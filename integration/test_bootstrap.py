@@ -3,12 +3,14 @@ from __future__ import annotations
 import hashlib
 import importlib.util
 import json
+import os
 import stat
 import sys
 import tempfile
 import unittest
 import zipfile
 from pathlib import Path
+from unittest import mock
 
 
 SCRIPT = Path(__file__).with_name("run-markitect.py")
@@ -48,6 +50,13 @@ class ParseLockTests(unittest.TestCase):
     def test_accepts_canonical_lock(self) -> None:
         lock = BOOTSTRAP.parse_lock(lock_text())
         self.assertEqual((lock.version, lock.source, lock.sha256), ("0.1.0-dev", "tools/markitect/release.zip", "0" * 64))
+
+    def test_accepts_windows_crlf_lock_checkout(self) -> None:
+        lf = lock_text()
+        crlf = lf.replace(b"\n", b"\r\n")
+        self.assertEqual(BOOTSTRAP.parse_lock(crlf), BOOTSTRAP.parse_lock(lf))
+        with self.assertRaisesRegex(BOOTSTRAP.BootstrapError, "LF line endings"):
+            BOOTSTRAP.parse_lock(lf.replace(b"\n", b"\r", 1))
 
     def test_rejects_duplicate_unknown_trailing_and_noncanonical_fields(self) -> None:
         samples = [
@@ -135,6 +144,85 @@ class ArchiveTests(unittest.TestCase):
 
 
 class InvocationTests(unittest.TestCase):
+    def build_with_fake_go(self, cache_dir: Path, source_dir: Path, lock, env_values: dict[str, str]):
+        observed: dict[str, object] = {}
+
+        def fake_run(command, *, cwd, check, env):
+            observed["command"] = command
+            observed["cwd"] = cwd
+            observed["env"] = env
+            output = Path(command[command.index("-o") + 1])
+            output.write_bytes(b"mock executable")
+            return type("Completed", (), {"returncode": 0})()
+
+        with mock.patch.dict(os.environ, env_values), mock.patch.object(BOOTSTRAP.subprocess, "run", side_effect=fake_run):
+            executable = BOOTSTRAP.build_markitect(source_dir, cache_dir, lock, "fake-go")
+            current_env = os.environ.copy()
+        return executable, observed, current_env
+
+    def test_build_uses_repository_local_cache_defaults_without_mutating_environment(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            cache_dir = root / ".artifacts" / "markitect" / ("a" * 64)
+            source_dir = cache_dir / "source"
+            source_dir.mkdir(parents=True)
+            lock = BOOTSTRAP.parse_lock(lock_text(digest="a" * 64))
+            executable, observed, current_env = self.build_with_fake_go(
+                cache_dir, source_dir, lock, {"GOCACHE": "", "GOTMPDIR": ""}
+            )
+            build_env = observed["env"]
+            self.assertEqual(build_env["GOCACHE"], str(root / ".artifacts" / "markitect" / "go-build"))
+            self.assertEqual(build_env["GOTMPDIR"], str(root / ".artifacts" / "markitect" / "go-tmp"))
+            self.assertTrue(Path(build_env["GOCACHE"]).is_dir())
+            self.assertTrue(Path(build_env["GOTMPDIR"]).is_dir())
+            self.assertTrue(executable.is_file())
+            self.assertEqual(current_env["GOCACHE"], "")
+            self.assertEqual(current_env["GOTMPDIR"], "")
+
+    def test_build_preserves_explicit_safe_cache_overrides(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            cache_dir = root / ".artifacts" / "markitect" / ("b" * 64)
+            source_dir = cache_dir / "source"
+            source_dir.mkdir(parents=True)
+            caller_cache = root / "caller-cache"
+            caller_tmp = root / "caller-tmp"
+            caller_cache.mkdir()
+            caller_tmp.mkdir()
+            lock = BOOTSTRAP.parse_lock(lock_text(digest="b" * 64))
+            _, observed, _ = self.build_with_fake_go(
+                cache_dir,
+                source_dir,
+                lock,
+                {"GOCACHE": str(caller_cache), "GOTMPDIR": str(caller_tmp)},
+            )
+            build_env = observed["env"]
+            self.assertEqual(build_env["GOCACHE"], str(caller_cache))
+            self.assertEqual(build_env["GOTMPDIR"], str(caller_tmp))
+            self.assertFalse((cache_dir.parent / "go-build").exists())
+            self.assertFalse((cache_dir.parent / "go-tmp").exists())
+
+    def test_build_rejects_reparse_point_at_local_cache_path(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            cache_dir = root / ".artifacts" / "markitect" / ("c" * 64)
+            source_dir = cache_dir / "source"
+            source_dir.mkdir(parents=True)
+            target = root / "target"
+            target.mkdir()
+            local_cache = cache_dir.parent / "go-build"
+            try:
+                local_cache.symlink_to(target, target_is_directory=True)
+            except OSError as exc:
+                self.skipTest(f"directory symlink unavailable: {exc}")
+            lock = BOOTSTRAP.parse_lock(lock_text(digest="c" * 64))
+            with mock.patch.dict(os.environ, {"GOCACHE": "", "GOTMPDIR": ""}), mock.patch.object(
+                BOOTSTRAP.subprocess, "run"
+            ) as run_build:
+                with self.assertRaisesRegex(BOOTSTRAP.BootstrapError, "symlink or reparse point"):
+                    BOOTSTRAP.build_markitect(source_dir, cache_dir, lock, "fake-go")
+                run_build.assert_not_called()
+
     def test_build_stamp_uses_strict_yaml_and_detects_replaced_binary(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             cache_dir = Path(directory)

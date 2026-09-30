@@ -56,6 +56,7 @@ def parse_flat_quoted_yaml(data: bytes, expected_fields: tuple[str, ...], docume
         text = data.decode("utf-8")
     except UnicodeDecodeError as exc:
         raise BootstrapError(f"{document} must be UTF-8") from exc
+    text = text.replace("\r\n", "\n")
     if text.endswith("\n"):
         text = text[:-1]
     if "\r" in text:
@@ -329,6 +330,29 @@ def create_cache_path(root: Path, digest: str) -> Path:
     return current
 
 
+def validate_directory_path(path: Path, *, create: bool) -> Path:
+    """Validate existing ancestors and optionally create a real directory path."""
+    absolute = Path(os.path.abspath(path))
+    anchor = Path(absolute.anchor)
+    current = anchor
+    for part in absolute.parts[1:]:
+        current = current / part
+        if is_reparse_or_symlink(current):
+            raise BootstrapError(f"build cache path traverses a symlink or reparse point: {current}")
+        if current.exists():
+            if not current.is_dir():
+                raise BootstrapError(f"build cache path component is not a directory: {current}")
+            continue
+        if create:
+            try:
+                current.mkdir()
+            except OSError as exc:
+                raise BootstrapError(f"cannot create build cache directory {current}: {exc}") from exc
+            if is_reparse_or_symlink(current) or not current.is_dir():
+                raise BootstrapError(f"unsafe build cache directory after creation: {current}")
+    return absolute
+
+
 def clear_cache(cache_dir: Path) -> None:
     if not cache_dir.exists():
         cache_dir.mkdir()
@@ -424,6 +448,23 @@ def write_stamp(cache_dir: Path, lock: Lock, executable: Path) -> None:
 
 def build_markitect(source_dir: Path, cache_dir: Path, lock: Lock, go: str) -> Path:
     executable = cache_dir / executable_name()
+    cache_dir = validate_directory_path(cache_dir, create=False)
+    source_dir = validate_directory_path(source_dir, create=False)
+    if not cache_dir.is_dir() or not source_dir.is_dir():
+        raise BootstrapError("Markitect source and cache directories must exist before building")
+    build_env = os.environ.copy()
+    shared_cache_root = validate_directory_path(cache_dir.parent, create=True)
+    for key, local_name in (("GOCACHE", "go-build"), ("GOTMPDIR", "go-tmp")):
+        override = build_env.get(key)
+        if override:
+            override_path = Path(override)
+            if not override_path.is_absolute():
+                override_path = source_dir / override_path
+            validate_directory_path(override_path, create=False)
+        else:
+            local_path = validate_directory_path(shared_cache_root / local_name, create=True)
+            build_env[key] = str(local_path)
+
     fd, temporary_name = tempfile.mkstemp(prefix="markitect-build-", dir=cache_dir)
     os.close(fd)
     os.unlink(temporary_name)
@@ -439,7 +480,7 @@ def build_markitect(source_dir: Path, cache_dir: Path, lock: Lock, go: str) -> P
             temporary_name,
             "./cmd/markitect",
         ]
-        result = subprocess.run(command, cwd=source_dir, check=False)
+        result = subprocess.run(command, cwd=source_dir, check=False, env=build_env)
         if result.returncode != 0:
             raise BootstrapError(f"Go failed to build pinned Markitect source (exit {result.returncode})")
         built = Path(temporary_name)
