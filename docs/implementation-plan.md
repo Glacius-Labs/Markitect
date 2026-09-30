@@ -2,7 +2,7 @@
 
 Updated 2026-09-30. This is the Markitect product roadmap. The Konfyra work-item dossier remains the owner of that consumer's running delivery state and acceptance. [Architecture](architecture.md) and [refinement decisions](refinement.md) own design; [pilot assessment](konfyra-assessment.md) records observed results.
 
-## 1. Establish the independent project — published, hosted verification in progress
+## 1. Establish the independent project — published and provisioned
 
 - Preserve existing Go source history in an independent checkout.
 - Move product architecture and planning ownership here; leave relocation pointers in the Cockpit.
@@ -10,7 +10,7 @@ Updated 2026-09-30. This is the Markitect product roadmap. The Konfyra work-item
 - Replace Markitect's Python bootstrap/tests with Go and exercise the integration against Konfyra's existing pinned RC2 engine.
 - Verify standalone builds/tests, consumer bootstrap and generated-view parity without a hidden source dependency on either consumer.
 
-Completion means a project that can be built, understood and changed on its own. The private GitHub repository `Glacius-Labs/Markitect` now contains the preserved source history, and its canonical checkout is under `Glacius Labs/Markitect`. The module follows that repository identity. Hosted Windows/Linux gates and provisioning of their exact artifact are required before upgrading the pilot. API-domain migration, public license and public releases remain separate decisions. Existing consumer release pins do not float.
+The private GitHub repository `Glacius-Labs/Markitect` contains the preserved source history, and its canonical checkout is under `Glacius Labs/Markitect`. The module follows that repository identity. RC3 passed hosted Windows/Linux gates; its exact four-file artifact was downloaded, verified and deliberately adopted by the Konfyra pilot. The [source release assessment](release-assessment.md) records the commits, archive and installation evidence. API-domain migration, public license and public releases remain separate decisions. Existing consumer release pins do not float.
 
 ## 2. Improve agent authoring — implemented and exercised locally
 
@@ -39,7 +39,7 @@ The supplied vision is a target, not an instruction to add every interface now. 
 
 Complete the [operations and release gates](operations.md) before expanding the resource model. Validate hosted installation, isolated Git inputs, bounded verification, portable cache identity, practical authoring, complete pin upgrades and rollback. Preserve failed exercises and the fix that makes their rerun pass. Publish exact source and artifact identity; keep tool readiness separate from consumer human acceptance.
 
-The initial hosted run exposed tests inheriting a protected default branch. The production audit also found inherited Git repository variables and incomplete Go build-cache identity. Fix these concrete issues in shared infrastructure with regressions before provisioning another consumer pin. New discovery interfaces or content packaging do not take precedence over these release blockers.
+The initial hosted run exposed tests inheriting a protected default branch. The production audit also found inherited Git repository variables and incomplete Go build-cache identity. RC3 repairs these issues and the subsequent independent verifier/bootstrap findings; the release assessment records actual installation and rollback evidence. Practical consumer checks and acceptance below remain distinct from the source distribution. New discovery interfaces or content packaging do not take precedence over unresolved consumer findings.
 
 ## 4. Finish Konfyra acceptance
 

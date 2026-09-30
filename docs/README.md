@@ -9,6 +9,7 @@
 | [Implementation plan](implementation-plan.md) | Ordered product work and acceptance criteria |
 | [Measurement](measurement.md) | Correctness scenarios, bounded benchmarks and controlled model comparisons |
 | [Core authoring assessment](authoring-assessment.md) | Actual isolated editing exercise, failures, fixes and verified boundary |
+| [Source release assessment](release-assessment.md) | Exact RC3 source distribution, hosted installation and closed review findings |
 | [Konfyra assessment](konfyra-assessment.md) | Dated migration assessment and practical use |
 
 The example and developer commands are routed from the [repository README](../README.md). Design proposals are labelled explicitly and must not be mistaken for supported YAML or CLI syntax.
