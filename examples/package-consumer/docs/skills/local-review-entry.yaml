@@ -1,0 +1,13 @@
+apiVersion: markitect.example.org/v1alpha1
+kind: Skill
+metadata:
+    name: local-review-entry
+    namespace: consumer
+spec:
+    text: Add repository-specific context here before using the shared evidence-led workflow.
+    description: Consumer-owned entry point that wraps the pinned review workflow.
+    uses:
+        - kind: Workflow
+          name: review-change
+          namespace: review
+          package: review-guidance

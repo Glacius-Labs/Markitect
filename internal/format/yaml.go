@@ -17,6 +17,7 @@ import (
 const maxResourceSize = 2 << 20
 
 var dnsLabel = regexp.MustCompile(`^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$`)
+var sha256Pattern = regexp.MustCompile(`^[0-9a-f]{64}$`)
 
 var specFields = map[string][]string{
 	"Text":     {"text", "files"},
@@ -25,7 +26,8 @@ var specFields = map[string][]string{
 	"Workflow": {"text", "rules", "uses", "needs", "implements", "input", "output", "files"},
 	"Skill":    {"text", "description", "rules", "uses", "needs", "implements", "input", "output", "files"},
 	"Agent":    {"text", "description", "rules", "uses", "needs", "implements", "input", "output", "providers", "files"},
-	"Project":  {"targets", "areas", "bindings", "checks", "ruleAdapters"},
+	"Project":  {"targets", "areas", "bindings", "checks", "ruleAdapters", "packages"},
+	"Package":  {"version", "areas", "exports", "bindings"},
 }
 
 // AllowedSpecFields returns the accepted spec fields for a resource kind.
@@ -81,7 +83,7 @@ func Parse(filePath string, data []byte) (*core.Resource, error) {
 		return nil, err
 	}
 	kind := child(root, "kind").Value
-	if !oneOf(kind, "Text", "Rule", "Workflow", "Skill", "Agent", "Contract", "Project") {
+	if !oneOf(kind, "Text", "Rule", "Workflow", "Skill", "Agent", "Contract", "Project", "Package") {
 		return nil, diagnostic(filePath, child(root, "kind").Line, "unsupported resource kind %q", kind)
 	}
 	if err := validateMetadata(filePath, child(root, "metadata"), kind); err != nil {
@@ -118,8 +120,8 @@ func validateMetadata(file string, n *yaml.Node, kind string) error {
 	if err := requireFields(file, n, "name"); err != nil {
 		return err
 	}
-	if kind == "Project" && child(n, "namespace") != nil {
-		return diagnostic(file, child(n, "namespace").Line, "Project metadata must not have a namespace")
+	if (kind == "Project" || kind == "Package") && child(n, "namespace") != nil {
+		return diagnostic(file, child(n, "namespace").Line, "%s metadata must not have a namespace", kind)
 	}
 	for _, field := range []string{"name", "namespace"} {
 		v := child(n, field)
@@ -149,15 +151,30 @@ func validateSpec(file string, n *yaml.Node, kind string) error {
 		return err
 	}
 	if kind != "Project" {
-		text := child(n, "text")
-		if text == nil {
-			return diagnostic(file, n.Line, "%s spec requires nonempty text", kind)
+		if kind == "Package" {
+			if err := requireFields(file, n, "version", "areas", "exports"); err != nil {
+				return err
+			}
+			if err := checkScalar(file, child(n, "version"), "string"); err != nil {
+				return err
+			}
+			if strings.TrimSpace(child(n, "version").Value) == "" {
+				return diagnostic(file, child(n, "version").Line, "Package spec version must not be empty")
+			}
 		}
-		if err := checkScalar(file, text, "string"); err != nil {
-			return err
-		}
-		if strings.TrimSpace(text.Value) == "" {
-			return diagnostic(file, text.Line, "%s spec text must not be empty", kind)
+		if kind == "Package" {
+			// Package manifests describe a graph boundary and have no renderable prose.
+		} else {
+			text := child(n, "text")
+			if text == nil {
+				return diagnostic(file, n.Line, "%s spec requires nonempty text", kind)
+			}
+			if err := checkScalar(file, text, "string"); err != nil {
+				return err
+			}
+			if strings.TrimSpace(text.Value) == "" {
+				return diagnostic(file, text.Line, "%s spec text must not be empty", kind)
+			}
 		}
 	}
 	if d := child(n, "description"); d != nil {
@@ -193,12 +210,26 @@ func validateSpec(file string, n *yaml.Node, kind string) error {
 			return err
 		}
 	}
-	for _, field := range []string{"rules", "uses", "needs", "implements"} {
+	for _, field := range []string{"rules", "uses", "needs", "implements", "exports"} {
 		if d := child(n, field); d != nil {
 			if err := validateRefs(file, d, field); err != nil {
 				return err
 			}
 		}
+	}
+	if d := child(n, "packages"); d != nil {
+		if kind != "Project" {
+			return diagnostic(file, d.Line, "packages are only allowed on Project resources")
+		}
+		if err := validatePackagePins(file, d); err != nil {
+			return err
+		}
+	}
+	if d := child(n, "exports"); d != nil && kind != "Package" {
+		return diagnostic(file, d.Line, "exports are only allowed on Package resources")
+	}
+	if d := child(n, "version"); d != nil && kind != "Package" {
+		return diagnostic(file, d.Line, "version is only allowed on Package resources")
 	}
 	if kind == "Contract" {
 		for _, field := range []string{"input", "output"} {
@@ -286,13 +317,13 @@ func validateRefs(file string, n *yaml.Node, field string) error {
 		if err := requireMapping(file, item, field+" reference"); err != nil {
 			return err
 		}
-		if err := checkKeys(file, item, set("kind", "name", "namespace")); err != nil {
+		if err := checkKeys(file, item, set("kind", "name", "namespace", "package")); err != nil {
 			return err
 		}
 		if err := requireFields(file, item, "name"); err != nil {
 			return err
 		}
-		for _, key := range []string{"kind", "name", "namespace"} {
+		for _, key := range []string{"kind", "name", "namespace", "package"} {
 			if v := child(item, key); v != nil {
 				if err := checkScalar(file, v, "string"); err != nil {
 					return err
@@ -302,12 +333,87 @@ func validateRefs(file string, n *yaml.Node, field string) error {
 				}
 			}
 		}
+		if field == "exports" {
+			if child(item, "kind") == nil || child(item, "namespace") == nil || child(item, "package") != nil {
+				return diagnostic(file, item.Line, "package exports require kind and namespace and must not name another package")
+			}
+		}
 		if field == "uses" && child(item, "kind") == nil {
 			return diagnostic(file, item.Line, "uses references require kind")
 		}
 		if field == "rules" && child(item, "kind") != nil && child(item, "kind").Value != "Rule" {
 			return diagnostic(file, child(item, "kind").Line, "rules references must have kind Rule")
 		}
+	}
+	return nil
+}
+
+func validatePackagePins(file string, n *yaml.Node) error {
+	if err := requireSequence(file, n, "packages"); err != nil {
+		return err
+	}
+	seen := map[string]bool{}
+	archives := map[string]bool{}
+	for _, item := range n.Content {
+		if err := requireMapping(file, item, "package pin"); err != nil {
+			return err
+		}
+		if err := checkKeys(file, item, set("name", "version", "source", "archive", "sha256")); err != nil {
+			return err
+		}
+		if err := requireFields(file, item, "name", "version", "source", "archive", "sha256"); err != nil {
+			return err
+		}
+		values := make(map[string]*yaml.Node, 5)
+		for _, field := range []string{"name", "version", "source", "archive", "sha256"} {
+			value := child(item, field)
+			if err := checkScalar(file, value, "string"); err != nil {
+				return err
+			}
+			values[field] = value
+		}
+		name := values["name"]
+		if !validName(name.Value) {
+			return diagnostic(file, name.Line, "package name must be a DNS label of at most 63 characters")
+		}
+		if seen[name.Value] {
+			return diagnostic(file, name.Line, "duplicate package pin %q", name.Value)
+		}
+		seen[name.Value] = true
+		if strings.TrimSpace(values["version"].Value) == "" {
+			return diagnostic(file, values["version"].Line, "package version must not be empty")
+		}
+		if strings.TrimSpace(values["source"].Value) == "" || strings.ContainsAny(values["source"].Value, "\x00\r\n") {
+			return diagnostic(file, values["source"].Line, "package source must be a nonempty provenance coordinate without control characters")
+		}
+		archive := values["archive"]
+		if err := validatePackageArchivePath(archive.Value); err != nil {
+			return diagnostic(file, archive.Line, "unsafe package archive path: %v", err)
+		}
+		foldedArchive := strings.ToLower(archive.Value)
+		if archives[foldedArchive] {
+			return diagnostic(file, archive.Line, "package archive path %q is duplicated or case-colliding", archive.Value)
+		}
+		archives[foldedArchive] = true
+		sha := values["sha256"]
+		if !sha256Pattern.MatchString(sha.Value) {
+			return diagnostic(file, sha.Line, "package sha256 must be 64 lowercase hexadecimal characters")
+		}
+	}
+	return nil
+}
+
+func validatePackageArchivePath(value string) error {
+	if value == "" || strings.ContainsAny(value, "\\:\x00") || strings.ContainsAny(value, "*?[]{}") || path.IsAbs(value) || path.Clean(value) != value || value == "." || strings.HasPrefix(value, "../") || strings.HasSuffix(value, "/") {
+		return fmt.Errorf("path must be a normalized repository-relative ZIP file path")
+	}
+	for _, part := range strings.Split(value, "/") {
+		if part == "" || part == "." || part == ".." {
+			return fmt.Errorf("path contains an unsafe component")
+		}
+	}
+	if path.Ext(value) != ".zip" {
+		return fmt.Errorf("path must end in .zip")
 	}
 	return nil
 }
@@ -413,18 +519,18 @@ func validateBindings(file string, n *yaml.Node) error {
 			if err := requireMapping(file, r, field); err != nil {
 				return err
 			}
-			if err := checkKeys(file, r, set("kind", "name", "namespace")); err != nil {
+			if err := checkKeys(file, r, set("kind", "name", "namespace", "package")); err != nil {
 				return err
 			}
 			if err := requireFields(file, r, "name"); err != nil {
 				return err
 			}
-			for _, key := range []string{"kind", "name", "namespace"} {
+			for _, key := range []string{"kind", "name", "namespace", "package"} {
 				if x := child(r, key); x != nil {
 					if err := checkScalar(file, x, "string"); err != nil {
 						return err
 					}
-					if (key == "name" || key == "namespace") && !validName(x.Value) {
+					if (key == "name" || key == "namespace" || key == "package") && !validName(x.Value) {
 						return diagnostic(file, x.Line, "binding reference %s must be a DNS label", key)
 					}
 				}

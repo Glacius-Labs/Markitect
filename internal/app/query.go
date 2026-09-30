@@ -15,6 +15,7 @@ type FindQuery struct {
 	Query     string
 	Kind      string
 	Namespace string
+	Package   string
 }
 
 // FindMatch is a concise resource result; canonical prose is not returned.
@@ -29,6 +30,8 @@ type ExplainResult struct {
 	Kind                    string              `yaml:"kind"`
 	Name                    string              `yaml:"name"`
 	Namespace               string              `yaml:"namespace,omitempty"`
+	Package                 string              `yaml:"package,omitempty"`
+	PackageVersion          string              `yaml:"packageVersion,omitempty"`
 	Path                    string              `yaml:"path"`
 	Description             string              `yaml:"description,omitempty"`
 	Area                    *core.Area          `yaml:"area,omitempty"`
@@ -41,12 +44,14 @@ type ExplainResult struct {
 
 // ResourceSummary is a concise identity for a related resource.
 type ResourceSummary struct {
-	Key         string `yaml:"key"`
-	Kind        string `yaml:"kind"`
-	Name        string `yaml:"name"`
-	Namespace   string `yaml:"namespace,omitempty"`
-	Path        string `yaml:"path"`
-	Description string `yaml:"description,omitempty"`
+	Key            string `yaml:"key"`
+	Kind           string `yaml:"kind"`
+	Name           string `yaml:"name"`
+	Namespace      string `yaml:"namespace,omitempty"`
+	Package        string `yaml:"package,omitempty"`
+	PackageVersion string `yaml:"packageVersion,omitempty"`
+	Path           string `yaml:"path"`
+	Description    string `yaml:"description,omitempty"`
 }
 
 // Find searches resource identity, path, description and body using literal
@@ -65,6 +70,9 @@ func Find(p *Project, query FindQuery) ([]FindMatch, error) {
 	matches := make([]FindMatch, 0)
 	for _, key := range keys {
 		resource := p.Graph.Resources[key]
+		if !p.exported(resource) || (query.Package != "" && resource.Package != query.Package) {
+			continue
+		}
 		if query.Kind != "" && resource.Kind != query.Kind {
 			continue
 		}
@@ -78,7 +86,7 @@ func Find(p *Project, query FindQuery) ([]FindMatch, error) {
 		if needle != "" && !strings.Contains(searchable, needle) {
 			continue
 		}
-		matches = append(matches, summarize(resource))
+		matches = append(matches, p.summarize(resource))
 	}
 	return matches, nil
 }
@@ -94,9 +102,13 @@ func Explain(p *Project, key string) (*ExplainResult, error) {
 	if resource == nil {
 		return nil, fmt.Errorf("unknown resource %s", key)
 	}
+	if !p.exported(resource) {
+		return nil, fmt.Errorf("package entry %s is not exported", key)
+	}
 	result := &ExplainResult{
 		Key: key, Kind: resource.Kind, Name: resource.Metadata.Name,
 		Namespace: resource.Metadata.Namespace, Path: resource.Path,
+		Package: resource.Package, PackageVersion: p.packageVersion(resource.Package),
 		Description: resource.Spec.Description,
 		Outgoing:    make([]core.Relationship, 0), Incoming: make([]core.Relationship, 0),
 	}
@@ -120,9 +132,9 @@ func Explain(p *Project, key string) (*ExplainResult, error) {
 		}
 		switch relation.Relation {
 		case "implements":
-			result.DeclaredImplementations = append(result.DeclaredImplementations, summarize(implementation))
+			result.DeclaredImplementations = append(result.DeclaredImplementations, p.summarize(implementation))
 		case "binding":
-			selected := summarize(implementation)
+			selected := p.summarize(implementation)
 			result.SelectedImplementation = &selected
 		}
 	}
@@ -155,10 +167,11 @@ func queryableProject(p *Project) error {
 	return nil
 }
 
-func summarize(resource *core.Resource) ResourceSummary {
+func (p *Project) summarize(resource *core.Resource) ResourceSummary {
 	return ResourceSummary{
-		Key: resource.Key(), Kind: resource.Kind, Name: resource.Metadata.Name,
+		Key: resource.GraphKey(), Kind: resource.Kind, Name: resource.Metadata.Name,
 		Namespace: resource.Metadata.Namespace, Path: resource.Path,
+		Package: resource.Package, PackageVersion: p.packageVersion(resource.Package),
 		Description: resource.Spec.Description,
 	}
 }

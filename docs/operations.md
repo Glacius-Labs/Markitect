@@ -1,12 +1,14 @@
 # Operations
 
-This document defines product-side development and release operations. [Usage](usage.md) owns command syntax; [Integration](../integration/README.md) records the immutable v0.1.0 distribution and the v0.2 boundary.
+This document defines product-side development and release operations. [Usage](usage.md) owns command syntax; [Integration](../integration/README.md) describes distribution provisioning; the [production assessment](production-assessment.md) records release evidence.
 
 ## Authoring and checking
 
 Use a named feature branch and commit a baseline before controlled writes. Edit canonical YAML and declared files, format them, render the owned generic and explicitly configured outputs, then run `check`. Commit the complete candidate before collecting fixed-revision `context`, `impact`, or `verify` evidence. A source edit creates a new candidate and its applicable evidence must be refreshed.
 
 `check` validates resource structure and managed-output drift. `verify --revision COMMIT` repeats structural checks on that immutable snapshot and executes only its declared `Project.spec.checks`. A check is an argv array: the executable name must be a bare name resolved using `PATH`, remaining values are literal arguments, and no shell is involved. To run a script, declare its interpreter as the executable. Missing declarations yield `incomplete-evidence`; unavailable commands or execution limits are also incomplete, not successful verification.
+
+After a schema-changing upgrade, an older baseline may no longer parse with the current CLI. In that case, cross-version `impact` and review reuse are unavailable. Keep prior evidence as historical, commit the complete upgraded configuration and content, and establish a new baseline with the current `check`/`verify`, fresh context, and any required new review. Preserve strict parsing; do not manufacture an impact result across incompatible schemas.
 
 Each command is bounded by a ten-minute execution limit and a one MiB captured-output limit, with a two-second pipe-wait limit. Cancellation targets the direct process; it is not a security sandbox and cannot guarantee termination of every child process. Checks use local caller authority. Declare read-only commands scoped to the fixed project snapshot.
 

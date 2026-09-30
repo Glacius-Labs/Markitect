@@ -15,7 +15,7 @@ const schemaDialect = "https://json-schema.org/draft/2020-12/schema"
 // resource kind. The schemas describe structural editing aids; Parse and the
 // graph validator remain responsible for semantic validation.
 func Schemas() (map[string][]byte, error) {
-	kinds := []string{"Text", "Rule", "Workflow", "Skill", "Agent", "Contract", "Project"}
+	kinds := []string{"Text", "Rule", "Workflow", "Skill", "Agent", "Contract", "Project", "Package"}
 	out := make(map[string][]byte, len(kinds))
 	for _, kind := range kinds {
 		fields := AllowedSpecFields(kind)
@@ -37,7 +37,7 @@ func resourceSchema(kind string, specFields []string) map[string]any {
 		"apiVersion": map[string]any{"const": core.APIVersion, "type": "string"},
 		"kind":       map[string]any{"const": kind, "type": "string"},
 		"metadata":   metadataSchema(kind),
-		"spec":       filteredSpecSchema(specFields),
+		"spec":       filteredSpecSchema(kind, specFields),
 	}
 	return map[string]any{
 		"$schema":              schemaDialect,
@@ -54,7 +54,7 @@ func metadataSchema(kind string) map[string]any {
 		"name":      map[string]any{"type": "string"},
 		"namespace": map[string]any{"type": "string"},
 	}
-	if kind == "Project" {
+	if kind == "Project" || kind == "Package" {
 		delete(properties, "namespace")
 	}
 	return map[string]any{
@@ -65,7 +65,7 @@ func metadataSchema(kind string) map[string]any {
 	}
 }
 
-func filteredSpecSchema(fields []string) map[string]any {
+func filteredSpecSchema(kind string, fields []string) map[string]any {
 	all := reflectSchema(reflect.TypeOf(core.Spec{})).(map[string]any)
 	allProperties := all["properties"].(map[string]any)
 	properties := make(map[string]any, len(fields))
@@ -105,9 +105,27 @@ func filteredSpecSchema(fields []string) map[string]any {
 			}
 		}
 	}
+	if packageShape, ok := properties["packages"].(map[string]any); ok {
+		pin := packageShape["items"].(map[string]any)
+		pinProperties := pin["properties"].(map[string]any)
+		pinProperties["name"].(map[string]any)["pattern"] = dnsLabel.String()
+		pinProperties["version"].(map[string]any)["pattern"] = `^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$`
+		pinProperties["source"].(map[string]any)["minLength"] = 1
+		pinProperties["archive"].(map[string]any)["pattern"] = `^(?!/)(?!.*(?:^|/)\.\.?/)[^\\:*?\[\]{}\x00]+\.zip$`
+		pinProperties["sha256"].(map[string]any)["pattern"] = `^[0-9a-f]{64}$`
+	}
+	if exportsShape, ok := properties["exports"].(map[string]any); ok {
+		item := exportsShape["items"].(map[string]any)
+		item["required"] = []string{"kind", "namespace", "name"}
+		itemProperties := item["properties"].(map[string]any)
+		delete(itemProperties, "package")
+	}
 	required := make([]string, 0, 1)
 	for _, field := range fields {
 		if field == "text" {
+			required = append(required, field)
+		}
+		if kind == "Package" && (field == "version" || field == "areas" || field == "exports") {
 			required = append(required, field)
 		}
 	}

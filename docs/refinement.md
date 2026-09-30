@@ -15,20 +15,9 @@ This document owns product direction beyond the implemented source model. Suppor
 | Measured interfaces | Extend the query API only when actual authoring work shows a need. MCP, LSP, studio, and runtime reconciliation are options, not release promises. |
 | One data format | Markitect-owned configuration and evidence use YAML. No telemetry or statistics subsystem is needed to ship core authoring. |
 
-## Content-package design
+## Content packages
 
-Content reuse is a later product feature, not part of v0.2. A first useful package slice should be deliberately small:
-
-1. Give each package a canonical identity, exact version, explicit exports, immutable source coordinate, and digest.
-2. Keep local resource identity unchanged. External references include package identity; one lock selects an exact version per package.
-3. Resolve a package from a vendored immutable archive offline. Validation, context, and review do not fetch network content implicitly.
-4. Keep package files confined to the verified package or its declared dependencies. Never permit paths to escape into arbitrary project files.
-5. Importing content does not apply its Rules. The project explicitly selects exported Rules and binds Contracts.
-6. Include package resources and file inputs in context identity, impact, and evidence eligibility. Changes invalidate affected evidence conservatively.
-7. Initially reject transitive imports and conflicting versions with clear diagnostics. Add a resolver only after one-package behavior and migration are well tested.
-8. Treat updates as a candidate change to archive and lock together; compare old and new graphs before accepting the change.
-
-A package is an API boundary, not a confidentiality boundary: compiled context can include dependencies needed to use an exported resource. Distribution authority must be explicit.
+The v0.3.0 source model implements the first bounded content-package slice. Its user-facing contract is in [Content packages](content-packages.md). It uses exact direct pins and offline archives, keeps package resources read-only, rejects nested imports, and treats packages as context/API boundaries rather than confidentiality boundaries.
 
 ## Templates and interfaces
 

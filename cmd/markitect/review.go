@@ -11,7 +11,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/app"
 )
 
-func runReview(root string, p *app.Project, namespace, kind, name, configPath, reportPath, evidencePath, toolDigest string, emit func(any) int, fail func(error) int) int {
+func runReview(root string, p *app.Project, packageName, namespace, kind, name, configPath, reportPath, evidencePath, toolDigest string, emit func(any) int, fail func(error) int) int {
 	if p.Snapshot.Provisional || namespace == "" || kind == "" || name == "" || configPath == "" {
 		return fail(fmt.Errorf("review requires --revision, --namespace, --kind, --name and --config"))
 	}
@@ -30,6 +30,9 @@ func runReview(root string, p *app.Project, namespace, kind, name, configPath, r
 		return fail(err)
 	}
 	key := namespace + "/" + kind + "/" + name
+	if packageName != "" {
+		key = packageName + "::" + key
+	}
 	if reportPath != "" {
 		report, err := readReviewFile(reportPath)
 		if err != nil {

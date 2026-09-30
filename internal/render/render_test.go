@@ -148,6 +148,54 @@ func TestGenerateWithOwnersReturnsExplicitOutputOwnership(t *testing.T) {
 	}
 }
 
+func TestGenerateSkipsImportedResourcesButRendersQualifiedDependencyText(t *testing.T) {
+	local := resource("Skill", "docs/area/reviewer.yaml", "reviewer", "area", core.Spec{
+		Description: "Review changes.",
+		Uses:        []core.Ref{{Package: "policy-set", Namespace: "shared", Kind: "Skill", Name: "policy-review"}},
+	})
+	imported := resource("Skill", "docs/area/reviewer.yaml", "policy-review", "shared", core.Spec{Text: "Imported source must not be rendered."})
+	imported.Package = "policy-set"
+	project := resource("Project", "markitect.yaml", "sample", "", core.Spec{
+		Targets:  []string{"codex"},
+		Packages: []core.PackagePin{{Name: "policy-set", Version: "2.4.1"}},
+	})
+	g := &core.Graph{Project: project, Resources: map[string]*core.Resource{
+		local.GraphKey(): local, imported.GraphKey(): imported,
+	}}
+	outputs, err := Generate(g)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := outputs[".agents/skills/policy-review/SKILL.md"]; ok {
+		t.Fatal("imported Skill received a local provider entrypoint")
+	}
+	if _, ok := outputs["docs/area/reviewer.md"]; !ok {
+		t.Fatal("local companion was lost to an imported source path collision")
+	}
+	body := string(outputs["docs/area/reviewer.md"])
+	for _, want := range []string{"policy-set::shared/Skill/policy-review", "version 2.4.1", "--package policy-set", "--namespace shared", "--kind Skill", "--name policy-review"} {
+		if !strings.Contains(body, want) {
+			t.Errorf("imported dependency text lacks %q:\n%s", want, body)
+		}
+	}
+	if strings.Contains(body, "](docs/") || strings.Contains(body, "policy-review.md") {
+		t.Fatalf("imported dependency was rendered as a broken local link:\n%s", body)
+	}
+}
+
+func TestGenerateRejectsExternalRuleAdapters(t *testing.T) {
+	imported := resource("Rule", "rules/privacy.yaml", "privacy", "policy", core.Spec{})
+	imported.Package = "policy-set"
+	project := resource("Project", "markitect.yaml", "sample", "", core.Spec{
+		Targets:      []string{"claude"},
+		RuleAdapters: map[string][]core.Ref{"privacy": {{Package: "policy-set", Namespace: "policy", Kind: "Rule", Name: "privacy"}}},
+	})
+	g := &core.Graph{Project: project, Resources: map[string]*core.Resource{imported.GraphKey(): imported}}
+	if _, err := Generate(g); err == nil || !strings.Contains(err.Error(), "external ruleAdapters are not supported") {
+		t.Fatalf("external rule adapter error = %v", err)
+	}
+}
+
 func resource(kind, source, name, namespace string, spec core.Spec) *core.Resource {
 	return &core.Resource{Kind: kind, Path: source, Metadata: core.Metadata{Name: name, Namespace: namespace}, Spec: spec}
 }

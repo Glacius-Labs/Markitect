@@ -17,4 +17,6 @@ spec:
 
     Edit canonical YAML in place where possible. Add only dependencies needed for context or behavior, using supported typed fields; never infer them from Markdown links. Keep customer/provider policy with its owner. Follow the authoring Workflow for formatting, rendering, checking, fixed snapshots, impact, context and semantic review.
 
+    Keep dependencies local when the Project owns their meaning and change lifecycle. Refer to a content package only when its owner intentionally publishes a reusable contract, workflow, rule, skill, or other resource for independent consumers. Similar wording or a shared keyword is not enough reason to create or consume a package. Select only a declared export through a direct exact Project pin; inspect its compiled context with `context --package PACKAGE ...`. Keep the archive in a committed, snapshot-included path such as `packages/`; root-level `vendor/`, `.artifacts/`, and `.cache/`, plus build/cache directories such as `bin/` and `obj/`, are excluded inputs. Imported content is read-only and does not activate Rules or providers.
+
     Report machine-checked structure separately from semantic confidence and human decisions. Do not claim customer compatibility, approval or human acceptance from a successful Markitect command.

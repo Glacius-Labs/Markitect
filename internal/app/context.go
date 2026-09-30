@@ -21,20 +21,26 @@ type Context struct {
 	Inputs         []ContextInput `yaml:"inputs"`
 }
 type ContextInput struct {
-	Key      string         `yaml:"key"`
-	Path     string         `yaml:"path"`
-	Hash     string         `yaml:"hash"`
-	Reason   string         `yaml:"reason"`
-	Resource *core.Resource `yaml:"resource,omitempty"`
-	Text     string         `yaml:"text,omitempty"`
+	Key            string         `yaml:"key"`
+	Path           string         `yaml:"path"`
+	Package        string         `yaml:"package,omitempty"`
+	PackageVersion string         `yaml:"packageVersion,omitempty"`
+	Hash           string         `yaml:"hash"`
+	Reason         string         `yaml:"reason"`
+	Resource       *core.Resource `yaml:"resource,omitempty"`
+	Text           string         `yaml:"text,omitempty"`
 }
 
 func CompileContext(p *Project, key, version string, toolDigest ...string) (*Context, error) {
 	if len(p.Diagnostics) > 0 {
 		return nil, fmt.Errorf("context cannot be compiled while project diagnostics remain")
 	}
-	if _, ok := p.Graph.Resources[key]; !ok {
+	entry, ok := p.Graph.Resources[key]
+	if !ok {
 		return nil, fmt.Errorf("unknown entry %s", key)
+	}
+	if !p.exported(entry) {
+		return nil, fmt.Errorf("package entry %s is not exported", key)
 	}
 	c := &Context{Version: version, Revision: p.Snapshot.Revision, Provisional: p.Snapshot.Provisional, Entry: key, SnapshotDigest: p.Snapshot.Digest()}
 	if len(toolDigest) > 0 {
@@ -55,7 +61,17 @@ func CompileContext(p *Project, key, version string, toolDigest ...string) (*Con
 		}
 	}
 	// Configuration controls ownership, bindings and implicit rule applicability.
-	reasons[p.Graph.Project.Key()] = "project policy and bindings"
+	reasons[p.Graph.Project.GraphKey()] = "project policy and bindings"
+	for k := range reasons {
+		r := p.Graph.Resources[k]
+		if r != nil && r.Package != "" {
+			manifest := p.Graph.Packages[r.Package]
+			if manifest == nil {
+				return nil, fmt.Errorf("package manifest for %s is missing", k)
+			}
+			reasons[manifest.GraphKey()] = "package policy and exports for " + r.Package
+		}
+	}
 	keys := make([]string, 0, len(reasons))
 	for k := range reasons {
 		keys = append(keys, k)
@@ -69,15 +85,18 @@ func CompileContext(p *Project, key, version string, toolDigest ...string) (*Con
 		if r == nil {
 			return nil, fmt.Errorf("unresolved context resource %s", k)
 		}
-		h := Hash(p.Snapshot.Files[r.Path])
-		c.Inputs = append(c.Inputs, ContextInput{Key: k, Path: r.Path, Hash: h, Reason: reasons[k], Resource: r})
+		h := Hash(p.resourceBytes(r))
+		c.Inputs = append(c.Inputs, ContextInput{Key: k, Path: r.Path, Package: r.Package, PackageVersion: p.packageVersion(r.Package), Hash: h, Reason: reasons[k], Resource: r})
 		fmt.Fprintf(&fingerprint, "%d:%s%d:%s%d:%s", len(k), k, len(r.Path), r.Path, len(h), h)
 	}
-	fileReasons := map[string]string{}
+	type declaredFile struct{ origin, path, reason string }
+	fileReasons := map[string]declaredFile{}
 	for _, k := range keys {
+		r := p.Graph.Resources[k]
 		for _, name := range p.InputFiles[k] {
-			if _, ok := fileReasons[name]; !ok {
-				fileReasons[name] = "declared input of " + k
+			identity := inputKey(r.Package, name)
+			if _, ok := fileReasons[identity]; !ok {
+				fileReasons[identity] = declaredFile{r.Package, name, "declared input of " + k}
 			}
 		}
 	}
@@ -86,11 +105,18 @@ func CompileContext(p *Project, key, version string, toolDigest ...string) (*Con
 		fileNames = append(fileNames, name)
 	}
 	sort.Strings(fileNames)
-	for _, name := range fileNames {
-		data := p.Snapshot.Files[name]
+	for _, identity := range fileNames {
+		file := fileReasons[identity]
+		data := p.fileBytes(file.origin, file.path)
 		h := Hash(data)
-		c.Inputs = append(c.Inputs, ContextInput{Key: "file:" + name, Path: name, Hash: h, Reason: fileReasons[name], Text: string(data)})
-		fmt.Fprintf(&fingerprint, "file:%d:%s%d:%s", len(name), name, len(h), h)
+		c.Inputs = append(c.Inputs, ContextInput{Key: identity, Path: file.path, Package: file.origin, PackageVersion: p.packageVersion(file.origin), Hash: h, Reason: file.reason, Text: string(data)})
+		// Preserve local fingerprints; package identities additionally separate
+		// identically named archive members from local and other package inputs.
+		fingerprintPath := file.path
+		if file.origin != "" {
+			fingerprintPath = identity
+		}
+		fmt.Fprintf(&fingerprint, "file:%d:%s%d:%s", len(fingerprintPath), fingerprintPath, len(h), h)
 	}
 	c.Digest = Hash([]byte(fingerprint.String()))
 	return c, nil
@@ -127,8 +153,8 @@ func Changes(before, after *Project) *Impact {
 	ownedInputs := map[string]map[string]bool{}
 	for _, p := range []*Project{before, after} {
 		for _, r := range p.Resources {
-			if changed[r.Path] {
-				seeds[r.Key()] = true
+			if r.Package == "" && changed[r.Path] {
+				seeds[r.GraphKey()] = true
 				if r.Kind == "Project" {
 					all = true
 				}
@@ -167,7 +193,9 @@ func Changes(before, after *Project) *Impact {
 	modelled := map[string]bool{"markitect.yaml": true}
 	for _, p := range []*Project{before, after} {
 		for _, r := range p.Resources {
-			modelled[r.Path] = true
+			if r.Package == "" {
+				modelled[r.Path] = true
+			}
 		}
 	}
 	for name := range changed {
@@ -228,10 +256,10 @@ func impactFileOwners(p *Project) (map[string]map[string]bool, error) {
 		return owners, nil
 	}
 	for _, r := range p.Resources {
-		if r == nil || r.Kind == "Project" {
+		if r == nil || r.Kind == "Project" || r.Package != "" {
 			continue
 		}
-		key := r.Key()
+		key := r.GraphKey()
 		for _, file := range r.Spec.Files {
 			add(file, key)
 		}

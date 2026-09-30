@@ -1,0 +1,11 @@
+apiVersion: markitect.example.org/v1alpha1
+kind: Skill
+metadata:
+    name: evidence-review
+    namespace: review
+spec:
+    description: Review a change using observable evidence.
+    text: Separate observed behavior, inferred causes, and unresolved questions.
+    uses:
+        - kind: Text
+          name: review-principles

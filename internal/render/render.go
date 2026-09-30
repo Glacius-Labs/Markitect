@@ -34,13 +34,16 @@ func GenerateWithOwners(g *core.Graph) (map[string][]byte, map[string][]string, 
 		if r == nil {
 			return nil, nil, fmt.Errorf("graph contains a nil resource")
 		}
+		if r.Package != "" {
+			continue
+		}
 		resources = append(resources, r)
 	}
 	sort.Slice(resources, func(i, j int) bool {
 		if resources[i].Path != resources[j].Path {
 			return resources[i].Path < resources[j].Path
 		}
-		return resources[i].Key() < resources[j].Key()
+		return resources[i].GraphKey() < resources[j].GraphKey()
 	})
 
 	outputs := map[string][]byte{}
@@ -170,13 +173,13 @@ func renderCompanion(r *core.Resource, target string, g *core.Graph) ([]byte, er
 	if len(links) > 0 {
 		b.WriteString("\n## Dependencies\n\n")
 		for _, link := range links {
-			b.WriteString("- [" + link.label + "](" + link.path + ")\n")
+			writeDependency(&b, link)
 		}
 	}
 	return []byte(b.String()), nil
 }
 
-type dependencyLink struct{ label, path string }
+type dependencyLink struct{ label, path, instruction string }
 
 func dependencyLinks(r *core.Resource, from string, g *core.Graph) []dependencyLink {
 	type typedRef struct {
@@ -200,17 +203,35 @@ func dependencyLinks(r *core.Resource, from string, g *core.Graph) []dependencyL
 	links := make([]dependencyLink, 0, len(refs))
 	for _, item := range refs {
 		ref := item.ref
-		key := ref.Key(r.Metadata.Namespace, item.kind)
+		key := ref.GraphKey(r.Package, r.Metadata.Namespace, item.kind)
 		if seen[key] {
 			continue
 		}
 		seen[key] = true
-		dep := findResource(g, ref, r.Metadata.Namespace, item.kind)
+		dep := findResource(g, ref, r.Package, r.Metadata.Namespace, item.kind)
 		if dep == nil || dep.Kind == "Project" || dep.Path == "" {
 			continue
 		}
+		if dep.Package != "" {
+			version := ""
+			if g.Project != nil {
+				for _, pin := range g.Project.Spec.Packages {
+					if pin.Name == dep.Package {
+						version = pin.Version
+						break
+					}
+				}
+			}
+			label := "Package dependency: " + dep.GraphKey()
+			if version != "" {
+				label += " (version " + version + ")"
+			}
+			instruction := "Select this exported dependency with `markitect context --repo . --package " + dep.Package + " --namespace " + dep.Metadata.Namespace + " --kind " + dep.Kind + " --name " + dep.Metadata.Name + "`."
+			links = append(links, dependencyLink{label: label, instruction: instruction})
+			continue
+		}
 		companion := companionPath(dep.Path)
-		links = append(links, dependencyLink{dep.Kind + ": " + dep.Metadata.Name, relative(from, companion)})
+		links = append(links, dependencyLink{label: dep.Kind + ": " + dep.Metadata.Name, path: relative(from, companion)})
 	}
 	sort.Slice(links, func(i, j int) bool { return links[i].label < links[j].label })
 	return links
@@ -225,7 +246,7 @@ func renderSkill(r *core.Resource, target string, g *core.Graph) []byte {
 	if len(links) > 0 {
 		b.WriteString("\n## Dependencies\n\n")
 		for _, link := range links {
-			b.WriteString("- [" + link.label + "](" + link.path + ")\n")
+			writeDependency(&b, link)
 		}
 	}
 	return []byte(b.String())
@@ -278,8 +299,12 @@ func renderClaudeAgent(r *core.Resource, target string, g *core.Graph) []byte {
 	}
 	b.WriteString("---\n\n<!-- " + Marker + "; source: " + relative(target, r.Path) + " -->\n\n")
 	b.WriteString("Read the [canonical agent view](" + relative(target, companionPath(r.Path)) + ") before acting.\n")
-	for _, link := range dependencyLinks(r, target, g) {
-		b.WriteString("- [" + link.label + "](" + link.path + ")\n")
+	links := dependencyLinks(r, target, g)
+	if len(links) > 0 {
+		b.WriteString("\n## Dependencies\n\n")
+		for _, link := range links {
+			writeDependency(&b, link)
+		}
 	}
 	return []byte(b.String())
 }
@@ -300,7 +325,10 @@ func renderRules(g *core.Graph) (map[string][]byte, map[string][]string, error) 
 		var b strings.Builder
 		b.WriteString("<!-- " + Marker + " -->\n# " + title(name) + "\n\n")
 		for _, ref := range refs {
-			r := findResource(g, ref, "", "Rule")
+			if ref.Package != "" {
+				return nil, nil, fmt.Errorf("external ruleAdapters are not supported: %q", ref.GraphKey("", "", "Rule"))
+			}
+			r := findResource(g, ref, "", "", "Rule")
 			if r == nil {
 				return nil, nil, fmt.Errorf("rule adapter %q references unresolved rule %q", name, ref.Name)
 			}
@@ -316,14 +344,22 @@ func renderRules(g *core.Graph) (map[string][]byte, map[string][]string, error) 
 	return out, owners, nil
 }
 
-func findResource(g *core.Graph, ref core.Ref, namespace, kind string) *core.Resource {
+func writeDependency(b *strings.Builder, link dependencyLink) {
+	if link.instruction != "" {
+		b.WriteString("- " + link.label + ". " + link.instruction + "\n")
+		return
+	}
+	b.WriteString("- [" + link.label + "](" + link.path + ")\n")
+}
+
+func findResource(g *core.Graph, ref core.Ref, defaultPackage, namespace, kind string) *core.Resource {
 	if ref.Kind != "" {
 		kind = ref.Kind
 	}
 	if ref.Namespace != "" {
 		namespace = ref.Namespace
 	}
-	return g.Resources[namespace+"/"+kind+"/"+ref.Name]
+	return g.Resources[ref.GraphKey(defaultPackage, namespace, kind)]
 }
 
 func companionPath(source string) string {

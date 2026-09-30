@@ -26,10 +26,11 @@ On Linux and macOS, build as `go build -o bin/markitect ./cmd/markitect`. The [m
 ## Documentation
 
 - [Usage and upgrade notes](docs/usage.md): project format, commands, and the v0.1-to-v0.2 transition.
+- [Content packages](docs/content-packages.md): the direct offline package model in Markitect 0.3.0.
 - [Architecture](docs/architecture.md): product model, evidence, verification, rendering, and boundaries.
-- [Roadmap](docs/implementation-plan.md): current v0.2.0 work and later product options.
+- [Roadmap](docs/implementation-plan.md): the v0.2.0 release model and v0.3.0 source model.
 - [Operations](docs/operations.md): source development, checks, and release handling.
 - [Integration](integration/README.md): verified downloads, installation, upgrades, and release publication.
 - [Development](CONTRIBUTING.md): code ownership and validation.
 
-Markitect supports typed YAML resources, graph checks, core authoring, structural queries, fixed-snapshot context and impact, review-evidence eligibility, managed generic views, explicit render targets, declared command checks, and versioned release bundles. Version 0.2.0 removes built-in adopting-repository migration/rendering policy and replaces inferred verification modes with commands declared in each Project. It does not provide an agent runtime, guarantee semantic completeness, or execute undeclared checks.
+The v0.2 source model supports typed YAML resources, graph checks, core authoring, structural queries, fixed-snapshot context and impact, review-evidence eligibility, managed generic views, explicit render targets, declared command checks, and versioned release bundles. The v0.3.0 source model adds direct offline content packages. Markitect does not provide an agent runtime, guarantee semantic completeness, or execute undeclared checks. See [GitHub Releases](https://github.com/Glacius-Labs/Markitect/releases) for available distributions and the [production assessment](docs/production-assessment.md) for release evidence and current readiness.

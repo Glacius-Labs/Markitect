@@ -17,7 +17,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/source"
 )
 
-var version = "0.2.0"
+var version = "0.3.0"
 
 type report struct {
 	Tool        string            `yaml:"tool"`
@@ -85,6 +85,7 @@ func run(args []string, out, errout io.Writer) int {
 	kind := fs.String("kind", "", "context entry kind")
 	name := fs.String("name", "", "context entry name")
 	namespace := fs.String("namespace", "", "context entry namespace")
+	packageName := fs.String("package", "", "exact content package identity (omitted: local entry)")
 	query := fs.String("query", "", "literal search text (find)")
 	write := fs.Bool("write", false, "write managed outputs in an isolated worktree")
 	check := fs.Bool("check", false, "check rendered outputs (default)")
@@ -141,6 +142,9 @@ func run(args []string, out, errout io.Writer) int {
 	fail := func(err error) int { fmt.Fprintln(errout, err); return 2 }
 	if command == "bundle" {
 		return runBundle(*root, *revision, *output, emit, fail)
+	}
+	if command == "pack" {
+		return runPack(*root, *revision, *output, emit, fail)
 	}
 	if command == "install" {
 		return runInstall(*root, *bundlePath, *bundleSHA, *write, emit, fail)
@@ -244,7 +248,7 @@ func run(args []string, out, errout io.Writer) int {
 	}
 	switch command {
 	case "find":
-		matches, err := app.Find(p, app.FindQuery{Query: *query, Kind: *kind, Namespace: *namespace})
+		matches, err := app.Find(p, app.FindQuery{Query: *query, Kind: *kind, Namespace: *namespace, Package: *packageName})
 		if err != nil {
 			return fail(err)
 		}
@@ -264,13 +268,16 @@ func run(args []string, out, errout io.Writer) int {
 		if *namespace != "" {
 			key = *namespace + "/" + *kind + "/" + *name
 		}
+		if *packageName != "" {
+			key = *packageName + "::" + key
+		}
 		explanation, err := app.Explain(p, key)
 		if err != nil {
 			return fail(err)
 		}
 		return emit(queryEnvelope{Version: version, ToolDigest: toolDigest, Revision: p.Snapshot.Revision, Provisional: p.Snapshot.Provisional, SnapshotDigest: p.Snapshot.Digest(), Result: explanation})
 	case "review":
-		return runReview(*root, p, *namespace, *kind, *name, *reviewConfig, *reviewReport, *reviewEvidence, toolDigest, emit, fail)
+		return runReview(*root, p, *packageName, *namespace, *kind, *name, *reviewConfig, *reviewReport, *reviewEvidence, toolDigest, emit, fail)
 	case "format":
 		files, err := app.Format(*root, p, *write)
 		if err != nil {
@@ -293,7 +300,8 @@ func run(args []string, out, errout io.Writer) int {
 		if *kind == "" || *name == "" || *namespace == "" {
 			return fail(fmt.Errorf("context requires --kind, --name and --namespace"))
 		}
-		c, err := app.CompileContext(p, *namespace+"/"+*kind+"/"+*name, version, toolDigest)
+		key := (core.Ref{Package: *packageName, Namespace: *namespace, Kind: *kind, Name: *name}).GraphKey("", "", "")
+		c, err := app.CompileContext(p, key, version, toolDigest)
 		if err != nil {
 			return fail(err)
 		}
