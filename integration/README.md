@@ -12,7 +12,9 @@ go run scripts/run-markitect.go check
 go test scripts/run-markitect.go scripts/markitect-bootstrap_test.go
 ```
 
-The bootstrap finds the lock from the current directory or its parents, verifies source/archive/cache integrity and builds the pinned Go module. It requires Go; its own code uses only the standard library. The first tool build can acquire the toolchain and checksum-verified Go dependency. Subsequent runs can use verified local inputs and caches. In a restricted shell, configure a writable `GOCACHE` and `GOTMPDIR` before `go run` because the outer Go invocation runs before the bootstrap.
+The bootstrap finds the lock from the current directory or its parents, verifies source/archive/cache integrity and builds the pinned Go module. The supported installation uses Go 1.27.1 or newer, as in the source README; the bootstrap itself uses only the standard library. Go's automatic toolchain selection can acquire the module's required toolchain and checksum-verified dependency. Subsequent runs can use verified local inputs and caches. In a restricted shell, configure a writable `GOCACHE` and `GOTMPDIR` before `go run` because the outer Go invocation runs before the bootstrap.
+
+Cache eligibility also includes the actual selected Go toolchain and the bootstrap's build-policy version. The bootstrap probes the toolchain in the verified extracted module before cache lookup, then pins that version for compilation. Consequently, a cache hit still needs the selected toolchain available; provision it and the module dependency before going offline. It builds a portable native executable with CGO disabled; caller `GOFLAGS`, workspace settings, experiments and architecture tuning do not change the binary contract. Module download/checksum configuration, cache locations and authentication-helper environment remain available. Old stamps or a different toolchain cause a rebuild. Source/archive/executable hashes continue to be checked.
 
 Build the bootstrap as a small executable when exact CLI exit codes or repeated invocation speed matter. `go run` itself can map a program's nonzero status to its own exit status; automation should use the built bootstrap/binary when distinguishing Markitect's 1 from 2.
 
@@ -74,3 +76,5 @@ Copy-Item (Join-Path $download 'scripts/markitect-bootstrap_test.go') (Join-Path
 ```
 
 Commit that scoped change through the consumer's normal review and acceptance process. Do not configure consumer CI to fetch a floating version, rewrite a consumer checkout, or upgrade consumers automatically; Markitect CI only publishes its own source artifact.
+
+Keep the previous pin commit for rollback. Restore the complete four-file set together and reverse any related content migration before checking the rollback candidate. [Operations and releases](../docs/operations.md) describes failure recovery, upgrade evidence and the supported release boundary.

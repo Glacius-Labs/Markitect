@@ -57,13 +57,13 @@ Core resolution records why each relationship exists alongside the adjacency gra
 
 ## Fixed inputs and change
 
-A revision resolves once to a committed Git tree, captured with paths, modes and bytes. Later working-tree edits cannot change that snapshot. Working-tree results are provisional. Controlled writes check source state and refuse unmanaged collisions; per-file writes are atomic, but there is no repository-wide transaction guarantee.
+A revision resolves once to a committed Git tree, captured with paths, modes and bytes. Git reads and branch checks bind to the explicit repository and discard inherited Git repository/object/config overrides. Later working-tree edits cannot change that snapshot. Working-tree results are provisional. Controlled writes check source state and refuse unmanaged collisions; per-file writes are atomic, but there is no repository-wide transaction guarantee.
 
 Context includes the selected entry, transitive dependencies, applicable rules, selected implementations and explicit file contents. It reports inclusion reasons and hashes. Markitect currently requires an explicit resource entry; selecting that entry from a natural-language task is the agent's responsibility.
 
 Impact compares old and new dependency closures. Deleted edges cannot hide their former consumers. Configuration/inventory changes and unmodelled paths conservatively broaden the result. This preserves caution but can limit savings until real inputs are modelled more precisely.
 
-`verify` materializes the fixed snapshot and runs supported profile gates there. `generic` has no extra repository gate. `check` includes generated drift, so the normal authoring order is edit, format, render, check, commit, fixed context/impact/review.
+`verify` materializes the fixed snapshot and runs supported profile gates there. The Konfyra plan also includes the native Go bootstrap tests when both integration files occur in that snapshot; an incomplete pair fails. Execution time and output are bounded, partial gate results remain visible, and unavailable verification cannot be reported as passed. [Operations](operations.md) defines the limits and failure handling. `generic` has no extra repository gate. `check` includes generated drift, so the normal authoring order is edit, format, render, check, commit, fixed context/impact/review.
 
 ## Evidence limits
 

@@ -3,6 +3,7 @@ package app
 import (
 	"bytes"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"reflect"
 	"strings"
@@ -103,6 +104,15 @@ func tempRoot(t *testing.T) string {
 		}
 	})
 	return abs
+}
+
+func initAppTestRepo(t *testing.T, root string) {
+	t.Helper()
+	cmd := exec.Command("git", "-c", "safe.directory="+filepath.ToSlash(root), "-C", root, "init", "-b", "feature/app-test")
+	cmd.Env = source.CleanGitEnv()
+	if output, err := cmd.CombinedOutput(); err != nil {
+		t.Fatalf("git init app test repo: %v\n%s", err, output)
+	}
 }
 
 func TestLoadParseAndCompileContext(t *testing.T) {
@@ -236,6 +246,7 @@ func TestCheckOutputsReportsMissingAndDrift(t *testing.T) {
 
 func TestWriteOutputsWritesGeneratedPlan(t *testing.T) {
 	root := tempRoot(t)
+	initAppTestRepo(t, root)
 	p := loadFixture(t, root)
 	written, err := WriteOutputs(root, p)
 	if err != nil {
@@ -257,6 +268,7 @@ func TestWriteOutputsWritesGeneratedPlan(t *testing.T) {
 
 func TestWriteOutputsRefusesConcurrentSourceEdit(t *testing.T) {
 	root := tempRoot(t)
+	initAppTestRepo(t, root)
 	p := loadFixture(t, root)
 	changed := filepath.Join(root, filepath.FromSlash(rulePath))
 	if err := os.WriteFile(changed, []byte("changed after capture\n"), 0644); err != nil {
@@ -272,6 +284,7 @@ func TestWriteOutputsRefusesConcurrentSourceEdit(t *testing.T) {
 
 func TestWriteOutputsRefusesSourceAddedAfterCapture(t *testing.T) {
 	root := tempRoot(t)
+	initAppTestRepo(t, root)
 	p := loadFixture(t, root)
 	newSource := core.Resource{APIVersion: core.APIVersion, Kind: "Text", Metadata: core.Metadata{Name: "added", Namespace: projectNS}, Spec: core.Spec{Text: "Added after capture."}}
 	writeFixture(t, root, map[string][]byte{"docs/general/added.yaml": encodeResource(t, newSource)})
@@ -285,6 +298,7 @@ func TestWriteOutputsRefusesSourceAddedAfterCapture(t *testing.T) {
 
 func TestWriteOutputsRefusesUnmanagedFile(t *testing.T) {
 	root := tempRoot(t)
+	initAppTestRepo(t, root)
 	writeFixture(t, root, fixtureFiles(t, "", "Keep the owner source.", projectNS).Files)
 	unmanaged := filepath.Join(root, "docs/general/skills/entry.md")
 	if err := os.MkdirAll(filepath.Dir(unmanaged), 0755); err != nil {
@@ -311,6 +325,7 @@ func TestWriteOutputsRefusesUnmanagedFile(t *testing.T) {
 
 func TestWriteOutputsRejectsUnsafeDestinationAndSnapshot(t *testing.T) {
 	root := tempRoot(t)
+	initAppTestRepo(t, root)
 	for _, name := range []string{"../outside", "docs\\outside.md", ".git/config", "C:/outside"} {
 		if _, err := safeDestination(root, name); err == nil {
 			t.Errorf("safeDestination(%q) accepted an unsafe path", name)

@@ -38,6 +38,8 @@ Edit bundled authoring at `internal/authoring/resources/*.yaml`. Its content is 
 
 ## Release and consumers
 
+[Operations and releases](docs/operations.md) defines the supported boundary, mandatory release evidence, recovery and consumer rollback procedure.
+
 Keep development builds distinguishable from accepted releases. Set a release version only when its required evidence exists. `package --repo . --output NEW_DIRECTORY` creates the tool archive and current flat YAML tool lock. It does not distribute content packages. A release directory must not exist beforehand.
 
 Review source, tests, archive digest, bootstrap and source provenance before updating a consumer. The consumer owns its content, integration changes and acceptance. Moving this checkout does not change an existing consumer's archive or executable. A new binary digest invalidates reuse of evidence recorded by the old binary.

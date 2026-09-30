@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -18,7 +19,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/source"
 )
 
-var version = "0.1.0-rc.3-dev"
+var version = "0.1.0-rc.3"
 
 type report struct {
 	Tool        string            `yaml:"tool"`
@@ -122,7 +123,7 @@ func run(args []string, out, errout io.Writer) int {
 		return 2
 	}
 	if *write && ((command != "render" && command != "migrate" && command != "schema" && command != "format") || *revision != "" || *check) {
-		fmt.Fprintln(errout, "--write only supports render, migrate or schema on the working tree")
+		fmt.Fprintln(errout, "--write only supports render, format, migrate or schema on the working tree")
 		return 2
 	}
 	emit := func(value any) int {
@@ -342,9 +343,33 @@ func run(args []string, out, errout io.Writer) int {
 	if command == "verify" && result.Status == "passed" {
 		result.Gates, err = app.VerifyRepository(p)
 		if err != nil {
-			return fail(err)
+			var verifyErr *app.VerifyError
+			if !errors.As(err, &verifyErr) {
+				verifyErr = &app.VerifyError{Kind: "incomplete-evidence", Profile: p.Graph.Project.Spec.Profile, Err: err}
+			}
+			if verifyErr.Profile == "" {
+				verifyErr.Profile = p.Graph.Project.Spec.Profile
+			}
+			result.Diagnostics = append(result.Diagnostics, core.Diagnostic{
+				Code:    "verify." + verifyErr.Kind,
+				Path:    verifyErr.Gate,
+				Message: verifyErr.Error(),
+			})
+			fmt.Fprintf(errout, "verify: %s\n", verifyErr)
+			result.Status = "incomplete"
+			result.Coverage = "typed graph and Markitect-owned outputs passed; repository verification incomplete"
+			exitCode := 2
+			if verifyErr.Kind == "gate-failure" {
+				result.Status = "failed"
+				result.Coverage = "typed graph and Markitect-owned outputs passed; repository verification stopped at a failing gate; later gates were not run"
+				exitCode = 1
+			}
+			if code := emit(result); code != 0 {
+				return code
+			}
+			return exitCode
 		}
-		result.Coverage = "typed graph, owned outputs and fixed profile repository gates, all from one immutable Git snapshot; semantic review remains separate"
+		result.Coverage = "typed graph, owned outputs, and all fixed profile repository gates passed from one immutable Git snapshot; semantic review remains separate"
 		for _, gate := range result.Gates {
 			if gate.ExitCode != 0 {
 				result.Status = "failed"

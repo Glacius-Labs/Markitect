@@ -61,6 +61,23 @@ type sourceArchive struct {
 
 type builderFunc func(goPath string, args []string, dir string, env []string) error
 
+type toolchainVersionFunc func(goPath, dir string, env []string) (string, error)
+
+const buildPolicy = "portable-native-v1"
+
+// goBuildInputs lists environment settings that can change tool selection,
+// build inputs, target features, or cache behavior. Other environment names
+// (including GOOGLE_APPLICATION_CREDENTIALS and GOAUTH) pass through.
+var goBuildInputs = map[string]bool{
+	"GCCGO": true, "GCCGOTOOLDIR": true,
+	"GO111MODULE": true, "GOBIN": true, "GOCACHEPROG": true, "GODEBUG": true,
+	"GOENV": true, "GOFLAGS": true, "GOOS": true, "GOARCH": true, "GOROOT": true,
+	"GOTOOLCHAIN": true, "GOWORK": true, "GO386": true, "GOAMD64": true,
+	"GOARM": true, "GOARM64": true, "GOMIPS": true, "GOMIPS64": true,
+	"GOPPC64": true, "GORISCV64": true, "GOWASM": true, "GOEXPERIMENT": true,
+	"GOFIPS140": true, "GO_EXTLINK_ENABLED": true,
+}
+
 func parseFlatYAML(data []byte, expected []string, document string) (map[string]string, error) {
 	if !utf8.Valid(data) {
 		return nil, fmt.Errorf("%s must be UTF-8", document)
@@ -758,16 +775,18 @@ func extractSource(sourceDir string, archive *sourceArchive) error {
 }
 
 func parseStamp(data []byte) (map[string]string, error) {
-	return parseFlatYAML(data, []string{"version", "source_sha256", "executable_sha256"}, "build stamp")
+	return parseFlatYAML(data, []string{"version", "source_sha256", "toolchain", "build_policy", "executable_sha256"}, "build stamp")
 }
 
-func stampYAML(version, sourceDigest, executableDigest string) []byte {
+func stampYAML(version, sourceDigest, toolchain, policy, executableDigest string) []byte {
 	return []byte("version: " + strconv.Quote(version) + "\n" +
 		"source_sha256: " + strconv.Quote(sourceDigest) + "\n" +
+		"toolchain: " + strconv.Quote(toolchain) + "\n" +
+		"build_policy: " + strconv.Quote(policy) + "\n" +
 		"executable_sha256: " + strconv.Quote(executableDigest) + "\n")
 }
 
-func findCachedExecutable(platformDir string, m manifest) (string, error) {
+func findCachedExecutable(platformDir string, m manifest, toolchain string) (string, error) {
 	entries, err := os.ReadDir(platformDir)
 	if err != nil {
 		return "", err
@@ -790,7 +809,7 @@ func findCachedExecutable(platformDir string, m manifest) (string, error) {
 			return "", err
 		}
 		stamp, err := parseStamp(data)
-		if err != nil || stamp["version"] != m.version || stamp["source_sha256"] != m.sha256 || !isDigest(stamp["executable_sha256"]) {
+		if err != nil || stamp["version"] != m.version || stamp["source_sha256"] != m.sha256 || stamp["toolchain"] != toolchain || stamp["build_policy"] != buildPolicy || !isDigest(stamp["executable_sha256"]) {
 			continue
 		}
 		nonce := strings.TrimSuffix(strings.TrimPrefix(name, "build-stamp-"), ".yaml")
@@ -847,15 +866,15 @@ func fileDigest(name string) (string, error) {
 	return hex.EncodeToString(h.Sum(nil)), nil
 }
 
-func environmentForBuild(sourceDir, sharedCache string, original []string) ([]string, error) {
+func environmentForBuild(sourceDir, sharedCache string, original []string, selectedToolchain ...string) ([]string, error) {
 	env := make(map[string]string, len(original)+8)
 	for _, item := range original {
 		key, value, ok := strings.Cut(item, "=")
 		if ok {
-			// These settings can redirect the build to mutable workspace files or
-			// change its target. Ignore all caller spellings, including case
-			// variants on Windows, and set explicit safe values below.
-			if strings.EqualFold(key, "GOFLAGS") || strings.EqualFold(key, "GOWORK") || strings.EqualFold(key, "GOENV") || strings.EqualFold(key, "GOOS") || strings.EqualFold(key, "GOARCH") {
+			upper := strings.ToUpper(key)
+			// Drop documented Go build inputs and all cgo compiler settings. The
+			// list is explicit so unrelated GO-prefixed integrations survive.
+			if goBuildInputs[upper] || strings.HasPrefix(upper, "CGO_") {
 				continue
 			}
 			if runtime.GOOS == "windows" {
@@ -864,6 +883,7 @@ func environmentForBuild(sourceDir, sharedCache string, original []string) ([]st
 						delete(env, existing)
 					}
 				}
+				key = upper
 			}
 			env[key] = value
 		}
@@ -873,6 +893,21 @@ func environmentForBuild(sourceDir, sharedCache string, original []string) ([]st
 	env["GOENV"] = "off"
 	env["GOOS"] = runtime.GOOS
 	env["GOARCH"] = runtime.GOARCH
+	env["CGO_ENABLED"] = "0"
+	env["GOTOOLCHAIN"] = "auto"
+	if len(selectedToolchain) != 0 && selectedToolchain[0] != "" {
+		env["GOTOOLCHAIN"] = selectedToolchain[0]
+	}
+	switch runtime.GOARCH {
+	case "amd64":
+		env["GOAMD64"] = "v1"
+	case "arm64":
+		env["GOARM64"] = "v8.0"
+	case "386":
+		env["GO386"] = "sse2"
+	case "arm":
+		env["GOARM"] = "7"
+	}
 	for key, local := range map[string]string{"GOCACHE": "go-build", "GOTMPDIR": "go-tmp"} {
 		if override := env[key]; override != "" {
 			check := override
@@ -902,6 +937,46 @@ func environmentForBuild(sourceDir, sharedCache string, original []string) ([]st
 	return result, nil
 }
 
+func queryToolchainVersion(goPath, dir string, env []string) (string, error) {
+	cmd := exec.Command(goPath, "env", "GOVERSION")
+	cmd.Dir = dir
+	cmd.Env = env
+	var stdout bytes.Buffer
+	cmd.Stdout = &stdout
+	// Go diagnostics can echo credential-bearing GOPROXY URLs. Keep the error
+	// surface bounded and avoid reflecting environment-derived secrets.
+	cmd.Stderr = io.Discard
+	if err := cmd.Run(); err != nil {
+		return "", fmt.Errorf("select Go toolchain for pinned source: %w", err)
+	}
+	version := strings.TrimSpace(stdout.String())
+	if !validToolchainVersion(version) {
+		return "", fmt.Errorf("Go reported an invalid toolchain version")
+	}
+	return version, nil
+}
+
+func validToolchainVersion(version string) bool {
+	if !strings.HasPrefix(version, "go") || len(version) < 5 {
+		return false
+	}
+	parts := strings.Split(strings.TrimPrefix(version, "go"), ".")
+	if len(parts) < 2 || len(parts) > 3 {
+		return false
+	}
+	for _, part := range parts {
+		if part == "" {
+			return false
+		}
+		for _, r := range part {
+			if r < '0' || r > '9' {
+				return false
+			}
+		}
+	}
+	return true
+}
+
 func defaultBuilder(goPath string, args []string, dir string, env []string) error {
 	cmd := exec.Command(goPath, args...)
 	cmd.Dir = dir
@@ -914,7 +989,7 @@ func defaultBuilder(goPath string, args []string, dir string, env []string) erro
 	return nil
 }
 
-func buildOrReuse(root string, m manifest, archive *sourceArchive, goPath string, originalEnv []string, builder builderFunc) (string, error) {
+func buildOrReuse(root string, m manifest, archive *sourceArchive, goPath string, originalEnv []string, builder builderFunc, probe toolchainVersionFunc) (string, error) {
 	base, err := cacheBase(root)
 	if err != nil {
 		return "", err
@@ -931,10 +1006,24 @@ func buildOrReuse(root string, m manifest, archive *sourceArchive, goPath string
 	if err != nil {
 		return "", err
 	}
-	if cached, err := findCachedExecutable(platformDir, m); err != nil || cached != "" {
+	probeEnv, err := environmentForBuild(sourceDir, base, originalEnv, "auto")
+	if err != nil {
+		return "", err
+	}
+	if probe == nil {
+		probe = queryToolchainVersion
+	}
+	toolchain, err := probe(goPath, sourceDir, probeEnv)
+	if err != nil {
+		return "", err
+	}
+	if !validToolchainVersion(toolchain) {
+		return "", errors.New("toolchain probe returned an invalid version")
+	}
+	if cached, err := findCachedExecutable(platformDir, m, toolchain); err != nil || cached != "" {
 		return cached, err
 	}
-	buildEnv, err := environmentForBuild(sourceDir, base, originalEnv)
+	buildEnv, err := environmentForBuild(sourceDir, base, originalEnv, toolchain)
 	if err != nil {
 		return "", err
 	}
@@ -997,7 +1086,7 @@ func buildOrReuse(root string, m manifest, archive *sourceArchive, goPath string
 		return "", err
 	}
 	stampTempName := stampTemp.Name()
-	if _, err := stampTemp.Write(stampYAML(m.version, m.sha256, executableDigest)); err != nil {
+	if _, err := stampTemp.Write(stampYAML(m.version, m.sha256, toolchain, buildPolicy, executableDigest)); err != nil {
 		stampTemp.Close()
 		os.Remove(stampTempName)
 		return "", err
@@ -1056,7 +1145,7 @@ func run(args []string, cwd string, builder builderFunc) int {
 		fmt.Fprintln(os.Stderr, "markitect bootstrap: Go is required:", err)
 		return 2
 	}
-	executable, err := buildOrReuse(root, m, archive, goPath, os.Environ(), builder)
+	executable, err := buildOrReuse(root, m, archive, goPath, os.Environ(), builder, nil)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "markitect bootstrap:", err)
 		return 2

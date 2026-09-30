@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"runtime"
+	"sort"
 	"strings"
 	"testing"
 )
@@ -221,6 +222,13 @@ func TestBuildCacheReusesOnlyVerifiedBinaryAndUsesLocalGoCaches(t *testing.T) {
 	buildCount := 0
 	var buildArgs []string
 	var buildEnv []string
+	toolchain := "go1.27.1"
+	probe := func(_ string, _ string, env []string) (string, error) {
+		if envValue(env, "GOTOOLCHAIN") != "auto" {
+			t.Fatalf("toolchain probe was not allowed to select module toolchain")
+		}
+		return toolchain, nil
+	}
 	fakeBuild := func(_ string, args []string, dir string, env []string) error {
 		buildCount++
 		buildArgs = append([]string(nil), args...)
@@ -234,26 +242,38 @@ func TestBuildCacheReusesOnlyVerifiedBinaryAndUsesLocalGoCaches(t *testing.T) {
 		}
 		return os.WriteFile(args[i+1], []byte("mock executable"), 0755)
 	}
-	first, err := buildOrReuse(root, m, archive, "fake-go", os.Environ(), fakeBuild)
+	first, err := buildOrReuse(root, m, archive, "fake-go", os.Environ(), fakeBuild, probe)
 	if err != nil {
 		t.Fatal(err)
 	}
-	second, err := buildOrReuse(root, m, archive, "fake-go", os.Environ(), fakeBuild)
+	second, err := buildOrReuse(root, m, archive, "fake-go", os.Environ(), fakeBuild, probe)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if first != second || buildCount != 1 {
 		t.Fatalf("cache reused %q -> %q with %d builds", first, second, buildCount)
 	}
+	noiseEnv := []string{"PATH=original", "GOFLAGS=-overlay=foreign", "GOAMD64=v3", "GOEXPERIMENT=loopvar", "GOTOOLCHAIN=local", "UNRELATED_SETTING=changed"}
+	noiseReuse, err := buildOrReuse(root, m, archive, "fake-go", noiseEnv, fakeBuild, probe)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if noiseReuse != first || buildCount != 1 {
+		t.Fatalf("irrelevant caller environment invalidated cache: builds=%d", buildCount)
+	}
 	if indexOf(buildArgs, "-buildvcs=false") < 0 || indexOf(buildArgs, "-trimpath") < 0 || !contains(buildArgs, "-X main.version="+m.version) {
 		t.Fatalf("build flags missing: %v", buildArgs)
 	}
 	base := filepath.Join(root, ".artifacts", "markitect")
 	if envValue(buildEnv, "GOCACHE") != filepath.Join(base, "go-build") || envValue(buildEnv, "GOTMPDIR") != filepath.Join(base, "go-tmp") {
-		t.Fatalf("unexpected local Go cache env: %v", buildEnv)
+		t.Fatalf("unexpected local Go cache env keys: %v", envKeys(buildEnv))
 	}
-	if envValue(buildEnv, "GOFLAGS") != "" || envValue(buildEnv, "GOWORK") != "off" || envValue(buildEnv, "GOENV") != "off" || envValue(buildEnv, "GOOS") != runtime.GOOS || envValue(buildEnv, "GOARCH") != runtime.GOARCH {
-		t.Fatalf("Go build env is not isolated to native pinned source: %v", buildEnv)
+	if envValue(buildEnv, "GOFLAGS") != "" || envValue(buildEnv, "GOWORK") != "off" || envValue(buildEnv, "GOENV") != "off" || envValue(buildEnv, "GOOS") != runtime.GOOS || envValue(buildEnv, "GOARCH") != runtime.GOARCH || envValue(buildEnv, "CGO_ENABLED") != "0" || envValue(buildEnv, "GOTOOLCHAIN") != toolchain {
+		t.Fatalf("Go build env is not isolated to native pinned source: %v", envKeys(buildEnv))
+	}
+	archFeature := map[string]string{"amd64": "GOAMD64", "arm64": "GOARM64", "386": "GO386", "arm": "GOARM"}[runtime.GOARCH]
+	if archFeature != "" && envValue(buildEnv, archFeature) == "" {
+		t.Fatalf("portable architecture default %s is missing", archFeature)
 	}
 	if _, err := os.Stat(filepath.Join(base, "go-build")); err != nil {
 		t.Fatal(err)
@@ -264,12 +284,20 @@ func TestBuildCacheReusesOnlyVerifiedBinaryAndUsesLocalGoCaches(t *testing.T) {
 	if err := os.WriteFile(first, []byte("replaced executable"), 0755); err != nil {
 		t.Fatal(err)
 	}
-	third, err := buildOrReuse(root, m, archive, "fake-go", os.Environ(), fakeBuild)
+	third, err := buildOrReuse(root, m, archive, "fake-go", os.Environ(), fakeBuild, probe)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if buildCount != 2 || third == first {
 		t.Fatalf("replaced executable was not rebuilt: builds=%d old=%s new=%s", buildCount, first, third)
+	}
+	toolchain = "go1.28.0"
+	fourth, err := buildOrReuse(root, m, archive, "fake-go", os.Environ(), fakeBuild, probe)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if buildCount != 3 || fourth == third {
+		t.Fatalf("toolchain change did not invalidate cache: builds=%d old=%s new=%s", buildCount, third, fourth)
 	}
 }
 
@@ -291,15 +319,18 @@ func TestBuildEnvironmentPreservesExplicitOverrides(t *testing.T) {
 	if err := os.Mkdir(callerTmp, 0755); err != nil {
 		t.Fatal(err)
 	}
-	env, err := environmentForBuild(source, cache, []string{"PATH=original", "GOCACHE=" + callerCache, "GOTMPDIR=" + callerTmp, "GOFLAGS=-overlay=evil.json", "GOWORK=../go.work", "GOOS=wasm", "GOARCH=wasm"})
+	env, err := environmentForBuild(source, cache, []string{"PATH=original", "GOCACHE=" + callerCache, "GOTMPDIR=" + callerTmp, "GOPROXY=https://user:secret@example.invalid", "GOSUMDB=off", "GOAUTH=netrc", "GOFLAGS=-overlay=evil.json", "GOWORK=../go.work", "GOENV=evil", "GOOS=wasm", "GOARCH=wasm", "GOAMD64=v3", "GOEXPERIMENT=evil", "GOFIPS140=latest", "GOCACHEPROG=external-cache", "GODEBUG=toolchaintrace=1", "GOTOOLCHAIN=local", "CGO_ENABLED=1", "CGO_CFLAGS=-evil", "GOOGLE_APPLICATION_CREDENTIALS=fake-test-credential-path"}, "go1.27.1")
 	if err != nil {
 		t.Fatal(err)
 	}
 	if envValue(env, "GOCACHE") != callerCache || envValue(env, "GOTMPDIR") != callerTmp || envValue(env, "PATH") != "original" {
-		t.Fatalf("explicit build env changed: %v", env)
+		t.Fatalf("explicit build env changed; keys=%v", envKeys(env))
 	}
-	if envValue(env, "GOFLAGS") != "" || envValue(env, "GOWORK") != "off" || envValue(env, "GOENV") != "off" || envValue(env, "GOOS") != runtime.GOOS || envValue(env, "GOARCH") != runtime.GOARCH {
-		t.Fatalf("unsafe Go build variables were retained: %v", env)
+	if envValue(env, "GOFLAGS") != "" || envValue(env, "GOWORK") != "off" || envValue(env, "GOENV") != "off" || envValue(env, "GOOS") != runtime.GOOS || envValue(env, "GOARCH") != runtime.GOARCH || envValue(env, "GOAMD64") == "v3" || envValue(env, "GOEXPERIMENT") != "" || envValue(env, "GOFIPS140") != "" || envValue(env, "GOCACHEPROG") != "" || envValue(env, "GODEBUG") != "" || envValue(env, "CGO_ENABLED") != "0" || envValue(env, "CGO_CFLAGS") != "" || envValue(env, "GOTOOLCHAIN") != "go1.27.1" {
+		t.Fatalf("unsafe Go build variables were retained; keys=%v", envKeys(env))
+	}
+	if envValue(env, "GOPROXY") != "https://user:secret@example.invalid" || envValue(env, "GOSUMDB") != "off" || envValue(env, "GOAUTH") != "netrc" || envValue(env, "GOOGLE_APPLICATION_CREDENTIALS") != "fake-test-credential-path" {
+		t.Fatalf("module download/checksum settings were not preserved; keys=%v", envKeys(env))
 	}
 }
 
@@ -321,7 +352,8 @@ func TestBuildMutationIsNotStampedAsPinnedSource(t *testing.T) {
 		}
 		return os.WriteFile(filepath.Join(dir, "cmd", "markitect", "main.go"), []byte("mutated during build"), 0644)
 	}
-	if _, err := buildOrReuse(root, m, archive, "fake-go", nil, fakeBuild); err == nil || !strings.Contains(err.Error(), "changed during build") {
+	probe := func(_ string, _ string, _ []string) (string, error) { return "go1.27.1", nil }
+	if _, err := buildOrReuse(root, m, archive, "fake-go", nil, fakeBuild, probe); err == nil || !strings.Contains(err.Error(), "changed during build") {
 		t.Fatalf("source mutation result = %v", err)
 	}
 	platformDir := filepath.Join(root, ".artifacts", "markitect", m.sha256, runtime.GOOS+"-"+runtime.GOARCH)
@@ -371,13 +403,35 @@ func TestInjectRepoAndDiscoverRoot(t *testing.T) {
 
 func TestArchiveStampParser(t *testing.T) {
 	digest := strings.Repeat("a", 64)
-	data := stampYAML("1.2.3", digest, strings.Repeat("b", 64))
+	data := stampYAML("1.2.3", digest, "go1.27.1", buildPolicy, strings.Repeat("b", 64))
 	stamp, err := parseStamp(data)
 	if err != nil || stamp["source_sha256"] != digest {
 		t.Fatalf("parse stamp = %v, %v", stamp, err)
 	}
 	if _, err := parseStamp([]byte("version: \"1.2.3\"\nversion: \"1.2.3\"\nexecutable_sha256: \"" + strings.Repeat("b", 64) + "\"\n")); err == nil {
 		t.Fatal("duplicate stamp fields accepted")
+	}
+}
+
+func TestCacheRejectsBuildPolicyStampMismatch(t *testing.T) {
+	platformDir := t.TempDir()
+	digest := strings.Repeat("a", 64)
+	m := manifest{version: "1.2.3", sha256: digest}
+	nonce := "0011223344556677"
+	executable := filepath.Join(platformDir, "markitect-"+nonce)
+	if runtime.GOOS == "windows" {
+		executable += ".exe"
+	}
+	contents := []byte("mock executable")
+	if err := os.WriteFile(executable, contents, 0755); err != nil {
+		t.Fatal(err)
+	}
+	stamp := stampYAML(m.version, m.sha256, "go1.27.1", "older-policy", hexDigest(contents))
+	if err := os.WriteFile(filepath.Join(platformDir, "build-stamp-"+nonce+".yaml"), stamp, 0644); err != nil {
+		t.Fatal(err)
+	}
+	if got, err := findCachedExecutable(platformDir, m, "go1.27.1"); err != nil || got != "" {
+		t.Fatalf("stale build policy cache result = %q, %v", got, err)
 	}
 }
 
@@ -405,4 +459,16 @@ func envValue(values []string, key string) string {
 		}
 	}
 	return ""
+}
+
+func envKeys(values []string) []string {
+	keys := make([]string, 0, len(values))
+	for _, value := range values {
+		key, _, ok := strings.Cut(value, "=")
+		if ok {
+			keys = append(keys, key)
+		}
+	}
+	sort.Strings(keys)
+	return keys
 }

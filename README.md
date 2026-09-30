@@ -4,7 +4,7 @@ Markitect treats the rules, workflows, skills, agents and context around AI-assi
 
 Humans describe intent. Agents maintain the resources. Markitect supports authoring and checks their structure. Core authoring guidance ships with the tool; structural queries help agents find the canonical owner and explain dependencies.
 
-This is the independent [Glacius Labs Markitect source repository](https://github.com/Glacius-Labs/Markitect). Konfyra consumes a pinned release; the Cockpit is the next planned consumer. Neither repository is required to build or test the tool. The current development version is **0.1.0-rc.3-dev**. Konfyra's tested pilot remains on **0.1.0-rc.2**.
+This is the independent [Glacius Labs Markitect source repository](https://github.com/Glacius-Labs/Markitect). Konfyra consumes a pinned release; the Cockpit is the next planned consumer. Neither repository is required to build or test the tool. The current release candidate is **0.1.0-rc.3**. Konfyra's previously tested pilot used **0.1.0-rc.2**; its current adoption and acceptance are recorded in its own delivery dossier.
 
 ## Start
 
@@ -35,6 +35,7 @@ The [minimal example](examples/minimal/README.md) demonstrates all six content k
 - [Development](CONTRIBUTING.md): checks, boundaries and release preparation.
 - [Schemas](schema/Project.yaml): generated YAML schemas; parser and graph checks remain authoritative.
 - [Consumer integration](integration/README.md): pinned source packages and bootstrap.
+- [Operations and releases](docs/operations.md): parallel reviews, supported platforms, failure recovery and release gates.
 
 Implemented: strict YAML, six resource kinds, scopes, references, Contracts, immutable Git snapshots, structural queries, bundled core authoring, context compilation, impact, managed rendering and advisory review reuse. Content packages, template initialization, MCP/LSP and Kubernetes are design work. Markitect does not prove arbitrary prose consistent or enforce an agent's runtime behavior.
 
