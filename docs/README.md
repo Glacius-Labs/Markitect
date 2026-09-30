@@ -7,6 +7,7 @@
 | [Operations and releases](operations.md) | Supported operation, parallel reviews, failure recovery, upgrades and release gates |
 | [Refinement decisions](refinement.md) | Assessment of the supplied concept notes and proposed package/template model |
 | [Implementation plan](implementation-plan.md) | Ordered product work and acceptance criteria |
+| [Production delivery plan](production-plan.md) | Current release, provisioning, consumer integration and acceptance work |
 | [Measurement](measurement.md) | Correctness scenarios, bounded benchmarks and controlled model comparisons |
 | [Core authoring assessment](authoring-assessment.md) | Actual isolated editing exercise, failures, fixes and verified boundary |
 | [Source release assessment](release-assessment.md) | Exact RC3 source distribution, hosted installation and closed review findings |

@@ -6,6 +6,7 @@ on:
     branches:
       - main
   workflow_dispatch:
+  workflow_call:
 
 permissions:
   contents: read
@@ -144,3 +145,22 @@ jobs:
           path: ${{ runner.temp }}/markitect-source-${{ github.sha }}/
           if-no-files-found: error
           retention-days: 30
+
+  immutable-release-api-probe:
+    name: Immutable release API capability probe (manual dispatch only)
+    if: ${{ github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - name: Read the actual repository immutability setting
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh api \
+            -H 'X-GitHub-Api-Version: 2026-03-10' \
+            "repos/$GITHUB_REPOSITORY/immutable-releases" \
+            --jq 'if .enabled == true then "Immutable releases enabled (enforced_by_owner=\(.enforced_by_owner))" else error("immutable releases are not enabled") end'

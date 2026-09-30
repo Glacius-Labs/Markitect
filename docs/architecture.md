@@ -63,7 +63,7 @@ Context includes the selected entry, transitive dependencies, applicable rules, 
 
 Impact compares old and new dependency closures. Deleted edges cannot hide their former consumers. Configuration/inventory changes and unmodelled paths conservatively broaden the result. This preserves caution but can limit savings until real inputs are modelled more precisely.
 
-`verify` materializes the fixed snapshot and runs supported profile gates there. The Konfyra plan also includes the native Go bootstrap tests when both integration files occur in that snapshot; an incomplete pair fails. Execution time and output are bounded, partial gate results remain visible, and unavailable verification cannot be reported as passed. [Operations](operations.md) defines the limits and failure handling. `generic` has no extra repository gate. `check` includes generated drift, so the normal authoring order is edit, format, render, check, commit, fixed context/impact/review.
+`verify` materializes the fixed snapshot and runs supported profile gates there. Konfyra and Cockpit include native Go bootstrap tests when both integration files occur in that snapshot; an incomplete pair fails. Migrated Cockpit snapshots use their Go documentation checker and its tests; historical snapshots retain their compatibility gates. Execution time and output are bounded, partial gate results remain visible, and unavailable verification cannot be reported as passed. [Operations](operations.md) defines the limits and failure handling. `generic` has no extra repository gate. `check` includes generated drift, so the normal authoring order is edit, format, render, check, commit, fixed context/impact/review.
 
 ## Evidence limits
 
@@ -75,6 +75,8 @@ An undeclared semantic dependency remains a modelling gap. Ordinary links are na
 
 ## Standalone ownership
 
-This repository owns tool source, schemas, generic examples and product design. Consumers own their policies and pinned integration. The current `package` command creates a tool source archive, and `markitect.lock.yaml` currently pins that tool. Reusable content packages and template initialization are proposed work, not current commands.
+This repository owns tool source, schemas, generic examples and product design. Consumers own their policies and pinned integration. `internal/release` builds and validates the deterministic distribution using a fixed source snapshot. The complete bundle contains the source archive, existing flat tool lock, Go bootstrap, paired tests and a YAML release manifest binding their hashes to a source commit. `internal/app` owns installation plans, existing-pin ownership checks and controlled filesystem writes; CLI code selects inputs and reports outcomes. Release packaging has no provider or customer policy dependency.
+
+`bundle` requires a fixed revision and matching source version. `install` verifies the complete bundle before planning or writing and refuses ambiguous existing ownership. GitHub release attestation establishes downloaded asset provenance; local hashes establish byte consistency. Neither replaces consumer validation. The low-level `package` command still creates only a source archive and flat tool lock. Reusable content packages and template initialization are proposed work, not current commands.
 
 The API-shaped YAML envelope leaves room for a later Kubernetes adapter, but these resources and schemas are not CRDs. Runtime lifecycle, API conversion, status and reconciliation need an explicit future contract. The Go module follows the private `Glacius-Labs/Markitect` GitHub repository. The API group remains a placeholder until a controlled domain and explicit format migration are chosen.

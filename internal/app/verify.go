@@ -112,30 +112,45 @@ func verifyRepositoryWithTimeout(p *Project, timeout time.Duration) ([]GateResul
 
 func planVerifyCommands(profile string, files map[string][]byte) ([]verifyCommand, error) {
 	var commands []verifyCommand
+	if profile != "konfyra" && profile != "cockpit" {
+		return nil, &VerifyError{Kind: "incomplete-evidence", Profile: profile, Err: errors.New("profile has no repository gate adapter; check covers the Markitect graph only")}
+	}
+
+	_, hasBootstrapRunner := files["scripts/run-markitect.go"]
+	_, hasBootstrapTest := files["scripts/markitect-bootstrap_test.go"]
+	if hasBootstrapRunner != hasBootstrapTest {
+		return nil, &VerifyError{Kind: "incomplete-evidence", Profile: profile, Err: errors.New("Go Markitect bootstrap evidence must include both scripts/run-markitect.go and scripts/markitect-bootstrap_test.go")}
+	}
+
 	switch profile {
 	case "konfyra":
 		commands = []verifyCommand{
 			{profile: profile, name: "scripts/render-governance-adapters.py --check", tool: "python", args: []string{"-B", "scripts/render-governance-adapters.py", "--check"}},
 			{profile: profile, name: "python unittest discover scripts/tests", tool: "python", args: []string{"-B", "-m", "unittest", "discover", "-s", "scripts/tests", "-v"}},
 		}
-		_, hasRunner := files["scripts/run-markitect.go"]
-		_, hasTest := files["scripts/markitect-bootstrap_test.go"]
-		if hasRunner != hasTest {
-			return nil, &VerifyError{Kind: "incomplete-evidence", Profile: profile, Err: errors.New("Go Markitect bootstrap evidence must include both scripts/run-markitect.go and scripts/markitect-bootstrap_test.go")}
-		}
-		if hasRunner {
-			commands = append(commands, verifyCommand{
-				profile: profile, name: "go test -v scripts/run-markitect.go scripts/markitect-bootstrap_test.go", tool: "go",
-				args: []string{"test", "-count=1", "-v", "scripts/run-markitect.go", "scripts/markitect-bootstrap_test.go"},
-			})
-		}
 	case "cockpit":
-		commands = []verifyCommand{
-			{profile: profile, name: "scripts/check_docs.py", tool: "python", args: []string{"-B", "scripts/check_docs.py"}},
-			{profile: profile, name: "scripts/render_adapters.py --check", tool: "python", args: []string{"-B", "scripts/render_adapters.py", "--check"}},
+		_, hasCockpitChecker := files["scripts/check-cockpit.go"]
+		_, hasCockpitTest := files["scripts/check-cockpit_test.go"]
+		if hasCockpitChecker != hasCockpitTest {
+			return nil, &VerifyError{Kind: "incomplete-evidence", Profile: profile, Err: errors.New("Cockpit Go gate evidence must include both scripts/check-cockpit.go and scripts/check-cockpit_test.go")}
 		}
-	default:
-		return nil, &VerifyError{Kind: "incomplete-evidence", Profile: profile, Err: errors.New("profile has no repository gate adapter; check covers the Markitect graph only")}
+		if hasCockpitChecker {
+			commands = []verifyCommand{
+				{profile: profile, name: "go run scripts/check-cockpit.go", tool: "go", args: []string{"run", "scripts/check-cockpit.go"}},
+				{profile: profile, name: "go test -count=1 -v scripts/check-cockpit.go scripts/check-cockpit_test.go", tool: "go", args: []string{"test", "-count=1", "-v", "scripts/check-cockpit.go", "scripts/check-cockpit_test.go"}},
+			}
+		} else {
+			commands = []verifyCommand{
+				{profile: profile, name: "scripts/check_docs.py", tool: "python", args: []string{"-B", "scripts/check_docs.py"}},
+				{profile: profile, name: "scripts/render_adapters.py --check", tool: "python", args: []string{"-B", "scripts/render_adapters.py", "--check"}},
+			}
+		}
+	}
+	if hasBootstrapRunner {
+		commands = append(commands, verifyCommand{
+			profile: profile, name: "go test -count=1 -v scripts/run-markitect.go scripts/markitect-bootstrap_test.go", tool: "go",
+			args: []string{"test", "-count=1", "-v", "scripts/run-markitect.go", "scripts/markitect-bootstrap_test.go"},
+		})
 	}
 	return commands, nil
 }
