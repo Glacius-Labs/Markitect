@@ -225,6 +225,34 @@ func TestPackageRuntimeCyclesUseOriginQualifiedGraphKeys(t *testing.T) {
 	}
 }
 
+func TestSelfSelectedBindingIsARuntimeCycle(t *testing.T) {
+	for _, packaged := range []bool{false, true} {
+		t.Run(map[bool]string{false: "local", true: "package"}[packaged], func(t *testing.T) {
+			contract := resource("Contract", "shared", "assessment", "content/shared/assessment.yaml")
+			contract.Spec.Kind = "Skill"
+			implementation := resource("Skill", "shared", "assessor", "content/shared/assessor.yaml")
+			ref := Ref{Kind: "Contract", Namespace: "shared", Name: "assessment"}
+			implementation.Spec.Implements = []Ref{ref}
+			implementation.Spec.Needs = []Ref{ref}
+			binding := Binding{Contract: ref, Implementation: Ref{Kind: "Skill", Namespace: "shared", Name: "assessor"}}
+			var resources []*Resource
+			if packaged {
+				var manifest *Resource
+				resources, manifest = packageTestInputs(contract, implementation)
+				manifest.Spec.Bindings = []Binding{binding}
+			} else {
+				p := project(Area{Name: "shared", Path: "content/shared"})
+				p.Spec.Bindings = []Binding{binding}
+				resources = []*Resource{p, contract, implementation}
+			}
+			graph := Build(resources)
+			if !hasCode(graph, "graph.cycle") {
+				t.Fatalf("self-selected implementation was accepted: %#v", graph.Diagnostics)
+			}
+		})
+	}
+}
+
 func TestPackagePinsRequireExactVersionDigestAndSafeUniqueArchivePath(t *testing.T) {
 	tests := []struct {
 		name string

@@ -799,7 +799,9 @@ func (g *Graph) addEdge(from, to string) {
 }
 
 func (g *Graph) addRelationship(relationship Relationship) {
-	if relationship.From == relationship.To {
+	// A self-selected implementation is an execution dependency. Preserve it
+	// for runtime cycle detection even though context edges omit self-links.
+	if relationship.From == relationship.To && relationship.Relation != "selected-implementation" {
 		return
 	}
 	g.addEdge(relationship.From, relationship.To)

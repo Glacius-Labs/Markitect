@@ -17,7 +17,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/source"
 )
 
-var version = "0.3.0"
+var version = "0.3.1"
 
 type report struct {
 	Tool        string            `yaml:"tool"`
