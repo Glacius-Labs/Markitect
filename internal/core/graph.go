@@ -62,6 +62,11 @@ func Build(resources []*Resource) *Graph {
 	if g.Project == nil {
 		g.addDiagnostic(Diagnostic{Code: "project.count", Message: "exactly one Project resource is required"})
 	}
+	for _, r := range g.Resources {
+		if r.Kind != "Project" && len(r.Spec.Checks) != 0 {
+			g.diag(r, "check.kind", "checks are only allowed on Project resources")
+		}
+	}
 	if g.Project != nil {
 		g.validateProject()
 		g.assignAreas()
@@ -96,13 +101,20 @@ func resourceOrderKey(r *Resource) string {
 
 func (g *Graph) validateProject() {
 	p := g.Project
-	if p.Spec.Profile != "generic" && p.Spec.Profile != "konfyra" && p.Spec.Profile != "cockpit" {
-		g.diag(p, "project.profile", fmt.Sprintf("unsupported profile %q", p.Spec.Profile))
-	}
 	for _, target := range p.Spec.Targets {
 		if target != "codex" && target != "claude" {
 			g.diag(p, "project.target", fmt.Sprintf("unsupported target %q", target))
 		}
+	}
+	checkNames := map[string]bool{}
+	for _, check := range p.Spec.Checks {
+		if err := ValidateCheck(check); err != nil {
+			g.diag(p, "check.invalid", fmt.Sprintf("project check %q is invalid: %v", check.Name, err))
+		}
+		if checkNames[check.Name] {
+			g.diag(p, "check.duplicate", fmt.Sprintf("project check name %q is duplicated", check.Name))
+		}
+		checkNames[check.Name] = true
 	}
 	for entrypoint, refs := range p.Spec.RuleAdapters {
 		if strings.TrimSpace(entrypoint) == "" {

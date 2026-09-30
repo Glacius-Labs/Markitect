@@ -6,14 +6,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/internal/app"
 	"github.com/Glacius-Labs/Markitect/internal/core"
 	"github.com/Glacius-Labs/Markitect/internal/format"
-	"github.com/Glacius-Labs/Markitect/internal/render"
 )
 
-func TestVerifyUnsupportedGenericProfileReturnsFixedIncompleteReport(t *testing.T) {
-	repo := newCLIRepo(t, false)
+func TestVerifyWithoutDeclaredChecksIsIncompleteGraphOnlyEvidence(t *testing.T) {
+	repo := newVerifyCLIRepo(t, nil, nil)
 	code, output, stderr := invoke("verify", "--repo", repo.root, "--revision", repo.base)
 	if code != 2 {
 		t.Fatalf("verify exit=%d, want incomplete exit 2; stderr=%s output=%s", code, stderr, output)
@@ -22,72 +20,76 @@ func TestVerifyUnsupportedGenericProfileReturnsFixedIncompleteReport(t *testing.
 	if result.Status != "incomplete" || result.Revision != repo.base || result.Provisional || result.Digest == "" || result.ToolDigest == "" {
 		t.Fatalf("verify omitted fixed snapshot identity or incomplete status: %#v", result)
 	}
-	if len(result.Gates) != 0 || len(result.Diagnostics) != 1 || result.Diagnostics[0].Code != "verify.incomplete-evidence" || !strings.Contains(result.Diagnostics[0].Message, "profile generic") {
-		t.Fatalf("unexpected unsupported-profile diagnostic or gates: %#v", result)
+	if len(result.Gates) != 0 || len(result.Diagnostics) != 1 || result.Diagnostics[0].Code != "verify.incomplete-evidence" || !strings.Contains(result.Diagnostics[0].Message, "graph-only") {
+		t.Fatalf("missing checks were not clearly reported as graph-only evidence: %#v", result)
 	}
-	if strings.Contains(result.Coverage, "all fixed profile repository gates") || !strings.Contains(stderr, "incomplete-evidence") {
-		t.Fatalf("incomplete verification claimed complete gates or omitted stderr summary: coverage=%q stderr=%q", result.Coverage, stderr)
-	}
-}
-
-func TestVerifyGateFailurePreservesPassedAndFailingGateOutput(t *testing.T) {
-	if _, err := exec.LookPath("python"); err != nil {
-		if _, err = exec.LookPath("python3"); err != nil {
-			t.Skip("Python unavailable for existing Konfyra compatibility gates")
-		}
-	}
-	repo := newKonfyraVerifyRepo(t)
-	code, output, stderr := invoke("verify", "--repo", repo.root, "--revision", repo.base)
-	if code != 1 {
-		t.Fatalf("verify exit=%d, want gate-failure exit 1; stderr=%s output=%s", code, stderr, output)
-	}
-	result := decodeYAML[report](t, output)
-	if result.Status != "failed" || result.Revision != repo.base || result.Provisional || result.Digest == "" || result.ToolDigest == "" {
-		t.Fatalf("verify omitted fixed snapshot identity or failed status: %#v", result)
-	}
-	if len(result.Gates) != 2 {
-		t.Fatalf("verify discarded completed or current gate results: %#v", result.Gates)
-	}
-	if result.Gates[0].Name != "scripts/render-governance-adapters.py --check" || result.Gates[0].ExitCode != 0 || !strings.Contains(result.Gates[0].Output, "renderer compatibility fixture passed") {
-		t.Errorf("first gate result was not preserved: %#v", result.Gates[0])
-	}
-	if result.Gates[1].Name != "python unittest discover scripts/tests" || result.Gates[1].ExitCode == 0 || !strings.Contains(result.Gates[1].Output, "fixture consumer check marker") {
-		t.Errorf("failing gate output/exit code was not preserved: %#v", result.Gates[1])
-	}
-	if len(result.Diagnostics) != 1 || result.Diagnostics[0].Code != "verify.gate-failure" || result.Diagnostics[0].Path != result.Gates[1].Name {
-		t.Fatalf("verify diagnostic did not identify the failed gate: %#v", result.Diagnostics)
-	}
-	if strings.Contains(result.Coverage, "all fixed profile repository gates passed") || !strings.Contains(result.Coverage, "later gates were not run") || !strings.Contains(stderr, "gate-failure") {
-		t.Fatalf("failed verification made a complete-coverage claim or omitted stderr summary: coverage=%q stderr=%q", result.Coverage, stderr)
+	if strings.Contains(result.Coverage, "all declared repository checks passed") || !strings.Contains(stderr, "incomplete-evidence") {
+		t.Fatalf("incomplete verification made a passing-coverage claim or omitted stderr summary: coverage=%q stderr=%q", result.Coverage, stderr)
 	}
 }
 
-func TestVerifySignalTerminatedGateExitsFailed(t *testing.T) {
-	if _, err := exec.LookPath("python"); err != nil {
-		if _, err = exec.LookPath("python3"); err != nil {
-			t.Skip("Python unavailable for existing Konfyra compatibility gates")
-		}
+func TestVerifyRunsDeclaredCheckFromFixedSnapshotDespiteWorkingTreeEdit(t *testing.T) {
+	if _, err := exec.LookPath("go"); err != nil {
+		t.Skip("Go unavailable for the portable snapshot check")
 	}
-	repo := newKonfyraVerifyRepo(t)
-	writeRepoFile(t, repo.root, "scripts/render-governance-adapters.py", []byte("import os\nos.kill(os.getpid(), 15)\n"))
-	git(t, repo.root, "add", "scripts/render-governance-adapters.py")
-	git(t, repo.root, "commit", "-m", "signal terminated verify gate")
-	repo.base = git(t, repo.root, "rev-parse", "HEAD")
+	fixed := []byte("package main\nimport \"fmt\"\nfunc main() { fmt.Println(\"fixed snapshot marker\") }\n")
+	check := core.Check{Name: "snapshot-content", Run: []string{"go", "run", "scripts/verify-check.go"}}
+	repo := newVerifyCLIRepo(t, []core.Check{check}, fixed)
+	writeRepoFile(t, repo.root, "scripts/verify-check.go", []byte("package main\nimport \"fmt\"\nfunc main() { fmt.Println(\"mutated worktree marker\") }\n"))
 
 	code, output, stderr := invoke("verify", "--repo", repo.root, "--revision", repo.base)
-	if code != 1 {
-		t.Fatalf("signal-terminated gate exit=%d, want failed exit 1; stderr=%s output=%s", code, stderr, output)
+	if code != 0 {
+		t.Fatalf("verify exit=%d, want pass; stderr=%s output=%s", code, stderr, output)
 	}
 	result := decodeYAML[report](t, output)
-	if result.Status != "failed" || len(result.Gates) != 1 || result.Gates[0].ExitCode == 0 {
-		t.Fatalf("signal-terminated gate was not represented as a failed gate: %#v", result)
+	if result.Status != "passed" || result.Revision != repo.base || result.Provisional || len(result.Gates) != 1 {
+		t.Fatalf("verify did not report one completed fixed-snapshot check: %#v", result)
 	}
-	if len(result.Diagnostics) != 1 || result.Diagnostics[0].Code != "verify.gate-failure" || result.Diagnostics[0].Path != result.Gates[0].Name {
-		t.Fatalf("signal-terminated gate diagnostic was incomplete: %#v", result.Diagnostics)
+	gate := result.Gates[0]
+	if gate.Name != check.Name || gate.Tool != "go" || gate.ExitCode != 0 || !strings.Contains(gate.Output, "fixed snapshot marker") || strings.Contains(gate.Output, "mutated worktree marker") {
+		t.Fatalf("check did not execute the immutable revision bytes: %#v", gate)
+	}
+	if !strings.Contains(result.Coverage, "all declared repository checks passed") {
+		t.Fatalf("coverage did not describe the declared checks accurately: %q", result.Coverage)
 	}
 }
 
-func newKonfyraVerifyRepo(t *testing.T) cliRepo {
+func TestVerifyToolMissingAndGateFailureAreDistinct(t *testing.T) {
+	missingRepo := newVerifyCLIRepo(t, []core.Check{{Name: "missing-tool", Run: []string{"markitect-unavailable-check-tool-20260930"}}}, nil)
+	code, output, stderr := invoke("verify", "--repo", missingRepo.root, "--revision", missingRepo.base)
+	if code != 2 {
+		t.Fatalf("missing-tool verify exit=%d, want incomplete exit 2; stderr=%s output=%s", code, stderr, output)
+	}
+	missing := decodeYAML[report](t, output)
+	if missing.Status != "incomplete" || len(missing.Gates) != 0 || len(missing.Diagnostics) != 1 || missing.Diagnostics[0].Code != "verify.tool-missing" {
+		t.Fatalf("unknown tool was not classified as incomplete evidence: %#v", missing)
+	}
+
+	if _, err := exec.LookPath("go"); err != nil {
+		t.Skip("Go unavailable for the portable failing-check test")
+	}
+	checks := []core.Check{
+		{Name: "go-version", Run: []string{"go", "version"}},
+		{Name: "unknown-go-subcommand", Run: []string{"go", "markitect-no-such-go-subcommand"}},
+	}
+	failureRepo := newVerifyCLIRepo(t, checks, nil)
+	code, output, stderr = invoke("verify", "--repo", failureRepo.root, "--revision", failureRepo.base)
+	if code != 1 {
+		t.Fatalf("failed-check verify exit=%d, want failure exit 1; stderr=%s output=%s", code, stderr, output)
+	}
+	result := decodeYAML[report](t, output)
+	if result.Status != "failed" || len(result.Gates) != 2 || result.Gates[0].Name != "go-version" || result.Gates[0].ExitCode != 0 || result.Gates[1].Name != "unknown-go-subcommand" || result.Gates[1].ExitCode == 0 {
+		t.Fatalf("verify did not preserve successful and failing declared checks: %#v", result.Gates)
+	}
+	if len(result.Diagnostics) != 1 || result.Diagnostics[0].Code != "verify.gate-failure" || result.Diagnostics[0].Path != "unknown-go-subcommand" {
+		t.Fatalf("failure diagnostic did not identify the declared check: %#v", result.Diagnostics)
+	}
+	if strings.Contains(result.Coverage, "all declared repository checks passed") || !strings.Contains(result.Coverage, "later checks were not run") || !strings.Contains(stderr, "gate-failure") {
+		t.Fatalf("failed verification made a complete-coverage claim: coverage=%q stderr=%q", result.Coverage, stderr)
+	}
+}
+
+func newVerifyCLIRepo(t *testing.T, checks []core.Check, checkSource []byte) cliRepo {
 	t.Helper()
 	root := t.TempDir()
 	abs, err := filepath.Abs(root)
@@ -105,43 +107,18 @@ func newKonfyraVerifyRepo(t *testing.T) cliRepo {
 	project := core.Resource{
 		APIVersion: core.APIVersion,
 		Kind:       "Project",
-		Metadata:   core.Metadata{Name: "cockpit"},
-		Spec: core.Spec{
-			Profile: "konfyra",
-			Targets: []string{"codex"},
-			Areas:   []core.Area{{Name: cliNamespace, Path: "docs/general"}},
-		},
+		Metadata:   core.Metadata{Name: "verification-fixture"},
+		Spec:       core.Spec{Checks: checks},
 	}
-	rule := core.Resource{APIVersion: core.APIVersion, Kind: "Rule", Metadata: core.Metadata{Name: "policy", Namespace: cliNamespace}, Spec: core.Spec{Text: "Preserve canonical ownership."}}
-	skill := core.Resource{APIVersion: core.APIVersion, Kind: "Skill", Metadata: core.Metadata{Name: "entry", Namespace: cliNamespace}, Spec: core.Spec{Description: "Apply this policy to review work.", Text: "Use the policy.", Rules: []core.Ref{{Name: "policy"}}}}
-	resources := []*core.Resource{&project, &rule, &skill}
-	paths := []string{"markitect.yaml", "docs/general/rules/policy.yaml", "docs/general/skills/entry.yaml"}
-	for i, resource := range resources {
-		resource.Path = paths[i]
-		data, err := format.Encode(resource)
-		if err != nil {
-			t.Fatal(err)
-		}
-		writeRepoFile(t, root, paths[i], data)
-	}
-	writeRepoFile(t, root, "scripts/render-governance-adapters.py", []byte("print('renderer compatibility fixture passed')\n"))
-	writeRepoFile(t, root, "scripts/tests/test_gate_failure.py", []byte("import unittest\n\nclass FixtureCompatibilityGate(unittest.TestCase):\n    def test_failure_output_is_captured(self):\n        self.fail('fixture consumer check marker')\n"))
-
-	projectState, err := app.Load(root, "")
+	data, err := format.Encode(&project)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(projectState.Diagnostics) > 0 {
-		t.Fatalf("Konfyra verify fixture has graph diagnostics: %#v", projectState.Diagnostics)
-	}
-	outputs, err := render.Generate(projectState.Graph)
-	if err != nil {
-		t.Fatal(err)
-	}
-	for name, data := range outputs {
-		writeRepoFile(t, root, name, data)
+	writeRepoFile(t, root, "markitect.yaml", data)
+	if checkSource != nil {
+		writeRepoFile(t, root, "scripts/verify-check.go", checkSource)
 	}
 	git(t, root, "add", "-A")
-	git(t, root, "commit", "-m", "Konfyra verify fixture")
+	git(t, root, "commit", "-m", "verification fixture")
 	return cliRepo{root: root, base: git(t, root, "rev-parse", "HEAD")}
 }

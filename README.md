@@ -1,20 +1,16 @@
 # Markitect
 
-Markitect treats the rules, workflows, skills, agents and context around AI-assisted work as an engineered system. Natural language carries meaning; typed YAML makes ownership and dependencies explicit. A Go CLI validates the graph, compiles context, detects affected resources and generates managed views.
+Markitect makes AI-facing engineering knowledge maintainable as a small, typed system. It gives people and agents a canonical place to author rules, workflows, skills, agents, reusable text, and contracts; explicit dependencies connect those resources. A deterministic Go CLI validates structure, compiles selected context, explains relationships, measures change impact, checks declared outputs, and records whether review evidence still applies.
 
-Humans describe intent. Agents maintain the resources. Markitect supports authoring and checks their structure. Core authoring guidance ships with the tool; structural queries help agents find the canonical owner and explain dependencies.
+Authoring is part of the product. Its portable guidance is built from the same resource model as user-authored content. Markitect does not require a model to parse, validate, render, or compile context, and it does not claim to decide whether prose is true or whether an agent followed it.
 
-This is the independent [Glacius Labs Markitect source repository](https://github.com/Glacius-Labs/Markitect). Konfyra and the AI Cockpit consume the same pinned release; neither repository is required to build or test the tool. The published private release is **[v0.1.0](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.1.0)**. Verify its immutable metadata and successful run against the intended source commit. Consumer integration and acceptance are recorded separately in each consumer's delivery route.
+Source and verified distributions are maintained by [Glacius Labs](https://github.com/Glacius-Labs/Markitect). See [GitHub Releases](https://github.com/Glacius-Labs/Markitect/releases) for available versions. See [the roadmap](docs/implementation-plan.md) and [architecture](docs/architecture.md) for the current product model.
 
-## Start
+## Start from source
 
-Building and testing this source checkout requires Git and Go 1.27.1 or later. Consumer bootstrap execution has the same Go prerequisite. Published Windows amd64 and Linux amd64 native binaries can run the CLI without Go; consumer verification still needs the tools required by its gates. [Integration](integration/README.md) documents download verification and installation.
+Building this checkout requires Git and Go 1.27.1 or later.
 
 ```powershell
-# Optional caches when the shared Go cache is not writable
-$env:GOCACHE = Join-Path $PWD '.cache/go-build'
-$env:GOTMPDIR = Join-Path $PWD '.cache/tmp'
-New-Item -ItemType Directory -Force $env:GOCACHE, $env:GOTMPDIR, bin | Out-Null
 go test ./...
 go build -o bin/markitect.exe ./cmd/markitect
 ./bin/markitect.exe version
@@ -25,19 +21,15 @@ go build -o bin/markitect.exe ./cmd/markitect
 ./bin/markitect.exe context --repo examples/minimal --namespace sample --kind Skill --name rollback-review
 ```
 
-On Linux/macOS, use a writable Go cache and `go build -o bin/markitect ./cmd/markitect`. The CLI flags are identical.
+On Linux and macOS, build as `go build -o bin/markitect ./cmd/markitect`. The [minimal example](examples/minimal/README.md) is synthetic, executable product documentation; it demonstrates resources, explicit relationships, generated views, and compiled context.
 
-The [minimal example](examples/minimal/README.md) demonstrates all six content kinds, a Contract binding and an ordinary file input. Its generated views and compiled context are covered by Go tests. It is an example to copy, not an installed template or a reusable package dependency.
+## Documentation
 
-## Read
+- [Usage and upgrade notes](docs/usage.md): project format, commands, and the v0.1-to-v0.2 transition.
+- [Architecture](docs/architecture.md): product model, evidence, verification, rendering, and boundaries.
+- [Roadmap](docs/implementation-plan.md): current v0.2.0 work and later product options.
+- [Operations](docs/operations.md): source development, checks, and release handling.
+- [Integration](integration/README.md): verified downloads, installation, upgrades, and release publication.
+- [Development](CONTRIBUTING.md): code ownership and validation.
 
-- [Documentation](docs/README.md): usage, current architecture, design decisions, roadmap and pilot assessment.
-- [Development](CONTRIBUTING.md): checks, boundaries and release preparation.
-- [Schemas](schema/Project.yaml): generated YAML schemas; parser and graph checks remain authoritative.
-- [Consumer integration](integration/README.md): pinned source packages and bootstrap.
-- [Operations and releases](docs/operations.md): parallel reviews, supported platforms, failure recovery and release gates.
-- [Production delivery assessment](docs/production-assessment.md): `v0.1.0` release evidence, source support boundary and separate consumer acceptance.
-
-Implemented: strict YAML, six resource kinds, scopes, references, Contracts, immutable Git snapshots, structural queries, bundled core authoring, context compilation, impact, managed rendering, advisory review reuse, fixed-revision release bundles and safe install planning/application. Content packages, template initialization, MCP/LSP and Kubernetes are design work. Markitect does not prove arbitrary prose consistent or enforce an agent's runtime behavior.
-
-The Go module is `github.com/Glacius-Labs/Markitect`. The repository is private. GitHub immutable releases are enabled. Release CI produces and tests a run-scoped artifact; an authenticated release owner publishes it with the local release tool after a read-only preflight. The Actions `GITHUB_TOKEN` cannot read the admin-only immutable-release setting (live API returns 403), so CI does not publish and no PAT is stored in workflow secrets. Server-side branch rules could not be configured under the current private-repository plan; the CLI rejects `main` and `master`, but this is not server-enforced protection. The API group remains the placeholder `markitect.example.org/v1alpha1`; changing it needs an explicit format migration. A controlled API domain and public distribution license remain separate decisions. See [consumer integration](integration/README.md) for release verification and installation.
+Markitect supports typed YAML resources, graph checks, core authoring, structural queries, fixed-snapshot context and impact, review-evidence eligibility, managed generic views, explicit render targets, declared command checks, and versioned release bundles. Version 0.2.0 removes built-in adopting-repository migration/rendering policy and replaces inferred verification modes with commands declared in each Project. It does not provide an agent runtime, guarantee semantic completeness, or execute undeclared checks.

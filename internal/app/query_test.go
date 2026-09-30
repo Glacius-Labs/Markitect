@@ -156,7 +156,7 @@ func queryProject(resources ...*core.Resource) *Project {
 }
 
 func queryProjectResource(areas []core.Area) *core.Resource {
-	return &core.Resource{APIVersion: core.APIVersion, Kind: "Project", Metadata: core.Metadata{Name: "project"}, Path: "markitect.yaml", Spec: core.Spec{Profile: "generic", Areas: areas}}
+	return &core.Resource{APIVersion: core.APIVersion, Kind: "Project", Metadata: core.Metadata{Name: "project"}, Path: "markitect.yaml", Spec: core.Spec{Areas: areas}}
 }
 
 func queryResource(kind, namespace, name, path string, spec core.Spec) *core.Resource {

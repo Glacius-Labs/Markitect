@@ -121,15 +121,10 @@ func WriteOutputs(root string, p *Project) ([]string, error) {
 		return nil, err
 	}
 	branch := ""
-	if p.Graph.Project.Spec.Profile != "generic" {
+	if hasGitMetadata(rootAbs) {
 		branch, err = writeBranchName(rootAbs)
 		if err != nil {
 			return nil, err
-		}
-	} else if current, branchErr := source.GitOutput(rootAbs, "branch", "--show-current"); branchErr == nil {
-		branch = strings.TrimSpace(string(current))
-		if branch == "" || strings.EqualFold(branch, "master") || strings.EqualFold(branch, "main") {
-			return nil, fmt.Errorf("render --write requires a non-protected branch")
 		}
 	}
 	lockDir := filepath.Join(rootAbs, ".artifacts", "markitect")
@@ -258,6 +253,22 @@ func WriteOutputs(root string, p *Project) ([]string, error) {
 	return written, nil
 }
 
+// hasGitMetadata checks the selected directory and its ancestors so nested
+// source roots still receive the same branch guard as repository roots.
+func hasGitMetadata(root string) bool {
+	current := filepath.Clean(root)
+	for {
+		if _, err := os.Lstat(filepath.Join(current, ".git")); err == nil {
+			return true
+		}
+		parent := filepath.Dir(current)
+		if parent == current {
+			return false
+		}
+		current = parent
+	}
+}
+
 func writableBranch(root string) error {
 	_, err := writeBranchName(root)
 	return err
@@ -275,7 +286,7 @@ func writeBranchName(root string) (string, error) {
 	}
 	name := strings.TrimSpace(string(branch))
 	if name == "" || strings.EqualFold(name, "master") || strings.EqualFold(name, "main") {
-		return "", fmt.Errorf("writing requires an isolated non-protected Git branch")
+		return "", fmt.Errorf("writing requires an isolated non-protected Git branch; detached HEAD and protected branches are not writable")
 	}
 	return name, nil
 }

@@ -125,7 +125,6 @@ type authoringChange struct{ localRule, sharedRule, removeSkillRule, bindingChan
 func authoringProject(tb testing.TB, revision string, change authoringChange) *Project {
 	tb.Helper()
 	project := core.Resource{APIVersion: core.APIVersion, Kind: "Project", Metadata: core.Metadata{Name: "sample"}, Path: "markitect.yaml", Spec: core.Spec{
-		Profile:  "generic",
 		Areas:    []core.Area{{Name: "shared", Path: "docs/shared"}, {Name: "alpha", Path: "docs/alpha", Imports: []string{"shared"}, Rules: []core.Ref{{Kind: "Rule", Name: "shared-policy", Namespace: "shared"}}}, {Name: "beta", Path: "docs/beta", Imports: []string{"shared"}, Rules: []core.Ref{{Kind: "Rule", Name: "shared-policy", Namespace: "shared"}}}},
 		Bindings: []core.Binding{{Contract: core.Ref{Kind: "Contract", Name: "rollback-review", Namespace: "alpha"}, Implementation: core.Ref{Kind: "Agent", Name: "rollback-reviewer", Namespace: "alpha"}}},
 	}}
@@ -197,7 +196,7 @@ func authoringBenchmarkSnapshot(tb testing.TB, revision string, revise bool) *so
 	for i := range areas {
 		areas[i] = core.Area{Name: fmt.Sprintf("area-%02d", i), Path: fmt.Sprintf("docs/area-%02d", i), Rules: []core.Ref{{Kind: "Rule", Name: "shared-policy", Namespace: "area-00"}}}
 	}
-	project := core.Resource{APIVersion: core.APIVersion, Kind: "Project", Metadata: core.Metadata{Name: "benchmark"}, Path: "markitect.yaml", Spec: core.Spec{Profile: "generic", Areas: areas}}
+	project := core.Resource{APIVersion: core.APIVersion, Kind: "Project", Metadata: core.Metadata{Name: "benchmark"}, Path: "markitect.yaml", Spec: core.Spec{Areas: areas}}
 	resources := []*core.Resource{&project}
 	sharedText := "Shared authoring constraint."
 	if revise {

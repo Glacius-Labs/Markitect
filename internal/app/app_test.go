@@ -19,15 +19,15 @@ const (
 	projectPath = "markitect.yaml"
 	rulePath    = "docs/general/rules/policy.yaml"
 	skillPath   = "docs/general/skills/entry.yaml"
-	projectNS   = "cockpit-general"
+	projectNS   = "sample"
 )
 
 func projectResource(namespace string) core.Resource {
 	return core.Resource{
 		APIVersion: core.APIVersion,
 		Kind:       "Project",
-		Metadata:   core.Metadata{Name: "cockpit"},
-		Spec: core.Spec{Profile: "generic", Targets: []string{"codex"}, Areas: []core.Area{
+		Metadata:   core.Metadata{Name: "sample-project"},
+		Spec: core.Spec{Targets: []string{"codex"}, Areas: []core.Area{
 			{Name: projectNS, Path: "docs/general"},
 		}},
 	}
@@ -138,7 +138,7 @@ func TestLoadParseAndCompileContext(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	wantKeys := []string{"/Project/cockpit", projectNS + "/Rule/policy", projectNS + "/Skill/entry"}
+	wantKeys := []string{"/Project/sample-project", projectNS + "/Rule/policy", projectNS + "/Skill/entry"}
 	gotKeys := make([]string, 0, len(ctx.Inputs))
 	for _, input := range ctx.Inputs {
 		gotKeys = append(gotKeys, input.Key)
@@ -184,7 +184,7 @@ func TestChangesInvalidatesAllForNonResourceMarkdown(t *testing.T) {
 		t.Fatal(err)
 	}
 	impact := Changes(before, after)
-	want := []string{"/Project/cockpit", projectNS + "/Rule/policy", projectNS + "/Skill/entry"}
+	want := []string{"/Project/sample-project", projectNS + "/Rule/policy", projectNS + "/Skill/entry"}
 	if !reflect.DeepEqual(impact.Affected, want) {
 		t.Fatalf("non-resource Markdown change affected %v, want conservative invalidation %v", impact.Affected, want)
 	}
@@ -200,7 +200,7 @@ func TestChangesInvalidatesInventoryOnSamePathNamespaceEdit(t *testing.T) {
 		t.Fatal(err)
 	}
 	impact := Changes(before, after)
-	want := []string{"/Project/cockpit", projectNS + "/Rule/policy", projectNS + "/Skill/entry", "other-area/Skill/entry"}
+	want := []string{"/Project/sample-project", "other-area/Skill/entry", projectNS + "/Rule/policy", projectNS + "/Skill/entry"}
 	if !reflect.DeepEqual(impact.Affected, want) {
 		t.Fatalf("namespace inventory edit affected %v, want old and new resource inventories %v", impact.Affected, want)
 	}

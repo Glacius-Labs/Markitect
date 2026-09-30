@@ -83,8 +83,31 @@ properties:
                         - implementation
                     type: object
                 type: array
-            profile:
-                type: string
+            checks:
+                items:
+                    additionalProperties: false
+                    properties:
+                        name:
+                            pattern: ^[A-Za-z0-9][A-Za-z0-9._-]*$
+                            type: string
+                        run:
+                            items:
+                                not:
+                                    pattern: \u0000
+                                type: string
+                            minItems: 1
+                            prefixItems:
+                                - minLength: 1
+                                  not:
+                                    pattern: \u0000
+                                  pattern: ^[^/\\\s]+$
+                                  type: string
+                            type: array
+                    required:
+                        - name
+                        - run
+                    type: object
+                type: array
             ruleAdapters:
                 additionalProperties:
                     items:
@@ -105,8 +128,6 @@ properties:
                 items:
                     type: string
                 type: array
-        required:
-            - profile
         type: object
 required:
     - apiVersion

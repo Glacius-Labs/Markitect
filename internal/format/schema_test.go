@@ -6,6 +6,7 @@ import (
 	"sort"
 	"testing"
 
+	"github.com/Glacius-Labs/Markitect/internal/core"
 	"go.yaml.in/yaml/v3"
 )
 
@@ -90,13 +91,61 @@ func TestSchemasMatchAllowedSpecFieldsAndKeepObjectsStrict(t *testing.T) {
 				t.Errorf("spec properties = %v, want parser fields %v", gotFields, wantFields)
 			}
 			if kind == "Project" {
-				if !containsString(sequence(t, spec["required"]), "profile") {
-					t.Error("Project spec.profile is not required")
+				if required, ok := spec["required"]; ok && containsString(sequence(t, required), "checks") {
+					t.Error("Project spec.checks should be optional")
+				}
+				if _, ok := properties["profile"]; ok {
+					t.Error("removed Project spec.profile is still in the schema")
 				}
 			} else if !containsString(sequence(t, spec["required"]), "text") {
 				t.Errorf("%s spec.text is not required", kind)
 			}
 		})
+	}
+}
+
+func TestProjectCheckSchemaConstraints(t *testing.T) {
+	schemas, err := Schemas()
+	if err != nil {
+		t.Fatal(err)
+	}
+	var document map[string]any
+	if err := yaml.Unmarshal(schemas["schema/Project.yaml"], &document); err != nil {
+		t.Fatal(err)
+	}
+	spec := mapping(t, mapping(t, document["properties"])["spec"])
+	properties := mapping(t, spec["properties"])
+	checks := mapping(t, properties["checks"])
+	if checks["type"] != "array" {
+		t.Fatalf("checks type = %v, want array", checks["type"])
+	}
+	if _, ok := spec["required"]; ok {
+		t.Errorf("Project fields should remain optional, required = %v", spec["required"])
+	}
+	item := mapping(t, checks["items"])
+	if item["type"] != "object" || item["additionalProperties"] != false {
+		t.Fatalf("check items must be strict objects: %#v", item)
+	}
+	if !containsString(sequence(t, item["required"]), "name") || !containsString(sequence(t, item["required"]), "run") {
+		t.Fatalf("check name and run must be required: %#v", item["required"])
+	}
+	checkProperties := mapping(t, item["properties"])
+	if mapping(t, checkProperties["name"])["pattern"] != core.CheckNamePattern {
+		t.Errorf("check name pattern = %v, want %s", mapping(t, checkProperties["name"])["pattern"], core.CheckNamePattern)
+	}
+	run := mapping(t, checkProperties["run"])
+	if run["minItems"] != 1 {
+		t.Errorf("run minItems = %v, want 1", run["minItems"])
+	}
+	firstArg := sequence(t, run["prefixItems"])[0]
+	if mapping(t, firstArg)["pattern"] != core.CheckExecutablePattern {
+		t.Errorf("first argv pattern = %v, want %s", mapping(t, firstArg)["pattern"], core.CheckExecutablePattern)
+	}
+	if mapping(t, run["items"])["type"] != "string" || mapping(t, run["items"])["not"] == nil {
+		t.Errorf("additional argv items must be strings without NUL: %#v", run["items"])
+	}
+	if _, ok := properties["profile"]; ok {
+		t.Error("Project schema exposes removed spec.profile")
 	}
 }
 

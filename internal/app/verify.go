@@ -12,6 +12,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Glacius-Labs/Markitect/internal/core"
 	"github.com/Glacius-Labs/Markitect/internal/source"
 )
 
@@ -21,8 +22,9 @@ const (
 	verifyDefaultTime = 10 * time.Minute
 )
 
+// GateResult records one explicitly declared repository check run against the
+// fixed Markitect snapshot. Tool is the executable token declared in spec.checks.
 type GateResult struct {
-	Profile      string `yaml:"profile"`
 	Name         string `yaml:"name"`
 	Tool         string `yaml:"tool"`
 	ExitCode     int    `yaml:"exitCode"`
@@ -33,31 +35,31 @@ type GateResult struct {
 // VerifyError classifies why repository verification did not complete. Kind is
 // one of incomplete-evidence, tool-missing, gate-failure, timeout, or output-limit.
 type VerifyError struct {
-	Kind    string
-	Profile string
-	Gate    string
-	Err     error
+	Kind string
+	Gate string
+	Err  error
 }
 
 func (e *VerifyError) Error() string {
 	if e.Gate != "" {
-		return fmt.Sprintf("repository verification %s for profile %s at %s: %v", e.Kind, e.Profile, e.Gate, e.Err)
+		return fmt.Sprintf("repository verification %s at check %q: %v", e.Kind, e.Gate, e.Err)
 	}
-	return fmt.Sprintf("repository verification %s for profile %s: %v", e.Kind, e.Profile, e.Err)
+	return fmt.Sprintf("repository verification %s: %v", e.Kind, e.Err)
 }
 
 func (e *VerifyError) Unwrap() error { return e.Err }
 
 type verifyCommand struct {
-	profile string
-	name    string
-	tool    string
-	args    []string
-	env     []string
+	name string
+	tool string
+	args []string
+	env  []string
 }
 
-// VerifyRepository runs the profile's fixed allowlisted commands from the
-// same immutable snapshot used by the graph. Each gate has a 10-minute limit.
+// VerifyRepository runs only checks explicitly declared on the Project from
+// the same immutable snapshot used by the graph. Each check has a 10-minute
+// execution limit. An absent checks list is incomplete repository evidence;
+// callers may still use graph-only validation.
 func VerifyRepository(p *Project) ([]GateResult, error) {
 	return verifyRepositoryWithTimeout(p, verifyDefaultTime)
 }
@@ -70,24 +72,23 @@ func verifyRepositoryWithTimeout(p *Project, timeout time.Duration) ([]GateResul
 		return nil, &VerifyError{Kind: "incomplete-evidence", Err: errors.New("verify requires --revision; working trees cannot provide immutable evidence")}
 	}
 	if timeout <= 0 {
-		return nil, &VerifyError{Kind: "incomplete-evidence", Err: errors.New("gate timeout must be positive")}
+		return nil, &VerifyError{Kind: "incomplete-evidence", Err: errors.New("check timeout must be positive")}
 	}
-	profile := p.Graph.Project.Spec.Profile
-	commands, err := planVerifyCommands(profile, p.Snapshot.Files)
+	commands, err := planVerifyCommands(p.Graph.Project.Spec.Checks)
 	if err != nil {
 		return nil, err
 	}
 	temporary, err := os.MkdirTemp("", "markitect-verify-")
 	if err != nil {
-		return nil, err
+		return nil, &VerifyError{Kind: "incomplete-evidence", Err: err}
 	}
 	defer os.RemoveAll(temporary)
 	temporary, err = filepath.EvalSymlinks(temporary)
 	if err != nil {
-		return nil, err
+		return nil, &VerifyError{Kind: "incomplete-evidence", Err: err}
 	}
 	if err = source.Materialize(p.Snapshot, temporary); err != nil {
-		return nil, err
+		return nil, &VerifyError{Kind: "incomplete-evidence", Err: err}
 	}
 
 	results := make([]GateResult, 0, len(commands))
@@ -97,7 +98,7 @@ func verifyRepositoryWithTimeout(p *Project, timeout time.Duration) ([]GateResul
 		if !ok {
 			executable, err = findVerifyTool(command.tool)
 			if err != nil {
-				return results, &VerifyError{Kind: "tool-missing", Profile: profile, Gate: command.name, Err: err}
+				return results, &VerifyError{Kind: "tool-missing", Gate: command.name, Err: err}
 			}
 			tools[command.tool] = executable
 		}
@@ -110,64 +111,38 @@ func verifyRepositoryWithTimeout(p *Project, timeout time.Duration) ([]GateResul
 	return results, nil
 }
 
-func planVerifyCommands(profile string, files map[string][]byte) ([]verifyCommand, error) {
-	var commands []verifyCommand
-	if profile != "konfyra" && profile != "cockpit" {
-		return nil, &VerifyError{Kind: "incomplete-evidence", Profile: profile, Err: errors.New("profile has no repository gate adapter; check covers the Markitect graph only")}
+func planVerifyCommands(checks []core.Check) ([]verifyCommand, error) {
+	if len(checks) == 0 {
+		return nil, &VerifyError{Kind: "incomplete-evidence", Err: errors.New("the Project declares no repository checks; graph-only validation is available, but it does not verify repository checks")}
 	}
-
-	_, hasBootstrapRunner := files["scripts/run-markitect.go"]
-	_, hasBootstrapTest := files["scripts/markitect-bootstrap_test.go"]
-	if hasBootstrapRunner != hasBootstrapTest {
-		return nil, &VerifyError{Kind: "incomplete-evidence", Profile: profile, Err: errors.New("Go Markitect bootstrap evidence must include both scripts/run-markitect.go and scripts/markitect-bootstrap_test.go")}
-	}
-
-	switch profile {
-	case "konfyra":
-		commands = []verifyCommand{
-			{profile: profile, name: "scripts/render-governance-adapters.py --check", tool: "python", args: []string{"-B", "scripts/render-governance-adapters.py", "--check"}},
-			{profile: profile, name: "python unittest discover scripts/tests", tool: "python", args: []string{"-B", "-m", "unittest", "discover", "-s", "scripts/tests", "-v"}},
+	commands := make([]verifyCommand, 0, len(checks))
+	names := make(map[string]bool, len(checks))
+	for _, check := range checks {
+		if err := core.ValidateCheck(check); err != nil {
+			return nil, &VerifyError{Kind: "incomplete-evidence", Gate: check.Name, Err: fmt.Errorf("invalid declared repository check: %w", err)}
 		}
-	case "cockpit":
-		_, hasCockpitChecker := files["scripts/check-cockpit.go"]
-		_, hasCockpitTest := files["scripts/check-cockpit_test.go"]
-		if hasCockpitChecker != hasCockpitTest {
-			return nil, &VerifyError{Kind: "incomplete-evidence", Profile: profile, Err: errors.New("Cockpit Go gate evidence must include both scripts/check-cockpit.go and scripts/check-cockpit_test.go")}
+		name := check.Name
+		if names[name] {
+			return nil, &VerifyError{Kind: "incomplete-evidence", Gate: name, Err: errors.New("repository check names must be unique")}
 		}
-		if hasCockpitChecker {
-			commands = []verifyCommand{
-				{profile: profile, name: "go run scripts/check-cockpit.go", tool: "go", args: []string{"run", "scripts/check-cockpit.go"}},
-				{profile: profile, name: "go test -count=1 -v scripts/check-cockpit.go scripts/check-cockpit_test.go", tool: "go", args: []string{"test", "-count=1", "-v", "scripts/check-cockpit.go", "scripts/check-cockpit_test.go"}},
-			}
-		} else {
-			commands = []verifyCommand{
-				{profile: profile, name: "scripts/check_docs.py", tool: "python", args: []string{"-B", "scripts/check_docs.py"}},
-				{profile: profile, name: "scripts/render_adapters.py --check", tool: "python", args: []string{"-B", "scripts/render_adapters.py", "--check"}},
-			}
-		}
-	}
-	if hasBootstrapRunner {
-		commands = append(commands, verifyCommand{
-			profile: profile, name: "go test -count=1 -v scripts/run-markitect.go scripts/markitect-bootstrap_test.go", tool: "go",
-			args: []string{"test", "-count=1", "-v", "scripts/run-markitect.go", "scripts/markitect-bootstrap_test.go"},
-		})
+		names[name] = true
+		tool := check.Run[0]
+		args := append([]string(nil), check.Run[1:]...)
+		commands = append(commands, verifyCommand{name: name, tool: tool, args: args})
 	}
 	return commands, nil
 }
 
 func findVerifyTool(tool string) (string, error) {
-	if tool == "python" {
-		if python, err := exec.LookPath("python"); err == nil {
-			return python, nil
-		}
-		if python, err := exec.LookPath("python3"); err == nil {
-			return python, nil
-		}
-		return "", errors.New("Python is required by this repository profile")
+	if strings.TrimSpace(tool) == "" || strings.ContainsAny(tool, `/\\`) || filepath.IsAbs(tool) {
+		return "", errors.New("check executable must be a bare command name resolved from PATH")
 	}
 	toolPath, err := exec.LookPath(tool)
 	if err != nil {
-		return "", fmt.Errorf("%s is required by this repository profile: %w", tool, err)
+		return "", fmt.Errorf("check executable %q is unavailable on PATH: %w", tool, err)
+	}
+	if !filepath.IsAbs(toolPath) {
+		return "", fmt.Errorf("PATH resolved check executable %q to non-absolute path %q", tool, toolPath)
 	}
 	return toolPath, nil
 }
@@ -184,32 +159,31 @@ func runVerifyCommand(command verifyCommand, executable, directory string, timeo
 	cmd.WaitDelay = verifyWaitDelay
 	runErr := cmd.Run()
 	result := GateResult{
-		Profile: command.profile, Name: command.name, Tool: command.tool,
+		Name: command.name, Tool: command.tool,
 		ExitCode: 0, Milliseconds: time.Since(started).Milliseconds(), Output: output.String(),
 	}
 	if output.exceeded() {
 		result.ExitCode = -1
-		return result, &VerifyError{Kind: "output-limit", Profile: command.profile, Gate: command.name, Err: fmt.Errorf("output exceeded %d bytes; gate was cancelled", verifyOutputLimit)}
+		return result, &VerifyError{Kind: "output-limit", Gate: command.name, Err: fmt.Errorf("output exceeded %d bytes; check was cancelled", verifyOutputLimit)}
 	}
 	if errors.Is(ctx.Err(), context.DeadlineExceeded) {
 		result.ExitCode = -1
-		return result, &VerifyError{Kind: "timeout", Profile: command.profile, Gate: command.name, Err: fmt.Errorf("exceeded %s execution limit", timeout)}
+		return result, &VerifyError{Kind: "timeout", Gate: command.name, Err: fmt.Errorf("exceeded %s execution limit", timeout)}
 	}
 	if runErr != nil {
 		var exitErr *exec.ExitError
 		if errors.As(runErr, &exitErr) {
 			result.ExitCode = exitErr.ExitCode()
-			return result, &VerifyError{Kind: "gate-failure", Profile: command.profile, Gate: command.name, Err: fmt.Errorf("process exited with code %d", result.ExitCode)}
+			return result, &VerifyError{Kind: "gate-failure", Gate: command.name, Err: fmt.Errorf("process exited with code %d", result.ExitCode)}
 		}
 		result.ExitCode = -1
-		return result, &VerifyError{Kind: "incomplete-evidence", Profile: command.profile, Gate: command.name, Err: runErr}
+		return result, &VerifyError{Kind: "incomplete-evidence", Gate: command.name, Err: runErr}
 	}
 	return result, nil
 }
 
 // verifyEnvironment removes Go's ambient configuration and workspace redirects
-// for every gate. Python compatibility gates can invoke Go tools too, so this
-// applies to the whole fixed gate plan rather than only the native Go gate.
+// for every check, and clears inherited Git repository/object/config redirection.
 func verifyEnvironment(extra []string) []string {
 	filtered := make([]string, 0, len(os.Environ())+len(extra)+3)
 	for _, entry := range append(source.CleanGitEnv(), extra...) {

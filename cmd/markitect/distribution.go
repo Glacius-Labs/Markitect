@@ -17,7 +17,7 @@ func printUsage(out io.Writer) {
 	fmt.Fprintln(out, "usage: markitect COMMAND [options]")
 	fmt.Fprintln(out, "  check, verify, inventory    Validate a project and its repository gates")
 	fmt.Fprintln(out, "  context, impact, find, explain, review    Inspect and review fixed inputs")
-	fmt.Fprintln(out, "  authoring, render, format, migrate       Author canonical resources")
+	fmt.Fprintln(out, "  authoring, render, format       Author canonical resources")
 	fmt.Fprintln(out, "  bundle, install, package, schema, version")
 	fmt.Fprintln(out, "Use 'markitect help COMMAND' for applicable options.")
 }
@@ -40,8 +40,6 @@ func commandFlags(command string) (map[string]bool, bool) {
 		names = []string{"repo", "revision", "write", "check"}
 	case "schema":
 		names = []string{"repo", "write", "check"}
-	case "migrate":
-		names = []string{"repo", "revision", "write", "profile"}
 	case "package":
 		names = []string{"repo", "output"}
 	case "bundle":
