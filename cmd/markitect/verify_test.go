@@ -62,6 +62,31 @@ func TestVerifyGateFailurePreservesPassedAndFailingGateOutput(t *testing.T) {
 	}
 }
 
+func TestVerifySignalTerminatedGateExitsFailed(t *testing.T) {
+	if _, err := exec.LookPath("python"); err != nil {
+		if _, err = exec.LookPath("python3"); err != nil {
+			t.Skip("Python unavailable for existing Konfyra compatibility gates")
+		}
+	}
+	repo := newKonfyraVerifyRepo(t)
+	writeRepoFile(t, repo.root, "scripts/render-governance-adapters.py", []byte("import os\nos.kill(os.getpid(), 15)\n"))
+	git(t, repo.root, "add", "scripts/render-governance-adapters.py")
+	git(t, repo.root, "commit", "-m", "signal terminated verify gate")
+	repo.base = git(t, repo.root, "rev-parse", "HEAD")
+
+	code, output, stderr := invoke("verify", "--repo", repo.root, "--revision", repo.base)
+	if code != 1 {
+		t.Fatalf("signal-terminated gate exit=%d, want failed exit 1; stderr=%s output=%s", code, stderr, output)
+	}
+	result := decodeYAML[report](t, output)
+	if result.Status != "failed" || len(result.Gates) != 1 || result.Gates[0].ExitCode == 0 {
+		t.Fatalf("signal-terminated gate was not represented as a failed gate: %#v", result)
+	}
+	if len(result.Diagnostics) != 1 || result.Diagnostics[0].Code != "verify.gate-failure" || result.Diagnostics[0].Path != result.Gates[0].Name {
+		t.Fatalf("signal-terminated gate diagnostic was incomplete: %#v", result.Diagnostics)
+	}
+}
+
 func newKonfyraVerifyRepo(t *testing.T) cliRepo {
 	t.Helper()
 	root := t.TempDir()

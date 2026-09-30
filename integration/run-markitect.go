@@ -65,6 +65,19 @@ type toolchainVersionFunc func(goPath, dir string, env []string) (string, error)
 
 const buildPolicy = "portable-native-v1"
 
+// goBuildInputs lists environment settings that can change tool selection,
+// build inputs, target features, or cache behavior. Other environment names
+// (including GOOGLE_APPLICATION_CREDENTIALS and GOAUTH) pass through.
+var goBuildInputs = map[string]bool{
+	"GCCGO": true, "GCCGOTOOLDIR": true,
+	"GO111MODULE": true, "GOBIN": true, "GOCACHEPROG": true, "GODEBUG": true,
+	"GOENV": true, "GOFLAGS": true, "GOOS": true, "GOARCH": true, "GOROOT": true,
+	"GOTOOLCHAIN": true, "GOWORK": true, "GO386": true, "GOAMD64": true,
+	"GOARM": true, "GOARM64": true, "GOMIPS": true, "GOMIPS64": true,
+	"GOPPC64": true, "GORISCV64": true, "GOWASM": true, "GOEXPERIMENT": true,
+	"GOFIPS140": true, "GO_EXTLINK_ENABLED": true,
+}
+
 func parseFlatYAML(data []byte, expected []string, document string) (map[string]string, error) {
 	if !utf8.Valid(data) {
 		return nil, fmt.Errorf("%s must be UTF-8", document)
@@ -855,22 +868,13 @@ func fileDigest(name string) (string, error) {
 
 func environmentForBuild(sourceDir, sharedCache string, original []string, selectedToolchain ...string) ([]string, error) {
 	env := make(map[string]string, len(original)+8)
-	preserveGo := map[string]bool{
-		"GOCACHE": true, "GOTMPDIR": true, "GOPATH": true, "GOMODCACHE": true,
-		"GOPROXY": true, "GOSUMDB": true, "GONOSUMDB": true, "GONOPROXY": true,
-		"GOPRIVATE": true, "GOINSECURE": true, "GOVCS": true, "GOAUTH": true,
-	}
 	for _, item := range original {
 		key, value, ok := strings.Cut(item, "=")
 		if ok {
 			upper := strings.ToUpper(key)
-			if strings.HasPrefix(upper, "CGO_") {
-				continue
-			}
-			// Drop Go build knobs and toolchain overrides wholesale. Preserve only
-			// module download/checksum settings and cache locations; the remaining
-			// Go variables are set from the fixed build contract below.
-			if strings.HasPrefix(upper, "GO") && !preserveGo[upper] {
+			// Drop documented Go build inputs and all cgo compiler settings. The
+			// list is explicit so unrelated GO-prefixed integrations survive.
+			if goBuildInputs[upper] || strings.HasPrefix(upper, "CGO_") {
 				continue
 			}
 			if runtime.GOOS == "windows" {

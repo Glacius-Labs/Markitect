@@ -359,13 +359,10 @@ func run(args []string, out, errout io.Writer) int {
 			result.Status = "incomplete"
 			result.Coverage = "typed graph and Markitect-owned outputs passed; repository verification incomplete"
 			exitCode := 2
-			if verifyErr.Kind == "gate-failure" && len(result.Gates) > 0 {
-				last := result.Gates[len(result.Gates)-1]
-				if last.ExitCode > 0 {
-					result.Status = "failed"
-					result.Coverage = "typed graph and Markitect-owned outputs passed; repository verification stopped at a failing gate; later gates were not run"
-					exitCode = 1
-				}
+			if verifyErr.Kind == "gate-failure" {
+				result.Status = "failed"
+				result.Coverage = "typed graph and Markitect-owned outputs passed; repository verification stopped at a failing gate; later gates were not run"
+				exitCode = 1
 			}
 			if code := emit(result); code != 0 {
 				return code

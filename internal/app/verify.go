@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -125,7 +126,7 @@ func planVerifyCommands(profile string, files map[string][]byte) ([]verifyComman
 		if hasRunner {
 			commands = append(commands, verifyCommand{
 				profile: profile, name: "go test -v scripts/run-markitect.go scripts/markitect-bootstrap_test.go", tool: "go",
-				args: []string{"test", "-v", "scripts/run-markitect.go", "scripts/markitect-bootstrap_test.go"},
+				args: []string{"test", "-count=1", "-v", "scripts/run-markitect.go", "scripts/markitect-bootstrap_test.go"},
 			})
 		}
 	case "cockpit":
@@ -163,10 +164,7 @@ func runVerifyCommand(command verifyCommand, executable, directory string, timeo
 	output := &boundedVerifyOutput{limit: verifyOutputLimit, cancel: cancel}
 	cmd := exec.CommandContext(ctx, executable, command.args...)
 	cmd.Dir = directory
-	cmd.Env = source.CleanGitEnv()
-	if len(command.env) > 0 {
-		cmd.Env = append(cmd.Env, command.env...)
-	}
+	cmd.Env = verifyEnvironment(command.env)
 	cmd.Stdout, cmd.Stderr = output, output
 	cmd.WaitDelay = verifyWaitDelay
 	runErr := cmd.Run()
@@ -189,9 +187,24 @@ func runVerifyCommand(command verifyCommand, executable, directory string, timeo
 			return result, &VerifyError{Kind: "gate-failure", Profile: command.profile, Gate: command.name, Err: fmt.Errorf("process exited with code %d", result.ExitCode)}
 		}
 		result.ExitCode = -1
-		return result, &VerifyError{Kind: "gate-failure", Profile: command.profile, Gate: command.name, Err: runErr}
+		return result, &VerifyError{Kind: "incomplete-evidence", Profile: command.profile, Gate: command.name, Err: runErr}
 	}
 	return result, nil
+}
+
+// verifyEnvironment removes Go's ambient configuration and workspace redirects
+// for every gate. Python compatibility gates can invoke Go tools too, so this
+// applies to the whole fixed gate plan rather than only the native Go gate.
+func verifyEnvironment(extra []string) []string {
+	filtered := make([]string, 0, len(os.Environ())+len(extra)+3)
+	for _, entry := range append(source.CleanGitEnv(), extra...) {
+		key, _, _ := strings.Cut(entry, "=")
+		if strings.EqualFold(key, "GOFLAGS") || strings.EqualFold(key, "GOENV") || strings.EqualFold(key, "GOWORK") {
+			continue
+		}
+		filtered = append(filtered, entry)
+	}
+	return append(filtered, "GOFLAGS=", "GOENV=off", "GOWORK=off")
 }
 
 type boundedVerifyOutput struct {

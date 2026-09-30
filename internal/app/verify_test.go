@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -32,7 +33,7 @@ func TestPlanVerifyCommandsUsesFixedSnapshotBootstrapPair(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(withGo) != 3 || withGo[2].tool != "go" || strings.Join(withGo[2].args, " ") != "test -v scripts/run-markitect.go scripts/markitect-bootstrap_test.go" {
+	if len(withGo) != 3 || withGo[2].tool != "go" || strings.Join(withGo[2].args, " ") != "test -count=1 -v scripts/run-markitect.go scripts/markitect-bootstrap_test.go" {
 		t.Fatalf("Go bootstrap gate was not added accurately: %#v", withGo)
 	}
 
@@ -51,6 +52,14 @@ func TestVerifyRunsBootstrapTestFromMaterializedSnapshot(t *testing.T) {
 	if err != nil {
 		t.Skip("Python unavailable for existing Konfyra gates")
 	}
+	goEnvFile := filepath.Join(t.TempDir(), "go.env")
+	if err := os.WriteFile(goEnvFile, []byte("GOFLAGS=-run=^DefinitelyNoSuchTest$\n"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("GOFLAGS", "-run=^DefinitelyNoSuchTest$")
+	t.Setenv("GOENV", goEnvFile)
+	// A nonexistent absolute workspace would make an unsanitized go test fail.
+	t.Setenv("GOWORK", filepath.Join(t.TempDir(), "ambient.work"))
 	files := map[string][]byte{
 		"scripts/render-governance-adapters.py": []byte("print('adapter check from snapshot')\n"),
 		"scripts/tests/test_snapshot.py":        []byte("import unittest\nclass SnapshotTest(unittest.TestCase):\n def test_snapshot(self): self.assertTrue(True)\n"),
@@ -64,6 +73,32 @@ func TestVerifyRunsBootstrapTestFromMaterializedSnapshot(t *testing.T) {
 	}
 	if len(results) != 3 || results[2].Profile != "konfyra" || results[2].Tool != "go" || results[2].ExitCode != 0 || !strings.Contains(results[2].Output, "bootstrap from fixed snapshot") {
 		t.Fatalf("Go snapshot gate missing or inaccurate: %#v", results)
+	}
+}
+
+func TestVerifyCommandSanitizesGoEnvironmentForEveryGate(t *testing.T) {
+	goEnvFile := filepath.Join(t.TempDir(), "go.env")
+	if err := os.WriteFile(goEnvFile, []byte("GOFLAGS=-run=^DefinitelyNoSuchTest$\n"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("GOFLAGS", "-run=^DefinitelyNoSuchTest$")
+	t.Setenv("GOENV", goEnvFile)
+	t.Setenv("GOWORK", filepath.Join(t.TempDir(), "ambient.work"))
+	result, err := runVerifyCommand(verifyCommand{
+		profile: "konfyra", name: "nested Go environment", tool: "python",
+		args: []string{"-test.run=^TestVerifyCommandHelper$"},
+		env:  []string{"MARKITECT_VERIFY_HELPER=go-env"},
+	}, mustTestExecutable(t), t.TempDir(), time.Second)
+	if err != nil || !strings.Contains(result.Output, "GOFLAGS= GOENV=off GOWORK=off") {
+		t.Fatalf("gate did not receive isolated Go environment: result=%#v error=%v", result, err)
+	}
+}
+
+func TestVerifyCommandStartFailureIsIncompleteEvidence(t *testing.T) {
+	result, err := runVerifyCommand(verifyCommand{profile: "test", name: "missing command", tool: "test"}, filepath.Join(t.TempDir(), "missing-tool"), t.TempDir(), time.Second)
+	var verifyErr *VerifyError
+	if !errors.As(err, &verifyErr) || verifyErr.Kind != "incomplete-evidence" || result.ExitCode != -1 {
+		t.Fatalf("process start failure was reported as a gate result: result=%#v error=%v", result, err)
 	}
 }
 
@@ -127,6 +162,14 @@ func TestVerifyCommandBoundsOutputTimeoutAndExitFailure(t *testing.T) {
 	if !errors.As(err, &verifyErr) || verifyErr.Kind != "gate-failure" || result.ExitCode != 7 {
 		t.Fatalf("nonzero exit did not propagate as a gate failure: result=%#v error=%v", result, err)
 	}
+
+	killed := base
+	killed.name = "self-terminated process"
+	killed.env = []string{"MARKITECT_VERIFY_HELPER=self-kill"}
+	result, err = runVerifyCommand(killed, executable, dir, time.Second)
+	if !errors.As(err, &verifyErr) || verifyErr.Kind != "gate-failure" || result.ExitCode == 0 {
+		t.Fatalf("self-terminated child was not retained as a gate failure: result=%#v error=%v", result, err)
+	}
 }
 
 func TestVerifyCommandRemovesInheritedGitRepositoryEnvironment(t *testing.T) {
@@ -161,6 +204,19 @@ func TestVerifyCommandHelper(t *testing.T) {
 			}
 		}
 		_, _ = fmt.Fprintln(os.Stdout, "git environment clean")
+	case "go-env":
+		_, _ = fmt.Fprintf(os.Stdout, "GOFLAGS=%s GOENV=%s GOWORK=%s\n", os.Getenv("GOFLAGS"), os.Getenv("GOENV"), os.Getenv("GOWORK"))
+		if os.Getenv("GOFLAGS") != "" || os.Getenv("GOENV") != "off" || os.Getenv("GOWORK") != "off" {
+			os.Exit(10)
+		}
+	case "self-kill":
+		process, err := os.FindProcess(os.Getpid())
+		if err != nil {
+			os.Exit(11)
+		}
+		if err := process.Kill(); err != nil {
+			os.Exit(12)
+		}
 	}
 }
 

@@ -319,17 +319,17 @@ func TestBuildEnvironmentPreservesExplicitOverrides(t *testing.T) {
 	if err := os.Mkdir(callerTmp, 0755); err != nil {
 		t.Fatal(err)
 	}
-	env, err := environmentForBuild(source, cache, []string{"PATH=original", "GOCACHE=" + callerCache, "GOTMPDIR=" + callerTmp, "GOPROXY=https://user:secret@example.invalid", "GOSUMDB=off", "GOFLAGS=-overlay=evil.json", "GOWORK=../go.work", "GOENV=evil", "GOOS=wasm", "GOARCH=wasm", "GOAMD64=v3", "GOEXPERIMENT=evil", "GOTOOLCHAIN=local", "CGO_ENABLED=1"}, "go1.27.1")
+	env, err := environmentForBuild(source, cache, []string{"PATH=original", "GOCACHE=" + callerCache, "GOTMPDIR=" + callerTmp, "GOPROXY=https://user:secret@example.invalid", "GOSUMDB=off", "GOAUTH=netrc", "GOFLAGS=-overlay=evil.json", "GOWORK=../go.work", "GOENV=evil", "GOOS=wasm", "GOARCH=wasm", "GOAMD64=v3", "GOEXPERIMENT=evil", "GOFIPS140=latest", "GOCACHEPROG=external-cache", "GODEBUG=toolchaintrace=1", "GOTOOLCHAIN=local", "CGO_ENABLED=1", "CGO_CFLAGS=-evil", "GOOGLE_APPLICATION_CREDENTIALS=fake-test-credential-path"}, "go1.27.1")
 	if err != nil {
 		t.Fatal(err)
 	}
 	if envValue(env, "GOCACHE") != callerCache || envValue(env, "GOTMPDIR") != callerTmp || envValue(env, "PATH") != "original" {
 		t.Fatalf("explicit build env changed; keys=%v", envKeys(env))
 	}
-	if envValue(env, "GOFLAGS") != "" || envValue(env, "GOWORK") != "off" || envValue(env, "GOENV") != "off" || envValue(env, "GOOS") != runtime.GOOS || envValue(env, "GOARCH") != runtime.GOARCH || envValue(env, "GOAMD64") == "v3" || envValue(env, "GOEXPERIMENT") != "" || envValue(env, "CGO_ENABLED") != "0" || envValue(env, "GOTOOLCHAIN") != "go1.27.1" {
+	if envValue(env, "GOFLAGS") != "" || envValue(env, "GOWORK") != "off" || envValue(env, "GOENV") != "off" || envValue(env, "GOOS") != runtime.GOOS || envValue(env, "GOARCH") != runtime.GOARCH || envValue(env, "GOAMD64") == "v3" || envValue(env, "GOEXPERIMENT") != "" || envValue(env, "GOFIPS140") != "" || envValue(env, "GOCACHEPROG") != "" || envValue(env, "GODEBUG") != "" || envValue(env, "CGO_ENABLED") != "0" || envValue(env, "CGO_CFLAGS") != "" || envValue(env, "GOTOOLCHAIN") != "go1.27.1" {
 		t.Fatalf("unsafe Go build variables were retained; keys=%v", envKeys(env))
 	}
-	if envValue(env, "GOPROXY") != "https://user:secret@example.invalid" || envValue(env, "GOSUMDB") != "off" {
+	if envValue(env, "GOPROXY") != "https://user:secret@example.invalid" || envValue(env, "GOSUMDB") != "off" || envValue(env, "GOAUTH") != "netrc" || envValue(env, "GOOGLE_APPLICATION_CREDENTIALS") != "fake-test-credential-path" {
 		t.Fatalf("module download/checksum settings were not preserved; keys=%v", envKeys(env))
 	}
 }
