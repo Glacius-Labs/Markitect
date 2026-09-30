@@ -106,8 +106,9 @@ go run ./cmd/markitect render --repo ../consumer --write
 go run ./cmd/markitect format --repo ../consumer
 go run ./cmd/markitect format --repo ../consumer --write
 
-# Preview the supported Konfyra migration; --write applies it to a working tree
+# Preview the default Konfyra migration, then the Cockpit profile; --write applies either plan
 go run ./cmd/markitect migrate --repo ../consumer
+go run ./cmd/markitect migrate --repo ../consumer --profile cockpit
 go run ./cmd/markitect migrate --repo ../consumer --write
 
 # Write generated schemas, then check for drift
@@ -118,9 +119,9 @@ go run ./cmd/markitect schema --repo .
 go run ./cmd/markitect package --repo . --output .artifacts/release-candidate
 ```
 
-`render` without `--write` checks existing managed outputs. Writes use the current working tree and are rejected on `main` or `master`; `render --write` rechecks the source inventory before writing and refuses unmanaged output collisions. `format --write` canonicalizes YAML serialization and line endings in `spec.text`; it requires a non-protected Git branch. `migrate --write` is limited to the current Konfyra migration adapter and requires a non-protected branch. The migration reports explicit Skill/Agent links to Workflow files as `dependencyCandidates` and sets `requiresDependencyReview`; these candidates never become normative `uses` references automatically. Review candidate links and resulting files before committing. The schema writer updates only generated schema files.
+`render` without `--write` checks existing managed outputs. Writes use the current working tree and are rejected on `main` or `master`; `render --write` rechecks the source inventory before writing and refuses unmanaged output collisions. `format --write` canonicalizes YAML serialization and line endings in `spec.text`; it requires a non-protected Git branch. `migrate --write` supports the `konfyra` and `cockpit` profiles and requires a non-protected branch. The Konfyra profile reports explicit Skill/Agent links to Workflow files as `dependencyCandidates`; these candidates never become normative `uses` references automatically. The Cockpit profile applies its reviewed relationship allowlist. Both plans set `requiresDependencyReview`; review planned and resulting files before committing. The schema writer updates only generated schema files.
 
-`package` requires a new, absent output directory. It writes `tools/markitect/source.zip` and `markitect.lock.yaml` beneath that directory. Source text is validated as UTF-8 and normalized to LF so Windows checkout line endings do not change the archive. The lock records the release-candidate version, archive path, and SHA-256 digest so a bootstrap can pin the exact source archive. The Go bootstrap is a separate integration file and is not included in the source archive.
+`package` requires a new, absent output directory. It writes `tools/markitect/source.zip` and `markitect.lock.yaml` beneath that directory. Source text is validated as UTF-8 and normalized to LF so Windows checkout line endings do not change the archive. The lock records the tool version, archive path, and SHA-256 digest so a bootstrap can pin the exact source archive. The Go bootstrap is a separate integration file and is not included in the source archive.
 
 The consumer bootstrap uses this exact pair: copy the archive to `tools/markitect/source.zip`, the lock to the repository root as `markitect.lock.yaml`, and the runner from `integration/run-markitect.go` to `scripts/run-markitect.go`. Copy its paired test from `integration/run-markitect_test.go` to `scripts/markitect-bootstrap_test.go`. From the consumer repository root, run it with Go, for example `go run scripts/run-markitect.go check`. The runner verifies the archive against the lock, builds that pinned Go source into a digest-keyed `.artifacts/markitect/` cache, and forwards the command. Its flat YAML `build-stamp-<id>.yaml` records `version`, `source_sha256`, `toolchain`, `build_policy` and `executable_sha256`. Cache reuse requires every identity field to match. The bootstrap selects the toolchain from the verified module before lookup and pins that selection during the build. Builds use portable native settings with CGO disabled and ignore ambient compiler/workspace overrides. The outer `go run` needs a writable Go cache before the bootstrap starts; see [consumer integration](../integration/README.md).
 

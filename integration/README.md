@@ -12,7 +12,7 @@ PowerShell example (replace the candidate tag only after its release has been pu
 
 ```powershell
 gh auth status
-$repository = 'Glacius-Labs/Markitect'
+$repository = 'github.com/Glacius-Labs/Markitect'
 $tag = 'v0.1.0'
 gh release verify $tag --repo $repository
 if ($LASTEXITCODE -ne 0) { throw 'GitHub release attestation verification failed.' }

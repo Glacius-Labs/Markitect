@@ -7,10 +7,11 @@
 | [Operations and releases](operations.md) | Supported operation, parallel reviews, failure recovery, upgrades and release gates |
 | [Refinement decisions](refinement.md) | Assessment of the supplied concept notes and proposed package/template model |
 | [Implementation plan](implementation-plan.md) | Ordered product work and acceptance criteria |
-| [Production delivery plan](production-plan.md) | Current release, provisioning, consumer integration and acceptance work |
+| [Production delivery decisions](production-plan.md) | Closed source-release and provisioning decisions; consumer acceptance remains separate |
 | [Measurement](measurement.md) | Correctness scenarios, bounded benchmarks and controlled model comparisons |
 | [Core authoring assessment](authoring-assessment.md) | Actual isolated editing exercise, failures, fixes and verified boundary |
 | [Source release assessment](release-assessment.md) | Exact RC3 source distribution, hosted installation and closed review findings |
+| [Production delivery assessment](production-assessment.md) | Published `v0.1.0` release evidence, supported source boundary and consumer-acceptance limits |
 | [Konfyra assessment](konfyra-assessment.md) | Dated migration assessment and practical use |
 
 The example and developer commands are routed from the [repository README](../README.md). Design proposals are labelled explicitly and must not be mistaken for supported YAML or CLI syntax.

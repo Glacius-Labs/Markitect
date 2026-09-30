@@ -1,6 +1,6 @@
 # Architecture
 
-Status: implemented local compiler and release candidate; updated 2026-09-30. [Usage](usage.md) owns exact current syntax. [Refinement decisions](refinement.md) owns proposed changes; [the plan](implementation-plan.md) owns their order.
+Status: source release `v0.1.0` is published and immutable from `45e0017a3d25d2abd464de934b5ef3a802732d0a`; consumer acceptance remains separate. See the [production delivery assessment](production-assessment.md). Updated 2026-09-30. [Usage](usage.md) owns exact current syntax. [Refinement decisions](refinement.md) owns proposed changes; [the plan](implementation-plan.md) owns their order.
 
 ## Purpose
 
