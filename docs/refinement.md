@@ -1,6 +1,6 @@
 # Refinement decisions
 
-Status: product direction and bounded next design; 2026-09-30. This document evaluates the supplied concept notes, including `markitect-packages.md`, `markitect-templates.md`, `markitect-authoring.md` and `markitect-product-view.md`. Proposed APIs below are not supported RC2 syntax. [Architecture](architecture.md) describes implementation.
+Status: product direction and bounded next design; 2026-09-30. This document evaluates the supplied concept notes, including the consolidated `markitect-vision-and-system-overview.md` and `markitect-benchmark-and-metrics-guide.md`. Proposed package/template APIs below are not supported RC2 syntax. [Architecture](architecture.md) describes implementation.
 
 ## Adopt and refine
 
@@ -8,7 +8,7 @@ Status: product direction and bounded next design; 2026-09-30. This document eva
 |---|---|---|
 | AI architecture as an engineering toolchain | Adopt | One deterministic Go core serves agents, people and automation. |
 | Agent authoring as primary daily UX | Adopt | Authoring is a core product capability shipped with Markitect; manual editing and deterministic CI still need no LLM. |
-| Authoring using Markitect's own resources | Adopt next | Portable core Rules, Skill, Workflow and Text ship with the tool; package support is not a prerequisite. |
+| Authoring using Markitect's own resources | Implemented in development | Portable core Rule, Skill, Workflow and Text ship with the tool; package support is not a prerequisite. |
 | Versioned reusable engineering knowledge | Adopt next design | Identity, exports, immutable inputs, lock and evidence integration ship together. |
 | Templates as project bootstrap | Adopt later | One-time ownership transfer; no ongoing synchronization or inheritance. |
 | Ordinary documentation and formal dependencies | Adopt | Type relationships that affect execution, context, impact or ownership. Keep ordinary prose/README navigation lightweight. |
@@ -20,6 +20,21 @@ Status: product direction and bounded next design; 2026-09-30. This document eva
 | Go throughout Markitect | Adopt now | Core, bootstrap and tests use Go. Existing consumer-owned tools remain adapters during migration. |
 
 The user explicitly refined the new authoring document: authoring belongs to the Markitect core, rather than an optional module/package. Its workflow, modelling resources and structural queries are part of the product and release. The deterministic engine remains independent of model execution. The new product view makes the interface model useful, but its component list is an option map rather than a promise to build nine products. CLI structured output already exists as YAML; MCP is not required for an agent to use it.
+
+## Consolidated vision and metrics
+
+The new vision confirms the separation between deterministic structure, semantic judgment and human acceptance. Adopt the distinction between lightweight ordinary documentation and typed, machine-relevant inputs: README routes remain useful without making every Markdown link a dependency.
+
+Refine four details against the actual implementation:
+
+- Section 22 still makes authoring optional. The user's explicit core decision supersedes that wording. Core authoring is released with the tool and may be extended by local consumer policy.
+- Namespace examples containing `/` describe organizational structure, not accepted identifiers. Namespaces remain simple DNS labels; paths and explicit area imports model organization. Adding a second identity syntax needs a demonstrated use case and migration.
+- `owner` means the canonical resource path and governing area in these queries. It is not a person, role assignment, authorization or proof that prose ownership was modelled completely.
+- General interface and open-source diagrams describe future options. The standalone source repository already exists; no public hosting, license, registry or Kubernetes lifecycle contract is inferred from the vision.
+
+Adopt the benchmark guide's hidden oracle, fixed inputs, matched model settings, repetition, correctness-first scoring and explicit missing values. Start with deterministic Go scenarios and one isolated authoring exercise. A full model comparison is a later controlled experiment; no token savings are inferred from context bytes or one successful review reuse.
+
+The suggested NDJSON/SQLite persistence is replaced by the user's single-format decision: any future Markitect-owned measurement records use YAML. Local opt-in metadata can be considered after the pilot demonstrates useful fields; no telemetry or statistics subsystem is needed to ship core authoring. [Measurement](measurement.md) owns the concrete protocol.
 
 ## Correct the proposed authoring sequence
 
@@ -52,7 +67,7 @@ RC2's `markitect.lock.yaml` pins the **tool**, and `markitect package` builds it
 
 Ship a small portable core authoring collection with Markitect: resource modelling, ownership/scope, one canonical source, an author-resource-change Workflow, an entry Skill and a modelling Text. It should explain when to edit an existing owner, choose a kind, declare dependencies and interpret diagnostics. It must not embed Konfyra role assignments, Azure Boards delivery policy or customer examples.
 
-The agent selects relevant resources from intent, using inventory and upcoming reference/owner queries. The core explains the selected graph. A proposed free-text `context --for-authoring` must not pretend deterministic completeness; defer it until its semantic selection layer and uncertainty are explicit.
+The agent selects relevant resources from intent, using inventory and the `find`/`explain` queries. The core explains the selected graph. A proposed free-text `context --for-authoring` must not pretend deterministic completeness; defer it until its semantic selection layer and uncertainty are explicit.
 
 Core authoring resources live in this repository and share the tool release lifecycle. Bundle them with the distribution and verify them with a synthetic consumer. Their use must not depend on installing an optional knowledge package. A future package may extend authoring with organization policy, but cannot become the owner of the core workflow.
 

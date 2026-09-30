@@ -66,6 +66,9 @@ Examples run from the standalone Markitect repository. Replace `../consumer` and
 | `check` | Validate the typed YAML graph, declared file inputs, and generated outputs. |
 | `verify` | Run `check` plus the fixed repository checks selected by the Project profile. Requires an immutable revision. |
 | `inventory` | List legacy Markdown candidates and, when configured, typed resources; it does not infer dependencies or assert semantic validity. |
+| `find` | Search valid typed resources by literal text, kind and namespace; return concise canonical locations. |
+| `explain` | Show one resource's area, direct resolved relationships, declared files and Contract implementations. |
+| `authoring` | Compile the core authoring Skill shipped inside this executable; no repository required. |
 | `context` | Compile the dependency closure and its declared file inputs for one resource. |
 | `impact` | Compare two immutable snapshots and report changed paths and affected resources. |
 | `review` | Record an advisory AI report or determine whether its declared inputs still permit reuse. |
@@ -118,6 +121,29 @@ The consumer bootstrap uses this exact pair: copy the archive to `tools/markitec
 Successful commands return 0, validation findings return 1, and commands that cannot run or receive invalid arguments return 2. Results are YAML on standard output; command errors go to standard error.
 
 ## Snapshot and evidence boundaries
+
+### Discover and author resources
+
+```powershell
+# Core guidance, compiled from the resources embedded in this release
+./bin/markitect.exe authoring
+
+# Literal, case-insensitive match in identity, path, description or body
+./bin/markitect.exe find --repo examples/minimal --query rollback --kind Rule
+
+# Inspect canonical location, governing area and direct incoming/outgoing relationships
+./bin/markitect.exe explain --repo examples/minimal --namespace sample --kind Rule --name rollback-review
+./bin/markitect.exe explain --repo examples/minimal --namespace sample --kind Contract --name rollback-assessment
+./bin/markitect.exe explain --repo examples/minimal --kind Project --name rollback-example
+```
+
+`find` without query text lists all matches; `--kind` and `--namespace` are exact optional filters. It returns summaries, not duplicated prose. Both commands emit a YAML envelope with tool/version, revision/provisional state, snapshot digest and a `result` containing the facts. A missing match is an empty successful result; an unknown exact identity in `explain` is an error. Both require a structurally valid project; use `check` diagnostics to repair invalid inputs first. They do not require freshly rendered views, which makes them useful while editing.
+
+Both queries accept `--revision COMMIT` and report the selected snapshot. `explain` names the longest owning area for a content resource. Project has no namespace or owning area. Ownership here is structural, not human authorization. Relationships record their resolved source/target and declaration origin, including applicable area rules and selected bindings. `resourceLine` is the start of the declaring YAML resource, not the line of its nested reference. These are direct relationships; `context` follows the complete dependency closure and reports an inclusion reason for each input. Use `impact` for old-and-new consequences of an actual committed change.
+
+`authoring` accepts no flags and reads no consumer repository. Its `revision: embedded` is a source marker, not a Git commit. Its snapshot and tool digests identify the bundled guidance. The core Skill, Workflow, Rule and Text are canonical YAML compiled through the same parser and graph as other resources. Consumers need no copied installation or optional package to read them. Their own rules and delivery authority still apply to every edit.
+
+### Repository snapshots
 
 Omitting `--revision` reads the working tree and marks the result `provisional: true`. This is useful for local feedback, but it is not immutable evidence. Supplying `--revision` makes Markitect resolve a Git commit and read that committed tree. `impact` requires both `--base` and `--revision`. `verify` requires `--revision` and runs the selected profile's fixed checks against a materialized copy of that same snapshot.
 

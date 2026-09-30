@@ -10,6 +10,7 @@
 | `internal/source` | Working and immutable Git snapshots |
 | `internal/inputs` | Explicit ordinary file inputs |
 | `internal/app` | Context, impact, evidence and controlled writes |
+| `internal/authoring` | Embedded core authoring resources compiled through the application API |
 | `internal/render` | Managed Markdown/provider projections |
 | `internal/migrate` | Existing Konfyra migration adapter |
 | `internal/release` | Deterministic tool source archive |
@@ -32,6 +33,8 @@ git diff --check
 These checks require neither Konfyra nor the Cockpit. Initial Go toolchain/module download may require network access. Source/bootstrap changes require Windows and Linux coverage before a release. Hosted CI wiring follows the selected repository host; these local commands are its intended gates, not proof that hosted CI ran.
 
 Edit the Go validation declarations and use `schema --repo . --write` to update schemas. Edit example YAML and use `format` and `render --repo examples/minimal --write` on a working branch to update it. The example regression checks all expected resources, its binding, declared file content and generated views.
+
+Edit bundled authoring at `internal/authoring/resources/*.yaml`. Its content is canonical and embedded in the binary; do not maintain a second provider-specific copy. Tests parse and compile the bundle through the ordinary pipeline. Source packaging must preserve all required embedded assets. Structural query provenance belongs to core resolution, never a second reference resolver in a CLI adapter. [Measurement](docs/measurement.md) describes the bounded performance and authoring exercises.
 
 ## Release and consumers
 

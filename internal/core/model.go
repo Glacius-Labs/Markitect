@@ -92,8 +92,23 @@ type Diagnostic struct {
 }
 
 type Graph struct {
-	Resources   map[string]*Resource
-	Edges       map[string][]string
-	Project     *Resource
-	Diagnostics []Diagnostic
+	Resources     map[string]*Resource
+	Edges         map[string][]string
+	Relationships []Relationship
+	ResourceAreas map[string]Area
+	Project       *Resource
+	Diagnostics   []Diagnostic
+}
+
+// Relationship records why a resolved graph edge exists. Edges remains the
+// compact adjacency view used by existing context and impact logic.
+type Relationship struct {
+	From      string `yaml:"from"`
+	To        string `yaml:"to"`
+	Relation  string `yaml:"relation"`
+	Path      string `yaml:"path,omitempty"`
+	Line      int    `yaml:"resourceLine,omitempty"` // Start of the declaring resource, not the nested reference.
+	Reference Ref    `yaml:"reference,omitempty"`
+	Area      string `yaml:"area,omitempty"`
+	Selected  bool   `yaml:"selected,omitempty"`
 }

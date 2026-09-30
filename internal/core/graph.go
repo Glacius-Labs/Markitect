@@ -22,7 +22,7 @@ var usesKinds = map[string]map[string]bool{
 // Build resolves a complete resource snapshot. Diagnostics are sorted so the
 // result is stable regardless of the caller's resource order.
 func Build(resources []*Resource) *Graph {
-	g := &Graph{Resources: map[string]*Resource{}, Edges: map[string][]string{}}
+	g := &Graph{Resources: map[string]*Resource{}, Edges: map[string][]string{}, ResourceAreas: map[string]Area{}}
 	ordered := append([]*Resource(nil), resources...)
 	sort.Slice(ordered, func(i, j int) bool {
 		a, b := ordered[i], ordered[j]
@@ -73,6 +73,7 @@ func Build(resources []*Resource) *Graph {
 		g.detectRuntimeCycles()
 	}
 	g.sortEdges()
+	g.sortRelationships()
 	sort.Slice(g.Diagnostics, func(i, j int) bool {
 		a, b := g.Diagnostics[i], g.Diagnostics[j]
 		if a.Code != b.Code {
@@ -180,6 +181,7 @@ func (g *Graph) assignAreas() {
 		if ambiguous {
 			g.diag(r, "area.ambiguous", fmt.Sprintf("resource path %q matches equally specific areas", r.Path))
 		}
+		g.ResourceAreas[r.Key()] = *best
 		if r.Metadata.Namespace != best.Name {
 			g.diag(r, "area.namespace", fmt.Sprintf("resource namespace %q does not match owning area %q", r.Metadata.Namespace, best.Name))
 		}
@@ -254,7 +256,10 @@ func (g *Graph) resolveAreaRule(resource *Resource, area Area, ref Ref) {
 		g.diag(resource, "reference.missing", fmt.Sprintf("area.rules reference %s/Rule/%s does not resolve", namespace, ref.Name))
 		return
 	}
-	g.addEdge(resource.Key(), target.Key())
+	g.addRelationship(Relationship{
+		From: resource.Key(), To: target.Key(), Relation: "area.rules",
+		Path: g.Project.Path, Line: g.Project.Line, Reference: ref, Area: area.Name,
+	})
 }
 
 func (g *Graph) resolveResources() {
@@ -332,7 +337,10 @@ func (g *Graph) resolveRef(source *Resource, ref Ref, defaultKind string, allowe
 		return nil
 	}
 	if target.Kind != "Project" {
-		g.addEdge(source.Key(), target.Key())
+		g.addRelationship(Relationship{
+			From: source.Key(), To: target.Key(), Relation: field,
+			Path: source.Path, Line: source.Line, Reference: ref,
+		})
 	}
 	return target
 }
@@ -403,7 +411,10 @@ func (g *Graph) resolveBindings() {
 		if !declared {
 			g.diag(impl, "contract.undeclared", fmt.Sprintf("implementation does not declare implements reference to %s", contract.Key()))
 		}
-		g.addEdge(impl.Key(), contract.Key())
+		g.addRelationship(Relationship{
+			From: impl.Key(), To: contract.Key(), Relation: "binding",
+			Path: g.Project.Path, Line: g.Project.Line, Reference: b.Contract, Selected: true,
+		})
 	}
 	for _, r := range g.Resources {
 		if r.Kind != "Agent" && r.Kind != "Skill" && r.Kind != "Workflow" {
@@ -421,7 +432,12 @@ func (g *Graph) resolveBindings() {
 			}
 			impl := g.lookupExact(implementation)
 			if impl != nil {
-				g.addEdge(r.Key(), impl.Key())
+				g.addRelationship(Relationship{
+					From: r.Key(), To: impl.Key(), Relation: "selected-implementation",
+					Path: g.Project.Path, Line: g.Project.Line, Reference: implementation, Selected: true,
+				})
+				// The explicit needs edge was added by resolveResources. Keep the
+				// compact edge present even if the declaration was malformed there.
 				g.addEdge(r.Key(), contract.Key())
 			}
 		}
@@ -623,6 +639,58 @@ func (g *Graph) addEdge(from, to string) {
 		}
 	}
 	g.Edges[from] = append(g.Edges[from], to)
+}
+
+func (g *Graph) addRelationship(relationship Relationship) {
+	if relationship.From == relationship.To {
+		return
+	}
+	g.addEdge(relationship.From, relationship.To)
+	g.Relationships = append(g.Relationships, relationship)
+}
+
+func (g *Graph) sortRelationships() {
+	sort.Slice(g.Relationships, func(i, j int) bool {
+		a, b := g.Relationships[i], g.Relationships[j]
+		if a.From != b.From {
+			return a.From < b.From
+		}
+		if a.To != b.To {
+			return a.To < b.To
+		}
+		if a.Relation != b.Relation {
+			return a.Relation < b.Relation
+		}
+		if a.Path != b.Path {
+			return a.Path < b.Path
+		}
+		if a.Line != b.Line {
+			return a.Line < b.Line
+		}
+		if a.Area != b.Area {
+			return a.Area < b.Area
+		}
+		if a.Reference.Namespace != b.Reference.Namespace {
+			return a.Reference.Namespace < b.Reference.Namespace
+		}
+		if a.Reference.Kind != b.Reference.Kind {
+			return a.Reference.Kind < b.Reference.Kind
+		}
+		if a.Reference.Name != b.Reference.Name {
+			return a.Reference.Name < b.Reference.Name
+		}
+		return !a.Selected && b.Selected
+	})
+	if len(g.Relationships) < 2 {
+		return
+	}
+	unique := g.Relationships[:1]
+	for _, relationship := range g.Relationships[1:] {
+		if relationship != unique[len(unique)-1] {
+			unique = append(unique, relationship)
+		}
+	}
+	g.Relationships = unique
 }
 
 func (g *Graph) sortEdges() {

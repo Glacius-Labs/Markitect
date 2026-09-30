@@ -8,6 +8,8 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"runtime"
+	"sort"
 	"strings"
 	"testing"
 	"time"
@@ -27,7 +29,7 @@ func TestPackageIsDeterministicAndContainsOnlyReleaseSources(t *testing.T) {
 		t.Fatal("packaging the same source twice changed output")
 	}
 	entries := archiveEntries(t, first)
-	want := []string{"README.md", "cmd/markitect/main.go", "go.mod", "go.sum", "internal/core/model.go", "internal/format/schema.go", "internal/release/package.go", "internal/release/package_test.go", "schema/manifest.yaml"}
+	want := []string{"README.md", "cmd/markitect/main.go", "go.mod", "go.sum", "internal/authoring/resources/markitect.yaml", "internal/core/model.go", "internal/format/schema.go", "internal/release/package.go", "internal/release/package_test.go", "schema/manifest.yaml"}
 	if strings.Join(entries, "\n") != strings.Join(want, "\n") {
 		t.Fatalf("unexpected package contents:\n%v\nwant:\n%v", entries, want)
 	}
@@ -41,6 +43,52 @@ func TestPackageIsDeterministicAndContainsOnlyReleaseSources(t *testing.T) {
 	wantLock := "version: \"v1.2.3-rc.4+build.7\"\nsource: \"tools/markitect/source.zip\"\nsha256: \"" + hex.EncodeToString(hash[:]) + "\"\n"
 	if string(lock1) != wantLock {
 		t.Fatalf("lock format or digest mismatch:\n%s\nwant:\n%s", lock1, wantLock)
+	}
+}
+
+func TestPackageIncludesOnlyEmbeddedAuthoringYAMLResources(t *testing.T) {
+	_, testFile, _, ok := runtime.Caller(0)
+	if !ok {
+		t.Fatal("cannot locate release test source")
+	}
+	moduleRoot := filepath.Clean(filepath.Join(filepath.Dir(testFile), "..", ".."))
+	archive, _, err := Package(moduleRoot, "1.0.0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	contents := archiveContents(t, archive)
+	want := []string{
+		"internal/authoring/resources/markitect.yaml",
+		"internal/authoring/resources/rule-canonical-ownership.yaml",
+		"internal/authoring/resources/skill-authoring.yaml",
+		"internal/authoring/resources/text-resource-modelling.yaml",
+		"internal/authoring/resources/workflow-authoring-change.yaml",
+	}
+	var got []string
+	for name := range contents {
+		if strings.HasPrefix(name, "internal/authoring/resources/") {
+			got = append(got, name)
+		}
+	}
+	sort.Strings(got)
+	if strings.Join(got, "\n") != strings.Join(want, "\n") {
+		t.Fatalf("bundled authoring resources in source archive = %v, want %v", got, want)
+	}
+	for _, name := range want {
+		data, err := os.ReadFile(filepath.Join(moduleRoot, filepath.FromSlash(name)))
+		if err != nil {
+			t.Fatal(err)
+		}
+		data, err = normalizeTextSource(name, data)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !bytes.Equal(contents[name], data) {
+			t.Errorf("archive content differs from embedded resource source %s", name)
+		}
+	}
+	if _, included := contents["internal/authoring/testdata/not-embedded.yaml"]; included {
+		t.Fatal("unrelated YAML under internal was packaged")
 	}
 }
 
@@ -114,14 +162,35 @@ func TestNormalizeTextSourceRejectsInvalidUTF8AndNUL(t *testing.T) {
 	if got, err := normalizeTextSource("schema/manifest.yaml", []byte("a\r\nb\rc")); err != nil || string(got) != "a\nb\nc" {
 		t.Fatalf("normalization = %q, err=%v", got, err)
 	}
+	if got, err := normalizeTextSource("schema/legacy.yml", []byte("a\r\nb\rc")); err != nil || string(got) != "a\nb\nc" {
+		t.Fatalf(".yml normalization = %q, err=%v", got, err)
+	}
+	for _, input := range [][]byte{{0xff}, []byte("has\x00nul")} {
+		if _, err := normalizeTextSource("schema/legacy.yml", input); err == nil {
+			t.Errorf(".yml accepted invalid text bytes %v", input)
+		}
+	}
 }
 
 func TestNormalizeTextSourceDoesNotRewriteOtherFiles(t *testing.T) {
-	for _, name := range []string{"schema/manifest.json", "schema/manifest.yml", "assets/payload.bin"} {
+	for _, name := range []string{"schema/manifest.json", "assets/payload.bin"} {
 		input := []byte{0xff, 0x00, '\r', '\n'}
 		got, err := normalizeTextSource(name, input)
 		if err != nil || !bytes.Equal(got, input) {
 			t.Errorf("normalizeTextSource(%q) changed non-target bytes: %v, %v", name, got, err)
+		}
+	}
+}
+
+func TestMakeArchiveRejectsCaseInsensitivePathCollisions(t *testing.T) {
+	for _, files := range [][]sourceFile{
+		{{name: "cmd/Foo.go"}, {name: "cmd/foo.go"}},
+		{{name: "Internal/a.go"}, {name: "internal/b.go"}},
+		{{name: "cmd"}, {name: "CMD/a.go"}},
+		{{name: "cmd/a.go"}, {name: "cmd/a.go"}},
+	} {
+		if _, err := makeArchive(files); err == nil || !strings.Contains(err.Error(), "archive path collision") && !strings.Contains(err.Error(), "duplicate archive entry") {
+			t.Errorf("makeArchive(%v) error = %v, want path collision", files, err)
 		}
 	}
 }
@@ -188,6 +257,8 @@ func fixtureRoot(t *testing.T) string {
 	write("tools/markitect/internal/format/schema.go", "package format\n")
 	write("tools/markitect/internal/release/package.go", "package release\n")
 	write("tools/markitect/internal/release/package_test.go", "package release\n")
+	write("tools/markitect/internal/authoring/resources/markitect.yaml", "apiVersion: markitect.example.org/v1alpha1\nkind: Project\n")
+	write("tools/markitect/internal/authoring/testdata/fixture.yaml", "should not be packaged\n")
 	write("tools/markitect/schema/manifest.yaml", "schema: v1\n")
 	write("tools/markitect/internal/fixture/konfyra-customer-data.yaml", "proprietary: true\n")
 	write("tools/markitect/bin/markitect.exe", "excluded binary")

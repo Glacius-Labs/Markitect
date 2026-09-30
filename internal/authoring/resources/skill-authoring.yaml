@@ -1,0 +1,20 @@
+apiVersion: markitect.example.org/v1alpha1
+kind: Skill
+metadata:
+  name: authoring
+  namespace: core
+spec:
+  description: Author and review Markitect resources using their explicit ownership and dependency model.
+  uses:
+    - kind: Workflow
+      name: authoring-change
+    - kind: Text
+      name: resource-modelling
+  text: |
+    Help an agent change Markitect's canonical engineering mechanisms.
+
+    Begin with structural discovery: `find --query TEXT`, then inspect relevant candidates with `explain --kind KIND --name NAME --namespace NAMESPACE`. These queries expose structure, not semantic relevance. Select the owner using project area paths, existing responsibility and explicit dependencies. If the intent does not identify one defensible owner, ask before editing.
+
+    Edit canonical YAML in place where possible. Add only dependencies needed for context or behavior, using supported typed fields; never infer them from Markdown links. Keep customer/provider policy with its owner. Follow the authoring Workflow for formatting, rendering, checking, fixed snapshots, impact, context and semantic review.
+
+    Report machine-checked structure separately from semantic confidence and human decisions. Do not claim customer compatibility, approval or human acceptance from a successful Markitect command.

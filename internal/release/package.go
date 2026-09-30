@@ -128,7 +128,9 @@ func walkSourceTree(moduleDir, start string, files *[]sourceFile) error {
 		if entry.Type()&os.ModeSymlink != 0 {
 			return fmt.Errorf("refusing symlink in Markitect source tree: %s", rel)
 		}
-		if !strings.HasSuffix(strings.ToLower(entry.Name()), ".go") {
+		ext := strings.ToLower(filepath.Ext(entry.Name()))
+		embeddedResource := strings.HasPrefix(rel, "internal/authoring/resources/") && ext == ".yaml"
+		if ext != ".go" && !embeddedResource {
 			return nil
 		}
 		return appendRegularFile(moduleDir, rel, files, true)
@@ -192,7 +194,7 @@ func appendRegularFile(moduleDir, relative string, files *[]sourceFile, required
 func normalizeTextSource(name string, data []byte) ([]byte, error) {
 	base := strings.ToLower(filepath.Base(name))
 	ext := strings.ToLower(filepath.Ext(base))
-	isText := base == "go.mod" || base == "go.sum" || ext == ".go" || ext == ".md" || ext == ".yaml"
+	isText := base == "go.mod" || base == "go.sum" || ext == ".go" || ext == ".md" || ext == ".yaml" || ext == ".yml"
 	if !isText {
 		return data, nil
 	}
@@ -208,6 +210,9 @@ func normalizeTextSource(name string, data []byte) ([]byte, error) {
 }
 
 func makeArchive(files []sourceFile) ([]byte, error) {
+	if err := validateArchivePaths(files); err != nil {
+		return nil, err
+	}
 	var buffer bytes.Buffer
 	w := zip.NewWriter(&buffer)
 	fixedTime := time.Date(1980, 1, 1, 0, 0, 0, 0, time.UTC)
@@ -230,6 +235,36 @@ func makeArchive(files []sourceFile) ([]byte, error) {
 		return nil, fmt.Errorf("finish Markitect source archive: %w", err)
 	}
 	return buffer.Bytes(), nil
+}
+
+type archivePathRecord struct {
+	name string
+	dir  bool
+}
+
+func validateArchivePaths(files []sourceFile) error {
+	seenFiles := make(map[string]bool, len(files))
+	portable := make(map[string]archivePathRecord, len(files)*2)
+	for _, file := range files {
+		if err := safeArchivePath(file.name); err != nil {
+			return fmt.Errorf("unsafe archive entry %q: %w", file.name, err)
+		}
+		if seenFiles[file.name] {
+			return fmt.Errorf("duplicate archive entry %q", file.name)
+		}
+		seenFiles[file.name] = true
+		parts := strings.Split(file.name, "/")
+		for i := range parts {
+			prefix := strings.Join(parts[:i+1], "/")
+			isDir := i < len(parts)-1
+			key := strings.ToLower(prefix)
+			if previous, ok := portable[key]; ok && (previous.name != prefix || previous.dir != isDir) {
+				return fmt.Errorf("case-insensitive archive path collision: %q and %q", previous.name, prefix)
+			}
+			portable[key] = archivePathRecord{name: prefix, dir: isDir}
+		}
+	}
+	return nil
 }
 
 func safeArchivePath(name string) error {

@@ -31,7 +31,7 @@ Original provider models, effort, permissions, tools and limits were retained. T
 5. The complete candidate is committed once. Context, impact and verification use that fixed SHA.
 6. A semantic reviewer receives the declared context and a bounded question. Eligible previous reports can be reused if their relevant inputs, tool/configuration and change analysis allow it.
 
-Markitect currently resolves a named Skill/Agent/Workflow; the agent selects that entry from the task. It does not autonomously interpret the user's task, run agents or enforce their behavior. The portable authoring kit and reference/owner queries remain the next UX improvement.
+The pinned RC2 engine resolves a named Skill/Agent/Workflow; the agent selects that entry from the task. It does not autonomously interpret the user's task, run agents or enforce their behavior. The standalone development engine now supplies portable authoring and reference/owner queries; the consumer lock still pins RC2.
 
 ### Parallel work
 
@@ -56,7 +56,7 @@ These are local records, not authenticated CI attestations. Historical test coun
 
 Observed local samples: original governance run 7.473 s; migrated warm run 5.826 s; Markitect structural checks 1.041–1.975 s. These are small, uncontrolled samples. No sustained token-cost reduction has yet been measured. The 88,942-byte authoring context also shows that shared rules still have a real context cost.
 
-## Gaps worth refining
+## Gaps identified at RC2
 
 - **Declared dependency completeness:** typing 64 files does not prove that every normative prose relationship is modelled. Audit affected entrypoints through real tasks, not repeated full-repository rereads.
 - **Conservative invalidation:** all rules attached to the parent docs area reach descendant resources; unknown/configuration/inventory changes can affect every entry. Explain why a rule/input applies before considering narrower policy.
@@ -76,3 +76,9 @@ The subsequent pilot candidate `1b56627b1e1d9eb58db87b210d5c59e069b8a5a4` replac
 The Go bootstrap produced the same Windows Markitect executable digest as before. The new authoring context changed, and an actual reuse attempt returned `review-required` for the old report. This demonstrates invalidation across the two real candidates; it is not a fresh semantic review.
 
 Standalone source commit `94d4e70a391d29786c79511f20e1e454da6840d1` passed Go tests, vet, schema and example checks on Windows and isolated Linux. A newly packaged development build also passed a fresh Go-bootstrap consumer smoke test. The Cockpit's existing checks still pass; it remains unmigrated. Provider runtime, hosted CI and human acceptance remain open.
+
+## Follow-up: core authoring queries
+
+The standalone development binary was used read-only against fixed pilot `1b56627b1e1d9eb58db87b210d5c59e069b8a5a4`. `find` located `general/Skill/author-ai-mechanism`; `explain` reported area `general`, its Workflow and Contract dependencies, and all twelve parent-area Rule applications with Project provenance. The Contract explanation distinguished the declared `documentation-specialist` Agent from its selected binding. The Workflow explanation retained its three ordinary file inputs. All outputs identify the fixed revision and snapshot digest above; the source worktree's excluded `.artifacts/konfyra-*.yaml` records retain the exact tool digest.
+
+This exercise improves discoverability without changing Konfyra's canonical resources or pinned tool. It validates structural queries against the actual migrated graph. It does not close the semantic, provider-runtime, hosted CI or human acceptance gaps.

@@ -10,6 +10,7 @@ import (
 	"sort"
 
 	"markitect/internal/app"
+	"markitect/internal/authoring"
 	"markitect/internal/core"
 	"markitect/internal/format"
 	"markitect/internal/migrate"
@@ -34,9 +35,18 @@ type report struct {
 	Gates       []app.GateResult  `yaml:"gates,omitempty"`
 }
 
+type queryEnvelope struct {
+	Version        string `yaml:"version"`
+	ToolDigest     string `yaml:"toolDigest"`
+	Revision       string `yaml:"revision,omitempty"`
+	Provisional    bool   `yaml:"provisional"`
+	SnapshotDigest string `yaml:"snapshotDigest"`
+	Result         any    `yaml:"result"`
+}
+
 func run(args []string, out, errout io.Writer) int {
 	if len(args) == 0 {
-		fmt.Fprintln(errout, "usage: markitect <check|verify|inventory|context|impact|review|render|format|migrate|schema|package|version> [--repo PATH] [--revision COMMIT]")
+		fmt.Fprintln(errout, "usage: markitect <check|verify|inventory|context|impact|find|explain|authoring|review|render|format|migrate|schema|package|version> [--repo PATH] [--revision COMMIT]")
 		return 2
 	}
 	command := args[0]
@@ -56,6 +66,7 @@ func run(args []string, out, errout io.Writer) int {
 	kind := fs.String("kind", "", "context entry kind")
 	name := fs.String("name", "", "context entry name")
 	namespace := fs.String("namespace", "", "context entry namespace")
+	query := fs.String("query", "", "literal search text (find)")
 	write := fs.Bool("write", false, "write managed outputs in an isolated worktree")
 	check := fs.Bool("check", false, "check rendered outputs (default)")
 	output := fs.String("output", "", "new release output directory (package)")
@@ -69,12 +80,15 @@ func run(args []string, out, errout io.Writer) int {
 		fmt.Fprintln(errout, "unexpected positional arguments")
 		return 2
 	}
-	allowed := map[string]bool{"repo": true}
-	if command != "schema" && command != "package" {
+	allowed := map[string]bool{}
+	if command != "authoring" {
+		allowed["repo"] = true
+	}
+	if command != "schema" && command != "package" && command != "authoring" {
 		allowed["revision"] = true
 	}
 	switch command {
-	case "context", "review":
+	case "context", "review", "explain":
 		allowed["kind"] = true
 		allowed["name"] = true
 		allowed["namespace"] = true
@@ -83,6 +97,10 @@ func run(args []string, out, errout io.Writer) int {
 			allowed["report"] = true
 			allowed["evidence"] = true
 		}
+	case "find":
+		allowed["query"] = true
+		allowed["kind"] = true
+		allowed["namespace"] = true
 	case "impact":
 		allowed["base"] = true
 	case "render", "schema", "format":
@@ -120,6 +138,21 @@ func run(args []string, out, errout io.Writer) int {
 		return 0
 	}
 	fail := func(err error) int { fmt.Fprintln(errout, err); return 2 }
+	if command == "authoring" {
+		if fs.NFlag() != 0 {
+			fmt.Fprintln(errout, "authoring accepts no flags; its compiled context has no repository or revision")
+			return 2
+		}
+		digest, err := currentToolDigest()
+		if err != nil {
+			return fail(err)
+		}
+		ctx, err := authoring.Context(version, digest)
+		if err != nil {
+			return fail(err)
+		}
+		return emit(ctx)
+	}
 	if command == "schema" {
 		schemas, err := format.Schemas()
 		if err != nil {
@@ -209,22 +242,17 @@ func run(args []string, out, errout io.Writer) int {
 		}
 		return emit(report{Tool: "Markitect", Version: version, Revision: snap.Revision, Provisional: snap.Provisional, Digest: snap.Digest(), Status: "inventory", Coverage: coverage, Inventory: items})
 	}
-	if command != "check" && command != "verify" && command != "context" && command != "impact" && command != "review" && command != "render" && command != "format" {
+	if command != "check" && command != "verify" && command != "context" && command != "impact" && command != "find" && command != "explain" && command != "review" && command != "render" && command != "format" {
 		return fail(fmt.Errorf("unknown command %q", command))
 	}
 	p, err := app.Load(*root, *revision)
 	if err != nil {
 		return fail(err)
 	}
-	executable, err := os.Executable()
+	toolDigest, err := currentToolDigest()
 	if err != nil {
 		return fail(err)
 	}
-	executableBytes, err := os.ReadFile(executable)
-	if err != nil {
-		return fail(err)
-	}
-	toolDigest := app.Hash(executableBytes)
 	result := report{Tool: "Markitect", Version: version, ToolDigest: toolDigest, Revision: p.Snapshot.Revision, Provisional: p.Snapshot.Provisional, Digest: p.Snapshot.Digest(), Status: "passed", Coverage: "typed YAML graph and Markitect-owned outputs; external repository gates and semantic review remain separate", Inventory: p.Inventory, Diagnostics: p.Diagnostics}
 	if len(p.Diagnostics) > 0 {
 		result.Status = "failed"
@@ -234,6 +262,32 @@ func run(args []string, out, errout io.Writer) int {
 		return 1
 	}
 	switch command {
+	case "find":
+		matches, err := app.Find(p, app.FindQuery{Query: *query, Kind: *kind, Namespace: *namespace})
+		if err != nil {
+			return fail(err)
+		}
+		return emit(queryEnvelope{Version: version, ToolDigest: toolDigest, Revision: p.Snapshot.Revision, Provisional: p.Snapshot.Provisional, SnapshotDigest: p.Snapshot.Digest(), Result: matches})
+	case "explain":
+		if *kind == "" || *name == "" {
+			return fail(fmt.Errorf("explain requires --kind and --name"))
+		}
+		if *kind == "Project" {
+			if *namespace != "" {
+				return fail(fmt.Errorf("Project explain identity does not accept --namespace"))
+			}
+		} else if *namespace == "" {
+			return fail(fmt.Errorf("explain requires --namespace for namespaced resources"))
+		}
+		key := "/" + *kind + "/" + *name
+		if *namespace != "" {
+			key = *namespace + "/" + *kind + "/" + *name
+		}
+		explanation, err := app.Explain(p, key)
+		if err != nil {
+			return fail(err)
+		}
+		return emit(queryEnvelope{Version: version, ToolDigest: toolDigest, Revision: p.Snapshot.Revision, Provisional: p.Snapshot.Provisional, SnapshotDigest: p.Snapshot.Digest(), Result: explanation})
 	case "review":
 		return runReview(*root, p, *namespace, *kind, *name, *reviewConfig, *reviewReport, *reviewEvidence, toolDigest, emit, fail)
 	case "format":
@@ -308,3 +362,15 @@ func run(args []string, out, errout io.Writer) int {
 }
 
 func main() { os.Exit(run(os.Args[1:], os.Stdout, os.Stderr)) }
+
+func currentToolDigest() (string, error) {
+	executable, err := os.Executable()
+	if err != nil {
+		return "", err
+	}
+	executableBytes, err := os.ReadFile(executable)
+	if err != nil {
+		return "", err
+	}
+	return app.Hash(executableBytes), nil
+}

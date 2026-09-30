@@ -1,0 +1,11 @@
+apiVersion: markitect.example.org/v1alpha1
+kind: Project
+metadata:
+  name: markitect-authoring-core
+spec:
+  profile: generic
+  areas:
+    - name: core
+      path: internal/authoring/resources
+      rules:
+        - name: canonical-ownership

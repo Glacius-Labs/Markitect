@@ -2,7 +2,7 @@
 
 Updated 2026-09-30. This is the Markitect product roadmap. The Konfyra work-item dossier remains the owner of that consumer's running delivery state and acceptance. [Architecture](architecture.md) and [refinement decisions](refinement.md) own design; [pilot assessment](konfyra-assessment.md) records observed results.
 
-## 1. Establish the independent project — current slice
+## 1. Establish the independent project — completed locally
 
 - Preserve existing Go source history in an independent checkout.
 - Move product architecture and planning ownership here; leave relocation pointers in the Cockpit.
@@ -12,11 +12,26 @@ Updated 2026-09-30. This is the Markitect product roadmap. The Konfyra work-item
 
 Completion means a local project that can be built, understood and changed on its own. Remote hosting, module/domain choices, license and published releases remain separate decisions. Development identifies itself as `0.1.0-rc.3-dev`; existing consumer release pins do not float.
 
-## 2. Improve agent authoring
+## 2. Improve agent authoring — current slice
 
 Build core authoring using current types and ship its portable resources with the tool. Authoring is part of Markitect, not an optional package. Add deterministic resource lookup, owner, incoming references and context-reason queries to the CLI. Keep task intent interpretation in the authoring agent. Existing structured YAML output is the first interface; no MCP dependency.
 
 Acceptance: a user asks for a rollback-plan requirement; an agent finds the owner, modifies the proper Rule, reports affected consumers, generates and validates a fixed candidate, and explains what semantic work remains. No duplicate rule, guessed global scope or manually maintained provider file.
+
+### Delivery plan from the vision
+
+Work on `feature/core-authoring` from the independent source repository. Keep file ownership disjoint while implementing; integrate and review one candidate before changing a consumer pin.
+
+| Work | Artifact and owner | Acceptance |
+|---|---|---|
+| Resolve structure once | Core graph relationship provenance and query tests | Existing context/impact edges remain compatible; reasons distinguish direct references, area rules and selected bindings. |
+| Inspect without broad searching | Application queries and CLI `find`/`explain` | Sorted YAML results expose canonical paths, area ownership, direct references and Contract implementations; fixed revisions ignore later edits. |
+| Ship authoring as core | Embedded canonical Rule, Text, Workflow and Skill with a small Project | `authoring` compiles these resources through the normal parser/graph/context pipeline; source packages contain the assets. |
+| Test real editing behavior | Isolated synthetic consumer exercise | A separate agent uses the bundled workflow to update one owner, regenerate and check, then report fixed impact and semantic limits. |
+| Establish measurement | Go correctness scenarios and benchmarks; [measurement protocol](measurement.md) | Exact expected effects for scoped/shared changes and deleted dependencies; unknown inputs remain conservative. No invented model-token measurements. |
+| Review and integrate | Focused independent review and standalone checks | Windows tests/vet/schema/example, source-package build, Linux tests, read-only Konfyra queries and reviewed documentation. |
+
+The supplied vision is a target, not an instruction to add every interface now. This slice does not require a package resolver, metrics database, MCP server, IDE extension or operator. Their order below follows concrete consumer value. The new vision's optional-authoring wording is superseded by the user's core decision.
 
 ## 3. Prove versioned content reuse
 

@@ -4,7 +4,7 @@ Status: implemented local compiler and release candidate; updated 2026-09-30. [U
 
 ## Purpose
 
-Treat AI-facing mechanisms as software architecture: clear responsibility, explicit dependencies, controlled scope and predictable change. Go implements deterministic mechanics; YAML describes structure; Markdown remains the reading surface and prose body. Authoring is a core Markitect capability: modelling guidance, workflows, skills and supporting queries share its release lifecycle. Agents handle intent and semantic judgment; deterministic operations do not require a model. The portable core authoring resources are planned next; the current authoring workflow exists in the Konfyra consumer.
+Treat AI-facing mechanisms as software architecture: clear responsibility, explicit dependencies, controlled scope and predictable change. Go implements deterministic mechanics; YAML describes structure; Markdown remains the reading surface and prose body. Authoring is a core Markitect capability: modelling guidance, workflows, skills and supporting queries share its release lifecycle. Agents handle intent and semantic judgment; deterministic operations do not require a model. Portable core authoring resources are embedded in the tool; consumer workflows add local delivery policy.
 
 ```mermaid
 flowchart LR
@@ -46,6 +46,14 @@ The parser rejects unknown fields, duplicates, extra YAML documents, aliases, me
 The core has no dependency on Kubernetes, a model API, an IDE or a provider SDK. CLI orchestration, filesystem/Git access, rendering, release packaging and consumer checks are adapters. Existing Konfyra/Cockpit profile code remains in-tree compatibility code; extract an interface only when another adapter demonstrates a stable boundary.
 
 Each output has one owner. Generic rendering supports declared native targets. During the Konfyra pilot, Markitect generates adjacent Markdown and the existing Python renderer owns provider files. It requires a passing Markitect check before rendering. A later replacement must reproduce its mappings and retirement behavior before switching ownership.
+
+## Authoring and structural queries
+
+Core resolution records why each relationship exists alongside the adjacency graph. Area ownership is captured when the existing longest-path rule is validated. Application queries consume this resolved model; CLI adapters do not implement another reference resolver.
+
+`find` performs literal, case-insensitive discovery with exact optional filters and returns concise resource locations. `explain` shows direct incoming/outgoing relationships with declaration provenance, structural area ownership, ordinary file inputs and Contract implementation declarations/selection. A Project binding and an `implements` claim are distinct facts. `context` follows transitive graph edges and reports one deterministic inclusion reason per input. Queries require a valid graph and never claim semantic relevance or human authority.
+
+`internal/authoring` embeds canonical YAML for a small Project, Rule, Text, Workflow and Skill. `authoring` parses and compiles this collection through the ordinary application pipeline. Its embedded source marker and digests distinguish immutable release guidance from a consumer Git revision. No model runtime, optional package or copied provider installation is required. The distribution archive includes the embedded assets, so a consumer-built binary has the same guidance as a standalone build from those sources.
 
 ## Fixed inputs and change
 
