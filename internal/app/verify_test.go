@@ -93,19 +93,15 @@ func TestVerifyDistinguishesMissingToolFromGateFailure(t *testing.T) {
 
 func TestFindVerifyToolRejectsRelativePATHResolution(t *testing.T) {
 	toolDir := t.TempDir()
+	t.Chdir(toolDir)
 	toolName := "markitect-relative-path-probe.exe"
 	if err := os.WriteFile(filepath.Join(toolDir, toolName), []byte("not executed"), 0755); err != nil {
 		t.Fatal(err)
 	}
-	working, err := os.Getwd()
-	if err != nil {
-		t.Fatal(err)
-	}
-	relative, err := filepath.Rel(working, toolDir)
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Setenv("PATH", relative)
+	// Keep the probe on one volume even when the checkout and TEMP differ.
+	// Markitect must reject relative resolution even if Go's ErrDot guard is off.
+	t.Setenv("PATH", ".")
+	t.Setenv("GODEBUG", "execerrdot=0")
 	resolved, err := findVerifyTool(toolName)
 	if err == nil || filepath.IsAbs(resolved) {
 		t.Fatalf("relative PATH entry was accepted: resolved=%q error=%v", resolved, err)
