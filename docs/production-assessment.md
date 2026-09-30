@@ -12,6 +12,10 @@ This version adds deterministic offline content archives, exact Project pins, ex
 
 The release requires a reviewed fixed commit, the complete Windows/Linux CI matrix, deterministic bundle and installation smoke tests, and verified immutable release assets. The release's provenance asset records the exact source and hosted run; use that record for publication status rather than treating this source assessment as a release receipt. See [Content packages](content-packages.md) for supported behavior and [Operations](operations.md) for the publication procedure.
 
+### v0.3.1 correction
+
+The cycle detector also rejects an implementation that needs a Contract bound directly back to itself. Version 0.3.0 omitted that self-selected execution relationship and could accept this invalid graph. Regression tests cover both Project-local and package-local bindings; existing immutable releases remain unchanged.
+
 ## Historical v0.1.0 source and release evidence
 
 The release is bound to merge commit [`45e0017a3d25d2abd464de934b5ef3a802732d0a`](https://github.com/Glacius-Labs/Markitect/commit/45e0017a3d25d2abd464de934b5ef3a802732d0a), whose tree matches reviewed candidate [`4adb45964a172a77a1355c6ea5ac2596c325b90d`](https://github.com/Glacius-Labs/Markitect/commit/4adb45964a172a77a1355c6ea5ac2596c325b90d).
