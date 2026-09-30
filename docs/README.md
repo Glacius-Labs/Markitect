@@ -1,0 +1,11 @@
+# Documentation
+
+| Document | Owns |
+|---|---|
+| [Usage](usage.md) | Implemented format, commands and ordinary work sequence |
+| [Architecture](architecture.md) | Current boundaries, invariants and evidence limits |
+| [Refinement decisions](refinement.md) | Assessment of the supplied concept notes and proposed package/template model |
+| [Implementation plan](implementation-plan.md) | Ordered product work and acceptance criteria |
+| [Konfyra assessment](konfyra-assessment.md) | Dated migration assessment and practical use |
+
+The example and developer commands are routed from the [repository README](../README.md). Design proposals are labelled explicitly and must not be mistaken for supported YAML or CLI syntax.

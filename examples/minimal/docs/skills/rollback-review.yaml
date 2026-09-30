@@ -1,0 +1,14 @@
+apiVersion: markitect.example.org/v1alpha1
+kind: Skill
+metadata:
+  name: rollback-review
+  namespace: sample
+spec:
+  needs:
+    - kind: Contract
+      name: rollback-assessment
+  uses:
+    - kind: Workflow
+      name: rollback-review
+  text: |
+    Review the proposed rollback using the bound assessment capability and the linked workflow.
