@@ -19,7 +19,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/source"
 )
 
-var version = "0.1.0-rc.3"
+var version = "0.1.0"
 
 type report struct {
 	Tool        string            `yaml:"tool"`
@@ -47,11 +47,31 @@ type queryEnvelope struct {
 
 func run(args []string, out, errout io.Writer) int {
 	if len(args) == 0 {
-		fmt.Fprintln(errout, "usage: markitect <check|verify|inventory|context|impact|find|explain|authoring|review|render|format|migrate|schema|package|version> [--repo PATH] [--revision COMMIT]")
+		printUsage(errout)
+		return 2
+	}
+	if args[0] == "--help" || args[0] == "-h" || args[0] == "help" {
+		if len(args) == 1 {
+			printUsage(out)
+			return 0
+		}
+		if args[0] == "help" && len(args) == 2 {
+			return run([]string{args[1], "--help"}, out, errout)
+		}
+		fmt.Fprintln(errout, "help accepts at most one command")
 		return 2
 	}
 	command := args[0]
+	allowed, known := commandFlags(command)
+	if !known {
+		fmt.Fprintf(errout, "unknown command %q\n", command)
+		return 2
+	}
 	if command == "version" {
+		if len(args) == 2 && (args[1] == "--help" || args[1] == "-h") {
+			fmt.Fprintln(out, "usage: markitect version")
+			return 0
+		}
 		if len(args) != 1 {
 			fmt.Fprintln(errout, "version accepts no arguments")
 			return 2
@@ -70,47 +90,30 @@ func run(args []string, out, errout io.Writer) int {
 	query := fs.String("query", "", "literal search text (find)")
 	write := fs.Bool("write", false, "write managed outputs in an isolated worktree")
 	check := fs.Bool("check", false, "check rendered outputs (default)")
-	output := fs.String("output", "", "new release output directory (package)")
+	output := fs.String("output", "", "absent output directory (package) or ZIP file (bundle)")
+	bundlePath := fs.String("bundle", "", "local release ZIP to validate and install")
+	bundleSHA := fs.String("sha256", "", "expected SHA-256 of the release ZIP")
+	profile := fs.String("profile", "konfyra", "migration source profile: konfyra or cockpit")
 	reviewConfig := fs.String("config", "", "repository-relative review configuration in the fixed snapshot")
 	reviewReport := fs.String("report", "", "completed reviewer report to record (local UTF-8 file)")
 	reviewEvidence := fs.String("evidence", "", "previous advisory review record to evaluate (local YAML file)")
+	fs.Usage = func() {
+		fmt.Fprintf(out, "usage: markitect %s [options]\n", command)
+		fs.VisitAll(func(f *flag.Flag) {
+			if allowed[f.Name] {
+				fmt.Fprintf(out, "  --%-12s %s\n", f.Name, f.Usage)
+			}
+		})
+	}
 	if err := fs.Parse(args[1:]); err != nil {
+		if errors.Is(err, flag.ErrHelp) {
+			return 0
+		}
 		return 2
 	}
 	if fs.NArg() > 0 {
 		fmt.Fprintln(errout, "unexpected positional arguments")
 		return 2
-	}
-	allowed := map[string]bool{}
-	if command != "authoring" {
-		allowed["repo"] = true
-	}
-	if command != "schema" && command != "package" && command != "authoring" {
-		allowed["revision"] = true
-	}
-	switch command {
-	case "context", "review", "explain":
-		allowed["kind"] = true
-		allowed["name"] = true
-		allowed["namespace"] = true
-		if command == "review" {
-			allowed["config"] = true
-			allowed["report"] = true
-			allowed["evidence"] = true
-		}
-	case "find":
-		allowed["query"] = true
-		allowed["kind"] = true
-		allowed["namespace"] = true
-	case "impact":
-		allowed["base"] = true
-	case "render", "schema", "format":
-		allowed["write"] = true
-		allowed["check"] = true
-	case "migrate":
-		allowed["write"] = true
-	case "package":
-		allowed["output"] = true
 	}
 	invalid := ""
 	fs.Visit(func(f *flag.Flag) {
@@ -122,8 +125,8 @@ func run(args []string, out, errout io.Writer) int {
 		fmt.Fprintf(errout, "--%s does not apply to %s\n", invalid, command)
 		return 2
 	}
-	if *write && ((command != "render" && command != "migrate" && command != "schema" && command != "format") || *revision != "" || *check) {
-		fmt.Fprintln(errout, "--write only supports render, format, migrate or schema on the working tree")
+	if *write && ((command != "render" && command != "migrate" && command != "schema" && command != "format" && command != "install") || *revision != "" || *check) {
+		fmt.Fprintln(errout, "--write only supports render, format, migrate, schema or install on the working tree")
 		return 2
 	}
 	emit := func(value any) int {
@@ -139,6 +142,12 @@ func run(args []string, out, errout io.Writer) int {
 		return 0
 	}
 	fail := func(err error) int { fmt.Fprintln(errout, err); return 2 }
+	if command == "bundle" {
+		return runBundle(*root, *revision, *output, emit, fail)
+	}
+	if command == "install" {
+		return runInstall(*root, *bundlePath, *bundleSHA, *write, emit, fail)
+	}
 	if command == "authoring" {
 		if fs.NFlag() != 0 {
 			fmt.Fprintln(errout, "authoring accepts no flags; its compiled context has no repository or revision")
@@ -205,9 +214,24 @@ func run(args []string, out, errout io.Writer) int {
 		if err != nil {
 			return fail(err)
 		}
-		files, err := migrate.Konfyra(snap)
+		var files map[string][]byte
+		switch *profile {
+		case "konfyra":
+			files, err = migrate.Konfyra(snap)
+		case "cockpit":
+			files, err = migrate.Cockpit(snap)
+		default:
+			return fail(fmt.Errorf("unsupported migration profile %q", *profile))
+		}
 		if err != nil {
 			return fail(err)
+		}
+		var candidates any
+		if *profile == "konfyra" {
+			candidates, err = migrate.CandidateDependencies(snap)
+			if err != nil {
+				return fail(err)
+			}
 		}
 		paths := make([]string, 0, len(files))
 		for name := range files {
@@ -220,11 +244,7 @@ func run(args []string, out, errout io.Writer) int {
 				return fail(err)
 			}
 		}
-		candidates, err := migrate.CandidateDependencies(snap)
-		if err != nil {
-			return fail(err)
-		}
-		return emit(map[string]any{"status": "migration-plan", "written": *write, "files": paths, "provisional": snap.Provisional, "revision": snap.Revision, "requiresDependencyReview": true, "dependencyCandidates": candidates})
+		return emit(map[string]any{"status": "migration-plan", "profile": *profile, "written": *write, "files": paths, "provisional": snap.Provisional, "revision": snap.Revision, "requiresDependencyReview": true, "dependencyCandidates": candidates})
 	}
 	if command == "inventory" {
 		snap, err := source.Load(*root, *revision)
@@ -294,6 +314,11 @@ func run(args []string, out, errout io.Writer) int {
 	case "format":
 		files, err := app.Format(*root, p, *write)
 		if err != nil {
+			if len(files) > 0 {
+				if code := emit(map[string]any{"status": "failed", "written": files, "recovery": "Inspect the listed paths and Git diff before retrying; the complete operation is not a filesystem transaction."}); code != 0 {
+					return code
+				}
+			}
 			return fail(err)
 		}
 		code := emit(map[string]any{"changed": files, "written": *write})

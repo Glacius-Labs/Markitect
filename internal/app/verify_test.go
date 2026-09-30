@@ -36,11 +36,52 @@ func TestPlanVerifyCommandsUsesFixedSnapshotBootstrapPair(t *testing.T) {
 	if len(withGo) != 3 || withGo[2].tool != "go" || strings.Join(withGo[2].args, " ") != "test -count=1 -v scripts/run-markitect.go scripts/markitect-bootstrap_test.go" {
 		t.Fatalf("Go bootstrap gate was not added accurately: %#v", withGo)
 	}
+	for _, profile := range []string{"konfyra", "cockpit"} {
+		_, err := planVerifyCommands(profile, map[string][]byte{"scripts/run-markitect.go": nil})
+		var verifyErr *VerifyError
+		if !errors.As(err, &verifyErr) || verifyErr.Kind != "incomplete-evidence" || verifyErr.Profile != profile {
+			t.Fatalf("incomplete bootstrap pair was not rejected for %s: %v", profile, err)
+		}
+	}
+}
 
-	_, err = planVerifyCommands("konfyra", map[string][]byte{"scripts/run-markitect.go": nil})
+func TestPlanVerifyCommandsUsesCockpitGoPairOrLegacyPython(t *testing.T) {
+	legacy, err := planVerifyCommands("cockpit", map[string][]byte{
+		"scripts/check_docs.py":      nil,
+		"scripts/render_adapters.py": nil,
+	})
+	if err != nil || len(legacy) != 2 || legacy[0].tool != "python" || legacy[1].tool != "python" {
+		t.Fatalf("historical Cockpit snapshot did not retain Python gates: commands=%#v error=%v", legacy, err)
+	}
+
+	native, err := planVerifyCommands("cockpit", map[string][]byte{
+		"scripts/check_docs.py":         nil,
+		"scripts/render_adapters.py":    nil,
+		"scripts/check-cockpit.go":      nil,
+		"scripts/check-cockpit_test.go": nil,
+	})
+	if err != nil || len(native) != 2 {
+		t.Fatalf("native Cockpit pair did not replace Python gates: commands=%#v error=%v", native, err)
+	}
+	if native[0].tool != "go" || strings.Join(native[0].args, " ") != "run scripts/check-cockpit.go" ||
+		native[1].tool != "go" || strings.Join(native[1].args, " ") != "test -count=1 -v scripts/check-cockpit.go scripts/check-cockpit_test.go" {
+		t.Fatalf("native Cockpit commands were not planned exactly: %#v", native)
+	}
+	nativeWithBootstrap, err := planVerifyCommands("cockpit", map[string][]byte{
+		"scripts/check-cockpit.go":            nil,
+		"scripts/check-cockpit_test.go":       nil,
+		"scripts/run-markitect.go":            nil,
+		"scripts/markitect-bootstrap_test.go": nil,
+	})
+	if err != nil || len(nativeWithBootstrap) != 3 || nativeWithBootstrap[2].tool != "go" ||
+		strings.Join(nativeWithBootstrap[2].args, " ") != "test -count=1 -v scripts/run-markitect.go scripts/markitect-bootstrap_test.go" {
+		t.Fatalf("Cockpit bootstrap pair was not checked as well: commands=%#v error=%v", nativeWithBootstrap, err)
+	}
+
+	_, err = planVerifyCommands("cockpit", map[string][]byte{"scripts/check-cockpit.go": nil})
 	var verifyErr *VerifyError
-	if !errors.As(err, &verifyErr) || verifyErr.Kind != "incomplete-evidence" {
-		t.Fatalf("incomplete bootstrap pair was not rejected as incomplete evidence: %v", err)
+	if !errors.As(err, &verifyErr) || verifyErr.Kind != "incomplete-evidence" || verifyErr.Profile != "cockpit" {
+		t.Fatalf("half Cockpit Go pair fell back instead of failing closed: %v", err)
 	}
 }
 
@@ -73,6 +114,24 @@ func TestVerifyRunsBootstrapTestFromMaterializedSnapshot(t *testing.T) {
 	}
 	if len(results) != 3 || results[2].Profile != "konfyra" || results[2].Tool != "go" || results[2].ExitCode != 0 || !strings.Contains(results[2].Output, "bootstrap from fixed snapshot") {
 		t.Fatalf("Go snapshot gate missing or inaccurate: %#v", results)
+	}
+}
+
+func TestVerifyRunsCockpitGoGatesFromMaterializedSnapshot(t *testing.T) {
+	if _, err := exec.LookPath("go"); err != nil {
+		t.Skip("Go unavailable for native Cockpit gates")
+	}
+	files := map[string][]byte{
+		"scripts/check-cockpit.go":      []byte("package main\nimport \"fmt\"\nfunc main() { fmt.Println(\"Cockpit checker from fixed snapshot\") }\n"),
+		"scripts/check-cockpit_test.go": []byte("package main\nimport \"testing\"\nfunc TestCockpitSnapshot(t *testing.T) { t.Log(\"Cockpit paired test from fixed snapshot\") }\n"),
+	}
+	results, err := verifyRepositoryWithTimeout(cockpitVerifyProject(files), 2*time.Minute)
+	if err != nil {
+		t.Fatalf("native Cockpit verification failed: %v; results=%#v", err, results)
+	}
+	if len(results) != 2 || results[0].Tool != "go" || !strings.Contains(results[0].Output, "Cockpit checker from fixed snapshot") ||
+		results[1].Tool != "go" || !strings.Contains(results[1].Output, "Cockpit paired test from fixed snapshot") {
+		t.Fatalf("native Cockpit commands did not run from the snapshot: %#v", results)
 	}
 }
 
@@ -227,6 +286,16 @@ func konfyraVerifyProject(files map[string][]byte) *Project {
 	}
 	snapshot := &source.Snapshot{Revision: "fixed-test-revision", Files: files, Modes: modes}
 	project := &core.Resource{Kind: "Project", Metadata: core.Metadata{Name: "test"}, Path: "markitect.yaml", Spec: core.Spec{Profile: "konfyra"}}
+	return &Project{Snapshot: snapshot, Graph: &core.Graph{Project: project}}
+}
+
+func cockpitVerifyProject(files map[string][]byte) *Project {
+	modes := make(map[string]string, len(files))
+	for path := range files {
+		modes[path] = "100644"
+	}
+	snapshot := &source.Snapshot{Revision: "fixed-test-revision", Files: files, Modes: modes}
+	project := &core.Resource{Kind: "Project", Metadata: core.Metadata{Name: "test"}, Path: "markitect.yaml", Spec: core.Spec{Profile: "cockpit"}}
 	return &Project{Snapshot: snapshot, Graph: &core.Graph{Project: project}}
 }
 

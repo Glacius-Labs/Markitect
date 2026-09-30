@@ -55,6 +55,8 @@ Project bindings connect a Contract to an Agent, Skill, or Workflow. The impleme
 
 `spec.files` declares additional repository-relative UTF-8 text files needed by a resource. Paths must be explicit normalized paths without globs. Markitect checks that each file exists in the same or an imported area and includes it in that resource's compiled context. These declarations do not infer Markdown links, directory contents, or navigation relationships. A generated Markdown companion for a typed resource must be reached through the typed resource reference instead of `spec.files`.
 
+An explicitly declared `.yaml` or `.yml` may be ordinary input, including a Kubernetes manifest, when it is valid YAML and is not recognizable as a Markitect resource. The Markitect API group and an incomplete envelope with a known kind plus mapping `metadata` and `spec` remain parse errors; malformed YAML also fails closed. Do not list a valid typed resource's source file as an input—reference that resource through the graph.
+
 `markitect schema` checks the generated draft 2020-12 JSON Schema vocabulary emitted as YAML. The schemas help editors with object shape and reject undeclared object properties; parser and graph checks remain authoritative for semantic constraints. These files are not Kubernetes CRDs.
 
 ## Commands
@@ -74,10 +76,14 @@ Examples run from the standalone Markitect repository. Replace `../consumer` and
 | `review` | Record an advisory AI report or determine whether its declared inputs still permit reuse. |
 | `render` | Check generated output drift, or write managed outputs from the working tree. |
 | `format` | Check YAML canonicalization or write canonical YAML from the working tree. |
-| `migrate` | Plan the current Konfyra Markdown-to-YAML migration, or apply it on a non-protected working branch. Reports dependency candidates for human review. |
+| `migrate` | Plan the existing Markdown-to-YAML migration using `--profile konfyra` (default) or `--profile cockpit`, or apply it with `--write` on a non-protected branch. Dependencies still need explicit review. |
 | `schema` | Check schema output drift, or write generated schema YAML. |
 | `package` | Build a deterministic source archive and its YAML version/SHA-256 lock file. |
+| `bundle` | Build the complete five-file distribution from `--revision COMMIT` into an absent `--output FILE.zip`; version must match that source. |
+| `install` | Validate `--bundle FILE.zip --sha256 HASH` and preview a complete pin change; `--write` applies it on a non-protected Git branch. |
 | `version` | Print the CLI version and target platform. |
+
+`markitect --help`, `markitect help COMMAND`, and `markitect COMMAND --help` return usage without reading a repository. Command help shows only applicable flags. Follow [consumer integration](../integration/README.md) for release authentication, installation, upgrades and rollback. A bundle checksum detects changed bytes; trusted release provenance establishes which bytes to accept.
 
 ```powershell
 # Provisional working-tree check
@@ -147,7 +153,7 @@ Both queries accept `--revision COMMIT` and report the selected snapshot. `expla
 
 Omitting `--revision` reads the working tree and marks the result `provisional: true`. This is useful for local feedback, but it is not immutable evidence. Supplying `--revision` makes Markitect resolve a Git commit and read that committed tree. `impact` requires both `--base` and `--revision`. `verify` requires `--revision` and runs the selected profile's fixed checks against a materialized copy of that same snapshot.
 
-Coverage is reported with command results. `check` covers the typed graph, declared inputs, and Markitect-owned outputs. `verify` adds the configured repository gates; the `konfyra` and `cockpit` profiles have adapters, while `generic` currently has no repository gate adapter. The supported profiles invoke consumer-owned checks that currently require `python` or `python3` on `PATH`. The Konfyra adapter adds `go test` for its bootstrap when the fixed snapshot contains both `scripts/run-markitect.go` and `scripts/markitect-bootstrap_test.go`; an incomplete pair fails before execution. Historical snapshots without that Go integration retain their Python gates. Markitect itself, including its bootstrap and tests, is Go; Python belongs to the existing consumer checks. The Konfyra profile retains its existing renderer as the owner of provider outputs during the pilot; Markitect checks and renders its adjacent typed-resource views.
+Coverage is reported with command results. `check` covers the typed graph, declared inputs, and Markitect-owned outputs. `verify` adds the configured repository gates; the `konfyra` and `cockpit` profiles have adapters, while `generic` currently has no repository gate adapter. Cockpit snapshots containing `scripts/check-cockpit.go` and `scripts/check-cockpit_test.go` run their native Go checker and tests. Historical Cockpit snapshots without both files retain their existing Python checks; an incomplete pair fails before execution. Konfyra retains its existing Python renderer and regressions as consumer-owned compatibility. Both profiles add `go test -count=1` for the bootstrap when the snapshot contains both `scripts/run-markitect.go` and `scripts/markitect-bootstrap_test.go`; an incomplete pair also fails. Markitect itself, including bootstrap and tests, is Go. The Konfyra profile retains its existing renderer as the owner of provider outputs; Markitect checks and renders its adjacent typed-resource views.
 
 Every gate has a ten-minute timeout, a streaming 1 MiB output limit and a two-second pipe-wait limit. Failure reports preserve completed and failed gate output with the fixed snapshot identity. A normal nonzero gate exits 1 with `status: failed`; missing tools, missing gate support, incomplete integration, timeout or output overflow exit 2 with `status: incomplete` and a `verify.<kind>` diagnostic. Remaining gates do not run after a failure. [Operations](operations.md) owns recovery and precise process-isolation limits. A passing structural or repository check does not establish semantic review or external acceptance.
 
