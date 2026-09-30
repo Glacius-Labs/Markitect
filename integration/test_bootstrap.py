@@ -14,6 +14,9 @@ from unittest import mock
 
 
 SCRIPT = Path(__file__).with_name("run-markitect.py")
+if not SCRIPT.is_file():
+    # Consumer repositories place this test under scripts/tests/.
+    SCRIPT = Path(__file__).resolve().parents[1] / "run-markitect.py"
 SPEC = importlib.util.spec_from_file_location("markitect_bootstrap", SCRIPT)
 assert SPEC is not None and SPEC.loader is not None
 BOOTSTRAP = importlib.util.module_from_spec(SPEC)
