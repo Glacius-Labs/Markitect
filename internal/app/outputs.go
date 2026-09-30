@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -141,7 +140,7 @@ func WriteOutputs(root string, p *Project) ([]string, error) {
 			return nil, err
 		}
 	} else {
-		branch, err := exec.Command("git", "-c", "safe.directory="+filepath.ToSlash(rootAbs), "-C", rootAbs, "branch", "--show-current").Output()
+		branch, err := source.GitOutput(rootAbs, "branch", "--show-current")
 		if err == nil && (strings.EqualFold(strings.TrimSpace(string(branch)), "master") || strings.EqualFold(strings.TrimSpace(string(branch)), "main") || strings.TrimSpace(string(branch)) == "") {
 			return nil, fmt.Errorf("render --write requires a non-protected branch")
 		}
@@ -239,7 +238,7 @@ func writableBranch(root string) error {
 	if err != nil {
 		return err
 	}
-	branch, err := exec.Command("git", "-c", "safe.directory="+filepath.ToSlash(absolute), "-C", absolute, "branch", "--show-current").Output()
+	branch, err := source.GitOutput(absolute, "branch", "--show-current")
 	if err != nil {
 		return fmt.Errorf("writing canonical sources requires an isolated Git branch: %w", err)
 	}

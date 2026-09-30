@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -31,7 +30,7 @@ func WriteMigration(root string, snap *source.Snapshot, canonical map[string][]b
 	if err != nil {
 		return nil, err
 	}
-	branch, err := exec.Command("git", "-c", "safe.directory="+filepath.ToSlash(absolute), "-C", absolute, "branch", "--show-current").Output()
+	branch, err := source.GitOutput(absolute, "branch", "--show-current")
 	name := strings.TrimSpace(string(branch))
 	if err != nil || name == "" || name == "master" || name == "main" {
 		return nil, fmt.Errorf("migration requires an isolated non-protected Git branch")

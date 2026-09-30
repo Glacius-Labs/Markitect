@@ -2,7 +2,7 @@
 
 Updated 2026-09-30. This is the Markitect product roadmap. The Konfyra work-item dossier remains the owner of that consumer's running delivery state and acceptance. [Architecture](architecture.md) and [refinement decisions](refinement.md) own design; [pilot assessment](konfyra-assessment.md) records observed results.
 
-## 1. Establish the independent project — completed locally
+## 1. Establish the independent project — published, hosted verification in progress
 
 - Preserve existing Go source history in an independent checkout.
 - Move product architecture and planning ownership here; leave relocation pointers in the Cockpit.
@@ -10,7 +10,7 @@ Updated 2026-09-30. This is the Markitect product roadmap. The Konfyra work-item
 - Replace Markitect's Python bootstrap/tests with Go and exercise the integration against Konfyra's existing pinned RC2 engine.
 - Verify standalone builds/tests, consumer bootstrap and generated-view parity without a hidden source dependency on either consumer.
 
-Completion means a project that can be built, understood and changed on its own. The user selected the private GitHub repository `Glacius-Labs/Markitect` and a local checkout under Glacius Labs. The module now follows that repository identity. Reconcile the reviewed branch there, run hosted Windows/Linux gates and provision explicit commit artifacts. API-domain migration, public license and public releases remain separate decisions. Development identifies itself as `0.1.0-rc.3-dev`; existing consumer release pins do not float.
+Completion means a project that can be built, understood and changed on its own. The private GitHub repository `Glacius-Labs/Markitect` now contains the preserved source history, and its canonical checkout is under `Glacius Labs/Markitect`. The module follows that repository identity. Hosted Windows/Linux gates and provisioning of their exact artifact are required before upgrading the pilot. API-domain migration, public license and public releases remain separate decisions. Existing consumer release pins do not float.
 
 ## 2. Improve agent authoring — implemented and exercised locally
 
@@ -35,13 +35,11 @@ Work on `feature/core-authoring` from the independent source repository. Keep fi
 
 The supplied vision is a target, not an instruction to add every interface now. This slice does not require a package resolver, metrics database, MCP server, IDE extension or operator. Their order below follows concrete consumer value. The new vision's optional-authoring wording is superseded by the user's core decision.
 
-## 3. Prove versioned content reuse
+## 3. Establish the supported release boundary
 
-Implement the minimal package slice in [the refined design](refinement.md): package identity, exact version, exports/private closure, qualified references, a versioned lock, offline immutable archive and evidence integration. These are one feature boundary. Include a migration for the existing tool lock before changing its meaning.
+Complete the [operations and release gates](operations.md) before expanding the resource model. Validate hosted installation, isolated Git inputs, bounded verification, portable cache identity, practical authoring, complete pin upgrades and rollback. Preserve failed exercises and the fix that makes their rerun pass. Publish exact source and artifact identity; keep tool readiness separate from consumer human acceptance.
 
-Pilot one small generic engineering-policy package and two synthetic consumers. Keep core authoring owned and released by Markitect itself. Then extract only confirmed generic material from Konfyra. Local customer policy and delivery authority stay at their owner.
-
-Acceptance: checks work offline; exports and version conflicts fail correctly; package-only changes affect context/impact/review; selected Contract implementations remain explicit; a consumer cannot reference private resources directly. No template sync, registry, ranges, solver or transitive imports in this first slice.
+The initial hosted run exposed tests inheriting a protected default branch. The production audit also found inherited Git repository variables and incomplete Go build-cache identity. Fix these concrete issues in shared infrastructure with regressions before provisioning another consumer pin. New discovery interfaces or content packaging do not take precedence over these release blockers.
 
 ## 4. Finish Konfyra acceptance
 
@@ -51,9 +49,17 @@ Use the previous RC2 baseline as evidence for that fixed candidate, not as appro
 
 ## 5. Apply the accepted system to the Cockpit
 
-Migrate after agreed Konfyra acceptance. Use the same released tool and generic package; explicitly compose General, Consiliari, customer and project areas. Verify tasks that stop above project level and tests for cross-customer isolation. Do not create another tool implementation or inherit all customer rules through folder placement.
+Migrate after agreed Konfyra acceptance. Use the same released tool; explicitly compose General, Consiliari, customer and project areas. Verify tasks that stop above project level and tests for cross-customer isolation. Do not create another tool implementation or inherit all customer rules through folder placement. Ordinary documentation can remain Markdown with explicit inputs.
 
-## 6. Add interfaces when they remove measured friction
+## 6. Prove versioned content reuse
+
+Implement the minimal package slice in [the refined design](refinement.md): package identity, exact version, exports/private closure, qualified references, a versioned lock, offline immutable archive and evidence integration. These are one feature boundary. Include a migration for the existing tool lock before changing its meaning.
+
+Pilot one small generic engineering-policy package and two synthetic consumers. Keep core authoring owned and released by Markitect itself. Then extract only confirmed generic material from Konfyra and deliberately adopt the package in both consumers. Local customer policy and delivery authority stay at their owner. Distribution of the compiler and embedded authoring already has a pinned source package; reuse of additional policy content is a separate feature.
+
+Acceptance: checks work offline; exports and version conflicts fail correctly; package-only changes affect context/impact/review; selected Contract implementations remain explicit; a consumer cannot reference private resources directly. No template sync, registry, ranges, solver or transitive imports in this first slice.
+
+## 7. Add interfaces when they remove measured friction
 
 - One local `init` template once package composition is proven.
 - MCP over the existing query API when agent calls benefit.
@@ -65,7 +71,7 @@ CI enforcement should arrive with hosted delivery, before optional user interfac
 
 ## Glacius Labs reconciliation
 
-The GitHub repository is the product source owner. Move the complete independent local repository into `Glacius Labs/Markitect`, repair its registered worktree paths, and preserve the existing history rather than copying a second implementation. Keep the active implementation worktree until reconciliation and verification finish. Update Cockpit relocation pointers to the stable repository URLs. CI publishes only commit-specific development artifacts after both platform gates pass; consumers adopt a selected archive, lock and Go bootstrap through their own candidate workflow. No branch-following tool dependency or automatic promotion is introduced.
+The GitHub repository is the product source owner. The independent local repository has moved into `Glacius Labs/Markitect`; its registered worktree path is repaired and its full history is preserved. Cockpit relocation pointers use the stable repository URLs. Keep the active implementation worktree until reconciliation and verification finish. CI publishes only commit-specific artifacts after both platform gates pass; consumers adopt a selected archive, lock and Go bootstrap through their own candidate workflow.
 
 ## Measures
 

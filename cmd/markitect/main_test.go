@@ -10,12 +10,12 @@ import (
 	"strings"
 	"testing"
 
-	"go.yaml.in/yaml/v3"
 	"github.com/Glacius-Labs/Markitect/internal/app"
 	"github.com/Glacius-Labs/Markitect/internal/core"
 	"github.com/Glacius-Labs/Markitect/internal/format"
 	"github.com/Glacius-Labs/Markitect/internal/render"
 	"github.com/Glacius-Labs/Markitect/internal/source"
+	"go.yaml.in/yaml/v3"
 )
 
 const cliNamespace = "cockpit-general"
@@ -115,6 +115,7 @@ func git(t *testing.T, root string, args ...string) string {
 	t.Helper()
 	cmdArgs := append([]string{"-c", "safe.directory=" + filepath.ToSlash(root), "-C", root}, args...)
 	cmd := exec.Command("git", cmdArgs...)
+	cmd.Env = source.CleanGitEnv()
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		t.Fatalf("git %v failed: %v\n%s", args, err, out)

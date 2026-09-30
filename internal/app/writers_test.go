@@ -21,7 +21,9 @@ func initWriterRepo(t *testing.T, root string) {
 func runWriterGit(t *testing.T, root string, args ...string) string {
 	t.Helper()
 	gitArgs := append([]string{"-c", "safe.directory=" + filepath.ToSlash(root), "-C", root}, args...)
-	out, err := exec.Command("git", gitArgs...).CombinedOutput()
+	command := exec.Command("git", gitArgs...)
+	command.Env = source.CleanGitEnv()
+	out, err := command.CombinedOutput()
 	if err != nil {
 		t.Fatalf("git %v failed: %v\n%s", args, err, out)
 	}

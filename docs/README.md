@@ -4,6 +4,7 @@
 |---|---|
 | [Usage](usage.md) | Implemented format, commands and ordinary work sequence |
 | [Architecture](architecture.md) | Current boundaries, invariants and evidence limits |
+| [Operations and releases](operations.md) | Supported operation, parallel reviews, failure recovery, upgrades and release gates |
 | [Refinement decisions](refinement.md) | Assessment of the supplied concept notes and proposed package/template model |
 | [Implementation plan](implementation-plan.md) | Ordered product work and acceptance criteria |
 | [Measurement](measurement.md) | Correctness scenarios, bounded benchmarks and controlled model comparisons |

@@ -323,8 +323,7 @@ func loadBlobs(root string, files []treeFile, s *Snapshot) error {
 		input.WriteString(file.oid)
 		input.WriteByte('\n')
 	}
-	cmd := exec.Command("git", "-c", "safe.directory="+root, "cat-file", "--batch")
-	cmd.Dir = root
+	cmd := gitCommand(root, "cat-file", "--batch")
 	cmd.Stdin = &input
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
@@ -398,9 +397,15 @@ func readBatchHeader(r *bufio.Reader) (string, error) {
 }
 
 func git(root string, args ...string) ([]byte, error) {
-	gitArgs := append([]string{"-c", "safe.directory=" + root}, args...)
-	cmd := exec.Command("git", gitArgs...)
-	cmd.Dir = root
+	return GitOutput(root, args...)
+}
+
+// GitOutput runs Git against root while discarding inherited Git environment
+// variables. Those variables can silently redirect repository discovery,
+// indexes, objects or configuration to another checkout. The exact repository
+// is selected explicitly and marked safe for Git's ownership check.
+func GitOutput(root string, args ...string) ([]byte, error) {
+	cmd := gitCommand(root, args...)
 	out, err := cmd.Output()
 	if err == nil {
 		return out, nil
@@ -410,6 +415,35 @@ func git(root string, args ...string) ([]byte, error) {
 		return nil, fmt.Errorf("%w: %s", err, strings.TrimSpace(string(ee.Stderr)))
 	}
 	return nil, err
+}
+
+// CleanGitEnv returns the process environment without Git-specific variables.
+// It is also used for child gate processes so an ambient GIT_DIR cannot make
+// their repository checks inspect a different checkout.
+func CleanGitEnv() []string {
+	current := os.Environ()
+	clean := make([]string, 0, len(current))
+	for _, entry := range current {
+		key, _, ok := strings.Cut(entry, "=")
+		if !ok || strings.HasPrefix(strings.ToUpper(key), "GIT_") {
+			continue
+		}
+		clean = append(clean, entry)
+	}
+	return clean
+}
+
+func gitCommand(root string, args ...string) *exec.Cmd {
+	abs, err := filepath.Abs(root)
+	if err != nil {
+		// Callers validate and resolve root before invoking Git. Preserve a
+		// deterministic failing command if Abs nevertheless fails.
+		abs = root
+	}
+	gitArgs := append([]string{"--no-replace-objects", "-c", "safe.directory=" + filepath.ToSlash(abs), "-C", abs}, args...)
+	cmd := exec.Command("git", gitArgs...)
+	cmd.Env = CleanGitEnv()
+	return cmd
 }
 
 // Digest returns a stable SHA-256 digest of sorted paths, Git modes and bytes.
