@@ -12,7 +12,7 @@
 | `internal/app` | Context, impact, evidence and controlled writes |
 | `internal/authoring` | Embedded core authoring resources compiled through the application API |
 | `internal/render` | Managed Markdown/provider projections |
-| `internal/migrate` | Existing Konfyra migration adapter |
+| `internal/migrate` | Existing Konfyra and Cockpit migration adapters |
 | `internal/release` | Deterministic source archives and release bundles |
 | `internal/app/install.go` | Verified five-file consumer pin plan and application |
 | `integration` | Standard-library Go consumer bootstrap |

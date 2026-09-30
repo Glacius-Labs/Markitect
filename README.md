@@ -4,11 +4,11 @@ Markitect treats the rules, workflows, skills, agents and context around AI-assi
 
 Humans describe intent. Agents maintain the resources. Markitect supports authoring and checks their structure. Core authoring guidance ships with the tool; structural queries help agents find the canonical owner and explain dependencies.
 
-This is the independent [Glacius Labs Markitect source repository](https://github.com/Glacius-Labs/Markitect). Konfyra consumes a pinned release; Markitect also has a Go-native Cockpit verification profile, while Cockpit adoption and acceptance remain separate. Neither repository is required to build or test the tool. The source version is **0.1.0**. A version string alone does not establish a published or accepted release: use only an exact immutable release whose metadata and successful run identify the intended source commit. Consumer adoption and acceptance are recorded in each consumer's delivery dossier.
+This is the independent [Glacius Labs Markitect source repository](https://github.com/Glacius-Labs/Markitect). Konfyra and the AI Cockpit consume the same pinned release; neither repository is required to build or test the tool. The published private release is **[v0.1.0](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.1.0)**. Verify its immutable metadata and successful run against the intended source commit. Consumer integration and acceptance are recorded separately in each consumer's delivery route.
 
 ## Start
 
-Building and testing this source checkout requires Git and Go 1.27.1 or later. Consumer bootstrap execution has the same Go prerequisite. A future native release binary can run the CLI without Go; [integration](integration/README.md) documents its planned download and verification path.
+Building and testing this source checkout requires Git and Go 1.27.1 or later. Consumer bootstrap execution has the same Go prerequisite. Published Windows amd64 and Linux amd64 native binaries can run the CLI without Go; consumer verification still needs the tools required by its gates. [Integration](integration/README.md) documents download verification and installation.
 
 ```powershell
 # Optional caches when the shared Go cache is not writable
@@ -36,6 +36,7 @@ The [minimal example](examples/minimal/README.md) demonstrates all six content k
 - [Schemas](schema/Project.yaml): generated YAML schemas; parser and graph checks remain authoritative.
 - [Consumer integration](integration/README.md): pinned source packages and bootstrap.
 - [Operations and releases](docs/operations.md): parallel reviews, supported platforms, failure recovery and release gates.
+- [Production delivery assessment](docs/production-assessment.md): `v0.1.0` release evidence, source support boundary and separate consumer acceptance.
 
 Implemented: strict YAML, six resource kinds, scopes, references, Contracts, immutable Git snapshots, structural queries, bundled core authoring, context compilation, impact, managed rendering, advisory review reuse, fixed-revision release bundles and safe install planning/application. Content packages, template initialization, MCP/LSP and Kubernetes are design work. Markitect does not prove arbitrary prose consistent or enforce an agent's runtime behavior.
 

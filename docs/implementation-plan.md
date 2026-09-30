@@ -1,6 +1,6 @@
 # Implementation plan
 
-Updated 2026-09-30. This is the Markitect product roadmap. The Konfyra work-item dossier remains the owner of that consumer's running delivery state and acceptance. [Architecture](architecture.md) and [refinement decisions](refinement.md) own design; [pilot assessment](konfyra-assessment.md) records observed results.
+Updated 2026-09-30. This is the Markitect product roadmap. Each consumer owns its delivery state and acceptance. [Architecture](architecture.md) and [refinement decisions](refinement.md) own design; the [production delivery assessment](production-assessment.md) records the current release and bounded consumer results. Earlier assessments remain dated evidence.
 
 ## 1. Establish the independent project — published and provisioned
 
@@ -10,7 +10,7 @@ Updated 2026-09-30. This is the Markitect product roadmap. The Konfyra work-item
 - Replace Markitect's Python bootstrap/tests with Go and exercise the integration against Konfyra's existing pinned RC2 engine.
 - Verify standalone builds/tests, consumer bootstrap and generated-view parity without a hidden source dependency on either consumer.
 
-The private GitHub repository `Glacius-Labs/Markitect` contains the preserved source history, and its canonical checkout is under `Glacius Labs/Markitect`. The module follows that repository identity. RC3 passed hosted Windows/Linux gates; its exact four-file artifact was downloaded, verified and deliberately adopted by the Konfyra pilot. The [source release assessment](release-assessment.md) records the commits, archive and installation evidence. API-domain migration, public license and public releases remain separate decisions. Existing consumer release pins do not float.
+The private GitHub repository `Glacius-Labs/Markitect` contains the preserved source history, and its canonical checkout is under `Glacius Labs/Markitect`. The module follows that repository identity. Immutable `v0.1.0` passed hosted Windows/Linux source and provisioning gates and supplies a verified five-file consumer pin. Its release, install and rollback evidence is in the production delivery assessment. API-domain migration, public license and public releases remain separate decisions. Existing consumer release pins do not float.
 
 ## 2. Improve agent authoring — implemented and exercised locally
 
@@ -22,7 +22,7 @@ The [actual exercise](authoring-assessment.md) records the initial failed bounda
 
 ### Delivery plan from the vision
 
-Work on `feature/core-authoring` from the independent source repository. Keep file ownership disjoint while implementing; integrate and review one candidate before changing a consumer pin.
+The core-authoring slice below was implemented on its feature branch and integrated into the independent source repository. Continue keeping file ownership disjoint during parallel implementation; integrate and review a candidate before changing a consumer pin.
 
 | Work | Artifact and owner | Acceptance |
 |---|---|---|
@@ -35,11 +35,11 @@ Work on `feature/core-authoring` from the independent source repository. Keep fi
 
 The supplied vision is a target, not an instruction to add every interface now. This slice does not require a package resolver, metrics database, MCP server, IDE extension or operator. Their order below follows concrete consumer value. The new vision's optional-authoring wording is superseded by the user's core decision.
 
-## 3. Establish the supported release boundary
+## 3. Establish the supported release boundary — delivered as v0.1.0
 
 Complete the [operations and release gates](operations.md) before expanding the resource model. Validate hosted installation, isolated Git inputs, bounded verification, portable cache identity, practical authoring, complete pin upgrades and rollback. Preserve failed exercises and the fix that makes their rerun pass. Publish exact source and artifact identity; keep tool readiness separate from consumer human acceptance.
 
-The initial hosted run exposed tests inheriting a protected default branch. The production audit also found inherited Git repository variables and incomplete Go build-cache identity. RC3 repairs these issues and the subsequent independent verifier/bootstrap findings; the release assessment records actual installation and rollback evidence. Practical consumer checks and acceptance below remain distinct from the source distribution. New discovery interfaces or content packaging do not take precedence over unresolved consumer findings.
+The initial hosted run exposed tests inheriting a protected default branch. The production audit also found inherited Git repository variables and incomplete Go build-cache identity. Those findings were repaired and independently rechecked before the immutable release. The production delivery assessment records hosted gates, actual installation, rollback, safe-writer and release-publication boundaries. Practical consumer checks and acceptance below remain distinct from the source distribution.
 
 ## 4. Finish Konfyra acceptance
 
@@ -47,9 +47,9 @@ Keep its dedicated pilot branch as the testbed. Re-evaluate evidence for any new
 
 Use the previous RC2 baseline as evidence for that fixed candidate, not as approval of later changes. A renderer replacement is its own parity exercise; the existing consumer renderer currently owns provider mappings and retirements.
 
-## 5. Apply the accepted system to the Cockpit
+## 5. Apply the released system to the Cockpit — migrated and exercised
 
-Migrate after agreed Konfyra acceptance. Use the same released tool; explicitly compose General, Consiliari, customer and project areas. Verify tasks that stop above project level and tests for cross-customer isolation. Do not create another tool implementation or inherit all customer rules through folder placement. Ordinary documentation can remain Markdown with explicit inputs.
+The user's subsequent delivery mandate authorized both consumer migrations with separate acceptance routes. The Cockpit uses the same released tool and explicitly composes General, Consiliari, customer and project areas. Its existing mechanisms have canonical YAML and generated reading/provider views; its checker and bootstrap are Go. Fixed checks, above-project authoring, scope selection and review reuse are recorded in the production delivery assessment. Context selection excludes unrelated resource bodies but includes the full Project topology; it is not a confidentiality boundary. Ordinary documentation remains Markdown with explicit inputs where needed.
 
 ## 6. Prove versioned content reuse
 
@@ -67,11 +67,11 @@ Acceptance: checks work offline; exports and version conflicts fail correctly; p
 - Graph visualization as derived output.
 - Runtime/operator integration only after there is real desired state to reconcile.
 
-CI enforcement should arrive with hosted delivery, before optional user interfaces. No obligation to follow the concept note's illustrative LSP-before-MCP sequence.
+Hosted source and release gates are established. Preserve those gates when adding optional user interfaces. There is no obligation to follow the concept note's illustrative LSP-before-MCP sequence.
 
 ## Glacius Labs reconciliation
 
-The GitHub repository is the product source owner. The independent local repository has moved into `Glacius Labs/Markitect`; its registered worktree path is repaired and its full history is preserved. Cockpit relocation pointers use the stable repository URLs. Keep the active implementation worktree until reconciliation and verification finish. CI publishes only commit-specific artifacts after both platform gates pass; consumers adopt a selected archive, lock and Go bootstrap through their own candidate workflow.
+The GitHub repository is the product source owner. The independent local repository has moved into `Glacius Labs/Markitect`; its registered worktree path is repaired and its full history is preserved. Cockpit relocation pointers use the stable repository URLs. Keep the active implementation worktree until reconciliation and verification finish. CI assembles commit-specific artifacts after both platform gates pass; the authenticated owner publishes the immutable release using the Go publisher. Consumers install the verified complete five-file pin through their own candidate workflow.
 
 ## Measures
 
