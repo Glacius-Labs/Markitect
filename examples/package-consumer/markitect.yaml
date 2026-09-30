@@ -1,0 +1,16 @@
+apiVersion: markitect.example.org/v1alpha1
+kind: Project
+metadata:
+    name: package-consumer
+spec:
+    targets:
+        - codex
+    areas:
+        - name: consumer
+          path: docs
+    packages:
+        - name: review-guidance
+          version: 1.0.0
+          source: git:2e15d6c1aa2bf5c9008a451b40c5337e2a0b9e7f
+          archive: packages/review-guidance-1.0.0.zip
+          sha256: b100bb24373c7b5d3da5c162aac58ae58069ba93b902e71ad28309720c02724f

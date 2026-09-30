@@ -18,6 +18,7 @@ func printUsage(out io.Writer) {
 	fmt.Fprintln(out, "  check, verify, inventory    Validate a project and its repository gates")
 	fmt.Fprintln(out, "  context, impact, find, explain, review    Inspect and review fixed inputs")
 	fmt.Fprintln(out, "  authoring, render, format       Author canonical resources")
+	fmt.Fprintln(out, "  pack                         Build an offline content package")
 	fmt.Fprintln(out, "  bundle, install, package, schema, version")
 	fmt.Fprintln(out, "Use 'markitect help COMMAND' for applicable options.")
 }
@@ -29,11 +30,11 @@ func commandFlags(command string) (map[string]bool, bool) {
 	case "check", "verify", "inventory":
 		names = []string{"repo", "revision"}
 	case "context", "explain":
-		names = []string{"repo", "revision", "kind", "name", "namespace"}
+		names = []string{"repo", "revision", "kind", "name", "namespace", "package"}
 	case "review":
-		names = []string{"repo", "revision", "kind", "name", "namespace", "config", "report", "evidence"}
+		names = []string{"repo", "revision", "kind", "name", "namespace", "package", "config", "report", "evidence"}
 	case "find":
-		names = []string{"repo", "revision", "query", "kind", "namespace"}
+		names = []string{"repo", "revision", "query", "kind", "namespace", "package"}
 	case "impact":
 		names = []string{"repo", "revision", "base"}
 	case "render", "format":
@@ -42,7 +43,7 @@ func commandFlags(command string) (map[string]bool, bool) {
 		names = []string{"repo", "write", "check"}
 	case "package":
 		names = []string{"repo", "output"}
-	case "bundle":
+	case "bundle", "pack":
 		names = []string{"repo", "revision", "output"}
 	case "install":
 		names = []string{"repo", "bundle", "sha256", "write"}

@@ -104,3 +104,42 @@ func TestResolveRejectsBinaryOrInvalidUTF8InputContent(t *testing.T) {
 		t.Fatalf("expected binary diagnostic, got %#v", diagnostics)
 	}
 }
+
+func TestResolveWithPackagesSeparatesOriginsAndCannotReadConsumerFiles(t *testing.T) {
+	project := fixtureResource("Project", "", "sample", "markitect.yaml")
+	project.Spec.Areas = []core.Area{{Name: "local", Path: "docs/local"}}
+	manifest := fixtureResource("Package", "", "policy-set", "markitect-package.yaml")
+	manifest.Package = "policy-set"
+	manifest.Spec.Areas = []core.Area{{Name: "content", Path: "content"}}
+	local := fixtureResource("Workflow", "local", "build", "docs/local/build.yaml")
+	local.Spec.Files = []string{"docs/local/evidence.md"}
+	imported := fixtureResource("Rule", "content", "policy", "content/rules/policy.yaml")
+	imported.Package = "policy-set"
+	imported.Spec.Files = []string{"content/data.md", "content/evidence.md", "../escape.md"}
+	g := &core.Graph{
+		Project:  project,
+		Packages: map[string]*core.Resource{"policy-set": manifest},
+		Resources: map[string]*core.Resource{
+			project.Key():       project,
+			local.Key():         local,
+			imported.GraphKey(): imported,
+			manifest.GraphKey(): manifest,
+		},
+	}
+	consumerFiles := map[string][]byte{"docs/local/evidence.md": []byte("consumer-only"), "content/evidence.md": []byte("consumer-only")}
+	archiveFiles := map[string]map[string][]byte{"policy-set": {
+		"content/data.md": []byte("package-only"),
+	}}
+	resolved, diagnostics := ResolveWithPackages(g, consumerFiles, archiveFiles)
+	if got := resolved[local.GraphKey()]; len(got) != 1 || got[0] != "docs/local/evidence.md" {
+		t.Fatalf("local inputs = %#v", got)
+	}
+	if got := resolved[imported.GraphKey()]; len(got) != 1 || got[0] != "content/data.md" {
+		t.Fatalf("package inputs = %#v", got)
+	}
+	for _, code := range []string{"input.missing", "input.path"} {
+		if !diagnosticExists(diagnostics, code) {
+			t.Errorf("expected %s for package-origin isolation, got %#v", code, diagnostics)
+		}
+	}
+}

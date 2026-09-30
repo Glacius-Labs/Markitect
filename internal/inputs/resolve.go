@@ -17,12 +17,20 @@ import (
 // repository snapshot and returns resolved paths grouped by resource key.
 // The paths in each slice retain the order declared in the resource.
 func Resolve(graph *core.Graph, files map[string][]byte) (map[string][]string, []core.Diagnostic) {
+	return ResolveWithPackages(graph, files, nil)
+}
+
+// ResolveWithPackages validates declared ordinary inputs in their origin's
+// immutable file set. Repository resources read from files; package resources
+// read only from the archive selected for their Resource.Package.
+func ResolveWithPackages(graph *core.Graph, files map[string][]byte, packageFiles map[string]map[string][]byte) (map[string][]string, []core.Diagnostic) {
 	resolved := map[string][]string{}
 	var diagnostics []core.Diagnostic
 	add := func(resource *core.Resource, code, message string) {
 		d := core.Diagnostic{Code: code, Message: message}
 		if resource != nil {
 			d.Path, d.Line = resource.Path, resource.Line
+			d.Package = resource.Package
 		}
 		diagnostics = append(diagnostics, d)
 	}
@@ -44,9 +52,35 @@ func Resolve(graph *core.Graph, files map[string][]byte) (map[string][]string, [
 		if resource == nil || len(resource.Spec.Files) == 0 {
 			continue
 		}
-		if resource.Kind == "Project" {
-			add(resource, "input.project-files", "Project resources must not declare external input files")
+		graphKey := resource.GraphKey()
+		if graphKey == "" {
+			graphKey = key
+		}
+		if resource.Kind == "Project" || resource.Kind == "Package" {
+			code := "input.project-files"
+			if resource.Kind == "Package" {
+				code = "input.package-files"
+			}
+			add(resource, code, "Project and Package manifests must not declare external input files")
 			continue
+		}
+		originFiles := files
+		areas := graph.Project.Spec.Areas
+		projectPath := graph.Project.Path
+		if resource.Package != "" {
+			var ok bool
+			originFiles, ok = packageFiles[resource.Package]
+			if !ok {
+				add(resource, "input.package", fmt.Sprintf("package input origin %q has no verified archive files", resource.Package))
+				continue
+			}
+			manifest := graph.Packages[resource.Package]
+			if manifest == nil {
+				add(resource, "input.package", fmt.Sprintf("package input origin %q has no manifest", resource.Package))
+				continue
+			}
+			areas = manifest.Spec.Areas
+			projectPath = manifest.Path
 		}
 		declared := make([]string, 0, len(resource.Spec.Files))
 		seen := map[string]bool{}
@@ -61,16 +95,16 @@ func Resolve(graph *core.Graph, files map[string][]byte) (map[string][]string, [
 				continue
 			}
 			seen[clean] = true
-			if isProjectConfig(clean, graph.Project.Path) {
+			if isProjectConfig(clean, projectPath) || (resource.Package != "" && path.Base(clean) == "markitect-package.yaml") {
 				add(resource, "input.project-config", fmt.Sprintf("project configuration %q cannot be an external input", clean))
 				continue
 			}
-			if companion, typed := typedCompanion(graph, clean); typed {
-				add(resource, "input.typed-companion", fmt.Sprintf("%q is the generated view for typed resource %s; reference the resource with uses or rules", clean, companion.Key()))
+			if companion, typed := typedCompanion(graph, resource.Package, clean); typed {
+				add(resource, "input.typed-companion", fmt.Sprintf("%q is the generated view for typed resource %s; reference the resource with uses or rules", clean, companion.GraphKey()))
 				continue
 			}
-			sourceArea := owner(graph, resource.Path)
-			inputArea := owner(graph, clean)
+			sourceArea := owner(areas, resource.Path)
+			inputArea := owner(areas, clean)
 			if sourceArea == nil || inputArea == nil {
 				add(resource, "input.area", fmt.Sprintf("input path %q or its resource is outside every project area", clean))
 				continue
@@ -79,12 +113,12 @@ func Resolve(graph *core.Graph, files map[string][]byte) (map[string][]string, [
 				add(resource, "input.scope", fmt.Sprintf("input path %q belongs to area %q, which area %q does not import", clean, inputArea.Name, sourceArea.Name))
 				continue
 			}
-			data, ok := files[clean]
+			data, ok := originFiles[clean]
 			if !ok {
-				if hasDescendant(files, clean) {
+				if hasDescendant(originFiles, clean) {
 					add(resource, "input.directory", fmt.Sprintf("input path %q names a directory, not a file", clean))
 				} else {
-					add(resource, "input.missing", fmt.Sprintf("input file %q is missing from the repository snapshot", clean))
+					add(resource, "input.missing", fmt.Sprintf("input file %q is missing from its origin's immutable file set", clean))
 				}
 				continue
 			}
@@ -94,10 +128,13 @@ func Resolve(graph *core.Graph, files map[string][]byte) (map[string][]string, [
 			}
 			declared = append(declared, clean)
 		}
-		resolved[key] = declared
+		resolved[graphKey] = declared
 	}
 	sort.Slice(diagnostics, func(i, j int) bool {
 		a, b := diagnostics[i], diagnostics[j]
+		if a.Package != b.Package {
+			return a.Package < b.Package
+		}
 		if a.Code != b.Code {
 			return a.Code < b.Code
 		}
@@ -133,11 +170,11 @@ func safePath(file string) (string, error) {
 	return file, nil
 }
 
-func owner(graph *core.Graph, file string) *core.Area {
+func owner(areas []core.Area, file string) *core.Area {
 	bestLength := -1
 	var best *core.Area
-	for i := range graph.Project.Spec.Areas {
-		area := &graph.Project.Spec.Areas[i]
+	for i := range areas {
+		area := &areas[i]
 		root, candidate := clean(area.Path), clean(file)
 		if !within(candidate, root) {
 			continue
@@ -171,7 +208,7 @@ func isProjectConfig(file, projectPath string) bool {
 	return (projectPath != "" && file == clean(projectPath)) || path.Base(file) == "markitect.yaml"
 }
 
-func typedCompanion(graph *core.Graph, file string) (*core.Resource, bool) {
+func typedCompanion(graph *core.Graph, origin, file string) (*core.Resource, bool) {
 	keys := make([]string, 0, len(graph.Resources))
 	for key := range graph.Resources {
 		keys = append(keys, key)
@@ -179,7 +216,7 @@ func typedCompanion(graph *core.Graph, file string) (*core.Resource, bool) {
 	sort.Strings(keys)
 	for _, key := range keys {
 		resource := graph.Resources[key]
-		if resource == nil || resource.Kind == "Project" || resource.Path == "" {
+		if resource == nil || resource.Kind == "Project" || resource.Kind == "Package" || resource.Package != origin || resource.Path == "" {
 			continue
 		}
 		ext := path.Ext(resource.Path)

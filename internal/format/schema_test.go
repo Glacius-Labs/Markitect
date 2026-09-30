@@ -20,7 +20,7 @@ func TestSchemasAreDeterministicAndCoverEveryKind(t *testing.T) {
 		t.Fatal(err)
 	}
 	want := []string{
-		"schema/Agent.yaml", "schema/Contract.yaml", "schema/Project.yaml",
+		"schema/Agent.yaml", "schema/Contract.yaml", "schema/Package.yaml", "schema/Project.yaml",
 		"schema/Rule.yaml", "schema/Skill.yaml", "schema/Text.yaml", "schema/Workflow.yaml",
 	}
 	got := make([]string, 0, len(first))
@@ -43,7 +43,7 @@ func TestSchemasMatchAllowedSpecFieldsAndKeepObjectsStrict(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, kind := range []string{"Text", "Rule", "Workflow", "Skill", "Agent", "Contract", "Project"} {
+	for _, kind := range []string{"Text", "Rule", "Workflow", "Skill", "Agent", "Contract", "Project", "Package"} {
 		t.Run(kind, func(t *testing.T) {
 			var document map[string]any
 			if err := yaml.Unmarshal(schemas["schema/"+kind+".yaml"], &document); err != nil {
@@ -67,9 +67,9 @@ func TestSchemasMatchAllowedSpecFieldsAndKeepObjectsStrict(t *testing.T) {
 				t.Error("metadata.name is not required")
 			}
 			metadataProperties := mapping(t, metadata["properties"])
-			if kind == "Project" {
+			if kind == "Project" || kind == "Package" {
 				if _, ok := metadataProperties["namespace"]; ok {
-					t.Error("Project metadata unexpectedly allows namespace")
+					t.Errorf("%s metadata unexpectedly allows namespace", kind)
 				}
 			} else if _, ok := metadataProperties["namespace"]; !ok {
 				t.Error("metadata.namespace is missing")
@@ -97,10 +97,48 @@ func TestSchemasMatchAllowedSpecFieldsAndKeepObjectsStrict(t *testing.T) {
 				if _, ok := properties["profile"]; ok {
 					t.Error("removed Project spec.profile is still in the schema")
 				}
+			} else if kind == "Package" {
+				for _, field := range []string{"version", "areas", "exports"} {
+					if !containsString(sequence(t, spec["required"]), field) {
+						t.Errorf("Package spec.%s is not required", field)
+					}
+				}
 			} else if !containsString(sequence(t, spec["required"]), "text") {
 				t.Errorf("%s spec.text is not required", kind)
 			}
 		})
+	}
+}
+
+func TestPackageSchemaPinsAndExportsStayStructurallyQualified(t *testing.T) {
+	schemas, err := Schemas()
+	if err != nil {
+		t.Fatal(err)
+	}
+	var projectDocument, packageDocument map[string]any
+	if err := yaml.Unmarshal(schemas["schema/Project.yaml"], &projectDocument); err != nil {
+		t.Fatal(err)
+	}
+	if err := yaml.Unmarshal(schemas["schema/Package.yaml"], &packageDocument); err != nil {
+		t.Fatal(err)
+	}
+	projectSpec := mapping(t, mapping(t, projectDocument["properties"])["spec"])
+	pins := mapping(t, mapping(t, mapping(t, projectSpec["properties"])["packages"])["items"])
+	for _, field := range []string{"name", "version", "source", "archive", "sha256"} {
+		if !containsString(sequence(t, pins["required"]), field) {
+			t.Errorf("package pin %s is not required", field)
+		}
+	}
+	if pins["additionalProperties"] != false {
+		t.Errorf("package pin must reject unknown fields: %#v", pins)
+	}
+	packageSpec := mapping(t, mapping(t, packageDocument["properties"])["spec"])
+	exports := mapping(t, mapping(t, mapping(t, packageSpec["properties"])["exports"])["items"])
+	if _, ok := mapping(t, exports["properties"])["package"]; ok {
+		t.Error("package exports must not reference another package")
+	}
+	if !reflect.DeepEqual(sequence(t, exports["required"]), []any{"kind", "namespace", "name"}) {
+		t.Errorf("package exports are not fully qualified: %#v", exports["required"])
 	}
 }
 

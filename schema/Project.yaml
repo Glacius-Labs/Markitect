@@ -41,6 +41,8 @@ properties:
                                         type: string
                                     namespace:
                                         type: string
+                                    package:
+                                        type: string
                                 required:
                                     - name
                                 type: object
@@ -63,6 +65,8 @@ properties:
                                     type: string
                                 namespace:
                                     type: string
+                                package:
+                                    type: string
                             required:
                                 - name
                             type: object
@@ -74,6 +78,8 @@ properties:
                                 name:
                                     type: string
                                 namespace:
+                                    type: string
+                                package:
                                     type: string
                             required:
                                 - name
@@ -108,6 +114,33 @@ properties:
                         - run
                     type: object
                 type: array
+            packages:
+                items:
+                    additionalProperties: false
+                    properties:
+                        archive:
+                            pattern: ^(?!/)(?!.*(?:^|/)\.\.?/)[^\\:*?\[\]{}\x00]+\.zip$
+                            type: string
+                        name:
+                            pattern: ^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$
+                            type: string
+                        sha256:
+                            pattern: ^[0-9a-f]{64}$
+                            type: string
+                        source:
+                            minLength: 1
+                            type: string
+                        version:
+                            pattern: ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$
+                            type: string
+                    required:
+                        - name
+                        - version
+                        - source
+                        - archive
+                        - sha256
+                    type: object
+                type: array
             ruleAdapters:
                 additionalProperties:
                     items:
@@ -118,6 +151,8 @@ properties:
                             name:
                                 type: string
                             namespace:
+                                type: string
+                            package:
                                 type: string
                         required:
                             - name

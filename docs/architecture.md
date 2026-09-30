@@ -32,7 +32,8 @@ Resources have local identity `namespace/kind/name`; the Project has identity `k
 | Skill | Agent entrypoint to a procedure |
 | Agent | Responsibility and supported provider settings |
 | Contract | Required kind and symbolic input/output signature |
-| Project | Areas, imports, bindings, checks, and render configuration |
+| Project | Areas, imports, bindings, checks, render configuration, and exact direct package pins |
+| Package | A package archive manifest with areas, exports, a version, and optional package-local bindings |
 
 `rules` declares requirements; `uses` declares concrete dependencies; `needs` requires a Contract; `implements` promises its signature; Project bindings select implementations. `files` declares exact ordinary UTF-8 inputs. Prose links are navigation and are not inferred dependencies. Area ownership and access follow configured paths and explicit imports; namespaces do not create inheritance.
 
@@ -45,6 +46,8 @@ Strict parsing rejects unknown fields, duplicate identities, extra YAML document
 The core does not depend on a model API, IDE, provider SDK, or repository-specific policy. The CLI, Git reader, filesystem writers, release packaging, and explicitly configured output adapters are boundaries around the core. `verify` executes only the commands declared by the selected Project. It neither chooses a repository profile nor infers a runtime gate from files it happens to find.
 
 Rendering produces generic managed views and explicitly declared Codex/Claude targets or rule adapters. Markitect owns those supported adapters; additional project-specific output policy remains outside the core. No target is selected implicitly. Format, render, schema, and install operations validate plans before writing; per-file replacement is atomic, not a multi-file transaction.
+
+The v0.3.0 source model adds direct offline content archives. Project pins are the single content lock; `markitect.lock.yaml` continues to pin the CLI distribution. Package members are parsed into origin-qualified graph entries while local identity and canonical paths stay unchanged. The model rejects nested imports, cross-boundary direct references, checks, render targets, and external rule adapters. Verified archives are tracked outside the Git source snapshot and are read-only to formatting and rendering. Package content participates in context and conservative impact/review invalidation. See [Content packages](content-packages.md) for its contract, [GitHub Releases](https://github.com/Glacius-Labs/Markitect/releases) for available distributions, and the [production assessment](production-assessment.md) for release status.
 
 ## Authoring and queries
 
@@ -64,4 +67,4 @@ Review evidence is advisory. Reuse requires matching tool, configuration, contex
 
 This repository owns Markitect source, schemas, core authoring, generic examples, and release design. An adopting repository owns its content, import scripts, custom output formats, and declared runtime checks. Markitect provides no built-in project-specific migration command.
 
-The immutable `v0.1.0` release and its original package are historical pins. The `v0.2.0` model removes Project profiles, replaces implicit gates with declared commands, and uses explicit targets and rule adapters for rendering. A version number or passing standalone tests does not prove that a v0.2.0 release exists. See [Integration](../integration/README.md) for the existing release boundary.
+The immutable `v0.1.0` release and its original package are historical pins. The published `v0.2.0` release removes Project profiles, replaces implicit gates with declared commands, and uses explicit targets and rule adapters for rendering. See the [production assessment](production-assessment.md) for its exact release evidence and [Integration](../integration/README.md) for provisioning and upgrade boundaries.

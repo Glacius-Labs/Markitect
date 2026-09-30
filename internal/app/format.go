@@ -17,6 +17,9 @@ func Format(root string, p *Project, write bool) ([]string, error) {
 	}
 	changed := map[string][]byte{}
 	for _, resource := range p.Resources {
+		if resource.Package != "" || resource.Kind == "Package" {
+			continue
+		}
 		copy := *resource
 		copy.Spec.Text = strings.ReplaceAll(copy.Spec.Text, "\r\n", "\n")
 		data, err := format.Encode(copy)

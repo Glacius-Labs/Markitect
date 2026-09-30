@@ -35,6 +35,8 @@ properties:
                             type: string
                         namespace:
                             type: string
+                        package:
+                            type: string
                     required:
                         - name
                     type: object
@@ -52,6 +54,8 @@ properties:
                         name:
                             type: string
                         namespace:
+                            type: string
+                        package:
                             type: string
                     required:
                         - name
@@ -71,6 +75,8 @@ properties:
                             type: string
                         namespace:
                             type: string
+                        package:
+                            type: string
                     required:
                         - name
                     type: object
@@ -86,6 +92,8 @@ properties:
                         name:
                             type: string
                         namespace:
+                            type: string
+                        package:
                             type: string
                     required:
                         - name

@@ -12,6 +12,17 @@ type Ref struct {
 	Kind      string `yaml:"kind,omitempty"`
 	Name      string `yaml:"name"`
 	Namespace string `yaml:"namespace,omitempty"`
+	Package   string `yaml:"package,omitempty"`
+}
+
+// PackagePin selects one exact offline content archive in a Project.
+// Source records provenance only; it is never fetched by Markitect.
+type PackagePin struct {
+	Name    string `yaml:"name"`
+	Version string `yaml:"version"`
+	Source  string `yaml:"source"`
+	Archive string `yaml:"archive"`
+	SHA256  string `yaml:"sha256"`
 }
 
 type Area struct {
@@ -69,6 +80,12 @@ type Spec struct {
 	// Rules map provider rule entrypoint names to owning sources. This also
 	// supports several canonical sources behind one legacy entrypoint.
 	RuleAdapters map[string][]Ref `yaml:"ruleAdapters,omitempty"`
+	// Packages pins the direct offline content archives available to this Project.
+	Packages []PackagePin `yaml:"packages,omitempty"`
+	// Version identifies a Package manifest's exact content version.
+	Version string `yaml:"version,omitempty"`
+	// Exports declares the package-local resource identities consumers may reference.
+	Exports []Ref `yaml:"exports,omitempty"`
 }
 
 type Resource struct {
@@ -78,9 +95,35 @@ type Resource struct {
 	Spec       Spec     `yaml:"spec"`
 	Path       string   `yaml:"-"`
 	Line       int      `yaml:"-"`
+	// Package is the runtime origin package ID; it is not serialized in resource YAML.
+	Package string `yaml:"-"`
 }
 
 func (r Resource) Key() string { return r.Metadata.Namespace + "/" + r.Kind + "/" + r.Metadata.Name }
+
+// GraphKey identifies a resource within its origin while preserving Key as
+// the canonical package-local namespace/kind/name identity.
+func (r Resource) GraphKey() string {
+	packageName := r.Package
+	if r.Kind == "Package" && packageName == "" {
+		packageName = r.Metadata.Name
+	}
+	return Ref{Kind: r.Kind, Namespace: r.Metadata.Namespace, Name: r.Metadata.Name, Package: packageName}.GraphKey("", "", "")
+}
+
+// GraphKey returns the canonical graph identity for a reference. An explicit
+// package wins; otherwise the declaring resource's package is used.
+func (r Ref) GraphKey(defaultPackage, namespace, kind string) string {
+	if r.Package != "" {
+		defaultPackage = r.Package
+	}
+	key := r.Key(namespace, kind)
+	if defaultPackage == "" {
+		return key
+	}
+	return defaultPackage + "::" + key
+}
+
 func (r Ref) Key(namespace, kind string) string {
 	if r.Namespace != "" {
 		namespace = r.Namespace
@@ -94,12 +137,14 @@ func (r Ref) Key(namespace, kind string) string {
 type Diagnostic struct {
 	Code    string `yaml:"code"`
 	Path    string `yaml:"path,omitempty"`
+	Package string `yaml:"package,omitempty"`
 	Line    int    `yaml:"line,omitempty"`
 	Message string `yaml:"message"`
 }
 
 type Graph struct {
 	Resources     map[string]*Resource
+	Packages      map[string]*Resource
 	Edges         map[string][]string
 	Relationships []Relationship
 	ResourceAreas map[string]Area

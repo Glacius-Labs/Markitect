@@ -1,6 +1,6 @@
 # Using Markitect
 
-This guide describes the current source model. The immutable `v0.1.0` release remains a historical pin; consult the release list to determine which versions are available.
+This guide describes the current v0.3.0 source model. The immutable `v0.1.0` release is historical and `v0.2.0` is a verified published release. Consult [GitHub Releases](https://github.com/Glacius-Labs/Markitect/releases) for available distributions.
 
 ## Project and resource model
 
@@ -37,7 +37,7 @@ spec:
         name: change-review
 ```
 
-`ruleAdapters` maps generated rule entrypoint names to source references; these mappings currently produce Claude rule views when the Claude target is selected. `targets` currently accepts `codex` and `claude`. The [Project schema](../schema/Project.yaml) and [Agent schema](../schema/Agent.yaml) list the supported fields. Provider metadata configures generated output; it is not a runtime dependency of the Markitect core.
+`ruleAdapters` maps generated rule entrypoint names to source references; these mappings currently produce Claude rule views when the Claude target is selected. `targets` currently accepts `codex` and `claude`. A Project may also pin direct offline content packages in `spec.packages`. Each entry contains `name`, `version`, `source`, `archive`, and `sha256`; this list is the complete content lock. `markitect.lock.yaml` remains exclusively the CLI distribution lock. See [Content packages](content-packages.md) for manifests, exports, archive creation, query selection, and boundaries. The [Project schema](../schema/Project.yaml) and [Agent schema](../schema/Agent.yaml) list the supported fields. Provider metadata configures generated output; it is not a runtime dependency of the Markitect core.
 
 ## Declare verification commands
 
@@ -67,12 +67,15 @@ Commands run with the caller's local authority. Snapshot isolation fixes the inp
 | `render` | Check or write generic views and explicitly declared render outputs. |
 | `format` | Check or write canonical YAML formatting. |
 | `schema` | Check or write generated schema YAML. |
+| `pack` | Build a deterministic offline content ZIP from a fixed Git revision and emit a suggested Project pin. |
 | `package` | Build a deterministic source archive and YAML tool lock. |
 | `bundle` | Build a complete distribution from an exact revision. |
 | `install` | Validate a distribution and preview a complete pin change; `--write` applies the plan. |
 | `version` | Print the CLI version and platform. |
 
 Existing-content imports are implemented and reviewed as scripts owned by the project being migrated. Markitect core does not include a migration command or presume source documentation structure.
+
+Content packages are loaded from exact committed archive bytes in the selected Project snapshot. Markitect does not fetch the `source` coordinate, resolve ranges, load nested packages, activate imported Rules, or write imported resources. The content-package contract is part of the v0.3.0 source model; see [GitHub Releases](https://github.com/Glacius-Labs/Markitect/releases) for available distributions.
 
 ## Upgrade from v0.1.0
 
@@ -86,6 +89,8 @@ spec:
 ```
 
 Review each command and its arguments as project-owned policy. There is no automatic translation from a legacy profile setting to a check, no implicit bootstrap check, and no inferred Python or provider gate. Add import scripts to the project repository and review their output as ordinary source changes.
+
+When a schema-changing upgrade makes an older revision invalid under the current CLI, current-version `impact` and review reuse cannot cross that schema boundary. Keep evidence from the old version as historical. Upgrade configuration and content in a complete candidate commit, then run the current checks, compile fresh context, and complete a new review as needed; that candidate starts a new evidence baseline. Do not relax current parsing or invent a cross-version impact result to bridge the boundary.
 
 Rendering now defaults to generic views. Add an explicit target and, where needed, a rule adapter for every additional output the project owns. Compare generated files, run the declared checks against the exact candidate, and commit configuration, content, and generated outputs together. Never edit an immutable release to represent a new version.
 

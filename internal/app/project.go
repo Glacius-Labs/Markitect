@@ -1,20 +1,18 @@
 package app
 
 import (
-	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
-	"io"
 	"path"
 	"sort"
 	"strings"
 
+	"github.com/Glacius-Labs/Markitect/internal/contentpackage"
 	"github.com/Glacius-Labs/Markitect/internal/core"
 	"github.com/Glacius-Labs/Markitect/internal/format"
 	"github.com/Glacius-Labs/Markitect/internal/inputs"
 	"github.com/Glacius-Labs/Markitect/internal/source"
-	"go.yaml.in/yaml/v3"
 )
 
 // Project is one immutable input set and its resolved resources.
@@ -25,6 +23,9 @@ type Project struct {
 	Inventory   []Entry
 	Diagnostics []core.Diagnostic
 	InputFiles  map[string][]string
+	// PackageFiles is verified, immutable archive content, kept separate from
+	// the physical repository snapshot and its writable output paths.
+	PackageFiles map[string]map[string][]byte
 }
 
 type Entry struct {
@@ -32,6 +33,7 @@ type Entry struct {
 	Kind      string `yaml:"kind"`
 	Name      string `yaml:"name,omitempty"`
 	Namespace string `yaml:"namespace,omitempty"`
+	Package   string `yaml:"package,omitempty"`
 	Hash      string `yaml:"hash"`
 }
 
@@ -44,7 +46,7 @@ func Load(root, revision string) (*Project, error) {
 }
 
 func Parse(snap *source.Snapshot) (*Project, error) {
-	p := &Project{Snapshot: snap}
+	p := &Project{Snapshot: snap, PackageFiles: map[string]map[string][]byte{}}
 	data, ok := snap.Files["markitect.yaml"]
 	if !ok {
 		return nil, fmt.Errorf("markitect.yaml is missing from the selected source; use inventory to inspect existing Markdown, then author a Project in markitect.yaml and its resources")
@@ -78,11 +80,44 @@ func Parse(snap *source.Snapshot) (*Project, error) {
 			parseFindings = append(parseFindings, core.Diagnostic{Code: "parse", Path: name, Message: err.Error()})
 			continue
 		}
+		if r.Kind == "Package" {
+			return nil, fmt.Errorf("local Package manifest %q is not a project resource; build and pin its archive explicitly", name)
+		}
 		p.Resources = append(p.Resources, r)
+	}
+	var packageBytes int64
+	var packageFileCount int
+	packageNames := map[string]bool{}
+	for _, pin := range config.Spec.Packages {
+		if packageNames[pin.Name] {
+			return nil, fmt.Errorf("package %q is pinned more than once", pin.Name)
+		}
+		packageNames[pin.Name] = true
+		archiveBytes, exists := snap.Files[pin.Archive]
+		if !exists {
+			return nil, fmt.Errorf("package %q archive %q is missing from the selected snapshot", pin.Name, pin.Archive)
+		}
+		archive, err := contentpackage.Read(pin, archiveBytes)
+		if err != nil {
+			return nil, fmt.Errorf("package %q: %w", pin.Name, err)
+		}
+		for _, data := range archive.Files {
+			packageBytes += int64(len(data))
+		}
+		packageFileCount += len(archive.Files)
+		if packageBytes > 128<<20 {
+			return nil, fmt.Errorf("combined content packages exceed the 128 MiB limit")
+		}
+		if packageFileCount > 10_000 {
+			return nil, fmt.Errorf("combined content packages exceed the 10000 file limit")
+		}
+		p.PackageFiles[pin.Name] = archive.Files
+		p.Resources = append(p.Resources, archive.Manifest)
+		p.Resources = append(p.Resources, archive.Resources...)
 	}
 	declaredFiles := map[string]bool{}
 	for _, resource := range p.Resources {
-		if resource.Kind == "Project" {
+		if resource.Kind == "Project" || resource.Package != "" {
 			continue
 		}
 		for _, file := range resource.Spec.Files {
@@ -91,8 +126,8 @@ func Parse(snap *source.Snapshot) (*Project, error) {
 	}
 	typedPaths := map[string]*core.Resource{}
 	for _, resource := range p.Resources {
-		if resource.Kind != "Project" {
-			typedPaths[resource.Path] = resource
+		if resource.Kind != "Project" && resource.Kind != "Package" {
+			typedPaths[inputKey(resource.Package, resource.Path)] = resource
 		}
 	}
 	for _, diagnostic := range parseFindings {
@@ -102,109 +137,68 @@ func Parse(snap *source.Snapshot) (*Project, error) {
 	}
 	p.Graph = core.Build(p.Resources)
 	p.Diagnostics = append(p.Diagnostics, p.Graph.Diagnostics...)
-	resolved, findings := inputs.Resolve(p.Graph, snap.Files)
+	resolved, findings := inputs.ResolveWithPackages(p.Graph, snap.Files, p.PackageFiles)
 	p.InputFiles = resolved
 	p.Diagnostics = append(p.Diagnostics, findings...)
 	for key, files := range resolved {
+		resource := p.Graph.Resources[key]
+		if resource == nil {
+			continue
+		}
 		for _, file := range files {
-			if typed := typedPaths[file]; typed != nil {
-				resource := p.Graph.Resources[key]
-				if resource == nil {
-					continue
-				}
+			if typed := typedPaths[inputKey(resource.Package, file)]; typed != nil {
 				p.Diagnostics = append(p.Diagnostics, core.Diagnostic{
-					Code: "input.typed-source", Path: resource.Path, Line: resource.Line,
-					Message: fmt.Sprintf("input file %q is the source of typed resource %s; reference the resource instead of listing it in spec.files", file, typed.Key()),
+					Code: "input.typed-source", Path: resource.Path, Package: resource.Package, Line: resource.Line,
+					Message: fmt.Sprintf("input file %q is the source of typed resource %s; reference the resource instead of listing it in spec.files", file, typed.GraphKey()),
 				})
 			}
 		}
 	}
 	for _, r := range p.Resources {
-		p.Inventory = append(p.Inventory, Entry{Path: r.Path, Kind: r.Kind, Name: r.Metadata.Name, Namespace: r.Metadata.Namespace, Hash: Hash(snap.Files[r.Path])})
+		p.Inventory = append(p.Inventory, Entry{Path: r.Path, Kind: r.Kind, Name: r.Metadata.Name, Namespace: r.Metadata.Namespace, Package: r.Package, Hash: Hash(p.resourceBytes(r))})
 	}
 	return p, nil
 }
 
-// markitectResourceEnvelope distinguishes an explicitly declared ordinary YAML
-// input from a malformed Markitect resource. Malformed YAML remains fail-closed.
-// Markitect API versions are reserved under the markitect.example.org/ prefix;
-// without apiVersion, a known kind plus metadata and spec is the recognizable
-// incomplete envelope. Other YAML shapes, including Kubernetes manifests, are
-// ordinary inputs when explicitly declared.
-func markitectResourceEnvelope(data []byte) bool {
-	decoder := yaml.NewDecoder(bytes.NewReader(data))
-	for {
-		var document yaml.Node
-		err := decoder.Decode(&document)
-		if err == io.EOF {
-			return false
-		}
-		if err != nil {
-			return true
-		}
-		if len(document.Content) == 0 || document.Content[0].Kind != yaml.MappingNode {
-			continue
-		}
-		root := document.Content[0]
-		if hasDuplicateScalarYAMLKeys(root) {
-			return true
-		}
-		var apiVersion, kind, metadata, spec *yaml.Node
-		for i := 0; i+1 < len(root.Content); i += 2 {
-			key := root.Content[i]
-			if key.Kind != yaml.ScalarNode {
-				continue
-			}
-			value := root.Content[i+1]
-			switch key.Value {
-			case "apiVersion":
-				apiVersion = value
-			case "kind":
-				kind = value
-			case "metadata":
-				metadata = value
-			case "spec":
-				spec = value
-			}
-		}
-		knownResourceShape := kind != nil && kind.Kind == yaml.ScalarNode &&
-			format.AllowedSpecFields(kind.Value) != nil &&
-			metadata != nil && metadata.Kind == yaml.MappingNode &&
-			spec != nil && spec.Kind == yaml.MappingNode
-		if apiVersion != nil {
-			apiGroup, _, _ := strings.Cut(core.APIVersion, "/")
-			if (apiVersion.Kind == yaml.ScalarNode && strings.HasPrefix(apiVersion.Value, apiGroup+"/")) || knownResourceShape {
-				return true
-			}
-			continue
-		}
-		if knownResourceShape {
-			return true
-		}
+func (p *Project) fileBytes(origin, name string) []byte {
+	if origin != "" {
+		return p.PackageFiles[origin][name]
 	}
+	return p.Snapshot.Files[name]
 }
 
-func hasDuplicateScalarYAMLKeys(node *yaml.Node) bool {
-	if node.Kind == yaml.MappingNode {
-		seen := make(map[string]bool, len(node.Content)/2)
-		for i := 0; i+1 < len(node.Content); i += 2 {
-			key := node.Content[i]
-			if key.Kind == yaml.ScalarNode {
-				identity := key.Tag + "\x00" + key.Value
-				if seen[identity] {
-					return true
-				}
-				seen[identity] = true
-			}
-		}
-	}
-	for _, child := range node.Content {
-		if hasDuplicateScalarYAMLKeys(child) {
-			return true
-		}
-	}
-	return false
+func (p *Project) resourceBytes(r *core.Resource) []byte {
+	return p.fileBytes(r.Package, r.Path)
 }
+
+func (p *Project) packageVersion(origin string) string {
+	if manifest := p.Graph.Packages[origin]; manifest != nil {
+		return manifest.Spec.Version
+	}
+	return ""
+}
+
+// inputKey keeps physical paths distinct from archive-relative paths without
+// presenting archive members as writable files in the repository.
+func inputKey(origin, name string) string {
+	if origin != "" {
+		return "package:" + origin + "/file:" + name
+	}
+	return "file:" + name
+}
+
+func (p *Project) exported(r *core.Resource) bool {
+	if r == nil {
+		return false
+	}
+	if r.Package == "" {
+		return true
+	}
+	return p.Graph.IsExported(r)
+}
+
+// markitectResourceEnvelope uses the shared strict envelope boundary.
+func markitectResourceEnvelope(data []byte) bool { return format.IsResourceEnvelope(data) }
 
 func Hash(b []byte) string { h := sha256.Sum256(b); return "sha256:" + hex.EncodeToString(h[:]) }
 func Within(name, root string) bool {

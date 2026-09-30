@@ -13,6 +13,7 @@
 | `internal/authoring` | Embedded core authoring resources |
 | `internal/render` | Generic managed views and declared output adapters |
 | `internal/release` | Deterministic source archives and release bundles |
+| `internal/contentpackage` | Validated offline content-package archive format |
 | `internal/app/install.go` | Release pin plans and application |
 | `integration` | Versioned distribution support files |
 | `examples` | Executable synthetic product example |
@@ -34,7 +35,7 @@ git diff --check
 
 The standalone checks do not require another repository or an AI model. CI runs supported Windows and Linux gates. A successful source gate establishes only the product checks that ran; it does not establish semantic correctness or an adopting project's acceptance.
 
-Edit validation declarations and regenerate schemas with `schema --repo . --write`. Edit example YAML, then run `format`, `render --repo examples/minimal --write`, and `check`. Edit core authoring at `internal/authoring/resources/*.yaml`; its content is canonical and embedded in the binary. Tests compile those resources through the ordinary application API.
+Edit validation declarations and regenerate schemas with `schema --repo . --write`. Edit example YAML, then run `format`, `render --repo examples/minimal --write`, and `check`. For package or consumer example changes, also run `go run ./cmd/markitect check --repo examples/package-consumer`. Edit core authoring at `internal/authoring/resources/*.yaml`; its content is canonical and embedded in the binary. Tests compile those resources through the ordinary application API. The v0.3.0 content-package contract and consumer workflow are documented in [Content packages](docs/content-packages.md); the executable package fixtures live under `examples/content-package` and `examples/package-consumer`.
 
 ## Project checks and rendering
 
@@ -46,4 +47,4 @@ Rendering always supports Markitect's generic managed views. Additional output t
 
 ## Release work
 
-[Operations and releases](docs/operations.md) describes the supported source and publication gates. Immutable `v0.1.0` is historical. Source version `0.2.0` does not by itself establish a published release; use only a release with its exact source commit, successful hosted gates, immutable GitHub attestation, and verified assets. Release documentation does not imply acceptance by any adopting project.
+[Operations and releases](docs/operations.md) describes the supported source and publication gates. The v0.1.0 release is historical; v0.2.0 is a verified published release. See the [production assessment](docs/production-assessment.md) for exact release evidence and [GitHub Releases](https://github.com/Glacius-Labs/Markitect/releases) for available distributions. A source version does not imply acceptance by any adopting project.

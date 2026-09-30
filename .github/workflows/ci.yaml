@@ -58,6 +58,15 @@ jobs:
       - name: Check minimal example
         run: go run ./cmd/markitect check --repo examples/minimal
 
+      - name: Check pinned content package consumer
+        run: go run ./cmd/markitect check --repo examples/package-consumer
+
+      - name: Compile imported package context
+        run: go run ./cmd/markitect context --repo examples/package-consumer --package review-guidance --namespace review --kind Workflow --name review-change
+
+      - name: Compile consumer wrapper context
+        run: go run ./cmd/markitect context --repo examples/package-consumer --namespace consumer --kind Skill --name local-review-entry
+
       - name: Check diff whitespace
         run: git diff --check
 

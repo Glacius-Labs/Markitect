@@ -1,8 +1,18 @@
-# Markitect production assessment — v0.1.0
+# Markitect production assessment
 
-**Recorded:** 2026-09-30. This is historical evidence for the immutable source release `v0.1.0`. It reports only the Markitect source, its package, and source-owned gates; project adoption and acceptance are outside its scope.
+**Recorded:** 2026-10-01. This assessment distinguishes historical v0.1.0 evidence from the confirmed v0.2.0 release. It reports only the Markitect source, its distributions, and source-owned gates; project adoption and acceptance are outside its scope.
 
-## Source and release evidence
+## v0.2.0 release
+
+The immutable [`v0.2.0` release](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.2.0) is verified against source commit [`8ff0af4`](https://github.com/Glacius-Labs/Markitect/commit/8ff0af4). GitHub Actions [run 36777150514](https://github.com/Glacius-Labs/Markitect/actions/runs/36777150514) passed for that exact release source. This confirms distribution availability; it does not establish acceptance by an adopting project.
+
+## v0.3.0 source scope
+
+This version adds deterministic offline content archives, exact Project pins, explicit exports, origin-aware dependencies and context, and read-only imported resources. It also recognizes orphaned aggregate rule-adapter outputs during drift checks. The package source and consumer examples exercise the public CLI; the archive, graph, context, impact and review tests cover integrity failures and boundary isolation.
+
+The release requires a reviewed fixed commit, the complete Windows/Linux CI matrix, deterministic bundle and installation smoke tests, and verified immutable release assets. The release's provenance asset records the exact source and hosted run; use that record for publication status rather than treating this source assessment as a release receipt. See [Content packages](content-packages.md) for supported behavior and [Operations](operations.md) for the publication procedure.
+
+## Historical v0.1.0 source and release evidence
 
 The release is bound to merge commit [`45e0017a3d25d2abd464de934b5ef3a802732d0a`](https://github.com/Glacius-Labs/Markitect/commit/45e0017a3d25d2abd464de934b5ef3a802732d0a), whose tree matches reviewed candidate [`4adb45964a172a77a1355c6ea5ac2596c325b90d`](https://github.com/Glacius-Labs/Markitect/commit/4adb45964a172a77a1355c6ea5ac2596c325b90d).
 
@@ -28,7 +38,7 @@ The provenance records source tag/commit, workflow run and attempt, toolchain, a
 
 The release contained the Go CLI, typed YAML resources and schemas, a dependency graph, structural queries, fixed-snapshot context and impact, review-evidence eligibility, generic and explicitly selected provider views, core authoring resources, and the versioned release installer. The source and bootstrap ran on Windows amd64 and Linux amd64 with Go 1.27.1 or later. The native release binary could preview or apply installation without Go.
 
-The checks establish the product gates that ran. They do not prove prose is true or complete, infer a project's policy, certify an agent's runtime behavior, or constitute an adopting project's decision. The Project and verification model is changing in source version 0.2.0; the v0.1.0 assets above remain an immutable historical pin.
+The checks establish the product gates that ran. They do not prove prose is true or complete, infer a project's policy, certify an agent's runtime behavior, or constitute an adopting project's decision. The v0.1.0 assets above remain an immutable historical pin; source version 0.2.0 and later versions do not alter them.
 
 ## Historical publication route
 
