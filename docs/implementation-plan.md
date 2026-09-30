@@ -67,7 +67,7 @@ Acceptance: checks work offline; exports and version conflicts fail correctly; p
 - Graph visualization as derived output.
 - Runtime/operator integration only after there is real desired state to reconcile.
 
-CI enforcement should arrive with hosted delivery, before optional user interfaces. No obligation to follow the concept note's illustrative LSP-before-MCP sequence.
+Hosted source and release gates are established. Preserve those gates when adding optional user interfaces. There is no obligation to follow the concept note's illustrative LSP-before-MCP sequence.
 
 ## Glacius Labs reconciliation
 
