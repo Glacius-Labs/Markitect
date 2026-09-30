@@ -81,8 +81,6 @@ properties:
                                 type: string
                             permissionMode:
                                 type: string
-                            sandbox:
-                                type: string
                             tools:
                                 items:
                                     type: string
@@ -91,24 +89,12 @@ properties:
                     codex:
                         additionalProperties: false
                         properties:
-                            disallowedTools:
-                                items:
-                                    type: string
-                                type: array
                             effort:
                                 type: string
-                            maxTurns:
-                                type: integer
                             model:
-                                type: string
-                            permissionMode:
                                 type: string
                             sandbox:
                                 type: string
-                            tools:
-                                items:
-                                    type: string
-                                type: array
                         type: object
                 type: object
             rules:

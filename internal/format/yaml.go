@@ -446,15 +446,7 @@ func validateProviders(file string, n *yaml.Node) error {
 		if err := requireMapping(file, p, provider+" provider"); err != nil {
 			return err
 		}
-		allowed := set("model", "effort")
-		if provider == "codex" {
-			allowed["sandbox"] = struct{}{}
-		} else {
-			allowed["permissionMode"] = struct{}{}
-			allowed["tools"] = struct{}{}
-			allowed["disallowedTools"] = struct{}{}
-			allowed["maxTurns"] = struct{}{}
-		}
+		allowed := set(allowedProviderFields(provider)...)
 		if err := checkKeys(file, p, allowed); err != nil {
 			return err
 		}
@@ -494,6 +486,13 @@ func validateProviders(file string, n *yaml.Node) error {
 		}
 	}
 	return nil
+}
+
+func allowedProviderFields(provider string) []string {
+	if provider == "codex" {
+		return []string{"model", "effort", "sandbox"}
+	}
+	return []string{"model", "effort", "permissionMode", "tools", "disallowedTools", "maxTurns"}
 }
 
 func inspectNode(file string, n *yaml.Node) error {

@@ -74,6 +74,19 @@ func filteredSpecSchema(fields []string) map[string]any {
 			properties[field] = shape
 		}
 	}
+	if providerShape, ok := properties["providers"].(map[string]any); ok {
+		providerProperties := providerShape["properties"].(map[string]any)
+		for provider, value := range providerProperties {
+			shape := value.(map[string]any)
+			all := shape["properties"].(map[string]any)
+			allowed := set(allowedProviderFields(provider)...)
+			for field := range all {
+				if _, ok := allowed[field]; !ok {
+					delete(all, field)
+				}
+			}
+		}
+	}
 	required := make([]string, 0, 1)
 	for _, field := range fields {
 		if field == "text" || field == "profile" {

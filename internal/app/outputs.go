@@ -54,7 +54,7 @@ func CheckOutputs(p *Project) []core.Diagnostic {
 		}
 	}
 	for _, name := range sortedFiles(p.Snapshot.Files) {
-		if Generated(p.Snapshot.Files[name]) {
+		if (strings.HasSuffix(name, ".md") || strings.HasSuffix(name, ".toml")) && Generated(p.Snapshot.Files[name]) {
 			if _, ok := outputs[name]; !ok {
 				findings = append(findings, core.Diagnostic{Code: "stale-output", Path: name, Message: "previously generated file has no current source; inspect and remove in the same migration"})
 			}

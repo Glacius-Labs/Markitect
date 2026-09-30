@@ -15,6 +15,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode/utf8"
 )
 
 const sourcePath = "tools/markitect/source.zip"
@@ -180,8 +181,30 @@ func appendRegularFile(moduleDir, relative string, files *[]sourceFile, required
 	if err != nil {
 		return fmt.Errorf("read Markitect source %s: %w", relative, err)
 	}
+	data, err = normalizeTextSource(relative, data)
+	if err != nil {
+		return fmt.Errorf("invalid Markitect text source %s: %w", relative, err)
+	}
 	*files = append(*files, sourceFile{name: relative, data: data})
 	return nil
+}
+
+func normalizeTextSource(name string, data []byte) ([]byte, error) {
+	base := strings.ToLower(filepath.Base(name))
+	ext := strings.ToLower(filepath.Ext(base))
+	isText := base == "go.mod" || base == "go.sum" || ext == ".go" || ext == ".md" || ext == ".yaml"
+	if !isText {
+		return data, nil
+	}
+	if !utf8.Valid(data) {
+		return nil, fmt.Errorf("text source is not valid UTF-8")
+	}
+	if bytes.IndexByte(data, 0) >= 0 {
+		return nil, fmt.Errorf("text source contains a NUL byte")
+	}
+	data = bytes.ReplaceAll(data, []byte("\r\n"), []byte("\n"))
+	data = bytes.ReplaceAll(data, []byte("\r"), []byte("\n"))
+	return data, nil
 }
 
 func makeArchive(files []sourceFile) ([]byte, error) {

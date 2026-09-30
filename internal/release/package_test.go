@@ -63,6 +63,69 @@ func TestPackageChangesWhenIncludedSourceChanges(t *testing.T) {
 	}
 }
 
+func TestPackageNormalizesTextLineEndingsForReproducibleArchive(t *testing.T) {
+	root := fixtureRoot(t)
+	lfArchive, lfLock, err := Package(root, "1.0.0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	moduleDir := filepath.Join(root, "tools", "markitect")
+	for _, relative := range []string{
+		"go.mod",
+		"go.sum",
+		"README.md",
+		"cmd/markitect/main.go",
+		"internal/core/model.go",
+		"internal/format/schema.go",
+		"internal/release/package.go",
+		"internal/release/package_test.go",
+		"schema/manifest.yaml",
+	} {
+		full := filepath.Join(moduleDir, filepath.FromSlash(relative))
+		data, err := os.ReadFile(full)
+		if err != nil {
+			t.Fatal(err)
+		}
+		data = bytes.ReplaceAll(data, []byte("\r\n"), []byte("\n"))
+		data = bytes.ReplaceAll(data, []byte("\n"), []byte("\r\n"))
+		if err := os.WriteFile(full, data, 0644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	crlfArchive, crlfLock, err := Package(root, "1.0.0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(lfArchive, crlfArchive) || !bytes.Equal(lfLock, crlfLock) {
+		t.Fatal("CRLF checkout changed the canonical source archive or lock")
+	}
+	entries := archiveContents(t, crlfArchive)
+	if got, want := string(entries["internal/core/model.go"]), "package core\n"; got != want {
+		t.Fatalf("normalized source = %q, want %q", got, want)
+	}
+}
+
+func TestNormalizeTextSourceRejectsInvalidUTF8AndNUL(t *testing.T) {
+	for _, input := range [][]byte{{0xff, 0xfe}, []byte("valid\x00text")} {
+		if _, err := normalizeTextSource("docs/readme.md", input); err == nil {
+			t.Errorf("accepted invalid text bytes %v", input)
+		}
+	}
+	if got, err := normalizeTextSource("schema/manifest.yaml", []byte("a\r\nb\rc")); err != nil || string(got) != "a\nb\nc" {
+		t.Fatalf("normalization = %q, err=%v", got, err)
+	}
+}
+
+func TestNormalizeTextSourceDoesNotRewriteOtherFiles(t *testing.T) {
+	for _, name := range []string{"schema/manifest.json", "schema/manifest.yml", "assets/payload.bin"} {
+		input := []byte{0xff, 0x00, '\r', '\n'}
+		got, err := normalizeTextSource(name, input)
+		if err != nil || !bytes.Equal(got, input) {
+			t.Errorf("normalizeTextSource(%q) changed non-target bytes: %v, %v", name, got, err)
+		}
+	}
+}
+
 func TestPackageRejectsSymlinksInSourceTree(t *testing.T) {
 	root := fixtureRoot(t)
 	external := filepath.Join(t.TempDir(), "outside.go")
@@ -145,6 +208,29 @@ func archiveEntries(t *testing.T, data []byte) []string {
 		entries = append(entries, entry.Name)
 	}
 	return entries
+}
+
+func archiveContents(t *testing.T, data []byte) map[string][]byte {
+	t.Helper()
+	reader, err := zip.NewReader(bytes.NewReader(data), int64(len(data)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	contents := make(map[string][]byte, len(reader.File))
+	for _, entry := range reader.File {
+		file, err := entry.Open()
+		if err != nil {
+			t.Fatal(err)
+		}
+		contents[entry.Name], err = io.ReadAll(file)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := file.Close(); err != nil {
+			t.Fatal(err)
+		}
+	}
+	return contents
 }
 
 func verifyNormalZipMetadata(t *testing.T, data []byte) {

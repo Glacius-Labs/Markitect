@@ -2,7 +2,7 @@
 
 Markitect is a Go command-line tool for validating a repository's typed YAML documentation graph and generating its managed views. It reads YAML and repository files, resolves declared relationships, and reports structural or graph diagnostics. It does not perform semantic AI review or claim Kubernetes API compatibility.
 
-This is the standalone Go module `markitect`, currently staged under `tools/markitect` in a host repository. The module depends only on Go and `go.yaml.in/yaml/v3`. Its future repository location has not been selected; this README does not assume a remote URL. The checked-in CLI identifies itself as **0.1.0-rc.1**, a release candidate rather than a production release.
+This is the standalone Go module `markitect`, currently staged under `tools/markitect` in a host repository. The module depends only on Go and `go.yaml.in/yaml/v3`. Its future repository location has not been selected; this README does not assume a remote URL. The checked-in CLI identifies itself as **0.1.0-rc.2**, a release candidate rather than a production release.
 
 ## Build on Windows
 
@@ -84,6 +84,7 @@ Examples assume the current module is still under `tools/markitect`; run them fr
 | `inventory` | List legacy Markdown candidates and, when configured, typed resources; it does not infer dependencies or assert semantic validity. |
 | `context` | Compile the dependency closure and its declared file inputs for one resource. |
 | `impact` | Compare two immutable snapshots and report changed paths and affected resources. |
+| `review` | Record an advisory AI report or determine whether its declared inputs still permit reuse. |
 | `render` | Check generated output drift, or write managed outputs from the working tree. |
 | `format` | Check YAML canonicalization or write canonical YAML from the working tree. |
 | `migrate` | Plan the current Konfyra Markdown-to-YAML migration, or apply it on a non-protected working branch. Reports dependency candidates for human review. |
@@ -126,7 +127,7 @@ go run ./cmd/markitect package --repo ..\.. --output ..\..\markitect-release
 
 `render` without `--write` checks existing managed outputs. Writes use the current working tree and are rejected on `main` or `master`; `render --write` rechecks the source inventory before writing and refuses unmanaged output collisions. `format --write` canonicalizes YAML serialization and line endings in `spec.text`; it requires a non-protected Git branch. `migrate --write` is limited to the current Konfyra migration adapter and requires a non-protected branch. The migration reports explicit Skill/Agent links to Workflow files as `dependencyCandidates` and sets `requiresDependencyReview`; these candidates never become normative `uses` references automatically. Review candidate links and resulting files before committing. The schema writer updates only generated schema files.
 
-`package` requires a new, absent output directory. It writes `tools/markitect/source.zip` and `markitect.lock.yaml` beneath that directory. The lock records the release-candidate version, archive path, and SHA-256 digest so a bootstrap can pin the exact source archive. The Python runner is a separate integration file and is not included in the source archive.
+`package` requires a new, absent output directory. It writes `tools/markitect/source.zip` and `markitect.lock.yaml` beneath that directory. Source text is validated as UTF-8 and normalized to LF so Windows checkout line endings do not change the archive. The lock records the release-candidate version, archive path, and SHA-256 digest so a bootstrap can pin the exact source archive. The Python runner is a separate integration file and is not included in the source archive.
 
 The consumer bootstrap uses this exact pair: copy the archive to `tools/markitect/source.zip`, the lock to the repository root as `markitect.lock.yaml`, and the runner from `integration/run-markitect.py` to `scripts/run-markitect.py`. From the consumer repository root, run it with Python, for example `python scripts/run-markitect.py check`. The runner verifies the archive against the lock, builds that pinned Go source into a digest-keyed `.artifacts/markitect/` cache, and forwards the command. Its cache metadata is the flat YAML file `build-stamp.yaml` with `version`, `source_sha256`, and `executable_sha256` fields. It requires Python and Go on the machine. This flow uses repository-pinned files and has no release-server URL.
 
@@ -138,4 +139,27 @@ Omitting `--revision` reads the working tree and marks the result `provisional: 
 
 Coverage is reported with command results. `check` covers the typed graph, declared inputs, and Markitect-owned outputs. `verify` adds the configured repository gates; the `konfyra` and `cockpit` profiles have adapters, while `generic` currently has no repository gate adapter. The supported profile adapters require `python` or `python3` on `PATH`. The Konfyra profile retains its existing Python renderer as the owner of provider outputs during the pilot; Markitect checks and renders its adjacent typed-resource views. A passing structural or repository check does not establish semantic review or external acceptance.
 
-Context output includes three distinct digests or identifiers. `snapshotDigest` covers the complete loaded repository snapshot, including sorted paths, file modes, and bytes. `toolDigest` identifies the executable bytes. `digest` fingerprints the compiled entry, tool version and digest, selected resource files, and declared `spec.files` inputs. These digests are not semantic-review results, and Markitect does not yet provide an automated semantic review cache.
+Context output includes three distinct digests or identifiers. `snapshotDigest` covers the complete loaded repository snapshot, including sorted paths, file modes, and bytes. `toolDigest` identifies the executable bytes. `digest` fingerprints the compiled entry, tool version and digest, selected resource files, and declared `spec.files` inputs. These digests are not semantic-review results.
+
+## Reuse an advisory AI review
+
+Keep a small review configuration outside the typed resource areas, for example at the repository root as `markitect-review.yaml`, and commit it with the candidate:
+
+```yaml
+question: Is this entry's declared context sufficient and internally consistent for its task?
+promptVersion: context-review-v1
+model: gpt-6-luna
+effort: high
+allowReuse: true
+```
+
+Give the reviewer the fixed `context` output and that exact question/configuration. Save its actual report as UTF-8 text. Record it only after the review has completed, using the executable that compiled its context:
+
+```powershell
+markitect review --revision COMMIT --namespace general --kind Skill --name author-ai-mechanism --config markitect-review.yaml --report .artifacts/markitect/reviewer-report.md > .artifacts/markitect/review.yaml
+markitect review --revision NEXT_COMMIT --namespace general --kind Skill --name author-ai-mechanism --config markitect-review.yaml --evidence .artifacts/markitect/review.yaml
+```
+
+The configuration is read from the fixed candidate, never from a later working-tree edit. Reuse verifies the original snapshot, context and report hashes, compares the requested configuration and executable, recompiles the candidate context, and checks the union of old and new dependency impacts. Unknown inputs or inventory changes invalidate reuse conservatively. `allowReuse: false` always requests a new review. Exit code 0 means reusable, 1 means a new review is needed, and 2 means the evidence could not be evaluated. Recording a report returns 0 when its inputs are valid; it does not assert that the report is positive.
+
+The command makes no model call. A reusable result retains the original report and revision; an agent can use that result without repeating the same model review. Human approvals are never transferred. Evidence is local and advisory: hashes detect mismatch but do not authenticate a reviewer, and an imported success statement is not trusted CI evidence. Every input needed for the question must be declared; reviews that use additional undeclared material are ineligible for reuse. Keep records outside their input snapshot, for example in the excluded `.artifacts/markitect/` directory.

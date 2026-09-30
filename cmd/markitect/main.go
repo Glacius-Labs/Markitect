@@ -17,7 +17,7 @@ import (
 	"markitect/internal/source"
 )
 
-var version = "0.1.0-rc.1"
+var version = "0.1.0-rc.2"
 
 type report struct {
 	Tool        string            `yaml:"tool"`
@@ -36,7 +36,7 @@ type report struct {
 
 func run(args []string, out, errout io.Writer) int {
 	if len(args) == 0 {
-		fmt.Fprintln(errout, "usage: markitect <check|verify|inventory|context|impact|render|format|migrate|schema|package|version> [--repo PATH] [--revision COMMIT]")
+		fmt.Fprintln(errout, "usage: markitect <check|verify|inventory|context|impact|review|render|format|migrate|schema|package|version> [--repo PATH] [--revision COMMIT]")
 		return 2
 	}
 	command := args[0]
@@ -59,6 +59,9 @@ func run(args []string, out, errout io.Writer) int {
 	write := fs.Bool("write", false, "write managed outputs in an isolated worktree")
 	check := fs.Bool("check", false, "check rendered outputs (default)")
 	output := fs.String("output", "", "new release output directory (package)")
+	reviewConfig := fs.String("config", "", "repository-relative review configuration in the fixed snapshot")
+	reviewReport := fs.String("report", "", "completed reviewer report to record (local UTF-8 file)")
+	reviewEvidence := fs.String("evidence", "", "previous advisory review record to evaluate (local YAML file)")
 	if err := fs.Parse(args[1:]); err != nil {
 		return 2
 	}
@@ -71,10 +74,15 @@ func run(args []string, out, errout io.Writer) int {
 		allowed["revision"] = true
 	}
 	switch command {
-	case "context":
+	case "context", "review":
 		allowed["kind"] = true
 		allowed["name"] = true
 		allowed["namespace"] = true
+		if command == "review" {
+			allowed["config"] = true
+			allowed["report"] = true
+			allowed["evidence"] = true
+		}
 	case "impact":
 		allowed["base"] = true
 	case "render", "schema", "format":
@@ -201,7 +209,7 @@ func run(args []string, out, errout io.Writer) int {
 		}
 		return emit(report{Tool: "Markitect", Version: version, Revision: snap.Revision, Provisional: snap.Provisional, Digest: snap.Digest(), Status: "inventory", Coverage: coverage, Inventory: items})
 	}
-	if command != "check" && command != "verify" && command != "context" && command != "impact" && command != "render" && command != "format" {
+	if command != "check" && command != "verify" && command != "context" && command != "impact" && command != "review" && command != "render" && command != "format" {
 		return fail(fmt.Errorf("unknown command %q", command))
 	}
 	p, err := app.Load(*root, *revision)
@@ -226,6 +234,8 @@ func run(args []string, out, errout io.Writer) int {
 		return 1
 	}
 	switch command {
+	case "review":
+		return runReview(*root, p, *namespace, *kind, *name, *reviewConfig, *reviewReport, *reviewEvidence, toolDigest, emit, fail)
 	case "format":
 		files, err := app.Format(*root, p, *write)
 		if err != nil {

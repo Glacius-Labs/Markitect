@@ -129,6 +129,38 @@ func TestSchemaShapesComeFromYAMLTaggedModel(t *testing.T) {
 	}
 }
 
+func TestProviderSchemaPropertiesMatchProviderAllowLists(t *testing.T) {
+	schemas, err := Schemas()
+	if err != nil {
+		t.Fatal(err)
+	}
+	var document map[string]any
+	if err := yaml.Unmarshal(schemas["schema/Agent.yaml"], &document); err != nil {
+		t.Fatal(err)
+	}
+	spec := mapping(t, mapping(t, document["properties"])["spec"])
+	providers := mapping(t, mapping(t, spec["properties"])["providers"])
+	providerProperties := mapping(t, providers["properties"])
+	for _, provider := range []string{"codex", "claude"} {
+		t.Run(provider, func(t *testing.T) {
+			shape := mapping(t, providerProperties[provider])
+			got := make([]string, 0, len(mapping(t, shape["properties"])))
+			for name := range mapping(t, shape["properties"]) {
+				got = append(got, name)
+			}
+			sort.Strings(got)
+			want := append([]string(nil), allowedProviderFields(provider)...)
+			sort.Strings(want)
+			if !reflect.DeepEqual(got, want) {
+				t.Fatalf("%s schema properties = %v, want allowed fields %v", provider, got, want)
+			}
+			if shape["additionalProperties"] != false {
+				t.Errorf("%s additionalProperties = %v, want false", provider, shape["additionalProperties"])
+			}
+		})
+	}
+}
+
 func mapping(t *testing.T, value any) map[string]any {
 	t.Helper()
 	result, ok := value.(map[string]any)

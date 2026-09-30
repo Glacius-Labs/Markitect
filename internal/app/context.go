@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+	"path"
 	"sort"
 	"strings"
 
@@ -123,6 +124,7 @@ func Changes(before, after *Project) *Impact {
 	sort.Strings(result.Changed)
 	all := false
 	seeds := map[string]bool{}
+	ownedInputs := map[string]map[string]bool{}
 	for _, p := range []*Project{before, after} {
 		for _, r := range p.Resources {
 			if changed[r.Path] {
@@ -130,6 +132,14 @@ func Changes(before, after *Project) *Impact {
 				if r.Kind == "Project" {
 					all = true
 				}
+			}
+		}
+		for file, owners := range impactFileOwners(p) {
+			for owner := range owners {
+				if ownedInputs[file] == nil {
+					ownedInputs[file] = map[string]bool{}
+				}
+				ownedInputs[file][owner] = true
 			}
 		}
 	}
@@ -149,14 +159,18 @@ func Changes(before, after *Project) *Impact {
 	}
 	// Unmodelled inputs may contain normative contracts, router membership or
 	// checker code. Until their independence is declared, never reuse evidence.
-	modelled := map[string]bool{}
+	modelled := map[string]bool{"markitect.yaml": true}
 	for _, p := range []*Project{before, after} {
 		for _, r := range p.Resources {
 			modelled[r.Path] = true
 		}
 	}
 	for name := range changed {
-		if !modelled[name] {
+		if owners := ownedInputs[name]; len(owners) > 0 {
+			for owner := range owners {
+				seeds[owner] = true
+			}
+		} else if !modelled[name] {
 			all = true
 		}
 	}
@@ -189,6 +203,113 @@ func Changes(before, after *Project) *Impact {
 	}
 	sort.Strings(result.Affected)
 	return result
+}
+
+// impactFileOwners maps only paths whose content is already represented by a
+// typed resource or by an explicit Spec.Files declaration. Unknown generated
+// files remain broad-impact inputs until their ownership is modeled.
+func impactFileOwners(p *Project) map[string]map[string]bool {
+	owners := map[string]map[string]bool{}
+	add := func(file, key string) {
+		if file == "" || key == "" {
+			return
+		}
+		if owners[file] == nil {
+			owners[file] = map[string]bool{}
+		}
+		owners[file][key] = true
+	}
+	if p == nil {
+		return owners
+	}
+	profile := ""
+	targets := map[string]bool{}
+	if p.Graph != nil && p.Graph.Project != nil {
+		profile = strings.ToLower(p.Graph.Project.Spec.Profile)
+		for _, target := range p.Graph.Project.Spec.Targets {
+			targets[strings.ToLower(target)] = true
+		}
+	}
+	for _, r := range p.Resources {
+		if r == nil || r.Kind == "Project" {
+			continue
+		}
+		key := r.Key()
+		add(companionPath(r.Path), key)
+		for _, file := range r.Spec.Files {
+			add(file, key)
+		}
+		for _, file := range p.InputFiles[key] {
+			add(file, key)
+		}
+		switch r.Kind {
+		case "Agent":
+			if profile == "konfyra" || targets["codex"] {
+				add(".codex/agents/"+r.Metadata.Name+".toml", key)
+			}
+			if profile == "konfyra" || targets["claude"] {
+				add(".claude/agents/"+r.Metadata.Name+".md", key)
+			}
+		case "Skill":
+			if profile == "konfyra" || targets["codex"] {
+				add(".agents/skills/"+r.Metadata.Name+"/SKILL.md", key)
+			}
+			if profile == "konfyra" || targets["claude"] {
+				add(".claude/skills/"+r.Metadata.Name+"/SKILL.md", key)
+			}
+		}
+	}
+	if p.Graph != nil && p.Graph.Project != nil && targets["claude"] {
+		project := p.Graph.Project
+		if project.Spec.RuleAdapters != nil {
+			for name, refs := range project.Spec.RuleAdapters {
+				file := ".claude/rules/" + name + ".md"
+				for _, ref := range refs {
+					kind := ref.Kind
+					if kind == "" {
+						kind = "Rule"
+					}
+					namespace := ref.Namespace
+					if namespace == "" {
+						namespace = project.Metadata.Namespace
+					}
+					if resource := p.Graph.Resources[namespace+"/"+kind+"/"+ref.Name]; resource != nil {
+						add(file, resource.Key())
+					}
+				}
+			}
+		} else if strings.EqualFold(project.Spec.Profile, "cockpit") {
+			allowed := map[string]string{"cockpit-general": "general", "cockpit-consiliari": "consiliari"}
+			for _, area := range project.Spec.Areas {
+				scope, ok := allowed[area.Name]
+				if !ok {
+					continue
+				}
+				for _, ref := range area.Rules {
+					kind := ref.Kind
+					if kind == "" {
+						kind = "Rule"
+					}
+					namespace := ref.Namespace
+					if namespace == "" {
+						namespace = area.Name
+					}
+					if resource := p.Graph.Resources[namespace+"/"+kind+"/"+ref.Name]; resource != nil {
+						add(".claude/rules/"+scope+"-"+resource.Metadata.Name+".md", resource.Key())
+					}
+				}
+			}
+		}
+	}
+	return owners
+}
+
+func companionPath(source string) string {
+	ext := path.Ext(source)
+	if ext == "" {
+		return source + ".md"
+	}
+	return strings.TrimSuffix(source, ext) + ".md"
 }
 
 func YAML(value any) ([]byte, error) { return format.Encode(value) }
