@@ -68,3 +68,11 @@ Observed local samples: original governance run 7.473 s; migrated warm run 5.826
 ## Next acceptance exercise
 
 Use one small authoring request, one shared Rule change and one simultaneous independent branch change. Record selected entry, declared inputs, changed/affected resources, regenerated files, checks, semantic review scope and actual model work. Run the installed provider workflows, hosted gates and human acceptance on the final candidate. Only then advance the agreed Cockpit migration.
+
+## Follow-up: Go-only integration
+
+The subsequent pilot candidate `1b56627b1e1d9eb58db87b210d5c59e069b8a5a4` replaces the Markitect-owned Python bootstrap/tests with Go while retaining the same RC2 tool archive. Full governance passed on Windows and from that exact Git archive in a Linux container without network: 21 existing consumer regressions plus the native Go bootstrap suite. RC2 fixed `verify` also passed; its profile covers the renderer/Python regressions, while the additional native Go gate is covered by the separate complete governance run.
+
+The Go bootstrap produced the same Windows Markitect executable digest as before. The new authoring context changed, and an actual reuse attempt returned `review-required` for the old report. This demonstrates invalidation across the two real candidates; it is not a fresh semantic review.
+
+Standalone source commit `94d4e70a391d29786c79511f20e1e454da6840d1` passed Go tests, vet, schema and example checks on Windows and isolated Linux. A newly packaged development build also passed a fresh Go-bootstrap consumer smoke test. The Cockpit's existing checks still pass; it remains unmigrated. Provider runtime, hosted CI and human acceptance remain open.
