@@ -1,10 +1,10 @@
 # Architecture
 
-Status: source release `v0.1.0` is published and immutable from `45e0017a3d25d2abd464de934b5ef3a802732d0a`; consumer acceptance remains separate. See the [production delivery assessment](production-assessment.md). Updated 2026-09-30. [Usage](usage.md) owns exact current syntax. [Refinement decisions](refinement.md) owns proposed changes; [the plan](implementation-plan.md) owns their order.
+**Status:** This describes the current source model. The immutable `v0.1.0` release is historical and unchanged; published versions are listed in GitHub Releases. [Usage](usage.md) owns the Project and CLI contract; [the roadmap](implementation-plan.md) owns planned work and status.
 
 ## Purpose
 
-Treat AI-facing mechanisms as software architecture: clear responsibility, explicit dependencies, controlled scope and predictable change. Go implements deterministic mechanics; YAML describes structure; Markdown remains the reading surface and prose body. Authoring is a core Markitect capability: modelling guidance, workflows, skills and supporting queries share its release lifecycle. Agents handle intent and semantic judgment; deterministic operations do not require a model. Portable core authoring resources are embedded in the tool; consumer workflows add local delivery policy.
+Markitect makes AI-facing engineering resources explicit enough to validate, connect, and review. Humans and agents choose intent and meaning; the deterministic Go application parses YAML, resolves dependencies, compiles context, measures change impact, verifies declared commands, and produces managed views. Core authoring guidance is part of Markitect and uses the same model as project content.
 
 ```mermaid
 flowchart LR
@@ -14,69 +14,54 @@ flowchart LR
     Snapshot --> Graph[Parse and resolve graph]
     Graph --> Checks[Structural checks]
     Graph --> Context[Compiled context]
-    Graph --> Views[Managed views]
-    Context --> Review[Bounded semantic review]
-    Graph --> Impact[Old and new change impact]
-    Impact --> Reuse[Eligible report reuse]
-    Review --> Reuse
+    Graph --> Views[Generic managed views]
+    Graph --> Targets[Declared render targets]
+    Context --> Review[Advisory semantic review]
+    Graph --> Impact[Old/new change impact]
 ```
 
-## Small domain
+## Resource model
 
-| Kind | Meaning |
+Resources have local identity `namespace/kind/name`; the Project has identity `kind: Project` in `markitect.yaml`.
+
+| Kind | Responsibility |
 |---|---|
-| Text | Reusable prose/context without another machine role |
-| Rule | Scoped requirement; only named implemented checks are executable |
+| Text | Reusable prose or context |
+| Rule | Scoped requirement with an optional check description |
 | Workflow | Procedure and dependencies |
 | Skill | Agent entrypoint to a procedure |
 | Agent | Responsibility and supported provider settings |
-| Contract | Required kind and exact symbolic input/output signature |
-| Project | Area policy, imports, bindings and output configuration |
+| Contract | Required kind and symbolic input/output signature |
+| Project | Areas, imports, bindings, checks, and render configuration |
 
-Local resource identity is `namespace/kind/name`. Namespaces and names are DNS labels. File paths determine area ownership; the longest containing area owns the resource. Area `imports` permits direct references and does not grant transitive access.
+`rules` declares requirements; `uses` declares concrete dependencies; `needs` requires a Contract; `implements` promises its signature; Project bindings select implementations. `files` declares exact ordinary UTF-8 inputs. Prose links are navigation and are not inferred dependencies. Area ownership and access follow configured paths and explicit imports; namespaces do not create inheritance.
 
-`rules` declares requirements; `uses` declares concrete dependencies; `needs` requires a Contract; `implements` promises its signature. A Project binding selects the implementation. All implementations are checked; compiled context follows the selected one. `files` includes exact ordinary UTF-8 file inputs, subject to area access.
+The Project may declare `spec.checks` as entries with a name and `run` argument array. A command is an executable plus literal arguments, not a shell expression. This is the project's explicit verification contract. The package may be structurally checked without those entries, but `verify` reports incomplete evidence when no check is declared.
 
-Rules explicitly listed on any containing area apply to its descendant resources. This is path scope, including ancestor paths. A namespace name never creates inheritance; there is no resource inheritance or load-order override. Preserve this behavior until an explicit migration changes it.
+## Deterministic core and adapters
 
-## Compiler and adapters
+Strict parsing rejects unknown fields, duplicate identities, extra YAML documents, aliases, merge keys, and unsupported tags. Graph checks validate kinds, identities, references, access, bindings, signatures, and cycles. Schemas assist editors; the parser and graph remain authoritative.
 
-The parser rejects unknown fields, duplicates, extra YAML documents, aliases, merge keys and unsupported tags. The graph checks types, identities, references, scopes, bindings, signatures and cycles. Generated YAML schemas assist editors; they do not replace these semantic checks.
+The core does not depend on a model API, IDE, provider SDK, or repository-specific policy. The CLI, Git reader, filesystem writers, release packaging, and explicitly configured output adapters are boundaries around the core. `verify` executes only the commands declared by the selected Project. It neither chooses a repository profile nor infers a runtime gate from files it happens to find.
 
-The core has no dependency on Kubernetes, a model API, an IDE or a provider SDK. CLI orchestration, filesystem/Git access, rendering, release packaging and consumer checks are adapters. Existing Konfyra/Cockpit profile code remains in-tree compatibility code; extract an interface only when another adapter demonstrates a stable boundary.
+Rendering produces generic managed views and explicitly declared Codex/Claude targets or rule adapters. Markitect owns those supported adapters; additional project-specific output policy remains outside the core. No target is selected implicitly. Format, render, schema, and install operations validate plans before writing; per-file replacement is atomic, not a multi-file transaction.
 
-Each output has one owner. Generic rendering supports declared native targets. During the Konfyra pilot, Markitect generates adjacent Markdown and the existing Python renderer owns provider files. It requires a passing Markitect check before rendering. A later replacement must reproduce its mappings and retirement behavior before switching ownership.
+## Authoring and queries
 
-## Authoring and structural queries
+Portable core authoring resources are embedded and compiled through the normal parser, graph, and context pipeline. They explain resource choice, ownership, explicit dependencies, and diagnostics. `authoring`, `find`, and `explain` support an agent or person inspecting the model; they do not interpret natural-language intent or call a model.
 
-Core resolution records why each relationship exists alongside the adjacency graph. Area ownership is captured when the existing longest-path rule is validated. Application queries consume this resolved model; CLI adapters do not implement another reference resolver.
+`find` performs literal discovery with exact optional filters. `explain` reports direct relationships and their declaration source. `context` follows dependencies from a selected entry and reports included resources and declared-file inputs. `impact` compares old and candidate dependency closures. Semantic relevance and task-to-entry selection remain explicit reasoning outside the deterministic engine.
 
-`find` performs literal, case-insensitive discovery with exact optional filters and returns concise resource locations. `explain` shows direct incoming/outgoing relationships with declaration provenance, structural area ownership, ordinary file inputs and Contract implementation declarations/selection. A Project binding and an `implements` claim are distinct facts. `context` follows transitive graph edges and reports one deterministic inclusion reason per input. Queries require a valid graph and never claim semantic relevance or human authority.
+## Fixed inputs and evidence
 
-`internal/authoring` embeds canonical YAML for a small Project, Rule, Text, Workflow and Skill. `authoring` parses and compiles this collection through the ordinary application pipeline. Its embedded source marker and digests distinguish immutable release guidance from a consumer Git revision. No model runtime, optional package or copied provider installation is required. The distribution archive includes the embedded assets, so a consumer-built binary has the same guidance as a standalone build from those sources.
+A commit resolves to one Git tree with paths, modes, and bytes. Later working-tree edits do not alter that snapshot. Context fingerprints its selected inputs and tool identity. Impact includes changed paths and old/new consumers of changed dependencies. Unknown or unmodelled inputs conservatively broaden results.
 
-## Fixed inputs and change
+`verify --revision COMMIT` checks that exact snapshot. It runs Project-declared commands inside its materialized copy using literal executable arguments and bounded time/output. A missing check declaration, unavailable executable, timeout, or output overflow is incomplete evidence. Commands run with local user authority; snapshot materialization is not an operating-system sandbox.
 
-A revision resolves once to a committed Git tree, captured with paths, modes and bytes. Git reads and branch checks bind to the explicit repository and discard inherited Git repository/object/config overrides. Later working-tree edits cannot change that snapshot. Working-tree results are provisional. Controlled writes check source state and refuse unmanaged collisions; per-file writes are atomic, but there is no repository-wide transaction guarantee.
+Review evidence is advisory. Reuse requires matching tool, configuration, context and eligible impact. Markitect can record an actual report and assess whether its declared inputs still match; it does not invoke a reviewer, authenticate its prose, prove completeness, or transfer human acceptance.
 
-Context includes the selected entry, transitive dependencies, applicable rules, selected implementations and explicit file contents. It reports inclusion reasons and hashes. Markitect currently requires an explicit resource entry; selecting that entry from a natural-language task is the agent's responsibility.
+## Distribution and product boundary
 
-Impact compares old and new dependency closures. Deleted edges cannot hide their former consumers. Configuration/inventory changes and unmodelled paths conservatively broaden the result. This preserves caution but can limit savings until real inputs are modelled more precisely.
+This repository owns Markitect source, schemas, core authoring, generic examples, and release design. An adopting repository owns its content, import scripts, custom output formats, and declared runtime checks. Markitect provides no built-in project-specific migration command.
 
-`verify` materializes the fixed snapshot and runs supported profile gates there. Konfyra and Cockpit include native Go bootstrap tests when both integration files occur in that snapshot; an incomplete pair fails. Migrated Cockpit snapshots use their Go documentation checker and its tests; historical snapshots retain their compatibility gates. Execution time and output are bounded, partial gate results remain visible, and unavailable verification cannot be reported as passed. [Operations](operations.md) defines the limits and failure handling. `generic` has no extra repository gate. `check` includes generated drift, so the normal authoring order is edit, format, render, check, commit, fixed context/impact/review.
-
-## Evidence limits
-
-`snapshotDigest` identifies the loaded snapshot; context `digest` identifies declared relevant inputs and tool identity; `toolDigest` identifies executable bytes. None establishes that prose is true or complete.
-
-Advisory review reuse requires matching tool/config/context and eligible impact. Markitect records an actual report and checks whether its inputs permit reuse; it neither invokes a model nor interprets a successful result from prose. Hashes do not authenticate a reviewer or hosted CI. Human acceptance is never transferred.
-
-An undeclared semantic dependency remains a modelling gap. Ordinary links are navigation, not inferred graph edges. Structural correctness cannot prove arbitrary instructions compatible, sufficient or followed by a runtime agent.
-
-## Standalone ownership
-
-This repository owns tool source, schemas, generic examples and product design. Consumers own their policies and pinned integration. `internal/release` builds and validates the deterministic distribution using a fixed source snapshot. The complete bundle contains the source archive, existing flat tool lock, Go bootstrap, paired tests and a YAML release manifest binding their hashes to a source commit. `internal/app` owns installation plans, existing-pin ownership checks and controlled filesystem writes; CLI code selects inputs and reports outcomes. Release packaging has no provider or customer policy dependency.
-
-`bundle` requires a fixed revision and matching source version. `install` verifies the complete bundle before planning or writing and refuses ambiguous existing ownership. GitHub release attestation establishes downloaded asset provenance; local hashes establish byte consistency. Neither replaces consumer validation. The low-level `package` command still creates only a source archive and flat tool lock. Reusable content packages and template initialization are proposed work, not current commands.
-
-The API-shaped YAML envelope leaves room for a later Kubernetes adapter, but these resources and schemas are not CRDs. Runtime lifecycle, API conversion, status and reconciliation need an explicit future contract. The Go module follows the private `Glacius-Labs/Markitect` GitHub repository. The API group remains a placeholder until a controlled domain and explicit format migration are chosen.
+The immutable `v0.1.0` release and its original package are historical pins. The `v0.2.0` model removes Project profiles, replaces implicit gates with declared commands, and uses explicit targets and rule adapters for rendering. A version number or passing standalone tests does not prove that a v0.2.0 release exists. See [Integration](../integration/README.md) for the existing release boundary.

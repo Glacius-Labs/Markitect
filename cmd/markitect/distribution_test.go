@@ -20,7 +20,7 @@ func TestHelpSucceedsAndShowsOnlyApplicableFlags(t *testing.T) {
 	if !strings.Contains(out, "--sha256") || strings.Contains(out, "--revision") || strings.Contains(out, "--config") {
 		t.Fatalf("incorrect install help: %s", out)
 	}
-	for _, args := range [][]string{{"help", "missing"}, {"install", "--revision", "HEAD"}, {"bundle", "--write"}, {"migrate", "--profile", "missing"}} {
+	for _, args := range [][]string{{"help", "missing"}, {"install", "--revision", "HEAD"}, {"bundle", "--write"}, {"missing-command"}, {"migrate"}, {"check", "--profile", "generic"}} {
 		code, _, _ := invoke(args...)
 		if code != 2 {
 			t.Fatalf("%v returned %d, want 2", args, code)

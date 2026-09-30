@@ -14,8 +14,7 @@ func TestCompileContextIncludesOnlySelectedImplementationAndItsExplicitFiles(t *
 		Metadata:   core.Metadata{Name: "sample"},
 		Path:       projectPath,
 		Spec: core.Spec{
-			Profile: "generic",
-			Areas:   []core.Area{{Name: projectNS, Path: "docs/general"}},
+			Areas: []core.Area{{Name: projectNS, Path: "docs/area"}},
 			Bindings: []core.Binding{{
 				Contract:       core.Ref{Kind: "Contract", Name: "review", Namespace: projectNS},
 				Implementation: core.Ref{Kind: "Agent", Name: "reviewer-a", Namespace: projectNS},
@@ -24,22 +23,22 @@ func TestCompileContextIncludesOnlySelectedImplementationAndItsExplicitFiles(t *
 	}
 	contract := core.Resource{
 		APIVersion: core.APIVersion, Kind: "Contract", Metadata: core.Metadata{Name: "review", Namespace: projectNS},
-		Path: "docs/general/contracts/review.yaml",
-		Spec: core.Spec{Text: "Review contract.", Kind: "Agent", Input: []string{"change"}, Output: []string{"findings"}, Files: []string{"docs/general/contracts/review.go"}},
+		Path: "docs/area/contracts/review.yaml",
+		Spec: core.Spec{Text: "Review contract.", Kind: "Agent", Input: []string{"change"}, Output: []string{"findings"}, Files: []string{"docs/area/contracts/review.go"}},
 	}
 	selected := core.Resource{
 		APIVersion: core.APIVersion, Kind: "Agent", Metadata: core.Metadata{Name: "reviewer-a", Namespace: projectNS},
-		Path: "docs/general/agents/reviewer-a.yaml",
-		Spec: core.Spec{Text: "Selected reviewer.", Input: []string{"change"}, Output: []string{"findings"}, Implements: []core.Ref{{Name: "review"}}, Files: []string{"docs/general/agents/selected-notes.md"}},
+		Path: "docs/area/agents/reviewer-a.yaml",
+		Spec: core.Spec{Text: "Selected reviewer.", Input: []string{"change"}, Output: []string{"findings"}, Implements: []core.Ref{{Name: "review"}}, Files: []string{"docs/area/agents/selected-notes.md"}},
 	}
 	alternative := core.Resource{
 		APIVersion: core.APIVersion, Kind: "Agent", Metadata: core.Metadata{Name: "reviewer-b", Namespace: projectNS},
-		Path: "docs/general/agents/reviewer-b.yaml",
-		Spec: core.Spec{Text: "Alternative reviewer.", Input: []string{"change"}, Output: []string{"findings"}, Implements: []core.Ref{{Name: "review"}}, Files: []string{"docs/general/agents/alternative-notes.md"}},
+		Path: "docs/area/agents/reviewer-b.yaml",
+		Spec: core.Spec{Text: "Alternative reviewer.", Input: []string{"change"}, Output: []string{"findings"}, Implements: []core.Ref{{Name: "review"}}, Files: []string{"docs/area/agents/alternative-notes.md"}},
 	}
 	consumer := core.Resource{
 		APIVersion: core.APIVersion, Kind: "Workflow", Metadata: core.Metadata{Name: "review-change", Namespace: projectNS},
-		Path: "docs/general/workflows/review-change.yaml",
+		Path: "docs/area/workflows/review-change.yaml",
 		Spec: core.Spec{Text: "Review the change.", Needs: []core.Ref{{Name: "review"}}},
 	}
 
@@ -51,9 +50,9 @@ func TestCompileContextIncludesOnlySelectedImplementationAndItsExplicitFiles(t *
 		snapshot.Modes[resource.Path] = "100644"
 	}
 	texts := map[string]string{
-		"docs/general/contracts/review.go":         "type ReviewInput struct{}\n",
-		"docs/general/agents/selected-notes.md":    "Selected reference text.\n",
-		"docs/general/agents/alternative-notes.md": "Unselected reference text.\n",
+		"docs/area/contracts/review.go":         "type ReviewInput struct{}\n",
+		"docs/area/agents/selected-notes.md":    "Selected reference text.\n",
+		"docs/area/agents/alternative-notes.md": "Unselected reference text.\n",
 	}
 	for name, text := range texts {
 		snapshot.Files[name] = []byte(text)
@@ -89,7 +88,7 @@ func TestCompileContextIncludesOnlySelectedImplementationAndItsExplicitFiles(t *
 	for name, want := range texts {
 		key := "file:" + name
 		entry, ok := entries[key]
-		if name == "docs/general/agents/alternative-notes.md" {
+		if name == "docs/area/agents/alternative-notes.md" {
 			if ok {
 				t.Errorf("context included unselected input file %s", name)
 			}
@@ -107,23 +106,23 @@ func TestCompileContextIncludesOnlySelectedImplementationAndItsExplicitFiles(t *
 
 func TestChangesMapsSkillSourceAndCompanionToLocalDependents(t *testing.T) {
 	makeProject := func(body, companion string) *Project {
-		policy := impactProjectResource("generic", []core.Area{{Name: "general", Path: "docs/general"}})
-		skill := core.Resource{APIVersion: core.APIVersion, Kind: "Skill", Metadata: core.Metadata{Name: "local", Namespace: "general"}, Path: "docs/general/skills/local.yaml", Spec: core.Spec{Text: body}}
-		consumer := core.Resource{APIVersion: core.APIVersion, Kind: "Workflow", Metadata: core.Metadata{Name: "uses-local", Namespace: "general"}, Path: "docs/general/workflows/uses-local.yaml", Spec: core.Spec{Text: "Use local skill.", Uses: []core.Ref{{Kind: "Skill", Name: "local"}}}}
-		unrelated := core.Resource{APIVersion: core.APIVersion, Kind: "Workflow", Metadata: core.Metadata{Name: "unrelated", Namespace: "general"}, Path: "docs/general/workflows/unrelated.yaml", Spec: core.Spec{Text: "Independent."}}
-		return parseImpactProject(t, []*core.Resource{policy, &skill, &consumer, &unrelated}, map[string]string{"docs/general/skills/local.md": companion})
+		policy := impactProjectResource([]core.Area{{Name: "area", Path: "docs/area"}})
+		skill := core.Resource{APIVersion: core.APIVersion, Kind: "Skill", Metadata: core.Metadata{Name: "local", Namespace: "area"}, Path: "docs/area/skills/local.yaml", Spec: core.Spec{Text: body}}
+		consumer := core.Resource{APIVersion: core.APIVersion, Kind: "Workflow", Metadata: core.Metadata{Name: "uses-local", Namespace: "area"}, Path: "docs/area/workflows/uses-local.yaml", Spec: core.Spec{Text: "Use local skill.", Uses: []core.Ref{{Kind: "Skill", Name: "local"}}}}
+		unrelated := core.Resource{APIVersion: core.APIVersion, Kind: "Workflow", Metadata: core.Metadata{Name: "unrelated", Namespace: "area"}, Path: "docs/area/workflows/unrelated.yaml", Spec: core.Spec{Text: "Independent."}}
+		return parseImpactProject(t, []*core.Resource{policy, &skill, &consumer, &unrelated}, map[string]string{"docs/area/skills/local.md": companion})
 	}
 	impact := Changes(makeProject("Old definition.", "Old generated view."), makeProject("New definition.", "New generated view."))
-	assertAffected(t, impact, "general/Skill/local", "general/Workflow/uses-local")
+	assertAffected(t, impact, "area/Skill/local", "area/Workflow/uses-local")
 }
 
 func TestChangesMapsAgentMetadataAndProviderOutputsToDependents(t *testing.T) {
 	makeProject := func(model, codexOutput, claudeOutput string) *Project {
-		policy := impactProjectResource("generic", []core.Area{{Name: "general", Path: "docs/general"}})
+		policy := impactProjectResource([]core.Area{{Name: "area", Path: "docs/area"}})
 		policy.Spec.Targets = []string{"codex", "claude"}
-		agent := core.Resource{APIVersion: core.APIVersion, Kind: "Agent", Metadata: core.Metadata{Name: "reviewer", Namespace: "general"}, Path: "docs/general/agents/reviewer.yaml", Spec: core.Spec{Text: "Review changes.", Providers: core.Providers{Codex: &core.Provider{Model: model}}}}
-		consumer := core.Resource{APIVersion: core.APIVersion, Kind: "Workflow", Metadata: core.Metadata{Name: "review", Namespace: "general"}, Path: "docs/general/workflows/review.yaml", Spec: core.Spec{Text: "Review.", Uses: []core.Ref{{Kind: "Agent", Name: "reviewer"}}}}
-		unrelated := core.Resource{APIVersion: core.APIVersion, Kind: "Workflow", Metadata: core.Metadata{Name: "other", Namespace: "general"}, Path: "docs/general/workflows/other.yaml", Spec: core.Spec{Text: "Independent."}}
+		agent := core.Resource{APIVersion: core.APIVersion, Kind: "Agent", Metadata: core.Metadata{Name: "reviewer", Namespace: "area"}, Path: "docs/area/agents/reviewer.yaml", Spec: core.Spec{Text: "Review changes.", Providers: core.Providers{Codex: &core.Provider{Model: model}}}}
+		consumer := core.Resource{APIVersion: core.APIVersion, Kind: "Workflow", Metadata: core.Metadata{Name: "review", Namespace: "area"}, Path: "docs/area/workflows/review.yaml", Spec: core.Spec{Text: "Review.", Uses: []core.Ref{{Kind: "Agent", Name: "reviewer"}}}}
+		unrelated := core.Resource{APIVersion: core.APIVersion, Kind: "Workflow", Metadata: core.Metadata{Name: "other", Namespace: "area"}, Path: "docs/area/workflows/other.yaml", Spec: core.Spec{Text: "Independent."}}
 		outputs := map[string]string{
 			".codex/agents/reviewer.toml": codexOutput,
 			".claude/agents/reviewer.md":  claudeOutput,
@@ -131,36 +130,33 @@ func TestChangesMapsAgentMetadataAndProviderOutputsToDependents(t *testing.T) {
 		return parseImpactProject(t, []*core.Resource{policy, &agent, &consumer, &unrelated}, outputs)
 	}
 	impact := Changes(makeProject("old-model", "old codex output", "old claude output"), makeProject("new-model", "new codex output", "new claude output"))
-	assertAffected(t, impact, "general/Agent/reviewer", "general/Workflow/review")
+	assertAffected(t, impact, "area/Agent/reviewer", "area/Workflow/review")
 }
 
 func TestChangesMapsSharedRuleSourceViewsAndProviderViewToAllApplicableResources(t *testing.T) {
 	makeProject := func(ruleText, companion, providerView string) *Project {
-		policy := impactProjectResource("cockpit", []core.Area{
-			{Name: "cockpit-general", Path: "docs/general", Rules: []core.Ref{{Name: "shared"}}},
-			{Name: "customer", Path: "docs/customer"},
-		})
+		policy := impactProjectResource([]core.Area{{Name: "team", Path: "docs/team"}})
 		policy.Spec.Targets = []string{"claude"}
-		rule := core.Resource{APIVersion: core.APIVersion, Kind: "Rule", Metadata: core.Metadata{Name: "shared", Namespace: "cockpit-general"}, Path: "docs/general/rules/shared.yaml", Spec: core.Spec{Text: ruleText}}
-		general := core.Resource{APIVersion: core.APIVersion, Kind: "Workflow", Metadata: core.Metadata{Name: "general-flow", Namespace: "cockpit-general"}, Path: "docs/general/workflows/general-flow.yaml", Spec: core.Spec{Text: "General."}}
-		second := core.Resource{APIVersion: core.APIVersion, Kind: "Skill", Metadata: core.Metadata{Name: "general-skill", Namespace: "cockpit-general"}, Path: "docs/general/skills/general-skill.yaml", Spec: core.Spec{Text: "General skill."}}
-		private := core.Resource{APIVersion: core.APIVersion, Kind: "Workflow", Metadata: core.Metadata{Name: "customer-flow", Namespace: "customer"}, Path: "docs/customer/workflows/customer-flow.yaml", Spec: core.Spec{Text: "Customer."}}
+		policy.Spec.RuleAdapters = map[string][]core.Ref{"review-context": {{Kind: "Rule", Namespace: "team", Name: "shared"}}}
+		rule := core.Resource{APIVersion: core.APIVersion, Kind: "Rule", Metadata: core.Metadata{Name: "shared", Namespace: "team"}, Path: "docs/team/rules/shared.yaml", Spec: core.Spec{Text: ruleText}}
+		area := core.Resource{APIVersion: core.APIVersion, Kind: "Workflow", Metadata: core.Metadata{Name: "area-flow", Namespace: "team"}, Path: "docs/team/workflows/area-flow.yaml", Spec: core.Spec{Text: "General.", Rules: []core.Ref{{Name: "shared"}}}}
+		second := core.Resource{APIVersion: core.APIVersion, Kind: "Skill", Metadata: core.Metadata{Name: "area-skill", Namespace: "team"}, Path: "docs/team/skills/area-skill.yaml", Spec: core.Spec{Text: "General skill.", Rules: []core.Ref{{Name: "shared"}}}}
 		outputs := map[string]string{
-			"docs/general/rules/shared.md":    companion,
-			".claude/rules/general-shared.md": providerView,
+			"docs/team/rules/shared.md":       companion,
+			".claude/rules/review-context.md": providerView,
 		}
-		return parseImpactProject(t, []*core.Resource{policy, &rule, &general, &second, &private}, outputs)
+		return parseImpactProject(t, []*core.Resource{policy, &rule, &area, &second}, outputs)
 	}
 	impact := Changes(makeProject("Old policy.", "Old rule view.", "Old provider rule."), makeProject("New policy.", "New rule view.", "New provider rule."))
-	assertAffected(t, impact, "cockpit-general/Rule/shared", "cockpit-general/Workflow/general-flow", "cockpit-general/Skill/general-skill")
+	assertAffected(t, impact, "/Project/impact-test", "team/Rule/shared", "team/Workflow/area-flow", "team/Skill/area-skill")
 }
 
 func TestChangesIncludesRemovedResourceFromOldGraph(t *testing.T) {
-	policy := impactProjectResource("generic", []core.Area{{Name: "general", Path: "docs/general"}})
-	skill := core.Resource{APIVersion: core.APIVersion, Kind: "Skill", Metadata: core.Metadata{Name: "retired", Namespace: "general"}, Path: "docs/general/skills/retired.yaml", Spec: core.Spec{Text: "Retired."}}
-	consumer := core.Resource{APIVersion: core.APIVersion, Kind: "Workflow", Metadata: core.Metadata{Name: "consumer", Namespace: "general"}, Path: "docs/general/workflows/consumer.yaml", Spec: core.Spec{Text: "Consumer."}}
+	policy := impactProjectResource([]core.Area{{Name: "area", Path: "docs/area"}})
+	skill := core.Resource{APIVersion: core.APIVersion, Kind: "Skill", Metadata: core.Metadata{Name: "retired", Namespace: "area"}, Path: "docs/area/skills/retired.yaml", Spec: core.Spec{Text: "Retired."}}
+	consumer := core.Resource{APIVersion: core.APIVersion, Kind: "Workflow", Metadata: core.Metadata{Name: "consumer", Namespace: "area"}, Path: "docs/area/workflows/consumer.yaml", Spec: core.Spec{Text: "Consumer."}}
 	before := parseImpactProject(t, []*core.Resource{policy, &skill, &consumer}, nil)
-	afterPolicy := impactProjectResource("generic", []core.Area{{Name: "general", Path: "docs/general"}})
+	afterPolicy := impactProjectResource([]core.Area{{Name: "area", Path: "docs/area"}})
 	afterConsumer := consumer
 	after := parseImpactProject(t, []*core.Resource{afterPolicy, &afterConsumer}, nil)
 	impact := Changes(before, after)
@@ -169,8 +165,8 @@ func TestChangesIncludesRemovedResourceFromOldGraph(t *testing.T) {
 	}
 }
 
-func impactProjectResource(profile string, areas []core.Area) *core.Resource {
-	return &core.Resource{APIVersion: core.APIVersion, Kind: "Project", Metadata: core.Metadata{Name: "impact-test"}, Path: projectPath, Spec: core.Spec{Profile: profile, Areas: areas}}
+func impactProjectResource(areas []core.Area) *core.Resource {
+	return &core.Resource{APIVersion: core.APIVersion, Kind: "Project", Metadata: core.Metadata{Name: "impact-test"}, Path: projectPath, Spec: core.Spec{Areas: areas}}
 }
 
 func parseImpactProject(t *testing.T, resources []*core.Resource, extraFiles map[string]string) *Project {

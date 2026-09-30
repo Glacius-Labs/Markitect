@@ -96,13 +96,13 @@ func TestExplainResolvesExactNamespacedAndProjectIdentity(t *testing.T) {
 	if rule.Key != cliNamespace+"/Rule/policy" || len(rule.Incoming) != 1 || rule.Incoming[0].From != cliNamespace+"/Skill/entry" {
 		t.Fatalf("Rule explanation omitted exact identity or incoming reference: %#v", rule)
 	}
-	code, output, stderr = invoke("explain", "--repo", repo.root, "--revision", repo.base, "--kind", "Project", "--name", "cockpit")
+	code, output, stderr = invoke("explain", "--repo", repo.root, "--revision", repo.base, "--kind", "Project", "--name", "sample-project")
 	if code != 0 {
 		t.Fatalf("explain Project exit=%d stderr=%s output=%s", code, stderr, output)
 	}
 	projectEnvelope := decodeYAML[explainCLIResult](t, output)
 	project := projectEnvelope.Result
-	if project.Key != "/Project/cockpit" || project.Kind != "Project" || project.Namespace != "" {
+	if project.Key != "/Project/sample-project" || project.Kind != "Project" || project.Namespace != "" {
 		t.Fatalf("Project explanation has wrong identity: %#v", project)
 	}
 }
@@ -113,7 +113,7 @@ func TestFindAndExplainRejectInvalidInputAndUnknownIdentity(t *testing.T) {
 		{"find", "--repo", repo.root, "--revision", repo.base, "--query", "policy", "unexpected"},
 		{"find", "--repo", repo.root, "--revision", repo.base, "--base", repo.base},
 		{"explain", "--repo", repo.root, "--revision", repo.base, "--kind", "Rule", "--name", "policy"},
-		{"explain", "--repo", repo.root, "--revision", repo.base, "--kind", "Project", "--name", "cockpit", "--namespace", cliNamespace},
+		{"explain", "--repo", repo.root, "--revision", repo.base, "--kind", "Project", "--name", "sample-project", "--namespace", cliNamespace},
 	} {
 		code, _, _ := invoke(args...)
 		if code != 2 {

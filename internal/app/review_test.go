@@ -212,7 +212,6 @@ func TestReviewYAMLDecodersRejectUnsafeOrIncompleteDocuments(t *testing.T) {
 
 func reviewResources(withRule, omitUnrelated, configureCodex bool) []*core.Resource {
 	policy := &core.Resource{APIVersion: core.APIVersion, Kind: "Project", Metadata: core.Metadata{Name: "review-test"}, Path: projectPath}
-	policy.Spec.Profile = "generic"
 	policy.Spec.Areas = []core.Area{{Name: "general", Path: "docs/general"}}
 	if withRule {
 		policy.Spec.Areas[0].Rules = []core.Ref{{Name: "shared"}}

@@ -260,7 +260,7 @@ func fixtureRoot(t *testing.T) string {
 	write("tools/markitect/internal/authoring/resources/markitect.yaml", "apiVersion: markitect.example.org/v1alpha1\nkind: Project\n")
 	write("tools/markitect/internal/authoring/testdata/fixture.yaml", "should not be packaged\n")
 	write("tools/markitect/schema/manifest.yaml", "schema: v1\n")
-	write("tools/markitect/internal/fixture/konfyra-customer-data.yaml", "proprietary: true\n")
+	write("tools/markitect/internal/fixture/customer-data.yaml", "proprietary: true\n")
 	write("tools/markitect/bin/markitect.exe", "excluded binary")
 	write("tools/markitect/.cache/temp.go", "package temp\n")
 	write("tools/markitect/.gocache/entry.go", "package cache\n")

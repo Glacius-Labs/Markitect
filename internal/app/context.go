@@ -2,12 +2,12 @@ package app
 
 import (
 	"fmt"
-	"path"
 	"sort"
 	"strings"
 
 	"github.com/Glacius-Labs/Markitect/internal/core"
 	"github.com/Glacius-Labs/Markitect/internal/format"
+	"github.com/Glacius-Labs/Markitect/internal/render"
 )
 
 type Context struct {
@@ -134,7 +134,12 @@ func Changes(before, after *Project) *Impact {
 				}
 			}
 		}
-		for file, owners := range impactFileOwners(p) {
+		fileOwners, err := impactFileOwners(p)
+		if err != nil {
+			all = true
+			continue
+		}
+		for file, owners := range fileOwners {
 			for owner := range owners {
 				if ownedInputs[file] == nil {
 					ownedInputs[file] = map[string]bool{}
@@ -208,7 +213,7 @@ func Changes(before, after *Project) *Impact {
 // impactFileOwners maps only paths whose content is already represented by a
 // typed resource or by an explicit Spec.Files declaration. Unknown generated
 // files remain broad-impact inputs until their ownership is modeled.
-func impactFileOwners(p *Project) map[string]map[string]bool {
+func impactFileOwners(p *Project) (map[string]map[string]bool, error) {
 	owners := map[string]map[string]bool{}
 	add := func(file, key string) {
 		if file == "" || key == "" {
@@ -220,96 +225,30 @@ func impactFileOwners(p *Project) map[string]map[string]bool {
 		owners[file][key] = true
 	}
 	if p == nil {
-		return owners
-	}
-	profile := ""
-	targets := map[string]bool{}
-	if p.Graph != nil && p.Graph.Project != nil {
-		profile = strings.ToLower(p.Graph.Project.Spec.Profile)
-		for _, target := range p.Graph.Project.Spec.Targets {
-			targets[strings.ToLower(target)] = true
-		}
+		return owners, nil
 	}
 	for _, r := range p.Resources {
 		if r == nil || r.Kind == "Project" {
 			continue
 		}
 		key := r.Key()
-		add(companionPath(r.Path), key)
 		for _, file := range r.Spec.Files {
 			add(file, key)
 		}
 		for _, file := range p.InputFiles[key] {
 			add(file, key)
 		}
-		switch r.Kind {
-		case "Agent":
-			if profile == "konfyra" || targets["codex"] {
-				add(".codex/agents/"+r.Metadata.Name+".toml", key)
-			}
-			if profile == "konfyra" || targets["claude"] {
-				add(".claude/agents/"+r.Metadata.Name+".md", key)
-			}
-		case "Skill":
-			if profile == "konfyra" || targets["codex"] {
-				add(".agents/skills/"+r.Metadata.Name+"/SKILL.md", key)
-			}
-			if profile == "konfyra" || targets["claude"] {
-				add(".claude/skills/"+r.Metadata.Name+"/SKILL.md", key)
-			}
+	}
+	_, generatedOwners, err := render.GenerateWithOwners(p.Graph)
+	if err != nil {
+		return nil, err
+	}
+	for file, resources := range generatedOwners {
+		for _, resource := range resources {
+			add(file, resource)
 		}
 	}
-	if p.Graph != nil && p.Graph.Project != nil && targets["claude"] {
-		project := p.Graph.Project
-		if project.Spec.RuleAdapters != nil {
-			for name, refs := range project.Spec.RuleAdapters {
-				file := ".claude/rules/" + name + ".md"
-				for _, ref := range refs {
-					kind := ref.Kind
-					if kind == "" {
-						kind = "Rule"
-					}
-					namespace := ref.Namespace
-					if namespace == "" {
-						namespace = project.Metadata.Namespace
-					}
-					if resource := p.Graph.Resources[namespace+"/"+kind+"/"+ref.Name]; resource != nil {
-						add(file, resource.Key())
-					}
-				}
-			}
-		} else if strings.EqualFold(project.Spec.Profile, "cockpit") {
-			allowed := map[string]string{"cockpit-general": "general", "cockpit-consiliari": "consiliari"}
-			for _, area := range project.Spec.Areas {
-				scope, ok := allowed[area.Name]
-				if !ok {
-					continue
-				}
-				for _, ref := range area.Rules {
-					kind := ref.Kind
-					if kind == "" {
-						kind = "Rule"
-					}
-					namespace := ref.Namespace
-					if namespace == "" {
-						namespace = area.Name
-					}
-					if resource := p.Graph.Resources[namespace+"/"+kind+"/"+ref.Name]; resource != nil {
-						add(".claude/rules/"+scope+"-"+resource.Metadata.Name+".md", resource.Key())
-					}
-				}
-			}
-		}
-	}
-	return owners
-}
-
-func companionPath(source string) string {
-	ext := path.Ext(source)
-	if ext == "" {
-		return source + ".md"
-	}
-	return strings.TrimSuffix(source, ext) + ".md"
+	return owners, nil
 }
 
 func YAML(value any) ([]byte, error) { return format.Encode(value) }

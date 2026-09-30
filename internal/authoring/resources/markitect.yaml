@@ -3,7 +3,6 @@ kind: Project
 metadata:
   name: markitect-authoring-core
 spec:
-  profile: generic
   areas:
     - name: core
       path: internal/authoring/resources

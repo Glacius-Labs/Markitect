@@ -10,8 +10,8 @@ import (
 	"strconv"
 	"strings"
 
-	"go.yaml.in/yaml/v3"
 	"github.com/Glacius-Labs/Markitect/internal/core"
+	"go.yaml.in/yaml/v3"
 )
 
 const maxResourceSize = 2 << 20
@@ -25,7 +25,7 @@ var specFields = map[string][]string{
 	"Workflow": {"text", "rules", "uses", "needs", "implements", "input", "output", "files"},
 	"Skill":    {"text", "description", "rules", "uses", "needs", "implements", "input", "output", "files"},
 	"Agent":    {"text", "description", "rules", "uses", "needs", "implements", "input", "output", "providers", "files"},
-	"Project":  {"profile", "targets", "areas", "bindings", "ruleAdapters"},
+	"Project":  {"targets", "areas", "bindings", "checks", "ruleAdapters"},
 }
 
 // AllowedSpecFields returns the accepted spec fields for a resource kind.
@@ -178,19 +178,6 @@ func validateSpec(file string, n *yaml.Node, kind string) error {
 			return diagnostic(file, d.Line, "Contract kind must be Agent, Workflow, or Skill")
 		}
 	}
-	for _, field := range []string{"profile"} {
-		if d := child(n, field); d != nil {
-			if err := checkScalar(file, d, "string"); err != nil {
-				return err
-			}
-			if kind == "Project" && !oneOf(d.Value, "generic", "konfyra", "cockpit") {
-				return diagnostic(file, d.Line, "Project profile must be generic, konfyra, or cockpit")
-			}
-		}
-	}
-	if kind == "Project" && child(n, "profile") == nil {
-		return diagnostic(file, n.Line, "Project spec requires profile")
-	}
 	for _, field := range []string{"input", "output", "targets"} {
 		if d := child(n, field); d != nil {
 			if err := validateStrings(file, d, field, field == "targets"); err != nil {
@@ -237,10 +224,56 @@ func validateSpec(file string, n *yaml.Node, kind string) error {
 			return err
 		}
 	}
+	if d := child(n, "checks"); d != nil {
+		if err := validateChecks(file, d); err != nil {
+			return err
+		}
+	}
 	if d := child(n, "ruleAdapters"); d != nil {
 		if err := validateRuleAdapters(file, d); err != nil {
 			return err
 		}
+	}
+	return nil
+}
+
+func validateChecks(file string, n *yaml.Node) error {
+	if err := requireSequence(file, n, "checks"); err != nil {
+		return err
+	}
+	seen := map[string]bool{}
+	for _, item := range n.Content {
+		if err := requireMapping(file, item, "project check"); err != nil {
+			return err
+		}
+		if err := checkKeys(file, item, set("name", "run")); err != nil {
+			return err
+		}
+		if err := requireFields(file, item, "name", "run"); err != nil {
+			return err
+		}
+		name := child(item, "name")
+		if err := checkScalar(file, name, "string"); err != nil {
+			return err
+		}
+		run := child(item, "run")
+		if err := requireSequence(file, run, "check run"); err != nil {
+			return err
+		}
+		check := core.Check{Name: name.Value, Run: make([]string, 0, len(run.Content))}
+		for _, arg := range run.Content {
+			if err := checkScalar(file, arg, "string"); err != nil {
+				return err
+			}
+			check.Run = append(check.Run, arg.Value)
+		}
+		if err := core.ValidateCheck(check); err != nil {
+			return diagnostic(file, item.Line, "invalid project check: %v", err)
+		}
+		if seen[check.Name] {
+			return diagnostic(file, name.Line, "project check name %q is duplicated", check.Name)
+		}
+		seen[check.Name] = true
 	}
 	return nil
 }

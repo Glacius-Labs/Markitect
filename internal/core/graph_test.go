@@ -8,7 +8,6 @@ func resource(kind, namespace, name, file string) *Resource {
 
 func project(areas ...Area) *Resource {
 	r := resource("Project", "", "test", "markitect.yaml")
-	r.Spec.Profile = "generic"
 	r.Spec.Areas = areas
 	return r
 }
@@ -32,15 +31,15 @@ func hasEdge(g *Graph, from, to string) bool {
 }
 
 func TestBuildResolvesTypedUsesAndRejectsMissingWrongKindAndScope(t *testing.T) {
-	p := project(Area{Name: "general", Path: "docs/general"}, Area{Name: "customer", Path: "docs/customer"})
+	p := project(Area{Name: "general", Path: "docs/general"}, Area{Name: "area-b", Path: "docs/area-b"})
 	s := resource("Skill", "general", "entry", "docs/general/entry.yaml")
 	s.Spec.Uses = []Ref{
 		{Kind: "Workflow", Name: "missing"},
 		{Kind: "Rule", Name: "policy"},
-		{Kind: "Text", Name: "private-note", Namespace: "customer"},
+		{Kind: "Text", Name: "private-note", Namespace: "area-b"},
 	}
 	rule := resource("Rule", "general", "policy", "docs/general/policy.yaml")
-	text := resource("Text", "customer", "private-note", "docs/customer/private.yaml")
+	text := resource("Text", "area-b", "private-note", "docs/area-b/private.yaml")
 	g := Build([]*Resource{p, s, rule, text})
 	for _, code := range []string{"reference.missing", "reference.kind", "reference.scope"} {
 		if !hasCode(g, code) {
@@ -52,11 +51,11 @@ func TestBuildResolvesTypedUsesAndRejectsMissingWrongKindAndScope(t *testing.T) 
 func TestBuildUsesLongestAreaAndInheritsAncestorRules(t *testing.T) {
 	p := project(
 		Area{Name: "general", Path: "docs/general", Rules: []Ref{{Name: "documentation"}}},
-		Area{Name: "wz", Path: "docs/general/projects/wz", Imports: []string{"general"}},
+		Area{Name: "product-b", Path: "docs/general/projects/product-b", Imports: []string{"general"}},
 	)
 	rule := resource("Rule", "general", "documentation", "docs/general/documentation.yaml")
-	w := resource("Workflow", "wz", "author", "docs/general/projects/wz/author.yaml")
-	spoof := resource("Text", "general", "local", "docs/general/projects/wz/local.yaml")
+	w := resource("Workflow", "product-b", "author", "docs/general/projects/product-b/author.yaml")
+	spoof := resource("Text", "general", "local", "docs/general/projects/product-b/local.yaml")
 	g := Build([]*Resource{w, spoof, p, rule})
 	if !hasEdge(g, w.Key(), rule.Key()) {
 		t.Errorf("ancestor rule was not inherited: %#v", g.Edges[w.Key()])
@@ -123,26 +122,70 @@ func TestBuildVerifiesUnboundImplementationsAndAllowsCompatibleAlternatives(t *t
 	}
 }
 
-func TestBuildReportsUnboundNeedsAndUnsupportedProfileAndTarget(t *testing.T) {
+func TestBuildReportsUnboundNeedsAndUnsupportedTarget(t *testing.T) {
 	p := project(Area{Name: "general", Path: "docs/general"})
-	p.Spec.Profile = "unknown"
 	p.Spec.Targets = []string{"codex", "unknown"}
 	c := resource("Contract", "general", "review", "docs/general/review.yaml")
 	c.Spec.Kind = "Agent"
 	w := resource("Workflow", "general", "run", "docs/general/run.yaml")
 	w.Spec.Needs = []Ref{{Name: "review"}}
 	g := Build([]*Resource{p, c, w})
-	for _, code := range []string{"project.profile", "project.target", "binding.missing"} {
+	for _, code := range []string{"project.target", "binding.missing"} {
 		if !hasCode(g, code) {
 			t.Errorf("expected %s diagnostic; got %#v", code, g.Diagnostics)
 		}
 	}
 }
 
+func TestBuildValidatesProjectChecks(t *testing.T) {
+	tests := []struct {
+		name   string
+		checks []Check
+		want   string
+	}{
+		{name: "valid argv", checks: []Check{{Name: "unit-test", Run: []string{"go", "test", "./..."}}}},
+		{name: "duplicate names", checks: []Check{{Name: "verify", Run: []string{"tool"}}, {Name: "verify", Run: []string{"other"}}}, want: "check.duplicate"},
+		{name: "invalid name", checks: []Check{{Name: "../verify", Run: []string{"tool"}}}, want: "check.invalid"},
+		{name: "missing argv", checks: []Check{{Name: "verify"}}, want: "check.invalid"},
+		{name: "blank executable", checks: []Check{{Name: "verify", Run: []string{" \t", "arg"}}}, want: "check.invalid"},
+		{name: "path executable", checks: []Check{{Name: "verify", Run: []string{"./scripts/verify"}}}, want: "check.invalid"},
+		{name: "NUL in argument", checks: []Check{{Name: "verify", Run: []string{"tool", "bad\x00arg"}}}, want: "check.invalid"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			p := project(Area{Name: "general", Path: "docs/general"})
+			p.Spec.Checks = tt.checks
+			g := Build([]*Resource{p})
+			if tt.want == "" {
+				if len(g.Diagnostics) != 0 {
+					t.Fatalf("valid project checks produced diagnostics: %#v", g.Diagnostics)
+				}
+				if len(g.Project.Spec.Checks) != len(tt.checks) || g.Project.Spec.Checks[0].Run[1] != "test" {
+					t.Fatalf("check argv/order changed: %#v", g.Project.Spec.Checks)
+				}
+				return
+			}
+			if !hasCode(g, tt.want) {
+				t.Fatalf("expected %s diagnostic, got %#v", tt.want, g.Diagnostics)
+			}
+		})
+	}
+}
+
+func TestBuildRejectsChecksOnNonProjectResources(t *testing.T) {
+	p := project(Area{Name: "general", Path: "docs/general"})
+	r := resource("Rule", "general", "policy", "docs/general/policy.yaml")
+	r.Spec.Text = "Policy."
+	r.Spec.Checks = []Check{{Name: "validate", Run: []string{"validator"}}}
+	if g := Build([]*Resource{p, r}); !hasCode(g, "check.kind") {
+		t.Fatalf("expected non-Project checks diagnostic, got %#v", g.Diagnostics)
+	}
+}
+
 func TestBuildResolvesProjectRuleAdapterSourcesAcrossAreas(t *testing.T) {
-	p := project(Area{Name: "general", Path: "docs/general"}, Area{Name: "konfyra", Path: "docs/konfyra"})
-	text := resource("Text", "konfyra", "manifest-source", "docs/konfyra/manifest.yaml")
-	p.Spec.RuleAdapters = map[string][]Ref{"agents": {{Kind: "Text", Name: "manifest-source", Namespace: "konfyra"}}}
+	p := project(Area{Name: "general", Path: "docs/general"}, Area{Name: "platform", Path: "docs/platform"})
+	text := resource("Text", "platform", "adapter-source", "docs/platform/adapter.yaml")
+	p.Spec.RuleAdapters = map[string][]Ref{"agents": {{Kind: "Text", Name: "adapter-source", Namespace: "platform"}}}
 	g := Build([]*Resource{p, text})
 	if len(g.Diagnostics) != 0 {
 		t.Fatalf("unexpected diagnostics: %#v", g.Diagnostics)

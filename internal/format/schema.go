@@ -5,8 +5,8 @@ import (
 	"reflect"
 	"strings"
 
-	"go.yaml.in/yaml/v3"
 	"github.com/Glacius-Labs/Markitect/internal/core"
+	"go.yaml.in/yaml/v3"
 )
 
 const schemaDialect = "https://json-schema.org/draft/2020-12/schema"
@@ -74,6 +74,24 @@ func filteredSpecSchema(fields []string) map[string]any {
 			properties[field] = shape
 		}
 	}
+	if checksShape, ok := properties["checks"].(map[string]any); ok {
+		checkShape := checksShape["items"].(map[string]any)
+		checkProperties := checkShape["properties"].(map[string]any)
+		checkProperties["name"].(map[string]any)["pattern"] = core.CheckNamePattern
+		runShape := checkProperties["run"].(map[string]any)
+		runShape["minItems"] = 1
+		noNUL := map[string]any{"pattern": `\u0000`}
+		runShape["items"] = map[string]any{
+			"not":  noNUL,
+			"type": "string",
+		}
+		runShape["prefixItems"] = []any{map[string]any{
+			"minLength": 1,
+			"not":       noNUL,
+			"pattern":   core.CheckExecutablePattern,
+			"type":      "string",
+		}}
+	}
 	if providerShape, ok := properties["providers"].(map[string]any); ok {
 		providerProperties := providerShape["properties"].(map[string]any)
 		for provider, value := range providerProperties {
@@ -89,16 +107,19 @@ func filteredSpecSchema(fields []string) map[string]any {
 	}
 	required := make([]string, 0, 1)
 	for _, field := range fields {
-		if field == "text" || field == "profile" {
+		if field == "text" {
 			required = append(required, field)
 		}
 	}
-	return map[string]any{
+	result := map[string]any{
 		"additionalProperties": false,
 		"properties":           properties,
-		"required":             required,
 		"type":                 "object",
 	}
+	if len(required) > 0 {
+		result["required"] = required
+	}
+	return result
 }
 
 // reflectSchema translates the YAML-tagged model types into JSON Schema shape.

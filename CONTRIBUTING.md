@@ -1,27 +1,28 @@
 # Development
 
-## Layout and ownership
+## Ownership and layout
 
 | Path | Responsibility |
 |---|---|
-| `cmd/markitect` | CLI flags, exit codes and output |
-| `internal/core` | Typed resources and dependency graph |
-| `internal/format` | Strict YAML and schema generation |
-| `internal/source` | Working and immutable Git snapshots |
-| `internal/inputs` | Explicit ordinary file inputs |
-| `internal/app` | Context, impact, evidence and controlled writes |
-| `internal/authoring` | Embedded core authoring resources compiled through the application API |
-| `internal/render` | Managed Markdown/provider projections |
-| `internal/migrate` | Existing Konfyra and Cockpit migration adapters |
+| `cmd/markitect` | CLI flags, exit codes, and output |
+| `internal/core` | Typed resources, project configuration, and dependency graph |
+| `internal/format` | Strict YAML parsing and schema generation |
+| `internal/source` | Working-tree and immutable Git snapshots |
+| `internal/inputs` | Explicit ordinary-file inputs |
+| `internal/app` | Context, impact, evidence, verification, rendering, and controlled writes |
+| `internal/authoring` | Embedded core authoring resources |
+| `internal/render` | Generic managed views and declared output adapters |
 | `internal/release` | Deterministic source archives and release bundles |
-| `internal/app/install.go` | Verified five-file consumer pin plan and application |
-| `integration` | Standard-library Go consumer bootstrap |
-| `examples` | Executable, synthetic usage example |
-| `docs` | Product architecture, use and decisions |
+| `internal/app/install.go` | Release pin plans and application |
+| `integration` | Versioned distribution support files |
+| `examples` | Executable synthetic product example |
+| `docs` | Product architecture, usage, decisions, and roadmap |
 
-## Verification
+Adopting repositories own their content and any import scripts used to bring existing material into the Markitect model. Markitect does not embed a repository-specific migration or renderer policy. Core authoring guidance remains part of the product.
 
-From the repository root, using writable Go caches if needed:
+## Verify a change
+
+From the repository root with Go 1.27.1 or later:
 
 ```powershell
 go test ./...
@@ -31,26 +32,18 @@ go run ./cmd/markitect check --repo examples/minimal
 git diff --check
 ```
 
-These checks require neither Konfyra nor the Cockpit. Initial Go toolchain/module download may require network access. Source/bootstrap changes require Windows and Linux amd64 coverage before a release. [GitHub CI](.github/workflows/ci.yaml) runs the standalone gates on both systems. The tagged Release workflow repeats bundle install and smoke checks on both, then uploads its artifact for owner publication. A workflow definition alone is not evidence: inspect successful runs for the exact candidate commit before using its assets.
+The standalone checks do not require another repository or an AI model. CI runs supported Windows and Linux gates. A successful source gate establishes only the product checks that ran; it does not establish semantic correctness or an adopting project's acceptance.
 
-Edit the Go validation declarations and use `schema --repo . --write` to update schemas. Edit example YAML and use `format` and `render --repo examples/minimal --write` on a working branch to update it. The example regression checks all expected resources, its binding, declared file content and generated views.
+Edit validation declarations and regenerate schemas with `schema --repo . --write`. Edit example YAML, then run `format`, `render --repo examples/minimal --write`, and `check`. Edit core authoring at `internal/authoring/resources/*.yaml`; its content is canonical and embedded in the binary. Tests compile those resources through the ordinary application API.
 
-Edit bundled authoring at `internal/authoring/resources/*.yaml`. Its content is canonical and embedded in the binary; do not maintain a second provider-specific copy. Tests parse and compile the bundle through the ordinary pipeline. Source packaging must preserve all required embedded assets. Structural query provenance belongs to core resolution, never a second reference resolver in a CLI adapter. [Measurement](docs/measurement.md) describes the bounded performance and authoring exercises.
+## Project checks and rendering
 
-## Release and consumers
+For a Project to produce complete `verify` evidence, declare every required command under `spec.checks`. Each check has a stable `name` and a `run` argument array. The first item must be a bare executable name resolvable through `PATH`; use an interpreter command such as `go run tools/check-docs.go` for a repository script. Markitect passes arguments directly and does not insert a shell. This avoids implicit shell expansion and keeps the executed command visible in the fixed Project snapshot.
 
-[Operations and releases](docs/operations.md) defines the supported boundary, mandatory release evidence, recovery and consumer rollback procedure.
+Checks run against a materialized fixed revision within the documented time and output bounds. They run with the caller's local authority; the materialized copy is not a sandbox. Do not configure commands that mutate the checkout or access unrelated data. Missing or empty check declarations make `verify` incomplete rather than successful.
 
-The source declares version `0.1.0`. A source version is not proof of a published or accepted release; use the exact immutable release metadata and successful hosted run for the intended source commit as the release evidence. The private repository has immutable GitHub Releases enabled. The current GitHub plan does not permit the private repository's server-side branch-rule change (the API returns 403); CLI rejection of `main` and `master` does not provide equivalent server enforcement.
+Rendering always supports Markitect's generic managed views. Additional output targets and rule adapters must be declared in the Project. Only the declared outputs are rendered or checked. A provider-specific renderer or an import script belongs in the adopting repository that owns its format and policy.
 
-The tagged Release workflow runs the source gates, verifies bundle installation and bootstrap on Windows and Linux amd64, then uploads a run-scoped artifact containing the four versioned release files: bundle ZIP, Windows and Linux amd64 binaries, and provenance YAML. Its artifact name is `markitect-release-SOURCE_SHA`; it does not create or publish a GitHub Release. The Actions `GITHUB_TOKEN` cannot read the admin-only immutable-release setting (live API returns 403), so there is no workflow PAT secret or automated publish step.
+## Release work
 
-An authorized release owner downloads the artifact and runs `go run ./cmd/markitect-release --tag vVERSION --run RUN_ID --assets DIRECTORY` from the exact tagged source checkout with Go 1.27.1 or newer. This default is read-only: it authenticates through the owner's existing `gh auth` session, reloads the exact completed run artifact, checks byte equality and validates the tag, immutable setting, provenance and hashes, then prints the full plan. Review that plan; add `--publish` only to perform the same checks and the draft-upload-readback-publish-attestation sequence. The tool checks asset names and GitHub SHA-256 values and verifies the final immutable release and every asset. It does not ask the owner to copy or type asset hashes. A workflow run or source version without this owner operation and release verification is not acceptance.
-
-`install --repo CONSUMER --bundle BUNDLE --sha256 VERIFIED_OUTER_HASH` is a read-only preflight by default. Review the plan and manifest version/source commit against the verified release and its provenance. Add `--write` only on a named non-protected branch after committing a Git baseline. Install writes five files atomically one at a time; it is not a repository transaction. Inspect returned `written` paths and recovery guidance if the operation stops partway through. Consumer integration and rollback remain in the consumer's normal Git review route.
-
-`package --repo . --output NEW_DIRECTORY` remains a low-level development command that emits only `tools/markitect/source.zip` and the flat YAML tool lock. It is not the consumer release bundle and includes no bootstrap, manifest, native binary, or provenance. The output directory must not exist beforehand.
-
-Review source, tests, archive digest, bootstrap and source provenance before updating a consumer. The consumer owns its content, integration changes and acceptance. Moving this checkout does not change an existing consumer's archive or executable. A new binary digest invalidates reuse of evidence recorded by the old binary.
-
-The original Git history was independently cloned, without shared objects or a dependency on the retired checkout, and is preserved in the private `Glacius-Labs/Markitect` repository. Development belongs in the Glacius Labs checkout; consumer repositories contain pinned distributions. The Go module follows that repository identity. The API domain placeholder and public distribution license are still undecided; private immutable release attestations are distinct from a claim that public provenance or domain policy is settled.
+[Operations and releases](docs/operations.md) describes the supported source and publication gates. Immutable `v0.1.0` is historical. Source version `0.2.0` does not by itself establish a published release; use only a release with its exact source commit, successful hosted gates, immutable GitHub attestation, and verified assets. Release documentation does not imply acceptance by any adopting project.

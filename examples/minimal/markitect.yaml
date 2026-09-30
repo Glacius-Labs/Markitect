@@ -3,7 +3,6 @@ kind: Project
 metadata:
     name: rollback-example
 spec:
-    profile: generic
     areas:
         - name: sample
           path: docs

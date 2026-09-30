@@ -1,11 +1,9 @@
 # Markitect agent entrypoint
 
-Start with [the documentation router](docs/README.md) and the owner relevant to the task. [Architecture](docs/architecture.md) describes implemented behavior; [the implementation plan](docs/implementation-plan.md) owns future product work. [Development](CONTRIBUTING.md) defines checks and release boundaries.
+Start with [the documentation map](docs/README.md). [Architecture](docs/architecture.md) describes the product model and boundaries; [usage](docs/usage.md) describes the CLI and project format; [the roadmap](docs/implementation-plan.md) owns future work; [development](CONTRIBUTING.md) owns contribution checks.
 
-Keep the Go core independent of consumer repositories and providers. Use YAML for Markitect-owned data. Add abstractions or resource kinds only when a concrete invariant needs them. Preserve explicit dependencies, deterministic diagnostics, fixed-snapshot evidence and one output owner.
+Markitect is an independent authoring and structure-validation tool for AI-facing engineering resources. Keep its core independent of adopting repositories and model providers. Use YAML for machine-relevant ownership and dependencies, Markdown for readable prose, and explicit inputs for data that affects a result. Preserve deterministic diagnostics, fixed-snapshot evidence, and one owner per generated output.
 
-Change canonical sources and regenerate views/schemas. Keep examples executable. Do not silently infer dependencies from prose links, weaken unknown-input invalidation, transfer human acceptance through AI evidence, or copy customer policy into reusable content.
+Change canonical sources and regenerate generated views/schemas. Keep examples executable. Do not infer dependencies from prose links, weaken conservative invalidation, or treat AI evidence as human acceptance. Keep project-local policy in the project that owns it unless a deliberate product decision establishes a reusable general rule.
 
-Work on a non-protected branch. Scope tests to concrete risks and required gates. Changes to a consumer belong in that consumer's checkout and follow its instructions. A source change here does not upgrade a consumer: publish/prepare a versioned package and update its lock deliberately.
-
-Markitect's source and product decisions are maintained here. The previous Cockpit checkout is retired as an editing location. Existing Konfyra profile/migration adapters are compatibility code, not authority for general product policy.
+Work on a non-protected feature branch. Scope tests to concrete risks and required gates. Changes to an adopting project belong in its checkout and follow its instructions. A source change here does not update an installed release; validate the candidate and publish a versioned release through the documented process.

@@ -122,14 +122,6 @@ func Parse(snap *source.Snapshot) (*Project, error) {
 	for _, r := range p.Resources {
 		p.Inventory = append(p.Inventory, Entry{Path: r.Path, Kind: r.Kind, Name: r.Metadata.Name, Namespace: r.Metadata.Namespace, Hash: Hash(snap.Files[r.Path])})
 	}
-	if config.Spec.Profile == "konfyra" {
-		for _, candidate := range LegacyInventory(snap) {
-			companion := strings.TrimSuffix(candidate.Path, ".md") + ".yaml"
-			if _, ok := snap.Files[companion]; !ok {
-				p.Diagnostics = append(p.Diagnostics, core.Diagnostic{Code: "unclassified-mechanism", Path: candidate.Path, Message: "active AI mechanism has no canonical YAML resource; migrate or explicitly retire it"})
-			}
-		}
-	}
 	return p, nil
 }
 
@@ -227,30 +219,19 @@ func sortedFiles(files map[string][]byte) []string {
 	return names
 }
 
-// LegacyInventory reports candidates without inferring normative dependencies.
-func LegacyInventory(snap *source.Snapshot) []Entry {
+// MarkdownInventory lists ordinary Markdown candidates without assigning
+// resource kinds from their directories. Typed resources remain represented by
+// the parsed Project.Inventory entries.
+func MarkdownInventory(snap *source.Snapshot) []Entry {
 	var result []Entry
+	if snap == nil {
+		return result
+	}
 	for _, name := range sortedFiles(snap.Files) {
-		if Generated(snap.Files[name]) {
+		if path.Ext(name) != ".md" || Generated(snap.Files[name]) {
 			continue
 		}
-		if !strings.HasPrefix(name, "docs/") || path.Ext(name) != ".md" || path.Base(name) == "README.md" {
-			continue
-		}
-		kind := ""
-		switch path.Base(path.Dir(name)) {
-		case "rules":
-			kind = "Rule"
-		case "skills":
-			kind = "Skill"
-		case "agents":
-			kind = "Agent"
-		case "workflows":
-			kind = "Workflow"
-		}
-		if kind != "" {
-			result = append(result, Entry{Path: name, Kind: kind, Name: strings.TrimSuffix(path.Base(name), ".md"), Hash: Hash(snap.Files[name])})
-		}
+		result = append(result, Entry{Path: name, Kind: "Markdown", Name: strings.TrimSuffix(path.Base(name), ".md"), Hash: Hash(snap.Files[name])})
 	}
 	return result
 }

@@ -57,27 +57,27 @@ func TestParseKeepsRecognizableMarkitectParseErrors(t *testing.T) {
 	}{
 		{
 			name: "unknown Markitect version",
-			data: "apiVersion: markitect.example.org/v99\nkind: Text\nmetadata: {name: policy, namespace: cockpit-general}\nspec: {text: body}\n",
+			data: "apiVersion: markitect.example.org/v99\nkind: Text\nmetadata: {name: policy, namespace: sample}\nspec: {text: body}\n",
 		},
 		{
 			name: "wrong kind in Markitect envelope",
-			data: "apiVersion: markitect.example.org/v1alpha1\nkind: Unknown\nmetadata: {name: policy, namespace: cockpit-general}\nspec: {text: body}\n",
+			data: "apiVersion: markitect.example.org/v1alpha1\nkind: Unknown\nmetadata: {name: policy, namespace: sample}\nspec: {text: body}\n",
 		},
 		{
 			name: "missing API version",
-			data: "kind: Text\nmetadata: {name: policy, namespace: cockpit-general}\nspec: {text: body}\n",
+			data: "kind: Text\nmetadata: {name: policy, namespace: sample}\nspec: {text: body}\n",
 		},
 		{
 			name: "non-Markitect API version on known resource kind",
-			data: "apiVersion: v1\nkind: Text\nmetadata: {name: policy, namespace: cockpit-general}\nspec: {text: body}\n",
+			data: "apiVersion: v1\nkind: Text\nmetadata: {name: policy, namespace: sample}\nspec: {text: body}\n",
 		},
 		{
 			name: "non-scalar API version on known resource kind",
-			data: "apiVersion: [markitect.example.org/v1alpha1]\nkind: Skill\nmetadata: {name: author, namespace: cockpit-general}\nspec: {text: body}\n",
+			data: "apiVersion: [markitect.example.org/v1alpha1]\nkind: Skill\nmetadata: {name: author, namespace: sample}\nspec: {text: body}\n",
 		},
 		{
 			name: "duplicate Markitect discriminator",
-			data: "apiVersion: markitect.example.org/v1alpha1\napiVersion: v1\nkind: Text\nmetadata: {name: policy, namespace: cockpit-general}\nspec: {text: body}\n",
+			data: "apiVersion: markitect.example.org/v1alpha1\napiVersion: v1\nkind: Text\nmetadata: {name: policy, namespace: sample}\nspec: {text: body}\n",
 		},
 	}
 	for _, test := range tests {

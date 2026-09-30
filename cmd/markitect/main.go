@@ -8,18 +8,16 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
-	"sort"
 
 	"github.com/Glacius-Labs/Markitect/internal/app"
 	"github.com/Glacius-Labs/Markitect/internal/authoring"
 	"github.com/Glacius-Labs/Markitect/internal/core"
 	"github.com/Glacius-Labs/Markitect/internal/format"
-	"github.com/Glacius-Labs/Markitect/internal/migrate"
 	"github.com/Glacius-Labs/Markitect/internal/release"
 	"github.com/Glacius-Labs/Markitect/internal/source"
 )
 
-var version = "0.1.0"
+var version = "0.2.0"
 
 type report struct {
 	Tool        string            `yaml:"tool"`
@@ -93,7 +91,6 @@ func run(args []string, out, errout io.Writer) int {
 	output := fs.String("output", "", "absent output directory (package) or ZIP file (bundle)")
 	bundlePath := fs.String("bundle", "", "local release ZIP to validate and install")
 	bundleSHA := fs.String("sha256", "", "expected SHA-256 of the release ZIP")
-	profile := fs.String("profile", "konfyra", "migration source profile: konfyra or cockpit")
 	reviewConfig := fs.String("config", "", "repository-relative review configuration in the fixed snapshot")
 	reviewReport := fs.String("report", "", "completed reviewer report to record (local UTF-8 file)")
 	reviewEvidence := fs.String("evidence", "", "previous advisory review record to evaluate (local YAML file)")
@@ -125,8 +122,8 @@ func run(args []string, out, errout io.Writer) int {
 		fmt.Fprintf(errout, "--%s does not apply to %s\n", invalid, command)
 		return 2
 	}
-	if *write && ((command != "render" && command != "migrate" && command != "schema" && command != "format" && command != "install") || *revision != "" || *check) {
-		fmt.Fprintln(errout, "--write only supports render, format, migrate, schema or install on the working tree")
+	if *write && ((command != "render" && command != "schema" && command != "format" && command != "install") || *revision != "" || *check) {
+		fmt.Fprintln(errout, "--write only supports render, format, schema or install on the working tree")
 		return 2
 	}
 	emit := func(value any) int {
@@ -209,57 +206,20 @@ func run(args []string, out, errout io.Writer) int {
 		}
 		return emit(map[string]any{"status": "packaged", "version": version, "output": *output})
 	}
-	if command == "migrate" {
-		snap, err := source.Load(*root, *revision)
-		if err != nil {
-			return fail(err)
-		}
-		var files map[string][]byte
-		switch *profile {
-		case "konfyra":
-			files, err = migrate.Konfyra(snap)
-		case "cockpit":
-			files, err = migrate.Cockpit(snap)
-		default:
-			return fail(fmt.Errorf("unsupported migration profile %q", *profile))
-		}
-		if err != nil {
-			return fail(err)
-		}
-		var candidates any
-		if *profile == "konfyra" {
-			candidates, err = migrate.CandidateDependencies(snap)
-			if err != nil {
-				return fail(err)
-			}
-		}
-		paths := make([]string, 0, len(files))
-		for name := range files {
-			paths = append(paths, name)
-		}
-		sort.Strings(paths)
-		if *write {
-			paths, err = app.WriteMigration(*root, snap, files)
-			if err != nil {
-				return fail(err)
-			}
-		}
-		return emit(map[string]any{"status": "migration-plan", "profile": *profile, "written": *write, "files": paths, "provisional": snap.Provisional, "revision": snap.Revision, "requiresDependencyReview": true, "dependencyCandidates": candidates})
-	}
 	if command == "inventory" {
 		snap, err := source.Load(*root, *revision)
 		if err != nil {
 			return fail(err)
 		}
-		items := app.LegacyInventory(snap)
-		coverage := "legacy candidates only; no semantic dependency inference or validity claim"
+		items := app.MarkdownInventory(snap)
+		coverage := "ordinary Markdown candidates only; no resource classification, semantic dependency inference or validity claim"
 		if _, ok := snap.Files["markitect.yaml"]; ok {
 			p, err := app.Parse(snap)
 			if err != nil {
 				return fail(err)
 			}
 			items = append(p.Inventory, items...)
-			coverage = "typed canonical resources and remaining legacy candidates; generated views are not counted twice"
+			coverage = "typed canonical resources and ordinary Markdown candidates; generated views are not counted twice"
 		}
 		return emit(report{Tool: "Markitect", Version: version, Revision: snap.Revision, Provisional: snap.Provisional, Digest: snap.Digest(), Status: "inventory", Coverage: coverage, Inventory: items})
 	}
@@ -370,10 +330,7 @@ func run(args []string, out, errout io.Writer) int {
 		if err != nil {
 			var verifyErr *app.VerifyError
 			if !errors.As(err, &verifyErr) {
-				verifyErr = &app.VerifyError{Kind: "incomplete-evidence", Profile: p.Graph.Project.Spec.Profile, Err: err}
-			}
-			if verifyErr.Profile == "" {
-				verifyErr.Profile = p.Graph.Project.Spec.Profile
+				verifyErr = &app.VerifyError{Kind: "incomplete-evidence", Err: err}
 			}
 			result.Diagnostics = append(result.Diagnostics, core.Diagnostic{
 				Code:    "verify." + verifyErr.Kind,
@@ -386,7 +343,7 @@ func run(args []string, out, errout io.Writer) int {
 			exitCode := 2
 			if verifyErr.Kind == "gate-failure" {
 				result.Status = "failed"
-				result.Coverage = "typed graph and Markitect-owned outputs passed; repository verification stopped at a failing gate; later gates were not run"
+				result.Coverage = "typed graph and Markitect-owned outputs passed; repository verification stopped at a failing check; later checks were not run"
 				exitCode = 1
 			}
 			if code := emit(result); code != 0 {
@@ -394,7 +351,7 @@ func run(args []string, out, errout io.Writer) int {
 			}
 			return exitCode
 		}
-		result.Coverage = "typed graph, owned outputs, and all fixed profile repository gates passed from one immutable Git snapshot; semantic review remains separate"
+		result.Coverage = "typed graph, owned outputs, and all declared repository checks passed from one immutable Git snapshot; semantic review remains separate"
 		for _, gate := range result.Gates {
 			if gate.ExitCode != 0 {
 				result.Status = "failed"

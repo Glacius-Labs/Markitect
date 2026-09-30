@@ -2,16 +2,14 @@
 
 | Document | Owns |
 |---|---|
-| [Usage](usage.md) | Implemented format, commands and ordinary work sequence |
-| [Architecture](architecture.md) | Current boundaries, invariants and evidence limits |
-| [Operations and releases](operations.md) | Supported operation, parallel reviews, failure recovery, upgrades and release gates |
-| [Refinement decisions](refinement.md) | Assessment of the supplied concept notes and proposed package/template model |
-| [Implementation plan](implementation-plan.md) | Ordered product work and acceptance criteria |
-| [Production delivery decisions](production-plan.md) | Closed source-release and provisioning decisions; consumer acceptance remains separate |
-| [Measurement](measurement.md) | Correctness scenarios, bounded benchmarks and controlled model comparisons |
-| [Core authoring assessment](authoring-assessment.md) | Actual isolated editing exercise, failures, fixes and verified boundary |
-| [Source release assessment](release-assessment.md) | Exact RC3 source distribution, hosted installation and closed review findings |
-| [Production delivery assessment](production-assessment.md) | Published `v0.1.0` release evidence, supported source boundary and consumer-acceptance limits |
-| [Konfyra assessment](konfyra-assessment.md) | Dated migration assessment and practical use |
+| [Usage](usage.md) | Project format, CLI behavior, and the v0.1-to-v0.2 upgrade boundary |
+| [Architecture](architecture.md) | Current product boundaries and the v0.2.0 target model |
+| [Operations](operations.md) | Development, verification, rendering, and release operations |
+| [Refinement decisions](refinement.md) | Product principles and deferred design choices |
+| [Implementation plan](implementation-plan.md) | The Markitect roadmap |
+| [Measurement](measurement.md) | Correctness scenarios and bounded measurements |
+| [Core authoring assessment](authoring-assessment.md) | A dated exercise using the synthetic product example |
+| [Source release assessment](release-assessment.md) | General technical findings from source-distribution work |
+| [v0.1.0 release assessment](production-assessment.md) | Historical source release identity and verified product assets |
 
-The example and developer commands are routed from the [repository README](../README.md). Design proposals are labelled explicitly and must not be mistaken for supported YAML or CLI syntax.
+The repository README routes source development and example commands. Later product options are labelled as planned; published releases remain immutable.

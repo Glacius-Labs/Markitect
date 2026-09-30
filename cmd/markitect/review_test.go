@@ -5,12 +5,12 @@ import (
 	"path/filepath"
 	"testing"
 
-	"go.yaml.in/yaml/v3"
 	"github.com/Glacius-Labs/Markitect/internal/app"
 	"github.com/Glacius-Labs/Markitect/internal/core"
 	"github.com/Glacius-Labs/Markitect/internal/format"
 	"github.com/Glacius-Labs/Markitect/internal/render"
 	"github.com/Glacius-Labs/Markitect/internal/source"
+	"go.yaml.in/yaml/v3"
 )
 
 const reviewConfigPath = "markitect-review.yaml"
@@ -252,7 +252,7 @@ func TestReviewEvidenceMustBeValidYAMLAndEntryBound(t *testing.T) {
 	if err := yaml.Unmarshal([]byte(recordYAML), &evidence); err != nil {
 		t.Fatal(err)
 	}
-	evidence["entry"] = "cockpit-general/Skill/another"
+	evidence["entry"] = "sample/Skill/another"
 	wrongEntry, err := yaml.Marshal(evidence)
 	if err != nil {
 		t.Fatal(err)

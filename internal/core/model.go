@@ -26,6 +26,13 @@ type Binding struct {
 	Implementation Ref `yaml:"implementation"`
 }
 
+// Check describes one explicit project verification gate. Run is argv, not a
+// shell command string; consumers execute it without shell interpretation.
+type Check struct {
+	Name string   `yaml:"name"`
+	Run  []string `yaml:"run"`
+}
+
 type Provider struct {
 	Model           string   `yaml:"model,omitempty"`
 	Effort          string   `yaml:"effort,omitempty"`
@@ -55,10 +62,10 @@ type Spec struct {
 	Kind        string    `yaml:"kind,omitempty"`
 	Check       string    `yaml:"check,omitempty"`
 	Providers   Providers `yaml:"providers,omitempty"`
-	Profile     string    `yaml:"profile,omitempty"`
 	Targets     []string  `yaml:"targets,omitempty"`
 	Areas       []Area    `yaml:"areas,omitempty"`
 	Bindings    []Binding `yaml:"bindings,omitempty"`
+	Checks      []Check   `yaml:"checks,omitempty"`
 	// Rules map provider rule entrypoint names to owning sources. This also
 	// supports several canonical sources behind one legacy entrypoint.
 	RuleAdapters map[string][]Ref `yaml:"ruleAdapters,omitempty"`
