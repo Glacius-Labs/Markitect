@@ -378,8 +378,8 @@ func TestInjectRepoAndDiscoverRoot(t *testing.T) {
 		t.Fatal(err)
 	}
 	gotRoot, err := discoverRoot(nested)
-	if err != nil || gotRoot != root {
-		t.Fatalf("discoverRoot = %q, err=%v", gotRoot, err)
+	if err != nil || gotRoot != filepath.Clean(root) {
+		t.Fatalf("discoverRoot = %q, want=%q, err=%v", gotRoot, filepath.Clean(root), err)
 	}
 	if got := injectRepo([]string{"check", "--revision", "abc"}, root); !reflect.DeepEqual(got, []string{"check", "--repo", root, "--revision", "abc"}) {
 		t.Fatalf("repo args = %v", got)
