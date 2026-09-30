@@ -11,7 +11,7 @@ import (
 	"strings"
 
 	"go.yaml.in/yaml/v3"
-	"markitect/internal/core"
+	"github.com/Glacius-Labs/Markitect/internal/core"
 )
 
 const maxResourceSize = 2 << 20

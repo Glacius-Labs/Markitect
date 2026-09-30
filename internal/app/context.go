@@ -6,8 +6,8 @@ import (
 	"sort"
 	"strings"
 
-	"markitect/internal/core"
-	"markitect/internal/format"
+	"github.com/Glacius-Labs/Markitect/internal/core"
+	"github.com/Glacius-Labs/Markitect/internal/format"
 )
 
 type Context struct {

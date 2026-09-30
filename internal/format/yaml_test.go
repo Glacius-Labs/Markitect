@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"markitect/internal/core"
+	"github.com/Glacius-Labs/Markitect/internal/core"
 )
 
 const validText = `apiVersion: markitect.example.org/v1alpha1

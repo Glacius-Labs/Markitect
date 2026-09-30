@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"testing"
 
-	"markitect/internal/app"
-	"markitect/internal/core"
-	"markitect/internal/format"
+	"github.com/Glacius-Labs/Markitect/internal/app"
+	"github.com/Glacius-Labs/Markitect/internal/core"
+	"github.com/Glacius-Labs/Markitect/internal/format"
 )
 
 type findCLIResult struct {

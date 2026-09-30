@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"markitect/internal/render"
-	"markitect/internal/source"
+	"github.com/Glacius-Labs/Markitect/internal/render"
+	"github.com/Glacius-Labs/Markitect/internal/source"
 )
 
 // WriteMigration is an explicit one-time ownership transfer. Existing Markdown

@@ -77,4 +77,4 @@ An undeclared semantic dependency remains a modelling gap. Ordinary links are na
 
 This repository owns tool source, schemas, generic examples and product design. Consumers own their policies and pinned integration. The current `package` command creates a tool source archive, and `markitect.lock.yaml` currently pins that tool. Reusable content packages and template initialization are proposed work, not current commands.
 
-The API-shaped YAML envelope leaves room for a later Kubernetes adapter, but these resources and schemas are not CRDs. Runtime lifecycle, API conversion, status and reconciliation need an explicit future contract. The module path and API group remain placeholders until a repository host/domain is chosen.
+The API-shaped YAML envelope leaves room for a later Kubernetes adapter, but these resources and schemas are not CRDs. Runtime lifecycle, API conversion, status and reconciliation need an explicit future contract. The Go module follows the private `Glacius-Labs/Markitect` GitHub repository. The API group remains a placeholder until a controlled domain and explicit format migration are chosen.

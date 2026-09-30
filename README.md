@@ -4,7 +4,7 @@ Markitect treats the rules, workflows, skills, agents and context around AI-assi
 
 Humans describe intent. Agents maintain the resources. Markitect supports authoring and checks their structure. Core authoring guidance ships with the tool; structural queries help agents find the canonical owner and explain dependencies.
 
-This is the independent Markitect source repository. Konfyra consumes a pinned release; the Cockpit is the next planned consumer. Neither repository is required to build or test the tool. The current development version is **0.1.0-rc.3-dev**. Konfyra's tested pilot remains on **0.1.0-rc.2**.
+This is the independent [Glacius Labs Markitect source repository](https://github.com/Glacius-Labs/Markitect). Konfyra consumes a pinned release; the Cockpit is the next planned consumer. Neither repository is required to build or test the tool. The current development version is **0.1.0-rc.3-dev**. Konfyra's tested pilot remains on **0.1.0-rc.2**.
 
 ## Start
 
@@ -38,4 +38,4 @@ The [minimal example](examples/minimal/README.md) demonstrates all six content k
 
 Implemented: strict YAML, six resource kinds, scopes, references, Contracts, immutable Git snapshots, structural queries, bundled core authoring, context compilation, impact, managed rendering and advisory review reuse. Content packages, template initialization, MCP/LSP and Kubernetes are design work. Markitect does not prove arbitrary prose consistent or enforce an agent's runtime behavior.
 
-The Go module remains `markitect`, and the API group remains the placeholder `markitect.example.org/v1alpha1`. The remote host, controlled API domain and distribution license have not been selected. No public release is implied by this local extraction.
+The Go module is `github.com/Glacius-Labs/Markitect`. The repository is private. The API group remains the placeholder `markitect.example.org/v1alpha1`; changing it needs an explicit format migration. A controlled API domain, public distribution license and public releases remain separate decisions. See [consumer integration](integration/README.md) for explicit provisioning from a verified source artifact.

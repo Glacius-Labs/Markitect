@@ -1,18 +1,18 @@
 apiVersion: markitect.example.org/v1alpha1
 kind: Project
 metadata:
-  name: rollback-example
+    name: rollback-example
 spec:
-  profile: generic
-  areas:
-    - name: sample
-      path: docs
-  bindings:
-    - contract:
-        kind: Contract
-        name: rollback-assessment
-        namespace: sample
-      implementation:
-        kind: Agent
-        name: rollback-reviewer
-        namespace: sample
+    profile: generic
+    areas:
+        - name: sample
+          path: docs
+    bindings:
+        - contract:
+            kind: Contract
+            name: rollback-assessment
+            namespace: sample
+          implementation:
+            kind: Agent
+            name: rollback-reviewer
+            namespace: sample

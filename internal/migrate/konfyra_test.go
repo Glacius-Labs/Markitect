@@ -4,9 +4,9 @@ import (
 	"strings"
 	"testing"
 
-	"markitect/internal/core"
-	"markitect/internal/format"
-	"markitect/internal/source"
+	"github.com/Glacius-Labs/Markitect/internal/core"
+	"github.com/Glacius-Labs/Markitect/internal/format"
+	"github.com/Glacius-Labs/Markitect/internal/source"
 )
 
 func TestKonfyraPlansTypedResourcesAndPreservesMetadataAndBodies(t *testing.T) {

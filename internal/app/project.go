@@ -8,10 +8,10 @@ import (
 	"sort"
 	"strings"
 
-	"markitect/internal/core"
-	"markitect/internal/format"
-	"markitect/internal/inputs"
-	"markitect/internal/source"
+	"github.com/Glacius-Labs/Markitect/internal/core"
+	"github.com/Glacius-Labs/Markitect/internal/format"
+	"github.com/Glacius-Labs/Markitect/internal/inputs"
+	"github.com/Glacius-Labs/Markitect/internal/source"
 )
 
 // Project is one immutable input set and its resolved resources.

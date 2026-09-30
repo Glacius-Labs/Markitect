@@ -10,7 +10,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"markitect/internal/core"
+	"github.com/Glacius-Labs/Markitect/internal/core"
 )
 
 // Resolve validates each resource's spec.files entries against the provided

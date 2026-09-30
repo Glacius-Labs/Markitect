@@ -30,7 +30,7 @@ go run ./cmd/markitect check --repo examples/minimal
 git diff --check
 ```
 
-These checks require neither Konfyra nor the Cockpit. Initial Go toolchain/module download may require network access. Source/bootstrap changes require Windows and Linux coverage before a release. Hosted CI wiring follows the selected repository host; these local commands are its intended gates, not proof that hosted CI ran.
+These checks require neither Konfyra nor the Cockpit. Initial Go toolchain/module download may require network access. Source/bootstrap changes require Windows and Linux coverage before a release. [GitHub CI](.github/workflows/ci.yaml) runs the standalone gates on Windows and Linux. A workflow definition alone is not proof of a successful hosted run; inspect the candidate's actual run before provisioning its artifact.
 
 Edit the Go validation declarations and use `schema --repo . --write` to update schemas. Edit example YAML and use `format` and `render --repo examples/minimal --write` on a working branch to update it. The example regression checks all expected resources, its binding, declared file content and generated views.
 
@@ -42,4 +42,4 @@ Keep development builds distinguishable from accepted releases. Set a release ve
 
 Review source, tests, archive digest, bootstrap and source provenance before updating a consumer. The consumer owns its content, integration changes and acceptance. Moving this checkout does not change an existing consumer's archive or executable. A new binary digest invalidates reuse of evidence recorded by the old binary.
 
-The original Git history was independently cloned, without shared objects or a dependency on the old checkout. Before publishing, choose the remote host, module path, API domain and license. A host-specific CI definition and signed/reproducible release policy can then be added against concrete distribution requirements.
+The original Git history was independently cloned, without shared objects or a dependency on the retired checkout, and is preserved in the private `Glacius-Labs/Markitect` repository. Development belongs in the Glacius Labs checkout; consumer repositories contain pinned distributions. The Go module follows that repository identity. Before a public release, choose the controlled API domain, license and release provenance/signing policy. The current CI source artifact is a development distribution with an exact digest, not a production acceptance or signed release.

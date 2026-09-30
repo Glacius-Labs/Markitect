@@ -5,7 +5,7 @@ import (
 	"runtime"
 	"testing"
 
-	"markitect/internal/app"
+	"github.com/Glacius-Labs/Markitect/internal/app"
 )
 
 func TestMinimalExampleCompilesBoundContextAndRenderedViews(t *testing.T) {
@@ -61,5 +61,15 @@ func TestMinimalExampleCompilesBoundContextAndRenderedViews(t *testing.T) {
 
 	if findings := app.CheckOutputs(project); len(findings) != 0 {
 		t.Fatalf("checked-in rendered views have drift or are missing: %#v", findings)
+	}
+
+	// A copied example is an authoring baseline. Formatting a local edit must
+	// not rewrite unrelated resources and turn its impact into a project change.
+	changed, err := app.Format(root, project, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(changed) != 0 {
+		t.Fatalf("example must start in canonical format, changed: %v", changed)
 	}
 }

@@ -4,8 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	"markitect/internal/app"
-	"markitect/internal/authoring"
+	"github.com/Glacius-Labs/Markitect/internal/app"
+	"github.com/Glacius-Labs/Markitect/internal/authoring"
 )
 
 func TestAuthoringEmitsCompiledBuiltInContextWithoutRepository(t *testing.T) {

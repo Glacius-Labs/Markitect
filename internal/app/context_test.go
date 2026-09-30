@@ -3,8 +3,8 @@ package app
 import (
 	"testing"
 
-	"markitect/internal/core"
-	"markitect/internal/source"
+	"github.com/Glacius-Labs/Markitect/internal/core"
+	"github.com/Glacius-Labs/Markitect/internal/source"
 )
 
 func TestCompileContextIncludesOnlySelectedImplementationAndItsExplicitFiles(t *testing.T) {

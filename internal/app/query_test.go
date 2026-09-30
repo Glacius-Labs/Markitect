@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"markitect/internal/core"
+	"github.com/Glacius-Labs/Markitect/internal/core"
 )
 
 func TestFindUsesLiteralCaseInsensitiveMatchingAndExactFilters(t *testing.T) {

@@ -6,7 +6,7 @@ import (
 	"sort"
 	"strings"
 
-	"markitect/internal/core"
+	"github.com/Glacius-Labs/Markitect/internal/core"
 )
 
 // FindQuery selects resources using a literal, case-insensitive substring and

@@ -1,4 +1,4 @@
-module markitect
+module github.com/Glacius-Labs/Markitect
 
 go 1.27.1
 

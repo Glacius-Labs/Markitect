@@ -3,7 +3,7 @@ package inputs
 import (
 	"testing"
 
-	"markitect/internal/core"
+	"github.com/Glacius-Labs/Markitect/internal/core"
 )
 
 func fixtureResource(kind, namespace, name, file string) *core.Resource {

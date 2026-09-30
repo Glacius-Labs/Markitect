@@ -358,6 +358,15 @@ func TestInjectRepoAndDiscoverRoot(t *testing.T) {
 	if got := injectRepo([]string{"version"}, root); !reflect.DeepEqual(got, []string{"version"}) {
 		t.Fatalf("version args changed: %v", got)
 	}
+	if got := injectRepo([]string{"authoring"}, root); !reflect.DeepEqual(got, []string{"authoring"}) {
+		t.Fatalf("authoring args changed: %v", got)
+	}
+	if got := injectRepo([]string{"authoring", "--format", "yaml"}, root); !reflect.DeepEqual(got, []string{"authoring", "--format", "yaml"}) {
+		t.Fatalf("authoring flags changed: %v", got)
+	}
+	if got := injectRepo([]string{"find", "--query", "authoring"}, root); !reflect.DeepEqual(got, []string{"find", "--repo", root, "--query", "authoring"}) {
+		t.Fatalf("consumer query did not receive repo: %v", got)
+	}
 }
 
 func TestArchiveStampParser(t *testing.T) {

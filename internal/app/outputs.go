@@ -9,9 +9,9 @@ import (
 	"sort"
 	"strings"
 
-	"markitect/internal/core"
-	"markitect/internal/render"
-	"markitect/internal/source"
+	"github.com/Glacius-Labs/Markitect/internal/core"
+	"github.com/Glacius-Labs/Markitect/internal/render"
+	"github.com/Glacius-Labs/Markitect/internal/source"
 )
 
 func Generated(data []byte) bool {

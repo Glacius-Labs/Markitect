@@ -10,13 +10,15 @@ Updated 2026-09-30. This is the Markitect product roadmap. The Konfyra work-item
 - Replace Markitect's Python bootstrap/tests with Go and exercise the integration against Konfyra's existing pinned RC2 engine.
 - Verify standalone builds/tests, consumer bootstrap and generated-view parity without a hidden source dependency on either consumer.
 
-Completion means a local project that can be built, understood and changed on its own. Remote hosting, module/domain choices, license and published releases remain separate decisions. Development identifies itself as `0.1.0-rc.3-dev`; existing consumer release pins do not float.
+Completion means a project that can be built, understood and changed on its own. The user selected the private GitHub repository `Glacius-Labs/Markitect` and a local checkout under Glacius Labs. The module now follows that repository identity. Reconcile the reviewed branch there, run hosted Windows/Linux gates and provision explicit commit artifacts. API-domain migration, public license and public releases remain separate decisions. Development identifies itself as `0.1.0-rc.3-dev`; existing consumer release pins do not float.
 
-## 2. Improve agent authoring — current slice
+## 2. Improve agent authoring — implemented and exercised locally
 
 Build core authoring using current types and ship its portable resources with the tool. Authoring is part of Markitect, not an optional package. Add deterministic resource lookup, owner, incoming references and context-reason queries to the CLI. Keep task intent interpretation in the authoring agent. Existing structured YAML output is the first interface; no MCP dependency.
 
 Acceptance: a user asks for a rollback-plan requirement; an agent finds the owner, modifies the proper Rule, reports affected consumers, generates and validates a fixed candidate, and explains what semantic work remains. No duplicate rule, guessed global scope or manually maintained provider file.
+
+The [actual exercise](authoring-assessment.md) records the initial failed boundary, the normalized-example fix and the successful fresh-agent rerun. The suite now includes structural queries, embedded authoring and deterministic impact/context scenarios. Consumer upgrade and acceptance remain separate below.
 
 ### Delivery plan from the vision
 
@@ -60,6 +62,10 @@ Migrate after agreed Konfyra acceptance. Use the same released tool and generic 
 - Runtime/operator integration only after there is real desired state to reconcile.
 
 CI enforcement should arrive with hosted delivery, before optional user interfaces. No obligation to follow the concept note's illustrative LSP-before-MCP sequence.
+
+## Glacius Labs reconciliation
+
+The GitHub repository is the product source owner. Move the complete independent local repository into `Glacius Labs/Markitect`, repair its registered worktree paths, and preserve the existing history rather than copying a second implementation. Keep the active implementation worktree until reconciliation and verification finish. Update Cockpit relocation pointers to the stable repository URLs. CI publishes only commit-specific development artifacts after both platform gates pass; consumers adopt a selected archive, lock and Go bootstrap through their own candidate workflow. No branch-following tool dependency or automatic promotion is introduced.
 
 ## Measures
 

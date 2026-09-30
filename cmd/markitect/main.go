@@ -9,13 +9,13 @@ import (
 	"runtime"
 	"sort"
 
-	"markitect/internal/app"
-	"markitect/internal/authoring"
-	"markitect/internal/core"
-	"markitect/internal/format"
-	"markitect/internal/migrate"
-	"markitect/internal/release"
-	"markitect/internal/source"
+	"github.com/Glacius-Labs/Markitect/internal/app"
+	"github.com/Glacius-Labs/Markitect/internal/authoring"
+	"github.com/Glacius-Labs/Markitect/internal/core"
+	"github.com/Glacius-Labs/Markitect/internal/format"
+	"github.com/Glacius-Labs/Markitect/internal/migrate"
+	"github.com/Glacius-Labs/Markitect/internal/release"
+	"github.com/Glacius-Labs/Markitect/internal/source"
 )
 
 var version = "0.1.0-rc.3-dev"

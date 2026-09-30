@@ -8,7 +8,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"markitect/internal/app"
+	"github.com/Glacius-Labs/Markitect/internal/app"
 )
 
 func runReview(root string, p *app.Project, namespace, kind, name, configPath, reportPath, evidencePath, toolDigest string, emit func(any) int, fail func(error) int) int {

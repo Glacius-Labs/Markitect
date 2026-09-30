@@ -11,7 +11,7 @@ import (
 	"unicode/utf8"
 
 	"go.yaml.in/yaml/v3"
-	"markitect/internal/format"
+	"github.com/Glacius-Labs/Markitect/internal/format"
 )
 
 const (

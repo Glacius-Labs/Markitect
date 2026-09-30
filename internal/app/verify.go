@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"markitect/internal/source"
+	"github.com/Glacius-Labs/Markitect/internal/source"
 )
 
 type GateResult struct {

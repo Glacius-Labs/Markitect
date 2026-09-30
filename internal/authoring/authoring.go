@@ -9,8 +9,8 @@ import (
 	"path"
 	"strings"
 
-	"markitect/internal/app"
-	"markitect/internal/source"
+	"github.com/Glacius-Labs/Markitect/internal/app"
+	"github.com/Glacius-Labs/Markitect/internal/source"
 )
 
 // resources contains the canonical core Project and authoring resources. It is

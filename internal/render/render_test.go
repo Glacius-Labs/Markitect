@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"markitect/internal/core"
+	"github.com/Glacius-Labs/Markitect/internal/core"
 )
 
 func TestGenerateCompanionsKeepTextAndRelativeDependencyLinks(t *testing.T) {

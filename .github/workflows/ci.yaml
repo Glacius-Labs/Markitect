@@ -1,0 +1,146 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Quality (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-24.04
+          - windows-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+
+      - name: Verify module checksums
+        run: go mod verify
+
+      - name: Test
+        run: go test ./...
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Build
+        run: go build ./...
+
+      - name: Check generated schemas
+        run: go run ./cmd/markitect schema --repo .
+
+      - name: Check canonical formatting
+        run: go run ./cmd/markitect format --repo examples/minimal
+
+      - name: Check minimal example
+        run: go run ./cmd/markitect check --repo examples/minimal
+
+      - name: Check diff whitespace
+        run: git diff --check
+
+      - name: Create package and copy bootstrap (Unix)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          package_dir="$RUNNER_TEMP/markitect-source-smoke-$GITHUB_SHA"
+          go run ./cmd/markitect package --repo . --output "$package_dir"
+          mkdir -p "$package_dir/scripts"
+          cp integration/run-markitect.go "$package_dir/scripts/run-markitect.go"
+          cp integration/run-markitect_test.go "$package_dir/scripts/markitect-bootstrap_test.go"
+          echo "MARKITECT_PACKAGE_DIR=$package_dir" >> "$GITHUB_ENV"
+
+      - name: Create package and copy bootstrap (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $packageDir = Join-Path $env:RUNNER_TEMP "markitect-source-smoke-$env:GITHUB_SHA"
+          go run ./cmd/markitect package --repo . --output $packageDir
+          if ($LASTEXITCODE -ne 0) { throw "Markitect package failed with exit code $LASTEXITCODE" }
+          New-Item -ItemType Directory -Path (Join-Path $packageDir 'scripts') | Out-Null
+          Copy-Item integration/run-markitect.go (Join-Path $packageDir 'scripts/run-markitect.go')
+          Copy-Item integration/run-markitect_test.go (Join-Path $packageDir 'scripts/markitect-bootstrap_test.go')
+          "MARKITECT_PACKAGE_DIR=$packageDir" >> $env:GITHUB_ENV
+
+      - name: Test standalone bootstrap and packaged commands (Unix)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          cd "$MARKITECT_PACKAGE_DIR"
+          go test scripts/run-markitect.go scripts/markitect-bootstrap_test.go
+          output="$(go run scripts/run-markitect.go authoring)"
+          grep -Fq 'core/Skill/authoring' <<< "$output"
+          check_output="$(go run scripts/run-markitect.go check --repo "$GITHUB_WORKSPACE/examples/minimal")"
+          grep -Eq '^status: passed$' <<< "$check_output"
+
+      - name: Test standalone bootstrap and packaged commands (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Push-Location $env:MARKITECT_PACKAGE_DIR
+          go test scripts/run-markitect.go scripts/markitect-bootstrap_test.go
+          if ($LASTEXITCODE -ne 0) { throw "Bootstrap tests failed with exit code $LASTEXITCODE" }
+          $output = go run scripts/run-markitect.go authoring
+          if ($LASTEXITCODE -ne 0) { throw "Bootstrap authoring smoke failed with exit code $LASTEXITCODE" }
+          if (($output -join "`n") -notmatch 'core/Skill/authoring') { throw 'Packaged binary omitted the embedded authoring Skill' }
+          $example = Join-Path $env:GITHUB_WORKSPACE 'examples/minimal'
+          $checkOutput = go run scripts/run-markitect.go check --repo $example
+          if ($LASTEXITCODE -ne 0) { throw "Bootstrap example check failed with exit code $LASTEXITCODE" }
+          if (($checkOutput -join "`n") -notmatch '(?m)^status: passed$') { throw 'Packaged binary did not pass the minimal example check' }
+          Pop-Location
+
+  publish-source-artifact:
+    name: Publish main source artifact
+    needs:
+      - quality
+    if: ${{ success() && github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+
+      - name: Package pinned source and bootstrap files
+        shell: bash
+        run: |
+          package_dir="$RUNNER_TEMP/markitect-source-$GITHUB_SHA"
+          go run ./cmd/markitect package --repo . --output "$package_dir"
+          mkdir -p "$package_dir/scripts"
+          cp integration/run-markitect.go "$package_dir/scripts/run-markitect.go"
+          cp integration/run-markitect_test.go "$package_dir/scripts/markitect-bootstrap_test.go"
+
+      - name: Upload commit-scoped source artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: markitect-source-${{ github.sha }}
+          path: ${{ runner.temp }}/markitect-source-${{ github.sha }}/
+          if-no-files-found: error
+          retention-days: 30

@@ -3,7 +3,7 @@ package app
 import (
 	"testing"
 
-	"markitect/internal/render"
+	"github.com/Glacius-Labs/Markitect/internal/render"
 )
 
 func TestCheckOutputsDoesNotTreatGeneratedSchemaYAMLAsOwnedOutput(t *testing.T) {

@@ -1,8 +1,8 @@
 apiVersion: markitect.example.org/v1alpha1
 kind: Text
 metadata:
-  name: rollback-procedure
-  namespace: sample
+    name: rollback-procedure
+    namespace: sample
 spec:
-  text: |
-    Pause the rollout, confirm the previous version is healthy, and record the change being reversed.
+    text: |
+        Pause the rollout, confirm the previous version is healthy, and record the change being reversed.

@@ -5,9 +5,9 @@ import (
 	"reflect"
 	"testing"
 
-	"markitect/internal/core"
-	"markitect/internal/format"
-	"markitect/internal/source"
+	"github.com/Glacius-Labs/Markitect/internal/core"
+	"github.com/Glacius-Labs/Markitect/internal/format"
+	"github.com/Glacius-Labs/Markitect/internal/source"
 )
 
 // TestAuthoringScenarioImpactOracle keeps a synthetic multi-area graph as an

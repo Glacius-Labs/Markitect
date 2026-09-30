@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	"markitect/internal/core"
-	"markitect/internal/source"
+	"github.com/Glacius-Labs/Markitect/internal/core"
+	"github.com/Glacius-Labs/Markitect/internal/source"
 )
 
 func initWriterRepo(t *testing.T, root string) {

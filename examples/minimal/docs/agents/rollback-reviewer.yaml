@@ -1,21 +1,23 @@
 apiVersion: markitect.example.org/v1alpha1
 kind: Agent
 metadata:
-  name: rollback-reviewer
-  namespace: sample
+    name: rollback-reviewer
+    namespace: sample
 spec:
-  implements:
-    - kind: Contract
-      name: rollback-assessment
-  rules:
-    - kind: Rule
-      name: rollback-review
-  uses:
-    - kind: Text
-      name: rollback-procedure
-  files:
-    - docs/inputs/rollback-change.txt
-  input: [change]
-  output: [assessment]
-  text: |
-    Compare the proposed change and observed rollout evidence with the rollback procedure. Do not execute a rollback.
+    text: |
+        Compare the proposed change and observed rollout evidence with the rollback procedure. Do not execute a rollback.
+    files:
+        - docs/inputs/rollback-change.txt
+    rules:
+        - kind: Rule
+          name: rollback-review
+    uses:
+        - kind: Text
+          name: rollback-procedure
+    implements:
+        - kind: Contract
+          name: rollback-assessment
+    input:
+        - change
+    output:
+        - assessment

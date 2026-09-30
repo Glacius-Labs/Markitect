@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"markitect/internal/format"
-	"markitect/internal/source"
+	"github.com/Glacius-Labs/Markitect/internal/format"
+	"github.com/Glacius-Labs/Markitect/internal/source"
 )
 
 // Format canonicalizes YAML and line endings, without changing its model.
