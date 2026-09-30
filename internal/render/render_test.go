@@ -154,18 +154,26 @@ func TestGenerateRejectsCaseInsensitiveSourceOutputCollision(t *testing.T) {
 
 func TestCockpitRuleDefaultsExcludeCustomerAreas(t *testing.T) {
 	general := resource("Rule", "docs/general/rules/shared.yaml", "shared", "cockpit-general", core.Spec{Text: "general"})
+	local := resource("Rule", "docs/consiliari/rules/local.yaml", "local", "cockpit-consiliari", core.Spec{Text: "local"})
 	customer := resource("Rule", "docs/customers/acme/rules/private.yaml", "private", "cockpit-acme", core.Spec{Text: "private"})
 	project := resource("Project", "markitect.yaml", "cockpit", "", core.Spec{Profile: "cockpit", Targets: []string{"claude"}, Areas: []core.Area{
 		{Name: "cockpit-general", Rules: []core.Ref{{Name: "shared"}}},
+		{Name: "cockpit-consiliari", Rules: []core.Ref{{Name: "shared", Namespace: "cockpit-general"}, {Name: "local"}}},
 		{Name: "cockpit-acme", Rules: []core.Ref{{Name: "private"}}},
 	}})
-	g := &core.Graph{Resources: map[string]*core.Resource{general.Key(): general, customer.Key(): customer}, Project: project}
+	g := &core.Graph{Resources: map[string]*core.Resource{general.Key(): general, local.Key(): local, customer.Key(): customer}, Project: project}
 	outputs, err := Generate(g)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if outputs[".claude/rules/general-shared.md"] == nil {
 		t.Fatal("missing general rule adapter")
+	}
+	if outputs[".claude/rules/consiliari-local.md"] == nil {
+		t.Fatal("missing Consiliari-owned rule adapter")
+	}
+	if outputs[".claude/rules/consiliari-shared.md"] != nil {
+		t.Fatal("inherited General rule was rendered under a Consiliari global name")
 	}
 	if outputs[".claude/rules/acme-private.md"] != nil {
 		t.Fatal("customer rule was rendered as global adapter")

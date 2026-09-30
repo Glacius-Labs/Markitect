@@ -374,6 +374,12 @@ func renderRules(resources []*core.Resource, g *core.Graph) (map[string][]byte, 
 			if r == nil {
 				return nil, fmt.Errorf("area %q references unresolved rule %q", area.Name, ref.Name)
 			}
+			// Area rules include inherited rules for consumers. Only render an
+			// area's own rules under its global provider name; inherited rules
+			// already have an adapter at their owning scope.
+			if r.Metadata.Namespace != area.Name {
+				continue
+			}
 			name := scope + "-" + r.Metadata.Name
 			p := ".claude/rules/" + name + ".md"
 			out[p] = []byte("<!-- " + Marker + "; source: " + relative(p, r.Path) + " -->\n# " + title(r.Metadata.Name) + "\n\nRead the [canonical rule view](" + relative(p, companionPath(r.Path)) + ") and apply it only within its stated scope.\n")

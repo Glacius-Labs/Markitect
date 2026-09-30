@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/Glacius-Labs/Markitect/internal/source"
 )
 
 func TestFormatWriteRefusesSharedWriterLock(t *testing.T) {
@@ -59,6 +61,27 @@ func TestFormatWriteRefusesStaleSource(t *testing.T) {
 	}
 	if after := mustRead(t, skillFile); string(after) != string(before) {
 		t.Fatal("format overwrote a source edit made after capture")
+	}
+}
+
+func TestEnsureWriteBranchDetectsSameSHABranchSwitch(t *testing.T) {
+	root := installTestRepo(t, "feature/captured")
+	expected, err := writeBranchName(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	before, err := source.GitOutput(root, "rev-parse", "HEAD")
+	if err != nil {
+		t.Fatal(err)
+	}
+	runWriterGit(t, root, "branch", "feature/other")
+	runWriterGit(t, root, "checkout", "feature/other")
+	after, err := source.GitOutput(root, "rev-parse", "HEAD")
+	if err != nil || string(before) != string(after) {
+		t.Fatalf("branch-switch fixture changed HEAD: before=%q after=%q err=%v", before, after, err)
+	}
+	if err := ensureWriteBranch(root, expected); err == nil || !strings.Contains(err.Error(), "branch changed") {
+		t.Fatalf("same-SHA branch switch error = %v, want branch-change refusal", err)
 	}
 }
 

@@ -120,6 +120,18 @@ func WriteOutputs(root string, p *Project) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
+	branch := ""
+	if p.Graph.Project.Spec.Profile != "generic" {
+		branch, err = writeBranchName(rootAbs)
+		if err != nil {
+			return nil, err
+		}
+	} else if current, branchErr := source.GitOutput(rootAbs, "branch", "--show-current"); branchErr == nil {
+		branch = strings.TrimSpace(string(current))
+		if branch == "" || strings.EqualFold(branch, "master") || strings.EqualFold(branch, "main") {
+			return nil, fmt.Errorf("render --write requires a non-protected branch")
+		}
+	}
 	lockDir := filepath.Join(rootAbs, ".artifacts", "markitect")
 	if _, err = safeDestination(rootAbs, ".artifacts/markitect/write.lock"); err != nil {
 		return nil, err
@@ -133,16 +145,9 @@ func WriteOutputs(root string, p *Project) ([]string, error) {
 	}
 	lock.Close()
 	defer os.Remove(filepath.Join(lockDir, "write.lock"))
-	// Standalone generic examples need no Git repository. Repository profiles
-	// require a named authoring branch and fail closed on Git errors.
-	if p.Graph.Project.Spec.Profile != "generic" {
-		if err = writableBranch(rootAbs); err != nil {
+	if branch != "" {
+		if err := ensureWriteBranch(rootAbs, branch); err != nil {
 			return nil, err
-		}
-	} else {
-		branch, err := source.GitOutput(rootAbs, "branch", "--show-current")
-		if err == nil && (strings.EqualFold(strings.TrimSpace(string(branch)), "master") || strings.EqualFold(strings.TrimSpace(string(branch)), "main") || strings.TrimSpace(string(branch)) == "") {
-			return nil, fmt.Errorf("render --write requires a non-protected branch")
 		}
 	}
 	outputs, err := render.Generate(p.Graph)
@@ -159,6 +164,11 @@ func WriteOutputs(root string, p *Project) ([]string, error) {
 	}
 	// Validate the entire plan and reject concurrent edits before writing anything.
 	for _, name := range names {
+		if branch != "" {
+			if err := ensureWriteBranch(rootAbs, branch); err != nil {
+				return nil, err
+			}
+		}
 		dest, err := safeDestination(root, name)
 		if err != nil {
 			return nil, err
@@ -191,6 +201,11 @@ func WriteOutputs(root string, p *Project) ([]string, error) {
 	}
 	var written []string
 	for _, name := range names {
+		if branch != "" {
+			if err := ensureWriteBranch(rootAbs, branch); err != nil {
+				return written, err
+			}
+		}
 		dest, err := safeDestination(root, name)
 		if err != nil {
 			return written, err
@@ -211,6 +226,11 @@ func WriteOutputs(root string, p *Project) ([]string, error) {
 		if !existed && !os.IsNotExist(readErr) {
 			return written, fmt.Errorf("output appeared during render: %s", name)
 		}
+		if branch != "" {
+			if err := ensureWriteBranch(rootAbs, branch); err != nil {
+				return written, err
+			}
+		}
 		if err = atomicWrite(dest, outputs[name]); err != nil {
 			return written, err
 		}
@@ -230,21 +250,45 @@ func WriteOutputs(root string, p *Project) ([]string, error) {
 	if final.Digest() != fresh.Digest() {
 		return written, fmt.Errorf("source changed during rendering; outputs are provisional, rerun check")
 	}
+	if branch != "" {
+		if err := ensureWriteBranch(rootAbs, branch); err != nil {
+			return written, err
+		}
+	}
 	return written, nil
 }
 
 func writableBranch(root string) error {
+	_, err := writeBranchName(root)
+	return err
+}
+
+// writeBranchName returns the named, non-protected Git branch for a write.
+func writeBranchName(root string) (string, error) {
 	absolute, err := filepath.Abs(root)
 	if err != nil {
-		return err
+		return "", err
 	}
 	branch, err := source.GitOutput(absolute, "branch", "--show-current")
 	if err != nil {
-		return fmt.Errorf("writing canonical sources requires an isolated Git branch: %w", err)
+		return "", fmt.Errorf("writing canonical sources requires an isolated Git branch: %w", err)
 	}
 	name := strings.TrimSpace(string(branch))
-	if name == "" || name == "master" || name == "main" {
-		return fmt.Errorf("writing requires an isolated non-protected Git branch")
+	if name == "" || strings.EqualFold(name, "master") || strings.EqualFold(name, "main") {
+		return "", fmt.Errorf("writing requires an isolated non-protected Git branch")
+	}
+	return name, nil
+}
+
+// ensureWriteBranch catches a branch switch, including one to a different
+// branch at the same HEAD, during a multi-file write.
+func ensureWriteBranch(root, expected string) error {
+	current, err := writeBranchName(root)
+	if err != nil {
+		return fmt.Errorf("write branch changed or became protected: %w", err)
+	}
+	if current != expected {
+		return fmt.Errorf("branch changed during write from %q to %q", expected, current)
 	}
 	return nil
 }
@@ -292,8 +336,19 @@ func lockWriter(root string) (func(), error) {
 // WriteSchemas only owns its generated schema files; path validation also
 // protects standalone tool checkouts that do not yet have Git metadata.
 func WriteSchemas(root string, outputs map[string][]byte) error {
+	branch := ""
+	var unlock func()
 	if _, err := os.Lstat(filepath.Join(root, ".git")); err == nil {
-		if err = writableBranch(root); err != nil {
+		branch, err = writeBranchName(root)
+		if err != nil {
+			return err
+		}
+		unlock, err = lockWriter(root)
+		if err != nil {
+			return err
+		}
+		defer unlock()
+		if err := ensureWriteBranch(root, branch); err != nil {
 			return err
 		}
 	}
@@ -314,6 +369,11 @@ func WriteSchemas(root string, outputs map[string][]byte) error {
 		}
 	}
 	for _, name := range sortedFiles(outputs) {
+		if branch != "" {
+			if err := ensureWriteBranch(root, branch); err != nil {
+				return err
+			}
+		}
 		dest, err := safeDestination(root, name)
 		if err != nil {
 			return err
@@ -321,7 +381,17 @@ func WriteSchemas(root string, outputs map[string][]byte) error {
 		if err = os.MkdirAll(filepath.Dir(dest), 0755); err != nil {
 			return err
 		}
+		if branch != "" {
+			if err := ensureWriteBranch(root, branch); err != nil {
+				return err
+			}
+		}
 		if err = atomicWrite(dest, outputs[name]); err != nil {
+			return err
+		}
+	}
+	if branch != "" {
+		if err := ensureWriteBranch(root, branch); err != nil {
 			return err
 		}
 	}

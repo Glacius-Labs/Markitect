@@ -34,7 +34,8 @@ func Format(root string, p *Project, write bool) ([]string, error) {
 	if !p.Snapshot.Provisional {
 		return nil, fmt.Errorf("format writes require an isolated working tree")
 	}
-	if err := writableBranch(root); err != nil {
+	branch, err := writeBranchName(root)
+	if err != nil {
 		return nil, err
 	}
 	unlock, err := lockWriter(root)
@@ -42,6 +43,9 @@ func Format(root string, p *Project, write bool) ([]string, error) {
 		return nil, err
 	}
 	defer unlock()
+	if err := ensureWriteBranch(root, branch); err != nil {
+		return nil, err
+	}
 	current, err := source.Load(root, "")
 	if err != nil {
 		return nil, err
@@ -62,6 +66,9 @@ func Format(root string, p *Project, write bool) ([]string, error) {
 	}
 	written := make([]string, 0, len(names))
 	for _, name := range names {
+		if err := ensureWriteBranch(root, branch); err != nil {
+			return written, err
+		}
 		dest, err := safeDestination(root, name)
 		if err != nil {
 			return written, err
@@ -69,6 +76,9 @@ func Format(root string, p *Project, write bool) ([]string, error) {
 		data, err := os.ReadFile(dest)
 		if err != nil || !bytes.Equal(data, p.Snapshot.Files[name]) {
 			return written, fmt.Errorf("source changed during formatting: %s", name)
+		}
+		if err := ensureWriteBranch(root, branch); err != nil {
+			return written, err
 		}
 		if err = atomicWrite(dest, changed[name]); err != nil {
 			return written, err
@@ -96,6 +106,9 @@ func Format(root string, p *Project, write bool) ([]string, error) {
 	}
 	if final.Digest() != expected.Digest() {
 		return written, fmt.Errorf("source changed during formatting; reload and format the complete candidate")
+	}
+	if err := ensureWriteBranch(root, branch); err != nil {
+		return written, err
 	}
 	return written, nil
 }

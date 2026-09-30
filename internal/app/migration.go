@@ -21,19 +21,21 @@ func WriteMigration(root string, snap *source.Snapshot, canonical map[string][]b
 	if _, exists := snap.Files["markitect.yaml"]; exists {
 		return nil, fmt.Errorf("migration is a one-time import; markitect.yaml already exists")
 	}
+	branch, err := writeBranchName(root)
+	if err != nil {
+		return nil, fmt.Errorf("migration requires an isolated non-protected Git branch: %w", err)
+	}
 	unlock, err := lockWriter(root)
 	if err != nil {
 		return nil, err
 	}
 	defer unlock()
+	if err := ensureWriteBranch(root, branch); err != nil {
+		return nil, err
+	}
 	absolute, err := filepath.Abs(root)
 	if err != nil {
 		return nil, err
-	}
-	branch, err := source.GitOutput(absolute, "branch", "--show-current")
-	name := strings.TrimSpace(string(branch))
-	if err != nil || name == "" || name == "master" || name == "main" {
-		return nil, fmt.Errorf("migration requires an isolated non-protected Git branch")
 	}
 	proposed := &source.Snapshot{Provisional: true, Files: map[string][]byte{}, Modes: map[string]string{}}
 	for name, data := range snap.Files {
@@ -89,6 +91,9 @@ func WriteMigration(root string, snap *source.Snapshot, canonical map[string][]b
 	}
 	names := sortedFiles(outputs)
 	for _, name := range names {
+		if err := ensureWriteBranch(absolute, branch); err != nil {
+			return nil, err
+		}
 		dest, err := safeDestination(root, name)
 		if err != nil {
 			return nil, err
@@ -104,6 +109,9 @@ func WriteMigration(root string, snap *source.Snapshot, canonical map[string][]b
 		if !existed && !os.IsNotExist(readErr) {
 			return nil, fmt.Errorf("migration target appeared: %s", name)
 		}
+		if err := ensureWriteBranch(absolute, branch); err != nil {
+			return nil, err
+		}
 		if err = atomicWrite(dest, outputs[name]); err != nil {
 			return nil, err
 		}
@@ -118,6 +126,9 @@ func WriteMigration(root string, snap *source.Snapshot, canonical map[string][]b
 	}
 	if after.Digest() != current.Digest() {
 		return nil, fmt.Errorf("source changed during migration; branch is provisional and must be rechecked")
+	}
+	if err := ensureWriteBranch(absolute, branch); err != nil {
+		return nil, err
 	}
 	// A failure or interruption leaves a visible, reviewable branch diff. It
 	// cannot produce a successful check until the complete plan matches.

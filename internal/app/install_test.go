@@ -123,6 +123,27 @@ func TestInstallReadbackNormalizesCoreAutocrlfCheckout(t *testing.T) {
 	}
 }
 
+func TestInstallUpgradesUnchangedCRLFPins(t *testing.T) {
+	root := installTestRepo(t, "feature/autocrlf-unchanged")
+	old := installTestBundle(t, "a", "0.1.0-rc.3", "stable-bootstrap")
+	writeBundleToRoot(t, root, old, true)
+	commitInstallPins(t, root, "install RC3 pins")
+	runWriterGit(t, root, "config", "core.autocrlf", "true")
+	recreateAutocrlfCheckout(t, root)
+
+	// Keep both bootstrap files byte-identical while changing the lock and the
+	// release manifest. This exercises verification of unchanged checkout pins.
+	updated := installTestBundle(t, "b", "0.1.0-rc.4", "stable-bootstrap")
+	plan, err := Install(root, updated, false)
+	if err != nil || plan.Kind != "upgrade" {
+		t.Fatalf("CRLF upgrade plan = (%+v, %v), want upgrade", plan, err)
+	}
+	result, err := Install(root, updated, true)
+	if err != nil || result.Kind != "upgrade" || !result.Applied {
+		t.Fatalf("CRLF upgrade with unchanged text pins = (%+v, %v)", result, err)
+	}
+}
+
 func TestInstallFreshnessComparesRawCheckoutBytes(t *testing.T) {
 	root := installTestRepo(t, "feature/raw-freshness")
 	bundle := installTestBundle(t, "a", "0.1.0-rc.3", "old")

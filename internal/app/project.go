@@ -175,14 +175,18 @@ func markitectResourceEnvelope(data []byte) bool {
 				spec = value
 			}
 		}
+		knownResourceShape := kind != nil && kind.Kind == yaml.ScalarNode &&
+			format.AllowedSpecFields(kind.Value) != nil &&
+			metadata != nil && metadata.Kind == yaml.MappingNode &&
+			spec != nil && spec.Kind == yaml.MappingNode
 		if apiVersion != nil {
 			apiGroup, _, _ := strings.Cut(core.APIVersion, "/")
-			if apiVersion.Kind == yaml.ScalarNode && strings.HasPrefix(apiVersion.Value, apiGroup+"/") {
+			if (apiVersion.Kind == yaml.ScalarNode && strings.HasPrefix(apiVersion.Value, apiGroup+"/")) || knownResourceShape {
 				return true
 			}
 			continue
 		}
-		if kind != nil && kind.Kind == yaml.ScalarNode && format.AllowedSpecFields(kind.Value) != nil && metadata != nil && metadata.Kind == yaml.MappingNode && spec != nil && spec.Kind == yaml.MappingNode {
+		if knownResourceShape {
 			return true
 		}
 	}

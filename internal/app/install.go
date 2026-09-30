@@ -150,6 +150,9 @@ func Install(root string, bundle *release.Bundle, write bool) (*InstallPlan, err
 		if current.exists != before.exists || (current.exists && !bytes.Equal(current.data, before.data)) {
 			return installWriteFailure(plan, state, fmt.Errorf("install target changed during write: %s", file.Path))
 		}
+		if err := ensureWriteBranch(rootAbs, state.branch); err != nil {
+			return installWriteFailure(plan, state, err)
+		}
 		if err = atomicWrite(dest, bundle.Files[file.Path]); err != nil {
 			return installWriteFailure(plan, state, fmt.Errorf("write %s: %w", file.Path, err))
 		}
@@ -421,7 +424,7 @@ func verifyInstalledBundle(root string, bundle *release.Bundle) error {
 		if !file.exists {
 			return fmt.Errorf("installed file is missing: %s", name)
 		}
-		if !bytes.Equal(file.data, bundle.Files[name]) {
+		if !bytes.Equal(file.canonical, bundle.Files[name]) {
 			return fmt.Errorf("installed file differs from the selected bundle: %s", name)
 		}
 		files[name] = file.canonical
@@ -521,13 +524,9 @@ func allInstallBytesMatch(current map[string]installFileState, target map[string
 }
 
 func installableBranch(root string) (string, error) {
-	out, err := source.GitOutput(root, "branch", "--show-current")
+	branch, err := writeBranchName(root)
 	if err != nil {
 		return "", fmt.Errorf("install requires a Git worktree on a named non-protected branch: %w", err)
-	}
-	branch := strings.TrimSpace(string(out))
-	if branch == "" || strings.EqualFold(branch, "main") || strings.EqualFold(branch, "master") {
-		return "", errors.New("install write requires a named non-protected Git branch")
 	}
 	return branch, nil
 }

@@ -68,6 +68,14 @@ func TestParseKeepsRecognizableMarkitectParseErrors(t *testing.T) {
 			data: "kind: Text\nmetadata: {name: policy, namespace: cockpit-general}\nspec: {text: body}\n",
 		},
 		{
+			name: "non-Markitect API version on known resource kind",
+			data: "apiVersion: v1\nkind: Text\nmetadata: {name: policy, namespace: cockpit-general}\nspec: {text: body}\n",
+		},
+		{
+			name: "non-scalar API version on known resource kind",
+			data: "apiVersion: [markitect.example.org/v1alpha1]\nkind: Skill\nmetadata: {name: author, namespace: cockpit-general}\nspec: {text: body}\n",
+		},
+		{
 			name: "duplicate Markitect discriminator",
 			data: "apiVersion: markitect.example.org/v1alpha1\napiVersion: v1\nkind: Text\nmetadata: {name: policy, namespace: cockpit-general}\nspec: {text: body}\n",
 		},

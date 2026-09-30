@@ -1,6 +1,6 @@
 # Consumer integration
 
-Markitect's distribution unit is one versioned, immutable GitHub Release. The release workflow builds a deterministic source bundle from the exact tagged commit, tests installation on Windows and Linux amd64, then publishes the complete asset set to a draft before making it immutable. The source declares version `0.1.0`; that string alone does not prove a release was published or accepted. Install only an exact immutable release whose metadata and successful run identify the intended source commit.
+Markitect's distribution unit is one versioned, immutable GitHub Release. The tagged workflow builds a deterministic source bundle from the exact commit, tests installation on Windows and Linux amd64, and uploads a run-scoped artifact. An authorized release owner publishes that exact artifact through the local release tool. The source declares version `0.1.0`; that string alone does not prove a release was published or accepted. Install only an exact immutable release whose metadata and successful run identify the intended source commit.
 
 ## Release contents and verification
 
@@ -86,18 +86,55 @@ The five files are written atomically one at a time; this is not a filesystem tr
 
 Text files in the bundle are validated against their canonical LF form; the installer accepts CRLF readback from a Windows checkout. The nested `source.zip` is copied and checked byte-for-byte. Installation does not rewrite or normalize ZIP contents.
 
-Release creation fails closed when the tag already has a release, including an incomplete draft. The workflow does not resume uploads or clobber an existing draft. An owner must inspect the draft, recursively resolve its tag to a commit, and compare that commit with the intended source; check exact asset names, GitHub API SHA-256 values and the provenance record. If incomplete or mismatched, stop and have the release owner choose a reviewed draft correction or discard path before retrying. A published immutable release is never replaced or retried.
-
 The installer can upgrade a complete, committed `0.1.0-rc.3` four-file pin set. It refuses partial, changed, staged, or unknown pin sets rather than guessing ownership. Other legacy installations require an explicit migration.
 
 ## Runtime requirements
 
 Git is required for immutable snapshots and for `install --write`. The downloaded native release binary can run the install preview and write without Go installed. The installed consumer bootstrap is Go source: running it requires Go 1.27.1 or newer. The first bootstrap build may download the exact Go toolchain and checksum-verified module dependency; for offline use, provision those exact toolchain and module inputs before disconnecting. A cache hit still probes the selected toolchain. The outer `go run` also needs writable `GOCACHE` and `GOTMPDIR`. The bootstrap uses only the Go standard library; `CGO` is disabled for its Markitect build. GitHub CLI and private-repository read access are needed only to obtain and verify release assets.
 
-The platform release targets are Windows amd64 and Linux amd64. The release workflow is intended to run source quality checks on both, then install and smoke-test the same deterministic bundle on both before publishing. Other OS/architecture targets are not claimed.
+The platform release targets are Windows amd64 and Linux amd64. The tagged workflow runs source quality checks on both, then installs and smoke-tests the same deterministic bundle on both before uploading its run artifact. The authorized owner tool handles later publication. Other OS/architecture targets are not claimed.
 
-## Source maintenance and legacy package command
+## Owner publication
 
-The release workflow builds `bundle` from a full immutable revision and requires the source version in `cmd/markitect/main.go` to match its `v`-prefixed tag. It prepares a draft, attaches the complete bundle, binaries and provenance without replacement, publishes only after the set is complete, then verifies GitHub's immutable release and each asset. A successful workflow run and immutable release metadata for the exact tag and source commit are the acceptance evidence.
+The tagged Release workflow runs source quality gates and bundle/bootstrap smoke tests on Windows and Linux amd64, then uploads one run artifact named `markitect-release-SOURCE_SHA` with 30-day retention. The artifact contains four root-level files with versioned names: bundle ZIP, Windows and Linux amd64 binaries, and provenance YAML. The provenance records the tag, source commit, workflow run ID/attempt/URL, toolchain and SHA-256 digests for the bundle and binaries. GitHub Actions only builds and tests; it does not create a draft or mutate a Release.
+
+The Actions `GITHUB_TOKEN` cannot read the admin-only immutable-release setting (the live API returned 403). The release job therefore stops at its run artifact; no PAT is exported to or stored in workflow secrets. An authorized owner publishes locally using their existing GitHub CLI authentication. Check that `gh auth status` shows the verified owner/admin account; use Go 1.27.1 or newer and the exact tagged source checkout.
+
+Download the artifact from the completed Release workflow run into a new directory. The run has one artifact, so this downloads that run's artifact files without requiring manual hash entry:
+
+```powershell
+$repository = 'github.com/Glacius-Labs/Markitect'
+gh auth status
+if ($LASTEXITCODE -ne 0) { throw 'GitHub CLI authentication is unavailable.' }
+$runId = '<successful Release workflow run ID>'
+$run = gh run view $runId --repo $repository --json headSha,status,conclusion | ConvertFrom-Json
+if ($LASTEXITCODE -ne 0) { throw 'Could not inspect the selected Release workflow run.' }
+if ($run.status -ne 'completed' -or $run.conclusion -ne 'success' -or $run.headSha -notmatch '^[0-9a-f]{40}$') {
+    throw 'The selected Release workflow run is not successful or has no full source commit.'
+}
+$sourceCommit = $run.headSha
+$assets = Join-Path $env:TEMP "markitect-release-$runId"
+if (Test-Path -LiteralPath $assets) { throw "Asset directory already exists: $assets" }
+New-Item -ItemType Directory -Path $assets | Out-Null
+gh run download $runId --repo $repository --name "markitect-release-$sourceCommit" --dir $assets
+if ($LASTEXITCODE -ne 0) { throw 'Release artifact download failed.' }
+
+# Run from the exact tagged Markitect source checkout. This prints a read-only
+# plan; inspect its tag, run, source commit, asset names and verified actions.
+Set-Location -LiteralPath '<exact tagged Markitect source checkout>'
+go run ./cmd/markitect-release --tag v0.1.0 --run $runId --assets $assets
+if ($LASTEXITCODE -ne 0) { throw 'Release preflight failed.' }
+
+# This is the explicit owner publication step. Use it only after reviewing
+# the complete plan printed by the command above.
+go run ./cmd/markitect-release --tag v0.1.0 --run $runId --assets $assets --publish
+if ($LASTEXITCODE -ne 0) { throw 'Release publication or final verification failed; inspect the release state.' }
+```
+
+Both modes authenticate through the existing `gh auth` session. The tool independently checks the live immutable-release setting, exact remote tag target, selected successful Release workflow run, provenance and four-file set; it fetches the same run artifact again with that authentication and byte-compares it with `--assets`. The default mode prints a full read-only plan. `--publish` repeats the preflight immediately before mutation, creates an empty draft, uploads the four files, checks the names and GitHub SHA-256 values, rechecks tag/settings, publishes, then verifies the immutable-release attestation and every asset. The owner does not copy or type hashes. A successful CI run alone is not a published or accepted Release; completion requires successful owner publication and verification for the exact tag/source commit.
+
+The release tool fails closed if any release or draft already exists for the tag; CI itself creates no draft. If the publish command exits with an error, inspect the actual release state and verify the tag and assets; do not assume it remains a draft or retry blindly. The tool does not resume, delete or clobber existing releases. Compare any draft's resolved tag commit, exact asset names, GitHub API digests and provenance against the completed run. If anything is incomplete or mismatched, stop and have the authorized owner choose a reviewed correction/discard path before retrying. A published immutable Release is never replaced or retried.
+
+## Legacy package command
 
 `markitect package --repo . --output NEW_DIRECTORY` remains a low-level development command that writes only `tools/markitect/source.zip` and the flat lock. It does not produce the release bundle, bootstrap files, `release.yaml`, binaries, or provenance; use the tagged Release workflow for consumer installation. No content-package format is part of this tool lock.

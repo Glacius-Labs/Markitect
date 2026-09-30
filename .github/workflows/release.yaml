@@ -39,7 +39,7 @@ jobs:
         with:
           go-version-file: go.mod
 
-      - name: Validate tag, version, main ancestry, and unused release name
+      - name: Validate tag, source version, main ancestry, and build bundle
         id: release
         shell: bash
         env:
@@ -64,7 +64,7 @@ jobs:
           echo "version=$source_version" >> "$GITHUB_OUTPUT"
           echo "bundle_sha256=$bundle_sha256" >> "$GITHUB_OUTPUT"
 
-      - name: Confirm release name is unused and verification CLI is available
+      - name: Confirm current remote tag resolves to the workflow source commit
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
@@ -87,25 +87,8 @@ jobs:
             [[ "$type" == commit && "$sha" =~ ^[0-9a-f]{40}$ ]] || { echo "remote release tag does not resolve to a Git commit" >&2; return 1; }
             printf '%s' "$sha"
           }
-
-          immutable_enabled="$(gh api -H 'X-GitHub-Api-Version: 2026-03-10' "repos/$GITHUB_REPOSITORY/immutable-releases" --jq '.enabled')"
-          [[ "$immutable_enabled" == true ]] || { echo "GitHub immutable releases are not enabled; refusing release preparation" >&2; exit 1; }
           remote_tag_commit="$(resolve_remote_tag_commit)"
           [[ "$remote_tag_commit" == "$SOURCE_SHA" ]] || { echo "current remote release tag no longer resolves to the workflow source commit" >&2; exit 1; }
-
-          release_error="$RUNNER_TEMP/release-lookup-error.txt"
-          if gh api "repos/$GITHUB_REPOSITORY/releases/tags/$TAG" >/dev/null 2>"$release_error"; then
-            echo "a release already exists for $TAG; refusing to replace it" >&2
-            exit 1
-          else
-            status=$?
-            if [[ $status -ne 1 ]] || ! grep -Fq 'HTTP 404' "$release_error"; then
-              echo "could not safely determine whether a release already exists" >&2
-              cat "$release_error" >&2
-              exit 1
-            fi
-          fi
-          gh release verify-asset --help >/dev/null
 
   bundle-smoke:
     name: Bundle install smoke (${{ matrix.os }})
@@ -199,8 +182,8 @@ jobs:
           if (($example -join "`n") -notmatch '(?m)^status: passed$') { throw 'Installed bundle did not pass the minimal example check' }
           Pop-Location
 
-  publish:
-    name: Draft, publish, and verify immutable release
+  assemble:
+    name: Build and retain exact-source release assets
     needs:
       - quality
       - preflight
@@ -208,7 +191,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     permissions:
-      contents: write
+      contents: read
     env:
       TAG: ${{ needs.preflight.outputs.tag }}
       VERSION: ${{ needs.preflight.outputs.version }}
@@ -225,7 +208,7 @@ jobs:
         with:
           go-version-file: go.mod
 
-      - name: Build exact-source release assets and provenance
+      - name: Build bundle, portable CLIs, and provenance YAML
         id: assets
         shell: bash
         env:
@@ -236,7 +219,7 @@ jobs:
           git merge-base --is-ancestor "$SOURCE_SHA" origin/main || { echo "release source commit is no longer contained in origin/main" >&2; exit 1; }
           [[ "$(go run ./cmd/markitect version)" == "Markitect $VERSION (linux/amd64)" ]] || { echo "release source version changed" >&2; exit 1; }
 
-          out="$RUNNER_TEMP/markitect-release-$TAG"
+          out="$RUNNER_TEMP/markitect-release-$GITHUB_SHA"
           mkdir -p "$out"
           bundle="$out/markitect-$TAG-bundle.zip"
           go run ./cmd/markitect bundle --repo . --revision "$SOURCE_SHA" --output "$bundle"
@@ -275,10 +258,7 @@ jobs:
           printf 'windows_binary=%s\n' "$windows_binary" >> "$GITHUB_OUTPUT"
           printf 'provenance=%s\n' "$provenance" >> "$GITHUB_OUTPUT"
 
-      # GitHub has no atomic compare-tag-and-create operation. This immediate
-      # remote check narrows the remaining race; immutable publication locks
-      # whichever tag target GitHub sees when the release is published.
-      - name: Confirm release name is unused and create an empty draft
+      - name: Confirm remote tag before retaining assets
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
@@ -300,108 +280,13 @@ jobs:
             [[ "$type" == commit && "$sha" =~ ^[0-9a-f]{40}$ ]] || { echo "remote release tag does not resolve to a Git commit" >&2; return 1; }
             printf '%s' "$sha"
           }
-
-          immutable_enabled="$(gh api -H 'X-GitHub-Api-Version: 2026-03-10' "repos/$GITHUB_REPOSITORY/immutable-releases" --jq '.enabled')"
-          [[ "$immutable_enabled" == true ]] || { echo "GitHub immutable releases are not enabled; refusing to create a draft" >&2; exit 1; }
           remote_tag_commit="$(resolve_remote_tag_commit)"
           [[ "$remote_tag_commit" == "$SOURCE_SHA" ]] || { echo "current remote release tag no longer resolves to the workflow source commit" >&2; exit 1; }
 
-          release_error="$RUNNER_TEMP/release-lookup-error.txt"
-          if gh api "repos/$GITHUB_REPOSITORY/releases/tags/$TAG" >/dev/null 2>"$release_error"; then
-            echo "a release already exists for $TAG; refusing to replace it" >&2
-            exit 1
-          else
-            status=$?
-            if [[ $status -ne 1 ]] || ! grep -Fq 'HTTP 404' "$release_error"; then
-              echo "could not safely determine whether a release already exists" >&2
-              cat "$release_error" >&2
-              exit 1
-            fi
-          fi
-          gh release create "$TAG" --draft --verify-tag --title "Markitect $TAG" --notes "Private Markitect release for source commit $GITHUB_SHA. See the provenance YAML asset for the source, run, toolchain, and release asset digests."
-
-      - name: Attach the complete release asset set without replacement
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          gh release upload "$TAG" \
-            "${{ steps.assets.outputs.bundle }}" \
-            "${{ steps.assets.outputs.linux_binary }}" \
-            "${{ steps.assets.outputs.windows_binary }}" \
-            "${{ steps.assets.outputs.provenance }}"
-
-          expected="$(printf '%s\n' \
-            "$(basename '${{ steps.assets.outputs.bundle }}')" \
-            "$(basename '${{ steps.assets.outputs.linux_binary }}')" \
-            "$(basename '${{ steps.assets.outputs.windows_binary }}')" \
-            "$(basename '${{ steps.assets.outputs.provenance }}')" | sort)"
-          actual="$(gh release view "$TAG" --json assets --jq '.assets[].name' | sort)"
-          [[ "$actual" == "$expected" ]] || { echo "draft release asset set does not match the four approved assets" >&2; exit 1; }
-
-      # Recheck immediately before publication for the same non-atomic API reason.
-      - name: Publish the fully assembled release
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-          SOURCE_SHA: ${{ github.sha }}
-        run: |
-          set -euo pipefail
-          resolve_remote_tag_commit() {
-            local type sha response depth=0
-            response="$(gh api -H 'X-GitHub-Api-Version: 2026-03-10' "repos/$GITHUB_REPOSITORY/git/ref/tags/$TAG")"
-            type="$(jq -r '.object.type // empty' <<< "$response")"
-            sha="$(jq -r '.object.sha // empty' <<< "$response")"
-            while [[ "$type" == tag ]]; do
-              depth=$((depth + 1))
-              [[ $depth -le 8 ]] || { echo "annotated tag chain is unreasonably deep" >&2; return 1; }
-              response="$(gh api -H 'X-GitHub-Api-Version: 2026-03-10' "repos/$GITHUB_REPOSITORY/git/tags/$sha")"
-              type="$(jq -r '.object.type // empty' <<< "$response")"
-              sha="$(jq -r '.object.sha // empty' <<< "$response")"
-            done
-            [[ "$type" == commit && "$sha" =~ ^[0-9a-f]{40}$ ]] || { echo "remote release tag does not resolve to a Git commit" >&2; return 1; }
-            printf '%s' "$sha"
-          }
-
-          immutable_enabled="$(gh api -H 'X-GitHub-Api-Version: 2026-03-10' "repos/$GITHUB_REPOSITORY/immutable-releases" --jq '.enabled')"
-          [[ "$immutable_enabled" == true ]] || { echo "GitHub immutable releases are no longer enabled; refusing to publish" >&2; exit 1; }
-          remote_tag_commit="$(resolve_remote_tag_commit)"
-          [[ "$remote_tag_commit" == "$SOURCE_SHA" ]] || { echo "current remote release tag no longer resolves to the workflow source commit" >&2; exit 1; }
-          gh release edit "$TAG" --draft=false
-
-      - name: Verify immutable release attestation and each asset
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-          SOURCE_SHA: ${{ github.sha }}
-        run: |
-          set -euo pipefail
-          resolve_remote_tag_commit() {
-            local type sha response depth=0
-            response="$(gh api -H 'X-GitHub-Api-Version: 2026-03-10' "repos/$GITHUB_REPOSITORY/git/ref/tags/$TAG")"
-            type="$(jq -r '.object.type // empty' <<< "$response")"
-            sha="$(jq -r '.object.sha // empty' <<< "$response")"
-            while [[ "$type" == tag ]]; do
-              depth=$((depth + 1))
-              [[ $depth -le 8 ]] || { echo "annotated tag chain is unreasonably deep" >&2; return 1; }
-              response="$(gh api -H 'X-GitHub-Api-Version: 2026-03-10' "repos/$GITHUB_REPOSITORY/git/tags/$sha")"
-              type="$(jq -r '.object.type // empty' <<< "$response")"
-              sha="$(jq -r '.object.sha // empty' <<< "$response")"
-            done
-            [[ "$type" == commit && "$sha" =~ ^[0-9a-f]{40}$ ]] || { echo "remote release tag does not resolve to a Git commit" >&2; return 1; }
-            printf '%s' "$sha"
-          }
-
-          immutable_enabled="$(gh api -H 'X-GitHub-Api-Version: 2026-03-10' "repos/$GITHUB_REPOSITORY/immutable-releases" --jq '.enabled')"
-          [[ "$immutable_enabled" == true ]] || { echo "GitHub immutable releases are disabled after publication" >&2; exit 1; }
-          immutable_release="$(gh release view "$TAG" --json isImmutable --jq '.isImmutable')"
-          [[ "$immutable_release" == true ]] || { echo "GitHub did not publish this as an immutable release" >&2; exit 1; }
-
-          gh release verify "$TAG"
-          verified_tag_commit="$(resolve_remote_tag_commit)"
-          [[ "$verified_tag_commit" == "$SOURCE_SHA" ]] || { echo "verified immutable release attestation is bound to a different source commit" >&2; exit 1; }
-          gh release verify-asset "$TAG" "${{ steps.assets.outputs.bundle }}"
-          gh release verify-asset "$TAG" "${{ steps.assets.outputs.linux_binary }}"
-          gh release verify-asset "$TAG" "${{ steps.assets.outputs.windows_binary }}"
-          gh release verify-asset "$TAG" "${{ steps.assets.outputs.provenance }}"
+      - name: Upload the run-scoped release artifact (30-day transport retention)
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: markitect-release-${{ github.sha }}
+          path: ${{ runner.temp }}/markitect-release-${{ github.sha }}/*
+          if-no-files-found: error
+          retention-days: 30

@@ -29,3 +29,11 @@ The source development checkout is the existing `markitect-authoring` worktree o
 ## Acceptance record
 
 Keep implementation state and final commands/results in the final delivery report, linked from the documentation router. Every unresolved provider, hosted-service or human gate is named with its actual consequence. A missing external gate must not silently become a passed test, nor stop independent authorized implementation work.
+
+## Decisions from actual integration
+
+- The general Konfyra migration remains on `feature/markitect` and PR 3007. Current `origin/master` was merged normally; its new WorkSync recovery procedure was transferred into the owning YAML source and verified at merge commit `7c9248efb2e3d83fcfe4e0ca45269672ac5764ff`. A separate Survey Story still uses an older pin and remains separately owned.
+- The Cockpit now has a local Git baseline and a dedicated managed migration worktree. Its 17 mechanisms are migrated without promoting arbitrary prose links into dependencies. Provider cutover requires an exact inventory and Go-check parity.
+- Source candidate `39346a4d6c252ca9e9591d728e3b3d3e4c4930d7` passed hosted Windows/Linux source quality jobs. Run `36758935789` failed overall because the explicit Actions-token capability probe received HTTP 403 on the admin-only immutable-release setting. This is a measured platform boundary.
+- Release assembly therefore runs in CI with a read-only token. A separate Go publisher uses the existing owner's local GitHub CLI authentication, verifies the successful exact workflow artifact and repository setting, then creates and verifies the durable immutable release. Personal owner credentials are not copied into Actions secrets.
+- Independent review found a CRLF upgrade with unchanged text pins and a branch-switch gap in controlled writes. Integration also exposed duplicate inherited rule adapters. These are release blockers until repaired and rechecked, not accepted exceptions.

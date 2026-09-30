@@ -2,11 +2,13 @@ package migrate
 
 import (
 	"reflect"
+	"sort"
 	"strings"
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/internal/core"
 	"github.com/Glacius-Labs/Markitect/internal/format"
+	"github.com/Glacius-Labs/Markitect/internal/render"
 	"github.com/Glacius-Labs/Markitect/internal/source"
 )
 
@@ -52,7 +54,7 @@ func TestCockpitPlansScopedResourcesWithoutProviderOwnership(t *testing.T) {
 	if project.Spec.Profile != "cockpit" || len(project.Spec.Targets) != 0 || len(project.Spec.RuleAdapters) != 0 {
 		t.Fatalf("migration transferred provider ownership: %#v", project.Spec)
 	}
-	graph := core.Build([]*core.Resource{project,
+	resources := []*core.Resource{project,
 		mustResource(t, first, "docs/general/rules/documentation.yaml"),
 		mustResource(t, first, "docs/general/rules/mechanisms.yaml"),
 		mustResource(t, first, "docs/general/workflows/author-mechanism.yaml"),
@@ -62,7 +64,8 @@ func TestCockpitPlansScopedResourcesWithoutProviderOwnership(t *testing.T) {
 		mustResource(t, first, "docs/customers/septeo/projects/wz-assist/rules/customer-only.yaml"),
 		mustResource(t, first, "docs/customers/septeo/projects/wz-assist/workflows/delivery.yaml"),
 		mustResource(t, first, "docs/customers/septeo/projects/wz-assist/skills/wz-assist-work.yaml"),
-	})
+	}
+	graph := core.Build(resources)
 	if len(graph.Diagnostics) != 0 {
 		t.Fatalf("planned graph has diagnostics: %#v", graph.Diagnostics)
 	}
@@ -102,6 +105,22 @@ func TestCockpitPlansScopedResourcesWithoutProviderOwnership(t *testing.T) {
 	}
 	if !hasRule(engineArea.Rules, "cockpit-general", "documentation") {
 		t.Fatalf("General rules were not inherited into project scope: %#v", engineArea.Rules)
+	}
+	project.Spec.Targets = []string{"claude"}
+	providerGraph := core.Build(resources)
+	outputs, err := render.Generate(providerGraph)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var globalRules []string
+	for name := range outputs {
+		if strings.HasPrefix(name, ".claude/rules/") {
+			globalRules = append(globalRules, name)
+		}
+	}
+	sort.Strings(globalRules)
+	if strings.Join(globalRules, ",") != ".claude/rules/general-documentation.md,.claude/rules/general-mechanisms.md" {
+		t.Fatalf("customer/project rules or inherited General rules were mis-scoped globally: %v", globalRules)
 	}
 }
 
