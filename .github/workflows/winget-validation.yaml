@@ -40,6 +40,12 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Windows Package Manager is unavailable' }
           "WINGET_BINARY=$binary" >> $env:GITHUB_ENV
 
+      - name: Limit disposable runner to the community source
+        shell: pwsh
+        run: |
+          & $env:WINGET_BINARY source remove --name msstore --disable-interactivity
+          if ($LASTEXITCODE -ne 0) { throw 'Could not remove the unrelated Microsoft Store source from this disposable runner' }
+
       - name: Validate and test portable installation and upgrade
         shell: pwsh
         run: |
