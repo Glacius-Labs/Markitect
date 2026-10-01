@@ -5,6 +5,7 @@
 | Path | Responsibility |
 |---|---|
 | `cmd/markitect` | CLI flags, exit codes, and output |
+| `cmd/markitect-release`, `internal/publish` | Maintainer release verification, publication, and distribution metadata |
 | `internal/core` | Typed resources, project configuration, and dependency graph |
 | `internal/format` | Strict YAML parsing and schema generation |
 | `internal/source` | Working-tree and immutable Git snapshots |
@@ -16,7 +17,8 @@
 | `internal/release` | Deterministic source archives and release bundles |
 | `internal/contentpackage` | Validated offline content-package archive format |
 | `internal/app/install*.go` | Release pin planning, preflight, and application |
-| `integration` | Versioned distribution support files |
+| `integration` | Project adoption and pinned-release guidance |
+| `packaging/winget` | Versioned portable package manifests derived from verified releases |
 | `examples` | Executable synthetic product example |
 | `docs` | Product architecture, usage, decisions, and canonical roadmap |
 

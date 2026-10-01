@@ -110,11 +110,12 @@ type tagInfo struct {
 	} `json:"object"`
 }
 type releaseInfo struct {
-	ID        int64         `json:"id"`
-	TagName   string        `json:"tag_name"`
-	Draft     bool          `json:"draft"`
-	Immutable bool          `json:"immutable"`
-	Assets    []remoteAsset `json:"assets"`
+	ID          int64         `json:"id"`
+	TagName     string        `json:"tag_name"`
+	Draft       bool          `json:"draft"`
+	Immutable   bool          `json:"immutable"`
+	PublishedAt string        `json:"published_at"`
+	Assets      []remoteAsset `json:"assets"`
 }
 type remoteAsset struct {
 	Name   string `json:"name"`

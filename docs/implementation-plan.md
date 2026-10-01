@@ -59,6 +59,15 @@ This slice introduces no Resource Kind, documentation graph, README generation, 
 
 The reviewed source, exact tag, Windows/Linux release gates, four attested assets and post-publication benchmark are recorded in the [production assessment](production-assessment.md). Public installation examples use the verified v0.6.0 native assets.
 
+## Unreleased maintainer tooling
+
+The source now includes `markitect-release distribution` to check or regenerate
+marked README installation sections and versioned WinGet manifests from a
+verified published immutable release. It validates the exact provenance workflow
+attempt, tag, asset bytes, and attestations before generating local files.
+[Operations](operations.md) owns the commands and submission checks. This does
+not change published binaries or publish a WinGet catalog entry.
+
 ## Later product options
 
 - MCP, LSP, and graph visualization when measured authoring needs justify them.
