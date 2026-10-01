@@ -23,13 +23,13 @@ func renderConfiguredAdapters(g *core.Graph, targets map[string]bool, adapters *
 		for _, name := range names {
 			target := ".claude/rules/" + name + ".md"
 			var b strings.Builder
-			b.WriteString("<!-- " + Marker + "; source: markitect.yaml -->\n# " + title(name) + "\n\nRead the linked canonical guidance before acting; it owns the operative requirements.\n\n")
+			b.WriteString("<!-- " + Marker + "; source: markitect.yaml -->\n# " + adapterTitle(name) + "\n\nRead the linked canonical guidance before acting; it owns the operative requirements.\n\n")
 			for _, source := range adapters.RuleSources[name] {
 				if err := validRepoPath(source); err != nil {
 					return fmt.Errorf("ruleSources.%s: %w", name, err)
 				}
 				label := strings.TrimSuffix(path.Base(source), path.Ext(source))
-				b.WriteString("- [" + title(label) + "](" + relative(target, source) + ")\n")
+				b.WriteString("- [" + adapterTitle(label) + "](" + relative(target, source) + ")\n")
 			}
 			if err := addOwned(outputs, owners, target, []byte(b.String()), g.Project.Key()); err != nil {
 				return err
@@ -55,4 +55,12 @@ func renderConfiguredAdapters(g *core.Graph, targets map[string]bool, adapters *
 		}
 	}
 	return nil
+}
+
+func adapterTitle(value string) string {
+	words := strings.Fields(strings.ReplaceAll(value, "-", " "))
+	for i, word := range words {
+		words[i] = strings.ToUpper(word[:1]) + word[1:]
+	}
+	return strings.Join(words, " ")
 }
