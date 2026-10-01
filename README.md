@@ -15,7 +15,7 @@ go run ./cmd/markitect context --repo examples/minimal --namespace sample --kind
 
 The first command checks the example's declared resources and managed views. The second prints the selected Skill's dependency context. The [minimal example](examples/minimal/README.md) is a synthetic, executable fixture.
 
-To use Markitect in your repository, download the [verified v0.4.0 release](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.4.0) and follow the [installation and verification guide](integration/README.md). The CLI can preview a minimal project setup with `markitect init`; the preview shows the exact files before writing.
+To use Markitect in your repository, choose a [published GitHub release](https://github.com/Glacius-Labs/Markitect/releases) and follow the [installation and verification guide](integration/README.md). The CLI can preview a minimal project setup with `markitect init`; the preview shows the exact files before writing.
 
 ## What it does
 
