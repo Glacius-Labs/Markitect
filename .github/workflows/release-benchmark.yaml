@@ -3,6 +3,12 @@ name: Published release benchmark
 on:
   release:
     types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing immutable published release to measure
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -25,7 +31,7 @@ jobs:
       - name: Check out the immutable release source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ github.event.release.tag_name }}
+          ref: ${{ inputs.tag || github.event.release.tag_name }}
           persist-credentials: false
 
       - name: Set up Go for the fixture verification gate
@@ -38,14 +44,15 @@ jobs:
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: ${{ github.event.release.tag_name }}
+          TAG: ${{ inputs.tag || github.event.release.tag_name }}
           ASSET: ${{ matrix.asset }}
         run: |
           $ErrorActionPreference = 'Stop'
           $repo = $env:GITHUB_REPOSITORY
           $current = gh api "repos/$repo/releases/tags/$env:TAG" | ConvertFrom-Json
           if ($LASTEXITCODE -ne 0 -or -not $current.immutable -or $current.draft -or -not $current.published_at) { throw 'Current release is not published and immutable' }
-          if ($current.target_commitish -and $current.target_commitish -match '^[0-9a-f]{40}$' -and $current.target_commitish -ne $env:GITHUB_SHA) { throw 'Release source commit differs from the checkout' }
+          $checkoutCommit = (git rev-parse HEAD).Trim()
+          if ($LASTEXITCODE -ne 0 -or $current.target_commitish -notmatch '^[0-9a-f]{40}$' -or $current.target_commitish -ne $checkoutCommit) { throw 'Release source commit differs from the checkout' }
           $pages = gh api --paginate --slurp "repos/$repo/releases?per_page=100" | ConvertFrom-Json
           if ($LASTEXITCODE -ne 0) { throw 'Could not list releases' }
           $all = foreach ($page in $pages) { foreach ($release in $page) { $release } }
@@ -80,7 +87,7 @@ jobs:
         env:
           CURRENT_BINARY: ${{ steps.releases.outputs.current_binary }}
           PREVIOUS_BINARY: ${{ steps.releases.outputs.previous_binary }}
-          CURRENT_TAG: ${{ github.event.release.tag_name }}
+          CURRENT_TAG: ${{ inputs.tag || github.event.release.tag_name }}
           PREVIOUS_TAG: ${{ steps.releases.outputs.previous }}
         run: |
           ./benchmark/run.ps1 -CurrentBinary $env:CURRENT_BINARY -PreviousBinary $env:PREVIOUS_BINARY -CurrentTag $env:CURRENT_TAG -PreviousTag $env:PREVIOUS_TAG -FixtureRoot ./benchmark/fixtures/v1 -OutputDirectory (Join-Path $env:RUNNER_TEMP 'markitect-benchmark')
@@ -89,14 +96,14 @@ jobs:
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: release-benchmark-${{ github.event.release.tag_name }}-${{ matrix.os }}
+          name: release-benchmark-${{ inputs.tag || github.event.release.tag_name }}-${{ matrix.os }}
           path: ${{ runner.temp }}/markitect-benchmark/results.json
           if-no-files-found: warn
 
       - name: Upload summary
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0 # v7.0.1
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: release-benchmark-summary-${{ github.event.release.tag_name }}-${{ matrix.os }}
+          name: release-benchmark-summary-${{ inputs.tag || github.event.release.tag_name }}-${{ matrix.os }}
           path: ${{ runner.temp }}/markitect-benchmark/summary.md
           if-no-files-found: warn
