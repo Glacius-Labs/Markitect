@@ -59,27 +59,56 @@ type Providers struct {
 	Claude *Provider `yaml:"claude,omitempty"`
 }
 
+// ProviderAdapters configures additional, explicitly owned provider entrypoints.
+// Paths are canonical repository inputs, never discovered from prose links.
+type ProviderAdapters struct {
+	RuleSources     map[string][]string `yaml:"ruleSources,omitempty"`
+	AgentContract   string              `yaml:"agentContract,omitempty"`
+	RoleRegister    string              `yaml:"roleRegister,omitempty"`
+	InlineAgentText bool                `yaml:"inlineAgentText,omitempty"`
+	StrictInventory bool                `yaml:"strictInventory,omitempty"`
+	RetiredSkills   []string            `yaml:"retiredSkills,omitempty"`
+	RetiredAgents   []string            `yaml:"retiredAgents,omitempty"`
+}
+
+// Assertion is an explicit functional fact. Only predicates listed by the
+// Project as functional are compared; text is never interpreted as a fact.
+type Assertion struct {
+	Subject   string `yaml:"subject"`
+	Predicate string `yaml:"predicate"`
+	Value     string `yaml:"value"`
+	Source    string `yaml:"source"`
+	Quote     string `yaml:"quote"`
+}
+
+type Consistency struct {
+	FunctionalPredicates []string `yaml:"functionalPredicates,omitempty"`
+}
+
 type Spec struct {
 	Text string `yaml:"text,omitempty"`
 	// Files lists explicit repository-relative non-Markitect inputs needed by this resource.
-	Files       []string  `yaml:"files,omitempty"`
-	Description string    `yaml:"description,omitempty"`
-	Rules       []Ref     `yaml:"rules,omitempty"`
-	Uses        []Ref     `yaml:"uses,omitempty"`
-	Needs       []Ref     `yaml:"needs,omitempty"`
-	Implements  []Ref     `yaml:"implements,omitempty"`
-	Input       []string  `yaml:"input,omitempty"`
-	Output      []string  `yaml:"output,omitempty"`
-	Kind        string    `yaml:"kind,omitempty"`
-	Check       string    `yaml:"check,omitempty"`
-	Providers   Providers `yaml:"providers,omitempty"`
-	Targets     []string  `yaml:"targets,omitempty"`
-	Areas       []Area    `yaml:"areas,omitempty"`
-	Bindings    []Binding `yaml:"bindings,omitempty"`
-	Checks      []Check   `yaml:"checks,omitempty"`
+	Files       []string    `yaml:"files,omitempty"`
+	Description string      `yaml:"description,omitempty"`
+	Rules       []Ref       `yaml:"rules,omitempty"`
+	Uses        []Ref       `yaml:"uses,omitempty"`
+	Needs       []Ref       `yaml:"needs,omitempty"`
+	Implements  []Ref       `yaml:"implements,omitempty"`
+	Input       []string    `yaml:"input,omitempty"`
+	Output      []string    `yaml:"output,omitempty"`
+	Kind        string      `yaml:"kind,omitempty"`
+	Check       string      `yaml:"check,omitempty"`
+	Providers   Providers   `yaml:"providers,omitempty"`
+	Assertions  []Assertion `yaml:"assertions,omitempty"`
+	Targets     []string    `yaml:"targets,omitempty"`
+	Areas       []Area      `yaml:"areas,omitempty"`
+	Bindings    []Binding   `yaml:"bindings,omitempty"`
+	Checks      []Check     `yaml:"checks,omitempty"`
 	// Rules map provider rule entrypoint names to owning sources. This also
 	// supports several canonical sources behind one legacy entrypoint.
-	RuleAdapters map[string][]Ref `yaml:"ruleAdapters,omitempty"`
+	RuleAdapters     map[string][]Ref  `yaml:"ruleAdapters,omitempty"`
+	ProviderAdapters *ProviderAdapters `yaml:"providerAdapters,omitempty"`
+	Consistency      *Consistency      `yaml:"consistency,omitempty"`
 	// Packages pins the direct offline content archives available to this Project.
 	Packages []PackagePin `yaml:"packages,omitempty"`
 	// Version identifies a Package manifest's exact content version.

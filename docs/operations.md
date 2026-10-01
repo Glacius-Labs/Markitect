@@ -14,7 +14,7 @@ Each command is bounded by a ten-minute execution limit and a one MiB captured-o
 
 ## Rendering and controlled writes
 
-`render` checks or writes generic managed views and outputs selected by the Project's explicit target/rule-adapter configuration. It does not choose provider outputs from repository identity or inspect local conventions to infer a renderer. The project that owns a provider format owns its adapter and any import script.
+`render` checks or writes generic managed views and outputs selected by the Project's explicit target, rule, and provider-adapter configuration. It does not choose provider outputs from repository identity or inspect local conventions to infer a renderer. The adopting project owns its root navigation, hooks, custom formats, and import scripts.
 
 Writers take a shared lock, validate their plan, and check relevant source state. Existing-output writers use atomic replacement for each file; `init` exclusively creates new files so that a concurrent collision is never overwritten. A multi-file write is not a filesystem transaction. Read the command's complete written-path list and recovery guidance after any partial failure. Git is the boundary for reviewing, integrating, and reverting a multi-file candidate. Do not overwrite unmanaged collisions to make a command pass.
 
@@ -32,6 +32,8 @@ Writers take a shared lock, validate their plan, and check relevant source state
 | Review evidence is ineligible | Read the diagnostic and assess the new fixed context; do not alter old evidence hashes. |
 
 ## Release operations
+
+The post-publication [benchmark workflow](measurement.md) consumes attested binaries from two immutable releases on one versioned fixture. It uploads raw data and a summary as workflow artifacts and never modifies the published release. Its timing variation is diagnostic, not a publication gate.
 
 A source version string does not prove a release exists. Release only a clean reviewed full commit after standalone tests, vet, build, schema/example checks, and Windows/Linux gates pass. Bundle contents, provenance, tag, source commit, workflow run, and asset digests must agree. The immutable GitHub release is the durable distribution; a workflow artifact is only temporary transport.
 

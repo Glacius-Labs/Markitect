@@ -21,6 +21,28 @@ properties:
     spec:
         additionalProperties: false
         properties:
+            assertions:
+                items:
+                    additionalProperties: false
+                    properties:
+                        predicate:
+                            type: string
+                        quote:
+                            type: string
+                        source:
+                            type: string
+                        subject:
+                            type: string
+                        value:
+                            type: string
+                    required:
+                        - subject
+                        - predicate
+                        - value
+                        - source
+                        - quote
+                    type: object
+                type: array
             check:
                 type: string
             files:

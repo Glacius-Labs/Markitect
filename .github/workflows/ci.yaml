@@ -61,6 +61,9 @@ jobs:
       - name: Check minimal example
         run: go run ./cmd/markitect check --repo examples/minimal
 
+      - name: Check versioned release benchmark fixture
+        run: go run ./cmd/markitect check --repo benchmark/fixtures/v1
+
       - name: Check code and documentation example
         run: go run ./cmd/markitect check --repo examples/documentation
 

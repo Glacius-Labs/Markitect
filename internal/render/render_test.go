@@ -93,6 +93,26 @@ func TestGenerateProviderOutputsRequireExplicitTargets(t *testing.T) {
 	}
 }
 
+func TestSharedRolePointersRespectSelectedTarget(t *testing.T) {
+	project := resource("Project", "markitect.yaml", "sample", "", core.Spec{Targets: []string{"codex"}, ProviderAdapters: &core.ProviderAdapters{RoleRegister: "docs/roles.md"}})
+	g := &core.Graph{Resources: map[string]*core.Resource{}, Project: project}
+	outputs, err := Generate(g)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if outputs[".agents/roles.md"] == nil || outputs[".claude/roles.md"] != nil {
+		t.Fatalf("Codex target leaked Claude role pointer: %v", outputPaths(outputs))
+	}
+	project.Spec.Targets = []string{"claude"}
+	outputs, err = Generate(g)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if outputs[".claude/roles.md"] == nil || outputs[".agents/roles.md"] != nil {
+		t.Fatalf("Claude target leaked Codex role pointer: %v", outputPaths(outputs))
+	}
+}
+
 func TestGenerateRuleAdaptersOnlyFromExplicitMappings(t *testing.T) {
 	first := resource("Rule", "docs/area/rules/first.yaml", "first", "area", core.Spec{Text: "First."})
 	second := resource("Rule", "docs/other/rules/second.yaml", "second", "other", core.Spec{Text: "Second."})
