@@ -43,6 +43,9 @@ jobs:
       - name: Test
         run: go test ./...
 
+      - name: Validate authoring benchmark fixtures
+        run: go test ./internal/app -run '^$' -bench Authoring -benchtime=1x
+
       - name: Vet
         run: go vet ./...
 
@@ -57,6 +60,12 @@ jobs:
 
       - name: Check minimal example
         run: go run ./cmd/markitect check --repo examples/minimal
+
+      - name: Check code and documentation example
+        run: go run ./cmd/markitect check --repo examples/documentation
+
+      - name: Check code and documentation example formatting
+        run: go run ./cmd/markitect format --repo examples/documentation
 
       - name: Check pinned content package consumer
         run: go run ./cmd/markitect check --repo examples/package-consumer
@@ -103,6 +112,13 @@ jobs:
           grep -Fq 'core/Skill/authoring' <<< "$output"
           check_output="$(go run scripts/run-markitect.go check --repo "$GITHUB_WORKSPACE/examples/minimal")"
           grep -Eq '^status: passed$' <<< "$check_output"
+          init_dir="$RUNNER_TEMP/markitect-init-$GITHUB_SHA"
+          git init -b feature/authoring "$init_dir"
+          go run scripts/run-markitect.go init --repo "$init_dir" --name started-project --namespace engineering --path docs/engineering
+          test ! -e "$init_dir/markitect.yaml"
+          go run scripts/run-markitect.go init --repo "$init_dir" --name started-project --namespace engineering --path docs/engineering --write
+          init_check="$(go run scripts/run-markitect.go check --repo "$init_dir")"
+          grep -Eq '^status: passed$' <<< "$init_check"
 
       - name: Test standalone bootstrap and packaged commands (Windows)
         if: runner.os == 'Windows'
@@ -118,6 +134,17 @@ jobs:
           $checkOutput = go run scripts/run-markitect.go check --repo $example
           if ($LASTEXITCODE -ne 0) { throw "Bootstrap example check failed with exit code $LASTEXITCODE" }
           if (($checkOutput -join "`n") -notmatch '(?m)^status: passed$') { throw 'Packaged binary did not pass the minimal example check' }
+          $initDir = Join-Path $env:RUNNER_TEMP "markitect-init-$env:GITHUB_SHA"
+          git init -b feature/authoring $initDir
+          if ($LASTEXITCODE -ne 0) { throw 'Could not initialize the smoke repository' }
+          go run scripts/run-markitect.go init --repo $initDir --name started-project --namespace engineering --path docs/engineering
+          if ($LASTEXITCODE -ne 0) { throw 'Packaged initialization preview failed' }
+          if (Test-Path (Join-Path $initDir 'markitect.yaml')) { throw 'Initialization preview changed the destination' }
+          go run scripts/run-markitect.go init --repo $initDir --name started-project --namespace engineering --path docs/engineering --write
+          if ($LASTEXITCODE -ne 0) { throw 'Packaged initialization failed' }
+          $initCheck = go run scripts/run-markitect.go check --repo $initDir
+          if ($LASTEXITCODE -ne 0) { throw 'Initialized project failed structural checks' }
+          if (($initCheck -join "`n") -notmatch '(?m)^status: passed$') { throw 'Initialized project did not pass structural checks' }
           Pop-Location
 
   publish-source-artifact:

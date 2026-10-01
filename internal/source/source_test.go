@@ -276,6 +276,25 @@ func TestValidatePortablePathsRejectsCaseCollisions(t *testing.T) {
 	}
 }
 
+func TestValidateIncludedPathsAppliesSnapshotBoundaries(t *testing.T) {
+	for _, p := range []string{".artifacts/report/README.md", ".ARTIFACTS/report/README.md", "vendor/pkg/README.md", "app/node_modules/README.md"} {
+		if err := ValidateIncludedPaths([]string{p}); err == nil || !strings.Contains(err.Error(), "excluded") {
+			t.Errorf("ValidateIncludedPaths(%q) error = %v, want exclusion", p, err)
+		}
+	}
+	for _, paths := range [][]string{
+		{"docs/area/README.md", "docs/Area/other.md"},
+		{"markitect.yaml", "Markitect.yaml"},
+	} {
+		if err := ValidateIncludedPaths(paths); err == nil || !strings.Contains(err.Error(), "case-insensitive path collision") {
+			t.Errorf("ValidateIncludedPaths(%q) error = %v, want portable collision", paths, err)
+		}
+	}
+	if err := ValidateIncludedPaths([]string{"docs/area/README.md", "markitect.yaml"}); err != nil {
+		t.Fatalf("valid prospective paths rejected: %v", err)
+	}
+}
+
 func TestLoadRejectsWorkingTreeSymlinks(t *testing.T) {
 	root := t.TempDir()
 	target := filepath.Join(root, "target.txt")

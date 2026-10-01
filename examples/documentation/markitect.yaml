@@ -1,0 +1,10 @@
+apiVersion: markitect.example.org/v1alpha1
+kind: Project
+metadata:
+    name: documentation-example
+spec:
+    areas:
+        - name: implementation
+          path: docs/implementation
+        - name: operations
+          path: docs/operations

@@ -1,6 +1,6 @@
 # Markitect roadmap
 
-Updated 2026-09-30. This is the product's own roadmap. Source version `0.3.0` defines the current content-package model. Available distributions and their exact source commits are listed in [GitHub Releases](https://github.com/Glacius-Labs/Markitect/releases). [Architecture](architecture.md) describes the implemented product boundaries, [Usage](usage.md) records the project and upgrade contract, and [Operations](operations.md) owns release gates.
+Updated 2026-10-01. This is the canonical owner of current source and planned-work status. The v0.4.0 source candidate adds bounded project initialization. Dated release evidence is in the [production assessment](production-assessment.md), and available distributions are listed in [GitHub Releases](https://github.com/Glacius-Labs/Markitect/releases). [Architecture](architecture.md) describes product boundaries, [Usage](usage.md) records the CLI contract, and [Operations](operations.md) owns release gates.
 
 ## v0.1.0 — historical release
 
@@ -21,12 +21,21 @@ Acceptance: a project can author and structurally check resources without reposi
 
 ## v0.3.0 — direct offline content packages
 
-The current source adds exact direct package pins in `Project.spec.packages`, deterministic archives from fixed Git revisions, explicit exports, package-qualified graph identities, and package inputs in compiled context and impact/review eligibility. No second content lock or package resolver is introduced; `markitect.lock.yaml` remains the CLI distribution lock. Imported Rules are not activated implicitly, package resources remain read-only, and package manifests do not declare checks, targets, or rule adapters. See [Content packages](content-packages.md) for the contract and the [production assessment](production-assessment.md) for release status.
+This source version added exact direct package pins in `Project.spec.packages`, deterministic archives from fixed Git revisions, explicit exports, package-qualified graph identities, and package inputs in compiled context and impact/review eligibility. No second content lock or package resolver was introduced; `markitect.lock.yaml` remains the CLI distribution lock. Imported Rules are not activated implicitly, package resources remain read-only, and package manifests do not declare checks, targets, or rule adapters. See [Content packages](content-packages.md) for the contract.
+
+## v0.3.1 — binding-cycle correction
+
+This correction rejects binding cycles that include a Contract selected by its own implementation. The dated source and release evidence is in the [production assessment](production-assessment.md).
+
+## v0.4.0 — minimal project initialization candidate
+
+The current source candidate adds `markitect init` for an existing repository. Preview prints the exact minimal Project YAML and area README plan without writing, including outside Git. `--write` recomputes and validates the plan, requires a named non-protected Git branch, and creates only `markitect.yaml` and one README in a previously absent area directory. It does not infer project policy, add resources or checks, select outputs or packages, use custom templates, or edit root documentation or agent instructions. File creation is exclusive and guarded by the shared write lock; a partial failure reports created paths and recovery guidance, because two file creations are not a transaction.
+
+Acceptance is structural: the new Project parses, resolves, and passes output checks. `verify` must remain incomplete until the adopting project owner declares actual checks and commits the candidate. Consult GitHub Releases for currently available distributions.
 
 ## Later product options
 
-- One-time project initialization after package composition is proven.
 - MCP, LSP, and graph visualization when measured authoring needs justify them.
 - Runtime/operator integration only for a concrete state-reconciliation contract.
 
-These options are not v0.3.0 acceptance promises. Keep the core provider-independent and add abstractions only for a demonstrated invariant.
+These options are not v0.4.0 acceptance promises. Keep the core provider-independent and add abstractions only for a demonstrated invariant.

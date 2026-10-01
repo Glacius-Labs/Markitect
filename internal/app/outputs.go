@@ -78,12 +78,24 @@ func safeDestination(root, name string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	// Check the root and each existing ancestor for symbolic links/reparse aliases.
+	// Check the root and every ancestor directly; EvalSymlinks alone does not
+	// identify all Windows reparse tags and textual equality misses short names.
+	if err := rejectReparseAncestors(absolute); err != nil {
+		return "", err
+	}
 	resolved, err := filepath.EvalSymlinks(absolute)
 	if err != nil {
 		return "", err
 	}
-	if !strings.EqualFold(filepath.Clean(resolved), filepath.Clean(absolute)) {
+	canonical, err := canonicalPathSpelling(absolute)
+	if err != nil {
+		return "", fmt.Errorf("canonicalize output root spelling: %w", err)
+	}
+	resolvedCanonical, err := canonicalPathSpelling(resolved)
+	if err != nil {
+		return "", fmt.Errorf("canonicalize resolved output root: %w", err)
+	}
+	if !samePathSpelling(resolvedCanonical, canonical) {
 		return "", fmt.Errorf("output root contains a symlink: %s", root)
 	}
 	current := absolute
@@ -96,18 +108,42 @@ func safeDestination(root, name string) (string, error) {
 			}
 			return "", err
 		}
-		if info.Mode()&os.ModeSymlink != 0 {
+		if isReparsePoint(info) {
 			return "", fmt.Errorf("symlink in output path %s", name)
 		}
 		resolved, err := filepath.EvalSymlinks(current)
 		if err != nil {
 			return "", err
 		}
-		if !strings.EqualFold(filepath.Clean(resolved), filepath.Clean(current)) {
+		canonical, err := canonicalPathSpelling(current)
+		if err != nil {
+			return "", fmt.Errorf("canonicalize output path spelling: %w", err)
+		}
+		resolvedCanonical, err := canonicalPathSpelling(resolved)
+		if err != nil {
+			return "", fmt.Errorf("canonicalize resolved output path: %w", err)
+		}
+		if !samePathSpelling(resolvedCanonical, canonical) {
 			return "", fmt.Errorf("reparse point in output path %s", name)
 		}
 	}
 	return current, nil
+}
+
+func rejectReparseAncestors(path string) error {
+	for current := filepath.Clean(path); ; current = filepath.Dir(current) {
+		info, err := os.Lstat(current)
+		if err != nil {
+			return fmt.Errorf("inspect output root ancestor %s: %w", current, err)
+		}
+		if isReparsePoint(info) {
+			return fmt.Errorf("output root contains a symlink or reparse point: %s", current)
+		}
+		parent := filepath.Dir(current)
+		if parent == current {
+			return nil
+		}
+	}
 }
 
 func WriteOutputs(root string, p *Project) ([]string, error) {

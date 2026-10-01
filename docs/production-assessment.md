@@ -1,6 +1,14 @@
 # Markitect production assessment
 
-**Recorded:** 2026-10-01. This assessment distinguishes historical v0.1.0 evidence from the confirmed v0.2.0 release. It reports only the Markitect source, its distributions, and source-owned gates; project adoption and acceptance are outside its scope.
+**Recorded:** 2026-10-01. This dated assessment records the release evidence verified at that time and distinguishes it from source behavior. It reports only the Markitect source, its distributions, and source-owned gates; project adoption and acceptance are outside its scope.
+
+## v0.3.1 published release
+
+At the time this assessment was recorded, the immutable [`v0.3.1` release](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.3.1) was verified against source commit [`52f0bd6`](https://github.com/Glacius-Labs/Markitect/commit/52f0bd64ce64759be10ffdee180c2cf7c939d49b), release ID `400495147`. Main CI [run 36787681871](https://github.com/Glacius-Labs/Markitect/actions/runs/36787681871) and Release CI [run 36787725843](https://github.com/Glacius-Labs/Markitect/actions/runs/36787725843) passed for that release source. This release predates the minimal initialization behavior described in the current source.
+
+## Project initialization source behavior
+
+The source under assessment adds minimal project initialization. Preview is read-only; write recomputes and validates its plan, requires a named non-protected branch, and creates only the Project file and one area README. Structural checking is not complete verification: an initialized project with no owner-declared checks must still receive `incomplete-evidence` from `verify`. These are source-level claims, not release evidence.
 
 ## v0.2.0 release
 

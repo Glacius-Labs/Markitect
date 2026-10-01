@@ -10,8 +10,13 @@ Go scenario tests compare exact expected context and impact sets. Go benchmarks 
 
 ```powershell
 go test ./internal/app -run AuthoringScenario -count=1
+go test ./internal/app -run DocumentationScenario -count=1
 go test ./internal/app -run '^$' -bench Authoring -benchmem -count=3
 ```
+
+The [code and documentation example](documentation.md) exercises exact source-file inputs with a predeclared affected set and an unrelated area. Its source-only change intentionally leaves stale prose structurally valid: the scenario verifies routing to review, not semantic correction by the compiler.
+
+CI executes one iteration of each authoring benchmark to keep the measurement fixtures valid as the resource model evolves. This is a correctness smoke check, with no timing threshold. For timing reports, run the repeated command above on a fixed source commit and record the host; the measured section excludes Git reads, parsing, agent interaction, and provider calls.
 
 ## Authoring exercise
 

@@ -4,6 +4,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -75,5 +76,24 @@ func TestWriteSchemasRefusesSymlinkPath(t *testing.T) {
 	}
 	if _, err := os.Stat(filepath.Join(outside, "v1alpha1.json")); !os.IsNotExist(err) {
 		t.Fatalf("schema write followed a symlink: stat error = %v", err)
+	}
+}
+
+func TestSafeDestinationRejectsCaseOnlySymlinkAncestor(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("Windows path comparison is case-insensitive; reparse-point coverage is platform-specific")
+	}
+	base := t.TempDir()
+	targetParent := filepath.Join(base, "parent")
+	if err := os.MkdirAll(filepath.Join(targetParent, "repo"), 0755); err != nil {
+		t.Fatal(err)
+	}
+	aliasParent := filepath.Join(base, "Parent")
+	if err := os.Symlink(targetParent, aliasParent); err != nil {
+		t.Skipf("symlink creation is unavailable: %v", err)
+	}
+	root := filepath.Join(aliasParent, "repo")
+	if _, err := safeDestination(root, "output.md"); err == nil || (!strings.Contains(strings.ToLower(err.Error()), "symlink") && !strings.Contains(strings.ToLower(err.Error()), "reparse")) {
+		t.Fatalf("safeDestination accepted case-only symlink ancestor %q: %v", root, err)
 	}
 }
