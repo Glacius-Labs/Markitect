@@ -1,0 +1,103 @@
+package main
+
+import (
+	"errors"
+	"flag"
+	"fmt"
+	"io"
+)
+
+type commandOptions struct {
+	root           string
+	revision       string
+	base           string
+	kind           string
+	name           string
+	namespace      string
+	areaPath       string
+	packageName    string
+	query          string
+	write          bool
+	check          bool
+	output         string
+	bundlePath     string
+	bundleSHA      string
+	reviewConfig   string
+	reviewReport   string
+	reviewEvidence string
+	flagCount      int
+}
+
+func parseOptions(command string, args []string, allowed map[string]bool, out, errout io.Writer) (commandOptions, int, bool) {
+	fs := flag.NewFlagSet(command, flag.ContinueOnError)
+	fs.SetOutput(errout)
+	root := fs.String("repo", ".", "repository root")
+	revision := fs.String("revision", "", "fixed Git revision (omitted: provisional working tree)")
+	base := fs.String("base", "", "base revision for impact")
+	kind := fs.String("kind", "", "context entry kind")
+	name := fs.String("name", "", "resource or project name")
+	namespace := fs.String("namespace", "", "resource namespace (initial area name for init)")
+	areaPath := fs.String("path", "", "new ownership area path (init)")
+	packageName := fs.String("package", "", "exact content package identity (omitted: local entry)")
+	query := fs.String("query", "", "literal search text (find)")
+	write := fs.Bool("write", false, "write planned files in an isolated worktree")
+	check := fs.Bool("check", false, "check rendered outputs (default)")
+	output := fs.String("output", "", "absent output directory (package) or ZIP file (bundle)")
+	bundlePath := fs.String("bundle", "", "local release ZIP to validate and install")
+	bundleSHA := fs.String("sha256", "", "expected SHA-256 of the release ZIP")
+	reviewConfig := fs.String("config", "", "repository-relative review configuration in the fixed snapshot")
+	reviewReport := fs.String("report", "", "completed reviewer report to record (local UTF-8 file)")
+	reviewEvidence := fs.String("evidence", "", "previous advisory review record to evaluate (local YAML file)")
+	fs.Usage = func() {
+		fmt.Fprintf(out, "usage: markitect %s [options]\n", command)
+		fs.VisitAll(func(f *flag.Flag) {
+			if allowed[f.Name] {
+				fmt.Fprintf(out, "  --%-12s %s\n", f.Name, f.Usage)
+			}
+		})
+	}
+	if err := fs.Parse(args[1:]); err != nil {
+		if errors.Is(err, flag.ErrHelp) {
+			return commandOptions{}, 0, true
+		}
+		return commandOptions{}, 2, true
+	}
+	if fs.NArg() > 0 {
+		fmt.Fprintln(errout, "unexpected positional arguments")
+		return commandOptions{}, 2, true
+	}
+	invalid := ""
+	fs.Visit(func(f *flag.Flag) {
+		if !allowed[f.Name] {
+			invalid = f.Name
+		}
+	})
+	if invalid != "" {
+		fmt.Fprintf(errout, "--%s does not apply to %s\n", invalid, command)
+		return commandOptions{}, 2, true
+	}
+	if *write && ((command != "render" && command != "schema" && command != "format" && command != "install" && command != "init") || *revision != "" || *check) {
+		fmt.Fprintln(errout, "--write only supports render, format, schema, install or init on the working tree")
+		return commandOptions{}, 2, true
+	}
+	return commandOptions{
+		root:           *root,
+		revision:       *revision,
+		base:           *base,
+		kind:           *kind,
+		name:           *name,
+		namespace:      *namespace,
+		areaPath:       *areaPath,
+		packageName:    *packageName,
+		query:          *query,
+		write:          *write,
+		check:          *check,
+		output:         *output,
+		bundlePath:     *bundlePath,
+		bundleSHA:      *bundleSHA,
+		reviewConfig:   *reviewConfig,
+		reviewReport:   *reviewReport,
+		reviewEvidence: *reviewEvidence,
+		flagCount:      fs.NFlag(),
+	}, 0, false
+}

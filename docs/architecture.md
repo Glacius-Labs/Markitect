@@ -45,6 +45,19 @@ Strict parsing rejects unknown fields, duplicate identities, extra YAML document
 
 The core does not depend on a model API, IDE, provider SDK, or repository-specific policy. The CLI, Git reader, filesystem writers, release packaging, and explicitly configured output adapters are boundaries around the core. `verify` executes only the commands declared by the selected Project. It neither chooses a repository profile nor infers a runtime gate from files it happens to find.
 
+### Go implementation boundaries
+
+Markitect uses ports and adapters as a guide to dependency direction, with concrete Go packages where one implementation is sufficient:
+
+| Role | Packages | Dependency boundary |
+|---|---|---|
+| Resource model and deterministic decisions | `internal/core`, `internal/inputs` | Operate on explicit values and bytes; no Git, filesystem writer, CLI, or model API dependency. |
+| Application use cases | `internal/app` | Compose snapshots, parsing, graph checks, context, impact, review evidence, verification, and controlled writes. |
+| Input and output adapters | `internal/source`, `internal/format`, `internal/contentpackage`, `internal/render`, `internal/release` | Read or produce concrete Git, YAML, archive, schema, and managed-output representations. |
+| Entry points | `cmd/markitect`, `cmd/markitect-release`, `integration` | Parse commands, choose use cases, and report results. The standalone bootstrap in `integration` remains a single Go source file because distributions execute it directly. |
+
+This is not strict interface-driven hexagonal wiring: application use cases currently call the concrete adapters. There is no interchangeable implementation to justify ports for each one. Add a narrow interface in the consuming package when a real use case needs substitution; keep the deterministic model independent of the adapters. The publication `Runner` is an existing example of a consumer-owned boundary for the external `gh` process.
+
 Rendering produces generic managed views and explicitly declared Codex/Claude targets or rule adapters. Markitect owns those supported adapters; additional project-specific output policy remains outside the core. No target is selected implicitly. Format, render, schema, install, and initialization operations validate plans before writing; per-file writes are controlled, not a multi-file transaction.
 
 The v0.3.0 source model added direct offline content archives. Project pins are the single content lock; `markitect.lock.yaml` continues to pin the CLI distribution. Package members are parsed into origin-qualified graph entries while local identity and canonical paths stay unchanged. The model rejects nested imports, cross-boundary direct references, checks, render targets, and external rule adapters. Verified archives are tracked outside the Git source snapshot and are read-only to formatting and rendering. Package content participates in context and conservative impact/review invalidation. See [Content packages](content-packages.md) for its contract.
