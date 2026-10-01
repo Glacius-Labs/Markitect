@@ -1,0 +1,55 @@
+name: WinGet validation
+
+on:
+  pull_request:
+    paths:
+      - 'packaging/winget/**'
+      - '.github/workflows/winget-validation.yaml'
+  push:
+    branches: [main]
+    paths:
+      - 'packaging/winget/**'
+      - '.github/workflows/winget-validation.yaml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: winget-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  portable:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out manifests and runner
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Locate Windows Package Manager
+        shell: pwsh
+        run: |
+          $app = Get-AppxPackage -Name Microsoft.DesktopAppInstaller | Sort-Object Version -Descending | Select-Object -First 1
+          if (-not $app) { throw 'Windows Package Manager is not installed on this runner' }
+          $binary = Join-Path $app.InstallLocation 'winget.exe'
+          if (-not (Test-Path -LiteralPath $binary)) { throw 'Windows Package Manager executable is missing' }
+          & $binary --version
+          if ($LASTEXITCODE -ne 0) { throw 'Windows Package Manager is unavailable' }
+          "WINGET_BINARY=$binary" >> $env:GITHUB_ENV
+
+      - name: Validate and test portable installation and upgrade
+        shell: pwsh
+        run: |
+          ./packaging/winget/Test-InstallUpgrade.ps1 -WingetBinary $env:WINGET_BINARY -OutputDirectory (Join-Path $env:RUNNER_TEMP 'markitect-winget-evidence')
+
+      - name: Upload package evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: winget-${{ github.sha }}
+          path: ${{ runner.temp }}/markitect-winget-evidence/
+          if-no-files-found: warn
+          retention-days: 14
