@@ -13,7 +13,7 @@ PowerShell example (select only a tag confirmed to exist):
 ```powershell
 gh auth status
 $repository = 'github.com/Glacius-Labs/Markitect'
-$tag = 'v0.2.0'
+$tag = 'v0.4.1'
 gh release verify $tag --repo $repository
 if ($LASTEXITCODE -ne 0) { throw 'GitHub release attestation verification failed.' }
 $release = gh release view $tag --repo $repository --json tagName,isDraft,isImmutable | ConvertFrom-Json
@@ -133,6 +133,8 @@ if ($LASTEXITCODE -ne 0) { throw 'Publication or final verification failed; insp
 ```
 
 Both modes use the existing `gh auth` session. The tool verifies the immutable setting, remote tag target, successful run, provenance, and exact asset set; it downloads that same run artifact again and compares bytes with `--assets`. `--publish` repeats the checks before mutation, creates a draft, uploads and reads back the four assets, checks digests, publishes, then verifies the immutable release and each asset. A successful CI run alone is not a published release.
+
+After publication, each read-only attestation query allows four attempts with delays of one, two, and four seconds. Successful retries are recorded in the publisher result. Release identity and asset digest mismatches still fail immediately. If attestation remains unavailable, the publisher reports `published-unverified`; inspect and verify the immutable release manually rather than rerunning publication.
 
 The publisher fails closed if a release or draft already exists for the tag. If publication fails, inspect the release state and compare tag target, exact asset names, GitHub digests, and provenance against the workflow run. Do not retry blindly or overwrite an existing asset. An authorized owner must choose a reviewed recovery path. A published immutable release is never replaced.
 

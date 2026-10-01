@@ -283,11 +283,13 @@ func Execute(ctx context.Context, runner Runner, options Options) (*Result, erro
 		return result, fmt.Errorf("publication outcome for release %d is unknown; inspect the tag and release state manually before retrying: %w", draft.ID, err)
 	}
 	result.Status = "published-verified"
-	if err := verifyPublished(runner, ctx, options.Tag, run.HeadSHA, draft.ID, assets, uploadDir); err != nil {
+	verificationSteps, err := verifyPublished(runner, ctx, options.Tag, run.HeadSHA, draft.ID, assets, uploadDir)
+	if err != nil {
 		result.Status = "published-unverified"
 		return result, fmt.Errorf("release %d may be published but verification failed: %w", draft.ID, err)
 	}
 	result.Immutable = true
+	result.Steps = append(result.Steps, verificationSteps...)
 	result.Steps = append(result.Steps, "draft assets verified; release published immutable; release and each asset attestation verified; tag target rechecked")
 	return result, nil
 }

@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 )
 
 func validateTagTarget(r Runner, ctx context.Context, tag, commit string) error {
@@ -120,27 +121,70 @@ func isPrereleaseTag(tag string) bool {
 	version = strings.SplitN(version, "+", 2)[0]
 	return strings.Contains(version, "-")
 }
-func verifyPublished(r Runner, ctx context.Context, tag, commit string, id int64, files namedBytes, assetDir string) error {
+func verifyPublished(r Runner, ctx context.Context, tag, commit string, id int64, files namedBytes, assetDir string) ([]string, error) {
 	var x releaseInfo
 	if err := apiJSON(r, ctx, fmt.Sprintf("repos/%s/releases/%d", repository, id), &x); err != nil {
-		return err
+		return nil, err
 	}
 	if x.ID != id || x.TagName != tag || x.Draft || !x.Immutable {
-		return errors.New("published release is not the expected immutable release")
+		return nil, errors.New("published release is not the expected immutable release")
 	}
 	if err := compareRemoteAssets(x.Assets, files); err != nil {
-		return err
+		return nil, err
 	}
-	if err := call(r, ctx, "", "release", "verify", tag, "--repo", "github.com/"+repository); err != nil {
-		return fmt.Errorf("release attestation verification failed: %w", err)
+	steps := []string{}
+	attempts, err := verifyAttestation(r, ctx, "release", "verify", tag, "--repo", "github.com/"+repository)
+	if err != nil {
+		return nil, fmt.Errorf("release attestation verification failed: %w", err)
+	}
+	if attempts > 1 {
+		steps = append(steps, fmt.Sprintf("release attestation verified on attempt %d", attempts))
 	}
 	for _, name := range assetNames(tag) {
-		if err := call(r, ctx, "", "release", "verify-asset", tag, filepath.Join(assetDir, name), "--repo", "github.com/"+repository); err != nil {
-			return fmt.Errorf("asset attestation verification failed for %s: %w", name, err)
+		attempts, err := verifyAttestation(r, ctx, "release", "verify-asset", tag, filepath.Join(assetDir, name), "--repo", "github.com/"+repository)
+		if err != nil {
+			return nil, fmt.Errorf("asset attestation verification failed for %s: %w", name, err)
+		}
+		if attempts > 1 {
+			steps = append(steps, fmt.Sprintf("asset %s attestation verified on attempt %d", name, attempts))
 		}
 	}
 	if err := checkImmutable(r, ctx); err != nil {
-		return fmt.Errorf("immutable-release setting changed after publication: %w", err)
+		return nil, fmt.Errorf("immutable-release setting changed after publication: %w", err)
 	}
-	return validateTagTarget(r, ctx, tag, commit)
+	if err := validateTagTarget(r, ctx, tag, commit); err != nil {
+		return nil, err
+	}
+	return steps, nil
+}
+
+// GitHub may expose an immutable release before its attestation is queryable.
+// Retry only read-only attestation checks; mismatched release metadata and asset
+// digests above always fail immediately.
+func verifyAttestation(r Runner, ctx context.Context, args ...string) (int, error) {
+	delays := [...]time.Duration{0, time.Second, 2 * time.Second, 4 * time.Second}
+	failures := make([]error, 0, len(delays)+1)
+	for i, delay := range delays {
+		if delay > 0 {
+			timer := time.NewTimer(delay)
+			select {
+			case <-timer.C:
+			case <-ctx.Done():
+				timer.Stop()
+				return i, errors.Join(append(failures, ctx.Err())...)
+			}
+		}
+		if err := ctx.Err(); err != nil {
+			return i, errors.Join(append(failures, err)...)
+		}
+		if err := call(r, ctx, "", args...); err == nil {
+			return i + 1, nil
+		} else {
+			failures = append(failures, fmt.Errorf("attempt %d/%d: %w", i+1, len(delays), err))
+		}
+		if err := ctx.Err(); err != nil {
+			return i + 1, errors.Join(append(failures, err)...)
+		}
+	}
+	return len(delays), errors.Join(failures...)
 }
