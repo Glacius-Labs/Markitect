@@ -42,9 +42,9 @@ PATH/alias checks and cleanup evidence. The local-manifest ProductCode is
 test-only and must not be added to the community update.
 
 Only after the public installation succeeds should the README advertise
-WinGet commands. The current README already installs the verified v0.8.0
+WinGet commands. The current README already installs the verified v0.8.1
 binary directly; that route does not require Microsoft catalog approval.
 
 ## Current verified release metadata
 
-The generated [v0.8.0 manifests](../packaging/winget/GlaciusLabs.Markitect/0.8.0/) bind the immutable Windows binary and its attested SHA-256. The Windows workflow validates every canonical versioned manifest directory, including v0.8.0. Its portable install/upgrade exercise still checks the submitted v0.5.0 package against v0.4.1; it does not demonstrate a public-catalog v0.8.0 installation or upgrade. The initial community submission and later version submissions remain separate catalog gates.
+The generated [v0.8.1 manifests](../packaging/winget/GlaciusLabs.Markitect/0.8.1/) bind the immutable Windows binary and its attested SHA-256. The Windows workflow validates every canonical versioned manifest directory, including v0.8.1. Its portable install/upgrade exercise still checks the submitted v0.5.0 package against v0.4.1; it does not demonstrate a public-catalog v0.8.1 installation or upgrade. The initial community submission and later version submissions remain separate catalog gates.
