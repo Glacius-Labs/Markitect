@@ -230,7 +230,7 @@ func snapshotModuleFiles(snapshot *source.Snapshot) (map[string][]byte, error) {
 		if err := safeArchivePath(relative); err != nil {
 			return nil, fmt.Errorf("unsafe source snapshot path %q: %w", name, err)
 		}
-		include := relative == "go.mod" || relative == "go.sum" || relative == "README.md"
+		include := relative == "go.mod" || relative == "go.sum" || relative == "README.md" || relative == "LICENSE"
 		if strings.HasPrefix(relative, "cmd/") || strings.HasPrefix(relative, "internal/") {
 			ext := strings.ToLower(path.Ext(relative))
 			include = ext == ".go" || relative == embeddedNoticesPath || (strings.HasPrefix(relative, "internal/authoring/resources/") && (ext == ".yaml" || ext == ".yml"))
@@ -267,7 +267,7 @@ func collectModuleSnapshot(files map[string][]byte) ([]sourceFile, error) {
 			continue
 		}
 		ext := strings.ToLower(path.Ext(name))
-		include := name == "README.md"
+		include := name == "README.md" || name == "LICENSE"
 		if strings.HasPrefix(name, "cmd/") || strings.HasPrefix(name, "internal/") {
 			include = ext == ".go" || name == embeddedNoticesPath || (strings.HasPrefix(name, "internal/authoring/resources/") && (ext == ".yaml" || ext == ".yml"))
 		}
@@ -301,7 +301,7 @@ func validateSnapshotModuleLayout(files []sourceFile) error {
 	for _, file := range files {
 		present[file.name] = true
 	}
-	for _, name := range []string{"go.mod", "go.sum", "cmd/markitect/main.go"} {
+	for _, name := range []string{"go.mod", "go.sum", "LICENSE", "cmd/markitect/main.go"} {
 		if !present[name] {
 			return fmt.Errorf("fixed source snapshot is missing required module file %s", name)
 		}

@@ -1,0 +1,33 @@
+name: Feature request
+description: Propose a product capability or improvement.
+title: "feature: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Markitect is a provider-independent authoring and structure-validation tool. See [the architecture](https://github.com/Glacius-Labs/Markitect/blob/main/docs/architecture.md) and [roadmap](https://github.com/Glacius-Labs/Markitect/blob/main/docs/implementation-plan.md) before proposing a change.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem to solve
+      description: Describe the concrete authoring, validation, or review problem.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: Explain what a user would be able to do and any relevant inputs or outputs.
+    validations:
+      required: true
+  - type: textarea
+    id: boundaries
+    attributes:
+      label: Product boundaries
+      description: Note effects on deterministic behavior, explicit dependencies, fixed-snapshot evidence, or adopting-repository ownership.
+      render: markdown
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Include existing workflows or tools that could address the problem.

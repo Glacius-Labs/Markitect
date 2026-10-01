@@ -25,8 +25,8 @@ var excludedDirs = map[string]bool{
 	"bin": true, "obj": true, "vendor": true, "node_modules": true,
 }
 
-// Package packages the Markitect module's Go source, module files, and optional
-// root README/schema files. It returns the source archive and its flat lock
+// Package packages the Markitect module's Go source, module files, root license,
+// and optional README/schema files. It returns the source archive and its flat lock
 // manifest without writing to the filesystem.
 func Package(root, version string) (archive, lock []byte, err error) {
 	if !validVersion(version) {
@@ -90,8 +90,10 @@ func collect(moduleDir string) ([]sourceFile, error) {
 			return nil, err
 		}
 	}
-	if err := appendRegularFile(moduleDir, "README.md", &files, false); err != nil {
-		return nil, err
+	for _, name := range []string{"README.md", "LICENSE"} {
+		if err := appendRegularFile(moduleDir, name, &files, name == "LICENSE"); err != nil {
+			return nil, err
+		}
 	}
 	schemaDir := filepath.Join(moduleDir, "schema")
 	if info, err := os.Lstat(schemaDir); err == nil {
@@ -196,7 +198,7 @@ func appendRegularFile(moduleDir, relative string, files *[]sourceFile, required
 func normalizeTextSource(name string, data []byte) ([]byte, error) {
 	base := strings.ToLower(filepath.Base(name))
 	ext := strings.ToLower(filepath.Ext(base))
-	isText := base == "go.mod" || base == "go.sum" || ext == ".go" || ext == ".md" || ext == ".yaml" || ext == ".yml"
+	isText := base == "go.mod" || base == "go.sum" || base == "license" || ext == ".go" || ext == ".md" || ext == ".yaml" || ext == ".yml"
 	if !isText {
 		return data, nil
 	}

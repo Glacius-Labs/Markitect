@@ -35,6 +35,10 @@ func TestBuildBundleIsDeterministicAndBindsFiveFiles(t *testing.T) {
 	if len(bundle.Files) != 5 {
 		t.Fatalf("bundle has %d files, want 5", len(bundle.Files))
 	}
+	sourceFiles := archiveContents(t, bundle.Files["tools/markitect/source.zip"])
+	if got := string(sourceFiles["LICENSE"]); got != "Apache License\nVersion 2.0\n" {
+		t.Fatalf("source archive license = %q", got)
+	}
 	for _, name := range append(append([]string(nil), bundlePaths...), releaseManifestPath) {
 		if _, ok := bundle.Files[name]; !ok {
 			t.Errorf("bundle omitted %s", name)
@@ -68,6 +72,10 @@ func TestBuildBundleRejectsUnfixedOrUnboundSource(t *testing.T) {
 		{name: "missing paired test", change: func(s *source.Snapshot) {
 			delete(s.Files, "integration/run-markitect_test.go")
 			delete(s.Modes, "integration/run-markitect_test.go")
+		}, version: "1.2.3"},
+		{name: "missing license", change: func(s *source.Snapshot) {
+			delete(s.Files, "LICENSE")
+			delete(s.Modes, "LICENSE")
 		}, version: "1.2.3"},
 	}
 	for _, test := range tests {
@@ -223,6 +231,7 @@ func bundleSnapshot() *source.Snapshot {
 		"go.mod":                 []byte("module github.com/Glacius-Labs/Markitect\n\ngo 1.27.1\n"),
 		"go.sum":                 []byte("go.yaml.in/yaml/v3 v3.0.5 h1:fixture\n"),
 		"README.md":              []byte("Markitect\r\n"),
+		"LICENSE":                []byte("Apache License\r\nVersion 2.0\r\n"),
 		"cmd/markitect/main.go":  []byte("package main\nvar version = \"1.2.3\"\n"),
 		"internal/core/model.go": []byte("package core\n"),
 		"internal/authoring/resources/skill.yaml": []byte("kind: Skill\n"),

@@ -35,6 +35,10 @@ Acceptance is structural: the new Project parses, resolves, and passes output ch
 
 This source version also adds an executable code-to-documentation example, fixes shared-writer path handling for Windows short/long names while retaining reparse rejection, keeps benchmark fixtures checked in CI, and bundles third-party notices accessible offline through `licenses`. The [authoring pilot](authoring-pilot.md) records actual measurements and the incomplete model comparison; it makes no savings claim.
 
+## v0.4.1 — licensing and repository presentation
+
+The v0.4.1 source candidate adds the Apache License 2.0 to the product repository and requires it in future source distributions. Earlier immutable tags and their attached archives do not gain a license file retroactively. This candidate also improves the README entry, support and security guidance, and contribution templates. Its product behavior and verification boundaries remain those of v0.4.0. Publication requires the normal reviewed source, Windows/Linux gates, exact tag, and immutable release verification; this section does not claim a published v0.4.1 release.
+
 ## Later product options
 
 - MCP, LSP, and graph visualization when measured authoring needs justify them.

@@ -33,7 +33,7 @@ Writers take a shared lock, validate their plan, and check relevant source state
 
 ## Release operations
 
-A source version string does not prove a release exists. Release only a clean reviewed full commit after standalone tests, vet, build, schema/example checks, and Windows/Linux gates pass. Bundle contents, provenance, tag, source commit, workflow run, and asset digests must agree. The private immutable GitHub release is the durable distribution; a workflow artifact is only temporary transport.
+A source version string does not prove a release exists. Release only a clean reviewed full commit after standalone tests, vet, build, schema/example checks, and Windows/Linux gates pass. Bundle contents, provenance, tag, source commit, workflow run, and asset digests must agree. The immutable GitHub release is the durable distribution; a workflow artifact is only temporary transport.
 
 Publication uses the authenticated release owner's local GitHub CLI session and a fail-closed tool. CI does not store a personal access token or publish with a token that lacks permission to read the immutable-release setting. The owner reviews the read-only plan before choosing publication. Verify the resulting immutable release and every attached asset. Never overwrite a tag or release. Recovery from a failed draft publication is an explicit owner decision after checking the tag target, run artifact, asset set, and digests.
 
