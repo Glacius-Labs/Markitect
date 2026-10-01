@@ -34,7 +34,6 @@ Writers take a shared lock, validate their plan, and check relevant source state
 ## Release operations
 
 The post-publication [benchmark workflow](measurement.md) consumes attested binaries from two immutable releases on one versioned fixture. It uploads raw data and a summary as workflow artifacts and never modifies the published release. Its timing variation is diagnostic, not a publication gate.
-If that workflow fails before measurement, repair the workflow on main and dispatch it manually with the existing immutable release tag. Keep the failed run and the recovery run as separate evidence; do not recreate or change the release.
 
 A source version string does not prove a release exists. Release only a clean reviewed full commit after standalone tests, vet, build, schema/example checks, and Windows/Linux gates pass. Bundle contents, provenance, tag, source commit, workflow run, and asset digests must agree. The immutable GitHub release is the durable distribution; a workflow artifact is only temporary transport.
 

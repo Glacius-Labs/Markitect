@@ -13,6 +13,7 @@ The immutable [v0.5.0 release](https://github.com/Glacius-Labs/Markitect/release
 | Published release | Release 401138862 | Release is immutable and not a draft; tag target is the source commit; `gh release verify` and all four local `gh release verify-asset` checks succeeded |
 | Native Windows asset | Attested executable | `version` reported 0.5.0 and `check --repo examples/minimal` passed |
 | Post-publication benchmark | [Run 36890129330](https://github.com/Glacius-Labs/Markitect/actions/runs/36890129330) | Failed during job setup because one upload-artifact action pin was one character short; no measurements were made |
+| Recovery benchmark | [Run 36891661794](https://github.com/Glacius-Labs/Markitect/actions/runs/36891661794) | Repaired workflow ran on main for the same immutable v0.5.0 tag; Windows and Linux fixture v1 passed and each uploaded raw JSON and a summary |
 
 | Asset | SHA-256 |
 |---|---|
@@ -21,7 +22,7 @@ The immutable [v0.5.0 release](https://github.com/Glacius-Labs/Markitect/release
 | `markitect-v0.5.0-windows-amd64.exe` | `6f5b98dad2ea6003bc0368800691af70084a44d2c225c26fe12d120bcda27178` |
 | `markitect-v0.5.0-provenance.yaml` | `1f0713059bc6962e41d1b1dc4013e1ec479ed69924582e550608552c53e20281` |
 
-The verified provenance names source commit 78837346d0cb27c95b3a10f0a469b2709b757a83 and workflow run 36889429215. The failed benchmark is separate from release validity. Its workflow is being repaired on main so the same published binaries can be measured without changing the immutable release. An adopting project's installed pin and acceptance remain unverified here.
+The verified provenance names source commit 78837346d0cb27c95b3a10f0a469b2709b757a83 and workflow run 36889429215. The failed benchmark is separate from release validity. The recovery run measured the same attested v0.5.0 and v0.4.1 binaries without changing either release; its short timings and range differences do not establish a speed gain or regression. An adopting project's installed pin and acceptance remain unverified here.
 
 ## v0.4.1 published release
 
