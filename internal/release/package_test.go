@@ -29,7 +29,7 @@ func TestPackageIsDeterministicAndContainsOnlyReleaseSources(t *testing.T) {
 		t.Fatal("packaging the same source twice changed output")
 	}
 	entries := archiveEntries(t, first)
-	want := []string{"README.md", "cmd/markitect/main.go", "go.mod", "go.sum", "internal/authoring/resources/markitect.yaml", "internal/core/model.go", "internal/format/schema.go", "internal/release/package.go", "internal/release/package_test.go", "schema/manifest.yaml"}
+	want := []string{"LICENSE", "README.md", "cmd/markitect/main.go", "go.mod", "go.sum", "internal/authoring/resources/markitect.yaml", "internal/core/model.go", "internal/format/schema.go", "internal/release/package.go", "internal/release/package_test.go", "schema/manifest.yaml"}
 	if strings.Join(entries, "\n") != strings.Join(want, "\n") {
 		t.Fatalf("unexpected package contents:\n%v\nwant:\n%v", entries, want)
 	}
@@ -57,6 +57,17 @@ func TestPackageIncludesOnlyEmbeddedAuthoringYAMLResources(t *testing.T) {
 		t.Fatal(err)
 	}
 	contents := archiveContents(t, archive)
+	license, err := os.ReadFile(filepath.Join(moduleRoot, "LICENSE"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	license, err = normalizeTextSource("LICENSE", license)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(contents["LICENSE"], license) {
+		t.Fatal("source archive omitted or changed the root license")
+	}
 	want := []string{
 		"internal/authoring/resources/markitect.yaml",
 		"internal/authoring/resources/rule-canonical-ownership.yaml",
@@ -252,6 +263,7 @@ func fixtureRoot(t *testing.T) string {
 	write("tools/markitect/go.mod", "module markitect\n\ngo 1.24.0\n")
 	write("tools/markitect/go.sum", "example checksum\n")
 	write("tools/markitect/README.md", "Markitect\n")
+	write("tools/markitect/LICENSE", "Apache License\nVersion 2.0\n")
 	write("tools/markitect/cmd/markitect/main.go", "package main\n")
 	write("tools/markitect/internal/core/model.go", "package core\n")
 	write("tools/markitect/internal/format/schema.go", "package format\n")
