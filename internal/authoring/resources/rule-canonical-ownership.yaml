@@ -8,3 +8,5 @@ spec:
     Keep each mechanism in its existing canonical owner. Before creating a resource, inspect the closest owner and references; edit that resource when responsibility is already represented there. Use a separate resource only when it has a distinct responsibility or lifecycle.
 
     Declare every normative relationship with the resource's typed references. Prose links help people navigate but do not create dependencies. Keep customer policy and provider-specific instructions in their owning consumer.
+
+    For ordinary documentation, start at an explicitly configured documentation root and follow local README routers toward the narrowest plausible owner. Compare Area paths, router scopes and nearby canonical documents. A path is an ownership clue, not proof of semantic placement. Find and update an existing owner before creating a second document. Keep local completeness as a review heuristic, not a compiler claim.

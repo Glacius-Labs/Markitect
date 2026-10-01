@@ -93,3 +93,24 @@ func TestConsistencyConflictExampleReportsSourceAndOwners(t *testing.T) {
 		t.Fatalf("expected one sourced conflict with both owners: %#v", findings)
 	}
 }
+
+func TestDocumentationPlacementExampleHasValidRouters(t *testing.T) {
+	_, sourceFile, _, ok := runtime.Caller(0)
+	if !ok {
+		t.Fatal("could not locate example test source")
+	}
+	root := filepath.Join(filepath.Dir(sourceFile), "documentation-placement")
+	project, err := app.Load(root, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(project.Diagnostics) != 0 {
+		t.Fatalf("placement example has resource diagnostics: %#v", project.Diagnostics)
+	}
+	if findings := app.CheckOutputs(project); len(findings) != 0 {
+		t.Fatalf("placement example has output diagnostics: %#v", findings)
+	}
+	if findings := app.CheckDocumentationRouters(project); len(findings) != 0 {
+		t.Fatalf("placement example has router diagnostics: %#v", findings)
+	}
+}

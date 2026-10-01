@@ -93,6 +93,11 @@ jobs:
           path: ${{ runner.temp }}/markitect-onboarding-${{ github.sha }}/
           if-no-files-found: warn
           retention-days: 14
+      - name: Check documentation placement example
+        run: go run ./cmd/markitect check --repo examples/documentation-placement
+
+      - name: Check documentation placement example formatting
+        run: go run ./cmd/markitect format --repo examples/documentation-placement
 
       - name: Check pinned content package consumer
         run: go run ./cmd/markitect check --repo examples/package-consumer

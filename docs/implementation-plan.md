@@ -1,6 +1,6 @@
 # Markitect roadmap
 
-Updated 2026-10-01. This is the canonical owner of current source and planned-work status. The published v0.5.0 release adds explicit provider adapters and opt-in sourced consistency checks to the earlier product behavior. Dated release evidence is in the [production assessment](production-assessment.md), and available distributions are listed in [GitHub Releases](https://github.com/Glacius-Labs/Markitect/releases). [Architecture](architecture.md) describes product boundaries, [Usage](usage.md) records the CLI contract, and [Operations](operations.md) owns release gates.
+Updated 2026-10-01. This is the canonical owner of current source and planned-work status. The published v0.6.0 release adds canonical documentation placement guidance and opt-in snapshot router validation to the earlier product behavior. Dated release evidence is in the [production assessment](production-assessment.md), and available distributions are listed in [GitHub Releases](https://github.com/Glacius-Labs/Markitect/releases). [Architecture](architecture.md) describes product boundaries, [Usage](usage.md) records the CLI contract, and [Operations](operations.md) owns release gates.
 
 ## v0.1.0 — historical release
 
@@ -45,6 +45,20 @@ The published v0.5.0 release adds project-configured Codex, Claude, and shared e
 
 The tagged source passed Windows/Linux release gates, and the immutable release and four attached assets were verified. The release-triggered benchmark failed during runner setup because an action pin was truncated; the separately dispatched repaired run completed on Windows and Linux with raw measurement artifacts. Those measurements are diagnostic, not an acceptance gate or evidence of a speed gain. Konfyra's consumer pin, provider adapter ownership, candidate verification and human acceptance are tracked in its own repository. The Survey pilot can move only after its exact candidate basis and existing work are reconciled.
 
+## v0.6.0 — documentation placement and optional routers
+
+The published v0.6.0 release adds portable authoring guidance for locating an existing canonical documentation owner and an opt-in `Project.spec.documentation.roots` router check. Konfyra's local router contract and checker are the reference implementation for the general behavior; its General/Core/Module/Product taxonomy, code-to-document mapping and provider-adapter gates remain Konfyra-owned. [Documentation routers](documentation-routers.md) owns the exact participation, link-normalization and diagnostic contract.
+
+Implementation sequence: (1) define and test participating directories and local link normalization against snapshot paths; (2) add strict Project configuration and regenerate its schema; (3) surface stable router diagnostics through `check` and fixed-revision `verify`; (4) update embedded authoring guidance and validate a placement task where an agent finds and changes an existing canonical source; (5) run source and executable-example gates. The acceptance case must distinguish the agent's actual edit from the structural router check. A passing `check` cannot prove semantic placement or complete repository verification.
+
+Focused tests cover invalid and overlapping roots (`internal/format/yaml_documentation_test.go`); participating directories, direct-child coverage, extra cross-links, missing and unsafe targets, reference links, code examples and normalization (`internal/app/documentation_routers_test.go`); fixed-snapshot `check` and broken-router `verify` (`cmd/markitect/documentation_routers_test.go`); and the executable placement fixture (`examples/example_test.go`). These tests assert structural behavior. The separate agent exercise below probes the authoring decision.
+
+One isolated authoring exercise used a copy of the checked-in [placement example](../examples/documentation-placement/README.md) and the prompt recorded there. The agent changed only `docs/engineering/persistence.md`, the existing page whose README claims schema migration requirements; it created no second page. The router check passed on that candidate. This is one observed placement decision, not a measured reliability rate or proof that the prose is correct.
+
+This slice introduces no Resource Kind, documentation graph, README generation, excludes, or additional Project options. Router navigation and explicit dependency/impact analysis remain separate.
+
+The reviewed source, exact tag, Windows/Linux release gates, four attested assets and post-publication benchmark are recorded in the [production assessment](production-assessment.md). Public installation examples use the verified v0.6.0 native assets.
+
 ## Later product options
 
 Current source follow-up adds a neutral [onboarding exercise](onboarding.md), its replay in Windows CI, and structural fixture checks on both supported platforms. [WinGet distribution](winget.md) records the submitted v0.5.0 portable manifests and local installation/upgrade checks; submission is distinct from publication in Microsoft's catalog. The [MCP evaluation](mcp-evaluation.md) records the bounded experiment and client limitations. The existing MCP prototype remains experimental and is not part of the published v0.5.0 binaries.
@@ -52,4 +66,4 @@ Current source follow-up adds a neutral [onboarding exercise](onboarding.md), it
 - MCP, LSP, and graph visualization when measured authoring needs justify them.
 - Runtime/operator integration only for a concrete state-reconciliation contract.
 
-These options are not v0.5.0 acceptance promises. Keep the core provider-independent and add abstractions only for a demonstrated invariant.
+These options are not v0.6.0 acceptance promises. Keep the core provider-independent and add abstractions only for a demonstrated invariant.

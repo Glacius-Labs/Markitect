@@ -13,7 +13,7 @@ PowerShell example (select only a tag confirmed to exist):
 ```powershell
 gh auth status
 $repository = 'github.com/Glacius-Labs/Markitect'
-$tag = 'v0.5.0'
+$tag = 'v0.6.0'
 gh release verify $tag --repo $repository
 if ($LASTEXITCODE -ne 0) { throw 'GitHub release attestation verification failed.' }
 $release = gh release view $tag --repo $repository --json tagName,isDraft,isImmutable | ConvertFrom-Json

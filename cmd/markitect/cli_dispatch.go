@@ -52,7 +52,11 @@ func dispatchCommand(command string, o commandOptions, out, errout io.Writer, em
 	if err != nil {
 		return fail(err)
 	}
-	result := report{Tool: "Markitect", Version: version, ToolDigest: toolDigest, Revision: p.Snapshot.Revision, Provisional: p.Snapshot.Provisional, Digest: p.Snapshot.Digest(), Status: "passed", Coverage: "typed YAML graph and Markitect-owned outputs; external repository gates and semantic review remain separate", Inventory: p.Inventory, Diagnostics: p.Diagnostics}
+	structuralCoverage := "typed YAML graph and Markitect-owned outputs"
+	if (command == "check" || command == "verify") && p.Graph.Project.Spec.Documentation != nil {
+		structuralCoverage += " and configured documentation routers"
+	}
+	result := report{Tool: "Markitect", Version: version, ToolDigest: toolDigest, Revision: p.Snapshot.Revision, Provisional: p.Snapshot.Provisional, Digest: p.Snapshot.Digest(), Status: "passed", Coverage: structuralCoverage + "; external repository gates and semantic review remain separate", Inventory: p.Inventory, Diagnostics: p.Diagnostics}
 	if len(p.Diagnostics) > 0 {
 		result.Status = "failed"
 		if code := emit(result); code != 0 {
@@ -85,6 +89,9 @@ func dispatchCommand(command string, o commandOptions, out, errout io.Writer, em
 		}
 	}
 	result.Diagnostics = app.CheckOutputs(p)
+	if command == "check" || command == "verify" {
+		result.Diagnostics = append(result.Diagnostics, app.CheckDocumentationRouters(p)...)
+	}
 	if len(result.Diagnostics) > 0 {
 		result.Status = "failed"
 	}
@@ -102,11 +109,11 @@ func dispatchCommand(command string, o commandOptions, out, errout io.Writer, em
 			})
 			fmt.Fprintf(errout, "verify: %s\n", verifyErr)
 			result.Status = "incomplete"
-			result.Coverage = "typed graph and Markitect-owned outputs passed; repository verification incomplete"
+			result.Coverage = structuralCoverage + " passed; repository verification incomplete"
 			exitCode := 2
 			if verifyErr.Kind == "gate-failure" {
 				result.Status = "failed"
-				result.Coverage = "typed graph and Markitect-owned outputs passed; repository verification stopped at a failing check; later checks were not run"
+				result.Coverage = structuralCoverage + " passed; repository verification stopped at a failing check; later checks were not run"
 				exitCode = 1
 			}
 			if code := emit(result); code != 0 {
@@ -114,7 +121,7 @@ func dispatchCommand(command string, o commandOptions, out, errout io.Writer, em
 			}
 			return exitCode
 		}
-		result.Coverage = "typed graph, owned outputs, and all declared repository checks passed from one immutable Git snapshot; semantic review remains separate"
+		result.Coverage = structuralCoverage + " and all declared repository checks passed from one immutable Git snapshot; semantic review remains separate"
 		for _, gate := range result.Gates {
 			if gate.ExitCode != 0 {
 				result.Status = "failed"
