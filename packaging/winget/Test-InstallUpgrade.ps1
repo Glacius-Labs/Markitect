@@ -23,6 +23,8 @@ $olderSha256 = '419F61E99A3EE09C4D87624B44755BACBCB796244CFFE7A1FA148DA4C79A35F1
 $olderUrl = 'https://github.com/Glacius-Labs/Markitect/releases/download/v0.4.1/markitect-v0.4.1-windows-amd64.exe'
 $manifestDirectory = Join-Path $PSScriptRoot 'GlaciusLabs.Markitect\0.5.0'
 $oldManifestDirectory = Join-Path $OutputDirectory 'GlaciusLabs.Markitect-0.4.1-test'
+$upgradeManifestDirectory = Join-Path $OutputDirectory 'GlaciusLabs.Markitect-0.5.0-upgrade-test'
+$localProductCode = 'GlaciusLabs.Markitect__DefaultSource'
 $portablePackageDirectory = Join-Path $env:LOCALAPPDATA 'Microsoft\WinGet\Packages\GlaciusLabs.Markitect__DefaultSource'
 $portableLinksDirectory = Join-Path $env:LOCALAPPDATA 'Microsoft\WinGet\Links'
 $portableAlias = Join-Path $portableLinksDirectory 'markitect.exe'
@@ -205,6 +207,21 @@ if ($LASTEXITCODE -ne 0 -or $actual -ne "Markitect $ExpectedVersion (windows/amd
     Write-Host "Verified Markitect $ExpectedVersion via $route at $($freshCheck.command)"
 }
 
+function New-TestUpgradeManifest {
+    # Local installs use DefaultSource. Before catalog publication, WinGet's
+    # composite-source manifest lookup cannot correlate that registration.
+    # Bind only this test copy to the known local product code; keep the
+    # canonical community manifests unchanged.
+    New-Item -ItemType Directory -Path $upgradeManifestDirectory -Force | Out-Null
+    foreach ($name in @('GlaciusLabs.Markitect.installer.yaml', 'GlaciusLabs.Markitect.locale.en-US.yaml', 'GlaciusLabs.Markitect.yaml')) {
+        Copy-Item -LiteralPath (Join-Path $manifestDirectory $name) -Destination (Join-Path $upgradeManifestDirectory $name)
+    }
+    $installerPath = Join-Path $upgradeManifestDirectory 'GlaciusLabs.Markitect.installer.yaml'
+    $content = Get-Content -LiteralPath $installerPath -Raw
+    $content = $content.Replace('InstallerType: portable', "InstallerType: portable" + [Environment]::NewLine + "ProductCode: $localProductCode")
+    Set-Content -LiteralPath $installerPath -Value $content -NoNewline
+}
+
 function New-TestOlderManifest {
     @"
 # yaml-language-server: `$schema=https://aka.ms/winget-manifest.installer.1.12.0.schema.json
@@ -300,8 +317,10 @@ try {
     $script:completedPhases += 'confirmed no pre-existing package or replaced the exact GlaciusLabs.Markitect registration'
 
     New-TestOlderManifest
+    New-TestUpgradeManifest
     Invoke-WinGet -Arguments @('validate', '--manifest', $oldManifestDirectory) | Out-Null
     Invoke-WinGet -Arguments @('validate', '--manifest', $manifestDirectory) | Out-Null
+    Invoke-WinGet -Arguments @('validate', '--manifest', $upgradeManifestDirectory) | Out-Null
     $script:completedPhases += 'validated exact submitted 0.5.0 manifests and temporary 0.4.1 manifests'
 
     $settingChanged = -not $originalLocalManifestSetting
@@ -312,7 +331,7 @@ try {
     Assert-InstalledVersion -ExpectedVersion $olderVersion -ExpectedSha256 $olderSha256
     $script:completedPhases += 'installed and verified published v0.4.1'
 
-    Invoke-WinGet -Arguments @('upgrade', '--manifest', $manifestDirectory, '--scope', 'user', '--accept-package-agreements', '--accept-source-agreements', '--disable-interactivity') | Out-Null
+    Invoke-WinGet -Arguments @('upgrade', '--manifest', $upgradeManifestDirectory, '--scope', 'user', '--accept-package-agreements', '--accept-source-agreements', '--disable-interactivity') | Out-Null
     Assert-InstalledVersion -ExpectedVersion $submittedVersion -ExpectedSha256 $submittedSha256
     $script:completedPhases += 'upgraded and verified submitted v0.5.0'
     $testStatus = 'passed'
@@ -381,6 +400,8 @@ finally {
             outputDirectory = $OutputDirectory
             completedPhases = @($script:completedPhases)
             installedChecks = @($script:installedChecks)
+            localUpgradeTestProductCode = $localProductCode
+            publicCatalogUpgradeTested = $false
             failure = $failureMessage
             cleanupFailure = $cleanupFailure
             settingRestoreFailure = $restoreFailure
