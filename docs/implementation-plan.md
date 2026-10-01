@@ -43,11 +43,11 @@ The published v0.4.1 release adds the Apache License 2.0 to the product reposito
 
 The published v0.5.0 release adds project-configured Codex, Claude, and shared entrypoints with strict inventory; see [Provider adapters](provider-adapters.md). It adds a post-publication Windows/Linux benchmark workflow that measures both the new and prior immutable release on fixture v1, with raw results and a summary as workflow artifacts; see [Measurement](measurement.md). The opt-in [consistency MVP](consistency.md) compares explicit, quoted functional assertions and reports source and owner evidence. It does not interpret free text or change human acceptance.
 
-The tagged source passed Windows/Linux release gates, and the immutable release and four attached assets were verified. The release-triggered benchmark failed during runner setup because an action pin was truncated; the separately dispatched repaired run completed on Windows and Linux with raw measurement artifacts. Those measurements are diagnostic, not an acceptance gate or evidence of a speed gain. Konfyra's consumer pin, provider adapter ownership, candidate verification and human acceptance are tracked in its own repository. The Survey pilot can move only after its exact candidate basis and existing work are reconciled.
+The tagged source passed Windows/Linux release gates, and the immutable release and four attached assets were verified. The release-triggered benchmark failed during runner setup because an action pin was truncated; the separately dispatched repaired run completed on Windows and Linux with raw measurement artifacts. Those measurements are diagnostic, not an acceptance gate or evidence of a speed gain. Consumer pins, project-specific adapter ownership, candidate verification and human acceptance belong to adopting repositories.
 
 ## v0.6.0 — documentation placement and optional routers
 
-The published v0.6.0 release adds portable authoring guidance for locating an existing canonical documentation owner and an opt-in `Project.spec.documentation.roots` router check. Konfyra's local router contract and checker are the reference implementation for the general behavior; its General/Core/Module/Product taxonomy, code-to-document mapping and provider-adapter gates remain Konfyra-owned. [Documentation routers](documentation-routers.md) owns the exact participation, link-normalization and diagnostic contract.
+The published v0.6.0 release adds portable authoring guidance for locating an existing canonical documentation owner and an opt-in `Project.spec.documentation.roots` router check. An adopting project's documentation taxonomy, artifact-to-document relationships, and provider-adapter gates remain project-owned. [Documentation routers](documentation-routers.md) owns the exact participation, link-normalization and diagnostic contract.
 
 Implementation sequence: (1) define and test participating directories and local link normalization against snapshot paths; (2) add strict Project configuration and regenerate its schema; (3) surface stable router diagnostics through `check` and fixed-revision `verify`; (4) update embedded authoring guidance and validate a placement task where an agent finds and changes an existing canonical source; (5) run source and executable-example gates. The acceptance case must distinguish the agent's actual edit from the structural router check. A passing `check` cannot prove semantic placement or complete repository verification.
 
@@ -68,11 +68,11 @@ attempt, tag, asset bytes, and attestations before generating local files.
 [Operations](operations.md) owns the commands and submission checks. This does
 not publish a WinGet catalog entry.
 
-## v0.7.0 — fixed task and selected source context
+## v0.7.0 — fixed task and selected artifact context
 
-The published v0.7.0 release adds a fixed-run context request for one explicitly selected resource, committed work-item snapshot, and bounded exact source paths. The command requires a full Git revision and a manifest from that revision; its report binds included and missing selections, hashes, and completeness to the selected snapshot. It does not infer task relevance or validate acceptance criteria. See [Documentation inputs](documentation.md) for the run contract. An adopting repository owns the task snapshot, source selection, and any expected-resource inventory preflight.
+The published v0.7.0 release adds a fixed-run context request for one explicitly selected resource, committed work-item snapshot, and bounded exact project artifact paths. The command requires a full Git revision and a manifest from that revision; its report binds included and missing selections, hashes, and completeness to the selected snapshot. It does not infer task relevance or validate acceptance criteria. See [Project artifact inputs](documentation.md) for the run contract. An adopting repository owns the task snapshot, artifact selection, and any expected-resource inventory preflight.
 
-The published source, Windows/Linux gates, versioned assets, provenance and owner publication are recorded in the [production assessment](production-assessment.md). The immutable v0.7.0 release has four verified assets, and its post-publication README used the attested Windows/Linux digests. A Survey consumer must pin the same published version in each comparison arm and use a task absent from its fixed baseline.
+The published source, Windows/Linux gates, versioned assets, provenance and owner publication are recorded in the [production assessment](production-assessment.md). The immutable v0.7.0 release has four verified assets, and its post-publication README used the attested Windows/Linux digests.
 
 ## v0.8.0 — repository layout
 

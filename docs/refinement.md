@@ -12,7 +12,7 @@ This document owns product principles and deferred direction. The [roadmap](impl
 | Explicit completeness | Compile context from an explicitly selected resource and its declared graph. Semantic task-to-resource selection remains outside the deterministic engine. |
 | No implicit policy | Imports do not activate requirements or hooks. Project checks and output targets are explicit. |
 | Stable identity | Local identity remains `namespace/kind/name`; namespace labels are not paths and do not imply inheritance. |
-| Measured interfaces | Extend the query API only when actual authoring work shows a need. MCP, LSP, studio, and runtime reconciliation are options, not release promises. |
+| Measured interfaces | Extend the query API only when actual authoring work shows a need. MCP, LSP, studio, a public API, and runtime reconciliation are options, not release promises. |
 | One data format | Markitect-owned configuration and evidence use YAML. No telemetry or statistics subsystem is needed to ship core authoring. |
 
 ## Content packages

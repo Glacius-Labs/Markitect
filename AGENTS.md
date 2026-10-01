@@ -4,6 +4,8 @@ Start with [the documentation map](docs/README.md). [Architecture](docs/architec
 
 Markitect is an independent authoring and structure-validation tool for AI-facing engineering resources. Keep its core independent of adopting repositories and model providers. Use YAML for machine-relevant ownership and dependencies, Markdown for readable prose, and explicit inputs for data that affects a result. Preserve deterministic diagnostics, fixed-snapshot evidence, and one owner per generated output.
 
+Treat adopting-project code, schemas, configuration, infrastructure and documentation as declared artifact inputs. The core may track exact paths and bytes but must not infer their domain-specific structure or meaning. [Architecture](docs/architecture.md#project-artifact-boundary) owns this product boundary.
+
 Change canonical sources and regenerate generated views/schemas. Keep examples executable. Do not infer dependencies from prose links, weaken conservative invalidation, or treat AI evidence as human acceptance. Keep project-local policy in the project that owns it unless a deliberate product decision establishes a reusable general rule.
 
 Work on a non-protected feature branch. Scope tests to concrete risks and required gates. Changes to an adopting project belong in its checkout and follow its instructions. A source change here does not update an installed release; validate the candidate and publish a versioned release through the documented process.
