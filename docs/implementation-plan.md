@@ -74,9 +74,9 @@ The published v0.7.0 release adds a fixed-run context request for one explicitly
 
 The published source, Windows/Linux gates, versioned assets, provenance and owner publication are recorded in the [production assessment](production-assessment.md). The immutable v0.7.0 release has four verified assets, and the README uses the attested Windows/Linux digests. A Survey consumer must pin the same published version in each comparison arm and use a task absent from its fixed baseline.
 
-## Repository layout — current source candidate
+## v0.8.0 — repository layout (source candidate)
 
-The source candidate recommends `.markitect/areas/<owner>/` for canonical typed knowledge, organized by responsibility. New `init` plans use `.markitect/areas/<namespace>` when `--path` is omitted; explicit paths and existing Projects remain supported. Embedded authoring distinguishes typed Areas from human-owned documentation and uses configured ownership before the new-project convention. Optional kind-suffixed names do not infer YAML type or identity. The executable [layout example](../examples/repository-layout/README.md) checks new paths and generated native outputs while existing fixtures retain earlier layouts.
+The v0.8.0 source candidate recommends `.markitect/areas/<owner>/` for canonical typed knowledge, organized by responsibility. New `init` plans use `.markitect/areas/<namespace>` when `--path` is omitted; explicit paths and existing Projects remain supported. Embedded authoring distinguishes typed Areas from human-owned documentation and uses configured ownership before the new-project convention. Optional kind-suffixed names do not infer YAML type or identity. The executable [layout example](../examples/repository-layout/README.md) checks new paths and generated native outputs while existing fixtures retain earlier layouts.
 
 [Repository layout](repository-layout.md) owns the compatibility assessment. Generic sibling companions, provider output paths, Project schema, root agent instructions and pinned distribution/bootstrap paths retain their contracts. A separate companion-output design, distribution migration, optional layout lint, and migration helper are deferred until demonstrated needs justify their compatibility costs. This candidate is not a published release and does not update consumers' installed tools.
 

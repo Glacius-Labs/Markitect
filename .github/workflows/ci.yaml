@@ -61,6 +61,12 @@ jobs:
       - name: Check minimal example
         run: go run ./cmd/markitect check --repo examples/minimal
 
+      - name: Check repository layout example
+        run: go run ./cmd/markitect check --repo examples/repository-layout
+
+      - name: Check repository layout example formatting
+        run: go run ./cmd/markitect format --repo examples/repository-layout
+
       - name: Check versioned release benchmark fixture
         run: go run ./cmd/markitect check --repo benchmark/fixtures/v1
 
@@ -149,9 +155,10 @@ jobs:
           grep -Eq '^status: passed$' <<< "$check_output"
           init_dir="$RUNNER_TEMP/markitect-init-$GITHUB_SHA"
           git init -b feature/authoring "$init_dir"
-          go run scripts/run-markitect.go init --repo "$init_dir" --name started-project --namespace engineering --path docs/engineering
+          go run scripts/run-markitect.go init --repo "$init_dir" --name started-project --namespace engineering
           test ! -e "$init_dir/markitect.yaml"
-          go run scripts/run-markitect.go init --repo "$init_dir" --name started-project --namespace engineering --path docs/engineering --write
+          go run scripts/run-markitect.go init --repo "$init_dir" --name started-project --namespace engineering --write
+          test -f "$init_dir/.markitect/areas/engineering/README.md"
           init_check="$(go run scripts/run-markitect.go check --repo "$init_dir")"
           grep -Eq '^status: passed$' <<< "$init_check"
 
@@ -175,11 +182,12 @@ jobs:
           $initDir = Join-Path $env:RUNNER_TEMP "markitect-init-$env:GITHUB_SHA"
           git init -b feature/authoring $initDir
           if ($LASTEXITCODE -ne 0) { throw 'Could not initialize the smoke repository' }
-          go run scripts/run-markitect.go init --repo $initDir --name started-project --namespace engineering --path docs/engineering
+          go run scripts/run-markitect.go init --repo $initDir --name started-project --namespace engineering
           if ($LASTEXITCODE -ne 0) { throw 'Packaged initialization preview failed' }
           if (Test-Path (Join-Path $initDir 'markitect.yaml')) { throw 'Initialization preview changed the destination' }
-          go run scripts/run-markitect.go init --repo $initDir --name started-project --namespace engineering --path docs/engineering --write
+          go run scripts/run-markitect.go init --repo $initDir --name started-project --namespace engineering --write
           if ($LASTEXITCODE -ne 0) { throw 'Packaged initialization failed' }
+          if (-not (Test-Path (Join-Path $initDir '.markitect/areas/engineering/README.md'))) { throw 'Default canonical area README is missing' }
           $initCheck = go run scripts/run-markitect.go check --repo $initDir
           if ($LASTEXITCODE -ne 0) { throw 'Initialized project failed structural checks' }
           if (($initCheck -join "`n") -notmatch '(?m)^status: passed$') { throw 'Initialized project did not pass structural checks' }
