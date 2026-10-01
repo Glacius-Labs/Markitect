@@ -41,4 +41,14 @@ Publication uses the authenticated release owner's local GitHub CLI session and 
 
 After a new release is published and verified, update the README's pinned CLI installation examples to its exact tag and attested Windows/Linux SHA-256 digests. Check the public downloads and platform-specific version output before calling that version the current quick-install choice. Never put an unpublished tag or guessed digest in the README.
 
+Use the read-only distribution check to confirm that the marked README installation and example blocks, plus the versioned canonical WinGet manifests, match a selected public release:
+
+```powershell
+go run ./cmd/markitect-release distribution --tag vX.Y.Z --repo .
+```
+
+The command loads only a stable, published immutable release. It verifies the release and each asset attestation, downloads the exact four assets, checks the provenance against the successful release workflow attempt and tag commit, and matches every asset digest. It then checks the README markers and generated WinGet manifest files. `--write` applies those local files after validation; `--export-winget PATH` writes just the three manifests into `PATH/manifests/g/GlaciusLabs/Markitect/VERSION` for review and submission in a separate WinGet community PR. The modes are mutually exclusive. The command does not submit a package or publish a release.
+
+Before a WinGet submission, run `winget validate --manifest` against the exported version directory and review the diff. Verify the package install, upgrade, and uninstall from the public catalog after the community PR is merged.
+
 The release gate proves only the Markitect source and packaged product checks that ran. It does not assert that a project has correct policy, complete prose, a safe runtime, or a human decision. Those are owned where the project operates.

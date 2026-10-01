@@ -9,6 +9,8 @@ AI-facing engineering guidance often lives in documents whose relationships and 
 
 The Go CLI checks resource structure and generated views, compiles a selected resource's declared context, and reports affected resources between fixed Git revisions. These operations are deterministic and do not require a model API. Markitect does not decide whether prose is true, complete, or followed.
 
+<!-- markitect-release:install:start -->
+
 ## Install Markitect
 
 The current [v0.6.0 release](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.6.0) provides Windows and Linux amd64 binaries. The commands below download a fixed version from the public release, check its published SHA-256 digest, and install it for your user. No Go installation or GitHub login is needed. Git is needed for Markitect commands that read Git revisions.
@@ -60,6 +62,10 @@ export PATH="$HOME/.local/bin:$PATH"
 
 Add `~/.local/bin` to your shell startup file if it is not already on `PATH`. For developers who already use Go 1.27.1 or later, `go install github.com/Glacius-Labs/Markitect/cmd/markitect@v0.6.0` is a shorter source-build option. macOS and arm64 binaries are not currently released. For signed release and asset attestation verification, project pinning, and upgrades, follow the [distribution guide](integration/README.md). The CLI's `install` command installs a **project pin**, not the CLI on your computer.
 
+<!-- markitect-release:install:end -->
+
+<!-- markitect-release:try:start -->
+
 ## Try the installed CLI
 
 Clone the v0.6.0 synthetic example and run a structural check with the installed binary. This reads the example without modifying an adopting repository.
@@ -85,6 +91,8 @@ markitect check --repo ./markitect-sample-v0.6.0/examples/minimal
 ~~~
 
 The [minimal example](examples/minimal/README.md) is a synthetic, executable fixture. To use Markitect in your own repository, follow the [release installation and verification guide](integration/README.md) to preview and install a project pin.
+
+<!-- markitect-release:try:end -->
 
 For a complete first-project exercise, follow [the onboarding walkthrough](docs/onboarding.md): initialize a project, model explicit dependencies, compile context, and inspect a change between committed revisions.
 
