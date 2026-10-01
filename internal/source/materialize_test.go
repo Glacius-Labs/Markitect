@@ -5,13 +5,15 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
 
 func TestUnsafePathsRejectedBeforeMaterialize(t *testing.T) {
 	outside := filepath.Join(t.TempDir(), "escape.txt")
-	s := &Snapshot{
+	s := &snapshot.Snapshot{
 		Files: map[string][]byte{"../escape.txt": []byte("no")},
-		Modes: map[string]string{"../escape.txt": "100644"},
+		Modes: map[string]string{"../escape.txt": snapshot.RegularMode},
 	}
 	err := Materialize(s, filepath.Join(t.TempDir(), "destination"))
 	if err == nil || !strings.Contains(err.Error(), "unsafe repository path") {

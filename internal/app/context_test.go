@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/internal/core"
-	"github.com/Glacius-Labs/Markitect/internal/source"
+	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
 
 func TestCompileContextIncludesOnlySelectedImplementationAndItsExplicitFiles(t *testing.T) {
@@ -43,7 +43,7 @@ func TestCompileContextIncludesOnlySelectedImplementationAndItsExplicitFiles(t *
 	}
 
 	resources := []*core.Resource{&project, &contract, &selected, &alternative, &consumer}
-	snapshot := &source.Snapshot{Revision: "fixed-review-snapshot", Files: map[string][]byte{}, Modes: map[string]string{}}
+	snapshot := &snapshot.Snapshot{ID: "fixed-review-snapshot", Files: map[string][]byte{}, Modes: map[string]string{}}
 	for _, resource := range resources {
 		data := encodeResource(t, *resource)
 		snapshot.Files[resource.Path] = data
@@ -171,7 +171,7 @@ func impactProjectResource(areas []core.Area) *core.Resource {
 
 func parseImpactProject(t *testing.T, resources []*core.Resource, extraFiles map[string]string) *Project {
 	t.Helper()
-	snapshot := &source.Snapshot{Revision: "impact-test", Files: map[string][]byte{}, Modes: map[string]string{}}
+	snapshot := &snapshot.Snapshot{ID: "impact-test", Files: map[string][]byte{}, Modes: map[string]string{}}
 	for _, resource := range resources {
 		data := encodeResource(t, *resource)
 		snapshot.Files[resource.Path] = data

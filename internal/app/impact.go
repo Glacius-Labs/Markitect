@@ -4,6 +4,7 @@ import (
 	"sort"
 
 	"github.com/Glacius-Labs/Markitect/internal/render"
+	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
 
 type Impact struct {
@@ -15,23 +16,12 @@ type Impact struct {
 }
 
 func Changes(before, after *Project) *Impact {
-	result := &Impact{Base: before.Snapshot.Revision, Candidate: after.Snapshot.Revision, Reason: "Union of old and new dependency closures; configuration or inventory changes conservatively affect all resources."}
+	result := &Impact{Base: before.Snapshot.ID, Candidate: after.Snapshot.ID, Reason: "Union of old and new dependency closures; configuration or inventory changes conservatively affect all resources."}
+	result.Changed = snapshot.Compare(before.Snapshot, after.Snapshot).Paths()
 	changed := map[string]bool{}
-	for name, b := range before.Snapshot.Files {
-		a, ok := after.Snapshot.Files[name]
-		if !ok || Hash(b) != Hash(a) || before.Snapshot.Modes[name] != after.Snapshot.Modes[name] {
-			changed[name] = true
-		}
+	for _, name := range result.Changed {
+		changed[name] = true
 	}
-	for name := range after.Snapshot.Files {
-		if _, ok := before.Snapshot.Files[name]; !ok {
-			changed[name] = true
-		}
-	}
-	for n := range changed {
-		result.Changed = append(result.Changed, n)
-	}
-	sort.Strings(result.Changed)
 	all := false
 	seeds := map[string]bool{}
 	ownedInputs := map[string]map[string]bool{}

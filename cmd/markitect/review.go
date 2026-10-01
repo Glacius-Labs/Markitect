@@ -52,6 +52,11 @@ func runReview(root string, p *app.Project, packageName, namespace, kind, name, 
 	if err != nil {
 		return fail(err)
 	}
+	// The current CLI resolves review evidence through the Git adapter. Keep
+	// its historical full-commit contract outside generic evidence validation.
+	if !fullGitCommitID.MatchString(strings.ToLower(record.Revision)) {
+		return fail(fmt.Errorf("fixed snapshot revision must be a full 40- or 64-character hexadecimal commit id"))
+	}
 	if record.Entry != key {
 		return fail(fmt.Errorf("review evidence entry %s does not match requested entry %s", record.Entry, key))
 	}

@@ -7,7 +7,7 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/internal/core"
 	"github.com/Glacius-Labs/Markitect/internal/format"
-	"github.com/Glacius-Labs/Markitect/internal/source"
+	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
 
 // TestAuthoringScenarioImpactOracle keeps a synthetic multi-area graph as an
@@ -157,7 +157,7 @@ func authoringProject(tb testing.TB, revision string, change authoringChange) *P
 		&core.Resource{APIVersion: core.APIVersion, Kind: "Skill", Metadata: core.Metadata{Name: "beta-review", Namespace: "beta"}, Path: "docs/beta/skills/beta-review.yaml", Spec: core.Spec{Text: "Beta review."}},
 		&core.Resource{APIVersion: core.APIVersion, Kind: "Workflow", Metadata: core.Metadata{Name: "beta-flow", Namespace: "beta"}, Path: "docs/beta/workflows/beta-flow.yaml", Spec: core.Spec{Text: "Beta flow.", Uses: []core.Ref{{Kind: "Skill", Name: "beta-review"}}}},
 	)
-	snapshot := &source.Snapshot{Revision: revision, Files: map[string][]byte{}, Modes: map[string]string{}}
+	snapshot := &snapshot.Snapshot{ID: revision, Files: map[string][]byte{}, Modes: map[string]string{}}
 	for _, resource := range resources {
 		data, err := format.Encode(*resource)
 		if err != nil {
@@ -190,7 +190,7 @@ func authoringBenchmarkProject(tb testing.TB) *Project {
 	return p
 }
 
-func authoringBenchmarkSnapshot(tb testing.TB, revision string, revise bool) *source.Snapshot {
+func authoringBenchmarkSnapshot(tb testing.TB, revision string, revise bool) *snapshot.Snapshot {
 	tb.Helper()
 	areas := make([]core.Area, 10)
 	for i := range areas {
@@ -225,7 +225,7 @@ func authoringBenchmarkSnapshot(tb testing.TB, revision string, revise bool) *so
 			resources = append(resources, &core.Resource{APIVersion: core.APIVersion, Kind: "Workflow", Metadata: core.Metadata{Name: name, Namespace: ns}, Path: fmt.Sprintf("docs/%s/workflows/%s.yaml", ns, name), Spec: core.Spec{Text: "Synthetic review flow with explicitly declared uses and shared authoring rules.", Uses: []core.Ref{{Kind: "Skill", Name: fmt.Sprintf("%s-skill-%02d", ns, item)}}}})
 		}
 	}
-	snapshot := &source.Snapshot{Revision: revision, Files: map[string][]byte{}, Modes: map[string]string{}}
+	snapshot := &snapshot.Snapshot{ID: revision, Files: map[string][]byte{}, Modes: map[string]string{}}
 	for _, resource := range resources {
 		data, err := format.Encode(*resource)
 		if err != nil {

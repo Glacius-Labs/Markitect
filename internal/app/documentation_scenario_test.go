@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 	"github.com/Glacius-Labs/Markitect/internal/source"
 )
 
@@ -19,9 +20,9 @@ func TestDocumentationScenarioTracksExplicitCodeInput(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	fixed := func(revision string) *source.Snapshot {
-		snapshot := &source.Snapshot{
-			Revision: revision, Provisional: false,
+	fixed := func(revision string) *snapshot.Snapshot {
+		snapshot := &snapshot.Snapshot{
+			ID: revision, Provisional: false,
 			Files: make(map[string][]byte, len(working.Files)),
 			Modes: make(map[string]string, len(working.Modes)),
 		}

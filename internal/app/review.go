@@ -87,7 +87,7 @@ func RecordReview(p *Project, key, version, toolDigest string, config ReviewConf
 	}
 	record := &ReviewRecord{
 		SchemaVersion: ReviewSchemaVersion,
-		Entry:         key, Revision: p.Snapshot.Revision,
+		Entry:         key, Revision: p.Snapshot.ID,
 		SnapshotDigest: p.Snapshot.Digest(), ContextDigest: ctx.Digest,
 		ToolDigest: toolDigest, Version: version, Config: config,
 		Report: report, ReportDigest: Hash([]byte(report)),
@@ -118,7 +118,7 @@ func ReuseReview(before, after *Project, record *ReviewRecord, version, toolDige
 	if err := validateReviewableProject(before); err != nil {
 		return nil, fmt.Errorf("invalid review evidence base: %w", err)
 	}
-	if before.Snapshot.Revision != record.Revision || before.Snapshot.Digest() != record.SnapshotDigest {
+	if before.Snapshot.ID != record.Revision || before.Snapshot.Digest() != record.SnapshotDigest {
 		return nil, errors.New("review evidence base does not match the recorded revision and snapshot digest")
 	}
 	if _, ok := before.Graph.Resources[record.Entry]; !ok {
@@ -140,7 +140,7 @@ func ReuseReview(before, after *Project, record *ReviewRecord, version, toolDige
 		Entry: record.Entry, Advisory: true, TrustNotice: ReviewTrustNotice,
 	}
 	if after != nil && after.Snapshot != nil {
-		decision.Candidate = after.Snapshot.Revision
+		decision.Candidate = after.Snapshot.ID
 	}
 	addReason := func(reason string) { decision.Reasons = append(decision.Reasons, reason) }
 	if !config.AllowReuse {

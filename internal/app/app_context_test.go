@@ -20,7 +20,7 @@ func TestLoadParseAndCompileContext(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if parsed.Snapshot.Revision != "fixture-commit" || len(parsed.Diagnostics) != 0 {
+	if parsed.Snapshot.ID != "fixture-commit" || len(parsed.Diagnostics) != 0 {
 		t.Fatalf("unexpected parsed project: %#v", parsed)
 	}
 

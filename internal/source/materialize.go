@@ -12,16 +12,18 @@ import (
 	"strings"
 	"unicode"
 	"unicode/utf8"
+
+	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
 
 // Materialize writes a snapshot into destination, which must be absent or an
 // empty real directory. Every path is validated before anything is written.
-func Materialize(s *Snapshot, destination string) error {
+func Materialize(s *snapshot.Snapshot, destination string) error {
 	return MaterializeWithLimits(s, destination, DefaultLimits())
 }
 
 // MaterializeWithLimits is Materialize with caller-selected resource limits.
-func MaterializeWithLimits(s *Snapshot, destination string, limits Limits) error {
+func MaterializeWithLimits(s *snapshot.Snapshot, destination string, limits Limits) error {
 	if s == nil {
 		return errors.New("snapshot is nil")
 	}
@@ -41,7 +43,7 @@ func MaterializeWithLimits(s *Snapshot, destination string, limits Limits) error
 			return err
 		}
 		mode := s.Modes[p]
-		if mode != "100644" && mode != "100755" {
+		if mode != snapshot.RegularMode && mode != snapshot.ExecutableMode {
 			return fmt.Errorf("unsupported snapshot mode %q for %q", mode, p)
 		}
 		if int64(len(data)) > limits.MaxFileBytes || total > limits.MaxTotalBytes-int64(len(data)) {
@@ -101,7 +103,7 @@ func writeMaterializedFile(dest, repoPath string, data []byte, mode string) erro
 	}
 	file := filepath.Join(current, parts[len(parts)-1])
 	perm := os.FileMode(0644)
-	if mode == "100755" {
+	if mode == snapshot.ExecutableMode {
 		perm = 0755
 	}
 	f, err := os.OpenFile(file, os.O_WRONLY|os.O_CREATE|os.O_EXCL, perm)
@@ -171,7 +173,7 @@ func validateRepoPath(p string) error {
 	return nil
 }
 
-func snapshotPaths(s *Snapshot) []string {
+func snapshotPaths(s *snapshot.Snapshot) []string {
 	paths := make([]string, 0, len(s.Files))
 	for p := range s.Files {
 		paths = append(paths, p)

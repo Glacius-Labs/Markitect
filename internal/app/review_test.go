@@ -171,3 +171,33 @@ func TestReviewResultStatusStringsAreStable(t *testing.T) {
 		t.Fatal("review status strings changed")
 	}
 }
+
+func TestReviewUsesOpaqueFixedSnapshotIdentity(t *testing.T) {
+	base := reviewFixture(t, "fixture:base", false, reviewResources(false, false, false), nil)
+	record := mustRecordReview(t, base, testReviewConfig)
+	data, err := YAML(record)
+	if err != nil {
+		t.Fatal(err)
+	}
+	decoded, err := DecodeReviewRecord(data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if decoded.Revision != base.Snapshot.ID {
+		t.Fatal("opaque identity changed during evidence round trip")
+	}
+	candidate := reviewFixture(t, "fixture:candidate", false, reviewResources(false, false, false), nil)
+	decision, err := ReuseReview(base, candidate, decoded, "v1", "tool-1", testReviewConfig)
+	if err != nil || decision.Status != ReviewReusable {
+		t.Fatalf("same content under another identity: %#v, %v", decision, err)
+	}
+	if _, err := ReuseReview(candidate, candidate, decoded, "v1", "tool-1", testReviewConfig); err == nil {
+		t.Fatal("wrong fixed base identity accepted")
+	}
+	for _, id := range []string{"", "   ", "fixture:\x00base", "\xff"} {
+		base.Snapshot.ID = id
+		if _, err := RecordReview(base, "general/Workflow/review", "v1", "tool-1", testReviewConfig, "report"); err == nil {
+			t.Fatalf("invalid fixed identity %q accepted", id)
+		}
+	}
+}

@@ -13,6 +13,7 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/internal/core"
 	"github.com/Glacius-Labs/Markitect/internal/format"
+	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 	"github.com/Glacius-Labs/Markitect/internal/source"
 )
 
@@ -42,7 +43,7 @@ func buildInitPlan(root string, options InitOptions) (*initState, error) {
 	if err := preflightInit(state, options); err != nil {
 		return nil, err
 	}
-	projected := &source.Snapshot{Revision: "init-preview", Provisional: true, Files: cloneByteMap(state.snapshot.Files), Modes: cloneStringMap(state.snapshot.Modes)}
+	projected := &snapshot.Snapshot{ID: "init-preview", Provisional: true, Files: cloneByteMap(state.snapshot.Files), Modes: cloneStringMap(state.snapshot.Modes)}
 	for _, file := range files {
 		projected.Files[file.Path] = []byte(file.Text)
 		projected.Modes[file.Path] = "100644"

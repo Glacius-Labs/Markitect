@@ -11,7 +11,7 @@ import (
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/internal/release"
-	"github.com/Glacius-Labs/Markitect/internal/source"
+	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 	"go.yaml.in/yaml/v3"
 )
 
@@ -26,7 +26,7 @@ func makeAssets(t *testing.T, tag, runID string, attempt int, commit string) (st
 		"integration/run-markitect.go":      []byte("package main\nfunc main() {}\n"),
 		"integration/run-markitect_test.go": []byte("package main\nimport \"testing\"\nfunc TestReady(t *testing.T) {}\n"),
 	}
-	snapshot := &source.Snapshot{Revision: commit, Files: files, Modes: map[string]string{}}
+	snapshot := &snapshot.Snapshot{ID: commit, Files: files, Modes: map[string]string{}}
 	for name := range files {
 		snapshot.Modes[name] = "100644"
 	}

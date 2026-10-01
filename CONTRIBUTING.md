@@ -7,8 +7,9 @@
 | `cmd/markitect` | CLI flags, exit codes, and output |
 | `cmd/markitect-release`, `internal/publish` | Maintainer release verification, publication, and distribution metadata |
 | `internal/core` | Typed resources, project configuration, and dependency graph |
+| `internal/snapshot` | Resolved snapshot values, stable content digests, and deterministic snapshot comparison |
 | `internal/format` | Strict YAML parsing and schema generation |
-| `internal/source` | Working-tree and immutable Git snapshots |
+| `internal/source` | Git revision and working-tree acquisition, Git process hardening, and source materialization |
 | `internal/inputs` | Explicit ordinary-file inputs |
 | `internal/app` | Context, impact, evidence, verification, rendering, initialization, and controlled writes |
 | `internal/authoring` | Embedded core authoring resources |
@@ -21,6 +22,8 @@
 | `packaging/winget` | Versioned portable package manifests derived from verified releases |
 | `examples` | Executable synthetic product example |
 | `docs` | Product architecture, usage, decisions, and canonical roadmap |
+
+Snapshot semantics and the boundary between generic values and Git operations are documented in [Source snapshots](docs/source-snapshots.md). Keep Git resolution and process hardening in `internal/source`; keep deterministic comparison over resolved values in `internal/snapshot`. Repository branch, index, and worktree checks belong to the write use cases that require them. Do not add alternate production providers or a provider framework without a concrete consumer.
 
 Adopting repositories own their content and any import scripts used to bring existing material into the Markitect model. Markitect does not embed a repository-specific migration or renderer policy. Core authoring guidance remains part of the product.
 

@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 
 	"github.com/Glacius-Labs/Markitect/internal/release"
-	"github.com/Glacius-Labs/Markitect/internal/source"
+	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
 
 const releaseManifestPath = "tools/markitect/release.yaml"
@@ -57,7 +57,7 @@ type installFileState struct {
 
 type installState struct {
 	files  map[string]installFileState
-	head   *source.Snapshot
+	head   *snapshot.Snapshot
 	branch string
 	kind   string
 }

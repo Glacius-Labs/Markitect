@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/internal/core"
-	"github.com/Glacius-Labs/Markitect/internal/source"
+	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
 
 func TestStrictProviderDiagnosticsHaveStableResourceOrder(t *testing.T) {
@@ -17,7 +17,7 @@ func TestStrictProviderDiagnosticsHaveStableResourceOrder(t *testing.T) {
 		rule := &core.Resource{Kind: "Rule", Metadata: core.Metadata{Name: name}, Path: "docs/rules/" + name + ".yaml", Line: 1}
 		resources[rule.Key()] = rule
 	}
-	p := &Project{Snapshot: &source.Snapshot{Files: map[string][]byte{}}, Graph: &core.Graph{Project: project, Resources: resources}}
+	p := &Project{Snapshot: &snapshot.Snapshot{Files: map[string][]byte{}}, Graph: &core.Graph{Project: project, Resources: resources}}
 	want := []string{"docs/rules/alpha.yaml", "docs/rules/middle.yaml", "docs/rules/zeta.yaml"}
 	for run := 0; run < 32; run++ {
 		findings := checkProviderAdapterInputs(p)

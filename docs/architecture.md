@@ -20,7 +20,7 @@ Project-owned commands in `spec.checks` may run external analyzers during `verif
 flowchart LR
     Intent[Human intent] --> Agent[Authoring agent]
     Agent --> Sources[Canonical YAML and declared files]
-    Sources --> Snapshot[Fixed Git snapshot]
+    Sources --> Snapshot[Resolved project snapshot]
     Snapshot --> Graph[Parse and resolve graph]
     Graph --> Checks[Structural checks]
     Graph --> Context[Compiled context]
@@ -57,7 +57,7 @@ The Project may declare `spec.checks` as entries with a name and `run` argument 
 
 Strict parsing rejects unknown fields, duplicate identities, extra YAML documents, aliases, merge keys, and unsupported tags. Graph checks validate kinds, identities, references, access, bindings, signatures, and cycles. Schemas assist editors; the parser and graph remain authoritative.
 
-The core does not depend on a model API, IDE, provider SDK, or repository-specific policy. The CLI, Git reader, filesystem writers, release packaging, and explicitly configured output adapters are boundaries around the core. `verify` executes only the commands declared by the selected Project. It neither chooses a repository profile nor infers a runtime gate from files it happens to find.
+The core does not depend on a model API, IDE, provider SDK, or repository-specific policy. The CLI resolves Git selectors through the Git source adapter into a project snapshot. Deterministic application decisions consume that value; they do not execute Git. Filesystem writers, snapshot materialization, release packaging, and explicitly configured output adapters remain boundaries around the core. `verify` executes only the commands declared by the selected Project. It neither chooses a repository profile nor infers a runtime gate from files it happens to find. See [Source snapshots](source-snapshots.md) for the current boundary and its Git-specific contracts.
 
 Ordinary project artifacts stay with their owners and enter context or impact through exact declared inputs. Source code has no special semantic status: Markitect does not parse syntax trees, infer symbols or call graphs, or derive business meaning from code. Domain-specific analysis belongs outside the deterministic core.
 
@@ -67,12 +67,12 @@ Markitect uses ports and adapters as a guide to dependency direction, with concr
 
 | Role | Packages | Dependency boundary |
 |---|---|---|
-| Resource model and deterministic decisions | `internal/core`, `internal/inputs` | Operate on explicit values and bytes; no Git, filesystem writer, CLI, or model API dependency. |
-| Application use cases | `internal/app` | Compose snapshots, parsing, graph checks, context, impact, review evidence, verification, and controlled writes. |
-| Input and output adapters | `internal/source`, `internal/format`, `internal/contentpackage`, `internal/render`, `internal/release` | Read or produce concrete Git, YAML, archive, schema, and managed-output representations. |
+| Resource model and deterministic decisions | `internal/core`, `internal/inputs`, `internal/snapshot` | Operate on explicit values and bytes; no Git, filesystem writer, CLI, or model API dependency. |
+| Application use cases | `internal/app` | Compose resolved snapshots, parsing, graph checks, context, impact, review evidence, verification, and controlled writes. |
+| Input and output adapters | `internal/source`, `internal/format`, `internal/contentpackage`, `internal/render`, `internal/release` | Acquire Git-backed values, read or produce YAML, archives, schemas, materialized files, and managed outputs. |
 | Entry points | `cmd/markitect`, `cmd/markitect-release`, `integration` | Parse commands, choose use cases, and report results. The standalone bootstrap in `integration` remains a single Go source file because distributions execute it directly. |
 
-This is not strict interface-driven hexagonal wiring: application use cases currently call the concrete adapters. There is no interchangeable implementation to justify ports for each one. Add a narrow interface in the consuming package when a real use case needs substitution; keep the deterministic model independent of the adapters. The publication `Runner` is an existing example of a consumer-owned boundary for the external `gh` process.
+This is not strict interface-driven hexagonal wiring: application use cases currently call the concrete adapters. There is no interchangeable implementation to justify ports for each one. Add a narrow interface in the consuming package when a real use case needs substitution; keep the deterministic model independent of the adapters. `internal/snapshot` owns the concrete value and deterministic comparison; `internal/source` remains the Git acquisition adapter. The publication `Runner` is an existing example of a consumer-owned boundary for the external `gh` process.
 
 Rendering produces generic managed views and explicitly declared Codex/Claude targets or rule adapters. Markitect owns those supported adapters; additional project-specific output policy remains outside the core. No target is selected implicitly. Format, render, schema, install, and initialization operations validate plans before writing; per-file writes are controlled, not a multi-file transaction.
 
@@ -90,7 +90,7 @@ Portable core authoring resources are embedded and compiled through the normal p
 
 ## Fixed inputs and evidence
 
-A commit resolves to one Git tree with paths, modes, and bytes. Later working-tree edits do not alter that snapshot. Context fingerprints its selected inputs and tool identity. Impact includes changed paths and old/new consumers of changed dependencies. Unknown or unmodelled inputs conservatively broaden results.
+A Git commit resolves to one snapshot with paths, regular-file modes, and bytes. Later working-tree edits do not alter that fixed value. Context fingerprints its selected inputs and tool identity. Impact compares two resolved snapshots, including bytes and modes, then includes old and new consumers of changed dependencies. Unknown or unmodelled inputs conservatively broaden results. Snapshot identity is kept alongside content: the legacy content digest continues to hash sorted paths, mode tokens, and bytes, and does not include the ID or provisional flag. See [Source snapshots](source-snapshots.md) for evidence identity, review compatibility, package provenance, and materialization boundaries.
 
 `verify --revision COMMIT` checks that exact snapshot. It runs Project-declared commands inside its materialized copy using literal executable arguments and bounded time/output. A missing check declaration, unavailable executable, timeout, or output overflow is incomplete evidence. Commands run with local user authority; snapshot materialization is not an operating-system sandbox.
 

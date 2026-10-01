@@ -5,9 +5,11 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
 
-func loadWorkingTree(root string, s *Snapshot, limits Limits) error {
+func loadWorkingTree(root string, s *snapshot.Snapshot, limits Limits) error {
 	var total int64
 	var walk func(string, string) error
 	walk = func(dir, relDir string) error {
@@ -67,9 +69,9 @@ func loadWorkingTree(root string, s *Snapshot, limits Limits) error {
 			}
 			total += int64(len(data))
 			s.Files[rel] = data
-			mode := "100644"
+			mode := snapshot.RegularMode
 			if info.Mode().Perm()&0111 != 0 {
-				mode = "100755"
+				mode = snapshot.ExecutableMode
 			}
 			s.Modes[rel] = mode
 		}

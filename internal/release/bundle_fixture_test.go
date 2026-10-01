@@ -8,10 +8,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Glacius-Labs/Markitect/internal/source"
+	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
 
-func bundleSnapshot() *source.Snapshot {
+func bundleSnapshot() *snapshot.Snapshot {
 	files := map[string][]byte{
 		"go.mod":                 []byte("module github.com/Glacius-Labs/Markitect\n\ngo 1.27.1\n"),
 		"go.sum":                 []byte("go.yaml.in/yaml/v3 v3.0.5 h1:fixture\n"),
@@ -28,7 +28,7 @@ func bundleSnapshot() *source.Snapshot {
 	for name := range files {
 		modes[name] = "100644"
 	}
-	return &source.Snapshot{Revision: strings.Repeat("a", 40), Files: files, Modes: modes}
+	return &snapshot.Snapshot{ID: strings.Repeat("a", 40), Files: files, Modes: modes}
 }
 
 type bundleTestEntry struct {

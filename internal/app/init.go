@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/Glacius-Labs/Markitect/internal/core"
+	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 	"github.com/Glacius-Labs/Markitect/internal/source"
 )
 
@@ -42,8 +43,8 @@ type initState struct {
 	root      string
 	branch    string
 	insideGit bool
-	head      *source.Snapshot
-	snapshot  *source.Snapshot
+	head      *snapshot.Snapshot
+	snapshot  *snapshot.Snapshot
 	plan      *InitPlan
 	areaInfo  os.FileInfo
 }

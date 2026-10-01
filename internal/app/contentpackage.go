@@ -7,31 +7,35 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/contentpackage"
 	"github.com/Glacius-Labs/Markitect/internal/core"
 	"github.com/Glacius-Labs/Markitect/internal/format"
-	"github.com/Glacius-Labs/Markitect/internal/source"
+	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
 
 // PackContent validates a closed content package from one fixed source tree.
 // The returned pin is a suggestion: consumers choose the vendored archive path
 // and distribution provenance after obtaining the exact bytes from their owner.
-func PackContent(snapshot *source.Snapshot) ([]byte, core.PackagePin, error) {
+// The caller supplies provenance; the compiler does not infer a source system.
+func PackContent(s *snapshot.Snapshot, provenance string) ([]byte, core.PackagePin, error) {
 	var pin core.PackagePin
-	if snapshot == nil || snapshot.Provisional || !validRevision(snapshot.Revision) {
-		return nil, pin, fmt.Errorf("pack requires a fixed Git snapshot")
+	if s == nil || s.Provisional || !validSnapshotID(s.ID) {
+		return nil, pin, fmt.Errorf("pack requires a fixed identified snapshot")
 	}
-	manifest, err := format.Parse("markitect-package.yaml", snapshot.Files["markitect-package.yaml"])
+	if !validSnapshotID(provenance) {
+		return nil, pin, fmt.Errorf("package provenance is required")
+	}
+	manifest, err := format.Parse("markitect-package.yaml", s.Files["markitect-package.yaml"])
 	if err != nil {
 		return nil, pin, err
 	}
 	if manifest.Kind != "Package" {
 		return nil, pin, fmt.Errorf("markitect-package.yaml must contain a Package")
 	}
-	archive, err := contentpackage.Build(snapshot.Files)
+	archive, err := contentpackage.Build(s.Files)
 	if err != nil {
 		return nil, pin, err
 	}
 	pin = core.PackagePin{
 		Name: manifest.Metadata.Name, Version: manifest.Spec.Version,
-		Source:  "git:" + snapshot.Revision,
+		Source:  provenance,
 		Archive: "packages/" + manifest.Metadata.Name + "-" + manifest.Spec.Version + ".zip",
 		SHA256:  strings.TrimPrefix(Hash(archive), "sha256:"),
 	}
@@ -40,8 +44,8 @@ func PackContent(snapshot *source.Snapshot) ([]byte, core.PackagePin, error) {
 	if err != nil {
 		return nil, pin, err
 	}
-	validation := &source.Snapshot{
-		Revision: snapshot.Revision, Files: map[string][]byte{"markitect.yaml": config, pin.Archive: archive},
+	validation := &snapshot.Snapshot{
+		ID: s.ID, Files: map[string][]byte{"markitect.yaml": config, pin.Archive: archive},
 		Modes: map[string]string{"markitect.yaml": "100644", pin.Archive: "100644"},
 	}
 	p, err := Parse(validation)

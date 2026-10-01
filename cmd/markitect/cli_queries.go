@@ -23,7 +23,7 @@ func runInventory(o commandOptions, emit func(any) int, fail func(error) int) in
 		items = append(p.Inventory, items...)
 		coverage = "typed canonical resources and ordinary Markdown candidates; generated views are not counted twice"
 	}
-	return emit(report{Tool: "Markitect", Version: version, Revision: snap.Revision, Provisional: snap.Provisional, Digest: snap.Digest(), Status: "inventory", Coverage: coverage, Inventory: items})
+	return emit(report{Tool: "Markitect", Version: version, Revision: snap.ID, Provisional: snap.Provisional, Digest: snap.Digest(), Status: "inventory", Coverage: coverage, Inventory: items})
 }
 
 func runFind(o commandOptions, p *app.Project, toolDigest string, emit func(any) int, fail func(error) int) int {
@@ -31,7 +31,7 @@ func runFind(o commandOptions, p *app.Project, toolDigest string, emit func(any)
 	if err != nil {
 		return fail(err)
 	}
-	return emit(queryEnvelope{Version: version, ToolDigest: toolDigest, Revision: p.Snapshot.Revision, Provisional: p.Snapshot.Provisional, SnapshotDigest: p.Snapshot.Digest(), Result: matches})
+	return emit(queryEnvelope{Version: version, ToolDigest: toolDigest, Revision: p.Snapshot.ID, Provisional: p.Snapshot.Provisional, SnapshotDigest: p.Snapshot.Digest(), Result: matches})
 }
 
 func runExplain(o commandOptions, p *app.Project, toolDigest string, emit func(any) int, fail func(error) int) int {
@@ -56,7 +56,7 @@ func runExplain(o commandOptions, p *app.Project, toolDigest string, emit func(a
 	if err != nil {
 		return fail(err)
 	}
-	return emit(queryEnvelope{Version: version, ToolDigest: toolDigest, Revision: p.Snapshot.Revision, Provisional: p.Snapshot.Provisional, SnapshotDigest: p.Snapshot.Digest(), Result: explanation})
+	return emit(queryEnvelope{Version: version, ToolDigest: toolDigest, Revision: p.Snapshot.ID, Provisional: p.Snapshot.Provisional, SnapshotDigest: p.Snapshot.Digest(), Result: explanation})
 }
 
 func runContext(o commandOptions, p *app.Project, toolDigest string, emit func(any) int, fail func(error) int) int {

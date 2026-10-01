@@ -33,8 +33,8 @@ func TestLoadPinnedCommitIgnoresWorkingTreeChanges(t *testing.T) {
 	if s.Provisional {
 		t.Fatal("pinned snapshot marked provisional")
 	}
-	if s.Revision != revision {
-		t.Fatalf("revision = %q, want full commit %q", s.Revision, revision)
+	if s.ID != revision {
+		t.Fatalf("snapshot ID = %q, want full commit %q", s.ID, revision)
 	}
 	if got := string(s.Files["keep.txt"]); got != "committed" {
 		t.Fatalf("pinned content = %q, want committed blob", got)
@@ -84,8 +84,8 @@ func TestLoadPinnedCommitIgnoresAmbientGitRepositoryOverrides(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if snapshot.Revision != selectedRevision {
-		t.Fatalf("revision = %q, want selected repo revision %q", snapshot.Revision, selectedRevision)
+	if snapshot.ID != selectedRevision {
+		t.Fatalf("snapshot ID = %q, want selected repo revision %q", snapshot.ID, selectedRevision)
 	}
 	if got := string(snapshot.Files["selected.txt"]); got != "selected repository" {
 		t.Fatalf("selected blob = %q, want selected repository contents", got)

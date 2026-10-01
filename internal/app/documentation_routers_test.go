@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/internal/core"
-	"github.com/Glacius-Labs/Markitect/internal/source"
+	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
 
 func routerProject(roots []string, files map[string]string) *Project {
@@ -15,7 +15,7 @@ func routerProject(roots []string, files map[string]string) *Project {
 		bytes[name] = []byte(value)
 	}
 	return &Project{
-		Snapshot: &source.Snapshot{Revision: strings.Repeat("a", 40), Files: bytes},
+		Snapshot: &snapshot.Snapshot{ID: strings.Repeat("a", 40), Files: bytes},
 		Graph:    &core.Graph{Project: &core.Resource{Spec: core.Spec{Documentation: &core.Documentation{Roots: roots}}}},
 	}
 }
