@@ -88,7 +88,7 @@ This is the v0.8.1 source candidate, not a published release or a new snapshot p
 
 ## Later product options
 
-Current source adds a neutral [onboarding exercise](onboarding.md), its replay in Windows CI, and structural fixture checks on both supported platforms. [WinGet distribution](winget.md) records the submitted v0.5.0 portable manifests and local installation/upgrade checks; submission is distinct from publication in Microsoft's catalog. The [MCP evaluation](mcp-evaluation.md) records the concluded bounded assessment, the decision to keep MCP experimental, and the deferred second-client criterion. Claude remains blocked at the user's direction. The MCP prototype remains experimental and is excluded from published CLI binaries.
+Current source adds a neutral [onboarding exercise](onboarding.md), its replay in Windows CI, and structural fixture checks on both supported platforms. [WinGet distribution](winget.md) records the submitted v0.5.0 portable manifests and local installation/upgrade checks; submission is distinct from publication in Microsoft's catalog. The [MCP evaluation](mcp-evaluation.md) records the concluded bounded assessment, the decision to keep MCP experimental, and the deferred second-client criterion. The MCP prototype remains experimental and is excluded from published CLI binaries.
 
 - MCP, LSP, and graph visualization when measured authoring needs justify them.
 - Runtime/operator integration only for a concrete state-reconciliation contract.
