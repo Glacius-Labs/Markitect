@@ -1,4 +1,4 @@
-# Markitect
+<h1><img src="assets/markitect-avatar-512.png" alt="" width="48" height="48"> Markitect</h1>
 
 Markitect makes AI-facing engineering knowledge maintainable as a small, typed system. It gives people and agents a canonical place to author rules, workflows, skills, agents, reusable text, and contracts; explicit dependencies connect those resources. A deterministic Go CLI validates structure, compiles selected context, explains relationships, measures change impact, checks declared outputs, and records whether review evidence still applies.
 

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title desc">
+  <title id="title">Markitect M — offen</title>
+  <desc id="desc">Ein geometrisches M aus fünf getrennten, präzise geschnittenen Teilen.</desc>
+  <g fill="#c4cac8">
+    <path d="M14 18 58 59v20L14 39Z"/>
+    <path d="m114 18-44 41v20l44-40Z"/>
+    <path d="m14 47 21 22v43H14Z"/>
+    <path d="M114 47 93 69v43h21Z"/>
+    <path d="m64 69 10 10v33l-10 9-10-9V79Z"/>
+  </g>
+</svg>
