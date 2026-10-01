@@ -377,7 +377,7 @@ func maskMarkdownCode(text string) string {
 		start = end + 1
 	}
 	for i := 0; i < len(masked); i++ {
-		if masked[i] != '`' {
+		if masked[i] != '`' || escapedMarkdown(text, i) {
 			continue
 		}
 		n := 1

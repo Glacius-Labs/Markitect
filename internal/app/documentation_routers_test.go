@@ -134,6 +134,8 @@ func TestMarkdownRouterLinkBoundaries(t *testing.T) {
 		{"parenthesized title", "[Guide](guide.md (title))", []routerLink{{"guide.md", 1}}},
 		{"fence closing suffix", "```md\n```text\n[Example](missing.md)\n```\n[Guide](guide.md)", []routerLink{{"guide.md", 5}}},
 		{"invalid backtick opener", "```info`text\n[Guide](guide.md)", []routerLink{{"guide.md", 2}}},
+		{"escaped backticks", "\\`[Guide](guide.md)\\`", []routerLink{{"guide.md", 1}}},
+		{"backslash inside code is literal", "`code\\` [Guide](guide.md)", []routerLink{{"guide.md", 1}}},
 		{"exact inline delimiter", "` example `` [Example](missing.md) ` [Guide](guide.md)", []routerLink{{"guide.md", 1}}},
 	}
 	for _, tt := range tests {
