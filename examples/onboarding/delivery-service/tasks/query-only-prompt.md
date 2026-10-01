@@ -1,0 +1,3 @@
+# Shared read-only query task
+
+The support lead asks where an approved late-parcel refund policy change belongs and what information the refund-triage entrypoint currently receives. Do not edit files or make policy decisions. Use literal discovery filtered by kind `Skill` and namespace `support`, explain the matching entry's declared direct relationships, then compile its context at the supplied fixed baseline snapshot. Report the resource identity, outgoing relationships (including area rules and selected implementation), and included paths. Do not infer dependencies from links or include resources that are not in the compiled result.

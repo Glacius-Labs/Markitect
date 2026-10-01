@@ -143,9 +143,14 @@ function Assert-InstalledVersion {
     if ($versionExit -ne 0 -or $versionOutput -ne "Markitect $ExpectedVersion (windows/amd64)") {
         throw "Unexpected Markitect executable result (exit $versionExit): $versionOutput"
     }
-    $userPath = [Environment]::GetEnvironmentVariable('Path', 'User') -split ';'
-    if ($portablePackageDirectory -notin $userPath) {
-        throw "WinGet did not add the portable package directory to the user PATH: $portablePackageDirectory"
+    $userPath = @([Environment]::GetEnvironmentVariable('Path', 'User') -split ';' | ForEach-Object { [Environment]::ExpandEnvironmentVariables($_).TrimEnd('\') })
+    $linksDirectory = Join-Path $env:LOCALAPPDATA 'Microsoft\WinGet\Links'
+    $aliasDirectory = if ($portablePackageDirectory -in $userPath) { $portablePackageDirectory } elseif ($linksDirectory -in $userPath) { $linksDirectory } else { $null }
+    if (-not $aliasDirectory) { throw 'WinGet did not expose its portable package or command-alias directory on the user PATH.' }
+    $aliasExe = Join-Path $aliasDirectory 'markitect.exe'
+    $expectedHash = if ($ExpectedVersion -eq $olderVersion) { $olderSha256 } else { $submittedSha256 }
+    if ((Get-FileHash -LiteralPath $exe -Algorithm SHA256).Hash -ne $expectedHash -or (Get-FileHash -LiteralPath $aliasExe -Algorithm SHA256).Hash -ne $expectedHash) {
+        throw 'Installed executable or PATH command alias does not match the pinned release digest.'
     }
     Write-Host "Verified Markitect $ExpectedVersion at $exe"
 }

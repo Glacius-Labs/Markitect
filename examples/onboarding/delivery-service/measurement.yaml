@@ -1,0 +1,30 @@
+schemaVersion: 1
+exercise: parcel-support-onboarding
+classification: machine-cli-exercise
+startedUtc: "2026-10-01T18:43:15.1454866Z"
+completedUtc: "2026-10-01T18:43:24.1181207Z"
+binaryPath: "C:\\Users\\CONSIL~1\\AppData\\Local\\Temp\\markitect-v0.5.0-run-36889429215\\markitect-v0.5.0-windows-amd64.exe"
+binarySha256: 6f5b98dad2ea6003bc0368800691af70084a44d2c225c26fe12d120bcda27178
+versionOutput: "Markitect 0.5.0 (windows/amd64)"
+fixture: examples/onboarding/delivery-service
+baseSha: "973f11d9cfc157610ed84f4e9582c3534c67018c"
+candidateSha: "26c88c133cf09e09dd7f03a630c8e470128c002d"
+status: passed
+outcomes:
+  initPreviewReadOnly: passed
+  initWriteCreatedExpectedFiles: passed
+  baselineCheck: passed
+  contextExpectedPaths: passed
+  candidateVerify: passed
+  impactExpectedSet: passed
+durationsMs:
+  version: 38
+  init-preview: 701
+  init-write: 2075
+  render-baseline: 1694
+  check-baseline: 171
+  context-baseline: 218
+  render-candidate: 1625
+  check-candidate: 167
+  verify-candidate: 494
+  impact-fixed-shas: 417
