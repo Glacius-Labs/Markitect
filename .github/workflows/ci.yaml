@@ -70,6 +70,29 @@ jobs:
       - name: Check code and documentation example formatting
         run: go run ./cmd/markitect format --repo examples/documentation
 
+      - name: Check onboarding example
+        run: go run ./cmd/markitect check --repo examples/onboarding/delivery-service
+
+      - name: Check onboarding example formatting
+        run: go run ./cmd/markitect format --repo examples/onboarding/delivery-service
+
+      - name: Replay onboarding workflow
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $binary = Join-Path $env:RUNNER_TEMP 'markitect-onboarding.exe'
+          go build -o $binary ./cmd/markitect
+          if ($LASTEXITCODE -ne 0) { throw 'Could not build the onboarding candidate' }
+          ./scripts/onboarding/Measure-Adoption.ps1 -MarkitectBinary $binary -OutputDirectory (Join-Path $env:RUNNER_TEMP "markitect-onboarding-$env:GITHUB_SHA")
+
+      - name: Upload onboarding evidence
+        if: always() && runner.os == 'Windows'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: onboarding-${{ github.sha }}
+          path: ${{ runner.temp }}/markitect-onboarding-${{ github.sha }}/
+          if-no-files-found: warn
+          retention-days: 14
       - name: Check documentation placement example
         run: go run ./cmd/markitect check --repo examples/documentation-placement
 

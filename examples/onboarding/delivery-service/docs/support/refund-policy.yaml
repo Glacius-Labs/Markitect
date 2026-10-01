@@ -1,0 +1,12 @@
+apiVersion: markitect.example.org/v1alpha1
+kind: Text
+metadata:
+    name: refund-policy
+    namespace: support
+spec:
+    text: |
+        For a parcel delivered late, customers may request a refund of the delivery fee up to 14 days after delivery. Confirm the tracking history and order number before offering the refund.
+
+        For a damaged parcel, request a description and a photograph of the damage before deciding whether to refund or replace the order.
+
+        Escalate suspected loss, repeated claims, or conflicting tracking evidence to a support lead. Do not promise a refund before the evidence is reviewed.

@@ -2,6 +2,27 @@
 
 **Recorded:** 2026-10-01. This dated assessment records the release evidence verified at that time and distinguishes it from source behavior. It reports only the Markitect source, its distributions, and source-owned gates; project adoption and acceptance are outside its scope.
 
+## v0.7.0 published release
+
+The immutable [v0.7.0 release](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.7.0), release ID `401286207`, binds [source commit `857a77f`](https://github.com/Glacius-Labs/Markitect/commit/857a77f86b3a4056c7973fed49d12ce2e6bf9b28), merged from [PR 31](https://github.com/Glacius-Labs/Markitect/pull/31). Its fixed-run context request binds a committed task snapshot and explicitly selected source paths to one full Git revision, reporting selected hashes and missing inputs. This records product capability only; no adopting-project implementation effectiveness or time/cost savings are claimed here. The annotated tag is unsigned; the immutable release and its asset attestations were verified separately.
+
+| Evidence | Exact basis | Result |
+|---|---|---|
+| Source gates | [PR CI 36911228378](https://github.com/Glacius-Labs/Markitect/actions/runs/36911228378) | Windows/Linux source gates passed for the exact reviewed source tree; its tree is identical to the release commit |
+| Tagged release | [Run 36913950360](https://github.com/Glacius-Labs/Markitect/actions/runs/36913950360), attempt 1 | Windows/Linux source and bundle install smoke gates passed; exact-source assets and provenance were assembled |
+| Owner publisher | Release `401286207` | `published-verified`; owner preflight, run artifact, tag, payload digests, immutable release, and each asset attestation were verified |
+| Public distribution metadata | `markitect-release distribution --tag v0.7.0 --repo . --write` | Public immutable release and asset attestations were checked; README install blocks and three versioned WinGet manifests were generated from the attested assets |
+| Public downloads | Versioned unauthenticated Windows/Linux download URLs | Distribution verification matched the four downloaded asset digests to provenance and the successful release run |
+
+| Asset | Verified SHA-256 |
+|---|---|
+| `markitect-v0.7.0-bundle.zip` | `461ae101e3cc50f15b315382162fff1f75f4d91266a0e96790871e80b93c9db5` |
+| `markitect-v0.7.0-linux-amd64` | `384718c6574b28ffdcce121a17bda167d963996c3c954e0c27a33493cd9725c8` |
+| `markitect-v0.7.0-windows-amd64.exe` | `d797dbbd26d2c40b819b1519dd554701c407505091c9494baa30ff1447a4be0f` |
+| `markitect-v0.7.0-provenance.yaml` | `08f0ab103e33f0f8acbf5a1428ccc85b6e552ec5ed11d22136886610f4cba0f6` |
+
+The generated WinGet manifests are local versioned metadata; no community catalog submission or package-manager installation result is claimed. The release gates establish the Markitect source and package checks that ran, not adopting-project acceptance.
+
 ## v0.6.0 published release
 
 The immutable [v0.6.0 release](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.6.0), release ID `401237667`, binds [source commit 810a86f](https://github.com/Glacius-Labs/Markitect/commit/810a86ffe13aef065f38e70ae49d40911f447af2) from [PR 27](https://github.com/Glacius-Labs/Markitect/pull/27). It ships canonical-owner authoring guidance, optional snapshot router validation and the provider diagnostic/shared-agent-link corrections integrated after v0.5.0. The tag is annotated and unsigned; GitHub release and all asset attestations were verified separately.

@@ -1,0 +1,17 @@
+apiVersion: markitect.example.org/v1alpha1
+kind: Contract
+metadata:
+    name: refund-decision
+    namespace: support
+spec:
+    text: |
+        Assess a parcel refund request and return the recommended action with its evidence and remaining uncertainty.
+    input:
+        - order
+        - tracking
+        - customer-request
+    output:
+        - recommendation
+        - evidence
+        - uncertainty
+    kind: Agent
