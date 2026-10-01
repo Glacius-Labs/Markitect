@@ -47,6 +47,8 @@ The tagged source passed Windows/Linux release gates, and the immutable release 
 
 ## Later product options
 
+Current source follow-up adds a neutral [onboarding exercise](onboarding.md), its replay in Windows CI, and structural fixture checks on both supported platforms. [WinGet distribution](winget.md) records the submitted v0.5.0 portable manifests and local installation/upgrade checks; submission is distinct from publication in Microsoft's catalog. The [MCP evaluation](mcp-evaluation.md) records the bounded experiment and client limitations. The existing MCP prototype remains experimental and is not part of the published v0.5.0 binaries.
+
 - MCP, LSP, and graph visualization when measured authoring needs justify them.
 - Runtime/operator integration only for a concrete state-reconciliation contract.
 
