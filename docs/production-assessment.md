@@ -2,6 +2,28 @@
 
 **Recorded:** 2026-10-01. This dated assessment records the release evidence verified at that time and distinguishes it from source behavior. It reports only the Markitect source, its distributions, and source-owned gates; project adoption and acceptance are outside its scope.
 
+## v0.8.0 published release
+
+The immutable [v0.8.0 release](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.8.0), release ID `401351835`, binds [source commit `b8b81f0`](https://github.com/Glacius-Labs/Markitect/commit/b8b81f0739d23894592ba5b76ee91a25e7dea6d4), merged from [PR 36](https://github.com/Glacius-Labs/Markitect/pull/36). It recommends responsibility-owned canonical resources under `.markitect/areas/` and makes `.markitect/areas/<namespace>` the default for new `init` plans that omit `--path`. Existing Projects, explicit paths, generated companions, provider outputs and pinned distribution paths retain their contracts. The annotated tag is unsigned; the immutable release and every asset attestation were verified separately.
+
+| Evidence | Exact basis | Result |
+|---|---|---|
+| Source gates | [PR CI 36923568400](https://github.com/Glacius-Labs/Markitect/actions/runs/36923568400) and [main CI 36924066559](https://github.com/Glacius-Labs/Markitect/actions/runs/36924066559) | Windows/Linux source gates passed; candidate and release source share tree `2d535943fb32787adb037853f77d0c7ecdfb5a51` |
+| Tagged release | [Run 36924579615](https://github.com/Glacius-Labs/Markitect/actions/runs/36924579615), attempt 1 | Source, deterministic bundle and bundle install/bootstrap gates passed on Windows/Linux; the executable layout fixture and omitted-path default were checked |
+| Owner publisher | Release `401351835` | `published-verified`; owner preflight, exact run artifact, tag, payload digests, immutable release and each asset attestation were verified |
+| Public distribution metadata | `markitect-release distribution --tag v0.8.0 --repo . --write` | Public release, each asset attestation, provenance, successful workflow attempt and downloaded digests were checked; README install blocks and three versioned WinGet manifests were generated |
+| Native Windows binary | Exact attested Windows asset | Reported `Markitect 0.8.0 (windows/amd64)`; layout fixture passed; omitted-path initialization preview wrote nothing, explicit write created the default Area, and the resulting Project passed `check` |
+| Published native benchmark | [Run 36925736027](https://github.com/Glacius-Labs/Markitect/actions/runs/36925736027) | Windows/Linux fixture v1 completed for the attested v0.8.0 and v0.7.0 binaries; raw data and summaries retained as run artifacts |
+
+| Asset | Verified SHA-256 |
+|---|---|
+| `markitect-v0.8.0-bundle.zip` | `3c8fbb78b5467fdd5e16e21db11ffa72995dbd894f8bd47a5cd4bc0b651d24d8` |
+| `markitect-v0.8.0-linux-amd64` | `b764576514556f23c06a6e4bf41e96cdd8f0361a0132c697045053aaa2dc40cd` |
+| `markitect-v0.8.0-windows-amd64.exe` | `85757530e1f5ac3a50d3173a5c9e7f6c0401fadc40e0d1b7ce3876dadd7a3c62` |
+| `markitect-v0.8.0-provenance.yaml` | `d7477e521f6d908fa8d92111cc8c16f4a455e3da322cf6a83da3f34c6b337b1b` |
+
+The generated WinGet manifests are versioned metadata; they do not establish Microsoft catalog availability or a v0.8.0 package-manager installation. Benchmark timings are diagnostic and establish no speed gain. Consumer pins, project-local migrations and human acceptance remain owned by adopting repositories.
+
 ## v0.7.0 published release
 
 The immutable [v0.7.0 release](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.7.0), release ID `401286207`, binds [source commit `857a77f`](https://github.com/Glacius-Labs/Markitect/commit/857a77f86b3a4056c7973fed49d12ce2e6bf9b28), merged from [PR 31](https://github.com/Glacius-Labs/Markitect/pull/31). Its fixed-run context request binds a committed task snapshot and explicitly selected source paths to one full Git revision, reporting selected hashes and missing inputs. This records product capability only; no adopting-project implementation effectiveness or time/cost savings are claimed here. The annotated tag is unsigned; the immutable release and its asset attestations were verified separately.

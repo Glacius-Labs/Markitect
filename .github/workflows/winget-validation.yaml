@@ -59,6 +59,16 @@ jobs:
           & $env:WINGET_BINARY source remove --name msstore --disable-interactivity
           if ($LASTEXITCODE -ne 0) { throw 'Could not remove the unrelated Microsoft Store source from this disposable runner' }
 
+      - name: Validate all canonical release manifests
+        shell: pwsh
+        run: |
+          $manifestVersions = @(Get-ChildItem -LiteralPath 'packaging/winget/GlaciusLabs.Markitect' -Directory)
+          if ($manifestVersions.Count -eq 0) { throw 'No canonical WinGet manifests found' }
+          foreach ($manifestVersion in $manifestVersions) {
+            & $env:WINGET_BINARY validate --manifest $manifestVersion.FullName --disable-interactivity
+            if ($LASTEXITCODE -ne 0) { throw "Manifest validation failed for $($manifestVersion.Name)" }
+          }
+
       - name: Validate and test portable installation and upgrade
         shell: pwsh
         run: |
