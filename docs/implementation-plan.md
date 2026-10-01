@@ -1,6 +1,6 @@
 # Markitect roadmap
 
-Updated 2026-10-01. This is the canonical owner of current source and planned-work status. The published v0.7.0 release adds fixed task and selected source context to the earlier product behavior. Dated release evidence is in the [production assessment](production-assessment.md), and available distributions are listed in [GitHub Releases](https://github.com/Glacius-Labs/Markitect/releases). [Architecture](architecture.md) describes product boundaries, [Usage](usage.md) records the CLI contract, and [Operations](operations.md) owns release gates.
+Updated 2026-10-01. This is the canonical owner of current source and planned-work status. The published v0.8.0 release adds responsibility-owned canonical layout guidance and an omitted-path initialization default to the earlier product behavior. Dated release evidence is in the [production assessment](production-assessment.md), and available distributions are listed in [GitHub Releases](https://github.com/Glacius-Labs/Markitect/releases). [Architecture](architecture.md) describes product boundaries, [Usage](usage.md) records the CLI contract, and [Operations](operations.md) owns release gates.
 
 ## v0.1.0 — historical release
 
@@ -72,13 +72,13 @@ not publish a WinGet catalog entry.
 
 The published v0.7.0 release adds a fixed-run context request for one explicitly selected resource, committed work-item snapshot, and bounded exact source paths. The command requires a full Git revision and a manifest from that revision; its report binds included and missing selections, hashes, and completeness to the selected snapshot. It does not infer task relevance or validate acceptance criteria. See [Documentation inputs](documentation.md) for the run contract. An adopting repository owns the task snapshot, source selection, and any expected-resource inventory preflight.
 
-The published source, Windows/Linux gates, versioned assets, provenance and owner publication are recorded in the [production assessment](production-assessment.md). The immutable v0.7.0 release has four verified assets, and the README uses the attested Windows/Linux digests. A Survey consumer must pin the same published version in each comparison arm and use a task absent from its fixed baseline.
+The published source, Windows/Linux gates, versioned assets, provenance and owner publication are recorded in the [production assessment](production-assessment.md). The immutable v0.7.0 release has four verified assets, and its post-publication README used the attested Windows/Linux digests. A Survey consumer must pin the same published version in each comparison arm and use a task absent from its fixed baseline.
 
-## v0.8.0 — repository layout (source candidate)
+## v0.8.0 — repository layout
 
-The v0.8.0 source candidate recommends `.markitect/areas/<owner>/` for canonical typed knowledge, organized by responsibility. New `init` plans use `.markitect/areas/<namespace>` when `--path` is omitted; explicit paths and existing Projects remain supported. Embedded authoring distinguishes typed Areas from human-owned documentation and uses configured ownership before the new-project convention. Optional kind-suffixed names do not infer YAML type or identity. The executable [layout example](../examples/repository-layout/README.md) checks new paths and generated native outputs while existing fixtures retain earlier layouts.
+The published v0.8.0 release recommends `.markitect/areas/<owner>/` for canonical typed knowledge, organized by responsibility. New `init` plans use `.markitect/areas/<namespace>` when `--path` is omitted; explicit paths and existing Projects remain supported. Embedded authoring distinguishes typed Areas from human-owned documentation and uses configured ownership before the new-project convention. Optional kind-suffixed names do not infer YAML type or identity. The executable [layout example](../examples/repository-layout/README.md) checks new paths and generated native outputs while existing fixtures retain earlier layouts.
 
-[Repository layout](repository-layout.md) owns the compatibility assessment. Generic sibling companions, provider output paths, Project schema, root agent instructions and pinned distribution/bootstrap paths retain their contracts. A separate companion-output design, distribution migration, optional layout lint, and migration helper are deferred until demonstrated needs justify their compatibility costs. This candidate is not a published release and does not update consumers' installed tools.
+[Repository layout](repository-layout.md) owns the compatibility assessment. Generic sibling companions, provider output paths, Project schema, root agent instructions and pinned distribution/bootstrap paths retain their contracts. A separate companion-output design, distribution migration, optional layout lint, and migration helper are deferred until demonstrated needs justify their compatibility costs. The reviewed source, Windows/Linux release gates, immutable publication and attested assets are recorded in the [production assessment](production-assessment.md). README installation examples and versioned WinGet metadata use the verified release. Existing consumers must explicitly upgrade their installed tools or project pins.
 
 ## Later product options
 
@@ -87,4 +87,4 @@ Current source adds a neutral [onboarding exercise](onboarding.md), its replay i
 - MCP, LSP, and graph visualization when measured authoring needs justify them.
 - Runtime/operator integration only for a concrete state-reconciliation contract.
 
-These options are not v0.7.0 acceptance promises. Keep the core provider-independent and add abstractions only for a demonstrated invariant.
+These options are not v0.8.0 acceptance promises. Keep the core provider-independent and add abstractions only for a demonstrated invariant.
