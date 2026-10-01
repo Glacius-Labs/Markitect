@@ -45,6 +45,15 @@ The published v0.5.0 release adds project-configured Codex, Claude, and shared e
 
 The tagged source passed Windows/Linux release gates, and the immutable release and four attached assets were verified. The release-triggered benchmark failed during runner setup because an action pin was truncated; the separately dispatched repaired run completed on Windows and Linux with raw measurement artifacts. Those measurements are diagnostic, not an acceptance gate or evidence of a speed gain. Konfyra's consumer pin, provider adapter ownership, candidate verification and human acceptance are tracked in its own repository. The Survey pilot can move only after its exact candidate basis and existing work are reconciled.
 
+## Unreleased maintainer tooling
+
+The source now includes `markitect-release distribution` to check or regenerate
+marked README installation sections and versioned WinGet manifests from a
+verified published immutable release. It validates the exact provenance workflow
+attempt, tag, asset bytes, and attestations before generating local files.
+[Operations](operations.md) owns the commands and submission checks. This does
+not change the published v0.5.0 binary or publish a WinGet catalog entry.
+
 ## Later product options
 
 - MCP, LSP, and graph visualization when measured authoring needs justify them.
