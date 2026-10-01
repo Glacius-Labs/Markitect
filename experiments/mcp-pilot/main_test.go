@@ -107,6 +107,42 @@ func TestLifecycleOrdering(t *testing.T) {
 	}
 }
 
+func TestInitializeProtocolNegotiation(t *testing.T) {
+	for _, test := range []struct {
+		name    string
+		offered string
+		want    string
+	}{
+		{name: "legacy Codex client", offered: legacyProtocolVersion, want: legacyProtocolVersion},
+		{name: "current client", offered: protocolVersion, want: protocolVersion},
+		{name: "unknown version falls back to current", offered: "2099-01-01", want: protocolVersion},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			s := &server{}
+			params, _ := json.Marshal(map[string]string{"protocolVersion": test.offered})
+			result, rpcErr, reply := s.dispatch(request{JSONRPC: "2.0", ID: json.RawMessage(`1`), Method: "initialize", Params: params})
+			if !reply || rpcErr != nil {
+				t.Fatalf("initialize reply=%v error=%#v", reply, rpcErr)
+			}
+			got := result.(map[string]any)["protocolVersion"]
+			if got != test.want {
+				t.Fatalf("negotiated version = %#v, want %q", got, test.want)
+			}
+		})
+	}
+
+	for _, params := range []json.RawMessage{nil, json.RawMessage(`{}`), json.RawMessage(`{"protocolVersion":""}`), json.RawMessage(`[]`)} {
+		s := &server{}
+		_, rpcErr, reply := s.dispatch(request{JSONRPC: "2.0", ID: json.RawMessage(`2`), Method: "initialize", Params: params})
+		if !reply || rpcErr == nil || rpcErr.Code != -32602 {
+			t.Errorf("malformed initialize params %q returned reply=%v error=%#v", params, reply, rpcErr)
+		}
+		if s.initDone {
+			t.Errorf("malformed initialize params %q advanced lifecycle", params)
+		}
+	}
+}
+
 func TestSuccessfulToolUsesPinnedArgumentsAndCleansGitEnvironment(t *testing.T) {
 	recordPath := filepath.Join(t.TempDir(), "invocation.json")
 	t.Setenv("MARKITECT_MCP_TEST_HELPER", "1")
