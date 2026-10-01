@@ -1,4 +1,9 @@
-<h1><img src="assets/markitect-avatar-512.png" alt="" width="48" height="48"> Markitect</h1>
+<h1>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/markitect-wordmark-dark.svg">
+    <img src="assets/markitect-wordmark-light.svg" alt="Markitect" width="360">
+  </picture>
+</h1>
 
 AI-facing engineering guidance often lives in documents whose relationships and owners are hard to see. Markitect makes that guidance explicit: author rules, workflows, skills, agents, reusable text, and contracts as typed resources, then declare how they depend on one another and which ordinary files they need.
 
