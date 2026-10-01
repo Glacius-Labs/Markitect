@@ -50,7 +50,13 @@ func checkProviderAdapterInputs(p *Project) []core.Diagnostic {
 				}
 			}
 		}
-		for _, resource := range p.Graph.Resources {
+		keys := make([]string, 0, len(p.Graph.Resources))
+		for key := range p.Graph.Resources {
+			keys = append(keys, key)
+		}
+		sort.Strings(keys)
+		for _, key := range keys {
+			resource := p.Graph.Resources[key]
 			if resource.Package != "" {
 				continue
 			}
