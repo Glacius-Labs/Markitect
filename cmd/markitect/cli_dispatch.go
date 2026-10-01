@@ -44,6 +44,13 @@ func dispatchCommand(command string, o commandOptions, out, errout io.Writer, em
 	if command != "check" && command != "verify" && command != "context" && command != "impact" && command != "find" && command != "explain" && command != "review" && command != "render" && command != "format" {
 		return fail(fmt.Errorf("unknown command %q", command))
 	}
+	if command == "context" && o.runManifest != "" {
+		toolDigest, err := currentToolDigest()
+		if err != nil {
+			return fail(err)
+		}
+		return runContextManifest(o, toolDigest, emit, fail)
+	}
 	p, err := app.Load(o.root, o.revision)
 	if err != nil {
 		return fail(err)

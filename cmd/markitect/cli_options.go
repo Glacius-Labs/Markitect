@@ -5,10 +5,14 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"regexp"
 )
+
+var fullGitCommitID = regexp.MustCompile(`^(?:[0-9a-f]{40}|[0-9a-f]{64})$`)
 
 type commandOptions struct {
 	root           string
+	runManifest    string
 	revision       string
 	base           string
 	kind           string
@@ -32,6 +36,7 @@ func parseOptions(command string, args []string, allowed map[string]bool, out, e
 	fs := flag.NewFlagSet(command, flag.ContinueOnError)
 	fs.SetOutput(errout)
 	root := fs.String("repo", ".", "repository root")
+	runManifest := fs.String("run", "", "committed fixed-run context manifest (context)")
 	revision := fs.String("revision", "", "fixed Git revision (omitted: provisional working tree)")
 	base := fs.String("base", "", "base revision for impact")
 	kind := fs.String("kind", "", "context entry kind")
@@ -80,8 +85,13 @@ func parseOptions(command string, args []string, allowed map[string]bool, out, e
 		fmt.Fprintln(errout, "--write only supports render, format, schema, install or init on the working tree")
 		return commandOptions{}, 2, true
 	}
+	if *runManifest != "" && (command != "context" || !fullGitCommitID.MatchString(*revision) || *kind != "" || *name != "" || *namespace != "" || *packageName != "") {
+		fmt.Fprintln(errout, "--run is only valid for context with --revision and supplies its own entry")
+		return commandOptions{}, 2, true
+	}
 	return commandOptions{
 		root:           *root,
+		runManifest:    *runManifest,
 		revision:       *revision,
 		base:           *base,
 		kind:           *kind,
