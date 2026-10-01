@@ -166,6 +166,7 @@ func makeAssets(t *testing.T, tag, runID string, attempt int, commit string) (st
 	files := map[string][]byte{
 		"go.mod":                            []byte("module github.com/Glacius-Labs/Markitect\n\ngo 1.27.1\n"),
 		"go.sum":                            []byte("example.com/dependency v1.0.0 h1:checksum\n"),
+		"LICENSE":                           []byte("Apache License\nVersion 2.0\n"),
 		"cmd/markitect/main.go":             []byte("package main\nvar version = \"1.2.3\"\nfunc main() {}\n"),
 		"internal/example/example.go":       []byte("package example\nfunc Ready() bool { return true }\n"),
 		"integration/run-markitect.go":      []byte("package main\nfunc main() {}\n"),

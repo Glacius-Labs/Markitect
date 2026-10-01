@@ -36,6 +36,7 @@ func TestBundleInstallUsesFixedSourceAndExplicitDigest(t *testing.T) {
 	for name, content := range map[string]string{
 		"go.mod":                            "module github.com/Glacius-Labs/Markitect\n\ngo 1.27.1\n",
 		"go.sum":                            "",
+		"LICENSE":                           "Apache License\nVersion 2.0\n",
 		"cmd/markitect/main.go":             "package main\nvar version = \"" + version + "\"\nfunc main() {}\n",
 		"internal/core/core.go":             "package core\n",
 		"integration/run-markitect.go":      "package main\nfunc main() {}\n",

@@ -132,6 +132,7 @@ func TestPackageNormalizesTextLineEndingsForReproducibleArchive(t *testing.T) {
 	for _, relative := range []string{
 		"go.mod",
 		"go.sum",
+		"LICENSE",
 		"README.md",
 		"cmd/markitect/main.go",
 		"internal/core/model.go",
