@@ -33,6 +33,7 @@ go test ./...
 go vet ./...
 go run ./cmd/markitect schema --repo .
 go run ./cmd/markitect check --repo examples/minimal
+go run ./cmd/markitect check --repo benchmark/fixtures/v1
 git diff --check
 ```
 
@@ -46,7 +47,7 @@ For a Project to produce complete `verify` evidence, declare every required comm
 
 Checks run against a materialized fixed revision within the documented time and output bounds. They run with the caller's local authority; the materialized copy is not a sandbox. Do not configure commands that mutate the checkout or access unrelated data. Missing or empty check declarations make `verify` incomplete rather than successful.
 
-Rendering always supports Markitect's generic managed views. Additional output targets and rule adapters must be declared in the Project. Only the declared outputs are rendered or checked. A provider-specific renderer or an import script belongs in the adopting repository that owns its format and policy.
+Rendering always supports Markitect's generic managed views. Supported Codex and Claude targets, rule mappings and shared entrypoints must be declared in the Project. Only declared outputs are rendered or checked. An adopting repository owns its root navigation, hooks, custom output formats and import scripts.
 
 ## Initialization behavior
 

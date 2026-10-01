@@ -1,0 +1,3 @@
+# Release fixture v1
+
+`fixtures/v1` is a copy of the executable minimal example with one portable `go version` verification gate. The runner commits a baseline, changes one sentence in a Text resource, renders its companion view, and commits the candidate. Both release binaries then measure the same committed fixture and revisions on each platform. Preserve v1 bytes after the first benchmark publication; introduce v2 for a changed workload and record the fixture version in every result. The first use of v1 has no prior benchmark artifact, so the workflow measures the previous release binary anew on the same v1 fixture.
