@@ -1,4 +1,4 @@
-# Code and documentation example
+# Project artifact input example (Go)
 
 This fixture connects one ordinary Go source file to a `Text` resource through
 an explicit `spec.files` path. A `Workflow` uses that resource. Independent
