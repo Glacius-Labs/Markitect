@@ -1,10 +1,15 @@
 package app
 
 import (
+	"errors"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
+	"syscall"
 	"testing"
+	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/core"
 	"github.com/Glacius-Labs/Markitect/internal/format"
@@ -95,11 +100,86 @@ func tempRoot(t *testing.T) string {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() {
-		if err := os.RemoveAll(abs); err != nil {
+		if err := removeTestRoot(abs); err != nil {
 			t.Errorf("remove test root: %v", err)
 		}
 	})
 	return abs
+}
+
+func removeTestRoot(path string) error {
+	return removeAllWithWindowsRetry(path, os.RemoveAll, runtime.GOOS, 2*time.Second)
+}
+
+// removeAllWithWindowsRetry follows testing.TempDir's bounded Windows cleanup retry
+// for transient access-denied and sharing-violation errors.
+func removeAllWithWindowsRetry(path string, remove func(string) error, goos string, timeout time.Duration) error {
+	const (
+		windowsAccessDenied     = syscall.Errno(5)
+		windowsSharingViolation = syscall.Errno(32)
+		maxRetryDelay           = 100 * time.Millisecond
+	)
+	var start time.Time
+	delay := time.Millisecond
+	for {
+		err := remove(path)
+		if err == nil || goos != "windows" ||
+			(!errors.Is(err, windowsAccessDenied) && !errors.Is(err, windowsSharingViolation)) {
+			return err
+		}
+		if start.IsZero() {
+			start = time.Now()
+		} else if time.Since(start)+delay >= timeout {
+			return err
+		}
+		time.Sleep(delay)
+		if delay < maxRetryDelay {
+			delay *= 2
+			if delay > maxRetryDelay {
+				delay = maxRetryDelay
+			}
+		}
+	}
+}
+
+func TestRemoveAllWithWindowsRetry(t *testing.T) {
+	t.Run("retries transient Windows sharing violations", func(t *testing.T) {
+		attempts := 0
+		err := removeAllWithWindowsRetry("root", func(string) error {
+			attempts++
+			if attempts < 3 {
+				return fmt.Errorf("remove: %w", syscall.Errno(32))
+			}
+			return nil
+		}, "windows", 100*time.Millisecond)
+		if err != nil || attempts != 3 {
+			t.Fatalf("retry result = (%v, %d attempts), want (nil, 3 attempts)", err, attempts)
+		}
+	})
+
+	t.Run("does not retry on other platforms", func(t *testing.T) {
+		want := syscall.Errno(5)
+		attempts := 0
+		err := removeAllWithWindowsRetry("root", func(string) error {
+			attempts++
+			return want
+		}, "linux", time.Second)
+		if err != want || attempts != 1 {
+			t.Fatalf("non-Windows result = (%v, %d attempts), want (%v, 1 attempt)", err, attempts, want)
+		}
+	})
+
+	t.Run("returns the final error after the retry window", func(t *testing.T) {
+		want := syscall.Errno(5)
+		attempts := 0
+		err := removeAllWithWindowsRetry("root", func(string) error {
+			attempts++
+			return want
+		}, "windows", 5*time.Millisecond)
+		if err != want || attempts < 2 {
+			t.Fatalf("persistent-error result = (%v, %d attempts), want (%v, multiple attempts)", err, attempts, want)
+		}
+	})
 }
 
 func initAppTestRepo(t *testing.T, root string) {
