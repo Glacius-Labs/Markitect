@@ -29,15 +29,28 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Locate Windows Package Manager
+      - name: Install pinned Windows Package Manager
         shell: pwsh
         run: |
+          $bootstrap = Join-Path $env:RUNNER_TEMP 'winget-v1.29.380'
+          New-Item -ItemType Directory -Path $bootstrap | Out-Null
+          $release = 'https://github.com/microsoft/winget-cli/releases/download/v1.29.380'
+          $bundle = Join-Path $bootstrap 'Microsoft.DesktopAppInstaller_8wekyb3d8bbwe.msixbundle'
+          $dependencies = Join-Path $bootstrap 'DesktopAppInstaller_Dependencies.zip'
+          Invoke-WebRequest "$release/Microsoft.DesktopAppInstaller_8wekyb3d8bbwe.msixbundle" -OutFile $bundle
+          Invoke-WebRequest "$release/DesktopAppInstaller_Dependencies.zip" -OutFile $dependencies
+          if ((Get-FileHash $bundle).Hash -ne '65DEA9C01CE08EE7B763366B27C0E651F97DB857C11CA9B9C301826C10092F2E') { throw 'WinGet bundle SHA-256 mismatch' }
+          if ((Get-FileHash $dependencies).Hash -ne 'BA875AFE9D190F61218985AC0292A99D1DB710BF93E13C68944CA9D89F0D82D1') { throw 'WinGet dependencies SHA-256 mismatch' }
+          Expand-Archive -LiteralPath $dependencies -DestinationPath (Join-Path $bootstrap 'dependencies')
+          $dependencyPaths = @(Get-ChildItem (Join-Path $bootstrap 'dependencies/x64') -Filter '*.appx' | Select-Object -ExpandProperty FullName)
+          Add-AppxPackage -Path $bundle -DependencyPath $dependencyPaths
           $app = Get-AppxPackage -Name Microsoft.DesktopAppInstaller | Sort-Object Version -Descending | Select-Object -First 1
           if (-not $app) { throw 'Windows Package Manager is not installed on this runner' }
           $binary = Join-Path $app.InstallLocation 'winget.exe'
           if (-not (Test-Path -LiteralPath $binary)) { throw 'Windows Package Manager executable is missing' }
-          & $binary --version
-          if ($LASTEXITCODE -ne 0) { throw 'Windows Package Manager is unavailable' }
+          $version = & $binary --version
+          if ($LASTEXITCODE -ne 0 -or $version -ne 'v1.29.380') { throw "Unexpected Windows Package Manager version: $version" }
+          Write-Host $version
           "WINGET_BINARY=$binary" >> $env:GITHUB_ENV
 
       - name: Limit disposable runner to the community source
