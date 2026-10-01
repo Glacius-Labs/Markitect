@@ -1,0 +1,14 @@
+apiVersion: markitect.example.org/v1alpha1
+kind: Workflow
+metadata:
+    name: review-approval
+    namespace: sample
+spec:
+    text: Review the release approval owner.
+    files: [docs/review-policy.md]
+    assertions:
+        - subject: release-approval
+          predicate: owner
+          value: review
+          source: docs/review-policy.md
+          quote: Review owns release approval.

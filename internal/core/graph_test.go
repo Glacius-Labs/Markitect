@@ -2,6 +2,19 @@ package core
 
 import "testing"
 
+func TestProviderAdapterMappingsAndRetirementsAreValidated(t *testing.T) {
+	p := project(Area{Name: "sample", Path: "docs"})
+	p.Spec.ProviderAdapters = &ProviderAdapters{RuleSources: map[string][]string{"empty": {}}, RetiredSkills: []string{"../escape", "active", "old", "old"}, RetiredAgents: []string{"active-agent"}}
+	s := resource("Skill", "sample", "active", "docs/active.yaml")
+	a := resource("Agent", "sample", "active-agent", "docs/active-agent.yaml")
+	g := Build([]*Resource{p, s, a})
+	for _, code := range []string{"provider-adapter.rule", "provider-adapter.retired-name", "provider-adapter.retired-duplicate", "provider-adapter.retired-active"} {
+		if !hasCode(g, code) {
+			t.Errorf("missing %s: %#v", code, g.Diagnostics)
+		}
+	}
+}
+
 func resource(kind, namespace, name, file string) *Resource {
 	return &Resource{APIVersion: APIVersion, Kind: kind, Metadata: Metadata{Name: name, Namespace: namespace}, Path: file}
 }

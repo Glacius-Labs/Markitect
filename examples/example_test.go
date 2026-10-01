@@ -3,6 +3,7 @@ package examples
 import (
 	"path/filepath"
 	"runtime"
+	"strings"
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/internal/app"
@@ -71,5 +72,24 @@ func TestMinimalExampleCompilesBoundContextAndRenderedViews(t *testing.T) {
 	}
 	if len(changed) != 0 {
 		t.Fatalf("example must start in canonical format, changed: %v", changed)
+	}
+}
+
+func TestConsistencyConflictExampleReportsSourceAndOwners(t *testing.T) {
+	_, sourceFile, _, ok := runtime.Caller(0)
+	if !ok {
+		t.Fatal("could not locate example test source")
+	}
+	root := filepath.Join(filepath.Dir(sourceFile), "consistency-conflict")
+	project, err := app.Load(root, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(project.Diagnostics) != 0 {
+		t.Fatalf("unexpected graph diagnostics: %#v", project.Diagnostics)
+	}
+	findings := app.CheckOutputs(project)
+	if len(findings) != 1 || findings[0].Code != "consistency.conflict" || findings[0].Path != "docs/review-policy.md" || findings[0].Line != 3 || !strings.Contains(findings[0].Message, "docs/operations-policy.md:3") || !strings.Contains(findings[0].Message, "sample/Workflow/review-approval") {
+		t.Fatalf("expected one sourced conflict with both owners: %#v", findings)
 	}
 }

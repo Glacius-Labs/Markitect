@@ -1,0 +1,10 @@
+apiVersion: markitect.example.org/v1alpha1
+kind: Project
+metadata:
+    name: consistency-conflict
+spec:
+    areas:
+        - name: sample
+          path: docs
+    consistency:
+        functionalPredicates: [owner]

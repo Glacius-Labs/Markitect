@@ -114,6 +114,14 @@ properties:
                         - run
                     type: object
                 type: array
+            consistency:
+                additionalProperties: false
+                properties:
+                    functionalPredicates:
+                        items:
+                            type: string
+                        type: array
+                type: object
             packages:
                 items:
                     additionalProperties: false
@@ -141,6 +149,32 @@ properties:
                         - sha256
                     type: object
                 type: array
+            providerAdapters:
+                additionalProperties: false
+                properties:
+                    agentContract:
+                        type: string
+                    inlineAgentText:
+                        type: boolean
+                    retiredAgents:
+                        items:
+                            type: string
+                        type: array
+                    retiredSkills:
+                        items:
+                            type: string
+                        type: array
+                    roleRegister:
+                        type: string
+                    ruleSources:
+                        additionalProperties:
+                            items:
+                                type: string
+                            type: array
+                        type: object
+                    strictInventory:
+                        type: boolean
+                type: object
             ruleAdapters:
                 additionalProperties:
                     items:

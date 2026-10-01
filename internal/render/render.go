@@ -70,7 +70,9 @@ func GenerateWithOwners(g *core.Graph) (map[string][]byte, map[string][]string, 
 	}
 
 	targets := map[string]bool{}
+	var adapters *core.ProviderAdapters
 	if g.Project != nil {
+		adapters = g.Project.Spec.ProviderAdapters
 		for _, target := range g.Project.Spec.Targets {
 			target = strings.ToLower(target)
 			if target != "codex" && target != "claude" {
@@ -101,13 +103,13 @@ func GenerateWithOwners(g *core.Graph) (map[string][]byte, map[string][]string, 
 			case "Agent":
 				if targets["codex"] {
 					p := ".codex/agents/" + r.Metadata.Name + ".toml"
-					if err := addOwned(outputs, ownerSets, p, renderCodexAgent(r, p), r.Key()); err != nil {
+					if err := addOwned(outputs, ownerSets, p, renderCodexAgent(r, p, adapters), r.Key()); err != nil {
 						return nil, nil, err
 					}
 				}
 				if targets["claude"] {
 					p := ".claude/agents/" + r.Metadata.Name + ".md"
-					if err := addOwned(outputs, ownerSets, p, renderClaudeAgent(r, p, g), r.Key()); err != nil {
+					if err := addOwned(outputs, ownerSets, p, renderClaudeAgent(r, p, g, adapters), r.Key()); err != nil {
 						return nil, nil, err
 					}
 				}
@@ -128,6 +130,9 @@ func GenerateWithOwners(g *core.Graph) (map[string][]byte, map[string][]string, 
 				ownerSets[p][key] = true
 			}
 		}
+	}
+	if err := renderConfiguredAdapters(g, targets, adapters, outputs, ownerSets); err != nil {
+		return nil, nil, err
 	}
 	outputs, err := checkCollisions(outputs, canonical)
 	if err != nil {

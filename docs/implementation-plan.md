@@ -39,9 +39,15 @@ This source version also adds an executable code-to-documentation example, fixes
 
 The published v0.4.1 release adds the Apache License 2.0 to the product repository and includes it in source distributions. Earlier immutable tags and their attached archives do not gain a license file retroactively. It also improves the README entry, support and security guidance, and contribution templates. Its product behavior and verification boundaries remain those of v0.4.0. The reviewed source, Windows/Linux gates, exact tag, and immutable release verification are recorded in the [production assessment](production-assessment.md).
 
+## v0.5.0 source candidate — explicit adapters, measurements, and assertions
+
+This unshipped candidate adds project-configured Codex, Claude, and shared entrypoints with strict inventory; see [Provider adapters](provider-adapters.md). It adds a post-publication Windows/Linux benchmark workflow that measures both the new and prior immutable release on fixture v1, with raw results and a summary as workflow artifacts; see [Measurement](measurement.md). The opt-in [consistency MVP](consistency.md) compares explicit, quoted functional assertions and reports source and owner evidence. It does not interpret free text or change human acceptance.
+
+Release acceptance requires source CI, a reviewable candidate commit, verified versioned assets and provenance, and the documented owner publication route. The Konfyra migration retains its legacy renderer and remains Draft until a published pin and equivalent generation and drift checks are verified. The Survey pilot can move only after its exact candidate basis and existing work are reconciled.
+
 ## Later product options
 
 - MCP, LSP, and graph visualization when measured authoring needs justify them.
 - Runtime/operator integration only for a concrete state-reconciliation contract.
 
-These options are not v0.4.0 acceptance promises. Keep the core provider-independent and add abstractions only for a demonstrated invariant.
+These options are not v0.5.0 acceptance promises. Keep the core provider-independent and add abstractions only for a demonstrated invariant.

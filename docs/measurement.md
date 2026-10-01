@@ -18,6 +18,8 @@ The [code and documentation example](documentation.md) exercises exact source-fi
 
 CI executes one iteration of each authoring benchmark to keep the measurement fixtures valid as the resource model evolves. This is a correctness smoke check, with no timing threshold. For timing reports, run the repeated command above on a fixed source commit and record the host; the measured section excludes Git reads, parsing, agent interaction, and provider calls.
 
+After each immutable published release, `.github/workflows/release-benchmark.yaml` runs the published current and immediately previous attested platform binaries against `benchmark/fixtures/v1` on Windows and Linux. It records the first and three subsequent fresh-process runs of `check`, `render`, `context`, `impact`, and `verify`, with wall time, observed peak working set, exit status, and bounded output. Its JSON and short Markdown summary are workflow artifacts; no asset is added to the immutable release. First-run does not clear operating-system caches; a very short process can finish before memory sampling and records null for that sample. Compare distributions and failures, not one percentage; there is no performance threshold or release-blocking benchmark gate.
+
 ## Authoring exercise
 
 Copy the complete minimal example into an isolated Git repository and commit a baseline. Give an agent a normal requirement, access to the CLI, and the bundled `authoring` context. An independent reviewer checks the changed owner, required relationships, unaffected scopes, generated outputs, and fixed impact. Retain failures and corrections. This is a product usability exercise, not an A/B benchmark or provider-runtime certification.

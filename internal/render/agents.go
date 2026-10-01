@@ -7,7 +7,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/core"
 )
 
-func renderCodexAgent(r *core.Resource, target string) []byte {
+func renderCodexAgent(r *core.Resource, target string, adapters *core.ProviderAdapters) []byte {
 	p := r.Spec.Providers.Codex
 	var b strings.Builder
 	b.WriteString("# " + Marker + "; source: " + relative(target, r.Path) + "\n")
@@ -24,11 +24,19 @@ func renderCodexAgent(r *core.Resource, target string) []byte {
 			writeTOMLString(&b, "sandbox_mode", p.Sandbox)
 		}
 	}
-	writeTOMLString(&b, "developer_instructions", "Read the canonical [agent view]("+relative(target, companionPath(r.Path))+") and follow its stated scope.")
+	instructions := "Read the canonical [agent view](" + relative(target, companionPath(r.Path)) + ") and follow its stated scope."
+	if adapters != nil && adapters.InlineAgentText {
+		instructions = strings.TrimSpace(r.Spec.Text)
+		if adapters.AgentContract != "" {
+			instructions += "\n\nShared role-routing and delegation rules: [project agent contract](" + relative(target, adapters.AgentContract) + ")."
+		}
+		instructions += "\n"
+	}
+	writeTOMLString(&b, "developer_instructions", instructions)
 	return []byte(b.String())
 }
 
-func renderClaudeAgent(r *core.Resource, target string, g *core.Graph) []byte {
+func renderClaudeAgent(r *core.Resource, target string, g *core.Graph, adapters *core.ProviderAdapters) []byte {
 	p := r.Spec.Providers.Claude
 	var b strings.Builder
 	b.WriteString("---\nname: " + yamlQuote(r.Metadata.Name) + "\ndescription: " + yamlQuote(r.Spec.Description) + "\n")
@@ -53,7 +61,14 @@ func renderClaudeAgent(r *core.Resource, target string, g *core.Graph) []byte {
 		}
 	}
 	b.WriteString("---\n\n<!-- " + Marker + "; source: " + relative(target, r.Path) + " -->\n\n")
-	b.WriteString("Read the [canonical agent view](" + relative(target, companionPath(r.Path)) + ") before acting.\n")
+	if adapters != nil && adapters.InlineAgentText {
+		b.WriteString(strings.TrimSpace(r.Spec.Text) + "\n")
+		if adapters.AgentContract != "" {
+			b.WriteString("\nShared role-routing and delegation rules: [project agent contract](" + relative(target, adapters.AgentContract) + ").\n")
+		}
+	} else {
+		b.WriteString("Read the [canonical agent view](" + relative(target, companionPath(r.Path)) + ") before acting.\n")
+	}
 	links := dependencyLinks(r, target, g)
 	if len(links) > 0 {
 		b.WriteString("\n## Dependencies\n\n")
