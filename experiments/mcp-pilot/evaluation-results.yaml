@@ -1,0 +1,81 @@
+date: 2026-10-01
+status: incomplete-second-client
+platform: windows/amd64
+cli:
+  version: 0.5.0
+  sha256: 6f5b98dad2ea6003bc0368800691af70084a44d2c225c26fe12d120bcda27178
+server:
+  source: 800b5e94df907123cc6387fcdcd98476c3f86931
+  sha256: 0ab34ee51ca9b7c7c1e01272aa0430c90852aeb8e44fba88967b59fcfb2a0f27
+clients:
+  codex:
+    version: 0.130.0
+    model: null
+    effort: null
+  claude:
+    version: 2.1.233
+    model: claude-opus-5[1m]
+    status: authentication-blocked
+    serverConnection: connected
+    taskMeasurements: null
+runs:
+  - fixture: documentation
+    interface: cli
+    seconds: 69.505
+    successfulQueries: 3
+    inputTokens: 45145
+    cachedInputTokens: 31232
+    outputTokens: 1104
+    reasoningOutputTokens: 153
+    answer: complete-supported
+  - fixture: documentation
+    interface: mcp
+    seconds: 61.221
+    successfulQueries: 3
+    inputTokens: 63770
+    cachedInputTokens: 47104
+    outputTokens: 648
+    reasoningOutputTokens: 78
+    answer: complete-supported
+  - fixture: package-consumer
+    interface: cli
+    seconds: 140.907
+    successfulQueries: 3
+    inputTokens: 43692
+    cachedInputTokens: 19456
+    outputTokens: 1508
+    reasoningOutputTokens: 238
+    answer: required-facts-correct-unsupported-bindings-claim
+  - fixture: package-consumer
+    interface: mcp
+    seconds: 68.497
+    successfulQueries: 3
+    inputTokens: 65463
+    cachedInputTokens: 55808
+    outputTokens: 750
+    reasoningOutputTokens: 98
+    answer: required-package-facts-correct-project-context-entry-omitted
+parity:
+  documentation:
+    commit: f88e385eacc46c17662c402ca4bcdfd4d39931fd
+    snapshot: fb5e505abce216e67a3b021a16f5c69ba713dc626cc8d939fac8fdee3cd02b9d
+    findBytes: 632
+    explainBytes: 897
+    contextBytes: 2545
+    allByteIdentical: true
+  package-consumer:
+    commit: 031a14bb18fe8ff07d730142ef2993ae8d41476f
+    snapshot: a561ae4df4ee23ca289f565ff9a3959363c375e659ee80815c1bc9a490994bbc
+    findBytes: 748
+    explainBytes: 943
+    contextBytes: 5197
+    allByteIdentical: true
+retainedInvalidAttempts:
+  - cli-command-policy-blocked
+  - mcp-protocol-negotiation-failed
+  - mcp-client-tool-permission-cancelled
+limitations:
+  repetitions: 1
+  plannedCounterbalanceAchieved: false
+  sustainedSpeedOrTokenSavings: unestablished
+  secondClientComparison: blocked-at-user-direction

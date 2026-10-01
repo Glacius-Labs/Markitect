@@ -1,0 +1,22 @@
+apiVersion: markitect.example.org/v1alpha1
+kind: Agent
+metadata:
+    name: refund-specialist
+    namespace: support
+spec:
+    text: |
+        Help support staff assess delayed or damaged parcel refund requests. Follow the policy and workflow, separate facts from assumptions, and leave the decision to the authorized support lead when evidence is incomplete.
+    uses:
+        - kind: Workflow
+          name: refund-review
+    implements:
+        - kind: Contract
+          name: refund-decision
+    input:
+        - order
+        - tracking
+        - customer-request
+    output:
+        - recommendation
+        - evidence
+        - uncertainty

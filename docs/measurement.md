@@ -34,7 +34,7 @@ Capture only observed data: model-reported token usage, calls, tool calls, searc
 
 Review reuse should be exercised for identical inputs, relevant changes, removed edges, tool/config changes, and unknown files. Reuse makes no model call. Compare the full repeated task before claiming sustained savings.
 
-The [2026-10-01 documentation pilot](authoring-pilot.md) stopped after two completed runs because of a provider usage limit. It records the incomplete result and a mismatch between the task's wording and a stricter mutation oracle. State every scored mutation restriction in the task card before running another comparison; keep structural validity, requested semantics, and a narrow mutation boundary as separate results.
+The [2026-10-01 documentation pilot](authoring-pilot.md) records an incomplete first exercise and a six-run repeat with the mutation boundary stated in the task card. All six repeated candidates passed fixed structural and output checks and the four-path boundary. The blind semantic review found a further wording difference between task and rubric, while token and cost measures remained unavailable. State every scored requirement in both task card and review rubric before running another comparison; keep structural validity, requested semantics, and a narrow mutation boundary as separate results.
 
 ## Optional local records
 

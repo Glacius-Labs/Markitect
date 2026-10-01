@@ -94,6 +94,8 @@ The [minimal example](examples/minimal/README.md) is a synthetic, executable fix
 
 <!-- markitect-release:try:end -->
 
+For a complete first-project exercise, follow [the onboarding walkthrough](docs/onboarding.md): initialize a project, model explicit dependencies, compile context, and inspect a change between committed revisions.
+
 ## Try it from a source checkout
 
 From a Markitect source checkout, with Go 1.27.1 or later:

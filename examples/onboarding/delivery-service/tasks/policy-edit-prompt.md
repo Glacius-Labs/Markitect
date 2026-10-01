@@ -1,0 +1,3 @@
+# CLI-only policy change task
+
+You are maintaining the parcel-support workspace. The support lead approved this policy change: customers may request a delivery-fee refund for a parcel delivered late for up to **30 days after delivery**. Keep the existing evidence requirement and escalation rule. Update only the `Text support/refund-policy` resource, regenerate its Markitect-managed view, run the project's verification check, and commit the change on the current feature branch. Before editing, inspect the Skill's compiled context at the baseline revision. After committing, report the exact base and candidate commit IDs and run fixed-snapshot impact between them. The only changed paths should be the resource YAML and its own rendered Markdown view.
