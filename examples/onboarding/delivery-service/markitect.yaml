@@ -1,0 +1,32 @@
+apiVersion: markitect.example.org/v1alpha1
+kind: Project
+metadata:
+    name: parcel-support
+spec:
+    areas:
+        - name: shared
+          path: docs/shared
+        - name: support
+          path: docs/support
+          imports:
+            - shared
+          rules:
+            - kind: Rule
+              name: customer-data
+              namespace: shared
+    bindings:
+        - contract:
+            kind: Contract
+            name: refund-decision
+            namespace: support
+          implementation:
+            kind: Agent
+            name: refund-specialist
+            namespace: support
+    checks:
+        - name: refund-policy
+          run:
+            - pwsh
+            - -NoProfile
+            - -File
+            - scripts/onboarding/check-refund-policy.ps1

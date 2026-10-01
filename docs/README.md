@@ -14,6 +14,9 @@
 | [Implementation plan](implementation-plan.md) | The Markitect roadmap |
 | [Measurement](measurement.md) | Correctness scenarios and bounded measurements |
 | [Core authoring assessment](authoring-assessment.md) | A dated exercise using the synthetic product example |
+| [Onboarding](onboarding.md) | Scripted CLI workflow replay and dated command-path evidence |
+| [MCP evaluation](mcp-evaluation.md) | Bounded client comparison for the experimental read-only interface |
+| [WinGet distribution](winget.md) | Submitted portable manifests, validation, and installation/upgrade checks |
 | [Documentation authoring pilot](authoring-pilot.md) | An incomplete first exercise, a six-run controlled repeat, their limits, and fixed-source core measurements |
 | [Source release assessment](release-assessment.md) | General technical findings from source-distribution work |
 | [Production assessment](production-assessment.md) | Dated release evidence and source-level assessment |
