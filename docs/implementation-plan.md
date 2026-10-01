@@ -1,6 +1,6 @@
 # Markitect roadmap
 
-Updated 2026-10-01. This is the canonical owner of current source and planned-work status. The published v0.4.0 release adds bounded project initialization. Dated release evidence is in the [production assessment](production-assessment.md), and available distributions are listed in [GitHub Releases](https://github.com/Glacius-Labs/Markitect/releases). [Architecture](architecture.md) describes product boundaries, [Usage](usage.md) records the CLI contract, and [Operations](operations.md) owns release gates.
+Updated 2026-10-01. This is the canonical owner of current source and planned-work status. The published v0.4.1 release adds Apache-2.0 licensing and repository guidance to the v0.4.0 product behavior. Dated release evidence is in the [production assessment](production-assessment.md), and available distributions are listed in [GitHub Releases](https://github.com/Glacius-Labs/Markitect/releases). [Architecture](architecture.md) describes product boundaries, [Usage](usage.md) records the CLI contract, and [Operations](operations.md) owns release gates.
 
 ## v0.1.0 — historical release
 
@@ -37,7 +37,7 @@ This source version also adds an executable code-to-documentation example, fixes
 
 ## v0.4.1 — licensing and repository presentation
 
-The v0.4.1 source candidate adds the Apache License 2.0 to the product repository and requires it in future source distributions. Earlier immutable tags and their attached archives do not gain a license file retroactively. This candidate also improves the README entry, support and security guidance, and contribution templates. Its product behavior and verification boundaries remain those of v0.4.0. Publication requires the normal reviewed source, Windows/Linux gates, exact tag, and immutable release verification; this section does not claim a published v0.4.1 release.
+The published v0.4.1 release adds the Apache License 2.0 to the product repository and includes it in source distributions. Earlier immutable tags and their attached archives do not gain a license file retroactively. It also improves the README entry, support and security guidance, and contribution templates. Its product behavior and verification boundaries remain those of v0.4.0. The reviewed source, Windows/Linux gates, exact tag, and immutable release verification are recorded in the [production assessment](production-assessment.md).
 
 ## Later product options
 

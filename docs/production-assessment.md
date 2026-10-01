@@ -2,6 +2,26 @@
 
 **Recorded:** 2026-10-01. This dated assessment records the release evidence verified at that time and distinguishes it from source behavior. It reports only the Markitect source, its distributions, and source-owned gates; project adoption and acceptance are outside its scope.
 
+## v0.4.1 published release
+
+The immutable [`v0.4.1` release](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.4.1), release ID `401051061`, points to source commit [`f424432`](https://github.com/Glacius-Labs/Markitect/commit/f4244324b04d4dd748ae13cea43e2455b251a5de) from [PR 12](https://github.com/Glacius-Labs/Markitect/pull/12). The release adds Apache-2.0 licensing and repository guidance; product behavior remains that of v0.4.0.
+
+| Gate | Evidence | Result |
+|---|---|---|
+| Candidate and main CI | [Main run 36874976547](https://github.com/Glacius-Labs/Markitect/actions/runs/36874976547) | Windows and Linux source checks passed at the release commit |
+| Release CI | [Run 36875604747](https://github.com/Glacius-Labs/Markitect/actions/runs/36875604747) | Source gates, bundle and installation smoke passed on Windows and Linux |
+| Owner publisher | Release `401051061` | Exact run artifact and tag checked; release published immutable; a repeat `gh release verify` and each of the four `gh release verify-asset` commands succeeded |
+| Native Windows asset | Released executable, digest below | `version` reported 0.4.1; `licenses` showed third-party notices and the Markitect Apache-2.0 reference |
+
+| Asset | SHA-256 |
+|---|---|
+| `markitect-v0.4.1-bundle.zip` | `440e0829e405c4a793eaa02fe102cdabc6d596ed142d3d472f35182d37c13eab` |
+| `markitect-v0.4.1-linux-amd64` | `a02d0eb0ada42d95012da0965d471e6e31c4f5d607ac849fb8bd29d85b9b65a3` |
+| `markitect-v0.4.1-windows-amd64.exe` | `419f61e99a3ee09c4d87624b44755bacbcb796244cffe7a1fa148da4c79a35f1` |
+| `markitect-v0.4.1-provenance.yaml` | `5bfcf67cb3f30a16f5ca7a879bfd1533762000319133e702a171e2db01798c56` |
+
+The publisher's immediate post-publication attestation request returned an error, reporting `published-unverified`. The subsequent direct GitHub release and asset verification succeeded without changing the immutable release. This records the transient verification result instead of claiming that the publisher itself completed successfully.
+
 ## v0.4.0 published release
 
 The immutable [`v0.4.0` release](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.4.0) was verified against source commit [`1f0d17b`](https://github.com/Glacius-Labs/Markitect/commit/1f0d17bff22143afc6b2b63b4ea8f17486c818e6), release ID `400944013`. Its tree matches reviewed candidate `d7bb86434559bce52a9f7d8078d656c04ecdb024` from [PR 9](https://github.com/Glacius-Labs/Markitect/pull/9).
