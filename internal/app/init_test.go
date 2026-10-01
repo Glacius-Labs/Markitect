@@ -41,6 +41,50 @@ func TestInitPreviewIsDeterministicAndReadOnly(t *testing.T) {
 	}
 }
 
+func TestInitDefaultsAreaPathToMarkitectControlPlane(t *testing.T) {
+	root := initTempRoot(t)
+	plan, err := Init(root, InitOptions{Name: "sample-project", Namespace: "engineering"}, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if plan.Area.Path != ".markitect/areas/engineering" {
+		t.Fatalf("default area path = %q", plan.Area.Path)
+	}
+	var areaREADME string
+	for _, file := range plan.Files {
+		if file.Path == ".markitect/areas/engineering/README.md" {
+			areaREADME = file.Text
+		}
+	}
+	if areaREADME == "" || !strings.Contains(areaREADME, "canonical, typed Markitect resources") || !strings.Contains(areaREADME, "ordinary human-readable project documentation under `docs/`") || !strings.Contains(areaREADME, "Navigation links do not declare resource dependencies") {
+		t.Fatalf("area README does not explain ownership and navigation boundaries: %q", areaREADME)
+	}
+	if _, err := os.Stat(filepath.Join(root, ".markitect")); !os.IsNotExist(err) {
+		t.Fatalf("default-path preview created .markitect: %v", err)
+	}
+}
+
+func TestInitWritesDefaultAreaPathUnderMarkitect(t *testing.T) {
+	root := initTempRoot(t)
+	result, err := Init(root, InitOptions{Name: "sample-project", Namespace: "engineering"}, true)
+	if err != nil {
+		t.Fatalf("Init with default area path: %v", err)
+	}
+	wantDirectories := []string{".markitect", ".markitect/areas", ".markitect/areas/engineering"}
+	if !result.Applied || !reflect.DeepEqual(result.CreatedDirectories, wantDirectories) {
+		t.Fatalf("unexpected default-path write result: %+v", result)
+	}
+	if !reflect.DeepEqual(result.Written, []string{".markitect/areas/engineering/README.md", "markitect.yaml"}) {
+		t.Fatalf("unexpected default-path written files: %#v", result.Written)
+	}
+	if _, err := os.Stat(filepath.Join(root, ".markitect", "areas", "engineering", "README.md")); err != nil {
+		t.Fatalf("default area README missing: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(root, "docs")); !os.IsNotExist(err) {
+		t.Fatalf("default-path init created ordinary docs scaffold: %v", err)
+	}
+}
+
 func TestInitWritesValidatedProjectOnUnbornFeatureBranch(t *testing.T) {
 	root := initTempRoot(t)
 	result, err := Init(root, InitOptions{Name: "sample-project", Namespace: "general", Path: "docs/general"}, true)

@@ -22,6 +22,8 @@ flowchart LR
 
 ## Resource model
 
+The recommended [repository layout](repository-layout.md) keeps the Project entrypoint at the root, typed knowledge under explicit `.markitect/areas/` paths, and human documentation under `docs/`. Provider projections retain their native paths. This is a convention: configured Areas remain authoritative and existing paths remain valid. Current generic Markdown views still sit beside their canonical YAML.
+
 Resources have local identity `namespace/kind/name`; the Project has identity `kind: Project` in `markitect.yaml`.
 
 | Kind | Responsibility |
@@ -46,6 +48,8 @@ The Project may declare `spec.checks` as entries with a name and `run` argument 
 Strict parsing rejects unknown fields, duplicate identities, extra YAML documents, aliases, merge keys, and unsupported tags. Graph checks validate kinds, identities, references, access, bindings, signatures, and cycles. Schemas assist editors; the parser and graph remain authoritative.
 
 The core does not depend on a model API, IDE, provider SDK, or repository-specific policy. The CLI, Git reader, filesystem writers, release packaging, and explicitly configured output adapters are boundaries around the core. `verify` executes only the commands declared by the selected Project. It neither chooses a repository profile nor infers a runtime gate from files it happens to find.
+
+Ordinary project artifacts stay with their owners and enter context or impact through exact declared inputs. Source code has no special semantic status: Markitect does not parse syntax trees, infer symbols or call graphs, or derive business meaning from code. Domain-specific analysis belongs outside the deterministic core.
 
 ### Go implementation boundaries
 

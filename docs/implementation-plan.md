@@ -74,6 +74,12 @@ The source candidate adds a fixed-run context request for one explicitly selecte
 
 Release acceptance requires independent review, complete Windows/Linux source and release gates, verified versioned assets and provenance, and the documented owner publication route. This source version is not yet a published release. The Survey pilot must pin the same published version in each comparison arm and use a task absent from its fixed baseline.
 
+## Repository layout — current source candidate
+
+The source candidate recommends `.markitect/areas/<owner>/` for canonical typed knowledge, organized by responsibility. New `init` plans use `.markitect/areas/<namespace>` when `--path` is omitted; explicit paths and existing Projects remain supported. Embedded authoring distinguishes typed Areas from human-owned documentation and uses configured ownership before the new-project convention. Optional kind-suffixed names do not infer YAML type or identity. The executable [layout example](../examples/repository-layout/README.md) checks new paths and generated native outputs while existing fixtures retain earlier layouts.
+
+[Repository layout](repository-layout.md) owns the compatibility assessment. Generic sibling companions, provider output paths, Project schema, root agent instructions and pinned distribution/bootstrap paths retain their contracts. A separate companion-output design, distribution migration, optional layout lint, and migration helper are deferred until demonstrated needs justify their compatibility costs. This candidate is not a published release and does not update consumers' installed tools.
+
 ## Later product options
 
 - MCP, LSP, and graph visualization when measured authoring needs justify them.

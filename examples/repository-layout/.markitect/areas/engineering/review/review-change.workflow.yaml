@@ -1,0 +1,17 @@
+apiVersion: markitect.example.org/v1alpha1
+kind: Workflow
+metadata:
+    name: review-change
+    namespace: engineering
+spec:
+    text: |
+        Apply the change review requirement, shared principles, and project-owned procedure.
+    files:
+        - docs/engineering/change-procedure.md
+    rules:
+        - kind: Rule
+          name: change-review
+    uses:
+        - kind: Text
+          name: principles
+          namespace: shared

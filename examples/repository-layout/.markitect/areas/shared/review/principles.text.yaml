@@ -1,0 +1,8 @@
+apiVersion: markitect.example.org/v1alpha1
+kind: Text
+metadata:
+    name: principles
+    namespace: shared
+spec:
+    text: |
+        Review changes against their declared responsibility and exact inputs.

@@ -28,7 +28,7 @@ func TestContextCompilesPortableCoreAuthoringClosure(t *testing.T) {
 	if len(got.Inputs) != len(want) {
 		t.Fatalf("compiled %d inputs, want %d: %#v", len(got.Inputs), len(want), got.Inputs)
 	}
-	var skillText string
+	var skillText, workflowText string
 	for _, input := range got.Inputs {
 		if _, ok := want[input.Path]; !ok {
 			t.Errorf("unexpected context input %q", input.Path)
@@ -41,15 +41,23 @@ func TestContextCompilesPortableCoreAuthoringClosure(t *testing.T) {
 		if input.Path == "internal/authoring/resources/skill-authoring.yaml" {
 			skillText = input.Resource.Spec.Text
 		}
+		if input.Path == "internal/authoring/resources/workflow-authoring-change.yaml" {
+			workflowText = input.Resource.Spec.Text
+		}
 	}
 	for name, seen := range want {
 		if !seen {
 			t.Errorf("compiled context omitted %s", name)
 		}
 	}
-	for _, required := range []string{"find --query TEXT", "explain --kind KIND", "canonical YAML", "human acceptance"} {
+	for _, required := range []string{"find --query TEXT", "explain --kind KIND", "canonical YAML", "human acceptance", ".markitect/areas/<responsibility>/", "YAML `kind` field is authoritative", "configured Area paths", "human-owned navigation", "Configure Areas to cover canonical resources and exact file inputs"} {
 		if !strings.Contains(skillText, required) {
 			t.Errorf("authoring Skill omits %q", required)
+		}
+	}
+	for _, required := range []string{"init --repo PATH --name PROJECT --namespace OWNER`", "`.markitect/areas/OWNER`", "`.markitect/areas/OWNER/README.md`", "`--path AREA`", "`.markitect/packages/`", "other committed snapshot-included paths remain valid"} {
+		if !strings.Contains(workflowText, required) && !strings.Contains(skillText, required) {
+			t.Errorf("authoring guidance omits %q", required)
 		}
 	}
 }

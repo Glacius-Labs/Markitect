@@ -63,7 +63,6 @@ func TestInitCLIRequiresExplicitOptionsAndRejectsUnrelatedFlags(t *testing.T) {
 		{"init", "--repo", root},
 		{"init", "--repo", root, "--name", "example", "--path", "docs/engineering"},
 		{"init", "--repo", root, "--namespace", "engineering", "--path", "docs/engineering"},
-		{"init", "--repo", root, "--name", "example", "--namespace", "engineering"},
 		{"init", "--revision", "HEAD"},
 		{"init", "--check"},
 		{"init", "--kind", "Rule"},
@@ -81,5 +80,27 @@ func TestInitCLIRequiresExplicitOptionsAndRejectsUnrelatedFlags(t *testing.T) {
 	code, output, stderr := invoke("help", "init")
 	if code != 0 || stderr != "" || !strings.Contains(output, "--path") || strings.Contains(output, "--revision") {
 		t.Fatalf("init help: %d %s %s", code, output, stderr)
+	}
+}
+
+func TestInitCLIDefaultsAreaPathWhenOmitted(t *testing.T) {
+	root := t.TempDir()
+	code, output, stderr := invoke("init", "--repo", root, "--name", "example", "--namespace", "engineering")
+	if code != 0 || stderr != "" {
+		t.Fatalf("default-path preview: code=%d stderr=%s output=%s", code, stderr, output)
+	}
+	result := decodeYAML[struct {
+		Status string       `yaml:"status"`
+		Plan   app.InitPlan `yaml:"plan"`
+	}](t, output)
+	if result.Status != "planned" || result.Plan.Area.Path != ".markitect/areas/engineering" {
+		t.Fatalf("unexpected default-path plan: %#v", result)
+	}
+	if len(result.Plan.Files) != 2 || result.Plan.Files[0].Path != ".markitect/areas/engineering/README.md" {
+		t.Fatalf("unexpected default-path files: %#v", result.Plan.Files)
+	}
+	entries, err := os.ReadDir(root)
+	if err != nil || len(entries) != 0 {
+		t.Fatalf("default-path preview changed destination: %v, %v", entries, err)
 	}
 }

@@ -1,6 +1,7 @@
 # Examples
 
 - [Minimal rollback review](minimal/README.md) is a runnable synthetic fixture.
+- [Repository layout](repository-layout/README.md) separates canonical Areas, human documentation, and generated native output using the recommended convention.
 - [Code and documentation](documentation/README.md) links ordinary Go input to a focused documentation resource and its review workflow.
 - [Documentation placement](documentation-placement/README.md) is a small authoring exercise with an existing canonical owner and optional router validation.
 - [Content package](content-package/README.md) supplies a small versioned set of exported resources.

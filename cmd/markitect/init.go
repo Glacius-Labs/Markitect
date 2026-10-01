@@ -7,8 +7,8 @@ import (
 )
 
 func runInit(root, name, namespace, path string, write bool, emit func(any) int, fail func(error) int) int {
-	if name == "" || namespace == "" || path == "" {
-		return fail(fmt.Errorf("init requires --name, --namespace and --path; inspect the preview before applying with --write"))
+	if name == "" || namespace == "" {
+		return fail(fmt.Errorf("init requires --name and --namespace; --path is optional (defaults to .markitect/areas/<namespace>); inspect the preview before applying with --write"))
 	}
 	plan, err := app.Init(root, app.InitOptions{Name: name, Namespace: namespace, Path: path}, write)
 	if err != nil {

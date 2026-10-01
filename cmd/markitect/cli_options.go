@@ -42,7 +42,7 @@ func parseOptions(command string, args []string, allowed map[string]bool, out, e
 	kind := fs.String("kind", "", "context entry kind")
 	name := fs.String("name", "", "resource or project name")
 	namespace := fs.String("namespace", "", "resource namespace (initial area name for init)")
-	areaPath := fs.String("path", "", "new ownership area path (init)")
+	areaPath := fs.String("path", "", "new ownership area path (init; defaults to .markitect/areas/<namespace>)")
 	packageName := fs.String("package", "", "exact content package identity (omitted: local entry)")
 	query := fs.String("query", "", "literal search text (find)")
 	write := fs.Bool("write", false, "write planned files in an isolated worktree")

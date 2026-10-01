@@ -28,7 +28,7 @@ func buildInitPlan(root string, options InitOptions) (*initState, error) {
 	if err != nil {
 		return nil, fmt.Errorf("encode Project: %w", err)
 	}
-	readme := []byte(fmt.Sprintf("# %s\n\nThis area owns Markitect resources in namespace `%s`.\n\nUse `markitect authoring` for core authoring guidance. Add links here as area resources are created.\n", options.Namespace, options.Namespace))
+	readme := []byte(fmt.Sprintf("# %s\n\nThis area contains canonical, typed Markitect resources owned by namespace `%s`. Keep ordinary human-readable project documentation under `docs/`; this directory is for Markitect resources and their local navigation.\n\nUse `markitect authoring` for core authoring guidance. Add links here as area resources are created. Navigation links do not declare resource dependencies.\n", options.Namespace, options.Namespace))
 	files := []InitFile{
 		{Path: "markitect.yaml", SHA256: initSHA256(projectYAML), Text: string(projectYAML)},
 		{Path: strings.TrimSuffix(options.Path, "/") + "/README.md", SHA256: initSHA256(readme), Text: string(readme)},
