@@ -71,6 +71,28 @@ func runContext(o commandOptions, p *app.Project, toolDigest string, emit func(a
 	return emit(c)
 }
 
+func runContextManifest(o commandOptions, toolDigest string, emit func(any) int, fail func(error) int) int {
+	p, err := app.Load(o.root, o.revision)
+	if err != nil {
+		return fail(err)
+	}
+	manifestBytes, ok := p.Snapshot.Files[o.runManifest]
+	if !ok {
+		return fail(fmt.Errorf("run manifest %q is not a file in the selected Git snapshot", o.runManifest))
+	}
+	c, err := app.CompileRunContext(p, o.runManifest, manifestBytes, version, toolDigest)
+	if err != nil {
+		return fail(err)
+	}
+	if code := emit(c); code != 0 {
+		return code
+	}
+	if !c.Complete {
+		return 2
+	}
+	return 0
+}
+
 func runImpact(o commandOptions, p *app.Project, emit func(any) int, fail func(error) int) int {
 	if o.base == "" || o.revision == "" {
 		return fail(fmt.Errorf("impact requires fixed --base and --revision"))

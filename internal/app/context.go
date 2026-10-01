@@ -10,14 +10,17 @@ import (
 )
 
 type Context struct {
-	Version        string         `yaml:"version"`
-	Revision       string         `yaml:"revision,omitempty"`
-	Provisional    bool           `yaml:"provisional"`
-	Entry          string         `yaml:"entry"`
-	Digest         string         `yaml:"digest"`
-	SnapshotDigest string         `yaml:"snapshotDigest"`
-	ToolDigest     string         `yaml:"toolDigest,omitempty"`
-	Inputs         []ContextInput `yaml:"inputs"`
+	Version        string              `yaml:"version"`
+	Revision       string              `yaml:"revision,omitempty"`
+	Provisional    bool                `yaml:"provisional"`
+	Entry          string              `yaml:"entry"`
+	Digest         string              `yaml:"digest"`
+	SnapshotDigest string              `yaml:"snapshotDigest"`
+	ToolDigest     string              `yaml:"toolDigest,omitempty"`
+	Inputs         []ContextInput      `yaml:"inputs"`
+	Complete       bool                `yaml:"complete,omitempty"`
+	Status         string              `yaml:"status,omitempty"`
+	Run            *RunContextEvidence `yaml:"run,omitempty"`
 }
 type ContextInput struct {
 	Key            string         `yaml:"key"`
@@ -28,6 +31,9 @@ type ContextInput struct {
 	Reason         string         `yaml:"reason"`
 	Resource       *core.Resource `yaml:"resource,omitempty"`
 	Text           string         `yaml:"text,omitempty"`
+	Role           string         `yaml:"role,omitempty"`
+	Status         string         `yaml:"status,omitempty"`
+	Required       bool           `yaml:"required,omitempty"`
 }
 
 func CompileContext(p *Project, key, version string, toolDigest ...string) (*Context, error) {

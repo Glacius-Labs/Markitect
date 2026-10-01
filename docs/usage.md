@@ -89,7 +89,7 @@ For project-owned Codex, Claude, and shared entrypoints, declare `spec.targets` 
 | `find` | Search valid resources by literal text and exact optional filters. |
 | `explain` | Show a resource's canonical path, area, and direct relationships. |
 | `authoring` | Compile core authoring guidance embedded in the executable. |
-| `context` | Compile the dependency closure and declared file inputs for one entry. |
+| `context` | Compile an entry closure and declared files, or add a fixed-run task snapshot and exact source paths from a committed manifest. |
 | `impact` | Compare two immutable revisions and report changed paths and affected resources. |
 | `review` | Record an advisory report or determine whether its declared inputs permit reuse. |
 | `render` | Check or write generic views and explicitly declared render outputs. |
