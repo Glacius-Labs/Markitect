@@ -1,6 +1,6 @@
 # Markitect roadmap
 
-Updated 2026-10-01. This is the canonical owner of current source and planned-work status. The v0.4.0 source candidate adds bounded project initialization. Dated release evidence is in the [production assessment](production-assessment.md), and available distributions are listed in [GitHub Releases](https://github.com/Glacius-Labs/Markitect/releases). [Architecture](architecture.md) describes product boundaries, [Usage](usage.md) records the CLI contract, and [Operations](operations.md) owns release gates.
+Updated 2026-10-01. This is the canonical owner of current source and planned-work status. The published v0.4.0 release adds bounded project initialization. Dated release evidence is in the [production assessment](production-assessment.md), and available distributions are listed in [GitHub Releases](https://github.com/Glacius-Labs/Markitect/releases). [Architecture](architecture.md) describes product boundaries, [Usage](usage.md) records the CLI contract, and [Operations](operations.md) owns release gates.
 
 ## v0.1.0 — historical release
 
@@ -29,7 +29,7 @@ This correction rejects binding cycles that include a Contract selected by its o
 
 ## v0.4.0 — minimal project initialization
 
-The current source candidate adds `markitect init` for an existing repository. Preview prints the exact minimal Project YAML and area README plan without writing, including outside Git. `--write` recomputes and validates the plan, requires a named non-protected Git branch, and creates only `markitect.yaml` and one README in a previously absent area directory. It does not infer project policy, add resources or checks, select outputs or packages, use custom templates, or edit root documentation or agent instructions. File creation is exclusive and guarded by the shared write lock; a partial failure reports created paths and recovery guidance, because two file creations are not a transaction.
+The v0.4.0 release adds `markitect init` for an existing repository. Preview prints the exact minimal Project YAML and area README plan without writing, including outside Git. `--write` recomputes and validates the plan, requires a named non-protected Git branch, and creates only `markitect.yaml` and one README in a previously absent area directory. It does not infer project policy, add resources or checks, select outputs or packages, use custom templates, or edit root documentation or agent instructions. File creation is exclusive and guarded by the shared write lock; a partial failure reports created paths and recovery guidance, because two file creations are not a transaction.
 
 Acceptance is structural: the new Project parses, resolves, and passes output checks. `verify` must remain incomplete until the adopting project owner declares actual checks and commits the candidate. Consult GitHub Releases for currently available distributions.
 
