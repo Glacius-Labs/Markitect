@@ -70,6 +70,12 @@ jobs:
       - name: Check code and documentation example formatting
         run: go run ./cmd/markitect format --repo examples/documentation
 
+      - name: Check documentation placement example
+        run: go run ./cmd/markitect check --repo examples/documentation-placement
+
+      - name: Check documentation placement example formatting
+        run: go run ./cmd/markitect format --repo examples/documentation-placement
+
       - name: Check pinned content package consumer
         run: go run ./cmd/markitect check --repo examples/package-consumer
 

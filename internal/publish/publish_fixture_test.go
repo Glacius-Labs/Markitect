@@ -104,9 +104,13 @@ type fakeGH struct {
 	calls                                                     [][]string
 	assets, artifactFiles                                     namedBytes
 	run                                                       runInfo
+	attemptRun                                                runInfo
 	tagCommit                                                 string
 	admin, immutable                                          bool
 	releaseExists, draftCreated, published, badUploadedDigest bool
+	releaseDraft                                              bool
+	releaseImmutable                                          bool
+	releasePublishedAt                                        string
 	draftHasAssets                                            bool
 	patchTransitionUnknown                                    bool
 	releaseVerifyFailures                                     int
@@ -116,7 +120,8 @@ type fakeGH struct {
 }
 
 func newFakeGH(assets namedBytes) *fakeGH {
-	return &fakeGH{assets: cloneAssets(assets), artifactFiles: cloneAssets(assets), run: runInfo{ID: 7654321, Name: "Release", Path: workflowPath + "@refs/tags/" + testTag, Event: "push", Status: "completed", Conclusion: "success", HeadBranch: testTag, HeadSHA: testCommit, RunAttempt: 2}, tagCommit: testCommit, admin: true, immutable: true, uploaded: namedBytes{}}
+	run := runInfo{ID: 7654321, Name: "Release", Path: workflowPath + "@refs/tags/" + testTag, Event: "push", Status: "completed", Conclusion: "success", HeadBranch: testTag, HeadSHA: testCommit, RunAttempt: 2}
+	return &fakeGH{assets: cloneAssets(assets), artifactFiles: cloneAssets(assets), run: run, attemptRun: run, tagCommit: testCommit, admin: true, immutable: true, releaseImmutable: true, releasePublishedAt: "2026-10-01T00:00:00Z", uploaded: namedBytes{}}
 }
 
 func (f *fakeGH) Run(_ context.Context, _ string, args ...string) ([]byte, error) {
@@ -129,6 +134,15 @@ func (f *fakeGH) Run(_ context.Context, _ string, args ...string) ([]byte, error
 		f.usedArtifact = valueAfter(args, "--name")
 		dir := valueAfter(args, "--dir")
 		for n, b := range f.artifactFiles {
+			if err := os.WriteFile(filepath.Join(dir, n), b, 0600); err != nil {
+				return nil, err
+			}
+		}
+		return nil, nil
+	}
+	if len(args) >= 2 && args[0] == "release" && args[1] == "download" {
+		dir := valueAfter(args, "--dir")
+		for n, b := range f.assets {
 			if err := os.WriteFile(filepath.Join(dir, n), b, 0600); err != nil {
 				return nil, err
 			}
@@ -203,6 +217,8 @@ func (f *fakeGH) api(args []string) ([]byte, error) {
 		body = map[string]any{"enabled": f.immutable}
 	case endpoint == fmt.Sprintf("repos/%s/actions/runs/%d", repository, 7654321):
 		body = f.run
+	case endpoint == fmt.Sprintf("repos/%s/actions/runs/%d/attempts/2", repository, 7654321):
+		body = f.attemptRun
 	case endpoint == fmt.Sprintf("repos/%s/actions/runs/%d/artifacts", repository, 7654321):
 		body = map[string]any{"artifacts": []any{map[string]any{"name": "markitect-release-" + testCommit, "expired": false, "workflow_run": map[string]any{"id": 7654321}}}}
 	case strings.Contains(endpoint, "/git/ref/tags/"):
@@ -212,7 +228,11 @@ func (f *fakeGH) api(args []string) ([]byte, error) {
 			status = 404
 			body = map[string]any{"message": "Not Found"}
 		} else {
-			body = map[string]any{"id": 42, "tag_name": testTag, "draft": true}
+			assetRows := make([]remoteAsset, 0, len(f.assets))
+			for name, data := range f.assets {
+				assetRows = append(assetRows, remoteAsset{Name: name, Digest: "sha256:" + digest(data)})
+			}
+			body = releaseInfo{ID: 42, TagName: testTag, Draft: f.releaseDraft, Immutable: f.releaseImmutable, PublishedAt: f.releasePublishedAt, Assets: assetRows}
 		}
 	case endpoint == "repos/"+repository+"/releases/42/assets":
 		list := make([]remoteAsset, 0, len(f.uploaded))
