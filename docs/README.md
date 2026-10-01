@@ -18,6 +18,7 @@
 | [MCP evaluation](mcp-evaluation.md) | Bounded client comparison for the experimental read-only interface |
 | [WinGet distribution](winget.md) | Submitted portable manifests, validation, and installation/upgrade checks |
 | [Documentation authoring pilot](authoring-pilot.md) | An incomplete two-run exercise, its limits, and fixed-source core measurements |
+| [Documentation authoring pilot](authoring-pilot.md) | An incomplete first exercise, a six-run controlled repeat, their limits, and fixed-source core measurements |
 | [Source release assessment](release-assessment.md) | General technical findings from source-distribution work |
 | [Production assessment](production-assessment.md) | Dated release evidence and source-level assessment |
 
