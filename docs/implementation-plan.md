@@ -57,22 +57,22 @@ One isolated authoring exercise used a copy of the checked-in [placement example
 
 This slice introduces no Resource Kind, documentation graph, README generation, excludes, or additional Project options. Router navigation and explicit dependency/impact analysis remain separate.
 
-The reviewed source, exact tag, Windows/Linux release gates, four attested assets and post-publication benchmark are recorded in the [production assessment](production-assessment.md). Public installation examples use the verified v0.6.0 native assets.
+The v0.6.0 source, tag, Windows/Linux release gates, attested assets and post-publication benchmark are recorded in the [production assessment](production-assessment.md).
 
-## Unreleased maintainer tooling
+## Published maintainer tooling (v0.7.0)
 
-The source now includes `markitect-release distribution` to check or regenerate
+The published v0.7.0 release includes `markitect-release distribution` to check or regenerate
 marked README installation sections and versioned WinGet manifests from a
 verified published immutable release. It validates the exact provenance workflow
 attempt, tag, asset bytes, and attestations before generating local files.
 [Operations](operations.md) owns the commands and submission checks. This does
-not change published binaries or publish a WinGet catalog entry.
+not publish a WinGet catalog entry.
 
 ## v0.7.0 — fixed task and selected source context
 
 The published v0.7.0 release adds a fixed-run context request for one explicitly selected resource, committed work-item snapshot, and bounded exact source paths. The command requires a full Git revision and a manifest from that revision; its report binds included and missing selections, hashes, and completeness to the selected snapshot. It does not infer task relevance or validate acceptance criteria. See [Documentation inputs](documentation.md) for the run contract. An adopting repository owns the task snapshot, source selection, and any expected-resource inventory preflight.
 
-Release acceptance requires independent review, complete Windows/Linux source and release gates, verified versioned assets and provenance, and the documented owner publication route. The immutable v0.7.0 release and its four attested assets are verified; the current README uses those exact Windows/Linux digests. The Survey pilot must pin the same published version in each comparison arm and use a task absent from its fixed baseline.
+The published source, Windows/Linux gates, versioned assets, provenance and owner publication are recorded in the [production assessment](production-assessment.md). The immutable v0.7.0 release has four verified assets, and the README uses the attested Windows/Linux digests. A Survey consumer must pin the same published version in each comparison arm and use a task absent from its fixed baseline.
 
 ## Later product options
 
