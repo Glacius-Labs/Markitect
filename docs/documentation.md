@@ -1,11 +1,13 @@
-# Documentation inputs
+# Project artifact inputs
 
-Markitect can connect ordinary documentation to exact source inputs without
-turning every file into a typed resource. A resource may declare UTF-8 files
-that belong to its area or a directly imported area in `spec.files`; these bytes enter compiled context and
-their changes seed conservative impact analysis. The path is explicit and
-repository-relative. Globs, content inference, and semantic truth checking are
-not part of this feature.
+Markitect can connect AI-facing resources to exact project files without
+turning every file into a typed resource. A resource may declare ordinary UTF-8
+files that belong to its area or a directly imported area in `spec.files`.
+These bytes enter compiled context, and their changes seed conservative impact
+analysis. The path is explicit and repository-relative. Source code, schemas,
+configuration, infrastructure, CI files, and documentation follow the same
+mechanism. Arbitrary binary files, globs, content inference, and semantic truth
+checking are not part of this feature. See the [product boundary](architecture.md#project-artifact-boundary).
 
 Code can stay in its normal source directory. For example, a Project may give
 `src/` its own area and let the area containing `docs/` import it. The owning
@@ -14,7 +16,7 @@ permits that dependency; it does not load the entire source area or infer code
 relationships. The executable example places its small source file beside its
 documentation to keep the initial model to two independent areas.
 
-The [code and documentation example](../examples/documentation/README.md)
+The [Go input example](../examples/documentation/README.md)
 connects a Go source file to a `Text` resource, then to a `Workflow`. Changing
 the source file affects the declared `Text` and its dependent `Workflow`, while
 independent documentation in a second area stays outside the selected context

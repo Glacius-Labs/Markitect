@@ -24,6 +24,8 @@
 
 Adopting repositories own their content and any import scripts used to bring existing material into the Markitect model. Markitect does not embed a repository-specific migration or renderer policy. Core authoring guidance remains part of the product.
 
+The product treats adopting-project files as [declared artifact inputs](docs/architecture.md#project-artifact-boundary), including source code. Its own Go implementation and release tooling do not imply a source-code analysis feature for adopting projects.
+
 Keep source and test files focused on one coherent responsibility. When new functionality introduces an independent responsibility, prefer a new file in the existing package. Keep related types and helpers together; do not add packages or abstractions solely to shorten files.
 
 ## Verify a change

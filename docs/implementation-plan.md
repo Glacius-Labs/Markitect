@@ -33,7 +33,7 @@ The v0.4.0 release adds `markitect init` for an existing repository. Preview pri
 
 Acceptance is structural: the new Project parses, resolves, and passes output checks. `verify` must remain incomplete until the adopting project owner declares actual checks and commits the candidate. Consult GitHub Releases for currently available distributions.
 
-This source version also adds an executable code-to-documentation example, fixes shared-writer path handling for Windows short/long names while retaining reparse rejection, keeps benchmark fixtures checked in CI, and bundles third-party notices accessible offline through `licenses`. The [authoring pilot](authoring-pilot.md) records actual measurements and the incomplete model comparison; it makes no savings claim.
+This source version also adds an executable project-artifact input example using a Go file, fixes shared-writer path handling for Windows short/long names while retaining reparse rejection, keeps benchmark fixtures checked in CI, and bundles third-party notices accessible offline through `licenses`. The example exercises explicit context and impact, not source-code analysis; the [architecture boundary](architecture.md#project-artifact-boundary) applies to all artifact types. The [authoring pilot](authoring-pilot.md) records actual measurements and the incomplete model comparison; it makes no savings claim.
 
 ## v0.4.1 — licensing and repository presentation
 

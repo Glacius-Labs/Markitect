@@ -6,6 +6,14 @@
 
 Markitect makes AI-facing engineering resources explicit enough to validate, connect, and review. Humans and agents choose intent and meaning; the deterministic Go application parses YAML, resolves dependencies, compiles context, measures change impact, verifies declared commands, and produces managed views. Core authoring guidance is part of Markitect and uses the same model as project content.
 
+## Project artifact boundary
+
+Markitect models AI-facing engineering knowledge: typed resources, their ownership, and their explicitly declared relationships. An adopting project may also declare exact ordinary UTF-8 files as inputs to a resource. Source code, schemas, configuration, infrastructure definitions, CI files, and documentation use the same `spec.files` mechanism. These project artifacts are opaque with respect to their domain-specific meaning: Markitect checks their paths and access, includes their bytes in fixed-snapshot context, and uses changes to conservatively identify affected resources and invalidate review-evidence reuse. The current input contract does not accept arbitrary binary files or globs; see [Project artifact inputs](documentation.md).
+
+Markitect does not parse an adopting project's programming-language structure, infer symbols, call graphs, dependencies or business meaning from its files, or generate documentation from source code. A changed input can establish that dependent knowledge needs review; it cannot establish that the knowledge is wrong or that revised prose is correct. The declared resource graph is not a graph inferred from the internal structure of project artifacts. A proposed core feature that requires source-language semantics belongs outside this boundary; apply the same input and impact rules across artifact types.
+
+Project-owned commands in `spec.checks` may run external analyzers during `verify`. Markitect executes those explicit commands and reports their result for the selected snapshot; the adopting project chooses the checks and interprets their findings. A future integration with specialized tooling must preserve this boundary by supplying explicit inputs or project-owned checks, rather than moving domain-specific analysis into the core.
+
 ```mermaid
 flowchart LR
     Intent[Human intent] --> Agent[Authoring agent]
@@ -37,7 +45,7 @@ Resources have local identity `namespace/kind/name`; the Project has identity `k
 | Project | Areas, imports, bindings, checks, render configuration, and exact direct package pins |
 | Package | A package archive manifest with areas, exports, a version, and optional package-local bindings |
 
-`rules` declares requirements; `uses` declares concrete dependencies; `needs` requires a Contract; `implements` promises its signature; Project bindings select implementations. `files` declares exact ordinary UTF-8 inputs. Prose links are navigation and are not inferred dependencies. Area ownership and access follow configured paths and explicit imports; namespaces do not create inheritance.
+`rules` declares requirements; `uses` declares concrete dependencies; `needs` requires a Contract; `implements` promises its signature; Project bindings select implementations. `files` declares exact ordinary UTF-8 project artifact inputs. Prose links are navigation and are not inferred dependencies. Area ownership and access follow configured paths and explicit imports; namespaces do not create inheritance.
 
 Optional Project documentation roots enable snapshot-based README router checks. They validate local navigation only; ordinary Markdown remains untyped and router links do not enter the graph. Embedded authoring guidance uses Areas, paths and local routers to help an agent find an existing canonical owner before creating a document. The semantic placement decision remains with the author and reviewer. See [Documentation routers](documentation-routers.md).
 

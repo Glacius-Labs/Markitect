@@ -5,11 +5,11 @@
 | [Usage](usage.md) | Current Project format, CLI behavior, safe initialization, and schema-upgrade guidance |
 | [Repository layout](repository-layout.md) | Recommended control-plane organization, ownership zones, and layout compatibility |
 | [Content packages](content-packages.md) | Direct offline package pins, exports, archive creation, and package boundaries in Markitect 0.3.0 |
-| [Documentation inputs](documentation.md) | Explicit ordinary-file inputs in context and impact |
+| [Project artifact inputs](documentation.md) | Explicit ordinary-file inputs in context and impact, including source code |
 | [Documentation routers](documentation-routers.md) | Optional local navigation checks and placement guidance |
 | [Provider adapters](provider-adapters.md) | Explicit Codex, Claude, and shared entrypoints and strict inventory |
 | [Factual consistency](consistency.md) | Opt-in sourced functional assertions and their limits |
-| [Architecture](architecture.md) | Product boundaries and current source model |
+| [Architecture](architecture.md) | Product boundary for project artifacts and current source model |
 | [Operations](operations.md) | Development, verification, rendering, and release operations |
 | [Refinement decisions](refinement.md) | Product principles and deferred design choices |
 | [Implementation plan](implementation-plan.md) | The Markitect roadmap |

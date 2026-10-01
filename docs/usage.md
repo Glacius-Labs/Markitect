@@ -6,9 +6,9 @@ This guide describes the current source model. Consult [GitHub Releases](https:/
 
 Markitect projects declare YAML resources in `markitect.yaml` and configured content areas. The namespaced kinds are `Text`, `Rule`, `Contract`, `Workflow`, `Skill`, and `Agent`; `Project` declares topology and execution/output configuration. Namespaces and names are DNS labels. Paths, area imports, and resource declarations govern ownership and direct access.
 
-Use `rules` to attach requirements, `uses` for concrete resource dependencies, `needs` to require a Contract, `implements` to declare a Contract signature, and Project `bindings` to select implementations. Use `files` for exact ordinary UTF-8 file inputs needed by a resource. Markitect does not infer dependencies from prose links.
+Use `rules` to attach requirements, `uses` for concrete resource dependencies, `needs` to require a Contract, `implements` to declare a Contract signature, and Project `bindings` to select implementations. Use `files` for exact ordinary UTF-8 project artifact inputs needed by a resource. Markitect does not infer dependencies from prose links or from the contents of project artifacts.
 
-See [Documentation inputs](documentation.md) for the file-input context and impact contract and its executable example.
+See [Project artifact inputs](documentation.md) for the file-input context and impact contract and its executable example, and [Architecture](architecture.md#project-artifact-boundary) for the boundary on domain-specific analysis.
 See [Documentation routers](documentation-routers.md) for optional local navigation checks and the separate authoring placement procedure.
 See [Repository layout](repository-layout.md) for the recommended `.markitect/areas/` convention and compatibility boundaries. Explicit configured paths remain valid.
 

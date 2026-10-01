@@ -5,9 +5,9 @@
   </picture>
 </h1>
 
-AI-facing engineering guidance often lives in documents whose relationships and owners are hard to see. Markitect makes that guidance explicit: author rules, workflows, skills, agents, reusable text, and contracts as typed resources, then declare how they depend on one another and which ordinary files they need.
+AI-facing engineering guidance often lives in documents whose relationships and owners are hard to see. Markitect makes that guidance explicit: author rules, workflows, skills, agents, reusable text, and contracts as typed resources, then declare how they depend on one another and which ordinary project files they need.
 
-The Go CLI checks resource structure and generated views, compiles a selected resource's declared context, and reports affected resources between fixed Git revisions. These operations are deterministic and do not require a model API. Markitect does not decide whether prose is true, complete, or followed.
+The Go CLI checks resource structure and generated views, compiles a selected resource's declared context, and reports affected resources between fixed Git revisions. These operations are deterministic and do not require a model API. Project files, including source code, are explicit inputs; Markitect does not analyze their domain-specific structure or decide whether prose is true, complete, or followed. See the [product boundary](docs/architecture.md#project-artifact-boundary).
 
 <!-- markitect-release:install:start -->
 
@@ -129,7 +129,7 @@ Authoring guidance ships with Markitect and uses the same resource model as proj
 - [Operations](docs/operations.md): source development, checks, and release handling.
 - [Integration](integration/README.md): verified downloads, installation, upgrades, and release publication.
 - [Content packages](docs/content-packages.md): exact direct pins for offline content archives.
-- [Documentation inputs](docs/documentation.md): declare exact ordinary files used by resources.
+- [Project artifact inputs](docs/documentation.md): declare exact ordinary files used by resources.
 - [Development](CONTRIBUTING.md): code ownership and contribution checks.
 - [Third-party notices](internal/licenses/notices.md): bundled upstream attribution, also available offline with `markitect licenses`.
 
