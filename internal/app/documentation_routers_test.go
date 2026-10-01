@@ -72,6 +72,11 @@ func TestNormalizeRouterTarget(t *testing.T) {
 		{"encoded%252Fslash.md", "docs/sub/encoded%2Fslash.md", true, false},
 		{"a%2Fb.md", "docs/sub/a/b.md", true, false},
 		{"./", "docs/sub", true, false},
+		{"../../", ".", true, false},
+		{"foo%3Fbar.md", "docs/sub/foo?bar.md", true, false},
+		{"x:custom", "", false, false},
+		{"bad%00.md", "", true, true},
+		{"folder\\file.md", "", true, true},
 		{"#heading", "", false, false},
 		{"https://example.org/x", "", false, false},
 		{"//example.org/x", "", false, false},
@@ -110,5 +115,47 @@ func TestRouterLinksDoNotBecomeGraphDependencies(t *testing.T) {
 	}
 	if len(project.Graph.Edges) != 0 {
 		t.Fatalf("navigation created graph edges: %#v", project.Graph.Edges)
+	}
+}
+
+func TestMarkdownRouterLinkBoundaries(t *testing.T) {
+	tests := []struct {
+		name, markdown string
+		want           []routerLink
+	}{
+		{"shortcut at EOF", "[Guide]: guide.md\n\n[Guide]", []routerLink{{"guide.md", 3}}},
+		{"first reference wins", "[g]: first.md\n[g]: second.md\n\n[g]", []routerLink{{"first.md", 4}}},
+		{"escaped punctuation", `[Guide](a\(b\).md)`, []routerLink{{"a(b).md", 1}}},
+		{"literal backslash", `[Guide](folder\file.md)`, []routerLink{{`folder\file.md`, 1}}},
+		{"reference escape", "[g]: a\\(b\\).md\n\n[g]", []routerLink{{"a(b).md", 3}}},
+		{"image is not coverage", "![Guide](guide.md)", nil},
+		{"reference image is not coverage", "[g]: guide.md\n\n![Guide][g]", nil},
+		{"invalid inline suffix", "[Guide](guide.md arbitrary prose)", nil},
+		{"parenthesized title", "[Guide](guide.md (title))", []routerLink{{"guide.md", 1}}},
+		{"fence closing suffix", "```md\n```text\n[Example](missing.md)\n```\n[Guide](guide.md)", []routerLink{{"guide.md", 5}}},
+		{"invalid backtick opener", "```info`text\n[Guide](guide.md)", []routerLink{{"guide.md", 2}}},
+		{"exact inline delimiter", "` example `` [Example](missing.md) ` [Guide](guide.md)", []routerLink{{"guide.md", 1}}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := markdownRouterLinks([]byte(tt.markdown)); !reflect.DeepEqual(got, tt.want) {
+				t.Fatalf("links = %#v, want %#v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestDocumentationRootWithOnlyAssetsStillNeedsRouter(t *testing.T) {
+	p := routerProject([]string{"docs"}, map[string]string{"docs/assets/logo.png": "image"})
+	got := CheckDocumentationRouters(p)
+	if len(got) != 1 || got[0].Code != "documentation.router.missing" || got[0].Path != "docs/README.md" {
+		t.Fatalf("asset-only root = %#v", got)
+	}
+}
+
+func TestRouterCanLinkRepositoryRoot(t *testing.T) {
+	p := routerProject([]string{"docs"}, map[string]string{"docs/README.md": "[Repository](../)"})
+	if got := CheckDocumentationRouters(p); len(got) != 0 {
+		t.Fatalf("repository root link = %#v", got)
 	}
 }

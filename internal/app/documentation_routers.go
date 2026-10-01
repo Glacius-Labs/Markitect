@@ -26,7 +26,7 @@ func CheckDocumentationRouters(p *Project) []core.Diagnostic {
 		return nil
 	}
 	files := p.Snapshot.Files
-	allDirectories := map[string]bool{}
+	allDirectories := map[string]bool{".": len(files) > 0}
 	directMarkdown := map[string][]string{}
 	for name := range files {
 		for dir := path.Dir(name); dir != "."; dir = path.Dir(dir) {
@@ -53,6 +53,12 @@ func CheckDocumentationRouters(p *Project) []core.Diagnostic {
 				if ancestor == root {
 					break
 				}
+			}
+		}
+		children := map[string][]string{}
+		for child := range participating {
+			if child != root {
+				children[path.Dir(child)] = append(children[path.Dir(child)], child)
 			}
 		}
 		for _, dir := range sortedDirectories(participating) {
@@ -82,8 +88,8 @@ func CheckDocumentationRouters(p *Project) []core.Diagnostic {
 					findings = append(findings, core.Diagnostic{Code: "documentation.router.unlisted-file", Path: router, Message: fmt.Sprintf("router does not link to direct Markdown file %q", name)})
 				}
 			}
-			for child := range participating {
-				if child != dir && path.Dir(child) == dir && !linked[child] && !linked[path.Join(child, "README.md")] {
+			for _, child := range children[dir] {
+				if !linked[child] && !linked[path.Join(child, "README.md")] {
 					findings = append(findings, core.Diagnostic{Code: "documentation.router.unlisted-directory", Path: router, Message: fmt.Sprintf("router does not link to direct documentation directory %q", child)})
 				}
 			}
@@ -121,7 +127,7 @@ func normalizeRouterTarget(router, destination string) (string, bool, error) {
 		return "", false, nil
 	}
 	if uriScheme.MatchString(destination) {
-		if len(destination) >= 2 && destination[1] == ':' {
+		if len(destination) >= 3 && destination[1] == ':' && (destination[2] == '/' || destination[2] == '\\') {
 			return "", true, fmt.Errorf("target is not a portable relative path")
 		}
 		return "", false, nil
@@ -137,11 +143,11 @@ func normalizeRouterTarget(router, destination string) (string, bool, error) {
 	if err != nil {
 		return "", true, err
 	}
-	if strings.HasPrefix(decoded, "/") || strings.ContainsAny(decoded, "\\:\x00*?[]{}") {
+	if strings.HasPrefix(decoded, "/") || strings.ContainsAny(decoded, "\\\x00") {
 		return "", true, fmt.Errorf("target is not a portable relative path")
 	}
 	resolved := path.Clean(path.Join(path.Dir(router), decoded))
-	if resolved == "." || resolved == ".." || strings.HasPrefix(resolved, "../") {
+	if resolved == ".." || strings.HasPrefix(resolved, "../") {
 		return "", true, fmt.Errorf("target escapes the repository")
 	}
 	return resolved, true, nil
@@ -155,7 +161,9 @@ func markdownRouterLinks(data []byte) []routerLink {
 	definitionLines := map[int]bool{}
 	for _, match := range referenceDefinition.FindAllStringSubmatchIndex(text, -1) {
 		label := normalizeReferenceLabel(text[match[2]:match[3]])
-		definitions[label] = strings.Trim(text[match[4]:match[5]], "<>")
+		if _, exists := definitions[label]; !exists {
+			definitions[label] = unescapeMarkdownPath(strings.Trim(text[match[4]:match[5]], "<>"))
+		}
 		definitionLines[lineNumber(text, match[0])] = true
 	}
 	var links []routerLink
@@ -167,19 +175,19 @@ func markdownRouterLinks(data []byte) []routerLink {
 		if end < 0 {
 			continue
 		}
-		if end+1 >= len(text) {
-			continue
-		}
+		image := i > 0 && text[i-1] == '!' && !escapedMarkdown(text, i-1)
 		line := lineNumber(text, i)
-		if text[end+1] == '(' {
+		if end+1 < len(text) && text[end+1] == '(' {
 			if target, close, ok := inlineDestination(text, end+2); ok {
-				links = append(links, routerLink{target: target, line: line})
+				if !image {
+					links = append(links, routerLink{target: target, line: line})
+				}
 				i = close
 			}
 			continue
 		}
 		label := text[i+1 : end]
-		if text[end+1] == '[' {
+		if end+1 < len(text) && text[end+1] == '[' {
 			close := strings.IndexByte(text[end+2:], ']')
 			if close < 0 {
 				continue
@@ -192,7 +200,7 @@ func markdownRouterLinks(data []byte) []routerLink {
 		} else {
 			i = end
 		}
-		if target, ok := definitions[normalizeReferenceLabel(label)]; ok {
+		if target, ok := definitions[normalizeReferenceLabel(label)]; ok && !image {
 			links = append(links, routerLink{target: target, line: line})
 		}
 	}
@@ -220,30 +228,33 @@ func closingMarkdownBracket(text string, open int) int {
 
 func inlineDestination(text string, start int) (string, int, bool) {
 	i := start
-	for i < len(text) && (text[i] == ' ' || text[i] == '\t' || text[i] == '\n') {
+	for i < len(text) && markdownWhitespace(text[i]) {
 		i++
 	}
 	if i >= len(text) {
 		return "", 0, false
 	}
 	if text[i] == '<' {
-		end := strings.IndexByte(text[i+1:], '>')
-		if end < 0 {
-			return "", 0, false
+		begin := i + 1
+		for i = begin; i < len(text); i++ {
+			if text[i] == '\n' || text[i] == '\r' {
+				return "", 0, false
+			}
+			if text[i] == '>' && !escapedMarkdown(text, i) {
+				close, ok := inlineLinkEnd(text, i+1)
+				return unescapeMarkdownPath(text[begin:i]), close, ok
+			}
 		}
-		target := text[i+1 : i+1+end]
-		close := strings.IndexByte(text[i+2+end:], ')')
-		if close < 0 {
-			return "", 0, false
-		}
-		return target, i + 2 + end + close, true
+		return "", 0, false
 	}
 	begin, nested := i, 0
 	for i < len(text) {
 		switch text[i] {
 		case '\\':
-			i += 2
-			continue
+			if i+1 < len(text) {
+				i += 2
+				continue
+			}
 		case '(':
 			nested++
 		case ')':
@@ -251,13 +262,10 @@ func inlineDestination(text string, start int) (string, int, bool) {
 				return unescapeMarkdownPath(text[begin:i]), i, true
 			}
 			nested--
-		case ' ', '\t', '\n':
+		case ' ', '\t', '\n', '\r':
 			if nested == 0 {
-				close := strings.IndexByte(text[i:], ')')
-				if close >= 0 {
-					return unescapeMarkdownPath(text[begin:i]), i + close, true
-				}
-				return "", 0, false
+				close, ok := inlineLinkEnd(text, i)
+				return unescapeMarkdownPath(text[begin:i]), close, ok
 			}
 		}
 		i++
@@ -265,10 +273,49 @@ func inlineDestination(text string, start int) (string, int, bool) {
 	return "", 0, false
 }
 
+func markdownWhitespace(b byte) bool { return b == ' ' || b == '\t' || b == '\n' || b == '\r' }
+
+// A destination may be followed only by whitespace, an optional quoted title,
+// and the link's closing parenthesis. Arbitrary trailing prose is not a link.
+func inlineLinkEnd(text string, at int) (int, bool) {
+	i := at
+	for i < len(text) && markdownWhitespace(text[i]) {
+		i++
+	}
+	if i >= len(text) {
+		return 0, false
+	}
+	if text[i] == ')' {
+		return i, true
+	}
+	if i == at || (text[i] != '"' && text[i] != '\'' && text[i] != '(') {
+		return 0, false
+	}
+	close := text[i]
+	if close == '(' {
+		close = ')'
+	}
+	i++
+	for i < len(text) && (text[i] != close || escapedMarkdown(text, i)) {
+		if close == ')' && text[i] == '(' && !escapedMarkdown(text, i) {
+			return 0, false
+		}
+		i++
+	}
+	if i >= len(text) {
+		return 0, false
+	}
+	i++
+	for i < len(text) && markdownWhitespace(text[i]) {
+		i++
+	}
+	return i, i < len(text) && text[i] == ')'
+}
+
 func unescapeMarkdownPath(value string) string {
 	var b strings.Builder
 	for i := 0; i < len(value); i++ {
-		if value[i] == '\\' && i+1 < len(value) {
+		if value[i] == '\\' && i+1 < len(value) && strings.ContainsRune("!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~", rune(value[i+1])) {
 			i++
 		}
 		b.WriteByte(value[i])
@@ -307,10 +354,13 @@ func maskMarkdownCode(text string) string {
 				n++
 			}
 			if n >= 3 {
-				if fence == 0 {
+				if fence == 0 && (line[0] != '`' || !strings.ContainsRune(line[n:], '`')) {
 					fence, fenceLen = line[0], n
-				} else if line[0] == fence && n >= fenceLen {
+				} else if line[0] == fence && n >= fenceLen && strings.TrimSpace(line[n:]) == "" {
 					fence = 0
+				} else if fence == 0 {
+					start = end + 1
+					continue
 				}
 				for i := start; i < end; i++ {
 					masked[i] = ' '
@@ -334,7 +384,22 @@ func maskMarkdownCode(text string) string {
 		for i+n < len(masked) && masked[i+n] == '`' {
 			n++
 		}
-		close := strings.Index(string(masked[i+n:]), strings.Repeat("`", n))
+		close := -1
+		for at := i + n; at < len(masked); {
+			if masked[at] != '`' {
+				at++
+				continue
+			}
+			run := 1
+			for at+run < len(masked) && masked[at+run] == '`' {
+				run++
+			}
+			if run == n {
+				close = at - i - n
+				break
+			}
+			at += run
+		}
 		if close < 0 {
 			i += n - 1
 			continue

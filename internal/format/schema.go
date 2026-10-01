@@ -74,6 +74,9 @@ func filteredSpecSchema(kind string, fields []string) map[string]any {
 			properties[field] = shape
 		}
 	}
+	if documentationShape, ok := properties["documentation"].(map[string]any); ok {
+		documentationShape["properties"].(map[string]any)["roots"].(map[string]any)["minItems"] = 1
+	}
 	if checksShape, ok := properties["checks"].(map[string]any); ok {
 		checkShape := checksShape["items"].(map[string]any)
 		checkProperties := checkShape["properties"].(map[string]any)
