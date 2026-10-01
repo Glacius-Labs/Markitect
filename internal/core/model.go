@@ -44,6 +44,12 @@ type Check struct {
 	Run  []string `yaml:"run"`
 }
 
+// Documentation enables structural checks for explicitly selected local trees.
+// It does not assign resource identity or declare graph dependencies.
+type Documentation struct {
+	Roots []string `yaml:"roots"`
+}
+
 type Provider struct {
 	Model           string   `yaml:"model,omitempty"`
 	Effort          string   `yaml:"effort,omitempty"`
@@ -62,21 +68,22 @@ type Providers struct {
 type Spec struct {
 	Text string `yaml:"text,omitempty"`
 	// Files lists explicit repository-relative non-Markitect inputs needed by this resource.
-	Files       []string  `yaml:"files,omitempty"`
-	Description string    `yaml:"description,omitempty"`
-	Rules       []Ref     `yaml:"rules,omitempty"`
-	Uses        []Ref     `yaml:"uses,omitempty"`
-	Needs       []Ref     `yaml:"needs,omitempty"`
-	Implements  []Ref     `yaml:"implements,omitempty"`
-	Input       []string  `yaml:"input,omitempty"`
-	Output      []string  `yaml:"output,omitempty"`
-	Kind        string    `yaml:"kind,omitempty"`
-	Check       string    `yaml:"check,omitempty"`
-	Providers   Providers `yaml:"providers,omitempty"`
-	Targets     []string  `yaml:"targets,omitempty"`
-	Areas       []Area    `yaml:"areas,omitempty"`
-	Bindings    []Binding `yaml:"bindings,omitempty"`
-	Checks      []Check   `yaml:"checks,omitempty"`
+	Files         []string       `yaml:"files,omitempty"`
+	Description   string         `yaml:"description,omitempty"`
+	Rules         []Ref          `yaml:"rules,omitempty"`
+	Uses          []Ref          `yaml:"uses,omitempty"`
+	Needs         []Ref          `yaml:"needs,omitempty"`
+	Implements    []Ref          `yaml:"implements,omitempty"`
+	Input         []string       `yaml:"input,omitempty"`
+	Output        []string       `yaml:"output,omitempty"`
+	Kind          string         `yaml:"kind,omitempty"`
+	Check         string         `yaml:"check,omitempty"`
+	Providers     Providers      `yaml:"providers,omitempty"`
+	Targets       []string       `yaml:"targets,omitempty"`
+	Areas         []Area         `yaml:"areas,omitempty"`
+	Bindings      []Binding      `yaml:"bindings,omitempty"`
+	Checks        []Check        `yaml:"checks,omitempty"`
+	Documentation *Documentation `yaml:"documentation,omitempty"`
 	// Rules map provider rule entrypoint names to owning sources. This also
 	// supports several canonical sources behind one legacy entrypoint.
 	RuleAdapters map[string][]Ref `yaml:"ruleAdapters,omitempty"`

@@ -39,6 +39,18 @@ This source version also adds an executable code-to-documentation example, fixes
 
 The published v0.4.1 release adds the Apache License 2.0 to the product repository and includes it in source distributions. Earlier immutable tags and their attached archives do not gain a license file retroactively. It also improves the README entry, support and security guidance, and contribution templates. Its product behavior and verification boundaries remain those of v0.4.0. The reviewed source, Windows/Linux gates, exact tag, and immutable release verification are recorded in the [production assessment](production-assessment.md).
 
+## Source candidate — documentation placement and optional routers
+
+This unreleased source candidate adds portable authoring guidance for locating an existing canonical documentation owner and an opt-in `Project.spec.documentation.roots` router check. Konfyra's local router contract and checker are the reference implementation for the general behavior; its General/Core/Module/Product taxonomy, code-to-document mapping and provider-adapter gates remain Konfyra-owned. [Documentation routers](documentation-routers.md) owns the exact participation, link-normalization and diagnostic contract.
+
+Implementation sequence: (1) define and test participating directories and local link normalization against snapshot paths; (2) add strict Project configuration and regenerate its schema; (3) surface stable router diagnostics through `check` and fixed-revision `verify`; (4) update embedded authoring guidance and validate a placement task where an agent finds and changes an existing canonical source; (5) run source and executable-example gates. The acceptance case must distinguish the agent's actual edit from the structural router check. A passing `check` cannot prove semantic placement or complete repository verification.
+
+Focused tests cover invalid and overlapping roots (`internal/format/yaml_documentation_test.go`); participating directories, direct-child coverage, extra cross-links, missing and unsafe targets, reference links, code examples and normalization (`internal/app/documentation_routers_test.go`); fixed-snapshot `check` and broken-router `verify` (`cmd/markitect/documentation_routers_test.go`); and the executable placement fixture (`examples/example_test.go`). These tests assert structural behavior. The separate agent exercise below probes the authoring decision.
+
+One isolated authoring exercise used a copy of the checked-in [placement example](../examples/documentation-placement/README.md) and the prompt recorded there. The agent changed only `docs/engineering/persistence.md`, the existing page whose README claims schema migration requirements; it created no second page. The router check passed on that candidate. This is one observed placement decision, not a measured reliability rate or proof that the prose is correct.
+
+This slice introduces no Resource Kind, documentation graph, README generation, excludes, or additional Project options. Router navigation and explicit dependency/impact analysis remain separate.
+
 ## Later product options
 
 - MCP, LSP, and graph visualization when measured authoring needs justify them.

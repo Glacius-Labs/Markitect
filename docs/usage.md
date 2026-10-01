@@ -9,6 +9,7 @@ Markitect projects declare YAML resources in `markitect.yaml` and configured con
 Use `rules` to attach requirements, `uses` for concrete resource dependencies, `needs` to require a Contract, `implements` to declare a Contract signature, and Project `bindings` to select implementations. Use `files` for exact ordinary UTF-8 file inputs needed by a resource. Markitect does not infer dependencies from prose links.
 
 See [Documentation inputs](documentation.md) for the file-input context and impact contract and its executable example.
+See [Documentation routers](documentation-routers.md) for optional local navigation checks and the separate authoring placement procedure.
 
 A Project can declare named areas, direct imports, renderer targets, and rule adapters. References must resolve to authored resources. The following neutral shape shows those relationships; copy the [minimal example](../examples/minimal/README.md) for a runnable project:
 
@@ -31,6 +32,8 @@ spec:
   checks:
     - name: unit-tests
       run: [go, test, ./...]
+  documentation:
+    roots: [docs]
   targets: [codex, claude]
   ruleAdapters:
     review-context:
@@ -40,6 +43,8 @@ spec:
 ```
 
 `ruleAdapters` maps generated rule entrypoint names to source references; these mappings currently produce Claude rule views when the Claude target is selected. `targets` currently accepts `codex` and `claude`. A Project may also pin direct offline content packages in `spec.packages`. Each entry contains `name`, `version`, `source`, `archive`, and `sha256`; this list is the complete content lock. `markitect.lock.yaml` remains exclusively the CLI distribution lock. See [Content packages](content-packages.md) for manifests, exports, archive creation, query selection, and boundaries. The [Project schema](../schema/Project.yaml) and [Agent schema](../schema/Agent.yaml) list the supported fields. Provider metadata configures generated output; it is not a runtime dependency of the Markitect core.
+
+`spec.documentation.roots` opts into snapshot-based README router checks. It does not turn Markdown into typed resources or infer dependencies. Omit it when the project has no router contract. A passing router check says that local navigation is structurally complete; it does not establish that a document was placed with the correct semantic owner.
 
 ## Initialize a project
 
@@ -75,7 +80,7 @@ Commands run with the caller's local authority. Snapshot isolation fixes the inp
 
 | Command | Purpose |
 |---|---|
-| `check` | Validate YAML, the resource graph, declared file inputs, and managed outputs. |
+| `check` | Validate YAML, the resource graph, declared file inputs, managed outputs, and explicitly configured documentation routers. |
 | `init` | Preview a minimal project plan; `--write` creates only its Project file and one area README. |
 | `verify` | Check an immutable revision and run the Project's declared commands. |
 | `inventory` | List Markdown candidates and typed resources; it does not infer dependencies. |

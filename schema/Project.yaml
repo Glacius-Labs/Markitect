@@ -114,6 +114,16 @@ properties:
                         - run
                     type: object
                 type: array
+            documentation:
+                additionalProperties: false
+                properties:
+                    roots:
+                        items:
+                            type: string
+                        type: array
+                required:
+                    - roots
+                type: object
             packages:
                 items:
                     additionalProperties: false

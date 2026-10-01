@@ -1,0 +1,12 @@
+apiVersion: markitect.example.org/v1alpha1
+kind: Project
+metadata:
+  name: placement-exercise
+spec:
+  areas:
+    - name: engineering
+      path: docs/engineering
+    - name: product
+      path: docs/product
+  documentation:
+    roots: [docs]

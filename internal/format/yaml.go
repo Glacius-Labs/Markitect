@@ -23,7 +23,7 @@ var specFields = map[string][]string{
 	"Workflow": {"text", "rules", "uses", "needs", "implements", "input", "output", "files"},
 	"Skill":    {"text", "description", "rules", "uses", "needs", "implements", "input", "output", "files"},
 	"Agent":    {"text", "description", "rules", "uses", "needs", "implements", "input", "output", "providers", "files"},
-	"Project":  {"targets", "areas", "bindings", "checks", "ruleAdapters", "packages"},
+	"Project":  {"targets", "areas", "bindings", "checks", "documentation", "ruleAdapters", "packages"},
 	"Package":  {"version", "areas", "exports", "bindings"},
 }
 
@@ -219,6 +219,11 @@ func validateSpec(file string, n *yaml.Node, kind string) error {
 			return diagnostic(file, d.Line, "packages are only allowed on Project resources")
 		}
 		if err := validatePackagePins(file, d); err != nil {
+			return err
+		}
+	}
+	if d := child(n, "documentation"); d != nil {
+		if err := validateDocumentation(file, d); err != nil {
 			return err
 		}
 	}
