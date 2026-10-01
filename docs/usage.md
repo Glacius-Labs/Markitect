@@ -93,6 +93,7 @@ Commands run with the caller's local authority. Snapshot isolation fixes the inp
 | `bundle` | Build a complete distribution from an exact revision. |
 | `install` | Validate a distribution and preview a complete pin change; `--write` applies the plan. |
 | `version` | Print the CLI version and platform. |
+| `licenses` | Print bundled third-party notices; works offline without a Project. |
 
 Existing-content imports are implemented and reviewed as scripts owned by the project being migrated. Markitect core does not include a migration command or presume source documentation structure.
 

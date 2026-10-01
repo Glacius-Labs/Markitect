@@ -27,11 +27,13 @@ This source version added exact direct package pins in `Project.spec.packages`, 
 
 This correction rejects binding cycles that include a Contract selected by its own implementation. The dated source and release evidence is in the [production assessment](production-assessment.md).
 
-## v0.4.0 — minimal project initialization candidate
+## v0.4.0 — minimal project initialization
 
 The current source candidate adds `markitect init` for an existing repository. Preview prints the exact minimal Project YAML and area README plan without writing, including outside Git. `--write` recomputes and validates the plan, requires a named non-protected Git branch, and creates only `markitect.yaml` and one README in a previously absent area directory. It does not infer project policy, add resources or checks, select outputs or packages, use custom templates, or edit root documentation or agent instructions. File creation is exclusive and guarded by the shared write lock; a partial failure reports created paths and recovery guidance, because two file creations are not a transaction.
 
 Acceptance is structural: the new Project parses, resolves, and passes output checks. `verify` must remain incomplete until the adopting project owner declares actual checks and commits the candidate. Consult GitHub Releases for currently available distributions.
+
+This source version also adds an executable code-to-documentation example, fixes shared-writer path handling for Windows short/long names while retaining reparse rejection, keeps benchmark fixtures checked in CI, and bundles third-party notices accessible offline through `licenses`. The [authoring pilot](authoring-pilot.md) records actual measurements and the incomplete model comparison; it makes no savings claim.
 
 ## Later product options
 

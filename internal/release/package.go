@@ -72,6 +72,8 @@ type sourceFile struct {
 	data []byte
 }
 
+const embeddedNoticesPath = "internal/licenses/notices.md"
+
 func collect(moduleDir string) ([]sourceFile, error) {
 	files := make([]sourceFile, 0, 64)
 	for _, name := range []string{"go.mod", "go.sum"} {
@@ -130,7 +132,7 @@ func walkSourceTree(moduleDir, start string, files *[]sourceFile) error {
 		}
 		ext := strings.ToLower(filepath.Ext(entry.Name()))
 		embeddedResource := strings.HasPrefix(rel, "internal/authoring/resources/") && ext == ".yaml"
-		if ext != ".go" && !embeddedResource {
+		if ext != ".go" && !embeddedResource && rel != embeddedNoticesPath {
 			return nil
 		}
 		return appendRegularFile(moduleDir, rel, files, true)

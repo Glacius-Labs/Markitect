@@ -32,6 +32,8 @@ Capture only observed data: model-reported token usage, calls, tool calls, searc
 
 Review reuse should be exercised for identical inputs, relevant changes, removed edges, tool/config changes, and unknown files. Reuse makes no model call. Compare the full repeated task before claiming sustained savings.
 
+The [2026-10-01 documentation pilot](authoring-pilot.md) stopped after two completed runs because of a provider usage limit. It records the incomplete result and a mismatch between the task's wording and a stricter mutation oracle. State every scored mutation restriction in the task card before running another comparison; keep structural validity, requested semantics, and a narrow mutation boundary as separate results.
+
 ## Optional local records
 
 No telemetry is installed or enabled. Consider local opt-in YAML records only after a controlled exercise establishes useful fields. Counts, durations, identifiers, and hashes are enough; prompts, credentials, and source documents do not belong in generic metrics. Do not rank individual contributors. A statistics CLI, remote collection, and database are separate future decisions.

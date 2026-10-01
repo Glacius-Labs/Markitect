@@ -110,6 +110,9 @@ jobs:
           go test scripts/run-markitect.go scripts/markitect-bootstrap_test.go
           output="$(go run scripts/run-markitect.go authoring)"
           grep -Fq 'core/Skill/authoring' <<< "$output"
+          notices="$(go run scripts/run-markitect.go licenses)"
+          grep -Fq 'Copyright 2009 The Go Authors.' <<< "$notices"
+          grep -Fq 'END OF TERMS AND CONDITIONS' <<< "$notices"
           check_output="$(go run scripts/run-markitect.go check --repo "$GITHUB_WORKSPACE/examples/minimal")"
           grep -Eq '^status: passed$' <<< "$check_output"
           init_dir="$RUNNER_TEMP/markitect-init-$GITHUB_SHA"
@@ -130,6 +133,9 @@ jobs:
           $output = go run scripts/run-markitect.go authoring
           if ($LASTEXITCODE -ne 0) { throw "Bootstrap authoring smoke failed with exit code $LASTEXITCODE" }
           if (($output -join "`n") -notmatch 'core/Skill/authoring') { throw 'Packaged binary omitted the embedded authoring Skill' }
+          $notices = go run scripts/run-markitect.go licenses
+          if ($LASTEXITCODE -ne 0) { throw 'Packaged third-party notices failed' }
+          if (($notices -join "`n") -notmatch 'Copyright 2009 The Go Authors.' -or ($notices -join "`n") -notmatch 'END OF TERMS AND CONDITIONS') { throw 'Packaged binary omitted third-party notices' }
           $example = Join-Path $env:GITHUB_WORKSPACE 'examples/minimal'
           $checkOutput = go run scripts/run-markitect.go check --repo $example
           if ($LASTEXITCODE -ne 0) { throw "Bootstrap example check failed with exit code $LASTEXITCODE" }

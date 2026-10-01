@@ -13,6 +13,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/authoring"
 	"github.com/Glacius-Labs/Markitect/internal/core"
 	"github.com/Glacius-Labs/Markitect/internal/format"
+	"github.com/Glacius-Labs/Markitect/internal/licenses"
 	"github.com/Glacius-Labs/Markitect/internal/release"
 	"github.com/Glacius-Labs/Markitect/internal/source"
 )
@@ -141,6 +142,12 @@ func run(args []string, out, errout io.Writer) int {
 		return 0
 	}
 	fail := func(err error) int { fmt.Fprintln(errout, err); return 2 }
+	if command == "licenses" {
+		if _, err := io.WriteString(out, licenses.Text); err != nil {
+			return fail(err)
+		}
+		return 0
+	}
 	if command == "init" {
 		return runInit(*root, *name, *namespace, *areaPath, *write, emit, fail)
 	}

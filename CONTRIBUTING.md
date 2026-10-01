@@ -11,6 +11,7 @@
 | `internal/inputs` | Explicit ordinary-file inputs |
 | `internal/app` | Context, impact, evidence, verification, rendering, initialization, and controlled writes |
 | `internal/authoring` | Embedded core authoring resources |
+| `internal/licenses` | Canonical embedded upstream notices |
 | `internal/render` | Generic managed views and declared output adapters |
 | `internal/release` | Deterministic source archives and release bundles |
 | `internal/contentpackage` | Validated offline content-package archive format |
@@ -50,5 +51,7 @@ Rendering always supports Markitect's generic managed views. Additional output t
 `init` is a core authoring path for repositories with no Markitect Project. Its preview must remain read-only and show exact planned YAML and paths. Write recomputes and validates the plan, then exclusively creates only `markitect.yaml` and one area README under the shared write lock. It must enforce the named non-protected branch boundary and report created paths if a later file creation fails. Keep the two-file operation explicitly non-transactional. An empty Project is structurally checkable but cannot produce complete `verify` evidence until its owner declares actual checks and commits the candidate. Do not add generated policies, resources, checks, targets, package pins, custom templates, or edits to existing root files.
 
 ## Release work
+
+The canonical [third-party notices](internal/licenses/notices.md) are embedded in the CLI and included in both source distribution paths. When dependencies or the build toolchain change, compare their upstream notices and update this file in the same candidate when needed. Check `markitect licenses` from the packaged bootstrap as well as the source build. Markitect's own public license remains a separate owner decision.
 
 [Operations and releases](docs/operations.md) describes the supported source and publication gates. The [roadmap](docs/implementation-plan.md) owns current source status; [GitHub Releases](https://github.com/Glacius-Labs/Markitect/releases) lists available distributions. The [production assessment](docs/production-assessment.md) records dated release evidence. A source version does not imply acceptance by any adopting project.

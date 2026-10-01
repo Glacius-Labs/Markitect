@@ -33,5 +33,6 @@ On Linux and macOS, build as `go build -o bin/markitect ./cmd/markitect`. The [m
 - [Operations](docs/operations.md): source development, checks, and release handling.
 - [Integration](integration/README.md): verified downloads, installation, upgrades, and release publication.
 - [Development](CONTRIBUTING.md): code ownership and validation.
+- [Third-party notices](internal/licenses/notices.md): bundled upstream attribution, also available offline with `markitect licenses`.
 
 The current source model builds on typed YAML resources, graph checks, core authoring, fixed-snapshot context and impact, explicit outputs and checks, and direct offline content packages. It adds bounded project initialization. Markitect does not provide an agent runtime, guarantee semantic completeness, or execute undeclared checks. See [GitHub Releases](https://github.com/Glacius-Labs/Markitect/releases) for available distributions and the [roadmap](docs/implementation-plan.md) for current source status.
