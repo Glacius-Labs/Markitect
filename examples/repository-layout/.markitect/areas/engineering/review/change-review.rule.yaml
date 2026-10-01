@@ -1,0 +1,8 @@
+apiVersion: markitect.example.org/v1alpha1
+kind: Rule
+metadata:
+    name: change-review
+    namespace: engineering
+spec:
+    text: |
+        Describe the intended behavior and required verification before accepting a change.

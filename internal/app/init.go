@@ -62,8 +62,11 @@ func Init(root string, options InitOptions, write bool) (*InitPlan, error) {
 		}
 		return nil, errors.New("init root must be an existing real directory")
 	}
-	if options.Name == "" || options.Namespace == "" || options.Path == "" {
-		return nil, errors.New("init requires project name, area namespace, and area path")
+	if options.Name == "" || options.Namespace == "" {
+		return nil, errors.New("init requires project name and area namespace")
+	}
+	if options.Path == "" {
+		options.Path = ".markitect/areas/" + options.Namespace
 	}
 
 	var branch string

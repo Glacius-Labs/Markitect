@@ -109,6 +109,8 @@ The first command checks the example's declared resources and managed views. The
 
 In your own repository, `markitect init` previews the exact minimal project files before writing.
 
+New projects default to canonical Areas under `.markitect/areas/<namespace>`, alongside human-owned `docs/` and native provider projections. Existing configured layouts remain supported; see [repository layout](docs/repository-layout.md) and the [executable layout example](examples/repository-layout/README.md).
+
 ## What it does
 
 - Defines typed resources and explicit dependencies in YAML; keeps readable prose in Markdown.
