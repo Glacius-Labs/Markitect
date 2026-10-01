@@ -21,3 +21,7 @@ WinGet requires the administrator-controlled `LocalManifestFiles` setting for lo
 ## Later releases
 
 Each Markitect release needs its own three-file manifest set with that release's version-specific Windows binary URL and exact SHA-256. Keep each community-repository submission to one package version and follow its PR template's schema recommendation. A manifest in this source checkout does not publish or update the community package by itself.
+
+## Local upgrade correlation
+
+Before the community package is indexed, a local manifest install has the product code `GlaciusLabs.Markitect__DefaultSource`. The pinned WinGet client searches a composite source when upgrading a manifest; automatic portable product-code matching uses that source identity. The runner therefore creates a test-only v0.5.0 manifest copy with an explicit `ProductCode` matching its own local registration. Release URLs, versions, and hashes are unchanged, and the three canonical submitted manifests are not edited. The report records this test-only correlation and marks public-catalog upgrade testing as unavailable. Test the unmodified catalog install and upgrade separately after publication. See [the pinned manifest lookup implementation](https://github.com/microsoft/winget-cli/blob/v1.29.380/src/AppInstallerCLICore/Workflows/WorkflowBase.cpp).
