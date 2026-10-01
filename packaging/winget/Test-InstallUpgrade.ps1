@@ -1,3 +1,4 @@
+#requires -Version 7.2
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $true)]
@@ -23,10 +24,13 @@ $olderUrl = 'https://github.com/Glacius-Labs/Markitect/releases/download/v0.4.1/
 $manifestDirectory = Join-Path $PSScriptRoot 'GlaciusLabs.Markitect\0.5.0'
 $oldManifestDirectory = Join-Path $OutputDirectory 'GlaciusLabs.Markitect-0.4.1-test'
 $portablePackageDirectory = Join-Path $env:LOCALAPPDATA 'Microsoft\WinGet\Packages\GlaciusLabs.Markitect__DefaultSource'
+$portableLinksDirectory = Join-Path $env:LOCALAPPDATA 'Microsoft\WinGet\Links'
+$portableAlias = Join-Path $portableLinksDirectory 'markitect.exe'
 $transcriptPath = Join-Path $OutputDirectory 'test-run.log'
 $summaryPath = Join-Path $OutputDirectory 'test-summary.yaml'
 $script:commandRecords = @()
 $script:completedPhases = @()
+$script:installedChecks = @()
 $testStartedAt = Get-Date
 $testStatus = 'not_started'
 $failureMessage = $null
@@ -129,7 +133,10 @@ function Get-LocalManifestFilesEnabled {
 }
 
 function Assert-InstalledVersion {
-    param([Parameter(Mandatory = $true)][string] $ExpectedVersion)
+    param(
+        [Parameter(Mandatory = $true)][string] $ExpectedVersion,
+        [Parameter(Mandatory = $true)][string] $ExpectedSha256
+    )
     $inventory = (Get-MarkitectInventory) -join "`n"
     if ($inventory -notmatch "(?im)^\s*Markitect\s+.*GlaciusLabs\.Markitect__DefaultSource\s+$([regex]::Escape($ExpectedVersion))\s*$") {
         throw "WinGet inventory does not show Markitect $ExpectedVersion. Output:`n$inventory"
@@ -138,16 +145,64 @@ function Assert-InstalledVersion {
     if (-not (Test-Path -LiteralPath $exe -PathType Leaf)) {
         throw "Portable package executable was not installed: $exe"
     }
+    if ((Get-FileHash -LiteralPath $exe -Algorithm SHA256).Hash -ne $ExpectedSha256) {
+        throw "Installed executable does not match the published release SHA-256: $exe"
+    }
     $versionOutput = (& $exe version | Out-String).Trim()
     $versionExit = $LASTEXITCODE
     if ($versionExit -ne 0 -or $versionOutput -ne "Markitect $ExpectedVersion (windows/amd64)") {
         throw "Unexpected Markitect executable result (exit $versionExit): $versionOutput"
     }
-    $userPath = [Environment]::GetEnvironmentVariable('Path', 'User') -split ';'
-    if ($portablePackageDirectory -notin $userPath) {
-        throw "WinGet did not add the portable package directory to the user PATH: $portablePackageDirectory"
+    # WinGet normally exposes an alias in Links; package-directory PATH is its
+    # supported fallback if symlink creation fails.
+    $commandPath = $exe
+    $commandDirectory = $portablePackageDirectory
+    $route = 'package-directory-fallback'
+    if (Test-Path -LiteralPath $portableAlias -PathType Leaf) {
+        $aliasItem = Get-Item -LiteralPath $portableAlias -Force
+        $target = $aliasItem.ResolveLinkTarget($true)
+        if ($null -eq $target -or [IO.Path]::GetFullPath($target.FullName) -ne [IO.Path]::GetFullPath($exe)) {
+            throw "WinGet alias does not resolve to this package executable: $portableAlias"
+        }
+        $commandPath = $portableAlias
+        $commandDirectory = $portableLinksDirectory
+        $route = 'links-alias'
     }
-    Write-Host "Verified Markitect $ExpectedVersion at $exe"
+    $userPath = @([Environment]::GetEnvironmentVariable('Path', 'User') -split ';' | Where-Object { $_.Trim() } | ForEach-Object {
+        [IO.Path]::GetFullPath([Environment]::ExpandEnvironmentVariables($_.Trim().Trim('"'))).TrimEnd([char[]]'\/')
+    })
+    if ($commandDirectory.TrimEnd([char[]]'\/') -notin $userPath) {
+        throw "WinGet command directory is missing from the persisted user PATH: $commandDirectory"
+    }
+
+    # Check a fresh process using persisted PATH without changing the parent
+    # session or the user's environment.
+    $checkPath = Join-Path $OutputDirectory 'assert-fresh-command.ps1'
+    @'
+param([string] $ExpectedVersion, [string] $ExpectedSha256, [string] $ExpectedCommandPath)
+$ErrorActionPreference = 'Stop'
+$env:Path = [Environment]::ExpandEnvironmentVariables((@(
+    [Environment]::GetEnvironmentVariable('Path', 'Machine'),
+    [Environment]::GetEnvironmentVariable('Path', 'User')
+) | Where-Object { $_ }) -join ';')
+$command = Get-Command markitect -ErrorAction Stop
+if ($command.CommandType -ne 'Application' -or [IO.Path]::GetFullPath($command.Source) -ne [IO.Path]::GetFullPath($ExpectedCommandPath)) {
+    throw "Fresh PATH resolves markitect to an unexpected command: $($command.Source)"
+}
+if ((Get-FileHash -LiteralPath $command.Source -Algorithm SHA256).Hash -ne $ExpectedSha256) {
+    throw 'Fresh PATH command does not match the published release SHA-256.'
+}
+$actual = (& markitect version | Out-String).Trim()
+if ($LASTEXITCODE -ne 0 -or $actual -ne "Markitect $ExpectedVersion (windows/amd64)") {
+    throw "Unexpected fresh PATH version: $actual"
+}
+[pscustomobject]@{ command = $command.Source; version = $actual; sha256 = $ExpectedSha256 } | ConvertTo-Json -Compress
+'@ | Set-Content -LiteralPath $checkPath
+    $freshResult = @(& (Join-Path $PSHOME 'pwsh.exe') -NoLogo -NoProfile -NonInteractive -File $checkPath -ExpectedVersion $ExpectedVersion -ExpectedSha256 $ExpectedSha256 -ExpectedCommandPath $commandPath)
+    if ($LASTEXITCODE -ne 0) { throw 'Fresh-process markitect command verification failed.' }
+    $freshCheck = ($freshResult -join [Environment]::NewLine) | ConvertFrom-Json
+    $script:installedChecks += [pscustomobject]@{ version = $ExpectedVersion; sha256 = $ExpectedSha256; route = $route; command = $freshCheck.command }
+    Write-Host "Verified Markitect $ExpectedVersion via $route at $($freshCheck.command)"
 }
 
 function New-TestOlderManifest {
@@ -239,6 +294,9 @@ try {
         Write-Host "Removing only existing WinGet registration $existingRegistrationId because -AllowPackageReplacement was passed."
         Invoke-WinGet -Arguments @('uninstall', '--id', $existingRegistrationId, '--exact', '--disable-interactivity') | Out-Null
     }
+    if (Get-Item -LiteralPath $portableAlias -Force -ErrorAction SilentlyContinue) {
+        throw "A command alias already exists without a removable Markitect registration; refusing to replace it: $portableAlias"
+    }
     $script:completedPhases += 'confirmed no pre-existing package or replaced the exact GlaciusLabs.Markitect registration'
 
     New-TestOlderManifest
@@ -251,11 +309,11 @@ try {
     $script:completedPhases += 'enabled LocalManifestFiles for local manifests'
     $packageCreatedByTest = $true
     Invoke-WinGet -Arguments @('install', '--manifest', $oldManifestDirectory, '--scope', 'user', '--accept-package-agreements', '--accept-source-agreements', '--disable-interactivity') | Out-Null
-    Assert-InstalledVersion -ExpectedVersion $olderVersion
+    Assert-InstalledVersion -ExpectedVersion $olderVersion -ExpectedSha256 $olderSha256
     $script:completedPhases += 'installed and verified published v0.4.1'
 
     Invoke-WinGet -Arguments @('upgrade', '--manifest', $manifestDirectory, '--scope', 'user', '--accept-package-agreements', '--accept-source-agreements', '--disable-interactivity') | Out-Null
-    Assert-InstalledVersion -ExpectedVersion $submittedVersion
+    Assert-InstalledVersion -ExpectedVersion $submittedVersion -ExpectedSha256 $submittedSha256
     $script:completedPhases += 'upgraded and verified submitted v0.5.0'
     $testStatus = 'passed'
     Write-Host 'WinGet manifest validation, per-user install, and 0.4.1-to-0.5.0 upgrade passed.'
@@ -274,6 +332,13 @@ finally {
                 Invoke-WinGet -Arguments @('uninstall', '--id', $installedRegistrationId, '--exact', '--disable-interactivity') | Out-Null
                 $script:completedPhases += 'removed test-created package registration'
             }
+            if (Get-MarkitectRegistrationId -Inventory (Get-MarkitectInventory)) {
+                throw 'The test-created package registration remains after uninstall.'
+            }
+            if ((Test-Path -LiteralPath (Join-Path $portablePackageDirectory 'markitect.exe')) -or (Get-Item -LiteralPath $portableAlias -Force -ErrorAction SilentlyContinue)) {
+                throw 'The test-created executable or command alias remains after uninstall.'
+            }
+            $script:completedPhases += 'verified test-created executable and alias were removed'
         } catch {
             $cleanupFailure = $_.Exception.Message
             Write-Warning "Could not remove the test-created WinGet package registration: $cleanupFailure"
@@ -315,6 +380,7 @@ finally {
             retainedInstalledPackage = [bool]($LeaveInstalled -and $testStatus -eq 'passed')
             outputDirectory = $OutputDirectory
             completedPhases = @($script:completedPhases)
+            installedChecks = @($script:installedChecks)
             failure = $failureMessage
             cleanupFailure = $cleanupFailure
             settingRestoreFailure = $restoreFailure
