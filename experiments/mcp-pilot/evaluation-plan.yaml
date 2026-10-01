@@ -1,0 +1,52 @@
+date: 2026-10-01
+purpose: Compare the same read-only authoring workflow through CLI and MCP in two real clients.
+clients:
+  - name: Codex CLI
+    version: 0.130.0
+  - name: Claude Code
+    version: 2.1.233
+controls:
+  cli: Published and attested Markitect v0.5.0 Windows amd64 binary.
+  source: c801dc84fa2da2112910233115fa13f1f01b8d0d
+  session: Fresh noninteractive session for every client/interface/fixture cell.
+  models: Each client's default; record actual model when reported. Compare interfaces within a client only.
+  inputs: Identical committed fixture bytes and exact commit for CLI and MCP.
+  access: Markitect queries only; no direct file reads, edits, web or subagents.
+  order: Counterbalanced CLI/MCP order between clients and fixtures.
+  repetitions: 1
+  interpretation: Compatibility and task completion pilot only. No timing trend or token-savings claim.
+tasks:
+  - fixture: examples/documentation
+    operations: [find, explain, context]
+    request: Locate worker documentation, explain ownership and direct relationships, compile startup-review context and identify the source attempt limit.
+    expected:
+      owner: implementation/Text/worker-behavior
+      path: docs/implementation/text/worker-behavior.yaml
+      dependent: implementation/Workflow/startup-review
+      contextResources: [implementation/Workflow/startup-review, implementation/Text/worker-behavior]
+      file: docs/implementation/src/worker.go
+      value: 3
+  - fixture: examples/package-consumer
+    operations: [find, explain, context]
+    request: Locate the consumer review entry, explain its package-qualified dependency, compile its context and distinguish local and package ownership.
+    expected:
+      owner: consumer/Skill/local-review-entry
+      path: docs/skills/local-review-entry.yaml
+      package: review-guidance
+      version: 1.0.0
+      digest: b100bb24373c7b5d3da5c162aac58ae58069ba93b902e71ad28309720c02724f
+      dependency: review-guidance/review/Workflow/review-change
+      file: content/inputs/review-evidence.md
+measurements:
+  - correctness against these predeclared expectations
+  - successful query and client tool-call counts
+  - observed failures and forbidden extra operations
+  - whole-client wall time including discovery and startup
+  - reported model and token usage when available
+  - result bytes from direct fixed-snapshot query outputs
+boundaries:
+  - unknown tool and extra repository/revision/path arguments rejected
+  - nested repository path rejected at startup
+  - mutable ref and nonexistent full commit rejected at startup
+  - MCP result preserves exact CLI YAML for fixed inputs
+  - package-qualified inputs preserve ownership and digest

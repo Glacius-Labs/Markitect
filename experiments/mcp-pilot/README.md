@@ -48,7 +48,7 @@ content.
 
 ## Boundaries and limitations
 
-- This uses the MCP `2025-11-25` JSON-RPC stdio transport. It supports the
+- This negotiates MCP `2025-06-18` and `2025-11-25` over JSON-RPC stdio. It supports the
   initialize handshake, `ping`, `tools/list`, and `tools/call` needed for this
   pilot. It does not implement resources, prompts, sampling, HTTP, or extensions.
   See the [MCP transport specification](https://modelcontextprotocol.io/specification/2025-11-25/basic/transports)
@@ -74,18 +74,17 @@ content.
 - MCP tool descriptions and annotations are not an authorization boundary.
   The user should review the exposed tools and choose when the client may call
   them.
-- This implements the legacy initialize lifecycle at protocol version
-  `2025-11-25`. During `initialize`, it replies with that supported version
-  when a client proposes another non-empty version, as required by the legacy
-  version-negotiation rule. It does not implement the modern stateless
-  `2026-07-28` lifecycle or `server/discover`; test every target client before
-  treating the prototype as compatible. See the [legacy lifecycle version
-  negotiation](https://modelcontextprotocol.io/specification/2025-11-25/basic/lifecycle)
-  and [modern versioning and compatibility
-  rules](https://modelcontextprotocol.io/specification/2026-07-28/basic/versioning).
-- All three tools declare MCP read-only annotations for client approval
-  behavior. Those annotations are advisory; the fixed startup inputs and the
-  command allowlist enforce the actual server boundary.
+- Unknown nonempty protocol versions receive the supported `2025-11-25`
+  fallback; the client decides whether to continue. Missing or malformed
+  initialization versions are rejected.
+
+- The server implements the legacy initialize lifecycle only. It does not
+  implement the modern stateless lifecycle or server/discover; an offered
+  unsupported version receives the supported fallback. Compatibility must be
+  tested with the exact client, independently of direct transport parity.
+- All three tools declare read-only annotations for client approval behavior.
+  Those annotations are advisory; fixed startup inputs and the command
+  allowlist enforce the actual boundary.
 
 ## Smoke test
 
@@ -106,5 +105,12 @@ the `examples/minimal` fixture into a temporary Git repository, and compared
 `find(query=rollback)` through this MCP server with the CLI's direct fixed-SHA
 output. The YAML matched exactly. This establishes protocol plumbing and
 result parity for one query; it does not establish client compatibility or an
-authoring benefit. The comparison with actual MCP clients and the measurements
-listed in [refinement](../../docs/refinement.md) remain open.
+authoring benefit. The [client evaluation](evaluation.md) records two completed Codex CLI/MCP
+query tasks and six byte-identical comparisons. Claude Code connected but its
+model tasks were blocked by expired authentication; the user elected to record
+that blockage. A second-client task comparison and repeated authoring benefit
+remain open.
+
+The bounded assessment is closed with the decision to keep MCP experimental.
+See [the product decision](../../docs/mcp-evaluation.md) for completed evidence,
+the deferred second-client criterion, and the separate transport harness.

@@ -107,38 +107,39 @@ func TestLifecycleOrdering(t *testing.T) {
 	}
 }
 
-func TestExposedToolsAreAnnotatedReadOnly(t *testing.T) {
-	want := map[string]bool{
-		"readOnlyHint":    true,
-		"destructiveHint": false,
-		"idempotentHint":  true,
-		"openWorldHint":   false,
+func TestInitializeProtocolNegotiation(t *testing.T) {
+	for _, test := range []struct {
+		name    string
+		offered string
+		want    string
+	}{
+		{name: "legacy Codex client", offered: legacyProtocolVersion, want: legacyProtocolVersion},
+		{name: "current client", offered: protocolVersion, want: protocolVersion},
+		{name: "unknown version falls back to current", offered: "2099-01-01", want: protocolVersion},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			s := &server{}
+			params, _ := json.Marshal(map[string]string{"protocolVersion": test.offered})
+			result, rpcErr, reply := s.dispatch(request{JSONRPC: "2.0", ID: json.RawMessage(`1`), Method: "initialize", Params: params})
+			if !reply || rpcErr != nil {
+				t.Fatalf("initialize reply=%v error=%#v", reply, rpcErr)
+			}
+			got := result.(map[string]any)["protocolVersion"]
+			if got != test.want {
+				t.Fatalf("negotiated version = %#v, want %q", got, test.want)
+			}
+		})
 	}
-	for _, tool := range toolDefinitions() {
-		annotations, ok := tool["annotations"].(map[string]bool)
-		if !ok || !reflect.DeepEqual(annotations, want) {
-			t.Errorf("tool %v annotations = %#v, want %#v", tool["name"], tool["annotations"], want)
-		}
-	}
-}
 
-func TestInitializeCountersUnsupportedVersionWithSupportedVersion(t *testing.T) {
-	s := &server{}
-	result, rpcErr, reply := s.dispatch(request{
-		JSONRPC: "2.0",
-		ID:      json.RawMessage(`1`),
-		Method:  "initialize",
-		Params:  json.RawMessage(`{"protocolVersion":"2026-07-28","capabilities":{},"clientInfo":{"name":"Codex","version":"0.159.2"}}`),
-	})
-	if !reply || rpcErr != nil {
-		t.Fatalf("initialize should counter with the supported legacy version: reply=%v err=%#v", reply, rpcErr)
-	}
-	initialized := result.(map[string]any)
-	if initialized["protocolVersion"] != protocolVersion {
-		t.Fatalf("server negotiated %v, want supported version %s", initialized["protocolVersion"], protocolVersion)
-	}
-	if !s.initDone || s.ready {
-		t.Fatalf("initialize state is wrong: initDone=%v ready=%v", s.initDone, s.ready)
+	for _, params := range []json.RawMessage{nil, json.RawMessage(`{}`), json.RawMessage(`{"protocolVersion":""}`), json.RawMessage(`[]`)} {
+		s := &server{}
+		_, rpcErr, reply := s.dispatch(request{JSONRPC: "2.0", ID: json.RawMessage(`2`), Method: "initialize", Params: params})
+		if !reply || rpcErr == nil || rpcErr.Code != -32602 {
+			t.Errorf("malformed initialize params %q returned reply=%v error=%#v", params, reply, rpcErr)
+		}
+		if s.initDone {
+			t.Errorf("malformed initialize params %q advanced lifecycle", params)
+		}
 	}
 }
 
@@ -246,5 +247,40 @@ func TestStdioLinesAreNewlineDelimited(t *testing.T) {
 	}
 	if !strings.HasSuffix(output.String(), "\n") {
 		t.Fatalf("response was not newline delimited: %q", output.String())
+	}
+}
+
+func TestExposedToolsAreAnnotatedReadOnly(t *testing.T) {
+	want := map[string]bool{
+		"readOnlyHint":    true,
+		"destructiveHint": false,
+		"idempotentHint":  true,
+		"openWorldHint":   false,
+	}
+	for _, tool := range toolDefinitions() {
+		annotations, ok := tool["annotations"].(map[string]bool)
+		if !ok || !reflect.DeepEqual(annotations, want) {
+			t.Errorf("tool %v annotations = %#v, want %#v", tool["name"], tool["annotations"], want)
+		}
+	}
+}
+
+func TestInitializeCountersUnsupportedVersionWithSupportedVersion(t *testing.T) {
+	s := &server{}
+	result, rpcErr, reply := s.dispatch(request{
+		JSONRPC: "2.0",
+		ID:      json.RawMessage(`1`),
+		Method:  "initialize",
+		Params:  json.RawMessage(`{"protocolVersion":"2026-07-28","capabilities":{},"clientInfo":{"name":"Codex","version":"0.159.2"}}`),
+	})
+	if !reply || rpcErr != nil {
+		t.Fatalf("initialize should counter with the supported legacy version: reply=%v err=%#v", reply, rpcErr)
+	}
+	initialized := result.(map[string]any)
+	if initialized["protocolVersion"] != protocolVersion {
+		t.Fatalf("server negotiated %v, want supported version %s", initialized["protocolVersion"], protocolVersion)
+	}
+	if !s.initDone || s.ready {
+		t.Fatalf("initialize state is wrong: initDone=%v ready=%v", s.initDone, s.ready)
 	}
 }

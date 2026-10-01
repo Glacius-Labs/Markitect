@@ -22,9 +22,10 @@ import (
 )
 
 const (
-	protocolVersion = "2025-11-25"
-	maxMessageBytes = 1 << 20
-	maxOutputBytes  = 2 << 20
+	protocolVersion       = "2025-11-25"
+	legacyProtocolVersion = "2025-06-18"
+	maxMessageBytes       = 1 << 20
+	maxOutputBytes        = 2 << 20
 )
 
 var fullCommit = regexp.MustCompile(`^(?:[0-9a-f]{40}|[0-9a-f]{64})$`)
@@ -118,7 +119,7 @@ func fatal(message string) {
 func validateCommit(repo, revision string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	cmd := exec.CommandContext(ctx, "git", "-C", repo, "rev-parse", "--verify", revision+"^{commit}")
+	cmd := exec.CommandContext(ctx, "git", "--no-replace-objects", "-c", "safe.directory="+filepath.ToSlash(repo), "-C", repo, "rev-parse", "--verify", revision+"^{commit}")
 	cmd.Env = cleanGitEnv()
 	var out limitedBuffer
 	out.max = 256
@@ -144,7 +145,7 @@ func canonicalGitRepoRoot(repo string) (string, error) {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	cmd := exec.CommandContext(ctx, "git", "-C", resolvedRepo, "rev-parse", "--show-toplevel")
+	cmd := exec.CommandContext(ctx, "git", "--no-replace-objects", "-c", "safe.directory="+filepath.ToSlash(resolvedRepo), "-C", resolvedRepo, "rev-parse", "--show-toplevel")
 	cmd.Env = cleanGitEnv()
 	var out limitedBuffer
 	out.max = 4096
@@ -272,11 +273,11 @@ func (s *server) dispatch(req request) (any, *rpcError, bool) {
 			return nil, &rpcError{Code: -32602, Message: "Invalid params"}, true
 		}
 		if params.ProtocolVersion == "" {
-			return nil, &rpcError{Code: -32602, Message: "protocolVersion is required"}, true
+			return nil, &rpcError{Code: -32602, Message: "Invalid params: protocolVersion is required"}, true
 		}
 		s.initDone = true
 		return map[string]any{
-			"protocolVersion": protocolVersion,
+			"protocolVersion": negotiateProtocolVersion(params.ProtocolVersion),
 			"capabilities":    map[string]any{"tools": map[string]any{}},
 			"serverInfo":      map[string]string{"name": "markitect-readonly-pilot", "version": "0.1.0"},
 		}, nil, true
@@ -314,12 +315,21 @@ func (s *server) dispatch(req request) (any, *rpcError, bool) {
 	}
 }
 
+func negotiateProtocolVersion(offered string) string {
+	switch offered {
+	case protocolVersion, legacyProtocolVersion:
+		return offered
+	default:
+		return protocolVersion
+	}
+}
+
 func toolDefinitions() []map[string]any {
 	return []map[string]any{
 		{
 			"name":        "find",
-			"description": "Find resources in the fixed Markitect repository snapshot. Literal text and exact kind/namespace filters only.",
 			"annotations": readOnlyAnnotations(),
+			"description": "Find resources in the fixed Markitect repository snapshot. Literal text and exact kind/namespace filters only.",
 			"inputSchema": map[string]any{
 				"type": "object", "additionalProperties": false,
 				"properties": map[string]any{
@@ -332,8 +342,8 @@ func toolDefinitions() []map[string]any {
 		},
 		{
 			"name":        "explain",
-			"description": "Explain one resource's ownership and explicit direct relationships in the fixed snapshot.",
 			"annotations": readOnlyAnnotations(),
+			"description": "Explain one resource's ownership and explicit direct relationships in the fixed snapshot.",
 			"inputSchema": map[string]any{
 				"type": "object", "additionalProperties": false,
 				"properties": map[string]any{
@@ -346,8 +356,8 @@ func toolDefinitions() []map[string]any {
 		},
 		{
 			"name":        "context",
-			"description": "Compile a resource's declared dependency closure and file inputs from the fixed snapshot.",
 			"annotations": readOnlyAnnotations(),
+			"description": "Compile a resource's declared dependency closure and file inputs from the fixed snapshot.",
 			"inputSchema": map[string]any{
 				"type": "object", "additionalProperties": false,
 				"properties": map[string]any{
