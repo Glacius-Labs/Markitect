@@ -2,11 +2,41 @@ package core
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 )
 
+var providerAdapterName = regexp.MustCompile(`^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$`)
+
 func (g *Graph) validateProject() {
 	p := g.Project
+	if adapters := p.Spec.ProviderAdapters; adapters != nil {
+		for name, sources := range adapters.RuleSources {
+			if len(name) > 63 || !providerAdapterName.MatchString(name) || len(sources) == 0 {
+				g.diag(p, "provider-adapter.rule", fmt.Sprintf("rule adapter %q needs a valid name and at least one source", name))
+			}
+		}
+		for _, group := range []struct {
+			kind    string
+			retired []string
+		}{{"Skill", adapters.RetiredSkills}, {"Agent", adapters.RetiredAgents}} {
+			seenRetired := map[string]bool{}
+			for _, name := range group.retired {
+				if len(name) > 63 || !providerAdapterName.MatchString(name) {
+					g.diag(p, "provider-adapter.retired-name", fmt.Sprintf("retired %s name %q is invalid", group.kind, name))
+				}
+				if seenRetired[name] {
+					g.diag(p, "provider-adapter.retired-duplicate", fmt.Sprintf("retired %s name %q is duplicated", group.kind, name))
+				}
+				seenRetired[name] = true
+				for _, resource := range g.Resources {
+					if resource.Package == "" && resource.Kind == group.kind && resource.Metadata.Name == name {
+						g.diag(p, "provider-adapter.retired-active", fmt.Sprintf("retired %s name %q is still an active resource", group.kind, name))
+					}
+				}
+			}
+		}
+	}
 	for _, target := range p.Spec.Targets {
 		if target != "codex" && target != "claude" {
 			g.diag(p, "project.target", fmt.Sprintf("unsupported target %q", target))

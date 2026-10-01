@@ -5,6 +5,8 @@
 | [Usage](usage.md) | Current Project format, CLI behavior, safe initialization, and schema-upgrade guidance |
 | [Content packages](content-packages.md) | Direct offline package pins, exports, archive creation, and package boundaries in Markitect 0.3.0 |
 | [Documentation inputs](documentation.md) | Explicit ordinary-file inputs in context and impact |
+| [Provider adapters](provider-adapters.md) | Explicit Codex, Claude, and shared entrypoints and strict inventory |
+| [Factual consistency](consistency.md) | Opt-in sourced functional assertions and their limits |
 | [Architecture](architecture.md) | Product boundaries and current source model |
 | [Operations](operations.md) | Development, verification, rendering, and release operations |
 | [Refinement decisions](refinement.md) | Product principles and deferred design choices |
