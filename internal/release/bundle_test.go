@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/internal/source"
+	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
 
 func TestBuildBundleIsDeterministicAndBindsFiveFiles(t *testing.T) {
@@ -46,7 +46,7 @@ func TestBuildBundleIsDeterministicAndBindsFiveFiles(t *testing.T) {
 	if got := string(bundle.Files["scripts/markitect-bootstrap_test.go"]); strings.Contains(got, "\r") {
 		t.Fatal("integration test was not normalized to LF")
 	}
-	if err := ValidateBundleFiles(bundle.Manifest, bundle.Files, snapshot.Revision); err != nil {
+	if err := ValidateBundleFiles(bundle.Manifest, bundle.Files, snapshot.ID); err != nil {
 		t.Fatalf("validate installed bundle files: %v", err)
 	}
 }
@@ -54,22 +54,24 @@ func TestBuildBundleIsDeterministicAndBindsFiveFiles(t *testing.T) {
 func TestBuildBundleRejectsUnfixedOrUnboundSource(t *testing.T) {
 	tests := []struct {
 		name    string
-		change  func(*source.Snapshot)
+		change  func(*snapshot.Snapshot)
 		version string
 	}{
-		{name: "provisional", change: func(s *source.Snapshot) { s.Provisional = true }, version: "1.2.3"},
-		{name: "short commit", change: func(s *source.Snapshot) { s.Revision = "deadbeef" }, version: "1.2.3"},
-		{name: "version mismatch", change: func(*source.Snapshot) {}, version: "1.2.4"},
-		{name: "version with tag prefix", change: func(*source.Snapshot) {}, version: "v1.2.3"},
-		{name: "nonliteral source version", change: func(s *source.Snapshot) {
+		{name: "provisional", change: func(s *snapshot.Snapshot) { s.Provisional = true }, version: "1.2.3"},
+		{name: "short commit", change: func(s *snapshot.Snapshot) { s.ID = "deadbeef" }, version: "1.2.3"},
+		{name: "version mismatch", change: func(*snapshot.Snapshot) {}, version: "1.2.4"},
+		{name: "version with tag prefix", change: func(*snapshot.Snapshot) {}, version: "v1.2.3"},
+		{name: "nonliteral source version", change: func(s *snapshot.Snapshot) {
 			s.Files["cmd/markitect/main.go"] = []byte("package main\nvar version = currentVersion()\n")
 		}, version: "1.2.3"},
-		{name: "foreign module", change: func(s *source.Snapshot) { s.Files["go.mod"] = []byte("module example.invalid/foreign\n\ngo 1.27.1\n") }, version: "1.2.3"},
-		{name: "missing paired test", change: func(s *source.Snapshot) {
+		{name: "foreign module", change: func(s *snapshot.Snapshot) {
+			s.Files["go.mod"] = []byte("module example.invalid/foreign\n\ngo 1.27.1\n")
+		}, version: "1.2.3"},
+		{name: "missing paired test", change: func(s *snapshot.Snapshot) {
 			delete(s.Files, "integration/run-markitect_test.go")
 			delete(s.Modes, "integration/run-markitect_test.go")
 		}, version: "1.2.3"},
-		{name: "missing license", change: func(s *source.Snapshot) {
+		{name: "missing license", change: func(s *snapshot.Snapshot) {
 			delete(s.Files, "LICENSE")
 			delete(s.Modes, "LICENSE")
 		}, version: "1.2.3"},

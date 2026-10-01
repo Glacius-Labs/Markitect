@@ -105,7 +105,7 @@ func ensureInitGitState(state *initState) error {
 		}
 		return nil
 	}
-	if err != nil || strings.TrimSpace(string(current)) != state.head.Revision {
+	if err != nil || strings.TrimSpace(string(current)) != state.head.ID {
 		return errors.New("Git HEAD changed during init; rerun the plan")
 	}
 	return nil

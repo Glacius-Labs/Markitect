@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Glacius-Labs/Markitect/internal/source"
+	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 	"go.yaml.in/yaml/v3"
 )
 
@@ -57,8 +57,8 @@ type Bundle struct {
 // immutable Git snapshot. Provisional snapshots and incomplete commit IDs are
 // rejected so generated metadata cannot be mistaken for a source release.
 // The outer archive is limited to 64 MiB.
-func BuildBundle(snapshot *source.Snapshot, version string) ([]byte, error) {
-	if snapshot == nil || snapshot.Provisional || !validCommit(snapshot.Revision) {
+func BuildBundle(snapshot *snapshot.Snapshot, version string) ([]byte, error) {
+	if snapshot == nil || snapshot.Provisional || !validCommit(snapshot.ID) {
 		return nil, errors.New("release bundle requires a fixed snapshot with a full lowercase source commit")
 	}
 	if !validVersion(version) || strings.HasPrefix(version, "v") {
@@ -101,7 +101,7 @@ func BuildBundle(snapshot *source.Snapshot, version string) ([]byte, error) {
 	manifest := BundleManifest{
 		SchemaVersion:    1,
 		Version:          version,
-		SourceCommit:     snapshot.Revision,
+		SourceCommit:     snapshot.ID,
 		SourceRepository: sourceRepository,
 	}
 	for _, name := range bundlePaths {

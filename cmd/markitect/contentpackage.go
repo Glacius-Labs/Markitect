@@ -16,7 +16,7 @@ func runPack(root, revision, output string, emit func(any) int, fail func(error)
 	if err != nil {
 		return fail(err)
 	}
-	archive, pin, err := app.PackContent(snapshot)
+	archive, pin, err := app.PackContent(snapshot, "git:"+snapshot.ID)
 	if err != nil {
 		return fail(err)
 	}
@@ -37,7 +37,7 @@ func runPack(root, revision, output string, emit func(any) int, fail func(error)
 		return fail(closeErr)
 	}
 	return emit(map[string]any{
-		"status": "packed", "sourceCommit": snapshot.Revision, "output": output,
+		"status": "packed", "sourceCommit": snapshot.ID, "output": output,
 		"pin": pin, "notice": "Archive integrity does not authenticate a publisher. Review the package, vendor these exact bytes, and set the chosen archive path and provenance in the Project pin.",
 	})
 }

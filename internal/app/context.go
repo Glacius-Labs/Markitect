@@ -47,7 +47,7 @@ func CompileContext(p *Project, key, version string, toolDigest ...string) (*Con
 	if !p.exported(entry) {
 		return nil, fmt.Errorf("package entry %s is not exported", key)
 	}
-	c := &Context{Version: version, Revision: p.Snapshot.Revision, Provisional: p.Snapshot.Provisional, Entry: key, SnapshotDigest: p.Snapshot.Digest()}
+	c := &Context{Version: version, Revision: p.Snapshot.ID, Provisional: p.Snapshot.Provisional, Entry: key, SnapshotDigest: p.Snapshot.Digest()}
 	if len(toolDigest) > 0 {
 		c.ToolDigest = toolDigest[0]
 	}

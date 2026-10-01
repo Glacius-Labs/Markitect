@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/core"
-	"github.com/Glacius-Labs/Markitect/internal/source"
+	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
 
 func TestPlanVerifyCommandsRequiresExplicitNamedArgvChecks(t *testing.T) {
@@ -196,7 +196,7 @@ func verifyProject(files map[string][]byte, checks []core.Check) *Project {
 	for name := range files {
 		modes[name] = "100644"
 	}
-	snapshot := &source.Snapshot{Revision: "fixed-test-revision", Files: files, Modes: modes}
+	snapshot := &snapshot.Snapshot{ID: "fixed-test-revision", Files: files, Modes: modes}
 	project := &core.Resource{Kind: "Project", Metadata: core.Metadata{Name: "verification-fixture"}, Path: "markitect.yaml", Spec: core.Spec{Checks: checks}}
 	return &Project{Snapshot: snapshot, Graph: &core.Graph{Project: project}}
 }

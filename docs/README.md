@@ -10,6 +10,7 @@
 | [Provider adapters](provider-adapters.md) | Explicit Codex, Claude, and shared entrypoints and strict inventory |
 | [Factual consistency](consistency.md) | Opt-in sourced functional assertions and their limits |
 | [Architecture](architecture.md) | Product boundary for project artifacts and current source model |
+| [Source snapshots](source-snapshots.md) | Snapshot values, Git acquisition, identity, comparison, and compatibility boundaries |
 | [Operations](operations.md) | Development, verification, rendering, and release operations |
 | [Refinement decisions](refinement.md) | Product principles and deferred design choices |
 | [Implementation plan](implementation-plan.md) | The Markitect roadmap |

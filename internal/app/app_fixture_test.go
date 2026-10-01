@@ -13,6 +13,7 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/internal/core"
 	"github.com/Glacius-Labs/Markitect/internal/format"
+	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 	"github.com/Glacius-Labs/Markitect/internal/source"
 )
 
@@ -34,7 +35,7 @@ func projectResource(namespace string) core.Resource {
 	}
 }
 
-func fixtureFiles(t *testing.T, revision, ruleText, skillNamespace string) *source.Snapshot {
+func fixtureFiles(t *testing.T, revision, ruleText, skillNamespace string) *snapshot.Snapshot {
 	t.Helper()
 	config := projectResource(projectNS)
 	rule := core.Resource{APIVersion: core.APIVersion, Kind: "Rule", Metadata: core.Metadata{Name: "policy", Namespace: projectNS}, Spec: core.Spec{Text: ruleText}}
@@ -48,7 +49,7 @@ func fixtureFiles(t *testing.T, revision, ruleText, skillNamespace string) *sour
 	for name := range files {
 		modes[name] = "100644"
 	}
-	return &source.Snapshot{Revision: revision, Provisional: revision == "", Files: files, Modes: modes}
+	return &snapshot.Snapshot{ID: revision, Provisional: revision == "", Files: files, Modes: modes}
 }
 
 func encodeResource(t *testing.T, value core.Resource) []byte {

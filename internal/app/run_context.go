@@ -117,7 +117,7 @@ func CompileRunContext(p *Project, manifestPath string, manifestBytes []byte, ve
 	if err != nil {
 		return nil, err
 	}
-	if p.Snapshot.Provisional || p.Snapshot.Revision == "" {
+	if p.Snapshot.Provisional || p.Snapshot.ID == "" {
 		return nil, fmt.Errorf("run context requires an immutable Git snapshot")
 	}
 	selectedBytes := 0
@@ -135,7 +135,7 @@ func CompileRunContext(p *Project, manifestPath string, manifestBytes []byte, ve
 	c.Complete = true
 	c.Run = &RunContextEvidence{ManifestPath: manifestPath, ManifestHash: Hash(manifestBytes), TaskID: manifest.Task.ID, TaskPath: manifest.Task.Path}
 	selection := strings.Builder{}
-	fmt.Fprintf(&selection, "revision:%d:%s\x00entry:%d:%s\x00manifest:%d:%s\x00", len(p.Snapshot.Revision), p.Snapshot.Revision, len(manifest.Entry), manifest.Entry, len(manifestPath), manifestPath)
+	fmt.Fprintf(&selection, "revision:%d:%s\x00entry:%d:%s\x00manifest:%d:%s\x00", len(p.Snapshot.ID), p.Snapshot.ID, len(manifest.Entry), manifest.Entry, len(manifestPath), manifestPath)
 	writeSelectionField(&selection, manifest.Task.ID)
 	addSelectedRunInput := func(role, name, reason string, required bool) bool {
 		data, found := p.Snapshot.Files[name]

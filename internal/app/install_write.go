@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/Glacius-Labs/Markitect/internal/release"
+	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 	"github.com/Glacius-Labs/Markitect/internal/source"
 )
 
@@ -41,7 +42,7 @@ func ensureInstallStateUnchanged(root string, state *installState) error {
 	return nil
 }
 
-func ensureHeadUnchanged(root string, before *source.Snapshot) error {
+func ensureHeadUnchanged(root string, before *snapshot.Snapshot) error {
 	if before == nil {
 		out, err := source.GitOutput(root, "rev-parse", "--verify", "--end-of-options", "HEAD^{commit}")
 		if err == nil && strings.TrimSpace(string(out)) != "" {
@@ -53,7 +54,7 @@ func ensureHeadUnchanged(root string, before *source.Snapshot) error {
 	if err != nil {
 		return fmt.Errorf("read Git HEAD during install: %w", err)
 	}
-	if strings.TrimSpace(string(after)) != before.Revision {
+	if strings.TrimSpace(string(after)) != before.ID {
 		return errors.New("Git HEAD changed during install; rerun the plan")
 	}
 	return nil

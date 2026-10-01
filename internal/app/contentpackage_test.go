@@ -10,7 +10,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/core"
 	"github.com/Glacius-Labs/Markitect/internal/format"
 	"github.com/Glacius-Labs/Markitect/internal/render"
-	"github.com/Glacius-Labs/Markitect/internal/source"
+	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
 
 func packageSourceFixture(t *testing.T, text string) map[string][]byte {
@@ -50,7 +50,7 @@ func packageConsumerFixture(t *testing.T, text string) *Project {
 		"docs/entry.yaml": encodeResource(t, skill), "docs/notes.yaml": encodeResource(t, localNotes),
 		"docs/input.txt": []byte("Unrelated local file."),
 	}
-	snapshot := &source.Snapshot{Revision: strings.Repeat("a", 40), Files: files, Modes: map[string]string{}}
+	snapshot := &snapshot.Snapshot{ID: strings.Repeat("a", 40), Files: files, Modes: map[string]string{}}
 	for name := range files {
 		snapshot.Modes[name] = "100644"
 	}
@@ -125,7 +125,7 @@ func TestPackageContextKeepsOriginsAndPrivateDependencies(t *testing.T) {
 func TestPackageUpdateInvalidatesReviewAndReportsPhysicalChange(t *testing.T) {
 	before := packageConsumerFixture(t, "Initial package notes.")
 	after := packageConsumerFixture(t, "Revised package notes.")
-	after.Snapshot.Revision = strings.Repeat("b", 40)
+	after.Snapshot.ID = strings.Repeat("b", 40)
 	config := ReviewConfig{Question: "Does the entry include its review procedure?", PromptVersion: "v1", Model: "test", Effort: "high", AllowReuse: true}
 	record, err := RecordReview(before, "shared/Skill/entry", "test", "tool", config, "Fixture advisory report.")
 	if err != nil {
@@ -162,12 +162,23 @@ func TestPackContentUsesFixedSnapshotAndIncludesOnlyDeclaredInputs(t *testing.T)
 	files := packageSourceFixture(t, "Package notes.")
 	files["private.txt"] = []byte("not a package input")
 	files["docs/review.md"] = []byte("generated or ordinary view is not canonical package input")
-	snapshot := &source.Snapshot{Revision: strings.Repeat("c", 40), Files: files}
-	first, pin, err := PackContent(snapshot)
+	snapshot := &snapshot.Snapshot{ID: "fixture:review-kit:v1", Files: files}
+	first, pin, err := PackContent(snapshot, "urn:fixture:review-kit:1.0.0")
 	if err != nil {
 		t.Fatal(err)
 	}
-	second, pin2, err := PackContent(snapshot)
+	if pin.Source != "urn:fixture:review-kit:1.0.0" {
+		t.Fatalf("package provenance was inferred: %s", pin.Source)
+	}
+	if _, _, err := PackContent(snapshot, ""); err == nil {
+		t.Fatal("package with missing provenance accepted")
+	}
+	snapshot.ID = ""
+	if _, _, err := PackContent(snapshot, "urn:fixture:review-kit:1.0.0"); err == nil {
+		t.Fatal("unidentified fixed snapshot accepted")
+	}
+	snapshot.ID = "fixture:review-kit:v1"
+	second, pin2, err := PackContent(snapshot, "urn:fixture:review-kit:1.0.0")
 	if err != nil || !bytes.Equal(first, second) || !reflect.DeepEqual(pin, pin2) {
 		t.Fatalf("pack not deterministic: %v", err)
 	}
@@ -179,7 +190,7 @@ func TestPackContentUsesFixedSnapshotAndIncludesOnlyDeclaredInputs(t *testing.T)
 		t.Fatalf("packaged undeclared files: %v", sortedFiles(archive.Files))
 	}
 	snapshot.Provisional = true
-	if _, _, err := PackContent(snapshot); err == nil {
+	if _, _, err := PackContent(snapshot, "urn:fixture:review-kit:1.0.0"); err == nil {
 		t.Fatal("provisional pack accepted")
 	}
 	snapshot.Provisional = false
@@ -188,7 +199,7 @@ func TestPackContentUsesFixedSnapshotAndIncludesOnlyDeclaredInputs(t *testing.T)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, _, err := PackContent(snapshot); err == nil {
+	if _, _, err := PackContent(snapshot, "urn:fixture:review-kit:1.0.0"); err == nil {
 		t.Fatal("pack accepted unresolved dependency")
 	}
 }
@@ -213,12 +224,12 @@ func TestPackContentResolvesPrivatePackageBinding(t *testing.T) {
 	implementation := core.Resource{APIVersion: core.APIVersion, Kind: "Workflow", Metadata: core.Metadata{Namespace: "shared", Name: "assessor"}, Spec: core.Spec{Text: "Assess the supplied change.", Input: []string{"change"}, Output: []string{"findings"}, Implements: []core.Ref{contractRef}}}
 	files["docs/assessment.yaml"] = encodeResource(t, contract)
 	files["docs/assessor.yaml"] = encodeResource(t, implementation)
-	archive, pin, err := PackContent(&source.Snapshot{Revision: strings.Repeat("c", 40), Files: files})
+	archive, pin, err := PackContent(&snapshot.Snapshot{ID: strings.Repeat("c", 40), Files: files}, "git:"+strings.Repeat("c", 40))
 	if err != nil {
 		t.Fatal(err)
 	}
 	config := core.Resource{APIVersion: core.APIVersion, Kind: "Project", Metadata: core.Metadata{Name: "consumer"}, Spec: core.Spec{Packages: []core.PackagePin{pin}}}
-	p, err := Parse(&source.Snapshot{Revision: strings.Repeat("d", 40), Files: map[string][]byte{"markitect.yaml": encodeResource(t, config), pin.Archive: archive}})
+	p, err := Parse(&snapshot.Snapshot{ID: strings.Repeat("d", 40), Files: map[string][]byte{"markitect.yaml": encodeResource(t, config), pin.Archive: archive}})
 	if err != nil {
 		t.Fatal(err)
 	}

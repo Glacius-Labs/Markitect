@@ -5,7 +5,7 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/internal/core"
 	"github.com/Glacius-Labs/Markitect/internal/render"
-	"github.com/Glacius-Labs/Markitect/internal/source"
+	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
 
 func reviewResources(withRule, omitUnrelated, configureCodex bool) []*core.Resource {
@@ -33,7 +33,7 @@ func reviewResources(withRule, omitUnrelated, configureCodex bool) []*core.Resou
 
 func reviewFixture(t *testing.T, revision string, provisional bool, resources []*core.Resource, extra map[string]string) *Project {
 	t.Helper()
-	snapshot := &source.Snapshot{Revision: revision, Provisional: provisional, Files: map[string][]byte{}, Modes: map[string]string{}}
+	snapshot := &snapshot.Snapshot{ID: revision, Provisional: provisional, Files: map[string][]byte{}, Modes: map[string]string{}}
 	for _, resource := range resources {
 		snapshot.Files[resource.Path] = encodeResource(t, *resource)
 		snapshot.Modes[resource.Path] = "100644"

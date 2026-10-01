@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/Glacius-Labs/Markitect/internal/format"
+	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 	"github.com/Glacius-Labs/Markitect/internal/source"
 )
 
@@ -99,7 +100,7 @@ func Format(root string, p *Project, write bool) ([]string, error) {
 	if err != nil {
 		return written, err
 	}
-	expected := &source.Snapshot{Files: make(map[string][]byte, len(p.Snapshot.Files)), Modes: make(map[string]string, len(p.Snapshot.Modes))}
+	expected := &snapshot.Snapshot{Files: make(map[string][]byte, len(p.Snapshot.Files)), Modes: make(map[string]string, len(p.Snapshot.Modes))}
 	for name, data := range p.Snapshot.Files {
 		expected.Files[name] = data
 		expected.Modes[name] = p.Snapshot.Modes[name]

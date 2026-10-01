@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	"github.com/Glacius-Labs/Markitect/internal/app"
-	"github.com/Glacius-Labs/Markitect/internal/source"
+	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
 
 // resources contains the canonical core Project and authoring resources. It is
@@ -28,10 +28,10 @@ func Context(version, toolDigest string) (*app.Context, error) {
 	if strings.TrimSpace(version) == "" {
 		return nil, fmt.Errorf("authoring context requires a tool version")
 	}
-	snapshot := &source.Snapshot{
-		Revision: "embedded",
-		Files:    make(map[string][]byte),
-		Modes:    make(map[string]string),
+	snapshot := &snapshot.Snapshot{
+		ID:    "embedded",
+		Files: make(map[string][]byte),
+		Modes: make(map[string]string),
 	}
 	err := fs.WalkDir(resources, "resources", func(name string, entry fs.DirEntry, walkErr error) error {
 		if walkErr != nil {

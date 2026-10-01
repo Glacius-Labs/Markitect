@@ -94,7 +94,7 @@ func runBundle(root, revision, output string, emit func(any) int, fail func(erro
 		return fail(closeErr)
 	}
 	digest := sha256.Sum256(data)
-	return emit(map[string]any{"status": "bundled", "version": version, "sourceCommit": snapshot.Revision, "sha256": hex.EncodeToString(digest[:]), "output": output})
+	return emit(map[string]any{"status": "bundled", "version": version, "sourceCommit": snapshot.ID, "sha256": hex.EncodeToString(digest[:]), "output": output})
 }
 
 func runInstall(root, path, expectedSHA string, write bool, emit func(any) int, fail func(error) int) int {

@@ -84,7 +84,7 @@ func TestInstallWriteRequiresNonProtectedBranchAndSharedLock(t *testing.T) {
 			t.Fatal(err)
 		}
 		state.branch = "feature/branch-race"
-		before := state.head.Revision
+		before := state.head.ID
 		runWriterGit(t, root, "branch", "main")
 		runWriterGit(t, root, "checkout", "main")
 		after := runWriterGit(t, root, "rev-parse", "HEAD")

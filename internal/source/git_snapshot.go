@@ -12,6 +12,8 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
 
 type treeFile struct {
@@ -39,7 +41,7 @@ func resolveCommit(root, revision string) (string, error) {
 	return strings.ToLower(commit), nil
 }
 
-func loadCommit(root, commit string, s *Snapshot, limits Limits) error {
+func loadCommit(root, commit string, s *snapshot.Snapshot, limits Limits) error {
 	// NUL-delimited output preserves all Git path bytes except NUL, which is
 	// forbidden by Git itself. --long supplies blob object IDs for cat-file.
 	out, err := git(root, "ls-tree", "-r", "-z", "--full-tree", "--long", commit)
@@ -78,7 +80,7 @@ func loadCommit(root, commit string, s *Snapshot, limits Limits) error {
 		if mode == "120000" {
 			return fmt.Errorf("Git symlink is not a source file: %q", p)
 		}
-		if kind != "blob" || (mode != "100644" && mode != "100755") {
+		if kind != "blob" || (mode != snapshot.RegularMode && mode != snapshot.ExecutableMode) {
 			return fmt.Errorf("unsupported Git tree entry %q (mode %s, type %s)", p, mode, kind)
 		}
 		if blobSize > limits.MaxFileBytes {
@@ -103,7 +105,7 @@ func loadCommit(root, commit string, s *Snapshot, limits Limits) error {
 	return loadBlobs(root, files, s)
 }
 
-func loadBlobs(root string, files []treeFile, s *Snapshot) error {
+func loadBlobs(root string, files []treeFile, s *snapshot.Snapshot) error {
 	if len(files) == 0 {
 		return nil
 	}

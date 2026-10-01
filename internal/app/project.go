@@ -12,12 +12,12 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/core"
 	"github.com/Glacius-Labs/Markitect/internal/format"
 	"github.com/Glacius-Labs/Markitect/internal/inputs"
-	"github.com/Glacius-Labs/Markitect/internal/source"
+	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
 
 // Project is one immutable input set and its resolved resources.
 type Project struct {
-	Snapshot    *source.Snapshot
+	Snapshot    *snapshot.Snapshot
 	Graph       *core.Graph
 	Resources   []*core.Resource
 	Inventory   []Entry
@@ -37,15 +37,10 @@ type Entry struct {
 	Hash      string `yaml:"hash"`
 }
 
-func Load(root, revision string) (*Project, error) {
-	snap, err := source.Load(root, revision)
-	if err != nil {
-		return nil, err
+func Parse(snap *snapshot.Snapshot) (*Project, error) {
+	if snap == nil {
+		return nil, fmt.Errorf("project snapshot is required")
 	}
-	return Parse(snap)
-}
-
-func Parse(snap *source.Snapshot) (*Project, error) {
 	p := &Project{Snapshot: snap, PackageFiles: map[string]map[string][]byte{}}
 	data, ok := snap.Files["markitect.yaml"]
 	if !ok {
@@ -216,7 +211,7 @@ func sortedFiles(files map[string][]byte) []string {
 // MarkdownInventory lists ordinary Markdown candidates without assigning
 // resource kinds from their directories. Typed resources remain represented by
 // the parsed Project.Inventory entries.
-func MarkdownInventory(snap *source.Snapshot) []Entry {
+func MarkdownInventory(snap *snapshot.Snapshot) []Entry {
 	var result []Entry
 	if snap == nil {
 		return result

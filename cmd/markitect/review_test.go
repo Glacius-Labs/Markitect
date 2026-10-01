@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/internal/app"
@@ -264,5 +265,37 @@ func TestReviewEvidenceMustBeValidYAMLAndEntryBound(t *testing.T) {
 	code, _, _ = invoke(reviewArgs(repo, repo.base, reviewConfigPath, "", evidencePath)...)
 	if code != 2 {
 		t.Fatalf("review accepted evidence for another entry: exit %d", code)
+	}
+}
+
+func TestReviewCLIRequiresFullGitIdentityForStoredEvidence(t *testing.T) {
+	repo := newReviewCLIRepo(t)
+	project, err := app.Load(repo.root, repo.base)
+	if err != nil {
+		t.Fatal(err)
+	}
+	config, err := app.DecodeReviewConfig(project.Snapshot.Files[reviewConfigPath])
+	if err != nil {
+		t.Fatal(err)
+	}
+	record, err := app.RecordReview(project, cliNamespace+"/Skill/entry", version, "test-tool", config, "Advisory fixture report.")
+	if err != nil {
+		t.Fatal(err)
+	}
+	evidencePath := filepath.Join(t.TempDir(), "record.yaml")
+	for _, id := range []string{"HEAD", "deadbeef", "fixture:base", strings.Repeat("z", 40)} {
+		t.Run(id, func(t *testing.T) {
+			candidate := *record
+			candidate.Revision = id
+			data, err := app.YAML(candidate)
+			if err != nil {
+				t.Fatal(err)
+			}
+			writeReviewRecord(t, evidencePath, string(data))
+			code, _, stderr := invoke(reviewArgs(repo, repo.base, reviewConfigPath, "", evidencePath)...)
+			if code != 2 || !strings.Contains(stderr, "hexadecimal commit id") {
+				t.Fatalf("non-Git evidence identity %q: code=%d stderr=%s", id, code, stderr)
+			}
+		})
 	}
 }

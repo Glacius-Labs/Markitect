@@ -1,7 +1,6 @@
 package app
 
 import (
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"strings"
@@ -15,8 +14,8 @@ func validateReviewableProject(p *Project) error {
 	if p.Snapshot.Provisional {
 		return errors.New("review evidence requires a fixed, non-provisional snapshot")
 	}
-	if !validRevision(p.Snapshot.Revision) {
-		return errors.New("fixed snapshot revision must be a full 40- or 64-character hexadecimal commit id")
+	if !validSnapshotID(p.Snapshot.ID) {
+		return errors.New("fixed snapshot identity must be nonempty valid UTF-8 without NUL")
 	}
 	if len(p.Diagnostics) != 0 {
 		return errors.New("project diagnostics must be clear")
@@ -27,12 +26,8 @@ func validateReviewableProject(p *Project) error {
 	return nil
 }
 
-func validRevision(revision string) bool {
-	if len(revision) != 40 && len(revision) != 64 {
-		return false
-	}
-	_, err := hex.DecodeString(revision)
-	return err == nil
+func validSnapshotID(id string) bool {
+	return strings.TrimSpace(id) != "" && utf8.ValidString(id) && !strings.ContainsRune(id, 0)
 }
 
 func validateReviewConfig(config ReviewConfig) error {
@@ -58,7 +53,7 @@ func validateReviewRecord(record *ReviewRecord) error {
 	if record.SchemaVersion != ReviewSchemaVersion {
 		return fmt.Errorf("unsupported review record schema version %d", record.SchemaVersion)
 	}
-	if strings.TrimSpace(record.Entry) == "" || !validRevision(record.Revision) || strings.TrimSpace(record.SnapshotDigest) == "" || strings.TrimSpace(record.ContextDigest) == "" || strings.TrimSpace(record.ToolDigest) == "" || strings.TrimSpace(record.Version) == "" {
+	if strings.TrimSpace(record.Entry) == "" || !validSnapshotID(record.Revision) || strings.TrimSpace(record.SnapshotDigest) == "" || strings.TrimSpace(record.ContextDigest) == "" || strings.TrimSpace(record.ToolDigest) == "" || strings.TrimSpace(record.Version) == "" {
 		return errors.New("review record is missing required evidence identity")
 	}
 	if err := validateReviewConfig(record.Config); err != nil {
