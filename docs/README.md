@@ -6,6 +6,8 @@
 | [Content packages](content-packages.md) | Direct offline package pins, exports, archive creation, and package boundaries in Markitect 0.3.0 |
 | [Documentation inputs](documentation.md) | Explicit ordinary-file inputs in context and impact |
 | [Documentation routers](documentation-routers.md) | Optional local navigation checks and placement guidance |
+| [Provider adapters](provider-adapters.md) | Explicit Codex, Claude, and shared entrypoints and strict inventory |
+| [Factual consistency](consistency.md) | Opt-in sourced functional assertions and their limits |
 | [Architecture](architecture.md) | Product boundaries and current source model |
 | [Operations](operations.md) | Development, verification, rendering, and release operations |
 | [Refinement decisions](refinement.md) | Product principles and deferred design choices |

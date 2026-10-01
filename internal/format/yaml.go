@@ -17,13 +17,13 @@ var dnsLabel = regexp.MustCompile(`^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$`)
 var sha256Pattern = regexp.MustCompile(`^[0-9a-f]{64}$`)
 
 var specFields = map[string][]string{
-	"Text":     {"text", "files"},
-	"Rule":     {"text", "check", "files"},
-	"Contract": {"text", "kind", "input", "output", "files"},
-	"Workflow": {"text", "rules", "uses", "needs", "implements", "input", "output", "files"},
-	"Skill":    {"text", "description", "rules", "uses", "needs", "implements", "input", "output", "files"},
-	"Agent":    {"text", "description", "rules", "uses", "needs", "implements", "input", "output", "providers", "files"},
-	"Project":  {"targets", "areas", "bindings", "checks", "documentation", "ruleAdapters", "packages"},
+	"Text":     {"text", "files", "assertions"},
+	"Rule":     {"text", "check", "files", "assertions"},
+	"Contract": {"text", "kind", "input", "output", "files", "assertions"},
+	"Workflow": {"text", "rules", "uses", "needs", "implements", "input", "output", "files", "assertions"},
+	"Skill":    {"text", "description", "rules", "uses", "needs", "implements", "input", "output", "files", "assertions"},
+	"Agent":    {"text", "description", "rules", "uses", "needs", "implements", "input", "output", "providers", "files", "assertions"},
+	"Project":  {"targets", "areas", "bindings", "checks", "documentation", "ruleAdapters", "providerAdapters", "consistency", "packages"},
 	"Package":  {"version", "areas", "exports", "bindings"},
 }
 
@@ -265,6 +265,93 @@ func validateSpec(file string, n *yaml.Node, kind string) error {
 	if d := child(n, "ruleAdapters"); d != nil {
 		if err := validateRuleAdapters(file, d); err != nil {
 			return err
+		}
+	}
+	if d := child(n, "providerAdapters"); d != nil {
+		if err := validateProviderAdapters(file, d); err != nil {
+			return err
+		}
+	}
+	if d := child(n, "consistency"); d != nil {
+		if err := requireMapping(file, d, "consistency"); err != nil {
+			return err
+		}
+		if err := checkKeys(file, d, set("functionalPredicates")); err != nil {
+			return err
+		}
+		if v := child(d, "functionalPredicates"); v != nil {
+			if err := validateStrings(file, v, "functionalPredicates", true); err != nil {
+				return err
+			}
+		}
+	}
+	if d := child(n, "assertions"); d != nil {
+		if err := requireSequence(file, d, "assertions"); err != nil {
+			return err
+		}
+		for _, a := range d.Content {
+			if err := requireMapping(file, a, "assertion"); err != nil {
+				return err
+			}
+			if err := checkKeys(file, a, set("subject", "predicate", "value", "source", "quote")); err != nil {
+				return err
+			}
+			if err := requireFields(file, a, "subject", "predicate", "value", "source", "quote"); err != nil {
+				return err
+			}
+			for _, field := range []string{"subject", "predicate", "value", "source", "quote"} {
+				v := child(a, field)
+				if err := checkScalar(file, v, "string"); err != nil {
+					return err
+				}
+				if strings.TrimSpace(v.Value) == "" {
+					return diagnostic(file, v.Line, "assertion %s must not be empty", field)
+				}
+			}
+		}
+	}
+	return nil
+}
+
+func validateProviderAdapters(file string, n *yaml.Node) error {
+	if err := requireMapping(file, n, "providerAdapters"); err != nil {
+		return err
+	}
+	if err := checkKeys(file, n, set("ruleSources", "agentContract", "roleRegister", "inlineAgentText", "strictInventory", "retiredSkills", "retiredAgents")); err != nil {
+		return err
+	}
+	for _, field := range []string{"agentContract", "roleRegister"} {
+		if v := child(n, field); v != nil {
+			if err := checkScalar(file, v, "string"); err != nil {
+				return err
+			}
+		}
+	}
+	for _, field := range []string{"inlineAgentText", "strictInventory"} {
+		if v := child(n, field); v != nil {
+			if err := checkScalar(file, v, "boolean"); err != nil {
+				return err
+			}
+		}
+	}
+	for _, field := range []string{"retiredSkills", "retiredAgents"} {
+		if v := child(n, field); v != nil {
+			if err := validateStrings(file, v, field, true); err != nil {
+				return err
+			}
+		}
+	}
+	if rules := child(n, "ruleSources"); rules != nil {
+		if err := requireMapping(file, rules, "ruleSources"); err != nil {
+			return err
+		}
+		for i := 0; i < len(rules.Content); i += 2 {
+			if err := checkScalar(file, rules.Content[i], "string"); err != nil {
+				return err
+			}
+			if err := validateStrings(file, rules.Content[i+1], "ruleSources", true); err != nil {
+				return err
+			}
 		}
 	}
 	return nil

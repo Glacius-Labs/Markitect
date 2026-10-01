@@ -14,7 +14,7 @@ Each command is bounded by a ten-minute execution limit and a one MiB captured-o
 
 ## Rendering and controlled writes
 
-`render` checks or writes generic managed views and outputs selected by the Project's explicit target/rule-adapter configuration. It does not choose provider outputs from repository identity or inspect local conventions to infer a renderer. The project that owns a provider format owns its adapter and any import script.
+`render` checks or writes generic managed views and outputs selected by the Project's explicit target, rule, and provider-adapter configuration. It does not choose provider outputs from repository identity or inspect local conventions to infer a renderer. The adopting project owns its root navigation, hooks, custom formats, and import scripts.
 
 Writers take a shared lock, validate their plan, and check relevant source state. Existing-output writers use atomic replacement for each file; `init` exclusively creates new files so that a concurrent collision is never overwritten. A multi-file write is not a filesystem transaction. Read the command's complete written-path list and recovery guidance after any partial failure. Git is the boundary for reviewing, integrating, and reverting a multi-file candidate. Do not overwrite unmanaged collisions to make a command pass.
 
@@ -33,8 +33,12 @@ Writers take a shared lock, validate their plan, and check relevant source state
 
 ## Release operations
 
+The post-publication [benchmark workflow](measurement.md) consumes attested binaries from two immutable releases on one versioned fixture. It uploads raw data and a summary as workflow artifacts and never modifies the published release. Its timing variation is diagnostic, not a publication gate.
+
 A source version string does not prove a release exists. Release only a clean reviewed full commit after standalone tests, vet, build, schema/example checks, and Windows/Linux gates pass. Bundle contents, provenance, tag, source commit, workflow run, and asset digests must agree. The immutable GitHub release is the durable distribution; a workflow artifact is only temporary transport.
 
 Publication uses the authenticated release owner's local GitHub CLI session and a fail-closed tool. CI does not store a personal access token or publish with a token that lacks permission to read the immutable-release setting. The owner reviews the read-only plan before choosing publication. Verify the resulting immutable release and every attached asset. Never overwrite a tag or release. Recovery from a failed draft publication is an explicit owner decision after checking the tag target, run artifact, asset set, and digests.
+
+After a new release is published and verified, update the README's pinned CLI installation examples to its exact tag and attested Windows/Linux SHA-256 digests. Check the public downloads and platform-specific version output before calling that version the current quick-install choice. Never put an unpublished tag or guessed digest in the README.
 
 The release gate proves only the Markitect source and packaged product checks that ran. It does not assert that a project has correct policy, complete prose, a safe runtime, or a human decision. Those are owned where the project operates.

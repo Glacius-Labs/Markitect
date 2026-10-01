@@ -1,6 +1,7 @@
 package format
 
 import (
+	"slices"
 	"strings"
 	"testing"
 
@@ -161,7 +162,7 @@ func TestParseRejectsOversizedInput(t *testing.T) {
 
 func TestAllowedSpecFieldsReturnsIndependentSlice(t *testing.T) {
 	fields := AllowedSpecFields("Contract")
-	if len(fields) == 0 || fields[len(fields)-1] != "files" {
+	if len(fields) == 0 || !slices.Contains(fields, "files") {
 		t.Fatalf("unexpected contract fields: %#v", fields)
 	}
 	fields[0] = "changed"

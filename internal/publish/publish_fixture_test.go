@@ -109,6 +109,8 @@ type fakeGH struct {
 	releaseExists, draftCreated, published, badUploadedDigest bool
 	draftHasAssets                                            bool
 	patchTransitionUnknown                                    bool
+	releaseVerifyFailures                                     int
+	assetVerifyFailures                                       map[string]int
 	uploaded                                                  namedBytes
 	usedArtifact                                              string
 }
@@ -147,11 +149,20 @@ func (f *fakeGH) Run(_ context.Context, _ string, args ...string) ([]byte, error
 		return nil, nil
 	}
 	if len(args) >= 2 && args[0] == "release" && args[1] == "verify" {
+		if f.releaseVerifyFailures > 0 {
+			f.releaseVerifyFailures--
+			return nil, errors.New("release attestation is not yet available")
+		}
 		return []byte("verified"), nil
 	}
 	if len(args) >= 2 && args[0] == "release" && args[1] == "verify-asset" {
 		if _, err := os.Stat(args[3]); err != nil {
 			return nil, err
+		}
+		name := filepath.Base(args[3])
+		if f.assetVerifyFailures[name] > 0 {
+			f.assetVerifyFailures[name]--
+			return nil, errors.New("asset attestation is not yet available")
 		}
 		return []byte("verified"), nil
 	}

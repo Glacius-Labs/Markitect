@@ -2,6 +2,28 @@
 
 **Recorded:** 2026-10-01. This dated assessment records the release evidence verified at that time and distinguishes it from source behavior. It reports only the Markitect source, its distributions, and source-owned gates; project adoption and acceptance are outside its scope.
 
+## v0.5.0 published release
+
+The immutable [v0.5.0 release](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.5.0), release ID 401138862, points to [source commit 7883734](https://github.com/Glacius-Labs/Markitect/commit/78837346d0cb27c95b3a10f0a469b2709b757a83) from [PR 17](https://github.com/Glacius-Labs/Markitect/pull/17). It adds explicitly selected provider adapters and opt-in sourced consistency checks. The tag object itself is unsigned; the immutable-release attestation was verified separately.
+
+| Gate | Evidence | Result |
+|---|---|---|
+| Source CI | [Main run 36887739125](https://github.com/Glacius-Labs/Markitect/actions/runs/36887739125) | Windows and Linux source checks passed at the release commit |
+| Release CI | [Run 36889429215](https://github.com/Glacius-Labs/Markitect/actions/runs/36889429215) | Source checks, bundle build and installation smoke passed on Windows and Linux; run artifact contained four exact-source assets |
+| Published release | Release 401138862 | Release is immutable and not a draft; tag target is the source commit; `gh release verify` and all four local `gh release verify-asset` checks succeeded |
+| Native Windows asset | Attested executable | `version` reported 0.5.0 and `check --repo examples/minimal` passed |
+| Post-publication benchmark | [Run 36890129330](https://github.com/Glacius-Labs/Markitect/actions/runs/36890129330) | Failed during job setup because one upload-artifact action pin was one character short; no measurements were made |
+| Recovery benchmark | [Run 36891661794](https://github.com/Glacius-Labs/Markitect/actions/runs/36891661794) | Repaired workflow ran on main for the same immutable v0.5.0 tag; Windows and Linux fixture v1 passed and each uploaded raw JSON and a summary |
+
+| Asset | SHA-256 |
+|---|---|
+| `markitect-v0.5.0-bundle.zip` | `25c995f40a8e704197ee4245dc8daf37255adfb2dc2af6524c25d9b638c97da0` |
+| `markitect-v0.5.0-linux-amd64` | `e9eaa87fa36bb30578aaed0bef5bae2639689b39ac5bcd35c2d0632323d794cc` |
+| `markitect-v0.5.0-windows-amd64.exe` | `6f5b98dad2ea6003bc0368800691af70084a44d2c225c26fe12d120bcda27178` |
+| `markitect-v0.5.0-provenance.yaml` | `1f0713059bc6962e41d1b1dc4013e1ec479ed69924582e550608552c53e20281` |
+
+The verified provenance names source commit 78837346d0cb27c95b3a10f0a469b2709b757a83 and workflow run 36889429215. The failed benchmark is separate from release validity. The recovery run measured the same attested v0.5.0 and v0.4.1 binaries without changing either release; its short timings and range differences do not establish a speed gain or regression. An adopting project's installed pin and acceptance remain unverified here.
+
 ## v0.4.1 published release
 
 The immutable [`v0.4.1` release](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.4.1), release ID `401051061`, points to source commit [`f424432`](https://github.com/Glacius-Labs/Markitect/commit/f4244324b04d4dd748ae13cea43e2455b251a5de) from [PR 12](https://github.com/Glacius-Labs/Markitect/pull/12). The release adds Apache-2.0 licensing and repository guidance; product behavior remains that of v0.4.0.

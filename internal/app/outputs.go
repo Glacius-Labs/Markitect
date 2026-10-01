@@ -39,6 +39,8 @@ func CheckOutputs(p *Project) []core.Diagnostic {
 		return []core.Diagnostic{{Code: "render", Message: err.Error()}}
 	}
 	var findings []core.Diagnostic
+	findings = append(findings, CheckConsistency(p)...)
+	findings = append(findings, checkProviderAdapterInputs(p)...)
 	names := sortedFiles(outputs)
 	for _, name := range names {
 		data, ok := p.Snapshot.Files[name]
@@ -55,6 +57,7 @@ func CheckOutputs(p *Project) []core.Diagnostic {
 			}
 		}
 	}
+	findings = append(findings, checkProviderInventory(p, outputs)...)
 	return findings
 }
 

@@ -19,6 +19,9 @@ func WriteOutputs(root string, p *Project) ([]string, error) {
 	if len(p.Diagnostics) > 0 {
 		return nil, fmt.Errorf("cannot render while project diagnostics remain")
 	}
+	if findings := checkProviderAdapterInputs(p); len(findings) > 0 {
+		return nil, fmt.Errorf("cannot render with invalid provider adapter inputs: %s: %s", findings[0].Path, findings[0].Message)
+	}
 	rootAbs, err := filepath.Abs(root)
 	if err != nil {
 		return nil, err

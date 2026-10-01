@@ -74,6 +74,8 @@ Commands run with the caller's local authority. Snapshot isolation fixes the inp
 
 ## Render
 
+For project-owned Codex, Claude, and shared entrypoints, declare `spec.targets` and, when needed, `spec.providerAdapters`; see [Provider adapters](provider-adapters.md). For opt-in sourced functional assertions, declare `spec.consistency`; see [Factual consistency](consistency.md). Both are absent by default.
+
 `render` checks or writes Markitect's generic managed views. Additional outputs are produced only for Project `spec.targets` and `spec.ruleAdapters`. Codex and Claude outputs are product-owned adapters, selected only when the matching target is declared. No additional compatibility output is selected implicitly. Inspect the generated schema and the current target list; an undeclared output is not covered.
 
 ## Commands
