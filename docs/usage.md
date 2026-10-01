@@ -1,12 +1,14 @@
 # Using Markitect
 
-This guide describes the current v0.3.0 source model. The immutable `v0.1.0` release is historical and `v0.2.0` is a verified published release. Consult [GitHub Releases](https://github.com/Glacius-Labs/Markitect/releases) for available distributions.
+This guide describes the current source model. Consult [GitHub Releases](https://github.com/Glacius-Labs/Markitect/releases) for available distributions and their source versions; the [roadmap](implementation-plan.md) owns current source status.
 
 ## Project and resource model
 
 Markitect projects declare YAML resources in `markitect.yaml` and configured content areas. The namespaced kinds are `Text`, `Rule`, `Contract`, `Workflow`, `Skill`, and `Agent`; `Project` declares topology and execution/output configuration. Namespaces and names are DNS labels. Paths, area imports, and resource declarations govern ownership and direct access.
 
 Use `rules` to attach requirements, `uses` for concrete resource dependencies, `needs` to require a Contract, `implements` to declare a Contract signature, and Project `bindings` to select implementations. Use `files` for exact ordinary UTF-8 file inputs needed by a resource. Markitect does not infer dependencies from prose links.
+
+See [Documentation inputs](documentation.md) for the file-input context and impact contract and its executable example.
 
 A Project can declare named areas, direct imports, renderer targets, and rule adapters. References must resolve to authored resources. The following neutral shape shows those relationships; copy the [minimal example](../examples/minimal/README.md) for a runnable project:
 
@@ -39,6 +41,24 @@ spec:
 
 `ruleAdapters` maps generated rule entrypoint names to source references; these mappings currently produce Claude rule views when the Claude target is selected. `targets` currently accepts `codex` and `claude`. A Project may also pin direct offline content packages in `spec.packages`. Each entry contains `name`, `version`, `source`, `archive`, and `sha256`; this list is the complete content lock. `markitect.lock.yaml` remains exclusively the CLI distribution lock. See [Content packages](content-packages.md) for manifests, exports, archive creation, query selection, and boundaries. The [Project schema](../schema/Project.yaml) and [Agent schema](../schema/Agent.yaml) list the supported fields. Provider metadata configures generated output; it is not a runtime dependency of the Markitect core.
 
+## Initialize a project
+
+For an existing repository that has no `markitect.yaml`, `init` previews a minimal Project and one area README:
+
+```powershell
+markitect init --repo . --name project-name --namespace owner --path docs/ai
+```
+
+The preview shows the exact `markitect.yaml` content and both file paths. Initialization does not choose checks, rules, resources, output targets, packages, templates, or edits to root documentation. The selected area path must not already exist. Preview is read-only and can run outside Git.
+
+After reviewing the plan, `--write` recomputes it and validates the prospective Project with the normal parser, graph, and output checks before exclusive file creation:
+
+```powershell
+markitect init --repo . --name project-name --namespace owner --path docs/ai --write
+```
+
+Writing requires a named non-protected Git branch and the shared write lock. In a Git checkout, `--repo` must name the Git worktree root; preview also works outside Git. The repository root must exist; names and the area path must be safe, and initialization rejects aliases, excluded or unsafe paths, existing configuration or area content, and deleted or staged tracked targets. Only `markitect.yaml` and the selected area's `README.md` are created; the selected area directory must be absent and is created exclusively. The result lists `written` files and `createdDirectories`, including on a partial failure. Inspect those paths and the recovery instructions before retrying; no cleanup is automatic, and a directory may have acquired other content. This is not a multi-file transaction. Structural validation can pass with no Project checks. `verify` remains incomplete until the project owner declares real checks and commits the candidate.
+
 ## Declare verification commands
 
 `Project.spec.checks` is optional for structural authoring. `verify` requires at least one declared check; if none are configured, it returns `incomplete-evidence` rather than treating the project as verified.
@@ -56,6 +76,7 @@ Commands run with the caller's local authority. Snapshot isolation fixes the inp
 | Command | Purpose |
 |---|---|
 | `check` | Validate YAML, the resource graph, declared file inputs, and managed outputs. |
+| `init` | Preview a minimal project plan; `--write` creates only its Project file and one area README. |
 | `verify` | Check an immutable revision and run the Project's declared commands. |
 | `inventory` | List Markdown candidates and typed resources; it does not infer dependencies. |
 | `find` | Search valid resources by literal text and exact optional filters. |
@@ -72,10 +93,11 @@ Commands run with the caller's local authority. Snapshot isolation fixes the inp
 | `bundle` | Build a complete distribution from an exact revision. |
 | `install` | Validate a distribution and preview a complete pin change; `--write` applies the plan. |
 | `version` | Print the CLI version and platform. |
+| `licenses` | Print bundled third-party notices; works offline without a Project. |
 
 Existing-content imports are implemented and reviewed as scripts owned by the project being migrated. Markitect core does not include a migration command or presume source documentation structure.
 
-Content packages are loaded from exact committed archive bytes in the selected Project snapshot. Markitect does not fetch the `source` coordinate, resolve ranges, load nested packages, activate imported Rules, or write imported resources. The content-package contract is part of the v0.3.0 source model; see [GitHub Releases](https://github.com/Glacius-Labs/Markitect/releases) for available distributions.
+Content packages are loaded from exact committed archive bytes in the selected Project snapshot. Markitect does not fetch the `source` coordinate, resolve ranges, load nested packages, activate imported Rules, or write imported resources. The package contract was introduced in v0.3.0 and remains part of the current source model; see [GitHub Releases](https://github.com/Glacius-Labs/Markitect/releases) for distributions that include it.
 
 ## Upgrade from v0.1.0
 

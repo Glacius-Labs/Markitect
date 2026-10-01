@@ -10,8 +10,13 @@ Go scenario tests compare exact expected context and impact sets. Go benchmarks 
 
 ```powershell
 go test ./internal/app -run AuthoringScenario -count=1
+go test ./internal/app -run DocumentationScenario -count=1
 go test ./internal/app -run '^$' -bench Authoring -benchmem -count=3
 ```
+
+The [code and documentation example](documentation.md) exercises exact source-file inputs with a predeclared affected set and an unrelated area. Its source-only change intentionally leaves stale prose structurally valid: the scenario verifies routing to review, not semantic correction by the compiler.
+
+CI executes one iteration of each authoring benchmark to keep the measurement fixtures valid as the resource model evolves. This is a correctness smoke check, with no timing threshold. For timing reports, run the repeated command above on a fixed source commit and record the host; the measured section excludes Git reads, parsing, agent interaction, and provider calls.
 
 ## Authoring exercise
 
@@ -26,6 +31,8 @@ Start with a small set of local Rule edits, shared rules, and dependency changes
 Capture only observed data: model-reported token usage, calls, tool calls, searches, files read, wall time, context bytes, affected entries, review reuse, and human interventions. Missing values remain unavailable; do not estimate tokens from bytes. Context/impact precision and recall require a known expected set. Report undefined ratios with numerator and denominator rather than substituting 100%.
 
 Review reuse should be exercised for identical inputs, relevant changes, removed edges, tool/config changes, and unknown files. Reuse makes no model call. Compare the full repeated task before claiming sustained savings.
+
+The [2026-10-01 documentation pilot](authoring-pilot.md) stopped after two completed runs because of a provider usage limit. It records the incomplete result and a mismatch between the task's wording and a stricter mutation oracle. State every scored mutation restriction in the task card before running another comparison; keep structural validity, requested semantics, and a narrow mutation boundary as separate results.
 
 ## Optional local records
 

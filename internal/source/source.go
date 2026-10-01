@@ -662,6 +662,22 @@ func validatePortablePaths(paths []string) error {
 	return nil
 }
 
+// ValidateIncludedPaths validates prospective repository paths using the same
+// safety, inclusion, and portable-name rules as source snapshots. Callers pass
+// existing snapshot paths together with new paths they plan to add.
+func ValidateIncludedPaths(paths []string) error {
+	for _, p := range paths {
+		if err := validateRepoPath(p); err != nil {
+			return err
+		}
+		folded := strings.ToLower(p)
+		if excludedFilePath(p) || excludedDirectoryPath(p) || excludedFilePath(folded) || excludedDirectoryPath(folded) {
+			return fmt.Errorf("repository path %q is excluded from Markitect source", p)
+		}
+	}
+	return validatePortablePaths(paths)
+}
+
 func foldPath(p string) string {
 	var folded strings.Builder
 	for _, r := range p {

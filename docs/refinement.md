@@ -1,6 +1,6 @@
 # Product refinement decisions
 
-This document owns product direction beyond the implemented source model. Supported Project syntax is in [Usage](usage.md); delivery order is in the [roadmap](implementation-plan.md).
+This document owns product principles and deferred direction. The [roadmap](implementation-plan.md) is the sole owner of current source and planned-work status; [Usage](usage.md) owns supported Project syntax and CLI behavior.
 
 ## Product principles
 
@@ -21,7 +21,7 @@ The v0.3.0 source model implements the first bounded content-package slice. Its 
 
 ## Templates and interfaces
 
-A future initializer should copy project-owned files once, validate typed parameters and planned outputs, refuse unmanaged overwrites, and validate the result before writing. It should not synchronize created projects with an evolving template, execute arbitrary scripts, or introduce an expression language.
+Minimal one-time project initialization is in the current source model. It creates only the Project file and one area README after preview and validation. It uses no custom templates, executes no scripts, and does not synchronize created projects with an evolving template. The precise contract and its structural-verification limit are in [Usage](usage.md); source status remains in the [roadmap](implementation-plan.md).
 
 Expose graph inspection through MCP or LSP only when calls through the stable CLI/application API show measurable friction. Runtime/operator integration requires an explicit desired-state and reconciliation contract. A conceptual diagram is not a commitment to ship every interface.
 

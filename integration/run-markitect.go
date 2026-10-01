@@ -1107,7 +1107,11 @@ func buildOrReuse(root string, m manifest, archive *sourceArchive, goPath string
 }
 
 func injectRepo(args []string, root string) []string {
-	if len(args) == 0 || args[0] == "version" || args[0] == "authoring" {
+	if len(args) == 0 {
+		return args
+	}
+	switch args[0] {
+	case "version", "authoring", "licenses", "help", "--help", "-h":
 		return args
 	}
 	for _, arg := range args[1:] {

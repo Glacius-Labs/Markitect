@@ -396,6 +396,11 @@ func TestInjectRepoAndDiscoverRoot(t *testing.T) {
 	if got := injectRepo([]string{"authoring", "--format", "yaml"}, root); !reflect.DeepEqual(got, []string{"authoring", "--format", "yaml"}) {
 		t.Fatalf("authoring flags changed: %v", got)
 	}
+	for _, args := range [][]string{{"licenses"}, {"licenses", "--write"}, {"help"}, {"help", "init"}, {"--help"}, {"-h"}} {
+		if got := injectRepo(args, root); !reflect.DeepEqual(got, args) {
+			t.Fatalf("repository-independent arguments changed: got=%v want=%v", got, args)
+		}
+	}
 	if got := injectRepo([]string{"find", "--query", "authoring"}, root); !reflect.DeepEqual(got, []string{"find", "--repo", root, "--query", "authoring"}) {
 		t.Fatalf("consumer query did not receive repo: %v", got)
 	}

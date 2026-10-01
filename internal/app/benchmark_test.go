@@ -195,6 +195,9 @@ func authoringBenchmarkSnapshot(tb testing.TB, revision string, revise bool) *so
 	areas := make([]core.Area, 10)
 	for i := range areas {
 		areas[i] = core.Area{Name: fmt.Sprintf("area-%02d", i), Path: fmt.Sprintf("docs/area-%02d", i), Rules: []core.Ref{{Kind: "Rule", Name: "shared-policy", Namespace: "area-00"}}}
+		if i != 0 {
+			areas[i].Imports = []string{"area-00"}
+		}
 	}
 	project := core.Resource{APIVersion: core.APIVersion, Kind: "Project", Metadata: core.Metadata{Name: "benchmark"}, Path: "markitect.yaml", Spec: core.Spec{Areas: areas}}
 	resources := []*core.Resource{&project}

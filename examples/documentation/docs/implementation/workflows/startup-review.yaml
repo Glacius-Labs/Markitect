@@ -1,0 +1,11 @@
+apiVersion: markitect.example.org/v1alpha1
+kind: Workflow
+metadata:
+    name: startup-review
+    namespace: implementation
+spec:
+    text: |
+        Check the documented worker behavior against the implementation before changing startup assumptions.
+    uses:
+        - kind: Text
+          name: worker-behavior

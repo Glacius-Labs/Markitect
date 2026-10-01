@@ -1,6 +1,6 @@
 # Release decisions
 
-**Scope:** Product and release decisions for Markitect source and distributions. The v0.2.0 release is published; the v0.3.0 package model is in the current source. See the [roadmap](implementation-plan.md), [production assessment](production-assessment.md), and [operations](operations.md) for release evidence and status.
+**Scope:** Product and release decisions for Markitect source and distributions. See the [roadmap](implementation-plan.md) for source status, the [production assessment](production-assessment.md) for dated evidence, and [operations](operations.md) for release gates.
 
 ## Product decisions
 
@@ -14,4 +14,4 @@
 
 ## Deferred
 
-Project initialization, MCP/LSP, runtime operators, public licensing, and a controlled public API domain remain separate product decisions. They are not implied by the current source version.
+MCP/LSP, runtime operators, public licensing, and a controlled public API domain remain separate product decisions. They are not implied by the current source version.

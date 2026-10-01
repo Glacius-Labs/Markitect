@@ -13,11 +13,12 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/authoring"
 	"github.com/Glacius-Labs/Markitect/internal/core"
 	"github.com/Glacius-Labs/Markitect/internal/format"
+	"github.com/Glacius-Labs/Markitect/internal/licenses"
 	"github.com/Glacius-Labs/Markitect/internal/release"
 	"github.com/Glacius-Labs/Markitect/internal/source"
 )
 
-var version = "0.3.1"
+var version = "0.4.0"
 
 type report struct {
 	Tool        string            `yaml:"tool"`
@@ -83,11 +84,12 @@ func run(args []string, out, errout io.Writer) int {
 	revision := fs.String("revision", "", "fixed Git revision (omitted: provisional working tree)")
 	base := fs.String("base", "", "base revision for impact")
 	kind := fs.String("kind", "", "context entry kind")
-	name := fs.String("name", "", "context entry name")
-	namespace := fs.String("namespace", "", "context entry namespace")
+	name := fs.String("name", "", "resource or project name")
+	namespace := fs.String("namespace", "", "resource namespace (initial area name for init)")
+	areaPath := fs.String("path", "", "new ownership area path (init)")
 	packageName := fs.String("package", "", "exact content package identity (omitted: local entry)")
 	query := fs.String("query", "", "literal search text (find)")
-	write := fs.Bool("write", false, "write managed outputs in an isolated worktree")
+	write := fs.Bool("write", false, "write planned files in an isolated worktree")
 	check := fs.Bool("check", false, "check rendered outputs (default)")
 	output := fs.String("output", "", "absent output directory (package) or ZIP file (bundle)")
 	bundlePath := fs.String("bundle", "", "local release ZIP to validate and install")
@@ -123,8 +125,8 @@ func run(args []string, out, errout io.Writer) int {
 		fmt.Fprintf(errout, "--%s does not apply to %s\n", invalid, command)
 		return 2
 	}
-	if *write && ((command != "render" && command != "schema" && command != "format" && command != "install") || *revision != "" || *check) {
-		fmt.Fprintln(errout, "--write only supports render, format, schema or install on the working tree")
+	if *write && ((command != "render" && command != "schema" && command != "format" && command != "install" && command != "init") || *revision != "" || *check) {
+		fmt.Fprintln(errout, "--write only supports render, format, schema, install or init on the working tree")
 		return 2
 	}
 	emit := func(value any) int {
@@ -140,6 +142,15 @@ func run(args []string, out, errout io.Writer) int {
 		return 0
 	}
 	fail := func(err error) int { fmt.Fprintln(errout, err); return 2 }
+	if command == "licenses" {
+		if _, err := io.WriteString(out, licenses.Text); err != nil {
+			return fail(err)
+		}
+		return 0
+	}
+	if command == "init" {
+		return runInit(*root, *name, *namespace, *areaPath, *write, emit, fail)
+	}
 	if command == "bundle" {
 		return runBundle(*root, *revision, *output, emit, fail)
 	}

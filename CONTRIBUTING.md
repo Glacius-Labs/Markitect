@@ -9,15 +9,16 @@
 | `internal/format` | Strict YAML parsing and schema generation |
 | `internal/source` | Working-tree and immutable Git snapshots |
 | `internal/inputs` | Explicit ordinary-file inputs |
-| `internal/app` | Context, impact, evidence, verification, rendering, and controlled writes |
+| `internal/app` | Context, impact, evidence, verification, rendering, initialization, and controlled writes |
 | `internal/authoring` | Embedded core authoring resources |
+| `internal/licenses` | Canonical embedded upstream notices |
 | `internal/render` | Generic managed views and declared output adapters |
 | `internal/release` | Deterministic source archives and release bundles |
 | `internal/contentpackage` | Validated offline content-package archive format |
 | `internal/app/install.go` | Release pin plans and application |
 | `integration` | Versioned distribution support files |
 | `examples` | Executable synthetic product example |
-| `docs` | Product architecture, usage, decisions, and roadmap |
+| `docs` | Product architecture, usage, decisions, and canonical roadmap |
 
 Adopting repositories own their content and any import scripts used to bring existing material into the Markitect model. Markitect does not embed a repository-specific migration or renderer policy. Core authoring guidance remains part of the product.
 
@@ -35,7 +36,7 @@ git diff --check
 
 The standalone checks do not require another repository or an AI model. CI runs supported Windows and Linux gates. A successful source gate establishes only the product checks that ran; it does not establish semantic correctness or an adopting project's acceptance.
 
-Edit validation declarations and regenerate schemas with `schema --repo . --write`. Edit example YAML, then run `format`, `render --repo examples/minimal --write`, and `check`. For package or consumer example changes, also run `go run ./cmd/markitect check --repo examples/package-consumer`. Edit core authoring at `internal/authoring/resources/*.yaml`; its content is canonical and embedded in the binary. Tests compile those resources through the ordinary application API. The v0.3.0 content-package contract and consumer workflow are documented in [Content packages](docs/content-packages.md); the executable package fixtures live under `examples/content-package` and `examples/package-consumer`.
+Edit validation declarations and regenerate schemas with `schema --repo . --write`. Edit example YAML, then run `format`, `render --repo examples/minimal --write`, and `check`. For package or consumer example changes, also run `go run ./cmd/markitect check --repo examples/package-consumer`. Edit core authoring at `internal/authoring/resources/*.yaml`; its content is canonical and embedded in the binary. Tests compile those resources through the ordinary application API. Project initialization is specified in [Usage](docs/usage.md) and current source status belongs to the [roadmap](docs/implementation-plan.md). The v0.3.0 content-package contract and consumer workflow are documented in [Content packages](docs/content-packages.md); the executable package fixtures live under `examples/content-package` and `examples/package-consumer`.
 
 ## Project checks and rendering
 
@@ -45,6 +46,12 @@ Checks run against a materialized fixed revision within the documented time and 
 
 Rendering always supports Markitect's generic managed views. Additional output targets and rule adapters must be declared in the Project. Only the declared outputs are rendered or checked. A provider-specific renderer or an import script belongs in the adopting repository that owns its format and policy.
 
+## Initialization behavior
+
+`init` is a core authoring path for repositories with no Markitect Project. Its preview must remain read-only and show exact planned YAML and paths. Write recomputes and validates the plan, then exclusively creates only `markitect.yaml` and one area README under the shared write lock. It must enforce the named non-protected branch boundary and report created paths if a later file creation fails. Keep the two-file operation explicitly non-transactional. An empty Project is structurally checkable but cannot produce complete `verify` evidence until its owner declares actual checks and commits the candidate. Do not add generated policies, resources, checks, targets, package pins, custom templates, or edits to existing root files.
+
 ## Release work
 
-[Operations and releases](docs/operations.md) describes the supported source and publication gates. The v0.1.0 release is historical; v0.2.0 is a verified published release. See the [production assessment](docs/production-assessment.md) for exact release evidence and [GitHub Releases](https://github.com/Glacius-Labs/Markitect/releases) for available distributions. A source version does not imply acceptance by any adopting project.
+The canonical [third-party notices](internal/licenses/notices.md) are embedded in the CLI and included in both source distribution paths. When dependencies or the build toolchain change, compare their upstream notices and update this file in the same candidate when needed. Check `markitect licenses` from the packaged bootstrap as well as the source build. Markitect's own public license remains a separate owner decision.
+
+[Operations and releases](docs/operations.md) describes the supported source and publication gates. The [roadmap](docs/implementation-plan.md) owns current source status; [GitHub Releases](https://github.com/Glacius-Labs/Markitect/releases) lists available distributions. The [production assessment](docs/production-assessment.md) records dated release evidence. A source version does not imply acceptance by any adopting project.

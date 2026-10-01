@@ -27,10 +27,12 @@ On Linux and macOS, build as `go build -o bin/markitect ./cmd/markitect`. The [m
 
 - [Usage and upgrade notes](docs/usage.md): project format, commands, and the v0.1-to-v0.2 transition.
 - [Content packages](docs/content-packages.md): the direct offline package model in Markitect 0.3.0.
+- [Documentation inputs](docs/documentation.md): connect exact ordinary file inputs to compiled context and impact.
 - [Architecture](docs/architecture.md): product model, evidence, verification, rendering, and boundaries.
-- [Roadmap](docs/implementation-plan.md): the v0.2.0 release model and v0.3.0 source model.
+- [Roadmap](docs/implementation-plan.md): current source scope and planned work.
 - [Operations](docs/operations.md): source development, checks, and release handling.
 - [Integration](integration/README.md): verified downloads, installation, upgrades, and release publication.
 - [Development](CONTRIBUTING.md): code ownership and validation.
+- [Third-party notices](internal/licenses/notices.md): bundled upstream attribution, also available offline with `markitect licenses`.
 
-The v0.2 source model supports typed YAML resources, graph checks, core authoring, structural queries, fixed-snapshot context and impact, review-evidence eligibility, managed generic views, explicit render targets, declared command checks, and versioned release bundles. The v0.3.0 source model adds direct offline content packages. Markitect does not provide an agent runtime, guarantee semantic completeness, or execute undeclared checks. See [GitHub Releases](https://github.com/Glacius-Labs/Markitect/releases) for available distributions and the [production assessment](docs/production-assessment.md) for release evidence and current readiness.
+The current source model builds on typed YAML resources, graph checks, core authoring, fixed-snapshot context and impact, explicit outputs and checks, and direct offline content packages. It adds bounded project initialization. Markitect does not provide an agent runtime, guarantee semantic completeness, or execute undeclared checks. See [GitHub Releases](https://github.com/Glacius-Labs/Markitect/releases) for available distributions and the [roadmap](docs/implementation-plan.md) for current source status.

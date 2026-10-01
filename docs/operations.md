@@ -4,7 +4,7 @@ This document defines product-side development and release operations. [Usage](u
 
 ## Authoring and checking
 
-Use a named feature branch and commit a baseline before controlled writes. Edit canonical YAML and declared files, format them, render the owned generic and explicitly configured outputs, then run `check`. Commit the complete candidate before collecting fixed-revision `context`, `impact`, or `verify` evidence. A source edit creates a new candidate and its applicable evidence must be refreshed.
+Use a named feature branch. A new repository can preview `init` before creating its first Project; the write also works on an unborn feature branch. Commit that baseline before subsequent controlled edits. Edit canonical YAML and declared files, format them, render the owned generic and explicitly configured outputs, then run `check`. Commit the complete candidate before collecting fixed-revision `context`, `impact`, or `verify` evidence. A source edit creates a new candidate and its applicable evidence must be refreshed.
 
 `check` validates resource structure and managed-output drift. `verify --revision COMMIT` repeats structural checks on that immutable snapshot and executes only its declared `Project.spec.checks`. A check is an argv array: the executable name must be a bare name resolved using `PATH`, remaining values are literal arguments, and no shell is involved. To run a script, declare its interpreter as the executable. Missing declarations yield `incomplete-evidence`; unavailable commands or execution limits are also incomplete, not successful verification.
 
@@ -16,7 +16,7 @@ Each command is bounded by a ten-minute execution limit and a one MiB captured-o
 
 `render` checks or writes generic managed views and outputs selected by the Project's explicit target/rule-adapter configuration. It does not choose provider outputs from repository identity or inspect local conventions to infer a renderer. The project that owns a provider format owns its adapter and any import script.
 
-Writers take a shared lock, validate their plan, check relevant source state, and use atomic replacement for each file. A multi-file write is not a filesystem transaction. Read the command's complete written-path list and recovery guidance after any partial failure. Git is the boundary for reviewing, integrating, and reverting a multi-file candidate. Do not overwrite unmanaged collisions to make a command pass.
+Writers take a shared lock, validate their plan, and check relevant source state. Existing-output writers use atomic replacement for each file; `init` exclusively creates new files so that a concurrent collision is never overwritten. A multi-file write is not a filesystem transaction. Read the command's complete written-path list and recovery guidance after any partial failure. Git is the boundary for reviewing, integrating, and reverting a multi-file candidate. Do not overwrite unmanaged collisions to make a command pass.
 
 ## Troubleshooting
 

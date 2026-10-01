@@ -1,6 +1,6 @@
 # Architecture
 
-**Status:** This describes the current source model. The immutable `v0.1.0` release is historical and unchanged; published versions are listed in GitHub Releases. [Usage](usage.md) owns the Project and CLI contract; [the roadmap](implementation-plan.md) owns planned work and status.
+**Status:** This describes the current source model. Check [GitHub Releases](https://github.com/Glacius-Labs/Markitect/releases) for available distributions; [the roadmap](implementation-plan.md) owns current source and planned-work status. [Usage](usage.md) owns the Project and CLI contract.
 
 ## Purpose
 
@@ -45,9 +45,11 @@ Strict parsing rejects unknown fields, duplicate identities, extra YAML document
 
 The core does not depend on a model API, IDE, provider SDK, or repository-specific policy. The CLI, Git reader, filesystem writers, release packaging, and explicitly configured output adapters are boundaries around the core. `verify` executes only the commands declared by the selected Project. It neither chooses a repository profile nor infers a runtime gate from files it happens to find.
 
-Rendering produces generic managed views and explicitly declared Codex/Claude targets or rule adapters. Markitect owns those supported adapters; additional project-specific output policy remains outside the core. No target is selected implicitly. Format, render, schema, and install operations validate plans before writing; per-file replacement is atomic, not a multi-file transaction.
+Rendering produces generic managed views and explicitly declared Codex/Claude targets or rule adapters. Markitect owns those supported adapters; additional project-specific output policy remains outside the core. No target is selected implicitly. Format, render, schema, install, and initialization operations validate plans before writing; per-file writes are controlled, not a multi-file transaction.
 
-The v0.3.0 source model adds direct offline content archives. Project pins are the single content lock; `markitect.lock.yaml` continues to pin the CLI distribution. Package members are parsed into origin-qualified graph entries while local identity and canonical paths stay unchanged. The model rejects nested imports, cross-boundary direct references, checks, render targets, and external rule adapters. Verified archives are tracked outside the Git source snapshot and are read-only to formatting and rendering. Package content participates in context and conservative impact/review invalidation. See [Content packages](content-packages.md) for its contract, [GitHub Releases](https://github.com/Glacius-Labs/Markitect/releases) for available distributions, and the [production assessment](production-assessment.md) for release status.
+The v0.3.0 source model added direct offline content archives. Project pins are the single content lock; `markitect.lock.yaml` continues to pin the CLI distribution. Package members are parsed into origin-qualified graph entries while local identity and canonical paths stay unchanged. The model rejects nested imports, cross-boundary direct references, checks, render targets, and external rule adapters. Verified archives are tracked outside the Git source snapshot and are read-only to formatting and rendering. Package content participates in context and conservative impact/review invalidation. See [Content packages](content-packages.md) for its contract.
+
+The current source model adds minimal project initialization for an existing repository. Preview is read-only and shows the exact Project YAML and area README plan. Writing recomputes the plan and validates the prospective Project through the normal parser, graph, and output checks; it then requires a named non-protected branch and exclusively creates only those two paths. It does not select project-owned checks or policy or edit existing content. Structural success does not establish complete verification; without owner-declared checks, `verify` remains incomplete. See [Usage](usage.md) for the command contract and the [roadmap](implementation-plan.md) for current status.
 
 ## Authoring and queries
 

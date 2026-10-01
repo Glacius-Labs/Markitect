@@ -1,6 +1,6 @@
 # Distribution and integration
 
-Markitect's distribution unit is a versioned, immutable GitHub Release. The existing `v0.1.0` release is a historical pin; source files and release assets are never retagged or overwritten. Check [GitHub Releases](https://github.com/Glacius-Labs/Markitect/releases) for available versions and verify the exact tag, source commit, and assets before use. The current source model and upgrade notes are in [Usage](../docs/usage.md).
+Markitect's distribution unit is a versioned, immutable GitHub Release. Source files and release assets are never retagged or overwritten. Check [GitHub Releases](https://github.com/Glacius-Labs/Markitect/releases) for available versions and verify the exact tag, source commit, and assets before use. The current source model and upgrade notes are in [Usage](../docs/usage.md); the [roadmap](../docs/implementation-plan.md) records current source scope.
 
 ## Release contents and verification
 
@@ -77,7 +77,7 @@ Pop-Location
 
 The installer writes the complete pin as five individual atomic file replacements; it is not a filesystem transaction. If a later write fails, inspect the returned `written` paths. Do not treat a partial set as resumable. For a fresh install, remove only the listed files known to have been created by that attempt before retrying. For an upgrade, restore the previous complete committed set or use a normal Git revert. Keep a baseline commit so the whole pin can be rolled back together. Do not move or recreate an immutable release tag.
 
-A pin installs the CLI distribution; it does not create project content or choose project policy. Project configuration must match the installed release. The immutable v0.1.0 pin uses its earlier Project format; the current source model documents explicit checks, areas, imports, and renderer targets in [Usage](../docs/usage.md) and the [Project schema](../schema/Project.yaml). Existing content import scripts belong beside the content they transform. Markitect does not ship an implicit migration adapter.
+A pin installs the CLI distribution; it does not create project content or choose project policy. Project configuration must match the installed release. The current source model documents explicit checks, areas, imports, renderer targets, and bounded initialization in [Usage](../docs/usage.md) and the [Project schema](../schema/Project.yaml). Check the selected release's version and available commands before relying on source-only functionality. Existing content import scripts belong beside the content they transform. Markitect does not ship an implicit migration adapter.
 
 Text files are validated against canonical LF content; Windows CRLF checkout readback is accepted. The nested source archive is copied and verified byte-for-byte. The installer does not rewrite ZIP contents.
 
