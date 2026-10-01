@@ -2,6 +2,29 @@
 
 **Recorded:** 2026-10-01. This dated assessment records the release evidence verified at that time and distinguishes it from source behavior. It reports only the Markitect source, its distributions, and source-owned gates; project adoption and acceptance are outside its scope.
 
+## v0.6.0 published release
+
+The immutable [v0.6.0 release](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.6.0), release ID `401237667`, binds [source commit 810a86f](https://github.com/Glacius-Labs/Markitect/commit/810a86ffe13aef065f38e70ae49d40911f447af2) from [PR 27](https://github.com/Glacius-Labs/Markitect/pull/27). It ships canonical-owner authoring guidance, optional snapshot router validation and the provider diagnostic/shared-agent-link corrections integrated after v0.5.0. The tag is annotated and unsigned; GitHub release and all asset attestations were verified separately.
+
+| Evidence | Exact basis | Result |
+|---|---|---|
+| Source gates | [PR CI 36905108369](https://github.com/Glacius-Labs/Markitect/actions/runs/36905108369) | Windows/Linux tests, vet, build, schema, executable examples and package smoke passed |
+| Tagged release | [Run 36905582096](https://github.com/Glacius-Labs/Markitect/actions/runs/36905582096), attempt 1 | Deterministic bundle and both-platform bundle install/bootstrap gates passed; four exact-source assets assembled |
+| Owner publisher | Release `401237667` | `published-verified`: owner plan approved, run artifact/tag/manifest checked, immutable release and every asset attestation verified |
+| Public downloads | Versioned unauthenticated Windows/Linux download URLs | Bytes matched the attested hashes; Windows executable reported `Markitect 0.6.0 (windows/amd64)` |
+| Published native benchmark | [Run 36906676251](https://github.com/Glacius-Labs/Markitect/actions/runs/36906676251) | Windows/Linux fixture v1 completed for attested v0.6.0 and v0.5.0 binaries; raw JSON and summaries retained as run artifacts |
+
+| Asset | Verified SHA-256 |
+|---|---|
+| `markitect-v0.6.0-bundle.zip` | `6fc7ad77b13e3b25d5666f7136a7a631b62bfcd931a5454610b96de12a2981d1` |
+| `markitect-v0.6.0-linux-amd64` | `52f017f191a21ef352e602da15e7db7ea5d71b0fa0d0fdcaae9d166def00948c` |
+| `markitect-v0.6.0-windows-amd64.exe` | `7bd08165e11e2cf315307c49b65d7ab08f61d75dc8a178ad229bfea450067280` |
+| `markitect-v0.6.0-provenance.yaml` | `b13009121cab1e748db5afe5c04a39a9c298e7d794233301ba4f2f8b18aa19ae` |
+
+Local Windows tests exposed transient file-sharing locks during fixture cleanup. The release candidate retries only Windows access-denied/sharing-violation cleanup failures within a bounded two-second window and preserves the final error. The complete local test suite and both platform gates passed afterward. This changes test cleanup, not production refusal or write behavior.
+
+Benchmark timings remain diagnostic and do not establish a speed gain or an adopting project's semantic/human acceptance. Router checking establishes snapshot navigation structure; the actual canonical-owner authoring decision remains a separate observed acceptance case. Consumer pins and project-local acceptance records belong in the adopting repository.
+
 ## v0.5.0 published release
 
 The immutable [v0.5.0 release](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.5.0), release ID 401138862, points to [source commit 7883734](https://github.com/Glacius-Labs/Markitect/commit/78837346d0cb27c95b3a10f0a469b2709b757a83) from [PR 17](https://github.com/Glacius-Labs/Markitect/pull/17). It adds explicitly selected provider adapters and opt-in sourced consistency checks. The tag object itself is unsigned; the immutable-release attestation was verified separately.
