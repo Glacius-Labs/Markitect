@@ -96,7 +96,7 @@ function Get-MarkitectInventory {
 }
 
 function Get-MarkitectRegistrationId {
-    param([Parameter(Mandatory = $true)][string[]] $Inventory)
+    param([AllowNull()][AllowEmptyCollection()][AllowEmptyString()][string[]] $Inventory)
     $registrationIds = @(
         foreach ($line in $Inventory) {
             if ([string]$line -match '^\s*Markitect\s+(\S*GlaciusLabs\.Markitect__DefaultSource)\s+\S+\s*$') {
