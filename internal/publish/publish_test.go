@@ -40,6 +40,50 @@ func TestPublishReadOnlyPreflightAndOrderedImmutablePublish(t *testing.T) {
 	}
 }
 
+func TestPublishRetriesTransientAttestationChecks(t *testing.T) {
+	dir, assets := makeAssets(t, testTag, testRunID, 2, testCommit)
+	fake := newFakeGH(assets)
+	fake.releaseVerifyFailures = 1
+	fake.assetVerifyFailures = map[string]int{assetNames(testTag)[0]: 1}
+	result, err := Execute(context.Background(), fake, Options{Tag: testTag, RunID: testRunID, AssetsDir: dir, Publish: true})
+	if err != nil || result.Status != "published-verified" || !result.Immutable {
+		t.Fatalf("transient attestation result = (%+v, %v)", result, err)
+	}
+	steps := strings.Join(result.Steps, "\n")
+	if !strings.Contains(steps, "release attestation verified on attempt 2") || !strings.Contains(steps, "asset "+assetNames(testTag)[0]+" attestation verified on attempt 2") {
+		t.Fatalf("retry diagnostics missing from successful result: %s", steps)
+	}
+	if countCalls(fake.calls, "release verify ") != 2 || countCalls(fake.calls, "release verify-asset "+testTag) != 5 {
+		t.Fatalf("unexpected attestation retry calls: %v", fake.calls)
+	}
+}
+
+func TestPublishRemainsUnverifiedWhenAttestationNeverAppears(t *testing.T) {
+	dir, assets := makeAssets(t, testTag, testRunID, 2, testCommit)
+	fake := newFakeGH(assets)
+	fake.releaseVerifyFailures = 4
+	result, err := Execute(context.Background(), fake, Options{Tag: testTag, RunID: testRunID, AssetsDir: dir, Publish: true})
+	if err == nil || result.Status != "published-unverified" || result.Immutable || !fake.published {
+		t.Fatalf("persistent attestation result = (%+v, %v)", result, err)
+	}
+	if !strings.Contains(err.Error(), "attempt 1/4") || !strings.Contains(err.Error(), "attempt 4/4") || countCalls(fake.calls, "release verify ") != 4 {
+		t.Fatalf("retry diagnostics or call bound missing: %v; calls=%v", err, fake.calls)
+	}
+	if containsCall(fake.calls, "release verify-asset") {
+		t.Fatal("asset attestations ran after release attestation failed")
+	}
+}
+
+func countCalls(calls [][]string, fragment string) int {
+	count := 0
+	for _, args := range calls {
+		if strings.Contains(strings.Join(args, " "), fragment) {
+			count++
+		}
+	}
+	return count
+}
+
 func TestPrereleaseFlagFollowsSemVerTag(t *testing.T) {
 	if !isPrereleaseTag("v1.2.3-rc.1") || isPrereleaseTag("v1.2.3+build.7") || isPrereleaseTag("v1.2.3") {
 		t.Fatal("prerelease classification does not follow the SemVer prerelease component")
