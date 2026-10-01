@@ -67,7 +67,7 @@ func TestSyncDistributionWritesChecksAndExportsDeterministicFiles(t *testing.T) 
 	if err != nil || result.Status != "written" || len(result.Files) != 4 {
 		t.Fatalf("write result = %#v, %v", result, err)
 	}
-	wantPaths := []string{filepath.Join(root, "README.md"), filepath.Join(root, "integration", "winget", "1.2.3", "GlaciusLabs.Markitect.installer.yaml"), filepath.Join(root, "integration", "winget", "1.2.3", "GlaciusLabs.Markitect.locale.en-US.yaml"), filepath.Join(root, "integration", "winget", "1.2.3", "GlaciusLabs.Markitect.yaml")}
+	wantPaths := []string{filepath.Join(root, "README.md"), filepath.Join(root, "packaging", "winget", "GlaciusLabs.Markitect", "1.2.3", "GlaciusLabs.Markitect.installer.yaml"), filepath.Join(root, "packaging", "winget", "GlaciusLabs.Markitect", "1.2.3", "GlaciusLabs.Markitect.locale.en-US.yaml"), filepath.Join(root, "packaging", "winget", "GlaciusLabs.Markitect", "1.2.3", "GlaciusLabs.Markitect.yaml")}
 	for i := range wantPaths {
 		if result.Files[i] != wantPaths[i] {
 			t.Fatalf("result paths = %#v, want sorted %#v", result.Files, wantPaths)
@@ -90,7 +90,7 @@ func TestSyncDistributionWritesChecksAndExportsDeterministicFiles(t *testing.T) 
 	if err != nil {
 		t.Fatal(err)
 	}
-	installer := string(files["integration/winget/1.2.3/GlaciusLabs.Markitect.installer.yaml"])
+	installer := string(files["packaging/winget/GlaciusLabs.Markitect/1.2.3/GlaciusLabs.Markitect.installer.yaml"])
 	if !strings.Contains(installer, "InstallerUrl: https://github.com/Glacius-Labs/Markitect/releases/download/v1.2.3/markitect-v1.2.3-windows-amd64.exe") || !strings.Contains(installer, "InstallerSha256: "+strings.ToUpper(digest(assets[assetNames(testTag)[2]]))) {
 		t.Fatalf("WinGet installer did not bind the verified Windows release asset:\n%s", installer)
 	}
@@ -109,7 +109,7 @@ func TestSyncDistributionWritesChecksAndExportsDeterministicFiles(t *testing.T) 
 		if err != nil {
 			t.Fatal(err)
 		}
-		relative := filepath.ToSlash(filepath.Join("integration", "winget", "1.2.3", filepath.Base(target)))
+		relative := filepath.ToSlash(filepath.Join("packaging", "winget", "GlaciusLabs.Markitect", "1.2.3", filepath.Base(target)))
 		if len(data) == 0 || string(data) != string(files[relative]) {
 			t.Fatalf("export %s was empty or differs from canonical manifest", target)
 		}
@@ -131,7 +131,7 @@ func TestDistributionWritePreflightsEveryTargetBeforeMutation(t *testing.T) {
 	if err := os.WriteFile(readmePath, readme, 0600); err != nil {
 		t.Fatal(err)
 	}
-	manifestDir := filepath.Join(root, "integration", "winget", "1.2.3")
+	manifestDir := filepath.Join(root, "packaging", "winget", "GlaciusLabs.Markitect", "1.2.3")
 	if err := os.MkdirAll(manifestDir, 0700); err != nil {
 		t.Fatal(err)
 	}

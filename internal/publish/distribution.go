@@ -150,7 +150,7 @@ func SyncDistribution(ctx context.Context, runner Runner, options DistributionOp
 		exports := make([]pendingExport, 0, 3)
 		relativeTargets := make([]string, 0, 3)
 		for _, relative := range relatives {
-			if strings.HasPrefix(filepath.ToSlash(relative), "integration/winget/") {
+			if strings.HasPrefix(filepath.ToSlash(relative), "packaging/winget/GlaciusLabs.Markitect/") {
 				sourcePath := filepath.ToSlash(relative)
 				data, ok := files[sourcePath]
 				if !ok || len(data) == 0 {
@@ -281,7 +281,7 @@ func renderDistribution(r *PublishedDistribution) (map[string][]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	base := "integration/winget/" + r.Version + "/"
+	base := "packaging/winget/GlaciusLabs.Markitect/" + r.Version + "/"
 	url := "https://github.com/" + repository + "/releases/download/" + r.Tag + "/" + winName
 	return map[string][]byte{
 		"README.md":                                      []byte(readme),
