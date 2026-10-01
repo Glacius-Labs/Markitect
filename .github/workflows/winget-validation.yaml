@@ -11,6 +11,16 @@ on:
       - 'packaging/winget/**'
       - '.github/workflows/winget-validation.yaml'
   workflow_dispatch:
+    inputs:
+      mode:
+        description: Local lifecycle or public catalog test after indexing
+        type: choice
+        required: true
+        default: local
+        options:
+          - local
+          - catalog-install
+          - catalog-upgrade
 
 permissions:
   contents: read
@@ -23,6 +33,8 @@ jobs:
   portable:
     runs-on: windows-latest
     timeout-minutes: 20
+    env:
+      WINGET_TEST_MODE: ${{ inputs.mode || 'local' }}
     steps:
       - name: Check out manifests and runner
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -69,10 +81,14 @@ jobs:
             if ($LASTEXITCODE -ne 0) { throw "Manifest validation failed for $($manifestVersion.Name)" }
           }
 
+      - name: Check catalog command and inventory contracts
+        shell: pwsh
+        run: ./packaging/winget/Test-CatalogContract.ps1
+
       - name: Validate and test portable installation and upgrade
         shell: pwsh
         run: |
-          ./packaging/winget/Test-InstallUpgrade.ps1 -WingetBinary $env:WINGET_BINARY -OutputDirectory (Join-Path $env:RUNNER_TEMP 'markitect-winget-evidence')
+          ./packaging/winget/Test-InstallUpgrade.ps1 -WingetBinary $env:WINGET_BINARY -OutputDirectory (Join-Path $env:RUNNER_TEMP 'markitect-winget-evidence') -Mode $env:WINGET_TEST_MODE
 
       - name: Upload package evidence
         if: always()

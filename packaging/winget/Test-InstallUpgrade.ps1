@@ -9,7 +9,10 @@ param(
 
     [switch] $AllowPackageReplacement,
 
-    [switch] $LeaveInstalled
+    [switch] $LeaveInstalled,
+
+    [ValidateSet('local', 'catalog-install', 'catalog-upgrade')]
+    [string] $Mode = 'local'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -24,8 +27,29 @@ $olderUrl = 'https://github.com/Glacius-Labs/Markitect/releases/download/v0.4.1/
 $manifestDirectory = Join-Path $PSScriptRoot 'GlaciusLabs.Markitect\0.5.0'
 $oldManifestDirectory = Join-Path $OutputDirectory 'GlaciusLabs.Markitect-0.4.1-test'
 $upgradeManifestDirectory = Join-Path $OutputDirectory 'GlaciusLabs.Markitect-0.5.0-upgrade-test'
+$catalogMode = $Mode -ne 'local'
 $localProductCode = 'GlaciusLabs.Markitect__DefaultSource'
+$publicSourceIdentifier = 'Microsoft.Winget.Source_8wekyb3d8bbwe'
+$publicProductCode = "$($packageId)_$publicSourceIdentifier"
+if ($catalogMode) {
+    if ($AllowPackageReplacement -or $LeaveInstalled) {
+        throw 'Catalog tests require a fresh disposable runner and always uninstall; replacement and retention are forbidden.'
+    }
+    if (Test-Path -LiteralPath $OutputDirectory) { throw 'Choose a fresh output directory for catalog evidence.' }
+    $olderVersion = '0.5.0'
+    $olderSha256 = $submittedSha256
+    $olderUrl = $submittedUrl
+    if ($Mode -eq 'catalog-upgrade') {
+        $submittedVersion = '0.7.0'
+        $submittedSha256 = 'D797DBBD26D2C40B819B1519DD554701C407505091C9494BAA30FF1447A4BE0F'
+        $submittedUrl = 'https://github.com/Glacius-Labs/Markitect/releases/download/v0.7.0/markitect-v0.7.0-windows-amd64.exe'
+    }
+    $manifestDirectory = Join-Path $PSScriptRoot "GlaciusLabs.Markitect/$submittedVersion"
+}
 $portablePackageDirectory = Join-Path $env:LOCALAPPDATA 'Microsoft\WinGet\Packages\GlaciusLabs.Markitect__DefaultSource'
+if ($catalogMode) {
+    $portablePackageDirectory = Join-Path $env:LOCALAPPDATA "Microsoft/WinGet/Packages/$publicProductCode"
+}
 $portableLinksDirectory = Join-Path $env:LOCALAPPDATA 'Microsoft\WinGet\Links'
 $portableAlias = Join-Path $portableLinksDirectory 'markitect.exe'
 $transcriptPath = Join-Path $OutputDirectory 'test-run.log'
@@ -39,6 +63,7 @@ $failureMessage = $null
 $cleanupFailure = $null
 $restoreFailure = $null
 $summaryFailure = $null
+$originalUserPath = [Environment]::GetEnvironmentVariable('Path', 'User')
 
 if (-not (Test-Path -LiteralPath $WingetBinary -PathType Leaf)) {
     throw "WinGet executable not found: $WingetBinary"
@@ -50,7 +75,7 @@ if (-not (Test-Path -LiteralPath $manifestDirectory -PathType Container)) {
     throw "Submitted manifest directory not found: $manifestDirectory"
 }
 New-Item -ItemType Directory -Path $OutputDirectory -Force | Out-Null
-New-Item -ItemType Directory -Path $oldManifestDirectory -Force | Out-Null
+if (-not $catalogMode) { New-Item -ItemType Directory -Path $oldManifestDirectory -Force | Out-Null }
 
 function Invoke-WinGet {
     param([Parameter(Mandatory = $true)][string[]] $Arguments)
@@ -85,8 +110,9 @@ function Assert-ManifestContains {
 
 function Get-MarkitectInventory {
     $arguments = @('list', '--name', 'Markitect', '--exact', '--disable-interactivity')
+    if ($catalogMode) { $arguments += @('--source', 'winget') }
     $startedAt = Get-Date
-    $output = @(& $WingetBinary list --name Markitect --exact --disable-interactivity 2>&1)
+    $output = @(& $WingetBinary @arguments 2>&1)
     $exitCode = $LASTEXITCODE
     $script:commandRecords += [pscustomobject]@{
         command = "winget $($arguments -join ' ')"
@@ -103,18 +129,44 @@ function Get-MarkitectInventory {
 
 function Get-MarkitectRegistrationId {
     param([AllowNull()][AllowEmptyCollection()][AllowEmptyString()][string[]] $Inventory)
+    $knownIds = @([regex]::Escape($packageId), ('\S*' + [regex]::Escape($localProductCode)), ('\S*' + [regex]::Escape($publicProductCode))) -join '|'
     $registrationIds = @(
         foreach ($line in $Inventory) {
-            if ([string]$line -match '^\s*Markitect\s+(\S*GlaciusLabs\.Markitect__DefaultSource)\s+\S+\s*$') {
+            if ([string]$line -match "^\s*Markitect\s+($knownIds)\s+\S+(?:\s+\S+){0,2}\s*$") {
                 $Matches[1]
+            } elseif ($catalogMode -and [string]$line -match '^\s*Markitect\s+') {
+                throw 'Found a different Markitect package; catalog tests refuse replacement.'
             }
         }
     )
-    if ($registrationIds.Count -gt 1) {
-        throw "Found multiple WinGet registrations for $packageId; refusing to choose one."
-    }
+    if ($registrationIds.Count -gt 1) { throw "Found multiple WinGet registrations for $packageId; refusing to choose one." }
     if ($registrationIds.Count -eq 0) { return $null }
     return $registrationIds[0]
+}
+
+function Assert-PublicWingetSource {
+    param([Parameter(Mandatory = $true)] $Source)
+    if ($Source.Name -ne 'winget' -or $Source.Identifier -ne 'Microsoft.Winget.Source_8wekyb3d8bbwe' -or $Source.Arg -ne 'https://cdn.winget.microsoft.com/cache') {
+        throw 'The winget source does not match the expected public community catalog.'
+    }
+}
+
+function Get-CatalogOperationArguments {
+    param(
+        [ValidateSet('show', 'install', 'upgrade', 'uninstall')][string] $Operation,
+        [string] $Version
+    )
+    $arguments = @($Operation, '--id', $packageId, '--exact', '--source', 'winget', '--accept-source-agreements', '--disable-interactivity')
+    if ($Operation -eq 'uninstall') {
+        $arguments += '--purge'
+    } else {
+        if ($Version -notin @('0.5.0', '0.7.0')) { throw 'Only the authorized catalog versions may be tested.' }
+        $arguments += @('--version', $Version)
+        if ($Operation -in @('install', 'upgrade')) {
+            $arguments += @('--scope', 'user', '--accept-package-agreements')
+        }
+    }
+    return $arguments
 }
 
 function Get-LocalManifestFilesEnabled {
@@ -139,8 +191,10 @@ function Assert-InstalledVersion {
         [Parameter(Mandatory = $true)][string] $ExpectedVersion,
         [Parameter(Mandatory = $true)][string] $ExpectedSha256
     )
-    $inventory = (Get-MarkitectInventory) -join "`n"
-    if ($inventory -notmatch "(?im)^\s*Markitect\s+.*GlaciusLabs\.Markitect__DefaultSource\s+$([regex]::Escape($ExpectedVersion))\s*$") {
+    $inventoryLines = Get-MarkitectInventory
+    $registrationId = Get-MarkitectRegistrationId -Inventory $inventoryLines
+    $inventory = $inventoryLines -join "`n"
+    if (-not $registrationId -or $inventory -notmatch "(?im)^\s*Markitect\s+$([regex]::Escape($registrationId))\s+$([regex]::Escape($ExpectedVersion))(?:\s|$)") {
         throw "WinGet inventory does not show Markitect $ExpectedVersion. Output:`n$inventory"
     }
     $exe = Join-Path $portablePackageDirectory 'markitect.exe'
@@ -302,6 +356,19 @@ try {
         'ManifestVersion: 1.12.0'
     )
 
+    if ($catalogMode) {
+        $source = (Invoke-WinGet -Arguments @('source', 'export', '--name', 'winget')) -join [Environment]::NewLine | ConvertFrom-Json
+        Assert-PublicWingetSource -Source $source
+        Invoke-WinGet -Arguments (Get-CatalogOperationArguments -Operation show -Version $olderVersion) | Out-Null
+        if ($Mode -eq 'catalog-upgrade') {
+            Invoke-WinGet -Arguments (Get-CatalogOperationArguments -Operation show -Version $submittedVersion) | Out-Null
+        }
+        $script:completedPhases += 'confirmed authorized versions are indexed in the public winget source'
+        $packageRoot = Join-Path $env:LOCALAPPDATA 'Microsoft/WinGet/Packages'
+        if (Get-ChildItem -LiteralPath $packageRoot -Filter "$($packageId)_*" -ErrorAction SilentlyContinue) {
+            throw 'A Markitect portable package directory already exists; use a fresh disposable runner.'
+        }
+    }
     $inventoryLines = Get-MarkitectInventory
     $existingRegistrationId = Get-MarkitectRegistrationId -Inventory $inventoryLines
     if ($existingRegistrationId) {
@@ -316,26 +383,39 @@ try {
     }
     $script:completedPhases += 'confirmed no pre-existing package or replaced the exact GlaciusLabs.Markitect registration'
 
-    New-TestOlderManifest
-    New-TestUpgradeManifest
-    Invoke-WinGet -Arguments @('validate', '--manifest', $oldManifestDirectory) | Out-Null
-    Invoke-WinGet -Arguments @('validate', '--manifest', $manifestDirectory) | Out-Null
-    Invoke-WinGet -Arguments @('validate', '--manifest', $upgradeManifestDirectory) | Out-Null
-    $script:completedPhases += 'validated exact submitted 0.5.0 manifests and temporary 0.4.1 manifests'
+    if ($catalogMode) {
+        Invoke-WinGet -Arguments @('validate', '--manifest', $manifestDirectory) | Out-Null
+        $packageCreatedByTest = $true
+        Invoke-WinGet -Arguments (Get-CatalogOperationArguments -Operation install -Version $olderVersion) | Out-Null
+        Assert-InstalledVersion -ExpectedVersion $olderVersion -ExpectedSha256 $olderSha256
+        $script:completedPhases += "installed and verified public catalog v$olderVersion"
+        if ($Mode -eq 'catalog-upgrade') {
+            Invoke-WinGet -Arguments (Get-CatalogOperationArguments -Operation upgrade -Version $submittedVersion) | Out-Null
+            Assert-InstalledVersion -ExpectedVersion $submittedVersion -ExpectedSha256 $submittedSha256
+            $script:completedPhases += "upgraded and verified public catalog v$submittedVersion"
+        }
+    } else {
+        New-TestOlderManifest
+        New-TestUpgradeManifest
+        Invoke-WinGet -Arguments @('validate', '--manifest', $oldManifestDirectory) | Out-Null
+        Invoke-WinGet -Arguments @('validate', '--manifest', $manifestDirectory) | Out-Null
+        Invoke-WinGet -Arguments @('validate', '--manifest', $upgradeManifestDirectory) | Out-Null
+        $script:completedPhases += 'validated exact submitted 0.5.0 manifests and temporary 0.4.1 manifests'
 
-    $settingChanged = -not $originalLocalManifestSetting
-    Invoke-WinGet -Arguments @('settings', '--enable', 'LocalManifestFiles') | Out-Null
-    $script:completedPhases += 'enabled LocalManifestFiles for local manifests'
-    $packageCreatedByTest = $true
-    Invoke-WinGet -Arguments @('install', '--manifest', $oldManifestDirectory, '--scope', 'user', '--accept-package-agreements', '--accept-source-agreements', '--disable-interactivity') | Out-Null
-    Assert-InstalledVersion -ExpectedVersion $olderVersion -ExpectedSha256 $olderSha256
-    $script:completedPhases += 'installed and verified published v0.4.1'
+        $settingChanged = -not $originalLocalManifestSetting
+        Invoke-WinGet -Arguments @('settings', '--enable', 'LocalManifestFiles') | Out-Null
+        $script:completedPhases += 'enabled LocalManifestFiles for local manifests'
+        $packageCreatedByTest = $true
+        Invoke-WinGet -Arguments @('install', '--manifest', $oldManifestDirectory, '--scope', 'user', '--accept-package-agreements', '--accept-source-agreements', '--disable-interactivity') | Out-Null
+        Assert-InstalledVersion -ExpectedVersion $olderVersion -ExpectedSha256 $olderSha256
+        $script:completedPhases += 'installed and verified published v0.4.1'
 
-    Invoke-WinGet -Arguments @('upgrade', '--manifest', $upgradeManifestDirectory, '--scope', 'user', '--accept-package-agreements', '--accept-source-agreements', '--disable-interactivity') | Out-Null
-    Assert-InstalledVersion -ExpectedVersion $submittedVersion -ExpectedSha256 $submittedSha256
-    $script:completedPhases += 'upgraded and verified submitted v0.5.0'
+        Invoke-WinGet -Arguments @('upgrade', '--manifest', $upgradeManifestDirectory, '--scope', 'user', '--accept-package-agreements', '--accept-source-agreements', '--disable-interactivity') | Out-Null
+        Assert-InstalledVersion -ExpectedVersion $submittedVersion -ExpectedSha256 $submittedSha256
+        $script:completedPhases += 'upgraded and verified submitted v0.5.0'
+    }
     $testStatus = 'passed'
-    Write-Host 'WinGet manifest validation, per-user install, and 0.4.1-to-0.5.0 upgrade passed.'
+    Write-Host "WinGet $Mode lifecycle passed for $olderVersion and $submittedVersion."
 }
 catch {
     $testStatus = 'failed'
@@ -348,7 +428,8 @@ finally {
         try {
             $installedRegistrationId = Get-MarkitectRegistrationId -Inventory (Get-MarkitectInventory)
             if ($installedRegistrationId) {
-                Invoke-WinGet -Arguments @('uninstall', '--id', $installedRegistrationId, '--exact', '--disable-interactivity') | Out-Null
+                $uninstallArguments = if ($catalogMode) { Get-CatalogOperationArguments -Operation uninstall } else { @('uninstall', '--id', $installedRegistrationId, '--exact', '--disable-interactivity') }
+                Invoke-WinGet -Arguments $uninstallArguments | Out-Null
                 $script:completedPhases += 'removed test-created package registration'
             }
             if (Get-MarkitectRegistrationId -Inventory (Get-MarkitectInventory)) {
@@ -356,6 +437,15 @@ finally {
             }
             if ((Test-Path -LiteralPath (Join-Path $portablePackageDirectory 'markitect.exe')) -or (Get-Item -LiteralPath $portableAlias -Force -ErrorAction SilentlyContinue)) {
                 throw 'The test-created executable or command alias remains after uninstall.'
+            }
+            if ($catalogMode) {
+                if (Test-Path -LiteralPath $portablePackageDirectory) { throw 'The public portable package directory remains after purge.' }
+                $beforePath = @($originalUserPath -split ';' | Where-Object { $_ } | ForEach-Object { [IO.Path]::GetFullPath([Environment]::ExpandEnvironmentVariables($_.Trim().Trim('"'))).TrimEnd([char[]]'\/') })
+                $afterPath = @([Environment]::GetEnvironmentVariable('Path', 'User') -split ';' | Where-Object { $_ } | ForEach-Object { [IO.Path]::GetFullPath([Environment]::ExpandEnvironmentVariables($_.Trim().Trim('"'))).TrimEnd([char[]]'\/') })
+                foreach ($directory in @($portableLinksDirectory, $portablePackageDirectory)) {
+                    if ($directory -notin $beforePath -and $directory -in $afterPath) { throw "A test-created PATH entry remains after uninstall: $directory" }
+                }
+                $script:completedPhases += 'verified public package directory and test-created PATH entries were removed'
             }
             $script:completedPhases += 'verified test-created executable and alias were removed'
         } catch {
@@ -390,7 +480,8 @@ finally {
     try {
         [pscustomobject]@{
             packageIdentifier = $packageId
-            testedVersions = @($olderVersion, $submittedVersion)
+            mode = $Mode
+            testedVersions = @(@($olderVersion, $submittedVersion) | Select-Object -Unique)
             status = $testStatus
             startedAt = $testStartedAt.ToString('o')
             finishedAt = (Get-Date).ToString('o')
@@ -400,8 +491,12 @@ finally {
             outputDirectory = $OutputDirectory
             completedPhases = @($script:completedPhases)
             installedChecks = @($script:installedChecks)
-            localUpgradeTestProductCode = $localProductCode
-            publicCatalogUpgradeTested = $false
+            localUpgradeTestProductCode = if ($catalogMode) { $null } else { $localProductCode }
+            publicSourceIdentifier = if ($catalogMode) { $publicSourceIdentifier } else { $null }
+            userPathBefore = $originalUserPath
+            userPathAfter = [Environment]::GetEnvironmentVariable('Path', 'User')
+            publicCatalogInstallationTested = [bool]($catalogMode -and $testStatus -eq 'passed')
+            publicCatalogUpgradeTested = [bool]($Mode -eq 'catalog-upgrade' -and $testStatus -eq 'passed')
             failure = $failureMessage
             cleanupFailure = $cleanupFailure
             settingRestoreFailure = $restoreFailure
