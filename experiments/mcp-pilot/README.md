@@ -48,7 +48,7 @@ content.
 
 ## Boundaries and limitations
 
-- This uses the MCP `2025-11-25` JSON-RPC stdio transport. It supports the
+- This negotiates MCP `2025-06-18` and `2025-11-25` over JSON-RPC stdio. It supports the
   initialize handshake, `ping`, `tools/list`, and `tools/call` needed for this
   pilot. It does not implement resources, prompts, sampling, HTTP, or extensions.
   See the [MCP transport specification](https://modelcontextprotocol.io/specification/2025-11-25/basic/transports)
@@ -74,9 +74,9 @@ content.
 - MCP tool descriptions and annotations are not an authorization boundary.
   The user should review the exposed tools and choose when the client may call
   them.
-- This pilot speaks only protocol version `2025-11-25`. Verify that a target
-  client supports it before using the pilot; current MCP documentation also
-  publishes a newer `2026-07-28` revision.
+- Unknown nonempty protocol versions receive the supported `2025-11-25`
+  fallback; the client decides whether to continue. Missing or malformed
+  initialization versions are rejected.
 
 ## Smoke test
 
@@ -97,5 +97,8 @@ the `examples/minimal` fixture into a temporary Git repository, and compared
 `find(query=rollback)` through this MCP server with the CLI's direct fixed-SHA
 output. The YAML matched exactly. This establishes protocol plumbing and
 result parity for one query; it does not establish client compatibility or an
-authoring benefit. The comparison with actual MCP clients and the measurements
-listed in [refinement](../../docs/refinement.md) remain open.
+authoring benefit. The [client evaluation](evaluation.md) records two completed Codex CLI/MCP
+query tasks and six byte-identical comparisons. Claude Code connected but its
+model tasks were blocked by expired authentication; the user elected to record
+that blockage. A second-client task comparison and repeated authoring benefit
+remain open.
