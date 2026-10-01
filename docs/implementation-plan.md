@@ -1,6 +1,6 @@
 # Markitect roadmap
 
-Updated 2026-10-01. This is the canonical owner of current source and planned-work status. The published v0.6.0 release adds canonical documentation placement guidance and opt-in snapshot router validation to the earlier product behavior. Dated release evidence is in the [production assessment](production-assessment.md), and available distributions are listed in [GitHub Releases](https://github.com/Glacius-Labs/Markitect/releases). [Architecture](architecture.md) describes product boundaries, [Usage](usage.md) records the CLI contract, and [Operations](operations.md) owns release gates.
+Updated 2026-10-01. This is the canonical owner of current source and planned-work status. The published v0.7.0 release adds fixed task and selected source context to the earlier product behavior. Dated release evidence is in the [production assessment](production-assessment.md), and available distributions are listed in [GitHub Releases](https://github.com/Glacius-Labs/Markitect/releases). [Architecture](architecture.md) describes product boundaries, [Usage](usage.md) records the CLI contract, and [Operations](operations.md) owns release gates.
 
 ## v0.1.0 — historical release
 
@@ -70,15 +70,15 @@ not change published binaries or publish a WinGet catalog entry.
 
 ## v0.7.0 — fixed task and selected source context
 
-The source candidate adds a fixed-run context request for one explicitly selected resource, committed work-item snapshot, and bounded exact source paths. The command requires a full Git revision and a manifest from that revision; its report binds included and missing selections, hashes, and completeness to the selected snapshot. It does not infer task relevance or validate acceptance criteria. See [Documentation inputs](documentation.md) for the run contract. An adopting repository owns the task snapshot, source selection, and any expected-resource inventory preflight.
+The published v0.7.0 release adds a fixed-run context request for one explicitly selected resource, committed work-item snapshot, and bounded exact source paths. The command requires a full Git revision and a manifest from that revision; its report binds included and missing selections, hashes, and completeness to the selected snapshot. It does not infer task relevance or validate acceptance criteria. See [Documentation inputs](documentation.md) for the run contract. An adopting repository owns the task snapshot, source selection, and any expected-resource inventory preflight.
 
-Release acceptance requires independent review, complete Windows/Linux source and release gates, verified versioned assets and provenance, and the documented owner publication route. This source version is not yet a published release. The Survey pilot must pin the same published version in each comparison arm and use a task absent from its fixed baseline.
+Release acceptance requires independent review, complete Windows/Linux source and release gates, verified versioned assets and provenance, and the documented owner publication route. The immutable v0.7.0 release and its four attested assets are verified; the current README uses those exact Windows/Linux digests. The Survey pilot must pin the same published version in each comparison arm and use a task absent from its fixed baseline.
 
 ## Later product options
 
-Current source follow-up adds a neutral [onboarding exercise](onboarding.md), its replay in Windows CI, and structural fixture checks on both supported platforms. [WinGet distribution](winget.md) records the submitted v0.5.0 portable manifests and local installation/upgrade checks; submission is distinct from publication in Microsoft's catalog. The [MCP evaluation](mcp-evaluation.md) records the bounded experiment and client limitations. The MCP prototype remains experimental and is excluded from published CLI binaries.
+Current source adds a neutral [onboarding exercise](onboarding.md), its replay in Windows CI, and structural fixture checks on both supported platforms. [WinGet distribution](winget.md) records the submitted v0.5.0 portable manifests and local installation/upgrade checks; submission is distinct from publication in Microsoft's catalog. The [MCP evaluation](mcp-evaluation.md) records the concluded bounded assessment, the decision to keep MCP experimental, and the deferred second-client criterion. Claude remains blocked at the user's direction. The MCP prototype remains experimental and is excluded from published CLI binaries.
 
 - MCP, LSP, and graph visualization when measured authoring needs justify them.
 - Runtime/operator integration only for a concrete state-reconciliation contract.
 
-These options are not v0.6.0 acceptance promises. Keep the core provider-independent and add abstractions only for a demonstrated invariant.
+These options are not v0.7.0 acceptance promises. Keep the core provider-independent and add abstractions only for a demonstrated invariant.

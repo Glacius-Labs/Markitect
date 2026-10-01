@@ -26,3 +26,21 @@ Each Markitect release needs its own three-file manifest set with that release's
 ## Local upgrade correlation
 
 Before the community package is indexed, a local manifest install has the product code `GlaciusLabs.Markitect__DefaultSource`. The pinned WinGet client searches a composite source when upgrading a manifest; automatic portable product-code matching uses that source identity. The runner therefore creates a test-only v0.5.0 manifest copy with an explicit `ProductCode` matching its own local registration. Release URLs, versions, and hashes are unchanged, and the three canonical submitted manifests are not edited. The report records this test-only correlation and marks public-catalog upgrade testing as unavailable. Test the unmodified catalog install and upgrade separately after publication. See [the pinned manifest lookup implementation](https://github.com/microsoft/winget-cli/blob/v1.29.380/src/AppInstallerCLICore/Workflows/WorkflowBase.cpp).
+
+## Prepared release update and remaining catalog gates
+
+The generated [v0.7.0 manifests](../packaging/winget/GlaciusLabs.Markitect/0.7.0/)
+use the verified immutable Windows release and passed native WinGet manifest
+validation. They are prepared for a separate update after the initial v0.5.0
+submission is accepted; generation is not submission or public availability.
+
+The remaining distribution gates are Microsoft's manual review and catalog
+indexing, a fresh-runner public-source installation of v0.5.0, the v0.7.0
+community update and indexing, and the real public-source upgrade from v0.5.0
+to v0.7.0. The public tests must retain versions, release digests, fresh-process
+PATH/alias checks and cleanup evidence. The local-manifest ProductCode is
+test-only and must not be added to the community update.
+
+Only after the public installation succeeds should the README advertise
+WinGet commands. The current README already installs the verified v0.7.0
+binary directly; that route does not require Microsoft catalog approval.
