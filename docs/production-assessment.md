@@ -2,13 +2,36 @@
 
 **Recorded:** 2026-10-01. This dated assessment records the release evidence verified at that time and distinguishes it from source behavior. It reports only the Markitect source, its distributions, and source-owned gates; project adoption and acceptance are outside its scope.
 
+## v0.4.0 published release
+
+The immutable [`v0.4.0` release](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.4.0) was verified against source commit [`1f0d17b`](https://github.com/Glacius-Labs/Markitect/commit/1f0d17bff22143afc6b2b63b4ea8f17486c818e6), release ID `400944013`. Its tree matches reviewed candidate `d7bb86434559bce52a9f7d8078d656c04ecdb024` from [PR 9](https://github.com/Glacius-Labs/Markitect/pull/9).
+
+| Gate | Evidence | Result |
+|---|---|---|
+| Candidate CI | [Run 36860632114](https://github.com/Glacius-Labs/Markitect/actions/runs/36860632114) | Windows and Linux passed, including packaged commands and project initialization |
+| Main CI | [Run 36860951014](https://github.com/Glacius-Labs/Markitect/actions/runs/36860951014) | Passed at the release source commit |
+| Release CI | [Run 36861035636](https://github.com/Glacius-Labs/Markitect/actions/runs/36861035636) | Source gates, deterministic bundle and installation/bootstrap smoke passed on both platforms |
+| Owner publisher | Release `400944013` | `published-verified`: exact workflow artifact, tag/commit, immutable release and all four asset attestations verified |
+| Native Windows asset | Downloaded release executable, digest below | Version/notices, read-only init preview, initialization and structural check passed; fixed verification correctly returned incomplete evidence for the new Project without declared checks |
+
+| Asset | SHA-256 |
+|---|---|
+| `markitect-v0.4.0-bundle.zip` | `7966d53a1fe81e2b65d1896f267d708ea6ab95dc08f041476664193a5f10d4c3` |
+| `markitect-v0.4.0-linux-amd64` | `8487c3f3258992e89d890ddf036945ce4f026f504d3ed7d80b133b4c3b576608` |
+| `markitect-v0.4.0-windows-amd64.exe` | `67d62b1ebdd1224dc18591c72c98c7d8e3f395cedd137ffff1ed3cd66eebc719` |
+| `markitect-v0.4.0-provenance.yaml` | `0a852d3b89a5430eaf882dfc6b0bebd53d8748cce6a8030da5302da366fd35a5` |
+
+The earlier [candidate run 36860209819](https://github.com/Glacius-Labs/Markitect/actions/runs/36860209819) failed the packaged notices command because the bootstrap incorrectly inserted `--repo`. The repair preserves repository-independent notices and help arguments and adds regression coverage. That failed result is retained; only the later candidate passed the final gate.
+
+An independent review found and confirmed the Windows short-path repair at `070f51c1828a123530167d985890039579b28068`; its six reviewed implementation/test files are unchanged in the release. The coordinating reviewer inspected the later notices and bootstrap follow-ups. The [authoring pilot](authoring-pilot.md) was interrupted by a provider usage limit after two completed actors, and its planned blind semantic review did not run. Those measurements make no productivity or cost claim and are not release attestations.
+
 ## v0.3.1 published release
 
 At the time this assessment was recorded, the immutable [`v0.3.1` release](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.3.1) was verified against source commit [`52f0bd6`](https://github.com/Glacius-Labs/Markitect/commit/52f0bd64ce64759be10ffdee180c2cf7c939d49b), release ID `400495147`. Main CI [run 36787681871](https://github.com/Glacius-Labs/Markitect/actions/runs/36787681871) and Release CI [run 36787725843](https://github.com/Glacius-Labs/Markitect/actions/runs/36787725843) passed for that release source. This release predates the minimal initialization behavior described in the current source.
 
-## Project initialization source behavior
+## Project initialization behavior
 
-The source under assessment adds minimal project initialization. Preview is read-only; write recomputes and validates its plan, requires a named non-protected branch, and creates only the Project file and one area README. Structural checking is not complete verification: an initialized project with no owner-declared checks must still receive `incomplete-evidence` from `verify`. These are source-level claims, not release evidence.
+Version 0.4.0 adds minimal project initialization. Preview is read-only; write recomputes and validates its plan, requires a named non-protected branch, and creates only the Project file and one area README. Structural checking is not complete verification: an initialized project with no owner-declared checks must still receive `incomplete-evidence` from `verify`. The product also provides a code-to-documentation example, bundled third-party notices, and corrected Windows short/long-path handling. Multi-file writes remain non-transactional and the resource API remains alpha.
 
 ## v0.2.0 release
 
