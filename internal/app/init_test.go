@@ -238,7 +238,7 @@ func initTempRoot(t *testing.T) string {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() {
-		if err := os.RemoveAll(root); err != nil {
+		if err := removeTestRoot(root); err != nil {
 			t.Errorf("remove init test root: %v", err)
 		}
 	})
