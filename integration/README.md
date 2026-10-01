@@ -75,6 +75,13 @@ if ($LASTEXITCODE -ne 0) { throw 'Pinned Markitect bootstrap failed.' }
 Pop-Location
 ```
 
+`scripts/run-markitect.go` is intentionally one self-contained Go file: the
+installed command invokes that file directly, and CI tests the copied file
+with its companion test. The bootstrap validates the lock and source archive
+before building the pinned CLI, so its version and path validation repeats
+some release-side rules without importing the code it has not yet built.
+When changing those rules, check both the release package and bootstrap tests.
+
 The installer writes the complete pin as five individual atomic file replacements; it is not a filesystem transaction. If a later write fails, inspect the returned `written` paths. Do not treat a partial set as resumable. For a fresh install, remove only the listed files known to have been created by that attempt before retrying. For an upgrade, restore the previous complete committed set or use a normal Git revert. Keep a baseline commit so the whole pin can be rolled back together. Do not move or recreate an immutable release tag.
 
 A pin installs the CLI distribution; it does not create project content or choose project policy. Project configuration must match the installed release. The current source model documents explicit checks, areas, imports, renderer targets, and bounded initialization in [Usage](../docs/usage.md) and the [Project schema](../schema/Project.yaml). Check the selected release's version and available commands before relying on source-only functionality. Existing content import scripts belong beside the content they transform. Markitect does not ship an implicit migration adapter.

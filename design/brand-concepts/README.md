@@ -5,6 +5,9 @@ canonical vector is [`assets/markitect-mark.svg`](../../assets/markitect-mark.sv
 The 512 px square export, 32 px size probe, and 1280 x 640 px GitHub social
 preview are generated from that SVG by `export_avatar.py` using Pillow. Run
 `python design/brand-concepts/export_avatar.py` after changing the vector.
+This is a local design export; the generated PNGs are committed, and neither
+the Go build nor CI or release packaging runs Python. Keep the exporter with
+the design assets unless image generation becomes a required build input.
 
 [`index.html`](index.html) shows the square icon and the exact README heading
 treatment. The actual repository `README.md` now uses the 512 px PNG inline
