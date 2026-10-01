@@ -6,7 +6,7 @@ Markitect's distribution unit is a versioned, immutable GitHub Release. Source f
 
 A Markitect release attaches four files: `markitect-vTAG-bundle.zip`, `markitect-vTAG-windows-amd64.exe`, `markitect-vTAG-linux-amd64`, and `markitect-vTAG-provenance.yaml`. The bundle is limited to 64 MiB and contains five pinned files: `tools/markitect/release.yaml`, `markitect.lock.yaml`, `tools/markitect/source.zip`, and the Go bootstrap plus its paired test under `scripts/`. The manifest binds the other files by SHA-256 and records version, source commit, and source repository. Provenance records tag, commit, workflow run, toolchain, and payload digests. It is a self-declared record; GitHub's immutable-release attestation is authoritative for the published tag, commit, and attached assets.
 
-The public native binaries can be downloaded without GitHub CLI or an account; the [README](../README.md#install) gives pinned-version, SHA-256-checked commands for installing the CLI. For stronger release provenance verification or for project pinning, use GitHub CLI to verify the exact immutable release, download the bundle, provenance, and matching binary, then verify each local file against the release. GitHub CLI may require authentication. Do not choose `latest` or substitute GitHub's generated source archive for the attached bundle. GitHub documents [immutable releases](https://docs.github.com/en/code-security/concepts/supply-chain-security/immutable-releases), [release verification](https://docs.github.com/en/code-security/how-tos/secure-your-supply-chain/secure-your-dependencies/verify-release-integrity), and [GitHub CLI release commands](https://cli.github.com/manual/gh_release).
+The public native binaries can be downloaded without GitHub CLI or an account; the [README](../README.md#install-markitect) gives pinned-version, SHA-256-checked commands for installing the CLI. For stronger release provenance verification or for project pinning, use GitHub CLI to verify the exact immutable release, download the bundle, provenance, and matching binary, then verify each local file against the release. GitHub CLI may require authentication. Do not choose `latest` or substitute GitHub's generated source archive for the attached bundle. GitHub documents [immutable releases](https://docs.github.com/en/code-security/concepts/supply-chain-security/immutable-releases), [release verification](https://docs.github.com/en/code-security/how-tos/secure-your-supply-chain/secure-your-dependencies/verify-release-integrity), and [GitHub CLI release commands](https://cli.github.com/manual/gh_release).
 
 PowerShell example (select only a tag confirmed to exist):
 
@@ -75,6 +75,13 @@ if ($LASTEXITCODE -ne 0) { throw 'Pinned Markitect bootstrap failed.' }
 Pop-Location
 ```
 
+`scripts/run-markitect.go` is intentionally one self-contained Go file: the
+installed command invokes that file directly, and CI tests the copied file
+with its companion test. The bootstrap validates the lock and source archive
+before building the pinned CLI, so its version and path validation repeats
+some release-side rules without importing the code it has not yet built.
+When changing those rules, check both the release package and bootstrap tests.
+
 The installer writes the complete pin as five individual atomic file replacements; it is not a filesystem transaction. If a later write fails, inspect the returned `written` paths. Do not treat a partial set as resumable. For a fresh install, remove only the listed files known to have been created by that attempt before retrying. For an upgrade, restore the previous complete committed set or use a normal Git revert. Keep a baseline commit so the whole pin can be rolled back together. Do not move or recreate an immutable release tag.
 
 A pin installs the CLI distribution; it does not create project content or choose project policy. Project configuration must match the installed release. The current source model documents explicit checks, areas, imports, renderer targets, and bounded initialization in [Usage](../docs/usage.md) and the [Project schema](../schema/Project.yaml). Check the selected release's version and available commands before relying on source-only functionality. Existing content import scripts belong beside the content they transform. Markitect does not ship an implicit migration adapter.
@@ -126,6 +133,8 @@ if ($LASTEXITCODE -ne 0) { throw 'Publication or final verification failed; insp
 ```
 
 Both modes use the existing `gh auth` session. The tool verifies the immutable setting, remote tag target, successful run, provenance, and exact asset set; it downloads that same run artifact again and compares bytes with `--assets`. `--publish` repeats the checks before mutation, creates a draft, uploads and reads back the four assets, checks digests, publishes, then verifies the immutable release and each asset. A successful CI run alone is not a published release.
+
+After publication, each read-only attestation query allows four attempts with delays of one, two, and four seconds. Successful retries are recorded in the publisher result. Release identity and asset digest mismatches still fail immediately. If attestation remains unavailable, the publisher reports `published-unverified`; inspect and verify the immutable release manually rather than rerunning publication.
 
 The publisher fails closed if a release or draft already exists for the tag. If publication fails, inspect the release state and compare tag target, exact asset names, GitHub digests, and provenance against the workflow run. Do not retry blindly or overwrite an existing asset. An authorized owner must choose a reviewed recovery path. A published immutable release is never replaced.
 

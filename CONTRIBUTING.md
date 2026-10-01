@@ -15,12 +15,14 @@
 | `internal/render` | Generic managed views and declared output adapters |
 | `internal/release` | Deterministic source archives and release bundles |
 | `internal/contentpackage` | Validated offline content-package archive format |
-| `internal/app/install.go` | Release pin plans and application |
+| `internal/app/install*.go` | Release pin planning, preflight, and application |
 | `integration` | Versioned distribution support files |
 | `examples` | Executable synthetic product example |
 | `docs` | Product architecture, usage, decisions, and canonical roadmap |
 
 Adopting repositories own their content and any import scripts used to bring existing material into the Markitect model. Markitect does not embed a repository-specific migration or renderer policy. Core authoring guidance remains part of the product.
+
+Keep source and test files focused on one coherent responsibility. When new functionality introduces an independent responsibility, prefer a new file in the existing package. Keep related types and helpers together; do not add packages or abstractions solely to shorten files.
 
 ## Verify a change
 

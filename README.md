@@ -1,10 +1,15 @@
-<h1><img src="assets/markitect-avatar-512.png" alt="" width="48" height="48"> Markitect</h1>
+<h1>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/markitect-wordmark-dark.svg">
+    <img src="assets/markitect-wordmark-light.svg" alt="Markitect" width="360">
+  </picture>
+</h1>
 
 AI-facing engineering guidance often lives in documents whose relationships and owners are hard to see. Markitect makes that guidance explicit: author rules, workflows, skills, agents, reusable text, and contracts as typed resources, then declare how they depend on one another and which ordinary files they need.
 
 The Go CLI checks resource structure and generated views, compiles a selected resource's declared context, and reports affected resources between fixed Git revisions. These operations are deterministic and do not require a model API. Markitect does not decide whether prose is true, complete, or followed.
 
-## Install
+## Install Markitect
 
 The current [v0.4.1 release](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.4.1) provides Windows and Linux amd64 binaries. The commands below download a fixed version from the public release, check its published SHA-256 digest, and install it for your user. No Go installation or GitHub login is needed. Git is needed for Markitect commands that read Git revisions.
 
@@ -53,9 +58,35 @@ Remove-Item -LiteralPath $source, $download
 export PATH="$HOME/.local/bin:$PATH"
 ```
 
-Add `~/.local/bin` to your shell startup file if it is not already on `PATH`. For developers who already use Go 1.27.1 or later, `go install github.com/Glacius-Labs/Markitect/cmd/markitect@v0.4.1` is a shorter source-build option. macOS and arm64 binaries are not currently released. The [distribution guide](integration/README.md) covers GitHub's signed release attestations, project pinning, and upgrades. The CLI's `install` command installs a **project pin**, not the CLI on your computer.
+Add `~/.local/bin` to your shell startup file if it is not already on `PATH`. For developers who already use Go 1.27.1 or later, `go install github.com/Glacius-Labs/Markitect/cmd/markitect@v0.4.1` is a shorter source-build option. macOS and arm64 binaries are not currently released. For signed release and asset attestation verification, project pinning, and upgrades, follow the [distribution guide](integration/README.md). The CLI's `install` command installs a **project pin**, not the CLI on your computer.
 
-## Try it in a minute
+## Try the installed CLI
+
+Clone the v0.4.1 synthetic example and run a structural check with the installed binary. This reads the example without modifying an adopting repository.
+
+Windows PowerShell:
+
+~~~powershell
+git clone --depth 1 --branch v0.4.1 https://github.com/Glacius-Labs/Markitect.git markitect-sample-v0.4.1
+if ($LASTEXITCODE -ne 0) { throw 'Could not get the v0.4.1 synthetic example.' }
+markitect version
+if ($LASTEXITCODE -ne 0) { throw 'Version check failed.' }
+markitect check --repo .\markitect-sample-v0.4.1\examples\minimal
+if ($LASTEXITCODE -ne 0) { throw 'Example check failed.' }
+~~~
+
+Linux amd64:
+
+~~~sh
+set -e
+git clone --depth 1 --branch v0.4.1 https://github.com/Glacius-Labs/Markitect.git markitect-sample-v0.4.1
+markitect version
+markitect check --repo ./markitect-sample-v0.4.1/examples/minimal
+~~~
+
+The [minimal example](examples/minimal/README.md) is a synthetic, executable fixture. To use Markitect in your own repository, follow the [release installation and verification guide](integration/README.md) to preview and install a project pin.
+
+## Try it from a source checkout
 
 From a Markitect source checkout, with Go 1.27.1 or later:
 
@@ -64,9 +95,9 @@ go run ./cmd/markitect check --repo examples/minimal
 go run ./cmd/markitect context --repo examples/minimal --namespace sample --kind Skill --name rollback-review
 ```
 
-The first command checks the example's declared resources and managed views. The second prints the selected Skill's dependency context. The [minimal example](examples/minimal/README.md) is a synthetic, executable fixture.
+The first command checks the example's declared resources and managed views. The second prints the selected Skill's dependency context.
 
-To use Markitect in your repository, start with the installed CLI and preview a minimal project setup with `markitect init`; the preview shows the exact files before writing.
+In your own repository, `markitect init` previews the exact minimal project files before writing.
 
 ## What it does
 

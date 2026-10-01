@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 
 	"github.com/Glacius-Labs/Markitect/internal/app"
 	"github.com/Glacius-Labs/Markitect/internal/release"
@@ -141,4 +142,27 @@ func runInstall(root, path, expectedSHA string, write bool, emit func(any) int, 
 		status = "unchanged"
 	}
 	return emit(map[string]any{"status": status, "plan": plan})
+}
+
+func runPackage(o commandOptions, emit func(any) int, fail func(error) int) int {
+	if o.output == "" {
+		return fail(fmt.Errorf("package requires --output pointing to an absent directory"))
+	}
+	if _, err := os.Lstat(o.output); !os.IsNotExist(err) {
+		return fail(fmt.Errorf("release output must not already exist"))
+	}
+	archive, lock, err := release.Package(o.root, version)
+	if err != nil {
+		return fail(err)
+	}
+	if err = os.MkdirAll(filepath.Join(o.output, "tools", "markitect"), 0755); err != nil {
+		return fail(err)
+	}
+	if err = os.WriteFile(filepath.Join(o.output, "tools", "markitect", "source.zip"), archive, 0644); err != nil {
+		return fail(err)
+	}
+	if err = os.WriteFile(filepath.Join(o.output, "markitect.lock.yaml"), lock, 0644); err != nil {
+		return fail(err)
+	}
+	return emit(map[string]any{"status": "packaged", "version": version, "output": o.output})
 }
