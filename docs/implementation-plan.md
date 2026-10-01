@@ -2,11 +2,11 @@
 
 Updated 2026-10-01. This is the canonical owner of current source and planned-work status. The published v0.5.0 release adds explicit provider adapters and opt-in sourced consistency checks to the earlier product behavior. Dated release evidence is in the [production assessment](production-assessment.md), and available distributions are listed in [GitHub Releases](https://github.com/Glacius-Labs/Markitect/releases). [Architecture](architecture.md) describes product boundaries, [Usage](usage.md) records the CLI contract, and [Operations](operations.md) owns release gates.
 
-## v0.1.0 — historical release
+## v0.1.0 â€” historical release
 
 The initial release established a standalone Go/YAML tool, typed resources, explicit dependencies, fixed Git snapshots, context and impact queries, core authoring, generic rendering, and verified private release assets. Its product-source checks and release evidence are summarized in [the v0.1.0 assessment](production-assessment.md). The old Project profile and adopter-specific migration/rendering compatibility must not be carried forward as general product policy.
 
-## v0.2.0 — standalone verification and rendering
+## v0.2.0 â€” standalone verification and rendering
 
 The v0.2.0 model makes repository behavior explicit and removes adopter-specific assumptions.
 
@@ -19,15 +19,15 @@ The v0.2.0 model makes repository behavior explicit and removes adopter-specific
 
 Acceptance: a project can author and structurally check resources without repository-specific setup; `verify` reports incomplete evidence when checks are absent and executes only declared argv on the selected fixed commit; generic views render without a provider; extra outputs require explicit configuration; core authoring still compiles; all release gates identify one source commit and platform.
 
-## v0.3.0 — direct offline content packages
+## v0.3.0 â€” direct offline content packages
 
 This source version added exact direct package pins in `Project.spec.packages`, deterministic archives from fixed Git revisions, explicit exports, package-qualified graph identities, and package inputs in compiled context and impact/review eligibility. No second content lock or package resolver was introduced; `markitect.lock.yaml` remains the CLI distribution lock. Imported Rules are not activated implicitly, package resources remain read-only, and package manifests do not declare checks, targets, or rule adapters. See [Content packages](content-packages.md) for the contract.
 
-## v0.3.1 — binding-cycle correction
+## v0.3.1 â€” binding-cycle correction
 
 This correction rejects binding cycles that include a Contract selected by its own implementation. The dated source and release evidence is in the [production assessment](production-assessment.md).
 
-## v0.4.0 — minimal project initialization
+## v0.4.0 â€” minimal project initialization
 
 The v0.4.0 release adds `markitect init` for an existing repository. Preview prints the exact minimal Project YAML and area README plan without writing, including outside Git. `--write` recomputes and validates the plan, requires a named non-protected Git branch, and creates only `markitect.yaml` and one README in a previously absent area directory. It does not infer project policy, add resources or checks, select outputs or packages, use custom templates, or edit root documentation or agent instructions. File creation is exclusive and guarded by the shared write lock; a partial failure reports created paths and recovery guidance, because two file creations are not a transaction.
 
@@ -35,15 +35,27 @@ Acceptance is structural: the new Project parses, resolves, and passes output ch
 
 This source version also adds an executable code-to-documentation example, fixes shared-writer path handling for Windows short/long names while retaining reparse rejection, keeps benchmark fixtures checked in CI, and bundles third-party notices accessible offline through `licenses`. The [authoring pilot](authoring-pilot.md) records actual measurements and the incomplete model comparison; it makes no savings claim.
 
-## v0.4.1 — licensing and repository presentation
+## v0.4.1 â€” licensing and repository presentation
 
 The published v0.4.1 release adds the Apache License 2.0 to the product repository and includes it in source distributions. Earlier immutable tags and their attached archives do not gain a license file retroactively. It also improves the README entry, support and security guidance, and contribution templates. Its product behavior and verification boundaries remain those of v0.4.0. The reviewed source, Windows/Linux gates, exact tag, and immutable release verification are recorded in the [production assessment](production-assessment.md).
 
-## v0.5.0 — explicit adapters, measurements, and assertions
+## v0.5.0 â€” explicit adapters, measurements, and assertions
 
 The published v0.5.0 release adds project-configured Codex, Claude, and shared entrypoints with strict inventory; see [Provider adapters](provider-adapters.md). It adds a post-publication Windows/Linux benchmark workflow that measures both the new and prior immutable release on fixture v1, with raw results and a summary as workflow artifacts; see [Measurement](measurement.md). The opt-in [consistency MVP](consistency.md) compares explicit, quoted functional assertions and reports source and owner evidence. It does not interpret free text or change human acceptance.
 
 The tagged source passed Windows/Linux release gates, and the immutable release and four attached assets were verified. The release-triggered benchmark failed during runner setup because an action pin was truncated; the separately dispatched repaired run completed on Windows and Linux with raw measurement artifacts. Those measurements are diagnostic, not an acceptance gate or evidence of a speed gain. Konfyra's consumer pin, provider adapter ownership, candidate verification and human acceptance are tracked in its own repository. The Survey pilot can move only after its exact candidate basis and existing work are reconciled.
+
+## Source candidate â€” documentation placement and optional routers
+
+This unreleased source candidate adds portable authoring guidance for locating an existing canonical documentation owner and an opt-in `Project.spec.documentation.roots` router check. Konfyra's local router contract and checker are the reference implementation for the general behavior; its General/Core/Module/Product taxonomy, code-to-document mapping and provider-adapter gates remain Konfyra-owned. [Documentation routers](documentation-routers.md) owns the exact participation, link-normalization and diagnostic contract.
+
+Implementation sequence: (1) define and test participating directories and local link normalization against snapshot paths; (2) add strict Project configuration and regenerate its schema; (3) surface stable router diagnostics through `check` and fixed-revision `verify`; (4) update embedded authoring guidance and validate a placement task where an agent finds and changes an existing canonical source; (5) run source and executable-example gates. The acceptance case must distinguish the agent's actual edit from the structural router check. A passing `check` cannot prove semantic placement or complete repository verification.
+
+Focused tests cover invalid and overlapping roots (`internal/format/yaml_documentation_test.go`); participating directories, direct-child coverage, extra cross-links, missing and unsafe targets, reference links, code examples and normalization (`internal/app/documentation_routers_test.go`); fixed-snapshot `check` and broken-router `verify` (`cmd/markitect/documentation_routers_test.go`); and the executable placement fixture (`examples/example_test.go`). These tests assert structural behavior. The separate agent exercise below probes the authoring decision.
+
+One isolated authoring exercise used a copy of the checked-in [placement example](../examples/documentation-placement/README.md) and the prompt recorded there. The agent changed only `docs/engineering/persistence.md`, the existing page whose README claims schema migration requirements; it created no second page. The router check passed on that candidate. This is one observed placement decision, not a measured reliability rate or proof that the prose is correct.
+
+This slice introduces no Resource Kind, documentation graph, README generation, excludes, or additional Project options. Router navigation and explicit dependency/impact analysis remain separate.
 
 ## Later product options
 

@@ -122,6 +122,17 @@ properties:
                             type: string
                         type: array
                 type: object
+            documentation:
+                additionalProperties: false
+                properties:
+                    roots:
+                        items:
+                            type: string
+                        minItems: 1
+                        type: array
+                required:
+                    - roots
+                type: object
             packages:
                 items:
                     additionalProperties: false
