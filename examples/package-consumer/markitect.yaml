@@ -12,6 +12,6 @@ spec:
     packages:
         - name: review-guidance
           version: 1.0.0
-          source: git:f6d711763d93c6f8bed2b43d5ff5cf6b16458bf5
+          source: git:daf64b0a2fa01277805b38c50ffc586e87a85e5d
           archive: .markitect/packages/review-guidance-1.0.0.zip
-          sha256: a9540b436b28917f57f1373b1e1aa6916255441f5573d2649a63588a383ceb21
+          sha256: bb259b3e87fb6041777850c4137dc8c27458b2354acad56d7539b5fd00298961
