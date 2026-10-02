@@ -20,7 +20,7 @@ func TestSchemasAreDeterministicAndCoverEveryKind(t *testing.T) {
 		t.Fatal(err)
 	}
 	want := []string{
-		"schema/Agent.yaml", "schema/Contract.yaml", "schema/Package.yaml", "schema/Project.yaml",
+		"schema/Agent.yaml", "schema/Contract.yaml", "schema/Domain.yaml", "schema/Package.yaml", "schema/Project.yaml",
 		"schema/Rule.yaml", "schema/Skill.yaml", "schema/Text.yaml", "schema/Workflow.yaml",
 	}
 	got := make([]string, 0, len(first))

@@ -23,8 +23,8 @@ var specFields = map[string][]string{
 	"Workflow": {"text", "rules", "uses", "needs", "implements", "input", "output", "files", "assertions"},
 	"Skill":    {"text", "description", "rules", "uses", "needs", "implements", "input", "output", "files", "assertions"},
 	"Agent":    {"text", "description", "rules", "uses", "needs", "implements", "input", "output", "providers", "files", "assertions"},
-	"Project":  {"targets", "areas", "bindings", "checks", "documentation", "ruleAdapters", "providerAdapters", "consistency", "packages"},
-	"Package":  {"version", "areas", "exports", "bindings"},
+	"Project":  {"targets", "areas", "bindings", "checks", "documentation", "ruleAdapters", "providerAdapters", "consistency", "packages", "domains", "adapters"},
+	"Package":  {"version", "areas", "exports", "bindings", "domains"},
 }
 
 // AllowedSpecFields returns the accepted spec fields for a resource kind.
@@ -36,6 +36,14 @@ func AllowedSpecFields(kind string) []string {
 
 // Parse decodes exactly one strict Markitect YAML resource from data.
 func Parse(filePath string, data []byte) (*core.Resource, error) {
+	return ParseWithRegistry(filePath, data, core.NewRegistry())
+}
+
+// ParseWithRegistry decodes one strict resource using the project's loaded domain vocabulary.
+func ParseWithRegistry(filePath string, data []byte, registry *core.Registry) (*core.Resource, error) {
+	if registry == nil {
+		registry = core.NewRegistry()
+	}
 	if len(data) > maxResourceSize {
 		return nil, diagnostic(filePath, 1, "resource exceeds the 2 MiB limit")
 	}
@@ -80,24 +88,53 @@ func Parse(filePath string, data []byte) (*core.Resource, error) {
 		return nil, err
 	}
 	kind := child(root, "kind").Value
-	if !oneOf(kind, "Text", "Rule", "Workflow", "Skill", "Agent", "Contract", "Project", "Package") {
-		return nil, diagnostic(filePath, child(root, "kind").Line, "unsupported resource kind %q", kind)
+	apiVersion := child(root, "apiVersion").Value
+	if kind == "Domain" && apiVersion == core.APIVersion {
+		return nil, diagnostic(filePath, root.Line, "Domain definitions are not ordinary resources; select this file through project.spec.domains or package.spec.domains and parse it as a domain definition")
+	}
+	if !registry.IsKnownKind(apiVersion, kind) {
+		return nil, diagnostic(filePath, child(root, "kind").Line, "unsupported resource kind %q for apiVersion %q", kind, apiVersion)
 	}
 	if err := validateMetadata(filePath, child(root, "metadata"), kind); err != nil {
 		return nil, err
 	}
-	if err := validateSpec(filePath, child(root, "spec"), kind); err != nil {
+	if apiVersion == core.APIVersion {
+		if err := validateSpec(filePath, child(root, "spec"), kind); err != nil {
+			return nil, err
+		}
+	} else if err := validateGenericSpec(filePath, child(root, "spec"), registry, apiVersion, kind); err != nil {
 		return nil, err
 	}
-
 	var r core.Resource
-	strict := yaml.NewDecoder(bytes.NewReader(data))
-	strict.KnownFields(true)
-	if err := strict.Decode(&r); err != nil {
-		return nil, diagnostic(filePath, yamlErrorLine(err), "invalid resource: %v", err)
+	if err := child(root, "metadata").Decode(&r.Metadata); err != nil {
+		return nil, diagnostic(filePath, child(root, "metadata").Line, "invalid metadata: %v", err)
 	}
-	if r.APIVersion != core.APIVersion {
-		return nil, diagnostic(filePath, child(root, "apiVersion").Line, "apiVersion must be %q", core.APIVersion)
+	r.APIVersion = apiVersion
+	r.Kind = kind
+	var spec map[string]any
+	if err := child(root, "spec").Decode(&spec); err != nil {
+		return nil, diagnostic(filePath, child(root, "spec").Line, "invalid spec: %v", err)
+	}
+	if err := r.SetData(spec); err != nil {
+		return nil, diagnostic(filePath, child(root, "spec").Line, "invalid spec: %v", err)
+	}
+	if apiVersion != core.APIVersion {
+		definition, _ := registry.Lookup(apiVersion, kind)
+		if definition.InputsField != "" {
+			if values, ok := spec[definition.InputsField].([]any); ok {
+				for _, value := range values {
+					if path, ok := value.(string); ok {
+						r.Spec.Files = append(r.Spec.Files, path)
+					}
+				}
+			}
+		}
+		if text, ok := spec["text"].(string); ok {
+			r.Spec.Text = text
+		}
+		if description, ok := spec["description"].(string); ok {
+			r.Spec.Description = description
+		}
 	}
 	r.Path = filePath
 	r.Line = root.Line
@@ -111,14 +148,28 @@ func validateMetadata(file string, n *yaml.Node, kind string) error {
 	if err := requireMapping(file, n, "metadata"); err != nil {
 		return err
 	}
-	if err := checkKeys(file, n, set("name", "namespace")); err != nil {
+	if err := checkKeys(file, n, set("name", "namespace", "labels")); err != nil {
 		return err
 	}
 	if err := requireFields(file, n, "name"); err != nil {
 		return err
 	}
-	if (kind == "Project" || kind == "Package") && child(n, "namespace") != nil {
+	if (kind == "Project" || kind == "Package" || kind == "Domain") && child(n, "namespace") != nil {
 		return diagnostic(file, child(n, "namespace").Line, "%s metadata must not have a namespace", kind)
+	}
+	if labels := child(n, "labels"); labels != nil {
+		if err := requireMapping(file, labels, "metadata labels"); err != nil {
+			return err
+		}
+		for i := 0; i+1 < len(labels.Content); i += 2 {
+			key, value := labels.Content[i], labels.Content[i+1]
+			if err := checkScalar(file, key, "string"); err != nil {
+				return err
+			}
+			if err := checkScalar(file, value, "string"); err != nil {
+				return err
+			}
+		}
 	}
 	for _, field := range []string{"name", "namespace"} {
 		v := child(n, field)
@@ -219,6 +270,22 @@ func validateSpec(file string, n *yaml.Node, kind string) error {
 			return diagnostic(file, d.Line, "packages are only allowed on Project resources")
 		}
 		if err := validatePackagePins(file, d); err != nil {
+			return err
+		}
+	}
+	if d := child(n, "domains"); d != nil {
+		if kind != "Project" && kind != "Package" {
+			return diagnostic(file, d.Line, "domains are only allowed on Project or Package resources")
+		}
+		if err := validateDomainPaths(file, d, kind == "Project"); err != nil {
+			return err
+		}
+	}
+	if d := child(n, "adapters"); d != nil {
+		if kind != "Project" {
+			return diagnostic(file, d.Line, "adapters are only allowed on Project resources")
+		}
+		if err := validateAdapters(file, d); err != nil {
 			return err
 		}
 	}

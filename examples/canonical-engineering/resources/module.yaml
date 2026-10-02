@@ -1,0 +1,20 @@
+apiVersion: software.markitect.org/v1alpha1
+kind: Module
+metadata:
+    name: orders
+    namespace: engineering
+    labels:
+        layer: application
+spec:
+    dependsOn:
+        - kind: Core
+          name: platform-core
+          namespace: engineering
+    layer: application
+    owns:
+        - kind: UseCase
+          name: place-order
+          namespace: engineering
+        - kind: Interface
+          name: order-store
+          namespace: engineering

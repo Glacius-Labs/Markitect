@@ -1,6 +1,24 @@
 # Markitect roadmap
 
-Updated 2026-10-02. This is the canonical owner of current source and planned-work status. The published v0.9.1 release corrects source-relative prose navigation and retains the v0.9.0 separation of optional Markdown views, direct provider outputs and consumer tool pins. It retains explicit Area ownership, the omitted-path initialization default and the resolved snapshot boundary from earlier releases. Dated release evidence is in the [production assessment](production-assessment.md), and available distributions are listed in [GitHub Releases](https://github.com/Glacius-Labs/Markitect/releases). [Architecture](architecture.md) describes product boundaries, [Usage](usage.md) records the CLI contract, and [Operations](operations.md) owns release gates.
+Updated 2026-10-02. This is the canonical owner of current source and planned-work status. v0.10.0 is in active implementation as a product-level transition to a generic canonical engineering model; it is intended to ship the real language, normalized model, and configured adapters as supported capability, not defer them as an experimental pilot. The published v0.9.1 release corrects source-relative prose navigation and retains the v0.9.0 separation of optional Markdown views, direct provider outputs and consumer tool pins. Dated release evidence is in the [production assessment](production-assessment.md), and available distributions are listed in [GitHub Releases](https://github.com/Glacius-Labs/Markitect/releases). [Architecture](architecture.md) describes the target and product boundaries, [Usage](usage.md) records the CLI contract by version, the [canonical engineering plan](canonical-engineering-plan.md) owns v0.10.0 model decisions, and [Operations](operations.md) owns release gates.
+
+## v0.10.0 — canonical engineering model (in progress)
+
+The next version makes domain vocabulary data-driven and gives its consumers one normalized, deterministic model. This changes the core authoring contract: descriptive architecture and normative policy can refer to the same typed resources; configured consumers use validated semantic data rather than interpreting authoring YAML independently.
+
+**In progress:**
+
+- Define a versioned Domain contract loaded from the fixed Project snapshot before resource instances. Domain definitions provide closed, typed resource descriptors, relation descriptors, and a bounded constraint language.
+- Refactor resource instances to a generic data shape while preserving qualified identity and source provenance. Define how the supplied AI-working Domain expresses `Rule`, `Workflow`, `Skill`, `Agent`, and related vocabulary through the same kernel.
+- Build a normalized semantic IR after Domain validation and reference resolution. Core checks, context, impact, projections, and adapter planning consume this representation.
+- Give each relation explicit context, invalidation, and cycle behavior. Make bounded constraints over selected resource sets respond to additions and removals as well as edits.
+- Configure adapters explicitly from versioned mappings. Support local projections and the defined external command protocol through observe, plan, apply, and verify stages, with observation digests bound into results.
+- Add an executable, bounded policy slice where the same declared values appear in human documentation, agent context, and a deterministic check; keep source and model identity visible across all three consumers.
+- Update CLI, schema output, authoring resources, format/reference documentation, operations, and release material to describe the shipped contract.
+
+The release is ready only when a clean consumer project can define its Domains and resources, resolve typed relations, evaluate supported constraints, and use normalized IR for project behavior and adapters. The examples must exercise one recurring policy slice across human documentation, agent context, and deterministic checking; relation-specific context and invalidation; set-based constraint invalidation; and external drift when the canonical model has not changed. Results must bind to their source, Domain, Project configuration, mappings, adapter identity, and observation inputs. Human review, semantic truth, and authorization remain distinct from successful machine checks or apply operations.
+
+This version does not promise arbitrary executable plugins, a general-purpose query language, source-language parsing in the kernel, background reconciliation, or model-based validation. The kernel and external command boundary remain deterministic and explicit. Compatibility with v0.9 projects is not a v0.10.0 design constraint; adoption and migration guidance must explain the new model without retaining legacy semantics as hidden core policy.
 
 ## v0.1.0 — historical release
 
@@ -105,6 +123,6 @@ The published patch corrects copied resource prose whose relative links broke wh
 Current source adds a neutral [onboarding exercise](onboarding.md), its replay in Windows CI, and structural fixture checks on both supported platforms. [WinGet distribution](winget.md) records the submitted v0.5.0 portable manifests and local installation/upgrade checks; submission is distinct from publication in Microsoft's catalog. The [MCP evaluation](mcp-evaluation.md) records the concluded bounded assessment, the decision to keep MCP experimental, and the deferred second-client criterion. The MCP prototype remains experimental and is excluded from published CLI binaries.
 
 - MCP, LSP, and graph visualization when measured authoring needs justify them.
-- Runtime/operator integration only for a concrete state-reconciliation contract.
+- A long-running background operator beyond the explicit v0.10.0 observe/plan/apply/verify commands only if users show a need those bounded operations do not meet.
 
 These options are deferred product decisions, not commitments of the current release. Keep the core provider-independent and add abstractions only for a demonstrated invariant.

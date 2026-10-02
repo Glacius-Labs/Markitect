@@ -13,6 +13,20 @@ import (
 )
 
 func WriteOutputs(root string, p *Project) ([]string, error) {
+	return writeOutputs(root, p, nil)
+}
+
+// writeOutputPaths applies an explicitly selected subset of the generated
+// outputs. An empty slice is a read-only freshness check and performs no
+// filesystem writes.
+func writeOutputPaths(root string, p *Project, selected []string) ([]string, error) {
+	return writeOutputs(root, p, selected)
+}
+
+func writeOutputs(root string, p *Project, selected []string) ([]string, error) {
+	if p == nil || p.Snapshot == nil || p.Graph == nil || p.Graph.Project == nil {
+		return nil, fmt.Errorf("loaded project snapshot is required")
+	}
 	if !p.Snapshot.Provisional {
 		return nil, fmt.Errorf("writing a snapshot is forbidden; render the isolated working tree")
 	}
@@ -21,6 +35,9 @@ func WriteOutputs(root string, p *Project) ([]string, error) {
 	}
 	if findings := checkProviderAdapterInputs(p); len(findings) > 0 {
 		return nil, fmt.Errorf("cannot render with invalid provider adapter inputs: %s: %s", findings[0].Path, findings[0].Message)
+	}
+	if selected != nil && len(selected) == 0 {
+		return verifyNoopWrite(root, p)
 	}
 	rootAbs, err := filepath.Abs(root)
 	if err != nil {
@@ -56,6 +73,26 @@ func WriteOutputs(root string, p *Project) ([]string, error) {
 		return nil, err
 	}
 	names := sortedFiles(outputs)
+	if selected != nil {
+		selectedSet := make(map[string]bool, len(selected))
+		for _, name := range selected {
+			if selectedSet[name] {
+				return nil, fmt.Errorf("duplicate selected output path %q", name)
+			}
+			if _, ok := outputs[name]; !ok {
+				return nil, fmt.Errorf("selected path is not a generated output: %s", name)
+			}
+			selectedSet[name] = true
+		}
+		names = names[:0]
+		for name := range selectedSet {
+			names = append(names, name)
+		}
+		sort.Strings(names)
+		if len(names) == 0 {
+			return verifyNoopWrite(root, p)
+		}
+	}
 	fresh, err := source.Load(root, "")
 	if err != nil {
 		return nil, err
@@ -157,6 +194,33 @@ func WriteOutputs(root string, p *Project) ([]string, error) {
 		}
 	}
 	return written, nil
+}
+
+func verifyNoopWrite(root string, p *Project) ([]string, error) {
+	rootAbs, err := filepath.Abs(root)
+	if err != nil {
+		return nil, err
+	}
+	branch := ""
+	if hasGitMetadata(rootAbs) {
+		branch, err = writeBranchName(rootAbs)
+		if err != nil {
+			return nil, err
+		}
+	}
+	fresh, err := source.Load(root, "")
+	if err != nil {
+		return nil, err
+	}
+	if fresh.Digest() != p.Snapshot.Digest() {
+		return nil, fmt.Errorf("source inventory changed since capture; reload before rendering")
+	}
+	if branch != "" {
+		if err := ensureWriteBranch(rootAbs, branch); err != nil {
+			return nil, err
+		}
+	}
+	return []string{}, nil
 }
 
 // WriteSchemas only owns its generated schema files; path validation also

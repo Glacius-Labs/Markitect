@@ -120,6 +120,52 @@ func validatePackageArchivePath(value string) error {
 	return nil
 }
 
+func validateDomainPaths(file string, n *yaml.Node, allowPackageSelection bool) error {
+	if err := validateStrings(file, n, "domains", true); err != nil {
+		return err
+	}
+	seen := map[string]string{}
+	for _, item := range n.Content {
+		value := item.Value
+		pathValue := value
+		if strings.HasPrefix(value, "package:") {
+			if !allowPackageSelection {
+				return diagnostic(file, item.Line, "Package domain declarations must use archive-relative paths")
+			}
+			selector := strings.TrimPrefix(value, "package:")
+			parts := strings.SplitN(selector, "/", 2)
+			if len(parts) != 2 || !validName(parts[0]) {
+				return diagnostic(file, item.Line, "package domain selection must be package:<pin-name>/<archive-relative-path>")
+			}
+			pathValue = parts[1]
+		}
+		if err := validateDomainFilePath(pathValue); err != nil {
+			return diagnostic(file, item.Line, "invalid domain definition path %q: %v", value, err)
+		}
+		key := strings.ToLower(value)
+		if prior, ok := seen[key]; ok {
+			return diagnostic(file, item.Line, "domain paths %q and %q are duplicated or collide by case", prior, value)
+		}
+		seen[key] = value
+	}
+	return nil
+}
+
+func validateDomainFilePath(value string) error {
+	if value == "" || strings.ContainsAny(value, "\\:\x00") || strings.ContainsAny(value, "*?[]{}") || path.IsAbs(value) || path.Clean(value) != value || value == "." || strings.HasPrefix(value, "../") || strings.HasSuffix(value, "/") {
+		return fmt.Errorf("path must be a normalized relative POSIX YAML file path")
+	}
+	for _, part := range strings.Split(value, "/") {
+		if part == "" || part == "." || part == ".." {
+			return fmt.Errorf("path contains an unsafe component")
+		}
+	}
+	if ext := strings.ToLower(path.Ext(value)); ext != ".yaml" && ext != ".yml" {
+		return fmt.Errorf("path must end in .yaml or .yml")
+	}
+	return nil
+}
+
 func validateAreas(file string, n *yaml.Node) error {
 	if err := requireSequence(file, n, "areas"); err != nil {
 		return err
@@ -198,16 +244,22 @@ func validateBindings(file string, n *yaml.Node) error {
 			if err := requireMapping(file, r, field); err != nil {
 				return err
 			}
-			if err := checkKeys(file, r, set("kind", "name", "namespace", "package")); err != nil {
+			if err := checkKeys(file, r, set("apiVersion", "kind", "name", "namespace", "package")); err != nil {
 				return err
 			}
 			if err := requireFields(file, r, "name"); err != nil {
 				return err
 			}
-			for _, key := range []string{"kind", "name", "namespace", "package"} {
+			for _, key := range []string{"apiVersion", "kind", "name", "namespace", "package"} {
 				if x := child(r, key); x != nil {
 					if err := checkScalar(file, x, "string"); err != nil {
 						return err
+					}
+					if key == "apiVersion" {
+						parts := strings.Split(x.Value, "/")
+						if len(parts) != 2 || parts[0] == "" || parts[1] == "" || strings.ContainsAny(x.Value, " \t\r\n") {
+							return diagnostic(file, x.Line, "binding apiVersion must be a nonempty group/version")
+						}
 					}
 					if (key == "name" || key == "namespace" || key == "package") && !validName(x.Value) {
 						return diagnostic(file, x.Line, "binding reference %s must be a DNS label", key)

@@ -106,6 +106,9 @@ func GenerateWithOwners(g *core.Graph, files map[string][]byte) (map[string][]by
 			if r.Kind == "Project" {
 				continue
 			}
+			if r.APIVersion != "" && r.APIVersion != core.APIVersion {
+				continue
+			}
 			switch r.Kind {
 			case "Skill":
 				if targets["codex"] {

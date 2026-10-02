@@ -290,6 +290,16 @@ Markitect does not currently:
 
 Project-owned checks and future adapters can integrate specialized tooling without moving domain-specific analysis into the deterministic core.
 
+## v0.10.0 source candidate
+
+The next version extends this foundation with project-owned, versioned Domain definitions: closed resource schemas, typed references, relation-specific context and invalidation, and a finite set of structural constraints. The normalized model feeds configured adapters without exposing the core to technology-specific analysis. Domain definitions can be selected locally or from exact pinned content packages.
+
+The [canonical engineering example](examples/canonical-engineering/README.md) demonstrates software and delivery domains. The same structured policy appears in generated documentation and agent context and determines the check result. `model` exports validated resources, relationships, policy definitions and source identities. `reconcile` observes outputs, captures a plan, applies configured writes with `--write`, and verifies the result; changed inputs and altered plans are rejected.
+
+The separate .NET reference adapter checks literal, unconditional `ProjectReference` declarations for explicitly mapped resources. It reports unsupported MSBuild constructs as incomplete and does not claim a complete build-system analysis. See [its setup and evidence limits](cmd/markitect-adapter-dotnet/README.md).
+
+The published release remains v0.9.1 until the candidate passes the [release gates](docs/operations.md#release-operations). The [roadmap](docs/implementation-plan.md) records verified status; the [strategy sources](docs/strategy/README.md) separate adopted product decisions from benefit hypotheses that still need real-world measurement.
+
 <!-- markitect-release:install:start -->
 
 ## Install Markitect

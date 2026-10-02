@@ -1,10 +1,165 @@
 package format
 
 import (
+	"path"
+	"regexp"
 	"strings"
 
 	"go.yaml.in/yaml/v3"
 )
+
+var adapterExecutable = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._+-]*$`)
+
+func validateAdapters(file string, n *yaml.Node) error {
+	if err := requireSequence(file, n, "adapters"); err != nil {
+		return err
+	}
+	seen := map[string]bool{}
+	for _, item := range n.Content {
+		if err := requireMapping(file, item, "adapter"); err != nil {
+			return err
+		}
+		if err := checkKeys(file, item, set("name", "type", "version", "config")); err != nil {
+			return err
+		}
+		if err := requireFields(file, item, "name", "type", "version"); err != nil {
+			return err
+		}
+		values := map[string]string{}
+		for _, field := range []string{"name", "type", "version"} {
+			node := child(item, field)
+			if err := checkScalar(file, node, "string"); err != nil {
+				return err
+			}
+			if strings.TrimSpace(node.Value) == "" {
+				return diagnostic(file, node.Line, "adapter %s must not be empty", field)
+			}
+			values[field] = node.Value
+		}
+		if !validName(values["name"]) {
+			return diagnostic(file, child(item, "name").Line, "adapter name must be a DNS label of at most 63 characters")
+		}
+		if seen[values["name"]] {
+			return diagnostic(file, child(item, "name").Line, "adapter name %q is duplicated", values["name"])
+		}
+		seen[values["name"]] = true
+		if values["type"] != "command" {
+			return diagnostic(file, child(item, "type").Line, "unsupported adapter type %q", values["type"])
+		}
+		if config := child(item, "config"); config != nil {
+			if err := validateAdapterConfig(file, config); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func validateAdapterConfig(file string, n *yaml.Node) error {
+	if err := requireMapping(file, n, "adapter config"); err != nil {
+		return err
+	}
+	if err := checkKeys(file, n, set("inputs", "parameters", "target", "observe", "plan", "verify", "apply", "allowApply", "timeoutSeconds", "outputLimitBytes")); err != nil {
+		return err
+	}
+	if inputs := child(n, "inputs"); inputs != nil {
+		if err := validateStrings(file, inputs, "adapter inputs", true); err != nil {
+			return err
+		}
+		for _, item := range inputs.Content {
+			if path.IsAbs(item.Value) || strings.ContainsAny(item.Value, "\\:") || path.Clean(item.Value) != item.Value || item.Value == "." {
+				return diagnostic(file, item.Line, "adapter input path %q must be an exact relative POSIX path", item.Value)
+			}
+			for _, part := range strings.Split(item.Value, "/") {
+				if part == ".." || part == "." {
+					return diagnostic(file, item.Line, "adapter input path %q must not traverse directories", item.Value)
+				}
+			}
+		}
+	}
+	for _, field := range []string{"observe", "plan", "verify", "apply"} {
+		if command := child(n, field); command != nil {
+			if err := validateAdapterCommand(file, command, field); err != nil {
+				return err
+			}
+		}
+	}
+	allowApply := false
+	if node := child(n, "allowApply"); node != nil {
+		if err := checkScalar(file, node, "boolean"); err != nil {
+			return err
+		}
+		if err := node.Decode(&allowApply); err != nil {
+			return diagnostic(file, node.Line, "allowApply must be boolean")
+		}
+	}
+	apply := child(n, "apply")
+	if allowApply != (apply != nil) {
+		return diagnostic(file, n.Line, "adapter apply command and allowApply: true must be configured together")
+	}
+	if allowApply {
+		target := child(n, "target")
+		if target == nil {
+			return diagnostic(file, n.Line, "adapter target is required when apply is enabled")
+		}
+		if err := checkScalar(file, target, "string"); err != nil {
+			return err
+		}
+		if strings.TrimSpace(target.Value) == "" {
+			return diagnostic(file, target.Line, "adapter target must not be empty")
+		}
+	}
+	if target := child(n, "target"); target != nil {
+		if err := checkScalar(file, target, "string"); err != nil {
+			return err
+		}
+		if strings.TrimSpace(target.Value) == "" {
+			return diagnostic(file, target.Line, "adapter target must not be empty")
+		}
+	}
+	for _, field := range []string{"timeoutSeconds", "outputLimitBytes"} {
+		bounds := [2]int{1, 600}
+		if field == "outputLimitBytes" {
+			bounds = [2]int{1024, 10 * 1024 * 1024}
+		}
+		if value := child(n, field); value != nil {
+			if err := checkScalar(file, value, "integer"); err != nil {
+				return err
+			}
+			var number int
+			if err := value.Decode(&number); err != nil || number < bounds[0] || number > bounds[1] {
+				return diagnostic(file, value.Line, "adapter %s must be between %d and %d", field, bounds[0], bounds[1])
+			}
+		}
+	}
+	if params := child(n, "parameters"); params != nil {
+		if err := requireMapping(file, params, "adapter parameters"); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func validateAdapterCommand(file string, n *yaml.Node, field string) error {
+	if err := requireSequence(file, n, "adapter "+field); err != nil {
+		return err
+	}
+	if len(n.Content) == 0 {
+		return diagnostic(file, n.Line, "adapter %s command must not be empty", field)
+	}
+	for i, arg := range n.Content {
+		if err := checkScalar(file, arg, "string"); err != nil {
+			return err
+		}
+		if strings.TrimSpace(arg.Value) == "" {
+			return diagnostic(file, arg.Line, "adapter %s arguments must not be empty", field)
+		}
+		if i == 0 && !adapterExecutable.MatchString(arg.Value) {
+			return diagnostic(file, arg.Line, "adapter %s executable must be a bare executable name", field)
+		}
+	}
+	return nil
+}
 
 func validateRefs(file string, n *yaml.Node, field string) error {
 	if err := requireSequence(file, n, field); err != nil {
@@ -14,16 +169,22 @@ func validateRefs(file string, n *yaml.Node, field string) error {
 		if err := requireMapping(file, item, field+" reference"); err != nil {
 			return err
 		}
-		if err := checkKeys(file, item, set("kind", "name", "namespace", "package")); err != nil {
+		if err := checkKeys(file, item, set("apiVersion", "kind", "name", "namespace", "package")); err != nil {
 			return err
 		}
 		if err := requireFields(file, item, "name"); err != nil {
 			return err
 		}
-		for _, key := range []string{"kind", "name", "namespace", "package"} {
+		for _, key := range []string{"apiVersion", "kind", "name", "namespace", "package"} {
 			if v := child(item, key); v != nil {
 				if err := checkScalar(file, v, "string"); err != nil {
 					return err
+				}
+				if key == "apiVersion" {
+					parts := strings.Split(v.Value, "/")
+					if len(parts) != 2 || parts[0] == "" || parts[1] == "" || strings.ContainsAny(v.Value, " \t\r\n") {
+						return diagnostic(file, v.Line, "reference apiVersion must be a nonempty group/version")
+					}
 				}
 				if (key == "name" || key == "namespace") && !validName(v.Value) {
 					return diagnostic(file, v.Line, "reference %s must be a DNS label of at most 63 characters", key)

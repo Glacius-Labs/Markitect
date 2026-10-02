@@ -1,19 +1,30 @@
 # Product refinement decisions
 
-This document owns product principles and deferred direction. The [roadmap](implementation-plan.md) is the sole owner of current source and planned-work status; [Usage](usage.md) owns supported Project syntax and CLI behavior.
+This document owns product principles and deferred direction. The [roadmap](implementation-plan.md) is the sole owner of current source and planned-work status; [Usage](usage.md) owns supported Project syntax and CLI behavior. The v0.10.0 target is the shift to a canonical engineering model, declared Domains, a normalized semantic IR, and configured projection and observation adapters. Detailed contracts and delivery evidence belong to the [canonical engineering plan](canonical-engineering-plan.md).
 
 ## Product principles
 
 | Area | Decision |
 |---|---|
-| Deterministic core | One Go implementation serves people, agents, and automation. It validates structure without calling a model. |
-| Core authoring | Resource-modelling guidance, workflows, skills, and supporting queries ship with Markitect. They are not optional packages. |
-| Typed relationships | Model dependencies that affect execution, context, impact, or ownership. Keep ordinary documentation and navigation lightweight. |
-| Explicit completeness | Compile context from an explicitly selected resource and its declared graph. Semantic task-to-resource selection remains outside the deterministic engine. |
-| No implicit policy | Imports do not activate requirements or hooks. Project checks and output targets are explicit. |
-| Stable identity | Local identity remains `namespace/kind/name`; namespace labels are not paths and do not imply inheritance. |
-| Measured interfaces | Extend the query API only when actual authoring work shows a need. MCP, LSP, studio, a public API, and runtime reconciliation are options, not release promises. |
-| One data format | Markitect-owned configuration and evidence use YAML. No telemetry or statistics subsystem is needed to ship core authoring. |
+| Product purpose | Compile explicitly modeled engineering knowledge and policy into validated relationships, bounded checks, context, impact, and configured consumer actions. |
+| Small generic kernel | The kernel owns resource identity, typed references and relations, deterministic diagnostics, scope, and a normalized semantic representation. Domains define the vocabulary and bounded constraints. |
+| Domain-first language | Versioned Domain definitions load before resources and define resource shapes, relation descriptors, and supported constraints. The bundled AI-working vocabulary is one Domain. Software and delivery vocabularies are examples of the same mechanism. |
+| Canonical scope | Canonical ownership applies to modeled assertions and explicit mappings. It does not make unmodeled repository facts canonical or elevate generated output into source. |
+| Normative and descriptive knowledge | Model intended structure and rules together when rules refer to modeled concepts. Keep intent, policy, observation, and human judgment distinguishable. |
+| Relation semantics | Each relation declares its use in context, invalidation, and cycle checks. A relationship name alone does not imply every behavior. |
+| Bounded constraints | Constraints are closed, deterministic declarations over the model and explicitly selected resource sets. Their grammar must remain reviewable; arbitrary code and model execution are outside the kernel. |
+| Explicit adapters | Mappings are canonical inputs. Adapters consume the normalized model and may project files or use an explicit observe, plan, apply, and verify lifecycle. External state is observed independently, so drift can be detected while the model is unchanged. |
+| Evidence limits | Results identify fixed source, Domain, Project configuration, mappings, adapter, and observation inputs. A passing check proves only its configured assertion for those inputs; it does not establish semantic truth or transfer human acceptance. |
+| Opaque project artifacts | Repositories, source code, schemas, infrastructure, CI, and documentation remain explicit inputs. Domain-specific source analysis belongs in a configured adapter or project-owned check. |
+| Versioned delivery | v0.10.0 is intended to ship the generic capability as a supported product, not leave it as an experimental pilot. The roadmap records implemented coverage and remaining gaps. |
+
+## Product hypothesis and evidence
+
+The value hypothesis is that teams spend less effort finding and reconciling conflicting engineering intent when descriptive models, normative rules, agent guidance, checks, and selected external state are tied to explicit canonical owners and change impact. This is most plausible when the same policy genuinely has several consumers and changes often enough for drift to cost time or cause errors.
+
+That user-level benefit is not yet established. The existing synthetic authoring and onboarding exercises show bounded technical behavior, not measured reductions in real team effort or production defects. v0.10.0 commits to the complete technical product model and an executable end-to-end example; it must report the limits of its correctness evidence. Claims about productivity, semantic accuracy, or broad reconciliation value require real repeated tasks and observed external use. [Measurement](measurement.md) owns that evidence method.
+
+The v0.10.0 constraint language starts with a finite set of deterministic assertions. A general policy engine such as CUE or OPA is not silently embedded in that contract. Evaluate whether one should be integrated after comparing the bounded language against real policy cases, including authoring clarity, validation behavior, adapter reuse, and operational cost. Extend the kernel only for semantics that repeated cases show it must own.
 
 ## Content packages
 
@@ -23,7 +34,7 @@ The v0.3.0 source model implements the first bounded content-package slice. Its 
 
 Minimal one-time project initialization is in the current source model. It creates only the Project file and one area README after preview and validation. It uses no custom templates, executes no scripts, and does not synchronize created projects with an evolving template. The precise contract and its structural-verification limit are in [Usage](usage.md); source status remains in the [roadmap](implementation-plan.md).
 
-Expose graph inspection through MCP or LSP only when calls through the stable CLI/application API show measurable friction. Runtime/operator integration requires an explicit desired-state and reconciliation contract. A conceptual diagram is not a commitment to ship every interface.
+Reconciliation is now part of the v0.10.0 target through explicit adapter contracts. Broad runtime/operator operation, hidden background controllers, or inferred integrations remain outside that target. Every interaction with external systems must be configured, observable, scoped to named inputs, and represented in the adapter result. MCP and LSP remain separate interface choices and require evidence of authoring friction before adoption.
 
 ## CLI distribution assessment (2026-10-01)
 
@@ -45,4 +56,4 @@ A [local read-only stdio prototype](../experiments/mcp-pilot/README.md) now wrap
 
 ## Measurement
 
-Use fixed snapshots, predeclared expected effects, correctness-first scoring, and repeated comparable tasks. Missing measurements are unavailable, not zero. Do not infer model token savings from context bytes or one successful evidence-reuse decision. [Measurement](measurement.md) owns the procedure.
+Use fixed snapshots, predeclared expected effects, correctness-first scoring, and repeated comparable tasks. Validate the target language with cases that distinguish relation-specific context, invalidation, and cycle semantics; verify that adding or removing resources invalidates set-based constraints; and demonstrate both generated projection drift and external drift under an unchanged model. Missing measurements are unavailable, not zero. Do not infer model token savings from context bytes or one successful evidence-reuse decision. [Measurement](measurement.md) owns the procedure.

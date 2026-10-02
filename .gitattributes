@@ -1,2 +1,5 @@
 * text=auto eol=lf
 **/docs/markitect/** linguist-generated=true
+# Preserve supplied strategy proposals byte for byte, including their original EOF.
+docs/strategy/sources/*.md -text whitespace=-blank-at-eof
+docs/strategy/markitect-strategic-positioning-and-validation.md -text whitespace=-blank-at-eof

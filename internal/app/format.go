@@ -31,6 +31,22 @@ func Format(root string, p *Project, write bool) ([]string, error) {
 			changed[resource.Path] = data
 		}
 	}
+	for _, input := range p.DomainInputs {
+		if input.Package != "" {
+			continue
+		}
+		definition, err := format.ParseDomain(input.Path, p.Snapshot.Files[input.Path])
+		if err != nil {
+			return nil, err
+		}
+		data, err := format.EncodeDomain(definition)
+		if err != nil {
+			return nil, err
+		}
+		if !bytes.Equal(normalize(data), normalize(p.Snapshot.Files[input.Path])) {
+			changed[input.Path] = data
+		}
+	}
 	names := sortedFiles(changed)
 	if !write {
 		return names, nil

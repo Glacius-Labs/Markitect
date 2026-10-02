@@ -7,5 +7,6 @@
 - [Documentation placement](documentation-placement/README.md) is a small authoring exercise with an existing canonical owner and optional router validation.
 - [Content package](content-package/README.md) supplies a small versioned set of exported resources.
 - [Package consumer](package-consumer/README.md) pins that archive and composes its exports explicitly.
+- [Canonical engineering model](canonical-engineering/README.md) registers project-owned Software and Delivery vocabularies, checks structured policy, compiles Skill context, and exercises local render reconciliation.
 
 Examples with generated Markdown opt in through `spec.targets: [markdown]`; `package-consumer` also demonstrates provider output linking straight to canonical YAML. The minimal fixture's regression test lives in [example_test.go](example_test.go). The [documentation scenario](../internal/app/documentation_scenario_test.go) checks exact context, impact and review eligibility when its declared source input changes.

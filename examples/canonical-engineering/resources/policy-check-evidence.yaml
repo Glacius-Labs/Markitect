@@ -1,0 +1,9 @@
+apiVersion: delivery.markitect.org/v1alpha1
+kind: ReleaseEvidence
+metadata:
+    name: policy-check-8d7f3c1
+    namespace: engineering
+spec:
+    check: policy-check
+    result: passed
+    sourceRevision: 8d7f3c1

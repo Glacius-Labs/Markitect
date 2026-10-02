@@ -8,6 +8,7 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/internal/app"
 	"github.com/Glacius-Labs/Markitect/internal/authoring"
+	"github.com/Glacius-Labs/Markitect/internal/core"
 	"github.com/Glacius-Labs/Markitect/internal/format"
 )
 
@@ -28,7 +29,19 @@ func runAuthoring(o commandOptions, errout io.Writer, emit func(any) int, fail f
 }
 
 func runSchema(o commandOptions, errout io.Writer, emit func(any) int, fail func(error) int) int {
-	schemas, err := format.Schemas()
+	registry := core.NewRegistry()
+	if _, statErr := os.Stat(filepath.Join(o.root, "markitect.yaml")); statErr == nil {
+		project, loadErr := app.Load(o.root, "")
+		if loadErr != nil {
+			return fail(loadErr)
+		}
+		if project.Graph != nil && project.Graph.Registry != nil {
+			registry = project.Graph.Registry
+		}
+	} else if !os.IsNotExist(statErr) {
+		return fail(statErr)
+	}
+	schemas, err := format.SchemasWithRegistry(registry)
 	if err != nil {
 		return fail(err)
 	}

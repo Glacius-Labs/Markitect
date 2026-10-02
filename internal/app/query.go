@@ -12,10 +12,11 @@ import (
 // FindQuery selects resources using a literal, case-insensitive substring and
 // optional exact kind and namespace filters. An empty Query lists all matches.
 type FindQuery struct {
-	Query     string
-	Kind      string
-	Namespace string
-	Package   string
+	APIVersion string
+	Query      string
+	Kind       string
+	Namespace  string
+	Package    string
 }
 
 // FindMatch is a concise resource result; canonical prose is not returned.
@@ -26,6 +27,7 @@ type FindMatch = ResourceSummary
 // ExplainResult describes one exact resource and its directly resolved graph
 // relationships. Results are unavailable while project diagnostics remain.
 type ExplainResult struct {
+	APIVersion              string              `yaml:"apiVersion,omitempty"`
 	Key                     string              `yaml:"key"`
 	Kind                    string              `yaml:"kind"`
 	Name                    string              `yaml:"name"`
@@ -44,6 +46,7 @@ type ExplainResult struct {
 
 // ResourceSummary is a concise identity for a related resource.
 type ResourceSummary struct {
+	APIVersion     string `yaml:"apiVersion,omitempty"`
 	Key            string `yaml:"key"`
 	Kind           string `yaml:"kind"`
 	Name           string `yaml:"name"`
@@ -76,12 +79,23 @@ func Find(p *Project, query FindQuery) ([]FindMatch, error) {
 		if query.Kind != "" && resource.Kind != query.Kind {
 			continue
 		}
+		if query.APIVersion != "" && resource.APIVersion != query.APIVersion {
+			continue
+		}
 		if query.Namespace != "" && resource.Metadata.Namespace != query.Namespace {
 			continue
 		}
+		body := resource.Spec.Text
+		if resource.Data != nil {
+			encoded, err := YAML(resource.Data)
+			if err != nil {
+				return nil, err
+			}
+			body = string(encoded)
+		}
 		searchable := strings.ToLower(strings.Join([]string{
 			key, resource.Kind, resource.Metadata.Name, resource.Metadata.Namespace,
-			resource.Path, resource.Spec.Description, resource.Spec.Text,
+			resource.Path, resourceDescription(resource), body,
 		}, "\n"))
 		if needle != "" && !strings.Contains(searchable, needle) {
 			continue
@@ -109,7 +123,8 @@ func Explain(p *Project, key string) (*ExplainResult, error) {
 		Key: key, Kind: resource.Kind, Name: resource.Metadata.Name,
 		Namespace: resource.Metadata.Namespace, Path: resource.Path,
 		Package: resource.Package, PackageVersion: p.packageVersion(resource.Package),
-		Description: resource.Spec.Description,
+		APIVersion:  extensionAPI(resource),
+		Description: resourceDescription(resource),
 		Outgoing:    make([]core.Relationship, 0), Incoming: make([]core.Relationship, 0),
 	}
 	if area, ok := p.Graph.ResourceAreas[key]; ok {
@@ -172,6 +187,21 @@ func (p *Project) summarize(resource *core.Resource) ResourceSummary {
 		Key: resource.GraphKey(), Kind: resource.Kind, Name: resource.Metadata.Name,
 		Namespace: resource.Metadata.Namespace, Path: resource.Path,
 		Package: resource.Package, PackageVersion: p.packageVersion(resource.Package),
-		Description: resource.Spec.Description,
+		APIVersion:  extensionAPI(resource),
+		Description: resourceDescription(resource),
 	}
+}
+
+func extensionAPI(resource *core.Resource) string {
+	if resource.APIVersion == core.APIVersion {
+		return ""
+	}
+	return resource.APIVersion
+}
+
+func resourceDescription(resource *core.Resource) string {
+	if value, ok := resource.Data["description"].(string); ok {
+		return value
+	}
+	return resource.Spec.Description
 }

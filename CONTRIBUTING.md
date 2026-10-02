@@ -5,13 +5,14 @@
 | Path | Responsibility |
 |---|---|
 | `cmd/markitect` | CLI flags, exit codes, and output |
+| `cmd/markitect-adapter-dotnet` | External reference adapter for explicitly mapped, captured project-reference declarations |
 | `cmd/markitect-release`, `internal/publish` | Maintainer release verification, publication, and distribution metadata |
-| `internal/core` | Typed resources, project configuration, and dependency graph |
+| `internal/core` | Language registry, typed resources, structural constraints, and relation-specific graphs |
 | `internal/snapshot` | Resolved snapshot values, stable content digests, and deterministic snapshot comparison |
 | `internal/format` | Strict YAML parsing and schema generation |
 | `internal/source` | Git revision and working-tree acquisition, Git process hardening, and source materialization |
 | `internal/inputs` | Explicit ordinary-file inputs |
-| `internal/app` | Context, impact, evidence, verification, rendering, initialization, and controlled writes |
+| `internal/app` | Normalized model, context, impact, adapter orchestration, evidence, and controlled writes |
 | `internal/authoring` | Embedded core authoring resources |
 | `internal/licenses` | Canonical embedded upstream notices |
 | `internal/markdownlinks` | Bounded prose destination scanning with source-byte preservation |
@@ -42,6 +43,9 @@ go vet ./...
 go run ./cmd/markitect schema --repo .
 go run ./cmd/markitect check --repo examples/minimal
 go run ./cmd/markitect check --repo examples/repository-layout
+go run ./cmd/markitect check --repo examples/canonical-engineering
+go run ./cmd/markitect format --repo examples/canonical-engineering
+go run ./cmd/markitect model --repo examples/canonical-engineering
 go run ./cmd/markitect check --repo benchmark/fixtures/v2
 git diff --check
 ```

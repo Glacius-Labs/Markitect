@@ -1,34 +1,74 @@
 # Architecture
 
-**Status:** This describes the current source model. Check [GitHub Releases](https://github.com/Glacius-Labs/Markitect/releases) for available distributions; [the roadmap](implementation-plan.md) owns current source and planned-work status. [Usage](usage.md) owns the Project and CLI contract.
+**Status:** This document describes the product architecture targeted for v0.10.0 and identifies the current implementation where it differs. The next-version model is in active implementation; it is not a claim about the published v0.9.1 binary. The [roadmap](implementation-plan.md) owns delivery status, [Usage](usage.md) owns the supported syntax of each version, and the [canonical engineering plan](canonical-engineering-plan.md) owns the next-version model contract. Check [GitHub Releases](https://github.com/Glacius-Labs/Markitect/releases) for available distributions.
 
 ## Purpose
 
-Markitect makes AI-facing engineering resources explicit enough to validate, connect, and review. Humans and agents choose intent and meaning; the deterministic Go application parses YAML, resolves dependencies, compiles context, measures change impact, verifies declared commands, and produces managed views. Core authoring guidance is part of Markitect and uses the same model as project content.
+Markitect is an engineering knowledge and change compiler. Teams define descriptive engineering models and normative policy as canonical, versioned resources. Markitect validates their declared structure and relationships, calculates bounded change impact, and supplies the same normalized model to documentation, agent-context, verification, and external-system adapters.
+
+The product promise is that an explicitly modeled change can be traced to the outputs, observations, and checks it may affect. A model can carry free prose for people while marking only selected, structured properties as machine-checkable. Markitect proves those declared properties against its fixed inputs; it does not decide whether the model is wise, whether prose is true, whether implementation meets business intent, or whether a person has accepted the result.
+
+The modeling language is extensible through versioned Domain definitions loaded before resources. A Domain defines resource kinds, their typed fields, relation descriptors, and bounded constraint forms. This lets software architecture, delivery, and AI-working knowledge use one small kernel without making every domain concept a built-in Core kind. The bundled AI-working vocabulary is one supplied Domain. External adapters consume the normalized semantic model and explicit mappings; they do not create canonical domain meaning.
+
+## Target compiler and evidence model
+
+The target compilation order is:
+
+```text
+fixed source, Domain definitions, Project configuration, and adapter mappings
+    → validate Domain and resource shapes
+    → resolve typed references and relations
+    → construct normalized semantic IR
+    → evaluate bounded constraints and relation-specific graph rules
+    → compile context, impact, projections, and adapter plans
+    → optionally observe external state, plan changes, apply, and verify
+```
+
+Domain definitions and mappings are canonical inputs with explicit versions and digests. Constraints operate on declared resources, relations, and explicitly selected sets. They must remain bounded and deterministic; arbitrary code execution, unrestricted query languages, model calls, and inferred source-code semantics are outside the kernel.
+
+The semantic IR records qualified kind identity, resource identity and origin, validated values, resolved relation targets, applicable Domain definitions, scope, and source provenance. It is independent of YAML formatting and is the input to consumers. The IR is a normalized statement of what the selected source declares, not a truth oracle about an adopting system.
+
+Relations declare their meaning and graph behavior. A `dependsOn` edge, an ownership edge, and a policy scope can differ in context traversal, invalidation, and cycle rules. Context and impact follow those declared semantics. Constraints over sets must also declare the selection boundary so additions and removals can invalidate their result.
+
+Adapters are explicitly configured with mappings between canonical resources and their consumer-owned outputs or observed objects. Their lifecycle is `observe → plan → apply → verify`; adapters may expose only the stages they support. Observation is a fixed, named input with its own source and digest. If external state drifts while the canonical model is unchanged, a new observation still detects and plans the discrepancy. Apply is an explicit action. Command adapters receive only their declared snapshot inputs in a temporary working directory and run with the caller's local authority; this is not an operating-system security sandbox. A plan, successful command, or verification result does not itself grant human approval.
+
+Every result identifies its fixed source snapshot, Domain and Project configuration, mappings, adapter version, and any observed-state evidence it used. These identify the basis of a result. They do not establish semantic correctness, completeness beyond configured checks, human review, or continuing external truth after observation.
+
+## Current implementation boundary
+
+The published v0.9.1 implementation remains narrower: it has built-in `Text`, `Rule`, `Contract`, `Workflow`, `Skill`, and `Agent` resource kinds, a fixed dependency graph, static context/impact behavior, and explicit render and rule adapters. This architecture describes the v0.10.0 product destination; [Usage](usage.md) and the versioned release continue to define what users can run today. The v0.10.0 roadmap states which target capabilities are implemented and which remain incomplete.
 
 ## Project artifact boundary
 
-Markitect models AI-facing engineering knowledge: typed resources, their ownership, and their explicitly declared relationships. An adopting project may also declare exact ordinary UTF-8 files as inputs to a resource. Source code, schemas, configuration, infrastructure definitions, CI files, and documentation use the same `spec.files` mechanism. These project artifacts are opaque with respect to their domain-specific meaning: Markitect checks their paths and access, includes their bytes in fixed-snapshot context, and uses changes to conservatively identify affected resources and invalidate review-evidence reuse. The current input contract does not accept arbitrary binary files or globs; see [Project artifact inputs](documentation.md).
+The target kernel models explicit engineering resources and declared relations. Project artifacts, including source code, schemas, configuration, infrastructure definitions, CI files, and documentation, remain explicit inputs; the kernel does not infer their domain-specific structure. In v0.9.1, an adopting project declares exact ordinary UTF-8 files through `spec.files`; Markitect checks paths and access, includes bytes in fixed-snapshot context, and uses changes to conservatively identify affected resources and invalidate review-evidence reuse. That current input contract does not accept arbitrary binary files or globs; see [Project artifact inputs](documentation.md).
 
 A committed `ContextRun` manifest can select additional exact UTF-8 project artifacts under its `sources` field for one fixed task. Those bytes affect that run's context and digest. The selection adds no resource-graph edge; ordinary `impact` still follows declared resource inputs and its conservative rule for unknown files. The field name does not give source code special treatment.
 
-Markitect does not parse an adopting project's programming-language structure, infer symbols, call graphs, dependencies or business meaning from its files, or generate documentation from source code. A changed input can establish that dependent knowledge needs review; it cannot establish that the knowledge is wrong or that revised prose is correct. The declared resource graph is not a graph inferred from the internal structure of project artifacts. A proposed core feature that requires source-language semantics belongs outside this boundary; apply the same input and impact rules across artifact types.
+Markitect's core does not parse an adopting project's programming-language structure, infer symbols, call graphs, dependencies or business meaning from its files, or generate documentation from source code. A changed input can establish that dependent knowledge needs review; it cannot establish that the knowledge is wrong or that revised prose is correct. The declared resource graph is not a graph inferred from the internal structure of project artifacts. A configured adapter or project-owned check may use a specialized analyzer, but its behavior and evidence remain explicit and outside the generic kernel. Apply the same source and impact rules across artifact types.
 
 Project-owned commands in `spec.checks` may run external analyzers during `verify`. Markitect executes those explicit commands and reports their result for the selected snapshot; the adopting project chooses the checks and interprets their findings. A future integration with specialized tooling must preserve this boundary by supplying explicit inputs or project-owned checks, rather than moving domain-specific analysis into the core.
 
 ```mermaid
 flowchart LR
-    Intent[Human intent] --> Agent[Authoring agent]
-    Agent --> Sources[Canonical YAML and declared files]
-    Sources --> Snapshot[Resolved project snapshot]
-    Snapshot --> Graph[Parse and resolve graph]
-    Graph --> Checks[Structural checks]
-    Graph --> Context[Compiled context]
-    Graph -->|markdown target selected| Views[Managed Markdown views]
-    Graph --> Targets[Declared provider outputs]
-    Context --> Review[Advisory semantic review]
-    Graph --> Impact[Old/new change impact]
+    Intent[Human intent] --> Author[Human or agent authors]
+    Author --> Inputs[Fixed source, Domain, config, mappings]
+    Inputs --> Compile[Validate and resolve]
+    Compile --> IR[Normalized semantic IR]
+    IR --> Constraints[Bounded constraints]
+    IR --> Context[Context and impact]
+    IR --> Project[Configured projections]
+    Inputs --> Observe[Optional named observation]
+    IR --> Plan[Plan configured changes]
+    Observe --> Plan
+    Plan --> Apply[Explicit apply]
+    Apply --> Verify[Verify observed result]
+    Constraints --> Evidence[Input-bound evidence]
+    Context --> Evidence
+    Project --> Evidence
+    Verify --> Evidence
 ```
+
+## Current v0.9.1 implementation details
 
 ## Resource model
 

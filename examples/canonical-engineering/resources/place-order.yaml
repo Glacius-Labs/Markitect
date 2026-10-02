@@ -1,0 +1,7 @@
+apiVersion: software.markitect.org/v1alpha1
+kind: UseCase
+metadata:
+    name: place-order
+    namespace: engineering
+spec:
+    summary: Validate and accept a customer order.

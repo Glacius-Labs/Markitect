@@ -9,11 +9,13 @@
 | [Documentation routers](documentation-routers.md) | Optional local navigation checks and placement guidance |
 | [Provider adapters](provider-adapters.md) | Explicit Codex, Claude, and shared entrypoints and strict inventory |
 | [Factual consistency](consistency.md) | Opt-in sourced functional assertions and their limits |
-| [Architecture](architecture.md) | Product boundary for project artifacts and current source model |
+| [Architecture](architecture.md) | Target product architecture, evidence limits, and the current v0.9.1 boundary |
 | [Source snapshots](source-snapshots.md) | Snapshot values, Git acquisition, identity, comparison, and compatibility boundaries |
 | [Operations](operations.md) | Development, verification, rendering, and release operations |
 | [Refinement decisions](refinement.md) | Product principles and deferred design choices |
-| [Implementation plan](implementation-plan.md) | The Markitect roadmap |
+| [Implementation plan](implementation-plan.md) | The Markitect roadmap and v0.10.0 delivery status |
+| [Canonical engineering plan](canonical-engineering-plan.md) | v0.10.0 language, semantic model, and adapter contract |
+| [Strategy source documents](strategy/README.md) | User-provided product and design proposals, their provenance, and the boundary between hypotheses and adopted behavior |
 | [Measurement](measurement.md) | Correctness scenarios and bounded measurements |
 | [Core authoring assessment](authoring-assessment.md) | A dated exercise using the synthetic product example |
 | [Onboarding](onboarding.md) | Scripted CLI workflow replay and dated command-path evidence |
@@ -23,4 +25,4 @@
 | [Source release assessment](release-assessment.md) | General technical findings from source-distribution work |
 | [Production assessment](production-assessment.md) | Dated release evidence and source-level assessment |
 
-The [roadmap](implementation-plan.md) owns current source status and planned work. Published releases remain immutable; source changes do not update an installed release.
+The [roadmap](implementation-plan.md) owns current source status and planned work. v0.10.0 is in active implementation; the published v0.9.1 binary remains unchanged. Published releases remain immutable; source changes do not update an installed release.

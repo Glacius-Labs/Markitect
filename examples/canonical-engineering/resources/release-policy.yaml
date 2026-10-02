@@ -1,0 +1,10 @@
+apiVersion: delivery.markitect.org/v1alpha1
+kind: ReleasePolicy
+metadata:
+    name: candidate
+    namespace: engineering
+spec:
+    channel: preview
+    requiredChecks:
+        - unit-tests
+        - policy-check

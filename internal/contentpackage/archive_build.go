@@ -31,10 +31,21 @@ func Build(files map[string][]byte) ([]byte, error) {
 	if err := validateManifest(manifest); err != nil {
 		return nil, err
 	}
+	registry, _, err := parseDomainDefinitions(manifest, files)
+	if err != nil {
+		return nil, err
+	}
 	selected := map[string][]byte{ManifestName: manifestData}
 	var areaPaths []string
 	for _, area := range manifest.Spec.Areas {
 		areaPaths = append(areaPaths, area.Path)
+	}
+	for _, domainPath := range manifest.Spec.Domains {
+		data, exists := files[domainPath]
+		if !exists {
+			return nil, fmt.Errorf("declared package domain %q is missing", domainPath)
+		}
+		selected[domainPath] = data
 	}
 	candidates := make(map[string][]byte)
 	resources := make([]*core.Resource, 0)
@@ -44,8 +55,11 @@ func Build(files map[string][]byte) ([]byte, error) {
 		if filePath == ManifestName {
 			continue
 		}
+		if _, declaredDomain := selected[filePath]; declaredDomain {
+			continue
+		}
 		if isYAML(filePath) && inAnyArea(filePath, areaPaths) {
-			if resource, err := format.Parse(filePath, data); err == nil {
+			if resource, err := format.ParseWithRegistry(filePath, data, registry); err == nil {
 				selected[filePath] = data
 				resources = append(resources, resource)
 			} else {
@@ -57,7 +71,7 @@ func Build(files map[string][]byte) ([]byte, error) {
 	ordinary := declaredInputs(resources)
 	for _, filePath := range sortedFilePaths(candidates) {
 		data := candidates[filePath]
-		if ordinary[filePath] && isValidTextInput(data) && !format.IsResourceEnvelope(data) {
+		if ordinary[filePath] && isValidTextInput(data) && !format.IsResourceEnvelopeWithRegistry(data, registry) {
 			selected[filePath] = data
 		} else {
 			return nil, fmt.Errorf("parse package resource %q: %w", filePath, parseErrors[filePath])

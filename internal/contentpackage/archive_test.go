@@ -61,6 +61,200 @@ spec:
 	}
 }
 
+func TestBuildReadPackageDeclaredDomainAndGenericExport(t *testing.T) {
+	files := map[string][]byte{
+		ManifestName: []byte(`apiVersion: markitect.example.org/v1alpha1
+kind: Package
+metadata: {name: software-model}
+spec:
+  version: 1.0.0
+  areas: [{name: content, path: content}]
+  domains: [domains/software.yaml]
+  exports:
+    - apiVersion: software.markitect.org/v1alpha1
+      kind: Module
+      namespace: platform
+      name: payments
+`),
+		"domains/software.yaml": []byte(`apiVersion: markitect.example.org/v1alpha1
+kind: Domain
+metadata: {name: software}
+spec:
+  apiVersion: software.markitect.org/v1alpha1
+  kinds:
+    Module:
+      required: [intent]
+      properties:
+        intent: {type: string}
+        dependencies: {type: array, items: {type: ref, refKind: Module}}
+  relations:
+    dependsOn: {field: dependencies, sourceKinds: [Module], targetKinds: [Module], context: true, invalidate: true, acyclic: true}
+`),
+		"content/payments.yaml": []byte(`apiVersion: software.markitect.org/v1alpha1
+kind: Module
+metadata: {name: payments, namespace: platform}
+spec: {intent: Owns payment flow, dependencies: []}
+`),
+	}
+	archive, err := Build(files)
+	if err != nil {
+		t.Fatal(err)
+	}
+	digest := sha256.Sum256(archive)
+	got, err := Read(corePin("software-model", "1.0.0", hex.EncodeToString(digest[:])), archive)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got.DomainDefinitions) != 1 || got.DomainDefinitions["domains/software.yaml"].APIVersion != "software.markitect.org/v1alpha1" {
+		t.Fatalf("unexpected package domains: %#v", got.DomainDefinitions)
+	}
+	if len(got.Resources) != 1 || got.Resources[0].TypeKey() != "software.markitect.org/v1alpha1/Module" {
+		t.Fatalf("generic package resource was not parsed: %#v", got.Resources)
+	}
+}
+
+func TestBuildRequiresDeclaredPackageDomainAndOmitsUnlistedDomain(t *testing.T) {
+	manifest := []byte(`apiVersion: markitect.example.org/v1alpha1
+kind: Package
+metadata: {name: software-model}
+spec:
+  version: 1.0.0
+  areas: [{name: content, path: content}]
+  domains: [domains/software.yaml]
+  exports: [{kind: Rule, namespace: platform, name: basics}]
+`)
+	resource := []byte(`apiVersion: markitect.example.org/v1alpha1
+kind: Rule
+metadata: {name: basics, namespace: platform}
+spec: {text: A local package resource.}
+`)
+	if _, err := Build(map[string][]byte{ManifestName: manifest, "content/basics.yaml": resource}); err == nil {
+		t.Fatal("Build accepted a missing declared domain definition")
+	}
+	files := map[string][]byte{
+		ManifestName:            manifest,
+		"content/basics.yaml":   resource,
+		"domains/software.yaml": []byte("apiVersion: markitect.example.org/v1alpha1\nkind: Domain\nmetadata: {name: software}\nspec:\n  apiVersion: software.markitect.org/v1alpha1\n  kinds:\n    Module:\n      properties:\n        intent: {type: string}\n"),
+		"domains/unlisted.yaml": []byte("unlisted member"),
+	}
+	archive, err := Build(files)
+	if err != nil {
+		t.Fatalf("Build rejected unrelated snapshot content: %v", err)
+	}
+	digest := sha256.Sum256(archive)
+	got, err := Read(corePin("software-model", "1.0.0", hex.EncodeToString(digest[:])), archive)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, included := got.Files["domains/unlisted.yaml"]; included {
+		t.Fatal("Build included a domain definition that the package manifest did not declare")
+	}
+}
+
+func TestBuildRejectsConflictingDomainVersionAndUnqualifiedExport(t *testing.T) {
+	definition := func(property string) []byte {
+		return []byte("apiVersion: markitect.example.org/v1alpha1\nkind: Domain\nmetadata: {name: software}\nspec:\n  apiVersion: software.markitect.org/v1alpha1\n  kinds:\n    Module:\n      properties:\n        " + property + ": {type: string}\n")
+	}
+	resource := []byte(`apiVersion: software.markitect.org/v1alpha1
+kind: Module
+metadata: {name: payments, namespace: platform}
+spec: {intent: Owns payment flow}
+`)
+	base := map[string][]byte{
+		ManifestName: []byte(`apiVersion: markitect.example.org/v1alpha1
+kind: Package
+metadata: {name: software-model}
+spec:
+  version: 1.0.0
+  areas: [{name: content, path: content}]
+  domains: [domains/software.yaml, domains/other.yaml]
+  exports:
+    - apiVersion: software.markitect.org/v1alpha1
+      kind: Module
+      namespace: platform
+      name: payments
+`),
+		"domains/software.yaml": definition("intent"),
+		"domains/other.yaml":    definition("purpose"),
+		"content/payments.yaml": resource,
+	}
+	if _, err := Build(base); err == nil {
+		t.Fatal("Build accepted conflicting definitions for one active domain version")
+	}
+
+	manifest := bytes.Replace(base[ManifestName], []byte("  domains: [domains/software.yaml, domains/other.yaml]\n"), []byte("  domains: [domains/software.yaml]\n"), 1)
+	manifest = bytes.Replace(manifest, []byte("    - apiVersion: software.markitect.org/v1alpha1\n      kind:"), []byte("    - kind:"), 1)
+	base[ManifestName] = manifest
+	delete(base, "domains/other.yaml")
+	if _, err := Build(base); err == nil {
+		t.Fatal("Build accepted an unqualified export for a custom domain resource")
+	}
+}
+
+func TestBuildDoesNotDowngradeMalformedDeclaredGenericResourceToInput(t *testing.T) {
+	files := map[string][]byte{
+		ManifestName: []byte(`apiVersion: markitect.example.org/v1alpha1
+kind: Package
+metadata: {name: software-model}
+spec:
+  version: 1.0.0
+  areas: [{name: content, path: content}]
+  domains: [domains/software.yaml]
+  exports:
+    - apiVersion: software.markitect.org/v1alpha1
+      kind: Module
+      namespace: platform
+      name: payments
+`),
+		"domains/software.yaml": []byte(`apiVersion: markitect.example.org/v1alpha1
+kind: Domain
+metadata: {name: software}
+spec:
+  apiVersion: software.markitect.org/v1alpha1
+  kinds:
+    Module:
+      required: [intent, files]
+      properties:
+        intent: {type: string}
+        files: {type: array, items: {type: string}}
+`),
+		"content/payments.yaml": []byte(`apiVersion: software.markitect.org/v1alpha1
+kind: Module
+metadata: {name: payments, namespace: platform}
+spec:
+  intent: Owns payment flow
+  files: [content/input.yaml]
+`),
+		"content/input.yaml": []byte(`apiVersion: software.markitect.org/v1alpha1
+kind: UnknownKind
+metadata: {name: hidden, namespace: platform}
+spec: {unrecognized: resource}
+`),
+	}
+	if _, err := Build(files); err == nil {
+		t.Fatal("Build downgraded a malformed generic resource envelope to an ordinary declared input")
+	}
+}
+
+func TestReadRejectsArchiveTamperingAgainstPin(t *testing.T) {
+	archive, err := Build(map[string][]byte{
+		ManifestName: []byte(`apiVersion: markitect.example.org/v1alpha1
+kind: Package
+metadata: {name: standards}
+spec: {version: 1.2.3, areas: [{name: base, path: content}], exports: [{kind: Rule, namespace: base, name: basics}]}
+`),
+		"content/basics.yaml": []byte("apiVersion: markitect.example.org/v1alpha1\nkind: Rule\nmetadata: {name: basics, namespace: base}\nspec: {text: Apply the package basics.}\n"),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	digest := sha256.Sum256(archive)
+	archive[len(archive)-1] ^= 0xff
+	if _, err := Read(corePin("standards", "1.2.3", hex.EncodeToString(digest[:])), archive); err == nil {
+		t.Fatal("Read accepted bytes that differ from the pinned archive")
+	}
+}
+
 func TestReadRejectsMaliciousZIPMembers(t *testing.T) {
 	manifest := []byte(`apiVersion: markitect.example.org/v1alpha1
 kind: Package

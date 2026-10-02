@@ -88,6 +88,18 @@ jobs:
       - name: Check onboarding example formatting
         run: go run ./cmd/markitect format --repo examples/onboarding/delivery-service
 
+      - name: Check canonical engineering example
+        run: go run ./cmd/markitect check --repo examples/canonical-engineering
+
+      - name: Compile canonical engineering context
+        run: go run ./cmd/markitect context --repo examples/canonical-engineering --kind Skill --name architecture-review --namespace engineering
+
+      - name: Compile canonical engineering model
+        run: go run ./cmd/markitect model --repo examples/canonical-engineering
+
+      - name: Check canonical engineering formatting
+        run: go run ./cmd/markitect format --repo examples/canonical-engineering
+
       - name: Replay onboarding workflow
         if: runner.os == 'Windows'
         shell: pwsh
@@ -159,6 +171,36 @@ jobs:
           grep -Fq 'END OF TERMS AND CONDITIONS' <<< "$notices"
           check_output="$(go run .markitect/bootstrap/run.go check --repo "$GITHUB_WORKSPACE/examples/minimal")"
           grep -Eq '^status: passed$' <<< "$check_output"
+          adapter_source="$RUNNER_TEMP/markitect-adapter-source-$GITHUB_SHA"
+          adapter_bin="$RUNNER_TEMP/markitect-adapter-bin-$GITHUB_SHA"
+          mkdir -p "$adapter_source" "$adapter_bin"
+          unzip -q "$MARKITECT_PACKAGE_DIR/.markitect/tool/source.zip" -d "$adapter_source"
+          (cd "$adapter_source" && go build -trimpath -buildvcs=false -o "$adapter_bin/markitect-adapter-dotnet" ./cmd/markitect-adapter-dotnet)
+          echo "$adapter_bin" >> "$GITHUB_PATH"
+          export PATH="$adapter_bin:$PATH"
+          domain_check_output="$(go run .markitect/bootstrap/run.go check --repo "$GITHUB_WORKSPACE/examples/canonical-engineering")"
+          grep -Eq '^status: passed$' <<< "$domain_check_output"
+          go run .markitect/bootstrap/run.go context --repo "$GITHUB_WORKSPACE/examples/canonical-engineering" --kind Skill --name architecture-review --namespace engineering
+          go run .markitect/bootstrap/run.go model --repo "$GITHUB_WORKSPACE/examples/canonical-engineering"
+          go run .markitect/bootstrap/run.go format --repo "$GITHUB_WORKSPACE/examples/canonical-engineering"
+          domain_repo="$RUNNER_TEMP/markitect-canonical-engineering-$GITHUB_SHA"
+          mkdir -p "$domain_repo"
+          cp -R "$GITHUB_WORKSPACE/examples/canonical-engineering/." "$domain_repo/"
+          git -C "$domain_repo" init -b feature/canonical-smoke
+          git -C "$domain_repo" config user.name 'Markitect Release CI'
+          git -C "$domain_repo" config user.email 'markitect-release-ci@users.noreply.github.com'
+          git -C "$domain_repo" add .
+          git -C "$domain_repo" commit -m 'Create isolated canonical engineering fixture'
+          go run .markitect/bootstrap/run.go reconcile --repo "$domain_repo" --action observe --adapter markitect-render
+          mkdir -p "$domain_repo/.artifacts/markitect/reconcile"
+          domain_plan="$domain_repo/.artifacts/markitect/reconcile/plan.yaml"
+          go run .markitect/bootstrap/run.go reconcile --repo "$domain_repo" --action plan --adapter markitect-render > "$domain_plan"
+          go run .markitect/bootstrap/run.go reconcile --repo "$domain_repo" --action apply --adapter markitect-render --plan "$domain_plan" --write
+          go run .markitect/bootstrap/run.go reconcile --repo "$domain_repo" --action verify --adapter markitect-render --plan "$domain_plan"
+          adapter_plan="$domain_repo/.artifacts/markitect/reconcile/dotnet-plan.yaml"
+          go run .markitect/bootstrap/run.go reconcile --repo "$domain_repo" --action observe --adapter dotnet-dependencies
+          go run .markitect/bootstrap/run.go reconcile --repo "$domain_repo" --action plan --adapter dotnet-dependencies > "$adapter_plan"
+          go run .markitect/bootstrap/run.go reconcile --repo "$domain_repo" --action verify --adapter dotnet-dependencies --plan "$adapter_plan"
           init_dir="$RUNNER_TEMP/markitect-init-$GITHUB_SHA"
           git init -b feature/authoring "$init_dir"
           go run .markitect/bootstrap/run.go init --repo "$init_dir" --name started-project --namespace engineering
@@ -185,6 +227,58 @@ jobs:
           $checkOutput = go run .markitect/bootstrap/run.go check --repo $example
           if ($LASTEXITCODE -ne 0) { throw "Bootstrap example check failed with exit code $LASTEXITCODE" }
           if (($checkOutput -join "`n") -notmatch '(?m)^status: passed$') { throw 'Packaged binary did not pass the minimal example check' }
+          $adapterSource = Join-Path $env:RUNNER_TEMP "markitect-adapter-source-$env:GITHUB_SHA"
+          $adapterBin = Join-Path $env:RUNNER_TEMP "markitect-adapter-bin-$env:GITHUB_SHA"
+          New-Item -ItemType Directory -Path $adapterSource, $adapterBin -Force | Out-Null
+          Expand-Archive -LiteralPath (Join-Path $env:MARKITECT_PACKAGE_DIR '.markitect/tool/source.zip') -DestinationPath $adapterSource
+          Push-Location $adapterSource
+          go build -trimpath -buildvcs=false -o (Join-Path $adapterBin 'markitect-adapter-dotnet.exe') ./cmd/markitect-adapter-dotnet
+          if ($LASTEXITCODE -ne 0) { throw 'Could not build .NET reference adapter from packaged source' }
+          Pop-Location
+          $adapterBin >> $env:GITHUB_PATH
+          $env:PATH = "$adapterBin;$env:PATH"
+          $domainExample = Join-Path $env:GITHUB_WORKSPACE 'examples/canonical-engineering'
+          $domainCheck = go run .markitect/bootstrap/run.go check --repo $domainExample
+          if ($LASTEXITCODE -ne 0) { throw 'Packaged binary canonical engineering check failed' }
+          if (($domainCheck -join "`n") -notmatch '(?m)^status: passed$') { throw 'Packaged binary did not pass the canonical engineering example check' }
+          go run .markitect/bootstrap/run.go context --repo $domainExample --kind Skill --name architecture-review --namespace engineering
+          if ($LASTEXITCODE -ne 0) { throw 'Packaged binary canonical engineering context failed' }
+          go run .markitect/bootstrap/run.go model --repo $domainExample
+          if ($LASTEXITCODE -ne 0) { throw 'Packaged binary canonical engineering model failed' }
+          go run .markitect/bootstrap/run.go format --repo $domainExample
+          if ($LASTEXITCODE -ne 0) { throw 'Packaged binary canonical engineering format failed' }
+          $domainRepo = Join-Path $env:RUNNER_TEMP "markitect-canonical-engineering-$env:GITHUB_SHA"
+          New-Item -ItemType Directory -Path $domainRepo | Out-Null
+          Get-ChildItem -LiteralPath $domainExample -Force | Copy-Item -Destination $domainRepo -Recurse -Force
+          if ($LASTEXITCODE -ne 0) { throw 'Could not prepare canonical engineering reconciliation fixture' }
+          git -C $domainRepo init -b feature/canonical-smoke
+          if ($LASTEXITCODE -ne 0) { throw 'Could not initialize canonical engineering feature branch' }
+          git -C $domainRepo config user.name 'Markitect Release CI'
+          if ($LASTEXITCODE -ne 0) { throw 'Could not configure canonical engineering fixture identity' }
+          git -C $domainRepo config user.email 'markitect-release-ci@users.noreply.github.com'
+          if ($LASTEXITCODE -ne 0) { throw 'Could not configure canonical engineering fixture email' }
+          git -C $domainRepo add .
+          if ($LASTEXITCODE -ne 0) { throw 'Could not stage canonical engineering fixture' }
+          git -C $domainRepo commit -m 'Create isolated canonical engineering fixture'
+          if ($LASTEXITCODE -ne 0) { throw 'Could not commit canonical engineering fixture' }
+          go run .markitect/bootstrap/run.go reconcile --repo $domainRepo --action observe --adapter markitect-render
+          if ($LASTEXITCODE -ne 0) { throw 'Packaged binary canonical engineering observe failed' }
+          $evidenceDir = Join-Path $domainRepo '.artifacts/markitect/reconcile'
+          New-Item -ItemType Directory -Path $evidenceDir -Force | Out-Null
+          $domainPlan = Join-Path $evidenceDir 'plan.yaml'
+          go run .markitect/bootstrap/run.go reconcile --repo $domainRepo --action plan --adapter markitect-render | Set-Content -LiteralPath $domainPlan -Encoding utf8
+          if ($LASTEXITCODE -ne 0) { throw 'Packaged binary canonical engineering plan failed' }
+          go run .markitect/bootstrap/run.go reconcile --repo $domainRepo --action apply --adapter markitect-render --plan $domainPlan --write
+          if ($LASTEXITCODE -ne 0) { throw 'Packaged binary canonical engineering apply failed' }
+          go run .markitect/bootstrap/run.go reconcile --repo $domainRepo --action verify --adapter markitect-render --plan $domainPlan
+          if ($LASTEXITCODE -ne 0) { throw 'Packaged binary canonical engineering verify failed' }
+          $adapterPlan = Join-Path $evidenceDir 'dotnet-plan.yaml'
+          go run .markitect/bootstrap/run.go reconcile --repo $domainRepo --action observe --adapter dotnet-dependencies
+          if ($LASTEXITCODE -ne 0) { throw 'Packaged binary .NET adapter observe failed' }
+          go run .markitect/bootstrap/run.go reconcile --repo $domainRepo --action plan --adapter dotnet-dependencies | Set-Content -LiteralPath $adapterPlan -Encoding utf8
+          if ($LASTEXITCODE -ne 0) { throw 'Packaged binary .NET adapter plan failed' }
+          go run .markitect/bootstrap/run.go reconcile --repo $domainRepo --action verify --adapter dotnet-dependencies --plan $adapterPlan
+          if ($LASTEXITCODE -ne 0) { throw 'Packaged binary .NET adapter verify failed' }
           $initDir = Join-Path $env:RUNNER_TEMP "markitect-init-$env:GITHUB_SHA"
           git init -b feature/authoring $initDir
           if ($LASTEXITCODE -ne 0) { throw 'Could not initialize the smoke repository' }

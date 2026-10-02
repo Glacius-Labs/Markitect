@@ -15,7 +15,11 @@ func (g *Graph) resolveResources() {
 			g.resolveRef(r, ref, "Rule", map[string]bool{"Rule": true}, "rules")
 		}
 		for _, ref := range r.Spec.Uses {
-			g.resolveRef(r, ref, "", usesKinds[r.Kind], "uses")
+			allowed := usesKinds[r.Kind]
+			if ref.APIVersion != "" && ref.APIVersion != APIVersion {
+				allowed = map[string]bool{"*": true}
+			}
+			g.resolveRef(r, ref, "", allowed, "uses")
 		}
 		for _, ref := range r.Spec.Needs {
 			g.resolveRef(r, ref, "Contract", map[string]bool{"Contract": true}, "needs")
@@ -33,7 +37,7 @@ func (g *Graph) resolveRef(source *Resource, ref Ref, defaultKind string, allowe
 	}
 	g.addRelationship(Relationship{
 		From: source.GraphKey(), To: target.GraphKey(), Relation: field,
-		Path: source.Path, Line: source.Line, Reference: ref,
+		Path: source.Path, Line: source.Line, Reference: ref, Context: true, Invalidate: true,
 	})
 	return target
 }
@@ -81,10 +85,26 @@ func (g *Graph) resolveTarget(source *Resource, ref Ref, defaultKind string, all
 	if requestedKind == "" {
 		requestedKind = defaultKind
 	}
+	requestedAPI := ref.APIVersion
+	if requestedAPI == "" {
+		requestedAPI = source.APIVersion
+	}
+	if requestedAPI != source.APIVersion && !g.Registry.IsAPIVersionRegistered(requestedAPI) {
+		g.diag(source, "reference.api-version", fmt.Sprintf("%s reference names unregistered apiVersion %q", field, requestedAPI))
+		return nil
+	}
 	var matches []*Resource
 	kinds := make([]string, 0, len(allowed))
 	if requestedKind != "" {
 		kinds = append(kinds, requestedKind)
+	} else if allowed["*"] {
+		for _, targetKey := range sortedKeys(g.Resources) {
+			target := g.Resources[targetKey]
+			if target.Metadata.Namespace == requestedNamespace && target.Package == targetPackage && target.APIVersion == requestedAPI && target.Kind != "Project" && target.Kind != "Package" && target.Kind != "Domain" {
+				kinds = append(kinds, target.Kind)
+			}
+		}
+		sort.Strings(kinds)
 	} else {
 		for kind := range allowed {
 			kinds = append(kinds, kind)
@@ -92,13 +112,13 @@ func (g *Graph) resolveTarget(source *Resource, ref Ref, defaultKind string, all
 		sort.Strings(kinds)
 	}
 	for _, kind := range kinds {
-		key := (Ref{Kind: kind, Namespace: requestedNamespace, Name: ref.Name}).GraphKey(targetPackage, "", "")
+		key := (Ref{APIVersion: requestedAPI, Kind: kind, Namespace: requestedNamespace, Name: ref.Name}).GraphKey(targetPackage, "", "")
 		if target := g.Resources[key]; target != nil {
 			matches = append(matches, target)
 		}
 	}
 	if len(matches) == 0 {
-		key := (Ref{Kind: requestedKind, Namespace: requestedNamespace, Name: ref.Name}).GraphKey(targetPackage, "", "")
+		key := (Ref{APIVersion: requestedAPI, Kind: requestedKind, Namespace: requestedNamespace, Name: ref.Name}).GraphKey(targetPackage, "", "")
 		g.diag(source, "reference.missing", fmt.Sprintf("%s reference %s does not resolve", field, key))
 		return nil
 	}
@@ -107,7 +127,7 @@ func (g *Graph) resolveTarget(source *Resource, ref Ref, defaultKind string, all
 		return nil
 	}
 	target := matches[0]
-	if !allowed[target.Kind] {
+	if !allowed[target.Kind] && !allowed["*"] {
 		g.diag(source, "reference.kind", fmt.Sprintf("%s cannot reference %s", field, target.Kind))
 		return nil
 	}
@@ -141,7 +161,11 @@ func (g *Graph) lookupRef(source *Resource, ref Ref, kind string) *Resource {
 		}
 		packageName = ref.Package
 	}
-	return g.Resources[(Ref{Kind: requestedKind, Namespace: namespace, Name: ref.Name}).GraphKey(packageName, "", "")]
+	apiVersion := ref.APIVersion
+	if apiVersion == "" && source != nil {
+		apiVersion = source.APIVersion
+	}
+	return g.Resources[(Ref{APIVersion: apiVersion, Kind: requestedKind, Namespace: namespace, Name: ref.Name}).GraphKey(packageName, "", "")]
 }
 
 func (g *Graph) lookupExact(ref Ref) *Resource {
