@@ -1,6 +1,29 @@
 # Markitect production assessment
 
-**Recorded:** 2026-10-01. This dated assessment records the release evidence verified at that time and distinguishes it from source behavior. It reports only the Markitect source, its distributions, and source-owned gates; project adoption and acceptance are outside its scope.
+**Recorded:** 2026-10-02. This dated assessment records the release evidence verified at that time and distinguishes it from source behavior. It reports only the Markitect source, its distributions, and source-owned gates; project adoption and acceptance are outside its scope.
+
+## v0.9.0 published release
+
+The immutable [v0.9.0 release](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.9.0), release ID `401463997`, binds [source commit `ff5ffd5`](https://github.com/Glacius-Labs/Markitect/commit/ff5ffd5e3b538be58341fdb7983490895201d2b1), merged from [PR 43](https://github.com/Glacius-Labs/Markitect/pull/43). It makes generic Markdown views an explicit target under `docs/markitect/<area>/`, routes provider outputs directly to canonical inputs, and separates consumer bootstrap files from the complete `.markitect/tool/` pin set. Bundle schema v2 deliberately replaces the earlier layout contract. The annotated tag is unsigned; the immutable release and every asset attestation were verified separately.
+
+| Evidence | Exact basis | Result |
+|---|---|---|
+| Source gates | [PR CI 36947731879](https://github.com/Glacius-Labs/Markitect/actions/runs/36947731879) and [main CI 36947965582](https://github.com/Glacius-Labs/Markitect/actions/runs/36947965582) | Windows/Linux source gates passed; candidate and release source share tree `153f501172ae8b9a3145774e20c14e87546e282d` |
+| Tagged release | [Run 36948247745](https://github.com/Glacius-Labs/Markitect/actions/runs/36948247745), attempt 1 | Source, deterministic bundle and installed bootstrap gates passed on Windows/Linux; four exact-source assets assembled |
+| Owner publisher | Release `401463997` | `published-verified`; exact run artifact, tag, payload digests, immutable release and each asset attestation verified |
+| Public distribution metadata | `markitect-release distribution --tag v0.9.0 --repo . --write` | Public downloads, attestations, provenance, workflow attempt and digests verified; README install blocks and three versioned WinGet manifests generated |
+| Native Windows binary | Exact attested Windows asset | Reported `Markitect 0.9.0 (windows/amd64)`; minimal and provider-only layout fixtures passed; init preview wrote nothing, default Area write and resulting Project check passed |
+| Main source artifact | Download from main run 36947965582 | Hidden bootstrap and tool files were present in the actual downloaded source artifact |
+| Published native benchmark | [Run 36948742024](https://github.com/Glacius-Labs/Markitect/actions/runs/36948742024) | Attested v0.9.0/v2 and v0.8.1/v1 binaries completed 40 runs per platform with zero nonzero exits; Windows/Linux raw data and summaries retained |
+
+| Asset | Verified SHA-256 |
+|---|---|
+| `markitect-v0.9.0-bundle.zip` | `987f667a570ede674a845b7ff06e0aa76e5f52c83456800840384cdaa39a5b71` |
+| `markitect-v0.9.0-linux-amd64` | `22c8198d608f01d01069329ed2dbd9ca784479d80ba72a17c63a0ef2d90d2449` |
+| `markitect-v0.9.0-windows-amd64.exe` | `aee5fdd2e1ed91bdefd84c423bbc56213c9015c7de0bd91c00d4d182b6eea281` |
+| `markitect-v0.9.0-provenance.yaml` | `de5ae4b572fd895fdef3f06dedb057af341881f6b77c22fba77f176bfae5de53` |
+
+Benchmark fixture v1 remains byte-identical. The transition uses fixture digests `9f3bb4442d0544b02b941a90c2d46689ea1d990c7d227254b70cb5301299949d` (v1) and `37387124b579687fc250caf6e943f672b3e44a3700d86fbe5f3051867f1f2463` (v2) on both platforms. Different workloads are explicitly non-comparable, so the report withholds percentage changes and establishes no speed gain. Versioned WinGet metadata does not establish Microsoft catalog availability or a v0.9.0 package-manager installation. Consumer upgrades and adopting-project acceptance remain project-owned.
 
 ## v0.8.1 published release
 
