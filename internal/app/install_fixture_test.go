@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"sort"
 	"strings"
 	"testing"
 
@@ -22,7 +23,7 @@ func recreateAutocrlfCheckout(t *testing.T, root string) {
 	args := append([]string{"checkout", "--"}, installPaths...)
 	runWriterGit(t, root, args...)
 	for _, name := range installPaths {
-		if name == "tools/markitect/source.zip" {
+		if name == ".markitect/tool/source.zip" {
 			continue
 		}
 		path := filepath.Join(root, filepath.FromSlash(name))
@@ -66,13 +67,15 @@ func installTestBundle(t *testing.T, sourceID, version, marker string) *release.
 	archive := []byte("PK\x03\x04source archive " + marker + "\x00\n")
 	archiveHash := digestInstallBytes(archive)
 	files := map[string][]byte{
-		"markitect.lock.yaml":                 []byte("version: \"" + version + "\"\nsource: \"tools/markitect/source.zip\"\nsha256: \"" + archiveHash + "\"\n"),
-		"scripts/markitect-bootstrap_test.go": []byte("package scripts // " + marker + "\n"),
-		"scripts/run-markitect.go":            []byte("package main // " + marker + "\n"),
-		"tools/markitect/source.zip":          archive,
+		".markitect/tool/lock.yaml":        []byte("version: \"" + version + "\"\nsource: \".markitect/tool/source.zip\"\nsha256: \"" + archiveHash + "\"\n"),
+		".markitect/bootstrap/run_test.go": []byte("package main // " + marker + "\n"),
+		".markitect/bootstrap/run.go":      []byte("package main // " + marker + "\n"),
+		".markitect/tool/source.zip":       archive,
 	}
-	manifest := release.BundleManifest{SchemaVersion: 1, Version: version, SourceCommit: strings.Repeat(sourceID, 40), SourceRepository: "github.com/Glacius-Labs/Markitect"}
-	for _, name := range installPinPaths {
+	manifest := release.BundleManifest{SchemaVersion: 2, Version: version, SourceCommit: strings.Repeat(sourceID, 40), SourceRepository: "github.com/Glacius-Labs/Markitect"}
+	names := append([]string(nil), installPinPaths...)
+	sort.Strings(names)
+	for _, name := range names {
 		manifest.Files = append(manifest.Files, release.BundleFile{Path: name, SHA256: digestInstallBytes(files[name])})
 	}
 	manifestBytes, err := yaml.Marshal(manifest)

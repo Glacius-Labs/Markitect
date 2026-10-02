@@ -24,7 +24,7 @@ func renderCodexAgent(r *core.Resource, target string, adapters *core.ProviderAd
 			writeTOMLString(&b, "sandbox_mode", p.Sandbox)
 		}
 	}
-	instructions := "Read the canonical [agent view](" + relative(target, companionPath(r.Path)) + ") and follow its stated scope."
+	instructions := "Read the canonical [Agent YAML](" + relative(target, r.Path) + ") and follow its stated scope."
 	if adapters != nil && adapters.InlineAgentText {
 		instructions = strings.TrimSpace(r.Spec.Text)
 	}
@@ -66,12 +66,12 @@ func renderClaudeAgent(r *core.Resource, target string, g *core.Graph, adapters 
 	if adapters != nil && adapters.InlineAgentText {
 		b.WriteString(strings.TrimSpace(r.Spec.Text) + "\n")
 	} else {
-		b.WriteString("Read the [canonical agent view](" + relative(target, companionPath(r.Path)) + ") before acting.\n")
+		b.WriteString("Read the [canonical Agent YAML](" + relative(target, r.Path) + ") before acting.\n")
 	}
 	if adapters != nil && adapters.AgentContract != "" {
 		b.WriteString("\nShared role-routing and delegation rules: [project agent contract](" + relative(target, adapters.AgentContract) + ").\n")
 	}
-	links := dependencyLinks(r, target, g)
+	links := dependencyLinks(r, target, g, false)
 	if len(links) > 0 {
 		b.WriteString("\n## Dependencies\n\n")
 		for _, link := range links {

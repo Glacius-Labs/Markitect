@@ -150,8 +150,14 @@ func TestRecordReviewRequiresFixedCleanSnapshotAndCurrentOutputs(t *testing.T) {
 	}{
 		{name: "provisional", project: reviewFixture(t, "", true, resources, nil)},
 		{name: "dirty output", project: func() *Project {
-			p := reviewFixture(t, strings.Repeat("a", 40), false, reviewResources(false, false, false), nil)
-			for path := range renderOutputs(t, p) {
+			selected := reviewResources(false, false, false)
+			selected[0].Spec.Targets = []string{"markdown"}
+			p := reviewFixture(t, strings.Repeat("a", 40), false, selected, nil)
+			outputs := renderOutputs(t, p)
+			if len(outputs) == 0 {
+				t.Fatal("dirty-output fixture must select at least one output")
+			}
+			for path := range outputs {
 				p.Snapshot.Files[path] = []byte("stale output")
 				break
 			}

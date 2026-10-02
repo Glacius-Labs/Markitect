@@ -10,11 +10,11 @@ import (
 func TestInstallRefusesPartialPinSetAndUnmanagedCollision(t *testing.T) {
 	t.Run("partial pin", func(t *testing.T) {
 		root := installTestRepo(t, "feature/partial")
-		writeFixture(t, root, map[string][]byte{"markitect.lock.yaml": []byte("hand-authored\n")})
+		writeFixture(t, root, map[string][]byte{".markitect/tool/lock.yaml": []byte("hand-authored\n")})
 		if _, err := Install(root, installTestBundle(t, "f", "0.1.0-rc.4", "candidate"), false); err == nil || !strings.Contains(err.Error(), "partial") {
 			t.Fatalf("partial pin error = %v", err)
 		}
-		data, err := os.ReadFile(filepath.Join(root, "markitect.lock.yaml"))
+		data, err := os.ReadFile(filepath.Join(root, ".markitect", "tool", "lock.yaml"))
 		if err != nil || string(data) != "hand-authored\n" {
 			t.Fatalf("partial pin changed: %q, %v", data, err)
 		}
@@ -22,13 +22,13 @@ func TestInstallRefusesPartialPinSetAndUnmanagedCollision(t *testing.T) {
 
 	t.Run("ancestor collision", func(t *testing.T) {
 		root := installTestRepo(t, "feature/collision")
-		if err := os.WriteFile(filepath.Join(root, "scripts"), []byte("unmanaged file"), 0644); err != nil {
+		if err := os.WriteFile(filepath.Join(root, ".markitect"), []byte("unmanaged file"), 0644); err != nil {
 			t.Fatal(err)
 		}
 		if _, err := Install(root, installTestBundle(t, "1", "0.1.0-rc.4", "candidate"), false); err == nil {
-			t.Fatal("unmanaged file at scripts ancestor was accepted")
+			t.Fatal("unmanaged file at .markitect ancestor was accepted")
 		}
-		data, err := os.ReadFile(filepath.Join(root, "scripts"))
+		data, err := os.ReadFile(filepath.Join(root, ".markitect"))
 		if err != nil || string(data) != "unmanaged file" {
 			t.Fatalf("unmanaged ancestor changed: %q, %v", data, err)
 		}
@@ -41,7 +41,7 @@ func TestInstallRefusesModifiedBootstrapAndChangedPlanInputs(t *testing.T) {
 		bundle := installTestBundle(t, "2", "0.1.0-rc.3", "old")
 		writeBundleToRoot(t, root, bundle, true)
 		commitInstallPins(t, root, "install old release")
-		bootstrap := filepath.Join(root, "scripts", "run-markitect.go")
+		bootstrap := filepath.Join(root, ".markitect", "bootstrap", "run.go")
 		if err := os.WriteFile(bootstrap, []byte("modified bootstrap\n"), 0644); err != nil {
 			t.Fatal(err)
 		}
@@ -57,7 +57,7 @@ func TestInstallRefusesModifiedBootstrapAndChangedPlanInputs(t *testing.T) {
 		if err != nil || plan.Kind != "install" {
 			t.Fatalf("initial plan = (%+v, %v)", plan, err)
 		}
-		writeFixture(t, root, map[string][]byte{"tools/markitect/release.yaml": []byte("unexpected\n")})
+		writeFixture(t, root, map[string][]byte{".markitect/tool/release.yaml": []byte("unexpected\n")})
 		if _, err := Install(root, bundle, true); err == nil {
 			t.Fatal("install accepted target changes made after the plan")
 		}
@@ -114,7 +114,7 @@ func TestInstallWriteRequiresNonProtectedBranchAndSharedLock(t *testing.T) {
 func TestInstallRejectsSymlinkedPinPath(t *testing.T) {
 	root := installTestRepo(t, "feature/symlink")
 	outside := tempRoot(t)
-	if err := os.Symlink(outside, filepath.Join(root, "scripts")); err != nil {
+	if err := os.Symlink(outside, filepath.Join(root, ".markitect")); err != nil {
 		t.Skipf("symlink creation unavailable: %v", err)
 	}
 	if _, err := Install(root, installTestBundle(t, "7", "0.1.0-rc.4", "new"), false); err == nil || !strings.Contains(strings.ToLower(err.Error()), "symlink") {

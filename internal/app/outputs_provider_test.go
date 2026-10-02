@@ -31,3 +31,34 @@ func TestStrictProviderDiagnosticsHaveStableResourceOrder(t *testing.T) {
 		}
 	}
 }
+
+func TestStrictInventoryCountsTypedRuleAdapterAsCanonicalRuleMapping(t *testing.T) {
+	project := &core.Resource{Kind: "Project", Path: "markitect.yaml", Spec: core.Spec{
+		Targets:          []string{"claude"},
+		ProviderAdapters: &core.ProviderAdapters{StrictInventory: true},
+		RuleAdapters:     map[string][]core.Ref{"review": {{Kind: "Rule", Namespace: "team", Name: "policy"}}},
+	}}
+	rule := &core.Resource{Kind: "Rule", Metadata: core.Metadata{Name: "policy", Namespace: "team"}, Path: "docs/team/policy.yaml"}
+	resources := map[string]*core.Resource{rule.Key(): rule}
+	p := &Project{Snapshot: &snapshot.Snapshot{Files: map[string][]byte{}}, Graph: &core.Graph{Project: project, Resources: resources}}
+	for _, finding := range checkProviderAdapterInputs(p) {
+		if finding.Code == "provider-adapter.unmapped-rule" {
+			t.Fatalf("typed Rule adapter did not cover its canonical Rule: %+v", finding)
+		}
+	}
+}
+
+func TestProviderAdapterCannotReferenceSelectedOutputThroughCaseAlias(t *testing.T) {
+	project := &core.Resource{Kind: "Project", Path: "markitect.yaml", Spec: core.Spec{
+		Targets:          []string{"codex"},
+		ProviderAdapters: &core.ProviderAdapters{RoleRegister: ".AGENTS/roles.md"},
+	}}
+	p := &Project{Snapshot: &snapshot.Snapshot{Files: map[string][]byte{".AGENTS/roles.md": []byte("human-owned")}}, Graph: &core.Graph{Project: project, Resources: map[string]*core.Resource{}}}
+	findings := checkProviderAdapterInputs(p)
+	for _, finding := range findings {
+		if finding.Code == "provider-adapter.generated-source" {
+			return
+		}
+	}
+	t.Fatalf("case alias of selected generated output was accepted: %+v", findings)
+}

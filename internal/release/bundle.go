@@ -16,7 +16,10 @@ import (
 )
 
 const (
-	releaseManifestPath = "tools/markitect/release.yaml"
+	toolLockPath        = ".markitect/tool/lock.yaml"
+	releaseManifestPath = ".markitect/tool/release.yaml"
+	bootstrapPath       = ".markitect/bootstrap/run.go"
+	bootstrapTestPath   = ".markitect/bootstrap/run_test.go"
 	sourceRepository    = "github.com/Glacius-Labs/Markitect"
 	maxBundleBytes      = 64 << 20
 	maxBundleFileBytes  = 64 << 20
@@ -24,10 +27,10 @@ const (
 )
 
 var bundlePaths = []string{
-	"markitect.lock.yaml",
-	"scripts/markitect-bootstrap_test.go",
-	"scripts/run-markitect.go",
-	"tools/markitect/source.zip",
+	bootstrapPath,
+	bootstrapTestPath,
+	toolLockPath,
+	".markitect/tool/source.zip",
 }
 
 // BundleManifest identifies a complete, pinned Markitect distribution.
@@ -93,13 +96,13 @@ func BuildBundle(snapshot *snapshot.Snapshot, version string) ([]byte, error) {
 		return nil, err
 	}
 	files := map[string][]byte{
-		"markitect.lock.yaml":                 lock,
-		"scripts/run-markitect.go":            runner,
-		"scripts/markitect-bootstrap_test.go": test,
-		"tools/markitect/source.zip":          sourceZip,
+		toolLockPath:                lock,
+		bootstrapPath:               runner,
+		bootstrapTestPath:           test,
+		".markitect/tool/source.zip": sourceZip,
 	}
 	manifest := BundleManifest{
-		SchemaVersion:    1,
+		SchemaVersion:    2,
 		Version:          version,
 		SourceCommit:     snapshot.ID,
 		SourceRepository: sourceRepository,

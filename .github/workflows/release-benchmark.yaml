@@ -16,7 +16,7 @@ permissions:
 
 jobs:
   benchmark:
-    name: Fixture v1 (${{ matrix.os }})
+    name: Versioned fixture (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     timeout-minutes: 40
     strategy:
@@ -59,6 +59,12 @@ jobs:
           $all = foreach ($page in $pages) { foreach ($release in $page) { $release } }
           $previous = $all | Where-Object { $_.immutable -and -not $_.draft -and $_.published_at -and [datetime]$_.published_at -lt [datetime]$current.published_at } | Sort-Object { [datetime]$_.published_at } -Descending | Select-Object -First 1
           if (-not $previous) { throw 'No previous immutable published release exists' }
+          if ($current.tag_name -notmatch '^v(\d+\.\d+\.\d+)$') { throw "Current release tag is not stable semantic version form: $($current.tag_name)" }
+          $currentVersion = [version]$Matches[1]
+          if ($currentVersion -lt [version]'0.9.0') { throw 'This benchmark workflow requires a current release using fixture v2 (v0.9.0 or later)' }
+          if ($previous.tag_name -notmatch '^v(\d+\.\d+\.\d+)$') { throw "Previous release tag is not stable semantic version form: $($previous.tag_name)" }
+          $previousVersion = [version]$Matches[1]
+          $previousFixture = if ($previousVersion -lt [version]'0.9.0') { 'v1' } else { 'v2' }
           $currentDir = Join-Path $env:RUNNER_TEMP 'markitect-current'
           $previousDir = Join-Path $env:RUNNER_TEMP 'markitect-previous'
           New-Item -ItemType Directory -Force $currentDir,$previousDir | Out-Null
@@ -72,6 +78,7 @@ jobs:
             if ($LASTEXITCODE -ne 0) { throw "Asset attestation failed for $filename" }
           }
           "previous=$($previous.tag_name)" >> $env:GITHUB_OUTPUT
+          "previous_fixture=$previousFixture" >> $env:GITHUB_OUTPUT
           "current_binary=$(Join-Path $currentDir "markitect-$($current.tag_name)-$env:ASSET")" >> $env:GITHUB_OUTPUT
           "previous_binary=$(Join-Path $previousDir "markitect-$($previous.tag_name)-$env:ASSET")" >> $env:GITHUB_OUTPUT
 
@@ -83,15 +90,17 @@ jobs:
           PREVIOUS_BINARY: ${{ steps.releases.outputs.previous_binary }}
         run: chmod +x "$CURRENT_BINARY" "$PREVIOUS_BINARY"
 
-      - name: Measure both releases on one versioned fixture
+      - name: Measure releases with versioned fixtures
         shell: pwsh
         env:
           CURRENT_BINARY: ${{ steps.releases.outputs.current_binary }}
           PREVIOUS_BINARY: ${{ steps.releases.outputs.previous_binary }}
           CURRENT_TAG: ${{ github.event.release.tag_name || inputs.tag }}
           PREVIOUS_TAG: ${{ steps.releases.outputs.previous }}
+          PREVIOUS_FIXTURE_VERSION: ${{ steps.releases.outputs.previous_fixture }}
         run: |
-          ./benchmark/run.ps1 -CurrentBinary $env:CURRENT_BINARY -PreviousBinary $env:PREVIOUS_BINARY -CurrentTag $env:CURRENT_TAG -PreviousTag $env:PREVIOUS_TAG -FixtureRoot ./benchmark/fixtures/v1 -OutputDirectory (Join-Path $env:RUNNER_TEMP 'markitect-benchmark')
+          $previousFixtureRoot = Join-Path $env:GITHUB_WORKSPACE "benchmark/fixtures/$env:PREVIOUS_FIXTURE_VERSION"
+          ./benchmark/run.ps1 -CurrentBinary $env:CURRENT_BINARY -PreviousBinary $env:PREVIOUS_BINARY -CurrentTag $env:CURRENT_TAG -PreviousTag $env:PREVIOUS_TAG -CurrentFixtureRoot ./benchmark/fixtures/v2 -PreviousFixtureRoot $previousFixtureRoot -OutputDirectory (Join-Path $env:RUNNER_TEMP 'markitect-benchmark')
 
       - name: Upload raw data and summary even after measurement failure
         if: always()

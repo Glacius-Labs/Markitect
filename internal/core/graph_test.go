@@ -78,6 +78,31 @@ func TestBuildUsesLongestAreaAndInheritsAncestorRules(t *testing.T) {
 	}
 }
 
+func TestAreaNamesRejectPathTraversalWithoutRestrictingOrdinaryCharacters(t *testing.T) {
+	for _, name := range []string{"text-v0", "area 1"} {
+		project := resource("Project", "", "sample", "markitect.yaml")
+		project.Spec.Areas = []Area{{Name: name, Path: "docs/area"}}
+		graph := Build([]*Resource{project})
+		for _, diagnostic := range graph.Diagnostics {
+			if diagnostic.Code == "area.invalid" {
+				t.Errorf("valid Area name %q was rejected: %+v", name, diagnostic)
+			}
+		}
+	}
+	for _, name := range []string{"..", "bad/name", "bad\\name", "bad:name", "bad\x00name"} {
+		project := resource("Project", "", "sample", "markitect.yaml")
+		project.Spec.Areas = []Area{{Name: name, Path: "docs/area"}}
+		graph := Build([]*Resource{project})
+		found := false
+		for _, diagnostic := range graph.Diagnostics {
+			found = found || diagnostic.Code == "area.invalid"
+		}
+		if !found {
+			t.Errorf("unsafe Area name %q was accepted", name)
+		}
+	}
+}
+
 func TestBuildResolvesContractBindingAndChecksExactSignature(t *testing.T) {
 	p := project(Area{Name: "general", Path: "docs/general"})
 	c := resource("Contract", "general", "review", "docs/general/review.yaml")

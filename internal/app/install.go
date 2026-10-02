@@ -11,21 +11,21 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
 
-const releaseManifestPath = "tools/markitect/release.yaml"
+const releaseManifestPath = ".markitect/tool/release.yaml"
 
 var installPinPaths = []string{
-	"markitect.lock.yaml",
-	"scripts/markitect-bootstrap_test.go",
-	"scripts/run-markitect.go",
-	"tools/markitect/source.zip",
+	".markitect/tool/lock.yaml",
+	".markitect/bootstrap/run_test.go",
+	".markitect/bootstrap/run.go",
+	".markitect/tool/source.zip",
 }
 
 var installPaths = []string{
-	"markitect.lock.yaml",
-	"scripts/markitect-bootstrap_test.go",
-	"scripts/run-markitect.go",
-	"tools/markitect/release.yaml",
-	"tools/markitect/source.zip",
+	".markitect/tool/lock.yaml",
+	".markitect/bootstrap/run_test.go",
+	".markitect/bootstrap/run.go",
+	".markitect/tool/release.yaml",
+	".markitect/tool/source.zip",
 }
 
 // InstallPlan describes a complete release-pin change. Install performs only

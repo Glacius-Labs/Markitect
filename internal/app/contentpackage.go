@@ -36,7 +36,7 @@ func PackContent(s *snapshot.Snapshot, provenance string) ([]byte, core.PackageP
 	pin = core.PackagePin{
 		Name: manifest.Metadata.Name, Version: manifest.Spec.Version,
 		Source:  provenance,
-		Archive: "packages/" + manifest.Metadata.Name + "-" + manifest.Spec.Version + ".zip",
+		Archive: ".markitect/packages/" + manifest.Metadata.Name + "-" + manifest.Spec.Version + ".zip",
 		SHA256:  strings.TrimPrefix(Hash(archive), "sha256:"),
 	}
 	project := core.Resource{APIVersion: core.APIVersion, Kind: "Project", Metadata: core.Metadata{Name: "package-validation"}, Spec: core.Spec{Packages: []core.PackagePin{pin}}}

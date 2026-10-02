@@ -27,7 +27,7 @@ func TestAgentContractIsLinkedWithAndWithoutInlineText(t *testing.T) {
 			if inline && !strings.Contains(body, "Review the change.") {
 				t.Errorf("inline=%v: %s omitted canonical text:\n%s", inline, path, body)
 			}
-			if !inline && !strings.Contains(body, "../../docs/agents/reviewer.md") {
+			if !inline && !strings.Contains(body, "../../docs/agents/reviewer.yaml") {
 				t.Errorf("inline=%v: %s omitted canonical companion link:\n%s", inline, path, body)
 			}
 		}

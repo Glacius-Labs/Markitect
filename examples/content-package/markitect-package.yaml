@@ -1,13 +1,13 @@
 apiVersion: markitect.example.org/v1alpha1
 kind: Package
 metadata:
-    name: review-guidance
+  name: review-guidance
 spec:
-    version: 1.0.0
-    areas:
-        - name: review
-          path: content
-    exports:
-        - kind: Workflow
-          name: review-change
-          namespace: review
+  version: 1.0.0
+  areas:
+    - name: review
+      path: .markitect/areas/review
+  exports:
+    - kind: Workflow
+      name: review-change
+      namespace: review

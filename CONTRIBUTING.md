@@ -14,7 +14,7 @@
 | `internal/app` | Context, impact, evidence, verification, rendering, initialization, and controlled writes |
 | `internal/authoring` | Embedded core authoring resources |
 | `internal/licenses` | Canonical embedded upstream notices |
-| `internal/render` | Generic managed views and declared output adapters |
+| `internal/render` | Opt-in Markdown views and declared output adapters |
 | `internal/release` | Deterministic source archives and release bundles |
 | `internal/contentpackage` | Validated offline content-package archive format |
 | `internal/app/install*.go` | Release pin planning, preflight, and application |
@@ -41,7 +41,7 @@ go vet ./...
 go run ./cmd/markitect schema --repo .
 go run ./cmd/markitect check --repo examples/minimal
 go run ./cmd/markitect check --repo examples/repository-layout
-go run ./cmd/markitect check --repo benchmark/fixtures/v1
+go run ./cmd/markitect check --repo benchmark/fixtures/v2
 git diff --check
 ```
 
@@ -55,7 +55,7 @@ For a Project to produce complete `verify` evidence, declare every required comm
 
 Checks run against a materialized fixed revision within the documented time and output bounds. They run with the caller's local authority; the materialized copy is not a sandbox. Do not configure commands that mutate the checkout or access unrelated data. Missing or empty check declarations make `verify` incomplete rather than successful.
 
-Rendering always supports Markitect's generic managed views. Supported Codex and Claude targets, rule mappings and shared entrypoints must be declared in the Project. Only declared outputs are rendered or checked. An adopting repository owns its root navigation, hooks, custom output formats and import scripts.
+Rendering writes only explicitly selected outputs. Add `markdown` to `spec.targets` to generate resource views under `docs/markitect/`; add Codex and Claude targets, rule mappings and shared entrypoints for the provider outputs the Project owns. Provider entrypoints link directly to canonical YAML. Only declared outputs are rendered or checked. An adopting repository owns its root navigation, hooks, custom output formats and import scripts.
 
 ## Initialization behavior
 

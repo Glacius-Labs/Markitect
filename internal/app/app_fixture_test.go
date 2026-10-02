@@ -29,7 +29,7 @@ func projectResource(namespace string) core.Resource {
 		APIVersion: core.APIVersion,
 		Kind:       "Project",
 		Metadata:   core.Metadata{Name: "sample-project"},
-		Spec: core.Spec{Targets: []string{"codex"}, Areas: []core.Area{
+		Spec: core.Spec{Targets: []string{"codex", "markdown"}, Areas: []core.Area{
 			{Name: projectNS, Path: "docs/general"},
 		}},
 	}

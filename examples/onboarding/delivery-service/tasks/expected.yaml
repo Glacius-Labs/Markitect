@@ -5,15 +5,15 @@ entry:
   name: refund-triage
 contextInputs:
   - markitect.yaml
-  - docs/shared/customer-data.yaml
-  - docs/support/refund-decision.yaml
-  - docs/support/refund-policy.yaml
-  - docs/support/refund-review.yaml
-  - docs/support/refund-specialist.yaml
-  - docs/support/refund-triage.yaml
+  - .markitect/areas/shared/customer-data.rule.yaml
+  - .markitect/areas/support/refund-decision.contract.yaml
+  - .markitect/areas/support/refund-policy.text.yaml
+  - .markitect/areas/support/refund-review.workflow.yaml
+  - .markitect/areas/support/refund-specialist.agent.yaml
+  - .markitect/areas/support/refund-triage.skill.yaml
 expectedChangedPaths:
-  - docs/support/refund-policy.yaml
-  - docs/support/refund-policy.md
+  - .markitect/areas/support/refund-policy.text.yaml
+  - docs/markitect/support/refund-policy.text.md
 expectedAffectedResources:
   - support/Agent/refund-specialist
   - support/Skill/refund-triage

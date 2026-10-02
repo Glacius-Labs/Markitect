@@ -105,7 +105,7 @@ func TestWriteOutputsRefusesUnmanagedFile(t *testing.T) {
 	root := tempRoot(t)
 	initAppTestRepo(t, root)
 	writeFixture(t, root, fixtureFiles(t, "", "Keep the owner source.", projectNS).Files)
-	unmanaged := filepath.Join(root, "docs/general/skills/entry.md")
+	unmanaged := filepath.Join(root, ".agents/skills/entry/SKILL.md")
 	if err := os.MkdirAll(filepath.Dir(unmanaged), 0755); err != nil {
 		t.Fatal(err)
 	}

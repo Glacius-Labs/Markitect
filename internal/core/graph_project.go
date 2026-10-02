@@ -38,7 +38,7 @@ func (g *Graph) validateProject() {
 		}
 	}
 	for _, target := range p.Spec.Targets {
-		if target != "codex" && target != "claude" {
+		if target != "codex" && target != "claude" && target != "markdown" {
 			g.diag(p, "project.target", fmt.Sprintf("unsupported target %q", target))
 		}
 	}
@@ -72,6 +72,9 @@ func (g *Graph) validateProject() {
 		if a.Name == "" || a.Path == "" {
 			g.diag(p, "area.invalid", "area name and path are required")
 			continue
+		}
+		if a.Name == "." || a.Name == ".." || strings.ContainsAny(a.Name, `/\\:`) || strings.ContainsRune(a.Name, 0) {
+			g.diag(p, "area.invalid", fmt.Sprintf("area name %q must be a safe single path segment", a.Name))
 		}
 		if seen[a.Name] {
 			g.diag(p, "area.duplicate", fmt.Sprintf("duplicate area %q", a.Name))

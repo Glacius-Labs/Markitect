@@ -107,10 +107,11 @@ func TestCompileContextIncludesOnlySelectedImplementationAndItsExplicitFiles(t *
 func TestChangesMapsSkillSourceAndCompanionToLocalDependents(t *testing.T) {
 	makeProject := func(body, companion string) *Project {
 		policy := impactProjectResource([]core.Area{{Name: "area", Path: "docs/area"}})
+		policy.Spec.Targets = []string{"markdown"}
 		skill := core.Resource{APIVersion: core.APIVersion, Kind: "Skill", Metadata: core.Metadata{Name: "local", Namespace: "area"}, Path: "docs/area/skills/local.yaml", Spec: core.Spec{Text: body}}
 		consumer := core.Resource{APIVersion: core.APIVersion, Kind: "Workflow", Metadata: core.Metadata{Name: "uses-local", Namespace: "area"}, Path: "docs/area/workflows/uses-local.yaml", Spec: core.Spec{Text: "Use local skill.", Uses: []core.Ref{{Kind: "Skill", Name: "local"}}}}
 		unrelated := core.Resource{APIVersion: core.APIVersion, Kind: "Workflow", Metadata: core.Metadata{Name: "unrelated", Namespace: "area"}, Path: "docs/area/workflows/unrelated.yaml", Spec: core.Spec{Text: "Independent."}}
-		return parseImpactProject(t, []*core.Resource{policy, &skill, &consumer, &unrelated}, map[string]string{"docs/area/skills/local.md": companion})
+		return parseImpactProject(t, []*core.Resource{policy, &skill, &consumer, &unrelated}, map[string]string{"docs/markitect/area/skills/local.skill.md": companion})
 	}
 	impact := Changes(makeProject("Old definition.", "Old generated view."), makeProject("New definition.", "New generated view."))
 	assertAffected(t, impact, "area/Skill/local", "area/Workflow/uses-local")
@@ -136,14 +137,14 @@ func TestChangesMapsAgentMetadataAndProviderOutputsToDependents(t *testing.T) {
 func TestChangesMapsSharedRuleSourceViewsAndProviderViewToAllApplicableResources(t *testing.T) {
 	makeProject := func(ruleText, companion, providerView string) *Project {
 		policy := impactProjectResource([]core.Area{{Name: "team", Path: "docs/team"}})
-		policy.Spec.Targets = []string{"claude"}
+		policy.Spec.Targets = []string{"claude", "markdown"}
 		policy.Spec.RuleAdapters = map[string][]core.Ref{"review-context": {{Kind: "Rule", Namespace: "team", Name: "shared"}}}
 		rule := core.Resource{APIVersion: core.APIVersion, Kind: "Rule", Metadata: core.Metadata{Name: "shared", Namespace: "team"}, Path: "docs/team/rules/shared.yaml", Spec: core.Spec{Text: ruleText}}
 		area := core.Resource{APIVersion: core.APIVersion, Kind: "Workflow", Metadata: core.Metadata{Name: "area-flow", Namespace: "team"}, Path: "docs/team/workflows/area-flow.yaml", Spec: core.Spec{Text: "General.", Rules: []core.Ref{{Name: "shared"}}}}
 		second := core.Resource{APIVersion: core.APIVersion, Kind: "Skill", Metadata: core.Metadata{Name: "area-skill", Namespace: "team"}, Path: "docs/team/skills/area-skill.yaml", Spec: core.Spec{Text: "General skill.", Rules: []core.Ref{{Name: "shared"}}}}
 		outputs := map[string]string{
-			"docs/team/rules/shared.md":       companion,
-			".claude/rules/review-context.md": providerView,
+			"docs/markitect/team/rules/shared.rule.md": companion,
+			".claude/rules/review-context.md":          providerView,
 		}
 		return parseImpactProject(t, []*core.Resource{policy, &rule, &area, &second}, outputs)
 	}

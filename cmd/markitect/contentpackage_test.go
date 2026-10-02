@@ -70,7 +70,7 @@ func TestPackageConsumerCLIContextAndArchiveIntegrity(t *testing.T) {
 	for _, want := range []string{
 		"review-guidance::review/Skill/evidence-review",
 		"review-guidance::review/Text/review-principles",
-		"package:review-guidance/file:content/inputs/review-evidence.md",
+		"package:review-guidance/file:.markitect/areas/review/review-evidence.md",
 	} {
 		found := false
 		for _, input := range packageContext.Inputs {
@@ -121,7 +121,7 @@ func TestPackageConsumerCLIContextAndArchiveIntegrity(t *testing.T) {
 
 	changedRoot := filepath.Join(t.TempDir(), "consumer")
 	copyPackageTestTree(t, root, changedRoot)
-	archive := filepath.Join(changedRoot, filepath.FromSlash("packages/review-guidance-1.0.0.zip"))
+	archive := filepath.Join(changedRoot, filepath.FromSlash(".markitect/packages/review-guidance-1.0.0.zip"))
 	data, err := os.ReadFile(archive)
 	if err != nil {
 		t.Fatal(err)

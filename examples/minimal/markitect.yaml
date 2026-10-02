@@ -3,9 +3,15 @@ kind: Project
 metadata:
     name: rollback-example
 spec:
+    targets:
+        - markdown
     areas:
+        - name: documentation
+          path: docs/inputs
         - name: sample
-          path: docs
+          path: .markitect/areas/sample
+          imports:
+            - documentation
     bindings:
         - contract:
             kind: Contract

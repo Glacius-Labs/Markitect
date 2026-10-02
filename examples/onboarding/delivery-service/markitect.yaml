@@ -3,11 +3,13 @@ kind: Project
 metadata:
     name: parcel-support
 spec:
+    targets:
+        - markdown
     areas:
         - name: shared
-          path: docs/shared
+          path: .markitect/areas/shared
         - name: support
-          path: docs/support
+          path: .markitect/areas/support
           imports:
             - shared
           rules:

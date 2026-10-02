@@ -1,7 +1,6 @@
 # Implementation area
 
-This area owns the example's implementation-facing documentation and its
-explicit source input.
+This area owns the example's implementation-facing documentation and its explicit source input.
 
-- [Worker behavior](text/worker-behavior.md) — [canonical Text source](text/worker-behavior.yaml), informed by [worker.go](src/worker.go).
-- [Startup review](workflows/startup-review.md) — [canonical Workflow source](workflows/startup-review.yaml), which uses the worker-behavior Text.
+- [Worker behavior view](../markitect/implementation/review/worker-behavior.text.md) — [canonical Text YAML](../../.markitect/areas/implementation/review/worker-behavior.text.yaml), informed by [worker.go](src/worker.go).
+- [Startup review view](../markitect/implementation/review/startup-review.workflow.md) — [canonical Workflow YAML](../../.markitect/areas/implementation/review/startup-review.workflow.yaml), which uses the worker-behavior Text.

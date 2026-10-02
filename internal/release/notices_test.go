@@ -51,5 +51,5 @@ func TestSourceDistributionsRetainEmbeddedNotices(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	assertNotices(bundle.Files["tools/markitect/source.zip"])
+	assertNotices(bundle.Files[".markitect/tool/source.zip"])
 }

@@ -103,33 +103,11 @@ func buildInstallPlan(root string, bundle *release.Bundle) (*InstallPlan, *insta
 		if err != nil {
 			return nil, nil, fmt.Errorf("read installed release manifest: %w", err)
 		}
-		oldFiles := pinFileMap(state.files, installPinPaths)
+		oldFiles := pinFileMap(state.files, installPaths)
 		if err := release.ValidateBundleFiles(manifest, oldFiles, manifest.SourceCommit); err != nil {
 			return nil, nil, fmt.Errorf("validate installed release: %w", err)
 		}
 		state.kind = "upgrade"
-	case present == len(installPinPaths):
-		if state.head == nil {
-			return nil, nil, errors.New("legacy pins require committed Git evidence before upgrade")
-		}
-		if _, manifestTracked := state.head.Files[releaseManifestPath]; manifestTracked {
-			return nil, nil, errors.New("release manifest is deleted from the working tree; refusing to treat it as a legacy install")
-		}
-		if err := validateCommittedPins(root, state, installPinPaths); err != nil {
-			return nil, nil, fmt.Errorf("legacy pins are not a complete unchanged committed installation: %w", err)
-		}
-		legacyFiles := pinFileMap(state.files, installPinPaths)
-		lock, err := release.ParseToolLock(legacyFiles["markitect.lock.yaml"])
-		if err != nil {
-			return nil, nil, fmt.Errorf("read legacy tool lock: %w", err)
-		}
-		if lock.Version != "0.1.0-rc.3" {
-			return nil, nil, fmt.Errorf("legacy upgrade only accepts the RC3 flat lock, found %q", lock.Version)
-		}
-		if err := release.ValidateToolLockFiles(lock, legacyFiles); err != nil {
-			return nil, nil, fmt.Errorf("validate legacy tool lock: %w", err)
-		}
-		state.kind = "legacy-upgrade"
 	default:
 		return nil, nil, fmt.Errorf("refusing partial or unknown release pins: found %d of %d expected files", present, len(installPaths))
 	}
@@ -153,7 +131,7 @@ func buildInstallPlan(root string, bundle *release.Bundle) (*InstallPlan, *insta
 		}
 		plan.Files = append(plan.Files, InstallFilePlan{Path: name, SHA256: digestInstallBytes(bundle.Files[name]), Action: action})
 	}
-	if state.kind != "install" && state.kind != "upgrade" && state.kind != "legacy-upgrade" {
+	if state.kind != "install" && state.kind != "upgrade" {
 		return nil, nil, fmt.Errorf("unsupported install state %q", state.kind)
 	}
 	if allInstallBytesMatch(state.files, bundle.Files) {
@@ -226,7 +204,7 @@ func readInstallFile(root, name string) (installFileState, error) {
 // source archive remains byte-exact; installFileState.data retains raw bytes
 // independently for concurrent-edit checks.
 func canonicalInstallReadback(name string, data []byte) []byte {
-	if name == "tools/markitect/source.zip" {
+	if name == ".markitect/tool/source.zip" {
 		return append([]byte(nil), data...)
 	}
 	return bytes.ReplaceAll(data, []byte("\r\n"), []byte("\n"))

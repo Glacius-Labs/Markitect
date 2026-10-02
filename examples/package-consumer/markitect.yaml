@@ -4,13 +4,14 @@ metadata:
     name: package-consumer
 spec:
     targets:
+        - markdown
         - codex
     areas:
         - name: consumer
-          path: docs
+          path: .markitect/areas/consumer
     packages:
         - name: review-guidance
           version: 1.0.0
-          source: git:2e15d6c1aa2bf5c9008a451b40c5337e2a0b9e7f
-          archive: packages/review-guidance-1.0.0.zip
-          sha256: b100bb24373c7b5d3da5c162aac58ae58069ba93b902e71ad28309720c02724f
+          source: git:f6d711763d93c6f8bed2b43d5ff5cf6b16458bf5
+          archive: .markitect/packages/review-guidance-1.0.0.zip
+          sha256: a9540b436b28917f57f1373b1e1aa6916255441f5573d2649a63588a383ceb21

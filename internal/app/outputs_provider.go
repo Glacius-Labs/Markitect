@@ -2,11 +2,11 @@ package app
 
 import (
 	"fmt"
-	"path/filepath"
 	"sort"
 	"strings"
 
 	"github.com/Glacius-Labs/Markitect/internal/core"
+	"github.com/Glacius-Labs/Markitect/internal/render"
 )
 
 func checkProviderAdapterInputs(p *Project) []core.Diagnostic {
@@ -31,14 +31,28 @@ func checkProviderAdapterInputs(p *Project) []core.Diagnostic {
 		paths = append(paths, a.RoleRegister)
 	}
 	sort.Strings(paths)
+	generated, err := render.Generate(p.Graph)
+	if err != nil {
+		return []core.Diagnostic{{Code: "provider-adapter.output-plan", Path: "markitect.yaml", Message: fmt.Sprintf("resolve generated provider outputs: %v", err)}}
+	}
+	generatedPaths := make(map[string]bool, len(generated))
+	for name := range generated {
+		generatedPaths[strings.ToLower(name)] = true
+	}
 	var findings []core.Diagnostic
 	for _, name := range paths {
 		if !safeAssertionPath(name) {
 			findings = append(findings, core.Diagnostic{Code: "provider-adapter.path", Path: "markitect.yaml", Message: fmt.Sprintf("invalid adapter source path %q", name)})
 			continue
 		}
+		if generatedPaths[strings.ToLower(name)] {
+			findings = append(findings, core.Diagnostic{Code: "provider-adapter.generated-source", Path: name, Message: "provider adapter sources must not point to generated Markitect outputs"})
+			continue
+		}
 		if _, ok := p.Snapshot.Files[name]; !ok {
 			findings = append(findings, core.Diagnostic{Code: "provider-adapter.source", Path: name, Message: "adapter source is missing"})
+		} else if render.IsGenerated(p.Snapshot.Files[name]) {
+			findings = append(findings, core.Diagnostic{Code: "provider-adapter.generated-source", Path: name, Message: "provider adapter sources must not point to generated Markitect outputs"})
 		}
 	}
 	if a.StrictInventory {
@@ -47,6 +61,20 @@ func checkProviderAdapterInputs(p *Project) []core.Diagnostic {
 			for _, sources := range a.RuleSources {
 				for _, name := range sources {
 					mapped[name] = true
+				}
+			}
+			for _, refs := range p.Graph.Project.Spec.RuleAdapters {
+				for _, ref := range refs {
+					kind := ref.Kind
+					if kind == "" {
+						kind = "Rule"
+					}
+					if kind != "Rule" {
+						continue
+					}
+					if rule := p.Graph.Resources[ref.GraphKey("", "", "Rule")]; rule != nil && rule.Kind == "Rule" && rule.Package == "" {
+						mapped[rule.Path] = true
+					}
 				}
 			}
 		}
@@ -61,8 +89,7 @@ func checkProviderAdapterInputs(p *Project) []core.Diagnostic {
 				continue
 			}
 			if resource.Kind == "Rule" && targets["claude"] {
-				view := strings.TrimSuffix(resource.Path, filepath.Ext(resource.Path)) + ".md"
-				if !mapped[view] {
+				if !mapped[resource.Path] {
 					findings = append(findings, core.Diagnostic{Code: "provider-adapter.unmapped-rule", Path: resource.Path, Line: resource.Line, Message: "canonical Rule has no provider rule adapter mapping"})
 				}
 			}

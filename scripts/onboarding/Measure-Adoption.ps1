@@ -151,6 +151,7 @@ $outcomes.initWriteCreatedExpectedFiles = 'passed'
 # Build a disposable fixed-snapshot fixture without task cards or the oracle in its Git tree.
 $null = New-Item -ItemType Directory -Path $workspace
 Copy-Item -LiteralPath (Join-Path $fixtureRoot 'markitect.yaml') -Destination $workspace
+Copy-Item -LiteralPath (Join-Path $fixtureRoot '.markitect') -Destination $workspace -Recurse -Force
 Copy-Item -LiteralPath (Join-Path $fixtureRoot 'docs') -Destination $workspace -Recurse
 Copy-Item -LiteralPath (Join-Path $fixtureRoot 'scripts') -Destination $workspace -Recurse
 $null = Invoke-Git -Directory $workspace -Arguments @('init', '--initial-branch=feature/adoption-exercise')
@@ -170,14 +171,14 @@ Assert-ExactSet -Actual $contextPaths -Expected $expectedContextPaths -Label 'Co
 $outcomes.contextExpectedPaths = 'passed'
 
 # Apply the fixed task to the canonical Text resource and regenerate its managed view.
-$policyPath = Join-Path $workspace 'docs/support/refund-policy.yaml'
+$policyPath = Join-Path $workspace '.markitect/areas/support/refund-policy.text.yaml'
 $policySource = Get-Content -LiteralPath $policyPath -Raw
 $oldWindow = 'up to 14 days after delivery'
 if (-not $policySource.Contains($oldWindow)) { throw 'The fixed baseline policy wording has changed; review the task and oracle.' }
 $candidateSource = $policySource.Replace($oldWindow, 'up to 30 days after delivery')
 [IO.File]::WriteAllText($policyPath, $candidateSource, [Text.UTF8Encoding]::new($false))
 $null = Invoke-Markitect -Name 'render-candidate' -Arguments @('render', '--repo', $workspace, '--write')
-$null = Invoke-Git -Directory $workspace -Arguments @('add', 'docs/support/refund-policy.yaml', 'docs/support/refund-policy.md')
+$null = Invoke-Git -Directory $workspace -Arguments @('add', '.markitect/areas/support/refund-policy.text.yaml', 'docs/markitect/support/refund-policy.text.md')
 $null = Invoke-Git -Directory $workspace -Arguments @('commit', '-m', 'Extend late parcel refund request window')
 $candidateSha = Invoke-Git -Directory $workspace -Arguments @('rev-parse', 'HEAD')
 if ($candidateSha -notmatch '^[0-9a-f]{40}$') { throw "Candidate is not a full commit SHA: $candidateSha" }

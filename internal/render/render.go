@@ -59,14 +59,6 @@ func GenerateWithOwners(g *core.Graph) (map[string][]byte, map[string][]string, 
 		if r.Kind == "Project" {
 			continue
 		}
-		view := companionPath(r.Path)
-		content, err := renderCompanion(r, view, g)
-		if err != nil {
-			return nil, nil, err
-		}
-		if err := addOwned(outputs, ownerSets, view, content, r.Key()); err != nil {
-			return nil, nil, err
-		}
 	}
 
 	targets := map[string]bool{}
@@ -75,10 +67,32 @@ func GenerateWithOwners(g *core.Graph) (map[string][]byte, map[string][]string, 
 		adapters = g.Project.Spec.ProviderAdapters
 		for _, target := range g.Project.Spec.Targets {
 			target = strings.ToLower(target)
-			if target != "codex" && target != "claude" {
+			if target != "codex" && target != "claude" && target != "markdown" {
 				return nil, nil, fmt.Errorf("unsupported provider target %q", target)
 			}
 			targets[target] = true
+		}
+	}
+	if targets["markdown"] {
+		viewPaths, err := MarkdownViewPaths(g)
+		if err != nil {
+			return nil, nil, err
+		}
+		for view, resource := range viewPaths {
+			content, err := renderCompanion(resource, view, g)
+			if err != nil {
+				return nil, nil, err
+			}
+			if err := addOwned(outputs, ownerSets, view, content, resource.GraphKey()); err != nil {
+				return nil, nil, err
+			}
+		}
+		if len(viewPaths) > 0 {
+			if len(viewPaths) > 0 {
+				if err := addMarkdownNavigation(outputs, ownerSets, viewPaths, g.Project.Key()); err != nil {
+					return nil, nil, err
+				}
+			}
 		}
 	}
 	if targets["codex"] || targets["claude"] {

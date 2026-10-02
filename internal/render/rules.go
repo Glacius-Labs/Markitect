@@ -32,7 +32,7 @@ func renderRules(g *core.Graph) (map[string][]byte, map[string][]string, error) 
 				return nil, nil, fmt.Errorf("rule adapter %q references unresolved rule %q", name, ref.Name)
 			}
 			p := ".claude/rules/" + name + ".md"
-			b.WriteString("- [" + r.Metadata.Name + "](" + relative(p, companionPath(r.Path)) + ")\n")
+			b.WriteString("- [" + r.Metadata.Name + "](" + relative(p, r.Path) + ")\n")
 			owners[p] = append(owners[p], r.Key())
 		}
 		out[".claude/rules/"+name+".md"] = []byte(b.String())

@@ -41,7 +41,7 @@ func ParseBundleManifest(data []byte) (BundleManifest, error) {
 	if err := decoder.Decode(&manifest); err != nil {
 		return BundleManifest{}, fmt.Errorf("decode release manifest fields: %w", err)
 	}
-	if manifest.SchemaVersion != 1 || !validVersion(manifest.Version) || strings.HasPrefix(manifest.Version, "v") || !validCommit(manifest.SourceCommit) || manifest.SourceRepository != sourceRepository {
+	if manifest.SchemaVersion != 2 || !validVersion(manifest.Version) || strings.HasPrefix(manifest.Version, "v") || !validCommit(manifest.SourceCommit) || manifest.SourceRepository != sourceRepository {
 		return BundleManifest{}, errors.New("release manifest schema, version, source commit, or source repository is invalid")
 	}
 	if len(manifest.Files) != len(bundlePaths) {
@@ -84,16 +84,16 @@ func inspectYAMLNode(node *yaml.Node) error {
 	return nil
 }
 
-// ToolLock is the backwards-compatible three-field tool distribution lock.
+// ToolLock is the three-field tool distribution lock.
 type ToolLock struct {
 	Version string
 	Source  string
 	SHA256  string
 }
 
-// ParseToolLock strictly parses the existing flat Markitect tool lock.
+// ParseToolLock strictly parses the Markitect tool lock.
 func ParseToolLock(data []byte) (ToolLock, error) {
-	values, err := parseSimpleFlatYAML(data, []string{"version", "source", "sha256"}, "markitect.lock.yaml")
+	values, err := parseSimpleFlatYAML(data, []string{"version", "source", "sha256"}, toolLockPath)
 	if err != nil {
 		return ToolLock{}, err
 	}
@@ -103,9 +103,8 @@ func ParseToolLock(data []byte) (ToolLock, error) {
 	return ToolLock{Version: values["version"], Source: values["source"], SHA256: values["sha256"]}, nil
 }
 
-// ValidateToolLockFiles confirms that a strict flat tool lock describes the
-// source archive in files. It is useful when reading legacy installations that
-// predate release.yaml.
+// ValidateToolLockFiles confirms that a strict tool lock describes the source
+// archive in files.
 func ValidateToolLockFiles(lock ToolLock, files map[string][]byte) error {
 	archive, ok := files[sourcePath]
 	if !ok {
@@ -119,29 +118,28 @@ func ValidateToolLockFiles(lock ToolLock, files map[string][]byte) error {
 
 // ValidateBundleFiles checks all four distribution bytes against a parsed
 // manifest, confirms the expected installed source commit, and validates the
-// legacy flat lock against the source archive. The files map must contain the
-// exact four bundle paths.
+// tool lock against the source archive. The files map must contain the
+// exact five consumer files, including the release manifest.
 func ValidateBundleFiles(manifest BundleManifest, files map[string][]byte, expectedSourceCommit string) error {
-	if manifest.SchemaVersion != 1 || !validVersion(manifest.Version) || strings.HasPrefix(manifest.Version, "v") || !validCommit(manifest.SourceCommit) || manifest.SourceRepository != sourceRepository {
+	if manifest.SchemaVersion != 2 || !validVersion(manifest.Version) || strings.HasPrefix(manifest.Version, "v") || !validCommit(manifest.SourceCommit) || manifest.SourceRepository != sourceRepository {
 		return errors.New("release manifest schema, version, source commit, or source repository is invalid")
 	}
 	if expectedSourceCommit != "" && manifest.SourceCommit != expectedSourceCommit {
 		return errors.New("installed release manifest does not match the expected source commit")
 	}
 	if len(manifest.Files) != len(bundlePaths) {
-		return errors.New("installed release must contain exactly four distribution files")
+		return errors.New("release manifest must bind exactly four distribution files")
 	}
-	if len(files) == len(bundlePaths)+1 {
-		manifestBytes, ok := files[releaseManifestPath]
-		if !ok {
-			return errors.New("installed release has an unexpected extra file")
-		}
-		parsed, err := ParseBundleManifest(manifestBytes)
-		if err != nil || !sameManifest(manifest, parsed) {
-			return errors.New("installed release manifest bytes do not match the parsed manifest")
-		}
-	} else if len(files) != len(bundlePaths) {
-		return errors.New("installed release must contain exactly four distribution files and optionally release.yaml")
+	if len(files) != len(bundlePaths)+1 {
+		return errors.New("installed release must contain exactly five consumer files")
+	}
+	manifestBytes, ok := files[releaseManifestPath]
+	if !ok {
+		return errors.New("installed release is missing its release manifest")
+	}
+	parsed, err := ParseBundleManifest(manifestBytes)
+	if err != nil || !sameManifest(manifest, parsed) {
+		return errors.New("installed release manifest bytes do not match the parsed manifest")
 	}
 	for i, name := range bundlePaths {
 		entry := manifest.Files[i]
@@ -153,7 +151,7 @@ func ValidateBundleFiles(manifest BundleManifest, files map[string][]byte, expec
 			return fmt.Errorf("installed release file %q does not match manifest SHA-256", name)
 		}
 	}
-	lock, err := ParseToolLock(files["markitect.lock.yaml"])
+	lock, err := ParseToolLock(files[toolLockPath])
 	if err != nil {
 		return err
 	}

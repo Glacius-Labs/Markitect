@@ -1,0 +1,13 @@
+apiVersion: markitect.example.org/v1alpha1
+kind: Workflow
+metadata:
+    name: review-change
+    namespace: review
+spec:
+    text: Follow the checklist and retain the declared evidence input when preparing a review.
+    uses:
+        - kind: Skill
+          name: evidence-review
+    files:
+        - .markitect/areas/review/review-evidence.md
+

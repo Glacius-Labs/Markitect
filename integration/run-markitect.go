@@ -1,5 +1,5 @@
 // run-markitect.go is copied into a consumer repository and invoked with
-// `go run scripts/run-markitect.go ...`. It uses only the Go standard library.
+// `go run .markitect/bootstrap/run.go ...`. It uses only the Go standard library.
 package main
 
 import (
@@ -24,7 +24,7 @@ import (
 	"unicode/utf8"
 )
 
-const lockName = "markitect.lock.yaml"
+const lockName = ".markitect/tool/lock.yaml"
 const maxLockSize = 64 << 10
 
 type limits struct {

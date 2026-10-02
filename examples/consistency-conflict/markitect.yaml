@@ -3,8 +3,15 @@ kind: Project
 metadata:
     name: consistency-conflict
 spec:
+    targets:
+        - markdown
     areas:
-        - name: sample
+        - name: documentation
           path: docs
+        - name: sample
+          path: .markitect/areas/sample
+          imports:
+            - documentation
     consistency:
-        functionalPredicates: [owner]
+        functionalPredicates:
+            - owner

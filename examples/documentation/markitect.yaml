@@ -3,8 +3,14 @@ kind: Project
 metadata:
     name: documentation-example
 spec:
+    targets:
+        - markdown
     areas:
         - name: implementation
-          path: docs/implementation
+          path: .markitect/areas/implementation
+          imports:
+            - project-source
+        - name: project-source
+          path: docs/implementation/src
         - name: operations
-          path: docs/operations
+          path: .markitect/areas/operations
