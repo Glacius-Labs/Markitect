@@ -107,4 +107,4 @@ Current source adds a neutral [onboarding exercise](onboarding.md), its replay i
 - MCP, LSP, and graph visualization when measured authoring needs justify them.
 - Runtime/operator integration only for a concrete state-reconciliation contract.
 
-These options are not v0.8.0 acceptance promises. Keep the core provider-independent and add abstractions only for a demonstrated invariant.
+These options are deferred product decisions, not commitments of the current release. Keep the core provider-independent and add abstractions only for a demonstrated invariant.

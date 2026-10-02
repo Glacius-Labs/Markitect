@@ -24,8 +24,8 @@ flowchart LR
     Snapshot --> Graph[Parse and resolve graph]
     Graph --> Checks[Structural checks]
     Graph --> Context[Compiled context]
-    Graph --> Views[Generic managed views]
-    Graph --> Targets[Declared render targets]
+    Graph -->|markdown target selected| Views[Managed Markdown views]
+    Graph --> Targets[Declared provider outputs]
     Context --> Review[Advisory semantic review]
     Graph --> Impact[Old/new change impact]
 ```
@@ -76,7 +76,7 @@ This is not strict interface-driven hexagonal wiring: application use cases curr
 
 Rendering produces only explicitly selected Markdown, Codex, or Claude outputs and configured rule adapters. The Markdown target writes resource views under `docs/markitect/`; provider outputs link directly to canonical YAML. Markitect owns those supported adapters; additional project-specific output policy remains outside the core. No target is selected implicitly. Format, render, schema, install, and initialization operations validate plans before writing; per-file writes are controlled, not a multi-file transaction.
 
-The current source candidate adds optional project mappings for shared provider entrypoints and strict inventory. It also checks explicitly quoted functional assertions when the Project opts in. Neither mechanism infers dependencies or facts from prose. The [adapter contract](provider-adapters.md) and [consistency contract](consistency.md) describe coverage and limits.
+The source model supports optional project mappings for shared provider entrypoints and strict inventory. It also checks explicitly quoted functional assertions when the Project opts in. Neither mechanism infers dependencies or facts from prose. The [adapter contract](provider-adapters.md) and [consistency contract](consistency.md) describe coverage and limits.
 
 The v0.3.0 source model added direct offline content archives. Project pins are the single content lock; `markitect.lock.yaml` continues to pin the CLI distribution. Package members are parsed into origin-qualified graph entries while local identity and canonical paths stay unchanged. The model rejects nested imports, cross-boundary direct references, checks, render targets, and external rule adapters. Verified archives are tracked outside the Git source snapshot and are read-only to formatting and rendering. Package content participates in context and conservative impact/review invalidation. See [Content packages](content-packages.md) for its contract.
 
