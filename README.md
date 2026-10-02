@@ -5,11 +5,300 @@
   </picture>
 </h1>
 
-Engineering knowledge and policy often appear in multiple documents, agent instructions, checks, and external tools. Markitect's next version is being built as an engineering knowledge and change compiler: teams define domain vocabulary, intended system structure, and normative rules once as explicit resources, then validate their relationships and project selected parts to configured consumers.
+**Define how your software should be built. Keep documentation, AI agents, and engineering tooling aligned as it evolves.**
 
-The compiler will use versioned Domain definitions and a normalized semantic model so software architecture, delivery policy, and AI-working knowledge can share a small kernel. Relation meaning determines context and change invalidation. Explicit adapters can produce local views or observe external state, plan changes, and perform configured actions. Results bind to fixed source, model, configuration, mapping, and observation evidence. Markitect will report what those inputs prove; it will not assert that prose or implementation is semantically true, complete, or accepted by a human. See the [product architecture and evidence boundary](docs/architecture.md).
+Markitect is a compiler-like system for **canonical engineering knowledge**. It lets a project define rules, workflows, skills, agents, reusable text, contracts, ownership, and explicit relationships as typed resources instead of maintaining the same engineering truth independently across Markdown, Codex, Claude, and project checks.
 
-The available v0.9.1 release implements the earlier fixed-kind resource model. The [roadmap](docs/implementation-plan.md) tracks the v0.10.0 transition and its verified status.
+The current release focuses on the deterministic foundation: Markitect validates the resource graph, compiles bounded context, projects declared Markdown/Codex/Claude outputs, tracks exact project-artifact inputs, and reports the impact of changes between fixed snapshots. It does this without a model API. Declared project artifacts are exact UTF-8 file inputs; Markitect does not interpret their domain-specific meaning. See the [product boundary](docs/architecture.md#project-artifact-boundary).
+
+> **AI should implement your architecture, not reinvent it on every task.**
+
+## Why Markitect?
+
+Engineering rules rarely live in one place.
+
+A release process may be described in documentation, repeated in an agent Skill, partially enforced by CI, and summarized again in provider-specific instructions. Architecture guidance is copied into `AGENTS.md`, Claude rules, review checklists, and project conventions. Eventually one rule changes.
+
+Then the real question becomes:
+
+```text
+What else has to change?
+```
+
+Without a canonical owner, the usual answer is another global consistency pass:
+
+```text
+docs
+AGENTS.md
+Claude configuration
+Skills
+Rules
+Workflows
+CI
+project conventions
+...
+        ↓
+read everything again
+        ↓
+find stale copies and contradictions
+        ↓
+try to synchronize them
+```
+
+Markitect moves the problem toward:
+
+```text
+canonical engineering knowledge
+        ↓
+explicit typed relationships
+        ↓
+deterministic validation
+        ↓
+bounded context and impact
+```
+
+Projects independently select the Markdown and provider projections they need.
+
+The goal is not to generate more prompt text. The goal is to remove duplicated engineering truth and make more consistency questions answerable structurally.
+
+## One canonical model, multiple views
+
+A Markitect project keeps canonical typed resources separate from their explicitly selected projections. Markdown views under `docs/markitect/` are optional; provider outputs read canonical sources independently.
+
+```text
+                    Canonical resources
+                  .markitect/areas/...
+                           │
+             ┌─────────────┼─────────────┐
+             ▼             ▼             ▼
+      Markdown views     Codex         Claude
+      docs/markitect     outputs       outputs
+```
+
+Project-owned verification commands run separately against a materialized fixed project snapshot.
+
+Generated output is never the canonical owner. Provider projections can be regenerated from canonical resources, and ordinary project artifacts remain in their normal project-owned locations.
+
+## The current workflow
+
+### Define
+
+Author typed engineering resources with explicit ownership and relationships.
+
+Current resource kinds include:
+
+| Kind | Responsibility |
+|---|---|
+| `Text` | Reusable prose or context |
+| `Rule` | Scoped engineering requirement |
+| `Workflow` | Procedure plus dependencies |
+| `Skill` | Agent entrypoint to a procedure |
+| `Agent` | Responsibility and supported provider settings |
+| `Contract` | Required kind and symbolic input/output signature |
+| `Project` | Areas, imports, bindings, checks, outputs, and package pins |
+
+### Validate
+
+Markitect checks:
+
+```text
+resource structure
+identities
+references
+area access
+bindings
+contracts
+cycles
+declared file inputs
+documentation routers
+managed output drift
+```
+
+These checks are deterministic.
+
+### Project
+
+Projects explicitly select outputs.
+
+For example:
+
+```yaml
+spec:
+  targets:
+    - markdown
+    - claude
+```
+
+`markdown` writes generated resource views under `docs/markitect/`. Codex and Claude outputs use their native paths and route directly to canonical resources.
+
+### Understand change
+
+Markitect works from resolved project snapshots. Fixed Git revisions are acquired through the Git adapter and converted into generic snapshot values before graph/context/impact logic runs.
+
+`impact` compares project states and reports changed paths and affected resources. Review evidence can then be invalidated conservatively when its declared inputs no longer match. Unknown or unmodelled files conservatively broaden impact results.
+
+## A small example
+
+The repository-layout fixture contains canonical engineering knowledge under `.markitect/areas/`.
+
+A Rule:
+
+```yaml
+apiVersion: markitect.example.org/v1alpha1
+kind: Rule
+metadata:
+  name: change-review
+  namespace: engineering
+spec:
+  text: |
+    Describe the intended behavior and required verification before accepting a change.
+```
+
+A Workflow can apply that Rule, reuse shared typed knowledge, and declare an exact ordinary project artifact:
+
+```yaml
+apiVersion: markitect.example.org/v1alpha1
+kind: Workflow
+metadata:
+  name: review-change
+  namespace: engineering
+spec:
+  text: |
+    Apply the change review requirement, shared principles, and project-owned procedure.
+  files:
+    - docs/engineering/change-procedure.md
+  rules:
+    - kind: Rule
+      name: change-review
+  uses:
+    - kind: Text
+      name: principles
+      namespace: shared
+```
+
+The Project decides which projections exist:
+
+```yaml
+apiVersion: markitect.example.org/v1alpha1
+kind: Project
+metadata:
+  name: repository-layout-example
+spec:
+  targets:
+    - claude
+  areas:
+    - name: shared
+      path: .markitect/areas/shared
+    - name: engineering
+      path: .markitect/areas/engineering
+      imports:
+        - shared
+        - documentation
+    - name: documentation
+      path: docs
+  documentation:
+    roots:
+      - docs
+```
+
+Then:
+
+```sh
+markitect check --repo .
+markitect context --repo . --namespace engineering --kind Workflow --name review-change
+markitect render --repo .
+```
+
+The canonical YAML remains the source of truth. Human documentation remains human-owned unless an explicit generated view is selected.
+
+## Why this matters for AI-first engineering
+
+AI dramatically increases implementation throughput. Architectural governance does not automatically scale with it.
+
+If every coding agent must rediscover project structure, architecture rules, process requirements, and ownership from a large collection of prose on every task, two things happen:
+
+```text
+context grows
+architecture drifts
+```
+
+Markitect's direction is the opposite:
+
+```text
+explicit engineering knowledge
+        ↓
+deterministic structure
+        ↓
+task-relevant context
+        ↓
+more autonomous agents inside known boundaries
+```
+
+The current release provides the typed resource graph, context, artifact inputs, projections, checks, packages, and impact foundation for that model.
+
+## Canonical repository layout
+
+New projects default to responsibility-owned Areas under `.markitect/areas/<namespace>`.
+
+```text
+project/
+├── markitect.yaml
+├── .markitect/
+│   ├── areas/
+│   │   └── engineering/
+│   ├── packages/
+│   ├── tool/
+│   └── bootstrap/
+├── docs/
+│   ├── ... human-owned documentation ...
+│   └── markitect/          # generated only when target: markdown
+├── .agents/
+├── .codex/
+├── .claude/
+└── src/                    # ordinary project artifacts stay project-owned
+```
+
+The layout is a convention, not hidden semantics. Configured Areas are authoritative. File names do not infer resource types, and directory adjacency does not create dependencies.
+
+See [Repository layout](docs/repository-layout.md) for the exact current contract.
+
+## What Markitect does today
+
+- Models AI-facing engineering knowledge as typed YAML resources.
+- Gives each resource explicit identity, ownership, and graph relationships.
+- Keeps ordinary project files as explicit opaque inputs instead of pretending to understand their domain semantics.
+- Validates resource structure, references, bindings, contracts, cycles, file inputs, and configured documentation routers.
+- Compiles a selected resource's bounded context.
+- Supports committed fixed-run task context with exact selected project artifacts.
+- Compares resolved snapshots to identify changed paths and affected resources.
+- Produces only explicitly selected Markdown, Codex, and Claude outputs.
+- Supports exact direct offline content packages with explicit exports and package-qualified identities.
+- Runs only project-owned verification commands declared in `Project.spec.checks`.
+- Records advisory review evidence and determines when its declared basis no longer matches.
+
+## What Markitect deliberately does not do
+
+Markitect does not currently:
+
+- infer architecture from source-code ASTs, symbols, or call graphs;
+- decide whether prose is semantically true;
+- infer hidden dependencies from Markdown links;
+- treat generated provider files as canonical knowledge;
+- call a model as part of deterministic `check`, `context`, or `impact`;
+- replace your CI platform, work-item system, or source-control system;
+- claim that a passing structural check proves human acceptance or software correctness.
+
+Project-owned checks and future adapters can integrate specialized tooling without moving domain-specific analysis into the deterministic core.
+
+## v0.10.0 source candidate
+
+The next version extends this foundation with project-owned, versioned Domain definitions: closed resource schemas, typed references, relation-specific context and invalidation, and a finite set of structural constraints. The normalized model feeds configured adapters without exposing the core to technology-specific analysis. Domain definitions can be selected locally or from exact pinned content packages.
+
+The [canonical engineering example](examples/canonical-engineering/README.md) demonstrates software and delivery domains. The same structured policy appears in generated documentation and agent context and determines the check result. `model` exports validated resources, relationships, policy definitions and source identities. `reconcile` observes outputs, captures a plan, applies configured writes with `--write`, and verifies the result; changed inputs and altered plans are rejected.
+
+The separate .NET reference adapter checks literal, unconditional `ProjectReference` declarations for explicitly mapped resources. It reports unsupported MSBuild constructs as incomplete and does not claim a complete build-system analysis. See [its setup and evidence limits](cmd/markitect-adapter-dotnet/README.md).
+
+The published release remains v0.9.1 until the candidate passes the [release gates](docs/operations.md#release-operations). The [roadmap](docs/implementation-plan.md) records verified status; the [strategy sources](docs/strategy/README.md) separate adopted product decisions from benefit hypotheses that still need real-world measurement.
 
 <!-- markitect-release:install:start -->
 
@@ -96,7 +385,29 @@ The [minimal example](examples/minimal/README.md) is a synthetic, executable fix
 
 <!-- markitect-release:try:end -->
 
-For a complete first-project exercise, follow [the onboarding walkthrough](docs/onboarding.md): initialize a project, model explicit dependencies, compile context, and inspect a change between committed revisions.
+## Start a project
+
+For a complete first-project exercise, follow the [onboarding walkthrough](docs/onboarding.md).
+
+A new project can preview its minimal Markitect layout before anything is written:
+
+```sh
+markitect init --repo . --name my-project --namespace engineering
+```
+
+On a named non-protected Git branch, apply the reviewed plan with:
+
+```sh
+markitect init --repo . --name my-project --namespace engineering --write
+```
+
+The default canonical Area is:
+
+```text
+.markitect/areas/engineering/
+```
+
+Initialization deliberately does not invent your engineering rules, checks, packages, or provider outputs.
 
 ## Try it from a source checkout
 
@@ -105,33 +416,49 @@ From a Markitect source checkout, with Go 1.27.1 or later:
 ```sh
 go run ./cmd/markitect check --repo examples/minimal
 go run ./cmd/markitect context --repo examples/minimal --namespace sample --kind Skill --name rollback-review
+go run ./cmd/markitect check --repo examples/repository-layout
 ```
 
-The first command checks the example's declared resources and explicitly selected outputs. The second prints the selected Skill's dependency context. Generic Markdown views are optional: select `markdown` under `spec.targets` to generate them under `docs/markitect/`. Provider outputs read canonical sources independently of those views.
+The examples are executable fixtures rather than product-specific policy.
 
-In your own repository, `markitect init` previews the exact minimal project files before writing.
+## Design principles
 
-New projects default to canonical Areas under `.markitect/areas/<namespace>`, alongside human-owned `docs/` and native provider projections. Existing configured layouts remain supported; see [repository layout](docs/repository-layout.md) and the [executable layout example](examples/repository-layout/README.md).
+### One canonical owner
 
-## What it does
+Engineering knowledge should not become independently maintained copies across providers.
 
-- The v0.10.0 target defines typed domain resources and explicit relations from versioned Domain definitions.
-- Validates bounded constraints, compiles selected context, and traces changes through relation-specific impact rules.
-- Projects canonical resources through explicitly configured local or external adapters.
-- Binds reports to their fixed source, model, configuration, mappings, and observations.
-- Leaves semantic truth, completeness judgments, and human acceptance with the responsible people.
+### Explicit relationships
 
-Authoring guidance ships with Markitect and uses the same resource model as project content. Review evidence is advisory: the CLI can assess whether its declared inputs still match, but cannot authenticate a reviewer or transfer human acceptance.
+Ownership and dependency should be modeled rather than reconstructed from prose whenever they matter structurally.
+
+### Projection over duplication
+
+Generated Markdown, Codex, and Claude outputs are projections of canonical sources.
+
+### Deterministic where possible
+
+If structure can be checked deterministically, do not repeatedly ask an LLM to rediscover it.
+
+### Semantic humility
+
+Markitect does not claim that structural validity proves business correctness or semantic truth.
+
+### Provider independence
+
+The canonical model should outlive any one AI provider or output format.
 
 ## Documentation
 
 - [Usage and upgrade notes](docs/usage.md): project format, CLI behavior, and schema transitions.
 - [Architecture](docs/architecture.md): product model, evidence, verification, and boundaries.
-- [Roadmap](docs/implementation-plan.md): current source scope and planned work.
-- [Operations](docs/operations.md): source development, checks, and release handling.
-- [Integration](integration/README.md): verified downloads, installation, upgrades, and release publication.
+- [Repository layout](docs/repository-layout.md): canonical Areas, generated outputs, and layout conventions.
+- [Project artifact inputs](docs/documentation.md): exact ordinary files used by resources and fixed-run context.
+- [Provider adapters](docs/provider-adapters.md): Codex, Claude, shared entrypoints, and output ownership.
 - [Content packages](docs/content-packages.md): exact direct pins for offline content archives.
-- [Project artifact inputs](docs/documentation.md): declare exact ordinary files used by resources.
+- [Source snapshots](docs/source-snapshots.md): generic snapshot values and the Git acquisition boundary.
+- [Roadmap](docs/implementation-plan.md): released behavior, current scope, and deferred options.
+- [Operations](docs/operations.md): source development, checks, verification, and release handling.
+- [Integration](integration/README.md): verified downloads, project pins, upgrades, and release publication.
 - [Development](CONTRIBUTING.md): code ownership and contribution checks.
 - [Third-party notices](internal/licenses/notices.md): bundled upstream attribution, also available offline with `markitect licenses`.
 
