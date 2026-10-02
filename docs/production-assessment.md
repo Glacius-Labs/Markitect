@@ -2,6 +2,28 @@
 
 **Recorded:** 2026-10-02. This dated assessment records the release evidence verified at that time and distinguishes it from source behavior. It reports only the Markitect source, its distributions, and source-owned gates; project adoption and acceptance are outside its scope.
 
+## v0.10.0 published release
+
+The immutable [v0.10.0 release](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.10.0), release ID `401991913`, binds source commit [`8882d8f`](https://github.com/Glacius-Labs/Markitect/commit/8882d8f8b9eee184036c1dec4b4c51422608d1b1), merged from [PR 49](https://github.com/Glacius-Labs/Markitect/pull/49). The release extends the bundled resource vocabulary with project-owned, versioned domain definitions and a validated semantic model; it adds conservative reconciliation plans and an explicit external command-adapter protocol with optional configured apply capability. The separate .NET reference adapter is read-only. This is a deliberate pre-1.0 language and model change, and no compatibility guarantee is claimed. The annotated tag is unsigned; immutable-release and asset attestations were verified separately.
+
+| Evidence | Exact basis | Result |
+|---|---|---|
+| Reviewed candidate and PR CI | [PR 49](https://github.com/Glacius-Labs/Markitect/pull/49), candidate `44f14040a26330d7c395654835ac81f4f039da72`; [run 37034873229](https://github.com/Glacius-Labs/Markitect/actions/runs/37034873229) | Windows and Linux passed; merged release source has the same tree `f9a0336a8d3bbc01555b775c56dc2086a3987ea9` |
+| Main CI | [Run 37035301668](https://github.com/Glacius-Labs/Markitect/actions/runs/37035301668) | All three jobs passed at main source `8882d8f8b9eee184036c1dec4b4c51422608d1b1`; actual downloaded main source artifact contained the hidden bootstrap, lock file, source archive, and standalone adapter/compiler sources |
+| Tagged release | [Run 37035389068](https://github.com/Glacius-Labs/Markitect/actions/runs/37035389068), attempt 1 | Quality, preflight, Windows/Linux installation and bundle smoke, and asset assembly passed |
+| Owner publisher | Release `401991913` | `published-verified`; exact run artifact, tag, immutable release, and all four asset attestations were verified |
+| Public distribution metadata | `markitect-release distribution --tag v0.10.0 --repo . --write` | Returned `written` after verifying public assets, attestations, provenance, workflow attempt, and payload digests; generated README install/try blocks and three canonical v0.10.0 WinGet manifests |
+| Native Windows binary | Exact attested Windows asset | Reported `Markitect 0.10.0 (windows/amd64)`; minimal, repository-layout, and canonical-engineering fixtures passed, including semantic model validation and bundled notices |
+
+| Asset | Verified SHA-256 |
+|---|---|
+| `markitect-v0.10.0-bundle.zip` | `4633b6257d3bc0f571e212906eb96464e78022dc7b79bddd1137abe59c31eaa4` |
+| `markitect-v0.10.0-linux-amd64` | `520b35bee308ce06f3e7d539ea593da25e6b3adf609baa0262b27c130f4e25a6` |
+| `markitect-v0.10.0-windows-amd64.exe` | `da230c607a8779c882f825944353f629def22ff9f84be21eeb6f39c2e7f0f230` |
+| `markitect-v0.10.0-provenance.yaml` | `c8f43c2c3906622a78696fa13ea63862d9ae4d2f4a2bedd1cda9a3098a4ce8a1` |
+
+The public Windows binary downloaded separately matched the verified Windows asset digest above and passed the canonical-engineering fixture. The annotated tag has no signature block and is unsigned. WinGet manifests are generated release metadata; Microsoft catalog availability and package-manager installation are not claimed. No benchmark, business-benefit result, or adopting-project acceptance was established. Earlier tags and releases remain unchanged.
+
 ## v0.9.1 published release
 
 The immutable [v0.9.1 release](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.9.1), release ID `401496097`, binds [source commit `eb1b978`](https://github.com/Glacius-Labs/Markitect/commit/eb1b9781da6459d796c4e8fe108b6a8260c75b8e), merged from [PR 46](https://github.com/Glacius-Labs/Markitect/pull/46). It corrects source-relative prose navigation after v0.9.0 relocated Markdown views. Known local typed YAML destinations and unambiguous former companion aliases point to the selected Markdown view; ordinary documents/images retain their actual source target, and provider inline prose keeps canonical YAML destinations. Existing unmarked Markdown files take precedence over companion aliases. The projection consumes fixed snapshot files and infers no dependencies or artifact declarations. The annotated tag is unsigned; immutable release and asset attestations were verified separately.

@@ -9,7 +9,7 @@
 
 Markitect is a compiler-like system for **canonical engineering knowledge**. It lets a project define rules, workflows, skills, agents, reusable text, contracts, ownership, and explicit relationships as typed resources instead of maintaining the same engineering truth independently across Markdown, Codex, Claude, and project checks.
 
-The current release focuses on the deterministic foundation: Markitect validates the resource graph, compiles bounded context, projects declared Markdown/Codex/Claude outputs, tracks exact project-artifact inputs, and reports the impact of changes between fixed snapshots. It does this without a model API. Declared project artifacts are exact UTF-8 file inputs; Markitect does not interpret their domain-specific meaning. See the [product boundary](docs/architecture.md#project-artifact-boundary).
+The v0.10.0 release provides a generic canonical engineering model: Projects load versioned Domains, validate typed resources and relations, evaluate finite deterministic constraints, and expose one normalized semantic model to context, impact, projections, and configured adapters. Markitect does this without a model API. Exact declared project-artifact inputs remain opaque to the kernel; it does not infer their domain-specific meaning. See the [product boundary](docs/architecture.md#project-artifact-boundary).
 
 > **AI should implement your architecture, not reinvent it on every task.**
 
@@ -234,7 +234,7 @@ task-relevant context
 more autonomous agents inside known boundaries
 ```
 
-The current release provides the typed resource graph, context, artifact inputs, projections, checks, packages, and impact foundation for that model.
+The v0.10.0 release provides the typed Domain registry, normalized model, context and impact, artifact inputs, projections, deterministic constraints, configured adapters, packages, and reconciliation foundation for that model.
 
 ## Canonical repository layout
 
@@ -288,31 +288,31 @@ Markitect does not currently:
 - replace your CI platform, work-item system, or source-control system;
 - claim that a passing structural check proves human acceptance or software correctness.
 
-Project-owned checks and future adapters can integrate specialized tooling without moving domain-specific analysis into the deterministic core.
+Project-owned checks and configured adapters integrate specialized tooling without moving domain-specific analysis into the deterministic core.
 
-## v0.10.0 source candidate
+## The v0.10.0 canonical engineering model
 
-The next version extends this foundation with project-owned, versioned Domain definitions: closed resource schemas, typed references, relation-specific context and invalidation, and a finite set of structural constraints. The normalized model feeds configured adapters without exposing the core to technology-specific analysis. Domain definitions can be selected locally or from exact pinned content packages.
+The v0.10.0 release extends the deterministic foundation with project-owned, versioned Domain definitions: closed resource schemas, typed references within a custom Domain, relation-specific context and invalidation, and a finite set of structural constraints. The bundled AI-working Domain can explicitly use registered custom-domain resources through qualified references. The normalized model feeds configured adapters without exposing the core to technology-specific analysis. Domain definitions can be selected locally or from exact pinned content packages.
 
 The [canonical engineering example](examples/canonical-engineering/README.md) demonstrates software and delivery domains. The same structured policy appears in generated documentation and agent context and determines the check result. `model` exports validated resources, relationships, policy definitions and source identities. `reconcile` observes outputs, captures a plan, applies configured writes with `--write`, and verifies the result; changed inputs and altered plans are rejected.
 
-The separate .NET reference adapter checks literal, unconditional `ProjectReference` declarations for explicitly mapped resources. It reports unsupported MSBuild constructs as incomplete and does not claim a complete build-system analysis. See [its setup and evidence limits](cmd/markitect-adapter-dotnet/README.md).
+The separately built, read-only .NET reference adapter checks literal, unconditional `ProjectReference` declarations for explicitly mapped resources. It reports unsupported MSBuild constructs as incomplete and does not claim a complete build-system analysis. See [its setup and evidence limits](cmd/markitect-adapter-dotnet/README.md).
 
-The published release remains v0.9.1 until the candidate passes the [release gates](docs/operations.md#release-operations). The [roadmap](docs/implementation-plan.md) records verified status; the [strategy sources](docs/strategy/README.md) separate adopted product decisions from benefit hypotheses that still need real-world measurement.
+Machine results establish only configured assertions for their fixed inputs. They do not prove semantic truth, confer human acceptance, or establish product-market benefit. The [roadmap](docs/implementation-plan.md) records shipped coverage and its limits; the [strategy sources](docs/strategy/README.md) separate adopted product decisions from benefit hypotheses that still need real-world measurement.
 
 <!-- markitect-release:install:start -->
 
 ## Install Markitect
 
-The current [v0.9.1 release](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.9.1) provides Windows and Linux amd64 binaries. The commands below download a fixed version from the public release, check its published SHA-256 digest, and install it for your user. No Go installation or GitHub login is needed. Git is needed for Markitect commands that read Git revisions.
+The current [v0.10.0 release](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.10.0) provides Windows and Linux amd64 binaries. The commands below download a fixed version from the public release, check its published SHA-256 digest, and install it for your user. No Go installation or GitHub login is needed. Git is needed for Markitect commands that read Git revisions.
 
 **Windows (PowerShell):**
 
 ```powershell
 if (-not [Runtime.InteropServices.RuntimeInformation]::IsOSPlatform([Runtime.InteropServices.OSPlatform]::Windows) -or [Runtime.InteropServices.RuntimeInformation]::OSArchitecture -ne [Runtime.InteropServices.Architecture]::X64) { throw 'Only Windows amd64 is released.' }
-$tag = 'v0.9.1'
+$tag = 'v0.10.0'
 $asset = "markitect-$tag-windows-amd64.exe"
-$sha256 = '792e12c8ff44ad44ffb515bac381fcd1d171cb9a0a46a43e11a135bf17abe38e'
+$sha256 = 'da230c607a8779c882f825944353f629def22ff9f84be21eeb6f39c2e7f0f230'
 $download = Join-Path $env:TEMP ("markitect-" + [guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Path $download -ErrorAction Stop | Out-Null
 $source = Join-Path $download $asset
@@ -327,7 +327,7 @@ if ($bin -notin ($userPath -split ';')) {
 }
 $env:Path = "$bin;$env:Path"
 $installed = & (Join-Path $bin 'markitect.exe') version
-if ($LASTEXITCODE -ne 0 -or $installed -ne 'Markitect 0.9.1 (windows/amd64)') { throw 'Installed CLI version check failed.' }
+if ($LASTEXITCODE -ne 0 -or $installed -ne 'Markitect 0.10.0 (windows/amd64)') { throw 'Installed CLI version check failed.' }
 $installed
 Remove-Item -LiteralPath $source, $download
 ```
@@ -338,9 +338,9 @@ Remove-Item -LiteralPath $source, $download
 (
   set -e
   [ "$(uname -s)" = Linux ] && [ "$(uname -m)" = x86_64 ] || { echo 'Only Linux amd64 is released.' >&2; exit 1; }
-  tag=v0.9.1
+  tag=v0.10.0
   asset="markitect-$tag-linux-amd64"
-  sha256=37e5de60e9a5ca5216f359ca2a332f55811118f2b84932c456ee1001b739b81c
+  sha256=520b35bee308ce06f3e7d539ea593da25e6b3adf609baa0262b27c130f4e25a6
   download="$(mktemp -d)"
   trap 'rm -rf "$download"' EXIT
   curl -fLsS "https://github.com/Glacius-Labs/Markitect/releases/download/$tag/$asset" -o "$download/$asset"
@@ -351,7 +351,7 @@ Remove-Item -LiteralPath $source, $download
 export PATH="$HOME/.local/bin:$PATH"
 ```
 
-Add `~/.local/bin` to your shell startup file if it is not already on `PATH`. For developers who already use Go 1.27.1 or later, `go install github.com/Glacius-Labs/Markitect/cmd/markitect@v0.9.1` is a shorter source-build option. macOS and arm64 binaries are not currently released. For signed release and asset attestation verification, project pinning, and upgrades, follow the [distribution guide](integration/README.md). The CLI's `install` command installs a **project pin**, not the CLI on your computer.
+Add `~/.local/bin` to your shell startup file if it is not already on `PATH`. For developers who already use Go 1.27.1 or later, `go install github.com/Glacius-Labs/Markitect/cmd/markitect@v0.10.0` is a shorter source-build option. macOS and arm64 binaries are not currently released. For signed release and asset attestation verification, project pinning, and upgrades, follow the [distribution guide](integration/README.md). The CLI's `install` command installs a **project pin**, not the CLI on your computer.
 
 <!-- markitect-release:install:end -->
 
@@ -359,16 +359,16 @@ Add `~/.local/bin` to your shell startup file if it is not already on `PATH`. Fo
 
 ## Try the installed CLI
 
-Clone the v0.9.1 synthetic example and run a structural check with the installed binary. This reads the example without modifying an adopting repository.
+Clone the v0.10.0 synthetic example and run a structural check with the installed binary. This reads the example without modifying an adopting repository.
 
 Windows PowerShell:
 
 ~~~powershell
-git clone --depth 1 --branch v0.9.1 https://github.com/Glacius-Labs/Markitect.git markitect-sample-v0.9.1
-if ($LASTEXITCODE -ne 0) { throw 'Could not get the v0.9.1 synthetic example.' }
+git clone --depth 1 --branch v0.10.0 https://github.com/Glacius-Labs/Markitect.git markitect-sample-v0.10.0
+if ($LASTEXITCODE -ne 0) { throw 'Could not get the v0.10.0 synthetic example.' }
 markitect version
 if ($LASTEXITCODE -ne 0) { throw 'Version check failed.' }
-markitect check --repo .\markitect-sample-v0.9.1\examples\minimal
+markitect check --repo .\markitect-sample-v0.10.0\examples\minimal
 if ($LASTEXITCODE -ne 0) { throw 'Example check failed.' }
 ~~~
 
@@ -376,9 +376,9 @@ Linux amd64:
 
 ~~~sh
 set -e
-git clone --depth 1 --branch v0.9.1 https://github.com/Glacius-Labs/Markitect.git markitect-sample-v0.9.1
+git clone --depth 1 --branch v0.10.0 https://github.com/Glacius-Labs/Markitect.git markitect-sample-v0.10.0
 markitect version
-markitect check --repo ./markitect-sample-v0.9.1/examples/minimal
+markitect check --repo ./markitect-sample-v0.10.0/examples/minimal
 ~~~
 
 The [minimal example](examples/minimal/README.md) is a synthetic, executable fixture. To use Markitect in your own repository, follow the [release installation and verification guide](integration/README.md) to preview and install a project pin.
