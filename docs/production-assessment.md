@@ -2,6 +2,28 @@
 
 **Recorded:** 2026-10-01. This dated assessment records the release evidence verified at that time and distinguishes it from source behavior. It reports only the Markitect source, its distributions, and source-owned gates; project adoption and acceptance are outside its scope.
 
+## v0.8.1 published release
+
+The immutable [v0.8.1 release](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.8.1), release ID `401377439`, binds [source commit `a8f4eb2`](https://github.com/Glacius-Labs/Markitect/commit/a8f4eb2b4257cb877f891d51f582c6f08ce25389), merged from [PR 39](https://github.com/Glacius-Labs/Markitect/pull/39). It separates resolved snapshot values, content digests and deterministic comparison from Git acquisition. In-memory snapshots with opaque IDs exercise parsing, context, review and conservative impact behavior; the public Git CLI, YAML revision fields, digest algorithm and Git safety guards retain their contracts. The annotated tag is unsigned; the immutable release and every asset attestation were verified separately.
+
+| Evidence | Exact basis | Result |
+|---|---|---|
+| Source gates | [PR CI 36929152765](https://github.com/Glacius-Labs/Markitect/actions/runs/36929152765) and [main CI 36929541072](https://github.com/Glacius-Labs/Markitect/actions/runs/36929541072) | Windows/Linux source gates passed; candidate and release source share tree `9621e48261a7748581079d97588ffaecb366a39e` |
+| Tagged release | [Run 36929587756](https://github.com/Glacius-Labs/Markitect/actions/runs/36929587756), attempt 1 | Source, deterministic bundle and bundle install/bootstrap gates passed on Windows/Linux; four exact-source assets assembled |
+| Owner publisher | Release `401377439` | `published-verified`; owner preflight, exact run artifact, tag, payload digests, immutable release and each asset attestation were verified |
+| Public distribution metadata | `markitect-release distribution --tag v0.8.1 --repo . --write` | Public release, each asset attestation, provenance, successful workflow attempt and downloaded digests were checked; README install blocks and three versioned WinGet manifests were generated |
+| Native Windows binary | Exact attested Windows asset | Reported `Markitect 0.8.1 (windows/amd64)` and passed the executable repository-layout fixture |
+| Published native benchmark | [Run 36930381247](https://github.com/Glacius-Labs/Markitect/actions/runs/36930381247) | Windows/Linux fixture v1 completed for attested v0.8.1 and v0.8.0 binaries; raw data and summaries retained as run artifacts |
+
+| Asset | Verified SHA-256 |
+|---|---|
+| `markitect-v0.8.1-bundle.zip` | `f0b42b564cf280f490b98e441c3a5ede649aa0a29db3287a13cbcc5051fbc7b0` |
+| `markitect-v0.8.1-linux-amd64` | `2519814945606eb08cdc710576f9b4b032c91ad05f44d17025c891601298a642` |
+| `markitect-v0.8.1-windows-amd64.exe` | `6804409617bf0bb007df42710a3a609b996525d4d20289160981abf933ed6c71` |
+| `markitect-v0.8.1-provenance.yaml` | `c43146398fda780cea76b15587c8b7f0e1d475ec9ac24021f0f2c295559b214a` |
+
+The generated WinGet manifests are versioned metadata; they do not establish Microsoft catalog availability or a v0.8.1 package-manager installation. Benchmark timings are diagnostic and establish no speed gain. New snapshot providers, consumer upgrades and adopting-project acceptance remain separate work.
+
 ## v0.8.0 published release
 
 The immutable [v0.8.0 release](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.8.0), release ID `401351835`, binds [source commit `b8b81f0`](https://github.com/Glacius-Labs/Markitect/commit/b8b81f0739d23894592ba5b76ee91a25e7dea6d4), merged from [PR 36](https://github.com/Glacius-Labs/Markitect/pull/36). It recommends responsibility-owned canonical resources under `.markitect/areas/` and makes `.markitect/areas/<namespace>` the default for new `init` plans that omit `--path`. Existing Projects, explicit paths, generated companions, provider outputs and pinned distribution paths retain their contracts. The annotated tag is unsigned; the immutable release and every asset attestation were verified separately.

@@ -1,6 +1,6 @@
 # Source snapshots
 
-This page records the source snapshot boundary in the current source candidate. It describes the source implementation, not a published release. The public CLI remains Git-oriented.
+This page records the source snapshot boundary shipped in [v0.8.1](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.8.1). The public CLI remains Git-oriented. Verified release evidence is in the [production assessment](production-assessment.md).
 
 ## Current value
 
@@ -38,7 +38,7 @@ The deterministic `Compare` operation consumes two snapshots and returns a `Chan
 
 Snapshot content identity and source identity answer different questions. The digest identifies the exact paths, regular-file modes, and bytes used by the current algorithm. `ID` is an opaque identity supplied by the source, while `Provisional` separately records whether the input is fixed. They are independent fields: the live working-tree reader currently leaves `ID` empty, while the initialization preview uses a provisional snapshot with an ID. A nonempty fixed opaque ID is sufficient for application review logic to require that recorded evidence matches the selected fixed state.
 
-The CLI still validates full Git commit evidence before resolving its fixed input. Public YAML keeps the existing `revision` key, and existing Git consumers continue to see full commit IDs there. No review record schema version changes in this candidate. This preserves current consumer behavior while allowing application code to use an opaque fixed ID internally; it does not promise that another provider can be selected through the current CLI.
+The CLI still validates full Git commit evidence before resolving its fixed input. Public YAML keeps the existing `revision` key, and existing Git consumers continue to see full commit IDs there. The v0.8.1 release does not change the review record schema version. This preserves current consumer behavior while allowing application code to use an opaque fixed ID internally; it does not promise that another provider can be selected through the current CLI.
 
 `PackContent` requires provenance from its caller instead of inventing an origin from the snapshot value. The existing Git command passes `git:<full-commit-id>`, so emitted package pins and the public Project format remain unchanged. The snapshot adapter boundary does not change the package archive or its SHA-256 pin.
 

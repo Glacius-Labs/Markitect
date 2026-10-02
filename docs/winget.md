@@ -42,9 +42,44 @@ PATH/alias checks and cleanup evidence. The local-manifest ProductCode is
 test-only and must not be added to the community update.
 
 Only after the public installation succeeds should the README advertise
-WinGet commands. The current README already installs the verified v0.8.0
+WinGet commands. The current README already installs the verified v0.8.1
 binary directly; that route does not require Microsoft catalog approval.
 
 ## Current verified release metadata
 
-The generated [v0.8.0 manifests](../packaging/winget/GlaciusLabs.Markitect/0.8.0/) bind the immutable Windows binary and its attested SHA-256. The Windows workflow validates every canonical versioned manifest directory, including v0.8.0. Its portable install/upgrade exercise still checks the submitted v0.5.0 package against v0.4.1; it does not demonstrate a public-catalog v0.8.0 installation or upgrade. The initial community submission and later version submissions remain separate catalog gates.
+The generated [v0.8.1 manifests](../packaging/winget/GlaciusLabs.Markitect/0.8.1/) bind the immutable Windows binary and its attested SHA-256. The Windows workflow validates every canonical versioned manifest directory, including v0.8.1. Its portable install/upgrade exercise still checks the submitted v0.5.0 package against v0.4.1; it does not demonstrate a public-catalog v0.8.1 installation or upgrade. The initial community submission and later version submissions remain separate catalog gates.
+
+
+## Prepared public-catalog runner
+
+The same workflow now has explicit manual modes. Its default remains the
+local-manifest lifecycle. After the initial submission is merged and indexed,
+run:
+
+```powershell
+gh workflow run winget-validation.yaml --repo Glacius-Labs/Markitect --ref main -f mode=catalog-install
+```
+
+After the v0.7.0 community update is separately merged and indexed, run:
+
+```powershell
+gh workflow run winget-validation.yaml --repo Glacius-Labs/Markitect --ref main -f mode=catalog-upgrade
+```
+
+The first mode installs the public v0.5.0 package. The second installs that same
+version and upgrades it explicitly to v0.7.0. Both bind the community source
+identifier and URL, use its actual portable ProductCode, and verify the release
+digest, executable version, correct alias or PATH fallback, and command
+resolution in a fresh process. They never enable local manifests or inject a
+test ProductCode. They refuse replacement or retention, require fresh evidence,
+and uninstall with purge; registration, executable, alias, package directory and
+test-created PATH entries must be gone. Reports retain the mode, tested versions,
+source identity, settings state, PATH before/after and cleanup results.
+
+Contract checks cover public commands, ambiguous registrations, source identity,
+pinned versions and digest consistency without installing anything. Existing
+local-manifest lifecycle CI remains the regression gate. The public modes are
+prepared but have not been exercised against Microsoft's catalog: PR #445055
+is still awaiting manual review. Their preparation is not publication evidence.
+The current direct-download README remains on v0.8.1; the already-authorized
+catalog follow-up is explicitly v0.7.0.
