@@ -7,7 +7,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/core"
 )
 
-func renderCodexAgent(r *core.Resource, target string, adapters *core.ProviderAdapters) []byte {
+func renderCodexAgent(r *core.Resource, target string, adapters *core.ProviderAdapters, navigation *proseNavigation) ([]byte, error) {
 	p := r.Spec.Providers.Codex
 	var b strings.Builder
 	b.WriteString("# " + Marker + "; source: " + relative(target, r.Path) + "\n")
@@ -26,7 +26,11 @@ func renderCodexAgent(r *core.Resource, target string, adapters *core.ProviderAd
 	}
 	instructions := "Read the canonical [Agent YAML](" + relative(target, r.Path) + ") and follow its stated scope."
 	if adapters != nil && adapters.InlineAgentText {
-		instructions = strings.TrimSpace(r.Spec.Text)
+		text, err := navigation.rewrite(r.Spec.Text, r, target, false)
+		if err != nil {
+			return nil, err
+		}
+		instructions = strings.TrimSpace(text)
 	}
 	if adapters != nil && adapters.AgentContract != "" {
 		instructions += "\n\nShared role-routing and delegation rules: [project agent contract](" + relative(target, adapters.AgentContract) + ")."
@@ -35,10 +39,10 @@ func renderCodexAgent(r *core.Resource, target string, adapters *core.ProviderAd
 		instructions += "\n"
 	}
 	writeTOMLString(&b, "developer_instructions", instructions)
-	return []byte(b.String())
+	return []byte(b.String()), nil
 }
 
-func renderClaudeAgent(r *core.Resource, target string, g *core.Graph, adapters *core.ProviderAdapters) []byte {
+func renderClaudeAgent(r *core.Resource, target string, g *core.Graph, adapters *core.ProviderAdapters, navigation *proseNavigation) ([]byte, error) {
 	p := r.Spec.Providers.Claude
 	var b strings.Builder
 	b.WriteString("---\nname: " + yamlQuote(r.Metadata.Name) + "\ndescription: " + yamlQuote(r.Spec.Description) + "\n")
@@ -64,7 +68,11 @@ func renderClaudeAgent(r *core.Resource, target string, g *core.Graph, adapters 
 	}
 	b.WriteString("---\n\n<!-- " + Marker + "; source: " + relative(target, r.Path) + " -->\n\n")
 	if adapters != nil && adapters.InlineAgentText {
-		b.WriteString(strings.TrimSpace(r.Spec.Text) + "\n")
+		text, err := navigation.rewrite(r.Spec.Text, r, target, false)
+		if err != nil {
+			return nil, err
+		}
+		b.WriteString(strings.TrimSpace(text) + "\n")
 	} else {
 		b.WriteString("Read the [canonical Agent YAML](" + relative(target, r.Path) + ") before acting.\n")
 	}
@@ -78,5 +86,5 @@ func renderClaudeAgent(r *core.Resource, target string, g *core.Graph, adapters 
 			writeDependency(&b, link)
 		}
 	}
-	return []byte(b.String())
+	return []byte(b.String()), nil
 }

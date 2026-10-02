@@ -15,7 +15,7 @@ func TestAgentContractIsLinkedWithAndWithoutInlineText(t *testing.T) {
 	g := &core.Graph{Resources: map[string]*core.Resource{agent.Key(): agent}, Project: project}
 	for _, inline := range []bool{false, true} {
 		project.Spec.ProviderAdapters = &core.ProviderAdapters{AgentContract: "docs/agents/contract.md", InlineAgentText: inline}
-		outputs, err := Generate(g)
+		outputs, err := Generate(g, nil)
 		if err != nil {
 			t.Fatal(err)
 		}

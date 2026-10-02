@@ -12,7 +12,7 @@ func TestMarkdownViewsUseAreaRelativeKindQualifiedPathsAndIndices(t *testing.T) 
 	skill := resource("Skill", "docs/policy/skills/review.skill.yml", "review", "policy", core.Spec{Text: "Review changes.", Rules: []core.Ref{{Name: "privacy"}}})
 	project := resource("Project", "markitect.yaml", "sample", "", core.Spec{Targets: []string{"markdown"}, Areas: []core.Area{{Name: "policy", Path: "docs/policy"}}})
 	g := &core.Graph{Project: project, Resources: map[string]*core.Resource{rule.Key(): rule, skill.Key(): skill}, ResourceAreas: map[string]core.Area{rule.GraphKey(): {Name: "policy", Path: "docs/policy"}, skill.GraphKey(): {Name: "policy", Path: "docs/policy"}}}
-	outputs, owners, err := GenerateWithOwners(g)
+	outputs, owners, err := GenerateWithOwners(g, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -45,7 +45,7 @@ func TestMarkdownLinksEscapeURIPathSegments(t *testing.T) {
 	workflow := resource("Workflow", "docs/area/run.yaml", "run", "area", core.Spec{Uses: []core.Ref{{Kind: "Rule", Name: "privacy"}}})
 	p := resource("Project", "markitect.yaml", "sample", "", core.Spec{Targets: []string{"markdown"}, Areas: []core.Area{{Name: "area", Path: "docs/area"}}})
 	g := &core.Graph{Project: p, Resources: map[string]*core.Resource{rule.Key(): rule, workflow.Key(): workflow}, ResourceAreas: map[string]core.Area{rule.GraphKey(): {Name: "area", Path: "docs/area"}, workflow.GraphKey(): {Name: "area", Path: "docs/area"}}}
-	outputs, err := Generate(g)
+	outputs, err := Generate(g, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -75,7 +75,7 @@ func TestMarkdownViewsRejectDeterministicSourceAndOutputCollisions(t *testing.T)
 	b := resource("Text", "docs/area/a.yml", "b", "area", core.Spec{})
 	p := resource("Project", "markitect.yaml", "sample", "", core.Spec{Targets: []string{"markdown"}, Areas: []core.Area{{Name: "area", Path: "docs/area"}}})
 	g := &core.Graph{Project: p, Resources: map[string]*core.Resource{a.Key(): a, b.Key(): b}, ResourceAreas: map[string]core.Area{a.GraphKey(): {Name: "area", Path: "docs/area"}, b.GraphKey(): {Name: "area", Path: "docs/area"}}}
-	if _, err := Generate(g); err == nil || !strings.Contains(err.Error(), "Markdown view path collision") {
+	if _, err := Generate(g, nil); err == nil || !strings.Contains(err.Error(), "Markdown view path collision") {
 		t.Fatalf("same output from .yaml/.yml sources should collide deterministically, got %v", err)
 	}
 }

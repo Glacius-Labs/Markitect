@@ -16,7 +16,7 @@ func CheckOutputs(p *Project) []core.Diagnostic {
 	if len(p.Diagnostics) > 0 {
 		return nil
 	}
-	outputs, err := render.Generate(p.Graph)
+	outputs, err := render.Generate(p.Graph, p.Snapshot.Files)
 	if err != nil {
 		return []core.Diagnostic{{Code: "render", Message: err.Error()}}
 	}

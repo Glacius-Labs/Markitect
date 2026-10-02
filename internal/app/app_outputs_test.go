@@ -17,7 +17,7 @@ func TestCheckOutputsReportsMissingAndDrift(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	generated, err := render.Generate(p.Graph)
+	generated, err := render.Generate(p.Graph, p.Snapshot.Files)
 	if err != nil {
 		t.Fatal(err)
 	}

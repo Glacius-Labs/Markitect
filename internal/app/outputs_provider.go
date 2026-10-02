@@ -31,7 +31,7 @@ func checkProviderAdapterInputs(p *Project) []core.Diagnostic {
 		paths = append(paths, a.RoleRegister)
 	}
 	sort.Strings(paths)
-	generated, err := render.Generate(p.Graph)
+	generated, err := render.Generate(p.Graph, p.Snapshot.Files)
 	if err != nil {
 		return []core.Diagnostic{{Code: "provider-adapter.output-plan", Path: "markitect.yaml", Message: fmt.Sprintf("resolve generated provider outputs: %v", err)}}
 	}

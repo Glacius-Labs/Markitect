@@ -83,6 +83,14 @@ Provider outputs remain at their native `.agents/`, `.codex/`, and `.claude/` pa
 
 Generic Markdown views are opt-in through the `markdown` target. A resource under `.markitect/areas/engineering/persistence/change-review.rule.yaml` renders to `docs/markitect/engineering/persistence/change-review.rule.md`; an existing matching kind suffix appears only once. Markitect creates managed local README routers within `docs/markitect/`. Provider entrypoints link directly to canonical YAML whether or not Markdown views are enabled.
 
+### Source-relative prose navigation
+
+Author Markdown links and images in resource `spec.text` and Markdown descriptions relative to the canonical YAML file's directory. Rendering resolves that URL in the explicit local snapshot, then makes it relative to the concrete output. A generic Markdown view maps a link to a known local typed YAML resource to that resource's selected central view. Copied provider Agent text keeps typed links aimed at canonical YAML; ordinary document and image links are rebased to the actual source file in both projections. Query strings and fragments retain their destination semantics. Schemed URLs, site-root URLs, empty paths and local anchors remain unchanged.
+
+An old sibling companion URL is recognized only from an exact local resource path by replacing its YAML extension with `.md`. An existing unmarked ordinary Markdown file at that path wins. A missing or Markitect-marked sibling can route to the selected view (or canonical YAML in copied provider text); multiple typed candidates for a used companion alias produce an error. Renaming a canonical file still requires updating source links; the renderer does not guess old names, resolve package archive paths against consumer files, add graph edges, or declare ordinary inputs from prose.
+
+The destination scanner handles inline links and images, reference definitions and URI-escaped targets. It preserves surrounding Markdown, titles and code examples. Raw HTML attributes are not projected. This is navigation rewriting, not a complete Markdown parser or a check of every ordinary link target. Relative destinations that escape the repository or contain non-portable path components fail projection. The executable [Markdown navigation example](../examples/markdown-navigation/README.md) checks the source-relative contract and actual selected targets.
+
 For GitHub review presentation, use `.gitattributes` entries scoped to outputs the project actually owns:
 
 ```gitattributes

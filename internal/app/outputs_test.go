@@ -12,7 +12,7 @@ func TestCheckOutputsDoesNotTreatGeneratedSchemaYAMLAsOwnedOutput(t *testing.T) 
 	if err != nil {
 		t.Fatal(err)
 	}
-	generated, err := render.Generate(p.Graph)
+	generated, err := render.Generate(p.Graph, p.Snapshot.Files)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -43,7 +43,7 @@ func TestCheckOutputsRejectsOrphanedAggregateRuleAdapter(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	generated, err := render.Generate(p.Graph)
+	generated, err := render.Generate(p.Graph, p.Snapshot.Files)
 	if err != nil {
 		t.Fatal(err)
 	}

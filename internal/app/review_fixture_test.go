@@ -49,7 +49,7 @@ func reviewFixture(t *testing.T, revision string, provisional bool, resources []
 	if len(parsed.Diagnostics) != 0 {
 		t.Fatalf("review fixture has diagnostics: %#v", parsed.Diagnostics)
 	}
-	outputs, err := render.Generate(parsed.Graph)
+	outputs, err := render.Generate(parsed.Graph, parsed.Snapshot.Files)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -78,7 +78,7 @@ func mustRecordReview(t *testing.T, p *Project, config ReviewConfig) *ReviewReco
 
 func renderOutputs(t *testing.T, p *Project) map[string][]byte {
 	t.Helper()
-	outputs, err := render.Generate(p.Graph)
+	outputs, err := render.Generate(p.Graph, p.Snapshot.Files)
 	if err != nil {
 		t.Fatal(err)
 	}

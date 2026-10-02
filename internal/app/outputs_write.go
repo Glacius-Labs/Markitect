@@ -51,7 +51,7 @@ func WriteOutputs(root string, p *Project) ([]string, error) {
 			return nil, err
 		}
 	}
-	outputs, err := render.Generate(p.Graph)
+	outputs, err := render.Generate(p.Graph, p.Snapshot.Files)
 	if err != nil {
 		return nil, err
 	}

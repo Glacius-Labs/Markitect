@@ -15,7 +15,7 @@ func TestGenerateCompanionsKeepTextAndRelativeDependencyLinks(t *testing.T) {
 	})
 	project := resource("Project", "markitect.yaml", "sample", "", core.Spec{Targets: []string{"markdown"}, Areas: []core.Area{{Name: "team", Path: "docs/team"}}})
 	g := &core.Graph{Project: project, Resources: map[string]*core.Resource{rule.Key(): rule, skill.Key(): skill}, ResourceAreas: map[string]core.Area{rule.GraphKey(): {Name: "team", Path: "docs/team"}, skill.GraphKey(): {Name: "team", Path: "docs/team"}}}
-	outputs, err := Generate(g)
+	outputs, err := Generate(g, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -41,7 +41,7 @@ func TestGenerateExplicitTargetsPreservesProviderSettingsAndQuotes(t *testing.T)
 	skill := resource("Skill", "docs/team/skills/review.yaml", "review", "team", core.Spec{Description: "Use the skill", Text: "Review inputs."})
 	project := resource("Project", "markitect.yaml", "sample", "", core.Spec{Targets: []string{"codex", "claude"}})
 	g := &core.Graph{Resources: map[string]*core.Resource{agent.Key(): agent, skill.Key(): skill}, Project: project}
-	outputs, err := Generate(g)
+	outputs, err := Generate(g, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -74,7 +74,7 @@ func TestGenerateRejectsCaseInsensitiveSourceOutputCollision(t *testing.T) {
 	collision := resource("Text", "DOCS/MARKITECT/TEST/NOTE.TEXT.MD", "other", "test", core.Spec{Text: "existing output"})
 	project := resource("Project", "markitect.yaml", "sample", "", core.Spec{Targets: []string{"markdown"}, Areas: []core.Area{{Name: "test", Path: "docs/a"}, {Name: "test", Path: "DOCS/MARKITECT/TEST"}}})
 	g := &core.Graph{Project: project, Resources: map[string]*core.Resource{r.Key(): r, collision.Key(): collision}, ResourceAreas: map[string]core.Area{r.GraphKey(): {Name: "test", Path: "docs/a"}, collision.GraphKey(): {Name: "test", Path: "DOCS/MARKITECT/TEST"}}}
-	if _, err := Generate(g); err == nil || !strings.Contains(err.Error(), "collision") {
+	if _, err := Generate(g, nil); err == nil || !strings.Contains(err.Error(), "collision") {
 		t.Fatalf("expected path collision, got %v", err)
 	}
 }
@@ -83,7 +83,7 @@ func TestGenerateProviderOutputsRequireExplicitTargets(t *testing.T) {
 	agent := resource("Agent", "docs/area/agents/review.yaml", "review", "area", core.Spec{Text: "Review."})
 	project := resource("Project", "markitect.yaml", "sample", "", core.Spec{})
 	g := &core.Graph{Resources: map[string]*core.Resource{agent.Key(): agent}, Project: project}
-	outputs, err := Generate(g)
+	outputs, err := Generate(g, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -95,7 +95,7 @@ func TestGenerateProviderOutputsRequireExplicitTargets(t *testing.T) {
 func TestSharedRolePointersRespectSelectedTarget(t *testing.T) {
 	project := resource("Project", "markitect.yaml", "sample", "", core.Spec{Targets: []string{"codex"}, ProviderAdapters: &core.ProviderAdapters{RoleRegister: "docs/roles.md"}})
 	g := &core.Graph{Resources: map[string]*core.Resource{}, Project: project}
-	outputs, err := Generate(g)
+	outputs, err := Generate(g, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -103,7 +103,7 @@ func TestSharedRolePointersRespectSelectedTarget(t *testing.T) {
 		t.Fatalf("Codex target leaked Claude role pointer: %v", outputPaths(outputs))
 	}
 	project.Spec.Targets = []string{"claude"}
-	outputs, err = Generate(g)
+	outputs, err = Generate(g, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -121,7 +121,7 @@ func TestGenerateRuleAdaptersOnlyFromExplicitMappings(t *testing.T) {
 		},
 	})
 	g := &core.Graph{Resources: map[string]*core.Resource{first.Key(): first, second.Key(): second}, Project: project}
-	outputs, err := Generate(g)
+	outputs, err := Generate(g, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -133,7 +133,7 @@ func TestGenerateRuleAdaptersOnlyFromExplicitMappings(t *testing.T) {
 		t.Fatalf("adapter paths were inferred from namespaces: %v", outputPaths(outputs))
 	}
 	project.Spec.RuleAdapters = map[string][]core.Ref{"missing": {{Kind: "Rule", Namespace: "other", Name: "absent"}}}
-	if _, err := Generate(g); err == nil || !strings.Contains(err.Error(), "unresolved rule") {
+	if _, err := Generate(g, nil); err == nil || !strings.Contains(err.Error(), "unresolved rule") {
 		t.Fatalf("unresolved explicit adapter did not fail: %v", err)
 	}
 }
@@ -147,7 +147,7 @@ func TestGenerateWithOwnersReturnsExplicitOutputOwnership(t *testing.T) {
 		},
 	})
 	g := &core.Graph{Resources: map[string]*core.Resource{rule.Key(): rule, skill.Key(): skill}, Project: project}
-	_, owners, err := GenerateWithOwners(g)
+	_, owners, err := GenerateWithOwners(g, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -179,7 +179,7 @@ func TestGenerateSkipsImportedResourcesButRendersQualifiedDependencyText(t *test
 	g := &core.Graph{Project: project, Resources: map[string]*core.Resource{
 		local.GraphKey(): local, imported.GraphKey(): imported,
 	}}
-	outputs, err := Generate(g)
+	outputs, err := Generate(g, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -208,7 +208,7 @@ func TestGenerateRejectsExternalRuleAdapters(t *testing.T) {
 		RuleAdapters: map[string][]core.Ref{"privacy": {{Package: "policy-set", Namespace: "policy", Kind: "Rule", Name: "privacy"}}},
 	})
 	g := &core.Graph{Project: project, Resources: map[string]*core.Resource{imported.GraphKey(): imported}}
-	if _, err := Generate(g); err == nil || !strings.Contains(err.Error(), "external ruleAdapters are not supported") {
+	if _, err := Generate(g, nil); err == nil || !strings.Contains(err.Error(), "external ruleAdapters are not supported") {
 		t.Fatalf("external rule adapter error = %v", err)
 	}
 }

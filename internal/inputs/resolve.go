@@ -52,7 +52,7 @@ func ResolveWithPackages(graph *core.Graph, files map[string][]byte, packageFile
 	for name, resource := range generatedViews {
 		typedViewsByFoldedPath[strings.ToLower(name)] = resource
 	}
-	generatedOutputs, err := render.Generate(graph)
+	generatedOutputs, err := render.Generate(graph, files)
 	if err != nil {
 		add(graph.Project, "input.generated-path", fmt.Sprintf("resolve generated output paths: %v", err))
 		return resolved, diagnostics
