@@ -51,6 +51,10 @@ go run ./cmd/markitect format --repo examples/engineering-constitution
 go run ./cmd/markitect model --repo examples/engineering-constitution
 go run ./cmd/markitect check --repo examples/engineering-discovery
 go run ./cmd/markitect format --repo examples/engineering-discovery
+go run ./cmd/markitect check --repo examples/software-architecture
+go run ./cmd/markitect format --repo examples/software-architecture
+go run ./cmd/markitect model --repo examples/software-architecture
+go run ./cmd/markitect context --repo examples/software-architecture --namespace engineering --kind Skill --name implement-order
 go run ./cmd/markitect check --repo benchmark/fixtures/v2
 git diff --check
 ```

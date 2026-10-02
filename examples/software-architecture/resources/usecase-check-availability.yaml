@@ -1,0 +1,25 @@
+apiVersion: architecture.markitect.org/v1alpha1
+kind: UseCase
+metadata:
+    name: check-availability
+    namespace: engineering
+spec:
+    aggregates:
+        - kind: Aggregate
+          name: stock-item
+          namespace: engineering
+    feature:
+        kind: Feature
+        name: availability
+        namespace: engineering
+    handler:
+        kind: Handler
+        name: check-availability-handler
+        namespace: engineering
+    intent: Query
+    module:
+        kind: Module
+        name: inventory
+        namespace: engineering
+    summary: Report stock available for a requested quantity.
+    validators: []

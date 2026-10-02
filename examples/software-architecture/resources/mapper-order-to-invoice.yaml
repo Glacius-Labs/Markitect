@@ -1,0 +1,7 @@
+apiVersion: architecture.markitect.org/v1alpha1
+kind: Mapper
+metadata:
+    name: order-to-invoice
+    namespace: engineering
+spec:
+    summary: Maps accepted order facts into invoice input.

@@ -1,0 +1,18 @@
+apiVersion: architecture.markitect.org/v1alpha1
+kind: Module
+metadata:
+    name: inventory
+    namespace: engineering
+spec:
+    dependsOn:
+        - kind: Core
+          name: platform-core
+          namespace: engineering
+        - kind: Common
+          name: shared-kernel
+          namespace: engineering
+    product:
+        kind: Product
+        name: commerce
+        namespace: engineering
+    purpose: Own stock availability and reservation decisions independently.

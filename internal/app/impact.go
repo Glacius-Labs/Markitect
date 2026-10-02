@@ -1,7 +1,9 @@
 package app
 
 import (
+	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/Glacius-Labs/Markitect/internal/core"
 	"github.com/Glacius-Labs/Markitect/internal/render"
@@ -9,15 +11,30 @@ import (
 )
 
 type Impact struct {
-	Base      string   `yaml:"base"`
-	Candidate string   `yaml:"candidate"`
-	Changed   []string `yaml:"changed"`
-	Affected  []string `yaml:"affected"`
-	Reason    string   `yaml:"reason"`
+	Base      string        `yaml:"base"`
+	Candidate string        `yaml:"candidate"`
+	Changed   []string      `yaml:"changed"`
+	Affected  []string      `yaml:"affected"`
+	Reason    string        `yaml:"reason"`
+	Causes    []ImpactCause `yaml:"causes,omitempty"`
+}
+
+// ImpactCause records a changed input or an invalidation relationship in the
+// affected closure. A global cause has an empty Resource and applies to all.
+type ImpactCause struct {
+	Kind             string `yaml:"kind"`
+	Path             string `yaml:"path,omitempty"`
+	Resource         string `yaml:"resource,omitempty"`
+	From             string `yaml:"from,omitempty"`
+	To               string `yaml:"to,omitempty"`
+	Relation         string `yaml:"relation,omitempty"`
+	DomainAPIVersion string `yaml:"domainApiVersion,omitempty"`
+	Line             int    `yaml:"line,omitempty"`
+	Snapshot         string `yaml:"snapshot,omitempty"`
 }
 
 func Changes(before, after *Project) *Impact {
-	result := &Impact{Base: before.Snapshot.ID, Candidate: after.Snapshot.ID, Reason: "Union of old and new invalidation closures; configuration, inventory, constraint-selection or unowned-input changes conservatively affect all resources."}
+	result := &Impact{Base: before.Snapshot.ID, Candidate: after.Snapshot.ID, Reason: "Union of old and new invalidation closures; configuration, Domain definitions, inventory, collection policies, uncertain context effects or unowned inputs conservatively affect all resources. See causes for this comparison."}
 	result.Changed = snapshot.Compare(before.Snapshot, after.Snapshot).Paths()
 	changed := map[string]bool{}
 	for _, name := range result.Changed {
@@ -26,18 +43,32 @@ func Changes(before, after *Project) *Impact {
 	all := false
 	seeds := map[string]bool{}
 	ownedInputs := map[string]map[string]bool{}
+	causes := map[string]ImpactCause{}
+	addCause := func(cause ImpactCause) {
+		key := fmt.Sprintf("%s\x00%s\x00%s\x00%s\x00%s\x00%s\x00%s\x00%d\x00%s", cause.Kind, cause.Path, cause.Resource, cause.From, cause.To, cause.Relation, cause.DomainAPIVersion, cause.Line, cause.Snapshot)
+		causes[key] = cause
+	}
 	for _, p := range []*Project{before, after} {
 		for _, r := range p.Resources {
 			if r.Package == "" && changed[r.Path] {
 				seeds[r.GraphKey()] = true
-				if r.Kind == "Project" || constraintReadsResource(p, r) {
+				addCause(ImpactCause{Kind: "resource-change", Path: r.Path, Resource: r.GraphKey()})
+				if r.Kind == "Project" {
 					all = true
+					addCause(ImpactCause{Kind: "configuration", Path: r.Path})
+				} else if constraintReadsCollection(p, r) {
+					all = true
+					addCause(ImpactCause{Kind: "constraint-selection", Path: r.Path})
+				} else if constraintReadsResource(p, r) && hasContextWithoutInvalidation(before, after) {
+					all = true
+					addCause(ImpactCause{Kind: "context-policy-effect", Path: r.Path})
 				}
 			}
 		}
 		fileOwners, err := impactFileOwners(p)
 		if err != nil {
 			all = true
+			addCause(ImpactCause{Kind: "ownership-analysis"})
 			continue
 		}
 		for file, owners := range fileOwners {
@@ -52,15 +83,20 @@ func Changes(before, after *Project) *Impact {
 	// New/deleted symbols may affect global constraints and scope-level discovery.
 	if len(before.Graph.Resources) != len(after.Graph.Resources) {
 		all = true
+		addCause(ImpactCause{Kind: "inventory"})
 	}
 	for k := range before.Graph.Resources {
 		if _, ok := after.Graph.Resources[k]; !ok {
 			all = true
+			path := before.Graph.Resources[k].Path
+			addCause(ImpactCause{Kind: "inventory", Path: path})
 		}
 	}
 	for k := range after.Graph.Resources {
 		if _, ok := before.Graph.Resources[k]; !ok {
 			all = true
+			path := after.Graph.Resources[k].Path
+			addCause(ImpactCause{Kind: "inventory", Path: path})
 		}
 	}
 	// Unmodelled inputs may contain normative contracts, router membership or
@@ -74,33 +110,60 @@ func Changes(before, after *Project) *Impact {
 		}
 	}
 	for name := range changed {
-		if owners := ownedInputs[name]; len(owners) > 0 {
+		if selectedLocalDomainInput(before, name) || selectedLocalDomainInput(after, name) {
+			all = true
+			addCause(ImpactCause{Kind: "domain-definition", Path: name})
+		} else if owners := ownedInputs[name]; len(owners) > 0 {
 			for owner := range owners {
 				seeds[owner] = true
+				kind := "generated-output"
+				if declaredInputOwned(before, owner, name) || declaredInputOwned(after, owner, name) {
+					kind = "declared-input"
+				}
+				addCause(ImpactCause{Kind: kind, Path: name, Resource: owner})
 			}
 		} else if !modelled[name] {
 			all = true
+			addCause(ImpactCause{Kind: "unowned-input", Path: name})
 		}
 	}
 	if all {
+		if len(causes) == 0 {
+			addCause(ImpactCause{Kind: "global"})
+		}
 		for _, p := range []*Project{before, after} {
 			for k := range p.Graph.Resources {
 				seeds[k] = true
 			}
 		}
 	}
-	for again := true; again; {
+	for again := !all && len(seeds) > 0; again; {
 		again = false
-		for _, p := range []*Project{before, after} {
-			for from, edges := range p.Graph.InvalidationEdges {
-				if seeds[from] {
-					continue
-				}
+		for _, candidate := range []struct {
+			name string
+			p    *Project
+		}{{"base", before}, {"candidate", after}} {
+			fromKeys := make([]string, 0, len(candidate.p.Graph.InvalidationEdges))
+			for from := range candidate.p.Graph.InvalidationEdges {
+				fromKeys = append(fromKeys, from)
+			}
+			sort.Strings(fromKeys)
+			for _, from := range fromKeys {
+				edges := append([]string(nil), candidate.p.Graph.InvalidationEdges[from]...)
+				sort.Strings(edges)
 				for _, to := range edges {
-					if seeds[to] {
+					if !seeds[to] {
+						continue
+					}
+					if !seeds[from] {
 						seeds[from] = true
 						again = true
-						break
+					}
+					for _, relationship := range candidate.p.Graph.Relationships {
+						if relationship.From != from || relationship.To != to || !relationship.Invalidate {
+							continue
+						}
+						addCause(ImpactCause{Kind: "invalidation", Path: relationship.Path, From: from, To: to, Resource: from, Relation: relationship.Relation, DomainAPIVersion: relationship.DomainAPIVersion, Line: relationship.Line, Snapshot: candidate.name})
 					}
 				}
 			}
@@ -110,13 +173,17 @@ func Changes(before, after *Project) *Impact {
 		result.Affected = append(result.Affected, k)
 	}
 	sort.Strings(result.Affected)
+	for _, cause := range causes {
+		result.Causes = append(result.Causes, cause)
+	}
+	sort.Slice(result.Causes, func(i, j int) bool { return impactCauseLess(result.Causes[i], result.Causes[j]) })
 	return result
 }
 
-// A selector reads membership as well as values. A changed resource selected
-// in either snapshot may alter aggregate or uniqueness results without any
-// declared reference edge. Until those query dependencies can be narrowed,
-// retain project-wide invalidation for this explicit evaluation input.
+// constraintReadsResource reports whether the resource is a subject of any
+// policy in this snapshot. Collection-wide invalidation is classified
+// separately; this broader check guards per-resource outcomes whose consumers
+// may be context-visible without an invalidation edge.
 func constraintReadsResource(p *Project, resource *core.Resource) bool {
 	if p == nil || p.Graph == nil || p.Graph.Registry == nil || resource == nil {
 		return false
@@ -144,6 +211,99 @@ func constraintReadsResource(p *Project, resource *core.Resource) bool {
 		}
 	}
 	return false
+}
+
+// constraintReadsCollection identifies assertions whose outcome depends on
+// the selected set as a whole. Per-resource assertions are bounded by their
+// subject and its declared invalidation dependents.
+func constraintReadsCollection(p *Project, resource *core.Resource) bool {
+	if p == nil || p.Graph == nil || p.Graph.Registry == nil || resource == nil {
+		return false
+	}
+	for _, domain := range p.Graph.Registry.Domains() {
+		if resource.APIVersion != domain.APIVersion {
+			continue
+		}
+		for _, constraint := range domain.Constraints {
+			a := constraint.Assert
+			global := a.Op == "unique" || a.Op == "count" && a.Scope != "resource"
+			if !global {
+				continue
+			}
+			selector := constraint.Select
+			if selector.Kind != "" && selector.Kind != resource.Kind {
+				continue
+			}
+			if a.Op == "count" && a.Relation != "" && !containsString(domain.Relations[a.Relation].SourceKinds, resource.Kind) {
+				continue
+			}
+			matches := true
+			for name, value := range selector.Labels {
+				actual, exists := resource.Metadata.Labels[name]
+				if !exists || actual != value {
+					matches = false
+					break
+				}
+			}
+			if matches {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func selectedLocalDomainInput(p *Project, name string) bool {
+	if p == nil {
+		return false
+	}
+	for _, input := range p.DomainInputs {
+		if input.Package == "" && input.Path == name {
+			return true
+		}
+	}
+	return false
+}
+
+func declaredInputOwned(p *Project, owner, name string) bool {
+	if p == nil || p.Graph == nil {
+		return false
+	}
+	resource := p.Graph.Resources[owner]
+	if resource == nil {
+		return false
+	}
+	for _, input := range resource.Spec.Files {
+		if input == name {
+			return true
+		}
+	}
+	for _, input := range p.InputFiles[owner] {
+		if input == name {
+			return true
+		}
+	}
+	return false
+}
+
+func hasContextWithoutInvalidation(projects ...*Project) bool {
+	for _, p := range projects {
+		if p == nil || p.Graph == nil {
+			continue
+		}
+		for _, relationship := range p.Graph.Relationships {
+			if relationship.Context && !relationship.Invalidate {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func impactCauseLess(a, b ImpactCause) bool {
+	left := []string{a.Kind, a.Path, a.Resource, a.From, a.To, a.DomainAPIVersion, a.Relation, fmt.Sprint(a.Line), a.Snapshot}
+	right := []string{b.Kind, b.Path, b.Resource, b.From, b.To, b.DomainAPIVersion, b.Relation, fmt.Sprint(b.Line), b.Snapshot}
+	return strings.Join(left, "\x00") < strings.Join(right, "\x00")
 }
 
 // impactFileOwners maps only paths whose content is already represented by a

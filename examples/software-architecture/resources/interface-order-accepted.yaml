@@ -1,0 +1,11 @@
+apiVersion: architecture.markitect.org/v1alpha1
+kind: Interface
+metadata:
+    name: order-accepted
+    namespace: engineering
+spec:
+    provider:
+        kind: Module
+        name: orders
+        namespace: engineering
+    summary: Stable published contract for an order accepted by Orders.

@@ -1,0 +1,25 @@
+apiVersion: architecture.markitect.org/v1alpha1
+kind: UseCase
+metadata:
+    name: get-order
+    namespace: engineering
+spec:
+    aggregates:
+        - kind: Aggregate
+          name: order
+          namespace: engineering
+    feature:
+        kind: Feature
+        name: order-lifecycle
+        namespace: engineering
+    handler:
+        kind: Handler
+        name: get-order-handler
+        namespace: engineering
+    intent: Query
+    module:
+        kind: Module
+        name: orders
+        namespace: engineering
+    summary: Read an order and its current status.
+    validators: []

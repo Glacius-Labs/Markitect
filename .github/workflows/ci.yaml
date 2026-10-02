@@ -118,6 +118,18 @@ jobs:
       - name: Check discovery workflow formatting
         run: go run ./cmd/markitect format --repo examples/engineering-discovery
 
+      - name: Check software architecture stress case
+        run: go run ./cmd/markitect check --repo examples/software-architecture
+
+      - name: Compile software architecture context
+        run: go run ./cmd/markitect context --repo examples/software-architecture --namespace engineering --kind Skill --name implement-order
+
+      - name: Compile software architecture model
+        run: go run ./cmd/markitect model --repo examples/software-architecture
+
+      - name: Check software architecture formatting
+        run: go run ./cmd/markitect format --repo examples/software-architecture
+
       - name: Replay onboarding workflow
         if: runner.os == 'Windows'
         shell: pwsh
@@ -201,6 +213,10 @@ jobs:
           go run .markitect/bootstrap/run.go context --repo "$GITHUB_WORKSPACE/examples/canonical-engineering" --kind Skill --name architecture-review --namespace engineering
           go run .markitect/bootstrap/run.go model --repo "$GITHUB_WORKSPACE/examples/canonical-engineering"
           go run .markitect/bootstrap/run.go format --repo "$GITHUB_WORKSPACE/examples/canonical-engineering"
+          go run .markitect/bootstrap/run.go check --repo "$GITHUB_WORKSPACE/examples/software-architecture"
+          go run .markitect/bootstrap/run.go model --repo "$GITHUB_WORKSPACE/examples/software-architecture"
+          go run .markitect/bootstrap/run.go context --repo "$GITHUB_WORKSPACE/examples/software-architecture" --namespace engineering --kind Skill --name implement-order
+          go run .markitect/bootstrap/run.go format --repo "$GITHUB_WORKSPACE/examples/software-architecture"
           domain_repo="$RUNNER_TEMP/markitect-canonical-engineering-$GITHUB_SHA"
           mkdir -p "$domain_repo"
           cp -R "$GITHUB_WORKSPACE/examples/canonical-engineering/." "$domain_repo/"
@@ -265,6 +281,15 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Packaged binary canonical engineering model failed' }
           go run .markitect/bootstrap/run.go format --repo $domainExample
           if ($LASTEXITCODE -ne 0) { throw 'Packaged binary canonical engineering format failed' }
+          $architectureExample = Join-Path $env:GITHUB_WORKSPACE 'examples/software-architecture'
+          go run .markitect/bootstrap/run.go check --repo $architectureExample
+          if ($LASTEXITCODE -ne 0) { throw 'Packaged binary software architecture check failed' }
+          go run .markitect/bootstrap/run.go model --repo $architectureExample
+          if ($LASTEXITCODE -ne 0) { throw 'Packaged binary software architecture model failed' }
+          go run .markitect/bootstrap/run.go context --repo $architectureExample --namespace engineering --kind Skill --name implement-order
+          if ($LASTEXITCODE -ne 0) { throw 'Packaged binary software architecture context failed' }
+          go run .markitect/bootstrap/run.go format --repo $architectureExample
+          if ($LASTEXITCODE -ne 0) { throw 'Packaged binary software architecture format failed' }
           $domainRepo = Join-Path $env:RUNNER_TEMP "markitect-canonical-engineering-$env:GITHUB_SHA"
           New-Item -ItemType Directory -Path $domainRepo | Out-Null
           Get-ChildItem -LiteralPath $domainExample -Force | Copy-Item -Destination $domainRepo -Recurse -Force

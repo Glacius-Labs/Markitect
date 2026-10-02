@@ -1,0 +1,7 @@
+apiVersion: architecture.markitect.org/v1alpha1
+kind: Handler
+metadata:
+    name: issue-invoice-handler
+    namespace: engineering
+spec:
+    summary: Coordinates invoice creation from accepted order facts.

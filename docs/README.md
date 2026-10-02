@@ -11,6 +11,7 @@
 | [Factual consistency](consistency.md) | Opt-in sourced functional assertions and their limits |
 | [Architecture](architecture.md) | Shipped v0.11.0 architecture, product boundaries, and evidence limits; v0.10.0 remains the historical baseline |
 | [Engineering constitution](engineering-constitution.md) | Shipped v0.11.0 architecture-contract behavior, PolicyResults, explicit exceptions, and proposal/adoption boundaries |
+| [Domain-language pressure test](design/domain-language-pressure.md) | What the current language can and cannot establish for modular DDD / vertical-slice contracts, with a bounded experiment |
 | [Source snapshots](source-snapshots.md) | Snapshot values, Git acquisition, identity, comparison, and compatibility boundaries |
 | [Operations](operations.md) | Development, verification, rendering, and release operations |
 | [Refinement decisions](refinement.md) | Product principles and deferred design choices |

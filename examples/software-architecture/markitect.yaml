@@ -1,0 +1,19 @@
+apiVersion: markitect.example.org/v1alpha1
+kind: Project
+metadata:
+    name: software-architecture-consumer
+spec:
+    targets:
+        - markdown
+        - codex
+    areas:
+        - name: engineering
+          path: resources
+    domains:
+        - package:software-architecture/domains/software.yaml
+    packages:
+        - name: software-architecture
+          version: 1.0.0
+          source: fixture:software-architecture-package-v1
+          archive: .markitect/packages/software-architecture-1.0.0.zip
+          sha256: 22cb698924990fffe85d74489b971f239a2ff25863a1f69d65743b94facb3457
