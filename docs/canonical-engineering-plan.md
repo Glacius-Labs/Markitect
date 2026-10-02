@@ -1,6 +1,6 @@
 # Canonical engineering model delivery
 
-Status: implementation in progress for the next release. This plan records the authorized delivery scope; the roadmap remains the owner of release status.
+Status: delivered in the immutable [v0.10.0 release](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.10.0). This plan records the authorized delivery scope and model decisions; the roadmap remains the owner of release status, and the [production assessment](production-assessment.md) records verified source, platform and distribution evidence.
 
 ## Outcome
 

@@ -1,6 +1,6 @@
 # Architecture
 
-**Status:** This document describes the product architecture targeted for v0.10.0 and identifies the current implementation where it differs. The next-version model is in active implementation; it is not a claim about the published v0.9.1 binary. The [roadmap](implementation-plan.md) owns delivery status, [Usage](usage.md) owns the supported syntax of each version, and the [canonical engineering plan](canonical-engineering-plan.md) owns the next-version model contract. Check [GitHub Releases](https://github.com/Glacius-Labs/Markitect/releases) for available distributions.
+**Status:** This document describes the v0.10.0 architecture now shipped and identifies its boundaries. The [roadmap](implementation-plan.md) owns verified delivery status, [Usage](usage.md) owns supported syntax, and the [canonical engineering plan](canonical-engineering-plan.md) owns model decisions. Check [GitHub Releases](https://github.com/Glacius-Labs/Markitect/releases) for available distributions.
 
 ## Purpose
 
@@ -10,7 +10,7 @@ The product promise is that an explicitly modeled change can be traced to the ou
 
 The modeling language is extensible through versioned Domain definitions loaded before resources. A Domain defines resource kinds, their typed fields, relation descriptors, and bounded constraint forms. This lets software architecture, delivery, and AI-working knowledge use one small kernel without making every domain concept a built-in Core kind. The bundled AI-working vocabulary is one supplied Domain. External adapters consume the normalized semantic model and explicit mappings; they do not create canonical domain meaning.
 
-## Target compiler and evidence model
+## Compiler and evidence model
 
 The target compilation order is:
 
@@ -36,17 +36,17 @@ Every result identifies its fixed source snapshot, Domain and Project configurat
 
 ## Current implementation boundary
 
-The published v0.9.1 implementation remains narrower: it has built-in `Text`, `Rule`, `Contract`, `Workflow`, `Skill`, and `Agent` resource kinds, a fixed dependency graph, static context/impact behavior, and explicit render and rule adapters. This architecture describes the v0.10.0 product destination; [Usage](usage.md) and the versioned release continue to define what users can run today. The v0.10.0 roadmap states which target capabilities are implemented and which remain incomplete.
+The v0.10.0 implementation loads Domain definitions before generic resource instances, resolves typed custom-domain relations within their API version, evaluates the finite constraint operators, and supplies a normalized semantic model to context, impact, projections, and configured adapters. The bundled AI-working Domain can explicitly reference registered custom-domain resources through qualified `uses` references. Constraints are structural and finite; there is no arbitrary policy code, source-language semantics, or claim that modeled prose is true. Relation context, invalidation, and acyclic behavior remain separately declared. External state is observed through explicit adapters; apply does not grant human approval. See the [roadmap](implementation-plan.md) for the consumer proof and exact evidence limits.
 
 ## Project artifact boundary
 
-The target kernel models explicit engineering resources and declared relations. Project artifacts, including source code, schemas, configuration, infrastructure definitions, CI files, and documentation, remain explicit inputs; the kernel does not infer their domain-specific structure. In v0.9.1, an adopting project declares exact ordinary UTF-8 files through `spec.files`; Markitect checks paths and access, includes bytes in fixed-snapshot context, and uses changes to conservatively identify affected resources and invalidate review-evidence reuse. That current input contract does not accept arbitrary binary files or globs; see [Project artifact inputs](documentation.md).
+The kernel models explicit engineering resources and declared relations. Project artifacts, including source code, schemas, configuration, infrastructure definitions, CI files, and documentation, remain explicit inputs; the kernel does not infer their domain-specific structure. A custom Domain can declare one array-of-string property as `inputsField`; those paths become opaque snapshot inputs used for context and impact. The bundled AI-working vocabulary continues to declare these inputs through `spec.files`. Inputs remain exact paths and bytes: no arbitrary binary files, globs, or source interpretation; see [Project artifact inputs](documentation.md).
 
 A committed `ContextRun` manifest can select additional exact UTF-8 project artifacts under its `sources` field for one fixed task. Those bytes affect that run's context and digest. The selection adds no resource-graph edge; ordinary `impact` still follows declared resource inputs and its conservative rule for unknown files. The field name does not give source code special treatment.
 
 Markitect's core does not parse an adopting project's programming-language structure, infer symbols, call graphs, dependencies or business meaning from its files, or generate documentation from source code. A changed input can establish that dependent knowledge needs review; it cannot establish that the knowledge is wrong or that revised prose is correct. The declared resource graph is not a graph inferred from the internal structure of project artifacts. A configured adapter or project-owned check may use a specialized analyzer, but its behavior and evidence remain explicit and outside the generic kernel. Apply the same source and impact rules across artifact types.
 
-Project-owned commands in `spec.checks` may run external analyzers during `verify`. Markitect executes those explicit commands and reports their result for the selected snapshot; the adopting project chooses the checks and interprets their findings. A future integration with specialized tooling must preserve this boundary by supplying explicit inputs or project-owned checks, rather than moving domain-specific analysis into the core.
+Project-owned commands in `spec.checks` may run external analyzers during `verify`; configured adapters may also consume declared inputs and the normalized model. Markitect reports their bounded result for the selected snapshot; the adopting project chooses the checks and interprets their findings. A specialized integration must preserve this boundary by supplying explicit inputs or project-owned checks, rather than moving domain-specific analysis into the core.
 
 ```mermaid
 flowchart LR
@@ -68,13 +68,13 @@ flowchart LR
     Verify --> Evidence
 ```
 
-## Current v0.9.1 implementation details
+## Bundled AI vocabulary and shared application contracts
 
 ## Resource model
 
 The recommended [repository layout](repository-layout.md) keeps the Project entrypoint at the root, typed knowledge under explicit `.markitect/areas/` paths, and human documentation under `docs/`. Provider projections retain their native paths. This is a convention: configured Areas remain authoritative and existing paths remain valid. Resource Markdown views are generated only when `markdown` is an explicit Project target; they live under `docs/markitect/` and do not own source content.
 
-Resources have local identity `namespace/kind/name`; the Project has identity `kind: Project` in `markitect.yaml`.
+Bundled AI resources retain local identity `namespace/kind/name`; custom resources use `namespace/apiVersion/kind/name`. Package origin further qualifies imported identities. The Project has identity `kind: Project` in `markitect.yaml`.
 
 | Kind | Responsibility |
 |---|---|

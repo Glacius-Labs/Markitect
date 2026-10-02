@@ -1,6 +1,6 @@
 # Product refinement decisions
 
-This document owns product principles and deferred direction. The [roadmap](implementation-plan.md) is the sole owner of current source and planned-work status; [Usage](usage.md) owns supported Project syntax and CLI behavior. The v0.10.0 target is the shift to a canonical engineering model, declared Domains, a normalized semantic IR, and configured projection and observation adapters. Detailed contracts and delivery evidence belong to the [canonical engineering plan](canonical-engineering-plan.md).
+This document owns product principles and deferred direction. The [roadmap](implementation-plan.md) is the sole owner of shipped source and planned-work status; [Usage](usage.md) owns supported Project syntax and CLI behavior. v0.10.0 ships the canonical engineering model, declared Domains, a normalized semantic IR, and configured projection and observation adapters. Detailed contracts and delivery evidence belong to the [canonical engineering plan](canonical-engineering-plan.md).
 
 ## Product principles
 
@@ -16,13 +16,13 @@ This document owns product principles and deferred direction. The [roadmap](impl
 | Explicit adapters | Mappings are canonical inputs. Adapters consume the normalized model and may project files or use an explicit observe, plan, apply, and verify lifecycle. External state is observed independently, so drift can be detected while the model is unchanged. |
 | Evidence limits | Results identify fixed source, Domain, Project configuration, mappings, adapter, and observation inputs. A passing check proves only its configured assertion for those inputs; it does not establish semantic truth or transfer human acceptance. |
 | Opaque project artifacts | Repositories, source code, schemas, infrastructure, CI, and documentation remain explicit inputs. Domain-specific source analysis belongs in a configured adapter or project-owned check. |
-| Versioned delivery | v0.10.0 is intended to ship the generic capability as a supported product, not leave it as an experimental pilot. The roadmap records implemented coverage and remaining gaps. |
+| Versioned delivery | v0.10.0 ships the generic capability as a supported product. The roadmap records implemented coverage and remaining limits. |
 
 ## Product hypothesis and evidence
 
 The value hypothesis is that teams spend less effort finding and reconciling conflicting engineering intent when descriptive models, normative rules, agent guidance, checks, and selected external state are tied to explicit canonical owners and change impact. This is most plausible when the same policy genuinely has several consumers and changes often enough for drift to cost time or cause errors.
 
-That user-level benefit is not yet established. The existing synthetic authoring and onboarding exercises show bounded technical behavior, not measured reductions in real team effort or production defects. v0.10.0 commits to the complete technical product model and an executable end-to-end example; it must report the limits of its correctness evidence. Claims about productivity, semantic accuracy, or broad reconciliation value require real repeated tasks and observed external use. [Measurement](measurement.md) owns that evidence method.
+That user-level benefit is not established by shipping the capability. The synthetic consumer proof demonstrates one bounded technical case, not measured reductions in real team effort or production defects. v0.10.0 ships the defined technical product model and an executable end-to-end example with explicit limits on correctness evidence. Claims about productivity, semantic accuracy, or broad reconciliation value require repeated real tasks and observed external use. [Measurement](measurement.md) owns that evidence method.
 
 The v0.10.0 constraint language starts with a finite set of deterministic assertions. A general policy engine such as CUE or OPA is not silently embedded in that contract. Evaluate whether one should be integrated after comparing the bounded language against real policy cases, including authoring clarity, validation behavior, adapter reuse, and operational cost. Extend the kernel only for semantics that repeated cases show it must own.
 
@@ -34,7 +34,7 @@ The v0.3.0 source model implements the first bounded content-package slice. Its 
 
 Minimal one-time project initialization is in the current source model. It creates only the Project file and one area README after preview and validation. It uses no custom templates, executes no scripts, and does not synchronize created projects with an evolving template. The precise contract and its structural-verification limit are in [Usage](usage.md); source status remains in the [roadmap](implementation-plan.md).
 
-Reconciliation is now part of the v0.10.0 target through explicit adapter contracts. Broad runtime/operator operation, hidden background controllers, or inferred integrations remain outside that target. Every interaction with external systems must be configured, observable, scoped to named inputs, and represented in the adapter result. MCP and LSP remain separate interface choices and require evidence of authoring friction before adoption.
+Reconciliation ships through explicit adapter contracts with bounded observe, plan, capability-gated apply, and verify operations. Broad runtime/operator operation, hidden background controllers, and inferred integrations remain outside the product. Custom-domain typed references are limited to the same API version; the bundled AI Domain may explicitly use registered custom resources. MCP and LSP remain separate interface choices and require evidence of authoring friction before adoption.
 
 ## CLI distribution assessment (2026-10-01)
 
