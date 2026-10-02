@@ -7,4 +7,3 @@
 
 - **channel:** `preview`
 - **requiredChecks:** `unit-tests`, `policy-check`
-

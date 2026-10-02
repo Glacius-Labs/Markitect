@@ -480,6 +480,9 @@ func validateConstraint(c ConstraintDefinition, d DomainDefinition) error {
 		if !ok {
 			return fmt.Errorf("constraint %q refers to undefined relation %q", c.Name, a.Relation)
 		}
+		if c.Select.Kind != "" && !contains(relation.SourceKinds, c.Select.Kind) {
+			return fmt.Errorf("constraint %q selects kind %q, which is not a source of relation %q", c.Name, c.Select.Kind, a.Relation)
+		}
 		if len(a.Values) == 0 {
 			return fmt.Errorf("constraint %q allowed-targets requires nonempty values", c.Name)
 		}
@@ -503,8 +506,12 @@ func validateConstraint(c ConstraintDefinition, d DomainDefinition) error {
 			return fmt.Errorf("constraint %q count requires valid min/max bounds", c.Name)
 		}
 		if a.Relation != "" {
-			if _, ok := d.Relations[a.Relation]; !ok {
+			relation, ok := d.Relations[a.Relation]
+			if !ok {
 				return fmt.Errorf("constraint %q refers to undefined relation %q", c.Name, a.Relation)
+			}
+			if c.Select.Kind != "" && !contains(relation.SourceKinds, c.Select.Kind) {
+				return fmt.Errorf("constraint %q selects kind %q, which is not a source of relation %q", c.Name, c.Select.Kind, a.Relation)
 			}
 		}
 	default:
@@ -760,9 +767,19 @@ func (g *Graph) EvaluateConstraints() {
 
 func (g *Graph) evaluateConstraint(d DomainDefinition, c ConstraintDefinition) error {
 	selected := []*Resource{}
+	var relationSources map[string]bool
+	if c.Assert.Relation != "" && (c.Assert.Op == "count" || c.Assert.Op == "allowed-targets") {
+		relationSources = map[string]bool{}
+		for _, kind := range d.Relations[c.Assert.Relation].SourceKinds {
+			relationSources[kind] = true
+		}
+	}
 	for _, k := range sortedKeys(g.Resources) {
 		r := g.Resources[k]
 		if r.APIVersion != d.APIVersion || c.Select.Kind != "" && r.Kind != c.Select.Kind {
+			continue
+		}
+		if len(relationSources) > 0 && !relationSources[r.Kind] {
 			continue
 		}
 		match := true

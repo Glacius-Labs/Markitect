@@ -28,5 +28,3 @@ New-Item -ItemType Directory -Force .artifacts/markitect/reconcile | Out-Null
 markitect reconcile --repo . --action plan --adapter dotnet-dependencies | Out-File .artifacts/markitect/reconcile/dotnet-plan.yaml -Encoding utf8
 markitect reconcile --repo . --action verify --adapter dotnet-dependencies --plan .artifacts/markitect/reconcile/dotnet-plan.yaml
 ```
-
-

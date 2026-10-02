@@ -328,6 +328,23 @@ func TestCanonicalDotNetAdapterObservesAndVerifiesProjectDependencies(t *testing
 	if plan.Result.Status != "complete" {
 		t.Fatalf("adapter plan is incomplete: %#v", plan.Result)
 	}
+	tamperCases := map[string]func(*app.CommandAdapterPlan){
+		"observed": func(tampered *app.CommandAdapterPlan) {
+			tampered.Result.Observed = map[string]any{"tampered": true}
+		},
+		"operations": func(tampered *app.CommandAdapterPlan) {
+			tampered.Result.Operations = append(tampered.Result.Operations, app.AdapterOperation{ID: "tampered", Action: "remove", Target: "project"})
+		},
+	}
+	for name, mutate := range tamperCases {
+		t.Run("reject tampered plan "+name, func(t *testing.T) {
+			tampered := plan
+			mutate(&tampered)
+			if _, err := app.VerifyCommandAdapter(project, "dotnet-dependencies", "0.10.0", toolDigest, tampered); err == nil {
+				t.Fatalf("VerifyCommandAdapter accepted tampered plan %s", name)
+			}
+		})
+	}
 	verified, err := app.VerifyCommandAdapter(project, "dotnet-dependencies", "0.10.0", toolDigest, plan)
 	if err != nil {
 		t.Fatalf("verify unchanged project evidence: %v", err)

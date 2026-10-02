@@ -12,4 +12,3 @@
 ## Applicable constraints
 
 - **release-evidence-must-pass:** `result` must be one of `passed`. Explanation: A recorded check result must be passing; evidence remains distinct from the requested release state.
-

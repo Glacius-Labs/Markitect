@@ -14,7 +14,7 @@ import (
 
 const (
 	ordersModule = "engineering/software.markitect.org/v1alpha1/Module/orders"
-	coreModule   = "engineering/software.markitect.org/v1alpha1/Core/platform-core"
+	coreResource = "engineering/software.markitect.org/v1alpha1/Core/platform-core"
 	adapterID    = "dotnet-architecture"
 )
 
@@ -32,8 +32,8 @@ func TestObserveAcceptsCanonicalProjectReferences(t *testing.T) {
 	if got.Status != "complete" || len(got.Findings) != 0 {
 		t.Fatalf("status/findings = %s/%v", got.Status, got.Findings)
 	}
-	want := map[string][]string{ordersModule: {coreModule}, coreModule: {}}
-	if got.Observed.Evidence != "literal-unconditional-project-reference-xml" || !reflect.DeepEqual(got.Observed.Scope, []string{coreModule, ordersModule}) || !reflect.DeepEqual(got.Observed.Dependencies, want) {
+	want := map[string][]string{ordersModule: {coreResource}, coreResource: {}}
+	if got.Observed.Evidence != "literal-unconditional-project-reference-xml" || !reflect.DeepEqual(got.Observed.Scope, []string{coreResource, ordersModule}) || !reflect.DeepEqual(got.Observed.Dependencies, want) {
 		t.Fatalf("observed = %#v, want scoped literal-reference evidence %#v", got.Observed, want)
 	}
 }
@@ -87,7 +87,7 @@ func TestObserveReportsForbiddenAndMissingDependencies(t *testing.T) {
 	projects := req.Adapter.Parameters["projectMappings"].([]projectMapping)
 	req.Adapter.Parameters["projectMappings"] = append(projects, projectMapping{Resource: otherModule, ProjectFile: "src/Other/Other.csproj"})
 	req.Model.Resources = append(req.Model.Resources, resource{Identity: resourceIdentity{Kind: "Module", Key: otherModule}})
-	req.Model.Relationships = append(req.Model.Relationships, relationship{From: otherModule, To: coreModule, Type: "dependsOn"})
+	req.Model.Relationships = append(req.Model.Relationships, relationship{From: otherModule, To: coreResource, Type: "dependsOn"})
 	if err := os.MkdirAll(filepath.Join(root, "src", "Other"), 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -155,7 +155,7 @@ func TestVerifyDetectsChangedProjectSnapshot(t *testing.T) {
 		t.Fatal(err)
 	}
 	req := validRequest("verify")
-	req.Plan = &result{Adapter: adapterID, Action: "plan", Status: "complete", ModelDigest: "model-digest", Observed: &observation{Evidence: "literal-unconditional-project-reference-xml", Scope: []string{coreModule, ordersModule}, Dependencies: map[string][]string{ordersModule: {coreModule}, coreModule: {}}}}
+	req.Plan = &result{Adapter: adapterID, Action: "plan", Status: "complete", ModelDigest: "model-digest", Observed: &observation{Evidence: "literal-unconditional-project-reference-xml", Scope: []string{coreResource, ordersModule}, Dependencies: map[string][]string{ordersModule: {coreResource}, coreResource: {}}}}
 	got := run(req)
 	if got.Status != "complete" || !hasCode(got.Findings, "verification-drift") {
 		t.Fatalf("status/findings = %s/%v", got.Status, got.Findings)
@@ -249,7 +249,7 @@ func TestPlanRequiresAndChecksObservation(t *testing.T) {
 	if got.Status != "incomplete" || !hasCode(got.Findings, "observation-missing") {
 		t.Fatalf("missing observation status/findings = %s/%v", got.Status, got.Findings)
 	}
-	req.Observation = &result{Adapter: adapterID, Action: "observe", Status: "complete", ModelDigest: req.Model.ModelDigest, Observed: &observation{Evidence: "literal-unconditional-project-reference-xml", Scope: []string{coreModule, ordersModule}, Dependencies: map[string][]string{ordersModule: {coreModule}, coreModule: {}}}}
+	req.Observation = &result{Adapter: adapterID, Action: "observe", Status: "complete", ModelDigest: req.Model.ModelDigest, Observed: &observation{Evidence: "literal-unconditional-project-reference-xml", Scope: []string{coreResource, ordersModule}, Dependencies: map[string][]string{ordersModule: {coreResource}, coreResource: {}}}}
 	got = run(req)
 	if got.Status != "complete" || got.Action != "plan" {
 		t.Fatalf("plan status/action/findings = %s/%s/%v", got.Status, got.Action, got.Findings)
@@ -300,7 +300,7 @@ func validRequest(action string) request {
 		Action:     action,
 		Adapter: adapterRequest{Name: adapterID, Type: "command", Version: "markitect-dotnet/v0.1.0", Parameters: map[string]any{"projectMappings": []projectMapping{
 			{Resource: ordersModule, ProjectFile: "src/Orders/Orders.csproj"},
-			{Resource: coreModule, ProjectFile: "src/Core/Core.csproj"},
+			{Resource: coreResource, ProjectFile: "src/Core/Core.csproj"},
 		}}},
 		Model: semanticModel{
 			APIVersion:       "markitect.example.org/semantic-model/v1alpha1",
@@ -308,9 +308,9 @@ func validRequest(action string) request {
 			ValidationStatus: "passed",
 			Resources: []resource{
 				{Identity: resourceIdentity{Kind: "Module", Key: ordersModule}},
-				{Identity: resourceIdentity{Kind: "Module", Key: coreModule}},
+				{Identity: resourceIdentity{Kind: "Core", Key: coreResource}},
 			},
-			Relationships: []relationship{{From: ordersModule, To: coreModule, Type: "dependsOn"}},
+			Relationships: []relationship{{From: ordersModule, To: coreResource, Type: "dependsOn"}},
 		},
 	}
 }

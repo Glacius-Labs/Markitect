@@ -1,13 +1,81 @@
 package app
 
 import (
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/internal/contentpackage"
 	"github.com/Glacius-Labs/Markitect/internal/core"
+	"github.com/Glacius-Labs/Markitect/internal/format"
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
+
+func TestDomainInsideAreaRequiresSelectionBeforeFormatting(t *testing.T) {
+	for _, selected := range []bool{false, true} {
+		name := "unselected"
+		if selected {
+			name = "selected"
+		}
+		t.Run(name, func(t *testing.T) {
+			s := domainInputSnapshot()
+			domainPath := "resources/software.domain.yaml"
+			s.Files[domainPath] = s.Files["domains/software.yaml"]
+			delete(s.Files, "domains/software.yaml")
+			config := strings.Replace(string(s.Files["markitect.yaml"]), "domains/software.yaml", domainPath, 1)
+			if !selected {
+				config = strings.Replace(config, "  domains: ["+domainPath+"]\n", "", 1)
+			}
+			s.Files["markitect.yaml"] = []byte(config)
+			root := tempRoot(t)
+			initWriterRepo(t, root)
+			writeFixture(t, root, s.Files)
+			p, err := Load(root, "")
+			if err != nil {
+				t.Fatal(err)
+			}
+			fullPath := filepath.Join(root, filepath.FromSlash(domainPath))
+			before := mustRead(t, fullPath)
+			if !selected {
+				found := false
+				for _, diagnostic := range p.Diagnostics {
+					if diagnostic.Path == domainPath && diagnostic.Code == "parse" {
+						found = true
+					}
+				}
+				if !found {
+					t.Fatalf("unselected definition became an ordinary resource: %+v", p.Diagnostics)
+				}
+				if _, err := Format(root, p, true); err == nil {
+					t.Fatal("format must refuse an unselected Domain definition")
+				}
+				if string(mustRead(t, fullPath)) != string(before) {
+					t.Fatal("format modified an unselected Domain definition")
+				}
+				return
+			}
+			if len(p.Diagnostics) != 0 {
+				t.Fatalf("selected Area definition failed: %+v", p.Diagnostics)
+			}
+			if _, err := Format(root, p, true); err != nil {
+				t.Fatal(err)
+			}
+			after, err := os.ReadFile(fullPath)
+			if err != nil {
+				t.Fatal(err)
+			}
+			definition, err := format.ParseDomain(domainPath, after)
+			if err != nil || definition.Kinds["Module"].Properties["intent"].Type != "string" {
+				t.Fatalf("format lost Domain schema: definition=%+v err=%v", definition, err)
+			}
+			formatted, err := Load(root, "")
+			if err != nil || len(formatted.Diagnostics) != 0 {
+				t.Fatalf("formatted Domain no longer compiles: project=%+v err=%v", formatted, err)
+			}
+		})
+	}
+}
 
 const appDomainDefinition = `apiVersion: markitect.example.org/v1alpha1
 kind: Domain

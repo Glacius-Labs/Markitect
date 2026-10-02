@@ -6,4 +6,3 @@
 ## Declared facts
 
 - **summary:** `Persist and retrieve order state.`
-

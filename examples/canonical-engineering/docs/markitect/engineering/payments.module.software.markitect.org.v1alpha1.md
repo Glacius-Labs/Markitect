@@ -10,4 +10,3 @@
 ## Applicable constraints
 
 - **application-modules-use-core:** `dependsOn` relationships may target only kinds `Core`. Explanation: Application modules are subject to this declared dependency-target rule.
-

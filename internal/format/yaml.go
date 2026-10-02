@@ -90,11 +90,7 @@ func ParseWithRegistry(filePath string, data []byte, registry *core.Registry) (*
 	kind := child(root, "kind").Value
 	apiVersion := child(root, "apiVersion").Value
 	if kind == "Domain" && apiVersion == core.APIVersion {
-		d, err := ParseDomain(filePath, data)
-		if err != nil {
-			return nil, err
-		}
-		return &core.Resource{APIVersion: core.APIVersion, Kind: "Domain", Metadata: core.Metadata{Name: d.Name}, Data: map[string]any{}, Path: filePath, Line: root.Line}, nil
+		return nil, diagnostic(filePath, root.Line, "Domain definitions are not ordinary resources; select this file through project.spec.domains or package.spec.domains and parse it as a domain definition")
 	}
 	if !registry.IsKnownKind(apiVersion, kind) {
 		return nil, diagnostic(filePath, child(root, "kind").Line, "unsupported resource kind %q for apiVersion %q", kind, apiVersion)

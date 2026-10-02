@@ -90,3 +90,38 @@ func TestDomainSelectorsRequireLabelPresence(t *testing.T) {
 		t.Fatalf("absent label incorrectly matched empty selector value: %#v", graph.Diagnostics)
 	}
 }
+
+func TestRelationConstraintsValidateAndRespectSourceKinds(t *testing.T) {
+	t.Run("reject selector kind outside relation sources", func(t *testing.T) {
+		domain := testSoftwareDomain()
+		domain.Constraints[0].Select = ResourceSelector{Kind: "Core"}
+		if err := NewRegistry().AddDomain(domain); err == nil {
+			t.Fatal("accepted relation constraint selecting a non-source kind")
+		}
+	})
+
+	t.Run("unqualified selector counts only relation sources", func(t *testing.T) {
+		domain := testSoftwareDomain()
+		module := domain.Kinds["Module"]
+		module.Properties["dependsOn"].Items.RefKind = "Module"
+		domain.Kinds["Module"] = module
+		coreKind := domain.Kinds["Core"]
+		coreKind.Properties["dependsOn"] = PropertyDefinition{Type: "array", Items: &PropertyDefinition{Type: "ref", RefKind: "Module"}}
+		domain.Kinds["Core"] = coreKind
+		domain.Constraints = []ConstraintDefinition{{Name: "module-dependency-count", Assert: ConstraintAssertion{Op: "count", Relation: "dependsOn", Min: intPointer(2)}}}
+		registry := NewRegistry()
+		if err := registry.AddDomain(domain); err != nil {
+			t.Fatal(err)
+		}
+		project := &Resource{APIVersion: APIVersion, Kind: "Project", Metadata: Metadata{Name: "sample"}}
+		moduleResource := &Resource{APIVersion: domain.APIVersion, Kind: "Module", Metadata: Metadata{Name: "module", Namespace: "engineering"}, Data: map[string]any{"layer": "application", "dependsOn": []any{map[string]any{"kind": "Module", "name": "target"}}}}
+		coreResource := &Resource{APIVersion: domain.APIVersion, Kind: "Core", Metadata: Metadata{Name: "core", Namespace: "engineering"}, Data: map[string]any{"purpose": "shared", "dependsOn": []any{map[string]any{"kind": "Module", "name": "target"}, map[string]any{"kind": "Module", "name": "module"}}}}
+		target := &Resource{APIVersion: domain.APIVersion, Kind: "Module", Metadata: Metadata{Name: "target", Namespace: "engineering"}, Data: map[string]any{"layer": "core"}}
+		graph := BuildWithRegistry([]*Resource{project, moduleResource, coreResource, target}, registry)
+		if !hasCode(graph, "constraint.module-dependency-count") {
+			t.Fatalf("count included non-source Core relation values: %#v", graph.Diagnostics)
+		}
+	})
+}
+
+func intPointer(v int) *int { return &v }

@@ -57,7 +57,7 @@ spec:
   domains: [domains/software.yaml]
 ```
 
-`spec.domains` accepts a sequence of unique `.yaml` or `.yml` file paths relative to the selected source snapshot. A directly pinned package Domain can be selected as `package:PIN/DOMAIN-MEMBER`; the member must be exported by that package. Packages do not activate Domains implicitly. The Project loader registers selected definitions first, then validates resource documents and their references.
+`spec.domains` accepts a sequence of unique `.yaml` or `.yml` file paths relative to the selected source snapshot. A Domain from a directly pinned package can be selected as `package:PIN/DOMAIN-MEMBER`; `DOMAIN-MEMBER` must be declared in that package's `spec.domains` (it need not be a resource export). Packages do not activate Domains implicitly. The Project loader registers selected definitions first, then validates resource documents and their references.
 
 A resource uses the Domain's `apiVersion` and one of its declared kinds. Its relation field is a typed reference and is evaluated under the named relation's graph rules:
 
@@ -76,11 +76,11 @@ spec:
       name: core
 ```
 
-Same-Domain references can omit `apiVersion`; cross-Domain references use the target Domain's qualified API version. Relations separately declare context traversal, invalidation, and cycle behavior. A Domain constraint selects resources by its own kind and exact metadata labels, then applies a closed assertion operator. Supported operators are `present`, `equal`, `allowed`, `allowed-targets`, `count`, and `unique`; `count` requires at least one nonnegative `min` or `max`. `allowed-targets` checks actual relation target kinds against the assertion's `values`, which must be within the relation descriptor's declared `targetKinds`. These checks apply only to declared model data and selected inputs.
+References in custom Domain resources resolve within that same Domain API version; their typed references and named relations cannot cross into another Domain. The bundled AI-working Domain has explicit `uses` relationships that can target a registered custom Domain when the reference names its qualified `apiVersion`. Relations separately declare context traversal, invalidation, and cycle behavior. A Domain constraint selects resources by its own kind and exact metadata labels, then applies a closed assertion operator. Supported operators are `present`, `equal`, `allowed`, `allowed-targets`, `count`, and `unique`; `count` requires at least one nonnegative `min` or `max`. `allowed-targets` checks actual relation target kinds against the assertion's `values`, which must be within the relation descriptor's declared `targetKinds`. These checks apply only to declared model data and selected inputs.
 
 An optional `inputsField` on a kind names one declared array-of-string property whose paths are exact opaque project artifact inputs. Markitect snapshots those files and uses their byte changes for context and impact; it does not parse their domain-specific structure.
 
-Package content does not activate its Domain. Select a package-owned definition explicitly with `package:PIN/DOMAIN-MEMBER` after adding the exact package pin. Local Domain files and activated package Domain bytes are fixed context inputs; edits to them affect impact. `format` canonicalizes local Domain definitions and resource YAML. See the [canonical engineering plan](canonical-engineering-plan.md) for the full language and adapter guarantees.
+Package content does not activate its Domain. Select a package-owned definition explicitly with `package:PIN/DOMAIN-MEMBER` after adding the exact package pin; the member must be declared by the package manifest's `spec.domains`. Local Domain files and activated package Domain bytes are fixed context inputs; edits to them affect impact. `format` canonicalizes local Domain definitions and resource YAML. See the [canonical engineering plan](canonical-engineering-plan.md) for the full language and adapter guarantees.
 
 The [canonical engineering example](../examples/canonical-engineering/README.md) demonstrates independent Software and Delivery Domains, relation-specific context and impact, a policy value used in documentation, agent context, and deterministic checking, and a read-only adapter for concrete project inputs.
 

@@ -21,7 +21,7 @@ func runReconcile(o commandOptions, p *app.Project, emit func(any) int, fail fun
 			if planErr != nil {
 				return fail(planErr)
 			}
-			return emit(plan)
+			return emitCommandAdapterPlan(plan, emit)
 		case "apply":
 			plan, planErr := app.ReadCommandAdapterPlan(o.plan)
 			if planErr != nil {
@@ -97,6 +97,13 @@ func runReconcile(o commandOptions, p *app.Project, emit func(any) int, fail fun
 	default:
 		return fail(fmt.Errorf("unsupported reconciliation action %q", o.action))
 	}
+}
+
+func emitCommandAdapterPlan(plan app.CommandAdapterPlan, emit func(any) int) int {
+	if code := emit(plan); code != 0 {
+		return code
+	}
+	return adapterResultExitCode(plan.Result)
 }
 
 func adapterResultExitCode(result app.AdapterResult) int {

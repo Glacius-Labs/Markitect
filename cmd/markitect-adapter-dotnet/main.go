@@ -1,6 +1,6 @@
 // Command markitect-adapter-dotnet is a read-only reference adapter for the
 // Markitect normalized semantic-model protocol. It inspects captured MSBuild
-// project files and compares ProjectReference edges with canonical Module
+// project files and compares ProjectReference edges with canonical resource
 // dependsOn relationships. It never loads project code or runs MSBuild.
 package main
 
@@ -225,9 +225,9 @@ func run(req request) result {
 		return sortedResult(res, "incomplete")
 	}
 
-	projectToModule := map[string]string{}
+	projectToResource := map[string]string{}
 	for key, path := range mappings {
-		projectToModule[path] = key
+		projectToResource[path] = key
 	}
 	observed := map[string][]string{}
 	for _, key := range sortedKeys(mappings) {
@@ -258,9 +258,9 @@ func run(req request) result {
 				res.Findings = append(res.Findings, finding{Code: "project-reference-unsupported", Severity: "error", Path: projectFile, Message: "ProjectReference " + quote(reference) + ": " + err.Error()})
 				continue
 			}
-			target, ok := projectToModule[resolved]
+			target, ok := projectToResource[resolved]
 			if !ok {
-				res.Findings = append(res.Findings, finding{Code: "project-reference-unmapped", Severity: "error", Path: projectFile, Message: "ProjectReference target " + quote(resolved) + " is not mapped to a canonical Module"})
+				res.Findings = append(res.Findings, finding{Code: "project-reference-unmapped", Severity: "error", Path: projectFile, Message: "ProjectReference target " + quote(resolved) + " is not mapped to a canonical resource"})
 				continue
 			}
 			actual = append(actual, target)
@@ -302,7 +302,7 @@ func run(req request) result {
 	}
 	if req.Action == "verify" {
 		if req.Plan == nil {
-			return incomplete(res, "plan-missing", "verify requires a saved plan containing modelDigest and observed module dependencies")
+			return incomplete(res, "plan-missing", "verify requires a saved plan containing modelDigest and observed resource dependencies")
 		}
 		if req.Plan.Action != "plan" || req.Plan.Status != "complete" || req.Plan.Adapter != req.Adapter.Name || req.Plan.ModelDigest != req.Model.ModelDigest {
 			return fail(res, "plan-model-drift", "plan modelDigest does not match current normalized model")

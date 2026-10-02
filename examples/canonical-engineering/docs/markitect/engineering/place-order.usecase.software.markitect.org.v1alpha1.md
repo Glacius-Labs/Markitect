@@ -6,4 +6,3 @@
 ## Declared facts
 
 - **summary:** `Validate and accept a customer order.`
-

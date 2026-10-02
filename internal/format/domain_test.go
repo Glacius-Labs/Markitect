@@ -3,6 +3,7 @@ package format
 import (
 	"bytes"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/internal/core"
@@ -108,6 +109,12 @@ spec: {intent: x, unknown: true}`},
 				t.Fatal("expected validation error")
 			}
 		})
+	}
+}
+
+func TestParseWithRegistryRejectsDomainDefinitionsAsOrdinaryResources(t *testing.T) {
+	if _, err := ParseWithRegistry("domains/software.yaml", []byte(testDomainYAML), core.NewRegistry()); err == nil || !strings.Contains(err.Error(), "select this file through project.spec.domains or package.spec.domains") {
+		t.Fatalf("ordinary resource scan should require explicit Domain selection, got %v", err)
 	}
 }
 

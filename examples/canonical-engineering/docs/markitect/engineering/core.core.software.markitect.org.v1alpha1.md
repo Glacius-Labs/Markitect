@@ -6,4 +6,3 @@
 ## Declared facts
 
 - **purpose:** `Shared runtime and data-access primitives.`
-

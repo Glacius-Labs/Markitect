@@ -44,7 +44,7 @@ func renderDomainCompanion(r *core.Resource, target string, g *core.Graph) ([]by
 		}
 		b.WriteByte('\n')
 	}
-	return []byte(b.String()), nil
+	return []byte(strings.TrimRight(b.String(), "\n") + "\n"), nil
 }
 
 type domainViewConstraint struct{ Name, Text string }

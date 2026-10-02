@@ -42,6 +42,7 @@ type ReconcilePlan struct {
 	ToolDigest    string               `yaml:"toolDigest"`
 	Status        string               `yaml:"status"`
 	Stale         []string             `yaml:"stale,omitempty"`
+	Conflicts     []string             `yaml:"conflicts,omitempty"`
 	Operations    []ReconcileOperation `yaml:"operations"`
 }
 
@@ -54,6 +55,7 @@ type ReconcileObservation struct {
 	Observed     map[string]string `yaml:"observed"`
 	Drift        []string          `yaml:"drift,omitempty"`
 	Stale        []string          `yaml:"stale,omitempty"`
+	Conflicts    []string          `yaml:"conflicts,omitempty"`
 	ToolVersion  string            `yaml:"toolVersion"`
 	ToolDigest   string            `yaml:"toolDigest"`
 }
@@ -74,13 +76,16 @@ func ObserveProjection(p *Project, toolVersion, toolDigest string) (ReconcileObs
 	}
 	desired := map[string]string{}
 	observed := map[string]string{}
-	var drift, stale []string
+	var drift, stale, conflicts []string
 	for _, name := range sortedFiles(outputs) {
 		desired[name] = hashBytes(outputs[name])
 		if current, ok := p.Snapshot.Files[name]; ok {
 			observed[name] = hashBytes(current)
 			if !bytes.Equal(normalize(current), normalize(outputs[name])) {
 				drift = append(drift, name)
+				if !Generated(current) {
+					conflicts = append(conflicts, name)
+				}
 			}
 		} else {
 			observed[name] = "missing"
@@ -97,7 +102,7 @@ func ObserveProjection(p *Project, toolVersion, toolDigest string) (ReconcileObs
 	return ReconcileObservation{
 		APIVersion: ReconcilePlanVersion, Adapter: "markitect-render",
 		SourceDigest: reconcileInputDigest(p), ConfigDigest: hashBytes(configBytes),
-		Desired: desired, Observed: observed, Drift: drift, Stale: stale, ToolVersion: toolVersion, ToolDigest: toolDigest,
+		Desired: desired, Observed: observed, Drift: drift, Stale: stale, Conflicts: conflicts, ToolVersion: toolVersion, ToolDigest: toolDigest,
 	}, nil
 }
 
@@ -119,17 +124,20 @@ func PlanProjection(p *Project, toolVersion, toolDigest string) (ReconcilePlan, 
 		return ReconcilePlan{}, err
 	}
 	status := "complete"
-	if len(observation.Stale) > 0 {
+	if len(observation.Stale) > 0 || len(observation.Conflicts) > 0 {
 		status = "incomplete"
 	}
 	plan := ReconcilePlan{APIVersion: ReconcilePlanVersion, Adapter: observation.Adapter,
 		SourceDigest: observation.SourceDigest, ConfigDigest: observation.ConfigDigest,
 		ModelDigest: model.ModelDigest, DesiredDigest: digestStringMap(observation.Desired),
-		AdapterDigest: hashBytes([]byte("markitect-render/v1alpha1")), ToolVersion: toolVersion, ToolDigest: toolDigest, Status: status, Stale: append([]string(nil), observation.Stale...)}
+		AdapterDigest: hashBytes([]byte("markitect-render/v1alpha1")), ToolVersion: toolVersion, ToolDigest: toolDigest, Status: status, Stale: append([]string(nil), observation.Stale...), Conflicts: append([]string(nil), observation.Conflicts...)}
 	for _, name := range sortedFiles(outputs) {
 		current, exists := p.Snapshot.Files[name]
 		if exists && bytes.Equal(normalize(current), normalize(outputs[name])) {
 			continue
+		}
+		if exists && !Generated(current) {
+			continue // Unmanaged collisions require an ownership decision, not a write operation.
 		}
 		action := "create"
 		expected := "missing"
@@ -208,7 +216,11 @@ func ApplyProjection(root string, p *Project, plan ReconcilePlan, toolVersion, t
 	if err := ValidateProjectionPlan(p, plan, toolVersion, toolDigest); err != nil {
 		return nil, err
 	}
-	return WriteOutputs(root, p)
+	paths := make([]string, 0, len(plan.Operations))
+	for _, operation := range plan.Operations {
+		paths = append(paths, operation.Path)
+	}
+	return writeOutputPaths(root, p, paths)
 }
 
 func ParseReconcilePlan(data []byte) (ReconcilePlan, error) {

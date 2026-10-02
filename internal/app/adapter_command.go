@@ -93,6 +93,7 @@ type CommandAdapterPlan struct {
 	ToolVersion       string              `yaml:"toolVersion"`
 	ToolDigest        string              `yaml:"toolDigest"`
 	ObservationDigest string              `yaml:"observationDigest"`
+	Observation       AdapterResult       `yaml:"observation"`
 	Result            AdapterResult       `yaml:"result"`
 }
 
@@ -225,7 +226,7 @@ func PlanCommandAdapter(p *Project, name, toolVersion, toolDigest string) (Comma
 	if err != nil {
 		return CommandAdapterPlan{}, err
 	}
-	return CommandAdapterPlan{APIVersion: AdapterPlanVersion, Adapter: planIdentity(adapter, config), SourceDigest: reconcileInputDigest(p), ModelDigest: model.ModelDigest, ConfigDigest: configDigest, AdapterDigest: adapterDigest, ToolVersion: toolVersion, ToolDigest: toolDigest, ObservationDigest: digestYAML(observe), Result: planResult}, nil
+	return CommandAdapterPlan{APIVersion: AdapterPlanVersion, Adapter: planIdentity(adapter, config), SourceDigest: reconcileInputDigest(p), ModelDigest: model.ModelDigest, ConfigDigest: configDigest, AdapterDigest: adapterDigest, ToolVersion: toolVersion, ToolDigest: toolDigest, ObservationDigest: digestYAML(observe), Observation: observe, Result: planResult}, nil
 }
 
 func ApplyCommandAdapter(p *Project, name, toolVersion, toolDigest string, plan CommandAdapterPlan) (AdapterResult, error) {
@@ -299,7 +300,17 @@ func VerifyCommandAdapter(p *Project, name, toolVersion, toolDigest string, plan
 	if plan.APIVersion != AdapterPlanVersion || plan.Adapter != planIdentity(adapter, config) || plan.SourceDigest != reconcileInputDigest(p) || plan.ModelDigest != model.ModelDigest || plan.ConfigDigest != configDigest || plan.ToolVersion != toolVersion || plan.ToolDigest != toolDigest {
 		return AdapterResult{}, errors.New("adapter plan is stale; source, model, config, or tool identity changed")
 	}
-	result, adapterDigest, err := invokeCommandAdapter(p, adapter, config, config.Verify, AdapterRequest{APIVersion: AdapterRequestVersion, Action: "verify", Adapter: identity(adapter, config), Model: model, Plan: &plan.Result})
+	if plan.ObservationDigest != digestYAML(plan.Observation) || plan.Observation.Adapter != adapter.Name || plan.Observation.Action != "observe" || plan.Observation.Status != "complete" || plan.Observation.ModelDigest != model.ModelDigest || plan.Observation.Target != config.Target {
+		return AdapterResult{}, errors.New("adapter plan captured observation does not match its identity or digest")
+	}
+	replanned, planDigest, err := invokeCommandAdapter(p, adapter, config, config.Plan, AdapterRequest{APIVersion: AdapterRequestVersion, Action: "plan", Adapter: identity(adapter, config), Model: model, Observation: &plan.Observation})
+	if err != nil {
+		return AdapterResult{}, err
+	}
+	if planDigest != plan.AdapterDigest || replanned.Status != "complete" || !yamlEqual(replanned, plan.Result) {
+		return AdapterResult{}, errors.New("saved adapter plan result differs from a fresh plan over its captured observation")
+	}
+	result, adapterDigest, err := invokeCommandAdapter(p, adapter, config, config.Verify, AdapterRequest{APIVersion: AdapterRequestVersion, Action: "verify", Adapter: identity(adapter, config), Model: model, Observation: &plan.Observation, Plan: &plan.Result})
 	if err != nil {
 		return result, err
 	}
@@ -344,6 +355,9 @@ func ReadCommandAdapterPlan(filename string) (CommandAdapterPlan, error) {
 	}
 	if plan.Result.Adapter != plan.Adapter.Name || plan.Result.ModelDigest != plan.ModelDigest || plan.Result.Target != plan.Adapter.Target {
 		return plan, errors.New("adapter plan result does not match its bound identity")
+	}
+	if plan.Observation.APIVersion != AdapterResultVersion || plan.Observation.Action != "observe" || plan.Observation.Status != "complete" || plan.Observation.Adapter != plan.Adapter.Name || plan.Observation.ModelDigest != plan.ModelDigest || plan.Observation.Target != plan.Adapter.Target || plan.ObservationDigest != digestYAML(plan.Observation) {
+		return plan, errors.New("adapter plan captured observation does not match its bound identity or digest")
 	}
 	return plan, nil
 }

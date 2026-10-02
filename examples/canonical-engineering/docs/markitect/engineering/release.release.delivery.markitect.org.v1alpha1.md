@@ -18,4 +18,3 @@
 ## Applicable constraints
 
 - **release-has-evidence:** The count of `hasEvidence` relationships must be at least 1. Explanation: A release observation is incomplete until at least one check result is recorded.
-
