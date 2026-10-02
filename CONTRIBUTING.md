@@ -14,6 +14,7 @@
 | `internal/app` | Context, impact, evidence, verification, rendering, initialization, and controlled writes |
 | `internal/authoring` | Embedded core authoring resources |
 | `internal/licenses` | Canonical embedded upstream notices |
+| `internal/markdownlinks` | Bounded prose destination scanning with source-byte preservation |
 | `internal/render` | Opt-in Markdown views and declared output adapters |
 | `internal/release` | Deterministic source archives and release bundles |
 | `internal/contentpackage` | Validated offline content-package archive format |

@@ -2,6 +2,29 @@
 
 **Recorded:** 2026-10-02. This dated assessment records the release evidence verified at that time and distinguishes it from source behavior. It reports only the Markitect source, its distributions, and source-owned gates; project adoption and acceptance are outside its scope.
 
+## v0.9.1 published release
+
+The immutable [v0.9.1 release](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.9.1), release ID `401496097`, binds [source commit `eb1b978`](https://github.com/Glacius-Labs/Markitect/commit/eb1b9781da6459d796c4e8fe108b6a8260c75b8e), merged from [PR 46](https://github.com/Glacius-Labs/Markitect/pull/46). It corrects source-relative prose navigation after v0.9.0 relocated Markdown views. Known local typed YAML destinations and unambiguous former companion aliases point to the selected Markdown view; ordinary documents/images retain their actual source target, and provider inline prose keeps canonical YAML destinations. Existing unmarked Markdown files take precedence over companion aliases. The projection consumes fixed snapshot files and infers no dependencies or artifact declarations. The annotated tag is unsigned; immutable release and asset attestations were verified separately.
+
+| Evidence | Exact basis | Result |
+|---|---|---|
+| Source gates | [PR CI 36954684689](https://github.com/Glacius-Labs/Markitect/actions/runs/36954684689) and [main CI 36954870512](https://github.com/Glacius-Labs/Markitect/actions/runs/36954870512) | Windows/Linux gates passed; reviewed candidate `6afd17cdfc6e9e64a0cc405c976a015d0f8948e8` and release source share tree `98e5dfc62da9880eb69f23ebc584803e5ad3ac57` |
+| Tagged release | [Run 36955087269](https://github.com/Glacius-Labs/Markitect/actions/runs/36955087269), attempt 1 | Source, deterministic bundle and installed bootstrap gates passed on Windows/Linux; four exact-source assets assembled |
+| Owner publisher | Release `401496097` | `published-verified`; exact run artifact, tag, payload digests, immutable release and all four asset attestations verified |
+| Public distribution metadata | `markitect-release distribution --tag v0.9.1 --repo . --write` | Public downloads, attestations, provenance, workflow attempt and digests verified; README install blocks and three versioned WinGet manifests generated |
+| Native Windows binary | Exact attested Windows asset | Reported `Markitect 0.9.1 (windows/amd64)`; navigation, minimal and provider-only layout fixtures passed, with embedded notices present |
+| Main source artifact | Actual download from main run 36954870512 | Hidden bootstrap and tool files were present in the downloaded source artifact |
+| Published native benchmark | [Run 36955512621](https://github.com/Glacius-Labs/Markitect/actions/runs/36955512621) | Attested v0.9.1 and v0.9.0 binaries completed 40 runs per platform with zero nonzero exits; Windows/Linux raw data and summaries retained |
+
+| Asset | Verified SHA-256 |
+|---|---|
+| `markitect-v0.9.1-bundle.zip` | `aab429352a5fe884d26a498c4b0e45ae881709ddc10484a90ea5e1bbb4edb9b3` |
+| `markitect-v0.9.1-linux-amd64` | `37e5de60e9a5ca5216f359ca2a332f55811118f2b84932c456ee1001b739b81c` |
+| `markitect-v0.9.1-windows-amd64.exe` | `792e12c8ff44ad44ffb515bac381fcd1d171cb9a0a46a43e11a135bf17abe38e` |
+| `markitect-v0.9.1-provenance.yaml` | `716d5bd3508b205ecce89039da6b8fd03b5a425b38ef32fe9a120569e1ee4023` |
+
+Both binaries use identical fixture v2 bytes, digest `37387124b579687fc250caf6e943f672b3e44a3700d86fbe5f3051867f1f2463`, on each platform, so the report marks the workloads comparable. These first-run and three later fresh-process measurements retain runner/cache noise and establish no general speed gain. The bounded prose destination scanner is not a full Markdown parser or a validator of every ordinary link target. WinGet metadata does not establish Microsoft catalog availability. Consumer upgrades and adopting-project acceptance remain project-owned. Earlier tags and releases are unchanged.
+
 ## v0.9.0 published release
 
 The immutable [v0.9.0 release](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.9.0), release ID `401463997`, binds [source commit `ff5ffd5`](https://github.com/Glacius-Labs/Markitect/commit/ff5ffd5e3b538be58341fdb7983490895201d2b1), merged from [PR 43](https://github.com/Glacius-Labs/Markitect/pull/43). It makes generic Markdown views an explicit target under `docs/markitect/<area>/`, routes provider outputs directly to canonical inputs, and separates consumer bootstrap files from the complete `.markitect/tool/` pin set. Bundle schema v2 deliberately replaces the earlier layout contract. The annotated tag is unsigned; the immutable release and every asset attestation were verified separately.
