@@ -75,7 +75,7 @@ Human-owned Markdown under `docs/` remains ordinary documentation. Its README ro
 
 Area ownership applies to ordinary input paths as well as typed resource files; it does not turn those files into Markitect resources. A resource may declare an ordinary input only when both paths belong to Areas and, across Areas, the resource's Area explicitly imports the input's Area. The example uses a `documentation` Area for `docs/` and imports it from `engineering` to make that input boundary explicit.
 
-See the executable [repository-layout example](../examples/repository-layout/README.md) for Areas, an explicit cross-area dependency, ordinary documentation input, and a native Claude rule projection. The [minimal example](../examples/minimal/README.md) retains its earlier layout as a compatibility example.
+See the executable [repository-layout example](../examples/repository-layout/README.md) for Areas, an explicit cross-area dependency, ordinary documentation input, and a native Claude rule projection. The [minimal example](../examples/minimal/README.md) uses canonical YAML under `.markitect/areas/sample/` and explicitly selected Markdown views under `docs/markitect/`.
 
 ## Generated projections
 
