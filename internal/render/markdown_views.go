@@ -39,6 +39,12 @@ func MarkdownViewPath(g *core.Graph, resource *core.Resource) (string, error) {
 	ext := path.Ext(relative)
 	stem := strings.TrimSuffix(relative, ext)
 	suffix := "." + strings.ToLower(resource.Kind)
+	if resource.APIVersion != "" && resource.APIVersion != core.APIVersion {
+		parts := strings.Split(resource.APIVersion, "/")
+		if len(parts) == 2 {
+			suffix += "." + strings.ReplaceAll(parts[0], "/", ".") + "." + parts[1]
+		}
+	}
 	if !strings.HasSuffix(strings.ToLower(stem), suffix) {
 		stem += suffix
 	}

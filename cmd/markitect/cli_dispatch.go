@@ -41,7 +41,7 @@ func dispatchCommand(command string, o commandOptions, out, errout io.Writer, em
 	if command == "inventory" {
 		return runInventory(o, emit, fail)
 	}
-	if command != "check" && command != "verify" && command != "context" && command != "impact" && command != "find" && command != "explain" && command != "review" && command != "render" && command != "format" {
+	if command != "check" && command != "verify" && command != "context" && command != "impact" && command != "find" && command != "explain" && command != "review" && command != "render" && command != "format" && command != "reconcile" && command != "model" {
 		return fail(fmt.Errorf("unknown command %q", command))
 	}
 	if command == "context" && o.runManifest != "" {
@@ -58,6 +58,12 @@ func dispatchCommand(command string, o commandOptions, out, errout io.Writer, em
 	toolDigest, err := currentToolDigest()
 	if err != nil {
 		return fail(err)
+	}
+	if command == "model" {
+		model, err := app.CompileModel(p)
+		if err != nil { return fail(err) }
+		if code:=emit(model);code!=0{return code}
+		if model.ValidationStatus!="passed"{return 1};return 0
 	}
 	structuralCoverage := "typed YAML graph and Markitect-owned outputs"
 	if (command == "check" || command == "verify") && p.Graph.Project.Spec.Documentation != nil {
@@ -77,9 +83,11 @@ func dispatchCommand(command string, o commandOptions, out, errout io.Writer, em
 	case "explain":
 		return runExplain(o, p, toolDigest, emit, fail)
 	case "review":
-		return runReview(o.root, p, o.packageName, o.namespace, o.kind, o.name, o.reviewConfig, o.reviewReport, o.reviewEvidence, toolDigest, emit, fail)
+		return runReview(o.root, p, o.packageName, o.apiVersion, o.namespace, o.kind, o.name, o.reviewConfig, o.reviewReport, o.reviewEvidence, toolDigest, emit, fail)
 	case "format":
 		return runFormat(o, p, emit, fail)
+	case "reconcile":
+		return runReconcile(o, p, emit, fail)
 	case "context":
 		return runContext(o, p, toolDigest, emit, fail)
 	case "impact":

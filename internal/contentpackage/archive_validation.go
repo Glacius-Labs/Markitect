@@ -7,7 +7,28 @@ import (
 	"unicode/utf8"
 
 	"github.com/Glacius-Labs/Markitect/internal/core"
+	"github.com/Glacius-Labs/Markitect/internal/format"
 )
+
+func parseDomainDefinitions(manifest *core.Resource, files map[string][]byte) (*core.Registry, map[string]core.DomainDefinition, error) {
+	registry := core.NewRegistry()
+	definitions := make(map[string]core.DomainDefinition, len(manifest.Spec.Domains))
+	for _, domainPath := range manifest.Spec.Domains {
+		data, exists := files[domainPath]
+		if !exists {
+			return nil, nil, fmt.Errorf("declared package domain %q is missing", domainPath)
+		}
+		definition, err := format.ParseDomain(domainPath, data)
+		if err != nil {
+			return nil, nil, fmt.Errorf("parse package domain %q: %w", domainPath, err)
+		}
+		if err := registry.AddDomain(definition); err != nil {
+			return nil, nil, fmt.Errorf("register package domain %q: %w", domainPath, err)
+		}
+		definitions[domainPath] = definition
+	}
+	return registry, definitions, nil
+}
 
 func validateManifest(manifest *core.Resource) error {
 	if manifest.Spec.Version == "" {
@@ -20,14 +41,36 @@ func validateManifest(manifest *core.Resource) error {
 		return fmt.Errorf("package manifest must not declare checks, targets, ruleAdapters, or nested packages")
 	}
 	areas := map[string]bool{}
+	areaPaths := make([]string, 0, len(manifest.Spec.Areas))
 	for _, area := range manifest.Spec.Areas {
 		areas[area.Name] = true
+		areaPaths = append(areaPaths, area.Path)
 	}
 	for _, area := range manifest.Spec.Areas {
 		for _, imported := range area.Imports {
 			if !areas[imported] {
 				return fmt.Errorf("package area %q imports unknown package-local area %q", area.Name, imported)
 			}
+		}
+	}
+	domainPaths := make(map[string]string, len(manifest.Spec.Domains))
+	for _, domainPath := range manifest.Spec.Domains {
+		if err := validatePath(domainPath); err != nil {
+			return fmt.Errorf("invalid package domain path %q: %w", domainPath, err)
+		}
+		if !isYAML(domainPath) {
+			return fmt.Errorf("package domain path %q must be a YAML file", domainPath)
+		}
+		folded := strings.ToLower(domainPath)
+		if previous, exists := domainPaths[folded]; exists {
+			return fmt.Errorf("package domain paths %q and %q are duplicated or collide by case", previous, domainPath)
+		}
+		domainPaths[folded] = domainPath
+		if domainPath == ManifestName {
+			return fmt.Errorf("package manifest cannot also be a domain definition")
+		}
+		if inAnyAreaFolded(domainPath, areaPaths) {
+			return fmt.Errorf("package domain %q must not be inside a content area", domainPath)
 		}
 	}
 	for _, binding := range manifest.Spec.Bindings {
@@ -41,6 +84,17 @@ func validateManifest(manifest *core.Resource) error {
 		}
 	}
 	return nil
+}
+
+func inAnyAreaFolded(filePath string, roots []string) bool {
+	folded := strings.ToLower(filePath)
+	for _, root := range roots {
+		root = strings.ToLower(root)
+		if folded == root || strings.HasPrefix(folded, root+"/") {
+			return true
+		}
+	}
+	return false
 }
 
 func declaredInputs(resources []*core.Resource) map[string]bool {

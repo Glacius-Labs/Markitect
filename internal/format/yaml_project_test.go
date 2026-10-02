@@ -97,6 +97,46 @@ spec:
 	}
 }
 
+func TestParseExplicitDomainDefinitionSelections(t *testing.T) {
+	project := `apiVersion: markitect.example.org/v1alpha1
+kind: Project
+metadata: {name: workspace}
+spec:
+  domains: [domains/software.yaml, package:standards/domains/software.yaml]
+`
+	if _, err := Parse("markitect.yaml", []byte(project)); err != nil {
+		t.Fatalf("valid local and pinned package domain selections were rejected: %v", err)
+	}
+	invalid := []string{
+		"../domains/software.yaml",
+		"package:/domains/software.yaml",
+		"package:standards/../domains/software.yaml",
+		"domains/software.yaml, DOMAINS/software.yaml",
+	}
+	for _, domains := range invalid {
+		input := "apiVersion: markitect.example.org/v1alpha1\nkind: Project\nmetadata: {name: workspace}\nspec:\n  domains: [" + domains + "]\n"
+		if _, err := Parse("markitect.yaml", []byte(input)); err == nil {
+			t.Errorf("accepted invalid domain selection %q", domains)
+		}
+	}
+	packageManifest := `apiVersion: markitect.example.org/v1alpha1
+kind: Package
+metadata: {name: standards}
+spec:
+  version: 1.0.0
+  areas: [{name: content, path: content}]
+  domains: [domains/software.yaml]
+  exports: [{kind: Rule, namespace: base, name: basics}]
+`
+	if _, err := Parse("markitect-package.yaml", []byte(packageManifest)); err != nil {
+		t.Fatalf("valid package-relative domain path was rejected: %v", err)
+	}
+	packageManifest = strings.Replace(packageManifest, "domains/software.yaml", "package:other/domains/software.yaml", 1)
+	if _, err := Parse("markitect-package.yaml", []byte(packageManifest)); err == nil {
+		t.Fatal("Package domain declarations must not refer to another package")
+	}
+}
+
 func TestParseFilesOnResourcesAndRejectsFilesOnProject(t *testing.T) {
 	text := `apiVersion: markitect.example.org/v1alpha1
 kind: Contract

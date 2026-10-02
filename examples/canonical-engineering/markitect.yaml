@@ -1,0 +1,36 @@
+apiVersion: markitect.example.org/v1alpha1
+kind: Project
+metadata:
+    name: canonical-engineering-example
+spec:
+    targets:
+        - markdown
+    areas:
+        - name: engineering
+          path: resources
+    domains:
+        - domains/software.yaml
+        - domains/delivery.yaml
+    adapters:
+        - name: dotnet-dependencies
+          type: command
+          version: 0.1.0
+          config:
+            inputs:
+                - src/Core/Core.csproj
+                - src/Orders/Orders.csproj
+            observe:
+                - markitect-adapter-dotnet
+                - observe
+            parameters:
+                projectMappings:
+                    - projectFile: src/Orders/Orders.csproj
+                      resource: engineering/software.markitect.org/v1alpha1/Module/orders
+                    - projectFile: src/Core/Core.csproj
+                      resource: engineering/software.markitect.org/v1alpha1/Core/platform-core
+            plan:
+                - markitect-adapter-dotnet
+                - plan
+            verify:
+                - markitect-adapter-dotnet
+                - verify

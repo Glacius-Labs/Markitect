@@ -27,7 +27,7 @@ func runInventory(o commandOptions, emit func(any) int, fail func(error) int) in
 }
 
 func runFind(o commandOptions, p *app.Project, toolDigest string, emit func(any) int, fail func(error) int) int {
-	matches, err := app.Find(p, app.FindQuery{Query: o.query, Kind: o.kind, Namespace: o.namespace, Package: o.packageName})
+	matches, err := app.Find(p, app.FindQuery{Query: o.query, APIVersion: o.apiVersion, Kind: o.kind, Namespace: o.namespace, Package: o.packageName})
 	if err != nil {
 		return fail(err)
 	}
@@ -45,13 +45,7 @@ func runExplain(o commandOptions, p *app.Project, toolDigest string, emit func(a
 	} else if o.namespace == "" {
 		return fail(fmt.Errorf("explain requires --namespace for namespaced resources"))
 	}
-	key := "/" + o.kind + "/" + o.name
-	if o.namespace != "" {
-		key = o.namespace + "/" + o.kind + "/" + o.name
-	}
-	if o.packageName != "" {
-		key = o.packageName + "::" + key
-	}
+	key := (core.Ref{APIVersion: o.apiVersion, Kind: o.kind, Name: o.name, Namespace: o.namespace, Package: o.packageName}).GraphKey("", "", "")
 	explanation, err := app.Explain(p, key)
 	if err != nil {
 		return fail(err)
@@ -63,7 +57,7 @@ func runContext(o commandOptions, p *app.Project, toolDigest string, emit func(a
 	if o.kind == "" || o.name == "" || o.namespace == "" {
 		return fail(fmt.Errorf("context requires --kind, --name and --namespace"))
 	}
-	key := (core.Ref{Package: o.packageName, Namespace: o.namespace, Kind: o.kind, Name: o.name}).GraphKey("", "", "")
+	key := (core.Ref{APIVersion: o.apiVersion, Package: o.packageName, Namespace: o.namespace, Kind: o.kind, Name: o.name}).GraphKey("", "", "")
 	c, err := app.CompileContext(p, key, version, toolDigest)
 	if err != nil {
 		return fail(err)

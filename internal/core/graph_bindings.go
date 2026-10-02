@@ -56,6 +56,7 @@ func (g *Graph) resolveBindings() {
 				From: r.GraphKey(), To: implementation.GraphKey(), Relation: "selected-implementation",
 				Path: g.scopeOwner(r.Package).Path, Line: g.scopeOwner(r.Package).Line,
 				Reference: Ref{Kind: implementation.Kind, Namespace: implementation.Metadata.Namespace, Name: implementation.Metadata.Name, Package: implementation.Package}, Selected: true,
+				Context: true, Invalidate: true,
 			})
 			g.addEdge(r.GraphKey(), contract.GraphKey())
 		}
@@ -109,6 +110,7 @@ func (g *Graph) addBinding(bindings map[string]*Resource, owner *Resource, bindi
 	g.addRelationship(Relationship{
 		From: impl.GraphKey(), To: contract.GraphKey(), Relation: "binding",
 		Path: ownerPath, Line: owner.Line, Reference: binding.Contract, Selected: true,
+		Context: true, Invalidate: true,
 	})
 }
 

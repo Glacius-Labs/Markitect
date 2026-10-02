@@ -31,9 +31,10 @@ var fixedZipTime = time.Date(1980, time.January, 1, 0, 0, 0, 0, time.UTC)
 // indexed by its unchanged archive-relative POSIX path. Resources excludes
 // Manifest and has runtime package origin set to the pinned package name.
 type Archive struct {
-	Manifest  *core.Resource
-	Files     map[string][]byte
-	Resources []*core.Resource
+	Manifest          *core.Resource
+	Files             map[string][]byte
+	Resources         []*core.Resource
+	DomainDefinitions map[string]core.DomainDefinition
 }
 
 // Read validates the digest and ZIP structure before parsing package content.
@@ -144,6 +145,15 @@ func parseFiles(name, version string, files map[string][]byte) (*Archive, error)
 		return nil, err
 	}
 
+	// Package-local domain declarations are loaded before package resources so
+	// generic resources can be validated against the exact schemas they ship
+	// with. Merely containing a domain file does not activate it: the manifest
+	// must declare the exact member path.
+	registry, domainDefinitions, err := parseDomainDefinitions(manifest, files)
+	if err != nil {
+		return nil, err
+	}
+
 	areaPaths := make([]string, 0, len(manifest.Spec.Areas))
 	for _, area := range manifest.Spec.Areas {
 		areaPaths = append(areaPaths, area.Path)
@@ -157,15 +167,19 @@ func parseFiles(name, version string, files map[string][]byte) (*Archive, error)
 		if filePath == ManifestName {
 			continue
 		}
+		if _, isDomain := domainDefinitions[filePath]; isDomain {
+			accepted[filePath] = true
+			continue
+		}
 		if !isYAML(filePath) || !inAnyArea(filePath, areaPaths) {
 			continue
 		}
-		resource, parseErr := format.Parse(filePath, data)
+		resource, parseErr := format.ParseWithRegistry(filePath, data, registry)
 		if parseErr != nil {
 			parseErrors[filePath] = parseErr
 			continue
 		}
-		if resource.Kind == "Project" || resource.Kind == "Package" {
+		if resource.Kind == "Project" || resource.Kind == "Package" || resource.Kind == "Domain" {
 			return nil, fmt.Errorf("nested %s resource %q is not allowed in a package", resource.Kind, filePath)
 		}
 		if hasPackageRefs(resource) {
@@ -183,7 +197,7 @@ func parseFiles(name, version string, files map[string][]byte) (*Archive, error)
 	ordinary := declaredInputs(resources)
 	for _, filePath := range sortedFilePaths(parseErrors) {
 		parseErr := parseErrors[filePath]
-		if ordinary[filePath] && isValidTextInput(files[filePath]) && !format.IsResourceEnvelope(files[filePath]) {
+		if ordinary[filePath] && isValidTextInput(files[filePath]) && !format.IsResourceEnvelopeWithRegistry(files[filePath], registry) {
 			accepted[filePath] = true
 			continue
 		}
@@ -204,14 +218,14 @@ func parseFiles(name, version string, files map[string][]byte) (*Archive, error)
 	}
 	resourceKeys := make(map[string]bool, len(resources))
 	for _, resource := range resources {
-		resourceKeys[resource.Key()] = true
+		resourceKeys[resource.GraphKey()] = true
 	}
 	seenExports := make(map[string]bool, len(manifest.Spec.Exports))
 	for _, export := range manifest.Spec.Exports {
 		if export.Package != "" || export.Kind == "" || export.Namespace == "" || export.Name == "" {
 			return nil, fmt.Errorf("package exports must be fully qualified local refs")
 		}
-		key := export.Key("", "")
+		key := export.GraphKey(name, "", "")
 		if !resourceKeys[key] {
 			return nil, fmt.Errorf("package export %s does not identify a package resource", key)
 		}
@@ -226,5 +240,5 @@ func parseFiles(name, version string, files map[string][]byte) (*Archive, error)
 		}
 	}
 	sort.Slice(resources, func(i, j int) bool { return resources[i].Path < resources[j].Path })
-	return &Archive{Manifest: manifest, Files: files, Resources: resources}, nil
+	return &Archive{Manifest: manifest, Files: files, Resources: resources, DomainDefinitions: domainDefinitions}, nil
 }

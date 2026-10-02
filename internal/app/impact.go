@@ -3,6 +3,7 @@ package app
 import (
 	"sort"
 
+	"github.com/Glacius-Labs/Markitect/internal/core"
 	"github.com/Glacius-Labs/Markitect/internal/render"
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
@@ -16,7 +17,7 @@ type Impact struct {
 }
 
 func Changes(before, after *Project) *Impact {
-	result := &Impact{Base: before.Snapshot.ID, Candidate: after.Snapshot.ID, Reason: "Union of old and new dependency closures; configuration or inventory changes conservatively affect all resources."}
+	result := &Impact{Base: before.Snapshot.ID, Candidate: after.Snapshot.ID, Reason: "Union of old and new invalidation closures; configuration, inventory, constraint-selection or unowned-input changes conservatively affect all resources."}
 	result.Changed = snapshot.Compare(before.Snapshot, after.Snapshot).Paths()
 	changed := map[string]bool{}
 	for _, name := range result.Changed {
@@ -29,7 +30,7 @@ func Changes(before, after *Project) *Impact {
 		for _, r := range p.Resources {
 			if r.Package == "" && changed[r.Path] {
 				seeds[r.GraphKey()] = true
-				if r.Kind == "Project" {
+				if r.Kind == "Project" || constraintReadsResource(p, r) {
 					all = true
 				}
 			}
@@ -91,7 +92,7 @@ func Changes(before, after *Project) *Impact {
 	for again := true; again; {
 		again = false
 		for _, p := range []*Project{before, after} {
-			for from, edges := range p.Graph.Edges {
+			for from, edges := range p.Graph.InvalidationEdges {
 				if seeds[from] {
 					continue
 				}
@@ -110,6 +111,39 @@ func Changes(before, after *Project) *Impact {
 	}
 	sort.Strings(result.Affected)
 	return result
+}
+
+// A selector reads membership as well as values. A changed resource selected
+// in either snapshot may alter aggregate or uniqueness results without any
+// declared reference edge. Until those query dependencies can be narrowed,
+// retain project-wide invalidation for this explicit evaluation input.
+func constraintReadsResource(p *Project, resource *core.Resource) bool {
+	if p == nil || p.Graph == nil || p.Graph.Registry == nil || resource == nil {
+		return false
+	}
+	for _, domain := range p.Graph.Registry.Domains() {
+		if resource.APIVersion != domain.APIVersion {
+			continue
+		}
+		for _, constraint := range domain.Constraints {
+			selector := constraint.Select
+			if selector.Kind != "" && selector.Kind != resource.Kind {
+				continue
+			}
+			matches := true
+			for name, value := range selector.Labels {
+				actual, exists := resource.Metadata.Labels[name]
+				if !exists || actual != value {
+					matches = false
+					break
+				}
+			}
+			if matches {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 // impactFileOwners maps only paths whose content is already represented by a

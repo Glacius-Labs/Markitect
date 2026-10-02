@@ -1,6 +1,7 @@
 package format
 
 import (
+	"reflect"
 	"slices"
 	"strings"
 	"testing"
@@ -33,7 +34,7 @@ func TestParseAndEncodeRoundTrip(t *testing.T) {
 	if err != nil {
 		t.Fatalf("encoded YAML did not parse: %v\n%s", err, b)
 	}
-	if roundTrip.Kind != r.Kind || roundTrip.Metadata != r.Metadata || roundTrip.Spec.Text != r.Spec.Text {
+	if roundTrip.Kind != r.Kind || !reflect.DeepEqual(roundTrip.Metadata, r.Metadata) || roundTrip.Spec.Text != r.Spec.Text {
 		t.Fatalf("round trip mismatch: %#v", roundTrip)
 	}
 }

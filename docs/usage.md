@@ -1,12 +1,90 @@
 # Using Markitect
 
-This guide describes the current source model. Consult [GitHub Releases](https://github.com/Glacius-Labs/Markitect/releases) for available distributions and their source versions; the [roadmap](implementation-plan.md) owns current source status.
+This guide records the current source CLI and the v0.10.0 target language and adapter contracts as implementation progresses. The v0.9.1 release contains the earlier built-in resource model; the v0.10.0 target loads declared Domain definitions before typed resources. Consult [GitHub Releases](https://github.com/Glacius-Labs/Markitect/releases) for available distributions and their source versions; the [roadmap](implementation-plan.md) owns current source status and completion.
 
 ## Project and resource model
 
-Markitect projects declare YAML resources in `markitect.yaml` and configured content areas. The namespaced kinds are `Text`, `Rule`, `Contract`, `Workflow`, `Skill`, and `Agent`; `Project` declares topology and execution/output configuration. Namespaces and names are DNS labels. Paths, area imports, and resource declarations govern ownership and direct access.
+Markitect Projects declare YAML resources in configured content areas. The bundled AI-working Domain supplies `Text`, `Rule`, `Contract`, `Workflow`, `Skill`, and `Agent`. A Project may load additional versioned Domains from exact local snapshot-relative files or explicitly pinned package members through `spec.domains`; those definitions provide closed resource schemas, typed relations, and bounded constraints. `Project` declares topology and execution/output configuration. Each resource's API version and kind identify its Domain-qualified type. Namespaces and names are DNS labels. Paths, area imports, and resource declarations govern ownership and direct access.
 
-Use `rules` to attach requirements, `uses` for concrete resource dependencies, `needs` to require a Contract, `implements` to declare a Contract signature, and Project `bindings` to select implementations. Use `files` for exact ordinary UTF-8 project artifact inputs needed by a resource. Markitect does not infer dependencies from prose links or from the contents of project artifacts.
+### Define and load a Domain
+
+A Domain declares its API version, resource kinds and properties, typed relationships, and constraints. The Project loads the exact definition file before validating resource instances:
+
+```yaml
+apiVersion: markitect.example.org/v1alpha1
+kind: Domain
+metadata:
+  name: software
+spec:
+  apiVersion: example.org/v1
+  kinds:
+    Module:
+      inputsField: sourceFiles
+      required: [intent, dependsOn]
+      properties:
+        intent:
+          type: string
+        sourceFiles:
+          type: array
+          items:
+            type: string
+        dependsOn:
+          type: array
+          items:
+            type: ref
+            refKind: Module
+  relations:
+    dependsOn:
+      field: dependsOn
+      sourceKinds: [Module]
+      targetKinds: [Module]
+      context: true
+      invalidate: true
+      acyclic: true
+  constraints:
+    - name: module-intent
+      select:
+        kind: Module
+      assert:
+        op: present
+        field: intent
+```
+
+The Project selects the definition explicitly:
+
+```yaml
+spec:
+  domains: [domains/software.yaml]
+```
+
+`spec.domains` accepts a sequence of unique `.yaml` or `.yml` file paths relative to the selected source snapshot. A directly pinned package Domain can be selected as `package:PIN/DOMAIN-MEMBER`; the member must be exported by that package. Packages do not activate Domains implicitly. The Project loader registers selected definitions first, then validates resource documents and their references.
+
+A resource uses the Domain's `apiVersion` and one of its declared kinds. Its relation field is a typed reference and is evaluated under the named relation's graph rules:
+
+```yaml
+apiVersion: example.org/v1
+kind: Module
+metadata:
+  name: survey
+  namespace: intake
+spec:
+  intent: Own survey intake and response behavior.
+  sourceFiles: [src/Survey/Survey.csproj]
+  dependsOn:
+    - kind: Module
+      namespace: platform
+      name: core
+```
+
+Same-Domain references can omit `apiVersion`; cross-Domain references use the target Domain's qualified API version. Relations separately declare context traversal, invalidation, and cycle behavior. A Domain constraint selects resources by its own kind and exact metadata labels, then applies a closed assertion operator. Supported operators are `present`, `equal`, `allowed`, `allowed-targets`, `count`, and `unique`; `count` requires at least one nonnegative `min` or `max`. `allowed-targets` checks actual relation target kinds against the assertion's `values`, which must be within the relation descriptor's declared `targetKinds`. These checks apply only to declared model data and selected inputs.
+
+An optional `inputsField` on a kind names one declared array-of-string property whose paths are exact opaque project artifact inputs. Markitect snapshots those files and uses their byte changes for context and impact; it does not parse their domain-specific structure.
+
+Package content does not activate its Domain. Select a package-owned definition explicitly with `package:PIN/DOMAIN-MEMBER` after adding the exact package pin. Local Domain files and activated package Domain bytes are fixed context inputs; edits to them affect impact. `format` canonicalizes local Domain definitions and resource YAML. See the [canonical engineering plan](canonical-engineering-plan.md) for the full language and adapter guarantees.
+
+The [canonical engineering example](../examples/canonical-engineering/README.md) demonstrates independent Software and Delivery Domains, relation-specific context and impact, a policy value used in documentation, agent context, and deterministic checking, and a read-only adapter for concrete project inputs.
+
+For the bundled AI-working Domain, use `rules` to attach requirements, `uses` for concrete resource dependencies, `needs` to require a Contract, `implements` to declare a Contract signature, and Project `bindings` to select implementations. Other Domains own their own typed fields and relations. `inputsField` explicitly maps a Domain property containing exact file paths into opaque artifact inputs. Markitect does not infer relations from prose links or analyze the contents of project artifacts.
 
 See [Project artifact inputs](documentation.md) for the file-input context and impact contract and its executable example, and [Architecture](architecture.md#project-artifact-boundary) for the boundary on domain-specific analysis.
 See [Documentation routers](documentation-routers.md) for optional local navigation checks and the separate authoring placement procedure.
@@ -47,6 +125,24 @@ spec:
 
 `spec.documentation.roots` opts into snapshot-based README router checks. It does not turn Markdown into typed resources or infer dependencies. Omit it when the project has no router contract. A passing router check says that local navigation is structurally complete; it does not establish that a document was placed with the correct semantic owner.
 
+### Model output and adapters
+
+`model` emits the normalized semantic model as versioned YAML for adapters and inspection. It includes fixed snapshot and configuration identity, Domain definitions and their source digests, generic resources with qualified identity and provenance, and resolved relationships with their declared graph effects. It does not expose raw authoring YAML or the Go graph representation. `context`, `impact`, `explain`, and configured consumers use the same resolved meaning.
+
+The v0.10.0 target declares adapter entries under `spec.adapters`, each with `name`, `type`, `version`, and adapter-specific `config`. Mappings are explicit canonical inputs. Use only adapter types and configuration fields documented for the adapter version. A command adapter uses exact snapshot `inputs`, argv for its supported lifecycle stages, plugin-owned `parameters`, and an explicit non-secret `target` identity whenever apply is enabled. Keep credentials out of Project mappings and saved plans; command adapters use their own secure external credential lookup. The built-in local `markitect-render` adapter needs no `spec.adapters` entry; it observes outputs selected by existing Project targets and mappings. A new observation can report drift even when source resources have not changed. The current working-tree CLI exposes both local and configured command adapters; the published v0.9.1 binary does not include the v0.10.0 contract.
+
+`reconcile` separates observation and planning from writes:
+
+```powershell
+New-Item -ItemType Directory -Force .artifacts/markitect/reconcile | Out-Null
+markitect reconcile --repo . --action observe --adapter markitect-render
+markitect reconcile --repo . --action plan --adapter markitect-render > .artifacts/markitect/reconcile/plan.yaml
+markitect reconcile --repo . --action apply --adapter markitect-render --plan .artifacts/markitect/reconcile/plan.yaml --write
+markitect reconcile --repo . --action verify --adapter markitect-render --plan .artifacts/markitect/reconcile/plan.yaml
+```
+
+`observe` and `plan` write results only to standard output. Save the plan in `.artifacts/markitect/reconcile/` before applying. Apply is limited to the working tree and requires the unchanged plan plus explicit `--write`; it rejects stale inputs or changed plan content. Verification checks outputs after application. Plans do not automatically remove stale files. External command adapter inputs, protocol, output limits, and local-authority boundary are detailed in the [adapter contract](provider-adapters.md#command-adapter-contract).
+
 ## Initialize a project
 
 For an existing repository that has no `markitect.yaml`, `init` previews a minimal Project and one area README:
@@ -85,18 +181,20 @@ For project-owned Codex, Claude, and shared entrypoints, declare `spec.targets` 
 
 | Command | Purpose |
 |---|---|
-| `check` | Validate YAML, the resource graph, declared file inputs, managed outputs, and explicitly configured documentation routers. |
+| `check` | Validate Domain definitions, YAML resources, relations, constraints, declared file inputs, managed outputs, and explicitly configured documentation routers. |
 | `init` | Preview a minimal project plan; `--write` creates only its Project file and one area README. |
 | `verify` | Check an immutable revision and run the Project's declared commands. |
 | `inventory` | List Markdown candidates and typed resources; it does not infer dependencies. |
 | `find` | Search valid resources by literal text and exact optional filters. |
 | `explain` | Show a resource's canonical path, area, and direct relationships. |
+| `model` | Emit the normalized semantic model, its provenance, and resolved relation descriptors. |
 | `authoring` | Compile core authoring guidance embedded in the executable. |
-| `context` | Compile an entry closure and declared files, or add a fixed-run task snapshot and exact project artifact paths from a committed manifest. |
-| `impact` | Compare two immutable revisions and report changed paths and affected resources. |
+| `context` | Compile the selected resource closure, activated Domain definitions, and declared file inputs; a committed run manifest can also select a fixed task snapshot and exact artifact paths. |
+| `impact` | Compare two immutable revisions and report changed inputs and affected resources under relation-specific rules. |
 | `review` | Record an advisory report or determine whether its declared inputs permit reuse. |
+| `reconcile` | Observe a configured target, plan exact changes, apply a selected plan, or verify its result. |
 | `render` | Check or write explicitly selected Markdown and provider outputs. |
-| `format` | Check or write canonical YAML formatting. |
+| `format` | Check or write canonical formatting for resources and loaded local Domain definitions. |
 | `schema` | Check or write generated schema YAML. |
 | `pack` | Build a deterministic offline content ZIP from a fixed Git revision and emit a suggested Project pin. |
 | `package` | Build a deterministic source archive and YAML tool lock. |
@@ -107,7 +205,7 @@ For project-owned Codex, Claude, and shared entrypoints, declare `spec.targets` 
 
 Existing-content imports are implemented and reviewed as scripts owned by the project being migrated. Markitect core does not include a migration command or presume source documentation structure.
 
-Content packages are loaded from exact committed archive bytes in the selected Project snapshot. Markitect does not fetch the `source` coordinate, resolve ranges, load nested packages, activate imported Rules, or write imported resources. The package contract was introduced in v0.3.0 and remains part of the current source model; see [GitHub Releases](https://github.com/Glacius-Labs/Markitect/releases) for distributions that include it.
+Content packages are loaded from exact committed archive bytes in the selected Project snapshot. Markitect does not fetch the `source` coordinate, resolve ranges, or load nested packages. An imported resource or Domain does not become active until explicitly selected; package resources are read-only. The package contract was introduced in v0.3.0 and remains part of the current source model; see [GitHub Releases](https://github.com/Glacius-Labs/Markitect/releases) for distributions that include it.
 
 ## Upgrade from v0.1.0
 
@@ -130,4 +228,4 @@ Rendering produces only explicitly selected outputs. Add the `markdown` target w
 
 Omitting `--revision` uses the working tree and marks results provisional. A commit revision selects one immutable Git tree. `impact` needs both a base and candidate revision.
 
-Context reports its snapshot and selected-input digests; these identify bytes, not semantic truth. Impact conservatively includes old and new dependencies, and unknown or unmodelled inputs can broaden its result. Review reuse requires matching executable, configuration, context, and eligible impact. The CLI does not call a model, judge a report, authenticate its author, or transfer human acceptance.
+Context reports its snapshot and selected-input digests, including activated Domain definitions. The `model` command binds normalized resources and relations to snapshot and configuration digests. These identify the bytes and declarations evaluated, not semantic truth. Impact follows each declared relation's context and invalidation rules; set-based constraints include their selected members, and unknown or unmodelled inputs can broaden its result. Adapter observations have separate source and observation digests, so external drift can be detected under unchanged canonical inputs. Review reuse requires matching executable, configuration, context, and eligible impact. The CLI does not call a model, judge a report, authenticate its author, or transfer human acceptance.

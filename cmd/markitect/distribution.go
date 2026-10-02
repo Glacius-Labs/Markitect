@@ -17,8 +17,8 @@ func printUsage(out io.Writer) {
 	fmt.Fprintln(out, "Markitect — typed AI documentation and architecture")
 	fmt.Fprintln(out, "usage: markitect COMMAND [options]")
 	fmt.Fprintln(out, "  check, verify, inventory    Validate a project and its repository gates")
-	fmt.Fprintln(out, "  context, impact, find, explain, review    Inspect and review fixed inputs")
-	fmt.Fprintln(out, "  init, authoring, render, format    Author canonical resources")
+	fmt.Fprintln(out, "  model, context, impact, find, explain, review    Inspect fixed semantic inputs")
+	fmt.Fprintln(out, "  init, authoring, render, format, reconcile    Author and reconcile projections")
 	fmt.Fprintln(out, "  pack                         Build an offline content package")
 	fmt.Fprintln(out, "  bundle, install, package, schema, version, licenses")
 	fmt.Fprintln(out, "Use 'markitect help COMMAND' for applicable options.")
@@ -28,21 +28,23 @@ func commandFlags(command string) (map[string]bool, bool) {
 	flags := map[string]bool{}
 	var names []string
 	switch command {
-	case "check", "verify", "inventory":
+	case "check", "verify", "inventory", "model":
 		names = []string{"repo", "revision"}
 	case "context", "explain":
-		names = []string{"repo", "revision", "kind", "name", "namespace", "package"}
+		names = []string{"repo", "revision", "api-version", "kind", "name", "namespace", "package"}
 		if command == "context" {
 			names = append(names, "run")
 		}
 	case "review":
-		names = []string{"repo", "revision", "kind", "name", "namespace", "package", "config", "report", "evidence"}
+		names = []string{"repo", "revision", "api-version", "kind", "name", "namespace", "package", "config", "report", "evidence"}
 	case "find":
-		names = []string{"repo", "revision", "query", "kind", "namespace", "package"}
+		names = []string{"repo", "revision", "api-version", "query", "kind", "namespace", "package"}
 	case "impact":
 		names = []string{"repo", "revision", "base"}
 	case "render", "format":
 		names = []string{"repo", "revision", "write", "check"}
+	case "reconcile":
+		names = []string{"repo", "revision", "action", "adapter", "plan", "write"}
 	case "schema":
 		names = []string{"repo", "write", "check"}
 	case "package":

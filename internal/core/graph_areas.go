@@ -61,7 +61,7 @@ func (g *Graph) assignAreas() {
 		}
 	}
 	for _, r := range g.Resources {
-		if r.Kind == "Project" || r.Kind == "Package" {
+		if r.APIVersion == APIVersion && (r.Kind == "Project" || r.Kind == "Package") {
 			continue
 		}
 		areas := g.areas(r.Package)
@@ -122,7 +122,7 @@ func (g *Graph) areaFor(r *Resource) *Area {
 
 func (g *Graph) resolveAreaRules() {
 	for _, r := range g.Resources {
-		if r.Kind == "Project" || r.Kind == "Package" {
+		if r.APIVersion == APIVersion && (r.Kind == "Project" || r.Kind == "Package") {
 			continue
 		}
 		file := cleanPath(r.Path)
@@ -149,6 +149,9 @@ func (g *Graph) resolveAreaRules() {
 }
 
 func (g *Graph) resolveAreaRule(resource *Resource, area Area, ref Ref) {
+	if ref.APIVersion == "" {
+		ref.APIVersion = APIVersion
+	}
 	if ref.Namespace == "" {
 		ref.Namespace = area.Name
 	}
@@ -167,6 +170,7 @@ func (g *Graph) resolveAreaRule(resource *Resource, area Area, ref Ref) {
 	g.addRelationship(Relationship{
 		From: resource.GraphKey(), To: target.GraphKey(), Relation: "area.rules",
 		Path: owner.Path, Line: owner.Line, Reference: ref, Area: area.Name,
+		Context: true, Invalidate: true,
 	})
 }
 

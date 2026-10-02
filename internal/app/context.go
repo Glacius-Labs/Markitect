@@ -123,6 +123,16 @@ func CompileContext(p *Project, key, version string, toolDigest ...string) (*Con
 		}
 		fmt.Fprintf(&fingerprint, "file:%d:%s%d:%s", len(fingerprintPath), fingerprintPath, len(h), h)
 	}
+	// A domain definition controls types, relationships and constraints even
+	// when its file is outside resource Areas. Include its exact bytes, not just
+	// the selected path in the Project configuration.
+	for _, input := range p.DomainInputs {
+		identity := "domain:" + inputKey(input.Package, input.Path)
+		data := p.fileBytes(input.Package, input.Path)
+		h := Hash(data)
+		c.Inputs = append(c.Inputs, ContextInput{Key: identity, Path: input.Path, Package: input.Package, PackageVersion: p.packageVersion(input.Package), Hash: h, Reason: "selected language definition", Text: string(data), Role: "domain"})
+		fmt.Fprintf(&fingerprint, "domain:%d:%s%d:%s", len(identity), identity, len(h), h)
+	}
 	c.Digest = Hash([]byte(fingerprint.String()))
 	return c, nil
 }

@@ -53,6 +53,8 @@ properties:
                 items:
                     additionalProperties: false
                     properties:
+                        apiVersion:
+                            type: string
                         kind:
                             type: string
                         name:
@@ -73,6 +75,8 @@ properties:
                 items:
                     additionalProperties: false
                     properties:
+                        apiVersion:
+                            type: string
                         kind:
                             type: string
                         name:
@@ -93,6 +97,8 @@ properties:
                 items:
                     additionalProperties: false
                     properties:
+                        apiVersion:
+                            type: string
                         kind:
                             type: string
                         name:
@@ -111,6 +117,8 @@ properties:
                 items:
                     additionalProperties: false
                     properties:
+                        apiVersion:
+                            type: string
                         kind:
                             type: string
                         name:

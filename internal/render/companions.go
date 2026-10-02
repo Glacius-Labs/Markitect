@@ -10,6 +10,9 @@ import (
 )
 
 func renderCompanion(r *core.Resource, target string, g *core.Graph, navigation *proseNavigation) ([]byte, error) {
+	if r.APIVersion != "" && r.APIVersion != core.APIVersion {
+		return renderDomainCompanion(r, target, g)
+	}
 	var b strings.Builder
 	b.WriteString("<!-- " + Marker + "; source: " + r.Path + " -->\n")
 	b.WriteString("# " + r.Kind + ": " + r.Metadata.Name + "\n\n")

@@ -1,0 +1,18 @@
+apiVersion: markitect.example.org/v1alpha1
+kind: Skill
+metadata:
+    name: architecture-review
+    namespace: engineering
+spec:
+    text: |
+        Review the change against the selected engineering model and policy. Check the declared dependencies and ownership, then report missing evidence separately from desired state.
+    description: Review a proposed change against the declared software policy and its owned interfaces.
+    uses:
+        - apiVersion: software.markitect.org/v1alpha1
+          kind: Module
+          name: orders
+          namespace: engineering
+        - apiVersion: delivery.markitect.org/v1alpha1
+          kind: Release
+          name: 0-10-0-candidate
+          namespace: engineering

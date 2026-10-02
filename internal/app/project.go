@@ -8,7 +8,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/Glacius-Labs/Markitect/internal/contentpackage"
 	"github.com/Glacius-Labs/Markitect/internal/core"
 	"github.com/Glacius-Labs/Markitect/internal/format"
 	"github.com/Glacius-Labs/Markitect/internal/inputs"
@@ -23,18 +22,22 @@ type Project struct {
 	Inventory   []Entry
 	Diagnostics []core.Diagnostic
 	InputFiles  map[string][]string
+	// DomainInputs records the exact, explicitly selected language definitions.
+	// These bytes participate in context evidence independently of resource paths.
+	DomainInputs []DomainInput
 	// PackageFiles is verified, immutable archive content, kept separate from
 	// the physical repository snapshot and its writable output paths.
 	PackageFiles map[string]map[string][]byte
 }
 
 type Entry struct {
-	Path      string `yaml:"path"`
-	Kind      string `yaml:"kind"`
-	Name      string `yaml:"name,omitempty"`
-	Namespace string `yaml:"namespace,omitempty"`
-	Package   string `yaml:"package,omitempty"`
-	Hash      string `yaml:"hash"`
+	APIVersion string `yaml:"apiVersion,omitempty"`
+	Path       string `yaml:"path"`
+	Kind       string `yaml:"kind"`
+	Name       string `yaml:"name,omitempty"`
+	Namespace  string `yaml:"namespace,omitempty"`
+	Package    string `yaml:"package,omitempty"`
+	Hash       string `yaml:"hash"`
 }
 
 func Parse(snap *snapshot.Snapshot) (*Project, error) {
@@ -54,10 +57,20 @@ func Parse(snap *snapshot.Snapshot) (*Project, error) {
 		return nil, fmt.Errorf("markitect.yaml must contain a Project")
 	}
 	p.Resources = append(p.Resources, config)
+	if err := p.loadPackageInputs(config); err != nil {
+		return nil, err
+	}
+	registry, err := p.loadDomainInputs(config)
+	if err != nil {
+		return nil, err
+	}
 	paths := sortedFiles(snap.Files)
 	var parseFindings []core.Diagnostic
 	for _, name := range paths {
 		if name == "markitect.yaml" || (path.Ext(name) != ".yaml" && path.Ext(name) != ".yml") {
+			continue
+		}
+		if p.isDomainInput("", name) {
 			continue
 		}
 		scoped := false
@@ -70,7 +83,7 @@ func Parse(snap *snapshot.Snapshot) (*Project, error) {
 		if !scoped {
 			continue
 		}
-		r, err := format.Parse(name, snap.Files[name])
+		r, err := format.ParseWithRegistry(name, snap.Files[name], registry)
 		if err != nil {
 			parseFindings = append(parseFindings, core.Diagnostic{Code: "parse", Path: name, Message: err.Error()})
 			continue
@@ -79,36 +92,6 @@ func Parse(snap *snapshot.Snapshot) (*Project, error) {
 			return nil, fmt.Errorf("local Package manifest %q is not a project resource; build and pin its archive explicitly", name)
 		}
 		p.Resources = append(p.Resources, r)
-	}
-	var packageBytes int64
-	var packageFileCount int
-	packageNames := map[string]bool{}
-	for _, pin := range config.Spec.Packages {
-		if packageNames[pin.Name] {
-			return nil, fmt.Errorf("package %q is pinned more than once", pin.Name)
-		}
-		packageNames[pin.Name] = true
-		archiveBytes, exists := snap.Files[pin.Archive]
-		if !exists {
-			return nil, fmt.Errorf("package %q archive %q is missing from the selected snapshot", pin.Name, pin.Archive)
-		}
-		archive, err := contentpackage.Read(pin, archiveBytes)
-		if err != nil {
-			return nil, fmt.Errorf("package %q: %w", pin.Name, err)
-		}
-		for _, data := range archive.Files {
-			packageBytes += int64(len(data))
-		}
-		packageFileCount += len(archive.Files)
-		if packageBytes > 128<<20 {
-			return nil, fmt.Errorf("combined content packages exceed the 128 MiB limit")
-		}
-		if packageFileCount > 10_000 {
-			return nil, fmt.Errorf("combined content packages exceed the 10000 file limit")
-		}
-		p.PackageFiles[pin.Name] = archive.Files
-		p.Resources = append(p.Resources, archive.Manifest)
-		p.Resources = append(p.Resources, archive.Resources...)
 	}
 	declaredFiles := map[string]bool{}
 	for _, resource := range p.Resources {
@@ -126,11 +109,11 @@ func Parse(snap *snapshot.Snapshot) (*Project, error) {
 		}
 	}
 	for _, diagnostic := range parseFindings {
-		if !declaredFiles[diagnostic.Path] || markitectResourceEnvelope(snap.Files[diagnostic.Path]) {
+		if !declaredFiles[diagnostic.Path] || format.IsResourceEnvelopeWithRegistry(snap.Files[diagnostic.Path], registry) {
 			p.Diagnostics = append(p.Diagnostics, diagnostic)
 		}
 	}
-	p.Graph = core.Build(p.Resources)
+	p.Graph = core.BuildWithRegistry(p.Resources, registry)
 	p.Diagnostics = append(p.Diagnostics, p.Graph.Diagnostics...)
 	resolved, findings := inputs.ResolveWithPackages(p.Graph, snap.Files, p.PackageFiles)
 	p.InputFiles = resolved
@@ -150,7 +133,11 @@ func Parse(snap *snapshot.Snapshot) (*Project, error) {
 		}
 	}
 	for _, r := range p.Resources {
-		p.Inventory = append(p.Inventory, Entry{Path: r.Path, Kind: r.Kind, Name: r.Metadata.Name, Namespace: r.Metadata.Namespace, Package: r.Package, Hash: Hash(p.resourceBytes(r))})
+		api := r.APIVersion
+		if api == core.APIVersion {
+			api = ""
+		}
+		p.Inventory = append(p.Inventory, Entry{APIVersion: api, Path: r.Path, Kind: r.Kind, Name: r.Metadata.Name, Namespace: r.Metadata.Namespace, Package: r.Package, Hash: Hash(p.resourceBytes(r))})
 	}
 	return p, nil
 }

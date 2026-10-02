@@ -14,6 +14,7 @@ type commandOptions struct {
 	root           string
 	runManifest    string
 	revision       string
+	apiVersion     string
 	base           string
 	kind           string
 	name           string
@@ -26,6 +27,9 @@ type commandOptions struct {
 	output         string
 	bundlePath     string
 	bundleSHA      string
+	action         string
+	adapter        string
+	plan           string
 	reviewConfig   string
 	reviewReport   string
 	reviewEvidence string
@@ -38,6 +42,7 @@ func parseOptions(command string, args []string, allowed map[string]bool, out, e
 	root := fs.String("repo", ".", "repository root")
 	runManifest := fs.String("run", "", "committed fixed-run context manifest (context)")
 	revision := fs.String("revision", "", "fixed Git revision (omitted: provisional working tree)")
+	apiVersion := fs.String("api-version", "", "resource API version for extension resources")
 	base := fs.String("base", "", "base revision for impact")
 	kind := fs.String("kind", "", "context entry kind")
 	name := fs.String("name", "", "resource or project name")
@@ -50,6 +55,9 @@ func parseOptions(command string, args []string, allowed map[string]bool, out, e
 	output := fs.String("output", "", "absent output directory (package) or ZIP file (bundle)")
 	bundlePath := fs.String("bundle", "", "local release ZIP to validate and install")
 	bundleSHA := fs.String("sha256", "", "expected SHA-256 of the release ZIP")
+	action := fs.String("action", "", "reconciliation action: observe, plan, apply or verify")
+	adapter := fs.String("adapter", "", "configured reconciliation adapter name")
+	plan := fs.String("plan", "", "saved concrete YAML reconciliation plan")
 	reviewConfig := fs.String("config", "", "repository-relative review configuration in the fixed snapshot")
 	reviewReport := fs.String("report", "", "completed reviewer report to record (local UTF-8 file)")
 	reviewEvidence := fs.String("evidence", "", "previous advisory review record to evaluate (local YAML file)")
@@ -81,11 +89,37 @@ func parseOptions(command string, args []string, allowed map[string]bool, out, e
 		fmt.Fprintf(errout, "--%s does not apply to %s\n", invalid, command)
 		return commandOptions{}, 2, true
 	}
-	if *write && ((command != "render" && command != "schema" && command != "format" && command != "install" && command != "init") || *revision != "" || *check) {
-		fmt.Fprintln(errout, "--write only supports render, format, schema, install or init on the working tree")
+	if *write && ((command != "render" && command != "schema" && command != "format" && command != "install" && command != "init" && command != "reconcile") || *revision != "" || *check || (command == "reconcile" && *action != "apply")) {
+		fmt.Fprintln(errout, "--write only supports render, format, schema, install, init or reconcile --action apply on the working tree")
 		return commandOptions{}, 2, true
 	}
-	if *runManifest != "" && (command != "context" || !fullGitCommitID.MatchString(*revision) || *kind != "" || *name != "" || *namespace != "" || *packageName != "") {
+	if command == "reconcile" {
+		if *action != "observe" && *action != "plan" && *action != "apply" && *action != "verify" {
+			fmt.Fprintln(errout, "reconcile requires --action observe, plan, apply or verify")
+			return commandOptions{}, 2, true
+		}
+		if *adapter == "" {
+			fmt.Fprintln(errout, "reconcile requires --adapter")
+			return commandOptions{}, 2, true
+		}
+		if (*action == "apply" || *action == "verify") && *plan == "" {
+			fmt.Fprintln(errout, "reconcile apply and verify require --plan")
+			return commandOptions{}, 2, true
+		}
+		if (*action == "observe" || *action == "plan") && *plan != "" {
+			fmt.Fprintln(errout, "--plan applies only to reconcile apply or verify")
+			return commandOptions{}, 2, true
+		}
+		if *action == "apply" && !*write {
+			fmt.Fprintln(errout, "reconcile apply requires explicit --write")
+			return commandOptions{}, 2, true
+		}
+		if *action != "apply" && *write {
+			fmt.Fprintln(errout, "--write applies only to reconcile --action apply")
+			return commandOptions{}, 2, true
+		}
+	}
+	if *runManifest != "" && (command != "context" || !fullGitCommitID.MatchString(*revision) || *apiVersion != "" || *kind != "" || *name != "" || *namespace != "" || *packageName != "") {
 		fmt.Fprintln(errout, "--run is only valid for context with --revision and supplies its own entry")
 		return commandOptions{}, 2, true
 	}
@@ -93,6 +127,7 @@ func parseOptions(command string, args []string, allowed map[string]bool, out, e
 		root:           *root,
 		runManifest:    *runManifest,
 		revision:       *revision,
+		apiVersion:     *apiVersion,
 		base:           *base,
 		kind:           *kind,
 		name:           *name,
@@ -105,6 +140,9 @@ func parseOptions(command string, args []string, allowed map[string]bool, out, e
 		output:         *output,
 		bundlePath:     *bundlePath,
 		bundleSHA:      *bundleSHA,
+		action:         *action,
+		adapter:        *adapter,
+		plan:           *plan,
 		reviewConfig:   *reviewConfig,
 		reviewReport:   *reviewReport,
 		reviewEvidence: *reviewEvidence,

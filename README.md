@@ -5,9 +5,11 @@
   </picture>
 </h1>
 
-AI-facing engineering guidance often lives in documents whose relationships and owners are hard to see. Markitect makes that guidance explicit: author rules, workflows, skills, agents, reusable text, and contracts as typed resources, then declare how they depend on one another and which ordinary project files they need.
+Engineering knowledge and policy often appear in multiple documents, agent instructions, checks, and external tools. Markitect's next version is being built as an engineering knowledge and change compiler: teams define domain vocabulary, intended system structure, and normative rules once as explicit resources, then validate their relationships and project selected parts to configured consumers.
 
-The Go CLI checks resource structure and generated views, compiles a selected resource's declared context, and reports affected resources between fixed Git revisions. These operations are deterministic and do not require a model API. Project files, including source code, are explicit inputs; Markitect does not analyze their domain-specific structure or decide whether prose is true, complete, or followed. See the [product boundary](docs/architecture.md#project-artifact-boundary).
+The compiler will use versioned Domain definitions and a normalized semantic model so software architecture, delivery policy, and AI-working knowledge can share a small kernel. Relation meaning determines context and change invalidation. Explicit adapters can produce local views or observe external state, plan changes, and perform configured actions. Results bind to fixed source, model, configuration, mapping, and observation evidence. Markitect will report what those inputs prove; it will not assert that prose or implementation is semantically true, complete, or accepted by a human. See the [product architecture and evidence boundary](docs/architecture.md).
+
+The available v0.9.1 release implements the earlier fixed-kind resource model. The [roadmap](docs/implementation-plan.md) tracks the v0.10.0 transition and its verified status.
 
 <!-- markitect-release:install:start -->
 
@@ -113,11 +115,11 @@ New projects default to canonical Areas under `.markitect/areas/<namespace>`, al
 
 ## What it does
 
-- Defines typed engineering resources and explicit dependencies in YAML; keeps human-owned project documentation in Markdown.
-- Checks structure and managed output drift without calling a model.
-- Compiles context from declared resource and file inputs.
-- Compares immutable Git revisions to identify changed paths and affected resources.
-- Runs only the verification commands a project owner declares; missing checks remain incomplete evidence.
+- The v0.10.0 target defines typed domain resources and explicit relations from versioned Domain definitions.
+- Validates bounded constraints, compiles selected context, and traces changes through relation-specific impact rules.
+- Projects canonical resources through explicitly configured local or external adapters.
+- Binds reports to their fixed source, model, configuration, mappings, and observations.
+- Leaves semantic truth, completeness judgments, and human acceptance with the responsible people.
 
 Authoring guidance ships with Markitect and uses the same resource model as project content. Review evidence is advisory: the CLI can assess whether its declared inputs still match, but cannot authenticate a reviewer or transfer human acceptance.
 

@@ -35,6 +35,8 @@ properties:
                             items:
                                 additionalProperties: false
                                 properties:
+                                    apiVersion:
+                                        type: string
                                     kind:
                                         type: string
                                     name:
@@ -59,6 +61,8 @@ properties:
                         contract:
                             additionalProperties: false
                             properties:
+                                apiVersion:
+                                    type: string
                                 kind:
                                     type: string
                                 name:
@@ -73,6 +77,8 @@ properties:
                         implementation:
                             additionalProperties: false
                             properties:
+                                apiVersion:
+                                    type: string
                                 kind:
                                     type: string
                                 name:
@@ -89,10 +95,20 @@ properties:
                         - implementation
                     type: object
                 type: array
+            domains:
+                items:
+                    minLength: 1
+                    pattern: ^(?!/)(?!.*(?:^|/)\.\.?/)[^\\:\x00]+\.ya?ml$
+                    type: string
+                minItems: 1
+                type: array
+                uniqueItems: true
             exports:
                 items:
                     additionalProperties: false
                     properties:
+                        apiVersion:
+                            type: string
                         kind:
                             type: string
                         name:
