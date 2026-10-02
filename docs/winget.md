@@ -42,12 +42,12 @@ PATH/alias checks and cleanup evidence. The local-manifest ProductCode is
 test-only and must not be added to the community update.
 
 Only after the public installation succeeds should the README advertise
-WinGet commands. The current README already installs the verified v0.9.0
+WinGet commands. The current README already installs the verified v0.9.1
 binary directly; that route does not require Microsoft catalog approval.
 
 ## Current verified release metadata
 
-The generated [v0.9.0 manifests](../packaging/winget/GlaciusLabs.Markitect/0.9.0/) bind the immutable Windows binary and its attested SHA-256. The Windows workflow validates every canonical versioned manifest directory, including v0.9.0. Its portable install/upgrade exercise still checks the submitted v0.5.0 package against v0.4.1; it does not demonstrate a public-catalog v0.9.0 installation or upgrade. The initial community submission and later version submissions remain separate catalog gates.
+The generated [v0.9.1 manifests](../packaging/winget/GlaciusLabs.Markitect/0.9.1/) bind the immutable Windows binary and its attested SHA-256. The Windows workflow validates every canonical versioned manifest directory, including v0.9.1. Its portable install/upgrade exercise still checks the submitted v0.5.0 package against v0.4.1; it does not demonstrate a public-catalog v0.9.1 installation or upgrade. The initial community submission and later version submissions remain separate catalog gates.
 
 
 ## Prepared public-catalog runner
@@ -81,5 +81,5 @@ pinned versions and digest consistency without installing anything. Existing
 local-manifest lifecycle CI remains the regression gate. The public modes are
 prepared but have not been exercised against Microsoft's catalog: PR #445055
 is still awaiting manual review. Their preparation is not publication evidence.
-The current direct-download README installs v0.9.0; the already-authorized
+The current direct-download README installs v0.9.1; the already-authorized
 catalog follow-up is explicitly v0.7.0.

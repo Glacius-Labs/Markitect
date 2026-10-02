@@ -13,15 +13,15 @@ The Go CLI checks resource structure and generated views, compiles a selected re
 
 ## Install Markitect
 
-The current [v0.9.0 release](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.9.0) provides Windows and Linux amd64 binaries. The commands below download a fixed version from the public release, check its published SHA-256 digest, and install it for your user. No Go installation or GitHub login is needed. Git is needed for Markitect commands that read Git revisions.
+The current [v0.9.1 release](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.9.1) provides Windows and Linux amd64 binaries. The commands below download a fixed version from the public release, check its published SHA-256 digest, and install it for your user. No Go installation or GitHub login is needed. Git is needed for Markitect commands that read Git revisions.
 
 **Windows (PowerShell):**
 
 ```powershell
 if (-not [Runtime.InteropServices.RuntimeInformation]::IsOSPlatform([Runtime.InteropServices.OSPlatform]::Windows) -or [Runtime.InteropServices.RuntimeInformation]::OSArchitecture -ne [Runtime.InteropServices.Architecture]::X64) { throw 'Only Windows amd64 is released.' }
-$tag = 'v0.9.0'
+$tag = 'v0.9.1'
 $asset = "markitect-$tag-windows-amd64.exe"
-$sha256 = 'aee5fdd2e1ed91bdefd84c423bbc56213c9015c7de0bd91c00d4d182b6eea281'
+$sha256 = '792e12c8ff44ad44ffb515bac381fcd1d171cb9a0a46a43e11a135bf17abe38e'
 $download = Join-Path $env:TEMP ("markitect-" + [guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Path $download -ErrorAction Stop | Out-Null
 $source = Join-Path $download $asset
@@ -36,7 +36,7 @@ if ($bin -notin ($userPath -split ';')) {
 }
 $env:Path = "$bin;$env:Path"
 $installed = & (Join-Path $bin 'markitect.exe') version
-if ($LASTEXITCODE -ne 0 -or $installed -ne 'Markitect 0.9.0 (windows/amd64)') { throw 'Installed CLI version check failed.' }
+if ($LASTEXITCODE -ne 0 -or $installed -ne 'Markitect 0.9.1 (windows/amd64)') { throw 'Installed CLI version check failed.' }
 $installed
 Remove-Item -LiteralPath $source, $download
 ```
@@ -47,9 +47,9 @@ Remove-Item -LiteralPath $source, $download
 (
   set -e
   [ "$(uname -s)" = Linux ] && [ "$(uname -m)" = x86_64 ] || { echo 'Only Linux amd64 is released.' >&2; exit 1; }
-  tag=v0.9.0
+  tag=v0.9.1
   asset="markitect-$tag-linux-amd64"
-  sha256=22c8198d608f01d01069329ed2dbd9ca784479d80ba72a17c63a0ef2d90d2449
+  sha256=37e5de60e9a5ca5216f359ca2a332f55811118f2b84932c456ee1001b739b81c
   download="$(mktemp -d)"
   trap 'rm -rf "$download"' EXIT
   curl -fLsS "https://github.com/Glacius-Labs/Markitect/releases/download/$tag/$asset" -o "$download/$asset"
@@ -60,7 +60,7 @@ Remove-Item -LiteralPath $source, $download
 export PATH="$HOME/.local/bin:$PATH"
 ```
 
-Add `~/.local/bin` to your shell startup file if it is not already on `PATH`. For developers who already use Go 1.27.1 or later, `go install github.com/Glacius-Labs/Markitect/cmd/markitect@v0.9.0` is a shorter source-build option. macOS and arm64 binaries are not currently released. For signed release and asset attestation verification, project pinning, and upgrades, follow the [distribution guide](integration/README.md). The CLI's `install` command installs a **project pin**, not the CLI on your computer.
+Add `~/.local/bin` to your shell startup file if it is not already on `PATH`. For developers who already use Go 1.27.1 or later, `go install github.com/Glacius-Labs/Markitect/cmd/markitect@v0.9.1` is a shorter source-build option. macOS and arm64 binaries are not currently released. For signed release and asset attestation verification, project pinning, and upgrades, follow the [distribution guide](integration/README.md). The CLI's `install` command installs a **project pin**, not the CLI on your computer.
 
 <!-- markitect-release:install:end -->
 
@@ -68,16 +68,16 @@ Add `~/.local/bin` to your shell startup file if it is not already on `PATH`. Fo
 
 ## Try the installed CLI
 
-Clone the v0.9.0 synthetic example and run a structural check with the installed binary. This reads the example without modifying an adopting repository.
+Clone the v0.9.1 synthetic example and run a structural check with the installed binary. This reads the example without modifying an adopting repository.
 
 Windows PowerShell:
 
 ~~~powershell
-git clone --depth 1 --branch v0.9.0 https://github.com/Glacius-Labs/Markitect.git markitect-sample-v0.9.0
-if ($LASTEXITCODE -ne 0) { throw 'Could not get the v0.9.0 synthetic example.' }
+git clone --depth 1 --branch v0.9.1 https://github.com/Glacius-Labs/Markitect.git markitect-sample-v0.9.1
+if ($LASTEXITCODE -ne 0) { throw 'Could not get the v0.9.1 synthetic example.' }
 markitect version
 if ($LASTEXITCODE -ne 0) { throw 'Version check failed.' }
-markitect check --repo .\markitect-sample-v0.9.0\examples\minimal
+markitect check --repo .\markitect-sample-v0.9.1\examples\minimal
 if ($LASTEXITCODE -ne 0) { throw 'Example check failed.' }
 ~~~
 
@@ -85,9 +85,9 @@ Linux amd64:
 
 ~~~sh
 set -e
-git clone --depth 1 --branch v0.9.0 https://github.com/Glacius-Labs/Markitect.git markitect-sample-v0.9.0
+git clone --depth 1 --branch v0.9.1 https://github.com/Glacius-Labs/Markitect.git markitect-sample-v0.9.1
 markitect version
-markitect check --repo ./markitect-sample-v0.9.0/examples/minimal
+markitect check --repo ./markitect-sample-v0.9.1/examples/minimal
 ~~~
 
 The [minimal example](examples/minimal/README.md) is a synthetic, executable fixture. To use Markitect in your own repository, follow the [release installation and verification guide](integration/README.md) to preview and install a project pin.
