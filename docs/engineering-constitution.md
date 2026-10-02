@@ -1,12 +1,12 @@
 # Engineering constitution
 
-**Status:** This document records the adopted v0.11.0 product direction and the boundaries the implementation must preserve. v0.10.0 is published and remains the supported release today. The v0.11.0 features below are planned or in implementation; they are not supported CLI behavior until a release ships them. The [roadmap](implementation-plan.md) owns delivery status; [Usage](usage.md) separates current syntax from the planned contract.
+**Status:** This document records the v0.11.0 product direction and the boundaries preserved by the shipped implementation. v0.10.0 is the historical baseline; v0.11.0 is the current supported contract. The [roadmap](implementation-plan.md) owns verified release evidence; [Usage](usage.md) documents supported syntax and CLI behavior.
 
 ## Product purpose
 
 Markitect describes the space of valid engineering changes. People decide which architecture and policies a project wants. Markitect helps express those decisions as canonical, versioned Domains and resources, derives bounded deterministic checks and context from them, and gives agents the relevant constraints. Agents can choose implementations inside those boundaries. Markitect does not choose the architecture, generate arbitrary application code, or decide whether the desired architecture is wise.
 
-The intended outcome is one canonical model whose relevant values can feed generated human-readable Domain contracts, agent instructions, deterministic checks, and explicitly configured adapters. When a Project selects the `markdown` target, the planned v0.11.0 Domain projection writes normalized Domain schemas, relations, and constraints under `docs/markitect/_domains/`; per-resource projections may include their applicable PolicyResults and explicit waiver decision. These are generated views, not canonical sources. A check establishes only its declared assertions for its fixed inputs. It does not establish that prose is true, that code satisfies business intent beyond the evidence a configured checker can observe, or that a human has accepted a change.
+The intended outcome is one canonical model whose relevant values can feed generated human-readable Domain contracts, agent instructions, deterministic checks, and explicitly configured adapters. When a Project selects the `markdown` target, the v0.11.0 Domain projection writes normalized Domain schemas, relations, and constraints under `docs/markitect/_domains/`; per-resource projections may include their applicable PolicyResults and explicit waiver decision. These are generated views, not canonical sources. A check establishes only its declared assertions for its fixed inputs. It does not establish that prose is true, that code satisfies business intent beyond the evidence a configured checker can observe, or that a human has accepted a change.
 
 ## Reuse existing Domain packages
 
@@ -38,7 +38,7 @@ Changing a Domain package can change constraint digests and make existing except
 
 ## Copy Me: propose, review, adopt
 
-The v0.11.0 authoring resources include a provider-independent `Copy Me` workflow. It helps an agent propose a candidate engineering style from evidence a person explicitly selects. It does not add a `discover` CLI command, call a model from the Markitect kernel, or promote observations into canonical policy.
+The shipped v0.11.0 authoring resources include a provider-independent `Copy Me` workflow. It helps an agent propose a candidate engineering style from evidence a person explicitly selects. It does not add a `discover` CLI command, call a model from the Markitect kernel, or promote observations into canonical policy.
 
 The workflow must:
 
@@ -57,7 +57,7 @@ This workflow makes affected knowledge visible; it does not guarantee all releva
 
 ## Deliberate boundaries
 
-The v0.11.0 direction does not adopt the archived proposals as an unrestricted backlog. It excludes a Core Pattern primitive, a new architecture DSL, implicit pattern composition, code generation or automatic code migration, automatic exception approval, arbitrary policy code, source-code semantic inference in the kernel, provider-specific discovery, and automatic canonization. Pattern layering, broad architecture inheritance, cross-project behavioral profiling, and long-running background enforcement require separate evidence and product decisions.
+The v0.11.0 implementation does not adopt the archived proposals as an unrestricted backlog. It excludes a Core Pattern primitive, a new architecture DSL, implicit pattern composition, code generation or automatic code migration, automatic exception approval, arbitrary policy code, source-code semantic inference in the kernel, provider-specific discovery, and automatic canonization. Pattern layering, broad architecture inheritance, cross-project behavioral profiling, and long-running background enforcement require separate evidence and product decisions.
 
 ## Constraint language and specialist engines
 

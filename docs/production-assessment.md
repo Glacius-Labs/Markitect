@@ -2,6 +2,31 @@
 
 **Recorded:** 2026-10-02. This dated assessment records the release evidence verified at that time and distinguishes it from source behavior. It reports only the Markitect source, its distributions, and source-owned gates; project adoption and acceptance are outside its scope.
 
+## v0.11.0 published release
+
+The immutable [v0.11.0 release](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.11.0), release ID `402071906`, binds source commit [`a86903f`](https://github.com/Glacius-Labs/Markitect/commit/a86903f1e94cada583a225800fa42b2273755fbd), merged from [PR 51](https://github.com/Glacius-Labs/Markitect/pull/51). It adds resource-scoped relation counts, deterministic per-subject PolicyResults, narrowly scoped source-bound exceptions, generated Domain contracts, and provider-independent discovery and constitution-change authoring workflows. Architecture contracts remain explicit versioned Domain packages. The annotated tag is unsigned; immutable-release and asset attestations were verified separately.
+
+| Evidence | Exact basis | Result |
+|---|---|---|
+| Reviewed candidate and PR CI | [PR 51](https://github.com/Glacius-Labs/Markitect/pull/51), candidate `9acb01fc8beadcf0b13b04422eecb33aca494e98`; [run 37048194132](https://github.com/Glacius-Labs/Markitect/actions/runs/37048194132) | Windows and Linux passed; merged source has the same tree `4caec0d5e05ac85f5ba54602b3f99815eb04a304` |
+| Main CI and source artifact | [Run 37048677509](https://github.com/Glacius-Labs/Markitect/actions/runs/37048677509), source `a86903f1e94cada583a225800fa42b2273755fbd` | All three jobs passed; actual downloaded artifact contained bootstrap, lock, source archive, .NET adapter, and both new embedded workflows; the archive's SHA-256 matched lock value `2b15b4f979ab66b22ed58ad09eaad489319b22dd61235f501bf9fd2374bf3c5b` |
+| Tagged release | [Run 37049243207](https://github.com/Glacius-Labs/Markitect/actions/runs/37049243207), attempt 1 | Source quality, preflight, Windows/Linux bundle installation and smoke, and asset assembly passed |
+| Owner publisher | Release `402071906` | `published-verified`; exact run artifact, tag, immutable release, and all four asset attestations verified; bundle bytes matched the local fixed-source build |
+| Public distribution metadata | `markitect-release distribution --tag v0.11.0 --repo . --write` | Returned `written` after verifying public assets, attestations, provenance, workflow attempt, and digests; generated README pins and three canonical v0.11.0 WinGet manifests |
+| Public Windows binary | Separate anonymous public download | Digest matched the attested Windows asset; reported `Markitect 0.11.0 (windows/amd64)`; constitution check/model, discovery check, and bundled notices passed |
+| WinGet metadata validation | `winget validate --manifest packaging/winget/GlaciusLabs.Markitect/0.11.0` | Native manifest validation succeeded; public catalog availability and installation remain separate |
+
+| Asset | Verified SHA-256 |
+|---|---|
+| `markitect-v0.11.0-bundle.zip` | `ba46ab6327bde9df31f420a4023bd7c826725085a911ace4e1287d7ff9d2eccf` |
+| `markitect-v0.11.0-linux-amd64` | `5a3e4de0449e266191080a04e4c1da0cc2bfa09e88ee99965b03cce58e7fdb90` |
+| `markitect-v0.11.0-windows-amd64.exe` | `4e563a19a2e572b0bfc940a24ffee38cf08509639e46a68aa60f2dfadd82f6d8` |
+| `markitect-v0.11.0-provenance.yaml` | `bf5c78f7ba9c5b7c3358de255eaf2cdbcf7efac58e28aaea9a14d2463f5ea43f` |
+
+The constitution fixture exercises a pinned v1-to-v2 policy migration, impact, a missing Validator, a source-bound temporary exception visible in results/context/views, and removal after adding the Validator. Invalid, stale, expired, and unneeded exceptions fail; structural and collection-wide errors remain unwaivable. Constraint digests include referenced relation semantics. The package writer regression checks physical archive bytes while preserving virtual members and unrelated local files.
+
+The discovery fixture is synthetic. It demonstrates fixed Git-source and selected-file bindings, separate candidate/evidence/decision bytes, and a read-only integrity helper. It does not establish successful AI inference, authenticated human approval, adoption, measured consumer effort, or business benefit. Real-project validation remains future work. WinGet manifests are release metadata; Microsoft catalog availability and package-manager installation are not claimed. Earlier tags and releases remain unchanged.
+
 ## v0.10.0 published release
 
 The immutable [v0.10.0 release](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.10.0), release ID `401991913`, binds source commit [`8882d8f`](https://github.com/Glacius-Labs/Markitect/commit/8882d8f8b9eee184036c1dec4b4c51422608d1b1), merged from [PR 49](https://github.com/Glacius-Labs/Markitect/pull/49). The release extends the bundled resource vocabulary with project-owned, versioned domain definitions and a validated semantic model; it adds conservative reconciliation plans and an explicit external command-adapter protocol with optional configured apply capability. The separate .NET reference adapter is read-only. This is a deliberate pre-1.0 language and model change, and no compatibility guarantee is claimed. The annotated tag is unsigned; immutable-release and asset attestations were verified separately.
