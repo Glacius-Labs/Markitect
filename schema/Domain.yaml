@@ -84,6 +84,11 @@ properties:
                                     type: string
                                 relation:
                                     type: string
+                                scope:
+                                    enum:
+                                        - resource
+                                        - selection
+                                    type: string
                                 value: {}
                                 values:
                                     items: {}

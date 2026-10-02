@@ -1,0 +1,19 @@
+apiVersion: markitect.example.org/v1alpha1
+kind: Project
+metadata:
+    name: engineering-constitution-example
+spec:
+    targets:
+        - markdown
+        - codex
+    areas:
+        - name: engineering
+          path: resources
+    domains:
+        - package:engineering-constitution/domains/software.yaml
+    packages:
+        - name: engineering-constitution
+          version: 1.0.0
+          source: fixture:engineering-constitution-package-v1
+          archive: .markitect/packages/engineering-constitution-1.0.0.zip
+          sha256: bb373a7b8dbef7a96a97b98154200be2f2c56b67b4f6f85e33a8a9bdd3dbdc7d

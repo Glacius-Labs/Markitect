@@ -98,7 +98,7 @@ func hasTarget(targets []string, target string) bool {
 	return false
 }
 
-func addMarkdownNavigation(outputs map[string][]byte, owners map[string]map[string]bool, views map[string]*core.Resource, projectKey string) error {
+func addMarkdownNavigation(outputs map[string][]byte, owners map[string]map[string]bool, views map[string]*core.Resource, domains map[string]core.DomainDefinition, projectKey string) error {
 	directFiles := map[string][]string{}
 	childDirectories := map[string]map[string]bool{}
 	directories := map[string]bool{markdownViewsRoot: true}
@@ -113,6 +113,14 @@ func addMarkdownNavigation(outputs map[string][]byte, owners map[string]map[stri
 			dir = parent
 		}
 	}
+	if len(domains) > 0 {
+		directories[domainMarkdownRoot] = true
+		childDirectories[markdownViewsRoot] = ensureStringSet(childDirectories[markdownViewsRoot])
+		childDirectories[markdownViewsRoot][path.Base(domainMarkdownRoot)] = true
+		for view := range domains {
+			directFiles[domainMarkdownRoot] = append(directFiles[domainMarkdownRoot], path.Base(view))
+		}
+	}
 	dirs := make([]string, 0, len(directories))
 	for dir := range directories {
 		dirs = append(dirs, dir)
@@ -120,12 +128,23 @@ func addMarkdownNavigation(outputs map[string][]byte, owners map[string]map[stri
 	sort.Strings(dirs)
 	for _, dir := range dirs {
 		file := path.Join(dir, "README.md")
+		if dir == domainMarkdownRoot {
+			if err := addOwned(outputs, owners, file, renderDomainIndex(domains, file), projectKey); err != nil {
+				return err
+			}
+			continue
+		}
 		var b strings.Builder
 		b.WriteString("<!-- " + Marker + "; source: markitect.yaml -->\n# Markitect views\n\n")
 		files := directFiles[dir]
 		sort.Strings(files)
 		for _, name := range files {
 			view := path.Join(dir, name)
+			if domain, ok := domains[view]; ok {
+				label := "Domain contract: " + domain.Name + " (" + domain.APIVersion + ")"
+				b.WriteString("- [" + markdownText(label) + "](" + relative(file, view) + ")\n")
+				continue
+			}
 			resource := views[view]
 			label := resource.Kind + ": " + resource.Metadata.Name
 			b.WriteString("- [" + label + "](" + relative(file, view) + ")\n")

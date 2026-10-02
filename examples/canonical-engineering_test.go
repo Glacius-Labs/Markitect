@@ -90,12 +90,7 @@ func TestCanonicalEngineeringDomainsCompilePolicyContextAndViews(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	var moduleView string
-	for name, content := range outputs {
-		if strings.Contains(string(content), "application-modules-use-core") && strings.HasSuffix(name, ".md") {
-			moduleView = string(content)
-		}
-	}
+	moduleView := string(outputs["docs/markitect/engineering/module.module.software.markitect.org.v1alpha1.md"])
 	for _, value := range []string{"application-modules-use-core", "relationships may target only kinds", "Core", "dependsOn"} {
 		if !strings.Contains(moduleView, value) {
 			t.Errorf("generated Module view omitted structured policy value %q: %s", value, moduleView)
@@ -107,7 +102,8 @@ func TestCanonicalEngineeringDomainsCompilePolicyContextAndViews(t *testing.T) {
 }
 
 func TestCanonicalEngineeringPolicyConflictAndStalePlan(t *testing.T) {
-	root := canonicalEngineeringRoot(t)
+	root := filepath.Join(t.TempDir(), "canonical-engineering")
+	copyCanonicalExample(t, root)
 	project, err := app.Load(root, "")
 	if err != nil {
 		t.Fatal(err)
@@ -125,6 +121,7 @@ func TestCanonicalEngineeringPolicyConflictAndStalePlan(t *testing.T) {
 	}
 	defer os.WriteFile(modulePath, original, 0644)
 	conflict := strings.Replace(string(original), "kind: Core", "kind: Module", 1)
+	conflict = strings.Replace(conflict, "name: platform-core", "name: payments", 1)
 	if conflict == string(original) {
 		t.Fatal("test could not locate the dependency target")
 	}
@@ -140,7 +137,7 @@ func TestCanonicalEngineeringPolicyConflictAndStalePlan(t *testing.T) {
 	}
 	foundPolicy := false
 	for _, diagnostic := range changed.Diagnostics {
-		if strings.Contains(diagnostic.Code, "constraint") && strings.Contains(diagnostic.Message, "application-modules-use-core") {
+		if diagnostic.Code == "constraint.application-modules-use-core" {
 			foundPolicy = true
 		}
 	}
@@ -434,19 +431,15 @@ func TestCanonicalPolicyValueDrivesCheckContextAndHumanView(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	var moduleView string
-	for name, content := range outputs {
-		if strings.Contains(string(content), "application-modules-use-core") && strings.HasSuffix(name, ".md") {
-			moduleView = string(content)
-		}
-	}
+	moduleView := string(outputs["docs/markitect/engineering/module.module.software.markitect.org.v1alpha1.md"])
 	if !strings.Contains(moduleView, "relationships may target only kinds `Module`") || strings.Contains(moduleView, "target only kinds `Core`") {
 		t.Fatalf("human Module view did not derive the same revised policy value: %s", moduleView)
 	}
 }
 
 func TestCanonicalEngineeringRejectsBrokenRelations(t *testing.T) {
-	root := canonicalEngineeringRoot(t)
+	root := filepath.Join(t.TempDir(), "canonical-engineering")
+	copyCanonicalExample(t, root)
 	modulePath := filepath.Join(root, "resources", "module.yaml")
 	original, err := os.ReadFile(modulePath)
 	if err != nil {

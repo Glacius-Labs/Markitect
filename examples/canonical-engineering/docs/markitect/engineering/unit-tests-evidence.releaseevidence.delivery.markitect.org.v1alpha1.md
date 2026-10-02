@@ -12,3 +12,9 @@
 ## Applicable constraints
 
 - **release-evidence-must-pass:** `result` must be one of `passed`. Explanation: A recorded check result must be passing; evidence remains distinct from the requested release state.
+
+## Policy outcomes
+
+| Constraint | Subject | Status | Result | Waiver details |
+| --- | --- | --- | --- | --- |
+| `release-evidence-must-pass` | [engineering/ReleaseEvidence: unit-tests-8d7f3c1](unit-tests-evidence.releaseevidence.delivery.markitect.org.v1alpha1.md) | **PASSED** | Constraint passed. | — |

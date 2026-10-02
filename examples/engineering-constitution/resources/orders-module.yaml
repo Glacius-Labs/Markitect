@@ -1,0 +1,11 @@
+apiVersion: engineering.markitect.org/v1alpha1
+kind: Module
+metadata:
+    name: orders
+    namespace: engineering
+spec:
+    dependsOn:
+        - kind: Core
+          name: platform-core
+          namespace: engineering
+    purpose: Owns order-placement application behavior.

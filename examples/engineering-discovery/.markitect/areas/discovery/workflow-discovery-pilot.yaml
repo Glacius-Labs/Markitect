@@ -1,0 +1,7 @@
+apiVersion: markitect.example.org/v1alpha1
+kind: Workflow
+metadata:
+    name: discovery-pilot
+    namespace: discovery
+spec:
+    text: Inspect the selected ContextRun report. Record each source identity, exact hash, path and relevant excerpt. Distinguish observation from interpretation. Preserve at least one supporting case and one counterexample. Ask the owner to decide whether the provisional project-specific candidate is intended policy. Do not place the candidate in an Area or adopt it automatically.

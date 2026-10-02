@@ -9,7 +9,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/app"
 )
 
-var version = "0.10.0"
+var version = "0.11.0"
 
 func run(args []string, out, errout io.Writer) int {
 	if len(args) == 0 {

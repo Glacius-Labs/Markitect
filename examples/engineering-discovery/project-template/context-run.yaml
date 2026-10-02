@@ -1,0 +1,12 @@
+version: markitect.example.org/context-run/v1alpha1
+entry: engineering/Skill/architecture-review
+task:
+  id: synthetic-style-discovery
+  path: work-items/style-discovery.md
+sources:
+  - path: src/Refund/Handler.cs
+    reason: recent use-case slice selected as supporting structural evidence
+  - path: src/Services/RefundService.cs
+    reason: older service-centric implementation selected as a counterexample
+  - path: docs/decisions/service-transition.md
+    reason: decision excerpt clarifies that the older structure remains during migration

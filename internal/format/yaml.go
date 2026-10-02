@@ -23,7 +23,7 @@ var specFields = map[string][]string{
 	"Workflow": {"text", "rules", "uses", "needs", "implements", "input", "output", "files", "assertions"},
 	"Skill":    {"text", "description", "rules", "uses", "needs", "implements", "input", "output", "files", "assertions"},
 	"Agent":    {"text", "description", "rules", "uses", "needs", "implements", "input", "output", "providers", "files", "assertions"},
-	"Project":  {"targets", "areas", "bindings", "checks", "documentation", "ruleAdapters", "providerAdapters", "consistency", "packages", "domains", "adapters"},
+	"Project":  {"targets", "areas", "bindings", "checks", "documentation", "ruleAdapters", "providerAdapters", "consistency", "packages", "domains", "adapters", "policyDate", "policyExceptions"},
 	"Package":  {"version", "areas", "exports", "bindings", "domains"},
 }
 
@@ -286,6 +286,22 @@ func validateSpec(file string, n *yaml.Node, kind string) error {
 			return diagnostic(file, d.Line, "adapters are only allowed on Project resources")
 		}
 		if err := validateAdapters(file, d); err != nil {
+			return err
+		}
+	}
+	if d := child(n, "policyDate"); d != nil {
+		if kind != "Project" {
+			return diagnostic(file, d.Line, "policyDate is only allowed on Project resources")
+		}
+		if err := validatePolicyDate(file, d, "policyDate"); err != nil {
+			return err
+		}
+	}
+	if d := child(n, "policyExceptions"); d != nil {
+		if kind != "Project" {
+			return diagnostic(file, d.Line, "policyExceptions are only allowed on Project resources")
+		}
+		if err := validatePolicyExceptions(file, d, child(n, "policyDate")); err != nil {
 			return err
 		}
 	}

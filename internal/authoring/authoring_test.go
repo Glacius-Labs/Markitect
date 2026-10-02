@@ -20,15 +20,18 @@ func TestContextCompilesPortableCoreAuthoringClosure(t *testing.T) {
 	}
 	want := map[string]bool{
 		"markitect.yaml": false,
-		"internal/authoring/resources/rule-canonical-ownership.yaml":  false,
-		"internal/authoring/resources/text-resource-modelling.yaml":   false,
-		"internal/authoring/resources/workflow-authoring-change.yaml": false,
-		"internal/authoring/resources/skill-authoring.yaml":           false,
+		"internal/authoring/resources/rule-canonical-ownership.yaml":       false,
+		"internal/authoring/resources/text-resource-modelling.yaml":        false,
+		"internal/authoring/resources/workflow-authoring-change.yaml":      false,
+		"internal/authoring/resources/workflow-engineering-discovery.yaml": false,
+		"internal/authoring/resources/workflow-constitution-change.yaml":   false,
+		"internal/authoring/resources/skill-authoring.yaml":                false,
 	}
 	if len(got.Inputs) != len(want) {
 		t.Fatalf("compiled %d inputs, want %d: %#v", len(got.Inputs), len(want), got.Inputs)
 	}
-	var skillText, workflowText string
+	var skillText, workflowText, discoveryText, constitutionText string
+	discoveryWorkflow, constitutionWorkflow := false, false
 	for _, input := range got.Inputs {
 		if _, ok := want[input.Path]; !ok {
 			t.Errorf("unexpected context input %q", input.Path)
@@ -44,6 +47,16 @@ func TestContextCompilesPortableCoreAuthoringClosure(t *testing.T) {
 		if input.Path == "internal/authoring/resources/workflow-authoring-change.yaml" {
 			workflowText = input.Resource.Spec.Text
 		}
+		if input.Path == "internal/authoring/resources/workflow-engineering-discovery.yaml" {
+			discoveryText = input.Resource.Spec.Text
+		}
+		if input.Path == "internal/authoring/resources/workflow-constitution-change.yaml" {
+			constitutionText = input.Resource.Spec.Text
+		}
+		if input.Resource != nil && input.Resource.Kind == "Workflow" && input.Resource.Metadata.Namespace == "core" {
+			discoveryWorkflow = discoveryWorkflow || input.Resource.Metadata.Name == "engineering-discovery"
+			constitutionWorkflow = constitutionWorkflow || input.Resource.Metadata.Name == "constitution-change"
+		}
 	}
 	for name, seen := range want {
 		if !seen {
@@ -58,6 +71,24 @@ func TestContextCompilesPortableCoreAuthoringClosure(t *testing.T) {
 	for _, required := range []string{"init --repo PATH --name PROJECT --namespace OWNER`", "`.markitect/areas/OWNER`", "`.markitect/areas/OWNER/README.md`", "`--path AREA`", "`.markitect/packages/`", "other committed snapshot-included paths remain valid"} {
 		if !strings.Contains(workflowText, required) && !strings.Contains(skillText, required) {
 			t.Errorf("authoring guidance omits %q", required)
+		}
+	}
+	if !discoveryWorkflow || !constitutionWorkflow {
+		t.Errorf("authoring context does not reach both optional workflows (discovery=%t constitution=%t)", discoveryWorkflow, constitutionWorkflow)
+	}
+	for _, required := range []string{"optional provider-neutral Engineering Discovery workflow", "outside configured Areas", "separate human decision"} {
+		if !strings.Contains(skillText, required) {
+			t.Errorf("authoring Skill omits optional discovery boundary %q", required)
+		}
+	}
+	for _, required := range []string{"immutable full commit IDs", "counterexamples", "numerator, denominator", "candidate hash", "evidence-ledger hash", "do not authenticate", "No step in discovery writes"} {
+		if !strings.Contains(discoveryText, required) {
+			t.Errorf("Engineering Discovery workflow omits %q", required)
+		}
+	}
+	for _, required := range []string{"exact candidate and evidence hashes", "Domain definition before", "normal Project branch", "does not prove code conforms"} {
+		if !strings.Contains(constitutionText, required) {
+			t.Errorf("Constitution Change workflow omits %q", required)
 		}
 	}
 }

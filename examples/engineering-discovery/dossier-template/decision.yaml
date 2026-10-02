@@ -1,0 +1,7 @@
+version: markitect.example.org/engineering-discovery-decision/v1alpha1
+status: FILL_IN_accept_reject_defer_split_or_revise
+reviewer: FILL_IN_HUMAN_IDENTITY
+decidedAt: FILL_IN_DATE
+rationale: FILL_IN_HUMAN_RATIONALE
+candidateHash: FILL_IN_sha256_OF_EXACT_candidate.md_BYTES
+evidenceHash: FILL_IN_sha256_OF_EXACT_evidence.yaml_BYTES

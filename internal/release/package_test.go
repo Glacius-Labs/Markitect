@@ -71,6 +71,8 @@ func TestPackageIncludesOnlyEmbeddedAuthoringYAMLResources(t *testing.T) {
 		"internal/authoring/resources/skill-authoring.yaml",
 		"internal/authoring/resources/text-resource-modelling.yaml",
 		"internal/authoring/resources/workflow-authoring-change.yaml",
+		"internal/authoring/resources/workflow-constitution-change.yaml",
+		"internal/authoring/resources/workflow-engineering-discovery.yaml",
 	}
 	var got []string
 	for name := range contents {

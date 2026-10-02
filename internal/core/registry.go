@@ -425,6 +425,9 @@ func validateConstraint(c ConstraintDefinition, d DomainDefinition) error {
 	if !validIdentifier(c.Name) {
 		return fmt.Errorf("constraint name %q is invalid", c.Name)
 	}
+	if c.Assert.Op != "count" && c.Assert.Scope != "" {
+		return fmt.Errorf("constraint %q scope is only supported for count", c.Name)
+	}
 	if c.Select.Kind != "" {
 		if _, ok := d.Kinds[c.Select.Kind]; !ok {
 			return fmt.Errorf("constraint %q selects undefined kind %q", c.Name, c.Select.Kind)
@@ -502,6 +505,12 @@ func validateConstraint(c ConstraintDefinition, d DomainDefinition) error {
 			}
 		}
 	case "count":
+		if a.Scope != "" && a.Scope != "resource" && a.Scope != "selection" {
+			return fmt.Errorf("constraint %q count scope must be resource or selection", c.Name)
+		}
+		if a.Scope == "resource" && a.Relation == "" {
+			return fmt.Errorf("constraint %q resource count requires relation", c.Name)
+		}
 		if (a.Min == nil && a.Max == nil) || a.Min != nil && *a.Min < 0 || a.Max != nil && *a.Max < 0 || a.Min != nil && a.Max != nil && *a.Min > *a.Max {
 			return fmt.Errorf("constraint %q count requires valid min/max bounds", c.Name)
 		}
@@ -672,6 +681,9 @@ func cloneDomain(d DomainDefinition) DomainDefinition {
 	out.Constraints = append([]ConstraintDefinition(nil), d.Constraints...)
 	for i := range out.Constraints {
 		c := &out.Constraints[i]
+		if c.Assert.Op == "count" && c.Assert.Scope == "" {
+			c.Assert.Scope = "selection"
+		}
 		if c.Select.Labels != nil {
 			m := map[string]string{}
 			for k, v := range c.Select.Labels {
@@ -749,141 +761,4 @@ func sortedMapKeys[V any](m map[string]V) []string {
 	}
 	sort.Strings(keys)
 	return keys
-}
-
-// EvaluateConstraints returns deterministic diagnostics for registered domain assertions.
-func (g *Graph) EvaluateConstraints() {
-	if g == nil || g.Registry == nil {
-		return
-	}
-	for _, d := range g.Registry.Domains() {
-		for _, c := range d.Constraints {
-			if err := g.evaluateConstraint(d, c); err != nil {
-				g.addDiagnostic(Diagnostic{Code: "constraint." + c.Name, Message: err.Error()})
-			}
-		}
-	}
-}
-
-func (g *Graph) evaluateConstraint(d DomainDefinition, c ConstraintDefinition) error {
-	selected := []*Resource{}
-	var relationSources map[string]bool
-	if c.Assert.Relation != "" && (c.Assert.Op == "count" || c.Assert.Op == "allowed-targets") {
-		relationSources = map[string]bool{}
-		for _, kind := range d.Relations[c.Assert.Relation].SourceKinds {
-			relationSources[kind] = true
-		}
-	}
-	for _, k := range sortedKeys(g.Resources) {
-		r := g.Resources[k]
-		if r.APIVersion != d.APIVersion || c.Select.Kind != "" && r.Kind != c.Select.Kind {
-			continue
-		}
-		if len(relationSources) > 0 && !relationSources[r.Kind] {
-			continue
-		}
-		match := true
-		for label, value := range c.Select.Labels {
-			actual, exists := r.Metadata.Labels[label]
-			if !exists || actual != value {
-				match = false
-			}
-		}
-		if match {
-			selected = append(selected, r)
-		}
-	}
-	a := c.Assert
-	if a.Op == "count" {
-		count := len(selected)
-		if a.Relation != "" {
-			count = 0
-			rel := d.Relations[a.Relation]
-			for _, r := range selected {
-				if v, ok := r.Data[rel.Field]; ok {
-					if arr, ok := v.([]any); ok {
-						count += len(arr)
-					} else {
-						count++
-					}
-				}
-			}
-		}
-		if a.Min != nil && count < *a.Min || a.Max != nil && count > *a.Max {
-			return fmt.Errorf("constraint %q count is %d outside declared bounds", c.Name, count)
-		}
-		return nil
-	}
-	seen := map[string]bool{}
-	for _, r := range selected {
-		v, ok := r.Data[a.Field]
-		switch a.Op {
-		case "present":
-			if !ok || v == nil {
-				return fmt.Errorf("constraint %q: %s is missing %s", c.Name, r.GraphKey(), a.Field)
-			}
-		case "equal":
-			if !ok || !reflect.DeepEqual(v, a.Value) {
-				return fmt.Errorf("constraint %q: %s field %s does not equal required value", c.Name, r.GraphKey(), a.Field)
-			}
-		case "allowed":
-			if !ok {
-				return fmt.Errorf("constraint %q: %s is missing %s", c.Name, r.GraphKey(), a.Field)
-			}
-			found := false
-			for _, candidate := range a.Values {
-				if reflect.DeepEqual(v, candidate) {
-					found = true
-				}
-			}
-			if !found {
-				return fmt.Errorf("constraint %q: %s field %s has a disallowed value", c.Name, r.GraphKey(), a.Field)
-			}
-		case "unique":
-			if !ok {
-				continue
-			}
-			key := fmt.Sprintf("%T:%v", v, v)
-			if seen[key] {
-				return fmt.Errorf("constraint %q: field %s is not unique", c.Name, a.Field)
-			}
-			seen[key] = true
-		case "allowed-targets":
-			rel := d.Relations[a.Relation]
-			for _, target := range relationValues(r.Data[rel.Field]) {
-				kind, _ := target["kind"].(string)
-				if kind == "" {
-					kind = rel.TargetKinds[0]
-				}
-				allowed := false
-				for _, candidate := range a.Values {
-					if k, ok := candidate.(string); ok && kind == k {
-						allowed = true
-					}
-				}
-				if !allowed {
-					return fmt.Errorf("constraint %q: %s relation %s targets disallowed kind %q", c.Name, r.GraphKey(), a.Relation, kind)
-				}
-			}
-		}
-	}
-	return nil
-}
-func relationValues(v any) []map[string]any {
-	if v == nil {
-		return nil
-	}
-	if arr, ok := v.([]any); ok {
-		out := []map[string]any{}
-		for _, x := range arr {
-			if m, ok := asMap(x); ok {
-				out = append(out, m)
-			}
-		}
-		return out
-	}
-	if m, ok := asMap(v); ok {
-		return []map[string]any{m}
-	}
-	return nil
 }

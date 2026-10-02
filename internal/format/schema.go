@@ -73,7 +73,7 @@ func domainResourceSchema() map[string]any {
 	kindDef := map[string]any{"type": "object", "additionalProperties": false, "properties": map[string]any{"required": map[string]any{"type": "array", "items": map[string]any{"type": "string"}, "uniqueItems": true}, "inputsField": map[string]any{"type": "string"}, "properties": map[string]any{"type": "object", "additionalProperties": propertyRef}}, "required": []string{"properties"}}
 	relationDef := map[string]any{"type": "object", "additionalProperties": false, "properties": map[string]any{"description": map[string]any{"type": "string"}, "field": map[string]any{"type": "string"}, "sourceKinds": map[string]any{"type": "array", "items": map[string]any{"type": "string"}, "minItems": 1, "uniqueItems": true}, "targetKinds": map[string]any{"type": "array", "items": map[string]any{"type": "string"}, "minItems": 1, "uniqueItems": true}, "minTargets": map[string]any{"type": "integer", "minimum": 0}, "maxTargets": map[string]any{"type": "integer", "minimum": 0}, "context": map[string]any{"type": "boolean"}, "invalidate": map[string]any{"type": "boolean"}, "acyclic": map[string]any{"type": "boolean"}}, "required": []string{"field", "sourceKinds", "targetKinds"}}
 	selector := map[string]any{"type": "object", "additionalProperties": false, "properties": map[string]any{"kind": map[string]any{"type": "string"}, "labels": map[string]any{"type": "object", "additionalProperties": map[string]any{"type": "string"}}}}
-	assertion := map[string]any{"type": "object", "additionalProperties": false, "properties": map[string]any{"op": map[string]any{"type": "string", "enum": []string{"present", "equal", "allowed", "allowed-targets", "count", "unique"}}, "field": map[string]any{"type": "string"}, "relation": map[string]any{"type": "string"}, "value": map[string]any{}, "values": map[string]any{"type": "array", "items": map[string]any{}}, "min": map[string]any{"type": "integer", "minimum": 0}, "max": map[string]any{"type": "integer", "minimum": 0}}, "required": []string{"op"}}
+	assertion := map[string]any{"type": "object", "additionalProperties": false, "properties": map[string]any{"op": map[string]any{"type": "string", "enum": []string{"present", "equal", "allowed", "allowed-targets", "count", "unique"}}, "scope": map[string]any{"type": "string", "enum": []string{"resource", "selection"}}, "field": map[string]any{"type": "string"}, "relation": map[string]any{"type": "string"}, "value": map[string]any{}, "values": map[string]any{"type": "array", "items": map[string]any{}}, "min": map[string]any{"type": "integer", "minimum": 0}, "max": map[string]any{"type": "integer", "minimum": 0}}, "required": []string{"op"}}
 	constraint := map[string]any{"type": "object", "additionalProperties": false, "properties": map[string]any{"name": map[string]any{"type": "string"}, "description": map[string]any{"type": "string"}, "select": selector, "assert": assertion}, "required": []string{"name", "select", "assert"}}
 	spec := map[string]any{"type": "object", "additionalProperties": false, "properties": map[string]any{"apiVersion": map[string]any{"type": "string"}, "kinds": map[string]any{"type": "object", "additionalProperties": kindDef}, "relations": map[string]any{"type": "object", "additionalProperties": relationDef}, "constraints": map[string]any{"type": "array", "items": constraint}}, "required": []string{"apiVersion", "kinds"}}
 	properties := map[string]any{"apiVersion": map[string]any{"const": core.APIVersion, "type": "string"}, "kind": map[string]any{"const": "Domain", "type": "string"}, "metadata": metadataSchema("Domain"), "spec": spec}
@@ -191,6 +191,19 @@ func filteredSpecSchema(kind string, fields []string) map[string]any {
 			"pattern":   core.CheckExecutablePattern,
 			"type":      "string",
 		}}
+	}
+	if policyDate, ok := properties["policyDate"].(map[string]any); ok {
+		policyDate["format"] = "date"
+	}
+	if exceptionsShape, ok := properties["policyExceptions"].(map[string]any); ok {
+		exceptionsShape["maxItems"] = 64
+		item := exceptionsShape["items"].(map[string]any)
+		itemProperties := item["properties"].(map[string]any)
+		for _, field := range []string{"constraintDigest", "subjectDigest"} {
+			itemProperties[field].(map[string]any)["pattern"] = `^sha256:[0-9a-f]{64}$`
+		}
+		itemProperties["expiresOn"].(map[string]any)["format"] = "date"
+		item["required"] = []string{"name", "apiVersion", "constraint", "subject", "constraintDigest", "subjectDigest", "rationale", "owner", "decision"}
 	}
 	if providerShape, ok := properties["providers"].(map[string]any); ok {
 		providerProperties := providerShape["properties"].(map[string]any)

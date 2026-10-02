@@ -1,0 +1,7 @@
+apiVersion: engineering.markitect.org/v1alpha1
+kind: Handler
+metadata:
+    name: create-order-handler
+    namespace: engineering
+spec:
+    summary: Executes the CreateOrder command.

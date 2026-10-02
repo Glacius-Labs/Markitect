@@ -1,0 +1,7 @@
+apiVersion: markitect.example.org/v1alpha1
+kind: Workflow
+metadata:
+    name: architecture-review
+    namespace: engineering
+spec:
+    text: Compare the proposed change with the exact canonical Rules and Domain constraints selected by the owning Project. Report source facts, missing evidence, and semantic judgment separately. Do not enforce a discovery candidate until the Project owner adopts it.

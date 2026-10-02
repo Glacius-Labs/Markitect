@@ -19,6 +19,7 @@ type SemanticModel struct {
 	ModelDigest      string              `yaml:"modelDigest"`
 	ValidationStatus string              `yaml:"validationStatus"`
 	Diagnostics      []core.Diagnostic   `yaml:"diagnostics,omitempty"`
+	PolicyResults    []core.PolicyResult `yaml:"policyResults,omitempty"`
 	DomainInputs     []ModelDomainInput  `yaml:"domainInputs,omitempty"`
 	Domains          []ModelDomain       `yaml:"domains,omitempty"`
 	Resources        []ModelResource     `yaml:"resources"`
@@ -94,6 +95,7 @@ func CompileModel(p *Project) (SemanticModel, error) {
 		Snapshot:     ModelSnapshot{ID: p.Snapshot.ID, Provisional: p.Snapshot.Provisional, Digest: p.Snapshot.Digest()},
 		ConfigDigest: hashBytes(config), Resources: make([]ModelResource, 0, len(p.Graph.Resources)),
 	}
+	model.PolicyResults = append([]core.PolicyResult(nil), p.Graph.PolicyResults...)
 	if p.Graph.Registry != nil {
 		for _, d := range p.Graph.Registry.Domains() {
 			domain := ModelDomain{Name: d.Name, APIVersion: d.APIVersion, Kinds: d.Kinds, Relations: d.Relations, Constraints: d.Constraints}

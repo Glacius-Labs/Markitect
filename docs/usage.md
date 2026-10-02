@@ -1,6 +1,6 @@
 # Using Markitect
 
-This guide records the supported v0.10.0 Domain, normalized-model, and adapter contracts. The v0.9.1 resource model is historical; v0.10.0 loads declared Domain definitions before typed resources. Consult [GitHub Releases](https://github.com/Glacius-Labs/Markitect/releases) for available distributions; the [roadmap](implementation-plan.md) owns verified coverage and known limits.
+This guide records the supported v0.10.0 Domain, normalized-model, and adapter contracts. The v0.9.1 resource model is historical; v0.10.0 loads declared Domain definitions before typed resources. v0.11.0 is active planned/in-progress work and is not yet supported CLI behavior; its adopted direction is summarized below and in the [engineering constitution](engineering-constitution.md). Consult [GitHub Releases](https://github.com/Glacius-Labs/Markitect/releases) for available distributions; the [roadmap](implementation-plan.md) owns verified coverage and known limits.
 
 ## Project and resource model
 
@@ -83,6 +83,94 @@ An optional `inputsField` on a kind names one declared array-of-string property 
 Package content does not activate its Domain. Select a package-owned definition explicitly with `package:PIN/DOMAIN-MEMBER` after adding the exact package pin; the member must be declared by the package manifest's `spec.domains`. Local Domain files and activated package Domain bytes are fixed context inputs; edits to them affect impact. `format` canonicalizes local Domain definitions and resource YAML. See the [canonical engineering plan](canonical-engineering-plan.md) for the full language and adapter guarantees.
 
 The [canonical engineering example](../examples/canonical-engineering/README.md) demonstrates independent Software and Delivery Domains, relation-specific context and impact, a policy value used in documentation, agent context, and deterministic checking, and a read-only adapter for concrete project inputs.
+
+## Planned v0.11.0 contract — not yet supported
+
+v0.11.0 is planned to treat exact-pinned package Domains as reusable architecture contracts. Existing package declarations and Domain activation remain explicit; updating a contract means reviewing an exact package pin change, running `check` and fixed-snapshot `impact`, and inspecting PolicyResults. Markitect will not rewrite application source as part of a package update.
+
+When a Project selects `markdown`, the planned Domain projection generates normalized schema, relation, and constraint views at `docs/markitect/_domains/*.domain.md`. Relevant per-resource PolicyResults, including a waived result's recorded decision, appear in generated resource views. These generated files remain derived views; canonical Domain definitions and policy stay in the selected package or Project source.
+
+The planned `count.scope` values are `resource` and `selection`. If omitted, `scope` defaults to `selection`. A selection-scoped count without a `relation` counts selected resources; with a `relation`, it counts the total relation targets across the selected resources. A resource-scoped count requires a `relation` and evaluates its number of targets separately for each selected subject. Selection boundaries must include additions and removals. Planned PolicyResults report `passed`, `failed`, or `waived` per constraint and subject, exposed by the normalized model, `check`/`verify`, and relevant context output.
+
+This excerpt is the v2 fixture's per-UseCase Validator constraint. The `hasValidator` relation supplies the exact field and target kind counted by the assertion:
+
+```yaml
+apiVersion: "markitect.example.org/v1alpha1"
+kind: "Domain"
+metadata:
+  name: "engineering-constitution-v2"
+spec:
+  apiVersion: "engineering.markitect.org/v1beta1"
+  kinds:
+    UseCase:
+      required: ["validators"]
+      properties:
+        validators:
+          type: "array"
+          items: {type: "ref", refKind: "Validator"}
+    Validator:
+      required: ["summary"]
+      properties:
+        summary: {type: "string"}
+  relations:
+    hasValidator:
+      field: "validators"
+      sourceKinds: ["UseCase"]
+      targetKinds: ["Validator"]
+      context: true
+      invalidate: true
+  constraints:
+    - name: "each-usecase-has-validator"
+      select: {kind: "UseCase"}
+      assert:
+        op: "count"
+        scope: "resource"
+        relation: "hasValidator"
+        min: 1
+```
+
+This is an illustrative excerpt from the v2 fixture; the complete Domain also declares its other kinds and relations. `constraintDigest` binds the constraint and the relation semantics it depends on, not just the relation's name. Changing the field, endpoint kinds, or graph behavior makes an old exception stale. Do not calculate or guess digests. After changing the package pin and resource API versions, run `model`; it emits the failing `PolicyResult` before returning a nonzero status. Copy the matching result's `constraintDigest` and `subjectDigest` exactly. The failed `check` report also includes PolicyResults. The values below are deliberately invalid placeholders until replaced with those output strings:
+
+```yaml
+spec:
+  policyDate: "2026-10-02"
+  policyExceptions:
+    - name: "validator-transition"
+      apiVersion: "engineering.markitect.org/v1beta1"
+      constraint: "each-usecase-has-validator"
+      subject: "engineering/engineering.markitect.org/v1beta1/UseCase/create-order"
+      constraintDigest: "sha256:<COPY-EXACT-CONSTRAINTDIGEST-FROM-FAILED-RESULT>"
+      subjectDigest: "sha256:<COPY-EXACT-SUBJECTDIGEST-FROM-FAILED-RESULT>"
+      rationale: "Keep the existing UseCase unblocked while its Validator slice is implemented."
+      owner: "architecture-owner"
+      decision: "Approved as a temporary, reviewable architecture exception."
+      expiresOn: "2026-10-30"
+```
+
+The example subject is the exact GraphKey used by the fixture; for another project copy the `subject` from its failed PolicyResult. `policyDate` is a frozen as-of value. An exception with this `expiresOn` is expired when `policyDate` reaches that date. After adding a Validator and removing the exception, rerun `check`; never keep an exception once its result passes.
+
+Planned `Project.spec.policyExceptions` is limited to 64 entries. Each entry binds `name`, `apiVersion`, `constraint`, exact subject GraphKey, `constraintDigest`, `subjectDigest`, `rationale`, `owner`, and `decision`. Optional `expiresOn` uses `YYYY-MM-DD` and requires an explicitly frozen `policyDate` carried as as-of snapshot evidence. An exception expires when `policyDate >= expiresOn`; no ambient wall-clock value is used. Waived PolicyResults retain the original violation and expose rationale, owner, decision, expiry, and policy date. Exceptions may waive only per-resource constraints; unknown, stale, unused, expired, or malformed entries fail. No exception can waive types/schema, references, cycles, selection-wide policies, relation bounds, or global structural checks. These fields record a declared rationale and decision; they do not authenticate a person or establish approval.
+
+The planned Copy Me workflow will analyze only explicitly selected fixed-snapshot files with recorded hashes and present observations, hypotheses, counterexamples, and uncertainty in a separate candidate for human review. Only an explicit reviewed source/package-pin change adopts a candidate. This is authoring guidance, not a new discover CLI or a model call in Markitect's deterministic core. Code-level claims such as Query non-mutation and Handler/Test/Docs file presence require declared inputs plus project-owned checks or configured adapters; the core will not infer those facts. See the [engineering constitution](engineering-constitution.md) for complete scope and examples.
+
+To copy the runnable v0.11 candidate fixtures from the repository root into separate temporary work areas:
+
+```powershell
+$runRoot = Join-Path $env:TEMP ("markitect-v011-" + [guid]::NewGuid().ToString("N"))
+$null = New-Item -ItemType Directory -Path $runRoot
+$constitution = Join-Path $runRoot "engineering-constitution"
+Copy-Item -Recurse .\examples\engineering-constitution $constitution
+go run ./cmd/markitect check --repo $constitution
+
+$discoveryProject = Join-Path $runRoot "engineering-discovery-project"
+$discoveryDossier = Join-Path $runRoot "engineering-discovery-dossier"
+Copy-Item -Recurse .\examples\engineering-discovery\project-template $discoveryProject
+Copy-Item -Recurse .\examples\engineering-discovery\dossier-template $discoveryDossier
+```
+
+The constitution fixture starts at package v1; the isolated test exercises updating the exact pin to v2, the failing model result, a source-bound waiver, and removal of the waiver after implementation: `go test ./examples -run '^TestEngineeringConstitutionV2PackageMigrationAndWaiverLifecycle$' -count=1`. The discovery fixture continues from the copied templates with the [engineering-discovery pilot instructions](../examples/engineering-discovery/README.md), which freeze the Project commit, run `context --run context-run.yaml`, and show how to fill the separate evidence dossier. Neither fixture makes the proposal or waiver self-approving.
+
+The planned core language remains a finite set of deterministic assertions. CUE and OPA are evaluation candidates only if repeated real architecture policies exceed that language's readable expressive power; a specialist would be an explicit adapter. See the [engineering constitution](engineering-constitution.md#constraint-language-and-specialist-engines) for official references and the trigger. No performance or market claim is implied.
 
 For the bundled AI-working Domain, use `rules` to attach requirements, `uses` for concrete resource dependencies, `needs` to require a Contract, `implements` to declare a Contract signature, and Project `bindings` to select implementations. Other Domains own their own typed fields and relations. `inputsField` explicitly maps a Domain property containing exact file paths into opaque artifact inputs. Markitect does not infer relations from prose links or analyze the contents of project artifacts.
 

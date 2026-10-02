@@ -159,6 +159,10 @@ jobs:
           go run .markitect/bootstrap/run.go context --repo "$GITHUB_WORKSPACE/examples/canonical-engineering" --kind Skill --name architecture-review --namespace engineering
           go run .markitect/bootstrap/run.go model --repo "$GITHUB_WORKSPACE/examples/canonical-engineering"
           go run .markitect/bootstrap/run.go format --repo "$GITHUB_WORKSPACE/examples/canonical-engineering"
+          go run .markitect/bootstrap/run.go check --repo "$GITHUB_WORKSPACE/examples/engineering-constitution"
+          go run .markitect/bootstrap/run.go model --repo "$GITHUB_WORKSPACE/examples/engineering-constitution"
+          go run .markitect/bootstrap/run.go context --repo "$GITHUB_WORKSPACE/examples/engineering-constitution" --namespace engineering --kind Skill --name add-order
+          go run .markitect/bootstrap/run.go check --repo "$GITHUB_WORKSPACE/examples/engineering-discovery"
           domain_repo="$RUNNER_TEMP/markitect-canonical-engineering-$GITHUB_RUN_ID"
           mkdir -p "$domain_repo"
           cp -R "$GITHUB_WORKSPACE/examples/canonical-engineering/." "$domain_repo/"
@@ -236,6 +240,15 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Installed canonical engineering model failed' }
           go run .markitect/bootstrap/run.go format --repo $domainExample
           if ($LASTEXITCODE -ne 0) { throw 'Installed canonical engineering format failed' }
+          $constitutionExample = Join-Path $env:GITHUB_WORKSPACE 'examples/engineering-constitution'
+          go run .markitect/bootstrap/run.go check --repo $constitutionExample
+          if ($LASTEXITCODE -ne 0) { throw 'Installed bundle constitution check failed' }
+          go run .markitect/bootstrap/run.go model --repo $constitutionExample
+          if ($LASTEXITCODE -ne 0) { throw 'Installed bundle constitution model failed' }
+          go run .markitect/bootstrap/run.go context --repo $constitutionExample --namespace engineering --kind Skill --name add-order
+          if ($LASTEXITCODE -ne 0) { throw 'Installed bundle constitution context failed' }
+          go run .markitect/bootstrap/run.go check --repo (Join-Path $env:GITHUB_WORKSPACE 'examples/engineering-discovery')
+          if ($LASTEXITCODE -ne 0) { throw 'Installed bundle discovery check failed' }
           $domainRepo = Join-Path $env:RUNNER_TEMP "markitect-canonical-engineering-$env:GITHUB_RUN_ID"
           New-Item -ItemType Directory -Path $domainRepo | Out-Null
           Get-ChildItem -LiteralPath $domainExample -Force | Copy-Item -Destination $domainRepo -Recurse -Force

@@ -21,6 +21,7 @@ type Context struct {
 	Complete       bool                `yaml:"complete,omitempty"`
 	Status         string              `yaml:"status,omitempty"`
 	Run            *RunContextEvidence `yaml:"run,omitempty"`
+	PolicyResults  []core.PolicyResult `yaml:"policyResults,omitempty"`
 }
 type ContextInput struct {
 	Key            string         `yaml:"key"`
@@ -132,6 +133,21 @@ func CompileContext(p *Project, key, version string, toolDigest ...string) (*Con
 		h := Hash(data)
 		c.Inputs = append(c.Inputs, ContextInput{Key: identity, Path: input.Path, Package: input.Package, PackageVersion: p.packageVersion(input.Package), Hash: h, Reason: "selected language definition", Text: string(data), Role: "domain"})
 		fmt.Fprintf(&fingerprint, "domain:%d:%s%d:%s", len(identity), identity, len(h), h)
+	}
+	// Show the policy outcomes for this closure, including any explicitly
+	// recorded exception. Collection assertions describe the selected domain
+	// scope and remain visible independently of one subject's closure.
+	for _, result := range p.Graph.PolicyResults {
+		if _, included := reasons[result.Subject]; included || result.Subject == "" {
+			c.PolicyResults = append(c.PolicyResults, result)
+		}
+	}
+	if len(c.PolicyResults) > 0 {
+		policyBytes, err := YAML(c.PolicyResults)
+		if err != nil {
+			return nil, fmt.Errorf("encode context policy results: %w", err)
+		}
+		fmt.Fprintf(&fingerprint, "policy:%s", Hash(policyBytes))
 	}
 	c.Digest = Hash([]byte(fingerprint.String()))
 	return c, nil

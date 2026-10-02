@@ -1,0 +1,12 @@
+apiVersion: markitect.example.org/v1alpha1
+kind: Skill
+metadata:
+    name: architecture-review
+    namespace: engineering
+spec:
+    text: |
+        Review only against adopted Project policy. Treat discovery candidates and unreviewed observations as non-authoritative.
+    description: Review an implementation against explicitly approved engineering policy.
+    uses:
+        - kind: Workflow
+          name: architecture-review

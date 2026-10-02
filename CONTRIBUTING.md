@@ -46,6 +46,11 @@ go run ./cmd/markitect check --repo examples/repository-layout
 go run ./cmd/markitect check --repo examples/canonical-engineering
 go run ./cmd/markitect format --repo examples/canonical-engineering
 go run ./cmd/markitect model --repo examples/canonical-engineering
+go run ./cmd/markitect check --repo examples/engineering-constitution
+go run ./cmd/markitect format --repo examples/engineering-constitution
+go run ./cmd/markitect model --repo examples/engineering-constitution
+go run ./cmd/markitect check --repo examples/engineering-discovery
+go run ./cmd/markitect format --repo examples/engineering-discovery
 go run ./cmd/markitect check --repo benchmark/fixtures/v2
 git diff --check
 ```
