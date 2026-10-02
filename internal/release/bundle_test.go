@@ -31,7 +31,10 @@ func TestBuildBundleIsDeterministicAndBindsFiveFiles(t *testing.T) {
 	if len(bundle.Files) != 5 {
 		t.Fatalf("bundle has %d files, want 5", len(bundle.Files))
 	}
-	sourceFiles := archiveContents(t, bundle.Files["tools/markitect/source.zip"])
+	if bundle.Manifest.SchemaVersion != 2 {
+		t.Fatalf("bundle schema version = %d, want 2", bundle.Manifest.SchemaVersion)
+	}
+	sourceFiles := archiveContents(t, bundle.Files[".markitect/tool/source.zip"])
 	if got := string(sourceFiles["LICENSE"]); got != "Apache License\nVersion 2.0\n" {
 		t.Fatalf("source archive license = %q", got)
 	}
@@ -40,10 +43,10 @@ func TestBuildBundleIsDeterministicAndBindsFiveFiles(t *testing.T) {
 			t.Errorf("bundle omitted %s", name)
 		}
 	}
-	if got := string(bundle.Files["scripts/run-markitect.go"]); strings.Contains(got, "\r") {
+	if got := string(bundle.Files[bootstrapPath]); strings.Contains(got, "\r") {
 		t.Fatal("integration runner was not normalized to LF")
 	}
-	if got := string(bundle.Files["scripts/markitect-bootstrap_test.go"]); strings.Contains(got, "\r") {
+	if got := string(bundle.Files[bootstrapTestPath]); strings.Contains(got, "\r") {
 		t.Fatal("integration test was not normalized to LF")
 	}
 	if err := ValidateBundleFiles(bundle.Manifest, bundle.Files, snapshot.ID); err != nil {

@@ -105,7 +105,7 @@ go run ./cmd/markitect check --repo examples/minimal
 go run ./cmd/markitect context --repo examples/minimal --namespace sample --kind Skill --name rollback-review
 ```
 
-The first command checks the example's declared resources and managed views. The second prints the selected Skill's dependency context.
+The first command checks the example's declared resources and explicitly selected outputs. The second prints the selected Skill's dependency context. Generic Markdown views are optional: select `markdown` under `spec.targets` to generate them under `docs/markitect/`. Provider outputs read canonical sources independently of those views.
 
 In your own repository, `markitect init` previews the exact minimal project files before writing.
 
@@ -113,7 +113,7 @@ New projects default to canonical Areas under `.markitect/areas/<namespace>`, al
 
 ## What it does
 
-- Defines typed resources and explicit dependencies in YAML; keeps readable prose in Markdown.
+- Defines typed engineering resources and explicit dependencies in YAML; keeps human-owned project documentation in Markdown.
 - Checks structure and managed output drift without calling a model.
 - Compiles context from declared resource and file inputs.
 - Compares immutable Git revisions to identify changed paths and affected resources.

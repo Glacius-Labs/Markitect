@@ -37,7 +37,7 @@ func TestPackageIsDeterministicAndContainsOnlyReleaseSources(t *testing.T) {
 	}
 	verifyNormalZipMetadata(t, first)
 	hash := sha256.Sum256(first)
-	wantLock := "version: \"v1.2.3-rc.4+build.7\"\nsource: \"tools/markitect/source.zip\"\nsha256: \"" + hex.EncodeToString(hash[:]) + "\"\n"
+	wantLock := "version: \"v1.2.3-rc.4+build.7\"\nsource: \".markitect/tool/source.zip\"\nsha256: \"" + hex.EncodeToString(hash[:]) + "\"\n"
 	if string(lock1) != wantLock {
 		t.Fatalf("lock format or digest mismatch:\n%s\nwant:\n%s", lock1, wantLock)
 	}

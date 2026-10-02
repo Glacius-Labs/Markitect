@@ -68,7 +68,7 @@ func TestBundleInstallUsesFixedSourceAndExplicitDigest(t *testing.T) {
 	if code != 0 || !strings.Contains(out, "status: planned") {
 		t.Fatalf("preview: %d %s %s", code, out, errout)
 	}
-	if _, err = os.Stat(filepath.Join(consumer.root, "markitect.lock.yaml")); !os.IsNotExist(err) {
+	if _, err = os.Stat(filepath.Join(consumer.root, ".markitect", "tool", "lock.yaml")); !os.IsNotExist(err) {
 		t.Fatal("preview wrote pin")
 	}
 	code, _, _ = invoke("install", "--repo", consumer.root, "--bundle", bundlePath, "--sha256", strings.Repeat("0", 64), "--write")
@@ -79,7 +79,7 @@ func TestBundleInstallUsesFixedSourceAndExplicitDigest(t *testing.T) {
 	if code != 0 || !strings.Contains(out, "status: installed") {
 		t.Fatalf("install: %d %s %s", code, out, errout)
 	}
-	runner, err := os.ReadFile(filepath.Join(consumer.root, "scripts", "run-markitect.go"))
+	runner, err := os.ReadFile(filepath.Join(consumer.root, ".markitect", "bootstrap", "run.go"))
 	if err != nil || strings.Contains(string(runner), "dirty") {
 		t.Fatalf("fixed bundle runner: %s %v", runner, err)
 	}

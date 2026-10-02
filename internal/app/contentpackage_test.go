@@ -167,8 +167,8 @@ func TestPackContentUsesFixedSnapshotAndIncludesOnlyDeclaredInputs(t *testing.T)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if pin.Source != "urn:fixture:review-kit:1.0.0" {
-		t.Fatalf("package provenance was inferred: %s", pin.Source)
+	if pin.Source != "urn:fixture:review-kit:1.0.0" || pin.Archive != ".markitect/packages/review-kit-1.0.0.zip" {
+		t.Fatalf("package provenance or archive suggestion changed: %#v", pin)
 	}
 	if _, _, err := PackContent(snapshot, ""); err == nil {
 		t.Fatal("package with missing provenance accepted")

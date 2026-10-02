@@ -2,4 +2,4 @@
 
 This area owns independent deployment guidance for the example.
 
-- [Deployment guide](text/deployment-guide.md) — [canonical Text source](text/deployment-guide.yaml).
+- [Deployment guide view](../markitect/operations/deployment/deployment-guide.text.md) — [canonical Text YAML](../../.markitect/areas/operations/deployment/deployment-guide.text.yaml).

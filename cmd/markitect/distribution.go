@@ -158,13 +158,13 @@ func runPackage(o commandOptions, emit func(any) int, fail func(error) int) int 
 	if err != nil {
 		return fail(err)
 	}
-	if err = os.MkdirAll(filepath.Join(o.output, "tools", "markitect"), 0755); err != nil {
+	if err = os.MkdirAll(filepath.Join(o.output, ".markitect", "tool"), 0755); err != nil {
 		return fail(err)
 	}
-	if err = os.WriteFile(filepath.Join(o.output, "tools", "markitect", "source.zip"), archive, 0644); err != nil {
+	if err = os.WriteFile(filepath.Join(o.output, ".markitect", "tool", "source.zip"), archive, 0644); err != nil {
 		return fail(err)
 	}
-	if err = os.WriteFile(filepath.Join(o.output, "markitect.lock.yaml"), lock, 0644); err != nil {
+	if err = os.WriteFile(filepath.Join(o.output, ".markitect", "tool", "lock.yaml"), lock, 0644); err != nil {
 		return fail(err)
 	}
 	return emit(map[string]any{"status": "packaged", "version": version, "output": o.output})

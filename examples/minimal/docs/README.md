@@ -1,11 +1,6 @@
 # Example docs
 
-This router links to each resource area and the explicit input area.
+This human-owned router links to the ordinary rollback input and the generated resource views.
 
-- [Agents](agents/README.md)
-- [Contracts](contracts/README.md)
-- [Inputs](inputs/README.md)
-- [Rules](rules/README.md)
-- [Skills](skills/README.md)
-- [Text](text/README.md)
-- [Workflows](workflows/README.md)
+- [Rollback change input](inputs/rollback-change.txt)
+- [Generated Markitect views](markitect/sample/README.md)

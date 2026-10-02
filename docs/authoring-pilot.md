@@ -4,6 +4,8 @@ Recorded 2026-10-01. The first exercise was **incomplete**: one check-only run a
 
 [Measurement](measurement.md) owns the procedure. The earlier [core authoring exercise](authoring-assessment.md) is separate historical evidence.
 
+The recorded actor outcomes below belong to the dated source, tool and fixture identified here. The current example contract uses canonical `.markitect/areas/` resources and explicitly selected Markdown views under `docs/markitect/`; this change does not reinterpret those pilot outcomes as a replay.
+
 ## Fixed inputs
 
 - Product source: `070f51c1828a123530167d985890039579b28068`.

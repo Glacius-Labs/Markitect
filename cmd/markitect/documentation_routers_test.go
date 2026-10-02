@@ -28,10 +28,10 @@ func TestCheckDocumentationRoutersUsesSelectedSnapshot(t *testing.T) {
 	}
 	writeRepoFile(t, repo.root, "markitect.yaml", data)
 	for name, text := range map[string]string{
-		"docs/README.md":                "[General](general/README.md)\n",
+		"docs/README.md":                "[General](general/README.md) [Generated views](markitect/README.md)\n",
 		"docs/general/README.md":        "[Rules](rules/) [Skills](skills/)\n",
-		"docs/general/rules/README.md":  "[Policy](policy.md) [Legacy](legacy.md)\n",
-		"docs/general/skills/README.md": "[Entry](entry.md)\n",
+		"docs/general/rules/README.md":  "[Policy source](policy.yaml) [Legacy](legacy.md)\n",
+		"docs/general/skills/README.md": "[Entry source](entry.yaml)\n",
 	} {
 		writeRepoFile(t, repo.root, name, []byte(text))
 	}

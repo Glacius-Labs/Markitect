@@ -174,7 +174,7 @@ func TestReviewRequiresReviewWhenCandidateContextChanges(t *testing.T) {
 	for path, generatedData := range generated {
 		writeRepoFile(t, repo.root, path, generatedData)
 	}
-	git(t, repo.root, "add", "docs/general/rules/policy.yaml", "docs/general/rules/policy.md")
+	git(t, repo.root, "add", "docs/general/rules/policy.yaml", "docs/markitect/sample/rules/policy.rule.md")
 	git(t, repo.root, "commit", "-m", "change reviewed dependency")
 	candidate := git(t, repo.root, "rev-parse", "HEAD")
 	code, resultYAML, stderr := invoke(reviewArgs(repo, candidate, reviewConfigPath, "", evidencePath)...)

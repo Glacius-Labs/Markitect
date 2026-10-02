@@ -1,6 +1,6 @@
 # Rollback review example
 
-This synthetic fixture shows a small rollback review graph: a Skill needs a Contract, a Project binds that Contract to an Agent, and the Agent and Workflow refer to typed content. The Agent also declares an ordinary UTF-8 input file. See [the docs router](docs/README.md).
+This synthetic fixture shows a small rollback review graph: a Skill needs a Contract, a Project binds that Contract to an Agent, and the Agent and Workflow refer to typed content. Canonical YAML lives under `.markitect/areas/sample/`; the ordinary UTF-8 input remains under `docs/inputs/`. The Project opts into generated Markdown views under `docs/markitect/`.
 
 From the standalone Markitect repository root, run the built binary:
 

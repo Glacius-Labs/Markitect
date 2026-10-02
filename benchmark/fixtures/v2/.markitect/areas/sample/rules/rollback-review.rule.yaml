@@ -1,0 +1,8 @@
+apiVersion: markitect.example.org/v1alpha1
+kind: Rule
+metadata:
+    name: rollback-review
+    namespace: sample
+spec:
+    text: |
+        Separate observed evidence from assumptions. State unresolved checks before recommending a rollback.

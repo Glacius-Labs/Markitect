@@ -139,13 +139,13 @@ jobs:
 
           go run ./cmd/markitect install --repo "$consumer" --bundle "$bundle_path" --sha256 "$actual_sha256" --write
           cd "$consumer"
-          go test scripts/run-markitect.go scripts/markitect-bootstrap_test.go
-          authoring_output="$(go run scripts/run-markitect.go authoring)"
+          go test .markitect/bootstrap/run.go .markitect/bootstrap/run_test.go
+          authoring_output="$(go run .markitect/bootstrap/run.go authoring)"
           grep -Fq 'core/Skill/authoring' <<< "$authoring_output"
-          notices="$(go run scripts/run-markitect.go licenses)"
+          notices="$(go run .markitect/bootstrap/run.go licenses)"
           grep -Fq 'Copyright 2009 The Go Authors.' <<< "$notices"
           grep -Fq 'END OF TERMS AND CONDITIONS' <<< "$notices"
-          example_output="$(go run scripts/run-markitect.go check --repo "$consumer")"
+          example_output="$(go run .markitect/bootstrap/run.go check --repo "$consumer")"
           grep -Eq '^status: passed$' <<< "$example_output"
 
       - name: Install bundle and verify bootstrap (Windows)
@@ -175,15 +175,15 @@ jobs:
           go run ./cmd/markitect install --repo $consumer --bundle $bundlePath --sha256 $actualSha256 --write
           if ($LASTEXITCODE -ne 0) { throw "Bundle installation failed with exit code $LASTEXITCODE" }
           Push-Location $consumer
-          go test scripts/run-markitect.go scripts/markitect-bootstrap_test.go
+          go test .markitect/bootstrap/run.go .markitect/bootstrap/run_test.go
           if ($LASTEXITCODE -ne 0) { throw 'Installed bootstrap tests failed' }
-          $authoring = go run scripts/run-markitect.go authoring
+          $authoring = go run .markitect/bootstrap/run.go authoring
           if ($LASTEXITCODE -ne 0) { throw 'Installed authoring command failed' }
           if (($authoring -join "`n") -notmatch 'core/Skill/authoring') { throw 'Installed bundle omitted the authoring Skill' }
-          $notices = go run scripts/run-markitect.go licenses
+          $notices = go run .markitect/bootstrap/run.go licenses
           if ($LASTEXITCODE -ne 0) { throw 'Installed third-party notices failed' }
           if (($notices -join "`n") -notmatch 'Copyright 2009 The Go Authors.' -or ($notices -join "`n") -notmatch 'END OF TERMS AND CONDITIONS') { throw 'Installed bundle omitted third-party notices' }
-          $example = go run scripts/run-markitect.go check --repo $consumer
+          $example = go run .markitect/bootstrap/run.go check --repo $consumer
           if ($LASTEXITCODE -ne 0) { throw 'Installed example check failed' }
           if (($example -join "`n") -notmatch '(?m)^status: passed$') { throw 'Installed bundle did not pass the minimal example check' }
           Pop-Location

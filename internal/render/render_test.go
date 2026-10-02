@@ -13,16 +13,17 @@ func TestGenerateCompanionsKeepTextAndRelativeDependencyLinks(t *testing.T) {
 	skill := resource("Skill", "docs/team/skills/write-docs.yaml", "write-docs", "team", core.Spec{
 		Description: "Write docs", Text: text, Rules: []core.Ref{{Name: "documentation"}},
 	})
-	g := &core.Graph{Resources: map[string]*core.Resource{rule.Key(): rule, skill.Key(): skill}}
+	project := resource("Project", "markitect.yaml", "sample", "", core.Spec{Targets: []string{"markdown"}, Areas: []core.Area{{Name: "team", Path: "docs/team"}}})
+	g := &core.Graph{Project: project, Resources: map[string]*core.Resource{rule.Key(): rule, skill.Key(): skill}, ResourceAreas: map[string]core.Area{rule.GraphKey(): {Name: "team", Path: "docs/team"}, skill.GraphKey(): {Name: "team", Path: "docs/team"}}}
 	outputs, err := Generate(g)
 	if err != nil {
 		t.Fatal(err)
 	}
-	body := string(outputs["docs/team/skills/write-docs.md"])
+	body := string(outputs["docs/markitect/team/skills/write-docs.skill.md"])
 	if !strings.Contains(body, text) {
 		t.Fatalf("companion did not preserve spec.text exactly:\n%s", body)
 	}
-	if !strings.Contains(body, "[Rule: documentation](../rules/documentation.md)") {
+	if !strings.Contains(body, "[Rule: documentation](../rules/documentation.rule.md)") {
 		t.Fatalf("dependency link is absent or not relative: %s", body)
 	}
 	if !strings.Contains(body, Marker+"; source: docs/team/skills/write-docs.yaml") {
@@ -50,7 +51,7 @@ func TestGenerateExplicitTargetsPreservesProviderSettingsAndQuotes(t *testing.T)
 		}
 	}
 	codex := string(outputs[".codex/agents/review.toml"])
-	for _, required := range []string{`description = "Review \"carefully\""`, `model_reasoning_effort = "high"`, `sandbox_mode = "workspace-write"`, "../../docs/team/agents/review.md"} {
+	for _, required := range []string{`description = "Review \"carefully\""`, `model_reasoning_effort = "high"`, `sandbox_mode = "workspace-write"`, "../../docs/team/agents/review.yaml"} {
 		if !strings.Contains(codex, required) {
 			t.Errorf("Codex TOML missing %q:\n%s", required, codex)
 		}
@@ -61,7 +62,7 @@ func TestGenerateExplicitTargetsPreservesProviderSettingsAndQuotes(t *testing.T)
 		}
 	}
 	claude := string(outputs[".claude/agents/review.md"])
-	for _, required := range []string{"permissionMode: \"default\"", `tools: ["Read", "Grep"]`, `disallowedTools: ["Bash"]`, "maxTurns: 9", "../../docs/team/agents/review.md"} {
+	for _, required := range []string{"permissionMode: \"default\"", `tools: ["Read", "Grep"]`, `disallowedTools: ["Bash"]`, "maxTurns: 9", "../../docs/team/agents/review.yaml"} {
 		if !strings.Contains(claude, required) {
 			t.Errorf("Claude agent missing %q:\n%s", required, claude)
 		}
@@ -70,8 +71,9 @@ func TestGenerateExplicitTargetsPreservesProviderSettingsAndQuotes(t *testing.T)
 
 func TestGenerateRejectsCaseInsensitiveSourceOutputCollision(t *testing.T) {
 	r := resource("Text", "docs/a/note.yaml", "note", "test", core.Spec{Text: "source"})
-	collision := resource("Text", "DOCS/A/NOTE.MD", "other", "test", core.Spec{Text: "existing output"})
-	g := &core.Graph{Resources: map[string]*core.Resource{r.Key(): r, collision.Key(): collision}}
+	collision := resource("Text", "DOCS/MARKITECT/TEST/NOTE.TEXT.MD", "other", "test", core.Spec{Text: "existing output"})
+	project := resource("Project", "markitect.yaml", "sample", "", core.Spec{Targets: []string{"markdown"}, Areas: []core.Area{{Name: "test", Path: "docs/a"}, {Name: "test", Path: "DOCS/MARKITECT/TEST"}}})
+	g := &core.Graph{Project: project, Resources: map[string]*core.Resource{r.Key(): r, collision.Key(): collision}, ResourceAreas: map[string]core.Area{r.GraphKey(): {Name: "test", Path: "docs/a"}, collision.GraphKey(): {Name: "test", Path: "DOCS/MARKITECT/TEST"}}}
 	if _, err := Generate(g); err == nil || !strings.Contains(err.Error(), "collision") {
 		t.Fatalf("expected path collision, got %v", err)
 	}
@@ -85,11 +87,8 @@ func TestGenerateProviderOutputsRequireExplicitTargets(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, ok := outputs["docs/area/agents/review.md"]; !ok {
-		t.Fatal("missing canonical companion view")
-	}
-	if len(outputs) != 1 {
-		t.Fatalf("provider outputs appeared without explicit targets: %v", outputPaths(outputs))
+	if len(outputs) != 0 {
+		t.Fatalf("outputs appeared without explicit targets: %v", outputPaths(outputs))
 	}
 }
 
@@ -127,7 +126,7 @@ func TestGenerateRuleAdaptersOnlyFromExplicitMappings(t *testing.T) {
 		t.Fatal(err)
 	}
 	adapter := string(outputs[".claude/rules/review-context.md"])
-	if !strings.Contains(adapter, "../../docs/other/rules/second.md") {
+	if !strings.Contains(adapter, "../../docs/other/rules/second.yaml") {
 		t.Fatalf("explicit adapter does not link to its configured Rule: %s", adapter)
 	}
 	if outputs[".claude/rules/area-first.md"] != nil || outputs[".claude/rules/other-second.md"] != nil {
@@ -153,8 +152,6 @@ func TestGenerateWithOwnersReturnsExplicitOutputOwnership(t *testing.T) {
 		t.Fatal(err)
 	}
 	for path, want := range map[string][]string{
-		"resources/rules/privacy.md":     {"policy/Rule/privacy"},
-		"resources/skills/review.md":     {"policy/Skill/review"},
 		".claude/skills/review/SKILL.md": {"policy/Skill/review"},
 		".claude/rules/privacy.md":       {"policy/Rule/privacy"},
 	} {
@@ -189,16 +186,16 @@ func TestGenerateSkipsImportedResourcesButRendersQualifiedDependencyText(t *test
 	if _, ok := outputs[".agents/skills/policy-review/SKILL.md"]; ok {
 		t.Fatal("imported Skill received a local provider entrypoint")
 	}
-	if _, ok := outputs["docs/area/reviewer.md"]; !ok {
-		t.Fatal("local companion was lost to an imported source path collision")
+	if _, ok := outputs["docs/area/reviewer.skill.md"]; ok {
+		t.Fatal("Markdown view appeared without an explicit target")
 	}
-	body := string(outputs["docs/area/reviewer.md"])
+	body := string(outputs[".agents/skills/reviewer/SKILL.md"])
 	for _, want := range []string{"policy-set::shared/Skill/policy-review", "version 2.4.1", "--package policy-set", "--namespace shared", "--kind Skill", "--name policy-review"} {
 		if !strings.Contains(body, want) {
 			t.Errorf("imported dependency text lacks %q:\n%s", want, body)
 		}
 	}
-	if strings.Contains(body, "](docs/") || strings.Contains(body, "policy-review.md") {
+	if strings.Contains(body, "](docs/") || strings.Contains(body, "policy-review.yaml") {
 		t.Fatalf("imported dependency was rendered as a broken local link:\n%s", body)
 	}
 }

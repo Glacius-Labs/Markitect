@@ -4,7 +4,7 @@ Markitect's distribution unit is a versioned, immutable GitHub Release. Source f
 
 ## Release contents and verification
 
-A Markitect release attaches four files: `markitect-vTAG-bundle.zip`, `markitect-vTAG-windows-amd64.exe`, `markitect-vTAG-linux-amd64`, and `markitect-vTAG-provenance.yaml`. The bundle is limited to 64 MiB and contains five pinned files: `tools/markitect/release.yaml`, `markitect.lock.yaml`, `tools/markitect/source.zip`, and the Go bootstrap plus its paired test under `scripts/`. The manifest binds the other files by SHA-256 and records version, source commit, and source repository. Provenance records tag, commit, workflow run, toolchain, and payload digests. It is a self-declared record; GitHub's immutable-release attestation is authoritative for the published tag, commit, and attached assets.
+A Markitect release attaches four files: `markitect-vTAG-bundle.zip`, `markitect-vTAG-windows-amd64.exe`, `markitect-vTAG-linux-amd64`, and `markitect-vTAG-provenance.yaml`. In the current source candidate, the bundle is limited to 64 MiB and contains five pinned files: `.markitect/tool/release.yaml`, `.markitect/tool/lock.yaml`, `.markitect/tool/source.zip`, `.markitect/bootstrap/run.go`, and `.markitect/bootstrap/run_test.go`. The manifest binds the other files by SHA-256 and records version, source commit, and source repository. Provenance records tag, commit, workflow run, toolchain, and payload digests. It is a self-declared record; GitHub's immutable-release attestation is authoritative for the published tag, commit, and attached assets. Published releases remain immutable and retain the paths in their own manifest; earlier bundles may therefore use the previous `tools/markitect/`, root lock, and `scripts/` layout.
 
 The public native binaries can be downloaded without GitHub CLI or an account; the [README](../README.md#install-markitect) gives pinned-version, SHA-256-checked commands for installing the CLI. For stronger release provenance verification or for project pinning, use GitHub CLI to verify the exact immutable release, download the bundle, provenance, and matching binary, then verify each local file against the release. GitHub CLI may require authentication. Do not choose `latest` or substitute GitHub's generated source archive for the attached bundle. GitHub documents [immutable releases](https://docs.github.com/en/code-security/concepts/supply-chain-security/immutable-releases), [release verification](https://docs.github.com/en/code-security/how-tos/secure-your-supply-chain/secure-your-dependencies/verify-release-integrity), and [GitHub CLI release commands](https://cli.github.com/manual/gh_release).
 
@@ -68,19 +68,20 @@ The native binary can preview and apply an install without Go. For the Go bootst
 
 ```powershell
 Push-Location $project
-go test scripts/run-markitect.go scripts/markitect-bootstrap_test.go
+go test ./.markitect/bootstrap
 if ($LASTEXITCODE -ne 0) { throw 'Bootstrap tests failed.' }
-go run scripts/run-markitect.go version
+go run ./.markitect/bootstrap/run.go version
 if ($LASTEXITCODE -ne 0) { throw 'Pinned Markitect bootstrap failed.' }
 Pop-Location
 ```
 
-`scripts/run-markitect.go` is intentionally one self-contained Go file: the
-installed command invokes that file directly, and CI tests the copied file
-with its companion test. The bootstrap validates the lock and source archive
-before building the pinned CLI, so its version and path validation repeats
-some release-side rules without importing the code it has not yet built.
-When changing those rules, check both the release package and bootstrap tests.
+`.markitect/bootstrap/run.go` is intentionally one self-contained Go file: the
+installed command invokes that file directly, and CI tests it with
+`.markitect/bootstrap/run_test.go`. The bootstrap validates the lock and
+source archive before building the pinned CLI, so its version and path
+validation repeats some release-side rules without importing the code it has
+not yet built. When changing those rules, check both the release package and
+bootstrap tests.
 
 The installer writes the complete pin as five individual atomic file replacements; it is not a filesystem transaction. If a later write fails, inspect the returned `written` paths. Do not treat a partial set as resumable. For a fresh install, remove only the listed files known to have been created by that attempt before retrying. For an upgrade, restore the previous complete committed set or use a normal Git revert. Keep a baseline commit so the whole pin can be rolled back together. Do not move or recreate an immutable release tag.
 
@@ -140,4 +141,4 @@ The publisher fails closed if a release or draft already exists for the tag. If 
 
 ## Low-level source package
 
-`markitect package --repo . --output NEW_DIRECTORY` emits only `tools/markitect/source.zip` and the flat lock. It does not create the release bundle, bootstrap, manifest, binaries, or provenance. It is a development artifact, not the supported versioned distribution.
+`markitect package --repo .` writes the source archive to `.markitect/packages/<name>-<version>.zip` by default; `--output` selects another destination. The package contains only the source archive and flat lock. It does not create the release bundle, bootstrap, manifest, binaries, or provenance. It is a development artifact, not the supported versioned distribution.

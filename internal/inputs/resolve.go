@@ -11,6 +11,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/Glacius-Labs/Markitect/internal/core"
+	"github.com/Glacius-Labs/Markitect/internal/render"
 )
 
 // Resolve validates each resource's spec.files entries against the provided
@@ -41,6 +42,24 @@ func ResolveWithPackages(graph *core.Graph, files map[string][]byte, packageFile
 	if graph.Project == nil {
 		add(nil, "input.project", "graph has no Project resource")
 		return resolved, diagnostics
+	}
+	generatedViews, err := render.MarkdownViewPaths(graph)
+	if err != nil {
+		add(graph.Project, "input.generated-path", fmt.Sprintf("resolve generated Markdown views: %v", err))
+		return resolved, diagnostics
+	}
+	typedViewsByFoldedPath := make(map[string]*core.Resource, len(generatedViews))
+	for name, resource := range generatedViews {
+		typedViewsByFoldedPath[strings.ToLower(name)] = resource
+	}
+	generatedOutputs, err := render.Generate(graph)
+	if err != nil {
+		add(graph.Project, "input.generated-path", fmt.Sprintf("resolve generated output paths: %v", err))
+		return resolved, diagnostics
+	}
+	generatedOutputPaths := make(map[string]bool, len(generatedOutputs))
+	for name := range generatedOutputs {
+		generatedOutputPaths[strings.ToLower(name)] = true
 	}
 	keys := make([]string, 0, len(graph.Resources))
 	for key := range graph.Resources {
@@ -99,9 +118,15 @@ func ResolveWithPackages(graph *core.Graph, files map[string][]byte, packageFile
 				add(resource, "input.project-config", fmt.Sprintf("project configuration %q cannot be an external input", clean))
 				continue
 			}
-			if companion, typed := typedCompanion(graph, resource.Package, clean); typed {
-				add(resource, "input.typed-companion", fmt.Sprintf("%q is the generated view for typed resource %s; reference the resource with uses or rules", clean, companion.GraphKey()))
-				continue
+			if resource.Package == "" {
+				if view, typed := typedViewsByFoldedPath[strings.ToLower(clean)]; typed {
+					add(resource, "input.typed-companion", fmt.Sprintf("%q is the generated view for typed resource %s; reference the resource with uses or rules", clean, view.GraphKey()))
+					continue
+				}
+				if generatedOutputPaths[strings.ToLower(clean)] {
+					add(resource, "input.generated-output", fmt.Sprintf("selected Markitect output %q cannot be declared as an ordinary file input", clean))
+					continue
+				}
 			}
 			sourceArea := owner(areas, resource.Path)
 			inputArea := owner(areas, clean)
@@ -120,6 +145,10 @@ func ResolveWithPackages(graph *core.Graph, files map[string][]byte, packageFile
 				} else {
 					add(resource, "input.missing", fmt.Sprintf("input file %q is missing from its origin's immutable file set", clean))
 				}
+				continue
+			}
+			if render.IsGenerated(data) {
+				add(resource, "input.generated-output", fmt.Sprintf("generated Markitect output %q cannot be declared as an ordinary file input", clean))
 				continue
 			}
 			if !utf8.Valid(data) || bytes.IndexByte(data, 0) >= 0 {
@@ -206,29 +235,6 @@ func contains(values []string, expected string) bool {
 
 func isProjectConfig(file, projectPath string) bool {
 	return (projectPath != "" && file == clean(projectPath)) || path.Base(file) == "markitect.yaml"
-}
-
-func typedCompanion(graph *core.Graph, origin, file string) (*core.Resource, bool) {
-	keys := make([]string, 0, len(graph.Resources))
-	for key := range graph.Resources {
-		keys = append(keys, key)
-	}
-	sort.Strings(keys)
-	for _, key := range keys {
-		resource := graph.Resources[key]
-		if resource == nil || resource.Kind == "Project" || resource.Kind == "Package" || resource.Package != origin || resource.Path == "" {
-			continue
-		}
-		ext := path.Ext(resource.Path)
-		companion := resource.Path + ".md"
-		if ext != "" {
-			companion = strings.TrimSuffix(resource.Path, ext) + ".md"
-		}
-		if clean(companion) == file {
-			return resource, true
-		}
-	}
-	return nil, false
 }
 
 func hasDescendant(files map[string][]byte, directory string) bool {

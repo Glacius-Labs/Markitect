@@ -11,7 +11,7 @@ import (
 	"strings"
 )
 
-const sourcePath = "tools/markitect/source.zip"
+const sourcePath = ".markitect/tool/source.zip"
 
 var excludedDirs = map[string]bool{
 	".git": true, ".cache": true, ".gocache": true, ".artifacts": true,

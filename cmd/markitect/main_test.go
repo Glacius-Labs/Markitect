@@ -38,7 +38,7 @@ func TestRunInvalidArgumentsAndUnknownFlagsReturnTwo(t *testing.T) {
 
 func TestCheckUsesFixedGitSnapshotInsteadOfDirtyTree(t *testing.T) {
 	repo := newCLIRepo(t, false)
-	generatedPath := filepath.Join(repo.root, "docs/general/skills/entry.md")
+	generatedPath := filepath.Join(repo.root, "docs/markitect/sample/skills/entry.skill.md")
 	if err := os.WriteFile(generatedPath, []byte("dirty local output\n"), 0644); err != nil {
 		t.Fatal(err)
 	}
@@ -118,7 +118,7 @@ func TestImpactRenderInventoryAndVersionCommands(t *testing.T) {
 			t.Errorf("inventory omitted expected canonical or legacy input %s: %v", expected, seen)
 		}
 	}
-	if seen["docs/general/rules/policy.md"] || seen["docs/general/skills/entry.md"] {
+	if seen["docs/markitect/sample/rules/policy.rule.md"] || seen["docs/markitect/sample/skills/entry.skill.md"] {
 		t.Errorf("inventory duplicated generated views as legacy inputs: %v", seen)
 	}
 

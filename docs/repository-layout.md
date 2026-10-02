@@ -41,7 +41,7 @@ Directories appear only when they have content. Do not scaffold global empty `ru
 | Zone | Ownership |
 |---|---|
 | `markitect.yaml` | Project topology, explicit imports, checks, outputs, and package pins |
-| `.markitect/areas/` | Recommended location for canonical typed YAML; currently also its generated sibling views |
+| `.markitect/areas/` | Recommended location for canonical typed YAML resources, organized by responsibility |
 | `.markitect/packages/` | Optional location for immutable, explicitly pinned content archives |
 | `.markitect/review/configs/` | Optional authored review configuration, referenced explicitly by the review command |
 | `docs/` | Human-owned documentation and local README navigation |
@@ -81,7 +81,7 @@ See the executable [repository-layout example](../examples/repository-layout/REA
 
 Provider outputs remain at their native `.agents/`, `.codex/`, and `.claude/` paths and require explicit targets and mappings. Existing generated files identify Markitect and route to their sources. Edit the canonical YAML or declared project-owned source, then regenerate; never edit managed output by hand. Root `AGENTS.md` and `CLAUDE.md` remain project-owned. The [provider adapter contract](provider-adapters.md) owns exact output and inventory behavior.
 
-Generic Markdown companions currently remain beside each local resource: `change-review.rule.yaml` renders to `change-review.rule.md`. Dependency links, provider routing, ordinary-input exclusions, and strict Rule inventory use this sibling path. The new convention does not move companions to `docs/markitect/`, suppress them, or make their output path configurable. They are generated views, not a second canonical owner. Commit them with the YAML when the project checks managed outputs. If documentation roots include a directory with generated Markdown, those views participate in router coverage too.
+Generic Markdown views are opt-in through the `markdown` target. A resource under `.markitect/areas/engineering/persistence/change-review.rule.yaml` renders to `docs/markitect/engineering/persistence/change-review.rule.md`; an existing matching kind suffix appears only once. Markitect creates managed local README routers within `docs/markitect/`. Provider entrypoints link directly to canonical YAML whether or not Markdown views are enabled.
 
 For GitHub review presentation, use `.gitattributes` entries scoped to outputs the project actually owns:
 
@@ -91,9 +91,10 @@ For GitHub review presentation, use `.gitattributes` entries scoped to outputs t
 .claude/skills/**/SKILL.md linguist-generated=true
 .claude/agents/*.md linguist-generated=true
 .claude/rules/*.md linguist-generated=true
+docs/markitect/** linguist-generated=true
 ```
 
-Use these globs only when every matching file is generated; otherwise list exact paths. Broad `.agents/**`, `.codex/**`, or `.claude/**` entries are appropriate only if the entire matching tree is generated. They can otherwise hide hand-authored configuration or policy. Never mark normal `docs/**` or canonical YAML as generated; exact generated companion paths may be marked separately. Dedicated generated human-view paths can be marked if a future explicit output contract introduces them. Initialization does not edit `.gitattributes` or `.gitignore`.
+Use these globs only when every matching file is generated; otherwise list exact paths. Broad `.agents/**`, `.codex/**`, or `.claude/**` entries are appropriate only if the entire matching tree is generated. They can otherwise hide hand-authored configuration or policy. The dedicated `docs/markitect/**` tree is managed when the Markdown target is selected; ordinary `docs/**` and canonical YAML remain human-owned sources. Initialization does not edit `.gitattributes` or `.gitignore`.
 
 ## Compatibility and adoption
 
@@ -101,15 +102,15 @@ Use these globs only when every matching file is generated; otherwise list exact
 |---|---|
 | Recommended Areas | `.markitect/areas/<owner>/`, organized by responsibility; no mandatory migration |
 | Initialization | Omitting `--path` selects `.markitect/areas/<namespace>`; an explicit supported path still overrides it |
-| Root discovery, resource schema and graph | Unchanged; no implicit relationships or new Project fields |
+| Root discovery and graph | Unchanged; no implicit relationships or new Project fields |
 | File naming | Optional convention; YAML remains authoritative |
 | Provider paths and managed headers | Existing native paths and generation contract retained |
-| Generic companions | Existing sibling layout retained |
-| Tool distribution | `markitect.lock.yaml`, `tools/markitect/`, and bootstrap paths retained |
+| Markdown views | No output by default; existing `spec.targets` now accepts `markdown` and writes under `docs/markitect/` |
+| Tool distribution | Current pins use `.markitect/tool/` and `.markitect/bootstrap/`; immutable older releases keep their historical paths |
 | Layout lint and migration helper | Deferred until a demonstrated invariant or adoption need justifies them |
 
 The new default affects initialization plans that omit `--path`; earlier versions required that flag. Explicit invocations such as `--path docs/<namespace>` retain their paths. Preview the exact plan before writing. Existing Project configuration is loaded as before.
 
-An adopting project may deliberately move its own canonical files: change its Area paths, update exact file/mapping/navigation references, regenerate companions and provider outputs, remove obsolete generated files in the reviewed candidate, and run its checks. Moving files changes snapshot paths and context fingerprints. Compile fresh evidence; do not assume path-independent review reuse or automatic cleanup. Markitect does not perform this migration on the project's behalf.
+An adopting project may deliberately move its own canonical files: change its Area paths, update exact file/mapping/navigation references, regenerate Markdown views and provider outputs, remove obsolete generated files in the reviewed candidate, and run its checks. Moving files changes snapshot paths and context fingerprints. Compile fresh evidence; do not assume path-independent review reuse or automatic cleanup. Markitect does not perform this migration on the project's behalf.
 
-A separate companion-output design must account for routing, collisions, managed drift, ordinary-input exclusion, package boundaries, and existing committed views. Distribution consolidation under `.markitect/tool/` and `.markitect/bootstrap/` requires a versioned bundle/installer/bootstrap contract and an upgrade path; reserve such a break for an explicit compatibility decision, potentially a major release. Neither move is part of this change. Source changes also do not update an installed release; release verification and publication follow [Operations](operations.md).
+When enabling Markdown views in an existing Project, add the target, render into a committed candidate, review the new files, and deliberately remove old generated files in the same migration. Current source pins use `.markitect/tool/` and `.markitect/bootstrap/`; an installed older release retains its own pin contract. Source changes do not update an installed release; release verification and publication follow [Operations](operations.md).

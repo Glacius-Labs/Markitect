@@ -1,0 +1,31 @@
+apiVersion: markitect.example.org/v1alpha1
+kind: Project
+metadata:
+    name: rollback-example
+spec:
+    targets:
+        - markdown
+    areas:
+        - name: sample
+          path: .markitect/areas/sample
+          imports:
+            - documentation
+        - name: documentation
+          path: docs
+    bindings:
+        - contract:
+            kind: Contract
+            name: rollback-assessment
+            namespace: sample
+          implementation:
+            kind: Agent
+            name: rollback-reviewer
+            namespace: sample
+    checks:
+        - name: go-version
+          run:
+            - go
+            - version
+    documentation:
+        roots:
+            - docs

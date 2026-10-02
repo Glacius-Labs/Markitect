@@ -19,6 +19,8 @@ The example YAML was valid but not in canonical format. The product normalized t
 
 An early development binary assembled a namespaced identity incorrectly; integration tests found it and a corrected binary was supplied before final evidence. Both final runs used tool SHA-256 `fffda090efd4b06548e63d5150c7dcb1763ee2299ce520457fadd59eaeb9ceaa`. Subsequent source-package/bootstrap and repository-identity changes create a different tool identity and cannot reuse this evidence.
 
+The results above record the fixture and sibling-view contract at their fixed 2026-09-30 commits. The current example uses canonical YAML under `.markitect/areas/` and opts into views under `docs/markitect/`; the dated run is not a replay of that current layout.
+
 ## Verified boundary
 
 The second actor formatted, rendered, structurally checked, and compiled fixed context and impact. The independent reviewer checked the exact two-file diff, requirement placement, and wording, then reran fixed impact and Rule context. At the time, an unavailable repository-check adapter was reported as unavailable rather than passed. The Rule named an assessment requirement; no rollback was executed or authorized by the exercise.

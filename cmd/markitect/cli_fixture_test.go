@@ -63,7 +63,7 @@ func newCLIRepo(t *testing.T, badReference bool) cliRepo {
 func cliFixture(t *testing.T, badReference bool) map[string][]byte {
 	t.Helper()
 	project := core.Resource{APIVersion: core.APIVersion, Kind: "Project", Metadata: core.Metadata{Name: "sample-project"}, Spec: core.Spec{
-		Areas: []core.Area{{Name: cliNamespace, Path: "docs/general"}},
+		Areas: []core.Area{{Name: cliNamespace, Path: "docs/general"}}, Targets: []string{"markdown"},
 	}}
 	rule := core.Resource{APIVersion: core.APIVersion, Kind: "Rule", Metadata: core.Metadata{Name: "policy", Namespace: cliNamespace}, Spec: core.Spec{Text: "Keep the canonical source."}}
 	refName := "policy"

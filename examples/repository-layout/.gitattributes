@@ -2,3 +2,4 @@
 .markitect/areas/engineering/review/change-review.rule.md linguist-generated=true
 .markitect/areas/shared/review/principles.text.md linguist-generated=true
 .markitect/areas/engineering/review/review-change.workflow.md linguist-generated=true
+docs/markitect/** linguist-generated=true

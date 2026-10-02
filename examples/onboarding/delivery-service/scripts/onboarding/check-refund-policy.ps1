@@ -1,6 +1,6 @@
 $ErrorActionPreference = 'Stop'
 
-$policyPath = Join-Path (Get-Location) 'docs/support/refund-policy.md'
+$policyPath = Join-Path (Get-Location) 'docs/markitect/support/refund-policy.text.md'
 if (-not (Test-Path -LiteralPath $policyPath -PathType Leaf)) {
     throw "Required policy file is missing: $policyPath"
 }

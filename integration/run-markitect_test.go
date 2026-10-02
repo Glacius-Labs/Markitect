@@ -54,11 +54,11 @@ func validZipEntries() []zipFixtureEntry {
 
 func fixtureManifest(data []byte) manifest {
 	digest := sha256.Sum256(data)
-	return manifest{version: "0.1.0-dev", source: "tools/markitect/source.zip", sha256: hex.EncodeToString(digest[:])}
+	return manifest{version: "0.1.0-dev", source: ".markitect/tool/source.zip", sha256: hex.EncodeToString(digest[:])}
 }
 
 func TestParseManifestStrictFieldsAndCRLF(t *testing.T) {
-	good := []byte("version: \"1.2.3-rc.4+build.7\"\nsource: \"tools/markitect/source.zip\"\nsha256: \"" + strings.Repeat("a", 64) + "\"\n")
+	good := []byte("version: \"1.2.3-rc.4+build.7\"\nsource: \".markitect/tool/source.zip\"\nsha256: \"" + strings.Repeat("a", 64) + "\"\n")
 	parsed, err := parseManifest(bytes.ReplaceAll(good, []byte("\n"), []byte("\r\n")))
 	if err != nil {
 		t.Fatal(err)
@@ -83,7 +83,10 @@ func TestParseManifestStrictFieldsAndCRLF(t *testing.T) {
 
 func TestReadManifestBoundsAndRejectsLink(t *testing.T) {
 	root := t.TempDir()
-	lock := []byte("version: \"1.2.3\"\nsource: \"source.zip\"\nsha256: \"" + strings.Repeat("a", 64) + "\"\n")
+	lock := []byte("version: \"1.2.3\"\nsource: \".markitect/tool/source.zip\"\nsha256: \"" + strings.Repeat("a", 64) + "\"\n")
+	if err := os.MkdirAll(filepath.Dir(filepath.Join(root, lockName)), 0755); err != nil {
+		t.Fatal(err)
+	}
 	if err := os.WriteFile(filepath.Join(root, lockName), bytes.Repeat([]byte("x"), maxLockSize+1), 0644); err != nil {
 		t.Fatal(err)
 	}
@@ -93,7 +96,10 @@ func TestReadManifestBoundsAndRejectsLink(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(root, lockName), lock, 0644); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(root, "source.zip"), []byte("not a zip"), 0644); err != nil {
+	if err := os.MkdirAll(filepath.Join(root, ".markitect", "tool"), 0755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, ".markitect", "tool", "source.zip"), []byte("not a zip"), 0644); err != nil {
 		t.Fatal(err)
 	}
 	if _, _, err := readManifest(root); err != nil {
@@ -370,6 +376,9 @@ func TestBuildMutationIsNotStampedAsPinnedSource(t *testing.T) {
 
 func TestInjectRepoAndDiscoverRoot(t *testing.T) {
 	root := t.TempDir()
+	if err := os.MkdirAll(filepath.Dir(filepath.Join(root, lockName)), 0755); err != nil {
+		t.Fatal(err)
+	}
 	if err := os.WriteFile(filepath.Join(root, lockName), []byte("lock"), 0644); err != nil {
 		t.Fatal(err)
 	}

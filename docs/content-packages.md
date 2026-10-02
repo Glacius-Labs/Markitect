@@ -1,6 +1,6 @@
 # Content packages
 
-This guide describes the content-package model in Markitect 0.3.0. The immutable v0.1.0 release remains historical. See [GitHub Releases](https://github.com/Glacius-Labs/Markitect/releases) for available distributions.
+This guide describes the current content-package model. See [GitHub Releases](https://github.com/Glacius-Labs/Markitect/releases) for available distributions.
 
 Content packages let a Project consume a selected set of reusable Markitect resources and their declared file inputs from an offline archive. A Project pins each direct package by exact name, version, provenance coordinate, repository-relative archive path, and SHA-256. There is no floating resolution or second content lock. `markitect.lock.yaml` continues to describe the Markitect CLI distribution only.
 
@@ -29,11 +29,11 @@ spec:
     - name: shared-guidance
       version: 1.2.0
       source: git:0123456789abcdef0123456789abcdef01234567
-      archive: packages/shared-guidance-1.2.0.zip
+      archive: .markitect/packages/shared-guidance-1.2.0.zip
       sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
 ```
 
-The version and digest are exact values, not ranges. `source` records provenance and is never fetched. The archive must exist in the selected Project snapshot and match its digest. Markitect excludes root-level `vendor/`, `.artifacts/`, and `.cache/`, along with build/cache directories such as `bin` and `obj`; files there cannot serve as package archives or package inputs. Put the archive under an included path such as `packages/` and commit it with its pin so a fixed revision selects both. The single Project pin list avoids maintaining a second lock or asking Markitect to reconcile two configuration sources.
+The version and digest are exact values, not ranges. `source` records provenance and is never fetched. The archive must exist in the selected Project snapshot and match its digest. Markitect excludes root-level `vendor/`, `.artifacts/`, and `.cache/`, along with build/cache directories such as `bin` and `obj`; files there cannot serve as package archives or package inputs. The `pack` suggestion uses `.markitect/packages/`; commit the archive with its pin so a fixed revision selects both. The single Project pin list avoids maintaining a second lock or asking Markitect to reconcile two configuration sources.
 
 An exported package resource can be used explicitly:
 
@@ -67,7 +67,7 @@ Build from an immutable Git revision. `--output` must name a ZIP file that does 
 markitect pack --repo . --revision 0123456789abcdef0123456789abcdef01234567 --output .\out\shared-guidance.zip
 ```
 
-`pack` validates the closed package graph, creates a deterministic archive from the fixed Git snapshot, and emits a suggested Project pin containing the exact digest. The suggestion uses the source revision as provenance and `packages/<name>-<version>.zip` as the archive path; it does not install the archive or edit a Project. Review the package and archive bytes, place them at the suggested path in the consumer repository, then copy or adapt the suggested pin. Create the output's parent directory first if needed; the command only creates the ZIP itself and refuses to overwrite an existing file.
+`pack` validates the closed package graph, creates a deterministic archive from the fixed Git snapshot, and emits a suggested Project pin containing the exact digest. The suggestion uses the source revision as provenance and `.markitect/packages/<name>-<version>.zip` as the archive path; it does not install the archive or edit a Project. Review the package and archive bytes, place them at the suggested path in the consumer repository, then copy or adapt the suggested pin. Create the output's parent directory first if needed; the command only creates the ZIP itself and refuses to overwrite an existing file.
 
 Use `--package` with `context`, `explain`, or `review` to select an exported package entry. `find` can list exported package entries and filter by package. For example:
 

@@ -206,6 +206,10 @@ properties:
                 type: object
             targets:
                 items:
+                    enum:
+                        - codex
+                        - claude
+                        - markdown
                     type: string
                 type: array
         type: object

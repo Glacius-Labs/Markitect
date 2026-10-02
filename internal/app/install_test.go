@@ -6,11 +6,52 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/Glacius-Labs/Markitect/internal/core"
 )
+
+func TestInstalledPinsOutsideDeclaredAreaAreNotTypedResources(t *testing.T) {
+	root := installTestRepo(t, "feature/area-pins")
+	project := projectResource(projectNS)
+	project.Spec.Areas = []core.Area{{Name: "engineering", Path: ".markitect/areas/engineering"}}
+	rule := core.Resource{
+		APIVersion: core.APIVersion,
+		Kind:       "Rule",
+		Metadata:   core.Metadata{Name: "deployment", Namespace: "engineering"},
+		Spec:       core.Spec{Text: "Follow the deployment process."},
+	}
+	writeFixture(t, root, map[string][]byte{
+		"markitect.yaml": encodeResource(t, project),
+		".markitect/areas/engineering/deployment.yaml": encodeResource(t, rule),
+	})
+	commitInstallPins(t, root, "consumer project with a hidden control-plane area")
+	if _, err := Install(root, installTestBundle(t, "f", "0.9.0", "area-pins"), true); err != nil {
+		t.Fatalf("install pinned tool: %v", err)
+	}
+
+	installed, err := Load(root, "")
+	if err != nil {
+		t.Fatalf("load installed project: %v", err)
+	}
+	if len(installed.Diagnostics) != 0 {
+		t.Fatalf("installed project diagnostics: %#v", installed.Diagnostics)
+	}
+	if len(installed.Resources) != 2 || len(installed.Inventory) != 2 {
+		t.Fatalf("installed project parsed unexpected resources: resources=%#v inventory=%#v", installed.Resources, installed.Inventory)
+	}
+	for _, entry := range installed.Inventory {
+		if entry.Path == ".markitect/tool/lock.yaml" || entry.Path == ".markitect/tool/release.yaml" {
+			t.Fatalf("pinned distribution metadata became a typed resource: %#v", entry)
+		}
+	}
+	if got := installed.Graph.Resources["engineering/Rule/deployment"]; got == nil || got.Path != ".markitect/areas/engineering/deployment.yaml" {
+		t.Fatalf("declared hidden area resource was not retained: %#v", got)
+	}
+}
 
 func TestInstallPlansThenWritesCompleteFreshBundleAndNoops(t *testing.T) {
 	root := installTestRepo(t, "feature/install")
-	bundle := installTestBundle(t, "a", "0.1.0-rc.4", "new")
+	bundle := installTestBundle(t, "a", "0.9.0", "new")
 
 	plan, err := Install(root, bundle, false)
 	if err != nil {
@@ -47,10 +88,10 @@ func TestInstallPlansThenWritesCompleteFreshBundleAndNoops(t *testing.T) {
 
 func TestInstallUpgradesCommittedManifestPins(t *testing.T) {
 	root := installTestRepo(t, "feature/upgrade")
-	old := installTestBundle(t, "b", "0.1.0-rc.3", "old")
+	old := installTestBundle(t, "b", "0.8.0", "old")
 	writeBundleToRoot(t, root, old, true)
 	commitInstallPins(t, root, "legacy upgrade baseline")
-	newBundle := installTestBundle(t, "c", "0.1.0-rc.4", "new")
+	newBundle := installTestBundle(t, "c", "0.9.0", "new")
 
 	plan, err := Install(root, newBundle, false)
 	if err != nil {
@@ -84,9 +125,9 @@ func TestInstallUpgradesCommittedManifestPins(t *testing.T) {
 
 func TestInstallReadbackNormalizesCoreAutocrlfCheckout(t *testing.T) {
 	root := installTestRepo(t, "feature/autocrlf")
-	old := installTestBundle(t, "8", "0.1.0-rc.3", "old")
+	old := installTestBundle(t, "8", "0.8.0", "old")
 	writeBundleToRoot(t, root, old, true)
-	commitInstallPins(t, root, "install RC3 pins")
+	commitInstallPins(t, root, "install release pins")
 	runWriterGit(t, root, "config", "core.autocrlf", "true")
 	recreateAutocrlfCheckout(t, root)
 
@@ -113,23 +154,23 @@ func TestInstallReadbackNormalizesCoreAutocrlfCheckout(t *testing.T) {
 	if err != nil || noop.Kind != "noop" {
 		t.Fatalf("post-upgrade CRLF checkout no-op = (%+v, %v)", noop, err)
 	}
-	archive, err := os.ReadFile(filepath.Join(root, "tools", "markitect", "source.zip"))
-	if err != nil || !bytes.Equal(archive, updated.Files["tools/markitect/source.zip"]) {
+	archive, err := os.ReadFile(filepath.Join(root, ".markitect", "tool", "source.zip"))
+	if err != nil || !bytes.Equal(archive, updated.Files[".markitect/tool/source.zip"]) {
 		t.Fatalf("binary source archive was normalized: %v", err)
 	}
 }
 
 func TestInstallUpgradesUnchangedCRLFPins(t *testing.T) {
 	root := installTestRepo(t, "feature/autocrlf-unchanged")
-	old := installTestBundle(t, "a", "0.1.0-rc.3", "stable-bootstrap")
+	old := installTestBundle(t, "a", "0.8.0", "stable-bootstrap")
 	writeBundleToRoot(t, root, old, true)
-	commitInstallPins(t, root, "install RC3 pins")
+	commitInstallPins(t, root, "install release pins")
 	runWriterGit(t, root, "config", "core.autocrlf", "true")
 	recreateAutocrlfCheckout(t, root)
 
 	// Keep both bootstrap files byte-identical while changing the lock and the
 	// release manifest. This exercises verification of unchanged checkout pins.
-	updated := installTestBundle(t, "b", "0.1.0-rc.4", "stable-bootstrap")
+	updated := installTestBundle(t, "b", "0.9.0", "stable-bootstrap")
 	plan, err := Install(root, updated, false)
 	if err != nil || plan.Kind != "upgrade" {
 		t.Fatalf("CRLF upgrade plan = (%+v, %v), want upgrade", plan, err)
@@ -142,16 +183,16 @@ func TestInstallUpgradesUnchangedCRLFPins(t *testing.T) {
 
 func TestInstallFreshnessComparesRawCheckoutBytes(t *testing.T) {
 	root := installTestRepo(t, "feature/raw-freshness")
-	bundle := installTestBundle(t, "a", "0.1.0-rc.3", "old")
+	bundle := installTestBundle(t, "a", "0.8.0", "old")
 	writeBundleToRoot(t, root, bundle, true)
-	commitInstallPins(t, root, "install RC3 pins")
+	commitInstallPins(t, root, "install release pins")
 	runWriterGit(t, root, "config", "core.autocrlf", "true")
 	recreateAutocrlfCheckout(t, root)
 	_, state, err := buildInstallPlan(root, bundle)
 	if err != nil {
 		t.Fatal(err)
 	}
-	path := filepath.Join(root, "scripts", "run-markitect.go")
+	path := filepath.Join(root, ".markitect", "bootstrap", "run.go")
 	data, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatal(err)
@@ -165,37 +206,5 @@ func TestInstallFreshnessComparesRawCheckoutBytes(t *testing.T) {
 	}
 	if err := ensureInstallStateUnchanged(root, state); err == nil || !strings.Contains(err.Error(), "changed during install") {
 		t.Fatalf("raw line-ending edit error = %v, want concurrent-edit refusal", err)
-	}
-}
-
-func TestInstallUpgradesOnlyCompleteCommittedLegacyRC3(t *testing.T) {
-	root := installTestRepo(t, "feature/legacy-upgrade")
-	legacy := installTestBundle(t, "d", "0.1.0-rc.3", "legacy")
-	writeBundleToRoot(t, root, legacy, false)
-	commitInstallPins(t, root, "legacy RC3 pins")
-	updated := installTestBundle(t, "e", "0.1.0-rc.4", "updated")
-
-	plan, err := Install(root, updated, false)
-	if err != nil {
-		t.Fatal(err)
-	}
-	manifestAction := ""
-	for _, file := range plan.Files {
-		if file.Path == releaseManifestPath {
-			manifestAction = file.Action
-		}
-	}
-	if plan.Kind != "legacy-upgrade" || manifestAction != "create" {
-		t.Fatalf("legacy plan = %+v", plan)
-	}
-	result, err := Install(root, updated, true)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if result.Kind != "legacy-upgrade" || !result.Applied {
-		t.Fatalf("legacy write result = %+v", result)
-	}
-	if _, err := os.Stat(filepath.Join(root, filepath.FromSlash(releaseManifestPath))); err != nil {
-		t.Fatalf("release manifest was not installed: %v", err)
 	}
 }

@@ -18,7 +18,7 @@ func TestParseBundleChecksOuterDigestAndMemberHashes(t *testing.T) {
 		t.Fatal("wrong expected outer hash was accepted")
 	}
 	mutated := rewriteBundle(t, data, func(files map[string][]byte) {
-		files["scripts/run-markitect.go"] = append(files["scripts/run-markitect.go"], []byte("// mutation\n")...)
+		files[bootstrapPath] = append(files[bootstrapPath], []byte("// mutation\n")...)
 	})
 	if _, err := ParseBundle(mutated, digestBytes(mutated)); err == nil || !strings.Contains(err.Error(), "manifest SHA-256") {
 		t.Fatalf("modified bootstrap result = %v", err)
@@ -52,14 +52,14 @@ func TestParseBundleRejectsMissingExtraDuplicateAndUnsafeFiles(t *testing.T) {
 	})
 	t.Run("path traversal", func(t *testing.T) {
 		bad := rewriteBundleEntries(t, data, func(entries *[]bundleTestEntry) {
-			(*entries)[0].name = "../markitect.lock.yaml"
+			(*entries)[0].name = "../.markitect/tool/lock.yaml"
 		})
 		assertBundleRejected(t, bad)
 	})
 	t.Run("symlink", func(t *testing.T) {
 		bad := rewriteBundleEntriesWithMode(t, data, func(entries *[]bundleTestEntry) {
 			for i := range *entries {
-				if (*entries)[i].name == "scripts/run-markitect.go" {
+				if (*entries)[i].name == bootstrapPath {
 					(*entries)[i].mode = os.ModeSymlink | 0777
 				}
 			}
@@ -69,7 +69,7 @@ func TestParseBundleRejectsMissingExtraDuplicateAndUnsafeFiles(t *testing.T) {
 	t.Run("fifo", func(t *testing.T) {
 		bad := rewriteBundleEntriesWithMode(t, data, func(entries *[]bundleTestEntry) {
 			for i := range *entries {
-				if (*entries)[i].name == "scripts/run-markitect.go" {
+				if (*entries)[i].name == bootstrapPath {
 					(*entries)[i].mode = os.ModeNamedPipe | 0644
 				}
 			}
@@ -84,14 +84,14 @@ func TestParseBundleRejectsLockAndManifestMismatches(t *testing.T) {
 		t.Fatal(err)
 	}
 	badVersion := rewriteBundle(t, data, func(files map[string][]byte) {
-		files["markitect.lock.yaml"] = []byte("version: \"1.2.4\"\nsource: \"tools/markitect/source.zip\"\nsha256: \"" + digestBytes(files["tools/markitect/source.zip"]) + "\"\n")
+		files[toolLockPath] = []byte("version: \"1.2.4\"\nsource: \".markitect/tool/source.zip\"\nsha256: \"" + digestBytes(files[".markitect/tool/source.zip"]) + "\"\n")
 		manifest, err := ParseBundleManifest(files[releaseManifestPath])
 		if err != nil {
 			t.Fatal(err)
 		}
 		for i := range manifest.Files {
-			if manifest.Files[i].Path == "markitect.lock.yaml" {
-				manifest.Files[i].SHA256 = digestBytes(files["markitect.lock.yaml"])
+			if manifest.Files[i].Path == toolLockPath {
+				manifest.Files[i].SHA256 = digestBytes(files[toolLockPath])
 			}
 		}
 		files[releaseManifestPath], err = yaml.Marshal(manifest)
@@ -123,7 +123,7 @@ func TestParseBundleRejectsOversizedManifest(t *testing.T) {
 	}
 }
 
-func TestLegacyToolLockValidation(t *testing.T) {
+func TestToolLockValidation(t *testing.T) {
 	data, err := BuildBundle(bundleSnapshot(), "1.2.3")
 	if err != nil {
 		t.Fatal(err)
@@ -132,7 +132,7 @@ func TestLegacyToolLockValidation(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	lock, err := ParseToolLock(bundle.Files["markitect.lock.yaml"])
+	lock, err := ParseToolLock(bundle.Files[toolLockPath])
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -140,9 +140,9 @@ func TestLegacyToolLockValidation(t *testing.T) {
 		t.Fatal(err)
 	}
 	files := cloneBundleFiles(bundle.Files)
-	files["tools/markitect/source.zip"] = append(files["tools/markitect/source.zip"], 0)
+	files[".markitect/tool/source.zip"] = append(files[".markitect/tool/source.zip"], 0)
 	if err := ValidateToolLockFiles(lock, files); err == nil {
-		t.Fatal("legacy lock accepted a modified source archive")
+		t.Fatal("tool lock accepted a modified source archive")
 	}
 }
 

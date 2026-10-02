@@ -1,11 +1,13 @@
 package examples
 
 import (
+	"os"
 	"path/filepath"
 	"runtime"
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/internal/app"
+	"github.com/Glacius-Labs/Markitect/internal/render"
 )
 
 func TestRepositoryLayoutExampleCompilesExplicitInputsAndNativeOutput(t *testing.T) {
@@ -47,6 +49,16 @@ func TestRepositoryLayoutExampleCompilesExplicitInputsAndNativeOutput(t *testing
 	}
 	if len(want) != 0 {
 		t.Fatalf("context omitted explicit typed or ordinary inputs: %v", want)
+	}
+	outputs, err := render.Generate(project.Graph)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := outputs[".claude/rules/change-review.md"]; !ok || len(outputs) != 1 {
+		t.Fatalf("provider-only project must produce exactly its native rule adapter: %v", outputs)
+	}
+	if _, err := os.Stat(filepath.Join(root, "docs", "markitect")); !os.IsNotExist(err) {
+		t.Fatalf("provider-only example must not contain a Markdown view tree: %v", err)
 	}
 	if findings := app.CheckOutputs(project); len(findings) != 0 {
 		t.Fatalf("layout example has output diagnostics: %#v", findings)

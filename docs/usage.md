@@ -43,7 +43,7 @@ spec:
         name: change-review
 ```
 
-`ruleAdapters` maps generated rule entrypoint names to source references; these mappings currently produce Claude rule views when the Claude target is selected. `targets` currently accepts `codex` and `claude`. A Project may also pin direct offline content packages in `spec.packages`. Each entry contains `name`, `version`, `source`, `archive`, and `sha256`; this list is the complete content lock. `markitect.lock.yaml` remains exclusively the CLI distribution lock. See [Content packages](content-packages.md) for manifests, exports, archive creation, query selection, and boundaries. The [Project schema](../schema/Project.yaml) and [Agent schema](../schema/Agent.yaml) list the supported fields. Provider metadata configures generated output; it is not a runtime dependency of the Markitect core.
+`ruleAdapters` maps generated rule entrypoint names to source references; these mappings produce Claude rule outputs when the Claude target is selected. `targets` accepts `markdown`, `codex`, and `claude`. Generic Markdown resource views are opt-in through the `markdown` target; without it, canonical YAML is the only Markitect-owned documentation source. Markdown views live under `docs/markitect/<area>/` with each resource's source-relative subdirectory and a filename ending in its actual kind. Generated local README navigation stays within that generated root. Provider outputs link directly to canonical YAML, independent of Markdown views. See [Repository layout](repository-layout.md) and [Provider adapters](provider-adapters.md) for paths and ownership. A Project may also pin direct offline content packages in `spec.packages`. Each entry contains `name`, `version`, `source`, `archive`, and `sha256`; this list is the complete content lock. `markitect.lock.yaml` remains exclusively the CLI distribution lock. See [Content packages](content-packages.md) for manifests, exports, archive creation, query selection, and boundaries. The [Project schema](../schema/Project.yaml) and [Agent schema](../schema/Agent.yaml) list the supported fields. Provider metadata configures generated output; it is not a runtime dependency of the Markitect core.
 
 `spec.documentation.roots` opts into snapshot-based README router checks. It does not turn Markdown into typed resources or infer dependencies. Omit it when the project has no router contract. A passing router check says that local navigation is structurally complete; it does not establish that a document was placed with the correct semantic owner.
 
@@ -79,7 +79,7 @@ Commands run with the caller's local authority. Snapshot isolation fixes the inp
 
 For project-owned Codex, Claude, and shared entrypoints, declare `spec.targets` and, when needed, `spec.providerAdapters`; see [Provider adapters](provider-adapters.md). For opt-in sourced functional assertions, declare `spec.consistency`; see [Factual consistency](consistency.md). Both are absent by default.
 
-`render` checks or writes Markitect's generic managed views. Additional outputs are produced only for Project `spec.targets` and `spec.ruleAdapters`. Codex and Claude outputs are product-owned adapters, selected only when the matching target is declared. No additional compatibility output is selected implicitly. Inspect the generated schema and the current target list; an undeclared output is not covered.
+`render` checks or writes only the managed output families selected by Project `spec.targets` and `spec.ruleAdapters`. The `markdown` target produces opt-in resource views under `docs/markitect/`; Codex and Claude outputs use their native provider paths. No generic Markdown view is created by default. Provider outputs route directly to canonical YAML and do not depend on the Markdown target. An undeclared output is not covered.
 
 ## Commands
 
@@ -95,7 +95,7 @@ For project-owned Codex, Claude, and shared entrypoints, declare `spec.targets` 
 | `context` | Compile an entry closure and declared files, or add a fixed-run task snapshot and exact project artifact paths from a committed manifest. |
 | `impact` | Compare two immutable revisions and report changed paths and affected resources. |
 | `review` | Record an advisory report or determine whether its declared inputs permit reuse. |
-| `render` | Check or write generic views and explicitly declared render outputs. |
+| `render` | Check or write explicitly selected Markdown and provider outputs. |
 | `format` | Check or write canonical YAML formatting. |
 | `schema` | Check or write generated schema YAML. |
 | `pack` | Build a deterministic offline content ZIP from a fixed Git revision and emit a suggested Project pin. |
@@ -124,7 +124,7 @@ Review each command and its arguments as project-owned policy. There is no autom
 
 When a schema-changing upgrade makes an older revision invalid under the current CLI, current-version `impact` and review reuse cannot cross that schema boundary. Keep evidence from the old version as historical. Upgrade configuration and content in a complete candidate commit, then run the current checks, compile fresh context, and complete a new review as needed; that candidate starts a new evidence baseline. Do not relax current parsing or invent a cross-version impact result to bridge the boundary.
 
-Rendering now defaults to generic views. Add an explicit target and, where needed, a rule adapter for every additional output the project owns. Compare generated files, run the declared checks against the exact candidate, and commit configuration, content, and generated outputs together. Never edit an immutable release to represent a new version.
+Rendering produces only explicitly selected outputs. Add the `markdown` target when the project wants generic resource views, and add provider targets and rule adapters for the provider outputs it owns. Compare generated files, run the declared checks against the exact candidate, and commit configuration, content, and generated outputs together. Never edit an immutable release to represent a new version.
 
 ## Fixed snapshots and advisory review
 

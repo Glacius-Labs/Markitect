@@ -1,6 +1,7 @@
 package render
 
 import (
+	"net/url"
 	"path"
 	"sort"
 	"strings"
@@ -21,7 +22,7 @@ func renderCompanion(r *core.Resource, target string, g *core.Graph) ([]byte, er
 			b.WriteByte('\n')
 		}
 	}
-	links := dependencyLinks(r, target, g)
+	links := dependencyLinks(r, target, g, true)
 	if len(links) > 0 {
 		b.WriteString("\n## Dependencies\n\n")
 		for _, link := range links {
@@ -33,7 +34,7 @@ func renderCompanion(r *core.Resource, target string, g *core.Graph) ([]byte, er
 
 type dependencyLink struct{ label, path, instruction string }
 
-func dependencyLinks(r *core.Resource, from string, g *core.Graph) []dependencyLink {
+func dependencyLinks(r *core.Resource, from string, g *core.Graph, markdownViews bool) []dependencyLink {
 	type typedRef struct {
 		ref  core.Ref
 		kind string
@@ -82,8 +83,13 @@ func dependencyLinks(r *core.Resource, from string, g *core.Graph) []dependencyL
 			links = append(links, dependencyLink{label: label, instruction: instruction})
 			continue
 		}
-		companion := companionPath(dep.Path)
-		links = append(links, dependencyLink{label: dep.Kind + ": " + dep.Metadata.Name, path: relative(from, companion)})
+		path := dep.Path
+		if markdownViews {
+			if view, err := MarkdownViewPath(g, dep); err == nil {
+				path = view
+			}
+		}
+		links = append(links, dependencyLink{label: dep.Kind + ": " + dep.Metadata.Name, path: relative(from, path)})
 	}
 	sort.Slice(links, func(i, j int) bool { return links[i].label < links[j].label })
 	return links
@@ -93,8 +99,8 @@ func renderSkill(r *core.Resource, target string, g *core.Graph) []byte {
 	var b strings.Builder
 	b.WriteString("---\nname: " + yamlQuote(r.Metadata.Name) + "\ndescription: " + yamlQuote(r.Spec.Description) + "\n---\n\n")
 	b.WriteString("<!-- " + Marker + "; source: " + relative(target, r.Path) + " -->\n\n")
-	b.WriteString("Read the [canonical skill definition](" + relative(target, companionPath(r.Path)) + ") before acting.\n")
-	links := dependencyLinks(r, target, g)
+	b.WriteString("Read the [canonical Skill YAML](" + relative(target, r.Path) + ") before acting.\n")
+	links := dependencyLinks(r, target, g, false)
 	if len(links) > 0 {
 		b.WriteString("\n## Dependencies\n\n")
 		for _, link := range links {
@@ -152,6 +158,9 @@ func relativePath(fromDir, to string) string {
 	parts = append(parts, toParts[i:]...)
 	if len(parts) == 0 {
 		return "."
+	}
+	for i, part := range parts {
+		parts[i] = url.PathEscape(part)
 	}
 	return strings.Join(parts, "/")
 }

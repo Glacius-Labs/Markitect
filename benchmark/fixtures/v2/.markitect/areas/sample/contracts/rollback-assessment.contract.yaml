@@ -1,0 +1,13 @@
+apiVersion: markitect.example.org/v1alpha1
+kind: Contract
+metadata:
+    name: rollback-assessment
+    namespace: sample
+spec:
+    text: |
+        Assess whether the named change should be rolled back and list the evidence and remaining uncertainty.
+    input:
+        - change
+    output:
+        - assessment
+    kind: Agent
