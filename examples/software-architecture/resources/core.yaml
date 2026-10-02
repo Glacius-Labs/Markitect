@@ -1,0 +1,7 @@
+apiVersion: architecture.markitect.org/v1alpha1
+kind: Core
+metadata:
+    name: platform-core
+    namespace: engineering
+spec:
+    purpose: Stable identifiers and time abstractions shared by modules.

@@ -1,0 +1,24 @@
+apiVersion: markitect.example.org/v1alpha1
+kind: Skill
+metadata:
+    name: implement-order
+    namespace: engineering
+spec:
+    text: |
+        Follow the selected UseCase, its Module and Feature, and the exact pinned architecture policy.
+        Keep cross-module collaboration at declared Interfaces. Do not infer code structure from names.
+        Report failed or waived PolicyResults and their affected subjects.
+    description: Implement an order capability within the selected software architecture contract.
+    uses:
+        - apiVersion: architecture.markitect.org/v1alpha1
+          kind: UseCase
+          name: create-order
+          namespace: engineering
+        - apiVersion: architecture.markitect.org/v1alpha1
+          kind: Module
+          name: orders
+          namespace: engineering
+        - kind: Workflow
+          name: vertical-slice
+          namespace: architecture
+          package: software-architecture

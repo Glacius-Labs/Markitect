@@ -1,0 +1,7 @@
+apiVersion: architecture.markitect.org/v1alpha1
+kind: EventPublication
+metadata:
+    name: order-placed
+    namespace: engineering
+spec:
+    summary: Publishes the accepted order identifier after the command succeeds.

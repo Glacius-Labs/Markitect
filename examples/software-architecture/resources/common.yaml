@@ -1,0 +1,11 @@
+apiVersion: architecture.markitect.org/v1alpha1
+kind: Common
+metadata:
+    name: shared-kernel
+    namespace: engineering
+spec:
+    owner:
+        kind: Core
+        name: platform-core
+        namespace: engineering
+    purpose: Deliberately small shared value types and error vocabulary.

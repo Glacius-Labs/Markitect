@@ -24,17 +24,30 @@ type Context struct {
 	PolicyResults  []core.PolicyResult `yaml:"policyResults,omitempty"`
 }
 type ContextInput struct {
-	Key            string         `yaml:"key"`
-	Path           string         `yaml:"path"`
-	Package        string         `yaml:"package,omitempty"`
-	PackageVersion string         `yaml:"packageVersion,omitempty"`
-	Hash           string         `yaml:"hash"`
-	Reason         string         `yaml:"reason"`
-	Resource       *core.Resource `yaml:"resource,omitempty"`
-	Text           string         `yaml:"text,omitempty"`
-	Role           string         `yaml:"role,omitempty"`
-	Status         string         `yaml:"status,omitempty"`
-	Required       bool           `yaml:"required,omitempty"`
+	Key              string            `yaml:"key"`
+	Path             string            `yaml:"path"`
+	Package          string            `yaml:"package,omitempty"`
+	PackageVersion   string            `yaml:"packageVersion,omitempty"`
+	Hash             string            `yaml:"hash"`
+	Reason           string            `yaml:"reason"`
+	Via              []ContextRelation `yaml:"via,omitempty"`
+	DomainAPIVersion string            `yaml:"domainApiVersion,omitempty"`
+	DomainName       string            `yaml:"domainName,omitempty"`
+	Resource         *core.Resource    `yaml:"resource,omitempty"`
+	Text             string            `yaml:"text,omitempty"`
+	Role             string            `yaml:"role,omitempty"`
+	Status           string            `yaml:"status,omitempty"`
+	Required         bool              `yaml:"required,omitempty"`
+}
+
+// ContextRelation explains one declared graph relationship through which a
+// resource was included in the entry's bounded context.
+type ContextRelation struct {
+	From             string `yaml:"from"`
+	Relation         string `yaml:"relation"`
+	DomainAPIVersion string `yaml:"domainApiVersion,omitempty"`
+	Path             string `yaml:"path,omitempty"`
+	Line             int    `yaml:"line,omitempty"`
 }
 
 func CompileContext(p *Project, key, version string, toolDigest ...string) (*Context, error) {
@@ -53,6 +66,7 @@ func CompileContext(p *Project, key, version string, toolDigest ...string) (*Con
 		c.ToolDigest = toolDigest[0]
 	}
 	reasons := map[string]string{key: "entry"}
+	parents := map[string]string{}
 	queue := []string{key}
 	for len(queue) > 0 {
 		current := queue[0]
@@ -61,8 +75,40 @@ func CompileContext(p *Project, key, version string, toolDigest ...string) (*Con
 		sort.Strings(edges)
 		for _, dest := range edges {
 			if _, ok := reasons[dest]; !ok {
+				parents[dest] = current
 				reasons[dest] = "required by " + current
 				queue = append(queue, dest)
+			}
+		}
+	}
+	closure := make(map[string]bool, len(reasons))
+	for resourceKey := range reasons {
+		closure[resourceKey] = true
+	}
+	// Retain every declared context relationship between reachable resources,
+	// not merely the first BFS path. This makes multiple inclusion causes
+	// reviewable without changing the compact adjacency used by graph traversal.
+	viaByResource := map[string][]ContextRelation{}
+	for _, relationship := range p.Graph.Relationships {
+		if !relationship.Context || relationship.From == relationship.To || !closure[relationship.From] || !closure[relationship.To] {
+			continue
+		}
+		viaByResource[relationship.To] = append(viaByResource[relationship.To], ContextRelation{
+			From: relationship.From, Relation: relationship.Relation, DomainAPIVersion: relationship.DomainAPIVersion,
+			Path: relationship.Path, Line: relationship.Line,
+		})
+	}
+	for resourceKey := range viaByResource {
+		via := viaByResource[resourceKey]
+		sort.Slice(via, func(i, j int) bool { return contextRelationLess(via[i], via[j]) })
+		viaByResource[resourceKey] = via
+	}
+	for resourceKey, parent := range parents {
+		via := viaByResource[resourceKey]
+		for _, relation := range via {
+			if relation.From == parent {
+				reasons[resourceKey] = "required by " + parent + " via " + relation.Relation
+				break
 			}
 		}
 	}
@@ -92,8 +138,16 @@ func CompileContext(p *Project, key, version string, toolDigest ...string) (*Con
 			return nil, fmt.Errorf("unresolved context resource %s", k)
 		}
 		h := Hash(p.resourceBytes(r))
-		c.Inputs = append(c.Inputs, ContextInput{Key: k, Path: r.Path, Package: r.Package, PackageVersion: p.packageVersion(r.Package), Hash: h, Reason: reasons[k], Resource: r})
+		via := append([]ContextRelation(nil), viaByResource[k]...)
+		c.Inputs = append(c.Inputs, ContextInput{Key: k, Path: r.Path, Package: r.Package, PackageVersion: p.packageVersion(r.Package), Hash: h, Reason: reasons[k], Via: via, Resource: r})
 		fmt.Fprintf(&fingerprint, "%d:%s%d:%s%d:%s", len(k), k, len(r.Path), r.Path, len(h), h)
+		if len(via) > 0 {
+			viaBytes, err := YAML(via)
+			if err != nil {
+				return nil, fmt.Errorf("encode context relationship provenance for %s: %w", k, err)
+			}
+			fmt.Fprintf(&fingerprint, "via:%s", Hash(viaBytes))
+		}
 	}
 	type declaredFile struct{ origin, path, reason string }
 	fileReasons := map[string]declaredFile{}
@@ -131,7 +185,7 @@ func CompileContext(p *Project, key, version string, toolDigest ...string) (*Con
 		identity := "domain:" + inputKey(input.Package, input.Path)
 		data := p.fileBytes(input.Package, input.Path)
 		h := Hash(data)
-		c.Inputs = append(c.Inputs, ContextInput{Key: identity, Path: input.Path, Package: input.Package, PackageVersion: p.packageVersion(input.Package), Hash: h, Reason: "selected language definition", Text: string(data), Role: "domain"})
+		c.Inputs = append(c.Inputs, ContextInput{Key: identity, Path: input.Path, Package: input.Package, PackageVersion: p.packageVersion(input.Package), Hash: h, Reason: "selected language definition", Text: string(data), Role: "domain", DomainAPIVersion: input.APIVersion, DomainName: input.Name})
 		fmt.Fprintf(&fingerprint, "domain:%d:%s%d:%s", len(identity), identity, len(h), h)
 	}
 	// Show the policy outcomes for this closure, including any explicitly
@@ -151,6 +205,22 @@ func CompileContext(p *Project, key, version string, toolDigest ...string) (*Con
 	}
 	c.Digest = Hash([]byte(fingerprint.String()))
 	return c, nil
+}
+
+func contextRelationLess(a, b ContextRelation) bool {
+	if a.From != b.From {
+		return a.From < b.From
+	}
+	if a.DomainAPIVersion != b.DomainAPIVersion {
+		return a.DomainAPIVersion < b.DomainAPIVersion
+	}
+	if a.Relation != b.Relation {
+		return a.Relation < b.Relation
+	}
+	if a.Path != b.Path {
+		return a.Path < b.Path
+	}
+	return a.Line < b.Line
 }
 
 func YAML(value any) ([]byte, error) { return format.Encode(value) }

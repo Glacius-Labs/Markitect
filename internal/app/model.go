@@ -66,6 +66,8 @@ type ModelRelationship struct {
 }
 
 type ModelDomainInput struct {
+	APIVersion     string `yaml:"apiVersion"`
+	Name           string `yaml:"name"`
 	Path           string `yaml:"path"`
 	Package        string `yaml:"package,omitempty"`
 	PackageVersion string `yaml:"packageVersion,omitempty"`
@@ -111,7 +113,7 @@ func CompileModel(p *Project) (SemanticModel, error) {
 		}
 	}
 	for _, input := range p.DomainInputs {
-		model.DomainInputs = append(model.DomainInputs, ModelDomainInput{Path: input.Path, Package: input.Package,
+		model.DomainInputs = append(model.DomainInputs, ModelDomainInput{APIVersion: input.APIVersion, Name: input.Name, Path: input.Path, Package: input.Package,
 			PackageVersion: p.packageVersion(input.Package), Digest: Hash(p.fileBytes(input.Package, input.Path))})
 	}
 	if len(p.Diagnostics) == 0 {

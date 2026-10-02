@@ -1,0 +1,11 @@
+apiVersion: architecture.markitect.org/v1alpha1
+kind: Aggregate
+metadata:
+    name: invoice
+    namespace: engineering
+spec:
+    module:
+        kind: Module
+        name: billing
+        namespace: engineering
+    summary: Owns invoice totals and settlement state.

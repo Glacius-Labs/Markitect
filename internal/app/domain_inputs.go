@@ -14,8 +14,10 @@ import (
 // DomainInput identifies one explicitly activated compiler definition. Imported
 // content does not activate a domain or its policies by itself.
 type DomainInput struct {
-	Path    string `yaml:"path"`
-	Package string `yaml:"package,omitempty"`
+	APIVersion string `yaml:"apiVersion"`
+	Name       string `yaml:"name"`
+	Path       string `yaml:"path"`
+	Package    string `yaml:"package,omitempty"`
 }
 
 func (p *Project) loadPackageInputs(config *core.Resource) error {
@@ -104,6 +106,8 @@ func (p *Project) loadDomainInputs(config *core.Resource) (*core.Registry, error
 		if err := registry.AddDomain(definition); err != nil {
 			return nil, fmt.Errorf("domain %q: %w", selected, err)
 		}
+		input.APIVersion = definition.APIVersion
+		input.Name = definition.Name
 		p.DomainInputs = append(p.DomainInputs, input)
 	}
 	sort.Slice(p.DomainInputs, func(i, j int) bool {

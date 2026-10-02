@@ -15,6 +15,8 @@ The published v0.11.0 release builds on that foundation with [reusable engineeri
 
 > **AI should implement your architecture, not reinvent it on every task.**
 
+The current source iteration tests that language with a [modular DDD / Vertical Slice architecture](examples/software-architecture/README.md), including exact package evolution and deliberately failing structural rules. Its [language-pressure report](docs/design/domain-language-pressure.md) records what the existing kernel can express and what it cannot prove. Source-only explanation improvements add explicit Domain identities, context relation paths and impact causes; the published v0.11.0 download remains the baseline release.
+
 ## Why Markitect?
 
 Engineering rules rarely live in one place.

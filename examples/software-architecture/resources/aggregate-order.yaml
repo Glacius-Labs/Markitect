@@ -1,0 +1,11 @@
+apiVersion: architecture.markitect.org/v1alpha1
+kind: Aggregate
+metadata:
+    name: order
+    namespace: engineering
+spec:
+    module:
+        kind: Module
+        name: orders
+        namespace: engineering
+    summary: Owns order lines and lifecycle state transitions.

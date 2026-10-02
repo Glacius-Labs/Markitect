@@ -1,0 +1,11 @@
+apiVersion: architecture.markitect.org/v1alpha1
+kind: Aggregate
+metadata:
+    name: stock-item
+    namespace: engineering
+spec:
+    module:
+        kind: Module
+        name: inventory
+        namespace: engineering
+    summary: Owns on-hand quantity and reservations.

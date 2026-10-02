@@ -1,0 +1,7 @@
+apiVersion: architecture.markitect.org/v1alpha1
+kind: Handler
+metadata:
+    name: create-order-handler
+    namespace: engineering
+spec:
+    summary: Coordinates authorization, stock reservation, and order creation.

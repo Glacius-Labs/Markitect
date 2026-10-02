@@ -1,0 +1,7 @@
+apiVersion: architecture.markitect.org/v1alpha1
+kind: Product
+metadata:
+    name: commerce
+    namespace: engineering
+spec:
+    purpose: Coordinate order placement, billing, and inventory capabilities.
