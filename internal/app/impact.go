@@ -141,7 +141,7 @@ func impactFileOwners(p *Project) (map[string]map[string]bool, error) {
 			add(file, key)
 		}
 	}
-	_, generatedOwners, err := render.GenerateWithOwners(p.Graph)
+	_, generatedOwners, err := render.GenerateWithOwners(p.Graph, p.Snapshot.Files)
 	if err != nil {
 		return nil, err
 	}

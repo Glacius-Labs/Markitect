@@ -61,7 +61,7 @@ func packageConsumerFixture(t *testing.T, text string) *Project {
 	if len(p.Diagnostics) != 0 {
 		t.Fatalf("package fixture diagnostics: %#v", p.Diagnostics)
 	}
-	outputs, err := render.Generate(p.Graph)
+	outputs, err := render.Generate(p.Graph, p.Snapshot.Files)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -167,7 +167,7 @@ func TestReviewRequiresReviewWhenCandidateContextChanges(t *testing.T) {
 		}
 	}
 	base.Graph = core.Build(base.Resources)
-	generated, err := render.Generate(base.Graph)
+	generated, err := render.Generate(base.Graph, base.Snapshot.Files)
 	if err != nil {
 		t.Fatal(err)
 	}

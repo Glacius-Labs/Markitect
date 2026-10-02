@@ -45,7 +45,7 @@ func newCLIRepo(t *testing.T, badReference bool) cliRepo {
 	if err != nil {
 		t.Fatal(err)
 	}
-	outputs, err := render.Generate(loaded.Graph)
+	outputs, err := render.Generate(loaded.Graph, loaded.Snapshot.Files)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -86,7 +86,7 @@ func cliFixture(t *testing.T, badReference bool) map[string][]byte {
 	if len(graph.Diagnostics) != 0 && !badReference {
 		t.Fatalf("CLI fixture graph has diagnostics: %#v", graph.Diagnostics)
 	}
-	outputs, err := render.Generate(graph)
+	outputs, err := render.Generate(graph, files)
 	if err != nil {
 		t.Fatal(err)
 	}

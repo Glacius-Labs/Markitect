@@ -108,7 +108,7 @@ func TestPackageConsumerCLIContextAndArchiveIntegrity(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	outputs, err := render.Generate(project.Graph)
+	outputs, err := render.Generate(project.Graph, project.Snapshot.Files)
 	if err != nil {
 		t.Fatal(err)
 	}

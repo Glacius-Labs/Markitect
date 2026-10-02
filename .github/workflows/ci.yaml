@@ -67,6 +67,12 @@ jobs:
       - name: Check repository layout example formatting
         run: go run ./cmd/markitect format --repo examples/repository-layout
 
+      - name: Check Markdown navigation example
+        run: go run ./cmd/markitect check --repo examples/markdown-navigation
+
+      - name: Check Markdown navigation example formatting
+        run: go run ./cmd/markitect format --repo examples/markdown-navigation
+
       - name: Check versioned release benchmark fixture
         run: go run ./cmd/markitect check --repo benchmark/fixtures/v2
 

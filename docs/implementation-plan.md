@@ -96,6 +96,10 @@ Generated files retain exact ownership, deterministic links and drift/stale chec
 
 Executable fixtures demonstrate both optional Markdown views and provider-only operation. Benchmark fixture v1 remains immutable; v2 covers the new layout. The release-transition benchmark records each binary's compatible fixture and suppresses direct performance-change percentages when fixture versions differ. [Repository layout](repository-layout.md) and [Operations](operations.md) own the implementation and release contracts. The reviewed source, Windows/Linux gates, immutable publication, verified public downloads and versioned transition benchmark are recorded in the [production assessment](production-assessment.md).
 
+## v0.9.1 source candidate — source-relative prose navigation
+
+The patch candidate corrects copied resource prose whose relative links broke when v0.9.0 moved Markdown views. Prose URLs are authored relative to canonical YAML: generic Markdown views map exact local typed YAML destinations to their selected view, while provider inline text keeps canonical destinations. Ordinary document/image links are rebased without changing their target. Query strings, fragments, reference links and code examples are covered by focused tests; link projection uses explicit snapshot files to distinguish ordinary Markdown from an old generated companion. It infers no dependencies or input declarations. [Repository layout](repository-layout.md#source-relative-prose-navigation) owns the contract. This candidate is not yet a published distribution.
+
 ## Later product options
 
 Current source adds a neutral [onboarding exercise](onboarding.md), its replay in Windows CI, and structural fixture checks on both supported platforms. [WinGet distribution](winget.md) records the submitted v0.5.0 portable manifests and local installation/upgrade checks; submission is distinct from publication in Microsoft's catalog. The [MCP evaluation](mcp-evaluation.md) records the concluded bounded assessment, the decision to keep MCP experimental, and the deferred second-client criterion. The MCP prototype remains experimental and is excluded from published CLI binaries.

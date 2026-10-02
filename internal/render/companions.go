@@ -9,19 +9,25 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/core"
 )
 
-func renderCompanion(r *core.Resource, target string, g *core.Graph) ([]byte, error) {
+func renderCompanion(r *core.Resource, target string, g *core.Graph, navigation *proseNavigation) ([]byte, error) {
 	var b strings.Builder
 	b.WriteString("<!-- " + Marker + "; source: " + r.Path + " -->\n")
 	b.WriteString("# " + r.Kind + ": " + r.Metadata.Name + "\n\n")
+	var prose strings.Builder
 	if r.Spec.Description != "" {
-		b.WriteString("**Description:** " + r.Spec.Description + "\n\n")
+		prose.WriteString("**Description:** " + r.Spec.Description + "\n\n")
 	}
 	if r.Spec.Text != "" {
-		b.WriteString(r.Spec.Text)
+		prose.WriteString(r.Spec.Text)
 		if !strings.HasSuffix(r.Spec.Text, "\n") {
-			b.WriteByte('\n')
+			prose.WriteByte('\n')
 		}
 	}
+	text, err := navigation.rewrite(prose.String(), r, target, true)
+	if err != nil {
+		return nil, err
+	}
+	b.WriteString(text)
 	links := dependencyLinks(r, target, g, true)
 	if len(links) > 0 {
 		b.WriteString("\n## Dependencies\n\n")
