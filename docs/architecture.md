@@ -1,8 +1,8 @@
 # Architecture
 
-**Status:** This document describes the v0.10.0 architecture now shipped and identifies its boundaries. The [roadmap](implementation-plan.md) owns verified delivery status, [Usage](usage.md) owns supported syntax, and the [canonical engineering plan](canonical-engineering-plan.md) owns model decisions. Check [GitHub Releases](https://github.com/Glacius-Labs/Markitect/releases) for available distributions.
+**Status:** This document describes the v0.11.0 architecture now shipped and identifies its boundaries; v0.10.0 remains the historical baseline for the generic canonical engineering model. The [roadmap](implementation-plan.md) owns verified delivery status, [Usage](usage.md) owns supported syntax, and the [canonical engineering plan](canonical-engineering-plan.md) owns model decisions. Check [GitHub Releases](https://github.com/Glacius-Labs/Markitect/releases) for available distributions.
 
-The v0.11.0 source candidate extends the same kernel with per-subject policy results and exact, digest-bound Project exceptions. Architecture forms remain Domain/package contracts; discovery and architecture-change assistance remain explicit authoring workflows. [Engineering constitutions](engineering-constitution.md) defines those decisions and limits. Generated Domain contracts and resource policy outcomes require the Project's explicit Markdown target.
+v0.11.0 adds per-subject PolicyResults, narrowly scoped digest-bound Project exceptions, and a provider-independent Copy Me authoring workflow. Architecture contracts remain versioned Domain/package contracts; discovery proposals require explicit human adoption. The [engineering constitution](engineering-constitution.md) defines these decisions and limits. Generated Domain contracts and resource policy outcomes require the Project's explicit Markdown target.
 
 ## Purpose
 
@@ -38,7 +38,7 @@ Every result identifies its fixed source snapshot, Domain and Project configurat
 
 ## Current implementation boundary
 
-The v0.10.0 implementation loads Domain definitions before generic resource instances, resolves typed custom-domain relations within their API version, evaluates the finite constraint operators, and supplies a normalized semantic model to context, impact, projections, and configured adapters. The bundled AI-working Domain can explicitly reference registered custom-domain resources through qualified `uses` references. Constraints are structural and finite; there is no arbitrary policy code, source-language semantics, or claim that modeled prose is true. Relation context, invalidation, and acyclic behavior remain separately declared. External state is observed through explicit adapters; apply does not grant human approval. See the [roadmap](implementation-plan.md) for the consumer proof and exact evidence limits.
+v0.11.0 retains the v0.10.0 generic Domain registry, normalized model, relation semantics, projections, and explicit adapters. It adds `count.scope`, per-constraint/per-subject PolicyResults, source-bound per-resource exceptions, and a provider-independent discovery workflow over explicitly selected fixed evidence. Architecture traits that constrain the same resource shape are composed in one Domain for the active API version; a `conformsTo` relation does not activate another Domain's constraints. The kernel remains finite and structural: it does not interpret source-code semantics, authenticate exception decisions, or establish that modeled prose is true. Generated Domain contracts and resource policy outcomes require the explicit Markdown target. Human adoption and real-world product benefit remain outside what these machine checks prove. See the [roadmap](implementation-plan.md) and its linked v0.11.0 scenarios for shipped coverage and evidence limits.
 
 ## Project artifact boundary
 
