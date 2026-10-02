@@ -8,18 +8,19 @@ import (
 )
 
 type report struct {
-	Tool        string            `yaml:"tool"`
-	Version     string            `yaml:"version"`
-	ToolDigest  string            `yaml:"toolDigest,omitempty"`
-	Revision    string            `yaml:"revision,omitempty"`
-	Provisional bool              `yaml:"provisional"`
-	Digest      string            `yaml:"digest,omitempty"`
-	Status      string            `yaml:"status"`
-	Coverage    string            `yaml:"coverage"`
-	Inventory   []app.Entry       `yaml:"inventory,omitempty"`
-	Diagnostics []core.Diagnostic `yaml:"diagnostics,omitempty"`
-	Files       []string          `yaml:"files,omitempty"`
-	Gates       []app.GateResult  `yaml:"gates,omitempty"`
+	Tool          string              `yaml:"tool"`
+	Version       string              `yaml:"version"`
+	ToolDigest    string              `yaml:"toolDigest,omitempty"`
+	Revision      string              `yaml:"revision,omitempty"`
+	Provisional   bool                `yaml:"provisional"`
+	Digest        string              `yaml:"digest,omitempty"`
+	Status        string              `yaml:"status"`
+	Coverage      string              `yaml:"coverage"`
+	Inventory     []app.Entry         `yaml:"inventory,omitempty"`
+	Diagnostics   []core.Diagnostic   `yaml:"diagnostics,omitempty"`
+	PolicyResults []core.PolicyResult `yaml:"policyResults,omitempty"`
+	Files         []string            `yaml:"files,omitempty"`
+	Gates         []app.GateResult    `yaml:"gates,omitempty"`
 }
 
 type queryEnvelope struct {

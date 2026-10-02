@@ -9,12 +9,21 @@ Received 2026-10-02:
 - [Core modeling language design proposal](sources/markitect-core-modeling-language-design.md)
 - [Strategic positioning and validation proposal](markitect-strategic-positioning-and-validation.md)
 
+Received 2026-10-02, follow-up concepts:
+
+- [AI-first executable engineering constitution](sources/01-ai-first-executable-engineering-constitution.md)
+- [Reusable architecture patterns and project shapes](sources/02-reusable-architecture-patterns-and-project-shapes.md)
+- [Copy Me engineering-style discovery](sources/03-copy-me-engineering-style-discovery.md)
+- [Follow-up concepts index](sources/follow-up-concepts-readme.md)
+
 ## How to read these sources
 
 The proposals contain product claims, design options, recommendations, and imperatives. They are discussion inputs. Their market claims and expected business benefits have not been independently verified, and their recommendations do not automatically define Markitect scope. The repository's [architecture](../architecture.md), [refinement decisions](../refinement.md), [canonical engineering plan](../canonical-engineering-plan.md), [roadmap](../implementation-plan.md), and [usage contract](../usage.md) define adopted behavior and delivery status.
 
-The adopted direction takes the proposals' small generic kernel, explicit Domains and relationships, shared structured values for documentation, agent guidance, and deterministic checks, and specialist tools behind explicit adapters. The first end-to-end demonstration should prove one bounded, recurring policy slice through those consumers before the product generalizes further. It keeps semantic truth, human review, and authorization outside machine evidence. The product benefit remains a hypothesis: fewer manual copies and missed updates, lower synchronization effort, and more targeted coverage must be measured on real repeated tasks. Prompt volume alone is not a success measure.
+v0.10.0 is published. The adopted v0.11.0 direction reuses existing versioned package Domains as ongoing architecture contracts, keeps architecture kinds and constraints in the generic Domain mechanism, adds bounded PolicyResults and narrowly scoped explicit exceptions, and includes a provider-independent Copy Me authoring workflow. It does not adopt a Core Pattern kind or separate pattern DSL, automatic code migration, a discovery CLI, or model calls in the Markitect core. See the [engineering constitution](../engineering-constitution.md) for adopted scope and precise evidence boundaries. These follow-up ideas are not shipped behavior until the roadmap records them as released.
+
+The product benefit remains a hypothesis: fewer manual copies and missed updates, lower synchronization effort, more targeted coverage, and safer agent autonomy must be measured on repeated real tasks. Prompt volume alone is not a success measure. Discovery evidence and counterexamples are proposals; human adoption, not observed frequency, makes a pattern canonical.
 
 The initial constraint operators are finite and deterministic. Comparing that language with specialist policy tools such as CUE or OPA remains an evaluation question driven by concrete examples, not an automatic scope expansion.
 
-The version target is v0.10.0. Its roadmap is the implementation source of truth; this archive preserves provenance and records strategic context only.
+The v0.11.0 roadmap is the implementation source of truth; this archive preserves provenance and records strategic context only.

@@ -1,0 +1,8 @@
+apiVersion: markitect.example.org/v1alpha1
+kind: Project
+metadata:
+    name: engineering-discovery-example
+spec:
+    areas:
+        - name: discovery
+          path: .markitect/areas/discovery

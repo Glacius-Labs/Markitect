@@ -3,11 +3,99 @@ package format
 import (
 	"fmt"
 	"path"
+	"regexp"
 	"strings"
+	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/core"
 	"go.yaml.in/yaml/v3"
 )
+
+var policyDigestPattern = regexp.MustCompile(`^sha256:[0-9a-f]{64}$`)
+var policyAPIVersionPattern = regexp.MustCompile(`^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)*/[A-Za-z_][A-Za-z0-9_-]*$`)
+var policyConstraintPattern = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_-]*$`)
+
+func validatePolicyDate(file string, n *yaml.Node, field string) error {
+	if err := checkScalar(file, n, "string"); err != nil {
+		return err
+	}
+	if _, err := time.Parse("2006-01-02", n.Value); err != nil {
+		return diagnostic(file, n.Line, "%s must be a valid YYYY-MM-DD date", field)
+	}
+	return nil
+}
+
+func validatePolicyExceptions(file string, n, policyDate *yaml.Node) error {
+	if err := requireSequence(file, n, "policyExceptions"); err != nil {
+		return err
+	}
+	if len(n.Content) > 64 {
+		return diagnostic(file, n.Line, "policyExceptions may contain at most 64 entries")
+	}
+	if policyDate != nil {
+		if err := validatePolicyDate(file, policyDate, "policyDate"); err != nil {
+			return err
+		}
+	}
+	names, targets := map[string]bool{}, map[string]bool{}
+	for _, item := range n.Content {
+		if err := requireMapping(file, item, "policy exception"); err != nil {
+			return err
+		}
+		if err := checkKeys(file, item, set("name", "apiVersion", "constraint", "subject", "constraintDigest", "subjectDigest", "rationale", "owner", "decision", "expiresOn")); err != nil {
+			return err
+		}
+		if err := requireFields(file, item, "name", "apiVersion", "constraint", "subject", "constraintDigest", "subjectDigest", "rationale", "owner", "decision"); err != nil {
+			return err
+		}
+		values := map[string]*yaml.Node{}
+		for _, field := range []string{"name", "apiVersion", "constraint", "subject", "constraintDigest", "subjectDigest", "rationale", "owner", "decision", "expiresOn"} {
+			v := child(item, field)
+			if v == nil {
+				continue
+			}
+			if err := checkScalar(file, v, "string"); err != nil {
+				return err
+			}
+			values[field] = v
+			if field != "expiresOn" && strings.TrimSpace(v.Value) == "" {
+				return diagnostic(file, v.Line, "policy exception %s must not be empty", field)
+			}
+		}
+		if !validName(values["name"].Value) {
+			return diagnostic(file, values["name"].Line, "policy exception name must be a DNS label")
+		}
+		if names[values["name"].Value] {
+			return diagnostic(file, values["name"].Line, "duplicate policy exception name %q", values["name"].Value)
+		}
+		names[values["name"].Value] = true
+		if !policyAPIVersionPattern.MatchString(values["apiVersion"].Value) {
+			return diagnostic(file, values["apiVersion"].Line, "policy exception apiVersion must be a valid group/version")
+		}
+		if !policyConstraintPattern.MatchString(values["constraint"].Value) {
+			return diagnostic(file, values["constraint"].Line, "policy exception constraint must be an identifier")
+		}
+		for _, field := range []string{"constraintDigest", "subjectDigest"} {
+			if !policyDigestPattern.MatchString(values[field].Value) {
+				return diagnostic(file, values[field].Line, "policy exception %s must be sha256: followed by 64 lowercase hex characters", field)
+			}
+		}
+		target := values["apiVersion"].Value + "\x00" + values["constraint"].Value + "\x00" + values["subject"].Value
+		if targets[target] {
+			return diagnostic(file, values["subject"].Line, "duplicate policy exception target for constraint %q and subject %q", values["constraint"].Value, values["subject"].Value)
+		}
+		targets[target] = true
+		if expiry := values["expiresOn"]; expiry != nil {
+			if policyDate == nil {
+				return diagnostic(file, expiry.Line, "policyDate is required when a policy exception has expiresOn")
+			}
+			if err := validatePolicyDate(file, expiry, "policy exception expiresOn"); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
 
 func validateChecks(file string, n *yaml.Node) error {
 	if err := requireSequence(file, n, "checks"); err != nil {

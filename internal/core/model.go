@@ -10,6 +10,12 @@ import (
 
 const APIVersion = "markitect.example.org/v1alpha1"
 
+const (
+	PolicyPassed = "passed"
+	PolicyFailed = "failed"
+	PolicyWaived = "waived"
+)
+
 type Metadata struct {
 	Name      string            `yaml:"name"`
 	Namespace string            `yaml:"namespace,omitempty"`
@@ -91,12 +97,46 @@ type ConstraintDefinition struct {
 
 type ConstraintAssertion struct {
 	Op       string `yaml:"op"`
+	Scope    string `yaml:"scope,omitempty"`
 	Field    string `yaml:"field,omitempty"`
 	Relation string `yaml:"relation,omitempty"`
 	Value    any    `yaml:"value,omitempty"`
 	Values   []any  `yaml:"values,omitempty"`
 	Min      *int   `yaml:"min,omitempty"`
 	Max      *int   `yaml:"max,omitempty"`
+}
+
+// PolicyException is a source-bound, explicit waiver for one failing
+// per-resource constraint result. It carries no identity or approval proof.
+type PolicyException struct {
+	Name             string `yaml:"name"`
+	APIVersion       string `yaml:"apiVersion"`
+	Constraint       string `yaml:"constraint"`
+	Subject          string `yaml:"subject"`
+	ConstraintDigest string `yaml:"constraintDigest"`
+	SubjectDigest    string `yaml:"subjectDigest"`
+	Rationale        string `yaml:"rationale"`
+	Owner            string `yaml:"owner"`
+	Decision         string `yaml:"decision"`
+	ExpiresOn        string `yaml:"expiresOn,omitempty"` // Exclusive; policyDate >= expiresOn is expired.
+}
+
+// PolicyResult is the deterministic evaluation of one constraint against one
+// subject, or a selected collection when Subject is empty.
+type PolicyResult struct {
+	APIVersion       string `yaml:"apiVersion"`
+	Constraint       string `yaml:"constraint"`
+	Subject          string `yaml:"subject"`
+	Status           string `yaml:"status"`
+	Message          string `yaml:"message,omitempty"`
+	ConstraintDigest string `yaml:"constraintDigest"`
+	SubjectDigest    string `yaml:"subjectDigest"`
+	ExceptionName    string `yaml:"exceptionName,omitempty"`
+	Rationale        string `yaml:"rationale,omitempty"`
+	Owner            string `yaml:"owner,omitempty"`
+	Decision         string `yaml:"decision,omitempty"`
+	ExpiresOn        string `yaml:"expiresOn,omitempty"`
+	PolicyDate       string `yaml:"policyDate,omitempty"` // Explicit as-of date; no wall clock is consulted.
 }
 
 type AdapterConfig struct {
@@ -185,25 +225,27 @@ type Consistency struct {
 type Spec struct {
 	Text string `yaml:"text,omitempty"`
 	// Files lists explicit repository-relative non-Markitect inputs needed by this resource.
-	Files         []string        `yaml:"files,omitempty"`
-	Description   string          `yaml:"description,omitempty"`
-	Rules         []Ref           `yaml:"rules,omitempty"`
-	Uses          []Ref           `yaml:"uses,omitempty"`
-	Needs         []Ref           `yaml:"needs,omitempty"`
-	Implements    []Ref           `yaml:"implements,omitempty"`
-	Input         []string        `yaml:"input,omitempty"`
-	Output        []string        `yaml:"output,omitempty"`
-	Kind          string          `yaml:"kind,omitempty"`
-	Check         string          `yaml:"check,omitempty"`
-	Providers     Providers       `yaml:"providers,omitempty"`
-	Assertions    []Assertion     `yaml:"assertions,omitempty"`
-	Targets       []string        `yaml:"targets,omitempty"`
-	Areas         []Area          `yaml:"areas,omitempty"`
-	Bindings      []Binding       `yaml:"bindings,omitempty"`
-	Checks        []Check         `yaml:"checks,omitempty"`
-	Documentation *Documentation  `yaml:"documentation,omitempty"`
-	Domains       []string        `yaml:"domains,omitempty"`
-	Adapters      []AdapterConfig `yaml:"adapters,omitempty"`
+	Files            []string          `yaml:"files,omitempty"`
+	Description      string            `yaml:"description,omitempty"`
+	Rules            []Ref             `yaml:"rules,omitempty"`
+	Uses             []Ref             `yaml:"uses,omitempty"`
+	Needs            []Ref             `yaml:"needs,omitempty"`
+	Implements       []Ref             `yaml:"implements,omitempty"`
+	Input            []string          `yaml:"input,omitempty"`
+	Output           []string          `yaml:"output,omitempty"`
+	Kind             string            `yaml:"kind,omitempty"`
+	Check            string            `yaml:"check,omitempty"`
+	Providers        Providers         `yaml:"providers,omitempty"`
+	Assertions       []Assertion       `yaml:"assertions,omitempty"`
+	Targets          []string          `yaml:"targets,omitempty"`
+	Areas            []Area            `yaml:"areas,omitempty"`
+	Bindings         []Binding         `yaml:"bindings,omitempty"`
+	Checks           []Check           `yaml:"checks,omitempty"`
+	Documentation    *Documentation    `yaml:"documentation,omitempty"`
+	Domains          []string          `yaml:"domains,omitempty"`
+	Adapters         []AdapterConfig   `yaml:"adapters,omitempty"`
+	PolicyDate       string            `yaml:"policyDate,omitempty"`
+	PolicyExceptions []PolicyException `yaml:"policyExceptions,omitempty"`
 	// Rules map provider rule entrypoint names to owning sources. This also
 	// supports several canonical sources behind one legacy entrypoint.
 	RuleAdapters     map[string][]Ref  `yaml:"ruleAdapters,omitempty"`
@@ -309,6 +351,7 @@ type Graph struct {
 	Registry          *Registry
 	Diagnostics       []Diagnostic
 	InvalidationEdges map[string][]string
+	PolicyResults     []PolicyResult
 }
 
 // Relationship records why a resolved graph edge exists. Edges remains the

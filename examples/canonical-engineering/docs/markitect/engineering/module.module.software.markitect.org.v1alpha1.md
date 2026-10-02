@@ -18,3 +18,9 @@
 ## Applicable constraints
 
 - **application-modules-use-core:** `dependsOn` relationships may target only kinds `Core`. Explanation: Application modules are subject to this declared dependency-target rule.
+
+## Policy outcomes
+
+| Constraint | Subject | Status | Result | Waiver details |
+| --- | --- | --- | --- | --- |
+| `application-modules-use-core` | [engineering/Module: orders](module.module.software.markitect.org.v1alpha1.md) | **PASSED** | Constraint passed. | — |

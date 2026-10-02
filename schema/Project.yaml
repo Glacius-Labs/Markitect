@@ -257,6 +257,49 @@ properties:
                         - sha256
                     type: object
                 type: array
+            policyDate:
+                format: date
+                type: string
+            policyExceptions:
+                items:
+                    additionalProperties: false
+                    properties:
+                        apiVersion:
+                            type: string
+                        constraint:
+                            type: string
+                        constraintDigest:
+                            pattern: ^sha256:[0-9a-f]{64}$
+                            type: string
+                        decision:
+                            type: string
+                        expiresOn:
+                            format: date
+                            type: string
+                        name:
+                            type: string
+                        owner:
+                            type: string
+                        rationale:
+                            type: string
+                        subject:
+                            type: string
+                        subjectDigest:
+                            pattern: ^sha256:[0-9a-f]{64}$
+                            type: string
+                    required:
+                        - name
+                        - apiVersion
+                        - constraint
+                        - subject
+                        - constraintDigest
+                        - subjectDigest
+                        - rationale
+                        - owner
+                        - decision
+                    type: object
+                maxItems: 64
+                type: array
             providerAdapters:
                 additionalProperties: false
                 properties:

@@ -1,0 +1,11 @@
+apiVersion: markitect.example.org/v1alpha1
+kind: Skill
+metadata:
+    name: engineering-discovery
+    namespace: discovery
+spec:
+    text: This fixture demonstrates a discovery process, not a product claim. Use only the exact evidence selected by the owner. Keep hypotheses, contrary examples, and the human decision separate.
+    description: Run a human-led, evidence-bound engineering-style discovery exercise.
+    uses:
+        - kind: Workflow
+          name: discovery-pilot

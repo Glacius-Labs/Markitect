@@ -100,6 +100,24 @@ jobs:
       - name: Check canonical engineering formatting
         run: go run ./cmd/markitect format --repo examples/canonical-engineering
 
+      - name: Check reusable engineering constitution
+        run: go run ./cmd/markitect check --repo examples/engineering-constitution
+
+      - name: Compile engineering constitution context
+        run: go run ./cmd/markitect context --repo examples/engineering-constitution --namespace engineering --kind Skill --name add-order
+
+      - name: Compile engineering constitution model
+        run: go run ./cmd/markitect model --repo examples/engineering-constitution
+
+      - name: Check engineering constitution formatting
+        run: go run ./cmd/markitect format --repo examples/engineering-constitution
+
+      - name: Check discovery workflow example
+        run: go run ./cmd/markitect check --repo examples/engineering-discovery
+
+      - name: Check discovery workflow formatting
+        run: go run ./cmd/markitect format --repo examples/engineering-discovery
+
       - name: Replay onboarding workflow
         if: runner.os == 'Windows'
         shell: pwsh

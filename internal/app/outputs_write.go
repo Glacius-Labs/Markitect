@@ -126,15 +126,36 @@ func writeOutputs(root string, p *Project, selected []string) ([]string, error) 
 			return nil, fmt.Errorf("output removed since source capture: %s", name)
 		}
 	}
-	// Recheck all YAML source bytes, including configuration, before output writes.
+	// Imported resources and Domain definitions are immutable archive members,
+	// not paths in the consumer checkout. Recheck their physical pinned archives
+	// together with local canonical sources before writing any output.
+	sourcePaths := map[string]bool{}
 	for _, r := range p.Resources {
-		dest, err := safeDestination(root, r.Path)
+		if r.Package == "" {
+			sourcePaths[r.Path] = true
+		}
+	}
+	for _, domain := range p.DomainInputs {
+		if domain.Package == "" {
+			sourcePaths[domain.Path] = true
+		}
+	}
+	for _, pin := range p.Graph.Project.Spec.Packages {
+		sourcePaths[pin.Archive] = true
+	}
+	physicalSources := make([]string, 0, len(sourcePaths))
+	for name := range sourcePaths {
+		physicalSources = append(physicalSources, name)
+	}
+	sort.Strings(physicalSources)
+	for _, name := range physicalSources {
+		dest, err := safeDestination(root, name)
 		if err != nil {
 			return nil, err
 		}
 		current, err := os.ReadFile(dest)
-		if err != nil || !bytes.Equal(current, p.Snapshot.Files[r.Path]) {
-			return nil, fmt.Errorf("source changed since capture: %s", r.Path)
+		if err != nil || !bytes.Equal(current, p.Snapshot.Files[name]) {
+			return nil, fmt.Errorf("source changed since capture: %s", name)
 		}
 	}
 	var written []string

@@ -2,6 +2,8 @@
 
 **Status:** This document describes the v0.10.0 architecture now shipped and identifies its boundaries. The [roadmap](implementation-plan.md) owns verified delivery status, [Usage](usage.md) owns supported syntax, and the [canonical engineering plan](canonical-engineering-plan.md) owns model decisions. Check [GitHub Releases](https://github.com/Glacius-Labs/Markitect/releases) for available distributions.
 
+The v0.11.0 source candidate extends the same kernel with per-subject policy results and exact, digest-bound Project exceptions. Architecture forms remain Domain/package contracts; discovery and architecture-change assistance remain explicit authoring workflows. [Engineering constitutions](engineering-constitution.md) defines those decisions and limits. Generated Domain contracts and resource policy outcomes require the Project's explicit Markdown target.
+
 ## Purpose
 
 Markitect is an engineering knowledge and change compiler. Teams define descriptive engineering models and normative policy as canonical, versioned resources. Markitect validates their declared structure and relationships, calculates bounded change impact, and supplies the same normalized model to documentation, agent-context, verification, and external-system adapters.

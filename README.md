@@ -11,6 +11,8 @@ Markitect is a compiler-like system for **canonical engineering knowledge**. It 
 
 The v0.10.0 release provides a generic canonical engineering model: Projects load versioned Domains, validate typed resources and relations, evaluate finite deterministic constraints, and expose one normalized semantic model to context, impact, projections, and configured adapters. Markitect does this without a model API. Exact declared project-artifact inputs remain opaque to the kernel; it does not infer their domain-specific meaning. See the [product boundary](docs/architecture.md#project-artifact-boundary).
 
+The v0.11.0 source candidate builds on that foundation with [reusable engineering constitutions](docs/engineering-constitution.md): package-owned architecture contracts, generated Domain views, per-subject policy outcomes and explicit, source-bound exceptions. A supplied discovery workflow helps an authoring agent prepare evidence-backed proposals for human review; it does not automatically adopt inferred rules. The [roadmap](docs/implementation-plan.md) owns delivery status.
+
 > **AI should implement your architecture, not reinvent it on every task.**
 
 ## Why Markitect?

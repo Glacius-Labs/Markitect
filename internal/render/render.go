@@ -80,6 +80,10 @@ func GenerateWithOwners(g *core.Graph, files map[string][]byte) (map[string][]by
 		if err != nil {
 			return nil, nil, err
 		}
+		domainPaths, err := DomainMarkdownPaths(g)
+		if err != nil {
+			return nil, nil, err
+		}
 		views := make([]string, 0, len(viewPaths))
 		for view := range viewPaths {
 			views = append(views, view)
@@ -95,8 +99,24 @@ func GenerateWithOwners(g *core.Graph, files map[string][]byte) (map[string][]by
 				return nil, nil, err
 			}
 		}
-		if len(viewPaths) > 0 {
-			if err := addMarkdownNavigation(outputs, ownerSets, viewPaths, g.Project.Key()); err != nil {
+		domains := make([]string, 0, len(domainPaths))
+		for view := range domainPaths {
+			domains = append(domains, view)
+		}
+		sort.Strings(domains)
+		for _, view := range domains {
+			domain := domainPaths[view]
+			content, err := renderDomainContract(domain, view, g)
+			if err != nil {
+				return nil, nil, err
+			}
+			owner := "domain:" + domain.APIVersion + "/" + domain.Name
+			if err := addOwned(outputs, ownerSets, view, content, owner); err != nil {
+				return nil, nil, err
+			}
+		}
+		if len(viewPaths) > 0 || len(domainPaths) > 0 {
+			if err := addMarkdownNavigation(outputs, ownerSets, viewPaths, domainPaths, g.Project.Key()); err != nil {
 				return nil, nil, err
 			}
 		}

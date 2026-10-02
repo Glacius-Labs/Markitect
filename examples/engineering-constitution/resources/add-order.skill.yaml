@@ -1,0 +1,26 @@
+apiVersion: markitect.example.org/v1alpha1
+kind: Skill
+metadata:
+    name: add-order
+    namespace: engineering
+spec:
+    text: |
+        Use the selected architecture resources and the pinned Constitution
+        package as the contract. Preserve the declared UseCase-to-Module and
+        UseCase-to-Handler relations. Add optional behavior through an approved
+        extension kind. Report each failed or waived policy result, including its
+        subject and decision; a waiver is not a passing check.
+    description: Add a UseCase within the pinned engineering constitution.
+    uses:
+        - apiVersion: engineering.markitect.org/v1alpha1
+          kind: UseCase
+          name: create-order
+          namespace: engineering
+        - apiVersion: engineering.markitect.org/v1alpha1
+          kind: Module
+          name: orders
+          namespace: engineering
+        - kind: Workflow
+          name: vertical-slice
+          namespace: constitution
+          package: engineering-constitution

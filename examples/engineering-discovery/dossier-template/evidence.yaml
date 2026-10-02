@@ -1,0 +1,31 @@
+version: markitect.example.org/engineering-discovery-evidence/v1alpha1
+repository: FILL_IN_STABLE_REPOSITORY_ID
+revision: FILL_IN_FULL_COMMIT_SHA
+snapshotDigest: FILL_IN_CONTEXT_REPORT
+entry: engineering/Skill/architecture-review
+toolVersion: FILL_IN_CONTEXT_REPORT
+toolDigest: FILL_IN_CONTEXT_REPORT
+run:
+  path: context-run.yaml
+  manifestHash: FILL_IN_CONTEXT_REPORT
+  selectionHash: FILL_IN_CONTEXT_REPORT
+  contextDigest: FILL_IN_CONTEXT_REPORT
+sources:
+  - id: E-01
+    stance: supports
+    path: src/Refund/Handler.cs
+    hash: FILL_IN_CONTEXT_REPORT
+    excerpt: public sealed class Handler
+    note: Selected recent use-case structure; observation only.
+  - id: E-02
+    stance: counterexample
+    path: src/Services/RefundService.cs
+    hash: FILL_IN_CONTEXT_REPORT
+    excerpt: public sealed class RefundService
+    note: Older service-centric structure; retain as contrary evidence.
+  - id: E-03
+    stance: qualifies
+    path: docs/decisions/service-transition.md
+    hash: FILL_IN_CONTEXT_REPORT
+    excerpt: The older RefundService remains while existing callers migrate.
+    note: Explicitly describes migration context but does not settle preferred future policy.
