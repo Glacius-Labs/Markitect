@@ -1,0 +1,159 @@
+{
+  "evidenceType": "agents-md-comparison-preparation",
+  "schemaVersion": 1,
+  "frozenManifestSha256": "e085ec47e2da0a62e07bf1d526be5dab9a35c7c53cf9d5e7cde185cb31125c3e",
+  "oracleFreezeSha256": "819f127c60ed4ee19ad0d9e7f2fc8cd5a6290dfa7de6baeb5a4c47b17027f74e",
+  "sourceBundle": "<MARKITECT>\\experiments\\real-project-adoption\\evidence\\adopter-snapshots.bundle",
+  "sourceBundleSha256": "af9dbdc750f376b5250b61a451c1d124fe363fd87cce87684804b292149311cc",
+  "markitectExecutableSha256": "6aae29acf67217b9538a2076ff199102b44c84183f2e0dff4718584e84e064df",
+  "workspaces": [
+    {
+      "id": "t3-simple",
+      "task": "t3",
+      "arm": "simple",
+      "originalRevision": "fd94a689aab857704c3a4a45ac2abe0fc0e3185c",
+      "exportedRevision": "fd94a689aab857704c3a4a45ac2abe0fc0e3185c",
+      "overlayRevision": null,
+      "overlayPath": null,
+      "sourceManifestSha256": "99fe6a51fa51cbd21cfc1c405c1a9743c4487ff2f5502358b864a4fefcb05c09",
+      "sourceManifestPath": "operator/source-manifests/t3.json",
+      "fullTreeFileCount": 0,
+      "fullTreeManifestPath": null,
+      "fullTreeManifestSha256": null,
+      "baseCommit": "ae9035f3d7a493673122d72a5100392d9dd1a744",
+      "candidateCommit": "ae9035f3d7a493673122d72a5100392d9dd1a744",
+      "workspace": "<R3>\\workspaces\\t3-simple\\checkout",
+      "compiledInputs": [],
+      "frozenWorkspaceAssets": [
+        {
+          "path": "AGENTS.md",
+          "sha256": "844b426a9d952de6f0019463393670ef92c2ea2f6971b03f6f267ab595957df2",
+          "bytes": 2666
+        },
+        {
+          "path": ".tools/architecture-check/MeetingsArchitectureCheck.csproj",
+          "sha256": "ecd0ef45f7e286e167971f7c0b867cb6a458ff629973331c9ac6dd07dbea0082",
+          "bytes": 927
+        },
+        {
+          "path": ".tools/architecture-check/TestBase.cs",
+          "sha256": "ff7da1cb080ccf7d96b75f72d23b95028d052391d7649eb9ad25d1d41c8a4938",
+          "bytes": 1194
+        },
+        {
+          "path": ".tools/architecture-check/LICENSE",
+          "sha256": "e7e663ebd3dd4d6987f539743dba33750576870d51c2192500ea45d06adffa80",
+          "bytes": 1091
+        },
+        {
+          "path": "docs/engineering-policy.md",
+          "sha256": "3fad7de63b29ffd32b893956b88314d0e3471249af8dc774fcf4ff565e637296",
+          "bytes": 377
+        }
+      ],
+      "preparationCommands": [],
+      "pendingPreparationCommands": [],
+      "readHelperSha256": "d7c7016b7bb27d05f6b303906d7fa131bbf9650307c9fdfa456b31e07c903dbe",
+      "automaticAgentInstructions": [
+        {
+          "path": "AGENTS.md",
+          "sha256": "844b426a9d952de6f0019463393670ef92c2ea2f6971b03f6f267ab595957df2",
+          "bytes": 2666
+        }
+      ],
+      "markitectExecutableSha256": null,
+      "previousPreparedWorkspace": "<R2>\\workspaces\\t3-simple\\checkout"
+    },
+    {
+      "id": "t3-markitect",
+      "task": "t3",
+      "arm": "markitect",
+      "originalRevision": "fd94a689aab857704c3a4a45ac2abe0fc0e3185c",
+      "exportedRevision": "fd94a689aab857704c3a4a45ac2abe0fc0e3185c",
+      "overlayRevision": "",
+      "overlayPath": null,
+      "sourceManifestSha256": "99fe6a51fa51cbd21cfc1c405c1a9743c4487ff2f5502358b864a4fefcb05c09",
+      "sourceManifestPath": "operator/source-manifests/t3.json",
+      "fullTreeFileCount": 794,
+      "fullTreeManifestPath": "operator/canonical-tree-manifests/t3.json",
+      "fullTreeManifestSha256": "15f1a460743546e1cd804821742a81efdb2b0c6f512efa0913d53f1bd0f75535",
+      "baseCommit": "ba66728b9b87f6c38abc02ddba1c8d0fbc5ec8e3",
+      "candidateCommit": "ba66728b9b87f6c38abc02ddba1c8d0fbc5ec8e3",
+      "workspace": "<R3>\\workspaces\\t3-markitect\\checkout",
+      "compiledInputs": [
+        {
+          "command": [
+            "context",
+            "--repo",
+            "<R3>\\workspaces\\t3-markitect\\checkout",
+            "--revision",
+            "ba66728b9b87f6c38abc02ddba1c8d0fbc5ec8e3",
+            "--namespace",
+            "architecture",
+            "--kind",
+            "UseCase",
+            "--name",
+            "get-meeting-attendees",
+            "--api-version",
+            "architecture.mymeetings.example/v1alpha1"
+          ],
+          "expectedExitCode": 0,
+          "exitCode": 0,
+          "output": ".agent-input/context.yaml",
+          "sha256": "f54ed22266ec306803d293ec6ac95daa60824296718116b860224b873110efa8",
+          "bytes": 48434,
+          "scope": {
+            "kind": "UseCase",
+            "name": "get-meeting-attendees",
+            "namespace": "architecture"
+          },
+          "r2InputSha256": "f54ed22266ec306803d293ec6ac95daa60824296718116b860224b873110efa8",
+          "sameBytesAfterRelocation": true
+        }
+      ],
+      "frozenWorkspaceAssets": [
+        {
+          "path": ".tools/architecture-check/MeetingsArchitectureCheck.csproj",
+          "sha256": "ecd0ef45f7e286e167971f7c0b867cb6a458ff629973331c9ac6dd07dbea0082",
+          "bytes": 927
+        },
+        {
+          "path": ".tools/architecture-check/TestBase.cs",
+          "sha256": "ff7da1cb080ccf7d96b75f72d23b95028d052391d7649eb9ad25d1d41c8a4938",
+          "bytes": 1194
+        },
+        {
+          "path": ".tools/architecture-check/LICENSE",
+          "sha256": "e7e663ebd3dd4d6987f539743dba33750576870d51c2192500ea45d06adffa80",
+          "bytes": 1091
+        }
+      ],
+      "preparationCommands": [],
+      "pendingPreparationCommands": [],
+      "readHelperSha256": "d7c7016b7bb27d05f6b303906d7fa131bbf9650307c9fdfa456b31e07c903dbe",
+      "automaticAgentInstructions": [],
+      "markitectExecutableSha256": "6aae29acf67217b9538a2076ff199102b44c84183f2e0dff4718584e84e064df",
+      "previousPreparedWorkspace": "<R2>\\workspaces\\t3-markitect\\checkout"
+    }
+  ],
+  "auditRoots": [
+    "<MARKITECT>",
+    "<AUDIT-REPO-1>",
+    "<MARKITECT>",
+    "<R3>\\workspaces\\t3-markitect\\checkout",
+    "<R3>\\workspaces\\t3-simple\\checkout",
+    "<R2>\\workspaces\\t1-markitect\\checkout",
+    "<R2>\\workspaces\\t1-simple\\checkout",
+    "<R2>\\workspaces\\t2-markitect\\checkout",
+    "<R2>\\workspaces\\t2-simple\\checkout",
+    "<R2>\\workspaces\\t3-markitect\\checkout",
+    "<R2>\\workspaces\\t3-simple\\checkout"
+  ],
+  "status": "paired task3 relocation before either r3 agent; r2 simple blocked unchanged",
+  "pretrialAmendment": {
+    "reason": "Common architecture runner smoke test passed 10 tests; add bin/obj/TestResults to noncanonical Git ignores for both arms. No source/context/task/oracle changes; no r2 agent had started.",
+    "oldManifestSha256": "f15c5adea8a5d70ee34fd87b6fe68829c718a87a52ef1cb3aca22b841df05ab1",
+    "newManifestSha256": "e085ec47e2da0a62e07bf1d526be5dab9a35c7c53cf9d5e7cde185cb31125c3e"
+  },
+  "experimentId": "agents-md-vs-markitect-2026-10-03-task3-r3"
+}

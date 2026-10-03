@@ -1,0 +1,87 @@
+{
+  "status": "complete",
+  "executionMode": "fresh-collaboration-agent",
+  "runId": "t2-markitect",
+  "task": "t2",
+  "arm": "markitect",
+  "workspace": "<R2>\\workspaces\\t2-markitect\\checkout",
+  "preparedManifestSha256": "e085ec47e2da0a62e07bf1d526be5dab9a35c7c53cf9d5e7cde185cb31125c3e",
+  "frozenManifestSha256": "e085ec47e2da0a62e07bf1d526be5dab9a35c7c53cf9d5e7cde185cb31125c3e",
+  "sourceManifestSha256": "61f0774164179d61018a2f862354b12e24928d1b77e039581abaf17df221f671",
+  "candidateCommit": "286bfa78c87f770a3c2c2208f2eaef4f96ecd969",
+  "promptSha256": "41da3800f657e572b5696bd45e35976768cdec54fb3a5a3c724b41281fbeee12",
+  "promptPath": "input-prompt.txt",
+  "automaticAgentInstructions": [],
+  "compiledInputs": [
+    {
+      "command": [
+        "context",
+        "--repo",
+        "<R2>\\workspaces\\t2-markitect\\checkout",
+        "--revision",
+        "286bfa78c87f770a3c2c2208f2eaef4f96ecd969",
+        "--namespace",
+        "architecture",
+        "--kind",
+        "UseCase",
+        "--name",
+        "add-meeting-attendee",
+        "--api-version",
+        "architecture.mymeetings.example/v1alpha1",
+        "--analyze-policy-failures"
+      ],
+      "expectedExitCode": 1,
+      "exitCode": 1,
+      "output": ".agent-input/context.yaml",
+      "sha256": "379ab30da936b3d845d8b5c04686773ea39a843c5ad4487ef4ff550802c4cf5f",
+      "bytes": 43712,
+      "scope": {
+        "kind": "UseCase",
+        "name": "add-meeting-attendee",
+        "namespace": "architecture"
+      }
+    },
+    {
+      "command": [
+        "impact",
+        "--repo",
+        "<R2>\\workspaces\\t2-markitect\\checkout",
+        "--base",
+        "f2a71446ddf45feffdddfc4a6cbb4259b7c2a5d3",
+        "--revision",
+        "286bfa78c87f770a3c2c2208f2eaef4f96ecd969",
+        "--analyze-policy-failures"
+      ],
+      "expectedExitCode": 1,
+      "exitCode": 1,
+      "output": ".agent-input/impact.yaml",
+      "sha256": "98b3ba814fdfda422db4132ff2fdd73232a799f3cc370dde14d4c9d944424838",
+      "bytes": 18319,
+      "scope": {
+        "comparison": "reconstructed exact v1 to v2 pin trees"
+      }
+    }
+  ],
+  "frozenWorkspaceAssets": [
+    {
+      "path": ".tools/architecture-check/MeetingsArchitectureCheck.csproj",
+      "sha256": "ecd0ef45f7e286e167971f7c0b867cb6a458ff629973331c9ac6dd07dbea0082",
+      "bytes": 927
+    },
+    {
+      "path": ".tools/architecture-check/TestBase.cs",
+      "sha256": "ff7da1cb080ccf7d96b75f72d23b95028d052391d7649eb9ad25d1d41c8a4938",
+      "bytes": 1194
+    },
+    {
+      "path": ".tools/architecture-check/LICENSE",
+      "sha256": "e7e663ebd3dd4d6987f539743dba33750576870d51c2192500ea45d06adffa80",
+      "bytes": 1091
+    }
+  ],
+  "compiledInputChanges": [],
+  "readHelperSha256Before": "d7c7016b7bb27d05f6b303906d7fa131bbf9650307c9fdfa456b31e07c903dbe",
+  "markitectExecutableSha256Before": "6aae29acf67217b9538a2076ff199102b44c84183f2e0dff4718584e84e064df",
+  "startedAtUtc": "2026-10-03T17:32:08.684426+02:00",
+  "completedAtUtc": "2026-10-03T15:45:51.2431593+00:00"
+}

@@ -1,0 +1,237 @@
+{
+  "evidenceType": "agents-md-comparison-fresh-agent-run",
+  "executionMode": "fresh-collaboration-agent",
+  "runId": "t3-simple",
+  "agentIdentity": "/root/r3_t3_simple",
+  "task": "t3",
+  "arm": "simple",
+  "workspace": "<R3>\\workspaces\\t3-simple\\checkout",
+  "preparedManifestSha256": "e085ec47e2da0a62e07bf1d526be5dab9a35c7c53cf9d5e7cde185cb31125c3e",
+  "frozenManifestSha256": "e085ec47e2da0a62e07bf1d526be5dab9a35c7c53cf9d5e7cde185cb31125c3e",
+  "sourceManifestSha256": "99fe6a51fa51cbd21cfc1c405c1a9743c4487ff2f5502358b864a4fefcb05c09",
+  "candidateCommitBeforeAgent": "ae9035f3d7a493673122d72a5100392d9dd1a744",
+  "candidateCommitAfterAgent": "ae9035f3d7a493673122d72a5100392d9dd1a744",
+  "startedAtUtc": "2026-10-03T18:24:06.5145049+02:00",
+  "completedAtUtc": "2026-10-03T16:30:55.1234913+00:00",
+  "agentReportPath": "agent-report.txt",
+  "agentReportSha256": "9c8d98d724fb193ff193c5e7ce5717eae28ac3fda013cf5618bfe9bd974778c0",
+  "agentReportText": "Implemented attendee fee-paid status in the existing query path. The view exposes IsFeePaid, the DTO includes it, and the Dapper query maps it from Meetings' existing payment state.\n\nBuild passed with 0 warnings and errors after restoring from NuGet.org. The architecture facade passed all 10 tests; git diff --check passed. The build and tests verify compilation and architecture only; database execution and runtime behavior were not verified. The task context and impact files were absent, and no governance changes were needed.\n\nAdditional completion message recorded by the operator: changed only the SQL view, attendee DTO, and existing Dapper query handler. Read AGENTS.md, policy v1, ADRs 0009/0014/0017, query/view/table and existing event/command/domain files. Inherited guidance referenced an absent docs/README.md. Observed SDK reported by agent: 10.0.103. Initial restore failed NU1900 due unavailable configured feed; explicit public NuGet restore then build --no-restore passed; facade public restore and test --no-restore passed 10/10 with a preexisting nullable warning. No new API, integration route, project reference, or governance edit.",
+  "automaticAgentInstructions": [
+    {
+      "path": "AGENTS.md",
+      "sha256": "844b426a9d952de6f0019463393670ef92c2ea2f6971b03f6f267ab595957df2",
+      "bytes": 2666
+    }
+  ],
+  "compiledInputs": [],
+  "frozenWorkspaceAssets": [
+    {
+      "path": "AGENTS.md",
+      "sha256": "844b426a9d952de6f0019463393670ef92c2ea2f6971b03f6f267ab595957df2",
+      "bytes": 2666
+    },
+    {
+      "path": ".tools/architecture-check/MeetingsArchitectureCheck.csproj",
+      "sha256": "ecd0ef45f7e286e167971f7c0b867cb6a458ff629973331c9ac6dd07dbea0082",
+      "bytes": 927
+    },
+    {
+      "path": ".tools/architecture-check/TestBase.cs",
+      "sha256": "ff7da1cb080ccf7d96b75f72d23b95028d052391d7649eb9ad25d1d41c8a4938",
+      "bytes": 1194
+    },
+    {
+      "path": ".tools/architecture-check/LICENSE",
+      "sha256": "e7e663ebd3dd4d6987f539743dba33750576870d51c2192500ea45d06adffa80",
+      "bytes": 1091
+    },
+    {
+      "path": "docs/engineering-policy.md",
+      "sha256": "3fad7de63b29ffd32b893956b88314d0e3471249af8dc774fcf4ff565e637296",
+      "bytes": 377
+    }
+  ],
+  "frozenWorkspaceAssetChanges": [],
+  "compiledInputChanges": [],
+  "model": null,
+  "modelEvidenceStatus": "unavailable from collaboration backend metadata",
+  "toolEvents": null,
+  "toolUsageEvidenceStatus": "unavailable; the collaboration backend exposes only the final agent report",
+  "tokenUsage": null,
+  "tokenUsageEvidenceStatus": "unavailable; no CLI JSONL events or metering were collected",
+  "workspaceStatus": " M src/Database/CompanyName.MyMeetings.Database/Structure/meetings/Views/v_MeetingAttendees.sql\n M src/Modules/Meetings/Application/Meetings/GetMeetingAttendees/GetMeetingAttendeesQueryHandler.cs\n M src/Modules/Meetings/Application/Meetings/GetMeetingAttendees/MeetingAttendeeDto.cs\n",
+  "workspaceDelta": [
+    {
+      "root": "<R3>\\workspaces\\t3-simple\\checkout",
+      "path": "src/Modules/Meetings/Application/Meetings/GetMeetingAttendees/GetMeetingAttendeesQueryHandler.cs",
+      "change": "modified",
+      "before": {
+        "bytes": 2036,
+        "sha256": "996f50dd9cafe4df62d3ccc49f92be578fae5e851ffb8b8960b8a8284730d625"
+      },
+      "after": {
+        "bytes": 2150,
+        "sha256": "7c95c313d2718d4329c4e4056a023e0834621bdd1bfbe93e36d2c7c0e9d25e25"
+      }
+    },
+    {
+      "root": "<R3>\\workspaces\\t3-simple\\checkout",
+      "path": "src/Modules/Meetings/Application/Meetings/GetMeetingAttendees/MeetingAttendeeDto.cs",
+      "change": "modified",
+      "before": {
+        "bytes": 444,
+        "sha256": "c276b6000c2b22f6f40b06685d5112ad76b005c7cd673cf137ba408629b4c2c7"
+      },
+      "after": {
+        "bytes": 493,
+        "sha256": "a0d40aa6aeb3f8957e2f7df8c6d77944042db022fedf60f0a0fea132f81d0179"
+      }
+    },
+    {
+      "root": "<R3>\\workspaces\\t3-simple\\checkout",
+      "path": "src/Database/CompanyName.MyMeetings.Database/Structure/meetings/Views/v_MeetingAttendees.sql",
+      "change": "modified",
+      "before": {
+        "bytes": 467,
+        "sha256": "f45b41dfa11cac9b87b69e8ce780291be551b73170ec20e33a6fdbb2ff637e84"
+      },
+      "after": {
+        "bytes": 505,
+        "sha256": "52c82e8a99f5f1744878875d3b9ae7357fe213dca74cd3879e589f2592cc94fc"
+      }
+    },
+    {
+      "root": "<R3>\\workspaces\\t3-simple\\checkout",
+      "path": ".telemetry/reads.jsonl",
+      "change": "created",
+      "after": {
+        "bytes": 3454,
+        "sha256": "f8c01a4f4f74f95d7538db04229827df5102a8eea905bced507eaa3c7f4b5926"
+      }
+    }
+  ],
+  "workspaceDiffPath": "workspace.diff",
+  "workspaceDiffSha256": "4c613f9b06632a0774c6c020ef0c150627dcb93cd37717db80722edd6d6be73a",
+  "fileReadLedger": {
+    "recordsPath": "reads.jsonl",
+    "helperSha256Before": "d7c7016b7bb27d05f6b303906d7fa131bbf9650307c9fdfa456b31e07c903dbe",
+    "helperSha256After": "d7c7016b7bb27d05f6b303906d7fa131bbf9650307c9fdfa456b31e07c903dbe",
+    "helperMutated": false,
+    "helperRecordedContentReads": 18,
+    "records": [
+      {
+        "path": "AGENTS.md",
+        "bytes": 2666,
+        "sha256": "844b426a9d952de6f0019463393670ef92c2ea2f6971b03f6f267ab595957df2",
+        "readType": "content"
+      },
+      {
+        "path": "docs/engineering-policy.md",
+        "bytes": 377,
+        "sha256": "3fad7de63b29ffd32b893956b88314d0e3471249af8dc774fcf4ff565e637296",
+        "readType": "content"
+      },
+      {
+        "path": "docs/architecture-decision-log/0009-use-2-layered-architectural-style-for-reads.md",
+        "bytes": 1011,
+        "sha256": "426c1b3a6f8c629a6224b2c99fa5216b346c03af5ae70446d6a86095cd871734",
+        "readType": "content"
+      },
+      {
+        "path": "docs/architecture-decision-log/0014-event-driven-communication-between-modules.md",
+        "bytes": 2003,
+        "sha256": "ad1f35a168f05d4f86018167a84a23b9f00be9f4ddbc8573926ca798ff85e22a",
+        "readType": "content"
+      },
+      {
+        "path": "docs/architecture-decision-log/0017-implement-archictecture-tests.md",
+        "bytes": 1099,
+        "sha256": "40bf710685bba66a12317b78f4f217f7f4f54ee6ce5ca2c8b95b46921c4ef2ce",
+        "readType": "content"
+      },
+      {
+        "path": "src/Modules/Meetings/Application/Meetings/GetMeetingAttendees/MeetingAttendeeDto.cs",
+        "bytes": 444,
+        "sha256": "c276b6000c2b22f6f40b06685d5112ad76b005c7cd673cf137ba408629b4c2c7",
+        "readType": "content"
+      },
+      {
+        "path": "src/Modules/Meetings/Application/Meetings/GetMeetingAttendees/GetMeetingAttendeesQuery.cs",
+        "bytes": 423,
+        "sha256": "435532f99c8244bcdadb106b906a4f8e02bc1365f308d4f47d2ad5de73e7fc3e",
+        "readType": "content"
+      },
+      {
+        "path": "src/Modules/Meetings/Application/Meetings/GetMeetingAttendees/GetMeetingAttendeesQueryHandler.cs",
+        "bytes": 2036,
+        "sha256": "996f50dd9cafe4df62d3ccc49f92be578fae5e851ffb8b8960b8a8284730d625",
+        "readType": "content"
+      },
+      {
+        "path": "src/Modules/Meetings/Application/Meetings/MeetingFeePaidIntegrationEventHandler.cs",
+        "bytes": 935,
+        "sha256": "d12614cbe8f0384d81381680003cfe312cb21d12ad206650c93542ba9d608ce3",
+        "readType": "content"
+      },
+      {
+        "path": "src/Modules/Meetings/Application/Meetings/MarkMeetingAttendeeFeeAsPayedCommand.cs",
+        "bytes": 600,
+        "sha256": "4bcc356e943f88b0c59cbf3b279c9be79841f0dcfe555af5dba568243f44dab1",
+        "readType": "content"
+      },
+      {
+        "path": "src/Modules/Meetings/Application/Meetings/MarkMeetingAttendeeFeeAsPayedCommandHandler.cs",
+        "bytes": 985,
+        "sha256": "f71204f08f6ab396075f8679ef9154eed499980fb5e518c76bacfa56369021b5",
+        "readType": "content"
+      },
+      {
+        "path": "src/Modules/Meetings/Domain/Meetings/MeetingAttendee.cs",
+        "bytes": 4794,
+        "sha256": "1caa1c6027f7f461b3ce71fbed38f01c3e11c0c9f9df02ecf9e7870baf9d48d3",
+        "readType": "content"
+      },
+      {
+        "path": "src/Database/CompanyName.MyMeetings.Database/Structure/meetings/Tables/MeetingAttendees.sql",
+        "bytes": 708,
+        "sha256": "760d6074977f4b881a05d0a8366a0c7fd827a2540183844d556259a853f0dcfe",
+        "readType": "content"
+      },
+      {
+        "path": "src/Database/CompanyName.MyMeetings.Database/Structure/meetings/Views/v_MeetingAttendees.sql",
+        "bytes": 467,
+        "sha256": "f45b41dfa11cac9b87b69e8ce780291be551b73170ec20e33a6fdbb2ff637e84",
+        "readType": "content"
+      },
+      {
+        "path": "src/Modules/Payments/IntegrationEvents/MeetingFeePaidIntegrationEvent.cs",
+        "bytes": 598,
+        "sha256": "b1a08ce0c028af1272a83c427b60178be96c288dfc5978fd708c00c01372b47b",
+        "readType": "content"
+      },
+      {
+        "path": "src/Modules/Meetings/Tests/ArchTests/Application/ApplicationTests.cs",
+        "bytes": 7248,
+        "sha256": "2aef4aef91032ff32c60aca30a7e8b10a7235ad9d05c767a5a4c3951471463a3",
+        "readType": "content"
+      },
+      {
+        "path": "src/global.json",
+        "bytes": 113,
+        "sha256": "8dc87e6f68213f4444f20306d8057b48947550912e25a5b897702a51eea23d95",
+        "readType": "content"
+      },
+      {
+        "path": "src/Modules/Meetings/Application/CompanyName.MyMeetings.Modules.Meetings.Application.csproj",
+        "bytes": 642,
+        "sha256": "2f0d3e0797c1fdf2c35bc4f61d1bce373dff83fac85236fb252895dd2cc61249",
+        "readType": "content"
+      }
+    ],
+    "limit": "Only reads through .tools/read.ps1 are logged."
+  },
+  "markitectExecutable": null,
+  "externalTreeDeltas": [],
+  "externalWriteDetected": false,
+  "externalWritePolicy": "Any detected out-of-workspace change is reported and left in place for review."
+}

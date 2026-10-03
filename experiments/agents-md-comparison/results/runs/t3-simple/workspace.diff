@@ -1,0 +1,52 @@
+diff --git a/src/Database/CompanyName.MyMeetings.Database/Structure/meetings/Views/v_MeetingAttendees.sql b/src/Database/CompanyName.MyMeetings.Database/Structure/meetings/Views/v_MeetingAttendees.sql
+index 869a310..24bd10d 100644
+--- a/src/Database/CompanyName.MyMeetings.Database/Structure/meetings/Views/v_MeetingAttendees.sql
++++ b/src/Database/CompanyName.MyMeetings.Database/Structure/meetings/Views/v_MeetingAttendees.sql
+@@ -6,10 +6,11 @@ SELECT
+     [MeetingAttendee].[DecisionDate],
+     [MeetingAttendee].[RoleCode],
+     [MeetingAttendee].[GuestsNumber],
++    [MeetingAttendee].[IsFeePaid],
+ 
+     [Member].[FirstName],
+     [Member].[LastName]
+ FROM [meetings].[MeetingAttendees] AS [MeetingAttendee]
+     INNER JOIN [meetings].[Members] AS [Member]
+         ON [MeetingAttendee].[AttendeeId] = [Member].[Id]
+-GO
+\ No newline at end of file
++GO
+diff --git a/src/Modules/Meetings/Application/Meetings/GetMeetingAttendees/GetMeetingAttendeesQueryHandler.cs b/src/Modules/Meetings/Application/Meetings/GetMeetingAttendees/GetMeetingAttendeesQueryHandler.cs
+index ed69799..2f69c6c 100644
+--- a/src/Modules/Meetings/Application/Meetings/GetMeetingAttendees/GetMeetingAttendeesQueryHandler.cs
++++ b/src/Modules/Meetings/Application/Meetings/GetMeetingAttendees/GetMeetingAttendeesQueryHandler.cs
+@@ -23,6 +23,7 @@ namespace CompanyName.MyMeetings.Modules.Meetings.Application.Meetings.GetMeetin
+                                     [MeetingAttendee].[RoleCode] AS [{nameof(MeetingAttendeeDto.RoleCode)}],
+                                     [MeetingAttendee].[DecisionDate] AS [{nameof(MeetingAttendeeDto.DecisionDate)}],
+                                     [MeetingAttendee].[GuestsNumber] AS [{nameof(MeetingAttendeeDto.GuestsNumber)}],
++                                    [MeetingAttendee].[IsFeePaid] AS [{nameof(MeetingAttendeeDto.IsFeePaid)}],
+                                     [MeetingAttendee].[AttendeeId] AS [{nameof(MeetingAttendeeDto.AttendeeId)}]
+                                 FROM [meetings].[v_MeetingAttendees] AS [MeetingAttendee]
+                                 WHERE [MeetingAttendee].[MeetingId] = @MeetingId
+@@ -35,4 +36,4 @@ namespace CompanyName.MyMeetings.Modules.Meetings.Application.Meetings.GetMeetin
+                 })).AsList();
+         }
+     }
+-}
+\ No newline at end of file
++}
+diff --git a/src/Modules/Meetings/Application/Meetings/GetMeetingAttendees/MeetingAttendeeDto.cs b/src/Modules/Meetings/Application/Meetings/GetMeetingAttendees/MeetingAttendeeDto.cs
+index 56e356f..a2a66a0 100644
+--- a/src/Modules/Meetings/Application/Meetings/GetMeetingAttendees/MeetingAttendeeDto.cs
++++ b/src/Modules/Meetings/Application/Meetings/GetMeetingAttendees/MeetingAttendeeDto.cs
+@@ -12,6 +12,8 @@
+ 
+         public int GuestsNumber { get; set; }
+ 
++        public bool IsFeePaid { get; set; }
++
+         public DateTime DecisionDate { get; set; }
+     }
+-}
+\ No newline at end of file
++}

@@ -1,0 +1,3660 @@
+{
+  "schemaVersion": 1,
+  "experimentId": "agents-md-vs-markitect-2026-10-03-r2",
+  "sourceBundleSha256": "af9dbdc750f376b5250b61a451c1d124fe363fd87cce87684804b292149311cc",
+  "sourceFiles": [
+    {
+      "path": "LICENSE",
+      "sha256": "e7e663ebd3dd4d6987f539743dba33750576870d51c2192500ea45d06adffa80",
+      "bytes": 1091
+    },
+    {
+      "path": "README.md",
+      "sha256": "6fba56596a94d0d749a524dadca8b3f248c19c1577b547a7a97c75fcdf46ec1f",
+      "bytes": 105681
+    },
+    {
+      "path": "docs/architecture-decision-log/0001-record-architecture-decisions.md",
+      "sha256": "f56fc6c2357d6a6856fdd93d4d33b01f7c3bd0daa5e08381afea49b360a1a2f3",
+      "bytes": 825
+    },
+    {
+      "path": "docs/architecture-decision-log/0002-use_modular-monolith-system-architecture.md",
+      "sha256": "ea2e4edb82a47fb24f7a173397240216a43ed95aa2428675a1560a90af174231",
+      "bytes": 684
+    },
+    {
+      "path": "docs/architecture-decision-log/0003-use_dotnetcore_and_csharp.md",
+      "sha256": "b86cee60535bc486a6c5bced3a44900d25f6550c4983c59f0a8e734aa992fcd8",
+      "bytes": 764
+    },
+    {
+      "path": "docs/architecture-decision-log/0004-divide-the-system-into-4-modules.md",
+      "sha256": "e72cf0f2f5a1bdd578da32476d4d96a4574752e4a7959fcdbf52f2578875a428",
+      "bytes": 2385
+    },
+    {
+      "path": "docs/architecture-decision-log/0005-create-one-rest-api-module.md",
+      "sha256": "95aaf8e72fc5c0d8845cb9269a8b063a6203990e9c122295c38cf61cd343254d",
+      "bytes": 1696
+    },
+    {
+      "path": "docs/architecture-decision-log/0006-create-facade-between-api-and-business-module.md",
+      "sha256": "8691f1d524fc359b03b2b5acc0786e71c048757f2ba635b0d4d8c8ca2e82c0d2",
+      "bytes": 1284
+    },
+    {
+      "path": "docs/architecture-decision-log/0007-use-cqrs-architectural-style.md",
+      "sha256": "8a8e748e683da2acb853552bb2c5b66a8e0bc369837dd0bfe9e15a08a615f2bb",
+      "bytes": 1141
+    },
+    {
+      "path": "docs/architecture-decision-log/0008-allow-return-result-after-command-processing.md",
+      "sha256": "12c300a038ebd2a41c6f43dd65c726f7ed297817884756a5c99867f43534e5d9",
+      "bytes": 1049
+    },
+    {
+      "path": "docs/architecture-decision-log/0009-use-2-layered-architectural-style-for-reads.md",
+      "sha256": "426c1b3a6f8c629a6224b2c99fa5216b346c03af5ae70446d6a86095cd871734",
+      "bytes": 1011
+    },
+    {
+      "path": "docs/architecture-decision-log/0010-use-clean-architecture-for-writes.md",
+      "sha256": "41ce0295866c3d71a39801adf3df0b37d4c89f9c7b358856a43a23ae54d7b678",
+      "bytes": 1494
+    },
+    {
+      "path": "docs/architecture-decision-log/0011-create-rich-domain-models.md",
+      "sha256": "2c832cd4560cadeeedc52bc308c1efe7c1073afb9474c026f02911562edf9404",
+      "bytes": 2023
+    },
+    {
+      "path": "docs/architecture-decision-log/0012-use-domain-driven-design-tactical-patterns.md",
+      "sha256": "01770ee7cdadc95a672eda83c08c54b65861883e04bcd9d1d819d135c9511d63",
+      "bytes": 1739
+    },
+    {
+      "path": "docs/architecture-decision-log/0013-protect-business-invariants-using-exceptions.md",
+      "sha256": "17b33e65656bfe4d2c8d42b86b90655dd996daa81a032c5722f28a65ad641a37",
+      "bytes": 1865
+    },
+    {
+      "path": "docs/architecture-decision-log/0014-event-driven-communication-between-modules.md",
+      "sha256": "ad1f35a168f05d4f86018167a84a23b9f00be9f4ddbc8573926ca798ff85e22a",
+      "bytes": 2003
+    },
+    {
+      "path": "docs/architecture-decision-log/0015-use-in-memory-events-bus.md",
+      "sha256": "47a1c2d0064c35e2eb56b1ab9093227d44e95d2eb562e5446ea492453ba3a8df",
+      "bytes": 1755
+    },
+    {
+      "path": "docs/architecture-decision-log/0016-create-ioc-container-per-module.md",
+      "sha256": "80d9c57a69d6e9c3a7653900d80cfa6e7f79d272af2c9f3bf17b36119ca2efe2",
+      "bytes": 1292
+    },
+    {
+      "path": "docs/architecture-decision-log/0017-implement-archictecture-tests.md",
+      "sha256": "40bf710685bba66a12317b78f4f217f7f4f54ee6ce5ca2c8b95b46921c4ef2ce",
+      "bytes": 1099
+    },
+    {
+      "path": "src/.editorconfig",
+      "sha256": "9f8ecb9f1ce9681e1f41a9911a5f1475ef22eeae4451bad643be7bab5384345a",
+      "bytes": 1135
+    },
+    {
+      "path": "src/BuildingBlocks/Application/CompanyName.MyMeetings.BuildingBlocks.Application.csproj",
+      "sha256": "4858ec1718bf9805fa23efce7f9852a4eb5d5b950ad377586ba1eec5067ebecd",
+      "bytes": 38
+    },
+    {
+      "path": "src/BuildingBlocks/Application/Data/ISqlConnectionFactory.cs",
+      "sha256": "378c0edd5372afa950270a4f348da6126d30323f03c1afbfe297503d3b2774c0",
+      "bytes": 286
+    },
+    {
+      "path": "src/BuildingBlocks/Application/Emails/EmailMessage.cs",
+      "sha256": "88c88f18b5491212e6b6c4c49770b4ec540cfe9cb2cf47480a2ec43eeacd2690",
+      "bytes": 477
+    },
+    {
+      "path": "src/BuildingBlocks/Application/Emails/IEmailSender.cs",
+      "sha256": "f034b2f355ce08d7a014ce91aadd216364c911de2da2e8cd7aee79adb1bda468",
+      "bytes": 171
+    },
+    {
+      "path": "src/BuildingBlocks/Application/Events/DomainNotificationBase.cs",
+      "sha256": "cd0ad5f3bb3dfd78e9e0e932d4bfcfbf3e1570c3fdcc9ecae1e3bd57d233b43b",
+      "bytes": 483
+    },
+    {
+      "path": "src/BuildingBlocks/Application/Events/IDomainEventNotification.cs",
+      "sha256": "a7d100ce3686006dd64091a6fa93a6f76dc44b30c7d43f9e9a48756eed17581a",
+      "bytes": 343
+    },
+    {
+      "path": "src/BuildingBlocks/Application/IExecutionContextAccessor.cs",
+      "sha256": "86e45a49c618244188122ec58c6fc752c15171ec9614008c8deeb41f51e82905",
+      "bytes": 236
+    },
+    {
+      "path": "src/BuildingBlocks/Application/InvalidCommandException.cs",
+      "sha256": "e60ce98f59207957570223723bd014cf5daa7bba882f55d5d5f3157071f215d7",
+      "bytes": 303
+    },
+    {
+      "path": "src/BuildingBlocks/Application/Outbox/IOutbox.cs",
+      "sha256": "53ffdbf8bda1d0e227e394be74e88ece93a075957266bd49b522b3e69a261e73",
+      "bytes": 185
+    },
+    {
+      "path": "src/BuildingBlocks/Application/Outbox/OutboxMessage.cs",
+      "sha256": "4046eb58d865ba2900c40bc55eaa995a151834cbc7e8a29ddca50642bcea249e",
+      "bytes": 654
+    },
+    {
+      "path": "src/BuildingBlocks/Application/Queries/IPagedQuery.cs",
+      "sha256": "e9ac4363626d17be850b1fbbeed0322b3d5e84d3600e1248e08321de97bf5370",
+      "bytes": 382
+    },
+    {
+      "path": "src/BuildingBlocks/Application/Queries/PageData.cs",
+      "sha256": "7f9594baf8ec4063e4aed54152df553474b554772bc22fd41be461f1d6942d10",
+      "bytes": 327
+    },
+    {
+      "path": "src/BuildingBlocks/Application/Queries/PagedQueryHelper.cs",
+      "sha256": "7e629009dc32c0b511404337e00e797f7e8f98d4af193fe5bce413464ad931be",
+      "bytes": 1073
+    },
+    {
+      "path": "src/BuildingBlocks/Domain/BusinessRuleValidationException.cs",
+      "sha256": "0e402ac02afcafd1311027bbedd94076c745cadb93aa93d8a0bcf57a9999b46b",
+      "bytes": 602
+    },
+    {
+      "path": "src/BuildingBlocks/Domain/CompanyName.MyMeetings.BuildingBlocks.Domain.csproj",
+      "sha256": "3e1a9f612f8cfcc2e2a8b2ef085685f9f3d1a55c4b901e8d88af6ec37d283195",
+      "bytes": 35
+    },
+    {
+      "path": "src/BuildingBlocks/Domain/DomainEventBase.cs",
+      "sha256": "8d44a1aa75b04dc602e342f6d50893a49d1238d7dabfa3cb7da4f15f1ee55aa3",
+      "bytes": 351
+    },
+    {
+      "path": "src/BuildingBlocks/Domain/Entity.cs",
+      "sha256": "869c5312f99de1291e99f9358aca5d2f1302fd7756056949498027c13ebf47d2",
+      "bytes": 970
+    },
+    {
+      "path": "src/BuildingBlocks/Domain/IAggregateRoot.cs",
+      "sha256": "9b21bb1d117f31b93bc997edf05e64b9af0415269db8d618265338e6db72f783",
+      "bytes": 116
+    },
+    {
+      "path": "src/BuildingBlocks/Domain/IBusinessRule.cs",
+      "sha256": "cbb48c029fdfd1dcc7678e123db98938e771b3d8452d489d03c1ffb097ddb5e2",
+      "bytes": 174
+    },
+    {
+      "path": "src/BuildingBlocks/Domain/IDomainEvent.cs",
+      "sha256": "4d69dcc96fb9d08846fe3dc84bbff85d0c062fa4f4158b7efbc1dcfc47ed29ff",
+      "bytes": 212
+    },
+    {
+      "path": "src/BuildingBlocks/Domain/IgnoreMemberAttribute.cs",
+      "sha256": "d5ce168484ea1a1cfbdbd31b24fc1ab2be73a0c6f2269453c25f65059a43d8bd",
+      "bytes": 203
+    },
+    {
+      "path": "src/BuildingBlocks/Domain/TypedIdValueBase.cs",
+      "sha256": "f05e8afa2c8a623bfc05e18620a238e64742391b2600e43bd5583efa4dd73eae",
+      "bytes": 1435
+    },
+    {
+      "path": "src/BuildingBlocks/Domain/ValueObject.cs",
+      "sha256": "178182daf86c9d3729db227d41f57baeb987a8a181a96cd58e68cb94631bcc15",
+      "bytes": 3543
+    },
+    {
+      "path": "src/BuildingBlocks/Infrastructure/BiDictionary.cs",
+      "sha256": "685178caf9ad167be06706ba2796fe944940d27f0ba3cf78e39e52ab95efcd73",
+      "bytes": 1059
+    },
+    {
+      "path": "src/BuildingBlocks/Infrastructure/CompanyName.MyMeetings.BuildingBlocks.Infrastructure.csproj",
+      "sha256": "4858ec1718bf9805fa23efce7f9852a4eb5d5b950ad377586ba1eec5067ebecd",
+      "bytes": 38
+    },
+    {
+      "path": "src/BuildingBlocks/Infrastructure/DomainEventsDispatching/DomainEventsAccessor.cs",
+      "sha256": "c02f663ecd6f33a4c859554c61b3dea29ee29b8a7def66cc2a63f1d55b578517",
+      "bytes": 1221
+    },
+    {
+      "path": "src/BuildingBlocks/Infrastructure/DomainEventsDispatching/DomainEventsDispatcher.cs",
+      "sha256": "79f3771e78fc5af116a37478db3a757005d8d0346982038f45752bce2ddea5cf",
+      "bytes": 3264
+    },
+    {
+      "path": "src/BuildingBlocks/Infrastructure/DomainEventsDispatching/DomainEventsDispatcherNotificationHandlerDecorator.cs",
+      "sha256": "0a02a72c0b548aeb15c0a143d550c09d423b05f417db636e1256ae6b9ee56846",
+      "bytes": 956
+    },
+    {
+      "path": "src/BuildingBlocks/Infrastructure/DomainEventsDispatching/DomainNotificationsMapper.cs",
+      "sha256": "8eff4c51b076b4517d5f0dbe2093613a9a2e597767bea42136ec283cae12a7e7",
+      "bytes": 759
+    },
+    {
+      "path": "src/BuildingBlocks/Infrastructure/DomainEventsDispatching/IDomainEventsAccessor.cs",
+      "sha256": "5686089c442de86a6d242f073709b59e000b8520e9f5e36e5583a24e544b7596",
+      "bytes": 313
+    },
+    {
+      "path": "src/BuildingBlocks/Infrastructure/DomainEventsDispatching/IDomainEventsDispatcher.cs",
+      "sha256": "08fb1f0bc88beab216d5b1325d8456be1abad2df780e4edcc462fef0053f00c6",
+      "bytes": 192
+    },
+    {
+      "path": "src/BuildingBlocks/Infrastructure/DomainEventsDispatching/IDomainNotificationsMapper.cs",
+      "sha256": "48cf8a5dbe2d69004d146936ac16ee37284dbdbb32a020278ba86f4bb3212f0f",
+      "bytes": 232
+    },
+    {
+      "path": "src/BuildingBlocks/Infrastructure/DomainEventsDispatching/UnitOfWorkCommandHandlerDecorator.cs",
+      "sha256": "d0370861f4351357b1095d21e52ec3de1822a2c6f95a5579cd7618a7049e0d07",
+      "bytes": 817
+    },
+    {
+      "path": "src/BuildingBlocks/Infrastructure/Emails/EmailSender.cs",
+      "sha256": "5e3426f6c05f1080b6ecb89354ac2ff43fef413e49d95f94ef6a4c3531584468",
+      "bytes": 1770
+    },
+    {
+      "path": "src/BuildingBlocks/Infrastructure/Emails/EmailsConfiguration.cs",
+      "sha256": "7792866601dec70aec5f2b30707de0dbeb615169d7ecc2ee763e8408ea93e614",
+      "bytes": 286
+    },
+    {
+      "path": "src/BuildingBlocks/Infrastructure/EventBus/IEventsBus.cs",
+      "sha256": "3b35da72fb6054087189ea973ebf9da0f32f44c801f50257d6296173c1bb08d6",
+      "bytes": 358
+    },
+    {
+      "path": "src/BuildingBlocks/Infrastructure/EventBus/IIntegrationEventHandler.cs",
+      "sha256": "4be0ee562aca508847f1e297df7add44bae5f1f331848906d9cef16bf06765a8",
+      "bytes": 353
+    },
+    {
+      "path": "src/BuildingBlocks/Infrastructure/EventBus/InMemoryEventBus.cs",
+      "sha256": "8601f75f979d02dae3df7e93d179248891191d66d9c234552813092d663ab639",
+      "bytes": 1777
+    },
+    {
+      "path": "src/BuildingBlocks/Infrastructure/EventBus/InMemoryEventBusClient.cs",
+      "sha256": "be876d73bf6cc6923af65112871e7cd131065e4788284211e75e5ea3036b4063",
+      "bytes": 887
+    },
+    {
+      "path": "src/BuildingBlocks/Infrastructure/EventBus/IntegrationEvent.cs",
+      "sha256": "d47829bc8a6703c09454774b4ed0ecc04e8829f652a1e6a2c863dc79a46bceee",
+      "bytes": 412
+    },
+    {
+      "path": "src/BuildingBlocks/Infrastructure/IUnitOfWork.cs",
+      "sha256": "d189d4803575a5a597902966397233d0d8a768ca04dd71405aae805d845d1759",
+      "bytes": 257
+    },
+    {
+      "path": "src/BuildingBlocks/Infrastructure/Inbox/InboxMessage.cs",
+      "sha256": "7cbca510187800ec20d3ac18ffdf58c4985829233c80bf926417dcc5b9ff8a9d",
+      "bytes": 656
+    },
+    {
+      "path": "src/BuildingBlocks/Infrastructure/InternalCommands/IInternalCommandsMapper.cs",
+      "sha256": "e787a054e356328d01ff432d46faec587dcdeee4bffb40385d9321449eba21f1",
+      "bytes": 222
+    },
+    {
+      "path": "src/BuildingBlocks/Infrastructure/InternalCommands/InternalCommand.cs",
+      "sha256": "819023f35454dfd846badbde63eca7f13be9917ed119f37f3d035dcef048f513",
+      "bytes": 318
+    },
+    {
+      "path": "src/BuildingBlocks/Infrastructure/InternalCommands/InternalCommandsMapper.cs",
+      "sha256": "3cc4208e61a02aff41ec78245961ba3e653d1b26a0cf14e18dfb7b395ef4e0ac",
+      "bytes": 725
+    },
+    {
+      "path": "src/BuildingBlocks/Infrastructure/Serialization/AllPropertiesContractResolver.cs",
+      "sha256": "fe119d0d17102cbaef33dff7e1a539b06a9e76f415978df1aeb681cbf4dbfe20",
+      "bytes": 865
+    },
+    {
+      "path": "src/BuildingBlocks/Infrastructure/ServiceProviderWrapper.cs",
+      "sha256": "c2e2ee78be462bed0d9a2e5b170c98b609dccc381265435713be4e744c8672d6",
+      "bytes": 496
+    },
+    {
+      "path": "src/BuildingBlocks/Infrastructure/SqlConnectionFactory.cs",
+      "sha256": "c112cc3be0824e9bb6caf7f1d5d6c7bbcaf2f729a7c220e76210acbfbfbbe49f",
+      "bytes": 1408
+    },
+    {
+      "path": "src/BuildingBlocks/Infrastructure/StronglyTypedIdValueConverterSelector.cs",
+      "sha256": "628e740383a510c665afb6410b32292de7f645d861042c99edba973833874da9",
+      "bytes": 2504
+    },
+    {
+      "path": "src/BuildingBlocks/Infrastructure/TypedIdValueConverter.cs",
+      "sha256": "6957a0ac03ad9a3c14e8b95c101855bc2c79c57e9a1eca14e6d2fb40fb18a975",
+      "bytes": 649
+    },
+    {
+      "path": "src/BuildingBlocks/Infrastructure/UnitOfWork.cs",
+      "sha256": "70da8441e4f49450ba2240b5866a02118d4be5fa24c614c1257cd1d670b6a161",
+      "bytes": 944
+    },
+    {
+      "path": "src/Database/CompanyName.MyMeetings.Database/Structure/meetings/Tables/MeetingAttendees.sql",
+      "sha256": "760d6074977f4b881a05d0a8366a0c7fd827a2540183844d556259a853f0dcfe",
+      "bytes": 708
+    },
+    {
+      "path": "src/Database/CompanyName.MyMeetings.Database/Structure/meetings/Views/v_MeetingAttendees.sql",
+      "sha256": "f45b41dfa11cac9b87b69e8ce780291be551b73170ec20e33a6fdbb2ff637e84",
+      "bytes": 467
+    },
+    {
+      "path": "src/Directory.Build.props",
+      "sha256": "35658597595b1283540e5c2b38d6e5a70f83b0e8843f9358185af14fbb725c42",
+      "bytes": 1908
+    },
+    {
+      "path": "src/Directory.Build.targets",
+      "sha256": "1d9eef2fc500b0ac026f24445a631b74e352bedf5e28e888a13d3d52d43ec984",
+      "bytes": 2908
+    },
+    {
+      "path": "src/Directory.Packages.props",
+      "sha256": "1247510f1eeebc6407e8c242b9896d7d84359f0d738035da9b1d53983796d448",
+      "bytes": 2462
+    },
+    {
+      "path": "src/Modules/Administration/Application/CompanyName.MyMeetings.Modules.Administration.Application.csproj",
+      "sha256": "169213c87cd635a9c6daad6b4f0468385cd218a27cf4b0d3326a504de34fbe1b",
+      "bytes": 497
+    },
+    {
+      "path": "src/Modules/Administration/Application/Configuration/Commands/ICommandHandler.cs",
+      "sha256": "ebd3c5266f633ac003b757717d7ad719e7c7cca384360b74bda0cd6523e09ee0",
+      "bytes": 487
+    },
+    {
+      "path": "src/Modules/Administration/Application/Configuration/Commands/ICommandsScheduler.cs",
+      "sha256": "3a5e71abeba8e65f8197b0ea14bb22d2fc3563257cc7046a93e6590eca755ccf",
+      "bytes": 332
+    },
+    {
+      "path": "src/Modules/Administration/Application/Configuration/Commands/InternalCommandBase.cs",
+      "sha256": "1cd8ae96617682ce3aa2d741d42e69dec6b7b9e0b68d2d7ac01eaeaec3851c6f",
+      "bytes": 694
+    },
+    {
+      "path": "src/Modules/Administration/Application/Configuration/Queries/IQueryHandler.cs",
+      "sha256": "921e92ea329fdfaaa2253688d6248a8b92c67ba2c08aa4c33781d44300a5fe4d",
+      "bytes": 346
+    },
+    {
+      "path": "src/Modules/Administration/Application/Contracts/CommandBase.cs",
+      "sha256": "e3c0d6aad53e56e11b8ca9e840edee86f5fd458289d92681d5396be2fdb49b30",
+      "bytes": 654
+    },
+    {
+      "path": "src/Modules/Administration/Application/Contracts/IAdministrationModule.cs",
+      "sha256": "ac0985a5972e6d60ac2a5a7068a8f3982933c9cb658d52cd540849aec8745dcb",
+      "bytes": 355
+    },
+    {
+      "path": "src/Modules/Administration/Application/Contracts/ICommand.cs",
+      "sha256": "10da2955813a0aef207022650a5abe0c4786ad583aae891f4043d2d61534cbd0",
+      "bytes": 292
+    },
+    {
+      "path": "src/Modules/Administration/Application/Contracts/IQuery.cs",
+      "sha256": "cb07446c57018e4fe042df9f382c301321d6da4bce75a71adfe903049463c189",
+      "bytes": 180
+    },
+    {
+      "path": "src/Modules/Administration/Application/Contracts/IRecurringCommand.cs",
+      "sha256": "8d71218b4e795f3fd19552949b303fa2c51545d6283858ad672a0417d43ed126",
+      "bytes": 140
+    },
+    {
+      "path": "src/Modules/Administration/Application/Contracts/QueryBase.cs",
+      "sha256": "264c8841bf467f69965d04685b5d1ab44b3568cf91fd616087fd40a02b4acade",
+      "bytes": 370
+    },
+    {
+      "path": "src/Modules/Administration/Application/MeetingGroupProposals/AcceptMeetingGroupProposal/AcceptMeetingGroupProposalCommand.cs",
+      "sha256": "e17200efdf9436780dda70ed8f60970d5f9c8e7b96517480ef2a27eb41a8cdd0",
+      "bytes": 503
+    },
+    {
+      "path": "src/Modules/Administration/Application/MeetingGroupProposals/AcceptMeetingGroupProposal/AcceptMeetingGroupProposalCommandHandler.cs",
+      "sha256": "bcf6fba3aa4a06b601a2a0a7bbc1ce03777b4844ba4fe32d104734c72ae05a4a",
+      "bytes": 1286
+    },
+    {
+      "path": "src/Modules/Administration/Application/MeetingGroupProposals/AcceptMeetingGroupProposal/MeetingGroupProposalAcceptedNotification.cs",
+      "sha256": "9c48cdd4f4ea26ec0cac60907345b6ceb155646f1ef3a4aac2d219d137998cdf",
+      "bytes": 650
+    },
+    {
+      "path": "src/Modules/Administration/Application/MeetingGroupProposals/AcceptMeetingGroupProposal/MeetingGroupProposalAcceptedNotificationHandler.cs",
+      "sha256": "f4f8221e2ce1319c763fb1e8d3e2ba9c15cc07957142c89a0cb0fc4cb8e81492",
+      "bytes": 1048
+    },
+    {
+      "path": "src/Modules/Administration/Application/MeetingGroupProposals/GetMeetingGroupProposal/GetMeetingGroupProposalQuery.cs",
+      "sha256": "ae7f87606bb6c35fb4588c5422e867e7d4d7a4cc0888fd0bc1556ff5fecbdad0",
+      "bytes": 511
+    },
+    {
+      "path": "src/Modules/Administration/Application/MeetingGroupProposals/GetMeetingGroupProposal/GetMeetingGroupProposalQueryHandler.cs",
+      "sha256": "221eb2e33f5dcb88264eec98eaf2787b4bddcff2de7f08476802ed7c496bbe7f",
+      "bytes": 2784
+    },
+    {
+      "path": "src/Modules/Administration/Application/MeetingGroupProposals/GetMeetingGroupProposal/MeetingGroupProposalDto.cs",
+      "sha256": "80c097887562d623b268610bbc7a9ae550c279ebe263f01e7a5cfecb656fff1a",
+      "bytes": 798
+    },
+    {
+      "path": "src/Modules/Administration/Application/MeetingGroupProposals/GetMeetingGroupProposals/GetMeetingGroupProposalsQuery.cs",
+      "sha256": "aa4af50b08ea1f3fd6a4554f058948c1a4f8ec316149e6ee7932573b597aec91",
+      "bytes": 488
+    },
+    {
+      "path": "src/Modules/Administration/Application/MeetingGroupProposals/GetMeetingGroupProposals/GetMeetingGroupProposalsQueryHandler.cs",
+      "sha256": "1b520ef3d2bdd8bd3c1152be6a54283b6a8524909335ebdde34e84d245355c11",
+      "bytes": 2886
+    },
+    {
+      "path": "src/Modules/Administration/Application/MeetingGroupProposals/MeetingGroupProposedIntegrationEventHandler.cs",
+      "sha256": "04cead942885e0e59ad5dcdf0a14cc34b403a18e36ef4c8f26472c374cea7a76",
+      "bytes": 1368
+    },
+    {
+      "path": "src/Modules/Administration/Application/MeetingGroupProposals/RequestMeetingGroupProposalVerification/RequestMeetingGroupProposalVerificationCommand.cs",
+      "sha256": "4e5ed9cbfa1448439b1eed953f9c5beaebcc4d572a0d4e23f6b127cacc15628f",
+      "bytes": 1451
+    },
+    {
+      "path": "src/Modules/Administration/Application/MeetingGroupProposals/RequestMeetingGroupProposalVerification/RequestMeetingGroupProposalVerificationCommandHandler.cs",
+      "sha256": "d8b8cd09b051fb3028983dbe35673d0facb857b4e1f82c64b5e1996bb1c0303a",
+      "bytes": 1556
+    },
+    {
+      "path": "src/Modules/Administration/Application/Members/CreateMember/CreateMemberCommand.cs",
+      "sha256": "b35d8813a53688798f52a3a48fbbb349a3de35d83652ccc047897121cc52de99",
+      "bytes": 1038
+    },
+    {
+      "path": "src/Modules/Administration/Application/Members/CreateMember/CreateMemberCommandHandler.cs",
+      "sha256": "0e2e628292d0224564c29e11f044251effd6dad21db112e8b3d4ffbf6e92e22b",
+      "bytes": 1049
+    },
+    {
+      "path": "src/Modules/Administration/Application/Members/GetMember/GetMemberQuery.cs",
+      "sha256": "54245b29c4891aa98f3e259a146e39bc4f23c82c22873877c28f0b0010227261",
+      "bytes": 385
+    },
+    {
+      "path": "src/Modules/Administration/Application/Members/GetMember/GetMemberQueryHandler.cs",
+      "sha256": "6692e6972e57ecda9994761a20c9ecf863a2023f0cb0f2435bd44e48a5dd76f4",
+      "bytes": 1661
+    },
+    {
+      "path": "src/Modules/Administration/Application/Members/GetMember/MemberDto.cs",
+      "sha256": "77cd8c8fdd84d9e756131c4357234667f67060b650272c0949e7b3210b2632c6",
+      "bytes": 405
+    },
+    {
+      "path": "src/Modules/Administration/Application/Members/NewUserRegisteredIntegrationEventHandler.cs",
+      "sha256": "b88e96e677fc8f1beead354b044da744c92576347d6801930e7c24b30836a422",
+      "bytes": 1249
+    },
+    {
+      "path": "src/Modules/Administration/Domain/CompanyName.MyMeetings.Modules.Administration.Domain.csproj",
+      "sha256": "dad1d812ddf0a3e952d1ff5ed113229d9a337574de19f0cfe78899101689c6e1",
+      "bytes": 40
+    },
+    {
+      "path": "src/Modules/Administration/Domain/MeetingGroupProposals/Events/MeetingGroupProposalAcceptedDomainEvent.cs",
+      "sha256": "3c5e7ca69c91d3f6df8481a49c39dc66b6227ecc3b2e22f38d8e8bc1433b6ffe",
+      "bytes": 505
+    },
+    {
+      "path": "src/Modules/Administration/Domain/MeetingGroupProposals/Events/MeetingGroupProposalRejectedDomainEvent.cs",
+      "sha256": "2618d4288bf0132faf04a730a49a93073e9086d801c8853c7a8cf5445b43af8a",
+      "bytes": 511
+    },
+    {
+      "path": "src/Modules/Administration/Domain/MeetingGroupProposals/Events/MeetingGroupProposalVerificationRequestedDomainEvent.cs",
+      "sha256": "7c80c89c0f61acb6878111697ee2e2897b3e391cce432ace060c1c54ff3c435c",
+      "bytes": 533
+    },
+    {
+      "path": "src/Modules/Administration/Domain/MeetingGroupProposals/IMeetingGroupProposalRepository.cs",
+      "sha256": "26f43ee7c975fd6a0e47664b3c496042f5a082b1a3ae9fb3178d784689193199",
+      "bytes": 327
+    },
+    {
+      "path": "src/Modules/Administration/Domain/MeetingGroupProposals/MeetingGroupLocation.cs",
+      "sha256": "4052cad02bbcec36d529c598384cec1d663af6de257605cfda66a0fa7542b326",
+      "bytes": 632
+    },
+    {
+      "path": "src/Modules/Administration/Domain/MeetingGroupProposals/MeetingGroupProposal.cs",
+      "sha256": "4a56aa392a5e17e3e6a960251af173531c257b8bccffb00df453aa5a3a5835cd",
+      "bytes": 3273
+    },
+    {
+      "path": "src/Modules/Administration/Domain/MeetingGroupProposals/MeetingGroupProposalDecision.cs",
+      "sha256": "dcf6435c6f8a371d6b712b78364f983f3546dc772aa7ad2345a49c4c54585d0f",
+      "bytes": 1855
+    },
+    {
+      "path": "src/Modules/Administration/Domain/MeetingGroupProposals/MeetingGroupProposalId.cs",
+      "sha256": "a69ecde6a11343a16b8a7833d6220cedcb0e5484b391ec1dd88127f50f033689",
+      "bytes": 322
+    },
+    {
+      "path": "src/Modules/Administration/Domain/MeetingGroupProposals/MeetingGroupProposalStatus.cs",
+      "sha256": "754e615354d48b4a8f309a976f6e15711394f27dbebcccde5a218f117985a14c",
+      "bytes": 741
+    },
+    {
+      "path": "src/Modules/Administration/Domain/MeetingGroupProposals/Rules/MeetingGroupProposalCanBeVerifiedOnceRule.cs",
+      "sha256": "4f5a23ae415facf8b27aca4c0611b304e31548692a53c63f45598cd2196fd14e",
+      "bytes": 677
+    },
+    {
+      "path": "src/Modules/Administration/Domain/MeetingGroupProposals/Rules/MeetingGroupProposalRejectionMustHaveAReasonRule.cs",
+      "sha256": "ac3366402841067285e320487b47f33038e92607d1ecd352b8602ba296276524",
+      "bytes": 589
+    },
+    {
+      "path": "src/Modules/Administration/Domain/Members/Events/MemberCreatedDomainEvent.cs",
+      "sha256": "a5800d65bf813e18a900976fca7e925ac1787a8156b67ae60effa489cd302041",
+      "bytes": 377
+    },
+    {
+      "path": "src/Modules/Administration/Domain/Members/IMemberRepository.cs",
+      "sha256": "4417732e13057f945881a2421276c1d80ebc737e75e05c33949e1f4400d329f6",
+      "bytes": 229
+    },
+    {
+      "path": "src/Modules/Administration/Domain/Members/Member.cs",
+      "sha256": "f556a284470095eb7c788946f2188976c9eeeb5e44d8c71862e8a7dfe1174aff",
+      "bytes": 1293
+    },
+    {
+      "path": "src/Modules/Administration/Domain/Members/MemberId.cs",
+      "sha256": "efc44b6cf4fd4eb42d6eaa2eb08f110b2fcd4c2ff3c7653d734ab4f06030c840",
+      "bytes": 280
+    },
+    {
+      "path": "src/Modules/Administration/Domain/Users/IUserContext.cs",
+      "sha256": "754c9d70c384ec5eb20cc921c33a2fcde1ef23d118e719b9be34303c6b822b37",
+      "bytes": 158
+    },
+    {
+      "path": "src/Modules/Administration/Domain/Users/UserId.cs",
+      "sha256": "5ef105dd2762da4af7b4e48974ee467d9a5b89a5413c5b3240b2754d60aa5e65",
+      "bytes": 274
+    },
+    {
+      "path": "src/Modules/Administration/IntegrationEvents/CompanyName.MyMeetings.Modules.Administration.IntegrationEvents.csproj",
+      "sha256": "4858ec1718bf9805fa23efce7f9852a4eb5d5b950ad377586ba1eec5067ebecd",
+      "bytes": 38
+    },
+    {
+      "path": "src/Modules/Administration/IntegrationEvents/MeetingGroupProposals/MeetingGroupProposalAcceptedIntegrationEvent.cs",
+      "sha256": "6d88ff903405ecc77cb34b026ebb7ec894883d2a9e759e43778ce86faba07f8a",
+      "bytes": 609
+    },
+    {
+      "path": "src/Modules/Meetings/Application/CompanyName.MyMeetings.Modules.Meetings.Application.csproj",
+      "sha256": "2f0d3e0797c1fdf2c35bc4f61d1bce373dff83fac85236fb252895dd2cc61249",
+      "bytes": 642
+    },
+    {
+      "path": "src/Modules/Meetings/Application/Configuration/Commands/ICommandHandler.cs",
+      "sha256": "16a00ae9f7f7e75d27dd37cec382c90403aa1e5cf48455aa6a13384229165ce1",
+      "bytes": 475
+    },
+    {
+      "path": "src/Modules/Meetings/Application/Configuration/Commands/ICommandsScheduler.cs",
+      "sha256": "7d1f2c714bb17c3ed743b9d52a1c18fc33cb0574f398704138957d56103e2510",
+      "bytes": 320
+    },
+    {
+      "path": "src/Modules/Meetings/Application/Configuration/Commands/InternalCommandBase.cs",
+      "sha256": "1f3b41825102690d50c5c06b3db01029ca8ebfbaa22f2c31b67e578efcb06e91",
+      "bytes": 682
+    },
+    {
+      "path": "src/Modules/Meetings/Application/Configuration/Queries/IQueryHandler.cs",
+      "sha256": "044bc576309f53ebaf7d82908937c65e997bf588dc6ff110fc4c0aebb7cafccb",
+      "bytes": 334
+    },
+    {
+      "path": "src/Modules/Meetings/Application/Contracts/CommandBase.cs",
+      "sha256": "7ca3271ffc15a5fa17a7cc7916b062b19459412aaca43e9fe105fa514d21a210",
+      "bytes": 648
+    },
+    {
+      "path": "src/Modules/Meetings/Application/Contracts/ICommand.cs",
+      "sha256": "5db533c85e28499e469faba2d49351f65cd2651db877850e5a0b6e4c9481b595",
+      "bytes": 286
+    },
+    {
+      "path": "src/Modules/Meetings/Application/Contracts/IMeetingsModule.cs",
+      "sha256": "6aa3f0b4648a8510e1d08abe37c34b3803ab43fbebebf10830aa4c5e7bf3b555",
+      "bytes": 343
+    },
+    {
+      "path": "src/Modules/Meetings/Application/Contracts/IQuery.cs",
+      "sha256": "fcf0d510a0cf9fc8cf0d8d91a0ccacb67b6b89f79469668d025841e70a5100fe",
+      "bytes": 174
+    },
+    {
+      "path": "src/Modules/Meetings/Application/Contracts/IRecurringCommand.cs",
+      "sha256": "d886b1f5243579f080f1fa6c2aec96ea9facb48d0d8d551eaac7ba22d1535b01",
+      "bytes": 134
+    },
+    {
+      "path": "src/Modules/Meetings/Application/Contracts/QueryBase.cs",
+      "sha256": "6d622a598078f1d9c54c2a852ab303ec53ba4da1a14e0bd4c81199757068202f",
+      "bytes": 364
+    },
+    {
+      "path": "src/Modules/Meetings/Application/Countries/CountryDto.cs",
+      "sha256": "1219e806a4029a5669012e8e6dbbda1b63019e45812d9751cc7743a638c8a38f",
+      "bytes": 209
+    },
+    {
+      "path": "src/Modules/Meetings/Application/Countries/GetAllCountriesQuery.cs",
+      "sha256": "6d56444205931439cdc467e5079078c1ac2685fd14cba85b5e299203d88e8218",
+      "bytes": 235
+    },
+    {
+      "path": "src/Modules/Meetings/Application/Countries/GetAllCountriesQueryHandler.cs",
+      "sha256": "143ed0c242162a2a9a1106996d7832ffaf7dda696308d4701388795a34b66054",
+      "bytes": 1254
+    },
+    {
+      "path": "src/Modules/Meetings/Application/MeetingCommentingConfigurations/DisableMeetingCommentingConfiguration/DisableMeetingCommentingConfigurationCommand.cs",
+      "sha256": "9e80622a008f827d8400db04a177ebe84a0fa95a4671d5f1ada977da238fed2a",
+      "bytes": 480
+    },
+    {
+      "path": "src/Modules/Meetings/Application/MeetingCommentingConfigurations/DisableMeetingCommentingConfiguration/DisableMeetingCommentingConfigurationCommandHandler.cs",
+      "sha256": "f706dea10a6bf602c6ce96636b1df86236e31338701e3ddc0e4c59e8638be8f5",
+      "bytes": 2458
+    },
+    {
+      "path": "src/Modules/Meetings/Application/MeetingCommentingConfigurations/EnableMeetingCommentingConfiguration/EnableMeetingCommentingConfigurationCommand.cs",
+      "sha256": "20e3aaa553c1ad8e9b18943664d6e52fc9edf1b2ecd53359bb2d7eb1d369bc6c",
+      "bytes": 477
+    },
+    {
+      "path": "src/Modules/Meetings/Application/MeetingCommentingConfigurations/EnableMeetingCommentingConfiguration/EnableMeetingCommentingConfigurationCommandHandler.cs",
+      "sha256": "be20e7ee4bec0ef160025cb0965cf1a800f6e59fcdd9e6ab2cf0e8439d4daab7",
+      "bytes": 2451
+    },
+    {
+      "path": "src/Modules/Meetings/Application/MeetingCommentingConfigurations/GetMeetingCommentingConfiguration/GetMeetingCommentingConfigurationQuery.cs",
+      "sha256": "87bbc68a95ac5dbef060353ab180395e6523674d1fb3331c3462f4451c8ce5fb",
+      "bytes": 497
+    },
+    {
+      "path": "src/Modules/Meetings/Application/MeetingCommentingConfigurations/GetMeetingCommentingConfiguration/GetMeetingCommentingConfigurationQueryHandler.cs",
+      "sha256": "0552e3b71624751eb91eb627288341c7016bcd5b8dcbc1eca275050145263d81",
+      "bytes": 1745
+    },
+    {
+      "path": "src/Modules/Meetings/Application/MeetingCommentingConfigurations/GetMeetingCommentingConfiguration/MeetingCommentingConfigurationDto.cs",
+      "sha256": "494c254b0c6f3823143387a2339c23717ad8426fa5a9727122a028e7829d7823",
+      "bytes": 294
+    },
+    {
+      "path": "src/Modules/Meetings/Application/MeetingCommentingConfigurations/MeetingCreatedEventHandler.cs",
+      "sha256": "31015f91f5ff0e100dfe74f3bf6939f9a709984acd7777ae4134a7eb8185b751",
+      "bytes": 1408
+    },
+    {
+      "path": "src/Modules/Meetings/Application/MeetingComments/AddMeetingComment/AddMeetingCommentCommand.cs",
+      "sha256": "f56ea86b986b2b63f7eef3361a2e4031b931baa62f875d177f062c0b237be6dc",
+      "bytes": 500
+    },
+    {
+      "path": "src/Modules/Meetings/Application/MeetingComments/AddMeetingComment/AddMeetingCommentCommandHandler.cs",
+      "sha256": "7416620e2113d371c195f7eb3bed502e73d6107f7f4151205a63d082d74424a6",
+      "bytes": 2742
+    },
+    {
+      "path": "src/Modules/Meetings/Application/MeetingComments/AddMeetingComment/AddMeetingCommentCommandValidator.cs",
+      "sha256": "c568409bc4d95ef5f6d423a218c7e000741d72b296fc0adcc3ea99707c077775",
+      "bytes": 578
+    },
+    {
+      "path": "src/Modules/Meetings/Application/MeetingComments/AddMeetingCommentLike/AddMeetingCommentLikeCommand.cs",
+      "sha256": "72f2703a7453d2c022aacb330a321e8b1812f3fc525b299c438489eb24f3bc2c",
+      "bytes": 444
+    },
+    {
+      "path": "src/Modules/Meetings/Application/MeetingComments/AddMeetingCommentLike/AddMeetingCommentLikeCommandHandler.cs",
+      "sha256": "7ba12dc87898b63b51866de1615785c3cec0f591d7d929f498316af262e13600",
+      "bytes": 2725
+    },
+    {
+      "path": "src/Modules/Meetings/Application/MeetingComments/AddMeetingCommentReply/AddReplyToMeetingCommentCommand.cs",
+      "sha256": "c94e6a45cc2ef49435055ae6f8a5de69302ee2c335a8d1e32bee595238208a7c",
+      "bytes": 547
+    },
+    {
+      "path": "src/Modules/Meetings/Application/MeetingComments/AddMeetingCommentReply/AddReplyToMeetingCommentCommandHandler.cs",
+      "sha256": "9659f512e5263fc9b6e6dfe0381c53b4d441de4f43f289252d70dbf359107855",
+      "bytes": 2843
+    },
+    {
+      "path": "src/Modules/Meetings/Application/MeetingComments/EditMeetingComment/EditMeetingCommentCommand.cs",
+      "sha256": "0efe7fa8204ccb52042bc7c53889511bef0fb6a78f217423a82e6902746697be",
+      "bytes": 549
+    },
+    {
+      "path": "src/Modules/Meetings/Application/MeetingComments/EditMeetingComment/EditMeetingCommentCommandHandler.cs",
+      "sha256": "1819ba7c42e03f362967cb4773172fb65cf023fe428bc2c7b06af909e8306e22",
+      "bytes": 2014
+    },
+    {
+      "path": "src/Modules/Meetings/Application/MeetingComments/EditMeetingComment/EditMeetingCommentCommandValidator.cs",
+      "sha256": "606608f03cc5f1d84bb7494306f26c3e93dedda8d10ef4ab99ffcf8c4236417a",
+      "bytes": 454
+    },
+    {
+      "path": "src/Modules/Meetings/Application/MeetingComments/GetMeetingCommentLikers/GetMeetingCommentLikersQuery.cs",
+      "sha256": "14855b4034792a71c201f80297c6249eedfddebaf7760328d3363f4833fcf812",
+      "bytes": 471
+    },
+    {
+      "path": "src/Modules/Meetings/Application/MeetingComments/GetMeetingCommentLikers/GetMeetingCommentLikersQueryHandler.cs",
+      "sha256": "87939820a5f65eb129043e98245d64eecf6c74b3c1cf964ff763c17a108637a5",
+      "bytes": 1712
+    },
+    {
+      "path": "src/Modules/Meetings/Application/MeetingComments/GetMeetingCommentLikers/MeetingCommentLikerDto.cs",
+      "sha256": "ec836844b69b1b8405fc08c8ce028325d58e8ae52073e7f7c889808f057df293",
+      "bytes": 247
+    },
+    {
+      "path": "src/Modules/Meetings/Application/MeetingComments/GetMeetingComments/GetMeetingCommentsQuery.cs",
+      "sha256": "3c07fa94f4d35a715d7487cf22a7d20d7f9439b0c9f56a9dd1099952d35d5f02",
+      "bytes": 426
+    },
+    {
+      "path": "src/Modules/Meetings/Application/MeetingComments/GetMeetingComments/GetMeetingCommentsQueryHandler.cs",
+      "sha256": "7b867a8cee430100bf9e7bb9ce1456765996e2469f3a4fd4b231edceaf0d5704",
+      "bytes": 2084
+    },
+    {
+      "path": "src/Modules/Meetings/Application/MeetingComments/GetMeetingComments/MeetingCommentDto.cs",
+      "sha256": "5938dbf3b85d6fa02bc2761b5b01f4d8176ab1b45ce34a220062d082e410ecd9",
+      "bytes": 458
+    },
+    {
+      "path": "src/Modules/Meetings/Application/MeetingComments/MeetingCommentLikedNotification.cs",
+      "sha256": "d5b2eab5c374b578f01d0ffa7eb69e231dd711779fc20db729714203affe5dab",
+      "bytes": 522
+    },
+    {
+      "path": "src/Modules/Meetings/Application/MeetingComments/MeetingCommentLikedNotificationHandler.cs",
+      "sha256": "4b063bad8b160d87209c7a98985c5166a55c7457a9db4605a33646f8b38e35de",
+      "bytes": 1362
+    },
+    {
+      "path": "src/Modules/Meetings/Application/MeetingComments/MeetingCommentUnlikeNotificationHandler.cs",
+      "sha256": "9aaa994cd36f8f8be3cb86cb296b2753a4f2665363ea3aee4190526d565484aa",
+      "bytes": 1341
+    },
+    {
+      "path": "src/Modules/Meetings/Application/MeetingComments/MeetingCommentUnlikedNotification.cs",
+      "sha256": "783c15fc27498f14f31942b5540bdb2265d28062cd7d23424d3f1f5d7bf206f1",
+      "bytes": 530
+    },
+    {
+      "path": "src/Modules/Meetings/Application/MeetingComments/RemoveMeetingComment/RemoveMeetingCommentCommand.cs",
+      "sha256": "38180c7907a122626a3520fda1d29084f2b0c9ed2b411baab2223e59d1eb790e",
+      "bytes": 527
+    },
+    {
+      "path": "src/Modules/Meetings/Application/MeetingComments/RemoveMeetingComment/RemoveMeetingCommentCommandHandler.cs",
+      "sha256": "e7a10ef2c0bb4727ea86204bba1b720e016c75494bc45b5f7608e265046147dd",
+      "bytes": 2108
+    },
+    {
+      "path": "src/Modules/Meetings/Application/MeetingComments/RemoveMeetingCommentLike/RemoveMeetingCommentLikeCommand.cs",
+      "sha256": "92aacb9aca0915d17c206fac1b42a333aa2fac1f2cd88333f0e5c94d51592805",
+      "bytes": 453
+    },
+    {
+      "path": "src/Modules/Meetings/Application/MeetingComments/RemoveMeetingCommentLike/RemoveMeetingCommentLikeCommandHandler.cs",
+      "sha256": "332e87d858a7ef9fe86dcb5ccb82c379649240fbcec600155764817351a892fe",
+      "bytes": 1644
+    },
+    {
+      "path": "src/Modules/Meetings/Application/MeetingGroupProposals/AcceptMeetingGroupProposal/AcceptMeetingGroupProposalCommand.cs",
+      "sha256": "19154e0f5869d4e8f354b62b7a0a8ded0479634721b0fa5b2fc4996fa4a2fc68",
+      "bytes": 599
+    },
+    {
+      "path": "src/Modules/Meetings/Application/MeetingGroupProposals/AcceptMeetingGroupProposal/AcceptMeetingGroupProposalCommandHandler.cs",
+      "sha256": "efa767c15452115aa68c82b8c925f4a23163c81a82cdd1b00569afe1b2d64175",
+      "bytes": 1060
+    },
+    {
+      "path": "src/Modules/Meetings/Application/MeetingGroupProposals/AcceptMeetingGroupProposal/AcceptMeetingGroupProposalCommandValidator.cs",
+      "sha256": "62a208c97c79a038d3466494c460b00c57550c2e424cc28d27a3746ddeb36e9a",
+      "bytes": 508
+    },
+    {
+      "path": "src/Modules/Meetings/Application/MeetingGroupProposals/AcceptMeetingGroupProposal/MeetingGroupProposalAcceptedNotification.cs",
+      "sha256": "020d73e2e0dae217b8cd467cadaa70de20f3abe02b61ba6cab6a7f3387303b97",
+      "bytes": 587
+    },
+    {
+      "path": "src/Modules/Meetings/Application/MeetingGroupProposals/AcceptMeetingGroupProposal/MeetingGroupProposalAcceptedNotificationHandler.cs",
+      "sha256": "bb59082130e24b13054cfb9bf147b7060ff7f75d4c3a2d4c79dec078baa41aae",
+      "bytes": 1071
+    },
+    {
+      "path": "src/Modules/Meetings/Application/MeetingGroupProposals/GetAllMeetingGroupProposals/GetAllMeetingGroupProposalsQuery.cs",
+      "sha256": "c2ca898aa79975182c1aea4459f7dd7d89b49fffde13cecca6795b8a0c1d4039",
+      "bytes": 716
+    },
+    {
+      "path": "src/Modules/Meetings/Application/MeetingGroupProposals/GetAllMeetingGroupProposals/GetAllMeetingGroupProposalsQueryHandler.cs",
+      "sha256": "910df5cfe7ea9ad2e11909f69e98943b407d31504877db1c0de2f31ce23f1e5e",
+      "bytes": 2782
+    },
+    {
+      "path": "src/Modules/Meetings/Application/MeetingGroupProposals/GetMeetingGroupProposal/GetMeetingGroupProposalQuery.cs",
+      "sha256": "b736647ec2e0edb52c1bbcf203c863582a75245b2f930eb49b539542ae72e5d2",
+      "bytes": 499
+    },
+    {
+      "path": "src/Modules/Meetings/Application/MeetingGroupProposals/GetMeetingGroupProposal/GetMeetingGroupProposalQueryHandler.cs",
+      "sha256": "63c7beb68cd9b969365049d02c7e03c92115cafc17bfd69adc98d8623fb2861c",
+      "bytes": 2317
+    },
+    {
+      "path": "src/Modules/Meetings/Application/MeetingGroupProposals/GetMeetingGroupProposal/MeetingGroupProposalDto.cs",
+      "sha256": "4751984c340ca2bc6dd31397abe8f674081b7ec1aff53547fa85efd65e3e48b8",
+      "bytes": 572
+    },
+    {
+      "path": "src/Modules/Meetings/Application/MeetingGroupProposals/GetMemberMeetingGroupProposals/GetMemberMeetingGroupProposalsQuery.cs",
+      "sha256": "a54dcf3962b26aaa3b0ac60f5d1fc8754fe1697e60b875f931d64d727fcd9325",
+      "bytes": 488
+    },
+    {
+      "path": "src/Modules/Meetings/Application/MeetingGroupProposals/GetMemberMeetingGroupProposals/GetMemberMeetingGroupProposalsQueryHandler.cs",
+      "sha256": "66fb675056d45c229493f920a4a39a08534a253411319c208ba0264b9db2d448",
+      "bytes": 2942
+    },
+    {
+      "path": "src/Modules/Meetings/Application/MeetingGroupProposals/MeetingGroupProposalAcceptedIntegrationEventHandler.cs",
+      "sha256": "09b8bc446ed2ca991761631f767fd3772f82973ec75043baa132a294558db8b9",
+      "bytes": 1139
+    },
+    {
+      "path": "src/Modules/Meetings/Application/MeetingGroupProposals/MeetingGroupProposedNotification.cs",
+      "sha256": "3a4dc8570349630cf7cc65d382fa8fc0dc9155e6558887aadc222c7f27d035eb",
+      "bytes": 579
+    },
+    {
+      "path": "src/Modules/Meetings/Application/MeetingGroupProposals/MeetingGroupProposedNotificationHandler.cs",
+      "sha256": "90201bc91ce3f5c9423aeab4c1a58eb2d75d4ec706026f3ddd374078b10eea21",
+      "bytes": 1289
+    },
+    {
+      "path": "src/Modules/Meetings/Application/MeetingGroupProposals/ProposeMeetingGroup/ProposeMeetingGroupCommand.cs",
+      "sha256": "262c1675eecb8a5621b33e661921616f89ca5591e16bd24bf25f5c8f4c1ff450",
+      "bytes": 760
+    },
+    {
+      "path": "src/Modules/Meetings/Application/MeetingGroupProposals/ProposeMeetingGroup/ProposeMeetingGroupCommandHandler.cs",
+      "sha256": "16a23b7c4d9481df81de1522874ba94ac941b6cdca5781369f7d1469b7d10638",
+      "bytes": 1555
+    },
+    {
+      "path": "src/Modules/Meetings/Application/MeetingGroupProposals/ProposeMeetingGroup/ProposeMeetingGroupCommandValidator.cs",
+      "sha256": "074e89c1c595cde16238aa474fac2a19d5c48b10c6a60d052e86ccd3401d15bb",
+      "bytes": 661
+    },
+    {
+      "path": "src/Modules/Meetings/Application/MeetingGroups/CreateNewMeetingGroup/CreateNewMeetingGroupCommand.cs",
+      "sha256": "f03f42dcf578834f229a4e6d83f74b9b7704a9b7348eba03d9f64c04a012834d",
+      "bytes": 691
+    },
+    {
+      "path": "src/Modules/Meetings/Application/MeetingGroups/CreateNewMeetingGroup/CreateNewMeetingGroupCommandHandler.cs",
+      "sha256": "edee5b10624b92cf008f0361ba8641eb9f373576151f5be2e70dcbf4211d1b56",
+      "bytes": 1383
+    },
+    {
+      "path": "src/Modules/Meetings/Application/MeetingGroups/EditMeetingGroupGeneralAttributes/EditMeetingGroupGeneralAttributesCommand.cs",
+      "sha256": "c437e0742fa2562e79570d8de1c7981116365543aa750f2c53d17da006f3f565",
+      "bytes": 894
+    },
+    {
+      "path": "src/Modules/Meetings/Application/MeetingGroups/EditMeetingGroupGeneralAttributes/EditMeetingGroupGeneralAttributesCommandHandler.cs",
+      "sha256": "c6006f99920e496e0422e12c8d95742a9b2d4b490fe13340617edc18675f6217",
+      "bytes": 1396
+    },
+    {
+      "path": "src/Modules/Meetings/Application/MeetingGroups/GetAllMeetingGroups/GetAllMeetingGroupsQuery.cs",
+      "sha256": "7f5294001066d7c8cba9154b7d1cc452ef1cbf766e494b472c33796d1821ad2e",
+      "bytes": 265
+    },
+    {
+      "path": "src/Modules/Meetings/Application/MeetingGroups/GetAllMeetingGroups/GetAllMeetingGroupsQueryHandler.cs",
+      "sha256": "49a76ab7ab134e5690080ba25c8c3642eb3dcfb982f82aa2209e1e7979e2c427",
+      "bytes": 1739
+    },
+    {
+      "path": "src/Modules/Meetings/Application/MeetingGroups/GetAllMeetingGroups/MeetingGroupDto.cs",
+      "sha256": "da2c9e2480ddc7fd122549b4fdce87740f1a28f3cbdc331d0ee39328799398f1",
+      "bytes": 396
+    },
+    {
+      "path": "src/Modules/Meetings/Application/MeetingGroups/GetAuthenticationMemberMeetingGroups/GetAuthenticationMemberMeetingGroupsQuery.cs",
+      "sha256": "dade0f8023299ea6ab47ab17a997f336504cefdc3ab913a581db5cb563cf6e8c",
+      "bytes": 308
+    },
+    {
+      "path": "src/Modules/Meetings/Application/MeetingGroups/GetAuthenticationMemberMeetingGroups/GetAuthenticationMemberMeetingGroupsQueryHandler.cs",
+      "sha256": "7af06253c4e09ae5b3c4afe0721336c08d68e4fd20409683aa879f0fa5147004",
+      "bytes": 2798
+    },
+    {
+      "path": "src/Modules/Meetings/Application/MeetingGroups/GetAuthenticationMemberMeetingGroups/MemberMeetingGroupDto.cs",
+      "sha256": "1011f9fcd8952aa453f38608613ca566df1b7f335d8395848c5c836e2ca4dbf1",
+      "bytes": 513
+    },
+    {
+      "path": "src/Modules/Meetings/Application/MeetingGroups/GetMeetingGroupDetails/GetMeetingGroupDetailsQuery.cs",
+      "sha256": "1b45b21d3c9549fa6fef3c4ebe4cd7deabe03a0dbea2347f868561a14073cef7",
+      "bytes": 455
+    },
+    {
+      "path": "src/Modules/Meetings/Application/MeetingGroups/GetMeetingGroupDetails/GetMeetingGroupDetailsQueryHandler.cs",
+      "sha256": "cf5902cf36819db75eae9b92b6f4c568392252f60b2291311e4cef89a35adb1e",
+      "bytes": 2831
+    },
+    {
+      "path": "src/Modules/Meetings/Application/MeetingGroups/GetMeetingGroupDetails/MeetingGroupDetailsDto.cs",
+      "sha256": "cb79540de60a3fb068bb0795c906c73a618cbc286a6bb4968310c206da7a6f1b",
+      "bytes": 455
+    },
+    {
+      "path": "src/Modules/Meetings/Application/MeetingGroups/JoinToGroup/JoinToGroupCommand.cs",
+      "sha256": "031eb29cdcc9cb78e9aa490d59515ad2075f11136a405d84d5cf194cd6263563",
+      "bytes": 406
+    },
+    {
+      "path": "src/Modules/Meetings/Application/MeetingGroups/JoinToGroup/JoinToGroupCommandHandler.cs",
+      "sha256": "3c69efb02737da82642b3e7153ca5e88ce7669f194bc94c6537dbf06cbe06af8",
+      "bytes": 1139
+    },
+    {
+      "path": "src/Modules/Meetings/Application/MeetingGroups/LeaveMeetingGroup/LeaveMeetingGroupCommand.cs",
+      "sha256": "59fcd25417c4ce728700b71e21568191507040b744b49b2666daa7a158029807",
+      "bytes": 424
+    },
+    {
+      "path": "src/Modules/Meetings/Application/MeetingGroups/LeaveMeetingGroup/LeaveMeetingGroupCommandHandler.cs",
+      "sha256": "bd2032147a08568e6b412214b37cdfea7c7dbbf846af8781374b7757ec3cb3ab",
+      "bytes": 1162
+    },
+    {
+      "path": "src/Modules/Meetings/Application/MeetingGroups/MeetingGroupCreatedNotification.cs",
+      "sha256": "6c7e496aab45dbdfdaf936a9e870f4ed13809560362a9a210a156a6e686934c9",
+      "bytes": 561
+    },
+    {
+      "path": "src/Modules/Meetings/Application/MeetingGroups/MeetingGroupCreatedSendEmailHandler.cs",
+      "sha256": "fb6decd492947882a281716f9e3b112bb1a230a348deff92a4850cc1162f9ef9",
+      "bytes": 1055
+    },
+    {
+      "path": "src/Modules/Meetings/Application/MeetingGroups/SendMeetingGroupCreatedEmail/SendMeetingGroupCreatedEmailCommand.cs",
+      "sha256": "763b6f7d74f82bcdbfc765736c5433bd619597d13522509c5c87a4c7b3755aaf",
+      "bytes": 822
+    },
+    {
+      "path": "src/Modules/Meetings/Application/MeetingGroups/SendMeetingGroupCreatedEmail/SendMeetingGroupCreatedEmailCommandHandler.cs",
+      "sha256": "42fadfb2d6ba999eebe415cd0e5486299959ee0f64e4f5047547a47b3a0652e7",
+      "bytes": 2481
+    },
+    {
+      "path": "src/Modules/Meetings/Application/MeetingGroups/SetMeetingGroupExpirationDate/SetMeetingGroupExpirationDateCommand.cs",
+      "sha256": "cdc84641709fb15eb34560467428d1cf3d17033433d617f5ee8836851d1025e7",
+      "bytes": 657
+    },
+    {
+      "path": "src/Modules/Meetings/Application/MeetingGroups/SetMeetingGroupExpirationDate/SetMeetingGroupExpirationDateCommandHandler.cs",
+      "sha256": "c46c6b35e8a184f6f9e76ed10acdaae11715d606252bb8d9806129092a3ec08c",
+      "bytes": 998
+    },
+    {
+      "path": "src/Modules/Meetings/Application/Meetings/AddMeetingAttendee/AddMeetingAttendeeCommand.cs",
+      "sha256": "d0702f233e4aa2587592497b3a8c8595146dd80544544bbc5b49f59816add7d9",
+      "bytes": 504
+    },
+    {
+      "path": "src/Modules/Meetings/Application/Meetings/AddMeetingAttendee/AddMeetingAttendeeCommandHandler.cs",
+      "sha256": "328e756629a140bbdf5c92aaa51f5ab6b172d2e36fa18dfc5d54dcecb3b9673c",
+      "bytes": 1512
+    },
+    {
+      "path": "src/Modules/Meetings/Application/Meetings/AddMeetingNotAttendee/AddMeetingNotAttendeeCommand.cs",
+      "sha256": "b4c669d1ceac6c17a2f2ddf6936f37cc00eddf976711fbff651fad0d2a84174f",
+      "bytes": 409
+    },
+    {
+      "path": "src/Modules/Meetings/Application/Meetings/AddMeetingNotAttendee/AddMeetingNotAttendeeCommandHandler.cs",
+      "sha256": "a531d52012752e4b9950aae6dd7b14213c5a083634c299d8a49d47a6dea7d80a",
+      "bytes": 1092
+    },
+    {
+      "path": "src/Modules/Meetings/Application/Meetings/CancelMeeting/CancelMeetingCommand.cs",
+      "sha256": "8904c0d5d2b91b5dfaeae90a81e8ee83bd6cf65a6a0682df268d92fdff024f32",
+      "bytes": 385
+    },
+    {
+      "path": "src/Modules/Meetings/Application/Meetings/CancelMeeting/CancelMeetingCommandHandler.cs",
+      "sha256": "71bc544f2df431fc821ae9206b9798acdec9d53dc0c418727d4bcb5f57db6bd2",
+      "bytes": 1046
+    },
+    {
+      "path": "src/Modules/Meetings/Application/Meetings/ChangeMeetingMainAttributes/ChangeMeetingMainAttributesCommand.cs",
+      "sha256": "47918e00fb3af38d793762ca4c35fef256d454de38cadb29df7596605f053a23",
+      "bytes": 2349
+    },
+    {
+      "path": "src/Modules/Meetings/Application/Meetings/ChangeMeetingMainAttributes/ChangeMeetingMainAttributesCommandHandler.cs",
+      "sha256": "c94a843b6ff94fa6ed2cded01c73041b3e6ef59b1f92eb7fa38d11e4d9719c78",
+      "bytes": 1807
+    },
+    {
+      "path": "src/Modules/Meetings/Application/Meetings/ChangeNotAttendeeDecision/ChangeNotAttendeeDecisionCommand.cs",
+      "sha256": "4de5311328978d67435da83fc41c9f088113de95820b5ed28d2d2e39366f3f82",
+      "bytes": 421
+    },
+    {
+      "path": "src/Modules/Meetings/Application/Meetings/ChangeNotAttendeeDecision/ChangeNotAttendeeDecisionCommandHandler.cs",
+      "sha256": "d14b40167b887153961fce03a4526ca7afb2cdf31487be28bc19a76b9e063bbf",
+      "bytes": 1123
+    },
+    {
+      "path": "src/Modules/Meetings/Application/Meetings/CreateMeeting/CreateMeetingCommand.cs",
+      "sha256": "50b4783bfe145bee565a04a005a83e1303d907360f93fd65103755bd13fc644e",
+      "bytes": 2468
+    },
+    {
+      "path": "src/Modules/Meetings/Application/Meetings/CreateMeeting/CreateMeetingCommandHandler.cs",
+      "sha256": "6865e6b1dc109f8d4c898abc3d19970292676b377c58833d816726d7e61f97fb",
+      "bytes": 2304
+    },
+    {
+      "path": "src/Modules/Meetings/Application/Meetings/GetAuthenticatedMemberMeetings/GetAuthenticatedMemberMeetingsQuery.cs",
+      "sha256": "d112c479be1ff83dd2c40b0f0c4a09f833a1e492f67a3dfdb294b19db37ef8e3",
+      "bytes": 286
+    },
+    {
+      "path": "src/Modules/Meetings/Application/Meetings/GetAuthenticatedMemberMeetings/GetAuthenticatedMemberMeetingsQueryHandler.cs",
+      "sha256": "05497f031f18c86b644521245d25ca9c2cf0e31efdfdd605313a22f7891c8281",
+      "bytes": 2374
+    },
+    {
+      "path": "src/Modules/Meetings/Application/Meetings/GetAuthenticatedMemberMeetings/MemberMeetingDto.cs",
+      "sha256": "7b029b85408d20013919f96979de051f9b7c842b2519b1dedce64ae86d21337c",
+      "bytes": 570
+    },
+    {
+      "path": "src/Modules/Meetings/Application/Meetings/GetMeetingAttendees/GetMeetingAttendeesQuery.cs",
+      "sha256": "435532f99c8244bcdadb106b906a4f8e02bc1365f308d4f47d2ad5de73e7fc3e",
+      "bytes": 423
+    },
+    {
+      "path": "src/Modules/Meetings/Application/Meetings/GetMeetingAttendees/GetMeetingAttendeesQueryHandler.cs",
+      "sha256": "996f50dd9cafe4df62d3ccc49f92be578fae5e851ffb8b8960b8a8284730d625",
+      "bytes": 2036
+    },
+    {
+      "path": "src/Modules/Meetings/Application/Meetings/GetMeetingAttendees/MeetingAttendeeDto.cs",
+      "sha256": "c276b6000c2b22f6f40b06685d5112ad76b005c7cd673cf137ba408629b4c2c7",
+      "bytes": 444
+    },
+    {
+      "path": "src/Modules/Meetings/Application/Meetings/GetMeetingDetails/GetMeetingDetailsQuery.cs",
+      "sha256": "c28124673342d53f8078710f89540ea54a1fd604a6cdd2bc09e05297d2700cc6",
+      "bytes": 410
+    },
+    {
+      "path": "src/Modules/Meetings/Application/Meetings/GetMeetingDetails/GetMeetingDetailsQueryHandler.cs",
+      "sha256": "abc8a0e68eeb0f5164ee3a705e0ee04231d01a00cc695cee5eeaac109bfdc57e",
+      "bytes": 2865
+    },
+    {
+      "path": "src/Modules/Meetings/Application/Meetings/GetMeetingDetails/MeetingDetailsDto.cs",
+      "sha256": "4db3451d6a39e94c0c9988c0c70c8172f0db789ae18af9978e78982649338124",
+      "bytes": 987
+    },
+    {
+      "path": "src/Modules/Meetings/Application/Meetings/MarkMeetingAttendeeFeeAsPayedCommand.cs",
+      "sha256": "4bcc356e943f88b0c59cbf3b279c9be79841f0dcfe555af5dba568243f44dab1",
+      "bytes": 600
+    },
+    {
+      "path": "src/Modules/Meetings/Application/Meetings/MarkMeetingAttendeeFeeAsPayedCommandHandler.cs",
+      "sha256": "f71204f08f6ab396075f8679ef9154eed499980fb5e518c76bacfa56369021b5",
+      "bytes": 985
+    },
+    {
+      "path": "src/Modules/Meetings/Application/Meetings/MeetingDto.cs",
+      "sha256": "876b44778b12fec6e7d109938b81d5909cf13653f9be1082c69609036f060b24",
+      "bytes": 529
+    },
+    {
+      "path": "src/Modules/Meetings/Application/Meetings/MeetingFeePaidIntegrationEventHandler.cs",
+      "sha256": "d12614cbe8f0384d81381680003cfe312cb21d12ad206650c93542ba9d608ce3",
+      "bytes": 935
+    },
+    {
+      "path": "src/Modules/Meetings/Application/Meetings/MeetingsQueryHelper.cs",
+      "sha256": "65ef9dee0a6ff8daeeb18e16c67b78f4edb3e294469f3eb59e3557e1600186ca",
+      "bytes": 1473
+    },
+    {
+      "path": "src/Modules/Meetings/Application/Meetings/RemoveMeetingAttendee/RemoveMeetingAttendeeCommand.cs",
+      "sha256": "5e2eba10698672f6e7fa2639ec388d65ecd499f4d3f56b2f4cd893dacd1edb5f",
+      "bytes": 625
+    },
+    {
+      "path": "src/Modules/Meetings/Application/Meetings/RemoveMeetingAttendee/RemoveMeetingAttendeeCommandHandler.cs",
+      "sha256": "becfbbffee74806a55d0272dbe201caa07cf53fa399d5e10d24c5b7e495a18b5",
+      "bytes": 1152
+    },
+    {
+      "path": "src/Modules/Meetings/Application/Meetings/SendMeetingAttendeeAddedEmail/MeetingAttendeeAddedNotification.cs",
+      "sha256": "89c1436d57e4568b9f1cbd0c2cdd5195df63bf08b1b114df338ac144db04ffd0",
+      "bytes": 583
+    },
+    {
+      "path": "src/Modules/Meetings/Application/Meetings/SendMeetingAttendeeAddedEmail/MeetingAttendeeAddedNotificationHandler.cs",
+      "sha256": "b50caf44a57494a8b1d722f6d663c83a023f37c5acf91c98a5f104de8c7d5b74",
+      "bytes": 986
+    },
+    {
+      "path": "src/Modules/Meetings/Application/Meetings/SendMeetingAttendeeAddedEmail/MeetingAttendeeAddedPublishEventNotificationHandler.cs",
+      "sha256": "1321de4600b1be4b61090d009d12ea14795a54ec1e37e07c958369f65bc98957",
+      "bytes": 1145
+    },
+    {
+      "path": "src/Modules/Meetings/Application/Meetings/SendMeetingAttendeeAddedEmail/SendMeetingAttendeeAddedEmailCommand.cs",
+      "sha256": "f4eebfa4766e79c0e31d19aa1433114a53cac76bfdf5f7c751d7ca93cbf41b67",
+      "bytes": 789
+    },
+    {
+      "path": "src/Modules/Meetings/Application/Meetings/SendMeetingAttendeeAddedEmail/SendMeetingAttendeeAddedEmailCommandHandler.cs",
+      "sha256": "a173a955d2439e32bbe55a8c6fe128f29bf477338f30b5ad03bb2eef3fb090b7",
+      "bytes": 1766
+    },
+    {
+      "path": "src/Modules/Meetings/Application/Meetings/SetMeetingAttendeeRole/SetMeetingAttendeeRoleCommand.cs",
+      "sha256": "8851c35d3862b71874556655db72f17ea55b339deab665a924d49e3d7ab401ba",
+      "bytes": 502
+    },
+    {
+      "path": "src/Modules/Meetings/Application/Meetings/SetMeetingAttendeeRole/SetMeetingAttendeeRoleCommandHandler.cs",
+      "sha256": "1976780ab7d6609b473eab762bfbc768bf229895cc0723275aec06693f189c93",
+      "bytes": 1548
+    },
+    {
+      "path": "src/Modules/Meetings/Application/Meetings/SetMeetingHostRole/SetMeetingHostRoleCommand.cs",
+      "sha256": "d4de6a6c89e845016c2a5550579c63f9f36d58383528ee112be2ffb005388f45",
+      "bytes": 490
+    },
+    {
+      "path": "src/Modules/Meetings/Application/Meetings/SetMeetingHostRole/SetMeetingHostRoleCommandHandler.cs",
+      "sha256": "e07ebc5722966bf304b524807aded517522541cb484bde6b456458fdede45439",
+      "bytes": 1524
+    },
+    {
+      "path": "src/Modules/Meetings/Application/Meetings/SignOffMemberFromWaitlist/SignOffMemberFromWaitlistCommand.cs",
+      "sha256": "eca7172ce9f3f410d7de38a7f04676fd606b0720d76863d5e22938063fc15f25",
+      "bytes": 421
+    },
+    {
+      "path": "src/Modules/Meetings/Application/Meetings/SignOffMemberFromWaitlist/SignOffMemberFromWaitlistCommandHandler.cs",
+      "sha256": "b2ce11fdb1edee963d5fb6b78b82dce677e7ed63d791788cd195296cd16a3a24",
+      "bytes": 1123
+    },
+    {
+      "path": "src/Modules/Meetings/Application/Meetings/SignUpMemberToWaitlist/SignUpMemberToWaitlistCommand.cs",
+      "sha256": "2d531cca64737d619ac629dec6fd35254dbc96fcaabb3dd4b93476f9c709b0c0",
+      "bytes": 412
+    },
+    {
+      "path": "src/Modules/Meetings/Application/Meetings/SignUpMemberToWaitlist/SignUpMemberToWaitlistCommandHandler.cs",
+      "sha256": "78a5364b6cd6d7068c2f14ad417bbbf18af7cd995b1f66b4e759fea530d625f2",
+      "bytes": 1521
+    },
+    {
+      "path": "src/Modules/Meetings/Application/MemberSubscriptions/ChangeSubscriptionExpirationDateForMember/ChangeSubscriptionExpirationDateForMemberCommand.cs",
+      "sha256": "40749398a2a19150d872a39bf7d38d1b7ee05a90101d382a73dc838760501ba2",
+      "bytes": 814
+    },
+    {
+      "path": "src/Modules/Meetings/Application/MemberSubscriptions/ChangeSubscriptionExpirationDateForMember/ChangeSubscriptionExpirationDateForMemberCommandHandler.cs",
+      "sha256": "aa1ea4fb9666635af3788f231403b5481ea9ddabce91b6165082ee972c868629",
+      "bytes": 1496
+    },
+    {
+      "path": "src/Modules/Meetings/Application/MemberSubscriptions/MemberSubscriptionExpirationDateChangedNotification.cs",
+      "sha256": "17cece6985bd5ad9f7ea8dad3f30348594f7fcbab729c4d8c5d753d00e5e1a87",
+      "bytes": 659
+    },
+    {
+      "path": "src/Modules/Meetings/Application/MemberSubscriptions/MemberSubscriptionExpirationDateChangedNotificationHandler.cs",
+      "sha256": "cbec61e229fa4d0293dfa2ed3641c4b7af26d5a16c725ebe931b826747b77b2d",
+      "bytes": 3243
+    },
+    {
+      "path": "src/Modules/Meetings/Application/MemberSubscriptions/SubscriptionExpirationDateChangedIntegrationEventHandler.cs",
+      "sha256": "c6ae8a97969f4c635cfcbd00fdf7ce18e852f373fe93e8661a90183dd3798128",
+      "bytes": 1238
+    },
+    {
+      "path": "src/Modules/Meetings/Application/Members/CreateMember/CreateMemberCommand.cs",
+      "sha256": "c5a89b80ac3c88a5180d4be9595abd4228ef53f48a1f2a366fb3c0b34314765c",
+      "bytes": 1020
+    },
+    {
+      "path": "src/Modules/Meetings/Application/Members/CreateMember/CreateMemberCommandHandler.cs",
+      "sha256": "c43127ae0b752b1618126f48fbc17e7de3cfb69fd70ab86612413a500fec5b58",
+      "bytes": 877
+    },
+    {
+      "path": "src/Modules/Meetings/Application/Members/CreateMember/MemberCratedNotificationHandler.cs",
+      "sha256": "a6db56ccd9e45843d884f79cb3c1eeef2f94d4ca6623ef3dc89c721e1303d081",
+      "bytes": 390
+    },
+    {
+      "path": "src/Modules/Meetings/Application/Members/CreateMember/MemberCreatedNotification.cs",
+      "sha256": "05074bd7e039f2d26af0f3c36ad2e417b5ecb35382b97ba6aa9ee99e221439be",
+      "bytes": 539
+    },
+    {
+      "path": "src/Modules/Meetings/Application/Members/CreateMember/NewUserRegisteredIntegrationEventHandler.cs",
+      "sha256": "e54e13bf1ff5ce070cc2fe1ef8ecacdf6a7d480097ec858899512ec619140946",
+      "bytes": 1159
+    },
+    {
+      "path": "src/Modules/Meetings/Application/Members/MemberContext.cs",
+      "sha256": "692772c13dcb027cf76d1092ae4db3c3ff73cca947a24e91a698cb00b783c155",
+      "bytes": 608
+    },
+    {
+      "path": "src/Modules/Meetings/Application/Members/MemberDto.cs",
+      "sha256": "3c1f8cabcda0da2eef508fdb3950331583453f9a57f88c241bfc2fd0fc454364",
+      "bytes": 292
+    },
+    {
+      "path": "src/Modules/Meetings/Application/Members/MembersQueryHelper.cs",
+      "sha256": "6ab41b0d4fa3e41ec29317da118d96bc06c9f503f34a6f5a7f3dfc408bc77268",
+      "bytes": 2822
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/CompanyName.MyMeetings.Modules.Meetings.Domain.csproj",
+      "sha256": "e6fcb8e1e93a724d47a829cffd19d47840a5eb088e9ace43f3a34bbaf1524b07",
+      "bytes": 37
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/MeetingCommentingConfigurations/Events/MeetingCommentingConfigurationCreatedDomainEvent.cs",
+      "sha256": "fd88a9c69dfdf29428be932d401f9a4c754d950f64438ad0ddecd4df05ae7cf5",
+      "bytes": 607
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/MeetingCommentingConfigurations/Events/MeetingCommentingDisabledDomainEvent.cs",
+      "sha256": "2fecc80befe53b143e6fce1c676dfc2284221e3aa22df03bb137a60c8a430416",
+      "bytes": 489
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/MeetingCommentingConfigurations/Events/MeetingCommentingEnabledDomainEvent.cs",
+      "sha256": "9ea39c68d3cdf6144ee9691955eb57a8d38fbc11274eb84cd44b44d823808f3f",
+      "bytes": 487
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/MeetingCommentingConfigurations/IMeetingCommentingConfigurationRepository.cs",
+      "sha256": "f6e1bb36511a9cab86b6ef183f79739ecea35503b11c066c55e4144c7ef027ea",
+      "bytes": 418
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/MeetingCommentingConfigurations/MeetingCommentingConfiguration.cs",
+      "sha256": "67f373d27595e1a45fc5c10078b7ae7cfc0b5eaad605a18b6c3622fde92d6bc9",
+      "bytes": 2394
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/MeetingCommentingConfigurations/MeetingCommentingConfigurationId.cs",
+      "sha256": "a31da776122f4ac41f9a4d198a8fb0f436b7dae76c4bd32a97b93dd80b9d89e1",
+      "bytes": 346
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/MeetingCommentingConfigurations/Rules/MeetingCommentingCanBeDisabledOnlyByGroupOrganizerRule.cs",
+      "sha256": "5f2249abc4636d8f5e5245edf152a31d58175e860c98b64c24ce1a60f983cc83",
+      "bytes": 935
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/MeetingCommentingConfigurations/Rules/MeetingCommentingCanBeEnabledOnlyByGroupOrganizerRule.cs",
+      "sha256": "4924fcc402c6086436f2ba28a321a084ea4dbaca2f9498e9b6dc356d53394af0",
+      "bytes": 927
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/MeetingComments/Events/MeetingCommentAddedDomainEvent.cs",
+      "sha256": "65c6613694ff43abcdbd2af876f8977717eb1d4b810c0e1aa7db9584474cc601",
+      "bytes": 697
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/MeetingComments/Events/MeetingCommentEditedDomainEvent.cs",
+      "sha256": "61a0ea855edcfc3ba1b247e6a168bf97c6ba2fc0e808c8261109e57de3551ef9",
+      "bytes": 555
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/MeetingComments/Events/MeetingCommentRemovedDomainEvent.cs",
+      "sha256": "9d888d2875ae62596aa3005851889f2962e2db597304979acf7d3abea85f8bc5",
+      "bytes": 443
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/MeetingComments/Events/ReplyToMeetingCommentAddedDomainEvent.cs",
+      "sha256": "a34ff64ea6aab0d74bd589c3d369507c007c43178a18847c21f62b3c8735b2ac",
+      "bytes": 689
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/MeetingComments/IMeetingCommentRepository.cs",
+      "sha256": "de0867527d67a6078cb5076d78361aa48c89f8a0da29cfcb42923d6cdc4fd0b3",
+      "bytes": 279
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/MeetingComments/MeetingComment.cs",
+      "sha256": "b18269c44da114f684744e5e34c8f89047db4899995575b9f53b8e628b2ab537",
+      "bytes": 5519
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/MeetingComments/MeetingCommentId.cs",
+      "sha256": "2babd024bfacd569ae0f7ea9cdbc080091c4b2d22075c5e0c3e76f0d009c33ba",
+      "bytes": 298
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/MeetingComments/Rules/CommentCanBeAddedOnlyByMeetingGroupMemberRule.cs",
+      "sha256": "6c9504bbec640a318874669d7a7b78961b19a189a970a844d0653cd24d18dacc",
+      "bytes": 836
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/MeetingComments/Rules/CommentCanBeCreatedOnlyIfCommentingForMeetingEnabledRule.cs",
+      "sha256": "da37f8af576aee048e95de32314db7ae996dc2977c5b63edf87ced6641da3767",
+      "bytes": 834
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/MeetingComments/Rules/CommentCanBeEditedOnlyIfCommentingForMeetingEnabledRule.cs",
+      "sha256": "8cbdd2ccb87e7a86e8d8e43c56727ebe5ab7def0158d44894a539649a73cec83",
+      "bytes": 832
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/MeetingComments/Rules/CommentCanBeLikedOnlyByMeetingGroupMemberRule.cs",
+      "sha256": "0ddad5c8df64c439dd7da60a743795a8da89744dd22ab1e6ec42eebebb67e20a",
+      "bytes": 761
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/MeetingComments/Rules/CommentCannotBeLikedByTheSameMemberMoreThanOnceRule.cs",
+      "sha256": "938b1a22498ab4304125cd8354f079a3fb431c65370b8095610c38bec238a8b7",
+      "bytes": 637
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/MeetingComments/Rules/CommentTextMustBeProvidedRule.cs",
+      "sha256": "0b30329bb0d450e2035050c09294aa2da9ef19a1ad8217367e4131d4d6fecc4b",
+      "bytes": 521
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/MeetingComments/Rules/MeetingCommentCanBeEditedOnlyByAuthorRule.cs",
+      "sha256": "8919dc1ad44a2ccb46282ef60aa0c7f671d64c0e008f7574cc63a931a9e69182",
+      "bytes": 719
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/MeetingComments/Rules/MeetingCommentCanBeRemovedOnlyByAuthorOrGroupOrganizerRule.cs",
+      "sha256": "ec4f62872f1638439d9d9584504fac8ce0da83ff78a855b9749047cd6345ca10",
+      "bytes": 1063
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/MeetingComments/Rules/RemovingReasonCanBeProvidedOnlyByGroupOrganizerRule.cs",
+      "sha256": "78518ce9bea57a7f7b28f22a8f409a55993eda90e3c9afe18122a410f99a3f21",
+      "bytes": 1080
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/MeetingGroupProposals/Events/MeetingGroupProposalAcceptedDomainEvent.cs",
+      "sha256": "ce5cd27ac048c0b73cb70dbb88b0179f3852e2b4f7c0a7cc436610c70592445d",
+      "bytes": 499
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/MeetingGroupProposals/Events/MeetingGroupProposedDomainEvent.cs",
+      "sha256": "5925e26823316a13e7109e158d77912728faa77e7665e8b55a7621e1fd545f18",
+      "bytes": 1341
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/MeetingGroupProposals/IMeetingGroupProposalRepository.cs",
+      "sha256": "453ce3809402ad1c8710dc47193b69358e24c9c06ac60aa22a2955a5570cdf79",
+      "bytes": 321
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/MeetingGroupProposals/MeetingGroupProposal.cs",
+      "sha256": "0d60f8bc8e910212a50dfa32a2a20ff7fab29239b2ebf24fd6e2d6e1c768126b",
+      "bytes": 2520
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/MeetingGroupProposals/MeetingGroupProposalId.cs",
+      "sha256": "af708cbd9b5e11ecbe747f54dc3702178180203fed57dba6070facb7e28cd89e",
+      "bytes": 316
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/MeetingGroupProposals/MeetingGroupProposalStatus.cs",
+      "sha256": "4917251f3c41deff895eafc7d75acd70b4bfe0a4da1f7f69e07917e39f707443",
+      "bytes": 652
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/MeetingGroupProposals/Rules/MeetingGroupProposalCannotBeAcceptedMoreThanOnceRule.cs",
+      "sha256": "b474da27a481ea7b81c377f5a9ccacc7160d83f356c3f5fcb79d24b70bcd597c",
+      "bytes": 660
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/MeetingGroups/Events/MeetingAttendeeChangedDecisionDomainEvent.cs",
+      "sha256": "bf2d848cf3925bd564ddf8caffccf0defb62877e8191f3307f489ad072354d8e",
+      "bytes": 642
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/MeetingGroups/Events/MeetingGroupCreatedDomainEvent.cs",
+      "sha256": "98aaaf9f88cfafad0ef24d3d23101cb240721db87237513fbec1a9e0f5f4e25d",
+      "bytes": 602
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/MeetingGroups/Events/MeetingGroupGeneralAttributesEditedDomainEvent.cs",
+      "sha256": "350d2fc8def95879ac8199dc4ffbcecc1b5303544545104f03d97562e947c345",
+      "bytes": 682
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/MeetingGroups/Events/MeetingGroupMemberLeftGroupDomainEvent.cs",
+      "sha256": "f4eb43acbe3a73c1b4e975d3adbafc2d56deb9211f95bcd95153c00de4b3f606",
+      "bytes": 602
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/MeetingGroups/Events/MeetingGroupPaymentInfoUpdatedDomainEvent.cs",
+      "sha256": "a7ba70931480d8ffde0c968a6c25478c1d6b685ad96d5315af4f720827c0c350",
+      "bytes": 565
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/MeetingGroups/Events/MeetingNotAttendeeChangedDecisionDomainEvent.cs",
+      "sha256": "a2283b29a2dc350e8e96de16eef92d6f6fb2c92a8c6b8d942c6b3dc20ab419cf",
+      "bytes": 648
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/MeetingGroups/Events/NewMeetingGroupMemberJoinedDomainEvent.cs",
+      "sha256": "8233e888ebead6624971eb725c51e6345e0384954b371f441967310606e7ca51",
+      "bytes": 729
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/MeetingGroups/IMeetingGroupRepository.cs",
+      "sha256": "24b170543b5da7173b009808555024c3a43e6149122de1c5d977c2c52f887b69",
+      "bytes": 284
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/MeetingGroups/MeetingGroup.cs",
+      "sha256": "3d2f21ee58cc98d41d396e32447e885e8e169838131a0d9da63d9d474886a806",
+      "bytes": 4573
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/MeetingGroups/MeetingGroupId.cs",
+      "sha256": "d57f100cdb9c542410c3522d5b6078969d5735405f01a1c8e7b7aba560c92c17",
+      "bytes": 292
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/MeetingGroups/MeetingGroupLocation.cs",
+      "sha256": "7ee02b1e2362b1ca789d15dd7bd5b94b136cb9908f688da00f2d0f44837b946b",
+      "bytes": 621
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/MeetingGroups/MeetingGroupMember.cs",
+      "sha256": "4d9aea15ab70d1a9495e0588dbd4795905579abe3d7fb45198d599cbf6b45f25",
+      "bytes": 2149
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/MeetingGroups/MeetingGroupMemberRole.cs",
+      "sha256": "4b4d98a2340096a23ee5d9f8d10bd0e1733e00619cd53d383054279f31b916ab",
+      "bytes": 698
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/MeetingGroups/Policies/MeetingGroupExpirationDatePolicy.cs",
+      "sha256": "ce98569695842d3178a02697c00adb74275aaa09d1a8d3e9ee79c6b221d0c628",
+      "bytes": 511
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/MeetingGroups/Policies/MeetingGroupMemberData.cs",
+      "sha256": "277843e20bcd5d946df77b5d176442625e5d7b18a010175ca4564f709294bdc0",
+      "bytes": 448
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/MeetingGroups/Rules/MeetingCanBeOrganizedOnlyByPayedGroupRule.cs",
+      "sha256": "22920ebe222a45ac605be2d1483556e82fbf714e57ecbf41051f4bf70794002c",
+      "bytes": 687
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/MeetingGroups/Rules/MeetingGroupMemberCannotBeAddedTwiceRule.cs",
+      "sha256": "842ccb766b5bc280c486fc39872dd34fd82229301310c4cad2c68c7dd0fac117",
+      "bytes": 815
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/MeetingGroups/Rules/MeetingHostMustBeAMeetingGroupMemberRule.cs",
+      "sha256": "d1e5e6370ec5d70d18e112fe164a968db03a836dbbbc0f863b257d7603a5b311",
+      "bytes": 1227
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/MeetingGroups/Rules/NotActualGroupMemberCannotLeaveGroupRule.cs",
+      "sha256": "315d222f0cd80bb2b8a6f78d1e9ab6f42543f3f500e9a8ec952ee0e6d50cd888",
+      "bytes": 827
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/MeetingMemberCommentLikes/Events/MeetingCommentLikedDomainEvent.cs",
+      "sha256": "32985a6d59d624d6414bfd45ee30870f44a819b264ca47ef9092135599fcbabd",
+      "bytes": 677
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/MeetingMemberCommentLikes/Events/MeetingCommentUnlikedDomainEvent.cs",
+      "sha256": "5481fad803afbeae6ffc5aa1a20051d58648b6174181a264eca6d56db3d7d6e3",
+      "bytes": 681
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/MeetingMemberCommentLikes/IMeetingMemberCommentLikesRepository.cs",
+      "sha256": "20b1dc8b846381efbed0d746c2f2434ae87cf4c3f6fc80ab9a2e03d574d84eb4",
+      "bytes": 661
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/MeetingMemberCommentLikes/MeetingMemberCommentLike.cs",
+      "sha256": "44afd7b4807696a7872e08d393445694c853e8a6cfd2e466f4ef5f8241b5f039",
+      "bytes": 1409
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/MeetingMemberCommentLikes/MeetingMemberCommentLikeId.cs",
+      "sha256": "473426db851a49015b9b9ffa66e8de2fefd160ea5f4761de4f31fff881a8ed9e",
+      "bytes": 328
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/Meetings/Events/MeetingAttendeeAddedDomainEvent.cs",
+      "sha256": "ee98e8f8ff7e1b31d93ca6d3a689588254d0e55641664ebf9daba89e3816d37f",
+      "bytes": 1137
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/Meetings/Events/MeetingAttendeeFeePaidDomainEvent.cs",
+      "sha256": "08108ca6653692db62f2847eccb3dfdbb9502e0949af793b67fa92c7abb5854f",
+      "bytes": 565
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/Meetings/Events/MeetingAttendeeRemovedDomainEvent.cs",
+      "sha256": "0f7e7bcea736425cca5809519a55a50bfd071d55a6388a26fd913c951d194de9",
+      "bytes": 643
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/Meetings/Events/MeetingCanceledDomainEvent.cs",
+      "sha256": "792f1a71d44e9cd54fee9b41677e2d18c60d116286be9ed9fb227690c7e28f30",
+      "bytes": 673
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/Meetings/Events/MeetingCreatedDomainEvent.cs",
+      "sha256": "40c5b91a3f185fd47ff371e8bb1dced0f4102f34e136c03ad23d36d0a1de458d",
+      "bytes": 380
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/Meetings/Events/MeetingEditedDomainEvent.cs",
+      "sha256": "f2346cc29c897a5521f944beeab6a225f6574d252cf4239d291919d2f6979eaa",
+      "bytes": 368
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/Meetings/Events/MeetingMainAttributesChangedDomainEvent.cs",
+      "sha256": "597fd2e281c0614302371b8740caa005370dff31455106ba317136f7dfb6fd76",
+      "bytes": 408
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/Meetings/Events/MeetingNotAttendeeAddedDomainEvent.cs",
+      "sha256": "b6959a043c57f823525d5d1ba84d090eccedb99e2254c50683d3f849cdde6429",
+      "bytes": 559
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/Meetings/Events/MeetingWaitlistMemberAddedDomainEvent.cs",
+      "sha256": "58c203baecd7f201d9c5dde8d4843994b2bfd8ee59e6d060a66f44dfe263b93c",
+      "bytes": 565
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/Meetings/Events/MemberSetAsAttendeeDomainEvent.cs",
+      "sha256": "42a167b40c6e9260101ce717f93ea725fa55ff4fab649324ffd86724ec6bbc5b",
+      "bytes": 543
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/Meetings/Events/MemberSignedOffFromMeetingWaitlistDomainEvent.cs",
+      "sha256": "45b9923844fc25e0ecf91dc19731d9a8a8bd359af6e0eca25571190b2a7a7843",
+      "bytes": 581
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/Meetings/Events/NewMeetingHostSetDomainEvent.cs",
+      "sha256": "3f7dc0c7ea56378ccd93bc18b2afdabbe988d29ca107df363511fae884f96dde",
+      "bytes": 539
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/Meetings/IMeetingRepository.cs",
+      "sha256": "8e512d9f53fbb7f0f1e2ac3ab814a182cdd5596487e4b264b62b18a4bff1fd0d",
+      "bytes": 223
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/Meetings/Meeting.cs",
+      "sha256": "287ce8bfe6d3f77e95a986805e459fa658b4ca1f2861ced0c2dc65466c2fa42a",
+      "bytes": 12796
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/Meetings/MeetingAttendee.cs",
+      "sha256": "1caa1c6027f7f461b3ce71fbed38f01c3e11c0c9f9df02ecf9e7870baf9d48d3",
+      "bytes": 4794
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/Meetings/MeetingAttendeeRole.cs",
+      "sha256": "39c5c4bf004200f1b18fb1bf24cde98130301e493136706f1e3bd1c75ec779d4",
+      "bytes": 521
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/Meetings/MeetingId.cs",
+      "sha256": "e7bfedc304b2f8dfe022a6fffe2c7c699a76a1f6b5eb0e89984ad357e73f79a7",
+      "bytes": 277
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/Meetings/MeetingLimits.cs",
+      "sha256": "093827d5e4a7bfe19f65646e78259528f21dc8c73c1cbc33c6922a9cc12d816b",
+      "bytes": 986
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/Meetings/MeetingLocation.cs",
+      "sha256": "7c4c85129be0b6ecba453f048446b373075db1a188e518a87ee6c4a1ed207f38",
+      "bytes": 802
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/Meetings/MeetingNotAttendee.cs",
+      "sha256": "25f590b224e7cf6bcc8d61be21e6efd9479e1898a18274a86516ca8e3d500bdf",
+      "bytes": 1730
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/Meetings/MeetingTerm.cs",
+      "sha256": "a09c0c097d976484ecfe16daee3383ba5b4e693e09969abf275c4c7053934ef2",
+      "bytes": 804
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/Meetings/MeetingWaitlistMember.cs",
+      "sha256": "ba9350380ab1a062d20ab2f4ff20018d110f875b9d19dc69a142b40bf754578a",
+      "bytes": 2080
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/Meetings/MoneyValue.cs",
+      "sha256": "a0d37c6acada243f71b73a0d0f817b17e255d1632a0d120309b7c4bb3b267d83",
+      "bytes": 818
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/Meetings/Rules/AttendeeCanBeAddedOnlyInRsvpTermRule.cs",
+      "sha256": "d577e86adfa66117923f3714de1d5c077b0c1594683110b098567b3cacf1fb06",
+      "bytes": 613
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/Meetings/Rules/AttendeesLimitCannotBeChangedToSmallerThanActiveAttendeesRule.cs",
+      "sha256": "9a416470b4ea512853d4257d5c44a299a383877bd16844b43e9d4b72ff291dc5",
+      "bytes": 960
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/Meetings/Rules/MeetingAttendeeMustBeAMemberOfGroupRule.cs",
+      "sha256": "73ee37bd49830df0ba9ce5b08dec533c4996fc2a45e3e520b26c5aab69dd67c9",
+      "bytes": 874
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/Meetings/Rules/MeetingAttendeesLimitCannotBeNegativeRule.cs",
+      "sha256": "18e81700455a8e0213a970ffa4cc0c3b8323c7c49ca1b78b87ffbb04c29e09d7",
+      "bytes": 589
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/Meetings/Rules/MeetingAttendeesLimitMustBeGreaterThanGuestsLimitRule.cs",
+      "sha256": "3b51be35ed6b9dfd17191afbfeb5fa9b90c4003d93ed3f82598658342c1d5411",
+      "bytes": 744
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/Meetings/Rules/MeetingAttendeesNumberIsAboveLimitRule.cs",
+      "sha256": "df0ac4308b3e92f539ffb85a7cf63fe4c945c1b81d87705486352da807c6a4f6",
+      "bytes": 1033
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/Meetings/Rules/MeetingCannotBeChangedAfterStartRule.cs",
+      "sha256": "b7e99736e85e93e0d96c5a82a9a91b987ffc2f8ec1aac5988b186d1168cf5548",
+      "bytes": 558
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/Meetings/Rules/MeetingGuestsLimitCannotBeNegativeRule.cs",
+      "sha256": "06539bcd656905dabdaba1fd86812baa3544c3970ccd32414064d0b67856ddff",
+      "bytes": 529
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/Meetings/Rules/MeetingGuestsNumberIsAboveLimitRule.cs",
+      "sha256": "417f14bcd155f3160b176c69f032ab05265ab7bd6186a71ee241d7c93de3b209",
+      "bytes": 678
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/Meetings/Rules/MeetingMustHaveAtLeastOneHostRule.cs",
+      "sha256": "062e36b71258c36c496f10a9441ff99917734cbd20863b535bc9efabf42e3828",
+      "bytes": 554
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/Meetings/Rules/MemberCannotBeAnAttendeeOfMeetingMoreThanOnceRule.cs",
+      "sha256": "23091e1305eadf3bcbf3a36cbc49b6e6b2c96c2e617c4fd7afccc360899c3c52",
+      "bytes": 827
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/Meetings/Rules/MemberCannotBeMoreThanOnceOnMeetingWaitlistRule.cs",
+      "sha256": "e14dc4dbe6e98222296bd606450c6e1021a0b37a02e8b16add03dc2752c3ef14",
+      "bytes": 864
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/Meetings/Rules/MemberCannotBeNotAttendeeTwiceRule.cs",
+      "sha256": "4f9a5e25f0b4f82d2758e962afcffeac86276d284215e8dc0747ee88afefeb8a",
+      "bytes": 803
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/Meetings/Rules/MemberCannotHaveSetAttendeeRoleMoreThanOnceRule.cs",
+      "sha256": "d65ab06783d686afa0800f0095621a733688450ed6a50f8b2d9abb58485f4423",
+      "bytes": 669
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/Meetings/Rules/MemberOnWaitlistMustBeAMemberOfGroupRule.cs",
+      "sha256": "6005e08495726919c1f7869a3b459bb9c090d61937ebfe792e52d097862c58e5",
+      "bytes": 983
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/Meetings/Rules/NotActiveMemberOfWaitlistCannotBeSignedOffRule.cs",
+      "sha256": "cdb8e149b1b708ca7031dd310bb77c383db36b8742318cdaf86a730675b001f1",
+      "bytes": 855
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/Meetings/Rules/NotActiveNotAttendeeCannotChangeDecisionRule.cs",
+      "sha256": "9b40208597f68bcd387671b1a36ca79edf03e137d7d261c7553f2d497f1b99f0",
+      "bytes": 816
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/Meetings/Rules/OnlyActiveAttendeeCanBeRemovedFromMeetingRule.cs",
+      "sha256": "f2fde326803c63188115ca2941111d271620ebd2bb534105bfe02da8092c9c46",
+      "bytes": 844
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/Meetings/Rules/OnlyMeetingAttendeeCanHaveChangedRoleRule.cs",
+      "sha256": "127c9125810808a6654b9204da865bc9f3ed23fb02b8332a0a243a1eb0f84ecb",
+      "bytes": 840
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/Meetings/Rules/OnlyMeetingOrGroupOrganizerCanSetMeetingMemberRolesRule.cs",
+      "sha256": "fcfc19a8e68e950418979f8ab57542e39f5d532d7da2cbf934656e8f9a27fc9e",
+      "bytes": 1320
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/Meetings/Rules/ReasonOfRemovingAttendeeFromMeetingMustBeProvidedRule.cs",
+      "sha256": "403ddce23712e247b3b9ab02cd8824903be97bd5f41c346cad7230e5f09cb0ad",
+      "bytes": 586
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/Meetings/Term.cs",
+      "sha256": "26760e8bbea8a9ebff577ee8fbc603c8fbe145a575e26db228461c47d986f80f",
+      "bytes": 931
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/Members/Events/MemberCreatedDomainEvent.cs",
+      "sha256": "30d417a4a4152b2a8b892daf0ba0c49f0d6cc070648996d8d58828faa6b25023",
+      "bytes": 371
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/Members/IMemberContext.cs",
+      "sha256": "ca7074ca23e75d336db885ef94a197443e1e679af6cc476b576776dfa5024763",
+      "bytes": 160
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/Members/IMemberRepository.cs",
+      "sha256": "aced6700599eb43fcfb69d01b10ab299e36d5cff6f1a1e06837a928bad22384f",
+      "bytes": 223
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/Members/MeetingGroupMemberData.cs",
+      "sha256": "9c3a3356723a2e7966ead14de8df688de84ee481c86d4b21430713982f2c2c98",
+      "bytes": 492
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/Members/Member.cs",
+      "sha256": "26845afb5851ffc7021a94f225fa1565e168e817d1c767e22320c748b768294e",
+      "bytes": 1349
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/Members/MemberId.cs",
+      "sha256": "738d2706d5051e43cd80c430f0bf073114faa757aee2947e9d6b32e85f1403a0",
+      "bytes": 274
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/Members/MemberSubscriptions/Events/MemberSubscriptionExpirationDateChangedDomainEvent.cs",
+      "sha256": "db88e52debf4cead0c107896cce01041281c211d5d765ff03b3ca88f0f04f14a",
+      "bytes": 565
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/Members/MemberSubscriptions/IMemberSubscriptionRepository.cs",
+      "sha256": "fb36462ee520b34a7dbfbd8d3861456fc49194e585d3ffd41a5c4c34f984be5e",
+      "bytes": 323
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/Members/MemberSubscriptions/MemberSubscription.cs",
+      "sha256": "a09a3f4f72639b7992f43d74d06e33835816bed84086d748f4ec2518ffdfca8c",
+      "bytes": 1354
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/Members/MemberSubscriptions/MemberSubscriptionId.cs",
+      "sha256": "0e156f9fb2b71424e2459922bedce7ba8335aec58636d566b69e752374fdcb0f",
+      "bytes": 318
+    },
+    {
+      "path": "src/Modules/Meetings/Domain/SharedKernel/SystemClock.cs",
+      "sha256": "341b6613ecd5696860fe47bff80eb2c39c98ed1b58b4ac30afb7cd4410b3b7a5",
+      "bytes": 599
+    },
+    {
+      "path": "src/Modules/Meetings/IntegrationEvents/CompanyName.MyMeetings.Modules.Meetings.IntegrationEvents.csproj",
+      "sha256": "dad1d812ddf0a3e952d1ff5ed113229d9a337574de19f0cfe78899101689c6e1",
+      "bytes": 40
+    },
+    {
+      "path": "src/Modules/Meetings/IntegrationEvents/MeetingAttendeeAddedIntegrationEvent.cs",
+      "sha256": "0d2cc3ebb3c5451d603c568faad57093b312701d3da9ac539c2a670d139d275d",
+      "bytes": 852
+    },
+    {
+      "path": "src/Modules/Meetings/IntegrationEvents/MeetingGroupProposedIntegrationEvent.cs",
+      "sha256": "d8a368234a6b7a32544c820ed368d8df8cc3a055d2c0f065005afedcdc7202ee",
+      "bytes": 1336
+    },
+    {
+      "path": "src/Modules/Meetings/IntegrationEvents/MemberCreatedIntegrationEvent.cs",
+      "sha256": "afce490534d8845b18a88d4355fb4990802040c03950385353a4e6981901d994",
+      "bytes": 453
+    },
+    {
+      "path": "src/Modules/Meetings/Tests/ArchTests/Application/ApplicationTests.cs",
+      "sha256": "2aef4aef91032ff32c60aca30a7e8b10a7235ad9d05c767a5a4c3951471463a3",
+      "bytes": 7248
+    },
+    {
+      "path": "src/Modules/Payments/Application/CompanyName.MyMeetings.Modules.Payments.Application.csproj",
+      "sha256": "69815bba19b417069bd15711fa50fd2d8cc0680909925298f8267938445798ae",
+      "bytes": 643
+    },
+    {
+      "path": "src/Modules/Payments/Application/Configuration/Commands/ICommandHandler.cs",
+      "sha256": "b29aabfeece0039c3b2194fbfb97df45f56a5bf1dd265becfbb624be134332ba",
+      "bytes": 475
+    },
+    {
+      "path": "src/Modules/Payments/Application/Configuration/Commands/ICommandsScheduler.cs",
+      "sha256": "3940f7891448a163c0c71be9fb4b3d8e9403b4e69c65e6fd2cf3d8c11fdcbc9b",
+      "bytes": 320
+    },
+    {
+      "path": "src/Modules/Payments/Application/Configuration/Commands/InternalCommandBase.cs",
+      "sha256": "d609dfd645b9de916f256ca9327ee388e5947f37752a75d23128a3e308a6329a",
+      "bytes": 682
+    },
+    {
+      "path": "src/Modules/Payments/Application/Configuration/Projections/IProjector.cs",
+      "sha256": "3c556a2b062a33854fabfb4eefaddf90c297a2565b9897a949875b6180cdca7f",
+      "bytes": 242
+    },
+    {
+      "path": "src/Modules/Payments/Application/Configuration/Projections/ProjectorBase.cs",
+      "sha256": "ab47b756f2a11a27c67c90a832f8cdf29fc405b120aaeaf6a03eb7b035429e94",
+      "bytes": 327
+    },
+    {
+      "path": "src/Modules/Payments/Application/Configuration/Queries/IQueryHandler.cs",
+      "sha256": "2139d95b3f7a9e180f6a9568dd3805cfd577386c6a855520c1de29f147fd6c62",
+      "bytes": 334
+    },
+    {
+      "path": "src/Modules/Payments/Application/Contracts/CommandBase.cs",
+      "sha256": "44d53097a8b9ed6549714583175c28edad1d45ed678c84e9cbd6afa1c06179cb",
+      "bytes": 648
+    },
+    {
+      "path": "src/Modules/Payments/Application/Contracts/ICommand.cs",
+      "sha256": "58fa5eb2755355eecc1a55fe312ce7ad010bb5f27ab47fd8c1ee2f9f898602ad",
+      "bytes": 286
+    },
+    {
+      "path": "src/Modules/Payments/Application/Contracts/IPaymentsModule.cs",
+      "sha256": "6179a3c5172fedea2de60cba23c010a99295ef609a29e589e0b7d9e85d9d2e09",
+      "bytes": 343
+    },
+    {
+      "path": "src/Modules/Payments/Application/Contracts/IQuery.cs",
+      "sha256": "b5e0cdb878272ac1ab0c71f70a5492fcdf7133ed8f6e230162181f9ac4a10fa6",
+      "bytes": 174
+    },
+    {
+      "path": "src/Modules/Payments/Application/Contracts/IRecurringCommand.cs",
+      "sha256": "3c66af9066c038837d67060b69050afbd2d832ff9ac40601f54f231c69aeee40",
+      "bytes": 134
+    },
+    {
+      "path": "src/Modules/Payments/Application/Contracts/QueryBase.cs",
+      "sha256": "139d54398cb2620a594acd6a384845475fff9d222909e73aba61023bb3aa9ce8",
+      "bytes": 364
+    },
+    {
+      "path": "src/Modules/Payments/Application/MeetingFees/CreateMeetingFee/CreateMeetingFeeCommand.cs",
+      "sha256": "fe6ba01990efab68ce7cdf526c8f473ce15edeff997ffdccba26e07e2e223550",
+      "bytes": 794
+    },
+    {
+      "path": "src/Modules/Payments/Application/MeetingFees/CreateMeetingFee/CreateMeetingFeeCommandHandler.cs",
+      "sha256": "c4fcf022ff1bc419542567da38ea259c5b191f08fa980d7c41d083563e828be2",
+      "bytes": 1169
+    },
+    {
+      "path": "src/Modules/Payments/Application/MeetingFees/CreateMeetingFeePayment/CreateMeetingFeePaymentCommand.cs",
+      "sha256": "6647adf8549404b1fb72a83185c482176f96fd5b9f9b41fb3de4a2790746902f",
+      "bytes": 436
+    },
+    {
+      "path": "src/Modules/Payments/Application/MeetingFees/CreateMeetingFeePayment/CreateMeetingFeePaymentCommandHandler.cs",
+      "sha256": "b79da2cc7b23ef42d956072385199bfa5de31eef56083302a4136b4242668811",
+      "bytes": 1106
+    },
+    {
+      "path": "src/Modules/Payments/Application/MeetingFees/GetMeetingFees/GetMeetingFeesQuery.cs",
+      "sha256": "944913012f6946ba5ebae3bbd1fd9e810850ee177a96036a4db7c8e483724b1f",
+      "bytes": 406
+    },
+    {
+      "path": "src/Modules/Payments/Application/MeetingFees/GetMeetingFees/GetMeetingFeesQueryHandler.cs",
+      "sha256": "2189758f8e83ee5c64670730abdfa0a1d89547eb9bd46027099dc276c7a4c77c",
+      "bytes": 1947
+    },
+    {
+      "path": "src/Modules/Payments/Application/MeetingFees/GetMeetingFees/MeetingFeeDto.cs",
+      "sha256": "530fabb946e94fba5ddef69676c53c2c12acf3424fcabac595454f6f4282a963",
+      "bytes": 399
+    },
+    {
+      "path": "src/Modules/Payments/Application/MeetingFees/GetMeetingFees/MeetingFeesProjector.cs",
+      "sha256": "6e959303529fc299bb928ebf5b1ab01e213f5d0d584408857dcfd01789f06c55",
+      "bytes": 2639
+    },
+    {
+      "path": "src/Modules/Payments/Application/MeetingFees/MarkMeetingFeeAsPaid/MarkMeetingFeeAsPaidCommand.cs",
+      "sha256": "9b202d7a7973a6c8a5a6d4460dffba857870531e9396cc8c7ec097e18f15dc17",
+      "bytes": 525
+    },
+    {
+      "path": "src/Modules/Payments/Application/MeetingFees/MarkMeetingFeeAsPaid/MarkMeetingFeeAsPaidCommandHandler.cs",
+      "sha256": "86f7912fff095312844be5dc6fc96e429e618a4f7dd27d421b39ae8a86456eff",
+      "bytes": 995
+    },
+    {
+      "path": "src/Modules/Payments/Application/MeetingFees/MarkMeetingFeeAsPaid/MeetingFeePaidNotification.cs",
+      "sha256": "d6d695c3ec8beaecddb2744e272228d808bf3a882bca15c7806e74dd12d8f54e",
+      "bytes": 505
+    },
+    {
+      "path": "src/Modules/Payments/Application/MeetingFees/MarkMeetingFeeAsPaid/MeetingFeePaidNotificationHandler.cs",
+      "sha256": "7f398c1407f21c1ade2b7a860ca52d5a7e2ef87823a98b0a73f7118fb2a249fb",
+      "bytes": 1402
+    },
+    {
+      "path": "src/Modules/Payments/Application/MeetingFees/MarkMeetingFeePaymentAsPaid/MarkMeetingFeePaymentAsPaidCommand.cs",
+      "sha256": "e7b9c3230344bffe0bc80e949a1689618bcaf9527f3acfdd0ecc4138faba7a5d",
+      "bytes": 470
+    },
+    {
+      "path": "src/Modules/Payments/Application/MeetingFees/MarkMeetingFeePaymentAsPaid/MarkMeetingFeePaymentAsPaidCommandHandler.cs",
+      "sha256": "dce0a23285085fa31861a54f4b35910e9a71f7ca175ea6afb14adfd0ec0515ed",
+      "bytes": 1072
+    },
+    {
+      "path": "src/Modules/Payments/Application/MeetingFees/MarkMeetingFeePaymentAsPaid/MeetingFeePaymentPaidNotification.cs",
+      "sha256": "d4be5b92afd6535221d3dee88d1a497d028dd1297256eb823b20d72f45c81d39",
+      "bytes": 547
+    },
+    {
+      "path": "src/Modules/Payments/Application/MeetingFees/MarkMeetingFeePaymentAsPaid/MeetingFeePaymentPaidNotificationHandler.cs",
+      "sha256": "79d95289e628e02f443429875f605d842adabb4192afe7785e06f354592f5409",
+      "bytes": 1518
+    },
+    {
+      "path": "src/Modules/Payments/Application/MeetingFees/MeetingAttendeeAddedIntegrationEventHandler.cs",
+      "sha256": "a60b5de670e39866089695157a8938e01918bf6c54e342afb8571882994af1b1",
+      "bytes": 1255
+    },
+    {
+      "path": "src/Modules/Payments/Application/Payers/CreatePayer/CreatePayerCommand.cs",
+      "sha256": "8d023f80aacede1effaea655c797ffdce71437949e6d99d00a780cd11ca906d1",
+      "bytes": 1014
+    },
+    {
+      "path": "src/Modules/Payments/Application/Payers/CreatePayer/CreatePayerCommandHandler.cs",
+      "sha256": "5eb81d0ba078a0063f0e96a4fcd2f8e57beb384e51938a30cda8409bddde6b69",
+      "bytes": 1072
+    },
+    {
+      "path": "src/Modules/Payments/Application/Payers/CreatePayer/NewUserRegisteredIntegrationEventHandler.cs",
+      "sha256": "89e363b19f5ea337d7f38cf572c48511046606658c128782f77d0bb08f0459ea",
+      "bytes": 1160
+    },
+    {
+      "path": "src/Modules/Payments/Application/Payers/GetPayer/GetPayerQuery.cs",
+      "sha256": "f6ce99b337fe53a13d317b36ac83bb2f772f7bdbb8ead85d32a0ab37b615fc47",
+      "bytes": 364
+    },
+    {
+      "path": "src/Modules/Payments/Application/Payers/GetPayer/GetPayerQueryHandler.cs",
+      "sha256": "a81a0abf1e51491c39efbefc894fcabdab414062b6923f72a7d86b5a01a1f7eb",
+      "bytes": 1671
+    },
+    {
+      "path": "src/Modules/Payments/Application/Payers/GetPayer/PayerDetailsProjector.cs",
+      "sha256": "42f51b102e9e9cfb288febb41516510ca1f3d325535baf070455dcb405339d79",
+      "bytes": 1545
+    },
+    {
+      "path": "src/Modules/Payments/Application/Payers/GetPayer/PayerDto.cs",
+      "sha256": "f393d544f203eb97ae62fda18e71bd7653a784f55b99373c130b75a74d58d024",
+      "bytes": 396
+    },
+    {
+      "path": "src/Modules/Payments/Application/Payers/GetPayerEmail/PayerEmailProvider.cs",
+      "sha256": "93d40cc6bc90f871068e57d8b001eb29b85e3e1a721c73ecc72c59a456466e71",
+      "bytes": 869
+    },
+    {
+      "path": "src/Modules/Payments/Application/PriceListItems/ActivatePriceListItem/ActivatePriceListItemCommand.cs",
+      "sha256": "bff16531ff17d3731e337472483c5d41c4449af7e4d9dec07673444a20de1bb2",
+      "bytes": 439
+    },
+    {
+      "path": "src/Modules/Payments/Application/PriceListItems/ActivatePriceListItem/ActivatePriceListItemCommandHandler.cs",
+      "sha256": "e41556f04da02a03d425b75d6905eb5d5abdd70dc0aada5be32a848003239c3d",
+      "bytes": 1229
+    },
+    {
+      "path": "src/Modules/Payments/Application/PriceListItems/ChangePriceListItemAttributes/ChangePriceListItemAttributesCommand.cs",
+      "sha256": "3e50ccdff122ee339b619a2bdc8c0496628d60b48d334bb79a3c7f95b6d54444",
+      "bytes": 1047
+    },
+    {
+      "path": "src/Modules/Payments/Application/PriceListItems/ChangePriceListItemAttributes/ChangePriceListItemAttributesCommandHandler.cs",
+      "sha256": "89019b2ba64a17ca3a6e03f6af697871a9e80794cec3d2da1d873e1387b7409f",
+      "bytes": 1593
+    },
+    {
+      "path": "src/Modules/Payments/Application/PriceListItems/CreatePriceListItem/CreatePriceListItemCommand.cs",
+      "sha256": "831d7e5a803983bf2d8a25040d38d18277a4886ad1ab78f6c6d9ee02d65fe12d",
+      "bytes": 905
+    },
+    {
+      "path": "src/Modules/Payments/Application/PriceListItems/CreatePriceListItem/CreatePriceListItemCommandHandler.cs",
+      "sha256": "e58a4505282786e453382c92e1a0c274aff37c8dcb000c2e8807f0b09a077e30",
+      "bytes": 1282
+    },
+    {
+      "path": "src/Modules/Payments/Application/PriceListItems/DeactivatePriceListItem/DeactivatePriceListItemCommand.cs",
+      "sha256": "4156f9ec9b1a93c113f9bcc96b29c611d64eb6c221280f3ec0b2f3faddb5bffa",
+      "bytes": 445
+    },
+    {
+      "path": "src/Modules/Payments/Application/PriceListItems/DeactivatePriceListItem/DeactivatePriceListItemCommandHandler.cs",
+      "sha256": "7fd328a0cfc2b1d947afef7f9d675e3523dec471a58a7724596cd9edcd94536e",
+      "bytes": 1243
+    },
+    {
+      "path": "src/Modules/Payments/Application/PriceListItems/GetPriceListItem/GetPriceListItemQuery.cs",
+      "sha256": "bb8b447cb7df54a6cac60ce5a702a51bfd212df761cf70ad0aafc54506c6d593",
+      "bytes": 662
+    },
+    {
+      "path": "src/Modules/Payments/Application/PriceListItems/GetPriceListItem/GetPriceListItemQueryHandler.cs",
+      "sha256": "fc50f4327533959aad4d319a95c7403c02ccd540d9d7c9b1c9045c437ea1b4b3",
+      "bytes": 2011
+    },
+    {
+      "path": "src/Modules/Payments/Application/PriceListItems/GetPriceListItem/PriceListItemMoneyValueDto.cs",
+      "sha256": "39d54563291b8739772af814ff70e7ff199044f21da0eb8404268acdef15c473",
+      "bytes": 253
+    },
+    {
+      "path": "src/Modules/Payments/Application/PriceListItems/GetPriceListItem/PriceListItemsProjector.cs",
+      "sha256": "2610d81354a23b32f8eea4603ddd7cf894c789ccccf8788b5ad8508c6a09f764",
+      "bytes": 3373
+    },
+    {
+      "path": "src/Modules/Payments/Application/PriceListItems/GetPriceListItems/GetPriceListItemsQuery.cs",
+      "sha256": "8bd3a359c472b671cad2e120953cee6989b695f9717780a9003ec8e5b43dcb24",
+      "bytes": 266
+    },
+    {
+      "path": "src/Modules/Payments/Application/PriceListItems/GetPriceListItems/GetPriceListItemsQueryHandler.cs",
+      "sha256": "32405350761b2507ae9435895367a791a352863f5bff8c51673544b81c15a390",
+      "bytes": 878
+    },
+    {
+      "path": "src/Modules/Payments/Application/PriceListItems/PriceListFactory.cs",
+      "sha256": "40c29491da61f74c57d667e7b599926b72b048ed27557cc6e014435733b49810",
+      "bytes": 2574
+    },
+    {
+      "path": "src/Modules/Payments/Application/PriceListItems/PriceListItemDto.cs",
+      "sha256": "600ec261e99cfef54bd911d4b0fcb761ad976db798cedd58c7b1cb1669511e25",
+      "bytes": 401
+    },
+    {
+      "path": "src/Modules/Payments/Application/Subscriptions/BuySubscription/BuySubscriptionCommand.cs",
+      "sha256": "af366f8ac3612c5630820100be961858f5bf8ea14cb71da6b70decc40be0f33d",
+      "bytes": 787
+    },
+    {
+      "path": "src/Modules/Payments/Application/Subscriptions/BuySubscription/BuySubscriptionCommandHandler.cs",
+      "sha256": "c454aa1175558b2bbb4a01133109c04b358e63a0a6b554c5d35e821d3b7df7e2",
+      "bytes": 1905
+    },
+    {
+      "path": "src/Modules/Payments/Application/Subscriptions/BuySubscriptionRenewal/BuySubscriptionRenewalCommand.cs",
+      "sha256": "8a5db7798d3a7ba6f8a97154667038eab6d9e8eda0c9c87b1f5719e17bd72fce",
+      "bytes": 932
+    },
+    {
+      "path": "src/Modules/Payments/Application/Subscriptions/BuySubscriptionRenewal/BuySubscriptionRenewalCommandHandler.cs",
+      "sha256": "cab22198fb709081e6138dc75c7a3d88814bc307586735ce8242e1514198e92f",
+      "bytes": 2435
+    },
+    {
+      "path": "src/Modules/Payments/Application/Subscriptions/CreateSubscription/CreateSubscriptionCommand.cs",
+      "sha256": "b6265d04d3fb496acfaaad3ec4f839a917628fec48f1fcdd0b9853520c8fcdb7",
+      "bytes": 591
+    },
+    {
+      "path": "src/Modules/Payments/Application/Subscriptions/CreateSubscription/CreateSubscriptionCommandHandler.cs",
+      "sha256": "fc56fb6b91b0d9c77c73c17d61703a7a7c84f4fac87979aaf829ba0f0e69e58f",
+      "bytes": 1209
+    },
+    {
+      "path": "src/Modules/Payments/Application/Subscriptions/CreateSubscription/SubscriptionCreatedEnqueueEmailConfirmationHandler.cs",
+      "sha256": "999b8063a3007665f5e82a621400877194b451bc6ae5d301d1ea337ec63871ca",
+      "bytes": 1669
+    },
+    {
+      "path": "src/Modules/Payments/Application/Subscriptions/CreateSubscription/SubscriptionCreatedNotification.cs",
+      "sha256": "c6cf3046c2b355030611c22a01baaab21f5bc717f1b920a89ec19aad8b31a496",
+      "bytes": 581
+    },
+    {
+      "path": "src/Modules/Payments/Application/Subscriptions/CreateSubscription/SubscriptionCreatedNotificationHandler.cs",
+      "sha256": "0221ac9e313dec9690249004dae8350decd8a99d3f2d991caa2210383b6e8b72",
+      "bytes": 1004
+    },
+    {
+      "path": "src/Modules/Payments/Application/Subscriptions/ExpireSubscription/ExpireSubscriptionCommand.cs",
+      "sha256": "a69c4e2ac0f97707ca2b7c425861db25fc77489c9d6d1f2df4b57f298f737afa",
+      "bytes": 553
+    },
+    {
+      "path": "src/Modules/Payments/Application/Subscriptions/ExpireSubscription/ExpireSubscriptionCommandHandler.cs",
+      "sha256": "a4853fe01f6a47eb234eb62cf3c53661a4a29ee1de4d65d5b60bb9d6cc9bf881",
+      "bytes": 976
+    },
+    {
+      "path": "src/Modules/Payments/Application/Subscriptions/ExpireSubscriptionPayment/ExpireSubscriptionPaymentCommand.cs",
+      "sha256": "55489728d850b774170f4038990324a49a6ac8e156dd9843db804cb0a5834b14",
+      "bytes": 426
+    },
+    {
+      "path": "src/Modules/Payments/Application/Subscriptions/ExpireSubscriptionPayment/ExpireSubscriptionPaymentCommandHandler.cs",
+      "sha256": "3f9f340e7d22dc4ccf005106b680fdcb30820dfb0a2f9f2f2c3ae3c5a715150b",
+      "bytes": 1041
+    },
+    {
+      "path": "src/Modules/Payments/Application/Subscriptions/ExpireSubscriptionPayments/ExpireSubscriptionPaymentsCommand.cs",
+      "sha256": "daf18fb297f59f05ccfd636fb3c287c7147145e7615d246324d782eb98a975db",
+      "bytes": 282
+    },
+    {
+      "path": "src/Modules/Payments/Application/Subscriptions/ExpireSubscriptionPayments/ExpireSubscriptionPaymentsCommandHandler.cs",
+      "sha256": "4fdd0fbc7cfb0c74fd8bfa203e80baa52941d1404744f5a5db7aa37d752b2ddd",
+      "bytes": 2518
+    },
+    {
+      "path": "src/Modules/Payments/Application/Subscriptions/ExpireSubscriptions/ExpireSubscriptionsCommand.cs",
+      "sha256": "c19ee0d3aaab14d8948c6351d42f9a125083d09da543a349331a4f095f2f5ef7",
+      "bytes": 268
+    },
+    {
+      "path": "src/Modules/Payments/Application/Subscriptions/ExpireSubscriptions/ExpireSubscriptionsCommandHandler.cs",
+      "sha256": "690cbd7862f7cb1be1015be2c36b52a147947bf491e65d8a029c80f50a5e17e1",
+      "bytes": 2100
+    },
+    {
+      "path": "src/Modules/Payments/Application/Subscriptions/GetPayerSubscription/GetAuthenticatedPayerSubscriptionQuery.cs",
+      "sha256": "66fab4a98b35c1870a95dbfc33fc72b5aa6f6f51f39c87aec97467b0ff7739d4",
+      "bytes": 381
+    },
+    {
+      "path": "src/Modules/Payments/Application/Subscriptions/GetPayerSubscription/GetAuthenticatedPayerSubscriptionQueryHandler.cs",
+      "sha256": "585692416b65d3d04d328a17b88d506b5140b58276a5642d190a0f650e0a98cf",
+      "bytes": 2310
+    },
+    {
+      "path": "src/Modules/Payments/Application/Subscriptions/GetSubscriptionDetails/GetSubscriptionDetailsQuery.cs",
+      "sha256": "a35b85d7b9be0288a7a02912c6c23b08da30c95845de99c9359398450eae9dcc",
+      "bytes": 455
+    },
+    {
+      "path": "src/Modules/Payments/Application/Subscriptions/GetSubscriptionDetails/GetSubscriptionDetailsQueryHandler.cs",
+      "sha256": "465ef57bcad5c0c76afea58291d1491dbe7979f7a952bfa02b53ec8d2c0e50c4",
+      "bytes": 1857
+    },
+    {
+      "path": "src/Modules/Payments/Application/Subscriptions/GetSubscriptionDetails/SubscriptionDetailsDto.cs",
+      "sha256": "f32371a263d012ab27da03b5b87cd48cf83ba9b5b79a45b80d403ae25a95dd43",
+      "bytes": 360
+    },
+    {
+      "path": "src/Modules/Payments/Application/Subscriptions/GetSubscriptionDetails/SubscriptionDetailsProjector.cs",
+      "sha256": "3b88e33d7e1aa7e8131e28ebde0ac790b91ee30e2ac1138b21081a119a7770e6",
+      "bytes": 3101
+    },
+    {
+      "path": "src/Modules/Payments/Application/Subscriptions/GetSubscriptionPayments/GetSubscriptionPaymentsQuery.cs",
+      "sha256": "bded1d9e114a0c3a55570ee993672867f4b187232e0db5d03bf23b6da676916c",
+      "bytes": 436
+    },
+    {
+      "path": "src/Modules/Payments/Application/Subscriptions/GetSubscriptionPayments/GetSubscriptionPaymentsQueryHandler.cs",
+      "sha256": "360b8f21590972376c4aa285afe1cbdd223a089ffe3bd9a8c8ea90584fca0d41",
+      "bytes": 2570
+    },
+    {
+      "path": "src/Modules/Payments/Application/Subscriptions/GetSubscriptionPayments/SubscriptionPaymentDto.cs",
+      "sha256": "41ac7e1b460860c2f391526ea5baa9e487e13e6da3fda1d0d85dc2495a68c2f1",
+      "bytes": 592
+    },
+    {
+      "path": "src/Modules/Payments/Application/Subscriptions/GetSubscriptionPayments/SubscriptionPaymentsProjector.cs",
+      "sha256": "cff02558fa34bf1a2f198835020e35305b8eadfbb9681254230ca179b4a24f69",
+      "bytes": 5587
+    },
+    {
+      "path": "src/Modules/Payments/Application/Subscriptions/MarkSubscriptionPaymentAsPaid/MarkSubscriptionPaymentAsPaidCommand.cs",
+      "sha256": "2e752d0fbebe28456e85e4fc77667146e4878093129ef85cf1a7ddcd80d5c5c8",
+      "bytes": 486
+    },
+    {
+      "path": "src/Modules/Payments/Application/Subscriptions/MarkSubscriptionPaymentAsPaid/MarkSubscriptionPaymentAsPaidCommandHandler.cs",
+      "sha256": "05094da8feb80063fefcbbb5f3467c43176a56c4dcea0d1b48bf9cf7b6b9c6a0",
+      "bytes": 1096
+    },
+    {
+      "path": "src/Modules/Payments/Application/Subscriptions/MarkSubscriptionPaymentAsPaid/SubscriptionPaymentPaidNotification.cs",
+      "sha256": "bbd092f861f3647535f4b6e2517f595d712f34191fbdc072dfbcf4c60515920d",
+      "bytes": 561
+    },
+    {
+      "path": "src/Modules/Payments/Application/Subscriptions/MarkSubscriptionPaymentAsPaid/SubscriptionPaymentPaidNotificationHandler.cs",
+      "sha256": "16f8962c88e9d02cdebd62c47f783c2f6f4c054aacd2d9b3bf150a0bc7d159ec",
+      "bytes": 1035
+    },
+    {
+      "path": "src/Modules/Payments/Application/Subscriptions/MarkSubscriptionRenewalPaymentAsPaid/MarkSubscriptionRenewalPaymentAsPaidCommand.cs",
+      "sha256": "521ad2861a884430edfac409cdd53d6d7740b21aba876aca338d05066f88b818",
+      "bytes": 532
+    },
+    {
+      "path": "src/Modules/Payments/Application/Subscriptions/MarkSubscriptionRenewalPaymentAsPaid/MarkSubscriptionRenewalPaymentAsPaidCommandHandler.cs",
+      "sha256": "be40de490d1017593279e9c42dd48e888aba33d5156374a2c8b0540a52758581",
+      "bytes": 1208
+    },
+    {
+      "path": "src/Modules/Payments/Application/Subscriptions/MarkSubscriptionRenewalPaymentAsPaid/SubscriptionRenewalPaymentAsPaidNotificationHandler.cs",
+      "sha256": "cff8146c58494bda5a41a65bf7fcdacc5e97c885341266be3f9776598a3d5e6c",
+      "bytes": 1147
+    },
+    {
+      "path": "src/Modules/Payments/Application/Subscriptions/MarkSubscriptionRenewalPaymentAsPaid/SubscriptionRenewalPaymentPaidNotification.cs",
+      "sha256": "66b7f9a27c6e6064c00ab0c046a911b8bec792bd1a9ad36f3fee78252d02efed",
+      "bytes": 609
+    },
+    {
+      "path": "src/Modules/Payments/Application/Subscriptions/RenewSubscription/RenewSubscriptionCommand.cs",
+      "sha256": "1c23895a12076b8377ccfb75c6e0ff73e6119f02b349d1167b3e7343fe95be0a",
+      "bytes": 711
+    },
+    {
+      "path": "src/Modules/Payments/Application/Subscriptions/RenewSubscription/RenewSubscriptionCommandHandler.cs",
+      "sha256": "ed191712b73ac66980d63a4d4f7c4344a43fb77ceeb3df42cb80ca373bc61640",
+      "bytes": 1272
+    },
+    {
+      "path": "src/Modules/Payments/Application/Subscriptions/RenewSubscription/SubscriptionRenewedEnqueueEmailConfirmationHandler.cs",
+      "sha256": "f74aaf246fe4fa6758f38019310ccdbbee4a727ff2f11e1ed2d7cb8e4bb368c4",
+      "bytes": 1666
+    },
+    {
+      "path": "src/Modules/Payments/Application/Subscriptions/RenewSubscription/SubscriptionRenewedNotification.cs",
+      "sha256": "6e587ccfcb10b0de39241eadb67e6929bd2b1b8a47fdf0f872df2a7b46f9ff15",
+      "bytes": 574
+    },
+    {
+      "path": "src/Modules/Payments/Application/Subscriptions/RenewSubscription/SubscriptionRenewedNotificationHandler.cs",
+      "sha256": "acdbafe18e35f8a96600503653f9dcd840634c0a62e23723fa21272a64ada927",
+      "bytes": 1000
+    },
+    {
+      "path": "src/Modules/Payments/Application/Subscriptions/SendSubscriptionCreationConfirmationEmail/SendSubscriptionCreationConfirmationEmailCommand.cs",
+      "sha256": "f0650828418bdb4f06cb24445b5d2adcf345b5c40ffb13e7d0fc9420dea703fc",
+      "bytes": 811
+    },
+    {
+      "path": "src/Modules/Payments/Application/Subscriptions/SendSubscriptionCreationConfirmationEmail/SendSubscriptionCreationConfirmationEmailCommandHandler.cs",
+      "sha256": "0372d368063cfd3a0dc5fb1f4579e585a85e2a6894efd384a0ffdf23c6832410",
+      "bytes": 1115
+    },
+    {
+      "path": "src/Modules/Payments/Application/Subscriptions/SendSubscriptionRenewalConfirmationEmail/SendSubscriptionRenewalConfirmationEmailCommand.cs",
+      "sha256": "2a31cf81a94ba96395527cf9ebb4602d2c1288c5cb9c9578927d2f14ae5d4107",
+      "bytes": 808
+    },
+    {
+      "path": "src/Modules/Payments/Application/Subscriptions/SendSubscriptionRenewalConfirmationEmail/SendSubscriptionRenewalConfirmationEmailCommandHandler.cs",
+      "sha256": "7e821cc5565942c08bf00b8aabb885be39acb5607962436cc70fecadd5ed9389",
+      "bytes": 1108
+    },
+    {
+      "path": "src/Modules/Payments/Domain/CompanyName.MyMeetings.Modules.Payments.Domain.csproj",
+      "sha256": "4858ec1718bf9805fa23efce7f9852a4eb5d5b950ad377586ba1eec5067ebecd",
+      "bytes": 38
+    },
+    {
+      "path": "src/Modules/Payments/Domain/MeetingFeePayments/Events/MeetingFeePaymentCreatedDomainEvent.cs",
+      "sha256": "bec7183efb2122b98d6a2d85bbfeb4ecb9fb9dd1b656307e6e5b6752e3025bc2",
+      "bytes": 672
+    },
+    {
+      "path": "src/Modules/Payments/Domain/MeetingFeePayments/Events/MeetingFeePaymentExpiredDomainEvent.cs",
+      "sha256": "6d85a81e98b2e9ac4d6e7e342624e8d9a73305daebb381b7363420f477853b50",
+      "bytes": 526
+    },
+    {
+      "path": "src/Modules/Payments/Domain/MeetingFeePayments/Events/MeetingFeePaymentPaidDomainEvent.cs",
+      "sha256": "36618952eff89cb54f010a2b29eab83ca9adde489d11b32aedf4d2d1ed6acbad",
+      "bytes": 520
+    },
+    {
+      "path": "src/Modules/Payments/Domain/MeetingFeePayments/MeetingFeePayment.cs",
+      "sha256": "1d04d6fce9cfe753bf367941b3f2fab4d8c8deac0a3c6eec4068c857a3df26cd",
+      "bytes": 2640
+    },
+    {
+      "path": "src/Modules/Payments/Domain/MeetingFeePayments/MeetingFeePaymentId.cs",
+      "sha256": "5ac2921f45d2a845e35c739d274ea2bc1c112bd566a036eb0efe1514dec525c9",
+      "bytes": 332
+    },
+    {
+      "path": "src/Modules/Payments/Domain/MeetingFeePayments/MeetingFeePaymentSnapshot.cs",
+      "sha256": "6ec502c7db87e50c5dfcd7bdf8565674163385a53d4c6bcb1f4b8ddbb55b0105",
+      "bytes": 446
+    },
+    {
+      "path": "src/Modules/Payments/Domain/MeetingFeePayments/MeetingFeePaymentStatus.cs",
+      "sha256": "7c25b061961f782aaf83d6664462eae0dac15b05473700b6f2eacf46d17fee55",
+      "bytes": 824
+    },
+    {
+      "path": "src/Modules/Payments/Domain/MeetingFees/Events/MeetingFeeCanceledDomainEvent.cs",
+      "sha256": "74cdc7903866cfe01b42aa051741bd1adf9805017f562470ab50f22d98cbff2f",
+      "bytes": 479
+    },
+    {
+      "path": "src/Modules/Payments/Domain/MeetingFees/Events/MeetingFeeCreatedDomainEvent.cs",
+      "sha256": "418c51c990d62ff6680f223f5aab7d8c6a2dcae854916e9cb8c00b8c813ae49b",
+      "bytes": 938
+    },
+    {
+      "path": "src/Modules/Payments/Domain/MeetingFees/Events/MeetingFeeExpiredDomainEvent.cs",
+      "sha256": "96cd3c4dcf09ece1d9c5145933a375578daa6d00ccafe180782cb2715b0d9415",
+      "bytes": 477
+    },
+    {
+      "path": "src/Modules/Payments/Domain/MeetingFees/Events/MeetingFeePaidDomainEvent.cs",
+      "sha256": "1cf4106d28347c76658537b06219b787367c58bb780124413d9915087bac1f8b",
+      "bytes": 471
+    },
+    {
+      "path": "src/Modules/Payments/Domain/MeetingFees/MeetingFee.cs",
+      "sha256": "7a358a47f9fe7dede65531aa830e5428b1472636f2511ac32d48044061fd1ec4",
+      "bytes": 2771
+    },
+    {
+      "path": "src/Modules/Payments/Domain/MeetingFees/MeetingFeeId.cs",
+      "sha256": "f60308329f6b825a2ee15c49bc6e2b50f83fa01938b456318c051ed923694346",
+      "bytes": 304
+    },
+    {
+      "path": "src/Modules/Payments/Domain/MeetingFees/MeetingFeeSnapshot.cs",
+      "sha256": "85ffb0017d5315e543c7c8838ff1cac6e1f784d0b8979a5e288c17871cb1edb0",
+      "bytes": 471
+    },
+    {
+      "path": "src/Modules/Payments/Domain/MeetingFees/MeetingFeeStatus.cs",
+      "sha256": "ac47b912a505d9c7ddecdba4085b4d0688215a5259cc944bae965ddea7e8cdc8",
+      "bytes": 841
+    },
+    {
+      "path": "src/Modules/Payments/Domain/MeetingFees/MeetingId.cs",
+      "sha256": "e46372ca4d683501a5a9e3fd5bd33dd140ef1aac2bc5928c5eede057302a6e50",
+      "bytes": 280
+    },
+    {
+      "path": "src/Modules/Payments/Domain/Payers/Events/PayerCreatedDomainEvent.cs",
+      "sha256": "0b355376f7190733f4034b068334157156f5e5c66ad3ba39add28eee917125bd",
+      "bytes": 869
+    },
+    {
+      "path": "src/Modules/Payments/Domain/Payers/IPayerContext.cs",
+      "sha256": "acbf1a9a4cd7e69d790b77132864f17f9942724b5ef6cd877b487bc47bbf4491",
+      "bytes": 156
+    },
+    {
+      "path": "src/Modules/Payments/Domain/Payers/IPayerRepository.cs",
+      "sha256": "e7c72e47c93bd7cb0caabedd398626f9d670e230e1e5a3589712f0da7c094eca",
+      "bytes": 162
+    },
+    {
+      "path": "src/Modules/Payments/Domain/Payers/Payer.cs",
+      "sha256": "1694c3984f3474ed407fea2100f6f9b24b22b93c8e6ccaf3b017034e731db989",
+      "bytes": 1672
+    },
+    {
+      "path": "src/Modules/Payments/Domain/Payers/PayerId.cs",
+      "sha256": "dadf5e4dedb017db9b834cc8b5605dc922ba3a747766840de5a5d3379cab657c",
+      "bytes": 271
+    },
+    {
+      "path": "src/Modules/Payments/Domain/PriceListItems/Events/PriceListItemActivatedDomainEvent.cs",
+      "sha256": "81287a6c7831d3e69405477fbb9ad0676f717d68b5f84709289c17f812cd6fe6",
+      "bytes": 416
+    },
+    {
+      "path": "src/Modules/Payments/Domain/PriceListItems/Events/PriceListItemAttributesChangedDomainEvent.cs",
+      "sha256": "5f7591837aaf0216cbe5e709e385cf3bdc17fe0a196be74b0cde8656e095b3fe",
+      "bytes": 976
+    },
+    {
+      "path": "src/Modules/Payments/Domain/PriceListItems/Events/PriceListItemCreatedDomainEvent.cs",
+      "sha256": "cc36f87a318e2674edb44c16b92f04b470b9368f1754c64da91f58af727d4f11",
+      "bytes": 1110
+    },
+    {
+      "path": "src/Modules/Payments/Domain/PriceListItems/Events/PriceListItemDeactivatedDomainEvent.cs",
+      "sha256": "ab4f13090da3e489076a3c042859efb1abdaec2ab5096db8db2cdd9ad017bfd6",
+      "bytes": 420
+    },
+    {
+      "path": "src/Modules/Payments/Domain/PriceListItems/PriceList.cs",
+      "sha256": "974898427efc0ebea1aca1697510c7314538a330c5b543d485ffaa78fe0a443f",
+      "bytes": 1452
+    },
+    {
+      "path": "src/Modules/Payments/Domain/PriceListItems/PriceListItem.cs",
+      "sha256": "a27c302e8ccf4d67f3da44ce16ba05fa9bb0f1ea6b132fc50f0ec19b81bf11a8",
+      "bytes": 3882
+    },
+    {
+      "path": "src/Modules/Payments/Domain/PriceListItems/PriceListItemCategory.cs",
+      "sha256": "178baf12a523212ff6fb06c72cfd0d7866b84d38e3e7f89da315de35bbdd948a",
+      "bytes": 637
+    },
+    {
+      "path": "src/Modules/Payments/Domain/PriceListItems/PriceListItemData.cs",
+      "sha256": "2b13a34155efad7f33cfe130214a92221115a182d234a0fc89c4ee0aac4ff57c",
+      "bytes": 852
+    },
+    {
+      "path": "src/Modules/Payments/Domain/PriceListItems/PriceListItemId.cs",
+      "sha256": "f87be9ad5609500ca3e5821248c5a8515532c83de1d0abac0676031c3ec024c7",
+      "bytes": 316
+    },
+    {
+      "path": "src/Modules/Payments/Domain/PriceListItems/PricingStrategies/DirectValueFromPriceListPricingStrategy.cs",
+      "sha256": "1c37930229052d118a7261acaa080da8a31333fbb1b0073f6e6ab2065ffe8085",
+      "bytes": 945
+    },
+    {
+      "path": "src/Modules/Payments/Domain/PriceListItems/PricingStrategies/DirectValuePricingStrategy.cs",
+      "sha256": "70469c52b410ac77c9049bde6147cf6048076c557757c0b559dd9f436b000df0",
+      "bytes": 679
+    },
+    {
+      "path": "src/Modules/Payments/Domain/PriceListItems/PricingStrategies/DiscountedValueFromPriceListPricingStrategy.cs",
+      "sha256": "d8e001fd268c658f83ada6c88d3b3017b433e5199e932b841ae0704bd46c615f",
+      "bytes": 1083
+    },
+    {
+      "path": "src/Modules/Payments/Domain/PriceListItems/PricingStrategies/IPricingStrategy.cs",
+      "sha256": "9ba7b3534a8aeb206db1d14611138c25224ffd2bb945cdd7829b919b8bc724cd",
+      "bytes": 447
+    },
+    {
+      "path": "src/Modules/Payments/Domain/SeedWork/AggregateId.cs",
+      "sha256": "16709ccd02010517349953c3fbc3b6e4f6243e7ff3d906767ee69daea5f1dfe8",
+      "bytes": 294
+    },
+    {
+      "path": "src/Modules/Payments/Domain/SeedWork/AggregateRoot.cs",
+      "sha256": "0fbd62343038053d5f2b29f0317566742c65eb05a2b55979c092aab72c69dc79",
+      "bytes": 1180
+    },
+    {
+      "path": "src/Modules/Payments/Domain/SeedWork/IAggregateStore.cs",
+      "sha256": "a29ba203a7a71f8579297c2c658dc7fb2f97d3b978d421ee979ccb71f8de9c46",
+      "bytes": 456
+    },
+    {
+      "path": "src/Modules/Payments/Domain/SeedWork/MoneyValue.cs",
+      "sha256": "234c8e959dd44c4372a597b035d6bf002b6d673cd5bbffffb4fb38e030cbf61c",
+      "bytes": 1734
+    },
+    {
+      "path": "src/Modules/Payments/Domain/SeedWork/Rules/MoneyMustHaveTheSameCurrencyRule.cs",
+      "sha256": "6e96d324fa11c5474e5c7a730532e4818ed11adf497fbcf55d9e04ff6c214822",
+      "bytes": 618
+    },
+    {
+      "path": "src/Modules/Payments/Domain/SeedWork/Rules/ValueOfMoneyMustNotBeNegativeRule.cs",
+      "sha256": "ba32ef57daafef702fe26a77d4d836c2875d7d3f6e3b638e65561133bd2df0ec",
+      "bytes": 502
+    },
+    {
+      "path": "src/Modules/Payments/Domain/SeedWork/SystemClock.cs",
+      "sha256": "6e1137e18f421f32204a1a535e0fe02929ee780b7315736838fbbd45b2e738c3",
+      "bytes": 595
+    },
+    {
+      "path": "src/Modules/Payments/Domain/SubscriptionPayments/Events/SubscriptionPaymentCreatedDomainEvent.cs",
+      "sha256": "faa6f4734407d1208a4b28f3e832fd603b78131a05b8c39fe2dd1420cff16ae7",
+      "bytes": 1152
+    },
+    {
+      "path": "src/Modules/Payments/Domain/SubscriptionPayments/Events/SubscriptionPaymentExpiredDomainEvent.cs",
+      "sha256": "e685089e6c32423d1230dbad2ea7a15bc90f45188601af6d9e9bdbbd07365556",
+      "bytes": 540
+    },
+    {
+      "path": "src/Modules/Payments/Domain/SubscriptionPayments/Events/SubscriptionPaymentPaidDomainEvent.cs",
+      "sha256": "b31ab6b898e0240b593973b8f9644ce16421f25b883f9416be1efd89f037afda",
+      "bytes": 534
+    },
+    {
+      "path": "src/Modules/Payments/Domain/SubscriptionPayments/Rules/PriceForSubscriptionMustBeDefinedRule.cs",
+      "sha256": "15d60b3cf1cc386b76535a204289ab56d7f1e1471127bf67daf12baa6e2b2175",
+      "bytes": 1429
+    },
+    {
+      "path": "src/Modules/Payments/Domain/SubscriptionPayments/Rules/PriceOfferMustMatchPriceInPriceListRule.cs",
+      "sha256": "05a5df1f99cd8210294780e020dbb1bb8019ec2ebe839699d160c9feaa78d4f8",
+      "bytes": 809
+    },
+    {
+      "path": "src/Modules/Payments/Domain/SubscriptionPayments/SubscriptionPayment.cs",
+      "sha256": "089d10c0023243e758cf2e3a54a46e3bf5ebb60126971b5cfd909c583b111d23",
+      "bytes": 3829
+    },
+    {
+      "path": "src/Modules/Payments/Domain/SubscriptionPayments/SubscriptionPaymentId.cs",
+      "sha256": "5c91330aa55575ca81afa2892e5d54b27b52e1cda276a219f2fb08f67f0ad17a",
+      "bytes": 340
+    },
+    {
+      "path": "src/Modules/Payments/Domain/SubscriptionPayments/SubscriptionPaymentSnapshot.cs",
+      "sha256": "cdd7a7005142d87c8454f06c3b0ff81b3467d25cfb866de8dfd610b86b37457f",
+      "bytes": 854
+    },
+    {
+      "path": "src/Modules/Payments/Domain/SubscriptionPayments/SubscriptionPaymentStatus.cs",
+      "sha256": "624c6773aa2d92600963bf727cb6f3769b2209b1701e3a8ec39a5e34c61b7072",
+      "bytes": 846
+    },
+    {
+      "path": "src/Modules/Payments/Domain/SubscriptionRenewalPayments/Events/SubscriptionRenewalPaymentCreatedDomainEvent.cs",
+      "sha256": "22b2fd262991db2982650c0c4ed8ed0394fac55572759694bba348ca6a8d6939",
+      "bytes": 1325
+    },
+    {
+      "path": "src/Modules/Payments/Domain/SubscriptionRenewalPayments/Events/SubscriptionRenewalPaymentPaidDomainEvent.cs",
+      "sha256": "794131f2ada1a1fd5b8948a257d6f5e840e14ac4f994c2f0ddf2b9e0317f6c2c",
+      "bytes": 708
+    },
+    {
+      "path": "src/Modules/Payments/Domain/SubscriptionRenewalPayments/Rules/PriceOfferMustMatchPriceInPriceListRule.cs",
+      "sha256": "d9e98ce3d2009fa8d6cff88876b1d08ba3bbc81611b1df03b97ab7526b66d0a1",
+      "bytes": 813
+    },
+    {
+      "path": "src/Modules/Payments/Domain/SubscriptionRenewalPayments/SubscriptionRenewalPayment.cs",
+      "sha256": "27b4c6a6830b8aa94822d3211b81ce9690c4062b4e208ee101b308f35d60af6c",
+      "bytes": 3777
+    },
+    {
+      "path": "src/Modules/Payments/Domain/SubscriptionRenewalPayments/SubscriptionRenewalPaymentId.cs",
+      "sha256": "27dec6a2097a536cd73181714238a96137a2061131de7d5da1eb0cefbb57e8e6",
+      "bytes": 365
+    },
+    {
+      "path": "src/Modules/Payments/Domain/SubscriptionRenewalPayments/SubscriptionRenewalPaymentSnapshot.cs",
+      "sha256": "5b63d8a7e5927e22b4fac0552fd49958a44660e9db2fb24732afa1cce7022454",
+      "bytes": 886
+    },
+    {
+      "path": "src/Modules/Payments/Domain/SubscriptionRenewalPayments/SubscriptionRenewalPaymentStatus.cs",
+      "sha256": "d344a40b06f84fbcd4f858a77a47266a5d74e8749dba7db097bff44ee880eea0",
+      "bytes": 890
+    },
+    {
+      "path": "src/Modules/Payments/Domain/Subscriptions/Events/SubscriptionCreatedDomainEvent.cs",
+      "sha256": "d7e4cd1db40d1ad7bf9660eac085aad6df2402b5c13b955d684fcdd8fe3932fa",
+      "bytes": 1189
+    },
+    {
+      "path": "src/Modules/Payments/Domain/Subscriptions/Events/SubscriptionExpiredDomainEvent.cs",
+      "sha256": "9693265264713b31f29b31ace7c2215a3dd084a0d1593006d820c58792173519",
+      "bytes": 518
+    },
+    {
+      "path": "src/Modules/Payments/Domain/Subscriptions/Events/SubscriptionRenewedDomainEvent.cs",
+      "sha256": "958703ec60127b795f8a7783945a0ff392849a0fa8d5f79b4dfca6051146489b",
+      "bytes": 915
+    },
+    {
+      "path": "src/Modules/Payments/Domain/Subscriptions/SubscriberId.cs",
+      "sha256": "9c2e504f82c8f219b232bc2e97fde36f0b9799de8ac262281d54d72fe6e8653d",
+      "bytes": 288
+    },
+    {
+      "path": "src/Modules/Payments/Domain/Subscriptions/Subscription.cs",
+      "sha256": "0fc089a2cb92675bb53d1d7d28878c98f53d38a0f595b583a913d61f3e6d721f",
+      "bytes": 3991
+    },
+    {
+      "path": "src/Modules/Payments/Domain/Subscriptions/SubscriptionDateExpirationCalculator.cs",
+      "sha256": "256b72d7f1338a3dbb734623419fb3f05de757f165bf61aa8246dc71eb0da950",
+      "bytes": 744
+    },
+    {
+      "path": "src/Modules/Payments/Domain/Subscriptions/SubscriptionId.cs",
+      "sha256": "614c3fc0f97ba5c65b8aec8e63a76956e730ede77e7959f81eeb0abc83c859de",
+      "bytes": 312
+    },
+    {
+      "path": "src/Modules/Payments/Domain/Subscriptions/SubscriptionPeriod.cs",
+      "sha256": "e7ed8ddab5065a6d0583565b7ee095d0e3e161d16fddccd995084de5d0aa06fc",
+      "bytes": 895
+    },
+    {
+      "path": "src/Modules/Payments/Domain/Subscriptions/SubscriptionStatus.cs",
+      "sha256": "c2643c7ccbd202aeedab2a2eb81ccfe372ad90463d01fa0ab2ef29bf84739dc5",
+      "bytes": 657
+    },
+    {
+      "path": "src/Modules/Payments/Domain/Users/IUserContext.cs",
+      "sha256": "9e4cb1e3dee9f4c723b54a49d65a85157967a1fce6a1f6dad0c118beb9f26196",
+      "bytes": 152
+    },
+    {
+      "path": "src/Modules/Payments/Domain/Users/UserId.cs",
+      "sha256": "5e91a3e8658a5df04bc3223a81e44752bc2368af968fd01c9e75bbc53a8bd902",
+      "bytes": 268
+    },
+    {
+      "path": "src/Modules/Payments/IntegrationEvents/CompanyName.MyMeetings.Modules.Payments.IntegrationEvents.csproj",
+      "sha256": "dad1d812ddf0a3e952d1ff5ed113229d9a337574de19f0cfe78899101689c6e1",
+      "bytes": 40
+    },
+    {
+      "path": "src/Modules/Payments/IntegrationEvents/MeetingFeePaidIntegrationEvent.cs",
+      "sha256": "b1a08ce0c028af1272a83c427b60178be96c288dfc5978fd708c00c01372b47b",
+      "bytes": 598
+    },
+    {
+      "path": "src/Modules/Payments/IntegrationEvents/SubscriptionExpirationDateChangedIntegrationEvent.cs",
+      "sha256": "efee17d89eab57e2f9a963c0193406eee29e442083bdb866fc14010c13d8b1cb",
+      "bytes": 664
+    },
+    {
+      "path": "src/Modules/Registrations/Application/CompanyName.MyMeetings.Modules.Registrations.Application.csproj",
+      "sha256": "3c3459c17575dbb209258e974f0e303ebc22cbca90536b881e7c2cacbc3fa47b",
+      "bytes": 210
+    },
+    {
+      "path": "src/Modules/Registrations/Application/Configuration/Commands/ICommandHandler.cs",
+      "sha256": "c9d6f7cae721f04bacdc23bf092d5f0ea727403a3603ca4f02e45d6c0b7620c0",
+      "bytes": 485
+    },
+    {
+      "path": "src/Modules/Registrations/Application/Configuration/Commands/ICommandsScheduler.cs",
+      "sha256": "ad647358ebea2109f9f5b70774e721efd77833c1c250e83e4b2b87a4d28551ed",
+      "bytes": 330
+    },
+    {
+      "path": "src/Modules/Registrations/Application/Configuration/Commands/InternalCommandBase.cs",
+      "sha256": "64479c12715b0a1f9a28b50edb2955090d95bf893a2ea23b09887155ac61e4ac",
+      "bytes": 692
+    },
+    {
+      "path": "src/Modules/Registrations/Application/Configuration/Queries/IQueryHandler.cs",
+      "sha256": "9ba1ad9e27c808e981cdf21c9b4e66e1f79845bf04ca7d2a9ce48cd9e73f4d43",
+      "bytes": 344
+    },
+    {
+      "path": "src/Modules/Registrations/Application/Contracts/CommandBase.cs",
+      "sha256": "8711a2b6f256202f16f017d4ef26a2a178bd4deff9b7caef44bd066c91a382f2",
+      "bytes": 653
+    },
+    {
+      "path": "src/Modules/Registrations/Application/Contracts/CustomClaimTypes.cs",
+      "sha256": "05b699ea39d5ae25208fc72c007ad084f1b3ac8e8b8f653e484ecad15ec8c5bb",
+      "bytes": 270
+    },
+    {
+      "path": "src/Modules/Registrations/Application/Contracts/ICommand.cs",
+      "sha256": "f7797443cd771fab0632216f35debb0f68a431680dd35a0e04350a8bc28bc52e",
+      "bytes": 291
+    },
+    {
+      "path": "src/Modules/Registrations/Application/Contracts/IQuery.cs",
+      "sha256": "57cfdd8126892f05d7881f784b3924a7801c2912fa35a1bfc42ff76938f66bf2",
+      "bytes": 179
+    },
+    {
+      "path": "src/Modules/Registrations/Application/Contracts/IRecurringCommand.cs",
+      "sha256": "f55d87018fe74ad9028269efa706478a7c3d0eda35ce51f7328e4c0ab8edd48c",
+      "bytes": 139
+    },
+    {
+      "path": "src/Modules/Registrations/Application/Contracts/IRegistrationsModule.cs",
+      "sha256": "d443cdcb8315d7d3f1166a54d118aa156dc27787375011ad6a379bc99fe62094",
+      "bytes": 353
+    },
+    {
+      "path": "src/Modules/Registrations/Application/Contracts/QueryBase.cs",
+      "sha256": "1d4c7fba001ef1f5404c11c5001b77195dd4257357b18757febf0464395ce119",
+      "bytes": 369
+    },
+    {
+      "path": "src/Modules/Registrations/Application/Contracts/Roles.cs",
+      "sha256": "f8ee0d71a5031ce99db4655848bf7cfaa113dc5f359ce782f41c680ce6a7bf58",
+      "bytes": 213
+    },
+    {
+      "path": "src/Modules/Registrations/Application/UserRegistrations/ConfirmUserRegistration/ConfirmUserRegistrationCommand.cs",
+      "sha256": "9cae41071ba0fc80d4e6e179c57ad2117d371694440afc779d1bad2658e161b7",
+      "bytes": 470
+    },
+    {
+      "path": "src/Modules/Registrations/Application/UserRegistrations/ConfirmUserRegistration/ConfirmUserRegistrationCommandHandler.cs",
+      "sha256": "8a2d0c2b25c0b872b577db72b972a8279baa2609daf0c0a2720c093bb91b4e8f",
+      "bytes": 1026
+    },
+    {
+      "path": "src/Modules/Registrations/Application/UserRegistrations/ConfirmUserRegistration/IUserCreator.cs",
+      "sha256": "88a2630c262569aec839796f3f116f2a609586bcfd770dd5e4547151a6664aab",
+      "bytes": 333
+    },
+    {
+      "path": "src/Modules/Registrations/Application/UserRegistrations/ConfirmUserRegistration/UserRegistrationConfirmedNotification.cs",
+      "sha256": "81b27803a5fed2ee31c422a85e3cde6c40cb1f6aa6103174555c446010ddb675",
+      "bytes": 543
+    },
+    {
+      "path": "src/Modules/Registrations/Application/UserRegistrations/ConfirmUserRegistration/UserRegistrationConfirmedNotificationHandler.cs",
+      "sha256": "08c7c3818917244f0a3ad0967967d68bb9d0877ed70df01e76e74cba242444bc",
+      "bytes": 1386
+    },
+    {
+      "path": "src/Modules/Registrations/Application/UserRegistrations/GetUserRegistration/GetUserRegistrationQuery.cs",
+      "sha256": "24c8175ddf9191549c616349647d11b475a0c694a3063069fe1f440dd627bfbf",
+      "bytes": 473
+    },
+    {
+      "path": "src/Modules/Registrations/Application/UserRegistrations/GetUserRegistration/GetUserRegistrationQueryHandler.cs",
+      "sha256": "4217dba0ad54d23b7bc6c995cdd5acccd7726560061e71774aee0cddee878c28",
+      "bytes": 949
+    },
+    {
+      "path": "src/Modules/Registrations/Application/UserRegistrations/GetUserRegistration/UserRegistrationDto.cs",
+      "sha256": "79c3e58ee1023c45b7de57fb244eca971cc7c9164add3bb54f4d1143ef2e8c0f",
+      "bytes": 532
+    },
+    {
+      "path": "src/Modules/Registrations/Application/UserRegistrations/GetUserRegistration/UserRegistrationProvider.cs",
+      "sha256": "7981487aecd49a60d4a852fe9f4d0ce8400256dd2caddc3c6608af69f9091153",
+      "bytes": 1638
+    },
+    {
+      "path": "src/Modules/Registrations/Application/UserRegistrations/RegisterNewUser/NewUserRegisteredEnqueueEmailConfirmationHandler.cs",
+      "sha256": "88f0f5ca584463e652a7faf944db7aaa1087438423eb66c3e80f6821a2a44ac5",
+      "bytes": 1157
+    },
+    {
+      "path": "src/Modules/Registrations/Application/UserRegistrations/RegisterNewUser/NewUserRegisteredNotification.cs",
+      "sha256": "19fd1b11d1d768892ac59a7f8ba99875126205777eebd458fb64316d96cf156c",
+      "bytes": 585
+    },
+    {
+      "path": "src/Modules/Registrations/Application/UserRegistrations/RegisterNewUser/NewUserRegisteredPublishEventHandler.cs",
+      "sha256": "19a5fb012dbcd540d502df1cf08d36a1be843e78c4f6f92ed28cd9841b01fdc9",
+      "bytes": 1201
+    },
+    {
+      "path": "src/Modules/Registrations/Application/UserRegistrations/RegisterNewUser/PasswordManager.cs",
+      "sha256": "759566f09885de20a9a04598860383c0da399184331823e96b1df2e55b9edee3",
+      "bytes": 2533
+    },
+    {
+      "path": "src/Modules/Registrations/Application/UserRegistrations/RegisterNewUser/RegisterNewUserCommand.cs",
+      "sha256": "29035768f5b435ae5692fcd938e3a4fad41f261a3f45c35c63aec234175f8f34",
+      "bytes": 957
+    },
+    {
+      "path": "src/Modules/Registrations/Application/UserRegistrations/RegisterNewUser/RegisterNewUserCommandHandler.cs",
+      "sha256": "3fde51e3b83f36ca0067912b2ba0783f38a94b1b9aceb57f4780279badee3d4c",
+      "bytes": 1462
+    },
+    {
+      "path": "src/Modules/Registrations/Application/UserRegistrations/SendUserRegistrationConfirmationEmail/SendUserRegistrationConfirmationEmailCommand.cs",
+      "sha256": "02fd3088d9754673f6d19f2e60080f3a7db440b98a3e6cbb6eb3d84ee3d06009",
+      "bytes": 970
+    },
+    {
+      "path": "src/Modules/Registrations/Application/UserRegistrations/SendUserRegistrationConfirmationEmail/SendUserRegistrationConfirmationEmailCommandHandler.cs",
+      "sha256": "34a50d3f0bc32458f82fae61de397655e6248fe7c16b5af30ca5c74b126b464f",
+      "bytes": 1278
+    },
+    {
+      "path": "src/Modules/Registrations/Application/UserRegistrations/UsersCounter.cs",
+      "sha256": "614478f94c98f213206609d93725987c3b09fd4a08f5a7ce66a6beea804be0fc",
+      "bytes": 1148
+    },
+    {
+      "path": "src/Modules/Registrations/Domain/CompanyName.MyMeetings.Modules.Registrations.Domain.csproj",
+      "sha256": "dad1d812ddf0a3e952d1ff5ed113229d9a337574de19f0cfe78899101689c6e1",
+      "bytes": 40
+    },
+    {
+      "path": "src/Modules/Registrations/Domain/UserRegistrations/Events/NewUserRegisteredDomainEvent.cs",
+      "sha256": "101f1f2af86d3c2199a8a4e5edc01f518b8e88b622e085af57da71080cc80bf2",
+      "bytes": 1213
+    },
+    {
+      "path": "src/Modules/Registrations/Domain/UserRegistrations/Events/UserRegistrationConfirmedDomainEvent.cs",
+      "sha256": "70d7c9bfebeb0ade80a5c81cf1998181295ea8edfb769762a64aa6f439df6947",
+      "bytes": 470
+    },
+    {
+      "path": "src/Modules/Registrations/Domain/UserRegistrations/Events/UserRegistrationExpiredDomainEvent.cs",
+      "sha256": "b6c28b90233882cd0f64002d7ded7bf43e2fe97ed743090c9277d006d7ba8ff2",
+      "bytes": 466
+    },
+    {
+      "path": "src/Modules/Registrations/Domain/UserRegistrations/IUserRegistrationRepository.cs",
+      "sha256": "7dbd6d82c656dbdcd7adbbf20d7b5834f594be2c84f1408bdbb33f8123abb084",
+      "bytes": 298
+    },
+    {
+      "path": "src/Modules/Registrations/Domain/UserRegistrations/IUsersCounter.cs",
+      "sha256": "61053372a7a796e18a72b19aa18ae539d15c641012a04a07049639e3a22b7190",
+      "bytes": 186
+    },
+    {
+      "path": "src/Modules/Registrations/Domain/UserRegistrations/Rules/UserCannotBeCreatedWhenRegistrationIsNotConfirmedRule.cs",
+      "sha256": "2766b60dac1e73a96c59839c3319542b162925d923b91ebe6acc4794610d7e67",
+      "bytes": 741
+    },
+    {
+      "path": "src/Modules/Registrations/Domain/UserRegistrations/Rules/UserLoginMustBeUniqueRule.cs",
+      "sha256": "f58c6e17def1f7e4b9c18f1b7ccf0c1a6063efa3bf349137a8deb06d61bda4bd",
+      "bytes": 650
+    },
+    {
+      "path": "src/Modules/Registrations/Domain/UserRegistrations/Rules/UserRegistrationCannotBeConfirmedAfterExpirationRule.cs",
+      "sha256": "bd8aa722a1390bbac847bb716aa60608a7968251d081b03a6682edf970c7626d",
+      "bytes": 739
+    },
+    {
+      "path": "src/Modules/Registrations/Domain/UserRegistrations/Rules/UserRegistrationCannotBeConfirmedMoreThanOnceRule.cs",
+      "sha256": "53adc143f42a4ba17944c4f33fabd84446de52e79d7a24ac9b45ffdd1dc4341a",
+      "bytes": 728
+    },
+    {
+      "path": "src/Modules/Registrations/Domain/UserRegistrations/Rules/UserRegistrationCannotBeExpiredMoreThanOnceRule.cs",
+      "sha256": "b2d5c71590b37f6b1e3353540b12721f6d5abb7b7b7d3ee6002b111bc2f9d755",
+      "bytes": 720
+    },
+    {
+      "path": "src/Modules/Registrations/Domain/UserRegistrations/UserRegistration.cs",
+      "sha256": "15c7e0ef3564953e802d35641fe283d3ecd008a5849b67057eccd91cba23b473",
+      "bytes": 3064
+    },
+    {
+      "path": "src/Modules/Registrations/Domain/UserRegistrations/UserRegistrationId.cs",
+      "sha256": "c056ff93ca90d1d851ee7a37984f733daeb1934adac7540eddbcc6dfa13c147b",
+      "bytes": 309
+    },
+    {
+      "path": "src/Modules/Registrations/Domain/UserRegistrations/UserRegistrationStatus.cs",
+      "sha256": "2b11787e0786ba01c4f631acc1e6b120b798f528ce3bdb8b1b423539e7e727eb",
+      "bytes": 715
+    },
+    {
+      "path": "src/Modules/Registrations/IntegrationEvents/Class1.cs",
+      "sha256": "69ad3f2beebc1e10a0428721e9b6960480f45fb9150462e7da2f63b2ff3c6d9b",
+      "bytes": 105
+    },
+    {
+      "path": "src/Modules/Registrations/IntegrationEvents/CompanyName.MyMeetings.Modules.Registrations.IntegrationEvents.csproj",
+      "sha256": "dad1d812ddf0a3e952d1ff5ed113229d9a337574de19f0cfe78899101689c6e1",
+      "bytes": 40
+    },
+    {
+      "path": "src/Modules/Registrations/IntegrationEvents/NewUserRegisteredIntegrationEvent.cs",
+      "sha256": "f22a9ca93d6a418eea0fec7c05c75ffaeff575aaaf25f0c523c9974b1e83f532",
+      "bytes": 894
+    },
+    {
+      "path": "src/Modules/UserAccess/Application/Authentication/Authenticate/AuthenticateCommand.cs",
+      "sha256": "84e2f19749110352f03e239ab3b9191f532438c77d9082fb1c0bbd1f800866b8",
+      "bytes": 496
+    },
+    {
+      "path": "src/Modules/UserAccess/Application/Authentication/Authenticate/AuthenticateCommandHandler.cs",
+      "sha256": "147b10ab03fca5980e148a2072a33caa5b3ff2b8d0b6803eb00aed068260ebd2",
+      "bytes": 2607
+    },
+    {
+      "path": "src/Modules/UserAccess/Application/Authentication/Authenticate/AuthenticateCommandValidator.cs",
+      "sha256": "7c6887b1ee84b62e9102e5c5d7673cbf916b177516a7cf5e1c2cf2527cc0c860",
+      "bytes": 484
+    },
+    {
+      "path": "src/Modules/UserAccess/Application/Authentication/Authenticate/AuthenticationResult.cs",
+      "sha256": "d01a217d675583232dd6a1c41ba57334dd677ccc6a200a76afd33947f5119d89",
+      "bytes": 624
+    },
+    {
+      "path": "src/Modules/UserAccess/Application/Authentication/Authenticate/PasswordManager.cs",
+      "sha256": "15c478e697418e73b8428f0e890e0fe4b2b80ac8f20746e52dfc9b33842c05b8",
+      "bytes": 2524
+    },
+    {
+      "path": "src/Modules/UserAccess/Application/Authentication/Authenticate/UserDto.cs",
+      "sha256": "37d824aa17c2bc8cf5bec152e53be06b929ec9cf74321c260b617db2bcdcdf69",
+      "bytes": 490
+    },
+    {
+      "path": "src/Modules/UserAccess/Application/Authorization/GetAuthenticatedUserPermissions/GetAuthenticatedUserPermissionsQuery.cs",
+      "sha256": "aed5dfcf91eaf6db6f443881e09f4e0d8edd33c725448c65d89d3616872a9234",
+      "bytes": 393
+    },
+    {
+      "path": "src/Modules/UserAccess/Application/Authorization/GetAuthenticatedUserPermissions/GetAuthenticatedUserPermissionsQueryHandler.cs",
+      "sha256": "62d8a0b9515464823439117c5fb2b860ff10fd68d765c0793eec4504ae755557",
+      "bytes": 1986
+    },
+    {
+      "path": "src/Modules/UserAccess/Application/Authorization/GetUserPermissions/GetUserPermissionsQuery.cs",
+      "sha256": "13858d5227dd29b50ec81a91a568b1c155216d360088e4e5ab16324b035a5594",
+      "bytes": 416
+    },
+    {
+      "path": "src/Modules/UserAccess/Application/Authorization/GetUserPermissions/GetUserPermissionsQueryHandler.cs",
+      "sha256": "c03cc3b98a46c3bc314a5bcc1203f343e5d19c7afd22ff4b9f49d0c27e5539b1",
+      "bytes": 1372
+    },
+    {
+      "path": "src/Modules/UserAccess/Application/Authorization/GetUserPermissions/UserPermissionDto.cs",
+      "sha256": "dc4773ef7bf625fc80077e08d4cc45286eab3bc64de08dd4e6dcd4ef022d5f91",
+      "bytes": 197
+    },
+    {
+      "path": "src/Modules/UserAccess/Application/CompanyName.MyMeetings.Modules.UserAccess.Application.csproj",
+      "sha256": "b1e78668f67f00af0a5b676a172fcf28223522e678bec8a6b2d76647b7aca04f",
+      "bytes": 213
+    },
+    {
+      "path": "src/Modules/UserAccess/Application/Configuration/Commands/ICommandHandler.cs",
+      "sha256": "94b670b4d1c94af556999ccd56149d7c23c7d76fae78d97318f2845504a4e0f8",
+      "bytes": 479
+    },
+    {
+      "path": "src/Modules/UserAccess/Application/Configuration/Commands/ICommandsScheduler.cs",
+      "sha256": "8a0f7d24af1fc06ccd06f08ecb5f9394c777301e280da55cb9686a4e90aad825",
+      "bytes": 324
+    },
+    {
+      "path": "src/Modules/UserAccess/Application/Configuration/Commands/InternalCommandBase.cs",
+      "sha256": "3147fd1436a5e295d73a53bc799d432179325a21b02fdc8f39b7921952faac9d",
+      "bytes": 686
+    },
+    {
+      "path": "src/Modules/UserAccess/Application/Configuration/Queries/IQueryHandler.cs",
+      "sha256": "8c8397d155727312268bd2e19e5a02f07197bafe20914b66cba6ab78aacce65b",
+      "bytes": 338
+    },
+    {
+      "path": "src/Modules/UserAccess/Application/Contracts/CommandBase.cs",
+      "sha256": "57f3d4d8d4ff4d196a507e48dd49407f7adc31693d41d55446366b1cb57d6b79",
+      "bytes": 650
+    },
+    {
+      "path": "src/Modules/UserAccess/Application/Contracts/CustomClaimTypes.cs",
+      "sha256": "871df462fc8b845be5f78545586d4f11761de3ddb3e9409050e6c92afae817e7",
+      "bytes": 267
+    },
+    {
+      "path": "src/Modules/UserAccess/Application/Contracts/ICommand.cs",
+      "sha256": "d58db6471b537f9595651a65e0f7f0640b2d7cda6fc1fc49cf330aae6668afa9",
+      "bytes": 288
+    },
+    {
+      "path": "src/Modules/UserAccess/Application/Contracts/IQuery.cs",
+      "sha256": "3238fc0324817c7844a387dec2444c739e56c05435ac1c99c8a6a4893fdeec88",
+      "bytes": 176
+    },
+    {
+      "path": "src/Modules/UserAccess/Application/Contracts/IRecurringCommand.cs",
+      "sha256": "e94f2329a50e69e0f3ff3604ceca345f8ffc1a62cd49a9ca39749c13a2777514",
+      "bytes": 136
+    },
+    {
+      "path": "src/Modules/UserAccess/Application/Contracts/IUserAccessModule.cs",
+      "sha256": "7a1fd11d2a2b5d4c3518d824e65bc43637daea099ac58b837d18a4c929358e2a",
+      "bytes": 347
+    },
+    {
+      "path": "src/Modules/UserAccess/Application/Contracts/QueryBase.cs",
+      "sha256": "f3e91c7963a433227228244e87e4c2a7e7be82d6d42d7ef64c43af73951fc2b5",
+      "bytes": 366
+    },
+    {
+      "path": "src/Modules/UserAccess/Application/Contracts/Roles.cs",
+      "sha256": "24fa87a52a1168d27625e409e1f5af1c993f5ba68440d362575cdb9729ad5419",
+      "bytes": 210
+    },
+    {
+      "path": "src/Modules/UserAccess/Application/Emails/EmailDto.cs",
+      "sha256": "a937fc57abd66d79fe8363c6ecf44e45ac59244fa16309e0bc6f721784c24515",
+      "bytes": 384
+    },
+    {
+      "path": "src/Modules/UserAccess/Application/Emails/GetAllEmailsQuery.cs",
+      "sha256": "c21e25f3ffabc2fa195c2c0871bd78b55e3d9ae63df275607572d0a7de9ecddc",
+      "bytes": 231
+    },
+    {
+      "path": "src/Modules/UserAccess/Application/Emails/GetAllEmailsQueryHandler.cs",
+      "sha256": "49f3f3c5ff6d1a7fd61f1a9b28500d03ac9b62fd84b5c5b141b2a280e5888272",
+      "bytes": 1561
+    },
+    {
+      "path": "src/Modules/UserAccess/Application/Users/AddAdminUser/AddAdminUserCommand.cs",
+      "sha256": "f237831566679416dd2ee77a5191f08090d111006b6f2a38a0517d4e48daa31d",
+      "bytes": 896
+    },
+    {
+      "path": "src/Modules/UserAccess/Application/Users/AddAdminUser/AddAdminUserCommandHandler.cs",
+      "sha256": "2c2eeb5ff53a7a31aefb7c673af3332c1f9577ff599dacdd5f72cb7d9f8c8bbc",
+      "bytes": 1201
+    },
+    {
+      "path": "src/Modules/UserAccess/Application/Users/CreateUser/CreateUserCommand.cs",
+      "sha256": "68a65871b89f2cc3357069ec9eb4e02c48e8948e60111bc2ce27d7660684bfaf",
+      "bytes": 795
+    },
+    {
+      "path": "src/Modules/UserAccess/Application/Users/CreateUser/CreateUserCommandHandler.cs",
+      "sha256": "5ed38f693cb9e6d7b04e5c63b7b7b5f2f88c5f89aac7a5cdee1c0a3a89363a84",
+      "bytes": 879
+    },
+    {
+      "path": "src/Modules/UserAccess/Application/Users/GetAuthenticatedUser/GetAuthenticatedUserQuery.cs",
+      "sha256": "3e42c997e5a889d3f772c9588226274a919a5b4ecffd5474a4d00cdf7daeabb7",
+      "bytes": 394
+    },
+    {
+      "path": "src/Modules/UserAccess/Application/Users/GetAuthenticatedUser/GetAuthenticatedUserQueryHandler.cs",
+      "sha256": "124b57fe708e0354816cf592d1bf3f894621fac07d2cb8924ad47e35a7f78eb6",
+      "bytes": 2011
+    },
+    {
+      "path": "src/Modules/UserAccess/Application/Users/GetUser/GetUserQuery.cs",
+      "sha256": "a23c634b2c15762a10ec5bbdf4fd77a4e1aa2042a1be4b8bda5b8c2985706463",
+      "bytes": 359
+    },
+    {
+      "path": "src/Modules/UserAccess/Application/Users/GetUser/GetUserQueryHandler.cs",
+      "sha256": "4c0dd7b43a69f8804a4623d4eb1aa8c23d9413c6f3bcfe5fbdf8072aaff27aa5",
+      "bytes": 1572
+    },
+    {
+      "path": "src/Modules/UserAccess/Application/Users/GetUser/UserDto.cs",
+      "sha256": "ea83b48f5408f456e159bca0392550328f7caa6b84bc7e0ec00769e1af77e949",
+      "bytes": 344
+    },
+    {
+      "path": "src/Modules/UserAccess/Domain/CompanyName.MyMeetings.Modules.UserAccess.Domain.csproj",
+      "sha256": "dad1d812ddf0a3e952d1ff5ed113229d9a337574de19f0cfe78899101689c6e1",
+      "bytes": 40
+    },
+    {
+      "path": "src/Modules/UserAccess/Domain/Users/Events/UserCreatedDomainEvent.cs",
+      "sha256": "68cbc8abbe26d4179b07b3b62a62a82a2c2bd2eb5b8e82c732e54030b13fa296",
+      "bytes": 343
+    },
+    {
+      "path": "src/Modules/UserAccess/Domain/Users/IUserRepository.cs",
+      "sha256": "cd735553568a84d7b1bff62d873b7714377d4170c9cdfc743bff2e06d0fd6f01",
+      "bytes": 160
+    },
+    {
+      "path": "src/Modules/UserAccess/Domain/Users/User.cs",
+      "sha256": "199b4ce4643678a32bedaca39e6fa0109fd8b0cb1b63ffe23013233dc75f1b8e",
+      "bytes": 2467
+    },
+    {
+      "path": "src/Modules/UserAccess/Domain/Users/UserId.cs",
+      "sha256": "4120f4396e33a4207b83b8ab21e2f81652cd935a580fa4dd0368af763d8fcdca",
+      "bytes": 270
+    },
+    {
+      "path": "src/Modules/UserAccess/Domain/Users/UserRole.cs",
+      "sha256": "a86eb6b94c79ae19814e5dc0b0f16b55cce15e509d5c5bf656478445b0e7f193",
+      "bytes": 480
+    },
+    {
+      "path": "src/Modules/UserAccess/IntegrationEvents/CompanyName.MyMeetings.Modules.UserAccess.IntegrationEvents.csproj",
+      "sha256": "dad1d812ddf0a3e952d1ff5ed113229d9a337574de19f0cfe78899101689c6e1",
+      "bytes": 40
+    },
+    {
+      "path": "src/global.json",
+      "sha256": "8dc87e6f68213f4444f20306d8057b48947550912e25a5b897702a51eea23d95",
+      "bytes": 113
+    },
+    {
+      "path": "src/stylecop.json",
+      "sha256": "cb2847bbc38065100d6708e6aaae372fff71ebac8d0699bb45ff4361aecb1ee0",
+      "bytes": 663
+    }
+  ],
+  "sourceManifestSha256": "54d65ccd7c62fc2fcf12cf147ad15967335aa8499f084439c0149d87ed56edfc",
+  "frozenFiles": [
+    {
+      "path": "experiments/agents-md-comparison/.gitattributes",
+      "sha256": "705fd4d6451a31d36b3df7de96f83f30ac976c9b4a6d1e51671d8e2f33e2d0da"
+    },
+    {
+      "path": "experiments/agents-md-comparison/.gitignore",
+      "sha256": "32dae3052f331ee34d628ef535709b301259a45df7c7522c4d35dcf49873f00b"
+    },
+    {
+      "path": "experiments/agents-md-comparison/design.md",
+      "sha256": "2d59a3c00e3211aca48c8314a43179628f8843f691bf8f267797f4641657a949"
+    },
+    {
+      "path": "experiments/agents-md-comparison/evaluation/.gitignore",
+      "sha256": "6c5082c7e6de3e350189c67a1aacf757485ecc26e0a3cf96683528565f3e5f12"
+    },
+    {
+      "path": "experiments/agents-md-comparison/evaluation/evaluate.ps1",
+      "sha256": "d9604aef13f19c424f88a8aaa16fcef341d8478484435675b26e7b569f92338e"
+    },
+    {
+      "path": "experiments/agents-md-comparison/evaluation/LICENSE",
+      "sha256": "e7e663ebd3dd4d6987f539743dba33750576870d51c2192500ea45d06adffa80"
+    },
+    {
+      "path": "experiments/agents-md-comparison/evaluation/MeetingsEvaluation.csproj",
+      "sha256": "9d60f715d02471b7e5f03de2f21bcf70b9c6b052ed0454084f559db36b4821a1"
+    },
+    {
+      "path": "experiments/agents-md-comparison/evaluation/Original-TestBase.cs.txt",
+      "sha256": "fc0f31b8cedd1b40258f4e20c7038172a27abc2ae7edfefcb4f09e5bd30b7be0"
+    },
+    {
+      "path": "experiments/agents-md-comparison/evaluation/README.md",
+      "sha256": "a7ce141833a87edbebbb3a18d81585e6c1d26ce426109d6d3301ba3b348f5947"
+    },
+    {
+      "path": "experiments/agents-md-comparison/evaluation/Task2ValidatorRuntimeTests.cs",
+      "sha256": "0e5d5178101c10ae4fa82f28dde422d35faf70f68ab3edb91dec84631c439eee"
+    },
+    {
+      "path": "experiments/agents-md-comparison/evaluation/TestBase.cs",
+      "sha256": "ff7da1cb080ccf7d96b75f72d23b95028d052391d7649eb9ad25d1d41c8a4938"
+    },
+    {
+      "path": "experiments/agents-md-comparison/guidance/AGENTS.md",
+      "sha256": "844b426a9d952de6f0019463393670ef92c2ea2f6971b03f6f267ab595957df2"
+    },
+    {
+      "path": "experiments/agents-md-comparison/guidance/architecture-check/LICENSE",
+      "sha256": "e7e663ebd3dd4d6987f539743dba33750576870d51c2192500ea45d06adffa80"
+    },
+    {
+      "path": "experiments/agents-md-comparison/guidance/architecture-check/MeetingsArchitectureCheck.csproj",
+      "sha256": "ecd0ef45f7e286e167971f7c0b867cb6a458ff629973331c9ac6dd07dbea0082"
+    },
+    {
+      "path": "experiments/agents-md-comparison/guidance/architecture-check/TestBase.cs",
+      "sha256": "ff7da1cb080ccf7d96b75f72d23b95028d052391d7649eb9ad25d1d41c8a4938"
+    },
+    {
+      "path": "experiments/agents-md-comparison/guidance/architecture-review.skill.yaml",
+      "sha256": "8da80c8c098ad1f41dc8f15bb97020c3fcc19959fe8452d781b40005ad08229a"
+    },
+    {
+      "path": "experiments/agents-md-comparison/guidance/policy-v1.md",
+      "sha256": "3fad7de63b29ffd32b893956b88314d0e3471249af8dc774fcf4ff565e637296"
+    },
+    {
+      "path": "experiments/agents-md-comparison/guidance/policy-v2.md",
+      "sha256": "39dda00dfbf21e935a3fe7ef8e79b3894514e284df8f37c1b14f98b38dbf20db"
+    },
+    {
+      "path": "experiments/agents-md-comparison/integration.json",
+      "sha256": "eec207fdb6c99ae35e1050be8919cbb1ad6a19e26fb00d007d383303d424b6b4"
+    },
+    {
+      "path": "experiments/agents-md-comparison/knowledge-parity.md",
+      "sha256": "92630e5a6e61fc7db9e5a61986b9c326f6495170a87f3b0b7acf3f869cc2e108"
+    },
+    {
+      "path": "experiments/agents-md-comparison/oracles/task1.md",
+      "sha256": "0dc873198c7ea367f9d0cc5be8af1b94d2277d559e6498af8baeb7951cd19dfd"
+    },
+    {
+      "path": "experiments/agents-md-comparison/oracles/task2.md",
+      "sha256": "483b5ca0b22be502f291d2f0431c7f4ef5d529b6572792583c55b341a298e0aa"
+    },
+    {
+      "path": "experiments/agents-md-comparison/oracles/task3.md",
+      "sha256": "96b63c4d234d2fb2b2b64fe7a0f312f17f70a522e5a1ecbed79c71633efae2d7"
+    },
+    {
+      "path": "experiments/agents-md-comparison/prepare-manifest.py",
+      "sha256": "62a394a73aae2e1cd419e632ddc1be30948907644b1ec402f2dcc800741ffdb4"
+    },
+    {
+      "path": "experiments/agents-md-comparison/run.ps1",
+      "sha256": "c3338c63003397baf73f6a9b99033719ea3b6b196142862f5192521e5fe5f8de"
+    },
+    {
+      "path": "experiments/agents-md-comparison/tasks/task1.md",
+      "sha256": "ca5289fa3b8af9134c2b159e36ea1b8a0a9c9e73d77def819c6ef7841dd12617"
+    },
+    {
+      "path": "experiments/agents-md-comparison/tasks/task2.md",
+      "sha256": "66d26c18e555c9dbbd5ca44c7de535f223be2f60dcb50306a25949f82fb1e302"
+    },
+    {
+      "path": "experiments/agents-md-comparison/tasks/task3.md",
+      "sha256": "54d96c27ecdbc34bf3652753dd9143ccbc006018a5389c2a2f81e10af483f44a"
+    },
+    {
+      "path": "experiments/real-project-adoption/checks/check-module-project-references.ps1",
+      "sha256": "f5cd05dd73388805cdca41b1e47372cf2462462c191d9e54ae89e90451a3bae4"
+    },
+    {
+      "path": "experiments/real-project-adoption/checks/project-map.json",
+      "sha256": "b7c94e9288d4a0456ce17e0b10d88b7928638a0acb3856fd5c8f45e516f1fb25"
+    },
+    {
+      "path": "experiments/real-project-adoption/evidence/source-manifest.json",
+      "sha256": "f9741b4df4d39d5f4b4151bf733cafc8428d8c3fefad8edaa9d254ab214a1444"
+    }
+  ],
+  "oracleFreezeSha256": "819f127c60ed4ee19ad0d9e7f2fc8cd5a6290dfa7de6baeb5a4c47b17027f74e",
+  "markitect": {
+    "sourceCommit": "a23db5f48854cbf7723789843aaa10ddf06cdb0b",
+    "sha256": "6aae29acf67217b9538a2076ff199102b44c84183f2e0dff4718584e84e064df"
+  },
+  "prompts": {
+    "genericBoundary": "Work only inside this fresh checkout. Do not inspect parent directories, other trials,\noperator files, hidden acceptance criteria, memories, or prior sessions. Do not write outside\nthis checkout or bypass the sandbox. The task below is the current authoritative request.\nUse .tools/read.ps1 -Path <relative-path> for content reads so the experiment can meter them;\nnormal rg searches are allowed and separately recorded. The helper log is not a complete OS\nI/O monitor. Do not alter the helper or supplied .agent-input files.\nUse the existing governance supplied in this checkout. If .agent-input/context.yaml exists,\nread that compiled task context first; also read .agent-input/impact.yaml when present.\nFailed-policy analysis can produce useful output with exit 1: it does not mean compliance.\nThe local .tools/markitect.exe, when present, is the integrated candidate, not a release.\nKeep existing governance coherent with the change; do not introduce a different mechanism.\nRun focused checks and a Meetings Application build from src, honoring src/global.json.\nThe common bounded existing-test facade is available with:\ndotnet test ../.tools/architecture-check/MeetingsArchitectureCheck.csproj\nRun that command from src. It links the checkout architecture tests; hidden task oracles\nare not in this facade. Do not edit the facade itself; edit project-owned tests when needed.\nUse the same public NuGet source https://api.nuget.org/v3/index.json when restore is needed.\nDo not publish, change unrelated modules, waive a policy just to inspect it, or create an API.\nThere is no interactive operator assistance. If blocked, preserve the failure and explain it.\nFinish with changed files, checks and their exact outcomes, architecture decisions, missing\nor irrelevant guidance, governance upkeep, and the limits of what was actually verified.",
+    "genericBoundarySha256": "7afec54d343a820ee650e10fc0944471cd610519eab6be801af0bf0961dc7cd5"
+  },
+  "executionOrder": [
+    "t1-simple",
+    "t1-markitect",
+    "t2-markitect",
+    "t2-simple",
+    "t3-simple",
+    "t3-markitect"
+  ],
+  "assets": [
+    {
+      "source": "experiments/agents-md-comparison/guidance/AGENTS.md",
+      "destination": "AGENTS.md",
+      "sha256": "844b426a9d952de6f0019463393670ef92c2ea2f6971b03f6f267ab595957df2",
+      "arm": "simple",
+      "trial": [
+        "t1",
+        "t2",
+        "t3"
+      ],
+      "phase": "base"
+    },
+    {
+      "source": "experiments/agents-md-comparison/guidance/architecture-check/MeetingsArchitectureCheck.csproj",
+      "destination": ".tools/architecture-check/MeetingsArchitectureCheck.csproj",
+      "sha256": "ecd0ef45f7e286e167971f7c0b867cb6a458ff629973331c9ac6dd07dbea0082",
+      "arm": [
+        "simple",
+        "markitect"
+      ],
+      "trial": [
+        "t1",
+        "t2",
+        "t3"
+      ],
+      "phase": "base"
+    },
+    {
+      "source": "experiments/agents-md-comparison/guidance/architecture-check/TestBase.cs",
+      "destination": ".tools/architecture-check/TestBase.cs",
+      "sha256": "ff7da1cb080ccf7d96b75f72d23b95028d052391d7649eb9ad25d1d41c8a4938",
+      "arm": [
+        "simple",
+        "markitect"
+      ],
+      "trial": [
+        "t1",
+        "t2",
+        "t3"
+      ],
+      "phase": "base"
+    },
+    {
+      "source": "experiments/agents-md-comparison/guidance/architecture-check/LICENSE",
+      "destination": ".tools/architecture-check/LICENSE",
+      "sha256": "e7e663ebd3dd4d6987f539743dba33750576870d51c2192500ea45d06adffa80",
+      "arm": [
+        "simple",
+        "markitect"
+      ],
+      "trial": [
+        "t1",
+        "t2",
+        "t3"
+      ],
+      "phase": "base"
+    },
+    {
+      "source": "experiments/agents-md-comparison/guidance/policy-v1.md",
+      "destination": "docs/engineering-policy.md",
+      "sha256": "3fad7de63b29ffd32b893956b88314d0e3471249af8dc774fcf4ff565e637296",
+      "arm": "simple",
+      "trial": [
+        "t1",
+        "t3"
+      ],
+      "phase": "base"
+    },
+    {
+      "source": "experiments/agents-md-comparison/guidance/policy-v2.md",
+      "destination": "docs/engineering-policy.md",
+      "sha256": "39dda00dfbf21e935a3fe7ef8e79b3894514e284df8f37c1b14f98b38dbf20db",
+      "arm": "simple",
+      "trial": [
+        "t2"
+      ],
+      "phase": "base"
+    },
+    {
+      "source": "experiments/agents-md-comparison/guidance/architecture-review.skill.yaml",
+      "destination": "agent-guidance/architecture-review.skill.yaml",
+      "sha256": "8da80c8c098ad1f41dc8f15bb97020c3fcc19959fe8452d781b40005ad08229a",
+      "arm": "markitect",
+      "trial": [
+        "t1"
+      ],
+      "phase": "candidate"
+    }
+  ],
+  "trials": [
+    {
+      "id": "t1",
+      "revision": "fd94a689aab857704c3a4a45ac2abe0fc0e3185c",
+      "task": "experiments/agents-md-comparison/tasks/task1.md",
+      "contextArgs": [
+        {
+          "args": [
+            "context",
+            "--repo",
+            "{repo}",
+            "--revision",
+            "{candidate}",
+            "--namespace",
+            "engineering",
+            "--kind",
+            "Skill",
+            "--name",
+            "architecture-review"
+          ],
+          "output": "context.yaml",
+          "expectedExitCode": 0,
+          "stdoutContains": [],
+          "scope": {
+            "kind": "Skill",
+            "name": "architecture-review",
+            "namespace": "engineering"
+          }
+        }
+      ],
+      "preparationCommands": [
+        {
+          "name": "render-observe",
+          "executable": "{markitect}",
+          "args": [
+            "reconcile",
+            "--repo",
+            "{workspace}",
+            "--action",
+            "observe",
+            "--adapter",
+            "markitect-render"
+          ],
+          "expectedExitCode": 1
+        },
+        {
+          "name": "render-plan",
+          "executable": "{markitect}",
+          "args": [
+            "reconcile",
+            "--repo",
+            "{workspace}",
+            "--action",
+            "plan",
+            "--adapter",
+            "markitect-render"
+          ],
+          "expectedExitCode": 0
+        },
+        {
+          "name": "render-apply",
+          "executable": "{markitect}",
+          "args": [
+            "reconcile",
+            "--repo",
+            "{workspace}",
+            "--action",
+            "apply",
+            "--adapter",
+            "markitect-render",
+            "--plan",
+            "{externalEvidenceRoot}/render-plan.stdout.txt",
+            "--write"
+          ],
+          "expectedExitCode": 0,
+          "requiresPlanReview": true,
+          "reviewPlan": "render-plan.stdout.txt"
+        },
+        {
+          "name": "render-verify",
+          "executable": "{markitect}",
+          "args": [
+            "reconcile",
+            "--repo",
+            "{workspace}",
+            "--action",
+            "verify",
+            "--adapter",
+            "markitect-render",
+            "--plan",
+            "{externalEvidenceRoot}/render-plan.stdout.txt"
+          ],
+          "expectedExitCode": 0
+        }
+      ]
+    },
+    {
+      "id": "t2",
+      "revision": "a0f89e7c0ce43a1be556c17c41cd19f8e7f32d7f",
+      "task": "experiments/agents-md-comparison/tasks/task2.md",
+      "markitectBaseRevision": "fd94a689aab857704c3a4a45ac2abe0fc0e3185c",
+      "markitectOverlayRevision": "a0f89e7c0ce43a1be556c17c41cd19f8e7f32d7f",
+      "markitectOverlayPath": "markitect.yaml",
+      "contextArgs": [
+        {
+          "args": [
+            "context",
+            "--repo",
+            "{repo}",
+            "--revision",
+            "{candidate}",
+            "--namespace",
+            "architecture",
+            "--kind",
+            "UseCase",
+            "--name",
+            "add-meeting-attendee",
+            "--api-version",
+            "architecture.mymeetings.example/v1alpha1",
+            "--analyze-policy-failures"
+          ],
+          "output": "context.yaml",
+          "expectedExitCode": 1,
+          "stdoutContains": [
+            "policy-failure-analysis",
+            "policyStatus: failed"
+          ],
+          "scope": {
+            "kind": "UseCase",
+            "name": "add-meeting-attendee",
+            "namespace": "architecture"
+          }
+        },
+        {
+          "args": [
+            "impact",
+            "--repo",
+            "{repo}",
+            "--base",
+            "{base}",
+            "--revision",
+            "{candidate}",
+            "--analyze-policy-failures"
+          ],
+          "output": "impact.yaml",
+          "expectedExitCode": 1,
+          "stdoutContains": [
+            "policy-failure-analysis",
+            "directPolicySubjectCount: 2"
+          ],
+          "scope": {
+            "comparison": "reconstructed exact v1 to v2 pin trees"
+          }
+        }
+      ]
+    },
+    {
+      "id": "t3",
+      "revision": "fd94a689aab857704c3a4a45ac2abe0fc0e3185c",
+      "task": "experiments/agents-md-comparison/tasks/task3.md",
+      "contextArgs": [
+        {
+          "args": [
+            "context",
+            "--repo",
+            "{repo}",
+            "--revision",
+            "{candidate}",
+            "--namespace",
+            "architecture",
+            "--kind",
+            "UseCase",
+            "--name",
+            "get-meeting-attendees",
+            "--api-version",
+            "architecture.mymeetings.example/v1alpha1"
+          ],
+          "output": "context.yaml",
+          "expectedExitCode": 0,
+          "stdoutContains": [],
+          "scope": {
+            "kind": "UseCase",
+            "name": "get-meeting-attendees",
+            "namespace": "architecture"
+          }
+        }
+      ]
+    }
+  ]
+}

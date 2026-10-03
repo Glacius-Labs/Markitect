@@ -1,0 +1,176 @@
+[
+  {
+    "root": "<R3>\\workspaces\\t3-markitect\\checkout",
+    "path": "src/Modules/Meetings/Application/Meetings/GetMeetingAttendees/GetMeetingAttendeesQueryHandler.cs",
+    "change": "modified",
+    "before": {
+      "bytes": 2036,
+      "sha256": "996f50dd9cafe4df62d3ccc49f92be578fae5e851ffb8b8960b8a8284730d625"
+    },
+    "after": {
+      "bytes": 2150,
+      "sha256": "7c95c313d2718d4329c4e4056a023e0834621bdd1bfbe93e36d2c7c0e9d25e25"
+    }
+  },
+  {
+    "root": "<R3>\\workspaces\\t3-markitect\\checkout",
+    "path": "src/Modules/Meetings/Application/Meetings/GetMeetingAttendees/MeetingAttendeeDto.cs",
+    "change": "modified",
+    "before": {
+      "bytes": 444,
+      "sha256": "c276b6000c2b22f6f40b06685d5112ad76b005c7cd673cf137ba408629b4c2c7"
+    },
+    "after": {
+      "bytes": 493,
+      "sha256": "a0d40aa6aeb3f8957e2f7df8c6d77944042db022fedf60f0a0fea132f81d0179"
+    }
+  },
+  {
+    "root": "<R3>\\workspaces\\t3-markitect\\checkout",
+    "path": "src/Database/CompanyName.MyMeetings.Database/Structure/meetings/Views/v_MeetingAttendees.sql",
+    "change": "modified",
+    "before": {
+      "bytes": 467,
+      "sha256": "f45b41dfa11cac9b87b69e8ce780291be551b73170ec20e33a6fdbb2ff637e84"
+    },
+    "after": {
+      "bytes": 505,
+      "sha256": "52c82e8a99f5f1744878875d3b9ae7357fe213dca74cd3879e589f2592cc94fc"
+    }
+  },
+  {
+    "root": "<R3>\\workspaces\\t3-markitect\\checkout",
+    "path": "resources/handler-get-meeting-attendees.yaml",
+    "change": "modified",
+    "before": {
+      "bytes": 519,
+      "sha256": "77ab67d96846002a4aec33deda8bf60bf68ac2fcaf04103570ab794ddcba9877"
+    },
+    "after": {
+      "bytes": 566,
+      "sha256": "2147b5263cc53d90fbaded8c38a0525c7e6255fe66366131c39266f57dfe6a2c"
+    }
+  },
+  {
+    "root": "<R3>\\workspaces\\t3-markitect\\checkout",
+    "path": "resources/narrative-meeting-attendee-view.yaml",
+    "change": "modified",
+    "before": {
+      "bytes": 521,
+      "sha256": "241eff5a5e951ac439a0284df0a29c5d2537cfa1b31d6ca3a33270300ce2cb10"
+    },
+    "after": {
+      "bytes": 569,
+      "sha256": "02eb7d0c6621c6159e0687c5182e9b4825c728af3cd5bb91d7afca40bb51d00f"
+    }
+  },
+  {
+    "root": "<R3>\\workspaces\\t3-markitect\\checkout",
+    "path": "resources/usecase-get-meeting-attendees.yaml",
+    "change": "modified",
+    "before": {
+      "bytes": 943,
+      "sha256": "85d248f6ad5162b5d1be98e081061a4f6b2f02bdfd770586b10dc519d6d30379"
+    },
+    "after": {
+      "bytes": 983,
+      "sha256": "41efd5138a4e7ec3b716bb0b4c26f842d8036c6ded7aeb80cfa22c9625c45604"
+    }
+  },
+  {
+    "root": "<R3>\\workspaces\\t3-markitect\\checkout",
+    "path": "docs/markitect/architecture/handler-get-meeting-attendees.handler.architecture.mymeetings.example.v1alpha1.md",
+    "change": "modified",
+    "before": {
+      "bytes": 719,
+      "sha256": "c884870cf32634de969e9dd01c901ffd1f93f2838425553be08d4aeda8e9f371"
+    },
+    "after": {
+      "bytes": 766,
+      "sha256": "34219fcaf9b37a42c36e3eb9f3be49fbd51b75291ce591ce1a486526df2a52e5"
+    }
+  },
+  {
+    "root": "<R3>\\workspaces\\t3-markitect\\checkout",
+    "path": "docs/markitect/architecture/narrative-meeting-attendee-view.narrative.architecture.mymeetings.example.v1alpha1.md",
+    "change": "modified",
+    "before": {
+      "bytes": 693,
+      "sha256": "01a4a106f8e50ae76412915d33b9ad28c0c763f07f45ece76eb3fec42a485c37"
+    },
+    "after": {
+      "bytes": 741,
+      "sha256": "f90ae44ed83f9472a8a3fcbf197bb8dd06dee4d65272d744b752d196b0d191b1"
+    }
+  },
+  {
+    "root": "<R3>\\workspaces\\t3-markitect\\checkout",
+    "path": "docs/markitect/architecture/usecase-get-meeting-attendees.usecase.architecture.mymeetings.example.v1alpha1.md",
+    "change": "modified",
+    "before": {
+      "bytes": 2044,
+      "sha256": "ad1c5a6cbd54c2b6888d74c08f2f88b54cd0157932a7f817868867ec512f2fed"
+    },
+    "after": {
+      "bytes": 2084,
+      "sha256": "b1cad00d1ed1f82bf4a418fb9a7c91cde55d403d0b791c0692af44072747cd16"
+    }
+  },
+  {
+    "root": "<R3>\\workspaces\\t3-markitect\\checkout",
+    "path": ".telemetry/reads.jsonl",
+    "change": "created",
+    "after": {
+      "bytes": 4622,
+      "sha256": "91dd93dd4a105e1b9e220b5bb97baae9cc18e66656950bb137404f93b5c6bc85"
+    }
+  },
+  {
+    "root": "<R3>\\workspaces\\t3-simple\\checkout",
+    "path": "src/Modules/Meetings/Application/Meetings/GetMeetingAttendees/GetMeetingAttendeesQueryHandler.cs",
+    "change": "modified",
+    "before": {
+      "bytes": 2036,
+      "sha256": "996f50dd9cafe4df62d3ccc49f92be578fae5e851ffb8b8960b8a8284730d625"
+    },
+    "after": {
+      "bytes": 2150,
+      "sha256": "7c95c313d2718d4329c4e4056a023e0834621bdd1bfbe93e36d2c7c0e9d25e25"
+    }
+  },
+  {
+    "root": "<R3>\\workspaces\\t3-simple\\checkout",
+    "path": "src/Modules/Meetings/Application/Meetings/GetMeetingAttendees/MeetingAttendeeDto.cs",
+    "change": "modified",
+    "before": {
+      "bytes": 444,
+      "sha256": "c276b6000c2b22f6f40b06685d5112ad76b005c7cd673cf137ba408629b4c2c7"
+    },
+    "after": {
+      "bytes": 493,
+      "sha256": "a0d40aa6aeb3f8957e2f7df8c6d77944042db022fedf60f0a0fea132f81d0179"
+    }
+  },
+  {
+    "root": "<R3>\\workspaces\\t3-simple\\checkout",
+    "path": "src/Database/CompanyName.MyMeetings.Database/Structure/meetings/Views/v_MeetingAttendees.sql",
+    "change": "modified",
+    "before": {
+      "bytes": 467,
+      "sha256": "f45b41dfa11cac9b87b69e8ce780291be551b73170ec20e33a6fdbb2ff637e84"
+    },
+    "after": {
+      "bytes": 505,
+      "sha256": "52c82e8a99f5f1744878875d3b9ae7357fe213dca74cd3879e589f2592cc94fc"
+    }
+  },
+  {
+    "root": "<R3>\\workspaces\\t3-simple\\checkout",
+    "path": ".telemetry/reads.jsonl",
+    "change": "created",
+    "after": {
+      "bytes": 3454,
+      "sha256": "f8c01a4f4f74f95d7538db04229827df5102a8eea905bced507eaa3c7f4b5926"
+    }
+  }
+]

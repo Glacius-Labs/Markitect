@@ -1,0 +1,31 @@
+diff --git a/agent-guidance/architecture-review.skill.yaml b/agent-guidance/architecture-review.skill.yaml
+index 19eff55..356324e 100644
+--- a/agent-guidance/architecture-review.skill.yaml
++++ b/agent-guidance/architecture-review.skill.yaml
+@@ -22,6 +22,10 @@ spec:
+           kind: UseCase
+           name: get-meeting-attendees
+           namespace: architecture
++        - apiVersion: architecture.mymeetings.example/v1alpha1
++          kind: UseCase
++          name: get-meeting-people-count
++          namespace: architecture
+         - kind: Workflow
+           name: vertical-slice
+           namespace: constitution
+diff --git a/src/Modules/Meetings/Application/Meetings/GetMeetingAttendees/MeetingAttendeeDto.cs b/src/Modules/Meetings/Application/Meetings/GetMeetingAttendees/MeetingAttendeeDto.cs
+index 56e356f..2f94010 100644
+--- a/src/Modules/Meetings/Application/Meetings/GetMeetingAttendees/MeetingAttendeeDto.cs
++++ b/src/Modules/Meetings/Application/Meetings/GetMeetingAttendees/MeetingAttendeeDto.cs
+@@ -10,8 +10,8 @@
+ 
+         public string RoleCode { get; set; }
+ 
+-        public int GuestsNumber { get; set; }
++        public int? GuestsNumber { get; set; }
+ 
+         public DateTime DecisionDate { get; set; }
+     }
+-}
+\ No newline at end of file
++}

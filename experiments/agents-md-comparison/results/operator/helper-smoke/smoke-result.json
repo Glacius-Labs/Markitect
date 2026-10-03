@@ -1,0 +1,20 @@
+{
+  "tests": [
+    {
+      "input": "fixture.txt",
+      "accepted": true,
+      "returned": null
+    },
+    {
+      "error": "Cannot find path '<R2>\\operator\\helper-smoke\\<R2>\\operator\\helper-smoke\\fixture.txt' because it does not exist.",
+      "input": "<R2>\\operator\\helper-smoke\\fixture.txt",
+      "accepted": false
+    },
+    {
+      "error": "Cannot find path '<R2>\\operator\\fixture.txt' because it does not exist.",
+      "input": "../fixture.txt",
+      "accepted": false
+    }
+  ],
+  "helperSha256": "d7c7016b7bb27d05f6b303906d7fa131bbf9650307c9fdfa456b31e07c903dbe"
+}

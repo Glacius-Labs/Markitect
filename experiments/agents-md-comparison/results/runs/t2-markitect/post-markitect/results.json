@@ -1,0 +1,12 @@
+[
+  {
+    "exitCode": 0,
+    "stdoutSha256": "4e03296d50942a8e3398b3e1b101aca2eaa9956a929b026a8aa7b69d8db60702",
+    "operation": "check"
+  },
+  {
+    "exitCode": 0,
+    "stdoutSha256": "bcafa7539e64c7690d3646ea536e70e10783017dbafa51b12d27b365982ed68d",
+    "operation": "model"
+  }
+]

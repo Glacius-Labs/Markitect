@@ -1,0 +1,66 @@
+diff --git a/docs/engineering-policy.md b/docs/engineering-policy.md
+index bd539d2..395ebc5 100644
+--- a/docs/engineering-policy.md
++++ b/docs/engineering-policy.md
+@@ -1,3 +1,3 @@
+ # Adopter engineering policy, version 2
+ 
+-Every Command in the selected cohort, `AddMeetingAttendee` and `CancelMeeting`, must have a corresponding FluentValidation class in Meetings Application. Keep the selected cohort intact. This note records validator presence only; the Task 2 request separately specifies that both validators reject an empty `MeetingId`.
++Every Command in the selected cohort, `AddMeetingAttendee` and `CancelMeeting`, must have a corresponding FluentValidation class in Meetings Application. Each validator must reject an empty `MeetingId`. Keep the selected cohort intact.
+diff --git a/src/Modules/Meetings/Tests/ArchTests/Application/ApplicationTests.cs b/src/Modules/Meetings/Tests/ArchTests/Application/ApplicationTests.cs
+index aff28e8..1b776fc 100644
+--- a/src/Modules/Meetings/Tests/ArchTests/Application/ApplicationTests.cs
++++ b/src/Modules/Meetings/Tests/ArchTests/Application/ApplicationTests.cs
+@@ -2,6 +2,8 @@ using System.Reflection;
+ using CompanyName.MyMeetings.Modules.Meetings.Application.Configuration.Commands;
+ using CompanyName.MyMeetings.Modules.Meetings.Application.Configuration.Queries;
+ using CompanyName.MyMeetings.Modules.Meetings.Application.Contracts;
++using CompanyName.MyMeetings.Modules.Meetings.Application.Meetings.AddMeetingAttendee;
++using CompanyName.MyMeetings.Modules.Meetings.Application.Meetings.CancelMeeting;
+ using CompanyName.MyMeetings.Modules.Meetings.ArchTests.SeedWork;
+ using FluentValidation;
+ using MediatR;
+@@ -14,6 +16,36 @@ namespace CompanyName.MyMeetings.Modules.Meetings.ArchTests.Application
+     [TestFixture]
+     public class ApplicationTests : TestBase
+     {
++        [Test]
++        public void AddMeetingAttendee_Validator_Should_Reject_Empty_MeetingId()
++        {
++            AssertSelectedCommandRejectsEmptyMeetingId(
++                "Meetings.AddMeetingAttendee.AddMeetingAttendeeCommandValidator",
++                new AddMeetingAttendeeCommand(Guid.Empty, 0));
++        }
++
++        [Test]
++        public void CancelMeeting_Validator_Should_Reject_Empty_MeetingId()
++        {
++            AssertSelectedCommandRejectsEmptyMeetingId(
++                "Meetings.CancelMeeting.CancelMeetingCommandValidator",
++                new CancelMeetingCommand(Guid.Empty));
++        }
++
++        private static void AssertSelectedCommandRejectsEmptyMeetingId<TCommand>(string validatorTypeName, TCommand command)
++            where TCommand : class
++        {
++            var validatorType = ApplicationAssembly.GetType(
++                $"CompanyName.MyMeetings.Modules.Meetings.Application.{validatorTypeName}");
++
++            Assert.That(validatorType, Is.Not.Null, $"Missing selected-command validator: {validatorTypeName}");
++
++            var validator = (IValidator<TCommand>)Activator.CreateInstance(validatorType!, nonPublic: true)!;
++            var result = validator.Validate(command);
++
++            Assert.That(result.Errors.Any(error => error.PropertyName == "MeetingId"), Is.True);
++        }
++
+         [Test]
+         public void Command_Should_Be_Immutable()
+         {
+@@ -197,4 +229,4 @@ namespace CompanyName.MyMeetings.Modules.Meetings.ArchTests.Application
+             AssertFailingTypes(failingTypes);
+         }
+     }
+-}
+\ No newline at end of file
++}

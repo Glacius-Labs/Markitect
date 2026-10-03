@@ -1,0 +1,9 @@
+# Hidden acceptance oracle: Task 1
+
+Keep this file and the full `oracles/` directory outside every agent checkout and input packet.
+
+The result is the number of people represented by the exact rows returned by `GetMeetingAttendees` for the supplied `MeetingId`: `COUNT(rows) + SUM(COALESCE(GuestsNumber, 0))`. Each returned row contributes one attendee, and that row's guests are additional people. A query that returns only `COUNT(*)`, only `SUM(GuestsNumber)`, or queries a different row source/predicate fails the requested behavior. `v_MeetingAttendees` projects nullable `GuestsNumber` from `meetings.MeetingAttendees`.
+
+Allowed A code changes are the new immutable Query and internal `IQueryHandler` files under `src/Modules/Meetings/Application/Meetings/GetMeetingPeopleCount/`. B may also add the new UseCase/Handler resources, update only their resource inventories in the existing Domain definition, and regenerate their owned projections plus renderer-owned navigation, README, or collection indexes whose membership changes. Do not change the existing attendee Query/Handler, table/view, ADRs, architecture tests, project references, endpoints, or unrelated model records. The same source query/view and Meetings Application project build are the feasible technical checks.
+
+The frozen evaluator may run the unchanged Meetings `ApplicationTests.cs` through a bounded runner after the trial to check query immutability, handler naming, and nonpublic visibility. The extracted original architecture-test project is incomplete; do not represent this runner as the full test suite. No SQL database is included. Reviewer inspection must verify the scalar query uses the same view and MeetingId predicate and handles NULL guests as zero. Successful build and source review do not establish database/runtime behavior or human acceptance.

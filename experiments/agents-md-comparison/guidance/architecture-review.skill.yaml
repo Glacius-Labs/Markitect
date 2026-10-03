@@ -1,0 +1,28 @@
+apiVersion: markitect.example.org/v1alpha1
+kind: Skill
+metadata:
+    name: architecture-review
+    namespace: engineering
+spec:
+    text: |
+        # Task 1: People represented by meeting attendees
+        
+        Add the `GetMeetingPeopleCount` query to the Meetings Application. It accepts a `MeetingId` and returns the number of people represented by the rows returned for that meeting by the existing `GetMeetingAttendees` query. Count one person for each returned attendee row, then add that row's guest count. Treat a null guest count as zero. Return only the integer result; do not add an HTTP endpoint.
+    description: Implement a bounded read-side change in the Meetings Module.
+    uses:
+        - apiVersion: architecture.mymeetings.example/v1alpha1
+          kind: Module
+          name: meetings
+          namespace: architecture
+        - apiVersion: architecture.mymeetings.example/v1alpha1
+          kind: Feature
+          name: meeting-attendance
+          namespace: architecture
+        - apiVersion: architecture.mymeetings.example/v1alpha1
+          kind: UseCase
+          name: get-meeting-attendees
+          namespace: architecture
+        - kind: Workflow
+          name: vertical-slice
+          namespace: constitution
+          package: mymeetings-architecture

@@ -1,0 +1,16 @@
+{"path": "AGENTS.md", "bytes": 2666, "sha256": "844b426a9d952de6f0019463393670ef92c2ea2f6971b03f6f267ab595957df2", "readType": "content"}
+{"path": "docs/engineering-policy.md", "bytes": 361, "sha256": "39dda00dfbf21e935a3fe7ef8e79b3894514e284df8f37c1b14f98b38dbf20db", "readType": "content"}
+{"path": "src/Modules/Meetings/Tests/ArchTests/Application/ApplicationTests.cs", "bytes": 7248, "sha256": "2aef4aef91032ff32c60aca30a7e8b10a7235ad9d05c767a5a4c3951471463a3", "readType": "content"}
+{"path": "src/Modules/Meetings/Application/MeetingGroupProposals/AcceptMeetingGroupProposal/AcceptMeetingGroupProposalCommandValidator.cs", "bytes": 508, "sha256": "62a208c97c79a038d3466494c460b00c57550c2e424cc28d27a3746ddeb36e9a", "readType": "content"}
+{"path": "src/Modules/Meetings/Application/CompanyName.MyMeetings.Modules.Meetings.Application.csproj", "bytes": 642, "sha256": "2f0d3e0797c1fdf2c35bc4f61d1bce373dff83fac85236fb252895dd2cc61249", "readType": "content"}
+{"path": "src/global.json", "bytes": 113, "sha256": "8dc87e6f68213f4444f20306d8057b48947550912e25a5b897702a51eea23d95", "readType": "content"}
+{"path": "src/Modules/Meetings/Application/Meetings/AddMeetingAttendee/AddMeetingAttendeeCommand.cs", "bytes": 504, "sha256": "d0702f233e4aa2587592497b3a8c8595146dd80544544bbc5b49f59816add7d9", "readType": "content"}
+{"path": "src/Modules/Meetings/Application/Meetings/CancelMeeting/CancelMeetingCommand.cs", "bytes": 385, "sha256": "8904c0d5d2b91b5dfaeae90a81e8ee83bd6cf65a6a0682df268d92fdff024f32", "readType": "content"}
+{"path": ".tools/architecture-check/MeetingsArchitectureCheck.csproj", "bytes": 927, "sha256": "ecd0ef45f7e286e167971f7c0b867cb6a458ff629973331c9ac6dd07dbea0082", "readType": "content"}
+{"path": "src/Modules/Meetings/Application/MeetingComments/AddMeetingComment/AddMeetingCommentCommandValidator.cs", "bytes": 578, "sha256": "c568409bc4d95ef5f6d423a218c7e000741d72b296fc0adcc3ea99707c077775", "readType": "content"}
+{"path": ".tools/architecture-check/TestBase.cs", "bytes": 1194, "sha256": "ff7da1cb080ccf7d96b75f72d23b95028d052391d7649eb9ad25d1d41c8a4938", "readType": "content"}
+{"path": "src/Modules/Meetings/Tests/ArchTests/Application/ApplicationTests.cs", "bytes": 7248, "sha256": "2aef4aef91032ff32c60aca30a7e8b10a7235ad9d05c767a5a4c3951471463a3", "readType": "content"}
+{"path": "docs/engineering-policy.md", "bytes": 277, "sha256": "d390960d9f922ebd69e66845231b5e8a9202d5a416ed81e0e045263a2a38ba63", "readType": "content"}
+{"path": "src/Modules/Meetings/Application/Meetings/AddMeetingAttendee/AddMeetingAttendeeCommandValidator.cs", "bytes": 434, "sha256": "999be058a06d9387be037ef0658d1b4a9acf044e98451e692a4ebea15c884e7c", "readType": "content"}
+{"path": "src/Modules/Meetings/Application/Meetings/CancelMeeting/CancelMeetingCommandValidator.cs", "bytes": 414, "sha256": "2d1fcf5dffc28e1e348e60c6bdba7fa01d599fed0a550d5fa998e6e7beda3a76", "readType": "content"}
+{"path": "src/Modules/Meetings/Tests/ArchTests/Application/ApplicationTests.cs", "bytes": 8776, "sha256": "59374f46a2aad5d275d1bb11e888ba78e2e34ff662c1ab1033b4c8ed7ad0c236", "readType": "content"}

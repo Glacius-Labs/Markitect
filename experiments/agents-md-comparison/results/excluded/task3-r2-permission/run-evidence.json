@@ -1,0 +1,186 @@
+{
+  "evidenceType": "agents-md-comparison-fresh-agent-run",
+  "executionMode": "fresh-collaboration-agent",
+  "runId": "t3-simple",
+  "agentIdentity": "/root/r2_t3_simple",
+  "task": "t3",
+  "arm": "simple",
+  "workspace": "<R2>\\workspaces\\t3-simple\\checkout",
+  "preparedManifestSha256": "e085ec47e2da0a62e07bf1d526be5dab9a35c7c53cf9d5e7cde185cb31125c3e",
+  "frozenManifestSha256": "e085ec47e2da0a62e07bf1d526be5dab9a35c7c53cf9d5e7cde185cb31125c3e",
+  "sourceManifestSha256": "99fe6a51fa51cbd21cfc1c405c1a9743c4487ff2f5502358b864a4fefcb05c09",
+  "candidateCommitBeforeAgent": "ae9035f3d7a493673122d72a5100392d9dd1a744",
+  "candidateCommitAfterAgent": "ae9035f3d7a493673122d72a5100392d9dd1a744",
+  "startedAtUtc": "2026-10-03T17:58:38.3888222+02:00",
+  "completedAtUtc": "2026-10-03T16:22:35.0809713+00:00",
+  "agentReportPath": "agent-report.txt",
+  "agentReportSha256": "0905269c373301d5444aaa126491c121e842547e6e70d397696cdafde7a732fc",
+  "agentReportText": "The implementation path is clear, but the authorized checkout could not be modified. Auto-review rejected the patch because this temporary MyMeetings checkout is outside the writable roots and explicitly barred workaround edits. I made no changes.\n\nThe focused change is to add IsFeePaid to MeetingAttendeeDto, select the stored flag in the existing attendee query, and expose MeetingAttendees.IsFeePaid in v_MeetingAttendees. The table already stores the flag, and the existing Payments integration updates it through Meetings.\n\nRead ADR 0009, ADR 0014, and docs/engineering-policy.md. No .agent-input/context.yaml, .agent-input/impact.yaml, or .tools/markitect.exe was present. The SDK selected from src is 8.0.418. Build and architecture checks were not run because they would write into the unauthorized checkout.",
+  "automaticAgentInstructions": [
+    {
+      "path": "AGENTS.md",
+      "sha256": "844b426a9d952de6f0019463393670ef92c2ea2f6971b03f6f267ab595957df2",
+      "bytes": 2666
+    }
+  ],
+  "compiledInputs": [],
+  "frozenWorkspaceAssets": [
+    {
+      "path": "AGENTS.md",
+      "sha256": "844b426a9d952de6f0019463393670ef92c2ea2f6971b03f6f267ab595957df2",
+      "bytes": 2666
+    },
+    {
+      "path": ".tools/architecture-check/MeetingsArchitectureCheck.csproj",
+      "sha256": "ecd0ef45f7e286e167971f7c0b867cb6a458ff629973331c9ac6dd07dbea0082",
+      "bytes": 927
+    },
+    {
+      "path": ".tools/architecture-check/TestBase.cs",
+      "sha256": "ff7da1cb080ccf7d96b75f72d23b95028d052391d7649eb9ad25d1d41c8a4938",
+      "bytes": 1194
+    },
+    {
+      "path": ".tools/architecture-check/LICENSE",
+      "sha256": "e7e663ebd3dd4d6987f539743dba33750576870d51c2192500ea45d06adffa80",
+      "bytes": 1091
+    },
+    {
+      "path": "docs/engineering-policy.md",
+      "sha256": "3fad7de63b29ffd32b893956b88314d0e3471249af8dc774fcf4ff565e637296",
+      "bytes": 377
+    }
+  ],
+  "frozenWorkspaceAssetChanges": [],
+  "compiledInputChanges": [],
+  "model": null,
+  "modelEvidenceStatus": "unavailable from collaboration backend metadata",
+  "toolEvents": null,
+  "toolUsageEvidenceStatus": "unavailable; the collaboration backend exposes only the final agent report",
+  "tokenUsage": null,
+  "tokenUsageEvidenceStatus": "unavailable; no CLI JSONL events or metering were collected",
+  "workspaceStatus": "",
+  "workspaceDelta": [
+    {
+      "root": "<R2>\\workspaces\\t3-simple\\checkout",
+      "path": ".telemetry/reads.jsonl",
+      "change": "created",
+      "after": {
+        "bytes": 3054,
+        "sha256": "a59bcb24b5c737ec590658e97e5e4ad7de9523b2485d9542e66736616bc25734"
+      }
+    }
+  ],
+  "workspaceDiffPath": "workspace.diff",
+  "workspaceDiffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "fileReadLedger": {
+    "recordsPath": "reads.jsonl",
+    "helperSha256Before": "d7c7016b7bb27d05f6b303906d7fa131bbf9650307c9fdfa456b31e07c903dbe",
+    "helperSha256After": "d7c7016b7bb27d05f6b303906d7fa131bbf9650307c9fdfa456b31e07c903dbe",
+    "helperMutated": false,
+    "helperRecordedContentReads": 16,
+    "records": [
+      {
+        "path": "src/Modules/Meetings/Application/Meetings/GetMeetingAttendees/MeetingAttendeeDto.cs",
+        "bytes": 444,
+        "sha256": "c276b6000c2b22f6f40b06685d5112ad76b005c7cd673cf137ba408629b4c2c7",
+        "readType": "content"
+      },
+      {
+        "path": "src/Modules/Meetings/Application/Meetings/GetMeetingAttendees/GetMeetingAttendeesQueryHandler.cs",
+        "bytes": 2036,
+        "sha256": "996f50dd9cafe4df62d3ccc49f92be578fae5e851ffb8b8960b8a8284730d625",
+        "readType": "content"
+      },
+      {
+        "path": "src/Modules/Meetings/Application/Meetings/MeetingFeePaidIntegrationEventHandler.cs",
+        "bytes": 935,
+        "sha256": "d12614cbe8f0384d81381680003cfe312cb21d12ad206650c93542ba9d608ce3",
+        "readType": "content"
+      },
+      {
+        "path": "src/Modules/Payments/IntegrationEvents/MeetingFeePaidIntegrationEvent.cs",
+        "bytes": 598,
+        "sha256": "b1a08ce0c028af1272a83c427b60178be96c288dfc5978fd708c00c01372b47b",
+        "readType": "content"
+      },
+      {
+        "path": "src/Database/CompanyName.MyMeetings.Database/Structure/meetings/Views/v_MeetingAttendees.sql",
+        "bytes": 467,
+        "sha256": "f45b41dfa11cac9b87b69e8ce780291be551b73170ec20e33a6fdbb2ff637e84",
+        "readType": "content"
+      },
+      {
+        "path": "src/Database/CompanyName.MyMeetings.Database/Structure/meetings/Tables/MeetingAttendees.sql",
+        "bytes": 708,
+        "sha256": "760d6074977f4b881a05d0a8366a0c7fd827a2540183844d556259a853f0dcfe",
+        "readType": "content"
+      },
+      {
+        "path": "src/Modules/Meetings/Application/Meetings/MarkMeetingAttendeeFeeAsPayedCommandHandler.cs",
+        "bytes": 985,
+        "sha256": "f71204f08f6ab396075f8679ef9154eed499980fb5e518c76bacfa56369021b5",
+        "readType": "content"
+      },
+      {
+        "path": "src/Modules/Meetings/Application/Meetings/MarkMeetingAttendeeFeeAsPayedCommand.cs",
+        "bytes": 600,
+        "sha256": "4bcc356e943f88b0c59cbf3b279c9be79841f0dcfe555af5dba568243f44dab1",
+        "readType": "content"
+      },
+      {
+        "path": "src/Modules/Meetings/Domain/Meetings/MeetingAttendee.cs",
+        "bytes": 4794,
+        "sha256": "1caa1c6027f7f461b3ce71fbed38f01c3e11c0c9f9df02ecf9e7870baf9d48d3",
+        "readType": "content"
+      },
+      {
+        "path": "src/Modules/Meetings/Tests/ArchTests/Application/ApplicationTests.cs",
+        "bytes": 7248,
+        "sha256": "2aef4aef91032ff32c60aca30a7e8b10a7235ad9d05c767a5a4c3951471463a3",
+        "readType": "content"
+      },
+      {
+        "path": "AGENTS.md",
+        "bytes": 2666,
+        "sha256": "844b426a9d952de6f0019463393670ef92c2ea2f6971b03f6f267ab595957df2",
+        "readType": "content"
+      },
+      {
+        "path": "docs/architecture-decision-log/0009-use-2-layered-architectural-style-for-reads.md",
+        "bytes": 1011,
+        "sha256": "426c1b3a6f8c629a6224b2c99fa5216b346c03af5ae70446d6a86095cd871734",
+        "readType": "content"
+      },
+      {
+        "path": "docs/architecture-decision-log/0014-event-driven-communication-between-modules.md",
+        "bytes": 2003,
+        "sha256": "ad1f35a168f05d4f86018167a84a23b9f00be9f4ddbc8573926ca798ff85e22a",
+        "readType": "content"
+      },
+      {
+        "path": "docs/engineering-policy.md",
+        "bytes": 377,
+        "sha256": "3fad7de63b29ffd32b893956b88314d0e3471249af8dc774fcf4ff565e637296",
+        "readType": "content"
+      },
+      {
+        "path": "src/global.json",
+        "bytes": 113,
+        "sha256": "8dc87e6f68213f4444f20306d8057b48947550912e25a5b897702a51eea23d95",
+        "readType": "content"
+      },
+      {
+        "path": "src/Modules/Meetings/Application/CompanyName.MyMeetings.Modules.Meetings.Application.csproj",
+        "bytes": 642,
+        "sha256": "2f0d3e0797c1fdf2c35bc4f61d1bce373dff83fac85236fb252895dd2cc61249",
+        "readType": "content"
+      }
+    ],
+    "limit": "Only reads through .tools/read.ps1 are logged."
+  },
+  "markitectExecutable": null,
+  "externalTreeDeltas": [],
+  "externalWriteDetected": false,
+  "externalWritePolicy": "Any detected out-of-workspace change is reported and left in place for review."
+}

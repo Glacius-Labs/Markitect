@@ -1,0 +1,1270 @@
+{
+  "evidenceType": "agents-md-comparison-fresh-agent-run",
+  "executionMode": "fresh-collaboration-agent",
+  "runId": "t2-markitect",
+  "agentIdentity": "/root/r2_t2_markitect",
+  "task": "t2",
+  "arm": "markitect",
+  "workspace": "<R2>\\workspaces\\t2-markitect\\checkout",
+  "preparedManifestSha256": "e085ec47e2da0a62e07bf1d526be5dab9a35c7c53cf9d5e7cde185cb31125c3e",
+  "frozenManifestSha256": "e085ec47e2da0a62e07bf1d526be5dab9a35c7c53cf9d5e7cde185cb31125c3e",
+  "sourceManifestSha256": "61f0774164179d61018a2f862354b12e24928d1b77e039581abaf17df221f671",
+  "candidateCommitBeforeAgent": "286bfa78c87f770a3c2c2208f2eaef4f96ecd969",
+  "candidateCommitAfterAgent": "286bfa78c87f770a3c2c2208f2eaef4f96ecd969",
+  "startedAtUtc": "2026-10-03T17:32:08.684426+02:00",
+  "completedAtUtc": "2026-10-03T15:45:51.2268659+00:00",
+  "agentReportPath": "agent-report.txt",
+  "agentReportSha256": "cea6f75099c491d9c6d91d73eccbaa78ebc8f04431e3b05a6a56a50b2284a748",
+  "agentReportText": "Implemented the selected Command Validator migration in the assigned checkout.\n\n- Added internal FluentValidation classes for `AddMeetingAttendeeCommand` and `CancelMeetingCommand`; each rejects `Guid.Empty` for `MeetingId`.\n- Added matching Validator resources and connected both UseCases to them. The selected cohort remains explicitly marked `validation: required`; I found no separate temporary waiver in the checkout.\n- Added an executable architecture check that confirms both Validators reject an empty meeting ID.\n- Refreshed Markitect projections, including the domain and architecture indexes and the two new Validator projections.\n\nValidation evidence:\n\n- Before the changes, `.tools/markitect.exe check --repo .` exited 1. It reported `selected-commands-require-validator` failures for both selected Commands, each with zero Validator targets.\n- After the changes, the same check exited 0 with `status: passed`; `markitect render --repo . --check` also exited 0.\n- Observed SDK: `8.0.418` (using `src/global.json`).\n- The architecture test facade passed: 11 passed, 0 failed. I restored it from `https://api.nuget.org/v3/index.json`, then ran the test with `--no-restore`.\n- The Meetings Application build succeeded with 0 warnings and 0 errors.\n\nNonzero attempts: the first test invocation used unsupported `--source` and failed; the exact facade command then failed restore because the configured Azure feed was unavailable. After restoring from the specified public NuGet source, the first compilation exposed an `IValidator.Validate` overload mismatch in the new test; I corrected it, and the subsequent run passed. There was one existing nullable warning in `ApplicationTests.cs` during the passing test run.\n\nThe checks verify the two selected resources, the architecture test behavior, generated projection consistency, and Application compilation. They do not establish broader project acceptance beyond those checks.",
+  "automaticAgentInstructions": [],
+  "compiledInputs": [
+    {
+      "command": [
+        "context",
+        "--repo",
+        "<R2>\\workspaces\\t2-markitect\\checkout",
+        "--revision",
+        "286bfa78c87f770a3c2c2208f2eaef4f96ecd969",
+        "--namespace",
+        "architecture",
+        "--kind",
+        "UseCase",
+        "--name",
+        "add-meeting-attendee",
+        "--api-version",
+        "architecture.mymeetings.example/v1alpha1",
+        "--analyze-policy-failures"
+      ],
+      "expectedExitCode": 1,
+      "exitCode": 1,
+      "output": ".agent-input/context.yaml",
+      "sha256": "379ab30da936b3d845d8b5c04686773ea39a843c5ad4487ef4ff550802c4cf5f",
+      "bytes": 43712,
+      "scope": {
+        "kind": "UseCase",
+        "name": "add-meeting-attendee",
+        "namespace": "architecture"
+      }
+    },
+    {
+      "command": [
+        "impact",
+        "--repo",
+        "<R2>\\workspaces\\t2-markitect\\checkout",
+        "--base",
+        "f2a71446ddf45feffdddfc4a6cbb4259b7c2a5d3",
+        "--revision",
+        "286bfa78c87f770a3c2c2208f2eaef4f96ecd969",
+        "--analyze-policy-failures"
+      ],
+      "expectedExitCode": 1,
+      "exitCode": 1,
+      "output": ".agent-input/impact.yaml",
+      "sha256": "98b3ba814fdfda422db4132ff2fdd73232a799f3cc370dde14d4c9d944424838",
+      "bytes": 18319,
+      "scope": {
+        "comparison": "reconstructed exact v1 to v2 pin trees"
+      }
+    }
+  ],
+  "frozenWorkspaceAssets": [
+    {
+      "path": ".tools/architecture-check/MeetingsArchitectureCheck.csproj",
+      "sha256": "ecd0ef45f7e286e167971f7c0b867cb6a458ff629973331c9ac6dd07dbea0082",
+      "bytes": 927
+    },
+    {
+      "path": ".tools/architecture-check/TestBase.cs",
+      "sha256": "ff7da1cb080ccf7d96b75f72d23b95028d052391d7649eb9ad25d1d41c8a4938",
+      "bytes": 1194
+    },
+    {
+      "path": ".tools/architecture-check/LICENSE",
+      "sha256": "e7e663ebd3dd4d6987f539743dba33750576870d51c2192500ea45d06adffa80",
+      "bytes": 1091
+    }
+  ],
+  "frozenWorkspaceAssetChanges": [],
+  "compiledInputChanges": [],
+  "model": null,
+  "modelEvidenceStatus": "unavailable from collaboration backend metadata",
+  "toolEvents": null,
+  "toolUsageEvidenceStatus": "unavailable; the collaboration backend exposes only the final agent report",
+  "tokenUsage": null,
+  "tokenUsageEvidenceStatus": "unavailable; no CLI JSONL events or metering were collected",
+  "workspaceStatus": " M .agents/skills/architecture-review/SKILL.md\n M docs/markitect/README.md\n M docs/markitect/_domains/README.md\n M docs/markitect/_domains/architecture.mymeetings.example.v1alpha1.domain.md\n M docs/markitect/architecture/README.md\n M docs/markitect/architecture/aggregate-meeting-comment.aggregate.architecture.mymeetings.example.v1alpha1.md\n M docs/markitect/architecture/aggregate-meeting-group.aggregate.architecture.mymeetings.example.v1alpha1.md\n M docs/markitect/architecture/aggregate-meeting-proposal.aggregate.architecture.mymeetings.example.v1alpha1.md\n M docs/markitect/architecture/aggregate-meeting.aggregate.architecture.mymeetings.example.v1alpha1.md\n M docs/markitect/architecture/aggregate-payer.aggregate.architecture.mymeetings.example.v1alpha1.md\n M docs/markitect/architecture/aggregate-user-registration.aggregate.architecture.mymeetings.example.v1alpha1.md\n M docs/markitect/architecture/aggregate-user.aggregate.architecture.mymeetings.example.v1alpha1.md\n M docs/markitect/architecture/common-aggregate-root-marker.common.architecture.mymeetings.example.v1alpha1.md\n M docs/markitect/architecture/common-sql-connection-factory.common.architecture.mymeetings.example.v1alpha1.md\n M docs/markitect/architecture/common-unit-of-work.common.architecture.mymeetings.example.v1alpha1.md\n M docs/markitect/architecture/core.core.architecture.mymeetings.example.v1alpha1.md\n M docs/markitect/architecture/feature-authentication.feature.architecture.mymeetings.example.v1alpha1.md\n M docs/markitect/architecture/feature-group-proposals.feature.architecture.mymeetings.example.v1alpha1.md\n M docs/markitect/architecture/feature-meeting-attendance.feature.architecture.mymeetings.example.v1alpha1.md\n M docs/markitect/architecture/feature-meeting-fees.feature.architecture.mymeetings.example.v1alpha1.md\n M docs/markitect/architecture/feature-meeting-groups.feature.architecture.mymeetings.example.v1alpha1.md\n M docs/markitect/architecture/feature-meeting-lifecycle.feature.architecture.mymeetings.example.v1alpha1.md\n M docs/markitect/architecture/feature-price-list.feature.architecture.mymeetings.example.v1alpha1.md\n M docs/markitect/architecture/feature-user-registration.feature.architecture.mymeetings.example.v1alpha1.md\n M docs/markitect/architecture/handler-accept-proposal.handler.architecture.mymeetings.example.v1alpha1.md\n M docs/markitect/architecture/handler-add-meeting-attendee.handler.architecture.mymeetings.example.v1alpha1.md\n M docs/markitect/architecture/handler-authenticate.handler.architecture.mymeetings.example.v1alpha1.md\n M docs/markitect/architecture/handler-cancel-meeting.handler.architecture.mymeetings.example.v1alpha1.md\n M docs/markitect/architecture/handler-create-meeting.handler.architecture.mymeetings.example.v1alpha1.md\n M docs/markitect/architecture/handler-create-price-list-item.handler.architecture.mymeetings.example.v1alpha1.md\n M docs/markitect/architecture/handler-get-meeting-attendees.handler.architecture.mymeetings.example.v1alpha1.md\n M docs/markitect/architecture/handler-get-meeting-fees.handler.architecture.mymeetings.example.v1alpha1.md\n M docs/markitect/architecture/handler-get-meeting-group-details.handler.architecture.mymeetings.example.v1alpha1.md\n M docs/markitect/architecture/handler-get-member.handler.architecture.mymeetings.example.v1alpha1.md\n M docs/markitect/architecture/handler-propose-meeting-group.handler.architecture.mymeetings.example.v1alpha1.md\n M docs/markitect/architecture/handler-register-new-user.handler.architecture.mymeetings.example.v1alpha1.md\n M docs/markitect/architecture/interface-administration-events.interface.architecture.mymeetings.example.v1alpha1.md\n M docs/markitect/architecture/interface-administration-module-api.interface.architecture.mymeetings.example.v1alpha1.md\n M docs/markitect/architecture/interface-meetings-events.interface.architecture.mymeetings.example.v1alpha1.md\n M docs/markitect/architecture/interface-meetings-module-api.interface.architecture.mymeetings.example.v1alpha1.md\n M docs/markitect/architecture/interface-payments-events.interface.architecture.mymeetings.example.v1alpha1.md\n M docs/markitect/architecture/interface-payments-module-api.interface.architecture.mymeetings.example.v1alpha1.md\n M docs/markitect/architecture/interface-registrations-events.interface.architecture.mymeetings.example.v1alpha1.md\n M docs/markitect/architecture/interface-registrations-module-api.interface.architecture.mymeetings.example.v1alpha1.md\n M docs/markitect/architecture/interface-user-access-events.interface.architecture.mymeetings.example.v1alpha1.md\n M docs/markitect/architecture/interface-user-access-module-api.interface.architecture.mymeetings.example.v1alpha1.md\n M docs/markitect/architecture/module-administration.module.architecture.mymeetings.example.v1alpha1.md\n M docs/markitect/architecture/module-meetings.module.architecture.mymeetings.example.v1alpha1.md\n M docs/markitect/architecture/module-payments.module.architecture.mymeetings.example.v1alpha1.md\n M docs/markitect/architecture/module-registrations.module.architecture.mymeetings.example.v1alpha1.md\n M docs/markitect/architecture/module-user-access.module.architecture.mymeetings.example.v1alpha1.md\n M docs/markitect/architecture/narrative-architecture-test-decision.narrative.architecture.mymeetings.example.v1alpha1.md\n M docs/markitect/architecture/narrative-cqrs-read-model-decision.narrative.architecture.mymeetings.example.v1alpha1.md\n M docs/markitect/architecture/narrative-meeting-attendee-view.narrative.architecture.mymeetings.example.v1alpha1.md\n M docs/markitect/architecture/narrative-module-event-boundary-decision.narrative.architecture.mymeetings.example.v1alpha1.md\n M docs/markitect/architecture/product-mymeetings.product.architecture.mymeetings.example.v1alpha1.md\n M docs/markitect/architecture/usecase-accept-proposal.usecase.architecture.mymeetings.example.v1alpha1.md\n M docs/markitect/architecture/usecase-add-meeting-attendee.usecase.architecture.mymeetings.example.v1alpha1.md\n M docs/markitect/architecture/usecase-authenticate.usecase.architecture.mymeetings.example.v1alpha1.md\n M docs/markitect/architecture/usecase-cancel-meeting.usecase.architecture.mymeetings.example.v1alpha1.md\n M docs/markitect/architecture/usecase-create-meeting.usecase.architecture.mymeetings.example.v1alpha1.md\n M docs/markitect/architecture/usecase-create-price-list-item.usecase.architecture.mymeetings.example.v1alpha1.md\n M docs/markitect/architecture/usecase-get-meeting-attendees.usecase.architecture.mymeetings.example.v1alpha1.md\n M docs/markitect/architecture/usecase-get-meeting-fees.usecase.architecture.mymeetings.example.v1alpha1.md\n M docs/markitect/architecture/usecase-get-meeting-group-details.usecase.architecture.mymeetings.example.v1alpha1.md\n M docs/markitect/architecture/usecase-get-member.usecase.architecture.mymeetings.example.v1alpha1.md\n M docs/markitect/architecture/usecase-propose-meeting-group.usecase.architecture.mymeetings.example.v1alpha1.md\n M docs/markitect/architecture/usecase-register-new-user.usecase.architecture.mymeetings.example.v1alpha1.md\n M docs/markitect/architecture/validator-authenticate.validator.architecture.mymeetings.example.v1alpha1.md\n M docs/markitect/architecture/validator-propose-meeting-group.validator.architecture.mymeetings.example.v1alpha1.md\n M docs/markitect/engineering/README.md\n M docs/markitect/engineering/architecture-review.skill.md\n M resources/usecase-add-meeting-attendee.yaml\n M resources/usecase-cancel-meeting.yaml\n M src/Modules/Meetings/Tests/ArchTests/Application/ApplicationTests.cs\n?? docs/markitect/architecture/validator-add-meeting-attendee.validator.architecture.mymeetings.example.v1alpha1.md\n?? docs/markitect/architecture/validator-cancel-meeting.validator.architecture.mymeetings.example.v1alpha1.md\n?? resources/validator-add-meeting-attendee.yaml\n?? resources/validator-cancel-meeting.yaml\n?? src/Modules/Meetings/Application/Meetings/AddMeetingAttendee/AddMeetingAttendeeCommandValidator.cs\n?? src/Modules/Meetings/Application/Meetings/CancelMeeting/CancelMeetingCommandValidator.cs\n",
+  "workspaceDelta": [
+    {
+      "root": "<R2>\\workspaces\\t2-markitect\\checkout",
+      "path": "src/Modules/Meetings/Tests/ArchTests/Application/ApplicationTests.cs",
+      "change": "modified",
+      "before": {
+        "bytes": 7248,
+        "sha256": "2aef4aef91032ff32c60aca30a7e8b10a7235ad9d05c767a5a4c3951471463a3"
+      },
+      "after": {
+        "bytes": 8770,
+        "sha256": "c9d1e19bd28d0c59f58cde8e877dfe60416b3a48acbdc84de65bed18cec80ee9"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-markitect\\checkout",
+      "path": "resources/usecase-add-meeting-attendee.yaml",
+      "change": "modified",
+      "before": {
+        "bytes": 1100,
+        "sha256": "7117f5683a75dd6378225fd1d020418a9cc24ad197598a9fb8d7354b3c0ed001"
+      },
+      "after": {
+        "bytes": 1257,
+        "sha256": "72839c087b8ca30a60e0b93bd83b7e720a266efe7abe6c48fc1e672d5e8a87e2"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-markitect\\checkout",
+      "path": "resources/usecase-cancel-meeting.yaml",
+      "change": "modified",
+      "before": {
+        "bytes": 1063,
+        "sha256": "139ce0862ad67c1f16d31d3d1582ade05a881061f5f3adbe814ecd3f9bc8101c"
+      },
+      "after": {
+        "bytes": 1214,
+        "sha256": "8ebc8316bf0573bb81a90eba4d22096b7cae5084c0beff16d34e284e616e0439"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-markitect\\checkout",
+      "path": "docs/markitect/README.md",
+      "change": "modified",
+      "before": {
+        "bytes": 194,
+        "sha256": "765283bf78566e8d7ea31eff5256c41e1b84b6fa8328e74dcfaa854369a20ffd"
+      },
+      "after": {
+        "bytes": 188,
+        "sha256": "5724ef94f0c858cb22641d3b002128b6e8be168b7c7312807f8340ef34a35622"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-markitect\\checkout",
+      "path": "docs/markitect/engineering/architecture-review.skill.md",
+      "change": "modified",
+      "before": {
+        "bytes": 1183,
+        "sha256": "d4eb1aac73ed77ba3ebefd40a2d497e76678b9889b02a08d8d86646371a60958"
+      },
+      "after": {
+        "bytes": 1170,
+        "sha256": "b07a27fb6a150172929c76d38b4f25c66ec95b92929a81fd5e46c7eaecdb128c"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-markitect\\checkout",
+      "path": "docs/markitect/engineering/README.md",
+      "change": "modified",
+      "before": {
+        "bytes": 140,
+        "sha256": "bbc339f79b88c723f1f4e34fa0f0bdd95b75bb367eeb7cb07337a5e034db01a0"
+      },
+      "after": {
+        "bytes": 136,
+        "sha256": "a8cb324bfa773409b68d879bfa27c1ce99baa4434950335c569575f09c470f4b"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-markitect\\checkout",
+      "path": "docs/markitect/architecture/aggregate-meeting-comment.aggregate.architecture.mymeetings.example.v1alpha1.md",
+      "change": "modified",
+      "before": {
+        "bytes": 663,
+        "sha256": "9c2ef20c984f982928ea4e62d65d06155c491ba1b86f20b5668fe3f29666b18c"
+      },
+      "after": {
+        "bytes": 649,
+        "sha256": "414e033cf59f18fd8562c9502c8d1c031568448465402cfc3cb549de5da231f6"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-markitect\\checkout",
+      "path": "docs/markitect/architecture/aggregate-meeting-group.aggregate.architecture.mymeetings.example.v1alpha1.md",
+      "change": "modified",
+      "before": {
+        "bytes": 657,
+        "sha256": "2cb18c8fdccbd06dab106cb676137eacede1161715ee8aca996c86a1626cbc13"
+      },
+      "after": {
+        "bytes": 643,
+        "sha256": "2e6b6218a1e57ba71107049f656246cf96327fff0b49676d77cbfbf8e7e360cc"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-markitect\\checkout",
+      "path": "docs/markitect/architecture/aggregate-meeting-proposal.aggregate.architecture.mymeetings.example.v1alpha1.md",
+      "change": "modified",
+      "before": {
+        "bytes": 709,
+        "sha256": "6240c9b10906343a6ebeca03f25f4296d77d8c097142798a58739257b08c2b80"
+      },
+      "after": {
+        "bytes": 695,
+        "sha256": "7e4277ded8946396d673191fd983cf614e1db71ca168dc713a6de65954003861"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-markitect\\checkout",
+      "path": "docs/markitect/architecture/aggregate-meeting.aggregate.architecture.mymeetings.example.v1alpha1.md",
+      "change": "modified",
+      "before": {
+        "bytes": 646,
+        "sha256": "c67863468564149a3fa2715ba871cc686dde4132aee68c66f2b466b632b91717"
+      },
+      "after": {
+        "bytes": 632,
+        "sha256": "35c47d54304d74414c8de8dd910d4394b2b825ab08b8fbd04ffcbeee79d0e407"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-markitect\\checkout",
+      "path": "docs/markitect/architecture/aggregate-payer.aggregate.architecture.mymeetings.example.v1alpha1.md",
+      "change": "modified",
+      "before": {
+        "bytes": 604,
+        "sha256": "689adee3972a99e54b04b987c0a36202d38a19cf835bf92f77431e9ac9042474"
+      },
+      "after": {
+        "bytes": 590,
+        "sha256": "8ce403d9ef5711c2ebc91750bc94b43b40eae32f338aa21b89ef230324a69157"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-markitect\\checkout",
+      "path": "docs/markitect/architecture/aggregate-user-registration.aggregate.architecture.mymeetings.example.v1alpha1.md",
+      "change": "modified",
+      "before": {
+        "bytes": 684,
+        "sha256": "50548821a33444101e84502626efba64ea081aea7173598d6f14370e59017feb"
+      },
+      "after": {
+        "bytes": 670,
+        "sha256": "bb32d5bc45aa8aa7963a9b2f0302555fe8fe494f468f932a0614b0be273da78c"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-markitect\\checkout",
+      "path": "docs/markitect/architecture/aggregate-user.aggregate.architecture.mymeetings.example.v1alpha1.md",
+      "change": "modified",
+      "before": {
+        "bytes": 625,
+        "sha256": "3878a4327eab37d3965aec7f54a868cc21efe220f73c21c61193ad9437fc1a2f"
+      },
+      "after": {
+        "bytes": 611,
+        "sha256": "2b46c7e141f5b862bba59c710545b77d0f6c10a7134bfeafbad526809fbec3b9"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-markitect\\checkout",
+      "path": "docs/markitect/architecture/common-aggregate-root-marker.common.architecture.mymeetings.example.v1alpha1.md",
+      "change": "modified",
+      "before": {
+        "bytes": 642,
+        "sha256": "f0f7c6706b20a0a2d640273847f6ed0abd071e66829f708222875c09bac2daa7"
+      },
+      "after": {
+        "bytes": 628,
+        "sha256": "1815920b2d36e63a237e64f88f2287d8b9df7544c76b91db19f693ab33fdeee1"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-markitect\\checkout",
+      "path": "docs/markitect/architecture/common-sql-connection-factory.common.architecture.mymeetings.example.v1alpha1.md",
+      "change": "modified",
+      "before": {
+        "bytes": 656,
+        "sha256": "a17746c8f2c421d6002b09da427e6daa18ea8033d51fb0669586c088ce4b75ef"
+      },
+      "after": {
+        "bytes": 642,
+        "sha256": "6f32875bf42f858fafc9e959ec745d40ee3856407f224b9e03623de3ca0fc900"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-markitect\\checkout",
+      "path": "docs/markitect/architecture/common-unit-of-work.common.architecture.mymeetings.example.v1alpha1.md",
+      "change": "modified",
+      "before": {
+        "bytes": 614,
+        "sha256": "be9d18f109d29db59a2cd8cb94703f82e70ea215f43214da6d4380e70479c731"
+      },
+      "after": {
+        "bytes": 600,
+        "sha256": "6f625d94ab4862d0e9840014c886a7dd5949e29ee2779ca40e4ead7f302ac8f4"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-markitect\\checkout",
+      "path": "docs/markitect/architecture/core.core.architecture.mymeetings.example.v1alpha1.md",
+      "change": "modified",
+      "before": {
+        "bytes": 539,
+        "sha256": "ee3f93ecff0ceeff3555a082db72cbc225cd19114674aea3c64b8b07f81d2236"
+      },
+      "after": {
+        "bytes": 530,
+        "sha256": "58389c4e5d3557923541350ceb5ebeec898aa4d7d78f65f38f619223e293a069"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-markitect\\checkout",
+      "path": "docs/markitect/architecture/feature-authentication.feature.architecture.mymeetings.example.v1alpha1.md",
+      "change": "modified",
+      "before": {
+        "bytes": 902,
+        "sha256": "c50ca30d1e519d79ac4987424c788ecb4c9e083e66c1cdcbf087b40d0a9184fe"
+      },
+      "after": {
+        "bytes": 887,
+        "sha256": "ccb850f968ea5024675e9f91f9bc95afb6b677969a4651a7ef75e033f2f91a9a"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-markitect\\checkout",
+      "path": "docs/markitect/architecture/feature-group-proposals.feature.architecture.mymeetings.example.v1alpha1.md",
+      "change": "modified",
+      "before": {
+        "bytes": 908,
+        "sha256": "25c3d7585fb136efe3b00042ad214334667c709a13923aa0ec36655e5a46f7f9"
+      },
+      "after": {
+        "bytes": 893,
+        "sha256": "acd8d7c1477437ceedb6521c1389c5db27814c7b5b59e9bef8a407c674c2d8e4"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-markitect\\checkout",
+      "path": "docs/markitect/architecture/feature-meeting-attendance.feature.architecture.mymeetings.example.v1alpha1.md",
+      "change": "modified",
+      "before": {
+        "bytes": 1470,
+        "sha256": "7281843159f0e3c422a851a89b8b6a0daa51a1b38690f3f8c06616ad27a8bf45"
+      },
+      "after": {
+        "bytes": 1453,
+        "sha256": "91c2fe162934f4410c5543cf4b4f44bc9b9335fedd0a7ac7a26754ca37048a3f"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-markitect\\checkout",
+      "path": "docs/markitect/architecture/feature-meeting-fees.feature.architecture.mymeetings.example.v1alpha1.md",
+      "change": "modified",
+      "before": {
+        "bytes": 886,
+        "sha256": "572690e2bbeb5569a35123a5cd7bea8a90bb1937defe8afdd361fe04a90bf580"
+      },
+      "after": {
+        "bytes": 871,
+        "sha256": "32b460341414886ed22879e694b9bb97aad178bf748b95d3e12e3133add911be"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-markitect\\checkout",
+      "path": "docs/markitect/architecture/feature-meeting-groups.feature.architecture.mymeetings.example.v1alpha1.md",
+      "change": "modified",
+      "before": {
+        "bytes": 1170,
+        "sha256": "2cd86336f47e7a68df106b439f5f8a32b9d3f4e0a79147cb6fd2b8b8f8a7832f"
+      },
+      "after": {
+        "bytes": 1154,
+        "sha256": "0b84d48e36f7513f654c91fc6251affb95fac2e81a0e349ae7e14355d354a5ed"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-markitect\\checkout",
+      "path": "docs/markitect/architecture/feature-meeting-lifecycle.feature.architecture.mymeetings.example.v1alpha1.md",
+      "change": "modified",
+      "before": {
+        "bytes": 1169,
+        "sha256": "ca67d193c1420edb45ba4b8f619b132c8e1d359a365b5a5067a0d72683607af9"
+      },
+      "after": {
+        "bytes": 1153,
+        "sha256": "16bd768cbd867c7ccf98cd68c32f91d7ac937dc756895aa3dec96f3b38feb3e8"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-markitect\\checkout",
+      "path": "docs/markitect/architecture/feature-price-list.feature.architecture.mymeetings.example.v1alpha1.md",
+      "change": "modified",
+      "before": {
+        "bytes": 850,
+        "sha256": "7735e872053bf8517ff5725512b1c5f045f45b6545d01d12a22e2761b120ca3d"
+      },
+      "after": {
+        "bytes": 835,
+        "sha256": "e2df828e49632a664bafdead924d7808b45125f0e0e08aaf0e1ea346d626dd03"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-markitect\\checkout",
+      "path": "docs/markitect/architecture/feature-user-registration.feature.architecture.mymeetings.example.v1alpha1.md",
+      "change": "modified",
+      "before": {
+        "bytes": 910,
+        "sha256": "07f39d2cf3f8ade6d56f07db3d0e035589e081014bc052f9037164e91b38404c"
+      },
+      "after": {
+        "bytes": 895,
+        "sha256": "8e9fff16bd366735ca1f70f724d8622b94d3465c053ba351e91b3d6205702852"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-markitect\\checkout",
+      "path": "docs/markitect/architecture/handler-accept-proposal.handler.architecture.mymeetings.example.v1alpha1.md",
+      "change": "modified",
+      "before": {
+        "bytes": 444,
+        "sha256": "22b28cf92f4ef7f2c5660ddfd90a562fd390be5800bbac217903589ba99ba412"
+      },
+      "after": {
+        "bytes": 434,
+        "sha256": "444646ac2661e0bf073b60b1accf34b7063852333986616f762897e93b635c08"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-markitect\\checkout",
+      "path": "docs/markitect/architecture/handler-add-meeting-attendee.handler.architecture.mymeetings.example.v1alpha1.md",
+      "change": "modified",
+      "before": {
+        "bytes": 410,
+        "sha256": "fa592547d893c6c71b92629a5bdbc78f112048f85314a042e3ed2a25583d1905"
+      },
+      "after": {
+        "bytes": 400,
+        "sha256": "500836b481b84570ab5f7fe5b61bdc94f1c2935fcc5a89146053577a16b06699"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-markitect\\checkout",
+      "path": "docs/markitect/architecture/handler-authenticate.handler.architecture.mymeetings.example.v1alpha1.md",
+      "change": "modified",
+      "before": {
+        "bytes": 385,
+        "sha256": "1ed3ae53b62165d341fb4073b0f998228fae1523073759b6adeca95c7bde85d7"
+      },
+      "after": {
+        "bytes": 375,
+        "sha256": "d393a66c27072995ccdbcc23c77f87e8fad2ca2a431c183b7f63805ae4f1d546"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-markitect\\checkout",
+      "path": "docs/markitect/architecture/handler-cancel-meeting.handler.architecture.mymeetings.example.v1alpha1.md",
+      "change": "modified",
+      "before": {
+        "bytes": 380,
+        "sha256": "f86bcce45fd4fa3f047e48f2777acbb633f36f60d9b6ed7afde8701bec3d04fe"
+      },
+      "after": {
+        "bytes": 370,
+        "sha256": "d13b06829c2f3a51ee3d6c38c90c22fad3463b05741373c8cd30c8db71a0fe6b"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-markitect\\checkout",
+      "path": "docs/markitect/architecture/handler-create-meeting.handler.architecture.mymeetings.example.v1alpha1.md",
+      "change": "modified",
+      "before": {
+        "bytes": 402,
+        "sha256": "7b7a7c088990b3fc71192655f7d03aebcc916a12af32bf7f38acf665dcd78c48"
+      },
+      "after": {
+        "bytes": 392,
+        "sha256": "36e821c0e01b2925dc26333667fe628d54302d87f9cc50ee5921c31e46c12d3c"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-markitect\\checkout",
+      "path": "docs/markitect/architecture/handler-create-price-list-item.handler.architecture.mymeetings.example.v1alpha1.md",
+      "change": "modified",
+      "before": {
+        "bytes": 431,
+        "sha256": "fc38aeaee4b1f5d3b23d32b183083f2590b244f6a9299dca7f1fb67bc7af9dcc"
+      },
+      "after": {
+        "bytes": 421,
+        "sha256": "efd4ee2b86433c64ce29e6c0a6c92ee22cafde5ad3f25ae638d67a8a585878e8"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-markitect\\checkout",
+      "path": "docs/markitect/architecture/handler-get-meeting-attendees.handler.architecture.mymeetings.example.v1alpha1.md",
+      "change": "modified",
+      "before": {
+        "bytes": 719,
+        "sha256": "c884870cf32634de969e9dd01c901ffd1f93f2838425553be08d4aeda8e9f371"
+      },
+      "after": {
+        "bytes": 705,
+        "sha256": "c7e68daa1dc65b34837677f3d1a4cfecf7ff07ee28156be48bb2edf1dce8b247"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-markitect\\checkout",
+      "path": "docs/markitect/architecture/handler-get-meeting-fees.handler.architecture.mymeetings.example.v1alpha1.md",
+      "change": "modified",
+      "before": {
+        "bytes": 396,
+        "sha256": "01c8df38ea9cf21b2ac29a91883d34e7e015f1d58488116ff98b990b9efacba4"
+      },
+      "after": {
+        "bytes": 386,
+        "sha256": "0476cbfc7b7151fb7e88327c9e087fabc9c790cd458532fc9a1b53917f6c1f54"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-markitect\\checkout",
+      "path": "docs/markitect/architecture/handler-get-meeting-group-details.handler.architecture.mymeetings.example.v1alpha1.md",
+      "change": "modified",
+      "before": {
+        "bytes": 422,
+        "sha256": "3f9b5e9c17067fdc096409d9125e071844f67f908839365447f35565e8fda5f2"
+      },
+      "after": {
+        "bytes": 412,
+        "sha256": "15b289ce08cd7fd32557761e807ffa719e55709acb788eb53412ded9ad9abe9f"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-markitect\\checkout",
+      "path": "docs/markitect/architecture/handler-get-member.handler.architecture.mymeetings.example.v1alpha1.md",
+      "change": "modified",
+      "before": {
+        "bytes": 375,
+        "sha256": "a65d17b204ee4e6e2e939c5eac94f547db846102d1d89ddebcd63e13f015d4f8"
+      },
+      "after": {
+        "bytes": 365,
+        "sha256": "178b6dfc475aec4f2ad76dc09e305ff23f0473a1e33391fc7f651ffc0318a264"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-markitect\\checkout",
+      "path": "docs/markitect/architecture/handler-propose-meeting-group.handler.architecture.mymeetings.example.v1alpha1.md",
+      "change": "modified",
+      "before": {
+        "bytes": 433,
+        "sha256": "4f13e125af1f9a6245cb4cd05932348dfae48e365e5e40d2d2c3fbfdcfbd1e99"
+      },
+      "after": {
+        "bytes": 423,
+        "sha256": "3ac47ebcdf78fabc8a04c77c3b97b61f12cf67130b6ed8758155c9ea6dcf55ba"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-markitect\\checkout",
+      "path": "docs/markitect/architecture/handler-register-new-user.handler.architecture.mymeetings.example.v1alpha1.md",
+      "change": "modified",
+      "before": {
+        "bytes": 407,
+        "sha256": "f50067c4d6316d231cff839f45a6832946da6fd9e82b5b02c2d0c67a5dd57a8c"
+      },
+      "after": {
+        "bytes": 397,
+        "sha256": "6e80fb5bd804d978d8b74f892518cb3d1d98f2f67c011d7bb4859173ce0a99ab"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-markitect\\checkout",
+      "path": "docs/markitect/architecture/interface-administration-events.interface.architecture.mymeetings.example.v1alpha1.md",
+      "change": "modified",
+      "before": {
+        "bytes": 758,
+        "sha256": "e9db61b78d9f3dd871ba60d08dbc57c72fd7c2704b94a60df2f361153a9c945e"
+      },
+      "after": {
+        "bytes": 744,
+        "sha256": "cb52d8bee14f6f7f51191016aebdbcad562c5c28d1718bda6084532414d49e7e"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-markitect\\checkout",
+      "path": "docs/markitect/architecture/interface-administration-module-api.interface.architecture.mymeetings.example.v1alpha1.md",
+      "change": "modified",
+      "before": {
+        "bytes": 675,
+        "sha256": "4bbdc456dc15d72c907a4510f8a452887fed043692373ab2710e506fe1b2ecfa"
+      },
+      "after": {
+        "bytes": 661,
+        "sha256": "8d78d964ea72031e437605c67a0d7b8cdc5482f11464e409ddb2352903433de6"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-markitect\\checkout",
+      "path": "docs/markitect/architecture/interface-meetings-events.interface.architecture.mymeetings.example.v1alpha1.md",
+      "change": "modified",
+      "before": {
+        "bytes": 850,
+        "sha256": "18b5e8b18e3aa59d3344f3aad7f944c5b54e92994da40a32b9cee80055faf451"
+      },
+      "after": {
+        "bytes": 836,
+        "sha256": "20f488f1af7d9553414ca5e27e0a1c49070a683118e8f535ade1cd90b898f99b"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-markitect\\checkout",
+      "path": "docs/markitect/architecture/interface-meetings-module-api.interface.architecture.mymeetings.example.v1alpha1.md",
+      "change": "modified",
+      "before": {
+        "bytes": 627,
+        "sha256": "34428c6ae44e5e4b42f29c2d117e0fa4cbc53593fbe763de0eb11558c3bbe259"
+      },
+      "after": {
+        "bytes": 613,
+        "sha256": "cc570a582d453672832a206d49f8ac5580662a2f3c064427d6444aa3cea81795"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-markitect\\checkout",
+      "path": "docs/markitect/architecture/interface-payments-events.interface.architecture.mymeetings.example.v1alpha1.md",
+      "change": "modified",
+      "before": {
+        "bytes": 770,
+        "sha256": "ece09eaeb52547a2366996f03b49ac07de51c964bf517bc39518441f7d9e7c68"
+      },
+      "after": {
+        "bytes": 756,
+        "sha256": "176b89b1c0c48b7f0ce16d8ac22df1c2df40bcbaef96749519bb8e0e446c607f"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-markitect\\checkout",
+      "path": "docs/markitect/architecture/interface-payments-module-api.interface.architecture.mymeetings.example.v1alpha1.md",
+      "change": "modified",
+      "before": {
+        "bytes": 627,
+        "sha256": "fcabfa3fd3a4c9b00d487fabf1682153bb2fdf1cbd7a33e7674b3aacaf58c5e5"
+      },
+      "after": {
+        "bytes": 613,
+        "sha256": "a3921c483fa2d74f7c5dc97066580e847b0ae7da28ace7aa558a2dd0c281c1b7"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-markitect\\checkout",
+      "path": "docs/markitect/architecture/interface-registrations-events.interface.architecture.mymeetings.example.v1alpha1.md",
+      "change": "modified",
+      "before": {
+        "bytes": 693,
+        "sha256": "5a5f9a11b28530c038a9ee891fb6f02d11015f51ddf49e76a6808f434eafa244"
+      },
+      "after": {
+        "bytes": 679,
+        "sha256": "6a0a88a60ca8a26b588f9368c7ed1bf24e897c458570b814ed52d2417a5c30c8"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-markitect\\checkout",
+      "path": "docs/markitect/architecture/interface-registrations-module-api.interface.architecture.mymeetings.example.v1alpha1.md",
+      "change": "modified",
+      "before": {
+        "bytes": 667,
+        "sha256": "7eee8f0e492d91328d836d9f486bec56a2f909b3bcfc369e416a5f69c3cea946"
+      },
+      "after": {
+        "bytes": 653,
+        "sha256": "4ab992a03ed277149bec3ab117221a41dbd12913f8e6b8d05bcceb5baf04243a"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-markitect\\checkout",
+      "path": "docs/markitect/architecture/interface-user-access-events.interface.architecture.mymeetings.example.v1alpha1.md",
+      "change": "modified",
+      "before": {
+        "bytes": 648,
+        "sha256": "f2011dce903b1476f6499ddacda7e9144a948ea229ba32eb93033dd7781cefea"
+      },
+      "after": {
+        "bytes": 634,
+        "sha256": "63dd6bc6aec6317b7e230333e6d7aad8afd6f57431d87d14d15688a4bfd5c31e"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-markitect\\checkout",
+      "path": "docs/markitect/architecture/interface-user-access-module-api.interface.architecture.mymeetings.example.v1alpha1.md",
+      "change": "modified",
+      "before": {
+        "bytes": 648,
+        "sha256": "d85775fba911379be50e8f367113ef11c4bb5ad65db8fbbe3ee176f5ce279add"
+      },
+      "after": {
+        "bytes": 634,
+        "sha256": "b8eef8cce25352e0f9b08126c6e48830bb6b4cf925ec6b6912090c8bbcd16d94"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-markitect\\checkout",
+      "path": "docs/markitect/architecture/module-administration.module.architecture.mymeetings.example.v1alpha1.md",
+      "change": "modified",
+      "before": {
+        "bytes": 2319,
+        "sha256": "8f63d6037bc15510af7955db850e5949e20bdfbf116f7a5a5f476eb10e89d484"
+      },
+      "after": {
+        "bytes": 2292,
+        "sha256": "f3cd9724ebea58bb5e4d4676001e959f049fb0bde11f2c4d3435b740b9cc8013"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-markitect\\checkout",
+      "path": "docs/markitect/architecture/module-meetings.module.architecture.mymeetings.example.v1alpha1.md",
+      "change": "modified",
+      "before": {
+        "bytes": 2549,
+        "sha256": "9e737d38285c0d79619d85ad8bcf270ffc76feca7c1241805cdd636ac9607306"
+      },
+      "after": {
+        "bytes": 2521,
+        "sha256": "ab028d706954cfb9b74bd650a77a39f102b6f7e3420c8db9fd72a94485a5d6cb"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-markitect\\checkout",
+      "path": "docs/markitect/architecture/module-payments.module.architecture.mymeetings.example.v1alpha1.md",
+      "change": "modified",
+      "before": {
+        "bytes": 2544,
+        "sha256": "acf7a4c164e7b5c81079e3e5eaec151384969fb31801eda8c4f3f588dea9a753"
+      },
+      "after": {
+        "bytes": 2516,
+        "sha256": "4b85818bf5a2c4554db4eb687dbfb6892c3b1bd87603e34f0523ba0f59244b04"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-markitect\\checkout",
+      "path": "docs/markitect/architecture/module-registrations.module.architecture.mymeetings.example.v1alpha1.md",
+      "change": "modified",
+      "before": {
+        "bytes": 1442,
+        "sha256": "52f272ceb0acd7a16956385d40940da2946af91af4733be2276444a553754607"
+      },
+      "after": {
+        "bytes": 1418,
+        "sha256": "68306baa14aa7803b3645c8b4a3c70cb3d03b1d0f3b4ba0a03452f97a3d10866"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-markitect\\checkout",
+      "path": "docs/markitect/architecture/module-user-access.module.architecture.mymeetings.example.v1alpha1.md",
+      "change": "modified",
+      "before": {
+        "bytes": 1706,
+        "sha256": "3077207e0b8b97fba374954254cf30aec8f67ad0dbe80cb2857da4593a4582aa"
+      },
+      "after": {
+        "bytes": 1681,
+        "sha256": "8132c8d50742f834aec5082e5f764fd1240953af38651b32c13666e592c06ceb"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-markitect\\checkout",
+      "path": "docs/markitect/architecture/narrative-architecture-test-decision.narrative.architecture.mymeetings.example.v1alpha1.md",
+      "change": "modified",
+      "before": {
+        "bytes": 694,
+        "sha256": "433af0f46494df5e729c95924edc67192d770994ed78ad1a69db945f3cb6ca6d"
+      },
+      "after": {
+        "bytes": 680,
+        "sha256": "3e112208d7c359e436cf90fa96b06c470ad2718ddc65e59c072adce830880a18"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-markitect\\checkout",
+      "path": "docs/markitect/architecture/narrative-cqrs-read-model-decision.narrative.architecture.mymeetings.example.v1alpha1.md",
+      "change": "modified",
+      "before": {
+        "bytes": 679,
+        "sha256": "4a3010f973216bb1e608acdaea37f6fb2a79c0edb3bb76fa71100caf72c950b7"
+      },
+      "after": {
+        "bytes": 665,
+        "sha256": "25df96e142d7d1f6def226325fea4200df4ff347b61198215b06d2baa16b31d2"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-markitect\\checkout",
+      "path": "docs/markitect/architecture/narrative-meeting-attendee-view.narrative.architecture.mymeetings.example.v1alpha1.md",
+      "change": "modified",
+      "before": {
+        "bytes": 693,
+        "sha256": "01a4a106f8e50ae76412915d33b9ad28c0c763f07f45ece76eb3fec42a485c37"
+      },
+      "after": {
+        "bytes": 679,
+        "sha256": "2b59017b879e79c13c053b332f1e73dbe3459e6ecd689661390b40902e5dc288"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-markitect\\checkout",
+      "path": "docs/markitect/architecture/narrative-module-event-boundary-decision.narrative.architecture.mymeetings.example.v1alpha1.md",
+      "change": "modified",
+      "before": {
+        "bytes": 705,
+        "sha256": "6a01df701c762ac770d424ff4077897e73bace7c08ad8440e28343bc9c94501c"
+      },
+      "after": {
+        "bytes": 691,
+        "sha256": "c4e161b378306064dcf6c5dc6f1b7e677ae6d799b4aaabc3172beaeb71b4acbb"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-markitect\\checkout",
+      "path": "docs/markitect/architecture/product-mymeetings.product.architecture.mymeetings.example.v1alpha1.md",
+      "change": "modified",
+      "before": {
+        "bytes": 1872,
+        "sha256": "f1c8cbeca2f1f2a520f79a4c85f58e5b5ffb14d385a7866e360463c952334f77"
+      },
+      "after": {
+        "bytes": 1854,
+        "sha256": "2b80834e101ced69a2ae705a1a42260222cb137a279a0efd121a799af70db4d8"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-markitect\\checkout",
+      "path": "docs/markitect/architecture/README.md",
+      "change": "modified",
+      "before": {
+        "bytes": 7309,
+        "sha256": "bc6591742acef34437c8a35582c8bd58c77cd38e19370ae835d96097017dbdbf"
+      },
+      "after": {
+        "bytes": 7473,
+        "sha256": "ce284b3e95366a4ce57f1121ab38be5b389db45af18ea1236de4f851ae0cd5a3"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-markitect\\checkout",
+      "path": "docs/markitect/architecture/usecase-accept-proposal.usecase.architecture.mymeetings.example.v1alpha1.md",
+      "change": "modified",
+      "before": {
+        "bytes": 2299,
+        "sha256": "e35d3b5104544cfbe34740d0722f8d69c5f951fee1c488d9b1218d00e20b383e"
+      },
+      "after": {
+        "bytes": 2267,
+        "sha256": "0d3c757a56e6d8a314041bf5c51c9930034d103a519cf951744eae54ac28758c"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-markitect\\checkout",
+      "path": "docs/markitect/architecture/usecase-add-meeting-attendee.usecase.architecture.mymeetings.example.v1alpha1.md",
+      "change": "modified",
+      "before": {
+        "bytes": 2264,
+        "sha256": "b0c133c4220bb1ba0a4c7ce7ba3ded6433f9d3bdcc14fa7c60da49963359c262"
+      },
+      "after": {
+        "bytes": 3345,
+        "sha256": "759d5d0bfe813ca73c9ce7e9f717e721e1f3f6738ef9caef4b0672ce62c55679"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-markitect\\checkout",
+      "path": "docs/markitect/architecture/usecase-authenticate.usecase.architecture.mymeetings.example.v1alpha1.md",
+      "change": "modified",
+      "before": {
+        "bytes": 2453,
+        "sha256": "8b956342b969323005cdad406b5fd8725aa1dd42c93756d95aeefc2705cdf8a3"
+      },
+      "after": {
+        "bytes": 2420,
+        "sha256": "8b070666aef1e539ae89dfb59a5556693b5a9540c4b9d907f16ace4add8b950c"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-markitect\\checkout",
+      "path": "docs/markitect/architecture/usecase-cancel-meeting.usecase.architecture.mymeetings.example.v1alpha1.md",
+      "change": "modified",
+      "before": {
+        "bytes": 2195,
+        "sha256": "e1e1c5e6362ff9faa667cd8f84b62b881d60c8da1cc92c01c7f3cce840ebdd29"
+      },
+      "after": {
+        "bytes": 3234,
+        "sha256": "9ca4508cb2917003450620347eadf270635bde1dbf201dbeabe481952a0ac084"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-markitect\\checkout",
+      "path": "docs/markitect/architecture/usecase-create-meeting.usecase.architecture.mymeetings.example.v1alpha1.md",
+      "change": "modified",
+      "before": {
+        "bytes": 2235,
+        "sha256": "c7b884ae19d5df08b771e0363cb6c21311ce269400d4f0d4b855f4d682081161"
+      },
+      "after": {
+        "bytes": 2203,
+        "sha256": "4e1d2122628dc4efd891f2a07714358b666c18f3feea8c357b0cc72777894563"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-markitect\\checkout",
+      "path": "docs/markitect/architecture/usecase-create-price-list-item.usecase.architecture.mymeetings.example.v1alpha1.md",
+      "change": "modified",
+      "before": {
+        "bytes": 2009,
+        "sha256": "c68db15e91467efa448a01ff6d6ccde6542337e4b3a3b5ac0b72b1dda6b7f7e7"
+      },
+      "after": {
+        "bytes": 1978,
+        "sha256": "26570b6c7e9a4a2019d3382bda58db179054579a3f5d4e6aaa084d6f213358da"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-markitect\\checkout",
+      "path": "docs/markitect/architecture/usecase-get-meeting-attendees.usecase.architecture.mymeetings.example.v1alpha1.md",
+      "change": "modified",
+      "before": {
+        "bytes": 2044,
+        "sha256": "ad1c5a6cbd54c2b6888d74c08f2f88b54cd0157932a7f817868867ec512f2fed"
+      },
+      "after": {
+        "bytes": 2013,
+        "sha256": "f59db6bc6bac9d15ae781dfa07512da5d0bcdd77b9389b19d9d56ebec304565a"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-markitect\\checkout",
+      "path": "docs/markitect/architecture/usecase-get-meeting-fees.usecase.architecture.mymeetings.example.v1alpha1.md",
+      "change": "modified",
+      "before": {
+        "bytes": 1960,
+        "sha256": "3b2b5860c2f18e5f0bf802732edd998e35c94542b810f8bf8f8c1a3908a9b986"
+      },
+      "after": {
+        "bytes": 1929,
+        "sha256": "3a94b553bc07db7683c38a9652797e5c5ce05a42b927a8f6f006ec3ff76704c1"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-markitect\\checkout",
+      "path": "docs/markitect/architecture/usecase-get-meeting-group-details.usecase.architecture.mymeetings.example.v1alpha1.md",
+      "change": "modified",
+      "before": {
+        "bytes": 2305,
+        "sha256": "ce777c62e22611055a517bf2590a8e41a4d9571cf231ef0c9cd9a72b949536d0"
+      },
+      "after": {
+        "bytes": 2273,
+        "sha256": "25d7e6fa163dcd8ab85b40555183054506386ea271c340e639cec6856b428a44"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-markitect\\checkout",
+      "path": "docs/markitect/architecture/usecase-get-member.usecase.architecture.mymeetings.example.v1alpha1.md",
+      "change": "modified",
+      "before": {
+        "bytes": 1943,
+        "sha256": "87727f49b1911d51235f4bf64e287d5294310e80c30a6c803ee17e08b761b832"
+      },
+      "after": {
+        "bytes": 1912,
+        "sha256": "bfd800a46a5977ab3940ab71aac7cb0af04eb3d08fe6677d827254006529095e"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-markitect\\checkout",
+      "path": "docs/markitect/architecture/usecase-propose-meeting-group.usecase.architecture.mymeetings.example.v1alpha1.md",
+      "change": "modified",
+      "before": {
+        "bytes": 2589,
+        "sha256": "658ee6fc4ce8c48c143d64a7624d59639a5aad5ee3f0a73f5d95a4b44e39f96a"
+      },
+      "after": {
+        "bytes": 2556,
+        "sha256": "13616e85757a278bf52b6b3a09f486a159e2d9e037f64ddb319f3bdc3d1a7c1b"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-markitect\\checkout",
+      "path": "docs/markitect/architecture/usecase-register-new-user.usecase.architecture.mymeetings.example.v1alpha1.md",
+      "change": "modified",
+      "before": {
+        "bytes": 2307,
+        "sha256": "f61c5ac23ea9f648732dfdc20a6479f3324aa0cde09cee0c3061befdabedc109"
+      },
+      "after": {
+        "bytes": 2275,
+        "sha256": "8cba75bb7eb0a39833b18eb1918115d0dda1aba11125d28474c50cdd55c6e120"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-markitect\\checkout",
+      "path": "docs/markitect/architecture/validator-authenticate.validator.architecture.mymeetings.example.v1alpha1.md",
+      "change": "modified",
+      "before": {
+        "bytes": 377,
+        "sha256": "ea9fb398fcf5066be518dc2b795f2348c6cb13c8c5deca4c4b8a9d37569e16b0"
+      },
+      "after": {
+        "bytes": 368,
+        "sha256": "42b7cd64e3d0ec45f5d6b73712eb3af1b5098933ac4534decccc382cb62c14bd"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-markitect\\checkout",
+      "path": "docs/markitect/architecture/validator-propose-meeting-group.validator.architecture.mymeetings.example.v1alpha1.md",
+      "change": "modified",
+      "before": {
+        "bytes": 420,
+        "sha256": "166f7209f2bb5e8ee68685dc911bbe5e4439192ab483691b31bb5429ca6951df"
+      },
+      "after": {
+        "bytes": 411,
+        "sha256": "65e8f9ab2c22d15d243044d50ef0436a31e95ba738d1c42c2335e8cdee43adb5"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-markitect\\checkout",
+      "path": "docs/markitect/_domains/architecture.mymeetings.example.v1alpha1.domain.md",
+      "change": "modified",
+      "before": {
+        "bytes": 12818,
+        "sha256": "3cb35d96c6250823381192cd4ada12fecb6b3351d197a6efb0557add2d61e3e1"
+      },
+      "after": {
+        "bytes": 14017,
+        "sha256": "9f99f45d703c37fad8a16eb94b8054a03b79917b7a19b74ed750a28c0318bb37"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-markitect\\checkout",
+      "path": "docs/markitect/_domains/README.md",
+      "change": "modified",
+      "before": {
+        "bytes": 247,
+        "sha256": "1718e599e04b70345a80b09da9ee8962069a27db10943595ab4673b479526601"
+      },
+      "after": {
+        "bytes": 243,
+        "sha256": "b34acdd4c74e6e4213e85c8752e3f199b491c6a490da8d2f9bb22ad8e42930bf"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-markitect\\checkout",
+      "path": ".agents/skills/architecture-review/SKILL.md",
+      "change": "modified",
+      "before": {
+        "bytes": 847,
+        "sha256": "9617823da5fcf7bfadda7ad14ea6e1339269dbfb6b13803ae1eb2198a2ded07e"
+      },
+      "after": {
+        "bytes": 832,
+        "sha256": "fdd5c7786097bebc37caf27eeed4a1ca0fba584e0c07840f4989079ce65ccd5e"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-markitect\\checkout",
+      "path": "src/Modules/Meetings/Application/Meetings/CancelMeeting/CancelMeetingCommandValidator.cs",
+      "change": "created",
+      "after": {
+        "bytes": 413,
+        "sha256": "cd477bfb51208241307951dc39e155af9bb1988865cf6650f8f8718138447b1a"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-markitect\\checkout",
+      "path": "src/Modules/Meetings/Application/Meetings/AddMeetingAttendee/AddMeetingAttendeeCommandValidator.cs",
+      "change": "created",
+      "after": {
+        "bytes": 433,
+        "sha256": "27e6f268d02b1ef6f7a48c4da79cca376040fa02e82e56e0e374f4bb3f5ec137"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-markitect\\checkout",
+      "path": "resources/validator-add-meeting-attendee.yaml",
+      "change": "created",
+      "after": {
+        "bytes": 336,
+        "sha256": "ade916b26f7621730ea327305a8591d72db1d5e4f88ef244c24261c3379b5a63"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-markitect\\checkout",
+      "path": "resources/validator-cancel-meeting.yaml",
+      "change": "created",
+      "after": {
+        "bytes": 315,
+        "sha256": "ae428b0524a842b66d5f0b521d7be14946faadf6007f9811aa2b6a0a3a92bf0f"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-markitect\\checkout",
+      "path": "docs/markitect/architecture/validator-add-meeting-attendee.validator.architecture.mymeetings.example.v1alpha1.md",
+      "change": "created",
+      "after": {
+        "bytes": 393,
+        "sha256": "358d2eec0843fea37dfcdcf2740208f58c3eb844d709e46a1b88b5b2583c73e6"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-markitect\\checkout",
+      "path": "docs/markitect/architecture/validator-cancel-meeting.validator.architecture.mymeetings.example.v1alpha1.md",
+      "change": "created",
+      "after": {
+        "bytes": 366,
+        "sha256": "6669dea7c12c6d2714e135801987b540e9970e20e7b3f095944553bcf60fd3c1"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t2-markitect\\checkout",
+      "path": ".telemetry/reads.jsonl",
+      "change": "created",
+      "after": {
+        "bytes": 3398,
+        "sha256": "b438b1497c77bbc5f95a4a6dd279cfe95ed05f88f1cbd45eeb06a09ab9472766"
+      }
+    }
+  ],
+  "workspaceDiffPath": "workspace.diff",
+  "workspaceDiffSha256": "4212ce2b6949a016fc05f07e34a469a57311fbcf355d24caa8357e6035035037",
+  "fileReadLedger": {
+    "recordsPath": "reads.jsonl",
+    "helperSha256Before": "d7c7016b7bb27d05f6b303906d7fa131bbf9650307c9fdfa456b31e07c903dbe",
+    "helperSha256After": "d7c7016b7bb27d05f6b303906d7fa131bbf9650307c9fdfa456b31e07c903dbe",
+    "helperMutated": false,
+    "helperRecordedContentReads": 19,
+    "records": [
+      {
+        "path": ".agent-input/context.yaml",
+        "bytes": 43712,
+        "sha256": "379ab30da936b3d845d8b5c04686773ea39a843c5ad4487ef4ff550802c4cf5f",
+        "readType": "content"
+      },
+      {
+        "path": ".agent-input/impact.yaml",
+        "bytes": 18319,
+        "sha256": "98b3ba814fdfda422db4132ff2fdd73232a799f3cc370dde14d4c9d944424838",
+        "readType": "content"
+      },
+      {
+        "path": "markitect.yaml",
+        "bytes": 1052,
+        "sha256": "dcb07a04dd812457cd489b0c2155d1b0112f46244ce0c1b80308945300a15d3d",
+        "readType": "content"
+      },
+      {
+        "path": "resources/usecase-add-meeting-attendee.yaml",
+        "bytes": 1100,
+        "sha256": "7117f5683a75dd6378225fd1d020418a9cc24ad197598a9fb8d7354b3c0ed001",
+        "readType": "content"
+      },
+      {
+        "path": "resources/usecase-cancel-meeting.yaml",
+        "bytes": 1063,
+        "sha256": "139ce0862ad67c1f16d31d3d1582ade05a881061f5f3adbe814ecd3f9bc8101c",
+        "readType": "content"
+      },
+      {
+        "path": "resources/validator-authenticate.yaml",
+        "bytes": 329,
+        "sha256": "73454d7ca1ab418e8f9c7e7a1f5e4c600bc1697b78ffd7fd215e7e3c7075280d",
+        "readType": "content"
+      },
+      {
+        "path": "src/Modules/Meetings/Application/Meetings/AddMeetingAttendee/AddMeetingAttendeeCommand.cs",
+        "bytes": 504,
+        "sha256": "d0702f233e4aa2587592497b3a8c8595146dd80544544bbc5b49f59816add7d9",
+        "readType": "content"
+      },
+      {
+        "path": "src/Modules/Meetings/Application/Meetings/CancelMeeting/CancelMeetingCommand.cs",
+        "bytes": 385,
+        "sha256": "8904c0d5d2b91b5dfaeae90a81e8ee83bd6cf65a6a0682df268d92fdff024f32",
+        "readType": "content"
+      },
+      {
+        "path": "src/Modules/Meetings/Application/MeetingComments/AddMeetingComment/AddMeetingCommentCommandValidator.cs",
+        "bytes": 578,
+        "sha256": "c568409bc4d95ef5f6d423a218c7e000741d72b296fc0adcc3ea99707c077775",
+        "readType": "content"
+      },
+      {
+        "path": "src/Modules/Meetings/Tests/ArchTests/Application/ApplicationTests.cs",
+        "bytes": 7248,
+        "sha256": "2aef4aef91032ff32c60aca30a7e8b10a7235ad9d05c767a5a4c3951471463a3",
+        "readType": "content"
+      },
+      {
+        "path": "src/global.json",
+        "bytes": 113,
+        "sha256": "8dc87e6f68213f4444f20306d8057b48947550912e25a5b897702a51eea23d95",
+        "readType": "content"
+      },
+      {
+        "path": "src/Modules/Meetings/Application/MeetingGroupProposals/ProposeMeetingGroup/ProposeMeetingGroupCommandValidator.cs",
+        "bytes": 661,
+        "sha256": "074e89c1c595cde16238aa474fac2a19d5c48b10c6a60d052e86ccd3401d15bb",
+        "readType": "content"
+      },
+      {
+        "path": "docs/architecture-decision-log/0017-implement-archictecture-tests.md",
+        "bytes": 1099,
+        "sha256": "40bf710685bba66a12317b78f4f217f7f4f54ee6ce5ca2c8b95b46921c4ef2ce",
+        "readType": "content"
+      },
+      {
+        "path": "src/Modules/Meetings/Application/CompanyName.MyMeetings.Modules.Meetings.Application.csproj",
+        "bytes": 642,
+        "sha256": "2f0d3e0797c1fdf2c35bc4f61d1bce373dff83fac85236fb252895dd2cc61249",
+        "readType": "content"
+      },
+      {
+        "path": ".tools/architecture-check/MeetingsArchitectureCheck.csproj",
+        "bytes": 927,
+        "sha256": "ecd0ef45f7e286e167971f7c0b867cb6a458ff629973331c9ac6dd07dbea0082",
+        "readType": "content"
+      },
+      {
+        "path": "src/Modules/Meetings/Tests/ArchTests/Application/ApplicationTests.cs",
+        "bytes": 7248,
+        "sha256": "2aef4aef91032ff32c60aca30a7e8b10a7235ad9d05c767a5a4c3951471463a3",
+        "readType": "content"
+      },
+      {
+        "path": "resources/usecase-add-meeting-attendee.yaml",
+        "bytes": 1257,
+        "sha256": "72839c087b8ca30a60e0b93bd83b7e720a266efe7abe6c48fc1e672d5e8a87e2",
+        "readType": "content"
+      },
+      {
+        "path": "resources/usecase-add-meeting-attendee.yaml",
+        "bytes": 1257,
+        "sha256": "72839c087b8ca30a60e0b93bd83b7e720a266efe7abe6c48fc1e672d5e8a87e2",
+        "readType": "content"
+      },
+      {
+        "path": "src/Modules/Meetings/Tests/ArchTests/Application/ApplicationTests.cs",
+        "bytes": 8739,
+        "sha256": "9028b3e5c1d1826ac163004665814322e00dd19da1057d4cfe9860d5b81a9acf",
+        "readType": "content"
+      }
+    ],
+    "limit": "Only reads through .tools/read.ps1 are logged."
+  },
+  "markitectExecutable": {
+    "sha256Before": "6aae29acf67217b9538a2076ff199102b44c84183f2e0dff4718584e84e064df",
+    "sha256After": "6aae29acf67217b9538a2076ff199102b44c84183f2e0dff4718584e84e064df",
+    "mutated": false
+  },
+  "externalTreeDeltas": [],
+  "externalWriteDetected": false,
+  "externalWritePolicy": "Any detected out-of-workspace change is reported and left in place for review."
+}
