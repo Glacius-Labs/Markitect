@@ -22,6 +22,7 @@ type Context struct {
 	Status         string              `yaml:"status,omitempty"`
 	Run            *RunContextEvidence `yaml:"run,omitempty"`
 	PolicyResults  []core.PolicyResult `yaml:"policyResults,omitempty"`
+	Analysis       *AnalysisEvidence   `yaml:"analysis,omitempty"`
 }
 type ContextInput struct {
 	Key              string            `yaml:"key"`
@@ -51,7 +52,25 @@ type ContextRelation struct {
 }
 
 func CompileContext(p *Project, key, version string, toolDigest ...string) (*Context, error) {
-	if len(p.Diagnostics) > 0 {
+	return compileContext(p, key, version, false, toolDigest...)
+}
+
+// AnalyzeContext compiles the ordinary declared context closure for a
+// structurally valid candidate, even when ordinary policy results fail. The
+// output is explicitly marked as analysis and remains non-acceptance evidence.
+func AnalyzeContext(p *Project, key, version string, toolDigest ...string) (*Context, error) {
+	return compileContext(p, key, version, true, toolDigest...)
+}
+
+func compileContext(p *Project, key, version string, allowPolicyFailures bool, toolDigest ...string) (*Context, error) {
+	if p == nil || p.Graph == nil || p.Snapshot == nil {
+		return nil, fmt.Errorf("a parsed project and fixed snapshot are required")
+	}
+	if allowPolicyFailures {
+		if len(p.StructuralDiagnostics()) > 0 {
+			return nil, fmt.Errorf("context analysis is blocked while structural diagnostics remain")
+		}
+	} else if len(p.Diagnostics) > 0 {
 		return nil, fmt.Errorf("context cannot be compiled while project diagnostics remain")
 	}
 	entry, ok := p.Graph.Resources[key]
@@ -203,6 +222,21 @@ func CompileContext(p *Project, key, version string, toolDigest ...string) (*Con
 			return nil, fmt.Errorf("encode context policy results: %w", err)
 		}
 		fmt.Fprintf(&fingerprint, "policy:%s", Hash(policyBytes))
+	}
+	if allowPolicyFailures {
+		model, err := CompileModel(p)
+		if err != nil {
+			return nil, fmt.Errorf("compile context analysis identity: %w", err)
+		}
+		c.Analysis = &AnalysisEvidence{
+			Mode: PolicyFailureAnalysisMode, Complete: true, Candidate: analysisSnapshot(model),
+			Notice: "Policy analysis is read-only diagnostic evidence; it is not verification or acceptance.",
+		}
+		analysisBytes, err := YAML(c.Analysis)
+		if err != nil {
+			return nil, fmt.Errorf("encode context analysis evidence: %w", err)
+		}
+		fmt.Fprintf(&fingerprint, "analysis:%s", Hash(analysisBytes))
 	}
 	c.Digest = Hash([]byte(fingerprint.String()))
 	return c, nil

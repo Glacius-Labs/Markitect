@@ -33,14 +33,14 @@ func commandFlags(command string) (map[string]bool, bool) {
 	case "context", "explain":
 		names = []string{"repo", "revision", "api-version", "kind", "name", "namespace", "package"}
 		if command == "context" {
-			names = append(names, "run")
+			names = append(names, "run", "analyze-policy-failures")
 		}
 	case "review":
 		names = []string{"repo", "revision", "api-version", "kind", "name", "namespace", "package", "config", "report", "evidence"}
 	case "find":
 		names = []string{"repo", "revision", "api-version", "query", "kind", "namespace", "package"}
 	case "impact":
-		names = []string{"repo", "revision", "base"}
+		names = []string{"repo", "revision", "base", "analyze-policy-failures"}
 	case "render", "format":
 		names = []string{"repo", "revision", "write", "check"}
 	case "reconcile":

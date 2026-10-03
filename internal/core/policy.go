@@ -99,7 +99,7 @@ func (g *Graph) evaluateConstraint(domain DomainDefinition, constraint Constrain
 		}
 		if message != "" {
 			result.Status = PolicyFailed
-			g.addDiagnostic(Diagnostic{Code: "constraint." + constraint.Name, Path: domain.Path, Line: domain.Line, Message: fmt.Sprintf("%s: %s", domain.APIVersion, message)})
+			g.addDiagnostic(Diagnostic{Code: "constraint." + constraint.Name, Path: domain.Path, Line: domain.Line, Message: fmt.Sprintf("%s: %s", domain.APIVersion, message), PolicyResult: &PolicyResultRef{APIVersion: result.APIVersion, Constraint: result.Constraint, Subject: result.Subject}})
 		}
 		g.PolicyResults = append(g.PolicyResults, result)
 		return
@@ -114,7 +114,7 @@ func (g *Graph) evaluateConstraint(domain DomainDefinition, constraint Constrain
 		result := PolicyResult{APIVersion: domain.APIVersion, Constraint: constraint.Name, Subject: resource.GraphKey(), Status: PolicyPassed, Message: message, ConstraintDigest: constraintDigest, SubjectDigest: subjectDigest}
 		if message != "" {
 			result.Status = PolicyFailed
-			g.diag(resource, "constraint."+constraint.Name, fmt.Sprintf("%s: %s", domain.APIVersion, message))
+			g.addDiagnostic(Diagnostic{Code: "constraint." + constraint.Name, Path: resource.Path, Package: resource.Package, Line: resource.Line, Message: fmt.Sprintf("%s: %s", domain.APIVersion, message), PolicyResult: &PolicyResultRef{APIVersion: result.APIVersion, Constraint: result.Constraint, Subject: result.Subject}})
 		}
 		g.PolicyResults = append(g.PolicyResults, result)
 	}

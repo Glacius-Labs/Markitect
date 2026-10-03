@@ -58,11 +58,20 @@ func runContext(o commandOptions, p *app.Project, toolDigest string, emit func(a
 		return fail(fmt.Errorf("context requires --kind, --name and --namespace"))
 	}
 	key := (core.Ref{APIVersion: o.apiVersion, Package: o.packageName, Namespace: o.namespace, Kind: o.kind, Name: o.name}).GraphKey("", "", "")
-	c, err := app.CompileContext(p, key, version, toolDigest)
+	var c *app.Context
+	var err error
+	if o.analyzePolicyFailures {
+		c, err = app.AnalyzeContext(p, key, version, toolDigest)
+	} else {
+		c, err = app.CompileContext(p, key, version, toolDigest)
+	}
 	if err != nil {
 		return fail(err)
 	}
-	return emit(c)
+	if code := emit(c); code != 0 {
+		return code
+	}
+	return analysisExitCode(c.Analysis)
 }
 
 func runContextManifest(o commandOptions, toolDigest string, emit func(any) int, fail func(error) int) int {
@@ -95,8 +104,30 @@ func runImpact(o commandOptions, p *app.Project, emit func(any) int, fail func(e
 	if err != nil {
 		return fail(err)
 	}
-	if len(previous.Diagnostics) > 0 {
+	if !o.analyzePolicyFailures && len(previous.Diagnostics) > 0 {
 		return fail(fmt.Errorf("base has unresolved diagnostics; inspect the base separately"))
 	}
-	return emit(app.Changes(previous, p))
+	var result *app.Impact
+	if o.analyzePolicyFailures {
+		result, err = app.AnalyzeImpact(previous, p)
+	} else {
+		result = app.Changes(previous, p)
+	}
+	if err != nil {
+		return fail(err)
+	}
+	if code := emit(result); code != 0 {
+		return code
+	}
+	return analysisExitCode(result.Analysis)
+}
+
+func analysisExitCode(analysis *app.AnalysisEvidence) int {
+	if analysis == nil {
+		return 0
+	}
+	if analysis.Candidate.PolicyStatus == "failed" || analysis.Base != nil && analysis.Base.PolicyStatus == "failed" {
+		return 1
+	}
+	return 0
 }

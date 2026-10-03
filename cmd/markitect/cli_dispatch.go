@@ -77,7 +77,8 @@ func dispatchCommand(command string, o commandOptions, out, errout io.Writer, em
 		structuralCoverage += " and configured documentation routers"
 	}
 	result := report{Tool: "Markitect", Version: version, ToolDigest: toolDigest, Revision: p.Snapshot.ID, Provisional: p.Snapshot.Provisional, Digest: p.Snapshot.Digest(), Status: "passed", Coverage: structuralCoverage + "; external repository gates and semantic review remain separate", Inventory: p.Inventory, Diagnostics: p.Diagnostics, PolicyResults: p.Graph.PolicyResults}
-	if len(p.Diagnostics) > 0 {
+	allowPolicyFailures := o.analyzePolicyFailures && (command == "context" || command == "impact")
+	if len(p.Diagnostics) > 0 && (!allowPolicyFailures || len(p.StructuralDiagnostics()) > 0) {
 		result.Status = "failed"
 		if code := emit(result); code != 0 {
 			return code

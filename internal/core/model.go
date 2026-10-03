@@ -367,11 +367,21 @@ func (r Ref) Key(namespace, kind string) string {
 }
 
 type Diagnostic struct {
-	Code    string `yaml:"code"`
-	Path    string `yaml:"path,omitempty"`
-	Package string `yaml:"package,omitempty"`
-	Line    int    `yaml:"line,omitempty"`
-	Message string `yaml:"message"`
+	Code         string           `yaml:"code"`
+	Path         string           `yaml:"path,omitempty"`
+	Package      string           `yaml:"package,omitempty"`
+	Line         int              `yaml:"line,omitempty"`
+	Message      string           `yaml:"message"`
+	PolicyResult *PolicyResultRef `yaml:"policyResult,omitempty"`
+}
+
+// PolicyResultRef identifies an ordinary policy evaluation that produced a
+// diagnostic. It is deliberately a reference rather than an embedded result,
+// so diagnostics do not create a second owner for policy state.
+type PolicyResultRef struct {
+	APIVersion string `yaml:"apiVersion"`
+	Constraint string `yaml:"constraint"`
+	Subject    string `yaml:"subject"`
 }
 
 type Graph struct {

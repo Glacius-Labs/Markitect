@@ -72,6 +72,15 @@ func TestSameTargetComparesResolvedGraphIdentityAndEmitsTrace(t *testing.T) {
 	if result.Status != PolicyFailed || result.Comparison == nil || result.Comparison.Left.Target == result.Comparison.Right.Target {
 		t.Fatalf("different canonical targets did not fail: %+v", result)
 	}
+	found := false
+	for _, diagnostic := range graph.Diagnostics {
+		if diagnostic.Code == "constraint.feature-module-agrees" {
+			found = diagnostic.PolicyResult != nil && diagnostic.PolicyResult.APIVersion == sameTargetAPI && diagnostic.PolicyResult.Constraint == result.Constraint && diagnostic.PolicyResult.Subject == result.Subject
+		}
+	}
+	if !found {
+		t.Fatalf("same-target policy failure diagnostic lacks its exact result identity: %+v", graph.Diagnostics)
+	}
 }
 
 func TestSameTargetRejectsInvalidPathStructurallyWithoutPolicyResult(t *testing.T) {
@@ -83,6 +92,11 @@ func TestSameTargetRejectsInvalidPathStructurallyWithoutPolicyResult(t *testing.
 	}
 	if result := policyResultFor(graph, "feature-module-agrees", "app/equality.tests.example/v1/UseCase/CreateOrder"); result.Constraint != "" {
 		t.Fatalf("invalid path must not create a waivable PolicyResult: %+v", result)
+	}
+	for _, diagnostic := range graph.Diagnostics {
+		if diagnostic.Code == "constraint.path" && diagnostic.PolicyResult != nil {
+			t.Fatalf("structural same-target traversal failure was tagged as policy failure: %+v", diagnostic)
+		}
 	}
 	if len(graph.PolicyDependencies) == 0 {
 		t.Fatal("invalid traversal must retain dependency evidence for the reached prefix")

@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"path"
+	"reflect"
 	"sort"
 	"strings"
 
@@ -158,6 +159,42 @@ func (p *Project) packageVersion(origin string) string {
 		return manifest.Spec.Version
 	}
 	return ""
+}
+
+// StructuralDiagnostics returns findings that make the normalized graph
+// untrustworthy for analysis. An ordinary policy failure is excluded only
+// when its explicit result identity resolves to an actual failed result in
+// this graph; diagnostic codes and names are not used to classify it.
+func (p *Project) StructuralDiagnostics() []core.Diagnostic {
+	if p == nil {
+		return nil
+	}
+	failed := map[core.PolicyResultRef]bool{}
+	if p.Graph != nil {
+		for _, result := range p.Graph.PolicyResults {
+			if result.Status == core.PolicyFailed {
+				failed[core.PolicyResultRef{APIVersion: result.APIVersion, Constraint: result.Constraint, Subject: result.Subject}] = true
+			}
+		}
+	}
+	structural := make([]core.Diagnostic, 0, len(p.Diagnostics))
+	for _, diagnostic := range p.Diagnostics {
+		ref := diagnostic.PolicyResult
+		if ref != nil && failed[*ref] && p.Graph != nil && graphContainsDiagnostic(p.Graph.Diagnostics, diagnostic) {
+			continue
+		}
+		structural = append(structural, diagnostic)
+	}
+	return structural
+}
+
+func graphContainsDiagnostic(diagnostics []core.Diagnostic, candidate core.Diagnostic) bool {
+	for _, diagnostic := range diagnostics {
+		if reflect.DeepEqual(diagnostic, candidate) {
+			return true
+		}
+	}
+	return false
 }
 
 // inputKey keeps physical paths distinct from archive-relative paths without

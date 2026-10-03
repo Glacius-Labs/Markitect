@@ -13,6 +13,7 @@
 | [Engineering constitution](engineering-constitution.md) | Published v0.12.0 architecture-contract behavior, PolicyResults, exceptions, and proposal/adoption boundaries |
 | [Domain-language pressure test](design/domain-language-pressure.md) | What the current language can and cannot establish for modular DDD / vertical-slice contracts, with a bounded experiment |
 | [Resolved-target equality](design/resolved-target-equality.md) | Two-domain evidence, alternatives, finite v0.12.0 assertion semantics, provenance, impact and exception boundaries |
+| [Policy-failure analysis](design/policy-failure-analysis.md) | Unreleased source contract separating structural blockers from read-only Context/Impact inspection of ordinary policy failures |
 | [Source snapshots](source-snapshots.md) | Snapshot values, Git acquisition, identity, comparison, and compatibility boundaries |
 | [Operations](operations.md) | Development, verification, rendering, and release operations |
 | [Refinement decisions](refinement.md) | Product principles and deferred design choices |

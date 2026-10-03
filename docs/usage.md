@@ -4,6 +4,8 @@ This guide records the published v0.12.0 contract alongside its v0.11.0 baseline
 
 ## Project and resource model
 
+The source iteration after the real-code pilot adds explicit read-only policy-failure analysis, described below. It is not part of the published v0.12.0 executable; an installed binary needs a separately verified release before supporting this option.
+
 Markitect Projects declare YAML resources in configured content areas. The bundled AI-working Domain supplies `Text`, `Rule`, `Contract`, `Workflow`, `Skill`, and `Agent`. A Project may load additional versioned Domains from exact local snapshot-relative files or explicitly pinned package members through `spec.domains`; those definitions provide closed resource schemas, typed relations, and bounded constraints. `Project` declares topology and execution/output configuration. Each resource's API version and kind identify its Domain-qualified type. Namespaces and names are DNS labels. Paths, area imports, and resource declarations govern ownership and direct access.
 
 ### Define and load a Domain
@@ -314,6 +316,23 @@ For project-owned Codex, Claude, and shared entrypoints, declare `spec.targets` 
 | `licenses` | Print bundled third-party notices; works offline without a Project. |
 
 Existing-content imports are implemented and reviewed as scripts owned by the project being migrated. Markitect core does not include a migration command or presume source documentation structure.
+
+### Read-only analysis of failed policies (unreleased source)
+
+Ordinary `context` and `impact` remain strict. To investigate a structurally valid candidate whose ordinary PolicyResults fail, use the explicit `--analyze-policy-failures` option:
+
+```powershell
+markitect context --repo . --revision <candidate-commit> --api-version <domain-api> --namespace <namespace> --kind UseCase --name <name> --analyze-policy-failures
+markitect impact --repo . --base <base-commit> --revision <candidate-commit> --analyze-policy-failures
+```
+
+The output has an `analysis` marker with per-snapshot structural, policy and validation status, failed-result count, and configuration/model identity. A policy-failing candidate remains `validationStatus: failed`. **Retain stdout on exit 1:** completed analysis returns 1 if either analyzed snapshot has failed policies, including a failing base with a repaired candidate. It returns 0 only when analysis completed and neither side has unwaived failures. Invocation, acquisition or compilation errors use exit 2; structural diagnostic reports retain their failure exit and contain no Context/Impact analysis payload.
+
+Context follows the normal declared closure and includes its applicable PolicyResults, exact Domain/package inputs, declared files and relation `via` evidence. The header reports overall candidate status without adding unrelated failing subjects or documentation to the selected closure. Policy dependencies do not become Context edges. The diagnostic context digest binds its analysis status and normalized model identity.
+
+Impact retains `changed`, the conservative `affected` set and its `causes`. It additionally reports changed PolicyResults and their direct subjects separately, with both-side rule/source identities and the applicable selector/assertion. An absent result is represented as analysis-only `not-applicable`, with a reason distinguishing an undefined constraint, absent subject or unselected result; it is not a passed PolicyResult. Direct subjects describe evaluation changes, not a guaranteed implementation-change cohort. Package/configuration changes can still broaden the conservative set far beyond those subjects.
+
+Malformed schemas/resources, unresolved or wrong-kind references, relation bounds, prohibited cycles, invalid singleton traversal, input failures and invalid/stale exceptions block analysis. No exception is required to inspect an ordinary failure. Exceptions remain explicit governance decisions. `check`, `verify`, reconciliation and writes retain their strict behavior; this option is rejected for those commands and for `context --run`. Analysis is not acceptance or verification. See the [design contract](design/policy-failure-analysis.md) and the [preserved-bundle replay](../experiments/policy-failure-analysis/README.md).
 
 Content packages are loaded from exact committed archive bytes in the selected Project snapshot. Markitect does not fetch the `source` coordinate, resolve ranges, or load nested packages. An imported resource or Domain does not become active until explicitly selected; package resources are read-only. The package contract was introduced in v0.3.0 and remains part of the current source model; see [GitHub Releases](https://github.com/Glacius-Labs/Markitect/releases) for distributions that include it.
 
