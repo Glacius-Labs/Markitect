@@ -26,6 +26,7 @@ const (
 	semanticModelAPI  = "markitect.example.org/semantic-model/v1alpha1"
 	azureAPIVersion   = "7.1"
 	evidenceKind      = "captured-azure-devops-git-repository-default-branch"
+	maxCaptureBytes   = 1 << 20
 )
 
 type request struct {
@@ -201,9 +202,9 @@ func run(req request) result {
 		if pathErr != nil {
 			return incomplete(res, "capture-file-invalid", pathErr.Error())
 		}
-		data, readErr := os.ReadFile(path)
+		data, readErr := readCapture(path)
 		if readErr != nil {
-			return incomplete(res, "capture-file-missing", "cannot read staged capture "+mapping.CaptureFile)
+			return incomplete(res, "capture-file-invalid", mapping.CaptureFile+": "+readErr.Error())
 		}
 		_, repo, capErr := parseCapture(data, parameters, mapping)
 		if capErr != nil {
@@ -241,6 +242,9 @@ func run(req request) result {
 }
 
 func parseCapture(data []byte, params adapterParameters, mapping repositoryMapping) (capture, gitRepository, error) {
+	if err := rejectDuplicateJSONKeys(data); err != nil {
+		return capture{}, gitRepository{}, err
+	}
 	var cap capture
 	decoder := json.NewDecoder(bytes.NewReader(data))
 	if err := decoder.Decode(&cap); err != nil {
@@ -287,9 +291,70 @@ func validateRequestURL(raw string, params adapterParameters, mapping repository
 	if err != nil || org != params.Organization {
 		return errors.New("captured URL organization does not match the selected target")
 	}
-	query := u.Query()
-	if len(query) != 1 || query.Get("api-version") != azureAPIVersion {
+	query, err := url.ParseQuery(u.RawQuery)
+	if err != nil || len(query) != 1 || len(query["api-version"]) != 1 || query["api-version"][0] != azureAPIVersion {
 		return errors.New("captured URL must use exactly api-version=7.1")
+	}
+	return nil
+}
+
+// rejectDuplicateJSONKeys keeps object interpretation unambiguous without
+// rejecting provider fields this adapter does not consume.
+func rejectDuplicateJSONKeys(data []byte) error {
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	if err := walkJSONValue(decoder); err != nil {
+		return fmt.Errorf("invalid or ambiguous JSON capture: %w", err)
+	}
+	if _, err := decoder.Token(); err != io.EOF {
+		return errors.New("capture must contain exactly one JSON value")
+	}
+	return nil
+}
+
+func walkJSONValue(decoder *json.Decoder) error {
+	token, err := decoder.Token()
+	if err != nil {
+		return err
+	}
+	switch value := token.(type) {
+	case json.Delim:
+		switch value {
+		case '{':
+			seen := map[string]bool{}
+			for decoder.More() {
+				keyToken, err := decoder.Token()
+				if err != nil {
+					return err
+				}
+				key, ok := keyToken.(string)
+				if !ok {
+					return errors.New("JSON object key is not a string")
+				}
+				if seen[key] {
+					return fmt.Errorf("duplicate JSON object key %q", key)
+				}
+				seen[key] = true
+				if err := walkJSONValue(decoder); err != nil {
+					return err
+				}
+			}
+			end, err := decoder.Token()
+			if err != nil || end != json.Delim('}') {
+				return errors.New("unterminated JSON object")
+			}
+		case '[':
+			for decoder.More() {
+				if err := walkJSONValue(decoder); err != nil {
+					return err
+				}
+			}
+			end, err := decoder.Token()
+			if err != nil || end != json.Delim(']') {
+				return errors.New("unterminated JSON array")
+			}
+		default:
+			return fmt.Errorf("unexpected JSON delimiter %q", value)
+		}
 	}
 	return nil
 }
@@ -351,6 +416,32 @@ func safeCapturePath(relative string) (string, error) {
 		return "", errors.New("captureFile resolves outside staged inputs")
 	}
 	return resolved, nil
+}
+
+func readCapture(path string) ([]byte, error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+	info, err := file.Stat()
+	if err != nil {
+		return nil, err
+	}
+	if !info.Mode().IsRegular() {
+		return nil, errors.New("captureFile must be a regular file")
+	}
+	if info.Size() > maxCaptureBytes {
+		return nil, fmt.Errorf("captureFile exceeds %d bytes", maxCaptureBytes)
+	}
+	data, err := io.ReadAll(io.LimitReader(file, maxCaptureBytes+1))
+	if err != nil {
+		return nil, err
+	}
+	if len(data) > maxCaptureBytes {
+		return nil, fmt.Errorf("captureFile exceeds %d bytes", maxCaptureBytes)
+	}
+	return data, nil
 }
 func targetID(organization, projectID string) string {
 	return "azure-devops://" + organization + "/" + strings.ToLower(projectID)

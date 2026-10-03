@@ -25,7 +25,9 @@ go build -o .artifacts/adapters/markitect-adapter-azure-devops.exe ./cmd/markite
 Each `captureFile` must be listed in the command adapter's exact `config.inputs`
 so Markitect stages its fixed-snapshot bytes for the adapter. Preserve the
 HTTP method, full request URL including `api-version`, status code, and JSON
-response body in this envelope:
+response body in this envelope. Capture files must be regular files no larger
+than 1 MiB. Duplicate JSON object keys are rejected to keep envelope and body
+interpretation unambiguous; other Azure response fields remain allowed.
 
 ```json
 {

@@ -20,7 +20,11 @@ metadata. `plan` reports conformance findings and always has an empty
 completed plan. Negative evidence includes malformed or multiple JSON values,
 wrong URL/body identities, non-200 responses, unsupported API versions,
 ambiguous mappings, missing captures, malformed branch values, and staged-path
-escapes.
+escapes. Capture inputs must be regular files of at most 1 MiB. Duplicate JSON
+object keys and repeated `api-version` query parameters are rejected, while
+unconsumed Azure response fields remain accepted. The adapter test suite also
+round-trips Markitect's real `app.AdapterRequest` and `app.SemanticModel` DTOs
+through the adapter wire decoder to check the existing SPI boundary.
 
 ## Evidence boundary
 

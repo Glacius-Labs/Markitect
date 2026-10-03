@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/Glacius-Labs/Markitect/internal/app"
 	"go.yaml.in/yaml/v3"
 )
 
@@ -58,8 +59,11 @@ func TestCaptureIdentityAndAPIErrorsAreIncomplete(t *testing.T) {
 		{"wrong response project", stringsReplace(validCapture("refs/heads/main"), `"project":{"id":"`+projectID+`"}`, `"project":{"id":"33333333-3333-4333-8333-333333333333"}`), "capture-invalid"},
 		{"wrong request project", stringsReplace(validCapture("refs/heads/main"), "/"+projectID+"/_apis", "/33333333-3333-4333-8333-333333333333/_apis"), "capture-invalid"},
 		{"wrong API version", stringsReplace(validCapture("refs/heads/main"), "api-version=7.1", "api-version=7.0"), "capture-invalid"},
+		{"duplicate API versions", stringsReplace(validCapture("refs/heads/main"), "api-version=7.1", "api-version=7.1&api-version=7.0"), "capture-invalid"},
 		{"unauthorized", stringsReplace(validCapture("refs/heads/main"), `"status":200`, `"status":401`), "capture-invalid"},
 		{"malformed JSON", `{not-json`, "capture-invalid"},
+		{"duplicate envelope status", stringsReplace(validCapture("refs/heads/main"), `"status":200`, `"status":200,"status":401`), "capture-invalid"},
+		{"duplicate body branch", stringsReplace(validCapture("refs/heads/main"), `"defaultBranch":"refs/heads/main"`, `"defaultBranch":"refs/heads/main","defaultBranch":"refs/heads/release"`), "capture-invalid"},
 		{"missing branch", stringsReplace(validCapture("refs/heads/main"), `,"defaultBranch":"refs/heads/main"`, ""), "capture-invalid"},
 	}
 	for _, test := range tests {
@@ -72,6 +76,42 @@ func TestCaptureIdentityAndAPIErrorsAreIncomplete(t *testing.T) {
 			})
 		})
 	}
+}
+
+func TestUnknownAzureResponseFieldsRemainAllowed(t *testing.T) {
+	body := stringsReplace(validCapture("refs/heads/main"), `"name":"source"`, `"name":"source","extra":{"serverField":"retained-by-capture"}`)
+	withCapture(t, body, func(req request) {
+		if got := run(req); got.Status != "complete" {
+			t.Fatalf("result = %#v", got)
+		}
+	})
+}
+
+func TestOversizedCaptureIsRejectedBeforeParsing(t *testing.T) {
+	withCapture(t, validCapture("refs/heads/main"), func(req request) {
+		if err := os.WriteFile("repo.json", make([]byte, maxCaptureBytes+1), 0o600); err != nil {
+			t.Fatal(err)
+		}
+		got := run(req)
+		if got.Status != "incomplete" || !hasFinding(got, "capture-file-invalid") {
+			t.Fatalf("result = %#v", got)
+		}
+	})
+}
+
+func TestCaptureMustBeARegularFile(t *testing.T) {
+	withCapture(t, validCapture("refs/heads/main"), func(req request) {
+		if err := os.Remove("repo.json"); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.Mkdir("repo.json", 0o700); err != nil {
+			t.Fatal(err)
+		}
+		got := run(req)
+		if got.Status != "incomplete" || !hasFinding(got, "capture-file-invalid") {
+			t.Fatalf("result = %#v", got)
+		}
+	})
 }
 
 func TestWrongTargetAndAmbiguousMappingsFailClosed(t *testing.T) {
@@ -144,6 +184,37 @@ func TestCapturePathCannotEscapeStagedInputs(t *testing.T) {
 	if _, err := safeCapturePath(filepath.Join("..", "outside.json")); err == nil {
 		t.Fatal("path escape accepted")
 	}
+}
+
+func TestRealApplicationAdapterRequestUsesTheAdapterSPI(t *testing.T) {
+	withCapture(t, validCapture("refs/heads/main"), func(_ request) {
+		model := app.SemanticModel{
+			APIVersion: semanticModelAPI, ModelDigest: "model-digest", ValidationStatus: "passed",
+			Resources: []app.ModelResource{{Identity: app.ModelIdentity{Kind: "GitRepository", Key: resourceKey}, Data: map[string]any{"defaultBranch": "refs/heads/main", "otherCanonicalField": "untouched"}, Source: app.ModelSource{Path: "domains/repositories.yaml", Digest: "source-digest"}}},
+		}
+		adapter := app.AdapterIdentity{
+			Name: "azure-git-metadata", Type: "command", Version: "v0.1.0", Target: targetID(organization, projectID),
+			Parameters: map[string]any{
+				"apiVersion": azureAPIVersion, "organization": organization, "projectId": projectID,
+				"repositories": []any{map[string]any{"resource": resourceKey, "repositoryId": repositoryID, "captureFile": "repo.json"}},
+			},
+		}
+		wire, err := yaml.Marshal(app.AdapterRequest{APIVersion: app.AdapterRequestVersion, Action: "observe", Adapter: adapter, Model: model})
+		if err != nil {
+			t.Fatal(err)
+		}
+		var decoded request
+		if err := yaml.Unmarshal(wire, &decoded); err != nil {
+			t.Fatal(err)
+		}
+		if decoded.Model.Resources[0].Data["otherCanonicalField"] != "untouched" {
+			t.Fatalf("full model data lost across SPI: %#v", decoded.Model.Resources[0].Data)
+		}
+		got := run(decoded)
+		if got.Status != "complete" || got.Observed == nil || got.Observed.Repositories[0].DefaultBranch != "refs/heads/main" {
+			t.Fatalf("SPI result = %#v", got)
+		}
+	})
 }
 
 func withCapture(t *testing.T, content string, check func(request)) {
