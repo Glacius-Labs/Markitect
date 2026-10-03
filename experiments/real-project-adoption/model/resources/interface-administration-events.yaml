@@ -1,0 +1,10 @@
+apiVersion: architecture.mymeetings.example/v1alpha1
+kind: Interface
+metadata:
+  name: administration-events
+  namespace: architecture
+spec:
+  summary: Administration integration-event contract assembly; one accepted-proposal event is declared.
+  provider: {apiVersion: architecture.mymeetings.example/v1alpha1, kind: Module, name: administration, namespace: architecture}
+  sourceFiles:
+    - src/Modules/Administration/IntegrationEvents/MeetingGroupProposals/MeetingGroupProposalAcceptedIntegrationEvent.cs

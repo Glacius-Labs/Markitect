@@ -1,0 +1,11 @@
+apiVersion: architecture.mymeetings.example/v1alpha1
+kind: Interface
+metadata:
+  name: payments-events
+  namespace: architecture
+spec:
+  summary: Payments integration-event contracts for fee payment and subscription expiration.
+  provider: {apiVersion: architecture.mymeetings.example/v1alpha1, kind: Module, name: payments, namespace: architecture}
+  sourceFiles:
+    - src/Modules/Payments/IntegrationEvents/MeetingFeePaidIntegrationEvent.cs
+    - src/Modules/Payments/IntegrationEvents/SubscriptionExpirationDateChangedIntegrationEvent.cs

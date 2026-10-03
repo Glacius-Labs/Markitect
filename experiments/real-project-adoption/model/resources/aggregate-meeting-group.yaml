@@ -1,0 +1,10 @@
+apiVersion: architecture.mymeetings.example/v1alpha1
+kind: Aggregate
+metadata:
+  name: meeting-group
+  namespace: architecture
+spec:
+  summary: MeetingGroup aggregate root creates Meetings and manages group membership.
+  module: {apiVersion: architecture.mymeetings.example/v1alpha1, kind: Module, name: meetings, namespace: architecture}
+  sourceFiles:
+    - src/Modules/Meetings/Domain/MeetingGroups/MeetingGroup.cs

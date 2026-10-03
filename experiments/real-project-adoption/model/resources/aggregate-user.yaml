@@ -1,0 +1,10 @@
+apiVersion: architecture.mymeetings.example/v1alpha1
+kind: Aggregate
+metadata:
+  name: user
+  namespace: architecture
+spec:
+  summary: User aggregate root owns authentication identity and credentials.
+  module: {apiVersion: architecture.mymeetings.example/v1alpha1, kind: Module, name: user-access, namespace: architecture}
+  sourceFiles:
+    - src/Modules/UserAccess/Domain/Users/User.cs

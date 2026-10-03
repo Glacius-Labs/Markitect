@@ -1,0 +1,11 @@
+apiVersion: architecture.mymeetings.example/v1alpha1
+kind: Handler
+metadata:
+  name: get-member
+  namespace: architecture
+spec:
+  summary: Read handler for Administration member details.
+  sourceFiles:
+    - src/Modules/Administration/Application/Members/GetMember/GetMemberQueryHandler.cs
+  common:
+    []

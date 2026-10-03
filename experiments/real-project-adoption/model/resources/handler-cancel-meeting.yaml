@@ -1,0 +1,11 @@
+apiVersion: architecture.mymeetings.example/v1alpha1
+kind: Handler
+metadata:
+  name: cancel-meeting
+  namespace: architecture
+spec:
+  summary: Command handler that cancels a Meeting.
+  sourceFiles:
+    - src/Modules/Meetings/Application/Meetings/CancelMeeting/CancelMeetingCommandHandler.cs
+  common:
+    []

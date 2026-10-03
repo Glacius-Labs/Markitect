@@ -1,0 +1,13 @@
+{
+  "checkedMarkdownLinks": 47,
+  "commandArchiveEntriesVerified": 173,
+  "bundleDigestVerified": true,
+  "frozenContextAndDiscoveryDigestsVerified": true,
+  "secretShapeScannedEntries": 318,
+  "referencedHttpHosts": [
+    "api.nuget.org",
+    "github.com"
+  ],
+  "issues": [],
+  "limits": "Checks narrow credential patterns and relative links, not a proof that all sensitive material is absent. Public selected-source boundaries reviewed separately; bundle was separately Git-verified and cloned."
+}

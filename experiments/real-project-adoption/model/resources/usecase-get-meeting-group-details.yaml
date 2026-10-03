@@ -1,0 +1,19 @@
+apiVersion: architecture.mymeetings.example/v1alpha1
+kind: UseCase
+metadata:
+  name: get-meeting-group-details
+  namespace: architecture
+  labels:
+    feature-ownership: required
+spec:
+  intent: Query
+  summary: Read details for a MeetingGroup.
+  module: {apiVersion: architecture.mymeetings.example/v1alpha1, kind: Module, name: meetings, namespace: architecture}
+  feature: {apiVersion: architecture.mymeetings.example/v1alpha1, kind: Feature, name: meeting-groups, namespace: architecture}
+  handler: {apiVersion: architecture.mymeetings.example/v1alpha1, kind: Handler, name: get-meeting-group-details, namespace: architecture}
+  sourceFiles:
+    - src/Modules/Meetings/Application/MeetingGroups/GetMeetingGroupDetails/GetMeetingGroupDetailsQuery.cs
+  aggregates:
+    - {apiVersion: architecture.mymeetings.example/v1alpha1, kind: Aggregate, name: meeting-group, namespace: architecture}
+  validators:
+    []

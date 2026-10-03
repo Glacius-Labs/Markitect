@@ -1,0 +1,11 @@
+apiVersion: architecture.mymeetings.example/v1alpha1
+kind: Handler
+metadata:
+  name: authenticate
+  namespace: architecture
+spec:
+  summary: Command handler that authenticates a User.
+  sourceFiles:
+    - src/Modules/UserAccess/Application/Authentication/Authenticate/AuthenticateCommandHandler.cs
+  common:
+    []

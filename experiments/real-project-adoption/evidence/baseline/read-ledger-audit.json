@@ -1,0 +1,177 @@
+{
+  "finding": "Baseline logging mixed hash methods: some records hash BOM-decoded UTF-8 content; others hash raw files while their byte count excludes the BOM. All are reconciled below; the original ledger is unchanged. Source-manifest binds raw upstream bytes. Recorded content bytes and raw-file bytes are different measurements.",
+  "records": [
+    {
+      "path": "PILOT_BASELINE.md",
+      "recordedUTF8Bytes": 514,
+      "recordedDigest": "5f56310ef2ae0851a0e62568f24a761534b298b95993139b7d1e057459dfb4b4",
+      "rawFileBytes": 514,
+      "rawFileSHA256": "5f56310ef2ae0851a0e62568f24a761534b298b95993139b7d1e057459dfb4b4",
+      "utf8BOM": false,
+      "recordMatchesBOMDecodedContent": true,
+      "recordMatchesRawFile": true
+    },
+    {
+      "path": "LICENSE",
+      "recordedUTF8Bytes": 1091,
+      "recordedDigest": "e7e663ebd3dd4d6987f539743dba33750576870d51c2192500ea45d06adffa80",
+      "rawFileBytes": 1091,
+      "rawFileSHA256": "e7e663ebd3dd4d6987f539743dba33750576870d51c2192500ea45d06adffa80",
+      "utf8BOM": false,
+      "recordMatchesBOMDecodedContent": true,
+      "recordMatchesRawFile": true
+    },
+    {
+      "path": "src/Modules/Meetings/Application/Meetings/GetMeetingAttendees/GetMeetingAttendeesQuery.cs",
+      "recordedUTF8Bytes": 420,
+      "recordedDigest": "4592cabb7dad16e0023c9449b5c036668e7e4bb35d74dc0caaf1a98d0a1b8769",
+      "rawFileBytes": 423,
+      "rawFileSHA256": "435532f99c8244bcdadb106b906a4f8e02bc1365f308d4f47d2ad5de73e7fc3e",
+      "utf8BOM": true,
+      "recordMatchesBOMDecodedContent": true,
+      "recordMatchesRawFile": false
+    },
+    {
+      "path": "src/Modules/Meetings/Application/Meetings/GetMeetingAttendees/GetMeetingAttendeesQueryHandler.cs",
+      "recordedUTF8Bytes": 2033,
+      "recordedDigest": "4f86bd4a5926e3dd8ef668889e611c0dd307c86945eb011335e138eab7dcfa9d",
+      "rawFileBytes": 2036,
+      "rawFileSHA256": "996f50dd9cafe4df62d3ccc49f92be578fae5e851ffb8b8960b8a8284730d625",
+      "utf8BOM": true,
+      "recordMatchesBOMDecodedContent": true,
+      "recordMatchesRawFile": false
+    },
+    {
+      "path": "src/Modules/Meetings/Application/Meetings/GetMeetingAttendees/MeetingAttendeeDto.cs",
+      "recordedUTF8Bytes": 441,
+      "recordedDigest": "6cd1126759e14f1793adf815edd5e3561899e32e4aaec7631614fcefe5556d8c",
+      "rawFileBytes": 444,
+      "rawFileSHA256": "c276b6000c2b22f6f40b06685d5112ad76b005c7cd673cf137ba408629b4c2c7",
+      "utf8BOM": true,
+      "recordMatchesBOMDecodedContent": true,
+      "recordMatchesRawFile": false
+    },
+    {
+      "path": "src/Modules/Meetings/Application/Configuration/Queries/IQueryHandler.cs",
+      "recordedUTF8Bytes": 331,
+      "recordedDigest": "fdf29212a2082908efc6a5227289aa49ef182f9803da32327a28c20479e41b58",
+      "rawFileBytes": 334,
+      "rawFileSHA256": "044bc576309f53ebaf7d82908937c65e997bf588dc6ff110fc4c0aebb7cafccb",
+      "utf8BOM": true,
+      "recordMatchesBOMDecodedContent": true,
+      "recordMatchesRawFile": false
+    },
+    {
+      "path": "src/Modules/Meetings/Application/CompanyName.MyMeetings.Modules.Meetings.Application.csproj",
+      "recordedUTF8Bytes": 639,
+      "recordedDigest": "2db1eea45328b58c97f0027fedd8b395bd15313ae07f08e4ea55ce914866dc1b",
+      "rawFileBytes": 642,
+      "rawFileSHA256": "2f0d3e0797c1fdf2c35bc4f61d1bce373dff83fac85236fb252895dd2cc61249",
+      "utf8BOM": true,
+      "recordMatchesBOMDecodedContent": true,
+      "recordMatchesRawFile": false
+    },
+    {
+      "path": "docs/architecture-decision-log/0009-use-2-layered-architectural-style-for-reads.md",
+      "recordedUTF8Bytes": 1011,
+      "recordedDigest": "426c1b3a6f8c629a6224b2c99fa5216b346c03af5ae70446d6a86095cd871734",
+      "rawFileBytes": 1011,
+      "rawFileSHA256": "426c1b3a6f8c629a6224b2c99fa5216b346c03af5ae70446d6a86095cd871734",
+      "utf8BOM": false,
+      "recordMatchesBOMDecodedContent": true,
+      "recordMatchesRawFile": true
+    },
+    {
+      "path": "src/BuildingBlocks/Application/Data/ISqlConnectionFactory.cs",
+      "recordedUTF8Bytes": 283,
+      "recordedDigest": "378c0edd5372afa950270a4f348da6126d30323f03c1afbfe297503d3b2774c0",
+      "rawFileBytes": 286,
+      "rawFileSHA256": "378c0edd5372afa950270a4f348da6126d30323f03c1afbfe297503d3b2774c0",
+      "utf8BOM": true,
+      "recordMatchesBOMDecodedContent": false,
+      "recordMatchesRawFile": true
+    },
+    {
+      "path": "src/Modules/Meetings/Application/Contracts/QueryBase.cs",
+      "recordedUTF8Bytes": 361,
+      "recordedDigest": "6d622a598078f1d9c54c2a852ab303ec53ba4da1a14e0bd4c81199757068202f",
+      "rawFileBytes": 364,
+      "rawFileSHA256": "6d622a598078f1d9c54c2a852ab303ec53ba4da1a14e0bd4c81199757068202f",
+      "utf8BOM": true,
+      "recordMatchesBOMDecodedContent": false,
+      "recordMatchesRawFile": true
+    },
+    {
+      "path": "src/Modules/Meetings/Application/MeetingGroups/GetMeetingGroupDetails/GetMeetingGroupDetailsQueryHandler.cs",
+      "recordedUTF8Bytes": 2828,
+      "recordedDigest": "cf5902cf36819db75eae9b92b6f4c568392252f60b2291311e4cef89a35adb1e",
+      "rawFileBytes": 2831,
+      "rawFileSHA256": "cf5902cf36819db75eae9b92b6f4c568392252f60b2291311e4cef89a35adb1e",
+      "utf8BOM": true,
+      "recordMatchesBOMDecodedContent": false,
+      "recordMatchesRawFile": true
+    },
+    {
+      "path": "src/Modules/Meetings/Application/Countries/GetAllCountriesQueryHandler.cs",
+      "recordedUTF8Bytes": 1251,
+      "recordedDigest": "143ed0c242162a2a9a1106996d7832ffaf7dda696308d4701388795a34b66054",
+      "rawFileBytes": 1254,
+      "rawFileSHA256": "143ed0c242162a2a9a1106996d7832ffaf7dda696308d4701388795a34b66054",
+      "utf8BOM": true,
+      "recordMatchesBOMDecodedContent": false,
+      "recordMatchesRawFile": true
+    },
+    {
+      "path": "src/Modules/Meetings/Application/Meetings/GetMeetingAttendeeCount/GetMeetingAttendeeCountQuery.cs",
+      "recordedUTF8Bytes": 399,
+      "recordedDigest": "55f9a4802a98204afd758054721ffb88eeb09470615a000d52c946178f65e66f",
+      "rawFileBytes": 399,
+      "rawFileSHA256": "55f9a4802a98204afd758054721ffb88eeb09470615a000d52c946178f65e66f",
+      "utf8BOM": false,
+      "recordMatchesBOMDecodedContent": true,
+      "recordMatchesRawFile": true
+    },
+    {
+      "path": "src/Modules/Meetings/Application/Meetings/GetMeetingAttendeeCount/GetMeetingAttendeeCountQueryHandler.cs",
+      "recordedUTF8Bytes": 1293,
+      "recordedDigest": "87eaeea022f82c651e080d040f1c8d225ffbfc5ba2fba53afbfb59d006c91fec",
+      "rawFileBytes": 1293,
+      "rawFileSHA256": "87eaeea022f82c651e080d040f1c8d225ffbfc5ba2fba53afbfb59d006c91fec",
+      "utf8BOM": false,
+      "recordMatchesBOMDecodedContent": true,
+      "recordMatchesRawFile": true
+    },
+    {
+      "path": "src/global.json",
+      "recordedUTF8Bytes": 113,
+      "recordedDigest": "8dc87e6f68213f4444f20306d8057b48947550912e25a5b897702a51eea23d95",
+      "rawFileBytes": 113,
+      "rawFileSHA256": "8dc87e6f68213f4444f20306d8057b48947550912e25a5b897702a51eea23d95",
+      "utf8BOM": false,
+      "recordMatchesBOMDecodedContent": true,
+      "recordMatchesRawFile": true
+    },
+    {
+      "path": "src/Directory.Build.props",
+      "recordedUTF8Bytes": 1905,
+      "recordedDigest": "35658597595b1283540e5c2b38d6e5a70f83b0e8843f9358185af14fbb725c42",
+      "rawFileBytes": 1908,
+      "rawFileSHA256": "35658597595b1283540e5c2b38d6e5a70f83b0e8843f9358185af14fbb725c42",
+      "utf8BOM": true,
+      "recordMatchesBOMDecodedContent": false,
+      "recordMatchesRawFile": true
+    },
+    {
+      "path": "src/Directory.Packages.props",
+      "recordedUTF8Bytes": 2459,
+      "recordedDigest": "1247510f1eeebc6407e8c242b9896d7d84359f0d738035da9b1d53983796d448",
+      "rawFileBytes": 2462,
+      "rawFileSHA256": "1247510f1eeebc6407e8c242b9896d7d84359f0d738035da9b1d53983796d448",
+      "utf8BOM": true,
+      "recordMatchesBOMDecodedContent": false,
+      "recordMatchesRawFile": true
+    }
+  ],
+  "rawFileReadBytes": 17405,
+  "recordedContentReadBytes": 17372
+}

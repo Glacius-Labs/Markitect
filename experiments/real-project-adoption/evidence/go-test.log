@@ -1,0 +1,21 @@
+ok  	github.com/Glacius-Labs/Markitect/cmd/markitect	44.752s
+ok  	github.com/Glacius-Labs/Markitect/cmd/markitect-adapter-dotnet	11.072s
+ok  	github.com/Glacius-Labs/Markitect/cmd/markitect-release	0.498s
+ok  	github.com/Glacius-Labs/Markitect/examples	33.124s
+?   	github.com/Glacius-Labs/Markitect/examples/documentation/docs/implementation/src	[no test files]
+?   	github.com/Glacius-Labs/Markitect/examples/engineering-discovery	[no test files]
+ok  	github.com/Glacius-Labs/Markitect/experiments/mcp-pilot	1.236s
+ok  	github.com/Glacius-Labs/Markitect/integration	0.830s
+ok  	github.com/Glacius-Labs/Markitect/internal/app	51.162s
+ok  	github.com/Glacius-Labs/Markitect/internal/authoring	0.465s
+ok  	github.com/Glacius-Labs/Markitect/internal/contentpackage	0.456s
+ok  	github.com/Glacius-Labs/Markitect/internal/core	0.479s
+ok  	github.com/Glacius-Labs/Markitect/internal/format	0.516s
+ok  	github.com/Glacius-Labs/Markitect/internal/inputs	0.363s
+?   	github.com/Glacius-Labs/Markitect/internal/licenses	[no test files]
+ok  	github.com/Glacius-Labs/Markitect/internal/markdownlinks	0.348s
+ok  	github.com/Glacius-Labs/Markitect/internal/publish	10.043s
+ok  	github.com/Glacius-Labs/Markitect/internal/release	0.928s
+ok  	github.com/Glacius-Labs/Markitect/internal/render	0.320s
+ok  	github.com/Glacius-Labs/Markitect/internal/snapshot	0.299s
+ok  	github.com/Glacius-Labs/Markitect/internal/source	6.537s

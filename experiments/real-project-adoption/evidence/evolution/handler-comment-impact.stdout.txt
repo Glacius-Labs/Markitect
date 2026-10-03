@@ -1,0 +1,30 @@
+base: c507172b24da9005904422c03cc3d66a2b5efcec
+candidate: fdc32ac004d17e3b4e91443b7c59fe035ce0d7b3
+changed:
+    - src/Modules/Meetings/Application/Meetings/AddMeetingAttendee/AddMeetingAttendeeCommandHandler.cs
+affected:
+    - architecture/architecture.mymeetings.example/v1alpha1/Handler/add-meeting-attendee
+    - architecture/architecture.mymeetings.example/v1alpha1/UseCase/add-meeting-attendee
+reason: Union of old and new invalidation closures; configuration, Domain definitions, inventory, collection policies, uncertain context effects or unowned inputs conservatively affect all resources. See causes for this comparison.
+causes:
+    - kind: declared-input
+      path: src/Modules/Meetings/Application/Meetings/AddMeetingAttendee/AddMeetingAttendeeCommandHandler.cs
+      resource: architecture/architecture.mymeetings.example/v1alpha1/Handler/add-meeting-attendee
+    - kind: invalidation
+      path: resources/usecase-add-meeting-attendee.yaml
+      resource: architecture/architecture.mymeetings.example/v1alpha1/UseCase/add-meeting-attendee
+      from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/add-meeting-attendee
+      to: architecture/architecture.mymeetings.example/v1alpha1/Handler/add-meeting-attendee
+      relation: hasHandler
+      domainApiVersion: architecture.mymeetings.example/v1alpha1
+      line: 1
+      snapshot: base
+    - kind: invalidation
+      path: resources/usecase-add-meeting-attendee.yaml
+      resource: architecture/architecture.mymeetings.example/v1alpha1/UseCase/add-meeting-attendee
+      from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/add-meeting-attendee
+      to: architecture/architecture.mymeetings.example/v1alpha1/Handler/add-meeting-attendee
+      relation: hasHandler
+      domainApiVersion: architecture.mymeetings.example/v1alpha1
+      line: 1
+      snapshot: candidate

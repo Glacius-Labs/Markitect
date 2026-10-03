@@ -1,0 +1,23 @@
+{
+  "finding": "Cold agent relative file-edit operations accidentally created three parent-worktree artifacts. They were never staged as Markitect product files; preserved here and removed individually after path verification. No parent Core changes or architecture hints were involved. Adopter implementation/context remained the measured trial. This is an operator isolation failure, not a Markitect policy result.",
+  "files": [
+    {
+      "path": "resources/usecase-get-meeting-attendee-count.yaml",
+      "sha256": "91af040ed0d355dc0f1a0e8b4903b018c5fe39338a658bdbd6fb03196a90cbee",
+      "bytes": 984,
+      "sameDecodedTextAsAdopter": true
+    },
+    {
+      "path": "src/Modules/Meetings/Application/Meetings/GetMeetingAttendeeCount/GetMeetingAttendeeCountQuery.cs",
+      "sha256": "265bdab8f56e2905e7add9f971d73cdb0f88863511943673cdccd3b3d4601e82",
+      "bytes": 402,
+      "sameDecodedTextAsAdopter": true
+    },
+    {
+      "path": "src/Modules/Meetings/Application/Meetings/GetMeetingAttendeeCount/GetMeetingAttendeeCountQueryHandler.cs",
+      "sha256": "9bfb502c858a57fdafb5d2ea852fd23af4969107be0387ad2fbd3e0cc4b45ca9",
+      "bytes": 1292,
+      "sameDecodedTextAsAdopter": true
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+apiVersion: architecture.mymeetings.example/v1alpha1
+kind: Common
+metadata:
+  name: unit-of-work
+  namespace: architecture
+spec:
+  summary: Shared infrastructure abstraction for committing unit-of-work changes.
+  owner: {apiVersion: architecture.mymeetings.example/v1alpha1, kind: Core, name: core, namespace: architecture}
+  sourceFiles:
+    - src/BuildingBlocks/Infrastructure/IUnitOfWork.cs

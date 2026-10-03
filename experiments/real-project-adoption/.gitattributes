@@ -1,0 +1,5 @@
+# Captured evidence and the reviewed discovery dossier bind exact file bytes.
+# Preserve their line endings across Git checkouts; do not renormalize them.
+evidence/** -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+discovery/candidate.md -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+discovery/evidence.yaml -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol

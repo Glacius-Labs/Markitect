@@ -1,0 +1,19 @@
+apiVersion: architecture.mymeetings.example/v1alpha1
+kind: UseCase
+metadata:
+  name: create-price-list-item
+  namespace: architecture
+  labels:
+    feature-ownership: required
+spec:
+  intent: Command
+  summary: Create a reusable price-list item.
+  module: {apiVersion: architecture.mymeetings.example/v1alpha1, kind: Module, name: payments, namespace: architecture}
+  feature: {apiVersion: architecture.mymeetings.example/v1alpha1, kind: Feature, name: price-list, namespace: architecture}
+  handler: {apiVersion: architecture.mymeetings.example/v1alpha1, kind: Handler, name: create-price-list-item, namespace: architecture}
+  sourceFiles:
+    - src/Modules/Payments/Application/PriceListItems/CreatePriceListItem/CreatePriceListItemCommand.cs
+  aggregates:
+    []
+  validators:
+    []

@@ -1,0 +1,14 @@
+{
+  "upstreamCommit": "91c8ef24b4cb6ef558c95d8267fa07d68c7059f8",
+  "baselineRevision": "ec01cb6805f93c8a4dbe37efe2a129a58a7ed28d",
+  "assistedRevision": "fd94a689aab857704c3a4a45ac2abe0fc0e3185c",
+  "filesCompared": 646,
+  "workingTreeSelectionBytes": 711461,
+  "upstreamGitBlobBytes": 694557,
+  "frozenArmGitBlobBytes": 693095,
+  "baselineVersusAssistedByteMismatches": [],
+  "upstreamVersusFrozenRawMismatches": 47,
+  "upstreamVersusFrozenAfterCRLFNormalizationMismatches": [],
+  "explanation": "The working-tree selection copied646files byte-for-byte including platform CRLF. New subset Git repositories normalize line endings; both frozen arms are byte-identical for all retained original paths. Forty-seven upstream Git blobs differ only in CRLF/LF representation; no source content difference remains after newline normalization. Manifest hashes describe working-tree copies, not committed blob bytes.",
+  "method": "git cat-file --batch byte/hash audit against the exact original upstream, baseline and assisted commits"
+}

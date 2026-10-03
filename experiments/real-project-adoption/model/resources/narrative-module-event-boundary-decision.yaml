@@ -1,0 +1,10 @@
+apiVersion: architecture.mymeetings.example/v1alpha1
+kind: Narrative
+metadata:
+  name: module-event-boundary-decision
+  namespace: architecture
+spec:
+  summary: Human-owned ADR records the intended event-based inter-module communication boundary.
+  owner: {apiVersion: architecture.mymeetings.example/v1alpha1, kind: Module, name: meetings, namespace: architecture}
+  sourceFiles:
+    - docs/architecture-decision-log/0014-event-driven-communication-between-modules.md

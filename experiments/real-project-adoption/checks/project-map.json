@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "upstreamCommit": "91c8ef24b4cb6ef558c95d8267fa07d68c7059f8",
+  "sourceRoot": ".",
+  "configuration": "Debug",
+  "allowedCrossModuleTargetLayers": ["IntegrationEvents"],
+  "projects": [
+    {"id":"architecture.core.application","owner":"architecture.core","ownerKind":"core","layer":"Application","path":"src/BuildingBlocks/Application/CompanyName.MyMeetings.BuildingBlocks.Application.csproj"},
+    {"id":"architecture.core.domain","owner":"architecture.core","ownerKind":"core","layer":"Domain","path":"src/BuildingBlocks/Domain/CompanyName.MyMeetings.BuildingBlocks.Domain.csproj"},
+    {"id":"architecture.core.infrastructure","owner":"architecture.core","ownerKind":"core","layer":"Infrastructure","path":"src/BuildingBlocks/Infrastructure/CompanyName.MyMeetings.BuildingBlocks.Infrastructure.csproj"},
+    {"id":"architecture.administration.application","owner":"architecture.administration","ownerKind":"module","layer":"Application","path":"src/Modules/Administration/Application/CompanyName.MyMeetings.Modules.Administration.Application.csproj"},
+    {"id":"architecture.administration.domain","owner":"architecture.administration","ownerKind":"module","layer":"Domain","path":"src/Modules/Administration/Domain/CompanyName.MyMeetings.Modules.Administration.Domain.csproj"},
+    {"id":"architecture.administration.integration-events","owner":"architecture.administration","ownerKind":"module","layer":"IntegrationEvents","path":"src/Modules/Administration/IntegrationEvents/CompanyName.MyMeetings.Modules.Administration.IntegrationEvents.csproj"},
+    {"id":"architecture.meetings.application","owner":"architecture.meetings","ownerKind":"module","layer":"Application","path":"src/Modules/Meetings/Application/CompanyName.MyMeetings.Modules.Meetings.Application.csproj"},
+    {"id":"architecture.meetings.domain","owner":"architecture.meetings","ownerKind":"module","layer":"Domain","path":"src/Modules/Meetings/Domain/CompanyName.MyMeetings.Modules.Meetings.Domain.csproj"},
+    {"id":"architecture.meetings.integration-events","owner":"architecture.meetings","ownerKind":"module","layer":"IntegrationEvents","path":"src/Modules/Meetings/IntegrationEvents/CompanyName.MyMeetings.Modules.Meetings.IntegrationEvents.csproj"},
+    {"id":"architecture.payments.application","owner":"architecture.payments","ownerKind":"module","layer":"Application","path":"src/Modules/Payments/Application/CompanyName.MyMeetings.Modules.Payments.Application.csproj"},
+    {"id":"architecture.payments.domain","owner":"architecture.payments","ownerKind":"module","layer":"Domain","path":"src/Modules/Payments/Domain/CompanyName.MyMeetings.Modules.Payments.Domain.csproj"},
+    {"id":"architecture.payments.integration-events","owner":"architecture.payments","ownerKind":"module","layer":"IntegrationEvents","path":"src/Modules/Payments/IntegrationEvents/CompanyName.MyMeetings.Modules.Payments.IntegrationEvents.csproj"},
+    {"id":"architecture.registrations.application","owner":"architecture.registrations","ownerKind":"module","layer":"Application","path":"src/Modules/Registrations/Application/CompanyName.MyMeetings.Modules.Registrations.Application.csproj"},
+    {"id":"architecture.registrations.domain","owner":"architecture.registrations","ownerKind":"module","layer":"Domain","path":"src/Modules/Registrations/Domain/CompanyName.MyMeetings.Modules.Registrations.Domain.csproj"},
+    {"id":"architecture.registrations.integration-events","owner":"architecture.registrations","ownerKind":"module","layer":"IntegrationEvents","path":"src/Modules/Registrations/IntegrationEvents/CompanyName.MyMeetings.Modules.Registrations.IntegrationEvents.csproj"},
+    {"id":"architecture.user-access.application","owner":"architecture.user-access","ownerKind":"module","layer":"Application","path":"src/Modules/UserAccess/Application/CompanyName.MyMeetings.Modules.UserAccess.Application.csproj"},
+    {"id":"architecture.user-access.domain","owner":"architecture.user-access","ownerKind":"module","layer":"Domain","path":"src/Modules/UserAccess/Domain/CompanyName.MyMeetings.Modules.UserAccess.Domain.csproj"},
+    {"id":"architecture.user-access.integration-events","owner":"architecture.user-access","ownerKind":"module","layer":"IntegrationEvents","path":"src/Modules/UserAccess/IntegrationEvents/CompanyName.MyMeetings.Modules.UserAccess.IntegrationEvents.csproj"}
+  ],
+  "control": {
+    "sourceProject": "architecture.payments.application",
+    "targetProject": "architecture.user-access.application",
+    "expectedViolation": "cross-module-reference-must-target-integration-events"
+  }
+}

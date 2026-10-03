@@ -1,0 +1,11 @@
+apiVersion: architecture.mymeetings.example/v1alpha1
+kind: Feature
+metadata:
+  name: meeting-groups
+  namespace: architecture
+spec:
+  summary: Read and propose Meeting Groups.
+  module: {apiVersion: architecture.mymeetings.example/v1alpha1, kind: Module, name: meetings, namespace: architecture}
+  documents:
+    - {apiVersion: architecture.mymeetings.example/v1alpha1, kind: Narrative, name: cqrs-read-model-decision, namespace: architecture}
+    - {apiVersion: architecture.mymeetings.example/v1alpha1, kind: Narrative, name: module-event-boundary-decision, namespace: architecture}

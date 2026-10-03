@@ -1,0 +1,12 @@
+{
+  "1": {
+    "revision": "76584ffcf25c83876b32e5567ba4cd1351149eb5",
+    "archive": ".markitect\\packages\\mymeetings-architecture-1.0.0.zip",
+    "sha256": "0c7395055aac7f4c35afcff404481a77e2ce6475c863a435afc2586dd388b1cc"
+  },
+  "2": {
+    "revision": "e0ae3c5181323e0d2a03312524010cc817652330",
+    "archive": ".markitect\\packages\\mymeetings-architecture-2.0.0.zip",
+    "sha256": "0ed97c9f0b21e10b5e2a0ff232bdb910bd468ac04f84441ae24d5b7cefb2b504"
+  }
+}

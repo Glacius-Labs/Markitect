@@ -1,0 +1,11 @@
+apiVersion: architecture.mymeetings.example/v1alpha1
+kind: Handler
+metadata:
+  name: register-new-user
+  namespace: architecture
+spec:
+  summary: Command handler that registers a new User.
+  sourceFiles:
+    - src/Modules/Registrations/Application/UserRegistrations/RegisterNewUser/RegisterNewUserCommandHandler.cs
+  common:
+    []

@@ -1,0 +1,10 @@
+apiVersion: architecture.mymeetings.example/v1alpha1
+kind: Interface
+metadata:
+  name: registrations-module-api
+  namespace: architecture
+spec:
+  summary: Module facade contract for Registrations.
+  provider: {apiVersion: architecture.mymeetings.example/v1alpha1, kind: Module, name: registrations, namespace: architecture}
+  sourceFiles:
+    - src/Modules/Registrations/Application/Contracts/IRegistrationsModule.cs

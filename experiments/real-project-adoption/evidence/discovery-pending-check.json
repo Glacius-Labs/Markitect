@@ -1,0 +1,9 @@
+{
+  "date": "2026-10-03",
+  "sourceBaseline": "069a59deb30cf41e7acf81f88106e1a877c30cf9",
+  "command": "go run ./examples/engineering-discovery/check-discovery.go --repo .artifacts/adoption/assisted-final --revision fd94a689aab857704c3a4a45ac2abe0fc0e3185c --run context-run.yaml --evidence experiments/real-project-adoption/discovery/evidence.yaml --candidate experiments/real-project-adoption/discovery/candidate.md --decision experiments/real-project-adoption/discovery/decision.yaml",
+  "exitCode": 1,
+  "stderr": "discovery check: unsupported human decision status \"FILL_IN_accept_reject_defer_split_or_revise\"\nexit status 1\n",
+  "interpretation": "Expected rejection of the placeholder decision after fixed context/evidence/source/candidate checks. No human identity or acceptance fabricated; no candidate adopted. Exact candidate and evidence byte digests are recorded separately in the pilot report.",
+  "limits": "This is a read-only example helper. It cannot authenticate a human reviewer or adopt canonical rules. Its reported rejection does not establish completed human adoption."
+}

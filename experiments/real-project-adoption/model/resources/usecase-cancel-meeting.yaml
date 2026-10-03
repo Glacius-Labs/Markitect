@@ -1,0 +1,20 @@
+apiVersion: architecture.mymeetings.example/v1alpha1
+kind: UseCase
+metadata:
+  name: cancel-meeting
+  namespace: architecture
+  labels:
+    feature-ownership: required
+    validation: required
+spec:
+  intent: Command
+  summary: Cancel a scheduled Meeting.
+  module: {apiVersion: architecture.mymeetings.example/v1alpha1, kind: Module, name: meetings, namespace: architecture}
+  feature: {apiVersion: architecture.mymeetings.example/v1alpha1, kind: Feature, name: meeting-lifecycle, namespace: architecture}
+  handler: {apiVersion: architecture.mymeetings.example/v1alpha1, kind: Handler, name: cancel-meeting, namespace: architecture}
+  sourceFiles:
+    - src/Modules/Meetings/Application/Meetings/CancelMeeting/CancelMeetingCommand.cs
+  aggregates:
+    - {apiVersion: architecture.mymeetings.example/v1alpha1, kind: Aggregate, name: meeting, namespace: architecture}
+  validators:
+    []

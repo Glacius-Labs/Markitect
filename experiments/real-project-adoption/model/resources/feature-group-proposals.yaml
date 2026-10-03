@@ -1,0 +1,10 @@
+apiVersion: architecture.mymeetings.example/v1alpha1
+kind: Feature
+metadata:
+  name: group-proposals
+  namespace: architecture
+spec:
+  summary: Review and accept proposals for new Meeting Groups.
+  module: {apiVersion: architecture.mymeetings.example/v1alpha1, kind: Module, name: administration, namespace: architecture}
+  documents:
+    - {apiVersion: architecture.mymeetings.example/v1alpha1, kind: Narrative, name: module-event-boundary-decision, namespace: architecture}
