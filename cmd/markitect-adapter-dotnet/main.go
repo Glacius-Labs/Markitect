@@ -429,6 +429,9 @@ func projectReferences(data []byte) ([]string, string, error) {
 			if start.Name.Space != "" && start.Name.Space != msbuildNamespace {
 				return nil, "project uses an unsupported XML namespace; only unnamespaced or standard MSBuild project XML is supported", nil
 			}
+			if hasForeignAttribute(start, "Condition") {
+				return nil, "project Condition attribute uses an unsupported XML namespace", nil
+			}
 			if hasAttribute(start, "Condition") {
 				return nil, "project-level conditions are outside the captured XML subset", nil
 			}
@@ -446,12 +449,18 @@ func projectReferences(data []byte) ([]string, string, error) {
 		if start.Name.Local == "Project" && hasAttribute(start, "Condition") {
 			unsupportedNode = "project-level conditions are outside the captured XML subset"
 		}
+		if start.Name.Local == "ItemGroup" && hasForeignAttribute(start, "Condition") {
+			unsupportedNode = "ItemGroup Condition attribute uses an unsupported XML namespace"
+		}
 		if start.Name.Local == "ProjectReference" {
 			inItemGroup := false
 			for _, parent := range ancestors {
 				switch parent.Name.Local {
 				case "ItemGroup":
 					inItemGroup = true
+					if hasForeignAttribute(parent, "Condition") {
+						unsupportedNode = "ItemGroup Condition attribute uses an unsupported XML namespace"
+					}
 					if hasAttribute(parent, "Condition") {
 						unsupportedNode = "conditioned ItemGroup may add or remove ProjectReference items"
 					}
@@ -462,10 +471,13 @@ func projectReferences(data []byte) ([]string, string, error) {
 			if !inItemGroup {
 				unsupportedNode = "ProjectReference outside an unconditional ItemGroup is not supported"
 			}
+			if hasForeignAttribute(start, "Include", "Condition", "Update", "Remove", "Exclude") {
+				unsupportedNode = "ProjectReference uses an attribute in an unsupported XML namespace"
+			}
 			if hasAttribute(start, "Condition") || hasAttribute(start, "Update") || hasAttribute(start, "Remove") || hasAttribute(start, "Exclude") {
 				unsupportedNode = "conditioned or transformed ProjectReference items are not supported"
 			}
-			if hasAttribute(start, "Include") == false {
+			if !hasAttribute(start, "Include") && !hasForeignAttribute(start, "Include") {
 				return nil, "", errors.New("ProjectReference is missing Include")
 			}
 		}
@@ -478,7 +490,7 @@ func projectReferences(data []byte) ([]string, string, error) {
 		}
 		include := ""
 		for _, attribute := range start.Attr {
-			if attribute.Name.Local == "Include" {
+			if attribute.Name.Space == "" && attribute.Name.Local == "Include" {
 				if include != "" {
 					return nil, "", errors.New("ProjectReference has multiple Include attributes")
 				}
@@ -508,8 +520,22 @@ func isMSBuildElement(name string) bool {
 
 func hasAttribute(element xml.StartElement, name string) bool {
 	for _, attribute := range element.Attr {
-		if attribute.Name.Local == name {
+		if attribute.Name.Space == "" && attribute.Name.Local == name {
 			return true
+		}
+	}
+	return false
+}
+
+func hasForeignAttribute(element xml.StartElement, names ...string) bool {
+	for _, attribute := range element.Attr {
+		if attribute.Name.Space == "" {
+			continue
+		}
+		for _, name := range names {
+			if attribute.Name.Local == name {
+				return true
+			}
 		}
 	}
 	return false

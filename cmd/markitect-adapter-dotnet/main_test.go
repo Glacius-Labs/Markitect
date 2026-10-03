@@ -248,6 +248,33 @@ func TestForeignNamespacesMakeObservationIncomplete(t *testing.T) {
 	}
 }
 
+func TestForeignAttributesMakeObservationIncomplete(t *testing.T) {
+	for name, project := range map[string]string{
+		"foreign Include":             `<Project xmlns:x="urn:foreign"><ItemGroup><ProjectReference x:Include="../Core/Core.csproj" /></ItemGroup></Project>`,
+		"foreign Project Condition":   `<Project xmlns:x="urn:foreign" x:Condition="'$(Configuration)' == 'Debug'"><ItemGroup><ProjectReference Include="../Core/Core.csproj" /></ItemGroup></Project>`,
+		"foreign ItemGroup Condition": `<Project xmlns:x="urn:foreign"><ItemGroup x:Condition="'$(Configuration)' == 'Debug'"><ProjectReference Include="../Core/Core.csproj" /></ItemGroup></Project>`,
+		"foreign reference Condition": `<Project xmlns:x="urn:foreign"><ItemGroup><ProjectReference Include="../Core/Core.csproj" x:Condition="'$(Configuration)' == 'Debug'" /></ItemGroup></Project>`,
+		"foreign Update":              `<Project xmlns:x="urn:foreign"><ItemGroup><ProjectReference Include="../Core/Core.csproj" x:Update="../Core/Core.csproj" /></ItemGroup></Project>`,
+		"foreign Remove":              `<Project xmlns:x="urn:foreign"><ItemGroup><ProjectReference Include="../Core/Core.csproj" x:Remove="../Core/Core.csproj" /></ItemGroup></Project>`,
+	} {
+		t.Run(name, func(t *testing.T) {
+			root := fixture(t, project)
+			old, err := os.Getwd()
+			if err != nil {
+				t.Fatal(err)
+			}
+			if err := os.Chdir(root); err != nil {
+				t.Fatal(err)
+			}
+			defer os.Chdir(old)
+			got := run(validRequest("observe"))
+			if got.Status != "incomplete" || !hasCode(got.Findings, "project-semantics-unsupported") || got.Observed != nil {
+				t.Fatalf("status/findings/observation = %s/%v/%#v; want incomplete without observation", got.Status, got.Findings, got.Observed)
+			}
+		})
+	}
+}
+
 func TestUnmappedObservedProjectIsIncomplete(t *testing.T) {
 	root := fixture(t, `<Project><ItemGroup><ProjectReference Include="../Other/Other.csproj" /></ItemGroup></Project>`)
 	old, err := os.Getwd()
