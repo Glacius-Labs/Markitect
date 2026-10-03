@@ -1,6 +1,6 @@
 # Engineering constitution
 
-**Status:** v0.11.0 is the latest published product contract. The current source candidate targets v0.12.0 and adds the finite `same-target` assertion described in [Architecture](architecture.md); it is not yet a published distribution. v0.10.0 is the historical baseline. The [roadmap](implementation-plan.md) owns verified release evidence; [Usage](usage.md) documents source syntax and published CLI behavior.
+**Status:** v0.12.0 is the latest published product contract and adds the finite `same-target` assertion described in [Architecture](architecture.md). v0.11.0 is the historical baseline for reusable architecture contracts; v0.10.0 is the historical baseline for the generic model. The [roadmap](implementation-plan.md) owns verified release evidence; [Usage](usage.md) documents source syntax and published CLI behavior.
 
 ## Product purpose
 
@@ -22,7 +22,7 @@ A project-owned or package-supplied Software Domain may express a UseCase with a
 
 This is an example of a project-selected architecture, not a Markitect default. It does not make a specific Clean Architecture, DDD, folder layout, or .NET convention universal. It also does not imply that a relationship named `conformsTo` activates the linked Domain's assertions. The versioned package must carry the combined Domain contract for the resource kinds it constrains.
 
-The [Domain-language pressure test](design/domain-language-pressure.md) and its [software-architecture experiment](design/software-architecture-experiment.md) distinguish the structural slice rules this model can check from inverse-ownership, collection ownership and source-code claims that remain outside the current contract. The [resolved-target equality assessment](design/resolved-target-equality.md) records two independent Software and Delivery cases that justify the finite singleton-path assertion in the v0.12.0 source candidate. It changes the source contract from v0.11.0 but does not justify broader composition.
+The [Domain-language pressure test](design/domain-language-pressure.md) and its [software-architecture experiment](design/software-architecture-experiment.md) distinguish the structural slice rules this model can check from inverse-ownership, collection ownership and source-code claims that remain outside the current contract. The [resolved-target equality assessment](design/resolved-target-equality.md) records two independent Software and Delivery cases that justify the finite singleton-path assertion shipped in v0.12.0. This changes the v0.11.0 contract without justifying broader composition.
 
 The finite constraint language can express cardinality over a single resource or over a selected resource set. v0.11.0 adds a `scope` distinction to `count`: `resource` evaluates relation cardinality independently for each selected subject; `selection` evaluates the selected population as a whole. For example, a per-UseCase exactly-one-Handler invariant is resource-scoped, while a constraint on the number of selected active UseCases is selection-scoped. Selection boundaries must account for additions and removals.
 
