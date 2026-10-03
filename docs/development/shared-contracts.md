@@ -1,0 +1,31 @@
+# Shared contracts for parallel implementation
+
+The [constitution](../engineering-constitution.md) owns invariants; this document identifies the current seams an implementer may depend on. A freeze means hold the inspected contract constant during a dispatched wave. It is not a new promise of indefinite binary or schema compatibility. Version labels remain the actual `v1alpha1` source labels. The [baseline](baseline.md) separates published v0.12.0 from integrated source.
+
+| Contract held constant | Source owner | What consumers may rely on |
+|---|---|---|
+| Closed Domain and typed resource model | `internal/core/model.go`, `domain.go`, `graph*.go`; `internal/format/domain.go` | Explicit Domain activation, typed GraphKeys, finite assertions, independently declared context/invalidation/cycle effects. No implicit Domain stacking. |
+| Resolved snapshot value | `internal/snapshot`; Git acquisition `internal/source` | Fixed identity, provisional flag, exact paths/modes/bytes, deterministic diff. Git selection and opaque artifact acquisition stay outside semantic decisions. |
+| Normalized model | `internal/app/model.go` | `markitect.example.org/semantic-model/v1alpha1`: snapshot/config/model digests, Domain/package sources, identities/data, explicit relationships, diagnostics and PolicyResults. Current source includes structural/policy status; acceptance remains separate. |
+| PolicyResult/exception | `internal/core/policy.go`, `same_target.go` | Exact constraint/subject identity and digests, passed/failed/waived states, bounded traces, explicit frozen-date exceptions. Invalid exceptions and structural traversal block analysis. |
+| Context/Impact analysis | `internal/app/context*.go`, `impact*.go`, `policy_analysis.go`; CLI | Existing declared closure and input `via`; conservative causes, direct result changes separate from overall affected set. Opt-in failed-policy analysis stays visibly failing and read-only. |
+| External command adapter protocol | `internal/app/adapter_command.go`, `cmd/markitect/cli_reconcile.go` | Versioned request/result/plan YAML, normalized model, exact staged inputs, adapter parameters, literal argv, time/output bounds, source/config/model/tool/adapter/observation-bound plans. |
+| Local projections | `internal/render`, `internal/app/reconcile.go` | Validated Graph plus captured files, explicit native targets, generated marker and output ownership; read-only generation and guarded explicit writers. This is not the external DTO protocol. |
+| Direct content packages | `internal/contentpackage`, `core/packages.go`, `app/contentpackage.go` | Exact direct pins/archives, explicit Domain activation and exports, origin-qualified identities, read-only imported content; no transitive resolver or inheritance. |
+| Portable authoring | `internal/authoring/resources`, `examples/engineering-discovery` | Normal compiler for embedded resources, separate selected-evidence proposals and reviewed canonical changes. Example dossier versions are not general Core discovery APIs. |
+
+Check actual files through [CONTRIBUTING](../../CONTRIBUTING.md) and [Architecture](../architecture.md). A future implementer must not copy a DTO definition and silently alter its meaning, digest behavior or trust boundary. External adapters may define their own versioned provider-specific `parameters` without adding provider fields to resource semantics.
+
+## External command seam
+
+Project entries use `name`, `type: command`, `version` and `config`. Configuration requires exact `inputs` and `observe`, `plan`, `verify` argv. Apply is optional: `apply` argv and `allowApply` are declared together and require a non-secret `target`. There is no self-registration or independent `consumes`/capability manifest. The runner passes `adapter-request/v1alpha1`; responses use `adapter-result/v1alpha1`; saved envelopes use `adapter-plan/v1alpha1`, all under `markitect.example.org/`. Names select configured executables through a generic branch; adding a command implementation needs no provider switch in Core.
+
+The saved command plan separately binds resolved executable bytes, declared version/configuration and the other reviewed inputs. The executable digest is not a field of the typed adapter identity. This binding is not a release attestation, trust certification, process sandbox or guarantee about remote state. Declared read-only actions remain a contract with the executable running under caller authority. Apply requires the existing explicit boundary and must reject altered/stale plans. A new remote provider adapter must define observed-state concurrency/precondition behavior and credential handling in its own design before writes are enabled.
+
+Cross-command external-target exclusivity is **not enforced by a shared registry**. The target string binds a plan/response; it does not establish uniqueness or resolve aliases across adapters. Independent read-only adapters and deliberately disjoint isolated targets can start. Shared/overlapping writes wait for reviewed target ownership and concurrency semantics. Native renderer collision checks do not solve remote ownership. Do not invent an enforced registry in documentation or add a broad runtime to avoid this decision.
+
+## Coordinator-owned changes
+
+The coordinator owns Domain syntax/schema, semantic IR and digest definitions, state classification, policy/exceptions, context/impact soundness, source identity, adapter DTOs/lifecycle/trust boundaries, package activation and controlled writes. Implementers propose concrete changes with consumers, alternatives, compatibility/determinism/evidence tests and a focused design before editing these files. One generic limitation needs repeated independent engineering evidence; a provider convenience does not justify Core expansion.
+
+The proposed existing-project evidence selection/workspace handoff is not frozen yet. Init and Copy Me may investigate independently against the existing fixed snapshot/opaque path/hash principles; both implementations consume one coordinator-approved versioned handoff before sharing durable dossiers. No new CLI, manifest name, automatic root scan, conflict resolver, authorization semantics or adoption schema is prescribed here. See [adoption boundaries](adoption-boundaries.md).

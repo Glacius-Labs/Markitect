@@ -18,6 +18,8 @@
 | [Operations](operations.md) | Development, verification, rendering, and release operations |
 | [Refinement decisions](refinement.md) | Product principles and deferred design choices |
 | [Implementation plan](implementation-plan.md) | Published v0.12.0 status, release evidence, and later planned work |
+| [Development coordination](development/README.md) | Parallel baseline, current contracts, independence audit and risk evidence |
+| [Workstream packages](workstreams/README.md) | Bounded future implementer assignments, ownership and hard/soft dependencies |
 | [Canonical engineering plan](canonical-engineering-plan.md) | v0.10.0 language, semantic model, and adapter contract |
 | [Strategy source documents](strategy/README.md) | User-provided product and design proposals, their provenance, and the boundary between hypotheses and adopted behavior |
 | [Real-code adoption pilot](validation/real-project-adoption-pilot.md) | Baseline/assisted workflow observations, policy evolution, bounded evidence, negative findings and pending human discovery adoption |

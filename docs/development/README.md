@@ -1,0 +1,15 @@
+# Development coordination
+
+Start with [Architecture](../architecture.md), the canonical [engineering constitution](../engineering-constitution.md), [Usage](../usage.md), [roadmap](../implementation-plan.md) and [CONTRIBUTING](../../CONTRIBUTING.md). This directory owns implementation coordination, not another product constitution.
+
+| Document | Owns |
+|---|---|
+| [Baseline](baseline.md) | Integrated source identity, required evidence and published/source distinction |
+| [Shared contracts](shared-contracts.md) | Current frozen seams and coordinator-owned changes |
+| [Parallelizability audit](parallelizability.md) | Actual subsystem independence, limitations and hotspots |
+| [Parallel work](parallel-work.md) | Delegation, isolated ownership, validation and integration |
+| [Adoption boundaries](adoption-boundaries.md) | Init, Copy Me and adopter handoffs; current versus proposed contracts |
+| [Risk register](risk-register.md) | Evidence-based classification of the 18 supplied risks |
+| [Workstream map](../workstreams/README.md) | Bounded future packages and hard/soft dependencies |
+
+Preparation does not authorize implementation of the listed workstreams, a consumer migration or a release. The [supplied bundle](../strategy/sources/parallel-development/README.md) preserves design provenance; its illustrative commands and syntax are not shipped contracts.

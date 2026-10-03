@@ -1,0 +1,2 @@
+# Preserve the supplied source proposals as exact bytes, including original whitespace.
+*.md -text whitespace=-blank-at-eof,-blank-at-eol,cr-at-eol
