@@ -1,6 +1,6 @@
 # Using Markitect
 
-This guide records the supported v0.11.0 contracts, including the generic Domain, normalized-model, adapter, and architecture-policy capabilities. The v0.9.1 resource model is historical; v0.10.0 is the generic canonical-model baseline. v0.11.0 adds reusable architecture contracts, structured PolicyResults, explicit exceptions, and authoring workflows; the [engineering constitution](engineering-constitution.md) explains their scope and limits. Consult [GitHub Releases](https://github.com/Glacius-Labs/Markitect/releases) for available distributions; the [roadmap](implementation-plan.md) owns verified coverage and known limits.
+This guide distinguishes the published v0.11.0 contract from the current v0.12.0 source candidate. The v0.9.1 resource model is historical; v0.10.0 is the generic canonical-model baseline. v0.11.0 adds reusable architecture contracts, structured PolicyResults, explicit exceptions, and authoring workflows. The current source candidate adds the bounded `same-target` assertion described below. It is not yet a published distribution; consult [GitHub Releases](https://github.com/Glacius-Labs/Markitect/releases) for available binaries. The [engineering constitution](engineering-constitution.md) explains scope and limits; the [roadmap](implementation-plan.md) owns verified coverage and known limits.
 
 ## Project and resource model
 
@@ -76,7 +76,7 @@ spec:
       name: core
 ```
 
-References in custom Domain resources resolve within that same Domain API version; their typed references and named relations cannot cross into another Domain. The bundled AI-working Domain has explicit `uses` relationships that can target a registered custom Domain when the reference names its qualified `apiVersion`. Relations separately declare context traversal, invalidation, and cycle behavior. A Domain constraint selects resources by its own kind and exact metadata labels, then applies a closed assertion operator. Published v0.11.0 operators are `present`, `equal`, `allowed`, `allowed-targets`, `count`, and `unique`; `count` requires at least one nonnegative `min` or `max`. `allowed-targets` checks actual relation target kinds against the assertion's `values`, which must be within the relation descriptor's declared `targetKinds`. These checks apply only to declared model data and selected inputs.
+References in custom Domain resources resolve within that same Domain API version; their typed references and named relations cannot cross into another Domain. The bundled AI-working Domain has explicit `uses` relationships that can target a registered custom Domain when the reference names its qualified `apiVersion`. Relations separately declare context traversal, invalidation, and cycle behavior. A Domain constraint selects resources by its own kind and exact metadata labels, then applies a closed assertion operator. The published v0.11.0 operators are `present`, `equal`, `allowed`, `allowed-targets`, `count`, and `unique`. The current v0.12.0 source candidate adds `same-target`; `count` requires at least one nonnegative `min` or `max`. `allowed-targets` checks actual relation target kinds against the assertion's `values`, which must be within the relation descriptor's declared `targetKinds`. These checks apply only to declared model data and selected inputs.
 
 An optional `inputsField` on a kind names one declared array-of-string property whose paths are exact opaque project artifact inputs. Markitect snapshots those files and uses their byte changes for context and impact; it does not parse their domain-specific structure.
 
@@ -84,15 +84,15 @@ Package content does not activate its Domain. Select a package-owned definition 
 
 The [canonical engineering example](../examples/canonical-engineering/README.md) demonstrates independent Software and Delivery Domains, relation-specific context and impact, a policy value used in documentation, agent context, and deterministic checking, and a read-only adapter for concrete project inputs.
 
-## v0.11.0 architecture-contract capabilities
+## Published v0.11.0 architecture-contract capabilities
 
 v0.11.0 treats exact-pinned package Domains as reusable architecture contracts. Existing package declarations and Domain activation remain explicit; updating a contract means reviewing an exact package pin change, running `check` and fixed-snapshot `impact`, and inspecting PolicyResults. Markitect will not rewrite application source as part of a package update.
 
 When a Project selects `markdown`, the Domain projection generates normalized schema, relation, and constraint views at `docs/markitect/_domains/*.domain.md`. Relevant per-resource PolicyResults, including a waived result's recorded decision, appear in generated resource views. These generated files remain derived views; canonical Domain definitions and policy stay in the selected package or Project source.
 
-### Current source: resolved-target equality (unreleased)
+## v0.12.0 source candidate: resolved-target equality
 
-The current source adds `same-target` after the published v0.11.0 baseline. This assertion compares two fixed paths of named relations from each selected subject; it does not execute a graph query. Each path has one or two steps, all in the selected Domain. `select.kind` is required. Undefined relations, incompatible kind transitions, wildcard target kinds and disjoint terminal kinds are rejected in the Domain definition. No field expressions, collection traversal or implicit applicability are supported.
+The current v0.12.0 source candidate adds `same-target` after the published v0.11.0 baseline. Until the release is published and verified, v0.11.0 remains the latest supported download. This assertion compares two fixed paths of named relations from each selected subject; it does not execute a graph query. Each path has one or two steps, all in the selected Domain. `select.kind` is required. Undefined relations, incompatible kind transitions, wildcard target kinds and disjoint terminal kinds are rejected in the Domain definition. No field expressions, collection traversal or implicit applicability are supported.
 
 ```yaml
 - name: deployment-products-agree
@@ -235,7 +235,7 @@ spec:
 
 ### Model output and adapters
 
-The current source iteration after v0.11.0 also exposes `domainInputs[].apiVersion` and `name`. Join a PolicyResult's `apiVersion` and `constraint` to the normalized Domain's selector/assertion, and its API version to the exact Domain input path, package/version and digest. This explains both applicability and rule origin without activating another Domain implicitly. Context Domain inputs carry `domainApiVersion` and `domainName`; resource inputs expose the reachable incoming context relations in `via`. Impact `causes` explains changed resource/input seeds, old/new invalidation relationships and conservative project-wide causes. See the [software architecture experiment](design/software-architecture-experiment.md) for concrete output and replay steps. These explanation fields are source changes, not fields promised by the published v0.11.0 executable.
+The current v0.12.0 source candidate also exposes `domainInputs[].apiVersion` and `name`. Join a PolicyResult's `apiVersion` and `constraint` to the normalized Domain's selector/assertion, and its API version to the exact Domain input path, package/version and digest. This explains both applicability and rule origin without activating another Domain implicitly. Context Domain inputs carry `domainApiVersion` and `domainName`; resource inputs expose the reachable incoming context relations in `via`. Impact `causes` explains changed resource/input seeds, old/new invalidation relationships and conservative project-wide causes. See the [software architecture experiment](design/software-architecture-experiment.md) for concrete output and replay steps. These explanation fields are source changes, not fields promised by the published v0.11.0 executable.
 
 `model` emits the normalized semantic model as versioned YAML for adapters and inspection. It includes fixed snapshot and configuration identity, Domain definitions and their source digests, generic resources with qualified identity and provenance, and resolved relationships with their declared graph effects. It does not expose raw authoring YAML or the Go graph representation. `context`, `impact`, `explain`, and configured consumers use the same resolved meaning.
 

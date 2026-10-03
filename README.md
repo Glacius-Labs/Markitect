@@ -15,7 +15,7 @@ The published v0.11.0 release builds on that foundation with [reusable engineeri
 
 > **AI should implement your architecture, not reinvent it on every task.**
 
-The current source iteration tests that language with a [modular DDD / Vertical Slice architecture](examples/software-architecture/README.md) and an independent [Delivery topology](examples/delivery-target-equality/README.md). Their shared ownership gap justifies one finite `same-target` assertion comparing two declared singleton relation paths of at most two steps. Its [design assessment](docs/design/resolved-target-equality.md) explains normalization alternatives, explicit selection, policy traces, bounded impact and source-bound exceptions. The [language-pressure report](docs/design/domain-language-pressure.md) keeps the other gaps visible. These are source changes; the published v0.11.0 download remains the baseline release.
+The merged source candidate for v0.12.0 adds one finite `same-target` assertion after independent [Software architecture](examples/software-architecture/README.md) and [Delivery topology](examples/delivery-target-equality/README.md) cases demonstrated the same singleton ownership comparison. Its [design assessment](docs/design/resolved-target-equality.md) explains alternatives, explicit selection, policy traces, bounded impact and source-bound exceptions. The [language-pressure report](docs/design/domain-language-pressure.md) keeps the other gaps visible. v0.11.0 remains the latest published download until a release and its assets are verified.
 
 ## Why Markitect?
 
