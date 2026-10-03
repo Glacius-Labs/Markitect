@@ -1,6 +1,6 @@
 # Workstream assignments
 
-**Preparation only; no workstream is started by this map.** Read the [documentation map](../README.md), [constitution](../engineering-constitution.md), [shared contracts](../development/shared-contracts.md), [parallel-work guide](../development/parallel-work.md) and your package. Each assignment records the full verified [baseline commit](../development/baseline.md), exact owned paths and exit criteria. Implementers cannot approve their own shared semantic changes.
+**Future specifications; this map does not dispatch work by itself.** The [first-wave record](../validation/parallel-development-wave-1.md) owns the explicit narrower assignments and their integration status. Read the [documentation map](../README.md), [constitution](../engineering-constitution.md), [shared contracts](../development/shared-contracts.md), [parallel-work guide](../development/parallel-work.md) and your package. Each assignment records the full verified [baseline commit](../development/baseline.md), exact owned paths and exit criteria. Implementers cannot approve their own shared semantic changes.
 
 | Workstream | Class | Can start after dispatch | Must wait for |
 |---|---|---|---|
