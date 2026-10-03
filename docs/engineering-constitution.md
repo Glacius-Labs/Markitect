@@ -38,6 +38,10 @@ Exceptions can waive only a failing per-resource constraint for the exact subjec
 
 Changing a Domain package can change constraint digests and make existing exceptions stale. The consumer reviews the exact pin update, `impact`, and per-subject results; it then removes, renews, or replaces exception data through an explicit reviewed Project change. Markitect does not carry exceptions forward as if their meaning were unchanged.
 
+## Inspect a policy-breaking candidate
+
+The source iteration after the real-code pilot adds explicit read-only Context/Impact analysis of structurally valid policy-failing candidates. A failed policy is information: it blocks acceptance without requiring a waiver merely to inspect it. `--analyze-policy-failures` keeps failed validation visible and returns exit 1 when either analyzed snapshot fails policy. Structural errors and invalid exceptions remain blockers; Check, Verify and reconciliation retain their strict gates. The [design contract](design/policy-failure-analysis.md) records the unreleased source behavior separately from v0.12.0.
+
 ## Copy Me: propose, review, adopt
 
 The shipped v0.11.0 authoring resources include a provider-independent `Copy Me` workflow. It helps an agent propose a candidate engineering style from evidence a person explicitly selects. It does not add a `discover` CLI command, call a model from the Markitect kernel, or promote observations into canonical policy.

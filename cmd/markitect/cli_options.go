@@ -11,29 +11,30 @@ import (
 var fullGitCommitID = regexp.MustCompile(`^(?:[0-9a-f]{40}|[0-9a-f]{64})$`)
 
 type commandOptions struct {
-	root           string
-	runManifest    string
-	revision       string
-	apiVersion     string
-	base           string
-	kind           string
-	name           string
-	namespace      string
-	areaPath       string
-	packageName    string
-	query          string
-	write          bool
-	check          bool
-	output         string
-	bundlePath     string
-	bundleSHA      string
-	action         string
-	adapter        string
-	plan           string
-	reviewConfig   string
-	reviewReport   string
-	reviewEvidence string
-	flagCount      int
+	root                  string
+	runManifest           string
+	revision              string
+	apiVersion            string
+	base                  string
+	kind                  string
+	name                  string
+	namespace             string
+	areaPath              string
+	packageName           string
+	query                 string
+	write                 bool
+	check                 bool
+	analyzePolicyFailures bool
+	output                string
+	bundlePath            string
+	bundleSHA             string
+	action                string
+	adapter               string
+	plan                  string
+	reviewConfig          string
+	reviewReport          string
+	reviewEvidence        string
+	flagCount             int
 }
 
 func parseOptions(command string, args []string, allowed map[string]bool, out, errout io.Writer) (commandOptions, int, bool) {
@@ -52,6 +53,7 @@ func parseOptions(command string, args []string, allowed map[string]bool, out, e
 	query := fs.String("query", "", "literal search text (find)")
 	write := fs.Bool("write", false, "write planned files in an isolated worktree")
 	check := fs.Bool("check", false, "check rendered outputs (default)")
+	analyzePolicyFailures := fs.Bool("analyze-policy-failures", false, "allow read-only analysis of structurally valid policy failures (context, impact)")
 	output := fs.String("output", "", "absent output directory (package) or ZIP file (bundle)")
 	bundlePath := fs.String("bundle", "", "local release ZIP to validate and install")
 	bundleSHA := fs.String("sha256", "", "expected SHA-256 of the release ZIP")
@@ -80,7 +82,11 @@ func parseOptions(command string, args []string, allowed map[string]bool, out, e
 		return commandOptions{}, 2, true
 	}
 	invalid := ""
+	analyzePolicyFailuresProvided := false
 	fs.Visit(func(f *flag.Flag) {
+		if f.Name == "analyze-policy-failures" {
+			analyzePolicyFailuresProvided = true
+		}
 		if !allowed[f.Name] {
 			invalid = f.Name
 		}
@@ -123,29 +129,34 @@ func parseOptions(command string, args []string, allowed map[string]bool, out, e
 		fmt.Fprintln(errout, "--run is only valid for context with --revision and supplies its own entry")
 		return commandOptions{}, 2, true
 	}
+	if analyzePolicyFailuresProvided && command == "context" && *runManifest != "" {
+		fmt.Fprintln(errout, "--analyze-policy-failures does not apply to context --run")
+		return commandOptions{}, 2, true
+	}
 	return commandOptions{
-		root:           *root,
-		runManifest:    *runManifest,
-		revision:       *revision,
-		apiVersion:     *apiVersion,
-		base:           *base,
-		kind:           *kind,
-		name:           *name,
-		namespace:      *namespace,
-		areaPath:       *areaPath,
-		packageName:    *packageName,
-		query:          *query,
-		write:          *write,
-		check:          *check,
-		output:         *output,
-		bundlePath:     *bundlePath,
-		bundleSHA:      *bundleSHA,
-		action:         *action,
-		adapter:        *adapter,
-		plan:           *plan,
-		reviewConfig:   *reviewConfig,
-		reviewReport:   *reviewReport,
-		reviewEvidence: *reviewEvidence,
-		flagCount:      fs.NFlag(),
+		root:                  *root,
+		runManifest:           *runManifest,
+		revision:              *revision,
+		apiVersion:            *apiVersion,
+		base:                  *base,
+		kind:                  *kind,
+		name:                  *name,
+		namespace:             *namespace,
+		areaPath:              *areaPath,
+		packageName:           *packageName,
+		query:                 *query,
+		write:                 *write,
+		check:                 *check,
+		analyzePolicyFailures: *analyzePolicyFailures,
+		output:                *output,
+		bundlePath:            *bundlePath,
+		bundleSHA:             *bundleSHA,
+		action:                *action,
+		adapter:               *adapter,
+		plan:                  *plan,
+		reviewConfig:          *reviewConfig,
+		reviewReport:          *reviewReport,
+		reviewEvidence:        *reviewEvidence,
+		flagCount:             fs.NFlag(),
 	}, 0, false
 }

@@ -68,7 +68,7 @@ func (g *Graph) evaluateSameTarget(domain DomainDefinition, constraint Constrain
 	result := PolicyResult{APIVersion: domain.APIVersion, Constraint: constraint.Name, Subject: resource.GraphKey(), Status: PolicyPassed, Message: message, ConstraintDigest: constraintDigest, SubjectDigest: subjectDigest, Comparison: &TargetComparison{Left: left, Right: right}}
 	if message != "" {
 		result.Status = PolicyFailed
-		g.diag(resource, "constraint."+constraint.Name, fmt.Sprintf("%s: %s", domain.APIVersion, message))
+		g.addDiagnostic(Diagnostic{Code: "constraint." + constraint.Name, Path: resource.Path, Package: resource.Package, Line: resource.Line, Message: fmt.Sprintf("%s: %s", domain.APIVersion, message), PolicyResult: &PolicyResultRef{APIVersion: result.APIVersion, Constraint: result.Constraint, Subject: result.Subject}})
 	}
 	return result, true
 }

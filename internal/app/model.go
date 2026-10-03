@@ -18,6 +18,8 @@ type SemanticModel struct {
 	ConfigDigest     string              `yaml:"configDigest"`
 	ModelDigest      string              `yaml:"modelDigest"`
 	ValidationStatus string              `yaml:"validationStatus"`
+	StructuralStatus string              `yaml:"structuralStatus"`
+	PolicyStatus     string              `yaml:"policyStatus"`
 	Diagnostics      []core.Diagnostic   `yaml:"diagnostics,omitempty"`
 	PolicyResults    []core.PolicyResult `yaml:"policyResults,omitempty"`
 	DomainInputs     []ModelDomainInput  `yaml:"domainInputs,omitempty"`
@@ -116,12 +118,19 @@ func CompileModel(p *Project) (SemanticModel, error) {
 		model.DomainInputs = append(model.DomainInputs, ModelDomainInput{APIVersion: input.APIVersion, Name: input.Name, Path: input.Path, Package: input.Package,
 			PackageVersion: p.packageVersion(input.Package), Digest: Hash(p.fileBytes(input.Package, input.Path))})
 	}
+	structuralDiagnostics := p.StructuralDiagnostics()
 	if len(p.Diagnostics) == 0 {
 		model.ValidationStatus = "passed"
 	} else {
 		model.ValidationStatus = "failed"
-		model.Diagnostics = append([]core.Diagnostic(nil), p.Diagnostics...)
+		model.Diagnostics = cloneDiagnostics(p.Diagnostics)
 	}
+	if len(structuralDiagnostics) == 0 {
+		model.StructuralStatus = "passed"
+	} else {
+		model.StructuralStatus = "failed"
+	}
+	model.PolicyStatus = policyStatus(model.StructuralStatus, model.PolicyResults)
 	keys := make([]string, 0, len(p.Graph.Resources))
 	for key := range p.Graph.Resources {
 		keys = append(keys, key)

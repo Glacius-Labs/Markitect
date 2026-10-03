@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/internal/app"
@@ -33,6 +34,39 @@ func TestRunInvalidArgumentsAndUnknownFlagsReturnTwo(t *testing.T) {
 				t.Fatalf("run(%v) = %d, want exit 2", tt.args, code)
 			}
 		})
+	}
+}
+
+func TestAnalyzePolicyFailuresFlagIsLimitedToResourceContextAndImpact(t *testing.T) {
+	for _, command := range []string{"check", "verify", "model", "reconcile", "render", "format", "review", "explain"} {
+		t.Run(command, func(t *testing.T) {
+			code, _, stderr := invoke(command, "--analyze-policy-failures")
+			if code != 2 || !strings.Contains(stderr, "does not apply") {
+				t.Fatalf("%s accepted diagnostic analysis option: exit=%d stderr=%q", command, code, stderr)
+			}
+		})
+	}
+
+	for _, value := range []string{"true", "false"} {
+		code, _, stderr := invoke("context", "--run", strings.Repeat("a", 40), "--revision", strings.Repeat("a", 40), "--analyze-policy-failures="+value)
+		if code != 2 || !strings.Contains(stderr, "does not apply to context --run") {
+			t.Fatalf("context --run accepted explicit resource policy analysis value %s: exit=%d stderr=%q", value, code, stderr)
+		}
+	}
+}
+
+func TestAnalyzePolicyFailuresHelpIsExplicitlyScoped(t *testing.T) {
+	for _, command := range []string{"context", "impact"} {
+		code, output, stderr := invoke(command, "--help")
+		if code != 0 || stderr != "" || !strings.Contains(output, "--analyze-policy-failures") {
+			t.Fatalf("%s help omitted diagnostic analysis option: exit=%d stderr=%q output=%q", command, code, stderr, output)
+		}
+	}
+	for _, command := range []string{"check", "verify", "reconcile"} {
+		code, output, stderr := invoke(command, "--help")
+		if code != 0 || stderr != "" || strings.Contains(output, "--analyze-policy-failures") {
+			t.Fatalf("%s help exposed diagnostic analysis option: exit=%d stderr=%q output=%q", command, code, stderr, output)
+		}
 	}
 }
 

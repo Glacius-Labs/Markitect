@@ -78,6 +78,19 @@ func TestPolicyResultsReportEverySubjectAndSeparateResourceFromSelectionCounts(t
 	if countCode(graph, "constraint.module-intent") != 2 {
 		t.Fatalf("expected a diagnostic for each failing subject, got %#v", graph.Diagnostics)
 	}
+	for _, diagnostic := range graph.Diagnostics {
+		if diagnostic.Code != "constraint.module-intent" {
+			continue
+		}
+		if diagnostic.PolicyResult == nil || diagnostic.PolicyResult.APIVersion != domain.APIVersion || diagnostic.PolicyResult.Constraint != "module-intent" || diagnostic.PolicyResult.Subject == "" {
+			t.Fatalf("ordinary failed-policy diagnostic lacks its exact result identity: %+v", diagnostic)
+		}
+	}
+	for _, diagnostic := range graph.Diagnostics {
+		if diagnostic.Code == "constraint.module-validator-count" && diagnostic.PolicyResult == nil {
+			t.Fatalf("collection failure diagnostic lacks its empty-subject result identity: %+v", diagnostic)
+		}
+	}
 }
 
 func TestPolicyExceptionWaivesOneExactFindingAndReportsMetadata(t *testing.T) {

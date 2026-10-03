@@ -58,6 +58,85 @@ func TestSameTargetImpactTracksPathInputsAndExactConsumers(t *testing.T) {
 	}
 }
 
+func TestStructuralDiagnosticsClassifyByFailedResultIdentityNotDiagnosticCode(t *testing.T) {
+	snapshot := appSameTargetSnapshot()
+	snapshot.Files["domains/equality.yaml"] = []byte(strings.Replace(string(snapshot.Files["domains/equality.yaml"]), "name: feature-module-agrees", "name: path", 1))
+	featurePath := "resources/features/order-management.yaml"
+	snapshot.Files[featurePath] = []byte(strings.Replace(string(snapshot.Files[featurePath]), "name: orders", "name: billing", 1))
+	p := parsePolicyImpactProject(t, snapshot)
+	if len(p.Diagnostics) == 0 {
+		t.Fatal("fixture should have one failed policy diagnostic")
+	}
+	if len(p.StructuralDiagnostics()) != 0 {
+		t.Fatalf("failed result named path was misclassified from its diagnostic code: %+v", p.StructuralDiagnostics())
+	}
+	for _, diagnostic := range p.Diagnostics {
+		if diagnostic.Code == "constraint.path" && (diagnostic.PolicyResult == nil || diagnostic.PolicyResult.Constraint != "path") {
+			t.Fatalf("failed policy diagnostic lacks exact identity: %+v", diagnostic)
+		}
+	}
+
+	broken := appSameTargetSnapshot()
+	broken.Files[featurePath] = []byte(strings.Replace(string(broken.Files[featurePath]), "  module: {apiVersion: equality.tests.example/v1, kind: Module, name: orders}\n", "", 1))
+	structurallyInvalid := parsePolicyImpactProject(t, broken)
+	if len(structurallyInvalid.StructuralDiagnostics()) == 0 {
+		t.Fatal("same-target traversal failure was not retained as structural")
+	}
+	for _, diagnostic := range structurallyInvalid.Diagnostics {
+		if diagnostic.Code == "constraint.path" && diagnostic.PolicyResult != nil {
+			t.Fatalf("invalid traversal received a failed-policy identity: %+v", diagnostic)
+		}
+	}
+}
+
+func TestAnalyzeContextAllowsPolicyFailureButBlocksStructuralFailure(t *testing.T) {
+	snapshot := appSameTargetSnapshot()
+	snapshot.Files["domains/equality.yaml"] = []byte(strings.Replace(string(snapshot.Files["domains/equality.yaml"]), "name: feature-module-agrees", "name: path", 1))
+	featurePath := "resources/features/order-management.yaml"
+	snapshot.Files[featurePath] = []byte(strings.Replace(string(snapshot.Files[featurePath]), "name: orders", "name: billing", 1))
+	p := parsePolicyImpactProject(t, snapshot)
+	entry := appSameTargetKey(t, p, "UseCase", "create-order")
+	if _, err := CompileContext(p, entry, "test"); err == nil {
+		t.Fatal("strict context compilation accepted failed policy")
+	}
+	first, err := AnalyzeContext(p, entry, "test", "sha256:analysis-tool")
+	if err != nil {
+		t.Fatalf("analyze policy-failing context: %v", err)
+	}
+	second, err := AnalyzeContext(p, entry, "test", "sha256:analysis-tool")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if first.Analysis == nil || first.Analysis.Mode != PolicyFailureAnalysisMode || !first.Analysis.Complete || first.Analysis.Candidate.StructuralStatus != "passed" || first.Analysis.Candidate.PolicyStatus != "failed" || first.Analysis.Candidate.ValidationStatus != "failed" {
+		t.Fatalf("analysis state was not visibly bound to the candidate: %+v", first.Analysis)
+	}
+	if first.Analysis.Candidate.ModelDigest == "" || first.Analysis.Candidate.ConfigDigest == "" || first.Digest != second.Digest {
+		t.Fatalf("analysis omitted model identity or was nondeterministic: first=%+v second=%+v", first, second)
+	}
+	foundFailure := false
+	for _, result := range first.PolicyResults {
+		if result.Subject == entry && result.Constraint == "path" && result.Status == "failed" {
+			foundFailure = true
+		}
+	}
+	if !foundFailure {
+		t.Fatalf("context omitted the selected failed policy result: %+v", first.PolicyResults)
+	}
+	for _, input := range first.Inputs {
+		if input.Key == appSameTargetKey(t, p, "Module", "billing") || input.Key == appSameTargetKey(t, p, "Feature", "order-management") {
+			t.Fatalf("policy-only same-target traversal changed Context closure: %+v", input)
+		}
+	}
+
+	broken := appSameTargetSnapshot()
+	broken.Files[featurePath] = []byte(strings.Replace(string(broken.Files[featurePath]), "  module: {apiVersion: equality.tests.example/v1, kind: Module, name: orders}\n", "", 1))
+	structurallyInvalid := parsePolicyImpactProject(t, broken)
+	brokenEntry := appSameTargetKey(t, structurallyInvalid, "UseCase", "create-order")
+	if _, err := AnalyzeContext(structurallyInvalid, brokenEntry, "test"); err == nil {
+		t.Fatal("diagnostic context proceeded through structural same-target failure")
+	}
+}
+
 func TestSameTargetImpactRetainsIncompleteOldAndNewPathPrefixes(t *testing.T) {
 	beforeSnapshot := appSameTargetSnapshot()
 	afterSnapshot := clonePolicySnapshot(beforeSnapshot)
