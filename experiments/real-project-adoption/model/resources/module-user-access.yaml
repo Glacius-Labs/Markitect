@@ -1,0 +1,14 @@
+apiVersion: architecture.mymeetings.example/v1alpha1
+kind: Module
+metadata:
+  name: user-access
+  namespace: architecture
+spec:
+  purpose: Authentication, users and authorization-facing permissions.
+  dependsOn:
+    - {apiVersion: architecture.mymeetings.example/v1alpha1, kind: Core, name: core, namespace: architecture}
+    - {apiVersion: architecture.mymeetings.example/v1alpha1, kind: Interface, name: meetings-events, namespace: architecture}
+  projectFiles:
+    - src/Modules/UserAccess/Application/CompanyName.MyMeetings.Modules.UserAccess.Application.csproj
+    - src/Modules/UserAccess/Domain/CompanyName.MyMeetings.Modules.UserAccess.Domain.csproj
+    - src/Modules/UserAccess/IntegrationEvents/CompanyName.MyMeetings.Modules.UserAccess.IntegrationEvents.csproj

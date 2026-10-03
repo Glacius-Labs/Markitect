@@ -1,0 +1,10 @@
+apiVersion: architecture.mymeetings.example/v1alpha1
+kind: Narrative
+metadata:
+  name: cqrs-read-model-decision
+  namespace: architecture
+spec:
+  summary: Human-owned ADR records the separate relational read model and write aggregate model.
+  owner: {apiVersion: architecture.mymeetings.example/v1alpha1, kind: Module, name: meetings, namespace: architecture}
+  sourceFiles:
+    - docs/architecture-decision-log/0007-use-cqrs-architectural-style.md

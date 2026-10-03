@@ -1,0 +1,115 @@
+base: fd94a689aab857704c3a4a45ac2abe0fc0e3185c
+candidate: 058390f2ba6614f551f1a47cdd2088f9f15c7b92
+changed:
+    - docs/markitect/_domains/architecture.mymeetings.example.v1alpha1.domain.md
+    - docs/markitect/architecture/README.md
+    - docs/markitect/architecture/handler-get-meeting-attendee-count.handler.architecture.mymeetings.example.v1alpha1.md
+    - docs/markitect/architecture/usecase-get-meeting-attendee-count.usecase.architecture.mymeetings.example.v1alpha1.md
+    - resources/handler-get-meeting-attendee-count.yaml
+    - resources/usecase-get-meeting-attendee-count.yaml
+    - src/Modules/Meetings/Application/Meetings/GetMeetingAttendeeCount/GetMeetingAttendeeCountQuery.cs
+    - src/Modules/Meetings/Application/Meetings/GetMeetingAttendeeCount/GetMeetingAttendeeCountQueryHandler.cs
+affected:
+    - /Project/mymeetings-adoption-pilot
+    - architecture/architecture.mymeetings.example/v1alpha1/Aggregate/meeting
+    - architecture/architecture.mymeetings.example/v1alpha1/Aggregate/meeting-comment
+    - architecture/architecture.mymeetings.example/v1alpha1/Aggregate/meeting-group
+    - architecture/architecture.mymeetings.example/v1alpha1/Aggregate/meeting-proposal
+    - architecture/architecture.mymeetings.example/v1alpha1/Aggregate/payer
+    - architecture/architecture.mymeetings.example/v1alpha1/Aggregate/user
+    - architecture/architecture.mymeetings.example/v1alpha1/Aggregate/user-registration
+    - architecture/architecture.mymeetings.example/v1alpha1/Common/aggregate-root-marker
+    - architecture/architecture.mymeetings.example/v1alpha1/Common/sql-connection-factory
+    - architecture/architecture.mymeetings.example/v1alpha1/Common/unit-of-work
+    - architecture/architecture.mymeetings.example/v1alpha1/Core/core
+    - architecture/architecture.mymeetings.example/v1alpha1/Feature/authentication
+    - architecture/architecture.mymeetings.example/v1alpha1/Feature/group-proposals
+    - architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-attendance
+    - architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-fees
+    - architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-groups
+    - architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-lifecycle
+    - architecture/architecture.mymeetings.example/v1alpha1/Feature/price-list
+    - architecture/architecture.mymeetings.example/v1alpha1/Feature/user-registration
+    - architecture/architecture.mymeetings.example/v1alpha1/Handler/accept-proposal
+    - architecture/architecture.mymeetings.example/v1alpha1/Handler/add-meeting-attendee
+    - architecture/architecture.mymeetings.example/v1alpha1/Handler/authenticate
+    - architecture/architecture.mymeetings.example/v1alpha1/Handler/cancel-meeting
+    - architecture/architecture.mymeetings.example/v1alpha1/Handler/create-meeting
+    - architecture/architecture.mymeetings.example/v1alpha1/Handler/create-price-list-item
+    - architecture/architecture.mymeetings.example/v1alpha1/Handler/get-meeting-attendee-count
+    - architecture/architecture.mymeetings.example/v1alpha1/Handler/get-meeting-attendees
+    - architecture/architecture.mymeetings.example/v1alpha1/Handler/get-meeting-fees
+    - architecture/architecture.mymeetings.example/v1alpha1/Handler/get-meeting-group-details
+    - architecture/architecture.mymeetings.example/v1alpha1/Handler/get-member
+    - architecture/architecture.mymeetings.example/v1alpha1/Handler/propose-meeting-group
+    - architecture/architecture.mymeetings.example/v1alpha1/Handler/register-new-user
+    - architecture/architecture.mymeetings.example/v1alpha1/Interface/administration-events
+    - architecture/architecture.mymeetings.example/v1alpha1/Interface/administration-module-api
+    - architecture/architecture.mymeetings.example/v1alpha1/Interface/meetings-events
+    - architecture/architecture.mymeetings.example/v1alpha1/Interface/meetings-module-api
+    - architecture/architecture.mymeetings.example/v1alpha1/Interface/payments-events
+    - architecture/architecture.mymeetings.example/v1alpha1/Interface/payments-module-api
+    - architecture/architecture.mymeetings.example/v1alpha1/Interface/registrations-events
+    - architecture/architecture.mymeetings.example/v1alpha1/Interface/registrations-module-api
+    - architecture/architecture.mymeetings.example/v1alpha1/Interface/user-access-events
+    - architecture/architecture.mymeetings.example/v1alpha1/Interface/user-access-module-api
+    - architecture/architecture.mymeetings.example/v1alpha1/Module/administration
+    - architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+    - architecture/architecture.mymeetings.example/v1alpha1/Module/payments
+    - architecture/architecture.mymeetings.example/v1alpha1/Module/registrations
+    - architecture/architecture.mymeetings.example/v1alpha1/Module/user-access
+    - architecture/architecture.mymeetings.example/v1alpha1/Narrative/architecture-test-decision
+    - architecture/architecture.mymeetings.example/v1alpha1/Narrative/cqrs-read-model-decision
+    - architecture/architecture.mymeetings.example/v1alpha1/Narrative/meeting-attendee-view
+    - architecture/architecture.mymeetings.example/v1alpha1/Narrative/module-event-boundary-decision
+    - architecture/architecture.mymeetings.example/v1alpha1/Product/mymeetings
+    - architecture/architecture.mymeetings.example/v1alpha1/UseCase/accept-proposal
+    - architecture/architecture.mymeetings.example/v1alpha1/UseCase/add-meeting-attendee
+    - architecture/architecture.mymeetings.example/v1alpha1/UseCase/authenticate
+    - architecture/architecture.mymeetings.example/v1alpha1/UseCase/cancel-meeting
+    - architecture/architecture.mymeetings.example/v1alpha1/UseCase/create-meeting
+    - architecture/architecture.mymeetings.example/v1alpha1/UseCase/create-price-list-item
+    - architecture/architecture.mymeetings.example/v1alpha1/UseCase/get-meeting-attendee-count
+    - architecture/architecture.mymeetings.example/v1alpha1/UseCase/get-meeting-attendees
+    - architecture/architecture.mymeetings.example/v1alpha1/UseCase/get-meeting-fees
+    - architecture/architecture.mymeetings.example/v1alpha1/UseCase/get-meeting-group-details
+    - architecture/architecture.mymeetings.example/v1alpha1/UseCase/get-member
+    - architecture/architecture.mymeetings.example/v1alpha1/UseCase/propose-meeting-group
+    - architecture/architecture.mymeetings.example/v1alpha1/UseCase/register-new-user
+    - architecture/architecture.mymeetings.example/v1alpha1/Validator/authenticate
+    - architecture/architecture.mymeetings.example/v1alpha1/Validator/propose-meeting-group
+    - domain:architecture.mymeetings.example/v1alpha1/mymeetings-architecture-v1
+    - engineering/Skill/architecture-review
+    - mymeetings-architecture::/Package/mymeetings-architecture
+    - mymeetings-architecture::constitution/Workflow/vertical-slice
+reason: Union of old and new invalidation closures; configuration, Domain definitions, inventory, collection policies, uncertain context effects or unowned inputs conservatively affect all resources. See causes for this comparison.
+causes:
+    - kind: declared-input
+      path: src/Modules/Meetings/Application/Meetings/GetMeetingAttendeeCount/GetMeetingAttendeeCountQuery.cs
+      resource: architecture/architecture.mymeetings.example/v1alpha1/UseCase/get-meeting-attendee-count
+    - kind: declared-input
+      path: src/Modules/Meetings/Application/Meetings/GetMeetingAttendeeCount/GetMeetingAttendeeCountQueryHandler.cs
+      resource: architecture/architecture.mymeetings.example/v1alpha1/Handler/get-meeting-attendee-count
+    - kind: generated-output
+      path: docs/markitect/_domains/architecture.mymeetings.example.v1alpha1.domain.md
+      resource: domain:architecture.mymeetings.example/v1alpha1/mymeetings-architecture-v1
+    - kind: generated-output
+      path: docs/markitect/architecture/README.md
+      resource: /Project/mymeetings-adoption-pilot
+    - kind: generated-output
+      path: docs/markitect/architecture/handler-get-meeting-attendee-count.handler.architecture.mymeetings.example.v1alpha1.md
+      resource: architecture/architecture.mymeetings.example/v1alpha1/Handler/get-meeting-attendee-count
+    - kind: generated-output
+      path: docs/markitect/architecture/usecase-get-meeting-attendee-count.usecase.architecture.mymeetings.example.v1alpha1.md
+      resource: architecture/architecture.mymeetings.example/v1alpha1/UseCase/get-meeting-attendee-count
+    - kind: inventory
+    - kind: inventory
+      path: resources/handler-get-meeting-attendee-count.yaml
+    - kind: inventory
+      path: resources/usecase-get-meeting-attendee-count.yaml
+    - kind: resource-change
+      path: resources/handler-get-meeting-attendee-count.yaml
+      resource: architecture/architecture.mymeetings.example/v1alpha1/Handler/get-meeting-attendee-count
+    - kind: resource-change
+      path: resources/usecase-get-meeting-attendee-count.yaml
+      resource: architecture/architecture.mymeetings.example/v1alpha1/UseCase/get-meeting-attendee-count

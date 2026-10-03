@@ -1,0 +1,10 @@
+apiVersion: architecture.mymeetings.example/v1alpha1
+kind: Feature
+metadata:
+  name: price-list
+  namespace: architecture
+spec:
+  summary: Manage reusable price-list items.
+  module: {apiVersion: architecture.mymeetings.example/v1alpha1, kind: Module, name: payments, namespace: architecture}
+  documents:
+    - {apiVersion: architecture.mymeetings.example/v1alpha1, kind: Narrative, name: architecture-test-decision, namespace: architecture}

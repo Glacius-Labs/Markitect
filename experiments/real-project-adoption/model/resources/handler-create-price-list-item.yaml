@@ -1,0 +1,11 @@
+apiVersion: architecture.mymeetings.example/v1alpha1
+kind: Handler
+metadata:
+  name: create-price-list-item
+  namespace: architecture
+spec:
+  summary: Command handler that creates a Payments price-list item.
+  sourceFiles:
+    - src/Modules/Payments/Application/PriceListItems/CreatePriceListItem/CreatePriceListItemCommandHandler.cs
+  common:
+    []

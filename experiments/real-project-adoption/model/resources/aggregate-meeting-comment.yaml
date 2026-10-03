@@ -1,0 +1,10 @@
+apiVersion: architecture.mymeetings.example/v1alpha1
+kind: Aggregate
+metadata:
+  name: meeting-comment
+  namespace: architecture
+spec:
+  summary: MeetingComment aggregate root owns comment, reply and reaction behavior.
+  module: {apiVersion: architecture.mymeetings.example/v1alpha1, kind: Module, name: meetings, namespace: architecture}
+  sourceFiles:
+    - src/Modules/Meetings/Domain/MeetingComments/MeetingComment.cs

@@ -1,0 +1,18 @@
+{
+  "sourceBaseline": "069a59deb30cf41e7acf81f88106e1a877c30cf9",
+  "date": "2026-10-03",
+  "coreOrSchemaChanges": false,
+  "gates": {
+    "go test ./... -count=1": "passed",
+    "go vet ./...": "passed",
+    "go build ./...": "passed",
+    "go mod verify": "all modules verified",
+    "public v0.12.0 schema --repo .": "9 schemas passed",
+    "fresh replay.ps1 setup": "passed; both archive hashes matched original pins",
+    "offline bundle clone + fixed v1/v2 check": "passed",
+    "offline bundle local Handler impact": "passed",
+    "fixed completed Query verify": "passed",
+    "fixed v2 evolution verify": "passed"
+  },
+  "limits": "Commit-bound Windows/Linux candidate CI is recorded separately after PR submission. External project evidence depends on the recorded SDK/environment; no runtime or database acceptance."
+}

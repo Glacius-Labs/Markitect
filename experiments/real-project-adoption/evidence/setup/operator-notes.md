@@ -1,0 +1,3 @@
+# Operator notes
+
+After the fixed context was captured, I renamed `context-skill.yaml` to `context.yaml` to match the expected report label. That removed the filename the cold assisted agent had already been given and caused one repeat-read failure. The root agent restored `context-skill.yaml` byte-identically from the raw captured context; both names are now present with identical 52,873-byte content. This was an availability/filename handling error only. The compiled context content, digest, candidate SHA, and source bytes did not change. The candidate was clean at commit freeze (`fd94a689aab857704c3a4a45ac2abe0fc0e3185c`); later cold-agent activity may change adopter status.

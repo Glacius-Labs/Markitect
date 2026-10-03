@@ -1,0 +1,11 @@
+apiVersion: architecture.mymeetings.example/v1alpha1
+kind: Handler
+metadata:
+  name: create-meeting
+  namespace: architecture
+spec:
+  summary: Command handler that asks MeetingGroup to create the Meeting.
+  sourceFiles:
+    - src/Modules/Meetings/Application/Meetings/CreateMeeting/CreateMeetingCommandHandler.cs
+  common:
+    []

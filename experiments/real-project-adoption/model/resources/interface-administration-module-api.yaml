@@ -1,0 +1,10 @@
+apiVersion: architecture.mymeetings.example/v1alpha1
+kind: Interface
+metadata:
+  name: administration-module-api
+  namespace: architecture
+spec:
+  summary: Module facade contract for Administration.
+  provider: {apiVersion: architecture.mymeetings.example/v1alpha1, kind: Module, name: administration, namespace: architecture}
+  sourceFiles:
+    - src/Modules/Administration/Application/Contracts/IAdministrationModule.cs

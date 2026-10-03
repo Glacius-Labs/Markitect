@@ -19,6 +19,7 @@
 | [Implementation plan](implementation-plan.md) | Published v0.12.0 status, release evidence, and later planned work |
 | [Canonical engineering plan](canonical-engineering-plan.md) | v0.10.0 language, semantic model, and adapter contract |
 | [Strategy source documents](strategy/README.md) | User-provided product and design proposals, their provenance, and the boundary between hypotheses and adopted behavior |
+| [Real-code adoption pilot](validation/real-project-adoption-pilot.md) | Baseline/assisted workflow observations, policy evolution, bounded evidence, negative findings and pending human discovery adoption |
 | [Measurement](measurement.md) | Correctness scenarios and bounded measurements |
 | [Core authoring assessment](authoring-assessment.md) | A dated exercise using the synthetic product example |
 | [Onboarding](onboarding.md) | Scripted CLI workflow replay and dated command-path evidence |

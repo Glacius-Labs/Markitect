@@ -1,0 +1,17 @@
+apiVersion: architecture.mymeetings.example/v1alpha1
+kind: Module
+metadata:
+  name: payments
+  namespace: architecture
+spec:
+  purpose: Payers, subscriptions, price-list items and meeting fees.
+  dependsOn:
+    - {apiVersion: architecture.mymeetings.example/v1alpha1, kind: Core, name: core, namespace: architecture}
+    - {apiVersion: architecture.mymeetings.example/v1alpha1, kind: Interface, name: administration-events, namespace: architecture}
+    - {apiVersion: architecture.mymeetings.example/v1alpha1, kind: Interface, name: meetings-events, namespace: architecture}
+    - {apiVersion: architecture.mymeetings.example/v1alpha1, kind: Interface, name: registrations-events, namespace: architecture}
+    - {apiVersion: architecture.mymeetings.example/v1alpha1, kind: Interface, name: user-access-events, namespace: architecture}
+  projectFiles:
+    - src/Modules/Payments/Application/CompanyName.MyMeetings.Modules.Payments.Application.csproj
+    - src/Modules/Payments/Domain/CompanyName.MyMeetings.Modules.Payments.Domain.csproj
+    - src/Modules/Payments/IntegrationEvents/CompanyName.MyMeetings.Modules.Payments.IntegrationEvents.csproj

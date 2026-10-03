@@ -1,0 +1,26 @@
+apiVersion: markitect.example.org/v1alpha1
+kind: Skill
+metadata:
+  name: architecture-review
+  namespace: engineering
+spec:
+  description: Implement a bounded read-side change in the Meetings Module.
+  text: |
+    Add the GetMeetingAttendeeCount Query to Meetings. It accepts a MeetingId and returns the number of attendee rows that the existing GetMeetingAttendees query returns from the meeting attendee read model. Guest numbers are fields on those rows and are not separate attendee rows. Do not add an HTTP endpoint for this change.
+  uses:
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      kind: Module
+      name: meetings
+      namespace: architecture
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      kind: Feature
+      name: meeting-attendance
+      namespace: architecture
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      kind: UseCase
+      name: get-meeting-attendees
+      namespace: architecture
+    - kind: Workflow
+      name: vertical-slice
+      namespace: constitution
+      package: mymeetings-architecture

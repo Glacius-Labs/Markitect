@@ -1,0 +1,74 @@
+version: markitect.example.org/engineering-discovery-evidence/v1alpha1
+repository: https://github.com/kgrzybek/modular-monolith-with-ddd.git
+# revision is the fixed adopter snapshot; original public source commit 91c8ef24b4cb6ef558c95d8267fa07d68c7059f8 is recorded in evidence-selection.md.
+revision: fd94a689aab857704c3a4a45ac2abe0fc0e3185c
+snapshotDigest: 594d527fe69074a9fd7357983ce7c7a8d50307812e638a517c939382673de8ef
+entry: engineering/Skill/architecture-review
+toolVersion: 0.12.0
+toolDigest: sha256:b03424560caa460322e3580785d6abc9dfbf2137df878e03ddedcf76b3a8fa47
+run:
+  path: context-run.yaml
+  manifestHash: sha256:3a1af75cff1c6bea5029ec7c4442838a9581fb62cfcb0fee9d7bca66fbf399e5
+  selectionHash: sha256:34a5146f293dff53cce05002a4bc991212212f66e14d2b815171e1c5e5d02e6b
+  contextDigest: sha256:c9ec63e24bd1cf0fdf8b70a92a0e9479f86c4d2eccd6e6d938e157937b09c30b
+sources:
+  - id: E-01
+    stance: supports
+    path: docs/architecture-decision-log/0007-use-cqrs-architectural-style.md
+    hash: sha256:499e8ef95b0cbec811d1e8897a3baea3de8b1ec29579bec43f01b5ea8ae9f25d
+    excerpt: 'Each module will have a separate model for reading and writing.'
+    note: Line anchor 22-28. Accepted ADR dated 2019; selected source records intent but does not reconfirm current owner preference.
+  - id: E-02
+    stance: qualifies
+    path: docs/architecture-decision-log/0009-use-2-layered-architectural-style-for-reads.md
+    hash: sha256:8d570f9518601952e1b4e35c17ad162faf5f15c560a033e39c101bacf621fcdf
+    excerpt: 'The API layer is responsible for Query creation based on HTTP request and the module Application layer is responsible for query handling.'
+    note: Line anchor 17-24. Same ADR explicitly accepts database/query-framework coupling and no database abstraction.
+  - id: E-03
+    stance: supports
+    path: src/Modules/Meetings/Tests/ArchTests/Application/ApplicationTests.cs
+    hash: sha256:97c92702cc852e338b584c6498b4267254840e251343c4e0a793059b89cfc589
+    excerpt: 'public void Query_Should_Be_Immutable()'
+    note: Line anchors 35-82 also test QueryHandler suffix and non-public Command/Query handlers. Tests target Meetings Application only and do not prove one-to-one Query/Handler cardinality.
+  - id: E-04
+    stance: supports
+    path: src/Modules/Meetings/Application/MeetingGroups/GetMeetingGroupDetails/GetMeetingGroupDetailsQuery.cs
+    hash: sha256:9b843fa92e60e2f6ea04280811dbf6166bb489812e3e6e0bbb36e863611b93e8
+    excerpt: 'public Guid MeetingGroupId { get; }'
+    note: Line anchors 5-13. Concrete immutable parameterized Query example.
+  - id: E-05
+    stance: supports
+    path: src/Modules/Meetings/Application/MeetingGroups/GetMeetingGroupDetails/GetMeetingGroupDetailsQueryHandler.cs
+    hash: sha256:8473de39d9efdfc150c3e4dc48d95e4699239b77fee50e9ac4c9fdd0036c5957
+    excerpt: 'FROM [meetings].[v_MeetingGroups] AS [MeetingGroup]'
+    note: Line anchors 8-51. Internal IQueryHandler reads a details DTO from a view then separately queries active member count; example only, not universal storage rule.
+  - id: E-06
+    stance: supports
+    path: src/Modules/Meetings/Application/MeetingGroups/GetMeetingGroupDetails/MeetingGroupDetailsDto.cs
+    hash: sha256:155ee9fcb80af13080976eca022d4288957fa9697eb1b6d1bbb1caa400a97249
+    excerpt: 'public int MembersCount { get; set; }'
+    note: Line anchors 3-13. Response type for E-04/E-05.
+  - id: E-07
+    stance: supports
+    path: src/Modules/Meetings/Application/Countries/GetAllCountriesQuery.cs
+    hash: sha256:74cdfee65d16345c0c80cb3d3953365346ad5e1d3f8e0dee185025ab41672309
+    excerpt: 'public class GetAllCountriesQuery : QueryBase<List<CountryDto>>'
+    note: Line anchors 4-6. Second Meetings Query shape with no input fields.
+  - id: E-08
+    stance: supports
+    path: src/Modules/Meetings/Application/Countries/GetAllCountriesQueryHandler.cs
+    hash: sha256:f637e7d82b926b9591e9aef0fea9bde6271d210a48edb7ac8fd84b535959ddd1
+    excerpt: 'FROM [meetings].[v_Countries] AS [Country]'
+    note: Line anchors 7-27. Second internal IQueryHandler reading a Meetings view.
+  - id: E-09
+    stance: qualifies
+    path: src/Modules/UserAccess/Application/Emails/GetAllEmailsQuery.cs
+    hash: sha256:949220aec85544cf44603a430f56477f9617ef4c6bc395fccc311d4bfc544856
+    excerpt: 'public class GetAllEmailsQuery : QueryBase<List<EmailDto>>'
+    note: Line anchors 4-6. One cross-module Query comparison only; it does not establish whole-project prevalence.
+  - id: E-10
+    stance: counterexample
+    path: src/Modules/UserAccess/Application/Emails/GetAllEmailsQueryHandler.cs
+    hash: sha256:ec59877abe8e04605a604eabcb6ac9c544c3ec7159d422092ba30fd5ff4b561c
+    excerpt: 'FROM [app].[Emails] AS [Email]'
+    note: Line anchors 7-31. Same IQueryHandler shape reads a table directly, countering a universal view requirement.

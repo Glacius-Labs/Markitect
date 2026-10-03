@@ -1,0 +1,10 @@
+apiVersion: architecture.mymeetings.example/v1alpha1
+kind: Aggregate
+metadata:
+  name: meeting-proposal
+  namespace: architecture
+spec:
+  summary: MeetingGroupProposal aggregate root tracks proposal verification and acceptance.
+  module: {apiVersion: architecture.mymeetings.example/v1alpha1, kind: Module, name: administration, namespace: architecture}
+  sourceFiles:
+    - src/Modules/Administration/Domain/MeetingGroupProposals/MeetingGroupProposal.cs

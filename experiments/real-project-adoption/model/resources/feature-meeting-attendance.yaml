@@ -1,0 +1,12 @@
+apiVersion: architecture.mymeetings.example/v1alpha1
+kind: Feature
+metadata:
+  name: meeting-attendance
+  namespace: architecture
+spec:
+  summary: Read and change meeting attendee membership.
+  module: {apiVersion: architecture.mymeetings.example/v1alpha1, kind: Module, name: meetings, namespace: architecture}
+  documents:
+    - {apiVersion: architecture.mymeetings.example/v1alpha1, kind: Narrative, name: cqrs-read-model-decision, namespace: architecture}
+    - {apiVersion: architecture.mymeetings.example/v1alpha1, kind: Narrative, name: meeting-attendee-view, namespace: architecture}
+    - {apiVersion: architecture.mymeetings.example/v1alpha1, kind: Narrative, name: architecture-test-decision, namespace: architecture}

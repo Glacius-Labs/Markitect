@@ -1,0 +1,12 @@
+apiVersion: architecture.mymeetings.example/v1alpha1
+kind: Interface
+metadata:
+  name: meetings-events
+  namespace: architecture
+spec:
+  summary: Meetings integration-event contracts for new members, proposed groups and attendee additions.
+  provider: {apiVersion: architecture.mymeetings.example/v1alpha1, kind: Module, name: meetings, namespace: architecture}
+  sourceFiles:
+    - src/Modules/Meetings/IntegrationEvents/MemberCreatedIntegrationEvent.cs
+    - src/Modules/Meetings/IntegrationEvents/MeetingGroupProposedIntegrationEvent.cs
+    - src/Modules/Meetings/IntegrationEvents/MeetingAttendeeAddedIntegrationEvent.cs

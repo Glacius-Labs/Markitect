@@ -1,0 +1,112 @@
+diff --git a/markitect.yaml b/markitect.yaml
+index f13334c..dd8fef9 100644
+--- a/markitect.yaml
++++ b/markitect.yaml
+@@ -31,7 +31,7 @@ spec:
+         - package:mymeetings-architecture/domains/architecture.yaml
+     packages:
+         - name: mymeetings-architecture
+-          version: 1.0.0
+-          source: pilot:mymeetings-adopter-constitution-1.0.0
+-          archive: .markitect/packages/mymeetings-architecture-1.0.0.zip
+-          sha256: 0c7395055aac7f4c35afcff404481a77e2ce6475c863a435afc2586dd388b1cc
++          version: 2.0.0
++          source: git:e0ae3c5181323e0d2a03312524010cc817652330
++          archive: .markitect/packages/mymeetings-architecture-2.0.0.zip
++          sha256: 0ed97c9f0b21e10b5e2a0ff232bdb910bd468ac04f84441ae24d5b7cefb2b504
+diff --git a/resources/usecase-add-meeting-attendee.yaml b/resources/usecase-add-meeting-attendee.yaml
+index 4608eff..5ad41b5 100644
+--- a/resources/usecase-add-meeting-attendee.yaml
++++ b/resources/usecase-add-meeting-attendee.yaml
+@@ -31,4 +31,8 @@ spec:
+     sourceFiles:
+         - src/Modules/Meetings/Application/Meetings/AddMeetingAttendee/AddMeetingAttendeeCommand.cs
+     summary: Add a member to a Meeting as an attendee.
+-    validators: []
++    validators:
++        - apiVersion: architecture.mymeetings.example/v1alpha1
++          kind: Validator
++          name: add-meeting-attendee
++          namespace: architecture
+diff --git a/resources/usecase-cancel-meeting.yaml b/resources/usecase-cancel-meeting.yaml
+index b8aecde..f44af4b 100644
+--- a/resources/usecase-cancel-meeting.yaml
++++ b/resources/usecase-cancel-meeting.yaml
+@@ -31,4 +31,8 @@ spec:
+     sourceFiles:
+         - src/Modules/Meetings/Application/Meetings/CancelMeeting/CancelMeetingCommand.cs
+     summary: Cancel a scheduled Meeting.
+-    validators: []
++    validators:
++        - apiVersion: architecture.mymeetings.example/v1alpha1
++          kind: Validator
++          name: cancel-meeting
++          namespace: architecture
+diff --git a/resources/validator-add-meeting-attendee.yaml b/resources/validator-add-meeting-attendee.yaml
+new file mode 100644
+index 0000000..455e227
+--- /dev/null
++++ b/resources/validator-add-meeting-attendee.yaml
+@@ -0,0 +1,9 @@
++apiVersion: architecture.mymeetings.example/v1alpha1
++kind: Validator
++metadata:
++    name: add-meeting-attendee
++    namespace: architecture
++spec:
++    sourceFiles:
++        - src/Modules/Meetings/Application/Meetings/AddMeetingAttendee/AddMeetingAttendeeCommandValidator.cs
++    summary: FluentValidation rule requiring an add-attendee command MeetingId.
+diff --git a/resources/validator-cancel-meeting.yaml b/resources/validator-cancel-meeting.yaml
+new file mode 100644
+index 0000000..d4cb473
+--- /dev/null
++++ b/resources/validator-cancel-meeting.yaml
+@@ -0,0 +1,9 @@
++apiVersion: architecture.mymeetings.example/v1alpha1
++kind: Validator
++metadata:
++    name: cancel-meeting
++    namespace: architecture
++spec:
++    sourceFiles:
++        - src/Modules/Meetings/Application/Meetings/CancelMeeting/CancelMeetingCommandValidator.cs
++    summary: FluentValidation rule requiring a cancel-meeting command MeetingId.
+diff --git a/src/Modules/Meetings/Application/Meetings/AddMeetingAttendee/AddMeetingAttendeeCommandValidator.cs b/src/Modules/Meetings/Application/Meetings/AddMeetingAttendee/AddMeetingAttendeeCommandValidator.cs
+new file mode 100644
+index 0000000..165155f
+--- /dev/null
++++ b/src/Modules/Meetings/Application/Meetings/AddMeetingAttendee/AddMeetingAttendeeCommandValidator.cs
+@@ -0,0 +1,13 @@
++using FluentValidation;
++
++namespace CompanyName.MyMeetings.Modules.Meetings.Application.Meetings.AddMeetingAttendee
++{
++    internal class AddMeetingAttendeeCommandValidator : AbstractValidator<AddMeetingAttendeeCommand>
++    {
++        public AddMeetingAttendeeCommandValidator()
++        {
++            this.RuleFor(c => c.MeetingId).NotEmpty()
++                .WithMessage("Meeting id cannot be empty.");
++        }
++    }
++}
+diff --git a/src/Modules/Meetings/Application/Meetings/CancelMeeting/CancelMeetingCommandValidator.cs b/src/Modules/Meetings/Application/Meetings/CancelMeeting/CancelMeetingCommandValidator.cs
+new file mode 100644
+index 0000000..7aecddf
+--- /dev/null
++++ b/src/Modules/Meetings/Application/Meetings/CancelMeeting/CancelMeetingCommandValidator.cs
+@@ -0,0 +1,13 @@
++using FluentValidation;
++
++namespace CompanyName.MyMeetings.Modules.Meetings.Application.Meetings.CancelMeeting
++{
++    internal class CancelMeetingCommandValidator : AbstractValidator<CancelMeetingCommand>
++    {
++        public CancelMeetingCommandValidator()
++        {
++            this.RuleFor(c => c.MeetingId).NotEmpty()
++                .WithMessage("Meeting id cannot be empty.");
++        }
++    }
++}

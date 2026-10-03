@@ -1,0 +1,37 @@
+apiVersion: markitect.example.org/v1alpha1
+kind: Project
+metadata:
+  name: mymeetings-adoption-pilot
+spec:
+  targets:
+  - markdown
+  - codex
+  areas:
+  - name: architecture
+    path: resources
+    imports:
+    - source
+    - narrative
+  - name: engineering
+    path: agent-guidance
+    imports:
+    - architecture
+  - name: source
+    path: src
+  - name: narrative
+    path: docs
+  packages:
+  - name: mymeetings-architecture
+    version: 1.0.0
+    source: pilot:mymeetings-adopter-constitution-1.0.0
+    archive: .markitect/packages/mymeetings-architecture-1.0.0.zip
+    sha256: PLACEHOLDER_FOR_PACKAGE_BUILDER
+  domains:
+  - package:mymeetings-architecture/domains/architecture.yaml
+  checks:
+  - name: module-project-references
+    run:
+    - pwsh
+    - -NoProfile
+    - -File
+    - scripts/check-module-project-references.ps1

@@ -1,0 +1,12 @@
+{
+  "bundleSha256": "af9dbdc750f376b5250b61a451c1d124fe363fd87cce87684804b292149311cc",
+  "bundleBytes": 310272,
+  "upstreamLicense": "MIT; embedded LICENSE in each adopter snapshot; evidence/upstream-LICENSE.MIT",
+  "baselineInput": "ec01cb6805f93c8a4dbe37efe2a129a58a7ed28d",
+  "baselineTask": "90790a1f6849547c6e650309d9f5de0cc6266511",
+  "assistedInput": "fd94a689aab857704c3a4a45ac2abe0fc0e3185c",
+  "assistedTask": "058390f2ba6614f551f1a47cdd2088f9f15c7b92",
+  "v2Pin": "a0f89e7c0ce43a1be556c17c41cd19f8e7f32d7f",
+  "v2Final": "c507172b24da9005904422c03cc3d66a2b5efcec",
+  "handlerProbe": "fdc32ac004d17e3b4e91443b7c59fe035ce0d7b3"
+}

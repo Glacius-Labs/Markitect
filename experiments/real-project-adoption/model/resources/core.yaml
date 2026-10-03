@@ -1,0 +1,12 @@
+apiVersion: architecture.mymeetings.example/v1alpha1
+kind: Core
+metadata:
+  name: core
+  namespace: architecture
+spec:
+  purpose: Stable BuildingBlocks for shared domain and application abstractions.
+
+  projectFiles:
+    - src/BuildingBlocks/Application/CompanyName.MyMeetings.BuildingBlocks.Application.csproj
+    - src/BuildingBlocks/Domain/CompanyName.MyMeetings.BuildingBlocks.Domain.csproj
+    - src/BuildingBlocks/Infrastructure/CompanyName.MyMeetings.BuildingBlocks.Infrastructure.csproj

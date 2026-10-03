@@ -1,0 +1,14 @@
+apiVersion: markitect.example.org/v1alpha1
+kind: Workflow
+metadata:
+  name: vertical-slice
+  namespace: constitution
+spec:
+  text: |
+    Use the exact pinned MyMeetings architecture package and the selected graph context as the engineering contract.
+    Keep canonical ownership, observed source evidence, generated projections and candidate changes distinct.
+    Inspect only the task-relevant human-owned documents and declared code inputs needed for the change.
+    Report failed policy results with their exact subjects and constraints. A waived result is still a recorded violation.
+    Do not silently broaden the selected v2 command-validation cohort. Review labels and package changes as explicit policy inputs.
+    Source-code and .NET project-reference conclusions remain bounded to the project-owned checks that provide that evidence.
+    Do not use the architecture graph to infer business behavior that the selected source and tests do not establish.

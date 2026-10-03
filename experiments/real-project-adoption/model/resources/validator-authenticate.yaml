@@ -1,0 +1,9 @@
+apiVersion: architecture.mymeetings.example/v1alpha1
+kind: Validator
+metadata:
+  name: authenticate
+  namespace: architecture
+spec:
+  summary: FluentValidation rules for authentication input.
+  sourceFiles:
+    - src/Modules/UserAccess/Application/Authentication/Authenticate/AuthenticateCommandValidator.cs

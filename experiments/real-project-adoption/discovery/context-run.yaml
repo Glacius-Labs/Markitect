@@ -1,0 +1,26 @@
+version: markitect.example.org/context-run/v1alpha1
+entry: engineering/Skill/architecture-review
+task:
+  id: copy-me-query-convention
+  path: work-items/copy-me-query-convention.md
+sources:
+  - path: docs/architecture-decision-log/0007-use-cqrs-architectural-style.md
+    reason: accepted stated intent for separating module read and write models
+  - path: docs/architecture-decision-log/0009-use-2-layered-architectural-style-for-reads.md
+    reason: accepted read-side layer decision and explicit database-coupling qualification
+  - path: src/Modules/Meetings/Tests/ArchTests/Application/ApplicationTests.cs
+    reason: project-owned executable expectations for immutable Queries and handler conventions
+  - path: src/Modules/Meetings/Application/MeetingGroups/GetMeetingGroupDetails/GetMeetingGroupDetailsQuery.cs
+    reason: concrete parameterized Query example
+  - path: src/Modules/Meetings/Application/MeetingGroups/GetMeetingGroupDetails/GetMeetingGroupDetailsQueryHandler.cs
+    reason: concrete read handler and read-model implementation
+  - path: src/Modules/Meetings/Application/MeetingGroups/GetMeetingGroupDetails/MeetingGroupDetailsDto.cs
+    reason: response type for the concrete Query
+  - path: src/Modules/Meetings/Application/Countries/GetAllCountriesQuery.cs
+    reason: second Query example with no input fields
+  - path: src/Modules/Meetings/Application/Countries/GetAllCountriesQueryHandler.cs
+    reason: second Meetings handler implementation
+  - path: src/Modules/UserAccess/Application/Emails/GetAllEmailsQuery.cs
+    reason: cross-module Query comparison
+  - path: src/Modules/UserAccess/Application/Emails/GetAllEmailsQueryHandler.cs
+    reason: cross-module handler and storage-choice counterexample

@@ -1,0 +1,19 @@
+apiVersion: architecture.mymeetings.example/v1alpha1
+kind: UseCase
+metadata:
+  name: get-meeting-attendees
+  namespace: architecture
+  labels:
+    feature-ownership: required
+spec:
+  intent: Query
+  summary: Return attendee rows for one Meeting using the SQL read model.
+  module: {apiVersion: architecture.mymeetings.example/v1alpha1, kind: Module, name: meetings, namespace: architecture}
+  feature: {apiVersion: architecture.mymeetings.example/v1alpha1, kind: Feature, name: meeting-attendance, namespace: architecture}
+  handler: {apiVersion: architecture.mymeetings.example/v1alpha1, kind: Handler, name: get-meeting-attendees, namespace: architecture}
+  sourceFiles:
+    - src/Modules/Meetings/Application/Meetings/GetMeetingAttendees/GetMeetingAttendeesQuery.cs
+  aggregates:
+    []
+  validators:
+    []

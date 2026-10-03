@@ -1,0 +1,10 @@
+apiVersion: architecture.mymeetings.example/v1alpha1
+kind: Interface
+metadata:
+  name: user-access-module-api
+  namespace: architecture
+spec:
+  summary: Module facade contract for UserAccess.
+  provider: {apiVersion: architecture.mymeetings.example/v1alpha1, kind: Module, name: user-access, namespace: architecture}
+  sourceFiles:
+    - src/Modules/UserAccess/Application/Contracts/IUserAccessModule.cs
