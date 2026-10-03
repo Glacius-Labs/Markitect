@@ -22,6 +22,7 @@ const (
 	requestAPIVersion = "markitect.example.org/adapter-request/v1alpha1"
 	resultAPIVersion  = "markitect.example.org/adapter-result/v1alpha1"
 	semanticModelAPI  = "markitect.example.org/semantic-model/v1alpha1"
+	msbuildNamespace  = "http://schemas.microsoft.com/developer/msbuild/2003"
 )
 
 type request struct {
@@ -425,6 +426,18 @@ func projectReferences(data []byte) ([]string, string, error) {
 			if start.Name.Local != "Project" {
 				return nil, "", errors.New(".csproj XML root element must be Project")
 			}
+			if start.Name.Space != "" && start.Name.Space != msbuildNamespace {
+				return nil, "project uses an unsupported XML namespace; only unnamespaced or standard MSBuild project XML is supported", nil
+			}
+			if hasAttribute(start, "Condition") {
+				return nil, "project-level conditions are outside the captured XML subset", nil
+			}
+			ancestors = append(ancestors, start)
+			continue
+		}
+		projectNamespace := ancestors[0].Name.Space
+		if isMSBuildElement(start.Name.Local) && start.Name.Space != projectNamespace {
+			return nil, "MSBuild element " + quote(start.Name.Local) + " uses a different XML namespace from the Project root", nil
 		}
 		unsupportedNode := ""
 		if start.Name.Local == "Import" || start.Name.Local == "ImportGroup" || start.Name.Local == "Sdk" {
@@ -482,6 +495,15 @@ func projectReferences(data []byte) ([]string, string, error) {
 		return nil, "", errors.New(".csproj XML document is empty")
 	}
 	return uniqueSorted(refs), "", nil
+}
+
+func isMSBuildElement(name string) bool {
+	switch name {
+	case "Project", "Import", "ImportGroup", "Sdk", "ItemGroup", "ProjectReference", "Choose", "When", "Otherwise", "Target":
+		return true
+	default:
+		return false
+	}
 }
 
 func hasAttribute(element xml.StartElement, name string) bool {

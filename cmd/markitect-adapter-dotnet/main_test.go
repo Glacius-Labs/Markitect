@@ -179,6 +179,7 @@ func TestProjectReferenceExpressionsAndPathEscapeAreIncomplete(t *testing.T) {
 
 func TestUnsupportedMSBuildSemanticsAreIncomplete(t *testing.T) {
 	for _, project := range []string{
+		`<Project Condition="'$(Configuration)' == 'Debug'"><ItemGroup><ProjectReference Include="../Core/Core.csproj" /></ItemGroup></Project>`,
 		`<Project><ItemGroup Condition="'$(Configuration)' == 'Debug'"><ProjectReference Include="../Core/Core.csproj" /></ItemGroup></Project>`,
 		`<Project><Import Project="shared.props" /><ItemGroup><ProjectReference Include="../Core/Core.csproj" /></ItemGroup></Project>`,
 		`<Project><ItemGroup><ProjectReference Include="../Core/$(Target).csproj" /></ItemGroup></Project>`,
@@ -197,6 +198,51 @@ func TestUnsupportedMSBuildSemanticsAreIncomplete(t *testing.T) {
 			got := run(validRequest("observe"))
 			if got.Status != "incomplete" || (!hasCode(got.Findings, "project-semantics-unsupported") && !hasCode(got.Findings, "project-reference-unsupported")) {
 				t.Fatalf("status/findings = %s/%v", got.Status, got.Findings)
+			}
+		})
+	}
+}
+
+func TestProjectReferencesRespectMSBuildXMLNamespace(t *testing.T) {
+	t.Run("standard MSBuild namespace", func(t *testing.T) {
+		project := `<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003"><ItemGroup><ProjectReference Include="../Core/Core.csproj" /></ItemGroup></Project>`
+		refs, unsupported, err := projectReferences([]byte(project))
+		if err != nil || unsupported != "" || !reflect.DeepEqual(refs, []string{"../Core/Core.csproj"}) {
+			t.Fatalf("projectReferences = %#v, %q, %v; want one literal reference", refs, unsupported, err)
+		}
+	})
+
+	for name, project := range map[string]string{
+		"foreign project namespace":   `<Project xmlns="urn:foreign"><ItemGroup><ProjectReference Include="../Core/Core.csproj" /></ItemGroup></Project>`,
+		"foreign reference namespace": `<Project xmlns:x="urn:foreign"><ItemGroup><x:ProjectReference Include="../Core/Core.csproj" /></ItemGroup></Project>`,
+	} {
+		t.Run(name, func(t *testing.T) {
+			refs, unsupported, err := projectReferences([]byte(project))
+			if err != nil || unsupported == "" || len(refs) != 0 {
+				t.Fatalf("projectReferences = %#v, %q, %v; want unsupported namespace and no evidence", refs, unsupported, err)
+			}
+		})
+	}
+}
+
+func TestForeignNamespacesMakeObservationIncomplete(t *testing.T) {
+	for name, project := range map[string]string{
+		"foreign project namespace":   `<Project xmlns="urn:foreign"><ItemGroup><ProjectReference Include="../Core/Core.csproj" /></ItemGroup></Project>`,
+		"foreign reference namespace": `<Project xmlns:x="urn:foreign"><ItemGroup><x:ProjectReference Include="../Core/Core.csproj" /></ItemGroup></Project>`,
+	} {
+		t.Run(name, func(t *testing.T) {
+			root := fixture(t, project)
+			old, err := os.Getwd()
+			if err != nil {
+				t.Fatal(err)
+			}
+			if err := os.Chdir(root); err != nil {
+				t.Fatal(err)
+			}
+			defer os.Chdir(old)
+			got := run(validRequest("observe"))
+			if got.Status != "incomplete" || !hasCode(got.Findings, "project-semantics-unsupported") || got.Observed != nil {
+				t.Fatalf("status/findings/observation = %s/%v/%#v; want incomplete without observation", got.Status, got.Findings, got.Observed)
 			}
 		})
 	}
