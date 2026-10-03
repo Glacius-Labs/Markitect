@@ -4,7 +4,7 @@ The [constitution](../engineering-constitution.md) owns invariants; this documen
 
 | Contract held constant | Source owner | What consumers may rely on |
 |---|---|---|
-| Closed Domain and typed resource model | `internal/core/model.go`, `domain.go`, `graph*.go`; `internal/format/domain.go` | Explicit Domain activation, typed GraphKeys, finite assertions, independently declared context/invalidation/cycle effects. No implicit Domain stacking. |
+| Closed Domain and typed resource model | `internal/core/model.go`, `internal/core/registry.go`, graph files; `internal/format/domain.go` | Explicit Domain activation, typed GraphKeys, finite assertions, independently declared context/invalidation/cycle effects. No implicit Domain stacking. |
 | Resolved snapshot value | `internal/snapshot`; Git acquisition `internal/source` | Fixed identity, provisional flag, exact paths/modes/bytes, deterministic diff. Git selection and opaque artifact acquisition stay outside semantic decisions. |
 | Normalized model | `internal/app/model.go` | `markitect.example.org/semantic-model/v1alpha1`: snapshot/config/model digests, Domain/package sources, identities/data, explicit relationships, diagnostics and PolicyResults. Current source includes structural/policy status; acceptance remains separate. |
 | PolicyResult/exception | `internal/core/policy.go`, `same_target.go` | Exact constraint/subject identity and digests, passed/failed/waived states, bounded traces, explicit frozen-date exceptions. Invalid exceptions and structural traversal block analysis. |

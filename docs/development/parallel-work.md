@@ -14,6 +14,8 @@ Implement only the assigned slice. Report source-selection/privacy/permissions g
 
 README, architecture, roadmap, CLI dispatch, format/schema generation, model types, adapter DTOs, package/state/digest semantics and shared helpers stay with the coordinator during a wave. An implementer supplies a small proposed patch or design request rather than editing them opportunistically. Tests local to an owned package/new file are independent; renderer entrypoints/provider configuration and shared ownership helpers are integration hotspots. Coordinator review decides whether a needed edit is legitimate shared semantics or removable coupling.
 
+Shared `go.mod`, `go.sum` and CI workflows are also coordinator-owned integration files. Provider library/tool dependencies require a bounded request with scope, version, licensing and validation effects; parallel implementers must not each change the root dependency contract independently.
+
 Escalation includes the desired engineering statement, two concrete cases if requesting Core expansion, current expression, normalization/check/adapter alternatives, affected consumers, exact input/version behavior, diagnostics, context/impact/digest effects and a finite deterministic test. Do not introduce Pattern/Trait/inheritance, fan-out, arbitrary selectors/queries, provider semantics, source analysis or background execution through an unrelated workstream.
 
 ## Integration and evidence
