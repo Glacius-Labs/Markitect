@@ -18,6 +18,8 @@ Received 2026-10-02, follow-up concepts:
 
 ## How to read these sources
 
+Received 2026-10-03: [parallel-development coordinator bundle](sources/parallel-development/README.md). Its coordinator prompt was invoked for preparation only. Supporting adoption UX, risks and adapter proposals remain design input; illustrative schemas/commands are not shipped features. Adopted decisions live in [development coordination](../development/README.md), [workstream packages](../workstreams/README.md) and the existing [constitution](../engineering-constitution.md).
+
 The proposals contain product claims, design options, recommendations, and imperatives. They are discussion inputs. Their market claims and expected business benefits have not been independently verified, and their recommendations do not automatically define Markitect scope. The repository's [architecture](../architecture.md), [refinement decisions](../refinement.md), [canonical engineering plan](../canonical-engineering-plan.md), [roadmap](../implementation-plan.md), and [usage contract](../usage.md) define adopted behavior and delivery status.
 
 v0.10.0 is published. The adopted v0.11.0 direction reuses existing versioned package Domains as ongoing architecture contracts, keeps architecture kinds and constraints in the generic Domain mechanism, adds bounded PolicyResults and narrowly scoped explicit exceptions, and includes a provider-independent Copy Me authoring workflow. It does not adopt a Core Pattern kind or separate pattern DSL, automatic code migration, a discovery CLI, or model calls in the Markitect core. See the [engineering constitution](../engineering-constitution.md) for adopted scope and precise evidence boundaries. These follow-up ideas are not shipped behavior until the roadmap records them as released.
@@ -26,4 +28,4 @@ The product benefit remains a hypothesis: fewer manual copies and missed updates
 
 The initial constraint operators are finite and deterministic. Comparing that language with specialist policy tools such as CUE or OPA remains an evaluation question driven by concrete examples, not an automatic scope expansion.
 
-The v0.11.0 roadmap is the implementation source of truth; this archive preserves provenance and records strategic context only.
+The current roadmap is the implementation source of truth; this archive preserves provenance and records strategic context only. v0.12.0 is published; later policy-failure analysis is integrated source, not a published executable contract.

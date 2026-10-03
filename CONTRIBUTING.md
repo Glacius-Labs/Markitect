@@ -1,5 +1,7 @@
 # Development
 
+For coordinated parallel work, read the [development guide](docs/development/README.md), [parallel-work flow](docs/development/parallel-work.md) and your [workstream specification](docs/workstreams/README.md). Shared semantic contracts remain coordinator-owned; the normal gates below apply to every integrated candidate.
+
 ## Ownership and layout
 
 | Path | Responsibility |

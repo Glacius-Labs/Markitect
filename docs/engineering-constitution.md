@@ -4,9 +4,26 @@
 
 ## Product purpose
 
+The kernel invariants below are canonical for product and implementation decisions. [Development coordination](development/README.md) applies them to work ownership; archived proposals remain design input.
+
 Markitect describes the space of valid engineering changes. People decide which architecture and policies a project wants. Markitect helps express those decisions as canonical, versioned Domains and resources, derives bounded deterministic checks and context from them, and gives agents the relevant constraints. Agents can choose implementations inside those boundaries. Markitect does not choose the architecture, generate arbitrary application code, or decide whether the desired architecture is wise.
 
 The intended outcome is one canonical model whose relevant values can feed generated human-readable Domain contracts, agent instructions, deterministic checks, and explicitly configured adapters. When a Project selects the `markdown` target, the v0.11.0 Domain projection writes normalized Domain schemas, relations, and constraints under `docs/markitect/_domains/`; per-resource projections may include their applicable PolicyResults and explicit waiver decision. These are generated views, not canonical sources. A check establishes only its declared assertions for its fixed inputs. It does not establish that prose is true, that code satisfies business intent beyond the evidence a configured checker can observe, or that a human has accepted a change.
+
+## Kernel invariants
+
+- Fixed canonical data, inputs and executable/plugin versions produce deterministic results. Constraints are finite, terminating and side-effect free; the language remains smaller than its consumer Domains.
+- Authoring syntax and normalized meaning are distinct. Semantic relationships are explicit. Prose navigation and artifact selection create no inferred dependencies; Context and policy invalidation have separate declared semantics.
+- Canonical, observed, generated, inferred and proposed state remain distinct. AI proposals require explicit human-reviewed adoption. Generated outputs never own canonical meaning.
+- Domain meaning remains separate from technology/provider mappings. Core treats adopting code, configuration and prose as opaque inputs; specialist adapters/checks state what their evidence proves.
+- Structural invalidity blocks trustworthy analysis. Ordinary policy failure may be inspected explicitly read-only, with failed status and exit 1. Check, Verify and reconciliation remain strict; inspection is neither acceptance nor waiver.
+- Adapters consume canonical semantics plus explicit mappings/observations independently. Other adapters' generated representations are not canonical input. An existing shared contract should permit a new consumer without another adapter or provider-specific Core edits. Shared native rendering and external-target ownership limitations must be explained honestly.
+- Observe and Plan are read-only contracts. Apply is an explicit trust/mutation boundary; plans bind reviewed inputs and versions. Commands run under caller authority, not a claimed OS sandbox. Convergence is proved per adapter/target, not assumed universally.
+- Impact follows declared dependencies and broadens conservatively for unknown inputs. Direct policy subjects do not replace the conservative affected set. Explanation does not claim full source/business semantics.
+- Conflicts fail explicitly; no hidden precedence, implicit activation or independent Domain trait stacking. Architecture evolves through reviewed exact versions without changing historical meaning.
+- Exceptions are narrow, explicit, digest-bound and reviewable. Structural failures cannot be waived; recorded decisions do not authenticate authorization.
+- New Core semantics require repeated concrete failures, normalization/check/adapter alternatives and a focused generic design. Names, YAML repetition and provider convenience do not justify Pattern, Trait, inheritance, arbitrary queries, source analysis or background execution.
+- Tests and observations establish their declared scope, not human acceptance, runtime/business truth, productivity, token savings, general AI safety or demand.
 
 ## Reuse existing Domain packages
 

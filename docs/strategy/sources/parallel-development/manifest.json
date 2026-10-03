@@ -1,0 +1,51 @@
+{
+  "received": "2026-10-03",
+  "status": "design-input; coordinator prompt invoked for preparation only",
+  "files": [
+    {
+      "file": "00-coordinator-prompt.md",
+      "suppliedName": "00-coordinator-prompt.md",
+      "sha256": "822c0da1725b2539c7194f2ea1f8ccb587fe316a26eeb538bc3d06bd32afcc92"
+    },
+    {
+      "file": "01-core-invariants.md",
+      "suppliedName": "01-core-invariants.md",
+      "sha256": "c35ba33bf818a573f84a92bce5819ecf97b12a5da04190d41083da84f59e99e6"
+    },
+    {
+      "file": "02-risk-register-and-triage.md",
+      "suppliedName": "02-risk-register-and-triage.md",
+      "sha256": "183a854ac6d5adf073bc030b6320f1653fe72d3eb6da7bb534537e148e234d85"
+    },
+    {
+      "file": "03-parallelization-and-modularity.md",
+      "suppliedName": "03-parallelization-and-modularity.md",
+      "sha256": "27b5ff2278d4d7cadd4bea3ec2721bcb4affda3289cf53e24b1ec21e298b3528"
+    },
+    {
+      "file": "04-adapter-modularity-contract.md",
+      "suppliedName": "04-adapter-modularity-contract.md",
+      "sha256": "1c7b050ce760805cc092fcaa6f117474a899e92170951ed5ed0d131ab2b2336d"
+    },
+    {
+      "file": "05-existing-project-adoption-and-discovery.md",
+      "suppliedName": "05-existing-project-adoption-and-discovery.md",
+      "sha256": "c94ff6afcc449a19e14bed4ed4b924827199e86cd4cde98782fbfcd1a24cef2d"
+    },
+    {
+      "file": "06-init-existing-project-adoption.md",
+      "suppliedName": "06-init-existing-project-adoption.md",
+      "sha256": "4b88a0f7ea8897bb76f56efb4971b6731f573d0f379434fb38fc96f921fa7d76"
+    },
+    {
+      "file": "07-workstream-map.md",
+      "suppliedName": "07-workstream-map.md",
+      "sha256": "fb57e64c07e84a8a444e365541e2e9b613423a2108ea0ba7966e73c8f1ca0f87"
+    },
+    {
+      "file": "bundle-readme.md",
+      "suppliedName": "README(1).md",
+      "sha256": "b10f29dee476f6f176f4024d8cb87a2a86b5675cb3a2d98fd0b0383099b9f0e1"
+    }
+  ]
+}
