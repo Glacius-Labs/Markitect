@@ -915,7 +915,8 @@ if ($BeginExternalAgent) {
     New-Item -ItemType Directory -Path $runDirectory -Force | Out-Null
     $before = Get-AuditSnapshotSet @($prepared.auditRoots) @($prepared.workspaces | ForEach-Object { [string]$_.workspace })
     Write-JsonFile (Join-Path $runDirectory 'pre-run-audit.json') $before
-    $prompt = Get-FrozenAgentPrompt $manifest $run
+    $trial = @($manifest.trials | Where-Object { $_.id -eq $run.task }) | Select-Object -First 1
+    $prompt = Get-FrozenAgentPrompt $manifest $trial
     [IO.File]::WriteAllText((Join-Path $runDirectory 'input-prompt.txt'), $prompt, $script:Utf8NoBom)
     $state = [ordered]@{
         status = 'started'
