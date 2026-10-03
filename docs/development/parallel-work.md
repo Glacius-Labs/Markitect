@@ -6,6 +6,8 @@ The coordinator owns semantic decisions, cross-workstream compatibility, shared-
 
 ## Assignment and execution
 
+Tie the assignment to the [product vision](../vision.md): state which human execution/supervision activity it targets and which canonical decisions remain owner-controlled. Report technical evidence separately from any measured adopter benefit, including new upkeep. Routine implementation may proceed within the assigned authority; genuine architectural ambiguity, shared policy conflict, exception decisions and exceptional risk go to the designated owner. This does not bypass the integration review or mutation gates below.
+
 Each assignment records the full verified baseline commit, objective, owned paths, required contracts, forbidden paths, agreed new files, tests and exit criteria. Use an isolated worktree and `codex/` feature branch. Do not implement in protected `main`, another implementer's checkout or the consumer's parent directory. Verify working directory before writes. Inventory existing edits and preserve them; never clean another agent's work. Two implementers cannot own the same mutable contract, output or test helper. Disjoint research may proceed while a shared contract is unresolved; dependent durable implementation waits for its decision.
 
 Implement only the assigned slice. Report source-selection/privacy/permissions gaps before reading or moving consumer evidence beyond its reviewed scope. Existing-project adoption keeps ADRs, root instructions, tests and provider configurations authoritative until an explicit owner-reviewed cutover. Frequency, AI confidence, a candidate decision field and green CI are not owner approval. Do not use another adapter's output as canonical input.

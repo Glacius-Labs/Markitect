@@ -4,7 +4,7 @@
 
 ## Product purpose
 
-The kernel invariants below are canonical for product and implementation decisions. [Development coordination](development/README.md) applies them to work ownership; archived proposals remain design input.
+The [product vision](vision.md) owns the high-level thesis and human/agent responsibilities. The kernel invariants below are canonical for product and implementation decisions that support it. [Development coordination](development/README.md) applies them to work ownership; archived proposals remain design input. The goal of reducing routine human supervision does not weaken these invariants, explicit adoption, exception or mutation boundaries.
 
 Markitect describes the space of valid engineering changes. People decide which architecture and policies a project wants. Markitect helps express those decisions as canonical, versioned Domains and resources, derives bounded deterministic checks and context from them, and gives agents the relevant constraints. Agents can choose implementations inside those boundaries. Markitect does not choose the architecture, generate arbitrary application code, or decide whether the desired architecture is wise.
 

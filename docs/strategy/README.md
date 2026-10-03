@@ -18,6 +18,8 @@ Received 2026-10-02, follow-up concepts:
 
 ## How to read these sources
 
+The current [product vision](../vision.md) is the single adopted owner of the thesis and human/agent responsibility model. Archived vision/positioning proposals preserve origin and alternatives; they neither compete with that owner nor establish measured benefits. Architecture, constitution and roadmap retain their technical/status authority.
+
 Received 2026-10-03: [parallel-development coordinator bundle](sources/parallel-development/README.md). Its coordinator prompt was invoked for preparation only. Supporting adoption UX, risks and adapter proposals remain design input; illustrative schemas/commands are not shipped features. Adopted decisions live in [development coordination](../development/README.md), [workstream packages](../workstreams/README.md) and the existing [constitution](../engineering-constitution.md).
 
 The proposals contain product claims, design options, recommendations, and imperatives. They are discussion inputs. Their market claims and expected business benefits have not been independently verified, and their recommendations do not automatically define Markitect scope. The repository's [architecture](../architecture.md), [refinement decisions](../refinement.md), [canonical engineering plan](../canonical-engineering-plan.md), [roadmap](../implementation-plan.md), and [usage contract](../usage.md) define adopted behavior and delivery status.

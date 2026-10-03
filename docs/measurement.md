@@ -1,6 +1,26 @@
 # Measurement
 
-This document defines measurement procedure for Markitect product work. The [roadmap](implementation-plan.md) owns delivery order. Product tests and measurement fixtures use Go; any Markitect-owned persisted measurement record uses YAML.
+This document defines measurement procedure for Markitect product work. The [vision](vision.md) owns the human-attention and delegated-work thesis; the [roadmap](implementation-plan.md) owns delivery order. Product tests and measurement fixtures use Go; any Markitect-owned persisted measurement record uses YAML.
+
+## Human attention and delegated work
+
+The future product question is whether people can govern more autonomous engineering work without losing architectural intent. No current value for that outcome is established. Fewer interventions count as improvement only when task quality, required escalation, authority and independently checked architecture outcomes are preserved. Silent violations or skipped review requirements are failures, not autonomy.
+
+Use repeated realistic task/change sequences with a materially simpler baseline, such as owner guidance plus existing architecture tests. Freeze task/rubric, source and policy history, actual agent/model settings, tool versions, permissions and environment. Counterbalance run order and use fresh isolated sessions. Include setup, discovery, recovery, model authoring and recurring upkeep, not just the implementation interval. A single run or an unmatched policy history cannot establish sustained attention savings.
+
+| Future metric | Required observation and limit |
+|---|---|
+| Autonomous agent-hours / human intervention-hours | Record actual execution intervals and measured human attention separately; distinguish waiting and overlapping parallel work. An open agent session is not active work. Report both quantities and unavailable or zero denominators; do not substitute elapsed workflow time for attention. |
+| Completed changes / human review actions | Count independently assessed task outcomes and actual human reviews, corrections and acceptance decisions. Keep automated agent reviews separate. A green command or merged PR is not automatically an accepted change. |
+| Architecture-compliant changes before human intervention | State the finite model assertions and specialist implementation checks that ran, their fixed inputs and independent review coverage. Keep passed, failed, waived, incomplete and unknown evidence distinct; do not call modeled conformance complete implementation correctness. |
+| Architectural escalation and intervention | Record decisions versus routine clarifications, source/scope correction, steering, manual review, reconciliation and recovery. Score missing necessary escalations and unnecessary escalations against an owner-defined rubric. Fewer events alone is not better. |
+| Human time allocation | Measure implementation, routine review/synchronization, specification, architecture decisions, initial setup and recurring model/adapter maintenance. Record total attention as well as its distribution; moving effort into YAML authoring is not automatically a saving. |
+| Synchronization or reconciliation work eliminated | Identify a real prior manual step and owner, the replacement operation, outcome and subsequent maintenance. Generated file counts or several views of one owner do not prove a truth source or human step was removed. |
+| Drift detection and context/impact usefulness | Predeclare expected rules, violations, inputs and affected sets where independently knowable. Record misses, unnecessary inclusions, review noise and causes. Separate direct policy subjects from conservative impact; unassessed resources are not automatically false positives. |
+
+Record human interventions where they occur and preserve failures, exclusions, missing evidence and later corrections. Measure repeated architecture evolution as well as ordinary implementation so package, exception, mapping and projection upkeep is visible. Tokens and model/tool calls remain secondary observations only when instrumented; bytes, helper read events and agent duration are not token usage or cognition.
+
+The [real-code pilot](validation/real-project-adoption-pilot.md), [matched comparison](validation/agents-md-vs-markitect.md) and [consumer inventory](validation/parallel-wave-konfyra.md) retain contrary evidence and missing instrumentation. They do not establish human-attention reduction. Future studies must allow the simpler baseline to win and ask whether modeling costs more than the consistency work it replaces. This section specifies evaluation, not a telemetry implementation, benchmark run or automatic acceptance policy.
 
 ## Correctness first
 

@@ -1,6 +1,6 @@
 # Development coordination
 
-Start with [Architecture](../architecture.md), the canonical [engineering constitution](../engineering-constitution.md), [Usage](../usage.md), [roadmap](../implementation-plan.md) and [CONTRIBUTING](../../CONTRIBUTING.md). This directory owns implementation coordination, not another product constitution.
+Start with the canonical [product vision](../vision.md), [Architecture](../architecture.md), the [engineering constitution](../engineering-constitution.md), [Usage](../usage.md), [roadmap](../implementation-plan.md) and [CONTRIBUTING](../../CONTRIBUTING.md). This directory owns implementation coordination, not another product vision or constitution.
 
 | Document | Owns |
 |---|---|
