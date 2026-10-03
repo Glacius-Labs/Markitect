@@ -4,6 +4,14 @@ This preparation starts from integrated `main` commit `e9550f5c91430c6a65cbbd4ff
 
 The **PARALLEL DEVELOPMENT BASELINE** is the exact integration commit of this preparation, including these documents, after both quality jobs pass. The coordinator records that full commit and its gate URLs when integrating/dispatching; implementers must copy the full commit into their assignment and branch from it, rather than resolve moving `main` later. This document cannot embed its own future integration hash. Before integration this is a preparation candidate, not an established baseline.
 
+The immutable integration identity is the `mergeCommit.oid` of [PR 60](https://github.com/Glacius-Labs/Markitect/pull/60), once it is merged and its commit-bound main gates pass. This lets a fresh implementer recover the full baseline without chat history:
+
+```text
+gh pr view 60 --repo Glacius-Labs/Markitect --json state,mergeCommit
+```
+
+Require `state: MERGED` and a full commit ID; verify the main quality checks on that exact ID. Before those conditions hold, do not dispatch implementation from this candidate. Later work may use a newer integrated dependency only when the assignment explicitly records it.
+
 The current published release remains [v0.12.0](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.12.0), source `83b715c415e39af79715cd8a40b3c79237a4c850`. It includes bounded `same-target`. Integrated source additionally supports explicit read-only policy-failure analysis; that option remains unreleased. The matched [comparison](../validation/agents-md-vs-markitect.md) records workflow observations, not an advantage in total upkeep or productivity. No release, tag, historical package or distribution metadata is changed here.
 
 ## Required validation
@@ -12,7 +20,7 @@ PR 59's commit above is the source audit base only, not the future dispatch base
 
 Use the actual [CI workflow](../../.github/workflows/ci.yaml) and [contribution checks](../../CONTRIBUTING.md), not a shorter invented gate. Both Windows and Linux quality jobs cover module verification, Go tests/vet/build, authoring benchmark fixture validation, all nine generated schemas, executable examples/format/model/context, source packaging and standalone bootstrap commands. Windows also replays onboarding; packaged smoke includes projection reconciliation, the external .NET reference adapter and preview/write initialization. Record candidate and integration SHA separately. A main source artifact is temporary transport, not a product release.
 
-PR 59's candidate `9b0ed1b2dc1d2b5e94ada881f6b068e7fae8f794` passed [CI 37141270503](https://github.com/Glacius-Labs/Markitect/actions/runs/37141270503) on both platforms, including package/bootstrap gates. Local study hash/archive verification also passed. A local deep-path package replay reached bootstrap tests but failed spawning the installed Go toolchain; this environment observation is separate from hosted success and is not claimed as a passing local bootstrap gate. Preparation gets fresh commit-bound gates before it becomes a dispatch baseline.
+PR 59's candidate `9b0ed1b2dc1d2b5e94ada881f6b068e7fae8f794` passed [CI 37141270503](https://github.com/Glacius-Labs/Markitect/actions/runs/37141270503) on both platforms, including package/bootstrap gates. Its integrated `e9550f5` passed [main CI 37141545557](https://github.com/Glacius-Labs/Markitect/actions/runs/37141545557). Local study hash/archive verification also passed. A local replay first hit toolchain-cache access and then a deep-path bootstrap process-spawn failure. Replaying the unchanged Windows CI run steps with an accessible cache and shorter temporary package root passed on preparation candidate `9752f85057a853056ad3fdc56aa548456ef3c4ff`, including schema/examples, onboarding, package/bootstrap, both reconciliation paths and init. This is a bounded local environment workaround, not a source repair or a guarantee for arbitrary Windows paths. The final preparation head and integration still require their own hosted commit-bound gates.
 
 ## Scope of preparation
 
