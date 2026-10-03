@@ -1,0 +1,68 @@
+{
+  "status": "complete",
+  "executionMode": "fresh-collaboration-agent",
+  "runId": "t3-markitect",
+  "task": "t3",
+  "arm": "markitect",
+  "workspace": "<R3>\\workspaces\\t3-markitect\\checkout",
+  "preparedManifestSha256": "e085ec47e2da0a62e07bf1d526be5dab9a35c7c53cf9d5e7cde185cb31125c3e",
+  "frozenManifestSha256": "e085ec47e2da0a62e07bf1d526be5dab9a35c7c53cf9d5e7cde185cb31125c3e",
+  "sourceManifestSha256": "99fe6a51fa51cbd21cfc1c405c1a9743c4487ff2f5502358b864a4fefcb05c09",
+  "candidateCommit": "ba66728b9b87f6c38abc02ddba1c8d0fbc5ec8e3",
+  "promptSha256": "d7d38d268f8d37da6002af45c42bb50cb8c7bb9c90e4cbfd08cb9f028b91a68f",
+  "promptPath": "input-prompt.txt",
+  "automaticAgentInstructions": [],
+  "compiledInputs": [
+    {
+      "command": [
+        "context",
+        "--repo",
+        "<R3>\\workspaces\\t3-markitect\\checkout",
+        "--revision",
+        "ba66728b9b87f6c38abc02ddba1c8d0fbc5ec8e3",
+        "--namespace",
+        "architecture",
+        "--kind",
+        "UseCase",
+        "--name",
+        "get-meeting-attendees",
+        "--api-version",
+        "architecture.mymeetings.example/v1alpha1"
+      ],
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "output": ".agent-input/context.yaml",
+      "sha256": "f54ed22266ec306803d293ec6ac95daa60824296718116b860224b873110efa8",
+      "bytes": 48434,
+      "scope": {
+        "kind": "UseCase",
+        "name": "get-meeting-attendees",
+        "namespace": "architecture"
+      },
+      "r2InputSha256": "f54ed22266ec306803d293ec6ac95daa60824296718116b860224b873110efa8",
+      "sameBytesAfterRelocation": true
+    }
+  ],
+  "frozenWorkspaceAssets": [
+    {
+      "path": ".tools/architecture-check/MeetingsArchitectureCheck.csproj",
+      "sha256": "ecd0ef45f7e286e167971f7c0b867cb6a458ff629973331c9ac6dd07dbea0082",
+      "bytes": 927
+    },
+    {
+      "path": ".tools/architecture-check/TestBase.cs",
+      "sha256": "ff7da1cb080ccf7d96b75f72d23b95028d052391d7649eb9ad25d1d41c8a4938",
+      "bytes": 1194
+    },
+    {
+      "path": ".tools/architecture-check/LICENSE",
+      "sha256": "e7e663ebd3dd4d6987f539743dba33750576870d51c2192500ea45d06adffa80",
+      "bytes": 1091
+    }
+  ],
+  "compiledInputChanges": [],
+  "readHelperSha256Before": "d7c7016b7bb27d05f6b303906d7fa131bbf9650307c9fdfa456b31e07c903dbe",
+  "markitectExecutableSha256Before": "6aae29acf67217b9538a2076ff199102b44c84183f2e0dff4718584e84e064df",
+  "startedAtUtc": "2026-10-03T18:31:08.0793699+02:00",
+  "completedAtUtc": "2026-10-03T16:42:57.3290822+00:00"
+}

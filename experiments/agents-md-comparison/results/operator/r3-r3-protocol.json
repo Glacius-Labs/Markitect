@@ -1,0 +1,25 @@
+{
+  "experimentId": "agents-md-vs-markitect-2026-10-03-task3-r3",
+  "reason": "Auto-review denied temporary adopter patch; no workaround against that checkout. New fresh paired clones use the existing explicitly writable workspace.",
+  "originalSourceAndTaskAndOracleFreezeSha256": "e085ec47e2da0a62e07bf1d526be5dab9a35c7c53cf9d5e7cde185cb31125c3e",
+  "originalRunnerSha256": "c3338c63003397baf73f6a9b99033719ea3b6b196142862f5192521e5fe5f8de",
+  "r3RunnerSha256": "c1bea21f91a1519e6a8a256cf9d3bc201cd59feb82a230f43c1cff2e89dc560b",
+  "changes": [
+    "Assert exact authorized scratch root",
+    "Record common parent AGENTS instead of rejecting both arms"
+  ],
+  "commonParentGuidance": [
+    {
+      "path": "<MARKITECT>\\AGENTS.md",
+      "sha256": "992e0aeb813d8e195777a3f3465c5888e8487f9c83dd8042713e3db06a5bbbef"
+    },
+    {
+      "path": "<COMMON-PARENT>/AGENTS.md",
+      "sha256": "3cbe5b5b485711a13c38cb4857a837055d4cdb717082214f5319e6d33c1def41"
+    }
+  ],
+  "parentGuidanceLimitation": "Common to both relocated arms; task3 environment differs from r2. No causal comparison across tasks.",
+  "sourceFilesVerifiedPerArm": 646,
+  "blockedR2Run": "t3-simple: no code writes; not scored as implementation failure",
+  "freshAgentsRequired": true
+}

@@ -1,0 +1,11 @@
+Reviewer: /root/review_task1; independent agent review proxy, not human acceptance.
+
+Correction to the review: The agent reports describe their own sandboxed runs, where NuGet restore failed; raw agent command telemetry is unavailable. The operator evaluation was a later, separately authorized public-feed run against unchanged candidate source. It confirms compilation and the bounded checks for both candidates; it does not contradict the earlier restore failures. Agent self-verification was blocked.
+
+The frozen oracle explicitly allows the new Query and Handler files, plus B's specified canonical records and projections. B's edit to the C# attendee DTO is outside that listed allowance. It is source-relevant to nullable guests, but needs an explicit scope judgment; it is not a canonical Markitect model record.
+
+B's call to the existing attendee query matches the requested row source at the code level. It also couples one use case to another, which merits architectural review. Core did not establish that this coupling is absent or validate runtime dispatch.
+
+These are reviewer-proxy findings, not human acceptance.
+
+Prior factual findings retained: A computes COALESCE(SUM(1+COALESCE(GuestsNumber,0)),0) from meetings.v_MeetingAttendees for MeetingId. B calls the unchanged GetMeetingAttendeesQuery and sums the returned rows. Both satisfy arithmetic by source inspection; no database/runtime proof. Both queries/handlers satisfy the bounded existing convention tests. A changes two adopter files; B six, excluding telemetry. B context includes ADRs 0007 and 0017 but omits 0009. B projections did not converge. A duplicates the existing view/predicate; B reuses it through an additional use-case coupling and in-memory aggregation. Neither eliminates the need to inspect semantics. The prior review's word 'conflict' for agent versus operator check outcomes was corrected above.

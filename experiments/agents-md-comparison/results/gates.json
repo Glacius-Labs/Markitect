@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "sourceCommit": "a23db5f48854cbf7723789843aaa10ddf06cdb0b",
+  "localProductChecks": {
+    "goTestAll": "passed",
+    "goVetAll": "passed",
+    "cleanSourceSchemaGeneration": "passed; 9 schemas; no schema diff",
+    "recordingLimit": "Command results were observed by the operator; full local terminal transcripts are not preserved here. These are product-source checks, not study productivity evidence."
+  },
+  "publicCommitBoundChecks": {
+    "candidateHead": "1996ef2106e2df6aa8f5955359fa4a5542004799",
+    "candidateRun": "https://github.com/Glacius-Labs/Markitect/actions/runs/37126319833",
+    "windows": "success",
+    "linux": "success",
+    "integratedHead": "a23db5f48854cbf7723789843aaa10ddf06cdb0b",
+    "integratedRun": "https://github.com/Glacius-Labs/Markitect/actions/runs/37126611702",
+    "integratedConclusion": "success",
+    "refreshedAfterStudy": true
+  },
+  "studyChecks": {
+    "sixCandidateBuilds": "passed",
+    "sixBoundedTestRuns": "passed; counts in summary.json",
+    "sixProjectReferenceRuns": "passed; explicit 18-project boundary",
+    "frozenInputAndNormalizedEvidenceAndArchiveVerification": "passed",
+    "powershellParser": "passed for frozen runner, evaluator and derived runner",
+    "pythonCompile": "passed for preparation, extraction and verification utilities",
+    "gitDiffCheck": "passed",
+    "newPublicCIForStudyCommit": "not run; study is locally committed only",
+    "firstStagedDiffCheck": "failed on presentation CRLF and literal unified-diff context whitespace; commit script continued; local presentation corrected and rechecked"
+  },
+  "scope": "Only comparison material and documentation changed after integration. No Core, schema, historic pilot, historical package or release files changed.",
+  "newRelease": false
+}

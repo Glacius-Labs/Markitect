@@ -1,0 +1,4 @@
+adapter: markitect-render
+operations: 1
+sourceDigest: sha256:4d0787efe21370909aefcd4f1b3cdff7c6c178722cdfefca9af65bc67faea247
+status: verified

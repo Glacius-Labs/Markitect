@@ -1,0 +1,750 @@
+{
+  "schemaVersion": 1,
+  "normalization": "Known absolute workspace roots replaced by aliases; nested JSON and presentation line endings normalized. Original raw hashes are not normalized hashes. No full OS trace was collected.",
+  "files": [
+    {
+      "rawLocationAlias": "R2/operator/runs/t1-simple/run-evidence.json",
+      "rawBytes": 9800,
+      "rawSha256": "4bcce5876215fa889928bde334b2517804b5e3e24bf4d665a3382be374dffc86",
+      "preserved": "runs/t1-simple/run-evidence.json",
+      "normalizedSha256": "429bb26e274bf7aa10400e654f6aab6f41c831af75acf77c98ea809d68e83c69",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R2/operator/runs/t1-simple/agent-report.txt",
+      "rawBytes": 922,
+      "rawSha256": "ebfb87e852882996c07c82c55eead2c01b24b7068b5d8fba84ec69785223bc38",
+      "preserved": "runs/t1-simple/agent-report.txt",
+      "normalizedSha256": "ebfb87e852882996c07c82c55eead2c01b24b7068b5d8fba84ec69785223bc38",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R2/operator/runs/t1-simple/reads.jsonl",
+      "rawBytes": 3095,
+      "rawSha256": "d6ce4a679ea88dd83274f9bb8cf71a7584906c937a3525ff6f3253bd4df80f4d",
+      "preserved": "runs/t1-simple/reads.jsonl",
+      "normalizedSha256": "9f93c13eec406c38dad328b6496bbdbf0a78d8b82d8a5880ed2d858920d8f33b",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R2/operator/runs/t1-simple/workspace.diff",
+      "rawBytes": 0,
+      "rawSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "preserved": "runs/t1-simple/workspace.diff",
+      "normalizedSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R2/operator/runs/t1-simple/input-prompt.txt",
+      "rawBytes": 2976,
+      "rawSha256": "5e2df2f3ee0fa60d5b4190e76e895502ddf4daf6acc09e7f4f179714d378d134",
+      "preserved": "runs/t1-simple/input-prompt.txt",
+      "normalizedSha256": "5e2df2f3ee0fa60d5b4190e76e895502ddf4daf6acc09e7f4f179714d378d134",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R2/operator/runs/t1-simple/external-state.json",
+      "rawBytes": 2150,
+      "rawSha256": "a8944f2b3a98dc792da400e54d42358c393f432bbb9df331ca691ff551e4e224",
+      "preserved": "runs/t1-simple/external-state.json",
+      "normalizedSha256": "f66ca2837e14fec02dbf4fb2299c538f88d7a685178063bded85adf526172f00",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R2/operator/evaluation/t1-simple/evaluation.json",
+      "rawBytes": 64369,
+      "rawSha256": "b8d457a1b59a55c96d180d6d06193c7d966ced949e613a9e9182ecd292b0e15e",
+      "preserved": "runs/t1-simple/evaluation.json",
+      "normalizedSha256": "73400c301b5cfa2e40240bbfbd2c1dd53fab212b6a3e3102eaa116799b497c56",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R2/operator/runs/t1-markitect/run-evidence.json",
+      "rawBytes": 13948,
+      "rawSha256": "9afaffaaf326a3b14813e1698269ee292ec18b59e9c65ca251247d73fbe6b138",
+      "preserved": "runs/t1-markitect/run-evidence.json",
+      "normalizedSha256": "23179bd9ad718d4ba06bca15ff608ec58e21c7a71121be7f440735073bda72af",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R2/operator/runs/t1-markitect/agent-report.txt",
+      "rawBytes": 910,
+      "rawSha256": "a5c273e6bcb37710b6c0d8c11cc54d976cd0277ed0ec9af0a0a27e7424c06d3e",
+      "preserved": "runs/t1-markitect/agent-report.txt",
+      "normalizedSha256": "a5c273e6bcb37710b6c0d8c11cc54d976cd0277ed0ec9af0a0a27e7424c06d3e",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R2/operator/runs/t1-markitect/reads.jsonl",
+      "rawBytes": 3868,
+      "rawSha256": "0f8f4b4b6b04bd2d6150bc3c3e31dea8a73f6eeac98571a80b7a58e6ded8cfeb",
+      "preserved": "runs/t1-markitect/reads.jsonl",
+      "normalizedSha256": "7e5f05d0cb0dd9f5abd4cc84b86cf5b0c816d2a9075cbe9a6b6109f7c9534a09",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R2/operator/runs/t1-markitect/workspace.diff",
+      "rawBytes": 1275,
+      "rawSha256": "3456aef73cd42170ec530d313c994913f3d07732f9f2b588a6b728977d140417",
+      "preserved": "runs/t1-markitect/workspace.diff",
+      "normalizedSha256": "3456aef73cd42170ec530d313c994913f3d07732f9f2b588a6b728977d140417",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R2/operator/runs/t1-markitect/input-prompt.txt",
+      "rawBytes": 2976,
+      "rawSha256": "5e2df2f3ee0fa60d5b4190e76e895502ddf4daf6acc09e7f4f179714d378d134",
+      "preserved": "runs/t1-markitect/input-prompt.txt",
+      "normalizedSha256": "5e2df2f3ee0fa60d5b4190e76e895502ddf4daf6acc09e7f4f179714d378d134",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R2/operator/runs/t1-markitect/external-state.json",
+      "rawBytes": 2706,
+      "rawSha256": "1c81dc7cf4a45f8c85b900cc5af24924fa27d8656866290cc647be0722e96321",
+      "preserved": "runs/t1-markitect/external-state.json",
+      "normalizedSha256": "de9097468bc9b88112582b8e5f79800b8d627deda2429b3d37b8720767aa1b6e",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R2/operator/evaluation/t1-markitect/evaluation.json",
+      "rawBytes": 64751,
+      "rawSha256": "5adf560db795d827f5fa5e516c5fcc096bcf01240e64a1d03c02c734eaf987be",
+      "preserved": "runs/t1-markitect/evaluation.json",
+      "normalizedSha256": "5d3eab1cba18bcb08d00df246c96437c73ce494237db2914fea17d4ccf6cba19",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R2/workspaces/t1-markitect/checkout/.agent-input/context.yaml",
+      "rawBytes": 53013,
+      "rawSha256": "f981c49f768772cdd2a4f16da727b07d4987da257131f19fa6b398c1f19cf5b1",
+      "preserved": "runs/t1-markitect/provided-context.yaml",
+      "normalizedSha256": "f981c49f768772cdd2a4f16da727b07d4987da257131f19fa6b398c1f19cf5b1",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R2/operator/post-markitect/t1-markitect/check.stderr.txt",
+      "rawBytes": 0,
+      "rawSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "preserved": "runs/t1-markitect/post-markitect/check.stderr.txt",
+      "normalizedSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R2/operator/post-markitect/t1-markitect/check.stdout.txt",
+      "rawBytes": 49911,
+      "rawSha256": "fdf49152a93ba10ab44242e3c9b774f21a109abbdd0bb4d09e3b94485d4a3f64",
+      "preserved": "runs/t1-markitect/post-markitect/check.stdout.txt",
+      "normalizedSha256": "fdf49152a93ba10ab44242e3c9b774f21a109abbdd0bb4d09e3b94485d4a3f64",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R2/operator/post-markitect/t1-markitect/model.stderr.txt",
+      "rawBytes": 0,
+      "rawSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "preserved": "runs/t1-markitect/post-markitect/model.stderr.txt",
+      "normalizedSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R2/operator/post-markitect/t1-markitect/model.stdout.txt",
+      "rawBytes": 170065,
+      "rawSha256": "ed65016a80e3c766cecb1f95b8cdcccdd8f3011f25cd8b223f35343331f78991",
+      "preserved": "runs/t1-markitect/post-markitect/model.stdout.txt",
+      "normalizedSha256": "ed65016a80e3c766cecb1f95b8cdcccdd8f3011f25cd8b223f35343331f78991",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R2/operator/post-markitect/t1-markitect/results.json",
+      "rawBytes": 295,
+      "rawSha256": "1254b7d81927e8a7f4b0b209686f5b6afbbaeaa265c5fe5e0110100764532a31",
+      "preserved": "runs/t1-markitect/post-markitect/results.json",
+      "normalizedSha256": "554c98c2b44af2f8e3051a8f1826420a1ab0ed66fcb3ad36ee7f7eaa7a380116",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R2/operator/runs/t2-simple/run-evidence.json",
+      "rawBytes": 10979,
+      "rawSha256": "46ea111fe41ad674215fc95fcf5d39956cc990512333881b39e6e0638171dca9",
+      "preserved": "runs/t2-simple/run-evidence.json",
+      "normalizedSha256": "94bcbf77a8e4ec03c3861285d6b0e89a939be6840121ea66644174276dfdeb29",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R2/operator/runs/t2-simple/agent-report.txt",
+      "rawBytes": 804,
+      "rawSha256": "d33b53be6edee047cae10e91a563b1acf070b43f94c42739a5d83c36a7327bdc",
+      "preserved": "runs/t2-simple/agent-report.txt",
+      "normalizedSha256": "d33b53be6edee047cae10e91a563b1acf070b43f94c42739a5d83c36a7327bdc",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R2/operator/runs/t2-simple/reads.jsonl",
+      "rawBytes": 2991,
+      "rawSha256": "cae421461624cd85d09fe75a8d5ae2174b838b9792833fdec8de8f764f37134d",
+      "preserved": "runs/t2-simple/reads.jsonl",
+      "normalizedSha256": "6e7449cd31c5240686d7f491b002094081d79a48c816a3f468b355fe0cff4d14",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R2/operator/runs/t2-simple/workspace.diff",
+      "rawBytes": 3457,
+      "rawSha256": "86e79bb57ef5f59ae18a1b6647fdbaa886808480a47d53d2b6d75c460e3cafb1",
+      "preserved": "runs/t2-simple/workspace.diff",
+      "normalizedSha256": "86e79bb57ef5f59ae18a1b6647fdbaa886808480a47d53d2b6d75c460e3cafb1",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R2/operator/runs/t2-simple/input-prompt.txt",
+      "rawBytes": 3335,
+      "rawSha256": "41da3800f657e572b5696bd45e35976768cdec54fb3a5a3c724b41281fbeee12",
+      "preserved": "runs/t2-simple/input-prompt.txt",
+      "normalizedSha256": "41da3800f657e572b5696bd45e35976768cdec54fb3a5a3c724b41281fbeee12",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R2/operator/runs/t2-simple/external-state.json",
+      "rawBytes": 2150,
+      "rawSha256": "fcdb3abdd93963450d40a0400a31fd34c7cafb108b3ad573d4292e1b60ca9738",
+      "preserved": "runs/t2-simple/external-state.json",
+      "normalizedSha256": "1c1aeb15863c1dbe6338bcbd6947c3e199f869f3ad0cc92b09fe7d481474389d",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R2/operator/evaluation/t2-simple/evaluation.json",
+      "rawBytes": 64769,
+      "rawSha256": "e2789bed5a957c402c2c27833bbe87014a8a51fd01acd52a0e04b739134d8bfb",
+      "preserved": "runs/t2-simple/evaluation.json",
+      "normalizedSha256": "16c8d64b830e01617962267cdb9b06305127b93211f7fd5baca0bfe60e1156ad",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R2/operator/runs/t2-markitect/run-evidence.json",
+      "rawBytes": 65333,
+      "rawSha256": "95f8ffaee59f36f7b5be2f1c9d1238885e8bb3037c46d4a73d1ba1c80f961ce8",
+      "preserved": "runs/t2-markitect/run-evidence.json",
+      "normalizedSha256": "dc8e7e6aa03cbb694b3bf45a1379d9834c543109d7808fa298d6e42e58e9a685",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R2/operator/runs/t2-markitect/agent-report.txt",
+      "rawBytes": 1937,
+      "rawSha256": "cea6f75099c491d9c6d91d73eccbaa78ebc8f04431e3b05a6a56a50b2284a748",
+      "preserved": "runs/t2-markitect/agent-report.txt",
+      "normalizedSha256": "cea6f75099c491d9c6d91d73eccbaa78ebc8f04431e3b05a6a56a50b2284a748",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R2/operator/runs/t2-markitect/reads.jsonl",
+      "rawBytes": 3398,
+      "rawSha256": "b438b1497c77bbc5f95a4a6dd279cfe95ed05f88f1cbd45eeb06a09ab9472766",
+      "preserved": "runs/t2-markitect/reads.jsonl",
+      "normalizedSha256": "d30957a857f3af63fae618bac7168a289e8bb4f170c617dda6f418420fd34d78",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R2/operator/runs/t2-markitect/workspace.diff",
+      "rawBytes": 18539,
+      "rawSha256": "4212ce2b6949a016fc05f07e34a469a57311fbcf355d24caa8357e6035035037",
+      "preserved": "runs/t2-markitect/workspace.diff",
+      "normalizedSha256": "4212ce2b6949a016fc05f07e34a469a57311fbcf355d24caa8357e6035035037",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R2/operator/runs/t2-markitect/input-prompt.txt",
+      "rawBytes": 3335,
+      "rawSha256": "41da3800f657e572b5696bd45e35976768cdec54fb3a5a3c724b41281fbeee12",
+      "preserved": "runs/t2-markitect/input-prompt.txt",
+      "normalizedSha256": "41da3800f657e572b5696bd45e35976768cdec54fb3a5a3c724b41281fbeee12",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R2/operator/runs/t2-markitect/external-state.json",
+      "rawBytes": 3342,
+      "rawSha256": "2771549a72691a892f45027ee78cdcea3bacdd6033491c86ac7648452593cb9c",
+      "preserved": "runs/t2-markitect/external-state.json",
+      "normalizedSha256": "09a8b835f8abdc91cb62fd0ebdb513b396964b9b5e6b015dabb4e03989e8703d",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R2/operator/evaluation/t2-markitect/evaluation.json",
+      "rawBytes": 70699,
+      "rawSha256": "d0cef384d1d5fccb5044827a5c80c84948a51e155bbe08d83d0a75a450d69096",
+      "preserved": "runs/t2-markitect/evaluation.json",
+      "normalizedSha256": "19a945a85d9d6191e85f19a818a47e96f3cd8f8352cceb76c2c2ae30b1fc9f80",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R2/workspaces/t2-markitect/checkout/.agent-input/context.yaml",
+      "rawBytes": 43712,
+      "rawSha256": "379ab30da936b3d845d8b5c04686773ea39a843c5ad4487ef4ff550802c4cf5f",
+      "preserved": "runs/t2-markitect/provided-context.yaml",
+      "normalizedSha256": "379ab30da936b3d845d8b5c04686773ea39a843c5ad4487ef4ff550802c4cf5f",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R2/workspaces/t2-markitect/checkout/.agent-input/impact.yaml",
+      "rawBytes": 18319,
+      "rawSha256": "98b3ba814fdfda422db4132ff2fdd73232a799f3cc370dde14d4c9d944424838",
+      "preserved": "runs/t2-markitect/provided-impact.yaml",
+      "normalizedSha256": "98b3ba814fdfda422db4132ff2fdd73232a799f3cc370dde14d4c9d944424838",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R2/operator/post-markitect/t2-markitect/check.stderr.txt",
+      "rawBytes": 0,
+      "rawSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "preserved": "runs/t2-markitect/post-markitect/check.stderr.txt",
+      "normalizedSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R2/operator/post-markitect/t2-markitect/check.stdout.txt",
+      "rawBytes": 48386,
+      "rawSha256": "4e03296d50942a8e3398b3e1b101aca2eaa9956a929b026a8aa7b69d8db60702",
+      "preserved": "runs/t2-markitect/post-markitect/check.stdout.txt",
+      "normalizedSha256": "4e03296d50942a8e3398b3e1b101aca2eaa9956a929b026a8aa7b69d8db60702",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R2/operator/post-markitect/t2-markitect/model.stderr.txt",
+      "rawBytes": 0,
+      "rawSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "preserved": "runs/t2-markitect/post-markitect/model.stderr.txt",
+      "normalizedSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R2/operator/post-markitect/t2-markitect/model.stdout.txt",
+      "rawBytes": 168762,
+      "rawSha256": "bcafa7539e64c7690d3646ea536e70e10783017dbafa51b12d27b365982ed68d",
+      "preserved": "runs/t2-markitect/post-markitect/model.stdout.txt",
+      "normalizedSha256": "bcafa7539e64c7690d3646ea536e70e10783017dbafa51b12d27b365982ed68d",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R2/operator/post-markitect/t2-markitect/results.json",
+      "rawBytes": 295,
+      "rawSha256": "4b460721c9ce98c42efa5e834386ec627ded7c340af0b05b1b664ea8bfa3e5f5",
+      "preserved": "runs/t2-markitect/post-markitect/results.json",
+      "normalizedSha256": "a48c6d18b947faf145ff428d28edd315d35abd58eb7f9ba75dab103eac84d96c",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R3/operator/runs/t3-simple/run-evidence.json",
+      "rawBytes": 11452,
+      "rawSha256": "a6d6694fceef03199165cf2dccd7e723d090a8c27fb3fa3ca71a51e9d1e545b0",
+      "preserved": "runs/t3-simple/run-evidence.json",
+      "normalizedSha256": "1b036c9a429d009c73515b902502669d9f3d8a0e50fb5f5d02e5cf8732b1e7f9",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R3/operator/runs/t3-simple/agent-report.txt",
+      "rawBytes": 1157,
+      "rawSha256": "9c8d98d724fb193ff193c5e7ce5717eae28ac3fda013cf5618bfe9bd974778c0",
+      "preserved": "runs/t3-simple/agent-report.txt",
+      "normalizedSha256": "9c8d98d724fb193ff193c5e7ce5717eae28ac3fda013cf5618bfe9bd974778c0",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R3/operator/runs/t3-simple/reads.jsonl",
+      "rawBytes": 3454,
+      "rawSha256": "f8c01a4f4f74f95d7538db04229827df5102a8eea905bced507eaa3c7f4b5926",
+      "preserved": "runs/t3-simple/reads.jsonl",
+      "normalizedSha256": "daadca42367f160a107d3056fa47157b0ba222ae025329826a4abaf6ca5fd8f3",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R3/operator/runs/t3-simple/workspace.diff",
+      "rawBytes": 2930,
+      "rawSha256": "4c613f9b06632a0774c6c020ef0c150627dcb93cd37717db80722edd6d6be73a",
+      "preserved": "runs/t3-simple/workspace.diff",
+      "normalizedSha256": "4c613f9b06632a0774c6c020ef0c150627dcb93cd37717db80722edd6d6be73a",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R3/operator/runs/t3-simple/input-prompt.txt",
+      "rawBytes": 2901,
+      "rawSha256": "d7d38d268f8d37da6002af45c42bb50cb8c7bb9c90e4cbfd08cb9f028b91a68f",
+      "preserved": "runs/t3-simple/input-prompt.txt",
+      "normalizedSha256": "d7d38d268f8d37da6002af45c42bb50cb8c7bb9c90e4cbfd08cb9f028b91a68f",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R3/operator/runs/t3-simple/external-state.json",
+      "rawBytes": 2156,
+      "rawSha256": "e60388f1f0785fee561f4275f768735074c07dcdc7f00dc7ece853158d71ae23",
+      "preserved": "runs/t3-simple/external-state.json",
+      "normalizedSha256": "ffae2caa74a6e9bce95a301763e4ca18bb37f7ae48b08bea6923e5cb99a2f63e",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R3/operator/evaluation/t3-simple/evaluation.json",
+      "rawBytes": 62190,
+      "rawSha256": "8bd6cc306896ce25700fe0273b8911b6245312b2be201cbe4a70794a588a605b",
+      "preserved": "runs/t3-simple/evaluation.json",
+      "normalizedSha256": "99a52c05c4b39e14b4c68b871df53c18b71d3d51c4257b9b65cb86db0ccab876",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R3/operator/runs/t3-markitect/run-evidence.json",
+      "rawBytes": 17647,
+      "rawSha256": "126abcd5864bd31cd9135cb79f1dd425a43ab78e5d6223e19b1714695bed89d8",
+      "preserved": "runs/t3-markitect/run-evidence.json",
+      "normalizedSha256": "89f7b5614c8232dd2d1de10979999d0770b789c2a4030a0df1d268abaa10cef0",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R3/operator/runs/t3-markitect/agent-report.txt",
+      "rawBytes": 1155,
+      "rawSha256": "5477e1a3d82384a569b8fd1e9559711062be8531f3af91a6ca2653ef06fe66d2",
+      "preserved": "runs/t3-markitect/agent-report.txt",
+      "normalizedSha256": "5477e1a3d82384a569b8fd1e9559711062be8531f3af91a6ca2653ef06fe66d2",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R3/operator/runs/t3-markitect/reads.jsonl",
+      "rawBytes": 4622,
+      "rawSha256": "91dd93dd4a105e1b9e220b5bb97baae9cc18e66656950bb137404f93b5c6bc85",
+      "preserved": "runs/t3-markitect/reads.jsonl",
+      "normalizedSha256": "fad761dfdfc3731f8ef2a40c958e7149c27f3bededc6afafddbe725841a54b4f",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R3/operator/runs/t3-markitect/workspace.diff",
+      "rawBytes": 7911,
+      "rawSha256": "8a6c422e11d01f9edfc9d1f834b571c920b229842fec3d2c80ead6878f8e2feb",
+      "preserved": "runs/t3-markitect/workspace.diff",
+      "normalizedSha256": "8a6c422e11d01f9edfc9d1f834b571c920b229842fec3d2c80ead6878f8e2feb",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R3/operator/runs/t3-markitect/input-prompt.txt",
+      "rawBytes": 2901,
+      "rawSha256": "d7d38d268f8d37da6002af45c42bb50cb8c7bb9c90e4cbfd08cb9f028b91a68f",
+      "preserved": "runs/t3-markitect/input-prompt.txt",
+      "normalizedSha256": "d7d38d268f8d37da6002af45c42bb50cb8c7bb9c90e4cbfd08cb9f028b91a68f",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R3/operator/runs/t3-markitect/external-state.json",
+      "rawBytes": 2755,
+      "rawSha256": "b344c52633d6b66f2849b04a9d7cf80692af97e25a5221ff3e9c98c9bb981578",
+      "preserved": "runs/t3-markitect/external-state.json",
+      "normalizedSha256": "6a381cfdfcc70bdd9619a42d00bda1e4bb907475e07d0e711399b939df839518",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R3/operator/evaluation/t3-markitect/evaluation.json",
+      "rawBytes": 62801,
+      "rawSha256": "aa496c0577f9bf3a9776e7badd9c90f24f29b89485d9acda8f4490aaa18fb49a",
+      "preserved": "runs/t3-markitect/evaluation.json",
+      "normalizedSha256": "5f4ff1085a07ada382fade2e25ad5d0e5548a6370d7ad3172e101e1627148062",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R3/workspaces/t3-markitect/checkout/.agent-input/context.yaml",
+      "rawBytes": 48434,
+      "rawSha256": "f54ed22266ec306803d293ec6ac95daa60824296718116b860224b873110efa8",
+      "preserved": "runs/t3-markitect/provided-context.yaml",
+      "normalizedSha256": "f54ed22266ec306803d293ec6ac95daa60824296718116b860224b873110efa8",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R3/operator/post-markitect/t3-markitect/check.stderr.txt",
+      "rawBytes": 0,
+      "rawSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "preserved": "runs/t3-markitect/post-markitect/check.stderr.txt",
+      "normalizedSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R3/operator/post-markitect/t3-markitect/check.stdout.txt",
+      "rawBytes": 46151,
+      "rawSha256": "ae1ca50a4e9595cf276bd7e0bfe21b142767a82bfde2377cfd2bcaa82ffa63e6",
+      "preserved": "runs/t3-markitect/post-markitect/check.stdout.txt",
+      "normalizedSha256": "ae1ca50a4e9595cf276bd7e0bfe21b142767a82bfde2377cfd2bcaa82ffa63e6",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R3/operator/post-markitect/t3-markitect/model.stderr.txt",
+      "rawBytes": 0,
+      "rawSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "preserved": "runs/t3-markitect/post-markitect/model.stderr.txt",
+      "normalizedSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R3/operator/post-markitect/t3-markitect/model.stdout.txt",
+      "rawBytes": 163913,
+      "rawSha256": "d88ec6d5229f4f3e296aec98d123275eaac692ccaa57f5b51256f39d580c2c73",
+      "preserved": "runs/t3-markitect/post-markitect/model.stdout.txt",
+      "normalizedSha256": "d88ec6d5229f4f3e296aec98d123275eaac692ccaa57f5b51256f39d580c2c73",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R3/operator/post-markitect/t3-markitect/render-check.stderr.txt",
+      "rawBytes": 0,
+      "rawSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "preserved": "runs/t3-markitect/post-markitect/render-check.stderr.txt",
+      "normalizedSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R3/operator/post-markitect/t3-markitect/render-check.stdout.txt",
+      "rawBytes": 46151,
+      "rawSha256": "ae1ca50a4e9595cf276bd7e0bfe21b142767a82bfde2377cfd2bcaa82ffa63e6",
+      "preserved": "runs/t3-markitect/post-markitect/render-check.stdout.txt",
+      "normalizedSha256": "ae1ca50a4e9595cf276bd7e0bfe21b142767a82bfde2377cfd2bcaa82ffa63e6",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R3/operator/post-markitect/t3-markitect/results.json",
+      "rawBytes": 1784,
+      "rawSha256": "f72b1aecf4e16c183d4714654a9f7b5015c15daf3faed50a225135803b7b8069",
+      "preserved": "runs/t3-markitect/post-markitect/results.json",
+      "normalizedSha256": "14557b7bc36268d2e47c11f265af0fbf8a6fdb4806ec2074b7bd03ef4794f122",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R2/operator/prepared-manifest.json",
+      "rawBytes": 22524,
+      "rawSha256": "c7c85a4d3e177315a450da9371f6f8e23b86791c8a269a03b99dd37474b2056a",
+      "preserved": "operator/r2-prepared-manifest.json",
+      "normalizedSha256": "3e48ea92dd94b417eab56ba9e180df44c1a33edd0fae5fed85e443d78561d470",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R2/operator/whole-experiment-delta.json",
+      "rawBytes": 52168,
+      "rawSha256": "6d0906da59d3942af378dc552945a1e60bf54e37f62a8d85599ddd22ff868af1",
+      "preserved": "operator/r2-whole-experiment-delta.json",
+      "normalizedSha256": "e498da540f867b46ac137f5ba62d00a40d050ff6a355a7bd3cf7f42e28ffbf97",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R2/operator/setup-inventory.json",
+      "rawBytes": 5173,
+      "rawSha256": "f035366b3aa159d63a08af1eb507ef565d5db9773e3ada555e39bd58b150e94f",
+      "preserved": "operator/r2-setup-inventory.json",
+      "normalizedSha256": "823de488b81ba6fdf328cf158ca7a3f6972ae185eaae55c461786e45b7dc0bd4",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R2/operator/reviewer-task1-addendum.txt",
+      "rawBytes": 1894,
+      "rawSha256": "81b0365ac32a3bb2562260cbbdb6ba4f5716d5d6cd22268e8e7268e0744d5279",
+      "preserved": "operator/r2-reviewer-task1-addendum.txt",
+      "normalizedSha256": "81b0365ac32a3bb2562260cbbdb6ba4f5716d5d6cd22268e8e7268e0744d5279",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R3/operator/prepared-manifest.json",
+      "rawBytes": 8130,
+      "rawSha256": "beb44915effaf84abea7b18f520b43828abee044f58b885e7f76e98f89e9d33c",
+      "preserved": "operator/r3-prepared-manifest.json",
+      "normalizedSha256": "585ea4afaf53356dcd8d665308f6dbf345ba09dbcbdd4716450fae6143967b8a",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R3/operator/whole-experiment-delta.json",
+      "rawBytes": 7173,
+      "rawSha256": "c2fed9b58752cb8daf64bd11024ea0d4e88ad34a4dbeb01aa03c6651012c02b1",
+      "preserved": "operator/r3-whole-experiment-delta.json",
+      "normalizedSha256": "cedf58f6a7c8c058b9a0e084ccd1f1165ae0b623f4bd08deb04ca886d67b7fe4",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R3/operator/r3-protocol.json",
+      "rawBytes": 1339,
+      "rawSha256": "8e1aedf0eeac8009b41886f4fa7b5124d0e52928654583711f0fd950ac7282c2",
+      "preserved": "operator/r3-r3-protocol.json",
+      "normalizedSha256": "6abccbb462a8ccdb9af3dfae6e516dc7f49685c2db8a796dcb11c116a8c5282e",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R3/operator/whole-audit-provenance.json",
+      "rawBytes": 473,
+      "rawSha256": "fd0d32a076e282dfda0387430a60c6702546ddb46b620ee41ba451253baf70a3",
+      "preserved": "operator/r3-whole-audit-provenance.json",
+      "normalizedSha256": "b03e524c7ca503e4f81645d48cc65eb85b0a984780fe03fa5902892c3b66397a",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R2/operator/policy-baseline/check.stderr.txt",
+      "rawBytes": 0,
+      "rawSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "preserved": "operator/policy-baseline/check.stderr.txt",
+      "normalizedSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R2/operator/policy-baseline/check.stdout.txt",
+      "rawBytes": 49319,
+      "rawSha256": "ec08b53ab38a95ea2061047a8122c8398a2814f27dad80d4a534087af13c8959",
+      "preserved": "operator/policy-baseline/check.stdout.txt",
+      "normalizedSha256": "ec08b53ab38a95ea2061047a8122c8398a2814f27dad80d4a534087af13c8959",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R2/operator/policy-baseline/model.stderr.txt",
+      "rawBytes": 0,
+      "rawSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "preserved": "operator/policy-baseline/model.stderr.txt",
+      "normalizedSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R2/operator/policy-baseline/model.stdout.txt",
+      "rawBytes": 167682,
+      "rawSha256": "9a52969208f7f77908e1af342e38e627c46ba5b50013fe4105aa6dcc27d23567",
+      "preserved": "operator/policy-baseline/model.stdout.txt",
+      "normalizedSha256": "9a52969208f7f77908e1af342e38e627c46ba5b50013fe4105aa6dcc27d23567",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R2/operator/policy-baseline/results.json",
+      "rawBytes": 417,
+      "rawSha256": "81e84651f9d760da3c06ed52e0d5204b525eafb425019c0d4f336a1ce5a9664e",
+      "preserved": "operator/policy-baseline/results.json",
+      "normalizedSha256": "2d4fd72f68514ea433e61c6307fc980a986283cefe68ad9b9ac873985ed0d37d",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R2/operator/preparation/t1-markitect/render-apply.stderr.txt",
+      "rawBytes": 0,
+      "rawSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "preserved": "operator/preparation/t1-markitect/render-apply.stderr.txt",
+      "normalizedSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R2/operator/preparation/t1-markitect/render-apply.stdout.txt",
+      "rawBytes": 229,
+      "rawSha256": "444e23a08a59b965bf5e406ed113b2050cfb4ae2cad0e1836db6d040bef71399",
+      "preserved": "operator/preparation/t1-markitect/render-apply.stdout.txt",
+      "normalizedSha256": "517315736394806c4a723d57805373f519957110ece1334d43ee44e8d1f4810f",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R2/operator/preparation/t1-markitect/render-observe.stderr.txt",
+      "rawBytes": 0,
+      "rawSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "preserved": "operator/preparation/t1-markitect/render-observe.stderr.txt",
+      "normalizedSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R2/operator/preparation/t1-markitect/render-observe.stdout.txt",
+      "rawBytes": 26623,
+      "rawSha256": "5508af667844f140abca20d9a610453d18bdae58b534043d8f7a8027a0dcd722",
+      "preserved": "operator/preparation/t1-markitect/render-observe.stdout.txt",
+      "normalizedSha256": "5508af667844f140abca20d9a610453d18bdae58b534043d8f7a8027a0dcd722",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R2/operator/preparation/t1-markitect/render-plan.stderr.txt",
+      "rawBytes": 0,
+      "rawSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "preserved": "operator/preparation/t1-markitect/render-plan.stderr.txt",
+      "normalizedSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R2/operator/preparation/t1-markitect/render-plan.stdout.txt",
+      "rawBytes": 2311,
+      "rawSha256": "74be61d230b531616527b491bffb9719eaf58c3cd2992cf5e859e7e0a480e76e",
+      "preserved": "operator/preparation/t1-markitect/render-plan.stdout.txt",
+      "normalizedSha256": "74be61d230b531616527b491bffb9719eaf58c3cd2992cf5e859e7e0a480e76e",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R2/operator/preparation/t1-markitect/render-verify.stderr.txt",
+      "rawBytes": 0,
+      "rawSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "preserved": "operator/preparation/t1-markitect/render-verify.stderr.txt",
+      "normalizedSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R2/operator/preparation/t1-markitect/render-verify.stdout.txt",
+      "rawBytes": 143,
+      "rawSha256": "09a64170fdc28fa803df8f566dd2a1481c550927561dd48fcb0f159d50be50da",
+      "preserved": "operator/preparation/t1-markitect/render-verify.stdout.txt",
+      "normalizedSha256": "09a64170fdc28fa803df8f566dd2a1481c550927561dd48fcb0f159d50be50da",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R2/operator/helper-smoke/fixture.txt",
+      "rawBytes": 17,
+      "rawSha256": "6ea32499910d184fad2c7f6f0d9cc9b5276c1a64d921a595776ea1a490c03f24",
+      "preserved": "operator/helper-smoke/fixture.txt",
+      "normalizedSha256": "6ea32499910d184fad2c7f6f0d9cc9b5276c1a64d921a595776ea1a490c03f24",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R2/operator/helper-smoke/smoke-result.json",
+      "rawBytes": 929,
+      "rawSha256": "d019e4d7c8eafd15154f876539c9f3966d891a03c4e5f091d269acec70a0f3e7",
+      "preserved": "operator/helper-smoke/smoke-result.json",
+      "normalizedSha256": "fa02cf8dac7f72e8bc72a2d7758108b98dc5f05ce0459b57c8f25fde370b0f81",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R2/operator/helper-smoke/.telemetry/reads.jsonl",
+      "rawBytes": 131,
+      "rawSha256": "6aa3ff9d3fb023c9fc0f9ed9a70824379cd13ee8ae8d1e51d0fb1e7840f117f2",
+      "preserved": "operator/helper-smoke/.telemetry/reads.jsonl",
+      "normalizedSha256": "50e29951e8153b6cd1055170d8d47c34f30d8e70d653da79b0abcf254e77cf8e",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R2/operator/runs/t3-simple/run-evidence.json",
+      "rawBytes": 8584,
+      "rawSha256": "aec2b8698f3401aa5395ff89e5c62aa13ac217c2eff647f43409282da681d5a0",
+      "preserved": "excluded/task3-r2-permission/run-evidence.json",
+      "normalizedSha256": "841ffa0a7c0b2d88803a06919558149e665d1a4184add3f1a6043ec5e8769c05",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R2/operator/runs/t3-simple/agent-report.txt",
+      "rawBytes": 817,
+      "rawSha256": "0905269c373301d5444aaa126491c121e842547e6e70d397696cdafde7a732fc",
+      "preserved": "excluded/task3-r2-permission/agent-report.txt",
+      "normalizedSha256": "0905269c373301d5444aaa126491c121e842547e6e70d397696cdafde7a732fc",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R2/operator/runs/t3-simple/reads.jsonl",
+      "rawBytes": 3054,
+      "rawSha256": "a59bcb24b5c737ec590658e97e5e4ad7de9523b2485d9542e66736616bc25734",
+      "preserved": "excluded/task3-r2-permission/reads.jsonl",
+      "normalizedSha256": "3d8885ad47d7c8b4b78c7434aebf47117c443d3de589f9dfa13b7294a50deac1",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R2/operator/runs/t3-simple/workspace.diff",
+      "rawBytes": 0,
+      "rawSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "preserved": "excluded/task3-r2-permission/workspace.diff",
+      "normalizedSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R1/operator/runs/t1-simple/external-state.json",
+      "rawBytes": 2090,
+      "rawSha256": "a19129410ffc692a4a45947dfdd40bab4538f7da4b0a7687fa5d5bf9ae608214",
+      "preserved": "excluded/task1-r1-meter/external-state.json",
+      "normalizedSha256": "9be862b4f881f5357775b0aa28703c24b3eb1e0d21f1736c27dbd56ec5918d65",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    },
+    {
+      "rawLocationAlias": "R1/operator/runs/t1-simple/input-prompt.txt",
+      "rawBytes": 2976,
+      "rawSha256": "5e2df2f3ee0fa60d5b4190e76e895502ddf4daf6acc09e7f4f179714d378d134",
+      "preserved": "excluded/task1-r1-meter/input-prompt.txt",
+      "normalizedSha256": "5e2df2f3ee0fa60d5b4190e76e895502ddf4daf6acc09e7f4f179714d378d134",
+      "kind": "presentation-normalized; raw bytes remain in operator area"
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "r1Task1": {
+    "status": "interrupted after read-helper bug; unscored",
+    "preRunAuditSha256": "9ffb4480a365785fb6aecf5cf530ffc8f1d11ebf6621b3ba237eea41ac125f5e",
+    "rawRootAlias": "R1"
+  },
+  "r2Task3": {
+    "status": "blocked by auto-review before source edits; unscored",
+    "sourceChanges": 0,
+    "rawRootAlias": "R2/operator/runs/t3-simple"
+  },
+  "r3Preflight": {
+    "status": "Git-normalization and ownership setup failures before either agent; not performance evidence",
+    "preservedDirectories": [
+      "MARKITECT/.artifacts/comparison-task3-r3-preflight-git-normalization",
+      "MARKITECT/.artifacts/comparison-task3-r3-preflight-ownership",
+      "MARKITECT/.artifacts/comparison-task3-r3-preflight-byte-status",
+      "MARKITECT/.artifacts/comparison-task3-r3-preflight-index-refresh"
+    ]
+  }
+}

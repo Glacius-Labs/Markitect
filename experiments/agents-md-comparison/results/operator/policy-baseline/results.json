@@ -1,0 +1,14 @@
+[
+  {
+    "revision": "286bfa78c87f770a3c2c2208f2eaef4f96ecd969",
+    "operation": "check",
+    "stdoutSha256": "ec08b53ab38a95ea2061047a8122c8398a2814f27dad80d4a534087af13c8959",
+    "exitCode": 1
+  },
+  {
+    "revision": "286bfa78c87f770a3c2c2208f2eaef4f96ecd969",
+    "operation": "model",
+    "stdoutSha256": "9a52969208f7f77908e1af342e38e627c46ba5b50013fe4105aa6dcc27d23567",
+    "exitCode": 1
+  }
+]

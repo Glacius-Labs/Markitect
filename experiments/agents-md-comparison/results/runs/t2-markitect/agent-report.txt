@@ -1,0 +1,18 @@
+Implemented the selected Command Validator migration in the assigned checkout.
+
+- Added internal FluentValidation classes for `AddMeetingAttendeeCommand` and `CancelMeetingCommand`; each rejects `Guid.Empty` for `MeetingId`.
+- Added matching Validator resources and connected both UseCases to them. The selected cohort remains explicitly marked `validation: required`; I found no separate temporary waiver in the checkout.
+- Added an executable architecture check that confirms both Validators reject an empty meeting ID.
+- Refreshed Markitect projections, including the domain and architecture indexes and the two new Validator projections.
+
+Validation evidence:
+
+- Before the changes, `.tools/markitect.exe check --repo .` exited 1. It reported `selected-commands-require-validator` failures for both selected Commands, each with zero Validator targets.
+- After the changes, the same check exited 0 with `status: passed`; `markitect render --repo . --check` also exited 0.
+- Observed SDK: `8.0.418` (using `src/global.json`).
+- The architecture test facade passed: 11 passed, 0 failed. I restored it from `https://api.nuget.org/v3/index.json`, then ran the test with `--no-restore`.
+- The Meetings Application build succeeded with 0 warnings and 0 errors.
+
+Nonzero attempts: the first test invocation used unsupported `--source` and failed; the exact facade command then failed restore because the configured Azure feed was unavailable. After restoring from the specified public NuGet source, the first compilation exposed an `IValidator.Validate` overload mismatch in the new test; I corrected it, and the subsequent run passed. There was one existing nullable warning in `ApplicationTests.cs` during the passing test run.
+
+The checks verify the two selected resources, the architecture test behavior, generated projection consistency, and Application compilation. They do not establish broader project acceptance beyond those checks.

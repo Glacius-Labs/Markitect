@@ -1,0 +1,304 @@
+{
+  "evidenceType": "agents-md-comparison-fresh-agent-run",
+  "executionMode": "fresh-collaboration-agent",
+  "runId": "t1-markitect",
+  "agentIdentity": "/root/r2_t1_markitect",
+  "task": "t1",
+  "arm": "markitect",
+  "workspace": "<R2>\\workspaces\\t1-markitect\\checkout",
+  "preparedManifestSha256": "e085ec47e2da0a62e07bf1d526be5dab9a35c7c53cf9d5e7cde185cb31125c3e",
+  "frozenManifestSha256": "e085ec47e2da0a62e07bf1d526be5dab9a35c7c53cf9d5e7cde185cb31125c3e",
+  "sourceManifestSha256": "99fe6a51fa51cbd21cfc1c405c1a9743c4487ff2f5502358b864a4fefcb05c09",
+  "candidateCommitBeforeAgent": "bf18931e8c49555a0b8fda8133d809767a70c96b",
+  "candidateCommitAfterAgent": "bf18931e8c49555a0b8fda8133d809767a70c96b",
+  "startedAtUtc": "2026-10-03T17:17:02.3497484+02:00",
+  "completedAtUtc": "2026-10-03T15:31:50.4749845+00:00",
+  "agentReportPath": "agent-report.txt",
+  "agentReportSha256": "a5c273e6bcb37710b6c0d8c11cc54d976cd0277ed0ec9af0a0a27e7424c06d3e",
+  "agentReportText": "Implemented `GetMeetingPeopleCount` in the trial checkout. Its handler runs the existing attendee query and sums one person per row plus that row’s guest count, treating null as zero. I also made `GuestsNumber` nullable and added the UseCase and Handler governance resources, linking the UseCase from the architecture-review skill.\n\n`git diff --check` passed. `markitect find` found both new resources. `markitect check` exited 1: generated documentation is missing for the new resources, and it reports drift in the domain document and architecture README. I left generated outputs untouched because `render --write` writes in an isolated worktree, outside the trial checkout constraint.\n\nThe SDK selected from `src` is 8.0.418. The application build and required architecture test facade could not pass restore: feed access was blocked, producing NU1900 warning-as-error failures. No tests compiled or ran.",
+  "automaticAgentInstructions": [],
+  "compiledInputs": [
+    {
+      "command": [
+        "context",
+        "--repo",
+        "<R2>\\workspaces\\t1-markitect\\checkout",
+        "--revision",
+        "bf18931e8c49555a0b8fda8133d809767a70c96b",
+        "--namespace",
+        "engineering",
+        "--kind",
+        "Skill",
+        "--name",
+        "architecture-review"
+      ],
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "output": ".agent-input/context.yaml",
+      "sha256": "f981c49f768772cdd2a4f16da727b07d4987da257131f19fa6b398c1f19cf5b1",
+      "bytes": 53013,
+      "scope": {
+        "kind": "Skill",
+        "name": "architecture-review",
+        "namespace": "engineering"
+      }
+    }
+  ],
+  "frozenWorkspaceAssets": [
+    {
+      "path": ".tools/architecture-check/MeetingsArchitectureCheck.csproj",
+      "sha256": "ecd0ef45f7e286e167971f7c0b867cb6a458ff629973331c9ac6dd07dbea0082",
+      "bytes": 927
+    },
+    {
+      "path": ".tools/architecture-check/TestBase.cs",
+      "sha256": "ff7da1cb080ccf7d96b75f72d23b95028d052391d7649eb9ad25d1d41c8a4938",
+      "bytes": 1194
+    },
+    {
+      "path": ".tools/architecture-check/LICENSE",
+      "sha256": "e7e663ebd3dd4d6987f539743dba33750576870d51c2192500ea45d06adffa80",
+      "bytes": 1091
+    },
+    {
+      "path": "agent-guidance/architecture-review.skill.yaml",
+      "sha256": "8da80c8c098ad1f41dc8f15bb97020c3fcc19959fe8452d781b40005ad08229a",
+      "bytes": 1293
+    }
+  ],
+  "frozenWorkspaceAssetChanges": [
+    {
+      "path": "agent-guidance/architecture-review.skill.yaml",
+      "change": "modified",
+      "expectedSha256": "8da80c8c098ad1f41dc8f15bb97020c3fcc19959fe8452d781b40005ad08229a",
+      "actualSha256": "f8b5fdebf702897fbab2fb34b117704331a226b76c81204ee70b367692e886bf"
+    }
+  ],
+  "compiledInputChanges": [],
+  "model": null,
+  "modelEvidenceStatus": "unavailable from collaboration backend metadata",
+  "toolEvents": null,
+  "toolUsageEvidenceStatus": "unavailable; the collaboration backend exposes only the final agent report",
+  "tokenUsage": null,
+  "tokenUsageEvidenceStatus": "unavailable; no CLI JSONL events or metering were collected",
+  "workspaceStatus": " M agent-guidance/architecture-review.skill.yaml\n M src/Modules/Meetings/Application/Meetings/GetMeetingAttendees/MeetingAttendeeDto.cs\n?? resources/handler-get-meeting-people-count.yaml\n?? resources/usecase-get-meeting-people-count.yaml\n?? src/Modules/Meetings/Application/Meetings/GetMeetingPeopleCount/GetMeetingPeopleCountQuery.cs\n?? src/Modules/Meetings/Application/Meetings/GetMeetingPeopleCount/GetMeetingPeopleCountQueryHandler.cs\n",
+  "workspaceDelta": [
+    {
+      "root": "<R2>\\workspaces\\t1-markitect\\checkout",
+      "path": "src/Modules/Meetings/Application/Meetings/GetMeetingAttendees/MeetingAttendeeDto.cs",
+      "change": "modified",
+      "before": {
+        "bytes": 444,
+        "sha256": "c276b6000c2b22f6f40b06685d5112ad76b005c7cd673cf137ba408629b4c2c7"
+      },
+      "after": {
+        "bytes": 447,
+        "sha256": "e9d2da17368d3591d03efeb003cbc4ac71dac91dc13558c38726aff236db09cc"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t1-markitect\\checkout",
+      "path": "agent-guidance/architecture-review.skill.yaml",
+      "change": "modified",
+      "before": {
+        "bytes": 1293,
+        "sha256": "8da80c8c098ad1f41dc8f15bb97020c3fcc19959fe8452d781b40005ad08229a"
+      },
+      "after": {
+        "bytes": 1455,
+        "sha256": "f8b5fdebf702897fbab2fb34b117704331a226b76c81204ee70b367692e886bf"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t1-markitect\\checkout",
+      "path": "src/Modules/Meetings/Application/Meetings/GetMeetingPeopleCount/GetMeetingPeopleCountQuery.cs",
+      "change": "created",
+      "after": {
+        "bytes": 396,
+        "sha256": "3741a4bb982f207b089310d545ec367910d82b65c20abd0cdfc314963751067f"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t1-markitect\\checkout",
+      "path": "src/Modules/Meetings/Application/Meetings/GetMeetingPeopleCount/GetMeetingPeopleCountQueryHandler.cs",
+      "change": "created",
+      "after": {
+        "bytes": 895,
+        "sha256": "2f581590828f1f78a825e9c2c6aee5af58371f16ef4ef0d1e512206e61799cb2"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t1-markitect\\checkout",
+      "path": "resources/handler-get-meeting-people-count.yaml",
+      "change": "created",
+      "after": {
+        "bytes": 374,
+        "sha256": "c656f3368e2ce524a477027912b9d90e974d7479f14cdb7f86a5a3c68916c9e0"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t1-markitect\\checkout",
+      "path": "resources/usecase-get-meeting-people-count.yaml",
+      "change": "created",
+      "after": {
+        "bytes": 937,
+        "sha256": "4ced0080ae565de999bb126b9576db4452f4f7eb151b29497dc5ae326f30c187"
+      }
+    },
+    {
+      "root": "<R2>\\workspaces\\t1-markitect\\checkout",
+      "path": ".telemetry/reads.jsonl",
+      "change": "created",
+      "after": {
+        "bytes": 3868,
+        "sha256": "0f8f4b4b6b04bd2d6150bc3c3e31dea8a73f6eeac98571a80b7a58e6ded8cfeb"
+      }
+    }
+  ],
+  "workspaceDiffPath": "workspace.diff",
+  "workspaceDiffSha256": "3456aef73cd42170ec530d313c994913f3d07732f9f2b588a6b728977d140417",
+  "fileReadLedger": {
+    "recordsPath": "reads.jsonl",
+    "helperSha256Before": "d7c7016b7bb27d05f6b303906d7fa131bbf9650307c9fdfa456b31e07c903dbe",
+    "helperSha256After": "d7c7016b7bb27d05f6b303906d7fa131bbf9650307c9fdfa456b31e07c903dbe",
+    "helperMutated": false,
+    "helperRecordedContentReads": 21,
+    "records": [
+      {
+        "path": ".agent-input/context.yaml",
+        "bytes": 53013,
+        "sha256": "f981c49f768772cdd2a4f16da727b07d4987da257131f19fa6b398c1f19cf5b1",
+        "readType": "content"
+      },
+      {
+        "path": "src/Modules/Meetings/Application/Meetings/GetMeetingAttendees/GetMeetingAttendeesQuery.cs",
+        "bytes": 423,
+        "sha256": "435532f99c8244bcdadb106b906a4f8e02bc1365f308d4f47d2ad5de73e7fc3e",
+        "readType": "content"
+      },
+      {
+        "path": "src/Modules/Meetings/Application/Meetings/GetMeetingAttendees/GetMeetingAttendeesQueryHandler.cs",
+        "bytes": 2036,
+        "sha256": "996f50dd9cafe4df62d3ccc49f92be578fae5e851ffb8b8960b8a8284730d625",
+        "readType": "content"
+      },
+      {
+        "path": "src/Modules/Meetings/Application/Meetings/GetMeetingAttendees/MeetingAttendeeDto.cs",
+        "bytes": 444,
+        "sha256": "c276b6000c2b22f6f40b06685d5112ad76b005c7cd673cf137ba408629b4c2c7",
+        "readType": "content"
+      },
+      {
+        "path": "src/Modules/Meetings/Application/Meetings/GetMeetingDetails/GetMeetingDetailsQueryHandler.cs",
+        "bytes": 2865,
+        "sha256": "abc8a0e68eeb0f5164ee3a705e0ee04231d01a00cc695cee5eeaac109bfdc57e",
+        "readType": "content"
+      },
+      {
+        "path": "resources/usecase-get-meeting-attendees.yaml",
+        "bytes": 943,
+        "sha256": "85d248f6ad5162b5d1be98e081061a4f6b2f02bdfd770586b10dc519d6d30379",
+        "readType": "content"
+      },
+      {
+        "path": "resources/handler-get-meeting-attendees.yaml",
+        "bytes": 519,
+        "sha256": "77ab67d96846002a4aec33deda8bf60bf68ac2fcaf04103570ab794ddcba9877",
+        "readType": "content"
+      },
+      {
+        "path": "src/Modules/Meetings/Application/Contracts/IQuery.cs",
+        "bytes": 174,
+        "sha256": "fcf0d510a0cf9fc8cf0d8d91a0ccacb67b6b89f79469668d025841e70a5100fe",
+        "readType": "content"
+      },
+      {
+        "path": "src/Modules/Meetings/Application/Contracts/QueryBase.cs",
+        "bytes": 364,
+        "sha256": "6d622a598078f1d9c54c2a852ab303ec53ba4da1a14e0bd4c81199757068202f",
+        "readType": "content"
+      },
+      {
+        "path": "src/Modules/Meetings/Application/Configuration/Queries/IQueryHandler.cs",
+        "bytes": 334,
+        "sha256": "044bc576309f53ebaf7d82908937c65e997bf588dc6ff110fc4c0aebb7cafccb",
+        "readType": "content"
+      },
+      {
+        "path": "src/Modules/Meetings/Application/Meetings/MeetingsQueryHelper.cs",
+        "bytes": 1473,
+        "sha256": "65ef9dee0a6ff8daeeb18e16c67b78f4edb3e294469f3eb59e3557e1600186ca",
+        "readType": "content"
+      },
+      {
+        "path": "src/Modules/Meetings/Tests/ArchTests/Application/ApplicationTests.cs",
+        "bytes": 7248,
+        "sha256": "2aef4aef91032ff32c60aca30a7e8b10a7235ad9d05c767a5a4c3951471463a3",
+        "readType": "content"
+      },
+      {
+        "path": "agent-guidance/architecture-review.skill.yaml",
+        "bytes": 1293,
+        "sha256": "8da80c8c098ad1f41dc8f15bb97020c3fcc19959fe8452d781b40005ad08229a",
+        "readType": "content"
+      },
+      {
+        "path": "resources/feature-meeting-attendance.yaml",
+        "bytes": 878,
+        "sha256": "f1d70babe67c5fa8d122033d3bfcea0361b8c26da171190fcec2f1bef17145fc",
+        "readType": "content"
+      },
+      {
+        "path": "src/global.json",
+        "bytes": 113,
+        "sha256": "8dc87e6f68213f4444f20306d8057b48947550912e25a5b897702a51eea23d95",
+        "readType": "content"
+      },
+      {
+        "path": "src/Modules/Meetings/Application/CompanyName.MyMeetings.Modules.Meetings.Application.csproj",
+        "bytes": 642,
+        "sha256": "2f0d3e0797c1fdf2c35bc4f61d1bce373dff83fac85236fb252895dd2cc61249",
+        "readType": "content"
+      },
+      {
+        "path": ".tools/architecture-check/MeetingsArchitectureCheck.csproj",
+        "bytes": 927,
+        "sha256": "ecd0ef45f7e286e167971f7c0b867cb6a458ff629973331c9ac6dd07dbea0082",
+        "readType": "content"
+      },
+      {
+        "path": "src/Modules/Meetings/Application/Meetings/GetMeetingPeopleCount/GetMeetingPeopleCountQuery.cs",
+        "bytes": 396,
+        "sha256": "3741a4bb982f207b089310d545ec367910d82b65c20abd0cdfc314963751067f",
+        "readType": "content"
+      },
+      {
+        "path": "src/Modules/Meetings/Application/Meetings/GetMeetingPeopleCount/GetMeetingPeopleCountQueryHandler.cs",
+        "bytes": 895,
+        "sha256": "2f581590828f1f78a825e9c2c6aee5af58371f16ef4ef0d1e512206e61799cb2",
+        "readType": "content"
+      },
+      {
+        "path": "resources/usecase-get-meeting-people-count.yaml",
+        "bytes": 937,
+        "sha256": "4ced0080ae565de999bb126b9576db4452f4f7eb151b29497dc5ae326f30c187",
+        "readType": "content"
+      },
+      {
+        "path": "resources/handler-get-meeting-people-count.yaml",
+        "bytes": 374,
+        "sha256": "c656f3368e2ce524a477027912b9d90e974d7479f14cdb7f86a5a3c68916c9e0",
+        "readType": "content"
+      }
+    ],
+    "limit": "Only reads through .tools/read.ps1 are logged."
+  },
+  "markitectExecutable": {
+    "sha256Before": "6aae29acf67217b9538a2076ff199102b44c84183f2e0dff4718584e84e064df",
+    "sha256After": "6aae29acf67217b9538a2076ff199102b44c84183f2e0dff4718584e84e064df",
+    "mutated": false
+  },
+  "externalTreeDeltas": [],
+  "externalWriteDetected": false,
+  "externalWritePolicy": "Any detected out-of-workspace change is reported and left in place for review."
+}

@@ -1,0 +1,7 @@
+Implemented attendee fee-paid status in the existing Meetings query path. The view now exposes IsFeePaid, and the Dapper handler maps it to the attendee DTO. The Payments-to-Meetings integration and its Meetings-maintained state remain the source of that value; no endpoint was added.
+
+Changed files: the attendee SQL view, query handler and DTO, three canonical architecture resources, and their three generated Markitect projections.
+
+Checks: Markitect render and check passed; git diff --check passed. The Meetings Application build passed with SDK 8.0.418. The architecture test facade passed all 10 tests after restoring from https://api.nuget.org/v3/index.json. Its initial restore attempted an unreachable Azure feed and failed; the explicit NuGet restore followed by dotnet test ... --no-restore succeeded.
+
+The architecture keeps the existing SQL read model and module boundary. The checkout lacks docs/README.md; I used the supplied compiled context and existing Markitect resources and projections. Verification covered compilation and architecture tests, but did not execute the SQL view against a database or exercise live payment processing.

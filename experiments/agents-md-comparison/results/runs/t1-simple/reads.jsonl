@@ -1,0 +1,16 @@
+{"path": "AGENTS.md", "bytes": 2666, "sha256": "844b426a9d952de6f0019463393670ef92c2ea2f6971b03f6f267ab595957df2", "readType": "content"}
+{"path": "docs/architecture-decision-log/0009-use-2-layered-architectural-style-for-reads.md", "bytes": 1011, "sha256": "426c1b3a6f8c629a6224b2c99fa5216b346c03af5ae70446d6a86095cd871734", "readType": "content"}
+{"path": "docs/engineering-policy.md", "bytes": 377, "sha256": "3fad7de63b29ffd32b893956b88314d0e3471249af8dc774fcf4ff565e637296", "readType": "content"}
+{"path": "src/Modules/Meetings/Application/Meetings/GetMeetingAttendees/GetMeetingAttendeesQuery.cs", "bytes": 423, "sha256": "435532f99c8244bcdadb106b906a4f8e02bc1365f308d4f47d2ad5de73e7fc3e", "readType": "content"}
+{"path": "src/Modules/Meetings/Application/Meetings/GetMeetingAttendees/GetMeetingAttendeesQueryHandler.cs", "bytes": 2036, "sha256": "996f50dd9cafe4df62d3ccc49f92be578fae5e851ffb8b8960b8a8284730d625", "readType": "content"}
+{"path": "src/Modules/Meetings/Application/Meetings/GetMeetingAttendees/MeetingAttendeeDto.cs", "bytes": 444, "sha256": "c276b6000c2b22f6f40b06685d5112ad76b005c7cd673cf137ba408629b4c2c7", "readType": "content"}
+{"path": "src/Database/CompanyName.MyMeetings.Database/Structure/meetings/Views/v_MeetingAttendees.sql", "bytes": 467, "sha256": "f45b41dfa11cac9b87b69e8ce780291be551b73170ec20e33a6fdbb2ff637e84", "readType": "content"}
+{"path": "src/Database/CompanyName.MyMeetings.Database/Structure/meetings/Tables/MeetingAttendees.sql", "bytes": 708, "sha256": "760d6074977f4b881a05d0a8366a0c7fd827a2540183844d556259a853f0dcfe", "readType": "content"}
+{"path": "src/Modules/Meetings/Tests/ArchTests/Application/ApplicationTests.cs", "bytes": 7248, "sha256": "2aef4aef91032ff32c60aca30a7e8b10a7235ad9d05c767a5a4c3951471463a3", "readType": "content"}
+{"path": "src/global.json", "bytes": 113, "sha256": "8dc87e6f68213f4444f20306d8057b48947550912e25a5b897702a51eea23d95", "readType": "content"}
+{"path": "src/Modules/Meetings/Application/Contracts/QueryBase.cs", "bytes": 364, "sha256": "6d622a598078f1d9c54c2a852ab303ec53ba4da1a14e0bd4c81199757068202f", "readType": "content"}
+{"path": "src/Modules/Meetings/Application/Configuration/Queries/IQueryHandler.cs", "bytes": 334, "sha256": "044bc576309f53ebaf7d82908937c65e997bf588dc6ff110fc4c0aebb7cafccb", "readType": "content"}
+{"path": "src/Modules/Meetings/Application/Meetings/GetMeetingDetails/GetMeetingDetailsQueryHandler.cs", "bytes": 2865, "sha256": "abc8a0e68eeb0f5164ee3a705e0ee04231d01a00cc695cee5eeaac109bfdc57e", "readType": "content"}
+{"path": "src/Modules/Meetings/Application/CompanyName.MyMeetings.Modules.Meetings.Application.csproj", "bytes": 642, "sha256": "2f0d3e0797c1fdf2c35bc4f61d1bce373dff83fac85236fb252895dd2cc61249", "readType": "content"}
+{"path": "src/Modules/Meetings/Application/Meetings/GetMeetingPeopleCount/GetMeetingPeopleCountQuery.cs", "bytes": 396, "sha256": "3741a4bb982f207b089310d545ec367910d82b65c20abd0cdfc314963751067f", "readType": "content"}
+{"path": "src/Modules/Meetings/Application/Meetings/GetMeetingPeopleCount/GetMeetingPeopleCountQueryHandler.cs", "bytes": 1292, "sha256": "11a9985fa5426707932ef77497b91a3eb7557ba730d2528155fa969e1c689c93", "readType": "content"}
