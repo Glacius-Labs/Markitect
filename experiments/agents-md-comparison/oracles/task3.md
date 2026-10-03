@@ -1,0 +1,9 @@
+# Hidden acceptance oracle: Task 3
+
+Keep this file and the full `oracles/` directory outside every agent checkout and input packet.
+
+`GetMeetingAttendees` must expose a boolean `IsFeePaid` for each returned attendee. The value comes from Meetings-owned attendee read state. `meetings.MeetingAttendees` owns `IsFeePaid`, and the current `meetings.v_MeetingAttendees` view does not yet project it. The Payments-to-Meetings update path already exists: `MeetingFeePaidIntegrationEvent` is consumed by `MeetingFeePaidIntegrationEventHandler`, which schedules the Meetings command.
+
+Allowed A changes are the Meetings attendee DTO and QueryHandler plus `src/Database/CompanyName.MyMeetings.Database/Structure/meetings/Views/v_MeetingAttendees.sql`. B may also update the corresponding Handler/UseCase resource source declarations, update only those resource inventories in the existing Domain definition, and regenerate outputs owned by those resources and affected collection indexes. Do not edit the Payments Application, existing event publisher/consumer or command, Meetings table schema, project references, ADRs, tests, or unrelated Markitect policy. No new Payments Application reference or direct Payments data query is permitted. The independent project-reference check must continue to allow the existing Payments IntegrationEvents reference.
+
+The frozen evaluator may run unchanged `ApplicationTests.cs` through a bounded runner after trials. The extracted original architecture-test project is incomplete; do not call this the full test suite. Build the Meetings Application project and inspect the SQL/DTO mapping. No database or runtime is included, so the check does not establish the event-to-database update at runtime. ADRs 0004 and 0014 plus the frozen project-reference check are the boundary oracle; the upstream architecture test source does not itself check module references.
