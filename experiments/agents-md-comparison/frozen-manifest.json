@@ -3330,7 +3330,7 @@
     },
     {
       "path": "experiments/agents-md-comparison/prepare-manifest.py",
-      "sha256": "d296789fec20ae8d270e14e12bd29273e4cb2b0e12c3e7f05b596c9569a9449d"
+      "sha256": "3a918b6893cd82ea7e1698e54bafa74feace2c937aa1b7cd43985e7a77c3fff2"
     },
     {
       "path": "experiments/agents-md-comparison/run.ps1",
@@ -3585,6 +3585,8 @@
             "UseCase",
             "--name",
             "add-meeting-attendee",
+            "--api-version",
+            "architecture.mymeetings.example/v1alpha1",
             "--analyze-policy-failures"
           ],
           "output": "context.yaml",
@@ -3639,7 +3641,9 @@
             "--kind",
             "UseCase",
             "--name",
-            "get-meeting-attendees"
+            "get-meeting-attendees",
+            "--api-version",
+            "architecture.mymeetings.example/v1alpha1"
           ],
           "output": "context.yaml",
           "expectedExitCode": 0,

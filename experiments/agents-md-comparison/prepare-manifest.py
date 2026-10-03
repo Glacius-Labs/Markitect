@@ -70,6 +70,8 @@ def main():
     def context(kind, name, namespace, failing=False):
         arguments = ["context", "--repo", "{repo}", "--revision", "{candidate}",
                      "--namespace", namespace, "--kind", kind, "--name", name]
+        if kind == "UseCase":
+            arguments += ["--api-version", "architecture.mymeetings.example/v1alpha1"]
         if failing:
             arguments.append("--analyze-policy-failures")
         return {"args": arguments, "output": "context.yaml", "expectedExitCode": int(failing),
