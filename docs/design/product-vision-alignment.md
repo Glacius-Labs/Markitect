@@ -35,4 +35,4 @@ The existing bounded streams have a meaningful relationship to the thesis; none 
 
 ## Scope of this change
 
-README and canonical navigation/purpose descriptions are aligned; the new vision owns the name origin, assumptions, roles, desired operating model and decision filter. Technical architecture, Domain/schema, source behavior, examples, package versions, historical reports, release-managed README blocks and published release artifacts remain unchanged. No productivity experiment or feature wave was run as part of this assessment.
+README, the agent entrypoint and canonical navigation/purpose descriptions are aligned; the new vision owns the name origin, assumptions, roles, desired operating model and decision filter. Technical architecture, Domain/schema, source behavior, examples, package versions, historical reports, release-managed README blocks and published release artifacts remain unchanged. No productivity experiment or feature wave was run as part of this assessment.
