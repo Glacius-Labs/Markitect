@@ -82,7 +82,11 @@ func parseOptions(command string, args []string, allowed map[string]bool, out, e
 		return commandOptions{}, 2, true
 	}
 	invalid := ""
+	analyzePolicyFailuresProvided := false
 	fs.Visit(func(f *flag.Flag) {
+		if f.Name == "analyze-policy-failures" {
+			analyzePolicyFailuresProvided = true
+		}
 		if !allowed[f.Name] {
 			invalid = f.Name
 		}
@@ -125,7 +129,7 @@ func parseOptions(command string, args []string, allowed map[string]bool, out, e
 		fmt.Fprintln(errout, "--run is only valid for context with --revision and supplies its own entry")
 		return commandOptions{}, 2, true
 	}
-	if *analyzePolicyFailures && command == "context" && *runManifest != "" {
+	if analyzePolicyFailuresProvided && command == "context" && *runManifest != "" {
 		fmt.Fprintln(errout, "--analyze-policy-failures does not apply to context --run")
 		return commandOptions{}, 2, true
 	}

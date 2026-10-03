@@ -1,0 +1,15 @@
+<candidate-executable>
+	path	github.com/Glacius-Labs/Markitect/cmd/markitect
+	mod	github.com/Glacius-Labs/Markitect	v0.12.1-0.20261003054229-1549608438f9
+	dep	go.yaml.in/yaml/v3	v3.0.5	h1:N6y/pJk8buWs9NY5ERU2HSMfm+IuD/OtfdAnq6kESPw=
+	build	-buildmode=exe
+	build	-compiler=gc
+	build	-trimpath=true
+	build	CGO_ENABLED=0
+	build	GOARCH=amd64
+	build	GOOS=windows
+	build	GOAMD64=v1
+	build	vcs=git
+	build	vcs.revision=1549608438f9c0d24d29d43608515bce388c14e7
+	build	vcs.time=2026-10-03T05:42:29Z
+	build	vcs.modified=false

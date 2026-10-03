@@ -141,10 +141,18 @@ function Save-Command([string] $Name, [string] $Revision, [string[]] $Arguments,
     if ($result.ExitCode -ne $ExpectedExitCode) {
         throw "$Name exited $($result.ExitCode); expected $ExpectedExitCode. Captured output: $prefix.stdout.txt"
     }
+    $recordedArguments = @($Arguments | ForEach-Object {
+        if ([string]::Equals($_, $script:checkout, [StringComparison]::OrdinalIgnoreCase)) {
+            '<replay-checkout>'
+        } else {
+            $_
+        }
+    })
     $record = [ordered]@{
         name = $Name
         revision = $Revision
-        arguments = $Arguments
+        arguments = $recordedArguments
+        argumentPathNormalization = 'Only exact replay-checkout argument values are represented as <replay-checkout>; commands execute with the real checkout path.'
         expectedExitCode = $ExpectedExitCode
         actualExitCode = $result.ExitCode
         stdoutSha256 = Get-Sha256 "$prefix.stdout.txt"
@@ -294,6 +302,25 @@ try {
     Assert-CleanCheckout $checkout 'Completed replay'
     $candidateVersion = Invoke-Native $candidateExe @('version')
     if ($candidateVersion.ExitCode -ne 0) { throw "Candidate `version` failed: $($candidateVersion.Stderr)" }
+    $candidateBuildInfo = Invoke-Native 'go' @('version', '-m', $candidateExe)
+    if ($candidateBuildInfo.ExitCode -ne 0) { throw "Reading candidate Go build metadata failed: $($candidateBuildInfo.Stderr)" }
+    if ($candidateBuildInfo.Stdout -notmatch "(?m)^\s*build\s+vcs\.revision=$([regex]::Escape($CandidateSourceCommit))\s*$" -or
+        $candidateBuildInfo.Stdout -notmatch '(?m)^\s*build\s+vcs\.modified=false\s*$') {
+        throw 'Candidate Go build metadata does not match the supplied source commit or reports modified source.'
+    }
+    $buildInfoLines = @($candidateBuildInfo.Stdout.Replace($candidateExe, '<candidate-executable>') -split "`r?`n")
+    $normalizedBuildInfoLines = [Collections.Generic.List[string]]::new()
+    foreach ($line in $buildInfoLines) {
+        $normalizedBuildInfoLines.Add($line.TrimEnd([char[]]@(' ', "`t")))
+    }
+    while ($normalizedBuildInfoLines.Count -gt 0 -and [string]::IsNullOrWhiteSpace($normalizedBuildInfoLines[$normalizedBuildInfoLines.Count - 1])) {
+        $normalizedBuildInfoLines.RemoveAt($normalizedBuildInfoLines.Count - 1)
+    }
+    $normalizedBuildInfo = ($normalizedBuildInfoLines -join "`n") + "`n"
+    # This is a presentation copy: normalize only the executable path and
+    # trailing whitespace. The Go metadata values are preserved verbatim.
+    $buildInfoPath = Join-Path $runDirectory 'candidate-buildinfo.txt'
+    [IO.File]::WriteAllText($buildInfoPath, $normalizedBuildInfo, $encoding)
     $v012Info = $null
     if (-not [string]::IsNullOrWhiteSpace($PublicV012Executable)) {
         $publicExe = (Resolve-Path -LiteralPath $PublicV012Executable).Path
@@ -314,6 +341,7 @@ try {
         candidateSourceCommit = $CandidateSourceCommit
         candidateExecutableSha256 = Get-Sha256 $candidateExe
         candidateVersionOutput = $candidateVersion.Stdout.Trim()
+        candidateBuildInfoSha256 = Get-Sha256 $buildInfoPath
         publicV012 = $v012Info
         revisions = $revisions
         packageArchiveSha256 = $packageHashes

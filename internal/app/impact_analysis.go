@@ -174,6 +174,10 @@ func policyResultAbsence(project *Project, model SemanticModel, identity policyR
 	if !defined {
 		return "constraint-not-defined"
 	}
+	collection := constraintProducesCollectionResult(constraint)
+	if (identity.subject == "") != collection {
+		return "result-scope-changed"
+	}
 	if identity.subject == "" {
 		return "result-not-present"
 	}
@@ -191,6 +195,14 @@ func policyResultAbsence(project *Project, model SemanticModel, identity policyR
 		return "not-selected"
 	}
 	return ""
+}
+
+// constraintProducesCollectionResult mirrors the existing finite evaluator's
+// result shape: unique and selection-scoped count produce one subjectless
+// outcome; all other supported assertions produce per-subject outcomes.
+func constraintProducesCollectionResult(constraint core.ConstraintDefinition) bool {
+	assertion := constraint.Assert
+	return assertion.Op == "unique" || assertion.Op == "count" && assertion.Scope != "resource"
 }
 
 func modelPolicyDefinition(model SemanticModel, apiVersion, name string) (ModelDomainInput, bool, ModelDomain, core.ConstraintDefinition, bool) {

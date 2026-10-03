@@ -52,6 +52,8 @@ Each change carries the original result (including failure message, waiver and e
 
 A missing side is **not a passed result**. Represent it as analysis-only `not-applicable` with an absence reason: constraint not defined, subject absent, or no result selected. This is not a new PolicyResult status. It explains the pilot's new v2 constraint; selector entry/exit and removal also remain distinct through their reason and source. Support passed/failed/waived transitions and transitions to/from a missing result. A collection result has no direct resource subject; keep the delta without inventing one.
 
+When a constraint retains its identity but changes between resource and collection evaluation, its old result identities are no longer applicable. Report `result-scope-changed` on that absent side and retain the new result identities separately. This explains an existing finite assertion's output scope; it does not reevaluate policy or invent a resource subject for a collection.
+
 `directPolicySubjects` contains only subjects of changed result records, not all failed subjects, invalidation consumers, or the complete true implementation-review set. Status-preserving subject/constraint digest changes also count. Direct deltas are evidence of evaluation changes; `affected` remains the conservative review set. New counts summarize those separate existing meanings.
 
 ## Mutation and reconciliation boundaries
@@ -65,3 +67,7 @@ Test classification by identity, including a policy named `path`, alongside unre
 Replay the preserved bundle in a new `experiments/policy-failure-analysis/` result area. Preserve the entire earlier pilot tree. At its exact failing v2 revision obtain Model, diagnostic Context and v1-to-v2 Impact without a waiver, canonical/code edits or projections. Record the two direct failure subjects separately from the actual conservative set, then replay the original first Validator, optional explicit waiver and final passing revisions. Normal Check must still fail at the failing pin. This tests inspectability, not productivity, safety or token use.
 
 Separate follow-ups remain: matched AGENTS.md/architecture-test validation, ADR/source selection, authoring feedback, duplicated ownership mappings and context breadth. No new operator, expanded same-target, graph query, fan-out, inverse ownership, selector language, Pattern, Trait, composition or inheritance is justified here.
+
+## Release decision
+
+This is release-worthy as an explicit CLI and normalized-output contract. Integration and source quality gates do not publish it. Prepare a separate immutable release after integration, with its own exact source commit, Windows/Linux release gates and verified public assets; do not change published v0.12.0 artifacts or release-managed distribution metadata in this iteration. The replay establishes inspectability at fixed snapshots, not product-benefit claims for a release announcement.

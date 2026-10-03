@@ -198,6 +198,59 @@ func TestAnalyzeImpactCollectionDeltaHasNoInventedSubject(t *testing.T) {
 	}
 }
 
+func TestAnalyzeImpactExplainsPerResourceCollectionResultShapeChanges(t *testing.T) {
+	perResource := "- name: changing-scope\n  select: {kind: Module}\n  assert: {op: equal, field: intent, value: expected}"
+	collection := "- name: changing-scope\n  select: {kind: Module}\n  assert: {op: count, scope: selection, min: 1}"
+	perSnapshot := policyImpactSnapshot(t, perResource, false, true, false)
+	collectionSnapshot := clonePolicySnapshot(perSnapshot)
+	domain := string(collectionSnapshot.Files["domains/engineering.yaml"])
+	if index := strings.Index(domain, "  constraints:"); index >= 0 {
+		domain = domain[:index]
+	}
+	collectionSnapshot.Files["domains/engineering.yaml"] = []byte(domain + "  constraints:\n" + indentLines(collection, 4) + "\n")
+	perToCollection, err := AnalyzeImpact(parsePolicyImpactProject(t, perSnapshot), parsePolicyImpactProject(t, collectionSnapshot))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(perToCollection.PolicyChanges) != 3 {
+		t.Fatalf("expected two removed per-resource records and one added collection record: %+v", perToCollection.PolicyChanges)
+	}
+	collectionRecords, subjectRecords := 0, 0
+	for _, change := range perToCollection.PolicyChanges {
+		if change.Subject == "" {
+			collectionRecords++
+			if change.Base.Status != "not-applicable" || change.Base.AbsenceReason != "result-scope-changed" || change.Candidate.Status != "passed" {
+				t.Fatalf("new collection result should explain old result scope: %+v", change)
+			}
+		} else {
+			subjectRecords++
+			if change.Base.Status != "passed" || change.Candidate.Status != "not-applicable" || change.Candidate.AbsenceReason != "result-scope-changed" {
+				t.Fatalf("removed per-resource result should explain new result scope: %+v", change)
+			}
+		}
+	}
+	if collectionRecords != 1 || subjectRecords != 2 || perToCollection.DirectPolicySubjectCount == nil || *perToCollection.DirectPolicySubjectCount != 2 {
+		t.Fatalf("result scopes or direct subjects are wrong: %+v", perToCollection)
+	}
+
+	collectionToPer, err := AnalyzeImpact(parsePolicyImpactProject(t, collectionSnapshot), parsePolicyImpactProject(t, perSnapshot))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(collectionToPer.PolicyChanges) != 3 {
+		t.Fatalf("reverse scope transition should also produce three records: %+v", collectionToPer.PolicyChanges)
+	}
+	for _, change := range collectionToPer.PolicyChanges {
+		if change.Subject == "" {
+			if change.Base.Status != "passed" || change.Candidate.Status != "not-applicable" || change.Candidate.AbsenceReason != "result-scope-changed" {
+				t.Fatalf("removed collection result lost its absence reason: %+v", change)
+			}
+		} else if change.Base.Status != "not-applicable" || change.Base.AbsenceReason != "result-scope-changed" || change.Candidate.Status != "passed" {
+			t.Fatalf("added per-resource result lost its absence reason: %+v", change)
+		}
+	}
+}
+
 func TestAnalyzeImpactReportsPolicyStatusTransitions(t *testing.T) {
 	constraint := "- name: module-intent\n  select: {kind: Module, labels: {governed: yes}}\n  assert: {op: equal, field: intent, value: expected}"
 	passed := policyImpactSnapshot(t, constraint, false, true, true)

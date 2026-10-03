@@ -47,9 +47,11 @@ func TestAnalyzePolicyFailuresFlagIsLimitedToResourceContextAndImpact(t *testing
 		})
 	}
 
-	code, _, stderr := invoke("context", "--run", strings.Repeat("a", 40), "--revision", strings.Repeat("a", 40), "--analyze-policy-failures")
-	if code != 2 || !strings.Contains(stderr, "does not apply to context --run") {
-		t.Fatalf("context --run accepted resource policy analysis: exit=%d stderr=%q", code, stderr)
+	for _, value := range []string{"true", "false"} {
+		code, _, stderr := invoke("context", "--run", strings.Repeat("a", 40), "--revision", strings.Repeat("a", 40), "--analyze-policy-failures="+value)
+		if code != 2 || !strings.Contains(stderr, "does not apply to context --run") {
+			t.Fatalf("context --run accepted explicit resource policy analysis value %s: exit=%d stderr=%q", value, code, stderr)
+		}
 	}
 }
 
