@@ -11,5 +11,6 @@ Start with [Architecture](../architecture.md), the canonical [engineering consti
 | [Adoption boundaries](adoption-boundaries.md) | Init, Copy Me and adopter handoffs; current versus proposed contracts |
 | [Risk register](risk-register.md) | Evidence-based classification of the 18 supplied risks |
 | [Workstream map](../workstreams/README.md) | Bounded future packages and hard/soft dependencies |
+| [First-wave integration](../validation/parallel-development-wave-1.md) | Explicit assignments, reviewed candidates, gates, modularity findings and deferrals |
 
 Preparation does not authorize implementation of the listed workstreams, a consumer migration or a release. The [supplied bundle](../strategy/sources/parallel-development/README.md) preserves design provenance; its illustrative commands and syntax are not shipped contracts.

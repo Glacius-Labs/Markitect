@@ -8,6 +8,7 @@ For coordinated parallel work, read the [development guide](docs/development/REA
 |---|---|
 | `cmd/markitect` | CLI flags, exit codes, and output |
 | `cmd/markitect-adapter-dotnet` | External reference adapter for explicitly mapped, captured project-reference declarations |
+| `cmd/markitect-adapter-github`, `cmd/markitect-adapter-azure-devops` | Independent offline command consumers for mapped captured repository metadata; build separately |
 | `cmd/markitect-release`, `internal/publish` | Maintainer release verification, publication, and distribution metadata |
 | `internal/core` | Language registry, typed resources, structural constraints, and relation-specific graphs |
 | `internal/snapshot` | Resolved snapshot values, stable content digests, and deterministic snapshot comparison |
