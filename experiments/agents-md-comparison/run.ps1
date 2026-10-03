@@ -247,7 +247,7 @@ function Compare-CompiledInputs($Expected, [string] $Workspace) {
 function Install-AgentReadOnlyInputs([string] $Workspace) {
     $excludePath = Join-Path $Workspace '.git/info/exclude'
     $excludeText = [IO.File]::ReadAllText($excludePath)
-    foreach ($line in @('.tools/', '.agent-input/', '.telemetry/')) {
+    foreach ($line in @('.tools/', '.agent-input/', '.telemetry/', '**/bin/', '**/obj/', '**/TestResults/')) {
         if (-not $excludeText.Contains($line)) { $excludeText += "`n$line" }
     }
     [IO.File]::WriteAllText($excludePath, $excludeText, $script:Utf8NoBom)
