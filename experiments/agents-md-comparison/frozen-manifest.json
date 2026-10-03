@@ -3334,7 +3334,7 @@
     },
     {
       "path": "experiments/agents-md-comparison/run.ps1",
-      "sha256": "31867e2a3b8e8eebf91890383b2b83696fef77361b0634fcf9e9b0d231a8d36d"
+      "sha256": "e14e12d3fe2bb80a08b2ee319e6c18bdad1ccb6818dcf677a1a621e801af5d10"
     },
     {
       "path": "experiments/agents-md-comparison/tasks/task1.md",

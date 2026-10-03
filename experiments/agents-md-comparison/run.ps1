@@ -109,7 +109,7 @@ function Invoke-Native {
 
 function Invoke-Git {
     param([string[]] $ArgumentList, [string] $WorkingDirectory, [switch] $AllowFailure)
-    $gitPath = (Get-Command git -CommandType Application -ErrorAction Stop).Source
+    $gitPath = (Get-Command git -CommandType Application -ErrorAction Stop | Select-Object -First 1).Source
     Invoke-Native -FilePath $gitPath -ArgumentList $ArgumentList -WorkingDirectory $WorkingDirectory -AllowFailure:$AllowFailure
 }
 
@@ -457,7 +457,7 @@ function Export-SourceSnapshot {
     $archiveParent = Split-Path -Parent $archive
     if (-not (Test-Path -LiteralPath $archiveParent -PathType Container)) { New-Item -ItemType Directory -Path $archiveParent -Force | Out-Null }
     $args = @('-C', $Inspector, 'archive', '--format=zip', "--output=$archive", $revision)
-    if ($Arm -eq 'simple') { $args += @('--') + @($files | ForEach-Object { ([string]$_.path).Replace('\', '/') }) }
+    if ($Arm -eq 'simple') { $args += @('--', 'src', 'docs/architecture-decision-log', 'README.md', 'LICENSE') }
     [void](Invoke-Git -ArgumentList $args -WorkingDirectory $script:RunRootFull)
     Add-Type -AssemblyName System.IO.Compression.FileSystem
     [IO.Compression.ZipFile]::ExtractToDirectory($archive, $Workspace)
