@@ -268,7 +268,7 @@ $candidate = [IO.Path]::GetFullPath((Join-Path $root $Path))
 $resolved = (Resolve-Path -LiteralPath $candidate).Path
 $prefix = $root.TrimEnd([IO.Path]::DirectorySeparatorChar) + [IO.Path]::DirectorySeparatorChar
 if (-not $resolved.StartsWith($prefix, [StringComparison]::OrdinalIgnoreCase)) { throw 'Read path must stay inside the trial workspace.' }
-if ($candidate -match '^[A-Za-z]:[\\/]' -or $Path.StartsWith('\\') -or $Path -match '(^|[\\/])\.\.?([\\/]|$)') { throw 'Read path must be a normalized workspace-relative path.' }
+if ([IO.Path]::IsPathRooted($Path) -or $Path -match '(^|[\\/])\.\.?([\\/]|$)') { throw 'Read path must be a normalized workspace-relative path.' }
 $cursor = $candidate
 while ($cursor.StartsWith($prefix, [StringComparison]::OrdinalIgnoreCase)) {
     if ((Test-Path -LiteralPath $cursor) -and ((Get-Item -LiteralPath $cursor -Force).Attributes -band [IO.FileAttributes]::ReparsePoint)) { throw 'Read path cannot traverse a reparse point.' }

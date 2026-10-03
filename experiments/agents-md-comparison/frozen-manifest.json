@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "experimentId": "agents-md-vs-markitect-2026-10-03",
+  "experimentId": "agents-md-vs-markitect-2026-10-03-r2",
   "sourceBundleSha256": "af9dbdc750f376b5250b61a451c1d124fe363fd87cce87684804b292149311cc",
   "sourceFiles": [
     {
@@ -3330,11 +3330,11 @@
     },
     {
       "path": "experiments/agents-md-comparison/prepare-manifest.py",
-      "sha256": "3a918b6893cd82ea7e1698e54bafa74feace2c937aa1b7cd43985e7a77c3fff2"
+      "sha256": "62a394a73aae2e1cd419e632ddc1be30948907644b1ec402f2dcc800741ffdb4"
     },
     {
       "path": "experiments/agents-md-comparison/run.ps1",
-      "sha256": "133c602cc407add5a1a6e06956de79cdc8d1f0af8dafc4dd0d6534e81a0ae0c9"
+      "sha256": "469816c2e6c170db6d2333922b2685b9203888779a70b4e3417ae32b33fc02cb"
     },
     {
       "path": "experiments/agents-md-comparison/tasks/task1.md",

@@ -119,7 +119,7 @@ There is no interactive operator assistance. If blocked, preserve the failure an
 Finish with changed files, checks and their exact outcomes, architecture decisions, missing
 or irrelevant guidance, governance upkeep, and the limits of what was actually verified."""
     manifest = {
-        "schemaVersion": 1, "experimentId": "agents-md-vs-markitect-2026-10-03",
+        "schemaVersion": 1, "experimentId": "agents-md-vs-markitect-2026-10-03-r2",
         "sourceBundleSha256": "af9dbdc750f376b5250b61a451c1d124fe363fd87cce87684804b292149311cc",
         "sourceFiles": files,
         "sourceManifestSha256": sha(json.dumps(files, sort_keys=True, separators=(",", ":")).encode()),
