@@ -86,7 +86,7 @@ def main():
         if action == "apply":
             arguments.append("--write")
         record = {"name": f"render-{action}", "executable": "{markitect}",
-                  "args": arguments, "expectedExitCode": 0}
+                  "args": arguments, "expectedExitCode": int(action == "observe")}
         if action == "apply":
             record.update(requiresPlanReview=True, reviewPlan="render-plan.stdout.txt")
         preparation.append(record)
@@ -145,7 +145,7 @@ or irrelevant guidance, governance upkeep, and the limits of what was actually v
              "contextArgs": [context("UseCase", "get-meeting-attendees", "architecture")]}]
     }
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+    args.output.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8", newline="\n")
     print(json.dumps({"frozenFiles": len(frozen), "sourceFiles": len(files),
                       "manifestSha256": sha(args.output.read_bytes()),
                       "oracleFreezeSha256": manifest["oracleFreezeSha256"]}))

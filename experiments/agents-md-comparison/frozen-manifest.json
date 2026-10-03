@@ -3330,11 +3330,11 @@
     },
     {
       "path": "experiments/agents-md-comparison/prepare-manifest.py",
-      "sha256": "bf3dea957f2afd24f7367fe9751100f857190fbcb1e04d15e6353c313e89a0d3"
+      "sha256": "d296789fec20ae8d270e14e12bd29273e4cb2b0e12c3e7f05b596c9569a9449d"
     },
     {
       "path": "experiments/agents-md-comparison/run.ps1",
-      "sha256": "e14e12d3fe2bb80a08b2ee319e6c18bdad1ccb6818dcf677a1a621e801af5d10"
+      "sha256": "9877f61a522d135a52cd50ddf94a576883b58cfac64b0bd2abc6eacd97d1c2ed"
     },
     {
       "path": "experiments/agents-md-comparison/tasks/task1.md",
@@ -3511,7 +3511,7 @@
             "--adapter",
             "markitect-render"
           ],
-          "expectedExitCode": 0
+          "expectedExitCode": 1
         },
         {
           "name": "render-plan",

@@ -428,7 +428,7 @@ function Assert-ProjectionPlanTargets([string] $PlanPath) {
     if ($pathMatches.Count -lt 1) { throw 'Projection plan contained no file operation paths; refusing to apply.' }
     foreach ($match in $pathMatches) {
         $path = $match.Groups[1].Value.Trim()
-        if ($path.Contains('\\') -or $path.StartsWith('/') -or $path -match '(^|/)\.\.?(/|$)') { throw "Projection plan contains a non-relative or escaping target: $path" }
+        if ($path.Contains('\') -or $path.StartsWith('/') -or $path -match '(^|/)\.\.?(/|$)') { throw "Projection plan contains a non-relative or escaping target: $path" }
         if (-not ($path.StartsWith('.agents/skills/', [StringComparison]::Ordinal) -or $path.StartsWith('docs/markitect/', [StringComparison]::Ordinal))) {
             throw "Projection plan target is outside allowed skill/projection roots: $path"
         }
@@ -570,7 +570,7 @@ function Get-AuditRoots([string[]] $AdditionalRoots, [string[]] $PreparedWorkspa
     foreach ($candidate in $AdditionalRoots) {
         if (-not [string]::IsNullOrWhiteSpace($candidate)) { [void]$roots.Add([IO.Path]::GetFullPath($candidate)) }
     }
-    $gitPath = (Get-Command git -CommandType Application -ErrorAction Stop).Source
+    $gitPath = (Get-Command git -CommandType Application -ErrorAction Stop | Select-Object -First 1).Source
     $worktrees = Invoke-Native -FilePath $gitPath -ArgumentList @('-C', $script:RepositoryRoot, 'worktree', 'list', '--porcelain') -AllowFailure
     if ($worktrees.ExitCode -eq 0) {
         foreach ($line in $worktrees.Stdout -split "`r?`n") {
@@ -615,9 +615,9 @@ function Get-ManifestTrial($Manifest, [string] $Id) {
     return [pscustomobject]@{ Trial = $table[$trialId]; Arm = $arm; Id = $Id }
 }
 
-function Expand-Args([object[]] $Args, [hashtable] $Values) {
+function Expand-Args([object[]] $ArgumentTemplates, [hashtable] $Values) {
     $result = [Collections.Generic.List[string]]::new()
-    foreach ($arg in $Args) {
+    foreach ($arg in $ArgumentTemplates) {
         $expanded = [string]$arg
         foreach ($key in $Values.Keys) { $expanded = $expanded.Replace("{$key}", [string]$Values[$key]) }
         $result.Add($expanded)
@@ -981,6 +981,7 @@ if ($CompleteExternalAgent) {
     $readLedgerPath = Join-Path $workspace '.telemetry/reads.jsonl'
     $readRecords = @()
     if (Test-Path -LiteralPath $readLedgerPath -PathType Leaf) {
+        if ((Get-Item -LiteralPath $readLedgerPath).Attributes -band [IO.FileAttributes]::ReparsePoint) { throw 'Read ledger must be a regular workspace file.' }
         Copy-Item -LiteralPath $readLedgerPath -Destination (Join-Path $runDirectory 'reads.jsonl')
         foreach ($line in [IO.File]::ReadAllLines($readLedgerPath)) { try { $readRecords += ,($line | ConvertFrom-Json -AsHashtable) } catch { } }
     }
