@@ -5,9 +5,11 @@
   </picture>
 </h1>
 
-**Define how your software should be built. Keep documentation, AI agents, and engineering tooling aligned as it evolves.**
+**Humans architect the system of work. AI performs the work. Markitect keeps them aligned.**
 
-Markitect is a compiler-like system for **canonical engineering knowledge**. It lets a project define rules, workflows, skills, agents, reusable text, contracts, ownership, and explicit relationships as typed resources instead of maintaining the same engineering truth independently across Markdown, Codex, Claude, and project checks.
+Markitect turns human engineering intent into an explicit, versioned, machine-consumable engineering system so AI agents can build and evolve software within deliberately designed boundaries. Humans own goals, architecture, policy, exceptions and architecture evolution; agents perform routine work within their granted authority. The [canonical product vision](docs/vision.md) explains this direction and the benefit hypothesis: more autonomous engineering work per unit of human attention.
+
+Today, Markitect provides a compiler-like foundation for **canonical engineering knowledge**: typed Domains/resources, finite checks, context, impact and configured projections/adapters. Canonical ownership covers modeled facts and mappings; other project knowledge retains its own owners. Continuous agent operation and reduced human supervision are goals, not demonstrated properties of the current CLI.
 
 The v0.10.0 release provides a generic canonical engineering model: Projects load versioned Domains, validate typed resources and relations, evaluate finite deterministic constraints, and expose one normalized semantic model to context, impact, projections, and configured adapters. Markitect does this without a model API. Exact declared project-artifact inputs remain opaque to the kernel; it does not infer their domain-specific meaning. See the [product boundary](docs/architecture.md#project-artifact-boundary).
 
@@ -17,9 +19,13 @@ The published v0.11.0 release builds on that foundation with [reusable engineeri
 
 The published [v0.12.0 release](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.12.0) adds one finite `same-target` assertion after independent [Software architecture](examples/software-architecture/README.md) and [Delivery topology](examples/delivery-target-equality/README.md) cases demonstrated the same singleton ownership comparison. Its [design assessment](docs/design/resolved-target-equality.md) explains alternatives, explicit selection, policy traces, bounded impact and source-bound exceptions. The [language-pressure report](docs/design/domain-language-pressure.md) keeps the other gaps visible. The release establishes these bounded capabilities, not real-project benefit.
 
+Later integrated source adds explicit read-only policy-failure analysis and bounded offline GitHub/Azure capture consumers. Expanded selective Init/Copy Me preparation remains deferred. The [roadmap](docs/implementation-plan.md) separates these from published v0.12.0; the [real-project comparison](docs/validation/agents-md-vs-markitect.md) remains inconclusive about whether added maintenance pays for itself.
+
 ## Why Markitect?
 
-Engineering rules rarely live in one place.
+The product starts from a working assumption: implementation capacity will grow faster than human attention. Architecture and policy should guide that work without requiring people to rediscover, synchronize and supervise every routine detail. The vision treats this as a hypothesis to test, not a measured productivity claim.
+
+Engineering rules often have several consumers.
 
 A release process may be described in documentation, repeated in an agent Skill, partially enforced by CI, and summarized again in provider-specific instructions. Architecture guidance is copied into `AGENTS.md`, Claude rules, review checklists, and project conventions. Eventually one rule changes.
 
@@ -63,7 +69,7 @@ bounded context and impact
 
 Projects independently select the Markdown and provider projections they need.
 
-The goal is not to generate more prompt text. The goal is to remove duplicated engineering truth and make more consistency questions answerable structurally.
+These mechanisms aim to remove independently maintained copies of modeled intent and make consistency questions answerable structurally, leaving human attention for engineering decisions. Their upkeep must be included when testing whether that goal is achieved.
 
 ## One canonical model, multiple views
 
@@ -217,28 +223,7 @@ The canonical YAML remains the source of truth. Human documentation remains huma
 
 ## Why this matters for AI-first engineering
 
-AI dramatically increases implementation throughput. Architectural governance does not automatically scale with it.
-
-If every coding agent must rediscover project structure, architecture rules, process requirements, and ownership from a large collection of prose on every task, two things happen:
-
-```text
-context grows
-architecture drifts
-```
-
-Markitect's direction is the opposite:
-
-```text
-explicit engineering knowledge
-        ↓
-deterministic structure
-        ↓
-task-relevant context
-        ↓
-more autonomous agents inside known boundaries
-```
-
-The v0.10.0 release provides the typed Domain registry, normalized model, context and impact, artifact inputs, projections, deterministic constraints, configured adapters, packages, and reconciliation foundation for that model.
+Task context, deterministic checks and explicit policy evolution are ways to make human engineering decisions usable by many agents. Markitect's [vision](docs/vision.md) defines their role in executable governance and the desired shift from routine supervision to architecture-level decisions. Relevant context, fewer interventions and sustainable maintenance remain [evaluation questions](docs/measurement.md#human-attention-and-delegated-work); generated instructions do not prove agent compliance.
 
 ## Canonical repository layout
 
@@ -268,7 +253,7 @@ See [Repository layout](docs/repository-layout.md) for the exact current contrac
 
 ## What Markitect does today
 
-- Models AI-facing engineering knowledge as typed YAML resources.
+- Models project-selected engineering concepts and policy as typed YAML resources; AI-working knowledge is one supplied Domain.
 - Gives each resource explicit identity, ownership, and graph relationships.
 - Keeps ordinary project files as explicit opaque inputs instead of pretending to understand their domain semantics.
 - Validates resource structure, references, bindings, contracts, cycles, file inputs, and configured documentation routers.
@@ -453,6 +438,7 @@ The canonical model should outlive any one AI provider or output format.
 
 ## Documentation
 
+- [Product vision](docs/vision.md): human intent, agent responsibility, long-term operating model and unproven benefit hypothesis.
 - [Usage and upgrade notes](docs/usage.md): project format, CLI behavior, and schema transitions.
 - [Architecture](docs/architecture.md): product model, evidence, verification, and boundaries.
 - [Repository layout](docs/repository-layout.md): canonical Areas, generated outputs, and layout conventions.

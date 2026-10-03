@@ -2,6 +2,7 @@
 
 | Document | Owns |
 |---|---|
+| [Product vision](vision.md) | Canonical product thesis, human/AI responsibilities, desired operating model and benefit hypothesis |
 | [Usage](usage.md) | Current Project format, CLI behavior, safe initialization, and schema-upgrade guidance |
 | [Repository layout](repository-layout.md) | Recommended control-plane organization, ownership zones, and layout compatibility |
 | [Content packages](content-packages.md) | Direct offline package pins, exports, archive creation, and package boundaries |
@@ -16,7 +17,7 @@
 | [Policy-failure analysis](design/policy-failure-analysis.md) | Unreleased source contract separating structural blockers from read-only Context/Impact inspection of ordinary policy failures |
 | [Source snapshots](source-snapshots.md) | Snapshot values, Git acquisition, identity, comparison, and compatibility boundaries |
 | [Operations](operations.md) | Development, verification, rendering, and release operations |
-| [Refinement decisions](refinement.md) | Product principles and deferred design choices |
+| [Refinement decisions](refinement.md) | Technical product decisions and deferred design choices in support of the vision |
 | [Implementation plan](implementation-plan.md) | Published v0.12.0 status, release evidence, and later planned work |
 | [Development coordination](development/README.md) | Parallel baseline, current contracts, independence audit and risk evidence |
 | [Workstream packages](workstreams/README.md) | Bounded future implementer assignments, ownership and hard/soft dependencies |
@@ -24,7 +25,7 @@
 | [Strategy source documents](strategy/README.md) | User-provided product and design proposals, their provenance, and the boundary between hypotheses and adopted behavior |
 | [Real-code adoption pilot](validation/real-project-adoption-pilot.md) | Baseline/assisted workflow observations, policy evolution, bounded evidence, negative findings and pending human discovery adoption |
 | [AGENTS.md versus Markitect](validation/agents-md-vs-markitect.md) | Frozen three-task comparison, implementation/governance upkeep, excluded runs and limits; no demonstrated cost or productivity advantage |
-| [Measurement](measurement.md) | Correctness scenarios and bounded measurements |
+| [Measurement](measurement.md) | Correctness scenarios, bounded measurements and future human-attention/autonomy evaluation |
 | [Core authoring assessment](authoring-assessment.md) | A dated exercise using the synthetic product example |
 | [Onboarding](onboarding.md) | Scripted CLI workflow replay and dated command-path evidence |
 | [MCP evaluation](mcp-evaluation.md) | Bounded client comparison for the experimental read-only interface |

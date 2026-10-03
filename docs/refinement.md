@@ -1,12 +1,12 @@
 # Product refinement decisions
 
-This document owns product principles and deferred direction. The [roadmap](implementation-plan.md) is the sole owner of shipped source and planned-work status; [Usage](usage.md) owns supported Project syntax and CLI behavior. v0.10.0 ships the canonical engineering model, declared Domains, a normalized semantic IR, and configured projection and observation adapters. Detailed contracts and delivery evidence belong to the [canonical engineering plan](canonical-engineering-plan.md).
+This document owns technical product decisions and deferred design options supporting the canonical [product vision](vision.md). The vision owns the thesis, responsibility model and benefit hypothesis. The [roadmap](implementation-plan.md) is the sole owner of shipped source and planned-work status; [Usage](usage.md) owns supported Project syntax and CLI behavior. v0.10.0 established the canonical engineering model, declared Domains, a normalized semantic IR, and configured projection and observation adapters. Detailed contracts and delivery evidence belong to the [canonical engineering plan](canonical-engineering-plan.md).
 
 ## Product principles
 
 | Area | Decision |
 |---|---|
-| Product purpose | Compile explicitly modeled engineering knowledge and policy into validated relationships, bounded checks, context, impact, and configured consumer actions. |
+| Compilation mechanism | Compile explicitly modeled engineering knowledge and policy into validated relationships, bounded checks, context, impact, and configured consumer actions in support of the [vision](vision.md). |
 | Small generic kernel | The kernel owns resource identity, typed references and relations, deterministic diagnostics, scope, and a normalized semantic representation. Domains define the vocabulary and bounded constraints. |
 | Domain-first language | Versioned Domain definitions load before resources and define resource shapes, relation descriptors, and supported constraints. The bundled AI-working vocabulary is one Domain. Software and delivery vocabularies are examples of the same mechanism. |
 | Canonical scope | Canonical ownership applies to modeled assertions and explicit mappings. It does not make unmodeled repository facts canonical or elevate generated output into source. |
@@ -20,7 +20,7 @@ This document owns product principles and deferred direction. The [roadmap](impl
 
 ## Product hypothesis and evidence
 
-The value hypothesis is that teams spend less effort finding and reconciling conflicting engineering intent when descriptive models, normative rules, agent guidance, checks, and selected external state are tied to explicit canonical owners and change impact. This is most plausible when the same policy genuinely has several consumers and changes often enough for drift to cost time or cause errors.
+The [vision](vision.md#current-basis-and-unproven-benefit) owns the value hypothesis. Explicit canonical ownership and change impact are proposed mechanisms for reducing rediscovery and synchronization, especially when a policy has several consumers and changes repeatedly. Their modeling and maintenance cost must be included, rather than treating generated output or technical feasibility as user benefit.
 
 That user-level benefit is not established by shipping the capability. The synthetic consumer proof demonstrates one bounded technical case, not measured reductions in real team effort or production defects. v0.10.0 ships the defined technical product model and an executable end-to-end example with explicit limits on correctness evidence. Claims about productivity, semantic accuracy, or broad reconciliation value require repeated real tasks and observed external use. [Measurement](measurement.md) owns that evidence method.
 

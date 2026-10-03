@@ -16,6 +16,25 @@
 | [Azure DevOps](adapter-azure-devops.md) | A external | Purpose/mapping and read-only adapter design | Same remote mutation decisions |
 | [Konfyra](konfyra-adoption.md) | B consumer | Owner-scoped inventory in its own checkout | Reviewed evidence/handoff for discovery; coverage/shadow and owner cutover for adoption |
 
+## Connection to the product vision
+
+Every assignment should identify the human activity it aims to reduce, the intent owner it preserves, its remaining agent freedom and the evidence needed to test the effect. The canonical [vision](../vision.md) owns the thesis; [Measurement](../measurement.md#human-attention-and-delegated-work) owns evaluation. The relationships below are purposes and hypotheses, not measured savings or new implementation authority.
+
+| Workstream or mechanism | Intended contribution | Current limit / evidence needed |
+|---|---|---|
+| Existing-project Init | Reduce manual preparation of reviewed, fixed evidence so owners can focus on scope and intent. | Current Init creates only a new minimal Project. Selective capture, retention and shared handoff remain deferred; preparation cost/privacy must be tested. |
+| Copy Me | Let agents organize observations, counterexamples and candidate policies while humans decide adoption. | Shipped guidance is not autonomous discovery. Interpretation and adoption effort, accidental/legacy conventions and uncertainty need measured review. |
+| Context | Make applicable engineering decisions available without repeated architectural rediscovery. | Closure and selection are explicit, not inferred relevance. Missing rules and broad inputs in prior runs remain findings. |
+| Impact | Support architecture-level consequence review and explain changed policy subjects. | Conservative impact is not an exact implementation cohort; noise, misses and reviewer effort require independent assessment. |
+| Domains, packages, policies and exceptions | Encode chosen boundaries and deliberate evolution once for their declared consumers. | Finite modeled conformance is not source correctness; authoring, version/exception maintenance and real verification cost remain visible. |
+| Docs, Codex and Claude projections | Derive owned representations from canonical intent instead of hand-copying it across providers. | Local independence/ownership tests do not establish that agents obey guidance or that a manual step was eliminated. Shared native seams still require coordination. |
+| Adapter contract, .NET, GitHub and Azure DevOps | Automate explicitly scoped implementation/external evidence comparisons without technology meaning entering Core. | .NET is literal captured XML; GitHub/Azure are offline captures. Expand only for a recurring real check with measurable benefit, honest evidence limits and reviewed authority. |
+| Reconciliation | Align owned projections or configured targets through repeatable input-bound operations. | Convergence is per adapter/target. Observe/Plan stay read-only, Apply explicit; automation is not permission to mutate. |
+| Konfyra adoption | Test whether a mature project's real coordination work can be reduced. | Inventory proves neither migration nor benefit; its existing owner/mirror/check setup is a credible simpler baseline. Any study needs owner-approved scope and privacy. |
+| Risk triage and parallel development | Preserve the product's deterministic/authority boundaries while implementers work independently. | Technical confidence and subsystem independence support delivery; they are not direct adopter benefit measurements. |
+
+No named bounded stream is rejected solely by this alignment review. Deprioritize expansions without a recurring human task to replace: additional projections/adapters for their own sake, automatic discovery/adoption, a scheduler or background operator, interface proliferation, and speculative Core expressiveness. A broader goal does not remove existing hard dependencies or feature gates.
+
 ## Hard and soft dependencies
 
 ```mermaid
