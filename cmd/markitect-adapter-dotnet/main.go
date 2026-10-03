@@ -22,6 +22,7 @@ const (
 	requestAPIVersion = "markitect.example.org/adapter-request/v1alpha1"
 	resultAPIVersion  = "markitect.example.org/adapter-result/v1alpha1"
 	semanticModelAPI  = "markitect.example.org/semantic-model/v1alpha1"
+	msbuildNamespace  = "http://schemas.microsoft.com/developer/msbuild/2003"
 )
 
 type request struct {
@@ -425,6 +426,21 @@ func projectReferences(data []byte) ([]string, string, error) {
 			if start.Name.Local != "Project" {
 				return nil, "", errors.New(".csproj XML root element must be Project")
 			}
+			if start.Name.Space != "" && start.Name.Space != msbuildNamespace {
+				return nil, "project uses an unsupported XML namespace; only unnamespaced or standard MSBuild project XML is supported", nil
+			}
+			if hasForeignAttribute(start, "Condition") {
+				return nil, "project Condition attribute uses an unsupported XML namespace", nil
+			}
+			if hasAttribute(start, "Condition") {
+				return nil, "project-level conditions are outside the captured XML subset", nil
+			}
+			ancestors = append(ancestors, start)
+			continue
+		}
+		projectNamespace := ancestors[0].Name.Space
+		if isMSBuildElement(start.Name.Local) && start.Name.Space != projectNamespace {
+			return nil, "MSBuild element " + quote(start.Name.Local) + " uses a different XML namespace from the Project root", nil
 		}
 		unsupportedNode := ""
 		if start.Name.Local == "Import" || start.Name.Local == "ImportGroup" || start.Name.Local == "Sdk" {
@@ -433,12 +449,18 @@ func projectReferences(data []byte) ([]string, string, error) {
 		if start.Name.Local == "Project" && hasAttribute(start, "Condition") {
 			unsupportedNode = "project-level conditions are outside the captured XML subset"
 		}
+		if start.Name.Local == "ItemGroup" && hasForeignAttribute(start, "Condition") {
+			unsupportedNode = "ItemGroup Condition attribute uses an unsupported XML namespace"
+		}
 		if start.Name.Local == "ProjectReference" {
 			inItemGroup := false
 			for _, parent := range ancestors {
 				switch parent.Name.Local {
 				case "ItemGroup":
 					inItemGroup = true
+					if hasForeignAttribute(parent, "Condition") {
+						unsupportedNode = "ItemGroup Condition attribute uses an unsupported XML namespace"
+					}
 					if hasAttribute(parent, "Condition") {
 						unsupportedNode = "conditioned ItemGroup may add or remove ProjectReference items"
 					}
@@ -449,10 +471,13 @@ func projectReferences(data []byte) ([]string, string, error) {
 			if !inItemGroup {
 				unsupportedNode = "ProjectReference outside an unconditional ItemGroup is not supported"
 			}
+			if hasForeignAttribute(start, "Include", "Condition", "Update", "Remove", "Exclude") {
+				unsupportedNode = "ProjectReference uses an attribute in an unsupported XML namespace"
+			}
 			if hasAttribute(start, "Condition") || hasAttribute(start, "Update") || hasAttribute(start, "Remove") || hasAttribute(start, "Exclude") {
 				unsupportedNode = "conditioned or transformed ProjectReference items are not supported"
 			}
-			if hasAttribute(start, "Include") == false {
+			if !hasAttribute(start, "Include") && !hasForeignAttribute(start, "Include") {
 				return nil, "", errors.New("ProjectReference is missing Include")
 			}
 		}
@@ -465,7 +490,7 @@ func projectReferences(data []byte) ([]string, string, error) {
 		}
 		include := ""
 		for _, attribute := range start.Attr {
-			if attribute.Name.Local == "Include" {
+			if attribute.Name.Space == "" && attribute.Name.Local == "Include" {
 				if include != "" {
 					return nil, "", errors.New("ProjectReference has multiple Include attributes")
 				}
@@ -484,10 +509,33 @@ func projectReferences(data []byte) ([]string, string, error) {
 	return uniqueSorted(refs), "", nil
 }
 
+func isMSBuildElement(name string) bool {
+	switch name {
+	case "Project", "Import", "ImportGroup", "Sdk", "ItemGroup", "ProjectReference", "Choose", "When", "Otherwise", "Target":
+		return true
+	default:
+		return false
+	}
+}
+
 func hasAttribute(element xml.StartElement, name string) bool {
 	for _, attribute := range element.Attr {
-		if attribute.Name.Local == name {
+		if attribute.Name.Space == "" && attribute.Name.Local == name {
 			return true
+		}
+	}
+	return false
+}
+
+func hasForeignAttribute(element xml.StartElement, names ...string) bool {
+	for _, attribute := range element.Attr {
+		if attribute.Name.Space == "" {
+			continue
+		}
+		for _, name := range names {
+			if attribute.Name.Local == name {
+				return true
+			}
 		}
 	}
 	return false
