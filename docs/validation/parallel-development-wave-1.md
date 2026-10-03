@@ -1,6 +1,6 @@
 # First parallel development wave
 
-Status: final integration validation. Published v0.12.0 remains unchanged. This record measures subsystem independence, not productivity or adopter acceptance. The ten assignments are closed as integrated source/tests/reports or explicitly deferred implementation; their exact evidence is below.
+Status: all ten workstream assignments closed as integrated source/tests/reports or explicitly deferred implementation. Final combined gates are bound to the coordinator consolidation PR and its subsequent main CI. Published v0.12.0 remains unchanged. This record measures subsystem independence, not productivity or adopter acceptance.
 
 ## Fixed baseline and gates
 
@@ -72,6 +72,8 @@ Independent full-diff reviewers and the coordinator reviewed every candidate. Re
 ### Cross-workstream validation
 
 The coordinator's [executable runner control](../../examples/parallel_wave_adapters_test.go) builds both new commands and uses the actual `app.Parse` / command orchestration path. One fixed, structurally valid generic Domain/model supplies two disjoint captured inputs and target identities. It asserts complete Observe/Verify, byte-identical repeated Plans, no operations, unavailable Apply, equal model digests and unchanged canonical snapshot bytes.
+
+The focused control passed locally on Windows after all ten workstream PRs were integrated. It is included in normal `go test ./...` on both CI platforms; the final consolidation's checks and [main CI](https://github.com/Glacius-Labs/Markitect/actions/workflows/ci.yaml?query=branch%3Amain) are the authority for the exact combined commit, rather than a promise made by this source file.
 
 Changing only the GitHub capture causes its Verify to fail while Azure's serialized observation stays identical. The old Azure saved plan still becomes stale because the source digest conservatively covers the whole snapshot. Output independence must not weaken saved-plan input binding. This is bounded synthetic protocol evidence, not an adopter utility, live-provider or permission test.
 
