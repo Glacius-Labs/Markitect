@@ -1,0 +1,665 @@
+base: fd94a689aab857704c3a4a45ac2abe0fc0e3185c
+candidate: c507172b24da9005904422c03cc3d66a2b5efcec
+changed:
+    - .agents/skills/architecture-review/SKILL.md
+    - docs/markitect/_domains/README.md
+    - docs/markitect/_domains/architecture.mymeetings.example.v1alpha1.domain.md
+    - docs/markitect/architecture/README.md
+    - docs/markitect/architecture/usecase-add-meeting-attendee.usecase.architecture.mymeetings.example.v1alpha1.md
+    - docs/markitect/architecture/usecase-cancel-meeting.usecase.architecture.mymeetings.example.v1alpha1.md
+    - docs/markitect/architecture/validator-add-meeting-attendee.validator.architecture.mymeetings.example.v1alpha1.md
+    - docs/markitect/architecture/validator-cancel-meeting.validator.architecture.mymeetings.example.v1alpha1.md
+    - docs/markitect/engineering/architecture-review.skill.md
+    - markitect.yaml
+    - resources/usecase-add-meeting-attendee.yaml
+    - resources/usecase-cancel-meeting.yaml
+    - resources/validator-add-meeting-attendee.yaml
+    - resources/validator-cancel-meeting.yaml
+    - src/Modules/Meetings/Application/Meetings/AddMeetingAttendee/AddMeetingAttendeeCommandValidator.cs
+    - src/Modules/Meetings/Application/Meetings/CancelMeeting/CancelMeetingCommandValidator.cs
+affected:
+    - /Project/mymeetings-adoption-pilot
+    - architecture/architecture.mymeetings.example/v1alpha1/Aggregate/meeting
+    - architecture/architecture.mymeetings.example/v1alpha1/Aggregate/meeting-comment
+    - architecture/architecture.mymeetings.example/v1alpha1/Aggregate/meeting-group
+    - architecture/architecture.mymeetings.example/v1alpha1/Aggregate/meeting-proposal
+    - architecture/architecture.mymeetings.example/v1alpha1/Aggregate/payer
+    - architecture/architecture.mymeetings.example/v1alpha1/Aggregate/user
+    - architecture/architecture.mymeetings.example/v1alpha1/Aggregate/user-registration
+    - architecture/architecture.mymeetings.example/v1alpha1/Common/aggregate-root-marker
+    - architecture/architecture.mymeetings.example/v1alpha1/Common/sql-connection-factory
+    - architecture/architecture.mymeetings.example/v1alpha1/Common/unit-of-work
+    - architecture/architecture.mymeetings.example/v1alpha1/Core/core
+    - architecture/architecture.mymeetings.example/v1alpha1/Feature/authentication
+    - architecture/architecture.mymeetings.example/v1alpha1/Feature/group-proposals
+    - architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-attendance
+    - architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-fees
+    - architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-groups
+    - architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-lifecycle
+    - architecture/architecture.mymeetings.example/v1alpha1/Feature/price-list
+    - architecture/architecture.mymeetings.example/v1alpha1/Feature/user-registration
+    - architecture/architecture.mymeetings.example/v1alpha1/Handler/accept-proposal
+    - architecture/architecture.mymeetings.example/v1alpha1/Handler/add-meeting-attendee
+    - architecture/architecture.mymeetings.example/v1alpha1/Handler/authenticate
+    - architecture/architecture.mymeetings.example/v1alpha1/Handler/cancel-meeting
+    - architecture/architecture.mymeetings.example/v1alpha1/Handler/create-meeting
+    - architecture/architecture.mymeetings.example/v1alpha1/Handler/create-price-list-item
+    - architecture/architecture.mymeetings.example/v1alpha1/Handler/get-meeting-attendees
+    - architecture/architecture.mymeetings.example/v1alpha1/Handler/get-meeting-fees
+    - architecture/architecture.mymeetings.example/v1alpha1/Handler/get-meeting-group-details
+    - architecture/architecture.mymeetings.example/v1alpha1/Handler/get-member
+    - architecture/architecture.mymeetings.example/v1alpha1/Handler/propose-meeting-group
+    - architecture/architecture.mymeetings.example/v1alpha1/Handler/register-new-user
+    - architecture/architecture.mymeetings.example/v1alpha1/Interface/administration-events
+    - architecture/architecture.mymeetings.example/v1alpha1/Interface/administration-module-api
+    - architecture/architecture.mymeetings.example/v1alpha1/Interface/meetings-events
+    - architecture/architecture.mymeetings.example/v1alpha1/Interface/meetings-module-api
+    - architecture/architecture.mymeetings.example/v1alpha1/Interface/payments-events
+    - architecture/architecture.mymeetings.example/v1alpha1/Interface/payments-module-api
+    - architecture/architecture.mymeetings.example/v1alpha1/Interface/registrations-events
+    - architecture/architecture.mymeetings.example/v1alpha1/Interface/registrations-module-api
+    - architecture/architecture.mymeetings.example/v1alpha1/Interface/user-access-events
+    - architecture/architecture.mymeetings.example/v1alpha1/Interface/user-access-module-api
+    - architecture/architecture.mymeetings.example/v1alpha1/Module/administration
+    - architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+    - architecture/architecture.mymeetings.example/v1alpha1/Module/payments
+    - architecture/architecture.mymeetings.example/v1alpha1/Module/registrations
+    - architecture/architecture.mymeetings.example/v1alpha1/Module/user-access
+    - architecture/architecture.mymeetings.example/v1alpha1/Narrative/architecture-test-decision
+    - architecture/architecture.mymeetings.example/v1alpha1/Narrative/cqrs-read-model-decision
+    - architecture/architecture.mymeetings.example/v1alpha1/Narrative/meeting-attendee-view
+    - architecture/architecture.mymeetings.example/v1alpha1/Narrative/module-event-boundary-decision
+    - architecture/architecture.mymeetings.example/v1alpha1/Product/mymeetings
+    - architecture/architecture.mymeetings.example/v1alpha1/UseCase/accept-proposal
+    - architecture/architecture.mymeetings.example/v1alpha1/UseCase/add-meeting-attendee
+    - architecture/architecture.mymeetings.example/v1alpha1/UseCase/authenticate
+    - architecture/architecture.mymeetings.example/v1alpha1/UseCase/cancel-meeting
+    - architecture/architecture.mymeetings.example/v1alpha1/UseCase/create-meeting
+    - architecture/architecture.mymeetings.example/v1alpha1/UseCase/create-price-list-item
+    - architecture/architecture.mymeetings.example/v1alpha1/UseCase/get-meeting-attendees
+    - architecture/architecture.mymeetings.example/v1alpha1/UseCase/get-meeting-fees
+    - architecture/architecture.mymeetings.example/v1alpha1/UseCase/get-meeting-group-details
+    - architecture/architecture.mymeetings.example/v1alpha1/UseCase/get-member
+    - architecture/architecture.mymeetings.example/v1alpha1/UseCase/propose-meeting-group
+    - architecture/architecture.mymeetings.example/v1alpha1/UseCase/register-new-user
+    - architecture/architecture.mymeetings.example/v1alpha1/Validator/add-meeting-attendee
+    - architecture/architecture.mymeetings.example/v1alpha1/Validator/authenticate
+    - architecture/architecture.mymeetings.example/v1alpha1/Validator/cancel-meeting
+    - architecture/architecture.mymeetings.example/v1alpha1/Validator/propose-meeting-group
+    - domain:architecture.mymeetings.example/v1alpha1/mymeetings-architecture-v1
+    - domain:architecture.mymeetings.example/v1alpha1/mymeetings-architecture-v2
+    - engineering/Skill/architecture-review
+    - mymeetings-architecture::/Package/mymeetings-architecture
+    - mymeetings-architecture::constitution/Workflow/vertical-slice
+reason: Union of old and new invalidation closures; configuration, Domain definitions, inventory, collection policies, uncertain context effects or unowned inputs conservatively affect all resources. See causes for this comparison.
+causes:
+    - kind: configuration
+      path: markitect.yaml
+    - kind: declared-input
+      path: src/Modules/Meetings/Application/Meetings/AddMeetingAttendee/AddMeetingAttendeeCommandValidator.cs
+      resource: architecture/architecture.mymeetings.example/v1alpha1/Validator/add-meeting-attendee
+    - kind: declared-input
+      path: src/Modules/Meetings/Application/Meetings/CancelMeeting/CancelMeetingCommandValidator.cs
+      resource: architecture/architecture.mymeetings.example/v1alpha1/Validator/cancel-meeting
+    - kind: generated-output
+      path: .agents/skills/architecture-review/SKILL.md
+      resource: engineering/Skill/architecture-review
+    - kind: generated-output
+      path: docs/markitect/_domains/README.md
+      resource: /Project/mymeetings-adoption-pilot
+    - kind: generated-output
+      path: docs/markitect/_domains/architecture.mymeetings.example.v1alpha1.domain.md
+      resource: domain:architecture.mymeetings.example/v1alpha1/mymeetings-architecture-v1
+    - kind: generated-output
+      path: docs/markitect/_domains/architecture.mymeetings.example.v1alpha1.domain.md
+      resource: domain:architecture.mymeetings.example/v1alpha1/mymeetings-architecture-v2
+    - kind: generated-output
+      path: docs/markitect/architecture/README.md
+      resource: /Project/mymeetings-adoption-pilot
+    - kind: generated-output
+      path: docs/markitect/architecture/usecase-add-meeting-attendee.usecase.architecture.mymeetings.example.v1alpha1.md
+      resource: architecture/architecture.mymeetings.example/v1alpha1/UseCase/add-meeting-attendee
+    - kind: generated-output
+      path: docs/markitect/architecture/usecase-cancel-meeting.usecase.architecture.mymeetings.example.v1alpha1.md
+      resource: architecture/architecture.mymeetings.example/v1alpha1/UseCase/cancel-meeting
+    - kind: generated-output
+      path: docs/markitect/architecture/validator-add-meeting-attendee.validator.architecture.mymeetings.example.v1alpha1.md
+      resource: architecture/architecture.mymeetings.example/v1alpha1/Validator/add-meeting-attendee
+    - kind: generated-output
+      path: docs/markitect/architecture/validator-cancel-meeting.validator.architecture.mymeetings.example.v1alpha1.md
+      resource: architecture/architecture.mymeetings.example/v1alpha1/Validator/cancel-meeting
+    - kind: generated-output
+      path: docs/markitect/engineering/architecture-review.skill.md
+      resource: engineering/Skill/architecture-review
+    - kind: inventory
+    - kind: inventory
+      path: resources/validator-add-meeting-attendee.yaml
+    - kind: inventory
+      path: resources/validator-cancel-meeting.yaml
+    - kind: resource-change
+      path: markitect.yaml
+      resource: /Project/mymeetings-adoption-pilot
+    - kind: resource-change
+      path: resources/usecase-add-meeting-attendee.yaml
+      resource: architecture/architecture.mymeetings.example/v1alpha1/UseCase/add-meeting-attendee
+    - kind: resource-change
+      path: resources/usecase-cancel-meeting.yaml
+      resource: architecture/architecture.mymeetings.example/v1alpha1/UseCase/cancel-meeting
+    - kind: resource-change
+      path: resources/validator-add-meeting-attendee.yaml
+      resource: architecture/architecture.mymeetings.example/v1alpha1/Validator/add-meeting-attendee
+    - kind: resource-change
+      path: resources/validator-cancel-meeting.yaml
+      resource: architecture/architecture.mymeetings.example/v1alpha1/Validator/cancel-meeting
+analysis:
+    mode: policy-failure-analysis
+    complete: true
+    base:
+        snapshot:
+            id: fd94a689aab857704c3a4a45ac2abe0fc0e3185c
+            provisional: false
+            digest: 594d527fe69074a9fd7357983ce7c7a8d50307812e638a517c939382673de8ef
+        configDigest: sha256:9034f3767d0773047d2239ae3a38cbd86f3c804cdc5d2a4d20e77e90b68976e9
+        modelDigest: sha256:d115aeef1780a8bdf9aaec2dca2d67c696b4892740c7e59830d6dcd035c89e94
+        structuralStatus: passed
+        policyStatus: passed
+        validationStatus: passed
+        failedPolicyResults: 0
+    candidate:
+        snapshot:
+            id: c507172b24da9005904422c03cc3d66a2b5efcec
+            provisional: false
+            digest: 65fe599fdad205a0a9b63abcbbc0ca70e75a76210d1149e5098cb049dc912f8e
+        configDigest: sha256:3726cae54f94af37c56cf9d6316d27091ddb7919cdf2e262814190fad3cfd0a4
+        modelDigest: sha256:3398b29cf0b3bf88a432fe79506bed87f5f2afccd859991db618857fcdab80a3
+        structuralStatus: passed
+        policyStatus: passed
+        validationStatus: passed
+        failedPolicyResults: 0
+    notice: Read-only impact analysis is not verification or acceptance. Policy failures remain failures.
+policyChanges:
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      constraint: selected-commands-require-validator
+      subject: architecture/architecture.mymeetings.example/v1alpha1/UseCase/add-meeting-attendee
+      base:
+        status: not-applicable
+        absenceReason: constraint-not-defined
+        domainInput:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            name: mymeetings-architecture-v1
+            path: domains/architecture.yaml
+            package: mymeetings-architecture
+            packageVersion: 1.0.0
+            digest: sha256:508af1aca1fc747bdebb095a7d05af600753403a5416f95f0cfd84cc878456b6
+        packagePin:
+            name: mymeetings-architecture
+            version: 1.0.0
+            source: pilot:mymeetings-adopter-constitution-1.0.0
+            archive: .markitect/packages/mymeetings-architecture-1.0.0.zip
+            sha256: 0c7395055aac7f4c35afcff404481a77e2ce6475c863a435afc2586dd388b1cc
+      candidate:
+        status: passed
+        result:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            constraint: selected-commands-require-validator
+            subject: architecture/architecture.mymeetings.example/v1alpha1/UseCase/add-meeting-attendee
+            status: passed
+            constraintDigest: sha256:8d4e312bdb9a2f5569371b9a6be101ee76a9ea0d4007b0087e441031d248f2a8
+            subjectDigest: sha256:36d45d06bd8a4301c02653687494a2c2f7fd26604e5eeef574a1bce70a1b9e2e
+        domainInput:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            name: mymeetings-architecture-v2
+            path: domains/architecture.yaml
+            package: mymeetings-architecture
+            packageVersion: 2.0.0
+            digest: sha256:b46900d7ed055446734599f8b6091d027f4776c5557d213f9e2c6b6103f527c5
+        packagePin:
+            name: mymeetings-architecture
+            version: 2.0.0
+            source: git:e0ae3c5181323e0d2a03312524010cc817652330
+            archive: .markitect/packages/mymeetings-architecture-2.0.0.zip
+            sha256: 0ed97c9f0b21e10b5e2a0ff232bdb910bd468ac04f84441ae24d5b7cefb2b504
+        definition:
+            name: selected-commands-require-validator
+            description: Commands explicitly selected for the v2 validation cohort must have at least one Validator.
+            select:
+                kind: UseCase
+                labels:
+                    validation: required
+            assert:
+                op: count
+                scope: resource
+                relation: hasValidator
+                min: 1
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      constraint: selected-commands-require-validator
+      subject: architecture/architecture.mymeetings.example/v1alpha1/UseCase/cancel-meeting
+      base:
+        status: not-applicable
+        absenceReason: constraint-not-defined
+        domainInput:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            name: mymeetings-architecture-v1
+            path: domains/architecture.yaml
+            package: mymeetings-architecture
+            packageVersion: 1.0.0
+            digest: sha256:508af1aca1fc747bdebb095a7d05af600753403a5416f95f0cfd84cc878456b6
+        packagePin:
+            name: mymeetings-architecture
+            version: 1.0.0
+            source: pilot:mymeetings-adopter-constitution-1.0.0
+            archive: .markitect/packages/mymeetings-architecture-1.0.0.zip
+            sha256: 0c7395055aac7f4c35afcff404481a77e2ce6475c863a435afc2586dd388b1cc
+      candidate:
+        status: passed
+        result:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            constraint: selected-commands-require-validator
+            subject: architecture/architecture.mymeetings.example/v1alpha1/UseCase/cancel-meeting
+            status: passed
+            constraintDigest: sha256:8d4e312bdb9a2f5569371b9a6be101ee76a9ea0d4007b0087e441031d248f2a8
+            subjectDigest: sha256:67164086f2458955c5f846f9cca7b48e9bc142e0fb3ae2379b066f084491d93a
+        domainInput:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            name: mymeetings-architecture-v2
+            path: domains/architecture.yaml
+            package: mymeetings-architecture
+            packageVersion: 2.0.0
+            digest: sha256:b46900d7ed055446734599f8b6091d027f4776c5557d213f9e2c6b6103f527c5
+        packagePin:
+            name: mymeetings-architecture
+            version: 2.0.0
+            source: git:e0ae3c5181323e0d2a03312524010cc817652330
+            archive: .markitect/packages/mymeetings-architecture-2.0.0.zip
+            sha256: 0ed97c9f0b21e10b5e2a0ff232bdb910bd468ac04f84441ae24d5b7cefb2b504
+        definition:
+            name: selected-commands-require-validator
+            description: Commands explicitly selected for the v2 validation cohort must have at least one Validator.
+            select:
+                kind: UseCase
+                labels:
+                    validation: required
+            assert:
+                op: count
+                scope: resource
+                relation: hasValidator
+                min: 1
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      constraint: selected-feature-owner-matches-usecase-module
+      subject: architecture/architecture.mymeetings.example/v1alpha1/UseCase/add-meeting-attendee
+      base:
+        status: passed
+        result:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            constraint: selected-feature-owner-matches-usecase-module
+            subject: architecture/architecture.mymeetings.example/v1alpha1/UseCase/add-meeting-attendee
+            status: passed
+            constraintDigest: sha256:68e2fc1ca216c7d05cddc6d3d29e40ed4727192c4e69586374b573c9f661469f
+            subjectDigest: sha256:711da7cf7404f16f94e5dda4b4e26cb62265876009fa99d6ead8638d462e8f05
+            comparison:
+                left:
+                    relations:
+                        - belongsToModule
+                    steps:
+                        - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/add-meeting-attendee
+                          to: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+                          relation: belongsToModule
+                          domainApiVersion: architecture.mymeetings.example/v1alpha1
+                          path: resources/usecase-add-meeting-attendee.yaml
+                          line: 1
+                    target: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+                right:
+                    relations:
+                        - usesFeature
+                        - belongsToModule
+                    steps:
+                        - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/add-meeting-attendee
+                          to: architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-attendance
+                          relation: usesFeature
+                          domainApiVersion: architecture.mymeetings.example/v1alpha1
+                          path: resources/usecase-add-meeting-attendee.yaml
+                          line: 1
+                        - from: architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-attendance
+                          to: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+                          relation: belongsToModule
+                          domainApiVersion: architecture.mymeetings.example/v1alpha1
+                          path: resources/feature-meeting-attendance.yaml
+                          line: 1
+                    target: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+        domainInput:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            name: mymeetings-architecture-v1
+            path: domains/architecture.yaml
+            package: mymeetings-architecture
+            packageVersion: 1.0.0
+            digest: sha256:508af1aca1fc747bdebb095a7d05af600753403a5416f95f0cfd84cc878456b6
+        packagePin:
+            name: mymeetings-architecture
+            version: 1.0.0
+            source: pilot:mymeetings-adopter-constitution-1.0.0
+            archive: .markitect/packages/mymeetings-architecture-1.0.0.zip
+            sha256: 0c7395055aac7f4c35afcff404481a77e2ce6475c863a435afc2586dd388b1cc
+        definition:
+            name: selected-feature-owner-matches-usecase-module
+            description: The explicitly selected UseCase cohort must agree with the Module owner reached through its Feature.
+            select:
+                kind: UseCase
+                labels:
+                    feature-ownership: required
+            assert:
+                op: same-target
+                left:
+                    - belongsToModule
+                right:
+                    - usesFeature
+                    - belongsToModule
+      candidate:
+        status: passed
+        result:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            constraint: selected-feature-owner-matches-usecase-module
+            subject: architecture/architecture.mymeetings.example/v1alpha1/UseCase/add-meeting-attendee
+            status: passed
+            constraintDigest: sha256:68e2fc1ca216c7d05cddc6d3d29e40ed4727192c4e69586374b573c9f661469f
+            subjectDigest: sha256:41c4e7e1dd003c2399965ef81b92105efc42d4bd7f6a978328c2ef68366454d2
+            comparison:
+                left:
+                    relations:
+                        - belongsToModule
+                    steps:
+                        - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/add-meeting-attendee
+                          to: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+                          relation: belongsToModule
+                          domainApiVersion: architecture.mymeetings.example/v1alpha1
+                          path: resources/usecase-add-meeting-attendee.yaml
+                          line: 1
+                    target: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+                right:
+                    relations:
+                        - usesFeature
+                        - belongsToModule
+                    steps:
+                        - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/add-meeting-attendee
+                          to: architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-attendance
+                          relation: usesFeature
+                          domainApiVersion: architecture.mymeetings.example/v1alpha1
+                          path: resources/usecase-add-meeting-attendee.yaml
+                          line: 1
+                        - from: architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-attendance
+                          to: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+                          relation: belongsToModule
+                          domainApiVersion: architecture.mymeetings.example/v1alpha1
+                          path: resources/feature-meeting-attendance.yaml
+                          line: 1
+                    target: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+        domainInput:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            name: mymeetings-architecture-v2
+            path: domains/architecture.yaml
+            package: mymeetings-architecture
+            packageVersion: 2.0.0
+            digest: sha256:b46900d7ed055446734599f8b6091d027f4776c5557d213f9e2c6b6103f527c5
+        packagePin:
+            name: mymeetings-architecture
+            version: 2.0.0
+            source: git:e0ae3c5181323e0d2a03312524010cc817652330
+            archive: .markitect/packages/mymeetings-architecture-2.0.0.zip
+            sha256: 0ed97c9f0b21e10b5e2a0ff232bdb910bd468ac04f84441ae24d5b7cefb2b504
+        definition:
+            name: selected-feature-owner-matches-usecase-module
+            description: The explicitly selected UseCase cohort must agree with the Module owner reached through its Feature.
+            select:
+                kind: UseCase
+                labels:
+                    feature-ownership: required
+            assert:
+                op: same-target
+                left:
+                    - belongsToModule
+                right:
+                    - usesFeature
+                    - belongsToModule
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      constraint: selected-feature-owner-matches-usecase-module
+      subject: architecture/architecture.mymeetings.example/v1alpha1/UseCase/cancel-meeting
+      base:
+        status: passed
+        result:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            constraint: selected-feature-owner-matches-usecase-module
+            subject: architecture/architecture.mymeetings.example/v1alpha1/UseCase/cancel-meeting
+            status: passed
+            constraintDigest: sha256:68e2fc1ca216c7d05cddc6d3d29e40ed4727192c4e69586374b573c9f661469f
+            subjectDigest: sha256:9c72c7484653a6136a247d7e07bf380287ba651d27f3cc1c26726cd702a439c6
+            comparison:
+                left:
+                    relations:
+                        - belongsToModule
+                    steps:
+                        - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/cancel-meeting
+                          to: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+                          relation: belongsToModule
+                          domainApiVersion: architecture.mymeetings.example/v1alpha1
+                          path: resources/usecase-cancel-meeting.yaml
+                          line: 1
+                    target: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+                right:
+                    relations:
+                        - usesFeature
+                        - belongsToModule
+                    steps:
+                        - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/cancel-meeting
+                          to: architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-lifecycle
+                          relation: usesFeature
+                          domainApiVersion: architecture.mymeetings.example/v1alpha1
+                          path: resources/usecase-cancel-meeting.yaml
+                          line: 1
+                        - from: architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-lifecycle
+                          to: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+                          relation: belongsToModule
+                          domainApiVersion: architecture.mymeetings.example/v1alpha1
+                          path: resources/feature-meeting-lifecycle.yaml
+                          line: 1
+                    target: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+        domainInput:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            name: mymeetings-architecture-v1
+            path: domains/architecture.yaml
+            package: mymeetings-architecture
+            packageVersion: 1.0.0
+            digest: sha256:508af1aca1fc747bdebb095a7d05af600753403a5416f95f0cfd84cc878456b6
+        packagePin:
+            name: mymeetings-architecture
+            version: 1.0.0
+            source: pilot:mymeetings-adopter-constitution-1.0.0
+            archive: .markitect/packages/mymeetings-architecture-1.0.0.zip
+            sha256: 0c7395055aac7f4c35afcff404481a77e2ce6475c863a435afc2586dd388b1cc
+        definition:
+            name: selected-feature-owner-matches-usecase-module
+            description: The explicitly selected UseCase cohort must agree with the Module owner reached through its Feature.
+            select:
+                kind: UseCase
+                labels:
+                    feature-ownership: required
+            assert:
+                op: same-target
+                left:
+                    - belongsToModule
+                right:
+                    - usesFeature
+                    - belongsToModule
+      candidate:
+        status: passed
+        result:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            constraint: selected-feature-owner-matches-usecase-module
+            subject: architecture/architecture.mymeetings.example/v1alpha1/UseCase/cancel-meeting
+            status: passed
+            constraintDigest: sha256:68e2fc1ca216c7d05cddc6d3d29e40ed4727192c4e69586374b573c9f661469f
+            subjectDigest: sha256:1baf0711a3093acd515a9e3b49d0d320d02ce5c756054825d2e56e15db42177b
+            comparison:
+                left:
+                    relations:
+                        - belongsToModule
+                    steps:
+                        - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/cancel-meeting
+                          to: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+                          relation: belongsToModule
+                          domainApiVersion: architecture.mymeetings.example/v1alpha1
+                          path: resources/usecase-cancel-meeting.yaml
+                          line: 1
+                    target: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+                right:
+                    relations:
+                        - usesFeature
+                        - belongsToModule
+                    steps:
+                        - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/cancel-meeting
+                          to: architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-lifecycle
+                          relation: usesFeature
+                          domainApiVersion: architecture.mymeetings.example/v1alpha1
+                          path: resources/usecase-cancel-meeting.yaml
+                          line: 1
+                        - from: architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-lifecycle
+                          to: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+                          relation: belongsToModule
+                          domainApiVersion: architecture.mymeetings.example/v1alpha1
+                          path: resources/feature-meeting-lifecycle.yaml
+                          line: 1
+                    target: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+        domainInput:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            name: mymeetings-architecture-v2
+            path: domains/architecture.yaml
+            package: mymeetings-architecture
+            packageVersion: 2.0.0
+            digest: sha256:b46900d7ed055446734599f8b6091d027f4776c5557d213f9e2c6b6103f527c5
+        packagePin:
+            name: mymeetings-architecture
+            version: 2.0.0
+            source: git:e0ae3c5181323e0d2a03312524010cc817652330
+            archive: .markitect/packages/mymeetings-architecture-2.0.0.zip
+            sha256: 0ed97c9f0b21e10b5e2a0ff232bdb910bd468ac04f84441ae24d5b7cefb2b504
+        definition:
+            name: selected-feature-owner-matches-usecase-module
+            description: The explicitly selected UseCase cohort must agree with the Module owner reached through its Feature.
+            select:
+                kind: UseCase
+                labels:
+                    feature-ownership: required
+            assert:
+                op: same-target
+                left:
+                    - belongsToModule
+                right:
+                    - usesFeature
+                    - belongsToModule
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      constraint: selected-validation-cohort-is-command
+      subject: architecture/architecture.mymeetings.example/v1alpha1/UseCase/add-meeting-attendee
+      base:
+        status: not-applicable
+        absenceReason: constraint-not-defined
+        domainInput:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            name: mymeetings-architecture-v1
+            path: domains/architecture.yaml
+            package: mymeetings-architecture
+            packageVersion: 1.0.0
+            digest: sha256:508af1aca1fc747bdebb095a7d05af600753403a5416f95f0cfd84cc878456b6
+        packagePin:
+            name: mymeetings-architecture
+            version: 1.0.0
+            source: pilot:mymeetings-adopter-constitution-1.0.0
+            archive: .markitect/packages/mymeetings-architecture-1.0.0.zip
+            sha256: 0c7395055aac7f4c35afcff404481a77e2ce6475c863a435afc2586dd388b1cc
+      candidate:
+        status: passed
+        result:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            constraint: selected-validation-cohort-is-command
+            subject: architecture/architecture.mymeetings.example/v1alpha1/UseCase/add-meeting-attendee
+            status: passed
+            constraintDigest: sha256:7a6203e87bf7e0fe7a4d80b71a3fd33e9c235e79198c03ac9a04627bd109c193
+            subjectDigest: sha256:36d45d06bd8a4301c02653687494a2c2f7fd26604e5eeef574a1bce70a1b9e2e
+        domainInput:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            name: mymeetings-architecture-v2
+            path: domains/architecture.yaml
+            package: mymeetings-architecture
+            packageVersion: 2.0.0
+            digest: sha256:b46900d7ed055446734599f8b6091d027f4776c5557d213f9e2c6b6103f527c5
+        packagePin:
+            name: mymeetings-architecture
+            version: 2.0.0
+            source: git:e0ae3c5181323e0d2a03312524010cc817652330
+            archive: .markitect/packages/mymeetings-architecture-2.0.0.zip
+            sha256: 0ed97c9f0b21e10b5e2a0ff232bdb910bd468ac04f84441ae24d5b7cefb2b504
+        definition:
+            name: selected-validation-cohort-is-command
+            description: Resources in the explicitly selected v2 validation cohort must be Commands.
+            select:
+                kind: UseCase
+                labels:
+                    validation: required
+            assert:
+                op: equal
+                field: intent
+                value: Command
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      constraint: selected-validation-cohort-is-command
+      subject: architecture/architecture.mymeetings.example/v1alpha1/UseCase/cancel-meeting
+      base:
+        status: not-applicable
+        absenceReason: constraint-not-defined
+        domainInput:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            name: mymeetings-architecture-v1
+            path: domains/architecture.yaml
+            package: mymeetings-architecture
+            packageVersion: 1.0.0
+            digest: sha256:508af1aca1fc747bdebb095a7d05af600753403a5416f95f0cfd84cc878456b6
+        packagePin:
+            name: mymeetings-architecture
+            version: 1.0.0
+            source: pilot:mymeetings-adopter-constitution-1.0.0
+            archive: .markitect/packages/mymeetings-architecture-1.0.0.zip
+            sha256: 0c7395055aac7f4c35afcff404481a77e2ce6475c863a435afc2586dd388b1cc
+      candidate:
+        status: passed
+        result:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            constraint: selected-validation-cohort-is-command
+            subject: architecture/architecture.mymeetings.example/v1alpha1/UseCase/cancel-meeting
+            status: passed
+            constraintDigest: sha256:7a6203e87bf7e0fe7a4d80b71a3fd33e9c235e79198c03ac9a04627bd109c193
+            subjectDigest: sha256:67164086f2458955c5f846f9cca7b48e9bc142e0fb3ae2379b066f084491d93a
+        domainInput:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            name: mymeetings-architecture-v2
+            path: domains/architecture.yaml
+            package: mymeetings-architecture
+            packageVersion: 2.0.0
+            digest: sha256:b46900d7ed055446734599f8b6091d027f4776c5557d213f9e2c6b6103f527c5
+        packagePin:
+            name: mymeetings-architecture
+            version: 2.0.0
+            source: git:e0ae3c5181323e0d2a03312524010cc817652330
+            archive: .markitect/packages/mymeetings-architecture-2.0.0.zip
+            sha256: 0ed97c9f0b21e10b5e2a0ff232bdb910bd468ac04f84441ae24d5b7cefb2b504
+        definition:
+            name: selected-validation-cohort-is-command
+            description: Resources in the explicitly selected v2 validation cohort must be Commands.
+            select:
+                kind: UseCase
+                labels:
+                    validation: required
+            assert:
+                op: equal
+                field: intent
+                value: Command
+directPolicySubjects:
+    - architecture/architecture.mymeetings.example/v1alpha1/UseCase/add-meeting-attendee
+    - architecture/architecture.mymeetings.example/v1alpha1/UseCase/cancel-meeting
+directPolicySubjectCount: 2
+affectedCount: 73

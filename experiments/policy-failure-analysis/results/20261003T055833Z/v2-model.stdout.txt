@@ -1,0 +1,3916 @@
+apiVersion: markitect.example.org/semantic-model/v1alpha1
+snapshot:
+    id: a0f89e7c0ce43a1be556c17c41cd19f8e7f32d7f
+    provisional: false
+    digest: dda2001e4249f458414f3b260e72636a188221424e69ad111a645ff8e62f5bf4
+configDigest: sha256:3726cae54f94af37c56cf9d6316d27091ddb7919cdf2e262814190fad3cfd0a4
+modelDigest: sha256:9e03161abf413beacf9ddc47fa92033032bc2a93990301b6f4cb7ddb8ee6beb7
+validationStatus: failed
+structuralStatus: passed
+policyStatus: failed
+diagnostics:
+    - code: constraint.selected-commands-require-validator
+      path: resources/usecase-add-meeting-attendee.yaml
+      line: 1
+      message: 'architecture.mymeetings.example/v1alpha1: architecture/architecture.mymeetings.example/v1alpha1/UseCase/add-meeting-attendee relation hasValidator has 0 targets outside declared bounds'
+      policyResult:
+        apiVersion: architecture.mymeetings.example/v1alpha1
+        constraint: selected-commands-require-validator
+        subject: architecture/architecture.mymeetings.example/v1alpha1/UseCase/add-meeting-attendee
+    - code: constraint.selected-commands-require-validator
+      path: resources/usecase-cancel-meeting.yaml
+      line: 1
+      message: 'architecture.mymeetings.example/v1alpha1: architecture/architecture.mymeetings.example/v1alpha1/UseCase/cancel-meeting relation hasValidator has 0 targets outside declared bounds'
+      policyResult:
+        apiVersion: architecture.mymeetings.example/v1alpha1
+        constraint: selected-commands-require-validator
+        subject: architecture/architecture.mymeetings.example/v1alpha1/UseCase/cancel-meeting
+policyResults:
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      constraint: module-dependencies-cross-only-through-explicit-boundaries
+      subject: architecture/architecture.mymeetings.example/v1alpha1/Module/administration
+      status: passed
+      constraintDigest: sha256:9a7a41ae99897dae2c5ae64e3067d6f1db761f6a7c52fe025c2f5195a167ad5d
+      subjectDigest: sha256:9b388436835c13c35980da7da9449b02982b7d9c8f1c0e5cf3b1cb15f6c3c772
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      constraint: module-dependencies-cross-only-through-explicit-boundaries
+      subject: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+      status: passed
+      constraintDigest: sha256:9a7a41ae99897dae2c5ae64e3067d6f1db761f6a7c52fe025c2f5195a167ad5d
+      subjectDigest: sha256:ae333873ff4bfc0a1628abec11a40ad9099f7a4613e53e60b3f14e9092166c81
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      constraint: module-dependencies-cross-only-through-explicit-boundaries
+      subject: architecture/architecture.mymeetings.example/v1alpha1/Module/payments
+      status: passed
+      constraintDigest: sha256:9a7a41ae99897dae2c5ae64e3067d6f1db761f6a7c52fe025c2f5195a167ad5d
+      subjectDigest: sha256:4eab371f02575c99cff4212ee07cfd5562095bfdf08aa234aa7d08d35051bdbe
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      constraint: module-dependencies-cross-only-through-explicit-boundaries
+      subject: architecture/architecture.mymeetings.example/v1alpha1/Module/registrations
+      status: passed
+      constraintDigest: sha256:9a7a41ae99897dae2c5ae64e3067d6f1db761f6a7c52fe025c2f5195a167ad5d
+      subjectDigest: sha256:1a82ce6554dc9244a8f1c4d5413f9b46602338df06033056c3582c91a39eca82
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      constraint: module-dependencies-cross-only-through-explicit-boundaries
+      subject: architecture/architecture.mymeetings.example/v1alpha1/Module/user-access
+      status: passed
+      constraintDigest: sha256:9a7a41ae99897dae2c5ae64e3067d6f1db761f6a7c52fe025c2f5195a167ad5d
+      subjectDigest: sha256:94b5357e1bf3fb58fff09d260b280803951bc9f4a0124c298ff415bfc4a51a7d
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      constraint: selected-commands-require-validator
+      subject: architecture/architecture.mymeetings.example/v1alpha1/UseCase/add-meeting-attendee
+      status: failed
+      message: architecture/architecture.mymeetings.example/v1alpha1/UseCase/add-meeting-attendee relation hasValidator has 0 targets outside declared bounds
+      constraintDigest: sha256:8d4e312bdb9a2f5569371b9a6be101ee76a9ea0d4007b0087e441031d248f2a8
+      subjectDigest: sha256:fab7c2762127e209d566ebc53074ebe6402246912a3bc30681af3be785a061c6
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      constraint: selected-commands-require-validator
+      subject: architecture/architecture.mymeetings.example/v1alpha1/UseCase/cancel-meeting
+      status: failed
+      message: architecture/architecture.mymeetings.example/v1alpha1/UseCase/cancel-meeting relation hasValidator has 0 targets outside declared bounds
+      constraintDigest: sha256:8d4e312bdb9a2f5569371b9a6be101ee76a9ea0d4007b0087e441031d248f2a8
+      subjectDigest: sha256:cb2171eb85c210db94ac2a0d6bc7eebabaf9b83cb2f5e7b55ffcbae99dbf05cd
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      constraint: selected-feature-owner-matches-usecase-module
+      subject: architecture/architecture.mymeetings.example/v1alpha1/UseCase/accept-proposal
+      status: passed
+      constraintDigest: sha256:68e2fc1ca216c7d05cddc6d3d29e40ed4727192c4e69586374b573c9f661469f
+      subjectDigest: sha256:3d2f1eddeabc77adf088dfb88b1f5d5fe209f56ef66b9769838e932e4c5d4934
+      comparison:
+        left:
+            relations:
+                - belongsToModule
+            steps:
+                - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/accept-proposal
+                  to: architecture/architecture.mymeetings.example/v1alpha1/Module/administration
+                  relation: belongsToModule
+                  domainApiVersion: architecture.mymeetings.example/v1alpha1
+                  path: resources/usecase-accept-proposal.yaml
+                  line: 1
+            target: architecture/architecture.mymeetings.example/v1alpha1/Module/administration
+        right:
+            relations:
+                - usesFeature
+                - belongsToModule
+            steps:
+                - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/accept-proposal
+                  to: architecture/architecture.mymeetings.example/v1alpha1/Feature/group-proposals
+                  relation: usesFeature
+                  domainApiVersion: architecture.mymeetings.example/v1alpha1
+                  path: resources/usecase-accept-proposal.yaml
+                  line: 1
+                - from: architecture/architecture.mymeetings.example/v1alpha1/Feature/group-proposals
+                  to: architecture/architecture.mymeetings.example/v1alpha1/Module/administration
+                  relation: belongsToModule
+                  domainApiVersion: architecture.mymeetings.example/v1alpha1
+                  path: resources/feature-group-proposals.yaml
+                  line: 1
+            target: architecture/architecture.mymeetings.example/v1alpha1/Module/administration
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      constraint: selected-feature-owner-matches-usecase-module
+      subject: architecture/architecture.mymeetings.example/v1alpha1/UseCase/add-meeting-attendee
+      status: passed
+      constraintDigest: sha256:68e2fc1ca216c7d05cddc6d3d29e40ed4727192c4e69586374b573c9f661469f
+      subjectDigest: sha256:711da7cf7404f16f94e5dda4b4e26cb62265876009fa99d6ead8638d462e8f05
+      comparison:
+        left:
+            relations:
+                - belongsToModule
+            steps:
+                - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/add-meeting-attendee
+                  to: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+                  relation: belongsToModule
+                  domainApiVersion: architecture.mymeetings.example/v1alpha1
+                  path: resources/usecase-add-meeting-attendee.yaml
+                  line: 1
+            target: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+        right:
+            relations:
+                - usesFeature
+                - belongsToModule
+            steps:
+                - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/add-meeting-attendee
+                  to: architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-attendance
+                  relation: usesFeature
+                  domainApiVersion: architecture.mymeetings.example/v1alpha1
+                  path: resources/usecase-add-meeting-attendee.yaml
+                  line: 1
+                - from: architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-attendance
+                  to: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+                  relation: belongsToModule
+                  domainApiVersion: architecture.mymeetings.example/v1alpha1
+                  path: resources/feature-meeting-attendance.yaml
+                  line: 1
+            target: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      constraint: selected-feature-owner-matches-usecase-module
+      subject: architecture/architecture.mymeetings.example/v1alpha1/UseCase/authenticate
+      status: passed
+      constraintDigest: sha256:68e2fc1ca216c7d05cddc6d3d29e40ed4727192c4e69586374b573c9f661469f
+      subjectDigest: sha256:1f76abbff4665ce2e4a3e87920ade35a2976a419d9ce8112a41e45e2c1184c49
+      comparison:
+        left:
+            relations:
+                - belongsToModule
+            steps:
+                - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/authenticate
+                  to: architecture/architecture.mymeetings.example/v1alpha1/Module/user-access
+                  relation: belongsToModule
+                  domainApiVersion: architecture.mymeetings.example/v1alpha1
+                  path: resources/usecase-authenticate.yaml
+                  line: 1
+            target: architecture/architecture.mymeetings.example/v1alpha1/Module/user-access
+        right:
+            relations:
+                - usesFeature
+                - belongsToModule
+            steps:
+                - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/authenticate
+                  to: architecture/architecture.mymeetings.example/v1alpha1/Feature/authentication
+                  relation: usesFeature
+                  domainApiVersion: architecture.mymeetings.example/v1alpha1
+                  path: resources/usecase-authenticate.yaml
+                  line: 1
+                - from: architecture/architecture.mymeetings.example/v1alpha1/Feature/authentication
+                  to: architecture/architecture.mymeetings.example/v1alpha1/Module/user-access
+                  relation: belongsToModule
+                  domainApiVersion: architecture.mymeetings.example/v1alpha1
+                  path: resources/feature-authentication.yaml
+                  line: 1
+            target: architecture/architecture.mymeetings.example/v1alpha1/Module/user-access
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      constraint: selected-feature-owner-matches-usecase-module
+      subject: architecture/architecture.mymeetings.example/v1alpha1/UseCase/cancel-meeting
+      status: passed
+      constraintDigest: sha256:68e2fc1ca216c7d05cddc6d3d29e40ed4727192c4e69586374b573c9f661469f
+      subjectDigest: sha256:9c72c7484653a6136a247d7e07bf380287ba651d27f3cc1c26726cd702a439c6
+      comparison:
+        left:
+            relations:
+                - belongsToModule
+            steps:
+                - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/cancel-meeting
+                  to: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+                  relation: belongsToModule
+                  domainApiVersion: architecture.mymeetings.example/v1alpha1
+                  path: resources/usecase-cancel-meeting.yaml
+                  line: 1
+            target: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+        right:
+            relations:
+                - usesFeature
+                - belongsToModule
+            steps:
+                - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/cancel-meeting
+                  to: architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-lifecycle
+                  relation: usesFeature
+                  domainApiVersion: architecture.mymeetings.example/v1alpha1
+                  path: resources/usecase-cancel-meeting.yaml
+                  line: 1
+                - from: architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-lifecycle
+                  to: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+                  relation: belongsToModule
+                  domainApiVersion: architecture.mymeetings.example/v1alpha1
+                  path: resources/feature-meeting-lifecycle.yaml
+                  line: 1
+            target: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      constraint: selected-feature-owner-matches-usecase-module
+      subject: architecture/architecture.mymeetings.example/v1alpha1/UseCase/create-meeting
+      status: passed
+      constraintDigest: sha256:68e2fc1ca216c7d05cddc6d3d29e40ed4727192c4e69586374b573c9f661469f
+      subjectDigest: sha256:b07077b00c44a87873e7b87bb011f642a10ebc0131b7a954fa170b299ffe442d
+      comparison:
+        left:
+            relations:
+                - belongsToModule
+            steps:
+                - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/create-meeting
+                  to: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+                  relation: belongsToModule
+                  domainApiVersion: architecture.mymeetings.example/v1alpha1
+                  path: resources/usecase-create-meeting.yaml
+                  line: 1
+            target: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+        right:
+            relations:
+                - usesFeature
+                - belongsToModule
+            steps:
+                - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/create-meeting
+                  to: architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-lifecycle
+                  relation: usesFeature
+                  domainApiVersion: architecture.mymeetings.example/v1alpha1
+                  path: resources/usecase-create-meeting.yaml
+                  line: 1
+                - from: architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-lifecycle
+                  to: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+                  relation: belongsToModule
+                  domainApiVersion: architecture.mymeetings.example/v1alpha1
+                  path: resources/feature-meeting-lifecycle.yaml
+                  line: 1
+            target: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      constraint: selected-feature-owner-matches-usecase-module
+      subject: architecture/architecture.mymeetings.example/v1alpha1/UseCase/create-price-list-item
+      status: passed
+      constraintDigest: sha256:68e2fc1ca216c7d05cddc6d3d29e40ed4727192c4e69586374b573c9f661469f
+      subjectDigest: sha256:9cb58a110ea39a41864d50b0cc6079b6afb19afac87f530797ab880aa6d61ce1
+      comparison:
+        left:
+            relations:
+                - belongsToModule
+            steps:
+                - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/create-price-list-item
+                  to: architecture/architecture.mymeetings.example/v1alpha1/Module/payments
+                  relation: belongsToModule
+                  domainApiVersion: architecture.mymeetings.example/v1alpha1
+                  path: resources/usecase-create-price-list-item.yaml
+                  line: 1
+            target: architecture/architecture.mymeetings.example/v1alpha1/Module/payments
+        right:
+            relations:
+                - usesFeature
+                - belongsToModule
+            steps:
+                - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/create-price-list-item
+                  to: architecture/architecture.mymeetings.example/v1alpha1/Feature/price-list
+                  relation: usesFeature
+                  domainApiVersion: architecture.mymeetings.example/v1alpha1
+                  path: resources/usecase-create-price-list-item.yaml
+                  line: 1
+                - from: architecture/architecture.mymeetings.example/v1alpha1/Feature/price-list
+                  to: architecture/architecture.mymeetings.example/v1alpha1/Module/payments
+                  relation: belongsToModule
+                  domainApiVersion: architecture.mymeetings.example/v1alpha1
+                  path: resources/feature-price-list.yaml
+                  line: 1
+            target: architecture/architecture.mymeetings.example/v1alpha1/Module/payments
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      constraint: selected-feature-owner-matches-usecase-module
+      subject: architecture/architecture.mymeetings.example/v1alpha1/UseCase/get-meeting-attendees
+      status: passed
+      constraintDigest: sha256:68e2fc1ca216c7d05cddc6d3d29e40ed4727192c4e69586374b573c9f661469f
+      subjectDigest: sha256:4295211bdca989f6718e62707ee7caf832242ee47c5c332d18ac36f0e0bc607b
+      comparison:
+        left:
+            relations:
+                - belongsToModule
+            steps:
+                - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/get-meeting-attendees
+                  to: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+                  relation: belongsToModule
+                  domainApiVersion: architecture.mymeetings.example/v1alpha1
+                  path: resources/usecase-get-meeting-attendees.yaml
+                  line: 1
+            target: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+        right:
+            relations:
+                - usesFeature
+                - belongsToModule
+            steps:
+                - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/get-meeting-attendees
+                  to: architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-attendance
+                  relation: usesFeature
+                  domainApiVersion: architecture.mymeetings.example/v1alpha1
+                  path: resources/usecase-get-meeting-attendees.yaml
+                  line: 1
+                - from: architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-attendance
+                  to: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+                  relation: belongsToModule
+                  domainApiVersion: architecture.mymeetings.example/v1alpha1
+                  path: resources/feature-meeting-attendance.yaml
+                  line: 1
+            target: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      constraint: selected-feature-owner-matches-usecase-module
+      subject: architecture/architecture.mymeetings.example/v1alpha1/UseCase/get-meeting-fees
+      status: passed
+      constraintDigest: sha256:68e2fc1ca216c7d05cddc6d3d29e40ed4727192c4e69586374b573c9f661469f
+      subjectDigest: sha256:611845a2cba145250bb66c4771fd1a9b285925e0f30a35d913f145a9d00b3f4e
+      comparison:
+        left:
+            relations:
+                - belongsToModule
+            steps:
+                - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/get-meeting-fees
+                  to: architecture/architecture.mymeetings.example/v1alpha1/Module/payments
+                  relation: belongsToModule
+                  domainApiVersion: architecture.mymeetings.example/v1alpha1
+                  path: resources/usecase-get-meeting-fees.yaml
+                  line: 1
+            target: architecture/architecture.mymeetings.example/v1alpha1/Module/payments
+        right:
+            relations:
+                - usesFeature
+                - belongsToModule
+            steps:
+                - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/get-meeting-fees
+                  to: architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-fees
+                  relation: usesFeature
+                  domainApiVersion: architecture.mymeetings.example/v1alpha1
+                  path: resources/usecase-get-meeting-fees.yaml
+                  line: 1
+                - from: architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-fees
+                  to: architecture/architecture.mymeetings.example/v1alpha1/Module/payments
+                  relation: belongsToModule
+                  domainApiVersion: architecture.mymeetings.example/v1alpha1
+                  path: resources/feature-meeting-fees.yaml
+                  line: 1
+            target: architecture/architecture.mymeetings.example/v1alpha1/Module/payments
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      constraint: selected-feature-owner-matches-usecase-module
+      subject: architecture/architecture.mymeetings.example/v1alpha1/UseCase/get-meeting-group-details
+      status: passed
+      constraintDigest: sha256:68e2fc1ca216c7d05cddc6d3d29e40ed4727192c4e69586374b573c9f661469f
+      subjectDigest: sha256:a8083df90f10eb5068dba946ba74d2903dab0abca4ecc7b2cb4ff24dbb598d0f
+      comparison:
+        left:
+            relations:
+                - belongsToModule
+            steps:
+                - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/get-meeting-group-details
+                  to: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+                  relation: belongsToModule
+                  domainApiVersion: architecture.mymeetings.example/v1alpha1
+                  path: resources/usecase-get-meeting-group-details.yaml
+                  line: 1
+            target: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+        right:
+            relations:
+                - usesFeature
+                - belongsToModule
+            steps:
+                - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/get-meeting-group-details
+                  to: architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-groups
+                  relation: usesFeature
+                  domainApiVersion: architecture.mymeetings.example/v1alpha1
+                  path: resources/usecase-get-meeting-group-details.yaml
+                  line: 1
+                - from: architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-groups
+                  to: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+                  relation: belongsToModule
+                  domainApiVersion: architecture.mymeetings.example/v1alpha1
+                  path: resources/feature-meeting-groups.yaml
+                  line: 1
+            target: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      constraint: selected-feature-owner-matches-usecase-module
+      subject: architecture/architecture.mymeetings.example/v1alpha1/UseCase/get-member
+      status: passed
+      constraintDigest: sha256:68e2fc1ca216c7d05cddc6d3d29e40ed4727192c4e69586374b573c9f661469f
+      subjectDigest: sha256:3ed3fdb67509954ad814f1231ce2d831057ba6ec1f8141c68d01702e3d59a6cd
+      comparison:
+        left:
+            relations:
+                - belongsToModule
+            steps:
+                - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/get-member
+                  to: architecture/architecture.mymeetings.example/v1alpha1/Module/administration
+                  relation: belongsToModule
+                  domainApiVersion: architecture.mymeetings.example/v1alpha1
+                  path: resources/usecase-get-member.yaml
+                  line: 1
+            target: architecture/architecture.mymeetings.example/v1alpha1/Module/administration
+        right:
+            relations:
+                - usesFeature
+                - belongsToModule
+            steps:
+                - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/get-member
+                  to: architecture/architecture.mymeetings.example/v1alpha1/Feature/group-proposals
+                  relation: usesFeature
+                  domainApiVersion: architecture.mymeetings.example/v1alpha1
+                  path: resources/usecase-get-member.yaml
+                  line: 1
+                - from: architecture/architecture.mymeetings.example/v1alpha1/Feature/group-proposals
+                  to: architecture/architecture.mymeetings.example/v1alpha1/Module/administration
+                  relation: belongsToModule
+                  domainApiVersion: architecture.mymeetings.example/v1alpha1
+                  path: resources/feature-group-proposals.yaml
+                  line: 1
+            target: architecture/architecture.mymeetings.example/v1alpha1/Module/administration
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      constraint: selected-feature-owner-matches-usecase-module
+      subject: architecture/architecture.mymeetings.example/v1alpha1/UseCase/propose-meeting-group
+      status: passed
+      constraintDigest: sha256:68e2fc1ca216c7d05cddc6d3d29e40ed4727192c4e69586374b573c9f661469f
+      subjectDigest: sha256:bfb0394c5076df5f87b4d7bcb3fed6d7cc0c2fd0564494f2c40562ff417b2213
+      comparison:
+        left:
+            relations:
+                - belongsToModule
+            steps:
+                - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/propose-meeting-group
+                  to: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+                  relation: belongsToModule
+                  domainApiVersion: architecture.mymeetings.example/v1alpha1
+                  path: resources/usecase-propose-meeting-group.yaml
+                  line: 1
+            target: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+        right:
+            relations:
+                - usesFeature
+                - belongsToModule
+            steps:
+                - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/propose-meeting-group
+                  to: architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-groups
+                  relation: usesFeature
+                  domainApiVersion: architecture.mymeetings.example/v1alpha1
+                  path: resources/usecase-propose-meeting-group.yaml
+                  line: 1
+                - from: architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-groups
+                  to: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+                  relation: belongsToModule
+                  domainApiVersion: architecture.mymeetings.example/v1alpha1
+                  path: resources/feature-meeting-groups.yaml
+                  line: 1
+            target: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      constraint: selected-feature-owner-matches-usecase-module
+      subject: architecture/architecture.mymeetings.example/v1alpha1/UseCase/register-new-user
+      status: passed
+      constraintDigest: sha256:68e2fc1ca216c7d05cddc6d3d29e40ed4727192c4e69586374b573c9f661469f
+      subjectDigest: sha256:7358da91707e1d4f6ce3f8271775488b187338df2c8ef743626608f10b3c9495
+      comparison:
+        left:
+            relations:
+                - belongsToModule
+            steps:
+                - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/register-new-user
+                  to: architecture/architecture.mymeetings.example/v1alpha1/Module/registrations
+                  relation: belongsToModule
+                  domainApiVersion: architecture.mymeetings.example/v1alpha1
+                  path: resources/usecase-register-new-user.yaml
+                  line: 1
+            target: architecture/architecture.mymeetings.example/v1alpha1/Module/registrations
+        right:
+            relations:
+                - usesFeature
+                - belongsToModule
+            steps:
+                - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/register-new-user
+                  to: architecture/architecture.mymeetings.example/v1alpha1/Feature/user-registration
+                  relation: usesFeature
+                  domainApiVersion: architecture.mymeetings.example/v1alpha1
+                  path: resources/usecase-register-new-user.yaml
+                  line: 1
+                - from: architecture/architecture.mymeetings.example/v1alpha1/Feature/user-registration
+                  to: architecture/architecture.mymeetings.example/v1alpha1/Module/registrations
+                  relation: belongsToModule
+                  domainApiVersion: architecture.mymeetings.example/v1alpha1
+                  path: resources/feature-user-registration.yaml
+                  line: 1
+            target: architecture/architecture.mymeetings.example/v1alpha1/Module/registrations
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      constraint: selected-validation-cohort-is-command
+      subject: architecture/architecture.mymeetings.example/v1alpha1/UseCase/add-meeting-attendee
+      status: passed
+      constraintDigest: sha256:7a6203e87bf7e0fe7a4d80b71a3fd33e9c235e79198c03ac9a04627bd109c193
+      subjectDigest: sha256:fab7c2762127e209d566ebc53074ebe6402246912a3bc30681af3be785a061c6
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      constraint: selected-validation-cohort-is-command
+      subject: architecture/architecture.mymeetings.example/v1alpha1/UseCase/cancel-meeting
+      status: passed
+      constraintDigest: sha256:7a6203e87bf7e0fe7a4d80b71a3fd33e9c235e79198c03ac9a04627bd109c193
+      subjectDigest: sha256:cb2171eb85c210db94ac2a0d6bc7eebabaf9b83cb2f5e7b55ffcbae99dbf05cd
+domainInputs:
+    - apiVersion: architecture.mymeetings.example/v1alpha1
+      name: mymeetings-architecture-v2
+      path: domains/architecture.yaml
+      package: mymeetings-architecture
+      packageVersion: 2.0.0
+      digest: sha256:b46900d7ed055446734599f8b6091d027f4776c5557d213f9e2c6b6103f527c5
+domains:
+    - name: mymeetings-architecture-v2
+      apiVersion: architecture.mymeetings.example/v1alpha1
+      kinds:
+        Aggregate:
+            required:
+                - summary
+                - module
+            inputsField: sourceFiles
+            properties:
+                module:
+                    type: ref
+                    refKind: Module
+                sourceFiles:
+                    type: array
+                    items:
+                        type: string
+                summary:
+                    type: string
+        Common:
+            required:
+                - summary
+                - owner
+            inputsField: sourceFiles
+            properties:
+                owner:
+                    type: ref
+                    refKind: Core
+                sourceFiles:
+                    type: array
+                    items:
+                        type: string
+                summary:
+                    type: string
+        Core:
+            required:
+                - purpose
+            inputsField: projectFiles
+            properties:
+                projectFiles:
+                    type: array
+                    items:
+                        type: string
+                purpose:
+                    type: string
+        Feature:
+            required:
+                - summary
+                - module
+            properties:
+                documents:
+                    type: array
+                    items:
+                        type: ref
+                        refKind: Narrative
+                module:
+                    type: ref
+                    refKind: Module
+                summary:
+                    type: string
+        Handler:
+            required:
+                - summary
+            inputsField: sourceFiles
+            properties:
+                common:
+                    type: array
+                    items:
+                        type: ref
+                        refKind: Common
+                sourceFiles:
+                    type: array
+                    items:
+                        type: string
+                summary:
+                    type: string
+        Interface:
+            required:
+                - summary
+                - provider
+            inputsField: sourceFiles
+            properties:
+                provider:
+                    type: ref
+                    refKind: Module
+                sourceFiles:
+                    type: array
+                    items:
+                        type: string
+                summary:
+                    type: string
+        Module:
+            required:
+                - purpose
+                - dependsOn
+            inputsField: projectFiles
+            properties:
+                dependsOn:
+                    type: array
+                    items:
+                        type: ref
+                projectFiles:
+                    type: array
+                    items:
+                        type: string
+                purpose:
+                    type: string
+        Narrative:
+            required:
+                - summary
+                - owner
+            inputsField: sourceFiles
+            properties:
+                owner:
+                    type: ref
+                    refKind: Module
+                sourceFiles:
+                    type: array
+                    items:
+                        type: string
+                summary:
+                    type: string
+        Product:
+            required:
+                - purpose
+                - components
+            properties:
+                components:
+                    type: array
+                    items:
+                        type: ref
+                purpose:
+                    type: string
+        UseCase:
+            required:
+                - intent
+                - summary
+                - module
+                - handler
+            inputsField: sourceFiles
+            properties:
+                aggregates:
+                    type: array
+                    items:
+                        type: ref
+                        refKind: Aggregate
+                feature:
+                    type: ref
+                    refKind: Feature
+                handler:
+                    type: ref
+                    refKind: Handler
+                intent:
+                    type: string
+                    enum:
+                        - Command
+                        - Query
+                module:
+                    type: ref
+                    refKind: Module
+                sourceFiles:
+                    type: array
+                    items:
+                        type: string
+                summary:
+                    type: string
+                validators:
+                    type: array
+                    items:
+                        type: ref
+                        refKind: Validator
+        Validator:
+            required:
+                - summary
+            inputsField: sourceFiles
+            properties:
+                sourceFiles:
+                    type: array
+                    items:
+                        type: string
+                summary:
+                    type: string
+      relations:
+        belongsToModule:
+            description: Feature, Aggregate and UseCase identify their owning Module.
+            field: module
+            sourceKinds:
+                - Aggregate
+                - Feature
+                - UseCase
+            targetKinds:
+                - Module
+            minTargets: 1
+            maxTargets: 1
+            context: true
+            invalidate: true
+        commonOwnedByCore:
+            description: Shared application and domain contracts have explicit stable Core ownership.
+            field: owner
+            sourceKinds:
+                - Common
+            targetKinds:
+                - Core
+            minTargets: 1
+            maxTargets: 1
+            context: true
+            invalidate: true
+        dependsOn:
+            description: Declared direct project boundary dependencies target stable Core, explicit Interface contracts, or a Module for policy checking.
+            field: dependsOn
+            sourceKinds:
+                - Module
+            targetKinds:
+                - Core
+                - Interface
+                - Module
+            invalidate: true
+            acyclic: true
+        documents:
+            description: Human-owned decision or evidence documents relevant to a Feature.
+            field: documents
+            sourceKinds:
+                - Feature
+            targetKinds:
+                - Narrative
+            context: true
+            invalidate: true
+        hasHandler:
+            description: Every modeled UseCase owns exactly one Handler.
+            field: handler
+            sourceKinds:
+                - UseCase
+            targetKinds:
+                - Handler
+            minTargets: 1
+            maxTargets: 1
+            context: true
+            invalidate: true
+        hasValidator:
+            description: Optional command/query-specific validation implementation.
+            field: validators
+            sourceKinds:
+                - UseCase
+            targetKinds:
+                - Validator
+            context: true
+            invalidate: true
+        productComposes:
+            description: The Product composition root includes its Core and business Modules.
+            field: components
+            sourceKinds:
+                - Product
+            targetKinds:
+                - Core
+                - Module
+            minTargets: 1
+            context: true
+            invalidate: true
+        providedBy:
+            description: An Interface identifies its publishing Module.
+            field: provider
+            sourceKinds:
+                - Interface
+            targetKinds:
+                - Module
+            minTargets: 1
+            maxTargets: 1
+            context: true
+            invalidate: true
+        usesCommon:
+            description: A UseCase Handler explicitly reuses a shared Core concept.
+            field: common
+            sourceKinds:
+                - Handler
+            targetKinds:
+                - Common
+            context: true
+            invalidate: true
+        usesFeature:
+            description: A UseCase may name its Feature grouping.
+            field: feature
+            sourceKinds:
+                - UseCase
+            targetKinds:
+                - Feature
+            maxTargets: 1
+            context: true
+            invalidate: true
+      constraints:
+        - name: module-dependencies-cross-only-through-explicit-boundaries
+          description: A Module's declared boundary dependencies cannot point directly at another Module.
+          select:
+            kind: Module
+          assert:
+            op: allowed-targets
+            relation: dependsOn
+            values:
+                - Core
+                - Interface
+        - name: selected-feature-owner-matches-usecase-module
+          description: The explicitly selected UseCase cohort must agree with the Module owner reached through its Feature.
+          select:
+            kind: UseCase
+            labels:
+                feature-ownership: required
+          assert:
+            op: same-target
+            left:
+                - belongsToModule
+            right:
+                - usesFeature
+                - belongsToModule
+        - name: selected-validation-cohort-is-command
+          description: Resources in the explicitly selected v2 validation cohort must be Commands.
+          select:
+            kind: UseCase
+            labels:
+                validation: required
+          assert:
+            op: equal
+            field: intent
+            value: Command
+        - name: selected-commands-require-validator
+          description: Commands explicitly selected for the v2 validation cohort must have at least one Validator.
+          select:
+            kind: UseCase
+            labels:
+                validation: required
+          assert:
+            op: count
+            scope: resource
+            relation: hasValidator
+            min: 1
+    - name: ""
+      apiVersion: markitect.example.org/v1alpha1
+      kinds:
+        Agent:
+            properties:
+                implements:
+                    type: array
+                    items:
+                        type: ref
+                        refKind: '*'
+                needs:
+                    type: array
+                    items:
+                        type: ref
+                        refKind: '*'
+                rules:
+                    type: array
+                    items:
+                        type: ref
+                        refKind: '*'
+                uses:
+                    type: array
+                    items:
+                        type: ref
+                        refKind: '*'
+        Contract:
+            properties:
+                implements:
+                    type: array
+                    items:
+                        type: ref
+                        refKind: '*'
+                needs:
+                    type: array
+                    items:
+                        type: ref
+                        refKind: '*'
+                rules:
+                    type: array
+                    items:
+                        type: ref
+                        refKind: '*'
+                uses:
+                    type: array
+                    items:
+                        type: ref
+                        refKind: '*'
+        Rule:
+            properties:
+                implements:
+                    type: array
+                    items:
+                        type: ref
+                        refKind: '*'
+                needs:
+                    type: array
+                    items:
+                        type: ref
+                        refKind: '*'
+                rules:
+                    type: array
+                    items:
+                        type: ref
+                        refKind: '*'
+                uses:
+                    type: array
+                    items:
+                        type: ref
+                        refKind: '*'
+        Skill:
+            properties:
+                implements:
+                    type: array
+                    items:
+                        type: ref
+                        refKind: '*'
+                needs:
+                    type: array
+                    items:
+                        type: ref
+                        refKind: '*'
+                rules:
+                    type: array
+                    items:
+                        type: ref
+                        refKind: '*'
+                uses:
+                    type: array
+                    items:
+                        type: ref
+                        refKind: '*'
+        Text:
+            properties:
+                implements:
+                    type: array
+                    items:
+                        type: ref
+                        refKind: '*'
+                needs:
+                    type: array
+                    items:
+                        type: ref
+                        refKind: '*'
+                rules:
+                    type: array
+                    items:
+                        type: ref
+                        refKind: '*'
+                uses:
+                    type: array
+                    items:
+                        type: ref
+                        refKind: '*'
+        Workflow:
+            properties:
+                implements:
+                    type: array
+                    items:
+                        type: ref
+                        refKind: '*'
+                needs:
+                    type: array
+                    items:
+                        type: ref
+                        refKind: '*'
+                rules:
+                    type: array
+                    items:
+                        type: ref
+                        refKind: '*'
+                uses:
+                    type: array
+                    items:
+                        type: ref
+                        refKind: '*'
+      relations:
+        implements:
+            field: implements
+            sourceKinds:
+                - Workflow
+                - Skill
+                - Agent
+            targetKinds:
+                - Contract
+            context: true
+            invalidate: true
+        needs:
+            field: needs
+            sourceKinds:
+                - Workflow
+                - Skill
+                - Agent
+            targetKinds:
+                - Contract
+            context: true
+            invalidate: true
+        rules:
+            field: rules
+            sourceKinds:
+                - Rule
+                - Text
+                - Contract
+                - Workflow
+                - Skill
+                - Agent
+            targetKinds:
+                - Rule
+            context: true
+            invalidate: true
+        uses:
+            field: uses
+            sourceKinds:
+                - Workflow
+                - Skill
+                - Agent
+            targetKinds:
+                - '*'
+            context: true
+            invalidate: true
+resources:
+    - identity:
+        apiVersion: markitect.example.org/v1alpha1
+        kind: Project
+        name: mymeetings-adoption-pilot
+        key: /Project/mymeetings-adoption-pilot
+      data:
+        areas:
+            - imports:
+                - source
+                - narrative
+              name: architecture
+              path: resources
+            - imports:
+                - architecture
+              name: engineering
+              path: agent-guidance
+            - name: source
+              path: src
+            - name: narrative
+              path: docs
+        checks:
+            - name: module-project-references
+              run:
+                - pwsh
+                - -NoProfile
+                - -File
+                - scripts/check-module-project-references.ps1
+        domains:
+            - package:mymeetings-architecture/domains/architecture.yaml
+        packages:
+            - archive: .markitect/packages/mymeetings-architecture-2.0.0.zip
+              name: mymeetings-architecture
+              sha256: 0ed97c9f0b21e10b5e2a0ff232bdb910bd468ac04f84441ae24d5b7cefb2b504
+              source: git:e0ae3c5181323e0d2a03312524010cc817652330
+              version: 2.0.0
+        targets:
+            - markdown
+            - codex
+      source:
+        path: markitect.yaml
+        line: 1
+        digest: sha256:dcb07a04dd812457cd489b0c2155d1b0112f46244ce0c1b80308945300a15d3d
+    - identity:
+        apiVersion: architecture.mymeetings.example/v1alpha1
+        kind: Aggregate
+        namespace: architecture
+        name: meeting
+        key: architecture/architecture.mymeetings.example/v1alpha1/Aggregate/meeting
+      data:
+        module:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            kind: Module
+            name: meetings
+            namespace: architecture
+        sourceFiles:
+            - src/Modules/Meetings/Domain/Meetings/Meeting.cs
+        summary: Meeting aggregate root owns attendees, waitlist, not-attendees and meeting lifecycle.
+      source:
+        path: resources/aggregate-meeting.yaml
+        line: 1
+        digest: sha256:3bda7498e19d18677aef69874ee020f0682019fd407b1622999e6ac871444eef
+      area: architecture
+    - identity:
+        apiVersion: architecture.mymeetings.example/v1alpha1
+        kind: Aggregate
+        namespace: architecture
+        name: meeting-comment
+        key: architecture/architecture.mymeetings.example/v1alpha1/Aggregate/meeting-comment
+      data:
+        module:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            kind: Module
+            name: meetings
+            namespace: architecture
+        sourceFiles:
+            - src/Modules/Meetings/Domain/MeetingComments/MeetingComment.cs
+        summary: MeetingComment aggregate root owns comment, reply and reaction behavior.
+      source:
+        path: resources/aggregate-meeting-comment.yaml
+        line: 1
+        digest: sha256:dbc3d7072bf2b0ce90673a1d5474f6c9a35677951c0272cbe2cdd8169c13f344
+      area: architecture
+    - identity:
+        apiVersion: architecture.mymeetings.example/v1alpha1
+        kind: Aggregate
+        namespace: architecture
+        name: meeting-group
+        key: architecture/architecture.mymeetings.example/v1alpha1/Aggregate/meeting-group
+      data:
+        module:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            kind: Module
+            name: meetings
+            namespace: architecture
+        sourceFiles:
+            - src/Modules/Meetings/Domain/MeetingGroups/MeetingGroup.cs
+        summary: MeetingGroup aggregate root creates Meetings and manages group membership.
+      source:
+        path: resources/aggregate-meeting-group.yaml
+        line: 1
+        digest: sha256:7237e6d6d58d06b31c34917d351d1c007e4c699bb9d4c87e64ff32e07434c18d
+      area: architecture
+    - identity:
+        apiVersion: architecture.mymeetings.example/v1alpha1
+        kind: Aggregate
+        namespace: architecture
+        name: meeting-proposal
+        key: architecture/architecture.mymeetings.example/v1alpha1/Aggregate/meeting-proposal
+      data:
+        module:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            kind: Module
+            name: administration
+            namespace: architecture
+        sourceFiles:
+            - src/Modules/Administration/Domain/MeetingGroupProposals/MeetingGroupProposal.cs
+        summary: MeetingGroupProposal aggregate root tracks proposal verification and acceptance.
+      source:
+        path: resources/aggregate-meeting-proposal.yaml
+        line: 1
+        digest: sha256:6d665dff3668c1f375a3742cc168a28024ff9f88fe60ff781e2ffcf8996b9093
+      area: architecture
+    - identity:
+        apiVersion: architecture.mymeetings.example/v1alpha1
+        kind: Aggregate
+        namespace: architecture
+        name: payer
+        key: architecture/architecture.mymeetings.example/v1alpha1/Aggregate/payer
+      data:
+        module:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            kind: Module
+            name: payments
+            namespace: architecture
+        sourceFiles:
+            - src/Modules/Payments/Domain/Payers/Payer.cs
+        summary: Payer aggregate root owns payer subscription state.
+      source:
+        path: resources/aggregate-payer.yaml
+        line: 1
+        digest: sha256:d1b2f28734dcba1a3a162b1687c66de8b7b6f528e79089fdfb4828c51e91a507
+      area: architecture
+    - identity:
+        apiVersion: architecture.mymeetings.example/v1alpha1
+        kind: Aggregate
+        namespace: architecture
+        name: user
+        key: architecture/architecture.mymeetings.example/v1alpha1/Aggregate/user
+      data:
+        module:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            kind: Module
+            name: user-access
+            namespace: architecture
+        sourceFiles:
+            - src/Modules/UserAccess/Domain/Users/User.cs
+        summary: User aggregate root owns authentication identity and credentials.
+      source:
+        path: resources/aggregate-user.yaml
+        line: 1
+        digest: sha256:01ef22a5b505db9fe8667d2affe6f5514c7f2826849a2ae58de6acd3d706a952
+      area: architecture
+    - identity:
+        apiVersion: architecture.mymeetings.example/v1alpha1
+        kind: Aggregate
+        namespace: architecture
+        name: user-registration
+        key: architecture/architecture.mymeetings.example/v1alpha1/Aggregate/user-registration
+      data:
+        module:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            kind: Module
+            name: registrations
+            namespace: architecture
+        sourceFiles:
+            - src/Modules/Registrations/Domain/UserRegistrations/UserRegistration.cs
+        summary: UserRegistration aggregate root tracks registration confirmation.
+      source:
+        path: resources/aggregate-user-registration.yaml
+        line: 1
+        digest: sha256:e60da1ef790ec6fb975c32ae07cd26a9a5f40e98f719241c7389eb7f1a5ed85f
+      area: architecture
+    - identity:
+        apiVersion: architecture.mymeetings.example/v1alpha1
+        kind: Common
+        namespace: architecture
+        name: aggregate-root-marker
+        key: architecture/architecture.mymeetings.example/v1alpha1/Common/aggregate-root-marker
+      data:
+        owner:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            kind: Core
+            name: core
+            namespace: architecture
+        sourceFiles:
+            - src/BuildingBlocks/Domain/IAggregateRoot.cs
+        summary: Shared aggregate-root marker used to distinguish aggregate roots in bounded contexts.
+      source:
+        path: resources/common-aggregate-root-marker.yaml
+        line: 1
+        digest: sha256:19fd4418ffe9641051476f5e31d229dab6035694c94afdc71c22aaff6a94e06a
+      area: architecture
+    - identity:
+        apiVersion: architecture.mymeetings.example/v1alpha1
+        kind: Common
+        namespace: architecture
+        name: sql-connection-factory
+        key: architecture/architecture.mymeetings.example/v1alpha1/Common/sql-connection-factory
+      data:
+        owner:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            kind: Core
+            name: core
+            namespace: architecture
+        sourceFiles:
+            - src/BuildingBlocks/Application/Data/ISqlConnectionFactory.cs
+        summary: Shared application abstraction used by read handlers to obtain a SQL connection.
+      source:
+        path: resources/common-sql-connection-factory.yaml
+        line: 1
+        digest: sha256:425a419c3a483f9c0873d626b611dc5daff60980ff944df923a0684656deb498
+      area: architecture
+    - identity:
+        apiVersion: architecture.mymeetings.example/v1alpha1
+        kind: Common
+        namespace: architecture
+        name: unit-of-work
+        key: architecture/architecture.mymeetings.example/v1alpha1/Common/unit-of-work
+      data:
+        owner:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            kind: Core
+            name: core
+            namespace: architecture
+        sourceFiles:
+            - src/BuildingBlocks/Infrastructure/IUnitOfWork.cs
+        summary: Shared infrastructure abstraction for committing unit-of-work changes.
+      source:
+        path: resources/common-unit-of-work.yaml
+        line: 1
+        digest: sha256:43fa2777f060e2d813ef39763b7fc7ccd5eb056ac51d4eac4072f08c61267092
+      area: architecture
+    - identity:
+        apiVersion: architecture.mymeetings.example/v1alpha1
+        kind: Core
+        namespace: architecture
+        name: core
+        key: architecture/architecture.mymeetings.example/v1alpha1/Core/core
+      data:
+        projectFiles:
+            - src/BuildingBlocks/Application/CompanyName.MyMeetings.BuildingBlocks.Application.csproj
+            - src/BuildingBlocks/Domain/CompanyName.MyMeetings.BuildingBlocks.Domain.csproj
+            - src/BuildingBlocks/Infrastructure/CompanyName.MyMeetings.BuildingBlocks.Infrastructure.csproj
+        purpose: Stable BuildingBlocks for shared domain and application abstractions.
+      source:
+        path: resources/core.yaml
+        line: 1
+        digest: sha256:d7c062010500b488e14f470e6b22902a93288a2f0ce4a540d795ffbe27ab046c
+      area: architecture
+    - identity:
+        apiVersion: architecture.mymeetings.example/v1alpha1
+        kind: Feature
+        namespace: architecture
+        name: authentication
+        key: architecture/architecture.mymeetings.example/v1alpha1/Feature/authentication
+      data:
+        documents:
+            - apiVersion: architecture.mymeetings.example/v1alpha1
+              kind: Narrative
+              name: architecture-test-decision
+              namespace: architecture
+        module:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            kind: Module
+            name: user-access
+            namespace: architecture
+        summary: Authenticate User credentials and expose permission-facing identity.
+      source:
+        path: resources/feature-authentication.yaml
+        line: 1
+        digest: sha256:1a315f8d73631cb7c533a7510df1090a40a195324567284acaba7ec0e3824793
+      area: architecture
+    - identity:
+        apiVersion: architecture.mymeetings.example/v1alpha1
+        kind: Feature
+        namespace: architecture
+        name: group-proposals
+        key: architecture/architecture.mymeetings.example/v1alpha1/Feature/group-proposals
+      data:
+        documents:
+            - apiVersion: architecture.mymeetings.example/v1alpha1
+              kind: Narrative
+              name: module-event-boundary-decision
+              namespace: architecture
+        module:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            kind: Module
+            name: administration
+            namespace: architecture
+        summary: Review and accept proposals for new Meeting Groups.
+      source:
+        path: resources/feature-group-proposals.yaml
+        line: 1
+        digest: sha256:cced0f41669df6a2a52ecd4f859737db71530618e583ca219bee2d0fe07cdaf4
+      area: architecture
+    - identity:
+        apiVersion: architecture.mymeetings.example/v1alpha1
+        kind: Feature
+        namespace: architecture
+        name: meeting-attendance
+        key: architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-attendance
+      data:
+        documents:
+            - apiVersion: architecture.mymeetings.example/v1alpha1
+              kind: Narrative
+              name: cqrs-read-model-decision
+              namespace: architecture
+            - apiVersion: architecture.mymeetings.example/v1alpha1
+              kind: Narrative
+              name: meeting-attendee-view
+              namespace: architecture
+            - apiVersion: architecture.mymeetings.example/v1alpha1
+              kind: Narrative
+              name: architecture-test-decision
+              namespace: architecture
+        module:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            kind: Module
+            name: meetings
+            namespace: architecture
+        summary: Read and change meeting attendee membership.
+      source:
+        path: resources/feature-meeting-attendance.yaml
+        line: 1
+        digest: sha256:0561d752aea2c5c82e2b8f18ce072089fd6530827d53d5a079526864192311aa
+      area: architecture
+    - identity:
+        apiVersion: architecture.mymeetings.example/v1alpha1
+        kind: Feature
+        namespace: architecture
+        name: meeting-fees
+        key: architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-fees
+      data:
+        documents:
+            - apiVersion: architecture.mymeetings.example/v1alpha1
+              kind: Narrative
+              name: module-event-boundary-decision
+              namespace: architecture
+        module:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            kind: Module
+            name: payments
+            namespace: architecture
+        summary: Read fees and payment state associated with Meetings.
+      source:
+        path: resources/feature-meeting-fees.yaml
+        line: 1
+        digest: sha256:862f97b78a6f6d40f65ba4c833001bc938c0eec0977c77ad7717e0387b52ffd1
+      area: architecture
+    - identity:
+        apiVersion: architecture.mymeetings.example/v1alpha1
+        kind: Feature
+        namespace: architecture
+        name: meeting-groups
+        key: architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-groups
+      data:
+        documents:
+            - apiVersion: architecture.mymeetings.example/v1alpha1
+              kind: Narrative
+              name: cqrs-read-model-decision
+              namespace: architecture
+            - apiVersion: architecture.mymeetings.example/v1alpha1
+              kind: Narrative
+              name: module-event-boundary-decision
+              namespace: architecture
+        module:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            kind: Module
+            name: meetings
+            namespace: architecture
+        summary: Read and propose Meeting Groups.
+      source:
+        path: resources/feature-meeting-groups.yaml
+        line: 1
+        digest: sha256:6c79cfbbb8b3e1bcd6daf0f9f817695dff7a3eaedc72088f23b6076c01d90968
+      area: architecture
+    - identity:
+        apiVersion: architecture.mymeetings.example/v1alpha1
+        kind: Feature
+        namespace: architecture
+        name: meeting-lifecycle
+        key: architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-lifecycle
+      data:
+        documents:
+            - apiVersion: architecture.mymeetings.example/v1alpha1
+              kind: Narrative
+              name: cqrs-read-model-decision
+              namespace: architecture
+            - apiVersion: architecture.mymeetings.example/v1alpha1
+              kind: Narrative
+              name: architecture-test-decision
+              namespace: architecture
+        module:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            kind: Module
+            name: meetings
+            namespace: architecture
+        summary: Create and cancel scheduled Meetings.
+      source:
+        path: resources/feature-meeting-lifecycle.yaml
+        line: 1
+        digest: sha256:4dea5fbbea6cb2fecb14c72292269b8e46ad0e0fc4161685749be9b70ad05c48
+      area: architecture
+    - identity:
+        apiVersion: architecture.mymeetings.example/v1alpha1
+        kind: Feature
+        namespace: architecture
+        name: price-list
+        key: architecture/architecture.mymeetings.example/v1alpha1/Feature/price-list
+      data:
+        documents:
+            - apiVersion: architecture.mymeetings.example/v1alpha1
+              kind: Narrative
+              name: architecture-test-decision
+              namespace: architecture
+        module:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            kind: Module
+            name: payments
+            namespace: architecture
+        summary: Manage reusable price-list items.
+      source:
+        path: resources/feature-price-list.yaml
+        line: 1
+        digest: sha256:bc359ceb773b84b629f2329cffb144953e45cfd3650050386819c9713503fb9c
+      area: architecture
+    - identity:
+        apiVersion: architecture.mymeetings.example/v1alpha1
+        kind: Feature
+        namespace: architecture
+        name: user-registration
+        key: architecture/architecture.mymeetings.example/v1alpha1/Feature/user-registration
+      data:
+        documents:
+            - apiVersion: architecture.mymeetings.example/v1alpha1
+              kind: Narrative
+              name: module-event-boundary-decision
+              namespace: architecture
+        module:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            kind: Module
+            name: registrations
+            namespace: architecture
+        summary: Register a new User and publish the resulting event.
+      source:
+        path: resources/feature-user-registration.yaml
+        line: 1
+        digest: sha256:e56438609a9cbe65a6bb0e4bd3f3b2e91835b12b4ecc716d1b27ec8476f02b4a
+      area: architecture
+    - identity:
+        apiVersion: architecture.mymeetings.example/v1alpha1
+        kind: Handler
+        namespace: architecture
+        name: accept-proposal
+        key: architecture/architecture.mymeetings.example/v1alpha1/Handler/accept-proposal
+      data:
+        common: []
+        sourceFiles:
+            - src/Modules/Administration/Application/MeetingGroupProposals/AcceptMeetingGroupProposal/AcceptMeetingGroupProposalCommandHandler.cs
+        summary: Command handler that accepts an Administration proposal.
+      source:
+        path: resources/handler-accept-proposal.yaml
+        line: 1
+        digest: sha256:caba3890f1cede5863a917b13322d6409de7b60155c193b3648a6514e3b775e4
+      area: architecture
+    - identity:
+        apiVersion: architecture.mymeetings.example/v1alpha1
+        kind: Handler
+        namespace: architecture
+        name: add-meeting-attendee
+        key: architecture/architecture.mymeetings.example/v1alpha1/Handler/add-meeting-attendee
+      data:
+        common: []
+        sourceFiles:
+            - src/Modules/Meetings/Application/Meetings/AddMeetingAttendee/AddMeetingAttendeeCommandHandler.cs
+        summary: Command handler that adds a member as attendee.
+      source:
+        path: resources/handler-add-meeting-attendee.yaml
+        line: 1
+        digest: sha256:0c53616c51fb164e96f6a574ab28003f6963b68b00967788ce6baaf3ceb0becb
+      area: architecture
+    - identity:
+        apiVersion: architecture.mymeetings.example/v1alpha1
+        kind: Handler
+        namespace: architecture
+        name: authenticate
+        key: architecture/architecture.mymeetings.example/v1alpha1/Handler/authenticate
+      data:
+        common: []
+        sourceFiles:
+            - src/Modules/UserAccess/Application/Authentication/Authenticate/AuthenticateCommandHandler.cs
+        summary: Command handler that authenticates a User.
+      source:
+        path: resources/handler-authenticate.yaml
+        line: 1
+        digest: sha256:ce4ccd6ecb189018b61cf0170ced2d8f879ed0e4dd343085179f5259f0d9e208
+      area: architecture
+    - identity:
+        apiVersion: architecture.mymeetings.example/v1alpha1
+        kind: Handler
+        namespace: architecture
+        name: cancel-meeting
+        key: architecture/architecture.mymeetings.example/v1alpha1/Handler/cancel-meeting
+      data:
+        common: []
+        sourceFiles:
+            - src/Modules/Meetings/Application/Meetings/CancelMeeting/CancelMeetingCommandHandler.cs
+        summary: Command handler that cancels a Meeting.
+      source:
+        path: resources/handler-cancel-meeting.yaml
+        line: 1
+        digest: sha256:396f911dff3d22236830c6fa760edcbf7a1863c1b3ffe2318916154990a30f6a
+      area: architecture
+    - identity:
+        apiVersion: architecture.mymeetings.example/v1alpha1
+        kind: Handler
+        namespace: architecture
+        name: create-meeting
+        key: architecture/architecture.mymeetings.example/v1alpha1/Handler/create-meeting
+      data:
+        common: []
+        sourceFiles:
+            - src/Modules/Meetings/Application/Meetings/CreateMeeting/CreateMeetingCommandHandler.cs
+        summary: Command handler that asks MeetingGroup to create the Meeting.
+      source:
+        path: resources/handler-create-meeting.yaml
+        line: 1
+        digest: sha256:ea027eb529e9493ce7d2eec2a0f5827af6c7e6bd52e48a6f1c7af0bb74c630c9
+      area: architecture
+    - identity:
+        apiVersion: architecture.mymeetings.example/v1alpha1
+        kind: Handler
+        namespace: architecture
+        name: create-price-list-item
+        key: architecture/architecture.mymeetings.example/v1alpha1/Handler/create-price-list-item
+      data:
+        common: []
+        sourceFiles:
+            - src/Modules/Payments/Application/PriceListItems/CreatePriceListItem/CreatePriceListItemCommandHandler.cs
+        summary: Command handler that creates a Payments price-list item.
+      source:
+        path: resources/handler-create-price-list-item.yaml
+        line: 1
+        digest: sha256:c93d960887db705f661e2ef40c31ba50239e449a2506c03a52f8f4807e1859dd
+      area: architecture
+    - identity:
+        apiVersion: architecture.mymeetings.example/v1alpha1
+        kind: Handler
+        namespace: architecture
+        name: get-meeting-attendees
+        key: architecture/architecture.mymeetings.example/v1alpha1/Handler/get-meeting-attendees
+      data:
+        common:
+            - apiVersion: architecture.mymeetings.example/v1alpha1
+              kind: Common
+              name: sql-connection-factory
+              namespace: architecture
+        sourceFiles:
+            - src/Modules/Meetings/Application/Meetings/GetMeetingAttendees/GetMeetingAttendeesQueryHandler.cs
+        summary: Read handler for attendee rows filtered by MeetingId.
+      source:
+        path: resources/handler-get-meeting-attendees.yaml
+        line: 1
+        digest: sha256:fa33297271d78cc07e200edfa970fd6c3c4f72f39408cf7c1f8ea1539f1cbd39
+      area: architecture
+    - identity:
+        apiVersion: architecture.mymeetings.example/v1alpha1
+        kind: Handler
+        namespace: architecture
+        name: get-meeting-fees
+        key: architecture/architecture.mymeetings.example/v1alpha1/Handler/get-meeting-fees
+      data:
+        common: []
+        sourceFiles:
+            - src/Modules/Payments/Application/MeetingFees/GetMeetingFees/GetMeetingFeesQueryHandler.cs
+        summary: Read handler for fees associated with a Meeting.
+      source:
+        path: resources/handler-get-meeting-fees.yaml
+        line: 1
+        digest: sha256:d84bba268d6c6076b2aa3ee6726ae00ba4488ff46e5844e570d6656ea639d99c
+      area: architecture
+    - identity:
+        apiVersion: architecture.mymeetings.example/v1alpha1
+        kind: Handler
+        namespace: architecture
+        name: get-meeting-group-details
+        key: architecture/architecture.mymeetings.example/v1alpha1/Handler/get-meeting-group-details
+      data:
+        common: []
+        sourceFiles:
+            - src/Modules/Meetings/Application/MeetingGroups/GetMeetingGroupDetails/GetMeetingGroupDetailsQueryHandler.cs
+        summary: Read handler for MeetingGroup details.
+      source:
+        path: resources/handler-get-meeting-group-details.yaml
+        line: 1
+        digest: sha256:5f9fc74a0911ecadb0b70876b92a6a2262279d7d7304258c1f3bef25e4326aee
+      area: architecture
+    - identity:
+        apiVersion: architecture.mymeetings.example/v1alpha1
+        kind: Handler
+        namespace: architecture
+        name: get-member
+        key: architecture/architecture.mymeetings.example/v1alpha1/Handler/get-member
+      data:
+        common: []
+        sourceFiles:
+            - src/Modules/Administration/Application/Members/GetMember/GetMemberQueryHandler.cs
+        summary: Read handler for Administration member details.
+      source:
+        path: resources/handler-get-member.yaml
+        line: 1
+        digest: sha256:02706d1a20cb04bfd6a68b2beefb56e5d16dd6ade5feaea4532bf41d210939c9
+      area: architecture
+    - identity:
+        apiVersion: architecture.mymeetings.example/v1alpha1
+        kind: Handler
+        namespace: architecture
+        name: propose-meeting-group
+        key: architecture/architecture.mymeetings.example/v1alpha1/Handler/propose-meeting-group
+      data:
+        common: []
+        sourceFiles:
+            - src/Modules/Meetings/Application/MeetingGroupProposals/ProposeMeetingGroup/ProposeMeetingGroupCommandHandler.cs
+        summary: Command handler that creates a MeetingGroup proposal.
+      source:
+        path: resources/handler-propose-meeting-group.yaml
+        line: 1
+        digest: sha256:90ad95b422b2efeb1e618ffaa11bced281b7271c7878e84bf83085d7a89be686
+      area: architecture
+    - identity:
+        apiVersion: architecture.mymeetings.example/v1alpha1
+        kind: Handler
+        namespace: architecture
+        name: register-new-user
+        key: architecture/architecture.mymeetings.example/v1alpha1/Handler/register-new-user
+      data:
+        common: []
+        sourceFiles:
+            - src/Modules/Registrations/Application/UserRegistrations/RegisterNewUser/RegisterNewUserCommandHandler.cs
+        summary: Command handler that registers a new User.
+      source:
+        path: resources/handler-register-new-user.yaml
+        line: 1
+        digest: sha256:c1154c29def643219bc255e9184bebcd4de043714503959afb56c5608933af87
+      area: architecture
+    - identity:
+        apiVersion: architecture.mymeetings.example/v1alpha1
+        kind: Interface
+        namespace: architecture
+        name: administration-events
+        key: architecture/architecture.mymeetings.example/v1alpha1/Interface/administration-events
+      data:
+        provider:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            kind: Module
+            name: administration
+            namespace: architecture
+        sourceFiles:
+            - src/Modules/Administration/IntegrationEvents/MeetingGroupProposals/MeetingGroupProposalAcceptedIntegrationEvent.cs
+        summary: Administration integration-event contract assembly; one accepted-proposal event is declared.
+      source:
+        path: resources/interface-administration-events.yaml
+        line: 1
+        digest: sha256:865bb89fd64d9f01bab5871fd2fda62900cf165888e813f09170b4ac9ac302ed
+      area: architecture
+    - identity:
+        apiVersion: architecture.mymeetings.example/v1alpha1
+        kind: Interface
+        namespace: architecture
+        name: administration-module-api
+        key: architecture/architecture.mymeetings.example/v1alpha1/Interface/administration-module-api
+      data:
+        provider:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            kind: Module
+            name: administration
+            namespace: architecture
+        sourceFiles:
+            - src/Modules/Administration/Application/Contracts/IAdministrationModule.cs
+        summary: Module facade contract for Administration.
+      source:
+        path: resources/interface-administration-module-api.yaml
+        line: 1
+        digest: sha256:7bb20be900a5c04347a67eec7ec6b1b8e4da2753d23c24dc95623e1fd03cf258
+      area: architecture
+    - identity:
+        apiVersion: architecture.mymeetings.example/v1alpha1
+        kind: Interface
+        namespace: architecture
+        name: meetings-events
+        key: architecture/architecture.mymeetings.example/v1alpha1/Interface/meetings-events
+      data:
+        provider:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            kind: Module
+            name: meetings
+            namespace: architecture
+        sourceFiles:
+            - src/Modules/Meetings/IntegrationEvents/MemberCreatedIntegrationEvent.cs
+            - src/Modules/Meetings/IntegrationEvents/MeetingGroupProposedIntegrationEvent.cs
+            - src/Modules/Meetings/IntegrationEvents/MeetingAttendeeAddedIntegrationEvent.cs
+        summary: Meetings integration-event contracts for new members, proposed groups and attendee additions.
+      source:
+        path: resources/interface-meetings-events.yaml
+        line: 1
+        digest: sha256:77b2130ecf5657e4a6e40ce1b698998c0675276b50ea1e6bd7dfe8d0519e8cf0
+      area: architecture
+    - identity:
+        apiVersion: architecture.mymeetings.example/v1alpha1
+        kind: Interface
+        namespace: architecture
+        name: meetings-module-api
+        key: architecture/architecture.mymeetings.example/v1alpha1/Interface/meetings-module-api
+      data:
+        provider:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            kind: Module
+            name: meetings
+            namespace: architecture
+        sourceFiles:
+            - src/Modules/Meetings/Application/Contracts/IMeetingsModule.cs
+        summary: Module facade contract for Meetings.
+      source:
+        path: resources/interface-meetings-module-api.yaml
+        line: 1
+        digest: sha256:c323228dd2f87ec92d5b177dad5b796f599719c6d16cc8acf04c64c937098283
+      area: architecture
+    - identity:
+        apiVersion: architecture.mymeetings.example/v1alpha1
+        kind: Interface
+        namespace: architecture
+        name: payments-events
+        key: architecture/architecture.mymeetings.example/v1alpha1/Interface/payments-events
+      data:
+        provider:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            kind: Module
+            name: payments
+            namespace: architecture
+        sourceFiles:
+            - src/Modules/Payments/IntegrationEvents/MeetingFeePaidIntegrationEvent.cs
+            - src/Modules/Payments/IntegrationEvents/SubscriptionExpirationDateChangedIntegrationEvent.cs
+        summary: Payments integration-event contracts for fee payment and subscription expiration.
+      source:
+        path: resources/interface-payments-events.yaml
+        line: 1
+        digest: sha256:e4c81a05cfe4c942e6cd4bab7decc30490fbf971af3de1581338a830e39a090a
+      area: architecture
+    - identity:
+        apiVersion: architecture.mymeetings.example/v1alpha1
+        kind: Interface
+        namespace: architecture
+        name: payments-module-api
+        key: architecture/architecture.mymeetings.example/v1alpha1/Interface/payments-module-api
+      data:
+        provider:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            kind: Module
+            name: payments
+            namespace: architecture
+        sourceFiles:
+            - src/Modules/Payments/Application/Contracts/IPaymentsModule.cs
+        summary: Module facade contract for Payments.
+      source:
+        path: resources/interface-payments-module-api.yaml
+        line: 1
+        digest: sha256:fbd85ddce6f0629089a97e534989355bd442bf4da0336a255dd4a5e99c387c33
+      area: architecture
+    - identity:
+        apiVersion: architecture.mymeetings.example/v1alpha1
+        kind: Interface
+        namespace: architecture
+        name: registrations-events
+        key: architecture/architecture.mymeetings.example/v1alpha1/Interface/registrations-events
+      data:
+        provider:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            kind: Module
+            name: registrations
+            namespace: architecture
+        sourceFiles:
+            - src/Modules/Registrations/IntegrationEvents/NewUserRegisteredIntegrationEvent.cs
+        summary: Registration integration-event contract for new user registration.
+      source:
+        path: resources/interface-registrations-events.yaml
+        line: 1
+        digest: sha256:4f188cb65316b7a0612270ddf8eca4b347c04676106e198978b27db5233e7d46
+      area: architecture
+    - identity:
+        apiVersion: architecture.mymeetings.example/v1alpha1
+        kind: Interface
+        namespace: architecture
+        name: registrations-module-api
+        key: architecture/architecture.mymeetings.example/v1alpha1/Interface/registrations-module-api
+      data:
+        provider:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            kind: Module
+            name: registrations
+            namespace: architecture
+        sourceFiles:
+            - src/Modules/Registrations/Application/Contracts/IRegistrationsModule.cs
+        summary: Module facade contract for Registrations.
+      source:
+        path: resources/interface-registrations-module-api.yaml
+        line: 1
+        digest: sha256:c2a247760ea7eb0882f80d936293998ed771c3bc40e93b281e1c4ae29970d954
+      area: architecture
+    - identity:
+        apiVersion: architecture.mymeetings.example/v1alpha1
+        kind: Interface
+        namespace: architecture
+        name: user-access-events
+        key: architecture/architecture.mymeetings.example/v1alpha1/Interface/user-access-events
+      data:
+        provider:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            kind: Module
+            name: user-access
+            namespace: architecture
+        sourceFiles: []
+        summary: The referenced UserAccess IntegrationEvents project currently declares no event source file in this snapshot.
+      source:
+        path: resources/interface-user-access-events.yaml
+        line: 1
+        digest: sha256:4acf2aa3ff0a16aac301ae7b58d530f749f687f5097e9746f3fbe73f815cb90e
+      area: architecture
+    - identity:
+        apiVersion: architecture.mymeetings.example/v1alpha1
+        kind: Interface
+        namespace: architecture
+        name: user-access-module-api
+        key: architecture/architecture.mymeetings.example/v1alpha1/Interface/user-access-module-api
+      data:
+        provider:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            kind: Module
+            name: user-access
+            namespace: architecture
+        sourceFiles:
+            - src/Modules/UserAccess/Application/Contracts/IUserAccessModule.cs
+        summary: Module facade contract for UserAccess.
+      source:
+        path: resources/interface-user-access-module-api.yaml
+        line: 1
+        digest: sha256:c2ec2903d0fce934b2e3eef2fa01ffa026059e21b50417e268ecabd5b2e17a36
+      area: architecture
+    - identity:
+        apiVersion: architecture.mymeetings.example/v1alpha1
+        kind: Module
+        namespace: architecture
+        name: administration
+        key: architecture/architecture.mymeetings.example/v1alpha1/Module/administration
+      data:
+        dependsOn:
+            - apiVersion: architecture.mymeetings.example/v1alpha1
+              kind: Core
+              name: core
+              namespace: architecture
+            - apiVersion: architecture.mymeetings.example/v1alpha1
+              kind: Interface
+              name: meetings-events
+              namespace: architecture
+            - apiVersion: architecture.mymeetings.example/v1alpha1
+              kind: Interface
+              name: registrations-events
+              namespace: architecture
+            - apiVersion: architecture.mymeetings.example/v1alpha1
+              kind: Interface
+              name: user-access-events
+              namespace: architecture
+        projectFiles:
+            - src/Modules/Administration/Application/CompanyName.MyMeetings.Modules.Administration.Application.csproj
+            - src/Modules/Administration/Domain/CompanyName.MyMeetings.Modules.Administration.Domain.csproj
+            - src/Modules/Administration/IntegrationEvents/CompanyName.MyMeetings.Modules.Administration.IntegrationEvents.csproj
+        purpose: Administration of members and review of meeting-group proposals.
+      source:
+        path: resources/module-administration.yaml
+        line: 1
+        digest: sha256:9f22dcb3c541268bf833e1bd51483d70eca873e324cf7ef6a5fbc3f49e4cea8c
+      area: architecture
+    - identity:
+        apiVersion: architecture.mymeetings.example/v1alpha1
+        kind: Module
+        namespace: architecture
+        name: meetings
+        key: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+      data:
+        dependsOn:
+            - apiVersion: architecture.mymeetings.example/v1alpha1
+              kind: Core
+              name: core
+              namespace: architecture
+            - apiVersion: architecture.mymeetings.example/v1alpha1
+              kind: Interface
+              name: administration-events
+              namespace: architecture
+            - apiVersion: architecture.mymeetings.example/v1alpha1
+              kind: Interface
+              name: payments-events
+              namespace: architecture
+            - apiVersion: architecture.mymeetings.example/v1alpha1
+              kind: Interface
+              name: registrations-events
+              namespace: architecture
+            - apiVersion: architecture.mymeetings.example/v1alpha1
+              kind: Interface
+              name: user-access-events
+              namespace: architecture
+        projectFiles:
+            - src/Modules/Meetings/Application/CompanyName.MyMeetings.Modules.Meetings.Application.csproj
+            - src/Modules/Meetings/Domain/CompanyName.MyMeetings.Modules.Meetings.Domain.csproj
+            - src/Modules/Meetings/IntegrationEvents/CompanyName.MyMeetings.Modules.Meetings.IntegrationEvents.csproj
+        purpose: Meeting groups, meetings, attendance, comments and membership.
+      source:
+        path: resources/module-meetings.yaml
+        line: 1
+        digest: sha256:9a4e2ab5611609fc6e713b8a0c874c42e76942fc7448b72256506c6e7477f75f
+      area: architecture
+    - identity:
+        apiVersion: architecture.mymeetings.example/v1alpha1
+        kind: Module
+        namespace: architecture
+        name: payments
+        key: architecture/architecture.mymeetings.example/v1alpha1/Module/payments
+      data:
+        dependsOn:
+            - apiVersion: architecture.mymeetings.example/v1alpha1
+              kind: Core
+              name: core
+              namespace: architecture
+            - apiVersion: architecture.mymeetings.example/v1alpha1
+              kind: Interface
+              name: administration-events
+              namespace: architecture
+            - apiVersion: architecture.mymeetings.example/v1alpha1
+              kind: Interface
+              name: meetings-events
+              namespace: architecture
+            - apiVersion: architecture.mymeetings.example/v1alpha1
+              kind: Interface
+              name: registrations-events
+              namespace: architecture
+            - apiVersion: architecture.mymeetings.example/v1alpha1
+              kind: Interface
+              name: user-access-events
+              namespace: architecture
+        projectFiles:
+            - src/Modules/Payments/Application/CompanyName.MyMeetings.Modules.Payments.Application.csproj
+            - src/Modules/Payments/Domain/CompanyName.MyMeetings.Modules.Payments.Domain.csproj
+            - src/Modules/Payments/IntegrationEvents/CompanyName.MyMeetings.Modules.Payments.IntegrationEvents.csproj
+        purpose: Payers, subscriptions, price-list items and meeting fees.
+      source:
+        path: resources/module-payments.yaml
+        line: 1
+        digest: sha256:f1baf2c0b825bdd79574c03c51792f34d893ad1070ec9a5a447de0d6bf5ef1b0
+      area: architecture
+    - identity:
+        apiVersion: architecture.mymeetings.example/v1alpha1
+        kind: Module
+        namespace: architecture
+        name: registrations
+        key: architecture/architecture.mymeetings.example/v1alpha1/Module/registrations
+      data:
+        dependsOn:
+            - apiVersion: architecture.mymeetings.example/v1alpha1
+              kind: Core
+              name: core
+              namespace: architecture
+        projectFiles:
+            - src/Modules/Registrations/Application/CompanyName.MyMeetings.Modules.Registrations.Application.csproj
+            - src/Modules/Registrations/Domain/CompanyName.MyMeetings.Modules.Registrations.Domain.csproj
+            - src/Modules/Registrations/IntegrationEvents/CompanyName.MyMeetings.Modules.Registrations.IntegrationEvents.csproj
+        purpose: Registration and confirmation of new users.
+      source:
+        path: resources/module-registrations.yaml
+        line: 1
+        digest: sha256:4f880fd5a2854b8840d9638eaf368317a74861f80ebd2b1a3cea21ad79fbd8dd
+      area: architecture
+    - identity:
+        apiVersion: architecture.mymeetings.example/v1alpha1
+        kind: Module
+        namespace: architecture
+        name: user-access
+        key: architecture/architecture.mymeetings.example/v1alpha1/Module/user-access
+      data:
+        dependsOn:
+            - apiVersion: architecture.mymeetings.example/v1alpha1
+              kind: Core
+              name: core
+              namespace: architecture
+            - apiVersion: architecture.mymeetings.example/v1alpha1
+              kind: Interface
+              name: meetings-events
+              namespace: architecture
+        projectFiles:
+            - src/Modules/UserAccess/Application/CompanyName.MyMeetings.Modules.UserAccess.Application.csproj
+            - src/Modules/UserAccess/Domain/CompanyName.MyMeetings.Modules.UserAccess.Domain.csproj
+            - src/Modules/UserAccess/IntegrationEvents/CompanyName.MyMeetings.Modules.UserAccess.IntegrationEvents.csproj
+        purpose: Authentication, users and authorization-facing permissions.
+      source:
+        path: resources/module-user-access.yaml
+        line: 1
+        digest: sha256:eca6b3a90a0c8d3229932971f25214b7c75e5aa279106531e5bd4d934adf6d63
+      area: architecture
+    - identity:
+        apiVersion: architecture.mymeetings.example/v1alpha1
+        kind: Narrative
+        namespace: architecture
+        name: architecture-test-decision
+        key: architecture/architecture.mymeetings.example/v1alpha1/Narrative/architecture-test-decision
+      data:
+        owner:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            kind: Module
+            name: meetings
+            namespace: architecture
+        sourceFiles:
+            - docs/architecture-decision-log/0017-implement-archictecture-tests.md
+        summary: Human-owned ADR records project-owned architecture tests for rules the compiler cannot enforce.
+      source:
+        path: resources/narrative-architecture-test-decision.yaml
+        line: 1
+        digest: sha256:da54a85673409c11d60d584394ba93fb2f7c54036eed5393942848154c08f449
+      area: architecture
+    - identity:
+        apiVersion: architecture.mymeetings.example/v1alpha1
+        kind: Narrative
+        namespace: architecture
+        name: cqrs-read-model-decision
+        key: architecture/architecture.mymeetings.example/v1alpha1/Narrative/cqrs-read-model-decision
+      data:
+        owner:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            kind: Module
+            name: meetings
+            namespace: architecture
+        sourceFiles:
+            - docs/architecture-decision-log/0007-use-cqrs-architectural-style.md
+        summary: Human-owned ADR records the separate relational read model and write aggregate model.
+      source:
+        path: resources/narrative-cqrs-read-model-decision.yaml
+        line: 1
+        digest: sha256:4ac9d7ba82287c9e3ec72d8540f32d0096e1d5f31ab4e02f8d4c5031321de989
+      area: architecture
+    - identity:
+        apiVersion: architecture.mymeetings.example/v1alpha1
+        kind: Narrative
+        namespace: architecture
+        name: meeting-attendee-view
+        key: architecture/architecture.mymeetings.example/v1alpha1/Narrative/meeting-attendee-view
+      data:
+        owner:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            kind: Module
+            name: meetings
+            namespace: architecture
+        sourceFiles:
+            - src/Database/CompanyName.MyMeetings.Database/Structure/meetings/Views/v_MeetingAttendees.sql
+        summary: Human-owned SQL view defines one row per attendee joined to member display data.
+      source:
+        path: resources/narrative-meeting-attendee-view.yaml
+        line: 1
+        digest: sha256:3c8ed59f138b6e6c05db819ef9be3fdf096267d70c694a360f678896f0907952
+      area: architecture
+    - identity:
+        apiVersion: architecture.mymeetings.example/v1alpha1
+        kind: Narrative
+        namespace: architecture
+        name: module-event-boundary-decision
+        key: architecture/architecture.mymeetings.example/v1alpha1/Narrative/module-event-boundary-decision
+      data:
+        owner:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            kind: Module
+            name: meetings
+            namespace: architecture
+        sourceFiles:
+            - docs/architecture-decision-log/0014-event-driven-communication-between-modules.md
+        summary: Human-owned ADR records the intended event-based inter-module communication boundary.
+      source:
+        path: resources/narrative-module-event-boundary-decision.yaml
+        line: 1
+        digest: sha256:e47c58fa23325956f73f0b96fcd22c26fc98d11445f029cc7fdbde8f684022ce
+      area: architecture
+    - identity:
+        apiVersion: architecture.mymeetings.example/v1alpha1
+        kind: Product
+        namespace: architecture
+        name: mymeetings
+        key: architecture/architecture.mymeetings.example/v1alpha1/Product/mymeetings
+      data:
+        components:
+            - apiVersion: architecture.mymeetings.example/v1alpha1
+              kind: Core
+              name: core
+              namespace: architecture
+            - apiVersion: architecture.mymeetings.example/v1alpha1
+              kind: Module
+              name: administration
+              namespace: architecture
+            - apiVersion: architecture.mymeetings.example/v1alpha1
+              kind: Module
+              name: meetings
+              namespace: architecture
+            - apiVersion: architecture.mymeetings.example/v1alpha1
+              kind: Module
+              name: payments
+              namespace: architecture
+            - apiVersion: architecture.mymeetings.example/v1alpha1
+              kind: Module
+              name: registrations
+              namespace: architecture
+            - apiVersion: architecture.mymeetings.example/v1alpha1
+              kind: Module
+              name: user-access
+              namespace: architecture
+        purpose: Compose the MyMeetings modular monolith from stable BuildingBlocks and five business Modules.
+      source:
+        path: resources/product-mymeetings.yaml
+        line: 1
+        digest: sha256:2a59ad0a7bb0d62537dcad17c9b4fa2e9714c3e38ea3cdb186ff3986bc006aa1
+      area: architecture
+    - identity:
+        apiVersion: architecture.mymeetings.example/v1alpha1
+        kind: UseCase
+        namespace: architecture
+        name: accept-proposal
+        key: architecture/architecture.mymeetings.example/v1alpha1/UseCase/accept-proposal
+      labels:
+        feature-ownership: required
+      data:
+        aggregates:
+            - apiVersion: architecture.mymeetings.example/v1alpha1
+              kind: Aggregate
+              name: meeting-proposal
+              namespace: architecture
+        feature:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            kind: Feature
+            name: group-proposals
+            namespace: architecture
+        handler:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            kind: Handler
+            name: accept-proposal
+            namespace: architecture
+        intent: Command
+        module:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            kind: Module
+            name: administration
+            namespace: architecture
+        sourceFiles:
+            - src/Modules/Administration/Application/MeetingGroupProposals/AcceptMeetingGroupProposal/AcceptMeetingGroupProposalCommand.cs
+        summary: Accept a verified MeetingGroup proposal.
+        validators: []
+      source:
+        path: resources/usecase-accept-proposal.yaml
+        line: 1
+        digest: sha256:f607be096ffc27cc48d80eef6455d49a49a6327f12fb576b28f2f975b0418df3
+      area: architecture
+    - identity:
+        apiVersion: architecture.mymeetings.example/v1alpha1
+        kind: UseCase
+        namespace: architecture
+        name: add-meeting-attendee
+        key: architecture/architecture.mymeetings.example/v1alpha1/UseCase/add-meeting-attendee
+      labels:
+        feature-ownership: required
+        validation: required
+      data:
+        aggregates:
+            - apiVersion: architecture.mymeetings.example/v1alpha1
+              kind: Aggregate
+              name: meeting
+              namespace: architecture
+        feature:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            kind: Feature
+            name: meeting-attendance
+            namespace: architecture
+        handler:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            kind: Handler
+            name: add-meeting-attendee
+            namespace: architecture
+        intent: Command
+        module:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            kind: Module
+            name: meetings
+            namespace: architecture
+        sourceFiles:
+            - src/Modules/Meetings/Application/Meetings/AddMeetingAttendee/AddMeetingAttendeeCommand.cs
+        summary: Add a member to a Meeting as an attendee.
+        validators: []
+      source:
+        path: resources/usecase-add-meeting-attendee.yaml
+        line: 1
+        digest: sha256:64176c528b01f2c22cdb7737c459d1623a44fc9f934be556cd040a37997e6790
+      area: architecture
+    - identity:
+        apiVersion: architecture.mymeetings.example/v1alpha1
+        kind: UseCase
+        namespace: architecture
+        name: authenticate
+        key: architecture/architecture.mymeetings.example/v1alpha1/UseCase/authenticate
+      labels:
+        feature-ownership: required
+      data:
+        aggregates:
+            - apiVersion: architecture.mymeetings.example/v1alpha1
+              kind: Aggregate
+              name: user
+              namespace: architecture
+        feature:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            kind: Feature
+            name: authentication
+            namespace: architecture
+        handler:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            kind: Handler
+            name: authenticate
+            namespace: architecture
+        intent: Command
+        module:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            kind: Module
+            name: user-access
+            namespace: architecture
+        sourceFiles:
+            - src/Modules/UserAccess/Application/Authentication/Authenticate/AuthenticateCommand.cs
+        summary: Authenticate a user with credentials.
+        validators:
+            - apiVersion: architecture.mymeetings.example/v1alpha1
+              kind: Validator
+              name: authenticate
+              namespace: architecture
+      source:
+        path: resources/usecase-authenticate.yaml
+        line: 1
+        digest: sha256:02cf59d4f10b7c3d405dcfd12ce2708d16cf16c11fdc4f81199324f585dec9b9
+      area: architecture
+    - identity:
+        apiVersion: architecture.mymeetings.example/v1alpha1
+        kind: UseCase
+        namespace: architecture
+        name: cancel-meeting
+        key: architecture/architecture.mymeetings.example/v1alpha1/UseCase/cancel-meeting
+      labels:
+        feature-ownership: required
+        validation: required
+      data:
+        aggregates:
+            - apiVersion: architecture.mymeetings.example/v1alpha1
+              kind: Aggregate
+              name: meeting
+              namespace: architecture
+        feature:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            kind: Feature
+            name: meeting-lifecycle
+            namespace: architecture
+        handler:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            kind: Handler
+            name: cancel-meeting
+            namespace: architecture
+        intent: Command
+        module:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            kind: Module
+            name: meetings
+            namespace: architecture
+        sourceFiles:
+            - src/Modules/Meetings/Application/Meetings/CancelMeeting/CancelMeetingCommand.cs
+        summary: Cancel a scheduled Meeting.
+        validators: []
+      source:
+        path: resources/usecase-cancel-meeting.yaml
+        line: 1
+        digest: sha256:94133b17624821827a147c42d043cfaf4de7d4f4b18e66488b7b8aed89f9e25a
+      area: architecture
+    - identity:
+        apiVersion: architecture.mymeetings.example/v1alpha1
+        kind: UseCase
+        namespace: architecture
+        name: create-meeting
+        key: architecture/architecture.mymeetings.example/v1alpha1/UseCase/create-meeting
+      labels:
+        feature-ownership: required
+      data:
+        aggregates:
+            - apiVersion: architecture.mymeetings.example/v1alpha1
+              kind: Aggregate
+              name: meeting-group
+              namespace: architecture
+        feature:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            kind: Feature
+            name: meeting-lifecycle
+            namespace: architecture
+        handler:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            kind: Handler
+            name: create-meeting
+            namespace: architecture
+        intent: Command
+        module:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            kind: Module
+            name: meetings
+            namespace: architecture
+        sourceFiles:
+            - src/Modules/Meetings/Application/Meetings/CreateMeeting/CreateMeetingCommand.cs
+        summary: Create a Meeting through its owning MeetingGroup.
+        validators: []
+      source:
+        path: resources/usecase-create-meeting.yaml
+        line: 1
+        digest: sha256:b5076af83aed7ebdb1be498d7771237905ae8eceb1a70cc1e0c9628ec13aee5b
+      area: architecture
+    - identity:
+        apiVersion: architecture.mymeetings.example/v1alpha1
+        kind: UseCase
+        namespace: architecture
+        name: create-price-list-item
+        key: architecture/architecture.mymeetings.example/v1alpha1/UseCase/create-price-list-item
+      labels:
+        feature-ownership: required
+      data:
+        aggregates: []
+        feature:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            kind: Feature
+            name: price-list
+            namespace: architecture
+        handler:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            kind: Handler
+            name: create-price-list-item
+            namespace: architecture
+        intent: Command
+        module:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            kind: Module
+            name: payments
+            namespace: architecture
+        sourceFiles:
+            - src/Modules/Payments/Application/PriceListItems/CreatePriceListItem/CreatePriceListItemCommand.cs
+        summary: Create a reusable price-list item.
+        validators: []
+      source:
+        path: resources/usecase-create-price-list-item.yaml
+        line: 1
+        digest: sha256:28430f3beba8b71eaee45eff9fb285c8d8c42dcad9cfc19cbbcd861f0650f318
+      area: architecture
+    - identity:
+        apiVersion: architecture.mymeetings.example/v1alpha1
+        kind: UseCase
+        namespace: architecture
+        name: get-meeting-attendees
+        key: architecture/architecture.mymeetings.example/v1alpha1/UseCase/get-meeting-attendees
+      labels:
+        feature-ownership: required
+      data:
+        aggregates: []
+        feature:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            kind: Feature
+            name: meeting-attendance
+            namespace: architecture
+        handler:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            kind: Handler
+            name: get-meeting-attendees
+            namespace: architecture
+        intent: Query
+        module:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            kind: Module
+            name: meetings
+            namespace: architecture
+        sourceFiles:
+            - src/Modules/Meetings/Application/Meetings/GetMeetingAttendees/GetMeetingAttendeesQuery.cs
+        summary: Return attendee rows for one Meeting using the SQL read model.
+        validators: []
+      source:
+        path: resources/usecase-get-meeting-attendees.yaml
+        line: 1
+        digest: sha256:cf1e7391ce6ebc8ae33f5e12ea7df632cc78b2305fc49ff97f9cc25b4c678dfd
+      area: architecture
+    - identity:
+        apiVersion: architecture.mymeetings.example/v1alpha1
+        kind: UseCase
+        namespace: architecture
+        name: get-meeting-fees
+        key: architecture/architecture.mymeetings.example/v1alpha1/UseCase/get-meeting-fees
+      labels:
+        feature-ownership: required
+      data:
+        aggregates: []
+        feature:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            kind: Feature
+            name: meeting-fees
+            namespace: architecture
+        handler:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            kind: Handler
+            name: get-meeting-fees
+            namespace: architecture
+        intent: Query
+        module:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            kind: Module
+            name: payments
+            namespace: architecture
+        sourceFiles:
+            - src/Modules/Payments/Application/MeetingFees/GetMeetingFees/GetMeetingFeesQuery.cs
+        summary: Read the configured fee for a Meeting.
+        validators: []
+      source:
+        path: resources/usecase-get-meeting-fees.yaml
+        line: 1
+        digest: sha256:e206e309866c65968dbb8e6970211f34f1fffe39b765127a164f53eff8fa1954
+      area: architecture
+    - identity:
+        apiVersion: architecture.mymeetings.example/v1alpha1
+        kind: UseCase
+        namespace: architecture
+        name: get-meeting-group-details
+        key: architecture/architecture.mymeetings.example/v1alpha1/UseCase/get-meeting-group-details
+      labels:
+        feature-ownership: required
+      data:
+        aggregates:
+            - apiVersion: architecture.mymeetings.example/v1alpha1
+              kind: Aggregate
+              name: meeting-group
+              namespace: architecture
+        feature:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            kind: Feature
+            name: meeting-groups
+            namespace: architecture
+        handler:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            kind: Handler
+            name: get-meeting-group-details
+            namespace: architecture
+        intent: Query
+        module:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            kind: Module
+            name: meetings
+            namespace: architecture
+        sourceFiles:
+            - src/Modules/Meetings/Application/MeetingGroups/GetMeetingGroupDetails/GetMeetingGroupDetailsQuery.cs
+        summary: Read details for a MeetingGroup.
+        validators: []
+      source:
+        path: resources/usecase-get-meeting-group-details.yaml
+        line: 1
+        digest: sha256:a6cea8fccc53bd354668e0d0588f9fd95934bb757849f4dbe52c2e48df1f2b6d
+      area: architecture
+    - identity:
+        apiVersion: architecture.mymeetings.example/v1alpha1
+        kind: UseCase
+        namespace: architecture
+        name: get-member
+        key: architecture/architecture.mymeetings.example/v1alpha1/UseCase/get-member
+      labels:
+        feature-ownership: required
+      data:
+        aggregates: []
+        feature:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            kind: Feature
+            name: group-proposals
+            namespace: architecture
+        handler:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            kind: Handler
+            name: get-member
+            namespace: architecture
+        intent: Query
+        module:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            kind: Module
+            name: administration
+            namespace: architecture
+        sourceFiles:
+            - src/Modules/Administration/Application/Members/GetMember/GetMemberQuery.cs
+        summary: Read an Administration Member by identifier.
+        validators: []
+      source:
+        path: resources/usecase-get-member.yaml
+        line: 1
+        digest: sha256:e408f0ddbe2cd664adcb26a9a933f9b0abe64c015daa10912104801ed16c57d6
+      area: architecture
+    - identity:
+        apiVersion: architecture.mymeetings.example/v1alpha1
+        kind: UseCase
+        namespace: architecture
+        name: propose-meeting-group
+        key: architecture/architecture.mymeetings.example/v1alpha1/UseCase/propose-meeting-group
+      labels:
+        feature-ownership: required
+      data:
+        aggregates:
+            - apiVersion: architecture.mymeetings.example/v1alpha1
+              kind: Aggregate
+              name: meeting-proposal
+              namespace: architecture
+        feature:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            kind: Feature
+            name: meeting-groups
+            namespace: architecture
+        handler:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            kind: Handler
+            name: propose-meeting-group
+            namespace: architecture
+        intent: Command
+        module:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            kind: Module
+            name: meetings
+            namespace: architecture
+        sourceFiles:
+            - src/Modules/Meetings/Application/MeetingGroupProposals/ProposeMeetingGroup/ProposeMeetingGroupCommand.cs
+        summary: Submit a proposal for a MeetingGroup.
+        validators:
+            - apiVersion: architecture.mymeetings.example/v1alpha1
+              kind: Validator
+              name: propose-meeting-group
+              namespace: architecture
+      source:
+        path: resources/usecase-propose-meeting-group.yaml
+        line: 1
+        digest: sha256:e03f5dac870a2e8f81718f29f69fb7188d5a81cb8607a265c545287fbc5bc27d
+      area: architecture
+    - identity:
+        apiVersion: architecture.mymeetings.example/v1alpha1
+        kind: UseCase
+        namespace: architecture
+        name: register-new-user
+        key: architecture/architecture.mymeetings.example/v1alpha1/UseCase/register-new-user
+      labels:
+        feature-ownership: required
+      data:
+        aggregates:
+            - apiVersion: architecture.mymeetings.example/v1alpha1
+              kind: Aggregate
+              name: user-registration
+              namespace: architecture
+        feature:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            kind: Feature
+            name: user-registration
+            namespace: architecture
+        handler:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            kind: Handler
+            name: register-new-user
+            namespace: architecture
+        intent: Command
+        module:
+            apiVersion: architecture.mymeetings.example/v1alpha1
+            kind: Module
+            name: registrations
+            namespace: architecture
+        sourceFiles:
+            - src/Modules/Registrations/Application/UserRegistrations/RegisterNewUser/RegisterNewUserCommand.cs
+        summary: Register a new user and publish the registration event.
+        validators: []
+      source:
+        path: resources/usecase-register-new-user.yaml
+        line: 1
+        digest: sha256:53042f496a6846536e89e6519a536aa77ae8b66b09a7a47ed60d117f46e53392
+      area: architecture
+    - identity:
+        apiVersion: architecture.mymeetings.example/v1alpha1
+        kind: Validator
+        namespace: architecture
+        name: authenticate
+        key: architecture/architecture.mymeetings.example/v1alpha1/Validator/authenticate
+      data:
+        sourceFiles:
+            - src/Modules/UserAccess/Application/Authentication/Authenticate/AuthenticateCommandValidator.cs
+        summary: FluentValidation rules for authentication input.
+      source:
+        path: resources/validator-authenticate.yaml
+        line: 1
+        digest: sha256:b8e336ca0adb96cf89de44a17176bf8e3cb04cd87206ec5c884197202f1dfd0e
+      area: architecture
+    - identity:
+        apiVersion: architecture.mymeetings.example/v1alpha1
+        kind: Validator
+        namespace: architecture
+        name: propose-meeting-group
+        key: architecture/architecture.mymeetings.example/v1alpha1/Validator/propose-meeting-group
+      data:
+        sourceFiles:
+            - src/Modules/Meetings/Application/MeetingGroupProposals/ProposeMeetingGroup/ProposeMeetingGroupCommandValidator.cs
+        summary: FluentValidation rules for new MeetingGroup proposals.
+      source:
+        path: resources/validator-propose-meeting-group.yaml
+        line: 1
+        digest: sha256:1f20e05989663313d00060ea149c4778c6c51c61a5b2806652b2ee7644decd52
+      area: architecture
+    - identity:
+        apiVersion: markitect.example.org/v1alpha1
+        kind: Skill
+        namespace: engineering
+        name: architecture-review
+        key: engineering/Skill/architecture-review
+      data:
+        description: Implement a bounded read-side change in the Meetings Module.
+        text: |
+            Add the GetMeetingAttendeeCount Query to Meetings. It accepts a MeetingId and returns the number of attendee rows that the existing GetMeetingAttendees query returns from the meeting attendee read model. Guest numbers are fields on those rows and are not separate attendee rows. Do not add an HTTP endpoint for this change.
+        uses:
+            - apiVersion: architecture.mymeetings.example/v1alpha1
+              kind: Module
+              name: meetings
+              namespace: architecture
+            - apiVersion: architecture.mymeetings.example/v1alpha1
+              kind: Feature
+              name: meeting-attendance
+              namespace: architecture
+            - apiVersion: architecture.mymeetings.example/v1alpha1
+              kind: UseCase
+              name: get-meeting-attendees
+              namespace: architecture
+            - kind: Workflow
+              name: vertical-slice
+              namespace: constitution
+              package: mymeetings-architecture
+      source:
+        path: agent-guidance/architecture-review.skill.yaml
+        line: 1
+        digest: sha256:e3d72b4a231b35f781acfaaf1958ffcf7434993f58a0f61852b82dac851a6ef3
+      area: engineering
+    - identity:
+        apiVersion: markitect.example.org/v1alpha1
+        kind: Package
+        name: mymeetings-architecture
+        package: mymeetings-architecture
+        key: mymeetings-architecture::/Package/mymeetings-architecture
+      data:
+        areas:
+            - name: constitution
+              path: areas/constitution
+        domains:
+            - domains/architecture.yaml
+        exports:
+            - kind: Workflow
+              name: vertical-slice
+              namespace: constitution
+        version: 2.0.0
+      source:
+        path: markitect-package.yaml
+        line: 1
+        digest: sha256:70d8072e853c194a1570f3ad6749c03119ac6e3504db832f4749af39e8539817
+    - identity:
+        apiVersion: markitect.example.org/v1alpha1
+        kind: Workflow
+        namespace: constitution
+        name: vertical-slice
+        package: mymeetings-architecture
+        key: mymeetings-architecture::constitution/Workflow/vertical-slice
+      data:
+        text: |
+            Use the exact pinned MyMeetings architecture package and the selected graph context as the engineering contract.
+            Keep canonical ownership, observed source evidence, generated projections and candidate changes distinct.
+            Inspect only the task-relevant human-owned documents and declared code inputs needed for the change.
+            Report failed policy results with their exact subjects and constraints. A waived result is still a recorded violation.
+            Do not silently broaden the selected v2 command-validation cohort. Review labels and package changes as explicit policy inputs.
+            Source-code and .NET project-reference conclusions remain bounded to the project-owned checks that provide that evidence.
+            Do not use the architecture graph to infer business behavior that the selected source and tests do not establish.
+      source:
+        path: areas/constitution/vertical-slice.workflow.yaml
+        line: 1
+        digest: sha256:adfee2bbdc34f299c45dae48383c3f1c9a2a18b225ae0ac2c02792d9b273ef13
+      area: constitution
+relationships:
+    - from: architecture/architecture.mymeetings.example/v1alpha1/Aggregate/meeting
+      to: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+      type: belongsToModule
+      source:
+        path: resources/aggregate-meeting.yaml
+        line: 1
+        digest: sha256:3bda7498e19d18677aef69874ee020f0682019fd407b1622999e6ac871444eef
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/Aggregate/meeting-comment
+      to: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+      type: belongsToModule
+      source:
+        path: resources/aggregate-meeting-comment.yaml
+        line: 1
+        digest: sha256:dbc3d7072bf2b0ce90673a1d5474f6c9a35677951c0272cbe2cdd8169c13f344
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/Aggregate/meeting-group
+      to: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+      type: belongsToModule
+      source:
+        path: resources/aggregate-meeting-group.yaml
+        line: 1
+        digest: sha256:7237e6d6d58d06b31c34917d351d1c007e4c699bb9d4c87e64ff32e07434c18d
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/Aggregate/meeting-proposal
+      to: architecture/architecture.mymeetings.example/v1alpha1/Module/administration
+      type: belongsToModule
+      source:
+        path: resources/aggregate-meeting-proposal.yaml
+        line: 1
+        digest: sha256:6d665dff3668c1f375a3742cc168a28024ff9f88fe60ff781e2ffcf8996b9093
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/Aggregate/payer
+      to: architecture/architecture.mymeetings.example/v1alpha1/Module/payments
+      type: belongsToModule
+      source:
+        path: resources/aggregate-payer.yaml
+        line: 1
+        digest: sha256:d1b2f28734dcba1a3a162b1687c66de8b7b6f528e79089fdfb4828c51e91a507
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/Aggregate/user
+      to: architecture/architecture.mymeetings.example/v1alpha1/Module/user-access
+      type: belongsToModule
+      source:
+        path: resources/aggregate-user.yaml
+        line: 1
+        digest: sha256:01ef22a5b505db9fe8667d2affe6f5514c7f2826849a2ae58de6acd3d706a952
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/Aggregate/user-registration
+      to: architecture/architecture.mymeetings.example/v1alpha1/Module/registrations
+      type: belongsToModule
+      source:
+        path: resources/aggregate-user-registration.yaml
+        line: 1
+        digest: sha256:e60da1ef790ec6fb975c32ae07cd26a9a5f40e98f719241c7389eb7f1a5ed85f
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/Common/aggregate-root-marker
+      to: architecture/architecture.mymeetings.example/v1alpha1/Core/core
+      type: commonOwnedByCore
+      source:
+        path: resources/common-aggregate-root-marker.yaml
+        line: 1
+        digest: sha256:19fd4418ffe9641051476f5e31d229dab6035694c94afdc71c22aaff6a94e06a
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/Common/sql-connection-factory
+      to: architecture/architecture.mymeetings.example/v1alpha1/Core/core
+      type: commonOwnedByCore
+      source:
+        path: resources/common-sql-connection-factory.yaml
+        line: 1
+        digest: sha256:425a419c3a483f9c0873d626b611dc5daff60980ff944df923a0684656deb498
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/Common/unit-of-work
+      to: architecture/architecture.mymeetings.example/v1alpha1/Core/core
+      type: commonOwnedByCore
+      source:
+        path: resources/common-unit-of-work.yaml
+        line: 1
+        digest: sha256:43fa2777f060e2d813ef39763b7fc7ccd5eb056ac51d4eac4072f08c61267092
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/Feature/authentication
+      to: architecture/architecture.mymeetings.example/v1alpha1/Module/user-access
+      type: belongsToModule
+      source:
+        path: resources/feature-authentication.yaml
+        line: 1
+        digest: sha256:1a315f8d73631cb7c533a7510df1090a40a195324567284acaba7ec0e3824793
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/Feature/authentication
+      to: architecture/architecture.mymeetings.example/v1alpha1/Narrative/architecture-test-decision
+      type: documents
+      source:
+        path: resources/feature-authentication.yaml
+        line: 1
+        digest: sha256:1a315f8d73631cb7c533a7510df1090a40a195324567284acaba7ec0e3824793
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/Feature/group-proposals
+      to: architecture/architecture.mymeetings.example/v1alpha1/Module/administration
+      type: belongsToModule
+      source:
+        path: resources/feature-group-proposals.yaml
+        line: 1
+        digest: sha256:cced0f41669df6a2a52ecd4f859737db71530618e583ca219bee2d0fe07cdaf4
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/Feature/group-proposals
+      to: architecture/architecture.mymeetings.example/v1alpha1/Narrative/module-event-boundary-decision
+      type: documents
+      source:
+        path: resources/feature-group-proposals.yaml
+        line: 1
+        digest: sha256:cced0f41669df6a2a52ecd4f859737db71530618e583ca219bee2d0fe07cdaf4
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-attendance
+      to: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+      type: belongsToModule
+      source:
+        path: resources/feature-meeting-attendance.yaml
+        line: 1
+        digest: sha256:0561d752aea2c5c82e2b8f18ce072089fd6530827d53d5a079526864192311aa
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-attendance
+      to: architecture/architecture.mymeetings.example/v1alpha1/Narrative/architecture-test-decision
+      type: documents
+      source:
+        path: resources/feature-meeting-attendance.yaml
+        line: 1
+        digest: sha256:0561d752aea2c5c82e2b8f18ce072089fd6530827d53d5a079526864192311aa
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-attendance
+      to: architecture/architecture.mymeetings.example/v1alpha1/Narrative/cqrs-read-model-decision
+      type: documents
+      source:
+        path: resources/feature-meeting-attendance.yaml
+        line: 1
+        digest: sha256:0561d752aea2c5c82e2b8f18ce072089fd6530827d53d5a079526864192311aa
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-attendance
+      to: architecture/architecture.mymeetings.example/v1alpha1/Narrative/meeting-attendee-view
+      type: documents
+      source:
+        path: resources/feature-meeting-attendance.yaml
+        line: 1
+        digest: sha256:0561d752aea2c5c82e2b8f18ce072089fd6530827d53d5a079526864192311aa
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-fees
+      to: architecture/architecture.mymeetings.example/v1alpha1/Module/payments
+      type: belongsToModule
+      source:
+        path: resources/feature-meeting-fees.yaml
+        line: 1
+        digest: sha256:862f97b78a6f6d40f65ba4c833001bc938c0eec0977c77ad7717e0387b52ffd1
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-fees
+      to: architecture/architecture.mymeetings.example/v1alpha1/Narrative/module-event-boundary-decision
+      type: documents
+      source:
+        path: resources/feature-meeting-fees.yaml
+        line: 1
+        digest: sha256:862f97b78a6f6d40f65ba4c833001bc938c0eec0977c77ad7717e0387b52ffd1
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-groups
+      to: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+      type: belongsToModule
+      source:
+        path: resources/feature-meeting-groups.yaml
+        line: 1
+        digest: sha256:6c79cfbbb8b3e1bcd6daf0f9f817695dff7a3eaedc72088f23b6076c01d90968
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-groups
+      to: architecture/architecture.mymeetings.example/v1alpha1/Narrative/cqrs-read-model-decision
+      type: documents
+      source:
+        path: resources/feature-meeting-groups.yaml
+        line: 1
+        digest: sha256:6c79cfbbb8b3e1bcd6daf0f9f817695dff7a3eaedc72088f23b6076c01d90968
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-groups
+      to: architecture/architecture.mymeetings.example/v1alpha1/Narrative/module-event-boundary-decision
+      type: documents
+      source:
+        path: resources/feature-meeting-groups.yaml
+        line: 1
+        digest: sha256:6c79cfbbb8b3e1bcd6daf0f9f817695dff7a3eaedc72088f23b6076c01d90968
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-lifecycle
+      to: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+      type: belongsToModule
+      source:
+        path: resources/feature-meeting-lifecycle.yaml
+        line: 1
+        digest: sha256:4dea5fbbea6cb2fecb14c72292269b8e46ad0e0fc4161685749be9b70ad05c48
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-lifecycle
+      to: architecture/architecture.mymeetings.example/v1alpha1/Narrative/architecture-test-decision
+      type: documents
+      source:
+        path: resources/feature-meeting-lifecycle.yaml
+        line: 1
+        digest: sha256:4dea5fbbea6cb2fecb14c72292269b8e46ad0e0fc4161685749be9b70ad05c48
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-lifecycle
+      to: architecture/architecture.mymeetings.example/v1alpha1/Narrative/cqrs-read-model-decision
+      type: documents
+      source:
+        path: resources/feature-meeting-lifecycle.yaml
+        line: 1
+        digest: sha256:4dea5fbbea6cb2fecb14c72292269b8e46ad0e0fc4161685749be9b70ad05c48
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/Feature/price-list
+      to: architecture/architecture.mymeetings.example/v1alpha1/Module/payments
+      type: belongsToModule
+      source:
+        path: resources/feature-price-list.yaml
+        line: 1
+        digest: sha256:bc359ceb773b84b629f2329cffb144953e45cfd3650050386819c9713503fb9c
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/Feature/price-list
+      to: architecture/architecture.mymeetings.example/v1alpha1/Narrative/architecture-test-decision
+      type: documents
+      source:
+        path: resources/feature-price-list.yaml
+        line: 1
+        digest: sha256:bc359ceb773b84b629f2329cffb144953e45cfd3650050386819c9713503fb9c
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/Feature/user-registration
+      to: architecture/architecture.mymeetings.example/v1alpha1/Module/registrations
+      type: belongsToModule
+      source:
+        path: resources/feature-user-registration.yaml
+        line: 1
+        digest: sha256:e56438609a9cbe65a6bb0e4bd3f3b2e91835b12b4ecc716d1b27ec8476f02b4a
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/Feature/user-registration
+      to: architecture/architecture.mymeetings.example/v1alpha1/Narrative/module-event-boundary-decision
+      type: documents
+      source:
+        path: resources/feature-user-registration.yaml
+        line: 1
+        digest: sha256:e56438609a9cbe65a6bb0e4bd3f3b2e91835b12b4ecc716d1b27ec8476f02b4a
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/Handler/get-meeting-attendees
+      to: architecture/architecture.mymeetings.example/v1alpha1/Common/sql-connection-factory
+      type: usesCommon
+      source:
+        path: resources/handler-get-meeting-attendees.yaml
+        line: 1
+        digest: sha256:fa33297271d78cc07e200edfa970fd6c3c4f72f39408cf7c1f8ea1539f1cbd39
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/Interface/administration-events
+      to: architecture/architecture.mymeetings.example/v1alpha1/Module/administration
+      type: providedBy
+      source:
+        path: resources/interface-administration-events.yaml
+        line: 1
+        digest: sha256:865bb89fd64d9f01bab5871fd2fda62900cf165888e813f09170b4ac9ac302ed
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/Interface/administration-module-api
+      to: architecture/architecture.mymeetings.example/v1alpha1/Module/administration
+      type: providedBy
+      source:
+        path: resources/interface-administration-module-api.yaml
+        line: 1
+        digest: sha256:7bb20be900a5c04347a67eec7ec6b1b8e4da2753d23c24dc95623e1fd03cf258
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/Interface/meetings-events
+      to: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+      type: providedBy
+      source:
+        path: resources/interface-meetings-events.yaml
+        line: 1
+        digest: sha256:77b2130ecf5657e4a6e40ce1b698998c0675276b50ea1e6bd7dfe8d0519e8cf0
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/Interface/meetings-module-api
+      to: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+      type: providedBy
+      source:
+        path: resources/interface-meetings-module-api.yaml
+        line: 1
+        digest: sha256:c323228dd2f87ec92d5b177dad5b796f599719c6d16cc8acf04c64c937098283
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/Interface/payments-events
+      to: architecture/architecture.mymeetings.example/v1alpha1/Module/payments
+      type: providedBy
+      source:
+        path: resources/interface-payments-events.yaml
+        line: 1
+        digest: sha256:e4c81a05cfe4c942e6cd4bab7decc30490fbf971af3de1581338a830e39a090a
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/Interface/payments-module-api
+      to: architecture/architecture.mymeetings.example/v1alpha1/Module/payments
+      type: providedBy
+      source:
+        path: resources/interface-payments-module-api.yaml
+        line: 1
+        digest: sha256:fbd85ddce6f0629089a97e534989355bd442bf4da0336a255dd4a5e99c387c33
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/Interface/registrations-events
+      to: architecture/architecture.mymeetings.example/v1alpha1/Module/registrations
+      type: providedBy
+      source:
+        path: resources/interface-registrations-events.yaml
+        line: 1
+        digest: sha256:4f188cb65316b7a0612270ddf8eca4b347c04676106e198978b27db5233e7d46
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/Interface/registrations-module-api
+      to: architecture/architecture.mymeetings.example/v1alpha1/Module/registrations
+      type: providedBy
+      source:
+        path: resources/interface-registrations-module-api.yaml
+        line: 1
+        digest: sha256:c2a247760ea7eb0882f80d936293998ed771c3bc40e93b281e1c4ae29970d954
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/Interface/user-access-events
+      to: architecture/architecture.mymeetings.example/v1alpha1/Module/user-access
+      type: providedBy
+      source:
+        path: resources/interface-user-access-events.yaml
+        line: 1
+        digest: sha256:4acf2aa3ff0a16aac301ae7b58d530f749f687f5097e9746f3fbe73f815cb90e
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/Interface/user-access-module-api
+      to: architecture/architecture.mymeetings.example/v1alpha1/Module/user-access
+      type: providedBy
+      source:
+        path: resources/interface-user-access-module-api.yaml
+        line: 1
+        digest: sha256:c2ec2903d0fce934b2e3eef2fa01ffa026059e21b50417e268ecabd5b2e17a36
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/Module/administration
+      to: architecture/architecture.mymeetings.example/v1alpha1/Core/core
+      type: dependsOn
+      source:
+        path: resources/module-administration.yaml
+        line: 1
+        digest: sha256:9f22dcb3c541268bf833e1bd51483d70eca873e324cf7ef6a5fbc3f49e4cea8c
+      context: false
+      invalidate: true
+      acyclic: true
+    - from: architecture/architecture.mymeetings.example/v1alpha1/Module/administration
+      to: architecture/architecture.mymeetings.example/v1alpha1/Interface/meetings-events
+      type: dependsOn
+      source:
+        path: resources/module-administration.yaml
+        line: 1
+        digest: sha256:9f22dcb3c541268bf833e1bd51483d70eca873e324cf7ef6a5fbc3f49e4cea8c
+      context: false
+      invalidate: true
+      acyclic: true
+    - from: architecture/architecture.mymeetings.example/v1alpha1/Module/administration
+      to: architecture/architecture.mymeetings.example/v1alpha1/Interface/registrations-events
+      type: dependsOn
+      source:
+        path: resources/module-administration.yaml
+        line: 1
+        digest: sha256:9f22dcb3c541268bf833e1bd51483d70eca873e324cf7ef6a5fbc3f49e4cea8c
+      context: false
+      invalidate: true
+      acyclic: true
+    - from: architecture/architecture.mymeetings.example/v1alpha1/Module/administration
+      to: architecture/architecture.mymeetings.example/v1alpha1/Interface/user-access-events
+      type: dependsOn
+      source:
+        path: resources/module-administration.yaml
+        line: 1
+        digest: sha256:9f22dcb3c541268bf833e1bd51483d70eca873e324cf7ef6a5fbc3f49e4cea8c
+      context: false
+      invalidate: true
+      acyclic: true
+    - from: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+      to: architecture/architecture.mymeetings.example/v1alpha1/Core/core
+      type: dependsOn
+      source:
+        path: resources/module-meetings.yaml
+        line: 1
+        digest: sha256:9a4e2ab5611609fc6e713b8a0c874c42e76942fc7448b72256506c6e7477f75f
+      context: false
+      invalidate: true
+      acyclic: true
+    - from: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+      to: architecture/architecture.mymeetings.example/v1alpha1/Interface/administration-events
+      type: dependsOn
+      source:
+        path: resources/module-meetings.yaml
+        line: 1
+        digest: sha256:9a4e2ab5611609fc6e713b8a0c874c42e76942fc7448b72256506c6e7477f75f
+      context: false
+      invalidate: true
+      acyclic: true
+    - from: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+      to: architecture/architecture.mymeetings.example/v1alpha1/Interface/payments-events
+      type: dependsOn
+      source:
+        path: resources/module-meetings.yaml
+        line: 1
+        digest: sha256:9a4e2ab5611609fc6e713b8a0c874c42e76942fc7448b72256506c6e7477f75f
+      context: false
+      invalidate: true
+      acyclic: true
+    - from: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+      to: architecture/architecture.mymeetings.example/v1alpha1/Interface/registrations-events
+      type: dependsOn
+      source:
+        path: resources/module-meetings.yaml
+        line: 1
+        digest: sha256:9a4e2ab5611609fc6e713b8a0c874c42e76942fc7448b72256506c6e7477f75f
+      context: false
+      invalidate: true
+      acyclic: true
+    - from: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+      to: architecture/architecture.mymeetings.example/v1alpha1/Interface/user-access-events
+      type: dependsOn
+      source:
+        path: resources/module-meetings.yaml
+        line: 1
+        digest: sha256:9a4e2ab5611609fc6e713b8a0c874c42e76942fc7448b72256506c6e7477f75f
+      context: false
+      invalidate: true
+      acyclic: true
+    - from: architecture/architecture.mymeetings.example/v1alpha1/Module/payments
+      to: architecture/architecture.mymeetings.example/v1alpha1/Core/core
+      type: dependsOn
+      source:
+        path: resources/module-payments.yaml
+        line: 1
+        digest: sha256:f1baf2c0b825bdd79574c03c51792f34d893ad1070ec9a5a447de0d6bf5ef1b0
+      context: false
+      invalidate: true
+      acyclic: true
+    - from: architecture/architecture.mymeetings.example/v1alpha1/Module/payments
+      to: architecture/architecture.mymeetings.example/v1alpha1/Interface/administration-events
+      type: dependsOn
+      source:
+        path: resources/module-payments.yaml
+        line: 1
+        digest: sha256:f1baf2c0b825bdd79574c03c51792f34d893ad1070ec9a5a447de0d6bf5ef1b0
+      context: false
+      invalidate: true
+      acyclic: true
+    - from: architecture/architecture.mymeetings.example/v1alpha1/Module/payments
+      to: architecture/architecture.mymeetings.example/v1alpha1/Interface/meetings-events
+      type: dependsOn
+      source:
+        path: resources/module-payments.yaml
+        line: 1
+        digest: sha256:f1baf2c0b825bdd79574c03c51792f34d893ad1070ec9a5a447de0d6bf5ef1b0
+      context: false
+      invalidate: true
+      acyclic: true
+    - from: architecture/architecture.mymeetings.example/v1alpha1/Module/payments
+      to: architecture/architecture.mymeetings.example/v1alpha1/Interface/registrations-events
+      type: dependsOn
+      source:
+        path: resources/module-payments.yaml
+        line: 1
+        digest: sha256:f1baf2c0b825bdd79574c03c51792f34d893ad1070ec9a5a447de0d6bf5ef1b0
+      context: false
+      invalidate: true
+      acyclic: true
+    - from: architecture/architecture.mymeetings.example/v1alpha1/Module/payments
+      to: architecture/architecture.mymeetings.example/v1alpha1/Interface/user-access-events
+      type: dependsOn
+      source:
+        path: resources/module-payments.yaml
+        line: 1
+        digest: sha256:f1baf2c0b825bdd79574c03c51792f34d893ad1070ec9a5a447de0d6bf5ef1b0
+      context: false
+      invalidate: true
+      acyclic: true
+    - from: architecture/architecture.mymeetings.example/v1alpha1/Module/registrations
+      to: architecture/architecture.mymeetings.example/v1alpha1/Core/core
+      type: dependsOn
+      source:
+        path: resources/module-registrations.yaml
+        line: 1
+        digest: sha256:4f880fd5a2854b8840d9638eaf368317a74861f80ebd2b1a3cea21ad79fbd8dd
+      context: false
+      invalidate: true
+      acyclic: true
+    - from: architecture/architecture.mymeetings.example/v1alpha1/Module/user-access
+      to: architecture/architecture.mymeetings.example/v1alpha1/Core/core
+      type: dependsOn
+      source:
+        path: resources/module-user-access.yaml
+        line: 1
+        digest: sha256:eca6b3a90a0c8d3229932971f25214b7c75e5aa279106531e5bd4d934adf6d63
+      context: false
+      invalidate: true
+      acyclic: true
+    - from: architecture/architecture.mymeetings.example/v1alpha1/Module/user-access
+      to: architecture/architecture.mymeetings.example/v1alpha1/Interface/meetings-events
+      type: dependsOn
+      source:
+        path: resources/module-user-access.yaml
+        line: 1
+        digest: sha256:eca6b3a90a0c8d3229932971f25214b7c75e5aa279106531e5bd4d934adf6d63
+      context: false
+      invalidate: true
+      acyclic: true
+    - from: architecture/architecture.mymeetings.example/v1alpha1/Narrative/architecture-test-decision
+      to: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+      type: owner
+      source:
+        path: resources/narrative-architecture-test-decision.yaml
+        line: 1
+        digest: sha256:da54a85673409c11d60d584394ba93fb2f7c54036eed5393942848154c08f449
+      context: false
+      invalidate: false
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/Narrative/cqrs-read-model-decision
+      to: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+      type: owner
+      source:
+        path: resources/narrative-cqrs-read-model-decision.yaml
+        line: 1
+        digest: sha256:4ac9d7ba82287c9e3ec72d8540f32d0096e1d5f31ab4e02f8d4c5031321de989
+      context: false
+      invalidate: false
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/Narrative/meeting-attendee-view
+      to: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+      type: owner
+      source:
+        path: resources/narrative-meeting-attendee-view.yaml
+        line: 1
+        digest: sha256:3c8ed59f138b6e6c05db819ef9be3fdf096267d70c694a360f678896f0907952
+      context: false
+      invalidate: false
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/Narrative/module-event-boundary-decision
+      to: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+      type: owner
+      source:
+        path: resources/narrative-module-event-boundary-decision.yaml
+        line: 1
+        digest: sha256:e47c58fa23325956f73f0b96fcd22c26fc98d11445f029cc7fdbde8f684022ce
+      context: false
+      invalidate: false
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/Product/mymeetings
+      to: architecture/architecture.mymeetings.example/v1alpha1/Core/core
+      type: productComposes
+      source:
+        path: resources/product-mymeetings.yaml
+        line: 1
+        digest: sha256:2a59ad0a7bb0d62537dcad17c9b4fa2e9714c3e38ea3cdb186ff3986bc006aa1
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/Product/mymeetings
+      to: architecture/architecture.mymeetings.example/v1alpha1/Module/administration
+      type: productComposes
+      source:
+        path: resources/product-mymeetings.yaml
+        line: 1
+        digest: sha256:2a59ad0a7bb0d62537dcad17c9b4fa2e9714c3e38ea3cdb186ff3986bc006aa1
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/Product/mymeetings
+      to: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+      type: productComposes
+      source:
+        path: resources/product-mymeetings.yaml
+        line: 1
+        digest: sha256:2a59ad0a7bb0d62537dcad17c9b4fa2e9714c3e38ea3cdb186ff3986bc006aa1
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/Product/mymeetings
+      to: architecture/architecture.mymeetings.example/v1alpha1/Module/payments
+      type: productComposes
+      source:
+        path: resources/product-mymeetings.yaml
+        line: 1
+        digest: sha256:2a59ad0a7bb0d62537dcad17c9b4fa2e9714c3e38ea3cdb186ff3986bc006aa1
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/Product/mymeetings
+      to: architecture/architecture.mymeetings.example/v1alpha1/Module/registrations
+      type: productComposes
+      source:
+        path: resources/product-mymeetings.yaml
+        line: 1
+        digest: sha256:2a59ad0a7bb0d62537dcad17c9b4fa2e9714c3e38ea3cdb186ff3986bc006aa1
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/Product/mymeetings
+      to: architecture/architecture.mymeetings.example/v1alpha1/Module/user-access
+      type: productComposes
+      source:
+        path: resources/product-mymeetings.yaml
+        line: 1
+        digest: sha256:2a59ad0a7bb0d62537dcad17c9b4fa2e9714c3e38ea3cdb186ff3986bc006aa1
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/accept-proposal
+      to: architecture/architecture.mymeetings.example/v1alpha1/Aggregate/meeting-proposal
+      type: aggregates
+      source:
+        path: resources/usecase-accept-proposal.yaml
+        line: 1
+        digest: sha256:f607be096ffc27cc48d80eef6455d49a49a6327f12fb576b28f2f975b0418df3
+      context: false
+      invalidate: false
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/accept-proposal
+      to: architecture/architecture.mymeetings.example/v1alpha1/Feature/group-proposals
+      type: usesFeature
+      source:
+        path: resources/usecase-accept-proposal.yaml
+        line: 1
+        digest: sha256:f607be096ffc27cc48d80eef6455d49a49a6327f12fb576b28f2f975b0418df3
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/accept-proposal
+      to: architecture/architecture.mymeetings.example/v1alpha1/Handler/accept-proposal
+      type: hasHandler
+      source:
+        path: resources/usecase-accept-proposal.yaml
+        line: 1
+        digest: sha256:f607be096ffc27cc48d80eef6455d49a49a6327f12fb576b28f2f975b0418df3
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/accept-proposal
+      to: architecture/architecture.mymeetings.example/v1alpha1/Module/administration
+      type: belongsToModule
+      source:
+        path: resources/usecase-accept-proposal.yaml
+        line: 1
+        digest: sha256:f607be096ffc27cc48d80eef6455d49a49a6327f12fb576b28f2f975b0418df3
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/add-meeting-attendee
+      to: architecture/architecture.mymeetings.example/v1alpha1/Aggregate/meeting
+      type: aggregates
+      source:
+        path: resources/usecase-add-meeting-attendee.yaml
+        line: 1
+        digest: sha256:64176c528b01f2c22cdb7737c459d1623a44fc9f934be556cd040a37997e6790
+      context: false
+      invalidate: false
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/add-meeting-attendee
+      to: architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-attendance
+      type: usesFeature
+      source:
+        path: resources/usecase-add-meeting-attendee.yaml
+        line: 1
+        digest: sha256:64176c528b01f2c22cdb7737c459d1623a44fc9f934be556cd040a37997e6790
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/add-meeting-attendee
+      to: architecture/architecture.mymeetings.example/v1alpha1/Handler/add-meeting-attendee
+      type: hasHandler
+      source:
+        path: resources/usecase-add-meeting-attendee.yaml
+        line: 1
+        digest: sha256:64176c528b01f2c22cdb7737c459d1623a44fc9f934be556cd040a37997e6790
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/add-meeting-attendee
+      to: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+      type: belongsToModule
+      source:
+        path: resources/usecase-add-meeting-attendee.yaml
+        line: 1
+        digest: sha256:64176c528b01f2c22cdb7737c459d1623a44fc9f934be556cd040a37997e6790
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/authenticate
+      to: architecture/architecture.mymeetings.example/v1alpha1/Aggregate/user
+      type: aggregates
+      source:
+        path: resources/usecase-authenticate.yaml
+        line: 1
+        digest: sha256:02cf59d4f10b7c3d405dcfd12ce2708d16cf16c11fdc4f81199324f585dec9b9
+      context: false
+      invalidate: false
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/authenticate
+      to: architecture/architecture.mymeetings.example/v1alpha1/Feature/authentication
+      type: usesFeature
+      source:
+        path: resources/usecase-authenticate.yaml
+        line: 1
+        digest: sha256:02cf59d4f10b7c3d405dcfd12ce2708d16cf16c11fdc4f81199324f585dec9b9
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/authenticate
+      to: architecture/architecture.mymeetings.example/v1alpha1/Handler/authenticate
+      type: hasHandler
+      source:
+        path: resources/usecase-authenticate.yaml
+        line: 1
+        digest: sha256:02cf59d4f10b7c3d405dcfd12ce2708d16cf16c11fdc4f81199324f585dec9b9
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/authenticate
+      to: architecture/architecture.mymeetings.example/v1alpha1/Module/user-access
+      type: belongsToModule
+      source:
+        path: resources/usecase-authenticate.yaml
+        line: 1
+        digest: sha256:02cf59d4f10b7c3d405dcfd12ce2708d16cf16c11fdc4f81199324f585dec9b9
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/authenticate
+      to: architecture/architecture.mymeetings.example/v1alpha1/Validator/authenticate
+      type: hasValidator
+      source:
+        path: resources/usecase-authenticate.yaml
+        line: 1
+        digest: sha256:02cf59d4f10b7c3d405dcfd12ce2708d16cf16c11fdc4f81199324f585dec9b9
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/cancel-meeting
+      to: architecture/architecture.mymeetings.example/v1alpha1/Aggregate/meeting
+      type: aggregates
+      source:
+        path: resources/usecase-cancel-meeting.yaml
+        line: 1
+        digest: sha256:94133b17624821827a147c42d043cfaf4de7d4f4b18e66488b7b8aed89f9e25a
+      context: false
+      invalidate: false
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/cancel-meeting
+      to: architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-lifecycle
+      type: usesFeature
+      source:
+        path: resources/usecase-cancel-meeting.yaml
+        line: 1
+        digest: sha256:94133b17624821827a147c42d043cfaf4de7d4f4b18e66488b7b8aed89f9e25a
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/cancel-meeting
+      to: architecture/architecture.mymeetings.example/v1alpha1/Handler/cancel-meeting
+      type: hasHandler
+      source:
+        path: resources/usecase-cancel-meeting.yaml
+        line: 1
+        digest: sha256:94133b17624821827a147c42d043cfaf4de7d4f4b18e66488b7b8aed89f9e25a
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/cancel-meeting
+      to: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+      type: belongsToModule
+      source:
+        path: resources/usecase-cancel-meeting.yaml
+        line: 1
+        digest: sha256:94133b17624821827a147c42d043cfaf4de7d4f4b18e66488b7b8aed89f9e25a
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/create-meeting
+      to: architecture/architecture.mymeetings.example/v1alpha1/Aggregate/meeting-group
+      type: aggregates
+      source:
+        path: resources/usecase-create-meeting.yaml
+        line: 1
+        digest: sha256:b5076af83aed7ebdb1be498d7771237905ae8eceb1a70cc1e0c9628ec13aee5b
+      context: false
+      invalidate: false
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/create-meeting
+      to: architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-lifecycle
+      type: usesFeature
+      source:
+        path: resources/usecase-create-meeting.yaml
+        line: 1
+        digest: sha256:b5076af83aed7ebdb1be498d7771237905ae8eceb1a70cc1e0c9628ec13aee5b
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/create-meeting
+      to: architecture/architecture.mymeetings.example/v1alpha1/Handler/create-meeting
+      type: hasHandler
+      source:
+        path: resources/usecase-create-meeting.yaml
+        line: 1
+        digest: sha256:b5076af83aed7ebdb1be498d7771237905ae8eceb1a70cc1e0c9628ec13aee5b
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/create-meeting
+      to: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+      type: belongsToModule
+      source:
+        path: resources/usecase-create-meeting.yaml
+        line: 1
+        digest: sha256:b5076af83aed7ebdb1be498d7771237905ae8eceb1a70cc1e0c9628ec13aee5b
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/create-price-list-item
+      to: architecture/architecture.mymeetings.example/v1alpha1/Feature/price-list
+      type: usesFeature
+      source:
+        path: resources/usecase-create-price-list-item.yaml
+        line: 1
+        digest: sha256:28430f3beba8b71eaee45eff9fb285c8d8c42dcad9cfc19cbbcd861f0650f318
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/create-price-list-item
+      to: architecture/architecture.mymeetings.example/v1alpha1/Handler/create-price-list-item
+      type: hasHandler
+      source:
+        path: resources/usecase-create-price-list-item.yaml
+        line: 1
+        digest: sha256:28430f3beba8b71eaee45eff9fb285c8d8c42dcad9cfc19cbbcd861f0650f318
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/create-price-list-item
+      to: architecture/architecture.mymeetings.example/v1alpha1/Module/payments
+      type: belongsToModule
+      source:
+        path: resources/usecase-create-price-list-item.yaml
+        line: 1
+        digest: sha256:28430f3beba8b71eaee45eff9fb285c8d8c42dcad9cfc19cbbcd861f0650f318
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/get-meeting-attendees
+      to: architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-attendance
+      type: usesFeature
+      source:
+        path: resources/usecase-get-meeting-attendees.yaml
+        line: 1
+        digest: sha256:cf1e7391ce6ebc8ae33f5e12ea7df632cc78b2305fc49ff97f9cc25b4c678dfd
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/get-meeting-attendees
+      to: architecture/architecture.mymeetings.example/v1alpha1/Handler/get-meeting-attendees
+      type: hasHandler
+      source:
+        path: resources/usecase-get-meeting-attendees.yaml
+        line: 1
+        digest: sha256:cf1e7391ce6ebc8ae33f5e12ea7df632cc78b2305fc49ff97f9cc25b4c678dfd
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/get-meeting-attendees
+      to: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+      type: belongsToModule
+      source:
+        path: resources/usecase-get-meeting-attendees.yaml
+        line: 1
+        digest: sha256:cf1e7391ce6ebc8ae33f5e12ea7df632cc78b2305fc49ff97f9cc25b4c678dfd
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/get-meeting-fees
+      to: architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-fees
+      type: usesFeature
+      source:
+        path: resources/usecase-get-meeting-fees.yaml
+        line: 1
+        digest: sha256:e206e309866c65968dbb8e6970211f34f1fffe39b765127a164f53eff8fa1954
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/get-meeting-fees
+      to: architecture/architecture.mymeetings.example/v1alpha1/Handler/get-meeting-fees
+      type: hasHandler
+      source:
+        path: resources/usecase-get-meeting-fees.yaml
+        line: 1
+        digest: sha256:e206e309866c65968dbb8e6970211f34f1fffe39b765127a164f53eff8fa1954
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/get-meeting-fees
+      to: architecture/architecture.mymeetings.example/v1alpha1/Module/payments
+      type: belongsToModule
+      source:
+        path: resources/usecase-get-meeting-fees.yaml
+        line: 1
+        digest: sha256:e206e309866c65968dbb8e6970211f34f1fffe39b765127a164f53eff8fa1954
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/get-meeting-group-details
+      to: architecture/architecture.mymeetings.example/v1alpha1/Aggregate/meeting-group
+      type: aggregates
+      source:
+        path: resources/usecase-get-meeting-group-details.yaml
+        line: 1
+        digest: sha256:a6cea8fccc53bd354668e0d0588f9fd95934bb757849f4dbe52c2e48df1f2b6d
+      context: false
+      invalidate: false
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/get-meeting-group-details
+      to: architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-groups
+      type: usesFeature
+      source:
+        path: resources/usecase-get-meeting-group-details.yaml
+        line: 1
+        digest: sha256:a6cea8fccc53bd354668e0d0588f9fd95934bb757849f4dbe52c2e48df1f2b6d
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/get-meeting-group-details
+      to: architecture/architecture.mymeetings.example/v1alpha1/Handler/get-meeting-group-details
+      type: hasHandler
+      source:
+        path: resources/usecase-get-meeting-group-details.yaml
+        line: 1
+        digest: sha256:a6cea8fccc53bd354668e0d0588f9fd95934bb757849f4dbe52c2e48df1f2b6d
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/get-meeting-group-details
+      to: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+      type: belongsToModule
+      source:
+        path: resources/usecase-get-meeting-group-details.yaml
+        line: 1
+        digest: sha256:a6cea8fccc53bd354668e0d0588f9fd95934bb757849f4dbe52c2e48df1f2b6d
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/get-member
+      to: architecture/architecture.mymeetings.example/v1alpha1/Feature/group-proposals
+      type: usesFeature
+      source:
+        path: resources/usecase-get-member.yaml
+        line: 1
+        digest: sha256:e408f0ddbe2cd664adcb26a9a933f9b0abe64c015daa10912104801ed16c57d6
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/get-member
+      to: architecture/architecture.mymeetings.example/v1alpha1/Handler/get-member
+      type: hasHandler
+      source:
+        path: resources/usecase-get-member.yaml
+        line: 1
+        digest: sha256:e408f0ddbe2cd664adcb26a9a933f9b0abe64c015daa10912104801ed16c57d6
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/get-member
+      to: architecture/architecture.mymeetings.example/v1alpha1/Module/administration
+      type: belongsToModule
+      source:
+        path: resources/usecase-get-member.yaml
+        line: 1
+        digest: sha256:e408f0ddbe2cd664adcb26a9a933f9b0abe64c015daa10912104801ed16c57d6
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/propose-meeting-group
+      to: architecture/architecture.mymeetings.example/v1alpha1/Aggregate/meeting-proposal
+      type: aggregates
+      source:
+        path: resources/usecase-propose-meeting-group.yaml
+        line: 1
+        digest: sha256:e03f5dac870a2e8f81718f29f69fb7188d5a81cb8607a265c545287fbc5bc27d
+      context: false
+      invalidate: false
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/propose-meeting-group
+      to: architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-groups
+      type: usesFeature
+      source:
+        path: resources/usecase-propose-meeting-group.yaml
+        line: 1
+        digest: sha256:e03f5dac870a2e8f81718f29f69fb7188d5a81cb8607a265c545287fbc5bc27d
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/propose-meeting-group
+      to: architecture/architecture.mymeetings.example/v1alpha1/Handler/propose-meeting-group
+      type: hasHandler
+      source:
+        path: resources/usecase-propose-meeting-group.yaml
+        line: 1
+        digest: sha256:e03f5dac870a2e8f81718f29f69fb7188d5a81cb8607a265c545287fbc5bc27d
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/propose-meeting-group
+      to: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+      type: belongsToModule
+      source:
+        path: resources/usecase-propose-meeting-group.yaml
+        line: 1
+        digest: sha256:e03f5dac870a2e8f81718f29f69fb7188d5a81cb8607a265c545287fbc5bc27d
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/propose-meeting-group
+      to: architecture/architecture.mymeetings.example/v1alpha1/Validator/propose-meeting-group
+      type: hasValidator
+      source:
+        path: resources/usecase-propose-meeting-group.yaml
+        line: 1
+        digest: sha256:e03f5dac870a2e8f81718f29f69fb7188d5a81cb8607a265c545287fbc5bc27d
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/register-new-user
+      to: architecture/architecture.mymeetings.example/v1alpha1/Aggregate/user-registration
+      type: aggregates
+      source:
+        path: resources/usecase-register-new-user.yaml
+        line: 1
+        digest: sha256:53042f496a6846536e89e6519a536aa77ae8b66b09a7a47ed60d117f46e53392
+      context: false
+      invalidate: false
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/register-new-user
+      to: architecture/architecture.mymeetings.example/v1alpha1/Feature/user-registration
+      type: usesFeature
+      source:
+        path: resources/usecase-register-new-user.yaml
+        line: 1
+        digest: sha256:53042f496a6846536e89e6519a536aa77ae8b66b09a7a47ed60d117f46e53392
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/register-new-user
+      to: architecture/architecture.mymeetings.example/v1alpha1/Handler/register-new-user
+      type: hasHandler
+      source:
+        path: resources/usecase-register-new-user.yaml
+        line: 1
+        digest: sha256:53042f496a6846536e89e6519a536aa77ae8b66b09a7a47ed60d117f46e53392
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: architecture/architecture.mymeetings.example/v1alpha1/UseCase/register-new-user
+      to: architecture/architecture.mymeetings.example/v1alpha1/Module/registrations
+      type: belongsToModule
+      source:
+        path: resources/usecase-register-new-user.yaml
+        line: 1
+        digest: sha256:53042f496a6846536e89e6519a536aa77ae8b66b09a7a47ed60d117f46e53392
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: engineering/Skill/architecture-review
+      to: architecture/architecture.mymeetings.example/v1alpha1/Feature/meeting-attendance
+      type: uses
+      source:
+        path: agent-guidance/architecture-review.skill.yaml
+        line: 1
+        digest: sha256:e3d72b4a231b35f781acfaaf1958ffcf7434993f58a0f61852b82dac851a6ef3
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: engineering/Skill/architecture-review
+      to: architecture/architecture.mymeetings.example/v1alpha1/Module/meetings
+      type: uses
+      source:
+        path: agent-guidance/architecture-review.skill.yaml
+        line: 1
+        digest: sha256:e3d72b4a231b35f781acfaaf1958ffcf7434993f58a0f61852b82dac851a6ef3
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: engineering/Skill/architecture-review
+      to: architecture/architecture.mymeetings.example/v1alpha1/UseCase/get-meeting-attendees
+      type: uses
+      source:
+        path: agent-guidance/architecture-review.skill.yaml
+        line: 1
+        digest: sha256:e3d72b4a231b35f781acfaaf1958ffcf7434993f58a0f61852b82dac851a6ef3
+      context: true
+      invalidate: true
+      acyclic: false
+    - from: engineering/Skill/architecture-review
+      to: mymeetings-architecture::constitution/Workflow/vertical-slice
+      type: uses
+      source:
+        path: agent-guidance/architecture-review.skill.yaml
+        line: 1
+        digest: sha256:e3d72b4a231b35f781acfaaf1958ffcf7434993f58a0f61852b82dac851a6ef3
+      context: true
+      invalidate: true
+      acyclic: false
