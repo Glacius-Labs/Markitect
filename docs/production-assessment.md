@@ -1,6 +1,27 @@
 # Markitect production assessment
 
-**Recorded:** 2026-10-02. This dated assessment records the release evidence verified at that time and distinguishes it from source behavior. It reports only the Markitect source, its distributions, and source-owned gates; project adoption and acceptance are outside its scope.
+**Recorded:** 2026-10-02; v0.12.0 evidence added 2026-10-03. This dated assessment records release evidence and distinguishes it from source behavior. It reports only the Markitect source, its distributions, and source-owned gates; project adoption and acceptance are outside its scope.
+
+## v0.12.0 published release
+
+The immutable [v0.12.0 release](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.12.0), release ID `402288212`, binds source commit [`83b715c`](https://github.com/Glacius-Labs/Markitect/commit/83b715c415e39af79715cd8a40b3c79237a4c850), following integration of [PR 54](https://github.com/Glacius-Labs/Markitect/pull/54). It ships the bounded `same-target` Domain assertion: two statically named paths, each one or two singleton relation steps, compared by canonical resource identity. The v0.11.0 release remains immutable historical evidence.
+
+| Evidence | Exact basis | Result |
+|---|---|---|
+| Commit-bound Windows/Linux quality and release workflow | [Run 37090219114](https://github.com/Glacius-Labs/Markitect/actions/runs/37090219114), attempt 1, source `83b715c415e39af79715cd8a40b3c79237a4c850` | Windows and Linux gates passed for the exact release source |
+| Release publisher | Release `402288212` | `published-verified`; immutable release and all four assets and attestations verified for the exact source and workflow run |
+| Public distribution metadata | `markitect-release distribution --tag v0.12.0 --repo . --write` | Returned successfully after public release verification; generated the README's marked install/example blocks and the three canonical v0.12.0 WinGet manifests |
+| Public Windows binary | Separately downloaded public asset | SHA-256 matched the attested Windows asset and `version` reported `Markitect 0.12.0 (windows/amd64)`; software-architecture and delivery-target-equality fixture checks passed |
+| Public fixture check basis | Software and Delivery example directories in the inspected working tree | Checks ran with `provisional: true`; these results exercise release behavior against current local fixture inputs and are not immutable consumer-snapshot verification |
+
+| Asset | Verified SHA-256 |
+|---|---|
+| `markitect-v0.12.0-bundle.zip` | `577b05e57817a4623ddbdb1fa4e29dbfe6aad044640e3bac0a1e3edb49584ef0` |
+| `markitect-v0.12.0-linux-amd64` | `f2072ded99d709b8267124d1460e6b1c1b5afd45c3b70ba7c723a82e17152297` |
+| `markitect-v0.12.0-provenance.yaml` | `f093da2c40773bea1f30c8203714bc4e343a348cd5ffb1fe58bb23aa3a3e2f9c` |
+| `markitect-v0.12.0-windows-amd64.exe` | `b03424560caa460322e3580785d6abc9dfbf2137df878e03ddedcf76b3a8fa47` |
+
+These release checks establish the shipped assertion and its declared fixture behavior. They do not establish real-project adoption, productivity improvement, lower context use, fewer defects, market demand, or general business benefit. The separate real-project validation exercise must report its own observed evidence and limits.
 
 ## v0.11.0 published release
 
