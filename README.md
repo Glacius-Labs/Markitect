@@ -15,7 +15,7 @@ The published v0.11.0 release builds on that foundation with [reusable engineeri
 
 > **AI should implement your architecture, not reinvent it on every task.**
 
-The current source iteration tests that language with a [modular DDD / Vertical Slice architecture](examples/software-architecture/README.md), including exact package evolution and deliberately failing structural rules. Its [language-pressure report](docs/design/domain-language-pressure.md) records what the existing kernel can express and what it cannot prove. Source-only explanation improvements add explicit Domain identities, context relation paths and impact causes; the published v0.11.0 download remains the baseline release.
+The current source iteration tests that language with a [modular DDD / Vertical Slice architecture](examples/software-architecture/README.md) and an independent [Delivery topology](examples/delivery-target-equality/README.md). Their shared ownership gap justifies one finite `same-target` assertion comparing two declared singleton relation paths of at most two steps. Its [design assessment](docs/design/resolved-target-equality.md) explains normalization alternatives, explicit selection, policy traces, bounded impact and source-bound exceptions. The [language-pressure report](docs/design/domain-language-pressure.md) keeps the other gaps visible. These are source changes; the published v0.11.0 download remains the baseline release.
 
 ## Why Markitect?
 

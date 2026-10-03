@@ -30,6 +30,7 @@ const (
 	billingModuleKey        = "engineering/architecture.markitect.org/v1alpha1/Module/billing"
 	inventoryModuleKey      = "engineering/architecture.markitect.org/v1alpha1/Module/inventory"
 	commandValidatorRule    = "selected-commands-have-validators"
+	featureOwnershipRule    = "selected-feature-ownership-matches-module"
 )
 
 func softwareArchitectureRoot(t *testing.T) string {
@@ -132,6 +133,24 @@ func installSoftwareArchitectureV2(t *testing.T, root string) []byte {
 	return installSoftwareArchitecturePackage(t, root, files, "2.0.0", "fixture:software-architecture-package-v2")
 }
 
+func installSoftwareArchitectureV1(t *testing.T, root string) []byte {
+	t.Helper()
+	files := readSoftwareArchitectureTree(t, filepath.Join(softwareArchitectureRoot(t), "architecture-package-v1"))
+	return installSoftwareArchitecturePackage(t, root, files, "1.0.0", "fixture:software-architecture-package-v1")
+}
+
+func installSoftwareArchitectureV1_1(t *testing.T, root string) []byte {
+	t.Helper()
+	files := readSoftwareArchitectureTree(t, filepath.Join(softwareArchitectureRoot(t), "architecture-package-v1.1.0"))
+	return installSoftwareArchitecturePackage(t, root, files, "1.1.0", "fixture:software-architecture-package-1.1.0")
+}
+
+func installSoftwareArchitectureV2_1(t *testing.T, root string) []byte {
+	t.Helper()
+	files := readSoftwareArchitectureTree(t, filepath.Join(softwareArchitectureRoot(t), "architecture-package-v2.1.0"))
+	return installSoftwareArchitecturePackage(t, root, files, "2.1.0", "fixture:software-architecture-package-2.1.0")
+}
+
 func installSoftwareArchitecturePackage(t *testing.T, root string, files map[string][]byte, version, source string) []byte {
 	t.Helper()
 	archive, err := contentpackage.Build(files)
@@ -139,7 +158,7 @@ func installSoftwareArchitecturePackage(t *testing.T, root string, files map[str
 		t.Fatal(err)
 	}
 	if !bytes.Equal(archive, mustBuildSoftwarePackage(t, files)) {
-		t.Fatal("rebuilding the v2 package from identical inputs was not deterministic")
+		t.Fatal("rebuilding the package from identical inputs was not deterministic")
 	}
 	archivePath := filepath.Join(root, ".markitect", "packages", "software-architecture-"+version+".zip")
 	if err := os.WriteFile(archivePath, archive, 0644); err != nil {
@@ -259,14 +278,20 @@ func TestSoftwareArchitectureV1PackageDrivesConsumerContextAndPolicy(t *testing.
 	if len(project.Diagnostics) != 0 {
 		t.Fatalf("v1 consumer should compile without policy failures: %#v", project.Diagnostics)
 	}
-	if got := project.Graph.Project.Spec.Packages[0].SHA256; got != "22cb698924990fffe85d74489b971f239a2ff25863a1f69d65743b94facb3457" {
-		t.Fatalf("checked-in v1 package digest changed unexpectedly: %s", got)
+	if got := project.Graph.Project.Spec.Packages[0].Version; got != "1.1.0" {
+		t.Fatalf("consumer should target the same-target baseline package 1.1.0, got %s", got)
 	}
 
 	for _, key := range []string{createOrderKey, issueInvoiceKey} {
 		if result, ok := softwareResult(project.Graph.PolicyResults, "selected-command-labels-identify-commands", key); !ok || result.Status != core.PolicyPassed {
 			t.Errorf("selected Command intent assertion missing or failed for %s: %#v", key, result)
 		}
+		if result, ok := softwareResult(project.Graph.PolicyResults, featureOwnershipRule, key); !ok || result.Status != core.PolicyPassed {
+			t.Errorf("selected Feature ownership assertion missing or failed for %s: %#v", key, result)
+		}
+	}
+	if _, ok := softwareResult(project.Graph.PolicyResults, featureOwnershipRule, getOrderKey); ok {
+		t.Fatal("unlabeled Query unexpectedly entered the selected Feature ownership cohort")
 	}
 	if _, ok := softwareResult(project.Graph.PolicyResults, "selected-command-labels-identify-commands", getOrderKey); ok {
 		t.Fatal("unlabeled Query unexpectedly entered the selected Command cohort")
@@ -282,9 +307,9 @@ func TestSoftwareArchitectureV1PackageDrivesConsumerContextAndPolicy(t *testing.
 		if input.Resource != nil {
 			resources[input.Resource.GraphKey()] = true
 		}
-		if input.Role == "domain" && input.PackageVersion == "1.0.0" {
+		if input.Role == "domain" && input.PackageVersion == "1.1.0" {
 			domains++
-			if !strings.Contains(input.Text, "selected-command-labels-identify-commands") || !strings.Contains(input.Text, "validation: required") {
+			if !strings.Contains(input.Text, "selected-command-labels-identify-commands") || !strings.Contains(input.Text, "validation: required") || !strings.Contains(input.Text, featureOwnershipRule) || !strings.Contains(input.Text, "same-target") {
 				t.Error("context did not retain the exact selected policy definition")
 			}
 		}
@@ -309,12 +334,13 @@ func TestSoftwareArchitectureV1PackageDrivesConsumerContextAndPolicy(t *testing.
 			t.Errorf("Orders context unexpectedly pulled unrelated resource %s", key)
 		}
 	}
-	if len(compiled.PolicyResults) != 2 {
-		t.Fatalf("context should include the Module boundary and selected UseCase results in its subject closure, got %#v", compiled.PolicyResults)
+	if len(compiled.PolicyResults) != 3 {
+		t.Fatalf("context should include the Module boundary and selected UseCase policy results in its subject closure, got %#v", compiled.PolicyResults)
 	}
 	for _, expected := range []struct{ constraint, subject string }{
 		{"module-dependencies-stay-at-shared-boundaries", ordersModuleKey},
 		{"selected-command-labels-identify-commands", createOrderKey},
+		{featureOwnershipRule, createOrderKey},
 	} {
 		if _, ok := softwareResult(compiled.PolicyResults, expected.constraint, expected.subject); !ok {
 			t.Errorf("context omitted exact policy result %s for %s", expected.constraint, expected.subject)
@@ -322,8 +348,26 @@ func TestSoftwareArchitectureV1PackageDrivesConsumerContextAndPolicy(t *testing.
 	}
 }
 
+func TestSoftwareArchitectureV11SameTargetRuleAppearsInGeneratedViews(t *testing.T) {
+	project := loadSoftwareArchitecture(t, softwareArchitectureRoot(t), "")
+	views, err := render.Generate(project.Graph, project.Snapshot.Files)
+	if err != nil {
+		t.Fatal(err)
+	}
+	domainView := string(views["docs/markitect/_domains/architecture.markitect.org.v1alpha1.domain.md"])
+	for _, want := range []string{featureOwnershipRule, "feature-ownership: required", "same-target", "belongsToModule", "realizesFeature"} {
+		if !strings.Contains(domainView, want) {
+			t.Errorf("generated Domain view omitted same-target policy detail %q", want)
+		}
+	}
+	useCaseView := string(views["docs/markitect/engineering/usecase-create-order.usecase.architecture.markitect.org.v1alpha1.md"])
+	if !strings.Contains(useCaseView, featureOwnershipRule) || !strings.Contains(useCaseView, "**PASSED**") {
+		t.Errorf("generated UseCase view omitted its selected same-target result: %s", useCaseView)
+	}
+}
+
 func TestSoftwareArchitecturePackageSourcesAndArchiveAreReproducible(t *testing.T) {
-	for _, version := range []string{"v1", "v2"} {
+	for _, version := range []string{"v1", "v1.1.0", "v2", "v2.1.0"} {
 		t.Run(version, func(t *testing.T) {
 			root := filepath.Join(softwareArchitectureRoot(t), "architecture-package-"+version)
 			files := readSoftwareArchitectureTree(t, root)
@@ -366,10 +410,14 @@ func TestSoftwareArchitecturePackageSourcesAndArchiveAreReproducible(t *testing.
 			if !bytes.Equal(first, second) {
 				t.Fatal("package builder output changed for identical source bytes")
 			}
-			if version == "v1" {
-				checkedIn := mustReadSoftwareFile(t, filepath.Join(softwareArchitectureRoot(t), ".markitect", "packages", "software-architecture-1.0.0.zip"))
+			if version == "v1" || version == "v1.1.0" {
+				archiveVersion := strings.TrimPrefix(version, "v")
+				if version == "v1" {
+					archiveVersion = "1.0.0"
+				}
+				checkedIn := mustReadSoftwareFile(t, filepath.Join(softwareArchitectureRoot(t), ".markitect", "packages", "software-architecture-"+archiveVersion+".zip"))
 				if !bytes.Equal(first, checkedIn) {
-					t.Fatal("checked-in v1 archive does not match the deterministic package builder output")
+					t.Fatalf("checked-in %s archive does not match the deterministic package builder output", version)
 				}
 			}
 		})
@@ -379,6 +427,7 @@ func TestSoftwareArchitecturePackageSourcesAndArchiveAreReproducible(t *testing.
 func TestSoftwareArchitectureV2PackagePolicyLifecycleUsesFixedSnapshots(t *testing.T) {
 	root := t.TempDir()
 	copySoftwareArchitecture(t, root)
+	installSoftwareArchitectureV1(t, root)
 	rev1 := initSoftwareArchitectureGit(t, root)
 	v1 := loadSoftwareArchitecture(t, root, rev1)
 	if v1.Snapshot.Provisional || len(v1.Diagnostics) != 0 {

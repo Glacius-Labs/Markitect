@@ -29,6 +29,8 @@ func (g *Graph) EvaluateConstraints() {
 	}
 	g.Diagnostics = retained
 	g.PolicyResults = nil
+	g.PolicyDependencies = nil
+	g.invalidPolicyPaths = map[string]bool{}
 	for _, domain := range g.Registry.Domains() {
 		for _, constraint := range domain.Constraints {
 			g.evaluateConstraint(domain, constraint)
@@ -45,6 +47,28 @@ func (g *Graph) EvaluateConstraints() {
 		}
 		return a.Subject < b.Subject
 	})
+	sort.Slice(g.PolicyDependencies, func(i, j int) bool {
+		a, b := g.PolicyDependencies[i], g.PolicyDependencies[j]
+		if a.Subject != b.Subject {
+			return a.Subject < b.Subject
+		}
+		if a.Input != b.Input {
+			return a.Input < b.Input
+		}
+		if a.APIVersion != b.APIVersion {
+			return a.APIVersion < b.APIVersion
+		}
+		if a.Constraint != b.Constraint {
+			return a.Constraint < b.Constraint
+		}
+		if a.Relation != b.Relation {
+			return a.Relation < b.Relation
+		}
+		if a.Path != b.Path {
+			return a.Path < b.Path
+		}
+		return a.Line < b.Line
+	})
 }
 
 func (g *Graph) evaluateConstraint(domain DomainDefinition, constraint ConstraintDefinition) {
@@ -56,6 +80,15 @@ func (g *Graph) evaluateConstraint(domain DomainDefinition, constraint Constrain
 	}
 	selected := g.selectedForConstraint(domain, constraint)
 	assertion := constraint.Assert
+	if assertion.Op == "same-target" {
+		for _, resource := range selected {
+			result, valid := g.evaluateSameTarget(domain, constraint, resource)
+			if valid {
+				g.PolicyResults = append(g.PolicyResults, result)
+			}
+		}
+		return
+	}
 	if assertion.Op == "unique" || assertion.Op == "count" && assertion.Scope != "resource" {
 		message := evaluateCollectionConstraint(domain, constraint, selected)
 		result := PolicyResult{APIVersion: domain.APIVersion, Constraint: constraint.Name, Status: PolicyPassed, Message: message, ConstraintDigest: constraintDigest}
@@ -99,6 +132,9 @@ func normalizeConstraint(constraint ConstraintDefinition) ConstraintDefinition {
 // its name while changing its field, endpoints, or graph effects.
 func digestConstraint(domain DomainDefinition, constraint ConstraintDefinition) (string, error) {
 	constraint = normalizeConstraint(constraint)
+	if constraint.Assert.Op == "same-target" {
+		return digestSameTargetConstraint(domain, constraint)
+	}
 	type relationBinding struct {
 		APIVersion string             `yaml:"apiVersion"`
 		Name       string             `yaml:"name"`
@@ -327,6 +363,14 @@ func (g *Graph) applyPolicyExceptions() {
 			}
 			if domain, constraint, exists := g.findPolicyConstraint(exception.APIVersion, exception.Constraint); exists && g.Resources[exception.Subject] != nil {
 				currentConstraintDigest, constraintErr := digestConstraint(domain, constraint)
+				if constraintErr == nil && exception.ConstraintDigest != currentConstraintDigest {
+					g.diag(g.Project, "policy.exception.stale", fmt.Sprintf("policy exception %q is stale; constraint or subject content changed", exception.Name))
+					continue
+				}
+				if g.invalidPolicyPaths[exceptionTargetKey(exception)] {
+					g.diag(g.Project, "policy.exception.not-waivable", fmt.Sprintf("policy exception %q targets a subject with an invalid same-target path", exception.Name))
+					continue
+				}
 				currentSubjectDigest, subjectErr := digestResource(g.Resources[exception.Subject])
 				if constraintErr != nil || subjectErr != nil || exception.ConstraintDigest != currentConstraintDigest || exception.SubjectDigest != currentSubjectDigest {
 					g.diag(g.Project, "policy.exception.stale", fmt.Sprintf("policy exception %q is stale; constraint or subject content changed", exception.Name))

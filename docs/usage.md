@@ -76,7 +76,7 @@ spec:
       name: core
 ```
 
-References in custom Domain resources resolve within that same Domain API version; their typed references and named relations cannot cross into another Domain. The bundled AI-working Domain has explicit `uses` relationships that can target a registered custom Domain when the reference names its qualified `apiVersion`. Relations separately declare context traversal, invalidation, and cycle behavior. A Domain constraint selects resources by its own kind and exact metadata labels, then applies a closed assertion operator. Supported operators are `present`, `equal`, `allowed`, `allowed-targets`, `count`, and `unique`; `count` requires at least one nonnegative `min` or `max`. `allowed-targets` checks actual relation target kinds against the assertion's `values`, which must be within the relation descriptor's declared `targetKinds`. These checks apply only to declared model data and selected inputs.
+References in custom Domain resources resolve within that same Domain API version; their typed references and named relations cannot cross into another Domain. The bundled AI-working Domain has explicit `uses` relationships that can target a registered custom Domain when the reference names its qualified `apiVersion`. Relations separately declare context traversal, invalidation, and cycle behavior. A Domain constraint selects resources by its own kind and exact metadata labels, then applies a closed assertion operator. Published v0.11.0 operators are `present`, `equal`, `allowed`, `allowed-targets`, `count`, and `unique`; `count` requires at least one nonnegative `min` or `max`. `allowed-targets` checks actual relation target kinds against the assertion's `values`, which must be within the relation descriptor's declared `targetKinds`. These checks apply only to declared model data and selected inputs.
 
 An optional `inputsField` on a kind names one declared array-of-string property whose paths are exact opaque project artifact inputs. Markitect snapshots those files and uses their byte changes for context and impact; it does not parse their domain-specific structure.
 
@@ -89,6 +89,26 @@ The [canonical engineering example](../examples/canonical-engineering/README.md)
 v0.11.0 treats exact-pinned package Domains as reusable architecture contracts. Existing package declarations and Domain activation remain explicit; updating a contract means reviewing an exact package pin change, running `check` and fixed-snapshot `impact`, and inspecting PolicyResults. Markitect will not rewrite application source as part of a package update.
 
 When a Project selects `markdown`, the Domain projection generates normalized schema, relation, and constraint views at `docs/markitect/_domains/*.domain.md`. Relevant per-resource PolicyResults, including a waived result's recorded decision, appear in generated resource views. These generated files remain derived views; canonical Domain definitions and policy stay in the selected package or Project source.
+
+### Current source: resolved-target equality (unreleased)
+
+The current source adds `same-target` after the published v0.11.0 baseline. This assertion compares two fixed paths of named relations from each selected subject; it does not execute a graph query. Each path has one or two steps, all in the selected Domain. `select.kind` is required. Undefined relations, incompatible kind transitions, wildcard target kinds and disjoint terminal kinds are rejected in the Domain definition. No field expressions, collection traversal or implicit applicability are supported.
+
+```yaml
+- name: deployment-products-agree
+  select:
+    kind: Deployment
+  assert:
+    op: same-target
+    left: [deploysService, belongsToProduct]
+    right: [deploysTo, belongsToProduct]
+```
+
+Every step must have exactly one declared reference and one resolved target. Missing, unresolved, wrong-kind or ambiguous steps are structural errors with no equality PolicyResult; an exception cannot waive them. Declared relation cycle rules still apply independently; bounded traversal introduces no mixed-relation cycle prohibition. Fully resolved paths produce one per-subject `passed` or `failed` result by comparing their final canonical GraphKeys. A failed result can be waived only for that exact subject and constraint under the existing exception rules.
+
+Both passed and failed results expose `comparison.left` and `comparison.right`: ordered `relations`, edge `steps` with `from`, `to`, `relation`, Domain API and source path/resource line, and the final `target`. Join the result's API/constraint to the normalized Domain and exact `domainInputs` provenance to explain selection and rule origin. Constraint digests include both paths and their relation definitions. For this operator, the subject digest also binds the canonical contents of all traversed resources and the resolved identities; it conservatively becomes stale even when a changed input does not alter the final equality. Source location metadata does not determine equality.
+
+Impact derives policy-read dependencies from both paths, including valid prefixes of incomplete paths and the old and new snapshots. These dependencies do not insert Context edges or change relation flags. Context includes comparison evidence for its included subjects, but resources along a policy-only path enter the context closure only through existing `context: true` relations. See the [design assessment](design/resolved-target-equality.md), [Delivery fixture](../examples/delivery-target-equality/README.md) and [versioned Software fixture](../examples/software-architecture/README.md). Software Feature ownership uses an explicit label cohort; an unlabeled Feature-bearing UseCase is outside that policy.
 
 The `count.scope` values are `resource` and `selection`. If omitted, `scope` defaults to `selection`. A selection-scoped count without a `relation` counts selected resources; with a `relation`, it counts the total relation targets across the selected resources. A resource-scoped count requires a `relation` and evaluates its number of targets separately for each selected subject. Selection boundaries must include additions and removals. PolicyResults report `passed`, `failed`, or `waived` per constraint and subject, exposed by the normalized model, `check`/`verify`, and relevant context output.
 

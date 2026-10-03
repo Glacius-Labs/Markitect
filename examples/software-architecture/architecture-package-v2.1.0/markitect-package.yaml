@@ -1,0 +1,15 @@
+apiVersion: markitect.example.org/v1alpha1
+kind: Package
+metadata:
+    name: software-architecture
+spec:
+    areas:
+        - name: architecture
+          path: .markitect/areas/architecture
+    domains:
+        - domains/software.yaml
+    version: 2.1.0
+    exports:
+        - kind: Workflow
+          name: vertical-slice
+          namespace: architecture

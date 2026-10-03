@@ -428,6 +428,9 @@ func validateConstraint(c ConstraintDefinition, d DomainDefinition) error {
 	if c.Assert.Op != "count" && c.Assert.Scope != "" {
 		return fmt.Errorf("constraint %q scope is only supported for count", c.Name)
 	}
+	if c.Assert.Op != "same-target" && (len(c.Assert.Left) > 0 || len(c.Assert.Right) > 0) {
+		return fmt.Errorf("constraint %q left and right are only supported for same-target", c.Name)
+	}
 	if c.Select.Kind != "" {
 		if _, ok := d.Kinds[c.Select.Kind]; !ok {
 			return fmt.Errorf("constraint %q selects undefined kind %q", c.Name, c.Select.Kind)
@@ -435,6 +438,31 @@ func validateConstraint(c ConstraintDefinition, d DomainDefinition) error {
 	}
 	a := c.Assert
 	switch a.Op {
+	case "same-target":
+		if c.Select.Kind == "" {
+			return fmt.Errorf("constraint %q same-target requires select.kind", c.Name)
+		}
+		if a.Scope != "" || a.Field != "" || a.Relation != "" || a.Value != nil || len(a.Values) > 0 || a.Min != nil || a.Max != nil {
+			return fmt.Errorf("constraint %q same-target does not accept scope, field, relation, value, values, min, or max", c.Name)
+		}
+		if err := validateSameTargetPath(c.Name, "left", a.Left, c.Select.Kind, d); err != nil {
+			return err
+		}
+		if err := validateSameTargetPath(c.Name, "right", a.Right, c.Select.Kind, d); err != nil {
+			return err
+		}
+		leftTargets := terminalKinds(a.Left, d)
+		rightTargets := terminalKinds(a.Right, d)
+		compatible := false
+		for _, kind := range leftTargets {
+			if contains(rightTargets, kind) {
+				compatible = true
+				break
+			}
+		}
+		if !compatible {
+			return fmt.Errorf("constraint %q same-target paths have no compatible terminal kinds", c.Name)
+		}
 	case "present", "equal", "allowed", "unique":
 		if a.Field == "" {
 			return fmt.Errorf("constraint %q op %s requires field", c.Name, a.Op)
@@ -693,6 +721,8 @@ func cloneDomain(d DomainDefinition) DomainDefinition {
 		}
 		c.Assert.Value = cloneAny(c.Assert.Value)
 		c.Assert.Values = append([]any(nil), c.Assert.Values...)
+		c.Assert.Left = append([]string(nil), c.Assert.Left...)
+		c.Assert.Right = append([]string(nil), c.Assert.Right...)
 		for j := range c.Assert.Values {
 			c.Assert.Values[j] = cloneAny(c.Assert.Values[j])
 		}

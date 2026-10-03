@@ -1,13 +1,20 @@
 param(
-    [ValidateSet('1', '2')]
-    [string] $Version = '1'
+    [ValidateSet('1.0.0', '1.1.0', '2.0.0', '2.1.0')]
+    [string] $Version = '1.1.0'
 )
 
 $ErrorActionPreference = 'Stop'
 $projectRoot = $PSScriptRoot
 $repositoryRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
-$sourceRoot = Join-Path $projectRoot "architecture-package-v$Version"
-$packageVersion = if ($Version -eq '1') { '1.0.0' } else { '2.0.0' }
+$sourceDirectory = switch ($Version) {
+    '1.0.0' { 'architecture-package-v1' }
+    '1.1.0' { 'architecture-package-v1.1.0' }
+    '2.0.0' { 'architecture-package-v2' }
+    '2.1.0' { 'architecture-package-v2.1.0' }
+}
+$sourceCoordinate = "fixture:software-architecture-package-$Version"
+$sourceRoot = Join-Path $projectRoot $sourceDirectory
+$packageVersion = $Version
 $archivePath = Join-Path $projectRoot ".markitect/packages/software-architecture-$packageVersion.zip"
 if (Test-Path -LiteralPath $archivePath) { throw "Refusing to overwrite existing archive: $archivePath" }
 
@@ -51,7 +58,7 @@ try {
     $digest = (Get-FileHash -LiteralPath $archivePath -Algorithm SHA256).Hash.ToLowerInvariant()
     Write-Output "archive: .markitect/packages/software-architecture-$packageVersion.zip"
     Write-Output "sha256: $digest"
-    Write-Output "pin source: fixture:software-architecture-package-v$Version (local fixture coordinate; not the temporary Git revision)"
+    Write-Output "pin source: $sourceCoordinate (local fixture coordinate; not the temporary Git revision)"
 }
 finally {
     if (Test-Path -LiteralPath $temporaryRoot) {

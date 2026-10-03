@@ -197,6 +197,7 @@ func CompileContext(p *Project, key, version string, toolDigest ...string) (*Con
 		}
 	}
 	if len(c.PolicyResults) > 0 {
+		c.PolicyResults = clonePolicyResults(c.PolicyResults)
 		policyBytes, err := YAML(c.PolicyResults)
 		if err != nil {
 			return nil, fmt.Errorf("encode context policy results: %w", err)

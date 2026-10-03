@@ -10,5 +10,5 @@ Report failed or waived PolicyResults and their affected subjects.
 ## Dependencies
 
 - [Module: orders](module-orders.module.architecture.markitect.org.v1alpha1.md)
-- Package dependency: software-architecture::architecture/Workflow/vertical-slice (version 1.0.0). Select this exported dependency with `markitect context --repo . --package software-architecture --namespace architecture --kind Workflow --name vertical-slice`.
+- Package dependency: software-architecture::architecture/Workflow/vertical-slice (version 1.1.0). Select this exported dependency with `markitect context --repo . --package software-architecture --namespace architecture --kind Workflow --name vertical-slice`.
 - [UseCase: create-order](usecase-create-order.usecase.architecture.markitect.org.v1alpha1.md)

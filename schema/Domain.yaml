@@ -67,6 +67,13 @@ properties:
                             properties:
                                 field:
                                     type: string
+                                left:
+                                    items:
+                                        minLength: 1
+                                        type: string
+                                    maxItems: 2
+                                    minItems: 1
+                                    type: array
                                 max:
                                     minimum: 0
                                     type: integer
@@ -81,9 +88,17 @@ properties:
                                         - allowed-targets
                                         - count
                                         - unique
+                                        - same-target
                                     type: string
                                 relation:
                                     type: string
+                                right:
+                                    items:
+                                        minLength: 1
+                                        type: string
+                                    maxItems: 2
+                                    minItems: 1
+                                    type: array
                                 scope:
                                     enum:
                                         - resource
