@@ -38,6 +38,32 @@ func TestSchemasAreDeterministicAndCoverEveryKind(t *testing.T) {
 	}
 }
 
+func TestDomainSchemaDescribesSameTargetPaths(t *testing.T) {
+	schemas, err := Schemas()
+	if err != nil {
+		t.Fatal(err)
+	}
+	var document map[string]any
+	if err := yaml.Unmarshal(schemas["schema/Domain.yaml"], &document); err != nil {
+		t.Fatal(err)
+	}
+	root := mapping(t, document["properties"])
+	spec := mapping(t, root["spec"])
+	constraints := mapping(t, spec["properties"])["constraints"]
+	constraint := mapping(t, mapping(t, constraints)["items"])
+	assertion := mapping(t, mapping(t, constraint["properties"])["assert"])
+	assertionProperties := mapping(t, assertion["properties"])
+	if !containsString(sequence(t, mapping(t, assertionProperties["op"])["enum"]), "same-target") {
+		t.Fatal("Domain schema does not list same-target")
+	}
+	for _, side := range []string{"left", "right"} {
+		path := mapping(t, assertionProperties[side])
+		if path["minItems"] != 1 || path["maxItems"] != 2 {
+			t.Errorf("%s path bounds = %v..%v, want one or two relations", side, path["minItems"], path["maxItems"])
+		}
+	}
+}
+
 func TestSchemasMatchAllowedSpecFieldsAndKeepObjectsStrict(t *testing.T) {
 	schemas, err := Schemas()
 	if err != nil {

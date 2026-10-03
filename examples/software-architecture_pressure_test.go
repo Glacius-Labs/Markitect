@@ -103,7 +103,13 @@ func setPressureArrayReferenceName(t *testing.T, resource *core.Resource, field 
 }
 
 func TestSoftwareArchitecturePressureUseCaseFeatureOwnerMismatchPasses(t *testing.T) {
-	base := loadSoftwareArchitecturePressureBase(t)
+	root := t.TempDir()
+	copySoftwareArchitecture(t, root)
+	installSoftwareArchitectureV1(t, root)
+	base := loadSoftwareArchitecture(t, root, "")
+	if len(base.Diagnostics) != 0 {
+		t.Fatalf("historical v1.0.0 baseline should not enforce Feature owner equality: %#v", base.Diagnostics)
+	}
 	project := parseSoftwareArchitecturePressureResourceMutation(t, base, "resources/usecase-create-order.yaml", func(resource *core.Resource) {
 		setPressureReferenceName(t, resource, "feature", "invoicing")
 	})
@@ -220,23 +226,27 @@ spec:
 	}
 }
 
-func TestSoftwareArchitecturePressureEmptyOptInCohortHasNoSubjectResultsV1AndV2(t *testing.T) {
-	for _, version := range []string{"v1", "v2"} {
+func TestSoftwareArchitecturePressureEmptyOptInCohortHasNoSubjectResultsV11V2AndV21(t *testing.T) {
+	for _, version := range []string{"v1.1", "v2", "v2.1"} {
 		t.Run(version, func(t *testing.T) {
-			root := softwareArchitectureRoot(t)
-			if version == "v2" {
-				root = t.TempDir()
-				copySoftwareArchitecture(t, root)
+			root := t.TempDir()
+			copySoftwareArchitecture(t, root)
+			switch version {
+			case "v1.1":
+				installSoftwareArchitectureV1_1(t, root)
+			case "v2":
 				installSoftwareArchitectureV2(t, root)
+			case "v2.1":
+				installSoftwareArchitectureV2_1(t, root)
 			}
 			base, err := app.Load(root, "")
 			if err != nil {
 				t.Fatalf("%s baseline failed to load: %v", version, err)
 			}
-			if version == "v1" && len(base.Diagnostics) != 0 {
-				t.Fatalf("v1 baseline should have no policy findings: %#v", base.Diagnostics)
+			if version == "v1.1" && len(base.Diagnostics) != 0 {
+				t.Fatalf("v1.1 baseline should have no policy findings: %#v", base.Diagnostics)
 			}
-			if version == "v2" {
+			if version == "v2" || version == "v2.1" {
 				failures := 0
 				for _, diagnostic := range base.Diagnostics {
 					if diagnostic.Code == "constraint.selected-commands-have-validators" {
@@ -244,7 +254,7 @@ func TestSoftwareArchitecturePressureEmptyOptInCohortHasNoSubjectResultsV1AndV2(
 					}
 				}
 				if failures != 2 || len(base.Diagnostics) != failures {
-					t.Fatalf("v2 baseline should expose exactly the two opted-in validator failures before labels are removed: %#v", base.Diagnostics)
+					t.Fatalf("%s baseline should expose exactly the two opted-in validator failures before labels are removed: %#v", version, base.Diagnostics)
 				}
 			}
 			private := privateSoftwareArchitectureSnapshot(base)
@@ -257,12 +267,12 @@ func TestSoftwareArchitecturePressureEmptyOptInCohortHasNoSubjectResultsV1AndV2(
 				if err != nil {
 					t.Fatalf("parse %s cohort member %s: %v", version, path, err)
 				}
-				if resource.Metadata.Labels["validation"] != "required" {
-					t.Fatalf("%s cohort member %s does not carry the opt-in label: %#v", version, path, resource.Metadata.Labels)
+				if resource.Metadata.Labels["validation"] != "required" || (version != "v2" && resource.Metadata.Labels["feature-ownership"] != "required") {
+					t.Fatalf("%s cohort member %s does not carry the opt-in labels: %#v", version, path, resource.Metadata.Labels)
 				}
-				labels := make(map[string]string, len(resource.Metadata.Labels)-1)
+				labels := make(map[string]string, len(resource.Metadata.Labels))
 				for key, value := range resource.Metadata.Labels {
-					if key != "validation" {
+					if key != "validation" && key != "feature-ownership" {
 						labels[key] = value
 					}
 				}
@@ -278,7 +288,7 @@ func TestSoftwareArchitecturePressureEmptyOptInCohortHasNoSubjectResultsV1AndV2(
 				t.Fatalf("empty %s opt-in cohort failed to parse: %v; %#v", version, err, project.Diagnostics)
 			}
 			for _, result := range project.Graph.PolicyResults {
-				if result.Constraint == "selected-command-labels-identify-commands" || version == "v2" && result.Constraint == "selected-commands-have-validators" {
+				if result.Constraint == "selected-command-labels-identify-commands" || result.Constraint == featureOwnershipRule || (version == "v2" || version == "v2.1") && result.Constraint == "selected-commands-have-validators" {
 					t.Fatalf("empty %s opt-in cohort unexpectedly emitted a per-subject result: %+v", version, result)
 				}
 			}

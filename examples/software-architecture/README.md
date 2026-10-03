@@ -2,13 +2,13 @@
 
 This is a technology-neutral consumer of one offline, exact-pinned Software Architecture package. Its custom Domain describes a Product with three Modules: Orders, Billing, and Inventory. Billing consumes an Interface published by Orders. Inventory has no direct or Interface relationship to either slice and is included to test that a bounded Orders change need not affect an unrelated Module. `Core` has no outgoing relation in this Domain; `Common` is an explicitly owned shared resource.
 
-`Feature` is optional on a UseCase. Where present, its `module` and the UseCase's own `module` reference are both modeled, but today Markitect cannot prove they identify the same Module. Aggregates also name a Module, while UseCases reference Aggregates; matching those owners is another unverified join. Handlers are scalar references with exactly-one structural bounds per UseCase. This says nothing about exclusivity: two UseCases can share one Handler. An Interface names one provider Module; multiple Modules may consume it. The current language cannot restrict which Module may consume which Interface by identity. It also cannot deduplicate semantically equivalent Common resources with different identities.
+`Feature` remains optional on a UseCase. Package 1.1.0 adds an explicitly labeled `feature-ownership: required` cohort and proves that each selected UseCase's `module` resolves to the same canonical Module as `feature -> Feature.module`. A selected UseCase without a Feature is a structural path error; an unlabeled UseCase remains outside the rule even if it has no Feature or points to a Feature owned elsewhere. The label therefore defines coverage and is not inferred from Feature presence. Aggregates also name a Module, while UseCases reference Aggregates; matching those owners remains unverified. Handlers are scalar references with exactly-one structural bounds per UseCase. This says nothing about exclusivity: two UseCases can share one Handler. An Interface names one provider Module; multiple Modules may consume it. The current language cannot restrict which Module may consume which Interface by identity. It also cannot deduplicate semantically equivalent Common resources with different identities.
 
 The central `module-dependencies-stay-at-shared-boundaries` constraint permits direct `dependsOn` target kinds `Core` and `Common`; direct Module-to-Module dependencies fail policy. Cross-module collaboration is represented through typed Interfaces. That is a kind-level boundary only: the finite policy language cannot restrict which consumer Modules may use a particular Interface by identity. Its `acyclic` checks are per relation name, not over a combined Module→Interface→Module path. These limitations are exercised as negative pressure probes; a passing model in those probes is not evidence of the missing invariant.
 
-The v1 and v2 package Domains have the same API version and resource schema. V1 defines an opt-in validation cohort through the `validation: required` label and checks that labeled UseCases have `intent: Command`. V2 adds a per-subject rule requiring at least one Validator for that same labeled cohort. The selector cannot inspect `spec.intent`, so a Command without the opt-in label is outside this rule by design. A label is not proof of classification or risk. The example tests that a mislabeled Query is rejected when it is in the selected cohort and documents that an unlabeled Command is not selected.
+The package Domain versions retain the same API version and resource schema. Versions 1.0.0 and 2.0.0 are immutable historical sources: v1 defines the `validation: required` cohort and checks that its UseCases have `intent: Command`; v2 adds the Validator requirement. Version 1.1.0 adds the `feature-ownership: required` same-target rule without changing those definitions. Version 2.1.0 retains both opt-in cohorts and adds the Validator requirement to the historical v2 rules. The selector cannot inspect `spec.intent`, so a Command without `validation: required` is outside that rule by design. A label defines coverage, not proof of classification or risk.
 
-The package-v1 archive is checked in and pinned by exact version, local fixture provenance coordinate, archive path, and SHA-256. Package-v2 is built deterministically from its source fixture during the tests. The migration changes the exact pin, leaves the API version/schema stable, and reports affected resources. It does not migrate application code. Exceptions bind to one failing selected UseCase, and the test adds Validators and removes the exception before claiming a passing policy state.
+The package 1.0.0 and 1.1.0 archives are checked in and pinned by exact version, local fixture provenance coordinate, archive path, and SHA-256. Packages 2.0.0 and 2.1.0 are built deterministically from their versioned source fixtures during tests. The tests preserve the historical 1.0.0→2.0.0 lifecycle and exercise the new 1.1.0→2.1.0 lifecycle. Each migration changes an exact pin, keeps the API/schema stable, and reports affected resources. It does not migrate application code. Exceptions bind to one failing selected UseCase; stale decisions remain actionable, and the tests implement Validators before claiming a passing policy state.
 
 ## Run the consumer
 
@@ -22,19 +22,19 @@ go run ./cmd/markitect context --repo examples/software-architecture --namespace
 go test ./examples -run SoftwareArchitecture -count=1
 ```
 
-Regenerate the local package archive only when intentionally changing package-v1 sources:
+Regenerate the local package archive only when intentionally changing the matching versioned package source:
 
 ```powershell
-./examples/software-architecture/build-package.ps1 -Version 1
+./examples/software-architecture/build-package.ps1 -Version 1.1.0
 ```
 
-The script refuses to overwrite an archive and prints the resulting digest and local source coordinate. Package-v2 source is under `architecture-package-v2`; the migration test builds a reproducible archive from those bytes without requiring a network or claiming an upstream commit.
+The script refuses to overwrite an archive and prints the resulting digest and local source coordinate. Exact source directories are `architecture-package-v1`, `architecture-package-v1.1.0`, `architecture-package-v2`, and `architecture-package-v2.1.0`; tests build reproducible archives from those bytes without a network or claiming an upstream commit.
 
 ## Architecture-contract evolution
 
-`TestSoftwareArchitectureV2PackagePolicyLifecycleUsesFixedSnapshots` creates an isolated consumer Git repository and captures each state as a commit. It verifies that v2 retains the v1 API version, kinds, relations and existing assertions, adding only `selected-commands-have-validators`.
+`TestSoftwareArchitectureV2PackagePolicyLifecycleUsesFixedSnapshots` retains the original 1.0.0→2.0.0 policy migration proof. `TestSoftwareArchitectureV11ToV21VersionedPolicyLifecycle` proves the active 1.1.0→2.1.0 lifecycle with the new ownership contract. Both use isolated consumer Git repositories and exact snapshots.
 
-| Snapshot | Explicit change | Expected policy evidence |
+| Historical snapshot | Explicit change | Expected policy evidence |
 |---|---|---|
 | v1 | Pin `1.0.0`, activate its Domain member. | Module boundaries and selected Command classification pass. Exactly-one Handler remains structural. |
 | v2 | Pin `2.0.0` with its new archive digest. | `create-order` and `issue-invoice` fail the Validator rule; Queries remain unselected. Pin/configuration impact conservatively includes the whole consumer. |
@@ -42,7 +42,9 @@ The script refuses to overwrite an archive and prints the resulting digest and l
 | Partial implementation | Add Billing's Validator and explicit ownership relation. | Billing passes; Orders remains waived. Agent context and generated Domain/UseCase views show the waiver, rationale, owner, decision and dates. |
 | Completed model | Add Orders' Validator; remove the exception and policy date. | Both selected Commands pass without waivers. |
 
-Separate probes change an exception's subject bytes or advance the fixed review date past expiry: they produce `policy.exception.stale` or `policy.exception.expired` and leave the original finding failed. Observe and Plan tests remain read-only; changing inputs makes a saved projection plan stale before Apply. This sequence updates the canonical architecture graph only. No application code is generated or migrated.
+The separate current-baseline lifecycle starts at package 1.1.0, where the two opted-in UseCases pass same-target ownership. Pinning 2.1.0 retains those passes and adds the two Validator failures; implementing both Validators returns a clean model. This lifecycle is independently exercised by `TestSoftwareArchitectureV11ToV21VersionedPolicyLifecycle`.
+
+Separate probes change an exception's subject bytes or advance the fixed review date past expiry: they produce `policy.exception.stale` or `policy.exception.expired` and leave the original finding failed. The same-target tests show a selected missing Feature as structural and non-waivable, while an unlabeled mismatch remains outside coverage. Observe and Plan tests remain read-only; changing inputs makes a saved projection plan stale before Apply. This sequence updates the canonical architecture graph only. No application code is generated or migrated.
 
 ## Agent context and explanation
 

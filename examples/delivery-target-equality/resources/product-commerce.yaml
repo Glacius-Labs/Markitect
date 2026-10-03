@@ -1,0 +1,7 @@
+apiVersion: delivery.example.org/v1alpha1
+kind: Product
+metadata:
+    name: commerce
+    namespace: engineering
+spec:
+    purpose: Owns commerce services and their deployment environments.

@@ -28,6 +28,7 @@ type ImpactCause struct {
 	From             string `yaml:"from,omitempty"`
 	To               string `yaml:"to,omitempty"`
 	Relation         string `yaml:"relation,omitempty"`
+	Constraint       string `yaml:"constraint,omitempty"`
 	DomainAPIVersion string `yaml:"domainApiVersion,omitempty"`
 	Line             int    `yaml:"line,omitempty"`
 	Snapshot         string `yaml:"snapshot,omitempty"`
@@ -42,16 +43,19 @@ func Changes(before, after *Project) *Impact {
 	}
 	all := false
 	seeds := map[string]bool{}
+	changedInputs := map[string]bool{}
+	policySubjects := map[string]bool{}
 	ownedInputs := map[string]map[string]bool{}
 	causes := map[string]ImpactCause{}
 	addCause := func(cause ImpactCause) {
-		key := fmt.Sprintf("%s\x00%s\x00%s\x00%s\x00%s\x00%s\x00%s\x00%d\x00%s", cause.Kind, cause.Path, cause.Resource, cause.From, cause.To, cause.Relation, cause.DomainAPIVersion, cause.Line, cause.Snapshot)
+		key := fmt.Sprintf("%s\x00%s\x00%s\x00%s\x00%s\x00%s\x00%s\x00%s\x00%d\x00%s", cause.Kind, cause.Path, cause.Resource, cause.From, cause.To, cause.Relation, cause.Constraint, cause.DomainAPIVersion, cause.Line, cause.Snapshot)
 		causes[key] = cause
 	}
 	for _, p := range []*Project{before, after} {
 		for _, r := range p.Resources {
 			if r.Package == "" && changed[r.Path] {
 				seeds[r.GraphKey()] = true
+				changedInputs[r.GraphKey()] = true
 				addCause(ImpactCause{Kind: "resource-change", Path: r.Path, Resource: r.GraphKey()})
 				if r.Kind == "Project" {
 					all = true
@@ -59,7 +63,7 @@ func Changes(before, after *Project) *Impact {
 				} else if constraintReadsCollection(p, r) {
 					all = true
 					addCause(ImpactCause{Kind: "constraint-selection", Path: r.Path})
-				} else if constraintReadsResource(p, r) && hasContextWithoutInvalidation(before, after) {
+				} else if constraintReadsLegacyResource(p, r) && hasContextWithoutInvalidation(before, after) {
 					all = true
 					addCause(ImpactCause{Kind: "context-policy-effect", Path: r.Path})
 				}
@@ -119,12 +123,64 @@ func Changes(before, after *Project) *Impact {
 				kind := "generated-output"
 				if declaredInputOwned(before, owner, name) || declaredInputOwned(after, owner, name) {
 					kind = "declared-input"
+					changedInputs[owner] = true
 				}
 				addCause(ImpactCause{Kind: kind, Path: name, Resource: owner})
 			}
 		} else if !modelled[name] {
 			all = true
 			addCause(ImpactCause{Kind: "unowned-input", Path: name})
+		}
+	}
+	// Same-target policies read the subject and every resolved path resource.
+	// Union old and new dependencies so rewires and newly incomplete paths keep
+	// their valid-prefix evidence. Only actual changed canonical inputs trigger
+	// the policy subject; ordinary affected closure membership is not a read.
+	if !all {
+		for _, candidate := range []struct {
+			name string
+			p    *Project
+		}{{"base", before}, {"candidate", after}} {
+			p := candidate.p
+			if p == nil || p.Graph == nil {
+				continue
+			}
+			for _, dependency := range p.Graph.PolicyDependencies {
+				if !changedInputs[dependency.Input] {
+					continue
+				}
+				policySubjects[dependency.Subject] = true
+				seeds[dependency.Subject] = true
+				addCause(ImpactCause{Kind: "policy-dependency", Path: dependency.Path, Resource: dependency.Subject, To: dependency.Input, Relation: dependency.Relation, Constraint: dependency.Constraint, DomainAPIVersion: dependency.APIVersion, Line: dependency.Line, Snapshot: candidate.name})
+			}
+		}
+	}
+	// Compute context consumers independently per snapshot. Mixing edges from
+	// the base and candidate graphs could otherwise invent a path that existed
+	// in neither revision.
+	if !all && len(policySubjects) > 0 {
+		for _, candidate := range []struct {
+			name string
+			p    *Project
+		}{{"base", before}, {"candidate", after}} {
+			closure := map[string]bool{}
+			for subject := range policySubjects {
+				closure[subject] = true
+			}
+			for again := true; again; {
+				again = false
+				for _, relationship := range candidate.p.Graph.Relationships {
+					if !relationship.Context || !closure[relationship.To] {
+						continue
+					}
+					if !closure[relationship.From] {
+						closure[relationship.From] = true
+						again = true
+					}
+					seeds[relationship.From] = true
+					addCause(ImpactCause{Kind: "policy-context", Path: relationship.Path, Resource: relationship.From, From: relationship.From, To: relationship.To, Relation: relationship.Relation, DomainAPIVersion: relationship.DomainAPIVersion, Line: relationship.Line, Snapshot: candidate.name})
+				}
+			}
 		}
 	}
 	if all {
@@ -193,6 +249,42 @@ func constraintReadsResource(p *Project, resource *core.Resource) bool {
 			continue
 		}
 		for _, constraint := range domain.Constraints {
+			selector := constraint.Select
+			if selector.Kind != "" && selector.Kind != resource.Kind {
+				continue
+			}
+			matches := true
+			for name, value := range selector.Labels {
+				actual, exists := resource.Metadata.Labels[name]
+				if !exists || actual != value {
+					matches = false
+					break
+				}
+			}
+			if matches {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// constraintReadsLegacyResource scopes the conservative context-without-
+// invalidation fallback to operators whose dependency behavior is not yet
+// represented by explicit graph evidence. same-target has PolicyDependencies
+// and receives an exact context closure.
+func constraintReadsLegacyResource(p *Project, resource *core.Resource) bool {
+	if p == nil || p.Graph == nil || p.Graph.Registry == nil || resource == nil {
+		return false
+	}
+	for _, domain := range p.Graph.Registry.Domains() {
+		if resource.APIVersion != domain.APIVersion {
+			continue
+		}
+		for _, constraint := range domain.Constraints {
+			if constraint.Assert.Op == "same-target" {
+				continue
+			}
 			selector := constraint.Select
 			if selector.Kind != "" && selector.Kind != resource.Kind {
 				continue
@@ -301,8 +393,8 @@ func hasContextWithoutInvalidation(projects ...*Project) bool {
 }
 
 func impactCauseLess(a, b ImpactCause) bool {
-	left := []string{a.Kind, a.Path, a.Resource, a.From, a.To, a.DomainAPIVersion, a.Relation, fmt.Sprint(a.Line), a.Snapshot}
-	right := []string{b.Kind, b.Path, b.Resource, b.From, b.To, b.DomainAPIVersion, b.Relation, fmt.Sprint(b.Line), b.Snapshot}
+	left := []string{a.Kind, a.Path, a.Resource, a.From, a.To, a.DomainAPIVersion, a.Relation, a.Constraint, fmt.Sprint(a.Line), a.Snapshot}
+	right := []string{b.Kind, b.Path, b.Resource, b.From, b.To, b.DomainAPIVersion, b.Relation, b.Constraint, fmt.Sprint(b.Line), b.Snapshot}
 	return strings.Join(left, "\x00") < strings.Join(right, "\x00")
 }
 

@@ -12,6 +12,7 @@
 | [Architecture](architecture.md) | Shipped v0.11.0 architecture, product boundaries, and evidence limits; v0.10.0 remains the historical baseline |
 | [Engineering constitution](engineering-constitution.md) | Shipped v0.11.0 architecture-contract behavior, PolicyResults, explicit exceptions, and proposal/adoption boundaries |
 | [Domain-language pressure test](design/domain-language-pressure.md) | What the current language can and cannot establish for modular DDD / vertical-slice contracts, with a bounded experiment |
+| [Resolved-target equality](design/resolved-target-equality.md) | Two-domain evidence, alternatives, finite assertion semantics, provenance, impact and exception boundaries in current source |
 | [Source snapshots](source-snapshots.md) | Snapshot values, Git acquisition, identity, comparison, and compatibility boundaries |
 | [Operations](operations.md) | Development, verification, rendering, and release operations |
 | [Refinement decisions](refinement.md) | Product principles and deferred design choices |

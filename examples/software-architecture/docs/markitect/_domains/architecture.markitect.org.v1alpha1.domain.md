@@ -312,6 +312,19 @@ constraints:
         op: equal
         field: intent
         value: Command
+    - name: selected-feature-ownership-matches-module
+      description: The opt-in Feature cohort belongs to the same Module as its UseCase.
+      select:
+        kind: UseCase
+        labels:
+            feature-ownership: required
+      assert:
+        op: same-target
+        left:
+            - belongsToModule
+        right:
+            - realizesFeature
+            - belongsToModule
 ```
 
 ## Policy outcomes
@@ -323,3 +336,5 @@ constraints:
 | `module-dependencies-stay-at-shared-boundaries` | [engineering/Module: orders](../engineering/module-orders.module.architecture.markitect.org.v1alpha1.md) | **PASSED** | Constraint passed. | — |
 | `selected-command-labels-identify-commands` | [engineering/UseCase: create-order](../engineering/usecase-create-order.usecase.architecture.markitect.org.v1alpha1.md) | **PASSED** | Constraint passed. | — |
 | `selected-command-labels-identify-commands` | [engineering/UseCase: issue-invoice](../engineering/usecase-issue-invoice.usecase.architecture.markitect.org.v1alpha1.md) | **PASSED** | Constraint passed. | — |
+| `selected-feature-ownership-matches-module` | [engineering/UseCase: create-order](../engineering/usecase-create-order.usecase.architecture.markitect.org.v1alpha1.md) | **PASSED** | Constraint passed. | — |
+| `selected-feature-ownership-matches-module` | [engineering/UseCase: issue-invoice](../engineering/usecase-issue-invoice.usecase.architecture.markitect.org.v1alpha1.md) | **PASSED** | Constraint passed. | — |

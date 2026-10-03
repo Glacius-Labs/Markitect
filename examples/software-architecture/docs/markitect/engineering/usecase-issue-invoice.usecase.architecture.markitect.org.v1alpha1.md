@@ -25,9 +25,11 @@
 ## Applicable constraints
 
 - **selected-command-labels-identify-commands:** `intent` must equal `Command`. Explanation: The opt-in validation cohort contains only UseCases whose intent is Command.
+- **selected-feature-ownership-matches-module:** Paths `belongsToModule` and `realizesFeature → belongsToModule` must each resolve exactly one target per step and end at the same canonical identity. Explanation: The opt-in Feature cohort belongs to the same Module as its UseCase.
 
 ## Policy outcomes
 
 | Constraint | Subject | Status | Result | Waiver details |
 | --- | --- | --- | --- | --- |
 | `selected-command-labels-identify-commands` | [engineering/UseCase: issue-invoice](usecase-issue-invoice.usecase.architecture.markitect.org.v1alpha1.md) | **PASSED** | Constraint passed. | — |
+| `selected-feature-ownership-matches-module` | [engineering/UseCase: issue-invoice](usecase-issue-invoice.usecase.architecture.markitect.org.v1alpha1.md) | **PASSED** | Constraint passed. | — |

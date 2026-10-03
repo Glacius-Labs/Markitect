@@ -219,6 +219,8 @@ func constraintAssertionText(assertion core.ConstraintAssertion, domain core.Dom
 		return fmt.Sprintf("`%s` must be one of %s.", assertion.Field, displayValue(assertion.Values))
 	case "allowed-targets":
 		return fmt.Sprintf("`%s` relationships may target only kinds %s.", relationField(domain, assertion.Relation), displayValue(assertion.Values))
+	case "same-target":
+		return fmt.Sprintf("Paths `%s` and `%s` must each resolve exactly one target per step and end at the same canonical identity.", strings.Join(assertion.Left, " → "), strings.Join(assertion.Right, " → "))
 	case "unique":
 		return fmt.Sprintf("`%s` must be unique across the selected resources.", assertion.Field)
 	case "count":

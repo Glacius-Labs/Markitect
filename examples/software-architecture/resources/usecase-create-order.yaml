@@ -4,6 +4,7 @@ metadata:
     name: create-order
     namespace: engineering
     labels:
+        feature-ownership: required
         validation: required
 spec:
     aggregates:

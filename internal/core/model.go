@@ -96,14 +96,16 @@ type ConstraintDefinition struct {
 }
 
 type ConstraintAssertion struct {
-	Op       string `yaml:"op"`
-	Scope    string `yaml:"scope,omitempty"`
-	Field    string `yaml:"field,omitempty"`
-	Relation string `yaml:"relation,omitempty"`
-	Value    any    `yaml:"value,omitempty"`
-	Values   []any  `yaml:"values,omitempty"`
-	Min      *int   `yaml:"min,omitempty"`
-	Max      *int   `yaml:"max,omitempty"`
+	Op       string   `yaml:"op"`
+	Scope    string   `yaml:"scope,omitempty"`
+	Field    string   `yaml:"field,omitempty"`
+	Relation string   `yaml:"relation,omitempty"`
+	Value    any      `yaml:"value,omitempty"`
+	Values   []any    `yaml:"values,omitempty"`
+	Min      *int     `yaml:"min,omitempty"`
+	Max      *int     `yaml:"max,omitempty"`
+	Left     []string `yaml:"left,omitempty"`
+	Right    []string `yaml:"right,omitempty"`
 }
 
 // PolicyException is a source-bound, explicit waiver for one failing
@@ -124,19 +126,50 @@ type PolicyException struct {
 // PolicyResult is the deterministic evaluation of one constraint against one
 // subject, or a selected collection when Subject is empty.
 type PolicyResult struct {
-	APIVersion       string `yaml:"apiVersion"`
-	Constraint       string `yaml:"constraint"`
-	Subject          string `yaml:"subject"`
-	Status           string `yaml:"status"`
-	Message          string `yaml:"message,omitempty"`
-	ConstraintDigest string `yaml:"constraintDigest"`
-	SubjectDigest    string `yaml:"subjectDigest"`
-	ExceptionName    string `yaml:"exceptionName,omitempty"`
-	Rationale        string `yaml:"rationale,omitempty"`
-	Owner            string `yaml:"owner,omitempty"`
-	Decision         string `yaml:"decision,omitempty"`
-	ExpiresOn        string `yaml:"expiresOn,omitempty"`
-	PolicyDate       string `yaml:"policyDate,omitempty"` // Explicit as-of date; no wall clock is consulted.
+	APIVersion       string            `yaml:"apiVersion"`
+	Constraint       string            `yaml:"constraint"`
+	Subject          string            `yaml:"subject"`
+	Status           string            `yaml:"status"`
+	Message          string            `yaml:"message,omitempty"`
+	ConstraintDigest string            `yaml:"constraintDigest"`
+	SubjectDigest    string            `yaml:"subjectDigest"`
+	ExceptionName    string            `yaml:"exceptionName,omitempty"`
+	Rationale        string            `yaml:"rationale,omitempty"`
+	Owner            string            `yaml:"owner,omitempty"`
+	Decision         string            `yaml:"decision,omitempty"`
+	ExpiresOn        string            `yaml:"expiresOn,omitempty"`
+	PolicyDate       string            `yaml:"policyDate,omitempty"` // Explicit as-of date; no wall clock is consulted.
+	Comparison       *TargetComparison `yaml:"comparison,omitempty"`
+}
+
+type TargetComparison struct {
+	Left  TargetPath `yaml:"left"`
+	Right TargetPath `yaml:"right"`
+}
+
+type TargetPath struct {
+	Relations []string     `yaml:"relations"`
+	Steps     []TargetStep `yaml:"steps"`
+	Target    string       `yaml:"target"`
+}
+
+type TargetStep struct {
+	From             string `yaml:"from"`
+	To               string `yaml:"to"`
+	Relation         string `yaml:"relation"`
+	DomainAPIVersion string `yaml:"domainApiVersion"`
+	Path             string `yaml:"path,omitempty"`
+	Line             int    `yaml:"line,omitempty"`
+}
+
+type PolicyDependency struct {
+	Subject    string `yaml:"subject"`
+	Input      string `yaml:"input"`
+	APIVersion string `yaml:"apiVersion"`
+	Constraint string `yaml:"constraint"`
+	Relation   string `yaml:"relation"`
+	Path       string `yaml:"path,omitempty"`
+	Line       int    `yaml:"line,omitempty"`
 }
 
 type AdapterConfig struct {
@@ -342,16 +375,18 @@ type Diagnostic struct {
 }
 
 type Graph struct {
-	Resources         map[string]*Resource
-	Packages          map[string]*Resource
-	Edges             map[string][]string
-	Relationships     []Relationship
-	ResourceAreas     map[string]Area
-	Project           *Resource
-	Registry          *Registry
-	Diagnostics       []Diagnostic
-	InvalidationEdges map[string][]string
-	PolicyResults     []PolicyResult
+	Resources          map[string]*Resource
+	Packages           map[string]*Resource
+	Edges              map[string][]string
+	Relationships      []Relationship
+	ResourceAreas      map[string]Area
+	Project            *Resource
+	Registry           *Registry
+	Diagnostics        []Diagnostic
+	InvalidationEdges  map[string][]string
+	PolicyResults      []PolicyResult
+	PolicyDependencies []PolicyDependency
+	invalidPolicyPaths map[string]bool
 }
 
 // Relationship records why a resolved graph edge exists. Edges remains the

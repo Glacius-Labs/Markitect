@@ -130,6 +130,18 @@ jobs:
       - name: Check software architecture formatting
         run: go run ./cmd/markitect format --repo examples/software-architecture
 
+      - name: Check Delivery target equality
+        run: go run ./cmd/markitect check --repo examples/delivery-target-equality
+
+      - name: Compile Delivery target equality model
+        run: go run ./cmd/markitect model --repo examples/delivery-target-equality
+
+      - name: Compile Delivery target equality context
+        run: go run ./cmd/markitect context --repo examples/delivery-target-equality --namespace engineering --kind Skill --name deployment-review
+
+      - name: Check Delivery target equality formatting
+        run: go run ./cmd/markitect format --repo examples/delivery-target-equality
+
       - name: Replay onboarding workflow
         if: runner.os == 'Windows'
         shell: pwsh
@@ -217,6 +229,10 @@ jobs:
           go run .markitect/bootstrap/run.go model --repo "$GITHUB_WORKSPACE/examples/software-architecture"
           go run .markitect/bootstrap/run.go context --repo "$GITHUB_WORKSPACE/examples/software-architecture" --namespace engineering --kind Skill --name implement-order
           go run .markitect/bootstrap/run.go format --repo "$GITHUB_WORKSPACE/examples/software-architecture"
+          go run .markitect/bootstrap/run.go check --repo "$GITHUB_WORKSPACE/examples/delivery-target-equality"
+          go run .markitect/bootstrap/run.go model --repo "$GITHUB_WORKSPACE/examples/delivery-target-equality"
+          go run .markitect/bootstrap/run.go context --repo "$GITHUB_WORKSPACE/examples/delivery-target-equality" --namespace engineering --kind Skill --name deployment-review
+          go run .markitect/bootstrap/run.go format --repo "$GITHUB_WORKSPACE/examples/delivery-target-equality"
           domain_repo="$RUNNER_TEMP/markitect-canonical-engineering-$GITHUB_SHA"
           mkdir -p "$domain_repo"
           cp -R "$GITHUB_WORKSPACE/examples/canonical-engineering/." "$domain_repo/"
@@ -290,6 +306,15 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Packaged binary software architecture context failed' }
           go run .markitect/bootstrap/run.go format --repo $architectureExample
           if ($LASTEXITCODE -ne 0) { throw 'Packaged binary software architecture format failed' }
+          $deliveryExample = Join-Path $env:GITHUB_WORKSPACE 'examples/delivery-target-equality'
+          go run .markitect/bootstrap/run.go check --repo $deliveryExample
+          if ($LASTEXITCODE -ne 0) { throw 'Packaged binary Delivery equality check failed' }
+          go run .markitect/bootstrap/run.go model --repo $deliveryExample
+          if ($LASTEXITCODE -ne 0) { throw 'Packaged binary Delivery equality model failed' }
+          go run .markitect/bootstrap/run.go context --repo $deliveryExample --namespace engineering --kind Skill --name deployment-review
+          if ($LASTEXITCODE -ne 0) { throw 'Packaged binary Delivery equality context failed' }
+          go run .markitect/bootstrap/run.go format --repo $deliveryExample
+          if ($LASTEXITCODE -ne 0) { throw 'Packaged binary Delivery equality format failed' }
           $domainRepo = Join-Path $env:RUNNER_TEMP "markitect-canonical-engineering-$env:GITHUB_SHA"
           New-Item -ItemType Directory -Path $domainRepo | Out-Null
           Get-ChildItem -LiteralPath $domainExample -Force | Copy-Item -Destination $domainRepo -Recurse -Force

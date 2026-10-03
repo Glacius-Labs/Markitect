@@ -1,0 +1,15 @@
+apiVersion: delivery.example.org/v1alpha1
+kind: Deployment
+metadata:
+    name: orders-production
+    namespace: engineering
+spec:
+    environment:
+        kind: Environment
+        name: commerce-production
+        namespace: engineering
+    purpose: Deliver Orders to its matching production environment.
+    service:
+        kind: Service
+        name: orders-api
+        namespace: engineering

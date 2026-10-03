@@ -97,7 +97,7 @@ func CompileModel(p *Project) (SemanticModel, error) {
 		Snapshot:     ModelSnapshot{ID: p.Snapshot.ID, Provisional: p.Snapshot.Provisional, Digest: p.Snapshot.Digest()},
 		ConfigDigest: hashBytes(config), Resources: make([]ModelResource, 0, len(p.Graph.Resources)),
 	}
-	model.PolicyResults = append([]core.PolicyResult(nil), p.Graph.PolicyResults...)
+	model.PolicyResults = clonePolicyResults(p.Graph.PolicyResults)
 	if p.Graph.Registry != nil {
 		for _, d := range p.Graph.Registry.Domains() {
 			domain := ModelDomain{Name: d.Name, APIVersion: d.APIVersion, Kinds: d.Kinds, Relations: d.Relations, Constraints: d.Constraints}
@@ -199,6 +199,25 @@ func CompileModel(p *Project) (SemanticModel, error) {
 	}
 	model.ModelDigest = hashBytes(unsigned)
 	return model, nil
+}
+
+// clonePolicyResults detaches the ordered relation traces from the canonical
+// graph. These traces are nested slices and must not let adapter-side mutation
+// alter subsequent model or context evidence.
+func clonePolicyResults(results []core.PolicyResult) []core.PolicyResult {
+	cloned := append([]core.PolicyResult(nil), results...)
+	for i := range cloned {
+		if results[i].Comparison == nil {
+			continue
+		}
+		comparison := *results[i].Comparison
+		comparison.Left.Relations = append([]string(nil), results[i].Comparison.Left.Relations...)
+		comparison.Left.Steps = append([]core.TargetStep(nil), results[i].Comparison.Left.Steps...)
+		comparison.Right.Relations = append([]string(nil), results[i].Comparison.Right.Relations...)
+		comparison.Right.Steps = append([]core.TargetStep(nil), results[i].Comparison.Right.Steps...)
+		cloned[i].Comparison = &comparison
+	}
+	return cloned
 }
 
 func cloneModelMap(input map[string]any) (map[string]any, error) {

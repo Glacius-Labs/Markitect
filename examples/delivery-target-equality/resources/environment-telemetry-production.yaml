@@ -1,0 +1,11 @@
+apiVersion: delivery.example.org/v1alpha1
+kind: Environment
+metadata:
+    name: telemetry-production
+    namespace: engineering
+spec:
+    product:
+        kind: Product
+        name: telemetry
+        namespace: engineering
+    purpose: Production target for telemetry services.

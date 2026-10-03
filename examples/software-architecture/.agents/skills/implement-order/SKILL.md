@@ -10,5 +10,5 @@ Read the [canonical Skill YAML](../../../resources/skill-implement-order.yaml) b
 ## Dependencies
 
 - [Module: orders](../../../resources/module-orders.yaml)
-- Package dependency: software-architecture::architecture/Workflow/vertical-slice (version 1.0.0). Select this exported dependency with `markitect context --repo . --package software-architecture --namespace architecture --kind Workflow --name vertical-slice`.
+- Package dependency: software-architecture::architecture/Workflow/vertical-slice (version 1.1.0). Select this exported dependency with `markitect context --repo . --package software-architecture --namespace architecture --kind Workflow --name vertical-slice`.
 - [UseCase: create-order](../../../resources/usecase-create-order.yaml)
