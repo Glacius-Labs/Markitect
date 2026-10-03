@@ -330,10 +330,11 @@ func walkJSONValue(decoder *json.Decoder) error {
 				if !ok {
 					return errors.New("JSON object key is not a string")
 				}
-				if seen[key] {
-					return fmt.Errorf("duplicate JSON object key %q", key)
+				normalizedKey := strings.ToLower(key)
+				if seen[normalizedKey] {
+					return fmt.Errorf("duplicate JSON object key ignoring case %q", key)
 				}
-				seen[key] = true
+				seen[normalizedKey] = true
 				if err := walkJSONValue(decoder); err != nil {
 					return err
 				}

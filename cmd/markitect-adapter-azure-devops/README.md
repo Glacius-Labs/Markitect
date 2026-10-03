@@ -27,7 +27,10 @@ so Markitect stages its fixed-snapshot bytes for the adapter. Preserve the
 HTTP method, full request URL including `api-version`, status code, and JSON
 response body in this envelope. Capture files must be regular files no larger
 than 1 MiB. Duplicate JSON object keys are rejected to keep envelope and body
-interpretation unambiguous; other Azure response fields remain allowed.
+interpretation unambiguous. Key uniqueness is case-insensitive throughout the
+capture because Go's JSON struct decoder also matches recognized field names
+without case sensitivity; other Azure response fields remain allowed when
+their names are unique ignoring case.
 
 ```json
 {

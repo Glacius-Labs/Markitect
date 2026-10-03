@@ -64,6 +64,7 @@ func TestCaptureIdentityAndAPIErrorsAreIncomplete(t *testing.T) {
 		{"malformed JSON", `{not-json`, "capture-invalid"},
 		{"duplicate envelope status", stringsReplace(validCapture("refs/heads/main"), `"status":200`, `"status":200,"status":401`), "capture-invalid"},
 		{"duplicate body branch", stringsReplace(validCapture("refs/heads/main"), `"defaultBranch":"refs/heads/main"`, `"defaultBranch":"refs/heads/main","defaultBranch":"refs/heads/release"`), "capture-invalid"},
+		{"case-colliding body branch", stringsReplace(validCapture("refs/heads/main"), `"defaultBranch":"refs/heads/main"`, `"defaultBranch":"refs/heads/main","DefaultBranch":"refs/heads/release"`), "capture-invalid"},
 		{"missing branch", stringsReplace(validCapture("refs/heads/main"), `,"defaultBranch":"refs/heads/main"`, ""), "capture-invalid"},
 	}
 	for _, test := range tests {
