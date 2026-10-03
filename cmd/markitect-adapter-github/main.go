@@ -27,6 +27,7 @@ const (
 	captureAPIVersion = "markitect.github.example.org/repository-capture/v1alpha1"
 	githubAPIVersion  = "2026-03-10"
 	maxCaptureBytes   = 1 << 20
+	maxRequestBytes   = 10 << 20
 )
 
 type request struct {
@@ -56,20 +57,67 @@ type repositoryMapping struct {
 }
 
 type semanticModel struct {
-	APIVersion       string          `yaml:"apiVersion"`
-	ModelDigest      string          `yaml:"modelDigest"`
-	ValidationStatus string          `yaml:"validationStatus"`
-	Resources        []modelResource `yaml:"resources"`
+	APIVersion       string              `yaml:"apiVersion"`
+	Snapshot         modelSnapshot       `yaml:"snapshot"`
+	ConfigDigest     string              `yaml:"configDigest"`
+	ModelDigest      string              `yaml:"modelDigest"`
+	ValidationStatus string              `yaml:"validationStatus"`
+	StructuralStatus string              `yaml:"structuralStatus"`
+	PolicyStatus     string              `yaml:"policyStatus"`
+	Diagnostics      []any               `yaml:"diagnostics,omitempty"`
+	PolicyResults    []any               `yaml:"policyResults,omitempty"`
+	DomainInputs     []modelDomainInput  `yaml:"domainInputs,omitempty"`
+	Domains          []any               `yaml:"domains,omitempty"`
+	Resources        []modelResource     `yaml:"resources"`
+	Relationships    []modelRelationship `yaml:"relationships,omitempty"`
+}
+
+type modelSnapshot struct {
+	ID          string `yaml:"id,omitempty"`
+	Provisional bool   `yaml:"provisional"`
+	Digest      string `yaml:"digest"`
+}
+
+type modelDomainInput struct {
+	APIVersion     string `yaml:"apiVersion"`
+	Name           string `yaml:"name"`
+	Path           string `yaml:"path"`
+	Package        string `yaml:"package,omitempty"`
+	PackageVersion string `yaml:"packageVersion,omitempty"`
+	Digest         string `yaml:"digest"`
 }
 
 type modelResource struct {
-	Identity resourceIdentity `yaml:"identity"`
-	Data     map[string]any   `yaml:"data"`
+	Identity resourceIdentity  `yaml:"identity"`
+	Labels   map[string]string `yaml:"labels,omitempty"`
+	Data     map[string]any    `yaml:"data"`
+	Source   modelSource       `yaml:"source"`
+	Area     string            `yaml:"area,omitempty"`
 }
 
 type resourceIdentity struct {
-	Kind string `yaml:"kind"`
-	Key  string `yaml:"key"`
+	APIVersion string `yaml:"apiVersion"`
+	Kind       string `yaml:"kind"`
+	Namespace  string `yaml:"namespace,omitempty"`
+	Name       string `yaml:"name"`
+	Package    string `yaml:"package,omitempty"`
+	Key        string `yaml:"key"`
+}
+
+type modelSource struct {
+	Path   string `yaml:"path"`
+	Line   int    `yaml:"line,omitempty"`
+	Digest string `yaml:"digest"`
+}
+
+type modelRelationship struct {
+	From       string      `yaml:"from"`
+	To         string      `yaml:"to"`
+	Type       string      `yaml:"type"`
+	Source     modelSource `yaml:"source"`
+	Context    bool        `yaml:"context"`
+	Invalidate bool        `yaml:"invalidate"`
+	Acyclic    bool        `yaml:"acyclic"`
 }
 
 type result struct {
@@ -135,12 +183,12 @@ type repositoryBody struct {
 }
 
 func main() {
-	input, err := io.ReadAll(io.LimitReader(os.Stdin, maxCaptureBytes+1))
+	input, err := io.ReadAll(io.LimitReader(os.Stdin, maxRequestBytes+1))
 	if err != nil {
 		fatal(err)
 	}
-	if len(input) > maxCaptureBytes {
-		fatal(errors.New("adapter request exceeds 1 MiB"))
+	if len(input) > maxRequestBytes {
+		fatal(errors.New("adapter request exceeds this prototype's 10 MiB input limit"))
 	}
 	decoder := yaml.NewDecoder(bytes.NewReader(input))
 	decoder.KnownFields(true)
@@ -334,6 +382,9 @@ func decodeParameters(values map[string]any) (adapterParameters, error) {
 }
 
 func decodeCapture(data []byte) (captureEnvelope, error) {
+	if err := rejectDuplicateJSONKeys(data); err != nil {
+		return captureEnvelope{}, fmt.Errorf("capture JSON is ambiguous or malformed: %w", err)
+	}
 	decoder := json.NewDecoder(bytes.NewReader(data))
 	decoder.DisallowUnknownFields()
 	var capture captureEnvelope
@@ -348,6 +399,88 @@ func decodeCapture(data []byte) (captureEnvelope, error) {
 		return capture, errors.New("capture request and HTTP response status are required")
 	}
 	return capture, nil
+}
+
+// rejectDuplicateJSONKeys rejects duplicate object keys at every depth before
+// decoding into structs. encoding/json otherwise accepts duplicates and uses
+// the last encountered value, making captured evidence ambiguous.
+func rejectDuplicateJSONKeys(data []byte) error {
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.UseNumber()
+	first, err := decoder.Token()
+	if err != nil {
+		return err
+	}
+	if err := scanJSONValue(decoder, first); err != nil {
+		return err
+	}
+	if _, err := decoder.Token(); err != io.EOF {
+		if err == nil {
+			return errors.New("capture must contain exactly one JSON value")
+		}
+		return err
+	}
+	return nil
+}
+
+func scanJSONValue(decoder *json.Decoder, token json.Token) error {
+	delim, isDelimiter := token.(json.Delim)
+	if !isDelimiter {
+		return nil
+	}
+	switch delim {
+	case '{':
+		seen := map[string]bool{}
+		for decoder.More() {
+			keyToken, err := decoder.Token()
+			if err != nil {
+				return err
+			}
+			key, ok := keyToken.(string)
+			if !ok {
+				return errors.New("JSON object key is not a string")
+			}
+			normalizedKey := strings.ToLower(key)
+			if seen[normalizedKey] {
+				return fmt.Errorf("duplicate JSON object key %q", key)
+			}
+			seen[normalizedKey] = true
+			value, err := decoder.Token()
+			if err != nil {
+				return err
+			}
+			if err := scanJSONValue(decoder, value); err != nil {
+				return err
+			}
+		}
+		end, err := decoder.Token()
+		if err != nil {
+			return err
+		}
+		if end != json.Delim('}') {
+			return errors.New("unterminated JSON object")
+		}
+	case '[':
+		for decoder.More() {
+			value, err := decoder.Token()
+			if err != nil {
+				return err
+			}
+			if err := scanJSONValue(decoder, value); err != nil {
+				return err
+			}
+		}
+		end, err := decoder.Token()
+		if err != nil {
+			return err
+		}
+		if end != json.Delim(']') {
+			return errors.New("unterminated JSON array")
+		}
+	default:
+		return errors.New("unexpected JSON delimiter")
+	}
+	return nil
 }
 
 func readCapture(filename string) ([]byte, error) {

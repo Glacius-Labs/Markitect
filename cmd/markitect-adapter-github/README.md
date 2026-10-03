@@ -35,7 +35,10 @@ spec:
 Each mapped capture must appear exactly once in `config.inputs`; each exact
 resource and evidence path may appear only once in the adapter mapping. The
 adapter rejects unknown parameter fields and paths outside the staged input
-directory. It reads only mapped files.
+directory. It reads only mapped files and rejects repeated JSON keys in the
+capture envelope and response body, including keys that differ only by case.
+That conservative rule avoids ambiguity from Go's case-insensitive struct-field
+matching rather than claiming that JSON keys themselves are case-insensitive.
 
 Each evidence file is one bounded JSON capture envelope:
 
@@ -82,6 +85,10 @@ GitHub state. Capture provenance, HTTP authorization, API pagination/rate
 limits, GitHub Enterprise, other repository settings, and mutation are outside
 this adapter's claim.
 
+Each capture file is capped at 1 MiB; the full adapter request is capped at
+10 MiB as a prototype implementation bound. The request cap is local to this
+executable, not a Markitect protocol or scale guarantee.
+
 ## Build and test
 
 From the Markitect repository root:
@@ -94,5 +101,9 @@ go build -o .artifacts/adapters/markitect-adapter-github.exe ./cmd/markitect-ada
 
 The executable can be configured as any `type: command` adapter using the
 frozen `adapter-request`, `adapter-result`, and `adapter-plan` v1alpha1
-protocols. It is built separately; this change does not add a GitHub-specific
-Markitect CLI command or change Core, Project syntax, or shared adapter DTOs.
+protocols. Its process test builds and runs the executable with a real
+`app.AdapterRequest` and `app.SemanticModel` serialization, including
+snapshot/configuration/status, Domain, relationship, resource identity,
+label, and source fields. It is built separately; this change does not add a
+GitHub-specific Markitect CLI command or change Core, Project syntax, or
+shared adapter DTOs.

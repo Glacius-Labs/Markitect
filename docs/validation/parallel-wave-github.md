@@ -45,7 +45,14 @@ argv, retries, shared target registry, or another adapter's output is used.
 
 Missing or malformed inputs, unsupported capture versions/statuses, `403`,
 `404`, wrong request/response identity, duplicate mappings, unknown parameters,
-oversized files and unsafe paths remain incomplete; they cannot silently pass.
+oversized files, duplicate JSON keys at any depth (including case-folded key
+collisions, to avoid Go struct-field matching ambiguity), and unsafe paths
+remain incomplete; they cannot silently pass. The process test serializes the actual
+`app.AdapterRequest` and complete `app.SemanticModel` DTO, including the fields
+the adapter does not interpret, before invoking the built executable.
+Each captured JSON input is capped at 1 MiB; the adapter also applies a local
+10 MiB stdin request cap. The latter is an executable-specific prototype
+bound, not a shared Markitect protocol limit or a scale guarantee.
 The bounded implementation does not inspect branch protection, permissions,
 topics, security settings, API rate limits, or GitHub Enterprise behavior.
 
@@ -55,8 +62,8 @@ The adapter's package tests cover deterministic successful observation,
 canonical desired-value sourcing, read-only no-op plans, failed verification
 for completed drift, fixed-capture digest drift, unauthorized/missing/malformed
 and wrong-target evidence, exact mapping validation, parameter/path bounds,
-unsupported Apply/version, and a separately built executable consuming the
-unchanged v1alpha1 protocol. Run:
+unsupported Apply/version, duplicate capture keys, and a separately built
+executable consuming the unchanged v1alpha1 protocol. Run:
 
 ```powershell
 go test ./cmd/markitect-adapter-github -count=1

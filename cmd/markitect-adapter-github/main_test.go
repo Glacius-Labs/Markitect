@@ -11,6 +11,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/Glacius-Labs/Markitect/internal/app"
+	"github.com/Glacius-Labs/Markitect/internal/core"
 	"go.yaml.in/yaml/v3"
 )
 
@@ -153,6 +155,12 @@ func TestMalformedCaptureAndCapturePathAreIncomplete(t *testing.T) {
 	if got := run(validRequest("observe")); got.Status != "incomplete" || !hasFinding(got, "capture-invalid") {
 		t.Fatalf("malformed/unknown capture fields should be incomplete: %+v", got)
 	}
+	if err := os.WriteFile(filepath.Join(root, filepath.FromSlash(captureFile)), bytes.Repeat([]byte(" "), maxCaptureBytes+1), 0600); err != nil {
+		t.Fatal(err)
+	}
+	if got := run(validRequest("observe")); got.Status != "incomplete" || !hasFinding(got, "capture-invalid") {
+		t.Fatalf("capture larger than the fixed 1 MiB bound should be incomplete: %+v", got)
+	}
 
 	req := validRequest("observe")
 	parameters := req.Adapter.Parameters["repositories"].([]repositoryMapping)
@@ -160,6 +168,24 @@ func TestMalformedCaptureAndCapturePathAreIncomplete(t *testing.T) {
 	req.Adapter.Parameters["repositories"] = parameters
 	if got := run(req); got.Status != "incomplete" || !hasFinding(got, "capture-path-invalid") {
 		t.Fatalf("path traversal should be rejected: %+v", got)
+	}
+}
+
+func TestDuplicateCaptureJSONKeysAreIncomplete(t *testing.T) {
+	root := fixture(t, 200, "Glacius-Labs/Markitect", "main")
+	withWorkingDirectory(t, root)
+	for _, raw := range []string{
+		`{"apiVersion":"markitect.github.example.org/repository-capture/v1alpha1","apiVersion":"other","request":{"method":"GET","path":"/repos/Glacius-Labs/Markitect","apiVersion":"2026-03-10"},"response":{"statusCode":200,"body":{}}}`,
+		`{"apiVersion":"markitect.github.example.org/repository-capture/v1alpha1","ApiVersion":"other","request":{"method":"GET","path":"/repos/Glacius-Labs/Markitect","apiVersion":"2026-03-10"},"response":{"statusCode":200,"body":{}}}`,
+		`{"apiVersion":"markitect.github.example.org/repository-capture/v1alpha1","request":{"method":"GET","path":"/repos/Glacius-Labs/Markitect","apiVersion":"2026-03-10"},"response":{"statusCode":200,"body":{"full_name":"Glacius-Labs/Markitect","default_branch":"main","default_branch":"trunk"}}}`,
+	} {
+		if err := os.WriteFile(filepath.Join(root, filepath.FromSlash(captureFile)), []byte(raw), 0600); err != nil {
+			t.Fatal(err)
+		}
+		got := run(validRequest("observe"))
+		if got.Status != "incomplete" || !hasFinding(got, "capture-invalid") {
+			t.Fatalf("duplicate capture keys must not be accepted: %+v", got)
+		}
 	}
 }
 
@@ -231,9 +257,14 @@ func TestBuiltExecutableConsumesFrozenCommandProtocol(t *testing.T) {
 	if output, err := build.CombinedOutput(); err != nil {
 		t.Fatalf("build adapter independently: %v\n%s", err, output)
 	}
-	input, err := yaml.Marshal(validRequest("observe"))
+	actual := fullAdapterRequest()
+	actual.Model.Resources[0].Data["description"] = strings.Repeat("x", maxCaptureBytes+64)
+	input, err := yaml.Marshal(actual)
 	if err != nil {
 		t.Fatal(err)
+	}
+	if len(input) <= maxCaptureBytes || len(input) > maxRequestBytes {
+		t.Fatalf("full DTO request size = %d; want between capture and request bounds", len(input))
 	}
 	command := exec.Command(binary)
 	command.Dir = root
@@ -249,6 +280,50 @@ func TestBuiltExecutableConsumesFrozenCommandProtocol(t *testing.T) {
 	}
 	if response.APIVersion != resultAPIVersion || response.Adapter != adapterName || response.Action != "observe" || response.Status != "complete" || response.Observed.Repositories[repositoryKey].DefaultBranch != "main" {
 		t.Fatalf("adapter protocol response = %+v", response)
+	}
+
+	actual.Model.Resources[0].Data["description"] = strings.Repeat("x", maxRequestBytes+1)
+	oversized, err := yaml.Marshal(actual)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(oversized) <= maxRequestBytes {
+		t.Fatalf("oversized test request has only %d bytes", len(oversized))
+	}
+	command = exec.Command(binary)
+	command.Dir = root
+	command.Stdin = bytes.NewReader(oversized)
+	output, err = command.Output()
+	if err == nil || !bytes.Contains(output, []byte("adapter request exceeds this prototype's 10 MiB input limit")) {
+		t.Fatalf("request over the documented adapter bound should be rejected: err=%v output=%s", err, output)
+	}
+}
+
+func fullAdapterRequest() app.AdapterRequest {
+	base := validRequest("observe")
+	model := app.SemanticModel{
+		APIVersion:   semanticModelAPI,
+		Snapshot:     app.ModelSnapshot{ID: "commit:abcdef", Digest: "sha256:fixed-snapshot"},
+		ConfigDigest: "sha256:fixed-project-config", ModelDigest: "sha256:fixed-model",
+		ValidationStatus: "passed", StructuralStatus: "passed", PolicyStatus: "passed",
+		DomainInputs: []app.ModelDomainInput{{APIVersion: "github.example.org/v1alpha1", Name: "repositories", Path: "domains/repositories.yaml", Digest: "sha256:domain"}},
+		Domains: []app.ModelDomain{{Name: "repositories", APIVersion: "github.example.org/v1alpha1", Kinds: map[string]core.KindDefinition{"Repository": {
+			Required: []string{"fullName", "defaultBranch", "description"},
+			Properties: map[string]core.PropertyDefinition{
+				"fullName": {Type: "string"}, "defaultBranch": {Type: "string"}, "description": {Type: "string"},
+			},
+		}}}},
+		Resources: []app.ModelResource{
+			{Identity: app.ModelIdentity{APIVersion: "github.example.org/v1alpha1", Kind: "Repository", Namespace: "engineering", Name: "markitect", Key: repositoryKey}, Labels: map[string]string{"tier": "platform"}, Data: map[string]any{"fullName": "Glacius-Labs/Markitect", "defaultBranch": "main"}, Source: app.ModelSource{Path: "resources/markitect.repository.yaml", Line: 1, Digest: "sha256:resource"}, Area: "engineering"},
+			{Identity: app.ModelIdentity{APIVersion: "github.example.org/v1alpha1", Kind: "Repository", Namespace: "engineering", Name: "parent", Key: "engineering/github.example.org/v1alpha1/Repository/parent"}, Data: map[string]any{"fullName": "Glacius-Labs/Parent", "defaultBranch": "main"}, Source: app.ModelSource{Path: "resources/parent.repository.yaml", Digest: "sha256:parent"}, Area: "engineering"},
+		},
+		Relationships: []app.ModelRelationship{{From: repositoryKey, To: "engineering/github.example.org/v1alpha1/Repository/parent", Type: "dependsOn", Source: app.ModelSource{Path: "resources/markitect.repository.yaml", Digest: "sha256:relation"}, Context: true, Invalidate: true, Acyclic: true}},
+	}
+	return app.AdapterRequest{
+		APIVersion: requestAPIVersion,
+		Action:     "observe",
+		Adapter:    app.AdapterIdentity{Name: base.Adapter.Name, Type: base.Adapter.Type, Version: base.Adapter.Version, Parameters: base.Adapter.Parameters},
+		Model:      model,
 	}
 }
 
