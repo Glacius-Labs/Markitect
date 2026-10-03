@@ -3,7 +3,7 @@
 ## Candidate and scope
 
 - Frozen baseline: `0ba7a7218f2ceae65b8db90bb8133c2ffa583ada`.
-- Adapter implementation commit: `debdd24b0447bf177f5dda4e44d0e17baec8099d` on `codex/wave-dotnet`.
+- Adapter implementation commit: `2b1a8176c82bca334873b1dc38b424aaaded8387` on `codex/wave-dotnet`.
 - Owned changes: `cmd/markitect-adapter-dotnet/main.go` and `main_test.go`.
 - Declared adapter version: `markitect-dotnet/v0.1.0`.
 - No shared protocol, Core, CLI, schema, dependency, or release files changed.
@@ -21,7 +21,7 @@ The adapter package tests use a synthetic normalized model and these exact UTF-8
 
 The mapping scope contains exactly those two keys. The successful executable protocol fixture reports `literal-unconditional-project-reference-xml` with `orders -> platform-core` and no Core dependencies. The standard MSBuild XML namespace control parses an unqualified `Include="../Core/Core.csproj"`. Foreign-namespace root, element, and `Include`/`Condition`/`Update`/`Remove` attribute controls return `status: incomplete`, finding `project-semantics-unsupported`, and no `observed` value. Negative-control tests substitute only the Orders fixture bytes. These fixtures establish parser behavior only; they are not captured inputs from an adopting repository.
 
-One executable built from the implementation commit on `go1.27.1 windows/amd64` had SHA-256 `ee1367839fc96df3f58c5be906687621cfd893c57de8e0eb948a9fe2f56b99fc`. This identifies that specific build instance. A later build can have different bytes because Go embeds build metadata, including VCS state and build paths. The command below shows how to build the adapter and inspect that build's digest; it does not promise the same digest across commits, worktree states, or toolchains:
+One executable built from the implementation commit on `go1.27.1 windows/amd64` had SHA-256 `01e38848e26ff81110ded23acc299cf4daf13fbad26cedb8b9350a15ae0dda5b`. This identifies that specific build instance. A later build can have different bytes because Go embeds build metadata, including VCS state and build paths. The command below shows how to build the adapter and inspect that build's digest; it does not promise the same digest across commits, worktree states, or toolchains:
 
 ```powershell
 $exe = Join-Path $env:TEMP 'markitect-adapter-dotnet.exe'
