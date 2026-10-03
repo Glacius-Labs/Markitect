@@ -6,7 +6,7 @@ This document covers the built-in Codex and Claude file projections, configured 
 
 The first parallel wave adds separately built [GitHub](../cmd/markitect-adapter-github/README.md) and [Azure DevOps](../cmd/markitect-adapter-azure-devops/README.md) command consumers. They compare explicit canonical repository properties with exact, sanitized JSON captures staged through the existing command protocol. They have no live API calls, credentials or Apply capability. Their operation-free Plans report observed conformance findings; Verify fails for remaining differences or stale evidence. Capture validation proves only correspondence with the supplied recording, not its authenticity, authorization or current remote state.
 
-These are source capabilities, not new built-in adapter types or binaries included in published v0.12.0. The .NET source adapter also rejects foreign XML element/attribute namespaces as incomplete literal-reference evidence. [Wave evidence](validation/parallel-development-wave-1.md) records the tests and integration boundaries. No Core/schema/protocol meaning changes.
+These are source capabilities, not new built-in adapter types or binaries included in published v0.12.0. The .NET source adapter also rejects foreign namespaces on recognized MSBuild elements and relevant attributes as incomplete literal-reference evidence. [Wave evidence](validation/parallel-development-wave-1.md) records the tests and integration boundaries. No Core/schema/protocol meaning changes.
 
 ## Configured adapters and reconciliation
 

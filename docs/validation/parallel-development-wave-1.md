@@ -43,7 +43,7 @@ Each branch has a managed isolated worktree; shared renderer files, CLI/schema/s
 
 ## Completion evidence
 
-Independent full-diff reviewers and the coordinator reviewed every candidate. Review findings led to new .NET, GitHub and Azure commits; superseded candidates were not integrated. Each row identifies the final reviewed head and its own Windows/Linux quality run, including Go tests/vet/build, generated schemas, executable examples, packaged bootstrap/reconciliation and Windows onboarding replay. Merge commits record integration, not release publication. Final combined-source gates are recorded by the coordinator consolidation PR and its subsequent main CI, without embedding a circular self-commit claim here.
+Independent full-diff reviewers and the coordinator reviewed every candidate. Review findings led to new .NET, GitHub and Azure commits; superseded candidates were not integrated. Each row identifies the final reviewed head and its own Windows/Linux quality run, including Go tests/vet/build, generated schemas, executable examples, packaged bootstrap/reconciliation and Windows onboarding replay. Merge commits record integration, not release publication. Final combined-source gates are recorded by [coordinator consolidation PR 71](https://github.com/Glacius-Labs/Markitect/pull/71) and its subsequent main CI, without embedding a circular self-commit claim here.
 
 | PR | Reviewed head | Windows/Linux CI | Integration commit |
 |---|---|---|---|
