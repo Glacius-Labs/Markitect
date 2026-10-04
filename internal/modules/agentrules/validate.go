@@ -13,7 +13,7 @@ func validateNormalizedConfig(config Config, resources []core.ModelResource, byK
 	seenNames := map[string]map[string]core.ModelResource{}
 	for _, resource := range resources {
 		kind := resource.Identity.Kind
-		if resource.Identity.Package != "" || kind != "Skill" && kind != "Agent" {
+		if resource.Identity.Package != "" || !isMarkitectAIResource(resource) || kind != "Skill" && kind != "Agent" {
 			continue
 		}
 		if seenNames[kind] == nil {
@@ -43,6 +43,8 @@ func validateNormalizedConfig(config Config, resources []core.ModelResource, byK
 			}
 			if resource.Identity.Kind != "Rule" {
 				findings = append(findings, diagnostic("rule-adapter.kind", resource.Source.Path, resource.Source.Line, fmt.Sprintf("rule adapter source %s must be Rule", key)))
+			} else if !isMarkitectAIResource(resource) {
+				findings = append(findings, diagnostic("rule-adapter.api", resource.Source.Path, resource.Source.Line, fmt.Sprintf("rule adapter source %s must use Markitect AI API %s", key, MarkitectAIVersion)))
 			}
 			if resource.Identity.Package != "" {
 				findings = append(findings, diagnostic("rule-adapter.package", config.ProjectPath, 0, "ruleAdapters cannot directly reference package resources; use an explicit local wrapper"))
@@ -73,7 +75,7 @@ func validateNormalizedConfig(config Config, resources []core.ModelResource, byK
 			}
 			seen[name] = true
 			for _, resource := range resources {
-				if resource.Identity.Package == "" && resource.Identity.Kind == item.kind && resource.Identity.Name == name {
+				if resource.Identity.Package == "" && isMarkitectAIResource(resource) && resource.Identity.Kind == item.kind && resource.Identity.Name == name {
 					findings = append(findings, diagnostic("provider-adapter.retired-active", config.ProjectPath, 0, fmt.Sprintf("retired %s name %q is still an active resource", item.kind, name)))
 				}
 			}
@@ -90,14 +92,14 @@ func validateNormalizedConfig(config Config, resources []core.ModelResource, byK
 			}
 			for _, adapter := range config.RuleAdapters {
 				for _, key := range adapter.RuleKeys {
-					if rule, ok := byKey[key]; ok && rule.Identity.Kind == "Rule" && rule.Identity.Package == "" {
+					if rule, ok := byKey[key]; ok && isMarkitectAIResource(rule) && rule.Identity.Kind == "Rule" && rule.Identity.Package == "" {
 						mappedRules[rule.Source.Path] = true
 					}
 				}
 			}
 		}
 		for _, resource := range resources {
-			if resource.Identity.Package != "" {
+			if resource.Identity.Package != "" || !isMarkitectAIResource(resource) {
 				continue
 			}
 			if resource.Identity.Kind == "Rule" && activeTarget(config, "claude") && !mappedRules[resource.Source.Path] {
@@ -118,7 +120,7 @@ func validateNormalizedConfig(config Config, resources []core.ModelResource, byK
 	return findings
 }
 
-func validateAdapters(config Config, files map[string][]byte, outputs map[string][]byte) []core.Diagnostic {
+func validateAdapters(config Config, files map[string][]byte, outputs map[string][]string) []core.Diagnostic {
 	provider := config.ProviderAdapters
 	targets := activeTarget(config, "codex") || activeTarget(config, "claude")
 	var paths []string
@@ -162,7 +164,7 @@ func validateAdapters(config Config, files map[string][]byte, outputs map[string
 	return findings
 }
 
-func validateProviderInventory(config Config, files map[string][]byte, outputs map[string][]byte) []core.Diagnostic {
+func validateProviderInventory(config Config, files map[string][]byte, outputs map[string][]string) []core.Diagnostic {
 	provider := config.ProviderAdapters
 	retired := map[string]bool{}
 	for _, name := range provider.RetiredSkills {
