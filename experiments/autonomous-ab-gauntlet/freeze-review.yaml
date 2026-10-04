@@ -25,6 +25,13 @@ gates:
   final_harness_vet: passed
   final_harness_build: passed
   exact_head_windows_linux_ci: pending preparation commit
+pre_scoring_ci:
+  initial_commit: b542019bc2125798bd75508ba32905cd4a60d55e
+  initial_run: https://github.com/Glacius-Labs/Markitect/actions/runs/37217893038
+  initial_result: Both platform jobs failed the integration-conflict harness tests because isolated integration Git lacked committer identity.
+  initial_freeze: e623a70b3fb8a10a3d725c1ce1c6c45ac6f405571116b6a9d9a0574509b9a2da
+  initial_dispatches: 0
+  response: Preserve the first freeze and create a new identified freeze only after explicit synthetic Git identity and clean-config regression tests pass.
 limits:
   - The vertical-slices oracle deliberately requires a separate frozen-procedure blinded assessment for most evolving public APIs and all six original assertion meanings; missing assessments are unavailable, never passed.
   - Native backend token/model-call counts and complete source-read telemetry are unavailable.

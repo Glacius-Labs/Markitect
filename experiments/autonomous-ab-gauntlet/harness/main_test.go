@@ -530,7 +530,14 @@ func TestParallelIntegrationPreservesLexicalGitConflictAndInitialEvidence(t *tes
 	}
 	status := gitOutput(t, result.integration.Workspace, "status", "--short")
 	if !strings.Contains(status, "UU shared.txt") {
-		t.Fatalf("integration did not preserve the forced second-commit conflict: %s", status)
+		history := gitOutput(t, result.integration.Workspace, "log", "--format=%B", result.integration.BaseRevision+"..HEAD")
+		t.Fatalf("integration did not preserve the forced second-commit conflict: status=%q history=%q public feedback=%q", status, history, string(result.feedback))
+	}
+	history := gitOutput(t, result.integration.Workspace, "log", "--format=%B", result.integration.BaseRevision+"..HEAD")
+	p01Trailer := "(cherry picked from commit " + result.commits["P01"] + ")"
+	p02Trailer := "(cherry picked from commit " + result.commits["P02"] + ")"
+	if !strings.Contains(history, p01Trailer) || strings.Contains(history, p02Trailer) {
+		t.Fatalf("integration conflict did not leave exactly the lexical P01 commit applied and P02 pending: history=%q status=%q public feedback=%q", history, status, string(result.feedback))
 	}
 	if len(result.feedback) == 0 {
 		t.Fatal("initial public integration failure output is empty")
@@ -698,6 +705,16 @@ type conflictIntegrationResult struct {
 
 func createConflictIntegration(t *testing.T) conflictIntegrationResult {
 	t.Helper()
+	// The integration workspace is a materialized Git snapshot, so it must not
+	// depend on this machine's global/system committer identity. Parallel actor
+	// commits set identity explicitly in gitCommit; the harness must do the same
+	// for its mechanical cherry-picks.
+	emptyGitConfig := filepath.Join(t.TempDir(), "empty-git-config")
+	if err := os.WriteFile(emptyGitConfig, nil, 0600); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("GIT_CONFIG_GLOBAL", emptyGitConfig)
+	t.Setenv("GIT_CONFIG_NOSYSTEM", "1")
 	f := newConflictIntegrationFixture(t)
 	main := prepareEnvelope(t, f.taskArgs("A", "06"))
 	if err := finishFixtureTask(t, f, main, "completed", 0); err != nil {

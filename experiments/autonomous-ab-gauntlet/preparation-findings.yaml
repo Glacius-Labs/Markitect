@@ -57,6 +57,7 @@ findings:
     observation: Default restricted-shell Git refused a current-user-created external arena as a different execution identity. Native smoke Git/helper commands succeeded through normal authorized sandbox escalation.
     disposition: Use that ordinary approval boundary identically in both arms for relevant Git/build/helper commands. Keep global Git trust, credentials and execution rules unchanged. Preserve any actual rejection; no bypass or fabricated pass.
 limits:
+  - The first external freeze e623a70b3fb8a10a3d725c1ce1c6c45ac6f405571116b6a9d9a0574509b9a2da is preserved as an unscored preparation. Both platform CI jobs at b542019bc2125798bd75508ba32905cd4a60d55e exposed missing mechanical Git committer identity, which local global configuration had masked. No actor was dispatched from that freeze. A separately identified validated freeze is required after the harness correction.
   - No scored result or product benefit follows from fixing a preparation defect.
   - This record is not a completed freeze or final independent review.
   - Private Konfyra evidence/candidates are outside this experiment and remain untouched.

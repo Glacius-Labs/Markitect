@@ -1088,7 +1088,7 @@ func integrateParallel(args []string) error {
 	}
 	if integrationError == "" {
 		for _, entry := range integrationPlan {
-			if er := gitRun(workspace, "cherry-pick", "-x", entry.Commit); er != nil {
+			if er := gitRun(workspace, "-c", "user.name=Gauntlet Integration", "-c", "user.email=gauntlet-integration@invalid", "cherry-pick", "-x", entry.Commit); er != nil {
 				integrationError = fmt.Sprintf("cherry-pick %s from %s: %v", entry.Commit, entry.TaskID, er)
 				break
 			}
@@ -2217,7 +2217,7 @@ func excludedWorkspacePath(rel string) bool {
 }
 
 func initializeSeedRepository(root string) (string, error) {
-	commands := [][]string{{"git", "init", "-b", "codex/gauntlet-seed"}, {"git", "config", "core.autocrlf", "false"}, {"git", "add", "-f", "-A"}, {"git", "-c", "user.name=Gauntlet Operator", "-c", "user.email=gauntlet@invalid", "commit", "--allow-empty", "-m", "Frozen seed"}}
+	commands := [][]string{{"git", "init", "-b", "codex/gauntlet-seed"}, {"git", "config", "core.autocrlf", "false"}, {"git", "config", "user.name", "Gauntlet Actor"}, {"git", "config", "user.email", "gauntlet-actor@invalid"}, {"git", "add", "-f", "-A"}, {"git", "-c", "user.name=Gauntlet Operator", "-c", "user.email=gauntlet@invalid", "commit", "--allow-empty", "-m", "Frozen seed"}}
 	for _, args := range commands {
 		cmd := exec.Command(args[0], args[1:]...)
 		cmd.Dir = root
