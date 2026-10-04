@@ -25,7 +25,7 @@ type PolicyResultSide struct {
 	Status        string                     `yaml:"status"`
 	AbsenceReason string                     `yaml:"absenceReason,omitempty"`
 	Result        *core.PolicyResult         `yaml:"result,omitempty"`
-	DomainInput   *ModelDomainInput          `yaml:"domainInput,omitempty"`
+	DomainInput   *core.ModelDomainInput     `yaml:"domainInput,omitempty"`
 	PackagePin    *core.PackagePin           `yaml:"packagePin,omitempty"`
 	Definition    *core.ConstraintDefinition `yaml:"definition,omitempty"`
 }
@@ -73,7 +73,7 @@ type policyResultIdentity struct {
 	api, constraint, subject string
 }
 
-func policyResultChanges(before *Project, beforeModel SemanticModel, after *Project, afterModel SemanticModel) ([]PolicyResultChange, []string, error) {
+func policyResultChanges(before *Project, beforeModel core.SemanticModel, after *Project, afterModel core.SemanticModel) ([]PolicyResultChange, []string, error) {
 	base := indexPolicyResults(beforeModel.PolicyResults)
 	candidate := indexPolicyResults(afterModel.PolicyResults)
 	identities := make(map[policyResultIdentity]bool, len(base)+len(candidate))
@@ -135,7 +135,7 @@ func indexPolicyResults(results []core.PolicyResult) map[policyResultIdentity]co
 	return indexed
 }
 
-func policyResultSide(project *Project, model SemanticModel, identity policyResultIdentity, result core.PolicyResult, exists bool) (PolicyResultSide, error) {
+func policyResultSide(project *Project, model core.SemanticModel, identity policyResultIdentity, result core.PolicyResult, exists bool) (PolicyResultSide, error) {
 	side := PolicyResultSide{}
 	if exists {
 		side.Status = result.Status
@@ -169,7 +169,7 @@ func policyResultSide(project *Project, model SemanticModel, identity policyResu
 	return side, nil
 }
 
-func policyResultAbsence(project *Project, model SemanticModel, identity policyResultIdentity) string {
+func policyResultAbsence(project *Project, model core.SemanticModel, identity policyResultIdentity) string {
 	_, _, _, constraint, defined := modelPolicyDefinition(model, identity.api, identity.constraint)
 	if !defined {
 		return "constraint-not-defined"
@@ -181,7 +181,7 @@ func policyResultAbsence(project *Project, model SemanticModel, identity policyR
 	if identity.subject == "" {
 		return "result-not-present"
 	}
-	var subject *ModelResource
+	var subject *core.ModelResource
 	for i := range model.Resources {
 		if model.Resources[i].Identity.Key == identity.subject {
 			subject = &model.Resources[i]
@@ -205,8 +205,8 @@ func constraintProducesCollectionResult(constraint core.ConstraintDefinition) bo
 	return assertion.Op == "unique" || assertion.Op == "count" && assertion.Scope != "resource"
 }
 
-func modelPolicyDefinition(model SemanticModel, apiVersion, name string) (ModelDomainInput, bool, ModelDomain, core.ConstraintDefinition, bool) {
-	var input ModelDomainInput
+func modelPolicyDefinition(model core.SemanticModel, apiVersion, name string) (core.ModelDomainInput, bool, core.ModelDomain, core.ConstraintDefinition, bool) {
+	var input core.ModelDomainInput
 	inputFound := false
 	for _, candidate := range model.DomainInputs {
 		if candidate.APIVersion == apiVersion {
@@ -224,10 +224,10 @@ func modelPolicyDefinition(model SemanticModel, apiVersion, name string) (ModelD
 			}
 		}
 	}
-	return input, inputFound, ModelDomain{}, core.ConstraintDefinition{}, false
+	return input, inputFound, core.ModelDomain{}, core.ConstraintDefinition{}, false
 }
 
-func constraintSelects(constraint core.ConstraintDefinition, subject ModelResource, model SemanticModel) bool {
+func constraintSelects(constraint core.ConstraintDefinition, subject core.ModelResource, model core.SemanticModel) bool {
 	if constraint.Select.Kind != "" && subject.Identity.Kind != constraint.Select.Kind {
 		return false
 	}
@@ -238,7 +238,7 @@ func constraintSelects(constraint core.ConstraintDefinition, subject ModelResour
 	}
 	assertion := constraint.Assert
 	if assertion.Relation != "" && (assertion.Op == "count" || assertion.Op == "allowed-targets") {
-		var domain *ModelDomain
+		var domain *core.ModelDomain
 		for i := range model.Domains {
 			if model.Domains[i].APIVersion == subject.Identity.APIVersion {
 				domain = &model.Domains[i]

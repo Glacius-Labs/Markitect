@@ -8,49 +8,36 @@ import (
 	"go.yaml.in/yaml/v3"
 )
 
-// Temporary compiler names keep this checkpoint buildable while use cases
-// move to Host. Core owns the single wire/IR definition; no copied DTO remains.
-const SemanticModelVersion = core.SemanticModelVersion
-
-type SemanticModel = core.SemanticModel
-type ModelSnapshot = core.ModelSnapshot
-type ModelResource = core.ModelResource
-type ModelIdentity = core.ModelIdentity
-type ModelSource = core.ModelSource
-type ModelRelationship = core.ModelRelationship
-type ModelDomainInput = core.ModelDomainInput
-type ModelDomain = core.ModelDomain
-
-func CompileModel(p *Project) (SemanticModel, error) {
+func CompileModel(p *Project) (core.SemanticModel, error) {
 	if p == nil || p.Graph == nil || p.Graph.Project == nil || p.Snapshot == nil {
-		return SemanticModel{}, fmt.Errorf("a parsed project and fixed snapshot are required")
+		return core.SemanticModel{}, fmt.Errorf("a parsed project and fixed snapshot are required")
 	}
 	config, err := YAML(p.Graph.Project.Spec)
 	if err != nil {
-		return SemanticModel{}, err
+		return core.SemanticModel{}, err
 	}
-	model := SemanticModel{
-		APIVersion:   SemanticModelVersion,
-		Snapshot:     ModelSnapshot{ID: p.Snapshot.ID, Provisional: p.Snapshot.Provisional, Digest: p.Snapshot.Digest()},
-		ConfigDigest: hashBytes(config), Resources: make([]ModelResource, 0, len(p.Graph.Resources)),
+	model := core.SemanticModel{
+		APIVersion:   core.SemanticModelVersion,
+		Snapshot:     core.ModelSnapshot{ID: p.Snapshot.ID, Provisional: p.Snapshot.Provisional, Digest: p.Snapshot.Digest()},
+		ConfigDigest: hashBytes(config), Resources: make([]core.ModelResource, 0, len(p.Graph.Resources)),
 	}
 	model.PolicyResults = clonePolicyResults(p.Graph.PolicyResults)
 	if p.Graph.Registry != nil {
 		for _, d := range p.Graph.Registry.Domains() {
-			domain := ModelDomain{Name: d.Name, APIVersion: d.APIVersion, Kinds: d.Kinds, Relations: d.Relations, Constraints: d.Constraints}
+			domain := core.ModelDomain{Name: d.Name, APIVersion: d.APIVersion, Kinds: d.Kinds, Relations: d.Relations, Constraints: d.Constraints}
 			encoded, marshalErr := YAML(domain)
 			if marshalErr != nil {
-				return SemanticModel{}, marshalErr
+				return core.SemanticModel{}, marshalErr
 			}
-			var cloned ModelDomain
+			var cloned core.ModelDomain
 			if unmarshalErr := yaml.Unmarshal(encoded, &cloned); unmarshalErr != nil {
-				return SemanticModel{}, unmarshalErr
+				return core.SemanticModel{}, unmarshalErr
 			}
 			model.Domains = append(model.Domains, cloned)
 		}
 	}
 	for _, input := range p.DomainInputs {
-		model.DomainInputs = append(model.DomainInputs, ModelDomainInput{APIVersion: input.APIVersion, Name: input.Name, Path: input.Path, Package: input.Package,
+		model.DomainInputs = append(model.DomainInputs, core.ModelDomainInput{APIVersion: input.APIVersion, Name: input.Name, Path: input.Path, Package: input.Package,
 			PackageVersion: p.packageVersion(input.Package), Digest: Hash(p.fileBytes(input.Package, input.Path))})
 	}
 	structuralDiagnostics := p.StructuralDiagnostics()
@@ -83,20 +70,20 @@ func CompileModel(p *Project) (SemanticModel, error) {
 			// only the generic `data` object in this DTO.
 			encoded, marshalErr := yaml.Marshal(r)
 			if marshalErr != nil {
-				return SemanticModel{}, marshalErr
+				return core.SemanticModel{}, marshalErr
 			}
 			var envelope struct {
 				Spec map[string]any `yaml:"spec"`
 			}
 			if unmarshalErr := yaml.Unmarshal(encoded, &envelope); unmarshalErr != nil {
-				return SemanticModel{}, unmarshalErr
+				return core.SemanticModel{}, unmarshalErr
 			}
 			data, err = cloneModelMap(envelope.Spec)
 		} else {
 			data, err = cloneModelMap(r.Data)
 		}
 		if err != nil {
-			return SemanticModel{}, err
+			return core.SemanticModel{}, err
 		}
 		labels := map[string]string(nil)
 		if r.Metadata.Labels != nil {
@@ -105,10 +92,10 @@ func CompileModel(p *Project) (SemanticModel, error) {
 				labels[name] = value
 			}
 		}
-		model.Resources = append(model.Resources, ModelResource{
-			Identity: ModelIdentity{APIVersion: r.APIVersion, Kind: r.Kind, Namespace: r.Metadata.Namespace, Name: r.Metadata.Name, Package: r.Package, Key: key},
+		model.Resources = append(model.Resources, core.ModelResource{
+			Identity: core.ModelIdentity{APIVersion: r.APIVersion, Kind: r.Kind, Namespace: r.Metadata.Namespace, Name: r.Metadata.Name, Package: r.Package, Key: key},
 			Labels:   labels, Data: data,
-			Source: ModelSource{Path: r.Path, Line: r.Line, Digest: Hash(p.resourceBytes(r))},
+			Source: core.ModelSource{Path: r.Path, Line: r.Line, Digest: Hash(p.resourceBytes(r))},
 			Area:   p.Graph.ResourceAreas[key].Name,
 		})
 	}
@@ -121,25 +108,25 @@ func CompileModel(p *Project) (SemanticModel, error) {
 			}
 			sourceDigest = Hash(p.fileBytes(sourceResource.Package, sourcePath))
 		}
-		model.Relationships = append(model.Relationships, ModelRelationship{
+		model.Relationships = append(model.Relationships, core.ModelRelationship{
 			From: relation.From, To: relation.To, Type: relation.Relation,
-			Source:  ModelSource{Path: relation.Path, Line: relation.Line, Digest: sourceDigest},
+			Source:  core.ModelSource{Path: relation.Path, Line: relation.Line, Digest: sourceDigest},
 			Context: relation.Context, Invalidate: relation.Invalidate, Acyclic: relation.Acyclic,
 		})
 	}
 	// Desired-model identity excludes volatile full-snapshot metadata, but includes
 	// every normalized resource, relationship, domain definition and exact input hash.
 	stable := struct {
-		APIVersion    string              `yaml:"apiVersion"`
-		ConfigDigest  string              `yaml:"configDigest"`
-		DomainInputs  []ModelDomainInput  `yaml:"domainInputs,omitempty"`
-		Domains       []ModelDomain       `yaml:"domains,omitempty"`
-		Resources     []ModelResource     `yaml:"resources"`
-		Relationships []ModelRelationship `yaml:"relationships,omitempty"`
+		APIVersion    string                   `yaml:"apiVersion"`
+		ConfigDigest  string                   `yaml:"configDigest"`
+		DomainInputs  []core.ModelDomainInput  `yaml:"domainInputs,omitempty"`
+		Domains       []core.ModelDomain       `yaml:"domains,omitempty"`
+		Resources     []core.ModelResource     `yaml:"resources"`
+		Relationships []core.ModelRelationship `yaml:"relationships,omitempty"`
 	}{model.APIVersion, model.ConfigDigest, model.DomainInputs, model.Domains, model.Resources, model.Relationships}
 	unsigned, err := YAML(stable)
 	if err != nil {
-		return SemanticModel{}, err
+		return core.SemanticModel{}, err
 	}
 	model.ModelDigest = hashBytes(unsigned)
 	return model, nil

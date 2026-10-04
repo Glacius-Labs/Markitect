@@ -49,12 +49,12 @@ type AdapterIdentity struct {
 }
 
 type AdapterRequest struct {
-	APIVersion  string          `yaml:"apiVersion"`
-	Action      string          `yaml:"action"`
-	Adapter     AdapterIdentity `yaml:"adapter"`
-	Model       SemanticModel   `yaml:"model"`
-	Observation *AdapterResult  `yaml:"observation,omitempty"`
-	Plan        *AdapterResult  `yaml:"plan,omitempty"`
+	APIVersion  string             `yaml:"apiVersion"`
+	Action      string             `yaml:"action"`
+	Adapter     AdapterIdentity    `yaml:"adapter"`
+	Model       core.SemanticModel `yaml:"model"`
+	Observation *AdapterResult     `yaml:"observation,omitempty"`
+	Plan        *AdapterResult     `yaml:"plan,omitempty"`
 }
 
 type AdapterFinding struct {
@@ -371,13 +371,13 @@ func loadCommandAdapter(p *Project, name string) (core.AdapterConfig, CommandAda
 	return adapter, config, err
 }
 
-func compileAdapterModel(p *Project) (SemanticModel, error) {
+func compileAdapterModel(p *Project) (core.SemanticModel, error) {
 	model, err := CompileModel(p)
 	if err != nil {
-		return SemanticModel{}, err
+		return core.SemanticModel{}, err
 	}
 	if model.ValidationStatus != "passed" {
-		return SemanticModel{}, fmt.Errorf("adapter requires a validated model; project has %d diagnostics", len(model.Diagnostics))
+		return core.SemanticModel{}, fmt.Errorf("adapter requires a validated model; project has %d diagnostics", len(model.Diagnostics))
 	}
 	return model, nil
 }

@@ -62,7 +62,7 @@ spec:
 		t.Fatalf("missing provenance/results: %+v", model)
 	}
 	for _, result := range model.PolicyResults {
-		var origin *ModelDomainInput
+		var origin *core.ModelDomainInput
 		for index := range model.DomainInputs {
 			if model.DomainInputs[index].APIVersion == result.APIVersion {
 				if origin != nil {

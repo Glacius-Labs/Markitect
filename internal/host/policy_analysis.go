@@ -17,16 +17,16 @@ type AnalysisEvidence struct {
 // AnalysisSnapshot binds an analysis side to the same normalized model
 // identity exposed by model and reports its two independent validation axes.
 type AnalysisSnapshot struct {
-	Snapshot            ModelSnapshot `yaml:"snapshot"`
-	ConfigDigest        string        `yaml:"configDigest"`
-	ModelDigest         string        `yaml:"modelDigest"`
-	StructuralStatus    string        `yaml:"structuralStatus"`
-	PolicyStatus        string        `yaml:"policyStatus"`
-	ValidationStatus    string        `yaml:"validationStatus"`
-	FailedPolicyResults int           `yaml:"failedPolicyResults"`
+	Snapshot            core.ModelSnapshot `yaml:"snapshot"`
+	ConfigDigest        string             `yaml:"configDigest"`
+	ModelDigest         string             `yaml:"modelDigest"`
+	StructuralStatus    string             `yaml:"structuralStatus"`
+	PolicyStatus        string             `yaml:"policyStatus"`
+	ValidationStatus    string             `yaml:"validationStatus"`
+	FailedPolicyResults int                `yaml:"failedPolicyResults"`
 }
 
-func analysisSnapshot(model SemanticModel) AnalysisSnapshot {
+func analysisSnapshot(model core.SemanticModel) AnalysisSnapshot {
 	failed := 0
 	for _, result := range model.PolicyResults {
 		if result.Status == core.PolicyFailed {
