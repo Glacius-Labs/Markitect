@@ -1,0 +1,34 @@
+schema: autonomous-ab-paired-rerun-preparation/v1
+source_arena: r1-paths-v3
+destination_arena: r1-paths-v3-ddd-t1-control-rerun
+freeze_digest: 4faee78795986559e91a0e233bd7321a9cf48526d331edba621ca98eee11638a
+frozen_input_count: 304
+harness_binary_sha256: 0fa0d12f29aa7746f1e74c6435fec08b63324919f1d01d7eb4046103be4d2ec1
+copy_tool:
+  classification: coordinator tooling; not an actor or scoring tool
+  path: .artifacts/autonomous-ab-gauntlet/copy-frozen-inputs.go
+  sha256: 9dd6f9a4a19cda3f558492f7da009662afe25d16a837e569cef1498e780aa7b7
+  behavior: Copy only the original freeze manifest's exact regular files after byte-digest validation into an exclusively new sibling arena; no overwrite, deletion, actor state or prior outputs.
+verification:
+  command: frozen gauntlet freeze --arena <new-arena> --out raw/copied-input-validation.yaml
+  created_utc: "2026-10-04T19:44:23Z"
+  result: Recomputed frozen aggregate is identical to the original.
+  raw_reference: r1-paths-v3-ddd-t1-control-rerun/raw/copied-input-validation.yaml
+  actor_records_at_preparation: 0
+execution_plan:
+  projects: [vertical-slices]
+  arms: [B, A]
+  trial: 1
+  development_tasks: ["01", "02", "03", "04", "05", "06", "07", "08"]
+  holdout_tasks: deferred
+  start_gate: Both excluded original trial1 development chains have finished task08.
+  model_and_effort: unchanged inherited runtime, gpt-6.1-sol/xhigh
+  deadline_seconds: 1800
+  maximum_repairs: 2
+  product_harness_tasks_oracles_changed: false
+  semantic_help: prohibited
+  status: prepared-not-started
+limits:
+  - The copy does not correct a product or actor outcome.
+  - Original observations remain separate and excluded from comparative longitudinal analysis.
+  - Final reports must name arena plus run identity; identical run IDs in separate arenas are not interchangeable evidence.

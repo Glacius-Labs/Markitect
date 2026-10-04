@@ -1,0 +1,11 @@
+schema: autonomous-ab-run-exclusions/v1
+freeze_digest: 4faee78795986559e91a0e233bd7321a9cf48526d331edba621ca98eee11638a
+runs:
+  - run_id: vertical-slices-a-t01
+    reason: Paired exclusion due to asymmetric premature controller termination of B/task03 and accumulated-state consequences; original observations retained.
+  - run_id: vertical-slices-b-t01
+    reason: Operator terminalized B/task03 after one failed helper with 565 seconds remaining instead of permitting the frozen repair budget; original observations retained.
+scope: exact-listed-run-ids-only
+original_development_continuation: Retain both original usable chains through task08; no state reset or hidden semantic feedback.
+replacement: One fresh symmetric trial1 pair in a separate arena with byte-identical frozen inputs; not a retry-until-green policy.
+holdout: Do not execute holdouts for the excluded original pair; valid cohort holdout stays deferred until the explicit development fix/no-fix decision.

@@ -20,6 +20,10 @@ Recorded harness start, completion and deadline timestamps are copied exactly. `
 
 Run the focused fixture checks with:
 
+A freeze-bound `decisions/run-exclusions.yaml` may exclude exact run IDs with explicit reasons. The collector retains their raw helper and evaluator results, adds the decision's byte digest to each affected row, and counts those rows as invalidated. Other trials remain available. Group churn is still descriptive evidence over all retained rows; it must not be mistaken for an eligible comparative cohort. A final comparison must select eligible rows explicitly, identifying both arena and run ID when a fresh paired rerun uses a separate arena. An excluded owner-decision row is invalidated, not a reviewed owner decision.
+
+`deadline_compliance` reports `within-deadline`, `overrun`, or `unavailable` using the recorded completion/deadline and explicit timeout flag. A raw evaluator pass with a successful helper cannot count as passed if completion exceeded the fixed deadline, including a mechanical parallel integration. Its raw evidence remains unchanged and its counted outcome is incomplete. Missing timestamps do not manufacture a timing result.
+
 ```powershell
 go test ./experiments/autonomous-ab-gauntlet/analysis
 ```

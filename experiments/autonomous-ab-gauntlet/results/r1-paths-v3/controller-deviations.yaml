@@ -1,0 +1,41 @@
+schema: autonomous-ab-controller-deviations/v1
+freeze_digest: 4faee78795986559e91a0e233bd7321a9cf48526d331edba621ca98eee11638a
+product_source_commit: adef79d935399f8ac63ad874dbdeab8d15c418a1
+harness_source_commit: af2f2d7369e2b86a89b735a34e62bda0d2a5a4ae
+observations:
+  - id: vertical-slices-trial1-task03-premature-terminal-finish
+    run_id: vertical-slices-b-t01
+    task_id: "03"
+    attempt: 0
+    input_digest: 20e18543fc0ba6ed9e8fc166438de4ee313f33d2e63a6846b40559c489e87e69
+    actor_started_utc: "2026-10-04T19:02:27Z"
+    actor_completed_utc: "2026-10-04T19:23:02Z"
+    deadline_utc: "2026-10-04T19:32:27Z"
+    public_helper_exit_code: 1
+    persisted_actor_status: failed
+    repair_iterations: 0
+    remaining_deadline_seconds_at_finish: 565
+    source_of_deviation: Operator used terminal failed instead of the originally documented repair-needed intermediate state.
+    contributing_help_defect: Frozen finish-task flag help omits repair-needed although the implementation and frozen README support it.
+    subsequent_refusal: task already completed; run IDs are write-once
+    actual_repairs: unavailable; none dispatched
+    recorded_state_modified: false
+    actor_semantic_feedback: false
+    product_defect_established: false
+    raw_references:
+      - runs/vertical-slices-b-t01/03.native.yaml
+      - runs/vertical-slices-b-t01/03.attempt-0.response.txt
+      - raw/vertical-slices-b-t01/03/helper-attempt-0.jsonl
+      - raw/vertical-slices-b-t01/03/attempt-0.public-validator.txt
+      - raw/vertical-slices-b-t01/03/snapshots/03-check-1/tree.yaml
+comparison_decision:
+  exact_exclusion_record: run-exclusions.yaml
+  exact_exclusion_record_sha256: 987c0e2308a7278889b35c3380e8b83106bf96058bb8f21b1cff429d41cad02d
+  affected_pair: [vertical-slices-a-t01, vertical-slices-b-t01]
+  original_pair_comparison: excluded due to an asymmetric controller error and its accumulated-state consequences
+  original_observations: retained; do not count the unavailable repairs as product failure or successful repair
+  original_continuation: Continue both usable development chains through task08 with no hidden feedback and no state rewrite.
+  planned_remedy: One fresh symmetric trial1 pair from the unchanged frozen seeds, tools, protocol, cards and oracles in a separately identified arena.
+  rerun_status: prepared-not-started; no actor envelope or task execution exists yet
+  rerun_preparation_record: paired-rerun-preparation.yaml
+  holdout_status: deferred until development assessment and the explicit fix/no-fix decision

@@ -66,6 +66,7 @@ type nativeRecord struct {
 	ActorStartedUTC     string       `yaml:"actor_started_utc"`
 	ActorCompletedUTC   string       `yaml:"actor_completed_utc"`
 	DeadlineUTC         string       `yaml:"deadline_utc"`
+	TimeoutExceeded     bool         `yaml:"timeout_exceeded"`
 	Workspace           string       `yaml:"workspace"`
 	BaseRevision        string       `yaml:"base_revision"`
 	FinalSnapshot       string       `yaml:"final_snapshot"`
@@ -169,6 +170,8 @@ type taskReport struct {
 	WorkflowStartedUTC           string            `yaml:"workflow_started_utc,omitempty" json:"workflow_started_utc,omitempty"`
 	WorkflowCompletedUTC         string            `yaml:"workflow_completed_utc,omitempty" json:"workflow_completed_utc,omitempty"`
 	WorkflowDeadlineUTC          string            `yaml:"workflow_deadline_utc,omitempty" json:"workflow_deadline_utc,omitempty"`
+	DeadlineCompliance           string            `yaml:"deadline_compliance" json:"deadline_compliance"`
+	ComparisonExclusionReason    string            `yaml:"comparison_exclusion_reason,omitempty" json:"comparison_exclusion_reason,omitempty"`
 	ElapsedWorkflowSeconds       *float64          `yaml:"elapsed_workflow_seconds,omitempty" json:"elapsed_workflow_seconds,omitempty"`
 	WorkflowTimeUnavailableWhy   string            `yaml:"workflow_time_unavailable_why,omitempty" json:"workflow_time_unavailable_why,omitempty"`
 	ContextImpactStatus          string            `yaml:"context_impact_status" json:"context_impact_status"`
@@ -205,6 +208,8 @@ type report struct {
 	ComparisonEligible             string                      `yaml:"comparison_eligible" json:"comparison_eligible"`
 	InvalidationReason             string                      `yaml:"invalidation_reason,omitempty" json:"invalidation_reason,omitempty"`
 	InvalidationRecordSHA256       string                      `yaml:"invalidation_record_sha256,omitempty" json:"invalidation_record_sha256,omitempty"`
+	RunExclusionRecordStatus       string                      `yaml:"run_exclusion_record_status" json:"run_exclusion_record_status"`
+	RunExclusionRecordSHA256       string                      `yaml:"run_exclusion_record_sha256,omitempty" json:"run_exclusion_record_sha256,omitempty"`
 	Limits                         []string                    `yaml:"limits" json:"limits"`
 	Tasks                          []taskReport                `yaml:"tasks" json:"tasks"`
 	Groups                         []group                     `yaml:"groups" json:"groups"`
@@ -217,6 +222,16 @@ type invalidation struct {
 	Scope              string `yaml:"scope"`
 	Reason             string `yaml:"reason"`
 	ComparisonEligible bool   `yaml:"comparison_eligible"`
+}
+
+type runExclusion struct {
+	RunID  string `yaml:"run_id"`
+	Reason string `yaml:"reason"`
+}
+
+type runExclusions struct {
+	FreezeDigest string         `yaml:"freeze_digest"`
+	Runs         []runExclusion `yaml:"runs"`
 }
 
 func invalidationApplies(inv invalidation, freezeDigest string) bool {
@@ -437,6 +452,11 @@ func analyze(arena, out string) error {
 		return fmt.Errorf("read invalidation record: %w", err)
 	}
 	r.FreezeDigest = frozen.Digest
+	excludedRuns, exclusionStatus, exclusionHash, err := readRunExclusions(arena, frozen.Digest)
+	if err != nil {
+		return err
+	}
+	r.RunExclusionRecordStatus, r.RunExclusionRecordSHA256 = exclusionStatus, exclusionHash
 	cardCache := map[string]map[string]taskCard{}
 	runsRoot, err := arenaPath(arena, "runs")
 	if err != nil {
@@ -447,6 +467,7 @@ func analyze(arena, out string) error {
 		return err
 	}
 	sort.Strings(files)
+	seenRuns := map[string]bool{}
 	for _, p := range files {
 		var n nativeRecord
 		if err := readArenaYAML(arena, p, &n); err != nil {
@@ -458,6 +479,7 @@ func analyze(arena, out string) error {
 		if filepath.Base(filepath.Dir(p)) != n.RunID || filepath.Base(p) != n.TaskID+".native.yaml" {
 			return fmt.Errorf("native record identity does not match its path: %s", p)
 		}
+		seenRuns[n.RunID] = true
 		key := n.Project + "/" + strings.ToLower(n.Arm) + "/" + runKind(n)
 		if _, ok := cardCache[key]; !ok {
 			cards, e := loadCardsForRun(arena, n.Project, strings.ToLower(n.Arm), n.Parallel)
@@ -483,6 +505,13 @@ func analyze(arena, out string) error {
 			outcome = "invalidated"
 			reportTask.CountedOutcome = outcome
 		}
+		if reason, excluded := excludedRuns[n.RunID]; excluded {
+			outcome, reportTask.CountedOutcome = "invalidated", "invalidated"
+			reportTask.ComparisonExclusionReason = reason
+			ref := "decisions/run-exclusions.yaml"
+			reportTask.RawReferences = append(reportTask.RawReferences, ref)
+			reportTask.RawReferenceSHA256[ref] = "sha256:" + exclusionHash
+		}
 		r.Tasks = append(r.Tasks, reportTask)
 		countOutcome(&c, outcome, reportTask.OwnerDecisionRequired)
 		r.CountsByProjectArmTrial[groupKey] = c
@@ -506,6 +535,16 @@ func analyze(arena, out string) error {
 			old.LinesDeleted += v.LinesDeleted
 			r.ChurnByProjectArmTrial[groupKey][cat] = old
 		}
+	}
+	missingExcludedRuns := []string{}
+	for id := range excludedRuns {
+		if !seenRuns[id] {
+			missingExcludedRuns = append(missingExcludedRuns, id)
+		}
+	}
+	if len(missingExcludedRuns) != 0 {
+		sort.Strings(missingExcludedRuns)
+		return fmt.Errorf("run exclusions reference absent native run IDs: %s", strings.Join(missingExcludedRuns, ", "))
 	}
 	sort.Slice(r.Tasks, func(i, j int) bool {
 		a, b := r.Tasks[i], r.Tasks[j]
@@ -623,6 +662,7 @@ func analyzeTask(arena string, n nativeRecord, c taskCard, cardOK bool) (taskRep
 	}
 	t := taskReport{Project: n.Project, Arm: strings.ToUpper(n.Arm), Trial: n.Trial, TaskID: n.TaskID, BaseRevision: n.BaseRevision, ActorStatus: n.ActorStatus, EvaluationStatus: "unknown", CountedOutcome: "unknown", BeforeRepairEvaluationStatus: "unknown", FinalEvaluationStatus: "unknown", NativeTokensStatus: "unavailable", PlatformCallsStatus: "unavailable", ReadAuditStatus: "unavailable", AttentionStatus: "unavailable", OwnerDecisionRequired: cardOK && c.RequiresOwnerDecision, OwnerAssessment: "unavailable", ExpectedAffectedStatus: "available", ContextImpactStatus: "unavailable", ContextStatus: "unavailable", ImpactStatus: "unavailable", Churn: map[string]churn{}, ChurnStatus: "unavailable", RawReferenceSHA256: map[string]string{}, PublicHelper: helperSummary{Status: "unavailable"}}
 	t.RunID, t.RunKind = n.RunID, runKind(n)
+	t.DeadlineCompliance = deadlineCompliance(n)
 	t.WorkflowStartedUTC, t.WorkflowCompletedUTC, t.WorkflowDeadlineUTC = n.ActorStartedUTC, n.ActorCompletedUTC, n.DeadlineUTC
 	t.ElapsedWorkflowSeconds, t.WorkflowTimeUnavailableWhy = workflowElapsed(n.ActorStartedUTC, n.ActorCompletedUTC)
 	t.WorkflowTimeStatus = "unavailable"
@@ -864,6 +904,9 @@ func analyzeTask(arena string, n nativeRecord, c taskCard, cardOK bool) (taskRep
 	if t.EvaluationStatus == "passed" && (t.ActorStatus != "completed" || t.PublicHelper.Status != "success") {
 		t.CountedOutcome = "incomplete"
 	}
+	if t.CountedOutcome == "passed" && t.DeadlineCompliance == "overrun" {
+		t.CountedOutcome = "incomplete"
+	}
 	for _, turn := range n.Turns {
 		for _, ref := range []string{turn.ResponseFile, turn.ReceiptsFile} {
 			if ref != "" {
@@ -1051,6 +1094,10 @@ func stringValue(v any) string {
 	return fmt.Sprint(v)
 }
 func countOutcome(c *counts, s string, decision bool) {
+	if s == "invalidated" {
+		c.Invalidated++
+		return
+	}
 	if decision {
 		c.OwnerDecisionRequired++
 		return
@@ -1067,8 +1114,6 @@ func countOutcome(c *counts, s string, decision bool) {
 		c.Manual++
 	case "incomplete":
 		c.Incomplete++
-	case "invalidated":
-		c.Invalidated++
 	default:
 		c.Unknown++
 	}
@@ -1104,6 +1149,57 @@ func workflowElapsed(start, end string) (*float64, string) {
 	return &seconds, ""
 }
 
+func deadlineCompliance(n nativeRecord) string {
+	if n.TimeoutExceeded {
+		return "overrun"
+	}
+	completed, err := time.Parse(time.RFC3339Nano, n.ActorCompletedUTC)
+	if err != nil {
+		return "unavailable"
+	}
+	deadline, err := time.Parse(time.RFC3339Nano, n.DeadlineUTC)
+	if err != nil {
+		return "unavailable"
+	}
+	if completed.After(deadline) {
+		return "overrun"
+	}
+	return "within-deadline"
+}
+
+func readRunExclusions(arena, freeze string) (map[string]string, string, string, error) {
+	path := filepath.Join(arena, "decisions", "run-exclusions.yaml")
+	var record runExclusions
+	if err := readArenaYAML(arena, path, &record); err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return map[string]string{}, "unavailable", "", nil
+		}
+		return nil, "invalid", "", err
+	}
+	resolved, err := safeArenaFile(arena, path)
+	if err != nil {
+		return nil, "invalid", "", err
+	}
+	hash, err := hashFile(resolved)
+	if err != nil {
+		return nil, "invalid", "", err
+	}
+	if record.FreezeDigest != freeze {
+		return map[string]string{}, "unmatched-freeze", hash, nil
+	}
+	excluded := map[string]string{}
+	for _, run := range record.Runs {
+		if !validComponent(run.RunID) || strings.TrimSpace(run.Reason) == "" {
+			return nil, "invalid", hash, errors.New("run exclusion needs an exact run identity and reason")
+		}
+		if _, duplicate := excluded[run.RunID]; duplicate {
+			return nil, "invalid", hash, fmt.Errorf("duplicate excluded run %s", run.RunID)
+		}
+		excluded[run.RunID] = run.Reason
+	}
+	return excluded, "matched", hash, nil
+}
+
 func makeGroups(tasks []taskReport) []group {
 	by := map[string][]taskReport{}
 	for _, t := range tasks {
@@ -1131,11 +1227,13 @@ func makeGroups(tasks []taskReport) []group {
 		for _, t := range list {
 			g.Outcomes.Tasks++
 			g.Outcomes.Repairs += t.Repairs
-			if t.OwnerDecisionRequired {
+			if t.OwnerDecisionRequired && t.CountedOutcome != "invalidated" {
 				g.Outcomes.OwnerDecisionRequired++
 				continue
 			}
-			g.Outcomes.ImplementationEligibleTasks++
+			if !t.OwnerDecisionRequired {
+				g.Outcomes.ImplementationEligibleTasks++
+			}
 			switch t.CountedOutcome {
 			case "passed":
 				if !unknownSeen {
