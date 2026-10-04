@@ -237,7 +237,9 @@ func Check(root, configPath string) (Report, error) {
 		}
 	}
 	for name, data := range snap.Files {
-		if !inRoots(name, config.Spec.Roots) || !render.IsGenerated(data) {
+		if !inRoots(name, config.Spec.Roots) ||
+			!(strings.HasSuffix(name, ".md") || strings.HasSuffix(name, ".toml")) ||
+			!render.IsGenerated(data) {
 			continue
 		}
 		if _, expected := generatedOwners[name]; !expected {
