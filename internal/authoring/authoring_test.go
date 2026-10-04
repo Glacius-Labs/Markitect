@@ -20,13 +20,13 @@ func TestContextCompilesPortableCoreAuthoringClosure(t *testing.T) {
 	}
 	want := map[string]bool{
 		"markitect.yaml": false,
-		"internal/authoring/resources/rule-canonical-ownership.yaml":       false,
-		"internal/authoring/resources/text-resource-modelling.yaml":        false,
-		"internal/authoring/resources/workflow-authoring-change.yaml":      false,
-		"internal/authoring/resources/workflow-engineering-discovery.yaml": false,
-		"internal/authoring/resources/workflow-constitution-change.yaml":   false,
+		"internal/authoring/resources/rule-canonical-ownership.yaml":        false,
+		"internal/authoring/resources/text-resource-modelling.yaml":         false,
+		"internal/authoring/resources/workflow-authoring-change.yaml":       false,
+		"internal/authoring/resources/workflow-engineering-discovery.yaml":  false,
+		"internal/authoring/resources/workflow-constitution-change.yaml":    false,
 		"internal/authoring/resources/workflow-markitect-first-change.yaml": false,
-		"internal/authoring/resources/skill-authoring.yaml":                false,
+		"internal/authoring/resources/skill-authoring.yaml":                 false,
 	}
 	if len(got.Inputs) != len(want) {
 		t.Fatalf("compiled %d inputs, want %d: %#v", len(got.Inputs), len(want), got.Inputs)
@@ -106,7 +106,7 @@ func TestContextCompilesPortableCoreAuthoringClosure(t *testing.T) {
 			t.Errorf("Constitution Change workflow omits %q", required)
 		}
 	}
-	for _, required := range []string{"implementation-only", "intent change", "migration", "ambiguity", "markitect check --repo PATH --revision BASE", "markitect impact --repo PATH --base BASE --revision INTENT_CANDIDATE", "markitect-check-artifacts --repo . --config markitect-artifacts.yaml", "unverified", "--action apply --adapter NAME --plan PLAN --write", "human decision"} {
+	for _, required := range []string{"implementation-only", "intent change", "migration", "ambiguity", "markitect check --repo PATH --revision BASE", "markitect impact --repo PATH --base BASE --revision INTENT_CANDIDATE", "markitect-check-artifacts --repo . --config markitect-artifacts.yaml", "with a reviewed helper built from the pinned Markitect source package on PATH", "Markitect's own source Project uses the equivalent local", "unverified", "--action apply --adapter NAME --plan PLAN --write", "human decision"} {
 		if !strings.Contains(markitectFirstText, required) {
 			t.Errorf("Markitect-first Change workflow omits %q", required)
 		}
