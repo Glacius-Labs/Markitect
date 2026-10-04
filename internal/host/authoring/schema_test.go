@@ -1,4 +1,4 @@
-package format
+package authoring
 
 import (
 	"bytes"
@@ -6,7 +6,6 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/internal/core"
 	"go.yaml.in/yaml/v3"
 )
 
@@ -194,16 +193,16 @@ func TestProjectCheckSchemaConstraints(t *testing.T) {
 		t.Fatalf("check name and run must be required: %#v", item["required"])
 	}
 	checkProperties := mapping(t, item["properties"])
-	if mapping(t, checkProperties["name"])["pattern"] != core.CheckNamePattern {
-		t.Errorf("check name pattern = %v, want %s", mapping(t, checkProperties["name"])["pattern"], core.CheckNamePattern)
+	if mapping(t, checkProperties["name"])["pattern"] != CheckNamePattern {
+		t.Errorf("check name pattern = %v, want %s", mapping(t, checkProperties["name"])["pattern"], CheckNamePattern)
 	}
 	run := mapping(t, checkProperties["run"])
 	if run["minItems"] != 1 {
 		t.Errorf("run minItems = %v, want 1", run["minItems"])
 	}
 	firstArg := sequence(t, run["prefixItems"])[0]
-	if mapping(t, firstArg)["pattern"] != core.CheckExecutablePattern {
-		t.Errorf("first argv pattern = %v, want %s", mapping(t, firstArg)["pattern"], core.CheckExecutablePattern)
+	if mapping(t, firstArg)["pattern"] != CheckExecutablePattern {
+		t.Errorf("first argv pattern = %v, want %s", mapping(t, firstArg)["pattern"], CheckExecutablePattern)
 	}
 	if mapping(t, run["items"])["type"] != "string" || mapping(t, run["items"])["not"] == nil {
 		t.Errorf("additional argv items must be strings without NUL: %#v", run["items"])

@@ -1,4 +1,4 @@
-package core
+package authoring
 
 import (
 	"encoding/hex"
@@ -169,7 +169,7 @@ func (g *Graph) IsExported(resource *Resource) bool {
 }
 
 func (g *Graph) validatePackageManifests() {
-	for _, name := range sortedKeys(g.Packages) {
+	for _, name := range sortedResources(g.Packages) {
 		manifest := g.Packages[name]
 		if manifest.Metadata.Namespace != "" {
 			g.diag(manifest, "package.namespace", "Package metadata must not have a namespace")

@@ -1,4 +1,4 @@
-package format
+package authoring
 
 import (
 	"github.com/Glacius-Labs/Markitect/internal/core"
@@ -24,7 +24,7 @@ func validateGenericSpec(file string, node *yaml.Node, registry *core.Registry, 
 // API. Such files remain typed inputs and cannot be downgraded to prose.
 func IsResourceEnvelopeWithRegistry(data []byte, registry *core.Registry) bool {
 	if registry == nil {
-		registry = core.NewRegistry()
+		registry = NewRegistry()
 	}
 	if IsResourceEnvelope(data) {
 		return true

@@ -1,4 +1,4 @@
-package format
+package authoring
 
 import (
 	"fmt"
@@ -7,7 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Glacius-Labs/Markitect/internal/core"
 	"go.yaml.in/yaml/v3"
 )
 
@@ -120,14 +119,14 @@ func validateChecks(file string, n *yaml.Node) error {
 		if err := requireSequence(file, run, "check run"); err != nil {
 			return err
 		}
-		check := core.Check{Name: name.Value, Run: make([]string, 0, len(run.Content))}
+		check := Check{Name: name.Value, Run: make([]string, 0, len(run.Content))}
 		for _, arg := range run.Content {
 			if err := checkScalar(file, arg, "string"); err != nil {
 				return err
 			}
 			check.Run = append(check.Run, arg.Value)
 		}
-		if err := core.ValidateCheck(check); err != nil {
+		if err := ValidateCheck(check); err != nil {
 			return diagnostic(file, item.Line, "invalid project check: %v", err)
 		}
 		if seen[check.Name] {

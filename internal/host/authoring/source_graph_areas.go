@@ -1,4 +1,4 @@
-package core
+package authoring
 
 import (
 	"fmt"
@@ -45,7 +45,7 @@ func within(candidate, root string) bool {
 
 func (g *Graph) assignAreas() {
 	owners := []*Resource{g.Project}
-	for _, name := range sortedKeys(g.Packages) {
+	for _, name := range sortedResources(g.Packages) {
 		owners = append(owners, g.Packages[name])
 	}
 	for _, owner := range owners {
@@ -169,7 +169,7 @@ func (g *Graph) resolveAreaRule(resource *Resource, area Area, ref Ref) {
 	owner := g.scopeOwner(resource.Package)
 	g.addRelationship(Relationship{
 		From: resource.GraphKey(), To: target.GraphKey(), Relation: "area.rules",
-		Path: owner.Path, Line: owner.Line, Reference: ref, Area: area.Name,
+		Path: owner.Path, Line: owner.Line, Reference: ref,
 		Context: true, Invalidate: true,
 	})
 }

@@ -17,30 +17,33 @@ type Registry struct {
 }
 
 func NewRegistry() *Registry {
-	r := &Registry{domains: map[string]DomainDefinition{}, kinds: map[string]KindDefinition{}, active: map[string]string{}, relations: map[string]map[string]RelationDefinition{}}
-	for _, kind := range []string{"Project", "Package", "Domain"} {
-		r.kinds[kindKey(APIVersion, kind)] = KindDefinition{Properties: map[string]PropertyDefinition{}}
+	return &Registry{domains: map[string]DomainDefinition{}, kinds: map[string]KindDefinition{}, active: map[string]string{}, relations: map[string]map[string]RelationDefinition{}}
+}
+
+// RegisterKind adds a generic kind descriptor supplied by a frontend. It does
+// not create a Domain descriptor or attach source-authoring meaning.
+func (r *Registry) RegisterKind(apiVersion, kind string, definition KindDefinition) error {
+	if r == nil {
+		return fmt.Errorf("registry is nil")
 	}
-	// These are the explicit relations of the built-in AI domain. The legacy
-	// lowering view remains available to existing render and application code.
-	ai := DomainDefinition{APIVersion: APIVersion, Kinds: map[string]KindDefinition{}, Relations: map[string]RelationDefinition{
-		"rules":      {Field: "rules", SourceKinds: []string{"Rule", "Text", "Contract", "Workflow", "Skill", "Agent"}, TargetKinds: []string{"Rule"}, Context: true, Invalidate: true},
-		"uses":       {Field: "uses", SourceKinds: []string{"Workflow", "Skill", "Agent"}, TargetKinds: []string{"*"}, Context: true, Invalidate: true},
-		"needs":      {Field: "needs", SourceKinds: []string{"Workflow", "Skill", "Agent"}, TargetKinds: []string{"Contract"}, Context: true, Invalidate: true},
-		"implements": {Field: "implements", SourceKinds: []string{"Workflow", "Skill", "Agent"}, TargetKinds: []string{"Contract"}, Context: true, Invalidate: true},
-	}}
-	ref := PropertyDefinition{Type: "array", Items: &PropertyDefinition{Type: "ref", RefKind: "*"}}
-	for _, kind := range []string{"Text", "Rule", "Contract", "Workflow", "Skill", "Agent"} {
-		props := map[string]PropertyDefinition{}
-		for _, field := range []string{"rules", "uses", "needs", "implements"} {
-			props[field] = ref
+	if !validAPIVersion(apiVersion) || !validIdentifier(kind) {
+		return fmt.Errorf("kind identity %q/%q is invalid", apiVersion, kind)
+	}
+	group := apiGroup(apiVersion)
+	if prior := r.active[group]; prior != "" && prior != apiVersion {
+		return fmt.Errorf("domain group %q has conflicting active versions %q and %q", group, prior, apiVersion)
+	}
+	if _, exists := r.kinds[kindKey(apiVersion, kind)]; exists {
+		return fmt.Errorf("kind %s/%s is already registered", apiVersion, kind)
+	}
+	if len(definition.Properties) > 0 {
+		if err := validateKindDefinition(kind, definition); err != nil {
+			return err
 		}
-		ai.Kinds[kind] = KindDefinition{Properties: props}
 	}
-	if err := r.AddDomain(ai); err != nil {
-		panic("invalid built-in AI domain: " + err.Error())
-	}
-	return r
+	r.active[group] = apiVersion
+	r.kinds[kindKey(apiVersion, kind)] = cloneKind(definition)
+	return nil
 }
 
 func kindKey(apiVersion, kind string) string { return apiVersion + "\x00" + kind }
@@ -66,9 +69,6 @@ func (r *Registry) AddDomain(domain DomainDefinition) error {
 		definition := domain.Kinds[name]
 		if !validIdentifier(name) {
 			return fmt.Errorf("domain kind %q is not a valid identifier", name)
-		}
-		if domain.APIVersion != APIVersion && isBuiltinKind(name) {
-			return fmt.Errorf("kind %q is reserved by the built-in Markitect domains", name)
 		}
 		if _, exists := r.kinds[kindKey(domain.APIVersion, name)]; exists {
 			return fmt.Errorf("kind %s/%s is already registered", domain.APIVersion, name)
@@ -153,14 +153,6 @@ func (r *Registry) AddDomain(domain DomainDefinition) error {
 	return nil
 }
 
-func isBuiltinKind(kind string) bool {
-	switch kind {
-	case "Text", "Rule", "Contract", "Workflow", "Skill", "Agent", "Project", "Package", "Domain":
-		return true
-	}
-	return false
-}
-
 func (r *Registry) activeKindGroup(group, kind string) string {
 	for api, d := range r.domains {
 		if apiGroup(api) == group {
@@ -193,10 +185,7 @@ func (r *Registry) IsAPIVersionRegistered(apiVersion string) bool {
 	if r == nil {
 		return false
 	}
-	if _, ok := r.domains[apiVersion]; ok {
-		return true
-	}
-	return apiVersion == APIVersion
+	return r.active[apiGroup(apiVersion)] == apiVersion
 }
 func (r *Registry) Domain(apiVersion string) (DomainDefinition, bool) {
 	if r == nil {

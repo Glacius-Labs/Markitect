@@ -12,7 +12,7 @@ func (g *Graph) resolveDomainRelations() {
 	}
 	for _, key := range sortedKeys(g.Resources) {
 		source := g.Resources[key]
-		if source == nil || source.APIVersion == APIVersion {
+		if source == nil {
 			continue
 		}
 		domain, ok := g.Registry.Domain(source.APIVersion)

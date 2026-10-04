@@ -1,5 +1,5 @@
 // Package format reads and writes Markitect YAML resources.
-package format
+package authoring
 
 import (
 	"bytes"
@@ -35,14 +35,14 @@ func AllowedSpecFields(kind string) []string {
 }
 
 // Parse decodes exactly one strict Markitect YAML resource from data.
-func Parse(filePath string, data []byte) (*core.Resource, error) {
-	return ParseWithRegistry(filePath, data, core.NewRegistry())
+func Parse(filePath string, data []byte) (*Resource, error) {
+	return ParseWithRegistry(filePath, data, NewRegistry())
 }
 
 // ParseWithRegistry decodes one strict resource using the project's loaded domain vocabulary.
-func ParseWithRegistry(filePath string, data []byte, registry *core.Registry) (*core.Resource, error) {
+func ParseWithRegistry(filePath string, data []byte, registry *core.Registry) (*Resource, error) {
 	if registry == nil {
-		registry = core.NewRegistry()
+		registry = NewRegistry()
 	}
 	if len(data) > maxResourceSize {
 		return nil, diagnostic(filePath, 1, "resource exceeds the 2 MiB limit")
@@ -105,18 +105,21 @@ func ParseWithRegistry(filePath string, data []byte, registry *core.Registry) (*
 	} else if err := validateGenericSpec(filePath, child(root, "spec"), registry, apiVersion, kind); err != nil {
 		return nil, err
 	}
-	var r core.Resource
-	if err := child(root, "metadata").Decode(&r.Metadata); err != nil {
+	var r Resource
+	if err := child(root, "metadata").Decode(&r.Core.Metadata); err != nil {
 		return nil, diagnostic(filePath, child(root, "metadata").Line, "invalid metadata: %v", err)
 	}
-	r.APIVersion = apiVersion
-	r.Kind = kind
+	r.Core.APIVersion = apiVersion
+	r.Core.Kind = kind
 	var spec map[string]any
 	if err := child(root, "spec").Decode(&spec); err != nil {
 		return nil, diagnostic(filePath, child(root, "spec").Line, "invalid spec: %v", err)
 	}
-	if err := r.SetData(spec); err != nil {
-		return nil, diagnostic(filePath, child(root, "spec").Line, "invalid spec: %v", err)
+	r.Core.Data = spec
+	if apiVersion == core.APIVersion {
+		if err := child(root, "spec").Decode(&r.Spec); err != nil {
+			return nil, diagnostic(filePath, child(root, "spec").Line, "invalid spec: %v", err)
+		}
 	}
 	if apiVersion != core.APIVersion {
 		definition, _ := registry.Lookup(apiVersion, kind)
@@ -136,8 +139,8 @@ func ParseWithRegistry(filePath string, data []byte, registry *core.Registry) (*
 			r.Spec.Description = description
 		}
 	}
-	r.Path = filePath
-	r.Line = root.Line
+	r.Core.Path = filePath
+	r.Core.Line = root.Line
 	return &r, nil
 }
 
