@@ -746,7 +746,11 @@ func relationLinks(r core.ModelResource, output string, m core.SemanticModel, n 
 	for _, x := range m.Resources {
 		byKey[x.Identity.Key] = x
 	}
-	var out []string
+	type dependency struct{ label, line string }
+	var builtIn []dependency
+	var generic []string
+	seen := map[string]bool{}
+	builtInRefs := r.Identity.APIVersion == "" || r.Identity.APIVersion == core.APIVersion
 	for _, rel := range m.Relationships {
 		if rel.From != r.Identity.Key {
 			continue
@@ -757,6 +761,12 @@ func relationLinks(r core.ModelResource, output string, m core.SemanticModel, n 
 		d, ok := byKey[rel.To]
 		if !ok {
 			continue
+		}
+		if builtInRefs {
+			if seen[d.Identity.Key] {
+				continue
+			}
+			seen[d.Identity.Key] = true
 		}
 		label := rel.Type + " " + d.Identity.Kind + ": " + d.Identity.Name
 		if r.Identity.APIVersion == "" || r.Identity.APIVersion == core.APIVersion {
@@ -769,10 +779,10 @@ func relationLinks(r core.ModelResource, output string, m core.SemanticModel, n 
 					label += " (version " + version + ")"
 				}
 				instruction := "Select this exported dependency with `markitect context --repo . --package " + d.Identity.Package + " --namespace " + d.Identity.Namespace + " --kind " + d.Identity.Kind + " --name " + d.Identity.Name + "`."
-				out = append(out, "- "+label+". "+instruction)
+				builtIn = append(builtIn, dependency{label: label, line: "- " + label + ". " + instruction})
 				continue
 			}
-			out = append(out, "- `"+rel.Type+"` → "+label+" (package `"+d.Identity.Package+"`)")
+			generic = append(generic, "- `"+rel.Type+"` → "+label+" (package `"+d.Identity.Package+"`)")
 			continue
 		}
 		target := d.Source.Path
@@ -780,13 +790,26 @@ func relationLinks(r core.ModelResource, output string, m core.SemanticModel, n 
 			target = view
 		}
 		if r.Identity.APIVersion == "" || r.Identity.APIVersion == core.APIVersion {
-			out = append(out, "- ["+label+"]("+relative(output, target)+")")
+			builtIn = append(builtIn, dependency{label: label, line: "- [" + label + "](" + relative(output, target) + ")"})
 		} else {
-			out = append(out, "- [`"+rel.Type+"` → "+label+"]("+relative(output, target)+")")
+			generic = append(generic, "- [`"+rel.Type+"` → "+label+"]("+relative(output, target)+")")
 		}
 	}
-	sort.Strings(out)
-	return unique(out)
+	if builtInRefs {
+		sort.Slice(builtIn, func(i, j int) bool {
+			if builtIn[i].label != builtIn[j].label {
+				return builtIn[i].label < builtIn[j].label
+			}
+			return builtIn[i].line < builtIn[j].line
+		})
+		out := make([]string, 0, len(builtIn))
+		for _, item := range builtIn {
+			out = append(out, item.line)
+		}
+		return out
+	}
+	sort.Strings(generic)
+	return unique(generic)
 }
 func unique(v []string) []string {
 	if len(v) < 2 {
