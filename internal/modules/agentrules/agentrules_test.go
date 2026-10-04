@@ -88,12 +88,12 @@ func TestGenerateIsDeterministicAndProviderAdaptersRemainIndependent(t *testing.
 
 func TestDependenciesComeFromResolvedCoreRelationshipsAndPackagePins(t *testing.T) {
 	skill := resource("Skill", "skills/review.yaml", "review", map[string]any{"description": "Review"})
-	packageRule := resource("Rule", "packages/guidance/rules/security.yaml", "security", map[string]any{})
-	packageRule.Identity.Package = "guidance"
+	packageSkill := resource("Skill", "packages/guidance/skills/security.yaml", "security", map[string]any{})
+	packageSkill.Identity.Package = "guidance"
 	model := core.SemanticModel{
-		Resources: []core.ModelResource{skill, packageRule},
+		Resources: []core.ModelResource{skill, packageSkill},
 		Relationships: []core.ModelRelationship{{
-			From: skill.Identity.Key, To: packageRule.Identity.Key, Type: "rules",
+			From: skill.Identity.Key, To: packageSkill.Identity.Key, Type: "uses",
 		}},
 	}
 	config := Config{Targets: []string{"codex"}, PackageVersions: map[string]string{"guidance": "2.4.1"}}
@@ -101,8 +101,11 @@ func TestDependenciesComeFromResolvedCoreRelationshipsAndPackagePins(t *testing.
 	if err != nil {
 		t.Fatal(err)
 	}
+	if _, ok := outputs[".agents/skills/security/SKILL.md"]; ok {
+		t.Fatal("imported Skill received a local provider entrypoint")
+	}
 	body := string(outputs[".agents/skills/review/SKILL.md"])
-	for _, value := range []string{"Package dependency: " + packageRule.Identity.Key + " (version 2.4.1)", "--package guidance", "--kind Rule", "--name security"} {
+	for _, value := range []string{"Package dependency: " + packageSkill.Identity.Key + " (version 2.4.1)", "--package guidance", "--kind Skill", "--name security"} {
 		if !strings.Contains(body, value) {
 			t.Errorf("dependency projection lacks %q: %s", value, body)
 		}
