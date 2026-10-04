@@ -15,72 +15,30 @@ type outputState struct {
 	canonical map[string]string
 }
 
-func generate(model core.SemanticModel, config Config, files map[string][]byte) (map[string][]byte, map[string][]string, []core.Diagnostic, error) {
-	state := &outputState{outputs: map[string][]byte{}, owners: map[string]map[string]bool{}, canonical: map[string]string{}}
-	resources := append([]core.ModelResource(nil), model.Resources...)
-	sort.Slice(resources, func(i, j int) bool {
-		if resources[i].Source.Path != resources[j].Source.Path {
-			return resources[i].Source.Path < resources[j].Source.Path
-		}
-		return resources[i].Identity.Key < resources[j].Identity.Key
-	})
-	byKey := make(map[string]core.ModelResource, len(resources))
-	local := make([]core.ModelResource, 0, len(resources))
-	var diagnostics []core.Diagnostic
-	for _, resource := range resources {
-		if resource.Identity.Key == "" {
-			diagnostics = append(diagnostics, diagnostic("agent-rules.identity", resource.Source.Path, resource.Source.Line, "normalized resource has no identity key"))
-			continue
-		}
-		if _, exists := byKey[resource.Identity.Key]; exists {
-			diagnostics = append(diagnostics, diagnostic("agent-rules.identity", resource.Source.Path, resource.Source.Line, fmt.Sprintf("duplicate normalized resource key %q", resource.Identity.Key)))
-			continue
-		}
-		byKey[resource.Identity.Key] = resource
-		if resource.Identity.Package != "" {
-			continue
-		}
-		if err := validRepoPath(resource.Source.Path); err != nil {
-			return nil, nil, nil, fmt.Errorf("resource %s source path: %w", resource.Identity.Key, err)
-		}
-		folded := foldPath(resource.Source.Path)
-		if prior, exists := state.canonical[folded]; exists {
-			return nil, nil, nil, fmt.Errorf("source path collision: %q and %q", prior, resource.Source.Path)
-		}
-		state.canonical[folded] = resource.Source.Path
-		local = append(local, resource)
+func generate(model core.SemanticModel, config Config, files map[string][]byte) (map[string][]byte, map[string][]string, error) {
+	plan, err := buildPlan(model, config)
+	if err != nil {
+		return nil, nil, err
 	}
-	if config.ProjectPath != "" {
-		if err := validRepoPath(config.ProjectPath); err != nil {
-			return nil, nil, nil, fmt.Errorf("Project source path: %w", err)
-		}
-		folded := foldPath(config.ProjectPath)
-		if prior, exists := state.canonical[folded]; exists && prior != config.ProjectPath {
-			return nil, nil, nil, fmt.Errorf("source path collision: %q and %q", prior, config.ProjectPath)
-		}
-		state.canonical[folded] = config.ProjectPath
-	}
-
-	for _, target := range config.Targets {
-		if target != "codex" && target != "claude" && target != "markdown" {
-			diagnostics = append(diagnostics, diagnostic("project.target", config.ProjectPath, 0, fmt.Sprintf("unsupported target %q", target)))
-		}
-	}
-	diagnostics = append(diagnostics, validateNormalizedConfig(config, local, byKey)...)
-
+	model, config = plan.model, plan.config
+	byKey, local := plan.byKey, plan.local
+	state := &outputState{outputs: map[string][]byte{}, owners: map[string]map[string]bool{}, canonical: plan.canonical}
 	for _, resource := range local {
+		if !isMarkitectAIResource(resource) {
+			continue
+		}
 		switch resource.Identity.Kind {
 		case "Skill":
 			if activeTarget(config, "codex") {
 				name := ".agents/skills/" + resource.Identity.Name + "/SKILL.md"
 				if err := state.addOwned(name, renderSkill(resource, name, model, config, byKey), resource.Identity.Key); err != nil {
-					return nil, nil, nil, err
+					return nil, nil, err
 				}
 			}
 			if activeTarget(config, "claude") {
 				name := ".claude/skills/" + resource.Identity.Name + "/SKILL.md"
 				if err := state.addOwned(name, renderSkill(resource, name, model, config, byKey), resource.Identity.Key); err != nil {
-					return nil, nil, nil, err
+					return nil, nil, err
 				}
 			}
 		case "Agent":
@@ -89,20 +47,20 @@ func generate(model core.SemanticModel, config Config, files map[string][]byte) 
 				name := ".codex/agents/" + resource.Identity.Name + ".toml"
 				content, err := renderCodexAgent(resource, name, config, settings.Codex, byKey, files)
 				if err != nil {
-					return nil, nil, nil, err
+					return nil, nil, err
 				}
 				if err := state.addOwned(name, content, resource.Identity.Key); err != nil {
-					return nil, nil, nil, err
+					return nil, nil, err
 				}
 			}
 			if activeTarget(config, "claude") {
 				name := ".claude/agents/" + resource.Identity.Name + ".md"
 				content, err := renderClaudeAgent(resource, name, config, settings.Claude, model, byKey, files)
 				if err != nil {
-					return nil, nil, nil, err
+					return nil, nil, err
 				}
 				if err := state.addOwned(name, content, resource.Identity.Key); err != nil {
-					return nil, nil, nil, err
+					return nil, nil, err
 				}
 			}
 		}
@@ -110,15 +68,15 @@ func generate(model core.SemanticModel, config Config, files map[string][]byte) 
 
 	if activeTarget(config, "claude") {
 		if err := renderRuleAdapters(state, config, byKey); err != nil {
-			return nil, nil, nil, err
+			return nil, nil, err
 		}
 		if err := renderClaudeRuleSources(state, config); err != nil {
-			return nil, nil, nil, err
+			return nil, nil, err
 		}
 	}
 	if hasProviderTarget(config) && config.ProviderAdapters.RoleRegister != "" {
 		if err := validRepoPath(config.ProviderAdapters.RoleRegister); err != nil {
-			return nil, nil, nil, fmt.Errorf("roleRegister: %w", err)
+			return nil, nil, fmt.Errorf("roleRegister: %w", err)
 		}
 		if config.ProjectKey != "" && config.ProjectPath != "" {
 			for _, provider := range []struct{ target, path string }{
@@ -129,17 +87,19 @@ func generate(model core.SemanticModel, config Config, files map[string][]byte) 
 				}
 				body := "<!-- " + Marker + "; source: markitect.yaml -->\n# Repository role assignments\n\nThe canonical person-to-scope assignments are maintained in [the shared role register](" + relative(provider.path, config.ProviderAdapters.RoleRegister) + ").\n"
 				if err := state.addOwned(provider.path, []byte(body), config.ProjectKey); err != nil {
-					return nil, nil, nil, err
+					return nil, nil, err
 				}
 			}
 		}
 	}
 	if err := checkOutputCollisions(state.outputs, state.canonical); err != nil {
-		return nil, nil, nil, err
+		return nil, nil, err
 	}
-	diagnostics = append(diagnostics, validateAdapters(config, files, state.outputs)...)
-	sortDiagnostics(diagnostics)
-	return state.outputs, finishOwners(state.owners), diagnostics, nil
+	owners := finishOwners(state.owners)
+	if !equalOwners(plan.paths, owners) {
+		return nil, nil, fmt.Errorf("generated outputs do not match reserved Agent Rules paths")
+	}
+	return state.outputs, owners, nil
 }
 
 func (state *outputState) addOwned(name string, data []byte, owner string) error {

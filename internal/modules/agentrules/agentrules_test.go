@@ -109,6 +109,103 @@ func TestDependenciesComeFromResolvedCoreRelationshipsAndPackagePins(t *testing.
 	}
 }
 
+func TestCustomDomainKindsNeverAcquireAgentRulesSemantics(t *testing.T) {
+	project := resource("Project", "markitect.yaml", "project", map[string]any{})
+	project.Identity.APIVersion = core.APIVersion
+	agent := resource("Agent", "docs/agents/reviewer.yaml", "reviewer", map[string]any{
+		"description": "Review",
+		"text":        "See [the module](../architecture/module.yaml).",
+	})
+	builtinRule := resource("Rule", "docs/rules/security.yaml", "security", map[string]any{})
+	customAgent := resource("Agent", "docs/custom/agent.yaml", "reviewer", map[string]any{"description": "Domain Agent"})
+	customSkill := resource("Skill", "docs/custom/skill.yaml", "helper", map[string]any{"description": "Domain Skill"})
+	customRule := resource("Rule", "docs/custom/rule.yaml", "custom-rule", map[string]any{})
+	customModule := resource("Module", "docs/architecture/module.yaml", "module", map[string]any{})
+	for _, resource := range []*core.ModelResource{&customAgent, &customSkill, &customRule, &customModule} {
+		resource.Identity.APIVersion = "architecture.example.org/v1alpha1"
+		resource.Identity.Key = resource.Identity.APIVersion + "/" + resource.Identity.Kind + "/" + resource.Identity.Name
+	}
+	model := core.SemanticModel{
+		Resources:     []core.ModelResource{project, agent, builtinRule, customAgent, customSkill, customRule, customModule},
+		Relationships: []core.ModelRelationship{{From: agent.Identity.Key, To: customModule.Identity.Key, Type: "uses"}},
+	}
+	config := Config{
+		Targets:          []string{"codex", "claude"},
+		ProjectKey:       project.Identity.Key,
+		ProjectPath:      project.Source.Path,
+		RuleAdapters:     []RuleAdapter{{Name: "review", RuleKeys: []string{builtinRule.Identity.Key}}},
+		AgentSettings:    map[string]AgentSettings{agent.Identity.Key: {Codex: &CodexSettings{Model: "c", Effort: "high", Sandbox: "workspace"}, Claude: &ClaudeSettings{Model: "a", Effort: "medium", PermissionMode: "plan"}}},
+		ProviderAdapters: ProviderAdapters{StrictInventory: true, InlineAgentText: true},
+	}
+	paths, err := OutputPaths(model, config)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, path := range []string{".codex/agents/reviewer.toml", ".claude/agents/reviewer.md", ".claude/rules/review.md"} {
+		if _, ok := paths[path]; !ok {
+			t.Errorf("missing built-in output path %s in %v", path, paths)
+		}
+	}
+	for _, path := range []string{".agents/skills/helper/SKILL.md", ".claude/skills/helper/SKILL.md"} {
+		if _, ok := paths[path]; ok {
+			t.Errorf("custom vocabulary generated provider path %s", path)
+		}
+	}
+
+	findings := Validate(model, config, nil)
+	for _, finding := range findings {
+		if finding.Code == "provider.name" || finding.Code == "provider-adapter.unmapped-rule" || finding.Code == "provider-adapter.settings" {
+			t.Errorf("custom vocabulary was treated as Agent Rules provider content: %+v", finding)
+		}
+	}
+
+	outputs, generatedOwners, err := Generate(model, config, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, want := generatedOwners[".claude/agents/reviewer.md"], []string{agent.Identity.Key}; !reflect.DeepEqual(got, want) {
+		t.Fatalf("custom Agent identity acquired provider ownership: got %v want %v", got, want)
+	}
+	claudeAgent := string(outputs[".claude/agents/reviewer.md"])
+	for _, link := range []string{"[the module](../../docs/architecture/module.yaml)", "[Module: module](../../docs/architecture/module.yaml)"} {
+		if !strings.Contains(claudeAgent, link) {
+			t.Errorf("explicit custom-domain navigation was lost (%q): %s", link, claudeAgent)
+		}
+	}
+
+	config.RuleAdapters = []RuleAdapter{{Name: "custom", RuleKeys: []string{customRule.Identity.Key}}}
+	if _, err := OutputPaths(model, config); err == nil || !strings.Contains(err.Error(), "Markitect AI Rule") {
+		t.Fatalf("custom Rule was accepted as provider adapter target: %v", err)
+	}
+}
+
+func TestOutputPathsDoesNotRequireArtifactBytesOrStrictEvidence(t *testing.T) {
+	project := resource("Project", "markitect.yaml", "project", map[string]any{})
+	agent := resource("Agent", "agents/reviewer.yaml", "reviewer", map[string]any{"description": "Review"})
+	model := core.SemanticModel{Resources: []core.ModelResource{project, agent}}
+	config := Config{
+		Targets:          []string{"claude"},
+		ProjectKey:       project.Identity.Key,
+		ProjectPath:      project.Source.Path,
+		ProviderAdapters: ProviderAdapters{StrictInventory: true, RoleRegister: "docs/roles.md"},
+	}
+	paths, err := OutputPaths(model, config)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, path := range []string{".claude/agents/reviewer.md", ".claude/roles.md"} {
+		if _, ok := paths[path]; !ok {
+			t.Errorf("reserved output %s missing from %v", path, paths)
+		}
+	}
+	if findings := Validate(model, config, nil); !hasDiagnostic(findings, "provider-adapter.source") || !hasDiagnostic(findings, "provider-adapter.settings") {
+		t.Fatalf("artifact/evidence validation did not remain separate from planning: %+v", findings)
+	}
+	if outputs, _, err := Generate(model, config, nil); err != nil || len(outputs) != len(paths) {
+		t.Fatalf("Generate promoted missing adapter bytes into projection failure: outputs=%v err=%v", outputs, err)
+	}
+}
+
 func TestValidateChecksStrictMappingsSettingsAndInventory(t *testing.T) {
 	project := resource("Project", "markitect.yaml", "project", map[string]any{})
 	agent := resource("Agent", "agents/reviewer.yaml", "reviewer", map[string]any{"description": "Review", "text": "Review."})
