@@ -11,6 +11,9 @@ import (
 func TestModularServiceOwnershipTableContract(t *testing.T) {
 	pwsh, err := exec.LookPath("pwsh")
 	if err != nil {
+		if os.Getenv("GITHUB_ACTIONS") == "true" {
+			t.Fatal("CI must execute the PowerShell oracle contract; pwsh is unavailable")
+		}
 		t.Skip("pwsh is not installed")
 	}
 
