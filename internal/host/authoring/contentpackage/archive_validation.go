@@ -7,18 +7,18 @@ import (
 	"unicode/utf8"
 
 	"github.com/Glacius-Labs/Markitect/internal/core"
-	"github.com/Glacius-Labs/Markitect/internal/format"
+	"github.com/Glacius-Labs/Markitect/internal/host/authoring"
 )
 
-func parseDomainDefinitions(manifest *core.Resource, files map[string][]byte) (*core.Registry, map[string]core.DomainDefinition, error) {
-	registry := core.NewRegistry()
+func parseDomainDefinitions(manifest *authoring.Resource, files map[string][]byte) (*core.Registry, map[string]core.DomainDefinition, error) {
+	registry := authoring.NewRegistry()
 	definitions := make(map[string]core.DomainDefinition, len(manifest.Spec.Domains))
 	for _, domainPath := range manifest.Spec.Domains {
 		data, exists := files[domainPath]
 		if !exists {
 			return nil, nil, fmt.Errorf("declared package domain %q is missing", domainPath)
 		}
-		definition, err := format.ParseDomain(domainPath, data)
+		definition, err := authoring.ParseDomain(domainPath, data)
 		if err != nil {
 			return nil, nil, fmt.Errorf("parse package domain %q: %w", domainPath, err)
 		}
@@ -30,7 +30,7 @@ func parseDomainDefinitions(manifest *core.Resource, files map[string][]byte) (*
 	return registry, definitions, nil
 }
 
-func validateManifest(manifest *core.Resource) error {
+func validateManifest(manifest *authoring.Resource) error {
 	if manifest.Spec.Version == "" {
 		return fmt.Errorf("package manifest requires spec.version")
 	}
@@ -97,7 +97,7 @@ func inAnyAreaFolded(filePath string, roots []string) bool {
 	return false
 }
 
-func declaredInputs(resources []*core.Resource) map[string]bool {
+func declaredInputs(resources []*authoring.Resource) map[string]bool {
 	inputs := make(map[string]bool)
 	for _, resource := range resources {
 		for _, filePath := range resource.Spec.Files {
@@ -107,7 +107,7 @@ func declaredInputs(resources []*core.Resource) map[string]bool {
 	return inputs
 }
 
-func hasPackageRefs(resource *core.Resource) bool {
+func hasPackageRefs(resource *authoring.Resource) bool {
 	check := func(ref core.Ref) bool { return ref.Package != "" }
 	for _, refs := range [][]core.Ref{resource.Spec.Rules, resource.Spec.Uses, resource.Spec.Needs, resource.Spec.Implements} {
 		for _, ref := range refs {

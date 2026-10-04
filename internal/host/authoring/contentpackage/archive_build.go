@@ -10,8 +10,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/Glacius-Labs/Markitect/internal/core"
-	"github.com/Glacius-Labs/Markitect/internal/format"
+	"github.com/Glacius-Labs/Markitect/internal/host/authoring"
 )
 
 // Build selects the closed package file set from a source snapshot and writes
@@ -21,7 +20,7 @@ func Build(files map[string][]byte) ([]byte, error) {
 	if !ok {
 		return nil, fmt.Errorf("source files are missing %s", ManifestName)
 	}
-	manifest, err := format.Parse(ManifestName, manifestData)
+	manifest, err := authoring.Parse(ManifestName, manifestData)
 	if err != nil {
 		return nil, fmt.Errorf("parse package manifest: %w", err)
 	}
@@ -48,7 +47,7 @@ func Build(files map[string][]byte) ([]byte, error) {
 		selected[domainPath] = data
 	}
 	candidates := make(map[string][]byte)
-	resources := make([]*core.Resource, 0)
+	resources := make([]*authoring.Resource, 0)
 	parseErrors := make(map[string]error)
 	for _, filePath := range sortedFilePaths(files) {
 		data := files[filePath]
@@ -59,7 +58,7 @@ func Build(files map[string][]byte) ([]byte, error) {
 			continue
 		}
 		if isYAML(filePath) && inAnyArea(filePath, areaPaths) {
-			if resource, err := format.ParseWithRegistry(filePath, data, registry); err == nil {
+			if resource, err := authoring.ParseWithRegistry(filePath, data, registry); err == nil {
 				selected[filePath] = data
 				resources = append(resources, resource)
 			} else {
@@ -71,7 +70,7 @@ func Build(files map[string][]byte) ([]byte, error) {
 	ordinary := declaredInputs(resources)
 	for _, filePath := range sortedFilePaths(candidates) {
 		data := candidates[filePath]
-		if ordinary[filePath] && isValidTextInput(data) && !format.IsResourceEnvelopeWithRegistry(data, registry) {
+		if ordinary[filePath] && isValidTextInput(data) && !authoring.IsResourceEnvelopeWithRegistry(data, registry) {
 			selected[filePath] = data
 		} else {
 			return nil, fmt.Errorf("parse package resource %q: %w", filePath, parseErrors[filePath])

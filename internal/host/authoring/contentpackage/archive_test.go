@@ -8,7 +8,7 @@ import (
 	"io/fs"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/internal/core"
+	"github.com/Glacius-Labs/Markitect/internal/host/authoring"
 )
 
 func TestBuildReadDeterministicRoundTrip(t *testing.T) {
@@ -363,6 +363,6 @@ func makeZIP(t *testing.T, members []zipMember) []byte {
 	return data.Bytes()
 }
 
-func corePin(name, version, digest string) core.PackagePin {
-	return core.PackagePin{Name: name, Version: version, Source: "test", Archive: "packages/standards.zip", SHA256: digest}
+func corePin(name, version, digest string) authoring.PackagePin {
+	return authoring.PackagePin{Name: name, Version: version, Source: "test", Archive: "packages/standards.zip", SHA256: digest}
 }
