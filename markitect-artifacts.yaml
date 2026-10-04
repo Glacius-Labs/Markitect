@@ -1,0 +1,30 @@
+apiVersion: markitect.example.org/artifact-coverage/v1alpha1
+kind: ArtifactCoverage
+spec:
+  roots:
+    - .markitect
+    - internal/authoring/resources
+    - .agents
+    - .claude
+    - docs/markitect
+    - cmd/markitect-check-artifacts
+    - internal/artifactcoverage
+    - AGENTS.md
+    - markitect.yaml
+    - markitect-artifacts.yaml
+    - docs/markitect-first.md
+  tooling:
+    - path: AGENTS.md
+      owner: repository-agent-navigation
+    - path: markitect-artifacts.yaml
+      owner: managed-artifact-accounting-configuration
+    - path: docs/markitect-first.md
+      owner: markitect-first-workflow-navigation
+    - path: cmd/markitect-check-artifacts/main.go
+      owner: managed-artifact-check-command
+    - path: cmd/markitect-check-artifacts/main_test.go
+      owner: managed-artifact-check-command-tests
+    - path: internal/artifactcoverage/coverage.go
+      owner: managed-artifact-accounting-implementation
+    - path: internal/artifactcoverage/coverage_test.go
+      owner: managed-artifact-accounting-tests

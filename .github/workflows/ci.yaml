@@ -52,6 +52,24 @@ jobs:
       - name: Build
         run: go build ./...
 
+      - name: Verify modules
+        run: go mod verify
+
+      - name: Check Markitect-first dogfood project
+        run: go run ./cmd/markitect check --repo . --revision ${{ github.sha }}
+
+      - name: Check dogfood canonical formatting
+        run: go run ./cmd/markitect format --repo .
+
+      - name: Check managed artifact accounting
+        run: go run ./cmd/markitect-check-artifacts --repo . --config markitect-artifacts.yaml
+
+      - name: Compile fixed dogfood engineering context
+        run: go run ./cmd/markitect context --repo . --revision ${{ github.sha }} --namespace development --kind Skill --name engineering-change
+
+      - name: Verify fixed dogfood engineering state
+        run: go run ./cmd/markitect verify --repo . --revision ${{ github.sha }}
+
       - name: Check generated schemas
         run: go run ./cmd/markitect schema --repo .
 
@@ -270,6 +288,10 @@ jobs:
           unzip -q "$MARKITECT_PACKAGE_DIR/.markitect/tool/source.zip" -d "$adoption_source"
           (cd "$adoption_source" && go build -trimpath -buildvcs=false -o "$adoption_binary" ./cmd/markitect)
           MARKITECT_ADOPTION_BINARY="$adoption_binary" go test ./examples -run '^TestSelectiveAdoptionCLI$' -count=1
+          MARKITECT_POLICY_ANALYSIS_BINARY="$adoption_binary" go test ./cmd/markitect -run '^(TestPolicyFailureAnalysisCLIIsExplicitAndKeepsAcceptanceStrict|TestPolicyFailingWorkingTreeRejectsReconciliationAndWritersWithoutMutation|TestPolicyFailureAnalysisBlocksStructuralDiagnostics)$' -count=1
+          artifact_binary="$RUNNER_TEMP/markitect-check-artifacts-$GITHUB_SHA"
+          (cd "$adoption_source" && go build -trimpath -buildvcs=false -o "$artifact_binary" ./cmd/markitect-check-artifacts)
+          "$artifact_binary" --repo "$GITHUB_WORKSPACE" --config markitect-artifacts.yaml
 
       - name: Replay selective adoption with packaged CLI (Windows)
         if: runner.os == 'Windows'
@@ -286,6 +308,17 @@ jobs:
           $env:MARKITECT_ADOPTION_BINARY = $adoptionBinary
           go test ./examples -run '^TestSelectiveAdoptionCLI$' -count=1
           if ($LASTEXITCODE -ne 0) { throw 'Packaged selective adoption replay failed' }
+          $env:MARKITECT_POLICY_ANALYSIS_BINARY = $adoptionBinary
+          go test ./cmd/markitect -run '^(TestPolicyFailureAnalysisCLIIsExplicitAndKeepsAcceptanceStrict|TestPolicyFailingWorkingTreeRejectsReconciliationAndWritersWithoutMutation|TestPolicyFailureAnalysisBlocksStructuralDiagnostics)$' -count=1
+          if ($LASTEXITCODE -ne 0) { throw 'Packaged policy failure analysis replay failed' }
+          $artifactBinary = Join-Path $env:RUNNER_TEMP "markitect-check-artifacts-$env:GITHUB_SHA.exe"
+          Push-Location $adoptionSource
+          try {
+            go build -trimpath -buildvcs=false -o $artifactBinary ./cmd/markitect-check-artifacts
+            if ($LASTEXITCODE -ne 0) { throw 'Packaged artifact checker build failed' }
+          } finally { Pop-Location }
+          & $artifactBinary --repo $env:GITHUB_WORKSPACE --config markitect-artifacts.yaml
+          if ($LASTEXITCODE -ne 0) { throw 'Packaged artifact checker dogfood failed' }
 
       - name: Test standalone bootstrap and packaged commands (Windows)
         if: runner.os == 'Windows'

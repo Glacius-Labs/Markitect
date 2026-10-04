@@ -1,30 +1,34 @@
 apiVersion: markitect.example.org/v1alpha1
 kind: Skill
 metadata:
-  name: authoring
-  namespace: core
+    name: authoring
+    namespace: core
 spec:
-  description: Author and review Markitect resources using their explicit ownership and dependency model.
-  uses:
-    - kind: Workflow
-      name: authoring-change
-    - kind: Workflow
-      name: engineering-discovery
-    - kind: Workflow
-      name: constitution-change
-    - kind: Text
-      name: resource-modelling
-  text: |
-    Help an agent change Markitect's canonical engineering mechanisms.
+    text: |
+        Help an agent change Markitect's canonical engineering mechanisms.
 
-    Begin with structural discovery: `find --query TEXT`, then inspect relevant candidates with `explain --kind KIND --name NAME --namespace NAMESPACE`. These queries expose structure, not semantic relevance. Select the owner using project area paths, existing responsibility and explicit dependencies. If the intent does not identify one defensible owner, ask before editing.
+        For ordinary implementation and maintenance tasks in a Markitect-adopting Project, follow the provider-neutral Markitect-first Change workflow before changing implementation artifacts. It separates intent changes from implementation-only work and binds checks, context, impact and verification to immutable snapshots.
 
-    Edit the canonical YAML resource in place where possible. Declare each versioned Domain definition in `spec.domains` before its resource instances. Select local Domain files by exact snapshot-relative path; select package definitions only through an exact direct package pin and a member declared in the package's `spec.domains`. Domain definitions and mappings are model inputs and belong in context and impact. For a new Project, use `.markitect/areas/<responsibility>/` as the recommended resource root and organize by responsibility before kind. Keep existing Projects at their configured Area paths. The API version and YAML `kind` identify a resource's domain-qualified type. The YAML `kind` field is authoritative; filenames never infer its type. Configure Areas to cover canonical resources and exact file inputs. Add only typed references supported by the loaded Domain; never infer relations from Markdown links or directory structure. Custom Domain references stay within their API version; bundled AI `uses` may target a registered custom Domain only with its qualified API version. Follow the authoring Workflow for formatting, selected projections, checking, fixed snapshots, impact, context and semantic review.
+        Begin with structural discovery: `find --query TEXT`, then inspect relevant candidates with `explain --kind KIND --name NAME --namespace NAMESPACE`. These queries expose structure, not semantic relevance. Select the owner using project area paths, existing responsibility and explicit dependencies. If the intent does not identify one defensible owner, ask before editing.
 
-    For ordinary Markdown, follow the configured documentation root and local README routers, compare configured Areas and existing owner contracts, and search before creating a file. Prefer updating the current canonical page. README routers are human-owned navigation; their links are not dependencies or proof that a page is semantically correct.
+        Edit the canonical YAML resource in place where possible. Declare each versioned Domain definition in `spec.domains` before its resource instances. Select local Domain files by exact snapshot-relative path; select package definitions only through an exact direct package pin and a member declared in the package's `spec.domains`. Domain definitions and mappings are model inputs and belong in context and impact. For a new Project, use `.markitect/areas/<responsibility>/` as the recommended resource root and organize by responsibility before kind. Keep existing Projects at their configured Area paths. The API version and YAML `kind` identify a resource's domain-qualified type. The YAML `kind` field is authoritative; filenames never infer its type. Configure Areas to cover canonical resources and exact file inputs. Add only typed references supported by the loaded Domain; never infer relations from Markdown links or directory structure. Custom Domain references stay within their API version; bundled AI `uses` may target a registered custom Domain only with its qualified API version. Follow the authoring Workflow for formatting, selected projections, checking, fixed snapshots, impact, context and semantic review.
 
-    When asked to discover an engineering style from existing work, use the optional provider-neutral Engineering Discovery workflow. Treat repositories and decisions as explicitly selected evidence, never as automatic policy. Keep its candidate dossier outside configured Areas and canonical packages; adoption requires a separate human decision and normal Project change. For an approved constitution change, follow the Constitution Change workflow. Neither workflow mines repositories implicitly, calls a model from Markitect, nor changes canonical resources by itself.
+        For ordinary Markdown, follow the configured documentation root and local README routers, compare configured Areas and existing owner contracts, and search before creating a file. Prefer updating the current canonical page. README routers are human-owned navigation; their links are not dependencies or proof that a page is semantically correct.
 
-    Keep dependencies local when the Project owns their meaning and change lifecycle. Refer to a content package only when its owner intentionally publishes a reusable Domain or resource for independent consumers. Similar wording or a shared keyword is not enough reason to create or consume a package. Select only declared exports through a direct exact Project pin. A package's Domain does not activate itself: list each selected `package:PIN/DOMAIN-MEMBER` in Project `spec.domains`; imported Domain constraints then participate explicitly in the compiled Project. `.markitect/packages/` is a recommended committed archive location; other committed snapshot-included paths remain valid. Keep immutable input evidence separate from generated adapter evidence and build/cache files.
+        When asked to discover an engineering style from existing work, use the optional provider-neutral Engineering Discovery workflow. Treat repositories and decisions as explicitly selected evidence, never as automatic policy. Keep its candidate dossier outside configured Areas and canonical packages; adoption requires a separate human decision and normal Project change. For an approved constitution change, follow the Constitution Change workflow. Neither workflow mines repositories implicitly, calls a model from Markitect, nor changes canonical resources by itself.
 
-    Report machine-checked structure separately from semantic confidence and human decisions. Do not claim customer compatibility, approval or human acceptance from a successful Markitect command.
+        Keep dependencies local when the Project owns their meaning and change lifecycle. Refer to a content package only when its owner intentionally publishes a reusable Domain or resource for independent consumers. Similar wording or a shared keyword is not enough reason to create or consume a package. Select only declared exports through a direct exact Project pin. A package's Domain does not activate itself: list each selected `package:PIN/DOMAIN-MEMBER` in Project `spec.domains`; imported Domain constraints then participate explicitly in the compiled Project. `.markitect/packages/` is a recommended committed archive location; other committed snapshot-included paths remain valid. Keep immutable input evidence separate from generated adapter evidence and build/cache files.
+
+        Report machine-checked structure separately from semantic confidence and human decisions. Do not claim customer compatibility, approval or human acceptance from a successful Markitect command.
+    description: Author and review Markitect resources using their explicit ownership and dependency model.
+    uses:
+        - kind: Workflow
+          name: authoring-change
+        - kind: Workflow
+          name: engineering-discovery
+        - kind: Workflow
+          name: constitution-change
+        - kind: Workflow
+          name: markitect-first-change
+        - kind: Text
+          name: resource-modelling

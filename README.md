@@ -21,6 +21,8 @@ The published [v0.12.0 release](https://github.com/Glacius-Labs/Markitect/releas
 
 Later source adds explicit read-only policy-failure analysis, bounded offline GitHub/Azure capture consumers, and [selective adoption preparation](docs/design/selective-adoption-handoff.md). `prepare` captures only owner-selected Git blobs into an external workspace; `copy-me` validates separate evidence, candidate and supplied decision records without adopting policy. The [roadmap](docs/implementation-plan.md) separates these from published v0.12.0; the [real-project comparison](docs/validation/agents-md-vs-markitect.md) remains inconclusive about whether added maintenance pays for itself.
 
+The next source candidate makes [Markitect-first](docs/markitect-first.md) the repository's durable agent entrypoint: read fixed engineering context, classify the change, update desired intent first when it changes, account for managed artifacts, then verify/reconcile. The standalone artifact helper ships through the source package. [Release readiness](docs/validation/markitect-first-release-readiness.md) separates tested source behavior from publication; v0.12.0 remains current until the immutable candidate is verified.
+
 ## Why Markitect?
 
 The product starts from a working assumption: implementation capacity will grow faster than human attention. Architecture and policy should guide that work without requiring people to rediscover, synchronize and supervise every routine detail. The vision treats this as a hypothesis to test, not a measured productivity claim.

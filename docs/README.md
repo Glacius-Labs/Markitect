@@ -3,6 +3,7 @@
 | Document | Owns |
 |---|---|
 | [Product vision](vision.md) | Canonical product thesis, human/AI responsibilities, desired operating model and benefit hypothesis |
+| [Markitect-first](markitect-first.md) | Canonical change-protocol entrypoint, desired-intent ordering and declared artifact accounting |
 | [Usage](usage.md) | Current Project format, CLI behavior, safe initialization, and schema-upgrade guidance |
 | [Repository layout](repository-layout.md) | Recommended control-plane organization, ownership zones, and layout compatibility |
 | [Content packages](content-packages.md) | Direct offline package pins, exports, archive creation, and package boundaries |

@@ -76,7 +76,7 @@ func ObserveProjection(p *Project, toolVersion, toolDigest string) (ReconcileObs
 	}
 	desired := map[string]string{}
 	observed := map[string]string{}
-	var drift, stale, conflicts []string
+	var drift, conflicts []string
 	for _, name := range sortedFiles(outputs) {
 		desired[name] = hashBytes(outputs[name])
 		if current, ok := p.Snapshot.Files[name]; ok {
@@ -92,13 +92,7 @@ func ObserveProjection(p *Project, toolVersion, toolDigest string) (ReconcileObs
 			drift = append(drift, name)
 		}
 	}
-	for _, name := range sortedFiles(p.Snapshot.Files) {
-		if Generated(p.Snapshot.Files[name]) {
-			if _, ok := outputs[name]; !ok {
-				stale = append(stale, name)
-			}
-		}
-	}
+	stale := staleProjectionPaths(p, outputs)
 	return ReconcileObservation{
 		APIVersion: ReconcilePlanVersion, Adapter: "markitect-render",
 		SourceDigest: reconcileInputDigest(p), ConfigDigest: hashBytes(configBytes),

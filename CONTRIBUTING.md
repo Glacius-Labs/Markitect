@@ -18,7 +18,8 @@ For coordinated parallel work, read the [development guide](docs/development/REA
 | `internal/app/adoption_*` | Preparation orchestration and exclusive external workspace storage/read boundaries |
 | `internal/inputs` | Explicit ordinary-file inputs |
 | `internal/app` | Normalized model, context, impact, adapter orchestration, evidence, and controlled writes |
-| `internal/authoring` | Embedded core authoring resources |
+| `internal/authoring` | Embedded canonical authoring and Markitect-first resources; separate virtual Project manifest |
+| `cmd/markitect-check-artifacts`, `internal/artifactcoverage` | Standalone explicit path-ownership check configured through existing Project checks |
 | `internal/licenses` | Canonical embedded upstream notices |
 | `internal/markdownlinks` | Bounded prose destination scanning with source-byte preservation |
 | `internal/render` | Opt-in Markdown views and declared output adapters |
@@ -40,7 +41,7 @@ Keep source and test files focused on one coherent responsibility. When new func
 
 ## Verify a change
 
-From the repository root with Go 1.27.1 or later:
+Begin through the repository Markitect-first entrypoint in AGENTS.md and classify intent versus implementation before changes. From the repository root with Go 1.27.1 or later:
 
 ```powershell
 go test ./...
@@ -89,3 +90,5 @@ Rendering writes only explicitly selected outputs. Add `markdown` to `spec.targe
 Markitect is licensed under [Apache-2.0](LICENSE); the root license is included in source distributions. The canonical [third-party notices](internal/licenses/notices.md) are embedded in the CLI and included in both source distribution paths. When dependencies or the build toolchain change, compare their upstream notices and update this file in the same candidate when needed. Check `markitect licenses` from the packaged bootstrap as well as the source build.
 
 [Operations and releases](docs/operations.md) describes the supported source and publication gates. The [roadmap](docs/implementation-plan.md) owns current source status; [GitHub Releases](https://github.com/Glacius-Labs/Markitect/releases) lists available distributions. The [production assessment](docs/production-assessment.md) records dated release evidence. A source version does not imply acceptance by any adopting project.
+
+If a restricted local environment refuses the default Go build cache, use an explicit cache outside snapshot inputs, for example `GOCACHE` at `.cache/go-build` or an external workspace. Do not place a growing cache at an admitted source path and assume `.gitignore` filters working-tree snapshots: Markitect uses its own documented source exclusions. This is development-environment setup, not a change to snapshot semantics or the published CLI's permissions.

@@ -1,24 +1,24 @@
 apiVersion: markitect.example.org/v1alpha1
 kind: Text
 metadata:
-  name: resource-modelling
-  namespace: core
+    name: resource-modelling
+    namespace: core
 spec:
-  text: |
-    Use the smallest existing kinds in the Project's loaded Domains that make responsibility and required context clear. Load versioned Domain definitions through the Project before authoring instances. A Domain supplies closed resource shapes, typed relations, and bounded deterministic constraints. Treat the shipped AI-working vocabulary as one Domain and model new software or delivery concepts in a Domain that owns their meaning; do not add every domain concept to the kernel.
+    text: |
+        Use the smallest existing kinds in the Project's loaded Domains that make responsibility and required context clear. Load versioned Domain definitions through the Project before authoring instances. A Domain supplies closed resource shapes, typed relations, and bounded deterministic constraints. Treat the shipped AI-working vocabulary as one Domain and model new software or delivery concepts in a Domain that owns their meaning; do not add every domain concept to the kernel.
 
-    - Project describes ownership areas, imports, rules and explicit bindings.
-    - Rule states a scoped requirement; deterministic enforcement comes from a bounded Domain constraint or an explicitly configured adapter/check.
-    - Text holds reusable prose that has no separate procedure or requirement role.
-    - Workflow describes ordered work and declares the resources it uses.
-    - Skill is the agent-facing entrypoint and links to the workflow it should follow.
-    - Agent describes a role and supported provider settings; provider settings do not own the role's canonical guidance.
-    - Contract names a required interface and exact input/output signature for a bound implementation.
+        - Project describes ownership areas, imports, rules and explicit bindings.
+        - Rule states a scoped requirement; deterministic enforcement comes from a bounded Domain constraint or an explicitly configured adapter/check.
+        - Text holds reusable prose that has no separate procedure or requirement role.
+        - Workflow describes ordered work and declares the resources it uses.
+        - Skill is the agent-facing entrypoint and links to the workflow it should follow.
+        - Agent describes a role and supported provider settings; provider settings do not own the role's canonical guidance.
+        - Contract names a required interface and exact input/output signature for a bound implementation.
 
-    Keep one canonical source for each explicitly modeled assertion and name its owner and provenance. Separate intended structure, normative requirements, observed facts, and human judgments. Observations describe a selected external state; they do not silently update canonical intent. For a new Project, `.markitect/areas/<responsibility>/` is the recommended place for typed resources, with responsibility-first folders and optional kind suffixes such as `.rule.yaml` or `.workflow.yaml`. Keep existing Projects at their configured Area paths; layout conventions do not override `markitect.yaml`. The YAML API version and `kind` field determine the qualified type, regardless of filename.
+        Keep one canonical source for each explicitly modeled assertion and name its owner and provenance. Separate intended structure, normative requirements, observed facts, and human judgments. Observations describe a selected external state; they do not silently update canonical intent. For a new Project, `.markitect/areas/<responsibility>/` is the recommended place for typed resources, with responsibility-first folders and optional kind suffixes such as `.rule.yaml` or `.workflow.yaml`. Keep existing Projects at their configured Area paths; layout conventions do not override `markitect.yaml`. The YAML API version and `kind` field determine the qualified type, regardless of filename.
 
-    Configure Areas to cover canonical resources and exact file inputs; ordinary documentation may be covered by a separate Area. Add typed references only when the relationship is real and the Domain defines the field or relation. Relation descriptors separately determine context traversal, change invalidation, and cycle checks. Labels classify resources for bounded selection; they do not replace typed references. Declare file inputs explicitly. Do not infer dependencies from prose, README links or paths, create duplicate provider copies, or add a resource only to avoid editing its actual owner. README routers can guide people through human-owned documentation but do not add resources or graph edges.
+        Configure Areas to cover canonical resources and exact file inputs; ordinary documentation may be covered by a separate Area. Add typed references only when the relationship is real and the Domain defines the field or relation. Relation descriptors separately determine context traversal, change invalidation, and cycle checks. Labels classify resources for bounded selection; they do not replace typed references. Declare file inputs explicitly. Do not infer dependencies from prose, README links or paths, create duplicate provider copies, or add a resource only to avoid editing its actual owner. README routers can guide people through human-owned documentation but do not add resources or graph edges.
 
-    Use constraints only for properties the declared language can prove from the selected fixed inputs. A passing constraint establishes that assertion over that model snapshot. It does not prove the domain model wise, prose semantically true, implementation compliant, or a person accepting the result. Set-based assertions need explicit selectors so adding or removing matching resources can invalidate the result.
+        Use constraints only for properties the declared language can prove from the selected fixed inputs. A passing constraint establishes that assertion over that model snapshot. It does not prove the domain model wise, prose semantically true, implementation compliant, or a person accepting the result. Set-based assertions need explicit selectors so adding or removing matching resources can invalidate the result.
 
-    Configure consumer mappings as canonical Project inputs. A projection or external adapter consumes the normalized model and reports its observed state separately. Reconcile by observing, reviewing a concrete plan, applying only an explicit plan, and verifying the resulting state. A new observation must detect external drift even when the model has not changed. Adapter success and verification do not grant human approval.
+        Configure consumer mappings as canonical Project inputs. A projection or external adapter consumes the normalized model and reports its observed state separately. Reconcile by observing, reviewing a concrete plan, applying only an explicit plan, and verifying the resulting state. A new observation must detect external drift even when the model has not changed. Adapter success and verification do not grant human approval.
