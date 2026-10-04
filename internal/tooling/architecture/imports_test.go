@@ -21,6 +21,30 @@ func TestPermittedEdges(t *testing.T) {
 		t.Fatal(v)
 	}
 }
+
+func TestCoreExternalDependencyRequiresApproval(t *testing.T) {
+	root := t.TempDir()
+	dir := filepath.Join(root, "internal", "core")
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		t.Fatal(err)
+	}
+	for name, imports := range map[string]string{
+		"generic.go":       "\"fmt\"\n_ \"go.yaml.in/yaml/v3\"",
+		"provider_test.go": "_ \"example.org/provider/sdk\"",
+	} {
+		if err := os.WriteFile(filepath.Join(dir, name), []byte("package core\nimport (\n"+imports+"\n)\n"), 0644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	edges, err := Inspect(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	findings := Check(edges)
+	if len(findings) != 1 || findings[0].Edge.To != "example.org/provider/sdk" || !findings[0].Edge.Test || !strings.Contains(findings[0].String(), "internal/core imports example.org/provider/sdk") {
+		t.Fatalf("unapproved Core dependency was hidden or generic encoding refused: %v", findings)
+	}
+}
 func TestInspectAllPlatformsAndTests(t *testing.T) {
 	root := t.TempDir()
 	for _, name := range []string{"internal/core/bad_windows.go", "internal/modules/a/bad_test.go"} {

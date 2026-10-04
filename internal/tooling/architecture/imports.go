@@ -78,6 +78,11 @@ func Check(edges []Edge) []Violation {
 		to, target := layer(e.To)
 		rule := ""
 		switch {
+		case from == "core" && e.To == "go.yaml.in/yaml/v3":
+			// Core's only approved external dependency provides deterministic
+			// generic encoding. Additional dependencies need a central review.
+		case from == "core" && externalImport(e.To):
+			rule = "Core external imports require an explicitly approved generic dependency"
 		case from == "bootstrap":
 			rule = "standalone bootstrap tooling may not import Markitect packages"
 		case from == "fixture":
@@ -111,6 +116,11 @@ func Check(edges []Edge) []Violation {
 	}
 	sort.Slice(out, func(i, j int) bool { return out[i].String() < out[j].String() })
 	return out
+}
+
+func externalImport(path string) bool {
+	first, _, _ := strings.Cut(path, "/")
+	return strings.Contains(first, ".")
 }
 
 func Inspect(root string) ([]Edge, error) {
@@ -151,10 +161,11 @@ func Inspect(root string) ([]Edge, error) {
 			if err != nil {
 				return err
 			}
-			if !strings.HasPrefix(imported, ModulePath) {
-				continue
+			if strings.HasPrefix(imported, ModulePath) {
+				edges = append(edges, Edge{rel, fset.Position(imp.Pos()).Line, packagePath, strings.TrimPrefix(imported, ModulePath), strings.HasSuffix(rel, "_test.go")})
+			} else if from, _ := layer(packagePath); from == "core" && externalImport(imported) {
+				edges = append(edges, Edge{rel, fset.Position(imp.Pos()).Line, packagePath, imported, strings.HasSuffix(rel, "_test.go")})
 			}
-			edges = append(edges, Edge{rel, fset.Position(imp.Pos()).Line, filepath.ToSlash(filepath.Dir(rel)), strings.TrimPrefix(imported, ModulePath), strings.HasSuffix(rel, "_test.go")})
 		}
 		return nil
 	})
