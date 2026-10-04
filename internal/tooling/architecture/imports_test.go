@@ -8,7 +8,7 @@ import (
 )
 
 func TestForbiddenEdges(t *testing.T) {
-	for _, e := range []Edge{{"core.go", 3, "internal/core", "internal/modules/pipelines", false}, {"a.go", 4, "internal/modules/a", "internal/modules/b", false}, {"a_test.go", 5, "internal/modules/a", "internal/host", true}, {"main.go", 6, "cmd/markitect", "internal/core", false}} {
+	for _, e := range []Edge{{"core.go", 3, "internal/core", "internal/modules/pipelines", false}, {"a.go", 4, "internal/modules/a", "internal/modules/b", false}, {"a_test.go", 5, "internal/modules/a", "internal/host", true}, {"main.go", 6, "cmd/markitect", "internal/core", false}, {"host.go", 7, "internal/host", "cmd/markitect", false}} {
 		v := Check([]Edge{e})
 		if len(v) != 1 || !strings.Contains(v[0].String(), e.From+" imports "+e.To) {
 			t.Fatalf("missing exact edge: %v", v)

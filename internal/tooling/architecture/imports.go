@@ -98,6 +98,8 @@ func Check(edges []Edge) []Violation {
 			rule = "Module may import only Core and its own subtree"
 		case from == "cli" && to != "host":
 			rule = "CLI must delegate to Host"
+		case from == "host" && to == "cli":
+			rule = "Host may not import CLI entrypoints"
 		case from == "infrastructure" && (to == "module" || to == "host" || to == "cli" || to == "tooling"):
 			rule = "Infrastructure may not import product composition"
 		case from == "tooling" && (to == "module" || to == "host" || to == "cli"):

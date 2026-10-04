@@ -36,8 +36,8 @@ type Config struct {
 	DocumentationRoots   []string
 }
 
-// ViewPaths returns local typed-resource projection paths. Package resources,
-// Project and Package are inputs and do not acquire Markdown views.
+// ViewPaths returns local typed-resource projection paths. Imported resources
+// and the configured projection owner do not acquire local Markdown views.
 func ViewPaths(model core.SemanticModel, config Config) (map[string]core.ModelResource, error) {
 	paths := map[string]core.ModelResource{}
 	if !config.Enabled {
@@ -46,7 +46,7 @@ func ViewPaths(model core.SemanticModel, config Config) (map[string]core.ModelRe
 	resources := localResources(model)
 	folded := map[string]string{}
 	for _, r := range resources {
-		if excluded(r) {
+		if excluded(r, config) {
 			continue
 		}
 		if r.Identity.Key == "" || r.Identity.Kind == "" || r.Identity.Name == "" {
@@ -129,7 +129,7 @@ func DomainPathsWithSources(model core.SemanticModel, config Config) (map[string
 
 func MarkdownViewPath(r core.ModelResource, config Config) (string, error) {
 	i := r.Identity
-	if excluded(r) {
+	if excluded(r, config) {
 		return "", fmt.Errorf("resource %s has no local Markdown view", i.Key)
 	}
 	var area *Area
@@ -369,8 +369,8 @@ func localResources(m core.SemanticModel) []core.ModelResource {
 	})
 	return out
 }
-func excluded(r core.ModelResource) bool {
-	return r.Identity.Package != "" || r.Identity.Kind == "Project" || r.Identity.Kind == "Package"
+func excluded(r core.ModelResource, config Config) bool {
+	return r.Identity.Package != "" || r.Identity.Key == config.ProjectKey
 }
 func sortedResourcePaths[T any](m map[string]T) []string {
 	out := make([]string, 0, len(m))
@@ -447,7 +447,7 @@ type navigation struct {
 func newNavigation(m core.SemanticModel, c Config, files map[string][]byte) (*navigation, error) {
 	n := &navigation{files: files, companions: map[string][]core.ModelResource{}, sources: map[string]core.ModelResource{}, paths: map[string]string{}, config: c}
 	for _, r := range localResources(m) {
-		if excluded(r) {
+		if excluded(r, c) {
 			continue
 		}
 		if old, ok := n.sources[r.Source.Path]; ok && old.Identity.Key != r.Identity.Key {

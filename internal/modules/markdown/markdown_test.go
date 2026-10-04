@@ -366,3 +366,27 @@ func TestDisabledModuleProducesNoOutputs(t *testing.T) {
 		t.Fatalf("disabled outputs=%v owners=%v err=%v", out, owners, err)
 	}
 }
+
+func TestProjectionExcludesConfiguredOwnerWithoutAuthoringKindMagic(t *testing.T) {
+	model, config := fixture()
+	config.ProjectKey = "control/Owner/config"
+	model.Resources = append(model.Resources,
+		core.ModelResource{Identity: core.ModelIdentity{APIVersion: "example.org/control/v1", Kind: "Owner", Name: "config", Key: config.ProjectKey}, Source: core.ModelSource{Path: "control.yaml"}},
+		core.ModelResource{Identity: core.ModelIdentity{APIVersion: "example.org/control/v1", Kind: "Project", Name: "initiative", Key: "policy/Project/initiative"}, Area: "policy", Source: core.ModelSource{Path: "docs/policy/initiative.yaml"}, Data: map[string]any{"text": "A domain concept, not an authoring control."}},
+		core.ModelResource{Identity: core.ModelIdentity{APIVersion: "example.org/control/v1", Kind: "Package", Name: "delivery", Key: "policy/Package/delivery"}, Area: "policy", Source: core.ModelSource{Path: "docs/policy/delivery.yaml"}, Data: map[string]any{"text": "A local domain concept."}},
+	)
+	paths, err := ViewPaths(model, config)
+	if err != nil {
+		t.Fatal(err)
+	}
+	keys := map[string]bool{}
+	for _, resource := range paths {
+		keys[resource.Identity.Key] = true
+	}
+	if keys[config.ProjectKey] || !keys["policy/Project/initiative"] || !keys["policy/Package/delivery"] {
+		t.Fatalf("projection selection used authoring kind names rather than configured ownership: %v", keys)
+	}
+	if _, _, err := Generate(model, config, nil); err != nil {
+		t.Fatal(err)
+	}
+}

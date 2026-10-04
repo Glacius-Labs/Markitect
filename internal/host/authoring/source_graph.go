@@ -27,12 +27,6 @@ func Build(resources []*Resource) *Graph { return BuildWithRegistry(resources, N
 // BuildWithRegistry validates the source-owned Project/Package graph, derives
 // authorized relationships once, and passes only normalized values to Core.
 func BuildWithRegistry(resources []*Resource, registry *core.Registry) *Graph {
-	return buildWithRegistry(resources, registry, nil)
-}
-func Compile(resources []*Resource, registry *core.Registry, relationships []core.Relationship) (*Graph, error) {
-	return buildWithRegistry(resources, registry, relationships), nil
-}
-func buildWithRegistry(resources []*Resource, registry *core.Registry, supplied []core.Relationship) *Graph {
 	if registry == nil {
 		registry = NewRegistry()
 	}
