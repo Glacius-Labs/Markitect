@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/Glacius-Labs/Markitect/internal/artifactcoverage"
 	"github.com/Glacius-Labs/Markitect/internal/host"
 )
 
@@ -24,7 +23,7 @@ func Run(args []string, out, errout io.Writer) int {
 		fmt.Fprintln(errout, "unexpected positional arguments")
 		return 2
 	}
-	report, err := artifactcoverage.Check(*repo, *config)
+	report, err := host.CheckArtifacts(*repo, *config)
 	if err != nil {
 		fmt.Fprintln(errout, err)
 		return 2
