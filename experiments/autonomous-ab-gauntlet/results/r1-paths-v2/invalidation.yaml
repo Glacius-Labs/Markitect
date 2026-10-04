@@ -1,0 +1,9 @@
+freeze_digest: 3802b4ee5e6de4ccdb9480e81826f29f4448ac81e96ff1ec7291e2ba05e5b0b3
+source_commit: 817818310fd4ad5b39270880249713c8cfcb438f
+scope: all-native-records
+reason: pre-dispatch-review-missing-helper-fallback
+comparison_eligible: false
+prepared_tasks: 0
+actor_starts: 0
+product_changed: false
+semantic_rescue: false

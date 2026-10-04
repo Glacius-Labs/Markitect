@@ -1,0 +1,17 @@
+freeze_digest: d7c102ab4c566fc5c2893d59a51f0d4a3b3b7bb24c798a9a80088e81592da4b4
+analysis_source_commit: 817818310fd4ad5b39270880249713c8cfcb438f
+report_sha256: 2a0ac5278e31beac7323e2d8e0a6ee43e362631f12c2d42941545bdd153a755
+native_records: 6
+counted_invalidated: 6
+counted_passes: 0
+evaluator_unknown: 6
+repairs: 0
+churn_available: 3
+churn_unavailable: 3
+helper_status: unavailable
+tokens: unavailable
+platform_calls: unavailable
+read_audit: unavailable
+attention: unavailable
+context_impact: unavailable
+interpretation: Preparation failure evidence only; no comparative result.

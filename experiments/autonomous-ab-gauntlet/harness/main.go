@@ -307,6 +307,18 @@ func configuredGoCache(arena string) (string, error) {
 	}
 	return absolutePath(path)
 }
+func frozenHelperPath(arena string) (string, error) {
+	name := "gauntlet"
+	if runtime.GOOS == "windows" {
+		name += ".exe"
+	}
+	path := filepath.Join(arena, "bin", name)
+	info, err := os.Lstat(path)
+	if err != nil || !info.Mode().IsRegular() {
+		return "", fmt.Errorf("frozen helper binary is missing or not a regular file: %s", path)
+	}
+	return path, nil
+}
 func writeYAMLNew(path string, v any) error {
 	b, e := yaml.Marshal(v)
 	if e != nil {
@@ -608,6 +620,10 @@ func prepareTask(args []string) error {
 	if e = verifyArenaFreeze(arena); e != nil {
 		return e
 	}
+	helper, e := frozenHelperPath(arena)
+	if e != nil {
+		return e
+	}
 	projectRoot := filepath.Join(arena, "projects", project)
 	projectRoot = resolveProjectRoot(arena, protocol, project)
 	tasksPath := filepath.Join(projectRoot, "task-set.yaml")
@@ -780,13 +796,6 @@ func prepareTask(args []string) error {
 	}
 	if len(validators) == 0 {
 		return errors.New("task card or project config must declare public validator argv")
-	}
-	helper := filepath.Join(arena, "bin", "gauntlet.exe")
-	if runtime.GOOS != "windows" {
-		helper = filepath.Join(arena, "bin", "gauntlet")
-	}
-	if _, err := os.Stat(helper); os.IsNotExist(err) {
-		helper = "gauntlet"
 	}
 	validatorManifest := filepath.Join(arena, "raw", runID, t.ID, "validators.yaml")
 	if e = os.MkdirAll(filepath.Dir(validatorManifest), 0755); e != nil {
@@ -1063,6 +1072,10 @@ func integrateParallel(args []string) error {
 	if err = verifyArenaFreeze(arena); err != nil {
 		return err
 	}
+	helper, err := frozenHelperPath(arena)
+	if err != nil {
+		return err
+	}
 	var protocol Protocol
 	if err = readYAML(protocolPath, &protocol); err != nil {
 		return err
@@ -1217,13 +1230,6 @@ func integrateParallel(args []string) error {
 	checkRecord := filepath.Join(arena, "raw", integrationID, "08.attempt-0.helper.jsonl")
 	checkSnapshot := filepath.Join(arena, "raw", integrationID, "snapshots", "attempt-0")
 	checkOutput := filepath.Join(arena, "raw", integrationID, "08.attempt-0.public-validator.txt")
-	helper := filepath.Join(arena, "bin", "gauntlet.exe")
-	if runtime.GOOS != "windows" {
-		helper = filepath.Join(arena, "bin", "gauntlet")
-	}
-	if _, statErr := os.Stat(helper); statErr != nil {
-		helper, _ = os.Executable()
-	}
 	cmd := exec.Command(helper, "check", "--task-id", "08", "--manifest", manifestPath)
 	cmd.Dir = workspace
 	goCache, cacheErr := configuredGoCache(arena)
@@ -1367,6 +1373,10 @@ func prepareIntegrationRepair(args []string) error {
 	if err = verifyArenaFreeze(arena); err != nil {
 		return err
 	}
+	helper, err := frozenHelperPath(arena)
+	if err != nil {
+		return err
+	}
 	runID := fmt.Sprintf("%s-%s-t%02d-integration", project, arm, trial)
 	runDir := filepath.Join(arena, "runs", runID)
 	statePath := filepath.Join(runDir, "08.native.yaml")
@@ -1485,13 +1495,6 @@ func prepareIntegrationRepair(args []string) error {
 	boundary := "\n\nAuthorized mutation boundary (exact union of P01/P02 for this arm): " + strings.Join(allowedPaths, ", ") + ". Do not change files outside it. Do not weaken, delete, skip, or rewrite existing tests or check assertions."
 	instruction := "This is one fresh repair actor for a previously failed mechanical integration. Do not spawn, invoke, or delegate to any other agent. Read-only engineering guidance and analysis may be used; these are not public acceptance tests. Apply only the current integration correction and the frozen mechanical continuation plan. If a task explicitly requires generated-projection regeneration or reconciliation, use the corresponding apply/render operation only for that requested work and only when every write stays within the exact authorized boundary; do not perform implicit adoption, unapproved exceptions, or external/unscoped operations. Do not run builds, application tests, or configured acceptance validators outside the public-check helper. Use normal tool sandbox escalation for Git, helper, or build commands only when the authorized arena or cache permissions require it; do not change global Git trust/configuration or bypass tool rules. Commit your changes and any successfully continued frozen commits, then invoke the public-check helper exactly once. If it fails, stop; only its exact recorded output may go to the next fresh repair actor. Never inspect hidden evaluator data, future tasks, or other arms/trials."
 	feedbackBlock := "\n\nExact saved prior-attempt integration/public output (unmodified):\n" + string(savedFeedback)
-	helper := filepath.Join(arena, "bin", "gauntlet.exe")
-	if runtime.GOOS != "windows" {
-		helper = filepath.Join(arena, "bin", "gauntlet")
-	}
-	if _, statErr := os.Stat(helper); statErr != nil {
-		helper, _ = os.Executable()
-	}
 	goCache, err := configuredGoCache(arena)
 	if err != nil {
 		return err

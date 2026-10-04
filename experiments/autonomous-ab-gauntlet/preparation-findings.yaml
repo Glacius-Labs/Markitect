@@ -73,3 +73,20 @@ invalidated_first_cohort:
   markitect_product_changed: false
   tasks_oracles_changed: false
   source_preservation: Six exclusive workspace copies plus original raw records; initial Git status reads limited by different OS ownership remain recorded as unavailable, with actual observations appended from preserved copies.
+
+unscored_path_review:
+  freeze_digest: 3802b4ee5e6de4ccdb9480e81826f29f4448ac81e96ff1ec7291e2ba05e5b0b3
+  source_commit: 817818310fd4ad5b39270880249713c8cfcb438f
+  actor_starts: 0
+  finding: The normal frozen helper path was absolute, but a missing helper still activated a bare PATH fallback. Independent review found this before dispatch.
+  disposition: Preserve the unused freeze, remove the ambiguous fallback, test refusal, and freeze a clean committed harness separately after exact-head gates.
+  product_changed: false
+  tasks_oracles_changed: false
+
+invalidated_cohort_analysis:
+  report_sha256: 2a0ac5278e31beac7323e2d8e0a6ee43e362631f12c2d42941545bdd153a755
+  tasks: 6
+  counted_invalidated: 6
+  counted_passes: 0
+  evaluator_unknown: 6
+  interpretation: Retained states are preparation evidence; no comparative or product result follows.

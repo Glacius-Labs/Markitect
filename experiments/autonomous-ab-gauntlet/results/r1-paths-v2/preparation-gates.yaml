@@ -1,0 +1,11 @@
+source_commit: 817818310fd4ad5b39270880249713c8cfcb438f
+run_id: 37221245951
+url: https://github.com/Glacius-Labs/Markitect/actions/runs/37221245951
+windows: passed
+linux: passed
+go_test_vet_build: passed
+module_schema_examples: passed
+dogfood_import_artifact_modules_context_verify: passed
+package_bootstrap_selective_adoption: passed
+scored_actors_before_gate: 0
+invalidated_prior_starts: 6

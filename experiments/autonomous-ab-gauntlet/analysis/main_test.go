@@ -15,7 +15,7 @@ func TestEvaluationOutcomeIsSeparateFromPublicHelper(t *testing.T) {
 	if err := os.MkdirAll(filepath.Join(arena, "raw", runID, taskID), 0700); err != nil {
 		t.Fatal(err)
 	}
-	eval := "task: \"01\"\nstatus: failed\nchecks:\n  - name: hidden-vector\n    passed: false\n"
+	eval := "task: \"01\"\nstatus: failed\nchecks:\n  - name: hidden-vector\n    passed: false\n  - name: other-component\n    passed: true\n"
 	if err := os.WriteFile(filepath.Join(arena, "runs", runID, taskID+".evaluation.yaml"), []byte(eval), 0600); err != nil {
 		t.Fatal(err)
 	}
@@ -29,8 +29,70 @@ func TestEvaluationOutcomeIsSeparateFromPublicHelper(t *testing.T) {
 	if got.EvaluationStatus != "failed" {
 		t.Fatalf("evaluation status = %q, want failed", got.EvaluationStatus)
 	}
+	if len(got.EvaluationEvidenceConflicts) != 0 {
+		t.Fatalf("failed aggregate with a passed component was called contradictory: %#v", got.EvaluationEvidenceConflicts)
+	}
 	if got.PublicHelper.Status != "success" || got.PublicHelper.Calls != 1 {
 		t.Fatalf("helper receipt = %#v", got.PublicHelper)
+	}
+}
+
+func TestPassedAggregateConflictsWithUnresolvedRequiredComponent(t *testing.T) {
+	for _, component := range []string{"failed", "manual", "unknown"} {
+		t.Run(component, func(t *testing.T) {
+			arena := t.TempDir()
+			runID, taskID := "fixture", "01"
+			if err := os.MkdirAll(filepath.Join(arena, "runs", runID), 0700); err != nil {
+				t.Fatal(err)
+			}
+			record := "task: '01'\nstatus: passed\nchecks:\n  - name: required-component\n    status: " + component + "\n"
+			if err := os.WriteFile(filepath.Join(arena, "runs", runID, taskID+".evaluation.yaml"), []byte(record), 0600); err != nil {
+				t.Fatal(err)
+			}
+			got, err := analyzeTask(arena, nativeRecord{RunID: runID, Project: "p", Arm: "a", Trial: 1, TaskID: taskID}, taskCard{ID: taskID}, true)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if len(got.EvaluationEvidenceConflicts) != 1 {
+				t.Fatalf("conflicts = %#v, want one", got.EvaluationEvidenceConflicts)
+			}
+			if component != "failed" && (got.EvaluationStatus != component || got.CountedOutcome != component) {
+				t.Fatalf("%s component was normalized to evaluation=%s outcome=%s", component, got.EvaluationStatus, got.CountedOutcome)
+			}
+		})
+	}
+}
+
+func TestContradictoryPassIsIncompleteDespiteCompletedActorAndSuccessfulHelper(t *testing.T) {
+	arena := t.TempDir()
+	runID, taskID := "fixture", "01"
+	for _, dir := range []string{filepath.Join(arena, "runs", runID), filepath.Join(arena, "raw", runID, taskID)} {
+		if err := os.MkdirAll(dir, 0700); err != nil {
+			t.Fatal(err)
+		}
+	}
+	eval := "task: '01'\nstatus: passed\nchecks:\n  - name: required-vector\n    status: failed\n"
+	if err := os.WriteFile(filepath.Join(arena, "runs", runID, taskID+".evaluation.yaml"), []byte(eval), 0600); err != nil {
+		t.Fatal(err)
+	}
+	helper := `{"task_id":"01","commands":[["test"]],"exit_code":0,"snapshot":"snapshots/attempt-0","actor_attempt":1}` + "\n"
+	if err := os.WriteFile(filepath.Join(arena, "raw", runID, taskID, "helper-attempt-0.jsonl"), []byte(helper), 0600); err != nil {
+		t.Fatal(err)
+	}
+	got, err := analyzeTask(arena, nativeRecord{RunID: runID, Project: "p", Arm: "a", Trial: 1, TaskID: taskID, ActorStatus: "completed"}, taskCard{ID: taskID}, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.AggregateEvaluationStatus != "passed" || got.Checks[0].Status != "failed" || len(got.EvaluationEvidenceConflicts) != 1 {
+		t.Fatalf("raw aggregate/component evidence was lost: %#v", got)
+	}
+	if got.PublicHelper.Status != "success" || got.CountedOutcome != "incomplete" {
+		t.Fatalf("helper/outcome = %#v / %q", got.PublicHelper, got.CountedOutcome)
+	}
+	count := counts{}
+	countOutcome(&count, got.CountedOutcome, false)
+	if count.Passed != 0 || count.Incomplete != 1 {
+		t.Fatalf("contradictory outcome counts = %#v", count)
 	}
 }
 

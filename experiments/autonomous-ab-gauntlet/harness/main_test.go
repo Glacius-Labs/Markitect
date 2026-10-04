@@ -28,10 +28,22 @@ type harnessFixture struct {
 }
 
 func newHarnessFixture(t *testing.T, maximumRepairs int) harnessFixture {
-	return newHarnessFixtureWithHelper(t, maximumRepairs, false)
+	return newHarnessFixtureWithHelperKind(t, maximumRepairs, "file")
 }
 
 func newHarnessFixtureWithHelper(t *testing.T, maximumRepairs int, includeHelper bool) harnessFixture {
+	kind := "none"
+	if includeHelper {
+		kind = "file"
+	}
+	return newHarnessFixtureWithHelperKind(t, maximumRepairs, kind)
+}
+
+func newHarnessFixtureWithHelperDirectory(t *testing.T, maximumRepairs int) harnessFixture {
+	return newHarnessFixtureWithHelperKind(t, maximumRepairs, "directory")
+}
+
+func newHarnessFixtureWithHelperKind(t *testing.T, maximumRepairs int, helperKind string) harnessFixture {
 	t.Helper()
 	arena := t.TempDir()
 	project := filepath.Join(arena, "projects", "demo")
@@ -109,8 +121,12 @@ tasks:
 	if err := os.WriteFile(filepath.Join(project, "task-set.yaml"), []byte(tasks), 0644); err != nil {
 		t.Fatal(err)
 	}
-	if includeHelper {
+	if helperKind == "file" {
 		if err := buildGauntletHelper(t, arena); err != nil {
+			t.Fatal(err)
+		}
+	} else if helperKind == "directory" {
+		if err := os.MkdirAll(filepath.Join(arena, "bin", nativeHelperName()), 0755); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -292,6 +308,44 @@ func TestRelativeArenaNativeEnvelopeRunsFromWorkspaceAndFinishesByDigest(t *test
 	if state.ActorStatus != "completed" || state.ActorCompletedUTC == "" || state.Turns[0].CompletedDigest != initial.InputDigest {
 		t.Fatalf("relative-path finish did not preserve exact prepared digest and terminal receipt: %#v", state)
 	}
+}
+
+func TestPrepareTaskRequiresFrozenRegularHelperBeforeWritingEnvelope(t *testing.T) {
+	for _, helperKind := range []string{"missing", "directory"} {
+		t.Run(helperKind, func(t *testing.T) {
+			var f harnessFixture
+			if helperKind == "directory" {
+				f = newHarnessFixtureWithHelperDirectory(t, 0)
+			} else {
+				f = newHarnessFixtureWithHelperKind(t, 0, "none")
+			}
+			helperPath := filepath.Join(f.arena, "bin", nativeHelperName())
+			decoyPath := t.TempDir()
+			if err := os.WriteFile(filepath.Join(decoyPath, nativeHelperName()), []byte("not the frozen arena helper"), 0755); err != nil {
+				t.Fatal(err)
+			}
+			t.Setenv("PATH", decoyPath+string(os.PathListSeparator)+os.Getenv("PATH"))
+			err := prepareTask(f.taskArgs("A", "01"))
+			if err == nil || !strings.Contains(err.Error(), "frozen helper binary is missing or not a regular file:") || !strings.Contains(err.Error(), helperPath) {
+				t.Fatalf("prepare-task did not fail closed on the exact missing/non-file frozen helper %q: %v", helperPath, err)
+			}
+			envelope := filepath.Join(f.arena, "runs", f.runID, "01.attempt-0.envelope.yaml")
+			if _, statErr := os.Stat(envelope); !os.IsNotExist(statErr) {
+				t.Fatalf("prepare-task emitted an actor envelope after rejecting its frozen helper: %q (stat err %v)", envelope, statErr)
+			}
+			state := filepath.Join(f.arena, "runs", f.runID, "01.native.yaml")
+			if _, statErr := os.Stat(state); !os.IsNotExist(statErr) {
+				t.Fatalf("prepare-task emitted actor state after rejecting its frozen helper: %q (stat err %v)", state, statErr)
+			}
+		})
+	}
+}
+
+func nativeHelperName() string {
+	if runtime.GOOS == "windows" {
+		return "gauntlet.exe"
+	}
+	return "gauntlet"
 }
 
 func TestRelativeArenaRepairAndIntegrationEnvelopesUseAbsoluteExternalPaths(t *testing.T) {
@@ -1141,6 +1195,9 @@ func TestCheckedInProjectTaskSetsProduceScopedNativeEnvelopes(t *testing.T) {
 			t.Fatalf("copy checked-in %s project: %v", project, err)
 		}
 	}
+	if err := buildGauntletHelper(t, arena); err != nil {
+		t.Fatal(err)
+	}
 	protocol := filepath.Join(arena, "protocol.yaml")
 	if err := os.WriteFile(protocol, []byte(`agent:
   model: test-model
@@ -1238,6 +1295,9 @@ func newMalformedFixture(t *testing.T, projectManifest, taskSet string) harnessF
 	if err := os.WriteFile(filepath.Join(projectRoot, "task-set.yaml"), []byte(taskSet), 0644); err != nil {
 		t.Fatal(err)
 	}
+	if err := buildGauntletHelper(t, arena); err != nil {
+		t.Fatal(err)
+	}
 	if err := quietCall(t, func() error { return prepare([]string{"--arena", arena}) }); err != nil {
 		t.Fatal(err)
 	}
@@ -1309,6 +1369,9 @@ tasks:
 		if err := os.WriteFile(filepath.Join(projectRoot, path), []byte(data), 0644); err != nil {
 			t.Fatal(err)
 		}
+	}
+	if err := buildGauntletHelper(t, arena); err != nil {
+		t.Fatal(err)
 	}
 	if err := quietCall(t, func() error { return prepare([]string{"--arena", arena}) }); err != nil {
 		t.Fatal(err)

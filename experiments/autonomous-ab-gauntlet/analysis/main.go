@@ -120,6 +120,7 @@ type taskReport struct {
 	BaseRevision                 string            `yaml:"base_revision" json:"base_revision"`
 	FinalRevision                string            `yaml:"final_revision,omitempty" json:"final_revision,omitempty"`
 	ActorStatus                  string            `yaml:"actor_status" json:"actor_status"`
+	AggregateEvaluationStatus    string            `yaml:"aggregate_evaluation_status" json:"aggregate_evaluation_status"`
 	EvaluationStatus             string            `yaml:"evaluation_status" json:"evaluation_status"`
 	CountedOutcome               string            `yaml:"counted_outcome" json:"counted_outcome"`
 	BeforeRepairEvaluationStatus string            `yaml:"before_repair_evaluation_status" json:"before_repair_evaluation_status"`
@@ -417,6 +418,7 @@ func analyzeTask(arena string, n nativeRecord, c taskCard, cardOK bool) (taskRep
 	evalPath := filepath.Join(runDir, evalTask+".evaluation.yaml")
 	var ev evaluation
 	if err := readYAML(evalPath, &ev); err == nil {
+		t.AggregateEvaluationStatus = ev.Status
 		t.EvaluationStatus = normalizeStatus(ev.Status)
 		t.FinalEvaluationStatus = t.EvaluationStatus
 		for _, check := range ev.Checks {
@@ -475,13 +477,13 @@ func analyzeTask(arena string, n nativeRecord, c taskCard, cardOK bool) (taskRep
 	if ev.Status != "" {
 		declared := normalizeStatus(ev.Status)
 		for _, check := range t.Checks {
-			if declared == "passed" && check.Status == "failed" {
-				t.EvaluationEvidenceConflicts = append(t.EvaluationEvidenceConflicts, "evaluation status passed while check "+check.Name+" is failed")
-			}
-			if declared == "failed" && check.Status == "passed" {
-				t.EvaluationEvidenceConflicts = append(t.EvaluationEvidenceConflicts, "evaluation status failed while check "+check.Name+" is passed")
+			if declared == "passed" && (check.Status == "failed" || check.Status == "manual" || check.Status == "unknown") {
+				t.EvaluationEvidenceConflicts = append(t.EvaluationEvidenceConflicts, "evaluation status passed while check "+check.Name+" is "+check.Status)
 			}
 		}
+	}
+	if t.EvaluationStatus == "passed" && len(t.EvaluationEvidenceConflicts) > 0 {
+		t.CountedOutcome = "incomplete"
 	}
 	basePath := filepath.Join(arena, n.FinalSnapshot, "workspace")
 	if n.FinalSnapshot == "" {
