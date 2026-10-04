@@ -16,7 +16,7 @@ const maxPolicyExceptions = 64
 
 // EvaluateConstraints produces stable per-subject or collection results, then
 // applies only source-bound exceptions to exact failing per-resource results.
-func (g *Graph) EvaluateConstraints() {
+func (g *Graph) EvaluateConstraints(exceptions []PolicyException, policyDate string) {
 	if g == nil || g.Registry == nil {
 		return
 	}
@@ -36,7 +36,7 @@ func (g *Graph) EvaluateConstraints() {
 			g.evaluateConstraint(domain, constraint)
 		}
 	}
-	g.applyPolicyExceptions()
+	g.applyPolicyExceptions(exceptions, policyDate)
 	sort.Slice(g.PolicyResults, func(i, j int) bool {
 		a, b := g.PolicyResults[i], g.PolicyResults[j]
 		if a.APIVersion != b.APIVersion {
@@ -92,7 +92,7 @@ func (g *Graph) evaluateConstraint(domain DomainDefinition, constraint Constrain
 	if assertion.Op == "unique" || assertion.Op == "count" && assertion.Scope != "resource" {
 		message := evaluateCollectionConstraint(domain, constraint, selected)
 		result := PolicyResult{APIVersion: domain.APIVersion, Constraint: constraint.Name, Status: PolicyPassed, Message: message, ConstraintDigest: constraintDigest}
-		result.SubjectDigest, err = digestSelection(selected)
+		result.SubjectDigest, err = digestSelection(g, selected)
 		if err != nil {
 			g.addDiagnostic(Diagnostic{Code: "constraint.digest", Path: domain.Path, Line: domain.Line, Message: fmt.Sprintf("constraint %q selection digest failed: %v", constraint.Name, err)})
 			return
@@ -106,7 +106,7 @@ func (g *Graph) evaluateConstraint(domain DomainDefinition, constraint Constrain
 	}
 	for _, resource := range selected {
 		message := evaluateResourceConstraint(g, domain, constraint, resource)
-		subjectDigest, digestErr := digestResource(resource)
+		subjectDigest, digestErr := digestResource(resource, g.subjectDigestEncodings[resource.GraphKey()])
 		if digestErr != nil {
 			g.addDiagnostic(Diagnostic{Code: "constraint.digest", Path: resource.Path, Package: resource.Package, Line: resource.Line, Message: fmt.Sprintf("constraint %q subject digest failed: %v", constraint.Name, digestErr)})
 			continue
@@ -305,25 +305,20 @@ func outsideBounds(value int, min, max *int) bool {
 	return min != nil && value < *min || max != nil && value > *max
 }
 
-func (g *Graph) applyPolicyExceptions() {
-	if g.Project == nil {
-		return
-	}
-	exceptions := g.Project.Spec.PolicyExceptions
+func (g *Graph) applyPolicyExceptions(exceptions []PolicyException, policyDate string) {
 	if len(exceptions) > maxPolicyExceptions {
-		g.diag(g.Project, "policy.exception.limit", fmt.Sprintf("at most %d policy exceptions are supported", maxPolicyExceptions))
+		g.policyDiagnostic("policy.exception.limit", fmt.Sprintf("at most %d policy exceptions are supported", maxPolicyExceptions))
 		return
 	}
-	policyDate := g.Project.Spec.PolicyDate
 	if policyDate != "" {
 		if _, err := time.Parse("2006-01-02", policyDate); err != nil {
-			g.diag(g.Project, "policy.date", "policyDate must be a valid YYYY-MM-DD date")
+			g.policyDiagnostic("policy.date", "policyDate must be a valid YYYY-MM-DD date")
 			policyDate = ""
 		}
 	}
 	for _, exception := range exceptions {
 		if exception.ExpiresOn != "" && policyDate == "" {
-			g.diag(g.Project, "policy.exception.date-required", fmt.Sprintf("policy exception %q has expiresOn but Project.spec.policyDate is missing or invalid", exception.Name))
+			g.policyDiagnostic("policy.exception.date-required", fmt.Sprintf("policy exception %q has expiresOn but the supplied policy date is missing or invalid", exception.Name))
 		}
 	}
 	nameCounts, targetCounts := map[string]int{}, map[string]int{}
@@ -333,11 +328,11 @@ func (g *Graph) applyPolicyExceptions() {
 	}
 	for index, exception := range exceptions {
 		if nameCounts[exception.Name] > 1 || targetCounts[exceptionTargetKey(exception)] > 1 {
-			g.diag(g.Project, "policy.exception.duplicate", fmt.Sprintf("policy exception %q duplicates a name or target", exception.Name))
+			g.policyDiagnostic("policy.exception.duplicate", fmt.Sprintf("policy exception %q duplicates a name or target", exception.Name))
 			continue
 		}
 		if !validDNS(exception.Name) || !validAPIVersion(exception.APIVersion) || !validIdentifier(exception.Constraint) || exception.Subject == "" || strings.TrimSpace(exception.Rationale) == "" || strings.TrimSpace(exception.Owner) == "" || strings.TrimSpace(exception.Decision) == "" || !validPolicyDigest(exception.ConstraintDigest) || !validPolicyDigest(exception.SubjectDigest) {
-			g.diag(g.Project, "policy.exception.invalid", fmt.Sprintf("policy exception at index %d has invalid or missing required values", index))
+			g.policyDiagnostic("policy.exception.invalid", fmt.Sprintf("policy exception at index %d has invalid or missing required values", index))
 			continue
 		}
 		if exception.ExpiresOn != "" {
@@ -347,56 +342,56 @@ func (g *Graph) applyPolicyExceptions() {
 			expiresOn, err := time.Parse("2006-01-02", exception.ExpiresOn)
 			date, dateErr := time.Parse("2006-01-02", policyDate)
 			if err != nil {
-				g.diag(g.Project, "policy.exception.expiry", fmt.Sprintf("policy exception %q expiresOn must be a valid YYYY-MM-DD date", exception.Name))
+				g.policyDiagnostic("policy.exception.expiry", fmt.Sprintf("policy exception %q expiresOn must be a valid YYYY-MM-DD date", exception.Name))
 				continue
 			}
 			if dateErr != nil || !date.Before(expiresOn) {
-				g.diag(g.Project, "policy.exception.expired", fmt.Sprintf("policy exception %q expired on or before policyDate %s", exception.Name, policyDate))
+				g.policyDiagnostic("policy.exception.expired", fmt.Sprintf("policy exception %q expired on or before policyDate %s", exception.Name, policyDate))
 				continue
 			}
 		}
 		resultIndex := g.policyResultIndex(exception.APIVersion, exception.Constraint, exception.Subject)
 		if resultIndex < 0 {
 			if collectionIndex := g.policyResultIndex(exception.APIVersion, exception.Constraint, ""); collectionIndex >= 0 {
-				g.diag(g.Project, "policy.exception.not-waivable", fmt.Sprintf("policy exception %q targets a collection constraint that cannot be waived", exception.Name))
+				g.policyDiagnostic("policy.exception.not-waivable", fmt.Sprintf("policy exception %q targets a collection constraint that cannot be waived", exception.Name))
 				continue
 			}
 			if domain, constraint, exists := g.findPolicyConstraint(exception.APIVersion, exception.Constraint); exists && g.Resources[exception.Subject] != nil {
 				currentConstraintDigest, constraintErr := digestConstraint(domain, constraint)
 				if constraintErr == nil && exception.ConstraintDigest != currentConstraintDigest {
-					g.diag(g.Project, "policy.exception.stale", fmt.Sprintf("policy exception %q is stale; constraint or subject content changed", exception.Name))
+					g.policyDiagnostic("policy.exception.stale", fmt.Sprintf("policy exception %q is stale; constraint or subject content changed", exception.Name))
 					continue
 				}
 				if g.invalidPolicyPaths[exceptionTargetKey(exception)] {
-					g.diag(g.Project, "policy.exception.not-waivable", fmt.Sprintf("policy exception %q targets a subject with an invalid same-target path", exception.Name))
+					g.policyDiagnostic("policy.exception.not-waivable", fmt.Sprintf("policy exception %q targets a subject with an invalid same-target path", exception.Name))
 					continue
 				}
-				currentSubjectDigest, subjectErr := digestResource(g.Resources[exception.Subject])
+				currentSubjectDigest, subjectErr := digestResource(g.Resources[exception.Subject], g.subjectDigestEncodings[exception.Subject])
 				if constraintErr != nil || subjectErr != nil || exception.ConstraintDigest != currentConstraintDigest || exception.SubjectDigest != currentSubjectDigest {
-					g.diag(g.Project, "policy.exception.stale", fmt.Sprintf("policy exception %q is stale; constraint or subject content changed", exception.Name))
+					g.policyDiagnostic("policy.exception.stale", fmt.Sprintf("policy exception %q is stale; constraint or subject content changed", exception.Name))
 					continue
 				}
-				g.diag(g.Project, "policy.exception.unneeded", fmt.Sprintf("policy exception %q no longer matches a selected subject", exception.Name))
+				g.policyDiagnostic("policy.exception.unneeded", fmt.Sprintf("policy exception %q no longer matches a selected subject", exception.Name))
 				continue
 			}
-			g.diag(g.Project, "policy.exception.unknown", fmt.Sprintf("policy exception %q does not identify a known per-resource constraint and subject", exception.Name))
+			g.policyDiagnostic("policy.exception.unknown", fmt.Sprintf("policy exception %q does not identify a known per-resource constraint and subject", exception.Name))
 			continue
 		}
 		result := &g.PolicyResults[resultIndex]
 		if exception.ConstraintDigest != result.ConstraintDigest || exception.SubjectDigest != result.SubjectDigest {
-			g.diag(g.Project, "policy.exception.stale", fmt.Sprintf("policy exception %q is stale; constraint or subject content changed", exception.Name))
+			g.policyDiagnostic("policy.exception.stale", fmt.Sprintf("policy exception %q is stale; constraint or subject content changed", exception.Name))
 			continue
 		}
 		if result.Subject == "" {
-			g.diag(g.Project, "policy.exception.not-waivable", fmt.Sprintf("policy exception %q targets a collection result that cannot be waived", exception.Name))
+			g.policyDiagnostic("policy.exception.not-waivable", fmt.Sprintf("policy exception %q targets a collection result that cannot be waived", exception.Name))
 			continue
 		}
 		if result.Status == PolicyPassed {
-			g.diag(g.Project, "policy.exception.unneeded", fmt.Sprintf("policy exception %q is no longer needed", exception.Name))
+			g.policyDiagnostic("policy.exception.unneeded", fmt.Sprintf("policy exception %q is no longer needed", exception.Name))
 			continue
 		}
 		if result.Status != PolicyFailed {
-			g.diag(g.Project, "policy.exception.not-waivable", fmt.Sprintf("policy exception %q does not target a failing per-resource result", exception.Name))
+			g.policyDiagnostic("policy.exception.not-waivable", fmt.Sprintf("policy exception %q does not target a failing per-resource result", exception.Name))
 			continue
 		}
 		result.Status = PolicyWaived
@@ -408,6 +403,10 @@ func (g *Graph) applyPolicyExceptions() {
 		result.PolicyDate = policyDate
 		g.removeConstraintDiagnostic(result)
 	}
+}
+
+func (g *Graph) policyDiagnostic(code, message string) {
+	g.addDiagnostic(Diagnostic{Code: code, Message: message})
 }
 
 func (g *Graph) policyResultIndex(apiVersion, constraint, subject string) int {
@@ -463,14 +462,14 @@ func validPolicyDigest(value string) bool {
 	return err == nil && len(decoded) == sha256.Size && hex.EncodeToString(decoded) == encoded
 }
 
-func digestSelection(resources []*Resource) (string, error) {
+func digestSelection(g *Graph, resources []*Resource) (string, error) {
 	type member struct {
 		Subject string `yaml:"subject"`
 		Digest  string `yaml:"digest"`
 	}
 	members := make([]member, 0, len(resources))
 	for _, resource := range resources {
-		digest, err := digestResource(resource)
+		digest, err := digestResource(resource, g.subjectDigestEncodings[resource.GraphKey()])
 		if err != nil {
 			return "", err
 		}
@@ -479,13 +478,23 @@ func digestSelection(resources []*Resource) (string, error) {
 	return digestYAML(members)
 }
 
-func digestResource(resource *Resource) (string, error) {
+func digestResource(resource *Resource, sourceEncoding []byte) (string, error) {
 	if resource == nil {
 		return "", fmt.Errorf("resource is nil")
 	}
-	data, err := yaml.Marshal(resource)
-	if err != nil {
-		return "", err
+	data := sourceEncoding
+	if len(data) == 0 {
+		type normalizedResource struct {
+			APIVersion string         `yaml:"apiVersion"`
+			Kind       string         `yaml:"kind"`
+			Metadata   Metadata       `yaml:"metadata"`
+			Spec       map[string]any `yaml:"spec"`
+		}
+		var err error
+		data, err = yaml.Marshal(normalizedResource{resource.APIVersion, resource.Kind, resource.Metadata, resource.Data})
+		if err != nil {
+			return "", err
+		}
 	}
 	type canonicalSubject struct {
 		Identity string `yaml:"identity"`

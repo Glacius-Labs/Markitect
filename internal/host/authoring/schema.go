@@ -1,4 +1,4 @@
-package format
+package authoring
 
 import (
 	"fmt"
@@ -16,14 +16,14 @@ const schemaDialect = "https://json-schema.org/draft/2020-12/schema"
 // resource kind. The schemas describe structural editing aids; Parse and the
 // graph validator remain responsible for semantic validation.
 func Schemas() (map[string][]byte, error) {
-	return SchemasWithRegistry(core.NewRegistry())
+	return SchemasWithRegistry(NewRegistry())
 }
 
 // SchemasWithRegistry includes editor schemas for the active Project's
 // registered domain kinds and for the Domain descriptor envelope.
 func SchemasWithRegistry(registry *core.Registry) (map[string][]byte, error) {
 	if registry == nil {
-		registry = core.NewRegistry()
+		registry = NewRegistry()
 	}
 	kinds := []string{"Text", "Rule", "Workflow", "Skill", "Agent", "Contract", "Project", "Package"}
 	out := make(map[string][]byte, len(kinds))
@@ -123,7 +123,7 @@ func sortedKeys[V any](m map[string]V) []string {
 }
 
 func adapterArgvSchema() map[string]any {
-	return map[string]any{"type": "array", "minItems": 1, "items": map[string]any{"type": "string"}, "prefixItems": []any{map[string]any{"type": "string", "minLength": 1, "pattern": core.CheckExecutablePattern}}}
+	return map[string]any{"type": "array", "minItems": 1, "items": map[string]any{"type": "string"}, "prefixItems": []any{map[string]any{"type": "string", "minLength": 1, "pattern": CheckExecutablePattern}}}
 }
 
 func resourceSchema(kind string, specFields []string) map[string]any {
@@ -160,7 +160,7 @@ func metadataSchema(kind string) map[string]any {
 }
 
 func filteredSpecSchema(kind string, fields []string) map[string]any {
-	all := reflectSchema(reflect.TypeOf(core.Spec{})).(map[string]any)
+	all := reflectSchema(reflect.TypeOf(Spec{})).(map[string]any)
 	allProperties := all["properties"].(map[string]any)
 	properties := make(map[string]any, len(fields))
 	for _, field := range fields {
@@ -177,7 +177,7 @@ func filteredSpecSchema(kind string, fields []string) map[string]any {
 	if checksShape, ok := properties["checks"].(map[string]any); ok {
 		checkShape := checksShape["items"].(map[string]any)
 		checkProperties := checkShape["properties"].(map[string]any)
-		checkProperties["name"].(map[string]any)["pattern"] = core.CheckNamePattern
+		checkProperties["name"].(map[string]any)["pattern"] = CheckNamePattern
 		runShape := checkProperties["run"].(map[string]any)
 		runShape["minItems"] = 1
 		noNUL := map[string]any{"pattern": `\u0000`}
@@ -188,7 +188,7 @@ func filteredSpecSchema(kind string, fields []string) map[string]any {
 		runShape["prefixItems"] = []any{map[string]any{
 			"minLength": 1,
 			"not":       noNUL,
-			"pattern":   core.CheckExecutablePattern,
+			"pattern":   CheckExecutablePattern,
 			"type":      "string",
 		}}
 	}

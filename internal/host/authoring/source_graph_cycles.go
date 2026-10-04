@@ -1,4 +1,4 @@
-package core
+package authoring
 
 import (
 	"strings"
@@ -54,7 +54,7 @@ func (g *Graph) detectRuntimeCycles() {
 		stack = stack[:len(stack)-1]
 		state[key] = 2
 	}
-	for _, key := range sortedKeys(g.Resources) {
+	for _, key := range sortedResources(g.Resources) {
 		if state[key] == 0 {
 			visit(key)
 		}

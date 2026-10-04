@@ -1,4 +1,4 @@
-package core
+package authoring
 
 import (
 	"fmt"
@@ -13,8 +13,6 @@ const CheckExecutablePattern = `^[^/\\\s]+$`
 var checkNamePattern = regexp.MustCompile(CheckNamePattern)
 var checkExecutablePattern = regexp.MustCompile(CheckExecutablePattern)
 
-// ValidateCheck reports whether a project check has a portable simple name
-// and a valid argv sequence. It deliberately does not interpret shell syntax.
 func ValidateCheck(check Check) error {
 	if !checkNamePattern.MatchString(check.Name) {
 		return fmt.Errorf("name must match %q", CheckNamePattern)

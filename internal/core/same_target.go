@@ -51,7 +51,7 @@ func (g *Graph) evaluateSameTarget(domain DomainDefinition, constraint Constrain
 	}
 	traceResources := append([]*Resource{resource}, leftResources...)
 	traceResources = append(traceResources, rightResources...)
-	subjectDigest, err := digestTargetComparison(resource, traceResources, left, right)
+	subjectDigest, err := g.digestTargetComparison(resource, traceResources, left, right)
 	if err != nil {
 		g.diag(resource, "constraint.digest", fmt.Sprintf("constraint %q path subject digest failed: %v", constraint.Name, err))
 		return PolicyResult{}, false
@@ -174,7 +174,7 @@ func digestSameTargetConstraint(domain DomainDefinition, constraint ConstraintDe
 	return digestYAML(result)
 }
 
-func digestTargetComparison(subject *Resource, resources []*Resource, left, right TargetPath) (string, error) {
+func (g *Graph) digestTargetComparison(subject *Resource, resources []*Resource, left, right TargetPath) (string, error) {
 	type member struct {
 		Identity string `yaml:"identity"`
 		Digest   string `yaml:"digest"`
@@ -187,7 +187,7 @@ func digestTargetComparison(subject *Resource, resources []*Resource, left, righ
 	}
 	members := make([]member, 0, len(unique))
 	for _, key := range sortedKeys(unique) {
-		digest, err := digestResource(unique[key])
+		digest, err := digestResource(unique[key], g.subjectDigestEncodings[key])
 		if err != nil {
 			return "", err
 		}

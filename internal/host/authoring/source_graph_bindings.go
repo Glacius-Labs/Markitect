@@ -1,4 +1,4 @@
-package core
+package authoring
 
 import (
 	"fmt"
@@ -20,7 +20,7 @@ func (g *Graph) resolveBindings() {
 	}
 	// Package-local bindings are fixed by the package and cannot be replaced by
 	// consumer Project bindings.
-	for _, name := range sortedKeys(g.Packages) {
+	for _, name := range sortedResources(g.Packages) {
 		manifest := g.Packages[name]
 		for _, binding := range manifest.Spec.Bindings {
 			g.addBinding(bindings, manifest, binding, name, true)

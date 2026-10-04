@@ -1,8 +1,7 @@
-package format
+package authoring
 
 import (
 	"bytes"
-	"fmt"
 
 	"github.com/Glacius-Labs/Markitect/internal/core"
 	"go.yaml.in/yaml/v3"
@@ -65,12 +64,7 @@ func ParseDomain(filePath string, data []byte) (core.DomainDefinition, error) {
 }
 
 // EncodeDomain serializes the full Domain authoring envelope deterministically.
-func EncodeDomain(domain core.DomainDefinition) ([]byte, error) {
-	if domain.Name == "" {
-		return nil, fmt.Errorf("Domain name is required")
-	}
-	return yaml.Marshal(domain)
-}
+func EncodeDomain(domain core.DomainDefinition) ([]byte, error) { return encodeDomain(domain) }
 
 func parseOne(filePath string, data []byte) (*yaml.Node, error) {
 	dec := yaml.NewDecoder(bytes.NewReader(data))

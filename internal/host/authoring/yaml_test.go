@@ -1,4 +1,4 @@
-package format
+package authoring
 
 import (
 	"reflect"
@@ -8,6 +8,26 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/internal/core"
 )
+
+func TestBuiltinDomainDescriptorPreservesPublishedShape(t *testing.T) {
+	domain, ok := NewRegistry().Domain(core.APIVersion)
+	if !ok {
+		t.Fatal("built-in authoring Domain descriptor is missing")
+	}
+	if len(domain.Kinds) != 6 || len(domain.Relations) != 4 {
+		t.Fatalf("built-in Domain shape changed: kinds=%d relations=%d", len(domain.Kinds), len(domain.Relations))
+	}
+	for kind, definition := range domain.Kinds {
+		if len(definition.Properties) != 4 {
+			t.Fatalf("built-in kind %s descriptor changed: %#v", kind, definition.Properties)
+		}
+		for _, field := range []string{"rules", "uses", "needs", "implements"} {
+			if _, ok := definition.Properties[field]; !ok {
+				t.Fatalf("built-in kind %s lost reference field %s", kind, field)
+			}
+		}
+	}
+}
 
 const validText = `apiVersion: markitect.example.org/v1alpha1
 kind: Text
@@ -136,7 +156,7 @@ spec:
   output: [findings]
   implements: [{name: review}]
 `
-	projectResource, err := Parse("markitect.yaml", []byte(projectYAML))
+	_, err := Parse("markitect.yaml", []byte(projectYAML))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -148,9 +168,17 @@ spec:
 	if err != nil {
 		t.Fatal(err)
 	}
-	g := core.Build([]*core.Resource{projectResource, contract, workflow})
+	resources := []*core.Resource{&contract.Core, &workflow.Core}
+	relationships, diagnostics := core.ResolveTypedRelationships(resources, NewRegistry())
+	if len(diagnostics) != 0 {
+		t.Fatalf("typed relationship resolution produced diagnostics: %#v", diagnostics)
+	}
+	g := core.BuildNormalized(resources, NewRegistry(), relationships, nil, "", nil)
 	if len(g.Diagnostics) != 0 {
-		t.Fatalf("compatible Workflow contract binding produced diagnostics: %#v", g.Diagnostics)
+		t.Fatalf("normalized resources produced diagnostics: %#v", g.Diagnostics)
+	}
+	if len(g.Edges[workflow.Core.GraphKey()]) != 1 {
+		t.Fatalf("generic typed relationship was not compiled: %#v", g.Relationships)
 	}
 }
 
@@ -176,7 +204,7 @@ func TestAllowedSpecFieldsReturnsIndependentSlice(t *testing.T) {
 }
 
 func TestEncodeAcceptsCoreValue(t *testing.T) {
-	b, err := Encode(core.Resource{APIVersion: core.APIVersion, Kind: "Text", Metadata: core.Metadata{Name: "text"}, Spec: core.Spec{Text: "body"}})
+	b, err := Encode(Resource{Core: core.Resource{APIVersion: core.APIVersion, Kind: "Text", Metadata: core.Metadata{Name: "text"}}, Spec: Spec{Text: "body"}})
 	if err != nil {
 		t.Fatal(err)
 	}
