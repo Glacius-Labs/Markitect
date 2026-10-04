@@ -2,7 +2,7 @@
   "schema": "markitect-clean-architecture-validation/v1",
   "startingCommit": "e116e5c16d63546260a2155e80d8965da72ba30b",
   "productionCommit": "c63a1e6d1e7859fed5e95ca415eb71abf0c6af95",
-  "classification": "local technical validation, not CI, release or adopter acceptance",
+  "classification": "technical validation; local runs and GitHub CI recorded separately; no release or adopter acceptance",
   "windows": {
     "platform": "windows/amd64",
     "toolchain": "go1.27.1",
@@ -82,11 +82,36 @@
     "independentAutomatedReview": "no remaining blocker; not human acceptance"
   },
   "integration": {
-    "push": "not performed",
-    "pullRequest": "not created",
-    "merge": "not performed",
-    "githubWindowsLinuxCI": "pending",
-    "blocker": "destination-specific export authorization requested after automatic approval rejection",
+    "pullRequest": "https://github.com/Glacius-Labs/Markitect/pull/77",
+    "push": "performed under direct user authorization",
+    "productionCodeUnchangedAfter": "c63a1e6d1e7859fed5e95ca415eb71abf0c6af95",
+    "verifiedCandidate": {
+      "head": "a81f6bf89228905d0c6d6ea2f669d69bf62764ff",
+      "base": "e116e5c16d63546260a2155e80d8965da72ba30b",
+      "checkout": "9245b6e045219be60a0fad8bf58553fcac19a138",
+      "checkoutMeaning": "GitHub pull_request synthetic merge revision, distinct from the PR head",
+      "runID": 37199863935,
+      "runURL": "https://github.com/Glacius-Labs/Markitect/actions/runs/37199863935",
+      "status": "passed",
+      "jobs": [
+        {
+          "id": 111429152685,
+          "name": "Quality (ubuntu-24.04)",
+          "status": "success",
+          "url": "https://github.com/Glacius-Labs/Markitect/actions/runs/37199863935/job/111429152685",
+          "completedAt": "2026-10-04T11:48:00Z"
+        },
+        {
+          "id": 111429152936,
+          "name": "Quality (windows-latest)",
+          "status": "success",
+          "url": "https://github.com/Glacius-Labs/Markitect/actions/runs/37199863935/job/111429152936",
+          "completedAt": "2026-10-04T11:55:59Z"
+        }
+      ]
+    },
+    "finalDocumentationUpdate": "must pass exact-head CI before merge; PR records final head and merge identity",
+    "blocker": null,
     "release": "none; v0.13.0 remains immutable"
   },
   "konfyra": {

@@ -1,6 +1,6 @@
 # Clean architecture consolidation validation
 
-Date: 2026-10-04. Starting main: `e116e5c16d63546260a2155e80d8965da72ba30b`. Production-code checkpoint: `c63a1e6d1e7859fed5e95ca415eb71abf0c6af95`; the earlier `621f1a722880cf5b9d403b5753f5ac9152e16358` checkpoint binds the compatibility replay below. Integration remains pending the gate recorded under Integration status; no merged commit is claimed. The published [v0.13.0](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.13.0), source `ec312e35c15012c07acb6838c03e9316c5373dde`, remains immutable. No new release is published by this consolidation.
+Date: 2026-10-04. Starting main: `e116e5c16d63546260a2155e80d8965da72ba30b`. Production-code checkpoint: `c63a1e6d1e7859fed5e95ca415eb71abf0c6af95`; the earlier `621f1a722880cf5b9d403b5753f5ac9152e16358` checkpoint binds the compatibility replay below. PR #77 owns exact-head CI and integration identity; its verified initial receipt is recorded under Integration status. The published [v0.13.0](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.13.0), source `ec312e35c15012c07acb6838c03e9316c5373dde`, remains immutable. No new release is published by this consolidation.
 
 [Vision](../vision.md) owns product intent; [Architecture](../architecture.md#go-ownership-and-final-dependency-model) and the [Module guide](../development/modules.md) describe the final design. The [frozen decision](../design/clean-architecture-consolidation.md) and [baseline inventory](clean-architecture-baseline.json) preceded significant production moves at `11bcf9e`. Independent contract/import reviews examined that checkpoint before isolated implementation streams began. This report describes the migration and measured limits, rather than another product vision.
 
@@ -120,13 +120,15 @@ The root Project now explicitly configures architecture-imports, module-checks, 
 
 An isolated real clone of `fcd7765` first passed the actual import and artifact checkers. Added source patches then produced exactly three illegal imports at line 3: Core→githooks, githooks→pipelines, pipelines→Host. The checker exited 1 with exact edges. An untracked `.markitect/unowned-proof.txt` produced `unmanaged` and exit 1. Root was not changed by those probes. Unit negatives also cover CLI bypass, Host→CLI, platform/test files, unknown stdlib-only packages, self imports, fixture privilege and bootstrap imports. Go compilation additionally rejects cycles.
 
-Windows source tests, vet, build, module verification, executable examples and package/bootstrap smoke passed locally. The new source archive runs standalone bootstrap tests, version, authoring, notices and example checks. The historical bootstrap supports both old main.version and new Host-version symbols deliberately; immutable old release meaning is preserved. Windows/Linux CI remains mandatory for the exact integrated candidate; their commit-bound receipts require an authorized push and pull request. No automated test or review substitutes for adopter/human acceptance.
+Windows source tests, vet, build, module verification, executable examples and package/bootstrap smoke passed locally. The new source archive runs standalone bootstrap tests, version, authoring, notices and example checks. The historical bootstrap supports both old main.version and new Host-version symbols deliberately; immutable old release meaning is preserved. Windows/Linux CI remains mandatory for the exact integrated candidate; the verified PR receipt and final-head integration requirement are recorded below. No automated test or review substitutes for adopter/human acceptance.
 
 The final gate review found and closed a test-first file-order bypass: a standard-library-only production file could previously hide behind an earlier test file's package classification. `Inspect` now classifies every Go file; a lexical-order negative fixture proves refusal. Two duplicated identical CI import-check steps were removed while preserving the first mandatory step and updating the explicitly owned pipeline byte digest. The review also closed the external-import gap: current generic encoder `go.yaml.in/yaml/v3` is explicitly approved, and a provider SDK negative fixture proves any unapproved Core external import fails. These Tooling changes changed no Core semantics or compatibility outputs.
 
 ## Integration status
 
-This remains a local source candidate. Destination-specific authorization for pushing the payload and creating a pull request is pending; no push, pull request or merge has occurred. Exact-head GitHub Windows/Linux CI and post-merge main verification remain required. Local Linux gates recorded here are not a substitute for those integration receipts.
+The consolidation is reviewed in [PR #77](https://github.com/Glacius-Labs/Markitect/pull/77). The first full [Windows/Linux CI run](https://github.com/Glacius-Labs/Markitect/actions/runs/37199863935) passed for PR head `a81f6bf89228905d0c6d6ea2f669d69bf62764ff`, base `e116e5c16d63546260a2155e80d8965da72ba30b`, and checkout `9245b6e045219be60a0fad8bf58553fcac19a138`. The checkout is GitHub's synthetic pull-request merge revision; it is recorded separately from the original head. Linux job `111429152685` and Windows job `111429152936` both completed successfully.
+
+The final receipt/navigation update changes no Go code, schema, package version, checks or pipeline configuration. It corrects the moved workflow links in the current AGENTS/guide/roadmap entrypoints; historical release links remain commit-pinned. Exact-head CI must pass again for that update before merge. PR #77 owns the final check, merge identity and post-merge main-run references, avoiding a self-referential commit hash in this report. User authorization resolved the earlier export gate; release publication and adopter acceptance remain separate.
 
 Windows fixed-snapshot `verify` at `c63a1e6` passed all four Project-declared checks (architecture, artifact coverage, modules and the complete Go suite). Vet/build/schema/format and working-tree projection checks also passed. [The sanitized gate receipt](clean-architecture-gates.json) records exact source, archive/image and raw-output digests without private adopter evidence.
 
@@ -146,7 +148,7 @@ The three next priorities are: (1) exact-owner dispositions and accepted-only sh
 
 | Requested completion item | Evidence / conclusion |
 |---|---|
-| 1. Starting/ending commits | Starting e116e5c; production checkpoint c63a1e6; source head remains local; integration/CI are pending. |
+| 1. Starting/ending commits | Starting e116e5c; production checkpoint c63a1e6; PR #77 records final head/merge; first exact-head CI a81f6bf passed. |
 | 2–6. Architecture, Core, Host, Modules, Infrastructure/Tooling | Diagram, ownership audit and nine-Module table above; bootstrap is Tooling, not Harness. |
 | 7–11. Moves/deletions, debt, Core decisions, IR | Ownership audit and integration findings above; Core Data/IR is the sole normalized semantic contract. |
 | 12. Core metrics | Explicit before/root/combined counts and complete inventory above. |
@@ -157,7 +159,7 @@ The three next priorities are: (1) exact-owner dispositions and accepted-only sh
 | 26–27. Dogfood/fresh replay | Root generated convergence and check/context/coverage/module checks; fresh navigation/context establishes discoverability. |
 | 28. Remaining smells | Host source-bag size, caller validation precondition and private link-code duplication; no forbidden dependency remains. |
 | 29. Compatibility | No Domain/schema/SPI changes; intentional internal API/package moves; source-only module checker; immutable releases preserved. |
-| 30. Full gate status | Local source/package gates passed; GitHub Windows/Linux CI remains pending destination authorization. |
+| 30. Full gate status | Local and first GitHub Windows/Linux gates passed; final receipt-update head must pass again before merge. |
 | 31. Release/candidate | Source candidate only; no new release/tag/assets/publication. |
 | 32. Konfyra | Existing approved capture/4 candidates validated, owner review/adoption still pending. |
 | 33. Next 3 | Owner dispositions/shadow diff; matched upkeep/task measurement; separate immutable release decision. |
