@@ -47,6 +47,8 @@ markitect prepare --scope C:/review/scope.yaml --output C:/review/capture-1 --wr
 
 The destination is an absent absolute directory whose parent exists, outside every selected repository and its Git metadata. Preview writes nothing. Write recomputes the capture, checks the exact digest, and creates the directory/files exclusively. It persists `handoff.yaml` and selected bytes under `evidence/<repository-id>/<exact-path>`. Partial creation is reported without rollback; reruns refuse an existing workspace. Access and retention are owner responsibilities; Windows ACLs are not set by this command.
 
+Selected Git objects must already be available locally. Preparation blocks remote transports and automatic lazy fetching, so a partial clone with missing evidence is refused instead of silently downloading objects into the source repository.
+
 Prepare separate candidate files and one `copy-me-queue/v1alpha1` YAML with evidence entries, `candidates: [{stableID, path, digest}]`, preserved coverage IDs/repositories/questions and optional requests. Coverage state/reason may advance as an interpretive claim; the report retains original preparation coverage as well. Candidate paths are literal relative paths beneath the queue directory; hashes bind raw candidate-file bytes. The [executable fixture](../examples/selective-adoption/README.md) provides complete queue, candidate and decision examples and a runnable lifecycle.
 
 ```powershell

@@ -2,9 +2,16 @@ package source
 
 import (
 	"bytes"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
+	"fmt"
+	"net/url"
+	"os"
 	"os/exec"
 	"path/filepath"
+	"reflect"
+	"sort"
 	"strings"
 	"testing"
 )
@@ -166,6 +173,145 @@ func TestLoadSelectedVerifiesReturnedBlobBytesAgainstOID(t *testing.T) {
 	if err == nil || !strings.Contains(err.Error(), "hash mismatch") {
 		t.Fatalf("error = %v, want blob hash mismatch", err)
 	}
+}
+
+func TestLoadSelectedDoesNotFetchPromisorObjectsOrMutateRepository(t *testing.T) {
+	root, commit := partialCloneFixture(t)
+	selectedOID := strings.TrimSpace(gitTest(t, root, "rev-parse", commit+":selected.txt"))
+	unselectedOID := strings.TrimSpace(gitTest(t, root, "rev-parse", commit+":unselected.txt"))
+	if selectedOID == unselectedOID {
+		t.Fatal("fixture selected and unselected blob IDs unexpectedly match")
+	}
+	missingBefore := gitTest(t, root, "rev-list", "--objects", "--missing=print", commit)
+	if !strings.Contains(missingBefore, "?"+selectedOID) || !strings.Contains(missingBefore, "?"+unselectedOID) {
+		t.Fatalf("fixture blobs were not both absent before acquisition: %q", missingBefore)
+	}
+	stateBefore := partialGitState(t, root)
+
+	// GIT_ALLOW_PROTOCOL must independently protect older Git builds which do
+	// not recognize GIT_NO_LAZY_FETCH. Simulate that behavior by omitting the
+	// latter variable while asking cat-file for the missing selected blob.
+	fallbackEnv := CleanGitEnv()
+	fallbackEnv = append(fallbackEnv, "GIT_ALLOW_PROTOCOL=")
+	fallback := gitCommandWithEnv(root, fallbackEnv, "cat-file", "--batch")
+	fallback.Stdin = strings.NewReader(selectedOID + "\n")
+	fallbackOutput, fallbackErr := fallback.CombinedOutput()
+	if fallbackErr == nil || !strings.Contains(string(fallbackOutput), "transport 'file' not allowed") {
+		t.Fatalf("empty-protocol fallback output = %q, error = %v", fallbackOutput, fallbackErr)
+	}
+	if afterFallback := partialGitState(t, root); !reflect.DeepEqual(afterFallback, stateBefore) {
+		t.Fatalf("empty GIT_ALLOW_PROTOCOL changed repository state: before=%v after=%v", stateBefore, afterFallback)
+	}
+
+	_, err := LoadSelected(root, commit, []string{"selected.txt"})
+	if err == nil || !strings.Contains(err.Error(), "selected.txt") {
+		t.Fatalf("selected missing promisor blob error = %v, want safe missing-object failure", err)
+	}
+	if stateAfter := partialGitState(t, root); !reflect.DeepEqual(stateAfter, stateBefore) {
+		t.Fatalf("LoadSelected changed repository state: before=%v after=%v", stateBefore, stateAfter)
+	}
+	missingAfter := gitTest(t, root, "rev-list", "--objects", "--missing=print", commit)
+	if !strings.Contains(missingAfter, "?"+selectedOID) || !strings.Contains(missingAfter, "?"+unselectedOID) {
+		t.Fatalf("selected or unselected promisor blob was fetched: %q", missingAfter)
+	}
+}
+
+func TestSelectiveGitEnvironmentDisablesLazyFetchAndWrites(t *testing.T) {
+	values := make(map[string]string)
+	for _, entry := range selectiveGitEnvironment() {
+		key, value, ok := strings.Cut(entry, "=")
+		if ok {
+			values[key] = value
+		}
+	}
+	for key, want := range map[string]string{
+		"GIT_NO_LAZY_FETCH":   "1",
+		"GIT_ALLOW_PROTOCOL":  "",
+		"GIT_OPTIONAL_LOCKS":  "0",
+		"GIT_TERMINAL_PROMPT": "0",
+	} {
+		if got, ok := values[key]; !ok || got != want {
+			t.Errorf("selective environment %s = %q (present %v), want %q", key, got, ok, want)
+		}
+	}
+}
+
+func partialCloneFixture(t *testing.T) (string, string) {
+	t.Helper()
+	base := t.TempDir()
+	source := filepath.Join(base, "source")
+	remote := filepath.Join(base, "remote.git")
+	partial := filepath.Join(base, "partial")
+	if err := os.Mkdir(source, 0755); err != nil {
+		t.Fatal(err)
+	}
+	gitTest(t, source, "init", "-q", "-b", "main")
+	gitTest(t, source, "config", "user.email", "promisor-test@example.invalid")
+	gitTest(t, source, "config", "user.name", "Promisor Test")
+	writeTestFile(t, source, "selected.txt", "selected blob")
+	writeTestFile(t, source, "unselected.txt", "unselected blob")
+	gitTest(t, source, "add", "selected.txt", "unselected.txt")
+	gitTest(t, source, "commit", "-qm", "promisor source")
+	gitTest(t, base, "init", "--bare", "-q", "--initial-branch=main", remote)
+	gitTest(t, remote, "config", "uploadpack.allowFilter", "true")
+	gitTest(t, source, "remote", "add", "origin", localGitURL(remote))
+	gitTest(t, source, "push", "-q", "origin", "main")
+	gitTest(t, remote, "symbolic-ref", "HEAD", "refs/heads/main")
+	gitTest(t, source, "-c", "protocol.file.allow=always", "clone", "--quiet", "--filter=blob:none", "--no-checkout", "--branch", "main", localGitURL(remote), partial)
+	commit := strings.TrimSpace(gitTest(t, partial, "rev-parse", "HEAD"))
+	config := gitTest(t, partial, "config", "--get-regexp", "remote\\.origin\\.promisor|remote\\.origin\\.partialclonefilter")
+	if !strings.Contains(config, "remote.origin.promisor true") || !strings.Contains(config, "remote.origin.partialclonefilter blob:none") {
+		t.Fatalf("partial clone promisor config = %q", config)
+	}
+	return partial, commit
+}
+
+func localGitURL(path string) string {
+	gitPath := filepath.ToSlash(path)
+	if filepath.VolumeName(path) != "" && !strings.HasPrefix(gitPath, "/") {
+		gitPath = "/" + gitPath
+	}
+	return (&url.URL{Scheme: "file", Path: gitPath}).String()
+}
+
+func partialGitState(t *testing.T, root string) map[string]string {
+	t.Helper()
+	state := make(map[string]string)
+	gitDir := filepath.Join(root, ".git")
+	for _, name := range []string{"config", "index", "FETCH_HEAD"} {
+		path := filepath.Join(gitDir, name)
+		data, err := os.ReadFile(path)
+		if errors.Is(err, os.ErrNotExist) {
+			state[name] = "<absent>"
+			continue
+		}
+		if err != nil {
+			t.Fatal(err)
+		}
+		digest := sha256.Sum256(data)
+		state[name] = hex.EncodeToString(digest[:])
+	}
+	packDir := filepath.Join(gitDir, "objects", "pack")
+	entries, err := os.ReadDir(packDir)
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
+		t.Fatal(err)
+	}
+	var names []string
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+		names = append(names, entry.Name())
+		data, err := os.ReadFile(filepath.Join(packDir, entry.Name()))
+		if err != nil {
+			t.Fatal(err)
+		}
+		digest := sha256.Sum256(data)
+		state["pack:"+entry.Name()] = hex.EncodeToString(digest[:])
+	}
+	sort.Strings(names)
+	state["packFiles"] = fmt.Sprint(names)
+	return state
 }
 
 func TestIdentifyGitRejectsNestedRootAndIdentifiesWorktree(t *testing.T) {

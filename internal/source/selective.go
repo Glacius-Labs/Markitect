@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"sort"
 	"strconv"
@@ -37,7 +38,7 @@ type SelectedSnapshot struct {
 // IdentifyGit requires root to be the real top-level directory of a Git
 // repository and returns its canonical worktree and Git-directory identity.
 func IdentifyGit(root string) (GitIdentity, error) {
-	identity, _, err := identifyGit(root, GitOutput)
+	identity, _, err := identifyGit(root, selectiveGitOutput)
 	return identity, err
 }
 
@@ -45,7 +46,7 @@ func IdentifyGit(root string) (GitIdentity, error) {
 // lowercase commit ID. All requested paths are validated before Git is
 // queried, and all metadata is checked before any blob content is read.
 func LoadSelected(root, fullCommit string, paths []string) (*SelectedSnapshot, error) {
-	return loadSelected(root, fullCommit, paths, GitOutput, readSelectedBlobs)
+	return loadSelected(root, fullCommit, paths, selectiveGitOutput, readSelectedBlobs)
 }
 
 type gitOutputFunc func(root string, args ...string) ([]byte, error)
@@ -326,8 +327,14 @@ func parseSelectedTreeEntries(output []byte) ([]selectedTreeEntry, error) {
 		}
 		entry := selectedTreeEntry{treeFile: treeFile{path: string(name), mode: fields[0], oid: fields[2]}, kind: fields[1]}
 		if fields[1] == "blob" {
+			if fields[3] == "-" {
+				return nil, fmt.Errorf("Git blob object is unavailable locally for %q", entry.path)
+			}
 			size, err := strconv.ParseInt(fields[3], 10, 64)
-			if err != nil || size < 0 {
+			if err != nil {
+				return nil, fmt.Errorf("Git blob size is unavailable locally for %q", entry.path)
+			}
+			if size < 0 {
 				return nil, fmt.Errorf("invalid Git blob size for %q", entry.path)
 			}
 			entry.size = size
@@ -341,10 +348,32 @@ func parseSelectedTreeEntries(output []byte) ([]selectedTreeEntry, error) {
 
 func readSelectedBlobs(root string, files []treeFile) (map[string][]byte, error) {
 	loaded := &snapshot.Snapshot{Files: make(map[string][]byte, len(files)), Modes: make(map[string]string, len(files))}
-	if err := loadBlobs(root, files, loaded); err != nil {
+	if err := loadBlobsWithCommand(root, files, loaded, selectiveGitCommand); err != nil {
 		return nil, err
 	}
 	return loaded.Files, nil
+}
+
+func selectiveGitEnvironment() []string {
+	env := CleanGitEnv()
+	return append(env, "GIT_NO_LAZY_FETCH=1", "GIT_ALLOW_PROTOCOL=", "GIT_OPTIONAL_LOCKS=0", "GIT_TERMINAL_PROMPT=0")
+}
+
+func selectiveGitCommand(root string, args ...string) *exec.Cmd {
+	return gitCommandWithEnv(root, selectiveGitEnvironment(), args...)
+}
+
+func selectiveGitOutput(root string, args ...string) ([]byte, error) {
+	cmd := selectiveGitCommand(root, args...)
+	out, err := cmd.Output()
+	if err == nil {
+		return out, nil
+	}
+	var exitErr *exec.ExitError
+	if errors.As(err, &exitErr) {
+		return nil, fmt.Errorf("%w: %s", err, strings.TrimSpace(string(exitErr.Stderr)))
+	}
+	return nil, err
 }
 
 func confirmGitIdentity(before GitIdentity, beforeStats gitIdentityStats, run gitOutputFunc) error {
