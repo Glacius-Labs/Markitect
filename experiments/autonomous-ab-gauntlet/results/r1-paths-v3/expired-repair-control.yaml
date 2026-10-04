@@ -1,0 +1,42 @@
+schema: autonomous-ab-controller-deviation/v1
+freeze_digest: 4faee78795986559e91a0e233bd7321a9cf48526d331edba621ca98eee11638a
+run_id: engineering-ops-a-t02
+task_id: "02"
+disposition: expired-unresolved; chain cannot continue through the frozen API
+observed:
+  prepared_utc: "2026-10-04T22:42:25Z"
+  deadline_utc: "2026-10-04T23:12:25Z"
+  initial_turn_completed_utc: "2026-10-04T23:03:27Z"
+  initial_status: repair-needed
+  first_repair_started_utc: "2026-10-04T23:03:56Z"
+  first_repair_completed_utc: "2026-10-04T23:11:59Z"
+  first_repair_status: repair-needed
+  public_failure: "main_test.go:15:3: expected statement, found '.'"
+  second_repair_preparation: refused; no second-repair envelope or actor created
+  second_repair_refusal: "gauntlet: task wall-clock deadline expired before repair actor start"
+  next_task_preparation: one normal task03 preparation attempted; refused
+  next_task_refusal: "gauntlet: task 02 is still in progress"
+frozen_api_assessment:
+  finish_task: writes every attempt response exclusively; a finished repair-needed attempt cannot be re-finished
+  prepare_task: refuses expired repair starts and requires prior task-level completion
+  explicit_terminalization_operation: none exposed
+  consequence: An expired repair-needed state can leave a usable workspace without a supported final capture or continuation.
+preservation:
+  native_record: runs/engineering-ops-a-t02/02.native.yaml
+  public_helper_records: raw/engineering-ops-a-t02/02/helper-attempt-0.jsonl and helper-attempt-1.jsonl
+  operator_journal: raw/operator-engineering-ops.jsonl
+  rewritten_attempts_or_responses: false
+  fabricated_repair_or_completion: false
+  deadline_reset: false
+  coordinator_semantic_repair: false
+measurement:
+  task02: incomplete; actual public failures retained
+  task03_through_task08: unavailable in this arm/trial because the frozen runtime cannot advance
+  final_semantic_snapshot: unavailable; do not substitute a pre-validation helper capture and call it a terminal snapshot
+  actor_trials_repeated: false
+classification:
+  owner: benchmark orchestration
+  markitect_product_defect_proven: false
+  core_language_change_required: false
+  fix_during_frozen_run: prohibited
+  future_action: Add a separately versioned explicit timeout-terminalization contract before a future benchmark freeze.

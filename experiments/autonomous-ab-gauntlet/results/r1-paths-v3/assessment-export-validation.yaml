@@ -1,0 +1,45 @@
+schema: autonomous-ab-assessment-export-validation/v1
+freeze_digest: 4faee78795986559e91a0e233bd7321a9cf48526d331edba621ca98eee11638a
+product_change: none
+tool:
+  disposition: ignored one-off measurement tool; not a product command or frozen actor tool
+  source_sha256: a3c2ebcc43d8b6268d01eab4598ea8a0ed26a9d0692996ebba38ff026bed6880
+  tests_sha256: 200c298f301fc02cf2664181ac133408541ca4ac2375ed395cd234b17fed3bbe
+  binary_sha256: 275723dfe9a88c9238301a12fb7527bfa63d11d95ea9b848cbeb1a6af05c07bf
+  focused_tests: twelve passed
+  vet_and_build: passed
+review_corrections:
+  - Assessment evaluate writes task.evaluation.yaml for either phase; the before-repair suffix belongs only to the original-arena export.
+  - The frozen evaluate processed-count is defective for native records; exact bound result files and actual invocation evidence are used instead.
+  - Actual completed log footers are preserved; no log is rewritten to satisfy a test fixture.
+  - Equivalent resolved arena path spellings are accepted while a substituted executable identity is refused.
+  - Copied .NET build outputs may differ only under the four frozen build-output roots; original captured bytes remain exact.
+actual_refusals_before_output_creation:
+  - A01 export initially refused a copied .git/index byte difference introduced during assessment; no result was written.
+  - The next attempt refused Git repository discovery across different Windows principals; no global trust configuration was changed and no result was written.
+final_git_boundary:
+  invocation: git --no-optional-locks --git-dir=EXACT_CAPTURED_DOT_GIT --work-tree=EXACT_CAPTURED_WORKSPACE ls-files --stage -z
+  original: Every captured original file byte remains bound to the full staging ledger.
+  copied_index: Byte difference allowed only when exact staged-entry outputs are identical; both index hashes and staged-entry digest are recorded.
+  other_copied_git_files: must remain byte-identical
+  global_git_trust_or_config_mutation: false
+exports_completed_at_this_checkpoint:
+  sequential_final_records: 32
+  sequential_before_repair_records: 32
+  ops_a_parallel_final_records: 3
+  total: 67
+  original_service_comparison_eligibility: excluded by exact paired oracle control record
+  original_ddd_comparison_eligibility: excluded by exact paired controller control record
+provenance:
+  raw_evaluator_bytes: unchanged
+  creation: exclusive; existing outputs refused
+  source_capture: exact native, tree, full original file ledger, phase response and freeze identities
+  before_repair: exact initial helper event and snapshot, not reconstructed from final state
+  a01_final_and_ops_a_parallel: actual structured invocation references
+  other_sequential_records: hashed actual completed batch logs; no authenticated per-task process-attestation claim
+  location: "<external-parent>/r1-paths-v3/raw/<run>/<task>.<phase>.evaluation-export.yaml"
+limits:
+  - Export consistency does not authenticate a process, reviewer or semantic truth.
+  - The copied assessment may contain explicitly recorded build/index artifacts; the original actor captures remain unchanged.
+  - A successful evaluator process exit does not imply passing evaluator checks.
+  - No raw result is changed to rescue a failed or excluded actor.

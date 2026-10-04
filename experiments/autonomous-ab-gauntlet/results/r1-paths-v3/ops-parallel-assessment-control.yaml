@@ -1,0 +1,63 @@
+schema: autonomous-ab-assessment-control/v1
+freeze_digest: 4faee78795986559e91a0e233bd7321a9cf48526d331edba621ca98eee11638a
+product_or_actor_rerun: false
+scope: engineering-ops trial 1 B parallel forks and integration
+preserved_unsuitable_assessments:
+  - arenas: [r1-paths-v3-assessment-final, r1-paths-v3-assessment-before-owner]
+    records: four new B parallel/integration assessments
+    reason: Copied Git metadata was created by a different Windows principal; the evaluator could not resolve the declared base revision.
+    disposition: retained; not exported into the actor arena
+  - arenas: [r1-paths-v3-assessment-ops-b-parallel-owner, r1-paths-v3-assessment-ops-b-parallel-before-owner]
+    records: four new B parallel/integration assessments
+    reason: The explicit read-only Git index check refused the copied Git-directory path as too long.
+    observed_source_git_directory_characters: 196
+    observed_copy_git_directory_characters: 228
+    git_error: "fatal: '$GIT_DIR' too big"
+    disposition: retained; not exported into the actor arena
+accepted_assessment_copies:
+  final_arena: obpf
+  before_repair_arena: obpb
+  creation: exclusive, under the intended Windows principal, with shorter external paths
+  frozen_inputs: 304 exact unchanged inputs per copy
+  actor_snapshots: unchanged; full original file ledgers verified
+  evaluation: frozen harness; actual fresh invocation/log/result hash records
+  exports:
+    - engineering-ops-b-t01-parallel-P01/P01 final
+    - engineering-ops-b-t01-parallel-P02/P02 final
+    - engineering-ops-b-t01-integration/08 final
+    - engineering-ops-b-t01-integration/08 before-repair
+exporter_correction:
+  reason: The mechanical initial integration has no actor response; a later repair response must not be bound to its snapshot.
+  scope: ignored post-run measurement tool only
+  source_sha256: 35d6a5dc8e8ac26c9f02297c3643dceccd4e2935db3aa54b157c84bb062a5270
+  tests_sha256: 19e3353bee687d4678f474e2fa74f70c07058b5994fc9aa5f1c9530d83204b96
+  binary_sha256: 159f296f82abb4b5278f0e516cb54e110d59c7e4fdd9f346dd12b91aa1f45a1d
+  focused_tests: thirteen passed
+  vet_and_build: passed
+  previous_exports_rewritten: false
+integration_findings:
+  final_evaluator_status: failed
+  initial_evaluator_status: failed
+  applied_parallel_commits: 0
+  final_changed_paths:
+    - .agents/skills/engineering-operations/SKILL.md
+    - .claude/skills/engineering-operations/SKILL.md
+  failures:
+    - cumulative-vet-gates
+    - lease-renewal-runbook
+    - b7-guidance-and-gates
+    - task-validator
+    - fixed-markitect-check
+    - fixed-markitect-render
+  interpretation: Mechanical integration and attempted projection repair did not implement the two parallel tasks.
+export_checkpoint:
+  sequential_final: 32
+  sequential_before_repair: 32
+  ops_parallel_final: 6
+  ops_integration_before_repair: 1
+  total: 71
+  excluded_original_service_pair: remains excluded; raw exports do not restore comparison eligibility
+limits:
+  - These are fixed-snapshot assessment retries for account/path mechanics, not fresh actor trials or changed oracles.
+  - Supplied invocation consistency and file hashes do not authenticate a reviewer or prove semantic truth.
+  - The longer-path copies remain available as negative tooling evidence.

@@ -1,0 +1,52 @@
+schema: autonomous-ab-freeze-review/v1
+protocol: longitudinal-gauntlet-r1-service-oracle-v1
+freeze_digest: cc6124d1bd179f0824cde31947b929412562d2991879474ba2d02e855f4062f7
+created_utc: "2026-10-04T22:42:55Z"
+frozen_inputs: 308
+benchmark_source_commit: 888f0023c4d997659f6d6f8000d64bd01faf2bda
+predecessor_freeze: 4faee78795986559e91a0e233bd7321a9cf48526d331edba621ca98eee11638a
+predecessor_inputs: 304
+unchanged_predecessor_input_hashes: 301
+changed_predecessor_inputs:
+  - protocol.yaml
+  - projects/modular-service/oracle/evaluate.ps1
+  - projects/modular-service/oracle/vectors/task02_test.go.txt
+added_inputs:
+  - benchmark-revision.yaml
+  - benchmark-revision-ci.json
+  - benchmark-oracle-contract_test.go
+  - benchmark-oracle-correction.md
+product:
+  source_commit: adef79d935399f8ac63ad874dbdeab8d15c418a1
+  binary_sha256: 553b7077ce7b5db2df89567146fc1a877a03cb6edd75459be5a3e0a380676056
+  semantic_change: none
+harness:
+  source_commit: af2f2d7369e2b86a89b735a34e62bda0d2a5a4ae
+  binary_sha256: 0fa0d12f29aa7746f1e74c6435fec08b63324919f1d01d7eb4046103be4d2ec1
+  source_or_runtime_change: none
+quality_gates:
+  source_commit: 888f0023c4d997659f6d6f8000d64bd01faf2bda
+  run_id: 37239870919
+  url: https://github.com/Glacius-Labs/Markitect/actions/runs/37239870919
+  windows: success
+  ubuntu_24_04: success
+  main_artifact_publication: skipped
+  oracle_contract: CI refuses to skip the eighteen PowerShell ownership-table cases when pwsh is missing.
+cohort:
+  projects: [modular-service]
+  trials_per_arm: 3
+  development_task_ids: ["01", "02", "03", "04", "05", "06", "07", "08"]
+  trial_dispatch_order: [A-first, B-first, A-first]
+  parallel_trial: 1
+  holdout: sealed until development assessment and explicit fix/no-fix decision
+  seed_or_task_intent_or_model_or_effort_or_budget_change: none
+  rescore_predecessor_pair_for_comparison: false
+evidence:
+  predecessor_bytes: "<external-parent>/r1-service-oracle-v1/raw/predecessor-inputs/"
+  corrected_manifest: "<external-parent>/r1-service-oracle-v1/freeze.yaml"
+  gate_receipt: "<external-parent>/r1-service-oracle-v1/benchmark-revision-ci.json"
+limits:
+  - A measurement-oracle correction is not a product improvement.
+  - Instruction isolation is requested; hard native process/context isolation is not established.
+  - Future outcomes remain unavailable until actual actor and evaluator records exist.
+  - No release publication or Konfyra adoption is authorized by this record.
