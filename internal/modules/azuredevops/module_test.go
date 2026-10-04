@@ -58,6 +58,63 @@ func TestMappingsAndActionsFailClosed(t *testing.T) {
 	if got := Run(req); got.Status != "incomplete" || !hasFinding(got, "capture-file-invalid") {
 		t.Fatalf("missing bytes = %#v", got)
 	}
+	req = validRequest("observe", `refs/heads/main`)
+	req.Adapter.Target = "azure-devops://other-org/" + projectID
+	if got := Run(req); got.Status != "failed" || !hasFinding(got, "target-identity-mismatch") {
+		t.Fatalf("wrong target = %#v", got)
+	}
+	req = validRequest("observe", `refs/heads/main`)
+	req.Config.Repositories = append(req.Config.Repositories, req.Config.Repositories[0])
+	if got := Run(req); got.Status != "incomplete" || !hasFinding(got, "repository-mapping-ambiguous") {
+		t.Fatalf("duplicate mapping = %#v", got)
+	}
+	req = validRequest("observe", `refs/heads/main`)
+	req.Adapter.Type = "other"
+	if got := Run(req); got.Status != "failed" || !hasFinding(got, "adapter-identity-mismatch") {
+		t.Fatalf("wrong adapter type = %#v", got)
+	}
+	req = validRequest("observe", `refs/heads/main`)
+	req.APIVersion = "unsupported/version"
+	if got := Run(req); got.Status != "failed" || !hasFinding(got, "unsupported-request-version") {
+		t.Fatalf("wrong request version = %#v", got)
+	}
+	if _, err := DecodeConfig(map[string]any{"unknownParameter": true}); err == nil {
+		t.Fatal("unknown adapter parameter was accepted")
+	}
+}
+
+func TestAzureResponseExtensionsAndVerifyDriftStayReadOnly(t *testing.T) {
+	req := validRequest("observe", `refs/heads/main`)
+	req.Captures[captureFile] = []byte(strings.Replace(string(req.Captures[captureFile]), `"name":"source"`, `"name":"source","extra":{"unknown":true}`, 1))
+	observed := Run(req)
+	if observed.Status != "complete" {
+		t.Fatalf("unknown response field = %#v", observed)
+	}
+	req.Action, req.Observation = "plan", &observed
+	planned := Run(req)
+	if planned.Status != "complete" {
+		t.Fatalf("baseline plan = %#v", planned)
+	}
+	verify := req
+	verify.Action, verify.Plan = "verify", &planned
+	verify.Observation = nil
+	verify.Captures[captureFile] = []byte(strings.Replace(string(verify.Captures[captureFile]), "refs/heads/main", "refs/heads/other", 1))
+	if got := Run(verify); got.Status != "failed" || !hasFinding(got, "verification-drift") {
+		t.Fatalf("changed capture verify = %#v", got)
+	}
+
+	drift := validRequest("observe", `refs/heads/release`)
+	driftObservation := Run(drift)
+	drift.Action, drift.Observation = "plan", &driftObservation
+	driftPlan := Run(drift)
+	if driftPlan.Status != "complete" || !hasFinding(driftPlan, "default-branch-drift") || len(driftPlan.Operations) != 0 {
+		t.Fatalf("drift plan = %#v", driftPlan)
+	}
+	drift.Action, drift.Plan, drift.Observation = "verify", &driftPlan, nil
+	verified := Run(drift)
+	if verified.Status != "failed" || !hasFinding(verified, "default-branch-drift") || len(verified.Operations) != 0 {
+		t.Fatalf("canonical drift verify = %#v", verified)
+	}
 }
 
 func TestCapturePathsReturnOnlyExplicitSafePaths(t *testing.T) {

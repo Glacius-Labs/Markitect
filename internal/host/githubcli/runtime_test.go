@@ -3,9 +3,13 @@ package githubcli
 import (
 	"bytes"
 	"os"
+	"os/exec"
+	"path/filepath"
+	"runtime"
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/internal/core"
+	"github.com/Glacius-Labs/Markitect/internal/core/snapshot"
 	"github.com/Glacius-Labs/Markitect/internal/host"
 	"go.yaml.in/yaml/v3"
 )
@@ -35,6 +39,42 @@ func TestRunReadsOnlyMappedCaptureAndEmitsApplicationResult(t *testing.T) {
 	}
 	if result.Status != "complete" || result.Action != "observe" || len(result.Findings) != 0 {
 		t.Fatalf("result = %#v", result)
+	}
+}
+
+func TestThinCommandConsumesFrozenApplicationRequestFromParsedSnapshot(t *testing.T) {
+	model := parsedRepositoryModel(t)
+	resource := findModelResource(t, model, "Repository")
+	if resource.Source.Path != "resources/repository.yaml" || resource.Source.Digest == "" {
+		t.Fatalf("compiled source identity = %#v", resource.Source)
+	}
+	stage := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(stage, "evidence"), 0700); err != nil {
+		t.Fatal(err)
+	}
+	capture := []byte(`{"apiVersion":"markitect.github.example.org/repository-capture/v1alpha1","request":{"method":"GET","path":"/repos/Glacius-Labs/Markitect","apiVersion":"2026-03-10"},"response":{"statusCode":200,"body":{"full_name":"Glacius-Labs/Markitect","default_branch":"main"}}}`)
+	if err := os.WriteFile(filepath.Join(stage, "evidence", "repository.json"), capture, 0600); err != nil {
+		t.Fatal(err)
+	}
+	request := host.AdapterRequest{APIVersion: host.AdapterRequestVersion, Action: "observe", Adapter: host.AdapterIdentity{Name: "github-repository-metadata", Type: "command", Version: "v0.1.0", Parameters: map[string]any{"repositories": []any{map[string]any{"resource": resource.Identity.Key, "evidenceFile": "evidence/repository.json"}}}}, Model: model}
+	input, err := host.YAML(request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	root := repositoryRoot(t)
+	binary := buildAdapter(t, root, "./cmd/markitect-adapter-github")
+	command := exec.Command(binary)
+	command.Dir, command.Stdin = stage, bytes.NewReader(input)
+	output, err := command.Output()
+	if err != nil {
+		t.Fatalf("adapter process: %v: %s", err, output)
+	}
+	var result host.AdapterResult
+	if err := yaml.Unmarshal(output, &result); err != nil {
+		t.Fatalf("decode frozen result: %v\n%s", err, output)
+	}
+	if result.Status != "complete" || result.ModelDigest != model.ModelDigest || result.Observed["evidence"] != "github-rest-repository-metadata-capture" {
+		t.Fatalf("result did not bind parsed model and fixed capture: %#v", result)
 	}
 }
 
@@ -93,4 +133,59 @@ func withTempDirectory(t *testing.T) {
 			t.Errorf("restore cwd: %v", err)
 		}
 	})
+}
+
+func parsedRepositoryModel(t *testing.T) core.SemanticModel {
+	t.Helper()
+	files := map[string][]byte{
+		"markitect.yaml":            []byte("apiVersion: markitect.example.org/v1alpha1\nkind: Project\nmetadata:\n  name: adapter-host-test\nspec:\n  targets: [markdown]\n  areas:\n    - name: engineering\n      path: resources\n  domains:\n    - domains/github.yaml\n"),
+		"domains/github.yaml":       []byte("apiVersion: markitect.example.org/v1alpha1\nkind: Domain\nmetadata:\n  name: github\nspec:\n  apiVersion: github.example.org/v1alpha1\n  kinds:\n    Repository:\n      required: [fullName, defaultBranch]\n      properties:\n        fullName:\n          type: string\n        defaultBranch:\n          type: string\n"),
+		"resources/repository.yaml": []byte("apiVersion: github.example.org/v1alpha1\nkind: Repository\nmetadata:\n  name: markitect\n  namespace: engineering\nspec:\n  fullName: Glacius-Labs/Markitect\n  defaultBranch: main\n"),
+	}
+	p, err := host.Parse(&snapshot.Snapshot{ID: "fixed-github-adapter-snapshot", Provisional: true, Files: files, Modes: map[string]string{}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	model, err := host.CompileModel(p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if model.ValidationStatus != "passed" {
+		t.Fatalf("compiled model = %#v", model)
+	}
+	return model
+}
+
+func findModelResource(t *testing.T, model core.SemanticModel, kind string) core.ModelResource {
+	t.Helper()
+	for _, resource := range model.Resources {
+		if resource.Identity.Kind == kind {
+			return resource
+		}
+	}
+	t.Fatalf("model has no %s resource", kind)
+	return core.ModelResource{}
+}
+
+func repositoryRoot(t *testing.T) string {
+	t.Helper()
+	_, file, _, ok := runtime.Caller(0)
+	if !ok {
+		t.Fatal("cannot locate repository root")
+	}
+	return filepath.Clean(filepath.Join(filepath.Dir(file), "..", "..", ".."))
+}
+
+func buildAdapter(t *testing.T, root, packagePath string) string {
+	t.Helper()
+	binary := filepath.Join(t.TempDir(), "adapter")
+	if runtime.GOOS == "windows" {
+		binary += ".exe"
+	}
+	build := exec.Command("go", "build", "-o", binary, packagePath)
+	build.Dir = root
+	if output, err := build.CombinedOutput(); err != nil {
+		t.Fatalf("build adapter: %v\n%s", err, output)
+	}
+	return binary
 }
