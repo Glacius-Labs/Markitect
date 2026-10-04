@@ -8,11 +8,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/internal/app"
+	"github.com/Glacius-Labs/Markitect/internal/host"
 	"github.com/Glacius-Labs/Markitect/internal/core"
 	"github.com/Glacius-Labs/Markitect/internal/format"
 	"github.com/Glacius-Labs/Markitect/internal/render"
-	"github.com/Glacius-Labs/Markitect/internal/source"
+	"github.com/Glacius-Labs/Markitect/internal/infrastructure/source"
 	"go.yaml.in/yaml/v3"
 )
 
@@ -41,7 +41,7 @@ func newCLIRepo(t *testing.T, badReference bool) cliRepo {
 	for name, data := range files {
 		writeRepoFile(t, root, name, data)
 	}
-	loaded, err := app.Load(root, "")
+	loaded, err := host.Load(root, "")
 	if err != nil {
 		t.Fatal(err)
 	}

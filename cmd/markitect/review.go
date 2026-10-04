@@ -8,11 +8,11 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/Glacius-Labs/Markitect/internal/app"
+	"github.com/Glacius-Labs/Markitect/internal/host"
 	"github.com/Glacius-Labs/Markitect/internal/core"
 )
 
-func runReview(root string, p *app.Project, packageName, apiVersion, namespace, kind, name, configPath, reportPath, evidencePath, toolDigest string, emit func(any) int, fail func(error) int) int {
+func runReview(root string, p *host.Project, packageName, apiVersion, namespace, kind, name, configPath, reportPath, evidencePath, toolDigest string, emit func(any) int, fail func(error) int) int {
 	if p.Snapshot.Provisional || namespace == "" || kind == "" || name == "" || configPath == "" {
 		return fail(fmt.Errorf("review requires --revision, --namespace, --kind, --name and --config"))
 	}
@@ -26,7 +26,7 @@ func runReview(root string, p *app.Project, packageName, apiVersion, namespace, 
 	if !ok {
 		return fail(fmt.Errorf("review configuration %s is absent from the fixed snapshot", configPath))
 	}
-	config, err := app.DecodeReviewConfig(data)
+	config, err := host.DecodeReviewConfig(data)
 	if err != nil {
 		return fail(err)
 	}
@@ -36,7 +36,7 @@ func runReview(root string, p *app.Project, packageName, apiVersion, namespace, 
 		if err != nil {
 			return fail(err)
 		}
-		record, err := app.RecordReview(p, key, version, toolDigest, config, string(report))
+		record, err := host.RecordReview(p, key, version, toolDigest, config, string(report))
 		if err != nil {
 			return fail(err)
 		}
@@ -46,7 +46,7 @@ func runReview(root string, p *app.Project, packageName, apiVersion, namespace, 
 	if err != nil {
 		return fail(err)
 	}
-	record, err := app.DecodeReviewRecord(data)
+	record, err := host.DecodeReviewRecord(data)
 	if err != nil {
 		return fail(err)
 	}
@@ -58,11 +58,11 @@ func runReview(root string, p *app.Project, packageName, apiVersion, namespace, 
 	if record.Entry != key {
 		return fail(fmt.Errorf("review evidence entry %s does not match requested entry %s", record.Entry, key))
 	}
-	before, err := app.Load(root, record.Revision)
+	before, err := host.Load(root, record.Revision)
 	if err != nil {
 		return fail(fmt.Errorf("cannot load original review snapshot: %w", err))
 	}
-	result, err := app.ReuseReview(before, p, record, version, toolDigest, config)
+	result, err := host.ReuseReview(before, p, record, version, toolDigest, config)
 	if err != nil {
 		return fail(err)
 	}

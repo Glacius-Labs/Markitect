@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/Glacius-Labs/Markitect/internal/app"
+	"github.com/Glacius-Labs/Markitect/internal/host"
 	"github.com/Glacius-Labs/Markitect/internal/core"
 )
 
@@ -16,11 +16,11 @@ type report struct {
 	Digest        string              `yaml:"digest,omitempty"`
 	Status        string              `yaml:"status"`
 	Coverage      string              `yaml:"coverage"`
-	Inventory     []app.Entry         `yaml:"inventory,omitempty"`
+	Inventory     []host.Entry         `yaml:"inventory,omitempty"`
 	Diagnostics   []core.Diagnostic   `yaml:"diagnostics,omitempty"`
 	PolicyResults []core.PolicyResult `yaml:"policyResults,omitempty"`
 	Files         []string            `yaml:"files,omitempty"`
-	Gates         []app.GateResult    `yaml:"gates,omitempty"`
+	Gates         []host.GateResult    `yaml:"gates,omitempty"`
 }
 
 type queryEnvelope struct {
@@ -41,5 +41,5 @@ func currentToolDigest() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return app.Hash(executableBytes), nil
+	return host.Hash(executableBytes), nil
 }

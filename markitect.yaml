@@ -9,7 +9,7 @@ spec:
         - markdown
     areas:
         - name: core
-          path: internal/authoring/resources
+          path: internal/host/embedded/resources
           rules:
             - name: canonical-ownership
         - name: development
@@ -23,6 +23,13 @@ spec:
         - name: contribution
           path: CONTRIBUTING.md
     checks:
+        - name: architecture-imports
+          run:
+            - go
+            - run
+            - ./cmd/markitect-check-architecture
+            - --repo
+            - .
         - name: managed-artifacts
           run:
             - go

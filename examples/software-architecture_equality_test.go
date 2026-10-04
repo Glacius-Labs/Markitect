@@ -7,11 +7,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/internal/app"
+	"github.com/Glacius-Labs/Markitect/internal/host"
 	"github.com/Glacius-Labs/Markitect/internal/core"
 )
 
-func newSoftwareArchitectureV11(t *testing.T) (string, *app.Project) {
+func newSoftwareArchitectureV11(t *testing.T) (string, *host.Project) {
 	t.Helper()
 	root := t.TempDir()
 	copySoftwareArchitecture(t, root)
@@ -190,7 +190,7 @@ func TestSoftwareArchitectureV11ToV21VersionedPolicyLifecycle(t *testing.T) {
 			t.Errorf("v2.1 should add the Validator lifecycle failure for %s: %#v", key, result)
 		}
 	}
-	impact := app.Changes(v11, v21)
+	impact := host.Changes(v11, v21)
 	assertSoftwareHas(t, impact.Affected, createOrderKey)
 	assertSoftwareHas(t, impact.Affected, issueInvoiceKey)
 
@@ -216,7 +216,7 @@ func TestSoftwareArchitectureV11ToV21VersionedPolicyLifecycle(t *testing.T) {
 	}
 }
 
-func assertSoftwareOwnershipFailure(t *testing.T, project *app.Project, subject string) {
+func assertSoftwareOwnershipFailure(t *testing.T, project *host.Project, subject string) {
 	t.Helper()
 	if !hasSoftwareDiagnostic(project, "constraint."+featureOwnershipRule) {
 		t.Fatalf("selected owner mismatch did not produce its policy diagnostic: %#v", project.Diagnostics)

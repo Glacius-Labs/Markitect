@@ -4,8 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/internal/app"
-	"github.com/Glacius-Labs/Markitect/internal/authoring"
+	"github.com/Glacius-Labs/Markitect/internal/host"
+	"github.com/Glacius-Labs/Markitect/internal/host/embedded"
 )
 
 func TestAuthoringEmitsCompiledBuiltInContextWithoutRepository(t *testing.T) {
@@ -13,12 +13,12 @@ func TestAuthoringEmitsCompiledBuiltInContextWithoutRepository(t *testing.T) {
 	if code != 0 {
 		t.Fatalf("authoring exit=%d stderr=%s output=%s", code, stderr, output)
 	}
-	got := decodeYAML[app.Context](t, output)
+	got := decodeYAML[host.Context](t, output)
 	wantDigest, err := currentToolDigest()
 	if err != nil {
 		t.Fatal(err)
 	}
-	want, err := authoring.Context(version, wantDigest)
+	want, err := embedded.Context(version, wantDigest)
 	if err != nil {
 		t.Fatalf("compile built-in context: %v", err)
 	}

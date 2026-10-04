@@ -3,37 +3,37 @@ package main
 import (
 	"fmt"
 
-	"github.com/Glacius-Labs/Markitect/internal/app"
+	"github.com/Glacius-Labs/Markitect/internal/host"
 )
 
-func runReconcile(o commandOptions, p *app.Project, emit func(any) int, fail func(error) int) int {
+func runReconcile(o commandOptions, p *host.Project, emit func(any) int, fail func(error) int) int {
 	toolDigest, err := currentToolDigest()
 	if err != nil {
 		return fail(err)
 	}
 	if o.adapter != "markitect-render" {
-		var result app.AdapterResult
+		var result host.AdapterResult
 		switch o.action {
 		case "observe":
-			result, err = app.ObserveCommandAdapter(p, o.adapter)
+			result, err = host.ObserveCommandAdapter(p, o.adapter)
 		case "plan":
-			plan, planErr := app.PlanCommandAdapter(p, o.adapter, version, toolDigest)
+			plan, planErr := host.PlanCommandAdapter(p, o.adapter, version, toolDigest)
 			if planErr != nil {
 				return fail(planErr)
 			}
 			return emitCommandAdapterPlan(plan, emit)
 		case "apply":
-			plan, planErr := app.ReadCommandAdapterPlan(o.plan)
+			plan, planErr := host.ReadCommandAdapterPlan(o.plan)
 			if planErr != nil {
 				return fail(planErr)
 			}
-			result, err = app.ApplyCommandAdapter(p, o.adapter, version, toolDigest, plan)
+			result, err = host.ApplyCommandAdapter(p, o.adapter, version, toolDigest, plan)
 		case "verify":
-			plan, planErr := app.ReadCommandAdapterPlan(o.plan)
+			plan, planErr := host.ReadCommandAdapterPlan(o.plan)
 			if planErr != nil {
 				return fail(planErr)
 			}
-			result, err = app.VerifyCommandAdapter(p, o.adapter, version, toolDigest, plan)
+			result, err = host.VerifyCommandAdapter(p, o.adapter, version, toolDigest, plan)
 		default:
 			return fail(fmt.Errorf("unsupported reconciliation action %q", o.action))
 		}
@@ -48,7 +48,7 @@ func runReconcile(o commandOptions, p *app.Project, emit func(any) int, fail fun
 
 	switch o.action {
 	case "observe":
-		observation, observeErr := app.ObserveProjection(p, version, toolDigest)
+		observation, observeErr := host.ObserveProjection(p, version, toolDigest)
 		if observeErr != nil {
 			return fail(observeErr)
 		}
@@ -64,7 +64,7 @@ func runReconcile(o commandOptions, p *app.Project, emit func(any) int, fail fun
 		}
 		return 0
 	case "plan":
-		plan, planErr := app.PlanProjection(p, version, toolDigest)
+		plan, planErr := host.PlanProjection(p, version, toolDigest)
 		if planErr != nil {
 			return fail(planErr)
 		}
@@ -76,21 +76,21 @@ func runReconcile(o commandOptions, p *app.Project, emit func(any) int, fail fun
 		}
 		return 0
 	case "apply":
-		plan, planErr := app.ReadPlan(o.plan)
+		plan, planErr := host.ReadPlan(o.plan)
 		if planErr != nil {
 			return fail(planErr)
 		}
-		written, applyErr := app.ApplyProjection(o.root, p, plan, version, toolDigest)
+		written, applyErr := host.ApplyProjection(o.root, p, plan, version, toolDigest)
 		if applyErr != nil {
 			return fail(applyErr)
 		}
 		return emit(map[string]any{"status": "applied", "written": written, "plan": o.plan})
 	case "verify":
-		plan, planErr := app.ReadPlan(o.plan)
+		plan, planErr := host.ReadPlan(o.plan)
 		if planErr != nil {
 			return fail(planErr)
 		}
-		if verifyErr := app.VerifyProjectionPlan(p, plan, version, toolDigest); verifyErr != nil {
+		if verifyErr := host.VerifyProjectionPlan(p, plan, version, toolDigest); verifyErr != nil {
 			return fail(verifyErr)
 		}
 		return emit(map[string]any{"status": "verified", "adapter": o.adapter, "sourceDigest": plan.SourceDigest, "operations": len(plan.Operations)})
@@ -99,14 +99,14 @@ func runReconcile(o commandOptions, p *app.Project, emit func(any) int, fail fun
 	}
 }
 
-func emitCommandAdapterPlan(plan app.CommandAdapterPlan, emit func(any) int) int {
+func emitCommandAdapterPlan(plan host.CommandAdapterPlan, emit func(any) int) int {
 	if code := emit(plan); code != 0 {
 		return code
 	}
 	return adapterResultExitCode(plan.Result)
 }
 
-func adapterResultExitCode(result app.AdapterResult) int {
+func adapterResultExitCode(result host.AdapterResult) int {
 	if result.Status == "incomplete" {
 		return 2
 	}

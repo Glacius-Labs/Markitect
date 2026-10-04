@@ -13,8 +13,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/internal/app"
-	"github.com/Glacius-Labs/Markitect/internal/contentpackage"
+	"github.com/Glacius-Labs/Markitect/internal/host"
+	"github.com/Glacius-Labs/Markitect/internal/host/authoring/contentpackage"
 	"github.com/Glacius-Labs/Markitect/internal/core"
 	"github.com/Glacius-Labs/Markitect/internal/format"
 	"github.com/Glacius-Labs/Markitect/internal/render"
@@ -67,9 +67,9 @@ func copySoftwareArchitecture(t *testing.T, target string) {
 	}
 }
 
-func loadSoftwareArchitecture(t *testing.T, root, revision string) *app.Project {
+func loadSoftwareArchitecture(t *testing.T, root, revision string) *host.Project {
 	t.Helper()
-	project, err := app.Load(root, revision)
+	project, err := host.Load(root, revision)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -207,7 +207,7 @@ func mustReadSoftwareFile(t *testing.T, path string) []byte {
 	return data
 }
 
-func mutateSoftwareResource(t *testing.T, root string, project *app.Project, key string, mutate func(map[string]any)) {
+func mutateSoftwareResource(t *testing.T, root string, project *host.Project, key string, mutate func(map[string]any)) {
 	t.Helper()
 	resource := project.Graph.Resources[key]
 	if resource == nil {
@@ -230,7 +230,7 @@ func mutateSoftwareResource(t *testing.T, root string, project *app.Project, key
 	}
 }
 
-func updateSoftwareProject(t *testing.T, root string, project *app.Project, policyDate string, exceptions []core.PolicyException) {
+func updateSoftwareProject(t *testing.T, root string, project *host.Project, policyDate string, exceptions []core.PolicyException) {
 	t.Helper()
 	copy := *project.Graph.Project
 	copy.Spec.PolicyDate = policyDate
@@ -253,7 +253,7 @@ func softwareResult(results []core.PolicyResult, constraint, subject string) (co
 	return core.PolicyResult{}, false
 }
 
-func hasSoftwareDiagnostic(project *app.Project, code string) bool {
+func hasSoftwareDiagnostic(project *host.Project, code string) bool {
 	for _, diagnostic := range project.Diagnostics {
 		if diagnostic.Code == code {
 			return true
@@ -297,7 +297,7 @@ func TestSoftwareArchitectureV1PackageDrivesConsumerContextAndPolicy(t *testing.
 		t.Fatal("unlabeled Query unexpectedly entered the selected Command cohort")
 	}
 
-	compiled, err := app.CompileContext(project, "engineering/Skill/implement-order", "0.11.0")
+	compiled, err := host.CompileContext(project, "engineering/Skill/implement-order", "0.11.0")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -475,7 +475,7 @@ func TestSoftwareArchitectureV2PackagePolicyLifecycleUsesFixedSnapshots(t *testi
 			t.Errorf("unlabeled Query %s unexpectedly received the command-only validator policy", key)
 		}
 	}
-	impact := app.Changes(v1, v2)
+	impact := host.Changes(v1, v2)
 	assertSoftwareHas(t, impact.Affected, createOrderKey)
 	assertSoftwareHas(t, impact.Affected, issueInvoiceKey)
 	assertSoftwareHas(t, impact.Affected, inventoryModuleKey)
@@ -516,7 +516,7 @@ func TestSoftwareArchitectureV2PackagePolicyLifecycleUsesFixedSnapshots(t *testi
 	if len(cleared.Diagnostics) != 0 {
 		t.Fatalf("the remaining failure should be cleared while the exact exception remains: %#v", cleared.Diagnostics)
 	}
-	context, err := app.CompileContext(cleared, "engineering/Skill/implement-order", "0.11.0")
+	context, err := host.CompileContext(cleared, "engineering/Skill/implement-order", "0.11.0")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -757,7 +757,7 @@ func TestSoftwareArchitectureBoundedHandlerImpactAndReadOnlyReconcile(t *testing
 		data["summary"] = "Coordinates the revised order acceptance flow."
 	})
 	changed := loadSoftwareArchitecture(t, root, "")
-	impact := app.Changes(base, changed)
+	impact := host.Changes(base, changed)
 	assertSoftwareHas(t, impact.Affected, createOrderKey)
 	assertSoftwareHas(t, impact.Affected, "engineering/Skill/implement-order")
 	for _, unrelated := range []string{checkAvailabilityKey, inventoryModuleKey} {
@@ -773,14 +773,14 @@ func TestSoftwareArchitectureBoundedHandlerImpactAndReadOnlyReconcile(t *testing
 		t.Fatal(err)
 	}
 	planProject := loadSoftwareArchitecture(t, planRoot, "")
-	observation, err := app.ObserveProjection(planProject, "0.11.0", app.Hash([]byte("software-architecture-test-tool")))
+	observation, err := host.ObserveProjection(planProject, "0.11.0", host.Hash([]byte("software-architecture-test-tool")))
 	if err != nil {
 		t.Fatal(err)
 	}
 	if len(observation.Drift) == 0 {
 		t.Fatal("new fixture should expose missing or changed generated projections to read-only observe")
 	}
-	plan, err := app.PlanProjection(planProject, "0.11.0", app.Hash([]byte("software-architecture-test-tool")))
+	plan, err := host.PlanProjection(planProject, "0.11.0", host.Hash([]byte("software-architecture-test-tool")))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -794,7 +794,7 @@ func TestSoftwareArchitectureBoundedHandlerImpactAndReadOnlyReconcile(t *testing
 		t.Fatal(err)
 	}
 	changedProject := loadSoftwareArchitecture(t, planRoot, "")
-	if err := app.ValidateProjectionPlan(changedProject, plan, "0.11.0", app.Hash([]byte("software-architecture-test-tool"))); err == nil || !strings.Contains(err.Error(), "stale") {
+	if err := host.ValidateProjectionPlan(changedProject, plan, "0.11.0", host.Hash([]byte("software-architecture-test-tool"))); err == nil || !strings.Contains(err.Error(), "stale") {
 		t.Fatalf("source edit should invalidate a saved projection plan before any write, got %v", err)
 	}
 }
@@ -808,7 +808,7 @@ func containsSoftwareString(values []string, target string) bool {
 	return false
 }
 
-func setSoftwareResourceLabel(t *testing.T, root string, project *app.Project, key, label, value string) {
+func setSoftwareResourceLabel(t *testing.T, root string, project *host.Project, key, label, value string) {
 	t.Helper()
 	resource := *project.Graph.Resources[key]
 	resource.Metadata.Labels = map[string]string{}

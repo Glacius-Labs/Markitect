@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/internal/app"
+	"github.com/Glacius-Labs/Markitect/internal/host"
 	"github.com/Glacius-Labs/Markitect/internal/core"
 	"github.com/Glacius-Labs/Markitect/internal/format"
 )
@@ -15,7 +15,7 @@ type findCLIResult struct {
 	Revision       string          `yaml:"revision"`
 	Provisional    bool            `yaml:"provisional"`
 	SnapshotDigest string          `yaml:"snapshotDigest"`
-	Result         []app.FindMatch `yaml:"result"`
+	Result         []host.FindMatch `yaml:"result"`
 }
 
 type explainCLIResult struct {
@@ -24,7 +24,7 @@ type explainCLIResult struct {
 	Revision       string            `yaml:"revision"`
 	Provisional    bool              `yaml:"provisional"`
 	SnapshotDigest string            `yaml:"snapshotDigest"`
-	Result         app.ExplainResult `yaml:"result"`
+	Result         host.ExplainResult `yaml:"result"`
 }
 
 func TestFindIsDeterministicAndAppliesExactFilters(t *testing.T) {

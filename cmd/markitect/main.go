@@ -6,7 +6,7 @@ import (
 	"os"
 	"runtime"
 
-	"github.com/Glacius-Labs/Markitect/internal/app"
+	"github.com/Glacius-Labs/Markitect/internal/host"
 )
 
 var version = "0.13.0"
@@ -50,7 +50,7 @@ func run(args []string, out, errout io.Writer) int {
 		return code
 	}
 	emit := func(value any) int {
-		data, err := app.YAML(value)
+		data, err := host.YAML(value)
 		if err != nil {
 			fmt.Fprintln(errout, err)
 			return 2

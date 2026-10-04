@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/Glacius-Labs/Markitect/internal/app"
-	"github.com/Glacius-Labs/Markitect/internal/source"
+	"github.com/Glacius-Labs/Markitect/internal/host"
+	"github.com/Glacius-Labs/Markitect/internal/infrastructure/source"
 )
 
 func runPack(root, revision, output string, emit func(any) int, fail func(error) int) int {
@@ -16,7 +16,7 @@ func runPack(root, revision, output string, emit func(any) int, fail func(error)
 	if err != nil {
 		return fail(err)
 	}
-	archive, pin, err := app.PackContent(snapshot, "git:"+snapshot.ID)
+	archive, pin, err := host.PackContent(snapshot, "git:"+snapshot.ID)
 	if err != nil {
 		return fail(err)
 	}

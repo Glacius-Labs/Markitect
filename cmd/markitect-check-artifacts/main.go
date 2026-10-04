@@ -8,7 +8,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/Glacius-Labs/Markitect/internal/app"
+	"github.com/Glacius-Labs/Markitect/internal/host"
 	"github.com/Glacius-Labs/Markitect/internal/artifactcoverage"
 )
 
@@ -29,7 +29,7 @@ func run(args []string, out, errout io.Writer) int {
 		fmt.Fprintln(errout, err)
 		return 2
 	}
-	data, err := app.YAML(report)
+	data, err := host.YAML(report)
 	if err != nil {
 		fmt.Fprintln(errout, err)
 		return 2

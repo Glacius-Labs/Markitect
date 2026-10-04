@@ -15,10 +15,10 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/Glacius-Labs/Markitect/internal/app"
+	"github.com/Glacius-Labs/Markitect/internal/host"
 	"github.com/Glacius-Labs/Markitect/internal/render"
 	"github.com/Glacius-Labs/Markitect/internal/core/snapshot"
-	"github.com/Glacius-Labs/Markitect/internal/source"
+	"github.com/Glacius-Labs/Markitect/internal/infrastructure/source"
 	"go.yaml.in/yaml/v3"
 )
 
@@ -123,7 +123,7 @@ func Check(root, configPath string) (Report, error) {
 		return Report{}, fmt.Errorf("coverage config %q must be inside a managed root and have explicit tooling ownership", configPath)
 	}
 	report := Report{SnapshotDigest: snap.Digest(), Files: []File{}, Findings: []Finding{}}
-	project, err := app.Parse(snap)
+	project, err := host.Parse(snap)
 	if err != nil {
 		return Report{}, fmt.Errorf("parse Markitect project: %w", err)
 	}

@@ -10,8 +10,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/internal/app"
-	"github.com/Glacius-Labs/Markitect/internal/contentpackage"
+	"github.com/Glacius-Labs/Markitect/internal/host"
+	"github.com/Glacius-Labs/Markitect/internal/host/authoring/contentpackage"
 	"github.com/Glacius-Labs/Markitect/internal/core"
 	"github.com/Glacius-Labs/Markitect/internal/format"
 	"github.com/Glacius-Labs/Markitect/internal/render"
@@ -58,9 +58,9 @@ func copyEngineeringConstitution(t *testing.T, destination string) {
 	}
 }
 
-func loadEngineeringConstitution(t *testing.T, root string) *app.Project {
+func loadEngineeringConstitution(t *testing.T, root string) *host.Project {
 	t.Helper()
-	project, err := app.Load(root, "")
+	project, err := host.Load(root, "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -76,7 +76,7 @@ func TestEngineeringConstitutionV1PackageDrivesModelContextAndViews(t *testing.T
 	if got := project.Graph.Project.Spec.Packages[0].Version; got != "1.0.0" {
 		t.Fatalf("fixture package version = %q, want exact v1.0.0 pin", got)
 	}
-	model, err := app.CompileModel(project)
+	model, err := host.CompileModel(project)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -86,7 +86,7 @@ func TestEngineeringConstitutionV1PackageDrivesModelContextAndViews(t *testing.T
 	}
 
 	entry := "engineering/Skill/add-order"
-	compiled, err := app.CompileContext(project, entry, "0.11.0")
+	compiled, err := host.CompileContext(project, entry, "0.11.0")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -142,20 +142,20 @@ func TestEngineeringConstitutionV1PackageDrivesModelContextAndViews(t *testing.T
 func TestEngineeringConstitutionStructuralRelationsAndConflictFailClosed(t *testing.T) {
 	for _, test := range []struct {
 		name     string
-		mutate   func(t *testing.T, root string, project *app.Project)
+		mutate   func(t *testing.T, root string, project *host.Project)
 		wantCode string
 		alsoCode string
 	}{
 		{
 			name: "zero handlers",
-			mutate: func(t *testing.T, root string, project *app.Project) {
+			mutate: func(t *testing.T, root string, project *host.Project) {
 				writeEngineeringResource(t, root, project, constitutionUseCaseV1, func(data map[string]any) { data["handlers"] = []any{} })
 			},
 			wantCode: "relation.min-targets",
 		},
 		{
 			name: "two handlers",
-			mutate: func(t *testing.T, root string, project *app.Project) {
+			mutate: func(t *testing.T, root string, project *host.Project) {
 				writeEngineeringResource(t, root, project, constitutionUseCaseV1, func(data map[string]any) {
 					data["handlers"] = append(data["handlers"].([]any), map[string]any{"kind": "Handler", "name": "second-handler", "namespace": "engineering"})
 				})
@@ -166,7 +166,7 @@ func TestEngineeringConstitutionStructuralRelationsAndConflictFailClosed(t *test
 		},
 		{
 			name: "handler reference has forbidden target kind",
-			mutate: func(t *testing.T, root string, project *app.Project) {
+			mutate: func(t *testing.T, root string, project *host.Project) {
 				writeEngineeringResource(t, root, project, constitutionUseCaseV1, func(data map[string]any) {
 					data["handlers"] = []any{map[string]any{"kind": "Module", "name": "orders", "namespace": "engineering"}}
 				})
@@ -220,7 +220,7 @@ func TestEngineeringConstitutionV2PackageMigrationAndWaiverLifecycle(t *testing.
 	if got := v2.Graph.Project.Spec.Packages[0].SHA256; got == v1.Graph.Project.Spec.Packages[0].SHA256 {
 		t.Fatal("v1 and v2 package pins unexpectedly select identical archive digests")
 	}
-	impact := app.Changes(v1, v2)
+	impact := host.Changes(v1, v2)
 	if !containsString(impact.Affected, constitutionUseCaseV2) {
 		t.Fatalf("exact package migration did not conservatively affect the UseCase: %#v", impact)
 	}
@@ -235,7 +235,7 @@ func TestEngineeringConstitutionV2PackageMigrationAndWaiverLifecycle(t *testing.
 		t.Fatalf("exception did not yield an explicit waived result: %#v", waiver)
 	}
 
-	compiled, err := app.CompileContext(waived, "engineering/Skill/add-order", "0.11.0")
+	compiled, err := host.CompileContext(waived, "engineering/Skill/add-order", "0.11.0")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -403,7 +403,7 @@ func TestEngineeringConstitutionPackageSourcesAreCanonical(t *testing.T) {
 	}
 }
 
-func migrateEngineeringConstitutionToV2(t *testing.T, root string) *app.Project {
+func migrateEngineeringConstitutionToV2(t *testing.T, root string) *host.Project {
 	t.Helper()
 	archive := buildEngineeringPackage(t, "constitution-package-v2")
 	installEngineeringPackage(t, root, "2.0.0", archive)
@@ -496,7 +496,7 @@ func installEngineeringPackage(t *testing.T, root, version string, archive []byt
 	}
 }
 
-func writeEngineeringException(t *testing.T, root string, project *app.Project, failed core.PolicyResult, name, policyDate, expiresOn string) {
+func writeEngineeringException(t *testing.T, root string, project *host.Project, failed core.PolicyResult, name, policyDate, expiresOn string) {
 	t.Helper()
 	exception := exceptionForConstitutionResult(failed, name, policyDate, expiresOn)
 	writeEngineeringProjectWithExceptions(t, root, project.Graph.Project, []core.PolicyException{exception}, policyDate)
@@ -531,7 +531,7 @@ func writeEngineeringProject(t *testing.T, root string, project *core.Resource) 
 	}
 }
 
-func writeEngineeringResource(t *testing.T, root string, project *app.Project, key string, mutate func(map[string]any)) {
+func writeEngineeringResource(t *testing.T, root string, project *host.Project, key string, mutate func(map[string]any)) {
 	t.Helper()
 	resource := project.Graph.Resources[key]
 	if resource == nil {

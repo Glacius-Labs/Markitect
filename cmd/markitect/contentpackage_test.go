@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/internal/app"
+	"github.com/Glacius-Labs/Markitect/internal/host"
 	"github.com/Glacius-Labs/Markitect/internal/core"
 	"github.com/Glacius-Labs/Markitect/internal/render"
 )
@@ -63,7 +63,7 @@ func TestPackageConsumerCLIContextAndArchiveIntegrity(t *testing.T) {
 	if code != 0 {
 		t.Fatalf("package context exit=%d stderr=%s output=%s", code, stderr, output)
 	}
-	packageContext := decodeYAML[app.Context](t, output)
+	packageContext := decodeYAML[host.Context](t, output)
 	if packageContext.Entry != "review-guidance::review/Workflow/review-change" {
 		t.Fatalf("package context entry = %q", packageContext.Entry)
 	}
@@ -90,7 +90,7 @@ func TestPackageConsumerCLIContextAndArchiveIntegrity(t *testing.T) {
 	if code != 0 {
 		t.Fatalf("local wrapper context exit=%d stderr=%s output=%s", code, stderr, output)
 	}
-	localContext := decodeYAML[app.Context](t, output)
+	localContext := decodeYAML[host.Context](t, output)
 	if localContext.Entry != "consumer/Skill/local-review-entry" {
 		t.Fatalf("local wrapper context entry = %q", localContext.Entry)
 	}
@@ -104,7 +104,7 @@ func TestPackageConsumerCLIContextAndArchiveIntegrity(t *testing.T) {
 		t.Fatalf("local wrapper context omitted its versioned package dependency: %#v", localContext.Inputs)
 	}
 
-	project, err := app.Load(root, "")
+	project, err := host.Load(root, "")
 	if err != nil {
 		t.Fatal(err)
 	}

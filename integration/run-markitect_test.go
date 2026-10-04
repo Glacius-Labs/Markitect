@@ -48,7 +48,7 @@ func validZipEntries() []zipFixtureEntry {
 		{name: "go.mod", data: []byte("module markitect\n\ngo 1.24.0\n"), mode: 0644},
 		{name: "go.sum", data: []byte(""), mode: 0644},
 		{name: "cmd/markitect/main.go", data: []byte("package main\n"), mode: 0644},
-		{name: "internal/app/app.go", data: []byte("package app\n"), mode: 0644},
+		{name: "internal/app/host.go", data: []byte("package app\n"), mode: 0644},
 	}
 }
 

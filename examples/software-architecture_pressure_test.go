@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/internal/app"
+	"github.com/Glacius-Labs/Markitect/internal/host"
 	"github.com/Glacius-Labs/Markitect/internal/core"
 	"github.com/Glacius-Labs/Markitect/internal/format"
 	"github.com/Glacius-Labs/Markitect/internal/core/snapshot"
@@ -15,13 +15,13 @@ import (
 // These are deliberately negative language-pressure probes. A passing parse
 // demonstrates that the current finite model does not enforce the named
 // invariant; it is not an endorsement of the mutated architecture.
-func loadSoftwareArchitecturePressureBase(t *testing.T) *app.Project {
+func loadSoftwareArchitecturePressureBase(t *testing.T) *host.Project {
 	t.Helper()
 	_, sourceFile, _, ok := runtime.Caller(0)
 	if !ok {
 		t.Fatal("could not locate pressure test source")
 	}
-	project, err := app.Load(filepath.Join(filepath.Dir(sourceFile), "software-architecture"), "")
+	project, err := host.Load(filepath.Join(filepath.Dir(sourceFile), "software-architecture"), "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -31,7 +31,7 @@ func loadSoftwareArchitecturePressureBase(t *testing.T) *app.Project {
 	return project
 }
 
-func parseSoftwareArchitecturePressureResourceMutation(t *testing.T, base *app.Project, path string, mutate func(*core.Resource)) *app.Project {
+func parseSoftwareArchitecturePressureResourceMutation(t *testing.T, base *host.Project, path string, mutate func(*core.Resource)) *host.Project {
 	t.Helper()
 	private := privateSoftwareArchitectureSnapshot(base)
 	data, exists := private.Files[path]
@@ -48,7 +48,7 @@ func parseSoftwareArchitecturePressureResourceMutation(t *testing.T, base *app.P
 		t.Fatalf("encode mutated pressure resource %s: %v", path, err)
 	}
 	private.Files[path] = encoded
-	project, err := app.Parse(private)
+	project, err := host.Parse(private)
 	if err != nil {
 		t.Fatalf("parse mutated private snapshot: %v", err)
 	}
@@ -58,7 +58,7 @@ func parseSoftwareArchitecturePressureResourceMutation(t *testing.T, base *app.P
 	return project
 }
 
-func privateSoftwareArchitectureSnapshot(base *app.Project) *snapshot.Snapshot {
+func privateSoftwareArchitectureSnapshot(base *host.Project) *snapshot.Snapshot {
 	files := make(map[string][]byte, len(base.Snapshot.Files))
 	for name, data := range base.Snapshot.Files {
 		files[name] = append([]byte(nil), data...)
@@ -70,7 +70,7 @@ func privateSoftwareArchitectureSnapshot(base *app.Project) *snapshot.Snapshot {
 	return &snapshot.Snapshot{ID: base.Snapshot.ID, Provisional: base.Snapshot.Provisional, Files: files, Modes: modes}
 }
 
-func assertPressureRelationship(t *testing.T, project *app.Project, from, relation, to string) {
+func assertPressureRelationship(t *testing.T, project *host.Project, from, relation, to string) {
 	t.Helper()
 	for _, edge := range project.Graph.Relationships {
 		if edge.From == from && edge.Relation == relation && edge.To == to {
@@ -179,8 +179,8 @@ func TestSoftwareArchitecturePressureMixedRelationCyclePasses(t *testing.T) {
 		t.Fatal(err)
 	}
 	graph := core.BuildWithRegistry(project.Resources, registry)
-	assertPressureRelationship(t, &app.Project{Graph: graph}, module, "usesInterfaces", contract)
-	assertPressureRelationship(t, &app.Project{Graph: graph}, contract, "providedBy", module)
+	assertPressureRelationship(t, &host.Project{Graph: graph}, module, "usesInterfaces", contract)
+	assertPressureRelationship(t, &host.Project{Graph: graph}, contract, "providedBy", module)
 	for _, diagnostic := range graph.Diagnostics {
 		if diagnostic.Code == "relation.cycle" {
 			t.Fatalf("cycle across usesInterfaces (Module -> Interface) and providedBy (Interface -> Module) should remain undetected when each relation is acyclic independently; found %#v", diagnostic)
@@ -239,7 +239,7 @@ func TestSoftwareArchitecturePressureEmptyOptInCohortHasNoSubjectResultsV11V2And
 			case "v2.1":
 				installSoftwareArchitectureV2_1(t, root)
 			}
-			base, err := app.Load(root, "")
+			base, err := host.Load(root, "")
 			if err != nil {
 				t.Fatalf("%s baseline failed to load: %v", version, err)
 			}
@@ -283,7 +283,7 @@ func TestSoftwareArchitecturePressureEmptyOptInCohortHasNoSubjectResultsV11V2And
 				}
 				private.Files[path] = encoded
 			}
-			project, err := app.Parse(private)
+			project, err := host.Parse(private)
 			if err != nil || len(project.Diagnostics) != 0 {
 				t.Fatalf("empty %s opt-in cohort failed to parse: %v; %#v", version, err, project.Diagnostics)
 			}

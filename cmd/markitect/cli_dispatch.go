@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/Glacius-Labs/Markitect/internal/app"
+	"github.com/Glacius-Labs/Markitect/internal/host"
 	"github.com/Glacius-Labs/Markitect/internal/core"
-	"github.com/Glacius-Labs/Markitect/internal/licenses"
+	"github.com/Glacius-Labs/Markitect/internal/tooling/licenses"
 )
 
 func dispatchCommand(command string, o commandOptions, out, errout io.Writer, emit func(any) int, fail func(error) int) int {
@@ -57,7 +57,7 @@ func dispatchCommand(command string, o commandOptions, out, errout io.Writer, em
 		}
 		return runContextManifest(o, toolDigest, emit, fail)
 	}
-	p, err := app.Load(o.root, o.revision)
+	p, err := host.Load(o.root, o.revision)
 	if err != nil {
 		return fail(err)
 	}
@@ -66,7 +66,7 @@ func dispatchCommand(command string, o commandOptions, out, errout io.Writer, em
 		return fail(err)
 	}
 	if command == "model" {
-		model, err := app.CompileModel(p)
+		model, err := host.CompileModel(p)
 		if err != nil {
 			return fail(err)
 		}
@@ -108,7 +108,7 @@ func dispatchCommand(command string, o commandOptions, out, errout io.Writer, em
 		return runImpact(o, p, emit, fail)
 	case "render":
 		if o.write {
-			files, err := app.WriteOutputs(o.root, p)
+			files, err := host.WriteOutputs(o.root, p)
 			if err != nil {
 				return fail(err)
 			}
@@ -117,19 +117,19 @@ func dispatchCommand(command string, o commandOptions, out, errout io.Writer, em
 			return emit(result)
 		}
 	}
-	result.Diagnostics = app.CheckOutputs(p)
+	result.Diagnostics = host.CheckOutputs(p)
 	if command == "check" || command == "verify" {
-		result.Diagnostics = append(result.Diagnostics, app.CheckDocumentationRouters(p)...)
+		result.Diagnostics = append(result.Diagnostics, host.CheckDocumentationRouters(p)...)
 	}
 	if len(result.Diagnostics) > 0 {
 		result.Status = "failed"
 	}
 	if command == "verify" && result.Status == "passed" {
-		result.Gates, err = app.VerifyRepository(p)
+		result.Gates, err = host.VerifyRepository(p)
 		if err != nil {
-			var verifyErr *app.VerifyError
+			var verifyErr *host.VerifyError
 			if !errors.As(err, &verifyErr) {
-				verifyErr = &app.VerifyError{Kind: "incomplete-evidence", Err: err}
+				verifyErr = &host.VerifyError{Kind: "incomplete-evidence", Err: err}
 			}
 			result.Diagnostics = append(result.Diagnostics, core.Diagnostic{
 				Code:    "verify." + verifyErr.Kind,

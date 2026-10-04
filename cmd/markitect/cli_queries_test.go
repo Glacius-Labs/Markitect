@@ -3,8 +3,8 @@ package main
 import (
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/internal/app"
-	"github.com/Glacius-Labs/Markitect/internal/source"
+	"github.com/Glacius-Labs/Markitect/internal/host"
+	"github.com/Glacius-Labs/Markitect/internal/infrastructure/source"
 )
 
 func TestInventoryDoesNotInferResourceKindsFromDirectoryNames(t *testing.T) {
@@ -33,7 +33,7 @@ func TestContextIncludesSnapshotDigestAndRequiredRule(t *testing.T) {
 	if code != 0 {
 		t.Fatalf("context exit=%d stderr=%s output=%s", code, stderr, output)
 	}
-	ctx := decodeYAML[app.Context](t, output)
+	ctx := decodeYAML[host.Context](t, output)
 	snapshot, err := source.Load(repo.root, repo.base)
 	if err != nil {
 		t.Fatal(err)
@@ -45,7 +45,7 @@ func TestContextIncludesSnapshotDigestAndRequiredRule(t *testing.T) {
 	for _, input := range ctx.Inputs {
 		if input.Resource != nil && input.Resource.Kind == "Rule" && input.Resource.Metadata.Name == "policy" {
 			foundRule = true
-			if input.Hash != app.Hash(snapshot.Files[input.Path]) {
+			if input.Hash != host.Hash(snapshot.Files[input.Path]) {
 				t.Errorf("rule input hash %s does not match snapshot bytes", input.Key)
 			}
 		}

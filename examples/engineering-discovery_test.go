@@ -10,12 +10,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/internal/app"
+	"github.com/Glacius-Labs/Markitect/internal/host"
 )
 
 func TestEngineeringDiscoveryProjectKeepsDossierOutsideCanonicalGraph(t *testing.T) {
 	root := filepath.Join(exampleRepoRoot(t), "examples", "engineering-discovery")
-	project, err := app.Load(root, "")
+	project, err := host.Load(root, "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -41,7 +41,7 @@ func TestEngineeringDiscoveryDossierBindsEvidenceAndCandidateToDecision(t *testi
 	git(t, projectRoot, "-c", "user.name=Discovery Example", "-c", "user.email=example@invalid", "commit", "-m", "freeze selected evidence")
 	revision := strings.TrimSpace(git(t, projectRoot, "rev-parse", "HEAD"))
 
-	project, err := app.Load(projectRoot, revision)
+	project, err := host.Load(projectRoot, revision)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -49,7 +49,7 @@ func TestEngineeringDiscoveryDossierBindsEvidenceAndCandidateToDecision(t *testi
 		t.Fatalf("fixed synthetic Project has graph diagnostics: %#v", project.Diagnostics)
 	}
 	manifest := project.Snapshot.Files["context-run.yaml"]
-	context, err := app.CompileRunContext(project, "context-run.yaml", manifest, "engineering-discovery-example", "synthetic-workflow")
+	context, err := host.CompileRunContext(project, "context-run.yaml", manifest, "engineering-discovery-example", "synthetic-workflow")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -99,7 +99,7 @@ func TestEngineeringDiscoveryDossierBindsEvidenceAndCandidateToDecision(t *testi
 	}
 	decisionBytes := []byte(fmt.Sprintf(
 		"version: markitect.example.org/engineering-discovery-decision/v1alpha1\nstatus: accepted\nreviewer: synthetic-fixture-only\ndecidedAt: 2026-10-02\nrationale: Synthetic test input; no real review or approval occurred.\ncandidateHash: %q\nevidenceHash: %q\n",
-		app.Hash(candidateBytes), app.Hash(evidenceBytes),
+		host.Hash(candidateBytes), host.Hash(evidenceBytes),
 	))
 	decision := filepath.Join(dossierRoot, "decision.yaml")
 	if err := os.WriteFile(decision, decisionBytes, 0o600); err != nil {
@@ -148,7 +148,7 @@ func TestEngineeringDiscoveryDossierBindsEvidenceAndCandidateToDecision(t *testi
 	}
 	forgedDecision := []byte(fmt.Sprintf(
 		"version: markitect.example.org/engineering-discovery-decision/v1alpha1\nstatus: accepted\nreviewer: synthetic-fixture-only\ndecidedAt: 2026-10-02\nrationale: Synthetic test input; no real review or approval occurred.\ncandidateHash: %q\nevidenceHash: %q\n",
-		app.Hash(candidateBytes), app.Hash(forgedEvidenceBytes),
+		host.Hash(candidateBytes), host.Hash(forgedEvidenceBytes),
 	))
 	if err := os.WriteFile(decision, forgedDecision, 0o600); err != nil {
 		t.Fatal(err)

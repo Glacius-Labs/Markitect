@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/internal/app"
+	"github.com/Glacius-Labs/Markitect/internal/host"
 	"github.com/Glacius-Labs/Markitect/internal/core"
 	"github.com/Glacius-Labs/Markitect/internal/format"
 )
@@ -130,7 +130,7 @@ func TestImpactRenderInventoryAndVersionCommands(t *testing.T) {
 	if code != 0 {
 		t.Fatalf("impact exit=%d stderr=%s output=%s", code, stderr, output)
 	}
-	impact := decodeYAML[app.Impact](t, output)
+	impact := decodeYAML[host.Impact](t, output)
 	if impact.Base != repo.base || impact.Candidate != candidate || len(impact.Affected) != 2 {
 		t.Fatalf("unexpected impact result: %#v", impact)
 	}

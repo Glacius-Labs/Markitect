@@ -8,13 +8,13 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/internal/app"
+	"github.com/Glacius-Labs/Markitect/internal/host"
 	"github.com/Glacius-Labs/Markitect/internal/render"
 )
 
 func TestMarkdownNavigationExampleRebasesHumanLinksAndPreservesCode(t *testing.T) {
 	root := markdownNavigationRoot(t)
-	project, err := app.Load(root, "")
+	project, err := host.Load(root, "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -67,14 +67,14 @@ func TestMarkdownNavigationExampleRebasesHumanLinksAndPreservesCode(t *testing.T
 	}
 	assertMarkdownTargetExists(t, ".claude/skills/setup-workspace/SKILL.md", "../../../docs/general/workflows/setup-workspace.yaml", project.Snapshot.Files, outputs)
 
-	if findings := app.CheckOutputs(project); len(findings) != 0 {
+	if findings := host.CheckOutputs(project); len(findings) != 0 {
 		t.Fatalf("checked-in navigation outputs have drift or are missing: %#v", findings)
 	}
 }
 
 func TestMarkdownNavigationPrefersExistingUnmarkedOrdinaryAlias(t *testing.T) {
 	root := markdownNavigationRoot(t)
-	project, err := app.Load(root, "")
+	project, err := host.Load(root, "")
 	if err != nil {
 		t.Fatal(err)
 	}

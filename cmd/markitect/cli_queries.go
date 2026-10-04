@@ -3,9 +3,9 @@ package main
 import (
 	"fmt"
 
-	"github.com/Glacius-Labs/Markitect/internal/app"
+	"github.com/Glacius-Labs/Markitect/internal/host"
 	"github.com/Glacius-Labs/Markitect/internal/core"
-	"github.com/Glacius-Labs/Markitect/internal/source"
+	"github.com/Glacius-Labs/Markitect/internal/infrastructure/source"
 )
 
 func runInventory(o commandOptions, emit func(any) int, fail func(error) int) int {
@@ -13,10 +13,10 @@ func runInventory(o commandOptions, emit func(any) int, fail func(error) int) in
 	if err != nil {
 		return fail(err)
 	}
-	items := app.MarkdownInventory(snap)
+	items := host.MarkdownInventory(snap)
 	coverage := "ordinary Markdown candidates only; no resource classification, semantic dependency inference or validity claim"
 	if _, ok := snap.Files["markitect.yaml"]; ok {
-		p, err := app.Parse(snap)
+		p, err := host.Parse(snap)
 		if err != nil {
 			return fail(err)
 		}
@@ -26,15 +26,15 @@ func runInventory(o commandOptions, emit func(any) int, fail func(error) int) in
 	return emit(report{Tool: "Markitect", Version: version, Revision: snap.ID, Provisional: snap.Provisional, Digest: snap.Digest(), Status: "inventory", Coverage: coverage, Inventory: items})
 }
 
-func runFind(o commandOptions, p *app.Project, toolDigest string, emit func(any) int, fail func(error) int) int {
-	matches, err := app.Find(p, app.FindQuery{Query: o.query, APIVersion: o.apiVersion, Kind: o.kind, Namespace: o.namespace, Package: o.packageName})
+func runFind(o commandOptions, p *host.Project, toolDigest string, emit func(any) int, fail func(error) int) int {
+	matches, err := host.Find(p, host.FindQuery{Query: o.query, APIVersion: o.apiVersion, Kind: o.kind, Namespace: o.namespace, Package: o.packageName})
 	if err != nil {
 		return fail(err)
 	}
 	return emit(queryEnvelope{Version: version, ToolDigest: toolDigest, Revision: p.Snapshot.ID, Provisional: p.Snapshot.Provisional, SnapshotDigest: p.Snapshot.Digest(), Result: matches})
 }
 
-func runExplain(o commandOptions, p *app.Project, toolDigest string, emit func(any) int, fail func(error) int) int {
+func runExplain(o commandOptions, p *host.Project, toolDigest string, emit func(any) int, fail func(error) int) int {
 	if o.kind == "" || o.name == "" {
 		return fail(fmt.Errorf("explain requires --kind and --name"))
 	}
@@ -46,24 +46,24 @@ func runExplain(o commandOptions, p *app.Project, toolDigest string, emit func(a
 		return fail(fmt.Errorf("explain requires --namespace for namespaced resources"))
 	}
 	key := (core.Ref{APIVersion: o.apiVersion, Kind: o.kind, Name: o.name, Namespace: o.namespace, Package: o.packageName}).GraphKey("", "", "")
-	explanation, err := app.Explain(p, key)
+	explanation, err := host.Explain(p, key)
 	if err != nil {
 		return fail(err)
 	}
 	return emit(queryEnvelope{Version: version, ToolDigest: toolDigest, Revision: p.Snapshot.ID, Provisional: p.Snapshot.Provisional, SnapshotDigest: p.Snapshot.Digest(), Result: explanation})
 }
 
-func runContext(o commandOptions, p *app.Project, toolDigest string, emit func(any) int, fail func(error) int) int {
+func runContext(o commandOptions, p *host.Project, toolDigest string, emit func(any) int, fail func(error) int) int {
 	if o.kind == "" || o.name == "" || o.namespace == "" {
 		return fail(fmt.Errorf("context requires --kind, --name and --namespace"))
 	}
 	key := (core.Ref{APIVersion: o.apiVersion, Package: o.packageName, Namespace: o.namespace, Kind: o.kind, Name: o.name}).GraphKey("", "", "")
-	var c *app.Context
+	var c *host.Context
 	var err error
 	if o.analyzePolicyFailures {
-		c, err = app.AnalyzeContext(p, key, version, toolDigest)
+		c, err = host.AnalyzeContext(p, key, version, toolDigest)
 	} else {
-		c, err = app.CompileContext(p, key, version, toolDigest)
+		c, err = host.CompileContext(p, key, version, toolDigest)
 	}
 	if err != nil {
 		return fail(err)
@@ -75,7 +75,7 @@ func runContext(o commandOptions, p *app.Project, toolDigest string, emit func(a
 }
 
 func runContextManifest(o commandOptions, toolDigest string, emit func(any) int, fail func(error) int) int {
-	p, err := app.Load(o.root, o.revision)
+	p, err := host.Load(o.root, o.revision)
 	if err != nil {
 		return fail(err)
 	}
@@ -83,7 +83,7 @@ func runContextManifest(o commandOptions, toolDigest string, emit func(any) int,
 	if !ok {
 		return fail(fmt.Errorf("run manifest %q is not a file in the selected Git snapshot", o.runManifest))
 	}
-	c, err := app.CompileRunContext(p, o.runManifest, manifestBytes, version, toolDigest)
+	c, err := host.CompileRunContext(p, o.runManifest, manifestBytes, version, toolDigest)
 	if err != nil {
 		return fail(err)
 	}
@@ -96,22 +96,22 @@ func runContextManifest(o commandOptions, toolDigest string, emit func(any) int,
 	return 0
 }
 
-func runImpact(o commandOptions, p *app.Project, emit func(any) int, fail func(error) int) int {
+func runImpact(o commandOptions, p *host.Project, emit func(any) int, fail func(error) int) int {
 	if o.base == "" || o.revision == "" {
 		return fail(fmt.Errorf("impact requires fixed --base and --revision"))
 	}
-	previous, err := app.Load(o.root, o.base)
+	previous, err := host.Load(o.root, o.base)
 	if err != nil {
 		return fail(err)
 	}
 	if !o.analyzePolicyFailures && len(previous.Diagnostics) > 0 {
 		return fail(fmt.Errorf("base has unresolved diagnostics; inspect the base separately"))
 	}
-	var result *app.Impact
+	var result *host.Impact
 	if o.analyzePolicyFailures {
-		result, err = app.AnalyzeImpact(previous, p)
+		result, err = host.AnalyzeImpact(previous, p)
 	} else {
-		result = app.Changes(previous, p)
+		result = host.Changes(previous, p)
 	}
 	if err != nil {
 		return fail(err)
@@ -122,7 +122,7 @@ func runImpact(o commandOptions, p *app.Project, emit func(any) int, fail func(e
 	return analysisExitCode(result.Analysis)
 }
 
-func analysisExitCode(analysis *app.AnalysisEvidence) int {
+func analysisExitCode(analysis *host.AnalysisEvidence) int {
 	if analysis == nil {
 		return 0
 	}

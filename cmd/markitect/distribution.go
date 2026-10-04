@@ -8,9 +8,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/Glacius-Labs/Markitect/internal/app"
-	"github.com/Glacius-Labs/Markitect/internal/release"
-	"github.com/Glacius-Labs/Markitect/internal/source"
+	"github.com/Glacius-Labs/Markitect/internal/host"
+	"github.com/Glacius-Labs/Markitect/internal/tooling/release"
+	"github.com/Glacius-Labs/Markitect/internal/infrastructure/source"
 )
 
 func printUsage(out io.Writer) {
@@ -135,7 +135,7 @@ func runInstall(root, path, expectedSHA string, write bool, emit func(any) int, 
 	if err != nil {
 		return fail(err)
 	}
-	plan, err := app.Install(root, bundle, write)
+	plan, err := host.Install(root, bundle, write)
 	if err != nil {
 		if plan != nil {
 			if code := emit(map[string]any{"status": "failed", "plan": plan}); code != 0 {

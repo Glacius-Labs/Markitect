@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/internal/app"
+	"github.com/Glacius-Labs/Markitect/internal/host"
 	"github.com/Glacius-Labs/Markitect/internal/core/snapshot"
 )
 
@@ -110,7 +110,7 @@ spec:
 		modes[name] = snapshot.RegularMode
 	}
 	fixed := &snapshot.Snapshot{ID: "parallel-wave-fixed-control", Files: files, Modes: modes}
-	project, err := app.Parse(fixed)
+	project, err := host.Parse(fixed)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -118,30 +118,30 @@ spec:
 		t.Fatalf("structural fixture diagnostics: %#v", project.Diagnostics)
 	}
 	initialDigest := fixed.Digest()
-	plans := map[string]app.CommandAdapterPlan{}
+	plans := map[string]host.CommandAdapterPlan{}
 	for _, name := range []string{"github-capture", "azure-capture"} {
-		observed, err := app.ObserveCommandAdapter(project, name)
+		observed, err := host.ObserveCommandAdapter(project, name)
 		if err != nil || observed.Status != "complete" {
 			t.Fatalf("%s observe: %#v, %v", name, observed, err)
 		}
-		plan, err := app.PlanCommandAdapter(project, name, "fixture-tool", "fixture-digest")
+		plan, err := host.PlanCommandAdapter(project, name, "fixture-tool", "fixture-digest")
 		if err != nil {
 			t.Fatalf("%s plan: %v", name, err)
 		}
-		again, err := app.PlanCommandAdapter(project, name, "fixture-tool", "fixture-digest")
+		again, err := host.PlanCommandAdapter(project, name, "fixture-tool", "fixture-digest")
 		if err != nil {
 			t.Fatal(err)
 		}
-		one, _ := app.YAML(plan)
-		two, _ := app.YAML(again)
+		one, _ := host.YAML(plan)
+		two, _ := host.YAML(again)
 		if string(one) != string(two) || len(plan.Result.Operations) != 0 {
 			t.Fatalf("%s plan is nondeterministic or contains operations", name)
 		}
-		verified, err := app.VerifyCommandAdapter(project, name, "fixture-tool", "fixture-digest", plan)
+		verified, err := host.VerifyCommandAdapter(project, name, "fixture-tool", "fixture-digest", plan)
 		if err != nil || verified.Status != "complete" {
 			t.Fatalf("%s verify: %#v, %v", name, verified, err)
 		}
-		if _, err := app.ApplyCommandAdapter(project, name, "fixture-tool", "fixture-digest", plan); err == nil || !strings.Contains(err.Error(), "does not declare apply") {
+		if _, err := host.ApplyCommandAdapter(project, name, "fixture-tool", "fixture-digest", plan); err == nil || !strings.Contains(err.Error(), "does not declare apply") {
 			t.Fatalf("%s Apply must remain unavailable: %v", name, err)
 		}
 		plans[name] = plan
@@ -156,34 +156,34 @@ spec:
 	// Changing only one captured observation must not contaminate the other
 	// observer. Overall saved-plan source invalidation stays conservative.
 	files["captures/github.json"] = []byte(strings.Replace(string(files["captures/github.json"]), `"default_branch":"main"`, `"default_branch":"release"`, 1))
-	changed, err := app.Parse(fixed)
+	changed, err := host.Parse(fixed)
 	if err != nil || len(changed.Diagnostics) != 0 {
 		t.Fatalf("changed fixture: %v", err)
 	}
-	azure, err := app.ObserveCommandAdapter(changed, "azure-capture")
+	azure, err := host.ObserveCommandAdapter(changed, "azure-capture")
 	if err != nil || azure.Status != "complete" {
 		t.Fatalf("unrelated observer affected: %v", err)
 	}
-	originalAzure, err := app.YAML(plans["azure-capture"].Observation)
+	originalAzure, err := host.YAML(plans["azure-capture"].Observation)
 	if err != nil {
 		t.Fatal(err)
 	}
-	changedAzure, err := app.YAML(azure)
+	changedAzure, err := host.YAML(azure)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if string(originalAzure) != string(changedAzure) {
 		t.Fatal("changing GitHub capture contaminated Azure observation")
 	}
-	githubPlan, err := app.PlanCommandAdapter(changed, "github-capture", "fixture-tool", "fixture-digest")
+	githubPlan, err := host.PlanCommandAdapter(changed, "github-capture", "fixture-tool", "fixture-digest")
 	if err != nil {
 		t.Fatal(err)
 	}
-	github, err := app.VerifyCommandAdapter(changed, "github-capture", "fixture-tool", "fixture-digest", githubPlan)
+	github, err := host.VerifyCommandAdapter(changed, "github-capture", "fixture-tool", "fixture-digest", githubPlan)
 	if err != nil || github.Status != "failed" {
 		t.Fatalf("capture drift silently passed: %#v, %v", github, err)
 	}
-	if _, err := app.VerifyCommandAdapter(changed, "azure-capture", "fixture-tool", "fixture-digest", plans["azure-capture"]); err == nil || !strings.Contains(err.Error(), "stale") {
+	if _, err := host.VerifyCommandAdapter(changed, "azure-capture", "fixture-tool", "fixture-digest", plans["azure-capture"]); err == nil || !strings.Contains(err.Error(), "stale") {
 		t.Fatalf("overall source change must invalidate saved plan: %v", err)
 	}
 }

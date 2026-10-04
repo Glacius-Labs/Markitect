@@ -4,24 +4,24 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/Glacius-Labs/Markitect/internal/adoption"
-	"github.com/Glacius-Labs/Markitect/internal/app"
-	"github.com/Glacius-Labs/Markitect/internal/copyme"
+	"github.com/Glacius-Labs/Markitect/internal/modules/adoption/capture"
+	"github.com/Glacius-Labs/Markitect/internal/host"
+	"github.com/Glacius-Labs/Markitect/internal/modules/adoption/review"
 )
 
 func runPrepare(o commandOptions, emit func(any) int, fail func(error) int) int {
-	if o.scope == "" || o.output == "" || (!o.write && o.expect != "") || (o.write && !adoption.ValidHash(o.expect)) {
+	if o.scope == "" || o.output == "" || (!o.write && o.expect != "") || (o.write && !capture.ValidHash(o.expect)) {
 		return fail(fmt.Errorf("prepare requires --scope and --output; preview first, then --write --expect HANDOFF_DIGEST"))
 	}
-	data, err := app.ReadAdoptionRecord(o.scope)
+	data, err := host.ReadAdoptionRecord(o.scope)
 	if err != nil {
 		return fail(err)
 	}
-	var scope adoption.Scope
-	if err = adoption.Decode(data, &scope); err != nil {
+	var scope capture.Scope
+	if err = capture.Decode(data, &scope); err != nil {
 		return fail(err)
 	}
-	result, err := app.PrepareAdoption(scope, o.output, o.expect, o.write)
+	result, err := host.PrepareAdoption(scope, o.output, o.expect, o.write)
 	if err != nil {
 		if result != nil {
 			if code := emit(result); code != 0 {
@@ -37,16 +37,16 @@ func runCopyMe(o commandOptions, emit func(any) int, fail func(error) int) int {
 	if o.workspace == "" || o.queue == "" {
 		return fail(fmt.Errorf("copy-me requires --workspace and --queue; --decision is an optional exact review record"))
 	}
-	handoff, blobs, err := app.ReadAdoptionWorkspace(o.workspace)
+	handoff, blobs, err := host.ReadAdoptionWorkspace(o.workspace)
 	if err != nil {
 		return fail(err)
 	}
-	queueBytes, err := app.ReadAdoptionRecord(o.queue)
+	queueBytes, err := host.ReadAdoptionRecord(o.queue)
 	if err != nil {
 		return fail(err)
 	}
-	var queue copyme.Queue
-	if err = adoption.Decode(queueBytes, &queue); err != nil {
+	var queue review.Queue
+	if err = capture.Decode(queueBytes, &queue); err != nil {
 		return fail(err)
 	}
 	candidateBytes := map[string][]byte{}
@@ -54,7 +54,7 @@ func runCopyMe(o commandOptions, emit func(any) int, fail func(error) int) int {
 		if _, ok := candidateBytes[c.Path]; ok {
 			return fail(fmt.Errorf("duplicate candidate path %s", c.Path))
 		}
-		data, err := app.ReadAdoptionCandidate(filepath.Dir(o.queue), c.Path)
+		data, err := host.ReadAdoptionCandidate(filepath.Dir(o.queue), c.Path)
 		if err != nil {
 			return fail(err)
 		}
@@ -62,12 +62,12 @@ func runCopyMe(o commandOptions, emit func(any) int, fail func(error) int) int {
 	}
 	var decisionBytes []byte
 	if o.decision != "" {
-		decisionBytes, err = app.ReadAdoptionRecord(o.decision)
+		decisionBytes, err = host.ReadAdoptionRecord(o.decision)
 		if err != nil {
 			return fail(err)
 		}
 	}
-	report, err := copyme.Validate(handoff, blobs, queueBytes, candidateBytes, decisionBytes)
+	report, err := review.Validate(handoff, blobs, queueBytes, candidateBytes, decisionBytes)
 	if err != nil {
 		return fail(err)
 	}

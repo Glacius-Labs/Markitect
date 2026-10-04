@@ -13,7 +13,7 @@ import (
 	"os/exec"
 	"time"
 
-	"github.com/Glacius-Labs/Markitect/internal/publish"
+	"github.com/Glacius-Labs/Markitect/internal/tooling/publish"
 	"go.yaml.in/yaml/v3"
 )
 

@@ -3,7 +3,7 @@ package main
 import (
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/internal/app"
+	"github.com/Glacius-Labs/Markitect/internal/host"
 	"github.com/Glacius-Labs/Markitect/internal/core"
 	"github.com/Glacius-Labs/Markitect/internal/format"
 )
@@ -41,7 +41,7 @@ spec:
 		t.Fatalf("missing concrete failure: %+v", failed)
 	}
 	result := failed.PolicyResults[0]
-	p, err := app.Load(root, "")
+	p, err := host.Load(root, "")
 	if err != nil {
 		t.Fatal(err)
 	}

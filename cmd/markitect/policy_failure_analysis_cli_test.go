@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Glacius-Labs/Markitect/internal/app"
+	"github.com/Glacius-Labs/Markitect/internal/host"
 )
 
 func TestPolicyFailureAnalysisCLIIsExplicitAndKeepsAcceptanceStrict(t *testing.T) {
@@ -53,7 +53,7 @@ func TestPolicyFailureAnalysisCLIIsExplicitAndKeepsAcceptanceStrict(t *testing.T
 	if code != 1 {
 		t.Fatalf("diagnostic context exit=%d stderr=%s output=%s, want useful output with failing status", code, stderr, output)
 	}
-	contextResult := decodeYAML[app.Context](t, output)
+	contextResult := decodeYAML[host.Context](t, output)
 	if contextResult.Analysis == nil || contextResult.Analysis.Candidate.PolicyStatus != "failed" || !contextResult.Analysis.Complete {
 		t.Fatalf("diagnostic context omitted explicit noncompliant status: %#v", contextResult)
 	}
@@ -65,7 +65,7 @@ func TestPolicyFailureAnalysisCLIIsExplicitAndKeepsAcceptanceStrict(t *testing.T
 	if code != 1 {
 		t.Fatalf("diagnostic impact exit=%d stderr=%s output=%s, want useful output with failing candidate status", code, stderr, output)
 	}
-	impact := decodeYAML[app.Impact](t, output)
+	impact := decodeYAML[host.Impact](t, output)
 	if impact.Analysis == nil || impact.Analysis.Base == nil || impact.Analysis.Base.PolicyStatus != "passed" || impact.Analysis.Candidate.PolicyStatus != "failed" {
 		t.Fatalf("impact did not distinguish base and candidate policy state: %#v", impact.Analysis)
 	}
@@ -79,7 +79,7 @@ func TestPolicyFailureAnalysisCLIIsExplicitAndKeepsAcceptanceStrict(t *testing.T
 	if code != 1 {
 		t.Fatalf("repaired-candidate impact exit=%d stderr=%s output=%s, want base-failure exit 1", code, stderr, output)
 	}
-	reverse := decodeYAML[app.Impact](t, output)
+	reverse := decodeYAML[host.Impact](t, output)
 	if reverse.Analysis == nil || reverse.Analysis.Base == nil || reverse.Analysis.Base.PolicyStatus != "failed" || reverse.Analysis.Candidate.PolicyStatus != "passed" {
 		t.Fatalf("reverse impact did not distinguish failed base and passing candidate: %#v", reverse.Analysis)
 	}
@@ -105,7 +105,7 @@ func TestPolicyFailingWorkingTreeRejectsReconciliationAndWritersWithoutMutation(
 	}
 	writeRepoFile(t, repo.root, "domain.yaml", append(domainBytes, '\n'))
 
-	before, err := app.Load(repo.root, "")
+	before, err := host.Load(repo.root, "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -138,7 +138,7 @@ func TestPolicyFailingWorkingTreeRejectsReconciliationAndWritersWithoutMutation(
 		})
 	}
 
-	after, err := app.Load(repo.root, "")
+	after, err := host.Load(repo.root, "")
 	if err != nil {
 		t.Fatal(err)
 	}

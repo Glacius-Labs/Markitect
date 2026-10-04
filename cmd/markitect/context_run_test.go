@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/internal/app"
+	"github.com/Glacius-Labs/Markitect/internal/host"
 )
 
 func TestRunContextUsesFixedRevisionAndExactSelectedPaths(t *testing.T) {
@@ -23,14 +23,14 @@ func TestRunContextUsesFixedRevisionAndExactSelectedPaths(t *testing.T) {
 	if code != 0 {
 		t.Fatalf("context exit=%d stderr=%s output=%s", code, stderr, output)
 	}
-	ctx := decodeYAML[app.Context](t, output)
+	ctx := decodeYAML[host.Context](t, output)
 	if ctx.Revision != revision || ctx.Provisional || !ctx.Complete || ctx.Status != "complete" || ctx.Run == nil {
 		t.Fatalf("run context has wrong fixed snapshot identity: %#v", ctx)
 	}
-	if ctx.Run.ManifestHash != app.Hash([]byte(manifest)) || ctx.Run.ManifestPath != "context-run.yaml" || ctx.Run.TaskID != "work-item-17" {
+	if ctx.Run.ManifestHash != host.Hash([]byte(manifest)) || ctx.Run.ManifestPath != "context-run.yaml" || ctx.Run.TaskID != "work-item-17" {
 		t.Fatalf("run context omitted manifest evidence: %#v", ctx.Run)
 	}
-	inputs := map[string]app.ContextInput{}
+	inputs := map[string]host.ContextInput{}
 	for _, input := range ctx.Inputs {
 		inputs[input.Role+":"+input.Path] = input
 	}
@@ -39,7 +39,7 @@ func TestRunContextUsesFixedRevisionAndExactSelectedPaths(t *testing.T) {
 		"source:internal/orders/OrderService.cs": "public sealed class OrderService { }\n",
 	} {
 		input, ok := inputs[key]
-		if !ok || input.Status != "included" || input.Hash != app.Hash([]byte(expected)) || input.Text != expected {
+		if !ok || input.Status != "included" || input.Hash != host.Hash([]byte(expected)) || input.Text != expected {
 			t.Errorf("input %s = %#v, want exact fixed-snapshot bytes", key, input)
 		}
 	}
@@ -59,7 +59,7 @@ func TestRunContextReportsMissingRequiredInputsAsIncomplete(t *testing.T) {
 	if code != 2 {
 		t.Fatalf("incomplete context exit=%d stderr=%s output=%s, want 2", code, stderr, output)
 	}
-	ctx := decodeYAML[app.Context](t, output)
+	ctx := decodeYAML[host.Context](t, output)
 	if ctx.Complete || ctx.Status != "incomplete" {
 		t.Fatalf("missing required inputs were not marked incomplete: %#v", ctx)
 	}
@@ -79,12 +79,12 @@ func TestRunContextRequiresFixedRevisionAndRejectsDuplicatePaths(t *testing.T) {
 	if code, _, _ := invoke("context", "--repo", repo.root, "--run", "context-run.yaml"); code == 0 {
 		t.Fatal("run context accepted an omitted fixed revision")
 	}
-	duplicate := fmt.Sprintf("version: %s\nentry: %s\ntask:\n  id: work-item-17\n  path: work-items/17.md\nsources:\n  - path: work-items/17.md\n    reason: duplicate task\n", app.RunManifestVersion, cliNamespace+"/Skill/entry")
-	if _, err := app.ParseRunManifest([]byte(duplicate)); err == nil {
+	duplicate := fmt.Sprintf("version: %s\nentry: %s\ntask:\n  id: work-item-17\n  path: work-items/17.md\nsources:\n  - path: work-items/17.md\n    reason: duplicate task\n", host.RunManifestVersion, cliNamespace+"/Skill/entry")
+	if _, err := host.ParseRunManifest([]byte(duplicate)); err == nil {
 		t.Fatal("run manifest accepted a source path duplicated from the task path")
 	}
 }
 
 func runManifestYAML(taskPath, sourcePath string) string {
-	return fmt.Sprintf("version: %s\nentry: %s\ntask:\n  id: work-item-17\n  path: %s\nsources:\n  - path: %s\n    reason: implementation source selected for this work item\n", app.RunManifestVersion, cliNamespace+"/Skill/entry", taskPath, sourcePath)
+	return fmt.Sprintf("version: %s\nentry: %s\ntask:\n  id: work-item-17\n  path: %s\nsources:\n  - path: %s\n    reason: implementation source selected for this work item\n", host.RunManifestVersion, cliNamespace+"/Skill/entry", taskPath, sourcePath)
 }

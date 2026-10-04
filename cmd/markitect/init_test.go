@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/internal/app"
+	"github.com/Glacius-Labs/Markitect/internal/host"
 )
 
 func TestInitCLIPlansThenCreatesProjectWithoutInventingVerification(t *testing.T) {
@@ -18,7 +18,7 @@ func TestInitCLIPlansThenCreatesProjectWithoutInventingVerification(t *testing.T
 	}
 	result := decodeYAML[struct {
 		Status string       `yaml:"status"`
-		Plan   app.InitPlan `yaml:"plan"`
+		Plan   host.InitPlan `yaml:"plan"`
 	}](t, output)
 	if result.Status != "planned" || result.Plan.Applied || len(result.Plan.Files) != 2 {
 		t.Fatalf("unexpected plan: %#v", result)
@@ -91,7 +91,7 @@ func TestInitCLIDefaultsAreaPathWhenOmitted(t *testing.T) {
 	}
 	result := decodeYAML[struct {
 		Status string       `yaml:"status"`
-		Plan   app.InitPlan `yaml:"plan"`
+		Plan   host.InitPlan `yaml:"plan"`
 	}](t, output)
 	if result.Status != "planned" || result.Plan.Area.Path != ".markitect/areas/engineering" {
 		t.Fatalf("unexpected default-path plan: %#v", result)

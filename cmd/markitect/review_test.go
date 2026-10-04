@@ -6,11 +6,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/internal/app"
+	"github.com/Glacius-Labs/Markitect/internal/host"
 	"github.com/Glacius-Labs/Markitect/internal/core"
 	"github.com/Glacius-Labs/Markitect/internal/format"
 	"github.com/Glacius-Labs/Markitect/internal/render"
-	"github.com/Glacius-Labs/Markitect/internal/source"
+	"github.com/Glacius-Labs/Markitect/internal/infrastructure/source"
 	"go.yaml.in/yaml/v3"
 )
 
@@ -151,7 +151,7 @@ func TestReviewRequiresReviewWhenCandidateContextChanges(t *testing.T) {
 	}
 	writeReviewRecord(t, evidencePath, recordYAML)
 
-	base, err := app.Load(repo.root, repo.base)
+	base, err := host.Load(repo.root, repo.base)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -270,15 +270,15 @@ func TestReviewEvidenceMustBeValidYAMLAndEntryBound(t *testing.T) {
 
 func TestReviewCLIRequiresFullGitIdentityForStoredEvidence(t *testing.T) {
 	repo := newReviewCLIRepo(t)
-	project, err := app.Load(repo.root, repo.base)
+	project, err := host.Load(repo.root, repo.base)
 	if err != nil {
 		t.Fatal(err)
 	}
-	config, err := app.DecodeReviewConfig(project.Snapshot.Files[reviewConfigPath])
+	config, err := host.DecodeReviewConfig(project.Snapshot.Files[reviewConfigPath])
 	if err != nil {
 		t.Fatal(err)
 	}
-	record, err := app.RecordReview(project, cliNamespace+"/Skill/entry", version, "test-tool", config, "Advisory fixture report.")
+	record, err := host.RecordReview(project, cliNamespace+"/Skill/entry", version, "test-tool", config, "Advisory fixture report.")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -287,7 +287,7 @@ func TestReviewCLIRequiresFullGitIdentityForStoredEvidence(t *testing.T) {
 		t.Run(id, func(t *testing.T) {
 			candidate := *record
 			candidate.Revision = id
-			data, err := app.YAML(candidate)
+			data, err := host.YAML(candidate)
 			if err != nil {
 				t.Fatal(err)
 			}

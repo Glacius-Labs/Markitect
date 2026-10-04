@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/internal/app"
+	"github.com/Glacius-Labs/Markitect/internal/host"
 	"go.yaml.in/yaml/v3"
 )
 
@@ -189,18 +189,18 @@ func TestCapturePathCannotEscapeStagedInputs(t *testing.T) {
 
 func TestRealApplicationAdapterRequestUsesTheAdapterSPI(t *testing.T) {
 	withCapture(t, validCapture("refs/heads/main"), func(_ request) {
-		model := app.SemanticModel{
+		model := host.SemanticModel{
 			APIVersion: semanticModelAPI, ModelDigest: "model-digest", ValidationStatus: "passed",
-			Resources: []app.ModelResource{{Identity: app.ModelIdentity{Kind: "GitRepository", Key: resourceKey}, Data: map[string]any{"defaultBranch": "refs/heads/main", "otherCanonicalField": "untouched"}, Source: app.ModelSource{Path: "domains/repositories.yaml", Digest: "source-digest"}}},
+			Resources: []host.ModelResource{{Identity: host.ModelIdentity{Kind: "GitRepository", Key: resourceKey}, Data: map[string]any{"defaultBranch": "refs/heads/main", "otherCanonicalField": "untouched"}, Source: host.ModelSource{Path: "domains/repositories.yaml", Digest: "source-digest"}}},
 		}
-		adapter := app.AdapterIdentity{
+		adapter := host.AdapterIdentity{
 			Name: "azure-git-metadata", Type: "command", Version: "v0.1.0", Target: targetID(organization, projectID),
 			Parameters: map[string]any{
 				"apiVersion": azureAPIVersion, "organization": organization, "projectId": projectID,
 				"repositories": []any{map[string]any{"resource": resourceKey, "repositoryId": repositoryID, "captureFile": "repo.json"}},
 			},
 		}
-		wire, err := yaml.Marshal(app.AdapterRequest{APIVersion: app.AdapterRequestVersion, Action: "observe", Adapter: adapter, Model: model})
+		wire, err := yaml.Marshal(host.AdapterRequest{APIVersion: host.AdapterRequestVersion, Action: "observe", Adapter: adapter, Model: model})
 		if err != nil {
 			t.Fatal(err)
 		}

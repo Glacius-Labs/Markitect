@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/internal/app"
+	"github.com/Glacius-Labs/Markitect/internal/host"
 	"github.com/Glacius-Labs/Markitect/internal/core"
 	"github.com/Glacius-Labs/Markitect/internal/format"
 	"github.com/Glacius-Labs/Markitect/internal/core/snapshot"
@@ -18,13 +18,13 @@ const deliveryTopologyAPI = "delivery.example.org/v1alpha1"
 
 const deliveryEqualityConstraint = "deployment-service-and-environment-share-product"
 
-func loadDeliveryTargetEquality(t *testing.T) *app.Project {
+func loadDeliveryTargetEquality(t *testing.T) *host.Project {
 	t.Helper()
 	_, source, _, ok := runtime.Caller(0)
 	if !ok {
 		t.Fatal("could not locate Delivery target equality fixture")
 	}
-	project, err := app.Load(filepath.Join(filepath.Dir(source), "delivery-target-equality"), "")
+	project, err := host.Load(filepath.Join(filepath.Dir(source), "delivery-target-equality"), "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -119,7 +119,7 @@ func TestDeliveryTargetEqualityPreOperatorKernelAcceptsTypedMismatch(t *testing.
 	}
 	private.Files[definitionPath] = encodedDomain
 	mutateDeliveryReferenceInSnapshot(t, private, base.Graph.Registry, "resources/deployment-orders-production.yaml", "environment", "support-production")
-	project, err := app.Parse(private)
+	project, err := host.Parse(private)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -158,7 +158,7 @@ func TestDeliveryTargetEqualityReportsDifferentPathResults(t *testing.T) {
 			base := loadDeliveryTargetEquality(t)
 			private := privateDeliveryTargetSnapshot(base)
 			mutateDeliveryReferenceInSnapshot(t, private, base.Graph.Registry, test.path, test.field, test.targetName)
-			changed, err := app.Parse(private)
+			changed, err := host.Parse(private)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -213,7 +213,7 @@ func TestDeliveryTargetEqualityOwnershipIsNonContextAndInvalidatesPathDependents
 		t.Fatal("orders Service Product ownership relation is absent")
 	}
 
-	context, err := app.CompileContext(project, "engineering/Skill/deployment-review", "test")
+	context, err := host.CompileContext(project, "engineering/Skill/deployment-review", "test")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -281,7 +281,7 @@ func TestDeliveryTargetEqualityOwnershipIsNonContextAndInvalidatesPathDependents
 			if result, ok := deliveryPolicyResult(after.Graph.PolicyResults, "engineering/delivery.example.org/v1alpha1/Deployment/orders-production"); !ok || result.Status != core.PolicyFailed {
 				t.Fatalf("changed ownership path should fail the selected Deployment: %+v", result)
 			}
-			impact := app.Changes(base, after)
+			impact := host.Changes(base, after)
 			for _, want := range test.wantAffected {
 				if !deliveryContains(impact.Affected, want) {
 					t.Errorf("ownership-path edit omitted dependent %s from impact: %#v", want, impact.Affected)
@@ -361,16 +361,16 @@ func TestDeliveryTargetEqualitySourcesUseCanonicalFormat(t *testing.T) {
 	}
 }
 
-func loadDeliveryTargetEqualityAt(t *testing.T, root string) *app.Project {
+func loadDeliveryTargetEqualityAt(t *testing.T, root string) *host.Project {
 	t.Helper()
-	project, err := app.Load(root, "")
+	project, err := host.Load(root, "")
 	if err != nil {
 		t.Fatal(err)
 	}
 	return project
 }
 
-func privateDeliveryTargetSnapshot(project *app.Project) *snapshot.Snapshot {
+func privateDeliveryTargetSnapshot(project *host.Project) *snapshot.Snapshot {
 	files := make(map[string][]byte, len(project.Snapshot.Files))
 	for name, data := range project.Snapshot.Files {
 		files[name] = append([]byte(nil), data...)
@@ -430,7 +430,7 @@ func copyDeliveryTargetFixture(t *testing.T, destination string) {
 	}
 }
 
-func mutateDeliveryProductOwner(t *testing.T, root string, project *app.Project, resourceKey, relativePath, field, targetName string) {
+func mutateDeliveryProductOwner(t *testing.T, root string, project *host.Project, resourceKey, relativePath, field, targetName string) {
 	t.Helper()
 	resource := project.Graph.Resources[resourceKey]
 	if resource == nil {

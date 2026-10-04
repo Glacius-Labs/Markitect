@@ -6,9 +6,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/internal/app"
+	"github.com/Glacius-Labs/Markitect/internal/host"
 	"github.com/Glacius-Labs/Markitect/internal/render"
-	"github.com/Glacius-Labs/Markitect/internal/source"
+	"github.com/Glacius-Labs/Markitect/internal/infrastructure/source"
 )
 
 // The canonical intent checkpoint adds accounting limits to development
@@ -23,7 +23,7 @@ func TestMarkitectFirstProjectContextAndProjections(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	project, err := app.Parse(snap)
+	project, err := host.Parse(snap)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -31,7 +31,7 @@ func TestMarkitectFirstProjectContextAndProjections(t *testing.T) {
 		t.Fatalf("root Project is invalid: %#v", project.Diagnostics)
 	}
 	const entry = "development/Skill/engineering-change"
-	context, err := app.CompileContext(project, entry, "test", "sha256:fixed-test-tool")
+	context, err := host.CompileContext(project, entry, "test", "sha256:fixed-test-tool")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -45,7 +45,7 @@ func TestMarkitectFirstProjectContextAndProjections(t *testing.T) {
 		}
 		if input.Path == "docs/design/managed-artifact-coverage.md" {
 			foundLimits = true
-			if input.Hash != app.Hash(snap.Files[input.Path]) || input.Reason == "" {
+			if input.Hash != host.Hash(snap.Files[input.Path]) || input.Reason == "" {
 				t.Fatalf("accounting limits lack exact input evidence: %#v", input)
 			}
 		}
@@ -56,15 +56,15 @@ func TestMarkitectFirstProjectContextAndProjections(t *testing.T) {
 	if !foundProtocol || !foundLimits {
 		t.Fatalf("needed context missing: protocol=%v accounting limits=%v", foundProtocol, foundLimits)
 	}
-	repeated, err := app.CompileContext(project, entry, "test", "sha256:fixed-test-tool")
+	repeated, err := host.CompileContext(project, entry, "test", "sha256:fixed-test-tool")
 	if err != nil {
 		t.Fatal(err)
 	}
-	first, err := app.YAML(context)
+	first, err := host.YAML(context)
 	if err != nil {
 		t.Fatal(err)
 	}
-	second, err := app.YAML(repeated)
+	second, err := host.YAML(repeated)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -80,24 +80,24 @@ func TestMarkitectFirstProjectContextAndProjections(t *testing.T) {
 			t.Fatalf("entry projection %s has wrong canonical owner: %v", output, owners[output])
 		}
 	}
-	if findings := app.CheckOutputs(project); len(findings) != 0 {
+	if findings := host.CheckOutputs(project); len(findings) != 0 {
 		t.Fatalf("root projections are not converged: %#v", findings)
 	}
-	observation, err := app.ObserveProjection(project, "test", "sha256:fixed-test-tool")
+	observation, err := host.ObserveProjection(project, "test", "sha256:fixed-test-tool")
 	if err != nil {
 		t.Fatal(err)
 	}
 	if len(observation.Stale) != 0 || len(observation.Drift) != 0 || len(observation.Conflicts) != 0 {
 		t.Fatalf("native projection observation does not converge: %#v", observation)
 	}
-	plan, err := app.PlanProjection(project, "test", "sha256:fixed-test-tool")
+	plan, err := host.PlanProjection(project, "test", "sha256:fixed-test-tool")
 	if err != nil {
 		t.Fatal(err)
 	}
 	if plan.Status != "complete" || len(plan.Operations) != 0 || len(plan.Stale) != 0 {
 		t.Fatalf("converged root must have an empty complete plan: %#v", plan)
 	}
-	if err := app.VerifyProjectionPlan(project, plan, "test", "sha256:fixed-test-tool"); err != nil {
+	if err := host.VerifyProjectionPlan(project, plan, "test", "sha256:fixed-test-tool"); err != nil {
 		t.Fatalf("converged root plan does not verify: %v", err)
 	}
 }

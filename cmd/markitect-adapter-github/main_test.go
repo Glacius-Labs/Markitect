@@ -11,7 +11,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/internal/app"
+	"github.com/Glacius-Labs/Markitect/internal/host"
 	"github.com/Glacius-Labs/Markitect/internal/core"
 	"go.yaml.in/yaml/v3"
 )
@@ -299,30 +299,30 @@ func TestBuiltExecutableConsumesFrozenCommandProtocol(t *testing.T) {
 	}
 }
 
-func fullAdapterRequest() app.AdapterRequest {
+func fullAdapterRequest() host.AdapterRequest {
 	base := validRequest("observe")
-	model := app.SemanticModel{
+	model := host.SemanticModel{
 		APIVersion:   semanticModelAPI,
-		Snapshot:     app.ModelSnapshot{ID: "commit:abcdef", Digest: "sha256:fixed-snapshot"},
+		Snapshot:     host.ModelSnapshot{ID: "commit:abcdef", Digest: "sha256:fixed-snapshot"},
 		ConfigDigest: "sha256:fixed-project-config", ModelDigest: "sha256:fixed-model",
 		ValidationStatus: "passed", StructuralStatus: "passed", PolicyStatus: "passed",
-		DomainInputs: []app.ModelDomainInput{{APIVersion: "github.example.org/v1alpha1", Name: "repositories", Path: "domains/repositories.yaml", Digest: "sha256:domain"}},
-		Domains: []app.ModelDomain{{Name: "repositories", APIVersion: "github.example.org/v1alpha1", Kinds: map[string]core.KindDefinition{"Repository": {
+		DomainInputs: []host.ModelDomainInput{{APIVersion: "github.example.org/v1alpha1", Name: "repositories", Path: "domains/repositories.yaml", Digest: "sha256:domain"}},
+		Domains: []host.ModelDomain{{Name: "repositories", APIVersion: "github.example.org/v1alpha1", Kinds: map[string]core.KindDefinition{"Repository": {
 			Required: []string{"fullName", "defaultBranch", "description"},
 			Properties: map[string]core.PropertyDefinition{
 				"fullName": {Type: "string"}, "defaultBranch": {Type: "string"}, "description": {Type: "string"},
 			},
 		}}}},
-		Resources: []app.ModelResource{
-			{Identity: app.ModelIdentity{APIVersion: "github.example.org/v1alpha1", Kind: "Repository", Namespace: "engineering", Name: "markitect", Key: repositoryKey}, Labels: map[string]string{"tier": "platform"}, Data: map[string]any{"fullName": "Glacius-Labs/Markitect", "defaultBranch": "main"}, Source: app.ModelSource{Path: "resources/markitect.repository.yaml", Line: 1, Digest: "sha256:resource"}, Area: "engineering"},
-			{Identity: app.ModelIdentity{APIVersion: "github.example.org/v1alpha1", Kind: "Repository", Namespace: "engineering", Name: "parent", Key: "engineering/github.example.org/v1alpha1/Repository/parent"}, Data: map[string]any{"fullName": "Glacius-Labs/Parent", "defaultBranch": "main"}, Source: app.ModelSource{Path: "resources/parent.repository.yaml", Digest: "sha256:parent"}, Area: "engineering"},
+		Resources: []host.ModelResource{
+			{Identity: host.ModelIdentity{APIVersion: "github.example.org/v1alpha1", Kind: "Repository", Namespace: "engineering", Name: "markitect", Key: repositoryKey}, Labels: map[string]string{"tier": "platform"}, Data: map[string]any{"fullName": "Glacius-Labs/Markitect", "defaultBranch": "main"}, Source: host.ModelSource{Path: "resources/markitect.repository.yaml", Line: 1, Digest: "sha256:resource"}, Area: "engineering"},
+			{Identity: host.ModelIdentity{APIVersion: "github.example.org/v1alpha1", Kind: "Repository", Namespace: "engineering", Name: "parent", Key: "engineering/github.example.org/v1alpha1/Repository/parent"}, Data: map[string]any{"fullName": "Glacius-Labs/Parent", "defaultBranch": "main"}, Source: host.ModelSource{Path: "resources/parent.repository.yaml", Digest: "sha256:parent"}, Area: "engineering"},
 		},
-		Relationships: []app.ModelRelationship{{From: repositoryKey, To: "engineering/github.example.org/v1alpha1/Repository/parent", Type: "dependsOn", Source: app.ModelSource{Path: "resources/markitect.repository.yaml", Digest: "sha256:relation"}, Context: true, Invalidate: true, Acyclic: true}},
+		Relationships: []host.ModelRelationship{{From: repositoryKey, To: "engineering/github.example.org/v1alpha1/Repository/parent", Type: "dependsOn", Source: host.ModelSource{Path: "resources/markitect.repository.yaml", Digest: "sha256:relation"}, Context: true, Invalidate: true, Acyclic: true}},
 	}
-	return app.AdapterRequest{
+	return host.AdapterRequest{
 		APIVersion: requestAPIVersion,
 		Action:     "observe",
-		Adapter:    app.AdapterIdentity{Name: base.Adapter.Name, Type: base.Adapter.Type, Version: base.Adapter.Version, Parameters: base.Adapter.Parameters},
+		Adapter:    host.AdapterIdentity{Name: base.Adapter.Name, Type: base.Adapter.Type, Version: base.Adapter.Version, Parameters: base.Adapter.Parameters},
 		Model:      model,
 	}
 }
