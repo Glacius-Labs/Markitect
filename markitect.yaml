@@ -14,8 +14,6 @@ spec:
             - name: canonical-ownership
         - name: development
           path: .markitect/areas/development
-          rules:
-            - name: module-verification
           imports:
             - core
             - documentation
@@ -23,6 +21,8 @@ spec:
             - module-configs
             - hooks
             - pipelines
+          rules:
+            - name: module-verification
         - name: documentation
           path: docs
         - name: contribution

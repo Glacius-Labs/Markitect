@@ -35,8 +35,6 @@ spec:
       owner: winget-validation-workflow
     - path: cmd/markitect-check-artifacts/main.go
       owner: managed-artifact-check-command
-    - path: cmd/markitect-check-artifacts/main_test.go
-      owner: managed-artifact-check-command-tests
     - path: internal/host/artifactcli/main.go
       owner: managed-artifact-check-host-command
     - path: internal/host/artifactcli/main_test.go
