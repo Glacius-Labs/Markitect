@@ -31,11 +31,11 @@ GitHub Actions paths must be exact YAML files under `.github/workflows/`; Azure 
 
 Each `expectedChecks` entry names a Host-supplied `CheckFact{Name, Reference}` and one exact RFC 6901-style YAML pointer. The pointed-to node must be a unique string scalar, and its decoded scalar value must equal the supplied reference as an exact Go string. No command parsing or normalization occurs. Unsupported aliases, missing or ambiguous mapping keys, non-string values, and invalid pointers are reported.
 
-An empty `pipelines` list returns `not-configured`, never a successful verification claim. If `expectedChecks` is empty, only configured path presence, optional digest, and owner linkage are checked.
+An empty `pipelines` list returns `not-configured`, never a successful verification claim. If `expectedChecks` is empty, only configured path presence, required digest, and owner linkage are checked.
 
 ## Result and limits
 
-`Check(Input)` returns deterministic findings for missing supplied bytes, stale digests, owner-resource/link failures, absent Host check facts, invalid YAML and unavailable/mismatched literal references. Inputs are bounded to 128 pipeline files, 128 expected references, a 1 MiB config, and 2 MiB per configured pipeline artifact.
+`Check(Input)` returns deterministic findings for missing supplied bytes, stale digests, owner-resource/link failures, absent Host check facts, invalid YAML and unavailable/mismatched literal references. It reports the supplied snapshot/model identities and `configDigest`. That digest is SHA-256 over deterministic JSON for the closed typed config, with pipelines sorted by path and name and each expected-check list sorted by name and YAML pointer, so YAML formatting or list order does not change the binding. Inputs are bounded to 128 pipeline files, 128 expected references, a 1 MiB config, and 2 MiB per configured pipeline artifact. Configured paths that collide under portable case folding are rejected.
 
 A matching scalar proves only that the exact configured YAML location contains the Host-supplied literal. It does not prove the step executes, is reachable, runs on a relevant event, succeeds, or has complete coverage. The module does not evaluate GitHub Actions expressions, Azure templates/tasks, conditions, matrices, external actions, shell commands, or provider state. A configured reference is a narrow textual assertion, not a universal CI DSL.
 

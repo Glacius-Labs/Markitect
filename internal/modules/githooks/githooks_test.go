@@ -135,3 +135,39 @@ func TestFindingOrderIsStableAcrossHookConfigOrder(t *testing.T) {
 		t.Fatalf("report depends on input order:\n%#v\n%#v", one, two)
 	}
 }
+
+func TestReportBindsNormalizedConfigWithoutChangingModel(t *testing.T) {
+	model := fixtureModel()
+	first := Config{APIVersion: ConfigVersion, Hooks: []Hook{{
+		Name: "pre-commit-tests", Stage: "pre-commit", Path: ".githooks/pre-commit",
+		Digest: strings.Repeat("c", 64), Owner: "development/Rule/hooks-owner",
+	}}}
+	second := first
+	second.Hooks = append([]Hook(nil), first.Hooks...)
+	second.Hooks[0].Name = "renamed-pre-commit-tests"
+	one, err := Check(Input{Model: model, Config: first})
+	if err != nil {
+		t.Fatal(err)
+	}
+	two, err := Check(Input{Model: model, Config: second})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if one.ModelDigest != two.ModelDigest || one.SnapshotDigest != two.SnapshotDigest {
+		t.Fatal("test must hold the model snapshot fixed")
+	}
+	if one.ConfigDigest == "" || one.ConfigDigest == two.ConfigDigest {
+		t.Fatalf("report must bind the changed module config: first=%q second=%q", one.ConfigDigest, two.ConfigDigest)
+	}
+}
+
+func TestConfigRejectsPortableCaseFoldPathDuplicates(t *testing.T) {
+	config := Config{APIVersion: ConfigVersion, Hooks: []Hook{
+		{Name: "upper", Stage: "pre-commit", Path: ".githooks/Pre-Commit", Digest: strings.Repeat("c", 64), Owner: "owner"},
+		{Name: "lower", Stage: "pre-commit", Path: ".githooks/pre-commit", Digest: strings.Repeat("c", 64), Owner: "owner"},
+	}}
+	_, err := Check(Input{Model: fixtureModel(), Config: config})
+	if err == nil || !strings.Contains(err.Error(), "portable case folding") {
+		t.Fatalf("case-fold colliding hook paths must be rejected: %v", err)
+	}
+}

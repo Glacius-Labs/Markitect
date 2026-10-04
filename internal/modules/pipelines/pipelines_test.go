@@ -159,3 +159,41 @@ func TestFindingOrderIsStableAcrossPipelineConfigOrder(t *testing.T) {
 		t.Fatalf("report depends on input order:\n%#v\n%#v", one, two)
 	}
 }
+
+func TestReportBindsNormalizedConfigWithoutChangingModel(t *testing.T) {
+	model := pipelineModel()
+	first := Config{APIVersion: ConfigVersion, Pipelines: []Pipeline{{
+		Name: "tests", Provider: "github-actions", Path: ".github/workflows/ci.yaml",
+		Digest: strings.Repeat("c", 64), Owner: "development/Rule/ci-owner",
+		ExpectedChecks: []ExpectedCheck{{Name: "go-tests", YAMLPath: "/jobs/test/steps/0/run"}},
+	}}}
+	second := first
+	second.Pipelines = append([]Pipeline(nil), first.Pipelines...)
+	second.Pipelines[0].ExpectedChecks = append([]ExpectedCheck(nil), first.Pipelines[0].ExpectedChecks...)
+	second.Pipelines[0].ExpectedChecks[0].YAMLPath = "/jobs/build/steps/0/run"
+	one, err := Check(Input{Model: model, Config: first})
+	if err != nil {
+		t.Fatal(err)
+	}
+	two, err := Check(Input{Model: model, Config: second})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if one.ModelDigest != two.ModelDigest || one.SnapshotDigest != two.SnapshotDigest {
+		t.Fatal("test must hold the model snapshot fixed")
+	}
+	if one.ConfigDigest == "" || one.ConfigDigest == two.ConfigDigest {
+		t.Fatalf("report must bind the changed module config: first=%q second=%q", one.ConfigDigest, two.ConfigDigest)
+	}
+}
+
+func TestConfigRejectsPortableCaseFoldPathDuplicates(t *testing.T) {
+	config := Config{APIVersion: ConfigVersion, Pipelines: []Pipeline{
+		{Name: "upper", Provider: "github-actions", Path: ".github/workflows/CI.yaml", Digest: strings.Repeat("c", 64), Owner: "owner"},
+		{Name: "lower", Provider: "github-actions", Path: ".github/workflows/ci.yaml", Digest: strings.Repeat("c", 64), Owner: "owner"},
+	}}
+	_, err := Check(Input{Model: pipelineModel(), Config: config})
+	if err == nil || !strings.Contains(err.Error(), "portable case folding") {
+		t.Fatalf("case-fold colliding pipeline paths must be rejected: %v", err)
+	}
+}
