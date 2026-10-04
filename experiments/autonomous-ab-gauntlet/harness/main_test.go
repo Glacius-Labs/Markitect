@@ -28,6 +28,10 @@ type harnessFixture struct {
 }
 
 func newHarnessFixture(t *testing.T, maximumRepairs int) harnessFixture {
+	return newHarnessFixtureWithHelper(t, maximumRepairs, false)
+}
+
+func newHarnessFixtureWithHelper(t *testing.T, maximumRepairs int, includeHelper bool) harnessFixture {
 	t.Helper()
 	arena := t.TempDir()
 	project := filepath.Join(arena, "projects", "demo")
@@ -104,6 +108,11 @@ tasks:
 `
 	if err := os.WriteFile(filepath.Join(project, "task-set.yaml"), []byte(tasks), 0644); err != nil {
 		t.Fatal(err)
+	}
+	if includeHelper {
+		if err := buildGauntletHelper(t, arena); err != nil {
+			t.Fatal(err)
+		}
 	}
 	if err := quietCall(t, func() error { return prepare([]string{"--arena", arena}) }); err != nil {
 		t.Fatal(err)
@@ -226,6 +235,223 @@ func TestTaskOrderCarriesFailedWorkspaceForwardAndCapturesSnapshot(t *testing.T)
 	if _, statErr := os.Stat(filepath.Join(f.arena, state.FinalSnapshot, "tree.yaml")); statErr != nil {
 		t.Fatalf("failed task snapshot missing: %v", statErr)
 	}
+}
+
+func TestRelativeArenaNativeEnvelopeRunsFromWorkspaceAndFinishesByDigest(t *testing.T) {
+	f := newHarnessFixtureWithHelper(t, 2, true)
+	t.Setenv("GAUNTLET_GOCACHE", "")
+	if err := withWorkingDirectory(f.arena, func() error {
+		return quietCall(t, func() error {
+			return prepareTask([]string{"--arena", ".", "--protocol", "protocol.yaml", "--project", "demo", "--arm", "A", "--trial", "1", "--task-id", "01"})
+		})
+	}); err != nil {
+		t.Fatalf("prepare task from relative arena root: %v", err)
+	}
+	var initial NativeEnvelope
+	if err := readYAML(filepath.Join(f.arena, "runs", f.runID, "01.attempt-0.envelope.yaml"), &initial); err != nil {
+		t.Fatal(err)
+	}
+	assertEnvelopeExternalPathsAbsolute(t, initial)
+	if err := os.WriteFile(filepath.Join(initial.Workspace, "source.txt"), []byte("before public check\r\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := withWorkingDirectory(initial.Workspace, func() error {
+		return runSuppliedHelper(initial)
+	}); err != nil {
+		t.Fatalf("execute supplied helper from isolated workspace: %v", err)
+	}
+	var firstEvent helperEvent
+	if err := json.Unmarshal(mustReadFile(t, initial.HelperEnvironment["GAUNTLET_HELPER_RECORD"]), &firstEvent); err != nil {
+		t.Fatalf("read public helper receipt: %v", err)
+	}
+	if firstEvent.ExitCode != 0 || firstEvent.ActorAttempt != 1 || !filepath.IsAbs(firstEvent.Snapshot) {
+		t.Fatalf("helper receipt has wrong outcome, attempt, or snapshot path: %#v", firstEvent)
+	}
+	if got := string(mustReadFile(t, filepath.Join(firstEvent.Snapshot, "workspace", "source.txt"))); got != "before public check\r\n" {
+		t.Fatalf("helper snapshot was not taken before validation: %q", got)
+	}
+	if err := os.WriteFile(filepath.Join(initial.Workspace, "source.txt"), []byte("after public check\r\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if got := string(mustReadFile(t, filepath.Join(firstEvent.Snapshot, "workspace", "source.txt"))); got != "before public check\r\n" {
+		t.Fatalf("helper snapshot changed after the check: %q", got)
+	}
+	if err := os.WriteFile(filepath.Join(f.arena, "actor-response.txt"), []byte("completed response"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	if err := withWorkingDirectory(f.arena, func() error {
+		return finishTask([]string{"--arena", ".", "--run-id", initial.RunID, "--task-id", initial.TaskID, "--input-digest", initial.InputDigest,
+			"--response-file", "actor-response.txt", "--status", "completed"})
+	}); err != nil {
+		t.Fatalf("finish task from relative arena root with prepared digest: %v", err)
+	}
+	var state NativeTaskRecord
+	if err := readYAML(filepath.Join(f.arena, "runs", f.runID, "01.native.yaml"), &state); err != nil {
+		t.Fatal(err)
+	}
+	if state.ActorStatus != "completed" || state.ActorCompletedUTC == "" || state.Turns[0].CompletedDigest != initial.InputDigest {
+		t.Fatalf("relative-path finish did not preserve exact prepared digest and terminal receipt: %#v", state)
+	}
+}
+
+func TestRelativeArenaRepairAndIntegrationEnvelopesUseAbsoluteExternalPaths(t *testing.T) {
+	t.Run("task repair", func(t *testing.T) {
+		f := newHarnessFixtureWithHelper(t, 2, true)
+		t.Setenv("GAUNTLET_GOCACHE", "")
+		var initial NativeEnvelope
+		if err := withWorkingDirectory(f.arena, func() error {
+			if err := quietCall(t, func() error {
+				return prepareTask([]string{"--arena", ".", "--protocol", "protocol.yaml", "--project", "demo", "--arm", "A", "--trial", "1", "--task-id", "01"})
+			}); err != nil {
+				return err
+			}
+			if err := readYAML(filepath.Join(f.arena, "runs", f.runID, "01.attempt-0.envelope.yaml"), &initial); err != nil {
+				return err
+			}
+			return runSuppliedHelper(initial)
+		}); err != nil {
+			t.Fatalf("prepare and run initial relative-arena actor: %v", err)
+		}
+		assertEnvelopeExternalPathsAbsolute(t, initial)
+		responseRelative := filepath.Join("raw", f.runID, "initial-response.txt")
+		response := filepath.Join(f.arena, responseRelative)
+		if err := os.WriteFile(response, []byte("repair-needed"), 0600); err != nil {
+			t.Fatal(err)
+		}
+		feedbackRelative := filepath.Join("raw", initial.RunID, initial.TaskID, "attempt-0.public-validator.txt")
+		if err := withWorkingDirectory(f.arena, func() error {
+			return finishTask([]string{"--arena", ".", "--run-id", initial.RunID, "--task-id", initial.TaskID, "--input-digest", initial.InputDigest,
+				"--response-file", responseRelative, "--status", "repair-needed"})
+		}); err != nil {
+			t.Fatalf("finish initial actor from relative arena root: %v", err)
+		}
+		var repair NativeEnvelope
+		if err := withWorkingDirectory(f.arena, func() error {
+			if err := quietCall(t, func() error {
+				return prepareTask([]string{"--arena", ".", "--protocol", "protocol.yaml", "--project", "demo", "--arm", "A", "--trial", "1", "--task-id", "01",
+					"--repair-iteration", "1", "--feedback-file", feedbackRelative})
+			}); err != nil {
+				return err
+			}
+			return readYAML(filepath.Join(f.arena, "runs", f.runID, "01.attempt-1.envelope.yaml"), &repair)
+		}); err != nil {
+			t.Fatalf("prepare repair with relative arena/protocol/feedback paths: %v", err)
+		}
+		assertEnvelopeExternalPathsAbsolute(t, repair)
+		if repair.DeadlineUTC != initial.DeadlineUTC || repair.InputDigest == initial.InputDigest {
+			t.Fatalf("relative-path repair lost the frozen deadline or fresh digest: initial=%#v repair=%#v", initial, repair)
+		}
+	})
+
+	t.Run("integration repair", func(t *testing.T) {
+		result := createConflictIntegration(t)
+		t.Setenv("GAUNTLET_GOCACHE", "")
+		feedbackRelative := filepath.Join("raw", result.integration.RunID, "08.attempt-0.feedback.txt")
+		var repair NativeEnvelope
+		if err := withWorkingDirectory(result.f.arena, func() error {
+			err := quietCall(t, func() error {
+				return prepareIntegrationRepair([]string{"--arena", ".", "--project", "demo", "--arm", "A", "--trial", "1", "--protocol", "protocol.yaml",
+					"--attempt", "1", "--feedback-file", feedbackRelative})
+			})
+			if err != nil {
+				return err
+			}
+			return readYAML(filepath.Join(result.f.arena, "runs", result.integration.RunID, "08.attempt-1.envelope.yaml"), &repair)
+		}); err != nil {
+			t.Fatalf("prepare integration repair with relative arena/protocol/feedback paths: %v", err)
+		}
+		assertEnvelopeExternalPathsAbsolute(t, repair)
+		if repair.DeadlineUTC != result.integration.DeadlineUTC || repair.InputDigest == result.integration.InputDigest {
+			t.Fatalf("relative-path integration repair lost deadline or fresh digest: initial=%#v repair=%#v", result.integration, repair)
+		}
+	})
+
+	t.Run("initial integration", func(t *testing.T) {
+		result := createConflictIntegrationWithRelativeIntegrate(t)
+		if !filepath.IsAbs(result.integration.Workspace) {
+			t.Fatalf("relative integrate-parallel emitted relative workspace path %q", result.integration.Workspace)
+		}
+		manifest := filepath.Join(result.f.arena, "raw", result.integration.RunID, "08.validators.yaml")
+		if !filepath.IsAbs(manifest) {
+			t.Fatalf("expected test manifest path to be absolute: %q", manifest)
+		}
+		var event helperEvent
+		if err := json.Unmarshal(mustReadFile(t, filepath.Join(result.f.arena, "raw", result.integration.RunID, "08.attempt-0.helper.jsonl")), &event); err != nil {
+			t.Fatalf("read integrate-parallel public receipt: %v", err)
+		}
+		if !filepath.IsAbs(event.Snapshot) {
+			t.Fatalf("relative integrate-parallel recorded relative helper snapshot path %q", event.Snapshot)
+		}
+		if _, err := os.Stat(manifest); err != nil {
+			t.Fatalf("relative integrate-parallel did not preserve its public validator manifest: %v", err)
+		}
+	})
+}
+
+func assertEnvelopeExternalPathsAbsolute(t *testing.T, env NativeEnvelope) {
+	t.Helper()
+	for label, path := range map[string]string{
+		"workspace": env.Workspace, "validator manifest": env.ValidatorManifest, "helper command": strings.Fields(env.HelperCommand)[0],
+		"helper record": env.HelperRecord, "helper record environment": env.HelperEnvironment["GAUNTLET_HELPER_RECORD"],
+		"snapshot root": env.HelperEnvironment["GAUNTLET_SNAPSHOT_ROOT"], "public validators": env.HelperEnvironment["GAUNTLET_PUBLIC_VALIDATORS"],
+		"public output": env.HelperEnvironment["GAUNTLET_PUBLIC_VALIDATOR_OUTPUT"], "go cache": env.HelperEnvironment["GOCACHE"],
+	} {
+		if !filepath.IsAbs(path) {
+			t.Errorf("relative envelope %s path: %q", label, path)
+		}
+		if path != "" && !strings.Contains(env.ActorPrompt, path) && label != "workspace" && label != "helper record" {
+			t.Errorf("actor prompt does not carry absolute %s path %q", label, path)
+		}
+	}
+	pathEntries := strings.Split(env.HelperEnvironment["PATH"], string(os.PathListSeparator))
+	if len(pathEntries) == 0 || !filepath.IsAbs(pathEntries[0]) {
+		t.Errorf("helper PATH does not start with an absolute arena bin directory: %q", env.HelperEnvironment["PATH"])
+	}
+}
+
+func runSuppliedHelper(env NativeEnvelope) error {
+	parts := strings.Fields(env.HelperCommand)
+	if len(parts) < 2 || !filepath.IsAbs(parts[0]) {
+		return fmt.Errorf("supplied helper command is not an absolute executable invocation: %q", env.HelperCommand)
+	}
+	cmd := exec.Command(parts[0], parts[1:]...)
+	cmd.Dir = env.Workspace
+	cmd.Env = mergeEnvironment(os.Environ(), env.HelperEnvironment)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("supplied helper failed: %w: %s", err, strings.TrimSpace(string(output)))
+	}
+	return nil
+}
+
+func mergeEnvironment(base []string, overrides map[string]string) []string {
+	values := make(map[string]string, len(base)+len(overrides))
+	for _, entry := range base {
+		parts := strings.SplitN(entry, "=", 2)
+		if len(parts) == 2 {
+			values[parts[0]] = parts[1]
+		}
+	}
+	for key, value := range overrides {
+		values[key] = value
+	}
+	out := make([]string, 0, len(values))
+	for key, value := range values {
+		out = append(out, key+"="+value)
+	}
+	return out
+}
+
+func withWorkingDirectory(path string, action func() error) error {
+	oldDir, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+	if err := os.Chdir(path); err != nil {
+		return err
+	}
+	defer os.Chdir(oldDir)
+	return action()
 }
 
 func TestArmScopeValidatorsAndRevisionPlaceholdersReachPublicCheck(t *testing.T) {
@@ -704,6 +930,14 @@ type conflictIntegrationResult struct {
 }
 
 func createConflictIntegration(t *testing.T) conflictIntegrationResult {
+	return createConflictIntegrationMode(t, false)
+}
+
+func createConflictIntegrationWithRelativeIntegrate(t *testing.T) conflictIntegrationResult {
+	return createConflictIntegrationMode(t, true)
+}
+
+func createConflictIntegrationMode(t *testing.T, relativeIntegrate bool) conflictIntegrationResult {
 	t.Helper()
 	// The integration workspace is a materialized Git snapshot, so it must not
 	// depend on this machine's global/system committer identity. Parallel actor
@@ -734,7 +968,14 @@ func createConflictIntegration(t *testing.T) conflictIntegrationResult {
 		}
 	}
 	args := []string{"--arena", f.arena, "--project", "demo", "--arm", "A", "--trial", "1", "--protocol", f.protocol, "--main-task-id", "06", "--parallel-task-ids", "P02,P01"}
-	err := quietCall(t, func() error { return integrateParallel(args) })
+	var err error
+	if relativeIntegrate {
+		args[1] = "."
+		args[9] = "protocol.yaml"
+		err = withWorkingDirectory(f.arena, func() error { return quietCall(t, func() error { return integrateParallel(args) }) })
+	} else {
+		err = quietCall(t, func() error { return integrateParallel(args) })
+	}
 	if err == nil || !strings.Contains(err.Error(), "preserved with failed status") {
 		t.Fatalf("conflicting lexical integration did not preserve a failed record: %v", err)
 	}

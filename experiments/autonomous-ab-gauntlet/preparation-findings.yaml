@@ -61,3 +61,15 @@ limits:
   - No scored result or product benefit follows from fixing a preparation defect.
   - This record is not a completed freeze or final independent review.
   - Private Konfyra evidence/candidates are outside this experiment and remain untouched.
+
+invalidated_first_cohort:
+  freeze_digest: d7c102ab4c566fc5c2893d59a51f0d4a3b3b7bb24c798a9a80088e81592da4b4
+  prepared_tasks: 6
+  scope: all three paired projects, trial1, task01
+  defect: Relative arena arguments produced relative actor/helper/evidence paths; the exact supplied helper could not launch from an isolated actor workspace.
+  disposition: Halt both arms, preserve every actual state/response, invalidate the entire paired cohort, correct benchmark path normalization, freeze separately and rerun from unchanged seeds.
+  missing_response: Explicitly unavailable for interrupted leaves; no fabricated actor final.
+  comparison_eligible: false
+  markitect_product_changed: false
+  tasks_oracles_changed: false
+  source_preservation: Six exclusive workspace copies plus original raw records; initial Git status reads limited by different OS ownership remain recorded as unavailable, with actual observations appended from preserved copies.

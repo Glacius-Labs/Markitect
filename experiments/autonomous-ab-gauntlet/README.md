@@ -6,6 +6,8 @@ Project cards are normalized as YAML task sets with a `tasks` list. The harness 
 
 Freeze the benchmark harness source and `gauntlet` binary separately from the product candidate: record the harness source revision and binary hash, while retaining product source candidate `adef79d935399f8ac63ad874dbdeab8d15c418a1` and its fixed candidate binaries unchanged. Build the harness from `./experiments/autonomous-ab-gauntlet/harness` and place the harness source/binary, fixed product binaries, protocol, project seeds, task cards, checks, and sealed evaluator in the external arena before freezing. The evaluator must remain outside every actor workspace and must not be added to its PATH. `prepare` creates mutable evidence directories; `freeze` writes a one-time digest manifest for every input, including binaries. Scored commands refuse changed or newly added frozen inputs.
 
+The CLI resolves `--arena`, protocol, response, feedback, and explicit seed paths to absolute paths before saving records or actor envelopes. This also supports calling the frozen binary from the arena root with `--arena .`; every workspace, helper, validator manifest, snapshot, raw evidence, and cache path sent to an actor remains usable from its isolated working directory.
+
 ```powershell
 go build -o <arena>/bin/gauntlet.exe ./experiments/autonomous-ab-gauntlet/harness
 <arena>/bin/gauntlet.exe prepare --arena <arena>

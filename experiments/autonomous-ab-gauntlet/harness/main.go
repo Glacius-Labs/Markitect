@@ -268,6 +268,45 @@ func readYAML(path string, out any) error {
 	}
 	return yaml.Unmarshal(b, out)
 }
+func absolutePath(path string) (string, error) {
+	if path == "" {
+		return "", nil
+	}
+	abs, err := filepath.Abs(path)
+	if err != nil {
+		return "", err
+	}
+	return filepath.Clean(abs), nil
+}
+func absoluteArenaPath(arena *string) error {
+	abs, err := absolutePath(*arena)
+	if err != nil {
+		return fmt.Errorf("resolve arena path: %w", err)
+	}
+	*arena = abs
+	return nil
+}
+func absoluteOptionalPath(path *string) error {
+	abs, err := absolutePath(*path)
+	if err != nil {
+		return err
+	}
+	*path = abs
+	return nil
+}
+func absoluteExecutablePath(path *string) error {
+	if *path == "" || (!filepath.IsAbs(*path) && !strings.ContainsAny(*path, `/\`)) {
+		return nil
+	}
+	return absoluteOptionalPath(path)
+}
+func configuredGoCache(arena string) (string, error) {
+	path := os.Getenv("GAUNTLET_GOCACHE")
+	if path == "" {
+		return filepath.Join(arena, "raw", "shared-go-cache"), nil
+	}
+	return absolutePath(path)
+}
 func writeYAMLNew(path string, v any) error {
 	b, e := yaml.Marshal(v)
 	if e != nil {
@@ -330,6 +369,9 @@ func prepare(args []string) error {
 	if arena == "" {
 		return errors.New("--arena is required")
 	}
+	if e = absoluteArenaPath(&arena); e != nil {
+		return e
+	}
 	for _, d := range []string{"runs", "raw", "snapshots", "results", "decisions"} {
 		if e = os.MkdirAll(filepath.Join(arena, d), 0755); e != nil {
 			return e
@@ -350,6 +392,12 @@ func freeze(args []string) error {
 	_ = f
 	if arena == "" {
 		return errors.New("--arena required")
+	}
+	if e = absoluteArenaPath(&arena); e != nil {
+		return e
+	}
+	if e = absoluteOptionalPath(&out); e != nil {
+		return e
 	}
 	if out == "" {
 		out = filepath.Join(arena, "freeze.yaml")
@@ -533,6 +581,15 @@ func prepareTask(args []string) error {
 	_ = f
 	if arena == "" || project == "" || arm == "" || protocolPath == "" || taskID == "" {
 		return errors.New("prepare-task requires --arena --project --arm --protocol --task-id")
+	}
+	if e = absoluteArenaPath(&arena); e != nil {
+		return e
+	}
+	if e = absoluteOptionalPath(&protocolPath); e != nil {
+		return e
+	}
+	if e = absoluteOptionalPath(&feedbackPath); e != nil {
+		return e
 	}
 	arm = strings.ToLower(strings.TrimPrefix(arm, "arm-"))
 	if arm != "a" && arm != "b" {
@@ -747,9 +804,9 @@ func prepareTask(args []string) error {
 	checkCmd := helper + " check --task-id " + t.ID + " --manifest " + validatorManifest
 	// Do not expose the harness build cache or repository paths to actors. An
 	// explicit experiment cache override must use the GAUNTLET_GOCACHE name.
-	goCache := os.Getenv("GAUNTLET_GOCACHE")
-	if goCache == "" {
-		goCache = filepath.Join(arena, "raw", "shared-go-cache")
+	goCache, e := configuredGoCache(arena)
+	if e != nil {
+		return e
 	}
 	helperEnv := map[string]string{"PATH": filepath.Join(arena, "bin") + string(os.PathListSeparator) + os.Getenv("PATH"), "GOCACHE": goCache, "PYTHONDONTWRITEBYTECODE": "1", "GAUNTLET_RUN_ID": runID, "GAUNTLET_TASK_ID": t.ID, "GAUNTLET_ACTOR_ATTEMPT": fmt.Sprint(repairIteration + 1), "GAUNTLET_HELPER_RECORD": filepath.Join(arena, "raw", runID, t.ID, fmt.Sprintf("helper-attempt-%d.jsonl", repairIteration)), "GAUNTLET_SNAPSHOT_ROOT": filepath.Join(arena, "raw", runID, t.ID, "snapshots"), "GAUNTLET_PUBLIC_VALIDATORS": validatorManifest, "GAUNTLET_PUBLIC_VALIDATOR_OUTPUT": filepath.Join(arena, "raw", runID, t.ID, fmt.Sprintf("attempt-%d.public-validator.txt", repairIteration))}
 	instruction := "This task is assigned to one actor session. Do not spawn, invoke, or delegate work to any other agents or subagents. Read-only engineering guidance and analysis available in this arm may be used while planning; these are not public acceptance tests. If the current task explicitly requires generated-projection regeneration or reconciliation, you may use the corresponding mutating apply/render operation only for that requested work and only when every resulting write stays within the exact authorized mutation boundary below. Do not perform implicit adoption, unapproved exceptions, or external/unscoped apply/render operations. Do not run builds, application tests, or configured acceptance validators outside the public-check helper. Use normal tool sandbox escalation for Git, helper, or build commands only when the authorized arena or cache permissions require it; do not change global Git trust/configuration or bypass tool rules. Commit your task changes, then set the supplied GAUNTLET variables in the actor shell and invoke the exact helper command below once. It snapshots the workspace before validation and preserves actual check output. If any public check fails, stop; a fresh repair actor may receive only the exact recorded public output. Never inspect hidden evaluator data, future tasks, or other arms/trials."
@@ -881,6 +938,15 @@ func finishTask(args []string) error {
 	if arena == "" || runID == "" || taskID == "" || digest == "" || responsePath == "" {
 		return errors.New("finish-task requires --arena --run-id --task-id --input-digest --response-file")
 	}
+	if e = absoluteArenaPath(&arena); e != nil {
+		return e
+	}
+	if e = absoluteOptionalPath(&responsePath); e != nil {
+		return e
+	}
+	if e = absoluteOptionalPath(&receiptsPath); e != nil {
+		return e
+	}
 	switch status {
 	case "completed", "failed", "protocol-invalid", "unusable", "repair-needed":
 	default:
@@ -983,6 +1049,12 @@ func integrateParallel(args []string) error {
 	_ = f
 	if arena == "" || project == "" || arm == "" || protocolPath == "" {
 		return errors.New("integrate-parallel requires --arena --project --arm --protocol")
+	}
+	if err = absoluteArenaPath(&arena); err != nil {
+		return err
+	}
+	if err = absoluteOptionalPath(&protocolPath); err != nil {
+		return err
 	}
 	arm = strings.ToLower(strings.TrimPrefix(arm, "arm-"))
 	if arm != "a" && arm != "b" {
@@ -1154,9 +1226,9 @@ func integrateParallel(args []string) error {
 	}
 	cmd := exec.Command(helper, "check", "--task-id", "08", "--manifest", manifestPath)
 	cmd.Dir = workspace
-	goCache := os.Getenv("GAUNTLET_GOCACHE")
-	if goCache == "" {
-		goCache = filepath.Join(arena, "raw", "shared-go-cache")
+	goCache, cacheErr := configuredGoCache(arena)
+	if cacheErr != nil {
+		return cacheErr
 	}
 	cmd.Env = append(os.Environ(), "PATH="+filepath.Join(arena, "bin")+string(os.PathListSeparator)+os.Getenv("PATH"), "GOCACHE="+goCache, "PYTHONDONTWRITEBYTECODE=1", "GAUNTLET_RUN_ID="+integrationID, "GAUNTLET_TASK_ID=08", "GAUNTLET_ACTOR_ATTEMPT=1", "GAUNTLET_HELPER_RECORD="+checkRecord, "GAUNTLET_SNAPSHOT_ROOT="+checkSnapshot, "GAUNTLET_PUBLIC_VALIDATORS="+manifestPath, "GAUNTLET_PUBLIC_VALIDATOR_OUTPUT="+checkOutput)
 	stdoutPath := filepath.Join(arena, "raw", integrationID, "attempt-0.check.stdout.txt")
@@ -1268,6 +1340,15 @@ func prepareIntegrationRepair(args []string) error {
 	_ = f
 	if arena == "" || project == "" || arm == "" || protocolPath == "" || trial < 1 || feedbackPath == "" {
 		return errors.New("prepare-integration-repair requires --arena --project --arm --trial --protocol --attempt --feedback-file")
+	}
+	if err = absoluteArenaPath(&arena); err != nil {
+		return err
+	}
+	if err = absoluteOptionalPath(&protocolPath); err != nil {
+		return err
+	}
+	if err = absoluteOptionalPath(&feedbackPath); err != nil {
+		return err
 	}
 	arm = strings.ToLower(strings.TrimPrefix(arm, "arm-"))
 	if arm != "a" && arm != "b" {
@@ -1411,17 +1492,18 @@ func prepareIntegrationRepair(args []string) error {
 	if _, statErr := os.Stat(helper); statErr != nil {
 		helper, _ = os.Executable()
 	}
+	goCache, err := configuredGoCache(arena)
+	if err != nil {
+		return err
+	}
 	helperEnv := map[string]string{
 		"PATH":    filepath.Join(arena, "bin") + string(os.PathListSeparator) + os.Getenv("PATH"),
-		"GOCACHE": filepath.Join(arena, "raw", "shared-go-cache"), "PYTHONDONTWRITEBYTECODE": "1",
+		"GOCACHE": goCache, "PYTHONDONTWRITEBYTECODE": "1",
 		"GAUNTLET_RUN_ID": runID, "GAUNTLET_TASK_ID": "08", "GAUNTLET_ACTOR_ATTEMPT": fmt.Sprint(attempt + 1),
 		"GAUNTLET_HELPER_RECORD":           filepath.Join(arena, "raw", runID, fmt.Sprintf("08.attempt-%d.helper.jsonl", attempt)),
 		"GAUNTLET_SNAPSHOT_ROOT":           filepath.Join(arena, "raw", runID, "snapshots", fmt.Sprintf("attempt-%d", attempt)),
 		"GAUNTLET_PUBLIC_VALIDATORS":       manifestPath,
 		"GAUNTLET_PUBLIC_VALIDATOR_OUTPUT": filepath.Join(arena, "raw", runID, fmt.Sprintf("08.attempt-%d.public-validator.txt", attempt)),
-	}
-	if cache := os.Getenv("GAUNTLET_GOCACHE"); cache != "" {
-		helperEnv["GOCACHE"] = cache
 	}
 	var helperBlock strings.Builder
 	helperBlock.WriteString("\n\nGAUNTLET shell environment (set each variable exactly):\n")
@@ -1515,6 +1597,9 @@ func recordHoldoutDecision(args []string) error {
 	_ = f
 	if arena == "" || rationale == "" || candidate == "" || (decision != "fix" && decision != "no-fix") {
 		return errors.New("requires --arena --decision fix|no-fix --candidate ID --rationale TEXT")
+	}
+	if e = absoluteArenaPath(&arena); e != nil {
+		return e
 	}
 	record := HoldoutDecision{Decision: decision, Rationale: rationale, Candidate: candidate, RecordedUTC: time.Now().UTC().Format(time.RFC3339)}
 	return writeYAMLNew(filepath.Join(arena, "decisions", "holdout.yaml"), record)
@@ -1717,6 +1802,18 @@ func run(args []string, smoke bool) error {
 	_ = f
 	if arena == "" || project == "" || variant == "" || protocolPath == "" {
 		return errors.New("--arena, --project, --variant, --protocol required")
+	}
+	if e = absoluteArenaPath(&arena); e != nil {
+		return e
+	}
+	if e = absoluteOptionalPath(&protocolPath); e != nil {
+		return e
+	}
+	if e = absoluteOptionalPath(&seed); e != nil {
+		return e
+	}
+	if e = absoluteExecutablePath(&actor); e != nil {
+		return e
 	}
 	if trial < 1 {
 		trial = 1
@@ -2258,6 +2355,12 @@ func aggregate(args []string, mode string) error {
 	if arena == "" {
 		return errors.New("--arena required")
 	}
+	if e = absoluteArenaPath(&arena); e != nil {
+		return e
+	}
+	if e = absoluteExecutablePath(&evaluator); e != nil {
+		return e
+	}
 	if includeHoldout {
 		var gate HoldoutDecision
 		if e = readYAML(filepath.Join(arena, "decisions", "holdout.yaml"), &gate); e != nil {
@@ -2450,6 +2553,12 @@ func summarize(args []string) error {
 	_ = f
 	if arena == "" {
 		return errors.New("--arena required")
+	}
+	if e = absoluteArenaPath(&arena); e != nil {
+		return e
+	}
+	if e = absoluteOptionalPath(&out); e != nil {
+		return e
 	}
 	if out == "" {
 		out = filepath.Join(arena, "raw", "summary.json")

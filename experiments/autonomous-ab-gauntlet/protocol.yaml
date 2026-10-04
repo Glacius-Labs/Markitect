@@ -1,6 +1,6 @@
 apiVersion: markitect.measurement.org/v1alpha1
 kind: AutonomousABProtocol
-id: longitudinal-gauntlet-r1
+id: longitudinal-gauntlet-r1-paths-v2
 state: frozen
 purpose: Compare controlled autonomous repository evolution; no human-attention or business-benefit inference.
 candidate:

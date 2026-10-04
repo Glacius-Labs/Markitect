@@ -1,0 +1,10 @@
+freeze_digest: d7c102ab4c566fc5c2893d59a51f0d4a3b3b7bb24c798a9a80088e81592da4b4
+scope: all-native-records
+reason: relative-native-paths
+comparison_eligible: false
+prepared_tasks: 6
+project_task: all three paired projects, trial1, task01
+observed_failure: Supplied relative helper cannot run from the isolated actor workspace.
+operator_response: Halt every paired chain, preserve all states, correct benchmark paths, freeze separately and rerun both arms.
+product_changed: false
+semantic_rescue: false

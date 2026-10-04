@@ -48,7 +48,7 @@ func layer(p string) (string, string) {
 		return "infrastructure", "infrastructure"
 	case p == "internal/tooling" || strings.HasPrefix(p, "internal/tooling/") || p == "tools" || strings.HasPrefix(p, "tools/"):
 		return "tooling", "tooling"
-	case p == "experiments/autonomous-ab-gauntlet/harness":
+	case p == "experiments/autonomous-ab-gauntlet/harness" || p == "experiments/autonomous-ab-gauntlet/analysis":
 		return "tooling", "tooling"
 	case p == "cmd" || strings.HasPrefix(p, "cmd/"):
 		return "cli", p
