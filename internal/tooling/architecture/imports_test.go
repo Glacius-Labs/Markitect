@@ -77,3 +77,15 @@ func TestHarnessCannotHideProductOrSelfImport(t *testing.T) {
 		t.Fatal(v)
 	}
 }
+
+func TestAdoptingCodeFixtureHasNoProductDependencyPrivilege(t *testing.T) {
+	const fixture = "examples/documentation/docs/implementation/src"
+	if got := Check([]Edge{{From: fixture}}); len(got) != 0 {
+		t.Fatal(got)
+	}
+	for _, target := range []string{"internal/core", "internal/host", "internal/modules/a"} {
+		if got := Check([]Edge{{From: fixture, To: target}}); len(got) != 1 {
+			t.Fatalf("hidden product edge: %s: %v", target, got)
+		}
+	}
+}

@@ -51,6 +51,10 @@ func layer(p string) (string, string) {
 		return "tooling", "tooling"
 	case p == "cmd" || strings.HasPrefix(p, "cmd/"):
 		return "cli", p
+	// This isolated adopting-code fixture is compiled by Go, but is not a
+	// Markitect capability. It cannot import any Markitect product package.
+	case p == "examples/documentation/docs/implementation/src":
+		return "fixture", p
 	case p == "examples" || p == "integration" || p == "benchmark":
 		return "harness-tests", p
 	case p == "examples/engineering-discovery" || p == "examples/selective-adoption" || p == "examples/selective-adoption/pathspell" || p == "experiments/mcp-pilot":
@@ -91,6 +95,8 @@ func Check(edges []Edge) []Violation {
 		to, target := layer(e.To)
 		rule := ""
 		switch {
+		case from == "fixture":
+			rule = "adopting-code fixture may not import Markitect product packages"
 		case e.From == e.To:
 			rule = "self-import is forbidden"
 		case strings.HasPrefix(to, "harness") && !strings.HasPrefix(from, "harness"):
