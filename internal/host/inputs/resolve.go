@@ -10,25 +10,33 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/Glacius-Labs/Markitect/internal/core"
-	"github.com/Glacius-Labs/Markitect/internal/render"
+	"github.com/Glacius-Labs/Markitect/internal/host/authoring"
 )
+
+// ProjectionScope contains projection facts computed by Host for the same
+// fixed snapshot. TypedViews maps generated Markdown paths to owner identities;
+// OutputPaths marks configured generated output paths. Resolve never derives
+// either set by invoking a renderer.
+type ProjectionScope struct {
+	TypedViews  map[string]string
+	OutputPaths map[string]bool
+}
 
 // Resolve validates each resource's spec.files entries against the provided
 // repository snapshot and returns resolved paths grouped by resource key.
 // The paths in each slice retain the order declared in the resource.
-func Resolve(graph *core.Graph, files map[string][]byte) (map[string][]string, []core.Diagnostic) {
-	return ResolveWithPackages(graph, files, nil)
+func Resolve(graph *authoring.Graph, files map[string][]byte, scope ProjectionScope) (map[string][]string, []authoring.Diagnostic) {
+	return ResolveWithPackages(graph, files, nil, scope)
 }
 
 // ResolveWithPackages validates declared ordinary inputs in their origin's
 // immutable file set. Repository resources read from files; package resources
 // read only from the archive selected for their Resource.Package.
-func ResolveWithPackages(graph *core.Graph, files map[string][]byte, packageFiles map[string]map[string][]byte) (map[string][]string, []core.Diagnostic) {
+func ResolveWithPackages(graph *authoring.Graph, files map[string][]byte, packageFiles map[string]map[string][]byte, scope ProjectionScope) (map[string][]string, []authoring.Diagnostic) {
 	resolved := map[string][]string{}
-	var diagnostics []core.Diagnostic
-	add := func(resource *core.Resource, code, message string) {
-		d := core.Diagnostic{Code: code, Message: message}
+	var diagnostics []authoring.Diagnostic
+	add := func(resource *authoring.Resource, code, message string) {
+		d := authoring.Diagnostic{Code: code, Message: message}
 		if resource != nil {
 			d.Path, d.Line = resource.Path, resource.Line
 			d.Package = resource.Package
@@ -43,23 +51,15 @@ func ResolveWithPackages(graph *core.Graph, files map[string][]byte, packageFile
 		add(nil, "input.project", "graph has no Project resource")
 		return resolved, diagnostics
 	}
-	generatedViews, err := render.MarkdownViewPaths(graph)
-	if err != nil {
-		add(graph.Project, "input.generated-path", fmt.Sprintf("resolve generated Markdown views: %v", err))
-		return resolved, diagnostics
+	typedViewsByFoldedPath := make(map[string]string, len(scope.TypedViews))
+	for name, owner := range scope.TypedViews {
+		typedViewsByFoldedPath[strings.ToLower(name)] = owner
 	}
-	typedViewsByFoldedPath := make(map[string]*core.Resource, len(generatedViews))
-	for name, resource := range generatedViews {
-		typedViewsByFoldedPath[strings.ToLower(name)] = resource
-	}
-	generatedOutputs, err := render.Generate(graph, files)
-	if err != nil {
-		add(graph.Project, "input.generated-path", fmt.Sprintf("resolve generated output paths: %v", err))
-		return resolved, diagnostics
-	}
-	generatedOutputPaths := make(map[string]bool, len(generatedOutputs))
-	for name := range generatedOutputs {
-		generatedOutputPaths[strings.ToLower(name)] = true
+	generatedOutputPaths := make(map[string]bool, len(scope.OutputPaths))
+	for name, selected := range scope.OutputPaths {
+		if selected {
+			generatedOutputPaths[strings.ToLower(name)] = true
+		}
 	}
 	keys := make([]string, 0, len(graph.Resources))
 	for key := range graph.Resources {
@@ -120,7 +120,7 @@ func ResolveWithPackages(graph *core.Graph, files map[string][]byte, packageFile
 			}
 			if resource.Package == "" {
 				if view, typed := typedViewsByFoldedPath[strings.ToLower(clean)]; typed {
-					add(resource, "input.typed-companion", fmt.Sprintf("%q is the generated view for typed resource %s; reference the resource with uses or rules", clean, view.GraphKey()))
+					add(resource, "input.typed-companion", fmt.Sprintf("%q is the generated view for typed resource %s; reference the resource with uses or rules", clean, view))
 					continue
 				}
 				if generatedOutputPaths[strings.ToLower(clean)] {
@@ -147,7 +147,7 @@ func ResolveWithPackages(graph *core.Graph, files map[string][]byte, packageFile
 				}
 				continue
 			}
-			if render.IsGenerated(data) {
+			if hasGeneratedMarker(data) {
 				add(resource, "input.generated-output", fmt.Sprintf("generated Markitect output %q cannot be declared as an ordinary file input", clean))
 				continue
 			}
@@ -199,9 +199,9 @@ func safePath(file string) (string, error) {
 	return file, nil
 }
 
-func owner(areas []core.Area, file string) *core.Area {
+func owner(areas []authoring.Area, file string) *authoring.Area {
 	bestLength := -1
-	var best *core.Area
+	var best *authoring.Area
 	for i := range areas {
 		area := &areas[i]
 		root, candidate := clean(area.Path), clean(file)
@@ -235,6 +235,29 @@ func contains(values []string, expected string) bool {
 
 func isProjectConfig(file, projectPath string) bool {
 	return (projectPath != "" && file == clean(projectPath)) || path.Base(file) == "markitect.yaml"
+}
+
+// hasGeneratedMarker recognizes only the literal Markitect ownership markers
+// used by generated outputs. It does not parse or interpret the artifact.
+func hasGeneratedMarker(data []byte) bool {
+	text := strings.TrimSpace(string(data))
+	if strings.HasPrefix(text, "---\n") || strings.HasPrefix(text, "---\r\n") {
+		lines := strings.Split(text, "\n")
+		closed := false
+		for i := 1; i < len(lines); i++ {
+			if strings.TrimSpace(lines[i]) == "---" {
+				text = strings.TrimSpace(strings.Join(lines[i+1:], "\n"))
+				closed = true
+				break
+			}
+		}
+		if !closed {
+			return false
+		}
+	}
+	return strings.HasPrefix(text, "<!-- Generated by Markitect;") ||
+		strings.HasPrefix(text, "# Generated by Markitect;") ||
+		strings.HasPrefix(text, "<!-- Generated by Markitect -->")
 }
 
 func hasDescendant(files map[string][]byte, directory string) bool {
