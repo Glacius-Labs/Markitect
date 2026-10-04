@@ -5,7 +5,7 @@ metadata:
     namespace: development
 spec:
     text: |
-        Keep Markitect Core independent of adopting repositories and model providers. Project artifacts remain opaque declared bytes; specialized checks/adapters own implementation-specific interpretation. Relationships and input scope are explicit, fixed-snapshot results are deterministic, unknown impact stays conservative, and generated projections have one canonical owner.
+        Keep Markitect Core generic and independent of Modules, Host and CLI. Each capability Module depends only on Core and its own private implementation; never import sibling Modules or Host. Host composes Modules and supplies explicit normalized model/configuration/artifacts. CLI delegates to Host. The Go import gate mechanically enforces these directions. Keep Markitect Core independent of adopting repositories and model providers. Project artifacts remain opaque declared bytes; specialized checks/adapters own implementation-specific interpretation. Relationships and input scope are explicit, fixed-snapshot results are deterministic, unknown impact stays conservative, and generated projections have one canonical owner.
 
         Preserve strict check/verify acceptance, read-only failed-policy analysis, explicit exceptions and observe/plan/apply/verify trust boundaries. Desired, observed, inferred, candidate and generated state remain distinct. AI evidence is not owner acceptance. Follow the declared contribution checks; a source change does not update a published immutable release. The architecture and engineering-constitution documents retain technical contract ownership; this rule routes their exact bytes into development context.
     files:
@@ -13,3 +13,4 @@ spec:
         - docs/engineering-constitution.md
         - CONTRIBUTING.md
         - docs/design/managed-artifact-coverage.md
+        - docs/design/clean-architecture-consolidation.md
