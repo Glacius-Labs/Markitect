@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -27,16 +28,16 @@ const (
 )
 
 type Config struct {
-	APIVersion string `yaml:"apiVersion"`
-	Hooks      []Hook `yaml:"hooks"`
+	APIVersion string `yaml:"apiVersion" json:"apiVersion"`
+	Hooks      []Hook `yaml:"hooks" json:"hooks"`
 }
 
 type Hook struct {
-	Name   string `yaml:"name"`
-	Stage  string `yaml:"stage"`
-	Path   string `yaml:"path"`
-	Digest string `yaml:"digest,omitempty"`
-	Owner  string `yaml:"owner"`
+	Name   string `yaml:"name" json:"name"`
+	Stage  string `yaml:"stage" json:"stage"`
+	Path   string `yaml:"path" json:"path"`
+	Digest string `yaml:"digest,omitempty" json:"digest,omitempty"`
+	Owner  string `yaml:"owner" json:"owner"`
 }
 
 // Input contains only normalized resource identities, configured hook bytes,
@@ -64,6 +65,7 @@ type Report struct {
 	SnapshotID     string    `yaml:"snapshotID,omitempty"`
 	SnapshotDigest string    `yaml:"snapshotDigest"`
 	ModelDigest    string    `yaml:"modelDigest"`
+	ConfigDigest   string    `yaml:"configDigest"`
 	Findings       []Finding `yaml:"findings"`
 }
 
@@ -103,7 +105,7 @@ func Check(input Input) (Report, error) {
 	report := Report{
 		APIVersion: ReportVersion, Status: StatusPassed,
 		SnapshotID: input.Model.Snapshot.ID, SnapshotDigest: input.Model.Snapshot.Digest,
-		ModelDigest: input.Model.ModelDigest, Findings: []Finding{},
+		ModelDigest: input.Model.ModelDigest, ConfigDigest: configDigest(input.Config), Findings: []Finding{},
 	}
 	if len(input.Config.Hooks) == 0 {
 		report.Status = StatusNotConfigured
@@ -147,7 +149,8 @@ func validateConfig(config Config) error {
 	if len(config.Hooks) > maxConfiguredEntrypoints {
 		return fmt.Errorf("git hooks config exceeds %d configured entrypoints", maxConfiguredEntrypoints)
 	}
-	seenNames, seenPaths := map[string]bool{}, map[string]bool{}
+	seenNames := map[string]bool{}
+	seenPaths := make([]string, 0, len(config.Hooks))
 	for _, hook := range config.Hooks {
 		if !validName(hook.Name) || seenNames[hook.Name] {
 			return fmt.Errorf("git hook names must be non-empty and unique: %q", hook.Name)
@@ -158,10 +161,15 @@ func validateConfig(config Config) error {
 		default:
 			return fmt.Errorf("git hook %q has unsupported stage %q", hook.Name, hook.Stage)
 		}
-		if !validExactPath(hook.Path) || seenPaths[hook.Path] {
-			return fmt.Errorf("git hook paths must be safe, exact, and unique: %q", hook.Path)
+		if !validExactPath(hook.Path) {
+			return fmt.Errorf("git hook path must be safe and exact: %q", hook.Path)
 		}
-		seenPaths[hook.Path] = true
+		for _, previous := range seenPaths {
+			if strings.EqualFold(previous, hook.Path) {
+				return fmt.Errorf("git hook paths must not collide under portable case folding: %q", hook.Path)
+			}
+		}
+		seenPaths = append(seenPaths, hook.Path)
 		if !validDigest(hook.Digest) {
 			return fmt.Errorf("git hook %q digest must be 64 lowercase hexadecimal SHA-256 characters", hook.Name)
 		}
@@ -170,6 +178,19 @@ func validateConfig(config Config) error {
 		}
 	}
 	return nil
+}
+
+func configDigest(config Config) string {
+	normalized := config
+	normalized.Hooks = append([]Hook(nil), config.Hooks...)
+	sort.Slice(normalized.Hooks, func(i, j int) bool {
+		if normalized.Hooks[i].Path != normalized.Hooks[j].Path {
+			return normalized.Hooks[i].Path < normalized.Hooks[j].Path
+		}
+		return normalized.Hooks[i].Name < normalized.Hooks[j].Name
+	})
+	canonical, _ := json.Marshal(normalized)
+	return digest(canonical)
 }
 
 func validateModel(model core.SemanticModel) error {

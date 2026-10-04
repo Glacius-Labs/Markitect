@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -29,22 +30,22 @@ const (
 )
 
 type Config struct {
-	APIVersion string     `yaml:"apiVersion"`
-	Pipelines  []Pipeline `yaml:"pipelines"`
+	APIVersion string     `yaml:"apiVersion" json:"apiVersion"`
+	Pipelines  []Pipeline `yaml:"pipelines" json:"pipelines"`
 }
 
 type Pipeline struct {
-	Name           string          `yaml:"name"`
-	Provider       string          `yaml:"provider"`
-	Path           string          `yaml:"path"`
-	Digest         string          `yaml:"digest,omitempty"`
-	Owner          string          `yaml:"owner"`
-	ExpectedChecks []ExpectedCheck `yaml:"expectedChecks,omitempty"`
+	Name           string          `yaml:"name" json:"name"`
+	Provider       string          `yaml:"provider" json:"provider"`
+	Path           string          `yaml:"path" json:"path"`
+	Digest         string          `yaml:"digest,omitempty" json:"digest,omitempty"`
+	Owner          string          `yaml:"owner" json:"owner"`
+	ExpectedChecks []ExpectedCheck `yaml:"expectedChecks,omitempty" json:"expectedChecks,omitempty"`
 }
 
 type ExpectedCheck struct {
-	Name     string `yaml:"name"`
-	YAMLPath string `yaml:"yamlPath"`
+	Name     string `yaml:"name" json:"name"`
+	YAMLPath string `yaml:"yamlPath" json:"yamlPath"`
 }
 
 // CheckFact is an explicit Host-supplied check identity and the exact scalar
@@ -82,6 +83,7 @@ type Report struct {
 	SnapshotID             string    `yaml:"snapshotID,omitempty"`
 	SnapshotDigest         string    `yaml:"snapshotDigest"`
 	ModelDigest            string    `yaml:"modelDigest"`
+	ConfigDigest           string    `yaml:"configDigest"`
 	PipelinesChecked       int       `yaml:"pipelinesChecked"`
 	CheckReferencesChecked int       `yaml:"checkReferencesChecked"`
 	Findings               []Finding `yaml:"findings"`
@@ -133,7 +135,7 @@ func Check(input Input) (Report, error) {
 	report := Report{
 		APIVersion: ReportVersion, Status: StatusPassed,
 		SnapshotID: input.Model.Snapshot.ID, SnapshotDigest: input.Model.Snapshot.Digest,
-		ModelDigest: input.Model.ModelDigest, Findings: []Finding{},
+		ModelDigest: input.Model.ModelDigest, ConfigDigest: configDigest(input.Config), Findings: []Finding{},
 	}
 	if len(input.Config.Pipelines) == 0 {
 		report.Status = StatusNotConfigured
@@ -202,7 +204,8 @@ func validateConfig(config Config) error {
 	if len(config.Pipelines) > maxConfiguredPipelines {
 		return fmt.Errorf("pipelines config exceeds %d configured paths", maxConfiguredPipelines)
 	}
-	seenNames, seenPaths := map[string]bool{}, map[string]bool{}
+	seenNames := map[string]bool{}
+	seenPaths := make([]string, 0, len(config.Pipelines))
 	totalChecks := 0
 	for _, pipeline := range config.Pipelines {
 		if !validName(pipeline.Name) || seenNames[pipeline.Name] {
@@ -221,10 +224,15 @@ func validateConfig(config Config) error {
 		default:
 			return fmt.Errorf("pipeline %q has unsupported provider %q", pipeline.Name, pipeline.Provider)
 		}
-		if !validExactPath(pipeline.Path) || seenPaths[pipeline.Path] {
-			return fmt.Errorf("pipeline paths must be safe, exact, and unique: %q", pipeline.Path)
+		if !validExactPath(pipeline.Path) {
+			return fmt.Errorf("pipeline path must be safe and exact: %q", pipeline.Path)
 		}
-		seenPaths[pipeline.Path] = true
+		for _, previous := range seenPaths {
+			if strings.EqualFold(previous, pipeline.Path) {
+				return fmt.Errorf("pipeline paths must not collide under portable case folding: %q", pipeline.Path)
+			}
+		}
+		seenPaths = append(seenPaths, pipeline.Path)
 		if !validDigest(pipeline.Digest) {
 			return fmt.Errorf("pipeline %q digest must be 64 lowercase hexadecimal SHA-256 characters", pipeline.Name)
 		}
@@ -247,6 +255,29 @@ func validateConfig(config Config) error {
 		return fmt.Errorf("pipelines config exceeds %d expected check references", maxExpectedChecks)
 	}
 	return nil
+}
+
+func configDigest(config Config) string {
+	normalized := config
+	normalized.Pipelines = append([]Pipeline(nil), config.Pipelines...)
+	for i := range normalized.Pipelines {
+		normalized.Pipelines[i].ExpectedChecks = append([]ExpectedCheck(nil), normalized.Pipelines[i].ExpectedChecks...)
+		sort.Slice(normalized.Pipelines[i].ExpectedChecks, func(a, b int) bool {
+			left, right := normalized.Pipelines[i].ExpectedChecks[a], normalized.Pipelines[i].ExpectedChecks[b]
+			if left.Name != right.Name {
+				return left.Name < right.Name
+			}
+			return left.YAMLPath < right.YAMLPath
+		})
+	}
+	sort.Slice(normalized.Pipelines, func(i, j int) bool {
+		if normalized.Pipelines[i].Path != normalized.Pipelines[j].Path {
+			return normalized.Pipelines[i].Path < normalized.Pipelines[j].Path
+		}
+		return normalized.Pipelines[i].Name < normalized.Pipelines[j].Name
+	})
+	canonical, _ := json.Marshal(normalized)
+	return digest(canonical)
 }
 
 func validateModel(model core.SemanticModel) error {
