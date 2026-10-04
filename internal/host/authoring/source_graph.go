@@ -2,9 +2,11 @@ package authoring
 
 import (
 	"fmt"
+	"sort"
+	"strings"
+
 	"github.com/Glacius-Labs/Markitect/internal/core"
 	"go.yaml.in/yaml/v3"
-	"sort"
 )
 
 type Graph struct {
@@ -119,7 +121,16 @@ func buildWithRegistry(resources []*Resource, registry *core.Registry, supplied 
 			normalized = append(normalized, &r.Core)
 		}
 	}
-	candidates, candidateDiagnostics := core.ResolveTypedRelationships(normalized, registry)
+	// Built-in AI references are resolved and access-checked by this source
+	// frontend above. Core's generic Domain resolver intentionally handles only
+	// resources authored in registered custom Domains.
+	genericResources := make([]*core.Resource, 0, len(normalized))
+	for _, resource := range normalized {
+		if resource.APIVersion != core.APIVersion {
+			genericResources = append(genericResources, resource)
+		}
+	}
+	candidates, candidateDiagnostics := core.ResolveTypedRelationships(genericResources, registry)
 	for _, d := range candidateDiagnostics {
 		g.addDiagnostic(d)
 	}
@@ -178,7 +189,19 @@ func buildWithRegistry(resources []*Resource, registry *core.Registry, supplied 
 	g.Relationships = g.Core.Relationships
 	g.Edges = g.Core.Edges
 	g.InvalidationEdges = g.Core.InvalidationEdges
+	coreDiagnosticStart := len(g.Diagnostics)
 	g.Diagnostics = append(g.Diagnostics, g.Core.Diagnostics...)
+	if g.Project != nil {
+		for i := coreDiagnosticStart; i < len(g.Diagnostics); i++ {
+			diagnostic := &g.Diagnostics[i]
+			if diagnostic.Code != "policy.date" && !strings.HasPrefix(diagnostic.Code, "policy.exception.") {
+				continue
+			}
+			diagnostic.Path = g.Project.Path
+			diagnostic.Line = g.Project.Line
+			diagnostic.Package = g.Project.Package
+		}
+	}
 	sort.Slice(g.Diagnostics, func(i, j int) bool {
 		a, b := g.Diagnostics[i], g.Diagnostics[j]
 		if a.Package != b.Package {
