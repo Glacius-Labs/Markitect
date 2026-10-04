@@ -2,6 +2,62 @@
 
 This guide records the published v0.12.0 contract alongside its v0.11.0 baseline. The v0.9.1 resource model is historical; v0.10.0 is the generic canonical-model baseline. v0.11.0 adds reusable architecture contracts, structured PolicyResults, explicit exceptions, and authoring workflows. v0.12.0 adds the bounded `same-target` assertion described below. Consult [GitHub Releases](https://github.com/Glacius-Labs/Markitect/releases) for available binaries. The [engineering constitution](engineering-constitution.md) explains scope and limits; the [roadmap](implementation-plan.md) owns verified coverage and known limits.
 
+## Selective adoption preparation and Copy Me (unreleased source)
+
+These commands are source capabilities; published v0.12.0 has the earlier Copy Me guidance, not this durable handoff. Existing greenfield `init` is unchanged. No Project, Domain or ContextRun is required to prepare opaque engineering evidence. The [contract](design/selective-adoption-handoff.md) owns selection, identity, privacy and retention semantics.
+
+Create an owner-supplied scope YAML, for example:
+
+```yaml
+apiVersion: markitect.example.org/adoption-scope/v1alpha1
+id: architecture-review
+purpose: Review ownership conventions in selected engineering guidance
+review: owner-supplied-scope-review-2026-10-04
+privacy:
+  constraints: Public-safe evidence only; no source secrets or personal records
+  allowExcerpts: false
+retention: Owner removes the external workspace after this review
+repositories:
+  - id: product
+    root: C:/projects/product
+    commit: REPLACE_WITH_OWNER_SELECTED_FULL_LOWERCASE_COMMIT
+    paths:
+      - path: docs/architecture.md
+        reason: Canonical boundary guidance
+      - path: docs/decisions/legacy-service.md
+        reason: Explicit counterevidence
+    exclusions:
+      - path: private
+        reason: Withheld by owner
+coverage:
+  - id: ownership
+    repository: product
+    question: Is ownership consistently explicit in this selected sample?
+    state: uninspected
+    reason: Capture precedes interpretation
+```
+
+The commit placeholder must be replaced with an exact 40- or 64-digit commit. Paths are literal, case-sensitive Git tree names, not directories or globs. Preparation checks the entire selected list before opening its blobs. A working-tree edit is not evidence. A newer commit is a new capture even when only unselected files changed; the selected-only content digest may remain equal.
+
+```powershell
+markitect prepare --scope C:/review/scope.yaml --output C:/review/capture-1
+# Review the emitted handoff and copy its handoff.digest:
+markitect prepare --scope C:/review/scope.yaml --output C:/review/capture-1 --write --expect REVIEWED_HANDOFF_DIGEST
+```
+
+The destination is an absent absolute directory whose parent exists, outside every selected repository and its Git metadata. Preview writes nothing. Write recomputes the capture, checks the exact digest, and creates the directory/files exclusively. It persists `handoff.yaml` and selected bytes under `evidence/<repository-id>/<exact-path>`. Partial creation is reported without rollback; reruns refuse an existing workspace. Access and retention are owner responsibilities; Windows ACLs are not set by this command.
+
+Prepare separate candidate files and one `copy-me-queue/v1alpha1` YAML with evidence entries, `candidates: [{stableID, path, digest}]`, preserved coverage IDs/repositories/questions and optional requests. Coverage state/reason may advance as an interpretive claim; the report retains original preparation coverage as well. Candidate paths are literal relative paths beneath the queue directory; hashes bind raw candidate-file bytes. The [executable fixture](../examples/selective-adoption/README.md) provides complete queue, candidate and decision examples and a runnable lifecycle.
+
+```powershell
+markitect copy-me --workspace C:/review/capture-1 --queue C:/review/dossier/queue.yaml
+markitect copy-me --workspace C:/review/capture-1 --queue C:/review/dossier/queue.yaml --decision C:/review/dossier/decision.yaml
+```
+
+The report supplies raw handoff/queue/candidate hashes for an explicit human-supplied decision. A decision binds one candidate revision, queue bytes, handoff bytes and handoff identity, plus supplied reviewer/date/rationale/scope and `accept|reject|defer|split|revise`. Changed selected bytes fail handoff validation; changed candidate/queue/handoff bytes stale an old decision. Conflicts, uncertainty and coverage remain visible. A request for another repository path grants no read permission: the owner must supply a new preparation scope.
+
+Both commands exit 0 for completed capture or byte/reference validation, 2 for refusal, invalid input or stale binding. Neither authenticates the owner/reviewer, infers policy, evaluates discovery quality, calls a model or automatically adopts an accepted candidate. Copy Me does not read Git or broaden the captured evidence. Only a later explicit reviewed project change can create canonical architecture.
+
 ## Project and resource model
 
 The source iteration after the real-code pilot adds explicit read-only policy-failure analysis, described below. It is not part of the published v0.12.0 executable; an installed binary needs a separately verified release before supporting this option.

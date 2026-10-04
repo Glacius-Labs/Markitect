@@ -16,6 +16,8 @@
 | [Resolved-target equality](design/resolved-target-equality.md) | Two-domain evidence, alternatives, finite v0.12.0 assertion semantics, provenance, impact and exception boundaries |
 | [Policy-failure analysis](design/policy-failure-analysis.md) | Unreleased source contract separating structural blockers from read-only Context/Impact inspection of ordinary policy failures |
 | [Source snapshots](source-snapshots.md) | Snapshot values, Git acquisition, identity, comparison, and compatibility boundaries |
+| [Selective adoption handoff](design/selective-adoption-handoff.md) | Source-only exact Git capture, isolated workspace, immutable handoff and Copy Me freshness contract |
+| [Selective adoption validation](validation/selective-adoption-handoff.md) | Acquisition/storage/freshness controls, executable CLI lifecycle and sanitized Konfyra-style replay limits |
 | [Operations](operations.md) | Development, verification, rendering, and release operations |
 | [Refinement decisions](refinement.md) | Technical product decisions and deferred design choices in support of the vision |
 | [Implementation plan](implementation-plan.md) | Published v0.12.0 status, release evidence, and later planned work |

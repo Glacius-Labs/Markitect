@@ -61,6 +61,8 @@ The source iteration after the real-code pilot adds explicit read-only Context/I
 
 ## Copy Me: propose, review, adopt
 
+Current source additionally implements the [selective handoff](design/selective-adoption-handoff.md): preparation opens only owner-selected Git blobs, stores an external capture with an explicit reviewed digest, and Copy Me validates supplied interpretation/decision bytes without acquiring more evidence. No Project or ContextRun is required. This infrastructure changes no Core assertion or authority invariant; published v0.12.0 retains its earlier guidance. An accepted candidate remains non-canonical until a separate reviewed project change adopts it.
+
 The shipped v0.11.0 authoring resources include a provider-independent `Copy Me` workflow. It helps an agent propose a candidate engineering style from evidence a person explicitly selects. It does not add a `discover` CLI command, call a model from the Markitect kernel, or promote observations into canonical policy.
 
 The workflow must:

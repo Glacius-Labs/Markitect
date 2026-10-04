@@ -1,47 +1,45 @@
 # Existing-project preparation workstream
 
-This is a bounded future-work specification, not authorization to implement a new Init mode. Read it with the [shared contracts](../development/shared-contracts.md) and [adoption boundaries](../development/adoption-boundaries.md). The coordinator owns shared selection and workspace-handoff design; parallel investigation may proceed, but durable implementation must wait for those contracts and an explicit implementation decision.
+**Status:** `prepare` and the shared handoff are implemented in current source outside Core; source verification is in progress and this is not a CI or release claim. Published v0.12.0 remains unchanged. This page retains the original workstream rationale; the current contract is [Selective adoption handoff](../design/selective-adoption-handoff.md), with current CLI usage linked from [Usage](../usage.md) when integrated. See also [shared contracts](../development/shared-contracts.md) and [adoption boundaries](../development/adoption-boundaries.md).
 
 ## Context
 
-Start from the full verified preparation integration SHA supplied in the assignment, as defined by [Baseline](../development/baseline.md). PR 59's `e9550f5` is the source audit base only; it omits these preparation contracts and is not the dispatch baseline.
+Published v0.12.0 `init` remains the greenfield contract. Current source adds a separate `prepare` command to capture an explicitly owner-selected evidence scope into an external handoff workspace; it does not extend `init` or load/adopt an existing Project. The shared contract documents its fixed-input boundary.
 
-Published v0.12.0 `init` starts a new Project only when `markitect.yaml` is absent and the target Area does not exist. It previews and can create only `markitect.yaml` plus one Area README. Its refusal to replace or adopt an existing Project is a safety invariant for current behavior. A future existing-project preparation workflow may help a human owner review a control-plane or discovery workspace, but it must not silently extend the current minimal init contract.
+Published v0.12.0 `init` starts a new Project only when `markitect.yaml` is absent and the target Area does not exist. It previews and can create only `markitect.yaml` plus one Area README. Its refusal to replace or adopt an existing Project remains a safety invariant. The source-only `prepare` workflow is separate and does not load or mutate an existing Project.
 
-The requested outcome includes making detected roots distinguishable from selected and excluded roots and requiring owner scope review before evidence analysis. The shape and persistence of that selection, snapshot identity, and handoff are unresolved shared design, not assumptions for this workstream to freeze.
+The implemented preparation requires the owner to supply exact roots, revisions, selected paths, reasons and exclusions; it does not infer or inventory candidate roots. The shared record, identity, write and recovery semantics are specified in the linked design. Owner/reviewer fields are supplied claims, not authenticated authorization.
 
 ## Objective
 
-Define and, only after explicit authorization, implement a reviewable preparation operation for an existing repository. The operation should expose candidate roots and scope information for owner review, then prepare an isolated workspace only from an approved selection. Preserve the existing new-Project Init behavior and explicit refusal boundary unless the coordinator approves a separate, exact change.
+Maintain the separate preparation operation for an existing repository using an owner-supplied exact scope and isolated handoff. Preserve the existing greenfield Init behavior and refusal boundary. Any expansion beyond the implemented selection/capture flow requires a separate decision.
 
 ## Scope
 
-- This workstream owns product behavior for safe preparation and workspace creation in Markitect's Init application path.
-- It may investigate repository roots, filesystem safety, Git snapshot acquisition, path exclusions, and recovery behavior.
-- It does not own the shared selection/snapshot record or cross-workstream handoff protocol; those require the shared coordinator contract.
+- This workstream owns safe preparation and workspace creation, implemented separately from greenfield Init.
+- Shared scope, snapshot, handoff and record semantics are centralized in the coordinator-owned [selective adoption contract](../design/selective-adoption-handoff.md).
 - It does not perform engineering-style interpretation or change an adopter's canonical Project, policy, provider files, or code.
 - Work may investigate in parallel on disjoint code/docs ownership. Shared selection records, target directories, and canonical consumer files require serialized coordination.
 
 ## Current implementation
 
-`internal/app/init.go`, `init_plan.go`, and `init_write.go` build and apply a read-only preview with exclusive creation and revalidation. `cmd/markitect/init.go` exposes the current `--name`, `--namespace`, optional `--path`, and `--write` behavior. Tests are in `internal/app/init_test.go` and `cmd/markitect/init_test.go`. The current CLI requires a new Project and its target Area to be absent; there is no existing-project or root-inventory mode.
+Greenfield `init` remains implemented by `internal/app/init.go`, `init_plan.go`, `init_write.go`, and `cmd/markitect/init.go`; it still requires absent Project and Area paths. Current source adds a separate `prepare` command through `cmd/markitect/adoption.go`, `internal/app/adoption_prepare.go`, `internal/adoption`, and `internal/source/selective.go`. Exact CLI semantics and verification status are documented centrally rather than repeated here.
 
 ## Owned subsystem
 
-For a future approved implementation, ownership is limited to new or directly relevant files in `internal/app/` for preparation and filesystem/Git safety, `cmd/markitect/` for an explicitly approved CLI surface, and focused tests for those components. The current Init path is a shared mutable hotspot: coordinate any changes to existing Init semantics with the shared coordinator. Documentation changes belong to the root-owned integration plan unless separately assigned.
+The separate implementation owns its new app/source/record/CLI packages. Existing Init behavior, Core/Project contracts, source snapshot semantics, CLI dispatch, integration and release remain coordinator-reviewed shared areas.
 
 ## Allowed changes
 
-- During investigation: read the current Init implementation, tests, usage contract, and filesystem/source snapshot helpers; produce a bounded design note or reviewable experiment in an assigned isolated work area.
-- After contracts and implementation authorization: add a distinct existing-project preparation capability that requires explicit owner scope review, reports detected/selected/excluded roots, uses fixed inputs, and stages results in an approved isolated location.
-- Add meaningful safety tests proving no writes before explicit apply intent, no overwrite/adoption of existing Project state, and safe handling of path aliases, exclusions, concurrent changes, and partial failure.
-- Preserve the existing new-Project path, preview semantics, exclusive creates, and recovery reporting unless an explicit reviewed decision changes them.
+- Preserve explicit scope, exact fixed inputs, exclusive external workspace creation, and existing Init behavior.
+- Keep owner-supplied privacy/approval fields as claims; do not add authentication or expand scope from discovered repository contents.
+- Treat source validation and release/published status as separate gates; this workstream page does not imply either has passed.
 
 ## Forbidden changes
 
-- Do not implement a feature now solely because this workstream exists; it is not implementation authorization.
-- Do not reinterpret or remove current minimal Init's refusal of an existing `markitect.yaml` or existing target Area without an explicit coordinator decision.
-- Do not invent a stable command name, flag set, selection schema, snapshot schema, workspace handoff, or persistent state format before approval.
+- Do not treat this historical workstream specification as the current CLI or record-format reference; use the linked design and Usage.
+- Do not reinterpret or remove current minimal Init's refusal of an existing `markitect.yaml` or existing target Area.
+- Do not add implicit discovery, consumer repository writes, Core changes, or automatic adoption.
 - Do not inspect all repository contents implicitly, follow symlinks or nested repositories without an approved rule, broaden a selection through globs, or treat detected roots as selected roots.
 - Do not rewrite, migrate, or activate consumer policy, adapters, package pins, provider files, AGENTS, docs, tests, or implementation code.
 - Do not interpret source-code or repository conventions in the Markitect Core.
@@ -49,41 +47,31 @@ For a future approved implementation, ownership is limited to new or directly re
 ## Dependencies
 
 - **Hard current behavior:** for existing-project preparation, preserve the current Init invariants until a separate behavior is explicitly approved. Current Init's required name/namespace, root safety, absent Project/Area paths, exclusive writes, and branch/lock checks remain the baseline for new-Project creation.
-- **Hard future dependency:** coordinator-approved shared selection, snapshot identity, owner-review, and workspace-handoff contracts before durable implementation.
-- **Soft choices:** default workspace location, root presentation, whether preparation can be previewed outside Git, and which optional project metadata is displayed. These remain design decisions; none creates permission to read unselected content.
+- **Implemented source boundary:** shared selection, snapshot identity, owner-scope claims, and external workspace handoff are defined in the coordinator-owned design.
+- **Out of scope for this source slice:** automatic root inventory, workspace defaults, or Project metadata inspection. The caller names an external destination and supplies the exact evidence scope; optional presentation changes cannot broaden that scope.
 - **External:** adopter-owned repository instructions and authority determine whether a consumer checkout may be inspected or modified. This workstream has no authority to alter those files.
 
-## Design questions
+## Questions preserved from the proposal
 
-- Is preparation a distinct command or a distinct Init mode? What exact user action marks the owner-reviewed scope, and how is that review bound to inputs?
-- Which filesystem/Git roots can be detected safely? How are nested repositories, worktrees, submodules, ignored/generated paths, symlinks, and case aliases represented?
-- Does a workspace contain only reports and candidate scaffolding, or does it ever materialize selected source bytes? Where does it live and how is it cleaned up or recovered?
-- What exact immutable identity binds each root, and what changes invalidate the preparation plan between preview and write?
-- How does preparation hand an approved selection to Copy Me without changing it or merging identities?
-- Which existing Init guarantees must be repeated in the new mode, and which outcomes remain read-only by construction?
+- Preparation is a separate command, not a mode that changes greenfield Init. The handoff contract specifies its supplied scope and fixed-input boundary.
+- The current contract does not discover roots; unsupported paths/repository shapes fail closed as described in the linked design.
+- The external workspace contains the handoff and selected evidence bytes; exact identity/digest and failure behavior are defined in the linked contract.
+- Copy Me consumes that handoff without merging repository identities or changing scope.
+- Greenfield Init keeps its existing safety guarantees; preparation uses the separate external-write contract and never adopts a Project.
 
-## Required tests
+## Verification expectations
 
-After design approval, cover at least:
-
-- Existing `init` behavior remains byte-for-byte compatible for valid new-Project preview/write flows.
-- An existing Project and existing Area are not overwritten, adopted, migrated, or partially rewritten by preparation.
-- Detected roots, selected roots, and excluded roots remain distinct; excluded and unselected inputs do not enter later context or discovery.
-- A changed branch, commit, manifest, directory identity, or selected bytes invalidates a saved preparation result before any write.
-- Unsafe aliases, symlinks, nested repositories, ignored paths, staged targets, and partial writes follow the approved handling contract.
-- No mutation occurs during inventory/preview, and explicit writes are confined to the approved workspace destination.
+Candidate validation should show that exact selection/capture and external handoff boundaries follow the [canonical design](../design/selective-adoption-handoff.md), and that greenfield `init` regression behavior remains intact. Do not claim detected-root inventory: this implementation does not include it. Full local/CI results belong to immutable candidate evidence, not this specification.
 
 ## Required evidence
 
-Record the exact Markitect commit and build identity; owner-approved repository/root scope; detected, selected, and excluded roots with reasons; immutable source identity for each repository; selection and plan identities; relevant safety-test results; workspace output paths and hashes; and any partial-failure recovery evidence. Report uninspected roots and unresolved scope instead of describing them as covered. Do not retain credential values, secret contents, or unapproved personal information.
+For a verified candidate, report the exact Markitect commit/build; supplied scope and exclusions; fixed source identities; selection, capture and handoff digests; safety-test results; external workspace paths/hashes; and partial-failure behavior. Report uninspected evidence honestly and do not retain credential values, secrets, or unapproved personal information.
 
 ## Exit criteria
 
-- The coordinator has approved shared selection, snapshot, and handoff contracts.
-- A separate implementation decision identifies the exact Init behavior and allowed writes.
-- Tests establish preservation of current Init behavior and the approved no-overwrite and fixed-input guarantees.
-- Evidence shows the approved selection, excluded scope, destination, and generated artifacts are reviewable and reproducible.
-- The root integration owner has reviewed compatibility and documentation changes before any release claim.
+- Focused and required repository/CI gates pass for an exact candidate SHA.
+- Review confirms greenfield Init remains unchanged and the new workspace boundary matches the shared contract.
+- The root integration owner records the candidate result; a separate immutable publication record is required for any release claim.
 
 ## Completion questions
 

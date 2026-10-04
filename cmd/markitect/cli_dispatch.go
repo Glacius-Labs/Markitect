@@ -11,6 +11,12 @@ import (
 )
 
 func dispatchCommand(command string, o commandOptions, out, errout io.Writer, emit func(any) int, fail func(error) int) int {
+	if command == "prepare" {
+		return runPrepare(o, emit, fail)
+	}
+	if command == "copy-me" {
+		return runCopyMe(o, emit, fail)
+	}
 	if command == "licenses" {
 		if _, err := io.WriteString(out, licenses.Text); err != nil {
 			return fail(err)

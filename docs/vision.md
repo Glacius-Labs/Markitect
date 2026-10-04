@@ -77,7 +77,7 @@ Reconsider proposals that introduce another manually synchronized truth owner, h
 | Category | What is established or intended |
 |---|---|
 | Published capability | v0.12.0 provides generic versioned Domains, typed relations, finite assertions including bounded `same-target`, a normalized model, context/impact, exact-pinned packages, PolicyResults/exceptions, provider projections, configured checks/adapters, explicit reconciliation and the Copy Me proposal/review workflow. The roadmap owns precise coverage. |
-| Later integrated source | Explicit read-only analysis of ordinary failed policies and the first parallel wave's bounded adapter/test slices. The GitHub/Azure consumers use supplied offline captures; expanded selective Init/Copy Me preparation remains deferred design. These are not additions to an installed v0.12.0 release. |
+| Later source | Explicit read-only analysis of ordinary failed policies, bounded offline adapter/test slices, and selective preparation/Copy Me handoff validation. The handoff preserves owner-selected evidence and explicit adoption; it establishes no discovery-quality or upkeep benefit. These are not additions to an installed v0.12.0 release. |
 | Aspirational operation | Many continuously working agents, less routine human supervision, architecture-level escalation and sustainable governance at greater scale. No current scheduler, dashboard or universal automatic acceptance is claimed. |
 | Unproven benefit | Reduced human intervention, lower total maintenance/synchronization cost, fewer missed updates or defects, better sustained autonomy, token savings and market demand. |
 

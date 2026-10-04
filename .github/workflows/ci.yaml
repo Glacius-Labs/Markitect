@@ -260,6 +260,33 @@ jobs:
           init_check="$(go run .markitect/bootstrap/run.go check --repo "$init_dir")"
           grep -Eq '^status: passed$' <<< "$init_check"
 
+      - name: Replay selective adoption with packaged CLI (Unix)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          adoption_source="$RUNNER_TEMP/markitect-adoption-source-$GITHUB_SHA"
+          adoption_binary="$RUNNER_TEMP/markitect-adoption-$GITHUB_SHA"
+          mkdir "$adoption_source"
+          unzip -q "$MARKITECT_PACKAGE_DIR/.markitect/tool/source.zip" -d "$adoption_source"
+          (cd "$adoption_source" && go build -trimpath -buildvcs=false -o "$adoption_binary" ./cmd/markitect)
+          MARKITECT_ADOPTION_BINARY="$adoption_binary" go test ./examples -run '^TestSelectiveAdoptionCLI$' -count=1
+
+      - name: Replay selective adoption with packaged CLI (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $adoptionSource = Join-Path $env:RUNNER_TEMP "markitect-adoption-source-$env:GITHUB_SHA"
+          $adoptionBinary = Join-Path $env:RUNNER_TEMP "markitect-adoption-$env:GITHUB_SHA.exe"
+          Expand-Archive -LiteralPath (Join-Path $env:MARKITECT_PACKAGE_DIR '.markitect/tool/source.zip') -DestinationPath $adoptionSource
+          Push-Location $adoptionSource
+          try {
+            go build -trimpath -buildvcs=false -o $adoptionBinary ./cmd/markitect
+            if ($LASTEXITCODE -ne 0) { throw 'Packaged adoption CLI build failed' }
+          } finally { Pop-Location }
+          $env:MARKITECT_ADOPTION_BINARY = $adoptionBinary
+          go test ./examples -run '^TestSelectiveAdoptionCLI$' -count=1
+          if ($LASTEXITCODE -ne 0) { throw 'Packaged selective adoption replay failed' }
+
       - name: Test standalone bootstrap and packaged commands (Windows)
         if: runner.os == 'Windows'
         shell: pwsh

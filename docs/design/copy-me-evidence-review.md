@@ -1,10 +1,10 @@
-# Copy Me evidence review and candidate queue proposal
+# Copy Me evidence review and candidate queue: earlier design proposal
 
-**Status:** coordinator review only. This document proposes the smallest reusable evidence-binding and candidate-queue handoff for the Copy Me workstream. It does not establish a schema, CLI, permission model, discovery service, or adoption policy. The coordinator owns the shared owner-selection, snapshot, privacy, and workspace-handoff contract. No durable implementation may start until that contract and these owned paths are approved.
+**Status:** Historical design proposal. The current source has a `copy-me` command and bounded record validation outside Core. The canonical source contract and workspace boundary are in [Selective adoption handoff](selective-adoption-handoff.md); CLI invocation is documented in [Usage](../usage.md). Implementation verification is in progress; no CI or publication claim is made here. Published v0.12.0 remains unchanged.
 
-## Decision requested
+## Earlier decision request
 
-Approve a bounded, read-only validator outside Markitect Core that consumes a complete owner-supplied fixed-input handoff and validates references, byte bindings, and decision freshness. It may generalize checks already demonstrated by `examples/engineering-discovery/check-discovery.go`; the example's current `engineering-discovery-evidence/v1alpha1` and `engineering-discovery-decision/v1alpha1` formats remain illustrative until a separate schema decision. No CLI is needed for this first slice.
+The original request was for a bounded read-only validator outside Markitect Core. Its former suggestion that no CLI was needed is superseded: source now supplies an explicit `copy-me` command over the externally prepared handoff. The example's `engineering-discovery-evidence/v1alpha1` and `engineering-discovery-decision/v1alpha1` formats remain example-local, not the new shared record contract.
 
 Copy Me consumes permission scope; it does not select, broaden, or infer it. The handoff must contain explicit stable repository IDs, full immutable commit IDs, exact selected paths, snapshot identities and byte hashes. It must not provide a discovered root list or an implicit path scan. A name or owner field is supplied evidence, not authenticated identity or authority.
 
@@ -29,7 +29,7 @@ A candidate has a stable candidate ID and exact candidate-byte digest, proposed 
 
 Each decision is a separate immutable record for one exact candidate revision. It records the supplied reviewer identity, date, rationale, scope, status (`accept`, `reject`, `defer`, `split`, or `revise`), candidate byte digest, full evidence/queue byte digest, and handoff digest. If status `split` or `revise` points to follow-on candidate IDs, the validator may check that those IDs exist in the same dossier; it cannot decide whether the split or revision is adequate. A later review appends a new decision instead of rewriting the old one. Any changed selected input, handoff, ledger/queue, or candidate bytes makes the prior decision stale. A valid digest proves byte correspondence only: it neither authenticates the reviewer nor approves adoption.
 
-## Minimal ownership and test proposal
+## Ownership and test proposal from the earlier review
 
 After coordinator approval, assign this isolated Go package and its package-local tests:
 
@@ -50,6 +50,6 @@ The shipped Copy Me Workflow already calls for owner-agreed scope before reading
 
 The real-project adoption pilot provides a separate bounded safety case: one owner-supplied task and committed Copy Me ContextRun selected exact artifacts, including counterevidence; the selected source files stayed opaque; one narrow assisted change built successfully with no runtime or database calls. The record states that model/token telemetry was not instrumented. It does not establish Copy Me interpretation accuracy, broad coverage, lower effort, productivity benefit, or general adoption. Keep synthetic helper success, this single assisted implementation, and any future human review outcomes as distinct evidence classes.
 
-## Boundaries
+## Boundaries retained in the implemented source contract
 
-This proposal does not authorize source crawling, provider-history retrieval, model calls, secret or personal-data collection, implicit root discovery, semantic/source-code interpretation in Core, a stable CLI, schema publication, shared handoff changes, canonical edits, package activation, dependency declarations, or adoption. A separate owner-reviewed Project change remains the only adoption path. `docs/workstreams/copy-me.md` and the coordinator-owned shared contracts remain authoritative if this proposal conflicts with them.
+The implemented source slice still excludes source crawling, provider-history retrieval, model calls, secret/personal-data collection, implicit root discovery, semantic source-code interpretation in Core, authentication, and adoption. The explicit `copy-me` command validates supplied bytes; it does not publish a new Project schema or automatically activate packages/dependencies. A separate owner-reviewed Project change remains the only adoption path. This historical proposal is superseded by [Selective adoption handoff](selective-adoption-handoff.md) and the current [Copy Me workstream](../workstreams/copy-me.md) wherever details differ.

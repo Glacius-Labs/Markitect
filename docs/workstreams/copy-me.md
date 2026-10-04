@@ -1,47 +1,46 @@
 # Copy Me discovery workstream
 
-This is a bounded future-work specification, not authorization to add discovery behavior to the deterministic core. Read it with the [shared contracts](../development/shared-contracts.md) and [adoption boundaries](../development/adoption-boundaries.md). The coordinator owns selection, snapshot, and workspace handoff; investigation can proceed in parallel, while durable implementation waits for approval of those shared contracts.
+**Status:** current source adds `copy-me` record validation outside Core and a common externally prepared handoff. Source verification is in progress; this is not a CI or release claim. Published v0.12.0 remains unchanged. This page preserves the original workstream rationale; [Selective adoption handoff](../design/selective-adoption-handoff.md) is the canonical source contract. See [shared contracts](../development/shared-contracts.md) and [adoption boundaries](../development/adoption-boundaries.md).
 
 ## Context
 
-Start from the full verified preparation integration SHA supplied in the assignment, as defined by [Baseline](../development/baseline.md). PR 59's `e9550f5` is the source audit base only; it omits these preparation contracts and is not the dispatch baseline.
+The Copy Me authoring Workflow shipped in v0.11.0 and remains in published v0.12.0. Current source adds an explicit `copy-me` command backed by `internal/copyme`, which validates supplied handoff/queue/decision data without changing the author's Project or adopting candidates.
 
-The Copy Me authoring Workflow shipped in v0.11.0 and remains in published v0.12.0. It guides human-led/provider-neutral analysis of explicitly selected evidence at immutable snapshots. There is no discover CLI or model call in Markitect's deterministic core. The synthetic `examples/engineering-discovery/` helper and its `engineering-discovery-evidence/v1alpha1` and `engineering-discovery-decision/v1alpha1` files demonstrate byte binding and dossier review; they are example-only formats, not reusable published schemas.
+The Copy Me authoring Workflow remains provider-neutral guidance for human-led interpretation of explicitly selected evidence. The new CLI validates caller-supplied bytes; it does not crawl/discover evidence, call a model, or add semantics to the deterministic core. The synthetic `examples/engineering-discovery/` helper and its `engineering-discovery-evidence/v1alpha1` and `engineering-discovery-decision/v1alpha1` files remain example-only formats, not the new shared record contract or published schemas.
 
-The desired future work concerns an explicit, fixed-input discovery workflow with observations, support and counterexamples, duplicate/conflicting evidence, current versus legacy observations, uncertainty, and a separate candidate/decision queue. It must preserve the rule that a candidate is not authority and must not presume a particular CLI or schema.
+The bounded implementation separates captured observations, candidate interpretations, and supplied decisions over fixed inputs. A candidate remains outside canonical Project state and is not an authority; adoption requires a separate owner-reviewed Project change.
 
 ## Objective
 
-Improve the reviewability and completeness of Copy Me discovery over a coordinator-approved selection. Produce a separate evidence dossier and candidate queue that preserves provenance, counterevidence, uncertainty, and owner decisions. Keep source interpretation and any model-assisted synthesis outside Markitect Core; keep adoption as a separate, explicit owner-reviewed Project change.
+Maintain reviewability of Copy Me records over the common owner-supplied handoff. Preserve provenance, counterevidence, uncertainty, and decision byte bindings. Keep interpretation/model assistance outside Markitect Core and adoption as a separate, explicit owner-reviewed Project change.
 
 ## Scope
 
-- This workstream owns generic authoring guidance and, after contract approval, any separate discovery support package or example that validates evidence bindings without judging truth.
-- It may investigate ledger completeness, evidence deduplication, conflicts, historical/current classification, candidate lifecycle, and decision invalidation.
-- It does not own shared source selection, snapshot identity, or workspace handoff; those are coordinator decisions.
+- This workstream owns Copy Me authoring guidance and bounded record validation in `internal/copyme`; common selection/capture and workspace handoff are owned by `internal/adoption` and the preparation packages.
+- Candidate and decision records are validated structurally and by exact byte/digest references, not judged for truth or completeness.
 - It does not own adopter-specific policy. Konfyra observations remain inputs to consumer-owned review, not generic Core rules.
 - Parallel analysis is permitted on separately assigned immutable evidence selections. Shared candidate/evidence/decision records require a single owner or serialized merge with preserved provenance.
 
 ## Current implementation
 
-The normative current workflow is `internal/authoring/resources/workflow-engineering-discovery.yaml`; related authoring and adoption guidance is in `workflow-authoring-change.yaml` and `workflow-constitution-change.yaml`. The runnable synthetic example and helper live under `examples/engineering-discovery/`. `docs/usage.md`, `docs/engineering-constitution.md`, and `docs/validation/real-project-adoption-pilot.md` describe limits and evidence. None establishes a generic discovery API or accepts a human decision as an automatic mutation request.
+The published authoring workflow remains `internal/authoring/resources/workflow-engineering-discovery.yaml`; related guidance is in `workflow-authoring-change.yaml` and `workflow-constitution-change.yaml`. Current source adds the separate CLI/package `cmd/markitect/adoption.go` and `internal/copyme`. Canonical handoff/record semantics are in [Selective adoption handoff](../design/selective-adoption-handoff.md); Usage is being updated by the coordinator. Neither the CLI nor supplied reviewer claims create an automatic mutation request.
 
 ## Owned subsystem
 
-For future authorized changes, ownership is limited to Copy Me authoring resources and tests in `internal/authoring/`, plus a new, isolated discovery support package or fixture under its explicitly assigned path after the shared schema is approved. Example-only dossier checks stay example-scoped unless a separate product decision adopts their behavior. Do not modify `internal/core`, `internal/app` source selection, ContextRun parsing, snapshot acquisition, generic Project schemas, or adopter source files as part of this workstream.
+The current bounded ownership is Copy Me authoring guidance and `internal/copyme` record validation. `internal/adoption`, selective Git acquisition, app orchestration, and CLI dispatch own the shared preparation/handoff side. Core/Project schema changes, adopters' source files, and actual candidate adoption remain outside this slice.
 
 ## Allowed changes
 
-- During investigation: compare the existing workflow/example against approved requirements; document missing evidence fields, lifecycle states, and review handoffs without claiming a frozen format.
-- After approval: clarify or extend authoring guidance; add a distinct package/helper that validates exact IDs, paths, hashes, status transitions, and decision bindings; add examples that retain repository identities separately.
+- Maintain authoring guidance against the implemented fixed-input contract without implying model analysis or automatic discovery.
+- Keep candidate and decision data in the external preparation workspace; validate exact supplied bytes and record bindings.
 - Keep discovery output in an external dossier or isolated staging area outside configured Areas, package contents, generated projections, and canonical consumer files.
 - Preserve observations separately from interpretations; include supporting evidence, counterexamples, duplicates, conflicts, date/period, scope, confidence basis, alternatives, and unanswered questions as the approved contract requires.
 - Require an explicit, hash-bound human decision for the exact candidate and evidence bytes; make any change to cited inputs invalidate that decision.
 
 ## Forbidden changes
 
-- Do not implement now solely on this workstream specification; no implementation authorization is implied.
-- Do not invent a stable discover CLI, workflow command, evidence/decision schema, or selection/snapshot record before coordinator approval.
+- Do not treat this workstream page as the current command or record-format reference; use the canonical design and Usage.
+- Do not broaden scope, authenticate reviewer identity, interpret source code in Core, or make a candidate canonical.
 - Do not add source inspection, repository crawling, provider-history retrieval, model calls, semantic inference, or human identity authentication to Markitect Core.
 - Do not silently include unselected or excluded files, flatten multiple repositories into one identity, remove counterexamples, or turn frequency in a selected sample into proof of intent.
 - Do not place candidates in configured Areas or packages, render them as authoritative, change Domain definitions/pins/adapters/checks, or edit adopter policy as an effect of discovery.
@@ -50,12 +49,14 @@ For future authorized changes, ownership is limited to Copy Me authoring resourc
 ## Dependencies
 
 - **Hard current boundary:** use only explicit fixed-snapshot evidence; source bytes are opaque inputs to Markitect; no implicit graph edges or semantic source parsing.
-- **Hard future dependency:** coordinator-approved selection, snapshot, privacy, and workspace-handoff contract before durable implementation or schema publication.
+- **Implemented source dependency:** fixed scope, selective capture, privacy claims, and workspace handoff follow the shared [design](../design/selective-adoption-handoff.md).
 - **Hard adoption dependency:** explicit human review of exact candidate/evidence bytes followed by a separate adoption decision in the owning Project.
-- **Soft choices:** a model-assisted authoring agent, a separate validator helper, choice of dossier serialization, and whether multiple candidates share a ledger. None is a current CLI/API contract.
+- **Out of scope for this source slice:** model-assisted synthesis or provider calls. The CLI and closed records exist in source; optional authoring UX beyond them would require a separate product decision. The current contract keeps repository identities distinct and validates supplied queue/decision data.
 - **External:** evidence owner approval, redaction, retention, and adopter project authority are supplied by the relevant human/project process; a helper cannot authenticate them.
 
-## Design questions
+## Questions retained from the earlier proposal
+
+The former proposal raised the questions below before the shared record contract was set. Current command and record behavior is defined in [Selective adoption handoff](../design/selective-adoption-handoff.md); this historical checklist does not reopen those contracts.
 
 - What are the required identities for a repository, snapshot, ContextRun, exact selected path/bytes, tool, selection, compiled context, and final report?
 - How are detected, selected, and excluded roots represented and reviewed without treating inventory as permission to read everything?
@@ -65,9 +66,9 @@ For future authorized changes, ownership is limited to Copy Me authoring resourc
 - What is the boundary between a generic evidence validator and project-owned semantic checks? Which formats remain illustrative until adoption?
 - How are parallel researchers assigned separate source/evidence ownership and how are findings reconciled without losing contrary evidence?
 
-## Required tests
+## Verification expectations
 
-After contract approval, test that:
+Candidate validation should establish that:
 
 - Every evidence record resolves to an approved repository/revision, exact selected path, matching byte hash, and selection/report identity.
 - Changes to selected files, candidate text, evidence ledger, source revision, or selection invalidate the relevant compiled evidence and prior decision.
@@ -82,11 +83,10 @@ Retain the exact tool/build identity; owner-approved scope; per-repository immut
 
 ## Exit criteria
 
-- Shared selection/snapshot/privacy/handoff contracts are approved before any durable schema or CLI work.
-- The existing v0.12.0 authoring contract and example-only status are preserved or their changes receive explicit review.
-- Discovery yields a provenance-preserving dossier and candidate queue without mutating canonical state or representing a candidate as authority.
-- Tests establish fixed-input binding, decision invalidation, counterevidence retention, privacy/selection boundaries, and no automatic adoption.
-- The adopter's owner separately reviews any accepted candidate before a normal Project change.
+- The exact candidate passes focused and required repository/CI gates; evidence is recorded separately from this workstream summary.
+- Supplied records remain bound to exact handoff/queue bytes, and the CLI performs no discovery, model call, authentication, or adoption.
+- Published v0.12.0 remains unchanged; a later release requires separate immutable publication evidence.
+- An adopter's owner separately reviews any candidate before a normal Project change.
 
 ## Completion questions
 
