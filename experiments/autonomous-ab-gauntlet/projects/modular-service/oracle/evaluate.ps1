@@ -18,7 +18,59 @@ $script:sourceThrough=if($script:isParallel){[int]$PriorTasksThrough}else{[int]$
 function Add-Check([string]$Name,[bool]$Passed,[string]$Evidence){$script:checks.Add([pscustomobject]@{name=$Name;passed=$Passed;evidence=$Evidence});if(-not $Passed){$script:failures.Add($Name)}}
 function Read-SeedFile([string]$Relative){$p=Join-Path $script:repoPath $Relative;if(Test-Path -LiteralPath $p -PathType Leaf){return Get-Content -LiteralPath $p -Raw};return ''}
 function Has-Text([string]$Path,[string]$Pattern){return (Read-SeedFile $Path) -match $Pattern}
-function Has-CompleteOwnershipTable([string]$Text){$header=$Text -match '(?im)^\|\s*Module\s*\|\s*Responsibility\s*\|\s*Allowed dependencies\s*\|\s*Go package\s*\|';if(-not $header){return $false};$truth=@{Orders='^(?:owns?\s+(?:the\s+)?order lifecycle(?:\s+and order decisions)?|order lifecycle owner)\.?$';Inventory='^(?:owns?\s+(?:the\s+)?stock and reservations?|stock and reservations? owner)\.?$';Billing='^(?:owns?\s+(?:the\s+)?invoice records and idempotency|invoice records and idempotency owner)\.?$'};foreach($module in @('Orders','Inventory','Billing')){$pattern='(?im)^\|\s*'+$module+'\s*\|\s*(?<responsibility>[^|]+)\|\s*(?<dependencies>[^|]+)\|\s*(?<package>[^|]+)\|\s*$';$row=[regex]::Match($Text,$pattern);if(-not $row.Success){return $false};$responsibility=$row.Groups['responsibility'].Value.Trim().ToLowerInvariant() -replace '[`*_]','';$dependencies=$row.Groups['dependencies'].Value.Trim().ToLowerInvariant() -replace '[`*_]','';$package=$row.Groups['package'].Value.Trim().ToLowerInvariant();if($responsibility -notmatch $truth[$module]){return $false};$dependencyTokens=@([regex]::Matches($dependencies,'[a-z]+')|ForEach-Object{$_.Value}|Where-Object{$_ -ne 'and'});if(($dependencyTokens -join ',') -ne 'core,contracts' -and ($dependencyTokens -join ',') -ne 'contracts,core'){return $false};if($package -ne ('internal/modules/'+$module.ToLowerInvariant())){return $false}};return $true}
+function Has-CompleteOwnershipTable([string]$Text){
+ $lines=$Text -split "`r?`n"
+ $expected=@{
+  Orders='^(?:owns?\s+(?:the\s+)?order lifecycle(?:\s+and order decisions|\s+decisions)?|order lifecycle(?:\s+decisions)?(?:\s+owner)?)\.?$'
+  Inventory='^(?:owns?\s+(?:the\s+)?stock and reservations?|stock and reservations?(?:\s+owner)?)\.?$'
+  Billing='^(?:owns?\s+(?:the\s+)?invoice records and idempotency|invoice records and idempotency(?:\s+owner)?)\.?$'
+ }
+ $seen=@{}
+ foreach($line in $lines){
+  $line=$line.Trim()
+  if($line -notmatch '^\|.*\|$'){continue}
+  $cells=@($line.Trim('|').Split('|')|ForEach-Object{$_.Trim()})
+  $moduleCells=@($cells|Where-Object{$_ -match '^(?i)(Orders|Inventory|Billing)$'})
+  if($moduleCells.Count -eq 0){continue}
+  if($moduleCells.Count -ne 1){return $false}
+  $module=switch -Regex ($moduleCells[0]){'(?i)^Orders$'{'Orders';break}'(?i)^Inventory$'{'Inventory';break}'(?i)^Billing$'{'Billing';break}}
+  if($seen.ContainsKey($module)){return $false}
+  $seen[$module]=$true
+  $ownershipCells=@()
+  foreach($cell in $cells){
+   $value=($cell -replace '[`*_]','').Trim().ToLowerInvariant() -replace '\s+',' '
+   if($value -match $expected[$module]){$ownershipCells+=$cell}
+  }
+  if($ownershipCells.Count -ne 1){return $false}
+  $packageCells=@($cells|Where-Object{($_ -replace '[`*_]','').Trim() -match '(?i)^internal/modules/'})
+  if($packageCells.Count -ne 1){return $false}
+  $package=($packageCells[0] -replace '[`*_]','').Trim()
+  if($package -cne ('internal/modules/'+$module.ToLowerInvariant())){return $false}
+
+  $dependencyCells=@($cells|Where-Object{$_ -match '(?i)\bCore\b' -and $_ -match '(?i)\bContracts\b'})
+  if($dependencyCells.Count -ne 1){return $false}
+  $dependencyText=($dependencyCells[0] -replace '[`*_]','').Trim()
+  $dependencyMatches=[regex]::Matches($dependencyText,'(?i)\b(Core|Contracts)\b(?:\s*\(\s*([^()]*)\s*\))?')
+  if($dependencyMatches.Count -ne 2){return $false}
+  $found=@{}
+  foreach($match in $dependencyMatches){
+   $name=$match.Groups[1].Value.ToLowerInvariant()
+   if($found.ContainsKey($name)){return $false}
+   $path=$match.Groups[2]
+   if($path.Success){
+    $expectedPath=if($name -eq 'core'){'internal/core'}else{'internal/contracts'}
+    if($path.Value.Trim() -cne $expectedPath){return $false}
+   }
+   $found[$name]=$true
+  }
+  if(-not $found.ContainsKey('core') -or -not $found.ContainsKey('contracts')){return $false}
+  $remainder=$dependencyText
+  foreach($match in $dependencyMatches){$position=$remainder.IndexOf($match.Value,[StringComparison]::Ordinal);if($position -lt 0){return $false};$remainder=$remainder.Remove($position,$match.Length)}
+  $remainder=$remainder -replace '(?i)\band\b','' -replace '[,;&\s]',''
+  if($remainder.Length -ne 0){return $false}
+ }
+ return $seen.Count -eq 3
+}
 function Has-MetadataName([string]$Text,[string]$Name){$metadata=[regex]::Match($Text,'(?ims)^metadata:\s*(?<body>.*?)(?=^spec:|\z)');return $metadata.Success -and $metadata.Groups['body'].Value -match ('(?im)^\s*name:\s*'+[regex]::Escape($Name)+'\s*$')}
 function Has-Relation([string]$Text,[string]$Field,[string]$Kind,[string]$Name,[string]$Namespace){$lines=$Text -split "`r?`n";$fieldPattern='^(?<indent>\s*)'+[regex]::Escape($Field)+':\s*(?<value>.*)$';$kindPattern='(?im)(?:\bkind:\s*'+[regex]::Escape($Kind)+'\s*(?=,|\}|$)|^\s*kind:\s*'+[regex]::Escape($Kind)+'\s*$)';$namePattern='(?im)(?:\bname:\s*'+[regex]::Escape($Name)+'\s*(?=,|\}|$)|^\s*name:\s*'+[regex]::Escape($Name)+'\s*$)';$namespacePattern='(?im)(?:\bnamespace:\s*'+[regex]::Escape($Namespace)+'\s*(?=,|\}|$)|^\s*namespace:\s*'+[regex]::Escape($Namespace)+'\s*$)';for($i=0;$i -lt $lines.Count;$i++){$fieldMatch=[regex]::Match($lines[$i],$fieldPattern);if(-not $fieldMatch.Success){continue};$value=$fieldMatch.Groups['value'].Value;if($value -match '^\{.*\}$'){$block=$value}else{$indent=$fieldMatch.Groups['indent'].Value.Length;$parts=@();for($j=$i+1;$j -lt $lines.Count;$j++){if($lines[$j].Trim() -eq ''){continue};$nextIndent=([regex]::Match($lines[$j],'^\s*')).Length;if($nextIndent -le $indent){break};$parts+=$lines[$j]};$block=$parts -join "`n"};if($block -match $kindPattern -and $block -match $namePattern -and $block -match $namespacePattern){return $true}};return $false}
 function Run-Go([string[]]$GoArgs){$script:commands.Add(('go '+($GoArgs -join ' ')));Push-Location $script:repoPath;try{& go @GoArgs *> $null;return $LASTEXITCODE -eq 0}finally{Pop-Location}}

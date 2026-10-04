@@ -3,7 +3,6 @@ package billing
 import (
 	"context"
 	contract "example.com/acme/modular-service/internal/contracts/billing"
-	"strings"
 	"testing"
 )
 
@@ -19,9 +18,10 @@ func TestGauntletInvoiceConflictVector(t *testing.T) {
 		t.Fatalf("same request not idempotent: %+v %v", retry, err)
 	}
 	req.AmountCents = 101
-	if _, err = s.Issue(context.Background(), req); err == nil || !strings.Contains(err.Error(), "conflict") {
-		t.Fatalf("want explicit conflict, got %v", err)
+	if _, err = s.Issue(context.Background(), req); err == nil {
+		t.Fatal("want an explicit conflict error")
 	}
+	t.Logf("conflicting amount rejected with %T: %v", err, err)
 	final, err := s.Issue(context.Background(), contract.IssueRequest{OrderID: "O", AmountCents: 100})
 	if err != nil || final != first {
 		t.Fatalf("original invoice changed: %+v %v", final, err)

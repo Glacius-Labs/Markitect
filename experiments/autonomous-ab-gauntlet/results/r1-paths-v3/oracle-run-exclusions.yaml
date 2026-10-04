@@ -1,0 +1,35 @@
+schema: autonomous-ab-run-exclusions/v1
+freeze_digest: 4faee78795986559e91a0e233bd7321a9cf48526d331edba621ca98eee11638a
+runs:
+  - run_id: modular-service-a-t01
+    reason: Frozen task02 and task03 oracle tests impose unrequested lexical and table-format conditions; paired comparison excluded, observations preserved.
+  - run_id: modular-service-b-t01
+    reason: Symmetric paired exclusion for the same invalid frozen oracle contract; actual public-helper failures and repair records remain preserved.
+scope: exact-listed-run-ids-only
+original_development_continuation: Both original chains are terminal through task08; no state reset or hidden semantic feedback occurred.
+replacement: One fresh symmetric trial1 pair under an explicitly corrected benchmark protocol; unchanged Markitect candidate, seed/application bytes and task intent.
+holdout: No holdout for the excluded original pair; valid holdout remains sealed until development assessment and explicit fix/no-fix decision.
+confirmed_contract_defects:
+  - id: unrequested-ownership-table-format
+    task_id: "03"
+    frozen_task_set_sha256: 020fbe8d60c66ded59c32b74654a883d17e6e99d054f19b3b60a97608f3bf00e
+    frozen_evaluator_spec_sha256: b5d66595815a05d14f6caed5202de80368a9f576d0bc83c898ada2b06564acf1
+    frozen_evaluator_script_sha256: 140fd2d0cf11aa9ff5e1dfd96c8e3f6ba46460a8f20b0f70acdfbc6de310279f
+    captured_a_task03_document_sha256: ff6596a3765f137339e43b5d2f22cb99624e03ef7265a4939a06d2490bb33d73
+    requested: Three module rows with stated ownership, Core/Contracts dependencies and exact package paths; no prescribed header, column order or error-free prose template.
+    actual_oracle: Requires a literal header and fixed column order, restrictive ownership phrasing and unannotated dependency tokens.
+    finding: The captured table states the requested facts and preserves boundaries; the formatting rejection establishes no product failure.
+  - id: unrequested-literal-conflict-message
+    task_id: "02"
+    frozen_vector_sha256: 2690b55a136bdd64f4bfba15e25e926db388e365a5c8042e3eb2db0179f6594b
+    captured_a_task02_implementation_sha256: da8d85e706fce94d9947fb6e1e326bbfa8a6961ec9e1a7ffdaa87e0a2ecc1e98
+    requested: Reject a repeated order ID with a different amount using an explicit conflict error; retain retry and invoice state semantics.
+    actual_oracle: Requires the literal substring conflict in the returned error message.
+    finding: An explicit named conflict sentinel describing the differing amount is rejected solely for unrequested wording; no exact type or message was required.
+correction_boundary:
+  product_change: none
+  task_or_seed_change: none
+  extra_behavior_cases: none
+  oracle_fix: Validate requested semantic facts and original behavior vectors without imposing unrequested formatting or a literal error word.
+  old_raw_results: unchanged
+  interpretation: Do not reinterpret only one arm or count the excluded pair in comparative success/drift metrics.

@@ -135,9 +135,44 @@ func TestExcludedRunRetainsRawPassAndDoesNotExcludeOtherTrial(t *testing.T) {
 	if _, err := os.Stat(filepath.Join(arena, "report.yaml")); !os.IsNotExist(err) {
 		t.Fatal("collector wrote into arena")
 	}
+	evidenceFile(t, arena, "decisions/oracle-run-exclusions.yaml", "freeze_digest: "+frozen.Digest+"\nruns:\n  - run_id: p-a-t02\n    reason: oracle contract exclusion\n")
+	oracleOut := filepath.Join(outParent, "oracle")
+	if err := analyze(arena, oracleOut); err != nil {
+		t.Fatal(err)
+	}
+	if err := readYAML(filepath.Join(oracleOut, "report.yaml"), &got); err != nil {
+		t.Fatal(err)
+	}
+	if got.OracleExclusionRecordStatus != "matched" || len(got.OracleExclusionRecordSHA256) != 64 {
+		t.Fatalf("oracle record not separately bound: %#v", got)
+	}
+	for _, task := range got.Tasks {
+		ref := "decisions/run-exclusions.yaml"
+		if task.Trial == 2 {
+			ref = "decisions/oracle-run-exclusions.yaml"
+		}
+		if task.CountedOutcome != "invalidated" || task.AggregateEvaluationStatus != "passed" || task.RawReferenceSHA256[ref] == "" {
+			t.Fatalf("merged exclusion lost raw evidence or exact source: %#v", task)
+		}
+	}
+	evidenceFile(t, arena, "decisions/oracle-run-exclusions.yaml", "freeze_digest: "+frozen.Digest+"\nruns:\n  - run_id: p-a-t01\n    reason: conflicting second record\n")
+	if err := analyze(arena, filepath.Join(outParent, "overlap")); err == nil || !strings.Contains(err.Error(), "more than one control record") {
+		t.Fatalf("hidden exclusion precedence accepted: %v", err)
+	}
+	evidenceFile(t, arena, "decisions/oracle-run-exclusions.yaml", "freeze_digest: "+frozen.Digest+"\nruns:\n  - run_id: p-a-t99\n    reason: absent oracle run\n")
+	if err := analyze(arena, filepath.Join(outParent, "absent-oracle")); err == nil || !strings.Contains(err.Error(), "absent native run IDs: p-a-t99") {
+		t.Fatalf("dangling oracle exclusion accepted: %v", err)
+	}
+	evidenceFile(t, arena, "decisions/oracle-run-exclusions.yaml", "freeze_digest: "+frozen.Digest+"\nruns: []\n")
 	evidenceFile(t, arena, "decisions/run-exclusions.yaml", "freeze_digest: "+frozen.Digest+"\nruns:\n  - run_id: p-a-t99\n    reason: absent run\n")
 	if err := analyze(arena, filepath.Join(outParent, "unmatched")); err == nil || !strings.Contains(err.Error(), "absent native run IDs: p-a-t99") {
 		t.Fatalf("dangling exclusion accepted: %v", err)
+	}
+}
+
+func TestExclusionRecordsDoNotEnableArbitrarySourcePaths(t *testing.T) {
+	if _, _, _, err := readNamedRunExclusions(t.TempDir(), strings.Repeat("f", 64), "../external.yaml"); err == nil {
+		t.Fatal("arbitrary control path accepted")
 	}
 }
 

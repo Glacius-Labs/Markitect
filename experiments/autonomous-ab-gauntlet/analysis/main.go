@@ -210,6 +210,8 @@ type report struct {
 	InvalidationRecordSHA256       string                      `yaml:"invalidation_record_sha256,omitempty" json:"invalidation_record_sha256,omitempty"`
 	RunExclusionRecordStatus       string                      `yaml:"run_exclusion_record_status" json:"run_exclusion_record_status"`
 	RunExclusionRecordSHA256       string                      `yaml:"run_exclusion_record_sha256,omitempty" json:"run_exclusion_record_sha256,omitempty"`
+	OracleExclusionRecordStatus    string                      `yaml:"oracle_exclusion_record_status" json:"oracle_exclusion_record_status"`
+	OracleExclusionRecordSHA256    string                      `yaml:"oracle_exclusion_record_sha256,omitempty" json:"oracle_exclusion_record_sha256,omitempty"`
 	Limits                         []string                    `yaml:"limits" json:"limits"`
 	Tasks                          []taskReport                `yaml:"tasks" json:"tasks"`
 	Groups                         []group                     `yaml:"groups" json:"groups"`
@@ -457,6 +459,22 @@ func analyze(arena, out string) error {
 		return err
 	}
 	r.RunExclusionRecordStatus, r.RunExclusionRecordSHA256 = exclusionStatus, exclusionHash
+	exclusionRefs, exclusionHashes := map[string]string{}, map[string]string{}
+	for id := range excludedRuns {
+		exclusionRefs[id], exclusionHashes[id] = "decisions/run-exclusions.yaml", exclusionHash
+	}
+	oracleExcluded, oracleStatus, oracleHash, err := readNamedRunExclusions(arena, frozen.Digest, "oracle-run-exclusions.yaml")
+	if err != nil {
+		return err
+	}
+	r.OracleExclusionRecordStatus, r.OracleExclusionRecordSHA256 = oracleStatus, oracleHash
+	for id, reason := range oracleExcluded {
+		if _, duplicate := excludedRuns[id]; duplicate {
+			return fmt.Errorf("run %s is excluded by more than one control record", id)
+		}
+		excludedRuns[id] = reason
+		exclusionRefs[id], exclusionHashes[id] = "decisions/oracle-run-exclusions.yaml", oracleHash
+	}
 	cardCache := map[string]map[string]taskCard{}
 	runsRoot, err := arenaPath(arena, "runs")
 	if err != nil {
@@ -508,9 +526,9 @@ func analyze(arena, out string) error {
 		if reason, excluded := excludedRuns[n.RunID]; excluded {
 			outcome, reportTask.CountedOutcome = "invalidated", "invalidated"
 			reportTask.ComparisonExclusionReason = reason
-			ref := "decisions/run-exclusions.yaml"
+			ref := exclusionRefs[n.RunID]
 			reportTask.RawReferences = append(reportTask.RawReferences, ref)
-			reportTask.RawReferenceSHA256[ref] = "sha256:" + exclusionHash
+			reportTask.RawReferenceSHA256[ref] = "sha256:" + exclusionHashes[n.RunID]
 		}
 		r.Tasks = append(r.Tasks, reportTask)
 		countOutcome(&c, outcome, reportTask.OwnerDecisionRequired)
@@ -1168,7 +1186,14 @@ func deadlineCompliance(n nativeRecord) string {
 }
 
 func readRunExclusions(arena, freeze string) (map[string]string, string, string, error) {
-	path := filepath.Join(arena, "decisions", "run-exclusions.yaml")
+	return readNamedRunExclusions(arena, freeze, "run-exclusions.yaml")
+}
+
+func readNamedRunExclusions(arena, freeze, name string) (map[string]string, string, string, error) {
+	if name != "run-exclusions.yaml" && name != "oracle-run-exclusions.yaml" {
+		return nil, "invalid", "", errors.New("unsupported exclusion control record")
+	}
+	path := filepath.Join(arena, "decisions", name)
 	var record runExclusions
 	if err := readArenaYAML(arena, path, &record); err != nil {
 		if errors.Is(err, os.ErrNotExist) {

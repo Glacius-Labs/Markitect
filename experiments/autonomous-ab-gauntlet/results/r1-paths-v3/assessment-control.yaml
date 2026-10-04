@@ -1,0 +1,52 @@
+schema: autonomous-ab-assessment-control/v1
+freeze_digest: 4faee78795986559e91a0e233bd7321a9cf48526d331edba621ca98eee11638a
+product_source_commit: adef79d935399f8ac63ad874dbdeab8d15c418a1
+product_change: none
+assessment_boundary:
+  actor_snapshots: preserved
+  evaluator_execution: separate sibling copies, never live actor workspaces
+  public_feedback_to_actors: none
+  output_count: actual bound evaluation records, never the frozen printed processed count
+  missing_evidence: unavailable, never inferred passing
+observations:
+  - id: ops-task07-projection-scope-suspicion-disproved
+    type: negative-control-finding
+    source: frozen engineering-ops arm-b seed
+    isolated_copy: ops-task07-scope-proof
+    action: add go vet to the canonical verification Rule and render with the unchanged fixed CLI
+    tool_digest: sha256:553b7077ce7b5db2df89567146fc1a877a03cb6edd75459be5a3e0a380676056
+    changed_paths:
+      - .markitect/areas/operations/verification.rule.yaml
+      - docs/markitect/operations/verification.rule.md
+    changed_paths_allowed_by_frozen_task07_and_P01: true
+    provider_skill_bytes_changed: false
+    conclusion: no demonstrated scope contradiction; no Ops exclusion or scope expansion
+  - id: assessment-output-relative-path-operator-error
+    type: coordinator-usage-error
+    action: frozen freeze command received a cwd-relative custom output path
+    result: one public validation record was created under the coordinator checkout instead of its assessment arena
+    correction: moved that exact record into assessment-final; subsequent outputs use absolute paths
+    overwrite_or_delete: false
+    actor_or_product_mutation: false
+  - id: before-assessment-wrong-windows-execution-identity
+    type: coordinator-environment-error
+    discarded_assessment_arena: r1-paths-v3-assessment-before
+    actual_identity: IceTower/CodexSandboxOffline
+    evidence_log: raw/development-a-evaluation-20261004T2059.txt
+    observed_errors: Git dubious ownership and unavailable Go execution under the wrong identity
+    scoring: exclude the batch; do not count these results as implementation or architecture failures
+    correction: new sibling r1-paths-v3-assessment-before-owner, same frozen inputs and captured sources
+    corrected_identity: IceTower/Consiliari
+    global_git_trust_change: false
+    actor_or_product_mutation: false
+  - id: staging-tool-phase-and-git-boundary-review
+    type: independent-coordinator-tool-review
+    finding: bind the exact initial helper bytes/event for before-repair; refuse external gitdir pointer files
+    current_harness_layout: standalone .git directories created by git init and retained in snapshots
+    correction: new staging tool version records helper identity and requires a real .git directory
+    regression_tests: exact phase binding and refusal before copy of an external gitdir pointer
+    product_or_frozen_harness_change: false
+limitations:
+  - Windows process identity and provider execution permissions are runtime evidence, not Markitect semantic defects.
+  - A captured byte ledger proves the recorded source bytes; it is not a complete operating-system write audit.
+  - Synthetic functional and architecture observations do not prove human-attention savings or production reliability.
