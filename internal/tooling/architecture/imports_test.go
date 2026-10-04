@@ -89,3 +89,16 @@ func TestAdoptingCodeFixtureHasNoProductDependencyPrivilege(t *testing.T) {
 		}
 	}
 }
+
+// The public single-file bootstrap remains in integration for the supported
+// consumer download path. Its tooling owner grants no product import privilege.
+func TestStandaloneBootstrapToolingHasNoProductDependencies(t *testing.T) {
+	if got := Check([]Edge{{From: "integration"}}); len(got) != 0 {
+		t.Fatal(got)
+	}
+	for _, target := range []string{"internal/core", "internal/host", "internal/modules/a"} {
+		if got := Check([]Edge{{From: "integration", To: target}}); len(got) != 1 {
+			t.Fatalf("bootstrap import privilege: %s: %v", target, got)
+		}
+	}
+}

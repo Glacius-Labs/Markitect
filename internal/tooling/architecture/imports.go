@@ -30,9 +30,8 @@ func (v Violation) String() string {
 	return fmt.Sprintf("%s:%d: %s imports %s: %s", v.Edge.File, v.Edge.Line, v.Edge.From, v.Edge.To, v.Rule)
 }
 
-// layer classifies every product package by its concrete owner, not an edge
-// allowlist. Old paths retain their intended responsibility during migration
-// and fail the same rules until they are removed.
+// layer classifies every product package by its concrete owner. Removed
+// legacy paths receive no permanent exemption.
 func layer(p string) (string, string) {
 	switch {
 	case p == "internal/core" || strings.HasPrefix(p, "internal/core/"):
@@ -55,28 +54,12 @@ func layer(p string) (string, string) {
 	// Markitect capability. It cannot import any Markitect product package.
 	case p == "examples/documentation/docs/implementation/src":
 		return "fixture", p
-	case p == "examples" || p == "integration" || p == "benchmark":
+	case p == "integration":
+		return "bootstrap", "bootstrap"
+	case p == "examples" || p == "benchmark":
 		return "harness-tests", p
 	case p == "examples/engineering-discovery" || p == "examples/selective-adoption" || p == "examples/selective-adoption/pathspell" || p == "experiments/mcp-pilot":
 		return "harness-runtime", p
-	case p == "internal/app" || p == "internal/format" || p == "internal/inputs":
-		return "host", "host"
-	case p == "internal/snapshot":
-		return "core", "core"
-	case p == "internal/source":
-		return "infrastructure", "infrastructure"
-	case p == "internal/release" || p == "internal/publish" || p == "internal/licenses":
-		return "tooling", "tooling"
-	case p == "internal/render" || p == "internal/markdownlinks":
-		return "module", "legacy-projections"
-	case p == "internal/adoption" || p == "internal/copyme":
-		return "module", "adoption"
-	case p == "internal/authoring":
-		return "module", "authoring"
-	case p == "internal/artifactcoverage":
-		return "module", "artifactcoverage"
-	case p == "internal/contentpackage":
-		return "host", "host"
 	default:
 		return "unknown", p
 	}
@@ -95,6 +78,8 @@ func Check(edges []Edge) []Violation {
 		to, target := layer(e.To)
 		rule := ""
 		switch {
+		case from == "bootstrap":
+			rule = "standalone bootstrap tooling may not import Markitect packages"
 		case from == "fixture":
 			rule = "adopting-code fixture may not import Markitect product packages"
 		case e.From == e.To:
