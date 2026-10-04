@@ -67,6 +67,9 @@ jobs:
       - name: Check managed artifact accounting
         run: go run ./cmd/markitect-check-artifacts --repo . --config markitect-artifacts.yaml
 
+      - name: Check configured modules
+        run: go run ./cmd/markitect-check-modules --repo . --hooks .markitect/modules/githooks.config --pipelines .markitect/modules/pipelines.config
+
       - name: Compile fixed dogfood engineering context
         run: go run ./cmd/markitect context --repo . --revision ${{ github.sha }} --namespace development --kind Skill --name engineering-change
 
