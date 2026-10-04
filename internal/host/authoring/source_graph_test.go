@@ -1,6 +1,11 @@
 package authoring
 
-import "testing"
+import (
+	"strings"
+	"testing"
+
+	"github.com/Glacius-Labs/Markitect/internal/core"
+)
 
 func TestProviderAdapterMappingsAndRetirementsAreValidated(t *testing.T) {
 	p := project(Area{Name: "sample", Path: "docs"})
@@ -32,6 +37,99 @@ func hasCode(g *Graph, code string) bool {
 		}
 	}
 	return false
+}
+
+func TestBuiltinAIReferencesAreResolvedOnlyByAuthoringFrontend(t *testing.T) {
+	const customAPI = "software.example.org/v1"
+	registry := NewRegistry()
+	domain := core.DomainDefinition{APIVersion: customAPI, Kinds: map[string]core.KindDefinition{
+		"Module": {Properties: map[string]core.PropertyDefinition{"intent": {Type: "string"}}},
+	}}
+	if err := registry.AddDomain(domain); err != nil {
+		t.Fatal(err)
+	}
+	p := project(Area{Name: "general", Path: "docs/general"})
+	skill := resource("Skill", "general", "assistant", "docs/general/assistant.yaml")
+	skill.Spec.Uses = []Ref{{APIVersion: customAPI, Kind: "Module", Name: "orders"}}
+	contract := resource("Contract", "general", "review", "docs/general/review.yaml")
+	contract.Spec.Uses = []Ref{{Kind: "Text", Name: "review-guidance"}}
+	text := resource("Text", "general", "review-guidance", "docs/general/review-guidance.yaml")
+	module := &Resource{Core: core.Resource{APIVersion: customAPI, Kind: "Module", Metadata: core.Metadata{Name: "orders", Namespace: "general"}, Data: map[string]any{"intent": "Owns orders."}, Path: "docs/general/orders.yaml"}}
+
+	graph := BuildWithRegistry([]*Resource{p, skill, contract, text, module}, registry)
+	for _, diagnostic := range graph.Diagnostics {
+		if diagnostic.Code == "relation.api-version" || diagnostic.Code == "reference.api-version" {
+			t.Fatalf("built-in cross-domain reference was reinterpreted as a same-domain relation: %+v", diagnostic)
+		}
+	}
+	for _, tc := range []struct {
+		from, to string
+	}{
+		{skill.GraphKey(), module.GraphKey()},
+		{contract.GraphKey(), text.GraphKey()},
+	} {
+		matches := 0
+		for _, relation := range graph.Relationships {
+			if relation.From == tc.from && relation.To == tc.to && relation.Relation == "uses" {
+				matches++
+				if !relation.Context || !relation.Invalidate {
+					t.Errorf("Host-authorized uses relationship lost its effects: %+v", relation)
+				}
+			}
+		}
+		if matches != 1 {
+			t.Errorf("expected exactly one Host-authorized uses relationship %s -> %s, got %d (%+v)", tc.from, tc.to, matches, graph.Relationships)
+		}
+	}
+}
+
+func TestCorePolicyInputDiagnosticsRetainProjectSourceLocation(t *testing.T) {
+	const customAPI = "policy-source.example.org/v1"
+	registry := NewRegistry()
+	domain := core.DomainDefinition{APIVersion: customAPI, Kinds: map[string]core.KindDefinition{
+		"Module": {Properties: map[string]core.PropertyDefinition{"intent": {Type: "string"}}},
+	}, Constraints: []core.ConstraintDefinition{{Name: "module-intent", Select: core.ResourceSelector{Kind: "Module"}, Assert: core.ConstraintAssertion{Op: "present", Field: "intent"}}}}
+	if err := registry.AddDomain(domain); err != nil {
+		t.Fatal(err)
+	}
+	project := resource("Project", "", "sample", "markitect.yaml")
+	project.Line = 9
+	project.Spec.Areas = []Area{{Name: "general", Path: "docs/general"}}
+	project.Spec.PolicyDate = "not-a-date"
+	module := &Resource{Core: core.Resource{APIVersion: customAPI, Kind: "Module", Metadata: core.Metadata{Name: "orders", Namespace: "general"}, Data: map[string]any{}, Path: "docs/general/orders.yaml"}}
+	invalidDate := BuildWithRegistry([]*Resource{project, module}, registry)
+	assertProjectLocation := func(graph *Graph, code string) {
+		t.Helper()
+		for _, diagnostic := range graph.Diagnostics {
+			if diagnostic.Code == code {
+				if diagnostic.Path != project.Path || diagnostic.Line != project.Line || diagnostic.Package != project.Package {
+					t.Fatalf("%s lost Project provenance: %+v", code, diagnostic)
+				}
+				return
+			}
+		}
+		t.Fatalf("missing %s diagnostic: %+v", code, graph.Diagnostics)
+	}
+	assertProjectLocation(invalidDate, "policy.date")
+
+	project.Spec.PolicyDate = ""
+	baseline := BuildWithRegistry([]*Resource{project, module}, registry)
+	var finding core.PolicyResult
+	for _, result := range baseline.Core.PolicyResults {
+		if result.Constraint == "module-intent" {
+			finding = result
+		}
+	}
+	if finding.Status != core.PolicyFailed {
+		t.Fatalf("fixture did not produce the policy finding: %+v", baseline.Core.PolicyResults)
+	}
+	project.Spec.PolicyExceptions = []PolicyException{{
+		Name: "stale-intent", APIVersion: finding.APIVersion, Constraint: finding.Constraint, Subject: finding.Subject,
+		ConstraintDigest: finding.ConstraintDigest, SubjectDigest: "sha256:" + strings.Repeat("0", 64),
+		Rationale: "The source moved during migration.", Owner: "architecture", Decision: "accepted for review",
+	}}
+	stale := BuildWithRegistry([]*Resource{project, module}, registry)
+	assertProjectLocation(stale, "policy.exception.stale")
 }
 
 func hasEdge(g *Graph, from, to string) bool {
