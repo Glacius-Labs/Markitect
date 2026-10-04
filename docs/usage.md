@@ -1,10 +1,11 @@
 # Using Markitect
 
-This guide records the published v0.12.0 contract alongside its v0.11.0 baseline. The v0.9.1 resource model is historical; v0.10.0 is the generic canonical-model baseline. v0.11.0 adds reusable architecture contracts, structured PolicyResults, explicit exceptions, and authoring workflows. v0.12.0 adds the bounded `same-target` assertion described below. Consult [GitHub Releases](https://github.com/Glacius-Labs/Markitect/releases) for available binaries. The [engineering constitution](engineering-constitution.md) explains scope and limits; the [roadmap](implementation-plan.md) owns verified coverage and known limits.
+This guide records the published v0.13.0 contract alongside its v0.12.0 and v0.11.0 baselines. The v0.9.1 resource model is historical; v0.10.0 is the generic canonical-model baseline. v0.11.0 adds reusable architecture contracts, structured PolicyResults, explicit exceptions, and authoring workflows. v0.12.0 adds the bounded `same-target` assertion. v0.13.0 adds read-only policy-failure analysis, bounded selective handoff, the provider-neutral Markitect-first workflow and managed-artifact accounting. Consult [GitHub Releases](https://github.com/Glacius-Labs/Markitect/releases) for available binaries. The [engineering constitution](engineering-constitution.md) explains scope and limits; the [roadmap](implementation-plan.md) owns verified coverage and known limits.
 
-## Selective adoption preparation and Copy Me (unreleased source)
+<a id="selective-adoption-preparation-and-copy-me-unreleased-source"></a>
+## Selective adoption preparation and Copy Me (v0.13.0)
 
-These commands are source capabilities; published v0.12.0 has the earlier Copy Me guidance, not this durable handoff. Existing greenfield `init` is unchanged. No Project, Domain or ContextRun is required to prepare opaque engineering evidence. The [contract](design/selective-adoption-handoff.md) owns selection, identity, privacy and retention semantics.
+These commands are included in v0.13.0 as bounded, versioned byte/reference infrastructure; immutable v0.12.0 has the earlier Copy Me guidance, not this durable handoff. Existing greenfield `init` is unchanged. No Project, Domain or ContextRun is required to prepare opaque engineering evidence. The [contract](design/selective-adoption-handoff.md) owns selection, identity, privacy and retention semantics.
 
 Create an owner-supplied scope YAML, for example:
 
@@ -62,7 +63,7 @@ Both commands exit 0 for completed capture or byte/reference validation, 2 for r
 
 ## Project and resource model
 
-The source iteration after the real-code pilot adds explicit read-only policy-failure analysis, described below. It is not part of the published v0.12.0 executable; an installed binary needs a separately verified release before supporting this option.
+The published v0.13.0 executable adds explicit read-only policy-failure analysis, described below. The immutable v0.12.0 executable does not support this option.
 
 Markitect Projects declare YAML resources in configured content areas. The bundled AI-working Domain supplies `Text`, `Rule`, `Contract`, `Workflow`, `Skill`, and `Agent`. A Project may load additional versioned Domains from exact local snapshot-relative files or explicitly pinned package members through `spec.domains`; those definitions provide closed resource schemas, typed relations, and bounded constraints. `Project` declares topology and execution/output configuration. Each resource's API version and kind identify its Domain-qualified type. Namespaces and names are DNS labels. Paths, area imports, and resource declarations govern ownership and direct access.
 
@@ -375,7 +376,8 @@ For project-owned Codex, Claude, and shared entrypoints, declare `spec.targets` 
 
 Existing-content imports are implemented and reviewed as scripts owned by the project being migrated. Markitect core does not include a migration command or presume source documentation structure.
 
-### Read-only analysis of failed policies (unreleased source)
+<a id="read-only-analysis-of-failed-policies-unreleased-source"></a>
+### Read-only analysis of failed policies (v0.13.0)
 
 Ordinary `context` and `impact` remain strict. To investigate a structurally valid candidate whose ordinary PolicyResults fail, use the explicit `--analyze-policy-failures` option:
 
@@ -417,7 +419,8 @@ Omitting `--revision` uses the working tree and marks results provisional. A com
 
 Context reports its snapshot and selected-input digests, including activated Domain definitions. The `model` command binds normalized resources and relations to snapshot and configuration digests. These identify the bytes and declarations evaluated, not semantic truth. Impact follows each declared relation's context and invalidation rules; set-based constraints include their selected members, and unknown or unmodelled inputs can broaden its result. Adapter observations have separate source and observation digests, so external drift can be detected under unchanged canonical inputs. Review reuse requires matching executable, configuration, context, and eligible impact. The CLI does not call a model, judge a report, authenticate its author, or transfer human acceptance.
 
-## Markitect-first (release candidate)
+<a id="markitect-first-release-candidate"></a>
+## Markitect-first (published v0.13.0)
 
 The provider-neutral [Change workflow](../internal/authoring/resources/workflow-markitect-first-change.yaml) is canonical. `markitect authoring` includes it without requiring a Project. An adopting owner can put a durable pointer to that version-bound command and the project's selected resource Context in its root agent guidance; selected provider Skills are derived through existing targets. Markitect's own [root Project](../markitect.yaml) uses `development/Skill/engineering-change`; its human-owned AGENTS.md is navigation, not a second workflow owner. Greenfield Init remains unchanged.
 
