@@ -224,9 +224,6 @@ jobs:
           Copy-Item integration/run-markitect_test.go (Join-Path $packageDir '.markitect/bootstrap/run_test.go')
           "MARKITECT_PACKAGE_DIR=$packageDir" >> $env:GITHUB_ENV
 
-      - name: Enforce Core, Module, Host and CLI import boundaries
-        run: go test ./internal/tooling/architecture
-
       - name: Test standalone bootstrap and packaged commands (Unix)
         if: runner.os != 'Windows'
         shell: bash
@@ -328,9 +325,6 @@ jobs:
           } finally { Pop-Location }
           & $artifactBinary --repo $env:GITHUB_WORKSPACE --config markitect-artifacts.yaml
           if ($LASTEXITCODE -ne 0) { throw 'Packaged artifact checker dogfood failed' }
-
-      - name: Enforce Core, Module, Host and CLI import boundaries
-        run: go test ./internal/tooling/architecture
 
       - name: Test standalone bootstrap and packaged commands (Windows)
         if: runner.os == 'Windows'

@@ -78,6 +78,27 @@ func TestHarnessCannotHideProductOrSelfImport(t *testing.T) {
 	}
 }
 
+func TestInspectTestFirstDoesNotHideProductionFile(t *testing.T) {
+	root := t.TempDir()
+	dir := filepath.Join(root, "examples")
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		t.Fatal(err)
+	}
+	for _, name := range []string{"00_test.go", "z.go"} {
+		if err := os.WriteFile(filepath.Join(dir, name), []byte("package examples\nimport _ \"fmt\"\n"), 0644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	edges, err := Inspect(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	findings := Check(edges)
+	if len(findings) != 1 || findings[0].Edge.File != "examples/z.go" || findings[0].Edge.Test || findings[0].Rule != "unclassified product package" {
+		t.Fatalf("test-first order hid the production file: %v", findings)
+	}
+}
+
 func TestAdoptingCodeFixtureHasNoProductDependencyPrivilege(t *testing.T) {
 	const fixture = "examples/documentation/docs/implementation/src"
 	if got := Check([]Edge{{From: fixture}}); len(got) != 0 {

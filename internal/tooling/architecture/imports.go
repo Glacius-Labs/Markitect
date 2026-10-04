@@ -115,7 +115,6 @@ func Check(edges []Edge) []Violation {
 
 func Inspect(root string) ([]Edge, error) {
 	var edges []Edge
-	seenPackages := map[string]bool{}
 	err := filepath.WalkDir(root, func(name string, entry fs.DirEntry, err error) error {
 		if err != nil {
 			return err
@@ -139,10 +138,9 @@ func Inspect(root string) ([]Edge, error) {
 			return nil
 		}
 		packagePath := filepath.ToSlash(filepath.Dir(rel))
-		if !seenPackages[packagePath] {
-			seenPackages[packagePath] = true
-			edges = append(edges, Edge{File: rel, From: packagePath, Test: strings.HasSuffix(rel, "_test.go")})
-		}
+		// Classify every file, even when it has no local imports. A test file
+		// visited first must not hide production code in a test-only package.
+		edges = append(edges, Edge{File: rel, From: packagePath, Test: strings.HasSuffix(rel, "_test.go")})
 		fset := token.NewFileSet()
 		f, err := parser.ParseFile(fset, name, nil, parser.ImportsOnly)
 		if err != nil {
