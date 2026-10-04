@@ -7,7 +7,7 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/Glacius-Labs/Markitect/internal/format"
+	"github.com/Glacius-Labs/Markitect/internal/host/authoring"
 )
 
 const (
@@ -93,7 +93,7 @@ func RecordReview(p *Project, key, version, toolDigest string, config ReviewConf
 		Report: report, ReportDigest: Hash([]byte(report)),
 		RecordedAt: time.Now().UTC(), Advisory: true, TrustNotice: ReviewTrustNotice,
 	}
-	encoded, err := format.Encode(record)
+	encoded, err := authoring.Encode(record)
 	if err != nil {
 		return nil, fmt.Errorf("encode review record: %w", err)
 	}

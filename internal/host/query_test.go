@@ -1,6 +1,7 @@
 package host
 
 import (
+	"github.com/Glacius-Labs/Markitect/internal/host/authoring"
 	"reflect"
 	"testing"
 
@@ -8,9 +9,9 @@ import (
 )
 
 func TestFindUsesLiteralCaseInsensitiveMatchingAndExactFilters(t *testing.T) {
-	general := queryResource("Text", "general", "rollback", "docs/general/rollback.yaml", core.Spec{Text: "Migration needs a rollback plan.", Description: "Database changes"})
-	other := queryResource("Text", "general", "migration", "docs/general/migration.yaml", core.Spec{Text: "Apply the migration."})
-	project := queryProject(queryProjectResource([]core.Area{{Name: "general", Path: "docs/general"}}), general, other)
+	general := queryResource("Text", "general", "rollback", "docs/general/rollback.yaml", authoring.Spec{Text: "Migration needs a rollback plan.", Description: "Database changes"})
+	other := queryResource("Text", "general", "migration", "docs/general/migration.yaml", authoring.Spec{Text: "Apply the migration."})
+	project := queryProject(queryProjectResource([]authoring.Area{{Name: "general", Path: "docs/general"}}), general, other)
 	matches, err := Find(project, FindQuery{Query: "ROLLBACK", Kind: "Text", Namespace: "general"})
 	if err != nil {
 		t.Fatal(err)
@@ -31,12 +32,12 @@ func TestFindUsesLiteralCaseInsensitiveMatchingAndExactFilters(t *testing.T) {
 }
 
 func TestExplainUsesLongestOwningAreaAndResolvedRelationships(t *testing.T) {
-	projectResource := queryProjectResource([]core.Area{
+	projectResource := queryProjectResource([]authoring.Area{
 		{Name: "general", Path: "docs/general"},
 		{Name: "specific", Path: "docs/general/customer"},
 	})
-	text := queryResource("Text", "specific", "guide", "docs/general/customer/text/guide.yaml", core.Spec{Text: "Specific guidance."})
-	workflow := queryResource("Workflow", "specific", "review", "docs/general/customer/workflows/review.yaml", core.Spec{Text: "Review workflow.", Uses: []core.Ref{{Kind: "Text", Name: "guide"}}})
+	text := queryResource("Text", "specific", "guide", "docs/general/customer/text/guide.yaml", authoring.Spec{Text: "Specific guidance."})
+	workflow := queryResource("Workflow", "specific", "review", "docs/general/customer/workflows/review.yaml", authoring.Spec{Text: "Review workflow.", Uses: []core.Ref{{Kind: "Text", Name: "guide"}}})
 	project := queryProject(projectResource, text, workflow)
 	result, err := Explain(project, workflow.Key())
 	if err != nil {
@@ -58,22 +59,22 @@ func TestExplainUsesLongestOwningAreaAndResolvedRelationships(t *testing.T) {
 }
 
 func TestExplainContractShowsEveryDeclarationAndSelectedBinding(t *testing.T) {
-	projectResource := queryProjectResource([]core.Area{{Name: "general", Path: "docs/general"}})
-	contract := queryResource("Contract", "general", "review", "docs/general/contracts/review.yaml", core.Spec{
+	projectResource := queryProjectResource([]authoring.Area{{Name: "general", Path: "docs/general"}})
+	contract := queryResource("Contract", "general", "review", "docs/general/contracts/review.yaml", authoring.Spec{
 		Text: "Review contract.", Kind: "Agent", Input: []string{"change"}, Output: []string{"findings"},
 		Uses: []core.Ref{{Kind: "Text", Name: "policy"}},
 	})
-	policy := queryResource("Text", "general", "policy", "docs/general/text/policy.yaml", core.Spec{Text: "Policy."})
-	selected := queryResource("Agent", "general", "reviewer", "docs/general/agents/reviewer.yaml", core.Spec{
+	policy := queryResource("Text", "general", "policy", "docs/general/text/policy.yaml", authoring.Spec{Text: "Policy."})
+	selected := queryResource("Agent", "general", "reviewer", "docs/general/agents/reviewer.yaml", authoring.Spec{
 		Text: "Selected.", Input: []string{"change"}, Output: []string{"findings"}, Implements: []core.Ref{{Name: "review"}},
 	})
-	alternative := queryResource("Agent", "general", "reviewer-alt", "docs/general/agents/reviewer-alt.yaml", core.Spec{
+	alternative := queryResource("Agent", "general", "reviewer-alt", "docs/general/agents/reviewer-alt.yaml", authoring.Spec{
 		Text: "Alternative.", Input: []string{"change"}, Output: []string{"findings"}, Implements: []core.Ref{{Name: "review"}},
 	})
-	consumer := queryResource("Workflow", "general", "consume", "docs/general/workflows/consume.yaml", core.Spec{
+	consumer := queryResource("Workflow", "general", "consume", "docs/general/workflows/consume.yaml", authoring.Spec{
 		Text: "Consumer.", Needs: []core.Ref{{Name: "review"}},
 	})
-	projectResource.Spec.Bindings = []core.Binding{{
+	projectResource.Spec.Bindings = []authoring.Binding{{
 		Contract:       core.Ref{Kind: "Contract", Name: "review", Namespace: "general"},
 		Implementation: core.Ref{Kind: "Agent", Name: "reviewer", Namespace: "general"},
 	}}
@@ -104,12 +105,12 @@ func TestExplainContractShowsEveryDeclarationAndSelectedBinding(t *testing.T) {
 }
 
 func TestExplainRelationshipDisappearsWhenReferenceIsRemoved(t *testing.T) {
-	text := queryResource("Text", "general", "guide", "docs/general/text/guide.yaml", core.Spec{Text: "Guide."})
-	workflow := queryResource("Workflow", "general", "review", "docs/general/workflows/review.yaml", core.Spec{Text: "Review.", Uses: []core.Ref{{Kind: "Text", Name: "guide"}}})
-	withRef := queryProject(queryProjectResource([]core.Area{{Name: "general", Path: "docs/general"}}), text, workflow)
+	text := queryResource("Text", "general", "guide", "docs/general/text/guide.yaml", authoring.Spec{Text: "Guide."})
+	workflow := queryResource("Workflow", "general", "review", "docs/general/workflows/review.yaml", authoring.Spec{Text: "Review.", Uses: []core.Ref{{Kind: "Text", Name: "guide"}}})
+	withRef := queryProject(queryProjectResource([]authoring.Area{{Name: "general", Path: "docs/general"}}), text, workflow)
 	withoutWorkflow := *workflow
 	withoutWorkflow.Spec.Uses = nil
-	withoutRef := queryProject(queryProjectResource([]core.Area{{Name: "general", Path: "docs/general"}}), text, &withoutWorkflow)
+	withoutRef := queryProject(queryProjectResource([]authoring.Area{{Name: "general", Path: "docs/general"}}), text, &withoutWorkflow)
 	removed, err := Explain(withoutRef, text.Key())
 	if err != nil {
 		t.Fatal(err)
@@ -124,8 +125,8 @@ func TestExplainRelationshipDisappearsWhenReferenceIsRemoved(t *testing.T) {
 }
 
 func TestQueriesRejectProjectsWithDiagnostics(t *testing.T) {
-	broken := queryResource("Workflow", "general", "broken", "docs/general/workflows/broken.yaml", core.Spec{Text: "Broken.", Uses: []core.Ref{{Kind: "Text", Name: "missing"}}})
-	project := queryProject(queryProjectResource([]core.Area{{Name: "general", Path: "docs/general"}}), broken)
+	broken := queryResource("Workflow", "general", "broken", "docs/general/workflows/broken.yaml", authoring.Spec{Text: "Broken.", Uses: []core.Ref{{Kind: "Text", Name: "missing"}}})
+	project := queryProject(queryProjectResource([]authoring.Area{{Name: "general", Path: "docs/general"}}), broken)
 	if len(project.Graph.Diagnostics) == 0 {
 		t.Fatal("fixture should contain graph diagnostics")
 	}
@@ -138,11 +139,11 @@ func TestQueriesRejectProjectsWithDiagnostics(t *testing.T) {
 }
 
 func TestGraphRelationshipsAreDeterministicAndDoNotChangeEdges(t *testing.T) {
-	projectResource := queryProjectResource([]core.Area{{Name: "general", Path: "docs/general", Rules: []core.Ref{{Name: "policy"}}}})
-	rule := queryResource("Rule", "general", "policy", "docs/general/rules/policy.yaml", core.Spec{Text: "Policy."})
-	workflow := queryResource("Workflow", "general", "review", "docs/general/workflows/review.yaml", core.Spec{Text: "Review."})
-	forward := core.Build([]*core.Resource{projectResource, rule, workflow})
-	reverse := core.Build([]*core.Resource{workflow, rule, projectResource})
+	projectResource := queryProjectResource([]authoring.Area{{Name: "general", Path: "docs/general", Rules: []core.Ref{{Name: "policy"}}}})
+	rule := queryResource("Rule", "general", "policy", "docs/general/rules/policy.yaml", authoring.Spec{Text: "Policy."})
+	workflow := queryResource("Workflow", "general", "review", "docs/general/workflows/review.yaml", authoring.Spec{Text: "Review."})
+	forward := authoring.Build([]*authoring.Resource{projectResource, rule, workflow})
+	reverse := authoring.Build([]*authoring.Resource{workflow, rule, projectResource})
 	if !reflect.DeepEqual(forward.Relationships, reverse.Relationships) {
 		t.Fatalf("relationship order depends on input order:\n%#v\n%#v", forward.Relationships, reverse.Relationships)
 	}
@@ -151,16 +152,16 @@ func TestGraphRelationshipsAreDeterministicAndDoNotChangeEdges(t *testing.T) {
 	}
 }
 
-func queryProject(resources ...*core.Resource) *Project {
-	return &Project{Resources: resources, Graph: core.Build(resources), InputFiles: map[string][]string{}}
+func queryProject(resources ...*authoring.Resource) *Project {
+	return &Project{Resources: resources, Graph: authoring.Build(resources), InputFiles: map[string][]string{}}
 }
 
-func queryProjectResource(areas []core.Area) *core.Resource {
-	return &core.Resource{APIVersion: core.APIVersion, Kind: "Project", Metadata: core.Metadata{Name: "project"}, Path: "markitect.yaml", Spec: core.Spec{Areas: areas}}
+func queryProjectResource(areas []authoring.Area) *authoring.Resource {
+	return &authoring.Resource{Core: authoring.Core{APIVersion: core.APIVersion, Kind: "Project", Metadata: core.Metadata{Name: "project"}, Path: "markitect.yaml"}, Spec: authoring.Spec{Areas: areas}}
 }
 
-func queryResource(kind, namespace, name, path string, spec core.Spec) *core.Resource {
-	return &core.Resource{APIVersion: core.APIVersion, Kind: kind, Metadata: core.Metadata{Name: name, Namespace: namespace}, Path: path, Spec: spec}
+func queryResource(kind, namespace, name, path string, spec authoring.Spec) *authoring.Resource {
+	return &authoring.Resource{Core: authoring.Core{APIVersion: core.APIVersion, Kind: kind, Metadata: core.Metadata{Name: name, Namespace: namespace}, Path: path}, Spec: spec}
 }
 
 func containsRelationship(relationships []core.Relationship, from, to, relation string) bool {

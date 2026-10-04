@@ -11,7 +11,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/Glacius-Labs/Markitect/internal/app"
+	"github.com/Glacius-Labs/Markitect/internal/host"
 	"github.com/Glacius-Labs/Markitect/internal/modules/azuredevops"
 	"go.yaml.in/yaml/v3"
 )
@@ -24,7 +24,7 @@ func Run(input io.Reader, output, stderr io.Writer) int {
 		return writeFailure(output, fmt.Errorf("read adapter request: %w", err))
 	}
 	decoder := yaml.NewDecoder(bytes.NewReader(body))
-	var wire app.AdapterRequest
+	var wire host.AdapterRequest
 	if err := decoder.Decode(&wire); err != nil {
 		return writeFailure(output, fmt.Errorf("decode adapter request: %w", err))
 	}
@@ -62,8 +62,8 @@ func Run(input io.Reader, output, stderr io.Writer) int {
 	return writeResult(output, azuredevops.Run(request))
 }
 
-func decodeResult(value *app.AdapterResult) (*azuredevops.Result, error) {
-	data, err := app.YAML(value)
+func decodeResult(value *host.AdapterResult) (*azuredevops.Result, error) {
+	data, err := host.YAML(value)
 	if err != nil {
 		return nil, err
 	}

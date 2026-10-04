@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Glacius-Labs/Markitect/internal/render"
+	"github.com/Glacius-Labs/Markitect/internal/modules/agentrules"
 )
 
 func TestApplyProjectionNoopDoesNotWrite(t *testing.T) {
@@ -51,7 +51,7 @@ func TestApplyProjectionWritesOnlyPlannedPath(t *testing.T) {
 	}
 	writeFixture(t, root, fixtureFiles(t, "", "Keep the owner source.", projectNS).Files)
 	initial := loadAndWriteFixtureOutputs(t, root)
-	outputs, err := render.Generate(initial.Graph, initial.Snapshot.Files)
+	outputs, err := GenerateOutputs(initial)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -62,7 +62,7 @@ func TestApplyProjectionWritesOnlyPlannedPath(t *testing.T) {
 	changedPath := paths[0]
 	changedFile := filepath.Join(root, filepath.FromSlash(changedPath))
 	oldTime := time.Date(2020, 1, 2, 3, 4, 5, 0, time.UTC)
-	if err := os.WriteFile(changedFile, []byte("<!-- "+render.Marker+" -->\nstale generated content\n"), 0644); err != nil {
+	if err := os.WriteFile(changedFile, []byte("<!-- "+agentrules.Marker+" -->\nstale generated content\n"), 0644); err != nil {
 		t.Fatal(err)
 	}
 	if err := os.Chtimes(changedFile, oldTime, oldTime); err != nil {
@@ -123,7 +123,7 @@ func loadAndWriteFixtureOutputs(t *testing.T, root string) *Project {
 	if err != nil {
 		t.Fatal(err)
 	}
-	outputs, err := render.Generate(project.Graph, project.Snapshot.Files)
+	outputs, err := GenerateOutputs(project)
 	if err != nil {
 		t.Fatal(err)
 	}

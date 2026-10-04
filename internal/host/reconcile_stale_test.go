@@ -3,8 +3,6 @@ package host
 import (
 	"strings"
 	"testing"
-
-	"github.com/Glacius-Labs/Markitect/internal/render"
 )
 
 func TestProjectionStaleInventoryMatchesCheckAndPreservesOwnership(t *testing.T) {
@@ -13,7 +11,7 @@ func TestProjectionStaleInventoryMatchesCheckAndPreservesOwnership(t *testing.T)
 	if err != nil {
 		t.Fatal(err)
 	}
-	outputs, err := render.Generate(p.Graph, snapshot.Files)
+	outputs, err := GenerateOutputs(p)
 	if err != nil {
 		t.Fatal(err)
 	}

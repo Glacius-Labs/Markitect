@@ -26,7 +26,7 @@ func TestContextCompilesPortableCoreAuthoringClosure(t *testing.T) {
 		"internal/host/embedded/resources/workflow-engineering-discovery.yaml":  false,
 		"internal/host/embedded/resources/workflow-constitution-change.yaml":    false,
 		"internal/host/embedded/resources/workflow-markitect-first-change.yaml": false,
-		"internal/host/embedded/resources/skill-authoring.yaml":                  false,
+		"internal/host/embedded/resources/skill-authoring.yaml":                 false,
 	}
 	if len(got.Inputs) != len(want) {
 		t.Fatalf("compiled %d inputs, want %d: %#v", len(got.Inputs), len(want), got.Inputs)

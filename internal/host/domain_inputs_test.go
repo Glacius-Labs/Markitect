@@ -8,7 +8,7 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/internal/core"
 	"github.com/Glacius-Labs/Markitect/internal/core/snapshot"
-	"github.com/Glacius-Labs/Markitect/internal/format"
+	"github.com/Glacius-Labs/Markitect/internal/host/authoring"
 	"github.com/Glacius-Labs/Markitect/internal/host/authoring/contentpackage"
 )
 
@@ -65,7 +65,7 @@ func TestDomainInsideAreaRequiresSelectionBeforeFormatting(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			definition, err := format.ParseDomain(domainPath, after)
+			definition, err := authoring.ParseDomain(domainPath, after)
 			if err != nil || definition.Kinds["Module"].Properties["intent"].Type != "string" {
 				t.Fatalf("format lost Domain schema: definition=%+v err=%v", definition, err)
 			}
@@ -249,8 +249,8 @@ spec:
 	if err != nil {
 		t.Fatal(err)
 	}
-	pin := core.PackagePin{Name: "software-model", Version: "1.0.0", Source: "urn:example:software-model:1.0.0", Archive: "packages/software-model.zip", SHA256: strings.TrimPrefix(Hash(archive), "sha256:")}
-	project := core.Resource{APIVersion: core.APIVersion, Kind: "Project", Metadata: core.Metadata{Name: "consumer"}, Spec: core.Spec{Packages: []core.PackagePin{pin}}}
+	pin := authoring.PackagePin{Name: "software-model", Version: "1.0.0", Source: "urn:example:software-model:1.0.0", Archive: "packages/software-model.zip", SHA256: strings.TrimPrefix(Hash(archive), "sha256:")}
+	project := authoring.Resource{Core: authoring.Core{APIVersion: core.APIVersion, Kind: "Project", Metadata: core.Metadata{Name: "consumer"}}, Spec: authoring.Spec{Packages: []authoring.PackagePin{pin}}}
 	s := &snapshot.Snapshot{Provisional: true, Files: map[string][]byte{"markitect.yaml": encodeResource(t, project), pin.Archive: archive}, Modes: map[string]string{}}
 	unselected, err := Parse(s)
 	if err != nil {

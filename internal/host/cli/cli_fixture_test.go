@@ -10,10 +10,10 @@ import (
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/internal/core"
-	"github.com/Glacius-Labs/Markitect/internal/format"
+	"github.com/Glacius-Labs/Markitect/internal/core/snapshot"
 	"github.com/Glacius-Labs/Markitect/internal/host"
+	"github.com/Glacius-Labs/Markitect/internal/host/authoring"
 	"github.com/Glacius-Labs/Markitect/internal/infrastructure/source"
-	"github.com/Glacius-Labs/Markitect/internal/render"
 	"go.yaml.in/yaml/v3"
 )
 
@@ -46,7 +46,7 @@ func newCLIRepo(t *testing.T, badReference bool) cliRepo {
 	if err != nil {
 		t.Fatal(err)
 	}
-	outputs, err := render.Generate(loaded.Graph, loaded.Snapshot.Files)
+	outputs, err := host.GenerateOutputs(loaded)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -63,31 +63,31 @@ func newCLIRepo(t *testing.T, badReference bool) cliRepo {
 
 func cliFixture(t *testing.T, badReference bool) map[string][]byte {
 	t.Helper()
-	project := core.Resource{APIVersion: core.APIVersion, Kind: "Project", Metadata: core.Metadata{Name: "sample-project"}, Spec: core.Spec{
-		Areas: []core.Area{{Name: cliNamespace, Path: "docs/general"}}, Targets: []string{"markdown"},
+	project := authoring.Resource{Core: authoring.Core{APIVersion: core.APIVersion, Kind: "Project", Metadata: core.Metadata{Name: "sample-project"}}, Spec: authoring.Spec{
+		Areas: []authoring.Area{{Name: cliNamespace, Path: "docs/general"}}, Targets: []string{"markdown"},
 	}}
-	rule := core.Resource{APIVersion: core.APIVersion, Kind: "Rule", Metadata: core.Metadata{Name: "policy", Namespace: cliNamespace}, Spec: core.Spec{Text: "Keep the canonical source."}}
+	rule := authoring.Resource{Core: authoring.Core{APIVersion: core.APIVersion, Kind: "Rule", Metadata: core.Metadata{Name: "policy", Namespace: cliNamespace}}, Spec: authoring.Spec{Text: "Keep the canonical source."}}
 	refName := "policy"
 	if badReference {
 		refName = "missing-rule"
 	}
-	skill := core.Resource{APIVersion: core.APIVersion, Kind: "Skill", Metadata: core.Metadata{Name: "entry", Namespace: cliNamespace}, Spec: core.Spec{Text: "Use the policy.", Rules: []core.Ref{{Name: refName}}}}
-	resources := []*core.Resource{&project, &rule, &skill}
+	skill := authoring.Resource{Core: authoring.Core{APIVersion: core.APIVersion, Kind: "Skill", Metadata: core.Metadata{Name: "entry", Namespace: cliNamespace}}, Spec: authoring.Spec{Text: "Use the policy.", Rules: []core.Ref{{Name: refName}}}}
+	resources := []*authoring.Resource{&project, &rule, &skill}
 	names := []string{"markitect.yaml", "docs/general/rules/policy.yaml", "docs/general/skills/entry.yaml"}
 	files := make(map[string][]byte, 5)
 	for i, resource := range resources {
 		resource.Path = names[i]
-		data, err := format.Encode(resource)
+		data, err := authoring.Encode(resource)
 		if err != nil {
 			t.Fatal(err)
 		}
 		files[names[i]] = data
 	}
-	graph := core.Build(resources)
+	graph := authoring.Build(resources)
 	if len(graph.Diagnostics) != 0 && !badReference {
 		t.Fatalf("CLI fixture graph has diagnostics: %#v", graph.Diagnostics)
 	}
-	outputs, err := render.Generate(graph, files)
+	outputs, err := host.GenerateOutputs(&host.Project{Graph: graph, Snapshot: &snapshot.Snapshot{Files: files}})
 	if err != nil {
 		t.Fatal(err)
 	}

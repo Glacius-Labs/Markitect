@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/internal/host"
-	"github.com/Glacius-Labs/Markitect/internal/render"
 	"github.com/Glacius-Labs/Markitect/internal/infrastructure/source"
 )
 
@@ -71,7 +70,7 @@ func TestMarkitectFirstProjectContextAndProjections(t *testing.T) {
 	if !bytes.Equal(first, second) {
 		t.Fatal("fixed model/context inputs produced different output")
 	}
-	_, owners, err := render.GenerateWithOwners(project.Graph, snap.Files)
+	_, owners, err := host.GenerateOutputsWithOwners(project)
 	if err != nil {
 		t.Fatal(err)
 	}

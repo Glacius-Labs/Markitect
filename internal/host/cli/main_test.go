@@ -9,8 +9,8 @@ import (
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/internal/core"
-	"github.com/Glacius-Labs/Markitect/internal/format"
 	"github.com/Glacius-Labs/Markitect/internal/host"
+	"github.com/Glacius-Labs/Markitect/internal/host/authoring"
 )
 
 func TestRunInvalidArgumentsAndUnknownFlagsReturnTwo(t *testing.T) {
@@ -117,8 +117,8 @@ func TestImpactRenderInventoryAndVersionCommands(t *testing.T) {
 		t.Fatalf("unexpected render report: %#v", result)
 	}
 
-	rule := core.Resource{APIVersion: core.APIVersion, Kind: "Rule", Metadata: core.Metadata{Name: "policy", Namespace: cliNamespace}, Spec: core.Spec{Text: "Changed policy."}}
-	data, err := format.Encode(rule)
+	rule := authoring.Resource{Core: authoring.Core{APIVersion: core.APIVersion, Kind: "Rule", Metadata: core.Metadata{Name: "policy", Namespace: cliNamespace}}, Spec: authoring.Spec{Text: "Changed policy."}}
+	data, err := authoring.Encode(rule)
 	if err != nil {
 		t.Fatal(err)
 	}

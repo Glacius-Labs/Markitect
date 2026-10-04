@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/Glacius-Labs/Markitect/internal/core"
-	"github.com/Glacius-Labs/Markitect/internal/format"
+	"github.com/Glacius-Labs/Markitect/internal/host/authoring"
 )
 
 type Context struct {
@@ -25,20 +25,20 @@ type Context struct {
 	Analysis       *AnalysisEvidence   `yaml:"analysis,omitempty"`
 }
 type ContextInput struct {
-	Key              string            `yaml:"key"`
-	Path             string            `yaml:"path"`
-	Package          string            `yaml:"package,omitempty"`
-	PackageVersion   string            `yaml:"packageVersion,omitempty"`
-	Hash             string            `yaml:"hash"`
-	Reason           string            `yaml:"reason"`
-	Via              []ContextRelation `yaml:"via,omitempty"`
-	DomainAPIVersion string            `yaml:"domainApiVersion,omitempty"`
-	DomainName       string            `yaml:"domainName,omitempty"`
-	Resource         *core.Resource    `yaml:"resource,omitempty"`
-	Text             string            `yaml:"text,omitempty"`
-	Role             string            `yaml:"role,omitempty"`
-	Status           string            `yaml:"status,omitempty"`
-	Required         bool              `yaml:"required,omitempty"`
+	Key              string              `yaml:"key"`
+	Path             string              `yaml:"path"`
+	Package          string              `yaml:"package,omitempty"`
+	PackageVersion   string              `yaml:"packageVersion,omitempty"`
+	Hash             string              `yaml:"hash"`
+	Reason           string              `yaml:"reason"`
+	Via              []ContextRelation   `yaml:"via,omitempty"`
+	DomainAPIVersion string              `yaml:"domainApiVersion,omitempty"`
+	DomainName       string              `yaml:"domainName,omitempty"`
+	Resource         *authoring.Resource `yaml:"resource,omitempty"`
+	Text             string              `yaml:"text,omitempty"`
+	Role             string              `yaml:"role,omitempty"`
+	Status           string              `yaml:"status,omitempty"`
+	Required         bool                `yaml:"required,omitempty"`
 }
 
 // ContextRelation explains one declared graph relationship through which a
@@ -210,7 +210,7 @@ func compileContext(p *Project, key, version string, allowPolicyFailures bool, t
 	// Show the policy outcomes for this closure, including any explicitly
 	// recorded exception. Collection assertions describe the selected domain
 	// scope and remain visible independently of one subject's closure.
-	for _, result := range p.Graph.PolicyResults {
+	for _, result := range p.Graph.Core.PolicyResults {
 		if _, included := reasons[result.Subject]; included || result.Subject == "" {
 			c.PolicyResults = append(c.PolicyResults, result)
 		}
@@ -258,4 +258,4 @@ func contextRelationLess(a, b ContextRelation) bool {
 	return a.Line < b.Line
 }
 
-func YAML(value any) ([]byte, error) { return format.Encode(value) }
+func YAML(value any) ([]byte, error) { return authoring.Encode(value) }

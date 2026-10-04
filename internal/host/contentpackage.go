@@ -6,7 +6,7 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/internal/core"
 	"github.com/Glacius-Labs/Markitect/internal/core/snapshot"
-	"github.com/Glacius-Labs/Markitect/internal/format"
+	"github.com/Glacius-Labs/Markitect/internal/host/authoring"
 	"github.com/Glacius-Labs/Markitect/internal/host/authoring/contentpackage"
 )
 
@@ -14,15 +14,15 @@ import (
 // The returned pin is a suggestion: consumers choose the vendored archive path
 // and distribution provenance after obtaining the exact bytes from their owner.
 // The caller supplies provenance; the compiler does not infer a source system.
-func PackContent(s *snapshot.Snapshot, provenance string) ([]byte, core.PackagePin, error) {
-	var pin core.PackagePin
+func PackContent(s *snapshot.Snapshot, provenance string) ([]byte, authoring.PackagePin, error) {
+	var pin authoring.PackagePin
 	if s == nil || s.Provisional || !validSnapshotID(s.ID) {
 		return nil, pin, fmt.Errorf("pack requires a fixed identified snapshot")
 	}
 	if !validSnapshotID(provenance) {
 		return nil, pin, fmt.Errorf("package provenance is required")
 	}
-	manifest, err := format.Parse("markitect-package.yaml", s.Files["markitect-package.yaml"])
+	manifest, err := authoring.Parse("markitect-package.yaml", s.Files["markitect-package.yaml"])
 	if err != nil {
 		return nil, pin, err
 	}
@@ -33,14 +33,14 @@ func PackContent(s *snapshot.Snapshot, provenance string) ([]byte, core.PackageP
 	if err != nil {
 		return nil, pin, err
 	}
-	pin = core.PackagePin{
+	pin = authoring.PackagePin{
 		Name: manifest.Metadata.Name, Version: manifest.Spec.Version,
 		Source:  provenance,
 		Archive: ".markitect/packages/" + manifest.Metadata.Name + "-" + manifest.Spec.Version + ".zip",
 		SHA256:  strings.TrimPrefix(Hash(archive), "sha256:"),
 	}
-	project := core.Resource{APIVersion: core.APIVersion, Kind: "Project", Metadata: core.Metadata{Name: "package-validation"}, Spec: core.Spec{Packages: []core.PackagePin{pin}}}
-	config, err := format.Encode(project)
+	project := authoring.Resource{Core: authoring.Core{APIVersion: core.APIVersion, Kind: "Project", Metadata: core.Metadata{Name: "package-validation"}}, Spec: authoring.Spec{Packages: []authoring.PackagePin{pin}}}
+	config, err := authoring.Encode(project)
 	if err != nil {
 		return nil, pin, err
 	}

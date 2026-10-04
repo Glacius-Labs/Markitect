@@ -3,6 +3,7 @@ package host
 import (
 	"errors"
 	"fmt"
+	"github.com/Glacius-Labs/Markitect/internal/host/authoring"
 	"sort"
 	"strings"
 
@@ -36,7 +37,7 @@ type ExplainResult struct {
 	PackageVersion          string              `yaml:"packageVersion,omitempty"`
 	Path                    string              `yaml:"path"`
 	Description             string              `yaml:"description,omitempty"`
-	Area                    *core.Area          `yaml:"area,omitempty"`
+	Area                    *authoring.Area     `yaml:"area,omitempty"`
 	Outgoing                []core.Relationship `yaml:"outgoing"`
 	Incoming                []core.Relationship `yaml:"incoming"`
 	DeclaredImplementations []ResourceSummary   `yaml:"declaredImplementations,omitempty"`
@@ -182,7 +183,7 @@ func queryableProject(p *Project) error {
 	return nil
 }
 
-func (p *Project) summarize(resource *core.Resource) ResourceSummary {
+func (p *Project) summarize(resource *authoring.Resource) ResourceSummary {
 	return ResourceSummary{
 		Key: resource.GraphKey(), Kind: resource.Kind, Name: resource.Metadata.Name,
 		Namespace: resource.Metadata.Namespace, Path: resource.Path,
@@ -192,14 +193,14 @@ func (p *Project) summarize(resource *core.Resource) ResourceSummary {
 	}
 }
 
-func extensionAPI(resource *core.Resource) string {
+func extensionAPI(resource *authoring.Resource) string {
 	if resource.APIVersion == core.APIVersion {
 		return ""
 	}
 	return resource.APIVersion
 }
 
-func resourceDescription(resource *core.Resource) string {
+func resourceDescription(resource *authoring.Resource) string {
 	if value, ok := resource.Data["description"].(string); ok {
 		return value
 	}

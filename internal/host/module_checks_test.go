@@ -11,7 +11,7 @@ import (
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/internal/core"
-	"github.com/Glacius-Labs/Markitect/internal/format"
+	"github.com/Glacius-Labs/Markitect/internal/host/authoring"
 	"github.com/Glacius-Labs/Markitect/internal/infrastructure/source"
 	"github.com/Glacius-Labs/Markitect/internal/modules/githooks"
 	"github.com/Glacius-Labs/Markitect/internal/modules/pipelines"
@@ -167,20 +167,20 @@ func newModuleChecksFixture(t *testing.T, options moduleChecksFixtureOptions) mo
 	if !options.omitHookInput {
 		files = append(files, hookPath)
 	}
-	project := core.Resource{APIVersion: core.APIVersion, Kind: "Project", Metadata: core.Metadata{Name: "sample"}, Spec: core.Spec{
-		Areas: []core.Area{
+	project := authoring.Resource{Core: authoring.Core{APIVersion: core.APIVersion, Kind: "Project", Metadata: core.Metadata{Name: "sample"}}, Spec: authoring.Spec{
+		Areas: []authoring.Area{
 			{Name: "docs", Path: "docs", Imports: []string{"hooks", "workflows"}},
 			{Name: "hooks", Path: ".githooks"},
 			{Name: "workflows", Path: ".github"},
 		},
-		Checks: []core.Check{{Name: "go-tests", Run: []string{"go", "test", "./..."}}},
+		Checks: []authoring.Check{{Name: "go-tests", Run: []string{"go", "test", "./..."}}},
 	}}
-	rule := core.Resource{APIVersion: core.APIVersion, Kind: "Rule", Metadata: core.Metadata{Name: "repository-checks", Namespace: "docs"}, Spec: core.Spec{Text: "Keep repository checks explicit.", Files: files}}
-	projectBytes, err := format.Encode(&project)
+	rule := authoring.Resource{Core: authoring.Core{APIVersion: core.APIVersion, Kind: "Rule", Metadata: core.Metadata{Name: "repository-checks", Namespace: "docs"}}, Spec: authoring.Spec{Text: "Keep repository checks explicit.", Files: files}}
+	projectBytes, err := authoring.Encode(&project)
 	if err != nil {
 		t.Fatal(err)
 	}
-	ruleBytes, err := format.Encode(&rule)
+	ruleBytes, err := authoring.Encode(&rule)
 	if err != nil {
 		t.Fatal(err)
 	}

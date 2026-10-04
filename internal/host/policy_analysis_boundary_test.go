@@ -154,12 +154,12 @@ type policyFinding struct {
 
 func policyFindingFor(t *testing.T, p *Project, name string) policyFinding {
 	t.Helper()
-	for _, result := range p.Graph.PolicyResults {
+	for _, result := range p.Graph.Core.PolicyResults {
 		if result.Status == "failed" && strings.HasSuffix(result.Subject, "/Module/"+name) {
 			return policyFinding{api: result.APIVersion, constraint: result.Constraint, subject: result.Subject, constraintDigest: result.ConstraintDigest, subjectDigest: result.SubjectDigest}
 		}
 	}
-	t.Fatalf("missing failed policy for Module %s: %+v", name, p.Graph.PolicyResults)
+	t.Fatalf("missing failed policy for Module %s: %+v", name, p.Graph.Core.PolicyResults)
 	return policyFinding{}
 }
 

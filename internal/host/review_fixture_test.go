@@ -1,28 +1,28 @@
 package host
 
 import (
+	"github.com/Glacius-Labs/Markitect/internal/host/authoring"
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/internal/core"
 	"github.com/Glacius-Labs/Markitect/internal/core/snapshot"
-	"github.com/Glacius-Labs/Markitect/internal/render"
 )
 
-func reviewResources(withRule, omitUnrelated, configureCodex bool) []*core.Resource {
-	policy := &core.Resource{APIVersion: core.APIVersion, Kind: "Project", Metadata: core.Metadata{Name: "review-test"}, Path: projectPath}
-	policy.Spec.Areas = []core.Area{{Name: "general", Path: "docs/general"}}
+func reviewResources(withRule, omitUnrelated, configureCodex bool) []*authoring.Resource {
+	policy := &authoring.Resource{Core: authoring.Core{APIVersion: core.APIVersion, Kind: "Project", Metadata: core.Metadata{Name: "review-test"}, Path: projectPath}}
+	policy.Spec.Areas = []authoring.Area{{Name: "general", Path: "docs/general"}}
 	if withRule {
 		policy.Spec.Areas[0].Rules = []core.Ref{{Name: "shared"}}
 	}
 	if configureCodex {
 		policy.Spec.Targets = []string{"codex"}
 	}
-	entry := &core.Resource{APIVersion: core.APIVersion, Kind: "Workflow", Metadata: core.Metadata{Name: "review", Namespace: "general"}, Path: "docs/general/workflows/review.yaml", Spec: core.Spec{Text: "Review the change.", Uses: []core.Ref{{Kind: "Text", Name: "guide"}}}}
-	guide := &core.Resource{APIVersion: core.APIVersion, Kind: "Text", Metadata: core.Metadata{Name: "guide", Namespace: "general"}, Path: "docs/general/text/guide.yaml", Spec: core.Spec{Text: "Stable guide."}}
-	unrelated := &core.Resource{APIVersion: core.APIVersion, Kind: "Text", Metadata: core.Metadata{Name: "unrelated", Namespace: "general"}, Path: "docs/general/text/unrelated.yaml", Spec: core.Spec{Text: "Unrelated reference."}}
-	resources := []*core.Resource{policy, guide, entry}
+	entry := &authoring.Resource{Core: authoring.Core{APIVersion: core.APIVersion, Kind: "Workflow", Metadata: core.Metadata{Name: "review", Namespace: "general"}, Path: "docs/general/workflows/review.yaml"}, Spec: authoring.Spec{Text: "Review the change.", Uses: []core.Ref{{Kind: "Text", Name: "guide"}}}}
+	guide := &authoring.Resource{Core: authoring.Core{APIVersion: core.APIVersion, Kind: "Text", Metadata: core.Metadata{Name: "guide", Namespace: "general"}, Path: "docs/general/text/guide.yaml"}, Spec: authoring.Spec{Text: "Stable guide."}}
+	unrelated := &authoring.Resource{Core: authoring.Core{APIVersion: core.APIVersion, Kind: "Text", Metadata: core.Metadata{Name: "unrelated", Namespace: "general"}, Path: "docs/general/text/unrelated.yaml"}, Spec: authoring.Spec{Text: "Unrelated reference."}}
+	resources := []*authoring.Resource{policy, guide, entry}
 	if withRule {
-		rule := &core.Resource{APIVersion: core.APIVersion, Kind: "Rule", Metadata: core.Metadata{Name: "shared", Namespace: "general"}, Path: "docs/general/rules/shared.yaml", Spec: core.Spec{Text: "Shared requirement."}}
+		rule := &authoring.Resource{Core: authoring.Core{APIVersion: core.APIVersion, Kind: "Rule", Metadata: core.Metadata{Name: "shared", Namespace: "general"}, Path: "docs/general/rules/shared.yaml"}, Spec: authoring.Spec{Text: "Shared requirement."}}
 		resources = append(resources, rule)
 	}
 	if !omitUnrelated {
@@ -31,7 +31,7 @@ func reviewResources(withRule, omitUnrelated, configureCodex bool) []*core.Resou
 	return resources
 }
 
-func reviewFixture(t *testing.T, revision string, provisional bool, resources []*core.Resource, extra map[string]string) *Project {
+func reviewFixture(t *testing.T, revision string, provisional bool, resources []*authoring.Resource, extra map[string]string) *Project {
 	t.Helper()
 	snapshot := &snapshot.Snapshot{ID: revision, Provisional: provisional, Files: map[string][]byte{}, Modes: map[string]string{}}
 	for _, resource := range resources {
@@ -49,7 +49,7 @@ func reviewFixture(t *testing.T, revision string, provisional bool, resources []
 	if len(parsed.Diagnostics) != 0 {
 		t.Fatalf("review fixture has diagnostics: %#v", parsed.Diagnostics)
 	}
-	outputs, err := render.Generate(parsed.Graph, parsed.Snapshot.Files)
+	outputs, err := GenerateOutputs(parsed)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -78,7 +78,7 @@ func mustRecordReview(t *testing.T, p *Project, config ReviewConfig) *ReviewReco
 
 func renderOutputs(t *testing.T, p *Project) map[string][]byte {
 	t.Helper()
-	outputs, err := render.Generate(p.Graph, p.Snapshot.Files)
+	outputs, err := GenerateOutputs(p)
 	if err != nil {
 		t.Fatal(err)
 	}

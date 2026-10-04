@@ -3,12 +3,13 @@ package examples
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"github.com/Glacius-Labs/Markitect/internal/host/authoring"
 	"reflect"
 	"strings"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/internal/host"
 	"github.com/Glacius-Labs/Markitect/internal/core"
+	"github.com/Glacius-Labs/Markitect/internal/host"
 )
 
 func newSoftwareArchitectureV11(t *testing.T) (string, *host.Project) {
@@ -27,7 +28,7 @@ func TestSoftwareArchitectureSameTargetFeatureOwnership(t *testing.T) {
 	t.Run("selected equal paths pass", func(t *testing.T) {
 		_, project := newSoftwareArchitectureV11(t)
 		for _, key := range []string{createOrderKey, issueInvoiceKey} {
-			result, ok := softwareResult(project.Graph.PolicyResults, featureOwnershipRule, key)
+			result, ok := softwareResult(project.Graph.Core.PolicyResults, featureOwnershipRule, key)
 			if !ok || result.Status != core.PolicyPassed || result.Comparison == nil {
 				t.Fatalf("selected feature ownership should compare two resolved paths for %s: %#v", key, result)
 			}
@@ -57,7 +58,7 @@ func TestSoftwareArchitectureSameTargetFeatureOwnership(t *testing.T) {
 
 	t.Run("selected missing Feature is structural and non-waivable", func(t *testing.T) {
 		root, project := newSoftwareArchitectureV11(t)
-		baseline, ok := softwareResult(project.Graph.PolicyResults, featureOwnershipRule, createOrderKey)
+		baseline, ok := softwareResult(project.Graph.Core.PolicyResults, featureOwnershipRule, createOrderKey)
 		if !ok || baseline.Status != core.PolicyPassed {
 			t.Fatalf("expected a valid baseline comparison before the structural mutation: %#v", baseline)
 		}
@@ -73,7 +74,7 @@ func TestSoftwareArchitectureSameTargetFeatureOwnership(t *testing.T) {
 		if !hasSoftwareDiagnostic(changed, "constraint.path") || !hasSoftwareDiagnostic(changed, "policy.exception.not-waivable") {
 			t.Fatalf("missing selected Feature must be a non-waivable structural path error: %#v", changed.Diagnostics)
 		}
-		if _, ok := softwareResult(changed.Graph.PolicyResults, featureOwnershipRule, createOrderKey); ok {
+		if _, ok := softwareResult(changed.Graph.Core.PolicyResults, featureOwnershipRule, createOrderKey); ok {
 			t.Fatal("invalid same-target path incorrectly produced a PolicyResult")
 		}
 	})
@@ -85,7 +86,7 @@ func TestSoftwareArchitectureSameTargetFeatureOwnership(t *testing.T) {
 		if len(changed.Diagnostics) != 0 {
 			t.Fatalf("feature remains optional outside the explicit cohort: %#v", changed.Diagnostics)
 		}
-		if _, ok := softwareResult(changed.Graph.PolicyResults, featureOwnershipRule, getOrderKey); ok {
+		if _, ok := softwareResult(changed.Graph.Core.PolicyResults, featureOwnershipRule, getOrderKey); ok {
 			t.Fatal("unselected featureless UseCase unexpectedly received an equality result")
 		}
 
@@ -96,7 +97,7 @@ func TestSoftwareArchitectureSameTargetFeatureOwnership(t *testing.T) {
 		if len(mismatched.Diagnostics) != 0 {
 			t.Fatalf("unlabeled owner mismatch must remain explicitly outside policy coverage: %#v", mismatched.Diagnostics)
 		}
-		if _, ok := softwareResult(mismatched.Graph.PolicyResults, featureOwnershipRule, getOrderKey); ok {
+		if _, ok := softwareResult(mismatched.Graph.Core.PolicyResults, featureOwnershipRule, getOrderKey); ok {
 			t.Fatal("unselected mismatched UseCase unexpectedly received an equality result")
 		}
 	})
@@ -107,7 +108,7 @@ func TestSoftwareArchitectureSameTargetFeatureOwnership(t *testing.T) {
 			data["feature"] = map[string]any{"kind": "Feature", "name": "invoicing", "namespace": "engineering"}
 		})
 		failed := loadSoftwareArchitecture(t, root, "")
-		result, ok := softwareResult(failed.Graph.PolicyResults, featureOwnershipRule, createOrderKey)
+		result, ok := softwareResult(failed.Graph.Core.PolicyResults, featureOwnershipRule, createOrderKey)
 		if !ok || result.Status != core.PolicyFailed {
 			t.Fatalf("owner mismatch should be a policy failure eligible for an exact exception: %#v", result)
 		}
@@ -120,7 +121,7 @@ func TestSoftwareArchitectureSameTargetFeatureOwnership(t *testing.T) {
 		}
 		updateSoftwareProject(t, root, failed, "2026-10-02", []core.PolicyException{exception})
 		waived := loadSoftwareArchitecture(t, root, "")
-		waivedResult, ok := softwareResult(waived.Graph.PolicyResults, featureOwnershipRule, createOrderKey)
+		waivedResult, ok := softwareResult(waived.Graph.Core.PolicyResults, featureOwnershipRule, createOrderKey)
 		if !ok || waivedResult.Status != core.PolicyWaived || waivedResult.ExceptionName != exception.Name {
 			t.Fatalf("exact policy exception should remain visible as waived: %#v", waivedResult)
 		}
@@ -132,7 +133,7 @@ func TestSoftwareArchitectureSameTargetFeatureOwnership(t *testing.T) {
 		if !hasSoftwareDiagnostic(stale, "policy.exception.stale") {
 			t.Fatalf("changed selected subject should stale its exact waiver: %#v", stale.Diagnostics)
 		}
-		staleResult, ok := softwareResult(stale.Graph.PolicyResults, featureOwnershipRule, createOrderKey)
+		staleResult, ok := softwareResult(stale.Graph.Core.PolicyResults, featureOwnershipRule, createOrderKey)
 		if !ok || staleResult.Status != core.PolicyFailed {
 			t.Fatalf("stale exception must leave the ownership finding failed: %#v", staleResult)
 		}
@@ -145,7 +146,7 @@ func TestSoftwareArchitectureSameTargetFeatureOwnership(t *testing.T) {
 		if len(repaired.Diagnostics) != 0 {
 			t.Fatalf("corrected ownership and removed exception should leave a clean project: %#v", repaired.Diagnostics)
 		}
-		repairedResult, ok := softwareResult(repaired.Graph.PolicyResults, featureOwnershipRule, createOrderKey)
+		repairedResult, ok := softwareResult(repaired.Graph.Core.PolicyResults, featureOwnershipRule, createOrderKey)
 		if !ok || repairedResult.Status != core.PolicyPassed {
 			t.Fatalf("repaired selected paths should pass without a waiver: %#v", repairedResult)
 		}
@@ -162,7 +163,7 @@ func TestSoftwareArchitectureV11ToV21VersionedPolicyLifecycle(t *testing.T) {
 		t.Fatalf("frozen v1.1 baseline is not clean/exact: %#v %#v", v11.Snapshot, v11.Diagnostics)
 	}
 	for _, key := range []string{createOrderKey, issueInvoiceKey} {
-		if result, ok := softwareResult(v11.Graph.PolicyResults, featureOwnershipRule, key); !ok || result.Status != core.PolicyPassed {
+		if result, ok := softwareResult(v11.Graph.Core.PolicyResults, featureOwnershipRule, key); !ok || result.Status != core.PolicyPassed {
 			t.Fatalf("v1.1 should enforce aligned Feature ownership for %s: %#v", key, result)
 		}
 	}
@@ -183,10 +184,10 @@ func TestSoftwareArchitectureV11ToV21VersionedPolicyLifecycle(t *testing.T) {
 		t.Fatal("v2.1 should retain v1.1 schema/relations and append only the Validator policy")
 	}
 	for _, key := range []string{createOrderKey, issueInvoiceKey} {
-		if result, ok := softwareResult(v21.Graph.PolicyResults, featureOwnershipRule, key); !ok || result.Status != core.PolicyPassed {
+		if result, ok := softwareResult(v21.Graph.Core.PolicyResults, featureOwnershipRule, key); !ok || result.Status != core.PolicyPassed {
 			t.Errorf("v2.1 should retain same-target passes for %s: %#v", key, result)
 		}
-		if result, ok := softwareResult(v21.Graph.PolicyResults, commandValidatorRule, key); !ok || result.Status != core.PolicyFailed {
+		if result, ok := softwareResult(v21.Graph.Core.PolicyResults, commandValidatorRule, key); !ok || result.Status != core.PolicyFailed {
 			t.Errorf("v2.1 should add the Validator lifecycle failure for %s: %#v", key, result)
 		}
 	}
@@ -199,7 +200,7 @@ func TestSoftwareArchitectureV11ToV21VersionedPolicyLifecycle(t *testing.T) {
 		mutateSoftwareResource(t, root, v21, key, func(data map[string]any) {
 			data["validators"] = []any{map[string]any{"kind": "Validator", "name": validatorName, "namespace": "engineering"}}
 		})
-		writeSoftwareResource(t, root, core.Resource{APIVersion: softwareArchitectureAPI, Kind: "Validator", Metadata: core.Metadata{Name: validatorName, Namespace: "engineering"}, Data: map[string]any{"summary": "Validates the selected command input."}})
+		writeSoftwareResource(t, root, authoring.Resource{Core: authoring.Core{APIVersion: softwareArchitectureAPI, Kind: "Validator", Metadata: core.Metadata{Name: validatorName, Namespace: "engineering"}, Data: map[string]any{"summary": "Validates the selected command input."}}})
 	}
 	rev3 := commitSoftwareArchitecture(t, root, "Complete v2.1 validator policy")
 	passed := loadSoftwareArchitecture(t, root, rev3)
@@ -207,10 +208,10 @@ func TestSoftwareArchitectureV11ToV21VersionedPolicyLifecycle(t *testing.T) {
 		t.Fatalf("implemented Validators should complete the v2.1 lifecycle cleanly: %#v", passed.Diagnostics)
 	}
 	for _, key := range []string{createOrderKey, issueInvoiceKey} {
-		if result, ok := softwareResult(passed.Graph.PolicyResults, featureOwnershipRule, key); !ok || result.Status != core.PolicyPassed {
+		if result, ok := softwareResult(passed.Graph.Core.PolicyResults, featureOwnershipRule, key); !ok || result.Status != core.PolicyPassed {
 			t.Errorf("completed v2.1 lifecycle lost the equality pass for %s: %#v", key, result)
 		}
-		if result, ok := softwareResult(passed.Graph.PolicyResults, commandValidatorRule, key); !ok || result.Status != core.PolicyPassed {
+		if result, ok := softwareResult(passed.Graph.Core.PolicyResults, commandValidatorRule, key); !ok || result.Status != core.PolicyPassed {
 			t.Errorf("completed v2.1 lifecycle did not pass Validator rule for %s: %#v", key, result)
 		}
 	}
@@ -221,7 +222,7 @@ func assertSoftwareOwnershipFailure(t *testing.T, project *host.Project, subject
 	if !hasSoftwareDiagnostic(project, "constraint."+featureOwnershipRule) {
 		t.Fatalf("selected owner mismatch did not produce its policy diagnostic: %#v", project.Diagnostics)
 	}
-	result, ok := softwareResult(project.Graph.PolicyResults, featureOwnershipRule, subject)
+	result, ok := softwareResult(project.Graph.Core.PolicyResults, featureOwnershipRule, subject)
 	if !ok || result.Status != core.PolicyFailed || result.Comparison == nil || result.Comparison.Left.Target == result.Comparison.Right.Target {
 		t.Fatalf("mismatched path targets did not produce a failed comparison: %#v", result)
 	}

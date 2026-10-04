@@ -3,6 +3,7 @@ package host
 import (
 	"errors"
 	"fmt"
+	"github.com/Glacius-Labs/Markitect/internal/core"
 	"os"
 	"path/filepath"
 	"sort"
@@ -11,7 +12,6 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/core/snapshot"
 	"github.com/Glacius-Labs/Markitect/internal/infrastructure/source"
 	"github.com/Glacius-Labs/Markitect/internal/modules/artifactcoverage"
-	"github.com/Glacius-Labs/Markitect/internal/render"
 )
 
 // CheckArtifacts composes artifact ownership from one working-tree snapshot,
@@ -48,7 +48,7 @@ func CheckArtifacts(root, configPath string) (artifactcoverage.Report, error) {
 		return artifactcoverage.Report{}, fmt.Errorf("compile normalized project model: %w", err)
 	}
 
-	_, generatedOwners, renderErr := render.GenerateWithOwners(project.Graph, snap.Files)
+	_, generatedOwners, renderErr := GenerateOutputsWithOwners(project)
 
 	inventory := artifactcoverage.Inventory{
 		SnapshotDigest:  snap.Digest(),
@@ -96,7 +96,7 @@ func validateArtifactCoverageSourcePaths(config artifactcoverage.Config, configP
 	return nil
 }
 
-func canonicalArtifactOwners(project *Project, model SemanticModel) []artifactcoverage.OwnerFact {
+func canonicalArtifactOwners(project *Project, model core.SemanticModel) []artifactcoverage.OwnerFact {
 	owners := make([]artifactcoverage.OwnerFact, 0, len(model.Resources)+len(model.DomainInputs)+1)
 	if project != nil && project.Graph != nil && project.Graph.Project != nil {
 		owners = append(owners, artifactcoverage.OwnerFact{Path: project.Graph.Project.Path, Owner: project.Graph.Project.GraphKey()})

@@ -3,13 +3,13 @@ package host
 import (
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/internal/format"
+	"github.com/Glacius-Labs/Markitect/internal/host/authoring"
 )
 
 func projectWithDeclaredFiles(t *testing.T, files []string, extra map[string][]byte) *Project {
 	t.Helper()
 	snapshot := fixtureFiles(t, "", "Policy text.", projectNS)
-	skill, err := format.Parse(skillPath, snapshot.Files[skillPath])
+	skill, err := authoring.Parse(skillPath, snapshot.Files[skillPath])
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/Glacius-Labs/Markitect/internal/core"
-	"github.com/Glacius-Labs/Markitect/internal/format"
+	"github.com/Glacius-Labs/Markitect/internal/host/authoring"
 	"github.com/Glacius-Labs/Markitect/internal/host/authoring/contentpackage"
 )
 
@@ -20,7 +20,7 @@ type DomainInput struct {
 	Package    string `yaml:"package,omitempty"`
 }
 
-func (p *Project) loadPackageInputs(config *core.Resource) error {
+func (p *Project) loadPackageInputs(config *authoring.Resource) error {
 	var byteCount int64
 	var fileCount int
 	names := map[string]bool{}
@@ -54,8 +54,8 @@ func (p *Project) loadPackageInputs(config *core.Resource) error {
 	return nil
 }
 
-func (p *Project) loadDomainInputs(config *core.Resource) (*core.Registry, error) {
-	registry := core.NewRegistry()
+func (p *Project) loadDomainInputs(config *authoring.Resource) (*core.Registry, error) {
+	registry := authoring.NewRegistry()
 	if len(config.Spec.Domains) > 64 {
 		return nil, fmt.Errorf("project exceeds the 64 domain definition limit")
 	}
@@ -99,7 +99,7 @@ func (p *Project) loadDomainInputs(config *core.Resource) (*core.Registry, error
 		if selectedBytes > 16<<20 {
 			return nil, fmt.Errorf("selected domain definitions exceed the 16 MiB limit")
 		}
-		definition, err := format.ParseDomain(input.Path, data)
+		definition, err := authoring.ParseDomain(input.Path, data)
 		if err != nil {
 			return nil, fmt.Errorf("domain %q: %w", selected, err)
 		}

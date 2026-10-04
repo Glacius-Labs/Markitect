@@ -13,19 +13,17 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/internal/core"
 	"github.com/Glacius-Labs/Markitect/internal/core/snapshot"
-	"github.com/Glacius-Labs/Markitect/internal/format"
+	"github.com/Glacius-Labs/Markitect/internal/host/authoring"
 	"github.com/Glacius-Labs/Markitect/internal/infrastructure/source"
 )
 
 func buildInitPlan(root string, options InitOptions) (*initState, error) {
-	area := core.Area{Name: options.Namespace, Path: options.Path}
-	resource := core.Resource{
-		APIVersion: core.APIVersion,
-		Kind:       "Project",
-		Metadata:   core.Metadata{Name: options.Name},
-		Spec:       core.Spec{Areas: []core.Area{area}},
+	area := authoring.Area{Name: options.Namespace, Path: options.Path}
+	resource := authoring.Resource{Core: authoring.Core{APIVersion: core.APIVersion,
+		Kind:     "Project",
+		Metadata: core.Metadata{Name: options.Name}}, Spec: authoring.Spec{Areas: []authoring.Area{area}},
 	}
-	projectYAML, err := format.Encode(resource)
+	projectYAML, err := authoring.Encode(resource)
 	if err != nil {
 		return nil, fmt.Errorf("encode Project: %w", err)
 	}

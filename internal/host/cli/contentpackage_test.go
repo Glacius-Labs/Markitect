@@ -2,15 +2,14 @@ package cli
 
 import (
 	"bytes"
+	"github.com/Glacius-Labs/Markitect/internal/host/authoring"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/internal/core"
 	"github.com/Glacius-Labs/Markitect/internal/host"
-	"github.com/Glacius-Labs/Markitect/internal/render"
 )
 
 func TestPackUsesFixedGitRevisionAndRefusesOverwrite(t *testing.T) {
@@ -22,10 +21,10 @@ func TestPackUsesFixedGitRevisionAndRefusesOverwrite(t *testing.T) {
 		t.Fatalf("pack exit=%d stderr=%s output=%s", code, stderr, output)
 	}
 	result := decodeYAML[struct {
-		Status       string          `yaml:"status"`
-		SourceCommit string          `yaml:"sourceCommit"`
-		Output       string          `yaml:"output"`
-		Pin          core.PackagePin `yaml:"pin"`
+		Status       string               `yaml:"status"`
+		SourceCommit string               `yaml:"sourceCommit"`
+		Output       string               `yaml:"output"`
+		Pin          authoring.PackagePin `yaml:"pin"`
 	}](t, output)
 	if result.Status != "packed" || result.SourceCommit != repo.base || result.Output != archivePath {
 		t.Fatalf("pack did not identify the fixed commit and output: %#v", result)
@@ -107,7 +106,7 @@ func TestPackageConsumerCLIContextAndArchiveIntegrity(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	outputs, err := render.Generate(project.Graph, project.Snapshot.Files)
+	outputs, err := host.GenerateOutputs(project)
 	if err != nil {
 		t.Fatal(err)
 	}

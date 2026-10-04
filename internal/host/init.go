@@ -3,10 +3,10 @@ package host
 import (
 	"errors"
 	"fmt"
+	"github.com/Glacius-Labs/Markitect/internal/host/authoring"
 	"os"
 	"path/filepath"
 
-	"github.com/Glacius-Labs/Markitect/internal/core"
 	"github.com/Glacius-Labs/Markitect/internal/core/snapshot"
 	"github.com/Glacius-Labs/Markitect/internal/infrastructure/source"
 )
@@ -29,14 +29,14 @@ type InitFile struct {
 // The writes are exclusive per-file creates and are not a filesystem
 // transaction; Recovery identifies files and directories left by a partial write.
 type InitPlan struct {
-	Kind               string     `yaml:"kind"`
-	Project            string     `yaml:"project"`
-	Area               core.Area  `yaml:"area"`
-	Files              []InitFile `yaml:"files"`
-	Applied            bool       `yaml:"applied"`
-	Written            []string   `yaml:"written,omitempty"`
-	CreatedDirectories []string   `yaml:"createdDirectories,omitempty"`
-	Recovery           string     `yaml:"recovery,omitempty"`
+	Kind               string         `yaml:"kind"`
+	Project            string         `yaml:"project"`
+	Area               authoring.Area `yaml:"area"`
+	Files              []InitFile     `yaml:"files"`
+	Applied            bool           `yaml:"applied"`
+	Written            []string       `yaml:"written,omitempty"`
+	CreatedDirectories []string       `yaml:"createdDirectories,omitempty"`
+	Recovery           string         `yaml:"recovery,omitempty"`
 }
 
 type initState struct {

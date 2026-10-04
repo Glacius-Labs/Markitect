@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/Glacius-Labs/Markitect/internal/core/snapshot"
-	"github.com/Glacius-Labs/Markitect/internal/format"
+	"github.com/Glacius-Labs/Markitect/internal/host/authoring"
 	"github.com/Glacius-Labs/Markitect/internal/infrastructure/source"
 )
 
@@ -23,7 +23,7 @@ func Format(root string, p *Project, write bool) ([]string, error) {
 		}
 		copy := *resource
 		copy.Spec.Text = strings.ReplaceAll(copy.Spec.Text, "\r\n", "\n")
-		data, err := format.Encode(copy)
+		data, err := authoring.Encode(copy)
 		if err != nil {
 			return nil, err
 		}
@@ -35,11 +35,11 @@ func Format(root string, p *Project, write bool) ([]string, error) {
 		if input.Package != "" {
 			continue
 		}
-		definition, err := format.ParseDomain(input.Path, p.Snapshot.Files[input.Path])
+		definition, err := authoring.ParseDomain(input.Path, p.Snapshot.Files[input.Path])
 		if err != nil {
 			return nil, err
 		}
-		data, err := format.EncodeDomain(definition)
+		data, err := authoring.EncodeDomain(definition)
 		if err != nil {
 			return nil, err
 		}

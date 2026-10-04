@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/Glacius-Labs/Markitect/internal/host/authoring"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -12,7 +13,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Glacius-Labs/Markitect/internal/core"
 	"github.com/Glacius-Labs/Markitect/internal/infrastructure/source"
 )
 
@@ -111,14 +111,14 @@ func verifyRepositoryWithTimeout(p *Project, timeout time.Duration) ([]GateResul
 	return results, nil
 }
 
-func planVerifyCommands(checks []core.Check) ([]verifyCommand, error) {
+func planVerifyCommands(checks []authoring.Check) ([]verifyCommand, error) {
 	if len(checks) == 0 {
 		return nil, &VerifyError{Kind: "incomplete-evidence", Err: errors.New("the Project declares no repository checks; graph-only validation is available, but it does not verify repository checks")}
 	}
 	commands := make([]verifyCommand, 0, len(checks))
 	names := make(map[string]bool, len(checks))
 	for _, check := range checks {
-		if err := core.ValidateCheck(check); err != nil {
+		if err := authoring.ValidateCheck(check); err != nil {
 			return nil, &VerifyError{Kind: "incomplete-evidence", Gate: check.Name, Err: fmt.Errorf("invalid declared repository check: %w", err)}
 		}
 		name := check.Name

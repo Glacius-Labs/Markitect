@@ -13,11 +13,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/internal/host"
-	"github.com/Glacius-Labs/Markitect/internal/host/authoring/contentpackage"
 	"github.com/Glacius-Labs/Markitect/internal/core"
-	"github.com/Glacius-Labs/Markitect/internal/format"
-	"github.com/Glacius-Labs/Markitect/internal/render"
+	"github.com/Glacius-Labs/Markitect/internal/host"
+	"github.com/Glacius-Labs/Markitect/internal/host/authoring"
+	"github.com/Glacius-Labs/Markitect/internal/host/authoring/contentpackage"
 )
 
 const (
@@ -166,7 +165,7 @@ func installSoftwareArchitecturePackage(t *testing.T, root string, files map[str
 	}
 	digest := sha256.Sum256(archive)
 	projectPath := filepath.Join(root, "markitect.yaml")
-	project, err := format.Parse(projectPath, mustReadSoftwareFile(t, projectPath))
+	project, err := authoring.Parse(projectPath, mustReadSoftwareFile(t, projectPath))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -179,7 +178,7 @@ func installSoftwareArchitecturePackage(t *testing.T, root string, files map[str
 	pin.Archive = ".markitect/packages/software-architecture-" + version + ".zip"
 	pin.SHA256 = hex.EncodeToString(digest[:])
 	project.Spec.Packages[0] = pin
-	encoded, err := format.Encode(*project)
+	encoded, err := authoring.Encode(*project)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -220,7 +219,7 @@ func mutateSoftwareResource(t *testing.T, root string, project *host.Project, ke
 	}
 	copy.Data = data
 	mutate(data)
-	encoded, err := format.Encode(copy)
+	encoded, err := authoring.Encode(copy)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -235,7 +234,7 @@ func updateSoftwareProject(t *testing.T, root string, project *host.Project, pol
 	copy := *project.Graph.Project
 	copy.Spec.PolicyDate = policyDate
 	copy.Spec.PolicyExceptions = exceptions
-	encoded, err := format.Encode(copy)
+	encoded, err := authoring.Encode(copy)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -283,17 +282,17 @@ func TestSoftwareArchitectureV1PackageDrivesConsumerContextAndPolicy(t *testing.
 	}
 
 	for _, key := range []string{createOrderKey, issueInvoiceKey} {
-		if result, ok := softwareResult(project.Graph.PolicyResults, "selected-command-labels-identify-commands", key); !ok || result.Status != core.PolicyPassed {
+		if result, ok := softwareResult(project.Graph.Core.PolicyResults, "selected-command-labels-identify-commands", key); !ok || result.Status != core.PolicyPassed {
 			t.Errorf("selected Command intent assertion missing or failed for %s: %#v", key, result)
 		}
-		if result, ok := softwareResult(project.Graph.PolicyResults, featureOwnershipRule, key); !ok || result.Status != core.PolicyPassed {
+		if result, ok := softwareResult(project.Graph.Core.PolicyResults, featureOwnershipRule, key); !ok || result.Status != core.PolicyPassed {
 			t.Errorf("selected Feature ownership assertion missing or failed for %s: %#v", key, result)
 		}
 	}
-	if _, ok := softwareResult(project.Graph.PolicyResults, featureOwnershipRule, getOrderKey); ok {
+	if _, ok := softwareResult(project.Graph.Core.PolicyResults, featureOwnershipRule, getOrderKey); ok {
 		t.Fatal("unlabeled Query unexpectedly entered the selected Feature ownership cohort")
 	}
-	if _, ok := softwareResult(project.Graph.PolicyResults, "selected-command-labels-identify-commands", getOrderKey); ok {
+	if _, ok := softwareResult(project.Graph.Core.PolicyResults, "selected-command-labels-identify-commands", getOrderKey); ok {
 		t.Fatal("unlabeled Query unexpectedly entered the selected Command cohort")
 	}
 
@@ -350,7 +349,7 @@ func TestSoftwareArchitectureV1PackageDrivesConsumerContextAndPolicy(t *testing.
 
 func TestSoftwareArchitectureV11SameTargetRuleAppearsInGeneratedViews(t *testing.T) {
 	project := loadSoftwareArchitecture(t, softwareArchitectureRoot(t), "")
-	views, err := render.Generate(project.Graph, project.Snapshot.Files)
+	views, err := host.GenerateOutputs(project)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -371,15 +370,15 @@ func TestSoftwareArchitecturePackageSourcesAndArchiveAreReproducible(t *testing.
 		t.Run(version, func(t *testing.T) {
 			root := filepath.Join(softwareArchitectureRoot(t), "architecture-package-"+version)
 			files := readSoftwareArchitectureTree(t, root)
-			domain, err := format.ParseDomain("domains/software.yaml", files["domains/software.yaml"])
+			domain, err := authoring.ParseDomain("domains/software.yaml", files["domains/software.yaml"])
 			if err != nil {
 				t.Fatal(err)
 			}
-			registry := core.NewRegistry()
+			registry := authoring.NewRegistry()
 			if err := registry.AddDomain(domain); err != nil {
 				t.Fatal(err)
 			}
-			canonicalDomain, err := format.EncodeDomain(domain)
+			canonicalDomain, err := authoring.EncodeDomain(domain)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -387,11 +386,11 @@ func TestSoftwareArchitecturePackageSourcesAndArchiveAreReproducible(t *testing.
 				t.Errorf("%s Domain source is not canonical", version)
 			}
 			for _, member := range []string{"markitect-package.yaml", ".markitect/areas/architecture/vertical-slice.workflow.yaml"} {
-				resource, err := format.ParseWithRegistry(member, files[member], registry)
+				resource, err := authoring.ParseWithRegistry(member, files[member], registry)
 				if err != nil {
 					t.Fatalf("parse %s: %v", member, err)
 				}
-				canonical, err := format.Encode(*resource)
+				canonical, err := authoring.Encode(*resource)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -465,13 +464,13 @@ func TestSoftwareArchitectureV2PackagePolicyLifecycleUsesFixedSnapshots(t *testi
 	}
 
 	for _, key := range []string{createOrderKey, issueInvoiceKey} {
-		result, ok := softwareResult(v2.Graph.PolicyResults, commandValidatorRule, key)
+		result, ok := softwareResult(v2.Graph.Core.PolicyResults, commandValidatorRule, key)
 		if !ok || result.Status != core.PolicyFailed {
 			t.Errorf("v2 should fail selected Command %s without a Validator: %#v", key, result)
 		}
 	}
 	for _, key := range []string{getOrderKey, checkAvailabilityKey} {
-		if _, ok := softwareResult(v2.Graph.PolicyResults, commandValidatorRule, key); ok {
+		if _, ok := softwareResult(v2.Graph.Core.PolicyResults, commandValidatorRule, key); ok {
 			t.Errorf("unlabeled Query %s unexpectedly received the command-only validator policy", key)
 		}
 	}
@@ -480,7 +479,7 @@ func TestSoftwareArchitectureV2PackagePolicyLifecycleUsesFixedSnapshots(t *testi
 	assertSoftwareHas(t, impact.Affected, issueInvoiceKey)
 	assertSoftwareHas(t, impact.Affected, inventoryModuleKey)
 
-	createFailure, ok := softwareResult(v2.Graph.PolicyResults, commandValidatorRule, createOrderKey)
+	createFailure, ok := softwareResult(v2.Graph.Core.PolicyResults, commandValidatorRule, createOrderKey)
 	if !ok {
 		t.Fatal("create-order failure has no source-bound PolicyResult")
 	}
@@ -498,11 +497,11 @@ func TestSoftwareArchitectureV2PackagePolicyLifecycleUsesFixedSnapshots(t *testi
 	if !hasSoftwareDiagnostic(waived, "constraint."+commandValidatorRule) {
 		t.Fatal("waiving one subject incorrectly hid the other selected Command failure")
 	}
-	waivedResult, ok := softwareResult(waived.Graph.PolicyResults, commandValidatorRule, createOrderKey)
+	waivedResult, ok := softwareResult(waived.Graph.Core.PolicyResults, commandValidatorRule, createOrderKey)
 	if !ok || waivedResult.Status != core.PolicyWaived || waivedResult.ExceptionName != exception.Name {
 		t.Fatalf("exact exception did not yield an explicit waived PolicyResult: %#v", waivedResult)
 	}
-	stillFailed, ok := softwareResult(waived.Graph.PolicyResults, commandValidatorRule, issueInvoiceKey)
+	stillFailed, ok := softwareResult(waived.Graph.Core.PolicyResults, commandValidatorRule, issueInvoiceKey)
 	if !ok || stillFailed.Status != core.PolicyFailed {
 		t.Fatalf("second selected Command must remain failed: %#v", stillFailed)
 	}
@@ -510,7 +509,7 @@ func TestSoftwareArchitectureV2PackagePolicyLifecycleUsesFixedSnapshots(t *testi
 	mutateSoftwareResource(t, root, waived, issueInvoiceKey, func(data map[string]any) {
 		data["validators"] = []any{map[string]any{"kind": "Validator", "name": "invoice-validation", "namespace": "engineering"}}
 	})
-	writeSoftwareResource(t, root, core.Resource{APIVersion: softwareArchitectureAPI, Kind: "Validator", Metadata: core.Metadata{Name: "invoice-validation", Namespace: "engineering"}, Data: map[string]any{"summary": "Validates invoice command input."}})
+	writeSoftwareResource(t, root, authoring.Resource{Core: authoring.Core{APIVersion: softwareArchitectureAPI, Kind: "Validator", Metadata: core.Metadata{Name: "invoice-validation", Namespace: "engineering"}, Data: map[string]any{"summary": "Validates invoice command input."}}})
 	rev4 := commitSoftwareArchitecture(t, root, "Implement the second selected Command Validator")
 	cleared := loadSoftwareArchitecture(t, root, rev4)
 	if len(cleared.Diagnostics) != 0 {
@@ -524,7 +523,7 @@ func TestSoftwareArchitectureV2PackagePolicyLifecycleUsesFixedSnapshots(t *testi
 	if !ok || contextWaiver.Status != core.PolicyWaived || contextWaiver.ExceptionName != exception.Name || contextWaiver.Rationale != exception.Rationale || contextWaiver.Owner != exception.Owner || contextWaiver.Decision != exception.Decision || contextWaiver.PolicyDate != "2026-10-02" || contextWaiver.ExpiresOn != exception.ExpiresOn {
 		t.Fatalf("agent context omitted the bound waiver decision: %#v", contextWaiver)
 	}
-	views, err := render.Generate(cleared.Graph, cleared.Snapshot.Files)
+	views, err := host.GenerateOutputs(cleared)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -544,7 +543,7 @@ func TestSoftwareArchitectureV2PackagePolicyLifecycleUsesFixedSnapshots(t *testi
 	mutateSoftwareResource(t, root, cleared, createOrderKey, func(data map[string]any) {
 		data["validators"] = []any{map[string]any{"kind": "Validator", "name": "order-validation", "namespace": "engineering"}}
 	})
-	writeSoftwareResource(t, root, core.Resource{APIVersion: softwareArchitectureAPI, Kind: "Validator", Metadata: core.Metadata{Name: "order-validation", Namespace: "engineering"}, Data: map[string]any{"summary": "Validates order command input."}})
+	writeSoftwareResource(t, root, authoring.Resource{Core: authoring.Core{APIVersion: softwareArchitectureAPI, Kind: "Validator", Metadata: core.Metadata{Name: "order-validation", Namespace: "engineering"}, Data: map[string]any{"summary": "Validates order command input."}}})
 	updateSoftwareProject(t, root, cleared, "", nil)
 	rev5 := commitSoftwareArchitecture(t, root, "Implement final Validator and remove exception")
 	passed := loadSoftwareArchitecture(t, root, rev5)
@@ -552,7 +551,7 @@ func TestSoftwareArchitectureV2PackagePolicyLifecycleUsesFixedSnapshots(t *testi
 		t.Fatalf("adding Validators and removing the exception should pass v2: %#v", passed.Diagnostics)
 	}
 	for _, key := range []string{createOrderKey, issueInvoiceKey} {
-		result, ok := softwareResult(passed.Graph.PolicyResults, commandValidatorRule, key)
+		result, ok := softwareResult(passed.Graph.Core.PolicyResults, commandValidatorRule, key)
 		if !ok || result.Status != core.PolicyPassed {
 			t.Errorf("selected Command %s should pass after Validator implementation: %#v", key, result)
 		}
@@ -571,7 +570,7 @@ func TestSoftwareArchitectureStructuralAndPolicyFailuresRemainDistinct(t *testin
 		if !hasSoftwareDiagnostic(changed, "constraint.module-dependencies-stay-at-shared-boundaries") {
 			t.Fatalf("direct Module dependency escaped the central shared-boundary policy: %#v", changed.Diagnostics)
 		}
-		result, ok := softwareResult(changed.Graph.PolicyResults, "module-dependencies-stay-at-shared-boundaries", ordersModuleKey)
+		result, ok := softwareResult(changed.Graph.Core.PolicyResults, "module-dependencies-stay-at-shared-boundaries", ordersModuleKey)
 		if !ok || result.Status != core.PolicyFailed {
 			t.Fatalf("forbidden Module target did not yield per-subject policy result: %#v", result)
 		}
@@ -611,7 +610,7 @@ func TestSoftwareArchitectureStructuralAndPolicyFailuresRemainDistinct(t *testin
 				t.Fatalf("invalid structural model was not rejected by the registered schema: %#v", changed.Diagnostics)
 			}
 			if test.key == createOrderKey {
-				if _, ok := softwareResult(changed.Graph.PolicyResults, "handledBy", createOrderKey); ok {
+				if _, ok := softwareResult(changed.Graph.Core.PolicyResults, "handledBy", createOrderKey); ok {
 					t.Fatal("structural Handler failure was misrepresented as a waivable PolicyResult")
 				}
 			}
@@ -634,7 +633,7 @@ func TestSoftwareArchitectureStructuralAndPolicyFailuresRemainDistinct(t *testin
 		before := loadSoftwareArchitecture(t, root, "")
 		setSoftwareResourceLabel(t, root, before, getOrderKey, "validation", "required")
 		changed := loadSoftwareArchitecture(t, root, "")
-		result, ok := softwareResult(changed.Graph.PolicyResults, "selected-command-labels-identify-commands", getOrderKey)
+		result, ok := softwareResult(changed.Graph.Core.PolicyResults, "selected-command-labels-identify-commands", getOrderKey)
 		if !ok || result.Status != core.PolicyFailed || !hasSoftwareDiagnostic(changed, "constraint.selected-command-labels-identify-commands") {
 			t.Fatalf("a Query opted into the Command cohort must fail its selected intent assertion: %#v", result)
 		}
@@ -645,7 +644,7 @@ func TestSoftwareArchitectureConflictingDomainPoliciesRemainVisible(t *testing.T
 	root := t.TempDir()
 	copySoftwareArchitecture(t, root)
 	files := readSoftwareArchitectureTree(t, filepath.Join(softwareArchitectureRoot(t), "architecture-package-v2"))
-	domain, err := format.ParseDomain("domains/software.yaml", files["domains/software.yaml"])
+	domain, err := authoring.ParseDomain("domains/software.yaml", files["domains/software.yaml"])
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -654,7 +653,7 @@ func TestSoftwareArchitectureConflictingDomainPoliciesRemainVisible(t *testing.T
 		Select: core.ResourceSelector{Kind: "Module"},
 		Assert: core.ConstraintAssertion{Op: "allowed-targets", Relation: "dependsOn", Values: []any{"Module"}},
 	})
-	files["domains/software.yaml"], err = format.EncodeDomain(domain)
+	files["domains/software.yaml"], err = authoring.EncodeDomain(domain)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -663,7 +662,7 @@ func TestSoftwareArchitectureConflictingDomainPoliciesRemainVisible(t *testing.T
 	if !hasSoftwareDiagnostic(project, "constraint.conflicting-module-dependency-allows-only-modules") {
 		t.Fatalf("contradictory policy was hidden or overwritten by declaration order: %#v", project.Diagnostics)
 	}
-	conflict, ok := softwareResult(project.Graph.PolicyResults, "conflicting-module-dependency-allows-only-modules", ordersModuleKey)
+	conflict, ok := softwareResult(project.Graph.Core.PolicyResults, "conflicting-module-dependency-allows-only-modules", ordersModuleKey)
 	if !ok || conflict.Status != core.PolicyFailed {
 		t.Fatalf("conflicting assertion did not remain a separate failed PolicyResult: %#v", conflict)
 	}
@@ -676,10 +675,10 @@ func TestSoftwareArchitectureCommandPolicyIsExplicitLabelScope(t *testing.T) {
 	before := loadSoftwareArchitecture(t, root, "")
 	setSoftwareResourceLabel(t, root, before, createOrderKey, "validation", "")
 	changed := loadSoftwareArchitecture(t, root, "")
-	if _, ok := softwareResult(changed.Graph.PolicyResults, commandValidatorRule, createOrderKey); ok {
+	if _, ok := softwareResult(changed.Graph.Core.PolicyResults, commandValidatorRule, createOrderKey); ok {
 		t.Fatal("unlabeled Command unexpectedly received the v2 command-only Validator finding")
 	}
-	if result, ok := softwareResult(changed.Graph.PolicyResults, commandValidatorRule, issueInvoiceKey); !ok || result.Status != core.PolicyFailed {
+	if result, ok := softwareResult(changed.Graph.Core.PolicyResults, commandValidatorRule, issueInvoiceKey); !ok || result.Status != core.PolicyFailed {
 		t.Fatalf("other labeled Command should remain in scope and failed: %#v", result)
 	}
 	if len(changed.Diagnostics) == 0 {
@@ -693,7 +692,7 @@ func TestSoftwareArchitecturePolicyExceptionExpiryAndStalenessAreActionable(t *t
 		copySoftwareArchitecture(t, root)
 		installSoftwareArchitectureV2(t, root)
 		v2 := loadSoftwareArchitecture(t, root, "")
-		failure, ok := softwareResult(v2.Graph.PolicyResults, commandValidatorRule, createOrderKey)
+		failure, ok := softwareResult(v2.Graph.Core.PolicyResults, commandValidatorRule, createOrderKey)
 		if !ok || failure.Status != core.PolicyFailed {
 			t.Fatalf("expected source-bound validator finding: %#v", failure)
 		}
@@ -710,7 +709,7 @@ func TestSoftwareArchitecturePolicyExceptionExpiryAndStalenessAreActionable(t *t
 		if !hasSoftwareDiagnostic(expired, "policy.exception.expired") {
 			t.Fatalf("exception past its pinned expiry date should be actionable: %#v", expired.Diagnostics)
 		}
-		result, ok := softwareResult(expired.Graph.PolicyResults, commandValidatorRule, createOrderKey)
+		result, ok := softwareResult(expired.Graph.Core.PolicyResults, commandValidatorRule, createOrderKey)
 		if !ok || result.Status != core.PolicyFailed {
 			t.Fatalf("expired exception must not waive its source-bound failure: %#v", result)
 		}
@@ -721,7 +720,7 @@ func TestSoftwareArchitecturePolicyExceptionExpiryAndStalenessAreActionable(t *t
 		copySoftwareArchitecture(t, root)
 		installSoftwareArchitectureV2(t, root)
 		v2 := loadSoftwareArchitecture(t, root, "")
-		failure, ok := softwareResult(v2.Graph.PolicyResults, commandValidatorRule, createOrderKey)
+		failure, ok := softwareResult(v2.Graph.Core.PolicyResults, commandValidatorRule, createOrderKey)
 		if !ok || failure.Status != core.PolicyFailed {
 			t.Fatalf("expected source-bound validator finding: %#v", failure)
 		}
@@ -741,7 +740,7 @@ func TestSoftwareArchitecturePolicyExceptionExpiryAndStalenessAreActionable(t *t
 		if !hasSoftwareDiagnostic(stale, "policy.exception.stale") {
 			t.Fatalf("subject digest change should make the exception actionable as stale: %#v", stale.Diagnostics)
 		}
-		result, ok := softwareResult(stale.Graph.PolicyResults, commandValidatorRule, createOrderKey)
+		result, ok := softwareResult(stale.Graph.Core.PolicyResults, commandValidatorRule, createOrderKey)
 		if !ok || result.Status != core.PolicyFailed {
 			t.Fatalf("stale exception must not waive its changed source finding: %#v", result)
 		}
@@ -823,7 +822,7 @@ func setSoftwareResourceLabel(t *testing.T, root string, project *host.Project, 
 	if len(resource.Metadata.Labels) == 0 {
 		resource.Metadata.Labels = nil
 	}
-	encoded, err := format.Encode(resource)
+	encoded, err := authoring.Encode(resource)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -832,9 +831,9 @@ func setSoftwareResourceLabel(t *testing.T, root string, project *host.Project, 
 	}
 }
 
-func writeSoftwareResource(t *testing.T, root string, resource core.Resource) {
+func writeSoftwareResource(t *testing.T, root string, resource authoring.Resource) {
 	t.Helper()
-	encoded, err := format.Encode(resource)
+	encoded, err := authoring.Encode(resource)
 	if err != nil {
 		t.Fatal(err)
 	}

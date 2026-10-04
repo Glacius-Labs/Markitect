@@ -90,7 +90,7 @@ func TestPolicyFailingWorkingTreeRejectsReconciliationAndWritersWithoutMutation(
 
 	// Make both writer paths observably capable of changes if they are ever
 	// reached: render has an enabled projection target and Domain YAML has
-	// noncanonical trailing whitespace for format.
+	// noncanonical trailing whitespace for authoring.
 	projectPath := filepath.Join(repo.root, "markitect.yaml")
 	projectBytes, err := os.ReadFile(projectPath)
 	if err != nil {

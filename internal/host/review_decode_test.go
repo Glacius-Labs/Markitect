@@ -4,11 +4,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/internal/format"
+	"github.com/Glacius-Labs/Markitect/internal/host/authoring"
 )
 
 func TestReviewYAMLDecodersRejectUnsafeOrIncompleteDocuments(t *testing.T) {
-	configData, err := format.Encode(testReviewConfig)
+	configData, err := authoring.Encode(testReviewConfig)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -30,7 +30,7 @@ func TestReviewYAMLDecodersRejectUnsafeOrIncompleteDocuments(t *testing.T) {
 
 	p := reviewFixture(t, strings.Repeat("a", 40), false, reviewResources(false, false, false), nil)
 	record := mustRecordReview(t, p, testReviewConfig)
-	recordData, err := format.Encode(record)
+	recordData, err := authoring.Encode(record)
 	if err != nil {
 		t.Fatal(err)
 	}

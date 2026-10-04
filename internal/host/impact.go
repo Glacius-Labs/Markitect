@@ -2,12 +2,11 @@ package host
 
 import (
 	"fmt"
+	"github.com/Glacius-Labs/Markitect/internal/host/authoring"
 	"sort"
 	"strings"
 
-	"github.com/Glacius-Labs/Markitect/internal/core"
 	"github.com/Glacius-Labs/Markitect/internal/core/snapshot"
-	"github.com/Glacius-Labs/Markitect/internal/render"
 )
 
 type Impact struct {
@@ -150,7 +149,7 @@ func Changes(before, after *Project) *Impact {
 			if p == nil || p.Graph == nil {
 				continue
 			}
-			for _, dependency := range p.Graph.PolicyDependencies {
+			for _, dependency := range p.Graph.Core.PolicyDependencies {
 				if !changedInputs[dependency.Input] {
 					continue
 				}
@@ -245,7 +244,7 @@ func Changes(before, after *Project) *Impact {
 // policy in this snapshot. Collection-wide invalidation is classified
 // separately; this broader check guards per-resource outcomes whose consumers
 // may be context-visible without an invalidation edge.
-func constraintReadsResource(p *Project, resource *core.Resource) bool {
+func constraintReadsResource(p *Project, resource *authoring.Resource) bool {
 	if p == nil || p.Graph == nil || p.Graph.Registry == nil || resource == nil {
 		return false
 	}
@@ -278,7 +277,7 @@ func constraintReadsResource(p *Project, resource *core.Resource) bool {
 // invalidation fallback to operators whose dependency behavior is not yet
 // represented by explicit graph evidence. same-target has PolicyDependencies
 // and receives an exact context closure.
-func constraintReadsLegacyResource(p *Project, resource *core.Resource) bool {
+func constraintReadsLegacyResource(p *Project, resource *authoring.Resource) bool {
 	if p == nil || p.Graph == nil || p.Graph.Registry == nil || resource == nil {
 		return false
 	}
@@ -313,7 +312,7 @@ func constraintReadsLegacyResource(p *Project, resource *core.Resource) bool {
 // constraintReadsCollection identifies assertions whose outcome depends on
 // the selected set as a whole. Per-resource assertions are bounded by their
 // subject and its declared invalidation dependents.
-func constraintReadsCollection(p *Project, resource *core.Resource) bool {
+func constraintReadsCollection(p *Project, resource *authoring.Resource) bool {
 	if p == nil || p.Graph == nil || p.Graph.Registry == nil || resource == nil {
 		return false
 	}
@@ -432,7 +431,7 @@ func impactFileOwners(p *Project) (map[string]map[string]bool, error) {
 			add(file, key)
 		}
 	}
-	_, generatedOwners, err := render.GenerateWithOwners(p.Graph, p.Snapshot.Files)
+	_, generatedOwners, err := GenerateOutputsWithOwners(p)
 	if err != nil {
 		return nil, err
 	}

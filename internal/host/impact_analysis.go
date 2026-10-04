@@ -2,6 +2,7 @@ package host
 
 import (
 	"fmt"
+	"github.com/Glacius-Labs/Markitect/internal/host/authoring"
 	"sort"
 
 	"github.com/Glacius-Labs/Markitect/internal/core"
@@ -26,7 +27,7 @@ type PolicyResultSide struct {
 	AbsenceReason string                     `yaml:"absenceReason,omitempty"`
 	Result        *core.PolicyResult         `yaml:"result,omitempty"`
 	DomainInput   *core.ModelDomainInput     `yaml:"domainInput,omitempty"`
-	PackagePin    *core.PackagePin           `yaml:"packagePin,omitempty"`
+	PackagePin    *authoring.PackagePin      `yaml:"packagePin,omitempty"`
 	Definition    *core.ConstraintDefinition `yaml:"definition,omitempty"`
 }
 

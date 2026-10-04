@@ -6,19 +6,19 @@ import (
 	"strings"
 
 	"github.com/Glacius-Labs/Markitect/internal/core"
-	"github.com/Glacius-Labs/Markitect/internal/format"
-	"github.com/Glacius-Labs/Markitect/internal/render"
+	"github.com/Glacius-Labs/Markitect/internal/host/authoring"
+	"github.com/Glacius-Labs/Markitect/internal/modules/agentrules"
 )
 
 func Generated(data []byte) bool {
-	return render.IsGenerated(data)
+	return agentrules.IsGenerated(data)
 }
 
 func CheckOutputs(p *Project) []core.Diagnostic {
 	if len(p.Diagnostics) > 0 {
 		return nil
 	}
-	outputs, err := render.Generate(p.Graph, p.Snapshot.Files)
+	outputs, err := GenerateOutputs(p)
 	if err != nil {
 		return []core.Diagnostic{{Code: "render", Message: err.Error()}}
 	}
@@ -37,7 +37,7 @@ func CheckOutputs(p *Project) []core.Diagnostic {
 	for _, name := range staleProjectionPaths(p, outputs) {
 		findings = append(findings, core.Diagnostic{Code: "stale-output", Path: name, Message: "previously generated file has no current source; inspect and remove in the same migration"})
 	}
-	findings = append(findings, checkProviderInventory(p, outputs)...)
+
 	return findings
 }
 
@@ -83,7 +83,7 @@ func independentNestedProjectRoots(p *Project, expectedOutputs map[string][]byte
 		if root == "." {
 			continue
 		}
-		manifest, err := format.Parse(name, p.Snapshot.Files[name])
+		manifest, err := authoring.Parse(name, p.Snapshot.Files[name])
 		if err != nil || manifest.APIVersion != core.APIVersion || manifest.Kind != "Project" {
 			continue
 		}

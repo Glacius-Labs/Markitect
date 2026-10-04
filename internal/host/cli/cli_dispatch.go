@@ -82,7 +82,7 @@ func dispatchCommand(command string, o commandOptions, out, errout io.Writer, em
 	if (command == "check" || command == "verify") && p.Graph.Project.Spec.Documentation != nil {
 		structuralCoverage += " and configured documentation routers"
 	}
-	result := report{Tool: "Markitect", Version: version, ToolDigest: toolDigest, Revision: p.Snapshot.ID, Provisional: p.Snapshot.Provisional, Digest: p.Snapshot.Digest(), Status: "passed", Coverage: structuralCoverage + "; external repository gates and semantic review remain separate", Inventory: p.Inventory, Diagnostics: p.Diagnostics, PolicyResults: p.Graph.PolicyResults}
+	result := report{Tool: "Markitect", Version: version, ToolDigest: toolDigest, Revision: p.Snapshot.ID, Provisional: p.Snapshot.Provisional, Digest: p.Snapshot.Digest(), Status: "passed", Coverage: structuralCoverage + "; external repository gates and semantic review remain separate", Inventory: p.Inventory, Diagnostics: p.Diagnostics, PolicyResults: p.Graph.Core.PolicyResults}
 	allowPolicyFailures := o.analyzePolicyFailures && (command == "context" || command == "impact")
 	if len(p.Diagnostics) > 0 && (!allowPolicyFailures || len(p.StructuralDiagnostics()) > 0) {
 		result.Status = "failed"

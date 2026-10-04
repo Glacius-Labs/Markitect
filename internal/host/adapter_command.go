@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"github.com/Glacius-Labs/Markitect/internal/host/authoring"
 	"io"
 	"os"
 	"os/exec"
@@ -109,19 +110,19 @@ type commandRun struct {
 	argv []string
 }
 
-func FindAdapter(p *Project, name string) (core.AdapterConfig, error) {
+func FindAdapter(p *Project, name string) (authoring.AdapterConfig, error) {
 	if p == nil || p.Graph == nil || p.Graph.Project == nil {
-		return core.AdapterConfig{}, errors.New("parsed Project is required")
+		return authoring.AdapterConfig{}, errors.New("parsed Project is required")
 	}
 	for _, adapter := range p.Graph.Project.Spec.Adapters {
 		if adapter.Name == name {
 			return adapter, nil
 		}
 	}
-	return core.AdapterConfig{}, fmt.Errorf("adapter %q is not configured in the Project", name)
+	return authoring.AdapterConfig{}, fmt.Errorf("adapter %q is not configured in the Project", name)
 }
 
-func parseCommandAdapter(adapter core.AdapterConfig) (CommandAdapterConfig, error) {
+func parseCommandAdapter(adapter authoring.AdapterConfig) (CommandAdapterConfig, error) {
 	if adapter.Type != "command" {
 		return CommandAdapterConfig{}, fmt.Errorf("adapter %q has unsupported type %q", adapter.Name, adapter.Type)
 	}
@@ -362,7 +363,7 @@ func ReadCommandAdapterPlan(filename string) (CommandAdapterPlan, error) {
 	return plan, nil
 }
 
-func loadCommandAdapter(p *Project, name string) (core.AdapterConfig, CommandAdapterConfig, error) {
+func loadCommandAdapter(p *Project, name string) (authoring.AdapterConfig, CommandAdapterConfig, error) {
 	adapter, err := FindAdapter(p, name)
 	if err != nil {
 		return adapter, CommandAdapterConfig{}, err
@@ -382,10 +383,10 @@ func compileAdapterModel(p *Project) (core.SemanticModel, error) {
 	return model, nil
 }
 
-func identity(adapter core.AdapterConfig, config CommandAdapterConfig) AdapterIdentity {
+func identity(adapter authoring.AdapterConfig, config CommandAdapterConfig) AdapterIdentity {
 	return AdapterIdentity{Name: adapter.Name, Type: adapter.Type, Version: adapter.Version, Target: config.Target, Parameters: config.Parameters}
 }
-func planIdentity(adapter core.AdapterConfig, config CommandAdapterConfig) AdapterPlanIdentity {
+func planIdentity(adapter authoring.AdapterConfig, config CommandAdapterConfig) AdapterPlanIdentity {
 	return AdapterPlanIdentity{Name: adapter.Name, Type: adapter.Type, Version: adapter.Version, Target: config.Target}
 }
 func yamlEqual(a, b any) bool {
@@ -397,7 +398,7 @@ func yamlEqual(a, b any) bool {
 	return e == nil && bytes.Equal(x, y)
 }
 
-func invokeCommandAdapter(p *Project, adapter core.AdapterConfig, config CommandAdapterConfig, argv []string, request AdapterRequest) (AdapterResult, string, error) {
+func invokeCommandAdapter(p *Project, adapter authoring.AdapterConfig, config CommandAdapterConfig, argv []string, request AdapterRequest) (AdapterResult, string, error) {
 	if p == nil || p.Snapshot == nil {
 		return AdapterResult{}, "", errors.New("fixed project snapshot is required")
 	}
@@ -537,7 +538,7 @@ func validateAdapterInputPath(name string) error {
 	return nil
 }
 
-func adapterConfigDigest(adapter core.AdapterConfig, config CommandAdapterConfig) (string, error) {
+func adapterConfigDigest(adapter authoring.AdapterConfig, config CommandAdapterConfig) (string, error) {
 	value := struct {
 		Adapter AdapterIdentity      `yaml:"adapter"`
 		Runtime CommandAdapterConfig `yaml:"runtime"`

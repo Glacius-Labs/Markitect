@@ -10,7 +10,7 @@ import (
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/internal/core"
-	"github.com/Glacius-Labs/Markitect/internal/format"
+	"github.com/Glacius-Labs/Markitect/internal/host/authoring"
 	"github.com/Glacius-Labs/Markitect/internal/modules/githooks"
 	"go.yaml.in/yaml/v3"
 )
@@ -38,13 +38,13 @@ func TestRunReportsPassFindingsAndInvalidInputExitCodes(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	project := core.Resource{APIVersion: core.APIVersion, Kind: "Project", Metadata: core.Metadata{Name: "sample"}, Spec: core.Spec{Areas: []core.Area{{Name: "docs", Path: "docs", Imports: []string{"hooks"}}, {Name: "hooks", Path: ".githooks"}}}}
-	rule := core.Resource{APIVersion: core.APIVersion, Kind: "Rule", Metadata: core.Metadata{Name: "repository-checks", Namespace: "docs"}, Spec: core.Spec{Text: "Keep repository checks explicit.", Files: []string{configPath, hookPath}}}
-	projectBytes, err := format.Encode(&project)
+	project := authoring.Resource{Core: authoring.Core{APIVersion: core.APIVersion, Kind: "Project", Metadata: core.Metadata{Name: "sample"}}, Spec: authoring.Spec{Areas: []authoring.Area{{Name: "docs", Path: "docs", Imports: []string{"hooks"}}, {Name: "hooks", Path: ".githooks"}}}}
+	rule := authoring.Resource{Core: authoring.Core{APIVersion: core.APIVersion, Kind: "Rule", Metadata: core.Metadata{Name: "repository-checks", Namespace: "docs"}}, Spec: authoring.Spec{Text: "Keep repository checks explicit.", Files: []string{configPath, hookPath}}}
+	projectBytes, err := authoring.Encode(&project)
 	if err != nil {
 		t.Fatal(err)
 	}
-	ruleBytes, err := format.Encode(&rule)
+	ruleBytes, err := authoring.Encode(&rule)
 	if err != nil {
 		t.Fatal(err)
 	}

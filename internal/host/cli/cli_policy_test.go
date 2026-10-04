@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/internal/core"
-	"github.com/Glacius-Labs/Markitect/internal/format"
 	"github.com/Glacius-Labs/Markitect/internal/host"
+	"github.com/Glacius-Labs/Markitect/internal/host/authoring"
 )
 
 func TestCheckReportsReviewedDeviationWithoutHidingViolation(t *testing.T) {
@@ -50,7 +50,7 @@ spec:
 		Subject: result.Subject, ConstraintDigest: result.ConstraintDigest, SubjectDigest: result.SubjectDigest,
 		Rationale: "Synthetic migration exercise.", Owner: "fixture-owner", Decision: "fixture-decision",
 	}}
-	config, err := format.Encode(p.Graph.Project)
+	config, err := authoring.Encode(p.Graph.Project)
 	if err != nil {
 		t.Fatal(err)
 	}

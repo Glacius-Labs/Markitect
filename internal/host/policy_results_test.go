@@ -6,7 +6,7 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/internal/core"
 	"github.com/Glacius-Labs/Markitect/internal/core/snapshot"
-	"github.com/Glacius-Labs/Markitect/internal/format"
+	"github.com/Glacius-Labs/Markitect/internal/host/authoring"
 )
 
 func TestPolicyExceptionRemainsVisibleInModelAndSelectedContext(t *testing.T) {
@@ -40,13 +40,13 @@ spec:
 		t.Fatal(err)
 	}
 	var failure core.PolicyResult
-	for _, result := range p.Graph.PolicyResults {
+	for _, result := range p.Graph.Core.PolicyResults {
 		if result.Status == "failed" {
 			failure = result
 		}
 	}
 	if failure.Subject == "" {
-		t.Fatalf("missing subject-bound failure: %+v", p.Graph.PolicyResults)
+		t.Fatalf("missing subject-bound failure: %+v", p.Graph.Core.PolicyResults)
 	}
 	p.Graph.Project.Spec.PolicyExceptions = []core.PolicyException{{
 		Name: "reviewed-legacy", APIVersion: failure.APIVersion, Constraint: failure.Constraint,
@@ -54,7 +54,7 @@ spec:
 		Rationale: "Synthetic exercise: migrate in a separate change.", Owner: "fixture-owner",
 		Decision: "fixture-decision; does not authenticate a human reviewer",
 	}}
-	s.Files["markitect.yaml"], err = format.Encode(p.Graph.Project)
+	s.Files["markitect.yaml"], err = authoring.Encode(p.Graph.Project)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -89,7 +89,7 @@ spec:
 	}
 	// Returned model outcomes must not share mutable slice storage with the graph.
 	model.PolicyResults[0].Status = "changed by caller"
-	if p.Graph.PolicyResults[0].Status == "changed by caller" {
+	if p.Graph.Core.PolicyResults[0].Status == "changed by caller" {
 		t.Fatal("model caller changed the compiler's policy results")
 	}
 }
@@ -142,7 +142,7 @@ spec:
 
 	// A code that looks like a policy diagnostic remains structural without a
 	// generated graph diagnostic, even if a caller supplies a matching identity.
-	failed := p.Graph.PolicyResults[0]
+	failed := p.Graph.Core.PolicyResults[0]
 	ref := &core.PolicyResultRef{APIVersion: failed.APIVersion, Constraint: failed.Constraint, Subject: failed.Subject}
 	p.Diagnostics = append(p.Diagnostics,
 		core.Diagnostic{Code: "constraint.path", Message: "unrelated structural finding"},

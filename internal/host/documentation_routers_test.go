@@ -1,11 +1,11 @@
 package host
 
 import (
+	"github.com/Glacius-Labs/Markitect/internal/host/authoring"
 	"reflect"
 	"strings"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/internal/core"
 	"github.com/Glacius-Labs/Markitect/internal/core/snapshot"
 )
 
@@ -16,7 +16,7 @@ func routerProject(roots []string, files map[string]string) *Project {
 	}
 	return &Project{
 		Snapshot: &snapshot.Snapshot{ID: strings.Repeat("a", 40), Files: bytes},
-		Graph:    &core.Graph{Project: &core.Resource{Spec: core.Spec{Documentation: &core.Documentation{Roots: roots}}}},
+		Graph:    &authoring.Graph{Project: &authoring.Resource{Spec: authoring.Spec{Documentation: &authoring.Documentation{Roots: roots}}}},
 	}
 }
 
@@ -61,50 +61,6 @@ func TestDocumentationRootAndDirectFileDiagnostics(t *testing.T) {
 	}
 }
 
-func TestNormalizeRouterTarget(t *testing.T) {
-	tests := []struct {
-		in, want       string
-		local, invalid bool
-	}{
-		{"../a%20b.md?mode=1#part", "docs/a b.md", true, false},
-		{"plus+name.md", "docs/sub/plus+name.md", true, false},
-		{"foo%23bar.md#heading", "docs/sub/foo#bar.md", true, false},
-		{"encoded%252Fslash.md", "docs/sub/encoded%2Fslash.md", true, false},
-		{"a%2Fb.md", "docs/sub/a/b.md", true, false},
-		{"./", "docs/sub", true, false},
-		{"../../", ".", true, false},
-		{"foo%3Fbar.md", "docs/sub/foo?bar.md", true, false},
-		{"x:custom", "", false, false},
-		{"bad%00.md", "", true, true},
-		{"folder\\file.md", "", true, true},
-		{"#heading", "", false, false},
-		{"https://example.org/x", "", false, false},
-		{"//example.org/x", "", false, false},
-		{"../../../outside.md", "", true, true},
-		{"/absolute.md", "", true, true},
-		{"C:\\absolute.md", "", true, true},
-		{"C:/absolute.md", "", true, true},
-		{"bad%ZZ.md", "", true, true},
-	}
-	for _, tt := range tests {
-		t.Run(tt.in, func(t *testing.T) {
-			got, local, err := normalizeRouterTarget("docs/sub/README.md", tt.in)
-			if got != tt.want || local != tt.local || (err != nil) != tt.invalid {
-				t.Fatalf("normalize(%q) = %q, %t, %v; want %q, %t, invalid=%t", tt.in, got, local, err, tt.want, tt.local, tt.invalid)
-			}
-		})
-	}
-}
-
-func TestMarkdownRouterLinksIgnoreCodeAndResolveReferences(t *testing.T) {
-	data := []byte("[Inline](<a b.md> \"title\")\n[Ref][guide]\n[guide]: guide.md\n[Nested](func(a).md#part)\n[the [nested] label](nested.md)\n`[Code](missing.md)`\n```md\n[Fence](missing.md)\n```\n")
-	got := markdownRouterLinks(data)
-	want := []routerLink{{target: "a b.md", line: 1}, {target: "guide.md", line: 2}, {target: "func(a).md#part", line: 4}, {target: "nested.md", line: 5}}
-	if !reflect.DeepEqual(got, want) {
-		t.Fatalf("links = %#v, want %#v", got, want)
-	}
-}
-
 func TestRouterLinksDoNotBecomeGraphDependencies(t *testing.T) {
 	project := routerProject([]string{"docs"}, map[string]string{
 		"docs/README.md": "[Other](../other.md)\n",
@@ -115,35 +71,6 @@ func TestRouterLinksDoNotBecomeGraphDependencies(t *testing.T) {
 	}
 	if len(project.Graph.Edges) != 0 {
 		t.Fatalf("navigation created graph edges: %#v", project.Graph.Edges)
-	}
-}
-
-func TestMarkdownRouterLinkBoundaries(t *testing.T) {
-	tests := []struct {
-		name, markdown string
-		want           []routerLink
-	}{
-		{"shortcut at EOF", "[Guide]: guide.md\n\n[Guide]", []routerLink{{"guide.md", 3}}},
-		{"first reference wins", "[g]: first.md\n[g]: second.md\n\n[g]", []routerLink{{"first.md", 4}}},
-		{"escaped punctuation", `[Guide](a\(b\).md)`, []routerLink{{"a(b).md", 1}}},
-		{"literal backslash", `[Guide](folder\file.md)`, []routerLink{{`folder\file.md`, 1}}},
-		{"reference escape", "[g]: a\\(b\\).md\n\n[g]", []routerLink{{"a(b).md", 3}}},
-		{"image is not coverage", "![Guide](guide.md)", nil},
-		{"reference image is not coverage", "[g]: guide.md\n\n![Guide][g]", nil},
-		{"invalid inline suffix", "[Guide](guide.md arbitrary prose)", nil},
-		{"parenthesized title", "[Guide](guide.md (title))", []routerLink{{"guide.md", 1}}},
-		{"fence closing suffix", "```md\n```text\n[Example](missing.md)\n```\n[Guide](guide.md)", []routerLink{{"guide.md", 5}}},
-		{"invalid backtick opener", "```info`text\n[Guide](guide.md)", []routerLink{{"guide.md", 2}}},
-		{"escaped backticks", "\\`[Guide](guide.md)\\`", []routerLink{{"guide.md", 1}}},
-		{"backslash inside code is literal", "`code\\` [Guide](guide.md)", []routerLink{{"guide.md", 1}}},
-		{"exact inline delimiter", "` example `` [Example](missing.md) ` [Guide](guide.md)", []routerLink{{"guide.md", 1}}},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := markdownRouterLinks([]byte(tt.markdown)); !reflect.DeepEqual(got, tt.want) {
-				t.Fatalf("links = %#v, want %#v", got, tt.want)
-			}
-		})
 	}
 }
 

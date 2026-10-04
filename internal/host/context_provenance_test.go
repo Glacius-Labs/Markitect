@@ -1,6 +1,7 @@
 package host
 
 import (
+	"github.com/Glacius-Labs/Markitect/internal/host/authoring"
 	"reflect"
 	"testing"
 
@@ -9,19 +10,14 @@ import (
 )
 
 func TestContextProvenanceRetainsEveryReachableRelationDeterministically(t *testing.T) {
-	project := core.Resource{APIVersion: core.APIVersion, Kind: "Project", Metadata: core.Metadata{Name: "sample"}, Path: projectPath,
-		Spec: core.Spec{Areas: []core.Area{{Name: "area", Path: "docs/area", Rules: []core.Ref{{Kind: "Rule", Name: "area-policy"}}}}}}
-	agent := core.Resource{APIVersion: core.APIVersion, Kind: "Agent", Metadata: core.Metadata{Name: "root", Namespace: "area"}, Path: "docs/area/root.yaml",
-		Spec: core.Spec{Text: "Root.", Uses: []core.Ref{{Kind: "Workflow", Name: "z-short"}, {Kind: "Workflow", Name: "a-long"}}}}
-	long := core.Resource{APIVersion: core.APIVersion, Kind: "Workflow", Metadata: core.Metadata{Name: "a-long", Namespace: "area"}, Path: "docs/area/a-long.yaml",
-		Spec: core.Spec{Text: "Long path.", Uses: []core.Ref{{Kind: "Workflow", Name: "deep"}}}}
-	short := core.Resource{APIVersion: core.APIVersion, Kind: "Workflow", Metadata: core.Metadata{Name: "z-short", Namespace: "area"}, Path: "docs/area/z-short.yaml",
-		Spec: core.Spec{Text: "Short path.", Uses: []core.Ref{{Kind: "Skill", Name: "shared"}}}}
-	deep := core.Resource{APIVersion: core.APIVersion, Kind: "Workflow", Metadata: core.Metadata{Name: "deep", Namespace: "area"}, Path: "docs/area/deep.yaml",
-		Spec: core.Spec{Text: "Deep path.", Uses: []core.Ref{{Kind: "Skill", Name: "shared"}}}}
-	shared := core.Resource{APIVersion: core.APIVersion, Kind: "Skill", Metadata: core.Metadata{Name: "shared", Namespace: "area"}, Path: "docs/area/shared.yaml", Spec: core.Spec{Text: "Shared."}}
-	rule := core.Resource{APIVersion: core.APIVersion, Kind: "Rule", Metadata: core.Metadata{Name: "area-policy", Namespace: "area"}, Path: "docs/area/policy.yaml", Spec: core.Spec{Text: "Area rule."}}
-	parsed := parseContextProvenanceResources(t, []*core.Resource{&project, &agent, &long, &short, &deep, &shared, &rule})
+	project := authoring.Resource{Core: authoring.Core{APIVersion: core.APIVersion, Kind: "Project", Metadata: core.Metadata{Name: "sample"}, Path: projectPath}, Spec: authoring.Spec{Areas: []authoring.Area{{Name: "area", Path: "docs/area", Rules: []core.Ref{{Kind: "Rule", Name: "area-policy"}}}}}}
+	agent := authoring.Resource{Core: authoring.Core{APIVersion: core.APIVersion, Kind: "Agent", Metadata: core.Metadata{Name: "root", Namespace: "area"}, Path: "docs/area/root.yaml"}, Spec: authoring.Spec{Text: "Root.", Uses: []core.Ref{{Kind: "Workflow", Name: "z-short"}, {Kind: "Workflow", Name: "a-long"}}}}
+	long := authoring.Resource{Core: authoring.Core{APIVersion: core.APIVersion, Kind: "Workflow", Metadata: core.Metadata{Name: "a-long", Namespace: "area"}, Path: "docs/area/a-long.yaml"}, Spec: authoring.Spec{Text: "Long path.", Uses: []core.Ref{{Kind: "Workflow", Name: "deep"}}}}
+	short := authoring.Resource{Core: authoring.Core{APIVersion: core.APIVersion, Kind: "Workflow", Metadata: core.Metadata{Name: "z-short", Namespace: "area"}, Path: "docs/area/z-short.yaml"}, Spec: authoring.Spec{Text: "Short path.", Uses: []core.Ref{{Kind: "Skill", Name: "shared"}}}}
+	deep := authoring.Resource{Core: authoring.Core{APIVersion: core.APIVersion, Kind: "Workflow", Metadata: core.Metadata{Name: "deep", Namespace: "area"}, Path: "docs/area/deep.yaml"}, Spec: authoring.Spec{Text: "Deep path.", Uses: []core.Ref{{Kind: "Skill", Name: "shared"}}}}
+	shared := authoring.Resource{Core: authoring.Core{APIVersion: core.APIVersion, Kind: "Skill", Metadata: core.Metadata{Name: "shared", Namespace: "area"}, Path: "docs/area/shared.yaml"}, Spec: authoring.Spec{Text: "Shared."}}
+	rule := authoring.Resource{Core: authoring.Core{APIVersion: core.APIVersion, Kind: "Rule", Metadata: core.Metadata{Name: "area-policy", Namespace: "area"}, Path: "docs/area/policy.yaml"}, Spec: authoring.Spec{Text: "Area rule."}}
+	parsed := parseContextProvenanceResources(t, []*authoring.Resource{&project, &agent, &long, &short, &deep, &shared, &rule})
 	if len(parsed.Diagnostics) != 0 {
 		t.Fatalf("fixture diagnostics: %+v", parsed.Diagnostics)
 	}
@@ -128,7 +124,7 @@ spec: {intent: Other module.}
 	}
 }
 
-func parseContextProvenanceResources(t *testing.T, resources []*core.Resource) *Project {
+func parseContextProvenanceResources(t *testing.T, resources []*authoring.Resource) *Project {
 	t.Helper()
 	s := &snapshot.Snapshot{ID: "context-provenance", Provisional: true, Files: map[string][]byte{}, Modes: map[string]string{}}
 	for _, resource := range resources {

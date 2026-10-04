@@ -13,7 +13,7 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/internal/core"
 	"github.com/Glacius-Labs/Markitect/internal/core/snapshot"
-	"github.com/Glacius-Labs/Markitect/internal/format"
+	"github.com/Glacius-Labs/Markitect/internal/host/authoring"
 	"github.com/Glacius-Labs/Markitect/internal/infrastructure/source"
 )
 
@@ -24,22 +24,20 @@ const (
 	projectNS   = "sample"
 )
 
-func projectResource(namespace string) core.Resource {
-	return core.Resource{
-		APIVersion: core.APIVersion,
-		Kind:       "Project",
-		Metadata:   core.Metadata{Name: "sample-project"},
-		Spec: core.Spec{Targets: []string{"codex", "markdown"}, Areas: []core.Area{
-			{Name: projectNS, Path: "docs/general"},
-		}},
+func projectResource(namespace string) authoring.Resource {
+	return authoring.Resource{Core: authoring.Core{APIVersion: core.APIVersion,
+		Kind:     "Project",
+		Metadata: core.Metadata{Name: "sample-project"}}, Spec: authoring.Spec{Targets: []string{"codex", "markdown"}, Areas: []authoring.Area{
+		{Name: projectNS, Path: "docs/general"},
+	}},
 	}
 }
 
 func fixtureFiles(t *testing.T, revision, ruleText, skillNamespace string) *snapshot.Snapshot {
 	t.Helper()
 	config := projectResource(projectNS)
-	rule := core.Resource{APIVersion: core.APIVersion, Kind: "Rule", Metadata: core.Metadata{Name: "policy", Namespace: projectNS}, Spec: core.Spec{Text: ruleText}}
-	skill := core.Resource{APIVersion: core.APIVersion, Kind: "Skill", Metadata: core.Metadata{Name: "entry", Namespace: skillNamespace}, Spec: core.Spec{Text: "Use the policy.", Rules: []core.Ref{{Name: "policy"}}}}
+	rule := authoring.Resource{Core: authoring.Core{APIVersion: core.APIVersion, Kind: "Rule", Metadata: core.Metadata{Name: "policy", Namespace: projectNS}}, Spec: authoring.Spec{Text: ruleText}}
+	skill := authoring.Resource{Core: authoring.Core{APIVersion: core.APIVersion, Kind: "Skill", Metadata: core.Metadata{Name: "entry", Namespace: skillNamespace}}, Spec: authoring.Spec{Text: "Use the policy.", Rules: []core.Ref{{Name: "policy"}}}}
 	files := map[string][]byte{
 		projectPath: encodeResource(t, config),
 		rulePath:    encodeResource(t, rule),
@@ -52,9 +50,9 @@ func fixtureFiles(t *testing.T, revision, ruleText, skillNamespace string) *snap
 	return &snapshot.Snapshot{ID: revision, Provisional: revision == "", Files: files, Modes: modes}
 }
 
-func encodeResource(t *testing.T, value core.Resource) []byte {
+func encodeResource(t *testing.T, value authoring.Resource) []byte {
 	t.Helper()
-	b, err := format.Encode(value)
+	b, err := authoring.Encode(value)
 	if err != nil {
 		t.Fatal(err)
 	}

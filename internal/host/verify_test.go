@@ -3,6 +3,7 @@ package host
 import (
 	"errors"
 	"fmt"
+	"github.com/Glacius-Labs/Markitect/internal/host/authoring"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -21,7 +22,7 @@ func TestPlanVerifyCommandsRequiresExplicitNamedArgvChecks(t *testing.T) {
 		t.Fatalf("missing checks did not fail as incomplete graph-only evidence: %v", err)
 	}
 
-	for name, checks := range map[string][]core.Check{
+	for name, checks := range map[string][]authoring.Check{
 		"blank name":          {{Run: []string{"go", "version"}}},
 		"empty argv":          {{Name: "empty", Run: nil}},
 		"blank executable":    {{Name: "blank", Run: []string{"  "}}},
@@ -39,7 +40,7 @@ func TestPlanVerifyCommandsRequiresExplicitNamedArgvChecks(t *testing.T) {
 }
 
 func TestPlanVerifyCommandsPreservesDeclaredArgv(t *testing.T) {
-	checks := []core.Check{{Name: "literal-argv", Run: []string{"go", "test", "-run", "literal;$(text)"}}}
+	checks := []authoring.Check{{Name: "literal-argv", Run: []string{"go", "test", "-run", "literal;$(text)"}}}
 	commands, err := planVerifyCommands(checks)
 	if err != nil {
 		t.Fatal(err)
@@ -55,7 +56,7 @@ func TestVerifyRunsCheckAgainstMaterializedSnapshot(t *testing.T) {
 	}
 	checkSource := []byte("package main\nimport \"fmt\"\nfunc main() { fmt.Println(\"fixed snapshot marker\") }\n")
 	files := map[string][]byte{"scripts/verify-check.go": checkSource}
-	project := verifyProject(files, []core.Check{{Name: "snapshot-check", Run: []string{"go", "run", "scripts/verify-check.go"}}})
+	project := verifyProject(files, []authoring.Check{{Name: "snapshot-check", Run: []string{"go", "run", "scripts/verify-check.go"}}})
 	results, err := verifyRepositoryWithTimeout(project, 2*time.Minute)
 	if err != nil {
 		t.Fatalf("snapshot check failed: %v; results=%#v", err, results)
@@ -72,7 +73,7 @@ func TestVerifyRejectsProvisionalSnapshotAndMissingChecks(t *testing.T) {
 	if !errors.As(err, &verifyErr) || verifyErr.Kind != "incomplete-evidence" || !strings.Contains(err.Error(), "graph-only") {
 		t.Fatalf("empty check list was not reported as incomplete: %v", err)
 	}
-	p.Graph.Project.Spec.Checks = []core.Check{{Name: "simple", Run: []string{"go", "version"}}}
+	p.Graph.Project.Spec.Checks = []authoring.Check{{Name: "simple", Run: []string{"go", "version"}}}
 	p.Snapshot.Provisional = true
 	_, err = VerifyRepository(p)
 	if !errors.As(err, &verifyErr) || verifyErr.Kind != "incomplete-evidence" {
@@ -83,7 +84,7 @@ func TestVerifyRejectsProvisionalSnapshotAndMissingChecks(t *testing.T) {
 func TestVerifyDistinguishesMissingToolFromGateFailure(t *testing.T) {
 	pathDir := t.TempDir()
 	t.Setenv("PATH", pathDir)
-	p := verifyProject(nil, []core.Check{{Name: "unknown-command", Run: []string{"markitect-no-such-check-tool-20260930"}}})
+	p := verifyProject(nil, []authoring.Check{{Name: "unknown-command", Run: []string{"markitect-no-such-check-tool-20260930"}}})
 	results, err := verifyRepositoryWithTimeout(p, time.Second)
 	var verifyErr *VerifyError
 	if !errors.As(err, &verifyErr) || verifyErr.Kind != "tool-missing" || verifyErr.Gate != "unknown-command" || len(results) != 0 {
@@ -191,14 +192,14 @@ func TestVerifyCommandHelper(t *testing.T) {
 	}
 }
 
-func verifyProject(files map[string][]byte, checks []core.Check) *Project {
+func verifyProject(files map[string][]byte, checks []authoring.Check) *Project {
 	modes := make(map[string]string, len(files))
 	for name := range files {
 		modes[name] = "100644"
 	}
 	snapshot := &snapshot.Snapshot{ID: "fixed-test-revision", Files: files, Modes: modes}
-	project := &core.Resource{Kind: "Project", Metadata: core.Metadata{Name: "verification-fixture"}, Path: "markitect.yaml", Spec: core.Spec{Checks: checks}}
-	return &Project{Snapshot: snapshot, Graph: &core.Graph{Project: project}}
+	project := &authoring.Resource{Core: authoring.Core{Kind: "Project", Metadata: core.Metadata{Name: "verification-fixture"}, Path: "markitect.yaml"}, Spec: authoring.Spec{Checks: checks}}
+	return &Project{Snapshot: snapshot, Graph: &authoring.Graph{Project: project}}
 }
 
 func mustTestExecutable(t *testing.T) string {

@@ -2,13 +2,13 @@ package host
 
 import (
 	"fmt"
+	"github.com/Glacius-Labs/Markitect/internal/host/authoring"
 	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/internal/core"
 	"github.com/Glacius-Labs/Markitect/internal/core/snapshot"
 	"go.yaml.in/yaml/v3"
 )
@@ -173,7 +173,7 @@ func parallelWaveCommandAdapterProject(t *testing.T) (*Project, string, string) 
 	t.Setenv(parallelWaveApplyMarkEnv, applyMark)
 
 	project := projectResource(projectNS)
-	project.Spec.Adapters = []core.AdapterConfig{{
+	project.Spec.Adapters = []authoring.AdapterConfig{{
 		Name:    parallelWaveAdapterName,
 		Type:    "command",
 		Version: "fixture-v1",

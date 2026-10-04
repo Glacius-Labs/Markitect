@@ -2,6 +2,7 @@ package host
 
 import (
 	"bytes"
+	"github.com/Glacius-Labs/Markitect/internal/host/authoring"
 	"os"
 	"path/filepath"
 	"strings"
@@ -13,12 +14,10 @@ import (
 func TestInstalledPinsOutsideDeclaredAreaAreNotTypedResources(t *testing.T) {
 	root := installTestRepo(t, "feature/area-pins")
 	project := projectResource(projectNS)
-	project.Spec.Areas = []core.Area{{Name: "engineering", Path: ".markitect/areas/engineering"}}
-	rule := core.Resource{
-		APIVersion: core.APIVersion,
-		Kind:       "Rule",
-		Metadata:   core.Metadata{Name: "deployment", Namespace: "engineering"},
-		Spec:       core.Spec{Text: "Follow the deployment process."},
+	project.Spec.Areas = []authoring.Area{{Name: "engineering", Path: ".markitect/areas/engineering"}}
+	rule := authoring.Resource{Core: authoring.Core{APIVersion: core.APIVersion,
+		Kind:     "Rule",
+		Metadata: core.Metadata{Name: "deployment", Namespace: "engineering"}}, Spec: authoring.Spec{Text: "Follow the deployment process."},
 	}
 	writeFixture(t, root, map[string][]byte{
 		"markitect.yaml": encodeResource(t, project),

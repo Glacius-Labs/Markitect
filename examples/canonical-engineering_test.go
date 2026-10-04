@@ -10,8 +10,7 @@ import (
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/internal/host"
-	"github.com/Glacius-Labs/Markitect/internal/format"
-	"github.com/Glacius-Labs/Markitect/internal/render"
+	"github.com/Glacius-Labs/Markitect/internal/host/authoring"
 )
 
 func canonicalEngineeringRoot(t *testing.T) string {
@@ -86,7 +85,7 @@ func TestCanonicalEngineeringDomainsCompilePolicyContextAndViews(t *testing.T) {
 		t.Fatalf("compiled context omitted the structured software policy: %q", software)
 	}
 
-	outputs, err := render.Generate(project.Graph, project.Snapshot.Files)
+	outputs, err := host.GenerateOutputs(project)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -165,7 +164,7 @@ func TestCanonicalRenderPlanApplyVerifyRoundTrip(t *testing.T) {
 		t.Fatal(err)
 	}
 	if len(plan.Operations) == 0 {
-		outputs, renderErr := render.Generate(project.Graph, project.Snapshot.Files)
+		outputs, renderErr := host.GenerateOutputs(project)
 		if renderErr != nil {
 			t.Fatal(renderErr)
 		}
@@ -381,7 +380,7 @@ func TestCanonicalPolicyValueDrivesCheckContextAndHumanView(t *testing.T) {
 		t.Fatal("Module dependency unexpectedly passed the Core-only policy")
 	}
 
-	domain, err := format.ParseDomain("domains/software.yaml", domainOriginal)
+	domain, err := authoring.ParseDomain("domains/software.yaml", domainOriginal)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -395,7 +394,7 @@ func TestCanonicalPolicyValueDrivesCheckContextAndHumanView(t *testing.T) {
 	if !policyFound {
 		t.Fatal("test could not locate the canonical allowed-targets constraint")
 	}
-	changedPolicy, err := format.EncodeDomain(domain)
+	changedPolicy, err := authoring.EncodeDomain(domain)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -420,14 +419,14 @@ func TestCanonicalPolicyValueDrivesCheckContextAndHumanView(t *testing.T) {
 			selectedPolicy = input.Text
 		}
 	}
-	definition, err := format.ParseDomain("domains/software.yaml", []byte(selectedPolicy))
+	definition, err := authoring.ParseDomain("domains/software.yaml", []byte(selectedPolicy))
 	if err != nil {
 		t.Fatal(err)
 	}
 	if len(definition.Constraints) != 1 || len(definition.Constraints[0].Assert.Values) != 1 || definition.Constraints[0].Assert.Values[0] != "Module" {
 		t.Fatalf("Skill context does not contain the revised canonical assertion value: %#v", definition.Constraints)
 	}
-	outputs, err := render.Generate(updated.Graph, updated.Snapshot.Files)
+	outputs, err := host.GenerateOutputs(updated)
 	if err != nil {
 		t.Fatal(err)
 	}

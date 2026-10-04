@@ -1,6 +1,7 @@
 package host
 
 import (
+	"github.com/Glacius-Labs/Markitect/internal/host/authoring"
 	"reflect"
 	"testing"
 
@@ -107,21 +108,17 @@ func neutralityFixture(t *testing.T, id, sourceText string) *snapshot.Snapshot {
 	delete(snap.Files, skillPath)
 	delete(snap.Modes, skillPath)
 
-	text := core.Resource{
-		APIVersion: core.APIVersion,
-		Kind:       "Text",
-		Metadata:   core.Metadata{Name: "behavior", Namespace: projectNS},
-		Spec:       core.Spec{Text: "The worker has an attempt limit.", Files: []string{neutralitySourcePath}},
+	text := authoring.Resource{Core: authoring.Core{APIVersion: core.APIVersion,
+		Kind:     "Text",
+		Metadata: core.Metadata{Name: "behavior", Namespace: projectNS}}, Spec: authoring.Spec{Text: "The worker has an attempt limit.", Files: []string{neutralitySourcePath}},
 	}
-	workflow := core.Resource{
-		APIVersion: core.APIVersion,
-		Kind:       "Workflow",
-		Metadata:   core.Metadata{Name: "review", Namespace: projectNS},
-		Spec: core.Spec{
-			Text:  "Review the implementation against its documented behavior.",
-			Uses:  []core.Ref{{Kind: "Text", Name: "behavior"}},
-			Rules: []core.Ref{{Kind: "Rule", Name: "policy"}},
-		},
+	workflow := authoring.Resource{Core: authoring.Core{APIVersion: core.APIVersion,
+		Kind:     "Workflow",
+		Metadata: core.Metadata{Name: "review", Namespace: projectNS}}, Spec: authoring.Spec{
+		Text:  "Review the implementation against its documented behavior.",
+		Uses:  []core.Ref{{Kind: "Text", Name: "behavior"}},
+		Rules: []core.Ref{{Kind: "Rule", Name: "policy"}},
+	},
 	}
 	snap.Files[neutralityTextPath] = encodeResource(t, text)
 	snap.Files[neutralityWorkflowPath] = encodeResource(t, workflow)

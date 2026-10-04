@@ -6,8 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/internal/core"
-	"github.com/Glacius-Labs/Markitect/internal/format"
+	"github.com/Glacius-Labs/Markitect/internal/host/authoring"
 )
 
 func TestCheckDocumentationRoutersUsesSelectedSnapshot(t *testing.T) {
@@ -17,12 +16,12 @@ func TestCheckDocumentationRoutersUsesSelectedSnapshot(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	project, err := format.Parse("markitect.yaml", data)
+	project, err := authoring.Parse("markitect.yaml", data)
 	if err != nil {
 		t.Fatal(err)
 	}
-	project.Spec.Documentation = &core.Documentation{Roots: []string{"docs"}}
-	data, err = format.Encode(project)
+	project.Spec.Documentation = &authoring.Documentation{Roots: []string{"docs"}}
+	data, err = authoring.Encode(project)
 	if err != nil {
 		t.Fatal(err)
 	}

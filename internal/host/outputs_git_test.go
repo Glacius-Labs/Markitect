@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/internal/core"
-	"github.com/Glacius-Labs/Markitect/internal/format"
+	"github.com/Glacius-Labs/Markitect/internal/host/authoring"
 	"github.com/Glacius-Labs/Markitect/internal/infrastructure/source"
 )
 
@@ -51,15 +51,15 @@ func TestWriteOutputsRejectsDetachedHeadInAnyProject(t *testing.T) {
 
 func branchGuardFixtureFiles(t *testing.T) map[string][]byte {
 	t.Helper()
-	project := core.Resource{APIVersion: core.APIVersion, Kind: "Project", Metadata: core.Metadata{Name: "sample"}, Path: "markitect.yaml", Spec: core.Spec{
-		Targets: []string{"codex"}, Areas: []core.Area{{Name: "sample", Path: "resources/sample"}},
+	project := authoring.Resource{Core: authoring.Core{APIVersion: core.APIVersion, Kind: "Project", Metadata: core.Metadata{Name: "sample"}, Path: "markitect.yaml"}, Spec: authoring.Spec{
+		Targets: []string{"codex"}, Areas: []authoring.Area{{Name: "sample", Path: "resources/sample"}},
 	}}
-	skill := core.Resource{APIVersion: core.APIVersion, Kind: "Skill", Metadata: core.Metadata{Name: "entry", Namespace: "sample"}, Path: "resources/sample/skills/entry.yaml", Spec: core.Spec{Text: "Use the owner source."}}
-	projectBytes, err := format.Encode(project)
+	skill := authoring.Resource{Core: authoring.Core{APIVersion: core.APIVersion, Kind: "Skill", Metadata: core.Metadata{Name: "entry", Namespace: "sample"}, Path: "resources/sample/skills/entry.yaml"}, Spec: authoring.Spec{Text: "Use the owner source."}}
+	projectBytes, err := authoring.Encode(project)
 	if err != nil {
 		t.Fatal(err)
 	}
-	skillBytes, err := format.Encode(skill)
+	skillBytes, err := authoring.Encode(skill)
 	if err != nil {
 		t.Fatal(err)
 	}

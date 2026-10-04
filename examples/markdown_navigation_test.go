@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/Glacius-Labs/Markitect/internal/core/snapshot"
 	"github.com/Glacius-Labs/Markitect/internal/host"
-	"github.com/Glacius-Labs/Markitect/internal/render"
 )
 
 func TestMarkdownNavigationExampleRebasesHumanLinksAndPreservesCode(t *testing.T) {
@@ -28,7 +28,7 @@ func TestMarkdownNavigationExampleRebasesHumanLinksAndPreservesCode(t *testing.T
 		t.Fatalf("ordinary prose links changed the declared dependency graph: got %v, want %v", got, wantEdges)
 	}
 
-	outputs, err := render.Generate(project.Graph, project.Snapshot.Files)
+	outputs, err := host.GenerateOutputs(project)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -82,7 +82,11 @@ func TestMarkdownNavigationPrefersExistingUnmarkedOrdinaryAlias(t *testing.T) {
 	const alias = "docs/general/workflows/setup-workspace.md"
 	files[alias] = []byte("# Human-owned workflow alias\n")
 
-	outputs, err := render.Generate(project.Graph, files)
+	candidate, err := host.Parse(&snapshot.Snapshot{Files: files})
+	if err != nil {
+		t.Fatal(err)
+	}
+	outputs, err := host.GenerateOutputs(candidate)
 	if err != nil {
 		t.Fatal(err)
 	}

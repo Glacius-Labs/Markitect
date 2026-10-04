@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/Glacius-Labs/Markitect/internal/infrastructure/source"
-	"github.com/Glacius-Labs/Markitect/internal/render"
 )
 
 func WriteOutputs(root string, p *Project) ([]string, error) {
@@ -68,7 +67,7 @@ func writeOutputs(root string, p *Project, selected []string) ([]string, error) 
 			return nil, err
 		}
 	}
-	outputs, err := render.Generate(p.Graph, p.Snapshot.Files)
+	outputs, err := GenerateOutputs(p)
 	if err != nil {
 		return nil, err
 	}

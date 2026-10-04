@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/internal/host"
-	"github.com/Glacius-Labs/Markitect/internal/render"
 )
 
 func TestRepositoryLayoutExampleCompilesExplicitInputsAndNativeOutput(t *testing.T) {
@@ -50,7 +49,7 @@ func TestRepositoryLayoutExampleCompilesExplicitInputsAndNativeOutput(t *testing
 	if len(want) != 0 {
 		t.Fatalf("context omitted explicit typed or ordinary inputs: %v", want)
 	}
-	outputs, err := render.Generate(project.Graph, project.Snapshot.Files)
+	outputs, err := host.GenerateOutputs(project)
 	if err != nil {
 		t.Fatal(err)
 	}

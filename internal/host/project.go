@@ -11,15 +11,15 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/internal/core"
 	"github.com/Glacius-Labs/Markitect/internal/core/snapshot"
-	"github.com/Glacius-Labs/Markitect/internal/format"
+	"github.com/Glacius-Labs/Markitect/internal/host/authoring"
 	"github.com/Glacius-Labs/Markitect/internal/host/inputs"
 )
 
 // Project is one immutable input set and its resolved resources.
 type Project struct {
 	Snapshot    *snapshot.Snapshot
-	Graph       *core.Graph
-	Resources   []*core.Resource
+	Graph       *authoring.Graph
+	Resources   []*authoring.Resource
 	Inventory   []Entry
 	Diagnostics []core.Diagnostic
 	InputFiles  map[string][]string
@@ -50,7 +50,7 @@ func Parse(snap *snapshot.Snapshot) (*Project, error) {
 	if !ok {
 		return nil, fmt.Errorf("markitect.yaml is missing from the selected source; use inventory to inspect existing Markdown and init to preview a new Project with an explicit area")
 	}
-	config, err := format.Parse("markitect.yaml", data)
+	config, err := authoring.Parse("markitect.yaml", data)
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +84,7 @@ func Parse(snap *snapshot.Snapshot) (*Project, error) {
 		if !scoped {
 			continue
 		}
-		r, err := format.ParseWithRegistry(name, snap.Files[name], registry)
+		r, err := authoring.ParseWithRegistry(name, snap.Files[name], registry)
 		if err != nil {
 			parseFindings = append(parseFindings, core.Diagnostic{Code: "parse", Path: name, Message: err.Error()})
 			continue
@@ -103,20 +103,24 @@ func Parse(snap *snapshot.Snapshot) (*Project, error) {
 			declaredFiles[file] = true
 		}
 	}
-	typedPaths := map[string]*core.Resource{}
+	typedPaths := map[string]*authoring.Resource{}
 	for _, resource := range p.Resources {
 		if resource.Kind != "Project" && resource.Kind != "Package" {
 			typedPaths[inputKey(resource.Package, resource.Path)] = resource
 		}
 	}
 	for _, diagnostic := range parseFindings {
-		if !declaredFiles[diagnostic.Path] || format.IsResourceEnvelopeWithRegistry(snap.Files[diagnostic.Path], registry) {
+		if !declaredFiles[diagnostic.Path] || authoring.IsResourceEnvelopeWithRegistry(snap.Files[diagnostic.Path], registry) {
 			p.Diagnostics = append(p.Diagnostics, diagnostic)
 		}
 	}
-	p.Graph = core.BuildWithRegistry(p.Resources, registry)
+	p.Graph = authoring.BuildWithRegistry(p.Resources, registry)
 	p.Diagnostics = append(p.Diagnostics, p.Graph.Diagnostics...)
-	resolved, findings := inputs.ResolveWithPackages(p.Graph, snap.Files, p.PackageFiles)
+	scope, scopeErr := projectionScope(p)
+	if scopeErr != nil {
+		p.Diagnostics = append(p.Diagnostics, core.Diagnostic{Code: "input.generated-path", Path: config.Path, Message: fmt.Sprintf("resolve generated output paths: %v", scopeErr)})
+	}
+	resolved, findings := inputs.ResolveWithPackages(p.Graph, snap.Files, p.PackageFiles, scope)
 	p.InputFiles = resolved
 	p.Diagnostics = append(p.Diagnostics, findings...)
 	for key, files := range resolved {
@@ -150,7 +154,7 @@ func (p *Project) fileBytes(origin, name string) []byte {
 	return p.Snapshot.Files[name]
 }
 
-func (p *Project) resourceBytes(r *core.Resource) []byte {
+func (p *Project) resourceBytes(r *authoring.Resource) []byte {
 	return p.fileBytes(r.Package, r.Path)
 }
 
@@ -170,8 +174,8 @@ func (p *Project) StructuralDiagnostics() []core.Diagnostic {
 		return nil
 	}
 	failed := map[core.PolicyResultRef]bool{}
-	if p.Graph != nil {
-		for _, result := range p.Graph.PolicyResults {
+	if p.Graph != nil && p.Graph.Core != nil {
+		for _, result := range p.Graph.Core.PolicyResults {
 			if result.Status == core.PolicyFailed {
 				failed[core.PolicyResultRef{APIVersion: result.APIVersion, Constraint: result.Constraint, Subject: result.Subject}] = true
 			}
@@ -206,7 +210,7 @@ func inputKey(origin, name string) string {
 	return "file:" + name
 }
 
-func (p *Project) exported(r *core.Resource) bool {
+func (p *Project) exported(r *authoring.Resource) bool {
 	if r == nil {
 		return false
 	}
@@ -217,7 +221,7 @@ func (p *Project) exported(r *core.Resource) bool {
 }
 
 // markitectResourceEnvelope uses the shared strict envelope boundary.
-func markitectResourceEnvelope(data []byte) bool { return format.IsResourceEnvelope(data) }
+func markitectResourceEnvelope(data []byte) bool { return authoring.IsResourceEnvelope(data) }
 
 func Hash(b []byte) string { h := sha256.Sum256(b); return "sha256:" + hex.EncodeToString(h[:]) }
 func Within(name, root string) bool {

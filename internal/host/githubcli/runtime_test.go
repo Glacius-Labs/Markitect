@@ -5,8 +5,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/internal/app"
 	"github.com/Glacius-Labs/Markitect/internal/core"
+	"github.com/Glacius-Labs/Markitect/internal/host"
 	"go.yaml.in/yaml/v3"
 )
 
@@ -20,8 +20,8 @@ func TestRunReadsOnlyMappedCaptureAndEmitsApplicationResult(t *testing.T) {
 	if err := os.WriteFile("evidence/repository.json", data, 0600); err != nil {
 		t.Fatal(err)
 	}
-	request := app.AdapterRequest{APIVersion: app.AdapterRequestVersion, Action: "observe", Adapter: app.AdapterIdentity{Name: "github-repository-metadata", Type: "command", Version: "v0.1.0", Parameters: map[string]any{"repositories": []any{map[string]any{"resource": key, "evidenceFile": "evidence/repository.json"}}}}, Model: core.SemanticModel{APIVersion: "markitect.example.org/semantic-model/v1alpha1", ModelDigest: "model", ValidationStatus: "passed", Resources: []core.ModelResource{{Identity: core.ModelIdentity{Key: key, Kind: "Repository"}, Data: map[string]any{"fullName": "Glacius-Labs/Markitect", "defaultBranch": "main"}}}}}
-	input, err := app.YAML(request)
+	request := host.AdapterRequest{APIVersion: host.AdapterRequestVersion, Action: "observe", Adapter: host.AdapterIdentity{Name: "github-repository-metadata", Type: "command", Version: "v0.1.0", Parameters: map[string]any{"repositories": []any{map[string]any{"resource": key, "evidenceFile": "evidence/repository.json"}}}}, Model: core.SemanticModel{APIVersion: "markitect.example.org/semantic-model/v1alpha1", ModelDigest: "model", ValidationStatus: "passed", Resources: []core.ModelResource{{Identity: core.ModelIdentity{Key: key, Kind: "Repository"}, Data: map[string]any{"fullName": "Glacius-Labs/Markitect", "defaultBranch": "main"}}}}}
+	input, err := host.YAML(request)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -29,7 +29,7 @@ func TestRunReadsOnlyMappedCaptureAndEmitsApplicationResult(t *testing.T) {
 	if code := Run(bytes.NewReader(input), &output, &bytes.Buffer{}); code != 0 {
 		t.Fatalf("exit code %d: %s", code, output.String())
 	}
-	var result app.AdapterResult
+	var result host.AdapterResult
 	if err := yaml.Unmarshal(output.Bytes(), &result); err != nil {
 		t.Fatal(err)
 	}
@@ -70,7 +70,7 @@ func TestMalformedProtocolReturnsStructuredFailureAndExitTwo(t *testing.T) {
 	if code := Run(bytes.NewBufferString("not: [yaml"), &output, &bytes.Buffer{}); code != 2 {
 		t.Fatalf("exit code = %d", code)
 	}
-	var result app.AdapterResult
+	var result host.AdapterResult
 	if err := yaml.Unmarshal(output.Bytes(), &result); err != nil {
 		t.Fatal(err)
 	}

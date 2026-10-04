@@ -2,8 +2,6 @@ package host
 
 import (
 	"testing"
-
-	"github.com/Glacius-Labs/Markitect/internal/render"
 )
 
 func TestCheckOutputsDoesNotTreatGeneratedSchemaYAMLAsOwnedOutput(t *testing.T) {
@@ -12,7 +10,7 @@ func TestCheckOutputsDoesNotTreatGeneratedSchemaYAMLAsOwnedOutput(t *testing.T) 
 	if err != nil {
 		t.Fatal(err)
 	}
-	generated, err := render.Generate(p.Graph, p.Snapshot.Files)
+	generated, err := GenerateOutputs(p)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -43,7 +41,7 @@ func TestCheckOutputsRejectsOrphanedAggregateRuleAdapter(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	generated, err := render.Generate(p.Graph, p.Snapshot.Files)
+	generated, err := GenerateOutputs(p)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -2,13 +2,13 @@ package host
 
 import (
 	"bytes"
+	"github.com/Glacius-Labs/Markitect/internal/host/authoring"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/internal/core"
-	"github.com/Glacius-Labs/Markitect/internal/render"
 )
 
 func TestCheckOutputsReportsMissingAndDrift(t *testing.T) {
@@ -17,7 +17,7 @@ func TestCheckOutputsReportsMissingAndDrift(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	generated, err := render.Generate(p.Graph, p.Snapshot.Files)
+	generated, err := GenerateOutputs(p)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -91,7 +91,7 @@ func TestWriteOutputsRefusesSourceAddedAfterCapture(t *testing.T) {
 	root := tempRoot(t)
 	initAppTestRepo(t, root)
 	p := loadFixture(t, root)
-	newSource := core.Resource{APIVersion: core.APIVersion, Kind: "Text", Metadata: core.Metadata{Name: "added", Namespace: projectNS}, Spec: core.Spec{Text: "Added after capture."}}
+	newSource := authoring.Resource{Core: authoring.Core{APIVersion: core.APIVersion, Kind: "Text", Metadata: core.Metadata{Name: "added", Namespace: projectNS}}, Spec: authoring.Spec{Text: "Added after capture."}}
 	writeFixture(t, root, map[string][]byte{"docs/general/added.yaml": encodeResource(t, newSource)})
 	if _, err := WriteOutputs(root, p); err == nil || !strings.Contains(err.Error(), "inventory changed since capture") {
 		t.Fatalf("WriteOutputs error = %v, want changed-inventory refusal", err)

@@ -1,6 +1,7 @@
 package host
 
 import (
+	"github.com/Glacius-Labs/Markitect/internal/host/authoring"
 	"strings"
 	"testing"
 
@@ -39,10 +40,10 @@ spec:
 	if err != nil {
 		t.Fatal(err)
 	}
-	pin := core.PackagePin{Name: "architecture", Version: "1.0.0", Source: "fixture:architecture-v1", Archive: "packages/architecture.zip", SHA256: strings.TrimPrefix(Hash(archive), "sha256:")}
-	config := core.Resource{APIVersion: core.APIVersion, Kind: "Project", Metadata: core.Metadata{Name: "consumer"}, Spec: core.Spec{
+	pin := authoring.PackagePin{Name: "architecture", Version: "1.0.0", Source: "fixture:architecture-v1", Archive: "packages/architecture.zip", SHA256: strings.TrimPrefix(Hash(archive), "sha256:")}
+	config := authoring.Resource{Core: authoring.Core{APIVersion: core.APIVersion, Kind: "Project", Metadata: core.Metadata{Name: "consumer"}}, Spec: authoring.Spec{
 		Domains:  []string{"domains/software.yaml", "package:architecture/domains/software.yaml"},
-		Packages: []core.PackagePin{pin}, Areas: []core.Area{{Name: "engineering", Path: "resources"}},
+		Packages: []authoring.PackagePin{pin}, Areas: []authoring.Area{{Name: "engineering", Path: "resources"}},
 	}}
 	s.Files["markitect.yaml"] = encodeResource(t, config)
 	s.Files[pin.Archive] = archive

@@ -221,7 +221,7 @@ func TestSameTargetContextCarriesComparisonWithoutIncludingPathResources(t *test
 	model.PolicyResults[policyIndex].Comparison.Left.Steps[0].Relation = "mutated"
 	ctx.PolicyResults[0].Comparison.Left.Relations[0] = "context-mutated"
 	graphTrace := ""
-	for _, result := range p.Graph.PolicyResults {
+	for _, result := range p.Graph.Core.PolicyResults {
 		if result.Constraint == "feature-module-agrees" && result.Subject == useCase {
 			graphTrace = result.Comparison.Left.Relations[0]
 		}

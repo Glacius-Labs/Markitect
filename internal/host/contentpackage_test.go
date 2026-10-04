@@ -8,21 +8,20 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/internal/core"
 	"github.com/Glacius-Labs/Markitect/internal/core/snapshot"
-	"github.com/Glacius-Labs/Markitect/internal/format"
+	"github.com/Glacius-Labs/Markitect/internal/host/authoring"
 	"github.com/Glacius-Labs/Markitect/internal/host/authoring/contentpackage"
-	"github.com/Glacius-Labs/Markitect/internal/render"
 )
 
 func packageSourceFixture(t *testing.T, text string) map[string][]byte {
 	t.Helper()
-	manifest := core.Resource{APIVersion: core.APIVersion, Kind: "Package", Metadata: core.Metadata{Name: "review-kit"}, Spec: core.Spec{
-		Version: "1.0.0", Areas: []core.Area{{Name: "shared", Path: "docs"}},
+	manifest := authoring.Resource{Core: authoring.Core{APIVersion: core.APIVersion, Kind: "Package", Metadata: core.Metadata{Name: "review-kit"}}, Spec: authoring.Spec{
+		Version: "1.0.0", Areas: []authoring.Area{{Name: "shared", Path: "docs"}},
 		Exports: []core.Ref{{Namespace: "shared", Kind: "Workflow", Name: "review"}},
 	}}
-	flow := core.Resource{APIVersion: core.APIVersion, Kind: "Workflow", Metadata: core.Metadata{Namespace: "shared", Name: "review"}, Spec: core.Spec{
+	flow := authoring.Resource{Core: authoring.Core{APIVersion: core.APIVersion, Kind: "Workflow", Metadata: core.Metadata{Namespace: "shared", Name: "review"}}, Spec: authoring.Spec{
 		Text: "Review the declared input.", Uses: []core.Ref{{Kind: "Text", Name: "notes"}},
 	}}
-	notes := core.Resource{APIVersion: core.APIVersion, Kind: "Text", Metadata: core.Metadata{Namespace: "shared", Name: "notes"}, Spec: core.Spec{
+	notes := authoring.Resource{Core: authoring.Core{APIVersion: core.APIVersion, Kind: "Text", Metadata: core.Metadata{Namespace: "shared", Name: "notes"}}, Spec: authoring.Spec{
 		Text: text, Files: []string{"docs/input.txt"},
 	}}
 	return map[string][]byte{
@@ -37,14 +36,14 @@ func packageConsumerFixture(t *testing.T, text string) *Project {
 	if err != nil {
 		t.Fatal(err)
 	}
-	pin := core.PackagePin{Name: "review-kit", Version: "1.0.0", Source: "urn:example:review-kit:1.0.0", Archive: "packages/review-kit.zip", SHA256: strings.TrimPrefix(Hash(archive), "sha256:")}
-	project := core.Resource{APIVersion: core.APIVersion, Kind: "Project", Metadata: core.Metadata{Name: "consumer"}, Spec: core.Spec{
-		Packages: []core.PackagePin{pin}, Areas: []core.Area{{Name: "shared", Path: "docs"}}, Targets: []string{"codex"},
+	pin := authoring.PackagePin{Name: "review-kit", Version: "1.0.0", Source: "urn:example:review-kit:1.0.0", Archive: "packages/review-kit.zip", SHA256: strings.TrimPrefix(Hash(archive), "sha256:")}
+	project := authoring.Resource{Core: authoring.Core{APIVersion: core.APIVersion, Kind: "Project", Metadata: core.Metadata{Name: "consumer"}}, Spec: authoring.Spec{
+		Packages: []authoring.PackagePin{pin}, Areas: []authoring.Area{{Name: "shared", Path: "docs"}}, Targets: []string{"codex"},
 	}}
-	skill := core.Resource{APIVersion: core.APIVersion, Kind: "Skill", Metadata: core.Metadata{Namespace: "shared", Name: "entry"}, Spec: core.Spec{
+	skill := authoring.Resource{Core: authoring.Core{APIVersion: core.APIVersion, Kind: "Skill", Metadata: core.Metadata{Namespace: "shared", Name: "entry"}}, Spec: authoring.Spec{
 		Text: "Use the reviewed package workflow.", Description: "Review an input.", Uses: []core.Ref{{Package: "review-kit", Namespace: "shared", Kind: "Workflow", Name: "review"}},
 	}}
-	localNotes := core.Resource{APIVersion: core.APIVersion, Kind: "Text", Metadata: core.Metadata{Namespace: "shared", Name: "notes"}, Spec: core.Spec{Text: "Unrelated local resource."}}
+	localNotes := authoring.Resource{Core: authoring.Core{APIVersion: core.APIVersion, Kind: "Text", Metadata: core.Metadata{Namespace: "shared", Name: "notes"}}, Spec: authoring.Spec{Text: "Unrelated local resource."}}
 	files := map[string][]byte{
 		"markitect.yaml": encodeResource(t, project), pin.Archive: archive,
 		"docs/entry.yaml": encodeResource(t, skill), "docs/notes.yaml": encodeResource(t, localNotes),
@@ -61,7 +60,7 @@ func packageConsumerFixture(t *testing.T, text string) *Project {
 	if len(p.Diagnostics) != 0 {
 		t.Fatalf("package fixture diagnostics: %#v", p.Diagnostics)
 	}
-	outputs, err := render.Generate(p.Graph, p.Snapshot.Files)
+	outputs, err := GenerateOutputs(p)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -194,8 +193,8 @@ func TestPackContentUsesFixedSnapshotAndIncludesOnlyDeclaredInputs(t *testing.T)
 		t.Fatal("provisional pack accepted")
 	}
 	snapshot.Provisional = false
-	bad := core.Resource{APIVersion: core.APIVersion, Kind: "Workflow", Metadata: core.Metadata{Name: "review", Namespace: "shared"}, Spec: core.Spec{Text: "Missing dependency.", Uses: []core.Ref{{Kind: "Text", Name: "missing"}}}}
-	files["docs/review.yaml"], err = format.Encode(bad)
+	bad := authoring.Resource{Core: authoring.Core{APIVersion: core.APIVersion, Kind: "Workflow", Metadata: core.Metadata{Name: "review", Namespace: "shared"}}, Spec: authoring.Spec{Text: "Missing dependency.", Uses: []core.Ref{{Kind: "Text", Name: "missing"}}}}
+	files["docs/review.yaml"], err = authoring.Encode(bad)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -206,29 +205,29 @@ func TestPackContentUsesFixedSnapshotAndIncludesOnlyDeclaredInputs(t *testing.T)
 
 func TestPackContentResolvesPrivatePackageBinding(t *testing.T) {
 	files := packageSourceFixture(t, "Review notes.")
-	manifest, err := format.Parse("markitect-package.yaml", files["markitect-package.yaml"])
+	manifest, err := authoring.Parse("markitect-package.yaml", files["markitect-package.yaml"])
 	if err != nil {
 		t.Fatal(err)
 	}
 	contractRef := core.Ref{Kind: "Contract", Namespace: "shared", Name: "assessment"}
 	implementationRef := core.Ref{Kind: "Workflow", Namespace: "shared", Name: "assessor"}
-	manifest.Spec.Bindings = []core.Binding{{Contract: contractRef, Implementation: implementationRef}}
+	manifest.Spec.Bindings = []authoring.Binding{{Contract: contractRef, Implementation: implementationRef}}
 	files[manifest.Path] = encodeResource(t, *manifest)
-	entry, err := format.Parse("docs/review.yaml", files["docs/review.yaml"])
+	entry, err := authoring.Parse("docs/review.yaml", files["docs/review.yaml"])
 	if err != nil {
 		t.Fatal(err)
 	}
 	entry.Spec.Needs = []core.Ref{contractRef}
 	files[entry.Path] = encodeResource(t, *entry)
-	contract := core.Resource{APIVersion: core.APIVersion, Kind: "Contract", Metadata: core.Metadata{Namespace: "shared", Name: "assessment"}, Spec: core.Spec{Text: "Assess an input.", Kind: "Workflow", Input: []string{"change"}, Output: []string{"findings"}}}
-	implementation := core.Resource{APIVersion: core.APIVersion, Kind: "Workflow", Metadata: core.Metadata{Namespace: "shared", Name: "assessor"}, Spec: core.Spec{Text: "Assess the supplied change.", Input: []string{"change"}, Output: []string{"findings"}, Implements: []core.Ref{contractRef}}}
+	contract := authoring.Resource{Core: authoring.Core{APIVersion: core.APIVersion, Kind: "Contract", Metadata: core.Metadata{Namespace: "shared", Name: "assessment"}}, Spec: authoring.Spec{Text: "Assess an input.", Kind: "Workflow", Input: []string{"change"}, Output: []string{"findings"}}}
+	implementation := authoring.Resource{Core: authoring.Core{APIVersion: core.APIVersion, Kind: "Workflow", Metadata: core.Metadata{Namespace: "shared", Name: "assessor"}}, Spec: authoring.Spec{Text: "Assess the supplied change.", Input: []string{"change"}, Output: []string{"findings"}, Implements: []core.Ref{contractRef}}}
 	files["docs/assessment.yaml"] = encodeResource(t, contract)
 	files["docs/assessor.yaml"] = encodeResource(t, implementation)
 	archive, pin, err := PackContent(&snapshot.Snapshot{ID: strings.Repeat("c", 40), Files: files}, "git:"+strings.Repeat("c", 40))
 	if err != nil {
 		t.Fatal(err)
 	}
-	config := core.Resource{APIVersion: core.APIVersion, Kind: "Project", Metadata: core.Metadata{Name: "consumer"}, Spec: core.Spec{Packages: []core.PackagePin{pin}}}
+	config := authoring.Resource{Core: authoring.Core{APIVersion: core.APIVersion, Kind: "Project", Metadata: core.Metadata{Name: "consumer"}}, Spec: authoring.Spec{Packages: []authoring.PackagePin{pin}}}
 	p, err := Parse(&snapshot.Snapshot{ID: strings.Repeat("d", 40), Files: map[string][]byte{"markitect.yaml": encodeResource(t, config), pin.Archive: archive}})
 	if err != nil {
 		t.Fatal(err)

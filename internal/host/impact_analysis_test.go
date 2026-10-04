@@ -7,7 +7,7 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/internal/core"
 	"github.com/Glacius-Labs/Markitect/internal/core/snapshot"
-	"github.com/Glacius-Labs/Markitect/internal/format"
+	"github.com/Glacius-Labs/Markitect/internal/host/authoring"
 	"github.com/Glacius-Labs/Markitect/internal/host/authoring/contentpackage"
 )
 
@@ -260,13 +260,13 @@ func TestAnalyzeImpactReportsPolicyStatusTransitions(t *testing.T) {
 	baseProject := parsePolicyImpactProject(t, passed)
 	failedProject := parsePolicyImpactProject(t, failed)
 	var finding corePolicyResult
-	for _, result := range failedProject.Graph.PolicyResults {
+	for _, result := range failedProject.Graph.Core.PolicyResults {
 		if result.Status == "failed" && strings.HasSuffix(result.Subject, "/Module/orders") {
 			finding = corePolicyResult{api: result.APIVersion, constraint: result.Constraint, subject: result.Subject, constraintDigest: result.ConstraintDigest, subjectDigest: result.SubjectDigest}
 		}
 	}
 	if finding.subject == "" {
-		t.Fatalf("fixture has no failed policy result: %+v", failedProject.Graph.PolicyResults)
+		t.Fatalf("fixture has no failed policy result: %+v", failedProject.Graph.Core.PolicyResults)
 	}
 	config := string(waived.Files["markitect.yaml"])
 	config = strings.Replace(config, "spec:\n", "spec:\n  policyExceptions:\n    - name: temporary-orders-waiver\n      apiVersion: "+finding.api+"\n      constraint: "+finding.constraint+"\n      subject: \""+finding.subject+"\"\n      constraintDigest: "+finding.constraintDigest+"\n      subjectDigest: "+finding.subjectDigest+"\n      rationale: test explicit waiver\n      owner: test owner\n      decision: test decision\n", 1)
@@ -354,18 +354,18 @@ spec: {text: Packaged engineering contract.}
 	if err != nil {
 		t.Fatal(err)
 	}
-	pin := core.PackagePin{Name: "architecture", Version: version, Source: source, Archive: "packages/architecture.zip", SHA256: strings.TrimPrefix(Hash(archive), "sha256:")}
-	project := core.Resource{APIVersion: core.APIVersion, Kind: "Project", Metadata: core.Metadata{Name: "package-impact"}, Spec: core.Spec{
+	pin := authoring.PackagePin{Name: "architecture", Version: version, Source: source, Archive: "packages/architecture.zip", SHA256: strings.TrimPrefix(Hash(archive), "sha256:")}
+	project := authoring.Resource{Core: authoring.Core{APIVersion: core.APIVersion, Kind: "Project", Metadata: core.Metadata{Name: "package-impact"}}, Spec: authoring.Spec{
 		Domains:  []string{"package:architecture/domains/architecture.yaml"},
-		Areas:    []core.Area{{Name: "engineering", Path: "resources"}},
-		Packages: []core.PackagePin{pin},
+		Areas:    []authoring.Area{{Name: "engineering", Path: "resources"}},
+		Packages: []authoring.PackagePin{pin},
 	}}
 	module := `apiVersion: architecture.example.org/v1
 kind: Module
 metadata: {name: orders, namespace: engineering}
 spec: {intent: changed}
 `
-	projectBytes, err := format.Encode(project)
+	projectBytes, err := authoring.Encode(project)
 	if err != nil {
 		t.Fatal(err)
 	}

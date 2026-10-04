@@ -7,7 +7,7 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/internal/core"
 	"github.com/Glacius-Labs/Markitect/internal/core/snapshot"
-	"github.com/Glacius-Labs/Markitect/internal/format"
+	"github.com/Glacius-Labs/Markitect/internal/host/authoring"
 )
 
 // TestAuthoringScenarioImpactOracle keeps a synthetic multi-area graph as an
@@ -124,9 +124,9 @@ type authoringChange struct{ localRule, sharedRule, removeSkillRule, bindingChan
 
 func authoringProject(tb testing.TB, revision string, change authoringChange) *Project {
 	tb.Helper()
-	project := core.Resource{APIVersion: core.APIVersion, Kind: "Project", Metadata: core.Metadata{Name: "sample"}, Path: "markitect.yaml", Spec: core.Spec{
-		Areas:    []core.Area{{Name: "shared", Path: "docs/shared"}, {Name: "alpha", Path: "docs/alpha", Imports: []string{"shared"}, Rules: []core.Ref{{Kind: "Rule", Name: "shared-policy", Namespace: "shared"}}}, {Name: "beta", Path: "docs/beta", Imports: []string{"shared"}, Rules: []core.Ref{{Kind: "Rule", Name: "shared-policy", Namespace: "shared"}}}},
-		Bindings: []core.Binding{{Contract: core.Ref{Kind: "Contract", Name: "rollback-review", Namespace: "alpha"}, Implementation: core.Ref{Kind: "Agent", Name: "rollback-reviewer", Namespace: "alpha"}}},
+	project := authoring.Resource{Core: authoring.Core{APIVersion: core.APIVersion, Kind: "Project", Metadata: core.Metadata{Name: "sample"}, Path: "markitect.yaml"}, Spec: authoring.Spec{
+		Areas:    []authoring.Area{{Name: "shared", Path: "docs/shared"}, {Name: "alpha", Path: "docs/alpha", Imports: []string{"shared"}, Rules: []core.Ref{{Kind: "Rule", Name: "shared-policy", Namespace: "shared"}}}, {Name: "beta", Path: "docs/beta", Imports: []string{"shared"}, Rules: []core.Ref{{Kind: "Rule", Name: "shared-policy", Namespace: "shared"}}}},
+		Bindings: []authoring.Binding{{Contract: core.Ref{Kind: "Contract", Name: "rollback-review", Namespace: "alpha"}, Implementation: core.Ref{Kind: "Agent", Name: "rollback-reviewer", Namespace: "alpha"}}},
 	}}
 	sharedText, localText := "Require rollback evidence.", "Keep rollback scoped."
 	if change.sharedRule {
@@ -138,28 +138,28 @@ func authoringProject(tb testing.TB, revision string, change authoringChange) *P
 	if change.bindingChange {
 		project.Spec.Bindings[0].Implementation = core.Ref{Kind: "Agent", Name: "alternate-reviewer", Namespace: "alpha"}
 	}
-	resources := []*core.Resource{
+	resources := []*authoring.Resource{
 		&project,
-		{APIVersion: core.APIVersion, Kind: "Rule", Metadata: core.Metadata{Name: "shared-policy", Namespace: "shared"}, Path: "docs/shared/rules/shared-policy.yaml", Spec: core.Spec{Text: sharedText}},
-		{APIVersion: core.APIVersion, Kind: "Rule", Metadata: core.Metadata{Name: "local-policy", Namespace: "alpha"}, Path: "docs/alpha/rules/local-policy.yaml", Spec: core.Spec{Text: localText}},
-		{APIVersion: core.APIVersion, Kind: "Rule", Metadata: core.Metadata{Name: "local-policy", Namespace: "beta"}, Path: "docs/beta/rules/local-policy.yaml", Spec: core.Spec{Text: "Keep beta isolated."}},
-		{APIVersion: core.APIVersion, Kind: "Contract", Metadata: core.Metadata{Name: "rollback-review", Namespace: "alpha"}, Path: "docs/alpha/contracts/rollback-review.yaml", Spec: core.Spec{Text: "Review a rollback.", Kind: "Agent", Input: []string{"change"}, Output: []string{"findings"}}},
-		{APIVersion: core.APIVersion, Kind: "Agent", Metadata: core.Metadata{Name: "rollback-reviewer", Namespace: "alpha"}, Path: "docs/alpha/agents/rollback-reviewer.yaml", Spec: core.Spec{Text: "Assess rollback risk.", Implements: []core.Ref{{Kind: "Contract", Name: "rollback-review"}}, Input: []string{"change"}, Output: []string{"findings"}}},
-		{APIVersion: core.APIVersion, Kind: "Agent", Metadata: core.Metadata{Name: "alternate-reviewer", Namespace: "alpha"}, Path: "docs/alpha/agents/alternate-reviewer.yaml", Spec: core.Spec{Text: "Alternative implementation.", Implements: []core.Ref{{Kind: "Contract", Name: "rollback-review"}}, Input: []string{"change"}, Output: []string{"findings"}}},
+		{Core: authoring.Core{APIVersion: core.APIVersion, Kind: "Rule", Metadata: core.Metadata{Name: "shared-policy", Namespace: "shared"}, Path: "docs/shared/rules/shared-policy.yaml"}, Spec: authoring.Spec{Text: sharedText}},
+		{Core: authoring.Core{APIVersion: core.APIVersion, Kind: "Rule", Metadata: core.Metadata{Name: "local-policy", Namespace: "alpha"}, Path: "docs/alpha/rules/local-policy.yaml"}, Spec: authoring.Spec{Text: localText}},
+		{Core: authoring.Core{APIVersion: core.APIVersion, Kind: "Rule", Metadata: core.Metadata{Name: "local-policy", Namespace: "beta"}, Path: "docs/beta/rules/local-policy.yaml"}, Spec: authoring.Spec{Text: "Keep beta isolated."}},
+		{Core: authoring.Core{APIVersion: core.APIVersion, Kind: "Contract", Metadata: core.Metadata{Name: "rollback-review", Namespace: "alpha"}, Path: "docs/alpha/contracts/rollback-review.yaml"}, Spec: authoring.Spec{Text: "Review a rollback.", Kind: "Agent", Input: []string{"change"}, Output: []string{"findings"}}},
+		{Core: authoring.Core{APIVersion: core.APIVersion, Kind: "Agent", Metadata: core.Metadata{Name: "rollback-reviewer", Namespace: "alpha"}, Path: "docs/alpha/agents/rollback-reviewer.yaml"}, Spec: authoring.Spec{Text: "Assess rollback risk.", Implements: []core.Ref{{Kind: "Contract", Name: "rollback-review"}}, Input: []string{"change"}, Output: []string{"findings"}}},
+		{Core: authoring.Core{APIVersion: core.APIVersion, Kind: "Agent", Metadata: core.Metadata{Name: "alternate-reviewer", Namespace: "alpha"}, Path: "docs/alpha/agents/alternate-reviewer.yaml"}, Spec: authoring.Spec{Text: "Alternative implementation.", Implements: []core.Ref{{Kind: "Contract", Name: "rollback-review"}}, Input: []string{"change"}, Output: []string{"findings"}}},
 	}
-	alphaSkill := core.Resource{APIVersion: core.APIVersion, Kind: "Skill", Metadata: core.Metadata{Name: "rollback-review", Namespace: "alpha"}, Path: "docs/alpha/skills/rollback-review.yaml", Spec: core.Spec{Text: "Review rollback changes."}}
+	alphaSkill := authoring.Resource{Core: authoring.Core{APIVersion: core.APIVersion, Kind: "Skill", Metadata: core.Metadata{Name: "rollback-review", Namespace: "alpha"}, Path: "docs/alpha/skills/rollback-review.yaml"}, Spec: authoring.Spec{Text: "Review rollback changes."}}
 	if !change.removeSkillRule {
 		alphaSkill.Spec.Rules = []core.Ref{{Kind: "Rule", Name: "local-policy"}}
 	}
 	resources = append(resources, &alphaSkill)
 	resources = append(resources,
-		&core.Resource{APIVersion: core.APIVersion, Kind: "Workflow", Metadata: core.Metadata{Name: "rollback-flow", Namespace: "alpha"}, Path: "docs/alpha/workflows/rollback-flow.yaml", Spec: core.Spec{Text: "Run the review.", Uses: []core.Ref{{Kind: "Skill", Name: "rollback-review"}}, Needs: []core.Ref{{Kind: "Contract", Name: "rollback-review"}}}},
-		&core.Resource{APIVersion: core.APIVersion, Kind: "Skill", Metadata: core.Metadata{Name: "beta-review", Namespace: "beta"}, Path: "docs/beta/skills/beta-review.yaml", Spec: core.Spec{Text: "Beta review."}},
-		&core.Resource{APIVersion: core.APIVersion, Kind: "Workflow", Metadata: core.Metadata{Name: "beta-flow", Namespace: "beta"}, Path: "docs/beta/workflows/beta-flow.yaml", Spec: core.Spec{Text: "Beta flow.", Uses: []core.Ref{{Kind: "Skill", Name: "beta-review"}}}},
+		&authoring.Resource{Core: authoring.Core{APIVersion: core.APIVersion, Kind: "Workflow", Metadata: core.Metadata{Name: "rollback-flow", Namespace: "alpha"}, Path: "docs/alpha/workflows/rollback-flow.yaml"}, Spec: authoring.Spec{Text: "Run the review.", Uses: []core.Ref{{Kind: "Skill", Name: "rollback-review"}}, Needs: []core.Ref{{Kind: "Contract", Name: "rollback-review"}}}},
+		&authoring.Resource{Core: authoring.Core{APIVersion: core.APIVersion, Kind: "Skill", Metadata: core.Metadata{Name: "beta-review", Namespace: "beta"}, Path: "docs/beta/skills/beta-review.yaml"}, Spec: authoring.Spec{Text: "Beta review."}},
+		&authoring.Resource{Core: authoring.Core{APIVersion: core.APIVersion, Kind: "Workflow", Metadata: core.Metadata{Name: "beta-flow", Namespace: "beta"}, Path: "docs/beta/workflows/beta-flow.yaml"}, Spec: authoring.Spec{Text: "Beta flow.", Uses: []core.Ref{{Kind: "Skill", Name: "beta-review"}}}},
 	)
 	snapshot := &snapshot.Snapshot{ID: revision, Files: map[string][]byte{}, Modes: map[string]string{}}
 	for _, resource := range resources {
-		data, err := format.Encode(*resource)
+		data, err := authoring.Encode(*resource)
 		if err != nil {
 			tb.Fatal(err)
 		}
@@ -192,25 +192,25 @@ func authoringBenchmarkProject(tb testing.TB) *Project {
 
 func authoringBenchmarkSnapshot(tb testing.TB, revision string, revise bool) *snapshot.Snapshot {
 	tb.Helper()
-	areas := make([]core.Area, 10)
+	areas := make([]authoring.Area, 10)
 	for i := range areas {
-		areas[i] = core.Area{Name: fmt.Sprintf("area-%02d", i), Path: fmt.Sprintf("docs/area-%02d", i), Rules: []core.Ref{{Kind: "Rule", Name: "shared-policy", Namespace: "area-00"}}}
+		areas[i] = authoring.Area{Name: fmt.Sprintf("area-%02d", i), Path: fmt.Sprintf("docs/area-%02d", i), Rules: []core.Ref{{Kind: "Rule", Name: "shared-policy", Namespace: "area-00"}}}
 		if i != 0 {
 			areas[i].Imports = []string{"area-00"}
 		}
 	}
-	project := core.Resource{APIVersion: core.APIVersion, Kind: "Project", Metadata: core.Metadata{Name: "benchmark"}, Path: "markitect.yaml", Spec: core.Spec{Areas: areas}}
-	resources := []*core.Resource{&project}
+	project := authoring.Resource{Core: authoring.Core{APIVersion: core.APIVersion, Kind: "Project", Metadata: core.Metadata{Name: "benchmark"}, Path: "markitect.yaml"}, Spec: authoring.Spec{Areas: areas}}
+	resources := []*authoring.Resource{&project}
 	sharedText := "Shared authoring constraint."
 	if revise {
 		sharedText += " Candidate revision."
 	}
-	resources = append(resources, &core.Resource{APIVersion: core.APIVersion, Kind: "Rule", Metadata: core.Metadata{Name: "shared-policy", Namespace: "area-00"}, Path: "docs/area-00/rules/shared-policy.yaml", Spec: core.Spec{Text: sharedText}})
+	resources = append(resources, &authoring.Resource{Core: authoring.Core{APIVersion: core.APIVersion, Kind: "Rule", Metadata: core.Metadata{Name: "shared-policy", Namespace: "area-00"}, Path: "docs/area-00/rules/shared-policy.yaml"}, Spec: authoring.Spec{Text: sharedText}})
 	for area := range areas {
 		ns := fmt.Sprintf("area-%02d", area)
 		for item := 0; item < 12; item++ {
 			name := fmt.Sprintf("note-%02d", item)
-			resources = append(resources, &core.Resource{APIVersion: core.APIVersion, Kind: "Text", Metadata: core.Metadata{Name: name, Namespace: ns}, Path: fmt.Sprintf("docs/%s/text/%s.yaml", ns, name), Spec: core.Spec{Text: "Synthetic evidence input for the bounded authoring context benchmark."}})
+			resources = append(resources, &authoring.Resource{Core: authoring.Core{APIVersion: core.APIVersion, Kind: "Text", Metadata: core.Metadata{Name: name, Namespace: ns}, Path: fmt.Sprintf("docs/%s/text/%s.yaml", ns, name)}, Spec: authoring.Spec{Text: "Synthetic evidence input for the bounded authoring context benchmark."}})
 		}
 		for item := 0; item < 24; item++ {
 			name := fmt.Sprintf("%s-skill-%02d", ns, item)
@@ -218,16 +218,16 @@ func authoringBenchmarkSnapshot(tb testing.TB, revision string, revise bool) *sn
 			for note := range uses {
 				uses[note] = core.Ref{Kind: "Text", Name: fmt.Sprintf("note-%02d", note)}
 			}
-			resources = append(resources, &core.Resource{APIVersion: core.APIVersion, Kind: "Skill", Metadata: core.Metadata{Name: name, Namespace: ns}, Path: fmt.Sprintf("docs/%s/skills/%s.yaml", ns, name), Spec: core.Spec{Text: "A bounded synthetic workflow skill with enough prose to exercise context selection and hashing.", Uses: uses}})
+			resources = append(resources, &authoring.Resource{Core: authoring.Core{APIVersion: core.APIVersion, Kind: "Skill", Metadata: core.Metadata{Name: name, Namespace: ns}, Path: fmt.Sprintf("docs/%s/skills/%s.yaml", ns, name)}, Spec: authoring.Spec{Text: "A bounded synthetic workflow skill with enough prose to exercise context selection and hashing.", Uses: uses}})
 		}
 		for item := 0; item < 12; item++ {
 			name := fmt.Sprintf("flow-%02d", item)
-			resources = append(resources, &core.Resource{APIVersion: core.APIVersion, Kind: "Workflow", Metadata: core.Metadata{Name: name, Namespace: ns}, Path: fmt.Sprintf("docs/%s/workflows/%s.yaml", ns, name), Spec: core.Spec{Text: "Synthetic review flow with explicitly declared uses and shared authoring rules.", Uses: []core.Ref{{Kind: "Skill", Name: fmt.Sprintf("%s-skill-%02d", ns, item)}}}})
+			resources = append(resources, &authoring.Resource{Core: authoring.Core{APIVersion: core.APIVersion, Kind: "Workflow", Metadata: core.Metadata{Name: name, Namespace: ns}, Path: fmt.Sprintf("docs/%s/workflows/%s.yaml", ns, name)}, Spec: authoring.Spec{Text: "Synthetic review flow with explicitly declared uses and shared authoring rules.", Uses: []core.Ref{{Kind: "Skill", Name: fmt.Sprintf("%s-skill-%02d", ns, item)}}}})
 		}
 	}
 	snapshot := &snapshot.Snapshot{ID: revision, Files: map[string][]byte{}, Modes: map[string]string{}}
 	for _, resource := range resources {
-		data, err := format.Encode(*resource)
+		data, err := authoring.Encode(*resource)
 		if err != nil {
 			tb.Fatal(err)
 		}
@@ -238,7 +238,7 @@ func authoringBenchmarkSnapshot(tb testing.TB, revision string, revise bool) *sn
 
 func contextSize(tb testing.TB, ctx *Context) int {
 	tb.Helper()
-	data, err := format.Encode(ctx)
+	data, err := authoring.Encode(ctx)
 	if err != nil {
 		tb.Fatal(err)
 	}

@@ -11,7 +11,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/Glacius-Labs/Markitect/internal/render"
 	"go.yaml.in/yaml/v3"
 )
 
@@ -66,7 +65,7 @@ func ObserveProjection(p *Project, toolVersion, toolDigest string) (ReconcileObs
 	if p == nil || p.Snapshot == nil || p.Graph == nil {
 		return ReconcileObservation{}, errors.New("a loaded project snapshot is required")
 	}
-	outputs, err := render.Generate(p.Graph, p.Snapshot.Files)
+	outputs, err := GenerateOutputs(p)
 	if err != nil {
 		return ReconcileObservation{}, err
 	}
@@ -109,7 +108,7 @@ func PlanProjection(p *Project, toolVersion, toolDigest string) (ReconcilePlan, 
 	if err != nil {
 		return ReconcilePlan{}, err
 	}
-	outputs, err := render.Generate(p.Graph, p.Snapshot.Files)
+	outputs, err := GenerateOutputs(p)
 	if err != nil {
 		return ReconcilePlan{}, err
 	}
@@ -246,7 +245,7 @@ func ParseReconcilePlan(data []byte) (ReconcilePlan, error) {
 
 func reconcileInputDigest(p *Project) string {
 	owned := map[string]bool{}
-	if outputs, err := render.Generate(p.Graph, p.Snapshot.Files); err == nil {
+	if outputs, err := GenerateOutputs(p); err == nil {
 		for name := range outputs {
 			owned[name] = true
 		}

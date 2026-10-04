@@ -16,7 +16,7 @@ const APIVersion = core.APIVersion
 
 type Core = core.Resource
 type Resource struct {
-	Core
+	Core `yaml:",inline"`
 	Spec Spec
 }
 

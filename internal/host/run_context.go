@@ -9,7 +9,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/Glacius-Labs/Markitect/internal/format"
+	"github.com/Glacius-Labs/Markitect/internal/host/authoring"
 	"go.yaml.in/yaml/v3"
 )
 
@@ -206,4 +206,4 @@ func writeSelectionField(builder *strings.Builder, value string) {
 }
 
 // EncodeRunManifest returns canonical YAML for a validated manifest.
-func EncodeRunManifest(manifest *RunManifest) ([]byte, error) { return format.Encode(manifest) }
+func EncodeRunManifest(manifest *RunManifest) ([]byte, error) { return authoring.Encode(manifest) }

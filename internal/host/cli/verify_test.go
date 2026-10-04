@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/internal/core"
-	"github.com/Glacius-Labs/Markitect/internal/format"
+	"github.com/Glacius-Labs/Markitect/internal/host/authoring"
 )
 
 func TestVerifyWithoutDeclaredChecksIsIncompleteGraphOnlyEvidence(t *testing.T) {
@@ -33,8 +33,8 @@ func TestVerifyRunsDeclaredCheckFromFixedSnapshotDespiteWorkingTreeEdit(t *testi
 		t.Skip("Go unavailable for the portable snapshot check")
 	}
 	fixed := []byte("package main\nimport \"fmt\"\nfunc main() { fmt.Println(\"fixed snapshot marker\") }\n")
-	check := core.Check{Name: "snapshot-content", Run: []string{"go", "run", "scripts/verify-check.go"}}
-	repo := newVerifyCLIRepo(t, []core.Check{check}, fixed)
+	check := authoring.Check{Name: "snapshot-content", Run: []string{"go", "run", "scripts/verify-check.go"}}
+	repo := newVerifyCLIRepo(t, []authoring.Check{check}, fixed)
 	writeRepoFile(t, repo.root, "scripts/verify-check.go", []byte("package main\nimport \"fmt\"\nfunc main() { fmt.Println(\"mutated worktree marker\") }\n"))
 
 	code, output, stderr := invoke("verify", "--repo", repo.root, "--revision", repo.base)
@@ -55,7 +55,7 @@ func TestVerifyRunsDeclaredCheckFromFixedSnapshotDespiteWorkingTreeEdit(t *testi
 }
 
 func TestVerifyToolMissingAndGateFailureAreDistinct(t *testing.T) {
-	missingRepo := newVerifyCLIRepo(t, []core.Check{{Name: "missing-tool", Run: []string{"markitect-unavailable-check-tool-20260930"}}}, nil)
+	missingRepo := newVerifyCLIRepo(t, []authoring.Check{{Name: "missing-tool", Run: []string{"markitect-unavailable-check-tool-20260930"}}}, nil)
 	code, output, stderr := invoke("verify", "--repo", missingRepo.root, "--revision", missingRepo.base)
 	if code != 2 {
 		t.Fatalf("missing-tool verify exit=%d, want incomplete exit 2; stderr=%s output=%s", code, stderr, output)
@@ -68,7 +68,7 @@ func TestVerifyToolMissingAndGateFailureAreDistinct(t *testing.T) {
 	if _, err := exec.LookPath("go"); err != nil {
 		t.Skip("Go unavailable for the portable failing-check test")
 	}
-	checks := []core.Check{
+	checks := []authoring.Check{
 		{Name: "go-version", Run: []string{"go", "version"}},
 		{Name: "unknown-go-subcommand", Run: []string{"go", "markitect-no-such-go-subcommand"}},
 	}
@@ -89,7 +89,7 @@ func TestVerifyToolMissingAndGateFailureAreDistinct(t *testing.T) {
 	}
 }
 
-func newVerifyCLIRepo(t *testing.T, checks []core.Check, checkSource []byte) cliRepo {
+func newVerifyCLIRepo(t *testing.T, checks []authoring.Check, checkSource []byte) cliRepo {
 	t.Helper()
 	root := t.TempDir()
 	abs, err := filepath.Abs(root)
@@ -104,13 +104,11 @@ func newVerifyCLIRepo(t *testing.T, checks []core.Check, checkSource []byte) cli
 	git(t, root, "config", "user.name", "Markitect Verify Test")
 	git(t, root, "config", "user.email", "markitect-verify-test@example.invalid")
 
-	project := core.Resource{
-		APIVersion: core.APIVersion,
-		Kind:       "Project",
-		Metadata:   core.Metadata{Name: "verification-fixture"},
-		Spec:       core.Spec{Checks: checks},
+	project := authoring.Resource{Core: authoring.Core{APIVersion: core.APIVersion,
+		Kind:     "Project",
+		Metadata: core.Metadata{Name: "verification-fixture"}}, Spec: authoring.Spec{Checks: checks},
 	}
-	data, err := format.Encode(&project)
+	data, err := authoring.Encode(&project)
 	if err != nil {
 		t.Fatal(err)
 	}

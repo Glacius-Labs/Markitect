@@ -8,7 +8,6 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/internal/infrastructure/source"
 	"github.com/Glacius-Labs/Markitect/internal/modules/artifactcoverage"
-	"github.com/Glacius-Labs/Markitect/internal/render"
 )
 
 func TestCheckArtifactsUsesParsedOwnershipAndFindsNewFiles(t *testing.T) {
@@ -198,7 +197,7 @@ spec:
 	if err != nil {
 		t.Fatal(err)
 	}
-	outputs, _, err := render.GenerateWithOwners(project.Graph, snap.Files)
+	outputs, _, err := GenerateOutputsWithOwners(project)
 	if err != nil {
 		t.Fatal(err)
 	}

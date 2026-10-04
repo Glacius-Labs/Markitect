@@ -21,7 +21,9 @@ func CompileModel(p *Project) (core.SemanticModel, error) {
 		Snapshot:     core.ModelSnapshot{ID: p.Snapshot.ID, Provisional: p.Snapshot.Provisional, Digest: p.Snapshot.Digest()},
 		ConfigDigest: hashBytes(config), Resources: make([]core.ModelResource, 0, len(p.Graph.Resources)),
 	}
-	model.PolicyResults = clonePolicyResults(p.Graph.PolicyResults)
+	if p.Graph.Core != nil {
+		model.PolicyResults = clonePolicyResults(p.Graph.Core.PolicyResults)
+	}
 	if p.Graph.Registry != nil {
 		for _, d := range p.Graph.Registry.Domains() {
 			domain := core.ModelDomain{Name: d.Name, APIVersion: d.APIVersion, Kinds: d.Kinds, Relations: d.Relations, Constraints: d.Constraints}

@@ -7,10 +7,10 @@ import (
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/internal/core"
-	"github.com/Glacius-Labs/Markitect/internal/format"
 	"github.com/Glacius-Labs/Markitect/internal/host"
+	"github.com/Glacius-Labs/Markitect/internal/host/authoring"
 	"github.com/Glacius-Labs/Markitect/internal/infrastructure/source"
-	"github.com/Glacius-Labs/Markitect/internal/render"
+
 	"go.yaml.in/yaml/v3"
 )
 
@@ -48,7 +48,7 @@ type cliReviewDecision struct {
 
 func reviewConfigData(t *testing.T, question string, allowReuse bool) []byte {
 	t.Helper()
-	data, err := format.Encode(cliReviewConfig{
+	data, err := authoring.Encode(cliReviewConfig{
 		Question:      question,
 		PromptVersion: "review-prompt-v1",
 		Model:         "gpt-6-sol",
@@ -155,8 +155,8 @@ func TestReviewRequiresReviewWhenCandidateContextChanges(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	changedRule := core.Resource{APIVersion: core.APIVersion, Kind: "Rule", Metadata: core.Metadata{Name: "policy", Namespace: cliNamespace}, Path: "docs/general/rules/policy.yaml", Spec: core.Spec{Text: "Changed policy after the original review."}}
-	data, err := format.Encode(changedRule)
+	changedRule := authoring.Resource{Core: authoring.Core{APIVersion: core.APIVersion, Kind: "Rule", Metadata: core.Metadata{Name: "policy", Namespace: cliNamespace}, Path: "docs/general/rules/policy.yaml"}, Spec: authoring.Spec{Text: "Changed policy after the original review."}}
+	data, err := authoring.Encode(changedRule)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -166,8 +166,8 @@ func TestReviewRequiresReviewWhenCandidateContextChanges(t *testing.T) {
 			resource.Spec = changedRule.Spec
 		}
 	}
-	base.Graph = core.Build(base.Resources)
-	generated, err := render.Generate(base.Graph, base.Snapshot.Files)
+	base.Graph = authoring.Build(base.Resources)
+	generated, err := host.GenerateOutputs(base)
 	if err != nil {
 		t.Fatal(err)
 	}

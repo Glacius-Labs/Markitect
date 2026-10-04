@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/internal/core"
-	"github.com/Glacius-Labs/Markitect/internal/format"
 	"github.com/Glacius-Labs/Markitect/internal/host"
+	"github.com/Glacius-Labs/Markitect/internal/host/authoring"
 )
 
 type findCLIResult struct {
@@ -54,8 +54,8 @@ func TestFindIsDeterministicAndAppliesExactFilters(t *testing.T) {
 
 func TestFindReadsRequestedImmutableRevisionAfterWorkingEdit(t *testing.T) {
 	repo := newCLIRepo(t, false)
-	updated := core.Resource{APIVersion: core.APIVersion, Kind: "Rule", Metadata: core.Metadata{Name: "policy", Namespace: cliNamespace}, Spec: core.Spec{Text: "Only the changed revision contains current-only token."}}
-	data, err := format.Encode(updated)
+	updated := authoring.Resource{Core: authoring.Core{APIVersion: core.APIVersion, Kind: "Rule", Metadata: core.Metadata{Name: "policy", Namespace: cliNamespace}}, Spec: authoring.Spec{Text: "Only the changed revision contains current-only token."}}
+	data, err := authoring.Encode(updated)
 	if err != nil {
 		t.Fatal(err)
 	}
