@@ -1,6 +1,6 @@
 # Clean architecture consolidation validation
 
-Date: 2026-10-04. Starting main: `e116e5c16d63546260a2155e80d8965da72ba30b`. Final production-code checkpoint: `621f1a722880cf5b9d403b5753f5ac9152e16358`; subsequent report/navigation changes do not alter that code. Integration and its exact head are recorded by the associated pull request and commit-bound CI. The published [v0.13.0](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.13.0), source `ec312e35c15012c07acb6838c03e9316c5373dde`, remains immutable. No new release is published by this consolidation.
+Date: 2026-10-04. Starting main: `e116e5c16d63546260a2155e80d8965da72ba30b`. Production-code checkpoint: `8a532af2440702b80705516511391641e42d74a3`; the earlier `621f1a722880cf5b9d403b5753f5ac9152e16358` checkpoint binds the compatibility replay below. Integration and its exact head are recorded by the associated pull request and commit-bound CI. The published [v0.13.0](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.13.0), source `ec312e35c15012c07acb6838c03e9316c5373dde`, remains immutable. No new release is published by this consolidation.
 
 [Vision](../vision.md) owns product intent; [Architecture](../architecture.md#go-ownership-and-final-dependency-model) and the [Module guide](../development/modules.md) describe the final design. The [frozen decision](../design/clean-architecture-consolidation.md) and [baseline inventory](clean-architecture-baseline.json) preceded significant production moves at `11bcf9e`. Independent contract/import reviews examined that checkpoint before isolated implementation streams began. This report describes the migration and measured limits, rather than another product vision.
 
@@ -118,9 +118,11 @@ A clean detached `621f1a7` build used Go 1.27.1, with VCS metadata `modified=fal
 
 The root Project now explicitly configures architecture-imports, module-checks, managed-artifacts and go-tests. Canonical development Rules supply those owners and exact config/hook/pipeline inputs to the engineering-change Skill. Root check, artifact accounting, hooks/pipelines, schemas, formatting and generated projection convergence pass. A fresh no-history actor discovered the workflow from AGENTS/docs and obtained passing non-provisional check/context at `fcd7765`; a later clean fixed `621f1a7` check/context also passed. Compiled context includes package ownership through declared CONTRIBUTING/architecture inputs, rather than inventing typed code-Module resources.
 
-An isolated real clone of `fcd7765` first passed the actual import and artifact checkers. Added source patches then produced exactly three illegal imports at line 3: Core→githooks, githooks→pipelines, pipelines→Host. The checker exited 1 with exact edges. An untracked `.markitect/unowned-proof.txt` produced `unmanaged` and exit1. Root was not changed by those probes. Unit negatives also cover CLI bypass, Host→CLI, platform/test files, unknown stdlib-only packages, self imports, fixture privilege and bootstrap imports. Go compilation additionally rejects cycles.
+An isolated real clone of `fcd7765` first passed the actual import and artifact checkers. Added source patches then produced exactly three illegal imports at line 3: Core→githooks, githooks→pipelines, pipelines→Host. The checker exited 1 with exact edges. An untracked `.markitect/unowned-proof.txt` produced `unmanaged` and exit 1. Root was not changed by those probes. Unit negatives also cover CLI bypass, Host→CLI, platform/test files, unknown stdlib-only packages, self imports, fixture privilege and bootstrap imports. Go compilation additionally rejects cycles.
 
-Windows source tests, vet, build, module verification, executable examples and package/bootstrap smoke passed locally. The new source archive runs standalone bootstrap tests, version, authoring, notices and example checks. The historical bootstrap supports both old main.version and new Host-version symbols deliberately; immutable old release meaning is preserved. Windows/Linux CI remains mandatory for the exact integrated candidate; its receipt is recorded below. No automated test or review substitutes for adopter/human acceptance.
+Windows source tests, vet, build, module verification, executable examples and package/bootstrap smoke passed locally. The new source archive runs standalone bootstrap tests, version, authoring, notices and example checks. The historical bootstrap supports both old main.version and new Host-version symbols deliberately; immutable old release meaning is preserved. Windows/Linux CI remains mandatory for the exact integrated candidate; the associated pull request records the commit-bound receipt. No automated test or review substitutes for adopter/human acceptance.
+
+The final gate review found and closed a test-first file-order bypass: a standard-library-only production file could previously hide behind an earlier test file's package classification. `Inspect` now classifies every Go file; a lexical-order negative fixture proves refusal. Two duplicated identical CI import-check steps were removed while preserving the first mandatory step and updating the explicitly owned pipeline byte digest. This hardening changed no Core semantics or compatibility outputs.
 
 ## Remaining limits and next work
 
@@ -136,7 +138,7 @@ The three next priorities are: (1) exact-owner dispositions and accepted-only sh
 
 | Requested completion item | Evidence / conclusion |
 |---|---|
-| 1. Starting/ending commits | Starting e116e5c; production checkpoint 621f1a7; final head/integration are bound by the pull request/CI receipt. |
+| 1. Starting/ending commits | Starting e116e5c; production checkpoint 8a532af; final head/integration are bound by the pull request/CI receipt. |
 | 2–6. Architecture, Core, Host, Modules, Infrastructure/Tooling | Diagram, ownership audit and nine-Module table above; bootstrap is Tooling, not Harness. |
 | 7–11. Moves/deletions, debt, Core decisions, IR | Ownership audit and integration findings above; Core Data/IR is the sole normalized semantic contract. |
 | 12. Core metrics | Explicit before/root/combined counts and complete inventory above. |
@@ -147,7 +149,7 @@ The three next priorities are: (1) exact-owner dispositions and accepted-only sh
 | 26–27. Dogfood/fresh replay | Root generated convergence and check/context/coverage/module checks; fresh navigation/context establishes discoverability. |
 | 28. Remaining smells | Host source-bag size, caller validation precondition and private link-code duplication; no forbidden dependency remains. |
 | 29. Compatibility | No Domain/schema/SPI changes; intentional internal API/package moves; source-only module checker; immutable releases preserved. |
-| 30. Full gate status | Local source/package gates passed; exact Windows/Linux receipt below is acceptance authority for integration. |
+| 30. Full gate status | Local source/package gates passed; the exact Windows/Linux receipt in the pull request is acceptance authority for integration. |
 | 31. Release/candidate | Source candidate only; no new release/tag/assets/publication. |
 | 32. Konfyra | Existing approved capture/4 candidates validated, owner review/adoption still pending. |
 | 33. Next 3 | Owner dispositions/shadow diff; matched upkeep/task measurement; separate immutable release decision. |

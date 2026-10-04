@@ -1,24 +1,9 @@
 {
   "schema": "markitect-clean-architecture-final-inventory/v1",
-  "sourceCommit": "621f1a722880cf5b9d403b5753f5ac9152e16358",
+  "sourceCommit": "8a532af2440702b80705516511391641e42d74a3",
   "baselineCommit": "e116e5c16d63546260a2155e80d8965da72ba30b",
   "workingTreeState": "Inventory source is committed Go code at sourceCommit; uncommitted tracked changes are docs-only and excluded from Go AST traversal. Ignored .artifacts evidence is excluded.",
-  "workingTreeTrackedChanges": [
-    "CONTRIBUTING.md",
-    "docs/README.md",
-    "docs/architecture.md",
-    "docs/design/clean-architecture-consolidation.md",
-    "docs/design/selective-adoption-handoff.md",
-    "docs/development/README.md",
-    "docs/development/modules.md",
-    "docs/development/parallelizability.md",
-    "docs/development/risk-register.md",
-    "docs/development/shared-contracts.md",
-    "docs/implementation-plan.md",
-    "docs/source-snapshots.md",
-    "docs/usage.md",
-    "docs/validation/markitect-first-release-readiness.md"
-  ],
+  "workingTreeTrackedChanges": null,
   "method": {
     "baselineGraph": "preserved docs/validation/clean-architecture-baseline.json records baseline sourceCommit e116e5c; package/edge inventory is reused, while Core metrics are independently recalculated from baseline Git blobs",
     "distinctImports": "unique production import paths per Core metric, standard library and external modules included; no transitive imports",
