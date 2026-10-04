@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/internal/app"
+	"github.com/Glacius-Labs/Markitect/internal/host"
 )
 
 func TestMinimalExampleCompilesBoundContextAndRenderedViews(t *testing.T) {
@@ -15,7 +15,7 @@ func TestMinimalExampleCompilesBoundContextAndRenderedViews(t *testing.T) {
 		t.Fatal("could not locate example test source")
 	}
 	root := filepath.Join(filepath.Dir(sourceFile), "minimal")
-	project, err := app.Load(root, "")
+	project, err := host.Load(root, "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -38,7 +38,7 @@ func TestMinimalExampleCompilesBoundContextAndRenderedViews(t *testing.T) {
 		}
 	}
 
-	context, err := app.CompileContext(project, "sample/Skill/rollback-review", "example-test")
+	context, err := host.CompileContext(project, "sample/Skill/rollback-review", "example-test")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -60,13 +60,13 @@ func TestMinimalExampleCompilesBoundContextAndRenderedViews(t *testing.T) {
 		t.Fatalf("compiled context omitted bound implementation, Contract, or declared input (Agent=%t Contract=%t file=%t)", seenAgent, seenContract, seenInput)
 	}
 
-	if findings := app.CheckOutputs(project); len(findings) != 0 {
+	if findings := host.CheckOutputs(project); len(findings) != 0 {
 		t.Fatalf("checked-in rendered views have drift or are missing: %#v", findings)
 	}
 
 	// A copied example is an authoring baseline. Formatting a local edit must
 	// not rewrite unrelated resources and turn its impact into a project change.
-	changed, err := app.Format(root, project, false)
+	changed, err := host.Format(root, project, false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -81,14 +81,14 @@ func TestConsistencyConflictExampleReportsSourceAndOwners(t *testing.T) {
 		t.Fatal("could not locate example test source")
 	}
 	root := filepath.Join(filepath.Dir(sourceFile), "consistency-conflict")
-	project, err := app.Load(root, "")
+	project, err := host.Load(root, "")
 	if err != nil {
 		t.Fatal(err)
 	}
 	if len(project.Diagnostics) != 0 {
 		t.Fatalf("unexpected graph diagnostics: %#v", project.Diagnostics)
 	}
-	findings := app.CheckOutputs(project)
+	findings := host.CheckOutputs(project)
 	if len(findings) != 1 || findings[0].Code != "consistency.conflict" || findings[0].Path != "docs/review-policy.md" || findings[0].Line != 3 || !strings.Contains(findings[0].Message, "docs/operations-policy.md:3") || !strings.Contains(findings[0].Message, "sample/Workflow/review-approval") {
 		t.Fatalf("expected one sourced conflict with both owners: %#v", findings)
 	}
@@ -100,17 +100,17 @@ func TestDocumentationPlacementExampleHasValidRouters(t *testing.T) {
 		t.Fatal("could not locate example test source")
 	}
 	root := filepath.Join(filepath.Dir(sourceFile), "documentation-placement")
-	project, err := app.Load(root, "")
+	project, err := host.Load(root, "")
 	if err != nil {
 		t.Fatal(err)
 	}
 	if len(project.Diagnostics) != 0 {
 		t.Fatalf("placement example has resource diagnostics: %#v", project.Diagnostics)
 	}
-	if findings := app.CheckOutputs(project); len(findings) != 0 {
+	if findings := host.CheckOutputs(project); len(findings) != 0 {
 		t.Fatalf("placement example has output diagnostics: %#v", findings)
 	}
-	if findings := app.CheckDocumentationRouters(project); len(findings) != 0 {
+	if findings := host.CheckDocumentationRouters(project); len(findings) != 0 {
 		t.Fatalf("placement example has router diagnostics: %#v", findings)
 	}
 }

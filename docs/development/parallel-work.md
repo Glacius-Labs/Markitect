@@ -12,6 +12,11 @@ Each assignment records the full verified baseline commit, objective, owned path
 
 Implement only the assigned slice. Report source-selection/privacy/permissions gaps before reading or moving consumer evidence beyond its reviewed scope. Existing-project adoption keeps ADRs, root instructions, tests and provider configurations authoritative until an explicit owner-reviewed cutover. Frequency, AI confidence, a candidate decision field and green CI are not owner approval. Do not use another adapter's output as canonical input.
 
+## Module assignments
+
+A Module assignment owns one `internal/modules/<name>` subtree, including its private tests and bounded design/evidence files. It may consume Core IR and explicit Host-supplied configuration or artifact bytes, but must not edit Core, Host, Infrastructure, Tooling, a sibling Module or shared wiring. Host composition, shared DTOs, `go.mod`, CI workflows, and the import gate remain coordinator-owned. The [Module guide](modules.md) defines when to add or remove a Module and the exact static dependency law.
+
+A request to change Core must describe a generic invariant with concrete cases from at least two distinct vocabularies, the current expression and its failure, a finite normalization/check/adapter alternative, consumers, exact input/version behavior, diagnostics, digest/context/impact consequences, and deterministic tests. Submit the request to the coordinator before editing Core. A Module is never its own authority to add a Core primitive.
 ## Shared-file requests
 
 README, architecture, roadmap, CLI dispatch, format/schema generation, model types, adapter DTOs, package/state/digest semantics and shared helpers stay with the coordinator during a wave. An implementer supplies a small proposed patch or design request rather than editing them opportunistically. Tests local to an owned package/new file are independent; renderer entrypoints/provider configuration and shared ownership helpers are integration hotspots. Coordinator review decides whether a needed edit is legitimate shared semantics or removable coupling.
@@ -22,7 +27,7 @@ Escalation includes the desired engineering statement, two concrete cases if req
 
 ## Integration and evidence
 
-1. Implement and run focused tests for concrete risks, then the normal contribution gates. Keep canonical sources and generated schemas/examples together where legitimately changed.
+1. Implement and run focused Module tests and compatibility cases, then the normal contribution gates. The architecture import gate at `internal/tooling/architecture` statically checks supported-platform files and tests and exercises negative dependency fixtures. It is included in `go test ./...`, a named CI step, the explicit Project check and the release quality job through reusable CI. These routes do not imply an exact-head pass; the coordinator reports evidence separately.
 2. Commit a complete candidate. Open a focused PR stating before/after behavior, owned scope, non-goals, evidence, limitations and any shared-contract request.
 3. Run [Windows/Linux CI](../../.github/workflows/ci.yaml) on that exact head; changed head invalidates the earlier integration evidence.
 4. Obtain independent complete-diff review. The coordinator checks shared contract compatibility, target ownership, conflicts with parallel candidates and the consumer authority boundary.
@@ -31,4 +36,4 @@ Escalation includes the desired engineering statement, two concrete cases if req
 
 Every completion report states what changed and why, owned scope, what remains outside it, tests and exact SHA, evidence limitations, remaining gaps, integration dependencies and requested Core changes (or none). Mark incomplete evidence explicitly. Never infer tokens from bytes or make productivity, defect, runtime-safety or market claims from fixture success.
 
-Release is a separate owner decision using [Operations](../operations.md) and immutable publication gates. Agents do not publish individual workstream releases, update installed tools, edit release-managed README values or overwrite published assets. v0.12.0 stays current until verified publication establishes another release.
+Release is a separate owner decision using [Operations](../operations.md) and immutable publication gates. Agents do not publish individual workstream releases, update installed tools, edit release-managed README values or overwrite published assets. The published v0.13.0 release remains immutable; this source architecture does not change its package layout or claim a new release.

@@ -1,0 +1,1702 @@
+{
+  "testLocalEdges": [
+    {
+      "to": "internal/app",
+      "from": "cmd/markitect"
+    },
+    {
+      "to": "internal/authoring",
+      "from": "cmd/markitect"
+    },
+    {
+      "to": "internal/core",
+      "from": "cmd/markitect"
+    },
+    {
+      "to": "internal/format",
+      "from": "cmd/markitect"
+    },
+    {
+      "to": "internal/render",
+      "from": "cmd/markitect"
+    },
+    {
+      "to": "internal/source",
+      "from": "cmd/markitect"
+    },
+    {
+      "to": "internal/app",
+      "from": "cmd/markitect-adapter-azure-devops"
+    },
+    {
+      "to": "internal/app",
+      "from": "cmd/markitect-adapter-github"
+    },
+    {
+      "to": "internal/core",
+      "from": "cmd/markitect-adapter-github"
+    },
+    {
+      "to": "examples/selective-adoption/pathspell",
+      "from": "examples"
+    },
+    {
+      "to": "internal/app",
+      "from": "examples"
+    },
+    {
+      "to": "internal/contentpackage",
+      "from": "examples"
+    },
+    {
+      "to": "internal/core",
+      "from": "examples"
+    },
+    {
+      "to": "internal/format",
+      "from": "examples"
+    },
+    {
+      "to": "internal/render",
+      "from": "examples"
+    },
+    {
+      "to": "internal/snapshot",
+      "from": "examples"
+    },
+    {
+      "to": "internal/source",
+      "from": "examples"
+    },
+    {
+      "to": "internal/snapshot",
+      "from": "internal/adoption"
+    },
+    {
+      "to": "internal/adoption",
+      "from": "internal/app"
+    },
+    {
+      "to": "internal/contentpackage",
+      "from": "internal/app"
+    },
+    {
+      "to": "internal/core",
+      "from": "internal/app"
+    },
+    {
+      "to": "internal/format",
+      "from": "internal/app"
+    },
+    {
+      "to": "internal/release",
+      "from": "internal/app"
+    },
+    {
+      "to": "internal/render",
+      "from": "internal/app"
+    },
+    {
+      "to": "internal/snapshot",
+      "from": "internal/app"
+    },
+    {
+      "to": "internal/source",
+      "from": "internal/app"
+    },
+    {
+      "to": "internal/snapshot",
+      "from": "internal/artifactcoverage"
+    },
+    {
+      "to": "internal/core",
+      "from": "internal/contentpackage"
+    },
+    {
+      "to": "internal/adoption",
+      "from": "internal/copyme"
+    },
+    {
+      "to": "internal/snapshot",
+      "from": "internal/copyme"
+    },
+    {
+      "to": "internal/core",
+      "from": "internal/format"
+    },
+    {
+      "to": "internal/core",
+      "from": "internal/inputs"
+    },
+    {
+      "to": "internal/release",
+      "from": "internal/publish"
+    },
+    {
+      "to": "internal/snapshot",
+      "from": "internal/publish"
+    },
+    {
+      "to": "internal/licenses",
+      "from": "internal/release"
+    },
+    {
+      "to": "internal/snapshot",
+      "from": "internal/release"
+    },
+    {
+      "to": "internal/core",
+      "from": "internal/render"
+    },
+    {
+      "to": "internal/snapshot",
+      "from": "internal/source"
+    }
+  ],
+  "productionLocalEdges": [
+    {
+      "to": "internal/adoption",
+      "from": "cmd/markitect"
+    },
+    {
+      "to": "internal/app",
+      "from": "cmd/markitect"
+    },
+    {
+      "to": "internal/authoring",
+      "from": "cmd/markitect"
+    },
+    {
+      "to": "internal/copyme",
+      "from": "cmd/markitect"
+    },
+    {
+      "to": "internal/core",
+      "from": "cmd/markitect"
+    },
+    {
+      "to": "internal/format",
+      "from": "cmd/markitect"
+    },
+    {
+      "to": "internal/licenses",
+      "from": "cmd/markitect"
+    },
+    {
+      "to": "internal/release",
+      "from": "cmd/markitect"
+    },
+    {
+      "to": "internal/source",
+      "from": "cmd/markitect"
+    },
+    {
+      "to": "internal/app",
+      "from": "cmd/markitect-check-artifacts"
+    },
+    {
+      "to": "internal/artifactcoverage",
+      "from": "cmd/markitect-check-artifacts"
+    },
+    {
+      "to": "internal/publish",
+      "from": "cmd/markitect-release"
+    },
+    {
+      "to": "internal/app",
+      "from": "examples/engineering-discovery"
+    },
+    {
+      "to": "examples/selective-adoption/pathspell",
+      "from": "examples/selective-adoption"
+    },
+    {
+      "to": "internal/snapshot",
+      "from": "internal/adoption"
+    },
+    {
+      "to": "internal/adoption",
+      "from": "internal/app"
+    },
+    {
+      "to": "internal/contentpackage",
+      "from": "internal/app"
+    },
+    {
+      "to": "internal/core",
+      "from": "internal/app"
+    },
+    {
+      "to": "internal/format",
+      "from": "internal/app"
+    },
+    {
+      "to": "internal/inputs",
+      "from": "internal/app"
+    },
+    {
+      "to": "internal/release",
+      "from": "internal/app"
+    },
+    {
+      "to": "internal/render",
+      "from": "internal/app"
+    },
+    {
+      "to": "internal/snapshot",
+      "from": "internal/app"
+    },
+    {
+      "to": "internal/source",
+      "from": "internal/app"
+    },
+    {
+      "to": "internal/app",
+      "from": "internal/artifactcoverage"
+    },
+    {
+      "to": "internal/render",
+      "from": "internal/artifactcoverage"
+    },
+    {
+      "to": "internal/snapshot",
+      "from": "internal/artifactcoverage"
+    },
+    {
+      "to": "internal/source",
+      "from": "internal/artifactcoverage"
+    },
+    {
+      "to": "internal/app",
+      "from": "internal/authoring"
+    },
+    {
+      "to": "internal/snapshot",
+      "from": "internal/authoring"
+    },
+    {
+      "to": "internal/core",
+      "from": "internal/contentpackage"
+    },
+    {
+      "to": "internal/format",
+      "from": "internal/contentpackage"
+    },
+    {
+      "to": "internal/adoption",
+      "from": "internal/copyme"
+    },
+    {
+      "to": "internal/core",
+      "from": "internal/format"
+    },
+    {
+      "to": "internal/core",
+      "from": "internal/inputs"
+    },
+    {
+      "to": "internal/render",
+      "from": "internal/inputs"
+    },
+    {
+      "to": "internal/release",
+      "from": "internal/publish"
+    },
+    {
+      "to": "internal/snapshot",
+      "from": "internal/release"
+    },
+    {
+      "to": "internal/core",
+      "from": "internal/render"
+    },
+    {
+      "to": "internal/markdownlinks",
+      "from": "internal/render"
+    },
+    {
+      "to": "internal/snapshot",
+      "from": "internal/source"
+    }
+  ],
+  "note": "Production and test imports are separate; local production imports form the actual architecture graph. Classification is an inventory label, not an exemption.",
+  "sourceCommit": "e116e5c16d63546260a2155e80d8965da72ba30b",
+  "schema": "markitect-go-package-inventory/v1",
+  "generatedBy": "go list package metadata",
+  "packageCount": 29,
+  "packages": [
+    {
+      "testImports": [
+        "bytes",
+        "context",
+        "crypto/sha256",
+        "encoding/hex",
+        "errors",
+        "fmt",
+        "github.com/Glacius-Labs/Markitect/internal/app",
+        "github.com/Glacius-Labs/Markitect/internal/authoring",
+        "github.com/Glacius-Labs/Markitect/internal/core",
+        "github.com/Glacius-Labs/Markitect/internal/format",
+        "github.com/Glacius-Labs/Markitect/internal/render",
+        "github.com/Glacius-Labs/Markitect/internal/source",
+        "go.yaml.in/yaml/v3",
+        "io/fs",
+        "os",
+        "os/exec",
+        "path/filepath",
+        "runtime",
+        "strings",
+        "testing",
+        "time"
+      ],
+      "goFiles": [
+        "adoption.go",
+        "cli_dispatch.go",
+        "cli_metadata.go",
+        "cli_options.go",
+        "cli_outputs.go",
+        "cli_queries.go",
+        "cli_reconcile.go",
+        "cli_reports.go",
+        "contentpackage.go",
+        "distribution.go",
+        "init.go",
+        "main.go",
+        "review.go"
+      ],
+      "role": "Main CLI composition root",
+      "testLocalImports": [
+        "internal/app",
+        "internal/authoring",
+        "internal/core",
+        "internal/format",
+        "internal/render",
+        "internal/source"
+      ],
+      "path": "cmd/markitect",
+      "productionImports": [
+        "crypto/sha256",
+        "encoding/hex",
+        "errors",
+        "flag",
+        "fmt",
+        "github.com/Glacius-Labs/Markitect/internal/adoption",
+        "github.com/Glacius-Labs/Markitect/internal/app",
+        "github.com/Glacius-Labs/Markitect/internal/authoring",
+        "github.com/Glacius-Labs/Markitect/internal/copyme",
+        "github.com/Glacius-Labs/Markitect/internal/core",
+        "github.com/Glacius-Labs/Markitect/internal/format",
+        "github.com/Glacius-Labs/Markitect/internal/licenses",
+        "github.com/Glacius-Labs/Markitect/internal/release",
+        "github.com/Glacius-Labs/Markitect/internal/source",
+        "io",
+        "os",
+        "path",
+        "path/filepath",
+        "regexp",
+        "runtime",
+        "strings",
+        "unicode/utf8"
+      ],
+      "packageName": "main",
+      "testGoFiles": [
+        "adoption_test.go",
+        "authoring_test.go",
+        "cli_fixture_test.go",
+        "cli_policy_test.go",
+        "cli_queries_test.go",
+        "cli_reconcile_test.go",
+        "contentpackage_test.go",
+        "context_run_test.go",
+        "distribution_test.go",
+        "documentation_routers_test.go",
+        "find_explain_test.go",
+        "init_test.go",
+        "licenses_test.go",
+        "main_test.go",
+        "policy_failure_analysis_cli_test.go",
+        "review_test.go",
+        "verify_test.go"
+      ],
+      "externalTestImports": null,
+      "externalTestLocalImports": [],
+      "externalTestGoFiles": null,
+      "productionLocalImports": [
+        "internal/adoption",
+        "internal/app",
+        "internal/authoring",
+        "internal/copyme",
+        "internal/core",
+        "internal/format",
+        "internal/licenses",
+        "internal/release",
+        "internal/source"
+      ],
+      "classification": "TOOLING"
+    },
+    {
+      "testImports": [
+        "github.com/Glacius-Labs/Markitect/internal/app",
+        "go.yaml.in/yaml/v3",
+        "os",
+        "path/filepath",
+        "strings",
+        "testing"
+      ],
+      "goFiles": "main.go",
+      "role": "Standalone provider command frontend",
+      "testLocalImports": [
+        "internal/app"
+      ],
+      "path": "cmd/markitect-adapter-azure-devops",
+      "productionImports": [
+        "bytes",
+        "crypto/sha256",
+        "encoding/hex",
+        "encoding/json",
+        "errors",
+        "fmt",
+        "go.yaml.in/yaml/v3",
+        "io",
+        "net/url",
+        "os",
+        "path/filepath",
+        "regexp",
+        "sort",
+        "strings"
+      ],
+      "packageName": "main",
+      "testGoFiles": "main_test.go",
+      "externalTestImports": null,
+      "externalTestLocalImports": [],
+      "externalTestGoFiles": null,
+      "productionLocalImports": [],
+      "classification": "TOOLING"
+    },
+    {
+      "testImports": [
+        "bytes",
+        "go.yaml.in/yaml/v3",
+        "os",
+        "os/exec",
+        "path/filepath",
+        "reflect",
+        "runtime",
+        "testing"
+      ],
+      "goFiles": "main.go",
+      "role": ".NET projection command frontend",
+      "testLocalImports": [],
+      "path": "cmd/markitect-adapter-dotnet",
+      "productionImports": [
+        "bytes",
+        "encoding/xml",
+        "errors",
+        "fmt",
+        "go.yaml.in/yaml/v3",
+        "io",
+        "os",
+        "path/filepath",
+        "sort",
+        "strings"
+      ],
+      "packageName": "main",
+      "testGoFiles": "main_test.go",
+      "externalTestImports": null,
+      "externalTestLocalImports": [],
+      "externalTestGoFiles": null,
+      "productionLocalImports": [],
+      "classification": "TOOLING"
+    },
+    {
+      "testImports": [
+        "bytes",
+        "encoding/json",
+        "github.com/Glacius-Labs/Markitect/internal/app",
+        "github.com/Glacius-Labs/Markitect/internal/core",
+        "go.yaml.in/yaml/v3",
+        "os",
+        "os/exec",
+        "path/filepath",
+        "reflect",
+        "runtime",
+        "strings",
+        "testing"
+      ],
+      "goFiles": "main.go",
+      "role": "GitHub adapter and capture command frontend",
+      "testLocalImports": [
+        "internal/app",
+        "internal/core"
+      ],
+      "path": "cmd/markitect-adapter-github",
+      "productionImports": [
+        "bytes",
+        "crypto/sha256",
+        "encoding/hex",
+        "encoding/json",
+        "errors",
+        "fmt",
+        "go.yaml.in/yaml/v3",
+        "io",
+        "os",
+        "path",
+        "path/filepath",
+        "sort",
+        "strings"
+      ],
+      "packageName": "main",
+      "testGoFiles": "main_test.go",
+      "externalTestImports": null,
+      "externalTestLocalImports": [],
+      "externalTestGoFiles": null,
+      "productionLocalImports": [],
+      "classification": "TOOLING"
+    },
+    {
+      "testImports": [
+        "bytes",
+        "os",
+        "path/filepath",
+        "strings",
+        "testing"
+      ],
+      "goFiles": "main.go",
+      "role": "Artifact coverage command frontend",
+      "testLocalImports": [],
+      "path": "cmd/markitect-check-artifacts",
+      "productionImports": [
+        "flag",
+        "fmt",
+        "github.com/Glacius-Labs/Markitect/internal/app",
+        "github.com/Glacius-Labs/Markitect/internal/artifactcoverage",
+        "io",
+        "os"
+      ],
+      "packageName": "main",
+      "testGoFiles": "main_test.go",
+      "externalTestImports": null,
+      "externalTestLocalImports": [],
+      "externalTestGoFiles": null,
+      "productionLocalImports": [
+        "internal/app",
+        "internal/artifactcoverage"
+      ],
+      "classification": "TOOLING"
+    },
+    {
+      "testImports": [
+        "context",
+        "fmt",
+        "os",
+        "strings",
+        "testing"
+      ],
+      "goFiles": "main.go",
+      "role": "Release command frontend",
+      "testLocalImports": [],
+      "path": "cmd/markitect-release",
+      "productionImports": [
+        "bytes",
+        "context",
+        "errors",
+        "flag",
+        "fmt",
+        "github.com/Glacius-Labs/Markitect/internal/publish",
+        "go.yaml.in/yaml/v3",
+        "os",
+        "os/exec",
+        "time"
+      ],
+      "packageName": "main",
+      "testGoFiles": "main_test.go",
+      "externalTestImports": null,
+      "externalTestLocalImports": [],
+      "externalTestGoFiles": null,
+      "productionLocalImports": [
+        "internal/publish"
+      ],
+      "classification": "TOOLING"
+    },
+    {
+      "testImports": [
+        "bytes",
+        "crypto/sha256",
+        "encoding/hex",
+        "errors",
+        "fmt",
+        "github.com/Glacius-Labs/Markitect/examples/selective-adoption/pathspell",
+        "github.com/Glacius-Labs/Markitect/internal/app",
+        "github.com/Glacius-Labs/Markitect/internal/contentpackage",
+        "github.com/Glacius-Labs/Markitect/internal/core",
+        "github.com/Glacius-Labs/Markitect/internal/format",
+        "github.com/Glacius-Labs/Markitect/internal/render",
+        "github.com/Glacius-Labs/Markitect/internal/snapshot",
+        "github.com/Glacius-Labs/Markitect/internal/source",
+        "go.yaml.in/yaml/v3",
+        "io/fs",
+        "net/url",
+        "os",
+        "os/exec",
+        "path",
+        "path/filepath",
+        "reflect",
+        "runtime",
+        "strings",
+        "testing"
+      ],
+      "goFiles": null,
+      "role": "Integration-style examples harness",
+      "testLocalImports": [
+        "examples/selective-adoption/pathspell",
+        "internal/app",
+        "internal/contentpackage",
+        "internal/core",
+        "internal/format",
+        "internal/render",
+        "internal/snapshot",
+        "internal/source"
+      ],
+      "path": "examples",
+      "productionImports": null,
+      "packageName": "examples",
+      "testGoFiles": [
+        "canonical-engineering_test.go",
+        "delivery-target-equality_test.go",
+        "engineering-constitution_test.go",
+        "engineering-discovery_test.go",
+        "example_test.go",
+        "markdown_navigation_test.go",
+        "markitect_first_test.go",
+        "parallel_wave_adapters_test.go",
+        "repository_layout_test.go",
+        "selective_adoption_test.go",
+        "software-architecture_equality_test.go",
+        "software-architecture_pressure_test.go",
+        "software-architecture_test.go"
+      ],
+      "externalTestImports": null,
+      "externalTestLocalImports": [],
+      "externalTestGoFiles": null,
+      "productionLocalImports": [],
+      "classification": "TOOLING"
+    },
+    {
+      "testImports": null,
+      "goFiles": "worker.go",
+      "role": "Documentation source fixture",
+      "testLocalImports": [],
+      "path": "examples/documentation/docs/implementation/src",
+      "productionImports": null,
+      "packageName": "worker",
+      "testGoFiles": null,
+      "externalTestImports": null,
+      "externalTestLocalImports": [],
+      "externalTestGoFiles": null,
+      "productionLocalImports": [],
+      "classification": "MODULE-LOCAL"
+    },
+    {
+      "testImports": null,
+      "goFiles": "check-discovery.go",
+      "role": "Project-local example checker",
+      "testLocalImports": [],
+      "path": "examples/engineering-discovery",
+      "productionImports": [
+        "bytes",
+        "errors",
+        "flag",
+        "fmt",
+        "github.com/Glacius-Labs/Markitect/internal/app",
+        "go.yaml.in/yaml/v3",
+        "io",
+        "os",
+        "path/filepath",
+        "regexp",
+        "strings",
+        "unicode/utf8"
+      ],
+      "packageName": "main",
+      "testGoFiles": null,
+      "externalTestImports": null,
+      "externalTestLocalImports": [],
+      "externalTestGoFiles": null,
+      "productionLocalImports": [
+        "internal/app"
+      ],
+      "classification": "TOOLING"
+    },
+    {
+      "testImports": null,
+      "goFiles": "replay.go",
+      "role": "Selective adoption example replay",
+      "testLocalImports": [],
+      "path": "examples/selective-adoption",
+      "productionImports": [
+        "crypto/sha256",
+        "encoding/hex",
+        "errors",
+        "flag",
+        "fmt",
+        "github.com/Glacius-Labs/Markitect/examples/selective-adoption/pathspell",
+        "go.yaml.in/yaml/v3",
+        "os",
+        "os/exec",
+        "path/filepath",
+        "strings"
+      ],
+      "packageName": "main",
+      "testGoFiles": null,
+      "externalTestImports": null,
+      "externalTestLocalImports": [],
+      "externalTestGoFiles": null,
+      "productionLocalImports": [
+        "examples/selective-adoption/pathspell"
+      ],
+      "classification": "TOOLING"
+    },
+    {
+      "testImports": null,
+      "goFiles": "canonical_windows.go",
+      "role": "Example-private path helper",
+      "testLocalImports": [],
+      "path": "examples/selective-adoption/pathspell",
+      "productionImports": [
+        "fmt",
+        "os",
+        "path/filepath",
+        "syscall"
+      ],
+      "packageName": "pathspell",
+      "testGoFiles": null,
+      "externalTestImports": null,
+      "externalTestLocalImports": [],
+      "externalTestGoFiles": null,
+      "productionLocalImports": [],
+      "classification": "MODULE-LOCAL"
+    },
+    {
+      "testImports": [
+        "bufio",
+        "bytes",
+        "encoding/json",
+        "fmt",
+        "os",
+        "os/exec",
+        "path/filepath",
+        "reflect",
+        "strings",
+        "testing"
+      ],
+      "goFiles": "main.go",
+      "role": "Experimental MCP pilot",
+      "testLocalImports": [],
+      "path": "experiments/mcp-pilot",
+      "productionImports": [
+        "bufio",
+        "bytes",
+        "context",
+        "encoding/json",
+        "errors",
+        "flag",
+        "fmt",
+        "io",
+        "os",
+        "os/exec",
+        "path/filepath",
+        "regexp",
+        "runtime",
+        "strings",
+        "time"
+      ],
+      "packageName": "main",
+      "testGoFiles": "main_test.go",
+      "externalTestImports": null,
+      "externalTestLocalImports": [],
+      "externalTestGoFiles": null,
+      "productionLocalImports": [],
+      "classification": "LEGACY"
+    },
+    {
+      "testImports": [
+        "archive/zip",
+        "bytes",
+        "crypto/sha256",
+        "encoding/hex",
+        "os",
+        "path/filepath",
+        "reflect",
+        "runtime",
+        "sort",
+        "strings",
+        "testing"
+      ],
+      "goFiles": "run-markitect.go",
+      "role": "Install/release integration harness",
+      "testLocalImports": [],
+      "path": "integration",
+      "productionImports": [
+        "archive/zip",
+        "bytes",
+        "crypto/rand",
+        "crypto/sha256",
+        "encoding/hex",
+        "encoding/json",
+        "errors",
+        "fmt",
+        "io",
+        "os",
+        "os/exec",
+        "path",
+        "path/filepath",
+        "reflect",
+        "runtime",
+        "sort",
+        "strconv",
+        "strings",
+        "unicode/utf8"
+      ],
+      "packageName": "main",
+      "testGoFiles": "run-markitect_test.go",
+      "externalTestImports": null,
+      "externalTestLocalImports": [],
+      "externalTestGoFiles": null,
+      "productionLocalImports": [],
+      "classification": "TOOLING"
+    },
+    {
+      "testImports": [
+        "github.com/Glacius-Labs/Markitect/internal/snapshot",
+        "strings",
+        "testing"
+      ],
+      "goFiles": [
+        "contract.go",
+        "yaml.go"
+      ],
+      "role": "Selective adoption module",
+      "testLocalImports": [
+        "internal/snapshot"
+      ],
+      "path": "internal/adoption",
+      "productionImports": [
+        "bytes",
+        "crypto/sha256",
+        "encoding/hex",
+        "encoding/json",
+        "fmt",
+        "github.com/Glacius-Labs/Markitect/internal/snapshot",
+        "go.yaml.in/yaml/v3",
+        "io",
+        "path",
+        "regexp",
+        "sort",
+        "strings",
+        "unicode",
+        "unicode/utf8"
+      ],
+      "packageName": "adoption",
+      "testGoFiles": "contract_test.go",
+      "externalTestImports": null,
+      "externalTestLocalImports": [],
+      "externalTestGoFiles": null,
+      "productionLocalImports": [
+        "internal/snapshot"
+      ],
+      "classification": "MODULE"
+    },
+    {
+      "testImports": [
+        "bytes",
+        "crypto/sha256",
+        "encoding/hex",
+        "errors",
+        "fmt",
+        "github.com/Glacius-Labs/Markitect/internal/adoption",
+        "github.com/Glacius-Labs/Markitect/internal/contentpackage",
+        "github.com/Glacius-Labs/Markitect/internal/core",
+        "github.com/Glacius-Labs/Markitect/internal/format",
+        "github.com/Glacius-Labs/Markitect/internal/release",
+        "github.com/Glacius-Labs/Markitect/internal/render",
+        "github.com/Glacius-Labs/Markitect/internal/snapshot",
+        "github.com/Glacius-Labs/Markitect/internal/source",
+        "go.yaml.in/yaml/v3",
+        "os",
+        "os/exec",
+        "path/filepath",
+        "reflect",
+        "runtime",
+        "sort",
+        "strings",
+        "syscall",
+        "testing",
+        "time"
+      ],
+      "goFiles": [
+        "adapter_command.go",
+        "adoption_prepare.go",
+        "adoption_workspace.go",
+        "consistency.go",
+        "contentpackage.go",
+        "context.go",
+        "documentation_routers.go",
+        "domain_inputs.go",
+        "format.go",
+        "impact.go",
+        "impact_analysis.go",
+        "init.go",
+        "init_plan.go",
+        "init_write.go",
+        "install.go",
+        "install_plan.go",
+        "install_write.go",
+        "load.go",
+        "model.go",
+        "outputs.go",
+        "outputs_provider.go",
+        "outputs_write.go",
+        "path_spelling_windows.go",
+        "policy_analysis.go",
+        "project.go",
+        "query.go",
+        "reconcile.go",
+        "review.go",
+        "review_decode.go",
+        "review_validation.go",
+        "run_context.go",
+        "verify.go",
+        "write_safety.go"
+      ],
+      "role": "Application orchestration and I/O boundary",
+      "testLocalImports": [
+        "internal/adoption",
+        "internal/contentpackage",
+        "internal/core",
+        "internal/format",
+        "internal/release",
+        "internal/render",
+        "internal/snapshot",
+        "internal/source"
+      ],
+      "path": "internal/app",
+      "productionImports": [
+        "bytes",
+        "context",
+        "crypto/sha256",
+        "encoding/hex",
+        "errors",
+        "fmt",
+        "github.com/Glacius-Labs/Markitect/internal/adoption",
+        "github.com/Glacius-Labs/Markitect/internal/contentpackage",
+        "github.com/Glacius-Labs/Markitect/internal/core",
+        "github.com/Glacius-Labs/Markitect/internal/format",
+        "github.com/Glacius-Labs/Markitect/internal/inputs",
+        "github.com/Glacius-Labs/Markitect/internal/release",
+        "github.com/Glacius-Labs/Markitect/internal/render",
+        "github.com/Glacius-Labs/Markitect/internal/snapshot",
+        "github.com/Glacius-Labs/Markitect/internal/source",
+        "go.yaml.in/yaml/v3",
+        "io",
+        "net/url",
+        "os",
+        "os/exec",
+        "path",
+        "path/filepath",
+        "reflect",
+        "regexp",
+        "sort",
+        "strings",
+        "sync",
+        "syscall",
+        "time",
+        "unicode/utf8"
+      ],
+      "packageName": "app",
+      "testGoFiles": [
+        "adoption_prepare_test.go",
+        "app_context_test.go",
+        "app_fixture_test.go",
+        "app_impact_test.go",
+        "app_outputs_test.go",
+        "benchmark_test.go",
+        "consistency_test.go",
+        "contentpackage_test.go",
+        "context_provenance_test.go",
+        "context_test.go",
+        "documentation_routers_test.go",
+        "documentation_scenario_test.go",
+        "domain_inputs_test.go",
+        "domain_provenance_test.go",
+        "format_write_test.go",
+        "impact_analysis_test.go",
+        "impact_policy_test.go",
+        "init_test.go",
+        "install_fixture_test.go",
+        "install_safety_test.go",
+        "install_test.go",
+        "outputs_git_test.go",
+        "outputs_nested_test.go",
+        "outputs_package_write_test.go",
+        "outputs_provider_test.go",
+        "outputs_test.go",
+        "parallel_wave_risk_test.go",
+        "policy_analysis_boundary_test.go",
+        "policy_results_test.go",
+        "query_test.go",
+        "reconcile_conflict_test.go",
+        "reconcile_stale_test.go",
+        "reconcile_write_test.go",
+        "review_decode_test.go",
+        "review_fixture_test.go",
+        "review_test.go",
+        "run_context_test.go",
+        "same_target_test.go",
+        "snapshot_neutrality_test.go",
+        "verify_test.go",
+        "writers_test.go",
+        "writers_windows_test.go",
+        "yaml_inputs_test.go"
+      ],
+      "externalTestImports": null,
+      "externalTestLocalImports": [],
+      "externalTestGoFiles": null,
+      "productionLocalImports": [
+        "internal/adoption",
+        "internal/contentpackage",
+        "internal/core",
+        "internal/format",
+        "internal/inputs",
+        "internal/release",
+        "internal/render",
+        "internal/snapshot",
+        "internal/source"
+      ],
+      "classification": "HOST"
+    },
+    {
+      "testImports": [
+        "github.com/Glacius-Labs/Markitect/internal/snapshot",
+        "os",
+        "path/filepath",
+        "strings",
+        "testing"
+      ],
+      "goFiles": "coverage.go",
+      "role": "Managed artifact checker",
+      "testLocalImports": [
+        "internal/snapshot"
+      ],
+      "path": "internal/artifactcoverage",
+      "productionImports": [
+        "bytes",
+        "errors",
+        "fmt",
+        "github.com/Glacius-Labs/Markitect/internal/app",
+        "github.com/Glacius-Labs/Markitect/internal/render",
+        "github.com/Glacius-Labs/Markitect/internal/snapshot",
+        "github.com/Glacius-Labs/Markitect/internal/source",
+        "go.yaml.in/yaml/v3",
+        "io",
+        "os",
+        "path",
+        "path/filepath",
+        "sort",
+        "strings",
+        "unicode"
+      ],
+      "packageName": "artifactcoverage",
+      "testGoFiles": "coverage_test.go",
+      "externalTestImports": null,
+      "externalTestLocalImports": [],
+      "externalTestGoFiles": null,
+      "productionLocalImports": [
+        "internal/app",
+        "internal/render",
+        "internal/snapshot",
+        "internal/source"
+      ],
+      "classification": "TOOLING"
+    },
+    {
+      "testImports": [
+        "strings",
+        "testing"
+      ],
+      "goFiles": "authoring.go",
+      "role": "Portable authoring feature",
+      "testLocalImports": [],
+      "path": "internal/authoring",
+      "productionImports": [
+        "embed",
+        "fmt",
+        "github.com/Glacius-Labs/Markitect/internal/app",
+        "github.com/Glacius-Labs/Markitect/internal/snapshot",
+        "io/fs",
+        "path",
+        "strings"
+      ],
+      "packageName": "authoring",
+      "testGoFiles": "authoring_test.go",
+      "externalTestImports": null,
+      "externalTestLocalImports": [],
+      "externalTestGoFiles": null,
+      "productionLocalImports": [
+        "internal/app",
+        "internal/snapshot"
+      ],
+      "classification": "MODULE"
+    },
+    {
+      "testImports": [
+        "archive/zip",
+        "bytes",
+        "crypto/sha256",
+        "encoding/hex",
+        "github.com/Glacius-Labs/Markitect/internal/core",
+        "io/fs",
+        "testing"
+      ],
+      "goFiles": [
+        "archive.go",
+        "archive_build.go",
+        "archive_validation.go"
+      ],
+      "role": "Content archive/validation",
+      "testLocalImports": [
+        "internal/core"
+      ],
+      "path": "internal/contentpackage",
+      "productionImports": [
+        "archive/zip",
+        "bytes",
+        "compress/flate",
+        "crypto/sha256",
+        "encoding/hex",
+        "fmt",
+        "github.com/Glacius-Labs/Markitect/internal/core",
+        "github.com/Glacius-Labs/Markitect/internal/format",
+        "io",
+        "path",
+        "sort",
+        "strings",
+        "time",
+        "unicode/utf8"
+      ],
+      "packageName": "contentpackage",
+      "testGoFiles": "archive_test.go",
+      "externalTestImports": null,
+      "externalTestLocalImports": [],
+      "externalTestGoFiles": null,
+      "productionLocalImports": [
+        "internal/core",
+        "internal/format"
+      ],
+      "classification": "INFRASTRUCTURE"
+    },
+    {
+      "testImports": [
+        "github.com/Glacius-Labs/Markitect/internal/adoption",
+        "github.com/Glacius-Labs/Markitect/internal/snapshot",
+        "go.yaml.in/yaml/v3",
+        "testing"
+      ],
+      "goFiles": [
+        "records.go",
+        "validate.go"
+      ],
+      "role": "Copy Me submodule of adoption",
+      "testLocalImports": [
+        "internal/adoption",
+        "internal/snapshot"
+      ],
+      "path": "internal/copyme",
+      "productionImports": [
+        "bytes",
+        "fmt",
+        "github.com/Glacius-Labs/Markitect/internal/adoption",
+        "go.yaml.in/yaml/v3",
+        "sort",
+        "strings",
+        "time"
+      ],
+      "packageName": "copyme",
+      "testGoFiles": "validate_test.go",
+      "externalTestImports": null,
+      "externalTestLocalImports": [],
+      "externalTestGoFiles": null,
+      "productionLocalImports": [
+        "internal/adoption"
+      ],
+      "classification": "MODULE-LOCAL"
+    },
+    {
+      "testImports": [
+        "reflect",
+        "strings",
+        "testing"
+      ],
+      "goFiles": [
+        "check.go",
+        "graph.go",
+        "graph_areas.go",
+        "graph_bindings.go",
+        "graph_cycles.go",
+        "graph_domains.go",
+        "graph_project.go",
+        "graph_references.go",
+        "model.go",
+        "packages.go",
+        "policy.go",
+        "registry.go",
+        "same_target.go"
+      ],
+      "role": "Normalized model, graph and policy",
+      "testLocalImports": [],
+      "path": "internal/core",
+      "productionImports": [
+        "crypto/sha256",
+        "encoding/hex",
+        "fmt",
+        "go.yaml.in/yaml/v3",
+        "path",
+        "reflect",
+        "regexp",
+        "sort",
+        "strings",
+        "time",
+        "unicode"
+      ],
+      "packageName": "core",
+      "testGoFiles": [
+        "domain_test.go",
+        "graph_test.go",
+        "packages_test.go",
+        "policy_test.go",
+        "same_target_test.go"
+      ],
+      "externalTestImports": null,
+      "externalTestLocalImports": [],
+      "externalTestGoFiles": null,
+      "productionLocalImports": [],
+      "classification": "CORE"
+    },
+    {
+      "testImports": [
+        "bytes",
+        "github.com/Glacius-Labs/Markitect/internal/core",
+        "go.yaml.in/yaml/v3",
+        "reflect",
+        "slices",
+        "sort",
+        "strings",
+        "testing"
+      ],
+      "goFiles": [
+        "domain.go",
+        "generic.go",
+        "resource_envelope.go",
+        "schema.go",
+        "yaml.go",
+        "yaml_documentation.go",
+        "yaml_nodes.go",
+        "yaml_project.go",
+        "yaml_resource.go"
+      ],
+      "role": "Canonical YAML codec and schemas",
+      "testLocalImports": [
+        "internal/core"
+      ],
+      "path": "internal/format",
+      "productionImports": [
+        "bytes",
+        "fmt",
+        "github.com/Glacius-Labs/Markitect/internal/core",
+        "go.yaml.in/yaml/v3",
+        "io",
+        "path",
+        "reflect",
+        "regexp",
+        "sort",
+        "strconv",
+        "strings",
+        "time"
+      ],
+      "packageName": "format",
+      "testGoFiles": [
+        "domain_test.go",
+        "policy_test.go",
+        "schema_test.go",
+        "yaml_documentation_test.go",
+        "yaml_project_test.go",
+        "yaml_test.go"
+      ],
+      "externalTestImports": null,
+      "externalTestLocalImports": [],
+      "externalTestGoFiles": null,
+      "productionLocalImports": [
+        "internal/core"
+      ],
+      "classification": "INFRASTRUCTURE"
+    },
+    {
+      "testImports": [
+        "github.com/Glacius-Labs/Markitect/internal/core",
+        "testing"
+      ],
+      "goFiles": "resolve.go",
+      "role": "Declared file input resolver",
+      "testLocalImports": [
+        "internal/core"
+      ],
+      "path": "internal/inputs",
+      "productionImports": [
+        "bytes",
+        "fmt",
+        "github.com/Glacius-Labs/Markitect/internal/core",
+        "github.com/Glacius-Labs/Markitect/internal/render",
+        "path",
+        "sort",
+        "strings",
+        "unicode/utf8"
+      ],
+      "packageName": "inputs",
+      "testGoFiles": "resolve_test.go",
+      "externalTestImports": null,
+      "externalTestLocalImports": [],
+      "externalTestGoFiles": null,
+      "productionLocalImports": [
+        "internal/core",
+        "internal/render"
+      ],
+      "classification": "INFRASTRUCTURE"
+    },
+    {
+      "testImports": null,
+      "goFiles": "licenses.go",
+      "role": "License and notices support",
+      "testLocalImports": [],
+      "path": "internal/licenses",
+      "productionImports": "embed",
+      "packageName": "licenses",
+      "testGoFiles": null,
+      "externalTestImports": null,
+      "externalTestLocalImports": [],
+      "externalTestGoFiles": null,
+      "productionLocalImports": [],
+      "classification": "TOOLING"
+    },
+    {
+      "testImports": [
+        "errors",
+        "strings",
+        "testing"
+      ],
+      "goFiles": [
+        "mask.go",
+        "rewrite.go"
+      ],
+      "role": "Renderer-private Markdown link helper",
+      "testLocalImports": [],
+      "path": "internal/markdownlinks",
+      "productionImports": [
+        "fmt",
+        "html",
+        "sort",
+        "strings"
+      ],
+      "packageName": "markdownlinks",
+      "testGoFiles": "rewrite_test.go",
+      "externalTestImports": null,
+      "externalTestLocalImports": [],
+      "externalTestGoFiles": null,
+      "productionLocalImports": [],
+      "classification": "MODULE-LOCAL"
+    },
+    {
+      "testImports": [
+        "context",
+        "encoding/json",
+        "errors",
+        "fmt",
+        "github.com/Glacius-Labs/Markitect/internal/release",
+        "github.com/Glacius-Labs/Markitect/internal/snapshot",
+        "go.yaml.in/yaml/v3",
+        "os",
+        "path/filepath",
+        "strings",
+        "testing"
+      ],
+      "goFiles": [
+        "distribution.go",
+        "distribution_readme.go",
+        "publish.go",
+        "publish_api.go",
+        "publish_assets.go",
+        "publish_remote.go"
+      ],
+      "role": "GitHub publication transport",
+      "testLocalImports": [
+        "internal/release",
+        "internal/snapshot"
+      ],
+      "path": "internal/publish",
+      "productionImports": [
+        "bytes",
+        "context",
+        "crypto/sha256",
+        "encoding/hex",
+        "encoding/json",
+        "errors",
+        "fmt",
+        "github.com/Glacius-Labs/Markitect/internal/release",
+        "go.yaml.in/yaml/v3",
+        "io",
+        "net/url",
+        "os",
+        "path/filepath",
+        "regexp",
+        "sort",
+        "strconv",
+        "strings",
+        "time"
+      ],
+      "packageName": "publish",
+      "testGoFiles": [
+        "distribution_test.go",
+        "publish_fixture_test.go",
+        "publish_test.go"
+      ],
+      "externalTestImports": null,
+      "externalTestLocalImports": [],
+      "externalTestGoFiles": null,
+      "productionLocalImports": [
+        "internal/release"
+      ],
+      "classification": "TOOLING"
+    },
+    {
+      "testImports": [
+        "archive/zip",
+        "bytes",
+        "crypto/sha256",
+        "encoding/hex",
+        "github.com/Glacius-Labs/Markitect/internal/licenses",
+        "github.com/Glacius-Labs/Markitect/internal/snapshot",
+        "go.yaml.in/yaml/v3",
+        "io",
+        "os",
+        "path/filepath",
+        "runtime",
+        "sort",
+        "strings",
+        "testing",
+        "time"
+      ],
+      "goFiles": [
+        "bundle.go",
+        "bundle_manifest.go",
+        "bundle_snapshot.go",
+        "package.go",
+        "package_archive.go",
+        "package_source.go"
+      ],
+      "role": "Release bundle/source package",
+      "testLocalImports": [
+        "internal/licenses",
+        "internal/snapshot"
+      ],
+      "path": "internal/release",
+      "productionImports": [
+        "archive/zip",
+        "bytes",
+        "crypto/sha256",
+        "encoding/hex",
+        "errors",
+        "fmt",
+        "github.com/Glacius-Labs/Markitect/internal/snapshot",
+        "go.yaml.in/yaml/v3",
+        "go/ast",
+        "go/parser",
+        "go/token",
+        "io",
+        "io/fs",
+        "os",
+        "path",
+        "path/filepath",
+        "sort",
+        "strconv",
+        "strings",
+        "time",
+        "unicode/utf8"
+      ],
+      "packageName": "release",
+      "testGoFiles": [
+        "bundle_fixture_test.go",
+        "bundle_parse_test.go",
+        "bundle_test.go",
+        "notices_test.go",
+        "package_archive_test.go",
+        "package_fixture_test.go",
+        "package_test.go"
+      ],
+      "externalTestImports": null,
+      "externalTestLocalImports": [],
+      "externalTestGoFiles": null,
+      "productionLocalImports": [
+        "internal/snapshot"
+      ],
+      "classification": "TOOLING"
+    },
+    {
+      "testImports": [
+        "bytes",
+        "crypto/sha256",
+        "encoding/hex",
+        "github.com/Glacius-Labs/Markitect/internal/core",
+        "reflect",
+        "sort",
+        "strings",
+        "testing"
+      ],
+      "goFiles": [
+        "agents.go",
+        "companions.go",
+        "domain_contract_views.go",
+        "domain_views.go",
+        "markdown_views.go",
+        "output_paths.go",
+        "prose_navigation.go",
+        "provider_adapters.go",
+        "render.go",
+        "render_values.go",
+        "rules.go"
+      ],
+      "role": "Core model projection/rendering",
+      "testLocalImports": [
+        "internal/core"
+      ],
+      "path": "internal/render",
+      "productionImports": [
+        "fmt",
+        "github.com/Glacius-Labs/Markitect/internal/core",
+        "github.com/Glacius-Labs/Markitect/internal/markdownlinks",
+        "go.yaml.in/yaml/v3",
+        "net/url",
+        "path",
+        "sort",
+        "strconv",
+        "strings"
+      ],
+      "packageName": "render",
+      "testGoFiles": [
+        "agents_test.go",
+        "domain_contract_views_test.go",
+        "markdown_views_test.go",
+        "parallel_wave_claude_test.go",
+        "parallel_wave_codex_test.go",
+        "parallel_wave_docs_test.go",
+        "prose_navigation_test.go",
+        "render_test.go"
+      ],
+      "externalTestImports": null,
+      "externalTestLocalImports": [],
+      "externalTestGoFiles": null,
+      "productionLocalImports": [
+        "internal/core",
+        "internal/markdownlinks"
+      ],
+      "classification": "MODULE"
+    },
+    {
+      "testImports": [
+        "reflect",
+        "testing"
+      ],
+      "goFiles": "snapshot.go",
+      "role": "Fixed snapshot identity/digest",
+      "testLocalImports": [],
+      "path": "internal/snapshot",
+      "productionImports": [
+        "bytes",
+        "crypto/sha256",
+        "encoding/binary",
+        "encoding/hex",
+        "sort"
+      ],
+      "packageName": "snapshot",
+      "testGoFiles": "snapshot_test.go",
+      "externalTestImports": null,
+      "externalTestLocalImports": [],
+      "externalTestGoFiles": null,
+      "productionLocalImports": [],
+      "classification": "CORE"
+    },
+    {
+      "testImports": [
+        "bytes",
+        "crypto/sha256",
+        "encoding/hex",
+        "errors",
+        "fmt",
+        "github.com/Glacius-Labs/Markitect/internal/snapshot",
+        "net/url",
+        "os",
+        "os/exec",
+        "path/filepath",
+        "reflect",
+        "sort",
+        "strings",
+        "testing"
+      ],
+      "goFiles": [
+        "filemode_windows.go",
+        "git_snapshot.go",
+        "materialize.go",
+        "selective.go",
+        "source.go",
+        "working_tree.go"
+      ],
+      "role": "Git/working-tree acquisition",
+      "testLocalImports": [
+        "internal/snapshot"
+      ],
+      "path": "internal/source",
+      "productionImports": [
+        "bufio",
+        "bytes",
+        "crypto/sha1",
+        "crypto/sha256",
+        "encoding/hex",
+        "errors",
+        "fmt",
+        "github.com/Glacius-Labs/Markitect/internal/snapshot",
+        "io",
+        "os",
+        "os/exec",
+        "path",
+        "path/filepath",
+        "sort",
+        "strconv",
+        "strings",
+        "syscall",
+        "unicode",
+        "unicode/utf8"
+      ],
+      "packageName": "source",
+      "testGoFiles": [
+        "materialize_test.go",
+        "selective_test.go",
+        "source_fixture_test.go",
+        "source_test.go",
+        "working_tree_test.go"
+      ],
+      "externalTestImports": null,
+      "externalTestLocalImports": [],
+      "externalTestGoFiles": null,
+      "productionLocalImports": [
+        "internal/snapshot"
+      ],
+      "classification": "INFRASTRUCTURE"
+    }
+  ]
+}

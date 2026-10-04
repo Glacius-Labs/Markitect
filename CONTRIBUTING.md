@@ -4,34 +4,28 @@ For coordinated parallel work, read the [development guide](docs/development/REA
 
 ## Ownership and layout
 
-| Path | Responsibility |
+| Path | Final responsibility |
 |---|---|
-| `cmd/markitect` | CLI flags, exit codes, and output |
-| `cmd/markitect-adapter-dotnet` | External reference adapter for explicitly mapped, captured project-reference declarations |
-| `cmd/markitect-adapter-github`, `cmd/markitect-adapter-azure-devops` | Independent offline command consumers for mapped captured repository metadata; build separately |
-| `cmd/markitect-release`, `internal/publish` | Maintainer release verification, publication, and distribution metadata |
-| `internal/core` | Language registry, typed resources, structural constraints, and relation-specific graphs |
-| `internal/snapshot` | Resolved snapshot values, stable content digests, and deterministic snapshot comparison |
-| `internal/format` | Strict YAML parsing and schema generation |
-| `internal/source` | Git revision and working-tree acquisition, Git process hardening, and source materialization |
-| `internal/adoption`, `internal/copyme` | Closed selective-evidence handoff and pure candidate/decision byte-reference validation outside Core |
-| `internal/app/adoption_*` | Preparation orchestration and exclusive external workspace storage/read boundaries |
-| `internal/inputs` | Explicit ordinary-file inputs |
-| `internal/app` | Normalized model, context, impact, adapter orchestration, evidence, and controlled writes |
-| `internal/authoring` | Embedded canonical authoring and Markitect-first resources; separate virtual Project manifest |
-| `cmd/markitect-check-artifacts`, `internal/artifactcoverage` | Standalone explicit path-ownership check configured through existing Project checks |
-| `internal/licenses` | Canonical embedded upstream notices |
-| `internal/markdownlinks` | Bounded prose destination scanning with source-byte preservation |
-| `internal/render` | Opt-in Markdown views and declared output adapters |
-| `internal/release` | Deterministic source archives and release bundles |
-| `internal/contentpackage` | Validated offline content-package archive format |
-| `internal/app/install*.go` | Release pin planning, preflight, and application |
-| `integration` | Project adoption and pinned-release guidance |
-| `packaging/winget` | Versioned portable package manifests derived from verified releases |
-| `examples` | Executable synthetic product example |
-| `docs` | Product architecture, usage, decisions, and canonical roadmap |
+| `cmd/...` | Thin executable entrypoints. Every CLI imports Host only and delegates to Host runtime functions. |
+| `internal/core` | Generic normalized resources, `Resource.Data`, empty registry, finite graph/policy semantics, IR and opaque snapshot values. No authoring source, Project/package activation or provider semantics. |
+| `internal/host` | Transient source specifications and codecs; Project/Package/Area/provider authoring and source normalization; generic exception provenance supply; content-package validation, embedded resources, inputs, root composition, model/context/impact, process execution and controlled writes. |
+| `internal/modules/adoption` | Private selected capture/review handoff. |
+| `internal/modules/agentrules` | Private Codex/Claude adapters and provider-owned configuration. |
+| `internal/modules/markdown` | Markdown projection, literal consistency and local router checks. |
+| `internal/modules/artifactcoverage` | Pure managed-artifact ownership checks over Host-supplied inventory. |
+| `internal/modules/githooks`, `internal/modules/pipelines` | Bounded configured hook/pipeline artifact ownership and check linkage. |
+| `internal/modules/dotnet` | Explicitly mapped captured project-reference declarations and literal XML checks. |
+| `internal/modules/github`, `internal/modules/azuredevops` | Offline consumers of explicitly mapped captured repository metadata; no live provider Apply. |
+| `internal/infrastructure/source` | Git/working-tree acquisition, process hardening and materialization into snapshot values. |
+| `internal/tooling/architecture`, `internal/tooling/release`, `internal/tooling/publish`, `internal/tooling/licenses` | Mechanical import gate, immutable distribution/publication operations, and canonical notices. |
+| `integration` | Standalone public bootstrap/distribution Tooling; copied into installed packages, with no Markitect package imports. |
+| `examples`, `benchmark`, `experiments` | Executable fixtures and measurements; Harness, not production dependencies. |
+| `packaging/winget` | Versioned portable package manifests derived from verified releases. |
+| `docs` | Product architecture, usage, decisions and canonical roadmap. |
 
-Snapshot semantics and the boundary between generic values and Git operations are documented in [Source snapshots](docs/source-snapshots.md). Keep Git resolution and process hardening in `internal/source`; keep deterministic comparison over resolved values in `internal/snapshot`. Repository branch, index, and worktree checks belong to the write use cases that require them. Do not add alternate production providers or a provider framework without a concrete consumer.
+The [architecture overview](docs/architecture.md#go-ownership-and-final-dependency-model) and [Module guide](docs/development/modules.md) define these boundaries. The published v0.13.0 release remains unchanged by this source architecture; exact implementation and gate evidence belong to the coordinator's migration report.
+
+Snapshot semantics and the boundary between generic values and Git operations are documented in [Source snapshots](docs/source-snapshots.md). Keep Git resolution and process hardening in `internal/infrastructure/source`; keep deterministic comparison over resolved values in `internal/core/snapshot`. Repository branch, index, and worktree checks belong to the write use cases that require them. Do not add alternate production providers or a provider framework without a concrete consumer.
 
 Adopting repositories own their content and any import scripts used to bring existing material into the Markitect model. Markitect does not embed a repository-specific migration or renderer policy. Core authoring guidance remains part of the product.
 
@@ -69,9 +63,9 @@ go run ./cmd/markitect check --repo benchmark/fixtures/v2
 git diff --check
 ```
 
-The standalone checks do not require another repository or an AI model. CI runs supported Windows and Linux gates. A successful source gate establishes only the product checks that ran; it does not establish semantic correctness or an adopting project's acceptance.
+The standalone checks do not require another repository or an AI model. CI runs supported Windows and Linux gates. A successful source gate establishes only the product checks that ran; it does not establish semantic correctness or an adopting project's acceptance. The import checker at `internal/tooling/architecture` statically examines production and test imports, including supported-platform files, and has negative fixtures for forbidden directions. The repository test calls it through `go test ./...`, CI has a named gate step, the explicit Project check delegates through Host, and the release quality job reuses CI. These routes are wired; wiring is not a gate result. Consult the [consolidation report](docs/validation/clean-architecture-consolidation.md) for exact-head status, and do not add an exception allowlist.
 
-Edit validation declarations and regenerate schemas with `schema --repo . --write`. Edit example YAML, then run `format`, `render --repo examples/minimal --write`, and `check`. For package or consumer example changes, also run `go run ./cmd/markitect check --repo examples/package-consumer`. Edit core authoring at `internal/authoring/resources/*.yaml`; its content is canonical and embedded in the binary. Tests compile those resources through the ordinary application API. Project initialization is specified in [Usage](docs/usage.md) and current source status belongs to the [roadmap](docs/implementation-plan.md). The v0.3.0 content-package contract and consumer workflow are documented in [Content packages](docs/content-packages.md); the executable package fixtures live under `examples/content-package` and `examples/package-consumer`.
+Edit validation declarations and regenerate schemas with `schema --repo . --write`. Edit example YAML, then run `format`, `render --repo examples/minimal --write`, and `check`. For package or consumer example changes, also run `go run ./cmd/markitect check --repo examples/package-consumer`. Edit core authoring at `internal/host/embedded/resources/*.yaml`; its content is canonical and embedded in the binary. Tests compile those resources through the ordinary application API. Project initialization is specified in [Usage](docs/usage.md) and current source status belongs to the [roadmap](docs/implementation-plan.md). The v0.3.0 content-package contract and consumer workflow are documented in [Content packages](docs/content-packages.md); the executable package fixtures live under `examples/content-package` and `examples/package-consumer`.
 
 ## Project checks and rendering
 
@@ -87,7 +81,7 @@ Rendering writes only explicitly selected outputs. Add `markdown` to `spec.targe
 
 ## Release work
 
-Markitect is licensed under [Apache-2.0](LICENSE); the root license is included in source distributions. The canonical [third-party notices](internal/licenses/notices.md) are embedded in the CLI and included in both source distribution paths. When dependencies or the build toolchain change, compare their upstream notices and update this file in the same candidate when needed. Check `markitect licenses` from the packaged bootstrap as well as the source build.
+Markitect is licensed under [Apache-2.0](LICENSE); the root license is included in source distributions. The canonical [third-party notices](internal/tooling/licenses/notices.md) are embedded in the CLI and included in both source distribution paths. When dependencies or the build toolchain change, compare their upstream notices and update this file in the same candidate when needed. Check `markitect licenses` from the packaged bootstrap as well as the source build.
 
 [Operations and releases](docs/operations.md) describes the supported source and publication gates. The [roadmap](docs/implementation-plan.md) owns current source status; [GitHub Releases](https://github.com/Glacius-Labs/Markitect/releases) lists available distributions. The [production assessment](docs/production-assessment.md) records dated release evidence. A source version does not imply acceptance by any adopting project.
 

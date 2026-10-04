@@ -6,8 +6,7 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/internal/app"
-	"github.com/Glacius-Labs/Markitect/internal/render"
+	"github.com/Glacius-Labs/Markitect/internal/host"
 )
 
 func TestRepositoryLayoutExampleCompilesExplicitInputsAndNativeOutput(t *testing.T) {
@@ -16,14 +15,14 @@ func TestRepositoryLayoutExampleCompilesExplicitInputsAndNativeOutput(t *testing
 		t.Fatal("could not locate example test source")
 	}
 	root := filepath.Join(filepath.Dir(sourceFile), "repository-layout")
-	project, err := app.Load(root, "")
+	project, err := host.Load(root, "")
 	if err != nil {
 		t.Fatal(err)
 	}
 	if len(project.Diagnostics) != 0 {
 		t.Fatalf("layout example has graph diagnostics: %#v", project.Diagnostics)
 	}
-	context, err := app.CompileContext(project, "engineering/Workflow/review-change", "layout-example-test")
+	context, err := host.CompileContext(project, "engineering/Workflow/review-change", "layout-example-test")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -50,7 +49,7 @@ func TestRepositoryLayoutExampleCompilesExplicitInputsAndNativeOutput(t *testing
 	if len(want) != 0 {
 		t.Fatalf("context omitted explicit typed or ordinary inputs: %v", want)
 	}
-	outputs, err := render.Generate(project.Graph, project.Snapshot.Files)
+	outputs, err := host.GenerateOutputs(project)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -60,13 +59,13 @@ func TestRepositoryLayoutExampleCompilesExplicitInputsAndNativeOutput(t *testing
 	if _, err := os.Stat(filepath.Join(root, "docs", "markitect")); !os.IsNotExist(err) {
 		t.Fatalf("provider-only example must not contain a Markdown view tree: %v", err)
 	}
-	if findings := app.CheckOutputs(project); len(findings) != 0 {
+	if findings := host.CheckOutputs(project); len(findings) != 0 {
 		t.Fatalf("layout example has output diagnostics: %#v", findings)
 	}
-	if findings := app.CheckDocumentationRouters(project); len(findings) != 0 {
+	if findings := host.CheckDocumentationRouters(project); len(findings) != 0 {
 		t.Fatalf("layout example has router diagnostics: %#v", findings)
 	}
-	if changed, err := app.Format(root, project, false); err != nil || len(changed) != 0 {
+	if changed, err := host.Format(root, project, false); err != nil || len(changed) != 0 {
 		t.Fatalf("layout example is not canonically formatted: changed=%v err=%v", changed, err)
 	}
 }

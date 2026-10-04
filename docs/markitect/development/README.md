@@ -2,4 +2,5 @@
 # Markitect views
 
 - [Skill: engineering-change](engineering-change.skill.md)
+- [Rule: module-verification](module-verification.rule.md)
 - [Rule: repository-boundaries](repository-boundaries.rule.md)

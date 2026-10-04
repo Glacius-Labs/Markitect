@@ -15,6 +15,7 @@ spec:
     description: Begin Markitect repository changes from fixed engineering context and finish with accounted artifacts and verification.
     rules:
         - name: repository-boundaries
+        - name: module-verification
     uses:
         - kind: Workflow
           name: markitect-first-change

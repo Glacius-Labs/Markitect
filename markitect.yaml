@@ -9,7 +9,7 @@ spec:
         - markdown
     areas:
         - name: core
-          path: internal/authoring/resources
+          path: internal/host/embedded/resources
           rules:
             - name: canonical-ownership
         - name: development
@@ -18,11 +18,27 @@ spec:
             - core
             - documentation
             - contribution
+            - module-configs
+            - hooks
+            - pipelines
+          rules:
+            - name: module-verification
         - name: documentation
           path: docs
         - name: contribution
           path: CONTRIBUTING.md
+        - name: module-configs
+          path: .markitect/modules
+        - name: hooks
+          path: .githooks
+        - name: pipelines
+          path: .github/workflows/ci.yaml
     checks:
+        - name: architecture-imports
+          run:
+            - go
+            - test
+            - ./internal/tooling/architecture
         - name: managed-artifacts
           run:
             - go
@@ -32,6 +48,17 @@ spec:
             - .
             - --config
             - markitect-artifacts.yaml
+        - name: module-checks
+          run:
+            - go
+            - run
+            - ./cmd/markitect-check-modules
+            - --repo
+            - .
+            - --hooks
+            - .markitect/modules/githooks.config
+            - --pipelines
+            - .markitect/modules/pipelines.config
         - name: go-tests
           run:
             - go

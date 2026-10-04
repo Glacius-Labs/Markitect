@@ -9,5 +9,6 @@ Read the [canonical Skill YAML](../../../.markitect/areas/development/engineerin
 
 ## Dependencies
 
+- [Rule: module-verification](../../../.markitect/areas/development/module-verification.rule.yaml)
 - [Rule: repository-boundaries](../../../.markitect/areas/development/repository-boundaries.rule.yaml)
-- [Workflow: markitect-first-change](../../../internal/authoring/resources/workflow-markitect-first-change.yaml)
+- [Workflow: markitect-first-change](../../../internal/host/embedded/resources/workflow-markitect-first-change.yaml)

@@ -48,7 +48,7 @@ func validZipEntries() []zipFixtureEntry {
 		{name: "go.mod", data: []byte("module markitect\n\ngo 1.24.0\n"), mode: 0644},
 		{name: "go.sum", data: []byte(""), mode: 0644},
 		{name: "cmd/markitect/main.go", data: []byte("package main\n"), mode: 0644},
-		{name: "internal/app/app.go", data: []byte("package app\n"), mode: 0644},
+		{name: "internal/app/host.go", data: []byte("package app\n"), mode: 0644},
 	}
 }
 
@@ -267,7 +267,7 @@ func TestBuildCacheReusesOnlyVerifiedBinaryAndUsesLocalGoCaches(t *testing.T) {
 	if noiseReuse != first || buildCount != 1 {
 		t.Fatalf("irrelevant caller environment invalidated cache: builds=%d", buildCount)
 	}
-	if indexOf(buildArgs, "-buildvcs=false") < 0 || indexOf(buildArgs, "-trimpath") < 0 || !contains(buildArgs, "-X main.version="+m.version) {
+	if indexOf(buildArgs, "-buildvcs=false") < 0 || indexOf(buildArgs, "-trimpath") < 0 || !contains(buildArgs, "-X main.version="+m.version+" -X github.com/Glacius-Labs/Markitect/internal/host/cli.version="+m.version) {
 		t.Fatalf("build flags missing: %v", buildArgs)
 	}
 	base := filepath.Join(root, ".artifacts", "markitect")

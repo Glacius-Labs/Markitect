@@ -12,7 +12,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/Glacius-Labs/Markitect/internal/app"
+	"github.com/Glacius-Labs/Markitect/internal/host"
 	"go.yaml.in/yaml/v3"
 )
 
@@ -99,7 +99,7 @@ func run(args []string) error {
 		}
 	}
 
-	project, err := app.Load(projectRoot, *revision)
+	project, err := host.Load(projectRoot, *revision)
 	if err != nil {
 		return fmt.Errorf("load fixed Project snapshot: %w", err)
 	}
@@ -133,7 +133,7 @@ func run(args []string) error {
 	if strings.TrimSpace(evidence.ToolVersion) == "" || strings.TrimSpace(evidence.ToolDigest) == "" {
 		return errors.New("evidence ledger must bind the ContextRun tool version and digest")
 	}
-	context, err := app.CompileRunContext(project, *runPath, manifestBytes, evidence.ToolVersion, evidence.ToolDigest)
+	context, err := host.CompileRunContext(project, *runPath, manifestBytes, evidence.ToolVersion, evidence.ToolDigest)
 	if err != nil {
 		return fmt.Errorf("compile fixed ContextRun: %w", err)
 	}
@@ -156,7 +156,7 @@ func run(args []string) error {
 		return errors.New("evidence ledger must include selected sources")
 	}
 	known := make(map[string]evidenceSource, len(evidence.Sources))
-	selected := make(map[string]app.ContextInput, len(context.Inputs))
+	selected := make(map[string]host.ContextInput, len(context.Inputs))
 	for _, input := range context.Inputs {
 		if input.Role == "source" {
 			selected[input.Path] = input
@@ -218,7 +218,7 @@ func run(args []string) error {
 	default:
 		return fmt.Errorf("unsupported human decision status %q", decision.Status)
 	}
-	if decision.CandidateHash != app.Hash(candidateBytes) || decision.EvidenceHash != app.Hash(evidenceBytes) {
+	if decision.CandidateHash != host.Hash(candidateBytes) || decision.EvidenceHash != host.Hash(evidenceBytes) {
 		return errors.New("decision is stale: candidate or evidence-ledger bytes changed after review")
 	}
 

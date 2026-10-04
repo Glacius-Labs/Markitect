@@ -1,0 +1,168 @@
+// Package azuredevopscli owns the command protocol and staged-file boundary
+// for the Azure DevOps metadata Module.
+package azuredevopscli
+
+import (
+	"bytes"
+	"errors"
+	"fmt"
+	"io"
+	"os"
+	"path/filepath"
+	"strings"
+
+	"github.com/Glacius-Labs/Markitect/internal/host"
+	"github.com/Glacius-Labs/Markitect/internal/modules/azuredevops"
+	"go.yaml.in/yaml/v3"
+)
+
+func Main() { os.Exit(Run(os.Stdin, os.Stdout, os.Stderr)) }
+
+func Run(input io.Reader, output, stderr io.Writer) int {
+	body, err := io.ReadAll(input)
+	if err != nil {
+		return writeFailure(output, fmt.Errorf("read adapter request: %w", err))
+	}
+	decoder := yaml.NewDecoder(bytes.NewReader(body))
+	var wire host.AdapterRequest
+	if err := decoder.Decode(&wire); err != nil {
+		return writeFailure(output, fmt.Errorf("decode adapter request: %w", err))
+	}
+	var extra any
+	if err := decoder.Decode(&extra); err != io.EOF {
+		return writeFailure(output, errors.New("adapter request must contain exactly one YAML document"))
+	}
+	config, configErr := azuredevops.DecodeConfig(wire.Adapter.Parameters)
+	request := azuredevops.Request{
+		APIVersion:    wire.APIVersion,
+		Action:        wire.Action,
+		Adapter:       azuredevops.Identity{Name: wire.Adapter.Name, Type: wire.Adapter.Type, Version: wire.Adapter.Version, Target: wire.Adapter.Target},
+		Model:         wire.Model,
+		Config:        config,
+		Captures:      map[string][]byte{},
+		CaptureErrors: map[string]string{},
+	}
+	if configErr != nil {
+		request.ConfigError = configErr.Error()
+	} else {
+		request.Captures, request.CaptureErrors = readMappedInputs(azuredevops.CapturePaths(config))
+	}
+	if wire.Observation != nil {
+		request.Observation, err = decodeResult(wire.Observation)
+		if err != nil {
+			return writeFailure(output, fmt.Errorf("decode adapter observation: %w", err))
+		}
+	}
+	if wire.Plan != nil {
+		request.Plan, err = decodeResult(wire.Plan)
+		if err != nil {
+			return writeFailure(output, fmt.Errorf("decode adapter plan: %w", err))
+		}
+	}
+	return writeResult(output, azuredevops.Run(request))
+}
+
+func decodeResult(value *host.AdapterResult) (*azuredevops.Result, error) {
+	data, err := host.YAML(value)
+	if err != nil {
+		return nil, err
+	}
+	var result azuredevops.Result
+	decoder := yaml.NewDecoder(bytes.NewReader(data))
+	decoder.KnownFields(true)
+	if err := decoder.Decode(&result); err != nil {
+		return nil, err
+	}
+	return &result, nil
+}
+
+func readMappedInputs(paths []string) (map[string][]byte, map[string]string) {
+	data := make(map[string][]byte, len(paths))
+	errorsByPath := make(map[string]string)
+	for _, path := range paths {
+		value, err := readStagedFile(path, 1<<20)
+		if err != nil {
+			errorsByPath[path] = err.Error()
+			continue
+		}
+		data[path] = value
+	}
+	return data, errorsByPath
+}
+
+func readStagedFile(relative string, limit int64) ([]byte, error) {
+	if relative == "" || strings.ContainsAny(relative, `\:`) || filepath.IsAbs(relative) {
+		return nil, errors.New("captureFile must be a staged-input-relative path")
+	}
+	clean := filepath.Clean(filepath.FromSlash(relative))
+	if clean == "." || clean == ".." || strings.HasPrefix(clean, ".."+string(filepath.Separator)) {
+		return nil, errors.New("captureFile must stay within staged inputs")
+	}
+	root, err := os.Getwd()
+	if err != nil {
+		return nil, err
+	}
+	root, err = filepath.EvalSymlinks(root)
+	if err != nil {
+		return nil, err
+	}
+	current := root
+	parts := strings.Split(clean, string(filepath.Separator))
+	for i, part := range parts {
+		current = filepath.Join(current, part)
+		info, err := os.Lstat(current)
+		if err != nil {
+			return nil, err
+		}
+		if isReparsePoint(info) {
+			return nil, errors.New("capture input contains a link or reparse point")
+		}
+		if i < len(parts)-1 && !info.IsDir() {
+			return nil, errors.New("capture input parent is not a directory")
+		}
+		if i == len(parts)-1 && !info.Mode().IsRegular() {
+			return nil, errors.New("captureFile must be a regular file")
+		}
+	}
+	before, err := os.Lstat(current)
+	if err != nil {
+		return nil, err
+	}
+	file, err := os.Open(current)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+	opened, err := file.Stat()
+	if err != nil || !opened.Mode().IsRegular() || !os.SameFile(before, opened) {
+		return nil, errors.New("capture input changed while opening")
+	}
+	if opened.Size() < 0 || opened.Size() > limit {
+		return nil, fmt.Errorf("captureFile exceeds %d bytes", limit)
+	}
+	data, err := io.ReadAll(io.LimitReader(file, limit+1))
+	if err != nil {
+		return nil, err
+	}
+	if int64(len(data)) > limit || int64(len(data)) != opened.Size() {
+		return nil, errors.New("capture changed or exceeds size limit")
+	}
+	return data, nil
+}
+
+func isReparsePoint(info os.FileInfo) bool { return isPlatformReparsePoint(info) }
+func writeResult(output io.Writer, value any) int {
+	encoder := yaml.NewEncoder(output)
+	encoder.SetIndent(2)
+	if err := encoder.Encode(value); err != nil {
+		return 2
+	}
+	if err := encoder.Close(); err != nil {
+		return 2
+	}
+	return 0
+}
+func writeFailure(output io.Writer, err error) int {
+	_ = writeResult(output, azuredevops.InvalidRequest(err.Error()))
+	return 2
+}

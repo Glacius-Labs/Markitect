@@ -28,10 +28,9 @@ func policyTestDomain() DomainDefinition {
 	}
 }
 
-func policyTestResources(project *Resource) []*Resource {
+func policyTestResources() []*Resource {
 	domain := "policy.tests.example/v1"
 	return []*Resource{
-		project,
 		{APIVersion: domain, Kind: "Module", Metadata: Metadata{Name: "empty", Namespace: "engineering"}, Path: "modules/empty.yaml", Line: 2, Data: map[string]any{"code": "same"}},
 		{APIVersion: domain, Kind: "Module", Metadata: Metadata{Name: "full", Namespace: "engineering"}, Path: "modules/full.yaml", Line: 3, Data: map[string]any{"code": "same", "validators": []any{map[string]any{"kind": "Core", "name": "one"}, map[string]any{"kind": "Core", "name": "two"}}}},
 		{APIVersion: domain, Kind: "Core", Metadata: Metadata{Name: "one", Namespace: "engineering"}, Data: map[string]any{"purpose": "one"}},
@@ -39,18 +38,22 @@ func policyTestResources(project *Resource) []*Resource {
 	}
 }
 
-func buildPolicyTestGraph(project *Resource, domain DomainDefinition) *Graph {
+func buildPolicyTestGraph(exceptions []PolicyException, policyDate string, domain DomainDefinition) *Graph {
 	registry := NewRegistry()
 	if err := registry.AddDomain(domain); err != nil {
 		panic(err)
 	}
-	return BuildWithRegistry(policyTestResources(project), registry)
+	resources := policyTestResources()
+	relationships, diagnostics := ResolveTypedRelationships(resources, registry)
+	if len(diagnostics) != 0 {
+		panic(diagnostics)
+	}
+	return BuildNormalized(resources, registry, relationships, exceptions, policyDate, nil)
 }
 
 func TestPolicyResultsReportEverySubjectAndSeparateResourceFromSelectionCounts(t *testing.T) {
 	domain := policyTestDomain()
-	project := &Resource{APIVersion: APIVersion, Kind: "Project", Metadata: Metadata{Name: "sample"}}
-	graph := buildPolicyTestGraph(project, domain)
+	graph := buildPolicyTestGraph(nil, "", domain)
 	results := map[string]map[string]PolicyResult{}
 	for _, result := range graph.PolicyResults {
 		if results[result.Constraint] == nil {
@@ -95,8 +98,7 @@ func TestPolicyResultsReportEverySubjectAndSeparateResourceFromSelectionCounts(t
 
 func TestPolicyExceptionWaivesOneExactFindingAndReportsMetadata(t *testing.T) {
 	domain := policyTestDomain()
-	baseProject := &Resource{APIVersion: APIVersion, Kind: "Project", Metadata: Metadata{Name: "sample"}}
-	base := buildPolicyTestGraph(baseProject, domain)
+	base := buildPolicyTestGraph(nil, "", domain)
 	var target PolicyResult
 	for _, result := range base.PolicyResults {
 		if result.Constraint == "module-intent" && result.Subject == "engineering/policy.tests.example/v1/Module/empty" {
@@ -106,11 +108,11 @@ func TestPolicyExceptionWaivesOneExactFindingAndReportsMetadata(t *testing.T) {
 	if target.Status != PolicyFailed {
 		t.Fatalf("fixture did not fail: %+v", target)
 	}
-	project := &Resource{APIVersion: APIVersion, Kind: "Project", Metadata: Metadata{Name: "sample"}, Spec: Spec{PolicyExceptions: []PolicyException{{
+	exceptions := []PolicyException{{
 		Name: "legacy-intent", APIVersion: target.APIVersion, Constraint: target.Constraint, Subject: target.Subject,
 		ConstraintDigest: target.ConstraintDigest, SubjectDigest: target.SubjectDigest, Rationale: "Migration is scheduled separately.", Owner: "architecture", Decision: "accepted for this fixed snapshot",
-	}}}}
-	graph := buildPolicyTestGraph(project, domain)
+	}}
+	graph := buildPolicyTestGraph(exceptions, "", domain)
 	statuses := map[string]string{}
 	for _, result := range graph.PolicyResults {
 		if result.Constraint == "module-intent" {
@@ -126,7 +128,7 @@ func TestPolicyExceptionWaivesOneExactFindingAndReportsMetadata(t *testing.T) {
 	if countCode(graph, "constraint.module-intent") != 1 {
 		t.Fatalf("waiver removed a sibling finding or left its finding diagnostic: %#v", graph.Diagnostics)
 	}
-	graph.EvaluateConstraints()
+	graph.EvaluateConstraints(exceptions, "")
 	if statusFor(graph, "module-intent", target.Subject) != PolicyWaived || countCode(graph, "constraint.module-intent") != 1 {
 		t.Fatalf("reevaluation accumulated stale policy diagnostics: %#v", graph.Diagnostics)
 	}
@@ -137,8 +139,7 @@ func TestPolicyExceptionDigestBindsRelationDefinition(t *testing.T) {
 	module := domain.Kinds["Module"]
 	module.Properties["approvers"] = PropertyDefinition{Type: "array", Items: &PropertyDefinition{Type: "ref", RefKind: "Core"}}
 	domain.Kinds["Module"] = module
-	project := &Resource{APIVersion: APIVersion, Kind: "Project", Metadata: Metadata{Name: "sample"}}
-	baseline := buildPolicyTestGraph(project, domain)
+	baseline := buildPolicyTestGraph(nil, "", domain)
 	var finding PolicyResult
 	for _, result := range baseline.PolicyResults {
 		if result.Constraint == "module-validator-count" && result.Subject == "engineering/policy.tests.example/v1/Module/empty" {
@@ -154,12 +155,12 @@ func TestPolicyExceptionDigestBindsRelationDefinition(t *testing.T) {
 	relation := domain.Relations["validators"]
 	relation.Field = "approvers"
 	domain.Relations["validators"] = relation
-	projectWithOldException := &Resource{APIVersion: APIVersion, Kind: "Project", Metadata: Metadata{Name: "sample"}, Spec: Spec{PolicyExceptions: []PolicyException{{
+	exceptions := []PolicyException{{
 		Name: "old-validator-waiver", APIVersion: finding.APIVersion, Constraint: finding.Constraint, Subject: finding.Subject,
 		ConstraintDigest: finding.ConstraintDigest, SubjectDigest: finding.SubjectDigest,
 		Rationale: "The previous relation definition was reviewed.", Owner: "architecture", Decision: "time-boxed exception",
-	}}}}
-	updated := buildPolicyTestGraph(projectWithOldException, domain)
+	}}
+	updated := buildPolicyTestGraph(exceptions, "", domain)
 	if countCode(updated, "policy.exception.stale") != 1 {
 		t.Fatalf("changing the relation field must stale the exception: %#v", updated.Diagnostics)
 	}
@@ -172,25 +173,22 @@ func TestPolicyExceptionDigestBindsRelationDefinition(t *testing.T) {
 
 func TestPolicyExceptionsRejectStaleAndExpiredEvidenceWithoutClock(t *testing.T) {
 	domain := policyTestDomain()
-	base := buildPolicyTestGraph(&Resource{APIVersion: APIVersion, Kind: "Project", Metadata: Metadata{Name: "sample"}}, domain)
+	base := buildPolicyTestGraph(nil, "", domain)
 	var finding PolicyResult
 	for _, result := range base.PolicyResults {
 		if result.Constraint == "module-intent" && result.Subject == "engineering/policy.tests.example/v1/Module/empty" {
 			finding = result
 		}
 	}
-	makeProject := func(date, subjectDigest string) *Resource {
-		return &Resource{APIVersion: APIVersion, Kind: "Project", Metadata: Metadata{Name: "sample"}, Spec: Spec{
-			PolicyDate: date,
-			PolicyExceptions: []PolicyException{{Name: "legacy-intent", APIVersion: finding.APIVersion, Constraint: finding.Constraint, Subject: finding.Subject,
-				ConstraintDigest: finding.ConstraintDigest, SubjectDigest: subjectDigest, Rationale: "R", Owner: "O", Decision: "D", ExpiresOn: "2026-10-02"}},
-		}}
+	makeException := func(subjectDigest string) []PolicyException {
+		return []PolicyException{{Name: "legacy-intent", APIVersion: finding.APIVersion, Constraint: finding.Constraint, Subject: finding.Subject,
+			ConstraintDigest: finding.ConstraintDigest, SubjectDigest: subjectDigest, Rationale: "R", Owner: "O", Decision: "D", ExpiresOn: "2026-10-02"}}
 	}
-	stale := buildPolicyTestGraph(makeProject("2026-10-01", "sha256:"+strings.Repeat("0", 64)), domain)
+	stale := buildPolicyTestGraph(makeException("sha256:"+strings.Repeat("0", 64)), "2026-10-01", domain)
 	if !hasCode(stale, "policy.exception.stale") || statusFor(stale, finding.Constraint, finding.Subject) != PolicyFailed {
 		t.Fatalf("stale subject binding waived a failure: %#v", stale.Diagnostics)
 	}
-	expired := buildPolicyTestGraph(makeProject("2026-10-02", finding.SubjectDigest), domain)
+	expired := buildPolicyTestGraph(makeException(finding.SubjectDigest), "2026-10-02", domain)
 	if !hasCode(expired, "policy.exception.expired") || statusFor(expired, finding.Constraint, finding.Subject) != PolicyFailed {
 		t.Fatalf("expiresOn was not exclusive at the pinned policy date: %#v", expired.Diagnostics)
 	}
@@ -201,7 +199,7 @@ func TestPolicyExceptionsRejectStaleAndExpiredEvidenceWithoutClock(t *testing.T)
 			changedPolicy.Constraints[i].Assert.Field = "code"
 		}
 	}
-	stalePolicy := buildPolicyTestGraph(makeProject("2026-10-01", finding.SubjectDigest), changedPolicy)
+	stalePolicy := buildPolicyTestGraph(makeException(finding.SubjectDigest), "2026-10-01", changedPolicy)
 	if !hasCode(stalePolicy, "policy.exception.stale") {
 		t.Fatalf("changed normalized constraint did not stale the exception: %#v", stalePolicy.Diagnostics)
 	}
@@ -209,23 +207,23 @@ func TestPolicyExceptionsRejectStaleAndExpiredEvidenceWithoutClock(t *testing.T)
 
 func TestPolicySubjectDigestExcludesSourceLocationButIncludesPackageIdentity(t *testing.T) {
 	resource := &Resource{APIVersion: "policy.tests.example/v1", Kind: "Module", Metadata: Metadata{Name: "orders", Namespace: "engineering"}, Data: map[string]any{"intent": "stable"}, Path: "first.yaml", Line: 1}
-	first, err := digestResource(resource)
+	first, err := digestResource(resource, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
 	resource.Path, resource.Line = "second.yaml", 50
-	second, err := digestResource(resource)
+	second, err := digestResource(resource, nil)
 	if err != nil || first != second {
 		t.Fatalf("source location affected canonical subject digest: %q != %q (%v)", first, second, err)
 	}
 	resource.Package = "patterns"
-	third, err := digestResource(resource)
+	third, err := digestResource(resource, nil)
 	if err != nil || third == second {
 		t.Fatalf("package-qualified subject identity was omitted from digest: %q, %q (%v)", second, third, err)
 	}
 	resource.Package = ""
 	resource.APIVersion = "policy.tests.example/v2"
-	fourth, err := digestResource(resource)
+	fourth, err := digestResource(resource, nil)
 	if err != nil || fourth == second {
 		t.Fatalf("API-qualified resource identity was omitted from digest: %q, %q (%v)", second, fourth, err)
 	}
@@ -233,18 +231,18 @@ func TestPolicySubjectDigestExcludesSourceLocationButIncludesPackageIdentity(t *
 
 func TestPolicyExceptionsRejectWrongAPIVersionAndNoLongerNeededFindings(t *testing.T) {
 	domain := policyTestDomain()
-	base := buildPolicyTestGraph(&Resource{APIVersion: APIVersion, Kind: "Project", Metadata: Metadata{Name: "sample"}}, domain)
+	base := buildPolicyTestGraph(nil, "", domain)
 	var finding PolicyResult
 	for _, result := range base.PolicyResults {
 		if result.Constraint == "module-intent" && result.Subject == "engineering/policy.tests.example/v1/Module/empty" {
 			finding = result
 		}
 	}
-	wrongAPI := &Resource{APIVersion: APIVersion, Kind: "Project", Metadata: Metadata{Name: "sample"}, Spec: Spec{PolicyExceptions: []PolicyException{{
+	wrongAPI := []PolicyException{{
 		Name: "wrong-domain", APIVersion: "other.tests.example/v1", Constraint: finding.Constraint, Subject: finding.Subject,
 		ConstraintDigest: finding.ConstraintDigest, SubjectDigest: finding.SubjectDigest, Rationale: "R", Owner: "O", Decision: "D",
-	}}}}
-	if graph := buildPolicyTestGraph(wrongAPI, domain); !hasCode(graph, "policy.exception.unknown") || statusFor(graph, finding.Constraint, finding.Subject) != PolicyFailed {
+	}}
+	if graph := buildPolicyTestGraph(wrongAPI, "", domain); !hasCode(graph, "policy.exception.unknown") || statusFor(graph, finding.Constraint, finding.Subject) != PolicyFailed {
 		t.Fatalf("wrong API identity matched an unrelated finding: %#v", graph.Diagnostics)
 	}
 
@@ -254,18 +252,18 @@ func TestPolicyExceptionsRejectWrongAPIVersionAndNoLongerNeededFindings(t *testi
 			unselectedPolicy.Constraints[i].Select.Labels = map[string]string{"scope": "included"}
 		}
 	}
-	unneeded := &Resource{APIVersion: APIVersion, Kind: "Project", Metadata: Metadata{Name: "sample"}, Spec: Spec{PolicyExceptions: []PolicyException{{
+	unneeded := []PolicyException{{
 		Name: "no-longer-selected", APIVersion: finding.APIVersion, Constraint: finding.Constraint, Subject: finding.Subject,
 		ConstraintDigest: finding.ConstraintDigest, SubjectDigest: finding.SubjectDigest, Rationale: "R", Owner: "O", Decision: "D",
-	}}}}
-	if graph := buildPolicyTestGraph(unneeded, unselectedPolicy); !hasCode(graph, "policy.exception.stale") {
+	}}
+	if graph := buildPolicyTestGraph(unneeded, "", unselectedPolicy); !hasCode(graph, "policy.exception.stale") {
 		t.Fatalf("changed selector did not stale a no-longer-selected exception: %#v", graph.Diagnostics)
 	}
 }
 
 func TestPolicyExceptionCannotWaiveCollectionUniqueFinding(t *testing.T) {
 	domain := policyTestDomain()
-	base := buildPolicyTestGraph(&Resource{APIVersion: APIVersion, Kind: "Project", Metadata: Metadata{Name: "sample"}}, domain)
+	base := buildPolicyTestGraph(nil, "", domain)
 	var finding PolicyResult
 	for _, result := range base.PolicyResults {
 		if result.Constraint == "module-codes-unique" {
@@ -275,11 +273,11 @@ func TestPolicyExceptionCannotWaiveCollectionUniqueFinding(t *testing.T) {
 	if finding.Status != PolicyFailed || finding.Subject != "" {
 		t.Fatalf("fixture did not produce a collection finding: %+v", finding)
 	}
-	project := &Resource{APIVersion: APIVersion, Kind: "Project", Metadata: Metadata{Name: "sample"}, Spec: Spec{PolicyExceptions: []PolicyException{{
+	exceptions := []PolicyException{{
 		Name: "unique-override", APIVersion: finding.APIVersion, Constraint: finding.Constraint, Subject: "engineering/policy.tests.example/v1/Module/empty",
 		ConstraintDigest: finding.ConstraintDigest, SubjectDigest: finding.SubjectDigest, Rationale: "R", Owner: "O", Decision: "D",
-	}}}}
-	graph := buildPolicyTestGraph(project, domain)
+	}}
+	graph := buildPolicyTestGraph(exceptions, "", domain)
 	if !hasCode(graph, "policy.exception.not-waivable") || statusFor(graph, finding.Constraint, "") != PolicyFailed || !hasCode(graph, "constraint."+finding.Constraint) {
 		t.Fatalf("collection-wide finding was waived or lost: results=%#v diagnostics=%#v", graph.PolicyResults, graph.Diagnostics)
 	}

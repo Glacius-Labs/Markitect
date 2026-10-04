@@ -23,6 +23,9 @@
 | [Refinement decisions](refinement.md) | Technical product decisions and deferred design choices in support of the vision |
 | [Implementation plan](implementation-plan.md) | Published v0.13.0 status, release evidence, and later planned work |
 | [Development coordination](development/README.md) | Parallel baseline, current contracts, independence audit and risk evidence |
+| [Module architecture](development/modules.md) | Core, Host, independent Modules, Infrastructure/Tooling and how to extend the source |
+| [Architecture consolidation](validation/clean-architecture-consolidation.md) | Package inventory, Core audit, compatibility, dogfood and exact-source gate results |
+| [Markitect-first release readiness](validation/markitect-first-release-readiness.md) | Earlier workflow/artifact-coverage release checks and their evidence limits |
 | [Workstream packages](workstreams/README.md) | Bounded future implementer assignments, ownership and hard/soft dependencies |
 | [Canonical engineering plan](canonical-engineering-plan.md) | v0.10.0 language, semantic model, and adapter contract |
 | [Strategy source documents](strategy/README.md) | User-provided product and design proposals, their provenance, and the boundary between hypotheses and adopted behavior |

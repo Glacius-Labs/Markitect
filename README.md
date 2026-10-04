@@ -452,7 +452,7 @@ The canonical model should outlive any one AI provider or output format.
 - [Operations](docs/operations.md): source development, checks, verification, and release handling.
 - [Integration](integration/README.md): verified downloads, project pins, upgrades, and release publication.
 - [Development](CONTRIBUTING.md): code ownership and contribution checks.
-- [Third-party notices](internal/licenses/notices.md): bundled upstream attribution, also available offline with `markitect licenses`.
+- [Third-party notices](internal/tooling/licenses/notices.md): bundled upstream attribution, also available offline with `markitect licenses`.
 
 ## License
 

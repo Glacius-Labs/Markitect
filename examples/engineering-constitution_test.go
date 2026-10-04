@@ -10,11 +10,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/internal/app"
-	"github.com/Glacius-Labs/Markitect/internal/contentpackage"
 	"github.com/Glacius-Labs/Markitect/internal/core"
-	"github.com/Glacius-Labs/Markitect/internal/format"
-	"github.com/Glacius-Labs/Markitect/internal/render"
+	"github.com/Glacius-Labs/Markitect/internal/host"
+	"github.com/Glacius-Labs/Markitect/internal/host/authoring"
+	"github.com/Glacius-Labs/Markitect/internal/host/authoring/contentpackage"
 )
 
 const (
@@ -58,9 +57,9 @@ func copyEngineeringConstitution(t *testing.T, destination string) {
 	}
 }
 
-func loadEngineeringConstitution(t *testing.T, root string) *app.Project {
+func loadEngineeringConstitution(t *testing.T, root string) *host.Project {
 	t.Helper()
-	project, err := app.Load(root, "")
+	project, err := host.Load(root, "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -76,7 +75,7 @@ func TestEngineeringConstitutionV1PackageDrivesModelContextAndViews(t *testing.T
 	if got := project.Graph.Project.Spec.Packages[0].Version; got != "1.0.0" {
 		t.Fatalf("fixture package version = %q, want exact v1.0.0 pin", got)
 	}
-	model, err := app.CompileModel(project)
+	model, err := host.CompileModel(project)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -86,7 +85,7 @@ func TestEngineeringConstitutionV1PackageDrivesModelContextAndViews(t *testing.T
 	}
 
 	entry := "engineering/Skill/add-order"
-	compiled, err := app.CompileContext(project, entry, "0.11.0")
+	compiled, err := host.CompileContext(project, entry, "0.11.0")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -123,7 +122,7 @@ func TestEngineeringConstitutionV1PackageDrivesModelContextAndViews(t *testing.T
 		t.Fatal("agent context omitted model policy results")
 	}
 
-	outputs, err := render.Generate(project.Graph, project.Snapshot.Files)
+	outputs, err := host.GenerateOutputs(project)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -142,31 +141,31 @@ func TestEngineeringConstitutionV1PackageDrivesModelContextAndViews(t *testing.T
 func TestEngineeringConstitutionStructuralRelationsAndConflictFailClosed(t *testing.T) {
 	for _, test := range []struct {
 		name     string
-		mutate   func(t *testing.T, root string, project *app.Project)
+		mutate   func(t *testing.T, root string, project *host.Project)
 		wantCode string
 		alsoCode string
 	}{
 		{
 			name: "zero handlers",
-			mutate: func(t *testing.T, root string, project *app.Project) {
+			mutate: func(t *testing.T, root string, project *host.Project) {
 				writeEngineeringResource(t, root, project, constitutionUseCaseV1, func(data map[string]any) { data["handlers"] = []any{} })
 			},
 			wantCode: "relation.min-targets",
 		},
 		{
 			name: "two handlers",
-			mutate: func(t *testing.T, root string, project *app.Project) {
+			mutate: func(t *testing.T, root string, project *host.Project) {
 				writeEngineeringResource(t, root, project, constitutionUseCaseV1, func(data map[string]any) {
 					data["handlers"] = append(data["handlers"].([]any), map[string]any{"kind": "Handler", "name": "second-handler", "namespace": "engineering"})
 				})
-				second := core.Resource{APIVersion: constitutionV1API, Kind: "Handler", Metadata: core.Metadata{Name: "second-handler", Namespace: "engineering"}, Data: map[string]any{"summary": "A second structural handler."}}
+				second := authoring.Resource{Core: authoring.Core{APIVersion: constitutionV1API, Kind: "Handler", Metadata: core.Metadata{Name: "second-handler", Namespace: "engineering"}, Data: map[string]any{"summary": "A second structural handler."}}}
 				writeEngineeringResourceFile(t, filepath.Join(root, "resources", "second-handler.yaml"), second)
 			},
 			wantCode: "relation.max-targets",
 		},
 		{
 			name: "handler reference has forbidden target kind",
-			mutate: func(t *testing.T, root string, project *app.Project) {
+			mutate: func(t *testing.T, root string, project *host.Project) {
 				writeEngineeringResource(t, root, project, constitutionUseCaseV1, func(data map[string]any) {
 					data["handlers"] = []any{map[string]any{"kind": "Module", "name": "orders", "namespace": "engineering"}}
 				})
@@ -192,7 +191,7 @@ func TestEngineeringConstitutionStructuralRelationsAndConflictFailClosed(t *test
 			if !hasConstitutionDiagnostic(invalid.Diagnostics, test.wantCode) {
 				t.Fatalf("wanted structural diagnostic %q, got %#v", test.wantCode, invalid.Diagnostics)
 			}
-			if hasConstitutionResult(invalid.Graph.PolicyResults, "handledBy", constitutionUseCaseV1) {
+			if hasConstitutionResult(invalid.Graph.Core.PolicyResults, "handledBy", constitutionUseCaseV1) {
 				t.Fatal("structural relation failure was incorrectly converted to a policy result")
 			}
 			if !hasConstitutionDiagnostic(invalid.Diagnostics, "policy.exception.unknown") && !hasConstitutionDiagnostic(invalid.Diagnostics, "policy.exception.stale") {
@@ -210,7 +209,7 @@ func TestEngineeringConstitutionV2PackageMigrationAndWaiverLifecycle(t *testing.
 	if len(v2.Diagnostics) == 0 || !hasConstitutionDiagnostic(v2.Diagnostics, "constraint.each-usecase-has-validator") {
 		t.Fatalf("v2 should identify the newly affected UseCase: %#v", v2.Diagnostics)
 	}
-	missing := findConstitutionResult(v2.Graph.PolicyResults, constitutionV2API, "each-usecase-has-validator", constitutionUseCaseV2)
+	missing := findConstitutionResult(v2.Graph.Core.PolicyResults, constitutionV2API, "each-usecase-has-validator", constitutionUseCaseV2)
 	if missing.Status != core.PolicyFailed || !strings.Contains(missing.Message, "0 targets") {
 		t.Fatalf("v2 validator policy did not return a per-subject failure: %#v", missing)
 	}
@@ -220,7 +219,7 @@ func TestEngineeringConstitutionV2PackageMigrationAndWaiverLifecycle(t *testing.
 	if got := v2.Graph.Project.Spec.Packages[0].SHA256; got == v1.Graph.Project.Spec.Packages[0].SHA256 {
 		t.Fatal("v1 and v2 package pins unexpectedly select identical archive digests")
 	}
-	impact := app.Changes(v1, v2)
+	impact := host.Changes(v1, v2)
 	if !containsString(impact.Affected, constitutionUseCaseV2) {
 		t.Fatalf("exact package migration did not conservatively affect the UseCase: %#v", impact)
 	}
@@ -230,12 +229,12 @@ func TestEngineeringConstitutionV2PackageMigrationAndWaiverLifecycle(t *testing.
 	if len(waived.Diagnostics) != 0 {
 		t.Fatalf("valid dated exception should leave no model diagnostics: %#v", waived.Diagnostics)
 	}
-	waiver := findConstitutionResult(waived.Graph.PolicyResults, constitutionV2API, "each-usecase-has-validator", constitutionUseCaseV2)
+	waiver := findConstitutionResult(waived.Graph.Core.PolicyResults, constitutionV2API, "each-usecase-has-validator", constitutionUseCaseV2)
 	if waiver.Status != core.PolicyWaived || waiver.ExceptionName != "validator-transition" || waiver.Owner != "architecture-owner" || waiver.PolicyDate != "2026-10-02" || !strings.Contains(waiver.Decision, "temporary") {
 		t.Fatalf("exception did not yield an explicit waived result: %#v", waiver)
 	}
 
-	compiled, err := app.CompileContext(waived, "engineering/Skill/add-order", "0.11.0")
+	compiled, err := host.CompileContext(waived, "engineering/Skill/add-order", "0.11.0")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -255,7 +254,7 @@ func TestEngineeringConstitutionV2PackageMigrationAndWaiverLifecycle(t *testing.
 	if !strings.Contains(selectedDomain, "each-usecase-has-validator") || !strings.Contains(selectedDomain, "min: 1") {
 		t.Fatalf("agent context did not carry the exact v2 policy definition: %s", selectedDomain)
 	}
-	outputs, err := render.Generate(waived.Graph, waived.Snapshot.Files)
+	outputs, err := host.GenerateOutputs(waived)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -270,7 +269,7 @@ func TestEngineeringConstitutionV2PackageMigrationAndWaiverLifecycle(t *testing.
 		staleRoot := t.TempDir()
 		copyEngineeringConstitution(t, staleRoot)
 		staleV2 := migrateEngineeringConstitutionToV2(t, staleRoot)
-		staleResult := findConstitutionResult(staleV2.Graph.PolicyResults, constitutionV2API, "each-usecase-has-validator", constitutionUseCaseV2)
+		staleResult := findConstitutionResult(staleV2.Graph.Core.PolicyResults, constitutionV2API, "each-usecase-has-validator", constitutionUseCaseV2)
 		writeEngineeringException(t, staleRoot, staleV2, staleResult, "stale-validator", "2026-10-02", "2026-10-30")
 		waivedV2 := loadEngineeringConstitution(t, staleRoot)
 		writeEngineeringResource(t, staleRoot, waivedV2, constitutionUseCaseV2, func(data map[string]any) { data["summary"] = "A changed subject must invalidate its exception." })
@@ -284,7 +283,7 @@ func TestEngineeringConstitutionV2PackageMigrationAndWaiverLifecycle(t *testing.
 		expiredRoot := t.TempDir()
 		copyEngineeringConstitution(t, expiredRoot)
 		expiredV2 := migrateEngineeringConstitutionToV2(t, expiredRoot)
-		failed := findConstitutionResult(expiredV2.Graph.PolicyResults, constitutionV2API, "each-usecase-has-validator", constitutionUseCaseV2)
+		failed := findConstitutionResult(expiredV2.Graph.Core.PolicyResults, constitutionV2API, "each-usecase-has-validator", constitutionUseCaseV2)
 		writeEngineeringException(t, expiredRoot, expiredV2, failed, "expired-validator", "2026-10-30", "2026-10-30")
 		expired := loadEngineeringConstitution(t, expiredRoot)
 		if !hasConstitutionDiagnostic(expired.Diagnostics, "policy.exception.expired") {
@@ -296,7 +295,7 @@ func TestEngineeringConstitutionV2PackageMigrationAndWaiverLifecycle(t *testing.
 		unknownRoot := t.TempDir()
 		copyEngineeringConstitution(t, unknownRoot)
 		unknownV2 := migrateEngineeringConstitutionToV2(t, unknownRoot)
-		failed := findConstitutionResult(unknownV2.Graph.PolicyResults, constitutionV2API, "each-usecase-has-validator", constitutionUseCaseV2)
+		failed := findConstitutionResult(unknownV2.Graph.Core.PolicyResults, constitutionV2API, "each-usecase-has-validator", constitutionUseCaseV2)
 		exception := exceptionForConstitutionResult(failed, "unknown-validator", "2026-10-02", "2026-10-30")
 		exception.Constraint = "no-such-policy"
 		writeEngineeringProjectWithExceptions(t, unknownRoot, unknownV2.Graph.Project, []core.PolicyException{exception}, "2026-10-02")
@@ -310,15 +309,14 @@ func TestEngineeringConstitutionV2PackageMigrationAndWaiverLifecycle(t *testing.
 		unusedRoot := t.TempDir()
 		copyEngineeringConstitution(t, unusedRoot)
 		unusedV2 := migrateEngineeringConstitutionToV2(t, unusedRoot)
-		writeEngineeringResourceFile(t, filepath.Join(unusedRoot, "resources", "create-order-validator.yaml"), core.Resource{
-			APIVersion: constitutionV2API, Kind: "Validator", Metadata: core.Metadata{Name: "create-order-validator", Namespace: "engineering"},
-			Data: map[string]any{"summary": "Validates the order request."},
+		writeEngineeringResourceFile(t, filepath.Join(unusedRoot, "resources", "create-order-validator.yaml"), authoring.Resource{Core: authoring.Core{APIVersion: constitutionV2API, Kind: "Validator", Metadata: core.Metadata{Name: "create-order-validator", Namespace: "engineering"},
+			Data: map[string]any{"summary": "Validates the order request."}},
 		})
 		writeEngineeringResource(t, unusedRoot, unusedV2, constitutionUseCaseV2, func(data map[string]any) {
 			data["validators"] = []any{map[string]any{"kind": "Validator", "name": "create-order-validator", "namespace": "engineering"}}
 		})
 		passing := loadEngineeringConstitution(t, unusedRoot)
-		passed := findConstitutionResult(passing.Graph.PolicyResults, constitutionV2API, "each-usecase-has-validator", constitutionUseCaseV2)
+		passed := findConstitutionResult(passing.Graph.Core.PolicyResults, constitutionV2API, "each-usecase-has-validator", constitutionUseCaseV2)
 		if passed.Status != core.PolicyPassed {
 			t.Fatalf("migrated UseCase should satisfy v2: %#v", passed)
 		}
@@ -336,7 +334,7 @@ func TestEngineeringConstitutionConflictingComposedRulesRemainVisible(t *testing
 	copyEngineeringConstitution(t, root)
 	_ = migrateEngineeringConstitutionToV2(t, root)
 	packageFiles := readConstitutionTree(t, filepath.Join(engineeringConstitutionRoot(t), "constitution-package-v2"))
-	domain, err := format.ParseDomain("domains/software.yaml", packageFiles["domains/software.yaml"])
+	domain, err := authoring.ParseDomain("domains/software.yaml", packageFiles["domains/software.yaml"])
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -345,7 +343,7 @@ func TestEngineeringConstitutionConflictingComposedRulesRemainVisible(t *testing
 		Select: core.ResourceSelector{Kind: "Module"},
 		Assert: core.ConstraintAssertion{Op: "allowed-targets", Relation: "dependsOn", Values: []any{"Module"}},
 	})
-	packageFiles["domains/software.yaml"], err = format.EncodeDomain(domain)
+	packageFiles["domains/software.yaml"], err = authoring.EncodeDomain(domain)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -358,8 +356,8 @@ func TestEngineeringConstitutionConflictingComposedRulesRemainVisible(t *testing
 	if !hasConstitutionDiagnostic(conflict.Diagnostics, "constraint.conflicting-module-depends-on-modules-only") {
 		t.Fatalf("contradictory Domain rules were silently overridden: %#v", conflict.Diagnostics)
 	}
-	coreRule := findConstitutionResult(conflict.Graph.PolicyResults, constitutionV2API, "module-depends-on-core-only", "engineering/engineering.markitect.org/v1beta1/Module/orders")
-	moduleRule := findConstitutionResult(conflict.Graph.PolicyResults, constitutionV2API, "conflicting-module-depends-on-modules-only", "engineering/engineering.markitect.org/v1beta1/Module/orders")
+	coreRule := findConstitutionResult(conflict.Graph.Core.PolicyResults, constitutionV2API, "module-depends-on-core-only", "engineering/engineering.markitect.org/v1beta1/Module/orders")
+	moduleRule := findConstitutionResult(conflict.Graph.Core.PolicyResults, constitutionV2API, "conflicting-module-depends-on-modules-only", "engineering/engineering.markitect.org/v1beta1/Module/orders")
 	if coreRule.Status != core.PolicyPassed || moduleRule.Status != core.PolicyFailed {
 		t.Fatalf("composed conflict must retain both rule outcomes, got core=%#v modules=%#v", coreRule, moduleRule)
 	}
@@ -369,11 +367,11 @@ func TestEngineeringConstitutionPackageSourcesAreCanonical(t *testing.T) {
 	for _, version := range []string{"v1", "v2"} {
 		t.Run(version, func(t *testing.T) {
 			files := readConstitutionTree(t, filepath.Join(engineeringConstitutionRoot(t), "constitution-package-"+version))
-			definition, err := format.ParseDomain("domains/software.yaml", files["domains/software.yaml"])
+			definition, err := authoring.ParseDomain("domains/software.yaml", files["domains/software.yaml"])
 			if err != nil {
 				t.Fatal(err)
 			}
-			registry := core.NewRegistry()
+			registry := authoring.NewRegistry()
 			if err := registry.AddDomain(definition); err != nil {
 				t.Fatal(err)
 			}
@@ -384,13 +382,13 @@ func TestEngineeringConstitutionPackageSourcesAreCanonical(t *testing.T) {
 				var normalized []byte
 				var err error
 				if name == "domains/software.yaml" {
-					normalized, err = format.EncodeDomain(definition)
+					normalized, err = authoring.EncodeDomain(definition)
 				} else {
-					resource, parseErr := format.ParseWithRegistry(name, data, registry)
+					resource, parseErr := authoring.ParseWithRegistry(name, data, registry)
 					if parseErr != nil {
 						t.Fatalf("parse %s: %v", name, parseErr)
 					}
-					normalized, err = format.Encode(*resource)
+					normalized, err = authoring.Encode(*resource)
 				}
 				if err != nil {
 					t.Fatalf("normalize %s: %v", name, err)
@@ -403,7 +401,7 @@ func TestEngineeringConstitutionPackageSourcesAreCanonical(t *testing.T) {
 	}
 }
 
-func migrateEngineeringConstitutionToV2(t *testing.T, root string) *app.Project {
+func migrateEngineeringConstitutionToV2(t *testing.T, root string) *host.Project {
 	t.Helper()
 	archive := buildEngineeringPackage(t, "constitution-package-v2")
 	installEngineeringPackage(t, root, "2.0.0", archive)
@@ -480,14 +478,14 @@ func installEngineeringPackage(t *testing.T, root, version string, archive []byt
 	if err != nil {
 		t.Fatal(err)
 	}
-	project, err := format.Parse("markitect.yaml", data)
+	project, err := authoring.Parse("markitect.yaml", data)
 	if err != nil {
 		t.Fatal(err)
 	}
-	project.Spec.Packages = []core.PackagePin{{Name: "engineering-constitution", Version: packageVersion,
+	project.Spec.Packages = []authoring.PackagePin{{Name: "engineering-constitution", Version: packageVersion,
 		Source:  "fixture:engineering-constitution-package-v" + strings.TrimSuffix(packageVersion, ".0.0"),
 		Archive: ".markitect/packages/engineering-constitution-" + packageVersion + ".zip", SHA256: sha}}
-	encoded, err := format.Encode(project)
+	encoded, err := authoring.Encode(project)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -496,7 +494,7 @@ func installEngineeringPackage(t *testing.T, root, version string, archive []byt
 	}
 }
 
-func writeEngineeringException(t *testing.T, root string, project *app.Project, failed core.PolicyResult, name, policyDate, expiresOn string) {
+func writeEngineeringException(t *testing.T, root string, project *host.Project, failed core.PolicyResult, name, policyDate, expiresOn string) {
 	t.Helper()
 	exception := exceptionForConstitutionResult(failed, name, policyDate, expiresOn)
 	writeEngineeringProjectWithExceptions(t, root, project.Graph.Project, []core.PolicyException{exception}, policyDate)
@@ -512,7 +510,7 @@ func exceptionForConstitutionResult(result core.PolicyResult, name, policyDate, 
 	}
 }
 
-func writeEngineeringProjectWithExceptions(t *testing.T, root string, project *core.Resource, exceptions []core.PolicyException, policyDate string) {
+func writeEngineeringProjectWithExceptions(t *testing.T, root string, project *authoring.Resource, exceptions []core.PolicyException, policyDate string) {
 	t.Helper()
 	updated := *project
 	updated.Spec.PolicyDate = policyDate
@@ -520,9 +518,9 @@ func writeEngineeringProjectWithExceptions(t *testing.T, root string, project *c
 	writeEngineeringProject(t, root, &updated)
 }
 
-func writeEngineeringProject(t *testing.T, root string, project *core.Resource) {
+func writeEngineeringProject(t *testing.T, root string, project *authoring.Resource) {
 	t.Helper()
-	data, err := format.Encode(project)
+	data, err := authoring.Encode(project)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -531,7 +529,7 @@ func writeEngineeringProject(t *testing.T, root string, project *core.Resource) 
 	}
 }
 
-func writeEngineeringResource(t *testing.T, root string, project *app.Project, key string, mutate func(map[string]any)) {
+func writeEngineeringResource(t *testing.T, root string, project *host.Project, key string, mutate func(map[string]any)) {
 	t.Helper()
 	resource := project.Graph.Resources[key]
 	if resource == nil {
@@ -546,9 +544,9 @@ func writeEngineeringResource(t *testing.T, root string, project *app.Project, k
 	writeEngineeringResourceFile(t, filepath.Join(root, filepath.FromSlash(resource.Path)), updated)
 }
 
-func writeEngineeringResourceFile(t *testing.T, file string, resource core.Resource) {
+func writeEngineeringResourceFile(t *testing.T, file string, resource authoring.Resource) {
 	t.Helper()
-	data, err := format.Encode(&resource)
+	data, err := authoring.Encode(&resource)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -2,7 +2,7 @@
 
 Shipped in the immutable [v0.13.0 release](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.13.0). [Release evidence](validation/markitect-first-release-readiness.md) separates the verified workflow contract from unproven human-attention benefits.
 
-The embedded provider-neutral [Markitect-first Change workflow](../internal/authoring/resources/workflow-markitect-first-change.yaml) defines how implementation and maintenance work should use an adopting Project's canonical intent, configured checks, packages, adapters, and fixed-snapshot evidence. The [authoring Skill](../internal/authoring/resources/skill-authoring.yaml) includes it in Markitect's portable authoring context.
+The embedded provider-neutral [Markitect-first Change workflow](../internal/host/embedded/resources/workflow-markitect-first-change.yaml) defines how implementation and maintenance work should use an adopting Project's canonical intent, configured checks, packages, adapters, and fixed-snapshot evidence. The [authoring Skill](../internal/host/embedded/resources/skill-authoring.yaml) includes it in Markitect's portable authoring context.
 
 The workflow classifies work as implementation-only, an intent change, a migration, or ambiguous. Intent changes establish desired state in its canonical owner and review `check` plus fixed-revision `impact` before corresponding implementation begins. Implementation-only work follows accepted intent without creating model edits to simulate compliance. Final evidence binds `check`, selected `context`, `impact`, configured `verify` checks, and adapter reconciliation to the exact candidate revision.
 

@@ -35,7 +35,6 @@ func sameTargetResources(useCaseModule, featureModule string) []*Resource {
 		return map[string]any{"apiVersion": sameTargetAPI, "kind": kind, "name": name}
 	}
 	return []*Resource{
-		{APIVersion: APIVersion, Kind: "Project", Metadata: Metadata{Name: "test"}, Spec: Spec{Areas: []Area{{Name: "app", Path: "resources/app", Imports: []string{"other"}}, {Name: "other", Path: "resources/other"}}}},
 		{APIVersion: sameTargetAPI, Kind: "UseCase", Metadata: Metadata{Name: "CreateOrder", Namespace: "app", Labels: map[string]string{"feature-ownership": "required"}}, Path: "resources/app/usecases/create-order.yaml", Line: 1, Data: map[string]any{"module": []any{ref("Module", useCaseModule)}, "feature": ref("Feature", "order-management")}},
 		{APIVersion: sameTargetAPI, Kind: "Feature", Metadata: Metadata{Name: "order-management", Namespace: "app"}, Path: "resources/app/features/order-management.yaml", Line: 1, Data: map[string]any{"module": ref("Module", featureModule)}},
 		{APIVersion: sameTargetAPI, Kind: "Module", Metadata: Metadata{Name: "orders", Namespace: "app"}, Path: "resources/app/modules/orders.yaml", Data: map[string]any{"name": "Orders"}},
@@ -46,12 +45,19 @@ func sameTargetResources(useCaseModule, featureModule string) []*Resource {
 func ptrProperty(p PropertyDefinition) *PropertyDefinition { return &p }
 
 func buildSameTargetGraph(t *testing.T, domain DomainDefinition, resources []*Resource) *Graph {
+	return buildSameTargetGraphWithPolicy(t, domain, resources, nil)
+}
+
+func buildSameTargetGraphWithPolicy(t *testing.T, domain DomainDefinition, resources []*Resource, exceptions []PolicyException) *Graph {
 	t.Helper()
 	registry := NewRegistry()
 	if err := registry.AddDomain(domain); err != nil {
 		t.Fatal(err)
 	}
-	return BuildWithRegistry(resources, registry)
+	relationships, diagnostics := ResolveTypedRelationships(resources, registry)
+	graph := BuildNormalized(resources, registry, relationships, exceptions, "", nil)
+	graph.Diagnostics = append(graph.Diagnostics, diagnostics...)
+	return graph
 }
 
 func TestSameTargetComparesResolvedGraphIdentityAndEmitsTrace(t *testing.T) {
@@ -85,7 +91,7 @@ func TestSameTargetComparesResolvedGraphIdentityAndEmitsTrace(t *testing.T) {
 
 func TestSameTargetRejectsInvalidPathStructurallyWithoutPolicyResult(t *testing.T) {
 	resources := sameTargetResources("orders", "orders")
-	resources[2].Data["module"] = nil // The selected Feature exists, but its second hop is absent.
+	resources[1].Data["module"] = nil // The selected Feature exists, but its second hop is absent.
 	graph := buildSameTargetGraph(t, sameTargetDomain(), resources)
 	if hasCode(graph, "constraint.path") == false {
 		t.Fatalf("missing selected path hop did not produce structural diagnostic: %#v", graph.Diagnostics)
@@ -105,7 +111,7 @@ func TestSameTargetRejectsInvalidPathStructurallyWithoutPolicyResult(t *testing.
 
 func TestSameTargetRejectsDuplicateRawReferenceEvenIfItResolvesToSameTarget(t *testing.T) {
 	resources := sameTargetResources("orders", "orders")
-	resources[1].Data["module"] = []any{
+	resources[0].Data["module"] = []any{
 		map[string]any{"apiVersion": sameTargetAPI, "kind": "Module", "name": "orders"},
 		map[string]any{"apiVersion": sameTargetAPI, "kind": "Module", "name": "orders"},
 	}
@@ -117,7 +123,7 @@ func TestSameTargetRejectsDuplicateRawReferenceEvenIfItResolvesToSameTarget(t *t
 
 func TestSameTargetRejectsTwoDistinctResolvedTargetsForOneHop(t *testing.T) {
 	resources := sameTargetResources("orders", "orders")
-	resources[1].Data["module"] = []any{
+	resources[0].Data["module"] = []any{
 		map[string]any{"apiVersion": sameTargetAPI, "kind": "Module", "name": "orders"},
 		map[string]any{"apiVersion": sameTargetAPI, "kind": "Module", "name": "billing"},
 	}
@@ -134,24 +140,24 @@ func TestSameTargetStructuralPathFailuresAreNotWaivable(t *testing.T) {
 		name   string
 		mutate func([]*Resource)
 	}{
-		{"missing selected left target", func(r []*Resource) { r[1].Data["module"] = []any{} }},
+		{"missing selected left target", func(r []*Resource) { r[0].Data["module"] = []any{} }},
 		{"unresolved right terminal", func(r []*Resource) {
-			r[2].Data["module"] = map[string]any{"apiVersion": sameTargetAPI, "kind": "Module", "name": "absent"}
+			r[1].Data["module"] = map[string]any{"apiVersion": sameTargetAPI, "kind": "Module", "name": "absent"}
 		}},
 		{"wrong kind", func(r []*Resource) {
-			r[1].Data["feature"] = map[string]any{"apiVersion": sameTargetAPI, "kind": "Module", "name": "orders"}
+			r[0].Data["feature"] = map[string]any{"apiVersion": sameTargetAPI, "kind": "Module", "name": "orders"}
 		}},
-		{"missing intermediate hop", func(r []*Resource) { r[2].Data["module"] = nil }},
+		{"missing intermediate hop", func(r []*Resource) { r[1].Data["module"] = nil }},
 		{"wrong api version", func(r []*Resource) {
-			r[2].Data["module"] = map[string]any{"apiVersion": "other.tests.example/v1", "kind": "Module", "name": "orders"}
+			r[1].Data["module"] = map[string]any{"apiVersion": "other.tests.example/v1", "kind": "Module", "name": "orders"}
 		}},
 	}
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
 			resources := sameTargetResources("orders", "orders")
 			test.mutate(resources)
-			resources[0].Spec.PolicyExceptions = []PolicyException{{Name: "old-waiver", APIVersion: passing.APIVersion, Constraint: passing.Constraint, Subject: passing.Subject, ConstraintDigest: passing.ConstraintDigest, SubjectDigest: passing.SubjectDigest, Rationale: "Review pending", Owner: "architecture", Decision: "accepted"}}
-			graph := buildSameTargetGraph(t, sameTargetDomain(), resources)
+			exceptions := []PolicyException{{Name: "old-waiver", APIVersion: passing.APIVersion, Constraint: passing.Constraint, Subject: passing.Subject, ConstraintDigest: passing.ConstraintDigest, SubjectDigest: passing.SubjectDigest, Rationale: "Review pending", Owner: "architecture", Decision: "accepted"}}
+			graph := buildSameTargetGraphWithPolicy(t, sameTargetDomain(), resources, exceptions)
 			if !hasCode(graph, "constraint.path") || policyResultFor(graph, passing.Constraint, passing.Subject).Constraint != "" || !hasCode(graph, "policy.exception.not-waivable") {
 				t.Fatalf("structural path failure produced a result or was waivable: %#v", graph.Diagnostics)
 			}
@@ -227,10 +233,9 @@ func TestSameTargetSubjectDigestBindsIntermediateContentAndExceptionCannotWaiveI
 	if finding.Status != PolicyPassed {
 		t.Fatalf("baseline path did not pass: %+v", finding)
 	}
-	resources[2].Data["module"] = nil
-	project := resources[0]
-	project.Spec.PolicyExceptions = []PolicyException{{Name: "path-waiver", APIVersion: sameTargetAPI, Constraint: finding.Constraint, Subject: finding.Subject, ConstraintDigest: finding.ConstraintDigest, SubjectDigest: finding.SubjectDigest, Rationale: "Historical exception", Owner: "architecture", Decision: "accepted"}}
-	graph := buildSameTargetGraph(t, domain, resources)
+	resources[1].Data["module"] = nil
+	exceptions := []PolicyException{{Name: "path-waiver", APIVersion: sameTargetAPI, Constraint: finding.Constraint, Subject: finding.Subject, ConstraintDigest: finding.ConstraintDigest, SubjectDigest: finding.SubjectDigest, Rationale: "Historical exception", Owner: "architecture", Decision: "accepted"}}
+	graph := buildSameTargetGraphWithPolicy(t, domain, resources, exceptions)
 	if !hasCode(graph, "policy.exception.not-waivable") || !hasCode(graph, "constraint.path") {
 		t.Fatalf("invalid path should reject the old exception and keep structural finding: %#v", graph.Diagnostics)
 	}
@@ -245,21 +250,21 @@ func TestSameTargetFailureCanBeWaivedAndBindsIntermediateContent(t *testing.T) {
 	feature.Properties["note"] = PropertyDefinition{Type: "string"}
 	domain.Kinds["Feature"] = feature
 	resources := sameTargetResources("orders", "billing")
-	resources[2].Data["note"] = "reviewed"
+	resources[1].Data["note"] = "reviewed"
 	baseline := buildSameTargetGraph(t, domain, resources)
 	finding := policyResultFor(baseline, "feature-module-agrees", "app/equality.tests.example/v1/UseCase/CreateOrder")
 	if finding.Status != PolicyFailed || finding.Comparison == nil {
 		t.Fatalf("mismatch should produce a failed trace: %+v", finding)
 	}
 	originalMessage := finding.Message
-	resources[0].Spec.PolicyExceptions = []PolicyException{{Name: "known-module-drift", APIVersion: finding.APIVersion, Constraint: finding.Constraint, Subject: finding.Subject, ConstraintDigest: finding.ConstraintDigest, SubjectDigest: finding.SubjectDigest, Rationale: "Feature ownership migration is scheduled", Owner: "architecture", Decision: "accepted until migration"}}
-	waived := buildSameTargetGraph(t, domain, resources)
+	exceptions := []PolicyException{{Name: "known-module-drift", APIVersion: finding.APIVersion, Constraint: finding.Constraint, Subject: finding.Subject, ConstraintDigest: finding.ConstraintDigest, SubjectDigest: finding.SubjectDigest, Rationale: "Feature ownership migration is scheduled", Owner: "architecture", Decision: "accepted until migration"}}
+	waived := buildSameTargetGraphWithPolicy(t, domain, resources, exceptions)
 	waivedResult := policyResultFor(waived, finding.Constraint, finding.Subject)
 	if waivedResult.Status != PolicyWaived || waivedResult.Message != originalMessage || waivedResult.Comparison == nil {
 		t.Fatalf("exception did not waive only the policy mismatch while preserving explanation: %+v", waivedResult)
 	}
-	resources[2].Data["note"] = "changed intermediate content"
-	stale := buildSameTargetGraph(t, domain, resources)
+	resources[1].Data["note"] = "changed intermediate content"
+	stale := buildSameTargetGraphWithPolicy(t, domain, resources, exceptions)
 	if !hasCode(stale, "policy.exception.stale") || policyResultFor(stale, finding.Constraint, finding.Subject).Status != PolicyFailed {
 		t.Fatalf("editing intermediate resource content must stale exact-path evidence: %#v", stale.Diagnostics)
 	}
@@ -302,8 +307,8 @@ func TestSameTargetConstraintDigestBindsPathsRelationsAndConsumedSchema(t *testi
 			changed := sameTargetDomain()
 			mutation.edit(&changed)
 			resources := sameTargetResources("orders", "billing")
-			resources[0].Spec.PolicyExceptions = []PolicyException{{Name: "old-policy", APIVersion: finding.APIVersion, Constraint: finding.Constraint, Subject: finding.Subject, ConstraintDigest: finding.ConstraintDigest, SubjectDigest: finding.SubjectDigest, Rationale: "Previous relationship meaning was reviewed", Owner: "architecture", Decision: "accepted"}}
-			graph := buildSameTargetGraph(t, changed, resources)
+			exceptions := []PolicyException{{Name: "old-policy", APIVersion: finding.APIVersion, Constraint: finding.Constraint, Subject: finding.Subject, ConstraintDigest: finding.ConstraintDigest, SubjectDigest: finding.SubjectDigest, Rationale: "Previous relationship meaning was reviewed", Owner: "architecture", Decision: "accepted"}}
+			graph := buildSameTargetGraphWithPolicy(t, changed, resources, exceptions)
 			if !hasCode(graph, "policy.exception.stale") || policyResultFor(graph, finding.Constraint, finding.Subject).Status != PolicyFailed {
 				t.Fatalf("changing %s must stale the bound exception: %#v", mutation.name, graph.Diagnostics)
 			}
@@ -314,7 +319,7 @@ func TestSameTargetConstraintDigestBindsPathsRelationsAndConsumedSchema(t *testi
 func TestSameTargetUsesCanonicalNamespaceIdentity(t *testing.T) {
 	resources := sameTargetResources("orders", "orders")
 	resources = append(resources, &Resource{APIVersion: sameTargetAPI, Kind: "Module", Metadata: Metadata{Name: "orders", Namespace: "other"}, Path: "resources/other/modules/orders.yaml", Data: map[string]any{"name": "Other Orders"}})
-	resources[2].Data["module"] = map[string]any{"apiVersion": sameTargetAPI, "kind": "Module", "namespace": "other", "name": "orders"}
+	resources[0].Data["module"] = map[string]any{"apiVersion": sameTargetAPI, "kind": "Module", "namespace": "other", "name": "orders"}
 	graph := buildSameTargetGraph(t, sameTargetDomain(), resources)
 	result := policyResultFor(graph, "feature-module-agrees", "app/equality.tests.example/v1/UseCase/CreateOrder")
 	if result.Status != PolicyFailed || result.Comparison == nil || result.Comparison.Left.Target == result.Comparison.Right.Target {
@@ -335,7 +340,7 @@ func TestSameTargetUsesCanonicalPackageIdentity(t *testing.T) {
 	left := &Resource{APIVersion: sameTargetAPI, Kind: "Module", Metadata: Metadata{Name: "orders", Namespace: "app"}, Package: "pkg-a", Data: map[string]any{"name": "Package A Orders"}}
 	right := &Resource{APIVersion: sameTargetAPI, Kind: "Module", Metadata: Metadata{Name: "orders", Namespace: "app"}, Package: "pkg-b", Data: map[string]any{"name": "Package B Orders"}}
 	resources := []*Resource{subject, feature, left, right}
-	graph := &Graph{Resources: map[string]*Resource{}, Registry: registry}
+	graph := &Graph{Resources: map[string]*Resource{}, Registry: registry, invalidPolicyPaths: map[string]bool{}}
 	for _, resource := range resources {
 		graph.Resources[resource.GraphKey()] = resource
 	}
@@ -344,7 +349,7 @@ func TestSameTargetUsesCanonicalPackageIdentity(t *testing.T) {
 		{From: subject.GraphKey(), To: feature.GraphKey(), Relation: "realizesFeature", DomainAPIVersion: sameTargetAPI},
 		{From: feature.GraphKey(), To: right.GraphKey(), Relation: "belongsToModule", DomainAPIVersion: sameTargetAPI},
 	}
-	graph.EvaluateConstraints()
+	graph.EvaluateConstraints(nil, "")
 	result := policyResultFor(graph, "feature-module-agrees", subject.GraphKey())
 	if result.Status != PolicyFailed || result.Comparison == nil || result.Comparison.Left.Target == result.Comparison.Right.Target {
 		t.Fatalf("same identity in separate packages must remain distinct canonical targets: %+v", result)
@@ -359,7 +364,7 @@ func TestSameTargetBoundedWalkTerminatesAcrossCycleAndCycleFindingRemainsStructu
 	domain.Relations["parentFeature"] = RelationDefinition{Field: "parent", SourceKinds: []string{"Feature"}, TargetKinds: []string{"Feature"}}
 	domain.Constraints = append(domain.Constraints, ConstraintDefinition{Name: "finite-feature-walk", Select: ResourceSelector{Kind: "Feature"}, Assert: ConstraintAssertion{Op: "same-target", Left: []string{"parentFeature", "parentFeature"}, Right: []string{"parentFeature", "parentFeature"}}})
 	resources := sameTargetResources("orders", "orders")
-	resources[2].Data["parent"] = map[string]any{"apiVersion": sameTargetAPI, "kind": "Feature", "name": "feature-two"}
+	resources[1].Data["parent"] = map[string]any{"apiVersion": sameTargetAPI, "kind": "Feature", "name": "feature-two"}
 	resources = append(resources, &Resource{APIVersion: sameTargetAPI, Kind: "Feature", Metadata: Metadata{Name: "feature-two", Namespace: "app"}, Path: "resources/app/features/feature-two.yaml", Data: map[string]any{"parent": map[string]any{"apiVersion": sameTargetAPI, "kind": "Feature", "name": "order-management"}}})
 	graph := buildSameTargetGraph(t, domain, resources)
 	result := policyResultFor(graph, "finite-feature-walk", "app/equality.tests.example/v1/Feature/order-management")
@@ -370,8 +375,8 @@ func TestSameTargetBoundedWalkTerminatesAcrossCycleAndCycleFindingRemainsStructu
 	domain.Relations["parentFeature"] = RelationDefinition{Field: "parent", SourceKinds: []string{"Feature"}, TargetKinds: []string{"Feature"}, Acyclic: true}
 	baseline := buildSameTargetGraph(t, domain, resources)
 	result = policyResultFor(baseline, "finite-feature-walk", "app/equality.tests.example/v1/Feature/order-management")
-	resources[0].Spec.PolicyExceptions = []PolicyException{{Name: "cannot-waive-cycle", APIVersion: sameTargetAPI, Constraint: "finite-feature-walk", Subject: "app/equality.tests.example/v1/Feature/order-management", ConstraintDigest: result.ConstraintDigest, SubjectDigest: result.SubjectDigest, Rationale: "Cycle waiver attempt", Owner: "architecture", Decision: "requested"}}
-	graph = buildSameTargetGraph(t, domain, resources)
+	exceptions := []PolicyException{{Name: "cannot-waive-cycle", APIVersion: sameTargetAPI, Constraint: "finite-feature-walk", Subject: "app/equality.tests.example/v1/Feature/order-management", ConstraintDigest: result.ConstraintDigest, SubjectDigest: result.SubjectDigest, Rationale: "Cycle waiver attempt", Owner: "architecture", Decision: "requested"}}
+	graph = buildSameTargetGraphWithPolicy(t, domain, resources, exceptions)
 	if !hasCode(graph, "relation.cycle") || !hasCode(graph, "policy.exception.unneeded") {
 		t.Fatalf("declared acyclic cycle must remain structural and cannot be waived: %#v", graph.Diagnostics)
 	}
@@ -391,7 +396,7 @@ func TestSameTargetResultsAndDependenciesAreDeterministicOnRebuildAndReevaluatio
 	}
 	results := append([]PolicyResult(nil), first.PolicyResults...)
 	dependencies := append([]PolicyDependency(nil), first.PolicyDependencies...)
-	first.EvaluateConstraints()
+	first.EvaluateConstraints(nil, "")
 	if !reflect.DeepEqual(results, first.PolicyResults) || !reflect.DeepEqual(dependencies, first.PolicyDependencies) {
 		t.Fatalf("reevaluation accumulated or reordered same-target evidence\nfirst: %+v\nsecond: %+v", results, first.PolicyResults)
 	}

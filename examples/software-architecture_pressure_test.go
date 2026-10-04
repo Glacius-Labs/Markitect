@@ -6,22 +6,22 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/internal/app"
 	"github.com/Glacius-Labs/Markitect/internal/core"
-	"github.com/Glacius-Labs/Markitect/internal/format"
-	"github.com/Glacius-Labs/Markitect/internal/snapshot"
+	"github.com/Glacius-Labs/Markitect/internal/core/snapshot"
+	"github.com/Glacius-Labs/Markitect/internal/host"
+	"github.com/Glacius-Labs/Markitect/internal/host/authoring"
 )
 
 // These are deliberately negative language-pressure probes. A passing parse
 // demonstrates that the current finite model does not enforce the named
 // invariant; it is not an endorsement of the mutated architecture.
-func loadSoftwareArchitecturePressureBase(t *testing.T) *app.Project {
+func loadSoftwareArchitecturePressureBase(t *testing.T) *host.Project {
 	t.Helper()
 	_, sourceFile, _, ok := runtime.Caller(0)
 	if !ok {
 		t.Fatal("could not locate pressure test source")
 	}
-	project, err := app.Load(filepath.Join(filepath.Dir(sourceFile), "software-architecture"), "")
+	project, err := host.Load(filepath.Join(filepath.Dir(sourceFile), "software-architecture"), "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -31,24 +31,24 @@ func loadSoftwareArchitecturePressureBase(t *testing.T) *app.Project {
 	return project
 }
 
-func parseSoftwareArchitecturePressureResourceMutation(t *testing.T, base *app.Project, path string, mutate func(*core.Resource)) *app.Project {
+func parseSoftwareArchitecturePressureResourceMutation(t *testing.T, base *host.Project, path string, mutate func(*authoring.Resource)) *host.Project {
 	t.Helper()
 	private := privateSoftwareArchitectureSnapshot(base)
 	data, exists := private.Files[path]
 	if !exists {
 		t.Fatalf("pressure fixture source %q is absent", path)
 	}
-	resource, err := format.ParseWithRegistry(path, data, base.Graph.Registry)
+	resource, err := authoring.ParseWithRegistry(path, data, base.Graph.Registry)
 	if err != nil {
 		t.Fatalf("parse pressure resource %s: %v", path, err)
 	}
 	mutate(resource)
-	encoded, err := format.Encode(resource)
+	encoded, err := authoring.Encode(resource)
 	if err != nil {
 		t.Fatalf("encode mutated pressure resource %s: %v", path, err)
 	}
 	private.Files[path] = encoded
-	project, err := app.Parse(private)
+	project, err := host.Parse(private)
 	if err != nil {
 		t.Fatalf("parse mutated private snapshot: %v", err)
 	}
@@ -58,7 +58,7 @@ func parseSoftwareArchitecturePressureResourceMutation(t *testing.T, base *app.P
 	return project
 }
 
-func privateSoftwareArchitectureSnapshot(base *app.Project) *snapshot.Snapshot {
+func privateSoftwareArchitectureSnapshot(base *host.Project) *snapshot.Snapshot {
 	files := make(map[string][]byte, len(base.Snapshot.Files))
 	for name, data := range base.Snapshot.Files {
 		files[name] = append([]byte(nil), data...)
@@ -70,7 +70,7 @@ func privateSoftwareArchitectureSnapshot(base *app.Project) *snapshot.Snapshot {
 	return &snapshot.Snapshot{ID: base.Snapshot.ID, Provisional: base.Snapshot.Provisional, Files: files, Modes: modes}
 }
 
-func assertPressureRelationship(t *testing.T, project *app.Project, from, relation, to string) {
+func assertPressureRelationship(t *testing.T, project *host.Project, from, relation, to string) {
 	t.Helper()
 	for _, edge := range project.Graph.Relationships {
 		if edge.From == from && edge.Relation == relation && edge.To == to {
@@ -80,7 +80,7 @@ func assertPressureRelationship(t *testing.T, project *app.Project, from, relati
 	t.Fatalf("mutated graph lost expected %s edge %s -> %s; relationships: %#v", relation, from, to, project.Graph.Relationships)
 }
 
-func setPressureReferenceName(t *testing.T, resource *core.Resource, field, name string) {
+func setPressureReferenceName(t *testing.T, resource *authoring.Resource, field, name string) {
 	t.Helper()
 	reference, ok := resource.Data[field].(map[string]any)
 	if !ok {
@@ -89,7 +89,7 @@ func setPressureReferenceName(t *testing.T, resource *core.Resource, field, name
 	reference["name"] = name
 }
 
-func setPressureArrayReferenceName(t *testing.T, resource *core.Resource, field string, index int, name string) {
+func setPressureArrayReferenceName(t *testing.T, resource *authoring.Resource, field string, index int, name string) {
 	t.Helper()
 	references, ok := resource.Data[field].([]any)
 	if !ok || index < 0 || index >= len(references) {
@@ -110,7 +110,7 @@ func TestSoftwareArchitecturePressureUseCaseFeatureOwnerMismatchPasses(t *testin
 	if len(base.Diagnostics) != 0 {
 		t.Fatalf("historical v1.0.0 baseline should not enforce Feature owner equality: %#v", base.Diagnostics)
 	}
-	project := parseSoftwareArchitecturePressureResourceMutation(t, base, "resources/usecase-create-order.yaml", func(resource *core.Resource) {
+	project := parseSoftwareArchitecturePressureResourceMutation(t, base, "resources/usecase-create-order.yaml", func(resource *authoring.Resource) {
 		setPressureReferenceName(t, resource, "feature", "invoicing")
 	})
 	useCase := "engineering/architecture.markitect.org/v1alpha1/UseCase/create-order"
@@ -121,7 +121,7 @@ func TestSoftwareArchitecturePressureUseCaseFeatureOwnerMismatchPasses(t *testin
 
 func TestSoftwareArchitecturePressureUseCaseForeignAggregateOwnerPasses(t *testing.T) {
 	base := loadSoftwareArchitecturePressureBase(t)
-	project := parseSoftwareArchitecturePressureResourceMutation(t, base, "resources/usecase-get-order.yaml", func(resource *core.Resource) {
+	project := parseSoftwareArchitecturePressureResourceMutation(t, base, "resources/usecase-get-order.yaml", func(resource *authoring.Resource) {
 		setPressureArrayReferenceName(t, resource, "aggregates", 0, "invoice")
 	})
 	assertPressureRelationship(t, project, "engineering/architecture.markitect.org/v1alpha1/UseCase/get-order", "touchesAggregate", "engineering/architecture.markitect.org/v1alpha1/Aggregate/invoice")
@@ -130,7 +130,7 @@ func TestSoftwareArchitecturePressureUseCaseForeignAggregateOwnerPasses(t *testi
 
 func TestSoftwareArchitecturePressureTwoUseCasesShareHandlerPasses(t *testing.T) {
 	base := loadSoftwareArchitecturePressureBase(t)
-	project := parseSoftwareArchitecturePressureResourceMutation(t, base, "resources/usecase-get-order.yaml", func(resource *core.Resource) {
+	project := parseSoftwareArchitecturePressureResourceMutation(t, base, "resources/usecase-get-order.yaml", func(resource *authoring.Resource) {
 		setPressureReferenceName(t, resource, "handler", "create-order-handler")
 	})
 	target := "engineering/architecture.markitect.org/v1alpha1/Handler/create-order-handler"
@@ -147,7 +147,7 @@ func TestSoftwareArchitecturePressureTwoUseCasesShareHandlerPasses(t *testing.T)
 
 func TestSoftwareArchitecturePressureInterfaceProviderIdentityMismatchPasses(t *testing.T) {
 	base := loadSoftwareArchitecturePressureBase(t)
-	project := parseSoftwareArchitecturePressureResourceMutation(t, base, "resources/interface-order-accepted.yaml", func(resource *core.Resource) {
+	project := parseSoftwareArchitecturePressureResourceMutation(t, base, "resources/interface-order-accepted.yaml", func(resource *authoring.Resource) {
 		setPressureReferenceName(t, resource, "provider", "inventory")
 	})
 	assertPressureRelationship(t, project, "engineering/architecture.markitect.org/v1alpha1/Module/billing", "usesInterfaces", "engineering/architecture.markitect.org/v1alpha1/Interface/order-accepted")
@@ -156,7 +156,7 @@ func TestSoftwareArchitecturePressureInterfaceProviderIdentityMismatchPasses(t *
 
 func TestSoftwareArchitecturePressureMixedRelationCyclePasses(t *testing.T) {
 	base := loadSoftwareArchitecturePressureBase(t)
-	project := parseSoftwareArchitecturePressureResourceMutation(t, base, "resources/interface-order-accepted.yaml", func(resource *core.Resource) {
+	project := parseSoftwareArchitecturePressureResourceMutation(t, base, "resources/interface-order-accepted.yaml", func(resource *authoring.Resource) {
 		setPressureReferenceName(t, resource, "provider", "billing")
 	})
 	module := "engineering/architecture.markitect.org/v1alpha1/Module/billing"
@@ -174,13 +174,13 @@ func TestSoftwareArchitecturePressureMixedRelationCyclePasses(t *testing.T) {
 	if !domain.Relations["providedBy"].Acyclic {
 		t.Fatal("private pressure Domain failed to mark providedBy acyclic")
 	}
-	registry := core.NewRegistry()
+	registry := authoring.NewRegistry()
 	if err := registry.AddDomain(domain); err != nil {
 		t.Fatal(err)
 	}
-	graph := core.BuildWithRegistry(project.Resources, registry)
-	assertPressureRelationship(t, &app.Project{Graph: graph}, module, "usesInterfaces", contract)
-	assertPressureRelationship(t, &app.Project{Graph: graph}, contract, "providedBy", module)
+	graph := authoring.BuildWithRegistry(project.Resources, registry)
+	assertPressureRelationship(t, &host.Project{Graph: graph}, module, "usesInterfaces", contract)
+	assertPressureRelationship(t, &host.Project{Graph: graph}, contract, "providedBy", module)
 	for _, diagnostic := range graph.Diagnostics {
 		if diagnostic.Code == "relation.cycle" {
 			t.Fatalf("cycle across usesInterfaces (Module -> Interface) and providedBy (Interface -> Module) should remain undetected when each relation is acyclic independently; found %#v", diagnostic)
@@ -199,7 +199,7 @@ func TestSoftwareArchitecturePressureUniqueReferenceConstraintRejected(t *testin
 		Select: core.ResourceSelector{Kind: "Module"},
 		Assert: core.ConstraintAssertion{Op: "unique", Field: "product"},
 	})
-	if err := core.NewRegistry().AddDomain(domain); err == nil || !strings.Contains(err.Error(), "unique requires a scalar field") {
+	if err := authoring.NewRegistry().AddDomain(domain); err == nil || !strings.Contains(err.Error(), "unique requires a scalar field") {
 		t.Fatalf("reference uniqueness should be rejected by the finite constraint language, got %v", err)
 	}
 }
@@ -221,7 +221,7 @@ spec:
         fields: {intent: Command}
       assert: {op: equal, field: intent, value: Command}
 `)
-	if _, err := format.ParseDomain("domains/pressure.yaml", unsupported); err == nil || !strings.Contains(err.Error(), "field fields not found") {
+	if _, err := authoring.ParseDomain("domains/pressure.yaml", unsupported); err == nil || !strings.Contains(err.Error(), "field fields not found") {
 		t.Fatalf("arbitrary spec-field selector should be rejected, got %v", err)
 	}
 }
@@ -239,7 +239,7 @@ func TestSoftwareArchitecturePressureEmptyOptInCohortHasNoSubjectResultsV11V2And
 			case "v2.1":
 				installSoftwareArchitectureV2_1(t, root)
 			}
-			base, err := app.Load(root, "")
+			base, err := host.Load(root, "")
 			if err != nil {
 				t.Fatalf("%s baseline failed to load: %v", version, err)
 			}
@@ -263,7 +263,7 @@ func TestSoftwareArchitecturePressureEmptyOptInCohortHasNoSubjectResultsV11V2And
 				if !exists {
 					t.Fatalf("%s fixture is missing opt-in cohort member %s", version, path)
 				}
-				resource, err := format.ParseWithRegistry(path, data, base.Graph.Registry)
+				resource, err := authoring.ParseWithRegistry(path, data, base.Graph.Registry)
 				if err != nil {
 					t.Fatalf("parse %s cohort member %s: %v", version, path, err)
 				}
@@ -277,17 +277,17 @@ func TestSoftwareArchitecturePressureEmptyOptInCohortHasNoSubjectResultsV11V2And
 					}
 				}
 				resource.Metadata.Labels = labels
-				encoded, err := format.Encode(resource)
+				encoded, err := authoring.Encode(resource)
 				if err != nil {
 					t.Fatalf("encode %s cohort member %s: %v", version, path, err)
 				}
 				private.Files[path] = encoded
 			}
-			project, err := app.Parse(private)
+			project, err := host.Parse(private)
 			if err != nil || len(project.Diagnostics) != 0 {
 				t.Fatalf("empty %s opt-in cohort failed to parse: %v; %#v", version, err, project.Diagnostics)
 			}
-			for _, result := range project.Graph.PolicyResults {
+			for _, result := range project.Graph.Core.PolicyResults {
 				if result.Constraint == "selected-command-labels-identify-commands" || result.Constraint == featureOwnershipRule || (version == "v2" || version == "v2.1") && result.Constraint == "selected-commands-have-validators" {
 					t.Fatalf("empty %s opt-in cohort unexpectedly emitted a per-subject result: %+v", version, result)
 				}

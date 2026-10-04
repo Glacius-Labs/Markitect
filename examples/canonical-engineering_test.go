@@ -9,9 +9,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/internal/app"
-	"github.com/Glacius-Labs/Markitect/internal/format"
-	"github.com/Glacius-Labs/Markitect/internal/render"
+	"github.com/Glacius-Labs/Markitect/internal/host"
+	"github.com/Glacius-Labs/Markitect/internal/host/authoring"
 )
 
 func canonicalEngineeringRoot(t *testing.T) string {
@@ -50,7 +49,7 @@ func copyCanonicalExample(t *testing.T, destination string) {
 
 func TestCanonicalEngineeringDomainsCompilePolicyContextAndViews(t *testing.T) {
 	root := canonicalEngineeringRoot(t)
-	project, err := app.Load(root, "")
+	project, err := host.Load(root, "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -58,7 +57,7 @@ func TestCanonicalEngineeringDomainsCompilePolicyContextAndViews(t *testing.T) {
 		t.Fatalf("example has diagnostics: %#v", project.Diagnostics)
 	}
 
-	compiled, err := app.CompileContext(project, "engineering/Skill/architecture-review", "example-test")
+	compiled, err := host.CompileContext(project, "engineering/Skill/architecture-review", "example-test")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -86,7 +85,7 @@ func TestCanonicalEngineeringDomainsCompilePolicyContextAndViews(t *testing.T) {
 		t.Fatalf("compiled context omitted the structured software policy: %q", software)
 	}
 
-	outputs, err := render.Generate(project.Graph, project.Snapshot.Files)
+	outputs, err := host.GenerateOutputs(project)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -96,7 +95,7 @@ func TestCanonicalEngineeringDomainsCompilePolicyContextAndViews(t *testing.T) {
 			t.Errorf("generated Module view omitted structured policy value %q: %s", value, moduleView)
 		}
 	}
-	if findings := app.CheckOutputs(project); len(findings) != 0 {
+	if findings := host.CheckOutputs(project); len(findings) != 0 {
 		t.Fatalf("checked-in generated views must match the canonical model: %#v", findings)
 	}
 }
@@ -104,12 +103,12 @@ func TestCanonicalEngineeringDomainsCompilePolicyContextAndViews(t *testing.T) {
 func TestCanonicalEngineeringPolicyConflictAndStalePlan(t *testing.T) {
 	root := filepath.Join(t.TempDir(), "canonical-engineering")
 	copyCanonicalExample(t, root)
-	project, err := app.Load(root, "")
+	project, err := host.Load(root, "")
 	if err != nil {
 		t.Fatal(err)
 	}
-	toolDigest := app.Hash([]byte("canonical-example-tool"))
-	plan, err := app.PlanProjection(project, "0.10.0", toolDigest)
+	toolDigest := host.Hash([]byte("canonical-example-tool"))
+	plan, err := host.PlanProjection(project, "0.10.0", toolDigest)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -128,7 +127,7 @@ func TestCanonicalEngineeringPolicyConflictAndStalePlan(t *testing.T) {
 	if err := os.WriteFile(modulePath, []byte(conflict), 0644); err != nil {
 		t.Fatal(err)
 	}
-	changed, err := app.Load(root, "")
+	changed, err := host.Load(root, "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -144,7 +143,7 @@ func TestCanonicalEngineeringPolicyConflictAndStalePlan(t *testing.T) {
 	if !foundPolicy {
 		t.Fatalf("expected a policy diagnostic tied to the structured constraint, got %#v", changed.Diagnostics)
 	}
-	if err := app.ValidateProjectionPlan(changed, plan, "0.10.0", toolDigest); err == nil || !strings.Contains(err.Error(), "stale") {
+	if err := host.ValidateProjectionPlan(changed, plan, "0.10.0", toolDigest); err == nil || !strings.Contains(err.Error(), "stale") {
 		t.Fatalf("source edit should invalidate the captured local projection plan, got %v", err)
 	}
 }
@@ -152,20 +151,20 @@ func TestCanonicalEngineeringPolicyConflictAndStalePlan(t *testing.T) {
 func TestCanonicalRenderPlanApplyVerifyRoundTrip(t *testing.T) {
 	root := filepath.Join(t.TempDir(), "canonical-engineering")
 	copyCanonicalExample(t, root)
-	project, err := app.Load(root, "")
+	project, err := host.Load(root, "")
 	if err != nil {
 		t.Fatal(err)
 	}
 	if len(project.Diagnostics) != 0 {
 		t.Fatalf("fixture should load before planning: %#v", project.Diagnostics)
 	}
-	toolDigest := app.Hash([]byte("canonical-example-tool"))
-	plan, err := app.PlanProjection(project, "0.10.0", toolDigest)
+	toolDigest := host.Hash([]byte("canonical-example-tool"))
+	plan, err := host.PlanProjection(project, "0.10.0", toolDigest)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if len(plan.Operations) == 0 {
-		outputs, renderErr := render.Generate(project.Graph, project.Snapshot.Files)
+		outputs, renderErr := host.GenerateOutputs(project)
 		if renderErr != nil {
 			t.Fatal(renderErr)
 		}
@@ -175,11 +174,11 @@ func TestCanonicalRenderPlanApplyVerifyRoundTrip(t *testing.T) {
 			}
 			break
 		}
-		project, err = app.Load(root, "")
+		project, err = host.Load(root, "")
 		if err != nil {
 			t.Fatal(err)
 		}
-		plan, err = app.PlanProjection(project, "0.10.0", toolDigest)
+		plan, err = host.PlanProjection(project, "0.10.0", toolDigest)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -191,40 +190,40 @@ func TestCanonicalRenderPlanApplyVerifyRoundTrip(t *testing.T) {
 	if err := os.MkdirAll(filepath.Dir(planPath), 0755); err != nil {
 		t.Fatal(err)
 	}
-	planBytes, err := app.YAML(plan)
+	planBytes, err := host.YAML(plan)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if err := os.WriteFile(planPath, planBytes, 0644); err != nil {
 		t.Fatal(err)
 	}
-	savedPlan, err := app.ReadPlan(planPath)
+	savedPlan, err := host.ReadPlan(planPath)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := app.ValidateProjectionPlan(project, savedPlan, "0.10.0", toolDigest); err != nil {
+	if err := host.ValidateProjectionPlan(project, savedPlan, "0.10.0", toolDigest); err != nil {
 		t.Fatalf("saved plan should match its captured project: %v", err)
 	}
 
 	tampered := savedPlan
-	tampered.Operations = append([]app.ReconcileOperation(nil), savedPlan.Operations...)
+	tampered.Operations = append([]host.ReconcileOperation(nil), savedPlan.Operations...)
 	tampered.Operations[0].Content += "tampered"
-	tamperedBytes, err := app.YAML(tampered)
+	tamperedBytes, err := host.YAML(tampered)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := app.ParseReconcilePlan(tamperedBytes); err == nil || !strings.Contains(err.Error(), "hash mismatch") {
+	if _, err := host.ParseReconcilePlan(tamperedBytes); err == nil || !strings.Contains(err.Error(), "hash mismatch") {
 		t.Fatalf("tampered saved plan should fail its content hash: %v", err)
 	}
 
-	if _, err := app.ApplyProjection(root, project, savedPlan, "0.10.0", toolDigest); err != nil {
+	if _, err := host.ApplyProjection(root, project, savedPlan, "0.10.0", toolDigest); err != nil {
 		t.Fatalf("apply saved local plan: %v", err)
 	}
-	afterApply, err := app.Load(root, "")
+	afterApply, err := host.Load(root, "")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := app.VerifyProjectionPlan(afterApply, savedPlan, "0.10.0", toolDigest); err != nil {
+	if err := host.VerifyProjectionPlan(afterApply, savedPlan, "0.10.0", toolDigest); err != nil {
 		t.Fatalf("verify applied plan: %v", err)
 	}
 
@@ -236,11 +235,11 @@ func TestCanonicalRenderPlanApplyVerifyRoundTrip(t *testing.T) {
 	if err := os.WriteFile(changedInput, append(data, []byte("\n# changed after verification\n")...), 0644); err != nil {
 		t.Fatal(err)
 	}
-	stale, err := app.Load(root, "")
+	stale, err := host.Load(root, "")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := app.VerifyProjectionPlan(stale, savedPlan, "0.10.0", toolDigest); err == nil || !strings.Contains(err.Error(), "source inputs changed") {
+	if err := host.VerifyProjectionPlan(stale, savedPlan, "0.10.0", toolDigest); err == nil || !strings.Contains(err.Error(), "source inputs changed") {
 		t.Fatalf("source change should invalidate saved reconcile evidence: %v", err)
 	}
 }
@@ -248,7 +247,7 @@ func TestCanonicalRenderPlanApplyVerifyRoundTrip(t *testing.T) {
 func TestCanonicalRelationEffectsSeparateContextFromInvalidation(t *testing.T) {
 	root := filepath.Join(t.TempDir(), "canonical-engineering")
 	copyCanonicalExample(t, root)
-	before, err := app.Load(root, "")
+	before, err := host.Load(root, "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -264,11 +263,11 @@ func TestCanonicalRelationEffectsSeparateContextFromInvalidation(t *testing.T) {
 	if err := os.WriteFile(owned, []byte(changed), 0644); err != nil {
 		t.Fatal(err)
 	}
-	after, err := app.Load(root, "")
+	after, err := host.Load(root, "")
 	if err != nil {
 		t.Fatal(err)
 	}
-	impact := app.Changes(before, after)
+	impact := host.Changes(before, after)
 	affected := map[string]bool{}
 	for _, key := range impact.Affected {
 		affected[key] = true
@@ -278,7 +277,7 @@ func TestCanonicalRelationEffectsSeparateContextFromInvalidation(t *testing.T) {
 			t.Errorf("owns invalidation should affect %s: %#v", key, impact.Affected)
 		}
 	}
-	context, err := app.CompileContext(before, "engineering/Skill/architecture-review", "example-test")
+	context, err := host.CompileContext(before, "engineering/Skill/architecture-review", "example-test")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -306,43 +305,43 @@ func TestCanonicalDotNetAdapterObservesAndVerifiesProjectDependencies(t *testing
 	}
 	t.Setenv("PATH", buildDir+string(os.PathListSeparator)+os.Getenv("PATH"))
 
-	project, err := app.Load(root, "")
+	project, err := host.Load(root, "")
 	if err != nil {
 		t.Fatal(err)
 	}
-	observation, err := app.ObserveCommandAdapter(project, "dotnet-dependencies")
+	observation, err := host.ObserveCommandAdapter(project, "dotnet-dependencies")
 	if err != nil {
 		t.Fatal(err)
 	}
 	if observation.Status != "complete" || len(observation.Findings) != 0 {
 		t.Fatalf("literal ProjectReference evidence does not match canonical dependsOn: %#v", observation)
 	}
-	toolDigest := app.Hash([]byte("test-markitect-tool"))
-	plan, err := app.PlanCommandAdapter(project, "dotnet-dependencies", "0.10.0", toolDigest)
+	toolDigest := host.Hash([]byte("test-markitect-tool"))
+	plan, err := host.PlanCommandAdapter(project, "dotnet-dependencies", "0.10.0", toolDigest)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if plan.Result.Status != "complete" {
 		t.Fatalf("adapter plan is incomplete: %#v", plan.Result)
 	}
-	tamperCases := map[string]func(*app.CommandAdapterPlan){
-		"observed": func(tampered *app.CommandAdapterPlan) {
+	tamperCases := map[string]func(*host.CommandAdapterPlan){
+		"observed": func(tampered *host.CommandAdapterPlan) {
 			tampered.Result.Observed = map[string]any{"tampered": true}
 		},
-		"operations": func(tampered *app.CommandAdapterPlan) {
-			tampered.Result.Operations = append(tampered.Result.Operations, app.AdapterOperation{ID: "tampered", Action: "remove", Target: "project"})
+		"operations": func(tampered *host.CommandAdapterPlan) {
+			tampered.Result.Operations = append(tampered.Result.Operations, host.AdapterOperation{ID: "tampered", Action: "remove", Target: "project"})
 		},
 	}
 	for name, mutate := range tamperCases {
 		t.Run("reject tampered plan "+name, func(t *testing.T) {
 			tampered := plan
 			mutate(&tampered)
-			if _, err := app.VerifyCommandAdapter(project, "dotnet-dependencies", "0.10.0", toolDigest, tampered); err == nil {
+			if _, err := host.VerifyCommandAdapter(project, "dotnet-dependencies", "0.10.0", toolDigest, tampered); err == nil {
 				t.Fatalf("VerifyCommandAdapter accepted tampered plan %s", name)
 			}
 		})
 	}
-	verified, err := app.VerifyCommandAdapter(project, "dotnet-dependencies", "0.10.0", toolDigest, plan)
+	verified, err := host.VerifyCommandAdapter(project, "dotnet-dependencies", "0.10.0", toolDigest, plan)
 	if err != nil {
 		t.Fatalf("verify unchanged project evidence: %v", err)
 	}
@@ -373,7 +372,7 @@ func TestCanonicalPolicyValueDrivesCheckContextAndHumanView(t *testing.T) {
 	if err := os.WriteFile(modulePath, []byte(moduleForModuleDependency), 0644); err != nil {
 		t.Fatal(err)
 	}
-	baseline, err := app.Load(root, "")
+	baseline, err := host.Load(root, "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -381,7 +380,7 @@ func TestCanonicalPolicyValueDrivesCheckContextAndHumanView(t *testing.T) {
 		t.Fatal("Module dependency unexpectedly passed the Core-only policy")
 	}
 
-	domain, err := format.ParseDomain("domains/software.yaml", domainOriginal)
+	domain, err := authoring.ParseDomain("domains/software.yaml", domainOriginal)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -395,14 +394,14 @@ func TestCanonicalPolicyValueDrivesCheckContextAndHumanView(t *testing.T) {
 	if !policyFound {
 		t.Fatal("test could not locate the canonical allowed-targets constraint")
 	}
-	changedPolicy, err := format.EncodeDomain(domain)
+	changedPolicy, err := authoring.EncodeDomain(domain)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if err := os.WriteFile(domainPath, changedPolicy, 0644); err != nil {
 		t.Fatal(err)
 	}
-	updated, err := app.Load(root, "")
+	updated, err := host.Load(root, "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -410,7 +409,7 @@ func TestCanonicalPolicyValueDrivesCheckContextAndHumanView(t *testing.T) {
 		t.Fatalf("the same Module dependency should pass after the canonical policy value changes: %#v", updated.Diagnostics)
 	}
 
-	compiled, err := app.CompileContext(updated, "engineering/Skill/architecture-review", "example-test")
+	compiled, err := host.CompileContext(updated, "engineering/Skill/architecture-review", "example-test")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -420,14 +419,14 @@ func TestCanonicalPolicyValueDrivesCheckContextAndHumanView(t *testing.T) {
 			selectedPolicy = input.Text
 		}
 	}
-	definition, err := format.ParseDomain("domains/software.yaml", []byte(selectedPolicy))
+	definition, err := authoring.ParseDomain("domains/software.yaml", []byte(selectedPolicy))
 	if err != nil {
 		t.Fatal(err)
 	}
 	if len(definition.Constraints) != 1 || len(definition.Constraints[0].Assert.Values) != 1 || definition.Constraints[0].Assert.Values[0] != "Module" {
 		t.Fatalf("Skill context does not contain the revised canonical assertion value: %#v", definition.Constraints)
 	}
-	outputs, err := render.Generate(updated.Graph, updated.Snapshot.Files)
+	outputs, err := host.GenerateOutputs(updated)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -463,7 +462,7 @@ func TestCanonicalEngineeringRejectsBrokenRelations(t *testing.T) {
 			if err := os.WriteFile(modulePath, []byte(text), 0644); err != nil {
 				t.Fatal(err)
 			}
-			project, err := app.Load(root, "")
+			project, err := host.Load(root, "")
 			if err != nil {
 				t.Fatal(err)
 			}

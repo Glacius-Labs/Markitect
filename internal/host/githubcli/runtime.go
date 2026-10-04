@@ -1,0 +1,175 @@
+// Package githubcli owns the command protocol and staged-file boundary for
+// the GitHub repository-metadata Module.
+package githubcli
+
+import (
+	"bytes"
+	"errors"
+	"fmt"
+	"io"
+	"os"
+	"path/filepath"
+	"strings"
+
+	"github.com/Glacius-Labs/Markitect/internal/host"
+	"github.com/Glacius-Labs/Markitect/internal/modules/github"
+	"go.yaml.in/yaml/v3"
+)
+
+const maxRequestBytes = 10 << 20
+
+func Main() { os.Exit(Run(os.Stdin, os.Stdout, os.Stderr)) }
+
+func Run(input io.Reader, output, stderr io.Writer) int {
+	body, err := io.ReadAll(io.LimitReader(input, maxRequestBytes+1))
+	if err != nil {
+		return writeFailure(output, fmt.Errorf("read adapter request: %w", err))
+	}
+	if len(body) > maxRequestBytes {
+		return writeFailure(output, errors.New("adapter request exceeds this prototype's 10 MiB input limit"))
+	}
+	decoder := yaml.NewDecoder(bytes.NewReader(body))
+	decoder.KnownFields(true)
+	var wire host.AdapterRequest
+	if err := decoder.Decode(&wire); err != nil {
+		return writeFailure(output, fmt.Errorf("decode adapter request: %w", err))
+	}
+	var extra any
+	if err := decoder.Decode(&extra); err != io.EOF {
+		return writeFailure(output, errors.New("adapter request must contain exactly one YAML document"))
+	}
+	config, configErr := github.DecodeConfig(wire.Adapter.Parameters)
+	request := github.Request{
+		APIVersion:    wire.APIVersion,
+		Action:        wire.Action,
+		Adapter:       github.Identity{Name: wire.Adapter.Name, Type: wire.Adapter.Type, Version: wire.Adapter.Version, Target: wire.Adapter.Target},
+		Model:         wire.Model,
+		Config:        config,
+		Captures:      map[string][]byte{},
+		CaptureErrors: map[string]string{},
+	}
+	if configErr != nil {
+		request.ConfigError = configErr.Error()
+	} else {
+		request.Captures, request.CaptureErrors = readMappedInputs(github.CapturePaths(config))
+	}
+	if wire.Observation != nil {
+		request.Observation, err = decodeResult(wire.Observation)
+		if err != nil {
+			return writeFailure(output, fmt.Errorf("decode adapter observation: %w", err))
+		}
+	}
+	if wire.Plan != nil {
+		request.Plan, err = decodeResult(wire.Plan)
+		if err != nil {
+			return writeFailure(output, fmt.Errorf("decode adapter plan: %w", err))
+		}
+	}
+	return writeResult(output, github.Run(request))
+}
+
+func decodeResult(value *host.AdapterResult) (*github.Result, error) {
+	data, err := host.YAML(value)
+	if err != nil {
+		return nil, err
+	}
+	var result github.Result
+	decoder := yaml.NewDecoder(bytes.NewReader(data))
+	decoder.KnownFields(true)
+	if err := decoder.Decode(&result); err != nil {
+		return nil, err
+	}
+	return &result, nil
+}
+
+func readMappedInputs(paths []string) (map[string][]byte, map[string]string) {
+	data := make(map[string][]byte, len(paths))
+	errorsByPath := make(map[string]string)
+	for _, path := range paths {
+		value, err := readStagedFile(path, 1<<20)
+		if err != nil {
+			errorsByPath[path] = err.Error()
+			continue
+		}
+		data[path] = value
+	}
+	return data, errorsByPath
+}
+
+func readStagedFile(relative string, limit int64) ([]byte, error) {
+	if relative == "" || strings.ContainsAny(relative, `\:`) || filepath.IsAbs(relative) {
+		return nil, errors.New("evidenceFile must be a clean repository-relative path")
+	}
+	clean := filepath.Clean(filepath.FromSlash(relative))
+	if clean == "." || clean == ".." || strings.HasPrefix(clean, ".."+string(filepath.Separator)) {
+		return nil, errors.New("evidenceFile must stay within staged declared inputs")
+	}
+	root, err := os.Getwd()
+	if err != nil {
+		return nil, err
+	}
+	root, err = filepath.EvalSymlinks(root)
+	if err != nil {
+		return nil, err
+	}
+	current := root
+	parts := strings.Split(clean, string(filepath.Separator))
+	for i, part := range parts {
+		current = filepath.Join(current, part)
+		info, err := os.Lstat(current)
+		if err != nil {
+			return nil, fmt.Errorf("capture input is missing or unresolved: %w", err)
+		}
+		if isReparsePoint(info) {
+			return nil, errors.New("capture input contains a link or reparse point")
+		}
+		if i < len(parts)-1 && !info.IsDir() {
+			return nil, errors.New("capture input parent is not a directory")
+		}
+		if i == len(parts)-1 && !info.Mode().IsRegular() {
+			return nil, errors.New("capture input must be a regular file")
+		}
+	}
+	before, err := os.Lstat(current)
+	if err != nil {
+		return nil, err
+	}
+	file, err := os.Open(current)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+	opened, err := file.Stat()
+	if err != nil || !opened.Mode().IsRegular() || !os.SameFile(before, opened) {
+		return nil, errors.New("capture input changed while opening")
+	}
+	if opened.Size() < 0 || opened.Size() > limit {
+		return nil, errors.New("capture exceeds 1 MiB")
+	}
+	data, err := io.ReadAll(io.LimitReader(file, limit+1))
+	if err != nil {
+		return nil, err
+	}
+	if int64(len(data)) > limit || int64(len(data)) != opened.Size() {
+		return nil, errors.New("capture changed or exceeds 1 MiB")
+	}
+	return data, nil
+}
+
+func isReparsePoint(info os.FileInfo) bool { return isPlatformReparsePoint(info) }
+
+func writeResult(output io.Writer, value any) int {
+	encoder := yaml.NewEncoder(output)
+	encoder.SetIndent(2)
+	if err := encoder.Encode(value); err != nil {
+		return 2
+	}
+	if err := encoder.Close(); err != nil {
+		return 2
+	}
+	return 0
+}
+func writeFailure(output io.Writer, err error) int {
+	_ = writeResult(output, github.InvalidRequest(err.Error()))
+	return 2
+}

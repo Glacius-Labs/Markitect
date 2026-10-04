@@ -13,5 +13,6 @@ Generated Markdown, Codex and Claude files are projections. Change their YAML ow
 
 ## Dependencies
 
+- [Rule: module-verification](module-verification.rule.md)
 - [Rule: repository-boundaries](repository-boundaries.rule.md)
 - [Workflow: markitect-first-change](../core/workflow-markitect-first-change.workflow.md)

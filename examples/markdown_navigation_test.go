@@ -8,13 +8,13 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/internal/app"
-	"github.com/Glacius-Labs/Markitect/internal/render"
+	"github.com/Glacius-Labs/Markitect/internal/core/snapshot"
+	"github.com/Glacius-Labs/Markitect/internal/host"
 )
 
 func TestMarkdownNavigationExampleRebasesHumanLinksAndPreservesCode(t *testing.T) {
 	root := markdownNavigationRoot(t)
-	project, err := app.Load(root, "")
+	project, err := host.Load(root, "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -28,7 +28,7 @@ func TestMarkdownNavigationExampleRebasesHumanLinksAndPreservesCode(t *testing.T
 		t.Fatalf("ordinary prose links changed the declared dependency graph: got %v, want %v", got, wantEdges)
 	}
 
-	outputs, err := render.Generate(project.Graph, project.Snapshot.Files)
+	outputs, err := host.GenerateOutputs(project)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -67,14 +67,14 @@ func TestMarkdownNavigationExampleRebasesHumanLinksAndPreservesCode(t *testing.T
 	}
 	assertMarkdownTargetExists(t, ".claude/skills/setup-workspace/SKILL.md", "../../../docs/general/workflows/setup-workspace.yaml", project.Snapshot.Files, outputs)
 
-	if findings := app.CheckOutputs(project); len(findings) != 0 {
+	if findings := host.CheckOutputs(project); len(findings) != 0 {
 		t.Fatalf("checked-in navigation outputs have drift or are missing: %#v", findings)
 	}
 }
 
 func TestMarkdownNavigationPrefersExistingUnmarkedOrdinaryAlias(t *testing.T) {
 	root := markdownNavigationRoot(t)
-	project, err := app.Load(root, "")
+	project, err := host.Load(root, "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -82,7 +82,11 @@ func TestMarkdownNavigationPrefersExistingUnmarkedOrdinaryAlias(t *testing.T) {
 	const alias = "docs/general/workflows/setup-workspace.md"
 	files[alias] = []byte("# Human-owned workflow alias\n")
 
-	outputs, err := render.Generate(project.Graph, files)
+	candidate, err := host.Parse(&snapshot.Snapshot{Files: files})
+	if err != nil {
+		t.Fatal(err)
+	}
+	outputs, err := host.GenerateOutputs(candidate)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -6,6 +6,8 @@ Start with the canonical [product vision](../vision.md), [Architecture](../archi
 |---|---|
 | [Baseline](baseline.md) | Integrated source identity, required evidence and published/source distinction |
 | [Shared contracts](shared-contracts.md) | Current frozen seams and coordinator-owned changes |
+| [Modules](modules.md) | Final Core/Host/Module ownership, static composition and mechanical dependency laws |
+| [Architecture consolidation](../validation/clean-architecture-consolidation.md) | Migration decisions, measured dependencies, compatibility and exact gate evidence |
 | [Parallelizability audit](parallelizability.md) | Actual subsystem independence, limitations and hotspots |
 | [Parallel work](parallel-work.md) | Delegation, isolated ownership, validation and integration |
 | [Adoption boundaries](adoption-boundaries.md) | Init, Copy Me and adopter handoffs; current versus proposed contracts |

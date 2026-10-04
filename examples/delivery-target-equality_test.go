@@ -8,23 +8,23 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/internal/app"
 	"github.com/Glacius-Labs/Markitect/internal/core"
-	"github.com/Glacius-Labs/Markitect/internal/format"
-	"github.com/Glacius-Labs/Markitect/internal/snapshot"
+	"github.com/Glacius-Labs/Markitect/internal/core/snapshot"
+	"github.com/Glacius-Labs/Markitect/internal/host"
+	"github.com/Glacius-Labs/Markitect/internal/host/authoring"
 )
 
 const deliveryTopologyAPI = "delivery.example.org/v1alpha1"
 
 const deliveryEqualityConstraint = "deployment-service-and-environment-share-product"
 
-func loadDeliveryTargetEquality(t *testing.T) *app.Project {
+func loadDeliveryTargetEquality(t *testing.T) *host.Project {
 	t.Helper()
 	_, source, _, ok := runtime.Caller(0)
 	if !ok {
 		t.Fatal("could not locate Delivery target equality fixture")
 	}
-	project, err := app.Load(filepath.Join(filepath.Dir(source), "delivery-target-equality"), "")
+	project, err := host.Load(filepath.Join(filepath.Dir(source), "delivery-target-equality"), "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -40,7 +40,7 @@ func deliveryTargetEqualityRoot(t *testing.T) string {
 	return filepath.Join(filepath.Dir(source), "delivery-target-equality")
 }
 
-func relationshipTarget(t *testing.T, graph *core.Graph, from, relation string) string {
+func relationshipTarget(t *testing.T, graph *authoring.Graph, from, relation string) string {
 	t.Helper()
 	var found []string
 	for _, edge := range graph.Relationships {
@@ -54,7 +54,7 @@ func relationshipTarget(t *testing.T, graph *core.Graph, from, relation string) 
 	return found[0]
 }
 
-func deploymentProductPaths(t *testing.T, graph *core.Graph, deployment string) (string, string) {
+func deploymentProductPaths(t *testing.T, graph *authoring.Graph, deployment string) (string, string) {
 	t.Helper()
 	service := relationshipTarget(t, graph, deployment, "deploysService")
 	environment := relationshipTarget(t, graph, deployment, "deploysTo")
@@ -88,13 +88,13 @@ func TestDeliveryTargetEqualityCurrentLanguageAcceptsMatchingAndMismatchingDeplo
 	}
 
 	for _, subject := range []string{matching, "engineering/delivery.example.org/v1alpha1/Deployment/telemetry-production"} {
-		result, ok := deliveryPolicyResult(project.Graph.PolicyResults, subject)
+		result, ok := deliveryPolicyResult(project.Graph.Core.PolicyResults, subject)
 		if !ok || result.Status != core.PolicyPassed || result.Comparison == nil {
 			t.Fatalf("matching Deployment should have a traceable passing equality result for %s: %+v", subject, result)
 		}
 	}
-	if len(project.Graph.PolicyResults) != 2 {
-		t.Fatalf("each Deployment should have one equality result, got %#v", project.Graph.PolicyResults)
+	if len(project.Graph.Core.PolicyResults) != 2 {
+		t.Fatalf("each Deployment should have one equality result, got %#v", project.Graph.Core.PolicyResults)
 	}
 }
 
@@ -102,7 +102,7 @@ func TestDeliveryTargetEqualityPreOperatorKernelAcceptsTypedMismatch(t *testing.
 	base := loadDeliveryTargetEquality(t)
 	private := privateDeliveryTargetSnapshot(base)
 	definitionPath := "domains/delivery-topology.yaml"
-	domain, err := format.ParseDomain(definitionPath, private.Files[definitionPath])
+	domain, err := authoring.ParseDomain(definitionPath, private.Files[definitionPath])
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -113,13 +113,13 @@ func TestDeliveryTargetEqualityPreOperatorKernelAcceptsTypedMismatch(t *testing.
 		}
 	}
 	domain.Constraints = filtered
-	encodedDomain, err := format.EncodeDomain(domain)
+	encodedDomain, err := authoring.EncodeDomain(domain)
 	if err != nil {
 		t.Fatal(err)
 	}
 	private.Files[definitionPath] = encodedDomain
 	mutateDeliveryReferenceInSnapshot(t, private, base.Graph.Registry, "resources/deployment-orders-production.yaml", "environment", "support-production")
-	project, err := app.Parse(private)
+	project, err := host.Parse(private)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -132,8 +132,8 @@ func TestDeliveryTargetEqualityPreOperatorKernelAcceptsTypedMismatch(t *testing.
 	if left != wantCommerce || right != wantSupport {
 		t.Fatalf("baseline mismatch did not retain distinct resolved paths: %s / %s", left, right)
 	}
-	if len(project.Graph.PolicyResults) != 0 {
-		t.Fatalf("without the new assertion, the current language should emit no equality result: %#v", project.Graph.PolicyResults)
+	if len(project.Graph.Core.PolicyResults) != 0 {
+		t.Fatalf("without the new assertion, the current language should emit no equality result: %#v", project.Graph.Core.PolicyResults)
 	}
 }
 
@@ -158,7 +158,7 @@ func TestDeliveryTargetEqualityReportsDifferentPathResults(t *testing.T) {
 			base := loadDeliveryTargetEquality(t)
 			private := privateDeliveryTargetSnapshot(base)
 			mutateDeliveryReferenceInSnapshot(t, private, base.Graph.Registry, test.path, test.field, test.targetName)
-			changed, err := app.Parse(private)
+			changed, err := host.Parse(private)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -166,7 +166,7 @@ func TestDeliveryTargetEqualityReportsDifferentPathResults(t *testing.T) {
 				t.Fatalf("cross-Product wiring should produce only its subject policy diagnostic: %#v", changed.Diagnostics)
 			}
 			deployment := "engineering/delivery.example.org/v1alpha1/Deployment/orders-production"
-			result, ok := deliveryPolicyResult(changed.Graph.PolicyResults, deployment)
+			result, ok := deliveryPolicyResult(changed.Graph.Core.PolicyResults, deployment)
 			if !ok || result.Status != core.PolicyFailed || result.Comparison == nil {
 				t.Fatalf("mismatch should retain its failed per-Deployment result and trace: %+v", result)
 			}
@@ -177,7 +177,7 @@ func TestDeliveryTargetEqualityReportsDifferentPathResults(t *testing.T) {
 				t.Fatalf("comparison trace should show both fixed two-edge paths: %+v", result.Comparison)
 			}
 			telemetry := "engineering/delivery.example.org/v1alpha1/Deployment/telemetry-production"
-			other, ok := deliveryPolicyResult(changed.Graph.PolicyResults, telemetry)
+			other, ok := deliveryPolicyResult(changed.Graph.Core.PolicyResults, telemetry)
 			if !ok || other.Status != core.PolicyPassed {
 				t.Fatalf("unrelated Deployment should remain a passing subject: %+v", other)
 			}
@@ -213,7 +213,7 @@ func TestDeliveryTargetEqualityOwnershipIsNonContextAndInvalidatesPathDependents
 		t.Fatal("orders Service Product ownership relation is absent")
 	}
 
-	context, err := app.CompileContext(project, "engineering/Skill/deployment-review", "test")
+	context, err := host.CompileContext(project, "engineering/Skill/deployment-review", "test")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -278,10 +278,10 @@ func TestDeliveryTargetEqualityOwnershipIsNonContextAndInvalidatesPathDependents
 			if len(after.Diagnostics) != 1 || after.Diagnostics[0].Code != "constraint."+deliveryEqualityConstraint {
 				t.Fatalf("changing a valid Product should produce only the subject's equality diagnostic: %#v", after.Diagnostics)
 			}
-			if result, ok := deliveryPolicyResult(after.Graph.PolicyResults, "engineering/delivery.example.org/v1alpha1/Deployment/orders-production"); !ok || result.Status != core.PolicyFailed {
+			if result, ok := deliveryPolicyResult(after.Graph.Core.PolicyResults, "engineering/delivery.example.org/v1alpha1/Deployment/orders-production"); !ok || result.Status != core.PolicyFailed {
 				t.Fatalf("changed ownership path should fail the selected Deployment: %+v", result)
 			}
-			impact := app.Changes(base, after)
+			impact := host.Changes(base, after)
 			for _, want := range test.wantAffected {
 				if !deliveryContains(impact.Affected, want) {
 					t.Errorf("ownership-path edit omitted dependent %s from impact: %#v", want, impact.Affected)
@@ -316,11 +316,11 @@ func TestDeliveryTargetEqualitySourcesUseCanonicalFormat(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	project, err := format.Parse(filepath.Join(root, "markitect.yaml"), projectBytes)
+	project, err := authoring.Parse(filepath.Join(root, "markitect.yaml"), projectBytes)
 	if err != nil {
 		t.Fatal(err)
 	}
-	canonicalProject, err := format.Encode(*project)
+	canonicalProject, err := authoring.Encode(*project)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -331,11 +331,11 @@ func TestDeliveryTargetEqualitySourcesUseCanonicalFormat(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	domain, err := format.ParseDomain("domains/delivery-topology.yaml", domainBytes)
+	domain, err := authoring.ParseDomain("domains/delivery-topology.yaml", domainBytes)
 	if err != nil {
 		t.Fatal(err)
 	}
-	canonicalDomain, err := format.EncodeDomain(domain)
+	canonicalDomain, err := authoring.EncodeDomain(domain)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -347,11 +347,11 @@ func TestDeliveryTargetEqualitySourcesUseCanonicalFormat(t *testing.T) {
 		if !strings.HasPrefix(path, "resources/") || !strings.HasSuffix(path, ".yaml") {
 			continue
 		}
-		resource, err := format.ParseWithRegistry(path, data, projectModel.Graph.Registry)
+		resource, err := authoring.ParseWithRegistry(path, data, projectModel.Graph.Registry)
 		if err != nil {
 			t.Fatalf("parse %s: %v", path, err)
 		}
-		canonical, err := format.Encode(*resource)
+		canonical, err := authoring.Encode(*resource)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -361,16 +361,16 @@ func TestDeliveryTargetEqualitySourcesUseCanonicalFormat(t *testing.T) {
 	}
 }
 
-func loadDeliveryTargetEqualityAt(t *testing.T, root string) *app.Project {
+func loadDeliveryTargetEqualityAt(t *testing.T, root string) *host.Project {
 	t.Helper()
-	project, err := app.Load(root, "")
+	project, err := host.Load(root, "")
 	if err != nil {
 		t.Fatal(err)
 	}
 	return project
 }
 
-func privateDeliveryTargetSnapshot(project *app.Project) *snapshot.Snapshot {
+func privateDeliveryTargetSnapshot(project *host.Project) *snapshot.Snapshot {
 	files := make(map[string][]byte, len(project.Snapshot.Files))
 	for name, data := range project.Snapshot.Files {
 		files[name] = append([]byte(nil), data...)
@@ -384,7 +384,7 @@ func privateDeliveryTargetSnapshot(project *app.Project) *snapshot.Snapshot {
 
 func mutateDeliveryReferenceInSnapshot(t *testing.T, private *snapshot.Snapshot, registry *core.Registry, path, field, targetName string) {
 	t.Helper()
-	resource, err := format.ParseWithRegistry(path, private.Files[path], registry)
+	resource, err := authoring.ParseWithRegistry(path, private.Files[path], registry)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -398,7 +398,7 @@ func mutateDeliveryReferenceInSnapshot(t *testing.T, private *snapshot.Snapshot,
 	}
 	updated["name"] = targetName
 	resource.Data[field] = updated
-	encoded, err := format.Encode(*resource)
+	encoded, err := authoring.Encode(*resource)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -430,7 +430,7 @@ func copyDeliveryTargetFixture(t *testing.T, destination string) {
 	}
 }
 
-func mutateDeliveryProductOwner(t *testing.T, root string, project *app.Project, resourceKey, relativePath, field, targetName string) {
+func mutateDeliveryProductOwner(t *testing.T, root string, project *host.Project, resourceKey, relativePath, field, targetName string) {
 	t.Helper()
 	resource := project.Graph.Resources[resourceKey]
 	if resource == nil {
@@ -451,7 +451,7 @@ func mutateDeliveryProductOwner(t *testing.T, root string, project *app.Project,
 	}
 	refCopy["name"] = targetName
 	updated.Data[field] = refCopy
-	encoded, err := format.Encode(updated)
+	encoded, err := authoring.Encode(updated)
 	if err != nil {
 		t.Fatal(err)
 	}

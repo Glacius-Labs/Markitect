@@ -131,27 +131,50 @@ The core does not depend on a model API, IDE, provider SDK, or repository-specif
 
 Ordinary project artifacts stay with their owners and enter context or impact through exact declared inputs. Source code has no special semantic status: Markitect does not parse syntax trees, infer symbols or call graphs, or derive business meaning from code. Domain-specific analysis belongs outside the deterministic core.
 
-### Go implementation boundaries
+<a id="go-implementation-boundaries"></a>
+### Go ownership and final dependency model
 
-Markitect uses ports and adapters as a guide to dependency direction, with concrete Go packages where one implementation is sufficient:
+The [clean-architecture consolidation decision](design/clean-architecture-consolidation.md) freezes these package responsibilities. The consolidation does not add Domain language or a new Core SPI. The published v0.13.0 release remains unchanged; this source architecture does not claim that release contains the final package layout. The [consolidation report](validation/clean-architecture-consolidation.md) owns exact implementation and gate evidence.
 
-| Role | Packages | Dependency boundary |
+| Responsibility | Final owner | Dependency and meaning boundary |
 |---|---|---|
-| Resource model and deterministic decisions | `internal/core`, `internal/inputs`, `internal/snapshot` | Operate on explicit values and bytes; no Git, filesystem writer, CLI, or model API dependency. |
-| Application use cases | `internal/app` | Compose resolved snapshots, parsing, graph checks, context, impact, review evidence, verification, and controlled writes. |
-| Input and output adapters | `internal/source`, `internal/format`, `internal/contentpackage`, `internal/render`, `internal/release` | Acquire Git-backed values, read or produce YAML, archives, schemas, materialized files, and managed outputs. |
-| Entry points | `cmd/markitect`, `cmd/markitect-release`, `integration` | Parse commands, choose use cases, and report results. The standalone bootstrap in `integration` remains a single Go source file because distributions execute it directly. |
+| Generic `Resource.Data`, empty registry, finite graph and policy kernel, semantic IR, explicit exception semantics, result/dependency traces, and opaque snapshot value/digest/diff | Core: `internal/core`, including `internal/core/snapshot` | Receives validated, normalized values and Host-authorized resolved edges. No authoring YAML, Git loading, Project layout, provider interpretation, filesystem writing, CLI, or adopting-project semantics. |
+| Authoring source contracts and compiler; Project/Package/Area/provider/pinned-contract codecs; generic exception provenance supply; content-package validation/activation; embedded resources and inputs; model/context/impact; process execution, controlled writes, and static composition | Host: `internal/host` | Owns transient typed source specifications, source codecs/normalization and runtime use cases. It lowers supported legacy `authoring.Spec` provider fields into Module-owned configuration and composes concrete functions over Core IR. |
+| Selected capture/review; private Codex/Claude agent rules; Markdown projection, literal consistency and router checks; managed-artifact coverage; Git Hooks, Pipelines, .NET, GitHub and Azure DevOps consumers | Independent Modules: `internal/modules/<name>` | A Module imports Core and its own subtree only, plus justified standard-library/external dependencies. It never imports a sibling Module, Host, Infrastructure or Tooling, including in tests. Module configuration owns provider fields; Host supplies explicit normalized values and authorized artifact bytes/facts. |
+| Git and working-tree acquisition, revision resolution and materialization | Infrastructure: `internal/infrastructure/source` | Acquires source and supplies Core snapshot values; it does not interpret canonical policy or adopting-project layout. |
+| Architecture import gate, release, publication, licenses/notices and standalone distribution bootstrap | Tooling: `internal/tooling/{architecture,release,publish,licenses}` and `integration` | Maintainer algorithms invoked through Host runtime composition; never a runtime capability Module. |
+| All executable entrypoints, including maintainer commands | `cmd/...` thin Host runtimes | CLI packages import Host only, dispatch to Host runtime functions and report results. They do not call Core, Modules, Infrastructure or Tooling directly. |
+| Examples, adopter fixtures and experiments | Harness | Validation code is not a production dependency or an exemption from dependency rules. |
 
-This is not strict interface-driven hexagonal wiring: application use cases currently call the concrete adapters. There is no interchangeable implementation to justify ports for each one. Add a narrow interface in the consuming package when a real use case needs substitution; keep the deterministic model independent of the adapters. `internal/snapshot` owns the concrete value and deterministic comparison; `internal/source` remains the Git acquisition adapter. The publication `Runner` is an existing example of a consumer-owned boundary for the external `gh` process.
+The dependency graph is statically composed:
 
-Rendering produces only explicitly selected Markdown, Codex, or Claude outputs and configured rule adapters. The Markdown target writes resource views under `docs/markitect/`; provider outputs link directly to canonical YAML. Markitect owns those supported adapters; additional project-specific output policy remains outside the core. No target is selected implicitly. Format, render, schema, install, and initialization operations validate plans before writing; per-file writes are controlled, not a multi-file transaction.
+```mermaid
+flowchart TD
+  CLI[cmd entrypoints] --> Host[Host composition and runtimes]
+  Host --> Core[Core IR, kernel and snapshot values]
+  Host --> Modules[Independent Modules]
+  Modules --> Core
+  Host --> Infra[Infrastructure source]
+  Infra --> Core
+  Host --> Tooling[Maintainer Tooling]
+  Tooling --> Core
+```
 
-The source model supports optional project mappings for shared provider entrypoints and strict inventory. It also checks explicitly quoted functional assertions when the Project opts in. Neither mechanism infers dependencies or facts from prose. The [adapter contract](provider-adapters.md) and [consistency contract](consistency.md) describe coverage and limits.
+Core receives one normalized canonical `Resource.Data` value per resource. Before semantic evaluation, Host validates source contracts, determines authority, and supplies resolved edges that are authorized by the selected Project/package/import bindings. Core does not acquire source, authorize layout access, or normalize a second `SourceValue` into a competing model. It evaluates only the validated normalized values and resolved relationships supplied to it.
 
-The v0.3.0 source model added direct offline content archives. Project pins are the single content lock; `.markitect/tool/lock.yaml` pins the CLI distribution in v0.9.0 and later. Package members are parsed into origin-qualified graph entries while local identity and canonical paths stay unchanged. The model rejects nested imports, cross-boundary direct references, checks, render targets, and external rule adapters. Verified archives are tracked outside the Git source snapshot and are read-only to formatting and rendering. Package content participates in context and conservative impact/review invalidation. See [Content packages](content-packages.md) for its contract.
+Host owns the source frontend: transient `authoring.Spec` and typed Project, Package, Area, provider and pinned-contract inputs, their public YAML codecs/schemas, source compilation and normalization, and generic exception provenance supply. Content-package archive and manifest/domain/resource validation, embedded canonical resources and ordinary input resolution also belong to Host. These authoring contracts do not become Core resource kinds or Module-owned YAML formats.
 
-The current source model adds minimal project initialization for an existing repository. Preview is read-only and shows the exact Project YAML and area README plan. Writing recomputes the plan and validates the prospective Project through the normal parser, graph, and output checks; it then requires a named non-protected branch and exclusively creates only those two paths. It does not select project-owned checks or policy or edit existing content. Structural success does not establish complete verification; without owner-declared checks, `verify` remains incomplete. See [Usage](usage.md) for the command contract and the [roadmap](implementation-plan.md) for current status.
+Module configuration owns provider-specific fields. Host lowers supported legacy `authoring.Spec` into that configuration and the root composition consumes Core IR. Module path planning is a separate step from `Validate`: path selection and ownership planning are explicit inputs, while validation checks the prepared plan and does not infer paths or extend Core semantics.
 
+Core computes generic deterministic digests. For compatibility-sensitive bootstrap exceptions, Host may supply an explicit GraphKey-to-opaque-encoding map; Core hashes those bytes only and never parses or branches on their contents. Policy evaluation still uses normalized `Resource.Data` and resolved edges. Core snapshot mode strings retain their historical opaque encoding for digest compatibility; Core may compare and hash the strings but does not interpret Git file modes. Infrastructure performs Git acquisition and mode conversion.
+
+Host composition uses direct typed function calls. There is no dynamic plugin loader, service locator, reflection-based registration, generic Module lifecycle or provider switch in Core. Each Module owns its implementation and private tests; Host owns composition and shared runtime contracts.
+
+Rendering remains limited to explicitly selected outputs. The Markdown and agent-rules Modules own their projections; provider outputs link to canonical YAML. Source mappings and explicitly quoted consistency assertions remain opt-in and do not infer dependencies or facts from prose. Format, render, schema, install and initialization retain validated-plan and controlled-write behavior; multi-file writes are not a transaction. See [Provider adapters](provider-adapters.md) and [Factual consistency](consistency.md).
+
+Direct offline content packages remain exact pinned archives, with explicit activation, origin-qualified identities and read-only imported content; nested imports and cross-boundary direct references remain rejected. Project initialization remains read-only in preview and recomputes/validates before writing only the planned Project and Area README. It does not select project-owned checks or policy or edit existing content. Structural success without owner-declared checks remains incomplete verification; see [Usage](usage.md) and the [roadmap](implementation-plan.md).
+
+The architecture gate is `internal/tooling/architecture`. Its static import check covers supported-platform source and tests and has negative fixtures for forbidden directions. The same gate is included in normal tests, a named CI step, the explicit Project check and release quality workflow. These wiring facts do not claim an exact-head pass; the [consolidation report](validation/clean-architecture-consolidation.md) owns gate results. There is no exception allowlist.
 ## Authoring and queries
 
 Portable core authoring resources are embedded and compiled through the normal parser, graph, and context pipeline. They explain resource choice, ownership, explicit dependencies, and diagnostics. `authoring`, `find`, and `explain` support an agent or person inspecting the model; they do not interpret natural-language intent or call a model.
@@ -175,7 +198,7 @@ The immutable `v0.1.0` release and its original package are historical pins. The
 <a id="markitect-first-and-artifact-coverage-release-candidate"></a>
 ## Markitect-first and artifact coverage (published v0.13.0)
 
-The [canonical Change workflow](../internal/authoring/resources/workflow-markitect-first-change.yaml) separates implementation freedom from engineering-intent changes. The shipped authoring context makes it available provider-neutrally; a project's root guidance routes agents to its version-bound tool and selected Context. Desired intent changes before implementation when the intent changes. Implementation-only tasks cause no invented canonical edits. Markitect's root Project dogfoods that division with generated Codex/Claude Skill entrypoints.
+The [canonical Change workflow](../internal/host/embedded/resources/workflow-markitect-first-change.yaml) separates implementation freedom from engineering-intent changes. The shipped authoring context makes it available provider-neutrally; a project's root guidance routes agents to its version-bound tool and selected Context. Desired intent changes before implementation when the intent changes. Implementation-only tasks cause no invented canonical edits. Markitect's root Project dogfoods that division with generated Codex/Claude Skill entrypoints.
 
 The [artifact check](design/managed-artifact-coverage.md) is a standalone source-package helper selected through existing Project checks. It derives canonical sources, exact inputs and renderer owners and checks literal managed roots, exact tooling ownership and reasoned file exclusions. It adds no Domain operator, graph composition, source-language semantics or SPI change. Direct working-tree coverage can detect new untracked files; fixed Verify binds the same check to the exact materialized candidate. Output-byte drift remains the compiler's separate check. Unmanaged roots remain ordinary project review scope.
 
