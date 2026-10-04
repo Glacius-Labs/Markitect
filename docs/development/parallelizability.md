@@ -1,5 +1,16 @@
 # Parallel development boundaries
 
+## Current source ownership after consolidation
+
+The [Module guide](modules.md) and [consolidation report](../validation/clean-architecture-consolidation.md) supersede the package/readiness map below. Nine capability owners now have independent Module subtrees; Markdown and Agent Rules no longer share a renderer dependency. Host supplies config/IR/artifacts and composes outputs, with explicit collision checks. Content-package/source authoring remain Host-owned, acquisition is Infrastructure, and Core is the generic finite kernel/IR. The mandatory AST gate forbids sibling/Host imports by Modules, including tests/platform files.
+
+Module-local work can proceed independently behind that frozen Core contract, while Host wiring, output-target ownership, source/schema semantics and release changes remain coordinated. Init and Copy Me retain separate responsibilities behind their implemented immutable handoff within the Adoption capability. Owner review/adoption and remote write authority remain genuine external dependencies. Published v0.13.0 remains separate from this source consolidation.
+
+## Preserved preparation assessment
+
+The following baseline assessment retains its original package paths, release labels, negative findings and readiness judgments. It describes that inspected commit, not the final source tree.
+
+
 **Baseline:** integrated source at `e9550f5c91430c6a65cbbd4ffcdbb49b48272537` (`codex/parallel-development-baseline`), after PR 59. Published release status remains v0.12.0. This assessment records source-level ownership and seams at that baseline; it does not authorize product implementation or release.
 
 ## Workstream classes and readiness

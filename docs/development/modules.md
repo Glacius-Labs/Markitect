@@ -1,6 +1,6 @@
 # Modules and static composition
 
-This document records the final package responsibilities frozen by the [clean-architecture consolidation decision](../design/clean-architecture-consolidation.md). It does not change the immutable published v0.13.0 release. Exact source migration and gate evidence are recorded separately by the coordinator. The [product vision](../vision.md) remains the owner of product intent and human/agent responsibilities; this document records technical ownership without copying or revising that thesis.
+This document records the final package responsibilities frozen by the [clean-architecture consolidation decision](../design/clean-architecture-consolidation.md). It does not change the immutable published v0.13.0 release. Exact source migration and gate evidence are recorded in the [consolidation report](../validation/clean-architecture-consolidation.md). The [product vision](../vision.md) remains the owner of product intent and human/agent responsibilities; this document records technical ownership without copying or revising that thesis.
 
 ## Dependency direction
 
@@ -16,7 +16,7 @@ flowchart TD
   Tooling --> Core
 ```
 
-CLI packages import Host only. Host statically wires concrete functions, consumes Core IR, and supplies explicit configuration and exact artifact bytes or inventory facts. Infrastructure acquires/materializes source and supplies Core snapshot values. Tooling owns maintainer release, publication, licenses and import-gate algorithms; Host runtime composition invokes those algorithms. Examples, experiments and external integration fixtures are Harness, never production imports or dependency-law exemptions.
+CLI packages import Host only. Host statically wires concrete functions, consumes Core IR, and supplies explicit configuration and exact artifact bytes or inventory facts. Infrastructure acquires/materializes source and supplies Core snapshot values. Tooling owns maintainer release, publication, licenses and import-gate algorithms; Host runtime composition invokes those algorithms. Examples, experiments and adopter fixtures are Harness, never production imports or dependency-law exemptions. `integration/run-markitect.go` is independently copied distribution Tooling; it uses the standard library and imports no Markitect package.
 
 Each Module under `internal/modules/<name>` may import Core and its own private subtree, plus the standard library and justified external libraries. It must not import a sibling Module, Host, Infrastructure or Tooling; the restriction covers production files, unit tests and supported-platform variants. Host may compose Modules. A Module may not call back into Host or register itself dynamically. There is no service locator, reflection loader, generic lifecycle framework or Core provider switch.
 
@@ -38,7 +38,7 @@ Each Module under `internal/modules/<name>` may import Core and its own private 
 | Infrastructure: `internal/infrastructure/source` | Git revision and working-tree acquisition, process hardening for acquisition, and materialization | Semantic decisions, Project layout, or policy interpretation |
 | Tooling: `internal/tooling` | Release, publication, license/notice operations and static architecture import analysis | Runtime adoption capabilities or a Module dependency |
 
-Host owns all public source contracts and transient typed forms: `SourceSpec`, Project, Package, Area, provider configuration, pinned contracts, schemas, built-in authoring vocabulary and content-package interpretation. Its source compiler validates and normalizes those inputs once. Host owns embedded authoring resources and ordinary inputs. Module configuration owns provider fields; Host lowers supported legacy `SourceSpec` fields into the owning Module configuration. No Module decodes canonical Project, Package, Rule or Domain YAML.
+Host owns all public source contracts and transient typed forms: `authoring.Spec`, Project, Package, Area, provider configuration, pinned contracts, schemas, built-in authoring vocabulary and content-package interpretation. Its source compiler validates and normalizes those inputs once. Host owns embedded authoring resources and ordinary inputs. Module configuration owns provider fields; Host lowers supported legacy `authoring.Spec` fields into the owning Module configuration. No Module decodes canonical Project, Package, Rule or Domain YAML.
 
 Core receives one normalized canonical `Resource.Data` value per resource, after source validation and Host authorization/resolution of graph edges. There is no second `SourceValue` normalization or alternate semantic owner. Host root composition consumes Core IR. Module path planning is separate from `Validate`: planning declares the paths/ownership facts, while validation checks the prepared plan and does not infer or expand paths.
 

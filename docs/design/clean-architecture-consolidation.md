@@ -41,7 +41,7 @@ flowchart TD
   Tooling --> Core
 ```
 
-A Module imports only Core and its own subtree, plus standard library/justified external dependencies. No sibling Module, Host, Infrastructure or Tooling import is allowed, including unit tests. External examples/integration harnesses are explicitly classified Harness. Core imports only its own subtree and justified language/encoding dependencies. CLI imports only Host. Host composes concrete functions; no service locator, reflection, dynamic plugin loader or generic Module lifecycle is introduced.
+A Module imports only Core and its own subtree, plus standard library/justified external dependencies. No sibling Module, Host, Infrastructure or Tooling import is allowed, including unit tests. Examples, experiments and adopter fixtures are explicitly classified Harness. The independently copied public bootstrap in `integration` is distribution Tooling with no Markitect package imports. Core imports only its own subtree and justified language/encoding dependencies. CLI imports only Host. Host composes concrete functions; no service locator, reflection, dynamic plugin loader or generic Module lifecycle is introduced.
 
 | Current ownership | Final owner and reason |
 |---|---|
@@ -65,7 +65,8 @@ A Module imports only Core and its own subtree, plus standard library/justified 
 | command provider adapters | Independent concrete adapter Modules, Host runtime supplies protocol and explicit bytes; command wrappers delegate |
 | Git Hooks/Pipelines | Independent bounded artifact Modules: literal configured paths/bytes/ownership/check linkage, no shell semantics or universal pipeline DSL |
 | inputs | Host input resolution using Host-composed generated paths; no sibling Module import |
-| examples/integration/experiments | Harness; not a production exemption, and cannot be imported by production |
+| examples/experiments/adopter fixtures | Harness; not a production exemption, and cannot be imported by production |
+| integration bootstrap | Standalone public distribution Tooling; standard library only, no Markitect package imports |
 
 ## Every significant Core concept
 

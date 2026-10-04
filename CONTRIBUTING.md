@@ -18,7 +18,8 @@ For coordinated parallel work, read the [development guide](docs/development/REA
 | `internal/modules/github`, `internal/modules/azuredevops` | Offline consumers of explicitly mapped captured repository metadata; no live provider Apply. |
 | `internal/infrastructure/source` | Git/working-tree acquisition, process hardening and materialization into snapshot values. |
 | `internal/tooling/architecture`, `internal/tooling/release`, `internal/tooling/publish`, `internal/tooling/licenses` | Mechanical import gate, immutable distribution/publication operations, and canonical notices. |
-| `integration`, `examples`, `benchmark` | Adoption guidance, executable fixtures and measurements; Harness, not production dependencies. |
+| `integration` | Standalone public bootstrap/distribution Tooling; copied into installed packages, with no Markitect package imports. |
+| `examples`, `benchmark`, `experiments` | Executable fixtures and measurements; Harness, not production dependencies. |
 | `packaging/winget` | Versioned portable package manifests derived from verified releases. |
 | `docs` | Product architecture, usage, decisions and canonical roadmap. |
 
@@ -62,7 +63,7 @@ go run ./cmd/markitect check --repo benchmark/fixtures/v2
 git diff --check
 ```
 
-The standalone checks do not require another repository or an AI model. CI runs supported Windows and Linux gates. A successful source gate establishes only the product checks that ran; it does not establish semantic correctness or an adopting project's acceptance. The import checker at `internal/tooling/architecture` statically examines production and test imports, including supported-platform files, and has negative fixtures for forbidden directions. The repository test calls it through `go test ./...`, CI has a named gate step, the explicit Project check delegates through Host, and the release quality job reuses CI. These routes are wired; wiring is not a gate result. Consult the coordinator-owned migration report for exact-head status, and do not add an exception allowlist.
+The standalone checks do not require another repository or an AI model. CI runs supported Windows and Linux gates. A successful source gate establishes only the product checks that ran; it does not establish semantic correctness or an adopting project's acceptance. The import checker at `internal/tooling/architecture` statically examines production and test imports, including supported-platform files, and has negative fixtures for forbidden directions. The repository test calls it through `go test ./...`, CI has a named gate step, the explicit Project check delegates through Host, and the release quality job reuses CI. These routes are wired; wiring is not a gate result. Consult the [consolidation report](docs/validation/clean-architecture-consolidation.md) for exact-head status, and do not add an exception allowlist.
 
 Edit validation declarations and regenerate schemas with `schema --repo . --write`. Edit example YAML, then run `format`, `render --repo examples/minimal --write`, and `check`. For package or consumer example changes, also run `go run ./cmd/markitect check --repo examples/package-consumer`. Edit core authoring at `internal/host/embedded/resources/*.yaml`; its content is canonical and embedded in the binary. Tests compile those resources through the ordinary application API. Project initialization is specified in [Usage](docs/usage.md) and current source status belongs to the [roadmap](docs/implementation-plan.md). The v0.3.0 content-package contract and consumer workflow are documented in [Content packages](docs/content-packages.md); the executable package fixtures live under `examples/content-package` and `examples/package-consumer`.
 

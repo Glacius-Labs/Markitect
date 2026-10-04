@@ -2,6 +2,8 @@
 
 **Status:** preparation evidence and triage, updated 2026-10-03. This document classifies risks for coordinator planning; it is not a product roadmap, a new policy contract, or authorization to implement one feature per risk. The [engineering constitution](../engineering-constitution.md) remains the canonical owner of adopted invariants. A future product change needs a separate concrete case, owner, and decision.
 
+The preparation baseline assessment below is preserved. Current package ownership and mechanically enforced independence are recorded in the [consolidation report](../validation/clean-architecture-consolidation.md); current release status is owned by the roadmap.
+
 ## Evidence boundary
 
 This assessment uses the current preparation-branch source after merged PR #59 (`e9550f5`) and the completed [three-task AGENTS.md comparison](../validation/agents-md-vs-markitect.md). **v0.12.0 remains the latest published release.** The current source also contains explicit read-only analysis for structurally valid policy failures; that behavior is unreleased source and must not be described as part of the v0.12.0 binary. See the [roadmap](../implementation-plan.md) and the [policy-failure analysis contract](../design/policy-failure-analysis.md).
