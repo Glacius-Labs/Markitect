@@ -1,0 +1,53 @@
+package orders
+
+import (
+	"context"
+	"errors"
+	bc "example.com/acme/modular-service/internal/contracts/billing"
+	ic "example.com/acme/modular-service/internal/contracts/inventory"
+	"math"
+	"testing"
+	"time"
+)
+
+type gauntletOverflowClock struct{}
+
+func (gauntletOverflowClock) Now() time.Time { return time.Unix(0, 0) }
+
+type gauntletOverflowStore struct{}
+
+func (gauntletOverflowStore) Save(context.Context, Order) error { return nil }
+
+type gauntletOverflowStock struct{ calls int }
+
+func (s *gauntletOverflowStock) Reserve(context.Context, ic.ReserveRequest) (ic.Reservation, error) {
+	s.calls++
+	return ic.Reservation{}, nil
+}
+
+type gauntletOverflowBilling struct{ got bc.CreateInvoiceRequest }
+
+func (b *gauntletOverflowBilling) Issue(_ context.Context, r bc.CreateInvoiceRequest) (bc.Invoice, error) {
+	b.got = r
+	return bc.Invoice{}, nil
+}
+func TestGauntletOverflowVector(t *testing.T) {
+	stock := &gauntletOverflowStock{}
+	bill := &gauntletOverflowBilling{}
+	svc := New(gauntletOverflowStore{}, stock, bill, gauntletOverflowClock{})
+	_, err := svc.Create(context.Background(), CreateRequest{CustomerID: "C", SKU: "S", Quantity: 1, UnitPriceCents: math.MaxInt64})
+	if err != nil {
+		t.Fatalf("maximum total rejected: %v", err)
+	}
+	if bill.got.AmountCents != math.MaxInt64 {
+		t.Fatalf("total=%d", bill.got.AmountCents)
+	}
+	stock.calls = 0
+	_, err = svc.Create(context.Background(), CreateRequest{CustomerID: "C", SKU: "S", Quantity: 2, UnitPriceCents: math.MaxInt64})
+	if !errors.Is(err, ErrInvalidOrder) {
+		t.Fatalf("overflow must preserve ErrInvalidOrder, got %v", err)
+	}
+	if stock.calls != 0 {
+		t.Fatal("stock reserved before overflow rejection")
+	}
+}

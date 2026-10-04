@@ -1,0 +1,18 @@
+apiVersion: markitect.example.org/v1alpha1
+kind: Skill
+metadata:
+    name: engineering-operations
+    namespace: operations
+spec:
+    description: Implement Relay changes within accepted operational and package boundaries.
+    text: |
+        For implementation work, inspect the applicable Rules and exact inputs before editing. Do not make policy changes to excuse implementation drift. For a rule or ownership change, establish the desired state in its canonical owner before code changes; review the affected inputs and generated provider views. Render all configured targets after canonical edits, run markitect check and the configured verify checks, and inspect the exact candidate. Stop for an owner decision when a cross-module ownership decision is unresolved. Preserve the existing version 1 text output unless accepted intent changes it. Update canonical resources rather than editing generated projections.
+    rules:
+        - name: architecture-boundaries
+        - name: process-lifecycle
+        - name: verification
+    files:
+        - docs/engineering/architecture.md
+        - docs/operations/runbooks/process-sentinel.md
+        - docs/operations/runbooks/legacy-start.md
+        - docs/operations/runbooks/legacy-bulk-replay.md

@@ -1,0 +1,132 @@
+tool: Markitect
+version: 0.13.0
+toolDigest: sha256:553b7077ce7b5db2df89567146fc1a877a03cb6edd75459be5a3e0a380676056
+revision: 7f44f450dc69294e1c0a9c4e44dd38c2507c9114
+provisional: false
+digest: 913753a7ebf14f068cc181565bafe8a37993619f400f14960df2d164b92707ca
+status: passed
+coverage: typed YAML graph and Markitect-owned outputs; external repository gates and semantic review remain separate
+inventory:
+    - path: markitect.yaml
+      kind: Project
+      name: commerce-vertical-slices
+      hash: sha256:d76c5bd4019c4d6cdfca845a96f6c9e6848ece1f4647d1c9ab69f49dd7c7d2d1
+    - path: markitect-package.yaml
+      kind: Package
+      name: software-architecture
+      package: software-architecture
+      hash: sha256:09a7047a9f40ce1cf4076e6daef61d20a3fcbb24a6818c3d8f91ca619e45265d
+    - path: .markitect/areas/architecture/vertical-slice.workflow.yaml
+      kind: Workflow
+      name: vertical-slice
+      namespace: architecture
+      package: software-architecture
+      hash: sha256:2beb8e65489ef7741516e75a935e08ef8ca56538756c86b3c0bf56bc9e037955
+    - apiVersion: architecture.markitect.org/v1alpha1
+      path: resources/aggregate-order.yaml
+      kind: Aggregate
+      name: order
+      namespace: engineering
+      hash: sha256:24441de80c1deb6e55d53779a0fe102ab444612fde229bb610aceecd3c902af7
+    - apiVersion: architecture.markitect.org/v1alpha1
+      path: resources/authorizer-order-write.yaml
+      kind: Authorizer
+      name: order-write
+      namespace: engineering
+      hash: sha256:567331b03bdfdf8fe43260e700306f142b2d2d94683c91c9718a33b7bd30a5f4
+    - apiVersion: architecture.markitect.org/v1alpha1
+      path: resources/common.yaml
+      kind: Common
+      name: shared-kernel
+      namespace: engineering
+      hash: sha256:f76d1a48973558cb4c5e564ea0e4a6ff5654adf8c3f06abf05c7ffc2280ac00a
+    - apiVersion: architecture.markitect.org/v1alpha1
+      path: resources/core.yaml
+      kind: Core
+      name: platform-core
+      namespace: engineering
+      hash: sha256:7c29555971c00ed9c478cfedebbc542fce758d433f834a2b3653b096de174ba0
+    - apiVersion: architecture.markitect.org/v1alpha1
+      path: resources/feature-order-lifecycle.yaml
+      kind: Feature
+      name: order-lifecycle
+      namespace: engineering
+      hash: sha256:46107710c3d8365d6d7a9bd4c9f38925b8aa6fbf5343305a2802be9afc316e4e
+    - apiVersion: architecture.markitect.org/v1alpha1
+      path: resources/handler-create-order.yaml
+      kind: Handler
+      name: create-order-handler
+      namespace: engineering
+      hash: sha256:a08d9fd5a68f885553327a4358c7ee179ee76d757930202e1ca2b8bb8d3f6f34
+    - apiVersion: architecture.markitect.org/v1alpha1
+      path: resources/interface-billing-terms.yaml
+      kind: Interface
+      name: billing-terms
+      namespace: engineering
+      hash: sha256:d57ec6ba473a5a49ceb784279a7c2ca4377fac19ce4ccde2f12bd7d784e3892a
+    - apiVersion: architecture.markitect.org/v1alpha1
+      path: resources/interface-order-accepted.yaml
+      kind: Interface
+      name: order-accepted
+      namespace: engineering
+      hash: sha256:f89cee4be5bcd2f4da3cc73dcf1fedb15d3b5e00cfc7810915da3ef8d4e1109a
+    - apiVersion: architecture.markitect.org/v1alpha1
+      path: resources/module-billing.yaml
+      kind: Module
+      name: billing
+      namespace: engineering
+      hash: sha256:df4f0edeee5bfeaa130801a51c5063c751fe7bfb790ed07605b008460511b84d
+    - apiVersion: architecture.markitect.org/v1alpha1
+      path: resources/module-inventory.yaml
+      kind: Module
+      name: inventory
+      namespace: engineering
+      hash: sha256:4b0e80681e7ab42d2cb050ad49a3ec002c40febdd67f928ff81adbccf2665b7b
+    - apiVersion: architecture.markitect.org/v1alpha1
+      path: resources/module-orders.yaml
+      kind: Module
+      name: orders
+      namespace: engineering
+      hash: sha256:c43fb3e20ca4641a63c3a2d6eaa3f7e5300dbba28a25d021fe05365621cc8577
+    - apiVersion: architecture.markitect.org/v1alpha1
+      path: resources/product.yaml
+      kind: Product
+      name: commerce
+      namespace: engineering
+      hash: sha256:d220134c9bfdd3522d51ae7981dadf02f76178fb12cf4ef78aa1ff0d4401c6e6
+    - path: resources/skill-implement-commerce.yaml
+      kind: Skill
+      name: implement-commerce
+      namespace: engineering
+      hash: sha256:29ca4d43b3b38eac60a2a362c8f3dfdf07b36c02f41835be337dd5e30b2c2d53
+    - apiVersion: architecture.markitect.org/v1alpha1
+      path: resources/usecase-create-order.yaml
+      kind: UseCase
+      name: create-order
+      namespace: engineering
+      hash: sha256:68d5aad240f5191d08558d89f279237bb6d36bc2b5096f6870b3f38555b7a485
+policyResults:
+    - apiVersion: architecture.markitect.org/v1alpha1
+      constraint: module-dependencies-stay-at-shared-boundaries
+      subject: engineering/architecture.markitect.org/v1alpha1/Module/billing
+      status: passed
+      constraintDigest: sha256:f9c785fe18e4df70e56987d3f3d53a424bf8faab951e2594efc766ea74517c40
+      subjectDigest: sha256:090869e9b8be58b7d2da531ffcc05116a89b298c7ea93c5ae82995d720e91207
+    - apiVersion: architecture.markitect.org/v1alpha1
+      constraint: module-dependencies-stay-at-shared-boundaries
+      subject: engineering/architecture.markitect.org/v1alpha1/Module/inventory
+      status: passed
+      constraintDigest: sha256:f9c785fe18e4df70e56987d3f3d53a424bf8faab951e2594efc766ea74517c40
+      subjectDigest: sha256:2e9b4b0d144e25e1e516a54205a5c50d4e5e8915cc2a0d9fb7aa459b6c0faa68
+    - apiVersion: architecture.markitect.org/v1alpha1
+      constraint: module-dependencies-stay-at-shared-boundaries
+      subject: engineering/architecture.markitect.org/v1alpha1/Module/orders
+      status: passed
+      constraintDigest: sha256:f9c785fe18e4df70e56987d3f3d53a424bf8faab951e2594efc766ea74517c40
+      subjectDigest: sha256:c958053f90cce8b93f6af9bbfec61b1d8177a5f42a1e45c1c75705314a1b8f76
+    - apiVersion: architecture.markitect.org/v1alpha1
+      constraint: selected-command-labels-identify-commands
+      subject: engineering/architecture.markitect.org/v1alpha1/UseCase/create-order
+      status: passed
+      constraintDigest: sha256:72e596827e5a18f4bd1986736c7bd5e71026962574a4e92c2592ba8de617f0d4
+      subjectDigest: sha256:2c960a690f4413520133f8ac21d041f9daf741b2b0840d03b48d0f771b9a6bb2

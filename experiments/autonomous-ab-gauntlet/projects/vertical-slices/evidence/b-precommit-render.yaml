@@ -1,0 +1,5 @@
+usage: markitect render [options]
+  --check        check rendered outputs (default)
+  --repo         repository root
+  --revision     fixed Git revision (omitted: provisional working tree)
+  --write        explicitly write planned files (prepare: reviewed external capture)

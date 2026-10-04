@@ -1,0 +1,8 @@
+apiVersion: architecture.markitect.org/v1alpha1
+kind: Common
+metadata:
+  name: money
+  namespace: architecture
+spec:
+  owner: {kind: Core, name: service-core, namespace: architecture}
+  purpose: Currency-independent integer minor-unit amounts.

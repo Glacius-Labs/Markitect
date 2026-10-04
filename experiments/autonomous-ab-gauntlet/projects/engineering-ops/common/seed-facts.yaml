@@ -1,0 +1,32 @@
+schema: autonomous-ab-gauntlet/seed-facts/v1
+project: Relay
+candidateSourceCommit: adef79d935399f8ac63ad874dbdeab8d15c418a1
+projectBaseCommit: recorded by the harness when each arm is committed
+goVersion: "1.23"
+rootModule: example.test/relay
+nestedModules:
+  - path: tools/process-sentinel
+    module: example.test/relay/tools/process-sentinel
+sharedFacts:
+  - id: package-direction
+    value: "cmd may depend on internal; reusable process primitives belong in internal/process; the nested module may not import the root module"
+  - id: process-observation
+    value: "process-sentinel reports observed child exit code and elapsed time; v1 text output is supported"
+  - id: cancellation
+    value: "child processes inherit cancellation; the established timeout is 5 seconds"
+  - id: configuration
+    value: "malformed configuration fails closed"
+  - id: logging
+    value: "preserve request IDs; never log payloads or credentials"
+  - id: verification
+    value: "CI and pre-commit both run operations policy checks and their tests, root Go tests, and nested-module Go tests"
+  - id: OPS-142
+    value: "cancellation propagation was added after a stuck child delayed shutdown; no shared-library boundary was decided"
+  - id: OPS-188
+    value: "a green root-only test run missed a nested-module regression; nested tests were added explicitly"
+  - id: config-parser
+    value: "internal/config parses exact input bytes into a typed document; regression tests must preserve supplied fixture bytes"
+  - id: excluded-fixtures
+    value: "testdata/vendor-snapshots is immutable parser-test input, outside production policy ownership"
+  - id: legacy-runbook
+    value: "docs/operations/runbooks/legacy-start.md is obsolete when the replacement workflow is adopted"

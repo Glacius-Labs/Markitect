@@ -1,0 +1,8 @@
+apiVersion: architecture.markitect.org/v1alpha1
+kind: Interface
+metadata:
+  name: invoice-issue
+  namespace: architecture
+spec:
+  provider: {kind: Module, name: billing, namespace: architecture}
+  summary: Consumer-facing contract for issuing one invoice per order.

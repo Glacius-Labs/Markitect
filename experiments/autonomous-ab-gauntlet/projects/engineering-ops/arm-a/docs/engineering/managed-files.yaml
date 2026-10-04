@@ -1,0 +1,41 @@
+version: 1
+roots:
+  - AGENTS.md
+  - .claude
+  - .githooks
+  - .github/workflows
+  - cmd
+  - docs/engineering
+  - docs/operations
+  - internal/config
+  - go.mod
+  - scripts
+  - tools/process-sentinel
+owners:
+  AGENTS.md: shared-agent-entrypoint
+  .claude/CLAUDE.md: shared-agent-entrypoint
+  .githooks/pre-commit: hook-contract
+  .githooks/pre-commit.sha256: hook-digest-record
+  .github/workflows/ci.yaml: ci-contract
+  cmd/relayctl/main.go: relay-cli
+  cmd/relayctl/main_test.go: relay-cli-tests
+  docs/engineering/agent-rules.md: accepted-agent-rules
+  docs/engineering/architecture.md: architecture
+  docs/engineering/managed-files.yaml: managed-file-inventory
+  docs/operations/runbooks/legacy-start.md: legacy-runbook
+  docs/operations/runbooks/legacy-bulk-replay.md: retired-bulk-replay-runbook
+  docs/operations/runbooks/process-sentinel.md: process-sentinel-runbook
+  go.mod: relay-root-module
+  internal/config/parse.go: config-parser
+  internal/config/parse_test.go: config-parser-tests
+  scripts/check_operations.py: operations-policy-check
+  scripts/test_check_operations.py: operations-policy-check-tests
+  scripts/validate.py: project-validation-runner
+  tools/process-sentinel/go.mod: process-sentinel-module
+  tools/process-sentinel/main.go: process-sentinel
+  tools/process-sentinel/main_test.go: process-sentinel-tests
+excluded:
+  - path: testdata/vendor-snapshots
+    reason: immutable parser-test input; no production policy ownership
+  - path: scripts/__pycache__
+    reason: local Python bytecode cache

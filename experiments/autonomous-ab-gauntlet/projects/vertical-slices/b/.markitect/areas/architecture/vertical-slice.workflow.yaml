@@ -1,0 +1,8 @@
+apiVersion: architecture.markitect.org/v1alpha1
+kind: Workflow
+metadata:
+  name: vertical-slice
+  namespace: architecture
+spec:
+  text: |
+    Establish fixed intent and affected artifacts before editing. Keep Domain invariants in the owning aggregate and validators in the command Application slice. Cross-module behavior goes through explicit public contracts. Run the offline behavior and boundary check; report exact scope, findings, and gaps. Escalate unresolved module ownership instead of choosing or waiving policy.

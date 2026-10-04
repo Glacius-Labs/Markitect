@@ -1,0 +1,43 @@
+apiVersion: markitect.example.org/artifact-coverage/v1alpha1
+kind: ArtifactCoverage
+spec:
+  roots:
+    - src/Commerce
+    - checks
+    - resources
+    - .markitect/areas
+    - .markitect/packages
+    - docs/markitect
+    - .agents
+    - .github
+    - AGENTS.md
+    - markitect.yaml
+    - markitect-artifacts.yaml
+    - Directory.Build.props
+    - NuGet.Config
+    - .gitignore
+    - global.json
+    - docs/architecture.md
+  tooling:
+    - path: markitect-artifacts.yaml
+      owner: explicit-artifact-coverage-configuration
+    - path: Directory.Build.props
+      owner: dotnet-build-configuration
+    - path: NuGet.Config
+      owner: offline-package-source-policy
+    - path: .gitignore
+      owner: generated-build-output-exclusions
+    - path: global.json
+      owner: exact-dotnet-sdk-selection
+    - path: docs/architecture.md
+      owner: readable-architecture-navigation
+    - path: .github/workflows/check.yml
+      owner: continuous-integration-workflow
+    - path: AGENTS.md
+      owner: agent-entrypoint
+    - path: .markitect/areas/architecture/vertical-slice.workflow.yaml
+      owner: versioned-architecture-workflow-source
+    - path: .markitect/packages/software-architecture-1.0.0.zip
+      owner: exact-pinned-v1-domain-package
+    - path: .markitect/packages/software-architecture-2.0.0.zip
+      owner: inactive-exact-pinned-v2-migration-package

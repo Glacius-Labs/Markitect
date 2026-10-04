@@ -1,0 +1,7 @@
+#!/bin/sh
+set -eu
+markitect check --repo .
+markitect-check-modules --repo . --hooks .markitect/modules/githooks.config --pipelines .markitect/modules/pipelines.config
+markitect-check-artifacts --repo . --config markitect-artifacts.yaml
+go test ./...
+go -C tools/process-sentinel test ./...

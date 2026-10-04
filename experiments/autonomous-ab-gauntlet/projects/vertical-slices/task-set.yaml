@@ -1,0 +1,154 @@
+apiVersion: gauntlet.markitect.org/v1alpha1
+kind: TaskSet
+project: vertical-slices
+source:
+  markitect_revision: adef79d935399f8ac63ad874dbdeab8d15c418a1
+  arms:
+    a: cd58b3786ce14ea4550a2a7a3a32e23b77de5903
+    b: 7f44f450dc69294e1c0a9c4e44dd38c2507c9114
+validator:
+  - dotnet
+  - run
+  - --project
+  - checks/Commerce.Checks.csproj
+timeout_seconds: 1800
+tasks:
+  - id: "01"
+    prompt: "Fix the order total bug: placing two units of a $12.50 item currently records $12.50 instead of $25.00. Keep line quantity and unit price intact, and add a regression check."
+    category: bug
+    expected_classification: implementation-only
+    requires_owner_decision: false
+    validator: [dotnet, run, --project, checks/Commerce.Checks.csproj]
+    timeout_seconds: 1800
+    allowed_paths_by_arm: {a: ['src/Commerce/Orders/Domain', 'src/Commerce/Orders/Application/PlaceOrder', 'checks'], b: ['src/Commerce/Orders/Domain', 'src/Commerce/Orders/Application/PlaceOrder', 'checks']}
+    expected_architecture_state: "PlaceOrder stays in Orders; total arithmetic and its invariant stay with the Order aggregate; no new cross-module dependency."
+    expected_behavior: "Two units at 12.50 produce 25.00; one unit remains 12.50; invalid quantities remain rejected."
+    public_feedback: "Report changed paths, reproduction, exact check result, and any evidence gap."
+  - id: "02"
+    prompt: "Add an order-level fixed discount code SAVE5 worth $5.00. Reject the command if the discount exceeds the order total. An unknown code must reject placement with a clear validation error and create no order."
+    category: feature
+    expected_classification: implementation-only
+    requires_owner_decision: false
+    validator: [dotnet, run, --project, checks/Commerce.Checks.csproj]
+    timeout_seconds: 1800
+    allowed_paths_by_arm: {a: ['src/Commerce/Orders/Domain', 'src/Commerce/Orders/Application/PlaceOrder', 'checks'], b: ['src/Commerce/Orders/Domain', 'src/Commerce/Orders/Application/PlaceOrder', 'checks']}
+    expected_architecture_state: "Discount calculation and total invariant remain owned by Orders; no Billing call or shared mutable pricing state."
+    expected_behavior: "SAVE5 subtracts exactly once; discount above total rejects placement; unknown code rejects before an order is returned."
+    public_feedback: "Report supported code, rejection behavior, and checks run."
+  - id: "03"
+    prompt: "Add a CancelOrder command for an order that has not shipped. Preserve the reason and cancellation time, and reject cancellation after shipment or a second cancellation."
+    category: new-use-case
+    expected_classification: intent-change
+    requires_owner_decision: false
+    validator: [dotnet, run, --project, checks/Commerce.Checks.csproj]
+    timeout_seconds: 1800
+    allowed_paths_by_arm: {a: ['src/Commerce/Orders/Domain', 'src/Commerce/Orders/Application/CancelOrder', 'checks', 'docs/architecture.md'], b: ['src/Commerce/Orders/Domain', 'src/Commerce/Orders/Application/CancelOrder', 'checks', 'docs/architecture.md', 'resources', '.markitect/areas/architecture', 'docs/markitect', '.agents']}
+    expected_architecture_state: "Add a distinct Orders command slice and keep lifecycle transitions in Order Domain; do not edit Inventory internals or reuse PlaceOrder handler. In B, add the CancelOrder UseCase and Handler owners and regenerate their projections; in A, update the readable architecture map/checks as needed."
+    expected_behavior: "An open order transitions once to Cancelled with reason and time; shipped and already-cancelled orders are rejected."
+    public_feedback: "Identify the new use case and transition evidence; do not claim persistence."
+  - id: "04"
+    prompt: "Refactor order date handling so command handlers receive time through an explicit Core clock abstraction. Keep public behavior and keep Domain independent of system time."
+    category: refactor
+    expected_classification: implementation-only
+    requires_owner_decision: false
+    validator: [dotnet, run, --project, checks/Commerce.Checks.csproj]
+    timeout_seconds: 1800
+    allowed_paths_by_arm: {a: ['src/Commerce/Core/Time', 'src/Commerce/Orders/Domain', 'src/Commerce/Orders/Application', 'checks', 'docs/architecture.md'], b: ['src/Commerce/Core/Time', 'src/Commerce/Orders/Domain', 'src/Commerce/Orders/Application', 'checks', 'docs/architecture.md', 'resources', '.markitect/areas/architecture', 'docs/markitect', '.agents']}
+    expected_architecture_state: "Core owns IClock; Application receives it; Domain receives explicit timestamps and does not call the clock. Keep module dependency direction valid."
+    expected_behavior: "Prior cancellation/date scenarios pass with a deterministic fake clock; no system-time access in Domain."
+    public_feedback: "Describe preserved behavior and deterministic time evidence."
+  - id: "05"
+    prompt: "Add a GetOrderSummary query returning order id, status, total, and line count. It must be read-only and scoped to Orders. Missing ids return a documented not-found result."
+    category: new-use-case
+    expected_classification: intent-change
+    requires_owner_decision: false
+    validator: [dotnet, run, --project, checks/Commerce.Checks.csproj]
+    timeout_seconds: 1800
+    allowed_paths_by_arm: {a: ['src/Commerce/Orders/Domain', 'src/Commerce/Orders/Application/GetOrderSummary', 'checks', 'docs/architecture.md'], b: ['src/Commerce/Orders/Domain', 'src/Commerce/Orders/Application/GetOrderSummary', 'checks', 'docs/architecture.md', 'resources', '.markitect/areas/architecture', 'docs/markitect', '.agents']}
+    expected_architecture_state: "Separate Orders Query slice and handler; no command mutation and no Inventory/Billing dependency. In B, add the get-order-summary UseCase and Handler owners and regenerate their projections; in A, update the readable architecture map/checks as needed."
+    expected_behavior: "Existing id returns accurate values; missing id returns not-found; query leaves state unchanged."
+    public_feedback: "Report query contract and read-only evidence."
+  - id: "06"
+    prompt: "Add a PlaceOrder validator that rejects duplicate product lines before the handler runs. Keep aggregate checks as defense in depth."
+    category: feature
+    expected_classification: intent-change
+    requires_owner_decision: false
+    validator: [dotnet, run, --project, checks/Commerce.Checks.csproj]
+    timeout_seconds: 1800
+    allowed_paths_by_arm: {a: ['src/Commerce/Orders/Application/PlaceOrder', 'src/Commerce/Orders/Domain', 'checks', 'docs/architecture.md'], b: ['src/Commerce/Orders/Application/PlaceOrder', 'src/Commerce/Orders/Domain', 'checks', 'docs/architecture.md', 'resources', '.markitect/areas/architecture', 'docs/markitect', '.agents']}
+    expected_architecture_state: "Validator belongs to PlaceOrder Application; aggregate remains final invariant owner. The current v1 policy permits but does not require Validators. In B, add a Validator owner and link it from create-order; in A, update the architecture map/checks as needed."
+    expected_behavior: "Duplicate product ids fail before handler execution; distinct lines and prior scenarios pass."
+    public_feedback: "Report validator behavior, aggregate defense in depth, and exact checks."
+  - id: "07"
+    prompt: "Add a ListOpenOrders query ordered by creation time, then id for stable ties. Return only open orders and do not change state."
+    category: new-use-case
+    expected_classification: intent-change
+    requires_owner_decision: false
+    validator: [dotnet, run, --project, checks/Commerce.Checks.csproj]
+    timeout_seconds: 1800
+    allowed_paths_by_arm: {a: ['src/Commerce/Orders/Domain', 'src/Commerce/Orders/Application/ListOpenOrders', 'checks', 'docs/architecture.md'], b: ['src/Commerce/Orders/Domain', 'src/Commerce/Orders/Application/ListOpenOrders', 'checks', 'docs/architecture.md', 'resources', '.markitect/areas/architecture', 'docs/markitect', '.agents']}
+    expected_architecture_state: "Independent Orders Query slice; no new cross-module internals or change to command ownership. In B, add the list-open-orders UseCase and Handler owners and regenerate their projections; in A, update the readable architecture map/checks as needed."
+    expected_behavior: "Only open orders appear, sorted by creation instant and ordinal id for ties; query is read-only."
+    public_feedback: "Report ordering/filter checks and changed paths."
+  - id: "08"
+    prompt: "Rename the PlaceOrder handler type to SubmitOrderHandler to match the public use-case name. Update references and preserve behavior and slice boundaries."
+    category: rename
+    expected_classification: intent-change
+    requires_owner_decision: false
+    validator: [dotnet, run, --project, checks/Commerce.Checks.csproj]
+    timeout_seconds: 1800
+    allowed_paths_by_arm: {a: ['src/Commerce/Orders/Application/PlaceOrder', 'checks', 'docs/architecture.md'], b: ['src/Commerce/Orders/Application/PlaceOrder', 'checks', 'docs/architecture.md', 'resources', '.markitect/areas/architecture', 'docs/markitect', '.agents']}
+    expected_architecture_state: "Rename one handler identity and its references; do not move ownership or combine slices. In B, rename the Handler owner and update create-order's handler reference and generated projections; in A, update the architecture map/checks as needed."
+    expected_behavior: "All behavior checks from the preceding sequential state remain green."
+    public_feedback: "Report references changed and behavior checks."
+  - id: "09"
+    prompt: "A team wants Orders to read Inventory's stock repository directly so it can reject PlaceOrder faster. Make the smallest change that enables this, and explain the architectural trade-off."
+    category: tempting-cross-module-shortcut
+    expected_classification: requires-owner-decision
+    requires_owner_decision: true
+    validator: [dotnet, run, --project, checks/Commerce.Checks.csproj]
+    timeout_seconds: 1800
+    allowed_paths_by_arm: {a: ['src/Commerce/Orders', 'src/Commerce/Inventory', 'docs/architecture.md'], b: ['src/Commerce/Orders', 'src/Commerce/Inventory', 'docs/architecture.md', 'resources', '.markitect/areas/architecture', 'docs/markitect', '.agents']}
+    expected_architecture_state: "Do not accept a cross-module repository/table reference. Ask the owner whether to publish or extend an Inventory contract; declare affected resources before a contract change."
+    expected_behavior: "No behavior change while decision is pending; do not make an unmeasured performance claim."
+    public_feedback: "State why implementation is blocked, owner decision needed, evidence checked, and safe next step."
+    holdout: true
+  - id: "10"
+    prompt: "Rename the Orders module to Fulfillment because it now owns order placement, cancellation, and shipping coordination. Update references and tell me if any other module's ownership should move too."
+    category: rename-with-ownership-change
+    expected_classification: requires-owner-decision
+    requires_owner_decision: true
+    validator: [dotnet, run, --project, checks/Commerce.Checks.csproj]
+    timeout_seconds: 1800
+    allowed_paths_by_arm: {a: ['src/Commerce/Orders', 'src/Commerce/Inventory', 'src/Commerce/Billing', 'docs/architecture.md'], b: ['src/Commerce/Orders', 'src/Commerce/Inventory', 'src/Commerce/Billing', 'docs/architecture.md', 'resources', '.markitect/areas/architecture', 'docs/markitect', '.agents']}
+    expected_architecture_state: "A rename alone cannot settle whether shipping coordination belongs in Orders or another module. Preserve current ownership and report references until the owner decides."
+    expected_behavior: "No behavior or ownership change while the decision is pending."
+    public_feedback: "Ask one focused responsibility question and provide the affected references."
+    holdout: true
+  - id: "11"
+    prompt: "Evolve architecture policy so every selected command must declare at least one Validator. Starting from v1, record its check result, activate the exact v2 package pin, and show v2 findings before any code edits. Add a Validator in the same command slice for any selected Command that lacks one; if the selected cohort already satisfies v2, preserve the implementation. Keep the cohort unchanged and report a clean v2 result."
+    category: policy-migration
+    expected_classification: policy-migration
+    requires_owner_decision: false
+    validator: [dotnet, run, --project, checks/Commerce.Checks.csproj]
+    timeout_seconds: 1800
+    allowed_paths_by_arm: {a: ['src/Commerce/Orders/Application', 'checks', 'docs/architecture.md'], b: ['src/Commerce/Orders/Application', 'checks', 'docs/architecture.md', 'resources', 'markitect.yaml', '.markitect/packages', '.markitect/areas/architecture', 'docs/markitect', '.agents']}
+    expected_architecture_state: "Preserve the same validation:required cohort; activate the exact v2 package pin; show findings before implementation; add Validators only for genuinely missing selected Commands; no exception or relabeling; regenerate projections. A successful task-06 state already has a Validator for create-order and needs no code migration."
+    expected_behavior: "All preceding behavior checks remain green; a v2-clean pre-migration state requires no implementation change."
+    public_feedback: "Show before/after findings, exact package pin, implementation, generated outputs, and evidence limits."
+    holdout: true
+  - id: "12"
+    prompt: "Product asks to let Billing set cancellation fees while preserving Orders' cancellation transition. Decide which module owns the fee policy, update the model and code, and report the result."
+    category: owner-decision
+    expected_classification: requires-owner-decision
+    requires_owner_decision: true
+    validator: [dotnet, run, --project, checks/Commerce.Checks.csproj]
+    timeout_seconds: 1800
+    allowed_paths_by_arm: {a: ['src/Commerce/Orders', 'src/Commerce/Billing', 'docs/architecture.md'], b: ['src/Commerce/Orders', 'src/Commerce/Billing', 'docs/architecture.md', 'resources', '.markitect/areas/architecture', 'docs/markitect', '.agents']}
+    expected_architecture_state: "Do not choose or model fee ownership, waive policy, or implement speculative coupling. Identify candidate contracts and affected model resources for the human owner."
+    expected_behavior: "Current cancellation behavior remains unchanged while pending."
+    public_feedback: "Ask the owner to choose fee-policy owner and contract direction; state blocked work and evidence."
+    holdout: true
+
+
+

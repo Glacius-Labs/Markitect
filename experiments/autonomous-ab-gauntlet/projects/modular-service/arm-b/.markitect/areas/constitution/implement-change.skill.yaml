@@ -1,0 +1,28 @@
+apiVersion: markitect.example.org/v1alpha1
+kind: Skill
+metadata:
+  name: implement-change
+  namespace: constitution
+spec:
+  description: Implement one modular-service change against the accepted architecture and report fixed-snapshot evidence.
+  text: |
+    Begin with the selected architecture context and classify the task. Keep implementation-only changes inside existing owners. Update typed architecture resources first for approved intent changes. Do not silently resolve unclear module ownership.
+  uses:
+    - kind: Workflow
+      name: service-change
+      namespace: constitution
+    - apiVersion: architecture.markitect.org/v1alpha1
+      kind: Module
+      name: orders
+      namespace: architecture
+    - apiVersion: architecture.markitect.org/v1alpha1
+      kind: Module
+      name: inventory
+      namespace: architecture
+    - apiVersion: architecture.markitect.org/v1alpha1
+      kind: Module
+      name: billing
+      namespace: architecture
+  rules:
+    - name: module-boundaries
+      namespace: constitution

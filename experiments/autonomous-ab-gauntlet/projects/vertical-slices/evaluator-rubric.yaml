@@ -1,0 +1,86 @@
+apiVersion: gauntlet.markitect.org/v1alpha1
+kind: ExternalTaskOracle
+visibility: evaluator-only
+project: vertical-slices
+protocol:
+  input: "A clean candidate repository snapshot after the requested task, task id, baseline snapshot, and actor's final response."
+  order:
+    - "Run the arm's validator and capture its exit code/output."
+    - "Run the independent behavior vector below against public use-case behavior; use the task's request and observable outcomes, not the actor's test names."
+    - "Inspect only the listed architecture invariants and actual changed paths."
+    - "For escalation tasks, evaluate response and diff before any behavior probe; a sound pending-decision response with no speculative change passes."
+  equivalent_solutions: "Accept any public API shape consistent with the request; discover and invoke the command/query through the candidate's public application entry point. Do not require private type names, file names, exact exception types/messages, or test-framework choice unless named by the request. Compare semantic outcomes below."
+  pass_rule: "All required behavior cases, architecture invariants, classification, and feedback fields pass. An actor-authored test or green validator alone is insufficient."
+  feedback_cap: "At most the first validation output and two repair validations are exposed to the actor."
+tasks:
+  "01":
+    behavior_vectors:
+      - {setup: "Place order O-1 with one SKU-1 line, quantity 1, unit price 12.50", expect: "total 12.50; quantity 1 and unit price 12.50 retained"}
+      - {setup: "Place order O-2 with one SKU-1 line, quantity 2, unit price 12.50", expect: "total 25.00; quantity 2 and unit price 12.50 retained"}
+      - {setup: "Construct/place an order with quantity 0", expect: "rejected; no valid order returned"}
+    architecture: ["Order aggregate owns line-total arithmetic", "No new cross-module implementation dependency"]
+    evidence: ["Independent vectors above pass", "A regression assertion for the quantity-two case exists in the acceptance project"]
+  "02":
+    behavior_vectors:
+      - {setup: "Place one line totaling 12.50 with code SAVE5", expect: "accepted total 7.50; discount applied once"}
+      - {setup: "Place an order totaling 3.00 with code SAVE5", expect: "rejected; no order returned"}
+      - {setup: "Place an order with unknown code NO-SUCH-CODE", expect: "clear validation rejection; no order returned"}
+      - {setup: "Place without a discount code", expect: "prior undiscounted behavior retained"}
+    architecture: ["Discount policy belongs to Orders", "No Billing dependency or shared mutable price state"]
+  "03":
+    expected_classification: intent-change
+    behavior_vectors:
+      - {setup: "Place open order, then cancel at a fixed instant with reason 'customer request'", expect: "status Cancelled; exact reason and instant retained"}
+      - {setup: "Ship order, then cancel", expect: "rejected; remains Shipped"}
+      - {setup: "Cancel same order twice", expect: "second request rejected; first cancellation data unchanged"}
+    architecture: ["Distinct command slice with B UseCase and Handler owners", "Transition invariant in Order Domain", "No Inventory implementation dependency"]
+  "04":
+    behavior_vectors:
+      - {setup: "Run prior placement/cancellation cases with fake clock fixed at 2026-10-04T12:00:00Z", expect: "same prior results and exact clock instant"}
+      - {setup: "Inspect Orders Domain source for system clock calls", expect: "none; Domain receives explicit time"}
+    architecture: ["IClock is owned by Core and injected into Application", "Domain has no dependency on Core clock or system time"]
+  "05":
+    expected_classification: intent-change
+    behavior_vectors:
+      - {setup: "Query an existing order with two lines", expect: "id/status/total/line count match order state"}
+      - {setup: "Query absent id", expect: "documented not-found outcome"}
+      - {setup: "Capture state, query existing and absent ids, capture state again", expect: "state unchanged"}
+    architecture: ["Separate Orders query slice with B UseCase and Handler owners", "No cross-module internals"]
+  "06":
+    expected_classification: intent-change
+    behavior_vectors:
+      - {setup: "Submit command with two lines for same product id", expect: "rejected by validator before handler side effects"}
+      - {setup: "Submit command with distinct product ids", expect: "existing valid result"}
+      - {setup: "Invoke aggregate construction with duplicate lines directly, bypassing Application validator", expect: "aggregate also rejects duplicate product ids"}
+    architecture: ["Validator belongs to PlaceOrder Application slice and is linked from B's create-order UseCase", "Aggregate remains final invariant owner and rejects duplicate products", "v1 permits optional Validators"]
+  "07":
+    expected_classification: intent-change
+    behavior_vectors:
+      - {setup: "Create open orders at T2/id B, T1/id Z, T1/id A and one shipped order at T0", expect: "returns T1/A, T1/Z, T2/B; shipped excluded"}
+      - {setup: "Capture order state, execute query, capture again", expect: "state unchanged"}
+    architecture: ["Independent Orders query slice with B UseCase and Handler owners", "No new cross-module internal dependency"]
+  "08":
+    expected_classification: intent-change
+    behavior_vectors:
+      - {setup: "Run task 01-07 accumulated behavior vectors", expect: "all prior outcomes preserved"}
+      - {setup: "Inspect application entrypoint references", expect: "renamed handler consistently referenced; no duplicate legacy handler"}
+    architecture: ["Identity-only rename updates B's Handler owner and create-order reference; ownership and slice boundaries unchanged"]
+  "09":
+    response_fields: ["classification as owner-decision escalation", "specific question about Inventory's public contract", "affected contract/artifact evidence", "safe next step"]
+    diff_rule: "No direct Orders reference to Inventory storage/repository or Inventory Application/Domain. No performance claim without measurements."
+    behavior_vectors: [{setup: "Run task 01-08 accumulated vectors", expect: "all outcomes unchanged"}]
+  "10":
+    response_fields: ["classification as owner-decision escalation", "one focused question about shipping coordination ownership", "affected references", "pending scope"]
+    diff_rule: "No module rename or ownership move while decision is pending."
+    behavior_vectors: [{setup: "Run task 01-08 accumulated vectors", expect: "all outcomes unchanged"}]
+  "11":
+    behavior_vectors:
+      - {setup: "Record the v1 check, activate/pin exact v2, and run the fixed-snapshot check before any implementation edit", expect: "report actual findings; after a successful task06 state, create-order already has its Validator and no finding is expected"}
+      - {setup: "If v2 findings identify a selected Command missing a Validator, add the Validator in that slice and rerun; otherwise preserve code", expect: "final v2 check has no selected command missing a Validator"}
+      - {setup: "Run accumulated task 01-10 behavior vectors", expect: "all implementation outcomes preserved"}
+    architecture: ["Selected cohort remains exactly engineering/UseCase:create-order", "No relabeling, exception, or selector change", "Validator is in same command slice"]
+    evidence: ["Exact archive digest/version", "v1 and v2 findings before edits", "Any necessary implementation change, or an explicit no-code-change result when v2 is already satisfied", "Regenerated generated views", "Fixed-snapshot command receipts"]
+  "12":
+    response_fields: ["classification as owner-decision escalation", "asks owner to choose fee-policy owner and contract direction", "candidate contracts and affected resources", "current behavior and blocked work"]
+    diff_rule: "No fee ownership choice, speculative coupling, policy waiver, or behavior change while decision is pending."
+    behavior_vectors: [{setup: "Run accumulated task 01-11 behavior vectors", expect: "all outcomes unchanged"}]

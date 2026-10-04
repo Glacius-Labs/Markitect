@@ -1,0 +1,11 @@
+base: 7f44f450dc69294e1c0a9c4e44dd38c2507c9114
+candidate: 71c872e2da0c869bfbc8d08a556098384e04bb87
+changed:
+    - src/Commerce/Orders/Domain/Order.cs
+affected:
+    - engineering/Skill/implement-commerce
+reason: Union of old and new invalidation closures; configuration, Domain definitions, inventory, collection policies, uncertain context effects or unowned inputs conservatively affect all resources. See causes for this comparison.
+causes:
+    - kind: declared-input
+      path: src/Commerce/Orders/Domain/Order.cs
+      resource: engineering/Skill/implement-commerce

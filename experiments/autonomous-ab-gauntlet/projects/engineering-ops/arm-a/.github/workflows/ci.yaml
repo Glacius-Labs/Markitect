@@ -1,0 +1,21 @@
+name: CI
+on: [push, pull_request]
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Operations policy
+        run: python scripts/check_operations.py
+      - name: Operations checker tests
+        run: python -m unittest discover -s scripts
+      - name: Root module tests
+        run: go test ./...
+      - name: Nested module tests
+        run: go -C tools/process-sentinel test ./...

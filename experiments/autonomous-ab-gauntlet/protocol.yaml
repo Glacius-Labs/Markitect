@@ -1,0 +1,82 @@
+apiVersion: markitect.measurement.org/v1alpha1
+kind: AutonomousABProtocol
+id: longitudinal-gauntlet-r1
+state: frozen
+purpose: Compare controlled autonomous repository evolution; no human-attention or business-benefit inference.
+candidate:
+  source: adef79d935399f8ac63ad874dbdeab8d15c418a1
+  embedded_version: 0.13.0
+  binary_sha256: 553b7077ce7b5db2df89567146fc1a877a03cb6edd75459be5a3e0a380676056
+  toolchain: go1.27.1 windows/amd64
+  vcs_modified: false
+  publication: unreleased-source-candidate
+agent:
+  runtime: native-collaboration
+  runtime_version: unavailable; frozen tool interface and active-session configuration are recorded
+  model: gpt-6.1-sol
+  reasoning_effort: xhigh
+  sandbox: workspace-write
+  approval_policy: on-request; inherited automatic tool review, same authorized scope in both arms
+  web_search: prohibited by common actor instructions; no network needed for fixture implementation
+  model_override: none; inherit parent active-session model and effort
+  fresh_agent_per_task: true
+  fork_turns: none
+  conversation_memory: no parent turns or other actor history
+  credentials: no credentials copied into fixtures or records
+  telemetry: native backend token/model-call counts unavailable; do not substitute CLI smoke usage
+execution:
+  trials_per_arm: 3
+  tasks_per_project: 12
+  maximum_concurrent_actors: 6
+  initial_validation_attempts: 1
+  maximum_self_repair_iterations: 2
+  task_timeout_seconds: 1800
+  timeout_basis: Before freeze, the recorded native READY smoke initial workflow spanned 268 seconds from preparation to collection, including dispatch, tool/queue wait and collection. Thirty minutes total permits the same initial plus two fresh-repair budget in both arms. Wall time is not active-agent time or human attention.
+  human_semantic_feedback: prohibited
+  hidden_evaluator_feedback: prohibited
+  coordinator_repairs: prohibited
+  arm_order: For paired chains alternate A-first/B-first dispatch by project and trial index; each chain retains fixed task01-to-task12 order.
+  continuation: Preserve the resulting state, including failures, for the next task; terminate a chain only if the actor workspace is unusable or the runtime cannot start.
+  operator_commits: Record exact accumulated task state without semantic edits; actor intent commits are also permitted.
+  retry_transport_failure: One fresh attempt only when no application/governance mutation occurred; preserve and exclude the interrupted attempt symmetrically.
+  budget_violation: Preserve output; report task protocol-invalid separately from final functional/architecture outcome.
+  mutation_boundary: allowed_paths is an independently scored path boundary, not an OS enforcement claim. Existing check assertions may not be removed/weakened; new tests and task-authorized check-policy evolution are permitted. Frozen external copies retain the original assertions.
+  repair_feedback: Only predeclared public validator output, with exact fresh repair prompts/logs preserved; at most two extra actor attempts and no hidden feedback.
+  authoring_analysis: Read-only engineering preflight, model/constraint compilation, context and impact are authoring operations, not complete public acceptance attempts. The corresponding conventional engineering inspection is permitted in A. Application tests and the configured complete acceptance checks run through the helper once per actor turn. A failing helper ends the turn; no in-turn repair follows it.
+projects:
+  - modular-service
+  - vertical-slices
+  - engineering-ops
+holdout:
+  task_ids: ["09", "10", "11", "12"]
+  policy: Stop every development chain after task08. Do not dispatch tasks09-to12 until the generic fix/no-fix decision is recorded. Frozen task cards and oracles remain unchanged. This deferred dispatch prevents native actor messages from exposing holdout outcomes to fix authors.
+  unchanged_candidate: If no high-confidence generic defect warrants a fix, dispatch holdout with the original candidate after the explicit no-fix decision; do not invent a second candidate.
+parallel:
+  fork_after_task: "06"
+  trials_per_arm: 1
+  projects: [modular-service, engineering-ops]
+  integration_order: lexical task ID
+  integration: Cherry-pick each isolated actor commit; on conflict preserve the conflict and allow at most two fresh automated integration-repair attempts with public checks only.
+  human_semantic_repair: prohibited
+measurement:
+  persisted_owned_records: YAML
+  raw_platform_events: JSONL; retained before parsing
+  before_repair: Snapshot taken by gauntlet-check before each public validation; missing invocation is unavailable, not reconstructed.
+  tokens: Actual backend token telemetry only; native driver does not expose it, so values remain unavailable. Never infer from file/context bytes or reuse unscored CLI smoke usage.
+  calls: Actual emitted platform/tool receipts only; missing backend telemetry stays unavailable.
+  authoring_checks: Record observed authoring/preflight commands separately from complete helper validation attempts; do not claim equal total command counts between mechanisms.
+  completion_denominators: Report implementation-eligible tasks separately from owner-decision tasks; evaluate correct escalation without counting it as implemented work.
+  attention: Human attention is unmeasured; operator elapsed time is not a substitute.
+  architecture: Explicit violation vector; no composite quality score.
+  impact: Expected set, direct policy subjects and conservative affected entries remain separate.
+  uncertainty: Synthetic controlled conditions; descriptive sample counts, no statistical significance claim.
+isolation:
+  actor_inputs: One accumulated seed, the current task, its normal guidance/checks, fixed tools and common execution protocol.
+  forbidden_inputs: Other arms/trials, future tasks, Markitect source, evaluators and hidden oracle outcomes.
+  oracle_boundary: External to actor workspace and never included in the prompt; filesystem read confinement is not established by workspace-write alone.
+  contamination: Preserve command/read evidence; detected forbidden access invalidates the run rather than producing a scored win.
+authority:
+  escalation: An owner-decision task must stop before the prohibited change; recording an escalation is not owner acceptance.
+  exceptions: No inferred or automatically created policy exception.
+  konfyra: Independent experiment; no candidate acceptance, adoption or scope expansion.
+  release: No automatic publication.

@@ -1,0 +1,39 @@
+apiVersion: markitect.example.org/artifact-coverage/v1alpha1
+kind: ArtifactCoverage
+spec:
+  roots:
+    - .markitect
+    - .githooks
+    - .github/workflows
+    - .agents
+    - .claude
+    - docs/markitect
+    - docs/engineering/architecture.md
+    - docs/operations
+    - cmd
+    - tools/process-sentinel
+    - internal/config
+    - scripts
+    - testdata
+    - go.mod
+    - AGENTS.md
+    - markitect.yaml
+    - markitect-artifacts.yaml
+  tooling:
+    - path: AGENTS.md
+      owner: codex-entry-navigation
+    - path: .claude/CLAUDE.md
+      owner: claude-entry-navigation
+    - path: go.mod
+      owner: relay-root-module
+    - path: markitect-artifacts.yaml
+      owner: artifact-coverage-configuration
+    - path: cmd/relayctl/main_test.go
+      owner: relay-cli-tests
+    - path: tools/process-sentinel/main_test.go
+      owner: process-sentinel-tests
+    - path: scripts/validate.py
+      owner: project-validation-runner
+  exclusions:
+    - path: testdata/vendor-snapshots/sample.json
+      reason: immutable golden parser input; read-only test evidence outside production ownership

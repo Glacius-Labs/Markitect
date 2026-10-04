@@ -1,0 +1,30 @@
+apiVersion: markitect.example.org/v1alpha1
+kind: Project
+metadata:
+  name: commerce-vertical-slices
+spec:
+  targets: [markdown, codex]
+  areas:
+    - name: application
+      path: src/Commerce
+    - name: checks
+      path: checks
+    - name: engineering
+      path: resources
+      imports: [application, checks]
+  domains:
+    - package:software-architecture/domains/software.yaml
+  packages:
+    - name: software-architecture
+      version: 1.0.0
+      source: fixture:vertical-slices/software-architecture-1.0.0
+      archive: .markitect/packages/software-architecture-1.0.0.zip
+      sha256: 22cb698924990fffe85d74489b971f239a2ff25863a1f69d65743b94facb3457
+  checks:
+    - name: commerce-behavior-and-boundaries
+      run: [dotnet, run, --project, checks/Commerce.Checks.csproj]
+
+
+
+
+

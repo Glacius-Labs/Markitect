@@ -1,0 +1,24 @@
+package billing
+
+import (
+	"context"
+	contract "example.com/acme/modular-service/internal/contracts/billing"
+	"testing"
+)
+
+func TestGauntletMemoVector(t *testing.T) {
+	s := New()
+	r := contract.CreateInvoiceRequest{OrderID: "O", AmountCents: 100, Memo: "gift"}
+	first, err := s.Issue(context.Background(), r)
+	if err != nil {
+		t.Fatal(err)
+	}
+	again, err := s.Issue(context.Background(), r)
+	if err != nil || again != first || again.Memo != "gift" {
+		t.Fatalf("retry changed memo: %+v %v", again, err)
+	}
+	r.AmountCents = 101
+	if _, err = s.Issue(context.Background(), r); err == nil {
+		t.Fatal("amount conflict accepted")
+	}
+}

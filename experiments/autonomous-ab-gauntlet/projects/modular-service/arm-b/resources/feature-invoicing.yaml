@@ -1,0 +1,8 @@
+apiVersion: architecture.markitect.org/v1alpha1
+kind: Feature
+metadata:
+  name: invoicing
+  namespace: architecture
+spec:
+  module: {kind: Module, name: billing, namespace: architecture}
+  summary: Issue and preserve invoices.

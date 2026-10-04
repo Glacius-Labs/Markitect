@@ -1,0 +1,24 @@
+apiVersion: markitect.example.org/v1alpha1
+kind: Rule
+metadata:
+  name: module-boundaries
+  namespace: constitution
+spec:
+  text: |
+    Orders, Inventory, and Billing own separate business decisions and data. Modules may depend only on Core, Common, and explicitly published Interfaces. A module must not directly import another module or its storage. Cross-module calls use consumer-facing contracts. Keep composition in the application layer. Architecture changes update this canonical model before implementation. Ambiguous ownership, a new direct dependency, or a conflict with these rules requires the service owner's explicit decision; do not add an exception or waiver to continue implementation.
+  files:
+    - AGENTS.md
+    - docs/architecture.md
+    - go.mod
+    - .github/workflows/ci.yml
+    - internal/core/clock.go
+    - internal/contracts/inventory/reservation.go
+    - internal/contracts/billing/invoice.go
+    - internal/modules/orders/service.go
+    - internal/modules/orders/service_test.go
+    - internal/modules/inventory/service.go
+    - internal/modules/inventory/service_test.go
+    - internal/modules/billing/service.go
+    - internal/modules/billing/service_test.go
+    - internal/architecture/boundary_test.go
+    - cmd/service/main.go

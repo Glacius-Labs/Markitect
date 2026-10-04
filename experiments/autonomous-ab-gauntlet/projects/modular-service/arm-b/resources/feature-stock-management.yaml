@@ -1,0 +1,8 @@
+apiVersion: architecture.markitect.org/v1alpha1
+kind: Feature
+metadata:
+  name: stock-management
+  namespace: architecture
+spec:
+  module: {kind: Module, name: inventory, namespace: architecture}
+  summary: Track and reserve stock.

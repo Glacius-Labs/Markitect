@@ -1,0 +1,3 @@
+usage: markitect check [options]
+  --repo         repository root
+  --revision     fixed Git revision (omitted: provisional working tree)

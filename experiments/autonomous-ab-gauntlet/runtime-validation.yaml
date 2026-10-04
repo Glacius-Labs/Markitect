@@ -1,0 +1,44 @@
+apiVersion: markitect.measurement.org/v1alpha1
+kind: GauntletRuntimeValidation
+id: native-initial-fresh-repair-smoke-r3
+scored: false
+runtime: native-collaboration
+model: gpt-6.1-sol
+reasoning_effort: xhigh
+overrides: none
+evidence_location: external-arena/native-harness-smoke-r3
+frozen_input_digest: b08bba2d66a7e6bf2d90b8ec5af6a8d1e615da1559c3f7dcba1317b4086feaf6
+harness_binary_sha256: 1bd1a17c61f23f267425c4e017e4511116e4ae15ea1b2cd88c804fc79008fd28
+seed_revision: 5dce9d4206d9df73c240458ef1215d0c1411c364
+actor_commit: 5a15658d1922d1ade3280c1b5b73cd7f37cc45b9
+proof_sha256: 3dfa3fb239f56c778a1e9b33eb31328349edd155a95806dac4378904e88527e5
+initial:
+  actor: /root/gauntlet_native_smoke_r3_initial
+  input_digest: 45c0eb11ba9363a7a721c62e1f50657521cb6ae4ac01b3a78cc806c26b282ea1
+  public_helper_calls: 1
+  actual_helper_exit: 1
+  outcome: stopped after the deliberately simulated public failure
+repair:
+  actor: /root/gauntlet_native_smoke_r3_repair_1
+  input_digest: 7189b9285528714268ae34fd7edf25868d9832f988f80c419d54055df671ccf7
+  feedback: exact initial public output, retained before dispatch
+  public_helper_calls: 1
+  actual_helper_exit: 0
+  mutations: none; existing exact proof preserved
+result:
+  status: completed
+  fresh_repair_iterations: 1
+  distinct_before_validation_snapshots: [01-check-1, 01-check-2]
+  original_deadline_preserved: true
+  exact_responses_preserved: true
+  actual_helper_jsonl_preserved: true
+limits:
+  - This proves transport, isolated mutation, stopping, fresh feedback binding and helper snapshot mechanics only.
+  - No A/B task was scored in this smoke.
+  - Native backend token/model-call telemetry remains unavailable.
+  - The final shared actor wording subsequently clarified task-authorized projection writes; this proof-only smoke required no projection mutation.
+prior_preparations:
+  - id: native-harness-smoke-r1
+    outcome: initial simulated failure captured; repair prepared but not dispatched before harness changes
+  - id: native-harness-smoke-r2
+    outcome: frozen smoke lacked required project manifest; preparation refused before an actor was dispatched

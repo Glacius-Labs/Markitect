@@ -1,0 +1,12 @@
+apiVersion: architecture.markitect.org/v1alpha1
+kind: Module
+metadata:
+  name: billing
+  namespace: architecture
+spec:
+  dependsOn:
+    - {kind: Core, name: service-core, namespace: architecture}
+    - {kind: Common, name: money, namespace: architecture}
+  interfaces: []
+  product: {kind: Product, name: commerce, namespace: architecture}
+  purpose: Own invoice issuance and idempotency.

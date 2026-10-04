@@ -1,0 +1,14 @@
+apiVersion: markitect.example.org/v1alpha1
+kind: Rule
+metadata:
+    name: architecture-boundaries
+    namespace: operations
+spec:
+    text: |
+        Relay is an event-forwarding service. cmd/relayctl is the executable boundary and may depend on internal/. Reusable process primitives belong in internal/process. The independent tools/process-sentinel Go module is a standalone utility and must not import the root module. Do not introduce a cross-module shared library without an explicit owner decision.
+        OPS-142 added child cancellation propagation after a stuck process delayed shutdown. OPS-188 added explicit nested-module tests after a green root-only run missed a regression. Neither history item approved a shared-library boundary.
+    files:
+        - cmd/relayctl/main.go
+        - internal/config/parse.go
+        - internal/config/parse_test.go
+        - tools/process-sentinel/go.mod

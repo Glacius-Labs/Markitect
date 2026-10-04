@@ -1,0 +1,8 @@
+apiVersion: architecture.markitect.org/v1alpha1
+kind: Interface
+metadata:
+  name: stock-reservation
+  namespace: architecture
+spec:
+  provider: {kind: Module, name: inventory, namespace: architecture}
+  summary: Consumer-facing contract for reserving available stock.

@@ -1,0 +1,7 @@
+apiVersion: architecture.markitect.org/v1alpha1
+kind: Handler
+metadata:
+  name: create-order
+  namespace: architecture
+spec:
+  summary: Validate request and invoke the order creation use case.

@@ -1,0 +1,88 @@
+apiVersion: gauntlet.markitect.org/v1alpha1
+kind: CodeParity
+project: vertical-slices
+base_revisions:
+  a: cd58b3786ce14ea4550a2a7a3a32e23b77de5903
+  b: 7f44f450dc69294e1c0a9c4e44dd38c2507c9114
+comparison: tracked C# project/source/check files; compare working-tree bytes and committed Git blobs
+file_count: 13
+all_equal: true
+identical_files:
+  - path: checks/Commerce.Checks.csproj
+    byte_sha256_a: 63b11cf5d566d21f41edbba722bf65822a1e71c4e17c8fdece15ac3becc41656
+    byte_sha256_b: 63b11cf5d566d21f41edbba722bf65822a1e71c4e17c8fdece15ac3becc41656
+    git_blob_a: 301bd70fcca7e4a8284ca85cb59595de22961d7b
+    git_blob_b: 301bd70fcca7e4a8284ca85cb59595de22961d7b
+    equal: true
+  - path: checks/Program.cs
+    byte_sha256_a: 8e83f502146cf33947e1c646b9224b6cb1d91d8f6a9b3421efeedb84551504a0
+    byte_sha256_b: 8e83f502146cf33947e1c646b9224b6cb1d91d8f6a9b3421efeedb84551504a0
+    git_blob_a: 0fd06f8ee8a1350b012a7c7e7f78de69eb9a235c
+    git_blob_b: 0fd06f8ee8a1350b012a7c7e7f78de69eb9a235c
+    equal: true
+  - path: src/Commerce/Billing/Application/InMemoryPaymentAuthorizer.cs
+    byte_sha256_a: 20f3ef8b37a08428fed2324d71fb428895009697317ad7ca900f174f3f32f42a
+    byte_sha256_b: 20f3ef8b37a08428fed2324d71fb428895009697317ad7ca900f174f3f32f42a
+    git_blob_a: 283e45efbc6f84896a5083120a74eca0e32e456c
+    git_blob_b: 283e45efbc6f84896a5083120a74eca0e32e456c
+    equal: true
+  - path: src/Commerce/Billing/Contracts/IPaymentAuthorizer.cs
+    byte_sha256_a: f43781159ba6a515bb284c9faa59e5a12af47628b4135c326ede307dd733ebe0
+    byte_sha256_b: f43781159ba6a515bb284c9faa59e5a12af47628b4135c326ede307dd733ebe0
+    git_blob_a: 32b0f3fdf1fb39d352b27e609163a77b4a84b7ab
+    git_blob_b: 32b0f3fdf1fb39d352b27e609163a77b4a84b7ab
+    equal: true
+  - path: src/Commerce/Commerce.csproj
+    byte_sha256_a: 8b2badca0fb8db97c71c5a2201e84f2dfbd5acc8f7875e289c38ee72574c0f5f
+    byte_sha256_b: 8b2badca0fb8db97c71c5a2201e84f2dfbd5acc8f7875e289c38ee72574c0f5f
+    git_blob_a: d5b1f25db0ec9d4591857a0de07f326da8e8b253
+    git_blob_b: d5b1f25db0ec9d4591857a0de07f326da8e8b253
+    equal: true
+  - path: src/Commerce/Core/Time/IClock.cs
+    byte_sha256_a: 13342fc8c29a569417ab8b15355d2249ac71ae3f3b95fe3f068be58371ddfb45
+    byte_sha256_b: 13342fc8c29a569417ab8b15355d2249ac71ae3f3b95fe3f068be58371ddfb45
+    git_blob_a: b434f0714fc06ea8c98c52eeac63570311698408
+    git_blob_b: b434f0714fc06ea8c98c52eeac63570311698408
+    equal: true
+  - path: src/Commerce/Inventory/Application/InMemoryStockAvailability.cs
+    byte_sha256_a: 9f26e5521d26fdb7c84961d6c48b8c2be3edf316267a5e19d2307777fbf77c7b
+    byte_sha256_b: 9f26e5521d26fdb7c84961d6c48b8c2be3edf316267a5e19d2307777fbf77c7b
+    git_blob_a: 63333243e1891b9d90490d8a94ea72020a365fe0
+    git_blob_b: 63333243e1891b9d90490d8a94ea72020a365fe0
+    equal: true
+  - path: src/Commerce/Inventory/Contracts/IStockAvailability.cs
+    byte_sha256_a: f6969c962f3df782a60e32695c57494036b39920372fabed0124802d0da6f2ed
+    byte_sha256_b: f6969c962f3df782a60e32695c57494036b39920372fabed0124802d0da6f2ed
+    git_blob_a: c38fab5c9a4b9381612803d3a998deec8faa9846
+    git_blob_b: c38fab5c9a4b9381612803d3a998deec8faa9846
+    equal: true
+  - path: src/Commerce/Orders/Application/PlaceOrder/PlaceOrderCommand.cs
+    byte_sha256_a: 6cc787e89673ffc4f3e85ff7c9b403582bb993956d06ced077287ee1abed6a4a
+    byte_sha256_b: 6cc787e89673ffc4f3e85ff7c9b403582bb993956d06ced077287ee1abed6a4a
+    git_blob_a: c8e65aa815f6454669fb4519416fd8221f27d28b
+    git_blob_b: c8e65aa815f6454669fb4519416fd8221f27d28b
+    equal: true
+  - path: src/Commerce/Orders/Application/PlaceOrder/PlaceOrderHandler.cs
+    byte_sha256_a: b386c8adcf5a9f018847be97d70bedfd0bc9d5a5cef76085befe22b8943878da
+    byte_sha256_b: b386c8adcf5a9f018847be97d70bedfd0bc9d5a5cef76085befe22b8943878da
+    git_blob_a: 6c7716c90d1962529510246a06270144599a985a
+    git_blob_b: 6c7716c90d1962529510246a06270144599a985a
+    equal: true
+  - path: src/Commerce/Orders/Domain/Order.cs
+    byte_sha256_a: 47618f5a44c839b4d283a8a58127ec9799d6418a7e093440886d1b5633fec1ff
+    byte_sha256_b: 47618f5a44c839b4d283a8a58127ec9799d6418a7e093440886d1b5633fec1ff
+    git_blob_a: e893f99e7c69a24004550ad96722cd3179157e9b
+    git_blob_b: e893f99e7c69a24004550ad96722cd3179157e9b
+    equal: true
+  - path: src/Commerce/Orders/Domain/OrderLine.cs
+    byte_sha256_a: e41452772d488be80cca69b75899332988915eb783c8f604e8e23ce1d89c067f
+    byte_sha256_b: e41452772d488be80cca69b75899332988915eb783c8f604e8e23ce1d89c067f
+    git_blob_a: 034215f523c64f73dfe86e840e4f4f859ae0bbb1
+    git_blob_b: 034215f523c64f73dfe86e840e4f4f859ae0bbb1
+    equal: true
+  - path: src/Commerce/Orders/Domain/OrderStatus.cs
+    byte_sha256_a: 655c9a1b0f43a7c9cef7651e33fd776b9e56afa29e2cf860497fb18a5718f757
+    byte_sha256_b: 655c9a1b0f43a7c9cef7651e33fd776b9e56afa29e2cf860497fb18a5718f757
+    git_blob_a: 1395e3a7cb46e5b083c10dbcaa5f77aebec04607
+    git_blob_b: 1395e3a7cb46e5b083c10dbcaa5f77aebec04607
+    equal: true

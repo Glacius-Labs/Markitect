@@ -1,0 +1,7 @@
+apiVersion: architecture.markitect.org/v1alpha1
+kind: Product
+metadata:
+  name: commerce
+  namespace: architecture
+spec:
+  purpose: Accept customer orders, reserve stock, and issue invoices.

@@ -1,0 +1,26 @@
+package inventory
+
+import (
+	"context"
+	contract "example.com/acme/modular-service/internal/contracts/inventory"
+	"testing"
+)
+
+func TestGauntletAvailabilityVector(t *testing.T) {
+	s := New(map[string]int{"S": 5})
+	got, err := s.GetAvailability(context.Background(), "S")
+	if err != nil || got != 5 {
+		t.Fatalf("got %d, %v; want 5", got, err)
+	}
+	if _, err = s.GetAvailability(context.Background(), ""); err == nil {
+		t.Fatal("empty SKU accepted")
+	}
+	_, err = s.Reserve(context.Background(), contract.ReserveRequest{OrderID: "O", SKU: "S", Quantity: 2})
+	if err != nil {
+		t.Fatal(err)
+	}
+	got, err = s.GetAvailability(context.Background(), "S")
+	if err != nil || got != 3 {
+		t.Fatalf("after reserve got %d, %v; want 3", got, err)
+	}
+}

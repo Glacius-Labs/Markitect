@@ -1,0 +1,33 @@
+schema: autonomous-ab-gauntlet/project/v1
+id: engineering-ops
+name: Relay Engineering Operations
+candidate:
+  markitectVersion: 0.13.0
+  sourceCommit: adef79d935399f8ac63ad874dbdeab8d15c418a1
+arms:
+  a:
+    path: arm-a
+    model: conventional-project-owned-docs-and-literal-checks
+    validator:
+      - ["python", "scripts/validate.py"]
+  b:
+    path: arm-b
+    model: canonical-markitect-resources-and-generated-views
+    validator:
+      - ["python", "scripts/validate.py"]
+shared:
+  facts: common/seed-facts.yaml
+  taskSet: tasks/task-set.yaml
+  exactPromptsForBothArms: true
+  ordinaryValidationBeforeFreeze: true
+runPolicy:
+  trialsPerArm: 3
+  sequence: "01 through 12 in order"
+  holdoutTasks: ["09", "10", "11", "12"]
+  maxRepairCycles: 2
+  humanFeedbackBudget: "initial validation plus two repairs"
+  actorCheckoutInputs: "copy one arm directory only; do not expose task rubric or evaluator implementation"
+evaluator:
+  command: ["pwsh", "-NoProfile", "-File", "oracle/evaluate.ps1"]
+  implementationLocation: outside this seed
+  records: YAML

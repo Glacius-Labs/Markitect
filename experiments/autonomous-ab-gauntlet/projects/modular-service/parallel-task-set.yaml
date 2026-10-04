@@ -1,0 +1,40 @@
+project: modular-service
+schema: autonomous-ab-gauntlet/parallel-task-set/v1
+origin_task_set: task-set.yaml
+base_task: "06"
+base_snapshot: Frozen result immediately after longitudinal task 06; both cards start from the same commit.
+fork_from:
+  main_task_id: "06"
+  main_trial: 1
+  prior_tasks_through: "06"
+execution: Run P01 and P02 concurrently in separate worktrees. Keep results separate; no cherry-picks before evaluation.
+tasks:
+  - id: P01
+    origin_task_id: "07"
+    prior_tasks_through: "06"
+    prompt: "Add an optional CustomerReference to Orders.CreateRequest and persist it on the created Order. Empty references remain valid, and non-empty values must be preserved exactly. Add focused tests."
+    category: feature
+    expected_classification: implementation-only
+    requires_owner_decision: false
+    allowed_paths: [internal/modules/orders/]
+    expected_affected: [constitution/Rule/module-boundaries, constitution/Skill/implement-change]
+    validator: [go, test, ./...]
+    feedback_command: go test ./internal/modules/orders
+    timeout_seconds: 1800
+    evaluator:
+      assertions: [reference-preserved, empty-reference-valid, orders-tests-pass]
+  - id: P02
+    origin_task_id: "08"
+    prior_tasks_through: "06"
+    prompt: "Add an optional Memo to the billing invoice request and returned invoice. Preserve it on the first issue, return the same invoice and memo for an identical idempotent retry, and do not change the amount-conflict behavior. Add focused tests."
+    category: feature
+    expected_classification: implementation-only
+    requires_owner_decision: false
+    allowed_paths: [internal/contracts/billing/, internal/modules/billing/]
+    expected_affected: [constitution/Rule/module-boundaries, constitution/Skill/implement-change]
+    validator: [go, test, ./...]
+    feedback_command: go test ./internal/modules/billing
+    timeout_seconds: 1800
+    evaluator:
+      assertions: [memo-preserved, idempotent-retry-returns-same-memo, conflict-still-rejected]
+

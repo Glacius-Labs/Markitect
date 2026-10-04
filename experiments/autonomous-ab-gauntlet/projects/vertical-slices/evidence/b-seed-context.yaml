@@ -1,0 +1,973 @@
+version: 0.13.0
+revision: 7a0a3ee768ecfe5d8831ff22e4b0b3dd380b44d7
+provisional: false
+entry: engineering/Skill/implement-commerce
+digest: sha256:3905b3eeb7af0d8a20da746633d83d0b37ca7641797495a2c797aabffabfc1df
+snapshotDigest: f4350f6737957c5c93b5fb646b507ff2cfefa4a1c09dc12e48d9f0a79767447b
+toolDigest: sha256:553b7077ce7b5db2df89567146fc1a877a03cb6edd75459be5a3e0a380676056
+inputs:
+    - key: software-architecture::architecture/Workflow/vertical-slice
+      path: .markitect/areas/architecture/vertical-slice.workflow.yaml
+      package: software-architecture
+      packageVersion: 1.0.0
+      hash: sha256:2beb8e65489ef7741516e75a935e08ef8ca56538756c86b3c0bf56bc9e037955
+      reason: required by engineering/Skill/implement-commerce via uses
+      via:
+        - from: engineering/Skill/implement-commerce
+          relation: uses
+          path: resources/skill-implement-commerce.yaml
+          line: 1
+      resource:
+        apiVersion: markitect.example.org/v1alpha1
+        kind: Workflow
+        metadata:
+            name: vertical-slice
+            namespace: architecture
+        spec:
+            text: |
+                Implement the selected UseCase within its owning Product and Module boundaries.
+                Follow the explicit Feature, Aggregate, Interface, Handler, and extension relations.
+                Use only the canonical package policy and report its selected subjects and outcomes.
+                This workflow describes architecture inputs; it does not infer code structure.
+    - key: file:checks/Commerce.Checks.csproj
+      path: checks/Commerce.Checks.csproj
+      hash: sha256:e02e4b1f22634c1c071776eb4966c47beb5466ca8f1c381e72d4d54c78d400bf
+      reason: declared input of engineering/Skill/implement-commerce
+      text: |
+        <Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><OutputType>Exe</OutputType><AssemblyName>Commerce.Checks</AssemblyName></PropertyGroup><ItemGroup><ProjectReference Include="../src/Commerce/Commerce.csproj" /></ItemGroup></Project>
+    - key: file:checks/Program.cs
+      path: checks/Program.cs
+      hash: sha256:472d5b781755e50972afed8fd93f2b5e3941ee70ab6f6ad709eff616864db0d6
+      reason: declared input of engineering/Skill/implement-commerce
+      text: |
+        using Commerce.Billing.Application;
+        using Commerce.Inventory.Application;
+        using Commerce.Orders.Application.PlaceOrder;
+        using Commerce.Orders.Domain;
+        var failures = new List<string>();
+        void Check(bool condition, string name) { if (!condition) failures.Add(name); }
+        var handler = new PlaceOrderHandler(new InMemoryStockAvailability(), new InMemoryPaymentAuthorizer());
+        var instant = new DateTimeOffset(2026, 10, 4, 12, 0, 0, TimeSpan.Zero);
+        var one = handler.Handle(new PlaceOrderCommand("O-1", instant, [new OrderLine("SKU-1", 1, 12.50m)], "tok_test"));
+        Check(one.Total == 12.50m, "one unit total");
+        Check(one.Status == OrderStatus.Open, "new order is open");
+        Check(one.Lines[0].Quantity == 1, "quantity is preserved");
+        var shipped = handler.Handle(new PlaceOrderCommand("O-2", instant, [new OrderLine("SKU-2", 1, 3m)], "tok_test"));
+        shipped.MarkShipped();
+        Check(shipped.Status == OrderStatus.Shipped, "open order can ship");
+        try { Order.Place("O-invalid", instant, [new OrderLine("SKU-1", 0, 1m)]); Check(false, "zero quantity rejected"); }
+        catch (ArgumentException) { Check(true, "zero quantity rejected"); }
+        var sourceRoot = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../../src/Commerce"));
+        var ordersSources = Directory.GetFiles(Path.Combine(sourceRoot, "Orders"), "*.cs", SearchOption.AllDirectories);
+        var forbidden = ordersSources.SelectMany(path => File.ReadAllText(path).Split('\n').Select((line, index) => (line, index, path)))
+            .Where(item => item.line.Contains("Commerce.Inventory.Application", StringComparison.Ordinal) || item.line.Contains("Commerce.Inventory.Domain", StringComparison.Ordinal) || item.line.Contains("Commerce.Billing.Application", StringComparison.Ordinal) || item.line.Contains("Commerce.Billing.Domain", StringComparison.Ordinal) || item.line.Contains("Infrastructure", StringComparison.Ordinal)).ToArray();
+        Check(forbidden.Length == 0, "orders uses published contracts only");
+        if (failures.Count == 0) { Console.WriteLine("PASS: behavior and source-boundary checks (6 assertions)"); return 0; }
+        foreach (var failure in failures) Console.Error.WriteLine($"FAIL: {failure}");
+        return 1;
+    - key: software-architecture::/Package/software-architecture
+      path: markitect-package.yaml
+      package: software-architecture
+      packageVersion: 1.0.0
+      hash: sha256:09a7047a9f40ce1cf4076e6daef61d20a3fcbb24a6818c3d8f91ca619e45265d
+      reason: package policy and exports for software-architecture
+      resource:
+        apiVersion: markitect.example.org/v1alpha1
+        kind: Package
+        metadata:
+            name: software-architecture
+        spec:
+            areas:
+                - name: architecture
+                  path: .markitect/areas/architecture
+            domains:
+                - domains/software.yaml
+            version: 1.0.0
+            exports:
+                - kind: Workflow
+                  name: vertical-slice
+                  namespace: architecture
+    - key: /Project/commerce-vertical-slices
+      path: markitect.yaml
+      hash: sha256:d76c5bd4019c4d6cdfca845a96f6c9e6848ece1f4647d1c9ab69f49dd7c7d2d1
+      reason: project policy and bindings
+      resource:
+        apiVersion: markitect.example.org/v1alpha1
+        kind: Project
+        metadata:
+            name: commerce-vertical-slices
+        spec:
+            targets:
+                - markdown
+                - codex
+            areas:
+                - name: application
+                  path: src/Commerce
+                - name: checks
+                  path: checks
+                - name: engineering
+                  path: resources
+                  imports:
+                    - application
+                    - checks
+            checks:
+                - name: commerce-behavior-and-boundaries
+                  run:
+                    - dotnet
+                    - run
+                    - --project
+                    - checks/Commerce.Checks.csproj
+            domains:
+                - package:software-architecture/domains/software.yaml
+            packages:
+                - name: software-architecture
+                  version: 1.0.0
+                  source: fixture:vertical-slices/software-architecture-1.0.0
+                  archive: .markitect/packages/software-architecture-1.0.0.zip
+                  sha256: 22cb698924990fffe85d74489b971f239a2ff25863a1f69d65743b94facb3457
+    - key: engineering/architecture.markitect.org/v1alpha1/Aggregate/order
+      path: resources/aggregate-order.yaml
+      hash: sha256:24441de80c1deb6e55d53779a0fe102ab444612fde229bb610aceecd3c902af7
+      reason: required by engineering/architecture.markitect.org/v1alpha1/UseCase/create-order via touchesAggregate
+      via:
+        - from: engineering/architecture.markitect.org/v1alpha1/UseCase/create-order
+          relation: touchesAggregate
+          domainApiVersion: architecture.markitect.org/v1alpha1
+          path: resources/usecase-create-order.yaml
+          line: 1
+      resource:
+        apiVersion: architecture.markitect.org/v1alpha1
+        kind: Aggregate
+        metadata:
+            name: order
+            namespace: engineering
+        spec:
+            module:
+                kind: Module
+                name: orders
+                namespace: engineering
+            summary: Owns order lines and lifecycle state transitions.
+    - key: engineering/architecture.markitect.org/v1alpha1/Authorizer/order-write
+      path: resources/authorizer-order-write.yaml
+      hash: sha256:567331b03bdfdf8fe43260e700306f142b2d2d94683c91c9718a33b7bd30a5f4
+      reason: required by engineering/architecture.markitect.org/v1alpha1/UseCase/create-order via hasAuthorizer
+      via:
+        - from: engineering/architecture.markitect.org/v1alpha1/UseCase/create-order
+          relation: hasAuthorizer
+          domainApiVersion: architecture.markitect.org/v1alpha1
+          path: resources/usecase-create-order.yaml
+          line: 1
+      resource:
+        apiVersion: architecture.markitect.org/v1alpha1
+        kind: Authorizer
+        metadata:
+            name: order-write
+            namespace: engineering
+        spec:
+            summary: Confirms the actor may place an order.
+    - key: engineering/architecture.markitect.org/v1alpha1/Common/shared-kernel
+      path: resources/common.yaml
+      hash: sha256:f76d1a48973558cb4c5e564ea0e4a6ff5654adf8c3f06abf05c7ffc2280ac00a
+      reason: required by engineering/architecture.markitect.org/v1alpha1/Module/orders via dependsOn
+      via:
+        - from: engineering/architecture.markitect.org/v1alpha1/Module/orders
+          relation: dependsOn
+          domainApiVersion: architecture.markitect.org/v1alpha1
+          path: resources/module-orders.yaml
+          line: 1
+      resource:
+        apiVersion: architecture.markitect.org/v1alpha1
+        kind: Common
+        metadata:
+            name: shared-kernel
+            namespace: engineering
+        spec:
+            owner:
+                kind: Core
+                name: platform-core
+                namespace: engineering
+            purpose: Deliberately small shared value types and error vocabulary.
+    - key: engineering/architecture.markitect.org/v1alpha1/Core/platform-core
+      path: resources/core.yaml
+      hash: sha256:7c29555971c00ed9c478cfedebbc542fce758d433f834a2b3653b096de174ba0
+      reason: required by engineering/architecture.markitect.org/v1alpha1/Module/orders via dependsOn
+      via:
+        - from: engineering/architecture.markitect.org/v1alpha1/Common/shared-kernel
+          relation: commonOwnedBy
+          domainApiVersion: architecture.markitect.org/v1alpha1
+          path: resources/common.yaml
+          line: 1
+        - from: engineering/architecture.markitect.org/v1alpha1/Module/orders
+          relation: dependsOn
+          domainApiVersion: architecture.markitect.org/v1alpha1
+          path: resources/module-orders.yaml
+          line: 1
+      resource:
+        apiVersion: architecture.markitect.org/v1alpha1
+        kind: Core
+        metadata:
+            name: platform-core
+            namespace: engineering
+        spec:
+            purpose: Stable identifiers and time abstractions shared by modules.
+    - key: engineering/architecture.markitect.org/v1alpha1/EventPublication/order-placed
+      path: resources/event-order-placed.yaml
+      hash: sha256:a7a6fa672aef4a030c04e438f87695fcff33caa28fce8c971d95cafcb3653766
+      reason: required by engineering/architecture.markitect.org/v1alpha1/UseCase/create-order via publishesEvent
+      via:
+        - from: engineering/architecture.markitect.org/v1alpha1/UseCase/create-order
+          relation: publishesEvent
+          domainApiVersion: architecture.markitect.org/v1alpha1
+          path: resources/usecase-create-order.yaml
+          line: 1
+      resource:
+        apiVersion: architecture.markitect.org/v1alpha1
+        kind: EventPublication
+        metadata:
+            name: order-placed
+            namespace: engineering
+        spec:
+            summary: Publishes the accepted order identifier after the command succeeds.
+    - key: engineering/architecture.markitect.org/v1alpha1/Feature/order-lifecycle
+      path: resources/feature-order-lifecycle.yaml
+      hash: sha256:46107710c3d8365d6d7a9bd4c9f38925b8aa6fbf5343305a2802be9afc316e4e
+      reason: required by engineering/architecture.markitect.org/v1alpha1/UseCase/create-order via realizesFeature
+      via:
+        - from: engineering/architecture.markitect.org/v1alpha1/UseCase/create-order
+          relation: realizesFeature
+          domainApiVersion: architecture.markitect.org/v1alpha1
+          path: resources/usecase-create-order.yaml
+          line: 1
+      resource:
+        apiVersion: architecture.markitect.org/v1alpha1
+        kind: Feature
+        metadata:
+            name: order-lifecycle
+            namespace: engineering
+        spec:
+            module:
+                kind: Module
+                name: orders
+                namespace: engineering
+            summary: Place and inspect customer orders.
+    - key: engineering/architecture.markitect.org/v1alpha1/Handler/create-order-handler
+      path: resources/handler-create-order.yaml
+      hash: sha256:a08d9fd5a68f885553327a4358c7ee179ee76d757930202e1ca2b8bb8d3f6f34
+      reason: required by engineering/architecture.markitect.org/v1alpha1/UseCase/create-order via handledBy
+      via:
+        - from: engineering/architecture.markitect.org/v1alpha1/UseCase/create-order
+          relation: handledBy
+          domainApiVersion: architecture.markitect.org/v1alpha1
+          path: resources/usecase-create-order.yaml
+          line: 1
+      resource:
+        apiVersion: architecture.markitect.org/v1alpha1
+        kind: Handler
+        metadata:
+            name: create-order-handler
+            namespace: engineering
+        spec:
+            summary: Coordinates authorization, stock reservation, and order creation.
+    - key: engineering/architecture.markitect.org/v1alpha1/Module/orders
+      path: resources/module-orders.yaml
+      hash: sha256:c43fb3e20ca4641a63c3a2d6eaa3f7e5300dbba28a25d021fe05365621cc8577
+      reason: required by engineering/Skill/implement-commerce via uses
+      via:
+        - from: engineering/Skill/implement-commerce
+          relation: uses
+          path: resources/skill-implement-commerce.yaml
+          line: 1
+        - from: engineering/architecture.markitect.org/v1alpha1/Aggregate/order
+          relation: belongsToModule
+          domainApiVersion: architecture.markitect.org/v1alpha1
+          path: resources/aggregate-order.yaml
+          line: 1
+        - from: engineering/architecture.markitect.org/v1alpha1/Feature/order-lifecycle
+          relation: belongsToModule
+          domainApiVersion: architecture.markitect.org/v1alpha1
+          path: resources/feature-order-lifecycle.yaml
+          line: 1
+        - from: engineering/architecture.markitect.org/v1alpha1/UseCase/create-order
+          relation: belongsToModule
+          domainApiVersion: architecture.markitect.org/v1alpha1
+          path: resources/usecase-create-order.yaml
+          line: 1
+      resource:
+        apiVersion: architecture.markitect.org/v1alpha1
+        kind: Module
+        metadata:
+            name: orders
+            namespace: engineering
+        spec:
+            dependsOn:
+                - kind: Core
+                  name: platform-core
+                  namespace: engineering
+                - kind: Common
+                  name: shared-kernel
+                  namespace: engineering
+            product:
+                kind: Product
+                name: commerce
+                namespace: engineering
+            purpose: Own order placement and order lifecycle decisions.
+    - key: engineering/architecture.markitect.org/v1alpha1/Product/commerce
+      path: resources/product.yaml
+      hash: sha256:d220134c9bfdd3522d51ae7981dadf02f76178fb12cf4ef78aa1ff0d4401c6e6
+      reason: required by engineering/architecture.markitect.org/v1alpha1/Module/orders via belongsToProduct
+      via:
+        - from: engineering/architecture.markitect.org/v1alpha1/Module/orders
+          relation: belongsToProduct
+          domainApiVersion: architecture.markitect.org/v1alpha1
+          path: resources/module-orders.yaml
+          line: 1
+      resource:
+        apiVersion: architecture.markitect.org/v1alpha1
+        kind: Product
+        metadata:
+            name: commerce
+            namespace: engineering
+        spec:
+            purpose: Coordinate order placement, billing, and inventory capabilities.
+    - key: engineering/Skill/implement-commerce
+      path: resources/skill-implement-commerce.yaml
+      hash: sha256:fa38c6fd6ad833fa7d8d45345207da83a748615c204ebe590e83f43bc81c68c4
+      reason: entry
+      resource:
+        apiVersion: markitect.example.org/v1alpha1
+        kind: Skill
+        metadata:
+            name: implement-commerce
+            namespace: engineering
+        spec:
+            text: |
+                Use the selected command, its Module and Feature, the exact pinned Domain policy, and the declared application-file snapshot. Keep module implementation behind public contracts. Preserve unresolved ownership questions for a human decision.
+            files:
+                - src/Commerce/Orders/Domain/Order.cs
+                - src/Commerce/Orders/Domain/OrderLine.cs
+                - src/Commerce/Orders/Domain/OrderStatus.cs
+                - src/Commerce/Billing/Application/InMemoryPaymentAuthorizer.cs
+                - src/Commerce/Inventory/Application/InMemoryStockAvailability.cs
+                - src/Commerce/Core/Time/IClock.cs
+                - src/Commerce/Commerce.csproj
+                - checks/Program.cs
+                - checks/Commerce.Checks.csproj
+                - src/Commerce/Orders/Application/PlaceOrder/PlaceOrderCommand.cs
+                - src/Commerce/Orders/Application/PlaceOrder/PlaceOrderHandler.cs
+                - src/Commerce/Inventory/Contracts/IStockAvailability.cs
+                - src/Commerce/Billing/Contracts/IPaymentAuthorizer.cs
+            description: Implement one bounded Commerce vertical slice from the selected architecture contract.
+            uses:
+                - apiVersion: architecture.markitect.org/v1alpha1
+                  kind: UseCase
+                  name: create-order
+                  namespace: engineering
+                - apiVersion: architecture.markitect.org/v1alpha1
+                  kind: Module
+                  name: orders
+                  namespace: engineering
+                - kind: Workflow
+                  name: vertical-slice
+                  namespace: architecture
+                  package: software-architecture
+    - key: engineering/architecture.markitect.org/v1alpha1/UseCase/create-order
+      path: resources/usecase-create-order.yaml
+      hash: sha256:5c805f56eecae9cdacbae3d12795f3d4fdcfd499a55c273f8e5dad8affc9f440
+      reason: required by engineering/Skill/implement-commerce via uses
+      via:
+        - from: engineering/Skill/implement-commerce
+          relation: uses
+          path: resources/skill-implement-commerce.yaml
+          line: 1
+      resource:
+        apiVersion: architecture.markitect.org/v1alpha1
+        kind: UseCase
+        metadata:
+            name: create-order
+            namespace: engineering
+            labels:
+                feature-ownership: required
+                validation: required
+        spec:
+            aggregates:
+                - kind: Aggregate
+                  name: order
+                  namespace: engineering
+            authorizers:
+                - kind: Authorizer
+                  name: order-write
+                  namespace: engineering
+            eventPublications:
+                - kind: EventPublication
+                  name: order-placed
+                  namespace: engineering
+            feature:
+                kind: Feature
+                name: order-lifecycle
+                namespace: engineering
+            handler:
+                kind: Handler
+                name: create-order-handler
+                namespace: engineering
+            intent: Command
+            module:
+                kind: Module
+                name: orders
+                namespace: engineering
+            summary: Accept an order after availability and authorization checks.
+            validators: []
+    - key: file:src/Commerce/Billing/Application/InMemoryPaymentAuthorizer.cs
+      path: src/Commerce/Billing/Application/InMemoryPaymentAuthorizer.cs
+      hash: sha256:7a53db3701a7eba711fc166a277e05d2ed0f028a0cd7e6a89b5e1a352f48d71f
+      reason: declared input of engineering/Skill/implement-commerce
+      text: |
+        using Commerce.Billing.Contracts;
+        namespace Commerce.Billing.Application;
+        public sealed class InMemoryPaymentAuthorizer : IPaymentAuthorizer
+        {
+            public bool CanAuthorize(string paymentToken, decimal amount) => !string.IsNullOrWhiteSpace(paymentToken) && amount > 0m;
+        }
+    - key: file:src/Commerce/Billing/Contracts/IPaymentAuthorizer.cs
+      path: src/Commerce/Billing/Contracts/IPaymentAuthorizer.cs
+      hash: sha256:e4672b83c12f99765d77ddc5d997fabc5204d3cefa7ed8cb1cc7b79f29f16313
+      reason: declared input of engineering/Skill/implement-commerce
+      text: |
+        namespace Commerce.Billing.Contracts;
+        public interface IPaymentAuthorizer { bool CanAuthorize(string paymentToken, decimal amount); }
+    - key: file:src/Commerce/Commerce.csproj
+      path: src/Commerce/Commerce.csproj
+      hash: sha256:fb4dcc6374a0ab7cf28d4b4268311eb1869189a294f2bc6863a9139718690fbc
+      reason: declared input of engineering/Skill/implement-commerce
+      text: |
+        <Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><AssemblyName>Commerce</AssemblyName></PropertyGroup></Project>
+    - key: file:src/Commerce/Core/Time/IClock.cs
+      path: src/Commerce/Core/Time/IClock.cs
+      hash: sha256:3472a18e4d2887e12268b4fc1c8caa086bf25c6662c597b617fe2cf38a26c46e
+      reason: declared input of engineering/Skill/implement-commerce
+      text: |
+        namespace Commerce.Core.Time;
+        public interface IClock { DateTimeOffset UtcNow { get; } }
+    - key: file:src/Commerce/Inventory/Application/InMemoryStockAvailability.cs
+      path: src/Commerce/Inventory/Application/InMemoryStockAvailability.cs
+      hash: sha256:6e0af7e7a648fdb1fb54b50515c0ff0a6b66fde3e299b63b8319eb6192cbd824
+      reason: declared input of engineering/Skill/implement-commerce
+      text: |
+        using Commerce.Inventory.Contracts;
+        namespace Commerce.Inventory.Application;
+        public sealed class InMemoryStockAvailability : IStockAvailability
+        {
+            private readonly Dictionary<string, int> _available = new(StringComparer.Ordinal) { ["SKU-1"] = 20, ["SKU-2"] = 8 };
+            public bool CanReserve(string productId, int quantity) => quantity > 0 && _available.TryGetValue(productId, out var count) && count >= quantity;
+        }
+    - key: file:src/Commerce/Inventory/Contracts/IStockAvailability.cs
+      path: src/Commerce/Inventory/Contracts/IStockAvailability.cs
+      hash: sha256:67de630937eb326d7ea2512dc0bd872cab5e5d56a7b662e33a4827a517a1852b
+      reason: declared input of engineering/Skill/implement-commerce
+      text: |
+        namespace Commerce.Inventory.Contracts;
+        public interface IStockAvailability { bool CanReserve(string productId, int quantity); }
+    - key: file:src/Commerce/Orders/Application/PlaceOrder/PlaceOrderCommand.cs
+      path: src/Commerce/Orders/Application/PlaceOrder/PlaceOrderCommand.cs
+      hash: sha256:906bd51d528b23e748c6413e1f4cd44b5b6e33a2b7f97da3ab6c0013b767fd04
+      reason: declared input of engineering/Skill/implement-commerce
+      text: |
+        using Commerce.Orders.Domain;
+        namespace Commerce.Orders.Application.PlaceOrder;
+        public sealed record PlaceOrderCommand(string OrderId, DateTimeOffset CreatedAt, IReadOnlyList<OrderLine> Lines, string PaymentToken);
+    - key: file:src/Commerce/Orders/Application/PlaceOrder/PlaceOrderHandler.cs
+      path: src/Commerce/Orders/Application/PlaceOrder/PlaceOrderHandler.cs
+      hash: sha256:77dd51692ed252962d067dfc9848b3d1c94237d66c99bdf5acccb61f8aab00be
+      reason: declared input of engineering/Skill/implement-commerce
+      text: |
+        using Commerce.Billing.Contracts;
+        using Commerce.Inventory.Contracts;
+        using Commerce.Orders.Domain;
+        namespace Commerce.Orders.Application.PlaceOrder;
+        public sealed class PlaceOrderHandler(IStockAvailability stock, IPaymentAuthorizer payments)
+        {
+            public Order Handle(PlaceOrderCommand command)
+            {
+                var order = Order.Place(command.OrderId, command.CreatedAt, command.Lines);
+                if (command.Lines.Any(line => !stock.CanReserve(line.ProductId, line.Quantity))) throw new InvalidOperationException("Insufficient stock.");
+                if (!payments.CanAuthorize(command.PaymentToken, order.Total)) throw new InvalidOperationException("Payment could not be authorized.");
+                return order;
+            }
+        }
+    - key: file:src/Commerce/Orders/Domain/Order.cs
+      path: src/Commerce/Orders/Domain/Order.cs
+      hash: sha256:53aa47b98dd96090c70f3d9b1fe16267137a207ab3e9bc23134409f8ad30c841
+      reason: declared input of engineering/Skill/implement-commerce
+      text: |
+        namespace Commerce.Orders.Domain;
+        public sealed class Order
+        {
+            private Order(string id, DateTimeOffset createdAt, IReadOnlyList<OrderLine> lines) { Id = id; CreatedAt = createdAt; Lines = lines; }
+            public string Id { get; }
+            public DateTimeOffset CreatedAt { get; }
+            public IReadOnlyList<OrderLine> Lines { get; }
+            public OrderStatus Status { get; private set; } = OrderStatus.Open;
+            public decimal Total => Lines.Sum(line => line.Total);
+            public static Order Place(string id, DateTimeOffset createdAt, IReadOnlyList<OrderLine> lines)
+            {
+                if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("Order id is required.", nameof(id));
+                if (lines.Count == 0) throw new ArgumentException("At least one line is required.", nameof(lines));
+                if (lines.Any(line => string.IsNullOrWhiteSpace(line.ProductId) || line.Quantity <= 0 || line.UnitPrice < 0m)) throw new ArgumentException("Order lines require a product, positive quantity, and non-negative price.", nameof(lines));
+                return new Order(id, createdAt, lines.ToArray());
+            }
+            public void MarkShipped() { if (Status != OrderStatus.Open) throw new InvalidOperationException("Only an open order can ship."); Status = OrderStatus.Shipped; }
+        }
+    - key: file:src/Commerce/Orders/Domain/OrderLine.cs
+      path: src/Commerce/Orders/Domain/OrderLine.cs
+      hash: sha256:ec99c0e3f08d908786d3bdd7a5846906c8baa2233cb29ab00d272a6c192f9097
+      reason: declared input of engineering/Skill/implement-commerce
+      text: |
+        namespace Commerce.Orders.Domain;
+        public sealed record OrderLine(string ProductId, int Quantity, decimal UnitPrice) { public decimal Total => UnitPrice; }
+    - key: file:src/Commerce/Orders/Domain/OrderStatus.cs
+      path: src/Commerce/Orders/Domain/OrderStatus.cs
+      hash: sha256:5f6ec53776a161ac50832f2faac7210f93e9c52d9fd5cc03a60f4ff24ee2f61a
+      reason: declared input of engineering/Skill/implement-commerce
+      text: |
+        namespace Commerce.Orders.Domain;
+        public enum OrderStatus { Open, Shipped, Cancelled }
+    - key: domain:package:software-architecture/file:domains/software.yaml
+      path: domains/software.yaml
+      package: software-architecture
+      packageVersion: 1.0.0
+      hash: sha256:78e82edc4e9456e5aaadb78f5279ed26d436e398d23f0e7f2b3ffc2d2f28f446
+      reason: selected language definition
+      domainApiVersion: architecture.markitect.org/v1alpha1
+      domainName: software-architecture
+      text: |
+        apiVersion: markitect.example.org/v1alpha1
+        kind: Domain
+        metadata:
+            name: software-architecture
+        spec:
+            apiVersion: architecture.markitect.org/v1alpha1
+            kinds:
+                Aggregate:
+                    required:
+                        - summary
+                        - module
+                    properties:
+                        module:
+                            type: ref
+                            refKind: Module
+                        summary:
+                            type: string
+                Authorizer:
+                    required:
+                        - summary
+                    properties:
+                        summary:
+                            type: string
+                Common:
+                    required:
+                        - purpose
+                        - owner
+                    properties:
+                        owner:
+                            type: ref
+                        purpose:
+                            type: string
+                Core:
+                    required:
+                        - purpose
+                    properties:
+                        purpose:
+                            type: string
+                EventPublication:
+                    required:
+                        - summary
+                    properties:
+                        summary:
+                            type: string
+                Feature:
+                    required:
+                        - summary
+                        - module
+                    properties:
+                        module:
+                            type: ref
+                            refKind: Module
+                        summary:
+                            type: string
+                Handler:
+                    required:
+                        - summary
+                    properties:
+                        summary:
+                            type: string
+                Interface:
+                    required:
+                        - summary
+                        - provider
+                    properties:
+                        provider:
+                            type: ref
+                            refKind: Module
+                        summary:
+                            type: string
+                Mapper:
+                    required:
+                        - summary
+                    properties:
+                        summary:
+                            type: string
+                Module:
+                    required:
+                        - purpose
+                        - product
+                        - dependsOn
+                    properties:
+                        dependsOn:
+                            type: array
+                            items:
+                                type: ref
+                        interfaces:
+                            type: array
+                            items:
+                                type: ref
+                                refKind: Interface
+                        product:
+                            type: ref
+                            refKind: Product
+                        purpose:
+                            type: string
+                Product:
+                    required:
+                        - purpose
+                    properties:
+                        purpose:
+                            type: string
+                UseCase:
+                    required:
+                        - intent
+                        - summary
+                        - module
+                        - handler
+                    properties:
+                        aggregates:
+                            type: array
+                            items:
+                                type: ref
+                                refKind: Aggregate
+                        authorizers:
+                            type: array
+                            items:
+                                type: ref
+                                refKind: Authorizer
+                        eventPublications:
+                            type: array
+                            items:
+                                type: ref
+                                refKind: EventPublication
+                        feature:
+                            type: ref
+                            refKind: Feature
+                        handler:
+                            type: ref
+                            refKind: Handler
+                        intent:
+                            type: string
+                            enum:
+                                - Command
+                                - Query
+                        mappers:
+                            type: array
+                            items:
+                                type: ref
+                                refKind: Mapper
+                        module:
+                            type: ref
+                            refKind: Module
+                        summary:
+                            type: string
+                        validators:
+                            type: array
+                            items:
+                                type: ref
+                                refKind: Validator
+                Validator:
+                    required:
+                        - summary
+                    properties:
+                        summary:
+                            type: string
+            relations:
+                belongsToModule:
+                    description: A Feature has one named Module owner.
+                    field: module
+                    sourceKinds:
+                        - Feature
+                        - UseCase
+                        - Aggregate
+                    targetKinds:
+                        - Module
+                    minTargets: 1
+                    maxTargets: 1
+                    context: true
+                    invalidate: true
+                belongsToProduct:
+                    description: A Module names its Product owner.
+                    field: product
+                    sourceKinds:
+                        - Module
+                    targetKinds:
+                        - Product
+                    minTargets: 1
+                    maxTargets: 1
+                    context: true
+                    invalidate: true
+                commonOwnedBy:
+                    description: A shared Common concept names one stable Core or Module owner.
+                    field: owner
+                    sourceKinds:
+                        - Common
+                    targetKinds:
+                        - Core
+                        - Module
+                    minTargets: 1
+                    maxTargets: 1
+                    context: true
+                    invalidate: true
+                dependsOn:
+                    description: Direct shared-boundary dependency; Module-to-Module edges are disallowed by policy.
+                    field: dependsOn
+                    sourceKinds:
+                        - Module
+                    targetKinds:
+                        - Core
+                        - Common
+                        - Module
+                    context: true
+                    invalidate: true
+                    acyclic: true
+                handledBy:
+                    description: Each UseCase declares exactly one required Handler.
+                    field: handler
+                    sourceKinds:
+                        - UseCase
+                    targetKinds:
+                        - Handler
+                    minTargets: 1
+                    maxTargets: 1
+                    context: true
+                    invalidate: true
+                hasAuthorizer:
+                    field: authorizers
+                    sourceKinds:
+                        - UseCase
+                    targetKinds:
+                        - Authorizer
+                    context: true
+                    invalidate: true
+                hasMapper:
+                    field: mappers
+                    sourceKinds:
+                        - UseCase
+                    targetKinds:
+                        - Mapper
+                    context: true
+                    invalidate: true
+                hasValidator:
+                    field: validators
+                    sourceKinds:
+                        - UseCase
+                    targetKinds:
+                        - Validator
+                    context: true
+                    invalidate: true
+                providedBy:
+                    description: An Interface names its publishing Module.
+                    field: provider
+                    sourceKinds:
+                        - Interface
+                    targetKinds:
+                        - Module
+                    minTargets: 1
+                    maxTargets: 1
+                    context: true
+                    invalidate: true
+                publishesEvent:
+                    field: eventPublications
+                    sourceKinds:
+                        - UseCase
+                    targetKinds:
+                        - EventPublication
+                    context: true
+                    invalidate: true
+                realizesFeature:
+                    description: A UseCase may identify one Feature grouping.
+                    field: feature
+                    sourceKinds:
+                        - UseCase
+                    targetKinds:
+                        - Feature
+                    minTargets: 0
+                    maxTargets: 1
+                    context: true
+                    invalidate: true
+                touchesAggregate:
+                    description: A UseCase declares the Aggregates it may operate on.
+                    field: aggregates
+                    sourceKinds:
+                        - UseCase
+                    targetKinds:
+                        - Aggregate
+                    context: true
+                    invalidate: true
+                usesInterfaces:
+                    description: A Module consumes an explicitly modeled contract.
+                    field: interfaces
+                    sourceKinds:
+                        - Module
+                    targetKinds:
+                        - Interface
+                    context: true
+                    invalidate: true
+                    acyclic: true
+            constraints:
+                - name: module-dependencies-stay-at-shared-boundaries
+                  description: Direct dependency declarations target only stable Core and Common resources.
+                  select:
+                    kind: Module
+                  assert:
+                    op: allowed-targets
+                    relation: dependsOn
+                    values:
+                        - Core
+                        - Common
+                - name: selected-command-labels-identify-commands
+                  description: The opt-in validation cohort contains only UseCases whose intent is Command.
+                  select:
+                    kind: UseCase
+                    labels:
+                        validation: required
+                  assert:
+                    op: equal
+                    field: intent
+                    value: Command
+      role: domain
+    - key: manifest:docs/context-runs/seed.yaml
+      path: docs/context-runs/seed.yaml
+      hash: sha256:38b1e0db57ffff98279fb23ee3e65be5def3e453b4deb11b3317f26791302645
+      reason: run input selection
+      text: |+
+        version: markitect.example.org/context-run/v1alpha1
+        entry: engineering/Skill/implement-commerce
+        task:
+          id: vertical-slices-seed
+          path: tasks/task-01.md
+        sources:
+          - path: src/Commerce/Orders/Domain/Order.cs
+            reason: selected Orders aggregate implementation input
+          - path: src/Commerce/Orders/Application/PlaceOrder/PlaceOrderHandler.cs
+            reason: selected Orders command handler implementation input
+          - path: src/Commerce/Inventory/Contracts/IStockAvailability.cs
+            reason: published Inventory contract used by selected command
+          - path: src/Commerce/Billing/Contracts/IPaymentAuthorizer.cs
+            reason: published Billing contract used by selected command
+
+      role: manifest
+      status: included
+      required: true
+    - key: source:src/Commerce/Billing/Contracts/IPaymentAuthorizer.cs
+      path: src/Commerce/Billing/Contracts/IPaymentAuthorizer.cs
+      hash: sha256:e4672b83c12f99765d77ddc5d997fabc5204d3cefa7ed8cb1cc7b79f29f16313
+      reason: published Billing contract used by selected command
+      text: |
+        namespace Commerce.Billing.Contracts;
+        public interface IPaymentAuthorizer { bool CanAuthorize(string paymentToken, decimal amount); }
+      role: source
+      status: included
+      required: true
+    - key: source:src/Commerce/Inventory/Contracts/IStockAvailability.cs
+      path: src/Commerce/Inventory/Contracts/IStockAvailability.cs
+      hash: sha256:67de630937eb326d7ea2512dc0bd872cab5e5d56a7b662e33a4827a517a1852b
+      reason: published Inventory contract used by selected command
+      text: |
+        namespace Commerce.Inventory.Contracts;
+        public interface IStockAvailability { bool CanReserve(string productId, int quantity); }
+      role: source
+      status: included
+      required: true
+    - key: source:src/Commerce/Orders/Application/PlaceOrder/PlaceOrderHandler.cs
+      path: src/Commerce/Orders/Application/PlaceOrder/PlaceOrderHandler.cs
+      hash: sha256:77dd51692ed252962d067dfc9848b3d1c94237d66c99bdf5acccb61f8aab00be
+      reason: selected Orders command handler implementation input
+      text: |
+        using Commerce.Billing.Contracts;
+        using Commerce.Inventory.Contracts;
+        using Commerce.Orders.Domain;
+        namespace Commerce.Orders.Application.PlaceOrder;
+        public sealed class PlaceOrderHandler(IStockAvailability stock, IPaymentAuthorizer payments)
+        {
+            public Order Handle(PlaceOrderCommand command)
+            {
+                var order = Order.Place(command.OrderId, command.CreatedAt, command.Lines);
+                if (command.Lines.Any(line => !stock.CanReserve(line.ProductId, line.Quantity))) throw new InvalidOperationException("Insufficient stock.");
+                if (!payments.CanAuthorize(command.PaymentToken, order.Total)) throw new InvalidOperationException("Payment could not be authorized.");
+                return order;
+            }
+        }
+      role: source
+      status: included
+      required: true
+    - key: source:src/Commerce/Orders/Domain/Order.cs
+      path: src/Commerce/Orders/Domain/Order.cs
+      hash: sha256:53aa47b98dd96090c70f3d9b1fe16267137a207ab3e9bc23134409f8ad30c841
+      reason: selected Orders aggregate implementation input
+      text: |
+        namespace Commerce.Orders.Domain;
+        public sealed class Order
+        {
+            private Order(string id, DateTimeOffset createdAt, IReadOnlyList<OrderLine> lines) { Id = id; CreatedAt = createdAt; Lines = lines; }
+            public string Id { get; }
+            public DateTimeOffset CreatedAt { get; }
+            public IReadOnlyList<OrderLine> Lines { get; }
+            public OrderStatus Status { get; private set; } = OrderStatus.Open;
+            public decimal Total => Lines.Sum(line => line.Total);
+            public static Order Place(string id, DateTimeOffset createdAt, IReadOnlyList<OrderLine> lines)
+            {
+                if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("Order id is required.", nameof(id));
+                if (lines.Count == 0) throw new ArgumentException("At least one line is required.", nameof(lines));
+                if (lines.Any(line => string.IsNullOrWhiteSpace(line.ProductId) || line.Quantity <= 0 || line.UnitPrice < 0m)) throw new ArgumentException("Order lines require a product, positive quantity, and non-negative price.", nameof(lines));
+                return new Order(id, createdAt, lines.ToArray());
+            }
+            public void MarkShipped() { if (Status != OrderStatus.Open) throw new InvalidOperationException("Only an open order can ship."); Status = OrderStatus.Shipped; }
+        }
+      role: source
+      status: included
+      required: true
+    - key: task:tasks/task-01.md
+      path: tasks/task-01.md
+      hash: sha256:d3208ee07e87b592745c356ae7723f7fa1133231da918aa5d24fea1334532ac0
+      reason: work-item snapshot
+      text: |
+        Fix the order total bug: placing two units of a $12.50 item currently records $12.50 instead of $25.00. Keep line quantity and unit price intact, and add a regression check.
+      role: task
+      status: included
+      required: true
+complete: true
+status: complete
+run:
+    manifestPath: docs/context-runs/seed.yaml
+    manifestHash: sha256:38b1e0db57ffff98279fb23ee3e65be5def3e453b4deb11b3317f26791302645
+    taskId: vertical-slices-seed
+    taskPath: tasks/task-01.md
+    selectionHash: sha256:47f8f5c5e4f44cfa616d32b2596d7b105c4a8088b67a392da3638203e1528e0f
+policyResults:
+    - apiVersion: architecture.markitect.org/v1alpha1
+      constraint: module-dependencies-stay-at-shared-boundaries
+      subject: engineering/architecture.markitect.org/v1alpha1/Module/orders
+      status: passed
+      constraintDigest: sha256:f9c785fe18e4df70e56987d3f3d53a424bf8faab951e2594efc766ea74517c40
+      subjectDigest: sha256:c958053f90cce8b93f6af9bbfec61b1d8177a5f42a1e45c1c75705314a1b8f76
+    - apiVersion: architecture.markitect.org/v1alpha1
+      constraint: selected-command-labels-identify-commands
+      subject: engineering/architecture.markitect.org/v1alpha1/UseCase/create-order
+      status: passed
+      constraintDigest: sha256:72e596827e5a18f4bd1986736c7bd5e71026962574a4e92c2592ba8de617f0d4
+      subjectDigest: sha256:6533b8cd723977cb7977dda5bace90b0a83b19ff5605df315928240e4020412f

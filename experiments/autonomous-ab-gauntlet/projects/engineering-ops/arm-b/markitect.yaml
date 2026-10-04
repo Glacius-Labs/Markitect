@@ -1,0 +1,69 @@
+apiVersion: markitect.example.org/v1alpha1
+kind: Project
+metadata:
+    name: relay-engineering-operations
+spec:
+    targets:
+        - markdown
+        - codex
+        - claude
+    areas:
+        - name: operations
+          path: .markitect/areas/operations
+          imports:
+              - documentation
+              - hooks
+              - pipelines
+              - module-configs
+              - relay-cli
+              - process-sentinel
+              - internal-config
+              - provider-entrypoints
+              - codex-entrypoint
+        - name: documentation
+          path: docs
+        - name: hooks
+          path: .githooks
+        - name: pipelines
+          path: .github/workflows/ci.yaml
+        - name: module-configs
+          path: .markitect/modules
+        - name: relay-cli
+          path: cmd
+        - name: process-sentinel
+          path: tools/process-sentinel
+        - name: internal-config
+          path: internal/config
+        - name: provider-entrypoints
+          path: .claude
+        - name: codex-entrypoint
+          path: AGENTS.md
+    checks:
+        - name: managed-artifacts
+          run:
+              - markitect-check-artifacts
+              - --repo
+              - .
+              - --config
+              - markitect-artifacts.yaml
+        - name: hook-and-pipeline-contracts
+          run:
+              - markitect-check-modules
+              - --repo
+              - .
+              - --hooks
+              - .markitect/modules/githooks.config
+              - --pipelines
+              - .markitect/modules/pipelines.config
+        - name: root-tests
+          run:
+              - go
+              - test
+              - ./...
+        - name: nested-module-tests
+          run:
+              - go
+              - -C
+              - tools/process-sentinel
+              - test
+              - ./...

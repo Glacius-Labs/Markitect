@@ -1,0 +1,236 @@
+status: passed
+snapshotDigest: a7adadaef68af1a8da7b4a1ce6588234c2af3810ab17cad7965fceab79670e8d
+files:
+    - path: .agents/skills/implement-commerce/SKILL.md
+      class: generated
+      owners:
+        - engineering/Skill/implement-commerce
+    - path: .github/workflows/check.yml
+      class: tooling
+      owners:
+        - continuous-integration-workflow
+    - path: .gitignore
+      class: tooling
+      owners:
+        - generated-build-output-exclusions
+    - path: .markitect/areas/architecture/vertical-slice.workflow.yaml
+      class: tooling
+      owners:
+        - versioned-architecture-workflow-source
+    - path: .markitect/packages/software-architecture-1.0.0.zip
+      class: tooling
+      owners:
+        - exact-pinned-v1-domain-package
+    - path: .markitect/packages/software-architecture-2.0.0.zip
+      class: tooling
+      owners:
+        - inactive-exact-pinned-v2-migration-package
+    - path: AGENTS.md
+      class: tooling
+      owners:
+        - agent-entrypoint
+    - path: Directory.Build.props
+      class: tooling
+      owners:
+        - dotnet-build-configuration
+    - path: NuGet.Config
+      class: tooling
+      owners:
+        - offline-package-source-policy
+    - path: checks/Commerce.Checks.csproj
+      class: input
+      owners:
+        - engineering/Skill/implement-commerce
+    - path: checks/Program.cs
+      class: input
+      owners:
+        - engineering/Skill/implement-commerce
+    - path: docs/architecture.md
+      class: tooling
+      owners:
+        - readable-architecture-navigation
+    - path: docs/markitect/README.md
+      class: generated
+      owners:
+        - /Project/commerce-vertical-slices
+    - path: docs/markitect/_domains/README.md
+      class: generated
+      owners:
+        - /Project/commerce-vertical-slices
+    - path: docs/markitect/_domains/architecture.markitect.org.v1alpha1.domain.md
+      class: generated
+      owners:
+        - domain:architecture.markitect.org/v1alpha1/software-architecture
+    - path: docs/markitect/engineering/README.md
+      class: generated
+      owners:
+        - /Project/commerce-vertical-slices
+    - path: docs/markitect/engineering/aggregate-order.aggregate.architecture.markitect.org.v1alpha1.md
+      class: generated
+      owners:
+        - engineering/architecture.markitect.org/v1alpha1/Aggregate/order
+    - path: docs/markitect/engineering/authorizer-order-write.authorizer.architecture.markitect.org.v1alpha1.md
+      class: generated
+      owners:
+        - engineering/architecture.markitect.org/v1alpha1/Authorizer/order-write
+    - path: docs/markitect/engineering/common.common.architecture.markitect.org.v1alpha1.md
+      class: generated
+      owners:
+        - engineering/architecture.markitect.org/v1alpha1/Common/shared-kernel
+    - path: docs/markitect/engineering/core.core.architecture.markitect.org.v1alpha1.md
+      class: generated
+      owners:
+        - engineering/architecture.markitect.org/v1alpha1/Core/platform-core
+    - path: docs/markitect/engineering/feature-order-lifecycle.feature.architecture.markitect.org.v1alpha1.md
+      class: generated
+      owners:
+        - engineering/architecture.markitect.org/v1alpha1/Feature/order-lifecycle
+    - path: docs/markitect/engineering/handler-create-order.handler.architecture.markitect.org.v1alpha1.md
+      class: generated
+      owners:
+        - engineering/architecture.markitect.org/v1alpha1/Handler/create-order-handler
+    - path: docs/markitect/engineering/interface-billing-terms.interface.architecture.markitect.org.v1alpha1.md
+      class: generated
+      owners:
+        - engineering/architecture.markitect.org/v1alpha1/Interface/billing-terms
+    - path: docs/markitect/engineering/interface-order-accepted.interface.architecture.markitect.org.v1alpha1.md
+      class: generated
+      owners:
+        - engineering/architecture.markitect.org/v1alpha1/Interface/order-accepted
+    - path: docs/markitect/engineering/module-billing.module.architecture.markitect.org.v1alpha1.md
+      class: generated
+      owners:
+        - engineering/architecture.markitect.org/v1alpha1/Module/billing
+    - path: docs/markitect/engineering/module-inventory.module.architecture.markitect.org.v1alpha1.md
+      class: generated
+      owners:
+        - engineering/architecture.markitect.org/v1alpha1/Module/inventory
+    - path: docs/markitect/engineering/module-orders.module.architecture.markitect.org.v1alpha1.md
+      class: generated
+      owners:
+        - engineering/architecture.markitect.org/v1alpha1/Module/orders
+    - path: docs/markitect/engineering/product.product.architecture.markitect.org.v1alpha1.md
+      class: generated
+      owners:
+        - engineering/architecture.markitect.org/v1alpha1/Product/commerce
+    - path: docs/markitect/engineering/skill-implement-commerce.skill.md
+      class: generated
+      owners:
+        - engineering/Skill/implement-commerce
+    - path: docs/markitect/engineering/usecase-create-order.usecase.architecture.markitect.org.v1alpha1.md
+      class: generated
+      owners:
+        - engineering/architecture.markitect.org/v1alpha1/UseCase/create-order
+    - path: global.json
+      class: tooling
+      owners:
+        - exact-dotnet-sdk-selection
+    - path: markitect-artifacts.yaml
+      class: tooling
+      owners:
+        - explicit-artifact-coverage-configuration
+    - path: markitect.yaml
+      class: canonical
+      owners:
+        - /Project/commerce-vertical-slices
+    - path: resources/aggregate-order.yaml
+      class: canonical
+      owners:
+        - engineering/architecture.markitect.org/v1alpha1/Aggregate/order
+    - path: resources/authorizer-order-write.yaml
+      class: canonical
+      owners:
+        - engineering/architecture.markitect.org/v1alpha1/Authorizer/order-write
+    - path: resources/common.yaml
+      class: canonical
+      owners:
+        - engineering/architecture.markitect.org/v1alpha1/Common/shared-kernel
+    - path: resources/core.yaml
+      class: canonical
+      owners:
+        - engineering/architecture.markitect.org/v1alpha1/Core/platform-core
+    - path: resources/feature-order-lifecycle.yaml
+      class: canonical
+      owners:
+        - engineering/architecture.markitect.org/v1alpha1/Feature/order-lifecycle
+    - path: resources/handler-create-order.yaml
+      class: canonical
+      owners:
+        - engineering/architecture.markitect.org/v1alpha1/Handler/create-order-handler
+    - path: resources/interface-billing-terms.yaml
+      class: canonical
+      owners:
+        - engineering/architecture.markitect.org/v1alpha1/Interface/billing-terms
+    - path: resources/interface-order-accepted.yaml
+      class: canonical
+      owners:
+        - engineering/architecture.markitect.org/v1alpha1/Interface/order-accepted
+    - path: resources/module-billing.yaml
+      class: canonical
+      owners:
+        - engineering/architecture.markitect.org/v1alpha1/Module/billing
+    - path: resources/module-inventory.yaml
+      class: canonical
+      owners:
+        - engineering/architecture.markitect.org/v1alpha1/Module/inventory
+    - path: resources/module-orders.yaml
+      class: canonical
+      owners:
+        - engineering/architecture.markitect.org/v1alpha1/Module/orders
+    - path: resources/product.yaml
+      class: canonical
+      owners:
+        - engineering/architecture.markitect.org/v1alpha1/Product/commerce
+    - path: resources/skill-implement-commerce.yaml
+      class: canonical
+      owners:
+        - engineering/Skill/implement-commerce
+    - path: resources/usecase-create-order.yaml
+      class: canonical
+      owners:
+        - engineering/architecture.markitect.org/v1alpha1/UseCase/create-order
+    - path: src/Commerce/Billing/Application/InMemoryPaymentAuthorizer.cs
+      class: input
+      owners:
+        - engineering/Skill/implement-commerce
+    - path: src/Commerce/Billing/Contracts/IPaymentAuthorizer.cs
+      class: input
+      owners:
+        - engineering/Skill/implement-commerce
+    - path: src/Commerce/Commerce.csproj
+      class: input
+      owners:
+        - engineering/Skill/implement-commerce
+    - path: src/Commerce/Core/Time/IClock.cs
+      class: input
+      owners:
+        - engineering/Skill/implement-commerce
+    - path: src/Commerce/Inventory/Application/InMemoryStockAvailability.cs
+      class: input
+      owners:
+        - engineering/Skill/implement-commerce
+    - path: src/Commerce/Inventory/Contracts/IStockAvailability.cs
+      class: input
+      owners:
+        - engineering/Skill/implement-commerce
+    - path: src/Commerce/Orders/Application/PlaceOrder/PlaceOrderCommand.cs
+      class: input
+      owners:
+        - engineering/Skill/implement-commerce
+    - path: src/Commerce/Orders/Application/PlaceOrder/PlaceOrderHandler.cs
+      class: input
+      owners:
+        - engineering/Skill/implement-commerce
+    - path: src/Commerce/Orders/Domain/Order.cs
+      class: input
+      owners:
+        - engineering/Skill/implement-commerce
+    - path: src/Commerce/Orders/Domain/OrderLine.cs
+      class: input
+      owners:
+        - engineering/Skill/implement-commerce
+    - path: src/Commerce/Orders/Domain/OrderStatus.cs
+      class: input
+      owners:
+        - engineering/Skill/implement-commerce
+findings: []

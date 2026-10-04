@@ -135,6 +135,21 @@ func TestAdoptingCodeFixtureHasNoProductDependencyPrivilege(t *testing.T) {
 	}
 }
 
+func TestGauntletFixturesAreIsolatedFromProductAndHarness(t *testing.T) {
+	const fixture = "experiments/autonomous-ab-gauntlet/projects/modular-service/arm-b/internal/core"
+	const harness = "experiments/autonomous-ab-gauntlet/harness"
+	if got := Check([]Edge{{From: fixture}, {From: harness}}); len(got) != 0 {
+		t.Fatal(got)
+	}
+	for _, product := range []string{"internal/core", "internal/host", "internal/modules/a", harness} {
+		for _, edge := range []Edge{{From: fixture, To: product}, {From: product, To: fixture}} {
+			if got := Check([]Edge{edge}); len(got) != 1 {
+				t.Fatalf("gauntlet isolation missing for %s -> %s: %v", edge.From, edge.To, got)
+			}
+		}
+	}
+}
+
 // The public single-file bootstrap remains in integration for the supported
 // consumer download path. Its tooling owner grants no product import privilege.
 func TestStandaloneBootstrapToolingHasNoProductDependencies(t *testing.T) {

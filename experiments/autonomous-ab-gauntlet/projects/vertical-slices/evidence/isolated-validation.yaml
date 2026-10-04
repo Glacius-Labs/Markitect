@@ -1,0 +1,26 @@
+project: vertical-slices
+isolated_copy_validation:
+  dotnet_sdk: 8.0.418
+  a:
+    command: [dotnet, run, --project, checks/Commerce.Checks.csproj]
+    exit_code: 0
+    output: 'PASS: behavior and source-boundary checks (6 assertions)'
+    receipt: evidence/a-isolated-validator.txt
+  b:
+    command: [dotnet, run, --project, checks/Commerce.Checks.csproj]
+    exit_code: 0
+    output: 'PASS: behavior and source-boundary checks (6 assertions)'
+    receipt: evidence/b-isolated-validator.txt
+    markitect:
+      check_exit_code: 0
+      render_check_exit_code: 0
+      verify_exit_code: 0
+      artifact_coverage_exit_code: 0
+      receipt_paths:
+        - evidence/b-isolated-check.yaml
+        - evidence/b-isolated-render.yaml
+        - evidence/b-isolated-verify.yaml
+        - evidence/b-isolated-artifact-coverage.yaml
+  temporary_copy:
+    root: .artifacts/autonomous-ab-gauntlet/vertical-slices-validation-copies
+    removed_after_checks: true

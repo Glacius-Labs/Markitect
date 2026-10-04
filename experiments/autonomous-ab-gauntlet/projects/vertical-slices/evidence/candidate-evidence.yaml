@@ -1,0 +1,39 @@
+version: 1
+markitect:
+  version: 0.13.0
+  source_revision: adef79d935399f8ac63ad874dbdeab8d15c418a1
+  source_commit: adef79d935399f8ac63ad874dbdeab8d15c418a1
+  binary: .artifacts/autonomous-ab-gauntlet/candidate/markitect.exe
+  binary_sha256: 553b7077ce7b5db2df89567146fc1a877a03cb6edd75459be5a3e0a380676056
+  reported_tool_digest: sha256:553b7077ce7b5db2df89567146fc1a877a03cb6edd75459be5a3e0a380676056
+  frozen_preflight: .artifacts/autonomous-ab-gauntlet/candidate/preflight-check.yaml
+  frozen_preflight_context: .artifacts/autonomous-ab-gauntlet/candidate/preflight-context.yaml
+seed_revisions:
+  a: cd58b3786ce14ea4550a2a7a3a32e23b77de5903
+  b: 7f44f450dc69294e1c0a9c4e44dd38c2507c9114
+impact_probe_commit: 71c872e2da0c869bfbc8d08a556098384e04bb87
+v2_baseline_probe_commit: 23c802c86b4646f4ccf3e123b4f9a9ee750e5de9
+package_pins:
+  v1:
+    path: b/.markitect/packages/software-architecture-1.0.0.zip
+    sha256: 22cb698924990fffe85d74489b971f239a2ff25863a1f69d65743b94facb3457
+  v2:
+    path: b/.markitect/packages/software-architecture-2.0.0.zip
+    sha256: 7962eed82a21a1efb12e40492596ce921e307d938376056e0c7e80cfc081f7df
+runtime:
+  target_framework: net8.0
+  seed_selected_sdk: 8.0.418
+  host_default_sdk_outside_seed: 10.0.103
+  dependencies: no external NuGet packages
+  package_sources: cleared by per-project NuGet.Config
+  validation: A and B offline checks passed locally on Windows
+  limits: no xUnit/NUnit, database, ASP.NET host, EF Core, network restore, Linux runner, or deployed-runtime proof
+
+
+
+
+  temporary_build_cache:
+    go_cache: .artifacts/autonomous-ab-gauntlet/vertical-slices-go-cache
+    scope: ignored toolchain cache outside the seed repositories
+    reason: isolated cache for the prescribed go run fixed-base workflow command
+    retained_for_replay: true

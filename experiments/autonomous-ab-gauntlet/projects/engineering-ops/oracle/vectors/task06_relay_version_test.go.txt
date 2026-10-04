@@ -1,0 +1,19 @@
+package main
+
+import (
+	"os/exec"
+	"path/filepath"
+	"runtime"
+	"strings"
+	"testing"
+)
+
+func TestGauntletRelayVersionAndDefaultOutput(t *testing.T) {
+	bin := filepath.Join(t.TempDir(), "relayctl")
+	if runtime.GOOS == "windows" { bin += ".exe" }
+	if out, err := exec.Command("go", "build", "-o", bin, ".").CombinedOutput(); err != nil { t.Fatalf("build relayctl: %v: %s", err, out) }
+	version, err := exec.Command(bin, "--version").CombinedOutput()
+	if err != nil || !strings.Contains(string(version), "0.4.0") { t.Fatalf("--version = %q, err=%v; want it to report 0.4.0", version, err) }
+	defaultOut, err := exec.Command(bin).CombinedOutput()
+	if err != nil || strings.TrimSpace(string(defaultOut)) != "relay ready" { t.Fatalf("default output = %q, err=%v", defaultOut, err) }
+}

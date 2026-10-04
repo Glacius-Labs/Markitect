@@ -1,0 +1,7 @@
+apiVersion: architecture.markitect.org/v1alpha1
+kind: Core
+metadata:
+  name: service-core
+  namespace: architecture
+spec:
+  purpose: Stable identifiers and time access shared by service modules.

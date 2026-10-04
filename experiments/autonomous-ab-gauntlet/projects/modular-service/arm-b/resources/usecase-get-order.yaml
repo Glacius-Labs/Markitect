@@ -1,0 +1,13 @@
+apiVersion: architecture.markitect.org/v1alpha1
+kind: UseCase
+metadata:
+  name: get-order
+  namespace: architecture
+  labels:
+    feature-ownership: required
+spec:
+  handler: {kind: Handler, name: get-order, namespace: architecture}
+  intent: Query
+  module: {kind: Module, name: orders, namespace: architecture}
+  feature: {kind: Feature, name: order-lifecycle, namespace: architecture}
+  summary: Return one order by its stable identifier.

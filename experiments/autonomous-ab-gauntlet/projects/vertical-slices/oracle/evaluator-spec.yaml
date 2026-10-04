@@ -1,0 +1,34 @@
+version: 1
+scope:
+  interface: "evaluate.ps1 -Repo PATH -Task ID -Base COMMIT -Output YAML"
+  base_revision: Use the immutable card-start commit. Compare changed tracked paths, ignored and non-ignored untracked paths, and protected package fixture blob IDs against this exact revision.
+  arm_detection: A project with markitect.yaml is arm B; otherwise it is arm A.
+  allowed_paths: Read the current card's allowed_paths_by_arm from task-set.yaml; include ordinary and ignored untracked paths, excluding only Git metadata and .NET bin/obj build directories. Any out-of-scope path fails independently of behavior results.
+  protected_architecture:
+    - Published software-architecture v1/v2 archive bytes remain identical on every card.
+    - Cards 01, 02, 04, 09, 10, and 12 keep canonical architecture inputs unchanged; escalation cards also keep the readable A architecture owner unchanged.
+    - Cards 03, 05, and 07 may add only the card-specific Orders UseCase and Handler owners in B; 06 may add only the create-order Validator owner/relation; 08 may rename only the create-order Handler identity and its UseCase reference. Generated views may follow those exact changes.
+    - Card 11 changes only the exact active v2 pin and, if the unchanged selected cohort has a real missing Validator finding, its create-order Validator owner/relation and implementation. The successful sequential state after task 06 may need no implementation change. Do not manufacture a missing finding or rewrite other resource meaning.
+    - Added or changed exception artifacts fail as an independent policy-exception finding.
+  boundaries:
+    - Orders Domain may not depend on Orders Application or other module internals.
+    - Orders may consume only published Inventory/Billing contracts, never their Application or Domain namespaces.
+    - Orders Domain may not read ambient system time.
+    - These checks are performed against candidate source, independently of actor-authored acceptance tests.
+  independent_behavior:
+    "01": The evaluator injects vectors through the public PlaceOrderHandler.Handle(PlaceOrderCommand) path for one and two units, exact unit price/quantity preservation, and zero-quantity rejection in a temporary .NET 8 console project referencing the candidate Commerce assembly. If the actual public API cannot be adapted from the task prompt, mark the vector manual/unavailable instead of failing on a compile mismatch. No actor test is used as behavioral evidence.
+    "02-08": The frozen behavior assessor may adapt invocation to the candidate's actual public API; a vector is unavailable if execution would require an API assumption absent from the prompt. Actor-authored tests alone never satisfy these vectors.
+    "09-10-12": No automatic decision or acceptance. Fail speculative implementation code changes; response quality and the owner decision remain human review.
+    "11": Review actual v1/v2 receipts against the exact unchanged selected cohort; task 06 may have already produced a clean v2 state. No green validator alone converts the migration into acceptance.
+  baseline_assertions: Always manual-review the candidate checks/Program.cs against the exact card-start file for semantic retention of its six original assertions. Allow the task01 total-bug correction and API/test-framework refactors. A source-text signal and actor runner are never automatic proof.
+  escalation:
+    status: owner-decision-required
+    automatic_acceptance: false
+results:
+  status_values: [passed, failed, manual-review-required, owner-decision-required]
+  manual: Manual fields remain unresolved and are never silently counted as passed.
+  feedback: YAML receipts retain independent checks, changed paths, failures, and manual review items; they are not sent to actors during scored runs.
+independence:
+  - Actor-authored tests and the acceptance validator are supplemental evidence only.
+  - Task 01 behavior is exercised through evaluator-owned source in an isolated temporary project.
+  - No source, actor seed, rubric, or root harness file is modified by this oracle.

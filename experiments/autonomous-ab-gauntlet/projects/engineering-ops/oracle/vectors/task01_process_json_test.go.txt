@@ -1,0 +1,77 @@
+package main
+
+import (
+	"encoding/json"
+	"fmt"
+	"os"
+	"os/exec"
+	"runtime"
+	"strconv"
+	"strings"
+	"testing"
+)
+
+func TestGauntletSentinelJSONAndTextCompatibility(t *testing.T) {
+	bin := buildSentinel(t)
+	args := childExitArgs(7)
+	text := exec.Command(bin, args...)
+	textOut, textErr := text.CombinedOutput()
+	if exitCode(textErr) != 7 || !strings.Contains(string(textOut), "exit=7 elapsed=") {
+		t.Fatalf("v1 text output lost its observed exit/elapsed fields: code=%d output=%q", exitCode(textErr), textOut)
+	}
+	jsonArgs := append([]string{"--json"}, args...)
+	jsonCmd := exec.Command(bin, jsonArgs...)
+	jsonOut, jsonErr := jsonCmd.CombinedOutput()
+	if exitCode(jsonErr) != 7 {
+		t.Fatalf("JSON mode changed the observed child exit code: code=%d output=%q", exitCode(jsonErr), jsonOut)
+	}
+	var value map[string]any
+	if err := json.Unmarshal(jsonOut, &value); err != nil {
+		t.Fatalf("--json did not emit one JSON object: %v; output=%q", err, jsonOut)
+	}
+	code, hasCode := numberField(value, "exitcode", "exit_code", "exit", "code")
+	elapsed, hasElapsed := field(value, "elapsed", "elapsedtime")
+	if !hasCode || code != 7 || !hasElapsed || !validElapsed(elapsed) {
+		t.Fatalf("JSON must preserve observed exit and elapsed meanings: %#v", value)
+	}
+}
+
+func buildSentinel(t *testing.T) string {
+	t.Helper()
+	path := t.TempDir() + string(os.PathSeparator) + "process-sentinel"
+	if runtime.GOOS == "windows" { path += ".exe" }
+	cmd := exec.Command("go", "build", "-o", path, ".")
+	if out, err := cmd.CombinedOutput(); err != nil { t.Fatalf("build process-sentinel: %v: %s", err, out) }
+	return path
+}
+func childExitArgs(code int) []string {
+	if runtime.GOOS == "windows" { return []string{"cmd.exe", "/c", "exit", strconv.Itoa(code)} }
+	return []string{"sh", "-c", "exit " + strconv.Itoa(code)}
+}
+func exitCode(err error) int {
+	if err == nil { return 0 }
+	if e, ok := err.(*exec.ExitError); ok { return e.ExitCode() }
+	return -1
+}
+func field(value map[string]any, names ...string) (any, bool) {
+	for key, raw := range value {
+		normal := strings.ToLower(strings.ReplaceAll(strings.ReplaceAll(key, "_", ""), "-", ""))
+		for _, name := range names { if normal == name { return raw, true } }
+	}
+	return nil, false
+}
+func numberField(value map[string]any, names ...string) (int, bool) {
+	for key, raw := range value {
+		normal := strings.ToLower(strings.ReplaceAll(strings.ReplaceAll(key, "_", ""), "-", ""))
+		for _, name := range names { if normal == name { switch n := raw.(type) { case float64: return int(n), n == float64(int(n)); case json.Number: parsed, err := n.Int64(); return int(parsed), err == nil; case string: parsed, err := strconv.Atoi(n); return parsed, err == nil } } }
+	}
+	return 0, false
+}
+func validElapsed(raw any) bool {
+	switch value := raw.(type) {
+	case string: return strings.TrimSpace(value) != "" && !strings.EqualFold(value, "0s")
+	case float64: return value > 0
+	case json.Number: n, err := value.Int64(); return err == nil && n > 0
+	default: return fmt.Sprint(value) != ""
+	}
+}

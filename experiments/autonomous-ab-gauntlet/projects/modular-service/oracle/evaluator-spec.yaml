@@ -1,0 +1,31 @@
+version: 1
+scope:
+  interface: "pwsh -NoProfile -File evaluate.ps1 -Repo PATH -Task ID -Output PATH -Base REV [-PriorTasksThrough 06]"
+  base_revision: Use the card-start commit supplied with -Base or GAUNTLET_TASK_BASE. Each sequential card receives the result of its prior card; only parallel-task-set.yaml cards P01/P02 both receive the identical task-06 state.
+  parallel_evaluation: For P01/P02, use the task-06 fork commit as Base and PriorTasksThrough 06. Run behavior vectors through 06 plus only the card's origin task (07 or 08); the combined main-sequence evaluation through task 08 checks both.
+  paths: Resolve the current card's allowed_paths_by_arm for the detected arm when supplied, otherwise allowed_paths; compare changed tracked paths from Base plus ordinary and ignored untracked paths. Directory scopes end in a slash and match by prefix; file scopes require an exact path.
+  untracked_scan: Include ignored and non-ignored untracked files. Exclude only .git/ and .cache/ as repository metadata or declared build-cache locations.
+  fixed_drift_vector:
+    - architecture_boundary: Run the identical Go import-boundary check for both arms.
+    - package_regression: Run the task-set validator and every hidden focused behavior vector introduced up to the current sequential task; adapt only task-02's IssueRequest name after task 04 and task-01's Quantity field after task 11 to preserve original behavior assertions across authorized contract renames.
+    - source_regression: Recheck each completed source-level acceptance assertion on every later sequential card, including the ownership table, renamed contract, both architecture-intent records, and Units migration.
+    - unaffected_paths: Require every changed path to fit the predeclared task scope; scope misses remain failures even if tests pass.
+    - b_model: For B model tasks, require frozen Markitect check, read-only render, fixed-revision verify, and artifact-coverage helper to pass on the candidate; A tasks use their corresponding human-owned architecture record and AGENTS.md scopes.
+    - escalation: Task 10 remains owner-decision-required with no automatic waiver or acceptance.
+results:
+  01: [idempotent-retry, conflicting-retry-no-mutation, inventory-tests]
+  02: [same-amount-idempotent, different-amount-conflict, invoice-immutable]
+  03: [three-module-rows, responsibility-terms, exact-core-contract-dependency-set, exact-package-paths, source-unchanged]
+  04: [old-type-absent, renamed-type-present, full-go-tests]
+  05: [max-total-accepted, ErrInvalidOrder-preserved, overflow-rejected-before-side-effects]
+  06: [availability-query-contract, empty-sku-rejected, UseCase-metadata-name, UseCase-spec-module-is-inventory, selected-guidance]
+  07: [reference-exactly-preserved, empty-reference-valid]
+  08: [memo-preserved, idempotent-retry-stable, amount-conflict-preserved]
+  09: [zero-and-negative-refunds-rejected-without-state-change, bounded-refund, retry-idempotency, immutable-issued-amount, UseCase-spec-module-is-billing, Interface-spec-provider-is-billing, selected-guidance-explicitly-assigns-refunds-to-Billing]
+  10: [no-implementation-before-decision, escalation-requested, waiver-forbidden]
+  11: [quantity-removed-from-contract, units-added-to-contract, consumers-migrated]
+  12: [named-gofmt-check-fails-on-formatting-output, architecture-step-before-service-tests, vet-step, exact-contribution-section-commands]
+independence:
+  - Evaluator implementation does not depend on actor model choice; results use fixed tests/source assertions.
+  - The evaluator does not grade prose, intentions, model compliance claims, or human acceptance.
+  - Evaluation output never grants the task-10 decision or converts a missing decision to success.

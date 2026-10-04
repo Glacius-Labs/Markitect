@@ -1,0 +1,44 @@
+package orders
+
+import (
+	"context"
+	bc "example.com/acme/modular-service/internal/contracts/billing"
+	ic "example.com/acme/modular-service/internal/contracts/inventory"
+	"testing"
+	"time"
+)
+
+type gauntletClock struct{}
+
+func (gauntletClock) Now() time.Time { return time.Unix(0, 0) }
+
+type gauntletStore struct{ order Order }
+
+func (s *gauntletStore) Save(_ context.Context, o Order) error { s.order = o; return nil }
+
+type gauntletStock struct{}
+
+func (gauntletStock) Reserve(context.Context, ic.ReserveRequest) (ic.Reservation, error) {
+	return ic.Reservation{}, nil
+}
+
+type gauntletBilling struct{}
+
+func (gauntletBilling) Issue(context.Context, bc.CreateInvoiceRequest) (bc.Invoice, error) {
+	return bc.Invoice{}, nil
+}
+func TestGauntletCustomerReferenceVector(t *testing.T) {
+	st := &gauntletStore{}
+	svc := New(st, gauntletStock{}, gauntletBilling{}, gauntletClock{})
+	o, err := svc.Create(context.Background(), CreateRequest{CustomerID: "C", SKU: "S", Quantity: 1, UnitPriceCents: 1, CustomerReference: "REF / exact"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if o.CustomerReference != "REF / exact" || st.order.CustomerReference != "REF / exact" {
+		t.Fatalf("reference lost: %+v %+v", o, st.order)
+	}
+	_, err = svc.Create(context.Background(), CreateRequest{CustomerID: "C", SKU: "S", Quantity: 1, UnitPriceCents: 1})
+	if err != nil {
+		t.Fatal(err)
+	}
+}

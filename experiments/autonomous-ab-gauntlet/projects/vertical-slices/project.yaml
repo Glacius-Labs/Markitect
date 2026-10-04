@@ -1,0 +1,36 @@
+apiVersion: gauntlet.markitect.org/v1alpha1
+kind: Project
+id: vertical-slices
+arms:
+  a:
+    path: a
+    base_revision: cd58b3786ce14ea4550a2a7a3a32e23b77de5903
+    validator:
+      - [dotnet, run, --project, checks/Commerce.Checks.csproj]
+    full_acceptance:
+      - [dotnet, run, --project, checks/Commerce.Checks.csproj]
+  b:
+    path: b
+    base_revision: 7f44f450dc69294e1c0a9c4e44dd38c2507c9114
+    validator:
+      - [dotnet, run, --project, checks/Commerce.Checks.csproj]
+      - [markitect, check, --repo, ., --revision, "${CANDIDATE_REVISION}"]
+      - [markitect-check-artifacts, --repo, ., --config, markitect-artifacts.yaml]
+    full_acceptance:
+      - [dotnet, run, --project, checks/Commerce.Checks.csproj]
+      - [markitect, check, --repo, ., --revision, "${CANDIDATE_REVISION}"]
+      - [markitect, render, --repo, ., --revision, "${CANDIDATE_REVISION}"]
+      - [markitect, impact, --repo, ., --base, "${BASE_REVISION}", --revision, "${CANDIDATE_REVISION}"]
+      - [markitect, verify, --repo, ., --revision, "${CANDIDATE_REVISION}"]
+      - [markitect-check-artifacts, --repo, ., --config, markitect-artifacts.yaml]
+evaluator:
+  command: [pwsh, -NoProfile, -File, oracle/evaluate.ps1]
+controls:
+  task_set: task-set.yaml
+  parity_evidence: evidence/code-parity.yaml
+  measurement_and_limits: parity.md
+  candidate_evidence: evidence/candidate-evidence.yaml
+  holdout_tasks: ["09", "10", "11", "12"]
+  do_not_dispatch_holdouts: true
+  candidate_revision_variable: "${CANDIDATE_REVISION}"
+  base_revision_variable: "${BASE_REVISION}"

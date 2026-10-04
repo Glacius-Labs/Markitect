@@ -1,0 +1,33 @@
+apiVersion: markitect.example.org/v1alpha1
+kind: Skill
+metadata:
+  name: implement-commerce
+  namespace: engineering
+spec:
+  description: Implement one bounded Commerce vertical slice from the selected architecture contract.
+  text: |
+    Treat the harness-provided task card as the request. Use the Commerce Domain/resources, exact pinned policy, and declared application-file snapshot to locate the owning slice. Keep module implementation behind public contracts. Preserve unresolved ownership questions for a human decision.
+  uses:
+    - apiVersion: architecture.markitect.org/v1alpha1
+      kind: Module
+      name: orders
+      namespace: engineering
+    - kind: Workflow
+      name: vertical-slice
+      namespace: architecture
+      package: software-architecture
+  files:
+    - src/Commerce/Orders/Domain/Order.cs
+    - src/Commerce/Orders/Domain/OrderLine.cs
+    - src/Commerce/Orders/Domain/OrderStatus.cs
+    - src/Commerce/Billing/Application/InMemoryPaymentAuthorizer.cs
+    - src/Commerce/Inventory/Application/InMemoryStockAvailability.cs
+    - src/Commerce/Core/Time/IClock.cs
+    - src/Commerce/Commerce.csproj
+    - checks/Program.cs
+    - checks/Commerce.Checks.csproj
+    - src/Commerce/Orders/Application/PlaceOrder/PlaceOrderCommand.cs
+    - src/Commerce/Orders/Application/PlaceOrder/PlaceOrderHandler.cs
+    - src/Commerce/Inventory/Contracts/IStockAvailability.cs
+    - src/Commerce/Billing/Contracts/IPaymentAuthorizer.cs
+

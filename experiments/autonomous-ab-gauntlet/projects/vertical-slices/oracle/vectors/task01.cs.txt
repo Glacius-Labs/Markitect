@@ -1,0 +1,169 @@
+using System.Reflection;
+
+static int Unavailable(string reason) { Console.WriteLine("UNAVAILABLE: " + reason); return 2; }
+
+var task = Environment.GetEnvironmentVariable("GAUNTLET_TASK") ?? "01";
+var handlerName = int.Parse(task) >= 8 ? "SubmitOrderHandler" : "PlaceOrderHandler";
+var instant = new DateTimeOffset(2026, 10, 4, 12, 0, 0, TimeSpan.Zero);
+Assembly assembly;
+try { assembly = Assembly.Load("Commerce"); }
+catch { return Unavailable("Commerce assembly did not load."); }
+var exported = assembly.GetExportedTypes();
+var handlerType = exported.SingleOrDefault(type => type.Name == handlerName);
+var commandType = exported.SingleOrDefault(type => type.Name == "PlaceOrderCommand");
+var lineType = exported.SingleOrDefault(type => type.Name == "OrderLine");
+if (handlerType is null || commandType is null || lineType is null) return Unavailable("The task's public order command entrypoint could not be identified.");
+
+object? BuildLine(int quantity)
+{
+    foreach (var constructor in lineType.GetConstructors().OrderByDescending(item => item.GetParameters().Length))
+    {
+        var values = new object?[constructor.GetParameters().Length];
+        var supported = true;
+        for (var index = 0; index < values.Length; index++)
+        {
+            var parameter = constructor.GetParameters()[index];
+            var name = parameter.Name?.ToLowerInvariant() ?? "";
+            if (name.Contains("product") || name == "sku") values[index] = "SKU-1";
+            else if (name is "quantity" or "units") values[index] = quantity;
+            else if (name.Contains("price")) values[index] = 12.50m;
+            else if (parameter.HasDefaultValue) values[index] = parameter.DefaultValue;
+            else if (!parameter.ParameterType.IsValueType || Nullable.GetUnderlyingType(parameter.ParameterType) is not null) values[index] = null;
+            else { supported = false; break; }
+        }
+        if (supported) return constructor.Invoke(values);
+    }
+    return null;
+}
+
+object? BuildCommand(string orderId, int quantity)
+{
+    var line = BuildLine(quantity);
+    if (line is null) return null;
+    foreach (var constructor in commandType.GetConstructors().OrderByDescending(item => item.GetParameters().Length))
+    {
+        var values = new object?[constructor.GetParameters().Length];
+        var supported = true;
+        for (var index = 0; index < values.Length; index++)
+        {
+            var parameter = constructor.GetParameters()[index];
+            var name = parameter.Name?.ToLowerInvariant() ?? "";
+            if (name.Contains("orderid") || name == "id") values[index] = orderId;
+            else if (name.Contains("created") || name.Contains("time")) values[index] = instant;
+            else if (name.Contains("line"))
+            {
+                var elementType = parameter.ParameterType.IsArray ? parameter.ParameterType.GetElementType() : parameter.ParameterType.GetGenericArguments().FirstOrDefault();
+                if (elementType is null || !elementType.IsAssignableFrom(line.GetType())) { supported = false; break; }
+                var listType = typeof(List<>).MakeGenericType(elementType);
+                var list = (System.Collections.IList)Activator.CreateInstance(listType)!;
+                list.Add(line);
+                if (!parameter.ParameterType.IsAssignableFrom(listType)) { supported = false; break; }
+                values[index] = list;
+            }
+            else if (name.Contains("payment") || name.Contains("token")) values[index] = "tok_test";
+            else if (parameter.HasDefaultValue) values[index] = parameter.DefaultValue;
+            else if (!parameter.ParameterType.IsValueType || Nullable.GetUnderlyingType(parameter.ParameterType) is not null) values[index] = null;
+            else { supported = false; break; }
+        }
+        if (supported) return constructor.Invoke(values);
+    }
+    return null;
+}
+
+object? BuildDependency(Type requestedType)
+{
+    if (requestedType.Name.Contains("Clock", StringComparison.OrdinalIgnoreCase))
+    {
+        var proxyType = typeof(FixedClockProxy);
+        var create = typeof(DispatchProxy).GetMethods(BindingFlags.Public | BindingFlags.Static)
+            .SingleOrDefault(method => method.Name == "Create" && method.IsGenericMethodDefinition && method.GetGenericArguments().Length == 2 && method.GetParameters().Length == 0);
+        if (create is null || !requestedType.IsInterface) return null;
+        var proxy = create.MakeGenericMethod(requestedType, proxyType).Invoke(null, null);
+        ((FixedClockProxy)proxy!).Instant = instant;
+        return proxy;
+    }
+    var implementation = exported.FirstOrDefault(type => type.IsClass && !type.IsAbstract && requestedType.IsAssignableFrom(type) && type.Name.StartsWith("InMemory", StringComparison.Ordinal));
+    if (implementation is null) return null;
+    return Activator.CreateInstance(implementation);
+}
+
+object? Place(string orderId, int quantity)
+{
+    var command = BuildCommand(orderId, quantity);
+    if (command is null) throw new NotSupportedException("Public command parameters could not be mapped.");
+    var constructors = handlerType.GetConstructors().OrderByDescending(item => item.GetParameters().Length);
+    foreach (var constructor in constructors)
+    {
+        var values = new object?[constructor.GetParameters().Length];
+        var supported = true;
+        for (var index = 0; index < values.Length; index++)
+        {
+            var parameter = constructor.GetParameters()[index];
+            values[index] = BuildDependency(parameter.ParameterType);
+            if (values[index] is null && parameter.HasDefaultValue) values[index] = parameter.DefaultValue;
+            if (values[index] is null) { supported = false; break; }
+        }
+        if (!supported) continue;
+        var handler = constructor.Invoke(values);
+        var method = handlerType.GetMethods(BindingFlags.Instance | BindingFlags.Public)
+            .SingleOrDefault(item => item.Name == "Handle" && item.GetParameters().Length == 1 && item.GetParameters()[0].ParameterType == commandType);
+        if (method is null) throw new NotSupportedException("Public Handle(PlaceOrderCommand) entrypoint is unavailable.");
+        return method.Invoke(handler, [command]);
+    }
+    throw new NotSupportedException("Public handler dependencies could not be constructed.");
+}
+
+try
+{
+    foreach (var scenario in new[] { (Id: "oracle-one", Quantity: 1, Total: 12.50m), (Id: "oracle-two", Quantity: 2, Total: 25.00m) })
+    {
+        var order = Place(scenario.Id, scenario.Quantity);
+        if (order is null) return Unavailable("Handler did not return a public order result.");
+        var total = order.GetType().GetProperty("Total")?.GetValue(order);
+        var lines = order.GetType().GetProperty("Lines")?.GetValue(order) as System.Collections.IEnumerable;
+        var firstLine = lines?.Cast<object>().FirstOrDefault();
+        var quantity = firstLine?.GetType().GetProperty("Quantity")?.GetValue(firstLine) ?? firstLine?.GetType().GetProperty("Units")?.GetValue(firstLine);
+        var unitPrice = firstLine?.GetType().GetProperty("UnitPrice")?.GetValue(firstLine);
+        if (total is null || firstLine is null || quantity is null || unitPrice is null) return Unavailable("Public order result does not expose the requested observable values.");
+        if (Convert.ToDecimal(total) != scenario.Total || Convert.ToInt32(quantity) != scenario.Quantity || Convert.ToDecimal(unitPrice) != 12.50m)
+        {
+            Console.Error.WriteLine($"FAIL: {scenario.Quantity} unit order returned total={total}, quantity={quantity}, unitPrice={unitPrice}.");
+            return 1;
+        }
+        if (scenario.Quantity == 1)
+        {
+            var status = order.GetType().GetProperty("Status");
+            if (status is null) return Unavailable("Public order result does not expose lifecycle status.");
+            if (!string.Equals(Convert.ToString(status.GetValue(order)), "Open", StringComparison.OrdinalIgnoreCase)) { Console.Error.WriteLine("FAIL: newly placed order was not Open."); return 1; }
+            var ship = order.GetType().GetMethods(BindingFlags.Instance | BindingFlags.Public).SingleOrDefault(method => method.Name == "MarkShipped" && method.GetParameters().Length == 0);
+            if (ship is null) return Unavailable("The seeded public shipping transition could not be adapted.");
+            ship.Invoke(order, null);
+            if (!string.Equals(Convert.ToString(status.GetValue(order)), "Shipped", StringComparison.OrdinalIgnoreCase)) { Console.Error.WriteLine("FAIL: open order did not transition to Shipped."); return 1; }
+        }
+    }
+}
+catch (TargetInvocationException exception) { Console.Error.WriteLine("FAIL: valid quantity order was rejected: " + exception.InnerException?.GetType().Name); return 1; }
+catch (NotSupportedException exception) { return Unavailable(exception.Message); }
+
+try
+{
+    var zero = Place("oracle-zero", 0);
+    if (zero is null) { Console.WriteLine("PASS: order placement vectors via public handler (valid totals/line values/lifecycle; zero quantity rejected)"); return 0; }
+    var success = zero.GetType().GetProperty("IsSuccess")?.GetValue(zero) ?? zero.GetType().GetProperty("Succeeded")?.GetValue(zero) ?? zero.GetType().GetProperty("Success")?.GetValue(zero);
+    if (success is bool isSuccess && !isSuccess) { Console.WriteLine("PASS: order placement vectors via public handler (valid totals/line values/lifecycle; zero quantity rejected)"); return 0; }
+    Console.Error.WriteLine("FAIL: zero quantity was accepted by the public order handler.");
+    return 1;
+}
+catch (NotSupportedException exception) { return Unavailable(exception.Message); }
+catch (Exception) { Console.WriteLine("PASS: order placement vectors via public handler (valid totals/line values/lifecycle; zero quantity rejected)"); return 0; }
+
+public class FixedClockProxy : DispatchProxy
+{
+    public DateTimeOffset Instant { get; set; }
+    protected override object? Invoke(MethodInfo? targetMethod, object?[]? args)
+    {
+        if (targetMethod?.Name == "get_UtcNow") return Instant;
+        return targetMethod?.ReturnType == typeof(void) ? null : targetMethod?.ReturnType.IsValueType == true ? Activator.CreateInstance(targetMethod.ReturnType) : null;
+    }
+}
+

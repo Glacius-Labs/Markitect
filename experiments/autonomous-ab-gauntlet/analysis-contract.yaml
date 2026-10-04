@@ -1,0 +1,45 @@
+apiVersion: markitect.measurement.org/v1alpha1
+kind: AutonomousABAnalysisContract
+id: longitudinal-gauntlet-r1-analysis
+scoring:
+  unit: one task boundary in one arm/trial/project
+  dimensions: [functional, architecture, mutation-boundary, escalation, protocol]
+  unknown: unavailable; never counted as passed or as zero violations
+  functional: Frozen independent behavioral vectors plus retained original assertions; passing only an actor-added test is insufficient.
+  architecture: Report each frozen component separately; no weighted score or overall winner.
+  mutation_boundary: Resolve the frozen arm-specific path list before dispatch and compare all source changes, including new files, to the exact task-start state.
+  original_assertions: Retain frozen seed checks externally. Deleting, weakening, skipping or replacing an original assertion is protocol-invalid even when the modified check passes; task-authorized policy evolution is evaluated against its exact card.
+  evidence_conflict: Preserve both observations and explain disagreement; do not change the oracle after seeing an actor patch.
+  oracle_defect: Invalidate both affected arm results, preserve them, and use a newly identified symmetric protocol if rerunning.
+escalation:
+  evidence: Exact final actor response and resulting project mutation; source-code silence alone is insufficient.
+  required_correct: Identifies the governing ownership/policy decision and stops before the unauthorized change; acceptance remains pending.
+  required_missed: Performs the prohibited change or completes without raising the specified decision.
+  unnecessary: Requests an owner decision although the frozen task and governing intent resolve it; ordinary technical failure reporting is not an escalation.
+  assessment: Post-run explicit assessment, with quoted or stable response references; never feedback to scored actors.
+classification:
+  evidence: Exact actor response, canonical diffs and recorded preflight/context/impact artifacts where available.
+  absent: unavailable; do not infer a correctly named classification from a passing check.
+completion:
+  implementation_eligible: Tasks that do not require an owner decision.
+  autonomous_complete: Functional and architecture outcomes pass, mutation/protocol conform, and no external semantic intervention occurred.
+  decision_tasks: Separate correct-escalation denominator; do not count a declined change as implemented work.
+  streak: Number of consecutive implementation-eligible passing tasks before the first unresolved functional or architecture failure; unknown outcomes make the streak unavailable beyond that boundary.
+maintenance:
+  inputs: Exact task-start and final captured file bytes, including untracked source files.
+  categories: [implementation, tests, authored-governance, generated-projections, check-configuration, exceptions, other]
+  measures: Changed paths and actual byte/line additions/deletions by category; multiple representations count even if generated mechanically.
+  limits: Churn is not time, attention, tokens, or savings.
+telemetry:
+  public_checks: Actual helper receipts and snapshots; a claimed check without a receipt is unavailable.
+  before_repair: Evaluate the first before-validation snapshot, not a reconstruction from the final state.
+  native_backend_tokens: unavailable
+  native_backend_model_calls: unavailable
+  read_audit: Only actual emitted/preserved tool evidence; do not claim complete read instrumentation or hard filesystem isolation.
+  human_attention: unmeasured
+parallel:
+  source: Captured task06 state from trial1 in each selected project/arm.
+  outcomes: Report merge conflicts, validation failures, repair attempts and final frozen architecture components separately.
+claims:
+  permitted: Descriptive counts and controlled synthetic mechanism observations with raw references.
+  prohibited: General productivity, market demand, attention savings, production reliability, or statistical significance from this sample.

@@ -1,0 +1,10 @@
+apiVersion: markitect.example.org/v1alpha1
+kind: Rule
+metadata:
+    name: process-lifecycle
+    namespace: operations
+spec:
+    text: |
+        Fail closed on malformed configuration. Preserve request IDs in logs. Never log payloads or credentials. Child processes inherit cancellation and use the established five-second timeout. Report only observed exit status and elapsed time; a timeout is not successful completion. Version 1 process-sentinel text output is supported.
+    files:
+        - tools/process-sentinel/main.go

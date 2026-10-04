@@ -1,0 +1,10 @@
+cli_version: 0.13.0
+source_commit: adef79d935399f8ac63ad874dbdeab8d15c418a1
+frozen_cli_digest: sha256:553b7077ce7b5db2df89567146fc1a877a03cb6edd75459be5a3e0a380676056
+frozen_artifact_helper_digest: sha256:e671a89e03c93c153dcbe8694b9c30f86cc0e9512b1dc026332ac24db5e1c9d8
+render: passed
+check: passed
+artifact_coverage: passed
+outputs_copied:
+  - .agents/skills/implement-change/SKILL.md
+  - docs/markitect/

@@ -1,0 +1,7 @@
+apiVersion: architecture.markitect.org/v1alpha1
+kind: Handler
+metadata:
+  name: reserve-stock
+  namespace: architecture
+spec:
+  summary: Validate request and invoke the stock reservation use case.

@@ -1,0 +1,29 @@
+package billing
+
+import (
+	"context"
+	contract "example.com/acme/modular-service/internal/contracts/billing"
+	"strings"
+	"testing"
+)
+
+func TestGauntletInvoiceConflictVector(t *testing.T) {
+	s := New()
+	req := contract.IssueRequest{OrderID: "O", AmountCents: 100}
+	first, err := s.Issue(context.Background(), req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	retry, err := s.Issue(context.Background(), req)
+	if err != nil || retry != first {
+		t.Fatalf("same request not idempotent: %+v %v", retry, err)
+	}
+	req.AmountCents = 101
+	if _, err = s.Issue(context.Background(), req); err == nil || !strings.Contains(err.Error(), "conflict") {
+		t.Fatalf("want explicit conflict, got %v", err)
+	}
+	final, err := s.Issue(context.Background(), contract.IssueRequest{OrderID: "O", AmountCents: 100})
+	if err != nil || final != first {
+		t.Fatalf("original invoice changed: %+v %v", final, err)
+	}
+}

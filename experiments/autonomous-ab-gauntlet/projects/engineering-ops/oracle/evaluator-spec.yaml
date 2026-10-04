@@ -1,0 +1,27 @@
+version: 1
+interface:
+  command: "powershell -NoProfile -ExecutionPolicy Bypass -File evaluate.ps1 -Repo PATH -Task ID -Base COMMIT [-PriorTasksThrough 06] -Output PATH"
+  base: "The caller must supply the exact task-start commit. No parent inference is performed. Missing or invalid Base yields status unavailable and no scope pass."
+  task_set: "Resolve the task ID, arm scope, decision flag, and validator from ../tasks/task-set.yaml on every invocation; P01/P02 resolve from ../parallel-task-set.yaml."
+  parallel_history: "P01/P02 inherit tasks 01-06 plus their own origin card; PriorTasksThrough accepts 06 for harness compatibility. Sequential task IDs evaluate all cards 01 through the selected ID, including task 08 integration even when the optional prior-task flag is present."
+  arm: "Arm B is identified by markitect.yaml in the candidate repository; otherwise use Arm A."
+  paths: "Compare Base..HEAD and all untracked files, including ignored files. Exclude only .git/ and .cache/. Each changed path must equal or descend from a declared arm scope."
+  isolation: "Copy the candidate to a unique temporary evaluation directory, excluding .git/ and .cache/. Inject hidden Go tests only into that copy and remove the copy afterward."
+  public_validation: "Run the card's declared validator in the disposable external evaluation copy. The public validator remains the only actor-facing validator."
+  hidden_vectors: "Cumulative fixed vectors cover sentinel JSON and exact v1 text compatibility, black-box seven-second default plus deadline cancellation, Relay version output, and parser fixture immutability. Vector sources use .go.txt and are never placed in actor workspaces."
+  baseline_protection: "Load original Go tests and Arm A policy checker/tests from the exact task-start Base into the external copy, then run those frozen gates independently of the mutable candidate validator. Candidate source must retain the protected assertion markers."
+  decisions: "Cards with requires_owner_decision=true never receive automatic acceptance. A no-mutation result is owner_decision_required; mutations fail. Exact response assessment is external to this evaluator."
+results:
+  output_fields: [task, arm, status, base, changed_paths, checks, failures, owner_decision]
+  statuses: [passed, failed, owner_decision_required, unavailable]
+  holdouts: "Cards 09-12 use the same evaluator when explicitly opened by the gauntlet; their card data is read live."
+  golden_fixture:
+    path: testdata/vendor-snapshots/sample.json
+    sha256: b700afecd52da6090288e13537d3efd6da7e2743d3b5fc2acd190f6c0efe68e8
+  positive_smokes:
+    - "A valid, scope-compliant candidate that passes its public validator and applicable fixed vectors passes."
+    - "A decision card with no mutation remains owner_decision_required, never passed."
+  negative_smokes:
+    - "A path outside the selected arm's declared scope fails even when tests pass."
+    - "A changed golden fixture fails task 11 and the cumulative fixture-integrity check."
+    - "Missing Base is unavailable, not an empty-diff success."

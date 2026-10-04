@@ -1,0 +1,45 @@
+apiVersion: gauntlet.markitect.org/v1alpha1
+kind: Project
+id: modular-service
+arms:
+  a:
+    path: arm-a
+    base_revision: adef79d935399f8ac63ad874dbdeab8d15c418a1
+    validator:
+      - [go, test, ./internal/architecture]
+      - [go, test, ./...]
+    full_acceptance:
+      - [go, test, ./internal/architecture]
+      - [go, test, ./...]
+      - [go, vet, ./...]
+  b:
+    path: arm-b
+    base_revision: adef79d935399f8ac63ad874dbdeab8d15c418a1
+    validator:
+      - [go, test, ./internal/architecture]
+      - [go, test, ./...]
+      - [markitect, check, --repo, ., --revision, "${CANDIDATE_REVISION}"]
+      - [markitect, render, --repo, ., --revision, "${CANDIDATE_REVISION}"]
+      - [markitect, verify, --repo, ., --revision, "${CANDIDATE_REVISION}"]
+      - [markitect-check-artifacts, --repo, ., --config, .markitect/coverage.yaml]
+    full_acceptance:
+      - [go, test, ./internal/architecture]
+      - [go, test, ./...]
+      - [go, vet, ./...]
+      - [markitect, check, --repo, ., --revision, "${CANDIDATE_REVISION}"]
+      - [markitect, render, --repo, ., --revision, "${CANDIDATE_REVISION}"]
+      - [markitect, verify, --repo, ., --revision, "${CANDIDATE_REVISION}"]
+      - [markitect-check-artifacts, --repo, ., --config, .markitect/coverage.yaml]
+controls:
+  task_set: task-set.yaml
+  parallel_task_set: parallel-task-set.yaml
+  measurement_and_limits: parity.md
+  holdout_tasks: ["09", "10", "11", "12"]
+  do_not_dispatch_holdouts: true
+  candidate_revision_variable: "${CANDIDATE_REVISION}"
+evaluator:
+  command:
+    - pwsh
+    - -NoProfile
+    - -File
+    - oracle/evaluate.ps1

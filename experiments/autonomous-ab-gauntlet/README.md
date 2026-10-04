@@ -1,0 +1,41 @@
+# Autonomous A/B gauntlet
+
+The protocol in [protocol.yaml](protocol.yaml) and experiment contract in [design.md](design.md) own the run. The Go harness operates on a separate external arena and preserves actor workspaces, raw events, before-validation snapshots, public-check output, final snapshots, evaluator results, and YAML run records outside the seed projects. It does not measure human attention or claim production benefit.
+
+Project cards are normalized as YAML task sets with a `tasks` list. The harness reads `id`, `prompt`, arm-specific `allowed_paths_by_arm` (or shared `allowed_paths`), and public `validator` argv. A project manifest may define arm seed paths, base revisions, validators, and full acceptance checks. Expected classifications, affected resources, owner-decision flags, and evaluator details are retained in frozen inputs but omitted from the actor envelope. Current arm directories may be named `arm-a`/`arm-b`, `a`/`b`, or `seed-a`/`seed-b`.
+
+Build the harness from the fixed Markitect source candidate and place its source/binary, exact candidate binaries, protocol, project seeds, task cards, checks, and sealed evaluator in the external arena before freezing. The evaluator must remain outside every actor workspace and must not be added to its PATH. `prepare` creates mutable evidence directories; `freeze` writes a one-time digest manifest for every input, including binaries. Scored commands refuse changed or newly added frozen inputs.
+
+```powershell
+go build -o <arena>/bin/gauntlet.exe ./experiments/autonomous-ab-gauntlet/harness
+<arena>/bin/gauntlet.exe prepare --arena <arena>
+<arena>/bin/gauntlet.exe freeze --arena <arena>
+```
+
+The preferred native driver uses one task boundary at a time. `prepare-task` emits the current actor prompt, workspace, resolved arm boundary, public validators, helper environment, deadline, and input digest. Dispatch one fresh actor session for the task with only that prompt and workspace. It must commit its task change before its one public-check call, stop after a failed check, and never inspect another arm, future card, product source, or evaluator. Preserve its exact final response and raw tool receipts outside the workspace. Then finish the task using those preserved files:
+
+```powershell
+$task = & <arena>/bin/gauntlet.exe prepare-task --arena <arena> --protocol <arena>/protocol.yaml `
+  --project modular-service --arm A --trial 1 --task-id 01
+$task = $task | ConvertFrom-Json
+# Dispatch one fresh native actor from $task.workspace with only $task.actor_prompt.
+<arena>/bin/gauntlet.exe finish-task --arena <arena> --run-id modular-service-a-t01 `
+  --task-id 01 --attempt 0 --input-digest $task.input_digest `
+  --response-file <preserved-response.txt> --receipts-file <preserved-events.jsonl> --status completed
+```
+
+`prepare-task` enforces task order and binds each turn to the frozen inputs and current workspace. `finish-task` stores each response and receipt separately; a `repair-needed` turn can be followed by at most two fresh repair sessions with the exact prior public-check output. A failed but usable task state carries to the next card. The chain stops only when the workspace is unusable. Actor/model settings in the envelope describe protocol expectations; native actor settings must be recorded from actual session evidence. Token usage and human attention remain unavailable unless actual usage events or directly measured attention records are supplied.
+
+An optional explicit Codex CLI adapter is available with `smoke` and `run`. It launches a new CLI process for each task and requires `--actor`; a successful command exit is not proof that a model turn or mutation occurred. Run only unscored smoke work until runtime, model, tool permissions, and workspace trust are verified. Raw CLI stdout JSONL and stderr are saved before parsing. `check` is the public-check helper: it captures the exact workspace before validation, runs the supplied argv, and records the validation output. The actor must invoke it before testing or repair. At most one helper call is accepted per actor turn and no more than the protocol's one initial check plus two repairs.
+
+Collect records with `collect`. Evaluate task-boundary snapshots with `evaluate --evaluator <path>`; task 09–12 outcomes stay sealed by default and require an explicit `--include-holdout` after the fix/no-fix decision is recorded. `summarize` preserves per-run task records. Automated evaluation is separate from owner acceptance, and missing instrumentation remains unavailable rather than inferred.
+
+## Native repair and parallel forks
+
+Project manifests may declare per-arm seed paths, base revisions, public validator argv arrays, and full-acceptance argv arrays. The emitted actor prompt includes only the current arm's resolved allowed paths and validator helper environment. Expected classifications, affected-resource sets, and evaluator details remain outside the actor envelope.
+
+Each task starts from a local non-protected Git branch with core.autocrlf disabled. Read-only engineering guidance and analysis available in that arm may inform the work. When the task explicitly requires generated-projection regeneration or reconciliation, the actor may invoke the corresponding mutating apply/render operation only for that requested work and only if every resulting write stays within the arm's exact authorized mutation boundary. Implicit adoption, unapproved exceptions, and external or unscoped apply/render operations are prohibited. Builds, application tests, and configured acceptance validators run only through the public-check helper. The actor commits its task change before invoking the helper so fixed-revision validators can inspect the candidate commit. The helper snapshots source bytes before each validation, records exact output, and permits one call for the initial actor plus at most two fresh repair actors. One task actor must not delegate or spawn additional agents. To start a repair, save the previous helper output and pass it to prepare-task with --repair-iteration 1 or 2 and --feedback-file. Finish the prior turn with --status repair-needed; after the final turn record completed, failed, protocol-invalid, or unusable. Use normal sandbox escalation for authorized Git, helper, or build commands only when arena or cache permissions require it; do not change global Git trust/configuration or bypass tool rules. Response files and tool receipts are retained separately for every attempt.
+
+Parallel overlays use prepare-task --parallel --fork-from-task 06. Each fork gets a distinct workspace copied from the exact completed task-06 snapshot and a separate run ID. The current card must declare origin_task_id and prior_tasks_through in the frozen overlay. After both actors finish, `integrate-parallel --main-task-id 06 --parallel-task-ids P01,P02 --protocol protocol.yaml` fetches both fork histories, records the full lexical commit plan, cherry-picks mechanically, and runs the combined public check. It preserves conflicts and the first failed integration snapshot. If integration or the public check fails, save the recorded feedback and call `prepare-integration-repair --arena ARENA --project PROJECT --arm A|B --trial N --protocol protocol.yaml --attempt 1|2 --feedback-file FILE`. This opens a fresh actor against the same integration workspace, with the union of the frozen P01/P02 arm scopes and only the not-yet-applied commit refs. Finish each repair with `finish-task --run-id RUN --task-id 08 --attempt N --input-digest DIGEST --response-file FILE --status repair-needed|completed|failed`. Each actor gets one public check; the task's frozen total deadline and maximum of two repairs cover the initial integration and both repairs. The combined task-08 snapshot is available to the external evaluator only after terminal completion. No operator semantic edits are part of integration or repair.
+
+The churn manifest excludes Git metadata and only the known vertical-slices build output paths src/Commerce/bin, src/Commerce/obj, checks/bin, and checks/obj. Ignored and untracked source files remain in the snapshot. The Go build cache defaults to the mutable external arena path raw/shared-go-cache, which is shared by both arms and excluded from the frozen-input check.

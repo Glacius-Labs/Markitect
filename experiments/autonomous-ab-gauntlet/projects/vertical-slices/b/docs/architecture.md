@@ -1,0 +1,3 @@
+# Commerce architecture facts
+
+Commerce is a fictional .NET 8 modular monolith. Orders owns the order aggregate, placement, cancellation, and order reads. Inventory owns stock and reservations. Billing owns payment authorization and capture. Modules collaborate through explicit public contracts. Domain invariants stay in the owning aggregate; validators belong to command Application slices. The v1 validation:required cohort is exactly `engineering/UseCase:create-order`; it requires Command intent and permits optional Validators. The proposed v2 rule requires at least one Validator for that same unchanged cohort. Ownership changes require a human decision and cannot be auto-waived.

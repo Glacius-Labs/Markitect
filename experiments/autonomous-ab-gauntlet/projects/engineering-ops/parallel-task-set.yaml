@@ -1,0 +1,35 @@
+schema: autonomous-ab-gauntlet/parallel-task-set/v1
+project: engineering-ops
+origin_task_set: tasks/task-set.yaml
+fork_from:
+  main_task_id: "06"
+  main_trial: 1
+  prior_tasks_through: "06"
+purpose: "Independent parallel branches from the retained main-run task-06 trial state; these overlay cards do not replace main-run tasks 07 or 08."
+tasks:
+  - id: P01
+    origin_task_id: "07"
+    prior_tasks_through: "06"
+    category: hook-and-pipeline-check-change
+    prompt: "The quality owner has accepted go vet ./... as a required check in both pre-commit and CI. Update the verification guidance, project hook and pipeline declarations, and literal check expectations so both gates run the new command. Keep existing root tests, nested-module tests, and artifact/projection checks."
+    expected_classification: intent-change
+    requires_owner_decision: false
+    allowed_paths_by_arm:
+      a: ["docs/engineering/agent-rules.md", "AGENTS.md", ".claude/CLAUDE.md", "scripts", ".githooks", ".github/workflows"]
+      b: [".markitect/areas/operations", ".markitect/modules", ".githooks", ".github/workflows", "markitect.yaml", "docs/markitect", "scripts/validate.py"]
+    expected_affected: ["verification Rule or source document", "provider instructions", "policy checker or Markitect module declarations", "hook", "CI workflow"]
+    validator: ["python", "scripts/validate.py"]
+    timeout_seconds: 1800
+  - id: P02
+    origin_task_id: "08"
+    prior_tasks_through: "06"
+    category: managed-artifact-create
+    prompt: "Add a concise operational runbook at docs/operations/runbooks/lease-renewal.md. It must explain idempotency, request-ID retention, timeout reporting, and that secrets and payloads stay out of logs. Update canonical inputs or ownership records and generated outputs as needed."
+    expected_classification: implementation-only
+    requires_owner_decision: false
+    allowed_paths_by_arm:
+      a: ["docs/operations/runbooks", "docs/engineering/managed-files.yaml"]
+      b: ["docs/operations/runbooks", ".markitect/areas/operations", ".agents/skills", ".claude/skills", "docs/markitect"]
+    expected_affected: ["lease-renewal runbook", "input or explicit tooling ownership declaration"]
+    validator: ["python", "scripts/validate.py"]
+    timeout_seconds: 1800

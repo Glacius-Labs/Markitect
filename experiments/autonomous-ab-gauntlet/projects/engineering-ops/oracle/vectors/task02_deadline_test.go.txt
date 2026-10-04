@@ -1,0 +1,28 @@
+package main
+
+import (
+	"os"
+	"os/exec"
+	"strings"
+	"testing"
+	"time"
+)
+
+func TestGauntletSevenSecondDefaultAndCancellation(t *testing.T) {
+	bin := buildSentinel(t)
+	child, err := os.Executable()
+	if err != nil { t.Fatal(err) }
+	command := exec.Command(bin, child, "-test.run=^TestGauntletSleeperProcess$")
+	command.Env = append(os.Environ(), "GAUNTLET_SLEEP_HELPER=1")
+	started := time.Now()
+	out, err := command.CombinedOutput()
+	elapsed := time.Since(started)
+	if exitCode(err) != 124 { t.Fatalf("timed out child exit=%d, want 124; output=%q", exitCode(err), out) }
+	if elapsed < 6500*time.Millisecond || elapsed > 8500*time.Millisecond { t.Fatalf("default deadline duration %s outside the seven-second window", elapsed) }
+	if !strings.Contains(string(out), "exit=124") || !strings.Contains(string(out), "elapsed=") { t.Fatalf("timeout did not report observed result: %q", out) }
+}
+
+func TestGauntletSleeperProcess(t *testing.T) {
+	if os.Getenv("GAUNTLET_SLEEP_HELPER") != "1" { return }
+	time.Sleep(7500 * time.Millisecond)
+}

@@ -1,0 +1,34 @@
+package inventory
+
+import (
+	"context"
+	contract "example.com/acme/modular-service/internal/contracts/inventory"
+	"strings"
+	"testing"
+)
+
+func TestGauntletIdempotencyVector(t *testing.T) {
+	s := New(map[string]int{"S": 5})
+	req := contract.ReserveRequest{OrderID: "O", SKU: "S", Quantity: 2}
+	first, err := s.Reserve(context.Background(), req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	second, err := s.Reserve(context.Background(), req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if first != second {
+		t.Fatalf("retry differs: %+v %+v", first, second)
+	}
+	if s.Available("S") != 3 {
+		t.Fatalf("retry consumed stock: %d", s.Available("S"))
+	}
+	req.Quantity = 4
+	if _, err = s.Reserve(context.Background(), req); err == nil || !strings.Contains(err.Error(), "conflict") {
+		t.Fatalf("want explicit conflict, got %v", err)
+	}
+	if s.Available("S") != 3 {
+		t.Fatalf("conflict mutated stock: %d", s.Available("S"))
+	}
+}

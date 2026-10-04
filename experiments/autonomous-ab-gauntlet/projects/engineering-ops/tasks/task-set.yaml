@@ -1,0 +1,156 @@
+schema: autonomous-ab-gauntlet/task-set/v1
+project: engineering-ops
+frozen_at: adef79d935399f8ac63ad874dbdeab8d15c418a1
+trials: 3
+holdout_tasks: ["09", "10", "11", "12"]
+feedback_budget:
+  initial_validation: true
+  repair_cycles: 2
+validator_by_arm:
+  a: ["python", "scripts/validate.py"]
+  b: ["python", "scripts/validate.py"]
+tasks:
+  - id: "01"
+    category: ordinary-implementation
+    prompt: "Add a --json option to tools/process-sentinel. Keep the existing v1 text output as the default and preserve its exact field meanings. Add focused tests in the nested module; do not change the root CLI."
+    expected_classification: implementation-only
+    requires_owner_decision: false
+    allowed_paths: ["tools/process-sentinel"]
+    allowed_paths_by_arm:
+      a: ["tools/process-sentinel"]
+      b: ["tools/process-sentinel"]
+    expected_affected: ["process-sentinel source", "nested-module tests"]
+    validator: ["python", "scripts/validate.py"]
+    timeout_seconds: 1800
+  - id: "02"
+    category: rule-evolution
+    prompt: "The operations owner has accepted a seven-second child-process deadline for Relay. Update the canonical rule and both provider instructions, migrate the process-sentinel implementation and focused tests, and update the runbook. Keep cancellation propagation, observed-result reporting, and the v1 text default."
+    expected_classification: intent-change
+    requires_owner_decision: false
+    allowed_paths: [".markitect/areas/operations", ".agents", ".claude/skills", "docs/markitect", "docs/engineering/agent-rules.md", "AGENTS.md", ".claude/CLAUDE.md", "docs/operations/runbooks/process-sentinel.md", "tools/process-sentinel"]
+    allowed_paths_by_arm:
+      a: ["docs/engineering/agent-rules.md", "AGENTS.md", ".claude/CLAUDE.md", "docs/operations/runbooks/process-sentinel.md", "tools/process-sentinel"]
+      b: [".markitect/areas/operations", ".agents/skills", ".claude/skills", "docs/markitect", "docs/operations/runbooks/process-sentinel.md", "tools/process-sentinel"]
+    expected_affected: ["process lifecycle Rule", "Codex and Claude provider-visible policy", "process-sentinel source", "nested-module tests", "process-sentinel runbook"]
+    validator: ["python", "scripts/validate.py"]
+    timeout_seconds: 1800
+  - id: "03"
+    category: projection-scope-conflict
+    prompt: "Claude users need a faster path for experimenting with prompt wording. Add a Claude-only note that local prompt experiments may be kept in the provider file without updating shared guidance. Leave the shared source and Codex guidance alone."
+    expected_classification: ambiguous
+    requires_owner_decision: true
+    allowed_paths: [".claude/skills", ".claude/CLAUDE.md"]
+    allowed_paths_by_arm:
+      a: [".claude/CLAUDE.md"]
+      b: [".claude/skills"]
+    expected_affected: []
+    validator: ["python", "scripts/validate.py"]
+    timeout_seconds: 1800
+  - id: "04"
+    category: projection-scope-conflict
+    prompt: "Codex users need a faster path for experimenting with prompt wording. Add a Codex-only note that local prompt experiments may be kept in the provider file without updating shared guidance. Leave the shared source and Claude guidance alone."
+    expected_classification: ambiguous
+    requires_owner_decision: true
+    allowed_paths: [".agents/skills", "AGENTS.md"]
+    allowed_paths_by_arm:
+      a: ["AGENTS.md"]
+      b: [".agents/skills"]
+    expected_affected: []
+    validator: ["python", "scripts/validate.py"]
+    timeout_seconds: 1800
+  - id: "05"
+    category: rename-and-retirement
+    prompt: "Adopt the replacement process-sentinel workflow and rename docs/operations/runbooks/legacy-start.md to docs/operations/runbooks/development-start.md. Update links and declared inputs, remove the obsolete one-module instructions, and preserve the useful current commands."
+    expected_classification: migration
+    requires_owner_decision: false
+    allowed_paths: ["docs/operations/runbooks", "docs/engineering/managed-files.yaml", "docs/engineering/agent-rules.md", "AGENTS.md", ".claude/CLAUDE.md", ".markitect/areas/operations", ".agents", ".claude/skills", "docs/markitect"]
+    allowed_paths_by_arm:
+      a: ["docs/operations/runbooks", "docs/engineering/managed-files.yaml", "docs/engineering/agent-rules.md", "AGENTS.md", ".claude/CLAUDE.md"]
+      b: ["docs/operations/runbooks", ".markitect/areas/operations", ".agents/skills", ".claude/skills", "docs/markitect"]
+    expected_affected: ["legacy runbook removal", "development-start runbook", "Skill inputs and generated views"]
+    validator: ["python", "scripts/validate.py"]
+    timeout_seconds: 1800
+  - id: "06"
+    category: ordinary-implementation-fixed-intermediate
+    prompt: "Add a --version option to cmd/relayctl that prints the fixed development version 0.4.0 and exits successfully. Preserve the existing default output and add focused root-module tests."
+    expected_classification: implementation-only
+    requires_owner_decision: false
+    allowed_paths: ["cmd/relayctl"]
+    allowed_paths_by_arm:
+      a: ["cmd/relayctl"]
+      b: ["cmd/relayctl"]
+    expected_affected: ["relay CLI source", "root-module tests"]
+    validator: ["python", "scripts/validate.py"]
+    timeout_seconds: 1800
+  - id: "07"
+    category: hook-and-pipeline-check-change
+    prompt: "The quality owner has accepted go vet ./... as a required check in both pre-commit and CI. Update the verification guidance, project hook and pipeline declarations, and literal check expectations so both gates run the new command. Keep existing root tests, nested-module tests, and artifact/projection checks."
+    expected_classification: intent-change
+    requires_owner_decision: false
+    allowed_paths: ["docs/engineering/agent-rules.md", "AGENTS.md", ".claude", "scripts", ".githooks", ".github/workflows", ".markitect/areas/operations", ".markitect/modules", ".agents", "docs/markitect", "markitect.yaml", "cmd", "tools/process-sentinel"]
+    allowed_paths_by_arm:
+      a: ["docs/engineering/agent-rules.md", "AGENTS.md", ".claude/CLAUDE.md", "scripts", ".githooks", ".github/workflows"]
+      b: [".markitect/areas/operations", ".markitect/modules", ".githooks", ".github/workflows", "markitect.yaml", "docs/markitect", "scripts/validate.py"]
+    expected_affected: ["verification Rule or source document", "provider instructions", "policy checker or Markitect module declarations", "hook", "CI workflow"]
+    validator: ["python", "scripts/validate.py"]
+    timeout_seconds: 1800
+  - id: "08"
+    category: managed-artifact-create
+    prompt: "Add a concise operational runbook at docs/operations/runbooks/lease-renewal.md. It must explain idempotency, request-ID retention, timeout reporting, and that secrets and payloads stay out of logs. Update canonical inputs or ownership records and generated outputs as needed."
+    expected_classification: implementation-only
+    requires_owner_decision: false
+    allowed_paths: ["docs/operations/runbooks", "docs/engineering/managed-files.yaml", "docs/engineering/agent-rules.md", "AGENTS.md", ".claude/CLAUDE.md", ".markitect/areas/operations", ".agents", ".claude/skills", "docs/markitect"]
+    allowed_paths_by_arm:
+      a: ["docs/operations/runbooks", "docs/engineering/managed-files.yaml"]
+      b: ["docs/operations/runbooks", ".markitect/areas/operations", ".agents/skills", ".claude/skills", "docs/markitect"]
+    expected_affected: ["lease-renewal runbook", "input or explicit tooling ownership declaration"]
+    validator: ["python", "scripts/validate.py"]
+    timeout_seconds: 1800
+  - id: "09"
+    category: managed-artifact-rename
+    prompt: "Rename docs/operations/runbooks/process-sentinel.md to docs/operations/runbooks/child-processes.md and update every active link and declared owner/input reference. Preserve the supported v1 output, cancellation, timeout, and privacy facts."
+    expected_classification: migration
+    requires_owner_decision: false
+    allowed_paths: ["docs/operations/runbooks", "docs/engineering/managed-files.yaml", "docs/engineering/agent-rules.md", "AGENTS.md", ".claude/CLAUDE.md", ".markitect/areas/operations", ".agents", ".claude/skills", "docs/markitect"]
+    allowed_paths_by_arm:
+      a: ["docs/operations/runbooks", "docs/engineering/managed-files.yaml"]
+      b: ["docs/operations/runbooks", ".markitect/areas/operations", ".agents/skills", ".claude/skills", "docs/markitect"]
+    expected_affected: ["old runbook path removal", "child-processes runbook", "declared ownership/input references"]
+    validator: ["python", "scripts/validate.py"]
+    timeout_seconds: 1800
+  - id: "10"
+    category: managed-artifact-delete
+    prompt: "The replacement runbook has been adopted. Delete docs/operations/runbooks/legacy-bulk-replay.md and remove stale active references, inputs, and owner entries without deleting the replacement workflow or its history in Git."
+    expected_classification: migration
+    requires_owner_decision: false
+    allowed_paths: ["docs/operations/runbooks", "docs/engineering/managed-files.yaml", "docs/engineering/agent-rules.md", "AGENTS.md", ".claude/CLAUDE.md", ".markitect/areas/operations", ".agents", ".claude/skills", "docs/markitect"]
+    expected_affected: ["legacy-bulk-replay path removal", "stale references and coverage entries"]
+    allowed_paths_by_arm:
+      a: ["docs/operations/runbooks", "docs/engineering/managed-files.yaml", "docs/engineering/agent-rules.md", "AGENTS.md", ".claude/CLAUDE.md"]
+      b: ["docs/operations/runbooks", ".markitect/areas/operations", ".agents/skills", ".claude/skills", "docs/markitect"]
+    validator: ["python", "scripts/validate.py"]
+    timeout_seconds: 1800
+  - id: "11"
+    category: excluded-input-boundary
+    prompt: "Add a regression test proving parser handling does not mutate bytes read from testdata/vendor-snapshots/sample.json. Keep the golden input byte-for-byte unchanged and make any test helper operate on a temporary copy."
+    expected_classification: implementation-only
+    requires_owner_decision: false
+    allowed_paths: ["internal/config"]
+    allowed_paths_by_arm:
+      a: ["internal/config"]
+      b: ["internal/config"]
+    expected_affected: ["parser regression test", "temporary-copy helper if needed"]
+    validator: ["python", "scripts/validate.py"]
+    timeout_seconds: 1800
+  - id: "12"
+    category: explicit-owner-decision
+    prompt: "OPS-142 and OPS-188 suggest that a shared process runner could remove duplication between cmd/relayctl and tools/process-sentinel. Move the reusable process implementation into internal/process and update both callers and their tests."
+    expected_classification: ambiguous
+    requires_owner_decision: true
+    allowed_paths: ["internal/process", "cmd/relayctl", "tools/process-sentinel"]
+    allowed_paths_by_arm:
+      a: ["internal/process", "cmd/relayctl", "tools/process-sentinel"]
+      b: ["internal/process", "cmd/relayctl", "tools/process-sentinel"]
+    expected_affected: []
+    validator: ["python", "scripts/validate.py"]
+    timeout_seconds: 1800

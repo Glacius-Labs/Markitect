@@ -1,0 +1,8 @@
+apiVersion: architecture.markitect.org/v1alpha1
+kind: Feature
+metadata:
+  name: order-lifecycle
+  namespace: architecture
+spec:
+  module: {kind: Module, name: orders, namespace: architecture}
+  summary: Place and inspect customer orders.

@@ -1,0 +1,62 @@
+apiVersion: markitect.measurement.org/v1alpha1
+kind: GauntletPreparationFindings
+id: longitudinal-gauntlet-r1-preparation
+state: pre-freeze-review
+scored_tasks_at_record_creation: 0
+classification: Preparation/runtime/benchmark findings, not scored Markitect defects.
+findings:
+  - id: runtime-cli
+    observation: CLI 0.130.0 rejected the Desktop model alias; an authenticated public-model attempt reached shell tools but its actual proof write was blocked by policy.
+    disposition: Preserve unscored logs. Keep execution rules and credentials unchanged. Select native collaboration after its independently verified scoped write/read smoke.
+  - id: native-telemetry
+    observation: Native collaboration does not expose backend token/model-call usage through the selected interface.
+    disposition: Record unavailable; do not reuse CLI smoke counts or infer tokens from bytes.
+  - id: native-wall-budget
+    observation: The recorded unscored READY initial workflow spans preparation at 2026-10-04T15:16:21Z to collection at 15:20:49Z, 268 seconds including operator dispatch/collection and tool/queue waits. These are workflow record boundaries, not actual active-agent telemetry.
+    disposition: Revise the common total deadline from 600 to 1800 seconds before freeze and before any scored dispatch, identically in all arms/projects. Keep one initial validation plus two fresh repairs. Do not infer active time or attention.
+  - id: control-arm-resource-shape
+    observation: The initial service oracle required typed Markitect resource files in Arm A.
+    disposition: Require equivalent facts in A's conventional owners and typed facts in B; independently re-review before freeze.
+  - id: path-scope
+    observation: Shared mutation scopes exposed B-only paths to A; one oracle duplicated scopes and omitted permitted conventional documentation paths.
+    disposition: Resolve frozen arm-specific scopes from task cards, including newly created source files. File entries are exact; directory entries use a component boundary.
+  - id: task-sequence
+    observation: Initial drafts placed peer forks at tasks07/08, conflicting with twelve sequential accumulated tasks.
+    disposition: Keep main01-to12 sequential. Put parallel P01/P02 cards in a separate overlay forked from retained task06.
+  - id: context-task-binding
+    observation: A .NET preparation ContextRun was bound to task01, making it unsuitable as institutional context for later tasks.
+    disposition: Remove preparation-only task evidence from actor seeds and use ordinary generic engineering guidance. Measure remaining context limitations during runs.
+  - id: dotnet-fact-parity
+    observation: B named a selected Validator-policy cohort and unrealized event relationship not equivalently stated in A.
+    disposition: Name the same cohort in A, remove the unrealized event requirement, and refresh both source/byte parity receipts.
+  - id: oracle-execution
+    observation: Baseline smoke assertions alone did not independently prove the requested new behaviors. The service oracle had overescaped regexes and non-cumulative vectors.
+    disposition: Freeze independent behavioral vectors/rubrics, preserve earlier behavior through later tasks, and test positive/negative evaluator cases before dispatch.
+  - id: public-repair-feedback
+    observation: Early native harness code declared repair flags without passing public feedback; revision placeholders could reach direct command execution literally.
+    disposition: Test the complete initial/fresh-repair lifecycle, exact public feedback and resolved revision arguments. Do not dispatch until the contract is executable.
+  - id: coverage-parity
+    observation: Operations Arm B initially omitted internal/config from managed roots while A explicitly accounted for it.
+    disposition: Match managed coverage, preserve the immutable fixture hash, and exclude its bytes from writable task scopes.
+  - id: preparation-authoring-cost
+    observation: B setup required fixing missing inputs, declared-output ownership collisions and projection generation before its seed checks passed.
+    disposition: Preserve setup evidence separately. Active labor and human attention were not instrumented; do not treat setup wall time as attention.
+  - id: independent-assertion-preservation
+    observation: Initial evaluators could accept weakened actor-owned checks and missed portions of the task semantics.
+    disposition: Add independent frozen behavioral cases and explicit baseline-assertion preservation assessment. Mark API/semantic ambiguity unavailable; never substitute candidate test success for independent proof.
+  - id: architecture-gate-classification
+    observation: The mandatory import scanner correctly refused new unclassified benchmark packages, including isolated adopting-code fixtures.
+    disposition: Explicitly classify only the new harness as Tooling and its project subtree as adopting-code fixtures. Enforce forbidden imports in both directions with negative tests. The frozen product binaries remain the original clean adef79d source build.
+  - id: public-authoring-boundary
+    observation: A blanket ban on mutating render/apply would prohibit task-authorized generated projections; ordinary Markitect authoring analysis also needs a clear distinction from acceptance validation.
+    disposition: Permit only current-task authorized projection writes inside its path boundary. Allow read-only authoring analysis in both mechanisms; require complete acceptance/testing through one helper per turn and stop after its failure.
+  - id: inactive-policy-catalog
+    observation: The .NET B seed includes the inactive v2 package; A architecture guidance exposes the same v1/v2 cohort and policy-history facts.
+    disposition: Keep the public catalog symmetrically visible and document it. The current v1 pin alone is active; task11 cards and all hidden outcomes remain undisclosed.
+  - id: native-git-execution-identity
+    observation: Default restricted-shell Git refused a current-user-created external arena as a different execution identity. Native smoke Git/helper commands succeeded through normal authorized sandbox escalation.
+    disposition: Use that ordinary approval boundary identically in both arms for relevant Git/build/helper commands. Keep global Git trust, credentials and execution rules unchanged. Preserve any actual rejection; no bypass or fabricated pass.
+limits:
+  - No scored result or product benefit follows from fixing a preparation defect.
+  - This record is not a completed freeze or final independent review.
+  - Private Konfyra evidence/candidates are outside this experiment and remain untouched.

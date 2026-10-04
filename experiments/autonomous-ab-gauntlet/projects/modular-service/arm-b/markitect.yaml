@@ -1,0 +1,40 @@
+apiVersion: markitect.example.org/v1alpha1
+kind: Project
+metadata:
+  name: modular-service
+spec:
+  targets: [markdown, codex]
+  areas:
+    - name: architecture
+      path: resources
+    - name: constitution
+      path: .markitect/areas/constitution
+      imports: [architecture, application-code, command, docs, ci, root-guidance, go-manifest]
+    - name: application-code
+      path: internal
+    - name: command
+      path: cmd
+    - name: docs
+      path: docs
+    - name: ci
+      path: .github/workflows/ci.yml
+    - name: root-guidance
+      path: AGENTS.md
+    - name: go-manifest
+      path: go.mod
+  domains:
+    - package:software-architecture/domains/software.yaml
+  packages:
+    - name: software-architecture
+      version: 1.1.0
+      source: fixture:software-architecture-package-1.1.0
+      archive: .markitect/packages/software-architecture-1.1.0.zip
+      sha256: a4317640fb27500e071bc0c6e9be7f77a82614a65f86cd60312f658517ee150d
+  checks:
+    - name: architecture-boundaries
+      run: [go, test, ./internal/architecture]
+    - name: service-tests
+      run: [go, test, ./...]
+    - name: artifact-coverage
+      run: [markitect-check-artifacts, --repo, ., --config, .markitect/coverage.yaml]
+

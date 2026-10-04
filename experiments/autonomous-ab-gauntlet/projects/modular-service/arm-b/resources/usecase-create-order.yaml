@@ -1,0 +1,13 @@
+apiVersion: architecture.markitect.org/v1alpha1
+kind: UseCase
+metadata:
+  name: create-order
+  namespace: architecture
+  labels:
+    feature-ownership: required
+spec:
+  handler: {kind: Handler, name: create-order, namespace: architecture}
+  intent: Command
+  module: {kind: Module, name: orders, namespace: architecture}
+  feature: {kind: Feature, name: order-lifecycle, namespace: architecture}
+  summary: Accept a valid order after stock reservation and invoice requests.

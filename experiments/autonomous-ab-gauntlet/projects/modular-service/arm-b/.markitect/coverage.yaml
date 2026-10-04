@@ -1,0 +1,9 @@
+apiVersion: markitect.example.org/artifact-coverage/v1alpha1
+kind: ArtifactCoverage
+spec:
+  roots: [resources, .markitect, .agents, docs/markitect, docs/architecture.md]
+  tooling:
+    - path: .markitect/coverage.yaml
+      owner: project-artifact-accounting
+    - path: .markitect/packages/software-architecture-1.1.0.zip
+      owner: pinned-software-architecture-package-fixture

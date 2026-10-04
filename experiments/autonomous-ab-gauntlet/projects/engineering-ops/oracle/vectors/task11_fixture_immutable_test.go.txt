@@ -1,0 +1,24 @@
+package config
+
+import (
+	"bytes"
+	"os"
+	"path/filepath"
+	"testing"
+)
+
+func TestGauntletParserDoesNotMutateFixtureBytes(t *testing.T) {
+	fixture := filepath.Join("..", "..", "testdata", "vendor-snapshots", "sample.json")
+	original, err := os.ReadFile(fixture)
+	if err != nil { t.Fatal(err) }
+	copyPath := filepath.Join(t.TempDir(), "sample.json")
+	if err := os.WriteFile(copyPath, original, 0600); err != nil { t.Fatal(err) }
+	input, err := os.ReadFile(copyPath)
+	if err != nil { t.Fatal(err) }
+	before := append([]byte(nil), input...)
+	if _, err := Parse(input); err != nil { t.Fatalf("parse fixture copy: %v", err) }
+	if !bytes.Equal(input, before) { t.Fatal("Parse mutated the exact bytes supplied by the caller") }
+	after, err := os.ReadFile(fixture)
+	if err != nil { t.Fatal(err) }
+	if !bytes.Equal(after, original) { t.Fatal("parser test changed the golden fixture") }
+}
