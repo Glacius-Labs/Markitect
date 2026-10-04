@@ -12,3 +12,4 @@ spec:
         - docs/architecture.md
         - docs/engineering-constitution.md
         - CONTRIBUTING.md
+        - docs/design/managed-artifact-coverage.md
