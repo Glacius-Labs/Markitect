@@ -14,7 +14,7 @@ import (
 	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/core"
-	"github.com/Glacius-Labs/Markitect/internal/format"
+	"github.com/Glacius-Labs/Markitect/internal/host/authoring"
 )
 
 const (
@@ -31,15 +31,15 @@ var fixedZipTime = time.Date(1980, time.January, 1, 0, 0, 0, 0, time.UTC)
 // indexed by its unchanged archive-relative POSIX path. Resources excludes
 // Manifest and has runtime package origin set to the pinned package name.
 type Archive struct {
-	Manifest          *core.Resource
+	Manifest          *authoring.Resource
 	Files             map[string][]byte
-	Resources         []*core.Resource
+	Resources         []*authoring.Resource
 	DomainDefinitions map[string]core.DomainDefinition
 }
 
 // Read validates the digest and ZIP structure before parsing package content.
 // All data remains in memory; member paths are never extracted to disk.
-func Read(pin core.PackagePin, archive []byte) (*Archive, error) {
+func Read(pin authoring.PackagePin, archive []byte) (*Archive, error) {
 	if len(archive) > maxCompressedBytes {
 		return nil, fmt.Errorf("package archive exceeds the 64 MiB compressed limit")
 	}
@@ -127,7 +127,7 @@ func parseFiles(name, version string, files map[string][]byte) (*Archive, error)
 	if !ok {
 		return nil, fmt.Errorf("package archive is missing %s", ManifestName)
 	}
-	manifest, err := format.Parse(ManifestName, manifestData)
+	manifest, err := authoring.Parse(ManifestName, manifestData)
 	if err != nil {
 		return nil, fmt.Errorf("parse package manifest: %w", err)
 	}
@@ -158,7 +158,7 @@ func parseFiles(name, version string, files map[string][]byte) (*Archive, error)
 	for _, area := range manifest.Spec.Areas {
 		areaPaths = append(areaPaths, area.Path)
 	}
-	resources := make([]*core.Resource, 0)
+	resources := make([]*authoring.Resource, 0)
 	parseErrors := make(map[string]error)
 	identities := make(map[string]string)
 	accepted := map[string]bool{ManifestName: true}
@@ -174,7 +174,7 @@ func parseFiles(name, version string, files map[string][]byte) (*Archive, error)
 		if !isYAML(filePath) || !inAnyArea(filePath, areaPaths) {
 			continue
 		}
-		resource, parseErr := format.ParseWithRegistry(filePath, data, registry)
+		resource, parseErr := authoring.ParseWithRegistry(filePath, data, registry)
 		if parseErr != nil {
 			parseErrors[filePath] = parseErr
 			continue
@@ -197,7 +197,7 @@ func parseFiles(name, version string, files map[string][]byte) (*Archive, error)
 	ordinary := declaredInputs(resources)
 	for _, filePath := range sortedFilePaths(parseErrors) {
 		parseErr := parseErrors[filePath]
-		if ordinary[filePath] && isValidTextInput(files[filePath]) && !format.IsResourceEnvelopeWithRegistry(files[filePath], registry) {
+		if ordinary[filePath] && isValidTextInput(files[filePath]) && !authoring.IsResourceEnvelopeWithRegistry(files[filePath], registry) {
 			accepted[filePath] = true
 			continue
 		}
