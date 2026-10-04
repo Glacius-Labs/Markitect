@@ -1,6 +1,6 @@
 {
   "schema": "markitect-clean-architecture-final-inventory/v1",
-  "sourceCommit": "8a532af2440702b80705516511391641e42d74a3",
+  "sourceCommit": "c63a1e6d1e7859fed5e95ca415eb71abf0c6af95",
   "baselineCommit": "e116e5c16d63546260a2155e80d8965da72ba30b",
   "workingTreeState": "Inventory source is committed Go code at sourceCommit; uncommitted tracked changes are docs-only and excluded from Go AST traversal. Ignored .artifacts evidence is excluded.",
   "workingTreeTrackedChanges": null,
