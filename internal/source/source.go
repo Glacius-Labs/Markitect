@@ -8,7 +8,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/Glacius-Labs/Markitect/internal/snapshot"
+	"github.com/Glacius-Labs/Markitect/internal/core/snapshot"
 )
 
 // Limits bounds memory and filesystem use while loading and materializing a

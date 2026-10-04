@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Glacius-Labs/Markitect/internal/snapshot"
+	"github.com/Glacius-Labs/Markitect/internal/core/snapshot"
 )
 
 func bundleSnapshot() *snapshot.Snapshot {

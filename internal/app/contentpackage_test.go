@@ -10,7 +10,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/core"
 	"github.com/Glacius-Labs/Markitect/internal/format"
 	"github.com/Glacius-Labs/Markitect/internal/render"
-	"github.com/Glacius-Labs/Markitect/internal/snapshot"
+	"github.com/Glacius-Labs/Markitect/internal/core/snapshot"
 )
 
 func packageSourceFixture(t *testing.T, text string) map[string][]byte {

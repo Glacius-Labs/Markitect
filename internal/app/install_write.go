@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/Glacius-Labs/Markitect/internal/release"
-	"github.com/Glacius-Labs/Markitect/internal/snapshot"
+	"github.com/Glacius-Labs/Markitect/internal/core/snapshot"
 	"github.com/Glacius-Labs/Markitect/internal/source"
 )
 

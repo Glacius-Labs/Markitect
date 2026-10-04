@@ -49,3 +49,31 @@ func TestRepositoryArchitecture(t *testing.T) {
 		t.Error(v.String())
 	}
 }
+
+func TestUnclassifiedPackageWithoutLocalImports(t *testing.T) {
+	root := t.TempDir()
+	p := filepath.Join(root, "internal", "unowned", "file.go")
+	if err := os.MkdirAll(filepath.Dir(p), 0755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(p, []byte("package unowned\nimport _ \"fmt\"\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	edges, err := Inspect(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if v := Check(edges); len(v) != 1 || v[0].Rule != "unclassified product package" {
+		t.Fatalf("missing package finding: %v", v)
+	}
+}
+func TestHarnessCannotHideProductOrSelfImport(t *testing.T) {
+	for _, e := range []Edge{{From: "internal/core", To: "internal/core"}, {From: "internal/host", To: "examples"}, {From: "examples", To: "internal/core", Test: false}, {From: "examples/arbitrary-new-runtime", To: "internal/host"}} {
+		if len(Check([]Edge{e})) != 1 {
+			t.Fatalf("unexpected pass: %v", e)
+		}
+	}
+	if v := Check([]Edge{{From: "examples", To: "internal/host", Test: true}}); len(v) != 0 {
+		t.Fatal(v)
+	}
+}

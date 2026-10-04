@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	"github.com/Glacius-Labs/Markitect/internal/app"
-	"github.com/Glacius-Labs/Markitect/internal/snapshot"
+	"github.com/Glacius-Labs/Markitect/internal/core/snapshot"
 )
 
 // resources contains the canonical core Project and authoring resources. It is

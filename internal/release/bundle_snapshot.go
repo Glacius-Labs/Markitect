@@ -11,7 +11,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Glacius-Labs/Markitect/internal/snapshot"
+	"github.com/Glacius-Labs/Markitect/internal/core/snapshot"
 )
 
 func snapshotModuleFiles(snapshot *snapshot.Snapshot) (map[string][]byte, error) {

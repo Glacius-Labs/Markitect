@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/internal/app"
-	"github.com/Glacius-Labs/Markitect/internal/snapshot"
+	"github.com/Glacius-Labs/Markitect/internal/core/snapshot"
 )
 
 // This integration control sends the complete compiler-produced DTO through the

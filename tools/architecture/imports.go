@@ -51,8 +51,10 @@ func layer(p string) (string, string) {
 		return "tooling", "tooling"
 	case p == "cmd" || strings.HasPrefix(p, "cmd/"):
 		return "cli", p
-	case p == "examples" || strings.HasPrefix(p, "examples/") || p == "integration" || strings.HasPrefix(p, "integration/") || p == "experiments" || strings.HasPrefix(p, "experiments/") || p == "benchmark" || strings.HasPrefix(p, "benchmark/"):
-		return "harness", p
+	case p == "examples" || p == "integration" || p == "benchmark":
+		return "harness-tests", p
+	case p == "examples/engineering-discovery" || p == "examples/selective-adoption" || p == "examples/selective-adoption/pathspell" || p == "experiments/mcp-pilot":
+		return "harness-runtime", p
 	case p == "internal/app" || p == "internal/format" || p == "internal/inputs":
 		return "host", "host"
 	case p == "internal/snapshot":
@@ -80,9 +82,23 @@ func Check(edges []Edge) []Violation {
 	var out []Violation
 	for _, e := range edges {
 		from, owner := layer(e.From)
+		if e.To == "" {
+			if from == "unknown" || from == "harness-tests" && !e.Test {
+				out = append(out, Violation{e, "unclassified product package"})
+			}
+			continue
+		}
 		to, target := layer(e.To)
 		rule := ""
 		switch {
+		case e.From == e.To:
+			rule = "self-import is forbidden"
+		case strings.HasPrefix(to, "harness") && !strings.HasPrefix(from, "harness"):
+			rule = "product may not import test/example Harness"
+		case from == "harness-tests" && !e.Test:
+			rule = "Harness root may contain only test code"
+		case from == "harness-runtime" && to != "host" && !(strings.HasPrefix(to, "harness") && strings.HasPrefix(e.To, strings.TrimSuffix(e.From, "/pathspell"))):
+			rule = "example/experiment runtime may import only Host and its own demonstration subtree"
 		case from == "unknown" || to == "unknown":
 			rule = "unclassified internal package"
 		case from == "core" && to != "core":
@@ -106,12 +122,13 @@ func Check(edges []Edge) []Violation {
 
 func Inspect(root string) ([]Edge, error) {
 	var edges []Edge
+	seenPackages := map[string]bool{}
 	err := filepath.WalkDir(root, func(name string, entry fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
 		if entry.IsDir() {
-			if name != root && (strings.HasPrefix(entry.Name(), ".") || entry.Name() == "vendor" || entry.Name() == "testdata" || entry.Name() == "node_modules" || entry.Name() == "tools-installed") {
+			if name != root && (entry.Name() == ".git" || entry.Name() == ".cache" || entry.Name() == ".artifacts" || entry.Name() == "vendor" || entry.Name() == "testdata" || entry.Name() == "node_modules") {
 				return filepath.SkipDir
 			}
 			return nil
@@ -127,6 +144,11 @@ func Inspect(root string) ([]Edge, error) {
 		// Only product source and explicitly classified test/tool harnesses.
 		if !strings.HasPrefix(rel, "internal/") && !strings.HasPrefix(rel, "cmd/") && !strings.HasPrefix(rel, "tools/") && !strings.HasPrefix(rel, "examples/") && !strings.HasPrefix(rel, "integration/") && !strings.HasPrefix(rel, "experiments/") && !strings.HasPrefix(rel, "benchmark/") {
 			return nil
+		}
+		packagePath := filepath.ToSlash(filepath.Dir(rel))
+		if !seenPackages[packagePath] {
+			seenPackages[packagePath] = true
+			edges = append(edges, Edge{File: rel, From: packagePath, Test: strings.HasSuffix(rel, "_test.go")})
 		}
 		fset := token.NewFileSet()
 		f, err := parser.ParseFile(fset, name, nil, parser.ImportsOnly)

@@ -5,7 +5,7 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/internal/core"
 	"github.com/Glacius-Labs/Markitect/internal/render"
-	"github.com/Glacius-Labs/Markitect/internal/snapshot"
+	"github.com/Glacius-Labs/Markitect/internal/core/snapshot"
 )
 
 func reviewResources(withRule, omitUnrelated, configureCodex bool) []*core.Resource {

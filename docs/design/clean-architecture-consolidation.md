@@ -61,6 +61,7 @@ A Module imports only Core and its own subtree, plus standard library/justified 
 | authoring embedded canonical resources | Host embedded authoring input, separate virtual Project; never Module→Host |
 | source | Infrastructure: Git and working-tree acquisition/materialization; consumes Core snapshot values |
 | release/publish/licenses | Tooling: maintainers' immutable distribution workflow and notices, not runtime Modules |
+| All cmd entrypoints, including maintainer release/check CLIs | Thin CLI wrappers delegate to Host runtime; Host invokes Tooling algorithms or Modules. The baseline inventory classifications are historical audit roles, not final import exemptions |
 | command provider adapters | Independent concrete adapter Modules, Host runtime supplies protocol and explicit bytes; command wrappers delegate |
 | Git Hooks/Pipelines | Independent bounded artifact Modules: literal configured paths/bytes/ownership/check linkage, no shell semantics or universal pipeline DSL |
 | inputs | Host input resolution using Host-composed generated paths; no sibling Module import |
@@ -87,3 +88,4 @@ The inventory and this contract must be committed and independently reviewed bef
 ## Validation and remaining decisions
 
 Require zero illegal imports, negative real patch failure, deterministic/golden compatibility, schema/examples/packages/bootstrap, Windows/Linux exact-head CI, strict acceptance and reconciliation controls, managed-artifact negative cases, and fresh-agent Markitect-first discovery. Record before/after Core metrics without optimizing LOC mechanically. No release occurs from this checkpoint. Historical adoption failures remain evidence; private owner-approved candidates remain unaccepted and outside the repository.
+Checkpoint review: independent Core/contract and capability reviews found the target coherent after clarifying that maintainer CLI wrappers also delegate Host. A separate gate review found and corrected stdlib-only unclassified-package omission, overly broad Harness classification, self-import handling and blanket hidden-directory skipping. Baseline failures are intentional migration blockers, never a passing/release claim.

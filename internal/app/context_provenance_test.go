@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/internal/core"
-	"github.com/Glacius-Labs/Markitect/internal/snapshot"
+	"github.com/Glacius-Labs/Markitect/internal/core/snapshot"
 )
 
 func TestContextProvenanceRetainsEveryReachableRelationDeterministically(t *testing.T) {

@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/internal/adoption"
-	"github.com/Glacius-Labs/Markitect/internal/snapshot"
+	"github.com/Glacius-Labs/Markitect/internal/core/snapshot"
 	"go.yaml.in/yaml/v3"
 )
 
