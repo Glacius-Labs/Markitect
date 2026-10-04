@@ -342,8 +342,8 @@ jobs:
 
           linux_binary="$out/markitect-$TAG-linux-amd64"
           windows_binary="$out/markitect-$TAG-windows-amd64.exe"
-          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -buildvcs=false -ldflags "-s -w -X main.version=$VERSION" -o "$linux_binary" ./cmd/markitect
-          CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -trimpath -buildvcs=false -ldflags "-s -w -X main.version=$VERSION" -o "$windows_binary" ./cmd/markitect
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -buildvcs=false -ldflags "-s -w -X github.com/Glacius-Labs/Markitect/internal/host/cli.version=$VERSION" -o "$linux_binary" ./cmd/markitect
+          CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -trimpath -buildvcs=false -ldflags "-s -w -X github.com/Glacius-Labs/Markitect/internal/host/cli.version=$VERSION" -o "$windows_binary" ./cmd/markitect
 
           linux_sha256="$(sha256sum "$linux_binary" | cut -d ' ' -f 1)"
           windows_sha256="$(sha256sum "$windows_binary" | cut -d ' ' -f 1)"

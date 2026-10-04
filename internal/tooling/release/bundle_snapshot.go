@@ -37,7 +37,7 @@ func snapshotModuleFiles(snapshot *snapshot.Snapshot) (map[string][]byte, error)
 		include := relative == "go.mod" || relative == "go.sum" || relative == "README.md" || relative == "LICENSE"
 		if strings.HasPrefix(relative, "cmd/") || strings.HasPrefix(relative, "internal/") {
 			ext := strings.ToLower(path.Ext(relative))
-			include = ext == ".go" || relative == embeddedNoticesPath || embeddedAuthoringSource(relative)
+			include = ext == ".go" || (relative == embeddedNoticesPath || relative == "internal/licenses/notices.md") || embeddedAuthoringSource(relative)
 		}
 		if strings.HasPrefix(relative, "schema/") {
 			ext := strings.ToLower(path.Ext(relative))
@@ -73,7 +73,7 @@ func collectModuleSnapshot(files map[string][]byte) ([]sourceFile, error) {
 		ext := strings.ToLower(path.Ext(name))
 		include := name == "README.md" || name == "LICENSE"
 		if strings.HasPrefix(name, "cmd/") || strings.HasPrefix(name, "internal/") {
-			include = ext == ".go" || name == embeddedNoticesPath || embeddedAuthoringSource(name)
+			include = ext == ".go" || (name == embeddedNoticesPath || name == "internal/licenses/notices.md") || embeddedAuthoringSource(name)
 		}
 		if strings.HasPrefix(name, "schema/") {
 			include = ext == ".json" || ext == ".yaml" || ext == ".yml" || ext == ".md"
@@ -101,11 +101,11 @@ func collectModuleSnapshot(files map[string][]byte) ([]sourceFile, error) {
 }
 
 func embeddedAuthoringSource(name string) bool {
-	if name == "internal/host/embedded/project.yaml" {
+	if name == "internal/host/embedded/project.yaml" || name == "internal/authoring/project.yaml" {
 		return true
 	}
 	ext := strings.ToLower(path.Ext(name))
-	return strings.HasPrefix(name, "internal/host/embedded/resources/") && (ext == ".yaml" || ext == ".yml")
+	return (strings.HasPrefix(name, "internal/host/embedded/resources/") || strings.HasPrefix(name, "internal/authoring/resources/")) && (ext == ".yaml" || ext == ".yml")
 }
 
 func validateSnapshotModuleLayout(files []sourceFile) error {
@@ -175,18 +175,26 @@ func snapshotRegularFile(snapshot *snapshot.Snapshot, name string) bool {
 }
 
 func validateSourceVersion(snapshot *snapshot.Snapshot, version string) error {
-	data, err := snapshotText(snapshot, "cmd/markitect/main.go")
+	sourcePath := "internal/host/cli/version.go"
+	declarationToken := token.VAR
+	// Historical immutable source distributions have their version in the
+	// executable entrypoint. Compatibility is confined to release tooling.
+	if _, exists := snapshot.Files[sourcePath]; !exists {
+		sourcePath = "cmd/markitect/main.go"
+		declarationToken = token.VAR
+	}
+	data, err := snapshotText(snapshot, sourcePath)
 	if err != nil {
 		return err
 	}
-	file, err := parser.ParseFile(token.NewFileSet(), "cmd/markitect/main.go", data, parser.AllErrors)
+	file, err := parser.ParseFile(token.NewFileSet(), sourcePath, data, parser.AllErrors)
 	if err != nil {
 		return fmt.Errorf("parse fixed source version declaration: %w", err)
 	}
 	found := false
 	for _, declaration := range file.Decls {
 		group, ok := declaration.(*ast.GenDecl)
-		if !ok || group.Tok != token.VAR {
+		if !ok || group.Tok != declarationToken {
 			continue
 		}
 		for _, spec := range group.Specs {
@@ -199,11 +207,11 @@ func validateSourceVersion(snapshot *snapshot.Snapshot, version string) error {
 					continue
 				}
 				if found || len(valueSpec.Names) != 1 || len(valueSpec.Values) != 1 || index != 0 {
-					return errors.New("source version must be declared once as a string literal var version")
+					return errors.New("source version must be declared once as a string literal version declaration")
 				}
 				literal, ok := valueSpec.Values[0].(*ast.BasicLit)
 				if !ok || literal.Kind != token.STRING {
-					return errors.New("source version must be a string literal var version")
+					return errors.New("source version must be a string literal version declaration")
 				}
 				declared, err := strconv.Unquote(literal.Value)
 				if err != nil || declared != version {
@@ -214,7 +222,7 @@ func validateSourceVersion(snapshot *snapshot.Snapshot, version string) error {
 		}
 	}
 	if !found {
-		return errors.New("fixed source snapshot is missing its var version declaration")
+		return errors.New("fixed source snapshot is missing its version declaration")
 	}
 	return nil
 }

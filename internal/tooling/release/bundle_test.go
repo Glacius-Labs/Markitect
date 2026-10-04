@@ -65,7 +65,7 @@ func TestBuildBundleRejectsUnfixedOrUnboundSource(t *testing.T) {
 		{name: "version mismatch", change: func(*snapshot.Snapshot) {}, version: "1.2.4"},
 		{name: "version with tag prefix", change: func(*snapshot.Snapshot) {}, version: "v1.2.3"},
 		{name: "nonliteral source version", change: func(s *snapshot.Snapshot) {
-			s.Files["cmd/markitect/main.go"] = []byte("package main\nvar version = currentVersion()\n")
+			s.Files["internal/host/cli/version.go"] = []byte("package cli\nvar version = currentVersion()\n")
 		}, version: "1.2.3"},
 		{name: "foreign module", change: func(s *snapshot.Snapshot) {
 			s.Files["go.mod"] = []byte("module example.invalid/foreign\n\ngo 1.27.1\n")

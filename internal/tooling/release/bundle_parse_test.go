@@ -148,7 +148,7 @@ func TestToolLockValidation(t *testing.T) {
 
 func TestBundleManifestRequiresSourceVersionLiteral(t *testing.T) {
 	snapshot := bundleSnapshot()
-	snapshot.Files["cmd/markitect/main.go"] = []byte("package main\nvar version = 1.2.3\n")
+	snapshot.Files["internal/host/cli/version.go"] = []byte("package cli\nvar version = 1.2.3\n")
 	if _, err := BuildBundle(snapshot, "1.2.3"); err == nil {
 		t.Fatal("non-string source version literal was accepted")
 	}
