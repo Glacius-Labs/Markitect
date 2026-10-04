@@ -125,7 +125,7 @@ func TestUnknownAndOwnerDecisionStayOutOfPassCounts(t *testing.T) {
 	if err := os.MkdirAll(filepath.Join(arena, "runs", "run"), 0700); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(arena, "runs", "run", "02.evaluation.yaml"), []byte("task: \\\"02\\\"\nstatus: owner_decision_required\nowner_decision: external assessment required\n"), 0600); err != nil {
+	if err := os.WriteFile(filepath.Join(arena, "runs", "run", "02.evaluation.yaml"), []byte("task: '02'\nstatus: owner_decision_required\nowner_decision: external assessment required\n"), 0600); err != nil {
 		t.Fatal(err)
 	}
 	owner, err := analyzeTask(arena, nativeRecord{RunID: "run", Project: "p", Arm: "a", Trial: 1, TaskID: "02"}, taskCard{ID: "02", RequiresOwnerDecision: true}, true)

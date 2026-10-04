@@ -18,6 +18,7 @@ import (
 	"runtime"
 	"sort"
 	"strings"
+	"time"
 
 	"go.yaml.in/yaml/v3"
 )
@@ -37,11 +38,16 @@ type taskSet struct {
 type projectManifest struct {
 	TaskSet  string `yaml:"task_set"`
 	Controls struct {
-		TaskSet string `yaml:"task_set"`
+		TaskSet         string `yaml:"task_set"`
+		ParallelTaskSet string `yaml:"parallel_task_set"`
 	} `yaml:"controls"`
 	Shared struct {
 		TaskSet string `yaml:"taskSet"`
 	} `yaml:"shared"`
+}
+type freezeInput struct {
+	Path   string `yaml:"path"`
+	SHA256 string `yaml:"sha256"`
 }
 type turnRecord struct {
 	Attempt      int    `yaml:"attempt"`
@@ -50,21 +56,26 @@ type turnRecord struct {
 	ReceiptsFile string `yaml:"receipts_file"`
 }
 type nativeRecord struct {
-	RunID              string       `yaml:"run_id"`
-	Project            string       `yaml:"project"`
-	Arm                string       `yaml:"arm"`
-	Trial              int          `yaml:"trial"`
-	TaskID             string       `yaml:"task_id"`
-	EvaluationTaskID   string       `yaml:"evaluation_task_id"`
-	ActorStatus        string       `yaml:"actor_status"`
-	Workspace          string       `yaml:"workspace"`
-	BaseRevision       string       `yaml:"base_revision"`
-	FinalSnapshot      string       `yaml:"final_snapshot"`
-	InitialSnapshot    string       `yaml:"initial_snapshot"`
-	ReportedTokenUsage *int64       `yaml:"reported_token_usage"`
-	AttentionSeconds   *int64       `yaml:"attention_seconds"`
-	RepairIterations   int          `yaml:"repair_iterations"`
-	Turns              []turnRecord `yaml:"turns"`
+	RunID               string       `yaml:"run_id"`
+	Project             string       `yaml:"project"`
+	Arm                 string       `yaml:"arm"`
+	Trial               int          `yaml:"trial"`
+	TaskID              string       `yaml:"task_id"`
+	EvaluationTaskID    string       `yaml:"evaluation_task_id"`
+	ActorStatus         string       `yaml:"actor_status"`
+	ActorStartedUTC     string       `yaml:"actor_started_utc"`
+	ActorCompletedUTC   string       `yaml:"actor_completed_utc"`
+	DeadlineUTC         string       `yaml:"deadline_utc"`
+	Workspace           string       `yaml:"workspace"`
+	BaseRevision        string       `yaml:"base_revision"`
+	FinalSnapshot       string       `yaml:"final_snapshot"`
+	InitialSnapshot     string       `yaml:"initial_snapshot"`
+	ReportedTokenUsage  *int64       `yaml:"reported_token_usage"`
+	AttentionSeconds    *int64       `yaml:"attention_seconds"`
+	RepairIterations    int          `yaml:"repair_iterations"`
+	ParallelIntegration bool         `yaml:"parallel_integration"`
+	Parallel            bool         `yaml:"parallel"`
+	Turns               []turnRecord `yaml:"turns"`
 }
 type helperEvent struct {
 	TaskID       string     `json:"task_id"`
@@ -85,15 +96,22 @@ type checkResult struct {
 	Status string `yaml:"status" json:"status"`
 }
 type counts struct {
-	Tasks                 int `yaml:"tasks" json:"tasks"`
-	Repairs               int `yaml:"repairs" json:"repairs"`
-	Passed                int `yaml:"passed" json:"passed"`
-	Failed                int `yaml:"failed" json:"failed"`
-	Unknown               int `yaml:"unknown" json:"unknown"`
-	Manual                int `yaml:"manual" json:"manual"`
-	Incomplete            int `yaml:"incomplete" json:"incomplete"`
-	Invalidated           int `yaml:"invalidated" json:"invalidated"`
-	OwnerDecisionRequired int `yaml:"owner_decision_required" json:"owner_decision_required"`
+	Tasks                       int `yaml:"tasks" json:"tasks"`
+	ImplementationEligibleTasks int `yaml:"implementation_eligible_tasks" json:"implementation_eligible_tasks"`
+	Repairs                     int `yaml:"repairs" json:"repairs"`
+	Passed                      int `yaml:"passed" json:"passed"`
+	Failed                      int `yaml:"failed" json:"failed"`
+	Unknown                     int `yaml:"unknown" json:"unknown"`
+	Manual                      int `yaml:"manual" json:"manual"`
+	Incomplete                  int `yaml:"incomplete" json:"incomplete"`
+	Invalidated                 int `yaml:"invalidated" json:"invalidated"`
+	OwnerDecisionRequired       int `yaml:"owner_decision_required" json:"owner_decision_required"`
+	UnexpectedOwnerDecision     int `yaml:"unexpected_owner_decision" json:"unexpected_owner_decision"`
+}
+type churnCoverage struct {
+	Tasks       int `yaml:"tasks" json:"tasks"`
+	Available   int `yaml:"available" json:"available"`
+	Unavailable int `yaml:"unavailable" json:"unavailable"`
 }
 type churn struct {
 	Paths        int   `yaml:"paths" json:"paths"`
@@ -113,6 +131,8 @@ type helperSummary struct {
 	FinalSnapshot        string `yaml:"final_snapshot,omitempty" json:"final_snapshot,omitempty"`
 }
 type taskReport struct {
+	RunID                        string            `yaml:"run_id" json:"run_id"`
+	RunKind                      string            `yaml:"run_kind" json:"run_kind"`
 	Project                      string            `yaml:"project" json:"project"`
 	Arm                          string            `yaml:"arm" json:"arm"`
 	Trial                        int               `yaml:"trial" json:"trial"`
@@ -122,13 +142,18 @@ type taskReport struct {
 	ActorStatus                  string            `yaml:"actor_status" json:"actor_status"`
 	AggregateEvaluationStatus    string            `yaml:"aggregate_evaluation_status" json:"aggregate_evaluation_status"`
 	EvaluationStatus             string            `yaml:"evaluation_status" json:"evaluation_status"`
+	EvaluationRecordStatus       string            `yaml:"evaluation_record_status" json:"evaluation_record_status"`
 	CountedOutcome               string            `yaml:"counted_outcome" json:"counted_outcome"`
 	BeforeRepairEvaluationStatus string            `yaml:"before_repair_evaluation_status" json:"before_repair_evaluation_status"`
+	BeforeRepairAggregateStatus  string            `yaml:"before_repair_aggregate_status,omitempty" json:"before_repair_aggregate_status,omitempty"`
 	FinalEvaluationStatus        string            `yaml:"final_evaluation_status" json:"final_evaluation_status"`
 	EvaluationEvidenceConflicts  []string          `yaml:"evaluation_evidence_conflicts,omitempty" json:"evaluation_evidence_conflicts,omitempty"`
 	OwnerDecisionRequired        bool              `yaml:"owner_decision_required" json:"owner_decision_required"`
 	OwnerAssessment              string            `yaml:"owner_assessment" json:"owner_assessment"`
+	UnexpectedOwnerDecision      bool              `yaml:"unexpected_owner_decision" json:"unexpected_owner_decision"`
+	UnexpectedOwnerAssessment    string            `yaml:"unexpected_owner_assessment" json:"unexpected_owner_assessment"`
 	Checks                       []checkResult     `yaml:"checks" json:"checks"`
+	RawChecks                    []map[string]any  `yaml:"raw_checks" json:"raw_checks"`
 	BeforeRepairChecks           []checkResult     `yaml:"before_repair_checks,omitempty" json:"before_repair_checks,omitempty"`
 	ExpectedAffected             []string          `yaml:"frozen_expected_affected" json:"frozen_expected_affected"`
 	ExpectedAffectedStatus       string            `yaml:"expected_affected_status" json:"expected_affected_status"`
@@ -140,6 +165,12 @@ type taskReport struct {
 	ReadAuditStatus              string            `yaml:"read_audit_status" json:"read_audit_status"`
 	AttentionSeconds             *int64            `yaml:"attention_seconds,omitempty" json:"attention_seconds,omitempty"`
 	AttentionStatus              string            `yaml:"attention_status" json:"attention_status"`
+	WorkflowTimeStatus           string            `yaml:"workflow_time_status" json:"workflow_time_status"`
+	WorkflowStartedUTC           string            `yaml:"workflow_started_utc,omitempty" json:"workflow_started_utc,omitempty"`
+	WorkflowCompletedUTC         string            `yaml:"workflow_completed_utc,omitempty" json:"workflow_completed_utc,omitempty"`
+	WorkflowDeadlineUTC          string            `yaml:"workflow_deadline_utc,omitempty" json:"workflow_deadline_utc,omitempty"`
+	ElapsedWorkflowSeconds       *float64          `yaml:"elapsed_workflow_seconds,omitempty" json:"elapsed_workflow_seconds,omitempty"`
+	WorkflowTimeUnavailableWhy   string            `yaml:"workflow_time_unavailable_why,omitempty" json:"workflow_time_unavailable_why,omitempty"`
 	ContextImpactStatus          string            `yaml:"context_impact_status" json:"context_impact_status"`
 	ContextStatus                string            `yaml:"context_status" json:"context_status"`
 	ImpactStatus                 string            `yaml:"impact_status" json:"impact_status"`
@@ -153,6 +184,8 @@ type taskReport struct {
 	RawReferenceSHA256           map[string]string `yaml:"raw_reference_sha256" json:"raw_reference_sha256"`
 }
 type group struct {
+	RunKind        string `yaml:"run_kind" json:"run_kind"`
+	RunID          string `yaml:"run_id,omitempty" json:"run_id,omitempty"`
 	Project        string `yaml:"project" json:"project"`
 	Arm            string `yaml:"arm" json:"arm"`
 	Trial          int    `yaml:"trial" json:"trial"`
@@ -162,21 +195,22 @@ type group struct {
 	StreakBoundary string `yaml:"streak_boundary,omitempty" json:"streak_boundary,omitempty"`
 }
 type report struct {
-	Schema                   string                      `yaml:"schema" json:"schema"`
-	Protocol                 string                      `yaml:"protocol" json:"protocol"`
-	AnalysisContract         string                      `yaml:"analysis_contract" json:"analysis_contract"`
-	AnalysisSourceSHA256     string                      `yaml:"analysis_source_sha256" json:"analysis_source_sha256"`
-	FreezeDigest             string                      `yaml:"freeze_digest" json:"freeze_digest"`
-	InvalidationRecordPath   string                      `yaml:"invalidation_record_path,omitempty" json:"invalidation_record_path,omitempty"`
-	CohortStatus             string                      `yaml:"cohort_status" json:"cohort_status"`
-	ComparisonEligible       string                      `yaml:"comparison_eligible" json:"comparison_eligible"`
-	InvalidationReason       string                      `yaml:"invalidation_reason,omitempty" json:"invalidation_reason,omitempty"`
-	InvalidationRecordSHA256 string                      `yaml:"invalidation_record_sha256,omitempty" json:"invalidation_record_sha256,omitempty"`
-	Limits                   []string                    `yaml:"limits" json:"limits"`
-	Tasks                    []taskReport                `yaml:"tasks" json:"tasks"`
-	Groups                   []group                     `yaml:"groups" json:"groups"`
-	CountsByProjectArmTrial  map[string]counts           `yaml:"counts_by_project_arm_trial" json:"counts_by_project_arm_trial"`
-	ChurnByProjectArmTrial   map[string]map[string]churn `yaml:"churn_by_project_arm_trial" json:"churn_by_project_arm_trial"`
+	Schema                         string                      `yaml:"schema" json:"schema"`
+	Protocol                       string                      `yaml:"protocol" json:"protocol"`
+	AnalysisContract               string                      `yaml:"analysis_contract" json:"analysis_contract"`
+	AnalysisSourceSHA256           string                      `yaml:"analysis_source_sha256" json:"analysis_source_sha256"`
+	FreezeDigest                   string                      `yaml:"freeze_digest" json:"freeze_digest"`
+	InvalidationRecordPath         string                      `yaml:"invalidation_record_path,omitempty" json:"invalidation_record_path,omitempty"`
+	CohortStatus                   string                      `yaml:"cohort_status" json:"cohort_status"`
+	ComparisonEligible             string                      `yaml:"comparison_eligible" json:"comparison_eligible"`
+	InvalidationReason             string                      `yaml:"invalidation_reason,omitempty" json:"invalidation_reason,omitempty"`
+	InvalidationRecordSHA256       string                      `yaml:"invalidation_record_sha256,omitempty" json:"invalidation_record_sha256,omitempty"`
+	Limits                         []string                    `yaml:"limits" json:"limits"`
+	Tasks                          []taskReport                `yaml:"tasks" json:"tasks"`
+	Groups                         []group                     `yaml:"groups" json:"groups"`
+	CountsByProjectArmTrial        map[string]counts           `yaml:"counts_by_project_arm_trial" json:"counts_by_project_arm_trial"`
+	ChurnByProjectArmTrial         map[string]map[string]churn `yaml:"churn_by_project_arm_trial" json:"churn_by_project_arm_trial"`
+	ChurnCoverageByProjectArmTrial map[string]churnCoverage    `yaml:"churn_coverage_by_project_arm_trial" json:"churn_coverage_by_project_arm_trial"`
 }
 type invalidation struct {
 	FreezeDigest       string `yaml:"freeze_digest"`
@@ -202,16 +236,152 @@ func main() {
 }
 func fatal(err error) { fmt.Fprintln(os.Stderr, "analysis:", err); os.Exit(1) }
 
+func pathWithin(root, path string) bool {
+	rel, err := filepath.Rel(root, path)
+	return err == nil && rel != ".." && !filepath.IsAbs(rel) && !strings.HasPrefix(rel, ".."+string(os.PathSeparator))
+}
+
+func canonicalOutputPath(arena, output string) (string, error) {
+	parent, err := filepath.EvalSymlinks(filepath.Dir(output))
+	if err != nil {
+		return "", fmt.Errorf("resolve output parent: %w", err)
+	}
+	out := filepath.Join(parent, filepath.Base(output))
+	if pathWithin(arena, out) {
+		return "", errors.New("output directory must be outside the arena after resolving parent links")
+	}
+	return out, nil
+}
+
+// arenaPath resolves existing links component by component and refuses any path that escapes the canonical arena.
+// For not-yet-existing output leaves, only the already-resolved existing parent is trusted.
+func arenaPath(arena, rel string) (string, error) {
+	root, err := filepath.EvalSymlinks(arena)
+	if err != nil {
+		return "", err
+	}
+	if rel == "" || filepath.IsAbs(rel) {
+		return "", fmt.Errorf("arena path must be non-empty and relative: %q", rel)
+	}
+	normalized := strings.ReplaceAll(filepath.ToSlash(rel), `\`, "/")
+	if strings.HasPrefix(normalized, "/") || strings.Contains(normalized, ":") {
+		return "", fmt.Errorf("arena path must be relative: %q", rel)
+	}
+	for _, part := range strings.Split(normalized, "/") {
+		if part == ".." {
+			return "", fmt.Errorf("arena path escapes root: %q", rel)
+		}
+	}
+	clean := filepath.Clean(filepath.FromSlash(normalized))
+	if clean == "." {
+		return root, nil
+	}
+	if filepath.IsAbs(clean) {
+		return "", fmt.Errorf("arena path must be relative: %q", rel)
+	}
+	parts := strings.Split(clean, string(os.PathSeparator))
+	cur := root
+	for i, part := range parts {
+		candidate := filepath.Join(cur, part)
+		_, e := os.Lstat(candidate)
+		if e == nil {
+			resolved, er := filepath.EvalSymlinks(candidate)
+			if er != nil {
+				return "", fmt.Errorf("resolve arena path %q: %w", rel, er)
+			}
+			if !pathWithin(root, resolved) {
+				return "", fmt.Errorf("arena path resolves outside root: %q", rel)
+			}
+			cur = resolved
+			continue
+		}
+		if !errors.Is(e, os.ErrNotExist) {
+			return "", e
+		}
+		cur = candidate
+		for _, remaining := range parts[i+1:] {
+			cur = filepath.Join(cur, remaining)
+		}
+		if !pathWithin(root, cur) {
+			return "", fmt.Errorf("arena path escapes root: %q", rel)
+		}
+		return cur, nil
+	}
+	if !pathWithin(root, cur) {
+		return "", fmt.Errorf("arena path resolves outside root: %q", rel)
+	}
+	return cur, nil
+}
+
+func safeArenaFile(arena, path string) (string, error) {
+	canonical, err := filepath.EvalSymlinks(arena)
+	if err != nil {
+		return "", err
+	}
+	if filepath.IsAbs(path) {
+		root := canonical
+		if pathWithin(arena, path) {
+			root = arena
+		}
+		rel, err := filepath.Rel(root, path)
+		if err != nil {
+			return "", err
+		}
+		path = rel
+	}
+	return arenaPath(canonical, path)
+}
+
+func readArenaYAML(arena, path string, target any) error {
+	resolved, err := safeArenaFile(arena, path)
+	if err != nil {
+		return err
+	}
+	return readYAML(resolved, target)
+}
+
+func validComponent(value string) bool {
+	return value != "" && value != "." && value != ".." && !strings.ContainsAny(value, `/\:`)
+}
+
+func runKind(n nativeRecord) string {
+	if n.ParallelIntegration {
+		return "parallel-integration"
+	}
+	if n.Parallel {
+		return "parallel-fork"
+	}
+	return "sequential"
+}
+
+func freezeDigest(inputs []freezeInput) string {
+	ordered := append([]freezeInput(nil), inputs...)
+	sort.Slice(ordered, func(i, j int) bool { return filepath.ToSlash(ordered[i].Path) < filepath.ToSlash(ordered[j].Path) })
+	h := sha256.New()
+	for _, input := range ordered {
+		_, _ = h.Write([]byte(filepath.ToSlash(input.Path) + "\x00" + input.SHA256 + "\n"))
+	}
+	return hex.EncodeToString(h.Sum(nil))
+}
+
 func analyze(arena, out string) error {
 	arena, err := filepath.Abs(arena)
 	if err != nil {
 		return err
 	}
+	arena, err = filepath.EvalSymlinks(arena)
+	if err != nil {
+		return fmt.Errorf("resolve arena root: %w", err)
+	}
 	out, err = filepath.Abs(out)
 	if err != nil {
 		return err
 	}
-	if rel, e := filepath.Rel(arena, out); e == nil && rel != ".." && !strings.HasPrefix(rel, ".."+string(os.PathSeparator)) {
+	out, err = canonicalOutputPath(arena, out)
+	if err != nil {
+		return err
+	}
+	if pathWithin(arena, out) {
 		return errors.New("output directory must be outside the arena")
 	}
 	if _, err = os.Stat(out); err == nil {
@@ -223,7 +393,7 @@ func analyze(arena, out string) error {
 	var protocol struct {
 		ID string `yaml:"id"`
 	}
-	if err = readYAML(protocolPath, &protocol); err != nil {
+	if err = readArenaYAML(arena, protocolPath, &protocol); err != nil {
 		return fmt.Errorf("read protocol: %w", err)
 	}
 	if err = verifyFrozenInputs(arena); err != nil {
@@ -237,21 +407,21 @@ func analyze(arena, out string) error {
 	var contract struct {
 		ID string `yaml:"id"`
 	}
-	if err = readYAML(filepath.Join(arena, "analysis-contract.yaml"), &contract); err != nil {
+	if err = readArenaYAML(arena, filepath.Join(arena, "analysis-contract.yaml"), &contract); err != nil {
 		return fmt.Errorf("read frozen analysis contract: %w", err)
 	}
-	r := report{Schema: "autonomous-ab-analysis/v1", Protocol: protocol.ID, AnalysisContract: contract.ID, AnalysisSourceSHA256: sourceSum, CohortStatus: "invalidation-not-recorded", ComparisonEligible: "unavailable",
+	r := report{Schema: "autonomous-ab-analysis/v2", Protocol: protocol.ID, AnalysisContract: contract.ID, AnalysisSourceSHA256: sourceSum, CohortStatus: "invalidation-not-recorded", ComparisonEligible: "unavailable",
 		Limits:                  []string{"Post-freeze descriptive collector; it cannot change assessment criteria.", "No composite winner, byte-token-time-attention equivalence, productivity, or statistical claim.", "Public helper success is reported separately from hidden evaluation correctness.", "Missing, manual, and unknown evaluations never count as passed.", "Tokens, backend calls, read audit, and human attention remain unavailable unless actual retained evidence supplies them.", "Churn is byte and line change volume, not time, attention, tokens, or savings."},
-		CountsByProjectArmTrial: map[string]counts{}, ChurnByProjectArmTrial: map[string]map[string]churn{}}
+		CountsByProjectArmTrial: map[string]counts{}, ChurnByProjectArmTrial: map[string]map[string]churn{}, ChurnCoverageByProjectArmTrial: map[string]churnCoverage{}}
 	var frozen struct {
 		Digest string `yaml:"digest"`
 	}
-	if err = readYAML(filepath.Join(arena, "freeze.yaml"), &frozen); err != nil {
+	if err = readArenaYAML(arena, filepath.Join(arena, "freeze.yaml"), &frozen); err != nil {
 		return err
 	}
 	invalidationPath := filepath.Join(arena, "decisions", "invalidation.yaml")
 	var inv invalidation
-	if err = readYAML(invalidationPath, &inv); err == nil {
+	if err = readArenaYAML(arena, invalidationPath, &inv); err == nil {
 		if sum, e := hashFile(invalidationPath); e == nil {
 			r.InvalidationRecordSHA256 = "sha256:" + sum
 		}
@@ -268,19 +438,29 @@ func analyze(arena, out string) error {
 	}
 	r.FreezeDigest = frozen.Digest
 	cardCache := map[string]map[string]taskCard{}
-	files, _ := filepath.Glob(filepath.Join(arena, "runs", "*", "*.native.yaml"))
+	runsRoot, err := arenaPath(arena, "runs")
+	if err != nil {
+		return fmt.Errorf("resolve runs directory: %w", err)
+	}
+	files, err := filepath.Glob(filepath.Join(runsRoot, "*", "*.native.yaml"))
+	if err != nil {
+		return err
+	}
 	sort.Strings(files)
 	for _, p := range files {
 		var n nativeRecord
-		if err := readYAML(p, &n); err != nil {
+		if err := readArenaYAML(arena, p, &n); err != nil {
 			return fmt.Errorf("%s: %w", relative(arena, p), err)
 		}
-		if n.Project == "" || n.TaskID == "" {
-			continue
+		if !validComponent(n.Project) || !validComponent(n.RunID) || !validComponent(n.TaskID) || (n.EvaluationTaskID != "" && !validComponent(n.EvaluationTaskID)) {
+			return fmt.Errorf("invalid native record identity: %s", p)
 		}
-		key := n.Project + "/" + strings.ToLower(n.Arm)
+		if filepath.Base(filepath.Dir(p)) != n.RunID || filepath.Base(p) != n.TaskID+".native.yaml" {
+			return fmt.Errorf("native record identity does not match its path: %s", p)
+		}
+		key := n.Project + "/" + strings.ToLower(n.Arm) + "/" + runKind(n)
 		if _, ok := cardCache[key]; !ok {
-			cards, e := loadCards(arena, n.Project, strings.ToLower(n.Arm))
+			cards, e := loadCardsForRun(arena, n.Project, strings.ToLower(n.Arm), n.Parallel)
 			if e != nil {
 				return e
 			}
@@ -291,10 +471,13 @@ func analyze(arena, out string) error {
 		if err != nil {
 			return fmt.Errorf("%s/%s/%s: %w", n.Project, n.Arm, n.TaskID, err)
 		}
-		groupKey := fmt.Sprintf("%s/%s/trial-%d", n.Project, strings.ToUpper(n.Arm), n.Trial)
+		groupKey := fmt.Sprintf("%s/%s/trial-%d/%s", n.Project, strings.ToUpper(n.Arm), n.Trial, runKind(n))
 		c := r.CountsByProjectArmTrial[groupKey]
 		c.Tasks++
 		c.Repairs += reportTask.Repairs
+		if !reportTask.OwnerDecisionRequired {
+			c.ImplementationEligibleTasks++
+		}
 		outcome := reportTask.CountedOutcome
 		if r.CohortStatus == "invalidated" {
 			outcome = "invalidated"
@@ -303,6 +486,14 @@ func analyze(arena, out string) error {
 		r.Tasks = append(r.Tasks, reportTask)
 		countOutcome(&c, outcome, reportTask.OwnerDecisionRequired)
 		r.CountsByProjectArmTrial[groupKey] = c
+		coverage := r.ChurnCoverageByProjectArmTrial[groupKey]
+		coverage.Tasks++
+		if reportTask.ChurnStatus == "available" {
+			coverage.Available++
+		} else {
+			coverage.Unavailable++
+		}
+		r.ChurnCoverageByProjectArmTrial[groupKey] = coverage
 		if r.ChurnByProjectArmTrial[groupKey] == nil {
 			r.ChurnByProjectArmTrial[groupKey] = map[string]churn{}
 		}
@@ -347,19 +538,26 @@ func analyze(arena, out string) error {
 }
 func verifyFrozenInputs(arena string) error {
 	var f struct {
-		Inputs []struct {
-			Path   string `yaml:"path"`
-			SHA256 string `yaml:"sha256"`
-		} `yaml:"inputs"`
+		Inputs []freezeInput `yaml:"inputs"`
 	}
-	if err := readYAML(filepath.Join(arena, "freeze.yaml"), &f); err != nil {
+	if err := readArenaYAML(arena, filepath.Join(arena, "freeze.yaml"), &f); err != nil {
 		return fmt.Errorf("read freeze manifest: %w", err)
 	}
 	if len(f.Inputs) == 0 {
 		return errors.New("freeze manifest has no inputs")
 	}
+	seen := map[string]bool{}
 	for _, in := range f.Inputs {
-		got, e := hashFile(filepath.Join(arena, filepath.FromSlash(in.Path)))
+		key := filepath.ToSlash(in.Path)
+		if seen[key] {
+			return fmt.Errorf("duplicate frozen input path: %s", key)
+		}
+		seen[key] = true
+		p, e := arenaPath(arena, in.Path)
+		if e != nil {
+			return fmt.Errorf("frozen input path %s: %w", in.Path, e)
+		}
+		got, e := hashFile(p)
 		if e != nil {
 			return e
 		}
@@ -367,12 +565,28 @@ func verifyFrozenInputs(arena string) error {
 			return fmt.Errorf("frozen input digest mismatch: %s", in.Path)
 		}
 	}
+	gotDigest := freezeDigest(f.Inputs)
+	var manifest struct {
+		Digest string `yaml:"digest"`
+	}
+	if err := readArenaYAML(arena, filepath.Join(arena, "freeze.yaml"), &manifest); err != nil {
+		return err
+	}
+	if !strings.EqualFold(gotDigest, manifest.Digest) {
+		return fmt.Errorf("freeze aggregate digest mismatch: calculated %s", gotDigest)
+	}
 	return nil
 }
 func loadCards(arena, project, arm string) (map[string]taskCard, error) {
+	return loadCardsForRun(arena, project, arm, false)
+}
+func loadCardsForRun(arena, project, arm string, parallel bool) (map[string]taskCard, error) {
+	if !validComponent(project) {
+		return nil, errors.New("invalid project identity")
+	}
 	root := filepath.Join(arena, "projects", project)
 	var m projectManifest
-	if err := readYAML(filepath.Join(root, "project.yaml"), &m); err != nil {
+	if err := readArenaYAML(arena, filepath.Join(root, "project.yaml"), &m); err != nil {
 		return nil, fmt.Errorf("project manifest %s: %w", project, err)
 	}
 	setPath := filepath.Join(root, "task-set.yaml")
@@ -381,8 +595,15 @@ func loadCards(arena, project, arm string) (map[string]taskCard, error) {
 			setPath = filepath.Join(root, filepath.FromSlash(candidate))
 		}
 	}
+	if parallel {
+		name := m.Controls.ParallelTaskSet
+		if name == "" {
+			name = "parallel-task-set.yaml"
+		}
+		setPath = filepath.Join(root, filepath.FromSlash(name))
+	}
 	var ts taskSet
-	if err := readYAML(setPath, &ts); err != nil {
+	if err := readArenaYAML(arena, setPath, &ts); err != nil {
 		return nil, fmt.Errorf("task set %s: %w", setPath, err)
 	}
 	out := map[string]taskCard{}
@@ -392,7 +613,24 @@ func loadCards(arena, project, arm string) (map[string]taskCard, error) {
 	return out, nil
 }
 func analyzeTask(arena string, n nativeRecord, c taskCard, cardOK bool) (taskReport, error) {
+	var canonicalErr error
+	arena, canonicalErr = filepath.EvalSymlinks(arena)
+	if canonicalErr != nil {
+		return taskReport{}, canonicalErr
+	}
+	if !validComponent(n.RunID) || !validComponent(n.TaskID) || !validComponent(n.Project) || (n.EvaluationTaskID != "" && !validComponent(n.EvaluationTaskID)) {
+		return taskReport{}, errors.New("invalid task identity")
+	}
 	t := taskReport{Project: n.Project, Arm: strings.ToUpper(n.Arm), Trial: n.Trial, TaskID: n.TaskID, BaseRevision: n.BaseRevision, ActorStatus: n.ActorStatus, EvaluationStatus: "unknown", CountedOutcome: "unknown", BeforeRepairEvaluationStatus: "unknown", FinalEvaluationStatus: "unknown", NativeTokensStatus: "unavailable", PlatformCallsStatus: "unavailable", ReadAuditStatus: "unavailable", AttentionStatus: "unavailable", OwnerDecisionRequired: cardOK && c.RequiresOwnerDecision, OwnerAssessment: "unavailable", ExpectedAffectedStatus: "available", ContextImpactStatus: "unavailable", ContextStatus: "unavailable", ImpactStatus: "unavailable", Churn: map[string]churn{}, ChurnStatus: "unavailable", RawReferenceSHA256: map[string]string{}, PublicHelper: helperSummary{Status: "unavailable"}}
+	t.RunID, t.RunKind = n.RunID, runKind(n)
+	t.WorkflowStartedUTC, t.WorkflowCompletedUTC, t.WorkflowDeadlineUTC = n.ActorStartedUTC, n.ActorCompletedUTC, n.DeadlineUTC
+	t.ElapsedWorkflowSeconds, t.WorkflowTimeUnavailableWhy = workflowElapsed(n.ActorStartedUTC, n.ActorCompletedUTC)
+	t.WorkflowTimeStatus = "unavailable"
+	if t.ElapsedWorkflowSeconds != nil {
+		t.WorkflowTimeStatus = "available"
+	}
+	t.EvaluationRecordStatus = "unavailable"
+	t.UnexpectedOwnerAssessment = "unavailable"
 	if !cardOK {
 		t.ExpectedAffectedStatus = "unavailable"
 	} else {
@@ -415,18 +653,26 @@ func analyzeTask(arena string, n nativeRecord, c taskCard, cardOK bool) (taskRep
 	if evalTask == "" {
 		evalTask = n.TaskID
 	}
-	evalPath := filepath.Join(runDir, evalTask+".evaluation.yaml")
+	evalPath := filepath.Join(runDir, n.TaskID+".evaluation.yaml")
 	var ev evaluation
-	if err := readYAML(evalPath, &ev); err == nil {
+	if err := readArenaYAML(arena, evalPath, &ev); err == nil {
 		t.AggregateEvaluationStatus = ev.Status
 		t.EvaluationStatus = normalizeStatus(ev.Status)
+		t.EvaluationRecordStatus = "matched"
+		if ev.Task != evalTask {
+			t.EvaluationRecordStatus = "task-identity-mismatch"
+			t.EvaluationStatus = "unknown"
+			t.EvaluationEvidenceConflicts = append(t.EvaluationEvidenceConflicts, "evaluator task identity does not match the native evaluation task")
+		}
 		t.FinalEvaluationStatus = t.EvaluationStatus
-		for _, check := range ev.Checks {
+		t.RawChecks = ev.Checks
+		for index, check := range ev.Checks {
 			name := stringValue(check["name"])
 			status := checkStatus(check)
-			if name != "" {
-				t.Checks = append(t.Checks, checkResult{name, status})
+			if name == "" {
+				name = fmt.Sprintf("unnamed-check-%d", index+1)
 			}
+			t.Checks = append(t.Checks, checkResult{name, status})
 		}
 		if t.OwnerDecisionRequired {
 			if status := assessmentFile(arena, n); status != "" {
@@ -437,14 +683,31 @@ func analyzeTask(arena string, n nativeRecord, c taskCard, cardOK bool) (taskRep
 	} else if !errors.Is(err, os.ErrNotExist) {
 		return t, err
 	}
-	beforeEval := filepath.Join(runDir, evalTask+".before-repair.evaluation.yaml")
+	beforeEval := filepath.Join(runDir, n.TaskID+".before-repair.evaluation.yaml")
 	var before evaluation
-	if err := readYAML(beforeEval, &before); err == nil {
+	if err := readArenaYAML(arena, beforeEval, &before); err == nil {
+		t.BeforeRepairAggregateStatus = before.Status
 		t.BeforeRepairEvaluationStatus = normalizeStatus(before.Status)
-		for _, check := range before.Checks {
+		if before.Task != evalTask {
+			t.BeforeRepairEvaluationStatus = "unknown"
+			t.EvaluationEvidenceConflicts = append(t.EvaluationEvidenceConflicts, "before-repair evaluator task identity mismatch")
+		}
+		for index, check := range before.Checks {
 			name := stringValue(check["name"])
-			if name != "" {
-				t.BeforeRepairChecks = append(t.BeforeRepairChecks, checkResult{name, checkStatus(check)})
+			if name == "" {
+				name = fmt.Sprintf("unnamed-check-%d", index+1)
+			}
+			t.BeforeRepairChecks = append(t.BeforeRepairChecks, checkResult{name, checkStatus(check)})
+		}
+		if t.BeforeRepairEvaluationStatus == "passed" {
+			if before.Manual != nil {
+				t.BeforeRepairEvaluationStatus = "manual"
+			}
+			for _, check := range t.BeforeRepairChecks {
+				if check.Status != "passed" {
+					t.BeforeRepairEvaluationStatus = "incomplete"
+					t.EvaluationEvidenceConflicts = append(t.EvaluationEvidenceConflicts, "before-repair evaluation status passed while check "+check.Name+" is "+check.Status)
+				}
 			}
 		}
 		t.RawReferences = append(t.RawReferences, relative(arena, beforeEval))
@@ -470,22 +733,29 @@ func analyzeTask(arena string, n nativeRecord, c taskCard, cardOK bool) (taskRep
 		}
 	}
 	if cardOK && !c.RequiresOwnerDecision && t.EvaluationStatus == "owner_decision_required" {
-		t.EvaluationStatus = "owner_decision_required"
+		t.UnexpectedOwnerDecision = true
 	}
 	t.FinalEvaluationStatus = t.EvaluationStatus
 	t.CountedOutcome = t.EvaluationStatus
 	if ev.Status != "" {
 		declared := normalizeStatus(ev.Status)
 		for _, check := range t.Checks {
-			if declared == "passed" && (check.Status == "failed" || check.Status == "manual" || check.Status == "unknown") {
+			if declared == "passed" && check.Status != "passed" {
 				t.EvaluationEvidenceConflicts = append(t.EvaluationEvidenceConflicts, "evaluation status passed while check "+check.Name+" is "+check.Status)
 			}
 		}
 	}
-	if t.EvaluationStatus == "passed" && len(t.EvaluationEvidenceConflicts) > 0 {
+	if t.EvaluationStatus == "passed" && finalEvidenceConflict(t.EvaluationEvidenceConflicts) {
 		t.CountedOutcome = "incomplete"
 	}
-	basePath := filepath.Join(arena, n.FinalSnapshot, "workspace")
+	basePath := ""
+	if n.FinalSnapshot != "" {
+		var err error
+		basePath, err = arenaPath(arena, filepath.Join(n.FinalSnapshot, "workspace"))
+		if err != nil {
+			return t, err
+		}
+	}
 	if n.FinalSnapshot == "" {
 		basePath = ""
 	}
@@ -504,7 +774,9 @@ func analyzeTask(arena string, n nativeRecord, c taskCard, cardOK bool) (taskRep
 			t.RawReferences = append(t.RawReferences, relative(arena, filepath.Join(arena, n.FinalSnapshot, "tree.yaml")))
 		}
 	}
-	readContextImpact(arena, n, &t)
+	if err := readContextImpact(arena, n, &t); err != nil {
+		return t, err
+	}
 	if cardOK {
 		if scopes, ok := c.AllowedPathsByArm[strings.ToLower(n.Arm)]; ok && len(scopes) > 0 {
 			_ = scopes
@@ -512,15 +784,46 @@ func analyzeTask(arena string, n nativeRecord, c taskCard, cardOK bool) (taskRep
 			_ = c.AllowedPaths
 		}
 	}
-	helpPaths, _ := filepath.Glob(filepath.Join(arena, "raw", n.RunID, n.TaskID, "helper*.jsonl"))
+	helpRoot, err := arenaPath(arena, filepath.Join("raw", n.RunID, n.TaskID))
+	if err != nil {
+		return t, err
+	}
+	helpPaths, _ := filepath.Glob(filepath.Join(helpRoot, "helper*.jsonl"))
+	if n.ParallelIntegration {
+		integrationRoot, err := arenaPath(arena, filepath.Join("raw", n.RunID))
+		if err != nil {
+			return t, err
+		}
+		additional, _ := filepath.Glob(filepath.Join(integrationRoot, n.TaskID+".attempt-*.helper.jsonl"))
+		helpPaths = append(helpPaths, additional...)
+	}
 	sort.Strings(helpPaths)
 	var events []helperEvent
+	seenHelpers := map[string]bool{}
 	for _, helpPath := range helpPaths {
+		helpPath, err = safeArenaFile(arena, helpPath)
+		if err != nil {
+			return t, err
+		}
+		if seenHelpers[helpPath] {
+			continue
+		}
+		seenHelpers[helpPath] = true
 		part, e := readHelperEvents(helpPath)
 		if e != nil {
 			return t, e
 		}
-		events = append(events, part...)
+		for _, event := range part {
+			if event.TaskID != n.TaskID {
+				return t, fmt.Errorf("helper task identity mismatch in %s", helpPath)
+			}
+			if event.Snapshot != "" {
+				if _, e := safeArenaFile(arena, event.Snapshot); e != nil {
+					return t, e
+				}
+			}
+			events = append(events, event)
+		}
 		t.RawReferences = append(t.RawReferences, relative(arena, helpPath))
 	}
 	if len(helpPaths) > 0 {
@@ -565,6 +868,10 @@ func analyzeTask(arena string, n nativeRecord, c taskCard, cardOK bool) (taskRep
 		for _, ref := range []string{turn.ResponseFile, turn.ReceiptsFile} {
 			if ref != "" {
 				p := filepath.Join(runDir, filepath.Base(ref))
+				p, err = safeArenaFile(arena, p)
+				if err != nil {
+					return t, err
+				}
 				if _, e := os.Stat(p); e == nil {
 					t.RawReferences = append(t.RawReferences, relative(arena, p))
 					if strings.HasSuffix(strings.ToLower(ref), ".jsonl") {
@@ -576,7 +883,11 @@ func analyzeTask(arena string, n nativeRecord, c taskCard, cardOK bool) (taskRep
 	}
 	sort.Strings(t.RawReferences)
 	for _, ref := range t.RawReferences {
-		if sum, e := hashFile(filepath.Join(arena, filepath.FromSlash(ref))); e == nil {
+		path, err := arenaPath(arena, ref)
+		if err != nil {
+			return t, err
+		}
+		if sum, e := hashFile(path); e == nil {
 			t.RawReferenceSHA256[ref] = "sha256:" + sum
 		} else {
 			t.RawReferenceSHA256[ref] = "unavailable"
@@ -595,10 +906,16 @@ func gitRevision(repo string) (string, error) {
 	return strings.TrimSpace(string(b)), nil
 }
 
-func readContextImpact(arena string, n nativeRecord, t *taskReport) {
+func readContextImpact(arena string, n nativeRecord, t *taskReport) error {
 	root := filepath.Join(arena, "raw", n.RunID, n.TaskID)
-	contextPath := filepath.Join(root, "context.yaml")
-	impactPath := filepath.Join(root, "impact.yaml")
+	contextPath, err := safeArenaFile(arena, filepath.Join(root, "context.yaml"))
+	if err != nil {
+		return err
+	}
+	impactPath, err := safeArenaFile(arena, filepath.Join(root, "impact.yaml"))
+	if err != nil {
+		return err
+	}
 	var ctx map[string]any
 	if readYAML(contextPath, &ctx) == nil {
 		if entries, ok := normalizedSet(ctx["entries"]); ok {
@@ -623,6 +940,7 @@ func readContextImpact(arena string, n nativeRecord, t *taskReport) {
 	} else if t.ContextStatus == "available" || t.ImpactStatus == "available" {
 		t.ContextImpactStatus = "partial"
 	}
+	return nil
 }
 func firstField(m map[string]any, keys ...string) any {
 	for _, k := range keys {
@@ -669,7 +987,7 @@ func snapshotManifestReference(arena, snapshot string) string {
 	if !filepath.IsAbs(p) {
 		p = filepath.Join(arena, filepath.FromSlash(p))
 	}
-	abs, err := filepath.Abs(p)
+	abs, err := safeArenaFile(arena, p)
 	if err != nil {
 		return ""
 	}
@@ -677,7 +995,10 @@ func snapshotManifestReference(arena, snapshot string) string {
 	if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(os.PathSeparator)) {
 		return ""
 	}
-	manifest := filepath.Join(abs, "tree.yaml")
+	manifest, err := safeArenaFile(arena, filepath.Join(abs, "tree.yaml"))
+	if err != nil {
+		return ""
+	}
 	if _, err := os.Stat(manifest); err != nil {
 		return ""
 	}
@@ -686,7 +1007,7 @@ func snapshotManifestReference(arena, snapshot string) string {
 func assessmentFile(arena string, n nativeRecord) string {
 	p := filepath.Join(arena, "decisions", n.RunID, n.TaskID+".yaml")
 	var v map[string]any
-	if readYAML(p, &v) != nil {
+	if readArenaYAML(arena, p, &v) != nil {
 		return ""
 	}
 	s := strings.ToLower(stringValue(v["assessment_status"]))
@@ -730,11 +1051,14 @@ func stringValue(v any) string {
 	return fmt.Sprint(v)
 }
 func countOutcome(c *counts, s string, decision bool) {
-	if decision || s == "owner_decision_required" {
+	if decision {
 		c.OwnerDecisionRequired++
 		return
 	}
 	switch s {
+	case "owner_decision_required":
+		c.UnexpectedOwnerDecision++
+		c.Incomplete++
 	case "passed":
 		c.Passed++
 	case "failed":
@@ -749,10 +1073,44 @@ func countOutcome(c *counts, s string, decision bool) {
 		c.Unknown++
 	}
 }
+
+func finalEvidenceConflict(conflicts []string) bool {
+	for _, conflict := range conflicts {
+		if !strings.HasPrefix(conflict, "before-repair ") {
+			return true
+		}
+	}
+	return false
+}
+
+// The harness timestamps span preparation through finish, including queues and repairs.
+// This is elapsed workflow time, never agent compute time or human attention.
+func workflowElapsed(start, end string) (*float64, string) {
+	if start == "" || end == "" {
+		return nil, "recorded workflow start or completion is unavailable"
+	}
+	from, err := time.Parse(time.RFC3339Nano, start)
+	if err != nil {
+		return nil, "recorded workflow start is not an RFC3339 timestamp"
+	}
+	to, err := time.Parse(time.RFC3339Nano, end)
+	if err != nil {
+		return nil, "recorded workflow completion is not an RFC3339 timestamp"
+	}
+	if to.Before(from) {
+		return nil, "recorded workflow completion precedes its start"
+	}
+	seconds := to.Sub(from).Seconds()
+	return &seconds, ""
+}
+
 func makeGroups(tasks []taskReport) []group {
 	by := map[string][]taskReport{}
 	for _, t := range tasks {
-		k := fmt.Sprintf("%s/%s/%d", t.Project, t.Arm, t.Trial)
+		k := fmt.Sprintf("%s/%s/%d/%s", t.Project, t.Arm, t.Trial, t.RunKind)
+		if t.RunKind != "" && t.RunKind != "sequential" {
+			k += "/" + t.RunID
+		}
 		by[k] = append(by[k], t)
 	}
 	keys := make([]string, 0, len(by))
@@ -763,15 +1121,21 @@ func makeGroups(tasks []taskReport) []group {
 	out := []group{}
 	for _, k := range keys {
 		list := by[k]
-		g := group{Project: list[0].Project, Arm: list[0].Arm, Trial: list[0].Trial, StreakStatus: "available"}
+		g := group{Project: list[0].Project, Arm: list[0].Arm, Trial: list[0].Trial, RunKind: list[0].RunKind, StreakStatus: "available"}
+		if g.RunKind != "" && g.RunKind != "sequential" {
+			g.RunID = list[0].RunID
+			g.StreakStatus = "not-longitudinal"
+		}
+		sort.Slice(list, func(i, j int) bool { return taskOrder(list[i].TaskID) < taskOrder(list[j].TaskID) })
 		unknownSeen := false
 		for _, t := range list {
+			g.Outcomes.Tasks++
+			g.Outcomes.Repairs += t.Repairs
 			if t.OwnerDecisionRequired {
 				g.Outcomes.OwnerDecisionRequired++
 				continue
 			}
-			g.Outcomes.Tasks++
-			g.Outcomes.Repairs += t.Repairs
+			g.Outcomes.ImplementationEligibleTasks++
 			switch t.CountedOutcome {
 			case "passed":
 				if !unknownSeen {
@@ -780,37 +1144,62 @@ func makeGroups(tasks []taskReport) []group {
 				g.Outcomes.Passed++
 			case "failed":
 				g.Outcomes.Failed++
+				if !unknownSeen {
+					g.StreakBoundary = "first failure at task " + t.TaskID
+				}
 				unknownSeen = true
-				g.StreakBoundary = "first failure at task " + t.TaskID
 			case "manual":
 				g.Outcomes.Manual++
+				if !unknownSeen {
+					g.StreakBoundary = "manual outcome at task " + t.TaskID
+				}
 				unknownSeen = true
 				g.StreakStatus = "unavailable"
-				g.StreakBoundary = "manual outcome at task " + t.TaskID
 			case "unknown":
 				g.Outcomes.Unknown++
+				if !unknownSeen {
+					g.StreakBoundary = "unknown outcome at task " + t.TaskID
+				}
 				unknownSeen = true
 				g.StreakStatus = "unavailable"
-				g.StreakBoundary = "unknown outcome at task " + t.TaskID
 			case "incomplete":
 				g.Outcomes.Incomplete++
+				if !unknownSeen {
+					g.StreakBoundary = "incomplete evidence at task " + t.TaskID
+				}
 				unknownSeen = true
 				g.StreakStatus = "unavailable"
-				g.StreakBoundary = "incomplete evidence at task " + t.TaskID
 			case "invalidated":
 				g.Outcomes.Invalidated++
+				if !unknownSeen {
+					g.StreakBoundary = "invalidated cohort at task " + t.TaskID
+				}
 				unknownSeen = true
 				g.StreakStatus = "unavailable"
-				g.StreakBoundary = "invalidated cohort at task " + t.TaskID
+			case "owner_decision_required":
+				g.Outcomes.UnexpectedOwnerDecision++
+				g.Outcomes.Incomplete++
+				if !unknownSeen {
+					g.StreakBoundary = "unexpected escalation at task " + t.TaskID
+				}
+				unknownSeen = true
+				g.StreakStatus = "unavailable"
 			default:
 				g.Outcomes.Unknown++
+				if !unknownSeen {
+					g.StreakBoundary = "non-implementation outcome at task " + t.TaskID
+				}
 				unknownSeen = true
 				g.StreakStatus = "unavailable"
-				g.StreakBoundary = "non-implementation outcome at task " + t.TaskID
 			}
 		}
 		if unknownSeen && g.StreakStatus == "available" {
 			g.StreakStatus = "bounded-by-failure"
+		}
+		if g.RunKind != "" && g.RunKind != "sequential" {
+			g.StreakStatus = "not-longitudinal"
+			g.PassingStreak = 0
+			g.StreakBoundary = ""
 		}
 		out = append(out, g)
 	}
@@ -827,9 +1216,10 @@ func readHelperEvents(path string) ([]helperEvent, error) {
 	s.Buffer(make([]byte, 4096), 8*1024*1024)
 	for s.Scan() {
 		var v helperEvent
-		if json.Unmarshal(s.Bytes(), &v) == nil {
-			out = append(out, v)
+		if err := json.Unmarshal(s.Bytes(), &v); err != nil {
+			return nil, fmt.Errorf("malformed helper receipt %s: %w", path, err)
 		}
+		out = append(out, v)
 	}
 	return out, s.Err()
 }
