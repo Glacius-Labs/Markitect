@@ -81,12 +81,10 @@ func DomainPaths(model core.SemanticModel, config Config) (map[string]core.Model
 		return inputOrder[i].Path < inputOrder[j].Path
 	})
 	for _, input := range inputOrder {
-		if input.Package == "" {
-			if previous, exists := inputs[input.APIVersion]; exists && previous.Path != input.Path {
-				return nil, fmt.Errorf("domain input collision for API version %q: %q and %q", input.APIVersion, previous.Path, input.Path)
-			}
-			inputs[input.APIVersion] = input
+		if previous, exists := inputs[input.APIVersion]; exists && (previous.Path != input.Path || previous.Package != input.Package) {
+			return nil, fmt.Errorf("domain input collision for API version %q: %q and %q", input.APIVersion, previous.Path, input.Path)
 		}
+		inputs[input.APIVersion] = input
 	}
 	folded := map[string]string{}
 	domains := append([]core.ModelDomain(nil), model.Domains...)
@@ -121,9 +119,7 @@ func DomainPathsWithSources(model core.SemanticModel, config Config) (map[string
 	sources := map[string]core.ModelDomainInput{}
 	byVersion := map[string]core.ModelDomainInput{}
 	for _, input := range model.DomainInputs {
-		if input.Package == "" {
-			byVersion[input.APIVersion] = input
-		}
+		byVersion[input.APIVersion] = input
 	}
 	for output, domain := range domains {
 		sources[output] = byVersion[domain.APIVersion]
@@ -215,17 +211,11 @@ func Generate(model core.SemanticModel, config Config, files map[string][]byte) 
 	if !config.Enabled {
 		return outputs, map[string][]string{}, nil
 	}
-	if err := checkCollisions(outputs, model); err != nil {
-		return nil, nil, err
-	}
-	views, err := ViewPaths(model, config)
+	plan, err := buildPlan(model, config)
 	if err != nil {
 		return nil, nil, err
 	}
-	domainSources, domains, err := DomainPathsWithSources(model, config)
-	if err != nil {
-		return nil, nil, err
-	}
+	views, domains, domainSources := plan.views, plan.domains, plan.domainSources
 	nav, err := newNavigation(model, config, files)
 	if err != nil {
 		return nil, nil, err
@@ -244,7 +234,7 @@ func Generate(model core.SemanticModel, config Config, files map[string][]byte) 
 	for _, output := range sortedResourcePaths(domains) {
 		d := domains[output]
 		source := domainSources[output]
-		body, err := renderDomain(d, source, output, model)
+		body, err := renderDomain(d, source, output, model, nav)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -277,6 +267,91 @@ func Generate(model core.SemanticModel, config Config, files map[string][]byte) 
 		sort.Strings(owners[p])
 	}
 	return outputs, owners, nil
+}
+
+type projectionPlan struct {
+	views         map[string]core.ModelResource
+	domains       map[string]core.ModelDomain
+	domainSources map[string]core.ModelDomainInput
+	owners        map[string][]string
+}
+
+// OutputPaths returns all generated paths and owners without rendering bytes
+// or inspecting prose. Host uses this to reserve outputs before input analysis.
+func OutputPaths(model core.SemanticModel, config Config) (map[string][]string, error) {
+	plan, err := buildPlan(model, config)
+	if err != nil {
+		return nil, err
+	}
+	return plan.owners, nil
+}
+
+func buildPlan(model core.SemanticModel, config Config) (projectionPlan, error) {
+	plan := projectionPlan{views: map[string]core.ModelResource{}, domains: map[string]core.ModelDomain{}, domainSources: map[string]core.ModelDomainInput{}, owners: map[string][]string{}}
+	if !config.Enabled {
+		return plan, nil
+	}
+	if err := checkCollisions(map[string][]byte{}, model); err != nil {
+		return projectionPlan{}, err
+	}
+	var err error
+	plan.views, err = ViewPaths(model, config)
+	if err != nil {
+		return projectionPlan{}, err
+	}
+	plan.domainSources, plan.domains, err = DomainPathsWithSources(model, config)
+	if err != nil {
+		return projectionPlan{}, err
+	}
+	if len(plan.views) > 0 || len(plan.domains) > 0 {
+		if config.ProjectKey == "" {
+			return projectionPlan{}, fmt.Errorf("Markdown projection requires a Project owner key")
+		}
+		if config.Path != "" {
+			if err := validPath(config.Path); err != nil {
+				return projectionPlan{}, fmt.Errorf("Project source path: %w", err)
+			}
+		}
+	}
+	paths := map[string][]string{}
+	for output, r := range plan.views {
+		paths[output] = []string{r.Identity.Key}
+	}
+	for output, d := range plan.domains {
+		paths[output] = []string{"domain:" + d.APIVersion + "/" + d.Name}
+	}
+	if len(plan.views) > 0 || len(plan.domains) > 0 {
+		for _, dir := range navigationDirectories(plan.views, plan.domains) {
+			output := path.Join(dir, "README.md")
+			if _, exists := paths[output]; exists {
+				return projectionPlan{}, fmt.Errorf("duplicate generated output %q", output)
+			}
+			paths[output] = []string{config.ProjectKey}
+		}
+	}
+	fake := make(map[string][]byte, len(paths))
+	for output := range paths {
+		if err := validPath(output); err != nil {
+			return projectionPlan{}, fmt.Errorf("invalid output path %q: %w", output, err)
+		}
+		fake[output] = nil
+	}
+	if err := checkCollisions(fake, model); err != nil {
+		return projectionPlan{}, err
+	}
+	folded := map[string]string{}
+	for _, output := range sortedResourcePaths(paths) {
+		key := foldPath(output)
+		if previous, ok := folded[key]; ok {
+			return projectionPlan{}, fmt.Errorf("output path collision: %q and %q", previous, output)
+		}
+		folded[key] = output
+	}
+	plan.owners = paths
+	for _, owners := range plan.owners {
+		sort.Strings(owners)
+	}
+	return plan, nil
 }
 
 func localResources(m core.SemanticModel) []core.ModelResource {
@@ -726,7 +801,7 @@ func unique(v []string) []string {
 	return out
 }
 
-func renderDomain(d core.ModelDomain, input core.ModelDomainInput, target string, m core.SemanticModel) ([]byte, error) {
+func renderDomain(d core.ModelDomain, input core.ModelDomainInput, target string, m core.SemanticModel, n *navigation) ([]byte, error) {
 	type schema struct {
 		APIVersion  string                             `yaml:"apiVersion"`
 		Kinds       map[string]core.KindDefinition     `yaml:"kinds"`
@@ -741,7 +816,7 @@ func renderDomain(d core.ModelDomain, input core.ModelDomainInput, target string
 	fmt.Fprintf(&b, "<!-- %s; source: %s -->\n# Domain contract: %s\n\n- **API version:** `%s`\n- **Definition source:** `%s`\n\n## Normalized schema and policy\n\n```yaml\n", marker, input.Path, markdownText(d.Name), markdownCode(d.APIVersion), markdownCode(input.Path))
 	b.Write(encoded)
 	b.WriteString("```\n\n")
-	writePolicy(&b, d.APIVersion, "", m, target, nil)
+	writePolicy(&b, d.APIVersion, "", m, target, n)
 	return []byte(strings.TrimRight(b.String(), "\n") + "\n"), nil
 }
 
@@ -877,7 +952,7 @@ func addNavigation(outputs map[string][]byte, owners map[string]map[string]bool,
 	}
 	direct := map[string][]string{}
 	children := map[string]map[string]bool{}
-	dirs := map[string]bool{viewsRoot: true}
+	dirsSorted := navigationDirectories(views, domains)
 	for view := range views {
 		dir := path.Dir(view)
 		direct[dir] = append(direct[dir], path.Base(view))
@@ -887,12 +962,10 @@ func addNavigation(outputs map[string][]byte, owners map[string]map[string]bool,
 				children[parent] = map[string]bool{}
 			}
 			children[parent][path.Base(dir)] = true
-			dirs[dir] = true
 			dir = parent
 		}
 	}
 	if len(domains) > 0 {
-		dirs[domainRoot] = true
 		if children[viewsRoot] == nil {
 			children[viewsRoot] = map[string]bool{}
 		}
@@ -901,11 +974,6 @@ func addNavigation(outputs map[string][]byte, owners map[string]map[string]bool,
 			direct[domainRoot] = append(direct[domainRoot], path.Base(view))
 		}
 	}
-	dirsSorted := make([]string, 0, len(dirs))
-	for d := range dirs {
-		dirsSorted = append(dirsSorted, d)
-	}
-	sort.Strings(dirsSorted)
 	for _, dir := range dirsSorted {
 		file := path.Join(dir, "README.md")
 		if dir == domainRoot {
@@ -943,6 +1011,26 @@ func addNavigation(outputs map[string][]byte, owners map[string]map[string]bool,
 		}
 	}
 	return nil
+}
+
+func navigationDirectories(views map[string]core.ModelResource, domains map[string]core.ModelDomain) []string {
+	dirs := map[string]bool{viewsRoot: true}
+	for view := range views {
+		dir := path.Dir(view)
+		for dir != viewsRoot && strings.HasPrefix(dir, viewsRoot+"/") {
+			dirs[dir] = true
+			dir = path.Dir(dir)
+		}
+	}
+	if len(domains) > 0 {
+		dirs[domainRoot] = true
+	}
+	result := make([]string, 0, len(dirs))
+	for dir := range dirs {
+		result = append(result, dir)
+	}
+	sort.Strings(result)
+	return result
 }
 func domainIndex(domains map[string]core.ModelDomain, sources map[string]core.ModelDomainInput, target, projectPath string) []byte {
 	var b strings.Builder
