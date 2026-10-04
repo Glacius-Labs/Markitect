@@ -35,7 +35,7 @@ spec:
 	}
 	out.Reset()
 	errout.Reset()
-	if code := run([]string{"--unknown"}, &out, &errout); code != 2 || errout.Len() == 0 {
+	if code := run([]string{"--unknown"}, &out, &errout); code != 2 || out.Len() != 0 || errout.Len() == 0 {
 		t.Fatalf("invalid invocation: code=%d stdout=%s stderr=%s", code, out.String(), errout.String())
 	}
 }
