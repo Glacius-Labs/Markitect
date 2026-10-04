@@ -27,7 +27,7 @@ An empty `hooks` list returns `not-configured` with an informational finding. It
 
 ## Result and limits
 
-`Check(Input)` returns deterministic findings for missing supplied bytes, stale configured digests, absent owner resources, and missing owner links. It reports the supplied snapshot/model identities and sorts findings by path and finding identity. Inputs are bounded to 128 configured paths, a 1 MiB config, and 1 MiB per configured hook artifact.
+`Check(Input)` returns deterministic findings for missing supplied bytes, stale configured digests, absent owner resources, and missing owner links. It reports the supplied snapshot/model identities and `configDigest`. That digest is SHA-256 over deterministic JSON for the closed typed config, with hooks sorted by path and name, so YAML formatting or list order does not change the binding. Inputs are bounded to 128 configured paths, a 1 MiB config, and 1 MiB per configured hook artifact. Configured paths that collide under portable case folding are rejected.
 
 The supplied Core model must be structurally valid and carry fixed snapshot/model digests. A pass establishes only that the configured path bytes were supplied, any configured digest matches, and the explicit owner link resolves. It does not establish that Git installs or invokes the hook, that a hook is executable, that its script is safe or correct, or that it runs successfully. The module does not inspect `.git/hooks`, Git's `core.hooksPath`, hook-manager configuration, or shell semantics.
 
