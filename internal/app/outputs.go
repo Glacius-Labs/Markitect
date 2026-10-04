@@ -34,19 +34,33 @@ func CheckOutputs(p *Project) []core.Diagnostic {
 			findings = append(findings, core.Diagnostic{Code: "output-drift", Path: name, Message: "generated file differs from its canonical source"})
 		}
 	}
-	nestedRoots := independentNestedProjectRoots(p, outputs)
-	for _, name := range sortedFiles(p.Snapshot.Files) {
-		if (strings.HasSuffix(name, ".md") || strings.HasSuffix(name, ".toml")) && Generated(p.Snapshot.Files[name]) {
-			if inIndependentNestedProject(name, nestedRoots) {
-				continue
-			}
-			if _, ok := outputs[name]; !ok {
-				findings = append(findings, core.Diagnostic{Code: "stale-output", Path: name, Message: "previously generated file has no current source; inspect and remove in the same migration"})
-			}
-		}
+	for _, name := range staleProjectionPaths(p, outputs) {
+		findings = append(findings, core.Diagnostic{Code: "stale-output", Path: name, Message: "previously generated file has no current source; inspect and remove in the same migration"})
 	}
 	findings = append(findings, checkProviderInventory(p, outputs)...)
 	return findings
+}
+
+// staleProjectionPaths lists only Markitect's Markdown and TOML projections
+// that have no current owner in this Project. Other generated-marked files
+// (for example schemas produced by another generator) are outside this
+// projection's ownership contract.
+func staleProjectionPaths(p *Project, expectedOutputs map[string][]byte) []string {
+	if p == nil || p.Snapshot == nil {
+		return nil
+	}
+	nestedRoots := independentNestedProjectRoots(p, expectedOutputs)
+	var stale []string
+	for _, name := range sortedFiles(p.Snapshot.Files) {
+		if !(strings.HasSuffix(name, ".md") || strings.HasSuffix(name, ".toml")) || !Generated(p.Snapshot.Files[name]) {
+			continue
+		}
+		if _, owned := expectedOutputs[name]; owned || inIndependentNestedProject(name, nestedRoots) {
+			continue
+		}
+		stale = append(stale, name)
+	}
+	return stale
 }
 
 func normalize(data []byte) []byte { return bytes.ReplaceAll(data, []byte("\r\n"), []byte("\n")) }

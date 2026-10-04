@@ -83,4 +83,21 @@ func TestMarkitectFirstProjectContextAndProjections(t *testing.T) {
 	if findings := app.CheckOutputs(project); len(findings) != 0 {
 		t.Fatalf("root projections are not converged: %#v", findings)
 	}
+	observation, err := app.ObserveProjection(project, "test", "sha256:fixed-test-tool")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(observation.Stale) != 0 || len(observation.Drift) != 0 || len(observation.Conflicts) != 0 {
+		t.Fatalf("native projection observation does not converge: %#v", observation)
+	}
+	plan, err := app.PlanProjection(project, "test", "sha256:fixed-test-tool")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if plan.Status != "complete" || len(plan.Operations) != 0 || len(plan.Stale) != 0 {
+		t.Fatalf("converged root must have an empty complete plan: %#v", plan)
+	}
+	if err := app.VerifyProjectionPlan(project, plan, "test", "sha256:fixed-test-tool"); err != nil {
+		t.Fatalf("converged root plan does not verify: %v", err)
+	}
 }
