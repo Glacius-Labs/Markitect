@@ -191,3 +191,9 @@ Current source adds a neutral [onboarding exercise](onboarding.md), its replay i
 - A long-running background operator beyond the explicit v0.10.0 observe/plan/apply/verify commands only if users show a need those bounded operations do not meet.
 
 These options are deferred product decisions, not commitments of the current release. Keep the core provider-independent and add abstractions only for a demonstrated invariant.
+
+## Markitect-first release candidate
+
+The [canonical Change workflow](../internal/authoring/resources/workflow-markitect-first-change.yaml), [usage](usage.md#markitect-first-release-candidate), root Project and generated provider Skills make the engineering-entrypoint direction executable. The artifact helper uses existing checks and explicit path accounting rather than new Core/Domain semantics. The [release-readiness assessment](validation/markitect-first-release-readiness.md) owns scope, exact gate evidence and unresolved acceptance items. v0.13.0 is the intended additive minor candidate; until immutable publication is independently verified, v0.12.0 remains the published contract.
+
+The exact owner-approved private Konfyra capture has been written outside both repositories and four bounded interpretation candidates prepared. Public documentation contains only sanitized counts/tool behavior. Candidate acceptance, canonical adoption and actual recurring human burden remain owner decisions; no adoption or productivity result is implied. Prior pilot negative findings remain intact. After generic release gates, the next product validation is a published-binary, owner-reviewed real-task comparison including initial setup and recurring maintenance, using [Measurement](measurement.md).

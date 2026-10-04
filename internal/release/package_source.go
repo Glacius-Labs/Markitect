@@ -70,7 +70,7 @@ func walkSourceTree(moduleDir, start string, files *[]sourceFile) error {
 			return fmt.Errorf("refusing symlink in Markitect source tree: %s", rel)
 		}
 		ext := strings.ToLower(filepath.Ext(entry.Name()))
-		embeddedResource := strings.HasPrefix(rel, "internal/authoring/resources/") && ext == ".yaml"
+		embeddedResource := embeddedAuthoringSource(rel)
 		if ext != ".go" && !embeddedResource && rel != embeddedNoticesPath {
 			return nil
 		}

@@ -2,9 +2,11 @@ package app
 
 import (
 	"bytes"
+	"path"
 	"strings"
 
 	"github.com/Glacius-Labs/Markitect/internal/core"
+	"github.com/Glacius-Labs/Markitect/internal/format"
 	"github.com/Glacius-Labs/Markitect/internal/render"
 )
 
@@ -32,8 +34,12 @@ func CheckOutputs(p *Project) []core.Diagnostic {
 			findings = append(findings, core.Diagnostic{Code: "output-drift", Path: name, Message: "generated file differs from its canonical source"})
 		}
 	}
+	nestedRoots := independentNestedProjectRoots(p, outputs)
 	for _, name := range sortedFiles(p.Snapshot.Files) {
 		if (strings.HasSuffix(name, ".md") || strings.HasSuffix(name, ".toml")) && Generated(p.Snapshot.Files[name]) {
+			if inIndependentNestedProject(name, nestedRoots) {
+				continue
+			}
 			if _, ok := outputs[name]; !ok {
 				findings = append(findings, core.Diagnostic{Code: "stale-output", Path: name, Message: "previously generated file has no current source; inspect and remove in the same migration"})
 			}
@@ -44,3 +50,68 @@ func CheckOutputs(p *Project) []core.Diagnostic {
 }
 
 func normalize(data []byte) []byte { return bytes.ReplaceAll(data, []byte("\r\n"), []byte("\n")) }
+
+// independentNestedProjectRoots identifies standalone Project directories
+// whose generated files belong to another Markitect invocation. A nested
+// manifest must be a strict supported Project resource and must not overlap
+// any input or output owned by the parent Project. The nested Project is not
+// parsed into the parent model; this list only narrows stale-marker inventory.
+func independentNestedProjectRoots(p *Project, expectedOutputs map[string][]byte) []string {
+	if p == nil || p.Snapshot == nil || p.Graph == nil || p.Graph.Project == nil {
+		return nil
+	}
+	var roots []string
+	for _, name := range sortedFiles(p.Snapshot.Files) {
+		if path.Base(name) != "markitect.yaml" {
+			continue
+		}
+		root := path.Dir(name)
+		if root == "." {
+			continue
+		}
+		manifest, err := format.Parse(name, p.Snapshot.Files[name])
+		if err != nil || manifest.APIVersion != core.APIVersion || manifest.Kind != "Project" {
+			continue
+		}
+		if overlapsParentProject(p, root, expectedOutputs) {
+			continue
+		}
+		roots = append(roots, root)
+	}
+	return roots
+}
+
+func overlapsParentProject(p *Project, nestedRoot string, expectedOutputs map[string][]byte) bool {
+	for _, area := range p.Graph.Project.Spec.Areas {
+		if pathsOverlap(nestedRoot, area.Path) {
+			return true
+		}
+	}
+	for output := range expectedOutputs {
+		if pathsOverlap(nestedRoot, output) {
+			return true
+		}
+	}
+	for _, inputs := range p.InputFiles {
+		for _, input := range inputs {
+			if Within(input, nestedRoot) {
+				return true
+			}
+		}
+	}
+	for _, domain := range p.DomainInputs {
+		if domain.Package == "" && Within(domain.Path, nestedRoot) {
+			return true
+		}
+	}
+	return false
+}
+
+func inIndependentNestedProject(file string, roots []string) bool {
+	for _, root := range roots {
+		if Within(file, root) {
+			return true
+		}
+	}
+	return false
+}

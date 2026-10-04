@@ -16,7 +16,7 @@ import (
 // resources contains the canonical core Project and authoring resources. It is
 // included in the release source archive and compiled into the tool binary.
 //
-//go:embed resources/*.yaml
+//go:embed project.yaml resources/*.yaml
 var resources embed.FS
 
 const entry = "core/Skill/authoring"
@@ -33,7 +33,13 @@ func Context(version, toolDigest string) (*app.Context, error) {
 		Files: make(map[string][]byte),
 		Modes: make(map[string]string),
 	}
-	err := fs.WalkDir(resources, "resources", func(name string, entry fs.DirEntry, walkErr error) error {
+	projectBytes, err := resources.ReadFile("project.yaml")
+	if err != nil {
+		return nil, fmt.Errorf("load embedded authoring project: %w", err)
+	}
+	snapshot.Files["markitect.yaml"] = projectBytes
+	snapshot.Modes["markitect.yaml"] = "100644"
+	err = fs.WalkDir(resources, "resources", func(name string, entry fs.DirEntry, walkErr error) error {
 		if walkErr != nil {
 			return walkErr
 		}
@@ -48,9 +54,6 @@ func Context(version, toolDigest string) (*app.Context, error) {
 			return err
 		}
 		relative := "internal/authoring/" + name
-		if name == "resources/markitect.yaml" {
-			relative = "markitect.yaml"
-		}
 		snapshot.Files[relative] = data
 		snapshot.Modes[relative] = "100644"
 		return nil

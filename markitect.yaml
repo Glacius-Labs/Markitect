@@ -1,0 +1,39 @@
+apiVersion: markitect.example.org/v1alpha1
+kind: Project
+metadata:
+    name: markitect-development
+spec:
+    targets:
+        - codex
+        - claude
+        - markdown
+    areas:
+        - name: core
+          path: internal/authoring/resources
+          rules:
+            - name: canonical-ownership
+        - name: development
+          path: .markitect/areas/development
+          imports:
+            - core
+            - documentation
+            - contribution
+        - name: documentation
+          path: docs
+        - name: contribution
+          path: CONTRIBUTING.md
+    checks:
+        - name: managed-artifacts
+          run:
+            - go
+            - run
+            - ./cmd/markitect-check-artifacts
+            - --repo
+            - .
+            - --config
+            - markitect-artifacts.yaml
+        - name: go-tests
+          run:
+            - go
+            - test
+            - ./...

@@ -26,7 +26,7 @@ func TestPackageIsDeterministicAndContainsOnlyReleaseSources(t *testing.T) {
 		t.Fatal("packaging the same source twice changed output")
 	}
 	entries := archiveEntries(t, first)
-	want := []string{"LICENSE", "README.md", "cmd/markitect/main.go", "go.mod", "go.sum", "internal/authoring/resources/markitect.yaml", "internal/core/model.go", "internal/format/schema.go", "internal/release/package.go", "internal/release/package_test.go", "schema/manifest.yaml"}
+	want := []string{"LICENSE", "README.md", "cmd/markitect/main.go", "go.mod", "go.sum", "internal/authoring/project.yaml", "internal/core/model.go", "internal/format/schema.go", "internal/release/package.go", "internal/release/package_test.go", "schema/manifest.yaml"}
 	if strings.Join(entries, "\n") != strings.Join(want, "\n") {
 		t.Fatalf("unexpected package contents:\n%v\nwant:\n%v", entries, want)
 	}
@@ -43,7 +43,7 @@ func TestPackageIsDeterministicAndContainsOnlyReleaseSources(t *testing.T) {
 	}
 }
 
-func TestPackageIncludesOnlyEmbeddedAuthoringYAMLResources(t *testing.T) {
+func TestPackageIncludesEmbeddedAuthoringProjectAndResourcesOnly(t *testing.T) {
 	_, testFile, _, ok := runtime.Caller(0)
 	if !ok {
 		t.Fatal("cannot locate release test source")
@@ -66,13 +66,13 @@ func TestPackageIncludesOnlyEmbeddedAuthoringYAMLResources(t *testing.T) {
 		t.Fatal("source archive omitted or changed the root license")
 	}
 	want := []string{
-		"internal/authoring/resources/markitect.yaml",
 		"internal/authoring/resources/rule-canonical-ownership.yaml",
 		"internal/authoring/resources/skill-authoring.yaml",
 		"internal/authoring/resources/text-resource-modelling.yaml",
 		"internal/authoring/resources/workflow-authoring-change.yaml",
 		"internal/authoring/resources/workflow-constitution-change.yaml",
 		"internal/authoring/resources/workflow-engineering-discovery.yaml",
+		"internal/authoring/resources/workflow-markitect-first-change.yaml",
 	}
 	var got []string
 	for name := range contents {
@@ -83,6 +83,21 @@ func TestPackageIncludesOnlyEmbeddedAuthoringYAMLResources(t *testing.T) {
 	sort.Strings(got)
 	if strings.Join(got, "\n") != strings.Join(want, "\n") {
 		t.Fatalf("bundled authoring resources in source archive = %v, want %v", got, want)
+	}
+	projectPath := "internal/authoring/project.yaml"
+	projectData, err := os.ReadFile(filepath.Join(moduleRoot, filepath.FromSlash(projectPath)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	projectData, err = normalizeTextSource(projectPath, projectData)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(contents[projectPath], projectData) {
+		t.Fatal("archive omitted or changed the embedded authoring Project")
+	}
+	if _, included := contents["internal/authoring/notes.yaml"]; included {
+		t.Fatal("unrelated YAML under internal/authoring was packaged")
 	}
 	for _, name := range want {
 		data, err := os.ReadFile(filepath.Join(moduleRoot, filepath.FromSlash(name)))

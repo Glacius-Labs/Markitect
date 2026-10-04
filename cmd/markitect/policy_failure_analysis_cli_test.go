@@ -2,10 +2,14 @@ package main
 
 import (
 	"bytes"
+	"context"
+	"errors"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/app"
 )
@@ -13,7 +17,7 @@ import (
 func TestPolicyFailureAnalysisCLIIsExplicitAndKeepsAcceptanceStrict(t *testing.T) {
 	repo := newPolicyAnalysisCLIRepo(t)
 
-	code, output, stderr := invoke("check", "--repo", repo.root, "--revision", repo.failing)
+	code, output, stderr := invokePolicyAnalysisCLI(t, "check", "--repo", repo.root, "--revision", repo.failing)
 	if code != 1 {
 		t.Fatalf("check exit=%d stderr=%s output=%s, want policy-failure exit 1", code, stderr, output)
 	}
@@ -22,7 +26,7 @@ func TestPolicyFailureAnalysisCLIIsExplicitAndKeepsAcceptanceStrict(t *testing.T
 		t.Fatalf("check hid the failing policy result: %#v", checked)
 	}
 
-	code, output, stderr = invoke("verify", "--repo", repo.root, "--revision", repo.failing)
+	code, output, stderr = invokePolicyAnalysisCLI(t, "verify", "--repo", repo.root, "--revision", repo.failing)
 	if code != 1 {
 		t.Fatalf("verify exit=%d stderr=%s output=%s, want policy-failure exit 1 before gates", code, stderr, output)
 	}
@@ -36,7 +40,7 @@ func TestPolicyFailureAnalysisCLIIsExplicitAndKeepsAcceptanceStrict(t *testing.T
 		}
 	}
 
-	code, output, stderr = invoke("context", "--repo", repo.root, "--revision", repo.failing, "--api-version", "report.example.org/v1", "--kind", "Module", "--name", "legacy", "--namespace", "engineering")
+	code, output, stderr = invokePolicyAnalysisCLI(t, "context", "--repo", repo.root, "--revision", repo.failing, "--api-version", "report.example.org/v1", "--kind", "Module", "--name", "legacy", "--namespace", "engineering")
 	if code != 1 {
 		t.Fatalf("default context exit=%d stderr=%s output=%s, want strict policy failure", code, stderr, output)
 	}
@@ -45,7 +49,7 @@ func TestPolicyFailureAnalysisCLIIsExplicitAndKeepsAcceptanceStrict(t *testing.T
 		t.Fatalf("default context unexpectedly returned analysis: %#v", strictContext)
 	}
 
-	code, output, stderr = invoke("context", "--repo", repo.root, "--revision", repo.failing, "--api-version", "report.example.org/v1", "--kind", "Module", "--name", "legacy", "--namespace", "engineering", "--analyze-policy-failures")
+	code, output, stderr = invokePolicyAnalysisCLI(t, "context", "--repo", repo.root, "--revision", repo.failing, "--api-version", "report.example.org/v1", "--kind", "Module", "--name", "legacy", "--namespace", "engineering", "--analyze-policy-failures")
 	if code != 1 {
 		t.Fatalf("diagnostic context exit=%d stderr=%s output=%s, want useful output with failing status", code, stderr, output)
 	}
@@ -57,7 +61,7 @@ func TestPolicyFailureAnalysisCLIIsExplicitAndKeepsAcceptanceStrict(t *testing.T
 		t.Fatalf("diagnostic context omitted the failed rule: %#v", contextResult.PolicyResults)
 	}
 
-	code, output, stderr = invoke("impact", "--repo", repo.root, "--base", repo.base, "--revision", repo.failing, "--analyze-policy-failures")
+	code, output, stderr = invokePolicyAnalysisCLI(t, "impact", "--repo", repo.root, "--base", repo.base, "--revision", repo.failing, "--analyze-policy-failures")
 	if code != 1 {
 		t.Fatalf("diagnostic impact exit=%d stderr=%s output=%s, want useful output with failing candidate status", code, stderr, output)
 	}
@@ -71,7 +75,7 @@ func TestPolicyFailureAnalysisCLIIsExplicitAndKeepsAcceptanceStrict(t *testing.T
 
 	// The comparison remains nonzero when the base failed and the candidate
 	// repaired it; each side still states its own policy status.
-	code, output, stderr = invoke("impact", "--repo", repo.root, "--base", repo.failing, "--revision", repo.base, "--analyze-policy-failures")
+	code, output, stderr = invokePolicyAnalysisCLI(t, "impact", "--repo", repo.root, "--base", repo.failing, "--revision", repo.base, "--analyze-policy-failures")
 	if code != 1 {
 		t.Fatalf("repaired-candidate impact exit=%d stderr=%s output=%s, want base-failure exit 1", code, stderr, output)
 	}
@@ -123,7 +127,7 @@ func TestPolicyFailingWorkingTreeRejectsReconciliationAndWritersWithoutMutation(
 			name += "-" + args[4]
 		}
 		t.Run(name, func(t *testing.T) {
-			code, output, stderr := invoke(args...)
+			code, output, stderr := invokePolicyAnalysisCLI(t, args...)
 			if code != 1 {
 				t.Fatalf("%v exit=%d stderr=%s output=%s, want policy-failure rejection before operation", args, code, stderr, output)
 			}
@@ -151,7 +155,7 @@ func TestPolicyFailureAnalysisBlocksStructuralDiagnostics(t *testing.T) {
 	git(t, repo.root, "commit", "-m", "break resource schema")
 	structurallyInvalid := git(t, repo.root, "rev-parse", "HEAD")
 
-	code, output, stderr := invoke("context", "--repo", repo.root, "--revision", structurallyInvalid, "--api-version", "report.example.org/v1", "--kind", "Module", "--name", "legacy", "--namespace", "engineering", "--analyze-policy-failures")
+	code, output, stderr := invokePolicyAnalysisCLI(t, "context", "--repo", repo.root, "--revision", structurallyInvalid, "--api-version", "report.example.org/v1", "--kind", "Module", "--name", "legacy", "--namespace", "engineering", "--analyze-policy-failures")
 	if code != 1 {
 		t.Fatalf("structural context analysis exit=%d stderr=%s output=%s, want hard failure", code, stderr, output)
 	}
@@ -172,7 +176,7 @@ func TestPolicyFailureAnalysisBlocksStructuralDiagnostics(t *testing.T) {
 
 	// A structurally invalid candidate still returns only the ordinary failed
 	// report. It must not emit analysis evidence.
-	code, output, stderr = invoke("impact", "--repo", repo.root, "--base", repo.base, "--revision", structurallyInvalid, "--analyze-policy-failures")
+	code, output, stderr = invokePolicyAnalysisCLI(t, "impact", "--repo", repo.root, "--base", repo.base, "--revision", structurallyInvalid, "--analyze-policy-failures")
 	if code != 1 {
 		t.Fatalf("structural candidate impact exit=%d stderr=%s output=%s, want hard diagnostic failure", code, stderr, output)
 	}
@@ -182,10 +186,38 @@ func TestPolicyFailureAnalysisBlocksStructuralDiagnostics(t *testing.T) {
 	}
 
 	// A structurally invalid base cannot participate in the comparison either.
-	code, output, stderr = invoke("impact", "--repo", repo.root, "--base", structurallyInvalid, "--revision", repo.failing, "--analyze-policy-failures")
+	code, output, stderr = invokePolicyAnalysisCLI(t, "impact", "--repo", repo.root, "--base", structurallyInvalid, "--revision", repo.failing, "--analyze-policy-failures")
 	if code != 2 || output != "" || !strings.Contains(stderr, "base has structural diagnostics") {
 		t.Fatalf("structural base impact was not blocked cleanly: exit=%d stderr=%q output=%q", code, stderr, output)
 	}
+}
+
+func invokePolicyAnalysisCLI(t *testing.T, args ...string) (int, string, string) {
+	t.Helper()
+	binary := os.Getenv("MARKITECT_POLICY_ANALYSIS_BINARY")
+	if binary == "" {
+		return invoke(args...)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 45*time.Second)
+	defer cancel()
+	command := exec.CommandContext(ctx, binary, args...)
+	var stdout, stderr bytes.Buffer
+	command.Stdout = &stdout
+	command.Stderr = &stderr
+	runErr := command.Run()
+	if ctx.Err() != nil {
+		t.Fatalf("packaged Markitect command exceeded 45-second timeout: %s %v\nstdout:\n%s\nstderr:\n%s", binary, args, stdout.String(), stderr.String())
+	}
+	if runErr == nil {
+		return 0, stdout.String(), stderr.String()
+	}
+	var exitErr *exec.ExitError
+	if errors.As(runErr, &exitErr) {
+		return exitErr.ExitCode(), stdout.String(), stderr.String()
+	}
+	t.Fatalf("could not run packaged Markitect command %s: %v\nstdout:\n%s\nstderr:\n%s", binary, runErr, stdout.String(), stderr.String())
+	return 0, stdout.String(), stderr.String()
 }
 
 type policyAnalysisCLIRepo struct {
