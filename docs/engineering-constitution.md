@@ -1,6 +1,6 @@
 # Engineering constitution
 
-**Status:** v0.12.0 is the latest published product contract and adds the finite `same-target` assertion described in [Architecture](architecture.md). v0.11.0 is the historical baseline for reusable architecture contracts; v0.10.0 is the historical baseline for the generic model. The [roadmap](implementation-plan.md) owns verified release evidence; [Usage](usage.md) documents source syntax and published CLI behavior.
+**Status:** v0.13.0 is the latest published product contract. It adds read-only policy-failure analysis, bounded selective handoff, the provider-neutral Markitect-first workflow and managed-artifact accounting; v0.12.0 adds the finite `same-target` assertion described in [Architecture](architecture.md). v0.11.0 is the historical baseline for reusable architecture contracts; v0.10.0 is the historical baseline for the generic model. The [roadmap](implementation-plan.md) owns verified release evidence; [Usage](usage.md) documents source syntax and published CLI behavior.
 
 ## Product purpose
 
@@ -57,11 +57,11 @@ Changing a Domain package can change constraint digests and make existing except
 
 ## Inspect a policy-breaking candidate
 
-The source iteration after the real-code pilot adds explicit read-only Context/Impact analysis of structurally valid policy-failing candidates. A failed policy is information: it blocks acceptance without requiring a waiver merely to inspect it. `--analyze-policy-failures` keeps failed validation visible and returns exit 1 when either analyzed snapshot fails policy. Structural errors and invalid exceptions remain blockers; Check, Verify and reconciliation retain their strict gates. The [design contract](design/policy-failure-analysis.md) records the unreleased source behavior separately from v0.12.0.
+v0.13.0 adds explicit read-only Context/Impact analysis of structurally valid policy-failing candidates. A failed policy is information: it blocks acceptance without requiring a waiver merely to inspect it. `--analyze-policy-failures` keeps failed validation visible and returns exit 1 when either analyzed snapshot fails policy. Structural errors and invalid exceptions remain blockers; Check, Verify and reconciliation retain their strict gates. The [design contract](design/policy-failure-analysis.md) records the contract; immutable v0.12.0 does not include this behavior.
 
 ## Copy Me: propose, review, adopt
 
-Current source additionally implements the [selective handoff](design/selective-adoption-handoff.md): preparation opens only owner-selected Git blobs, stores an external capture with an explicit reviewed digest, and Copy Me validates supplied interpretation/decision bytes without acquiring more evidence. No Project or ContextRun is required. This infrastructure changes no Core assertion or authority invariant; published v0.12.0 retains its earlier guidance. An accepted candidate remains non-canonical until a separate reviewed project change adopts it.
+v0.13.0 includes the [selective handoff](design/selective-adoption-handoff.md): preparation opens only owner-selected Git blobs, stores an external capture with an explicit reviewed digest, and Copy Me validates supplied interpretation/decision bytes without acquiring more evidence. No Project or ContextRun is required. This infrastructure changes no Core assertion or authority invariant; immutable v0.12.0 retains its earlier guidance. An accepted candidate remains non-canonical until a separate reviewed project change adopts it.
 
 The shipped v0.11.0 authoring resources include a provider-independent `Copy Me` workflow. It helps an agent propose a candidate engineering style from evidence a person explicitly selects. It does not add a `discover` CLI command, call a model from the Markitect kernel, or promote observations into canonical policy.
 

@@ -19,9 +19,9 @@ The published v0.11.0 release builds on that foundation with [reusable engineeri
 
 The published [v0.12.0 release](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.12.0) adds one finite `same-target` assertion after independent [Software architecture](examples/software-architecture/README.md) and [Delivery topology](examples/delivery-target-equality/README.md) cases demonstrated the same singleton ownership comparison. Its [design assessment](docs/design/resolved-target-equality.md) explains alternatives, explicit selection, policy traces, bounded impact and source-bound exceptions. The [language-pressure report](docs/design/domain-language-pressure.md) keeps the other gaps visible. The release establishes these bounded capabilities, not real-project benefit.
 
-Later source adds explicit read-only policy-failure analysis, bounded offline GitHub/Azure capture consumers, and [selective adoption preparation](docs/design/selective-adoption-handoff.md). `prepare` captures only owner-selected Git blobs into an external workspace; `copy-me` validates separate evidence, candidate and supplied decision records without adopting policy. The [roadmap](docs/implementation-plan.md) separates these from published v0.12.0; the [real-project comparison](docs/validation/agents-md-vs-markitect.md) remains inconclusive about whether added maintenance pays for itself.
+The published [v0.13.0 release](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.13.0) adds explicit read-only policy-failure analysis, bounded selective adoption preparation and Copy Me handoff validation, .NET/source hardening, the provider-neutral Markitect-first Change workflow, and a standalone managed-artifact check. Offline GitHub/Azure consumers and MCP remain experimental source-only interfaces; no live provider Apply is included. The [real-project comparison](docs/validation/agents-md-vs-markitect.md) remains inconclusive about whether added maintenance pays for itself.
 
-The next source candidate makes [Markitect-first](docs/markitect-first.md) the repository's durable agent entrypoint: read fixed engineering context, classify the change, update desired intent first when it changes, account for managed artifacts, then verify/reconcile. The standalone artifact helper ships through the source package. [Release readiness](docs/validation/markitect-first-release-readiness.md) separates tested source behavior from publication; v0.12.0 remains current until the immutable candidate is verified.
+The [Markitect-first](docs/markitect-first.md) workflow is the repository's durable agent entrypoint: read fixed engineering context, classify the change, update desired intent first when it changes, account for managed artifacts, then verify/reconcile. The standalone artifact helper ships through the source package and existing Project checks. The restricted owner-approved capture and candidate exercise remains separate from public sanitized replay evidence; it establishes neither owner acceptance nor adoption or productivity outcomes.
 
 ## Why Markitect?
 
@@ -295,15 +295,15 @@ Machine results establish only configured assertions for their fixed inputs. The
 
 ## Install Markitect
 
-The current [v0.12.0 release](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.12.0) provides Windows and Linux amd64 binaries. The commands below download a fixed version from the public release, check its published SHA-256 digest, and install it for your user. No Go installation or GitHub login is needed. Git is needed for Markitect commands that read Git revisions.
+The current [v0.13.0 release](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.13.0) provides Windows and Linux amd64 binaries. The commands below download a fixed version from the public release, check its published SHA-256 digest, and install it for your user. No Go installation or GitHub login is needed. Git is needed for Markitect commands that read Git revisions.
 
 **Windows (PowerShell):**
 
 ```powershell
 if (-not [Runtime.InteropServices.RuntimeInformation]::IsOSPlatform([Runtime.InteropServices.OSPlatform]::Windows) -or [Runtime.InteropServices.RuntimeInformation]::OSArchitecture -ne [Runtime.InteropServices.Architecture]::X64) { throw 'Only Windows amd64 is released.' }
-$tag = 'v0.12.0'
+$tag = 'v0.13.0'
 $asset = "markitect-$tag-windows-amd64.exe"
-$sha256 = 'b03424560caa460322e3580785d6abc9dfbf2137df878e03ddedcf76b3a8fa47'
+$sha256 = 'ac40c666ff549e2f6a7af0923a716278ecf4e019589fdd0de0982259bde17054'
 $download = Join-Path $env:TEMP ("markitect-" + [guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Path $download -ErrorAction Stop | Out-Null
 $source = Join-Path $download $asset
@@ -318,7 +318,7 @@ if ($bin -notin ($userPath -split ';')) {
 }
 $env:Path = "$bin;$env:Path"
 $installed = & (Join-Path $bin 'markitect.exe') version
-if ($LASTEXITCODE -ne 0 -or $installed -ne 'Markitect 0.12.0 (windows/amd64)') { throw 'Installed CLI version check failed.' }
+if ($LASTEXITCODE -ne 0 -or $installed -ne 'Markitect 0.13.0 (windows/amd64)') { throw 'Installed CLI version check failed.' }
 $installed
 Remove-Item -LiteralPath $source, $download
 ```
@@ -329,9 +329,9 @@ Remove-Item -LiteralPath $source, $download
 (
   set -e
   [ "$(uname -s)" = Linux ] && [ "$(uname -m)" = x86_64 ] || { echo 'Only Linux amd64 is released.' >&2; exit 1; }
-  tag=v0.12.0
+  tag=v0.13.0
   asset="markitect-$tag-linux-amd64"
-  sha256=f2072ded99d709b8267124d1460e6b1c1b5afd45c3b70ba7c723a82e17152297
+  sha256=7163bea66f539c3bf558770cdbd0745beea6b5b26a50e5f3fc4f1021a22abf2c
   download="$(mktemp -d)"
   trap 'rm -rf "$download"' EXIT
   curl -fLsS "https://github.com/Glacius-Labs/Markitect/releases/download/$tag/$asset" -o "$download/$asset"
@@ -342,7 +342,7 @@ Remove-Item -LiteralPath $source, $download
 export PATH="$HOME/.local/bin:$PATH"
 ```
 
-Add `~/.local/bin` to your shell startup file if it is not already on `PATH`. For developers who already use Go 1.27.1 or later, `go install github.com/Glacius-Labs/Markitect/cmd/markitect@v0.12.0` is a shorter source-build option. macOS and arm64 binaries are not currently released. For signed release and asset attestation verification, project pinning, and upgrades, follow the [distribution guide](integration/README.md). The CLI's `install` command installs a **project pin**, not the CLI on your computer.
+Add `~/.local/bin` to your shell startup file if it is not already on `PATH`. For developers who already use Go 1.27.1 or later, `go install github.com/Glacius-Labs/Markitect/cmd/markitect@v0.13.0` is a shorter source-build option. macOS and arm64 binaries are not currently released. For signed release and asset attestation verification, project pinning, and upgrades, follow the [distribution guide](integration/README.md). The CLI's `install` command installs a **project pin**, not the CLI on your computer.
 
 <!-- markitect-release:install:end -->
 
@@ -350,16 +350,16 @@ Add `~/.local/bin` to your shell startup file if it is not already on `PATH`. Fo
 
 ## Try the installed CLI
 
-Clone the v0.12.0 synthetic example and run a structural check with the installed binary. This reads the example without modifying an adopting repository.
+Clone the v0.13.0 synthetic example and run a structural check with the installed binary. This reads the example without modifying an adopting repository.
 
 Windows PowerShell:
 
 ~~~powershell
-git clone --depth 1 --branch v0.12.0 https://github.com/Glacius-Labs/Markitect.git markitect-sample-v0.12.0
-if ($LASTEXITCODE -ne 0) { throw 'Could not get the v0.12.0 synthetic example.' }
+git clone --depth 1 --branch v0.13.0 https://github.com/Glacius-Labs/Markitect.git markitect-sample-v0.13.0
+if ($LASTEXITCODE -ne 0) { throw 'Could not get the v0.13.0 synthetic example.' }
 markitect version
 if ($LASTEXITCODE -ne 0) { throw 'Version check failed.' }
-markitect check --repo .\markitect-sample-v0.12.0\examples\minimal
+markitect check --repo .\markitect-sample-v0.13.0\examples\minimal
 if ($LASTEXITCODE -ne 0) { throw 'Example check failed.' }
 ~~~
 
@@ -367,9 +367,9 @@ Linux amd64:
 
 ~~~sh
 set -e
-git clone --depth 1 --branch v0.12.0 https://github.com/Glacius-Labs/Markitect.git markitect-sample-v0.12.0
+git clone --depth 1 --branch v0.13.0 https://github.com/Glacius-Labs/Markitect.git markitect-sample-v0.13.0
 markitect version
-markitect check --repo ./markitect-sample-v0.12.0/examples/minimal
+markitect check --repo ./markitect-sample-v0.13.0/examples/minimal
 ~~~
 
 The [minimal example](examples/minimal/README.md) is a synthetic, executable fixture. To use Markitect in your own repository, follow the [release installation and verification guide](integration/README.md) to preview and install a project pin.

@@ -1,0 +1,12 @@
+# yaml-language-server: $schema=https://aka.ms/winget-manifest.installer.1.12.0.schema.json
+PackageIdentifier: GlaciusLabs.Markitect
+PackageVersion: 0.13.0
+InstallerType: portable
+Commands:
+- markitect
+Installers:
+- Architecture: x64
+  InstallerUrl: https://github.com/Glacius-Labs/Markitect/releases/download/v0.13.0/markitect-v0.13.0-windows-amd64.exe
+  InstallerSha256: AC40C666FF549E2F6A7AF0923A716278ECF4E019589FDD0DE0982259BDE17054
+ManifestType: installer
+ManifestVersion: 1.12.0
