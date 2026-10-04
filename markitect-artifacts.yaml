@@ -3,12 +3,17 @@ kind: ArtifactCoverage
 spec:
   roots:
     - .markitect
-    - internal/authoring/resources
+    - .githooks
+    - .github/workflows
+    - internal/host/embedded
+    - internal/host/artifactcli
+    - internal/host/artifact_coverage.go
+    - internal/host/artifact_coverage_test.go
+    - internal/modules/artifactcoverage
     - .agents
     - .claude
     - docs/markitect
     - cmd/markitect-check-artifacts
-    - internal/artifactcoverage
     - AGENTS.md
     - markitect.yaml
     - markitect-artifacts.yaml
@@ -18,13 +23,37 @@ spec:
       owner: repository-agent-navigation
     - path: markitect-artifacts.yaml
       owner: managed-artifact-accounting-configuration
+    - path: .markitect/README.md
+      owner: module-verification-navigation
     - path: docs/markitect-first.md
       owner: markitect-first-workflow-navigation
+    - path: .github/workflows/release.yaml
+      owner: release-workflow
+    - path: .github/workflows/release-benchmark.yaml
+      owner: release-benchmark-workflow
+    - path: .github/workflows/winget-validation.yaml
+      owner: winget-validation-workflow
     - path: cmd/markitect-check-artifacts/main.go
       owner: managed-artifact-check-command
     - path: cmd/markitect-check-artifacts/main_test.go
       owner: managed-artifact-check-command-tests
-    - path: internal/artifactcoverage/coverage.go
+    - path: internal/host/artifactcli/main.go
+      owner: managed-artifact-check-host-command
+    - path: internal/host/artifactcli/main_test.go
+      owner: managed-artifact-check-host-command-tests
+    - path: internal/host/artifact_coverage.go
       owner: managed-artifact-accounting-implementation
-    - path: internal/artifactcoverage/coverage_test.go
-      owner: managed-artifact-accounting-tests
+    - path: internal/host/artifact_coverage_test.go
+      owner: managed-artifact-accounting-host-tests
+    - path: internal/host/embedded/authoring.go
+      owner: embedded-authoring-host-implementation
+    - path: internal/host/embedded/authoring_test.go
+      owner: embedded-authoring-host-tests
+    - path: internal/host/embedded/project.yaml
+      owner: embedded-project-configuration
+    - path: internal/modules/artifactcoverage/README.md
+      owner: artifactcoverage-module-documentation
+    - path: internal/modules/artifactcoverage/artifactcoverage.go
+      owner: artifactcoverage-module-implementation
+    - path: internal/modules/artifactcoverage/artifactcoverage_test.go
+      owner: artifactcoverage-module-tests
