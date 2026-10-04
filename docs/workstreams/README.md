@@ -5,8 +5,8 @@
 | Workstream | Class | Can start after dispatch | Must wait for |
 |---|---|---|---|
 | [Risk triage](risk-triage.md) | C review | Evidence/tests review | Reproducer and bounded assignment before Core repair |
-| [Existing-project init](init-existing-project.md) | B | Scope/preview design, current-init investigation | Approved evidence/workspace handoff before durable new contracts |
-| [Copy Me](copy-me.md) | B | Candidate interpretation and decision design | Same handoff for integration; owner review for adoption |
+| [Existing-project init](init-existing-project.md) | B | Exact selection/preparation against the shared handoff | Reviewed shared changes; owner scope before content acquisition |
+| [Copy Me](copy-me.md) | B | Interpretation/validation of supplied handoff evidence | Owner review and separate project change for adoption |
 | [Adapter contract](adapter-contract.md) | C contract, A audit | Current protocol fixtures, ownership audit | Reviewed decision before new SPI/remote write semantics |
 | [.NET](adapter-dotnet.md) | A external | Existing read-only adapter work | New analysis must establish expanded evidence claims separately |
 | [Docs](adapter-docs.md) | A goal, shared native seam | Owned view work and new isolated tests | Coordinator edits of shared renderer/ownership |
@@ -22,7 +22,7 @@ Every assignment should identify the human activity it aims to reduce, the inten
 
 | Workstream or mechanism | Intended contribution | Current limit / evidence needed |
 |---|---|---|
-| Existing-project Init | Reduce manual preparation of reviewed, fixed evidence so owners can focus on scope and intent. | Current Init creates only a new minimal Project. Selective capture, retention and shared handoff remain deferred; preparation cost/privacy must be tested. |
+| Existing-project Init | Reduce manual preparation of reviewed, fixed evidence so owners can focus on scope and intent. | Greenfield Init remains minimal; source `prepare` now provides selective capture and the shared handoff. Adoption cost and owner review still require validation. |
 | Copy Me | Let agents organize observations, counterexamples and candidate policies while humans decide adoption. | Shipped guidance is not autonomous discovery. Interpretation and adoption effort, accidental/legacy conventions and uncertainty need measured review. |
 | Context | Make applicable engineering decisions available without repeated architectural rediscovery. | Closure and selection are explicit, not inferred relevance. Missing rules and broad inputs in prior runs remain findings. |
 | Impact | Support architecture-level consequence review and explain changed policy subjects. | Conservative impact is not an exact implementation cohort; noise, misses and reviewer effort require independent assessment. |

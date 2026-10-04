@@ -11,6 +11,11 @@ import (
 var fullGitCommitID = regexp.MustCompile(`^(?:[0-9a-f]{40}|[0-9a-f]{64})$`)
 
 type commandOptions struct {
+	scope                 string
+	expect                string
+	workspace             string
+	queue                 string
+	decision              string
 	root                  string
 	runManifest           string
 	revision              string
@@ -40,6 +45,11 @@ type commandOptions struct {
 func parseOptions(command string, args []string, allowed map[string]bool, out, errout io.Writer) (commandOptions, int, bool) {
 	fs := flag.NewFlagSet(command, flag.ContinueOnError)
 	fs.SetOutput(errout)
+	scope := fs.String("scope", "", "owner-supplied exact adoption scope YAML (prepare)")
+	expect := fs.String("expect", "", "reviewed preview handoff digest required with prepare --write")
+	workspace := fs.String("workspace", "", "captured immutable external evidence workspace (copy-me)")
+	queue := fs.String("queue", "", "explicit evidence/candidate queue YAML (copy-me)")
+	decision := fs.String("decision", "", "optional supplied immutable review decision YAML (copy-me)")
 	root := fs.String("repo", ".", "repository root")
 	runManifest := fs.String("run", "", "committed fixed-run context manifest (context)")
 	revision := fs.String("revision", "", "fixed Git revision (omitted: provisional working tree)")
@@ -51,10 +61,10 @@ func parseOptions(command string, args []string, allowed map[string]bool, out, e
 	areaPath := fs.String("path", "", "new ownership area path (init; defaults to .markitect/areas/<namespace>)")
 	packageName := fs.String("package", "", "exact content package identity (omitted: local entry)")
 	query := fs.String("query", "", "literal search text (find)")
-	write := fs.Bool("write", false, "write planned files in an isolated worktree")
+	write := fs.Bool("write", false, "explicitly write planned files (prepare: reviewed external capture)")
 	check := fs.Bool("check", false, "check rendered outputs (default)")
 	analyzePolicyFailures := fs.Bool("analyze-policy-failures", false, "allow read-only analysis of structurally valid policy failures (context, impact)")
-	output := fs.String("output", "", "absent output directory (package) or ZIP file (bundle)")
+	output := fs.String("output", "", "absent directory (package/prepare) or ZIP file (bundle)")
 	bundlePath := fs.String("bundle", "", "local release ZIP to validate and install")
 	bundleSHA := fs.String("sha256", "", "expected SHA-256 of the release ZIP")
 	action := fs.String("action", "", "reconciliation action: observe, plan, apply or verify")
@@ -95,8 +105,8 @@ func parseOptions(command string, args []string, allowed map[string]bool, out, e
 		fmt.Fprintf(errout, "--%s does not apply to %s\n", invalid, command)
 		return commandOptions{}, 2, true
 	}
-	if *write && ((command != "render" && command != "schema" && command != "format" && command != "install" && command != "init" && command != "reconcile") || *revision != "" || *check || (command == "reconcile" && *action != "apply")) {
-		fmt.Fprintln(errout, "--write only supports render, format, schema, install, init or reconcile --action apply on the working tree")
+	if *write && ((command != "render" && command != "schema" && command != "format" && command != "install" && command != "init" && command != "reconcile" && command != "prepare") || *revision != "" || *check || (command == "reconcile" && *action != "apply")) {
+		fmt.Fprintln(errout, "--write supports render, format, schema, install, init or reconcile --action apply on the working tree; prepare writes a reviewed external capture")
 		return commandOptions{}, 2, true
 	}
 	if command == "reconcile" {
@@ -134,6 +144,7 @@ func parseOptions(command string, args []string, allowed map[string]bool, out, e
 		return commandOptions{}, 2, true
 	}
 	return commandOptions{
+		scope: *scope, expect: *expect, workspace: *workspace, queue: *queue, decision: *decision,
 		root:                  *root,
 		runManifest:           *runManifest,
 		revision:              *revision,

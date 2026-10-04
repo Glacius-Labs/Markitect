@@ -1,6 +1,6 @@
-# Existing-project preparation: Init design proposal
+# Existing-project preparation: earlier Init design proposal
 
-**Status:** Proposal for coordinator review. This document does not add an Init mode, CLI, durable record, schema, or permission model. The current new-Project init contract remains the only implemented behavior.
+**Status:** Historical first-proof proposal. The current source now has a separate `prepare` command and adoption handoff; the canonical contract is [Selective adoption handoff](selective-adoption-handoff.md), with CLI invocation documented in [Usage](../usage.md). The implementation is under source verification; this note makes no CI or release claim. Published v0.12.0 is unchanged, and the existing new-Project `init` behavior remains separate.
 
 ## Goal and boundary
 
@@ -16,7 +16,7 @@ The current init remains a minimal new-Project operation. It still requires abse
 
 This follows the existing opaque-artifact rule: selected repository files are exact byte inputs, but Markitect Core does not infer their domain meaning. A candidate remains outside canonical Project state until the Project owner separately makes and reviews an ordinary Project change. No requirement to add context to or activate a non-Markitect adopter is implied.
 
-## Recommended first-proof shape
+## Earlier first-proof proposal
 
 Treat preparation as a separate operation in the Init application area, with explicit review and capture stages. Whether the CLI presents a new command or mode is a coordinator decision; neither should change the existing command's defaults or refusal behavior.
 
@@ -46,7 +46,7 @@ The workspace holds the reviewed selection, capture identities, and Copy Me hand
 
 Copy Me owns evidence interpretation and candidate/decision records. Init preparation owns the explicit scope intake, exact selected-source capture, and isolated handoff. The coordinator defines the shared record and write/merge boundary. Neither workstream may silently broaden or concurrently overwrite shared handoff state.
 
-## Proposed ownership after approval
+## Ownership proposed before implementation
 
 This proposal owns only docs/design/init-adoption-preparation.md.
 
@@ -92,7 +92,7 @@ Owner identity and review fields are supplied claims, not authentication or auth
 
 The source-acquisition request is narrow: support exact paths at one resolved full Git commit without reading unselected blobs. Keep this outside Core, preserve the existing snapshot digest, avoid a generic provider abstraction, and test the acquisition boundary with positive and negative evidence. If that helper cannot be approved now, a standalone helper must still meet the same no-unselected-read property.
 
-## Unresolved decisions
+## Questions recorded before the shared contract
 
 - Should preparation be a new CLI command or a distinct mode? This proposal intentionally names neither.
 - What is the minimum owner-supplied root identity needed to prevent a path from resolving to a different repository between review and capture?
@@ -103,4 +103,4 @@ The source-acquisition request is narrow: support exact paths at one resolved fu
 - What happens when the destination is inside another Git checkout, ignored, on a protected branch, or left partially initialized?
 - Which workstream is the single writer when Init and Copy Me finish at different times or branches?
 
-Until these decisions are approved, this document is a design proposal only. There is no new command, schema, persistent state, automatic crawl, discovery interpretation, or adoption behavior.
+These questions preserve the rationale for the original review. The current answers and source ownership are in [Selective adoption handoff](selective-adoption-handoff.md); do not use this historical proposal to infer today's command, record format, or verification status.

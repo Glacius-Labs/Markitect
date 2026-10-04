@@ -14,6 +14,8 @@ For coordinated parallel work, read the [development guide](docs/development/REA
 | `internal/snapshot` | Resolved snapshot values, stable content digests, and deterministic snapshot comparison |
 | `internal/format` | Strict YAML parsing and schema generation |
 | `internal/source` | Git revision and working-tree acquisition, Git process hardening, and source materialization |
+| `internal/adoption`, `internal/copyme` | Closed selective-evidence handoff and pure candidate/decision byte-reference validation outside Core |
+| `internal/app/adoption_*` | Preparation orchestration and exclusive external workspace storage/read boundaries |
 | `internal/inputs` | Explicit ordinary-file inputs |
 | `internal/app` | Normalized model, context, impact, adapter orchestration, evidence, and controlled writes |
 | `internal/authoring` | Embedded core authoring resources |

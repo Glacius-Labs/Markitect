@@ -106,6 +106,10 @@ func loadCommit(root, commit string, s *snapshot.Snapshot, limits Limits) error 
 }
 
 func loadBlobs(root string, files []treeFile, s *snapshot.Snapshot) error {
+	return loadBlobsWithCommand(root, files, s, gitCommand)
+}
+
+func loadBlobsWithCommand(root string, files []treeFile, s *snapshot.Snapshot, command func(root string, args ...string) *exec.Cmd) error {
 	if len(files) == 0 {
 		return nil
 	}
@@ -114,7 +118,7 @@ func loadBlobs(root string, files []treeFile, s *snapshot.Snapshot) error {
 		input.WriteString(file.oid)
 		input.WriteByte('\n')
 	}
-	cmd := gitCommand(root, "cat-file", "--batch")
+	cmd := command(root, "cat-file", "--batch")
 	cmd.Stdin = &input
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
@@ -225,6 +229,10 @@ func CleanGitEnv() []string {
 }
 
 func gitCommand(root string, args ...string) *exec.Cmd {
+	return gitCommandWithEnv(root, CleanGitEnv(), args...)
+}
+
+func gitCommandWithEnv(root string, env []string, args ...string) *exec.Cmd {
 	abs, err := filepath.Abs(root)
 	if err != nil {
 		// Callers validate and resolve root before invoking Git. Preserve a
@@ -233,6 +241,6 @@ func gitCommand(root string, args ...string) *exec.Cmd {
 	}
 	gitArgs := append([]string{"--no-replace-objects", "-c", "safe.directory=" + filepath.ToSlash(abs), "-C", abs}, args...)
 	cmd := exec.Command("git", gitArgs...)
-	cmd.Env = CleanGitEnv()
+	cmd.Env = env
 	return cmd
 }
