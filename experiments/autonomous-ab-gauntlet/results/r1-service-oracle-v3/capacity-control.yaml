@@ -1,0 +1,15 @@
+schema: autonomous-ab-capacity-control/v1
+recorded_utc: '2026-10-05T08:47:55.080181+00:00'
+freeze_digest: 1daa5bb43552c0437bcfd085d8afa4916094f90f03e3370f1ab2ecabdc339ee9
+scope: this Service-only cohort; existing Ops capacity control remains unchanged
+maximum_scored_leaves_per_operator: 1
+maximum_scored_leaves_globally: 3
+development_scope: tasks01-08 only; three fresh pairs; A/B/A first-arm order
+symmetry: same control in A and B; total task deadline includes queue/wait/repairs;
+  no resets
+parallel: isolated P01/P02 from trial1 task06 in both arms; serialized under capacity
+  control, then mechanical integration; no simultaneous-agent claim
+holdout: tasks09-12 remain closed until global explicit product fix/no-fix decision
+no_semantic_feedback: true
+product_candidate: adef79d935399f8ac63ad874dbdeab8d15c418a1
+human_acceptance: false

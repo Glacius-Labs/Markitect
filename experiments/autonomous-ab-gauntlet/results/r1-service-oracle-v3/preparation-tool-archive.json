@@ -1,0 +1,32 @@
+{
+  "schema": "service-oracle-v3-preparation-tool-archive/v1",
+  "recorded_utc": "2026-10-05T08:25:09.866110+00:00",
+  "source_gate_head": "d6ab34c0d08aa88faa7979e27bbf6cdce5dae4ef",
+  "purpose": "Coordinator-only copying of fixed predecessor inputs; not product or scored actor tooling. Archived before first use.",
+  "toolchain": "go version go1.27.1 windows/amd64",
+  "files": [
+    {
+      "file": "prepare-service-oracle-v3.go",
+      "sha256": "ba316c3eed7187b5b821aeaf82f7b57af2983aca4cfadbbb1f576487eac947b3",
+      "bytes": 11207,
+      "source": "C:\\Users\\Consiliari\\.codex\\worktrees\\689d\\Markitect\\.artifacts\\autonomous-ab-gauntlet\\prepare-service-oracle-v3.go"
+    },
+    {
+      "file": "prepare-service-oracle-v3_test.go",
+      "sha256": "0e239a23139a4a42be8b31c8d0059362e0991a3a229d4ecaafaa52095564ca43",
+      "bytes": 5842,
+      "source": "C:\\Users\\Consiliari\\.codex\\worktrees\\689d\\Markitect\\.artifacts\\autonomous-ab-gauntlet\\prepare-service-oracle-v3_test.go"
+    },
+    {
+      "file": "prepare-service-oracle-v3.exe",
+      "sha256": "675e126b2fd671dbdeb7777c71ed2bfbde873b9198fca7ce528de6f7412e8ef7",
+      "bytes": 5576192,
+      "source": "C:\\Users\\Consiliari\\.codex\\worktrees\\689d\\Markitect\\.artifacts\\autonomous-ab-gauntlet\\candidate\\prepare-service-oracle-v3.exe"
+    }
+  ],
+  "static_independent_review": "/root/service_v3_gate_review; evaluator, protocol and preparer/hardening; no blocker found. Automated not owner acceptance.",
+  "tool_test_exit": 0,
+  "candidate_or_actor_changes": false,
+  "partial_failure_behavior": "Retain exact created paths, no overwrite or rollback.",
+  "first_tool_test_adaptation_failure": "Retained tool call: copied extra-project negative test searched a removed engineering-ops line, so it was a no-op. Corrected to modular-service; all preparer tests passed before build. No arena created on failed test."
+}

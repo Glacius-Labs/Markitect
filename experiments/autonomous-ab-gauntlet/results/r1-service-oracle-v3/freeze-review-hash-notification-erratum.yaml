@@ -1,0 +1,15 @@
+schema: autonomous-ab-freeze-review-notification-erratum/v1
+recorded_at_utc: 2026-10-05T08:45:55Z
+purpose: Correct the hash transcribed in the coordinator notification; the review record itself is unchanged.
+review_record:
+  path: decisions/freeze-review.yaml
+  byte_count: 2578
+  verified_sha256: e7b33b985ee6f0fcfa6f9566f6562b4dbe391fcd5eb5d882c5e38d7911d51bb1
+notification_erratum:
+  previously_notified_sha256: e7b33b985ee6f0fcfa6f9566f6562b4dbbe391fcd5eb5d882c5e38d7911d51bb
+  actual_sha256: e7b33b985ee6f0fcfa6f9566f6562b4dbe391fcd5eb5d882c5e38d7911d51bb1
+  classification: transcription-only discrepancy
+preservation:
+  original_review_modified: false
+  actor_or_capacity_write_performed: false
+  evaluator_or_preparer_invoked: false

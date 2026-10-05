@@ -1,0 +1,49 @@
+schema: autonomous-ab-freeze-review/v1
+reviewed_at_utc: 2026-10-05T08:41:34Z
+reviewer_role: independent static manifest and parity review
+result: passed
+new_freeze:
+  digest: 1daa5bb43552c0437bcfd085d8afa4916094f90f03e3370f1ab2ecabdc339ee9
+  file_sha256: 40c3be61596a52e98176fd08f7997e079d303f75ad3313087c11cbf4d39b12da
+  input_count: 313
+  canonical_manifest_digest: passed
+  every_listed_file_hash: passed
+  regular_in_root_no_symlink_paths: passed
+  restricted_prefix_paths_raw_runs_workspaces_results: 0
+predecessor:
+  freeze_digest: d60e4975ab34b6519c2db414a58c170898750cacc59e077a199e2504f6bb6ebd
+  freeze_file_sha256: 2b384cd160e99263b9540272fad2386bbcedf0be97e1d99f662264648dcab1e3
+  input_count: 310
+  unchanged_byte_identical_inputs: 307
+replacements:
+  - path: protocol.yaml
+    sha256: c704891c45f064ab89b63aa9a52867d73e1d3644c70b773702517a3a693a886c
+  - path: projects/modular-service/oracle/evaluate.ps1
+    sha256: 487044e162462be1c26eebd47129104ab49bea9a53e574a2188ea255fcb1eb2c
+  - path: benchmark-service-oracle-v2_test.go
+    sha256: 3373f41c466cf6622574855f363f31d3882dbeb57a17ec1aa4ba0c48294c553f
+additions:
+  - path: benchmark-service-oracle-v3-correction.md
+    sha256: e65760a1ec0691cdc10857fca286d4bdc33cadfb90dc4b5aab458167fbdcfe0c
+  - path: benchmark-service-oracle-v3-ci.json
+    sha256: 5e1d804a757ee37cdf72a5a643f2a1f1cc7645270b219e8b799b72ccff108bc0
+  - path: benchmark-service-oracle-v3-preparation.yaml
+    sha256: 1385db805349367530b3057811127dafb5fce96633715df0bd9faf02af574015
+source_binding:
+  commit: d6ab34c0d08aa88faa7979e27bbf6cdce5dae4ef
+  replacement_and_correction_git_blobs_match: passed
+  exact_ci_run: 37283215539
+  exact_ci_head: d6ab34c0d08aa88faa7979e27bbf6cdce5dae4ef
+  windows_and_ubuntu_jobs: completed_success
+protocol:
+  non_cohort_fields: byte_semantically_equal
+  project_scope: [modular-service]
+  state: freeze-required-before-dispatch
+  benchmark_revision_predecessor: d60e4975ab34b6519c2db414a58c170898750cacc59e077a199e2504f6bb6ebd
+  candidate_product_seed_task_cards_harness_binaries: unchanged
+limits:
+  - Read only the two freeze manifests, their listed nonrestricted static inputs, and four source Git blobs at the pinned source commit.
+  - No raw, runs, workspaces, or results paths were present in either manifest or opened.
+  - No actor workspace, actor state, task outcome, evaluator invocation, or preparation execution was accessed.
+  - This review does not attest whether dispatch occurred; root owns the no-dispatch status.
+  - This review is not human acceptance of benchmark outcomes or product claims.

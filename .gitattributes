@@ -15,3 +15,5 @@ experiments/autonomous-ab-gauntlet/results/r1-service-oracle-v1/trial3-b-*.json 
 experiments/autonomous-ab-gauntlet/results/r1-paths-v3/ddd-trial3-b-independent-interpretation*.json -text whitespace=cr-at-eol
 
 experiments/autonomous-ab-gauntlet/results/r1-oracle-v2/service-predicate-recurrence*.json -text whitespace=cr-at-eol
+
+experiments/autonomous-ab-gauntlet/results/r1-service-oracle-v3/** -text whitespace=cr-at-eol
