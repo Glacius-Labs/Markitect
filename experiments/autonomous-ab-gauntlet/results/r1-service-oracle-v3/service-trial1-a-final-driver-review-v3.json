@@ -1,0 +1,58 @@
+{
+  "schema": "service-v3-final-driver-review/v1",
+  "reviewed_at_utc": "2026-10-05T11:31:31.0703129Z",
+  "archive_manifest_sha256": "2c343a3a70f341d37698149482bdeb11043ac43d0a6b3e2bc55f541ac9447895",
+  "driver_path": "C:/Users/Consiliari/.codex/worktrees/689d/Markitect/.artifacts/autonomous-ab-gauntlet/assess-service-v3-trial1-a-v3.ps1",
+  "driver_sha256": "4463c8382d5cb7bb5980fc7a8f600f38c8b55d08225d914351173522f067028d",
+  "plan_sha256": "7ca2b433dddf3443ca68a2e1578e09ee4dbd0ddda42b8d9f10e549ce0f8a4008",
+  "harness_sha256": "3ae5ef0bfa04d4e295ca09f7226f509808369daae25974f932239694683f38a8",
+  "configured_oracle_sha256": "487044e162462be1c26eebd47129104ab49bea9a53e574a2188ea255fcb1eb2c",
+  "tools": {
+    "stager": "11eaf8f1261cb783979f17d16154d40c05b238b0077b38804e8594ace3399ec8",
+    "copier": "71ad83ffb54e20cf68997906e54d7859d03dc1d49728f00c61b80d41804042ea",
+    "exporter": "c2c2cb603b4f184acb9fefc820b4e8c7cb262766db5cf95f0119761a8847b502"
+  },
+  "review_scope": "Read-only tooling review. No copy, stage, evaluator, exporter, actor, or public-result invocation. No actor response/code, hidden outcome, or holdout reads.",
+  "findings": [
+    "No blocking defect found in the v3 partial-failure location ledger: copy, decisions-directory creation, exclusion creation, staging, direct evaluation, invocation logging, and export each record target paths before attempting writes/processes and then record status, process output, and exit evidence where applicable. Failed-to-start is recorded for copier/stager/evaluator/exporter; timeout is recorded for evaluator."
+  ],
+  "frozen_plan": {
+    "declared_and_actual_count": 22,
+    "initial_count": 11,
+    "trial": 1,
+    "task_ids": [
+      "01",
+      "02",
+      "03",
+      "04",
+      "05",
+      "06",
+      "07",
+      "08",
+      "P01",
+      "P02"
+    ],
+    "run_ids": [
+      "modular-service-a-t01",
+      "modular-service-a-t01-integration",
+      "modular-service-a-t01-parallel-P01",
+      "modular-service-a-t01-parallel-P02"
+    ],
+    "arena": "r1-service-oracle-v3",
+    "arm": "a",
+    "schema": "service-v3-t1a-assessment-plan/v1",
+    "final_count": 11,
+    "project": "modular-service"
+  },
+  "semantics": "The bound harness configuredEvaluator source confirms project-configured command substitution and appended native inputs. The driver invokes the hash-pinned oracle as a direct child with staged workspace Repo, evaluation_task_id, base, result Output, and PriorTasksThrough when nonempty; cwd is the copied project root. It preserves the direct child exit, stdout/stderr, PID and timestamps, with an explicit 1800-second timeout. The 22-row plan is fixed and initial/final role partition is 11 each; driver preflight checks each listed native record, tree, capture reference, task/base/prior tuple, terminal actor status, and final snapshot binding.",
+  "control_and_exclusion": "Control metadata marks this A1 run descriptive-only and paired-comparison-excluded; it binds freeze, exclusion, plan, driver, tools, harness, oracle, and Go hashes. Each derived arena gets its exclusion record from exact frozen bytes via exclusive CreateNew, after explicit contained decisions-directory creation. Coordinator control/results metadata writes are explicit.",
+  "partial_failure": "Finally writes a results ledger with planned_count=22, recorded_count, failure text, and location_events. Event inventory explicitly is not an exhaustive descendant-file inventory. If ledger creation itself fails, or a failure occurs while writing the two initial control files before the try/finally, a complete ledger is not guaranteed; NewBytes prevents overwrites but the two control writes are not transactional.",
+  "limitations": [
+    "The word completed in evaluator event status means the child process returned; actual direct_child_exit separately distinguishes zero and nonzero, and timeout is separate.",
+    "Per-result exporter proof does not independently bind the shared exclusion; consumers must join it with the control/ledger and global source exclusion.",
+    "Filesystem races, symlink changes between checks and writes, exhaustive descendant-file inventory, and machine-level privacy guarantees are not proved.",
+    "Archive layout is flattened for review and is not standalone: run only the byte-matching workspace .artifacts driver with its candidate/exporter layout.",
+    "No invocation or output was produced or validated in this review."
+  ],
+  "conclusion": "Bounded safe-to-invoke tooling review: no remaining blocker identified in the v2 partial-path reporting issue. This is not execution approval evidence, a scored verdict, paired comparison, or human acceptance."
+}

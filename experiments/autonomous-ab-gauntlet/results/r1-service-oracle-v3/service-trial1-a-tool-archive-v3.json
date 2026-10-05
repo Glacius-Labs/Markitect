@@ -1,0 +1,29 @@
+{
+  "schema": "service-v3-assessment-tools-archive/v1",
+  "freeze_digest": "1daa5bb43552c0437bcfd085d8afa4916094f90f03e3370f1ab2ecabdc339ee9",
+  "supersedes_v2_archive_manifest_sha256": "86694e93b1b13afc4f59ffb219856d6a4c95c15aa7f3f2eedeae3bfa65755532",
+  "superseded_before_use": true,
+  "exclusion_sha256": "1dc58d017db27c31269633e5c32ee658667ec3eb7aa6234cd870e384d18bcc4a",
+  "files": [
+    {
+      "name": "assess-service-v3-trial1-a-v3.ps1",
+      "sha256": "4463c8382d5cb7bb5980fc7a8f600f38c8b55d08225d914351173522f067028d"
+    },
+    {
+      "name": "service-v3-t1a-assessment-plan-v1.json",
+      "sha256": "7ca2b433dddf3443ca68a2e1578e09ee4dbd0ddda42b8d9f10e549ce0f8a4008"
+    },
+    {
+      "name": "copy-frozen-inputs-v3.exe",
+      "sha256": "71ad83ffb54e20cf68997906e54d7859d03dc1d49728f00c61b80d41804042ea"
+    },
+    {
+      "name": "stage-captured-snapshot-v2.exe",
+      "sha256": "11eaf8f1261cb783979f17d16154d40c05b238b0077b38804e8594ace3399ec8"
+    },
+    {
+      "name": "export-captured-evaluation-v5.exe",
+      "sha256": "c2c2cb603b4f184acb9fefc820b4e8c7cb262766db5cf95f0119761a8847b502"
+    }
+  ]
+}

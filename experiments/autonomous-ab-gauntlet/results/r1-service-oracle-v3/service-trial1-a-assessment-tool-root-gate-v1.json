@@ -1,0 +1,29 @@
+{
+  "schema": "service-v3-assessment-tool-root-gate/v1",
+  "recorded_utc": "2026-10-05T11:34:28.016542+00:00",
+  "archive_manifest_sha256": "2c343a3a70f341d37698149482bdeb11043ac43d0a6b3e2bc55f541ac9447895",
+  "independent_review_sha256": "0bb9842e08e83b6feace5cc1e94644301f7678b61e72af5da7c34f04c4cf99bf",
+  "driver_sha256": "4463c8382d5cb7bb5980fc7a8f600f38c8b55d08225d914351173522f067028d",
+  "plan_sha256": "7ca2b433dddf3443ca68a2e1578e09ee4dbd0ddda42b8d9f10e549ce0f8a4008",
+  "archived_and_execution_layout_bytes_equal": true,
+  "v1_v2_archives_reviews_and_drivers_unchanged": true,
+  "verified_terminal_tuples": 22,
+  "initial": 11,
+  "final": 11,
+  "assessment_targets_absent": [
+    "s3a1i",
+    "s3a1f"
+  ],
+  "source_exclusion_sha256": "1dc58d017db27c31269633e5c32ee658667ec3eb7aa6234cd870e384d18bcc4a",
+  "assessment_eligibility": "descriptive-only; whole trial1 paired/controller-excluded",
+  "decision": "Invoke the reviewed byte-matching workspace v3 driver once; retain actual child exits, raw status, partial paths and failures without rescue or actor feedback.",
+  "human_acceptance": false,
+  "holdout": "closed",
+  "limits": [
+    "Initial/final are repeated observations of 11 boundaries, not22 independent tasks",
+    "Operation path inventory is explicit and non-exhaustive",
+    "Pre-try control writes are nontransactional; partial files are retained",
+    "Lexical path guards do not prove symlink/race safety",
+    "Unsigned byte/reference consistency only; no platform or reviewer authentication"
+  ]
+}
