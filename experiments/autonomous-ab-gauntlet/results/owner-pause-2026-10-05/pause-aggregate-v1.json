@@ -1,0 +1,158 @@
+{
+  "service": {
+    "attempts": [
+      {
+        "helper_exit": 1,
+        "status": "repair-needed",
+        "attempt": 0
+      },
+      {
+        "helper_exit": 1,
+        "status": "repair-needed",
+        "attempt": 1
+      },
+      {
+        "helper_executed": false,
+        "status": "unavailable_protocol_invalid",
+        "attempt": 2,
+        "helper_receipt_available": false,
+        "finish_protocol_error": "helper-attempt-2.jsonl not found",
+        "response_sha256": "D55E2A6E26D54B10AAAD89306F9E587050D9A8CD2EEF9746A476942AEA8634A0"
+      }
+    ],
+    "next_tasks_not_prepared": [
+      "modular-service-b-t02/06",
+      "modular-service-b-t02/07",
+      "modular-service-b-t02/08",
+      "trial3 A/B development tasks"
+    ],
+    "freeze_digest": "1daa5bb43552c0437bcfd085d8afa4916094f90f03e3370f1ab2ecabdc339ee9",
+    "arena": "r1-service-oracle-v3",
+    "operator_journal_sha256": "1108A2CBBF96D853A3BD9C2614B118E3515CCA5CCABB92AA1A677B69599355DA",
+    "overall_counts": "unavailable and unvalidated; no broad state/card reads performed",
+    "source_pause_receipt_sha256": "481F8513D437702BBA09E800CA6280F7A3ED4C52BDD82B5F7A8AAC28C324F21C",
+    "last_dispatched": {
+      "native_record_sha256": "32B80139D3BBE3A0506891AEB600C71FD2E056DACEB82B295714D96EF424B608",
+      "task_id": "05",
+      "leaf_disposition": "agent completed; no active leaf or PID",
+      "original_deadline_utc": "2026-10-05T15:26:30Z",
+      "attempt": 2,
+      "native_status": "actor_started",
+      "run_id": "modular-service-b-t02",
+      "envelope_sha256": "8EDDB9002422D47EDECF5F951EBE36A4CB364C2D4B96A4FB0C14259C12C99E0C",
+      "leaf": "ms_svc_v3_t2_b_05_repair2",
+      "input_digest": "12b6bbbb8281132e209ea52185fd114925479ae66d52f4e7c8074b644f0be71c",
+      "repair_iteration": 2
+    }
+  },
+  "final_winner": "none",
+  "created_utc": "2026-10-05T15:59:18Z",
+  "comparative_claim": "none",
+  "holdout": "09-12 unopened",
+  "schema": "autonomous-ab-gauntlet-owner-pause-aggregate/v1",
+  "ops": {
+    "copier_review": {
+      "completed_report": "unavailable; no completed report exists",
+      "status": "never_started"
+    },
+    "count_erratum_sha256": "8F54B9FE8FAF4778F3878CC1CCA619671A48E7D7A8BBD516AB69422450C99BC6",
+    "frontier": "A/T1 01-08 and P01/P02 plus mechanical integration are terminal in their native records. B/T1 01-03 are terminal; B01 and B03 failed after two repairs, B02 completed after one repair. B/T1/04 attempt0 is repair-needed; attempt1 has a preserved actor response and helper exit 1, but native remains actor_started because finish-task was interrupted by owner pause. One repair was unused and no attempt2 was prepared. B/T1/05-08 and B forks/integration were not prepared; T2/T3 were not prepared.",
+    "freeze_digest": "a615190fb253cc8ff0ebcb3c02573aa9328e712d67c9f24e985610d9441b8dd6",
+    "counts": {
+      "attempt_envelopes_prepared": 21,
+      "auxiliary_tasks_prepared": 3,
+      "actor_dispatch_requests": 21,
+      "native_nonterminal": 1,
+      "auxiliary_tasks_native_terminal": 3,
+      "main_tasks_not_prepared": 36,
+      "main_tasks_prepared": 12,
+      "active_leaf_count": 0,
+      "native_terminal_failed": 2,
+      "distinct_task_records_native_terminal": 14,
+      "main_tasks_native_terminal": 11,
+      "prepared_but_undispatched": 0,
+      "declared_main_development_rows": 48,
+      "native_terminal_completed": 12,
+      "distinct_task_records_prepared": 15,
+      "helper_invocation_records_corrected": 21
+    },
+    "assessment_references": [
+      {
+        "sha256": "1fd4b0136d4ba2c52cc4f562689c76269c8dcccfe4c5570de8b9cc36f380eb56",
+        "interpretation": "path/hash reference only; outcome contents not interpreted",
+        "path": ".artifacts/autonomous-ab-gauntlet/ops-a1-driver-v3-actual-run-v1.finished.json"
+      },
+      {
+        "sha256": "a05e7be811b0cfc0e7857120199e95d7b69ceb5a9dc01369770605a30d1369fe",
+        "interpretation": "external source ledger; path/hash reference only",
+        "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-ops-oracle-v3\\decisions\\ops-v3-trial1-a-assessment-results-v1.json"
+      },
+      {
+        "sha256": "e40648cf0c4a43cc6789c9ffe14b45fa2d9c71eb4874bb6399124f5c10afbe6d",
+        "interpretation": "public ledger; path/hash reference only; byte identity intentionally differs from source ledger",
+        "path": "experiments/autonomous-ab-gauntlet/results/r1-ops-oracle-v3/ops-v3-trial1-a-assessment-results-v1.json"
+      }
+    ],
+    "task04": {
+      "input_digest": "5d5644c9c25abb7f364362a32aab1a434e2b57625074a9c7a3603cd187d916d3",
+      "operator_cutoff_utc": "2026-10-05T15:35:53Z",
+      "native_deadline_utc": "2026-10-05T15:37:35Z",
+      "native_status": "actor_started",
+      "attempt1_helper_exit": 1,
+      "attempt1_public_output_sha256": "92F265F58404D9CA3FACAC6F86A30F2D2F245A117D8304225DF880689BA2FA92",
+      "native_path": "runs/engineering-ops-b-t01/04.native.yaml",
+      "finish_task": "interrupted and not retried"
+    },
+    "source_pause_receipt_sha256": "9B80A07C12F0008D4BB5655787B810D9688A5160C36EED746FB9B64780E8D933",
+    "limits": {
+      "max_fresh_repairs_per_task": 2,
+      "active_scored_leaf_cap_per_operator": 1,
+      "global_active_scored_leaf_cap": 3,
+      "task_window": "1800 seconds from first preparation intent, including queue/waits/repairs; never reset",
+      "holdout_tasks": "09-12 closed"
+    },
+    "arena": "r1-ops-oracle-v3",
+    "operator_journal_sha256": "E2DCF59594F7E0F1AA596D26D579C53D12707393FB61BA6A361731F499CA509B"
+  },
+  "pause_receipt_copies": [
+    {
+      "source_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-ops-oracle-v3\\decisions\\ops-a615-owner-pause-v1.json",
+      "sha256": "9B80A07C12F0008D4BB5655787B810D9688A5160C36EED746FB9B64780E8D933",
+      "byte_identical": true,
+      "destination_path": "experiments\\autonomous-ab-gauntlet\\results\\owner-pause-2026-10-05\\ops-owner-pause.json"
+    },
+    {
+      "source_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-ops-oracle-v3\\decisions\\ops-a615-owner-pause-helper-count-erratum-v1.json",
+      "sha256": "8F54B9FE8FAF4778F3878CC1CCA619671A48E7D7A8BBD516AB69422450C99BC6",
+      "byte_identical": true,
+      "destination_path": "experiments\\autonomous-ab-gauntlet\\results\\owner-pause-2026-10-05\\ops-helper-count-erratum.json"
+    },
+    {
+      "source_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v3\\decisions\\pause-receipts\\service-owner-pause-2026-10-05-1541Z.json",
+      "sha256": "481F8513D437702BBA09E800CA6280F7A3ED4C52BDD82B5F7A8AAC28C324F21C",
+      "byte_identical": true,
+      "destination_path": "experiments\\autonomous-ab-gauntlet\\results\\owner-pause-2026-10-05\\service-owner-pause.json"
+    }
+  ],
+  "hypothesis_separation": {
+    "raw_task_evidence": "Raw task/native/helper statuses remain as recorded in receipts; tool/controller failures are reported separately and are not reclassified as product findings.",
+    "owner_hypothesis": "hybrid staleness remains owner-supplied hypothesis guidance, not a scored or proven finding"
+  },
+  "status": "paused",
+  "copier_review": {
+    "completed_report": "unavailable; no completed report exists",
+    "status": "never_started"
+  },
+  "owner_directive": "Both operators paused at safe persistence boundaries; no future task, repair, fork, integration, collector, evaluation, or holdout action is authorized.",
+  "paired_eligibility_conclusion": "none",
+  "blocked_helper_disclosure": {
+    "event": "Automatic approval review denied helper execution before it ran because snapshot and record writes were outside the actor checkout.",
+    "bypass_or_retry": "none",
+    "source": "Service owner pause receipt",
+    "task": "modular-service-b-t02/05 attempt2",
+    "helper_receipt": "missing",
+    "classification": "unavailable/protocol-invalid; not a helper exit 1"
+  },
+  "continuation_gate": "The owner pause supersedes the prior global fix/no-fix prerequisite for continuation; no continuation is authorized by this record.",
+  "no_rescore_or_evaluation": true
+}

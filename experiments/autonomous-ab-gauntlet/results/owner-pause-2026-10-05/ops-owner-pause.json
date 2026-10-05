@@ -1,0 +1,232 @@
+{
+  "later_development": {
+    "trial2": "not prepared",
+    "trial3": "not prepared"
+  },
+  "schema": "autonomous-ab-gauntlet-owner-pause/v1",
+  "evidence_refs": [
+    {
+      "path": "runs/engineering-ops-b-t01/04.attempt-0.envelope.yaml",
+      "sha256": "49BB54480FA3E9A5E9FE9230A4730FBBD959FEAC73935092D2F28AAFA5FB66F3"
+    },
+    {
+      "path": "runs/engineering-ops-b-t01/04.attempt-1.envelope.yaml",
+      "sha256": "67797DC33E9EAE3262B97ED9F33FC03AFA35006E3CFE51D31D2FCDEA3E2C1102"
+    },
+    {
+      "path": "raw/engineering-ops-b-t01/04/helper-attempt-0.jsonl",
+      "sha256": "3A6D2BE2A1B23EE770A504AB66723A2E86C1E0509499674BE133051D9570C23D"
+    },
+    {
+      "path": "raw/engineering-ops-b-t01/04/attempt-0.public-validator.txt",
+      "sha256": "7D6B2E08B164DA7205645BCBE353F82BA9118B52D5BA62D86D5CE310A51CC45C"
+    },
+    {
+      "path": "raw/operator-responses/engineering-ops-b-t01/04.attempt-0.final.txt",
+      "sha256": "6260FD97EB5A5EDD22207BCB3BE417A018786641D2E4936AB9B0DC95DC000EF8"
+    },
+    {
+      "path": "raw/engineering-ops-b-t01/04/helper-attempt-1.jsonl",
+      "sha256": "8519C9A4FC99B60CFE3B3E0F54FF2A730BA8683D0635664F9F72C38512ED64A5"
+    },
+    {
+      "path": "raw/engineering-ops-b-t01/04/attempt-1.public-validator.txt",
+      "sha256": "92F265F58404D9CA3FACAC6F86A30F2D2F245A117D8304225DF880689BA2FA92"
+    },
+    {
+      "path": "raw/operator-responses/engineering-ops-b-t01/04.attempt-1.final.txt",
+      "sha256": "E4A642F84C14E3D47BFCADFBB350600F5246126C135E3F32193BC162E79042C2"
+    }
+  ],
+  "trial1": {
+    "armA": {
+      "native_records": [
+        {
+          "path": "runs/engineering-ops-a-t01/01.native.yaml",
+          "sha256": "EDB2C26B7BA76FAB2915CFFB5C146D9D05A2FF59D5D6F4E2B1F828737D59CA45"
+        },
+        {
+          "path": "runs/engineering-ops-a-t01/02.native.yaml",
+          "sha256": "A0E49DE25A37A17CDDA476EA48307F8F5DB4F581510928B4C79A0A7F7251A38C"
+        },
+        {
+          "path": "runs/engineering-ops-a-t01/03.native.yaml",
+          "sha256": "CA30A0117588F7076C28017AB7DEB7DFA7A1A73359745996C51501E032DB6500"
+        },
+        {
+          "path": "runs/engineering-ops-a-t01/04.native.yaml",
+          "sha256": "AE7D8803BD9DFCEEBDF069659438C570B6AD857B3B24E0C832BAE3755429CDDF"
+        },
+        {
+          "path": "runs/engineering-ops-a-t01/05.native.yaml",
+          "sha256": "A6014E71A92049D3BE29BF57F70473F83226F57DB5681CA259B1AF1B74E8D061"
+        },
+        {
+          "path": "runs/engineering-ops-a-t01/06.native.yaml",
+          "sha256": "99C8429B65B350559F3B4149D35237CD18822CE3C17203B477F34781C7D7050E"
+        },
+        {
+          "path": "runs/engineering-ops-a-t01/07.native.yaml",
+          "sha256": "9F8098DA707988C977A097BC1A21566191F74B8A33AC5EAEB4281F4A507AC9DB"
+        },
+        {
+          "path": "runs/engineering-ops-a-t01/08.native.yaml",
+          "sha256": "584FDD462D0AA9D5913D90C22540247D405EF0815CE9D62DC0F4FAC4BCE63523"
+        },
+        {
+          "path": "runs/engineering-ops-a-t01-parallel-P01/P01.native.yaml",
+          "sha256": "B14CC61FC6913C369B3EFC4F76B27160A8FCD438F3295B17CBA152B29D6A36A4"
+        },
+        {
+          "path": "runs/engineering-ops-a-t01-parallel-P02/P02.native.yaml",
+          "sha256": "628B60F4AFCA6C9846C104DFA0C7CCACE0FDA13324A8122E601C5DA1B853A100"
+        },
+        {
+          "path": "runs/engineering-ops-a-t01-integration/08.native.yaml",
+          "sha256": "9A342F370814E639BA36231E3418086F2BDBDFB3EF91FBD14710D64884DD14A6"
+        }
+      ],
+      "parallel_tasks": [
+        "P01 completed",
+        "P02 completed"
+      ],
+      "main_tasks": "01-08 completed",
+      "mechanical_integration": "completed"
+    },
+    "armB": {
+      "native_records": [
+        {
+          "path": "runs/engineering-ops-b-t01/01.native.yaml",
+          "sha256": "7D4CECD1BE87683A341500E7907C596129060B4CDFB050E1496FB6F74E82CCE9"
+        },
+        {
+          "path": "runs/engineering-ops-b-t01/02.native.yaml",
+          "sha256": "71E514BC086CA6C401F04E1B894D06FCA4B9CDEA15300D17D982369C16D987F7"
+        },
+        {
+          "path": "runs/engineering-ops-b-t01/03.native.yaml",
+          "sha256": "105D952738C7C13B6A07B5648F43D7CC3F879B6D50803638855183FA05431B6B"
+        },
+        {
+          "path": "runs/engineering-ops-b-t01/04.native.yaml",
+          "sha256": "637A86D19C6238BD1782FF641F44A259B9A9CA277927793779FC50C637EA93E8"
+        }
+      ],
+      "forks_and_integration": "not prepared; task06 not reached",
+      "task04": {
+        "attempt2_prepared": false,
+        "native_status_at_pause": "actor_started",
+        "attempt0_status": "repair-needed",
+        "finish_task_invocation": "interrupted by owner-directed turn stop; native record remains actor_started",
+        "attempt1_public_feedback_path": "raw/engineering-ops-b-t01/04/attempt-1.public-validator.txt",
+        "attempt1_helper_exit": 1,
+        "last_input_digest": "5d5644c9c25abb7f364362a32aab1a434e2b57625074a9c7a3603cd187d916d3",
+        "attempt1_public_feedback_sha256": "92F265F58404D9CA3FACAC6F86A30F2D2F245A117D8304225DF880689BA2FA92",
+        "original_operator_cutoff_utc": "2026-10-05T15:35:53Z",
+        "native_repair_iterations": 1,
+        "attempt1_helper_at_utc": "2026-10-05T15:22:51Z",
+        "repair_budget_remaining": 1,
+        "envelope_deadline_utc": "2026-10-05T15:37:35Z"
+      },
+      "main_tasks": {
+        "task04": "native actor_started at pause; attempt 0 repair-needed; attempt 1 actor returned final response and helper exit 1, but native finish-task terminalization did not complete",
+        "task02": "completed; attempt 1",
+        "task01": "failed; attempts 0-2; repair budget exhausted",
+        "task03": "failed; attempts 0-2; repair budget exhausted"
+      },
+      "tasks05_through08": "not prepared"
+    }
+  },
+  "canonical_freeze_digest": "a615190fb253cc8ff0ebcb3c02573aa9328e712d67c9f24e985610d9441b8dd6",
+  "pause_reason": "owner-directed pause at safe persistence boundary",
+  "counts": {
+    "native_terminal_failed": 2,
+    "currently_running_leaf_actors": 0,
+    "attempt_envelopes_prepared": 21,
+    "distinct_task_records_native_terminal": 14,
+    "helper_invocations_observed": 20,
+    "auxiliary_tasks_native_terminal": 3,
+    "native_terminal_completed": 12,
+    "auxiliary_tasks_prepared": 3,
+    "main_tasks_prepared": 12,
+    "distinct_task_records_prepared": 15,
+    "declared_main_development_rows": 48,
+    "main_tasks_native_terminal": 11,
+    "native_nonterminal": 1,
+    "prepared_but_undispatched": 0,
+    "main_tasks_not_prepared": 36,
+    "actor_dispatch_requests": 21
+  },
+  "status": "paused",
+  "arena": "r1-ops-oracle-v3",
+  "active_scored_leaf_count": 0,
+  "freeze_yaml_sha256": "53E62AE4781BDCD00C9340F187E169ECE6E4184F0132C269FD6A2B76012F8ACA",
+  "holdout": "09-12 unopened; no holdout preparation or dispatch",
+  "comparative_claim": "none",
+  "winner": "none",
+  "project": "engineering-ops",
+  "created_utc": "2026-10-05T15:45:21Z",
+  "native_record_refs": [
+    {
+      "path": "runs/engineering-ops-a-t01/01.native.yaml",
+      "sha256": "EDB2C26B7BA76FAB2915CFFB5C146D9D05A2FF59D5D6F4E2B1F828737D59CA45"
+    },
+    {
+      "path": "runs/engineering-ops-a-t01/02.native.yaml",
+      "sha256": "A0E49DE25A37A17CDDA476EA48307F8F5DB4F581510928B4C79A0A7F7251A38C"
+    },
+    {
+      "path": "runs/engineering-ops-a-t01/03.native.yaml",
+      "sha256": "CA30A0117588F7076C28017AB7DEB7DFA7A1A73359745996C51501E032DB6500"
+    },
+    {
+      "path": "runs/engineering-ops-a-t01/04.native.yaml",
+      "sha256": "AE7D8803BD9DFCEEBDF069659438C570B6AD857B3B24E0C832BAE3755429CDDF"
+    },
+    {
+      "path": "runs/engineering-ops-a-t01/05.native.yaml",
+      "sha256": "A6014E71A92049D3BE29BF57F70473F83226F57DB5681CA259B1AF1B74E8D061"
+    },
+    {
+      "path": "runs/engineering-ops-a-t01/06.native.yaml",
+      "sha256": "99C8429B65B350559F3B4149D35237CD18822CE3C17203B477F34781C7D7050E"
+    },
+    {
+      "path": "runs/engineering-ops-a-t01/07.native.yaml",
+      "sha256": "9F8098DA707988C977A097BC1A21566191F74B8A33AC5EAEB4281F4A507AC9DB"
+    },
+    {
+      "path": "runs/engineering-ops-a-t01/08.native.yaml",
+      "sha256": "584FDD462D0AA9D5913D90C22540247D405EF0815CE9D62DC0F4FAC4BCE63523"
+    },
+    {
+      "path": "runs/engineering-ops-a-t01-parallel-P01/P01.native.yaml",
+      "sha256": "B14CC61FC6913C369B3EFC4F76B27160A8FCD438F3295B17CBA152B29D6A36A4"
+    },
+    {
+      "path": "runs/engineering-ops-a-t01-parallel-P02/P02.native.yaml",
+      "sha256": "628B60F4AFCA6C9846C104DFA0C7CCACE0FDA13324A8122E601C5DA1B853A100"
+    },
+    {
+      "path": "runs/engineering-ops-a-t01-integration/08.native.yaml",
+      "sha256": "9A342F370814E639BA36231E3418086F2BDBDFB3EF91FBD14710D64884DD14A6"
+    },
+    {
+      "path": "runs/engineering-ops-b-t01/01.native.yaml",
+      "sha256": "7D4CECD1BE87683A341500E7907C596129060B4CDFB050E1496FB6F74E82CCE9"
+    },
+    {
+      "path": "runs/engineering-ops-b-t01/02.native.yaml",
+      "sha256": "71E514BC086CA6C401F04E1B894D06FCA4B9CDEA15300D17D982369C16D987F7"
+    },
+    {
+      "path": "runs/engineering-ops-b-t01/03.native.yaml",
+      "sha256": "105D952738C7C13B6A07B5648F43D7CC3F879B6D50803638855183FA05431B6B"
+    },
+    {
+      "path": "runs/engineering-ops-b-t01/04.native.yaml",
+      "sha256": "637A86D19C6238BD1782FF641F44A259B9A9CA277927793779FC50C637EA93E8"
+    }
+  ],
+  "operator_journal_pre_receipt_sha256": "24DAF508561AD34A33052384B73BAA5C7666B1A734FE6D4798A76E33ECA647A4"
+}

@@ -1,0 +1,28 @@
+{
+  "schema": "ops-v3-trial1-a-driver-preuse-archive-receipt/v1",
+  "archive": "postrun-ops-a1-driver-v3-tools-2026-10-05",
+  "archive_absolute": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\postrun-ops-a1-driver-v3-tools-2026-10-05",
+  "archive_manifest_sha256": "b47077fcd15894f82a9be33d24c50d0db65df7570c0ae0bbdeb7a9ea873dcb68",
+  "status": "v3-preflight-only-metadata-archived",
+  "driver_body_invoked": false,
+  "preflight_only_invoked": true,
+  "wrong_path_refusal_exit": 1,
+  "wrong_digest_refusal_exit": 1,
+  "real_metadata_preflight_exit": 0,
+  "named_targets_absent": 50,
+  "pinned_files_unchanged": 55,
+  "actual_copier_invocations": 0,
+  "actual_stager_invocations": 0,
+  "actual_evaluator_invocations": 0,
+  "actual_exporter_invocations": 0,
+  "planned_capture_tuples": 22,
+  "assessment_pipeline_captures": 0,
+  "actor_outcome_claim_made": false,
+  "eligibility_claim_made": false,
+  "holdout_accessed": false,
+  "archived_entry_count": 8,
+  "limits": [
+    "Preflight and synthetic function QA only; no actual pipeline captures or results.",
+    "No outcome, eligibility, acceptance, paired comparison, or winner claim."
+  ]
+}

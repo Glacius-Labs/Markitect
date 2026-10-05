@@ -1,0 +1,393 @@
+{
+  "record": "ops-a1-driver-v3-root-pre-use-gate/v1",
+  "recorded_utc": "2026-10-05T15:18:05.556127+00:00",
+  "decision": "proceed-exact-ended-ops-a1-capture-assessment",
+  "source_arena": "r1-ops-oracle-v3",
+  "freeze_digest": "a615190fb253cc8ff0ebcb3c02573aa9328e712d67c9f24e985610d9441b8dd6",
+  "planned_capture_tuples": 22,
+  "independent_boundaries": 11,
+  "selection": "8 sequential,2 forks,1 mechanical integration,each initial/final",
+  "cwd": "C:\\Users\\Consiliari\\.codex\\worktrees\\689d\\Markitect",
+  "argv": [
+    "C:\\Users\\Consiliari\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\native\\powershell\\pwsh.exe",
+    "-NoProfile",
+    "-File",
+    "C:\\Users\\Consiliari\\.codex\\worktrees\\689d\\Markitect\\.artifacts\\autonomous-ab-gauntlet\\assess-ops-v3-trial1-a-v3.ps1",
+    "-PlanPath",
+    "C:\\Users\\Consiliari\\.codex\\worktrees\\689d\\Markitect\\.artifacts\\autonomous-ab-gauntlet\\ops-v3-t1a-assessment-plan-v1.json",
+    "-PlanSHA256",
+    "b161e6e2f82ca93c776200fc3f37f052c66ad6f5cddddab40edd380ce5bb89b2"
+  ],
+  "input_bindings": [
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\postrun-ops-a1-driver-v3-tools-2026-10-05\\archive-manifest.json",
+      "sha256": "b47077fcd15894f82a9be33d24c50d0db65df7570c0ae0bbdeb7a9ea873dcb68"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\postrun-ops-a1-driver-v3-tools-2026-10-05\\driver\\assess-ops-v3-trial1-a-v3.ps1",
+      "sha256": "0975385e90b39f30db44d095d87c0254c8b531ab8488b2a3fd092bff82628e2b"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\689d\\Markitect\\.artifacts\\autonomous-ab-gauntlet\\assess-ops-v3-trial1-a-v3.ps1",
+      "sha256": "0975385e90b39f30db44d095d87c0254c8b531ab8488b2a3fd092bff82628e2b"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\postrun-ops-a1-driver-v3-tools-2026-10-05\\driver\\assess-ops-v3-trial1-a-source-review-v3.md",
+      "sha256": "f0c58ae3451cbf01ef3726216c0b6a06b95a1795885ee2617ce7a169172e8d33"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\689d\\Markitect\\.artifacts\\autonomous-ab-gauntlet\\assess-ops-v3-trial1-a-source-review-v3.md",
+      "sha256": "f0c58ae3451cbf01ef3726216c0b6a06b95a1795885ee2617ce7a169172e8d33"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\postrun-ops-a1-driver-v3-tools-2026-10-05\\plan\\ops-v3-t1a-assessment-plan-v1.json",
+      "sha256": "b161e6e2f82ca93c776200fc3f37f052c66ad6f5cddddab40edd380ce5bb89b2"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\689d\\Markitect\\.artifacts\\autonomous-ab-gauntlet\\ops-v3-t1a-assessment-plan-v1.json",
+      "sha256": "b161e6e2f82ca93c776200fc3f37f052c66ad6f5cddddab40edd380ce5bb89b2"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\postrun-ops-a1-driver-v3-tools-2026-10-05\\independent-review\\postrun-ops-a1-driver-review-v3.yaml",
+      "sha256": "030ce5c34f07922bbf5b9f38e7be345d732f5949d268a6fad9a5871479d89634"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\postrun-ops-a1-driver-review-v3.yaml",
+      "sha256": "030ce5c34f07922bbf5b9f38e7be345d732f5949d268a6fad9a5871479d89634"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\postrun-ops-a1-driver-v3-tools-2026-10-05\\independent-review\\postrun-ops-a1-driver-v3-pre-use-review-v1.yaml",
+      "sha256": "c764d1c702430ddfb5e23fd6f1950277f7750caeeee060c268a4e50a59119ed4"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\postrun-ops-a1-driver-v3-pre-use-review-v1.yaml",
+      "sha256": "c764d1c702430ddfb5e23fd6f1950277f7750caeeee060c268a4e50a59119ed4"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\postrun-ops-a1-driver-v3-tools-2026-10-05\\preflight-qa\\ops-a1-driver-v3-preflight-qa-v1.py",
+      "sha256": "b37e750b6c4b3c3454c8b9491f26f2c64071a87df280e9be6bec71dc9fa36013"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\689d\\Markitect\\.artifacts\\autonomous-ab-gauntlet\\ops-a1-driver-v3-preflight-qa-v1.py",
+      "sha256": "b37e750b6c4b3c3454c8b9491f26f2c64071a87df280e9be6bec71dc9fa36013"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\postrun-ops-a1-driver-v3-tools-2026-10-05\\preflight-qa\\ops-a1-driver-v3-preflight-qa-v1.json",
+      "sha256": "715383ca0e439a782a3d74d497e87015c2e9a469175d56936576bb09a4d155c5"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\689d\\Markitect\\.artifacts\\autonomous-ab-gauntlet\\ops-a1-driver-v3-preflight-qa-v1.json",
+      "sha256": "715383ca0e439a782a3d74d497e87015c2e9a469175d56936576bb09a4d155c5"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\postrun-ops-a1-driver-v3-tools-2026-10-05\\inherited-function-qa\\driver-owned-process-qa-v1.json",
+      "sha256": "274c9a17fbdec96afa845e737d86be08adfa9491a96709f557ed01bced140888"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\689d\\Markitect\\.artifacts\\autonomous-ab-gauntlet\\driver-owned-process-qa-v1.json",
+      "sha256": "274c9a17fbdec96afa845e737d86be08adfa9491a96709f557ed01bced140888"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\689d\\Markitect\\experiments\\autonomous-ab-gauntlet\\results\\r1-ops-oracle-v3\\ops-trial1-a-driver-v3-preuse-archive-v2.json",
+      "sha256": "76b72ffa60c47f3de83e26d9fcec6056864dc9a9533e78f3a42d418c670b26f2"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\689d\\Markitect\\.artifacts\\autonomous-ab-gauntlet\\ops-a1-driver-v3-run-v1.py",
+      "sha256": "0bb4969d0d1a4d4a63bde363bb80e6d13a651113420b8242cb6d6236bf7b49a9"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-ops-oracle-v3\\runs\\engineering-ops-a-t01\\01.native.yaml",
+      "sha256": "edb2c26b7ba76fab2915cffb5c146d9d05a2ff59d5d6f4e2b1f828737d59ca45"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-ops-oracle-v3\\raw\\engineering-ops-a-t01\\01\\snapshots\\01-check-1\\tree.yaml",
+      "sha256": "ffdcd162134e28509f4158d243240e954f1a37806b94f639050f5f5171745c61"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-ops-oracle-v3\\raw\\engineering-ops-a-t01\\01\\helper-attempt-0.jsonl",
+      "sha256": "620b0c6dfb7b9311378a2c41db41d7560979ee2774c62608dced568c6a72ec5e"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-ops-oracle-v3\\runs\\engineering-ops-a-t01\\01.native.yaml",
+      "sha256": "edb2c26b7ba76fab2915cffb5c146d9d05a2ff59d5d6f4e2b1f828737d59ca45"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-ops-oracle-v3\\results\\engineering-ops-a-t01\\snapshots\\01\\tree.yaml",
+      "sha256": "ffdcd162134e28509f4158d243240e954f1a37806b94f639050f5f5171745c61"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-ops-oracle-v3\\runs\\engineering-ops-a-t01\\01.native.yaml",
+      "sha256": "edb2c26b7ba76fab2915cffb5c146d9d05a2ff59d5d6f4e2b1f828737d59ca45"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-ops-oracle-v3\\runs\\engineering-ops-a-t01\\02.native.yaml",
+      "sha256": "a0e49de25a37a17cdda476ea48307f8f5db4f581510928b4c79a0a7f7251a38c"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-ops-oracle-v3\\raw\\engineering-ops-a-t01\\02\\snapshots\\02-check-1\\tree.yaml",
+      "sha256": "8a4571ecb6be0e7d32ccb54cf49620abefc3081564c8a90c7779193e48ecbc34"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-ops-oracle-v3\\raw\\engineering-ops-a-t01\\02\\helper-attempt-0.jsonl",
+      "sha256": "8b8b8c7a54f40f514676fab25c7fcfdccaf95f797685f746850a0eae4db27705"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-ops-oracle-v3\\runs\\engineering-ops-a-t01\\02.native.yaml",
+      "sha256": "a0e49de25a37a17cdda476ea48307f8f5db4f581510928b4c79a0a7f7251a38c"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-ops-oracle-v3\\results\\engineering-ops-a-t01\\snapshots\\02\\tree.yaml",
+      "sha256": "8a4571ecb6be0e7d32ccb54cf49620abefc3081564c8a90c7779193e48ecbc34"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-ops-oracle-v3\\runs\\engineering-ops-a-t01\\02.native.yaml",
+      "sha256": "a0e49de25a37a17cdda476ea48307f8f5db4f581510928b4c79a0a7f7251a38c"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-ops-oracle-v3\\runs\\engineering-ops-a-t01\\03.native.yaml",
+      "sha256": "ca30a0117588f7076c28017ab7deb7dfa7a1a73359745996c51501e032db6500"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-ops-oracle-v3\\raw\\engineering-ops-a-t01\\03\\snapshots\\03-check-1\\tree.yaml",
+      "sha256": "48b8ea1dc110159a02ec34e482c1e77fad67187cacab38ee4282abbdec687275"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-ops-oracle-v3\\raw\\engineering-ops-a-t01\\03\\helper-attempt-0.jsonl",
+      "sha256": "b3c2efdd23ec58e4a44cbafa0b251c711747c0f113c9938a8cc48a89c69e3d3f"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-ops-oracle-v3\\runs\\engineering-ops-a-t01\\03.native.yaml",
+      "sha256": "ca30a0117588f7076c28017ab7deb7dfa7a1a73359745996c51501e032db6500"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-ops-oracle-v3\\results\\engineering-ops-a-t01\\snapshots\\03\\tree.yaml",
+      "sha256": "48b8ea1dc110159a02ec34e482c1e77fad67187cacab38ee4282abbdec687275"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-ops-oracle-v3\\runs\\engineering-ops-a-t01\\03.native.yaml",
+      "sha256": "ca30a0117588f7076c28017ab7deb7dfa7a1a73359745996c51501e032db6500"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-ops-oracle-v3\\runs\\engineering-ops-a-t01\\04.native.yaml",
+      "sha256": "ae7d8803bd9dfceebdf069659438c570b6ad857b3b24e0c832bae3755429cddf"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-ops-oracle-v3\\raw\\engineering-ops-a-t01\\04\\snapshots\\04-check-1\\tree.yaml",
+      "sha256": "e6ce541b29fd23d3ae46e8c2da1ce2f8684f2cd5e169d1775542fe1ed9fe36c9"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-ops-oracle-v3\\raw\\engineering-ops-a-t01\\04\\helper-attempt-0.jsonl",
+      "sha256": "e4a21fd118f475e656ebb2a836abdfd8c549f59bee4a06ef6794405798b297ec"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-ops-oracle-v3\\runs\\engineering-ops-a-t01\\04.native.yaml",
+      "sha256": "ae7d8803bd9dfceebdf069659438c570b6ad857b3b24e0c832bae3755429cddf"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-ops-oracle-v3\\results\\engineering-ops-a-t01\\snapshots\\04\\tree.yaml",
+      "sha256": "e6ce541b29fd23d3ae46e8c2da1ce2f8684f2cd5e169d1775542fe1ed9fe36c9"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-ops-oracle-v3\\runs\\engineering-ops-a-t01\\04.native.yaml",
+      "sha256": "ae7d8803bd9dfceebdf069659438c570b6ad857b3b24e0c832bae3755429cddf"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-ops-oracle-v3\\runs\\engineering-ops-a-t01\\05.native.yaml",
+      "sha256": "a6014e71a92049d3be29bf57f70473f83226f57db5681ca259b1af1b74e8d061"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-ops-oracle-v3\\raw\\engineering-ops-a-t01\\05\\snapshots\\05-check-1\\tree.yaml",
+      "sha256": "e8494b2ff7308396a95b62b8b312409915f098eb7b9b9eae2a55f71712da786f"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-ops-oracle-v3\\raw\\engineering-ops-a-t01\\05\\helper-attempt-0.jsonl",
+      "sha256": "20671cb8e1d0288f35c3d5f6053998bf0151262eeaa15ad1ac306eb189510e7f"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-ops-oracle-v3\\runs\\engineering-ops-a-t01\\05.native.yaml",
+      "sha256": "a6014e71a92049d3be29bf57f70473f83226f57db5681ca259b1af1b74e8d061"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-ops-oracle-v3\\results\\engineering-ops-a-t01\\snapshots\\05\\tree.yaml",
+      "sha256": "e8494b2ff7308396a95b62b8b312409915f098eb7b9b9eae2a55f71712da786f"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-ops-oracle-v3\\runs\\engineering-ops-a-t01\\05.native.yaml",
+      "sha256": "a6014e71a92049d3be29bf57f70473f83226f57db5681ca259b1af1b74e8d061"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-ops-oracle-v3\\runs\\engineering-ops-a-t01\\06.native.yaml",
+      "sha256": "99c8429b65b350559f3b4149d35237cd18822ce3c17203b477f34781c7d7050e"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-ops-oracle-v3\\raw\\engineering-ops-a-t01\\06\\snapshots\\06-check-1\\tree.yaml",
+      "sha256": "a6dedfdddbb97efcc5c9fbcef83afd424af75d2cfa3c0dc8d478d89d17d22349"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-ops-oracle-v3\\raw\\engineering-ops-a-t01\\06\\helper-attempt-0.jsonl",
+      "sha256": "122e5aa977b157a39c4cb97ac133b7a0e13a80f624dce7bb7dbd693babd8dc02"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-ops-oracle-v3\\runs\\engineering-ops-a-t01\\06.native.yaml",
+      "sha256": "99c8429b65b350559f3b4149d35237cd18822ce3c17203b477f34781c7d7050e"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-ops-oracle-v3\\results\\engineering-ops-a-t01\\snapshots\\06\\tree.yaml",
+      "sha256": "a6dedfdddbb97efcc5c9fbcef83afd424af75d2cfa3c0dc8d478d89d17d22349"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-ops-oracle-v3\\runs\\engineering-ops-a-t01\\06.native.yaml",
+      "sha256": "99c8429b65b350559f3b4149d35237cd18822ce3c17203b477f34781c7d7050e"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-ops-oracle-v3\\runs\\engineering-ops-a-t01\\07.native.yaml",
+      "sha256": "9f8098da707988c977a097bc1a21566191f74b8a33ac5eaeb4281f4a507ac9db"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-ops-oracle-v3\\raw\\engineering-ops-a-t01\\07\\snapshots\\07-check-1\\tree.yaml",
+      "sha256": "32badcfbc01cda73d91dcf1cd5cafd348353319de07e12d35a6076fde8b77168"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-ops-oracle-v3\\raw\\engineering-ops-a-t01\\07\\helper-attempt-0.jsonl",
+      "sha256": "1eefd6290ff0158a6fda87d9b9753377ffaa658a38ca5288c0d5780ad48db1fe"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-ops-oracle-v3\\runs\\engineering-ops-a-t01\\07.native.yaml",
+      "sha256": "9f8098da707988c977a097bc1a21566191f74b8a33ac5eaeb4281f4a507ac9db"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-ops-oracle-v3\\results\\engineering-ops-a-t01\\snapshots\\07\\tree.yaml",
+      "sha256": "32badcfbc01cda73d91dcf1cd5cafd348353319de07e12d35a6076fde8b77168"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-ops-oracle-v3\\runs\\engineering-ops-a-t01\\07.native.yaml",
+      "sha256": "9f8098da707988c977a097bc1a21566191f74b8a33ac5eaeb4281f4a507ac9db"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-ops-oracle-v3\\runs\\engineering-ops-a-t01\\08.native.yaml",
+      "sha256": "584fdd462d0aa9d5913d90c22540247d405ef0815ce9d62dc0f4fac4bce63523"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-ops-oracle-v3\\raw\\engineering-ops-a-t01\\08\\snapshots\\08-check-1\\tree.yaml",
+      "sha256": "35c6b8d797d3d0661faa41e86ba613e6c1c2ac65a5f9ea5a4b2acc3b959687e7"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-ops-oracle-v3\\raw\\engineering-ops-a-t01\\08\\helper-attempt-0.jsonl",
+      "sha256": "fe63fe6ab1654ff3534cbf02668e8592c5553fad71e0f635a31fcbee3a6089e5"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-ops-oracle-v3\\runs\\engineering-ops-a-t01\\08.native.yaml",
+      "sha256": "584fdd462d0aa9d5913d90c22540247d405ef0815ce9d62dc0f4fac4bce63523"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-ops-oracle-v3\\results\\engineering-ops-a-t01\\snapshots\\08\\tree.yaml",
+      "sha256": "35c6b8d797d3d0661faa41e86ba613e6c1c2ac65a5f9ea5a4b2acc3b959687e7"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-ops-oracle-v3\\runs\\engineering-ops-a-t01\\08.native.yaml",
+      "sha256": "584fdd462d0aa9d5913d90c22540247d405ef0815ce9d62dc0f4fac4bce63523"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-ops-oracle-v3\\runs\\engineering-ops-a-t01-parallel-P01\\P01.native.yaml",
+      "sha256": "b14cc61fc6913c369b3efc4f76b27160a8fcd438f3295b17cba152b29d6a36a4"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-ops-oracle-v3\\raw\\engineering-ops-a-t01-parallel-P01\\P01\\snapshots\\P01-check-1\\tree.yaml",
+      "sha256": "a3cfeefc6a24c1e282588e7d7b2693b637127891bc8fa76ae3d5f22d0c88e537"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-ops-oracle-v3\\raw\\engineering-ops-a-t01-parallel-P01\\P01\\helper-attempt-0.jsonl",
+      "sha256": "38ff3f4ba1bbc636ee588bdca210e0cf950b6cfd26b49c3fc678088bea6cb7b5"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-ops-oracle-v3\\runs\\engineering-ops-a-t01-parallel-P01\\P01.native.yaml",
+      "sha256": "b14cc61fc6913c369b3efc4f76b27160a8fcd438f3295b17cba152b29d6a36a4"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-ops-oracle-v3\\results\\engineering-ops-a-t01-parallel-P01\\snapshots\\P01\\tree.yaml",
+      "sha256": "a3cfeefc6a24c1e282588e7d7b2693b637127891bc8fa76ae3d5f22d0c88e537"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-ops-oracle-v3\\runs\\engineering-ops-a-t01-parallel-P01\\P01.native.yaml",
+      "sha256": "b14cc61fc6913c369b3efc4f76b27160a8fcd438f3295b17cba152b29d6a36a4"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-ops-oracle-v3\\runs\\engineering-ops-a-t01-parallel-P02\\P02.native.yaml",
+      "sha256": "628b60f4afca6c9846c104dfa0c7ccace0fda13324a8122e601c5da1b853a100"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-ops-oracle-v3\\raw\\engineering-ops-a-t01-parallel-P02\\P02\\snapshots\\P02-check-1\\tree.yaml",
+      "sha256": "de017cb49f7108c429917113d54dccc524c68077ebc7b3b60a270722285598e9"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-ops-oracle-v3\\raw\\engineering-ops-a-t01-parallel-P02\\P02\\helper-attempt-0.jsonl",
+      "sha256": "518c5570ecdbd3a5b3d1bf3aa78eaa1ba83d6cbc5948b7178b1134e939f8f225"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-ops-oracle-v3\\runs\\engineering-ops-a-t01-parallel-P02\\P02.native.yaml",
+      "sha256": "628b60f4afca6c9846c104dfa0c7ccace0fda13324a8122e601c5da1b853a100"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-ops-oracle-v3\\results\\engineering-ops-a-t01-parallel-P02\\snapshots\\P02\\tree.yaml",
+      "sha256": "de017cb49f7108c429917113d54dccc524c68077ebc7b3b60a270722285598e9"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-ops-oracle-v3\\runs\\engineering-ops-a-t01-parallel-P02\\P02.native.yaml",
+      "sha256": "628b60f4afca6c9846c104dfa0c7ccace0fda13324a8122e601c5da1b853a100"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-ops-oracle-v3\\runs\\engineering-ops-a-t01-integration\\08.native.yaml",
+      "sha256": "9a342f370814e639ba36231e3418086f2bdbdfb3ef91fbd14710d64884dd14a6"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-ops-oracle-v3\\raw\\engineering-ops-a-t01-integration\\snapshots\\attempt-0\\08-check-1\\tree.yaml",
+      "sha256": "4618cd049a282b828b91b24ef6b6a5cd5dedd10af1ac1989c32050c4cf7b1315"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-ops-oracle-v3\\raw\\engineering-ops-a-t01-integration\\08.attempt-0.helper.jsonl",
+      "sha256": "c5a6427d1d4fd5c342977d3ca275603d0e8af61bcbca2323d9850963617e1f85"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-ops-oracle-v3\\runs\\engineering-ops-a-t01-integration\\08.native.yaml",
+      "sha256": "9a342f370814e639ba36231e3418086f2bdbdfb3ef91fbd14710d64884dd14a6"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-ops-oracle-v3\\results\\engineering-ops-a-t01-integration\\snapshots\\08\\tree.yaml",
+      "sha256": "4618cd049a282b828b91b24ef6b6a5cd5dedd10af1ac1989c32050c4cf7b1315"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-ops-oracle-v3\\runs\\engineering-ops-a-t01-integration\\08.native.yaml",
+      "sha256": "9a342f370814e639ba36231e3418086f2bdbdfb3ef91fbd14710d64884dd14a6"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\native\\powershell\\pwsh.exe",
+      "sha256": "362a356ce7f0940ec74f73a8fc2c990a2cc24a38a11c90bbd8eca947110ad139"
+    }
+  ],
+  "root_checks": {
+    "complete_driver_and_v2_v3_diff_read": true,
+    "parser_errors": 0,
+    "preflight_case_exit_codes": [
+      1,
+      1,
+      0
+    ],
+    "exact_named_targets_still_absent": 50,
+    "v3_archived_entries_source_copy_verified": 8,
+    "v2_archive_entries_source_copy_verified": 7,
+    "architecture_and_portfolio_tests_exit": 0
+  },
+  "limits": [
+    "Only already ended Ops trial1 armA captures; no active B/other trial outcome reads or actor feedback.",
+    "All313 frozen input bytes may be verified and copied for integrity; reserved task metadata/outcomes remain uninterpreted and no holdout evaluator is dispatched.",
+    "Initial/final captures repeat11 boundaries; no comparison eligibility or overall score is granted.",
+    "A06 first-intent timing uncertainty remains preserved; no timer/native rewrite.",
+    "Owned parent exit is not independent proof every descendant stopped; explicit paths are not a complete filesystem write inventory.",
+    "Pinned binaries do not establish audited source-to-binary correspondence for stager/exporter.",
+    "Source/public result ledgers are intentionally separate snapshots; bind each and compare shared records,not byte parity.",
+    "No source/seed/oracle/product repair,auto-waiver,owner acceptance or release."
+  ],
+  "human_acceptance": false,
+  "holdout_opened": false,
+  "global_fix_decision": null
+}

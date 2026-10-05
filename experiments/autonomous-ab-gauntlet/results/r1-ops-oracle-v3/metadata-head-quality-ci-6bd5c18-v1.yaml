@@ -1,0 +1,27 @@
+schema: autonomous-ab-source-quality-observation/v1
+source_commit: 6bd5c180ade22bb162e6863e9bfbd8f6d6d3ce04
+run_id: 37324933036
+run_attempt: 1
+url: https://github.com/Glacius-Labs/Markitect/actions/runs/37324933036
+quality_jobs:
+- name: Quality (ubuntu-24.04)
+  job_id: 111813131045
+  conclusion: success
+  completed_at: '2026-10-05T14:30:15Z'
+- name: Quality (windows-latest)
+  job_id: 111813130738
+  conclusion: success
+  completed_at: '2026-10-05T14:39:12Z'
+raw_references:
+- path: metadata-head-quality-ci-6bd5c18-v1.provider-run.raw.json
+  sha256: 70780c517af28d2d3038edade8c544b834ad3b3db0e1645c20a4180e339c7cc5
+- path: metadata-head-quality-ci-6bd5c18-v1.provider-jobs.raw.json
+  sha256: 32918fd941dbf8727e86aa6396e52bd165672887106982c946a74e9ef5f8fc78
+limits:
+- Head-bound provider PR merge-checkout quality evidence, not cryptographic exact-source
+  attestation.
+- Quality gates do not establish task outcomes, comparison validity, owner acceptance
+  or a release.
+frozen_candidate_changed: false
+actor_feedback_changed: false
+holdout_opened: false

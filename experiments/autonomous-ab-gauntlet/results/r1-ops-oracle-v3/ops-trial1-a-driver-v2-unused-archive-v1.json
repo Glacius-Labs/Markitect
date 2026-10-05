@@ -1,0 +1,27 @@
+{
+  "schema": "ops-v3-trial1-a-driver-unused-archive-receipt/v1",
+  "archive": "postrun-ops-a1-driver-v2-tools-2026-10-05",
+  "archive_absolute": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\postrun-ops-a1-driver-v2-tools-2026-10-05",
+  "archive_manifest_sha256": "d515e73b1106a90e3e08ab78fcca483cccc8d8d73a13bbfeb61b1f95063d39f1",
+  "status": "v2-metadata-archived-driver-unused",
+  "driver_body_invoked": false,
+  "preflight_invoked": false,
+  "isolated_function_synthetic_qa_only": true,
+  "synthetic_qa_file_sha256": "274c9a17fbdec96afa845e737d86be08adfa9491a96709f557ed01bced140888",
+  "actual_copier_invocations": 0,
+  "actual_stager_invocations": 0,
+  "actual_evaluator_invocations": 0,
+  "actual_exporter_invocations": 0,
+  "planned_capture_tuples": 22,
+  "assessment_pipeline_captures": 0,
+  "actor_outcome_claim_made": false,
+  "eligibility_claim_made": false,
+  "holdout_accessed": false,
+  "archived_entry_count": 7,
+  "manifest_bytes": 4536,
+  "separate_proposal_review_entry": "separate-proposal-review/proposal-metadata-commit-review-v1.md",
+  "limits": [
+    "Metadata preservation only; no assessment result or eligibility decision.",
+    "Source and public ledgers or assessment outputs were not created by the v2 driver."
+  ]
+}
