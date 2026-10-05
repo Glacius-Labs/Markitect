@@ -1,0 +1,34 @@
+actor_dispatches: 0
+ci_sha256: 0f3839e1d3a2e92da5ebeee06a31c945f0881a4232b4cdf8ecfa16fca228bb3f
+created_utc: "2026-10-05T06:04:26.2118352Z"
+human_acceptance: false
+partial_failure: retain exact created paths; no overwrite or deletion
+predecessor_freeze: 4faee78795986559e91a0e233bd7321a9cf48526d331edba621ca98eee11638a
+predecessor_freeze_sha256: 1ca3a0e3378be9226c8d3dab74fae28a78e9f9354d98dfaeb1693559e440263e
+predecessor_inputs: 304
+product_candidate: adef79d935399f8ac63ad874dbdeab8d15c418a1
+product_or_seed_or_card_change: false
+qa_sources:
+    benchmark-ops-oracle-v2_test.go: harness/ops_oracle_v2_test.go
+    benchmark-oracle-correction-v2.md: oracle-corrections-v2.md
+    benchmark-ownership-contract_test.go: harness/oracle_contract_test.go
+    benchmark-service-oracle-v2_test.go: harness/service_oracle_v2_test.go
+replaced_inputs:
+    - new_sha256: 7ef506c6936e2fb9a20ac53cb8ef10ba3cf590917682d687d90d8d179e36b7ae
+      path: projects/engineering-ops/oracle/evaluate.ps1
+      predecessor_sha256: 99e466a7c14fda0239c073ad8b5da0f8688696c8b6bbd43f130834c2cd7cce4c
+    - new_sha256: 361e1181301e4499de8ae873564cff740813e42b9292c7af5a5494c86884de61
+      path: projects/modular-service/oracle/evaluate.ps1
+      predecessor_sha256: 140fd2d0cf11aa9ff5e1dfd96c8e3f6ba46460a8f20b0f70acdfbc6de310279f
+    - new_sha256: 7401b517236185e3f5d9b129bd127148573cb1c96eb9a7ca46f169cc63f7acb8
+      path: projects/modular-service/oracle/vectors/task01_test.go.txt
+      predecessor_sha256: bb43425e68488be39b092e1e05e2138aa3ed880e8d997785db48774a9ec06266
+    - new_sha256: c034b49dcd3b5132485551d621d13d990a1b98d440f1a1641f4272e9527f5510
+      path: projects/modular-service/oracle/vectors/task02_test.go.txt
+      predecessor_sha256: 2690b55a136bdd64f4bfba15e25e926db388e365a5c8042e3eb2db0179f6594b
+    - new_sha256: 67fca5aa5792df1b3bb7ac364eed77dc554a8df1ef404a8a978cb622dbd9b32c
+      path: protocol.yaml
+      predecessor_sha256: a1588ae4df2124b2ebc7b035068e679eac6236c6517437c166fbec8708d10934
+schema: autonomous-ab-oracle-v2-preparation/v1
+source_commit: 9b4c45334a6e7ba80b0581d004769bd303e4c3bd
+unchanged_predecessor_inputs: 299

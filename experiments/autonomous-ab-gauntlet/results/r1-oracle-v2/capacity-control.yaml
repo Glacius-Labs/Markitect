@@ -1,0 +1,22 @@
+schema: autonomous-ab-capacity-control/v1
+recorded_utc: '2026-10-05T06:07:07.2583667Z'
+freeze_digest: d60e4975ab34b6519c2db414a58c170898750cacc59e077a199e2504f6bb6ebd
+frozen_product_change: none
+frozen_actor_or_harness_change: none
+purpose: Carry the symmetric scheduling control into the fresh corrected-oracle cohort before dispatch.
+coordination:
+  frozen_nominal_upper_bound: six scored leaves globally
+  effective_upper_bound: one active scored leaf per project operator; three globally
+  applies_symmetrically_to: [modular-service, engineering-ops]
+  other_active_cohorts: Count existing DDD and Service leaves in the same global limit.
+  prepared_envelopes: Exact identity and original deadline retained.
+  transport_retry_budget: unchanged; one mutation-free transport retry only
+  deadline_resets: prohibited
+  replacement_actor_or_fake_response: prohibited
+interpretation:
+  queued_time: Included in the frozen 1800-second task budget.
+  unavailable_dispatch: Runtime-unavailable, not a semantic product failure.
+  missing_response: No finish-task response is fabricated.
+  runtime_identity: Requested native model/effort inherited; backend attestation unavailable.
+  comparative_limit: Infrastructure interruptions and sequential fork scheduling constrain causal interpretation.
+  actor_dispatches_at_recording: 0

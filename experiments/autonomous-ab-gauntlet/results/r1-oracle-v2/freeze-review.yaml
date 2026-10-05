@@ -1,0 +1,79 @@
+schema: autonomous-ab-freeze-review/v1
+protocol: longitudinal-gauntlet-oracle-v2
+recorded_utc: '2026-10-05T06:11:29.3084552Z'
+freeze_digest: d60e4975ab34b6519c2db414a58c170898750cacc59e077a199e2504f6bb6ebd
+freeze_file_sha256: 2b384cd160e99263b9540272fad2386bbcedf0be97e1d99f662264648dcab1e3
+frozen_inputs: 310
+benchmark_source_commit: 9b4c45334a6e7ba80b0581d004769bd303e4c3bd
+predecessor:
+  digest: 4faee78795986559e91a0e233bd7321a9cf48526d331edba621ca98eee11638a
+  input_count: 304
+  freeze_file_sha256: 1ca3a0e3378be9226c8d3dab74fae28a78e9f9354d98dfaeb1693559e440263e
+  unchanged_inputs: 299
+replaced_inputs:
+  - protocol.yaml
+  - projects/modular-service/oracle/evaluate.ps1
+  - projects/modular-service/oracle/vectors/task01_test.go.txt
+  - projects/modular-service/oracle/vectors/task02_test.go.txt
+  - projects/engineering-ops/oracle/evaluate.ps1
+added_inputs:
+  - benchmark-oracle-correction-v2.md
+  - benchmark-service-oracle-v2_test.go
+  - benchmark-ops-oracle-v2_test.go
+  - benchmark-ownership-contract_test.go
+  - benchmark-oracle-v2-ci.json
+  - benchmark-oracle-v2-preparation.yaml
+product:
+  source: adef79d935399f8ac63ad874dbdeab8d15c418a1
+  cli_sha256: 553b7077ce7b5db2df89567146fc1a877a03cb6edd75459be5a3e0a380676056
+  artifact_checker_sha256: e671a89e03c93c153dcbe8694b9c30f86cc0e9512b1dc026332ac24db5e1c9d8
+  module_checker_sha256: af14fa820f9c145ff44d1bee3129e15bb35ec3b7aeb26334d65cbff25f0702e1
+  product_semantic_change: none
+harness:
+  source: af2f2d7369e2b86a89b735a34e62bda0d2a5a4ae
+  sha256: 0fa0d12f29aa7746f1e74c6435fec08b63324919f1d01d7eb4046103be4d2ec1
+  source_or_runtime_change: none
+review:
+  reviewer: /root/oracle_v2_freeze_review
+  automated_not_owner_acceptance: true
+  canonical_manifest_digest: passed
+  all_input_byte_hashes: passed
+  predecessor_byte_equality: passed
+  git_source_blob_equality: passed
+  protocol_non_oracle_parity: passed
+  product_binaries_seeds_cards: unchanged
+  non_oracle_fields_changed: [id, state, projects, benchmark_revision]
+  runtime_or_outcome_files_read: false
+  arena_mutation: false
+  blockers: []
+quality_gates:
+  run_id: 37269530257
+  url: https://github.com/Glacius-Labs/Markitect/actions/runs/37269530257
+  source_head: 9b4c45334a6e7ba80b0581d004769bd303e4c3bd
+  windows: success
+  ubuntu_24_04: success
+  ci_json_sha256: 0f3839e1d3a2e92da5ebeee06a31c945f0881a4232b4cdf8ecfa16fca228bb3f
+  coordinator_live_retrieval: verified before preparation
+  reviewer_live_retrieval: not performed; preserved record checked
+  unsigned_record_is_attestation: false
+cohort:
+  projects: [modular-service, engineering-ops]
+  trials_per_arm: 3
+  development_tasks: ['01', '02', '03', '04', '05', '06', '07', '08']
+  planned_development_tasks: 96
+  reserved_holdout_tasks: ['09', '10', '11', '12']
+  planned_holdout_tasks: 48
+  service_first_arm_by_trial: [A, B, A]
+  operations_first_arm_by_trial: [B, A, B]
+  arm_order_basis: Alternate by listed project index and trial index.
+  parallel_trial: 1
+  effective_capacity: One active scored leaf per operator; three globally including predecessor cohorts.
+  actor_dispatches_at_review: 0
+  old_outcome_rescoring: prohibited
+  fresh_seed_each_trial: required
+  holdout_gate: closed
+limits:
+  - Finite measurement QA does not establish arbitrary semantic completeness.
+  - Requested actor isolation and model identity are not backend attestations.
+  - New paired outcomes remain unavailable until actually recorded.
+  - No release or private adopter acceptance/adoption.
