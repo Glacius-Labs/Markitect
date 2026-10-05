@@ -1,0 +1,161 @@
+{
+  "apiVersion": "markitect.measurement.org/v1alpha1",
+  "kind": "GauntletFreezeIndependentReview",
+  "id": "r1-ops-oracle-v3-independent-freeze-review-final-v2",
+  "reviewed_utc": "2026-10-05T11:14:20Z",
+  "scope": "Independent byte/reference/protocol consistency review. No actor workspaces, raw/native outcome records, or detailed holdout evidence inspected; no actor evaluation performed. The frozen correction note was read for provenance and contains coarse historical trial-status summaries.",
+  "freeze": {
+    "arena": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-ops-oracle-v3",
+    "manifest": "freeze.yaml",
+    "manifest_sha256": "53e62ae4781bdcd00c9340f187e169ece6e4184f0132c269fd6a2b76012f8aca",
+    "canonical_digest": "a615190fb253cc8ff0ebcb3c02573aa9328e712d67c9f24e985610d9441b8dd6",
+    "inputs": 313,
+    "verified": 313,
+    "mismatches": 0,
+    "recipe": "Ordinal-sort by path; hash UTF-8 path, NUL, lowercase SHA-256 ASCII, LF. Recomputed digest matches.",
+    "extra_unlisted_file": "raw/predecessor-freeze.yaml",
+    "self_manifest_excluded": true,
+    "additional_unlisted_provenance_files": [
+      "raw/predecessor-freeze.yaml"
+    ]
+  },
+  "predecessor": {
+    "freeze_digest": "d60e4975ab34b6519c2db414a58c170898750cacc59e077a199e2504f6bb6ebd",
+    "manifest_sha256": "2b384cd160e99263b9540272fad2386bbcedf0be97e1d99f662264648dcab1e3",
+    "input_count": 310,
+    "unchanged": 307,
+    "replaced": [
+      {
+        "path": "benchmark-ops-oracle-v2_test.go",
+        "old": "f595ab9bc05fd566b566e468be0e009332efc3495245072251e82c234b20fc6b",
+        "new": "1d24b4b5a6013298b62feacc968aa1fa3c4474ec9269c310a945497fdfd3e882"
+      },
+      {
+        "path": "projects/engineering-ops/oracle/evaluate.ps1",
+        "old": "7ef506c6936e2fb9a20ac53cb8ef10ba3cf590917682d687d90d8d179e36b7ae",
+        "new": "fa1fd3b2e0a1377100974a01f83c569401285329edff0db88f6aedfcf7a7eb46"
+      },
+      {
+        "path": "protocol.yaml",
+        "old": "67fca5aa5792df1b3bb7ac364eed77dc554a8df1ef404a8a978cb622dbd9b32c",
+        "new": "008139defb3b84d4610ce366901ca48f0218bda8ef2a5d35f2d0e49a258ab0f0"
+      }
+    ],
+    "added": [
+      {
+        "path": "benchmark-ops-oracle-v3-ci.json",
+        "sha256": "70ed58d937bebbeb49bf1f5a46d11f0a709a0a86248188aefee5c24e0d876f0c"
+      },
+      {
+        "path": "benchmark-ops-oracle-v3-correction.md",
+        "sha256": "ca9481e164533083ce281ac4ff7845faa68d6144c5a378ed62051af9c6f77c71"
+      },
+      {
+        "path": "benchmark-ops-oracle-v3-preparation.yaml",
+        "sha256": "f08cbe5ff5f058f1066d346ee682abc62409d542a98504a5845f48fbc4636780"
+      }
+    ],
+    "removed": [],
+    "scope_result": "Only evaluator, QA, and protocol replaced; remaining predecessor inputs, including product binary, harness, seeds, task cards, and public checks, are byte-identical."
+  },
+  "source": {
+    "commit": "22e6e2b8ad342c3cba53d6798c71f895782eea73",
+    "repository_head": "22e6e2b8ad342c3cba53d6798c71f895782eea73",
+    "product_commit": "adef79d935399f8ac63ad874dbdeab8d15c418a1",
+    "product_binary_sha256": "553b7077ce7b5db2df89567146fc1a877a03cb6edd75459be5a3e0a380676056",
+    "source_identities_sha256": "829dfe90532387371b29b4cc0191cb67e9da93c0c31051bb7725857ca7ec059e",
+    "exact_workspace_arena_hashes": true,
+    "evaluator_sha256": "fa1fd3b2e0a1377100974a01f83c569401285329edff0db88f6aedfcf7a7eb46",
+    "qa_sha256": "1d24b4b5a6013298b62feacc968aa1fa3c4474ec9269c310a945497fdfd3e882",
+    "note_sha256": "ca9481e164533083ce281ac4ff7845faa68d6144c5a378ed62051af9c6f77c71",
+    "protocol_sha256": "008139defb3b84d4610ce366901ca48f0218bda8ef2a5d35f2d0e49a258ab0f0",
+    "focused_qa_record": {
+      "path": "experiments/autonomous-ab-gauntlet/results/r1-ops-oracle-v3/source-qa-v1.json",
+      "sha256": "4b5c102e464129e47623364092cd6fbfd6d15a98ee03192ed67e982d9a1685ef",
+      "cases": 82,
+      "exit": 0,
+      "scope": "source-only fixed predicate QA, not actor score"
+    },
+    "ci": {
+      "path": "benchmark-ops-oracle-v3-ci.json",
+      "sha256": "70ed58d937bebbeb49bf1f5a46d11f0a709a0a86248188aefee5c24e0d876f0c",
+      "run_id": 37298286679,
+      "head_sha": "22e6e2b8ad342c3cba53d6798c71f895782eea73",
+      "status": "completed",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "name": "Quality (ubuntu-24.04)",
+          "id": 111724668157,
+          "status": "completed",
+          "conclusion": "success",
+          "completed": "2026-10-05T10:44:45Z"
+        },
+        {
+          "name": "Quality (windows-latest)",
+          "id": 111724668353,
+          "status": "completed",
+          "conclusion": "success",
+          "completed": "2026-10-05T10:53:43Z"
+        }
+      ],
+      "exact_commit_match": true,
+      "qualification": "Record and byte binding verified; provider identity not independently authenticated."
+    },
+    "preparer_archive": {
+      "path": "ops-oracle-v3-tools-v2-2026-10-05/archive.json",
+      "sha256": "9b2143364b34fef97edebdab9c5d5cadf24f0cc9e783891ed6d4569526fd1ce7",
+      "three_archived_file_hashes_match": true,
+      "source_review_sha256": "205a7b684849c11484f0cdf2970612206016aa811192b4ce0f5018a880d8d060",
+      "preparation_sha256": "f08cbe5ff5f058f1066d346ee682abc62409d542a98504a5845f48fbc4636780",
+      "note_mapping": "benchmark-ops-oracle-v3-correction.md <- oracle-corrections-ops-v3.md",
+      "preparer_executed_by_reviewer": false
+    }
+  },
+  "protocol": {
+    "baseline_path": "experiments/autonomous-ab-gauntlet/protocol-oracle-v2.yaml",
+    "baseline_sha256": "67fca5aa5792df1b3bb7ac364eed77dc554a8df1ef404a8a978cb622dbd9b32c",
+    "v3_sha256": "008139defb3b84d4610ce366901ca48f0218bda8ef2a5d35f2d0e49a258ab0f0",
+    "non_cohort_fields_equal": true,
+    "excluded_keys": [
+      "id",
+      "state",
+      "projects",
+      "benchmark_revision"
+    ],
+    "state": "freeze-required-before-dispatch",
+    "projects": [
+      "engineering-ops"
+    ],
+    "revision": "Two Operations measurement corrections only; no product, seed, task intent, model, effort, or budget change."
+  },
+  "retained_provenance": {
+    "path": "raw/predecessor-freeze.yaml",
+    "sha256": "2b384cd160e99263b9540272fad2386bbcedf0be97e1d99f662264648dcab1e3",
+    "matches_declared_predecessor_sha256": true,
+    "interpretation": "Retained raw provenance, not an input-manifest member.",
+    "historical_freeze_review_sha256": "7421346946bdd64b77255232f78ad70e2f14cf88d5aa7e23cf588bf2185766ed",
+    "historical_pending_ci_note": "Left unchanged; later exact-source CI is recorded above."
+  },
+  "boundary": {
+    "recorded_actor_dispatches": 0,
+    "scored_tasks_before_freeze": 0,
+    "assessment": "No byte, delta, protocol-parity, or exact-source CI-reference blocker found. This separate review does not authorize dispatch or claim human acceptance."
+  },
+  "limits": [
+    "Hash/reference checks are not cryptographic signatures or independent CI-provider authentication.",
+    "No actor workspaces, raw/native outcomes, detailed holdout evidence, or post-freeze execution were inspected.",
+    "This post-freeze decision file is outside freeze.yaml inputs.",
+    "No semantic acceptance or dispatch decision is made.",
+    "The frozen correction note includes coarse prior-trial status summaries; those are not raw actor evidence and were not independently audited here."
+  ],
+  "assessment": "No byte, replacement-scope, protocol-parity, or exact-source CI-reference blocker found. The frozen 313-input digest recomputes exactly and all input hashes match; predecessor delta is exactly three replacements plus three additions.",
+  "supersession": {
+    "canonical_record": true,
+    "draft_path": "freeze-review.yaml",
+    "draft_current_sha256": "EAEF9E1F165E8E6791F34F630FBCEBC31FDF1310E0A849C73827836EB44F05A3",
+    "initial_draft_sha256": "5D4B85E035294857476FF98324CEA88FB4B7D2732B418AAD17DDBA31BE15FDD4",
+    "intermediate_draft_sha256": "D41A2B9162C8A9EC9BF6EB6453C9E4050FB045FF06AD6411CF70E8CEF23ECF2B",
+    "history_disclosure": "freeze-review.yaml was overwritten after exclusive creation while correcting scope disclosure; previous byte snapshots were not retained. See separate supersession erratum."
+  }
+}

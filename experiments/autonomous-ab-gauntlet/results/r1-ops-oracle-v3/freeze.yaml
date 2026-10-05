@@ -1,0 +1,630 @@
+version: 1
+created_utc: "2026-10-05T10:56:22Z"
+inputs:
+    - path: README.md
+      sha256: 71b616369ce4e92a11c40182266a0285fbc2f9f2ce7345b7b549608af6fcb849
+    - path: analysis-contract.yaml
+      sha256: 938327f03e8d95e9829790ec30af47ba34dc824388b2c0bd765b35138d9cd648
+    - path: benchmark-ops-oracle-v2_test.go
+      sha256: 1d24b4b5a6013298b62feacc968aa1fa3c4474ec9269c310a945497fdfd3e882
+    - path: benchmark-ops-oracle-v3-ci.json
+      sha256: 70ed58d937bebbeb49bf1f5a46d11f0a709a0a86248188aefee5c24e0d876f0c
+    - path: benchmark-ops-oracle-v3-correction.md
+      sha256: ca9481e164533083ce281ac4ff7845faa68d6144c5a378ed62051af9c6f77c71
+    - path: benchmark-ops-oracle-v3-preparation.yaml
+      sha256: f08cbe5ff5f058f1066d346ee682abc62409d542a98504a5845f48fbc4636780
+    - path: benchmark-oracle-correction-v2.md
+      sha256: fc8ba1f724a7447052624248c998d5f47d29d285f3648acd369b006e2f9b1d3e
+    - path: benchmark-oracle-v2-ci.json
+      sha256: 0f3839e1d3a2e92da5ebeee06a31c945f0881a4232b4cdf8ecfa16fca228bb3f
+    - path: benchmark-oracle-v2-preparation.yaml
+      sha256: 9e696fbda8a5532089d24c925435560503de22ebf5f14e466c1ab88df32930a1
+    - path: benchmark-ownership-contract_test.go
+      sha256: 38e7d8e5f110af85e006b4ce18affa56c0471b531434d48de2ab800a93aae4c1
+    - path: benchmark-service-oracle-v2_test.go
+      sha256: 093a9cc6caac6e4e136b6b1dc66af614aeb6826ec1de50669d084a421abe507a
+    - path: bin/gauntlet.exe
+      sha256: 0fa0d12f29aa7746f1e74c6435fec08b63324919f1d01d7eb4046103be4d2ec1
+    - path: bin/markitect-check-artifacts.exe
+      sha256: e671a89e03c93c153dcbe8694b9c30f86cc0e9512b1dc026332ac24db5e1c9d8
+    - path: bin/markitect-check-modules.exe
+      sha256: af14fa820f9c145ff44d1bee3129e15bb35ec3b7aeb26334d65cbff25f0702e1
+    - path: bin/markitect.exe
+      sha256: 553b7077ce7b5db2df89567146fc1a877a03cb6edd75459be5a3e0a380676056
+    - path: design.md
+      sha256: 984c18fe36b1bd0c4f6e334c7a93e80b92f7784811dac769dcd07e573eda261c
+    - path: freeze-review.yaml
+      sha256: 7421346946bdd64b77255232f78ad70e2f14cf88d5aa7e23cf588bf2185766ed
+    - path: go.mod
+      sha256: c710445a3b7484bddd88420ee47ae9b764e370bf8d019825f216faeeac410e3b
+    - path: go.sum
+      sha256: ff6dac09ab3f5857925f01c0336e5c9499120ef2f3e7050ec60f55e39a408fec
+    - path: harness/main.go
+      sha256: 3ae5ef0bfa04d4e295ca09f7226f509808369daae25974f932239694683f38a8
+    - path: harness/main_test.go
+      sha256: c83745804ead4b0d0821dff9dc42ba51d1a10ce596ae46108a3fa39c092beed7
+    - path: operator-contract.md
+      sha256: 304e24ec6a5132b99b97c7c5f557641d1f30db03344a8d08cccce8b0701ce6f6
+    - path: preparation-findings.yaml
+      sha256: 4fbf8aa41b5490c0aacccbb832621825e6997af8d9e7310886c4408903be2289
+    - path: preparation-gates.yaml
+      sha256: 1a10d250cdb3d4940975833aacd0e355138f4f232b8d91eb5a97007107a25728
+    - path: projects/engineering-ops/arm-a/.claude/CLAUDE.md
+      sha256: 10d4444fae5fe61084ad9d613118a6460a7c0ce3ccd337a4e44fcfa596929467
+    - path: projects/engineering-ops/arm-a/.githooks/pre-commit
+      sha256: 1972f1b1302137733fd5a3ae978ee732449453e680370f5fa740d7d3ebfe259c
+    - path: projects/engineering-ops/arm-a/.githooks/pre-commit.sha256
+      sha256: b21666474f3d2781957bdc35a966b3976441174223e4b2f396d363dccdc1bf5f
+    - path: projects/engineering-ops/arm-a/.github/workflows/ci.yaml
+      sha256: 055188034739780a3615a7682574902f883d2f4f9e197d26928b4bc03bef5f27
+    - path: projects/engineering-ops/arm-a/.gitignore
+      sha256: 6feaded4e28ea86e001a6751b4e3d960e8b7c31b9616ff9936b79297086e809b
+    - path: projects/engineering-ops/arm-a/AGENTS.md
+      sha256: 5d8516306f087e96c63be600f4aa03b2e68d2d91787035f583fb1543f0303862
+    - path: projects/engineering-ops/arm-a/README.md
+      sha256: fea8b11ddfa1f1e21c18db6c3d39ee3f7806b37271cd9fe04111d43727bc40a6
+    - path: projects/engineering-ops/arm-a/cmd/relayctl/main.go
+      sha256: 4a6fdbe0d4fa6e5cd58a0105b6c6af4ffbe6ea7c63806cfbaeb0e84dfc0c24e2
+    - path: projects/engineering-ops/arm-a/cmd/relayctl/main_test.go
+      sha256: d7e39b173b9f8fd7b339d2a7abefd4824de26acb864daa2fec61ae59c72fedf0
+    - path: projects/engineering-ops/arm-a/docs/engineering/agent-rules.md
+      sha256: 2638b985f3f86ca2580c20085611d3b5498a6ef644954a47f6188006c32d0d0c
+    - path: projects/engineering-ops/arm-a/docs/engineering/architecture.md
+      sha256: b73880226df29bf15d5d21be0c428effad730117c87150ec419f37091919f43d
+    - path: projects/engineering-ops/arm-a/docs/engineering/managed-files.yaml
+      sha256: 5ed8bf877c70e1214d7d3371da238026b788413ea8b332980b454aff3469f840
+    - path: projects/engineering-ops/arm-a/docs/operations/runbooks/legacy-bulk-replay.md
+      sha256: 50d291affeae4ae8088c66216f6a1b8646de495f638ae0a47ef455814986e889
+    - path: projects/engineering-ops/arm-a/docs/operations/runbooks/legacy-start.md
+      sha256: 573e1ca339f8e35d4d43de236fb5d6950a7ff7dae45515fd7355bed66d9b6ebd
+    - path: projects/engineering-ops/arm-a/docs/operations/runbooks/process-sentinel.md
+      sha256: 162547b470ee3e9ac0a9ec7853d1a0337cb581a2a05197c21718d40955f66d6d
+    - path: projects/engineering-ops/arm-a/go.mod
+      sha256: 229f28b853aa72cf989ccb2984284649c8e4c1a6bb51dd10001a6164a74e2880
+    - path: projects/engineering-ops/arm-a/internal/config/parse.go
+      sha256: 7d8a3880e25887f7cafe629962be5679b30ad315492306f2636c0e05ce9d4e84
+    - path: projects/engineering-ops/arm-a/internal/config/parse_test.go
+      sha256: f02821a5cef5cf4768c3e14e5e5bceaee98c24341c37b0b55c88f7139c2414db
+    - path: projects/engineering-ops/arm-a/scripts/check_operations.py
+      sha256: fc9fb3b0f774ea90596a97d2de93d78f55c9b8d0f41b23ec769d7cae363405de
+    - path: projects/engineering-ops/arm-a/scripts/test_check_operations.py
+      sha256: 3f2d0ad16ee9107de97c133fddf8a83d9dcff5a9106cfb8be1d8bc541ef74b99
+    - path: projects/engineering-ops/arm-a/scripts/validate.py
+      sha256: a151188d0ce87211e391d037334203486eb41268b97a686841318bf3da946909
+    - path: projects/engineering-ops/arm-a/testdata/vendor-snapshots/sample.json
+      sha256: b700afecd52da6090288e13537d3efd6da7e2743d3b5fc2acd190f6c0efe68e8
+    - path: projects/engineering-ops/arm-a/tools/process-sentinel/go.mod
+      sha256: 9a8c31ec086d1e5fb81ce20778e1017cdde6d6786dd8928016923e25d814997a
+    - path: projects/engineering-ops/arm-a/tools/process-sentinel/main.go
+      sha256: 9d3010715db1a5b76e33b2e114fdf4276a69d06f74ddbaf8c71b738a2bff3a29
+    - path: projects/engineering-ops/arm-a/tools/process-sentinel/main_test.go
+      sha256: 5f649e326371abdb6a632cbc55a6efa456c6d9f18683cefa049638d4f4c29d78
+    - path: projects/engineering-ops/arm-b/.agents/skills/engineering-operations/SKILL.md
+      sha256: 59fff5cf3d3cfe61e84285d2a7c6dafd494154db647d068da107f3e725c2ba6d
+    - path: projects/engineering-ops/arm-b/.claude/CLAUDE.md
+      sha256: 29ca69fa617d75f5c69ab1eed5ab8fb78da150532e9218ff0a8e7ed21e95486e
+    - path: projects/engineering-ops/arm-b/.claude/skills/engineering-operations/SKILL.md
+      sha256: 59fff5cf3d3cfe61e84285d2a7c6dafd494154db647d068da107f3e725c2ba6d
+    - path: projects/engineering-ops/arm-b/.githooks/pre-commit
+      sha256: 040ac324d3e2d7a8a058adb2affe0f1bfbde545e17b44d5f6bf4760c7bd504ec
+    - path: projects/engineering-ops/arm-b/.github/workflows/ci.yaml
+      sha256: 9c54a770bdeb98afa8f17961afd42d2417492d4236095e9cb9e956e960a8f98b
+    - path: projects/engineering-ops/arm-b/.gitignore
+      sha256: 6feaded4e28ea86e001a6751b4e3d960e8b7c31b9616ff9936b79297086e809b
+    - path: projects/engineering-ops/arm-b/.markitect/areas/operations/architecture-boundaries.rule.yaml
+      sha256: aa056bbe086531cfa456570ba4a16354fb957282261acf16a75bcc4a8077cd54
+    - path: projects/engineering-ops/arm-b/.markitect/areas/operations/engineering-operations.skill.yaml
+      sha256: 5f02e5ad02e4f9440814c0873c00e25ac028de5f811ad7831a2f2ae26475cc78
+    - path: projects/engineering-ops/arm-b/.markitect/areas/operations/process-lifecycle.rule.yaml
+      sha256: 859909d427564294838d09875c9d7207a8aae4d80877736fa86c1a6946b15288
+    - path: projects/engineering-ops/arm-b/.markitect/areas/operations/verification.rule.yaml
+      sha256: c1fd1969027f22e5d8f2a9ecdef806dd4c8bf4bd2df0c5c1991c348c5d061d30
+    - path: projects/engineering-ops/arm-b/.markitect/modules/githooks.config
+      sha256: f332ad96688160c94fb5c7ae69064c8d461a4a31af59cd2da73c25b021ab7f78
+    - path: projects/engineering-ops/arm-b/.markitect/modules/pipelines.config
+      sha256: 72b137d3f0cb32a6023fe9d8240e2d1d2000901911d92ffa23efa6427a5d93c3
+    - path: projects/engineering-ops/arm-b/AGENTS.md
+      sha256: b053f7fd8a3d254e308367747de2d03bd8c073c3afa6fbd5cf918cfeba067995
+    - path: projects/engineering-ops/arm-b/README.md
+      sha256: 2e784f3c26daa4a8cc6b13ccdfff8a488f83da1e743c67a96384939922040eb0
+    - path: projects/engineering-ops/arm-b/cmd/relayctl/main.go
+      sha256: 4a6fdbe0d4fa6e5cd58a0105b6c6af4ffbe6ea7c63806cfbaeb0e84dfc0c24e2
+    - path: projects/engineering-ops/arm-b/cmd/relayctl/main_test.go
+      sha256: d7e39b173b9f8fd7b339d2a7abefd4824de26acb864daa2fec61ae59c72fedf0
+    - path: projects/engineering-ops/arm-b/docs/engineering/architecture.md
+      sha256: b73880226df29bf15d5d21be0c428effad730117c87150ec419f37091919f43d
+    - path: projects/engineering-ops/arm-b/docs/markitect/README.md
+      sha256: fe3fee1cc325e7a514117001a6ef5770eada6567bb01c484e5f10de7a43f12f6
+    - path: projects/engineering-ops/arm-b/docs/markitect/operations/README.md
+      sha256: d744e6b9303ffadd27b924fdc3cfb60183071800df5de9774b9fb8b3bc95488e
+    - path: projects/engineering-ops/arm-b/docs/markitect/operations/architecture-boundaries.rule.md
+      sha256: e43c20587f62156b611590ee298e18cd6b3f142e536ff082e0a809ee3b3ee5e7
+    - path: projects/engineering-ops/arm-b/docs/markitect/operations/engineering-operations.skill.md
+      sha256: d4b1217d039c059cc03658c8b886eea3b1b1854ca1a4334958c965eddddfbacc
+    - path: projects/engineering-ops/arm-b/docs/markitect/operations/process-lifecycle.rule.md
+      sha256: 713febbc75cd8ec0555517fb43ad65de15273fd1b880901a25904ae2af111288
+    - path: projects/engineering-ops/arm-b/docs/markitect/operations/verification.rule.md
+      sha256: ecafc3aaddf8246ee2f70e970b97da34bfca191d49ae24e669c0761d82984a88
+    - path: projects/engineering-ops/arm-b/docs/operations/runbooks/legacy-bulk-replay.md
+      sha256: 50d291affeae4ae8088c66216f6a1b8646de495f638ae0a47ef455814986e889
+    - path: projects/engineering-ops/arm-b/docs/operations/runbooks/legacy-start.md
+      sha256: 573e1ca339f8e35d4d43de236fb5d6950a7ff7dae45515fd7355bed66d9b6ebd
+    - path: projects/engineering-ops/arm-b/docs/operations/runbooks/process-sentinel.md
+      sha256: 162547b470ee3e9ac0a9ec7853d1a0337cb581a2a05197c21718d40955f66d6d
+    - path: projects/engineering-ops/arm-b/go.mod
+      sha256: 229f28b853aa72cf989ccb2984284649c8e4c1a6bb51dd10001a6164a74e2880
+    - path: projects/engineering-ops/arm-b/internal/config/parse.go
+      sha256: 7d8a3880e25887f7cafe629962be5679b30ad315492306f2636c0e05ce9d4e84
+    - path: projects/engineering-ops/arm-b/internal/config/parse_test.go
+      sha256: f02821a5cef5cf4768c3e14e5e5bceaee98c24341c37b0b55c88f7139c2414db
+    - path: projects/engineering-ops/arm-b/markitect-artifacts.yaml
+      sha256: 002ac82e305a83779b3e1fec44ac5dc7bab1700ada1a92bffb53311c8d9a42be
+    - path: projects/engineering-ops/arm-b/markitect.yaml
+      sha256: e9462f99605ea9316c2c65d571fdf509b4e4660043ca23cd9c1ad753730ff4e5
+    - path: projects/engineering-ops/arm-b/scripts/validate.py
+      sha256: 94b74a1a8d6f4c835662d630ea6f72f0cadaed5bd228f381a3025a23c5896a1e
+    - path: projects/engineering-ops/arm-b/testdata/vendor-snapshots/sample.json
+      sha256: b700afecd52da6090288e13537d3efd6da7e2743d3b5fc2acd190f6c0efe68e8
+    - path: projects/engineering-ops/arm-b/tools/process-sentinel/go.mod
+      sha256: 9a8c31ec086d1e5fb81ce20778e1017cdde6d6786dd8928016923e25d814997a
+    - path: projects/engineering-ops/arm-b/tools/process-sentinel/main.go
+      sha256: 9d3010715db1a5b76e33b2e114fdf4276a69d06f74ddbaf8c71b738a2bff3a29
+    - path: projects/engineering-ops/arm-b/tools/process-sentinel/main_test.go
+      sha256: 5f649e326371abdb6a632cbc55a6efa456c6d9f18683cefa049638d4f4c29d78
+    - path: projects/engineering-ops/common/seed-facts.yaml
+      sha256: 744975761950e08246f4c2507927ca52278ee657e4bfbd18488960d9ff180c55
+    - path: projects/engineering-ops/oracle/evaluate.ps1
+      sha256: fa1fd3b2e0a1377100974a01f83c569401285329edff0db88f6aedfcf7a7eb46
+    - path: projects/engineering-ops/oracle/evaluator-spec.yaml
+      sha256: 76ca9a2110cf3dca93198abc1ce96f94164f217ae4ab0331c203fac40e72117a
+    - path: projects/engineering-ops/oracle/vectors/task01_process_json_test.go.txt
+      sha256: ca62319402284c2cc3183037d2011570b653c9fc15d3b80706e68599ad6979cd
+    - path: projects/engineering-ops/oracle/vectors/task02_deadline_test.go.txt
+      sha256: 181576dc80cb7145c34ffaf1ba296384bbd665715da6090601f842c534cd420f
+    - path: projects/engineering-ops/oracle/vectors/task06_relay_version_test.go.txt
+      sha256: 2f8cb862de1397357e5d8a5826f8b030ce6a288f6d315b73520ea1f2be874005
+    - path: projects/engineering-ops/oracle/vectors/task11_fixture_immutable_test.go.txt
+      sha256: 0e9f54029f214ebd07449543d27b1bb1222cd69c95abefa6c4e7dfb8b9a4b174
+    - path: projects/engineering-ops/parallel-task-set.yaml
+      sha256: 9c7025159dd023801cfef5ba13464d6ccbf5730bc3fbb0f9dd435f66dc5da76d
+    - path: projects/engineering-ops/parity.md
+      sha256: eea83650b360f72e9b8680342cf8a81e378ab672ac99f99c105724d25f19cbfb
+    - path: projects/engineering-ops/project.yaml
+      sha256: 168ecc3a9b81406014ba6706c30b4ea5464bad4283329b6ffd31937dc62ae195
+    - path: projects/engineering-ops/tasks/README.md
+      sha256: 42726e98d41e84fd5a285e198ba2a91ceb35c756de123ca12783cbfdfdce99f3
+    - path: projects/engineering-ops/tasks/task-set.yaml
+      sha256: d3f593eec9b295f48d2704425be10ea477d8d22c18799ed66b9ea5a37aa2c56b
+    - path: projects/modular-service/README.md
+      sha256: a23d44ec48c574b821fbc8d587607158ee41d15fa77281e5025dc4103978617f
+    - path: projects/modular-service/arm-a/.github/workflows/ci.yml
+      sha256: 0fc4d2ef7d826a1b33b3953869466755755fd1a9fa22348cd26dae464bb8ee41
+    - path: projects/modular-service/arm-a/AGENTS.md
+      sha256: 86c5c0ef2d6921fbc4fef1554635a379039b4961efa53c72e8ed457534640832
+    - path: projects/modular-service/arm-a/cmd/service/main.go
+      sha256: b8a3d84428d7756b02763952f80f3368e3e07e3009c211e6fbaa9b8e8fcdb239
+    - path: projects/modular-service/arm-a/docs/architecture.md
+      sha256: 8fd271cb0b5c4eff9dd0a41e583a0c4840a35ffc55e09b8a67ca6beba8c6cbaf
+    - path: projects/modular-service/arm-a/go.mod
+      sha256: d3c14bc94d8f2afa728c6cdd7ef1643d567a7a5f8547ec9a98cf90bac83dc109
+    - path: projects/modular-service/arm-a/internal/architecture/boundary_test.go
+      sha256: 7292ef5c955feed9c59c0e771d578b339f1648ec61f84719f675a0e6cd69d275
+    - path: projects/modular-service/arm-a/internal/contracts/billing/invoice.go
+      sha256: 68334c7253b2a7565f76454ddb904d02a962226b8113dc2559c65362042e3baa
+    - path: projects/modular-service/arm-a/internal/contracts/inventory/reservation.go
+      sha256: 7ed50417136db36e552a8ca23b147a565096f14492517b6ba35b2bb8c6005bd3
+    - path: projects/modular-service/arm-a/internal/core/clock.go
+      sha256: 599ed4cd9f70239daffc8ee6c092b39d667704f1353afb9e54c3b9a705c56245
+    - path: projects/modular-service/arm-a/internal/modules/billing/service.go
+      sha256: 1e23e2f5a2e5e3b7988afeaef41eda8b7b72a4294c3947de6dde0b28e445b869
+    - path: projects/modular-service/arm-a/internal/modules/billing/service_test.go
+      sha256: c478e4b46f65fa2ffbddc4fae6ca6573ab8d896781d33478cbaf060ceaf1bdb3
+    - path: projects/modular-service/arm-a/internal/modules/inventory/service.go
+      sha256: 6b18bc232ff94a57bf1fcfed1cdff304466e4071d8453d44aa7bc89a34586290
+    - path: projects/modular-service/arm-a/internal/modules/inventory/service_test.go
+      sha256: 110bb82d1a1230c14360eff6b7a7740b2e8e08e20ef83a71a3218465557d796a
+    - path: projects/modular-service/arm-a/internal/modules/orders/service.go
+      sha256: ce22fb080b48c8e6199ad0d010cc072a9df22ed83a383147536783dd4cf1d83c
+    - path: projects/modular-service/arm-a/internal/modules/orders/service_test.go
+      sha256: 1c72a83c254e1701d91dfd99b934c19909f2a6fd1db7a9837ee75ab2478fae46
+    - path: projects/modular-service/arm-b/.agents/skills/implement-change/SKILL.md
+      sha256: 79c398941373e5b53ebf404e3a078744ed7f7d43d716708f62451ae8a143cd3c
+    - path: projects/modular-service/arm-b/.github/workflows/ci.yml
+      sha256: 0fc4d2ef7d826a1b33b3953869466755755fd1a9fa22348cd26dae464bb8ee41
+    - path: projects/modular-service/arm-b/.markitect/areas/constitution/implement-change.skill.yaml
+      sha256: ba3ac78bbc10a2ff1d3d3fb0cf88a945803d22cb97b59144b174927cf9553507
+    - path: projects/modular-service/arm-b/.markitect/areas/constitution/module-boundaries.rule.yaml
+      sha256: 90c814ab9304df0af81eb0c7f4afadaa4bd86fe258fdbd739eea3f7322eb151a
+    - path: projects/modular-service/arm-b/.markitect/areas/constitution/service-change.workflow.yaml
+      sha256: 70c4d661391a891a6ca8244a2195793f81d628801b8750100c34a06b90ed3bb2
+    - path: projects/modular-service/arm-b/.markitect/coverage.yaml
+      sha256: e466498512e078c0e75f6714bae764e106be9dbec382cb4b21a715d2022b6553
+    - path: projects/modular-service/arm-b/.markitect/packages/software-architecture-1.1.0.zip
+      sha256: a4317640fb27500e071bc0c6e9be7f77a82614a65f86cd60312f658517ee150d
+    - path: projects/modular-service/arm-b/AGENTS.md
+      sha256: a758f914bcb3e2591980cff083a099e7e52c2f1d738dc6f2651c36799dfe56fa
+    - path: projects/modular-service/arm-b/cmd/service/main.go
+      sha256: b8a3d84428d7756b02763952f80f3368e3e07e3009c211e6fbaa9b8e8fcdb239
+    - path: projects/modular-service/arm-b/docs/architecture.md
+      sha256: 8fd271cb0b5c4eff9dd0a41e583a0c4840a35ffc55e09b8a67ca6beba8c6cbaf
+    - path: projects/modular-service/arm-b/docs/markitect/README.md
+      sha256: 48100d4f9cace357ee1a0b216ba7ef3243754422c1b995eead4dde8cea283d22
+    - path: projects/modular-service/arm-b/docs/markitect/_domains/README.md
+      sha256: e51e1d93367b01494190b6e0c5087e17bd2aaac33ec89ce85b57d63867a6ad9d
+    - path: projects/modular-service/arm-b/docs/markitect/_domains/architecture.markitect.org.v1alpha1.domain.md
+      sha256: 2e567a8cf8a700e11c25e7542ea8c874cb59336c5c5273b500a81a0c63a8a8d1
+    - path: projects/modular-service/arm-b/docs/markitect/architecture/README.md
+      sha256: 8c597261c925f08a83ff301b83d376db17fe517be1377690a1fdf414ddc4c851
+    - path: projects/modular-service/arm-b/docs/markitect/architecture/common.common.architecture.markitect.org.v1alpha1.md
+      sha256: ec4f0e0e8593b6e8e663822bdee416b6dd96e7a1898ca2da0ed83cb792264058
+    - path: projects/modular-service/arm-b/docs/markitect/architecture/core.core.architecture.markitect.org.v1alpha1.md
+      sha256: 68445b9bd97fa824423c2a0b03a498135e9d2bb29a9382a0705b9cd7ae572f11
+    - path: projects/modular-service/arm-b/docs/markitect/architecture/feature-invoicing.feature.architecture.markitect.org.v1alpha1.md
+      sha256: 1464191e6ca0f9cf0b6aadc4c44c9646f4d7da9cff2fd5bcdf5a88ff9e7a58bf
+    - path: projects/modular-service/arm-b/docs/markitect/architecture/feature-order-lifecycle.feature.architecture.markitect.org.v1alpha1.md
+      sha256: ebfb70dea2fffab170417f4d0a08aec17d212e16f87a91b11fb02b136769e450
+    - path: projects/modular-service/arm-b/docs/markitect/architecture/feature-stock-management.feature.architecture.markitect.org.v1alpha1.md
+      sha256: ca3343a2055ca9fecf28070897666c66e427c4ad40206ce9689782a57f236139
+    - path: projects/modular-service/arm-b/docs/markitect/architecture/handler-create-order.handler.architecture.markitect.org.v1alpha1.md
+      sha256: edb01c8a1b2f635764d9e8e251c5a67f205d2e7299dc182b94e41d757a544a43
+    - path: projects/modular-service/arm-b/docs/markitect/architecture/handler-get-order.handler.architecture.markitect.org.v1alpha1.md
+      sha256: 830f49d0909091ef1fa3282eebe739ffe2474b12fb349b9d9f88ed6872241072
+    - path: projects/modular-service/arm-b/docs/markitect/architecture/handler-issue-invoice.handler.architecture.markitect.org.v1alpha1.md
+      sha256: af1ab1de65fd5bc7228d113ca850a37e6ecd75340493a8830f7759f172f03770
+    - path: projects/modular-service/arm-b/docs/markitect/architecture/handler-reserve-stock.handler.architecture.markitect.org.v1alpha1.md
+      sha256: 1950327c5d70bdce25e0fab4a9527385c50e1666fd875e91672825ba24f8261e
+    - path: projects/modular-service/arm-b/docs/markitect/architecture/interface-invoice-issue.interface.architecture.markitect.org.v1alpha1.md
+      sha256: cba92a1b2b385d9c7e5b657e94c511ff7b008e62d9c3eab5fc3a4c7b24e9a4bd
+    - path: projects/modular-service/arm-b/docs/markitect/architecture/interface-stock-reservation.interface.architecture.markitect.org.v1alpha1.md
+      sha256: a4ee317820cdad0fc5ea6252e5cc5bc65eb0e18502c1f3f89e27a4e0019e4f83
+    - path: projects/modular-service/arm-b/docs/markitect/architecture/module-billing.module.architecture.markitect.org.v1alpha1.md
+      sha256: 4d95198d546bc9dfb6525854affce5f8603435329061df25731553cf10156f33
+    - path: projects/modular-service/arm-b/docs/markitect/architecture/module-inventory.module.architecture.markitect.org.v1alpha1.md
+      sha256: 9126aeb14a148b12b1e22d5c5247961454080853307439eb2132eb4970fc64fd
+    - path: projects/modular-service/arm-b/docs/markitect/architecture/module-orders.module.architecture.markitect.org.v1alpha1.md
+      sha256: 9e3551e64c7a42ed0df140bc7411cd6f6e5326f13b7b534d34c46c3e940c3bd1
+    - path: projects/modular-service/arm-b/docs/markitect/architecture/product.product.architecture.markitect.org.v1alpha1.md
+      sha256: a4d849ff26ac8ae38bbd6887d0d7702e2a7ad703a7156ec64e37e270397e3356
+    - path: projects/modular-service/arm-b/docs/markitect/architecture/usecase-create-order.usecase.architecture.markitect.org.v1alpha1.md
+      sha256: 5f1d3cfa7765f67d5d306d5ff99cb272986d9d199676a4a2fa3e3057e385b24b
+    - path: projects/modular-service/arm-b/docs/markitect/architecture/usecase-get-order.usecase.architecture.markitect.org.v1alpha1.md
+      sha256: 16d0e28022556078fd8659ec5d817ec9777bdd0aa331848dc45a5938981fe9b4
+    - path: projects/modular-service/arm-b/docs/markitect/architecture/usecase-issue-invoice.usecase.architecture.markitect.org.v1alpha1.md
+      sha256: 03d76c803cc00a3099728482af53440b4e458860b5245f82053c19b698cd7c1e
+    - path: projects/modular-service/arm-b/docs/markitect/architecture/usecase-reserve-stock.usecase.architecture.markitect.org.v1alpha1.md
+      sha256: 065e28992c93f5275861c93acdc3eb4fa5c93e364894bbd47c06095d63065d83
+    - path: projects/modular-service/arm-b/docs/markitect/constitution/README.md
+      sha256: e297fcfeccd04879c770ce592bbb36d340757e5672c6e0aae44361c3928f876a
+    - path: projects/modular-service/arm-b/docs/markitect/constitution/implement-change.skill.md
+      sha256: 145c0f0d3e9ea9fff09a84ba7746652c152281694c25882a5118a2bb7282f1e5
+    - path: projects/modular-service/arm-b/docs/markitect/constitution/module-boundaries.rule.md
+      sha256: a24e9bb6a6a5b7c830014bcdd2149b57b5e839a83f5586c6ac6052fbe3e381e5
+    - path: projects/modular-service/arm-b/docs/markitect/constitution/service-change.workflow.md
+      sha256: d0da368644266d57d092d2fd62921540df21101ff18e0c45066e93b756d4243e
+    - path: projects/modular-service/arm-b/go.mod
+      sha256: d3c14bc94d8f2afa728c6cdd7ef1643d567a7a5f8547ec9a98cf90bac83dc109
+    - path: projects/modular-service/arm-b/internal/architecture/boundary_test.go
+      sha256: 7292ef5c955feed9c59c0e771d578b339f1648ec61f84719f675a0e6cd69d275
+    - path: projects/modular-service/arm-b/internal/contracts/billing/invoice.go
+      sha256: 68334c7253b2a7565f76454ddb904d02a962226b8113dc2559c65362042e3baa
+    - path: projects/modular-service/arm-b/internal/contracts/inventory/reservation.go
+      sha256: 7ed50417136db36e552a8ca23b147a565096f14492517b6ba35b2bb8c6005bd3
+    - path: projects/modular-service/arm-b/internal/core/clock.go
+      sha256: 599ed4cd9f70239daffc8ee6c092b39d667704f1353afb9e54c3b9a705c56245
+    - path: projects/modular-service/arm-b/internal/modules/billing/service.go
+      sha256: 1e23e2f5a2e5e3b7988afeaef41eda8b7b72a4294c3947de6dde0b28e445b869
+    - path: projects/modular-service/arm-b/internal/modules/billing/service_test.go
+      sha256: c478e4b46f65fa2ffbddc4fae6ca6573ab8d896781d33478cbaf060ceaf1bdb3
+    - path: projects/modular-service/arm-b/internal/modules/inventory/service.go
+      sha256: 6b18bc232ff94a57bf1fcfed1cdff304466e4071d8453d44aa7bc89a34586290
+    - path: projects/modular-service/arm-b/internal/modules/inventory/service_test.go
+      sha256: 110bb82d1a1230c14360eff6b7a7740b2e8e08e20ef83a71a3218465557d796a
+    - path: projects/modular-service/arm-b/internal/modules/orders/service.go
+      sha256: ce22fb080b48c8e6199ad0d010cc072a9df22ed83a383147536783dd4cf1d83c
+    - path: projects/modular-service/arm-b/internal/modules/orders/service_test.go
+      sha256: 1c72a83c254e1701d91dfd99b934c19909f2a6fd1db7a9837ee75ab2478fae46
+    - path: projects/modular-service/arm-b/markitect.yaml
+      sha256: b9e2bed81c5d258b0e0707c5789edc2f84bb7bbebf11742b0b342f7603f6217b
+    - path: projects/modular-service/arm-b/resources/common.yaml
+      sha256: 615de8effbe08f60f1c7551c046e5a4b2f6be4c39215f3d7ede460a5a841b256
+    - path: projects/modular-service/arm-b/resources/core.yaml
+      sha256: af21ed91c800825f00dc387ecf40a2471a790f529d96f5759886b03539734e6e
+    - path: projects/modular-service/arm-b/resources/feature-invoicing.yaml
+      sha256: 40020a327b008552abf8854154597955fb1258a7fe43ec95b21afa15ba59bf2c
+    - path: projects/modular-service/arm-b/resources/feature-order-lifecycle.yaml
+      sha256: dc65c51635b857a2d36dc64267630e6d914c59bc885333fc6e176f5e81d63769
+    - path: projects/modular-service/arm-b/resources/feature-stock-management.yaml
+      sha256: 955262648ef463c25ecb82fd425e3b3dc24ffc16b7b7ac2da6bddd7a57d89fff
+    - path: projects/modular-service/arm-b/resources/handler-create-order.yaml
+      sha256: 48918e5739eccf493862021c8e4204524768a121b48a7d7df22c7231f42a40d8
+    - path: projects/modular-service/arm-b/resources/handler-get-order.yaml
+      sha256: 659a0bacfa2bac752d95cc46c95a8abc92dccad21660e86ab47428d84a953b09
+    - path: projects/modular-service/arm-b/resources/handler-issue-invoice.yaml
+      sha256: 994fffa82b4abda160c021e5e0efc3c0eca67f533075bb1ecb08307308b1abdc
+    - path: projects/modular-service/arm-b/resources/handler-reserve-stock.yaml
+      sha256: f4f4a9ab07f96107141f3b9caa415936637ee81a610d3fc59438c578ba4776c9
+    - path: projects/modular-service/arm-b/resources/interface-invoice-issue.yaml
+      sha256: 3b38a87e52725ac51d63fb8e4c125ba7d45ee77372f63f67d8841e2ca5c11f6a
+    - path: projects/modular-service/arm-b/resources/interface-stock-reservation.yaml
+      sha256: 0f743c8cc9adf23f1b2ba871e3dc15d23362ed4122453409101159209712ea3c
+    - path: projects/modular-service/arm-b/resources/module-billing.yaml
+      sha256: e8eda809c1f367beade579b2a5d8fb4f9f99b9dc5f2203045c955f9523dde112
+    - path: projects/modular-service/arm-b/resources/module-inventory.yaml
+      sha256: c228fcb364718abe8c8ea01cec68a870b1389671792725fc8eed6c9e396ffde0
+    - path: projects/modular-service/arm-b/resources/module-orders.yaml
+      sha256: 99609f412b46790d7247f922324c9cd0424fdcd7c31075ca3eb5fa2cd34b4af0
+    - path: projects/modular-service/arm-b/resources/product.yaml
+      sha256: 49e3ca3872672d0c51fecc647c95e7b4c44c7810999c28baf21261ce030b4030
+    - path: projects/modular-service/arm-b/resources/usecase-create-order.yaml
+      sha256: b58723083de670746913fd5893b035e57778ddbb0a6d25df278ea39c4b504539
+    - path: projects/modular-service/arm-b/resources/usecase-get-order.yaml
+      sha256: a9ebe5c1f37d6bb2766c1abca628668a39434fc61ba8393274788feabad03c11
+    - path: projects/modular-service/arm-b/resources/usecase-issue-invoice.yaml
+      sha256: c7beaead0dca913ee915c0b388bdaf9d1d97bb3a58a4a52686a76d200d704b29
+    - path: projects/modular-service/arm-b/resources/usecase-reserve-stock.yaml
+      sha256: 5594bc4c7610b5b951e57540aac0e941b06e8242fe1c3443e177a95031c66f7d
+    - path: projects/modular-service/oracle/evaluate.ps1
+      sha256: 361e1181301e4499de8ae873564cff740813e42b9292c7af5a5494c86884de61
+    - path: projects/modular-service/oracle/evaluator-spec.yaml
+      sha256: b5d66595815a05d14f6caed5202de80368a9f576d0bc83c898ada2b06564acf1
+    - path: projects/modular-service/oracle/render-receipt.yaml
+      sha256: 3c6aaaeca15b8fa9736a0cac63a0de277055e0f2291eeab267bb1f4ec3536bee
+    - path: projects/modular-service/oracle/vectors/task01_test.go.txt
+      sha256: 7401b517236185e3f5d9b129bd127148573cb1c96eb9a7ca46f169cc63f7acb8
+    - path: projects/modular-service/oracle/vectors/task02_test.go.txt
+      sha256: c034b49dcd3b5132485551d621d13d990a1b98d440f1a1641f4272e9527f5510
+    - path: projects/modular-service/oracle/vectors/task05_test.go.txt
+      sha256: a48579b02a2e40b7807b36fcc48c2d579a2884f7daae5497720d893b6af2ea42
+    - path: projects/modular-service/oracle/vectors/task06_test.go.txt
+      sha256: 8c77114f6efc2e7ebac8a1d97911dee8bcb1926680de320e466aa164763e7476
+    - path: projects/modular-service/oracle/vectors/task07_test.go.txt
+      sha256: 0a38d58ce5d13c056a949f5f40770fa5822a9e5adda524d5fa8f5f96be218f2e
+    - path: projects/modular-service/oracle/vectors/task08_test.go.txt
+      sha256: c6ef0eb7bf4f762910abcb7023bb3e4615ca6e80f6b5314241a0550369efee08
+    - path: projects/modular-service/oracle/vectors/task09_test.go.txt
+      sha256: faa0e8ccc355cd0a5990f40b903581a947111695070761574b9a4c4310442bb6
+    - path: projects/modular-service/parallel-task-set.yaml
+      sha256: 0e79f8d118f0dce6f8bb4592c2c5cbecb3f1e2f8b6a367dd8a024b2d02cff717
+    - path: projects/modular-service/parity.md
+      sha256: 21da575c49290dfdcab90aa1459afa0c346e8ef930f18b4c4a50a6155e89234c
+    - path: projects/modular-service/project.yaml
+      sha256: 64fc965622f2571ea02cbaf9af81bc043258fecd7280e17a08816e6e41ac7bcc
+    - path: projects/modular-service/task-set.yaml
+      sha256: 020fbe8d60c66ded59c32b74654a883d17e6e99d054f19b3b60a97608f3bf00e
+    - path: projects/vertical-slices/a/.github/workflows/check.yml
+      sha256: caa1831d7aee7146be0a3992c31cd1f204b5329a7bd04bf1f6dcdcdccfddb0a0
+    - path: projects/vertical-slices/a/.gitignore
+      sha256: 5f980c385e5fbe00b61ab98091ed7d20e4eab56ce11c640e948665627955810d
+    - path: projects/vertical-slices/a/AGENTS.md
+      sha256: f9c2da6a6f63c72cc59dde23b0bd142e1f9f234c1c57109a84244675fdf98e5a
+    - path: projects/vertical-slices/a/Directory.Build.props
+      sha256: aa45f8d59de0fc97d2f9d2aa6ea8c42ef78889c74a0434ed8aa03c0352ed1d12
+    - path: projects/vertical-slices/a/NuGet.Config
+      sha256: 964302159308872b9729e1828a1ba897f30634f7bd751cde11ea8e6fed8cfb97
+    - path: projects/vertical-slices/a/checks/Commerce.Checks.csproj
+      sha256: 63b11cf5d566d21f41edbba722bf65822a1e71c4e17c8fdece15ac3becc41656
+    - path: projects/vertical-slices/a/checks/Program.cs
+      sha256: 8e83f502146cf33947e1c646b9224b6cb1d91d8f6a9b3421efeedb84551504a0
+    - path: projects/vertical-slices/a/docs/architecture.md
+      sha256: 3507c8369e19823734b1d49e63e8edfce9c8821f1ac1f0cc7f87c22c6cbe5332
+    - path: projects/vertical-slices/a/global.json
+      sha256: 595c870cba208a92746d3530af1383e9617fffb72406c722f21f4099c5c7ff7a
+    - path: projects/vertical-slices/a/src/Commerce/Billing/Application/InMemoryPaymentAuthorizer.cs
+      sha256: 20f3ef8b37a08428fed2324d71fb428895009697317ad7ca900f174f3f32f42a
+    - path: projects/vertical-slices/a/src/Commerce/Billing/Contracts/IPaymentAuthorizer.cs
+      sha256: f43781159ba6a515bb284c9faa59e5a12af47628b4135c326ede307dd733ebe0
+    - path: projects/vertical-slices/a/src/Commerce/Commerce.csproj
+      sha256: 8b2badca0fb8db97c71c5a2201e84f2dfbd5acc8f7875e289c38ee72574c0f5f
+    - path: projects/vertical-slices/a/src/Commerce/Core/Time/IClock.cs
+      sha256: 13342fc8c29a569417ab8b15355d2249ac71ae3f3b95fe3f068be58371ddfb45
+    - path: projects/vertical-slices/a/src/Commerce/Inventory/Application/InMemoryStockAvailability.cs
+      sha256: 9f26e5521d26fdb7c84961d6c48b8c2be3edf316267a5e19d2307777fbf77c7b
+    - path: projects/vertical-slices/a/src/Commerce/Inventory/Contracts/IStockAvailability.cs
+      sha256: f6969c962f3df782a60e32695c57494036b39920372fabed0124802d0da6f2ed
+    - path: projects/vertical-slices/a/src/Commerce/Orders/Application/PlaceOrder/PlaceOrderCommand.cs
+      sha256: 6cc787e89673ffc4f3e85ff7c9b403582bb993956d06ced077287ee1abed6a4a
+    - path: projects/vertical-slices/a/src/Commerce/Orders/Application/PlaceOrder/PlaceOrderHandler.cs
+      sha256: b386c8adcf5a9f018847be97d70bedfd0bc9d5a5cef76085befe22b8943878da
+    - path: projects/vertical-slices/a/src/Commerce/Orders/Domain/Order.cs
+      sha256: 47618f5a44c839b4d283a8a58127ec9799d6418a7e093440886d1b5633fec1ff
+    - path: projects/vertical-slices/a/src/Commerce/Orders/Domain/OrderLine.cs
+      sha256: e41452772d488be80cca69b75899332988915eb783c8f604e8e23ce1d89c067f
+    - path: projects/vertical-slices/a/src/Commerce/Orders/Domain/OrderStatus.cs
+      sha256: 655c9a1b0f43a7c9cef7651e33fd776b9e56afa29e2cf860497fb18a5718f757
+    - path: projects/vertical-slices/b/.agents/skills/implement-commerce/SKILL.md
+      sha256: e1c3b2218ba6d1c58f766af48e685af682fc6f798fde617fb1728f4cde3de607
+    - path: projects/vertical-slices/b/.github/workflows/check.yml
+      sha256: b806753aa1143b513d757a0427cca7c9bfa41fbe98e9c17bb0de62a90f8fa234
+    - path: projects/vertical-slices/b/.gitignore
+      sha256: 5f980c385e5fbe00b61ab98091ed7d20e4eab56ce11c640e948665627955810d
+    - path: projects/vertical-slices/b/.markitect/areas/architecture/vertical-slice.workflow.yaml
+      sha256: f52ee3b079b968244e28ec07615777457ef871ad6f0f8844649be0d467e20474
+    - path: projects/vertical-slices/b/.markitect/packages/software-architecture-1.0.0.zip
+      sha256: 22cb698924990fffe85d74489b971f239a2ff25863a1f69d65743b94facb3457
+    - path: projects/vertical-slices/b/.markitect/packages/software-architecture-2.0.0.zip
+      sha256: 7962eed82a21a1efb12e40492596ce921e307d938376056e0c7e80cfc081f7df
+    - path: projects/vertical-slices/b/AGENTS.md
+      sha256: 2b02ad91badd4806f1e987be7e5843ed6d3a4c77d710b246882e41e6ed8f2452
+    - path: projects/vertical-slices/b/Directory.Build.props
+      sha256: aa45f8d59de0fc97d2f9d2aa6ea8c42ef78889c74a0434ed8aa03c0352ed1d12
+    - path: projects/vertical-slices/b/NuGet.Config
+      sha256: 964302159308872b9729e1828a1ba897f30634f7bd751cde11ea8e6fed8cfb97
+    - path: projects/vertical-slices/b/checks/Commerce.Checks.csproj
+      sha256: 63b11cf5d566d21f41edbba722bf65822a1e71c4e17c8fdece15ac3becc41656
+    - path: projects/vertical-slices/b/checks/Program.cs
+      sha256: 8e83f502146cf33947e1c646b9224b6cb1d91d8f6a9b3421efeedb84551504a0
+    - path: projects/vertical-slices/b/docs/architecture.md
+      sha256: 9ec3c8d86cc83c80be2b5fec13b48f484b8734237eb46774f7b04540344d8905
+    - path: projects/vertical-slices/b/docs/markitect/README.md
+      sha256: 51c818c85731672b9164033095b2550444589832e1aa2c30f52d57b156902908
+    - path: projects/vertical-slices/b/docs/markitect/_domains/README.md
+      sha256: e51e1d93367b01494190b6e0c5087e17bd2aaac33ec89ce85b57d63867a6ad9d
+    - path: projects/vertical-slices/b/docs/markitect/_domains/architecture.markitect.org.v1alpha1.domain.md
+      sha256: 8c42c6a8c74c31babd0f8e2e1b8f90fabe13b0161eee98b45f5de4693f3dc44e
+    - path: projects/vertical-slices/b/docs/markitect/engineering/README.md
+      sha256: 3def2e1934db263fe80640b624a001a99e5b54d1d03ef6f21ccd416d0387c688
+    - path: projects/vertical-slices/b/docs/markitect/engineering/aggregate-order.aggregate.architecture.markitect.org.v1alpha1.md
+      sha256: 8adc1d335f7ec8abe5771231a8f0b8c4bcc33817b25b274bd51e1c6359774bfc
+    - path: projects/vertical-slices/b/docs/markitect/engineering/authorizer-order-write.authorizer.architecture.markitect.org.v1alpha1.md
+      sha256: c1bba36be0af5f5c83c72b619b12e6c3b2bcd28629214df47b5bb3891d2a9be6
+    - path: projects/vertical-slices/b/docs/markitect/engineering/common.common.architecture.markitect.org.v1alpha1.md
+      sha256: 9c84f6bad05609ade9b4e10a2efbbe8f2f1eb1a876a5989e9bc4a93dedf5b0f8
+    - path: projects/vertical-slices/b/docs/markitect/engineering/core.core.architecture.markitect.org.v1alpha1.md
+      sha256: afc2661984a415a947b0d757c614db9dbeeff5aa2ab2f2efa407278b5461141e
+    - path: projects/vertical-slices/b/docs/markitect/engineering/feature-order-lifecycle.feature.architecture.markitect.org.v1alpha1.md
+      sha256: ecfb633cd5171d0820dc442d7e28aa6738ddef24c2c9c6e4db83307180d89743
+    - path: projects/vertical-slices/b/docs/markitect/engineering/handler-create-order.handler.architecture.markitect.org.v1alpha1.md
+      sha256: 70dbc849356d6100ed122148d97bc768bac851f232ea14c36ba108e6b8053e39
+    - path: projects/vertical-slices/b/docs/markitect/engineering/interface-billing-terms.interface.architecture.markitect.org.v1alpha1.md
+      sha256: f489263f5302f7b2f2ce09a0ce74ad8aa98961c23b49c340da4b47cce501fdef
+    - path: projects/vertical-slices/b/docs/markitect/engineering/interface-order-accepted.interface.architecture.markitect.org.v1alpha1.md
+      sha256: ba1bdfeffbdcc67196cac1b79623515b95b7444b6decec94bfe466c4fe5f87e5
+    - path: projects/vertical-slices/b/docs/markitect/engineering/module-billing.module.architecture.markitect.org.v1alpha1.md
+      sha256: f09215938cbcb5d7b5d60bc52c20421d27985eaea76675f1150ce0241f5311b3
+    - path: projects/vertical-slices/b/docs/markitect/engineering/module-inventory.module.architecture.markitect.org.v1alpha1.md
+      sha256: 48a16843aeb77d401f131d62d37a5d697eb4fd2a840b0ac66313e76ff666630e
+    - path: projects/vertical-slices/b/docs/markitect/engineering/module-orders.module.architecture.markitect.org.v1alpha1.md
+      sha256: 35892b1923c464b64b14aa65816c1cffe9ee3b434c9bbc46ab4e19cc9b482782
+    - path: projects/vertical-slices/b/docs/markitect/engineering/product.product.architecture.markitect.org.v1alpha1.md
+      sha256: 4ffb6f44c90df19e898827267374c45bbb1211adc06bbff1eee5ee5410d83260
+    - path: projects/vertical-slices/b/docs/markitect/engineering/skill-implement-commerce.skill.md
+      sha256: 1d62fa05daa41835863b37a608023c06a5951ed066f9eb1af75facf4f993bd1e
+    - path: projects/vertical-slices/b/docs/markitect/engineering/usecase-create-order.usecase.architecture.markitect.org.v1alpha1.md
+      sha256: d6d728619335c4f8895494c2b9f766b2c320826416f4fb16115418db4df8b8dc
+    - path: projects/vertical-slices/b/global.json
+      sha256: 595c870cba208a92746d3530af1383e9617fffb72406c722f21f4099c5c7ff7a
+    - path: projects/vertical-slices/b/markitect-artifacts.yaml
+      sha256: 756ad1f5c57e5e077e9493184c4dea2993df9a8f418e3fed0b75b026291b9e7a
+    - path: projects/vertical-slices/b/markitect.yaml
+      sha256: df243e4f94ff237ef73021966e37a7b831976d12c89211e7bdef2807f3ca6d0c
+    - path: projects/vertical-slices/b/resources/aggregate-order.yaml
+      sha256: 24441de80c1deb6e55d53779a0fe102ab444612fde229bb610aceecd3c902af7
+    - path: projects/vertical-slices/b/resources/authorizer-order-write.yaml
+      sha256: 567331b03bdfdf8fe43260e700306f142b2d2d94683c91c9718a33b7bd30a5f4
+    - path: projects/vertical-slices/b/resources/common.yaml
+      sha256: f76d1a48973558cb4c5e564ea0e4a6ff5654adf8c3f06abf05c7ffc2280ac00a
+    - path: projects/vertical-slices/b/resources/core.yaml
+      sha256: 7c29555971c00ed9c478cfedebbc542fce758d433f834a2b3653b096de174ba0
+    - path: projects/vertical-slices/b/resources/feature-order-lifecycle.yaml
+      sha256: 46107710c3d8365d6d7a9bd4c9f38925b8aa6fbf5343305a2802be9afc316e4e
+    - path: projects/vertical-slices/b/resources/handler-create-order.yaml
+      sha256: a08d9fd5a68f885553327a4358c7ee179ee76d757930202e1ca2b8bb8d3f6f34
+    - path: projects/vertical-slices/b/resources/interface-billing-terms.yaml
+      sha256: d57ec6ba473a5a49ceb784279a7c2ca4377fac19ce4ccde2f12bd7d784e3892a
+    - path: projects/vertical-slices/b/resources/interface-order-accepted.yaml
+      sha256: f89cee4be5bcd2f4da3cc73dcf1fedb15d3b5e00cfc7810915da3ef8d4e1109a
+    - path: projects/vertical-slices/b/resources/module-billing.yaml
+      sha256: df4f0edeee5bfeaa130801a51c5063c751fe7bfb790ed07605b008460511b84d
+    - path: projects/vertical-slices/b/resources/module-inventory.yaml
+      sha256: 4b0e80681e7ab42d2cb050ad49a3ec002c40febdd67f928ff81adbccf2665b7b
+    - path: projects/vertical-slices/b/resources/module-orders.yaml
+      sha256: c43fb3e20ca4641a63c3a2d6eaa3f7e5300dbba28a25d021fe05365621cc8577
+    - path: projects/vertical-slices/b/resources/product.yaml
+      sha256: d220134c9bfdd3522d51ae7981dadf02f76178fb12cf4ef78aa1ff0d4401c6e6
+    - path: projects/vertical-slices/b/resources/skill-implement-commerce.yaml
+      sha256: 7c3c50a488cd212935f41e8f4bd64ebcdf810574b23bbb856b43fe110c669d9f
+    - path: projects/vertical-slices/b/resources/usecase-create-order.yaml
+      sha256: 68d5aad240f5191d08558d89f279237bb6d36bc2b5096f6870b3f38555b7a485
+    - path: projects/vertical-slices/b/src/Commerce/Billing/Application/InMemoryPaymentAuthorizer.cs
+      sha256: 20f3ef8b37a08428fed2324d71fb428895009697317ad7ca900f174f3f32f42a
+    - path: projects/vertical-slices/b/src/Commerce/Billing/Contracts/IPaymentAuthorizer.cs
+      sha256: f43781159ba6a515bb284c9faa59e5a12af47628b4135c326ede307dd733ebe0
+    - path: projects/vertical-slices/b/src/Commerce/Commerce.csproj
+      sha256: 8b2badca0fb8db97c71c5a2201e84f2dfbd5acc8f7875e289c38ee72574c0f5f
+    - path: projects/vertical-slices/b/src/Commerce/Core/Time/IClock.cs
+      sha256: 13342fc8c29a569417ab8b15355d2249ac71ae3f3b95fe3f068be58371ddfb45
+    - path: projects/vertical-slices/b/src/Commerce/Inventory/Application/InMemoryStockAvailability.cs
+      sha256: 9f26e5521d26fdb7c84961d6c48b8c2be3edf316267a5e19d2307777fbf77c7b
+    - path: projects/vertical-slices/b/src/Commerce/Inventory/Contracts/IStockAvailability.cs
+      sha256: f6969c962f3df782a60e32695c57494036b39920372fabed0124802d0da6f2ed
+    - path: projects/vertical-slices/b/src/Commerce/Orders/Application/PlaceOrder/PlaceOrderCommand.cs
+      sha256: 6cc787e89673ffc4f3e85ff7c9b403582bb993956d06ced077287ee1abed6a4a
+    - path: projects/vertical-slices/b/src/Commerce/Orders/Application/PlaceOrder/PlaceOrderHandler.cs
+      sha256: b386c8adcf5a9f018847be97d70bedfd0bc9d5a5cef76085befe22b8943878da
+    - path: projects/vertical-slices/b/src/Commerce/Orders/Domain/Order.cs
+      sha256: 47618f5a44c839b4d283a8a58127ec9799d6418a7e093440886d1b5633fec1ff
+    - path: projects/vertical-slices/b/src/Commerce/Orders/Domain/OrderLine.cs
+      sha256: e41452772d488be80cca69b75899332988915eb783c8f604e8e23ce1d89c067f
+    - path: projects/vertical-slices/b/src/Commerce/Orders/Domain/OrderStatus.cs
+      sha256: 655c9a1b0f43a7c9cef7651e33fd776b9e56afa29e2cf860497fb18a5718f757
+    - path: projects/vertical-slices/evaluator-rubric.yaml
+      sha256: 63709cca19a92c78cd6bfca3a8b46e75e9a4fb74d3b0f2a336a4555749be82e9
+    - path: projects/vertical-slices/evidence/a-check.txt
+      sha256: c4762279178ed50e53bf8e5d050ef58bdf616895cda4dd850244a442888f9d28
+    - path: projects/vertical-slices/evidence/a-isolated-validator.txt
+      sha256: ac7e1fd77b33fbff62f5a0d5372484aee69014edd3a70c7fb8bcc5d9346eaf95
+    - path: projects/vertical-slices/evidence/a-sdk.txt
+      sha256: 9e4927da1ed53b495a2e624aa6118e28beb377f54494ff8b31c1aef6b72b9e4c
+    - path: projects/vertical-slices/evidence/b-artifact-coverage.yaml
+      sha256: 08da62290002cda232359b65b746649391239c8a272dd604a591ff084fc6137e
+    - path: projects/vertical-slices/evidence/b-check.txt
+      sha256: c4762279178ed50e53bf8e5d050ef58bdf616895cda4dd850244a442888f9d28
+    - path: projects/vertical-slices/evidence/b-final-artifact-coverage.yaml
+      sha256: 76200cb401f200126a70951b0f7f6b2b03549300981a8ef35b3f6548c5b03f13
+    - path: projects/vertical-slices/evidence/b-final-check.yaml
+      sha256: 67c3dc3cca0398750ac595d36bf6905af34989bcb53fee51a8cc9efe44827f1b
+    - path: projects/vertical-slices/evidence/b-final-context.yaml
+      sha256: 9dc8375a40dcc54d200ed28e8ae6b0c11306631d25d4e2722e8d7ec393f50aa2
+    - path: projects/vertical-slices/evidence/b-final-render.yaml
+      sha256: 67c3dc3cca0398750ac595d36bf6905af34989bcb53fee51a8cc9efe44827f1b
+    - path: projects/vertical-slices/evidence/b-final-verify.yaml
+      sha256: 8294a8240d45b712bc1513ec585b52932ea871c15494348a78fe4b5ef9752c10
+    - path: projects/vertical-slices/evidence/b-impact-drift.yaml
+      sha256: 0a53dfdc089ab19f857a78240970ca923d50e313d86eb52bc0c6663307fd936c
+    - path: projects/vertical-slices/evidence/b-isolated-artifact-coverage.yaml
+      sha256: cffefeb6847206b7088f38f26e65afef7d9ab0cf568cf083ab6f38b1cb28c4b8
+    - path: projects/vertical-slices/evidence/b-isolated-check.yaml
+      sha256: 25f58a417702e445015204c37f1cd19cd30ec10d87557b36151ec20a37ef6d40
+    - path: projects/vertical-slices/evidence/b-isolated-render.yaml
+      sha256: 25f58a417702e445015204c37f1cd19cd30ec10d87557b36151ec20a37ef6d40
+    - path: projects/vertical-slices/evidence/b-isolated-validator.txt
+      sha256: ac7e1fd77b33fbff62f5a0d5372484aee69014edd3a70c7fb8bcc5d9346eaf95
+    - path: projects/vertical-slices/evidence/b-isolated-verify.yaml
+      sha256: 646a6f31fe16e072eafea05a548549b1146d0cdaabc5e1abc90a34503c46017b
+    - path: projects/vertical-slices/evidence/b-precommit-check.yaml
+      sha256: 5dc591b6535ef2055e55b1fca9741c810e6acc58cf59571e43ec5a84f7ef6297
+    - path: projects/vertical-slices/evidence/b-precommit-render.yaml
+      sha256: 931a609ae2e50870b364494dfa1ba8bfa461537804402aa7f1f8b52586ebfa5f
+    - path: projects/vertical-slices/evidence/b-precommit-verify.yaml
+      sha256: e799dd293b0c08fdb4012073106141ad7951bd309fd633c19bff76b7649cdf66
+    - path: projects/vertical-slices/evidence/b-render.yaml
+      sha256: 3136956c85c87ec943121d5a7898ccf211f53a3fed9847a2e7ba822a36e06f7f
+    - path: projects/vertical-slices/evidence/b-sdk.txt
+      sha256: 9e4927da1ed53b495a2e624aa6118e28beb377f54494ff8b31c1aef6b72b9e4c
+    - path: projects/vertical-slices/evidence/b-seed-check.yaml
+      sha256: 27d4ed9c16fc718923ea65d8227c186673261cb719ee64a90f1f6d434b0629bb
+    - path: projects/vertical-slices/evidence/b-seed-context.yaml
+      sha256: 1b3d0e5381a67ea490beb6670ec22c4f62577b425c996af385c5274299094af7
+    - path: projects/vertical-slices/evidence/b-seed-render-check.yaml
+      sha256: 27d4ed9c16fc718923ea65d8227c186673261cb719ee64a90f1f6d434b0629bb
+    - path: projects/vertical-slices/evidence/b-seed-verify.yaml
+      sha256: 2e091f146295f6cd5f0112c7e5a8125a911c5c614a9601b6e7f1f1573806473c
+    - path: projects/vertical-slices/evidence/b-v2-policy-available.yaml
+      sha256: 70f5218e323d1de4fa0acec6e22c06df3032ec229128c7d5e5f32d4028446448
+    - path: projects/vertical-slices/evidence/candidate-evidence.yaml
+      sha256: 9bd36c0818349070fa4c1769fc607ede47717e6c0bc8da81c6fd08c1d1a6ce26
+    - path: projects/vertical-slices/evidence/code-parity.yaml
+      sha256: 4c3395be8731327f7555f1552305f7432a4df24a8cc9c737a61ee6a434b7fe22
+    - path: projects/vertical-slices/evidence/isolated-validation.yaml
+      sha256: 90aca1bd5c29a3ac49f93e2b96f137403cf43f44b1eb0cd34aa7f32614a85c5f
+    - path: projects/vertical-slices/oracle/behavior-assessor.md
+      sha256: 7dd3883554ffb3e0b92a18cc8463d5c01ae7de77fa114059304a1e667b410f41
+    - path: projects/vertical-slices/oracle/evaluate.ps1
+      sha256: 263987c0c5392709f384b013ffff8534acfcd5d30529acc90b656a2f20b7734b
+    - path: projects/vertical-slices/oracle/evaluator-spec.yaml
+      sha256: 0b2ac025793a6aa1a1d00d3fb4908d06a70b7c3970d06ca9c47bc5289d682c7f
+    - path: projects/vertical-slices/oracle/vectors/task01.cs.txt
+      sha256: 1d82125d70848cdc39ca28678d0c3ac86aed42a447d14ebdc7c022873a365b8f
+    - path: projects/vertical-slices/parity.md
+      sha256: 297f08823fbfd599766cf40dc86aa610b21a65fc0ad6ad5ba27ad5c9f8037dde
+    - path: projects/vertical-slices/project.yaml
+      sha256: f2ca6875536ea043fb3a50c7747c8780740741bb87cc50e255450700c02acdfb
+    - path: projects/vertical-slices/task-set.yaml
+      sha256: b59afc46e310a61ae07006fa0235114f8392e62257f0e447698a4449f264887c
+    - path: protocol.yaml
+      sha256: 008139defb3b84d4610ce366901ca48f0218bda8ef2a5d35f2d0e49a258ab0f0
+    - path: runtime-validation.yaml
+      sha256: 52407a08c4f607d0eaec8313f373850e44c2024fa548dd5007ecbc64aaba608c
+    - path: source-identities.yaml
+      sha256: 829dfe90532387371b29b4cc0191cb67e9da93c0c31051bb7725857ca7ec059e
+digest: a615190fb253cc8ff0ebcb3c02573aa9328e712d67c9f24e985610d9441b8dd6

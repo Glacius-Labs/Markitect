@@ -1,0 +1,15 @@
+{
+  "schema": "autonomous-ab-capacity-control/v1",
+  "recorded_utc": "2026-10-05T11:30:24.023923+00:00",
+  "freeze_digest": "a615190fb253cc8ff0ebcb3c02573aa9328e712d67c9f24e985610d9441b8dd6",
+  "scope": "this Ops-only fresh cohort; Service capacity remains unchanged",
+  "maximum_scored_leaves_per_operator": 1,
+  "maximum_scored_leaves_globally": 3,
+  "development_scope": "tasks01-08 only; three fresh pairs; A/B/A first-arm order",
+  "symmetry": "same control in A and B; total 1800-second deadline starts at first preparation intent, including refused calls, queue/waits/repairs; no reset",
+  "parallel": "isolated trial1 P01/P02 from task06; serialized under capacity control, then mechanical integration; no simultaneous-agent claim",
+  "holdout": "tasks09-12 remain closed until explicit global product fix/no-fix decision",
+  "no_semantic_feedback": true,
+  "product_candidate": "adef79d935399f8ac63ad874dbdeab8d15c418a1",
+  "human_acceptance": false
+}

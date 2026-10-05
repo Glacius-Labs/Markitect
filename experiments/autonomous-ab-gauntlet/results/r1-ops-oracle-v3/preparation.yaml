@@ -1,0 +1,25 @@
+actor_dispatches: 0
+ci_sha256: 70ed58d937bebbeb49bf1f5a46d11f0a709a0a86248188aefee5c24e0d876f0c
+created_utc: "2026-10-05T10:55:50.1914289Z"
+human_acceptance: false
+partial_failure: retain exact created paths; no overwrite or deletion
+predecessor_freeze: d60e4975ab34b6519c2db414a58c170898750cacc59e077a199e2504f6bb6ebd
+predecessor_freeze_sha256: 2b384cd160e99263b9540272fad2386bbcedf0be97e1d99f662264648dcab1e3
+predecessor_inputs: 310
+product_candidate: adef79d935399f8ac63ad874dbdeab8d15c418a1
+product_or_seed_or_card_change: false
+qa_sources:
+    benchmark-ops-oracle-v3-correction.md: oracle-corrections-ops-v3.md
+replaced_inputs:
+    - new_sha256: 1d24b4b5a6013298b62feacc968aa1fa3c4474ec9269c310a945497fdfd3e882
+      path: benchmark-ops-oracle-v2_test.go
+      predecessor_sha256: f595ab9bc05fd566b566e468be0e009332efc3495245072251e82c234b20fc6b
+    - new_sha256: fa1fd3b2e0a1377100974a01f83c569401285329edff0db88f6aedfcf7a7eb46
+      path: projects/engineering-ops/oracle/evaluate.ps1
+      predecessor_sha256: 7ef506c6936e2fb9a20ac53cb8ef10ba3cf590917682d687d90d8d179e36b7ae
+    - new_sha256: 008139defb3b84d4610ce366901ca48f0218bda8ef2a5d35f2d0e49a258ab0f0
+      path: protocol.yaml
+      predecessor_sha256: 67fca5aa5792df1b3bb7ac364eed77dc554a8df1ef404a8a978cb622dbd9b32c
+schema: autonomous-ab-ops-oracle-v3-preparation/v1
+source_commit: 22e6e2b8ad342c3cba53d6798c71f895782eea73
+unchanged_predecessor_inputs: 307

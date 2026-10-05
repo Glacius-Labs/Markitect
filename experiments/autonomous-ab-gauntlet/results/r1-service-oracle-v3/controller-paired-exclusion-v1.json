@@ -1,0 +1,31 @@
+{
+  "schema": "service-v3-controller-paired-exclusion/v1",
+  "created_utc": "2026-10-05T10:45:04.599184+00:00",
+  "freeze_digest": "1daa5bb43552c0437bcfd085d8afa4916094f90f03e3370f1ab2ecabdc339ee9",
+  "incident_sha256": "4d152c3b10eca9ce2c28a4139655abda34af44f8b14858be7241d431bedb5733",
+  "incident_reference": "controller-repair-status-incident-v1.invalid-yaml.txt",
+  "comparison_excluded_existing_run_ids": [
+    "modular-service-a-t01",
+    "modular-service-b-t01",
+    "modular-service-a-t01-parallel-P01",
+    "modular-service-a-t01-parallel-P02",
+    "modular-service-a-t01-integration"
+  ],
+  "reason": "Service trial1 paired comparison excluded: operator finalized B01 as failed instead of repair-needed, irreversibly withholding the predeclared repair budget. Raw states remain descriptive; this is a controller/protocol deviation, not a semantic product verdict.",
+  "future_trial1_fork_ids": "Add only after they exist; never fabricate unstarted run IDs",
+  "continuation": "B task02\u201308 uses unchanged accumulated state and normal per-task protocol; trial1 results remain descriptive. Fresh trials2/3 are unaffected.",
+  "native_state_rewritten": false,
+  "repair_actor_dispatched_after_finalization": false,
+  "product_candidate_changed": false,
+  "holdout": "closed",
+  "review_identity_claim": "/root",
+  "human_acceptance": false,
+  "limits": [
+    "Metadata byte/reference verification is not platform authentication",
+    "The original finish invocation is operator supplied; the native/response/helper/envelope/public-output bytes are independently hash checked",
+    "Lost repair opportunity invalidates pairwise trial1 comparison regardless of eventual hidden outcome"
+  ],
+  "parsed_incident_reference": "controller-repair-status-incident-v2.json",
+  "parsed_incident_sha256": "b121ebd4af69ae4a5527b702f041f92060e2c76b80cf99a4463523c0279eeac0",
+  "metadata_format_erratum": "Root strict YAML parser rejected unescaped double-quoted Windows paths in the original before any public write. Original bytes retained as text; separate structured JSON v2 is the parsed metadata owner. No actor or native result changed."
+}

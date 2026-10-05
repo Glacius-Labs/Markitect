@@ -1,0 +1,68 @@
+{
+  "schema": "ops-v3-root-freeze-verification/v1",
+  "recorded_utc": "2026-10-05T11:30:24.023923+00:00",
+  "source_commit": "22e6e2b8ad342c3cba53d6798c71f895782eea73",
+  "freeze_digest": "a615190fb253cc8ff0ebcb3c02573aa9328e712d67c9f24e985610d9441b8dd6",
+  "freeze_manifest_sha256": "53e62ae4781bdcd00c9340f187e169ece6e4184f0132c269fd6a2b76012f8aca",
+  "verified_inputs": 313,
+  "mismatches": 0,
+  "unchanged_predecessor_inputs": 307,
+  "replaced": [
+    "benchmark-ops-oracle-v2_test.go",
+    "projects/engineering-ops/oracle/evaluate.ps1",
+    "protocol.yaml"
+  ],
+  "added": [
+    "benchmark-ops-oracle-v3-ci.json",
+    "benchmark-ops-oracle-v3-correction.md",
+    "benchmark-ops-oracle-v3-preparation.yaml"
+  ],
+  "removed": [],
+  "committed_source_and_workspace_mapping_verified": {
+    "benchmark-ops-oracle-v2_test.go": "harness/ops_oracle_v2_test.go",
+    "projects/engineering-ops/oracle/evaluate.ps1": "projects/engineering-ops/oracle/evaluate.ps1",
+    "protocol.yaml": "protocol-ops-oracle-v3.yaml",
+    "benchmark-ops-oracle-v3-correction.md": "oracle-corrections-ops-v3.md"
+  },
+  "non_cohort_protocol_equal": true,
+  "protocol_comparison_excluded_keys": [
+    "benchmark_revision",
+    "id",
+    "projects",
+    "state"
+  ],
+  "source_ci": {
+    "run_id": 37298286679,
+    "sha256": "70ed58d937bebbeb49bf1f5a46d11f0a709a0a86248188aefee5c24e0d876f0c",
+    "head": "22e6e2b8ad342c3cba53d6798c71f895782eea73",
+    "quality_jobs": [
+      {
+        "name": "Quality (ubuntu-24.04)",
+        "databaseId": 111724668157,
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Quality (windows-latest)",
+        "databaseId": 111724668353,
+        "status": "completed",
+        "conclusion": "success"
+      }
+    ]
+  },
+  "independent_review_sha256": "017d56dd73e50a13d25f186574c4b557d2a5ed0bcaa2fae200143f62491322fc",
+  "review_supersession_erratum_sha256": "3a1a9ff9eab3fc790d830e6524646f1050343ac936cbc9b7968a6bb6510e1a24",
+  "superseded_current_draft_sha256": "eaef9e1f165e8e6791f34f630fbcebc31fdf1310e0a849c73827836eb44f05a3",
+  "draft_history_limit": "Initial/intermediate review bytes were overwritten before parent use and are not retained. Final separate review plus erratum are canonical; frozen inputs and actor records were not changed.",
+  "recorded_preparations_before_gate": 0,
+  "actor_dispatches_before_gate": 0,
+  "dispatch": "Root byte/protocol/gate verification clear; separate operator dispatch authorization follows after publication of this metadata.",
+  "product_paths_unchanged_from_candidate": true,
+  "holdout": "closed",
+  "human_acceptance": false,
+  "limits": [
+    "Byte/reference consistency, not CI-provider authentication or human acceptance",
+    "No actor code/response/hidden outcome or detailed holdout inspected",
+    "CI is PR-head-bound with normal provider merge checkout semantics, not an exact-source cryptographic attestation"
+  ]
+}

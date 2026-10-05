@@ -1,0 +1,81 @@
+record_type: controller-incident
+recorded_at_utc: "2026-10-05T10:36:44.0118147Z"
+cohort:
+  freeze_digest: 1daa5bb43552c0437bcfd085d8afa4916094f90f03e3370f1ab2ecabdc339ee9
+  project: modular-service
+  trial: 1
+  arm: B
+  run_id: modular-service-b-t01
+  task_id: "01"
+  attempt: 0
+  input_digest: 73f89f6afe0ffc52827a391629bad5d1a69af3d96eee3c9e30deb795f916c0e6
+  deadline_utc: "2026-10-05T10:50:45Z"
+operator_identity_claim: /root/gauntlet_service_operator
+reviewer_identity_claim: /root
+prepared_envelope:
+  path: runs/modular-service-b-t01/01.attempt-0.envelope.yaml
+  sha256: 18646234eb636d66bbbd431d552ed0438cd3c22bd760da8dfbf5881d799ac6aa
+native_record:
+  path: runs/modular-service-b-t01/01.native.yaml
+  sha256: b4cf39abb6d5a32920b086f39d0313af79db20a7101dc60bf15895b933139c25
+  actor_started_utc: "2026-10-05T10:20:45Z"
+  actor_completed_utc: "2026-10-05T10:27:06Z"
+  status: failed
+actor_response:
+  path: raw/operator-responses/modular-service-b-t01-task01-attempt0.txt
+  sha256: 645d78ae054dbac4687866a8da326ad22e072b85f98e29c809d00d40ee93a4c8
+helper_receipt:
+  path: raw/modular-service-b-t01/01/helper-attempt-0.jsonl
+  sha256: 0a8a6a02d1bdfad74748bb87f51fb0ed195a60c999e1eb0948affb2ebd12a0d7
+  exit_code: 1
+public_output:
+  path: raw/modular-service-b-t01/01/attempt-0.public-validator.txt
+  sha256: 77a351f3b05ee42a321dc5e819e96ad18bd21b5e8752b9029dab5224aa8b0b0c
+finish_task_initial:
+  command: "finish-task --arena <arena> --run-id modular-service-b-t01 --task-id 01 --attempt 0 --input-digest 73f89f6afe0ffc52827a391629bad5d1a69af3d96eee3c9e30deb795f916c0e6 --status failed --response-file <response-path> --receipts-file <helper-jsonl-path>"
+  result: accepted_with_no_stdout
+rejected_commands:
+  - kind: prepare-repair-iteration-1
+    exact_arguments:
+      - prepare-task
+      - --arena
+      - "C:\Users\Consiliari\.codex\visualizations\2026\10\02\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\autonomous-ab-gauntlet\r1-service-oracle-v3"
+      - --protocol
+      - "C:\Users\Consiliari\.codex\visualizations\2026\10\02\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\autonomous-ab-gauntlet\r1-service-oracle-v3\protocol.yaml"
+      - --project
+      - modular-service
+      - --arm
+      - B
+      - --trial
+      - "1"
+      - --task-id
+      - "01"
+      - --repair-iteration
+      - "1"
+      - --feedback-file
+      - "C:\Users\Consiliari\.codex\visualizations\2026\10\02\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\autonomous-ab-gauntlet\r1-service-oracle-v3\raw\modular-service-b-t01\01\attempt-0.public-validator.txt"
+    exact_output: "gauntlet: task already completed; run IDs are write-once"
+  - kind: finish-correction-to-repair-needed
+    exact_arguments:
+      - finish-task
+      - --arena
+      - "C:\Users\Consiliari\.codex\visualizations\2026\10\02\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\autonomous-ab-gauntlet\r1-service-oracle-v3"
+      - --run-id
+      - modular-service-b-t01
+      - --task-id
+      - "01"
+      - --attempt
+      - "0"
+      - --input-digest
+      - 73f89f6afe0ffc52827a391629bad5d1a69af3d96eee3c9e30deb795f916c0e6
+      - --status
+      - repair-needed
+      - --response-file
+      - "C:\Users\Consiliari\.codex\visualizations\2026\10\02\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\autonomous-ab-gauntlet\r1-service-oracle-v3\raw\operator-responses\modular-service-b-t01-task01-attempt0.txt"
+      - --receipts-file
+      - "C:\Users\Consiliari\.codex\visualizations\2026\10\02\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\autonomous-ab-gauntlet\r1-service-oracle-v3\raw\modular-service-b-t01\01\helper-attempt-0.jsonl"
+    exact_output: "gauntlet: task completion is write-once"
+resulting_state:
+  repair_actor_dispatched: false
+  task01_native_status_preserved: failed
+  source_or_workspace_mutated_by_operator: false

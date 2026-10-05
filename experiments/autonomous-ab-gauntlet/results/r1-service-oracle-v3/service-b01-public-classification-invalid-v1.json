@@ -1,0 +1,87 @@
+{
+  "classificationVersion": 1,
+  "classificationStatus": "provisional",
+  "run": {
+    "arena": "r1-service-oracle-v3",
+    "runId": "modular-service-b-t01",
+    "taskId": "01",
+    "attempt": 0,
+    "nativeStatus": "failed",
+    "controllerIncluded": false,
+    "controllerExclusionReason": "repair budget was lost"
+  },
+  "publicCheck": {
+    "helperExitCode": 1,
+    "candidateRevision": "ba583c7d1b305ac7db81da05b4f7c02265068ff7",
+    "components": [
+      {
+        "command": "go test ./...",
+        "observed": "passed",
+        "evidence": "Public validator output shows all listed packages completed without failure."
+      },
+      {
+        "command": "go test ./internal/architecture",
+        "observed": "passed",
+        "evidence": "Public validator output records package success."
+      },
+      {
+        "command": "markitect check --repo . --revision ba583c7d1b305ac7db81da05b4f7c02265068ff7",
+        "observed": "passed",
+        "toolVersion": "0.13.0",
+        "toolDigest": "sha256:553b7077ce7b5db2df89567146fc1a877a03cb6edd75459be5a3e0a380676056"
+      },
+      {
+        "command": "markitect render --repo . --revision ba583c7d1b305ac7db81da05b4f7c02265068ff7",
+        "observed": "passed"
+      },
+      {
+        "command": "markitect verify --repo . --revision ba583c7d1b305ac7db81da05b4f7c02265068ff7",
+        "observed": "incomplete",
+        "failureClass": "executable_or_environment_refusal",
+        "failedComponent": "repository verification check artifact-coverage",
+        "diagnostic": "check executable markitect-check-artifacts is unavailable on PATH: executable file not found in %PATH%"
+      },
+      {
+        "command": "markitect-check-artifacts --repo . --config .markitect/coverage.yaml",
+        "observed": "passed",
+        "evidence": "Standalone public artifact check reports status passed."
+      },
+      {
+        "command": "go vet ./...",
+        "observed": "unavailable_in_retained_output",
+        "evidence": "The retained validator output contains command resolution but no gate exit code or diagnostic for this command."
+      }
+    ],
+    "sourceFailureObserved": false,
+    "classification": "The recorded public failure is the incomplete Verify check caused by executable lookup in that check environment. No source-level failing diagnostic is present in the retained public output. The helper-wide exit code 1 does not identify an additional source failure."
+  },
+  "assessment": {
+    "semanticProductDefect": "not established",
+    "possibleGenericDefect": "A Verify-versus-standalone PATH resolution mismatch may warrant separate investigation: Verify reports the configured artifact-check executable unavailable, while the standalone artifact-check command passes. The retained evidence does not establish why the environments differ or whether Markitect, the harness, or configuration caused it.",
+    "taskCodeConclusion": "No inference about task source correctness or semantic behavior is made from the generic helper exit code."
+  },
+  "evidenceFiles": [
+    {
+      "role": "native metadata",
+      "sha256": "b4cf39abb1d5a32920b086f39d0313af79db20a7101dc60bf15895b933139c25"
+    },
+    {
+      "role": "envelope metadata; content omitted",
+      "sha256": "18646234eb636d66bbbd431d552ed0438cd3c22bd760da8dfbf5881d799ac6aa"
+    },
+    {
+      "role": "helper attempt 0 record",
+      "sha256": "0a8a6a02d1bdfad74748bb87f51fb0ed195a60c999e1eb0948affb2ebd12a0d7"
+    },
+    {
+      "role": "public validator output",
+      "sha256": "77a351f3b05ee42a321dc5e819e96ad18bd21b5e8752b9029dab5224aa8b0b0c"
+    }
+  ],
+  "limitations": [
+    "Controller-excluded after repair budget loss; not an A/B comparison outcome.",
+    "No actor source, response, other task, other arm, hidden evaluator, or holdout was inspected.",
+    "Envelope content is omitted from this classification.",
+    "Classification is provisional pending controller review."
+  ]
+}

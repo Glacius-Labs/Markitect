@@ -1,0 +1,26 @@
+{
+  "schema": "assessment-run-exclusions/v1",
+  "freeze_digest": "1daa5bb43552c0437bcfd085d8afa4916094f90f03e3370f1ab2ecabdc339ee9",
+  "runs": [
+    {
+      "run_id": "modular-service-a-t01",
+      "reason": "Service trial1 paired comparison excluded: operator finalized B01 as failed instead of repair-needed, irreversibly withholding the predeclared repair budget. Raw states remain descriptive; this is a controller/protocol deviation, not a semantic product verdict."
+    },
+    {
+      "run_id": "modular-service-b-t01",
+      "reason": "Service trial1 paired comparison excluded: operator finalized B01 as failed instead of repair-needed, irreversibly withholding the predeclared repair budget. Raw states remain descriptive; this is a controller/protocol deviation, not a semantic product verdict."
+    },
+    {
+      "run_id": "modular-service-a-t01-parallel-P01",
+      "reason": "Service trial1 paired comparison excluded: operator finalized B01 as failed instead of repair-needed, irreversibly withholding the predeclared repair budget. Raw states remain descriptive; this is a controller/protocol deviation, not a semantic product verdict."
+    },
+    {
+      "run_id": "modular-service-a-t01-parallel-P02",
+      "reason": "Service trial1 paired comparison excluded: operator finalized B01 as failed instead of repair-needed, irreversibly withholding the predeclared repair budget. Raw states remain descriptive; this is a controller/protocol deviation, not a semantic product verdict."
+    },
+    {
+      "run_id": "modular-service-a-t01-integration",
+      "reason": "Service trial1 paired comparison excluded: operator finalized B01 as failed instead of repair-needed, irreversibly withholding the predeclared repair budget. Raw states remain descriptive; this is a controller/protocol deviation, not a semantic product verdict."
+    }
+  ]
+}

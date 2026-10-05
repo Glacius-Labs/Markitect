@@ -1,0 +1,28 @@
+{
+  "apiVersion": "markitect.measurement.org/v1alpha1",
+  "kind": "FreezeReviewSupersessionErratum",
+  "id": "r1-ops-oracle-v3-freeze-review-supersession-v1",
+  "created_utc": "2026-10-05T11:16:51Z",
+  "canonical_review_path": "freeze-review-final-v2.yaml",
+  "canonical_review_sha256": "017D56DD73E50A13D25F186574C4B557D2A5ED0BCAA2FAE200143F62491322FC",
+  "superseded_draft_path": "freeze-review.yaml",
+  "superseded_draft_current_sha256": "EAEF9E1F165E8E6791F34F630FBCEBC31FDF1310E0A849C73827836EB44F05A3",
+  "overwritten_hash_history": [
+    {
+      "stage": "initial exclusive draft",
+      "sha256": "5D4B85E035294857476FF98324CEA88FB4B7D2732B418AAD17DDBA31BE15FDD4"
+    },
+    {
+      "stage": "first corrected rewrite",
+      "sha256": "D41A2B9162C8A9EC9BF6EB6453C9E4050FB045FF06AD6411CF70E8CEF23ECF2B"
+    },
+    {
+      "stage": "second corrected rewrite/current draft",
+      "sha256": "EAEF9E1F165E8E6791F34F630FBCEBC31FDF1310E0A849C73827836EB44F05A3"
+    }
+  ],
+  "event": "The initially created freeze-review.yaml was overwritten twice during scope-disclosure corrections before parent review. No separate byte snapshots of the initial or intermediate versions were retained. Their hashes are preserved here as contemporaneously observed; current draft hash is independently re-read.",
+  "scope_disclosure": "The correction note was read for provenance and contains coarse historical trial-status summaries. No actor workspaces, raw/native outcome records, or detailed holdout evidence were inspected.",
+  "supersession": "Use freeze-review-final-v2.yaml as the final review. freeze-review.yaml remains untouched at its current hash but is a superseded draft, not the canonical review.",
+  "review_disposition": "The final review is a byte/reference/protocol consistency assessment only; it does not authenticate CI-provider identity, establish human acceptance, or authorize actor dispatch."
+}

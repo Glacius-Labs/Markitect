@@ -1,0 +1,85 @@
+{
+  "schema": "autonomous-ab-static-analysis-contract-audit/v1",
+  "created_utc": "2026-10-05T11:10:56.353496+00:00",
+  "source_commit": "22e6e2b8ad342c3cba53d6798c71f895782eea73",
+  "inputs": [
+    {
+      "path": "experiments/autonomous-ab-gauntlet/analysis/main.go",
+      "sha256": "ed1d973ff9723ffe24f14d67e86ee3877a2aada57ad4e28ab11db79ee705ea20"
+    },
+    {
+      "path": "experiments/autonomous-ab-gauntlet/analysis-contract.yaml",
+      "sha256": "938327f03e8d95e9829790ec30af47ba34dc824388b2c0bd765b35138d9cd648"
+    }
+  ],
+  "method": "Independent read-only source audit, with root verification of named static locations; no arena outcome collection",
+  "findings": [
+    {
+      "id": "arena-identity",
+      "source_lines": [
+        417,
+        440,
+        519,
+        525
+      ],
+      "finding": "Collector works on one arena, but report rows do not expose arena identity. Run IDs recur across independently frozen arenas.",
+      "required_before_comparison": "Bind each untouched report to its exact arena/freeze and use an explicit external portfolio tuple (arena,run_id,project,arm,trial,task_id); never silently pool recaptures."
+    },
+    {
+      "id": "run-exclusion-scope",
+      "source_lines": [
+        554,
+        559,
+        1241,
+        1272
+      ],
+      "finding": "Freeze-bound exclusions apply to every task in a listed run ID; they do not propagate to other run IDs automatically.",
+      "required_before_comparison": "List only existing affected fork/integration IDs explicitly; retain stale/dangling/overlap checks and raw rows."
+    },
+    {
+      "id": "integration-card-selection",
+      "source_lines": [
+        369,
+        531,
+        674,
+        691
+      ],
+      "finding": "Integration run kind is distinct, while task-card loading is selected by Parallel rather than ParallelIntegration. Task08 integration may receive ordinary08 expectations.",
+      "required_before_comparison": "Adjudicate exact integration-card semantics before interpreting expected sets/escalation. Do not use an ordinary08 card as evidence of fork integration truth."
+    },
+    {
+      "id": "denominator-identity",
+      "source_lines": [
+        519,
+        525,
+        700,
+        1277,
+        1282
+      ],
+      "finding": "Sequential grouping uses project/arm/trial while fresh run IDs can introduce additional rows. Missing task cards can default into implementation-eligible counts.",
+      "required_before_comparison": "Validate one run identity per project/arm/trial, exact known task cards, and one designated task boundary; initial/final and derived assessments are repeated observations, not new tasks."
+    },
+    {
+      "id": "context-impact-binding",
+      "source_lines": [
+        1019,
+        1021,
+        1025
+      ],
+      "finding": "Optional sidecars yield small sets; absence/malformed/native-format mismatch can all become unavailable and do not provide complete snapshot/provenance binding.",
+      "required_before_comparison": "State the exact retained sidecar/receipt identity and limitations. Absent data is unavailable, never unused/empty; reconstructed outputs cannot prove actor consumption."
+    }
+  ],
+  "positive_boundary": "A public-helper pass is kept separate from frozen hidden-evaluator correctness; terminal actor, final helper, conflict/deadline and evaluator state participate in counted outcome.",
+  "status": "Final measurement-contract gaps to settle; no final metrics or source repair performed",
+  "classification": "measurement tooling, not a Markitect Core/Module defect",
+  "source_modified": false,
+  "live_actors_or_hidden_outcomes_or_holdout_inspected": false,
+  "holdout": "closed",
+  "human_acceptance": false,
+  "limits": [
+    "Static audit does not establish actual incidence in collected runs",
+    "No correction to frozen task/oracle/product semantics",
+    "Final matching must preserve raw statuses and comparison exclusions; no favorable rescore"
+  ]
+}
