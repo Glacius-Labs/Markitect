@@ -1,0 +1,12 @@
+{
+  "apiVersion": "dispatch.example.org/v1alpha1", "kind": "ListingView",
+  "metadata": { "name": "list-open-listings", "namespace": "dispatch" },
+  "spec": {
+    "board": { "kind": "DispatchBoard", "name": "north", "namespace": "dispatch" },
+    "process": { "kind": "DispatchProcess", "name": "python-materialization", "namespace": "dispatch" },
+    "purpose": "Show open listings in stable chronological order.",
+    "filterStatus": "Open", "sortFields": ["openedAt", "id"],
+    "sortOrder": "ascending", "outputFormat": "json-stdout",
+    "testCases": ["fixtures/listings.json"]
+  }
+}

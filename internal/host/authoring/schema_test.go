@@ -212,6 +212,49 @@ func TestProjectCheckSchemaConstraints(t *testing.T) {
 	}
 }
 
+func TestProjectLocalProjectionSchemaIsVersionedAndClosed(t *testing.T) {
+	schemas, err := Schemas()
+	if err != nil {
+		t.Fatal(err)
+	}
+	var document map[string]any
+	if err := yaml.Unmarshal(schemas["schema/Project.yaml"], &document); err != nil {
+		t.Fatal(err)
+	}
+	spec := mapping(t, mapping(t, document["properties"])["spec"])
+	adapters := mapping(t, mapping(t, spec["properties"])["adapters"])
+	item := mapping(t, adapters["items"])
+	if item["additionalProperties"] != false {
+		t.Fatal("adapter item schema must reject unknown fields")
+	}
+	branches := sequence(t, item["oneOf"])
+	if len(branches) != 2 {
+		t.Fatalf("adapter oneOf branches = %d, want command and local-projection", len(branches))
+	}
+	var projectionBranch map[string]any
+	for _, raw := range branches {
+		branch := mapping(t, raw)
+		branchProperties := mapping(t, branch["properties"])
+		if mapping(t, branchProperties["type"])["const"] == "local-projection" {
+			projectionBranch = branch
+		}
+	}
+	if projectionBranch == nil {
+		t.Fatal("schema has no local-projection branch")
+	}
+	branchProperties := mapping(t, projectionBranch["properties"])
+	if mapping(t, branchProperties["version"])["const"] != "v1alpha1" {
+		t.Fatal("local-projection schema does not pin version")
+	}
+	config := mapping(t, branchProperties["config"])
+	if config["additionalProperties"] != false || !reflect.DeepEqual(sequence(t, config["required"]), []any{"contracts", "coverage"}) {
+		t.Fatalf("local-projection config must be closed and require both paths: %#v", config)
+	}
+	if got := mapping(t, config["properties"]); len(got) != 2 || got["contracts"] == nil || got["coverage"] == nil {
+		t.Fatalf("local-projection config keys = %#v", got)
+	}
+}
+
 func TestSchemaShapesComeFromYAMLTaggedModel(t *testing.T) {
 	schemas, err := Schemas()
 	if err != nil {

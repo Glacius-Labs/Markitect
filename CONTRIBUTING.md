@@ -13,6 +13,7 @@ For coordinated parallel work, read the [development guide](docs/development/REA
 | `internal/modules/agentrules` | Private Codex/Claude adapters and provider-owned configuration. |
 | `internal/modules/markdown` | Markdown projection, literal consistency and local router checks. |
 | `internal/modules/artifactcoverage` | Pure managed-artifact ownership checks over Host-supplied inventory. |
+| `internal/modules/projections` | Pure bounded source/target/materializer contracts and evidence binding; Host owns execution and writes. |
 | `internal/modules/githooks`, `internal/modules/pipelines` | Bounded configured hook/pipeline artifact ownership and check linkage. |
 | `internal/modules/dotnet` | Explicitly mapped captured project-reference declarations and literal XML checks. |
 | `internal/modules/github`, `internal/modules/azuredevops` | Offline consumers of explicitly mapped captured repository metadata; no live provider Apply. |

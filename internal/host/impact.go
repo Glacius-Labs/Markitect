@@ -10,17 +10,19 @@ import (
 )
 
 type Impact struct {
-	Base                     string               `yaml:"base"`
-	Candidate                string               `yaml:"candidate"`
-	Changed                  []string             `yaml:"changed"`
-	Affected                 []string             `yaml:"affected"`
-	Reason                   string               `yaml:"reason"`
-	Causes                   []ImpactCause        `yaml:"causes,omitempty"`
-	Analysis                 *AnalysisEvidence    `yaml:"analysis,omitempty"`
-	PolicyChanges            []PolicyResultChange `yaml:"policyChanges,omitempty"`
-	DirectPolicySubjects     []string             `yaml:"directPolicySubjects,omitempty"`
-	DirectPolicySubjectCount *int                 `yaml:"directPolicySubjectCount,omitempty"`
-	AffectedCount            *int                 `yaml:"affectedCount,omitempty"`
+	Base                     string                `yaml:"base"`
+	Candidate                string                `yaml:"candidate"`
+	Changed                  []string              `yaml:"changed"`
+	Affected                 []string              `yaml:"affected"`
+	Reason                   string                `yaml:"reason"`
+	Causes                   []ImpactCause         `yaml:"causes,omitempty"`
+	Analysis                 *AnalysisEvidence     `yaml:"analysis,omitempty"`
+	PolicyChanges            []PolicyResultChange  `yaml:"policyChanges,omitempty"`
+	DirectPolicySubjects     []string              `yaml:"directPolicySubjects,omitempty"`
+	DirectPolicySubjectCount *int                  `yaml:"directPolicySubjectCount,omitempty"`
+	AffectedCount            *int                  `yaml:"affectedCount,omitempty"`
+	BaseProjections          []ProjectionInclusion `yaml:"baseProjections,omitempty"`
+	CandidateProjections     []ProjectionInclusion `yaml:"candidateProjections,omitempty"`
 }
 
 // ImpactCause records a changed input or an invalidation relationship in the

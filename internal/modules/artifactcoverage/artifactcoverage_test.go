@@ -37,6 +37,80 @@ func TestCheckAccountsSuppliedOwnershipAndNewFiles(t *testing.T) {
 	}
 }
 
+func TestCheckAccountsProjectedAndVendorRolesWithoutReadingContent(t *testing.T) {
+	config, inventory := fixture()
+	config.Spec.Vendor = append(config.Spec.Vendor, ToolOwner{Path: "content/vendor.txt", Owner: "upstream-library"})
+	inventory.Files["content/implementation.cs"] = []byte("opaque candidate bytes\x00")
+	inventory.Files["content/vendor.txt"] = []byte("opaque third-party bytes\x00")
+	inventory.ProjectedOwners = []OwnerFact{{Path: "content/implementation.cs", Owner: "contract:service-implementation"}}
+
+	report, err := Check(config, inventory)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if report.Status != "passed" {
+		t.Fatalf("projected/vendor inventory did not pass: %#v", report.Findings)
+	}
+	if !hasClass(report, "content/implementation.cs", "projected") || !hasClass(report, "content/vendor.txt", "vendor") {
+		t.Fatalf("projected/vendor roles missing: %#v", report.Files)
+	}
+	if !hasClass(report, "generated/entry.md", "generated") {
+		t.Fatalf("deterministic renderer output lost generated class: %#v", report.Files)
+	}
+	if got := strings.Join(ownersFor(report, "content/implementation.cs"), ","); got != "contract:service-implementation" {
+		t.Fatalf("projected owner = %q", got)
+	}
+	if got := strings.Join(ownersFor(report, "content/vendor.txt"), ","); got != "upstream-library" {
+		t.Fatalf("vendor owner = %q", got)
+	}
+}
+
+func TestCheckReportsMissingProjectedAndVendorFiles(t *testing.T) {
+	config, inventory := fixture()
+	inventory.ProjectedOwners = []OwnerFact{{Path: "generated/candidate.go", Owner: "contract:service-implementation"}}
+	config.Spec.Vendor = append(config.Spec.Vendor, ToolOwner{Path: "content/vendor/missing.txt", Owner: "upstream-library"})
+
+	report, err := Check(config, inventory)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !hasFinding(report, "missing-projected", "generated/candidate.go") {
+		t.Fatalf("missing projected target was not reported: %#v", report.Findings)
+	}
+	if !hasFinding(report, "stale-vendor", "content/vendor/missing.txt") {
+		t.Fatalf("missing vendor file was not reported: %#v", report.Findings)
+	}
+}
+
+func TestCheckReportsConflictingProjectedVendorOwnership(t *testing.T) {
+	config, inventory := fixture()
+	path := "generated/entry.md"
+	config.Spec.Vendor = append(config.Spec.Vendor, ToolOwner{Path: path, Owner: "vendored-copy"})
+	inventory.ProjectedOwners = []OwnerFact{{Path: path, Owner: "contract:first"}, {Path: path, Owner: "contract:second"}}
+
+	report, err := Check(config, inventory)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !hasFinding(report, "ownership-collision", path) || !hasFinding(report, "owner-conflict", path) {
+		t.Fatalf("cross-role or multiple-contract ownership conflict missing: %#v", report.Findings)
+	}
+}
+
+func TestCheckRejectsProjectedAndVendorCaseAliases(t *testing.T) {
+	config, inventory := fixture()
+	inventory.ProjectedOwners = []OwnerFact{{Path: "content/Reference.md", Owner: "contract:alias"}}
+	if _, err := Check(config, inventory); err == nil || !strings.Contains(err.Error(), "case-insensitive path collision") {
+		t.Fatalf("projected case alias accepted: %v", err)
+	}
+
+	config, inventory = fixture()
+	config.Spec.Vendor = []ToolOwner{{Path: "content/Reference.md", Owner: "upstream"}}
+	if _, err := Check(config, inventory); err == nil || !strings.Contains(err.Error(), "case-insensitive path collision") {
+		t.Fatalf("vendor case alias accepted: %v", err)
+	}
+}
+
 func TestCheckReportsDeletedInputAndRenamedFile(t *testing.T) {
 	config, inventory := fixture()
 	delete(inventory.Files, "content/reference.md")
@@ -151,6 +225,17 @@ func TestParseConfigIsClosedAndVersioned(t *testing.T) {
 	}
 	if _, err := ParseConfig([]byte("apiVersion: wrong\nkind: ArtifactCoverage\nspec: {roots: [content]}\n")); err == nil {
 		t.Fatal("wrong config version was accepted")
+	}
+}
+
+func TestParseConfigAcceptsVendorOwnership(t *testing.T) {
+	data := []byte("apiVersion: " + APIVersion + "\nkind: ArtifactCoverage\nspec:\n  roots: [content]\n  tooling: [{path: content/coverage.yaml, owner: coverage}]\n  vendor: [{path: content/library.bin, owner: upstream-library}]\n")
+	config, err := ParseConfig(data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(config.Spec.Vendor) != 1 || config.Spec.Vendor[0] != (ToolOwner{Path: "content/library.bin", Owner: "upstream-library"}) {
+		t.Fatalf("vendor ownership did not decode: %#v", config.Spec.Vendor)
 	}
 }
 

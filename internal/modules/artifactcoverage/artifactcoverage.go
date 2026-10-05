@@ -30,6 +30,7 @@ type Config struct {
 type ConfigSpec struct {
 	Roots      []string    `yaml:"roots"`
 	Tooling    []ToolOwner `yaml:"tooling,omitempty"`
+	Vendor     []ToolOwner `yaml:"vendor,omitempty"`
 	Exclusions []Exclusion `yaml:"exclusions,omitempty"`
 }
 
@@ -59,6 +60,7 @@ type Inventory struct {
 	CanonicalOwners []OwnerFact
 	InputOwners     []OwnerFact
 	GeneratedOwners []OwnerFact
+	ProjectedOwners []OwnerFact
 }
 
 type File struct {
@@ -116,7 +118,7 @@ func Check(config Config, inventory Inventory) (Report, error) {
 		Findings:       []Finding{},
 	}
 	for _, root := range config.Spec.Roots {
-		if rootPresent(root, inventory.Files, inventory.GeneratedOwners) {
+		if rootPresent(root, inventory.Files, inventory.GeneratedOwners, inventory.ProjectedOwners) {
 			continue
 		}
 		report.Findings = append(report.Findings, Finding{Code: "stale-root", Path: root, Message: "managed root is absent from the supplied snapshot and has no renderer-owned output"})
@@ -125,9 +127,14 @@ func Check(config Config, inventory Inventory) (Report, error) {
 	canonical := groupOwners(inventory.CanonicalOwners)
 	inputs := groupOwners(inventory.InputOwners)
 	generated := groupOwners(inventory.GeneratedOwners)
+	projected := groupOwners(inventory.ProjectedOwners)
 	tooling := make(map[string][]string, len(config.Spec.Tooling))
 	for _, declaration := range config.Spec.Tooling {
 		tooling[declaration.Path] = append(tooling[declaration.Path], declaration.Owner)
+	}
+	vendor := make(map[string][]string, len(config.Spec.Vendor))
+	for _, declaration := range config.Spec.Vendor {
+		vendor[declaration.Path] = append(vendor[declaration.Path], declaration.Owner)
 	}
 	exclusions := make(map[string]string, len(config.Spec.Exclusions))
 	for _, exclusion := range config.Spec.Exclusions {
@@ -142,7 +149,7 @@ func Check(config Config, inventory Inventory) (Report, error) {
 	}
 	sort.Strings(paths)
 	for _, name := range paths {
-		classes := make([]File, 0, 5)
+		classes := make([]File, 0, 7)
 		if owners := canonical[name]; len(owners) > 0 {
 			classes = append(classes, File{Path: name, Class: "canonical", Owners: owners})
 		}
@@ -152,8 +159,17 @@ func Check(config Config, inventory Inventory) (Report, error) {
 		if owners := generated[name]; len(owners) > 0 {
 			classes = append(classes, File{Path: name, Class: "generated", Owners: owners})
 		}
+		if owners := projected[name]; len(owners) > 0 {
+			classes = append(classes, File{Path: name, Class: "projected", Owners: owners})
+			if len(owners) > 1 {
+				report.Findings = append(report.Findings, Finding{Code: "owner-conflict", Path: name, Message: "projected representation has multiple contract owners: " + strings.Join(owners, ", ")})
+			}
+		}
 		if owners := tooling[name]; len(owners) > 0 {
 			classes = append(classes, File{Path: name, Class: "tooling", Owners: sortedUnique(owners)})
+		}
+		if owners := vendor[name]; len(owners) > 0 {
+			classes = append(classes, File{Path: name, Class: "vendor", Owners: sortedUnique(owners)})
 		}
 		if reason, excluded := exclusions[name]; excluded {
 			classes = append(classes, File{Path: name, Class: "excluded", Reason: reason})
@@ -188,6 +204,14 @@ func Check(config Config, inventory Inventory) (Report, error) {
 			}
 		}
 	}
+	for _, path := range sortedOwnerPaths(inventory.ProjectedOwners) {
+		if inRoots(path, config.Spec.Roots) {
+			if _, exists := inventory.Files[path]; !exists {
+				owners := projected[path]
+				report.Findings = append(report.Findings, Finding{Code: "missing-projected", Path: path, Message: "declared projected representation is missing (owners: " + strings.Join(owners, ", ") + ")"})
+			}
+		}
+	}
 	for _, name := range paths {
 		if !isRendererProjectionPath(name) || !hasGeneratedMarker(inventory.Files[name]) {
 			continue
@@ -199,6 +223,11 @@ func Check(config Config, inventory Inventory) (Report, error) {
 	for _, declaration := range config.Spec.Tooling {
 		if _, exists := inventory.Files[declaration.Path]; !exists {
 			report.Findings = append(report.Findings, Finding{Code: "stale-tooling", Path: declaration.Path, Message: "tooling ownership declaration does not name a file in the supplied snapshot"})
+		}
+	}
+	for _, declaration := range config.Spec.Vendor {
+		if _, exists := inventory.Files[declaration.Path]; !exists {
+			report.Findings = append(report.Findings, Finding{Code: "stale-vendor", Path: declaration.Path, Message: "vendor ownership declaration does not name a file in the supplied snapshot"})
 		}
 	}
 	for _, exclusion := range config.Spec.Exclusions {
@@ -296,6 +325,24 @@ func validateInventory(config Config, inventory Inventory) error {
 		toolingSeen[key] = true
 		declaredPaths = append(declaredPaths, declaration.Path)
 	}
+	vendorSeen := map[string]bool{}
+	for _, declaration := range config.Spec.Vendor {
+		if err := validateLiteralPath(declaration.Path); err != nil {
+			return fmt.Errorf("invalid vendor path %q: %w", declaration.Path, err)
+		}
+		if strings.TrimSpace(declaration.Owner) == "" {
+			return fmt.Errorf("vendor owner for %q must be nonblank", declaration.Path)
+		}
+		if !inRoots(declaration.Path, config.Spec.Roots) {
+			return fmt.Errorf("vendor path %q is outside every managed root", declaration.Path)
+		}
+		key := foldPath(declaration.Path)
+		if vendorSeen[key] {
+			return fmt.Errorf("vendor path %q is declared more than once or through a case alias", declaration.Path)
+		}
+		vendorSeen[key] = true
+		declaredPaths = append(declaredPaths, declaration.Path)
+	}
 	exclusionSeen := map[string]bool{}
 	for _, exclusion := range config.Spec.Exclusions {
 		if err := validateLiteralPath(exclusion.Path); err != nil {
@@ -318,7 +365,7 @@ func validateInventory(config Config, inventory Inventory) error {
 	if err := validatePortablePaths(declaredPaths); err != nil {
 		return fmt.Errorf("declared paths are not portable: %w", err)
 	}
-	for _, factSet := range [][]OwnerFact{inventory.CanonicalOwners, inventory.InputOwners, inventory.GeneratedOwners} {
+	for _, factSet := range [][]OwnerFact{inventory.CanonicalOwners, inventory.InputOwners, inventory.GeneratedOwners, inventory.ProjectedOwners} {
 		facts := append([]OwnerFact(nil), factSet...)
 		sort.Slice(facts, func(i, j int) bool {
 			if facts[i].Path != facts[j].Path {
@@ -343,13 +390,18 @@ func validateInventory(config Config, inventory Inventory) error {
 	return nil
 }
 
-func rootPresent(root string, files map[string][]byte, generated []OwnerFact) bool {
+func rootPresent(root string, files map[string][]byte, generated, projected []OwnerFact) bool {
 	for name := range files {
 		if inRoot(name, root) {
 			return true
 		}
 	}
 	for _, fact := range generated {
+		if inRoot(fact.Path, root) {
+			return true
+		}
+	}
+	for _, fact := range projected {
 		if inRoot(fact.Path, root) {
 			return true
 		}

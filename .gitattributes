@@ -3,3 +3,6 @@
 # Preserve supplied strategy proposals byte for byte, including their original whitespace.
 docs/strategy/sources/*.md -text whitespace=-blank-at-eof,-blank-at-eol
 docs/strategy/markitect-strategic-positioning-and-validation.md -text whitespace=-blank-at-eof
+
+# Preserve the owner-supplied research input and its recorded source digest.
+docs/research/ontology-projection-assurance.md -text whitespace=-blank-at-eof,-blank-at-eol

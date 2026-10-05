@@ -1,0 +1,7 @@
+{
+  "apiVersion": "dispatch.example.org/v1alpha1", "kind": "Listing",
+  "metadata": { "name": "renewal-a", "namespace": "dispatch" },
+  "spec": { "board": { "kind": "DispatchBoard", "name": "north", "namespace": "dispatch" },
+    "owner": { "kind": "Owner", "name": "dispatch-team", "namespace": "dispatch" },
+    "status": "Open", "openedAt": "2026-01-03T12:00:00Z", "summary": "Review a renewal" }
+}

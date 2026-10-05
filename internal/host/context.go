@@ -10,19 +10,20 @@ import (
 )
 
 type Context struct {
-	Version        string              `yaml:"version"`
-	Revision       string              `yaml:"revision,omitempty"`
-	Provisional    bool                `yaml:"provisional"`
-	Entry          string              `yaml:"entry"`
-	Digest         string              `yaml:"digest"`
-	SnapshotDigest string              `yaml:"snapshotDigest"`
-	ToolDigest     string              `yaml:"toolDigest,omitempty"`
-	Inputs         []ContextInput      `yaml:"inputs"`
-	Complete       bool                `yaml:"complete,omitempty"`
-	Status         string              `yaml:"status,omitempty"`
-	Run            *RunContextEvidence `yaml:"run,omitempty"`
-	PolicyResults  []core.PolicyResult `yaml:"policyResults,omitempty"`
-	Analysis       *AnalysisEvidence   `yaml:"analysis,omitempty"`
+	Version        string                `yaml:"version"`
+	Revision       string                `yaml:"revision,omitempty"`
+	Provisional    bool                  `yaml:"provisional"`
+	Entry          string                `yaml:"entry"`
+	Digest         string                `yaml:"digest"`
+	SnapshotDigest string                `yaml:"snapshotDigest"`
+	ToolDigest     string                `yaml:"toolDigest,omitempty"`
+	Inputs         []ContextInput        `yaml:"inputs"`
+	Complete       bool                  `yaml:"complete,omitempty"`
+	Status         string                `yaml:"status,omitempty"`
+	Run            *RunContextEvidence   `yaml:"run,omitempty"`
+	PolicyResults  []core.PolicyResult   `yaml:"policyResults,omitempty"`
+	Analysis       *AnalysisEvidence     `yaml:"analysis,omitempty"`
+	Projections    []ProjectionInclusion `yaml:"projections,omitempty"`
 }
 type ContextInput struct {
 	Key              string              `yaml:"key"`
@@ -237,6 +238,19 @@ func compileContext(p *Project, key, version string, allowPolicyFailures bool, t
 			return nil, fmt.Errorf("encode context analysis evidence: %w", err)
 		}
 		fmt.Fprintf(&fingerprint, "analysis:%s", Hash(analysisBytes))
+	}
+
+	projectionInclusions, err := ProjectionContext(p, keys)
+	c.Projections = projectionInclusions
+	if err != nil {
+		return nil, err
+	}
+	if len(c.Projections) > 0 {
+		projectionBytes, err := YAML(c.Projections)
+		if err != nil {
+			return nil, err
+		}
+		fmt.Fprintf(&fingerprint, "projections:%s", Hash(projectionBytes))
 	}
 	c.Digest = Hash([]byte(fingerprint.String()))
 	return c, nil

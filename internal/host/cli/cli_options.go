@@ -36,6 +36,7 @@ type commandOptions struct {
 	action                string
 	adapter               string
 	plan                  string
+	coverage              string
 	reviewConfig          string
 	reviewReport          string
 	reviewEvidence        string
@@ -46,7 +47,7 @@ func parseOptions(command string, args []string, allowed map[string]bool, out, e
 	fs := flag.NewFlagSet(command, flag.ContinueOnError)
 	fs.SetOutput(errout)
 	scope := fs.String("scope", "", "owner-supplied exact adoption scope YAML (prepare)")
-	expect := fs.String("expect", "", "reviewed preview handoff digest required with prepare --write")
+	expect := fs.String("expect", "", "reviewed exact handoff/candidate digest required for prepare/projection writes")
 	workspace := fs.String("workspace", "", "captured immutable external evidence workspace (copy-me)")
 	queue := fs.String("queue", "", "explicit evidence/candidate queue YAML (copy-me)")
 	decision := fs.String("decision", "", "optional supplied immutable review decision YAML (copy-me)")
@@ -70,6 +71,7 @@ func parseOptions(command string, args []string, allowed map[string]bool, out, e
 	action := fs.String("action", "", "reconciliation action: observe, plan, apply or verify")
 	adapter := fs.String("adapter", "", "configured reconciliation adapter name")
 	plan := fs.String("plan", "", "saved concrete YAML reconciliation plan")
+	coverage := fs.String("coverage", "", "explicit repository-relative artifact accounting configuration (projection)")
 	reviewConfig := fs.String("config", "", "repository-relative review configuration in the fixed snapshot")
 	reviewReport := fs.String("report", "", "completed reviewer report to record (local UTF-8 file)")
 	reviewEvidence := fs.String("evidence", "", "previous advisory review record to evaluate (local YAML file)")
@@ -105,9 +107,35 @@ func parseOptions(command string, args []string, allowed map[string]bool, out, e
 		fmt.Fprintf(errout, "--%s does not apply to %s\n", invalid, command)
 		return commandOptions{}, 2, true
 	}
-	if *write && ((command != "render" && command != "schema" && command != "format" && command != "install" && command != "init" && command != "reconcile" && command != "prepare") || *revision != "" || *check || (command == "reconcile" && *action != "apply")) {
-		fmt.Fprintln(errout, "--write supports render, format, schema, install, init or reconcile --action apply on the working tree; prepare writes a reviewed external capture")
+	if *write && ((command != "render" && command != "schema" && command != "format" && command != "install" && command != "init" && command != "reconcile" && command != "prepare" && command != "projection") || *revision != "" || *check || ((command == "reconcile" || command == "projection") && *action != "apply")) {
+		fmt.Fprintln(errout, "--write supports render, format, schema, install, init or reconcile/projection --action apply on the working tree; prepare writes a reviewed external capture")
 		return commandOptions{}, 2, true
+	}
+	if command == "projection" {
+		if *action != "observe" && *action != "plan" && *action != "apply" && *action != "verify" {
+			fmt.Fprintln(errout, "projection requires --action observe, plan, apply or verify")
+			return commandOptions{}, 2, true
+		}
+		if *reviewConfig == "" || *coverage == "" {
+			fmt.Fprintln(errout, "projection requires explicit --config and --coverage")
+			return commandOptions{}, 2, true
+		}
+		if *action == "apply" && (!*write || *plan == "") {
+			fmt.Fprintln(errout, "projection apply requires --write and --plan")
+			return commandOptions{}, 2, true
+		}
+		if *action != "apply" && (*write || *plan != "" || *reviewReport != "" || *expect != "") {
+			fmt.Fprintln(errout, "projection --write, --plan, --report and --expect apply only to apply")
+			return commandOptions{}, 2, true
+		}
+		if (*reviewReport == "") != (*expect == "") {
+			fmt.Fprintln(errout, "projection AI candidate --report and reviewed --expect digest are required together")
+			return commandOptions{}, 2, true
+		}
+		if *action == "verify" && !fullGitCommitID.MatchString(*revision) {
+			fmt.Fprintln(errout, "projection verify requires a full immutable --revision")
+			return commandOptions{}, 2, true
+		}
 	}
 	if command == "reconcile" {
 		if *action != "observe" && *action != "plan" && *action != "apply" && *action != "verify" {
@@ -165,6 +193,7 @@ func parseOptions(command string, args []string, allowed map[string]bool, out, e
 		action:                *action,
 		adapter:               *adapter,
 		plan:                  *plan,
+		coverage:              *coverage,
 		reviewConfig:          *reviewConfig,
 		reviewReport:          *reviewReport,
 		reviewEvidence:        *reviewEvidence,

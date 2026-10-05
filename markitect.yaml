@@ -64,3 +64,10 @@ spec:
             - go
             - test
             - ./...
+    adapters:
+        - name: engineering-representations
+          type: local-projection
+          version: v1alpha1
+          config:
+            contracts: .markitect/modules/projections.config
+            coverage: markitect-artifacts.yaml

@@ -1,6 +1,7 @@
 package authoring
 
 import (
+	"fmt"
 	"path"
 	"regexp"
 	"strings"
@@ -15,6 +16,7 @@ func validateAdapters(file string, n *yaml.Node) error {
 		return err
 	}
 	seen := map[string]bool{}
+	localProjectionCount := 0
 	for _, item := range n.Content {
 		if err := requireMapping(file, item, "adapter"); err != nil {
 			return err
@@ -43,16 +45,88 @@ func validateAdapters(file string, n *yaml.Node) error {
 			return diagnostic(file, child(item, "name").Line, "adapter name %q is duplicated", values["name"])
 		}
 		seen[values["name"]] = true
-		if values["type"] != "command" {
+		config := child(item, "config")
+		switch values["type"] {
+		case "command":
+			if config != nil {
+				if err := validateAdapterConfig(file, config); err != nil {
+					return err
+				}
+			}
+		case "local-projection":
+			localProjectionCount++
+			if localProjectionCount > 1 {
+				return diagnostic(file, child(item, "type").Line, "Project may register at most one local-projection adapter")
+			}
+			if values["version"] != "v1alpha1" {
+				return diagnostic(file, child(item, "version").Line, "local-projection adapter version must be v1alpha1")
+			}
+			if config == nil {
+				return diagnostic(file, item.Line, "local-projection adapter requires config")
+			}
+			if err := validateLocalProjectionConfig(file, config); err != nil {
+				return err
+			}
+		default:
 			return diagnostic(file, child(item, "type").Line, "unsupported adapter type %q", values["type"])
 		}
-		if config := child(item, "config"); config != nil {
-			if err := validateAdapterConfig(file, config); err != nil {
-				return err
+	}
+	return nil
+}
+
+func validateLocalProjectionConfig(file string, n *yaml.Node) error {
+	if err := requireMapping(file, n, "local-projection config"); err != nil {
+		return err
+	}
+	if err := checkKeys(file, n, set("contracts", "coverage")); err != nil {
+		return err
+	}
+	if err := requireFields(file, n, "contracts", "coverage"); err != nil {
+		return err
+	}
+	paths := make([]string, 0, 2)
+	for _, field := range []string{"contracts", "coverage"} {
+		value := child(n, field)
+		if err := checkScalar(file, value, "string"); err != nil {
+			return err
+		}
+		if strings.TrimSpace(value.Value) != value.Value || value.Value == "" {
+			return diagnostic(file, value.Line, "local-projection %s path must be a nonempty exact path", field)
+		}
+		if err := validateLocalProjectionPath(value.Value); err != nil {
+			return diagnostic(file, value.Line, "local-projection %s path: %v", field, err)
+		}
+		paths = append(paths, value.Value)
+	}
+	if strings.EqualFold(paths[0], paths[1]) || pathWithin(paths[0], paths[1]) || pathWithin(paths[1], paths[0]) {
+		return diagnostic(file, n.Line, "local-projection contracts and coverage paths must be distinct and non-overlapping")
+	}
+	return nil
+}
+
+func validateLocalProjectionPath(value string) error {
+	if strings.ContainsAny(value, "\\\\:*?[]{}<>|\"\x00") || path.IsAbs(value) || path.Clean(value) != value || value == "." || strings.HasSuffix(value, "/") {
+		return fmt.Errorf("must be a normalized relative POSIX YAML file path")
+	}
+	for _, part := range strings.Split(value, "/") {
+		if part == "" || part == "." || part == ".." || strings.TrimSpace(part) != part || strings.HasSuffix(part, ".") || strings.EqualFold(part, ".git") {
+			return fmt.Errorf("contains an unsafe path component")
+		}
+		base := strings.ToUpper(strings.SplitN(part, ".", 2)[0])
+		if base == "CON" || base == "PRN" || base == "AUX" || base == "NUL" || (len(base) == 4 && (strings.HasPrefix(base, "COM") || strings.HasPrefix(base, "LPT")) && base[3] >= '1' && base[3] <= '9') {
+			return fmt.Errorf("contains a Windows-reserved path component")
+		}
+		for _, r := range part {
+			if r < 32 {
+				return fmt.Errorf("contains a control character")
 			}
 		}
 	}
 	return nil
+}
+
+func pathWithin(parent, child string) bool {
+	return len(child) > len(parent) && strings.EqualFold(child[:len(parent)], parent) && child[len(parent)] == '/'
 }
 
 func validateAdapterConfig(file string, n *yaml.Node) error {

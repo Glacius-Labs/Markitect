@@ -1,0 +1,42 @@
+apiVersion: markitect.example.org/artifact-coverage/v1alpha1
+kind: ArtifactCoverage
+spec:
+    roots:
+        - resources
+        - domains
+        - tools
+        - fixtures
+        - scripts
+        - tests
+        - .github/workflows
+        - .githooks
+        - .agents/skills/list-open-listings/SKILL.md
+        - .claude/rules/dispatch-process.md
+        - .claude/skills/list-open-listings/SKILL.md
+        - docs/markitect/README.md
+        - docs/markitect/_domains/README.md
+        - docs/markitect/_domains/dispatch.example.org.v1alpha1.domain.md
+        - docs/markitect/dispatch/README.md
+        - docs/markitect/dispatch/board.dispatchboard.dispatch.example.org.v1alpha1.md
+        - docs/markitect/dispatch/dispatch-process.rule.md
+        - docs/markitect/dispatch/list-open-listings.listingview.dispatch.example.org.v1alpha1.md
+        - docs/markitect/dispatch/list-open-listings.skill.md
+        - docs/markitect/dispatch/owner.owner.dispatch.example.org.v1alpha1.md
+        - docs/markitect/dispatch/process.dispatchprocess.dispatch.example.org.v1alpha1.md
+        - docs/markitect/dispatch/renewal-a.listing.dispatch.example.org.v1alpha1.md
+        - docs/markitect/dispatch/renewal-b.listing.dispatch.example.org.v1alpha1.md
+        - docs/markitect/dispatch/renewal-c.listing.dispatch.example.org.v1alpha1.md
+        - markitect.yaml
+        - markitect-artifacts.yaml
+        - projections.config
+        - README.md
+    tooling:
+        - path: tools/check_contract.py
+          owner: independent-finite-projection-contract-checker
+        - path: tools/test_contract_checker.py
+          owner: independent-finite-projection-checker-tests
+        - path: markitect-artifacts.yaml
+          owner: fixture-artifact-coverage-configuration
+    exclusions:
+        - path: README.md
+          reason: Hand-authored fixture narrative that is not a canonical resource or checker input.

@@ -106,7 +106,7 @@ func TestContextCompilesPortableCoreAuthoringClosure(t *testing.T) {
 			t.Errorf("Constitution Change workflow omits %q", required)
 		}
 	}
-	for _, required := range []string{"implementation-only", "intent change", "migration", "ambiguity", "markitect check --repo PATH --revision BASE", "markitect impact --repo PATH --base BASE --revision INTENT_CANDIDATE", "markitect-check-artifacts --repo . --config markitect-artifacts.yaml", "with a reviewed helper built from the pinned Markitect source package on PATH", "Markitect's own source Project uses the equivalent local", "unverified", "--action apply --adapter NAME --plan PLAN --write", "human decision"} {
+	for _, required := range []string{"representation repair", "unchanged intent is not a bypass", "intent change", "migration", "ambiguity", "markitect check --repo PATH --revision BASE", "markitect impact --repo PATH --base BASE --revision INTENT_CANDIDATE", "markitect-check-artifacts --repo . --config markitect-artifacts.yaml", "with a reviewed helper built from the pinned Markitect source package on PATH", "Markitect's own source Project uses the equivalent local", "unverified", "--expect sha256:CANDIDATE_RECORD", "--action apply --adapter NAME --plan PLAN --write", "human decision"} {
 		if !strings.Contains(markitectFirstText, required) {
 			t.Errorf("Markitect-first Change workflow omits %q", required)
 		}

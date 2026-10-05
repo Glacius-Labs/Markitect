@@ -239,17 +239,38 @@ func filteredSpecSchema(kind string, fields []string) map[string]any {
 		}
 	}
 	if adaptersShape, ok := properties["adapters"].(map[string]any); ok {
-		configProperties := map[string]any{
+		commandConfigProperties := map[string]any{
 			"inputs":     map[string]any{"type": "array", "uniqueItems": true, "items": map[string]any{"type": "string", "minLength": 1, "pattern": `^(?!/)(?!.*(?:^|/)\.\.?/)[^\\:\x00]+$`}},
 			"parameters": map[string]any{"type": "object", "additionalProperties": true}, "target": map[string]any{"type": "string", "minLength": 1},
 			"observe": adapterArgvSchema(), "plan": adapterArgvSchema(), "verify": adapterArgvSchema(), "apply": adapterArgvSchema(),
 			"allowApply": map[string]any{"type": "boolean"}, "timeoutSeconds": map[string]any{"type": "integer", "minimum": 1, "maximum": 600}, "outputLimitBytes": map[string]any{"type": "integer", "minimum": 1024, "maximum": 10485760},
 		}
-		adapterProperties := map[string]any{
-			"name": map[string]any{"type": "string", "pattern": dnsLabel.String()}, "type": map[string]any{"type": "string", "enum": []string{"command"}}, "version": map[string]any{"type": "string", "minLength": 1},
-			"config": map[string]any{"type": "object", "additionalProperties": false, "properties": configProperties},
+		projectionConfigProperties := map[string]any{
+			"contracts": map[string]any{"type": "string", "minLength": 1, "pattern": `^(?!/)(?!.*(?:^|/)\.\.?/)[^\\:*?\[\]{}\x00]+$`},
+			"coverage":  map[string]any{"type": "string", "minLength": 1, "pattern": `^(?!/)(?!.*(?:^|/)\.\.?/)[^\\:*?\[\]{}\x00]+$`},
 		}
-		item := map[string]any{"type": "object", "additionalProperties": false, "required": []string{"name", "type", "version"}, "properties": adapterProperties}
+		adapterConfigUnion := map[string]any{
+			"type": "object", "additionalProperties": false,
+			"properties": map[string]any{
+				"inputs": commandConfigProperties["inputs"], "parameters": commandConfigProperties["parameters"], "target": commandConfigProperties["target"],
+				"observe": commandConfigProperties["observe"], "plan": commandConfigProperties["plan"], "verify": commandConfigProperties["verify"], "apply": commandConfigProperties["apply"],
+				"allowApply": commandConfigProperties["allowApply"], "timeoutSeconds": commandConfigProperties["timeoutSeconds"], "outputLimitBytes": commandConfigProperties["outputLimitBytes"],
+				"contracts": projectionConfigProperties["contracts"], "coverage": projectionConfigProperties["coverage"],
+			},
+		}
+		adapterProperties := map[string]any{
+			"name": map[string]any{"type": "string", "pattern": dnsLabel.String()}, "type": map[string]any{"type": "string", "enum": []string{"command", "local-projection"}}, "version": map[string]any{"type": "string", "minLength": 1},
+			"config": adapterConfigUnion,
+		}
+		commandAdapterConfig := map[string]any{"type": "object", "additionalProperties": false, "properties": commandConfigProperties}
+		localProjectionConfig := map[string]any{"type": "object", "additionalProperties": false, "required": []string{"contracts", "coverage"}, "properties": projectionConfigProperties}
+		item := map[string]any{
+			"type": "object", "additionalProperties": false, "required": []string{"name", "type", "version"}, "properties": adapterProperties,
+			"oneOf": []any{
+				map[string]any{"properties": map[string]any{"type": map[string]any{"const": "command"}, "config": commandAdapterConfig}},
+				map[string]any{"required": []string{"config"}, "properties": map[string]any{"type": map[string]any{"const": "local-projection"}, "version": map[string]any{"const": "v1alpha1"}, "config": localProjectionConfig}},
+			},
+		}
 		adaptersShape["items"] = item
 	}
 	if exportsShape, ok := properties["exports"].(map[string]any); ok {

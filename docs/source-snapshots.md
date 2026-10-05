@@ -36,6 +36,8 @@ The deterministic `Compare` operation consumes two snapshots and returns a `Chan
 | Pin an offline content package | `internal/host.PackContent` and its CLI caller | The pack operation receives provenance explicitly. The Git CLI supplies `git:<full-commit-id>`, preserving the existing Project pin format and provenance. Archive SHA-256 remains a separate content integrity check. |
 | Select CLI input | `internal/host/cli` behind thin `cmd/markitect` | Existing `--revision` and `--base` behavior stays intact: Git accepts revision selectors such as branches and `HEAD`, then the adapter records the resolved full commit ID. The fixed-run manifest and stored review-evidence workflows require full Git commit IDs. No new selector syntax is added. |
 
+Fixed Git acquisition is rooted at the selected Git repository root. Supplying a nested directory with a repository-wide revision does not rebase that commit tree into a nested Project. For an independently verified example or subproject, use a separate explicit Git repository/snapshot; do not silently substitute its configuration for the root Project.
+
 ## Identity and compatibility
 
 Snapshot content identity and source identity answer different questions. The digest identifies the exact paths, regular-file modes, and bytes used by the current algorithm. `ID` is an opaque identity supplied by the source, while `Provisional` separately records whether the input is fixed. They are independent fields: the live working-tree reader currently leaves `ID` empty, while the initialization preview uses a provisional snapshot with an ID. A nonempty fixed opaque ID is sufficient for application review logic to require that recorded evidence matches the selected fixed state.

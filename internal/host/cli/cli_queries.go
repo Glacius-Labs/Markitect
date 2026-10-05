@@ -116,6 +116,15 @@ func runImpact(o commandOptions, p *host.Project, emit func(any) int, fail func(
 	if err != nil {
 		return fail(err)
 	}
+
+	result.BaseProjections, err = host.ProjectionImpact(previous, result.Affected, result.Changed)
+	if err != nil {
+		return fail(err)
+	}
+	result.CandidateProjections, err = host.ProjectionImpact(p, result.Affected, result.Changed)
+	if err != nil {
+		return fail(err)
+	}
 	if code := emit(result); code != 0 {
 		return code
 	}

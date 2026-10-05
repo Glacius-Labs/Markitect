@@ -1,0 +1,6 @@
+{
+  "apiVersion": "dispatch.example.org/v1alpha1",
+  "kind": "Owner",
+  "metadata": { "name": "dispatch-team", "namespace": "dispatch" },
+  "spec": { "displayName": "Dispatch team" }
+}
