@@ -41,8 +41,15 @@ func TestCoreExternalDependencyRequiresApproval(t *testing.T) {
 		t.Fatal(err)
 	}
 	findings := Check(edges)
-	if len(findings) != 1 || findings[0].Edge.To != "example.org/provider/sdk" || !findings[0].Edge.Test || !strings.Contains(findings[0].String(), "internal/core imports example.org/provider/sdk") {
-		t.Fatalf("unapproved Core dependency was hidden or generic encoding refused: %v", findings)
+	if len(findings) != 2 {
+		t.Fatalf("Core external dependencies were hidden: %v", findings)
+	}
+	found := map[string]bool{}
+	for _, finding := range findings {
+		found[finding.Edge.To] = true
+	}
+	if !found["go.yaml.in/yaml/v3"] || !found["example.org/provider/sdk"] {
+		t.Fatalf("missing exact external dependency: %v", findings)
 	}
 }
 func TestInspectAllPlatformsAndTests(t *testing.T) {

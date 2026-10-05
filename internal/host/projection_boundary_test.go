@@ -2,7 +2,7 @@ package host
 
 import (
 	"github.com/Glacius-Labs/Markitect/internal/core/snapshot"
-	"github.com/Glacius-Labs/Markitect/internal/modules/projections"
+	"github.com/Glacius-Labs/Markitect/internal/host/compat/v0_13/consumers/projections"
 	"os"
 	"path/filepath"
 	"runtime"

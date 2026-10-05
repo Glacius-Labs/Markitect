@@ -1,0 +1,8 @@
+apiVersion: commerce.example.org/v1
+kind: EffectAxis
+metadata:
+  namespace: commerce
+  name: create-order-effects
+purpose: Keeps externally visible order effects behind the application boundary.
+spec:
+  boundary: application

@@ -5,7 +5,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/host/authoring"
 	"sort"
 
-	"github.com/Glacius-Labs/Markitect/internal/core"
+	core "github.com/Glacius-Labs/Markitect/internal/host/compat/v0_13/kernel"
 )
 
 // PolicyResultChange compares one stable Domain constraint/subject identity

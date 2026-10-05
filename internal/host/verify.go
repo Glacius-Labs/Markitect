@@ -15,6 +15,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Glacius-Labs/Markitect/internal/core/snapshot"
 	"github.com/Glacius-Labs/Markitect/internal/infrastructure/source"
 )
 
@@ -78,13 +79,26 @@ func verifyRepositoryScoped(p *Project, timeout time.Duration, immutableInputs b
 	if p == nil || p.Snapshot == nil || p.Graph == nil || p.Graph.Project == nil {
 		return nil, &VerifyError{Kind: "incomplete-evidence", Err: errors.New("a parsed project and source snapshot are required")}
 	}
-	if p.Snapshot.Provisional {
+	return verifySnapshotScoped(p.Snapshot, p.Graph.Project.Spec.Checks, timeout, immutableInputs)
+}
+
+// VerifySnapshotChecks reuses the fixed-snapshot verifier for explicitly supplied
+// checks. It does not authenticate check ownership or prove semantic sufficiency.
+func VerifySnapshotChecks(captured *snapshot.Snapshot, checks []authoring.Check) ([]GateResult, error) {
+	return verifySnapshotScoped(captured, checks, verifyDefaultTime, true)
+}
+
+func verifySnapshotScoped(captured *snapshot.Snapshot, checks []authoring.Check, timeout time.Duration, immutableInputs bool) ([]GateResult, error) {
+	if captured == nil {
+		return nil, &VerifyError{Kind: "incomplete-evidence", Err: errors.New("a source snapshot is required")}
+	}
+	if captured.Provisional {
 		return nil, &VerifyError{Kind: "incomplete-evidence", Err: errors.New("verify requires --revision; working trees cannot provide immutable evidence")}
 	}
 	if timeout <= 0 {
 		return nil, &VerifyError{Kind: "incomplete-evidence", Err: errors.New("check timeout must be positive")}
 	}
-	commands, err := planVerifyCommands(p.Graph.Project.Spec.Checks)
+	commands, err := planVerifyCommands(checks)
 	if err != nil {
 		return nil, err
 	}
@@ -97,7 +111,7 @@ func verifyRepositoryScoped(p *Project, timeout time.Duration, immutableInputs b
 	if err != nil {
 		return nil, &VerifyError{Kind: "incomplete-evidence", Err: err}
 	}
-	if err = source.Materialize(p.Snapshot, temporary); err != nil {
+	if err = source.Materialize(captured, temporary); err != nil {
 		return nil, &VerifyError{Kind: "incomplete-evidence", Err: err}
 	}
 
@@ -118,14 +132,14 @@ func verifyRepositoryScoped(p *Project, timeout time.Duration, immutableInputs b
 			if err != nil {
 				return results, &VerifyError{Kind: "incomplete-evidence", Gate: command.name, Err: err}
 			}
-			if err = source.Materialize(p.Snapshot, directory); err != nil {
+			if err = source.Materialize(captured, directory); err != nil {
 				os.RemoveAll(directory)
 				return results, &VerifyError{Kind: "incomplete-evidence", Gate: command.name, Err: err}
 			}
 		}
 		result, runErr := runVerifyCommand(command, executable, directory, timeout)
 		if immutableInputs {
-			integrityErr := verifySnapshotFilesUnchanged(p, directory)
+			integrityErr := snapshotFilesUnchanged(captured, directory)
 			os.RemoveAll(directory)
 			if integrityErr != nil {
 				result.ExitCode = -1
@@ -264,8 +278,12 @@ func (w *boundedVerifyOutput) exceeded() bool {
 }
 
 func verifySnapshotFilesUnchanged(p *Project, directory string) error {
-	names := make([]string, 0, len(p.Snapshot.Files))
-	for name := range p.Snapshot.Files {
+	return snapshotFilesUnchanged(p.Snapshot, directory)
+}
+
+func snapshotFilesUnchanged(captured *snapshot.Snapshot, directory string) error {
+	names := make([]string, 0, len(captured.Files))
+	for name := range captured.Files {
 		names = append(names, name)
 	}
 	sort.Strings(names)
@@ -278,11 +296,11 @@ func verifySnapshotFilesUnchanged(p *Project, directory string) error {
 		if err != nil || !info.Mode().IsRegular() {
 			return fmt.Errorf("check removed or replaced snapshot file %s", name)
 		}
-		if runtime.GOOS != "windows" && (info.Mode().Perm()&0111 != 0) != (p.Snapshot.Modes[name] == "100755") {
+		if runtime.GOOS != "windows" && (info.Mode().Perm()&0111 != 0) != (captured.Modes[name] == "100755") {
 			return fmt.Errorf("check changed snapshot executable mode %s", name)
 		}
 		data, err := os.ReadFile(dest)
-		if err != nil || !bytes.Equal(data, p.Snapshot.Files[name]) {
+		if err != nil || !bytes.Equal(data, captured.Files[name]) {
 			return fmt.Errorf("check changed snapshot bytes %s", name)
 		}
 	}

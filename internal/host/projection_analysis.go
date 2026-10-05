@@ -6,8 +6,8 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/Glacius-Labs/Markitect/internal/host/compat/v0_13/consumers/projections"
 	"github.com/Glacius-Labs/Markitect/internal/infrastructure/source"
-	"github.com/Glacius-Labs/Markitect/internal/modules/projections"
 )
 
 // ProjectionInclusion maps directly matched semantic source resources to one

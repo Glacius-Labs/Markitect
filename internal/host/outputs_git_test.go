@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/internal/core"
 	"github.com/Glacius-Labs/Markitect/internal/host/authoring"
+	core "github.com/Glacius-Labs/Markitect/internal/host/compat/v0_13/kernel"
 	"github.com/Glacius-Labs/Markitect/internal/infrastructure/source"
 )
 

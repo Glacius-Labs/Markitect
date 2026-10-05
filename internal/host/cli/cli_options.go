@@ -74,7 +74,7 @@ func parseOptions(command string, args []string, allowed map[string]bool, out, e
 	coverage := fs.String("coverage", "", "explicit repository-relative artifact accounting configuration (projection)")
 	reviewConfig := fs.String("config", "", "repository-relative review configuration in the fixed snapshot")
 	reviewReport := fs.String("report", "", "completed reviewer report to record (local UTF-8 file)")
-	reviewEvidence := fs.String("evidence", "", "previous advisory review record to evaluate (local YAML file)")
+	reviewEvidence := fs.String("evidence", "", "previous advisory review record or canonical Projection Record array (local file)")
 	fs.Usage = func() {
 		fmt.Fprintf(out, "usage: markitect %s [options]\n", command)
 		fs.VisitAll(func(f *flag.Flag) {
@@ -95,6 +95,7 @@ func parseOptions(command string, args []string, allowed map[string]bool, out, e
 	}
 	invalid := ""
 	analyzePolicyFailuresProvided := false
+	canonicalSelectors := map[string]bool{}
 	fs.Visit(func(f *flag.Flag) {
 		if f.Name == "analyze-policy-failures" {
 			analyzePolicyFailuresProvided = true
@@ -102,12 +103,16 @@ func parseOptions(command string, args []string, allowed map[string]bool, out, e
 		if !allowed[f.Name] {
 			invalid = f.Name
 		}
+		if command == "canonical" && (f.Name == "api-version" || f.Name == "kind" || f.Name == "namespace" || f.Name == "name") {
+			canonicalSelectors[f.Name] = true
+		}
 	})
 	if invalid != "" {
 		fmt.Fprintf(errout, "--%s does not apply to %s\n", invalid, command)
 		return commandOptions{}, 2, true
 	}
-	if *write && ((command != "render" && command != "schema" && command != "format" && command != "install" && command != "init" && command != "reconcile" && command != "prepare" && command != "projection") || *revision != "" || *check || ((command == "reconcile" || command == "projection") && *action != "apply")) {
+	canonicalApply := command == "canonical" && *action == "apply"
+	if *write && ((command != "render" && command != "schema" && command != "format" && command != "install" && command != "init" && command != "reconcile" && command != "prepare" && command != "projection" && !canonicalApply) || (*revision != "" && !canonicalApply) || *check || ((command == "reconcile" || command == "projection" || command == "canonical") && *action != "apply")) {
 		fmt.Fprintln(errout, "--write supports render, format, schema, install, init or reconcile/projection --action apply on the working tree; prepare writes a reviewed external capture")
 		return commandOptions{}, 2, true
 	}
@@ -160,6 +165,87 @@ func parseOptions(command string, args []string, allowed map[string]bool, out, e
 		}
 		if *action != "apply" && *write {
 			fmt.Fprintln(errout, "--write applies only to reconcile --action apply")
+			return commandOptions{}, 2, true
+		}
+	}
+	if command == "canonical" {
+		if *action != "model" && *action != "modules" && *action != "context" && *action != "request" && *action != "plan" && *action != "apply" && *action != "impact" && *action != "reconcile-plan" && *action != "verify" {
+			fmt.Fprintln(errout, "canonical requires --action model, modules, context, request, impact, reconcile-plan, plan, apply or verify")
+			return commandOptions{}, 2, true
+		}
+		if *reviewConfig == "" {
+			fmt.Fprintln(errout, "canonical requires --config in the selected source snapshot")
+			return commandOptions{}, 2, true
+		}
+		selectorFields := []string{*apiVersion, *kind, *namespace, *name}
+		selectedCount := 0
+		for _, field := range selectorFields {
+			if field != "" {
+				selectedCount++
+			}
+		}
+		if *action == "context" || *action == "request" || *action == "plan" || *action == "apply" {
+			if !canonicalSelectors["api-version"] || !canonicalSelectors["kind"] || !canonicalSelectors["namespace"] || !canonicalSelectors["name"] || *apiVersion == "" || *kind == "" || *name == "" {
+				fmt.Fprintf(errout, "canonical %s requires exact --api-version, --kind, --namespace and --name\n", *action)
+				return commandOptions{}, 2, true
+			}
+		} else if selectedCount != 0 || len(canonicalSelectors) != 0 {
+			fmt.Fprintln(errout, "canonical --api-version, --kind, --namespace and --name apply only to context, request, plan or apply")
+			return commandOptions{}, 2, true
+		}
+		if *write && !canonicalApply {
+			fmt.Fprintln(errout, "canonical actions are read-only")
+			return commandOptions{}, 2, true
+		}
+		if (*action == "request" || *action == "plan" || *action == "apply" || *action == "impact" || *action == "reconcile-plan" || *action == "verify") && !fullGitCommitID.MatchString(*revision) {
+			fmt.Fprintf(errout, "canonical %s requires a full immutable --revision\n", *action)
+			return commandOptions{}, 2, true
+		}
+		if *action == "impact" || *action == "reconcile-plan" || *action == "verify" {
+			if !fullGitCommitID.MatchString(*base) {
+				fmt.Fprintf(errout, "canonical %s requires a full immutable --base revision\n", *action)
+				return commandOptions{}, 2, true
+			}
+			if *write || *plan != "" || *reviewReport != "" || *expect != "" {
+				fmt.Fprintf(errout, "canonical %s is read-only and does not accept --plan, --report or --expect\n", *action)
+				return commandOptions{}, 2, true
+			}
+			if *action == "impact" && *reviewEvidence != "" {
+				fmt.Fprintln(errout, "canonical impact does not accept --evidence")
+				return commandOptions{}, 2, true
+			}
+			if *action == "verify" && *reviewEvidence == "" {
+				fmt.Fprintln(errout, "canonical verify requires --evidence with one Projection Record")
+				return commandOptions{}, 2, true
+			}
+		} else if *base != "" {
+			fmt.Fprintln(errout, "canonical --base applies only to --action impact, reconcile-plan or verify")
+			return commandOptions{}, 2, true
+		}
+		if *action == "plan" {
+			if *write || *plan != "" || *expect != "" {
+				fmt.Fprintln(errout, "canonical plan is read-only; --plan and --expect apply only to apply")
+				return commandOptions{}, 2, true
+			}
+		} else if *action == "apply" {
+			if !*write || *plan == "" || *expect == "" {
+				fmt.Fprintln(errout, "canonical apply requires --write, --plan and --expect")
+				return commandOptions{}, 2, true
+			}
+		} else if *action != "impact" && *action != "reconcile-plan" && (*write || *plan != "" || *reviewReport != "" || *expect != "") {
+			fmt.Fprintln(errout, "canonical --write, --plan, --report and --expect apply only to apply; --report is also allowed for plan candidates")
+			return commandOptions{}, 2, true
+		}
+		if *action == "reconcile-plan" && (*plan != "" || *reviewReport != "" || *expect != "") {
+			fmt.Fprintln(errout, "canonical reconcile-plan does not accept --plan, --report or --expect")
+			return commandOptions{}, 2, true
+		}
+		if *reviewEvidence != "" && *action != "reconcile-plan" && *action != "verify" {
+			fmt.Fprintln(errout, "canonical --evidence applies only to --action reconcile-plan or verify")
+			return commandOptions{}, 2, true
+		}
+		if *action == "plan" && *reviewReport != "" && *expect != "" {
+			fmt.Fprintln(errout, "canonical plan does not accept --expect")
 			return commandOptions{}, 2, true
 		}
 	}

@@ -2,8 +2,8 @@ package host
 
 import (
 	"encoding/json"
+	"github.com/Glacius-Labs/Markitect/internal/host/compat/v0_13/consumers/projections"
 	"github.com/Glacius-Labs/Markitect/internal/infrastructure/source"
-	"github.com/Glacius-Labs/Markitect/internal/modules/projections"
 	"os"
 	"os/exec"
 	"path/filepath"

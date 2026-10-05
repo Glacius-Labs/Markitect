@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/Glacius-Labs/Markitect/internal/core"
 	"github.com/Glacius-Labs/Markitect/internal/host"
+	core "github.com/Glacius-Labs/Markitect/internal/host/compat/v0_13/kernel"
 	"github.com/Glacius-Labs/Markitect/internal/tooling/licenses"
 )
 
@@ -40,6 +40,9 @@ func dispatchCommand(command string, o commandOptions, out, errout io.Writer, em
 	}
 	if command == "schema" {
 		return runSchema(o, errout, emit, fail)
+	}
+	if command == "canonical" {
+		return runCanonical(o, emit, fail)
 	}
 	if command == "package" {
 		return runPackage(o, emit, fail)

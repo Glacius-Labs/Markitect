@@ -12,7 +12,7 @@ import (
 	"strings"
 
 	"github.com/Glacius-Labs/Markitect/internal/host"
-	"github.com/Glacius-Labs/Markitect/internal/modules/dotnet"
+	"github.com/Glacius-Labs/Markitect/internal/host/compat/v0_13/consumers/dotnet"
 	"go.yaml.in/yaml/v3"
 )
 

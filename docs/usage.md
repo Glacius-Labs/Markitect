@@ -2,6 +2,8 @@
 
 This guide records the published v0.13.0 contract alongside its v0.12.0 and v0.11.0 baselines. The v0.9.1 resource model is historical; v0.10.0 is the generic canonical-model baseline. v0.11.0 adds reusable architecture contracts, structured PolicyResults, explicit exceptions, and authoring workflows. v0.12.0 adds the bounded `same-target` assertion. v0.13.0 adds read-only policy-failure analysis, bounded selective handoff, the provider-neutral Markitect-first workflow and managed-artifact accounting. Consult [GitHub Releases](https://github.com/Glacius-Labs/Markitect/releases) for available binaries. The [engineering constitution](engineering-constitution.md) explains scope and limits; the [roadmap](implementation-plan.md) owns verified coverage and known limits.
 
+Unreleased source additionally exposes the separate [canonical intent and reconciliation alpha](canonical-projections.md). It uses Schema/Definition inputs and runtime projection bindings; it does not reinterpret published Project/Domain commands.
+
 <a id="selective-adoption-preparation-and-copy-me-unreleased-source"></a>
 ## Selective adoption preparation and Copy Me (v0.13.0)
 

@@ -1,8 +1,8 @@
 package host
 
 import (
-	"github.com/Glacius-Labs/Markitect/internal/core"
-	"github.com/Glacius-Labs/Markitect/internal/modules/markdown"
+	"github.com/Glacius-Labs/Markitect/internal/host/compat/v0_13/consumers/markdown"
+	core "github.com/Glacius-Labs/Markitect/internal/host/compat/v0_13/kernel"
 )
 
 // CheckDocumentationRouters delegates literal snapshot link checks. Links are

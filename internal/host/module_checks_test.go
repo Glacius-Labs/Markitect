@@ -10,11 +10,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/internal/core"
 	"github.com/Glacius-Labs/Markitect/internal/host/authoring"
+	"github.com/Glacius-Labs/Markitect/internal/host/compat/v0_13/consumers/githooks"
+	"github.com/Glacius-Labs/Markitect/internal/host/compat/v0_13/consumers/pipelines"
+	core "github.com/Glacius-Labs/Markitect/internal/host/compat/v0_13/kernel"
 	"github.com/Glacius-Labs/Markitect/internal/infrastructure/source"
-	"github.com/Glacius-Labs/Markitect/internal/modules/githooks"
-	"github.com/Glacius-Labs/Markitect/internal/modules/pipelines"
 	"go.yaml.in/yaml/v3"
 )
 
