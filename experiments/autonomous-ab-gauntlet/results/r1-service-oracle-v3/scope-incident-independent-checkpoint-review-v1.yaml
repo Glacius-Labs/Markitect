@@ -1,0 +1,32 @@
+schema: autonomous-ab-gauntlet/scope-incident/v1
+recorded_utc: "2026-10-05T12:31:08Z"
+source_arena: r1-service-oracle-v3
+classification: inadvertent-evidence-scope-expansion
+source_record:
+  path: decisions/service-v3-trial1-a-assessment-results-v1.json
+  sha256: 5a9a35551db9e98afd23763a178d18e7b5960929479433760170ec01355b5e12
+  scope: Service v3 trial 1 A1 assessment ledger; source and public copies had been byte-hash verified equal.
+query:
+  shell: PowerShell
+  operation: Select evaluate-direct-child location events from parsed source ledger and serialize selected fields
+  selected_fields:
+    - status
+    - exit_code
+    - assessment_arena
+    - output
+  unintended_field: output
+  cause: output was assumed to be a path or process metadata, but it contained evaluator YAML payloads.
+  emitted_output: Tool output exceeded its display budget and was truncated. The visible beginning identified task IDs "01" and "02" and exposed evaluator YAML fields including task, origin_task, arm, status, base, changed_paths, checks, failures, and owner_decision. Further payload text appeared after clipping boundaries; exact remaining task-ID set is not reconstructed or claimed.
+handling:
+  outcome_interpretation: none
+  rescore_or_acceptance: none
+  rerun_or_repair: none
+  actor_response_or_patch_inspected: false
+  b_arm_or_holdout_inspected: false
+  tasks_09_through_12_inspected: false
+  feedback_sent_to_actors: false
+  source_or_product_mutated: false
+limits:
+  - This disclosure records the accidental query and the limited visible evidence; it does not claim the full clipped payload set.
+  - The surfaced evaluator YAML is not copied into this record.
+  - Preserve the paired trial 1 exclusion; this incident creates no task verdict and no comparative claim.

@@ -1,0 +1,29 @@
+schema: autonomous-ab-source-quality-observation/v1
+source_commit: d4d7642fc8535cd67b55fc3f562c65ca241f2212
+run_id: 37307238839
+run_attempt: 1
+url: https://github.com/Glacius-Labs/Markitect/actions/runs/37307238839
+quality_jobs:
+- name: Quality (windows-latest)
+  job_id: 111753760386
+  conclusion: success
+- name: Quality (ubuntu-24.04)
+  job_id: 111753760666
+  conclusion: failure
+raw_references:
+- source: run.json
+  path: metadata-head-quality-ci-d4d7642-attempt1.raw.json
+  sha256: e73af03671b0bf7f8ce784ca4851866b6570c2666a5fdfcf5cd4bccdf96048de
+- source: failed-log.txt
+  path: metadata-head-quality-ci-d4d7642-attempt1.failed-log.txt
+  sha256: 7e08d3acabbba3d6ff1fd30bad4eb55b2894cda0dd76e4ac3756ec5ccb691095
+failure: Linux harness initial-integration test failed opening a Git objects/maintenance.lock
+  path that was absent at copy time.
+classification: Benchmark snapshot-copy race is suspected; exact cause remains unproven.
+  Not evidence of a Markitect Core/Module defect.
+action: Rerun only failed CI jobs at the unchanged exact commit; retain original failure.
+rerun_outcome: pending
+frozen_candidate_changed: false
+actor_feedback_changed: false
+holdout_opened: false
+human_acceptance: false

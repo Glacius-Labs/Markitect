@@ -1,0 +1,68 @@
+schema: service-v3-integration-selection-review/v1
+reviewed_utc: "2026-10-05T12:31:08Z"
+source_arena: r1-service-oracle-v3
+review_scope: Static selector and invocation-binding review for only the A1 mechanical integration at Task 08. No evaluator/collector rerun; no task 09-12, B arm, holdout, actor patch/response, or result-payload interpretation.
+prior_scope_incident:
+  path: decisions/scope-incident-independent-checkpoint-review-v1.yaml
+  sha256: 16b5bcf7d42272d31ae59d2bc07927c4c8fbf774e0a8174faa6d8e3e1cfbd55d
+  handling: No result payload fields were re-read for this review. The prior disclosure is retained without outcome claims; paired trial 1 remains excluded.
+source_bindings:
+  harness_main_go:
+    sha256: 3ae5ef0bfa04d4e295ca09f7226f509808369daae25974f932239694683f38a8
+    relevant_lines: [1307, 2464, 2494, 2509, 2521, 2534]
+    observations:
+      - Mechanical integration writes task_id and evaluation_task_id as "08".
+      - It writes prior_tasks_through from mainTaskID and explicitly marks parallel_integration true.
+      - Configured evaluator derives task and prior-through arguments from the native record, appends missing arguments, and preserves the direct child process result.
+  evaluator:
+    path: projects/modular-service/oracle/evaluate.ps1
+    sha256: 487044e162462be1c26eebd47129104ab49bea9a53e574a2188ea255fcb1eb2c
+    relevant_lines: [3, 6, 15, 16, 17, 93, 94, 95, 97, 98, 100, 114, 122]
+    observations:
+      - Task "08" plus an explicitly supplied PriorTasksThrough "06" activates the integration selector.
+      - The selector rejects integration scope for any task other than "08".
+      - Effective allowed-path scope for integration is the union of P01 and P02 from parallel-task-set.yaml; it does not use ordinary Task 08 allowed_paths.
+      - The script treats Task "08" as origin task 08 and runs cumulative vectors through task 08. This includes both parallel origin tasks 07 and 08 on their shared through-06 baseline.
+      - The script does not consume ordinary task-set expected_affected or evaluator assertion fields as proof of the combined integration result.
+  task_set_task_08:
+    sha256: 020fbe8d60c66ded59c32b74654a883d17e6e99d054f19b3b60a97608f3bf00e
+    relevant_line: 101
+    purpose: Ordinary sequential Task 08 is one constituent feature (origin 08); it is not by itself the combined integration contract.
+  parallel_task_set:
+    sha256: 0e79f8d118f0dce6f8bb4592c2c5cbecb3f1e2f8b6a367dd8a024b2d02cff717
+    relevant_lines: [2, 3, 6, 12, 26]
+    task_metadata:
+      P01: {origin_task_id: "07", prior_tasks_through: "06"}
+      P02: {origin_task_id: "08", prior_tasks_through: "06"}
+execution_metadata:
+  frozen_plan_sha256: 7ca2b433dddf3443ca68a2e1578e09ee4dbd0ddda42b8d9f10e549ce0f8a4008
+  control_sha256: 0ce51043f7f13c3fa6be85fa38d184abce10423ee35fb233737ed23139b70233
+  result_ledger_sha256: 5a9a35551db9e98afd23763a178d18e7b5960929479433760170ec01355b5e12
+  integration_native_record:
+    sha256: 77974443b47d376f3ef9a20777e2f94ef94be94e924fe4d30e6a92ead8e56a74
+    fields_verified_without_reading_other_native_fields:
+      run_id: modular-service-a-t01-integration
+      task_id: "08"
+      evaluation_task_id: "08"
+      prior_tasks_through: "06"
+      parallel_integration: true
+      base_revision: 57e36cc98b9c6191c469562b2dc698b1307446b3
+  planned_captures:
+    - {phase: initial, task_id: "08", evaluation_task_id: "08", prior_tasks_through: "06", native_status: completed}
+    - {phase: final, task_id: "08", evaluation_task_id: "08", prior_tasks_through: "06", native_status: completed}
+  process_records:
+    - {phase: before-repair, direct_evaluator_exit: 0, timed_out: false, invocation_log_sha256: 1ec53aa997e639a11327f22aab3b706d5ed83f5cf4a52ce23240d7b6c05d9586}
+    - {phase: final, direct_evaluator_exit: 0, timed_out: false, invocation_log_sha256: 70d3bfe201ea70dd4145e79f111c3b1adc2766eebdbdc2e7173124686a4bc85d}
+  invocation_contract: Control states exact frozen project-configured direct-child evaluator invocation with 1800-second timeout. The pinned harness derives -Task "08" and -PriorTasksThrough "06" from the native record; tool hashes and the plan are bound by control and prior final driver review.
+  raw_argv_visibility: The public process rows provide direct-child exit, timeout and invocation-log digests, but not a separate argv receipt. Raw invocation logs were not reopened because the prior scope incident showed evaluator YAML is exposed in the result event output. Exact runtime argv is therefore source-derived and digest-bound, not independently re-read in this review.
+selection_assessment:
+  frozen_intended_selector: combined P01 + P02 integration from the shared through-06 base
+  static_binding_result: matches
+  runtime_metadata_result: matches planned task/evaluation-task/prior-through/marker fields; direct child is recorded completed with exit 0 for both captures
+  ordinary_task_08_caveat: Its expected-affected/escalation metadata cannot establish combined integration truth; it represents only origin task 08. The integration selector uses P01/P02 scopes and cumulative vectors through task 08.
+  integration_truth: not adjudicated. Raw evaluator status remains descriptive; ordinary Task 08 expectations do not establish that the combined integration is correct.
+  comparison: paired trial 1 is excluded; this review does not reinstate comparison eligibility or human acceptance.
+limitations:
+  - Runtime command arguments are not separately serialized in the permitted public result fields; exact argv was not recovered from logs.
+  - Static selector correctness and matching native/plan metadata prove intended selection, not semantic correctness of the integrated application.
+  - No task 09-12, B-arm, holdout, actor response/patch, or evaluator output payload was inspected for this review.

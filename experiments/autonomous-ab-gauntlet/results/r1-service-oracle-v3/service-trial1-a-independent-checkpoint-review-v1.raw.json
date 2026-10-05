@@ -1,0 +1,556 @@
+{
+  "schema": "autonomous-ab-gauntlet-independent-checkpoint-review/v1",
+  "reviewedAt": "2026-10-05T14:00:00+02:00",
+  "scope": "Read-only independent evidence check limited to the named Service v3 trial 1 A1 tool archive, final tooling review, control/results ledgers, root validation, export-destination erratum, frozen plan/hash references, and exact source/public hash paths. No evaluator rerun, collector run, actor response/code, hidden-outcome interpretation, B task evidence, other arm, or holdout inspection.",
+  "sourceArena": "r1-service-oracle-v3",
+  "evidenceDigests": {
+    "freezeDigest": "1daa5bb43552c0437bcfd085d8afa4916094f90f03e3370f1ab2ecabdc339ee9",
+    "planSha256": "7ca2b433dddf3443ca68a2e1578e09ee4dbd0ddda42b8d9f10e549ce0f8a4008",
+    "exclusionSha256": "1dc58d017db27c31269633e5c32ee658667ec3eb7aa6234cd870e384d18bcc4a",
+    "toolArchiveSha256": "2c343a3a70f341d37698149482bdeb11043ac43d0a6b3e2bc55f541ac9447895",
+    "finalDriverReviewSha256": "0bb9842e08e83b6feace5cc1e94644301f7678b61e72af5da7c34f04c4cf99bf",
+    "controlSha256": "0ce51043f7f13c3fa6be85fa38d184abce10423ee35fb233737ed23139b70233",
+    "resultsSha256": "5a9a35551db9e98afd23763a178d18e7b5960929479433760170ec01355b5e12",
+    "rootValidationSha256": "ecda3daaaf26409347a11012f0fa601f3f658021e70a653e2364fbcb42bd006b",
+    "exportDestinationErratumSha256": "215c581e688b4f5f71097674a87032e45d27f8a85e13e4a96a713583fbdf38ed"
+  },
+  "identityAndBinding": {
+    "plannedCaptures": 22,
+    "controlPlanned": 22,
+    "resultRecorded": 22,
+    "rootValidationRecords": 22,
+    "erratumRecords": 22,
+    "uniqueIdentityCounts": {
+      "results": 22,
+      "plan": 22,
+      "erratum": 22,
+      "root": 22
+    },
+    "allIdentitySetsReconcile": true,
+    "phaseCounts": {
+      "phase": "",
+      "records": 22,
+      "rawPass": 22,
+      "actualResultAndProvenanceVerified": 22,
+      "retainedPredictedResultPresent": 11,
+      "retainedPredictedResultEqual": 11,
+      "retainedPredictedProvenancePresent": 0
+    },
+    "freezePlanAndExclusionDigestsMatch": true,
+    "controlExclusionCoversAllObservedA1RunIds": true,
+    "excludedRunIds": [
+      "modular-service-a-t01",
+      "modular-service-a-t01-integration",
+      "modular-service-a-t01-parallel-P01",
+      "modular-service-a-t01-parallel-P02",
+      "modular-service-b-t01"
+    ],
+    "assessmentStatus": "descriptive-only-paired-comparison-excluded",
+    "comparisonDisposition": "excluded paired trial1; descriptive only",
+    "humanAcceptance": false,
+    "holdoutState": "closed"
+  },
+  "terminalEvidence": {
+    "allSourceNativeAndTreeBytesMatchPlanAndRootReferences": true,
+    "all22RecordsRawStatusAndCopyStageEvaluatorExporterExitsPass": true,
+    "rootRawInitialStatuses": {
+      "passed": 11
+    },
+    "rootRawFinalStatuses": {
+      "passed": 11
+    },
+    "rootChildExitSummary": "all22 zero, no timeout",
+    "nativeCaptureFrozenInputsUnchangedAsRecorded": true,
+    "records": [
+      {
+        "runId": "modular-service-a-t01",
+        "taskId": "01",
+        "captureRole": "initial",
+        "phase": "before-repair",
+        "runRole": "sequential",
+        "evaluationTaskId": "01",
+        "priorTasksThrough": null,
+        "nativeAndTreeBytesMatch": true,
+        "statusAndExitEvidencePass": true,
+        "actualResultAndProvenanceMatch": true,
+        "retainedPredictedResultExists": false,
+        "retainedPredictedResultHashEqualsActual": false,
+        "retainedPredictedProvenanceExists": false,
+        "retainedPredictedProvenanceHashEqualsActual": false
+      },
+      {
+        "runId": "modular-service-a-t01",
+        "taskId": "02",
+        "captureRole": "initial",
+        "phase": "before-repair",
+        "runRole": "sequential",
+        "evaluationTaskId": "02",
+        "priorTasksThrough": null,
+        "nativeAndTreeBytesMatch": true,
+        "statusAndExitEvidencePass": true,
+        "actualResultAndProvenanceMatch": true,
+        "retainedPredictedResultExists": false,
+        "retainedPredictedResultHashEqualsActual": false,
+        "retainedPredictedProvenanceExists": false,
+        "retainedPredictedProvenanceHashEqualsActual": false
+      },
+      {
+        "runId": "modular-service-a-t01",
+        "taskId": "03",
+        "captureRole": "initial",
+        "phase": "before-repair",
+        "runRole": "sequential",
+        "evaluationTaskId": "03",
+        "priorTasksThrough": null,
+        "nativeAndTreeBytesMatch": true,
+        "statusAndExitEvidencePass": true,
+        "actualResultAndProvenanceMatch": true,
+        "retainedPredictedResultExists": false,
+        "retainedPredictedResultHashEqualsActual": false,
+        "retainedPredictedProvenanceExists": false,
+        "retainedPredictedProvenanceHashEqualsActual": false
+      },
+      {
+        "runId": "modular-service-a-t01",
+        "taskId": "04",
+        "captureRole": "initial",
+        "phase": "before-repair",
+        "runRole": "sequential",
+        "evaluationTaskId": "04",
+        "priorTasksThrough": null,
+        "nativeAndTreeBytesMatch": true,
+        "statusAndExitEvidencePass": true,
+        "actualResultAndProvenanceMatch": true,
+        "retainedPredictedResultExists": false,
+        "retainedPredictedResultHashEqualsActual": false,
+        "retainedPredictedProvenanceExists": false,
+        "retainedPredictedProvenanceHashEqualsActual": false
+      },
+      {
+        "runId": "modular-service-a-t01",
+        "taskId": "05",
+        "captureRole": "initial",
+        "phase": "before-repair",
+        "runRole": "sequential",
+        "evaluationTaskId": "05",
+        "priorTasksThrough": null,
+        "nativeAndTreeBytesMatch": true,
+        "statusAndExitEvidencePass": true,
+        "actualResultAndProvenanceMatch": true,
+        "retainedPredictedResultExists": false,
+        "retainedPredictedResultHashEqualsActual": false,
+        "retainedPredictedProvenanceExists": false,
+        "retainedPredictedProvenanceHashEqualsActual": false
+      },
+      {
+        "runId": "modular-service-a-t01",
+        "taskId": "06",
+        "captureRole": "initial",
+        "phase": "before-repair",
+        "runRole": "sequential",
+        "evaluationTaskId": "06",
+        "priorTasksThrough": null,
+        "nativeAndTreeBytesMatch": true,
+        "statusAndExitEvidencePass": true,
+        "actualResultAndProvenanceMatch": true,
+        "retainedPredictedResultExists": false,
+        "retainedPredictedResultHashEqualsActual": false,
+        "retainedPredictedProvenanceExists": false,
+        "retainedPredictedProvenanceHashEqualsActual": false
+      },
+      {
+        "runId": "modular-service-a-t01",
+        "taskId": "07",
+        "captureRole": "initial",
+        "phase": "before-repair",
+        "runRole": "sequential",
+        "evaluationTaskId": "07",
+        "priorTasksThrough": null,
+        "nativeAndTreeBytesMatch": true,
+        "statusAndExitEvidencePass": true,
+        "actualResultAndProvenanceMatch": true,
+        "retainedPredictedResultExists": false,
+        "retainedPredictedResultHashEqualsActual": false,
+        "retainedPredictedProvenanceExists": false,
+        "retainedPredictedProvenanceHashEqualsActual": false
+      },
+      {
+        "runId": "modular-service-a-t01",
+        "taskId": "08",
+        "captureRole": "initial",
+        "phase": "before-repair",
+        "runRole": "sequential",
+        "evaluationTaskId": "08",
+        "priorTasksThrough": null,
+        "nativeAndTreeBytesMatch": true,
+        "statusAndExitEvidencePass": true,
+        "actualResultAndProvenanceMatch": true,
+        "retainedPredictedResultExists": false,
+        "retainedPredictedResultHashEqualsActual": false,
+        "retainedPredictedProvenanceExists": false,
+        "retainedPredictedProvenanceHashEqualsActual": false
+      },
+      {
+        "runId": "modular-service-a-t01-integration",
+        "taskId": "08",
+        "captureRole": "initial",
+        "phase": "before-repair",
+        "runRole": "mechanical-integration",
+        "evaluationTaskId": "08",
+        "priorTasksThrough": "06",
+        "nativeAndTreeBytesMatch": true,
+        "statusAndExitEvidencePass": true,
+        "actualResultAndProvenanceMatch": true,
+        "retainedPredictedResultExists": false,
+        "retainedPredictedResultHashEqualsActual": false,
+        "retainedPredictedProvenanceExists": false,
+        "retainedPredictedProvenanceHashEqualsActual": false
+      },
+      {
+        "runId": "modular-service-a-t01-parallel-P01",
+        "taskId": "P01",
+        "captureRole": "initial",
+        "phase": "before-repair",
+        "runRole": "isolated-fork",
+        "evaluationTaskId": "P01",
+        "priorTasksThrough": "06",
+        "nativeAndTreeBytesMatch": true,
+        "statusAndExitEvidencePass": true,
+        "actualResultAndProvenanceMatch": true,
+        "retainedPredictedResultExists": false,
+        "retainedPredictedResultHashEqualsActual": false,
+        "retainedPredictedProvenanceExists": false,
+        "retainedPredictedProvenanceHashEqualsActual": false
+      },
+      {
+        "runId": "modular-service-a-t01-parallel-P02",
+        "taskId": "P02",
+        "captureRole": "initial",
+        "phase": "before-repair",
+        "runRole": "isolated-fork",
+        "evaluationTaskId": "P02",
+        "priorTasksThrough": "06",
+        "nativeAndTreeBytesMatch": true,
+        "statusAndExitEvidencePass": true,
+        "actualResultAndProvenanceMatch": true,
+        "retainedPredictedResultExists": false,
+        "retainedPredictedResultHashEqualsActual": false,
+        "retainedPredictedProvenanceExists": false,
+        "retainedPredictedProvenanceHashEqualsActual": false
+      },
+      {
+        "runId": "modular-service-a-t01",
+        "taskId": "01",
+        "captureRole": "final",
+        "phase": "final",
+        "runRole": "sequential",
+        "evaluationTaskId": "01",
+        "priorTasksThrough": null,
+        "nativeAndTreeBytesMatch": true,
+        "statusAndExitEvidencePass": true,
+        "actualResultAndProvenanceMatch": true,
+        "retainedPredictedResultExists": true,
+        "retainedPredictedResultHashEqualsActual": true,
+        "retainedPredictedProvenanceExists": false,
+        "retainedPredictedProvenanceHashEqualsActual": false
+      },
+      {
+        "runId": "modular-service-a-t01",
+        "taskId": "02",
+        "captureRole": "final",
+        "phase": "final",
+        "runRole": "sequential",
+        "evaluationTaskId": "02",
+        "priorTasksThrough": null,
+        "nativeAndTreeBytesMatch": true,
+        "statusAndExitEvidencePass": true,
+        "actualResultAndProvenanceMatch": true,
+        "retainedPredictedResultExists": true,
+        "retainedPredictedResultHashEqualsActual": true,
+        "retainedPredictedProvenanceExists": false,
+        "retainedPredictedProvenanceHashEqualsActual": false
+      },
+      {
+        "runId": "modular-service-a-t01",
+        "taskId": "03",
+        "captureRole": "final",
+        "phase": "final",
+        "runRole": "sequential",
+        "evaluationTaskId": "03",
+        "priorTasksThrough": null,
+        "nativeAndTreeBytesMatch": true,
+        "statusAndExitEvidencePass": true,
+        "actualResultAndProvenanceMatch": true,
+        "retainedPredictedResultExists": true,
+        "retainedPredictedResultHashEqualsActual": true,
+        "retainedPredictedProvenanceExists": false,
+        "retainedPredictedProvenanceHashEqualsActual": false
+      },
+      {
+        "runId": "modular-service-a-t01",
+        "taskId": "04",
+        "captureRole": "final",
+        "phase": "final",
+        "runRole": "sequential",
+        "evaluationTaskId": "04",
+        "priorTasksThrough": null,
+        "nativeAndTreeBytesMatch": true,
+        "statusAndExitEvidencePass": true,
+        "actualResultAndProvenanceMatch": true,
+        "retainedPredictedResultExists": true,
+        "retainedPredictedResultHashEqualsActual": true,
+        "retainedPredictedProvenanceExists": false,
+        "retainedPredictedProvenanceHashEqualsActual": false
+      },
+      {
+        "runId": "modular-service-a-t01",
+        "taskId": "05",
+        "captureRole": "final",
+        "phase": "final",
+        "runRole": "sequential",
+        "evaluationTaskId": "05",
+        "priorTasksThrough": null,
+        "nativeAndTreeBytesMatch": true,
+        "statusAndExitEvidencePass": true,
+        "actualResultAndProvenanceMatch": true,
+        "retainedPredictedResultExists": true,
+        "retainedPredictedResultHashEqualsActual": true,
+        "retainedPredictedProvenanceExists": false,
+        "retainedPredictedProvenanceHashEqualsActual": false
+      },
+      {
+        "runId": "modular-service-a-t01",
+        "taskId": "06",
+        "captureRole": "final",
+        "phase": "final",
+        "runRole": "sequential",
+        "evaluationTaskId": "06",
+        "priorTasksThrough": null,
+        "nativeAndTreeBytesMatch": true,
+        "statusAndExitEvidencePass": true,
+        "actualResultAndProvenanceMatch": true,
+        "retainedPredictedResultExists": true,
+        "retainedPredictedResultHashEqualsActual": true,
+        "retainedPredictedProvenanceExists": false,
+        "retainedPredictedProvenanceHashEqualsActual": false
+      },
+      {
+        "runId": "modular-service-a-t01",
+        "taskId": "07",
+        "captureRole": "final",
+        "phase": "final",
+        "runRole": "sequential",
+        "evaluationTaskId": "07",
+        "priorTasksThrough": null,
+        "nativeAndTreeBytesMatch": true,
+        "statusAndExitEvidencePass": true,
+        "actualResultAndProvenanceMatch": true,
+        "retainedPredictedResultExists": true,
+        "retainedPredictedResultHashEqualsActual": true,
+        "retainedPredictedProvenanceExists": false,
+        "retainedPredictedProvenanceHashEqualsActual": false
+      },
+      {
+        "runId": "modular-service-a-t01",
+        "taskId": "08",
+        "captureRole": "final",
+        "phase": "final",
+        "runRole": "sequential",
+        "evaluationTaskId": "08",
+        "priorTasksThrough": null,
+        "nativeAndTreeBytesMatch": true,
+        "statusAndExitEvidencePass": true,
+        "actualResultAndProvenanceMatch": true,
+        "retainedPredictedResultExists": true,
+        "retainedPredictedResultHashEqualsActual": true,
+        "retainedPredictedProvenanceExists": false,
+        "retainedPredictedProvenanceHashEqualsActual": false
+      },
+      {
+        "runId": "modular-service-a-t01-integration",
+        "taskId": "08",
+        "captureRole": "final",
+        "phase": "final",
+        "runRole": "mechanical-integration",
+        "evaluationTaskId": "08",
+        "priorTasksThrough": "06",
+        "nativeAndTreeBytesMatch": true,
+        "statusAndExitEvidencePass": true,
+        "actualResultAndProvenanceMatch": true,
+        "retainedPredictedResultExists": true,
+        "retainedPredictedResultHashEqualsActual": true,
+        "retainedPredictedProvenanceExists": false,
+        "retainedPredictedProvenanceHashEqualsActual": false
+      },
+      {
+        "runId": "modular-service-a-t01-parallel-P01",
+        "taskId": "P01",
+        "captureRole": "final",
+        "phase": "final",
+        "runRole": "isolated-fork",
+        "evaluationTaskId": "P01",
+        "priorTasksThrough": "06",
+        "nativeAndTreeBytesMatch": true,
+        "statusAndExitEvidencePass": true,
+        "actualResultAndProvenanceMatch": true,
+        "retainedPredictedResultExists": true,
+        "retainedPredictedResultHashEqualsActual": true,
+        "retainedPredictedProvenanceExists": false,
+        "retainedPredictedProvenanceHashEqualsActual": false
+      },
+      {
+        "runId": "modular-service-a-t01-parallel-P02",
+        "taskId": "P02",
+        "captureRole": "final",
+        "phase": "final",
+        "runRole": "isolated-fork",
+        "evaluationTaskId": "P02",
+        "priorTasksThrough": "06",
+        "nativeAndTreeBytesMatch": true,
+        "statusAndExitEvidencePass": true,
+        "actualResultAndProvenanceMatch": true,
+        "retainedPredictedResultExists": true,
+        "retainedPredictedResultHashEqualsActual": true,
+        "retainedPredictedProvenanceExists": false,
+        "retainedPredictedProvenanceHashEqualsActual": false
+      }
+    ]
+  },
+  "exportDestination": {
+    "actualOutputsVerifiedByHash": 22,
+    "actualResultAndProvenanceByteHashesAgreeWithRootValidationAndErratum": true,
+    "destinationCorrection": "Driver v3 records derived-arena export targets; exporter resolves original arena from source-capture provenance and writes there. Original event/ledger bytes are preserved. Root found actual outputs, not substituted outputs, and verified exact byte hashes.",
+    "phaseCounts": [
+      {
+        "phase": "before-repair",
+        "records": 11,
+        "actualResultAndProvenanceVerified": 11,
+        "retainedPredictedResultPresent": 0,
+        "retainedPredictedResultEqual": 0,
+        "retainedPredictedProvenancePresent": 0
+      },
+      {
+        "phase": "final",
+        "records": 11,
+        "actualResultAndProvenanceVerified": 11,
+        "retainedPredictedResultPresent": 11,
+        "retainedPredictedResultEqual": 11,
+        "retainedPredictedProvenancePresent": 0
+      }
+    ],
+    "interpretation": "All 22 actual result/provenance files at paths recorded as actual were present and byte-hash matched. Initial (before-repair) retained predicted result/provenance paths were absent. Final retained predicted result paths existed in all 11 cases and their bytes hash-equal the actual result; predicted provenance paths were absent in all 11. The discrepancy is path/location metadata, not a differing exported evaluation byte. No file contents were inspected."
+  },
+  "toolBindings": {
+    "archiveFiles": [
+      {
+        "name": "assess-service-v3-trial1-a-v3.ps1",
+        "manifestSha256": "4463c8382d5cb7bb5980fc7a8f600f38c8b55d08225d914351173522f067028d",
+        "observedSha256": "4463c8382d5cb7bb5980fc7a8f600f38c8b55d08225d914351173522f067028d",
+        "matches": true
+      },
+      {
+        "name": "service-v3-t1a-assessment-plan-v1.json",
+        "manifestSha256": "7ca2b433dddf3443ca68a2e1578e09ee4dbd0ddda42b8d9f10e549ce0f8a4008",
+        "observedSha256": "7ca2b433dddf3443ca68a2e1578e09ee4dbd0ddda42b8d9f10e549ce0f8a4008",
+        "matches": true
+      },
+      {
+        "name": "copy-frozen-inputs-v3.exe",
+        "manifestSha256": "71ad83ffb54e20cf68997906e54d7859d03dc1d49728f00c61b80d41804042ea",
+        "observedSha256": "71ad83ffb54e20cf68997906e54d7859d03dc1d49728f00c61b80d41804042ea",
+        "matches": true
+      },
+      {
+        "name": "stage-captured-snapshot-v2.exe",
+        "manifestSha256": "11eaf8f1261cb783979f17d16154d40c05b238b0077b38804e8594ace3399ec8",
+        "observedSha256": "11eaf8f1261cb783979f17d16154d40c05b238b0077b38804e8594ace3399ec8",
+        "matches": true
+      },
+      {
+        "name": "export-captured-evaluation-v5.exe",
+        "manifestSha256": "c2c2cb603b4f184acb9fefc820b4e8c7cb262766db5cf95f0119761a8847b502",
+        "observedSha256": "c2c2cb603b4f184acb9fefc820b4e8c7cb262766db5cf95f0119761a8847b502",
+        "matches": true
+      }
+    ],
+    "allArchiveFilesMatch": true,
+    "controlMatchesFinalReviewBindings": true,
+    "controlGoToolchainSha256": "d3ccdb604eafa6031133aefe1a3db24f0bb7362b857bc2125ac4e4c178b4b490",
+    "goToolchainBytesIndependentlyRehashed": false,
+    "note": "The five archived driver/plan/copier/stager/exporter files hash-match. Harness/oracle/Go values are cross-bound by control/review digests; this review did not independently locate/re-hash harness/oracle/toolchain bytes."
+  },
+  "preUseCorrections": {
+    "gitIndexDigestCorrection": "First verifier used LF ls-files --stage and failed before writing output. Source and copy entries were equal; recorded hash uses ls-files --stage -z. Separate v2 verifier uses the proved NUL format. No source/export/status changed.",
+    "mechanicalIntegrationResponseBoundary": "Second verifier assumed an actor response for mechanical integration and stopped before public writes. Separate v3 requires explicit parallel_integration=true when response fields are absent; no response is fabricated.",
+    "assessment": "Both corrections are recorded as occurring before public result writes; this independent review did not execute or reconstruct them."
+  },
+  "integrationCardSelection": {
+    "planRunId": "modular-service-a-t01-integration",
+    "taskId": "08",
+    "evaluationTaskId": "08",
+    "priorTasksThrough": "06",
+    "explicitPlanBindingPresent": true,
+    "expectedFrozenCardSelectionIndependentlyVerified": false,
+    "blocker": "Scoped evidence binds task ID and invocation tooling, but does not expose an independent frozen task-card identity/hash or selector receipt for mechanical integration. Before interpreting this capture beyond a descriptive byte-bound run, explicitly verify that integration selected the intended expected card, without reading actor response or expanding into unapproved result inspection."
+  },
+  "limitations": [
+    "This is a technical evidence review, not human acceptance, task correctness adjudication, paired winner, productivity claim, or release decision.",
+    "Paired trial 1 comparison is explicitly excluded; raw evaluator status remains descriptive only.",
+    "Assessment status is descriptive-only-paired-comparison-excluded; human acceptance is false.",
+    "Integration expected-card selection remains unverified within authorized scope.",
+    "No claim is made about B arm, any other arm, or holdout.",
+    "Hash equality proves byte identity against the cited recorded hashes, not authentication or semantic correctness."
+  ],
+  "publicCopies": [
+    {
+      "name": "service-trial1-a-tool-archive-v3.json",
+      "sourceSha256": "2c343a3a70f341d37698149482bdeb11043ac43d0a6b3e2bc55f541ac9447895",
+      "publicSha256": "2c343a3a70f341d37698149482bdeb11043ac43d0a6b3e2bc55f541ac9447895",
+      "identical": true
+    },
+    {
+      "name": "service-trial1-a-final-driver-review-v3.json",
+      "sourceSha256": "0bb9842e08e83b6feace5cc1e94644301f7678b61e72af5da7c34f04c4cf99bf",
+      "publicSha256": "0bb9842e08e83b6feace5cc1e94644301f7678b61e72af5da7c34f04c4cf99bf",
+      "identical": true
+    },
+    {
+      "name": "service-v3-trial1-a-assessment-control-v1.json",
+      "sourceSha256": "0ce51043f7f13c3fa6be85fa38d184abce10423ee35fb233737ed23139b70233",
+      "publicSha256": "0ce51043f7f13c3fa6be85fa38d184abce10423ee35fb233737ed23139b70233",
+      "identical": true
+    },
+    {
+      "name": "service-v3-trial1-a-assessment-results-v1.json",
+      "sourceSha256": "5a9a35551db9e98afd23763a178d18e7b5960929479433760170ec01355b5e12",
+      "publicSha256": "5a9a35551db9e98afd23763a178d18e7b5960929479433760170ec01355b5e12",
+      "identical": true
+    },
+    {
+      "name": "service-trial1-a-root-validation-v1.json",
+      "sourceSha256": "ecda3daaaf26409347a11012f0fa601f3f658021e70a653e2364fbcb42bd006b",
+      "publicSha256": "ecda3daaaf26409347a11012f0fa601f3f658021e70a653e2364fbcb42bd006b",
+      "identical": true
+    },
+    {
+      "name": "service-trial1-a-export-destination-erratum-v1.json",
+      "sourceSha256": "215c581e688b4f5f71097674a87032e45d27f8a85e13e4a96a713583fbdf38ed",
+      "publicSha256": "215c581e688b4f5f71097674a87032e45d27f8a85e13e4a96a713583fbdf38ed",
+      "identical": true
+    },
+    {
+      "name": "runtime-run-exclusions.yaml",
+      "sourceSha256": "1dc58d017db27c31269633e5c32ee658667ec3eb7aa6234cd870e384d18bcc4a",
+      "publicSha256": "1dc58d017db27c31269633e5c32ee658667ec3eb7aa6234cd870e384d18bcc4a",
+      "identical": true
+    }
+  ],
+  "verification": {
+    "sourceNativeTreeResultAndProvenanceHashes": true,
+    "uniqueCaptureIdentityReconciliation": true,
+    "terminalRawStatusAndExitContract": true,
+    "sourcePublicNamedMetadataCopiesIdentical": true,
+    "actualDestinationByteHashes": true,
+    "toolArchiveAndReviewBinding": true
+  }
+}

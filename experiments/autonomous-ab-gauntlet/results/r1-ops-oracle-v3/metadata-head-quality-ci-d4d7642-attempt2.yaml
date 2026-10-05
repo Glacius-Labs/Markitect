@@ -1,0 +1,31 @@
+schema: autonomous-ab-source-quality-observation/v1
+source_commit: d4d7642fc8535cd67b55fc3f562c65ca241f2212
+run_id: 37307238839
+run_attempt: 2
+url: https://github.com/Glacius-Labs/Markitect/actions/runs/37307238839
+quality_jobs:
+- name: Quality (ubuntu-24.04)
+  job_id: 111759503821
+  conclusion: success
+  completed_at: '2026-10-05T12:23:59Z'
+- name: Quality (windows-latest)
+  job_id: 111759506511
+  conclusion: success
+  completed_at: '2026-10-05T12:18:08Z'
+raw_references:
+- path: metadata-head-quality-ci-d4d7642-attempt2.raw.json
+  sha256: f419fe83948e96558036be59c2f30f92d5920eb29dddff31c181d875aabf7d98
+- path: metadata-head-quality-ci-d4d7642-attempt2.provider-attempt.raw.json
+  sha256: 00eb88a47ee6ac8d0870297c0f073852334f7084c51b94791022303637372812
+prior_failure:
+  path: metadata-head-quality-ci-d4d7642-attempt1.yaml
+  sha256: 25e4aea073fc9a12bf9160aedd5ecf03a39360a89d0e486ef24538276681a297
+observation: The failed Linux job passed when repeated at the unchanged source commit;
+  Windows success is retained from the first attempt, not claimed as a second execution.
+failure_cause: Git snapshot-copy race suspected; a passing repeat does not independently
+  prove the cause.
+source_change_for_rerun: false
+frozen_candidate_changed: false
+actor_feedback_changed: false
+holdout_opened: false
+human_acceptance: false

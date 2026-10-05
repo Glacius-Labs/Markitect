@@ -1,0 +1,46 @@
+schema: frozen-input-copier-independent-review/v1
+reviewed_utc: "2026-10-05T12:31:08Z"
+archive_path: archive.json
+archive_sha256: 0c8f994444810f71d3dcd08d0876422259d912f62ab87e54d6bf54514f377fba
+review_scope: Read-only static source/test/QA and archive-byte review of unused copier v4. No copier execution, arena/raw path reads, product mutation, or tool adoption.
+archive_binding:
+  files:
+    - {name: copy-frozen-inputs-v4.go, expected: 5b989fa908fc055ea1fdca5d902434c7afc9160f29b543cc12801bcaf38ac2f4, observed: 5b989fa908fc055ea1fdca5d902434c7afc9160f29b543cc12801bcaf38ac2f4, match: true}
+    - {name: copy-frozen-inputs-v4_test.go, expected: 62f8d3e94a2cedfaa414aa2a7eb0e525acf76f6f192b3010ded92292790058d5, observed: 62f8d3e94a2cedfaa414aa2a7eb0e525acf76f6f192b3010ded92292790058d5, match: true}
+    - {name: copy-frozen-inputs-v4.exe, expected: bb9815dad3b427372aeb0ab2bcb10eae13e54236563bda47daafbf6b501f75bd, observed: bb9815dad3b427372aeb0ab2bcb10eae13e54236563bda47daafbf6b501f75bd, match: true}
+    - {name: copy-frozen-inputs-v4-qa.log, expected: 0fdff15a66a36e4482ce40965537de5009a5a12c4e801dffd5c39cef865bf86d, observed: 0fdff15a66a36e4482ce40965537de5009a5a12c4e801dffd5c39cef865bf86d, match: true}
+  source_v3_sha256_match: true
+  test_v3_sha256_match: true
+  binary_v3_sha256_match: true
+  source_v3_sha256: 03e33c43304793b48465bcdcdb6a42c4100eeb9d5ec8f21a58ab813fb0f0eaf1
+  test_v3_sha256: 62f8d3e94a2cedfaa414aa2a7eb0e525acf76f6f192b3010ded92292790058d5
+  binary_v3_sha256: 71ad83ffb54e20cf68997906e54d7859d03dc1d49728f00c61b80d41804042ea
+change_review:
+  v3_to_v4_diff:
+    only_changes:
+      - One allowlist map entry for r1-ops-oracle-v3, digest a615190fb253cc8ff0ebcb3c02573aa9328e712d67c9f24e985610d9441b8dd6, input_count 313.
+      - A comment updates the supported allowlist count from two to three.
+    copy_algorithm_changed: false
+    tests_changed: false
+  frozen_source_binding:
+    name: r1-ops-oracle-v3
+    digest_from_archive: a615190fb253cc8ff0ebcb3c02573aa9328e712d67c9f24e985610d9441b8dd6
+    expected_input_count: 313
+    arena_contents_read: false
+    claim: The archive's allowlist metadata is byte-bound; this review did not independently validate the arena's contents or recompute that digest.
+qa_review:
+  qa_log_sha256: 0fdff15a66a36e4482ce40965537de5009a5a12c4e801dffd5c39cef865bf86d
+  archived_tests_command: go test -count=1 -v source.go tests.go; manifest records actual exit 0
+  observed_qa_log: PASS; wrong digest/count, changed input, existing destination, copy allowlist/digest and path alias cases are reported passing.
+  skipped: Windows directory-symlink test skipped because symlink privilege unavailable.
+  build_exit_recorded: 0
+  binary_sha256_match: true
+  independent_test_or_build_rerun: false
+  not_proven: [race behavior, Linux behavior, symlink test behavior on this host]
+trust_and_scope:
+  archived_copy_invocations: 0
+  old_tool_unchanged: true
+  actor_or_oracle_or_product_change: false
+  human_acceptance: false
+  adopted_or_authorized_for_copy: false
+  conclusion: Static archive consistency and the narrow allowlist-only source delta are verified. This is not permission to execute the copier, evidence that 313 arena files validate, approval to adopt v4, or a product result.

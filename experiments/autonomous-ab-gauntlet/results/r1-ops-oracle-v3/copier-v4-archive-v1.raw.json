@@ -1,0 +1,54 @@
+{
+  "schema": "frozen-input-copier-tool-archive/v1",
+  "recorded_utc": "2026-10-05T11:52:01.603999+00:00",
+  "tool_version": 4,
+  "change": "One finite allowlist entry for r1-ops-oracle-v3/a615 with313 inputs plus comment count; copy algorithm and tests unchanged.",
+  "source_v3_sha256": "03e33c43304793b48465bcdcdb6a42c4100eeb9d5ec8f21a58ab813fb0f0eaf1",
+  "test_v3_sha256": "62f8d3e94a2cedfaa414aa2a7eb0e525acf76f6f192b3010ded92292790058d5",
+  "binary_v3_sha256": "71ad83ffb54e20cf68997906e54d7859d03dc1d49728f00c61b80d41804042ea",
+  "files": [
+    {
+      "name": "copy-frozen-inputs-v4.go",
+      "sha256": "5b989fa908fc055ea1fdca5d902434c7afc9160f29b543cc12801bcaf38ac2f4"
+    },
+    {
+      "name": "copy-frozen-inputs-v4_test.go",
+      "sha256": "62f8d3e94a2cedfaa414aa2a7eb0e525acf76f6f192b3010ded92292790058d5"
+    },
+    {
+      "name": "copy-frozen-inputs-v4.exe",
+      "sha256": "bb9815dad3b427372aeb0ab2bcb10eae13e54236563bda47daafbf6b501f75bd"
+    },
+    {
+      "name": "copy-frozen-inputs-v4-qa.log",
+      "sha256": "0fdff15a66a36e4482ce40965537de5009a5a12c4e801dffd5c39cef865bf86d"
+    }
+  ],
+  "sdk_sha256": "d3ccdb604eafa6031133aefe1a3db24f0bb7362b857bc2125ac4e4c178b4b490",
+  "sdk_version": "go1.27.1 windows/amd64",
+  "tests": "go test -count=1 -v source.go tests.go, actual exit0",
+  "test_limit": "Windows directory-symlink test skipped for privilege; no race or Linux mode proof",
+  "build_exit": 0,
+  "allowed_sources": [
+    {
+      "name": "r1-oracle-v2",
+      "digest": "d60e4975ab34b6519c2db414a58c170898750cacc59e077a199e2504f6bb6ebd",
+      "inputs": 310
+    },
+    {
+      "name": "r1-service-oracle-v3",
+      "digest": "1daa5bb43552c0437bcfd085d8afa4916094f90f03e3370f1ab2ecabdc339ee9",
+      "inputs": 313
+    },
+    {
+      "name": "r1-ops-oracle-v3",
+      "digest": "a615190fb253cc8ff0ebcb3c02573aa9328e712d67c9f24e985610d9441b8dd6",
+      "inputs": 313
+    }
+  ],
+  "old_tool_unchanged": true,
+  "copy_invocations": 0,
+  "actor_or_oracle_or_product_change": false,
+  "human_acceptance": false,
+  "status": "Archived tooling; independent review required before actual capture copy"
+}

@@ -1,0 +1,60 @@
+Quality (ubuntu-24.04)	Test	﻿2026-10-05T12:06:37.7176233Z ##[group]Run go test ./...
+Quality (ubuntu-24.04)	Test	2026-10-05T12:06:37.7176471Z ^[[36;1mgo test ./...^[[0m
+Quality (ubuntu-24.04)	Test	2026-10-05T12:06:37.7231786Z shell: /usr/bin/bash -e {0}
+Quality (ubuntu-24.04)	Test	2026-10-05T12:06:37.7231994Z env:
+Quality (ubuntu-24.04)	Test	2026-10-05T12:06:37.7232160Z   GOTOOLCHAIN: local
+Quality (ubuntu-24.04)	Test	2026-10-05T12:06:37.7232342Z ##[endgroup]
+Quality (ubuntu-24.04)	Test	2026-10-05T12:06:40.2388599Z ?   	github.com/Glacius-Labs/Markitect/cmd/markitect	[no test files]
+Quality (ubuntu-24.04)	Test	2026-10-05T12:06:40.2401468Z ?   	github.com/Glacius-Labs/Markitect/cmd/markitect-adapter-azure-devops	[no test files]
+Quality (ubuntu-24.04)	Test	2026-10-05T12:06:40.2413036Z ?   	github.com/Glacius-Labs/Markitect/cmd/markitect-adapter-dotnet	[no test files]
+Quality (ubuntu-24.04)	Test	2026-10-05T12:06:40.2453785Z ?   	github.com/Glacius-Labs/Markitect/cmd/markitect-adapter-github	[no test files]
+Quality (ubuntu-24.04)	Test	2026-10-05T12:06:40.2454995Z ?   	github.com/Glacius-Labs/Markitect/cmd/markitect-check-architecture	[no test files]
+Quality (ubuntu-24.04)	Test	2026-10-05T12:06:40.2801029Z ?   	github.com/Glacius-Labs/Markitect/cmd/markitect-check-artifacts	[no test files]
+Quality (ubuntu-24.04)	Test	2026-10-05T12:06:40.2985855Z ?   	github.com/Glacius-Labs/Markitect/cmd/markitect-check-modules	[no test files]
+Quality (ubuntu-24.04)	Test	2026-10-05T12:06:40.3033256Z ?   	github.com/Glacius-Labs/Markitect/cmd/markitect-release	[no test files]
+Quality (ubuntu-24.04)	Test	2026-10-05T12:07:08.3764986Z ok  	github.com/Glacius-Labs/Markitect/examples	27.026s
+Quality (ubuntu-24.04)	Test	2026-10-05T12:07:08.3765556Z ?   	github.com/Glacius-Labs/Markitect/examples/documentation/docs/implementation/src	[no test files]
+Quality (ubuntu-24.04)	Test	2026-10-05T12:07:08.3766083Z ?   	github.com/Glacius-Labs/Markitect/examples/engineering-discovery	[no test files]
+Quality (ubuntu-24.04)	Test	2026-10-05T12:07:08.3766541Z ?   	github.com/Glacius-Labs/Markitect/examples/selective-adoption	[no test files]
+Quality (ubuntu-24.04)	Test	2026-10-05T12:07:08.3767048Z ?   	github.com/Glacius-Labs/Markitect/examples/selective-adoption/pathspell	[no test files]
+Quality (ubuntu-24.04)	Test	2026-10-05T12:07:08.3767535Z ok  	github.com/Glacius-Labs/Markitect/experiments/autonomous-ab-gauntlet/analysis	0.154s
+Quality (ubuntu-24.04)	Test	2026-10-05T12:07:08.3768055Z --- FAIL: TestRelativeArenaRepairAndIntegrationEnvelopesUseAbsoluteExternalPaths (2.51s)
+Quality (ubuntu-24.04)	Test	2026-10-05T12:07:08.3768780Z     --- FAIL: TestRelativeArenaRepairAndIntegrationEnvelopesUseAbsoluteExternalPaths/initial_integration (1.02s)
+Quality (ubuntu-24.04)	Test	2026-10-05T12:07:08.3770606Z         main_test.go:991: open /tmp/TestRelativeArenaRepairAndIntegrationEnvelopesUseAbsoluteExterna2232264828/002/snapshots/demo-a-t01-parallel-P01/.git/objects/maintenance.lock: no such file or directory
+Quality (ubuntu-24.04)	Test	2026-10-05T12:07:08.3771584Z FAIL
+Quality (ubuntu-24.04)	Test	2026-10-05T12:07:08.3772038Z FAIL	github.com/Glacius-Labs/Markitect/experiments/autonomous-ab-gauntlet/harness	27.131s
+Quality (ubuntu-24.04)	Test	2026-10-05T12:07:08.3772655Z ok  	github.com/Glacius-Labs/Markitect/experiments/mcp-pilot	0.059s
+Quality (ubuntu-24.04)	Test	2026-10-05T12:07:08.3773129Z ok  	github.com/Glacius-Labs/Markitect/integration	0.040s
+Quality (ubuntu-24.04)	Test	2026-10-05T12:07:08.3773618Z ok  	github.com/Glacius-Labs/Markitect/internal/core	0.111s
+Quality (ubuntu-24.04)	Test	2026-10-05T12:07:08.3773958Z ok  	github.com/Glacius-Labs/Markitect/internal/core/snapshot	0.012s
+Quality (ubuntu-24.04)	Test	2026-10-05T12:07:08.3774293Z ok  	github.com/Glacius-Labs/Markitect/internal/host	11.177s
+Quality (ubuntu-24.04)	Test	2026-10-05T12:07:08.3774633Z ok  	github.com/Glacius-Labs/Markitect/internal/host/artifactcli	0.012s
+Quality (ubuntu-24.04)	Test	2026-10-05T12:07:08.3774995Z ok  	github.com/Glacius-Labs/Markitect/internal/host/authoring	0.110s
+Quality (ubuntu-24.04)	Test	2026-10-05T12:07:08.3775392Z ok  	github.com/Glacius-Labs/Markitect/internal/host/authoring/contentpackage	0.021s
+Quality (ubuntu-24.04)	Test	2026-10-05T12:07:08.3775842Z ok  	github.com/Glacius-Labs/Markitect/internal/host/azuredevopscli	0.711s
+Quality (ubuntu-24.04)	Test	2026-10-05T12:07:08.3776210Z ok  	github.com/Glacius-Labs/Markitect/internal/host/cli	7.088s
+Quality (ubuntu-24.04)	Test	2026-10-05T12:07:08.3776555Z ok  	github.com/Glacius-Labs/Markitect/internal/host/dotnetcli	0.005s
+Quality (ubuntu-24.04)	Test	2026-10-05T12:07:08.3776905Z ok  	github.com/Glacius-Labs/Markitect/internal/host/embedded	0.043s
+Quality (ubuntu-24.04)	Test	2026-10-05T12:07:08.3777265Z ok  	github.com/Glacius-Labs/Markitect/internal/host/githubcli	0.381s
+Quality (ubuntu-24.04)	Test	2026-10-05T12:07:08.3777610Z ok  	github.com/Glacius-Labs/Markitect/internal/host/inputs	0.003s
+Quality (ubuntu-24.04)	Test	2026-10-05T12:07:08.3777964Z ok  	github.com/Glacius-Labs/Markitect/internal/host/modulecli	0.027s
+Quality (ubuntu-24.04)	Test	2026-10-05T12:07:08.3778322Z ok  	github.com/Glacius-Labs/Markitect/internal/host/releasecli	0.006s
+Quality (ubuntu-24.04)	Test	2026-10-05T12:07:08.3778707Z ok  	github.com/Glacius-Labs/Markitect/internal/infrastructure/source	0.989s
+Quality (ubuntu-24.04)	Test	2026-10-05T12:07:08.3779367Z ok  	github.com/Glacius-Labs/Markitect/internal/modules/adoption/capture	0.007s
+Quality (ubuntu-24.04)	Test	2026-10-05T12:07:08.3779920Z ok  	github.com/Glacius-Labs/Markitect/internal/modules/adoption/review	0.055s
+Quality (ubuntu-24.04)	Test	2026-10-05T12:07:08.3780328Z ok  	github.com/Glacius-Labs/Markitect/internal/modules/agentrules	0.006s
+Quality (ubuntu-24.04)	Test	2026-10-05T12:07:08.3780726Z ok  	github.com/Glacius-Labs/Markitect/internal/modules/agentrules/links	0.003s
+Quality (ubuntu-24.04)	Test	2026-10-05T12:07:08.3781119Z ok  	github.com/Glacius-Labs/Markitect/internal/modules/artifactcoverage	0.008s
+Quality (ubuntu-24.04)	Test	2026-10-05T12:07:08.3781652Z ok  	github.com/Glacius-Labs/Markitect/internal/modules/azuredevops	0.003s
+Quality (ubuntu-24.04)	Test	2026-10-05T12:07:08.3782046Z ok  	github.com/Glacius-Labs/Markitect/internal/modules/dotnet	0.003s
+Quality (ubuntu-24.04)	Test	2026-10-05T12:07:08.3782409Z ok  	github.com/Glacius-Labs/Markitect/internal/modules/githooks	0.002s
+Quality (ubuntu-24.04)	Test	2026-10-05T12:07:08.3782762Z ok  	github.com/Glacius-Labs/Markitect/internal/modules/github	0.008s
+Quality (ubuntu-24.04)	Test	2026-10-05T12:07:08.3783120Z ok  	github.com/Glacius-Labs/Markitect/internal/modules/markdown	0.004s
+Quality (ubuntu-24.04)	Test	2026-10-05T12:07:08.3783504Z ok  	github.com/Glacius-Labs/Markitect/internal/modules/markdown/links	0.007s
+Quality (ubuntu-24.04)	Test	2026-10-05T12:07:08.3783887Z ok  	github.com/Glacius-Labs/Markitect/internal/modules/pipelines	0.008s
+Quality (ubuntu-24.04)	Test	2026-10-05T12:07:08.3784261Z ok  	github.com/Glacius-Labs/Markitect/internal/tooling/architecture	0.023s
+Quality (ubuntu-24.04)	Test	2026-10-05T12:07:08.3784659Z ?   	github.com/Glacius-Labs/Markitect/internal/tooling/licenses	[no test files]
+Quality (ubuntu-24.04)	Test	2026-10-05T12:07:08.3785044Z ok  	github.com/Glacius-Labs/Markitect/internal/tooling/publish	9.062s
+Quality (ubuntu-24.04)	Test	2026-10-05T12:07:08.3785402Z ok  	github.com/Glacius-Labs/Markitect/internal/tooling/release	0.035s
+Quality (ubuntu-24.04)	Test	2026-10-05T12:07:08.3785669Z FAIL
+Quality (ubuntu-24.04)	Test	2026-10-05T12:07:08.3982446Z ##[error]Process completed with exit code 1.
