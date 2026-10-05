@@ -1,0 +1,151 @@
+schema: autonomous-ab-ddd-serialization-validation/v1
+freeze_digest: 4faee78795986559e91a0e233bd7321a9cf48526d331edba621ca98eee11638a
+control_sha256: d6416f80d40507ae3fb87613446264a4075268133814c5d581d48c718366a5e8
+actual_exported_records: 28
+final_records: 16
+initial_records: 12
+unavailable_initial_B06: preserved; no reconstruction
+source_capture_and_raw_evaluator_bytes: verified unchanged by the exporter before exclusive output creation
+semantic_rescoring: none
+first_projection_manifest_sha256: 3606e93514be64ef76c0194ab1db1e8e8afb250c439c1485dc8fa58389315bc3
+exports:
+  - run: vertical-slices-a-t01
+    task: "01"
+    phase: final
+    projection_sha256: 9d69d0eccfdad69c619203b9e4689139d397a9f186993bae60dbb27b26d9f077
+    export_proof_sha256: 3fb0cacdf8510e54b225065015f89e98929449fd11ff7b984b0446518882ce27
+  - run: vertical-slices-a-t01
+    task: "02"
+    phase: before-repair
+    projection_sha256: aba793bb224dfddb34f260a83c753859865664283859502c5809cf8a68c2318c
+    export_proof_sha256: 1531dd47abcdfe0c03d77845463d3b89f5cbf910974f257c48f08627c9a11184
+  - run: vertical-slices-a-t01
+    task: "02"
+    phase: final
+    projection_sha256: f5a6fa3b864cd5266ca49e25f2d7ebc6a14e670e5946762e6f2c5844ecb2c8cf
+    export_proof_sha256: b86503816647e274703353c71e10436fcf95a7187092732171f6078c8550c7b7
+  - run: vertical-slices-a-t01
+    task: "03"
+    phase: before-repair
+    projection_sha256: 61b5a7ec1a80300c082e87db0a38bb1e870b3541eed380f70d9a24cd40881cc5
+    export_proof_sha256: 654833d8384f031c85c4fa4138d7bb1254d282106034e6e3867b6795227718c3
+  - run: vertical-slices-a-t01
+    task: "03"
+    phase: final
+    projection_sha256: 7a4c03c024ea56858ebdc364cf2b8324221982620e925b14c42ea57595a8bd23
+    export_proof_sha256: e1db78357fa8bea005e600664e8386a51e7312d3041017f3ef68066027f3a743
+  - run: vertical-slices-a-t01
+    task: "04"
+    phase: before-repair
+    projection_sha256: 9ff868a4e5be78e359bde0f6a0b9e6efe0e08104257c588dc98726ecbcc0981f
+    export_proof_sha256: cb8912237761a2debc611a51b0e94951cf01861a04e4339654a4acf57b4ea2a2
+  - run: vertical-slices-a-t01
+    task: "04"
+    phase: final
+    projection_sha256: a9eaa714ec3604fbbb2fce3cbd3ba0218689296a6e15568dd83f987a879afd20
+    export_proof_sha256: 2e68874e583458d57e1fae038173ed23b77c54e5fd29a078a60320e229de9cc2
+  - run: vertical-slices-a-t01
+    task: "05"
+    phase: before-repair
+    projection_sha256: 99d4af041b03f0cef9cb7a44f021466e65a99dc717680d1bbdd38d4ba10f6332
+    export_proof_sha256: 6923521c91ed6635b9d76c2ea33f7d34d8e559543d093094bfb8bb671ae69c19
+  - run: vertical-slices-a-t01
+    task: "05"
+    phase: final
+    projection_sha256: 99d4af041b03f0cef9cb7a44f021466e65a99dc717680d1bbdd38d4ba10f6332
+    export_proof_sha256: 8ba6910135c4c5cb5b74eb3f5a9781bc75f096a2f135aea60a6d31bec09089e0
+  - run: vertical-slices-a-t01
+    task: "06"
+    phase: before-repair
+    projection_sha256: 793cfaf7308afcd64dc2de909911849d82e982bc32956b8358691c08a864960a
+    export_proof_sha256: c056947e3ed0cc33da821a1e248c0d699b478ea65b816f25384d6220205c7e92
+  - run: vertical-slices-a-t01
+    task: "06"
+    phase: final
+    projection_sha256: 793cfaf7308afcd64dc2de909911849d82e982bc32956b8358691c08a864960a
+    export_proof_sha256: a78707c6907301ccea7106ba53c6982ad865c9049b84052ea8fde9a39736c95a
+  - run: vertical-slices-a-t01
+    task: "07"
+    phase: before-repair
+    projection_sha256: 6c4318f4d65df8cbce4baa1a2828480c4599e24da155c93efc8c8c73714070b1
+    export_proof_sha256: 8c9ec92c6c57b381b86a183a61f31abf124f40af1fb8faef437616977b205282
+  - run: vertical-slices-a-t01
+    task: "07"
+    phase: final
+    projection_sha256: 6c4318f4d65df8cbce4baa1a2828480c4599e24da155c93efc8c8c73714070b1
+    export_proof_sha256: 22f13e12094e192543851ac41f4613f866713ba4a9ae1d76744b867a8e60d63d
+  - run: vertical-slices-a-t01
+    task: "08"
+    phase: before-repair
+    projection_sha256: 1b0826610deda33c6f86f2c3adc599092cf485f40a9bca9c62f8a07ff81d86c1
+    export_proof_sha256: 6419a090f3dd8a2f48ba794f0ee4288683aab60273e8f10903c69de8498a8529
+  - run: vertical-slices-a-t01
+    task: "08"
+    phase: final
+    projection_sha256: 1b0826610deda33c6f86f2c3adc599092cf485f40a9bca9c62f8a07ff81d86c1
+    export_proof_sha256: ca08de88248fbd72a0b778c36821ce2b69109e0d0a738b7df11c0d5614fb8265
+  - run: vertical-slices-b-t01
+    task: "01"
+    phase: before-repair
+    projection_sha256: c5a4caf5dc8055a293fd06c3cca606e4e99f891eda6b4b27140ed845b8a3d1cd
+    export_proof_sha256: b8543454a2ae5b200f17e0efab1fa72577f72142751f620e414f0dde97d9b71d
+  - run: vertical-slices-b-t01
+    task: "01"
+    phase: final
+    projection_sha256: c5a4caf5dc8055a293fd06c3cca606e4e99f891eda6b4b27140ed845b8a3d1cd
+    export_proof_sha256: ae6a976fef5b2c4a8b5fe6c0cc9071188150636c6385d84eece3ad25a0eefebe
+  - run: vertical-slices-b-t01
+    task: "02"
+    phase: before-repair
+    projection_sha256: d097c73ff43d3793c1c658468f52f9abbc633d441d69700f286d7e60f880185d
+    export_proof_sha256: f8be4e470c69b64680655b1ab6a8da13733733bb760b610b9cdc82a3c0a70e6f
+  - run: vertical-slices-b-t01
+    task: "02"
+    phase: final
+    projection_sha256: d097c73ff43d3793c1c658468f52f9abbc633d441d69700f286d7e60f880185d
+    export_proof_sha256: 50883f4e43be8b963476837408d7533f7e43f80332a0983dd47d108cccd03555
+  - run: vertical-slices-b-t01
+    task: "03"
+    phase: before-repair
+    projection_sha256: b1ba129d62291558964f3b9af4e5b6d399fda2881d54a749b6543ec22eb20009
+    export_proof_sha256: fe7dab9bf5facc45125d6d17b534bdb3625a694cb3a668b2bcec82a7975014fa
+  - run: vertical-slices-b-t01
+    task: "03"
+    phase: final
+    projection_sha256: 180c6155dc964ad634a72404308ac62a61e0e58d4f0f7eb4fa426591656e2a93
+    export_proof_sha256: bad0034eb31d2ec22546813667cbc7f7e79ca7f2099b0ece5f7964d1a241e177
+  - run: vertical-slices-b-t01
+    task: "04"
+    phase: final
+    projection_sha256: 81ba5599c53ca63046a74256b97800bff684e32d02598ce22d8069129c7d3900
+    export_proof_sha256: c92eb090f8a32b27ec10fa0e6fce8968a9ebd599c94e023a8a363af948b2163d
+  - run: vertical-slices-b-t01
+    task: "05"
+    phase: final
+    projection_sha256: c072146c5b050dd0a8f0dcc4f5d8d367f0fd54ced5cba1341c045edaebaff526
+    export_proof_sha256: 7290f4842a79cdbb63375b9472fbec87219324080f262ab4301ddfa32fa16df8
+  - run: vertical-slices-b-t01
+    task: "06"
+    phase: final
+    projection_sha256: dd92e4e370be2252abff2041e524561839ba10623c3a4d14cf220c07e37a9ab7
+    export_proof_sha256: 0b396a6e485043a965297b622426451960e81c9a91858b41da18a54100816e2c
+  - run: vertical-slices-b-t01
+    task: "07"
+    phase: before-repair
+    projection_sha256: 8c4ef457a846acb1771d97eaa95551399d04921a0abcc38ee7c283f558c76c51
+    export_proof_sha256: 79d3ce5bd4c241cf4535f0ce58a94bdd7e26cf970ae7f4a3b510963a96762a13
+  - run: vertical-slices-b-t01
+    task: "07"
+    phase: final
+    projection_sha256: cef92da1bbb0346546f06cadeebc1214c2c2bbe7e26f0e62b005ac6ebb568caa
+    export_proof_sha256: 728934012eaf23d67d48f605809f5395059a9410f7c565365b233ee40cd428e3
+  - run: vertical-slices-b-t01
+    task: "08"
+    phase: before-repair
+    projection_sha256: c883b241203e384d46f3a5ef0355b320af3a0e4de5ecf35ccc5ec7292a017773
+    export_proof_sha256: ea0c7efa3c9b3158106ea9648c5627a49e438649d733f2c3a097079c4fd9f6c8
+  - run: vertical-slices-b-t01
+    task: "08"
+    phase: final
+    projection_sha256: c883b241203e384d46f3a5ef0355b320af3a0e4de5ecf35ccc5ec7292a017773
+    export_proof_sha256: 09a7efd3ca87a4aeb261131672c93abe393ff4c0cab2186ff50e8af4e437aefc

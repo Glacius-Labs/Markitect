@@ -1,0 +1,8 @@
+schema: autonomous-ab-capacity-control-timestamp-erratum/v1
+control_sha256: aaf0517d4acc8435fec0d55c2dadb840a40bc41bacb89ccdae6e3d1b86d716fb
+recorded_utc_field: manually entered approximate label; invalid as measured telemetry
+observed_external_file_creation_utc: '2026-10-05T01:02:30.8913831Z'
+file_time_limit: observed filesystem metadata, not authenticated process timing
+contract_change: none
+original_control_bytes: retained unchanged
+measurement_rule: use actual native task, deadline, completion and operator timestamps only

@@ -27,3 +27,5 @@ A freeze-bound `decisions/run-exclusions.yaml` may exclude exact run IDs with ex
 ```powershell
 go test ./experiments/autonomous-ab-gauntlet/analysis
 ```
+
+The DDD writer's Windows-path serialization defect is handled only by the explicit, pinned post-run recovery in [ddd-serialization-control.yaml](../results/r1-paths-v3/ddd-serialization-control.yaml). The [validation checkpoint](../results/r1-paths-v3/ddd-serialization-validation.yaml) binds 28 recovered trial-1 records to their original and projected hashes. This does not alter the frozen oracle or statuses: failed checks remain failed, unresolved manual checks remain manual, and the unavailable initial B06 capture remains unavailable. The default exporter still refuses malformed YAML. Independent behavioral probes are separate evidence, not human owner acceptance and not a retroactive rescue of protocol-invalid actor turns.

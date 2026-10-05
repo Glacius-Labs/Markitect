@@ -1,0 +1,44 @@
+schema: autonomous-ab-ddd-serialization-control/v1
+freeze_digest: 4faee78795986559e91a0e233bd7321a9cf48526d331edba621ca98eee11638a
+product_change: none
+actor_or_harness_change: none
+purpose: Preserve existing DDD evaluator fields when the frozen writer emits invalid YAML backslash escapes.
+raw_writer_sha256: 263987c0c5392709f384b013ffff8534acfcd5d30529acc90b656a2f20b7734b
+observed_defect:
+  first_refused_raw_sha256: 50086d3ae2bca7be0e479e8a1d8f21d7f58bf91a1e8e8b5baccf0cb1f5aa4270
+  cause: The fixed line writer quotes evidence but does not escape Windows path backslashes.
+  scoring_defect_proven: false
+decision:
+  operation: explicit exact-frozen-ddd-writer serialization projection/v1
+  allowed: Parse the pinned writer grammar and re-encode literal scalars as YAML single-quoted strings.
+  refused: Unexpected grammar, writer identity, task identity, field order, status/list relation or changed bound capture.
+  default_export: strict YAML parsing; malformed YAML still refused
+  explicit_export_option: --project-ddd-serialization
+  semantic_oracle_or_status_change: prohibited
+  original_raw_rewrite: prohibited
+  manual_review_to_pass_conversion: prohibited
+  targets: Fresh DDD trial-1 rerun only; original excluded trial-1 remains excluded.
+  projected_fields: task, arm, status, base, changed_paths, checks, failures, manual_review, commands, owner_decision
+  raw_and_projected_digests: both mandatory in every export proof
+tools:
+  archive: <external-parent>/r1-paths-v3/raw/coordinator-tools/ddd-serialization-v1
+  exporter_source_sha256: aff89bfb4dff9aabb45fb272bc72e75ab6032e070e9009b63d63b6f5e857fb40
+  exporter_tests_sha256: 6f45e8bc3213635074711e3d636577105931afdd204cb6b5e1c37a53be98d8d6
+  exporter_binary_sha256: c2c2cb603b4f184acb9fefc820b4e8c7cb262766db5cf95f0119761a8847b502
+  parser_source_sha256: 9ed4f7c0adc9a64a134e34a02e85d7b63e2555b95e9b8cf585d62858cd609c7f
+  parser_cli_source_sha256: 510bfccf0f406a1e5ccea56f3c6fe0ad55ecb4ec9ab5d5e5cbc3a5436c4472e6
+  parser_tests_sha256: 5d20c3433ab84f9f97ebe09fa300d85d4300edac7e9498574d3d68072830e9e1
+  parser_cli_binary_sha256: 656fe2b0aef69b00a31b9a414c74e6a55ebf3d51fa725076868f4d807722a523
+validation:
+  exporter_focused_tests: passed
+  parser_and_cli_focused_tests: passed
+  exporter_vet_and_both_builds: passed
+  independent_review_correction: failures/manual_review use bare names; changed_paths/commands use quoted values.
+  tested_boundaries: explicit option, default refusal, other-project refusal, changed writer refusal, literal preservation, status preservation, raw/projected hash binding, existing capture guards, exclusive output, path/symlink refusal
+  real_record_execution_before_this_control: false
+limits:
+  - This is measurement serialization recovery, not a product feature or semantic rescoring.
+  - The frozen writer already replaced evidence double quotes with apostrophes; original pre-writer quotes cannot be recovered.
+  - Failed, manual and owner-decision-required results remain those states.
+  - Initial B06 capture remains unavailable; no reconstruction or re-evaluation is permitted.
+  - Hash binding does not authenticate a process, reviewer or semantic truth.

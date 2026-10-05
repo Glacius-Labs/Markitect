@@ -1,0 +1,21 @@
+schema: autonomous-ab-capacity-control/v1
+recorded_utc: 2026-10-05T01:03:00Z
+frozen_product_change: none
+frozen_actor_or_harness_change: none
+observed: Fresh actor dispatch repeatedly returned agent thread limit reached before a leaf started.
+coordination:
+  previous_upper_bound: two active scored leaves per project operator; six globally
+  temporary_upper_bound: one active scored leaf per project operator; three globally
+  applies_symmetrically_to: [vertical-slices, modular-service, engineering-ops]
+  already_active_actors: not interrupted
+  already_prepared_envelopes: exact identity and original deadline preserved
+  transport_retry_budget: unchanged
+  deadline_resets: prohibited
+  replacement_actor_or_fake_response: prohibited
+interpretation:
+  queued_time: remains part of the frozen 1800-second task budget
+  undispatched_task: transport-unavailable, not a semantic product failure
+  missing_actor_response: no finish-task response is fabricated
+  broken_chain: preserved as incomplete; independent new trials may proceed
+  isolation_guarantee: not established by scheduling
+  comparative_limit: Infrastructure interruptions prevent unsupported causal conclusions about either arm.
