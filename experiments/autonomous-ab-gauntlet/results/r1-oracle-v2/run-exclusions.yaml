@@ -1,0 +1,13 @@
+apiVersion: markitect.measurement.org/v1alpha1
+kind: RunExclusions
+freeze_digest: d60e4975ab34b6519c2db414a58c170898750cacc59e077a199e2504f6bb6ebd
+freeze_file_sha256: 2b384cd160e99263b9540272fad2386bbcedf0be97e1d99f662264648dcab1e3
+scope: modular-service
+reason_class: source-only benchmark-design issue
+source_diagnostic:
+  path: experiments/autonomous-ab-gauntlet/results/r1-oracle-v2/service-predicate-recurrence-v1.json
+  sha256: b29d4ece6bc75e4d99b681de2c60b2b70770234f38e501a18bd1ab53a2575e40
+excluded_runs:
+  - run_id: modular-service-a-t01
+  - run_id: modular-service-a-t01-parallel-P01
+  - run_id: modular-service-a-t01-parallel-P02

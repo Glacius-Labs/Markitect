@@ -1,0 +1,1443 @@
+{
+  "schema": "autonomous-ab-service-trial3-b-assessment/v1",
+  "source_arena": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1",
+  "freeze_digest": "cc6124d1bd179f0824cde31947b929412562d2991879474ba2d02e855f4062f7",
+  "run_id": "modular-service-b-t03",
+  "arm": "b",
+  "trial": 3,
+  "aggregate_comparison_status": "pre-excluded pair; raw component measurements retained descriptively; no score repair or pass conversion",
+  "capture_counts": {
+    "terminal_native_tasks": 8,
+    "actual_attempt0_helper_captures": 8,
+    "before_repair_staged": 8,
+    "final_staged": 8,
+    "evaluator_invocations": 16,
+    "exports": 16
+  },
+  "native_terminal_statuses": [
+    {
+      "task_id": "01",
+      "actor_status": "failed",
+      "native_sha256": "9e3884f1751e99c9226bbb3a197787cf721f3793ca9dde9d91f408e64664db98",
+      "helper_attempt0_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\raw\\modular-service-b-t03\\01\\helper-attempt-0.jsonl",
+      "helper_attempt0_sha256": "7c69022f80e3345f629bc40ac531dad4b8b2fc31d94773aeaabd81b8090c64a8"
+    },
+    {
+      "task_id": "02",
+      "actor_status": "failed",
+      "native_sha256": "6acf86482e5f2ad508bfe0a15d251e888b60e4c46849686742804d8394a40b8f",
+      "helper_attempt0_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\raw\\modular-service-b-t03\\02\\helper-attempt-0.jsonl",
+      "helper_attempt0_sha256": "73cd5307e6a588a66029a93d85df98da31a417981995be2a4584ecc2bffb246f"
+    },
+    {
+      "task_id": "03",
+      "actor_status": "completed",
+      "native_sha256": "6adc291cfadac4f4038649fdba4b72630e3c3ce472ba95af0ae51853bdf398b5",
+      "helper_attempt0_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\raw\\modular-service-b-t03\\03\\helper-attempt-0.jsonl",
+      "helper_attempt0_sha256": "1f37e01cf753ddb624be417156950a7ef5f7c9a6238815d5a18e9de34f1db39c"
+    },
+    {
+      "task_id": "04",
+      "actor_status": "failed",
+      "native_sha256": "9ac11884a096128fe8971def35d78ca85e2f0e63c32e8f56b11287c2c509ec35",
+      "helper_attempt0_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\raw\\modular-service-b-t03\\04\\helper-attempt-0.jsonl",
+      "helper_attempt0_sha256": "8d5241b4acaeee74ad939177a9cd1dd7fb1a7aff84c2f9d6dcd3c8489cacfd16"
+    },
+    {
+      "task_id": "05",
+      "actor_status": "failed",
+      "native_sha256": "749ede5e9ab844264009d389fd8860a5b8e7f76279b88d6c18c8786ad7e170fb",
+      "helper_attempt0_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\raw\\modular-service-b-t03\\05\\helper-attempt-0.jsonl",
+      "helper_attempt0_sha256": "c099473d7680248891364b1d6f1ec681e1f97ce86b89f1ef2175574d5791cbb3"
+    },
+    {
+      "task_id": "06",
+      "actor_status": "failed",
+      "native_sha256": "075f69d9b0040e4533fe657228c54e4e3a71dbb6b8a780cd6a24d0ee80cb67da",
+      "helper_attempt0_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\raw\\modular-service-b-t03\\06\\helper-attempt-0.jsonl",
+      "helper_attempt0_sha256": "5b415edc114c0f0ad83f4a9c89774e201ee935c17ce757b90c72455ffdb1083f"
+    },
+    {
+      "task_id": "07",
+      "actor_status": "failed",
+      "native_sha256": "3f9ce816078058551d606b1d1f013d170fb90e6a21875487dd628b9226f6263a",
+      "helper_attempt0_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\raw\\modular-service-b-t03\\07\\helper-attempt-0.jsonl",
+      "helper_attempt0_sha256": "0c3116c212a6a41eacca23e09e83c6f7d3e611f8c26f1a0018730968347a4926"
+    },
+    {
+      "task_id": "08",
+      "actor_status": "failed",
+      "native_sha256": "0ddcce7c03b92e80d6449a6347983116d3273e5b8b79abbb81d1ced64daf5c68",
+      "helper_attempt0_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\raw\\modular-service-b-t03\\08\\helper-attempt-0.jsonl",
+      "helper_attempt0_sha256": "872ddb2f6c99d9a723c1ca85d777524ae435c78238ce1b2c4dffc6db620741f0"
+    }
+  ],
+  "pinned_inputs": {
+    "stage_control_sha256": "eba0fbdc8c0951de50a608d8727b49828aa80fb2b393893ac4c5015ef1c632f0",
+    "coordinator_archive_manifest_sha256": "32489f016d2f4564621ee18e7712047faccc3e7c38466bc012c3f639a53c8e3b",
+    "copier_binary_sha256": "6349449ab77c24d4a709c50154e23791f2c4369365e8aa9e67de24a8bb41530d",
+    "stager_binary_sha256": "11eaf8f1261cb783979f17d16154d40c05b238b0077b38804e8594ace3399ec8",
+    "exporter_binary_sha256": "c2c2cb603b4f184acb9fefc820b4e8c7cb262766db5cf95f0119761a8847b502",
+    "harness_binary_sha256": "0fa0d12f29aa7746f1e74c6435fec08b63324919f1d01d7eb4046103be4d2ec1",
+    "old_evaluator_sha256": "e760bc34da2780878fc6f952054b859e95021872d318a7595eb3745f973cb73a",
+    "driver_sha256": "f0e8df59899a17c6e89eeea36a763f523b793a993980280387ed6e578bf9e501"
+  },
+  "task_summary": [
+    {
+      "task_id": "01",
+      "terminal_actor_status": "failed",
+      "before_repair_failed_components": [
+        "idempotency-vector",
+        "task-validator"
+      ],
+      "final_failed_components": [
+        "idempotency-vector",
+        "task-validator"
+      ],
+      "before_repair_evaluation_sha256": "e19ddd71153f6279d615d19ebbba2c45d91af94d0ac8ec6803b632c070ffeb27",
+      "final_evaluation_sha256": "e19ddd71153f6279d615d19ebbba2c45d91af94d0ac8ec6803b632c070ffeb27"
+    },
+    {
+      "task_id": "02",
+      "terminal_actor_status": "failed",
+      "before_repair_failed_components": [
+        "idempotency-vector",
+        "invoice-conflict-vector",
+        "task-validator"
+      ],
+      "final_failed_components": [
+        "idempotency-vector",
+        "invoice-conflict-vector",
+        "task-validator"
+      ],
+      "before_repair_evaluation_sha256": "15183d7c72d79bbc3f0ebd91e6cd4d979da365a7fe2d05b03a7e0abd6f59e829",
+      "final_evaluation_sha256": "15183d7c72d79bbc3f0ebd91e6cd4d979da365a7fe2d05b03a7e0abd6f59e829"
+    },
+    {
+      "task_id": "03",
+      "terminal_actor_status": "completed",
+      "before_repair_failed_components": [
+        "cumulative-ownership-table",
+        "idempotency-vector",
+        "invoice-conflict-vector",
+        "task-validator"
+      ],
+      "final_failed_components": [
+        "cumulative-ownership-table",
+        "idempotency-vector",
+        "invoice-conflict-vector",
+        "task-validator"
+      ],
+      "before_repair_evaluation_sha256": "1c44056a0fa7b272328e769877742505b196831e60e27b903a44de53a3ace7f6",
+      "final_evaluation_sha256": "1c44056a0fa7b272328e769877742505b196831e60e27b903a44de53a3ace7f6"
+    },
+    {
+      "task_id": "04",
+      "terminal_actor_status": "failed",
+      "before_repair_failed_components": [
+        "cumulative-ownership-table",
+        "idempotency-vector",
+        "invoice-conflict-vector",
+        "task-validator"
+      ],
+      "final_failed_components": [
+        "cumulative-ownership-table",
+        "idempotency-vector",
+        "invoice-conflict-vector",
+        "task-validator"
+      ],
+      "before_repair_evaluation_sha256": "c269bad75a60d9cbfbd4ed69cda2f23f095a720da324b19c35e87ae1c6004fdb",
+      "final_evaluation_sha256": "c269bad75a60d9cbfbd4ed69cda2f23f095a720da324b19c35e87ae1c6004fdb"
+    },
+    {
+      "task_id": "05",
+      "terminal_actor_status": "failed",
+      "before_repair_failed_components": [
+        "cumulative-ownership-table",
+        "idempotency-vector",
+        "invoice-conflict-vector",
+        "overflow-vector",
+        "task-validator"
+      ],
+      "final_failed_components": [
+        "cumulative-ownership-table",
+        "idempotency-vector",
+        "invoice-conflict-vector",
+        "overflow-vector",
+        "task-validator"
+      ],
+      "before_repair_evaluation_sha256": "6c2b41d47ab8b1a27c2db5e96ed5991e7a02ccdbe0ec89992f0c708cb5d2f989",
+      "final_evaluation_sha256": "6c2b41d47ab8b1a27c2db5e96ed5991e7a02ccdbe0ec89992f0c708cb5d2f989"
+    },
+    {
+      "task_id": "06",
+      "terminal_actor_status": "failed",
+      "before_repair_failed_components": [
+        "cumulative-ownership-table",
+        "cumulative-availability-intent",
+        "idempotency-vector",
+        "invoice-conflict-vector",
+        "overflow-vector",
+        "availability-vector",
+        "task-validator",
+        "markitect-check"
+      ],
+      "final_failed_components": [
+        "cumulative-ownership-table",
+        "cumulative-availability-intent",
+        "idempotency-vector",
+        "invoice-conflict-vector",
+        "overflow-vector",
+        "availability-vector",
+        "task-validator",
+        "markitect-check"
+      ],
+      "before_repair_evaluation_sha256": "e78bbd67521309ba05ea60b19615581fe6045f22b6626fb7bfc132fe708dd485",
+      "final_evaluation_sha256": "1d9939c6d91c419b6a80da2818724bd2ac948bcc9be4223f402688ff14597c8b"
+    },
+    {
+      "task_id": "07",
+      "terminal_actor_status": "failed",
+      "before_repair_failed_components": [
+        "cumulative-ownership-table",
+        "cumulative-availability-intent",
+        "idempotency-vector",
+        "invoice-conflict-vector",
+        "overflow-vector",
+        "availability-vector",
+        "customer-reference-vector",
+        "task-validator"
+      ],
+      "final_failed_components": [
+        "cumulative-ownership-table",
+        "cumulative-availability-intent",
+        "idempotency-vector",
+        "invoice-conflict-vector",
+        "overflow-vector",
+        "availability-vector",
+        "customer-reference-vector",
+        "task-validator"
+      ],
+      "before_repair_evaluation_sha256": "9ac14c1b98b3c5a2870127f168f152ee5e3c758d82ed9c04d2e7eb14a8eb4204",
+      "final_evaluation_sha256": "9ac14c1b98b3c5a2870127f168f152ee5e3c758d82ed9c04d2e7eb14a8eb4204"
+    },
+    {
+      "task_id": "08",
+      "terminal_actor_status": "failed",
+      "before_repair_failed_components": [
+        "cumulative-ownership-table",
+        "cumulative-availability-intent",
+        "idempotency-vector",
+        "invoice-conflict-vector",
+        "overflow-vector",
+        "availability-vector",
+        "customer-reference-vector",
+        "invoice-memo-vector",
+        "task-validator"
+      ],
+      "final_failed_components": [
+        "cumulative-ownership-table",
+        "cumulative-availability-intent",
+        "idempotency-vector",
+        "invoice-conflict-vector",
+        "overflow-vector",
+        "availability-vector",
+        "customer-reference-vector",
+        "invoice-memo-vector",
+        "task-validator"
+      ],
+      "before_repair_evaluation_sha256": "6e7c5490126201e892a91f1144897f572e15d2cc8cef3325ba73b290ecb538ba",
+      "final_evaluation_sha256": "253df1defe9a72df104ed2f11458d9ab88ad6d3b394440bb98a0dbbcb96ca1e4"
+    }
+  ],
+  "phase_results": [
+    {
+      "arena": "s3i",
+      "phase": "before-repair",
+      "run_id": "modular-service-b-t03",
+      "task_id": "01",
+      "terminal_actor_status": "failed",
+      "source_native": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\runs\\modular-service-b-t03\\01.native.yaml",
+      "source_native_sha256": "9e3884f1751e99c9226bbb3a197787cf721f3793ca9dde9d91f408e64664db98",
+      "actual_attempt0_helper": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\raw\\modular-service-b-t03\\01\\helper-attempt-0.jsonl",
+      "attempt0_helper_sha256": "7c69022f80e3345f629bc40ac531dad4b8b2fc31d94773aeaabd81b8090c64a8",
+      "selected_source_snapshot": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\raw\\modular-service-b-t03\\01\\snapshots\\01-check-1",
+      "selected_source_tree_sha256": "ee75f537f02eccf52c693e2dd9a29b5bdf90f9bbe15498c326edb2a5a8b5724a",
+      "source_snapshot_tree_path": "",
+      "source_snapshot_tree_sha256": "ee75f537f02eccf52c693e2dd9a29b5bdf90f9bbe15498c326edb2a5a8b5724a",
+      "source_capture": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\s3i\\raw\\modular-service-b-t03\\01.source-capture.yaml",
+      "source_capture_sha256": "2aae75d6baa7ea5be8beb698eae4d3742a960052f8ebfe335053aa276105c43a",
+      "staged_native": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\s3i\\runs\\modular-service-b-t03\\01.native.yaml",
+      "staged_native_sha256": "c50f0f6ea07823c49ed0df095b804ca68ecc3c7a154bead50f70894123bb6d9b",
+      "evaluator_invocation_log": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\s3i\\raw\\trial3-b-01-invocation.txt",
+      "evaluator_invocation_log_sha256": "cba12feb7bb9dbc4ffc701fbac537a241ff2668f0e6485b707632760e3875757",
+      "actual_evaluator_exit": 0,
+      "assessment_raw_evaluation": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\s3i\\runs\\modular-service-b-t03\\01.evaluation.yaml",
+      "assessment_raw_evaluation_sha256": "e19ddd71153f6279d615d19ebbba2c45d91af94d0ac8ec6803b632c070ffeb27",
+      "returned_raw_evaluation": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\runs\\modular-service-b-t03\\01.before-repair.evaluation.yaml",
+      "returned_raw_evaluation_sha256": "e19ddd71153f6279d615d19ebbba2c45d91af94d0ac8ec6803b632c070ffeb27",
+      "evaluation_export_proof": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\raw\\modular-service-b-t03\\01.before-repair.evaluation-export.yaml",
+      "evaluation_export_proof_sha256": "196398061e80e35dd2b54c625abf4f22c27c2e4e7b96b264ddc384b707f68695",
+      "exporter_exit": 0,
+      "evaluator_status": "failed",
+      "failed_components": [
+        "idempotency-vector",
+        "task-validator"
+      ],
+      "checks": [
+        {
+          "name": "allowed-paths",
+          "passed": true
+        },
+        {
+          "name": "architecture-boundary",
+          "passed": false
+        },
+        {
+          "name": "idempotency-vector",
+          "passed": false
+        },
+        {
+          "name": "task-validator",
+          "passed": false
+        }
+      ],
+      "human_acceptance": false
+    },
+    {
+      "arena": "s3f",
+      "phase": "final",
+      "run_id": "modular-service-b-t03",
+      "task_id": "01",
+      "terminal_actor_status": "failed",
+      "source_native": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\runs\\modular-service-b-t03\\01.native.yaml",
+      "source_native_sha256": "9e3884f1751e99c9226bbb3a197787cf721f3793ca9dde9d91f408e64664db98",
+      "actual_attempt0_helper": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\raw\\modular-service-b-t03\\01\\helper-attempt-0.jsonl",
+      "attempt0_helper_sha256": "7c69022f80e3345f629bc40ac531dad4b8b2fc31d94773aeaabd81b8090c64a8",
+      "selected_source_snapshot": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\results\\modular-service-b-t03\\snapshots\\01",
+      "selected_source_tree_sha256": "ee75f537f02eccf52c693e2dd9a29b5bdf90f9bbe15498c326edb2a5a8b5724a",
+      "source_snapshot_tree_path": "",
+      "source_snapshot_tree_sha256": "ee75f537f02eccf52c693e2dd9a29b5bdf90f9bbe15498c326edb2a5a8b5724a",
+      "source_capture": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\s3f\\raw\\modular-service-b-t03\\01.source-capture.yaml",
+      "source_capture_sha256": "b08c3ba353d7f09878a426e39cc6abfb6ade23fb8cfb1f9bc5cd358fb2b38ec0",
+      "staged_native": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\s3f\\runs\\modular-service-b-t03\\01.native.yaml",
+      "staged_native_sha256": "4ed70fa8cb2eb0fda89109995b356a80acc60b0b004f31e492e8ea177d10ece5",
+      "evaluator_invocation_log": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\s3f\\raw\\trial3-b-01-invocation.txt",
+      "evaluator_invocation_log_sha256": "cba12feb7bb9dbc4ffc701fbac537a241ff2668f0e6485b707632760e3875757",
+      "actual_evaluator_exit": 0,
+      "assessment_raw_evaluation": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\s3f\\runs\\modular-service-b-t03\\01.evaluation.yaml",
+      "assessment_raw_evaluation_sha256": "e19ddd71153f6279d615d19ebbba2c45d91af94d0ac8ec6803b632c070ffeb27",
+      "returned_raw_evaluation": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\runs\\modular-service-b-t03\\01.evaluation.yaml",
+      "returned_raw_evaluation_sha256": "e19ddd71153f6279d615d19ebbba2c45d91af94d0ac8ec6803b632c070ffeb27",
+      "evaluation_export_proof": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\raw\\modular-service-b-t03\\01.final.evaluation-export.yaml",
+      "evaluation_export_proof_sha256": "ecc41aac1bba55e555f5796c6f51e9f50a37d51abf81c60143baaf4d8abdc1f7",
+      "exporter_exit": 0,
+      "evaluator_status": "failed",
+      "failed_components": [
+        "idempotency-vector",
+        "task-validator"
+      ],
+      "checks": [
+        {
+          "name": "allowed-paths",
+          "passed": true
+        },
+        {
+          "name": "architecture-boundary",
+          "passed": false
+        },
+        {
+          "name": "idempotency-vector",
+          "passed": false
+        },
+        {
+          "name": "task-validator",
+          "passed": false
+        }
+      ],
+      "human_acceptance": false
+    },
+    {
+      "arena": "s3i",
+      "phase": "before-repair",
+      "run_id": "modular-service-b-t03",
+      "task_id": "02",
+      "terminal_actor_status": "failed",
+      "source_native": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\runs\\modular-service-b-t03\\02.native.yaml",
+      "source_native_sha256": "6acf86482e5f2ad508bfe0a15d251e888b60e4c46849686742804d8394a40b8f",
+      "actual_attempt0_helper": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\raw\\modular-service-b-t03\\02\\helper-attempt-0.jsonl",
+      "attempt0_helper_sha256": "73cd5307e6a588a66029a93d85df98da31a417981995be2a4584ecc2bffb246f",
+      "selected_source_snapshot": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\raw\\modular-service-b-t03\\02\\snapshots\\02-check-1",
+      "selected_source_tree_sha256": "609908f88c2fde1f00b9533136bfdba600a78abbc780dd77e6e26f84f44b0622",
+      "source_snapshot_tree_path": "",
+      "source_snapshot_tree_sha256": "609908f88c2fde1f00b9533136bfdba600a78abbc780dd77e6e26f84f44b0622",
+      "source_capture": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\s3i\\raw\\modular-service-b-t03\\02.source-capture.yaml",
+      "source_capture_sha256": "8e7a303d97379982df57b2e1285bb0ddcdc72c29b2eb17d06500f2689f342ccc",
+      "staged_native": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\s3i\\runs\\modular-service-b-t03\\02.native.yaml",
+      "staged_native_sha256": "bc685ffe19a101e62c0adb90e84a494e06728cf79f5d0e849ce0a81598061611",
+      "evaluator_invocation_log": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\s3i\\raw\\trial3-b-02-invocation.txt",
+      "evaluator_invocation_log_sha256": "7785914cb01f8ca8361d13530a4a094c7472d2980c0f0a0f518f3c46c0ed0b51",
+      "actual_evaluator_exit": 0,
+      "assessment_raw_evaluation": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\s3i\\runs\\modular-service-b-t03\\02.evaluation.yaml",
+      "assessment_raw_evaluation_sha256": "15183d7c72d79bbc3f0ebd91e6cd4d979da365a7fe2d05b03a7e0abd6f59e829",
+      "returned_raw_evaluation": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\runs\\modular-service-b-t03\\02.before-repair.evaluation.yaml",
+      "returned_raw_evaluation_sha256": "15183d7c72d79bbc3f0ebd91e6cd4d979da365a7fe2d05b03a7e0abd6f59e829",
+      "evaluation_export_proof": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\raw\\modular-service-b-t03\\02.before-repair.evaluation-export.yaml",
+      "evaluation_export_proof_sha256": "40f1825ade82ea5ab7b1fb13625be9701e7edf5beffd6b47199ecd4dc6012b04",
+      "exporter_exit": 0,
+      "evaluator_status": "failed",
+      "failed_components": [
+        "idempotency-vector",
+        "invoice-conflict-vector",
+        "task-validator"
+      ],
+      "checks": [
+        {
+          "name": "allowed-paths",
+          "passed": true
+        },
+        {
+          "name": "architecture-boundary",
+          "passed": false
+        },
+        {
+          "name": "idempotency-vector",
+          "passed": false
+        },
+        {
+          "name": "invoice-conflict-vector",
+          "passed": false
+        },
+        {
+          "name": "task-validator",
+          "passed": false
+        }
+      ],
+      "human_acceptance": false
+    },
+    {
+      "arena": "s3f",
+      "phase": "final",
+      "run_id": "modular-service-b-t03",
+      "task_id": "02",
+      "terminal_actor_status": "failed",
+      "source_native": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\runs\\modular-service-b-t03\\02.native.yaml",
+      "source_native_sha256": "6acf86482e5f2ad508bfe0a15d251e888b60e4c46849686742804d8394a40b8f",
+      "actual_attempt0_helper": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\raw\\modular-service-b-t03\\02\\helper-attempt-0.jsonl",
+      "attempt0_helper_sha256": "73cd5307e6a588a66029a93d85df98da31a417981995be2a4584ecc2bffb246f",
+      "selected_source_snapshot": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\results\\modular-service-b-t03\\snapshots\\02",
+      "selected_source_tree_sha256": "609908f88c2fde1f00b9533136bfdba600a78abbc780dd77e6e26f84f44b0622",
+      "source_snapshot_tree_path": "",
+      "source_snapshot_tree_sha256": "609908f88c2fde1f00b9533136bfdba600a78abbc780dd77e6e26f84f44b0622",
+      "source_capture": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\s3f\\raw\\modular-service-b-t03\\02.source-capture.yaml",
+      "source_capture_sha256": "1f6d77e942f5d1dbe2afc84a08de8406e5cea917276ef7a57a400bb1bb26f561",
+      "staged_native": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\s3f\\runs\\modular-service-b-t03\\02.native.yaml",
+      "staged_native_sha256": "6dda01c27450d6d99eebd8c63690a7cecaefc0a9f8cc1577dd450cfb48220ab3",
+      "evaluator_invocation_log": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\s3f\\raw\\trial3-b-02-invocation.txt",
+      "evaluator_invocation_log_sha256": "7785914cb01f8ca8361d13530a4a094c7472d2980c0f0a0f518f3c46c0ed0b51",
+      "actual_evaluator_exit": 0,
+      "assessment_raw_evaluation": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\s3f\\runs\\modular-service-b-t03\\02.evaluation.yaml",
+      "assessment_raw_evaluation_sha256": "15183d7c72d79bbc3f0ebd91e6cd4d979da365a7fe2d05b03a7e0abd6f59e829",
+      "returned_raw_evaluation": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\runs\\modular-service-b-t03\\02.evaluation.yaml",
+      "returned_raw_evaluation_sha256": "15183d7c72d79bbc3f0ebd91e6cd4d979da365a7fe2d05b03a7e0abd6f59e829",
+      "evaluation_export_proof": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\raw\\modular-service-b-t03\\02.final.evaluation-export.yaml",
+      "evaluation_export_proof_sha256": "8d13ef5df8ebcfc0e9933dc19ae5113cd494ca1ea908ea8312b934005b95f2f4",
+      "exporter_exit": 0,
+      "evaluator_status": "failed",
+      "failed_components": [
+        "idempotency-vector",
+        "invoice-conflict-vector",
+        "task-validator"
+      ],
+      "checks": [
+        {
+          "name": "allowed-paths",
+          "passed": true
+        },
+        {
+          "name": "architecture-boundary",
+          "passed": false
+        },
+        {
+          "name": "idempotency-vector",
+          "passed": false
+        },
+        {
+          "name": "invoice-conflict-vector",
+          "passed": false
+        },
+        {
+          "name": "task-validator",
+          "passed": false
+        }
+      ],
+      "human_acceptance": false
+    },
+    {
+      "arena": "s3i",
+      "phase": "before-repair",
+      "run_id": "modular-service-b-t03",
+      "task_id": "03",
+      "terminal_actor_status": "completed",
+      "source_native": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\runs\\modular-service-b-t03\\03.native.yaml",
+      "source_native_sha256": "6adc291cfadac4f4038649fdba4b72630e3c3ce472ba95af0ae51853bdf398b5",
+      "actual_attempt0_helper": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\raw\\modular-service-b-t03\\03\\helper-attempt-0.jsonl",
+      "attempt0_helper_sha256": "1f37e01cf753ddb624be417156950a7ef5f7c9a6238815d5a18e9de34f1db39c",
+      "selected_source_snapshot": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\raw\\modular-service-b-t03\\03\\snapshots\\03-check-1",
+      "selected_source_tree_sha256": "523cc19645ecc2197ca43eac7e8c4fcf413f233720cc2e9d6c69cc111f5d59c9",
+      "source_snapshot_tree_path": "",
+      "source_snapshot_tree_sha256": "523cc19645ecc2197ca43eac7e8c4fcf413f233720cc2e9d6c69cc111f5d59c9",
+      "source_capture": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\s3i\\raw\\modular-service-b-t03\\03.source-capture.yaml",
+      "source_capture_sha256": "9bcfbbb55d68c79a480a58efb03f43c31a88d8cf0fb905c836e0963713abf2a8",
+      "staged_native": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\s3i\\runs\\modular-service-b-t03\\03.native.yaml",
+      "staged_native_sha256": "bdf8ab39e52d39f03855124390caf8fd910118aa85585ccd5a27eaa8a14c3a1f",
+      "evaluator_invocation_log": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\s3i\\raw\\trial3-b-03-invocation.txt",
+      "evaluator_invocation_log_sha256": "90dc0454d070b31fac0ad590a1df11d16de5523f6202acffed14307ddbaf06f9",
+      "actual_evaluator_exit": 0,
+      "assessment_raw_evaluation": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\s3i\\runs\\modular-service-b-t03\\03.evaluation.yaml",
+      "assessment_raw_evaluation_sha256": "1c44056a0fa7b272328e769877742505b196831e60e27b903a44de53a3ace7f6",
+      "returned_raw_evaluation": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\runs\\modular-service-b-t03\\03.before-repair.evaluation.yaml",
+      "returned_raw_evaluation_sha256": "1c44056a0fa7b272328e769877742505b196831e60e27b903a44de53a3ace7f6",
+      "evaluation_export_proof": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\raw\\modular-service-b-t03\\03.before-repair.evaluation-export.yaml",
+      "evaluation_export_proof_sha256": "78b0fe0fe4795744b045315c6e6793d909b09ec146e993adc31003835e3b9111",
+      "exporter_exit": 0,
+      "evaluator_status": "failed",
+      "failed_components": [
+        "cumulative-ownership-table",
+        "idempotency-vector",
+        "invoice-conflict-vector",
+        "task-validator"
+      ],
+      "checks": [
+        {
+          "name": "allowed-paths",
+          "passed": true
+        },
+        {
+          "name": "architecture-boundary",
+          "passed": false
+        },
+        {
+          "name": "cumulative-ownership-table",
+          "passed": false
+        },
+        {
+          "name": "idempotency-vector",
+          "passed": false
+        },
+        {
+          "name": "invoice-conflict-vector",
+          "passed": false
+        },
+        {
+          "name": "task-validator",
+          "passed": false
+        }
+      ],
+      "human_acceptance": false
+    },
+    {
+      "arena": "s3f",
+      "phase": "final",
+      "run_id": "modular-service-b-t03",
+      "task_id": "03",
+      "terminal_actor_status": "completed",
+      "source_native": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\runs\\modular-service-b-t03\\03.native.yaml",
+      "source_native_sha256": "6adc291cfadac4f4038649fdba4b72630e3c3ce472ba95af0ae51853bdf398b5",
+      "actual_attempt0_helper": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\raw\\modular-service-b-t03\\03\\helper-attempt-0.jsonl",
+      "attempt0_helper_sha256": "1f37e01cf753ddb624be417156950a7ef5f7c9a6238815d5a18e9de34f1db39c",
+      "selected_source_snapshot": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\results\\modular-service-b-t03\\snapshots\\03",
+      "selected_source_tree_sha256": "523cc19645ecc2197ca43eac7e8c4fcf413f233720cc2e9d6c69cc111f5d59c9",
+      "source_snapshot_tree_path": "",
+      "source_snapshot_tree_sha256": "523cc19645ecc2197ca43eac7e8c4fcf413f233720cc2e9d6c69cc111f5d59c9",
+      "source_capture": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\s3f\\raw\\modular-service-b-t03\\03.source-capture.yaml",
+      "source_capture_sha256": "26f63ffc1518e8ad03a03e6b01123352ac709702ddbf5946baac1fdca8095e60",
+      "staged_native": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\s3f\\runs\\modular-service-b-t03\\03.native.yaml",
+      "staged_native_sha256": "e5b215d20a28eb0aa9332dfa98ff3a59be66845135a28882cdd0e98dbca8eae6",
+      "evaluator_invocation_log": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\s3f\\raw\\trial3-b-03-invocation.txt",
+      "evaluator_invocation_log_sha256": "90dc0454d070b31fac0ad590a1df11d16de5523f6202acffed14307ddbaf06f9",
+      "actual_evaluator_exit": 0,
+      "assessment_raw_evaluation": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\s3f\\runs\\modular-service-b-t03\\03.evaluation.yaml",
+      "assessment_raw_evaluation_sha256": "1c44056a0fa7b272328e769877742505b196831e60e27b903a44de53a3ace7f6",
+      "returned_raw_evaluation": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\runs\\modular-service-b-t03\\03.evaluation.yaml",
+      "returned_raw_evaluation_sha256": "1c44056a0fa7b272328e769877742505b196831e60e27b903a44de53a3ace7f6",
+      "evaluation_export_proof": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\raw\\modular-service-b-t03\\03.final.evaluation-export.yaml",
+      "evaluation_export_proof_sha256": "1b37295dced539bae0bfa94ed19e27ab65d5a0586c821accc7b2e1dba1b35480",
+      "exporter_exit": 0,
+      "evaluator_status": "failed",
+      "failed_components": [
+        "cumulative-ownership-table",
+        "idempotency-vector",
+        "invoice-conflict-vector",
+        "task-validator"
+      ],
+      "checks": [
+        {
+          "name": "allowed-paths",
+          "passed": true
+        },
+        {
+          "name": "architecture-boundary",
+          "passed": false
+        },
+        {
+          "name": "cumulative-ownership-table",
+          "passed": false
+        },
+        {
+          "name": "idempotency-vector",
+          "passed": false
+        },
+        {
+          "name": "invoice-conflict-vector",
+          "passed": false
+        },
+        {
+          "name": "task-validator",
+          "passed": false
+        }
+      ],
+      "human_acceptance": false
+    },
+    {
+      "arena": "s3i",
+      "phase": "before-repair",
+      "run_id": "modular-service-b-t03",
+      "task_id": "04",
+      "terminal_actor_status": "failed",
+      "source_native": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\runs\\modular-service-b-t03\\04.native.yaml",
+      "source_native_sha256": "9ac11884a096128fe8971def35d78ca85e2f0e63c32e8f56b11287c2c509ec35",
+      "actual_attempt0_helper": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\raw\\modular-service-b-t03\\04\\helper-attempt-0.jsonl",
+      "attempt0_helper_sha256": "8d5241b4acaeee74ad939177a9cd1dd7fb1a7aff84c2f9d6dcd3c8489cacfd16",
+      "selected_source_snapshot": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\raw\\modular-service-b-t03\\04\\snapshots\\04-check-1",
+      "selected_source_tree_sha256": "8f59ff2c4888933518dbcb6fbb9d4184142327ec938a5389bafe1e1a520143ca",
+      "source_snapshot_tree_path": "",
+      "source_snapshot_tree_sha256": "8f59ff2c4888933518dbcb6fbb9d4184142327ec938a5389bafe1e1a520143ca",
+      "source_capture": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\s3i\\raw\\modular-service-b-t03\\04.source-capture.yaml",
+      "source_capture_sha256": "2a5be1c558bbd90bcb37320304135f4d2c7a7f969ff6e3dde999f29d9b608812",
+      "staged_native": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\s3i\\runs\\modular-service-b-t03\\04.native.yaml",
+      "staged_native_sha256": "309df29b14f0c696b358c584baf13a5715800f644fd0f0ffaaedc07dcad85dee",
+      "evaluator_invocation_log": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\s3i\\raw\\trial3-b-04-invocation.txt",
+      "evaluator_invocation_log_sha256": "916d6f4da8f63be1474bb51527d0a57662854773cd0890b5f78e1e5a560d8ffc",
+      "actual_evaluator_exit": 0,
+      "assessment_raw_evaluation": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\s3i\\runs\\modular-service-b-t03\\04.evaluation.yaml",
+      "assessment_raw_evaluation_sha256": "c269bad75a60d9cbfbd4ed69cda2f23f095a720da324b19c35e87ae1c6004fdb",
+      "returned_raw_evaluation": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\runs\\modular-service-b-t03\\04.before-repair.evaluation.yaml",
+      "returned_raw_evaluation_sha256": "c269bad75a60d9cbfbd4ed69cda2f23f095a720da324b19c35e87ae1c6004fdb",
+      "evaluation_export_proof": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\raw\\modular-service-b-t03\\04.before-repair.evaluation-export.yaml",
+      "evaluation_export_proof_sha256": "7894a7f5ab3f4129b579e1811d4bb8e9b646febfe18a51fe5c07967b034bdc25",
+      "exporter_exit": 0,
+      "evaluator_status": "failed",
+      "failed_components": [
+        "cumulative-ownership-table",
+        "idempotency-vector",
+        "invoice-conflict-vector",
+        "task-validator"
+      ],
+      "checks": [
+        {
+          "name": "allowed-paths",
+          "passed": true
+        },
+        {
+          "name": "architecture-boundary",
+          "passed": false
+        },
+        {
+          "name": "cumulative-ownership-table",
+          "passed": false
+        },
+        {
+          "name": "cumulative-contract-rename",
+          "passed": true
+        },
+        {
+          "name": "idempotency-vector",
+          "passed": false
+        },
+        {
+          "name": "invoice-conflict-vector",
+          "passed": false
+        },
+        {
+          "name": "task-validator",
+          "passed": false
+        }
+      ],
+      "human_acceptance": false
+    },
+    {
+      "arena": "s3f",
+      "phase": "final",
+      "run_id": "modular-service-b-t03",
+      "task_id": "04",
+      "terminal_actor_status": "failed",
+      "source_native": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\runs\\modular-service-b-t03\\04.native.yaml",
+      "source_native_sha256": "9ac11884a096128fe8971def35d78ca85e2f0e63c32e8f56b11287c2c509ec35",
+      "actual_attempt0_helper": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\raw\\modular-service-b-t03\\04\\helper-attempt-0.jsonl",
+      "attempt0_helper_sha256": "8d5241b4acaeee74ad939177a9cd1dd7fb1a7aff84c2f9d6dcd3c8489cacfd16",
+      "selected_source_snapshot": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\results\\modular-service-b-t03\\snapshots\\04",
+      "selected_source_tree_sha256": "8f59ff2c4888933518dbcb6fbb9d4184142327ec938a5389bafe1e1a520143ca",
+      "source_snapshot_tree_path": "",
+      "source_snapshot_tree_sha256": "8f59ff2c4888933518dbcb6fbb9d4184142327ec938a5389bafe1e1a520143ca",
+      "source_capture": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\s3f\\raw\\modular-service-b-t03\\04.source-capture.yaml",
+      "source_capture_sha256": "07a6e8eea55593b712823643ccfb0046e658d3a8e0f716fabb64bd042d8065ad",
+      "staged_native": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\s3f\\runs\\modular-service-b-t03\\04.native.yaml",
+      "staged_native_sha256": "29dfee90a530a0315361490a565e9c08e956b3aadae928bc21cdc474cba51836",
+      "evaluator_invocation_log": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\s3f\\raw\\trial3-b-04-invocation.txt",
+      "evaluator_invocation_log_sha256": "916d6f4da8f63be1474bb51527d0a57662854773cd0890b5f78e1e5a560d8ffc",
+      "actual_evaluator_exit": 0,
+      "assessment_raw_evaluation": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\s3f\\runs\\modular-service-b-t03\\04.evaluation.yaml",
+      "assessment_raw_evaluation_sha256": "c269bad75a60d9cbfbd4ed69cda2f23f095a720da324b19c35e87ae1c6004fdb",
+      "returned_raw_evaluation": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\runs\\modular-service-b-t03\\04.evaluation.yaml",
+      "returned_raw_evaluation_sha256": "c269bad75a60d9cbfbd4ed69cda2f23f095a720da324b19c35e87ae1c6004fdb",
+      "evaluation_export_proof": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\raw\\modular-service-b-t03\\04.final.evaluation-export.yaml",
+      "evaluation_export_proof_sha256": "02141733eb75d007632fd158fc50d90aca40aa49810dbfead4d356f8d0b3f1fe",
+      "exporter_exit": 0,
+      "evaluator_status": "failed",
+      "failed_components": [
+        "cumulative-ownership-table",
+        "idempotency-vector",
+        "invoice-conflict-vector",
+        "task-validator"
+      ],
+      "checks": [
+        {
+          "name": "allowed-paths",
+          "passed": true
+        },
+        {
+          "name": "architecture-boundary",
+          "passed": false
+        },
+        {
+          "name": "cumulative-ownership-table",
+          "passed": false
+        },
+        {
+          "name": "cumulative-contract-rename",
+          "passed": true
+        },
+        {
+          "name": "idempotency-vector",
+          "passed": false
+        },
+        {
+          "name": "invoice-conflict-vector",
+          "passed": false
+        },
+        {
+          "name": "task-validator",
+          "passed": false
+        }
+      ],
+      "human_acceptance": false
+    },
+    {
+      "arena": "s3i",
+      "phase": "before-repair",
+      "run_id": "modular-service-b-t03",
+      "task_id": "05",
+      "terminal_actor_status": "failed",
+      "source_native": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\runs\\modular-service-b-t03\\05.native.yaml",
+      "source_native_sha256": "749ede5e9ab844264009d389fd8860a5b8e7f76279b88d6c18c8786ad7e170fb",
+      "actual_attempt0_helper": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\raw\\modular-service-b-t03\\05\\helper-attempt-0.jsonl",
+      "attempt0_helper_sha256": "c099473d7680248891364b1d6f1ec681e1f97ce86b89f1ef2175574d5791cbb3",
+      "selected_source_snapshot": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\raw\\modular-service-b-t03\\05\\snapshots\\05-check-1",
+      "selected_source_tree_sha256": "1bc7a5bf76bb054b805920186ebadcaacdbcfc209d91c0ac859b17f84eec3baa",
+      "source_snapshot_tree_path": "",
+      "source_snapshot_tree_sha256": "1bc7a5bf76bb054b805920186ebadcaacdbcfc209d91c0ac859b17f84eec3baa",
+      "source_capture": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\s3i\\raw\\modular-service-b-t03\\05.source-capture.yaml",
+      "source_capture_sha256": "6b408f8de8c30a2b941de4f45b7ec86a771264ee457bd12f816ceb2b44538a15",
+      "staged_native": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\s3i\\runs\\modular-service-b-t03\\05.native.yaml",
+      "staged_native_sha256": "d5575fdd7e9b6a95d92db01a88d18323646f0ecdcfa34d6e287faf748329a4a0",
+      "evaluator_invocation_log": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\s3i\\raw\\trial3-b-05-invocation.txt",
+      "evaluator_invocation_log_sha256": "b3cfa746a860a4bf9d23222ecee9b448f92dfadebbe3f7980bd2f0b09eb57b77",
+      "actual_evaluator_exit": 0,
+      "assessment_raw_evaluation": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\s3i\\runs\\modular-service-b-t03\\05.evaluation.yaml",
+      "assessment_raw_evaluation_sha256": "6c2b41d47ab8b1a27c2db5e96ed5991e7a02ccdbe0ec89992f0c708cb5d2f989",
+      "returned_raw_evaluation": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\runs\\modular-service-b-t03\\05.before-repair.evaluation.yaml",
+      "returned_raw_evaluation_sha256": "6c2b41d47ab8b1a27c2db5e96ed5991e7a02ccdbe0ec89992f0c708cb5d2f989",
+      "evaluation_export_proof": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\raw\\modular-service-b-t03\\05.before-repair.evaluation-export.yaml",
+      "evaluation_export_proof_sha256": "5617affb4accce049cefc53d59fe8471209ea51ac20ac59d37361c43e78b510c",
+      "exporter_exit": 0,
+      "evaluator_status": "failed",
+      "failed_components": [
+        "cumulative-ownership-table",
+        "idempotency-vector",
+        "invoice-conflict-vector",
+        "overflow-vector",
+        "task-validator"
+      ],
+      "checks": [
+        {
+          "name": "allowed-paths",
+          "passed": true
+        },
+        {
+          "name": "architecture-boundary",
+          "passed": false
+        },
+        {
+          "name": "cumulative-ownership-table",
+          "passed": false
+        },
+        {
+          "name": "cumulative-contract-rename",
+          "passed": true
+        },
+        {
+          "name": "idempotency-vector",
+          "passed": false
+        },
+        {
+          "name": "invoice-conflict-vector",
+          "passed": false
+        },
+        {
+          "name": "overflow-vector",
+          "passed": false
+        },
+        {
+          "name": "task-validator",
+          "passed": false
+        }
+      ],
+      "human_acceptance": false
+    },
+    {
+      "arena": "s3f",
+      "phase": "final",
+      "run_id": "modular-service-b-t03",
+      "task_id": "05",
+      "terminal_actor_status": "failed",
+      "source_native": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\runs\\modular-service-b-t03\\05.native.yaml",
+      "source_native_sha256": "749ede5e9ab844264009d389fd8860a5b8e7f76279b88d6c18c8786ad7e170fb",
+      "actual_attempt0_helper": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\raw\\modular-service-b-t03\\05\\helper-attempt-0.jsonl",
+      "attempt0_helper_sha256": "c099473d7680248891364b1d6f1ec681e1f97ce86b89f1ef2175574d5791cbb3",
+      "selected_source_snapshot": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\results\\modular-service-b-t03\\snapshots\\05",
+      "selected_source_tree_sha256": "1bc7a5bf76bb054b805920186ebadcaacdbcfc209d91c0ac859b17f84eec3baa",
+      "source_snapshot_tree_path": "",
+      "source_snapshot_tree_sha256": "1bc7a5bf76bb054b805920186ebadcaacdbcfc209d91c0ac859b17f84eec3baa",
+      "source_capture": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\s3f\\raw\\modular-service-b-t03\\05.source-capture.yaml",
+      "source_capture_sha256": "38355164647df7863e55770401a21d5c3fa516e389bf113fd233d8cf38e79631",
+      "staged_native": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\s3f\\runs\\modular-service-b-t03\\05.native.yaml",
+      "staged_native_sha256": "16f25efcf1d0828183de1e999d9f4df27414f584b0593e3c68d6a378a24c5477",
+      "evaluator_invocation_log": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\s3f\\raw\\trial3-b-05-invocation.txt",
+      "evaluator_invocation_log_sha256": "b3cfa746a860a4bf9d23222ecee9b448f92dfadebbe3f7980bd2f0b09eb57b77",
+      "actual_evaluator_exit": 0,
+      "assessment_raw_evaluation": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\s3f\\runs\\modular-service-b-t03\\05.evaluation.yaml",
+      "assessment_raw_evaluation_sha256": "6c2b41d47ab8b1a27c2db5e96ed5991e7a02ccdbe0ec89992f0c708cb5d2f989",
+      "returned_raw_evaluation": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\runs\\modular-service-b-t03\\05.evaluation.yaml",
+      "returned_raw_evaluation_sha256": "6c2b41d47ab8b1a27c2db5e96ed5991e7a02ccdbe0ec89992f0c708cb5d2f989",
+      "evaluation_export_proof": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\raw\\modular-service-b-t03\\05.final.evaluation-export.yaml",
+      "evaluation_export_proof_sha256": "6be3b2676ce6c8a7d07b8a4268142189d51da5638c93e62eafb78f4feb2deef2",
+      "exporter_exit": 0,
+      "evaluator_status": "failed",
+      "failed_components": [
+        "cumulative-ownership-table",
+        "idempotency-vector",
+        "invoice-conflict-vector",
+        "overflow-vector",
+        "task-validator"
+      ],
+      "checks": [
+        {
+          "name": "allowed-paths",
+          "passed": true
+        },
+        {
+          "name": "architecture-boundary",
+          "passed": false
+        },
+        {
+          "name": "cumulative-ownership-table",
+          "passed": false
+        },
+        {
+          "name": "cumulative-contract-rename",
+          "passed": true
+        },
+        {
+          "name": "idempotency-vector",
+          "passed": false
+        },
+        {
+          "name": "invoice-conflict-vector",
+          "passed": false
+        },
+        {
+          "name": "overflow-vector",
+          "passed": false
+        },
+        {
+          "name": "task-validator",
+          "passed": false
+        }
+      ],
+      "human_acceptance": false
+    },
+    {
+      "arena": "s3i",
+      "phase": "before-repair",
+      "run_id": "modular-service-b-t03",
+      "task_id": "06",
+      "terminal_actor_status": "failed",
+      "source_native": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\runs\\modular-service-b-t03\\06.native.yaml",
+      "source_native_sha256": "075f69d9b0040e4533fe657228c54e4e3a71dbb6b8a780cd6a24d0ee80cb67da",
+      "actual_attempt0_helper": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\raw\\modular-service-b-t03\\06\\helper-attempt-0.jsonl",
+      "attempt0_helper_sha256": "5b415edc114c0f0ad83f4a9c89774e201ee935c17ce757b90c72455ffdb1083f",
+      "selected_source_snapshot": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\raw\\modular-service-b-t03\\06\\snapshots\\06-check-1",
+      "selected_source_tree_sha256": "acd9bfba03a65aa11e5b0836efa850fa3f788c56cc15652e6f19fe84274be61f",
+      "source_snapshot_tree_path": "",
+      "source_snapshot_tree_sha256": "acd9bfba03a65aa11e5b0836efa850fa3f788c56cc15652e6f19fe84274be61f",
+      "source_capture": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\s3i\\raw\\modular-service-b-t03\\06.source-capture.yaml",
+      "source_capture_sha256": "01798cf0cd4111e9f95a3dcb7db4f2d0d1fa91c4057f5983cdb1aaa4efc4ec8f",
+      "staged_native": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\s3i\\runs\\modular-service-b-t03\\06.native.yaml",
+      "staged_native_sha256": "67c9fb070b15cea7df520db3ae033f29237c7983e892dd76e3ed96948313bc38",
+      "evaluator_invocation_log": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\s3i\\raw\\trial3-b-06-invocation.txt",
+      "evaluator_invocation_log_sha256": "c08e6f81342dcf32ea6d3747da1633b29c0dcaa7333ce809597f7c65e57b1843",
+      "actual_evaluator_exit": 0,
+      "assessment_raw_evaluation": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\s3i\\runs\\modular-service-b-t03\\06.evaluation.yaml",
+      "assessment_raw_evaluation_sha256": "e78bbd67521309ba05ea60b19615581fe6045f22b6626fb7bfc132fe708dd485",
+      "returned_raw_evaluation": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\runs\\modular-service-b-t03\\06.before-repair.evaluation.yaml",
+      "returned_raw_evaluation_sha256": "e78bbd67521309ba05ea60b19615581fe6045f22b6626fb7bfc132fe708dd485",
+      "evaluation_export_proof": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\raw\\modular-service-b-t03\\06.before-repair.evaluation-export.yaml",
+      "evaluation_export_proof_sha256": "d01f699a6b39a3b63ab8b66c2ef3e21d1874828fa9e66798402820f2be3a9a84",
+      "exporter_exit": 0,
+      "evaluator_status": "failed",
+      "failed_components": [
+        "cumulative-ownership-table",
+        "cumulative-availability-intent",
+        "idempotency-vector",
+        "invoice-conflict-vector",
+        "overflow-vector",
+        "availability-vector",
+        "task-validator",
+        "markitect-check"
+      ],
+      "checks": [
+        {
+          "name": "allowed-paths",
+          "passed": true
+        },
+        {
+          "name": "architecture-boundary",
+          "passed": false
+        },
+        {
+          "name": "cumulative-ownership-table",
+          "passed": false
+        },
+        {
+          "name": "cumulative-contract-rename",
+          "passed": true
+        },
+        {
+          "name": "cumulative-availability-intent",
+          "passed": false
+        },
+        {
+          "name": "cumulative-availability-guidance",
+          "passed": true
+        },
+        {
+          "name": "idempotency-vector",
+          "passed": false
+        },
+        {
+          "name": "invoice-conflict-vector",
+          "passed": false
+        },
+        {
+          "name": "overflow-vector",
+          "passed": false
+        },
+        {
+          "name": "availability-vector",
+          "passed": false
+        },
+        {
+          "name": "task-validator",
+          "passed": false
+        },
+        {
+          "name": "markitect-check",
+          "passed": false
+        }
+      ],
+      "human_acceptance": false
+    },
+    {
+      "arena": "s3f",
+      "phase": "final",
+      "run_id": "modular-service-b-t03",
+      "task_id": "06",
+      "terminal_actor_status": "failed",
+      "source_native": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\runs\\modular-service-b-t03\\06.native.yaml",
+      "source_native_sha256": "075f69d9b0040e4533fe657228c54e4e3a71dbb6b8a780cd6a24d0ee80cb67da",
+      "actual_attempt0_helper": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\raw\\modular-service-b-t03\\06\\helper-attempt-0.jsonl",
+      "attempt0_helper_sha256": "5b415edc114c0f0ad83f4a9c89774e201ee935c17ce757b90c72455ffdb1083f",
+      "selected_source_snapshot": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\results\\modular-service-b-t03\\snapshots\\06",
+      "selected_source_tree_sha256": "8124d6ff769bbd7c5758332fcb7af943e389f0e65341cd03e0880b8e31034d9d",
+      "source_snapshot_tree_path": "",
+      "source_snapshot_tree_sha256": "8124d6ff769bbd7c5758332fcb7af943e389f0e65341cd03e0880b8e31034d9d",
+      "source_capture": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\s3f\\raw\\modular-service-b-t03\\06.source-capture.yaml",
+      "source_capture_sha256": "b7396b8a608b997fd954400a87d40fc4d0a9eeb74f78592171305910f916f1fd",
+      "staged_native": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\s3f\\runs\\modular-service-b-t03\\06.native.yaml",
+      "staged_native_sha256": "f26a1c4f93366a15a36984487d8c2f3c1a7dc00a1f74c0d19fbbb4989aea0e62",
+      "evaluator_invocation_log": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\s3f\\raw\\trial3-b-06-invocation.txt",
+      "evaluator_invocation_log_sha256": "edcbaa7e3cff7701ab48ef173210dd1bbc992e5df2b99afaa3955b2686cb77f7",
+      "actual_evaluator_exit": 0,
+      "assessment_raw_evaluation": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\s3f\\runs\\modular-service-b-t03\\06.evaluation.yaml",
+      "assessment_raw_evaluation_sha256": "1d9939c6d91c419b6a80da2818724bd2ac948bcc9be4223f402688ff14597c8b",
+      "returned_raw_evaluation": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\runs\\modular-service-b-t03\\06.evaluation.yaml",
+      "returned_raw_evaluation_sha256": "1d9939c6d91c419b6a80da2818724bd2ac948bcc9be4223f402688ff14597c8b",
+      "evaluation_export_proof": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\raw\\modular-service-b-t03\\06.final.evaluation-export.yaml",
+      "evaluation_export_proof_sha256": "fa3b7ce5be894bd244e3ec1847072c51c05b9caef8415271eb3dec37767306e1",
+      "exporter_exit": 0,
+      "evaluator_status": "failed",
+      "failed_components": [
+        "cumulative-ownership-table",
+        "cumulative-availability-intent",
+        "idempotency-vector",
+        "invoice-conflict-vector",
+        "overflow-vector",
+        "availability-vector",
+        "task-validator",
+        "markitect-check"
+      ],
+      "checks": [
+        {
+          "name": "allowed-paths",
+          "passed": true
+        },
+        {
+          "name": "architecture-boundary",
+          "passed": false
+        },
+        {
+          "name": "cumulative-ownership-table",
+          "passed": false
+        },
+        {
+          "name": "cumulative-contract-rename",
+          "passed": true
+        },
+        {
+          "name": "cumulative-availability-intent",
+          "passed": false
+        },
+        {
+          "name": "cumulative-availability-guidance",
+          "passed": true
+        },
+        {
+          "name": "idempotency-vector",
+          "passed": false
+        },
+        {
+          "name": "invoice-conflict-vector",
+          "passed": false
+        },
+        {
+          "name": "overflow-vector",
+          "passed": false
+        },
+        {
+          "name": "availability-vector",
+          "passed": false
+        },
+        {
+          "name": "task-validator",
+          "passed": false
+        },
+        {
+          "name": "markitect-check",
+          "passed": false
+        }
+      ],
+      "human_acceptance": false
+    },
+    {
+      "arena": "s3i",
+      "phase": "before-repair",
+      "run_id": "modular-service-b-t03",
+      "task_id": "07",
+      "terminal_actor_status": "failed",
+      "source_native": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\runs\\modular-service-b-t03\\07.native.yaml",
+      "source_native_sha256": "3f9ce816078058551d606b1d1f013d170fb90e6a21875487dd628b9226f6263a",
+      "actual_attempt0_helper": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\raw\\modular-service-b-t03\\07\\helper-attempt-0.jsonl",
+      "attempt0_helper_sha256": "0c3116c212a6a41eacca23e09e83c6f7d3e611f8c26f1a0018730968347a4926",
+      "selected_source_snapshot": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\raw\\modular-service-b-t03\\07\\snapshots\\07-check-1",
+      "selected_source_tree_sha256": "974f9400de4197217721ab5b979a09b66b85e36f1ec8475d42a1410d87811d7d",
+      "source_snapshot_tree_path": "",
+      "source_snapshot_tree_sha256": "974f9400de4197217721ab5b979a09b66b85e36f1ec8475d42a1410d87811d7d",
+      "source_capture": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\s3i\\raw\\modular-service-b-t03\\07.source-capture.yaml",
+      "source_capture_sha256": "ef2999b691d415e74b9cd4c5f9c7dccd5581e6cbfe4906c092307fa0f836cf08",
+      "staged_native": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\s3i\\runs\\modular-service-b-t03\\07.native.yaml",
+      "staged_native_sha256": "23b1149131176641a0dc87ea6c2d8a561b7f5fb7c5117faf419c0e7f9ea8b64f",
+      "evaluator_invocation_log": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\s3i\\raw\\trial3-b-07-invocation.txt",
+      "evaluator_invocation_log_sha256": "add0e06e3d18f92e9626c58b22a30e184a5726107ac3cd6e427da75ff94df7e6",
+      "actual_evaluator_exit": 0,
+      "assessment_raw_evaluation": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\s3i\\runs\\modular-service-b-t03\\07.evaluation.yaml",
+      "assessment_raw_evaluation_sha256": "9ac14c1b98b3c5a2870127f168f152ee5e3c758d82ed9c04d2e7eb14a8eb4204",
+      "returned_raw_evaluation": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\runs\\modular-service-b-t03\\07.before-repair.evaluation.yaml",
+      "returned_raw_evaluation_sha256": "9ac14c1b98b3c5a2870127f168f152ee5e3c758d82ed9c04d2e7eb14a8eb4204",
+      "evaluation_export_proof": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\raw\\modular-service-b-t03\\07.before-repair.evaluation-export.yaml",
+      "evaluation_export_proof_sha256": "c7f3d4e539b39800eeaa9f2db887518f76976c4148e26cf8bd43198c3981aac1",
+      "exporter_exit": 0,
+      "evaluator_status": "failed",
+      "failed_components": [
+        "cumulative-ownership-table",
+        "cumulative-availability-intent",
+        "idempotency-vector",
+        "invoice-conflict-vector",
+        "overflow-vector",
+        "availability-vector",
+        "customer-reference-vector",
+        "task-validator"
+      ],
+      "checks": [
+        {
+          "name": "allowed-paths",
+          "passed": true
+        },
+        {
+          "name": "architecture-boundary",
+          "passed": false
+        },
+        {
+          "name": "cumulative-ownership-table",
+          "passed": false
+        },
+        {
+          "name": "cumulative-contract-rename",
+          "passed": true
+        },
+        {
+          "name": "cumulative-availability-intent",
+          "passed": false
+        },
+        {
+          "name": "cumulative-availability-guidance",
+          "passed": true
+        },
+        {
+          "name": "idempotency-vector",
+          "passed": false
+        },
+        {
+          "name": "invoice-conflict-vector",
+          "passed": false
+        },
+        {
+          "name": "overflow-vector",
+          "passed": false
+        },
+        {
+          "name": "availability-vector",
+          "passed": false
+        },
+        {
+          "name": "customer-reference-vector",
+          "passed": false
+        },
+        {
+          "name": "task-validator",
+          "passed": false
+        }
+      ],
+      "human_acceptance": false
+    },
+    {
+      "arena": "s3f",
+      "phase": "final",
+      "run_id": "modular-service-b-t03",
+      "task_id": "07",
+      "terminal_actor_status": "failed",
+      "source_native": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\runs\\modular-service-b-t03\\07.native.yaml",
+      "source_native_sha256": "3f9ce816078058551d606b1d1f013d170fb90e6a21875487dd628b9226f6263a",
+      "actual_attempt0_helper": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\raw\\modular-service-b-t03\\07\\helper-attempt-0.jsonl",
+      "attempt0_helper_sha256": "0c3116c212a6a41eacca23e09e83c6f7d3e611f8c26f1a0018730968347a4926",
+      "selected_source_snapshot": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\results\\modular-service-b-t03\\snapshots\\07",
+      "selected_source_tree_sha256": "974f9400de4197217721ab5b979a09b66b85e36f1ec8475d42a1410d87811d7d",
+      "source_snapshot_tree_path": "",
+      "source_snapshot_tree_sha256": "974f9400de4197217721ab5b979a09b66b85e36f1ec8475d42a1410d87811d7d",
+      "source_capture": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\s3f\\raw\\modular-service-b-t03\\07.source-capture.yaml",
+      "source_capture_sha256": "84ce6ef3b8bf16545398b3f58b17fc013c6ce5bf7481d0a8b93f32d11b011212",
+      "staged_native": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\s3f\\runs\\modular-service-b-t03\\07.native.yaml",
+      "staged_native_sha256": "3b19bb5c65635072456a376ac62d91f650f3bd41a3d27624024cab5bf3adea88",
+      "evaluator_invocation_log": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\s3f\\raw\\trial3-b-07-invocation.txt",
+      "evaluator_invocation_log_sha256": "add0e06e3d18f92e9626c58b22a30e184a5726107ac3cd6e427da75ff94df7e6",
+      "actual_evaluator_exit": 0,
+      "assessment_raw_evaluation": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\s3f\\runs\\modular-service-b-t03\\07.evaluation.yaml",
+      "assessment_raw_evaluation_sha256": "9ac14c1b98b3c5a2870127f168f152ee5e3c758d82ed9c04d2e7eb14a8eb4204",
+      "returned_raw_evaluation": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\runs\\modular-service-b-t03\\07.evaluation.yaml",
+      "returned_raw_evaluation_sha256": "9ac14c1b98b3c5a2870127f168f152ee5e3c758d82ed9c04d2e7eb14a8eb4204",
+      "evaluation_export_proof": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\raw\\modular-service-b-t03\\07.final.evaluation-export.yaml",
+      "evaluation_export_proof_sha256": "f454547f28d2e06731db45f717ac313e963fc1626083eb26d6ed050a7866415d",
+      "exporter_exit": 0,
+      "evaluator_status": "failed",
+      "failed_components": [
+        "cumulative-ownership-table",
+        "cumulative-availability-intent",
+        "idempotency-vector",
+        "invoice-conflict-vector",
+        "overflow-vector",
+        "availability-vector",
+        "customer-reference-vector",
+        "task-validator"
+      ],
+      "checks": [
+        {
+          "name": "allowed-paths",
+          "passed": true
+        },
+        {
+          "name": "architecture-boundary",
+          "passed": false
+        },
+        {
+          "name": "cumulative-ownership-table",
+          "passed": false
+        },
+        {
+          "name": "cumulative-contract-rename",
+          "passed": true
+        },
+        {
+          "name": "cumulative-availability-intent",
+          "passed": false
+        },
+        {
+          "name": "cumulative-availability-guidance",
+          "passed": true
+        },
+        {
+          "name": "idempotency-vector",
+          "passed": false
+        },
+        {
+          "name": "invoice-conflict-vector",
+          "passed": false
+        },
+        {
+          "name": "overflow-vector",
+          "passed": false
+        },
+        {
+          "name": "availability-vector",
+          "passed": false
+        },
+        {
+          "name": "customer-reference-vector",
+          "passed": false
+        },
+        {
+          "name": "task-validator",
+          "passed": false
+        }
+      ],
+      "human_acceptance": false
+    },
+    {
+      "arena": "s3i",
+      "phase": "before-repair",
+      "run_id": "modular-service-b-t03",
+      "task_id": "08",
+      "terminal_actor_status": "failed",
+      "source_native": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\runs\\modular-service-b-t03\\08.native.yaml",
+      "source_native_sha256": "0ddcce7c03b92e80d6449a6347983116d3273e5b8b79abbb81d1ced64daf5c68",
+      "actual_attempt0_helper": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\raw\\modular-service-b-t03\\08\\helper-attempt-0.jsonl",
+      "attempt0_helper_sha256": "872ddb2f6c99d9a723c1ca85d777524ae435c78238ce1b2c4dffc6db620741f0",
+      "selected_source_snapshot": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\raw\\modular-service-b-t03\\08\\snapshots\\08-check-1",
+      "selected_source_tree_sha256": "24f3faa471ea3603571faf767a68ceb70b8d0289cb0ab5d102541bc31d742b2a",
+      "source_snapshot_tree_path": "",
+      "source_snapshot_tree_sha256": "24f3faa471ea3603571faf767a68ceb70b8d0289cb0ab5d102541bc31d742b2a",
+      "source_capture": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\s3i\\raw\\modular-service-b-t03\\08.source-capture.yaml",
+      "source_capture_sha256": "491e2e6a89ec2ae805b8ec1ff39c2d72d2c956e06da660fe4a620c01cccec303",
+      "staged_native": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\s3i\\runs\\modular-service-b-t03\\08.native.yaml",
+      "staged_native_sha256": "709bbc4462e15ceacaafcc8548a266160c5e5bb3afd3ca273a4298dcff0bd235",
+      "evaluator_invocation_log": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\s3i\\raw\\trial3-b-08-invocation.txt",
+      "evaluator_invocation_log_sha256": "802b33472c1ca6fed9970e686353855fe533ee8b185264e8fa70770ca0d7ab20",
+      "actual_evaluator_exit": 0,
+      "assessment_raw_evaluation": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\s3i\\runs\\modular-service-b-t03\\08.evaluation.yaml",
+      "assessment_raw_evaluation_sha256": "6e7c5490126201e892a91f1144897f572e15d2cc8cef3325ba73b290ecb538ba",
+      "returned_raw_evaluation": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\runs\\modular-service-b-t03\\08.before-repair.evaluation.yaml",
+      "returned_raw_evaluation_sha256": "6e7c5490126201e892a91f1144897f572e15d2cc8cef3325ba73b290ecb538ba",
+      "evaluation_export_proof": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\raw\\modular-service-b-t03\\08.before-repair.evaluation-export.yaml",
+      "evaluation_export_proof_sha256": "a8ec07bdd7ed53b0f24ee6007a54d38a38f1a175dabb51b5e567e57156c86fea",
+      "exporter_exit": 0,
+      "evaluator_status": "failed",
+      "failed_components": [
+        "cumulative-ownership-table",
+        "cumulative-availability-intent",
+        "idempotency-vector",
+        "invoice-conflict-vector",
+        "overflow-vector",
+        "availability-vector",
+        "customer-reference-vector",
+        "invoice-memo-vector",
+        "task-validator"
+      ],
+      "checks": [
+        {
+          "name": "allowed-paths",
+          "passed": true
+        },
+        {
+          "name": "architecture-boundary",
+          "passed": false
+        },
+        {
+          "name": "cumulative-ownership-table",
+          "passed": false
+        },
+        {
+          "name": "cumulative-contract-rename",
+          "passed": true
+        },
+        {
+          "name": "cumulative-availability-intent",
+          "passed": false
+        },
+        {
+          "name": "cumulative-availability-guidance",
+          "passed": true
+        },
+        {
+          "name": "idempotency-vector",
+          "passed": false
+        },
+        {
+          "name": "invoice-conflict-vector",
+          "passed": false
+        },
+        {
+          "name": "overflow-vector",
+          "passed": false
+        },
+        {
+          "name": "availability-vector",
+          "passed": false
+        },
+        {
+          "name": "customer-reference-vector",
+          "passed": false
+        },
+        {
+          "name": "invoice-memo-vector",
+          "passed": false
+        },
+        {
+          "name": "task-validator",
+          "passed": false
+        }
+      ],
+      "human_acceptance": false
+    },
+    {
+      "arena": "s3f",
+      "phase": "final",
+      "run_id": "modular-service-b-t03",
+      "task_id": "08",
+      "terminal_actor_status": "failed",
+      "source_native": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\runs\\modular-service-b-t03\\08.native.yaml",
+      "source_native_sha256": "0ddcce7c03b92e80d6449a6347983116d3273e5b8b79abbb81d1ced64daf5c68",
+      "actual_attempt0_helper": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\raw\\modular-service-b-t03\\08\\helper-attempt-0.jsonl",
+      "attempt0_helper_sha256": "872ddb2f6c99d9a723c1ca85d777524ae435c78238ce1b2c4dffc6db620741f0",
+      "selected_source_snapshot": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\results\\modular-service-b-t03\\snapshots\\08",
+      "selected_source_tree_sha256": "b290368680dbb95995765696b700dedf2d6e8f1e713dc9256ebff1711a4a0692",
+      "source_snapshot_tree_path": "",
+      "source_snapshot_tree_sha256": "b290368680dbb95995765696b700dedf2d6e8f1e713dc9256ebff1711a4a0692",
+      "source_capture": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\s3f\\raw\\modular-service-b-t03\\08.source-capture.yaml",
+      "source_capture_sha256": "8b25197f9b870fbf557d8719094601c20fe93d32ffa96a4c719dfb13f758e4d4",
+      "staged_native": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\s3f\\runs\\modular-service-b-t03\\08.native.yaml",
+      "staged_native_sha256": "ec951c70feab74ab6015ee6252331ae416de50ac9fee890821a09b5638852dad",
+      "evaluator_invocation_log": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\s3f\\raw\\trial3-b-08-invocation.txt",
+      "evaluator_invocation_log_sha256": "14c3e11c4f57cc11a03734f8b673ddbef6dada1a7c0197daf51812043adb0913",
+      "actual_evaluator_exit": 0,
+      "assessment_raw_evaluation": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\s3f\\runs\\modular-service-b-t03\\08.evaluation.yaml",
+      "assessment_raw_evaluation_sha256": "253df1defe9a72df104ed2f11458d9ab88ad6d3b394440bb98a0dbbcb96ca1e4",
+      "returned_raw_evaluation": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\runs\\modular-service-b-t03\\08.evaluation.yaml",
+      "returned_raw_evaluation_sha256": "253df1defe9a72df104ed2f11458d9ab88ad6d3b394440bb98a0dbbcb96ca1e4",
+      "evaluation_export_proof": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\raw\\modular-service-b-t03\\08.final.evaluation-export.yaml",
+      "evaluation_export_proof_sha256": "1df7b20e3df87476187471b022f76b2acca231f877cf98e222a9a2ffe9c71376",
+      "exporter_exit": 0,
+      "evaluator_status": "failed",
+      "failed_components": [
+        "cumulative-ownership-table",
+        "cumulative-availability-intent",
+        "idempotency-vector",
+        "invoice-conflict-vector",
+        "overflow-vector",
+        "availability-vector",
+        "customer-reference-vector",
+        "invoice-memo-vector",
+        "task-validator"
+      ],
+      "checks": [
+        {
+          "name": "allowed-paths",
+          "passed": true
+        },
+        {
+          "name": "architecture-boundary",
+          "passed": false
+        },
+        {
+          "name": "cumulative-ownership-table",
+          "passed": false
+        },
+        {
+          "name": "cumulative-contract-rename",
+          "passed": true
+        },
+        {
+          "name": "cumulative-availability-intent",
+          "passed": false
+        },
+        {
+          "name": "cumulative-availability-guidance",
+          "passed": true
+        },
+        {
+          "name": "idempotency-vector",
+          "passed": false
+        },
+        {
+          "name": "invoice-conflict-vector",
+          "passed": false
+        },
+        {
+          "name": "overflow-vector",
+          "passed": false
+        },
+        {
+          "name": "availability-vector",
+          "passed": false
+        },
+        {
+          "name": "customer-reference-vector",
+          "passed": false
+        },
+        {
+          "name": "invoice-memo-vector",
+          "passed": false
+        },
+        {
+          "name": "task-validator",
+          "passed": false
+        }
+      ],
+      "human_acceptance": false
+    }
+  ],
+  "human_acceptance": false,
+  "limits": [
+    "Invocation logs and exporter proofs retain operator-supplied process evidence; not signed host telemetry.",
+    "Frozen evaluator suppresses Go command output; false Go-based checks do not identify whether source behavior, test execution, or missing runtime caused failure.",
+    "No actor feedback, semantic rescore, human acceptance, or holdout evidence included."
+  ]
+}

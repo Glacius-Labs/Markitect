@@ -1,0 +1,11 @@
+{
+  "schema": "service-predicate-recurrence-root-validation/v1",
+  "recorded_utc": "2026-10-05T08:07:35.490159+00:00",
+  "diagnostic_sha256": "b29d4ece6bc75e4d99b681de2c60b2b70770234f38e501a18bd1ab53a2575e40",
+  "frozen_evaluator_identity_matches": true,
+  "successful_diagnostic_exit": 0,
+  "failed_first_helper_run_retained": true,
+  "scored_outcomes_used_for_diagnostic": false,
+  "scope_disclosure": "Reviewer accidentally issued one recursive path search while locating the freeze. Some result-tree path lines were emitted; reviewer reports no scored workspaces or evaluation outcomes opened or used. No blinded/no-outcome-access attestation is claimed. Root basis is the frozen pure predicates and fixed synthetic inputs.",
+  "evidence_claim": "Byte/source consistency only; not authentication, semantic completeness or human acceptance."
+}

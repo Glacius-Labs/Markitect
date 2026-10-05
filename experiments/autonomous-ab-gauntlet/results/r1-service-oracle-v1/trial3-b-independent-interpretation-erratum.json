@@ -1,0 +1,32 @@
+{
+  "schema": "autonomous-ab-service-trial3-b-interpretation-erratum/v1",
+  "supersedes_statement_in": "cumulative-ownership-table finding in trial3-b-independent-interpretation.json",
+  "interpretation_path": "C:\\Users\\Consiliari\\.codex\\worktrees\\689d\\Markitect\\experiments\\autonomous-ab-gauntlet\\results\\r1-service-oracle-v1\\trial3-b-independent-interpretation.json",
+  "interpretation_sha256": "1ff5915b0bd7fb3aadb762b72f4ae22dcf6402d441b1d0e193cc62ee83379029",
+  "assessment_path": "C:\\Users\\Consiliari\\.codex\\worktrees\\689d\\Markitect\\experiments\\autonomous-ab-gauntlet\\results\\r1-service-oracle-v1\\trial3-b-assessment.json",
+  "assessment_sha256": "dadef002a908d22cedc35505fa76eb5d5f439b7c175b0c87112772b28e23527f",
+  "binding_path": "C:\\Users\\Consiliari\\.codex\\worktrees\\689d\\Markitect\\experiments\\autonomous-ab-gauntlet\\results\\r1-service-oracle-v1\\trial3-b-independent-interpretation-bindings.json",
+  "binding_sha256": "fb636409bfedfc267ab3976539c0225f3deaa5478e090eb476475996384342af",
+  "precise_correction": "The interpretation wording that the predicate filters package cells before stripping Markdown backticks is inaccurate. The frozen source strips backticks before the owning-package path test at evaluate.ps1 line 45. The concrete dependency predicate at lines 53-73 extracts Core and Contracts, permits optional parenthesized path text, then rejects all residue except the words and punctuation it explicitly removes. The captured cells “internal/core” and “internal/contracts” leave “internal/” residue, so the old oracle rejects slash-qualified paths even though they identify the exact Core and Contracts dependencies. This is the bounded lexical overconstraint; it is not a package-cell stripping failure.",
+  "evidence": [
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\projects\\modular-service\\oracle\\evaluate.ps1",
+      "sha256": "e760bc34da2780878fc6f952054b859e95021872d318a7595eb3745f973cb73a",
+      "locations": [
+        "21-74",
+        "45",
+        "53-73"
+      ]
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\s3f\\results\\modular-service-b-t03\\snapshots\\03-final\\workspace\\docs\\architecture.md",
+      "sha256": "9d739be738f528ea38e47a809a2c689533b1f95becc220e6a6b49b6a870f49d3",
+      "locations": [
+        "ownership prose and table"
+      ]
+    }
+  ],
+  "semantic_observation": "Task03 table has three module rows; Orders owns order lifecycle, Inventory owns stock and reservations, Billing owns invoice records and idempotency. The table supplies each exact owning package under internal/modules and the allowed dependency paths internal/core and internal/contracts. This finding corrects explanation of the frozen component failure only; raw evaluator failure remains failed and no score is repaired.",
+  "disposition": "Interpretation v1 bytes retained. Apply this erratum when reading its table-recognition finding; all other bounded findings and limits remain as recorded.",
+  "human_acceptance": false
+}

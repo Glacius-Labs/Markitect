@@ -1,0 +1,12 @@
+apiVersion: markitect.measurement.org/v1alpha1
+kind: ImmutableRecordTimingAddendum
+observed_at_utc: 2026-10-05T08:11:03Z
+record_path: decisions/service-only-invalidation.yaml
+record_sha256: 969746386ff54be55e3f7bdbd7c8015bde10f4d9b516b39fbf216a6b945c0b67
+recorded_created_at_utc_value: 2026-10-05T08:07:56Z
+recorded_created_at_utc_semantics: Actual UTC decision-time capture taken before writing; the field name does not denote filesystem creation time.
+source_file_creation_time_utc: 2026-10-05T08:08:54.8596934Z
+source_file_last_write_time_utc: 2026-10-05T08:08:54.8606942Z
+public_mirror_creation_time_utc: 2026-10-05T08:08:54.8636941Z
+public_mirror_last_write_time_utc: 2026-10-05T08:08:54.8606942Z
+mirror_hash_equality: verified

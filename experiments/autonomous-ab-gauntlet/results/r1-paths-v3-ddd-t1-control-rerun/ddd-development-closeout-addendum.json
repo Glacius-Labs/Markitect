@@ -1,0 +1,27 @@
+{
+  "record_type": "DDD-development-closeout-addendum",
+  "recorded_utc": "2026-10-05T07:30:20Z",
+  "supersedes_closeout_sha256": "9AF3FBFD4B051092945602BFB14DCDE42E889D6C8AFC08E55C2A36016F1FC8AB",
+  "supersedes_file": "ddd-development-closeout.json",
+  "correction": {
+    "corrected_value": 24,
+    "derived_from": "46 exact helper-attempt JSONL records: 24 exit_code=1, 22 exit_code=0",
+    "related_counts": {
+      "attempt0_prepared_unique_tasks": 36,
+      "dispatched_tasks": 35,
+      "terminal_tasks": 33,
+      "terminal_status_counts": {
+        "completed": 20,
+        "protocol_invalid": 8,
+        "failed": 5
+      },
+      "unprepared_unavailable_tasks": 12,
+      "prepared_but_undispatched_tasks": 1,
+      "dispatched_unresolved_tasks": 2
+    },
+    "input": "raw helper-attempt JSONL metadata",
+    "incorrect_value_in_initial_closeout": 16,
+    "field": "aggregate_counts.helper_failed_invocations"
+  },
+  "scope": "Metadata correction only; no task/run/source/helper state was changed."
+}

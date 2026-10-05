@@ -1,0 +1,36 @@
+apiVersion: markitect.measurement.org/v1alpha1
+kind: MeasurementCohortDecision
+decision_id: service-only-invalidation-d60
+created_at_utc: 2026-10-05T08:07:56Z
+freeze_digest: d60e4975ab34b6519c2db414a58c170898750cacc59e077a199e2504f6bb6ebd
+freeze_file_sha256: 2b384cd160e99263b9540272fad2386bbcedf0be97e1d99f662264648dcab1e3
+scope: modular-service
+status: invalidated-for-comparative-measurement
+reason_class: source-only benchmark-design issue
+source_diagnostic:
+  path: experiments/autonomous-ab-gauntlet/results/r1-oracle-v2/service-predicate-recurrence-v1.json
+  sha256: b29d4ece6bc75e4d99b681de2c60b2b70770234f38e501a18bd1ab53a2575e40
+  finding_class: recurrence of false-negative predicates in the frozen service measurement oracle
+  product_or_actor_failure: false
+paused_coverage:
+  path: C:/Users/Consiliari/.codex/visualizations/2026/10/02/01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3/autonomous-ab-gauntlet/r1-oracle-v2/raw/modular-service-v2-paused-coverage-2026-10-05.json
+  sha256: 57486b83e3da48fd3df8053b1c038ac16662b238bda10d50030bc6106ecce2f2
+existing_excluded_runs:
+  - modular-service-a-t01
+  - modular-service-a-t01-parallel-P01
+  - modular-service-a-t01-parallel-P02
+symmetric_planned_comparison:
+  service_trial1_comparison: invalidated
+  arm_a_existing_prepared_work: preserved_with_native_status_and_helpers
+  arm_b: unstarted; no run identifier exists and none is listed as excluded
+  integration: unstarted; no run identifier exists and none is listed as excluded
+  trials_2_and_3: unstarted; no run identifiers exist and none are listed as excluded
+  holdout_tasks_09_to_12: remain sealed and unstarted
+other_projects:
+  engineering_ops: unchanged; not covered by this decision
+preservation:
+  native_run_statuses: unchanged
+  helper_receipts_and_actor_responses: unchanged
+  rescore: prohibited
+  source_or_workspace_mutation: none
+next_step: await a separately frozen Service-only corrected cohort authorization

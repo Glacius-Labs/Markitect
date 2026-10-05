@@ -1,0 +1,38 @@
+schema: autonomous-ab-ddd-development-closeout-validation/v1
+recorded_utc: '2026-10-05T07:45:41.446508+00:00'
+arena: r1-paths-v3-ddd-t1-control-rerun
+freeze_digest: 4faee78795986559e91a0e233bd7321a9cf48526d331edba621ca98eee11638a
+independent_byte_validation:
+  referenced_metadata_files: 123
+  helper_invocations: 46
+  helper_exit_1: 24
+  helper_exit_0: 22
+  prepared_native_records: 36
+  native_completed: 20
+  native_failed: 5
+  native_protocol_invalid: 8
+  native_actor_started_only: 3
+  terminal_native_records: 33
+  source_workspace_reads: none
+corrected_claims:
+  helper_count: Count addendum corrects original 16 failures to 24; original bytes retained.
+  trial1_exclusion: Original arena's trial1 exclusion does not apply to the fresh arena with the same run IDs.
+  expected_file_wording: A diagnostic naming expected files does not prove their presence.
+  dispatch: Prepared actor_started metadata is not an actual native model-start attestation.
+trial1_retained_checkpoint:
+  external_relative_path: decisions/trial1-independent-assessment.yaml
+  sha256: 'dda9edeb9478e73697ddb274df52303a13d6316d0b521a057636609779d2b416'
+  proves: Earlier separately reviewed trial1 observations, including absent B task07 owners, remain distinct from the report-only inventory.
+  limits: AI component assessment; not owner acceptance or rescue of invalid actor protocol.
+records:
+  - path: 'ddd-development-closeout.json'
+    sha256: '9af3fbfd4b051092945602bfb14dcde42e889d6c8afc08e55c2a36016f1fc8ab'
+  - path: 'ddd-development-closeout-addendum.json'
+    sha256: '4c90e6c8ec978d782be1adb54c558fda15eb6d2b38cf702e5974820646d6cc7e'
+  - path: 'ddd-development-closeout-interpretation-addendum-2026-10-05T07-38-35Z.json'
+    sha256: '9e72083310304fcd0b937afd3138591853e292bed1045a97d8acbc02a15e1d12'
+
+limits:
+  - Metadata and byte/reference consistency only; completed native status is not independently proven task success.
+  - T2 and T3 exact paired exclusions remain; no task05 response or downstream task is fabricated.
+  - No helper/evaluator rerun, canonical change, semantic rescore, holdout or human acceptance.

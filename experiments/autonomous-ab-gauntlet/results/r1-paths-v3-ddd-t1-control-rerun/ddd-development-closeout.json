@@ -1,0 +1,1238 @@
+{
+  "record_type": "DDD-frozen-development-descriptive-closeout",
+  "recorded_utc": "2026-10-05T07:29:30Z",
+  "arena": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t1-control-rerun",
+  "freeze_digest": "4faee78795986559e91a0e233bd7321a9cf48526d331edba621ca98eee11638a",
+  "scope": "Read-only closeout of retained native/helper/response metadata and operator logs. No source workspace reads/edits, no helper reruns, no hidden evaluation, no holdout.",
+  "planned": {
+    "trials": 3,
+    "tasks_per_arm_trial": [
+      "01",
+      "02",
+      "03",
+      "04",
+      "05",
+      "06",
+      "07",
+      "08"
+    ],
+    "total_tasks": 48,
+    "arms": [
+      "A",
+      "B"
+    ]
+  },
+  "aggregate_counts": {
+    "helper_failed_invocations": 16,
+    "unprepared_unavailable_tasks": 12,
+    "terminal_tasks": 33,
+    "terminal_status_counts": {
+      "failed": 5,
+      "completed": 20,
+      "protocol_invalid": 8
+    },
+    "prepared_but_undispatched_tasks": 1,
+    "dispatched_tasks": 35,
+    "dispatched_unresolved_tasks": 2,
+    "attempt0_prepared_unique_tasks": 36
+  },
+  "runs": [
+    {
+      "run": "vertical-slices-a-t01",
+      "prepared_tasks": [
+        "01",
+        "02",
+        "03",
+        "04",
+        "05",
+        "06",
+        "07",
+        "08"
+      ],
+      "terminal_tasks": [
+        {
+          "task": "01",
+          "status": "protocol-invalid",
+          "attempt": "0",
+          "timeout_exceeded": false
+        },
+        {
+          "task": "02",
+          "status": "completed",
+          "attempt": "1",
+          "timeout_exceeded": false
+        },
+        {
+          "task": "03",
+          "status": "protocol-invalid",
+          "attempt": "0",
+          "timeout_exceeded": false
+        },
+        {
+          "task": "04",
+          "status": "completed",
+          "attempt": "1",
+          "timeout_exceeded": false
+        },
+        {
+          "task": "05",
+          "status": "completed",
+          "attempt": "0",
+          "timeout_exceeded": false
+        },
+        {
+          "task": "06",
+          "status": "completed",
+          "attempt": "0",
+          "timeout_exceeded": false
+        },
+        {
+          "task": "07",
+          "status": "completed",
+          "attempt": "0",
+          "timeout_exceeded": false
+        },
+        {
+          "task": "08",
+          "status": "completed",
+          "attempt": "0",
+          "timeout_exceeded": false
+        }
+      ],
+      "nonterminal_native_tasks": []
+    },
+    {
+      "run": "vertical-slices-a-t02",
+      "prepared_tasks": [
+        "01",
+        "02",
+        "03",
+        "04"
+      ],
+      "terminal_tasks": [
+        {
+          "task": "01",
+          "status": "completed",
+          "attempt": "0",
+          "timeout_exceeded": false
+        },
+        {
+          "task": "02",
+          "status": "completed",
+          "attempt": "1",
+          "timeout_exceeded": false
+        },
+        {
+          "task": "03",
+          "status": "completed",
+          "attempt": "0",
+          "timeout_exceeded": false
+        }
+      ],
+      "nonterminal_native_tasks": [
+        {
+          "task": "04",
+          "native_status": "actor_started",
+          "attempt": "0"
+        }
+      ]
+    },
+    {
+      "run": "vertical-slices-a-t03",
+      "prepared_tasks": [
+        "01",
+        "02",
+        "03",
+        "04",
+        "05"
+      ],
+      "terminal_tasks": [
+        {
+          "task": "01",
+          "status": "protocol-invalid",
+          "attempt": "0",
+          "timeout_exceeded": false
+        },
+        {
+          "task": "02",
+          "status": "failed",
+          "attempt": "2",
+          "timeout_exceeded": false
+        },
+        {
+          "task": "03",
+          "status": "completed",
+          "attempt": "0",
+          "timeout_exceeded": false
+        },
+        {
+          "task": "04",
+          "status": "completed",
+          "attempt": "0",
+          "timeout_exceeded": false
+        }
+      ],
+      "nonterminal_native_tasks": [
+        {
+          "task": "05",
+          "native_status": "actor_started",
+          "attempt": "0"
+        }
+      ]
+    },
+    {
+      "run": "vertical-slices-b-t01",
+      "prepared_tasks": [
+        "01",
+        "02",
+        "03",
+        "04",
+        "05",
+        "06",
+        "07",
+        "08"
+      ],
+      "terminal_tasks": [
+        {
+          "task": "01",
+          "status": "completed",
+          "attempt": "0",
+          "timeout_exceeded": false
+        },
+        {
+          "task": "02",
+          "status": "completed",
+          "attempt": "0",
+          "timeout_exceeded": false
+        },
+        {
+          "task": "03",
+          "status": "protocol-invalid",
+          "attempt": "0",
+          "timeout_exceeded": false
+        },
+        {
+          "task": "04",
+          "status": "protocol-invalid",
+          "attempt": "0",
+          "timeout_exceeded": true
+        },
+        {
+          "task": "05",
+          "status": "protocol-invalid",
+          "attempt": "0",
+          "timeout_exceeded": false
+        },
+        {
+          "task": "06",
+          "status": "protocol-invalid",
+          "attempt": "1",
+          "timeout_exceeded": false
+        },
+        {
+          "task": "07",
+          "status": "protocol-invalid",
+          "attempt": "1",
+          "timeout_exceeded": false
+        },
+        {
+          "task": "08",
+          "status": "completed",
+          "attempt": "0",
+          "timeout_exceeded": false
+        }
+      ],
+      "nonterminal_native_tasks": []
+    },
+    {
+      "run": "vertical-slices-b-t02",
+      "prepared_tasks": [
+        "01",
+        "02",
+        "03"
+      ],
+      "terminal_tasks": [
+        {
+          "task": "01",
+          "status": "completed",
+          "attempt": "0",
+          "timeout_exceeded": false
+        },
+        {
+          "task": "02",
+          "status": "completed",
+          "attempt": "1",
+          "timeout_exceeded": false
+        }
+      ],
+      "nonterminal_native_tasks": [
+        {
+          "task": "03",
+          "native_status": "actor_started",
+          "attempt": "0"
+        }
+      ]
+    },
+    {
+      "run": "vertical-slices-b-t03",
+      "prepared_tasks": [
+        "01",
+        "02",
+        "03",
+        "04",
+        "05",
+        "06",
+        "07",
+        "08"
+      ],
+      "terminal_tasks": [
+        {
+          "task": "01",
+          "status": "failed",
+          "attempt": "1",
+          "timeout_exceeded": true
+        },
+        {
+          "task": "02",
+          "status": "completed",
+          "attempt": "0",
+          "timeout_exceeded": false
+        },
+        {
+          "task": "03",
+          "status": "completed",
+          "attempt": "1",
+          "timeout_exceeded": false
+        },
+        {
+          "task": "04",
+          "status": "failed",
+          "attempt": "2",
+          "timeout_exceeded": false
+        },
+        {
+          "task": "05",
+          "status": "failed",
+          "attempt": "2",
+          "timeout_exceeded": false
+        },
+        {
+          "task": "06",
+          "status": "failed",
+          "attempt": "2",
+          "timeout_exceeded": false
+        },
+        {
+          "task": "07",
+          "status": "completed",
+          "attempt": "2",
+          "timeout_exceeded": false
+        },
+        {
+          "task": "08",
+          "status": "completed",
+          "attempt": "0",
+          "timeout_exceeded": false
+        }
+      ],
+      "nonterminal_native_tasks": []
+    }
+  ],
+  "dispatch_classification": {
+    "trial3": "B tasks01-08 dispatched and terminal; A tasks01-05 dispatched, A01-04 terminal, A05 interrupted and unfinished; A06-08 unprepared",
+    "trial2": "A tasks01-03 and B tasks01-03 dispatched; A04 prepared but undispatched after native capacity refusals; B03 dispatched but unresolved with unknown process/receipt state; all other trial2 tasks unprepared",
+    "trial1": "A/B tasks01-08 dispatched and terminal"
+  },
+  "helper_attempt_metadata": [
+    {
+      "run": "vertical-slices-a-t01",
+      "task": "02",
+      "attempt": "0",
+      "exit_code": 1,
+      "at_utc": "2026-10-04T21:38:09Z",
+      "path": "raw\\vertical-slices-a-t01\\02\\helper-attempt-0.jsonl",
+      "sha256": "4E11F1FA551EDDA24CEDAABD0A2B0D885BDA50A39F58A5A89F3E4AC25A8A3773"
+    },
+    {
+      "run": "vertical-slices-a-t01",
+      "task": "02",
+      "attempt": "1",
+      "exit_code": 0,
+      "at_utc": "2026-10-04T21:44:12Z",
+      "path": "raw\\vertical-slices-a-t01\\02\\helper-attempt-1.jsonl",
+      "sha256": "754282C0AE1ACD8435C5558E77A57F7A2831C3A712EE8CC422B9F3AE1598EAD7"
+    },
+    {
+      "run": "vertical-slices-a-t01",
+      "task": "03",
+      "attempt": "0",
+      "exit_code": 1,
+      "at_utc": "2026-10-04T22:01:21Z",
+      "path": "raw\\vertical-slices-a-t01\\03\\helper-attempt-0.jsonl",
+      "sha256": "D9816AFF2C975FF48A5473D4863390D93A2CD0D5864A380D052EF862C1A8E761"
+    },
+    {
+      "run": "vertical-slices-a-t01",
+      "task": "04",
+      "attempt": "0",
+      "exit_code": 1,
+      "at_utc": "2026-10-04T22:16:48Z",
+      "path": "raw\\vertical-slices-a-t01\\04\\helper-attempt-0.jsonl",
+      "sha256": "64F2B0167DAE68E879D3DBB09F4BA2CDCDB14C620BC4A4AA252D283CF367B1CA"
+    },
+    {
+      "run": "vertical-slices-a-t01",
+      "task": "04",
+      "attempt": "1",
+      "exit_code": 0,
+      "at_utc": "2026-10-04T22:23:16Z",
+      "path": "raw\\vertical-slices-a-t01\\04\\helper-attempt-1.jsonl",
+      "sha256": "ADCA976E82FD4982B4DEAE49587E4B2F50C5791FAA0EBBE1CDF3DE6FE68981CD"
+    },
+    {
+      "run": "vertical-slices-a-t01",
+      "task": "05",
+      "attempt": "0",
+      "exit_code": 0,
+      "at_utc": "2026-10-04T22:52:34Z",
+      "path": "raw\\vertical-slices-a-t01\\05\\helper-attempt-0.jsonl",
+      "sha256": "C3331B8AD1B29EB3CCA7AB996FAD597943BE07F61B8340C76F2725443B8778EA"
+    },
+    {
+      "run": "vertical-slices-a-t01",
+      "task": "06",
+      "attempt": "0",
+      "exit_code": 0,
+      "at_utc": "2026-10-04T23:19:39Z",
+      "path": "raw\\vertical-slices-a-t01\\06\\helper-attempt-0.jsonl",
+      "sha256": "AFD7E65C432E7AE341D6FEE65AEA5246AC1C034CD265F74E716F98B219665C7C"
+    },
+    {
+      "run": "vertical-slices-a-t01",
+      "task": "07",
+      "attempt": "0",
+      "exit_code": 0,
+      "at_utc": "2026-10-04T23:36:47Z",
+      "path": "raw\\vertical-slices-a-t01\\07\\helper-attempt-0.jsonl",
+      "sha256": "AB9343B0FC3EAA9468487E0B2DE7FAFD51D8BB83121258F19224119E06AA2471"
+    },
+    {
+      "run": "vertical-slices-a-t01",
+      "task": "08",
+      "attempt": "0",
+      "exit_code": 0,
+      "at_utc": "2026-10-04T23:48:52Z",
+      "path": "raw\\vertical-slices-a-t01\\08\\helper-attempt-0.jsonl",
+      "sha256": "E6E94CC2BD3252653A6ECB3C8C5DD1C083FE474EE2C16DB64718159D607C44F7"
+    },
+    {
+      "run": "vertical-slices-a-t02",
+      "task": "01",
+      "attempt": "0",
+      "exit_code": 0,
+      "at_utc": "2026-10-05T01:01:36Z",
+      "path": "raw\\vertical-slices-a-t02\\01\\helper-attempt-0.jsonl",
+      "sha256": "BFF50AB3C3A4105C690894F32F5049E018869266EDE8224EF64C487FD3A1C1FB"
+    },
+    {
+      "run": "vertical-slices-a-t02",
+      "task": "02",
+      "attempt": "0",
+      "exit_code": 1,
+      "at_utc": "2026-10-05T01:19:13Z",
+      "path": "raw\\vertical-slices-a-t02\\02\\helper-attempt-0.jsonl",
+      "sha256": "EA35735C23992ABA02CDB4C195712D5593BCD22A6560B14FA4652D96A590FD07"
+    },
+    {
+      "run": "vertical-slices-a-t02",
+      "task": "02",
+      "attempt": "1",
+      "exit_code": 0,
+      "at_utc": "2026-10-05T01:27:16Z",
+      "path": "raw\\vertical-slices-a-t02\\02\\helper-attempt-1.jsonl",
+      "sha256": "BF2AE619FBA01A3E838CDAC0AE5424550E22CC904CF44DBA53EB4187DB1F2ADD"
+    },
+    {
+      "run": "vertical-slices-a-t02",
+      "task": "03",
+      "attempt": "0",
+      "exit_code": 0,
+      "at_utc": "2026-10-05T02:00:44Z",
+      "path": "raw\\vertical-slices-a-t02\\03\\helper-attempt-0.jsonl",
+      "sha256": "9E72FFDE953F27C6BC37F006F37785982EFCF059EAAD682EB6A98641034721FB"
+    },
+    {
+      "run": "vertical-slices-a-t03",
+      "task": "02",
+      "attempt": "0",
+      "exit_code": 1,
+      "at_utc": "2026-10-05T05:51:14Z",
+      "path": "raw\\vertical-slices-a-t03\\02\\helper-attempt-0.jsonl",
+      "sha256": "D3462FD8A2232316CEF2FD0D2818BD30641C1A672F5277D9EA2F8A20928286DE"
+    },
+    {
+      "run": "vertical-slices-a-t03",
+      "task": "02",
+      "attempt": "1",
+      "exit_code": 1,
+      "at_utc": "2026-10-05T05:54:31Z",
+      "path": "raw\\vertical-slices-a-t03\\02\\helper-attempt-1.jsonl",
+      "sha256": "F56FF7E13B17B1F3BF6ACB8C3A71E44C8EC47F117244181865BC7C299D155147"
+    },
+    {
+      "run": "vertical-slices-a-t03",
+      "task": "02",
+      "attempt": "2",
+      "exit_code": 1,
+      "at_utc": "2026-10-05T06:12:18Z",
+      "path": "raw\\vertical-slices-a-t03\\02\\helper-attempt-2.jsonl",
+      "sha256": "6034DFF700D7AB33640A5A6CC38B842992786690CB17BF4D1AAB51B35858445C"
+    },
+    {
+      "run": "vertical-slices-a-t03",
+      "task": "03",
+      "attempt": "0",
+      "exit_code": 0,
+      "at_utc": "2026-10-05T06:22:05Z",
+      "path": "raw\\vertical-slices-a-t03\\03\\helper-attempt-0.jsonl",
+      "sha256": "2DF44E066C5C880D08EB676CEF6932759C3EE6CD103F1E3EA6F215562002F5CF"
+    },
+    {
+      "run": "vertical-slices-a-t03",
+      "task": "04",
+      "attempt": "0",
+      "exit_code": 0,
+      "at_utc": "2026-10-05T06:30:50Z",
+      "path": "raw\\vertical-slices-a-t03\\04\\helper-attempt-0.jsonl",
+      "sha256": "A858B2ED20B6C8EBD1A6740F2C7A2513E5B6D1085AD097FB9330724F5F4DF401"
+    },
+    {
+      "run": "vertical-slices-b-t01",
+      "task": "01",
+      "attempt": "0",
+      "exit_code": 0,
+      "at_utc": "2026-10-04T21:25:05Z",
+      "path": "raw\\vertical-slices-b-t01\\01\\helper-attempt-0.jsonl",
+      "sha256": "1EE11FEBD5C4C28B3279D52D70A193DD6F9304C14C0EA8196E0A9BD98DC32633"
+    },
+    {
+      "run": "vertical-slices-b-t01",
+      "task": "02",
+      "attempt": "0",
+      "exit_code": 0,
+      "at_utc": "2026-10-04T21:34:40Z",
+      "path": "raw\\vertical-slices-b-t01\\02\\helper-attempt-0.jsonl",
+      "sha256": "FFDE59584578D38A5561007360C350E230D01BE524B5BF83CBCB908599F89869"
+    },
+    {
+      "run": "vertical-slices-b-t01",
+      "task": "03",
+      "attempt": "0",
+      "exit_code": 1,
+      "at_utc": "2026-10-04T22:01:28Z",
+      "path": "raw\\vertical-slices-b-t01\\03\\helper-attempt-0.jsonl",
+      "sha256": "F5CFEBD7D60C98E998B81D4571504AC54FB7BF4B49F568040EBBFAAD5332B1BE"
+    },
+    {
+      "run": "vertical-slices-b-t01",
+      "task": "06",
+      "attempt": "0",
+      "exit_code": 1,
+      "at_utc": "2026-10-04T23:07:29Z",
+      "path": "raw\\vertical-slices-b-t01\\06\\helper-attempt-0.jsonl",
+      "sha256": "B512F671DFFAF9946D0F9E1286D506AADBDE03FD23DE7590C6F145806EE02A64"
+    },
+    {
+      "run": "vertical-slices-b-t01",
+      "task": "07",
+      "attempt": "0",
+      "exit_code": 1,
+      "at_utc": "2026-10-04T23:34:00Z",
+      "path": "raw\\vertical-slices-b-t01\\07\\helper-attempt-0.jsonl",
+      "sha256": "9C1B5B39D571FE47F2EF921C7176892C05D8FB43128E8B4C7705F5756476177A"
+    },
+    {
+      "run": "vertical-slices-b-t01",
+      "task": "07",
+      "attempt": "1",
+      "exit_code": 0,
+      "at_utc": "2026-10-04T23:43:03Z",
+      "path": "raw\\vertical-slices-b-t01\\07\\helper-attempt-1.jsonl",
+      "sha256": "D001D56AC6C88B481A117D202FAB48A448B714ED2756864133FFC815B18BC47A"
+    },
+    {
+      "run": "vertical-slices-b-t01",
+      "task": "08",
+      "attempt": "0",
+      "exit_code": 0,
+      "at_utc": "2026-10-04T23:59:03Z",
+      "path": "raw\\vertical-slices-b-t01\\08\\helper-attempt-0.jsonl",
+      "sha256": "D2C5B1F4F00A62DD04EC65D0CF7FB6E9E119B1C760BB4F3A429D01A2AE53C68B"
+    },
+    {
+      "run": "vertical-slices-b-t02",
+      "task": "01",
+      "attempt": "0",
+      "exit_code": 0,
+      "at_utc": "2026-10-05T01:08:54Z",
+      "path": "raw\\vertical-slices-b-t02\\01\\helper-attempt-0.jsonl",
+      "sha256": "33329A1F871C5F9171BBEF474764C53D7C12757281662D9F1D02B01EC7195700"
+    },
+    {
+      "run": "vertical-slices-b-t02",
+      "task": "02",
+      "attempt": "0",
+      "exit_code": 1,
+      "at_utc": "2026-10-05T01:38:55Z",
+      "path": "raw\\vertical-slices-b-t02\\02\\helper-attempt-0.jsonl",
+      "sha256": "19A3138C2F00F3908305F550EAFCCED04A8339729092B1051B9BB40B43C176EC"
+    },
+    {
+      "run": "vertical-slices-b-t02",
+      "task": "02",
+      "attempt": "1",
+      "exit_code": 0,
+      "at_utc": "2026-10-05T01:46:13Z",
+      "path": "raw\\vertical-slices-b-t02\\02\\helper-attempt-1.jsonl",
+      "sha256": "0181F1327FFE3AB708D5C1AD22894E6259F4F708CA24717A4BE390771F5869B9"
+    },
+    {
+      "run": "vertical-slices-b-t03",
+      "task": "01",
+      "attempt": "0",
+      "exit_code": 1,
+      "at_utc": "2026-10-05T02:58:26Z",
+      "path": "raw\\vertical-slices-b-t03\\01\\helper-attempt-0.jsonl",
+      "sha256": "873C3F7586F5058063B44B0AB2352A9D4228DF7B99987DA6320D50141D74B49D"
+    },
+    {
+      "run": "vertical-slices-b-t03",
+      "task": "01",
+      "attempt": "1",
+      "exit_code": 0,
+      "at_utc": "2026-10-05T03:10:30Z",
+      "path": "raw\\vertical-slices-b-t03\\01\\helper-attempt-1.jsonl",
+      "sha256": "244CD923E0AF02EDCB3C1B94E1506D54F09BB30677BF6251751EEF6D27FBB4B0"
+    },
+    {
+      "run": "vertical-slices-b-t03",
+      "task": "02",
+      "attempt": "0",
+      "exit_code": 0,
+      "at_utc": "2026-10-05T03:18:58Z",
+      "path": "raw\\vertical-slices-b-t03\\02\\helper-attempt-0.jsonl",
+      "sha256": "1F47BF34C50CA1C0387D5EBA527805FFFAE011DEF1B7CD692B7069DA294FFA10"
+    },
+    {
+      "run": "vertical-slices-b-t03",
+      "task": "03",
+      "attempt": "0",
+      "exit_code": 1,
+      "at_utc": "2026-10-05T03:36:13Z",
+      "path": "raw\\vertical-slices-b-t03\\03\\helper-attempt-0.jsonl",
+      "sha256": "BC8D0EB6CBA6840571A1166873F10840FA20E45DC467049FCF8AD62D9ADE9EC3"
+    },
+    {
+      "run": "vertical-slices-b-t03",
+      "task": "03",
+      "attempt": "1",
+      "exit_code": 0,
+      "at_utc": "2026-10-05T03:42:40Z",
+      "path": "raw\\vertical-slices-b-t03\\03\\helper-attempt-1.jsonl",
+      "sha256": "FB2BD81B10D064FA4084122A6BA2F514A2698942075F4ADB6AB0DEAA87993D7F"
+    },
+    {
+      "run": "vertical-slices-b-t03",
+      "task": "04",
+      "attempt": "0",
+      "exit_code": 1,
+      "at_utc": "2026-10-05T03:58:36Z",
+      "path": "raw\\vertical-slices-b-t03\\04\\helper-attempt-0.jsonl",
+      "sha256": "894857292E577EDFE76E3833D03C8CDB4DEFEE1E06B66720FA22B9E515555CC2"
+    },
+    {
+      "run": "vertical-slices-b-t03",
+      "task": "04",
+      "attempt": "1",
+      "exit_code": 1,
+      "at_utc": "2026-10-05T04:05:10Z",
+      "path": "raw\\vertical-slices-b-t03\\04\\helper-attempt-1.jsonl",
+      "sha256": "05E6BD078162E8AD870DDBF10202776C5BF42FB65F541ADCB5E55EA1F1C53309"
+    },
+    {
+      "run": "vertical-slices-b-t03",
+      "task": "04",
+      "attempt": "2",
+      "exit_code": 1,
+      "at_utc": "2026-10-05T04:12:46Z",
+      "path": "raw\\vertical-slices-b-t03\\04\\helper-attempt-2.jsonl",
+      "sha256": "F793A87DF8424C863D99F2394FC2BC1145A700540E0205D902FB6CA212A80D84"
+    },
+    {
+      "run": "vertical-slices-b-t03",
+      "task": "05",
+      "attempt": "0",
+      "exit_code": 1,
+      "at_utc": "2026-10-05T04:26:04Z",
+      "path": "raw\\vertical-slices-b-t03\\05\\helper-attempt-0.jsonl",
+      "sha256": "BD3E5FEAF5E16A3AAC2180C5B5B6DB1F4158EDBF8C440B78F590275184571D6A"
+    },
+    {
+      "run": "vertical-slices-b-t03",
+      "task": "05",
+      "attempt": "1",
+      "exit_code": 1,
+      "at_utc": "2026-10-05T04:33:47Z",
+      "path": "raw\\vertical-slices-b-t03\\05\\helper-attempt-1.jsonl",
+      "sha256": "2362C36106D65D5DF2468A58EEAD7059B1D4160E7E852B4933D4B4ED24A1F0B4"
+    },
+    {
+      "run": "vertical-slices-b-t03",
+      "task": "05",
+      "attempt": "2",
+      "exit_code": 1,
+      "at_utc": "2026-10-05T04:40:15Z",
+      "path": "raw\\vertical-slices-b-t03\\05\\helper-attempt-2.jsonl",
+      "sha256": "F5A82846D570D66FFB264EE93374502DDC6BC9196E6674DACDC4E92F4539C2F6"
+    },
+    {
+      "run": "vertical-slices-b-t03",
+      "task": "06",
+      "attempt": "0",
+      "exit_code": 1,
+      "at_utc": "2026-10-05T04:49:41Z",
+      "path": "raw\\vertical-slices-b-t03\\06\\helper-attempt-0.jsonl",
+      "sha256": "440062CCE69B11B57D88F452E8B23EDC7944AFD5B13E9F9BF65FD051662EB2BD"
+    },
+    {
+      "run": "vertical-slices-b-t03",
+      "task": "06",
+      "attempt": "1",
+      "exit_code": 1,
+      "at_utc": "2026-10-05T04:55:58Z",
+      "path": "raw\\vertical-slices-b-t03\\06\\helper-attempt-1.jsonl",
+      "sha256": "A66B8E579F119B6879AE5FD6E6F022FC235FAADA19A91B31F12E1DAC46EDA959"
+    },
+    {
+      "run": "vertical-slices-b-t03",
+      "task": "06",
+      "attempt": "2",
+      "exit_code": 1,
+      "at_utc": "2026-10-05T05:02:04Z",
+      "path": "raw\\vertical-slices-b-t03\\06\\helper-attempt-2.jsonl",
+      "sha256": "B9BA06A6A56C64690F174BE8CE16B8F8C239C0A0D2D219D32E0595EFBD63B287"
+    },
+    {
+      "run": "vertical-slices-b-t03",
+      "task": "07",
+      "attempt": "0",
+      "exit_code": 1,
+      "at_utc": "2026-10-05T05:18:37Z",
+      "path": "raw\\vertical-slices-b-t03\\07\\helper-attempt-0.jsonl",
+      "sha256": "6C85CCDDF7D93F4DC1678F654253D493CE86A7B122EC85C55AD9485275E47C08"
+    },
+    {
+      "run": "vertical-slices-b-t03",
+      "task": "07",
+      "attempt": "1",
+      "exit_code": 1,
+      "at_utc": "2026-10-05T05:26:26Z",
+      "path": "raw\\vertical-slices-b-t03\\07\\helper-attempt-1.jsonl",
+      "sha256": "F0169F74B21294D72BE5875ECB6447CE11BE676217BCAA363795F9958894ED26"
+    },
+    {
+      "run": "vertical-slices-b-t03",
+      "task": "07",
+      "attempt": "2",
+      "exit_code": 0,
+      "at_utc": "2026-10-05T05:32:18Z",
+      "path": "raw\\vertical-slices-b-t03\\07\\helper-attempt-2.jsonl",
+      "sha256": "78A119052AFAB8C84B724DC35DD552D5E51C045A2AE91771FAF2CFC3331F66A9"
+    },
+    {
+      "run": "vertical-slices-b-t03",
+      "task": "08",
+      "attempt": "0",
+      "exit_code": 0,
+      "at_utc": "2026-10-05T05:39:50Z",
+      "path": "raw\\vertical-slices-b-t03\\08\\helper-attempt-0.jsonl",
+      "sha256": "B34AB63BB5874D5C4316156A18CA5A9FD3473F889D1A9ABF1CF4F0E6E473B8E1"
+    }
+  ],
+  "native_record_hashes": [
+    {
+      "path": "runs\\vertical-slices-a-t01\\01.native.yaml",
+      "sha256": "CE61D97EACA68F82F29E5222050A908F6E7604416933E3AA24EDAD858FC2BB2D"
+    },
+    {
+      "path": "runs\\vertical-slices-a-t01\\02.native.yaml",
+      "sha256": "9E80A7F1E80C9D224BC3BA2D6F412FAEB030C5D4F7306C9A4B4913C6D62DF787"
+    },
+    {
+      "path": "runs\\vertical-slices-a-t01\\03.native.yaml",
+      "sha256": "4BAE5E3F5929B52249AB40ECE6F28035D5DA2C9897F846BFA3234B7843C15BB1"
+    },
+    {
+      "path": "runs\\vertical-slices-a-t01\\04.native.yaml",
+      "sha256": "F6CEBF9CD4A76174CA32B622EFA24FAEFC118150EEAE9455F5469ED6DEA40486"
+    },
+    {
+      "path": "runs\\vertical-slices-a-t01\\05.native.yaml",
+      "sha256": "F8747905E36A175F0B64E7D87D3B8FE78DBB3799B111D33AA13DF4C96F8F069B"
+    },
+    {
+      "path": "runs\\vertical-slices-a-t01\\06.native.yaml",
+      "sha256": "0431058B4458F8BD6285399D7173495B183A5C38DBCEBEBE208561416570D3BA"
+    },
+    {
+      "path": "runs\\vertical-slices-a-t01\\07.native.yaml",
+      "sha256": "10EEEED64FC877B8B71B8D9DE47B9E34860E37D8CB9977E62B76AA22CE11D133"
+    },
+    {
+      "path": "runs\\vertical-slices-a-t01\\08.native.yaml",
+      "sha256": "461C7A073A9CA2B17E79E8EFAA979E81525E8A92E5A4A20B65188393E2FB0AFD"
+    },
+    {
+      "path": "runs\\vertical-slices-a-t02\\01.native.yaml",
+      "sha256": "E61130186623D98371EE2B2C210A8B384C1FC9C6F41E2FC43D3C3FD363902B26"
+    },
+    {
+      "path": "runs\\vertical-slices-a-t02\\02.native.yaml",
+      "sha256": "74967BD4595C684262B3C27664010F930814B006BBC23F377E6A700815198D0C"
+    },
+    {
+      "path": "runs\\vertical-slices-a-t02\\03.native.yaml",
+      "sha256": "8C2211210326494E858A2B33E8993DAFACEC9D8EE7E61C713C7C378E96010788"
+    },
+    {
+      "path": "runs\\vertical-slices-a-t02\\04.native.yaml",
+      "sha256": "04F391DA8668AA3067B5FD10D88B212D71483820A4DF4045CE0845D1B68F6F25"
+    },
+    {
+      "path": "runs\\vertical-slices-a-t03\\01.native.yaml",
+      "sha256": "A3C6F5B7848EC38E8B58C635FF440861F8B187C276A71788A1F6AA3C8E4D922A"
+    },
+    {
+      "path": "runs\\vertical-slices-a-t03\\02.native.yaml",
+      "sha256": "7EF542A7A21D50E0034586D1E4C3B47173C0B58FB4E4765613132B88A8C879B1"
+    },
+    {
+      "path": "runs\\vertical-slices-a-t03\\03.native.yaml",
+      "sha256": "46AB17A9C57E8277C139090B255AC8C0D212CDE10617016CA4AE8344583CF926"
+    },
+    {
+      "path": "runs\\vertical-slices-a-t03\\04.native.yaml",
+      "sha256": "AFC088E8ED7D603F33602815EA7C1316CAF40B8896DE8A0596C102211C6598F8"
+    },
+    {
+      "path": "runs\\vertical-slices-a-t03\\05.native.yaml",
+      "sha256": "1055D05B201267BD2ED2AE822E336A00715483B44694A0E79E82A60F89678967"
+    },
+    {
+      "path": "runs\\vertical-slices-b-t01\\01.native.yaml",
+      "sha256": "BB0540F40468E3AC7485881BA46C4A8EEB8B00F5DCA71294E8B928D6D116E809"
+    },
+    {
+      "path": "runs\\vertical-slices-b-t01\\02.native.yaml",
+      "sha256": "AFD082A6A383217B6A751D207375E77786D83213A6A58DF1A43D79F67A8C3367"
+    },
+    {
+      "path": "runs\\vertical-slices-b-t01\\03.native.yaml",
+      "sha256": "458109488C97D95547DBD13BF14F4DE31E26A9B4735D0FBA327377F8EC5B2487"
+    },
+    {
+      "path": "runs\\vertical-slices-b-t01\\04.native.yaml",
+      "sha256": "115C0166F83795807678880633B13BA4E3F0F6D418BE52840BC304AF4E850439"
+    },
+    {
+      "path": "runs\\vertical-slices-b-t01\\05.native.yaml",
+      "sha256": "F098E13DC351C7D75C08182A10AF7762DEF6E3317CAB9BB27487CB8914B36EF1"
+    },
+    {
+      "path": "runs\\vertical-slices-b-t01\\06.native.yaml",
+      "sha256": "4BA6FFEB767B9AB4497EDF7C69D9AC455D5AA633E66823DBB4BCECED523B93DA"
+    },
+    {
+      "path": "runs\\vertical-slices-b-t01\\07.native.yaml",
+      "sha256": "9B176826C3FD26DB474FE6BDB15806E0D60EFC105E468118758AEBE3E03B79B7"
+    },
+    {
+      "path": "runs\\vertical-slices-b-t01\\08.native.yaml",
+      "sha256": "E0A050A2D96C69A85210C5F03324744456B4A42682C6E80204E418DA91323F36"
+    },
+    {
+      "path": "runs\\vertical-slices-b-t02\\01.native.yaml",
+      "sha256": "4AF23E7940564CE856D6CE1158849644B8F4840BE40AC00530ABC0A6B921A80D"
+    },
+    {
+      "path": "runs\\vertical-slices-b-t02\\02.native.yaml",
+      "sha256": "8B90A990B4B8CD73E30E534E986D1301E6B7DFF18071BF3431BB0EC12E9F018D"
+    },
+    {
+      "path": "runs\\vertical-slices-b-t02\\03.native.yaml",
+      "sha256": "6B18B77F633EE3C0FD3D56781007866684BB5A1669CBDE2D6C83A987B2AB615E"
+    },
+    {
+      "path": "runs\\vertical-slices-b-t03\\01.native.yaml",
+      "sha256": "04702B78291BAADBCB4FCA4B2D50F486A11DCB96CA66854D3237C3D41B995880"
+    },
+    {
+      "path": "runs\\vertical-slices-b-t03\\02.native.yaml",
+      "sha256": "7B2749F27F41E3BBD762FDCEC364001961937112878DB09EF8ACBA0CA295C1FF"
+    },
+    {
+      "path": "runs\\vertical-slices-b-t03\\03.native.yaml",
+      "sha256": "6690E73BA10C5A027884F38C7F01D0B76C42F414289F867CD18A8A178211482D"
+    },
+    {
+      "path": "runs\\vertical-slices-b-t03\\04.native.yaml",
+      "sha256": "DBA73D9366464211F9BDA190D297E4B082F45E28FB95D53666DDAA3E331F3F73"
+    },
+    {
+      "path": "runs\\vertical-slices-b-t03\\05.native.yaml",
+      "sha256": "B451D98475BCAC70EBEE2CB74C577D46C209DADE4AE58C81D0C798CCD45F68F7"
+    },
+    {
+      "path": "runs\\vertical-slices-b-t03\\06.native.yaml",
+      "sha256": "C7FE0DD5C75DB6A4733779A9EEDA528335D70D5BD6DB15007C1809F6D72EDF7F"
+    },
+    {
+      "path": "runs\\vertical-slices-b-t03\\07.native.yaml",
+      "sha256": "302A8997AD1ABBE045BAFE994ED536E165261D25FFDF016B8751B10DA0A9C519"
+    },
+    {
+      "path": "runs\\vertical-slices-b-t03\\08.native.yaml",
+      "sha256": "DF790936BE6B7BFAA66D328CAA12DE3A65D9FABF1C90C7F3B71DB6C65E6D7C22"
+    }
+  ],
+  "prepared_envelope_hashes": [
+    {
+      "run": "vertical-slices-a-t01",
+      "task": "01",
+      "path": "runs\\vertical-slices-a-t01\\01.attempt-0.envelope.yaml",
+      "sha256": "0FB6F87957D8E0EBF4666AEE8D499D39B5C2145536555C4009F3527E79987AAD"
+    },
+    {
+      "run": "vertical-slices-a-t01",
+      "task": "02",
+      "path": "runs\\vertical-slices-a-t01\\02.attempt-0.envelope.yaml",
+      "sha256": "F3E4E01B114E6DB3D707AF0FFDDF6A98EFE36BD8A348821C87398B049B7E9F8A"
+    },
+    {
+      "run": "vertical-slices-a-t01",
+      "task": "03",
+      "path": "runs\\vertical-slices-a-t01\\03.attempt-0.envelope.yaml",
+      "sha256": "23187F6EFB892021B0C9DB1E39A4E15067001DEF2FA446D910C11430A785B443"
+    },
+    {
+      "run": "vertical-slices-a-t01",
+      "task": "04",
+      "path": "runs\\vertical-slices-a-t01\\04.attempt-0.envelope.yaml",
+      "sha256": "C287B3A8A2E2888DCF418881D2D5927CA123923B25D1DCD685724A39FED17473"
+    },
+    {
+      "run": "vertical-slices-a-t01",
+      "task": "05",
+      "path": "runs\\vertical-slices-a-t01\\05.attempt-0.envelope.yaml",
+      "sha256": "54A90E687C23CEE57D44474DDF73355C0FE0AA4F087F015E8DDB1E7739BB3DDB"
+    },
+    {
+      "run": "vertical-slices-a-t01",
+      "task": "06",
+      "path": "runs\\vertical-slices-a-t01\\06.attempt-0.envelope.yaml",
+      "sha256": "96CA75003314F935ECF8B8CFDA12372536BDDC20A384DB5EB3DEAD44C7F15A65"
+    },
+    {
+      "run": "vertical-slices-a-t01",
+      "task": "07",
+      "path": "runs\\vertical-slices-a-t01\\07.attempt-0.envelope.yaml",
+      "sha256": "18FF911F1653E777C7CFECFFCCE0C0D971245809E091CACDC1554CA521A52177"
+    },
+    {
+      "run": "vertical-slices-a-t01",
+      "task": "08",
+      "path": "runs\\vertical-slices-a-t01\\08.attempt-0.envelope.yaml",
+      "sha256": "4CCB5CEE887FC5C04DC7C96B820C95F18E5AAE43F223CB64089767E005D8970A"
+    },
+    {
+      "run": "vertical-slices-a-t02",
+      "task": "01",
+      "path": "runs\\vertical-slices-a-t02\\01.attempt-0.envelope.yaml",
+      "sha256": "4BC87F46FF5B4D3718FD19CD8D546C382263E9B015B4A7964CA11140713AE37A"
+    },
+    {
+      "run": "vertical-slices-a-t02",
+      "task": "02",
+      "path": "runs\\vertical-slices-a-t02\\02.attempt-0.envelope.yaml",
+      "sha256": "DA6C8AF5AFBE720AE95AC0E10355FF962E58DFA40025335775107639AAF3811D"
+    },
+    {
+      "run": "vertical-slices-a-t02",
+      "task": "03",
+      "path": "runs\\vertical-slices-a-t02\\03.attempt-0.envelope.yaml",
+      "sha256": "E65ABC6F7C434778EA1BBA3E589254D42486F17DCA62773C85B51FA4EE1D0D86"
+    },
+    {
+      "run": "vertical-slices-a-t02",
+      "task": "04",
+      "path": "runs\\vertical-slices-a-t02\\04.attempt-0.envelope.yaml",
+      "sha256": "B1A1915D9C2750F4311EC5CFBD18E5306B11DD22B6AC32A918DFC0C0FDB106D1"
+    },
+    {
+      "run": "vertical-slices-a-t03",
+      "task": "01",
+      "path": "runs\\vertical-slices-a-t03\\01.attempt-0.envelope.yaml",
+      "sha256": "D8C23C98E818236305C4DD62990DC40DEE1678A9B369DD46683F684E839EF75C"
+    },
+    {
+      "run": "vertical-slices-a-t03",
+      "task": "02",
+      "path": "runs\\vertical-slices-a-t03\\02.attempt-0.envelope.yaml",
+      "sha256": "1E5BA085D4D8D774BB20A214DD389C23A20A20A9EA105852DDA6D331B0F6CCA6"
+    },
+    {
+      "run": "vertical-slices-a-t03",
+      "task": "03",
+      "path": "runs\\vertical-slices-a-t03\\03.attempt-0.envelope.yaml",
+      "sha256": "860B1D1C63AFA3AAA898F7AB49A73AC75734E7C5C8EF94EDA9976FAAF73A60EA"
+    },
+    {
+      "run": "vertical-slices-a-t03",
+      "task": "04",
+      "path": "runs\\vertical-slices-a-t03\\04.attempt-0.envelope.yaml",
+      "sha256": "1B966A41CDA8C02F84950D497018CEADBB2E002D16F54D84172422EF4A6063A8"
+    },
+    {
+      "run": "vertical-slices-a-t03",
+      "task": "05",
+      "path": "runs\\vertical-slices-a-t03\\05.attempt-0.envelope.yaml",
+      "sha256": "4CAA989623CC2A502987AB1111AB7BF45BEBF5DBF08D4189185170700EEA64D9"
+    },
+    {
+      "run": "vertical-slices-b-t01",
+      "task": "01",
+      "path": "runs\\vertical-slices-b-t01\\01.attempt-0.envelope.yaml",
+      "sha256": "611672B4674BC572543C019DEF94BBD9BD34F31DBA52C415C38C8FCDAFE8947E"
+    },
+    {
+      "run": "vertical-slices-b-t01",
+      "task": "02",
+      "path": "runs\\vertical-slices-b-t01\\02.attempt-0.envelope.yaml",
+      "sha256": "BB9D4BC8D70DCC3D7B8BB9F4B0910D9DE7CD95F496A5B803B19C9C46F872BCF7"
+    },
+    {
+      "run": "vertical-slices-b-t01",
+      "task": "03",
+      "path": "runs\\vertical-slices-b-t01\\03.attempt-0.envelope.yaml",
+      "sha256": "EC8D1B42CAB9E553139A0776AF007475F522D71E0B5C224CA46531FECA37B006"
+    },
+    {
+      "run": "vertical-slices-b-t01",
+      "task": "04",
+      "path": "runs\\vertical-slices-b-t01\\04.attempt-0.envelope.yaml",
+      "sha256": "14132803505B8EE69A16015E03AC36293D5262509FB8420B31004E2B5A8502B5"
+    },
+    {
+      "run": "vertical-slices-b-t01",
+      "task": "05",
+      "path": "runs\\vertical-slices-b-t01\\05.attempt-0.envelope.yaml",
+      "sha256": "5D41892EBBE296342A3AEED22ED936AA8FA26C4346A73683B82BF2CE8BA22603"
+    },
+    {
+      "run": "vertical-slices-b-t01",
+      "task": "06",
+      "path": "runs\\vertical-slices-b-t01\\06.attempt-0.envelope.yaml",
+      "sha256": "C2C421631DB366F246ADC67E5962AF7F2B0930CFC87827B3E9802F14F2F52129"
+    },
+    {
+      "run": "vertical-slices-b-t01",
+      "task": "07",
+      "path": "runs\\vertical-slices-b-t01\\07.attempt-0.envelope.yaml",
+      "sha256": "6F9A8C192BD7CADDADF9780CCF02DD714ECD86FAD17D77DFDCFCD8702B0B37E6"
+    },
+    {
+      "run": "vertical-slices-b-t01",
+      "task": "08",
+      "path": "runs\\vertical-slices-b-t01\\08.attempt-0.envelope.yaml",
+      "sha256": "268D1089CA03ACC2EFB5EE1A71B1510A42DC8671DCFAC563848BA49AE8BBE1BB"
+    },
+    {
+      "run": "vertical-slices-b-t02",
+      "task": "01",
+      "path": "runs\\vertical-slices-b-t02\\01.attempt-0.envelope.yaml",
+      "sha256": "CD76605D36BE54B3FEE1A6863F438B96871A167EFEC0B958681FA62BC1077475"
+    },
+    {
+      "run": "vertical-slices-b-t02",
+      "task": "02",
+      "path": "runs\\vertical-slices-b-t02\\02.attempt-0.envelope.yaml",
+      "sha256": "D45D7993E93E62D744955F6B9DBB125C97D8C6B3558386EC6BDADA557F295320"
+    },
+    {
+      "run": "vertical-slices-b-t02",
+      "task": "03",
+      "path": "runs\\vertical-slices-b-t02\\03.attempt-0.envelope.yaml",
+      "sha256": "EDB3DC1C6A571AE4DA8EFB37D5B7989D1F006E0883C5B1069E120C31ECDD4738"
+    },
+    {
+      "run": "vertical-slices-b-t03",
+      "task": "01",
+      "path": "runs\\vertical-slices-b-t03\\01.attempt-0.envelope.yaml",
+      "sha256": "0068C71F4B97FDD1AA3501FC0B66552C96A9EDC0CC47B506A3AA3483EAF97B7C"
+    },
+    {
+      "run": "vertical-slices-b-t03",
+      "task": "02",
+      "path": "runs\\vertical-slices-b-t03\\02.attempt-0.envelope.yaml",
+      "sha256": "4FDF3CE1E6851EB7F39EF0EAAB9BCCB047A282FEC65DC542DA80759CB001C604"
+    },
+    {
+      "run": "vertical-slices-b-t03",
+      "task": "03",
+      "path": "runs\\vertical-slices-b-t03\\03.attempt-0.envelope.yaml",
+      "sha256": "0E9A7AD5FB7801B5242983AFD06772867BFEC3C651B199A99410BB40D8FF7DD7"
+    },
+    {
+      "run": "vertical-slices-b-t03",
+      "task": "04",
+      "path": "runs\\vertical-slices-b-t03\\04.attempt-0.envelope.yaml",
+      "sha256": "644EF52825DF966C140312FC81E882C74B0BE8F5FF48E2006CEBD6B294B10E48"
+    },
+    {
+      "run": "vertical-slices-b-t03",
+      "task": "05",
+      "path": "runs\\vertical-slices-b-t03\\05.attempt-0.envelope.yaml",
+      "sha256": "0BA5ABA439F948C105979EDCC1A5FF9BCF612377648244112BA8C7B870F949EE"
+    },
+    {
+      "run": "vertical-slices-b-t03",
+      "task": "06",
+      "path": "runs\\vertical-slices-b-t03\\06.attempt-0.envelope.yaml",
+      "sha256": "892496B218FA9441A7453E1D1514B2EEAFC13023B6041DABA24E6C5AA16ABAAD"
+    },
+    {
+      "run": "vertical-slices-b-t03",
+      "task": "07",
+      "path": "runs\\vertical-slices-b-t03\\07.attempt-0.envelope.yaml",
+      "sha256": "AA82B45CB001BA675E6959E5F6B0A4557FDD2417B14BABF79CBCA2AB74E741E8"
+    },
+    {
+      "run": "vertical-slices-b-t03",
+      "task": "08",
+      "path": "runs\\vertical-slices-b-t03\\08.attempt-0.envelope.yaml",
+      "sha256": "3EE67166C3EC508A221A55FA0F9C9F4F013CB2ED929DEC0559A9FE2F31DED14A"
+    }
+  ],
+  "operator_event_logs": [
+    {
+      "run": "vertical-slices-a-t01",
+      "path": "raw\\vertical-slices-a-t01\\operator-events.jsonl",
+      "lines": 11,
+      "sha256": "3ADDA3A78FC9589591BA8C09754FDCBC4E908084CB1AA12534636ED669D89BED"
+    },
+    {
+      "run": "vertical-slices-b-t01",
+      "path": "raw\\vertical-slices-b-t01\\operator-events.jsonl",
+      "lines": 9,
+      "sha256": "E8D75BAD8467302387410FFB3FE86DC446E6B2092160F18E31308CB44E169DAB"
+    },
+    {
+      "run": "vertical-slices-a-t02",
+      "path": "raw\\vertical-slices-a-t02\\operator-events.jsonl",
+      "lines": 10,
+      "sha256": "C2B4A19E4798869E6B8ED6A02414F55EB239F51C16C50EB3C5D16520D57C58CF"
+    },
+    {
+      "run": "vertical-slices-b-t02",
+      "path": "raw\\vertical-slices-b-t02\\operator-events.jsonl",
+      "lines": 8,
+      "sha256": "3EADB613BC4AC5DB4FA9BB868857A45E88E69EB85E4296E817CF3CB2664D712A"
+    },
+    {
+      "run": "vertical-slices-a-t03",
+      "path": "unavailable",
+      "lines": 0,
+      "sha256": "unavailable"
+    },
+    {
+      "run": "vertical-slices-b-t03",
+      "path": "raw\\vertical-slices-b-t03\\operator-events.jsonl",
+      "lines": 34,
+      "sha256": "01AA54343C0A3C5077741C9FF182130BE57DDBDE8D56C2551A602743253E0433"
+    }
+  ],
+  "trial1_pair_exclusion": "Whole trial1 pair excluded from comparative longitudinal claims after B03 premature terminal completion with 565 seconds remaining; original observations retained.",
+  "trial2_pair_exclusion": "Both arms excluded due controller/input asymmetry and unresolved B03; no redo; states retained.",
+  "trial3_pair_exclusion": "Both arms excluded after A05 detected out-of-scope apply_patch attempt; exact attempt evidence in task05 containment record. No A06-08 preparation.",
+  "terminal_task05_record": {
+    "current_state_note": "Parent reports exact target and src ancestor absent at 2026-10-05T06:44:19Z and tracked paths unchanged; this establishes current absence only, not no prior access/history.",
+    "path": "raw/vertical-slices-a-t03/05/containment-forensic-2026-10-05T06-41-20Z.json",
+    "status": "interrupted/unresolved; no exact scored final response or helper proof",
+    "sha256": "A2738AB7352B7F833D5FFECF39F84BA14ABA27CE23EB7B85098A07C591858FFE"
+  },
+  "trial1_b_owner_audit": {
+    "source_content_sha256": "unavailable: no source workspace read; retained evaluation YAML does not expose per-source SHA-256; actor commit IDs are listed as revision identifiers only.",
+    "reports": [
+      {
+        "before_report_sha256": "B1BA129D62291558964F3B9AF4E5B6D399FDA2881D54A749B6543EC22EB20009",
+        "commit": "266f2028e298d70623384441ccd98867c89c255d",
+        "report": "runs/vertical-slices-b-t01/03.evaluation.yaml",
+        "finding": "Expected resources/usecase-cancel-order.yaml and resources/handler-cancel-order.yaml; unexpected resource/model changes: resources/feature-order-lifecycle.yaml, resources/skill-implement-commerce.yaml",
+        "task": "03",
+        "report_sha256": "180C6155DC964AD634A72404308AC62A61E0E58D4F0F7EB4FA426591656E2A93",
+        "interpretation": "Expected UseCase and Handler owner paths explicitly present; extra Feature and Skill resource paths flagged.",
+        "before_report": "runs/vertical-slices-b-t01/03.before-repair.evaluation.yaml"
+      },
+      {
+        "report_sha256": "81BA5599C53CA63046A74256B97800BFF684E32D02598CE22D8069129C7D3900",
+        "report": "runs/vertical-slices-b-t01/04.evaluation.yaml",
+        "interpretation": "No task-specific-usecase-owner expected-path diagnostic in retained report. Changed paths include Core, two Handler owners, and Skill; no UseCase resource path is listed. Whether a requested UseCase owner was absent cannot be established from the permitted report-only evidence.",
+        "finding": "Architecture-owned paths changed without an intent change: docs/markitect/engineering/core.core.architecture.markitect.org.v1alpha1.md, docs/markitect/engineering/handler-cancel-order.handler.architecture.markitect.org.v1alpha1.md, docs/markitect/engineering/handler-create-order.handler.architecture.markitect.org.v1alpha1.md, resources/core.yaml, resources/handler-cancel-order.yaml, resources/handler-create-order.yaml, resources/skill-implement-commerce.yaml",
+        "commit": "18abf41",
+        "task": "04"
+      },
+      {
+        "report_sha256": "C072146C5B050DD0A8F0DCC4F5D8D367F0FD54CED5CBA1341C045EDAEBAFF526",
+        "report": "runs/vertical-slices-b-t01/05.evaluation.yaml",
+        "interpretation": "Expected UseCase and Handler owner paths explicitly present; extra Skill resource path flagged.",
+        "finding": "Expected resources/usecase-get-order-summary.yaml and resources/handler-get-order-summary.yaml; unexpected resource/model changes: resources/skill-implement-commerce.yaml",
+        "commit": "41eaa710973e4557ae6c805be71f205ab9d736b",
+        "task": "05"
+      },
+      {
+        "before_report_sha256": "8C4EF457A846ACB1771D97EAA95551399D04921A0ABCC38EE7C283F558C76C51",
+        "commit": "91bfb5a472cc5e6d5b9a27e9b23a9c24bfce86ba",
+        "report": "runs/vertical-slices-b-t01/07.evaluation.yaml",
+        "finding": "Expected resources/usecase-list-open-orders.yaml and resources/handler-list-open-orders.yaml; unexpected resource/model changes: resources/skill-implement-commerce.yaml",
+        "task": "07",
+        "report_sha256": "CEF92DA1BBB0346546F06CADEEBC1214C2C2BBE7E26F0E62B005AC6EBB568CAA",
+        "interpretation": "Expected UseCase and Handler owner paths explicitly present; extra Skill resource path flagged.",
+        "before_report": "runs/vertical-slices-b-t01/07.before-repair.evaluation.yaml"
+      }
+    ]
+  },
+  "a3_assessment": {
+    "retained_final_snapshot_directories": [
+      "results/vertical-slices-a-t03/snapshots/01",
+      "results/vertical-slices-a-t03/snapshots/02",
+      "results/vertical-slices-a-t03/snapshots/03",
+      "results/vertical-slices-a-t03/snapshots/04"
+    ],
+    "assessment_invoked": false,
+    "reason": "No sealed evaluator executable/path was exposed to this operator. `gauntlet.exe evaluate --help` requires -evaluator; no evaluation/export invocation or serializer projection was performed. No separate serializer control was created because no exporter was invoked.",
+    "terminal_tasks": [
+      "01",
+      "02",
+      "03",
+      "04"
+    ]
+  },
+  "exclusions_and_limits": [
+    "No task09-12 holdout preparation or evaluation.",
+    "No trial1 or trial2 redo.",
+    "No hidden oracle/spec/evaluator source inspected.",
+    "No source files or live source workspace inspected.",
+    "No A3 01-04 re-evaluation or serializer projection; terminal native statuses remain authoritative.",
+    "A03 task05 remains unresolved and is not finished from forensic text."
+  ]
+}

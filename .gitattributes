@@ -8,3 +8,10 @@ experiments/autonomous-ab-gauntlet/results/r1-service-oracle-v1/trial3-a-assessm
 experiments/autonomous-ab-gauntlet/results/r1-oracle-v2/** -text whitespace=cr-at-eol
 experiments/autonomous-ab-gauntlet/results/r1-paths-v3/ddd-trial3-b-assessment.json -text whitespace=cr-at-eol
 experiments/autonomous-ab-gauntlet/results/r1-paths-v3/ddd-serialization-control-trial3-b.yaml -text whitespace=cr-at-eol
+experiments/autonomous-ab-gauntlet/results/r1-paths-v3-ddd-t1-control-rerun/ddd-development-closeout*.json -text whitespace=cr-at-eol
+
+experiments/autonomous-ab-gauntlet/results/r1-service-oracle-v1/trial3-b-*.json -text whitespace=cr-at-eol
+
+experiments/autonomous-ab-gauntlet/results/r1-paths-v3/ddd-trial3-b-independent-interpretation*.json -text whitespace=cr-at-eol
+
+experiments/autonomous-ab-gauntlet/results/r1-oracle-v2/service-predicate-recurrence*.json -text whitespace=cr-at-eol

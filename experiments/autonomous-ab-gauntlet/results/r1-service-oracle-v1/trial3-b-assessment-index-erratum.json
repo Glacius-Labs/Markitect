@@ -1,0 +1,249 @@
+{
+  "schema": "autonomous-ab-service-trial3-b-assessment-index-erratum/v1",
+  "assessment_path": "C:\\Users\\Consiliari\\.codex\\worktrees\\689d\\Markitect\\experiments\\autonomous-ab-gauntlet\\results\\r1-service-oracle-v1\\trial3-b-assessment.json",
+  "assessment_sha256": "dadef002a908d22cedc35505fa76eb5d5f439b7c175b0c87112772b28e23527f",
+  "correction": "The task_summary.failed_components arrays in the assessment file were derived with a faulty post-run text extractor and omit architecture-boundary. The per-phase checks arrays and original raw evaluation YAMLs are complete and authoritative; this erratum supplies the corrected summary. No captured result, status, score, or source file was changed.",
+  "corrected_task_summary": [
+    {
+      "task_id": "01",
+      "before_repair_failed_components": [
+        "architecture-boundary",
+        "idempotency-vector",
+        "task-validator"
+      ],
+      "before_repair_evaluation_sha256": "e19ddd71153f6279d615d19ebbba2c45d91af94d0ac8ec6803b632c070ffeb27",
+      "final_failed_components": [
+        "architecture-boundary",
+        "idempotency-vector",
+        "task-validator"
+      ],
+      "final_evaluation_sha256": "e19ddd71153f6279d615d19ebbba2c45d91af94d0ac8ec6803b632c070ffeb27"
+    },
+    {
+      "task_id": "02",
+      "before_repair_failed_components": [
+        "architecture-boundary",
+        "idempotency-vector",
+        "invoice-conflict-vector",
+        "task-validator"
+      ],
+      "before_repair_evaluation_sha256": "15183d7c72d79bbc3f0ebd91e6cd4d979da365a7fe2d05b03a7e0abd6f59e829",
+      "final_failed_components": [
+        "architecture-boundary",
+        "idempotency-vector",
+        "invoice-conflict-vector",
+        "task-validator"
+      ],
+      "final_evaluation_sha256": "15183d7c72d79bbc3f0ebd91e6cd4d979da365a7fe2d05b03a7e0abd6f59e829"
+    },
+    {
+      "task_id": "03",
+      "before_repair_failed_components": [
+        "architecture-boundary",
+        "cumulative-ownership-table",
+        "idempotency-vector",
+        "invoice-conflict-vector",
+        "task-validator"
+      ],
+      "before_repair_evaluation_sha256": "1c44056a0fa7b272328e769877742505b196831e60e27b903a44de53a3ace7f6",
+      "final_failed_components": [
+        "architecture-boundary",
+        "cumulative-ownership-table",
+        "idempotency-vector",
+        "invoice-conflict-vector",
+        "task-validator"
+      ],
+      "final_evaluation_sha256": "1c44056a0fa7b272328e769877742505b196831e60e27b903a44de53a3ace7f6"
+    },
+    {
+      "task_id": "04",
+      "before_repair_failed_components": [
+        "architecture-boundary",
+        "cumulative-ownership-table",
+        "idempotency-vector",
+        "invoice-conflict-vector",
+        "task-validator"
+      ],
+      "before_repair_evaluation_sha256": "c269bad75a60d9cbfbd4ed69cda2f23f095a720da324b19c35e87ae1c6004fdb",
+      "final_failed_components": [
+        "architecture-boundary",
+        "cumulative-ownership-table",
+        "idempotency-vector",
+        "invoice-conflict-vector",
+        "task-validator"
+      ],
+      "final_evaluation_sha256": "c269bad75a60d9cbfbd4ed69cda2f23f095a720da324b19c35e87ae1c6004fdb"
+    },
+    {
+      "task_id": "05",
+      "before_repair_failed_components": [
+        "architecture-boundary",
+        "cumulative-ownership-table",
+        "idempotency-vector",
+        "invoice-conflict-vector",
+        "overflow-vector",
+        "task-validator"
+      ],
+      "before_repair_evaluation_sha256": "6c2b41d47ab8b1a27c2db5e96ed5991e7a02ccdbe0ec89992f0c708cb5d2f989",
+      "final_failed_components": [
+        "architecture-boundary",
+        "cumulative-ownership-table",
+        "idempotency-vector",
+        "invoice-conflict-vector",
+        "overflow-vector",
+        "task-validator"
+      ],
+      "final_evaluation_sha256": "6c2b41d47ab8b1a27c2db5e96ed5991e7a02ccdbe0ec89992f0c708cb5d2f989"
+    },
+    {
+      "task_id": "06",
+      "before_repair_failed_components": [
+        "architecture-boundary",
+        "cumulative-ownership-table",
+        "cumulative-availability-intent",
+        "idempotency-vector",
+        "invoice-conflict-vector",
+        "overflow-vector",
+        "availability-vector",
+        "task-validator",
+        "markitect-check"
+      ],
+      "before_repair_evaluation_sha256": "e78bbd67521309ba05ea60b19615581fe6045f22b6626fb7bfc132fe708dd485",
+      "final_failed_components": [
+        "architecture-boundary",
+        "cumulative-ownership-table",
+        "cumulative-availability-intent",
+        "idempotency-vector",
+        "invoice-conflict-vector",
+        "overflow-vector",
+        "availability-vector",
+        "task-validator",
+        "markitect-check"
+      ],
+      "final_evaluation_sha256": "1d9939c6d91c419b6a80da2818724bd2ac948bcc9be4223f402688ff14597c8b"
+    },
+    {
+      "task_id": "07",
+      "before_repair_failed_components": [
+        "architecture-boundary",
+        "cumulative-ownership-table",
+        "cumulative-availability-intent",
+        "idempotency-vector",
+        "invoice-conflict-vector",
+        "overflow-vector",
+        "availability-vector",
+        "customer-reference-vector",
+        "task-validator"
+      ],
+      "before_repair_evaluation_sha256": "9ac14c1b98b3c5a2870127f168f152ee5e3c758d82ed9c04d2e7eb14a8eb4204",
+      "final_failed_components": [
+        "architecture-boundary",
+        "cumulative-ownership-table",
+        "cumulative-availability-intent",
+        "idempotency-vector",
+        "invoice-conflict-vector",
+        "overflow-vector",
+        "availability-vector",
+        "customer-reference-vector",
+        "task-validator"
+      ],
+      "final_evaluation_sha256": "9ac14c1b98b3c5a2870127f168f152ee5e3c758d82ed9c04d2e7eb14a8eb4204"
+    },
+    {
+      "task_id": "08",
+      "before_repair_failed_components": [
+        "architecture-boundary",
+        "cumulative-ownership-table",
+        "cumulative-availability-intent",
+        "idempotency-vector",
+        "invoice-conflict-vector",
+        "overflow-vector",
+        "availability-vector",
+        "customer-reference-vector",
+        "invoice-memo-vector",
+        "task-validator"
+      ],
+      "before_repair_evaluation_sha256": "6e7c5490126201e892a91f1144897f572e15d2cc8cef3325ba73b290ecb538ba",
+      "final_failed_components": [
+        "architecture-boundary",
+        "cumulative-ownership-table",
+        "cumulative-availability-intent",
+        "idempotency-vector",
+        "invoice-conflict-vector",
+        "overflow-vector",
+        "availability-vector",
+        "customer-reference-vector",
+        "invoice-memo-vector",
+        "task-validator"
+      ],
+      "final_evaluation_sha256": "253df1defe9a72df104ed2f11458d9ab88ad6d3b394440bb98a0dbbcb96ca1e4"
+    }
+  ],
+  "source_evaluation_paths": [
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\runs\\modular-service-b-t03\\01.before-repair.evaluation.yaml",
+      "sha256": "e19ddd71153f6279d615d19ebbba2c45d91af94d0ac8ec6803b632c070ffeb27"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\runs\\modular-service-b-t03\\01.evaluation.yaml",
+      "sha256": "e19ddd71153f6279d615d19ebbba2c45d91af94d0ac8ec6803b632c070ffeb27"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\runs\\modular-service-b-t03\\02.before-repair.evaluation.yaml",
+      "sha256": "15183d7c72d79bbc3f0ebd91e6cd4d979da365a7fe2d05b03a7e0abd6f59e829"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\runs\\modular-service-b-t03\\02.evaluation.yaml",
+      "sha256": "15183d7c72d79bbc3f0ebd91e6cd4d979da365a7fe2d05b03a7e0abd6f59e829"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\runs\\modular-service-b-t03\\03.before-repair.evaluation.yaml",
+      "sha256": "1c44056a0fa7b272328e769877742505b196831e60e27b903a44de53a3ace7f6"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\runs\\modular-service-b-t03\\03.evaluation.yaml",
+      "sha256": "1c44056a0fa7b272328e769877742505b196831e60e27b903a44de53a3ace7f6"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\runs\\modular-service-b-t03\\04.before-repair.evaluation.yaml",
+      "sha256": "c269bad75a60d9cbfbd4ed69cda2f23f095a720da324b19c35e87ae1c6004fdb"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\runs\\modular-service-b-t03\\04.evaluation.yaml",
+      "sha256": "c269bad75a60d9cbfbd4ed69cda2f23f095a720da324b19c35e87ae1c6004fdb"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\runs\\modular-service-b-t03\\05.before-repair.evaluation.yaml",
+      "sha256": "6c2b41d47ab8b1a27c2db5e96ed5991e7a02ccdbe0ec89992f0c708cb5d2f989"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\runs\\modular-service-b-t03\\05.evaluation.yaml",
+      "sha256": "6c2b41d47ab8b1a27c2db5e96ed5991e7a02ccdbe0ec89992f0c708cb5d2f989"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\runs\\modular-service-b-t03\\06.before-repair.evaluation.yaml",
+      "sha256": "e78bbd67521309ba05ea60b19615581fe6045f22b6626fb7bfc132fe708dd485"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\runs\\modular-service-b-t03\\06.evaluation.yaml",
+      "sha256": "1d9939c6d91c419b6a80da2818724bd2ac948bcc9be4223f402688ff14597c8b"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\runs\\modular-service-b-t03\\07.before-repair.evaluation.yaml",
+      "sha256": "9ac14c1b98b3c5a2870127f168f152ee5e3c758d82ed9c04d2e7eb14a8eb4204"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\runs\\modular-service-b-t03\\07.evaluation.yaml",
+      "sha256": "9ac14c1b98b3c5a2870127f168f152ee5e3c758d82ed9c04d2e7eb14a8eb4204"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\runs\\modular-service-b-t03\\08.before-repair.evaluation.yaml",
+      "sha256": "6e7c5490126201e892a91f1144897f572e15d2cc8cef3325ba73b290ecb538ba"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\runs\\modular-service-b-t03\\08.evaluation.yaml",
+      "sha256": "253df1defe9a72df104ed2f11458d9ab88ad6d3b394440bb98a0dbbcb96ca1e4"
+    }
+  ],
+  "human_acceptance": false
+}

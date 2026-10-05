@@ -1,0 +1,786 @@
+{
+  "schema": "ddd-trial3-b-independent-interpretation/v1",
+  "source_report": "C:\\Users\\Consiliari\\.codex\\worktrees\\689d\\Markitect\\experiments\\autonomous-ab-gauntlet\\results\\r1-paths-v3\\ddd-trial3-b-assessment.json",
+  "source_report_sha256": "0a31077d644c2d819bab953519b04ac43378f771ad010d4c2a6a23ded503653d",
+  "freeze_digest": "4faee78795986559e91a0e233bd7321a9cf48526d331edba621ca98eee11638a",
+  "run_id": "vertical-slices-b-t03",
+  "scope": "B tasks 01-08, retained raw evaluator outputs, capture proofs, native records and selected public helper receipts only",
+  "comparison": "descriptive only; no paired claim, rescore, semantic conversion or human acceptance",
+  "counts": {
+    "phase_records": 16,
+    "before_repair": {
+      "raw_status_failed": 8,
+      "acceptance_validator_path_failure": 8
+    },
+    "final": {
+      "raw_status_failed": 6,
+      "raw_status_manual_review_required": 2
+    },
+    "all_native_terminal": 8,
+    "all_attempt0_captures_staged": 8,
+    "all_final_captures_staged": 8,
+    "export_proofs": 16
+  },
+  "tasks": [
+    {
+      "task_id": "01",
+      "native_actor_status": "failed",
+      "native_record": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t1-control-rerun\\runs\\vertical-slices-b-t03\\01.native.yaml",
+      "native_record_sha256": "04702b78291baadbcb4fca4b2d50f486a11dcb96ca66854d3237c3d41b995880",
+      "active_attempt": 1,
+      "native_response_file": "01.attempt-1.response.txt",
+      "attempt0_helper_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t1-control-rerun\\raw\\vertical-slices-b-t03\\01\\helper-attempt-0.jsonl",
+      "attempt0_helper_sha256": "873c3f7586f5058063b44b0ab2352a9d4228df7b99987da6320d50141d74b49d",
+      "attempt0_public_helper_exit_code": 1,
+      "active_helper_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t1-control-rerun\\raw\\vertical-slices-b-t03\\01\\helper-attempt-1.jsonl",
+      "active_helper_sha256": "244cd923e0af02edcb3c1b94e1506d54f09bb30677bf6251751eef6d27fbb4b0",
+      "active_public_helper_exit_code": 0,
+      "active_public_validator_output_sha256": "518951b41852c4eb4b375f65006e622e7522fba2407c8cfdab523db505170968",
+      "phases": [
+        {
+          "phase": "before-repair",
+          "raw_evaluator_status": "failed",
+          "raw_evaluation_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t3-b-before-repair\\runs\\vertical-slices-b-t03\\01.evaluation.yaml",
+          "raw_evaluation_sha256": "949bd8e63f2a1c3b8bfc1cebc0ba979d2d20e602a0486af336d56563fff19552",
+          "projected_evaluation_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t1-control-rerun\\runs\\vertical-slices-b-t03\\01.before-repair.evaluation.yaml",
+          "projected_evaluation_sha256": "c250214ce3f038cdf1a9925e6905f9143f2830bf6d24275c4b9525aa7579735c",
+          "export_proof_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t1-control-rerun\\raw\\vertical-slices-b-t03\\01.before-repair.evaluation-export.yaml",
+          "export_proof_sha256": "28ebddc0dc1431e16fb74223cffc7738483096d3d892b9b77d35becc5a17cdbc",
+          "source_capture_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t3-b-before-repair\\raw\\vertical-slices-b-t03\\01.source-capture.yaml",
+          "source_capture_sha256": "5e44a1b7cdd048cfd6d2e1722941ae517231ebeee6a3100b51155b999a8e5a89",
+          "source_snapshot_tree_sha256": "81df245dbb134a386dd21124b2bbc39700bd3a1a32addc3b558dce9f9ce8ddb8",
+          "invocation_log_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t3-b-before-repair\\raw\\events\\01.invocation.log",
+          "invocation_log_sha256": "70882008d2940a4263abec16ea196c2c2e5699ede96547fb7bbb6eaefbac1552",
+          "manual_components": [
+            "task01-regression-assertion",
+            "baseline-assertion-preservation"
+          ],
+          "failed_components": [
+            "acceptance-validator"
+          ],
+          "failure_evidence": [
+            {
+              "name": "acceptance-validator",
+              "evidence": "Win32Exception 206: filename or extension is too long while launching the checks executable from the before-repair assessment workspace."
+            }
+          ]
+        },
+        {
+          "phase": "final",
+          "raw_evaluator_status": "manual-review-required",
+          "raw_evaluation_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t3-b-final\\runs\\vertical-slices-b-t03\\01.evaluation.yaml",
+          "raw_evaluation_sha256": "c4fc75de51b466b2a4481aa81b4d0d13435a811a40ab8b90089f03ea724b28b6",
+          "projected_evaluation_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t1-control-rerun\\runs\\vertical-slices-b-t03\\01.evaluation.yaml",
+          "projected_evaluation_sha256": "c5078d20a78099df121ad85ea65feaa3c65f1160bcbac0330be4648053945a7f",
+          "export_proof_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t1-control-rerun\\raw\\vertical-slices-b-t03\\01.final.evaluation-export.yaml",
+          "export_proof_sha256": "42ef6680d6b10907d59974d7594bcb68f7ee11d8cb4fa2c95a4bdbf4ee247a1e",
+          "source_capture_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t3-b-final\\raw\\vertical-slices-b-t03\\01.source-capture.yaml",
+          "source_capture_sha256": "8a6de9179c57508ef37a2b072ce97ed509065296266fc37bf376f8fd71ca6332",
+          "source_snapshot_tree_sha256": "225a3e87ebc742451fb8dfbb567ce58a88d0da8f252d26780c7623bf7dcb2fe6",
+          "invocation_log_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t3-b-final\\raw\\events\\01.invocation.log",
+          "invocation_log_sha256": "f608d662ccf6787890ad6f790eddf94811f4f078c2b59c29dfba526598784ecd",
+          "manual_components": [
+            "task01-regression-assertion",
+            "baseline-assertion-preservation"
+          ],
+          "failed_components": [],
+          "failure_evidence": []
+        }
+      ]
+    },
+    {
+      "task_id": "02",
+      "native_actor_status": "completed",
+      "native_record": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t1-control-rerun\\runs\\vertical-slices-b-t03\\02.native.yaml",
+      "native_record_sha256": "7b2749f27f41e3bbd762fdcec364001961937112878db09ef8acba0ca295c1ff",
+      "active_attempt": 0,
+      "native_response_file": "02.attempt-0.response.txt",
+      "attempt0_helper_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t1-control-rerun\\raw\\vertical-slices-b-t03\\02\\helper-attempt-0.jsonl",
+      "attempt0_helper_sha256": "1f47bf34c50ca1c0387d5eba527805fffae011def1b7cd692b7069da294ffa10",
+      "attempt0_public_helper_exit_code": 0,
+      "active_helper_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t1-control-rerun\\raw\\vertical-slices-b-t03\\02\\helper-attempt-0.jsonl",
+      "active_helper_sha256": "1f47bf34c50ca1c0387d5eba527805fffae011def1b7cd692b7069da294ffa10",
+      "active_public_helper_exit_code": 0,
+      "active_public_validator_output_sha256": "d7c72b850e257a59f2731029a43e3af407e52cef5e43310a44b4104fa6c71faf",
+      "phases": [
+        {
+          "phase": "before-repair",
+          "raw_evaluator_status": "failed",
+          "raw_evaluation_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t3-b-before-repair\\runs\\vertical-slices-b-t03\\02.evaluation.yaml",
+          "raw_evaluation_sha256": "0378b5148b53c42ba3363978f7d79a0090bc5c45c70da86c8c026f7998b2a539",
+          "projected_evaluation_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t1-control-rerun\\runs\\vertical-slices-b-t03\\02.before-repair.evaluation.yaml",
+          "projected_evaluation_sha256": "bf14139d8d44bca2ca4e71ab45dd95af0a1c7dfde43716666c6d4bf1ed1f981e",
+          "export_proof_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t1-control-rerun\\raw\\vertical-slices-b-t03\\02.before-repair.evaluation-export.yaml",
+          "export_proof_sha256": "971177aa7a417d27095efd6781ef33d8f0f6d13c973a1404b0f6c0248362e66e",
+          "source_capture_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t3-b-before-repair\\raw\\vertical-slices-b-t03\\02.source-capture.yaml",
+          "source_capture_sha256": "1ccac707ef97995caef9dbe5ffd6aa89db53cb2c3dd921e31138a3f9ca7627ec",
+          "source_snapshot_tree_sha256": "150a3a88f7a0e35be14abfe6780220edead5dd3dba07aafb5b69f8e1ee49e7c7",
+          "invocation_log_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t3-b-before-repair\\raw\\events\\02.invocation.log",
+          "invocation_log_sha256": "0018c86e3d312c25d152eadcecf860a2be53e351e00a9b27b9dcfbd962dc9813",
+          "manual_components": [
+            "task01-regression-assertion",
+            "baseline-assertion-preservation",
+            "task-specific-public-behavior-vectors",
+            "cumulative-prior-behavior-vectors"
+          ],
+          "failed_components": [
+            "acceptance-validator"
+          ],
+          "failure_evidence": [
+            {
+              "name": "acceptance-validator",
+              "evidence": "Win32Exception 206: filename or extension is too long while launching the checks executable from the before-repair assessment workspace."
+            }
+          ]
+        },
+        {
+          "phase": "final",
+          "raw_evaluator_status": "manual-review-required",
+          "raw_evaluation_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t3-b-final\\runs\\vertical-slices-b-t03\\02.evaluation.yaml",
+          "raw_evaluation_sha256": "c340796a1a8fe28aaa130c5d13a4c0bdb10fa55d33076b85df34d70618088c47",
+          "projected_evaluation_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t1-control-rerun\\runs\\vertical-slices-b-t03\\02.evaluation.yaml",
+          "projected_evaluation_sha256": "1714a7c8a262c1582234ff165a262fafdf91634fd2c8ca7a6af806451dbee695",
+          "export_proof_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t1-control-rerun\\raw\\vertical-slices-b-t03\\02.final.evaluation-export.yaml",
+          "export_proof_sha256": "9f48b3c2fedfc67a1dc7300dc5b7563d415b1031e111e8e33acd59b3bc30cbbd",
+          "source_capture_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t3-b-final\\raw\\vertical-slices-b-t03\\02.source-capture.yaml",
+          "source_capture_sha256": "39bbc82ff98c34b41616dca3b7762895378e38ddd181dd88c000eb15184e0242",
+          "source_snapshot_tree_sha256": "150a3a88f7a0e35be14abfe6780220edead5dd3dba07aafb5b69f8e1ee49e7c7",
+          "invocation_log_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t3-b-final\\raw\\events\\02.invocation.log",
+          "invocation_log_sha256": "89c0fa7562e28c73fa276d9607b89600f4b857a0505d2d3051f940805ab6f5bf",
+          "manual_components": [
+            "task01-regression-assertion",
+            "baseline-assertion-preservation",
+            "task-specific-public-behavior-vectors",
+            "cumulative-prior-behavior-vectors"
+          ],
+          "failed_components": [],
+          "failure_evidence": []
+        }
+      ]
+    },
+    {
+      "task_id": "03",
+      "native_actor_status": "completed",
+      "native_record": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t1-control-rerun\\runs\\vertical-slices-b-t03\\03.native.yaml",
+      "native_record_sha256": "6690e73ba10c5a027884f38c7f01d0b76c42f414289f867cd18a8a178211482d",
+      "active_attempt": 1,
+      "native_response_file": "03.attempt-1.response.txt",
+      "attempt0_helper_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t1-control-rerun\\raw\\vertical-slices-b-t03\\03\\helper-attempt-0.jsonl",
+      "attempt0_helper_sha256": "bc8d0eb6cba6840571a1166873f10840fa20e45dc467049fcf8ad62d9ade9ec3",
+      "attempt0_public_helper_exit_code": 1,
+      "active_helper_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t1-control-rerun\\raw\\vertical-slices-b-t03\\03\\helper-attempt-1.jsonl",
+      "active_helper_sha256": "fb2bd81b10d064fa4084122a6ba2f514a2698942075f4adb6ab0deaa87993d7f",
+      "active_public_helper_exit_code": 0,
+      "active_public_validator_output_sha256": "a9a6e58a4682b549f41d9ea88c325915e4cdc438605c656cafe61333ca97caec",
+      "phases": [
+        {
+          "phase": "before-repair",
+          "raw_evaluator_status": "failed",
+          "raw_evaluation_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t3-b-before-repair\\runs\\vertical-slices-b-t03\\03.evaluation.yaml",
+          "raw_evaluation_sha256": "8e97585c8c406ab3b7934db79154ed763e6d0a78e7a7dbaac14742b48d8f4e0c",
+          "projected_evaluation_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t1-control-rerun\\runs\\vertical-slices-b-t03\\03.before-repair.evaluation.yaml",
+          "projected_evaluation_sha256": "e0eb49683edb0dd7bf7437beef24a1b8b975e517e9cd3d54c8c059d51a1ec868",
+          "export_proof_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t1-control-rerun\\raw\\vertical-slices-b-t03\\03.before-repair.evaluation-export.yaml",
+          "export_proof_sha256": "5db9f39402fd3be09a60fcc72d7b1213748e2bc587c653cfa6a9ca8d23111dbd",
+          "source_capture_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t3-b-before-repair\\raw\\vertical-slices-b-t03\\03.source-capture.yaml",
+          "source_capture_sha256": "59a5d634d5068447e654d0481aaba59dc0dee4f9984a285b755c35f86e98f3d3",
+          "source_snapshot_tree_sha256": "8ce7e796a825c4e3a383e7252ef5595dc4ac96dcf1ff30af0be947a61e7a1c5d",
+          "invocation_log_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t3-b-before-repair\\raw\\events\\03.invocation.log",
+          "invocation_log_sha256": "1e899caaf9cd0e95fcd45cd17f5f79fe7de77bc65672708c664815d29d061725",
+          "manual_components": [
+            "task01-regression-assertion",
+            "baseline-assertion-preservation",
+            "task-specific-public-behavior-vectors",
+            "cumulative-prior-behavior-vectors"
+          ],
+          "failed_components": [
+            "task-specific-usecase-owner",
+            "acceptance-validator"
+          ],
+          "failure_evidence": [
+            {
+              "name": "task-specific-usecase-owner",
+              "evidence": "Expected resources/usecase-cancel-order.yaml and resources/handler-cancel-order.yaml; unexpected resource/model changes: resources/feature-order-lifecycle.yaml"
+            },
+            {
+              "name": "acceptance-validator",
+              "evidence": "Win32Exception 206: filename or extension is too long while launching the checks executable from the before-repair assessment workspace."
+            }
+          ]
+        },
+        {
+          "phase": "final",
+          "raw_evaluator_status": "failed",
+          "raw_evaluation_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t3-b-final\\runs\\vertical-slices-b-t03\\03.evaluation.yaml",
+          "raw_evaluation_sha256": "9efab0243cc1f0c5cb2a52d232e14f62ef6f96d0ed5c2cece5b64c8278a5a39a",
+          "projected_evaluation_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t1-control-rerun\\runs\\vertical-slices-b-t03\\03.evaluation.yaml",
+          "projected_evaluation_sha256": "b981a9e1dfdbedac20ce194f6ffb9e39992bb7dd65a1283ff52a2b94f4a068b5",
+          "export_proof_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t1-control-rerun\\raw\\vertical-slices-b-t03\\03.final.evaluation-export.yaml",
+          "export_proof_sha256": "4ff0dbc74dc0cb1b35b34f549374901a1d024713e748c1101ae4ec546a51c290",
+          "source_capture_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t3-b-final\\raw\\vertical-slices-b-t03\\03.source-capture.yaml",
+          "source_capture_sha256": "da249dcff1c82edefb6dd4de6f33a58c6f5a9dcd6b7ca93e4021aac423cc1494",
+          "source_snapshot_tree_sha256": "5deff88d82ff3a9dd7bba098b2cb27ebee4e90e8e0cb197f053895342b4db417",
+          "invocation_log_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t3-b-final\\raw\\events\\03.invocation.log",
+          "invocation_log_sha256": "71e6e36676926829409fa89326b1d0f58fd4aa447d3f978978f911739ee9f361",
+          "manual_components": [
+            "task01-regression-assertion",
+            "baseline-assertion-preservation",
+            "task-specific-public-behavior-vectors",
+            "cumulative-prior-behavior-vectors"
+          ],
+          "failed_components": [
+            "task-specific-usecase-owner"
+          ],
+          "failure_evidence": [
+            {
+              "name": "task-specific-usecase-owner",
+              "evidence": "Expected resources/usecase-cancel-order.yaml and resources/handler-cancel-order.yaml; unexpected resource/model changes: resources/feature-order-lifecycle.yaml, resources/skill-implement-commerce.yaml"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "04",
+      "native_actor_status": "failed",
+      "native_record": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t1-control-rerun\\runs\\vertical-slices-b-t03\\04.native.yaml",
+      "native_record_sha256": "dba73d9366464211f9bda190d297e4b082f45e28fb95d53666ddaa3e331f3f73",
+      "active_attempt": 2,
+      "native_response_file": "04.attempt-2.response.txt",
+      "attempt0_helper_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t1-control-rerun\\raw\\vertical-slices-b-t03\\04\\helper-attempt-0.jsonl",
+      "attempt0_helper_sha256": "894857292e577edfe76e3833d03c8cdb4defee1e06b66720fa22b9e515555cc2",
+      "attempt0_public_helper_exit_code": 1,
+      "active_helper_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t1-control-rerun\\raw\\vertical-slices-b-t03\\04\\helper-attempt-2.jsonl",
+      "active_helper_sha256": "f793a87df8424c863d99f2394fc2bc1145a700540e0205d902fb6ca212a80d84",
+      "active_public_helper_exit_code": 1,
+      "active_public_validator_output_sha256": "fb81858656a9cca6549a86d61748b78aa7c0ed7eb1007beea6b316baff5c48c4",
+      "phases": [
+        {
+          "phase": "before-repair",
+          "raw_evaluator_status": "failed",
+          "raw_evaluation_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t3-b-before-repair\\runs\\vertical-slices-b-t03\\04.evaluation.yaml",
+          "raw_evaluation_sha256": "476a09860c826e02dfc1217aca4bc19ec84fbc0801047468d01781aa655a9b57",
+          "projected_evaluation_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t1-control-rerun\\runs\\vertical-slices-b-t03\\04.before-repair.evaluation.yaml",
+          "projected_evaluation_sha256": "7daf9dc62587995a95d9afefabb7025e376d1035452ba83bfbc274dff0164eeb",
+          "export_proof_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t1-control-rerun\\raw\\vertical-slices-b-t03\\04.before-repair.evaluation-export.yaml",
+          "export_proof_sha256": "8239103a3c8cb7b03aeb2e48773f6304c42218331dc35b9a76d743ece2de22c2",
+          "source_capture_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t3-b-before-repair\\raw\\vertical-slices-b-t03\\04.source-capture.yaml",
+          "source_capture_sha256": "7a2c092a1bf9f8bb77fe775ab0848d54422ee8d8434718a8064df34d511b5abd",
+          "source_snapshot_tree_sha256": "ff0ef89beb218c6d8854dbfa544716e3b4063c8e5600a10a9426b5620555ca2c",
+          "invocation_log_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t3-b-before-repair\\raw\\events\\04.invocation.log",
+          "invocation_log_sha256": "0fd11ae93bd9a4cfe3db6680370c9d422ad15f3d7e3ab8df8ad0a2edc73cc3ea",
+          "manual_components": [
+            "task01-regression-assertion",
+            "baseline-assertion-preservation",
+            "task-specific-public-behavior-vectors",
+            "cumulative-prior-behavior-vectors"
+          ],
+          "failed_components": [
+            "acceptance-validator"
+          ],
+          "failure_evidence": [
+            {
+              "name": "acceptance-validator",
+              "evidence": "Win32Exception 206: filename or extension is too long while launching the checks executable from the before-repair assessment workspace."
+            }
+          ]
+        },
+        {
+          "phase": "final",
+          "raw_evaluator_status": "failed",
+          "raw_evaluation_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t3-b-final\\runs\\vertical-slices-b-t03\\04.evaluation.yaml",
+          "raw_evaluation_sha256": "66c5b1a0c97be3abc96b57d16b662cfe0d2f81e92c19eec9283d1d0fb9804bbf",
+          "projected_evaluation_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t1-control-rerun\\runs\\vertical-slices-b-t03\\04.evaluation.yaml",
+          "projected_evaluation_sha256": "a9e08a7b3cd332f2c9ea388d86c4f065e3f704677c8baf2b3b6faf725f352b79",
+          "export_proof_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t1-control-rerun\\raw\\vertical-slices-b-t03\\04.final.evaluation-export.yaml",
+          "export_proof_sha256": "802c4de76ef4a01fa6828c23d715e6a1cd515ba62bf27ff9b9139aedd4ba5890",
+          "source_capture_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t3-b-final\\raw\\vertical-slices-b-t03\\04.source-capture.yaml",
+          "source_capture_sha256": "02cf9196281c8b6c2687bb83774bd68156bcaaed614eed8211b591257d82f7c3",
+          "source_snapshot_tree_sha256": "438ef9f772e722a42b8a5e0249c72892ec04d96d8fe63ca735498a7354f5e213",
+          "invocation_log_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t3-b-final\\raw\\events\\04.invocation.log",
+          "invocation_log_sha256": "610a217c0e6d1168ce22e25bafeb925b07925c173952f37dbcc820b738ac9d83",
+          "manual_components": [
+            "task01-regression-assertion",
+            "baseline-assertion-preservation",
+            "task-specific-public-behavior-vectors",
+            "cumulative-prior-behavior-vectors"
+          ],
+          "failed_components": [
+            "no-unrequested-architecture-change"
+          ],
+          "failure_evidence": [
+            {
+              "name": "no-unrequested-architecture-change",
+              "evidence": "Architecture-owned paths changed without an intent change: resources/skill-implement-commerce.yaml"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "05",
+      "native_actor_status": "failed",
+      "native_record": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t1-control-rerun\\runs\\vertical-slices-b-t03\\05.native.yaml",
+      "native_record_sha256": "b451d98475bcac70ebee2cb74c577d46c209dade4ae58c81d0c798ccd45f68f7",
+      "active_attempt": 2,
+      "native_response_file": "05.attempt-2.response.txt",
+      "attempt0_helper_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t1-control-rerun\\raw\\vertical-slices-b-t03\\05\\helper-attempt-0.jsonl",
+      "attempt0_helper_sha256": "bd3e5feaf5e16a3aac2180c5b5b6db1f4158edbf8c440b78f590275184571d6a",
+      "attempt0_public_helper_exit_code": 1,
+      "active_helper_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t1-control-rerun\\raw\\vertical-slices-b-t03\\05\\helper-attempt-2.jsonl",
+      "active_helper_sha256": "f5a82846d570d66ffb264ee93374502ddc6bc9196e6674dacdc4e92f4539c2f6",
+      "active_public_helper_exit_code": 1,
+      "active_public_validator_output_sha256": "faa8893b52f40dd20ac4a95cd5983ab2059543505d5e947fb442436ae3ca194c",
+      "phases": [
+        {
+          "phase": "before-repair",
+          "raw_evaluator_status": "failed",
+          "raw_evaluation_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t3-b-before-repair\\runs\\vertical-slices-b-t03\\05.evaluation.yaml",
+          "raw_evaluation_sha256": "2f624dec3edc9095f16435381a4cadaf9159e04d019350af1f185e5cf7c4bbd5",
+          "projected_evaluation_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t1-control-rerun\\runs\\vertical-slices-b-t03\\05.before-repair.evaluation.yaml",
+          "projected_evaluation_sha256": "c53b39427e5d14ad2ca68e2527e6fedbc3adb312509f018d03d15423cc840dc6",
+          "export_proof_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t1-control-rerun\\raw\\vertical-slices-b-t03\\05.before-repair.evaluation-export.yaml",
+          "export_proof_sha256": "153fad0ae0a4a075dba7039a9f98660920a63b9b8fd75de8237576e14c04786a",
+          "source_capture_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t3-b-before-repair\\raw\\vertical-slices-b-t03\\05.source-capture.yaml",
+          "source_capture_sha256": "336902858cb283048c3b94ba1542d2bf6223f6330f351cbed9255684b82ef06d",
+          "source_snapshot_tree_sha256": "50e31e06bf8a012949e800aa6119f4114b54411e84436f0a1c166a3938aff2df",
+          "invocation_log_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t3-b-before-repair\\raw\\events\\05.invocation.log",
+          "invocation_log_sha256": "f0497cb9498cc4220ef4b4a85e041efb8342433f2958d14b2ef2d4404c8ff3eb",
+          "manual_components": [
+            "task01-regression-assertion",
+            "baseline-assertion-preservation",
+            "task-specific-public-behavior-vectors",
+            "cumulative-prior-behavior-vectors"
+          ],
+          "failed_components": [
+            "acceptance-validator"
+          ],
+          "failure_evidence": [
+            {
+              "name": "acceptance-validator",
+              "evidence": "Win32Exception 206: filename or extension is too long while launching the checks executable from the before-repair assessment workspace."
+            }
+          ]
+        },
+        {
+          "phase": "final",
+          "raw_evaluator_status": "failed",
+          "raw_evaluation_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t3-b-final\\runs\\vertical-slices-b-t03\\05.evaluation.yaml",
+          "raw_evaluation_sha256": "bd7a7416c5637b36b3d7dea69bf49643ebf040de39ca85b193afc298ee1ca3ab",
+          "projected_evaluation_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t1-control-rerun\\runs\\vertical-slices-b-t03\\05.evaluation.yaml",
+          "projected_evaluation_sha256": "1e46fdbdc315cb2a796ee18fcaa30f9bd789f398bbe96c02c8163923d73c81c1",
+          "export_proof_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t1-control-rerun\\raw\\vertical-slices-b-t03\\05.final.evaluation-export.yaml",
+          "export_proof_sha256": "2d8d5b733b6c8d6f69118df1ac8564a9719d1714ad4a991b0f8c391188028ee1",
+          "source_capture_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t3-b-final\\raw\\vertical-slices-b-t03\\05.source-capture.yaml",
+          "source_capture_sha256": "94d6d3dcd27a26fd660d23910341ef79e96b217f37c4331ac0b764c2b9231f93",
+          "source_snapshot_tree_sha256": "8819fd9e5c93ba71316ce8d9262573a663767494f0d63e812547d259d37c6466",
+          "invocation_log_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t3-b-final\\raw\\events\\05.invocation.log",
+          "invocation_log_sha256": "0ac5e42ee57f044d8ec024fa7e13080a3ed0a2e34fff24f4ee024ae206b70fc2",
+          "manual_components": [
+            "task01-regression-assertion",
+            "baseline-assertion-preservation",
+            "task-specific-public-behavior-vectors",
+            "cumulative-prior-behavior-vectors"
+          ],
+          "failed_components": [
+            "task-specific-usecase-owner"
+          ],
+          "failure_evidence": [
+            {
+              "name": "task-specific-usecase-owner",
+              "evidence": "Expected resources/usecase-get-order-summary.yaml and resources/handler-get-order-summary.yaml; unexpected resource/model changes: resources/skill-implement-commerce.yaml"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "06",
+      "native_actor_status": "failed",
+      "native_record": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t1-control-rerun\\runs\\vertical-slices-b-t03\\06.native.yaml",
+      "native_record_sha256": "c7fe0dd5c75db6a4733779a9eeda528335d70d5bd6db15007c1809f6d72edf7f",
+      "active_attempt": 2,
+      "native_response_file": "06.attempt-2.response.txt",
+      "attempt0_helper_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t1-control-rerun\\raw\\vertical-slices-b-t03\\06\\helper-attempt-0.jsonl",
+      "attempt0_helper_sha256": "440062cce69b11b57d88f452e8b23edc7944afd5b13e9f9bf65fd051662eb2bd",
+      "attempt0_public_helper_exit_code": 1,
+      "active_helper_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t1-control-rerun\\raw\\vertical-slices-b-t03\\06\\helper-attempt-2.jsonl",
+      "active_helper_sha256": "b9ba06a6a56c64690f174be8ce16b8f8c239c0a0d2d219d32e0595efbd63b287",
+      "active_public_helper_exit_code": 1,
+      "active_public_validator_output_sha256": "f994bf0458ae79389949f1e2ba90ca1a7029379a3fb54d9fa737121e4a8c9385",
+      "phases": [
+        {
+          "phase": "before-repair",
+          "raw_evaluator_status": "failed",
+          "raw_evaluation_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t3-b-before-repair\\runs\\vertical-slices-b-t03\\06.evaluation.yaml",
+          "raw_evaluation_sha256": "12f2f4642d7238521bb701247f31f055c824a5e1af401e1805fc19152c8e97c0",
+          "projected_evaluation_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t1-control-rerun\\runs\\vertical-slices-b-t03\\06.before-repair.evaluation.yaml",
+          "projected_evaluation_sha256": "1a4654e6072f4682d90377cc7c2caf1544c1e8408a7fc33f158499a7937e20f7",
+          "export_proof_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t1-control-rerun\\raw\\vertical-slices-b-t03\\06.before-repair.evaluation-export.yaml",
+          "export_proof_sha256": "0236bb50ed1e2b0132f0a665aba261401a8b8c5ca489c2e35736f5c977a9bbfb",
+          "source_capture_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t3-b-before-repair\\raw\\vertical-slices-b-t03\\06.source-capture.yaml",
+          "source_capture_sha256": "733abcde232ecd4c75178df5714711a743c2d6ed534b042fe0e844daa3daf035",
+          "source_snapshot_tree_sha256": "6d9bf1696736af642d2617ebd7f155f29a3e79eb51a3948fa09d6a5c72885f77",
+          "invocation_log_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t3-b-before-repair\\raw\\events\\06.invocation.log",
+          "invocation_log_sha256": "e6cc506bde4198a58436dbb52cfffcba4729d125bebf945719085e1be15e1fde",
+          "manual_components": [
+            "task01-regression-assertion",
+            "baseline-assertion-preservation",
+            "task-specific-public-behavior-vectors",
+            "cumulative-prior-behavior-vectors"
+          ],
+          "failed_components": [
+            "place-order-validator-owner",
+            "acceptance-validator"
+          ],
+          "failure_evidence": [
+            {
+              "name": "place-order-validator-owner",
+              "evidence": "Expected resources/usecase-create-order.yaml and resources/validator-create-order.yaml; unexpected resource/model changes: "
+            },
+            {
+              "name": "acceptance-validator",
+              "evidence": "Win32Exception 206: filename or extension is too long while launching the checks executable from the before-repair assessment workspace."
+            }
+          ]
+        },
+        {
+          "phase": "final",
+          "raw_evaluator_status": "failed",
+          "raw_evaluation_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t3-b-final\\runs\\vertical-slices-b-t03\\06.evaluation.yaml",
+          "raw_evaluation_sha256": "4bd0605fb49b33bb5af537f8865e9fd4aa4134fdc7579fb46e668fad5b846292",
+          "projected_evaluation_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t1-control-rerun\\runs\\vertical-slices-b-t03\\06.evaluation.yaml",
+          "projected_evaluation_sha256": "4e4a8f7202a1d91b80b8dcb5818ac0ac598eb3c39570cb4b1160fbfac4a682a2",
+          "export_proof_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t1-control-rerun\\raw\\vertical-slices-b-t03\\06.final.evaluation-export.yaml",
+          "export_proof_sha256": "a1801edf77116163d4c0aafd6ad952d987ca62d93fba7ec2e201216f55b0b9c9",
+          "source_capture_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t3-b-final\\raw\\vertical-slices-b-t03\\06.source-capture.yaml",
+          "source_capture_sha256": "4e7eb5194573c1361c65e70d9d73f491a54cb2f2d42beb0714f363564ae24f93",
+          "source_snapshot_tree_sha256": "ab16848e749709fa9eaef50abfcf9b0223857a558bac0da0f5dce0a8945abc53",
+          "invocation_log_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t3-b-final\\raw\\events\\06.invocation.log",
+          "invocation_log_sha256": "c6082801f6f1cfc05d946acf19713ba33ac065bfbb3c8d14896b7d4b59465593",
+          "manual_components": [
+            "task01-regression-assertion",
+            "baseline-assertion-preservation",
+            "task-specific-public-behavior-vectors",
+            "cumulative-prior-behavior-vectors"
+          ],
+          "failed_components": [
+            "place-order-validator-owner"
+          ],
+          "failure_evidence": [
+            {
+              "name": "place-order-validator-owner",
+              "evidence": "Expected resources/usecase-create-order.yaml and resources/validator-create-order.yaml; unexpected resource/model changes: resources/skill-implement-commerce.yaml"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "07",
+      "native_actor_status": "completed",
+      "native_record": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t1-control-rerun\\runs\\vertical-slices-b-t03\\07.native.yaml",
+      "native_record_sha256": "302a8997ad1abbe045bafe994ed536e165261d25ffdf016b8751b10da0a9c519",
+      "active_attempt": 2,
+      "native_response_file": "07.attempt-2.response.txt",
+      "attempt0_helper_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t1-control-rerun\\raw\\vertical-slices-b-t03\\07\\helper-attempt-0.jsonl",
+      "attempt0_helper_sha256": "6c85ccddf7d93f4dc1678f654253d493ce86a7b122ec85c55ad9485275e47c08",
+      "attempt0_public_helper_exit_code": 1,
+      "active_helper_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t1-control-rerun\\raw\\vertical-slices-b-t03\\07\\helper-attempt-2.jsonl",
+      "active_helper_sha256": "78a119052afab8c84b724dc35dd552d5e51c045a2ae91771faf2cfc3331f66a9",
+      "active_public_helper_exit_code": 0,
+      "active_public_validator_output_sha256": "c2a371f63cd331190c415d6f0b96a38897f718a5a2c1a22ef298b1a952caacf9",
+      "phases": [
+        {
+          "phase": "before-repair",
+          "raw_evaluator_status": "failed",
+          "raw_evaluation_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t3-b-before-repair\\runs\\vertical-slices-b-t03\\07.evaluation.yaml",
+          "raw_evaluation_sha256": "db9c36e98cd840d94aa7948104b669bb11db77394f3fce2067c0e7594adf9263",
+          "projected_evaluation_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t1-control-rerun\\runs\\vertical-slices-b-t03\\07.before-repair.evaluation.yaml",
+          "projected_evaluation_sha256": "d0560e0efed95d1e7e3ec0c4964a321355fb15bb49c8ccc1c3b6ed5642258e26",
+          "export_proof_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t1-control-rerun\\raw\\vertical-slices-b-t03\\07.before-repair.evaluation-export.yaml",
+          "export_proof_sha256": "d35f341fdfada354d169a33422035b6acde500261f2d6004ac8d924c853db073",
+          "source_capture_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t3-b-before-repair\\raw\\vertical-slices-b-t03\\07.source-capture.yaml",
+          "source_capture_sha256": "9c68dad2ac0ea10d0c383fe8639601a4ca07706fbca34529473f29df3f98964c",
+          "source_snapshot_tree_sha256": "a291db5c60651ec16566939b200f54176cd6adb2d611cdf793f7e5fdb27ec1bb",
+          "invocation_log_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t3-b-before-repair\\raw\\events\\07.invocation.log",
+          "invocation_log_sha256": "b508fb68c966ce68a193c90fe66ee4a05e283f9229989430cf5f27b10d0e20d2",
+          "manual_components": [
+            "task01-regression-assertion",
+            "baseline-assertion-preservation",
+            "task-specific-public-behavior-vectors",
+            "cumulative-prior-behavior-vectors"
+          ],
+          "failed_components": [
+            "task-specific-usecase-owner",
+            "acceptance-validator"
+          ],
+          "failure_evidence": [
+            {
+              "name": "task-specific-usecase-owner",
+              "evidence": "Expected resources/usecase-list-open-orders.yaml and resources/handler-list-open-orders.yaml; unexpected resource/model changes: resources/skill-implement-commerce.yaml"
+            },
+            {
+              "name": "acceptance-validator",
+              "evidence": "Win32Exception 206: filename or extension is too long while launching the checks executable from the before-repair assessment workspace."
+            }
+          ]
+        },
+        {
+          "phase": "final",
+          "raw_evaluator_status": "failed",
+          "raw_evaluation_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t3-b-final\\runs\\vertical-slices-b-t03\\07.evaluation.yaml",
+          "raw_evaluation_sha256": "9e2cfef9df0db00dc4a1b2600e3faeb472ac9b01959e68d9b812b367806674d9",
+          "projected_evaluation_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t1-control-rerun\\runs\\vertical-slices-b-t03\\07.evaluation.yaml",
+          "projected_evaluation_sha256": "598d7ee2c4ae2b5e7281d180bf264d8e5e164ae27e38feb70aca1702e91ab0f2",
+          "export_proof_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t1-control-rerun\\raw\\vertical-slices-b-t03\\07.final.evaluation-export.yaml",
+          "export_proof_sha256": "e53b647cecbd91f4bf816e5525cdd1dbd7ca19b816467a13c4efbfc54a9edbac",
+          "source_capture_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t3-b-final\\raw\\vertical-slices-b-t03\\07.source-capture.yaml",
+          "source_capture_sha256": "abc21ea0a834ba3bffb02b548a01f7b2458cdcb70319922b77e255ec1a46fc90",
+          "source_snapshot_tree_sha256": "e51276dc459905fa43ba25f79167fb70bff17a5d071cbb4b132a121a99cb67e8",
+          "invocation_log_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t3-b-final\\raw\\events\\07.invocation.log",
+          "invocation_log_sha256": "ab2d3d5190351d222b71d141068022a248c6ae87c6668524bfaefd7d590bcf04",
+          "manual_components": [
+            "task01-regression-assertion",
+            "baseline-assertion-preservation",
+            "task-specific-public-behavior-vectors",
+            "cumulative-prior-behavior-vectors"
+          ],
+          "failed_components": [
+            "task-specific-usecase-owner"
+          ],
+          "failure_evidence": [
+            {
+              "name": "task-specific-usecase-owner",
+              "evidence": "Expected resources/usecase-list-open-orders.yaml and resources/handler-list-open-orders.yaml; unexpected resource/model changes: resources/skill-implement-commerce.yaml"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "08",
+      "native_actor_status": "completed",
+      "native_record": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t1-control-rerun\\runs\\vertical-slices-b-t03\\08.native.yaml",
+      "native_record_sha256": "df790936be6b7bfaa66d328caa12de3a65d9fabf1c90c7f3b71db6c65e6d7c22",
+      "active_attempt": 0,
+      "native_response_file": "08.attempt-0.response.txt",
+      "attempt0_helper_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t1-control-rerun\\raw\\vertical-slices-b-t03\\08\\helper-attempt-0.jsonl",
+      "attempt0_helper_sha256": "b34ab63bb5874d5c4316156a18ca5a9fd3473f889d1a9abf1cf4f0e6e473b8e1",
+      "attempt0_public_helper_exit_code": 0,
+      "active_helper_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t1-control-rerun\\raw\\vertical-slices-b-t03\\08\\helper-attempt-0.jsonl",
+      "active_helper_sha256": "b34ab63bb5874d5c4316156a18ca5a9fd3473f889d1a9abf1cf4f0e6e473b8e1",
+      "active_public_helper_exit_code": 0,
+      "active_public_validator_output_sha256": "a0e530779429494992025945627711b993820c382ffda5002721b59537288cbe",
+      "phases": [
+        {
+          "phase": "before-repair",
+          "raw_evaluator_status": "failed",
+          "raw_evaluation_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t3-b-before-repair\\runs\\vertical-slices-b-t03\\08.evaluation.yaml",
+          "raw_evaluation_sha256": "f63c0c7cce0ee2e198b24adf37c06b42d24e6899aab91751d4bdeef9293db004",
+          "projected_evaluation_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t1-control-rerun\\runs\\vertical-slices-b-t03\\08.before-repair.evaluation.yaml",
+          "projected_evaluation_sha256": "12dc237d679b8dc1db1a1c23569c83afc6221b3aa06ae54a2cf5ccb4aac0a04f",
+          "export_proof_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t1-control-rerun\\raw\\vertical-slices-b-t03\\08.before-repair.evaluation-export.yaml",
+          "export_proof_sha256": "3cd0aac2b760e5c76ac78a77c297597f0318f4fe872c341ee2da34ba61e31937",
+          "source_capture_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t3-b-before-repair\\raw\\vertical-slices-b-t03\\08.source-capture.yaml",
+          "source_capture_sha256": "88b627753be6ec205565e6d48d0769d054082e5a260ed9231c8a4b5a0cb948e0",
+          "source_snapshot_tree_sha256": "5835fb7b9db9093456507d461a6b459ec4c7426d20a2ea2826b9eff81b8fca48",
+          "invocation_log_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t3-b-before-repair\\raw\\events\\08.invocation.log",
+          "invocation_log_sha256": "7b30e6a355802ac39c373f0c138c2fc24e709200b48e947d1e798a771704ce9e",
+          "manual_components": [
+            "task01-regression-assertion",
+            "baseline-assertion-preservation",
+            "task-specific-public-behavior-vectors",
+            "cumulative-prior-behavior-vectors"
+          ],
+          "failed_components": [
+            "handler-identity-owner",
+            "acceptance-validator"
+          ],
+          "failure_evidence": [
+            {
+              "name": "handler-identity-owner",
+              "evidence": "Expected identity update only in Handler and UseCase owners; unexpected resource/model changes: "
+            },
+            {
+              "name": "acceptance-validator",
+              "evidence": "Win32Exception 206: filename or extension is too long while launching the checks executable from the before-repair assessment workspace."
+            }
+          ]
+        },
+        {
+          "phase": "final",
+          "raw_evaluator_status": "failed",
+          "raw_evaluation_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t3-b-final\\runs\\vertical-slices-b-t03\\08.evaluation.yaml",
+          "raw_evaluation_sha256": "13ab17845b3ef7a70332635a677e08a5004311f58c5adddad3ee40299a925dcd",
+          "projected_evaluation_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t1-control-rerun\\runs\\vertical-slices-b-t03\\08.evaluation.yaml",
+          "projected_evaluation_sha256": "e080f56ac79f40ac34b5ad3015e85a2d0639188d753eb2fc698c6020e929fe8e",
+          "export_proof_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t1-control-rerun\\raw\\vertical-slices-b-t03\\08.final.evaluation-export.yaml",
+          "export_proof_sha256": "8c8ddcc9f546afb6923a7f0afcca18b2de34455e654610d2caa5e56f97fac001",
+          "source_capture_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t3-b-final\\raw\\vertical-slices-b-t03\\08.source-capture.yaml",
+          "source_capture_sha256": "3f97d7c14c688e52ad716899a92d065f13863de4326cf2439aaf6bcfe8d7b20b",
+          "source_snapshot_tree_sha256": "5835fb7b9db9093456507d461a6b459ec4c7426d20a2ea2826b9eff81b8fca48",
+          "invocation_log_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3-ddd-t3-b-final\\raw\\events\\08.invocation.log",
+          "invocation_log_sha256": "eaff2f221cf904f1cebc3bd6136e960d5465a69aefd52b0cb97e42a4b24e9ee7",
+          "manual_components": [
+            "task01-regression-assertion",
+            "baseline-assertion-preservation",
+            "task-specific-public-behavior-vectors",
+            "cumulative-prior-behavior-vectors"
+          ],
+          "failed_components": [
+            "handler-identity-owner"
+          ],
+          "failure_evidence": [
+            {
+              "name": "handler-identity-owner",
+              "evidence": "Expected identity update only in Handler and UseCase owners; unexpected resource/model changes: "
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "topic": "Task03 B ownership facts",
+      "observation": "UseCase cancel-order and Handler cancel-order-handler are present; the UseCase points to Module orders, Aggregate order, Feature order-lifecycle, and the new Handler. Feature summary includes cancellation, and Skill files declare the new CancelOrder source files. The frozen owner check nevertheless records these changed Feature/Skill resource paths as unexpected.",
+      "sources": [
+        {
+          "path": "results/03-final/workspace/resources/usecase-cancel-order.yaml",
+          "sha256": "f1704ea366883c7c2e41025cb6f5df4ad15cf8f955b8f65cb1bae974e82f10e3"
+        },
+        {
+          "path": "results/03-final/workspace/resources/handler-cancel-order.yaml",
+          "sha256": "2cd36356207393e413bcf3e141c20b26fa3e6ab1e771dc0b3b7f7681a64d7bfd"
+        },
+        {
+          "path": "results/03-final/workspace/resources/feature-order-lifecycle.yaml",
+          "sha256": "f008789c4cac1f109f223b644c131c9808595abb79f9dd2be52b23bfe1b5dca9"
+        },
+        {
+          "path": "results/03-final/workspace/resources/skill-implement-commerce.yaml",
+          "sha256": "19f2c5728da901d1157b3940e53630058c43903966abe84468f6791d39aac68c"
+        }
+      ],
+      "assessment": "No direct wrong owner or dependency is established by these model facts. The automated failure and absent independent behavior vector remain as recorded; no pass is inferred."
+    },
+    {
+      "topic": "Task04 Skill artifact declaration",
+      "observation": "The changed Skill files list names docs/architecture.md and Core time files including SystemClock.cs; the frozen no-unrequested-architecture-change check flags the Skill resource path. This appears to be an artifact-input declaration accompanying the clock refactor, but remains an automated failure and was not rescored.",
+      "sources": [
+        {
+          "path": "results/04-final/workspace/resources/skill-implement-commerce.yaml",
+          "sha256": "560c1aafd3fe0d55564771bfe77fcc7e9d4361ad323652a0693bc0cd2571ee0a"
+        },
+        {
+          "path": "results/04-final/workspace/resources/core.yaml",
+          "sha256": "7c29555971c00ed9c478cfedebbc542fce758d433f834a2b3653b096de174ba0"
+        }
+      ],
+      "assessment": "No Core owner/policy failure is shown by the listed evaluator components; task-specific behavior evidence is manual."
+    },
+    {
+      "topic": "Task05 and Task07 query ownership",
+      "observation": "GetOrderSummary and ListOpenOrders UseCase/Handler resources exist under Orders, reference the Order aggregate and order-lifecycle Feature, and declare Query intent. The Skill file list adds query implementation files; the owner component flags the Skill file as an unexpected resource change.",
+      "sources": [
+        {
+          "path": "results/05-final/workspace/resources/usecase-get-order-summary.yaml",
+          "sha256": "8c53b1de0a403fd631f578a38d0cf29d2b382f514bafd94926399aac0620edaa"
+        },
+        {
+          "path": "results/05-final/workspace/resources/handler-get-order-summary.yaml",
+          "sha256": "f092f45d0271b97afb9042ab1cd154fecea0806b2be2a6f63e4c43dc4a2b3cc4"
+        },
+        {
+          "path": "results/07-final/workspace/resources/usecase-list-open-orders.yaml",
+          "sha256": "9b0506f95bb10093a44bd6742b2207a0cdf08511e0f87a5ea9dc3bf07917273f"
+        },
+        {
+          "path": "results/07-final/workspace/resources/handler-list-open-orders.yaml",
+          "sha256": "6967a729595d3e3613f775485765b242da8c2bebc50c3ba49519dc7cbaa4d23a"
+        },
+        {
+          "path": "results/07-final/workspace/resources/skill-implement-commerce.yaml",
+          "sha256": "3f606ec966a61015b1b0d73525c4f0b8fc00ff10ee8361a9565b186ba75133f5"
+        }
+      ],
+      "assessment": "Architecture owner links are evidenced; query behavior remains manual/unproven by the frozen evaluator."
+    },
+    {
+      "topic": "Task06 missing Validator owner/link",
+      "observation": "PlaceOrderValidator.cs exists in source, but resources/validator-create-order.yaml is absent and resources/usecase-create-order.yaml has validators: []. Task06 explicitly requires a Validator owner and link from create-order. Package v1 permits validators but does not require them, so this is a task-specific model gap rather than a v1 policy failure.",
+      "sources": [
+        {
+          "path": "results/06-final/workspace/src/Commerce/Orders/Application/PlaceOrder/PlaceOrderValidator.cs",
+          "sha256": "3c71507d755e604e8aff4b464a76518214fdd372d9b59227cc42511f0a612a71"
+        },
+        {
+          "path": "results/06-final/workspace/resources/usecase-create-order.yaml",
+          "sha256": "68d5aad240f5191d08558d89f279237bb6d36bc2b5096f6870b3f38555b7a485"
+        },
+        {
+          "path": "results/06-final/workspace/resources/skill-implement-commerce.yaml",
+          "sha256": "ab2c5f644194905144838097506009e0616d33b318b14d93c98fff63fba69b4f"
+        }
+      ],
+      "assessment": "Frozen failure `place-order-validator-owner` aligns with the explicit task request. No v2 package/policy migration was performed or evaluated in this Trial3 B run."
+    },
+    {
+      "topic": "Task08 stale Handler identity/reference",
+      "observation": "The code declares public class SubmitOrderHandler in PlaceOrderHandler.cs (SHA 82b6dbee4f24433a3733c496c14fe1b730b5908f3ed274fabc247628cc86e128); resources/handler-create-order.yaml still names create-order-handler, and resources/usecase-create-order.yaml still references create-order-handler. Task08 B explicitly requests renaming the Handler owner and updating the UseCase reference.",
+      "sources": [
+        {
+          "path": "results/08-final/workspace/src/Commerce/Orders/Application/PlaceOrder/PlaceOrderHandler.cs",
+          "sha256": "82b6dbee4f24433a3733c496c14fe1b730b5908f3ed274fabc247628cc86e128"
+        },
+        {
+          "path": "results/08-final/workspace/resources/handler-create-order.yaml",
+          "sha256": "a08d9fd5a68f885553327a4358c7ee179ee76d757930202e1ca2b8bb8d3f6f34"
+        },
+        {
+          "path": "results/08-final/workspace/resources/usecase-create-order.yaml",
+          "sha256": "68d5aad240f5191d08558d89f279237bb6d36bc2b5096f6870b3f38555b7a485"
+        }
+      ],
+      "assessment": "Frozen failure `handler-identity-owner` is supported by the captured code/model mismatch; no rescore is applied."
+    },
+    {
+      "topic": "Policy and package boundary",
+      "observation": "Captured markitect.yaml pins software-architecture version 1.0.0 to archive SHA 22cb698924990fffe85d74489b971f239a2ff25863a1f69d65743b94facb3457. Task06 says this v1 policy permits but does not require Validators, while its task request does require one. Trial3 B ends at task08; no task11 v2 policy/package update or migration findings are present.",
+      "sources": [
+        {
+          "path": "results/08-final/workspace/markitect.yaml",
+          "sha256": "df243e4f94ff237ef73021966e37a7b831976d12c89211e7bdef2807f3ca6d0c"
+        },
+        {
+          "path": "results/08-final/workspace/resources/usecase-create-order.yaml",
+          "sha256": "68d5aad240f5191d08558d89f279237bb6d36bc2b5096f6870b3f38555b7a485"
+        }
+      ],
+      "assessment": "No Task11/v2 package outcome is inferred from these records."
+    },
+    {
+      "topic": "Before-repair Windows path limitation",
+      "observation": "All 8 before-repair raw records retain acceptance-validator failed because dotnet could not launch the captured checks executable: Win32Exception 206, filename or extension too long, with the long before-repair assessment snapshot path. The raw statuses and files are preserved; this is an assessment-path confound, not evidence about the actor code.",
+      "sources": [
+        {
+          "path": "results/01.before-repair.evaluation.yaml",
+          "note": "per-task paths and SHA-256 are in this record task/phase entries"
+        },
+        {
+          "path": "r1-paths-v3-ddd-t3-b-before-repair/raw/events/01.invocation.log",
+          "note": "actual harness footer retained"
+        }
+      ],
+      "assessment": "No initial report is rescored or repaired. Initial component failures beyond this path failure remain listed verbatim."
+    }
+  ],
+  "limits": [
+    "Every status remains the frozen evaluator result; evidence distinguishes that result from native actor status and public helper exit.",
+    "The before-repair Windows path error limits interpretation; no result was rerun to repair it.",
+    "Task03/04/05/07 Skill or Feature resource changes were flagged by the frozen oracle. The observed files appear related to the corresponding source/task artifacts, but no oracle or status is changed; independent human acceptance remains separate.",
+    "Task-specific public behavior vectors for tasks 02-08 are recorded manual/unavailable, so their behavior is unproven here.",
+    "Package v2/task11 and all holdouts are outside this terminal Trial3 B record."
+  ]
+}

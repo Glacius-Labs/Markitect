@@ -1,0 +1,79 @@
+{
+  "schema": "autonomous-ab-service-trial3-b-independent-interpretation/v1",
+  "assessment_report_sha256": "dadef002a908d22cedc35505fa76eb5d5f439b7c175b0c87112772b28e23527f",
+  "disposition": "Descriptive only. Existing frozen contract excludes B3 and A3 from aggregate comparison. The failed raw results are unchanged.",
+  "findings": [
+    {
+      "component": "cumulative-ownership-table",
+      "observed": "False in Task03 through Task08 in both phases.",
+      "assessment": "Likely lexical formatting/path overconstraint. The captured architecture document states ownership in prose and its table assigns Orders to order lifecycle, Inventory to stock/reservations, Billing to invoice/idempotency; each row lists internal/core and internal/contracts. The frozen predicate filters package cells before stripping backticks and leaves slash-qualified dependency paths outside its accepted bare labels or parenthetical syntax. The intended facts appear present, while this old component still reports failure.",
+      "evidence": [
+        "frozen oracle evaluate.ps1 Has-CompleteOwnershipTable lines 25-76",
+        "s3f B Task03 docs/architecture.md"
+      ]
+    },
+    {
+      "component": "cumulative-availability-intent",
+      "observed": "False in Task06 through Task08 in both phases.",
+      "assessment": "Bounded lexical concern, not a full semantic proof. The captured typed UseCase is named get-availability, declares module Inventory, Query intent and available-quantity summary; selected guidance names Inventory GetAvailability(ctx, sku). Frozen predicate additionally requires the Go identifier GetAvailability to appear inside that YAML resource. The exact-resource-string rule may reject an architecture record that represents the query through typed names/relations, though the task expects the new query to be discoverable there. Keep raw failure; do not change score.",
+      "evidence": [
+        "frozen oracle evaluate.ps1 Task06 branch lines 90-91",
+        "s3f B Task06 resources/usecase-get-availability.yaml",
+        "s3f B Task06 .markitect/areas/constitution/implement-change.skill.yaml"
+      ]
+    },
+    {
+      "component": "markitect-check",
+      "observed": "False in Task06 both phases with evidence Frozen candidate CLI and helper are unavailable on PATH.",
+      "assessment": "Explicit environment/tool availability failure. It does not establish a malformed typed model or failed artifact policy check; there is no CLI execution result.",
+      "evidence": [
+        "s3f B Task06 evaluation record",
+        "frozen oracle evaluate.ps1 lines 98-99"
+      ]
+    },
+    {
+      "component": "architecture-boundary",
+      "observed": "False in all 16 phase evaluations; evidence records go test ./internal/architecture.",
+      "assessment": "Concrete frozen test-gate failure status, but the oracle redirects Go output to null and does not preserve diagnostics. Its cause is unproven: source boundary defect, test/toolchain execution issue, or another runtime condition cannot be separated from this record.",
+      "evidence": [
+        "frozen oracle evaluate.ps1 line 85 and Run-Go lines 78-79",
+        "16 raw evaluation YAMLs referenced by assessment report"
+      ]
+    },
+    {
+      "component": "task-validator and behavior vectors",
+      "observed": "task-validator false in all 16 evaluations; vector components false as listed per task in report.",
+      "assessment": "Raw gate failures remain failures. The evaluator suppresses Go stdout/stderr, so these records do not prove a concrete implementation defect. Static source review shows Task01 has an ErrConflict sentinel and checks mismatched quantity before stock mutation; the vector literal substring conflict appears satisfied by its message reservation request conflicts with existing reservation, but that does not explain the recorded failure. Avoid attributing the raw status to that lexical check without captured diagnostics. No API probe or rerun was authorized.",
+      "evidence": [
+        "frozen oracle evaluate.ps1 Run-Vector/Run-Go lines 79-80 and 95-97",
+        "frozen vectors task01_test.go.txt and task02_test.go.txt",
+        "s3f B Task01 inventory service.go and service_test.go"
+      ]
+    },
+    {
+      "component": "task05 overflow implementation",
+      "observed": "overflow-vector false in Task05 through Task08 in both phases.",
+      "assessment": "Static final source includes a pre-multiplication int64 guard and boundary tests that assert rejection before reservation, invoice, or store calls. Frozen Go output is suppressed, so status cause remains unresolved; static inspection does not convert the failed vector or validator.",
+      "evidence": [
+        "s3f B Task05 internal/modules/orders/service.go and service_test.go",
+        "frozen oracle evaluate.ps1 Run-Vector lines 95-97"
+      ]
+    },
+    {
+      "component": "human acceptance",
+      "observed": "No evidence in this assessment.",
+      "assessment": "Automated exports do not establish human acceptance. Native terminal actor status is retained independently from evaluator status.",
+      "evidence": [
+        "assessment report native_terminal_statuses",
+        "all source-capture export proofs"
+      ]
+    }
+  ],
+  "limits": [
+    "Interpretation is limited to captured old-oracle outputs and read-only source inspection of staged B snapshots.",
+    "No test or evaluator was rerun for this interpretation.",
+    "No result was repaired, rescored, or promoted to pass; the aggregate exclusion remains controlling.",
+    "Go-based failures have no captured process stderr/stdout; implementation conclusions from those components remain unavailable.",
+    "No holdout, A actor workspace, corrected cohort, or human acceptance evidence was read."
+  ]
+}

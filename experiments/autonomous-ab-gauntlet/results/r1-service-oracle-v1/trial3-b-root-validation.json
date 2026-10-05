@@ -1,0 +1,17 @@
+{
+  "schema": "autonomous-ab-service-trial3-b-root-validation/v1",
+  "recorded_utc": "2026-10-05T08:07:35.490159+00:00",
+  "assessment_sha256": "dadef002a908d22cedc35505fa76eb5d5f439b7c175b0c87112772b28e23527f",
+  "bindings_sha256": "fb636409bfedfc267ab3976539c0225f3deaa5478e090eb476475996384342af",
+  "index_erratum_sha256": "bfcb7ec1dfafccf3af75aa3bef55c407685178f7d3396fe2723a0f308abf0b1f",
+  "phase_records": 16,
+  "distinct_tasks": 8,
+  "phase_file_references_verified": 128,
+  "source_files_verified": 9,
+  "raw_status_failed": 16,
+  "evaluator_and_exporter_exit_zero": 16,
+  "corrected_index_matches_complete_phase_checks": true,
+  "old_aggregate_exclusion_unchanged": true,
+  "go_command_error_cause": "unavailable; suppressed by frozen evaluator",
+  "human_acceptance": false
+}

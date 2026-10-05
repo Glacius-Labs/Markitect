@@ -1,0 +1,121 @@
+{
+  "schema": "service-predicate-recurrence-record/v1",
+  "frozen_reference": {
+    "arena": "r1-oracle-v2",
+    "freeze_digest": "d60e4975ab34b6519c2db414a58c170898750cacc59e077a199e2504f6bb6ebd",
+    "freeze_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-oracle-v2\\freeze.yaml",
+    "freeze_sha256": "2b384cd160e99263b9540272fad2386bbcedf0be97e1d99f662264648dcab1e3",
+    "evaluator_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-oracle-v2\\projects\\modular-service\\oracle\\evaluate.ps1",
+    "evaluator_sha256": "361e1181301e4499de8ae873564cff740813e42b9292c7af5a5494c86884de61",
+    "freeze_manifest_evaluator_sha256": "361e1181301e4499de8ae873564cff740813e42b9292c7af5a5494c86884de61"
+  },
+  "diagnostic_scope": "Independent recurrence check on two pure predicates only. AST-extracted functions and one AST-extracted Task06 B-arm expression ran against fixed synthetic inputs. No full evaluator, actors, scored input, or outcomes were read or executed.",
+  "first_attempt": {
+    "command": "command: powershell.exe -NoProfile -ExecutionPolicy Bypass -File C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-oracle-v2\\raw\\coordinator-tools\\service-predicate-recurrence-v1\\inspect-service-predicates.ps1 -DiagnosticDirectory C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-oracle-v2\\raw\\coordinator-tools\\service-predicate-recurrence-v1",
+    "exit": 1,
+    "log_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-oracle-v2\\raw\\coordinator-tools\\service-predicate-recurrence-v1\\actual-invocation.log",
+    "log_sha256": "53ca369ceacb5c4c127b58932362d29aaf1667ac5c974c3a3c4ea2d2828fc108",
+    "failure": "Diagnostic helper used SHA256.HashData, unavailable in the host PowerShell runtime; failed before predicates ran."
+  },
+  "actual_run": {
+    "command": "command: powershell.exe -NoProfile -ExecutionPolicy Bypass -File C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-oracle-v2\\raw\\coordinator-tools\\service-predicate-recurrence-v1\\inspect-service-predicates-v2.ps1 -DiagnosticDirectory C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-oracle-v2\\raw\\coordinator-tools\\service-predicate-recurrence-v1",
+    "exit": 0,
+    "started_utc": "2026-10-05T07:54:29.1772795Z\r",
+    "finished_utc": "2026-10-05T07:54:29.7840252Z\r",
+    "log_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-oracle-v2\\raw\\coordinator-tools\\service-predicate-recurrence-v1\\actual-invocation-v2.log",
+    "log_sha256": "e76d492b72a9755304ceabc1023b019b18988503d0d852375a5b808f683b619c",
+    "script_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-oracle-v2\\raw\\coordinator-tools\\service-predicate-recurrence-v1\\inspect-service-predicates-v2.ps1",
+    "script_sha256": "d8f677ff9442b9a8bddeee67c906967d08c054b455717b97326c165a0388e7a4",
+    "inputs_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-oracle-v2\\raw\\coordinator-tools\\service-predicate-recurrence-v1\\synthetic-inputs.json",
+    "inputs_sha256": "f89cdf23fe67b8fa1e6bfbe41c25c18d7696028655cea33bd6d5e54b0c9c94be",
+    "control_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-oracle-v2\\raw\\coordinator-tools\\service-predicate-recurrence-v1\\control.json",
+    "control_sha256": "c60c442e98df8f19946825b3e6a97f7c191181999dbb7ac80db5f3a03c69ad25",
+    "attempt2_manifest_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-oracle-v2\\raw\\coordinator-tools\\service-predicate-recurrence-v1\\attempt2-manifest.json",
+    "attempt2_manifest_sha256": "50e1ef2ea3cd58a90c1d3d878d37e56ea764fc27abcedc38bb54c30755aa6a62"
+  },
+  "extracted_predicate_observation": {
+    "schema": "service-predicate-recurrence-observation/v1",
+    "evaluator_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-oracle-v2\\projects\\modular-service\\oracle\\evaluate.ps1",
+    "evaluator_sha256": "361e1181301e4499de8ae873564cff740813e42b9292c7af5a5494c86884de61",
+    "freeze_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-oracle-v2\\freeze.yaml",
+    "freeze_sha256": "2b384cd160e99263b9540272fad2386bbcedf0be97e1d99f662264648dcab1e3",
+    "freeze_digest": "d60e4975ab34b6519c2db414a58c170898750cacc59e077a199e2504f6bb6ebd",
+    "only_selected_ast_functions_executed": [
+      "Has-CompleteOwnershipTable",
+      "Has-MetadataName",
+      "Has-Relation"
+    ],
+    "full_evaluator_main_executed": false,
+    "scored_inputs_read": false,
+    "actor_workspaces_read": false,
+    "outcomes_read": false,
+    "extracted_functions": [
+      {
+        "name": "Has-CompleteOwnershipTable",
+        "start_line": 22,
+        "end_line": 86,
+        "sha256": "e8a95da244d8cac29b33889a483d0827294cc62cd8b46b917b8133a814052b46"
+      },
+      {
+        "name": "Has-MetadataName",
+        "start_line": 87,
+        "end_line": 87,
+        "sha256": "ca5a39896e1f61816f734f7ce364710c9dc91fa130e6a940e61af3c04787fb19"
+      },
+      {
+        "name": "Has-Relation",
+        "start_line": 88,
+        "end_line": 88,
+        "sha256": "1d6eaa0f48a82cc9af510dfad1cba2e0ba5614e880c2631349ddf94e6a840ccc"
+      }
+    ],
+    "availability_intent_expression": "(Has-MetadataName $u 'get-availability') -and (Has-Relation $u 'module' 'Module' 'inventory' 'architecture') -and ($u -match '(?is)GetAvailability')",
+    "availability_intent_line": 106,
+    "observations": [
+      {
+        "case": "table slash-qualified exact dependency package paths",
+        "actual": false,
+        "expected_current_predicate": false,
+        "task_semantic_interpretation": "Should be accepted when ownership rows are correct and allowed Core/Contracts dependencies are expressed by their exact package paths.",
+        "matches_expected": true
+      },
+      {
+        "case": "table named Core/Contracts with parenthetical paths",
+        "actual": true,
+        "expected_current_predicate": true,
+        "task_semantic_interpretation": "A clear alternate spelling of the same allowed dependency facts.",
+        "matches_expected": true
+      },
+      {
+        "case": "typed get-availability UseCase owned by Inventory, no camel-case token",
+        "actual": false,
+        "expected_current_predicate": false,
+        "task_semantic_interpretation": "Should satisfy the bounded ownership/discoverability predicate from canonical UseCase name and Inventory relation; selected guidance supplies the method signature separately.",
+        "matches_expected": true
+      },
+      {
+        "case": "same typed UseCase with explicit GetAvailability summary",
+        "actual": true,
+        "expected_current_predicate": true,
+        "task_semantic_interpretation": "Literal-sensitive positive control.",
+        "matches_expected": true
+      },
+      {
+        "case": "typed get-availability owned by Billing",
+        "actual": false,
+        "expected_current_predicate": false,
+        "task_semantic_interpretation": "Negative control; wrong module ownership must fail.",
+        "matches_expected": true
+      }
+    ]
+  },
+  "expected_interpretation": [
+    "The table predicate rejects otherwise correct ownership rows when Core/Contracts are expressed as the exact slash-qualified dependency paths internal/core and internal/contracts; it accepts the alternate Core (internal/core), Contracts (internal/contracts) notation. The spelling requirement is narrower than task meaning.",
+    "The Task06 B-arm intent predicate requires the literal Go token GetAvailability inside the canonical UseCase YAML even when metadata.name is get-availability and spec.module resolves to Inventory. Adding the literal makes it pass; changing module owner to Billing makes it fail. This confirms a formatting/token dependency in the current predicate, not an actor outcome."
+  ],
+  "source_edits": 0,
+  "main_evaluator_runs": 0,
+  "actor_workspaces_read": 0,
+  "outcomes_read": 0,
+  "human_acceptance": false
+}

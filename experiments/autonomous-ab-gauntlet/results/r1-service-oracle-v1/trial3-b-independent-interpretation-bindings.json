@@ -1,0 +1,58 @@
+{
+  "schema": "autonomous-ab-service-trial3-b-interpretation-bindings/v1",
+  "interpretation_path": "C:\\Users\\Consiliari\\.codex\\worktrees\\689d\\Markitect\\experiments\\autonomous-ab-gauntlet\\results\\r1-service-oracle-v1\\trial3-b-independent-interpretation.json",
+  "interpretation_sha256": "1ff5915b0bd7fb3aadb762b72f4ae22dcf6402d441b1d0e193cc62ee83379029",
+  "assessment_path": "C:\\Users\\Consiliari\\.codex\\worktrees\\689d\\Markitect\\experiments\\autonomous-ab-gauntlet\\results\\r1-service-oracle-v1\\trial3-b-assessment.json",
+  "assessment_sha256": "dadef002a908d22cedc35505fa76eb5d5f439b7c175b0c87112772b28e23527f",
+  "pinned_old_evaluator": {
+    "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\projects\\modular-service\\oracle\\evaluate.ps1",
+    "sha256": "e760bc34da2780878fc6f952054b859e95021872d318a7595eb3745f973cb73a"
+  },
+  "source_files": [
+    {
+      "label": "Task03 final architecture model",
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\s3f\\results\\modular-service-b-t03\\snapshots\\03-final\\workspace\\docs\\architecture.md",
+      "sha256": "9d739be738f528ea38e47a809a2c689533b1f95becc220e6a6b49b6a870f49d3"
+    },
+    {
+      "label": "Task06 final typed availability UseCase",
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\s3f\\results\\modular-service-b-t03\\snapshots\\06-final\\workspace\\resources\\usecase-get-availability.yaml",
+      "sha256": "66b93b647291afd4da5d56ab36745ccc0fd71b0e3a321a0190841d941cfef8c4"
+    },
+    {
+      "label": "Task06 final selected implementation guidance",
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\s3f\\results\\modular-service-b-t03\\snapshots\\06-final\\workspace\\.markitect\\areas\\constitution\\implement-change.skill.yaml",
+      "sha256": "ae8f9db0d58074bc3d62e2c057f833bb524bf5ef444f321a204d17737e45aa20"
+    },
+    {
+      "label": "Task01 final Inventory implementation",
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\s3f\\results\\modular-service-b-t03\\snapshots\\01-final\\workspace\\internal\\modules\\inventory\\service.go",
+      "sha256": "025fa0e1bb0e51408cdbbfef861dfcf8431db3327bc73cf6c2aa648238891a97"
+    },
+    {
+      "label": "Task01 final Inventory tests",
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\s3f\\results\\modular-service-b-t03\\snapshots\\01-final\\workspace\\internal\\modules\\inventory\\service_test.go",
+      "sha256": "814b15e16f60b9c87d904475fb152b02a854c3eb1e658876e469555537deefb6"
+    },
+    {
+      "label": "Task05 final Orders overflow implementation",
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\s3f\\results\\modular-service-b-t03\\snapshots\\05-final\\workspace\\internal\\modules\\orders\\service.go",
+      "sha256": "ac7c2e001b729563966c6b8e430c7346620f20857e46f5604429eab62187e506"
+    },
+    {
+      "label": "Task05 final Orders boundary tests",
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\s3f\\results\\modular-service-b-t03\\snapshots\\05-final\\workspace\\internal\\modules\\orders\\service_test.go",
+      "sha256": "74aac9c2fa5fa2e2d46e8db4f2d2fc5563cb1125e1277c9cd17f942297aa63b9"
+    },
+    {
+      "label": "Frozen task01 vector",
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\projects\\modular-service\\oracle\\vectors\\task01_test.go.txt",
+      "sha256": "bb43425e68488be39b092e1e05e2138aa3ed880e8d997785db48774a9ec06266"
+    },
+    {
+      "label": "Frozen task02 vector",
+      "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-service-oracle-v1\\projects\\modular-service\\oracle\\vectors\\task02_test.go.txt",
+      "sha256": "c034b49dcd3b5132485551d621d13d990a1b98d440f1a1641f4272e9527f5510"
+    }
+  ]
+}

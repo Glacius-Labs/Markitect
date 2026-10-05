@@ -22,7 +22,7 @@ $tokens = $null
 $parseErrors = $null
 $ast = [System.Management.Automation.Language.Parser]::ParseFile($EvaluatorPath, [ref]$tokens, [ref]$parseErrors)
 if ($parseErrors.Count -gt 0) { throw "Evaluator parse failed: $($parseErrors[0].Message)" }
-foreach ($name in @('Has-CompleteOwnershipTable','Get-CardScopes','Test-ParallelIntegration','Get-EffectiveCardScopes')) {
+foreach ($name in @('Has-CompleteOwnershipTable','Has-MetadataName','Has-Relation','Has-AvailabilityIntent','Get-CardScopes','Test-ParallelIntegration','Get-EffectiveCardScopes')) {
     $function = $ast.Find({ param($node) $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq $name }, $true)
     if (-not $function) { throw "Required function was not found: $name" }
     Invoke-Expression $function.Extent.Text
@@ -47,6 +47,10 @@ $contractCell = 'Contracts (' + $tick + 'internal/contracts' + $tick + ') |'
 $extraDependency = $candidate.Replace($contractCell, 'Contracts (' + $tick + 'internal/contracts' + $tick + '), Payments (' + $tick + 'internal/payments' + $tick + ') |')
 $coreDependency = 'Core (' + $tick + 'internal/core' + $tick + ')'
 $wrongDependencyPath = $candidate.Replace($coreDependency, 'Core (' + $tick + 'internal/contracts' + $tick + ')')
+$namedDependencies = $coreDependency + ', Contracts (' + $tick + 'internal/contracts' + $tick + ')'
+$pathDependencies = $candidate.Replace($namedDependencies, 'internal/core, internal/contracts')
+$siblingDependency = $candidate.Replace($namedDependencies, 'internal/core, internal/modules/orders')
+$nestedCoreDependency = $candidate.Replace($namedDependencies, 'internal/core/private, internal/contracts')
 $ordersPackage = $tick + 'internal/modules/orders' + $tick
 $inventoryPackage = $tick + 'internal/modules/inventory' + $tick
 $wrongPackage = $candidate.Replace($ordersPackage, $inventoryPackage)
@@ -60,11 +64,38 @@ $cases = @(
     @{ name = 'coordination contradicts module boundary'; text = $unrequestedCoordination; expected = $false },
     @{ name = 'extra dependency'; text = $extraDependency; expected = $false },
     @{ name = 'Core dependency with Contracts path'; text = $wrongDependencyPath; expected = $false },
+    @{ name = 'exact Core and Contracts paths'; text = $pathDependencies; expected = $true },
+    @{ name = 'sibling module dependency'; text = $siblingDependency; expected = $false },
+    @{ name = 'nested unsafe Core path'; text = $nestedCoreDependency; expected = $false },
     @{ name = 'wrong package'; text = $wrongPackage; expected = $false }
 )
 foreach ($case in $cases) {
     $actual = Has-CompleteOwnershipTable $case.text
     if ($actual -ne $case.expected) { throw "Ownership case '$($case.name)' returned $actual; expected $($case.expected)" }
+}
+
+$availability = @(
+    'apiVersion: markitect.example.org/v1alpha1',
+    'kind: UseCase',
+    'metadata:',
+    '  name: get-availability',
+    'spec:',
+    '  module:',
+    '    kind: Module',
+    '    name: inventory',
+    '    namespace: architecture'
+) -join [char]10
+$wrongAvailabilityName = $availability.Replace('name: get-availability', 'name: list-availability')
+$missingAvailabilityOwner = @('apiVersion: markitect.example.org/v1alpha1', 'kind: UseCase', 'metadata:', '  name: get-availability', 'spec:', '  summary: Inventory availability query') -join [char]10
+$wrongAvailabilityOwner = $availability.Replace('name: inventory', 'name: billing')
+foreach ($case in @(
+    @{ name = 'canonical availability identity with typed Inventory owner'; text = $availability; expected = $true },
+    @{ name = 'availability identity without required typed owner'; text = $missingAvailabilityOwner; expected = $false },
+    @{ name = 'wrong canonical availability identity'; text = $wrongAvailabilityName; expected = $false },
+    @{ name = 'availability assigned to wrong module'; text = $wrongAvailabilityOwner; expected = $false }
+)) {
+    $actual = Has-AvailabilityIntent $case.text
+    if ($actual -ne $case.expected) { throw "Availability case '$($case.name)' returned $actual; expected $($case.expected)" }
 }
 
 $ordinary08 = Test-ParallelIntegration '08' '06' $false
@@ -79,7 +110,7 @@ if (($task08Scopes -join ',') -ne 'internal/contracts/billing/,internal/modules/
 if (($integrationScopes -join ',') -ne 'internal/modules/orders/,internal/contracts/billing/,internal/modules/billing/') { throw "Integration scope is not the exact P01/P02 union: $($integrationScopes -join ',')" }
 if (($p01Scopes -join ',') -ne 'internal/modules/orders/') { throw "P01 scope was widened: $($p01Scopes -join ',')" }
 if (($p02Scopes -join ',') -ne 'internal/contracts/billing/,internal/modules/billing/') { throw "P02 scope was widened: $($p02Scopes -join ',')" }
-Write-Output "Passed $($cases.Count) ownership cases and exact parallel-scope cases."
+Write-Output "Passed $($cases.Count) ownership cases, 4 availability-intent cases, and exact parallel-scope cases."
 `
 	scriptPath := filepath.Join(t.TempDir(), "service-oracle-v2.ps1")
 	if err := os.WriteFile(scriptPath, []byte(strings.TrimSpace(script)+"\n"), 0o600); err != nil {

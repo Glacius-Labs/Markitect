@@ -1,0 +1,12 @@
+{
+  "schema": "autonomous-ab-ddd-trial3-b-paths-root-validation/v1",
+  "recorded_utc": "2026-10-05T08:07:35.490159+00:00",
+  "path_erratum_sha256": "6d2ec2eebd414c33c9f508eb0a396725c0b60022b67c84d898918bc3676d702b",
+  "original_interpretation_mirror_sha256": "327fd78b66c58e1a780531c97704f01023b87880d9a4c51ab5600a67c2fedabb",
+  "finding_path_mappings_verified": 21,
+  "phase_records_verified": 16,
+  "final_phase_attempt0_helper_fields": "null by schema; eight actual helper references are bound in before-repair phase records",
+  "raw_and_exported_statuses_identical": true,
+  "raw_records_and_interpretation_unmodified": true,
+  "human_acceptance": false
+}
