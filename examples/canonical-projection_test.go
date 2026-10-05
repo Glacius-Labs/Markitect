@@ -229,7 +229,7 @@ func TestCanonicalProjectionBoundCandidateApplyVerifyAndRepair(t *testing.T) {
 	assertOwnershipStatus(t, index, "scratch/unclaimed.txt", records.OwnershipUnknown)
 	assertOwnershipStatus(t, index, "docs/legacy/old.md", records.OwnershipExcluded)
 
-	firstDotnetRecordPath := filepath.Join(root, ".markitect", "projections", "records", dotnetApply.Record.ID+".json")
+	firstDotnetRecordPath := filepath.Join(root, ".markitect", "projections", "records", strings.TrimPrefix(dotnetApply.Record.ID, "sha256:")+".json")
 	firstRecordBytes, err := os.ReadFile(firstDotnetRecordPath)
 	if err != nil {
 		t.Fatal(err)
@@ -490,7 +490,7 @@ func persistProjectionRecord(t *testing.T, root string, record records.Projectio
 	if err := os.MkdirAll(directory, 0755); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(directory, record.ID+".json"), data, 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(directory, strings.TrimPrefix(record.ID, "sha256:")+".json"), data, 0644); err != nil {
 		t.Fatal(err)
 	}
 }

@@ -36,7 +36,7 @@ Metrics count direct top-level Core Go files in both revisions, exclude unchange
 | Provider-specific lexical name mentions | 0 | 0 |
 | Policy lexical mentions | 90 | 0 |
 | Package lexical mentions | 35 | 1 explanatory comment |
-| Forbidden Core→Module / Core→Host / Module→Module / Module→Host edges | 0 / 0 / 0 / 0 | Required 0 / 0 / 0 / 0 by mandatory gate |
+| Forbidden Core→Module / Core→Host / Module→Module / Module→Host edges | 0 / 0 / 0 / 0 | 0 / 0 / 0 / 0, mandatory gate passed |
 
 ## Executable proof
 
@@ -57,7 +57,7 @@ Important negatives remain executable:
 
 An early enum candidate invented Inventory/Payment categories although the modeled EffectAxis only stated the application boundary. The old marker-only check would accept it. The counterexample is retained; the positive candidate preserves an explicit application property, and the narrowed independent fixture check now rejects the enum. This is evidence of checker insufficiency, not proof that the revised checker covers arbitrary invented behavior. A handler name plus an empty `Handle` method still proves no command behavior.
 
-Independent review also found and closed outside-target record claims, missing source/model revision binding, protected-target planning, stale-record no-op reporting and incomplete provenance tie ordering. Tests retain these cases. An initial test-copy path error accidentally nested fixture copies; the exact new subtree was removed under a resolved-path guard and the test now refuses source/temp aliases before copying. No original fixture was removed.
+Independent review also found and closed outside-target record claims, missing source/model revision binding, protected-target planning, stale-record no-op reporting and incomplete provenance tie ordering. Tests retain these cases. An initial test-copy path error accidentally nested fixture copies; the exact new subtree was removed under a resolved-path guard and the test now refuses source/temp aliases before copying. No original fixture was removed. Cross-platform validation also caught a fixture ledger filename using the `sha256:` identity directly: Windows treated the colon as a stream separator and Linux refused it as unsafe. Portable ledger filenames now use the hex portion, while full content identities remain in the payload; path validation was not weakened.
 
 ## Reconcile-resolution pressure tests
 
