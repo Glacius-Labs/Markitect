@@ -6,3 +6,5 @@ docs/strategy/markitect-strategic-positioning-and-validation.md -text whitespace
 
 # Preserve the owner-supplied research input and its recorded source digest.
 docs/research/ontology-projection-assurance.md -text whitespace=-blank-at-eof,-blank-at-eol
+
+/docs/strategy/sources/canonical-reset/*.md -text whitespace=-blank-at-eof,-blank-at-eol
