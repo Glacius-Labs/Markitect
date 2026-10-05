@@ -1,0 +1,59 @@
+{
+  "record": "ops-a1-pre-use-driver-archive/v1",
+  "status": "unused-driver-refused-before-capture-use",
+  "source_arena": "r1-ops-oracle-v3",
+  "freeze_digest": "a615190fb253cc8ff0ebcb3c02573aa9328e712d67c9f24e985610d9441b8dd6",
+  "archive_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\postrun-ops-a1-driver-v1-tools-2026-10-05",
+  "files": [
+    {
+      "source_path": "C:\\Users\\Consiliari\\.codex\\worktrees\\689d\\Markitect\\.artifacts\\autonomous-ab-gauntlet\\assess-ops-v3-trial1-a-v1.ps1",
+      "archive_name": "driver-v1.ps1",
+      "sha256": "f8e8ea855ab410c2ca1b56667595598c2222c49dc5661effbaaa3baaeeeaa938",
+      "bytes": 30335,
+      "public_mirror": null
+    },
+    {
+      "source_path": "C:\\Users\\Consiliari\\.codex\\worktrees\\689d\\Markitect\\.artifacts\\autonomous-ab-gauntlet\\assess-ops-v3-trial1-a-source-review-v1.md",
+      "archive_name": "preparer-source-review-v1.md",
+      "sha256": "f77ae014a812386088fde4386eebbc686163f7b3bca06b478cd38c9f1473a3cf",
+      "bytes": 5702,
+      "public_mirror": null
+    },
+    {
+      "source_path": "C:\\Users\\Consiliari\\.codex\\worktrees\\689d\\Markitect\\.artifacts\\autonomous-ab-gauntlet\\ops-v3-t1a-assessment-plan-v1.json",
+      "archive_name": "plan-v1.json",
+      "sha256": "b161e6e2f82ca93c776200fc3f37f052c66ad6f5cddddab40edd380ce5bb89b2",
+      "bytes": 31034,
+      "public_mirror": null
+    },
+    {
+      "source_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\postrun-ops-a1-plan-review-v1.yaml",
+      "archive_name": "independent-plan-review-v1.yaml",
+      "sha256": "854a967306424c95f1a375734beef02ae1849a1b6df1bd8d557c438e169dcf70",
+      "bytes": 4310,
+      "public_mirror": "ops-trial1-a-independent-plan-review-v1.yaml"
+    },
+    {
+      "source_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\postrun-ops-a1-driver-review-v1.yaml",
+      "archive_name": "independent-driver-review-v1.yaml",
+      "sha256": "51da174dd70451f6eee4c65e1c2c1afb85ef3ebddd547cde6e88e96ee1199e3d",
+      "bytes": 10140,
+      "public_mirror": "ops-trial1-a-driver-refusal-review-v1.yaml"
+    },
+    {
+      "source_path": "C:\\Users\\Consiliari\\.codex\\worktrees\\689d\\Markitect\\.artifacts\\autonomous-ab-gauntlet\\ops-a1-driver-v1-refusal-qa.json",
+      "archive_name": "root-refusal-qa-v1.json",
+      "sha256": "f3231f725de190ce839cbfa19a43d05518a1819d4c4559ce424bcc594410bb4e",
+      "bytes": 1797,
+      "public_mirror": "ops-trial1-a-driver-refusal-qa-v1.json"
+    }
+  ],
+  "actual_capture_invocations": 0,
+  "early_refusal_invocations": 2,
+  "limits": [
+    "Two wrong-input early-refusal checks only; no copy, stage, evaluation or export.",
+    "V1 fabricates exclusion metadata, misreads standalone_git object shape, and does not bind public destination root; independent review blocks use.",
+    "Plan and source review are not outcome, eligibility, completeness, owner acceptance or score evidence.",
+    "V2 must be separately reviewed; no overwritten source or experimental results, no frozen product changes."
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "record": "ops-a1-driver-pre-use-refusal-qa/v1",
+  "driver_sha256": "f8e8ea855ab410c2ca1b56667595598c2222c49dc5661effbaaa3baaeeeaa938",
+  "plan_sha256": "b161e6e2f82ca93c776200fc3f37f052c66ad6f5cddddab40edd380ce5bb89b2",
+  "cases": [
+    {
+      "name": "wrong-plan-digest",
+      "exit": 1,
+      "output": [
+        "Exception: C:\\Users\\Consiliari\\.codex\\worktrees\\689d\\Markitect\\.artifacts\\autonomous-ab-gauntlet\\assess-ops-v3-trial1-a-v1.ps1:12",
+        "Line |",
+        "  12 |  … PlanSHA256){throw 'PlanSHA256 does not match the reviewed terminal Op …",
+        "     |                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+        "     | PlanSHA256 does not match the reviewed terminal Ops A1 plan"
+      ],
+      "expected_refusal": "PlanSHA256 does not match"
+    },
+    {
+      "name": "wrong-plan-path",
+      "exit": 1,
+      "output": [
+        "Exception: C:\\Users\\Consiliari\\.codex\\worktrees\\689d\\Markitect\\.artifacts\\autonomous-ab-gauntlet\\assess-ops-v3-trial1-a-v1.ps1:11",
+        "Line |",
+        "  11 |  … edPlanPath){throw 'PlanPath must name the root-produced Ops v3 assess …",
+        "     |                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+        "     | PlanPath must name the root-produced Ops v3 assessment plan"
+      ],
+      "expected_refusal": "PlanPath must name"
+    }
+  ],
+  "named_assessment_destinations_absent": true,
+  "inputs_unchanged": true,
+  "limits": [
+    "Only two early-refusal invocations; no copier, stager, evaluator, exporter or actual capture operation.",
+    "Named destination existence checks are not a complete filesystem write audit.",
+    "Does not clear the fabricated exclusion metadata blocker in unused v1."
+  ]
+}

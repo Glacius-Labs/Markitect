@@ -1,0 +1,105 @@
+record: postrun-ops-a1-driver-source-review/v1
+review_scope:
+  inputs:
+    - path: .artifacts/autonomous-ab-gauntlet/assess-ops-v3-trial1-a-v1.ps1
+      sha256: f8e8ea855ab410c2ca1b56667595598c2222c49dc5661effbaaa3baaeeeaa938
+    - path: .artifacts/autonomous-ab-gauntlet/assess-ops-v3-trial1-a-source-review-v1.md
+      sha256: f77ae014a812386088fde4386eebbc686163f7b3bca06b478cd38c9f1473a3cf
+    - path: .artifacts/autonomous-ab-gauntlet/ops-v3-t1a-assessment-plan-v1.json
+      sha256: b161e6e2f82ca93c776200fc3f37f052c66ad6f5cddddab40edd380ce5bb89b2
+    - path: external/postrun-ops-a1-plan-review-v1.yaml
+      sha256: 854a967306424c95f1a375734beef02ae1849a1b6df1bd8d557c438e169dcf70
+    - path: external/postrun-copy-tools-v4-2026-10-05/final-review-v1.yaml
+      sha256: 6585919c9ae6b07d080c53710f3538b0daef86ac184c0e18169428a3653330fa
+  method: static source/plan review only; driver not executed
+  excluded:
+    - arena operation or source-native reread
+    - evaluator, copier, stager, or exporter execution
+    - actor/response/workspace/raw outcome payload content
+    - other trials, B arm, and holdout content
+    - source or plan modification
+  acceptance: not assessed
+verdict:
+  status: do_not_use_frozen_v1
+  reason: "Two source-level contract blockers exist: comparison status claims a paired exclusion despite an empty exclusion plan, and the driver compares the plan's standalone_git object to Boolean true."
+findings:
+  - id: fabricated-comparison-exclusion
+    severity: blocker
+    evidence:
+      - "Driver line 133 sets assessment_status to descriptive-only-paired-comparison-excluded and repeats 'paired comparison remains excluded' in its limits."
+      - "The exact reviewed plan has exclusion_records: [] and the plan review confirms zero exclusions were recorded by the generator at preparation time."
+      - "The driver will therefore write comparison-exclusion metadata without a binding exclusion record."
+    required_v2: "Use neutral status such as descriptive-only-eligibility-unassessed and remove unsupported exclusion wording unless an exact source-bound exclusion is intentionally supplied and reviewed. Do not infer eligibility or results."
+  - id: standalone_git_shape_mismatch
+    severity: blocker_preflight_refusal
+    evidence:
+      - "Driver line 89 compares $taskEntry.standalone_git directly with Boolean $true."
+      - "The pinned plan represents standalone_git as an object with path, kind, and standalone fields, not a Boolean."
+      - "ConvertFrom-Json materializes that JSON object as an object; the check does not test the nested standalone property and is expected to reject the plan before mutation."
+    required_v2: "Validate $taskEntry.standalone_git.standalone is true and separately check its path/kind against the selected snapshot metadata. Do not execute v1 to test this."
+  - id: repository_cwd_not_bound
+    severity: pre_use_blocker
+    evidence:
+      - "Driver line 4 sets taskRepo from Get-Location."
+      - "Driver lines 37-38 bind the plan relative to PSScriptRoot, but do not require taskRepo to be the Markitect repository root."
+      - "Coordinator/public control and result paths are joined to taskRepo, so invoking the script from another working directory can write them to a different tree."
+    required_v2: "Derive the repository root from a fixed script-relative path or validate the current directory against the expected repository root before any mutation."
+  - id: evaluator_executable_not_hash_pinned
+    severity: provenance_limit
+    evidence:
+      - "Driver line 224 resolves pwsh through Get-Command after PATH mutation; lines 227-230 record resolved executable and argv."
+      - "The driver pins hashes for Go and the copier/stager/exporter executables but does not pin or verify the resolved pwsh executable bytes/version."
+    disposition: "The intended command and working directory match the source note's frozen evaluator contract: pwsh -NoProfile -File the copied engineering-ops oracle, cwd derivedArena/projects/engineering-ops, with plan-bound Repo, Task, Output, optional Base, and optional PriorTasksThrough. Actual resolved executable is logged, but exact executable identity is environment-dependent. Bind it or make the limitation explicit before relying on exact reproducibility."
+  - id: partial_failure_finalization
+    severity: caveat
+    evidence:
+      - "Driver lines 276-286 writes result ledgers in finally using exclusive CreateNew writes, then restores environment variables."
+      - "If either ledger write itself throws, later ledger publication and environment restoration are skipped; there is no secondary finalization-error record."
+      - "The ledger explicitly calls its tracking scope non-exhaustive at line 282."
+    disposition: "Partial operation failures are normally captured as operation events and evaluator rows, but a failure during final ledger publication can leave only one ledger or neither. Treat recorded_count/planned_count/failure and cross-copy equality as required post-run checks; consider independently guarded finalization in a future version."
+  - id: child_ownership_and_timeouts
+    severity: verified_boundary_with_limit
+    evidence:
+      - "Driver lines 224-236 starts the evaluator as a direct Process with redirected streams, records executable/argv/cwd, waits 1800000 ms, kills the process tree on timeout, waits for termination, and records direct-child exit and timed_out."
+      - "Copy, stage, and export tools are invoked synchronously by call operator at lines 161, 199, and 258 without a corresponding timeout."
+    disposition: "The evaluator timeout/ownership contract is explicit. A hung copier/stager/exporter has no driver timeout and delays the finalizer; this remains an operational limitation."
+  - id: tool_binary_provenance
+    severity: limitation
+    evidence:
+      - "Driver checks exact executable digests for copier v4, stager v2, exporter v5 and records an exporter source hash; it does not compare the exporter source hash to a reviewed constant."
+      - "Prior copier-v4 archive review (hash above) binds source, tests, and binary digests, while its own review explicitly does not prove Linux/race behavior or authorize use."
+      - "The supplied driver source note says exporter v5 correspondence to its Go source is not established; stager source/binary correspondence is not established within this review scope."
+    disposition: "Pinned binaries are byte-identifiable. Source-level correspondence is incomplete for at least exporter v5; retain that limitation in provenance and do not claim source-reproducible tooling."
+  - id: output_payload_persistence
+    severity: disclosure
+    evidence:
+      - "Driver lines 239-248 collects the evaluator's complete stdout and stderr, stores it in the location event and invocation log."
+      - "Driver line 282 publishes location_events in both results ledgers; lines 273 and 255 also emit/store raw evaluator status."
+    disposition: "This is future-use behavior only; this review did not inspect payloads. Ensure the chosen metadata destination is approved to retain raw evaluator output and keep it separate from any outcome interpretation."
+  - id: frozen_inputs_and_holdout_dispatch
+    severity: scoped_distinction
+    evidence:
+      - "Driver hash-pins the copier and source freeze file; the archived copier-v4 review binds the allowlist to Ops freeze a615... with 313 expected inputs, but explicitly says it did not validate current arena contents."
+      - "The driver copies the frozen input set into each derived arena; this entails the disclosed 313-byte integrity/copy operation and may include frozen task metadata."
+      - "Driver lines 81-122 constrain dispatch to the exact plan's 11 boundaries and paired roles; task IDs are limited to 01-08/P01/P02, with only Task08 permitted for integration."
+      - "Driver lines 189-190 evaluates only entries matching the current initial/final role; no loop dispatches reserved tasks 09-12."
+    disposition: "No holdout task is dispatched by the driver. Full frozen-input copy/hash is distinct from interpreting task metadata or evaluator outcomes. The evaluator/oracle itself is not behaviorally audited here; only its pinned identity and planned arguments were reviewed."
+  - id: export_destinations
+    severity: reviewed
+    evidence:
+      - "Driver lines 123-131 preflights exact source-arena result and provenance paths under the source root, requires parent directories, and refuses existing files."
+      - "Initial result: runs/<run>/<task>.before-repair.evaluation.yaml; final result: runs/<run>/<task>.evaluation.yaml. Provenance: raw/<run>/<task>.<phase>.evaluation-export.yaml."
+      - "Driver lines 252-271 exports only after direct evaluator exit 0 and result creation, then hashes both source outputs and requires exported result bytes equal the direct result."
+    disposition: "These are explicit source-arena mutation targets, not writes confined to the derived arena; the driver identifies and preflights them. They must remain part of any use authorization."
+  - id: derived_destinations_and_exclusivity
+    severity: reviewed_with_limit
+    evidence:
+      - "Driver lines 26-34 pins plan/source/tool inputs; lines 35-38 refuse preexisting control/result targets."
+      - "Derived names are restricted to safe sibling names, distinct, absent, and checked to remain under taskBase at lines 55-57 and 153-158."
+      - "NewBytes uses FileMode.CreateNew; control and both result records refuse overwrite."
+    disposition: "Destinations are explicit and exclusive at file creation, with preflight checks; there remains an ordinary check-then-create race for directories/tool destinations, delegated to the pinned tools."
+limits:
+  - "No driver command, evaluator, helper binary, or exporter was executed."
+  - "No source-arena native/helper/workspace/raw outcome content was read in this review."
+  - "The parent-provided refusal-QA statement is not independently rechecked here and does not resolve either blocker."
+  - "No output eligibility, score, paired comparison result, or acceptance claim is made."

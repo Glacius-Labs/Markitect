@@ -1,0 +1,69 @@
+record: postrun-ops-a1-plan-review/v1
+review_scope:
+  inputs:
+    - path: .artifacts/autonomous-ab-gauntlet/ops-v3-t1a-assessment-plan-v1.json
+      sha256: b161e6e2f82ca93c776200fc3f37f052c66ad6f5cddddab40edd380ce5bb89b2
+    - path: .artifacts/autonomous-ab-gauntlet/prepare-ops-v3-t1a-assessment-plan-v1.py
+      sha256: 0c279b4f8efadfab58512efa2eae04d88c11dd7ba9bb59fce84643de822cb916
+    - arena: r1-ops-oracle-v3
+      references: exact native/helper/tree paths named by the plan only
+  method: read-only metadata and digest verification; generator not executed
+  exclusions:
+    - actor code, responses, patches, evaluator records, outcomes, and reports
+    - active B, other trials, and holdout data
+    - output payloads in helper JSON; only task identity, snapshot reference, and exit metadata were examined
+    - copying, staging, evaluation, export, source modification, or destination creation
+  acceptance: not assessed
+verification:
+  capture_selection:
+    plan_records: 22
+    unique_tuple_ids: 22
+    unique_boundaries: 11
+    sequential_boundaries: 8
+    fork_boundaries: 2
+    mechanical_integration_boundaries: 1
+    initial_records: 11
+    final_records: 11
+    boundary_roles: each boundary has exactly initial and final
+  source_bindings:
+    native_records: 11
+    helper_reference_files: 11
+    tree_manifests: 22
+    result: "all named native, helper, and tree SHA-256 values matched the plan"
+    native_metadata: "run/project/arm/trial/task/evaluation-task/base revision/status matched; all 11 native statuses are completed"
+    helper_metadata: "each first selected attempt-0 snapshot reference matched the plan; all 11 helper exit codes were 0; task IDs matched"
+    final_metadata: "each terminal native final_snapshot matched the plan"
+    git_capture_metadata: "all 11 selected workspace .git references were existing plain directories, not symlinks"
+    terminal_status_evidence: "the plan generator requires completed status and a completion timestamp; raw native statuses are retained; this review makes no outcome claim"
+  grouping:
+    sequential_task_ids: ["01", "02", "03", "04", "05", "06", "07", "08"]
+    fork_task_ids: ["P01", "P02"]
+    mechanical_integration_task_ids: ["08"]
+    fork_and_integration_prior_tasks_through: "06"
+    integration_actor_response: "not invented; plan marks mechanical_no_actor_response true"
+    exclusion_records_in_plan: 0
+  derived_destination_names:
+    initial: o3a1i
+    initial_exists_at_review: false
+    final: o3a1f
+    final_exists_at_review: false
+findings:
+  status: capture_plan_and_named_byte_references_confirmed
+  evidence:
+    - "The plan and generator hashes match the requested plan and reviewed source bytes."
+    - "The generator defines exactly eight sequential boundaries, two fork boundaries, and one mechanical integration boundary, then emits initial/final rows for each."
+    - "The generator examines the four named exclusion-control files and adds existing matching records to the plan; the plan's exclusion_records list is empty. This establishes no exclusions were recorded by this generator run, not an outcome or eligibility decision."
+    - "The generator reads helper JSON to obtain snapshot references and hashes the original bytes. This review inspected only snapshot/task/exit metadata and did not inspect or emit helper stdout/stderr/output fields."
+    - "Initial/final snapshots are repeated captures of 11 boundaries, not 22 independent task observations."
+  caveats:
+    - "No evaluator/report data was read; helper exit code is not evaluator correctness or task acceptance."
+    - "The plan does not establish comparison eligibility, functional success, an A/B result, or completeness outside its 11 selected boundaries."
+    - "The plan generator deserializes helper JSON lines as JSON objects but reads only their snapshot field for selection; no output payload field is selected or emitted by the plan."
+    - "Existing exclusion-control file contents were not opened in this review. The empty plan list reflects the generator's four-file scan at preparation time."
+    - "Derived arena destinations were only checked for current existence; they were not created or populated."
+  prohibited_claims:
+    - eligibility
+    - score
+    - winner
+    - functional result
+    - human acceptance
