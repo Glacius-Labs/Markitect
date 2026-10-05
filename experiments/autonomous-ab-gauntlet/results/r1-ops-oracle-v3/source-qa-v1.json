@@ -1,0 +1,62 @@
+{
+  "schema": "ops-oracle-v3-source-qa/v1",
+  "created_utc": "2026-10-05T10:38:17.283250+00:00",
+  "parent_source_commit": "5acd6aef00d5f2ec82b320c4dd845ed3a784f8c1",
+  "evaluator": {
+    "path": "experiments/autonomous-ab-gauntlet/projects/engineering-ops/oracle/evaluate.ps1",
+    "sha256": "fa1fd3b2e0a1377100974a01f83c569401285329edff0db88f6aedfcf7a7eb46"
+  },
+  "qa": {
+    "path": "experiments/autonomous-ab-gauntlet/harness/ops_oracle_v2_test.go",
+    "sha256": "1d24b4b5a6013298b62feacc968aa1fa3c4474ec9269c310a945497fdfd3e882"
+  },
+  "toolchain": {
+    "version": "go1.27.1 windows/amd64",
+    "binary_sha256": "d3ccdb604eafa6031133aefe1a3db24f0bb7362b857bc2125ac4e4c178b4b490",
+    "GOENV": "off",
+    "GOTOOLCHAIN": "local"
+  },
+  "focused": {
+    "command": "go test ./experiments/autonomous-ab-gauntlet/harness -run ^TestEngineeringOpsOracleV2Contracts$ -count=1 -v",
+    "contract_cases": 82,
+    "exit": 0,
+    "log_sha256": "f471bad89eda159d1d61bcfc03005eabc2d9b20bd27bd316d5887fc31f332f86",
+    "subsequent_vet_exit": 0,
+    "subsequent_build_exit": 0
+  },
+  "known_paragraph": {
+    "recurrence_record_sha256": "3e3b347c4f445f4c85d80b6dd84c88b2b852da5135c4a593d58ac8399325bc9e",
+    "ended_runbook_sha256": "3be5dd6e4511dafdcbbd373f13a1fc8c97a8c8e6dba63f47525454d04333659c",
+    "method": "AST-extracted named pure predicate only, with declared=true; no full evaluator invocation",
+    "predicate": true,
+    "actual_process_exit": 0,
+    "stdout": "named_predicate_known_paragraph: true",
+    "actor_evaluation": false,
+    "rescored": false,
+    "captured_bytes_changed": false
+  },
+  "normal_local_gates": {
+    "go_test_vet_build_mod_verify_exit": 0,
+    "log_sha256": "b2345b76016afff918174c17bf0754199d864532e10c68d02c07a7afd3bb26ce",
+    "qualification": "Full test process began while the first 79-case QA draft existed. This log is not claimed to compile the final 82-case QA; the separate final focused test above did. Exact committed-source Windows/Linux CI remains mandatory before freeze."
+  },
+  "rejected_draft": {
+    "contract_cases": 79,
+    "reason": "Passed fixed cases but rejected the known same-renewal paragraph; direct regression added before freeze. No arena was prepared from that draft."
+  },
+  "tooling_failures_preserved": [
+    "Initial worker cache access refusal before tests",
+    "Initial Go RE2 lookahead test-helper error before predicate cases",
+    "Preparer V1 incorrectly mapped the Ops note to the Service note; rejected before arena preparation, V2 archived separately"
+  ],
+  "product_paths_changed_from_frozen_candidate": [],
+  "new_cohort_prepared": false,
+  "exact_source_ci": "pending",
+  "holdout": "closed",
+  "human_acceptance": false,
+  "limits": [
+    "Finite fixture recognition only, no general prose understanding",
+    "Source regression evidence is not a replacement actor score",
+    "Unsigned coordinator record establishes supplied byte/reference consistency, not authenticated process or reviewer identity"
+  ]
+}

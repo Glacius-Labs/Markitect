@@ -1,0 +1,28 @@
+{
+  "schema": "ops-oracle-v3-preparation-tool-archive/v2",
+  "created_utc": "2026-10-05T10:10:58.603675+00:00",
+  "files": [
+    {
+      "name": "prepare-ops-oracle-v3-v2.go",
+      "sha256": "f01727e14e45715515c5a6a5c48c4e7e99ad0d7698847f35183188c69897c601"
+    },
+    {
+      "name": "prepare-ops-oracle-v3-v2_test.go",
+      "sha256": "ee6057419c8661d85d94ad0887ac3fbdf6efa2acb8a5299b4be3d9d1e45eb04f"
+    },
+    {
+      "name": "prepare-ops-oracle-v3-v2.exe",
+      "sha256": "90c68e00d3ee0f905d993092432d608d59c98a5e7e2149eb6c15812a75459fa2"
+    }
+  ],
+  "predecessor_archive": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\ops-oracle-v3-tools-2026-10-05\\archive.json",
+  "predecessor_archive_sha256": "d0cf5c48f7f4d4cee547433d55b5d1c0dea40e823f9ba4c88fd339bcda0f536c",
+  "v1_status": "rejected before preparation: note destination was Ops but source mapping referenced Service note; original archive unchanged and zero arena invocations",
+  "v2_change": "One source mapping changed to oracle-corrections-ops-v3.md; test source unchanged; new binary built",
+  "actual_toolchain": "go1.27.1 windows/amd64; GOENV=off GOTOOLCHAIN=local",
+  "focused_test_exit": 0,
+  "build_exit": 0,
+  "arena_preparation_invocations": 0,
+  "pre_use_review": "Pending independent source/parity review; CI-bound source commit required before use",
+  "human_acceptance": false
+}

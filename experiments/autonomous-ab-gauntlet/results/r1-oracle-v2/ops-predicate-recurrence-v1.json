@@ -1,0 +1,31 @@
+{
+  "schema": "ops-runbook-predicate-diagnostic/v1",
+  "created_utc": "2026-10-05T09:56:57.984595+00:00",
+  "freeze_digest": "d60e4975ab34b6519c2db414a58c170898750cacc59e077a199e2504f6bb6ebd",
+  "evaluator": {
+    "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-oracle-v2\\projects\\engineering-ops\\oracle\\evaluate.ps1",
+    "sha256": "7ef506c6936e2fb9a20ac53cb8ef10ba3cf590917682d687d90d8d179e36b7ae"
+  },
+  "ended_runbook": {
+    "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-oracle-v2\\results\\engineering-ops-a-t01\\snapshots\\08\\workspace\\docs\\operations\\runbooks\\lease-renewal.md",
+    "sha256": "3be5dd6e4511dafdcbbd373f13a1fc8c97a8c8e6dba63f47525454d04333659c"
+  },
+  "ended_declaration": {
+    "path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-oracle-v2\\results\\engineering-ops-a-t01\\snapshots\\08\\workspace\\docs\\engineering\\managed-files.yaml",
+    "sha256": "adfccbd7737ff7e6d85c6ca9ef4c7d506a6e2b915156950a0eb18e3e8a04f364"
+  },
+  "method": "AST-extracted named pure predicate only; no full evaluator invocation, actor evaluation, repair or rescore",
+  "actual_frozen_predicate": false,
+  "old_same_id_recognition": false,
+  "added_literal_control": true,
+  "control": "Append Every retry uses the same request ID to an in-memory copy; captured bytes remain unchanged",
+  "independent_review": "Manual bounded review confirms stable ID, same-renewal retry reuse, deduplication, retention, timeout uncertainty/reporting, privacy and input ownership. Review is not owner acceptance.",
+  "diagnostic_tool_exit": 0,
+  "raw_status_changed": false,
+  "interpretation": "Concrete lexical false negative; task did not require every/each/all phrase adjacency",
+  "limits": [
+    "One ended capture; not arbitrary natural-language equivalence",
+    "No claim that all other predicate cases are correct",
+    "No hidden feedback to scored actors"
+  ]
+}

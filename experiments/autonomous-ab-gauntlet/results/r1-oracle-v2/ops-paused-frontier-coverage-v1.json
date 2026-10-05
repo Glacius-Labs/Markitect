@@ -1,0 +1,38 @@
+{
+  "schema": "ops-paused-frontier-coverage/v1",
+  "recorded_utc": "2026-10-05T10:01:29Z",
+  "arena": "C:/Users/Consiliari/.codex/visualizations/2026/10/02/01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3/autonomous-ab-gauntlet/r1-oracle-v2",
+  "project": "engineering-ops",
+  "freeze_sha256": "d60e4975ab34b6519c2db414a58c170898750cacc59e077a199e2504f6bb6ebd",
+  "state": "paused_by_coordinator_measurement_gate",
+  "handling": "Native records and actual raw captures remain unchanged after this record. No rescore, restart, repair dispatch, new preparation, or holdout dispatch is authorized until a separate coordinator decision.",
+  "decision_bindings": {
+    "invalidation_record": "decisions/ops-only-invalidation-v1.json",
+    "invalidation_sha256": "8c6dc1291ede22065e57b6d49c2c23b37efea4fa937bccf4c9d8a94010750b74",
+    "effective_exclusions_record": "experiments/autonomous-ab-gauntlet/results/r1-oracle-v2/assessment-run-exclusions.yaml",
+    "effective_exclusions_sha256": "953ad22e0f572289520dd515b4969c04fe01278c8abb96a066cf142106deaa39",
+    "effective_ops_exclusion_count": 7
+  },
+  "coverage": {
+    "trial1": {
+      "arm_a": {"prepared_turns": 12, "dispatch_accepted": 12, "dispatch_refusals": 0, "terminal_turns": 12, "completed_turns": 10, "repair_needed_turns": 2, "helper_exit_0": 10, "helper_exit_1": 2, "main_tasks_01_08_terminal": 8, "parallel_forks_terminal": 2, "parallel_integration_terminal": 1},
+      "arm_b": {"prepared_turns": 1, "dispatch_accepted": 0, "dispatch_refusals": 2, "terminal_turns": 0, "completed_turns": 0, "repair_needed_turns": 0, "helper_receipts": 0, "never_started_prepared_turns": 1, "unavailable_task": "01 attempt 0; both native dispatch attempts refused by platform thread limit"}
+    },
+    "trial2": {
+      "arm_a": {"prepared_turns": 8, "dispatch_accepted": 8, "dispatch_refusals": 0, "terminal_turns": 8, "completed_turns": 8, "repair_needed_turns": 0, "helper_exit_0": 8, "helper_exit_1": 0, "main_tasks_01_08_terminal": 8},
+      "arm_b": {"prepared_turns": 3, "dispatch_accepted": 3, "dispatch_refusals": 0, "terminal_turns": 3, "completed_turns": 1, "repair_needed_turns": 2, "helper_exit_0": 1, "helper_exit_1": 2, "task_01": "completed after one public-output repair", "frontier": {"task": "02", "attempt": 0, "native_status": "repair-needed", "input_digest": "2cc657e357a8ec10a600bf0dcb235c021f5166fb5c02b702004dae909151830f", "deadline_utc": "2026-10-05T10:09:19Z", "repair_iteration_1": "unprepared and undispatched"}}
+    },
+    "trial3": {"arm_a": {"prepared_turns": 0, "dispatch_accepted": 0, "terminal_turns": 0}, "arm_b": {"prepared_turns": 0, "dispatch_accepted": 0, "terminal_turns": 0}},
+    "totals": {"prepared_turns": 24, "dispatch_accepted": 23, "dispatch_refusals": 2, "terminal_actor_turns": 23, "completed_actor_turns": 19, "repair_needed_actor_turns": 4, "actor_helper_exit_0": 19, "actor_helper_exit_1": 4, "integration_helper_receipts": 1, "integration_helper_exit_0": 1, "never_started_prepared_turns": 1}
+  },
+  "evidence_bindings": {
+    "operator_log": {"path": "raw/operator-engineering-ops.jsonl", "sha256": "92f0b4b738560181b65e1978ba821cc7117f8d2488371c4711e912d881db8c2f"},
+    "t1_b01_native": {"path": "runs/engineering-ops-b-t01/01.native.yaml", "sha256": "b1c4de222b9a4ae44d30a12ea708d7e513bd44825d3ef89f3de37b010e894616"},
+    "t1_b01_envelope": {"path": "runs/engineering-ops-b-t01/01.attempt-0.envelope.yaml", "sha256": "7143e1fa6c85505399b25ca470757360e6c244468a9cba8ac4c6ca9f7468fa82"},
+    "t2_b02_native": {"path": "runs/engineering-ops-b-t02/02.native.yaml", "sha256": "09dd661cd41778b4cd99a7151e9512327f796840c3d24a5694cedc981763385a"},
+    "t2_b02_envelope": {"path": "runs/engineering-ops-b-t02/02.attempt-0.envelope.yaml", "sha256": "5169e6e0a6ad0a30bd7c363c6d43c055661c9dcd43f09ee52cdfa48af3e9903d"},
+    "t2_b02_response": {"path": "raw/engineering-ops-b-t02/02/attempt-0.final.txt", "sha256": "aca975f02836ab8ed2ebc08b6b5aaa83d237db405accc765fda50e3ea226250e"},
+    "t2_b02_public_output": {"path": "raw/engineering-ops-b-t02/02/attempt-0.public-validator.txt", "sha256": "11940f85292d5fb0e896b748a6f3213cefe50e2bcd1871019d95b81f8dc66328"},
+    "t2_b02_helper_receipt": {"path": "raw/engineering-ops-b-t02/02/helper-attempt-0.jsonl", "sha256": "67eb24ff22599a1eb53d2dba1aa033d9dbf64b970a77bdfeb6ae1004bd1fba13"}
+  }
+}

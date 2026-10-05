@@ -1,0 +1,67 @@
+{
+  "schema": "ddd-trial3-a-stage-control/v1",
+  "status": "interrupted",
+  "source_arena": "autonomous-ab-gauntlet/r1-paths-v3-ddd-t1-control-rerun",
+  "source_freeze_digest": "4faee78795986559e91a0e233bd7321a9cf48526d331edba621ca98eee11638a",
+  "source_freeze_sha256": "1CA3A0E3378BE9226C8D3DAB74FAE28A78E9F9354D98DFAEB1693559E440263E",
+  "run_id": "vertical-slices-a-t03",
+  "planned_phase_count": 7,
+  "started_phase_count": 2,
+  "interrupted_phase_count": 2,
+  "unstarted_phase_count": 5,
+  "native_evaluation_exit_available": 0,
+  "evaluation_result_count": 0,
+  "raw_export_count": 0,
+  "phase_records": [
+    {
+      "task_id": "01",
+      "phase": "final",
+      "native_actor_status": "protocol-invalid",
+      "source_native_sha256": "A3C6F5B7848EC38E8B58C635FF440861F8B187C276A71788A1F6AA3C8E4D922A",
+      "staged_capture_sha256": "667A6FFF2C91E26CDF85CC021D09EC70FCA4416488D3423FF262D19E97376C28",
+      "session_id": 58059,
+      "harness_pid": 12648,
+      "started_utc": "2026-10-05T08:37:33.5481464Z",
+      "interrupted_utc": "2026-10-05T09:07:35Z",
+      "session_return_code": 1,
+      "actual_native_evaluator_exit": "unavailable",
+      "evaluation_file_exists": false,
+      "raw_export_exists": false
+    },
+    {
+      "task_id": "02",
+      "phase": "before-repair",
+      "native_actor_status": "failed",
+      "source_native_sha256": "7EF542A7A21D50E0034586D1E4C3B47173C0B58FB4E4765613132B88A8C879B1",
+      "source_helper_sha256": "D3462FD8A2232316CEF2FD0D2818BD30641C1A672F5277D9EA2F8A20928286DE",
+      "staged_capture_sha256": "97CDB1A9C86E1E0A75D118D4E3AB3F697AF987AE6239EB3A505E216680A79E0B",
+      "session_id": 84580,
+      "owner_powershell_pid": 24688,
+      "harness_pid": "unverified",
+      "started_utc": "2026-10-05T09:24:49.5280733Z",
+      "interrupted_utc": "2026-10-05T09:54:49.5280733Z",
+      "session_return_code": 1,
+      "actual_native_evaluator_exit": "unavailable",
+      "evaluation_file_exists": false,
+      "raw_export_exists": false
+    }
+  ],
+  "unstarted_phases": [
+    "02/final",
+    "03/before-repair",
+    "03/final",
+    "04/before-repair",
+    "04/final"
+  ],
+  "driver_preflight_capture_and_control_bindings": {
+    "task01_driver_sha256": "43CFCB418B870BFB2274BE3A911A2C6FFFBF22A5F1191DF90435DB8F17DF81C7",
+    "task01_preflight_sha256": "0C0F4B7C5A7CC5604D5EE3159B3CAA65F703DF6B744196A63CC640FBF7051C45",
+    "continuation_driver_sha256": "835C7590C7EAE70AF3D8AA22A3642D7A4B39A19F954C314D3FC11A5BDD2E5434",
+    "continuation_preflight_sha256": "12286D1E15D758C9A2E3C7EF2ABE654E8C7B25000219690E53BC4222681BC983",
+    "external_control_sha256": "C2A7952DF7E6A97C11F5FB9974BEB325F8B6C488CC8B61119813DA9A5CF6CB78",
+    "task01_capture_sha256": "667A6FFF2C91E26CDF85CC021D09EC70FCA4416488D3423FF262D19E97376C28",
+    "task02_capture_sha256": "97CDB1A9C86E1E0A75D118D4E3AB3F697AF987AE6239EB3A505E216680A79E0B",
+    "paired_exclusion_sha256": "3174AF0D1D3F5ED57A73C1E05C58AD612CA12DEBC76A7087659427A2C2D51E44"
+  },
+  "statement": "Session return code 1 is not the native evaluator exit; both native exits are unavailable. All 7 planned evaluation-result and raw-export paths were checked absent."
+}

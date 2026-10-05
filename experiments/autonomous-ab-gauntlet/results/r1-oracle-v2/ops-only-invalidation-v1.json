@@ -1,0 +1,36 @@
+{
+  "schema": "autonomous-ab-measurement-invalidation/v1",
+  "created_utc": "2026-10-05T09:56:57.984595+00:00",
+  "freeze_digest": "d60e4975ab34b6519c2db414a58c170898750cacc59e077a199e2504f6bb6ebd",
+  "project": "engineering-ops",
+  "decision": "invalidate paired Ops measurement; retain all raw outcomes; no rescore",
+  "reason": "Concrete runbook lexical false negative: correct same-renewal ID reuse is rejected without every/each/all adjacency",
+  "recurrence_record": "ops-predicate-recurrence-v1.json",
+  "affected_existing_runs": [
+    "engineering-ops-a-t01",
+    "engineering-ops-b-t01",
+    "engineering-ops-a-t01-parallel-P01",
+    "engineering-ops-a-t01-parallel-P02",
+    "engineering-ops-a-t01-integration",
+    "engineering-ops-a-t02",
+    "engineering-ops-b-t02"
+  ],
+  "planned_scope": "Three Ops pairs including unstarted paired tasks/trial3; only existing IDs enter exclusions",
+  "frontier": {
+    "trial1_a": "main01-08, P01/P02, integration terminal; 2 repairs",
+    "trial1_b": "task01 prepared but never dispatched; runtime-unavailable",
+    "trial2_a": "main01-08 terminal; no repairs",
+    "trial2_b": "01 terminal after one repair;02 attempt0 terminal repair-needed; repair unprepared",
+    "trial3": "unprepared"
+  },
+  "pause_boundary": "B02 had already been prepared when gate arrived and completed unchanged; no further task or repair preparation",
+  "product_change": false,
+  "source_candidate": "adef79d935399f8ac63ad874dbdeab8d15c418a1",
+  "future_cohort": "New source-only oracle contract, focused positive/negative tests, exact-head Windows/Linux gates, immutable external freeze, independent parity review, then fresh pairs from unchanged seeds",
+  "task_intent_or_seed_or_public_check_or_model_or_effort_or_budget_change": false,
+  "holdout_dispatch": false,
+  "generic_fix_no_fix_decision": "not made",
+  "human_acceptance": false,
+  "additional_scope_review": "Integration Task08/prior06 scope mismatch under independent review; any confirmed defect recorded separately",
+  "review_limits": "The coordinator has read ended A1 outcomes. No outcome-blind review or semantic truth authentication is claimed."
+}

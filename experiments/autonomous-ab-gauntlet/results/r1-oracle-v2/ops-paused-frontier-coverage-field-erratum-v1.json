@@ -1,0 +1,19 @@
+{
+  "schema": "ops-paused-frontier-coverage-field-erratum/v1",
+  "recorded_utc": "2026-10-05T10:07:33Z",
+  "correction_scope": "field_label_only",
+  "original_record": {
+    "arena_path": "decisions/ops-paused-frontier-coverage-v1.json",
+    "public_mirror_path": "experiments/autonomous-ab-gauntlet/results/r1-oracle-v2/ops-paused-frontier-coverage-v1.json",
+    "sha256": "DB550F9596342E1F5EF5F772786927BCDB70E2FEEB6202DF722E5435CB564F99"
+  },
+  "clarification": {
+    "original_field": "freeze_sha256",
+    "original_value": "d60e4975ab34b6519c2db414a58c170898750cacc59e077a199e2504f6bb6ebd",
+    "meaning_of_original_value": "Canonical cohort digest stored in freeze.yaml, not the byte SHA-256 of freeze.yaml.",
+    "canonical_freeze_digest": "d60e4975ab34b6519c2db414a58c170898750cacc59e077a199e2504f6bb6ebd",
+    "source_freeze_file": "freeze.yaml",
+    "source_freeze_file_sha256": "2B384CD160E99263B9540272FAD2386BBCEDF0BE97E1D99F662264648DCAB1E3"
+  },
+  "effect": "No change to the original paused-frontier record, event counts, native records, measurement decision, or eligibility. This erratum clarifies the mislabeled hash field only."
+}

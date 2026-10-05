@@ -1,0 +1,105 @@
+{
+  "version": 1,
+  "created_utc": "2026-10-05T09:33:06.465784+00:00",
+  "status": "archived-before-use",
+  "purpose": "Unscored post-run assessment of22 fixed initial/final captures from11 ended Ops T1 A boundaries only; preserve original statuses.",
+  "source_freeze": "d60e4975ab34b6519c2db414a58c170898750cacc59e077a199e2504f6bb6ebd",
+  "archive_path": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\postrun-v2-tools-2026-10-05",
+  "records": [
+    {
+      "source": "C:\\Users\\Consiliari\\.codex\\worktrees\\689d\\Markitect\\.artifacts\\autonomous-ab-gauntlet\\copy-frozen-inputs-v3.go",
+      "archived_relative_path": "copy-frozen-inputs-v3.go",
+      "sha256": "03e33c43304793b48465bcdcdb6a42c4100eeb9d5ec8f21a58ab813fb0f0eaf1",
+      "bytes": 6798
+    },
+    {
+      "source": "C:\\Users\\Consiliari\\.codex\\worktrees\\689d\\Markitect\\.artifacts\\autonomous-ab-gauntlet\\copy-frozen-inputs-v3_test.go",
+      "archived_relative_path": "copy-frozen-inputs-v3_test.go",
+      "sha256": "62f8d3e94a2cedfaa414aa2a7eb0e525acf76f6f192b3010ded92292790058d5",
+      "bytes": 10667
+    },
+    {
+      "source": "C:\\Users\\Consiliari\\.codex\\worktrees\\689d\\Markitect\\.artifacts\\autonomous-ab-gauntlet\\candidate\\copy-frozen-inputs-v3.exe",
+      "archived_relative_path": "candidate/copy-frozen-inputs-v3.exe",
+      "sha256": "71ad83ffb54e20cf68997906e54d7859d03dc1d49728f00c61b80d41804042ea",
+      "bytes": 4006912
+    },
+    {
+      "source": "C:\\Users\\Consiliari\\.codex\\worktrees\\689d\\Markitect\\.artifacts\\autonomous-ab-gauntlet\\stage-captured-snapshot.go",
+      "archived_relative_path": "stage-captured-snapshot.go",
+      "sha256": "e322af17e5534fadc59e3315c614c06d4a70c235d35bdd9b93747c34e9296058",
+      "bytes": 8961
+    },
+    {
+      "source": "C:\\Users\\Consiliari\\.codex\\worktrees\\689d\\Markitect\\.artifacts\\autonomous-ab-gauntlet\\candidate\\stage-captured-snapshot-v2.exe",
+      "archived_relative_path": "candidate/stage-captured-snapshot-v2.exe",
+      "sha256": "11eaf8f1261cb783979f17d16154d40c05b238b0077b38804e8594ace3399ec8",
+      "bytes": 5332992
+    },
+    {
+      "source": "C:\\Users\\Consiliari\\.codex\\worktrees\\689d\\Markitect\\.artifacts\\autonomous-ab-gauntlet\\export-captured-evaluation.go",
+      "archived_relative_path": "export-captured-evaluation.go",
+      "sha256": "aff89bfb4dff9aabb45fb272bc72e75ab6032e070e9009b63d63b6f5e857fb40",
+      "bytes": 28981
+    },
+    {
+      "source": "C:\\Users\\Consiliari\\.codex\\worktrees\\689d\\Markitect\\.artifacts\\autonomous-ab-gauntlet\\export-captured-evaluation-v5.exe",
+      "archived_relative_path": "export-captured-evaluation-v5.exe",
+      "sha256": "c2c2cb603b4f184acb9fefc820b4e8c7cb262766db5cf95f0119761a8847b502",
+      "bytes": 5796352
+    },
+    {
+      "source": "C:\\Users\\Consiliari\\.codex\\worktrees\\689d\\Markitect\\.artifacts\\autonomous-ab-gauntlet\\assess-ops-v2-trial1-a-v1.ps1",
+      "archived_relative_path": "assess-ops-v2-trial1-a-v1.ps1",
+      "sha256": "c95b171842e98df4ea9d28c5315b38b935e5a55412b73a05e834b64454e9bf09",
+      "bytes": 10884
+    },
+    {
+      "source": "C:\\Users\\Consiliari\\.codex\\worktrees\\689d\\Markitect\\.artifacts\\autonomous-ab-gauntlet\\ops-v2-t1a-assessment-plan-v1.json",
+      "archived_relative_path": "ops-v2-t1a-assessment-plan-v1.json",
+      "sha256": "e20fb0bc6040842a34d3bfa67f3f2d37d092914dd35e143f47ac9b0f548d7e91",
+      "bytes": 18418
+    },
+    {
+      "source": "C:\\Users\\Consiliari\\.codex\\worktrees\\689d\\Markitect\\.artifacts\\autonomous-ab-gauntlet\\postrun-copier-root-validation-v1.log",
+      "archived_relative_path": "postrun-copier-root-validation-v1.log",
+      "sha256": "16bce47654c12791086bb6718c96507d11a69bfa279dfb2176ec2ef8de24f3b7",
+      "bytes": 94
+    },
+    {
+      "source": "C:\\Users\\Consiliari\\.codex\\worktrees\\689d\\Markitect\\.artifacts\\autonomous-ab-gauntlet\\postrun-copier-root-validation-v2.log",
+      "archived_relative_path": "postrun-copier-root-validation-v2.log",
+      "sha256": "da61b130625f3230839a4a9117f9aeee9b1058b7a2901885437c353a75ae9dd6",
+      "bytes": 2658
+    }
+  ],
+  "toolchain": {
+    "actual_pinned_go": "C:/Users/Consiliari/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.27.1.windows-amd64/bin/go.exe",
+    "sha256": "d3ccdb604eafa6031133aefe1a3db24f0bb7362b857bc2125ac4e4c178b4b490",
+    "version": "go1.27.1 windows/amd64",
+    "copy_binary_build_metadata": "go1.27.1; command-line-arguments; YAML v3.0.5; Windows amd64 CGO0"
+  },
+  "quality": {
+    "root_focused_test_exit": 0,
+    "passing_validation_log_sha256": "da61b130625f3230839a4a9117f9aeee9b1058b7a2901885437c353a75ae9dd6",
+    "earlier_root_environment_exit": 1,
+    "earlier_cause": "Default launcher with GOTOOLCHAINlocal selectedGo1.24.1 and refusedgo.mod before tests. Original log retained.",
+    "directory_symlink_test": "skipped: required Windows privilege unavailable; containment code-reviewed but this case not runtime-proved.",
+    "driver_syntax": "PowerShell parser produced zeroerrors; not yet invoked."
+  },
+  "review_history": {
+    "initial_independent_review_error": "Reviewer mistakenly used ignored evaluate-captured.go helper for a fresh-project-copy claim; this was retracted. Actual frozen harness main.go configuredEvaluator uses shared projects/project cwd.",
+    "initial_go_provenance_error": "Barego with auto toolchain does not establish launcher bundledversion. Reviewer retracted; fixedSDK roottest is authoritative.",
+    "corrected_bounded_review": "Actual production configuredEvaluator inspected; parameter andcwd parity, source-native field comparisons, unique tuple andexclusive result preflights.",
+    "root_tail_changes": "Failuremetadata and progress PID/time only after source-visible pass; finalreviewhash pending exact confirmation."
+  },
+  "limits": [
+    "Coordinator metadata is deliberately added under source decisions; frozen inputs/product/oracle/native captures remain unchanged.",
+    "Direct frozen oracle invocation records actualchildexit; harness aggregatezero doesnot certifychildsuccess.",
+    "No actor feedback orsemanticrepair, no holdoutoutcome read, no rescoring excludedoldcohorts.",
+    "Copier stores exactbytes with0600 permissions oncurrentWindows host; Linux executablemode preservation notclaimed.",
+    "Unsigned provenance, noauthentication orconcurrentfilesystem raceassurance.",
+    "Trial1B neverstarted; no pairedcomparativeclaim from thisA run."
+  ],
+  "human_acceptance": false
+}

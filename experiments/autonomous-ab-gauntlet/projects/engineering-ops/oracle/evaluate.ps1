@@ -56,6 +56,18 @@ function Get-TaskScopes([string]$Body, [string]$SelectedArm) {
     return @()
 }
 
+function Select-TaskScopes([string]$TaskId, [string]$PriorThrough, [string[]]$TaskScopes, [string[]]$P01Scopes, [string[]]$P02Scopes) {
+    if ($TaskId -match '^P0[1-2]$') {
+        if ($PriorThrough -and $PriorThrough -ne '06') { throw "Parallel task $TaskId requires PriorTasksThrough=06; received $PriorThrough." }
+        return @($TaskScopes)
+    }
+    if ($TaskId -eq '08' -and $PriorThrough -eq '06') {
+        return @($P01Scopes + $P02Scopes | Sort-Object -Unique)
+    }
+    if ($PriorThrough) { throw "PriorTasksThrough=$PriorThrough is unsupported for task $TaskId." }
+    return @($TaskScopes)
+}
+
 function Invoke-Repo([string]$WorkingDirectory, [string]$Executable, [string[]]$Arguments) {
     Push-Location $WorkingDirectory
     $priorPreference = $ErrorActionPreference
@@ -524,7 +536,11 @@ function Test-B7VerificationAndGateContract([string]$RepoRoot) {
 function Test-LeaseRenewalRunbookContract([string]$Runbook, [bool]$Declared) {
     # These bounded alternatives recognize this runbook's retry contract, not general natural-language equivalence.
     $sameIDRetry = $Runbook -match '(?is)(same|original)\s+request[ -]?id.{0,80}(every|each|all)\s+(retry|retries|attempt)' -or
-        $Runbook -match '(?is)(every|each|all)\s+(retry|retries|attempt).{0,80}(same|original)\s+request[ -]?id'
+        $Runbook -match '(?is)(every|each|all)\s+(retry|retries|attempt).{0,80}(same|original)\s+request[ -]?id' -or
+        $Runbook -match '(?is)request[ -]?id.{0,220}(retry|retries|attempt|attempts).{0,80}(?:for|of)\s+(?:(?:the|that)\s+)?same\s+(?:logical\s+)?(?:renewal|operation).{0,100}(?:must|should|will)\s+reuse\s+(?:it|that\s+(?:same\s+)?(?:request[ -]?)?id|the\s+(?:same|original)\s+request[ -]?id)\b' -or
+        $Runbook -match '(?is)request[ -]?id.{0,160}(?:for|of)\s+(?:(?:the|that)\s+)?same\s+(?:logical\s+)?(?:renewal|operation).{0,120}(retry|retries|attempt|attempts).{0,80}(?:must|should|will)\s+(?:reuse|use)\s+(?:it|that\s+(?:same\s+)?(?:request[ -]?)?id|the\s+(?:same|original)\s+request[ -]?id)\b'
+    $freshIDRetry = $Runbook -match '(?is)(?:each|every|all)\s+(?:retry|retries|attempt|attempts).{0,80}(?:must|should|will)\s+(?:use|assign|generate|create)\s+(?:a\s+)?(?:fresh|new|different)\s+(?:request[ -]?)?id\b' -or
+        $Runbook -match '(?is)(?:retry|retries|attempt|attempts).{0,80}(?:must|should|will)\s+(?:use|assign|generate|create)\s+(?:a\s+)?(?:fresh|new|different)\s+(?:request[ -]?)?id\b'
     $deduplicatedRetry = $Runbook -match '(?is)(recogniz\w*|deduplicat\w*).{0,100}(repeated|duplicate|same)\s+(operation|renewal)' -or
         $Runbook -match '(?is)(retry|retries).{0,100}(must not|does not|cannot|will not)\s+(create|cause|start).{0,60}(second|duplicate)\s+(renewal|operation)'
     $duplicateRisk = $false
@@ -568,7 +584,7 @@ function Test-LeaseRenewalRunbookContract([string]$Runbook, [bool]$Declared) {
     $payloadStaysPrivate = ($Runbook -match "(?is)$logNegation.{0,50}(log|logging).{0,100}payload|payload.{0,100}$logNegation.{0,50}(log|logging)") -or
         $Runbook -match '(?is)payloads?.{0,50}(?:stay|remain|are kept|kept)\s+out of logs?' -or
         $Runbook -match '(?is)(?:keep|store).{0,30}payloads?.{0,30}out of logs?'
-    return $sameIDRetry -and $deduplicatedRetry -and -not $duplicateRisk -and $requestIDRetained -and $timeoutReporting -and -not $unsafeTimeoutSuccess -and
+    return $sameIDRetry -and -not $freshIDRetry -and $deduplicatedRetry -and -not $duplicateRisk -and $requestIDRetained -and $timeoutReporting -and -not $unsafeTimeoutSuccess -and
         $secretsStayPrivate -and $payloadStaysPrivate -and $Declared
 }
 
@@ -727,7 +743,14 @@ try {
     }
     $card = Get-TaskCard $Task
     $decisionRequired = $card -match '(?m)^\s+requires_owner_decision: true\s*$'
-    $scopes = Get-TaskScopes $card $arm
+    $taskScopes = Get-TaskScopes $card $arm
+    $p01Scopes = @()
+    $p02Scopes = @()
+    if ($Task -eq '08' -and $PriorTasksThrough -eq '06') {
+        $p01Scopes = Get-TaskScopes (Get-TaskCard 'P01') $arm
+        $p02Scopes = Get-TaskScopes (Get-TaskCard 'P02') $arm
+    }
+    $scopes = Select-TaskScopes $Task $PriorTasksThrough $taskScopes $p01Scopes $p02Scopes
     $validatorMatch = [regex]::Match($card, '(?m)^\s+validator: \[(?<items>[^\]]*)\]')
     if (-not $validatorMatch.Success) { throw "Task $Task has no declared validator." }
     $validatorCommand = Parse-YamlList $validatorMatch.Groups['items'].Value

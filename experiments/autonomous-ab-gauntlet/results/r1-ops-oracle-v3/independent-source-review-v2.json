@@ -1,0 +1,75 @@
+{
+  "schema": "ops-oracle-v3-preparer-independent-source-review/v1",
+  "reviewed_utc": "2026-10-05T10:30:40.6704622Z",
+  "scope": "Coordinator preparer source, byte-bound archive, protocol parity, and pre-use gate only",
+  "archive": {
+    "path": "ops-oracle-v3-tools-v2-2026-10-05/archive.json",
+    "sha256": "9b2143364b34fef97edebdab9c5d5cadf24f0cc9e783891ed6d4569526fd1ce7",
+    "predecessor_archive_path": "ops-oracle-v3-tools-2026-10-05/archive.json",
+    "predecessor_archive_sha256": "d0cf5c48f7f4d4cee547433d55b5d1c0dea40e823f9ba4c88fd339bcda0f536c",
+    "expected_predecessor_archive_sha256": "d0cf5c48f7f4d4cee547433d55b5d1c0dea40e823f9ba4c88fd339bcda0f536c",
+    "files": [
+      {
+        "path": "prepare-ops-oracle-v3-v2.go",
+        "sha256": "f01727e14e45715515c5a6a5c48c4e7e99ad0d7698847f35183188c69897c601",
+        "matches_archive": true
+      },
+      {
+        "path": "prepare-ops-oracle-v3-v2_test.go",
+        "sha256": "ee6057419c8661d85d94ad0887ac3fbdf6efa2acb8a5299b4be3d9d1e45eb04f",
+        "matches_archive": true
+      },
+      {
+        "path": "prepare-ops-oracle-v3-v2.exe",
+        "sha256": "90c68e00d3ee0f905d993092432d608d59c98a5e7e2149eb6c15812a75459fa2",
+        "matches_archive": true
+      }
+    ]
+  },
+  "preparer_review": {
+    "source_paths": [
+      "protocol.yaml <- protocol-ops-oracle-v3.yaml",
+      "projects/engineering-ops/oracle/evaluate.ps1 <- projects/engineering-ops/oracle/evaluate.ps1",
+      "benchmark-ops-oracle-v2_test.go <- harness/ops_oracle_v2_test.go"
+    ],
+    "addition_mapping": [
+      "benchmark-ops-oracle-v3-correction.md <- oracle-corrections-ops-v3.md"
+    ],
+    "protocol_parity": "Source parser compares every non-cohort top-level field; it permits only id, state, projects, benchmark_revision, then requires state freeze-required-before-dispatch and project list exactly engineering-ops. A direct normalized comparison of current protocol-oracle-v2 vs protocol-ops-oracle-v3 excluding those four keys had zero differences.",
+    "predecessor_integrity": "Requires frozen predecessor digest d60e4975ab34b6519c2db414a58c170898750cacc59e077a199e2504f6bb6ebd and exactly 310 inputs; recomputes canonical digest, rejects duplicate/unsafe paths and non-regular/escaping inputs, and verifies every copied predecessor input SHA before substitution.",
+    "replacement_scope": "Exactly three frozen paths can be replaced; other frozen bytes are carried unchanged. One correction note is added. CI receipt, preparation provenance, and predecessor freeze are separately retained.",
+    "new_sibling": "Destination must be a nonexistent sibling; directory and each file use exclusive creation. Partial failures are retained and reported without cleanup or overwrite.",
+    "exact_source_ci": "Requires a full 40-hex commit; candidate blobs are read from that exact Git commit. Supplied CI JSON headSha must equal it, run status/conclusion must be completed/success, and exactly one completed/success Quality (windows-latest) and Quality (ubuntu-24.04) job is required.",
+    "corrected_note_mapping": "V2 maps the archive target to oracle-corrections-ops-v3.md, fixing the V1 Ops-target/Service-source mismatch recorded in the archive."
+  },
+  "current_workspace_hashes": {
+    "protocol_v3": "008139defb3b84d4610ce366901ca48f0218bda8ef2a5d35f2d0e49a258ab0f0",
+    "correction_note": "ca9481e164533083ce281ac4ff7845faa68d6144c5a378ed62051af9c6f77c71",
+    "public_preparation_record": "9b2143364b34fef97edebdab9c5d5cadf24f0cc9e783891ed6d4569526fd1ce7",
+    "ops_evaluator": "fa1fd3b2e0a1377100974a01f83c569401285329edff0db88f6aedfcf7a7eb46",
+    "protocol_v2": "67fca5aa5792df1b3bb7ac364eed77dc554a8df1ef404a8a978cb622dbd9b32c"
+  },
+  "pre_use_status": {
+    "source_gate_receipt": "pending/unavailable",
+    "required_windows_linux_exact_source_receipt_provided": false,
+    "archived_prep_focused_test_exit": 0,
+    "archived_prep_build_exit": 0,
+    "archived_arena_preparation_invocations": 0,
+    "pre_use_review_state": "Pending independent source/parity review; CI-bound source commit required before use",
+    "preparation_performed_by_reviewer": false,
+    "arena_or_actor_or_raw_outcome_inspected": false,
+    "new_evaluation_qa_test_content_read": false,
+    "human_acceptance": false
+  },
+  "finding": "No concrete scope-copying or pre-use gate bypass was found in the archived V2 preparer. The intended replacement/addition mappings, exact-source Windows/Linux gate checks, predecessor digest/count checks, protocol non-cohort equality enforcement, and exclusive sibling creation are present.",
+  "blocker": "Do not prepare, freeze, or dispatch the new cohort yet: the archived metadata says the CI-bound source commit is still required, and there is no successful exact-source Windows/Linux receipt in the reviewed record. Root has separately reported an unresolved bounded runbook predicate gap in the draft; that source QA is still in correction and was not reviewed here.",
+  "limitations": [
+    "This is a source/tool review, not an execution of the preparer or an acceptance review.",
+    "Archived preparer test content and the active evaluator QA test contents were not opened.",
+    "No actor workspace, raw outcome, or holdout artifact was read.",
+    "The tool validates fields in caller-supplied CI JSON; this review binds the gate logic but does not independently authenticate a CI provider receipt.",
+    "The review record does not claim a freeze, arena creation, scoring result, or human acceptance."
+  ],
+  "protocol_v2_sha256": "67fca5aa5792df1b3bb7ac364eed77dc554a8df1ef404a8a978cb622dbd9b32c",
+  "protocol_v3_sha256": "008139defb3b84d4610ce366901ca48f0218bda8ef2a5d35f2d0e49a258ab0f0"
+}

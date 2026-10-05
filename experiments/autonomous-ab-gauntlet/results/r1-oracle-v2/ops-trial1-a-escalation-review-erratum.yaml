@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "created_utc": "2026-10-05T09:09:39.040565+00:00",
+  "original_ledger_sha256": "72af87336f06c25ca9ded6b76797b987b511445743ad38bd73e6cc325c101e50",
+  "correction": "The original review incorrectly states that the captures contain no Git database. Both .git directories exist. A failed git diff at the long capture path did not prove absence. Git identity is still left as a native claim in this review because that invocation failed; no inferred Git validation is added.",
+  "affected_limit": "Git revision is the preserved native-record claim; final captures contain no Git database.",
+  "replacement_limit": "Git revision is a preserved native-record claim. Both captures contain .git directories; this review did not successfully validate HEAD at the original long path.",
+  "decision_status_change": "none; provider mutation and missing escalation are proved independently by captured files and exact final responses.",
+  "observed_git_directories": [
+    "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-oracle-v2\\results\\engineering-ops-a-t01\\snapshots\\03\\workspace\\.git",
+    "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-oracle-v2\\results\\engineering-ops-a-t01\\snapshots\\04\\workspace\\.git"
+  ],
+  "human_acceptance": false
+}

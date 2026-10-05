@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "reviewed_utc": "2026-10-05T09:34:34.979542+00:00",
+  "status": "passed-bounded-source-review-before-invocation",
+  "driver_sha256": "c95b171842e98df4ea9d28c5315b38b935e5a55412b73a05e834b64454e9bf09",
+  "tool_archive_sha256": "0c9882d75127516d4d7b80cacbc9b8e065e4907efb136628a91c8836d78c8bf5",
+  "independent_reviewer": "postrun_freeze_copier automated agent",
+  "independent_scope": "Actual production main.go aggregate/configuredEvaluator region and exact driver; no arena/outcome access.",
+  "root_additional_scope": "Frozen project.yaml command pwsh NoProfile File oracle/evaluate.ps1 and evaluator parameter signature checked; frozen evaluator SHA verified.",
+  "checked": [
+    "Parameter/cwd parity with actual frozen harness semantics.",
+    "Terminal source record and field-by-field pinned plan comparison.",
+    "Unique22 capture tuples and exclusive control/results paths.",
+    "Fixed GoSDK, unchanged oracle, read-only source captures, direct native child exit, process-owned1800s bound.",
+    "Partial ledger has planned_count, actual count and exception; initial/final repeats are not independent n."
+  ],
+  "review_erratum": "Earlier reviewer used ignored evaluate-captured.go helper by mistake; claimed fresh-project-copy mismatch was retracted. This final pass used actual production source.",
+  "limits": [
+    "Independent reviewer did not inspect frozen project config; root supplied that verification.",
+    "Control creation before try/finally can leave partial control metadata.",
+    "Second ledger write failure can leave only one copy; no rollback or silent overwrite.",
+    "Filesystem failure paths not injected or claimed proven.",
+    "Coordinator metadata is added under source decisions; frozen inputs/product/oracle/captures stay unchanged.",
+    "Unsigned source review and process records; no human owner acceptance."
+  ],
+  "human_acceptance": false
+}

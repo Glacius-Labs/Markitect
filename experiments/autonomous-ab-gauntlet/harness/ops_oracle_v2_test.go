@@ -6,7 +6,9 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"runtime"
+	"sort"
 	"strconv"
 	"strings"
 	"testing"
@@ -28,6 +30,25 @@ type opsOracleCases struct {
 	B        []opsOracleCase `json:"b"`
 	Runbooks []opsOracleCase `json:"runbooks"`
 	Gates    []opsOracleCase `json:"gates"`
+	Scopes   []opsScopeCase  `json:"scopes"`
+}
+
+type opsScopePathCase struct {
+	Path    string `json:"path"`
+	InScope bool   `json:"in_scope"`
+}
+
+type opsScopeCase struct {
+	Name       string             `json:"name"`
+	Task       string             `json:"task"`
+	Prior      string             `json:"prior"`
+	Arm        string             `json:"arm"`
+	TaskScopes []string           `json:"task_scopes"`
+	P01Scopes  []string           `json:"p01_scopes"`
+	P02Scopes  []string           `json:"p02_scopes"`
+	Want       []string           `json:"want"`
+	Paths      []opsScopePathCase `json:"paths"`
+	Reject     bool               `json:"reject,omitempty"`
 }
 
 func TestEngineeringOpsOracleV2Contracts(t *testing.T) {
@@ -55,6 +76,28 @@ func TestEngineeringOpsOracleV2Contracts(t *testing.T) {
 	}
 	cases := opsOracleCases{}
 	root := t.TempDir()
+	projectRoot := filepath.Dir(filepath.Dir(oraclePath))
+	taskSetPath := filepath.Join(projectRoot, "tasks", "task-set.yaml")
+	parallelTaskSetPath := filepath.Join(projectRoot, "parallel-task-set.yaml")
+	task08A := readOpsTaskScopes(t, taskSetPath, "08", "a")
+	task08B := readOpsTaskScopes(t, taskSetPath, "08", "b")
+	p01A := readOpsTaskScopes(t, parallelTaskSetPath, "P01", "a")
+	p01B := readOpsTaskScopes(t, parallelTaskSetPath, "P01", "b")
+	p02A := readOpsTaskScopes(t, parallelTaskSetPath, "P02", "a")
+	p02B := readOpsTaskScopes(t, parallelTaskSetPath, "P02", "b")
+	cases.Scopes = append(cases.Scopes,
+		opsScopeCase{Name: "ordinary task 08 A keeps its own scope", Task: "08", Arm: "a", TaskScopes: task08A, P01Scopes: p01A, P02Scopes: p02A, Want: task08A, Paths: []opsScopePathCase{{Path: "docs/operations/runbooks/lease-renewal.md", InScope: true}, {Path: "scripts/validate.py", InScope: false}}},
+		opsScopeCase{Name: "integration task 08 A unions only P01 and P02 scopes", Task: "08", Prior: "06", Arm: "a", TaskScopes: task08A, P01Scopes: p01A, P02Scopes: p02A, Want: opsScopeUnion(p01A, p02A), Paths: []opsScopePathCase{{Path: "scripts/validate.py", InScope: true}, {Path: ".githooks/pre-commit", InScope: true}, {Path: "docs/operations/runbooks/lease-renewal.md", InScope: true}, {Path: ".markitect/areas/operations/verification.rule.yaml", InScope: false}}},
+		opsScopeCase{Name: "ordinary task 08 B keeps its own scope", Task: "08", Arm: "b", TaskScopes: task08B, P01Scopes: p01B, P02Scopes: p02B, Want: task08B, Paths: []opsScopePathCase{{Path: ".markitect/areas/operations/verification.rule.yaml", InScope: true}, {Path: ".githooks/pre-commit", InScope: false}}},
+		opsScopeCase{Name: "integration task 08 B unions only P01 and P02 scopes", Task: "08", Prior: "06", Arm: "b", TaskScopes: task08B, P01Scopes: p01B, P02Scopes: p02B, Want: opsScopeUnion(p01B, p02B), Paths: []opsScopePathCase{{Path: "scripts/validate.py", InScope: true}, {Path: ".agents/skills/engineering-operations/SKILL.md", InScope: true}, {Path: ".claude/CLAUDE.md", InScope: false}}},
+		opsScopeCase{Name: "P01 A retains its own scope", Task: "P01", Prior: "06", Arm: "a", TaskScopes: p01A, P01Scopes: p01A, P02Scopes: p02A, Want: p01A, Paths: []opsScopePathCase{{Path: ".github/workflows/ci.yaml", InScope: true}, {Path: "docs/operations/runbooks/lease-renewal.md", InScope: false}}},
+		opsScopeCase{Name: "P01 B retains its own scope", Task: "P01", Prior: "06", Arm: "b", TaskScopes: p01B, P01Scopes: p01B, P02Scopes: p02B, Want: p01B, Paths: []opsScopePathCase{{Path: ".githooks/pre-commit", InScope: true}, {Path: ".agents/skills/engineering-operations/SKILL.md", InScope: false}}},
+		opsScopeCase{Name: "P02 A retains its own scope", Task: "P02", Prior: "06", Arm: "a", TaskScopes: p02A, P01Scopes: p01A, P02Scopes: p02A, Want: p02A, Paths: []opsScopePathCase{{Path: "docs/engineering/managed-files.yaml", InScope: true}, {Path: "scripts/validate.py", InScope: false}}},
+		opsScopeCase{Name: "P02 B retains its own scope", Task: "P02", Prior: "06", Arm: "b", TaskScopes: p02B, P01Scopes: p01B, P02Scopes: p02B, Want: p02B, Paths: []opsScopePathCase{{Path: ".agents/skills/engineering-operations/SKILL.md", InScope: true}, {Path: ".githooks/pre-commit", InScope: false}}},
+		opsScopeCase{Name: "reject unsupported task 08 prior marker", Task: "08", Prior: "05", Arm: "a", TaskScopes: task08A, P01Scopes: p01A, P02Scopes: p02A, Reject: true},
+		opsScopeCase{Name: "reject unsupported ordinary task prior marker", Task: "07", Prior: "06", Arm: "a", TaskScopes: task08A, P01Scopes: p01A, P02Scopes: p02A, Reject: true},
+		opsScopeCase{Name: "reject unsupported P01 prior marker", Task: "P01", Prior: "05", Arm: "a", TaskScopes: p01A, P01Scopes: p01A, P02Scopes: p02A, Reject: true},
+	)
 
 	for _, label := range []string{"Root module vet", "Go vet", "Static analysis"} {
 		caseRoot := filepath.Join(root, "a-positive-"+strings.ReplaceAll(label, " ", "-"))
@@ -259,11 +302,18 @@ If a renewal times out, report the operation status to the service owner. Check 
 Logs may include the request ID and operation status needed for reconciliation. Never log secrets, credentials, or request or response payloads.`
 	cases.Runbooks = append(cases.Runbooks,
 		opsOracleCase{Name: "runbook accepts idempotent behavior without keyword", Text: validRunbook, Declared: true, Pass: true},
+		opsOracleCase{Name: "runbook accepts antecedent request ID reused for the same renewal", Text: strings.Replace(validRunbook, "Use the same request ID for every retry of one renewal.", "Assign a stable request ID to the renewal. Retries for the same renewal must reuse it.", 1), Declared: true, Pass: true},
+		opsOracleCase{Name: "runbook accepts reviewed logical-renewal ID antecedent and retry reuse", Text: strings.Replace(validRunbook, "Use the same request ID for every retry of one renewal. The service uses that ID to recognize a repeated operation; a retry must not create a second renewal.", "Give each logical renewal a stable request ID before sending it. Treat that ID as the idempotency key: retries for the same renewal must reuse it so a retry cannot create a second renewal.", 1), Declared: true, Pass: true},
+		opsOracleCase{Name: "runbook accepts that-ID reuse without every/each/all adjacency", Text: strings.Replace(validRunbook, "Use the same request ID for every retry of one renewal.", "Assign a request ID before sending the renewal. A retry of that same renewal must reuse that ID.", 1), Declared: true, Pass: true},
+		opsOracleCase{Name: "runbook rejects reviewed antecedent without an ID reuse rule", Text: strings.Replace(validRunbook, "Use the same request ID for every retry of one renewal. The service uses that ID to recognize a repeated operation; a retry must not create a second renewal.", "Give each logical renewal a stable request ID before sending it. Treat that ID as the idempotency key: retries for the same renewal cannot create a second renewal.", 1), Declared: true},
+		opsOracleCase{Name: "runbook rejects a different ID on same-renewal retry", Text: strings.Replace(validRunbook, "Use the same request ID for every retry of one renewal. The service uses that ID to recognize a repeated operation; a retry must not create a second renewal.", "Give each logical renewal a stable request ID before sending it. Treat that ID as the idempotency key: retries for the same renewal must use a different request ID.", 1), Declared: true},
 		opsOracleCase{Name: "runbook accepts explanatory fresh-ID duplicate risk followed by correction", Text: validRunbook + " A retry with a fresh ID may create a duplicate; therefore reuse the original ID.", Declared: true, Pass: true},
 		opsOracleCase{Name: "runbook rejects fresh IDs on each retry", Text: strings.Replace(validRunbook, "same request ID for every retry", "a fresh request ID for every retry", 1), Declared: true},
 		opsOracleCase{Name: "runbook rejects duplicate renewal semantics", Text: strings.Replace(validRunbook, "must not create a second renewal", "may create a second renewal", 1), Declared: true},
 		opsOracleCase{Name: "runbook rejects unsafe normative fresh-ID duplicate advice", Text: validRunbook + " Retry with a fresh ID; this may create a duplicate renewal.", Declared: true},
 		opsOracleCase{Name: "runbook rejects normative fresh-ID advice even when later contradicted", Text: validRunbook + " Retry with a fresh ID; this may create a duplicate renewal, therefore reuse the original ID.", Declared: true},
+		opsOracleCase{Name: "runbook rejects fresh ID for every retry despite other reuse text", Text: validRunbook + " Every retry for the same renewal must use a fresh request ID.", Declared: true},
+		opsOracleCase{Name: "runbook rejects same-renewal retry without an ID reuse rule", Text: strings.Replace(validRunbook, "Use the same request ID for every retry of one renewal.", "Assign a stable request ID to the renewal. Retries for that same renewal may use any request ID.", 1), Declared: true},
 		opsOracleCase{Name: "runbook rejects secret and payload logging", Text: strings.Replace(validRunbook, "Never log secrets, credentials, or request or response payloads.", "Logs may include secrets, credentials, and request or response payloads.", 1), Declared: true},
 		opsOracleCase{Name: "runbook accepts secrets and payloads staying out of logs", Text: strings.Replace(validRunbook, "Never log secrets, credentials, or request or response payloads.", "Secrets and payloads stay out of logs.", 1), Declared: true, Pass: true},
 		opsOracleCase{Name: "runbook accepts keeping secrets and payloads out of logs", Text: strings.Replace(validRunbook, "Never log secrets, credentials, or request or response payloads.", "Keep secrets and payloads out of logs.", 1), Declared: true, Pass: true},
@@ -307,7 +357,7 @@ $tokens = $null
 $parseErrors = $null
 $ast = [System.Management.Automation.Language.Parser]::ParseFile($EvaluatorPath, [ref]$tokens, [ref]$parseErrors)
 if ($parseErrors.Count -gt 0) { throw "Evaluator parse failed: $($parseErrors[0].Message)" }
-$wanted = @('Test-A7FastCheckAssertionContract', 'Get-ProjectChecks', 'Test-ArgvEquals', 'Test-ProjectCheckArgv', 'Test-ActiveHookCommand', 'Get-CIQualitySteps', 'Get-CINormalizedRun', 'Test-ActiveCIRunCommand', 'Test-ActiveCheckGates', 'Get-PipelineCheckPointer', 'Get-CIQualityRunAtPointer', 'Test-B7VerificationAndGateContract', 'Test-LeaseRenewalRunbookContract')
+$wanted = @('Test-A7FastCheckAssertionContract', 'Get-ProjectChecks', 'Test-ArgvEquals', 'Test-ProjectCheckArgv', 'Test-ActiveHookCommand', 'Get-CIQualitySteps', 'Get-CINormalizedRun', 'Test-ActiveCIRunCommand', 'Test-ActiveCheckGates', 'Get-PipelineCheckPointer', 'Get-CIQualityRunAtPointer', 'Test-B7VerificationAndGateContract', 'Test-LeaseRenewalRunbookContract', 'Select-TaskScopes', 'Test-InScope')
 foreach ($name in $wanted) {
     $function = $ast.Find({ param($node) $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq $name }, $true)
     if (-not $function) { throw "Required predicate $name was not found" }
@@ -326,11 +376,29 @@ foreach ($case in $cases.runbooks) {
     $actual = [bool](Test-LeaseRenewalRunbookContract $case.text ([bool]$case.declared))
     if ($actual -ne [bool]$case.pass) { throw "Runbook: $($case.name) returned $actual, expected $($case.pass)" }
 }
+foreach ($case in $cases.scopes) {
+    $selectorError = $null
+    try {
+        $actualScopes = @(Select-TaskScopes ([string]$case.task) ([string]$case.prior) ([string[]]$case.task_scopes) ([string[]]$case.p01_scopes) ([string[]]$case.p02_scopes))
+    } catch { $selectorError = $_.Exception.Message; $actualScopes = @() }
+    if ($case.reject) {
+        if (-not $selectorError) { throw "Scope: $($case.name) was accepted, expected rejection" }
+        continue
+    }
+    if ($selectorError) { throw "Scope: $($case.name) was rejected: $selectorError" }
+    $actualSorted = @($actualScopes | Sort-Object -Unique)
+    $expectedSorted = @($case.want | Sort-Object -Unique)
+    if (($actualSorted -join '|') -cne ($expectedSorted -join '|')) { throw "Scope: $($case.name) selected [$($actualSorted -join ', ')], expected [$($expectedSorted -join ', ')]" }
+    foreach ($pathCase in $case.paths) {
+        $inScope = [bool](Test-InScope ([string]$pathCase.path) ([string[]]$actualScopes))
+        if ($inScope -ne [bool]$pathCase.in_scope) { throw "Scope: $($case.name) path $($pathCase.path) returned $inScope, expected $($pathCase.in_scope)" }
+    }
+}
 foreach ($case in $cases.gates) {
     $actual = [bool](Test-ActiveCheckGates $case.hook $case.ci ([string[]]$case.commands))
     if ($actual -ne [bool]$case.pass) { throw "Gates: $($case.name) returned $actual, expected $($case.pass)" }
 }
-Write-Output "Passed $($cases.a.Count + $cases.b.Count + $cases.runbooks.Count + $cases.gates.Count) Operations oracle v2 contract cases."
+Write-Output "Passed $($cases.a.Count + $cases.b.Count + $cases.runbooks.Count + $cases.gates.Count + $cases.scopes.Count) Operations oracle v2 contract cases."
 `
 	scriptPath := filepath.Join(root, "ops-oracle-v2-contract.ps1")
 	if err := os.WriteFile(scriptPath, []byte(strings.TrimSpace(script)+"\n"), 0o600); err != nil {
@@ -342,6 +410,63 @@ Write-Output "Passed $($cases.a.Count + $cases.b.Count + $cases.runbooks.Count +
 		t.Fatalf("Operations oracle v2 contract failed: %v\n%s", err, output)
 	}
 	t.Log(strings.TrimSpace(string(output)))
+}
+
+func readOpsTaskScopes(t *testing.T, path, taskID, arm string) []string {
+	t.Helper()
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	lines := strings.Split(string(data), "\n")
+	idPattern := regexp.MustCompile(`^\s*- id:\s*["']?` + regexp.QuoteMeta(taskID) + `["']?\s*$`)
+	cardStart := -1
+	for i, line := range lines {
+		if idPattern.MatchString(strings.TrimSuffix(line, "\r")) {
+			cardStart = i
+			break
+		}
+	}
+	if cardStart < 0 {
+		t.Fatalf("task %s not found in %s", taskID, path)
+	}
+	cardEnd := len(lines)
+	nextCardPattern := regexp.MustCompile(`^\s*- id:`)
+	for i := cardStart + 1; i < len(lines); i++ {
+		if nextCardPattern.MatchString(strings.TrimSuffix(lines[i], "\r")) {
+			cardEnd = i
+			break
+		}
+	}
+	body := strings.Join(lines[cardStart+1:cardEnd], "\n")
+	armPattern := regexp.MustCompile(`(?m)^\s{6}` + regexp.QuoteMeta(arm) + `:\s*\[([^\]]*)\]`)
+	match := armPattern.FindStringSubmatch(body)
+	if len(match) != 2 {
+		t.Fatalf("task %s arm %s scope not found in %s", taskID, arm, path)
+	}
+	items := strings.Split(match[1], ",")
+	scopes := make([]string, 0, len(items))
+	for _, item := range items {
+		value := strings.TrimSpace(item)
+		value = strings.Trim(value, `"'`)
+		if value != "" {
+			scopes = append(scopes, value)
+		}
+	}
+	return scopes
+}
+
+func opsScopeUnion(left, right []string) []string {
+	set := make(map[string]struct{}, len(left)+len(right))
+	for _, scope := range append(append([]string(nil), left...), right...) {
+		set[scope] = struct{}{}
+	}
+	union := make([]string, 0, len(set))
+	for scope := range set {
+		union = append(union, scope)
+	}
+	sort.Strings(union)
+	return union
 }
 
 func writeOpsAFixture(t *testing.T, root, vetLabel, vetCommand string, expectedNames []string) {

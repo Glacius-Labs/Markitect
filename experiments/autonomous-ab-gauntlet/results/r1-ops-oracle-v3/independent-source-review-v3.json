@@ -1,0 +1,58 @@
+{
+  "schema": "ops-oracle-independent-source-review/v3",
+  "review_scope": "Static independent source/parity review only; no actors, old outcomes, holdouts, or full actor evaluation were read or run.",
+  "head": "5acd6aef00d5f2ec82b320c4dd845ed3a784f8c1",
+  "sources": [
+    {
+      "git_state": "modified",
+      "path": "experiments/autonomous-ab-gauntlet/projects/engineering-ops/oracle/evaluate.ps1",
+      "sha256": "FA1FD3B2E0A1377100974A01F83C569401285329EDFF0DB88F6AEDFCF7A7EB46"
+    },
+    {
+      "git_state": "modified",
+      "path": "experiments/autonomous-ab-gauntlet/harness/ops_oracle_v2_test.go",
+      "sha256": "1D24B4B5A6013298B62FEACC968AA1FA3C4474EC9269C310A945497FDFD3E882"
+    },
+    {
+      "git_state": "untracked",
+      "path": "experiments/autonomous-ab-gauntlet/oracle-corrections-ops-v3.md",
+      "sha256": "CA9481E164533083CE281AC4FF7845FAA68D6144C5A378ED62051AF9C6F77C71"
+    },
+    {
+      "git_state": "untracked",
+      "path": "experiments/autonomous-ab-gauntlet/protocol-ops-oracle-v3.yaml",
+      "sha256": "008139DEFB3B84D4610CE366901CA48F0218BDA8EF2A5D35F2D0E49A258AB0F0"
+    }
+  ],
+  "findings": [
+    {
+      "result": "no-concrete-blocker",
+      "id": "runbook-predicate",
+      "detail": "Adds finite same-ID/retry antecedent variants, explicitly detects normative fresh-ID advice, and requires no such advice while retaining duplicate prevention, ID retention, timeout reporting, privacy, and declared-input conditions. QA includes positive variants and negatives for missing reuse, fresh-ID advice and existing unsafe cases.",
+      "location": "evaluate.ps1:536-588"
+    },
+    {
+      "result": "no-concrete-blocker",
+      "id": "integration-scope",
+      "detail": "Only Task 08 with PriorTasksThrough exactly 06 loads the per-arm P01 and P02 cards and uses their sorted unique union. Ordinary Task 08 retains its own paths; P01/P02 retain their own scopes; unsupported nonempty prior markers throw. The signal uses the actual parameter value, not a default/path/run-name inference.",
+      "location": "evaluate.ps1:57-69,744-753"
+    },
+    {
+      "result": "coverage-present",
+      "id": "qa",
+      "detail": "Includes 11 scope cases across ordinary Task 08 A/B, Task 08 integration A/B, P01/P02 A/B, and rejected markers; positive/negative path probes exercise union boundaries. Runbook fixtures exercise alternate retry-ID wording and harmful/missing variants. The test harness extracts and invokes named pure predicates and scope selector, not the full actor evaluator.",
+      "location": "ops_oracle_v2_test.go:74-104,303-338,358-400"
+    },
+    {
+      "result": "bounded",
+      "id": "protocol-and-note",
+      "detail": "Note and protocol declare two Operations measurement corrections, unchanged product/seeds/task intent/model/effort/budget, fixed bounded recognition, predecessor non-rescoring, and exact-source Windows/Linux gates before freeze/dispatch. The source diff itself only changes the two evaluator predicates and their QA."
+    }
+  ],
+  "limitations": [
+    "The runbook check is finite regex recognition, not general Markdown or natural-language understanding; unsupported valid paraphrases may remain unavailable/false-negative, and tests do not establish arbitrary semantic correctness.",
+    "Task scope QA uses a finite card-scope list reader and selected path probes; it is not a general YAML parser or filesystem-enforcement proof.",
+    "Exact-source Windows/Linux CI receipt was not present in this review input and remains a pre-freeze/pre-dispatch gate. Parent-reported 82-case pinned SDK success is not an independently executed or CI-bound result in this review."
+  ],
+  "disposition": "No concrete source blocker found within the authorized finite predicates and frozen scope contract. Do not freeze/dispatch until independent exact-source Windows and Linux successful CI evidence and root review are bound."
+}
