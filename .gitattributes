@@ -6,3 +6,5 @@ docs/strategy/markitect-strategic-positioning-and-validation.md -text whitespace
 # Preserve byte-bound new gauntlet receipt mirrors; do not renormalize historical records.
 experiments/autonomous-ab-gauntlet/results/r1-service-oracle-v1/trial3-a-assessment-stage-control.json -text whitespace=cr-at-eol
 experiments/autonomous-ab-gauntlet/results/r1-oracle-v2/** -text whitespace=cr-at-eol
+experiments/autonomous-ab-gauntlet/results/r1-paths-v3/ddd-trial3-b-assessment.json -text whitespace=cr-at-eol
+experiments/autonomous-ab-gauntlet/results/r1-paths-v3/ddd-serialization-control-trial3-b.yaml -text whitespace=cr-at-eol

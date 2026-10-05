@@ -1,0 +1,49 @@
+schema: autonomous-ab-run-exclusions/v1
+recorded_utc: '2026-10-05T06:48:38.3678856Z'
+freeze_digest: 4faee78795986559e91a0e233bd7321a9cf48526d331edba621ca98eee11638a
+arena: r1-paths-v3-ddd-t1-control-rerun
+runs:
+  - run_id: vertical-slices-a-t03
+    reason: Task05 reported an out-of-scope product-checkout patch target; containment interrupted the scored actor, and exact tool/read/effect history is unavailable. Exclude the chain from aggregate comparison without fabricating completion.
+  - run_id: vertical-slices-b-t03
+    reason: Conservative paired exclusion for A task05 isolation/containment uncertainty. Preserve B's actual failed/manual evaluations and all component evidence; no favorable-arm rescore.
+scope: exact-listed-run-ids-only
+reported_event:
+  run_id: vertical-slices-a-t03
+  task_id: '05'
+  attempt: 0
+  input_digest: 4286ca4492dfee28920ded85d3e844669215d2106e08fe360226bc9ca9adf97b
+  original_deadline_utc: '2026-10-05T07:01:18Z'
+  source: Actor collaboration report plus a separately labelled memory-only forensic reply.
+  exact_target_relative_to_product: src/Commerce/Orders/Application/GetOrderSummary/GetOrderSummaryHandler.cs
+  forensic_record: raw/vertical-slices-a-t03/05/containment-forensic-2026-10-05T06-41-20Z.json
+  forensic_sha256: a2738ab7352b7f833d5ffecf39f84ba14aba27ce23eb7b85098a07c591858ffe
+  native_tool_call_id: unavailable
+  tool_result_text: unavailable; reported enclosing cell7 terminated
+  final_scored_actor_response: unavailable
+  public_helper_result: unavailable
+inspection:
+  record: raw/vertical-slices-a-t03/05/root-product-containment-inspection-v1.json
+  sha256: 'a475c66b43b4de80f10fa1e02d135f3138926057db01076ee8c4c406a487889c'
+  reported_target_exists: false
+  product_src_ancestor_exists: false
+  tracked_product_diff_from_head: []
+  proves: Target/ancestor absence and no tracked product change at the recorded inspection points.
+  does_not_prove: No transient write, no forbidden read, or complete native tool history.
+continuation:
+  affected_a_chain: stopped; no task06-to08 preparation
+  task05_finish: not fabricated; original prepared native row remains unresolved
+  unscored_forensics: No tools, implementation, helper, or use as a final scored response.
+  source_cleanup_or_coordinator_repair: none
+  other_cohorts: continue independently
+  holdout_gate: closed
+preservation:
+  raw_actor_and_evaluation_records: unchanged
+  frozen_product_harness_oracles: unchanged
+  b3_raw_assessment_already_available_when_excluding: true
+  negative_actor_behavior: Retained explicitly; paired exclusion does not erase the reported attempted boundary violation.
+classification:
+  confirmed_markitect_product_defect: false
+  attempted_actor_scope_violation: reported
+  actual_product_mutation: unproven
+  owner_acceptance: false

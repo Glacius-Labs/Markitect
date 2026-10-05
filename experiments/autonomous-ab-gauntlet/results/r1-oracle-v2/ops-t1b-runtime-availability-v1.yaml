@@ -1,0 +1,34 @@
+schema: autonomous-ab-runtime-availability-checkpoint/v1
+recorded_utc: '2026-10-05T06:30:49.1192324Z'
+freeze_digest: d60e4975ab34b6519c2db414a58c170898750cacc59e077a199e2504f6bb6ebd
+run_id: engineering-ops-b-t01
+task_id: '01'
+input_digest: 0db07893a45f3660e685164e89a68d0fd314963682419958034275fe6f4d467f
+original_deadline_utc: '2026-10-05T06:46:16Z'
+availability:
+  prepared_envelopes: 1
+  attempted_native_dispatches: 2
+  actual_leaf_starts: 0
+  actual_leaf_responses: 0
+  helper_invocations: 0
+  native_finish_calls: 0
+  downstream_task_envelopes: 0
+  status: runtime-unavailable; this B chain is stopped
+reason: Both initial dispatch and the one mutation-free retry were refused by the platform thread limit.
+evidence:
+  log_checkpoint: raw/checkpoints/ops-t1b-dispatch-refusals-v1.jsonl
+  log_sha256: 111b2dc55488ac3957fec7b1019c0a8d7f0d9e88d9ccebe246e87f6c30a550e4
+  native_record: runs/engineering-ops-b-t01/01.native.yaml
+  native_sha256: 'b1c4de222b9a4ae44d30a12ea708d7e513bd44825d3ef89f3de37b010e894616'
+  native_actor_started_field: Preparation timestamp/status set by the fixed harness; not evidence that a native model actor actually started.
+  refusal_event_times: unavailable; operator log does not include event timestamps
+  supplied_operator_record_is_authenticated: false
+continuation:
+  restart_or_deadline_reset: prohibited
+  other_predeclared_arms_or_trials: May proceed independently when native capacity permits.
+  whole_cohort_completed: false
+  holdout_gate: closed
+limits:
+  - This is runtime availability, not a functional or Markitect product failure.
+  - The checkpoint is not a policy exception, waiver, or hidden-evaluation result.
+  - No response, pass, check receipt, or missing downstream task is fabricated.

@@ -1,0 +1,39 @@
+schema: autonomous-ab-ddd-serialization-control-trial3-b/v1
+freeze_digest: 4faee78795986559e91a0e233bd7321a9cf48526d331edba621ca98eee11638a
+product_change: none
+actor_or_harness_change: none
+purpose: Preserve the existing DDD evaluator fields when the frozen writer emits invalid YAML backslash escapes, for a new isolated Trial3 B measurement only.
+raw_writer_sha256: 263987c0c5392709f384b013ffff8534acfcd5d30529acc90b656a2f20b7734b
+observed_defect:
+  first_refused_raw_sha256: 50086d3ae2bca7be0e479e8a1d8f21d7f58bf91a1e8e8b5baccf0cb1f5aa4270
+  cause: The fixed line writer quotes evidence but does not escape Windows path backslashes.
+  scoring_defect_proven: false
+decision:
+  operation: explicit exact-frozen-ddd-writer serialization projection/v1
+  allowed: Parse the pinned writer grammar and re-encode literal scalars as YAML single-quoted strings.
+  refused: Unexpected grammar, writer identity, task identity, field order, status/list relation or changed bound capture.
+  default_export: strict YAML parsing; malformed YAML still refused
+  explicit_export_option: --project-ddd-serialization
+  semantic_oracle_or_status_change: prohibited
+  original_raw_rewrite: prohibited
+  manual_review_to_pass_conversion: prohibited
+  targets: Fresh vertical-slices Trial3 B only; prior Trial1 control and all excluded runs are outside this control.
+  run_id: vertical-slices-b-t03
+  tasks: ["01", "02", "03", "04", "05", "06", "07", "08"]
+  phases: [before-repair from actual helper-attempt-0 capture, final from terminal native final_snapshot]
+  projected_fields: task, arm, status, base, changed_paths, checks, failures, manual_review, commands, owner_decision
+  raw_and_projected_digests: both mandatory in every export proof
+  pinned_copier_sha256: 09936044fa210ca7a95336b9012fad9601f7030ba951cff426e9da99683e1296
+  pinned_stager_sha256: 11eaf8f1261cb783979f17d16154d40c05b238b0077b38804e8594ace3399ec8
+  pinned_harness_sha256: 0fa0d12f29aa7746f1e74c6435fec08b63324919f1d01d7eb4046103be4d2ec1
+  pinned_exporter_sha256: c2c2cb603b4f184acb9fefc820b4e8c7cb262766db5cf95f0119761a8847b502
+  staged_assessment_siblings:
+    - r1-paths-v3-ddd-t3-b-before-repair
+    - r1-paths-v3-ddd-t3-b-final
+  human_acceptance: false
+limits:
+  - This is measurement serialization recovery, not a product feature, semantic rescore or human acceptance.
+  - The frozen writer already replaces evidence double quotes with apostrophes; original pre-writer quotes cannot be recovered.
+  - Failed, manual and owner-decision-required results remain those states.
+  - Every initial phase is available only if the pinned stager validates helper-attempt-0 task identity and exact snapshot binding.
+  - Hash binding does not authenticate a process, reviewer or semantic truth.
