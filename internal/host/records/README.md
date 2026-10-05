@@ -35,3 +35,12 @@ inventory facts. It rejects multiple active owners for one artifact, preserves
 unknown/excluded/ignored facts, and reports observed drift. It does not infer
 which historical record is current or whether the supplied inventory covers
 the repository. An unobserved owned path stays unobserved.
+Source-alpha Brownfield records may declare `origin: adopted`, a full adoption
+evidence revision and an owner-supplied review reference. All artifact changes
+are retained; creation/modification/deletion claims are rejected for that origin.
+The metadata binds the content ID and is a supplied provenance claim, not
+reviewer authentication. Host adoption matches exact existing artifacts, checks
+the proposed owner against the supplied active set and executes immutable
+verification before returning a usable record. It does not persist or activate
+records. Omitted target files remain UNKNOWN; selected-artifact completeness
+does not imply full target-prefix or repository coverage.

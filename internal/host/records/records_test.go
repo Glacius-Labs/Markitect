@@ -266,3 +266,75 @@ func TestOperationalDigestsNormalizeEmptyCollectionsAcrossWireFormats(t *testing
 		t.Fatalf("empty check set changed identity: %s %s %v", before, after, err)
 	}
 }
+
+func TestAdoptionOriginIsDigestBoundAndRetainedOnly(t *testing.T) {
+	base := testRecord(t)
+	adopted := base
+	adopted.Artifacts = append([]Artifact(nil), base.Artifacts...)
+	for i := range adopted.Artifacts {
+		adopted.Artifacts[i].Change = ChangeRetained
+	}
+	adopted.Origin = OriginAdopted
+	adopted.AdoptionRevision = strings.Repeat("b", 40)
+	adopted.ReviewReference = "owner-review/fixed-scope"
+	adopted, err := NewProjectionRecord(adopted)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := ValidateProjectionRecord(adopted); err != nil {
+		t.Fatal(err)
+	}
+	for _, change := range []string{"review", "revision", "origin", "created"} {
+		modified := adopted
+		modified.Artifacts = append([]Artifact(nil), adopted.Artifacts...)
+		switch change {
+		case "review":
+			modified.ReviewReference += " changed"
+		case "revision":
+			modified.AdoptionRevision = strings.Repeat("c", 40)
+		case "origin":
+			modified.Origin = "inferred"
+		case "created":
+			modified.Artifacts[0].Change = ChangeCreated
+		}
+		if err := ValidateProjectionRecord(modified); err == nil {
+			t.Fatalf("changed %s did not invalidate adopted record", change)
+		}
+	}
+	legacy, err := NewProjectionRecord(base)
+	if err != nil || legacy.ID != base.ID {
+		t.Fatal("empty adoption metadata changed existing alpha record identity")
+	}
+}
+
+func TestOwnershipIndexRejectsCaseAliasAcrossRecordsAndInventory(t *testing.T) {
+	record := testRecord(t)
+	facts := testFacts(record)
+	facts[0].Path = strings.ToUpper(facts[0].Path)
+	if _, err := BuildOwnershipIndex([]ProjectionRecord{record}, facts); err == nil {
+		t.Fatal("case alias between active owner and inventory accepted")
+	}
+	other := record
+	other.Artifacts = append([]Artifact(nil), record.Artifacts...)
+	other.ProjectionID = "different-projection"
+	for i := range other.Artifacts {
+		other.Artifacts[i].Path = strings.ToUpper(other.Artifacts[i].Path)
+	}
+	other, err := NewProjectionRecord(other)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := BuildOwnershipIndex([]ProjectionRecord{record, other}, nil); err == nil {
+		t.Fatal("case aliases across active owners accepted")
+	}
+}
+
+func TestProjectionRecordRejectsCaseAliasWithinItsArtifactSet(t *testing.T) {
+	record := testRecord(t)
+	alias := record.Artifacts[0]
+	alias.Path = strings.ToUpper(alias.Path)
+	record.Artifacts = append(record.Artifacts, alias)
+	if _, err := NewProjectionRecord(record); err == nil {
+		t.Fatal("one record can claim portable aliases of the same artifact")
+	}
+}

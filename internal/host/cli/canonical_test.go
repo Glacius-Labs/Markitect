@@ -245,6 +245,188 @@ func TestReadCanonicalProjectionRecordsRequiresClosedUniqueJSONArray(t *testing.
 	}
 }
 
+func TestReadCanonicalAdoptionSelectionRequiresClosedExactJSON(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "selection.json")
+	cases := map[string]string{
+		"valid explicit empty active set": `{"artifacts":["src/a.cs"],"activeRecords":[],"reviewReference":"owner-review"}`,
+		"missing active set":              `{"artifacts":["src/a.cs"],"reviewReference":"owner-review"}`,
+		"null active set":                 `{"artifacts":["src/a.cs"],"activeRecords":null,"reviewReference":"owner-review"}`,
+		"unknown field":                   `{"artifacts":["src/a.cs"],"activeRecords":[],"reviewReference":"owner-review","mode":"replace"}`,
+		"duplicate field":                 `{"artifacts":["src/a.cs"],"artifacts":["src/b.cs"],"activeRecords":[],"reviewReference":"owner-review"}`,
+		"duplicate artifact":              `{"artifacts":["src/a.cs","src/a.cs"],"activeRecords":[],"reviewReference":"owner-review"}`,
+		"unsafe artifact":                 `{"artifacts":["../outside.cs"],"activeRecords":[],"reviewReference":"owner-review"}`,
+		"trailing value":                  `{"artifacts":["src/a.cs"],"activeRecords":[],"reviewReference":"owner-review"} {}`,
+	}
+	for name, input := range cases {
+		t.Run(name, func(t *testing.T) {
+			if err := os.WriteFile(path, []byte(input), 0600); err != nil {
+				t.Fatal(err)
+			}
+			selection, err := readCanonicalAdoptionSelection(path)
+			if name == "valid explicit empty active set" {
+				if err != nil || len(selection.Artifacts) != 1 || selection.ActiveRecords == nil {
+					t.Fatalf("valid selection = %#v, %v", selection, err)
+				}
+				return
+			}
+			if err == nil {
+				t.Fatalf("accepted invalid adoption selection %s", name)
+			}
+		})
+	}
+}
+
+func TestCanonicalAdoptionPreservesExistingArtifactsAndRequiresFreshApproval(t *testing.T) {
+	root, configPath, canonicalRevision := newCanonicalProjectionRepo(t, nil)
+	targetFiles := map[string]string{
+		"src/Commerce/CreateOrderHandler.cs": "namespace Commerce; public class CreateOrderHandler { }\n",
+		"src/Commerce/EffectAxis.cs":         "namespace Commerce; public record EffectAxis { public string Boundary { get; init; } = \"application\"; }\n",
+		"src/Commerce/Commerce.csproj":       "<Project><PropertyGroup><TargetFramework>net8.0</TargetFramework></PropertyGroup></Project>\n",
+		"src/Commerce/Legacy.cs":             "// Existing artifact outside the explicit adoption selection.\n",
+	}
+	targetRevision := commitCanonicalFiles(t, root, targetFiles, "existing target representation")
+	selectionPath := writeCanonicalSelection(t, map[string]any{
+		"artifacts":       []string{"src/Commerce/CreateOrderHandler.cs", "src/Commerce/EffectAxis.cs", "src/Commerce/Commerce.csproj"},
+		"activeRecords":   []records.ProjectionRecord{},
+		"reviewReference": "owner-review-2026-10-06",
+	})
+	selector := []string{"--api-version", "markitect.foundation/v1", "--kind", "Projection", "--namespace", "commerce", "--name", "application-dotnet"}
+	planArgs := append([]string{"--base", canonicalRevision, "--revision", targetRevision, "--report", selectionPath}, selector...)
+	var planned struct {
+		Status string `yaml:"status"`
+		Plan   struct {
+			PlanDigest       string                   `yaml:"planDigest"`
+			EvidenceRevision string                   `yaml:"evidenceRevision"`
+			Unmatched        []string                 `yaml:"unmatchedArtifacts"`
+			Record           records.ProjectionRecord `yaml:"record"`
+		} `yaml:"plan"`
+	}
+	statusBefore := git(t, root, "status", "--porcelain")
+	if code := runCanonicalCLI(t, root, "adopt-plan", configPath, planArgs, &planned); code != 0 {
+		t.Fatalf("canonical adopt-plan exit = %d, result=%s", code, previewDump(planned))
+	}
+	if planned.Status != "planned" || planned.Plan.PlanDigest == "" || planned.Plan.EvidenceRevision != targetRevision {
+		t.Fatalf("adoption plan did not bind the exact source/target selection: %#v", planned)
+	}
+	if !containsCanonicalString(planned.Plan.Unmatched, "src/Commerce/Legacy.cs") {
+		t.Fatalf("adoption plan hid the unselected in-scope artifact: %#v", planned.Plan.Unmatched)
+	}
+	if err := records.ValidateProjectionRecord(planned.Plan.Record); err != nil {
+		t.Fatalf("prospective adoption Record is invalid: %v", err)
+	}
+	if after := git(t, root, "status", "--porcelain"); after != statusBefore {
+		t.Fatalf("adopt-plan changed repository state: before=%q after=%q", statusBefore, after)
+	}
+	writeArgs := append(append([]string(nil), planArgs...), "--write")
+	if code := runCanonicalCLI(t, root, "adopt-plan", configPath, writeArgs, nil); code != 2 {
+		t.Fatalf("adopt-plan with --write exit = %d, want read-only refusal", code)
+	}
+	for path, want := range targetFiles {
+		if got := git(t, root, "show", targetRevision+":"+path); got != strings.TrimSuffix(want, "\n") {
+			t.Fatalf("planned adoption changed existing artifact %s: %q", path, got)
+		}
+	}
+
+	wrongDigest := "sha256:" + strings.Repeat("0", 64)
+	badArgs := append([]string{"--base", canonicalRevision, "--revision", targetRevision, "--report", selectionPath, "--expect", wrongDigest}, selector...)
+	if code := runCanonicalCLI(t, root, "adopt", configPath, badArgs, nil); code != 2 {
+		t.Fatalf("adopt with mismatched approval exit = %d, want 2", code)
+	}
+	if after := git(t, root, "status", "--porcelain"); after != statusBefore {
+		t.Fatalf("mismatched approval changed repository state: before=%q after=%q", statusBefore, after)
+	}
+
+	adoptArgs := append([]string{"--base", canonicalRevision, "--revision", targetRevision, "--report", selectionPath, "--expect", planned.Plan.PlanDigest}, selector...)
+	var adopted struct {
+		Status       string                    `yaml:"status"`
+		Record       *records.ProjectionRecord `yaml:"record"`
+		Unmatched    []string                  `yaml:"unmatchedArtifacts"`
+		Verification struct {
+			Result records.VerificationResult `yaml:"result"`
+		} `yaml:"verification"`
+	}
+	if code := runCanonicalCLI(t, root, "adopt", configPath, adoptArgs, &adopted); code != 0 {
+		t.Fatalf("canonical adopt exit = %d, result=%s", code, previewDump(adopted))
+	}
+	if adopted.Status != "adopted" || adopted.Record == nil || adopted.Record.Origin != records.OriginAdopted || adopted.Verification.Result.Outcome != records.OutcomePassed {
+		t.Fatalf("adoption did not return a passed, adopted provenance Record: %#v", adopted)
+	}
+	if !containsCanonicalString(adopted.Unmatched, "src/Commerce/Legacy.cs") {
+		t.Fatalf("adopt output hid unresolved target ownership: %#v", adopted.Unmatched)
+	}
+	if err := records.ValidateProjectionRecord(*adopted.Record); err != nil {
+		t.Fatalf("adopted Record is invalid: %v", err)
+	}
+	if after := git(t, root, "status", "--porcelain"); after != statusBefore {
+		t.Fatalf("adopt changed repository state: before=%q after=%q", statusBefore, after)
+	}
+
+	targetFiles["src/Commerce/EffectAxis.cs"] = "namespace Commerce; public record EffectAxis { }\n"
+	changedTargetRevision := commitCanonicalFiles(t, root, targetFiles, "break existing representation check")
+	staleArgs := append([]string{"--base", canonicalRevision, "--revision", changedTargetRevision, "--report", selectionPath, "--expect", planned.Plan.PlanDigest}, selector...)
+	if code := runCanonicalCLI(t, root, "adopt", configPath, staleArgs, nil); code != 2 {
+		t.Fatalf("adopt with a stale target-revision digest exit = %d, want 2", code)
+	}
+	changedPlanArgs := append([]string{"--base", canonicalRevision, "--revision", changedTargetRevision, "--report", selectionPath}, selector...)
+	var changedPlan struct {
+		Plan struct {
+			PlanDigest string `yaml:"planDigest"`
+		} `yaml:"plan"`
+	}
+	if code := runCanonicalCLI(t, root, "adopt-plan", configPath, changedPlanArgs, &changedPlan); code != 0 || changedPlan.Plan.PlanDigest == "" {
+		t.Fatalf("changed-target adoption plan exit=%d result=%s", code, previewDump(changedPlan))
+	}
+	failedArgs := append([]string{"--base", canonicalRevision, "--revision", changedTargetRevision, "--report", selectionPath, "--expect", changedPlan.Plan.PlanDigest}, selector...)
+	var failedAdoption struct {
+		Status string                    `yaml:"status"`
+		Record *records.ProjectionRecord `yaml:"record"`
+	}
+	if code := runCanonicalCLI(t, root, "adopt", configPath, failedArgs, &failedAdoption); code != 1 {
+		t.Fatalf("adopt with failing fixed check exit = %d, result=%s", code, previewDump(failedAdoption))
+	}
+	if failedAdoption.Status != "failed" || failedAdoption.Record != nil {
+		t.Fatalf("failed checks emitted an adoption Record: %#v", failedAdoption)
+	}
+}
+
+func containsCanonicalString(values []string, expected string) bool {
+	for _, value := range values {
+		if value == expected {
+			return true
+		}
+	}
+	return false
+}
+
+func writeCanonicalSelection(t *testing.T, selection map[string]any) string {
+	t.Helper()
+	data, err := json.Marshal(selection)
+	if err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(t.TempDir(), "selection.json")
+	if err := os.WriteFile(path, data, 0600); err != nil {
+		t.Fatal(err)
+	}
+	return path
+}
+
+func commitCanonicalFiles(t *testing.T, root string, files map[string]string, message string) string {
+	t.Helper()
+	for name, content := range files {
+		path := filepath.Join(root, filepath.FromSlash(name))
+		if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	git(t, root, "add", "-A")
+	git(t, root, "commit", "-m", message)
+	return git(t, root, "rev-parse", "HEAD")
+}
+
 func TestCanonicalPlanApplyRequiresSavedReportAndWritesUnverifiedRecord(t *testing.T) {
 	root, configPath, revision := newCanonicalProjectionRepo(t, map[string]string{"docs/outside.md": "outside target\n"})
 	selector := []string{"--api-version", "markitect.foundation/v1", "--kind", "Projection", "--namespace", "commerce", "--name", "application-markdown"}

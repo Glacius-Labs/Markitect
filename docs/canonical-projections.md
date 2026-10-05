@@ -14,7 +14,37 @@ The example selects three commerce Definitions for two independent targets: Mark
 
 The source loader uses the ordinary complete snapshot acquisition path. Exact Definition selection is **not** a selective-Git privacy claim. Owner-selected private evidence must use the separate `prepare` handoff flow.
 
-## Read-only inspection and high-level planning
+## Brownfield inference and zero-churn adoption
+
+Brownfield discovery runs in reverse: observed representations can inform candidate intent, but inference never changes canonical state. An owner reviews/corrects the proposal and deliberately accepts canonical intent first. Then match exact existing artifact paths to the desired Projection and verify those bytes against immutable source and target revisions. Valid representations are adopted as a baseline without regeneration or normalization. The selection covers only the supplied artifact scope and does not establish whole-repository completeness.
+
+The source-alpha adoption commands take one exact Projection selector and an owner-supplied review reference. This reference is a traceability claim; the command does not authenticate the owner or prove semantic review. `selection.json` requires this closed input shape, including the explicit `activeRecords` array (use `[]` when the caller supplies no active ownership claims):
+
+```json
+{
+  "artifacts": ["src/Orders/CreateOrder.cs", "src/Orders/CreateOrderHandler.cs"],
+  "reviewReference": "review-123",
+  "activeRecords": []
+}
+```
+
+Replace the illustrative artifact paths with the exact existing paths under the selected Projection target. Caller-supplied active records are ownership claims for conflict checks; the command does not discover a durable ledger or infer missing history. Conflicts are checked before artifact verification. Existing target artifacts outside the exact selection are returned as unmatched and classified UNKNOWN. UNKNOWN does not mean rewrite or delete; ordinary reconciliation escalates it until ownership is resolved.
+
+Create and inspect the read-only adoption plan against full immutable commits:
+
+```powershell
+go run ./cmd/markitect canonical --repo . --config examples/canonical-projection/canonical.yaml --action adopt-plan --base SOURCE --revision TARGET --api-version markitect.foundation/v1 --kind Projection --namespace commerce --name application-dotnet --report .artifacts/canonical-review/selection.json
+```
+
+The plan binds the exact selected artifact paths, Projection, source/target inputs, caller-supplied ownership claims and existing immutable checks. Any `materialized-unverified` prospective state in its preview applies only to these selected bytes; it is not semantic verification or a claim about a larger target prefix. Review its plan digest, matched scope and unmatched UNKNOWN artifacts before adoption:
+
+```powershell
+go run ./cmd/markitect canonical --repo . --config examples/canonical-projection/canonical.yaml --action adopt --base SOURCE --revision TARGET --api-version markitect.foundation/v1 --kind Projection --namespace commerce --name application-dotnet --report .artifacts/canonical-review/selection.json --expect PLAN_DIGEST
+```
+
+`adopt` verifies only the existing selected artifact scope. It performs no generation, target writes, record persistence or active-record selection. It returns a ProjectionRecord with `origin: adopted` only when existing immutable checks pass. A failed or missing required check produces no adopted record. This proves the supplied bytes passed the declared checks for that bounded scope; it does not prove semantic adequacy, authenticate the review reference, or establish whole-repository adoption. Preserve the record through explicit caller-owned persistence and active selection, which remain separate operations.
+
+## Read-only inspection and reconcile planning
 
 Run from a source checkout with Go 1.27.1. Set `BASE` and `CURRENT` to full immutable Git revisions containing the example; `CURRENT` is the intended canonical state. Module preview may use the working tree, but projection planning requires fixed canonical inputs.
 

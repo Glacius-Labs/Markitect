@@ -16,7 +16,7 @@ Humans should spend more attention defining goals, concepts, architecture, invar
 
 ## Product definition
 
-**Markitect is the canonical desired-state model of an engineering system.** Human owners define what should exist, why it exists and which implementation freedom remains. Schema Modules make that intent expressible; Projection Modules supply target expertise and tools. Explicit desired representations and project-owned ProjectionPolicies bind intent to its representations. Project configuration resolves the installed target capabilities separately from that intent.
+**Markitect is the canonical desired-state model of an engineering system.** Human owners define durable, provider-independent meaning when it is needed: goals, rules, processes, responsibilities, invariants and other concepts that still make sense if today's providers and file formats disappear. This is a test for canonical ownership, not a requirement to add every such concept to a shared foundation. Schema Modules make selected intent expressible; Projection Modules supply target expertise and tools. Explicit desired representations and project-owned ProjectionPolicies connect meaning to target representations, while project configuration resolves installed target capabilities separately from that intent. Provider Skills, Workflows, agent definitions, human documentation and generated enforcement are normally representations of this meaning.
 
 **Users change canonical intent. Markitect reconciles representations.** The target flow is:
 
@@ -24,14 +24,14 @@ Humans should spend more attention defining goals, concepts, architecture, invar
 human-owned engineering intent
     -> canonical Markitect Definitions and purpose
     -> compile, compare intent and derive explicit impact
-    -> reconciliation plan for desired representations
+    -> plan reconciliation of desired representations
     -> Executor Agent using resolved target tools
     -> candidate representation
     -> independent Verifier with bounded evidence
     -> pass, repair or decision escalation
 ```
 
-The desired authority model extends to code, documentation, agent guidance and automation: they represent accepted canonical intent instead of becoming competing semantic owners. Adoption is explicit and bounded. A partially adopted repository must identify what remains unmodeled, externally owned, excluded or uncertain; the source implementation does not make all existing files governed merely by installation. Observations and candidates never become canonical through inference. Humans decide adoption and real intent changes; unchanged intent with a drifting artifact calls for repair of that artifact.
+The desired authority model extends to code, documentation, agent guidance and automation: they represent accepted canonical intent instead of becoming competing semantic owners. Brownfield work adds a reverse inference path: existing representations can inform a candidate intent, but never grant it authority. Owners review and correct that proposal, accept canonical intent, then match exact artifact scopes and verify existing representations before adopting valid bytes as a baseline. Adoption preserves valid bytes; it does not regenerate or normalize them to an Executor's preference. Unknown or excluded artifacts remain explicit and unresolved artifacts are not rewritten or deleted. A partially adopted repository must identify what remains unmodeled, externally owned, excluded or uncertain; installation alone does not govern the whole repository. Humans decide adoption and real intent changes; unchanged intent with a drifting artifact calls for repair of that artifact.
 
 The product direction is an executable engineering-governance layer for autonomous software development. Markdown views, provider instructions, context, checks and adapters serve that purpose. Their existence or volume is not the product's success criterion.
 
@@ -94,7 +94,7 @@ Reconsider proposals that introduce another manually synchronized truth owner, h
 | Category | What is established or intended |
 |---|---|
 | Published capability | v0.13.0 retains versioned Domains, typed relations, finite assertions including bounded `same-target`, normalized model, context/impact, packages, PolicyResults/exceptions and configured projections/adapters. It adds read-only failed-policy analysis, selective preparation/Copy Me validation and the Markitect-first/accounting workflow. The roadmap owns precise coverage. |
-| Current unreleased source | A source-only canonical projection reset is in development: minimal structural Core, strictly typed Schema/Projection packages, explicit Projection binding, reused guarded lifecycle and separate scoped operational evidence. The prior bounded projection contracts retain their meaning in compatibility. These are not additions to an installed v0.13.0 release and establish no real-adopter benefit. |
+| Current unreleased source | A source-only canonical projection reset is in development: minimal structural Core, strictly typed Schema/Projection Modules, explicit runtime binding, Host-derived scoped reconciliation, and separate operational evidence. The source alpha now includes read-only, exact-scope existing-target adoption; focused Host checks cover preserving selected bytes, failed/stale verification, UNKNOWN artifacts and ownership conflicts. Final exact-head gates remain pending. Its owner claim and candidate record do not establish semantic review or automatic active ownership. The prior bounded projection contracts retain their meaning in compatibility. These are not additions to an installed v0.13.0 release and establish no real-adopter benefit. |
 | Aspirational operation | Many continuously working agents, less routine human supervision, architecture-level escalation and sustainable governance at greater scale. No current scheduler, dashboard or universal automatic acceptance is claimed. |
 | Unproven benefit | Reduced human intervention, lower total maintenance/synchronization cost, fewer missed updates or defects, better sustained autonomy, token savings and market demand. |
 

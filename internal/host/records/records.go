@@ -18,6 +18,7 @@ const (
 	VerificationResultAPIVersion = "markitect.example.org/verification-result/v1alpha1"
 	OwnershipIndexAPIVersion     = "markitect.example.org/artifact-ownership-index/v1alpha1"
 
+	OriginAdopted               = "adopted"
 	StateMaterializedUnverified = "materialized-unverified"
 	StatePartialFailure         = "partial-failure"
 	StateEscalated              = "escalated"
@@ -74,6 +75,9 @@ type Artifact struct {
 	Change string `json:"change"`
 }
 type ProjectionRecord struct {
+	Origin               string            `json:"origin,omitempty"`
+	AdoptionRevision     string            `json:"adoptionRevision,omitempty"`
+	ReviewReference      string            `json:"reviewReference,omitempty"`
 	APIVersion           string            `json:"apiVersion"`
 	ID                   string            `json:"id"`
 	Revision             string            `json:"revision"`
@@ -467,6 +471,14 @@ func BuildOwnershipIndex(activeRecords []ProjectionRecord, facts []ArtifactFact)
 		names = append(names, name)
 	}
 	sort.Strings(names)
+	aliases := map[string]string{}
+	for _, name := range names {
+		key := strings.ToLower(name)
+		if previous, exists := aliases[key]; exists && previous != name {
+			return OwnershipIndex{}, fmt.Errorf("artifact paths %q and %q collide under portable case matching", previous, name)
+		}
+		aliases[key] = name
+	}
 	for _, name := range names {
 		fact, hasFact := observed[name]
 		entry := OwnershipEntry{Path: name, Role: RoleUnknown, Status: OwnershipUnobserved, OwnerRecordIDs: []string{}, ScopeIDs: []string{}}
@@ -503,6 +515,21 @@ func BuildOwnershipIndex(activeRecords []ProjectionRecord, facts []ArtifactFact)
 }
 
 func validateRecordFields(record ProjectionRecord) error {
+	if record.Origin == OriginAdopted {
+		if !revisionPattern.MatchString(record.AdoptionRevision) || strings.TrimSpace(record.ReviewReference) == "" || len(record.ReviewReference) > 4096 || !utf8.ValidString(record.ReviewReference) || strings.ContainsRune(record.ReviewReference, 0) {
+			return errors.New("adopted record requires a full evidence revision and bounded owner-supplied review reference")
+		}
+		if record.State != StateMaterializedUnverified {
+			return errors.New("adopted record must describe a complete retained representation")
+		}
+		for _, artifact := range record.Artifacts {
+			if artifact.Change != ChangeRetained {
+				return errors.New("adopted record can claim only retained artifacts")
+			}
+		}
+	} else if record.Origin != "" || record.AdoptionRevision != "" || record.ReviewReference != "" {
+		return errors.New("unsupported record origin or adoption metadata without adopted origin")
+	}
 	if record.APIVersion != ProjectionRecordAPIVersion {
 		return fmt.Errorf("unsupported projection record apiVersion %q", record.APIVersion)
 	}
@@ -543,6 +570,7 @@ func validateRecordFields(record ProjectionRecord) error {
 		return errors.New("record requires at least one artifact")
 	}
 	seen := map[string]bool{}
+	aliases := map[string]string{}
 	for _, artifact := range record.Artifacts {
 		if err := validatePath(artifact.Path); err != nil {
 			return err
@@ -551,6 +579,11 @@ func validateRecordFields(record ProjectionRecord) error {
 			return fmt.Errorf("duplicate artifact path %q", artifact.Path)
 		}
 		seen[artifact.Path] = true
+		alias := strings.ToLower(artifact.Path)
+		if previous, exists := aliases[alias]; exists && previous != artifact.Path {
+			return fmt.Errorf("record artifact paths %q and %q collide under portable case matching", previous, artifact.Path)
+		}
+		aliases[alias] = artifact.Path
 		if !isDigest(artifact.Digest) {
 			return fmt.Errorf("artifact %q digest must be sha256", artifact.Path)
 		}

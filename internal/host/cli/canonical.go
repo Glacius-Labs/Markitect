@@ -44,7 +44,7 @@ type canonicalPlanEscalation struct {
 func runCanonical(o commandOptions, emit func(any) int, fail func(error) int) int {
 	requirePins := o.action != "modules"
 	loadRevision := o.revision
-	if o.action == "verify" {
+	if o.action == "verify" || o.action == "adopt-plan" || o.action == "adopt" {
 		loadRevision = o.base
 	}
 	loaded, err := host.LoadCanonicalSource(o.root, loadRevision, o.reviewConfig, requirePins)
@@ -181,8 +181,10 @@ func runCanonical(o commandOptions, emit func(any) int, fail func(error) int) in
 		return runCanonicalReconcilePlan(o, loaded, base, emit, fail)
 	case "verify":
 		return runCanonicalVerify(o, loaded, base, emit, fail)
+	case "adopt-plan", "adopt":
+		return runCanonicalAdoption(o, loaded, base, emit, fail)
 	default:
-		return fail(fmt.Errorf("canonical requires --action model, modules, context, request, impact, reconcile-plan, plan, apply or verify"))
+		return fail(fmt.Errorf("canonical requires --action model, modules, context, request, impact, reconcile-plan, plan, apply, verify, adopt-plan or adopt"))
 	}
 }
 
@@ -337,6 +339,126 @@ func runCanonicalVerify(o commandOptions, fixed *host.CanonicalSource, base map[
 	}
 	base["status"] = verification.Result.Outcome
 	return emit(base)
+}
+
+func runCanonicalAdoption(o commandOptions, fixed *host.CanonicalSource, base map[string]any, emit func(any) int, fail func(error) int) int {
+	target, err := source.Load(o.root, o.revision)
+	if err != nil {
+		return fail(err)
+	}
+	selection, err := readCanonicalAdoptionSelection(o.reviewReport)
+	if err != nil {
+		return fail(fmt.Errorf("read adoption selection: %w", err))
+	}
+	identity := core.DefinitionIdentity{APIVersion: o.apiVersion, Kind: o.kind, Namespace: o.namespace, Name: o.name}
+	base["sourceRevision"] = fixed.Snapshot.ID
+	base["evidenceRevision"] = target.ID
+	if o.action == "adopt-plan" {
+		plan, err := host.PrepareCanonicalAdoption(fixed, target, identity, selection)
+		if err != nil {
+			var classified *host.VerifyError
+			if errors.As(err, &classified) && classified.Kind == "incomplete-evidence" {
+				base["status"] = "incomplete"
+				base["adoptionError"] = err.Error()
+				if code := emit(base); code != 0 {
+					return code
+				}
+				return 1
+			}
+			return fail(err)
+		}
+		base["status"] = "planned"
+		base["plan"] = map[string]any{
+			"apiVersion": plan.APIVersion, "planDigest": plan.PlanDigest, "evidenceRevision": plan.EvidenceRevision,
+			"record": plan.Record, "unmatchedArtifacts": plan.UnmatchedArtifacts,
+		}
+		return emit(base)
+	}
+	toolDigest, err := currentToolDigest()
+	if err != nil {
+		return fail(err)
+	}
+	adoption, adoptErr := host.AdoptCanonicalProjection(fixed, target, identity, selection, o.expect, records.VerifierIdentity{ID: "markitect.canonical-adoption-verifier", Version: version, Digest: toolDigest})
+	base["verification"] = adoption.Verification
+	base["unmatchedArtifacts"] = adoption.UnmatchedArtifacts
+	if adoptErr != nil {
+		var classified *host.VerifyError
+		if errors.As(adoptErr, &classified) && (classified.Kind == "gate-failure" || classified.Kind == "incomplete-evidence") {
+			status := adoption.Verification.Result.Outcome
+			if status == "" {
+				status = "incomplete"
+			}
+			base["status"] = status
+			base["adoptionError"] = adoptErr.Error()
+			if code := emit(base); code != 0 {
+				return code
+			}
+			return 1
+		}
+		return fail(adoptErr)
+	}
+	if adoption.Record == nil {
+		return fail(fmt.Errorf("adoption verification passed without producing a Projection Record"))
+	}
+	base["status"] = "adopted"
+	base["record"] = adoption.Record
+	return emit(base)
+}
+
+func readCanonicalAdoptionSelection(file string) (host.CanonicalAdoptionSelection, error) {
+	data, err := readCanonicalLocalInput(file, 1<<20)
+	if err != nil {
+		return host.CanonicalAdoptionSelection{}, err
+	}
+	if err := rejectDuplicateCanonicalJSONFields(data); err != nil {
+		return host.CanonicalAdoptionSelection{}, fmt.Errorf("decode a closed JSON adoption selection: %w", err)
+	}
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.DisallowUnknownFields()
+	var selection host.CanonicalAdoptionSelection
+	if err := decoder.Decode(&selection); err != nil {
+		return host.CanonicalAdoptionSelection{}, fmt.Errorf("decode a closed JSON adoption selection: %w", err)
+	}
+	var extra any
+	if err := decoder.Decode(&extra); !errors.Is(err, io.EOF) {
+		return host.CanonicalAdoptionSelection{}, fmt.Errorf("adoption selection must contain exactly one JSON object")
+	}
+	if selection.Artifacts == nil || len(selection.Artifacts) == 0 || len(selection.Artifacts) > 4096 {
+		return host.CanonicalAdoptionSelection{}, fmt.Errorf("adoption selection must list 1..4096 exact artifacts")
+	}
+	if selection.ActiveRecords == nil || len(selection.ActiveRecords) > 4096 {
+		return host.CanonicalAdoptionSelection{}, fmt.Errorf("adoption selection must include an activeRecords array of at most 4096 records")
+	}
+	recordIDs, projectionIDs := map[string]bool{}, map[string]bool{}
+	for _, record := range selection.ActiveRecords {
+		if err := records.ValidateProjectionRecord(record); err != nil {
+			return host.CanonicalAdoptionSelection{}, fmt.Errorf("invalid active Projection Record: %w", err)
+		}
+		if recordIDs[record.ID] {
+			return host.CanonicalAdoptionSelection{}, fmt.Errorf("active Projection Record %q is duplicated", record.ID)
+		}
+		if projectionIDs[record.ProjectionID] {
+			return host.CanonicalAdoptionSelection{}, fmt.Errorf("active Projection %q has multiple supplied Records", record.ProjectionID)
+		}
+		recordIDs[record.ID], projectionIDs[record.ProjectionID] = true, true
+	}
+	if strings.TrimSpace(selection.ReviewReference) != selection.ReviewReference || selection.ReviewReference == "" || len(selection.ReviewReference) > 4096 {
+		return host.CanonicalAdoptionSelection{}, fmt.Errorf("adoption selection requires a nonempty exact reviewReference of at most 4096 bytes")
+	}
+	seen := map[string]bool{}
+	for _, artifact := range selection.Artifacts {
+		if strings.TrimSpace(artifact) != artifact || artifact == "" {
+			return host.CanonicalAdoptionSelection{}, fmt.Errorf("adoption artifact paths must be nonempty exact repository paths")
+		}
+		if err := projectionengine.ValidateRelativePath(artifact); err != nil {
+			return host.CanonicalAdoptionSelection{}, fmt.Errorf("adoption artifact path %q is invalid: %w", artifact, err)
+		}
+		if seen[artifact] {
+			return host.CanonicalAdoptionSelection{}, fmt.Errorf("adoption artifact path %q is duplicated", artifact)
+		}
+		seen[artifact] = true
+	}
+	return selection, nil
 }
 
 func rejectDuplicateCanonicalJSONFields(data []byte) error {

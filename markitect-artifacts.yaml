@@ -40,6 +40,10 @@ spec:
     - internal/host/canonical_verification.go
     - examples/canonical-projection_test.go
     - internal/host/canonical_verification_test.go
+    - docs/design/brownfield-representation-adoption.md
+    - docs/strategy/sources/canonical-reset/markitect-coordinator-steer-latest-architecture-clarifications.md
+    - internal/host/canonical_adoption.go
+    - internal/host/canonical_adoption_test.go
   tooling:
     - path: AGENTS.md
       owner: repository-agent-navigation
@@ -192,4 +196,12 @@ spec:
     - path: examples/canonical-projection/evidence/check.go
       owner: canonical-projection-lifecycle
     - path: internal/host/canonical_verification_test.go
+      owner: canonical-projection-lifecycle
+    - path: docs/design/brownfield-representation-adoption.md
+      owner: canonical-adoption-design
+    - path: docs/strategy/sources/canonical-reset/markitect-coordinator-steer-latest-architecture-clarifications.md
+      owner: owner-supplied-architecture-direction
+    - path: internal/host/canonical_adoption.go
+      owner: canonical-projection-lifecycle
+    - path: internal/host/canonical_adoption_test.go
       owner: canonical-projection-lifecycle
