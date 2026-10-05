@@ -44,9 +44,14 @@ go run ./cmd/markitect canonical --repo . --config examples/canonical-projection
 
 A .NET candidate is one UTF-8 JSON object: `requestDigest` must match that exact request, and `files` contains exact `path`/`content` pairs. No globs, duplicate paths/object members, implicit scope expansion, source mutation or arbitrary file extensions are accepted. Candidate preparation never creates canonical truth.
 
+Build one fixed executable before reviewing mutable targets, and keep candidate/plan/record files outside admitted snapshot inputs. The following `.artifacts` workspace is excluded by the source acquisition contract; using a new ordinary repository file for the saved plan would change the reviewed input snapshot. Rebuilding a tool between Plan and Apply can also invalidate its tool binding.
+
 ```powershell
-go run ./cmd/markitect canonical --repo . --config examples/canonical-projection/canonical.yaml --action plan --revision CURRENT --api-version markitect.foundation/v1 --kind Projection --namespace commerce --name application-dotnet --report candidate.json > reviewed-plan.yaml
-go run ./cmd/markitect canonical --repo . --config examples/canonical-projection/canonical.yaml --action apply --revision CURRENT --api-version markitect.foundation/v1 --kind Projection --namespace commerce --name application-dotnet --report candidate.json --plan reviewed-plan.yaml --expect REVIEWED_CANDIDATE_DIGEST --write
+New-Item -ItemType Directory -Force .artifacts/canonical-review | Out-Null
+go build -o .artifacts/canonical-review/markitect.exe ./cmd/markitect
+$markitectBinary = (Resolve-Path .artifacts/canonical-review/markitect.exe).Path
+& $markitectBinary canonical --repo . --config examples/canonical-projection/canonical.yaml --action plan --revision CURRENT --api-version markitect.foundation/v1 --kind Projection --namespace commerce --name application-dotnet --report .artifacts/canonical-review/candidate.json > .artifacts/canonical-review/reviewed-plan.yaml
+& $markitectBinary canonical --repo . --config examples/canonical-projection/canonical.yaml --action apply --revision CURRENT --api-version markitect.foundation/v1 --kind Projection --namespace commerce --name application-dotnet --report .artifacts/canonical-review/candidate.json --plan .artifacts/canonical-review/reviewed-plan.yaml --expect REVIEWED_CANDIDATE_DIGEST --write
 ```
 
 `--expect` is the emitted candidate digest, not an authentication token. Apply rebinds and recomputes the complete saved review report against fixed source, observed bytes, config/check arguments, tool, protected source and candidate inputs. Changing any reviewed input rejects the plan. Named non-protected branch, exact-path, alias/collision, preimage and partial-failure protections reuse the validated writer. Deletion is unsupported in this slice.
@@ -55,10 +60,10 @@ Apply emits a `materialized-unverified` ProjectionRecord in its report. It does 
 
 ## Immutable verification and assurance
 
-Commit materialized outputs to obtain full immutable `TARGET`. Supply one closed JSON ProjectionRecord in `record.json`:
+Commit materialized outputs to obtain full immutable `TARGET`. Supply one closed JSON ProjectionRecord in `.artifacts/canonical-review/record.json`:
 
 ```powershell
-go run ./cmd/markitect canonical --repo . --config examples/canonical-projection/canonical.yaml --action verify --base CURRENT --revision TARGET --evidence record.json
+go run ./cmd/markitect canonical --repo . --config examples/canonical-projection/canonical.yaml --action verify --base CURRENT --revision TARGET --evidence .artifacts/canonical-review/record.json
 ```
 
 Host checks exact source/capability/scope/policy and recorded target bytes/modes, then executes declared literal check argument arrays against immutable materializations. Each check identity binds its arguments plus the full evidence revision/snapshot, including checker source bytes. It does not hash the PATH executable, sandbox the process, authenticate the verifier or prove check independence/sufficiency. Missing checks are incomplete; failed checks fail. Evidence remains separate from canonical intent and ProjectionRecord.
