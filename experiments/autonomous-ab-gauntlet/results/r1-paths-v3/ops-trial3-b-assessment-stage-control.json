@@ -1,0 +1,166 @@
+{
+  "schema": "autonomous-ab-ops-trial3-b-assessment-staging/v1",
+  "source_arena": "r1-paths-v3",
+  "freeze_digest": "4faee78795986559e91a0e233bd7321a9cf48526d331edba621ca98eee11638a",
+  "planned_captures": 15,
+  "copier_source_sha256": "9dd6f9a4a19cda3f558492f7da009662afe25d16a837e569cef1498e780aa7b7",
+  "copier_binary_sha256": "09936044fa210ca7a95336b9012fad9601f7030ba951cff426e9da99683e1296",
+  "stager_binary_sha256": "11eaf8f1261cb783979f17d16154d40c05b238b0077b38804e8594ace3399ec8",
+  "evidence_boundary": "Terminal B trial3 captures only; frozen oracle on isolated sibling copies. B03 initial helper evidence is unavailable and omitted, not reconstructed. No holdout, candidate, source, native record, response or oracle mutation. Partial evidence retained; no overwrite/deletion.",
+  "human_acceptance": false,
+  "unavailable_initial": [
+    "engineering-ops-b-t03/03"
+  ],
+  "plan": [
+    {
+      "arena": "ops3bf",
+      "phase": "final",
+      "run_id": "engineering-ops-b-t03",
+      "task_id": "01",
+      "source_native": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3\\runs\\engineering-ops-b-t03\\01.native.yaml",
+      "source_native_sha256": "ac6ffa8e15955de3f7ffc68533e5c856fe638052aef2c3a3e1e83a6fef262daf",
+      "selected_snapshot": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3\\results\\engineering-ops-b-t03\\snapshots\\01",
+      "initial_helper_sha256": null
+    },
+    {
+      "arena": "ops3bf",
+      "phase": "final",
+      "run_id": "engineering-ops-b-t03",
+      "task_id": "02",
+      "source_native": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3\\runs\\engineering-ops-b-t03\\02.native.yaml",
+      "source_native_sha256": "1c739114c1bd6d90d559de06cf14df03dbee4b8973ea3a2abf434b957c7e2ad5",
+      "selected_snapshot": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3\\results\\engineering-ops-b-t03\\snapshots\\02",
+      "initial_helper_sha256": null
+    },
+    {
+      "arena": "ops3bf",
+      "phase": "final",
+      "run_id": "engineering-ops-b-t03",
+      "task_id": "03",
+      "source_native": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3\\runs\\engineering-ops-b-t03\\03.native.yaml",
+      "source_native_sha256": "d1f89e8b72ba41a1719dfa298dae20dfee7838fbb17aa73e43c1bc8dbe38d128",
+      "selected_snapshot": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3\\results\\engineering-ops-b-t03\\snapshots\\03",
+      "initial_helper_sha256": null
+    },
+    {
+      "arena": "ops3bf",
+      "phase": "final",
+      "run_id": "engineering-ops-b-t03",
+      "task_id": "04",
+      "source_native": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3\\runs\\engineering-ops-b-t03\\04.native.yaml",
+      "source_native_sha256": "0911a1f5816ac3c47e8c23dd07df8fce68155e2933e6a1dde76af39c9f97a0b9",
+      "selected_snapshot": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3\\results\\engineering-ops-b-t03\\snapshots\\04",
+      "initial_helper_sha256": null
+    },
+    {
+      "arena": "ops3bf",
+      "phase": "final",
+      "run_id": "engineering-ops-b-t03",
+      "task_id": "05",
+      "source_native": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3\\runs\\engineering-ops-b-t03\\05.native.yaml",
+      "source_native_sha256": "4b79ca2ef52895f1b1694fda2f3a209b4347f83ff0e383a8f55775d53d9d8ad6",
+      "selected_snapshot": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3\\results\\engineering-ops-b-t03\\snapshots\\05",
+      "initial_helper_sha256": null
+    },
+    {
+      "arena": "ops3bf",
+      "phase": "final",
+      "run_id": "engineering-ops-b-t03",
+      "task_id": "06",
+      "source_native": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3\\runs\\engineering-ops-b-t03\\06.native.yaml",
+      "source_native_sha256": "cb0647720a2c5f6348154e56183539936296f7a609aa40552574c502e1221b40",
+      "selected_snapshot": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3\\results\\engineering-ops-b-t03\\snapshots\\06",
+      "initial_helper_sha256": null
+    },
+    {
+      "arena": "ops3bf",
+      "phase": "final",
+      "run_id": "engineering-ops-b-t03",
+      "task_id": "07",
+      "source_native": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3\\runs\\engineering-ops-b-t03\\07.native.yaml",
+      "source_native_sha256": "86f90207a48b35705543d8b4b3a00b159592b651481a11b4069dc1dd50e0581c",
+      "selected_snapshot": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3\\results\\engineering-ops-b-t03\\snapshots\\07",
+      "initial_helper_sha256": null
+    },
+    {
+      "arena": "ops3bf",
+      "phase": "final",
+      "run_id": "engineering-ops-b-t03",
+      "task_id": "08",
+      "source_native": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3\\runs\\engineering-ops-b-t03\\08.native.yaml",
+      "source_native_sha256": "38c93dbb4c2e03c81c186b576c3fed2d3ae5458eebb252760761b412bbc9782c",
+      "selected_snapshot": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3\\results\\engineering-ops-b-t03\\snapshots\\08",
+      "initial_helper_sha256": null
+    },
+    {
+      "arena": "ops3bb",
+      "phase": "before-repair",
+      "run_id": "engineering-ops-b-t03",
+      "task_id": "01",
+      "source_native": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3\\runs\\engineering-ops-b-t03\\01.native.yaml",
+      "source_native_sha256": "ac6ffa8e15955de3f7ffc68533e5c856fe638052aef2c3a3e1e83a6fef262daf",
+      "selected_snapshot": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3\\raw\\engineering-ops-b-t03\\01\\snapshots\\01-check-1",
+      "initial_helper_sha256": "654c938b3fca2d98a9e0ac6851bb2ba56bb0731a6a2d814058196edae300a558"
+    },
+    {
+      "arena": "ops3bb",
+      "phase": "before-repair",
+      "run_id": "engineering-ops-b-t03",
+      "task_id": "02",
+      "source_native": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3\\runs\\engineering-ops-b-t03\\02.native.yaml",
+      "source_native_sha256": "1c739114c1bd6d90d559de06cf14df03dbee4b8973ea3a2abf434b957c7e2ad5",
+      "selected_snapshot": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3\\raw\\engineering-ops-b-t03\\02\\snapshots\\02-check-1",
+      "initial_helper_sha256": "78f6a4608f945da174b5871465d378892c2a6098ce12d50e03a28ce5476bad8b"
+    },
+    {
+      "arena": "ops3bb",
+      "phase": "before-repair",
+      "run_id": "engineering-ops-b-t03",
+      "task_id": "04",
+      "source_native": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3\\runs\\engineering-ops-b-t03\\04.native.yaml",
+      "source_native_sha256": "0911a1f5816ac3c47e8c23dd07df8fce68155e2933e6a1dde76af39c9f97a0b9",
+      "selected_snapshot": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3\\raw\\engineering-ops-b-t03\\04\\snapshots\\04-check-1",
+      "initial_helper_sha256": "856deb5c7b5953111cb06c70854fdd4863f264955b1b3a121d89a5d2fcfdcb31"
+    },
+    {
+      "arena": "ops3bb",
+      "phase": "before-repair",
+      "run_id": "engineering-ops-b-t03",
+      "task_id": "05",
+      "source_native": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3\\runs\\engineering-ops-b-t03\\05.native.yaml",
+      "source_native_sha256": "4b79ca2ef52895f1b1694fda2f3a209b4347f83ff0e383a8f55775d53d9d8ad6",
+      "selected_snapshot": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3\\raw\\engineering-ops-b-t03\\05\\snapshots\\05-check-1",
+      "initial_helper_sha256": "516b68ade78485885a85488fde885d717231f62a58545eb73cb6c627a82c9aeb"
+    },
+    {
+      "arena": "ops3bb",
+      "phase": "before-repair",
+      "run_id": "engineering-ops-b-t03",
+      "task_id": "06",
+      "source_native": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3\\runs\\engineering-ops-b-t03\\06.native.yaml",
+      "source_native_sha256": "cb0647720a2c5f6348154e56183539936296f7a609aa40552574c502e1221b40",
+      "selected_snapshot": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3\\raw\\engineering-ops-b-t03\\06\\snapshots\\06-check-1",
+      "initial_helper_sha256": "5930ca4fa7d19d9a66248e08187a1f598dfcb3c1bd422e258ecde70c10399460"
+    },
+    {
+      "arena": "ops3bb",
+      "phase": "before-repair",
+      "run_id": "engineering-ops-b-t03",
+      "task_id": "07",
+      "source_native": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3\\runs\\engineering-ops-b-t03\\07.native.yaml",
+      "source_native_sha256": "86f90207a48b35705543d8b4b3a00b159592b651481a11b4069dc1dd50e0581c",
+      "selected_snapshot": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3\\raw\\engineering-ops-b-t03\\07\\snapshots\\07-check-1",
+      "initial_helper_sha256": "c5b43df3ba78ea88d2a1e4ed497ab84318e78c5fcd255f1538bb861503caea22"
+    },
+    {
+      "arena": "ops3bb",
+      "phase": "before-repair",
+      "run_id": "engineering-ops-b-t03",
+      "task_id": "08",
+      "source_native": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3\\runs\\engineering-ops-b-t03\\08.native.yaml",
+      "source_native_sha256": "38c93dbb4c2e03c81c186b576c3fed2d3ae5458eebb252760761b412bbc9782c",
+      "selected_snapshot": "C:\\Users\\Consiliari\\.codex\\visualizations\\2026\\10\\02\\01a0fcc6-bbb1-7f82-bc44-aac6dc9df4e3\\autonomous-ab-gauntlet\\r1-paths-v3\\raw\\engineering-ops-b-t03\\08\\snapshots\\08-check-1",
+      "initial_helper_sha256": "250a6320355e3037073b752c1d93eba255e83f7801ca6b41ce4979ac4024b14e"
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+schema: autonomous-ab-ops-additional-oracle-findings/v1
+source_arena: r1-paths-v3
+freeze_digest: 4faee78795986559e91a0e233bd7321a9cf48526d331edba621ca98eee11638a
+scope: component review of already-aggregate-excluded B trial3 tasks07-08
+findings:
+  - component: lease-renewal-runbook
+    task: '08'
+    raw_status: failed
+    classification: benchmark-design-issue
+    desired_statement: Explain idempotency, request-ID retention, timeout reporting, and secret/payload log privacy; declare the input.
+    lexical_predicate: evaluate.ps1 line302 requires the literal idempotency word.
+    observed_statement: Reuse the original request ID for retries; repeated operations must not create a second renewal; retain the ID through reconciliation and until the outcome is known. Timeout outcome is unknown and secrets/credentials/payloads must not be logged.
+    ownership_evidence: The canonical engineering-operations Skill declares the exact lease-renewal runbook path.
+    independent_conclusion: The text explains the requested behavior without the literal word. The idempotency substring is an unasked wording constraint.
+  - component: b7-guidance-and-gates
+    tasks: ['07', '08']
+    raw_status: failed
+    classification: benchmark-design-issue; documentation expectation requires clarification in a future freeze
+    desired_statement: Update verification guidance, project hook/pipeline declarations and literal check expectations; retain root/nested tests and artifact/projection checks while adding vet.
+    lexical_predicate: evaluate.ps1 lines208-210 require exact root and nested command strings within the canonical verification Rule text.
+    observed_statement: The Rule names vet, root and nested Go tests, says root tests do not cover the nested module, and identifies exact hook/pipeline/module-config inputs. Project check declarations own the concrete commands.
+    independent_evidence: Captured hook and CI contain all three Go commands. The isolated final task08 Markitect/render/module/artifact/root/nested/vet checks pass.
+    independent_conclusion: Repeating command strings in this paragraph is stricter than the task wording. Missing those strings does not demonstrate a missing or unowned check; command availability in arbitrary agent context is not established by this review.
+    limitation: Explicit inline commands may be a useful documentation preference. This review does not decide that preference on behalf of an owner.
+evidence:
+  task_set_sha256: d3f593eec9b295f48d2704425be10ea477d8d22c18799ed66b9ea5a37aa2c56b
+  evaluator_sha256: 99e466a7c14fda0239c073ad8b5da0f8688696c8b6bbd43f130834c2cd7cce4c
+  task07_raw_sha256: edfbc5489c8452fd106a5ee8c65ec55aaba828dc41d0040ed563ce22f7b4567b
+  task08_raw_sha256: dfe9beccf064c6a483934bca16fe84dfd74b617481d856d2f7fbbce99ab5e726
+  final_task08_capture: ../ops3bf/results/engineering-ops-b-t03/snapshots/08-final/workspace
+  lease_runbook_sha256: 0a77b74abd9caf10292fe2b22b44e74b4af9eef153c34623166bc6d0a520bb72
+  verification_rule_sha256: a4cb2cd6645a2188fb4139066e8f35d48f78fadc6efe28a24584750f62b56e26
+  verification_projection_sha256: 9f19a50fd7730e9df94c37f847ae4b82cb61679311637428168f2135a7ae781e
+  pipeline_config_sha256: 0d6860a7b57f85b0ad3a74d7824a64ff66e2bed976d0bdabad800f1ebe7474b0
+  hook_config_sha256: 486b4c708f2925e3cc5720f91996d330ed26e635e4709fdedf8daebd46686c39
+  project_checks_sha256: 55d3dcac023b2b3707cc3ee7fde8ee5d355726758cc2af2da028c369f51353f1
+  ci_sha256: 078240052f33ad685df3b68f653915973ec1caa3cfa675a321f32c798dae2090
+  hook_sha256: 6e7606b222c761b3925792253cd15d618cebafad936b11f48431b384101ab292
+preservation:
+  existing_paired_exclusion: assessment-run-exclusions.yaml remains unchanged; no overlapping new exclusion
+  raw_component_and_task_statuses: remain failed; no waiver or rescore
+  task03_and_task04: Owner-decision mutations remain separate negative findings.
+  public_runtime_and_projection_failures: retained; later isolated checks do not rescue protocol outcomes
+  product_candidate_and_oracles: unchanged
+  actor_feedback: none
+  human_acceptance: none; this is a read-only automated source/predicate review
+  future_correction: separately frozen protocol and paired replay required

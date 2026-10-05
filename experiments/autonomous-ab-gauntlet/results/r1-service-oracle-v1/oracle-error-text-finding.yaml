@@ -1,0 +1,31 @@
+schema: autonomous-ab-oracle-error-text-finding/v1
+source_arena: r1-service-oracle-v1
+freeze_digest: cc6124d1bd179f0824cde31947b929412562d2991879474ba2d02e855f4062f7
+classification: benchmark-design-issue
+scope: separate non-scoring finding for already-controller-excluded trial2
+requirement: Repeating an order/SKU key with a different quantity returns an explicit conflict and leaves original reservation and stock unchanged.
+failed_predicate: task01 vector additionally requires the literal substring conflict in error.Error().
+observed_implementation: Exported ErrConflict sentinel has message reservation key reused with different quantity. Reserve returns it before stock mutation for a reused key with a different quantity.
+observed_focused_test: errors.Is(err, ErrConflict) plus unchanged stock.
+independent_review: The task does not declare error-message wording. The typed sentinel is a caller-visible conflict signal; the failed substring is an unasked formatting requirement.
+evidence:
+  task_source: projects/modular-service/task-set.yaml
+  task_source_sha256: 020fbe8d60c66ded59c32b74654a883d17e6e99d054f19b3b60a97608f3bf00e
+  vector: projects/modular-service/oracle/vectors/task01_test.go.txt
+  vector_sha256: bb43425e68488be39b092e1e05e2138aa3ed880e8d997785db48774a9ec06266
+  comparison_expression_lines: 27-29
+  terminal_source: ../svc2f/results/modular-service-a-t02/snapshots/01-final/workspace/internal/modules/inventory/service.go
+  terminal_source_sha256: 5190a9ee405925b09212fae2b7140380037eaa7357d73f3e1012f5f6265b960f
+  terminal_test: ../svc2f/results/modular-service-a-t02/snapshots/01-final/workspace/internal/modules/inventory/service_test.go
+  terminal_test_sha256: 955473e972639f79952fa3e2b07efb25dab714354a4f759511a93d104876f008
+preservation:
+  raw_idempotency_vector_status: failed at A2 tasks01-08, initial and final
+  aggregate_trial2_comparison: already excluded symmetrically by runtime-run-exclusions.yaml; no overlapping new exclusion
+  current_oracle_and_candidate: unchanged
+  rescore_or_waiver: none
+  actor_feedback: none; later actors remain blind
+  human_acceptance: none
+limits:
+  - Source/focused-test review concerns this repeated-key/different-quantity case, not arbitrary business correctness.
+  - No replacement probe or softened vector was run against this scored cohort.
+  - A future correction needs a separately frozen protocol and paired replay with an explicit bounded proof of conflict semantics.
