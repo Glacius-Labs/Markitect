@@ -956,6 +956,27 @@ func analyzeTask(arena string, n nativeRecord, c taskCard, cardOK bool) (taskRep
 			}
 		}
 	}
+	// Export proofs bind original evaluator bytes to the returned record. Keep
+	// them as byte-bound evidence; do not follow their external paths or treat
+	// their claims as another evaluator/acceptance source.
+	for _, phase := range []string{"final", "before-repair"} {
+		p := filepath.Join(arena, "raw", n.RunID, n.TaskID+"."+phase+".evaluation-export.yaml")
+		p, err = safeArenaFile(arena, p)
+		if err != nil {
+			return t, err
+		}
+		info, fileErr := os.Stat(p)
+		if errors.Is(fileErr, os.ErrNotExist) {
+			continue
+		}
+		if fileErr != nil {
+			return t, fileErr
+		}
+		if !info.Mode().IsRegular() {
+			return t, fmt.Errorf("evaluation export proof is not a regular file: %s", p)
+		}
+		t.RawReferences = append(t.RawReferences, relative(arena, p))
+	}
 	sort.Strings(t.RawReferences)
 	for _, ref := range t.RawReferences {
 		path, err := arenaPath(arena, ref)
