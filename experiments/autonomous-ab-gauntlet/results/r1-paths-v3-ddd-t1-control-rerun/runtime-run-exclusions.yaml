@@ -1,0 +1,49 @@
+schema: autonomous-ab-run-exclusions/v1
+freeze_digest: 4faee78795986559e91a0e233bd7321a9cf48526d331edba621ca98eee11638a
+arena: r1-paths-v3-ddd-t1-control-rerun
+runs:
+  - run_id: vertical-slices-a-t02
+    reason: The controller transcribed a different PATH in task02 repair1 dispatch than the frozen envelope; exclude the entire paired trial rather than attributing environment asymmetry to either product arm.
+  - run_id: vertical-slices-b-t02
+    reason: Paired exclusion for the A task02 repair1 controller dispatch transcription; independent descriptive outcomes remain preserved.
+scope: exact-listed-run-ids-only
+reported_deviation:
+  run_id: vertical-slices-a-t02
+  task_id: "02"
+  attempt: 1
+  envelope:
+    path: runs/vertical-slices-a-t02/02.attempt-1.envelope.yaml
+    sha256: 702d801ee0e7a047bf88bed4f077fcad80f9e65d8aeefe86a6c508858001012d
+  submitted_dispatch_transcription:
+    path: raw/vertical-slices-a-t02/02/attempt-1.dispatch.txt
+    sha256: ff36e9eba34ff4cbf485f05be970aa2e9960667f3eb3bdff0f72a64a5df3684b
+    provenance: Operator-retained transcription of its submitted collaboration message; native API byte export is unavailable.
+  deviation: Duplicated codex-arg06uMClL PATH segment and changed ordering relative to the exact frozen repair envelope.
+  contradictory_instruction: The same message told the actor to load actor_prompt and environment verbatim from the envelope.
+  actual_process_environment: unavailable
+  inference_limit: This establishes a controller-reported dispatch mismatch, not the exact environment ultimately used by the actor or a Markitect defect.
+continuation:
+  trial2: May finish development tasks 01-08 descriptively; no paired redo and no trial2 holdout.
+  trial3: Independent predeclared trial starts from the frozen seeds with exact envelope dispatch.
+  feedback: No interruption or additional advice to the active repair actor; only the original public failure output remains repair feedback.
+preservation:
+  raw_actor_records: unchanged
+  frozen_product_harness_oracles: unchanged
+  comparison: Both trial2 arms excluded from comparative correctness, drift, repair and holdout claims.
+trial1_distinction:
+  run_id: vertical-slices-b-t01
+  task_id: "07"
+  attempt: 1
+  attribution: Actor-reported helper-shell PATH transcription error; controller dispatch transcription is unproven.
+  envelope_sha256: 7e00610ad36f5213038f68773d76f5f24705804b410ed37dab105db6cb84bb7d
+  actor_response:
+    path: raw/vertical-slices-b-t01/07/attempt-1.actor-response.txt
+    sha256: 1bd68c2b62d42b3c6ed260f8b71fb62aeca4b04a52e6ed047ce7270b361ece1c
+  helper_receipt_sha256: d001d56ac6c88b481a117d202fab48a448b714ed2756864133ffc815b18bc47a
+  public_output_sha256: 2cb246c7ac947e324b016819b85cf96a7c7f51db1717a08fce9c121de4e1ce82
+  actor_statement: I made a transcription error in the helper shell's PATH; its Hashicorp package entry differed from the envelope. The render shell used the supplied PATH.
+  actual_path_value: unavailable
+  decision: Preserve the existing protocol-invalid task status; this evidence does not justify a paired controller exclusion for trial1.
+classification:
+  benchmark_controller_issue: true
+  markitect_product_defect_proven: false

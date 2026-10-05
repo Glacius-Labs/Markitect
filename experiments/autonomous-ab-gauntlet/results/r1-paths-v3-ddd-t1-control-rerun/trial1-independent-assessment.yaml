@@ -1,0 +1,90 @@
+schema: autonomous-ab-ddd-independent-assessment-checkpoint/v1
+arena: r1-paths-v3-ddd-t1-control-rerun
+freeze_digest: 4faee78795986559e91a0e233bd7321a9cf48526d331edba621ca98eee11638a
+product_source: adef79d935399f8ac63ad874dbdeab8d15c418a1
+scope: trial1 development tasks 01-08; no holdout or overall winner
+assessment_authority: Independent AI assessments and root evidence review; not human/project-owner acceptance.
+input_boundaries:
+  separate_assessors: Each fresh assessor received one arm only, frozen development procedure/cards/rubric, captured snapshots and exact responses.
+  runtime: Windows; .NET SDK 8.0.418; runtime probes on separate copies, not actor snapshots.
+  sandbox_identity_difference: A probes ran as CodexSandboxOffline; B probes ran as the owner execution identity. Process identity parity is not proven.
+  actual_full_read_audit: unavailable
+  product_and_actor_changes: none
+reports:
+  a_v1:
+    path: ddd-a-independent-behavior-v1/assessment.yaml
+    sha256: 4e80c99321a59b854bda030040c4255baf2a46c781d998ce047dc8935a081396
+    status: Superseded report claims; raw report and receipts retained unchanged.
+  a_v2:
+    path: ddd-a-independent-behavior-v2/assessment.yaml
+    sha256: 901793bb0854011846a4597c55cf0dad4d71939ea3cc6ba04d0a087263273112
+    status: Root inspected corrected rows, public component APIs, source hashes and valid YAML.
+    correction_manifest:
+      path: ddd-a-independent-behavior-v2/correction-manifest.yaml
+      sha256: 5d27bbf25a837ff2a1f04e7c8b98f924bb0088de8a800dc360537b852f6b4921
+  b_v1:
+    path: ../ddd-b-independent-behavior-v1/assessment.yaml
+    sha256: 7451cfc97446c4984cef8bca2e57d4ea23d813bb3e37d65bd1d6764fe124ef9d
+    status: Original serialization is invalid YAML because a quoted runtime identity contains an unescaped backslash; bytes retained.
+  b_serialization_v2:
+    path: ../ddd-b-independent-behavior-v1/assessment-serialization-v2.yaml
+    sha256: eb2c5d3395fb05b75508745e98664963a1d5891ca5e28f3434b7c054a4a95f14
+    status: Root verified valid YAML and exact backslash-only correction; assessment claims unchanged.
+protocol:
+  planned_tasks_per_arm: 8
+  a:
+    completed: ["02", "04", "05", "06", "07", "08"]
+    protocol_invalid: ["01", "03"]
+    fresh_repairs: 2
+  b:
+    completed: ["01", "02", "08"]
+    protocol_invalid: ["03", "04", "05", "06", "07"]
+    fresh_repairs: 2
+  interpretation: Later independent functional success never rescues invalid actor/helper protocol. Completed status alone never establishes hidden task correctness.
+functional:
+  frozen_named_vector_count: 22
+  a:
+    named_report_rows_passed: 20
+    named_report_rows_unavailable: 2
+    unavailable:
+      - task: "06"
+        vector: duplicate-validator-before-handler-dispatch
+        why: Standalone Validator and Handler exist, but no public composition guaranteeing validation before handler work can be invoked.
+      - task: "08"
+        vector: accumulated-01-through-07
+        why: The accumulated assertion includes the same unproven task06 dispatch contract; other named cases passed separately.
+    component_passes: Standalone duplicate Validator and aggregate duplicate defense; these do not prove composed pre-handler dispatch.
+    corrected_task04: Placement and cancellation both use the exact frozen 2026-10-04T12:00:00Z fake clock; the earlier 12:07 report wording is superseded.
+  b:
+    frozen_vectors: All named frozen behavior vectors have passing probe evidence.
+    raw_report_row_count: 23
+    denominator_limit: One extra repeated unknown-code case is descriptive, not an additional frozen requirement; do not compare 23 raw rows with A's 22.
+    task06: Actual public Handler invocation rejects duplicates before observed clock/stock/payment calls; direct aggregate defense and distinct-product case separately pass.
+  original_assertions: Both assessments manually compared all six original assertion meanings against exact start/final Git blobs; meanings retained. Task01's permitted two-unit total correction remains explicit.
+architecture_and_ownership:
+  a: Eight combined task-level ownership/boundary rows pass; do not treat these combined rows as an independent component-count score.
+  b:
+    tasks01_through05: Named reviewed ownership/boundary components pass.
+    task06: Code has a Validator but create-order validators remains empty and no Validator owner/projection is modeled.
+    task07: Query and Handler are implemented but their canonical owners/projections are absent; declaring paths as Skill inputs is not semantic ownership.
+    task08: Code is renamed to SubmitOrderHandler but the canonical Handler name/reference still describes create-order-handler.
+    report_component_row_count: 15
+    denominator_limit: Components are grouped differently from A; raw architecture row counts are not comparative scores.
+  forbidden_module_edges: No direct Orders to Inventory/Billing implementation reference found in the reviewed checkpoints.
+  allowed_paths: Assessed against each native task's exact base, not another task's snapshot.
+  b_task07_prior_false_alarm: Comparing task07 to task05 initially suggested an extra path mutation; exact task06 base disproved it before the final report.
+byte_integrity:
+  captured_checkpoints: All eight final snapshots per arm were source-ledger validated before independent probes.
+  b_initial_task06: Unavailable/corrupt capture remains excluded; final task06 is intact and distinct.
+  a_task06_handler_sha256: 7c2e1e07b2fcfd6b33eb32b338e024ff72858e5201a521204234ecb2582b9f88
+  a_task06_validator_sha256: 98e4b9fcb531919c48437f664977a6eb804775280b519a1c35894164f467ae6a
+  a_task08_handler_sha256: faebc258a50a4166b14978ce3cb35bb6b20d894401758844f584a0d3691f84b4
+  a_task04_exact_probe_sha256: 65718864bee041a8dfcf5e220e56bd3a86ae1000ebfca09def555cf14c9d72c3
+  a_earlier_clock_setup: Preserved but not scored; retained source copy differs from its earlier receipt fingerprint, as disclosed in the v2 report.
+measurement_limits:
+  - No token, productivity, attention, defect-rate or real-adopter benefit claim.
+  - This is one synthetic trial; other trials are still running or unavailable.
+  - Trial2 paired controller exclusion is separate and does not reclassify trial1 observations.
+  - No source-language semantics or new Core operator was introduced.
+  - Ownership gaps are agent/workflow and check-coverage findings; they do not prove a generic Core language limitation.
+  - Exact external paths are references only; this checkpoint grants no read authority and is not ingested as a human acceptance record.
