@@ -1,0 +1,31 @@
+record: postrun-portfolio-location-review/v2
+review_scope:
+  inputs:
+    - path: tools/autonomous-ab-gauntlet/portfolio/v1/main.go
+      sha256: c6f15ecdba6dc0b01429f9d0ab0b36d3fb8d90a60f3a39fa6402ce11096b984b
+    - path: tools/autonomous-ab-gauntlet/portfolio/v1/main_test.go
+      sha256: 5213f561c84fb763cd05491f2fc8451721874beb3a66084af9ad09de9df0265a
+    - path: experiments/autonomous-ab-gauntlet/portfolio/README.md
+      sha256: 2045a67f9c2401a47e1064eda58c29f6cc5ef40b93d8486805bdf924ab240199
+    - path: internal/tooling/architecture/imports.go
+      sha256: b564559f0c59deb9cd6100ddbdb12666eaf18d00c38437f3ace527f468f02be1
+    - path: external/postrun-portfolio-source-review-v1.yaml
+      sha256: 4647cc33c7ff5a02fca7039233facb7e2f1f648b9df92f0fedec248e245a089f
+  method: source-only location/classification review; no execution
+  exclusions:
+    - real arenas, reports, actors, outcomes, or holdout data
+    - source edits, commits, or acceptance decisions
+findings:
+  status: location_move_preserves_previously_reviewed_tool_semantics
+  evidence:
+    - "The moved main.go hash is identical to the previously reviewed source hash c6f15ecdba6dc0b01429f9d0ab0b36d3fb8d90a60f3a39fa6402ce11096b984b."
+    - "The moved main_test.go hash is identical to the previously reviewed test hash 5213f561c84fb763cd05491f2fc8451721874beb3a66084af9ad09de9df0265a."
+    - "README.md now names tools/autonomous-ab-gauntlet/portfolio/v1 and invokes go run ./tools/autonomous-ab-gauntlet/portfolio/v1."
+    - "imports.go:49-50 classifies tools and all descendants as tooling; imports.go:116-117 applies the existing rule that Tooling may not import runtime composition."
+    - "The moved main.go and tests import standard-library packages and go.yaml.in/yaml/v3; no Markitect product package imports are present in their import blocks."
+    - "The prior portfolio source review applies without semantic change because the two Go file digests are byte-identical."
+  conclusion: "Moving the package out of experiments and beneath the existing tools/ Tooling classification does not weaken or change the architecture rule. The reviewed behavior, tests, and documented holdout/selection limits are unchanged."
+  limits:
+    - "This independent review did not rerun the mandatory architecture gate, tests, vet, build, or synthetic CLI QA; those results were provided by the task owner and were not independently reproduced."
+    - "No claims are made about actual report contents, arena completeness, comparison eligibility, outcomes, or human acceptance."
+    - "The README is a workflow/limitations description, not proof of an executed portfolio."

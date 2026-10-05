@@ -1,0 +1,81 @@
+record: postrun-ddd-collector-source-review/v1
+review_scope:
+  inputs:
+    - path: experiments/autonomous-ab-gauntlet/analysis/main.go
+      sha256: ed1d973ff9723ffe24f14d67e86ee3877a2aada57ad4e28ab11db79ee705ea20
+    - path: experiments/autonomous-ab-gauntlet/analysis/main_test.go
+      sha256: b3c42f1ce0e02580316ac2275c2d0a331472ffdc83f638c3bbb9f9f656313767
+    - path: experiments/autonomous-ab-gauntlet/postrun-population.md
+      sha256: 204f10127d60b692166bcc273754821bb9f28c3a40c303dfe002c94d383b8254
+    - path: experiments/autonomous-ab-gauntlet/results/analysis-contract-static-audit-v1.json
+      sha256: e3918c0483c653d5811189a5d1963ddb9dbe70aab2785fc5f8c2da67c402f9c8
+  method: source-only static review; no collector or tests executed
+  exclusions:
+    - any arena files, reports, run records, or task artifacts
+    - actor responses/patches and hidden outcomes
+    - holdout artifacts or outcomes
+    - code changes or commits
+  acceptance: not assessed
+assessment:
+  descriptive_use: conditional; source can emit raw descriptive task/report rows but the direct arena invocation is not safe under a closed-holdout/no-holdout-read boundary because it automatically reads all frozen inputs and scans all native records without a task allowlist
+  evaluator_execution: none identified; source parses existing evaluation YAML and does not invoke the hidden evaluator or dispatch actors
+  mutating_scope: output is required outside the arena; source reads arena records and may execute read-only git commands for revision/churn evidence
+findings:
+  - id: automatic-heldout-metadata-access
+    severity: blocker_if_holdout_must_remain_unread
+    evidence:
+      - "main.go:624-661 reads and hashes every path in freeze.yaml; there is no development-only filter. This may include frozen holdout task/card bytes."
+      - "main.go:511-520 globs every runs/*/*.native.yaml record, with no task-ID or development-only selector."
+      - "main.go:531-537 loads the complete selected project task set; main.go:665-698 parses every task card in that set."
+      - "main.go:700-724 attaches the task card's expected-affected data to a task report. Thus a native holdout row, if present, can cause holdout card expectations to be emitted."
+      - "main.go:742-769 parses existing final evaluation and may read owner assessment data; no evaluator process is launched."
+    disposition: "Do not directly run against the raw arena while holdout metadata is required to remain closed/unread. A separate explicit data-access boundary or filtered, independently verified input is needed; exclusions do not prevent reads."
+  - id: exclusions_are_post_analysis
+    severity: pre_use_check_required
+    evidence:
+      - "main.go:538-540 calls analyzeTask before applying exclusions at main.go:549-560."
+      - "The collector intentionally retains raw evaluation/status and then sets CountedOutcome to invalidated for a matched excluded run."
+      - "main.go:1241-1274 treats missing controls as unavailable and a freeze mismatch as unmatched-freeze with an empty exclusion map; only matching freeze-bound entries apply."
+      - "main.go:475-505 rejects a run ID listed in multiple exclusion-control files; main.go:585-593 errors when an excluded run ID has no native record."
+    disposition: "Before any permitted run, independently verify exact freeze match, explicit runtime and assessment entries for intended exclusions, no cross-file duplicates, and no dangling IDs. Exclusion records are not a read filter."
+  - id: unresolved_actor_started
+    severity: caveat
+    evidence:
+      - "main.go:709-714 copies ActorStatus and defaults evaluation/count outcome to unknown."
+      - "main.go:744-769 changes evaluation status only when an existing evaluation record is present."
+      - "main.go:950-952 downgrades a passed evaluation to incomplete unless actor status is completed and final public-helper status is success."
+      - "main_test.go:66-97 covers a contradictory aggregate/component result for a completed actor, but does not test actor_started plus passed evaluator output."
+    disposition: "The source preserves the raw nonterminal actor status and does not count a passed evaluation for actor_started as passed; it becomes incomplete. Missing evaluation remains unknown. A failed/manual/unknown evaluator status remains that status unless an explicit run exclusion overrides CountedOutcome to invalidated. Tests do not directly lock the actor_started case."
+  - id: nonselected-native-population
+    severity: blocker_for_final_population_interpretation
+    evidence:
+      - "main.go:511-520 and main.go:561 include all discovered native records in the report. There is no manifest/portfolio selector in this command."
+      - "postrun-population.md:7, 15, 17, and 23 require exact arena/freeze/run/task identity, preserve unavailable/excluded rows, and separately review an outcome-independent portfolio."
+    disposition: "Any resulting collector report is a raw source report only. Final designated population requires a separate exact-pin/selection artifact; no pooled denominator, eligibility, or A/B conclusion follows from this collector."
+  - id: known_card_and_denominator_pressure
+    severity: blocker_for_interpreting_card_semantics
+    evidence:
+      - "analysis-contract-static-audit-v1.json records integration-card-selection: main.go:531 selects cards using n.Parallel rather than ParallelIntegration, so a task08 integration can receive ordinary task08 expectations."
+      - "The same audit records denominator-identity and missing-card risks: all native rows are grouped without external one-run-per-sequential-trajectory selection, and missing cards can leave OwnerDecisionRequired false."
+      - "postrun-population.md:19 requires integrations remain separate and ordinary task08 expectations not be used as integration truth."
+    disposition: "Keep ordinary counts/expected-affected values descriptive only; do not interpret integration card expectations or infer selected denominators without the separate external portfolio and a binding integration selection review."
+  - id: incomplete_evidence_reporting
+    severity: caveat
+    evidence:
+      - "main.go:709 initializes missing evaluation/helper/context/impact evidence to unknown or unavailable."
+      - "main.go:1019-1053 marks absent/malformed context/impact sidecars unavailable or partial rather than empty."
+      - "The collector emits only discovered native task rows; absence of a native record produces no task row or planned-cell placeholder."
+      - "postrun-population.md:5 and 21 say planned cells are not completed tasks and missing Context/Impact is unavailable."
+    disposition: "Interpret unknown/unavailable literally. A missing native row must be represented by the separately pinned portfolio as an unavailable designated slot; it is not represented by this collector."
+  - id: output_and_evidence_boundary
+    severity: limitation
+    evidence:
+      - "main.go:247-255 requires --arena and --out."
+      - "main.go:405-411 refuses an output directory inside the arena or an existing destination."
+      - "main.go:434-435 keeps comparison eligibility unavailable and disclaims a winner/productivity/statistical claim."
+      - "main.go:1402-1420 and main.go:1425-1435 invoke read-only git commands for churn; no evaluator or actor is invoked."
+    disposition: "If a separate approval later allows execution, use a fresh external destination and label output raw descriptive. This review neither selected nor approved a destination."
+limitations:
+  - "No actual source-arena status, exclusion record, freeze input path, native identity, report row, or holdout presence was checked. Therefore matching exclusions and the selected arena's concrete run coverage remain unverified."
+  - "No test, collector, evaluator, collector output, or portfolio validator was executed."
+  - "This record assigns no comparison eligibility, score, winner, acceptance, or product outcome."

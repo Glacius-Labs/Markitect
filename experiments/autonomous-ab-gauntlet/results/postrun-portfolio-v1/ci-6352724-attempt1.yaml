@@ -1,0 +1,36 @@
+schema: autonomous-ab-postrun-tooling-pre-use-ci-failure/v1
+source_commit: 63527247ae349cf877970e46c04a8bba5f5cec91
+run_id: 37316010983
+run_attempt: 1
+url: https://github.com/Glacius-Labs/Markitect/actions/runs/37316010983
+quality_jobs:
+- name: Quality (ubuntu-24.04)
+  conclusion: failure
+  completed_at: '2026-10-05T13:20:44Z'
+- name: Quality (windows-latest)
+  conclusion: failure
+  completed_at: '2026-10-05T13:21:08Z'
+failure: Mandatory architecture gate refuses the newly added experiments/autonomous-ab-gauntlet/portfolio/v1
+  package as unclassified.
+classification: Postrun tool ownership/placement error before actual report use; not
+  a frozen Markitect evaluator or actor outcome.
+correction: Move only the postrun tool to the already-classified tools/autonomous-ab-gauntlet/portfolio/v1
+  package. Do not edit the architecture gate or frozen product.
+raw_references:
+- path: ci-6352724-attempt1.provider-run.raw.json
+  sha256: efcacca8a13cbdfe634772aca6bf8289c2898bb0145966ff30bc0e04469d5275
+- path: ci-6352724-attempt1.provider-jobs.raw.json
+  sha256: 2afc7c06bcb3c11794ef0e55e88577833c051265a50dfd91a88086a2f75ec296
+- path: ci-6352724-attempt1.failed.log
+  sha256: 3c5599a0541b5b17c86b737966c3bf7b523936bce6fdf5294eafa1a57ffc10e8
+original_failure_retained: true
+same_commit_retry: false
+actual_portfolio_report_use_before_failure: false
+core_host_module_gate_or_frozen_product_changed: false
+actor_feedback_changed: false
+holdout_opened: false
+limits:
+- The source-only correction requires its own new commit-bound full Windows/Linux
+  gates.
+- A local passing repeat does not erase this failed source gate.
+- No A/B or release conclusion.

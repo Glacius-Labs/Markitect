@@ -1,0 +1,53 @@
+schema: autonomous-ab-postrun-portfolio-tool-location-archive/v2
+source_head_at_validation: 63527247ae349cf877970e46c04a8bba5f5cec91
+source_location: tools/autonomous-ab-gauntlet/portfolio/v1
+scope: Source-only descriptive postrun tooling; no actual report or arena processed.
+archive_directory: postrun-portfolio-location-v2-tools-2026-10-05
+files:
+- path: README.md
+  sha256: 2045a67f9c2401a47e1064eda58c29f6cc5ef40b93d8486805bdf924ab240199
+  bytes: 4518
+- path: main.go
+  sha256: c6f15ecdba6dc0b01429f9d0ab0b36d3fb8d90a60f3a39fa6402ce11096b984b
+  bytes: 23946
+- path: main_test.go
+  sha256: 5213f561c84fb763cd05491f2fc8451721874beb3a66084af9ad09de9df0265a
+  bytes: 24192
+- path: portfolio-v1.exe
+  sha256: 203d22ae8afcc91e867c84858dc680e58cb03ce898d2a346391f319052b31f2f
+  bytes: 4237312
+- path: root-qa.log
+  sha256: 6956f818112c6e9e5ef0e2fa9a6816776d526189df9f4d0ab49abafa00a1b7fb
+  bytes: 7984
+- path: synthetic-cli-qa.yaml
+  sha256: 0ad5a8bbce8a0fdd1864c23d486a6b23bd320c7db1c6b4762560d11928823619
+  bytes: 914
+- path: independent-location-review.yaml
+  sha256: 2fcb9426353d4e2583962526e2eb7492fb4a7c11dc6b1d51157a7da6165fbac0
+  bytes: 2638
+preserved_prior_archive_sha256: 2b58d6d473dfd79f8989f89c45cbb4540b9b5427a2a5391de9a8cbeb0494e94b
+preserved_pre_use_ci_failure:
+  path: ci-6352724-attempt1.yaml
+  sha256: ca4a721bcb9ca7e8a6735ad29e396519e69501bba9f53ccd4cf80fd1f526e6fb
+change: Go source/test bytes moved unchanged into the already-classified Tooling subtree;
+  README invocation path updated.
+architecture_gate_changed: false
+core_host_module_or_frozen_product_changed: false
+validation:
+  go_version: go1.27.1 windows/amd64
+  mandatory_architecture_and_portfolio_tests_exit_code: 0
+  go_vet_exit_code: 0
+  go_build_exit_code: 0
+  synthetic_cli_fresh_exit_codes:
+  - 0
+  - 0
+  existing_output_refusal_exit_code: 1
+actual_report_invocations: 0
+comparison_eligibility_assigned: false
+holdout_opened: false
+limits:
+- Normal new-commit Windows/Linux quality gates are separate and still required.
+- Independent review was source-only and did not independently rerun owner-provided
+  gates.
+- Source/tool hashes prove identity, not acceptance or report completeness.
+- The original CI failure and original source-location archive remain unchanged.

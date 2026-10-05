@@ -1,10 +1,10 @@
 # Post-run portfolio
 
-The versioned validator in `v1` accepts an explicit manifest of already-produced analysis reports. It verifies each report's exact bytes, report schema, declared analysis-source hash, freeze digest, and arena/report identity, then copies only manifest-designated task rows into a descriptive YAML portfolio record. This follows the experiment population contract in `postrun-population.md`: 216 planned cells, split into 144 development cells and 72 reserved holdout cells. The planned denominator is reported separately from designated trajectories and observed rows.
+The versioned validator at `tools/autonomous-ab-gauntlet/portfolio/v1` accepts an explicit manifest of already-produced analysis reports. It verifies each report's exact bytes, report schema, declared analysis-source hash, freeze digest, and arena/report identity, then copies only manifest-designated task rows into a descriptive YAML portfolio record. This follows the experiment population contract in `postrun-population.md`: 216 planned cells, split into 144 development cells and 72 reserved holdout cells. The planned denominator is reported separately from designated trajectories and observed rows.
 
 The manifest is an exact index, not a query language. Each trajectory names its `arena_id` indirectly through one report entry and binds one project, arm, trial, run ID, run kind, and explicit task-ID list. Duplicate report, trajectory, or task identities are refused. Multiple reports for an arena are allowed only for nonduplicate observations: the global observation identity is arena, freeze, run ID, project, arm, trial, task ID, and run kind. Repeated run IDs in different arenas remain separate report/trajectory records. Sequential trajectories require one run identity per project/arm/trial across all reports for the same arena and freeze; forks and integrations remain separate by run kind and run ID. Missing known task rows remain explicit unavailable slots; unknown and holdout task IDs are refused. Initial/final captures and derived snapshots are never expanded into extra task rows. Output counts distinguish manifest-designated trajectories, report-backed identities, unavailable identities, selected task slots, and observed rows; none is labeled an independent trial or actor-attempt count.
 
-`portfolio/v1` does not collect actor data, invoke validators or evaluators, or derive a score, pass rate, comparison eligibility, or winner. It preserves each selected raw row and all report-level exclusion metadata. Excluded report/task rows remain `excluded-descriptive`; raw statuses are never rewritten, and the portfolio-level comparison eligibility flag is always false. All other rows are also descriptive until a separately reviewed comparison contract exists.
+The portfolio tool does not collect actor data, invoke validators or evaluators, or derive a score, pass rate, comparison eligibility, or winner. It preserves each selected raw row and all report-level exclusion metadata. Excluded report/task rows remain `excluded-descriptive`; raw statuses are never rewritten, and the portfolio-level comparison eligibility flag is always false. All other rows are also descriptive until a separately reviewed comparison contract exists.
 
 Integration Task08 retains the source report's expected-set and escalation fields inside `raw_row`, but labels both interpretations `unavailable-integration-card`. The static analysis contract audit found that the existing analysis card selection can use ordinary Task08 expectations for an integration run. This tool does not repair that source or treat those values as integration evidence.
 
@@ -37,7 +37,7 @@ reports:
 Example invocation:
 
 ```powershell
-go run ./experiments/autonomous-ab-gauntlet/portfolio/v1 --manifest <portfolio-manifest.yaml> --out <new-portfolio.yaml>
+go run ./tools/autonomous-ab-gauntlet/portfolio/v1 --manifest <portfolio-manifest.yaml> --out <new-portfolio.yaml>
 ```
 
 Output creation is exclusive. Synthetic fixture tests exercise the selector and refusal boundaries without reading any arena.

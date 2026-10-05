@@ -1,0 +1,21 @@
+schema: autonomous-ab-portfolio-cli-synthetic-qa/v1
+scope: Only this synthetic QA report/manifest; no arena, actor, oracle, holdout or
+  real experiment report accessed.
+binary_sha256: 203d22ae8afcc91e867c84858dc680e58cb03ce898d2a346391f319052b31f2f
+invocations:
+- invocation: 1
+  exit_code: 0
+- invocation: 2
+  exit_code: 0
+- invocation: existing-output-refusal
+  exit_code: 1
+two_fresh_output_bytes_identical: true
+existing_output_unchanged_after_refusal: true
+input_bytes_unchanged: true
+padded_raw_metadata_preserved: true
+missing_known_slot_explicitly_unavailable: true
+comparative_eligibility_assigned: false
+outcome_or_human_acceptance_claim: false
+output_sha256: 729aac6004ffe3904bdce2d5d7ad23790ccd156ca3b5a82e4b58ca26afcb29e9
+fixture_manifest_sha256: 76f20397d8b4500d2c0bfdd4b538896666f4572b3905dbfb7e98c0c358459cef
+fixture_report_sha256: 8e33138200a4a46754456c8b8b13c9c36818522288fe9c0f703660d23de7a9f2

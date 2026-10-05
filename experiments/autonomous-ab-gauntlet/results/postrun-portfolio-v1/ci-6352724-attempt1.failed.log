@@ -1,0 +1,26 @@
+Quality (windows-latest)	Enforce Core, Module, Host and CLI import boundaries	﻿2026-10-05T13:21:01.9077657Z ##[group]Run go test ./internal/tooling/architecture
+Quality (windows-latest)	Enforce Core, Module, Host and CLI import boundaries	2026-10-05T13:21:01.9078129Z ^[[36;1mgo test ./internal/tooling/architecture^[[0m
+Quality (windows-latest)	Enforce Core, Module, Host and CLI import boundaries	2026-10-05T13:21:01.9148878Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
+Quality (windows-latest)	Enforce Core, Module, Host and CLI import boundaries	2026-10-05T13:21:01.9149236Z env:
+Quality (windows-latest)	Enforce Core, Module, Host and CLI import boundaries	2026-10-05T13:21:01.9149417Z   GOTOOLCHAIN: local
+Quality (windows-latest)	Enforce Core, Module, Host and CLI import boundaries	2026-10-05T13:21:01.9149621Z ##[endgroup]
+Quality (windows-latest)	Enforce Core, Module, Host and CLI import boundaries	2026-10-05T13:21:03.0793354Z --- FAIL: TestRepositoryArchitecture (0.06s)
+Quality (windows-latest)	Enforce Core, Module, Host and CLI import boundaries	2026-10-05T13:21:03.0795209Z     imports_test.go:73: experiments/autonomous-ab-gauntlet/portfolio/v1/main.go:0: experiments/autonomous-ab-gauntlet/portfolio/v1 imports : unclassified product package
+Quality (windows-latest)	Enforce Core, Module, Host and CLI import boundaries	2026-10-05T13:21:03.0797693Z     imports_test.go:73: experiments/autonomous-ab-gauntlet/portfolio/v1/main_test.go:0: experiments/autonomous-ab-gauntlet/portfolio/v1 imports : unclassified product package
+Quality (windows-latest)	Enforce Core, Module, Host and CLI import boundaries	2026-10-05T13:21:03.0799352Z FAIL
+Quality (windows-latest)	Enforce Core, Module, Host and CLI import boundaries	2026-10-05T13:21:03.0799941Z FAIL	github.com/Glacius-Labs/Markitect/internal/tooling/architecture	0.087s
+Quality (windows-latest)	Enforce Core, Module, Host and CLI import boundaries	2026-10-05T13:21:03.0800622Z FAIL
+Quality (windows-latest)	Enforce Core, Module, Host and CLI import boundaries	2026-10-05T13:21:03.2567348Z ##[error]Process completed with exit code 1.
+Quality (ubuntu-24.04)	Enforce Core, Module, Host and CLI import boundaries	﻿2026-10-05T13:20:39.4886271Z ##[group]Run go test ./internal/tooling/architecture
+Quality (ubuntu-24.04)	Enforce Core, Module, Host and CLI import boundaries	2026-10-05T13:20:39.4886784Z ^[[36;1mgo test ./internal/tooling/architecture^[[0m
+Quality (ubuntu-24.04)	Enforce Core, Module, Host and CLI import boundaries	2026-10-05T13:20:39.4955380Z shell: /usr/bin/bash -e {0}
+Quality (ubuntu-24.04)	Enforce Core, Module, Host and CLI import boundaries	2026-10-05T13:20:39.4955729Z env:
+Quality (ubuntu-24.04)	Enforce Core, Module, Host and CLI import boundaries	2026-10-05T13:20:39.4955955Z   GOTOOLCHAIN: local
+Quality (ubuntu-24.04)	Enforce Core, Module, Host and CLI import boundaries	2026-10-05T13:20:39.4956193Z ##[endgroup]
+Quality (ubuntu-24.04)	Enforce Core, Module, Host and CLI import boundaries	2026-10-05T13:20:39.8649225Z --- FAIL: TestRepositoryArchitecture (0.02s)
+Quality (ubuntu-24.04)	Enforce Core, Module, Host and CLI import boundaries	2026-10-05T13:20:39.8651494Z     imports_test.go:73: experiments/autonomous-ab-gauntlet/portfolio/v1/main.go:0: experiments/autonomous-ab-gauntlet/portfolio/v1 imports : unclassified product package
+Quality (ubuntu-24.04)	Enforce Core, Module, Host and CLI import boundaries	2026-10-05T13:20:39.8654163Z     imports_test.go:73: experiments/autonomous-ab-gauntlet/portfolio/v1/main_test.go:0: experiments/autonomous-ab-gauntlet/portfolio/v1 imports : unclassified product package
+Quality (ubuntu-24.04)	Enforce Core, Module, Host and CLI import boundaries	2026-10-05T13:20:39.8655387Z FAIL
+Quality (ubuntu-24.04)	Enforce Core, Module, Host and CLI import boundaries	2026-10-05T13:20:39.8655785Z FAIL	github.com/Glacius-Labs/Markitect/internal/tooling/architecture	0.024s
+Quality (ubuntu-24.04)	Enforce Core, Module, Host and CLI import boundaries	2026-10-05T13:20:39.8656201Z FAIL
+Quality (ubuntu-24.04)	Enforce Core, Module, Host and CLI import boundaries	2026-10-05T13:20:39.8839751Z ##[error]Process completed with exit code 1.
