@@ -1,0 +1,52 @@
+schema: autonomous-ab-run-exclusions/v1
+freeze_digest: 4faee78795986559e91a0e233bd7321a9cf48526d331edba621ca98eee11638a
+runs:
+  - run_id: engineering-ops-a-t02
+    reason: Paired exclusion after the B task03 actor reported invoking the helper outside its assigned workspace; A task02 also expired in a frozen repair-needed state.
+  - run_id: engineering-ops-b-t02
+    reason: The task03 actor explicitly reported starting the helper from the parent Markitect worktree rather than the assigned arm workspace; instruction isolation failed.
+scope: exact-listed-run-ids-only
+reported_violation:
+  run_id: engineering-ops-b-t02
+  task_id: "03"
+  input_digest: f222b75e6e8279ba747e70cfefe58127e080f0d8aaf15a43d56ac65a778f8650
+  actor_started_utc: "2026-10-04T23:27:16Z"
+  actor_completed_utc: "2026-10-04T23:37:21Z"
+  actor_status: protocol-invalid
+  reported_commit: 64ea490
+  source_native:
+    path: runs/engineering-ops-b-t02/03.native.yaml
+    sha256: 29ae951b114609745021854bd8ee168887fc94afecb1eb08dc81262a595bfeae
+  input_envelope:
+    path: runs/engineering-ops-b-t02/03.attempt-0.envelope.yaml
+    sha256: 198f8534b98b1f59b2802e64a7fc9dcb7b2c8bde385db028372ca698b6f26865
+  exact_response:
+    path: runs/engineering-ops-b-t02/03.attempt-0.response.txt
+    sha256: fe27b6b15602207e96b234d60805696cc7be49e92c2d1395a41447f885a927c1
+  actor_statement: I ran it from the parent worktree instead of the assigned snapshot directory, so validation is unconfirmed.
+  assigned_directory: r1-paths-v3/snapshots/engineering-ops-b-t02
+  reported_directory: Markitect coordinator worktree
+  helper_receipt: unavailable
+  actual_file_read_audit: unavailable
+  inference_limit: The response establishes a reported working-directory violation; it does not prove which implementation or hidden-oracle bytes were read.
+continuation:
+  trial2: Both arms stopped; no paired redo or later holdout.
+  b_task04: Prepared only, never dispatched after the exclusion decision.
+  b_task04_envelope:
+    path: runs/engineering-ops-b-t02/04.attempt-0.envelope.yaml
+    sha256: a2296427aca2e215d89201ba04233c53643ff7da0c38c9eb8ca7a0b02b7774d6
+  replacement: None. The predeclared third trial starts independently from the original frozen seeds.
+root_repository_check:
+  source_head: 8119b11fc2a9149347a414b86131cd46016cad38
+  working_tree: clean when checked after the reported violation
+  reported_commit_in_root_object_database: absent
+  limit: These checks establish no root source mutation at that boundary, not complete filesystem or content-access isolation.
+preservation:
+  raw_actor_records: unchanged
+  original_controller_and_oracle_exclusions: unchanged
+  product_candidate: unchanged
+  comparison: Keep actual failures and responses, but exclude both trial2 arms from paired correctness, drift and holdout claims.
+classification:
+  agent_workflow_violation: true
+  benchmark_isolation_limitation: true
+  markitect_product_defect_proven: false

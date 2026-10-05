@@ -212,6 +212,8 @@ type report struct {
 	RunExclusionRecordSHA256       string                      `yaml:"run_exclusion_record_sha256,omitempty" json:"run_exclusion_record_sha256,omitempty"`
 	OracleExclusionRecordStatus    string                      `yaml:"oracle_exclusion_record_status" json:"oracle_exclusion_record_status"`
 	OracleExclusionRecordSHA256    string                      `yaml:"oracle_exclusion_record_sha256,omitempty" json:"oracle_exclusion_record_sha256,omitempty"`
+	RuntimeExclusionRecordStatus   string                      `yaml:"runtime_exclusion_record_status" json:"runtime_exclusion_record_status"`
+	RuntimeExclusionRecordSHA256   string                      `yaml:"runtime_exclusion_record_sha256,omitempty" json:"runtime_exclusion_record_sha256,omitempty"`
 	Limits                         []string                    `yaml:"limits" json:"limits"`
 	Tasks                          []taskReport                `yaml:"tasks" json:"tasks"`
 	Groups                         []group                     `yaml:"groups" json:"groups"`
@@ -474,6 +476,18 @@ func analyze(arena, out string) error {
 		}
 		excludedRuns[id] = reason
 		exclusionRefs[id], exclusionHashes[id] = "decisions/oracle-run-exclusions.yaml", oracleHash
+	}
+	runtimeExcluded, runtimeStatus, runtimeHash, err := readNamedRunExclusions(arena, frozen.Digest, "runtime-run-exclusions.yaml")
+	if err != nil {
+		return err
+	}
+	r.RuntimeExclusionRecordStatus, r.RuntimeExclusionRecordSHA256 = runtimeStatus, runtimeHash
+	for id, reason := range runtimeExcluded {
+		if _, duplicate := excludedRuns[id]; duplicate {
+			return fmt.Errorf("run %s is excluded by more than one control record", id)
+		}
+		excludedRuns[id] = reason
+		exclusionRefs[id], exclusionHashes[id] = "decisions/runtime-run-exclusions.yaml", runtimeHash
 	}
 	cardCache := map[string]map[string]taskCard{}
 	runsRoot, err := arenaPath(arena, "runs")
@@ -1190,7 +1204,7 @@ func readRunExclusions(arena, freeze string) (map[string]string, string, string,
 }
 
 func readNamedRunExclusions(arena, freeze, name string) (map[string]string, string, string, error) {
-	if name != "run-exclusions.yaml" && name != "oracle-run-exclusions.yaml" {
+	if name != "run-exclusions.yaml" && name != "oracle-run-exclusions.yaml" && name != "runtime-run-exclusions.yaml" {
 		return nil, "invalid", "", errors.New("unsupported exclusion control record")
 	}
 	path := filepath.Join(arena, "decisions", name)

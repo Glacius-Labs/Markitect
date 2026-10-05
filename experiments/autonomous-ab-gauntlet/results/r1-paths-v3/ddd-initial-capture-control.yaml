@@ -1,0 +1,34 @@
+schema: autonomous-ab-assessment-control/v1
+freeze_digest: 4faee78795986559e91a0e233bd7321a9cf48526d331edba621ca98eee11638a
+source_arena: r1-paths-v3-ddd-t1-control-rerun
+run_id: vertical-slices-b-t01
+task_id: "06"
+phase: before-repair
+disposition: unavailable; original first-helper snapshot no longer matches its immutable byte ledger
+evidence:
+  first_helper_path: raw/vertical-slices-b-t01/06/helper-attempt-0.jsonl
+  first_helper_sha256: b512f671dffaf9946d0f9e1286d506aadbde03fd23de7590c6f145806ee02a64
+  first_helper_utc: "2026-10-04T23:07:29Z"
+  first_helper_actor_attempt: 1
+  first_helper_exit: 1
+  captured_path: raw/vertical-slices-b-t01/06/snapshots/06-check-1
+  mismatched_file: workspace/checks/Program.cs
+  expected_sha256: d00eb87ee3813782258cc30cc57840fa00b7a943db1e8cc2759a3587e6560e2e
+  observed_sha256: fb0c582f74b44ac672751d69be18d209f4fff7e0f9815e9890719690eee3b2d9
+  repair1_envelope_sha256: dc8839626215063b42fbff4c68f1f8bec2f7f44cec76942a5aa002b4435d6abf
+  declared_repair_actor_attempt: 2
+  repair_helper_refusal: File exists at first-check capture path; no repair receipt or completed public validation.
+causality:
+  frozen_helper: Uses supplied actor-attempt value as the capture ordinal when nonzero.
+  actual_repair_environment: unavailable
+  cause: unknown; do not infer a product defect or reconstruct a missing environment
+assessment:
+  initial_behavior_and_architecture: unavailable from this corrupted capture
+  final_capture: Staging accepted the separate final capture and its byte ledger.
+  source_snapshot_restored_or_rewritten: false
+  partial_assessment_destination: Retained; no retry over existing partial state and no deletion.
+late_helper_availability:
+  tasks: A03 and B03
+  observation: Initial helper files were present at assessment staging after the operator had reported them unavailable at the original finish boundary.
+  rule: Later availability does not retroactively change the recorded protocol-invalid actor status.
+limits: This is a benchmark evidence-integrity limitation; it does not establish a Markitect Core defect.
