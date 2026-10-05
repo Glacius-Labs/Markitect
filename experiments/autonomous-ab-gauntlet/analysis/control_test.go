@@ -194,6 +194,39 @@ func TestExcludedRunRetainsRawPassAndDoesNotExcludeOtherTrial(t *testing.T) {
 		t.Fatalf("stale runtime exclusion was applied: %#v", got)
 	}
 	evidenceFile(t, arena, "decisions/runtime-run-exclusions.yaml", "freeze_digest: "+frozen.Digest+"\nruns: []\n")
+	evidenceFile(t, arena, "decisions/assessment-run-exclusions.yaml", "freeze_digest: "+frozen.Digest+"\nruns:\n  - run_id: p-a-t02\n    reason: post-run oracle finding; prior controls retained\n")
+	assessmentOut := filepath.Join(outParent, "assessment")
+	if err := analyze(arena, assessmentOut); err != nil {
+		t.Fatal(err)
+	}
+	if err := readYAML(filepath.Join(assessmentOut, "report.yaml"), &got); err != nil {
+		t.Fatal(err)
+	}
+	if got.AssessmentExclusionRecordStatus != "matched" || len(got.AssessmentExclusionRecordSHA256) != 64 {
+		t.Fatalf("assessment record not separately bound: %#v", got)
+	}
+	if task := got.Tasks[1]; task.CountedOutcome != "invalidated" || task.AggregateEvaluationStatus != "passed" || task.PublicHelper.FinalStatus != "success" || task.RawReferenceSHA256["decisions/assessment-run-exclusions.yaml"] == "" {
+		t.Fatalf("assessment exclusion lost raw evidence or exact source: %#v", task)
+	}
+	evidenceFile(t, arena, "decisions/assessment-run-exclusions.yaml", "freeze_digest: "+frozen.Digest+"\nruns:\n  - run_id: p-a-t01\n    reason: conflicting assessment record\n")
+	if err := analyze(arena, filepath.Join(outParent, "assessment-overlap")); err == nil || !strings.Contains(err.Error(), "more than one control record") {
+		t.Fatalf("hidden assessment precedence accepted: %v", err)
+	}
+	evidenceFile(t, arena, "decisions/assessment-run-exclusions.yaml", "freeze_digest: "+frozen.Digest+"\nruns:\n  - run_id: p-a-t99\n    reason: absent assessment run\n")
+	if err := analyze(arena, filepath.Join(outParent, "absent-assessment")); err == nil || !strings.Contains(err.Error(), "absent native run IDs: p-a-t99") {
+		t.Fatalf("dangling assessment exclusion accepted: %v", err)
+	}
+	evidenceFile(t, arena, "decisions/assessment-run-exclusions.yaml", "freeze_digest: "+strings.Repeat("0", 64)+"\nruns:\n  - run_id: p-a-t02\n    reason: stale assessment record\n")
+	if err := analyze(arena, filepath.Join(outParent, "stale-assessment")); err != nil {
+		t.Fatal(err)
+	}
+	if err := readYAML(filepath.Join(outParent, "stale-assessment", "report.yaml"), &got); err != nil {
+		t.Fatal(err)
+	}
+	if got.AssessmentExclusionRecordStatus != "unmatched-freeze" || got.Tasks[1].ComparisonExclusionReason != "" {
+		t.Fatalf("stale assessment exclusion was applied: %#v", got)
+	}
+	evidenceFile(t, arena, "decisions/assessment-run-exclusions.yaml", "freeze_digest: "+frozen.Digest+"\nruns: []\n")
 	evidenceFile(t, arena, "decisions/oracle-run-exclusions.yaml", "freeze_digest: "+frozen.Digest+"\nruns:\n  - run_id: p-a-t01\n    reason: conflicting second record\n")
 	if err := analyze(arena, filepath.Join(outParent, "overlap")); err == nil || !strings.Contains(err.Error(), "more than one control record") {
 		t.Fatalf("hidden exclusion precedence accepted: %v", err)

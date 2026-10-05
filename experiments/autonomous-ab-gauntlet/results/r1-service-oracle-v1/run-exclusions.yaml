@@ -1,0 +1,44 @@
+schema: autonomous-ab-run-exclusions/v1
+arena: r1-service-oracle-v1
+freeze_digest: cc6124d1bd179f0824cde31947b929412562d2991879474ba2d02e855f4062f7
+runs:
+  - run_id: modular-service-a-t01
+    reason: Paired aggregate comparison is invalid because the frozen task03 ownership recognizer rejects a correct Orders responsibility followed by a non-conflicting contract-coordination explanation in B. Retain raw public/component evidence; no rescore.
+  - run_id: modular-service-b-t01
+    reason: Frozen task03 ownership recognizer requires a complete-cell lexical match and rejects a correct Orders responsibility followed by a non-conflicting contract-coordination explanation. Retain raw public/component evidence; no rescore.
+scope: exact-listed-existing-main-trial1-run-ids-only
+finding:
+  classification: benchmark-design-issue
+  source: Frozen task03 requests ownership, exact package paths and allowed Core/Contracts dependencies; it does not prohibit a correct explanatory coordination clause.
+  captured_orders_cell: Order lifecycle decisions; coordinates reservation and invoice requests through contracts.
+  actual_task_semantics: All three ownership rows, exact module package paths and Core/Contracts dependency entries match the requested table. The Orders clarification agrees with the frozen seed description.
+  failed_expression: Orders regex is anchored to the whole cell; line42 applies it to the entire normalized value, so the semicolon and explanation fail line24's end anchor.
+  raw_result: failed
+  failed_component: cumulative-ownership-table
+  other_task03_components: allowed-paths, architecture-boundary, idempotency-vector, invoice-conflict-vector and task-validator passed.
+  independent_review: Read-only automated benchmark-method review; no actor/operator contact, oracle rerun or human acceptance.
+evidence:
+  task_set:
+    path: projects/modular-service/task-set.yaml
+    sha256: 020fbe8d60c66ded59c32b74654a883d17e6e99d054f19b3b60a97608f3bf00e
+  evaluator:
+    path: projects/modular-service/oracle/evaluate.ps1
+    sha256: e760bc34da2780878fc6f952054b859e95021872d318a7595eb3745f973cb73a
+    regex_line: 24
+    full_cell_application_line: 42
+  captured_doc:
+    path: ../svc1f/results/modular-service-b-t01/snapshots/03-final/workspace/docs/architecture.md
+    sha256: a54586a4722e440c037c1f9540a716a8b2284a44d80062acf8103eb92d40e2c5
+  captured_result:
+    path: ../svc1f/runs/modular-service-b-t01/03.evaluation.yaml
+    sha256: 6ac14038998b556661ba865b42929b3a96d3edc0322fc0fa69f0be2d22a8dbbd
+preservation:
+  source_oracle_and_candidate: unchanged
+  raw_failed_results: unchanged
+  public_b_helper_failures: unchanged; independent passing components do not rescue whole-helper failure
+  feedback_to_scored_actors: none
+  comparative_aggregate: invalidated symmetrically, never changed to passed
+  independent_component_observations: retained as descriptive evidence
+  parallel_forks_and_integration: Separate run IDs; this record does not overwrite their separate scope/exclusion findings.
+  future_repaired_protocol: Requires a new freeze and new paired runs; no in-place correction or favorable-arm rescore.
+  technical_evidence: Does not prove arbitrary Markdown semantics or human acceptance.

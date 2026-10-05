@@ -1,0 +1,51 @@
+schema: autonomous-ab-run-exclusions/v1
+arena: r1-paths-v3
+freeze_digest: 4faee78795986559e91a0e233bd7321a9cf48526d331edba621ca98eee11638a
+runs:
+  - run_id: engineering-ops-a-t01
+    reason: Paired main aggregate comparison is invalid because the task07 oracle demands the literal command inside a test that correctly preserves and extends the expected check-name set. Retain independent components and raw failure; no waiver or rescore.
+  - run_id: engineering-ops-b-t01
+    reason: Symmetric exclusion of the main trial1 pair affected by the task07 oracle command-location overconstraint in A. B runtime/model/projection failures remain descriptive evidence.
+  - run_id: engineering-ops-a-t03
+    reason: Paired main aggregate comparison is invalid because the task07 oracle demands the literal command inside a test that correctly preserves and extends the expected check-name set. Retain independent components and raw failure; no waiver or rescore.
+  - run_id: engineering-ops-b-t03
+    reason: Symmetric exclusion of the main trial3 pair affected by the task07 oracle command-location overconstraint in A. B runtime/model/projection failures remain descriptive evidence.
+scope: exact-listed-existing-main-run-ids-only
+finding:
+  classification: benchmark-design-issue
+  requirement: Add required go vet command to both gates and literal check expectations while keeping root tests, nested tests and artifact/projection checks.
+  captured_assertion: The exact check-name set retains all four originals and adds Go vet in trial3, or Root module vet in trial1.
+  captured_command_evidence: EXPECTED_RUNS maps the additional name to go vet ./...; the checker verifies exact commands in CI and hook, and the captured gates contain all five commands.
+  failed_expression: Frozen evaluate.ps1 line184 additionally requires go vet ./... inside the check-name-set test body. That command location is not an original assertion or a task requirement.
+  raw_task07_and_task08_status: failed
+  independently_reviewed_raw_component: original-a7-checker-assertions
+  proof_limit: The check-name test does not independently pin the command string; map and gate evidence are separate. No arbitrary Python semantics or complete project correctness is claimed.
+evidence:
+  frozen_evaluator:
+    path: projects/engineering-ops/oracle/evaluate.ps1
+    sha256: 99e466a7c14fda0239c073ad8b5da0f8688696c8b6bbd43f130834c2cd7cce4c
+    command_location_pattern_line: 184
+  trial3_checker:
+    path: ../ops3af/results/engineering-ops-a-t03/snapshots/07-final/workspace/scripts/check_operations.py
+    sha256: 0fa4a40b571d7f2f3578681f1507465b58a1d96022be4f3cf7ee47911633d358
+  trial3_test:
+    path: ../ops3af/results/engineering-ops-a-t03/snapshots/07-final/workspace/scripts/test_check_operations.py
+    sha256: 8f3e2d203ce2839438cf2d11230099494d94d5dfc0a3710dbdb5a2ee4457ceae
+  trial3_task07_raw_result:
+    path: ../ops3af/runs/engineering-ops-a-t03/07.evaluation.yaml
+    sha256: 73716dbe9389a27a379062583552751c9b855b2364fbb0cd25db20551cf24356
+  trial3_task08_raw_result:
+    path: ../ops3af/runs/engineering-ops-a-t03/08.evaluation.yaml
+    sha256: 1a731bc7f175fb699db327bc05cb70a3307d8ba556380e1eba74fea4109bcb8f
+  trial1_checker_sha256: 7fc52fdb9c3c24cfaf42058df5098f3f6f382340a5d5e7f8b403b65dc02793f7
+  trial1_test_sha256: 69a8a0f602fa784e2e2d4210f351d8099b513bd4183423fb820255981d63b5ce
+preservation:
+  previous_control_files: unchanged; this later immutable assessment record has its own hash and exact IDs
+  candidate_and_frozen_oracle: unchanged
+  raw_statuses_and_components: unchanged; no literal-condition waiver or aggregate pass is introduced
+  actor_feedback: no hidden findings supplied
+  owner_decision_failures: Task03/04 mutations remain descriptive violations, never owner acceptance.
+  other_runtime_model_projection_findings: retained independently; not erased by measurement invalidation
+  parallel_run_ids: separate; not excluded or rescored by this exact main-run record
+  future_measurement_correction: A corrected command-location recognizer requires a new freeze and paired replay, not mid-round adjudication.
+  reviewer_authority: Read-only automated review is not human acceptance.

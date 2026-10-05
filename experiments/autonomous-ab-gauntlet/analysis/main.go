@@ -198,28 +198,30 @@ type group struct {
 	StreakBoundary string `yaml:"streak_boundary,omitempty" json:"streak_boundary,omitempty"`
 }
 type report struct {
-	Schema                         string                      `yaml:"schema" json:"schema"`
-	Protocol                       string                      `yaml:"protocol" json:"protocol"`
-	AnalysisContract               string                      `yaml:"analysis_contract" json:"analysis_contract"`
-	AnalysisSourceSHA256           string                      `yaml:"analysis_source_sha256" json:"analysis_source_sha256"`
-	FreezeDigest                   string                      `yaml:"freeze_digest" json:"freeze_digest"`
-	InvalidationRecordPath         string                      `yaml:"invalidation_record_path,omitempty" json:"invalidation_record_path,omitempty"`
-	CohortStatus                   string                      `yaml:"cohort_status" json:"cohort_status"`
-	ComparisonEligible             string                      `yaml:"comparison_eligible" json:"comparison_eligible"`
-	InvalidationReason             string                      `yaml:"invalidation_reason,omitempty" json:"invalidation_reason,omitempty"`
-	InvalidationRecordSHA256       string                      `yaml:"invalidation_record_sha256,omitempty" json:"invalidation_record_sha256,omitempty"`
-	RunExclusionRecordStatus       string                      `yaml:"run_exclusion_record_status" json:"run_exclusion_record_status"`
-	RunExclusionRecordSHA256       string                      `yaml:"run_exclusion_record_sha256,omitempty" json:"run_exclusion_record_sha256,omitempty"`
-	OracleExclusionRecordStatus    string                      `yaml:"oracle_exclusion_record_status" json:"oracle_exclusion_record_status"`
-	OracleExclusionRecordSHA256    string                      `yaml:"oracle_exclusion_record_sha256,omitempty" json:"oracle_exclusion_record_sha256,omitempty"`
-	RuntimeExclusionRecordStatus   string                      `yaml:"runtime_exclusion_record_status" json:"runtime_exclusion_record_status"`
-	RuntimeExclusionRecordSHA256   string                      `yaml:"runtime_exclusion_record_sha256,omitempty" json:"runtime_exclusion_record_sha256,omitempty"`
-	Limits                         []string                    `yaml:"limits" json:"limits"`
-	Tasks                          []taskReport                `yaml:"tasks" json:"tasks"`
-	Groups                         []group                     `yaml:"groups" json:"groups"`
-	CountsByProjectArmTrial        map[string]counts           `yaml:"counts_by_project_arm_trial" json:"counts_by_project_arm_trial"`
-	ChurnByProjectArmTrial         map[string]map[string]churn `yaml:"churn_by_project_arm_trial" json:"churn_by_project_arm_trial"`
-	ChurnCoverageByProjectArmTrial map[string]churnCoverage    `yaml:"churn_coverage_by_project_arm_trial" json:"churn_coverage_by_project_arm_trial"`
+	Schema                          string                      `yaml:"schema" json:"schema"`
+	Protocol                        string                      `yaml:"protocol" json:"protocol"`
+	AnalysisContract                string                      `yaml:"analysis_contract" json:"analysis_contract"`
+	AnalysisSourceSHA256            string                      `yaml:"analysis_source_sha256" json:"analysis_source_sha256"`
+	FreezeDigest                    string                      `yaml:"freeze_digest" json:"freeze_digest"`
+	InvalidationRecordPath          string                      `yaml:"invalidation_record_path,omitempty" json:"invalidation_record_path,omitempty"`
+	CohortStatus                    string                      `yaml:"cohort_status" json:"cohort_status"`
+	ComparisonEligible              string                      `yaml:"comparison_eligible" json:"comparison_eligible"`
+	InvalidationReason              string                      `yaml:"invalidation_reason,omitempty" json:"invalidation_reason,omitempty"`
+	InvalidationRecordSHA256        string                      `yaml:"invalidation_record_sha256,omitempty" json:"invalidation_record_sha256,omitempty"`
+	RunExclusionRecordStatus        string                      `yaml:"run_exclusion_record_status" json:"run_exclusion_record_status"`
+	RunExclusionRecordSHA256        string                      `yaml:"run_exclusion_record_sha256,omitempty" json:"run_exclusion_record_sha256,omitempty"`
+	OracleExclusionRecordStatus     string                      `yaml:"oracle_exclusion_record_status" json:"oracle_exclusion_record_status"`
+	OracleExclusionRecordSHA256     string                      `yaml:"oracle_exclusion_record_sha256,omitempty" json:"oracle_exclusion_record_sha256,omitempty"`
+	RuntimeExclusionRecordStatus    string                      `yaml:"runtime_exclusion_record_status" json:"runtime_exclusion_record_status"`
+	RuntimeExclusionRecordSHA256    string                      `yaml:"runtime_exclusion_record_sha256,omitempty" json:"runtime_exclusion_record_sha256,omitempty"`
+	AssessmentExclusionRecordStatus string                      `yaml:"assessment_exclusion_record_status" json:"assessment_exclusion_record_status"`
+	AssessmentExclusionRecordSHA256 string                      `yaml:"assessment_exclusion_record_sha256,omitempty" json:"assessment_exclusion_record_sha256,omitempty"`
+	Limits                          []string                    `yaml:"limits" json:"limits"`
+	Tasks                           []taskReport                `yaml:"tasks" json:"tasks"`
+	Groups                          []group                     `yaml:"groups" json:"groups"`
+	CountsByProjectArmTrial         map[string]counts           `yaml:"counts_by_project_arm_trial" json:"counts_by_project_arm_trial"`
+	ChurnByProjectArmTrial          map[string]map[string]churn `yaml:"churn_by_project_arm_trial" json:"churn_by_project_arm_trial"`
+	ChurnCoverageByProjectArmTrial  map[string]churnCoverage    `yaml:"churn_coverage_by_project_arm_trial" json:"churn_coverage_by_project_arm_trial"`
 }
 type invalidation struct {
 	FreezeDigest       string `yaml:"freeze_digest"`
@@ -488,6 +490,18 @@ func analyze(arena, out string) error {
 		}
 		excludedRuns[id] = reason
 		exclusionRefs[id], exclusionHashes[id] = "decisions/runtime-run-exclusions.yaml", runtimeHash
+	}
+	assessmentExcluded, assessmentStatus, assessmentHash, err := readNamedRunExclusions(arena, frozen.Digest, "assessment-run-exclusions.yaml")
+	if err != nil {
+		return err
+	}
+	r.AssessmentExclusionRecordStatus, r.AssessmentExclusionRecordSHA256 = assessmentStatus, assessmentHash
+	for id, reason := range assessmentExcluded {
+		if _, duplicate := excludedRuns[id]; duplicate {
+			return fmt.Errorf("run %s is excluded by more than one control record", id)
+		}
+		excludedRuns[id] = reason
+		exclusionRefs[id], exclusionHashes[id] = "decisions/assessment-run-exclusions.yaml", assessmentHash
 	}
 	cardCache := map[string]map[string]taskCard{}
 	runsRoot, err := arenaPath(arena, "runs")
@@ -1225,7 +1239,7 @@ func readRunExclusions(arena, freeze string) (map[string]string, string, string,
 }
 
 func readNamedRunExclusions(arena, freeze, name string) (map[string]string, string, string, error) {
-	if name != "run-exclusions.yaml" && name != "oracle-run-exclusions.yaml" && name != "runtime-run-exclusions.yaml" {
+	if name != "run-exclusions.yaml" && name != "oracle-run-exclusions.yaml" && name != "runtime-run-exclusions.yaml" && name != "assessment-run-exclusions.yaml" {
 		return nil, "invalid", "", errors.New("unsupported exclusion control record")
 	}
 	path := filepath.Join(arena, "decisions", name)

@@ -1,0 +1,53 @@
+schema: autonomous-ab-run-exclusions/v1
+arena: r1-service-oracle-v1
+freeze_digest: cc6124d1bd179f0824cde31947b929412562d2991879474ba2d02e855f4062f7
+runs:
+  - run_id: modular-service-a-t01-integration
+    reason: Frozen evaluator applies sequential task08 billing-only mutation scope to the combined P01/P02 integration, although the frozen overlay authorizes the union including Orders. Exclude its comparative aggregate result; retain component/merge evidence.
+scope: exact-listed-existing-run-id-only
+frozen_evidence:
+  native:
+    path: runs/modular-service-a-t01-integration/08.native.yaml
+    sha256: bfed0b5a5fde195b80be7432e753a00d9f56e339b86f3c69c403e4a8945708dc
+    parallel_integration: true
+    base_revision: 9aecff60b54e86d90e6712cb99162b37225c982d
+    applied_commits:
+      P01: 0ad141d5ce757014de444c180856cf01ac70ccd0
+      P02: 61f29292072f5c348db985522f893c6b87f230eb
+  overlay:
+    path: projects/modular-service/parallel-task-set.yaml
+    sha256: 0e79f8d118f0dce6f8bb4592c2c5cbecb3f1e2f8b6a367dd8a024b2d02cff717
+    p01_scope: [internal/modules/orders/]
+    p02_scope: [internal/contracts/billing/, internal/modules/billing/]
+  evaluator:
+    path: projects/modular-service/oracle/evaluate.ps1
+    sha256: e760bc34da2780878fc6f952054b859e95021872d318a7595eb3745f973cb73a
+    behavior: Get-CardScopes receives ordinary Task08 for a non-P ID; parallel_integration is not conveyed to its scope selection.
+  initial_and_final_results:
+    initial: ../svcp1b/runs/modular-service-a-t01-integration/08.evaluation.yaml
+    final: ../svcp1/runs/modular-service-a-t01-integration/08.evaluation.yaml
+    identical_sha256: 6687d3c1fed8cbb9c19d5b9b47454e61de768011d63f5ca98c3c3a8a865d66da
+    raw_status: failed
+    failed_component: allowed-paths
+    other_components: All other emitted functional, ownership and architecture components pass.
+reported_changed_paths:
+  - internal/contracts/billing/invoice.go
+  - internal/modules/billing/service_test.go
+  - internal/modules/billing/service.go
+  - internal/modules/orders/service_test.go
+  - internal/modules/orders/service.go
+independent_scope_review: All five reported paths belong to the frozen union. This observation does not rewrite the oracle or create an aggregate pass.
+paired_boundary:
+  b_integration: No B trial1 integration exists because its main chain did not reach task06. It remains unavailable; no dangling or fabricated exclusion run is created.
+  ordinary_main_tasks: Scope handling for sequential Task08 is unchanged and is not implicated by this integration-specific finding.
+  individual_forks: Their P01/P02-specific scope evaluation remains separate and is not excluded by this record.
+  concurrency: Fork actors ran sequentially under the temporary capacity control, so simultaneous-worker behavior is not proven.
+preservation:
+  frozen_source_and_oracles: unchanged
+  actor_input_and_feedback: unchanged; no hidden feedback to later actors
+  raw_failed_result: retained
+  comparative_result: invalidated, not passed
+  redo: none during this first frozen round; any repaired integration oracle needs a separately frozen protocol and a new paired run.
+classification:
+  benchmark_design_issue: true
+  markitect_product_defect_proven: false

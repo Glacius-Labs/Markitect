@@ -1,0 +1,46 @@
+schema: autonomous-ab-service-assessment-staging/v1
+source_arena: r1-service-oracle-v1
+freeze_digest: cc6124d1bd179f0824cde31947b929412562d2991879474ba2d02e855f4062f7
+purpose: Post-run frozen-oracle evaluation of exact terminal development captures; not a new actor run or product change.
+planned_destinations:
+  svc1f:
+    phase: final
+    runs:
+      modular-service-a-t01: ["01", "02", "03", "04", "05", "06", "07", "08"]
+      modular-service-b-t01: ["01", "02", "03"]
+  svc1b:
+    phase: before-repair
+    runs:
+      modular-service-a-t01: ["01", "02", "03", "04", "05", "06", "07", "08"]
+      modular-service-b-t01: ["01", "02", "03"]
+  svcp1:
+    phase: final
+    runs:
+      modular-service-a-t01-parallel-P01: ["P01"]
+      modular-service-a-t01-parallel-P02: ["P02"]
+      modular-service-a-t01-integration: ["08"]
+  svcp1b:
+    phase: before-repair
+    runs:
+      modular-service-a-t01-integration: ["08"]
+limits:
+  - Source native records, snapshots, check ledgers and responses remain unchanged.
+  - Failed B helper status stays failed even if owner-identity frozen oracle components pass.
+  - B04 and downstream tasks are unavailable; no fabricated response or capture.
+  - Forks ran sequentially under the temporary capacity cap; successful integration is not simultaneous-worker stress evidence.
+  - Holdout tasks09-12 remain unprepared and unevaluated by this control.
+  - Copy source is the original copier with only the exact Service freeze pin changed; no generic acquisition framework.
+tools:
+  archive: raw/coordinator-tools/service-staging-v1
+  copier_source_sha256: 564e916e354332c073939e4b94e3137e65ac510036ce386d51d4fa529656c864
+  copier_test_sha256: b3edec01e46ff03f6f927e7a9f9676e4103dc4a14830c732ef4ef7d74790bb91
+  copier_binary_sha256: 6349449ab77c24d4a709c50154e23791f2c4369365e8aa9e67de24a8bb41530d
+  stager_source_sha256: e322af17e5534fadc59e3315c614c06d4a70c235d35bdd9b93747c34e9296058
+  stager_test_sha256: 32cfc11fe5541723993b92691de970481f6631e787ea73baa3b064b756c3926c
+  stager_binary_sha256: 11eaf8f1261cb783979f17d16154d40c05b238b0077b38804e8594ace3399ec8
+validation:
+  copier_diff: Exactly one old-freeze literal replaced; otherwise source bytes identical.
+  focused_tests: Passed wrong-freeze-before-write, changed-input/retained-partial, exact-CRLF bytes and exclusive destination refusal.
+  vet: passed
+  toolchain: go1.27.1 windows/amd64
+  write_boundary: New sibling assessment directories and new coordinator raw/control records only; no deletion, rollback or silent overwrite.

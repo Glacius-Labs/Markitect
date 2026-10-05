@@ -1,0 +1,34 @@
+schema: autonomous-ab-run-exclusions/v1
+arena: r1-service-oracle-v1
+freeze_digest: cc6124d1bd179f0824cde31947b929412562d2991879474ba2d02e855f4062f7
+runs:
+  - run_id: modular-service-a-t02
+    reason: Symmetric exclusion of the main trial2 pair after the B03 controller supplied an incorrect arena path and interrupted the dispatched actor. A outcomes remain descriptive.
+  - run_id: modular-service-b-t02
+    reason: B03 dispatch transcribed the arena UUID incorrectly; interruption has no returned actor/helper evidence or mutation-free proof. No retry, deadline reset or fabricated finish.
+scope: exact-listed-existing-main-run-ids-only
+finding:
+  classification: benchmark-controller-protocol-violation
+  task_id: '03'
+  intended_input_digest: a5d014f45ec6a5d1425a626a6baee41b49982f5d51c74b83253ecc3ef29e4497
+  submitted_alias: arena UUID segment b44 instead of approved bc44
+  interruption: immediate interrupt_agent reported previous status running
+  actor_process_termination: unknown
+  actual_content_reads_and_mutations: unknown
+  native_record: remains actor_started; unavailable final response is not fabricated
+  carry_forward: B trial2 chain stopped; A trial2 may continue as descriptive evidence
+evidence:
+  intended_envelope: runs/modular-service-b-t02/03.attempt-0.envelope.yaml
+  intended_envelope_sha256: 77db50ad2020b24bd79a167cfa6812610778f4969fad42fc41ca172b7646fa25
+  exact_controller_event: raw/service-trial2-dispatch-event.jsonl
+  exact_controller_event_sha256: 936c6c8a3d73479f5f381df79faa00b542870ff3ec059bea1c2a3418c7172b83
+  original_append_only_log: raw/operator-modular-service.jsonl
+  original_event_line: 58
+  event_timestamp: '2026-10-05 02:26:27 UTC'
+  event_timestamp_limit: retained operator timestamp; not an independent platform timing attestation
+preservation:
+  frozen_inputs_and_candidate: unchanged
+  prior_controls: unchanged; no overlapping run IDs
+  raw_failures: retained without rescue or rescore
+  actor_feedback: no hidden semantic feedback
+  owner_acceptance: none
