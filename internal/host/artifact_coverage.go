@@ -43,6 +43,23 @@ func CheckArtifacts(root, configPath string) (artifactcoverage.Report, error) {
 	if err != nil {
 		return artifactcoverage.Report{}, fmt.Errorf("parse Markitect project: %w", err)
 	}
+	configPathSelected, coverageSelected, active, registrationErr := RegisteredProjection(project)
+	if registrationErr != nil {
+		return artifactcoverage.Report{}, registrationErr
+	}
+	if active {
+		if coverageSelected != configPath {
+			return artifactcoverage.Report{}, fmt.Errorf("artifact coverage config differs from registered projection coverage %s", coverageSelected)
+		}
+		report, err := representationAccounting(project, configPathSelected, coverageSelected)
+		if err != nil {
+			return artifactcoverage.Report{}, err
+		}
+		if err := reconcileArtifactFindings(&report, root); err != nil {
+			return artifactcoverage.Report{}, err
+		}
+		return report, nil
+	}
 	model, err := CompileModel(project)
 	if err != nil {
 		return artifactcoverage.Report{}, fmt.Errorf("compile normalized project model: %w", err)
@@ -85,6 +102,9 @@ func validateArtifactCoverageSourcePaths(config artifactcoverage.Config, configP
 		}
 	}
 	for _, declaration := range config.Spec.Tooling {
+		paths = append(paths, declaration.Path)
+	}
+	for _, declaration := range config.Spec.Vendor {
 		paths = append(paths, declaration.Path)
 	}
 	for _, exclusion := range config.Spec.Exclusions {

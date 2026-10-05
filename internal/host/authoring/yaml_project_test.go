@@ -64,6 +64,40 @@ spec:
 	}
 }
 
+func TestParseLocalProjectionAdapterRequiresClosedVersionedExactPaths(t *testing.T) {
+	projectYAML := func(adapter string) []byte {
+		return []byte("apiVersion: markitect.example.org/v1alpha1\nkind: Project\nmetadata: {name: workspace}\nspec:\n  adapters:\n" + adapter + "\n")
+	}
+	valid := `    - name: projection
+      type: local-projection
+      version: v1alpha1
+      config: {contracts: architecture/projections.config, coverage: architecture/coverage.yaml}`
+	parsed, err := Parse("markitect.yaml", projectYAML(valid))
+	if err != nil {
+		t.Fatalf("valid local projection registration should parse: %v", err)
+	}
+	if len(parsed.Spec.Adapters) != 1 || parsed.Spec.Adapters[0].Type != "local-projection" {
+		t.Fatalf("adapter was not retained: %#v", parsed.Spec.Adapters)
+	}
+
+	tests := []struct{ name, adapter, want string }{
+		{"unsupported version", strings.Replace(valid, "v1alpha1", "v2", 1), "version must be v1alpha1"},
+		{"unknown config key", strings.Replace(valid, "coverage: architecture/coverage.yaml", "coverage: architecture/coverage.yaml, extra: true", 1), "unknown field"},
+		{"missing coverage", strings.Replace(valid, ", coverage: architecture/coverage.yaml", "", 1), `required field "coverage"`},
+		{"traversal", strings.Replace(valid, "architecture/projections.config", "../projections.config", 1), "unsafe path component"},
+		{"windows reserved", strings.Replace(valid, "architecture/projections.config", "architecture/CON.yaml", 1), "Windows-reserved"},
+		{"case alias", strings.Replace(valid, "architecture/coverage.yaml", "ARCHITECTURE/projections.config", 1), "distinct and non-overlapping"},
+		{"multiple registrations", valid + "\n" + strings.Replace(valid, "name: projection", "name: second", 1), "at most one local-projection"},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			if _, err := Parse("markitect.yaml", projectYAML(test.adapter)); err == nil || !strings.Contains(err.Error(), test.want) {
+				t.Fatalf("expected error containing %q, got %v", test.want, err)
+			}
+		})
+	}
+}
+
 func TestParseProjectAndContractConstraints(t *testing.T) {
 	project := `apiVersion: markitect.example.org/v1alpha1
 kind: Project

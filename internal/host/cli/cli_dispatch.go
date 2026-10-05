@@ -47,7 +47,7 @@ func dispatchCommand(command string, o commandOptions, out, errout io.Writer, em
 	if command == "inventory" {
 		return runInventory(o, emit, fail)
 	}
-	if command != "check" && command != "verify" && command != "context" && command != "impact" && command != "find" && command != "explain" && command != "review" && command != "render" && command != "format" && command != "reconcile" && command != "model" {
+	if command != "check" && command != "verify" && command != "context" && command != "impact" && command != "find" && command != "explain" && command != "review" && command != "render" && command != "format" && command != "reconcile" && command != "model" && command != "projection" {
 		return fail(fmt.Errorf("unknown command %q", command))
 	}
 	if command == "context" && o.runManifest != "" {
@@ -100,6 +100,8 @@ func dispatchCommand(command string, o commandOptions, out, errout io.Writer, em
 		return runReview(o.root, p, o.packageName, o.apiVersion, o.namespace, o.kind, o.name, o.reviewConfig, o.reviewReport, o.reviewEvidence, toolDigest, emit, fail)
 	case "format":
 		return runFormat(o, p, emit, fail)
+	case "projection":
+		return runProjection(o, p, emit, fail)
 	case "reconcile":
 		return runReconcile(o, p, emit, fail)
 	case "context":
@@ -124,7 +126,36 @@ func dispatchCommand(command string, o commandOptions, out, errout io.Writer, em
 	if len(result.Diagnostics) > 0 {
 		result.Status = "failed"
 	}
-	if command == "verify" && result.Status == "passed" {
+
+	configPath, coveragePath, projectionActive, registrationErr := host.RegisteredProjection(p)
+	if registrationErr != nil {
+		return fail(registrationErr)
+	}
+	if projectionActive && (command == "check" || command == "verify") {
+		var projectionReport host.ProjectionReport
+		if command == "verify" && result.Status == "passed" {
+			projectionReport, err = host.VerifyRepresentations(p, configPath, coveragePath, version, toolDigest)
+		} else {
+			projectionReport, err = host.ObserveRepresentations(p, configPath, coveragePath, version, toolDigest)
+		}
+		if err != nil {
+			return fail(err)
+		}
+		result.Projections = &projectionReport
+		result.Gates = projectionReport.Checks
+		result.Coverage += "; registered projection state is separately reported; check does not establish AI semantics"
+		if command == "verify" && result.Status == "passed" {
+			switch projectionReport.Status {
+			case "converged":
+				result.Coverage = structuralCoverage + " and registered projection contracts converged relative to declared fixed-snapshot checks and artifact roots; semantic review remains separate"
+			case "drift", "failed", "blocked":
+				result.Status = "failed"
+			default:
+				result.Status = "incomplete"
+			}
+		}
+	}
+	if command == "verify" && result.Status == "passed" && !projectionActive {
 		result.Gates, err = host.VerifyRepository(p)
 		if err != nil {
 			var verifyErr *host.VerifyError
@@ -163,6 +194,9 @@ func dispatchCommand(command string, o commandOptions, out, errout io.Writer, em
 	}
 	if result.Status == "failed" {
 		return 1
+	}
+	if result.Status == "incomplete" {
+		return 2
 	}
 	return 0
 }

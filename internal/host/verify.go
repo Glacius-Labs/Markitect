@@ -9,6 +9,8 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -64,7 +66,15 @@ func VerifyRepository(p *Project) ([]GateResult, error) {
 	return verifyRepositoryWithTimeout(p, verifyDefaultTime)
 }
 
+// VerifyRepresentationChecks isolates each check at the same fixed input bytes
+// and rejects mutation of any original snapshot file. It is not an OS sandbox.
+func VerifyRepresentationChecks(p *Project) ([]GateResult, error) {
+	return verifyRepositoryScoped(p, verifyDefaultTime, true)
+}
 func verifyRepositoryWithTimeout(p *Project, timeout time.Duration) ([]GateResult, error) {
+	return verifyRepositoryScoped(p, timeout, false)
+}
+func verifyRepositoryScoped(p *Project, timeout time.Duration, immutableInputs bool) ([]GateResult, error) {
 	if p == nil || p.Snapshot == nil || p.Graph == nil || p.Graph.Project == nil {
 		return nil, &VerifyError{Kind: "incomplete-evidence", Err: errors.New("a parsed project and source snapshot are required")}
 	}
@@ -102,7 +112,26 @@ func verifyRepositoryWithTimeout(p *Project, timeout time.Duration) ([]GateResul
 			}
 			tools[command.tool] = executable
 		}
-		result, runErr := runVerifyCommand(command, executable, temporary, timeout)
+		directory := temporary
+		if immutableInputs {
+			directory, err = os.MkdirTemp("", "markitect-projection-check-")
+			if err != nil {
+				return results, &VerifyError{Kind: "incomplete-evidence", Gate: command.name, Err: err}
+			}
+			if err = source.Materialize(p.Snapshot, directory); err != nil {
+				os.RemoveAll(directory)
+				return results, &VerifyError{Kind: "incomplete-evidence", Gate: command.name, Err: err}
+			}
+		}
+		result, runErr := runVerifyCommand(command, executable, directory, timeout)
+		if immutableInputs {
+			integrityErr := verifySnapshotFilesUnchanged(p, directory)
+			os.RemoveAll(directory)
+			if integrityErr != nil {
+				result.ExitCode = -1
+				runErr = &VerifyError{Kind: "input-mutation", Gate: command.name, Err: integrityErr}
+			}
+		}
 		results = append(results, result)
 		if runErr != nil {
 			return results, runErr
@@ -232,4 +261,30 @@ func (w *boundedVerifyOutput) exceeded() bool {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 	return w.tooLarge
+}
+
+func verifySnapshotFilesUnchanged(p *Project, directory string) error {
+	names := make([]string, 0, len(p.Snapshot.Files))
+	for name := range p.Snapshot.Files {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	for _, name := range names {
+		dest, err := safeDestination(directory, name)
+		if err != nil {
+			return fmt.Errorf("check replaced snapshot path %s: %w", name, err)
+		}
+		info, err := os.Lstat(dest)
+		if err != nil || !info.Mode().IsRegular() {
+			return fmt.Errorf("check removed or replaced snapshot file %s", name)
+		}
+		if runtime.GOOS != "windows" && (info.Mode().Perm()&0111 != 0) != (p.Snapshot.Modes[name] == "100755") {
+			return fmt.Errorf("check changed snapshot executable mode %s", name)
+		}
+		data, err := os.ReadFile(dest)
+		if err != nil || !bytes.Equal(data, p.Snapshot.Files[name]) {
+			return fmt.Errorf("check changed snapshot bytes %s", name)
+		}
+	}
+	return nil
 }

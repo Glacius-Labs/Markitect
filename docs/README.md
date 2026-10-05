@@ -2,7 +2,7 @@
 
 | Document | Owns |
 |---|---|
-| [Product vision](vision.md) | Canonical product thesis, human/AI responsibilities, desired operating model and benefit hypothesis |
+| [Product vision](vision.md) | Canonical product thesis, desired state for selected governed intent, human/AI responsibilities and benefit hypothesis |
 | [Markitect-first](markitect-first.md) | Canonical change-protocol entrypoint, desired-intent ordering and declared artifact accounting |
 | [Usage](usage.md) | Current Project format, CLI behavior, safe initialization, and schema-upgrade guidance |
 | [Repository layout](repository-layout.md) | Recommended control-plane organization, ownership zones, and layout compatibility |
@@ -11,8 +11,9 @@
 | [Documentation routers](documentation-routers.md) | Optional local navigation checks and placement guidance |
 | [Provider adapters](provider-adapters.md) | Explicit Codex, Claude, and shared entrypoints and strict inventory |
 | [Factual consistency](consistency.md) | Opt-in sourced functional assertions and their limits |
-| [Architecture](architecture.md) | Published v0.13.0 capabilities, product boundaries, and evidence limits; v0.12.0 records bounded resolved-target equality, with v0.11.0 and v0.10.0 historical baselines |
-| [Engineering constitution](engineering-constitution.md) | Published v0.13.0 policy analysis and selective handoff alongside architecture contracts, exceptions, and proposal/adoption boundaries |
+| [Architecture](architecture.md) | Published v0.13.0 capabilities, the in-progress projection-first source direction, product boundaries and evidence limits; v0.12.0 records bounded resolved-target equality |
+| [Engineering constitution](engineering-constitution.md) | Kernel invariants, selected canonical intent, projection/evidence boundaries, policy analysis and human adoption authority |
+| [Projection-first reconciliation](design/projection-first-reconciliation.md) | Accepted source design for a bounded local projection contract; not yet a published or verified CLI capability |
 | [Domain-language pressure test](design/domain-language-pressure.md) | What the current language can and cannot establish for modular DDD / vertical-slice contracts, with a bounded experiment |
 | [Resolved-target equality](design/resolved-target-equality.md) | Two-domain evidence, alternatives, finite v0.12.0 assertion semantics, provenance, impact and exception boundaries |
 | [Policy-failure analysis](design/policy-failure-analysis.md) | v0.13.0 contract separating structural blockers from read-only Context/Impact inspection of ordinary policy failures |
@@ -21,7 +22,7 @@
 | [Selective adoption validation](validation/selective-adoption-handoff.md) | Acquisition/storage/freshness controls, executable CLI lifecycle and sanitized Konfyra-style replay limits |
 | [Operations](operations.md) | Development, verification, rendering, and release operations |
 | [Refinement decisions](refinement.md) | Technical product decisions and deferred design choices in support of the vision |
-| [Implementation plan](implementation-plan.md) | Published v0.13.0 status, release evidence, and later planned work |
+| [Implementation plan](implementation-plan.md) | Published v0.13.0 status, the in-progress projection-first source slice, release evidence and planned work |
 | [Development coordination](development/README.md) | Parallel baseline, current contracts, independence audit and risk evidence |
 | [Module architecture](development/modules.md) | Core, Host, independent Modules, Infrastructure/Tooling and how to extend the source |
 | [Architecture consolidation](validation/clean-architecture-consolidation.md) | Package inventory, Core audit, compatibility, dogfood and exact-source gate results |
@@ -41,3 +42,5 @@
 | [Production assessment](production-assessment.md) | Dated release evidence and source-level assessment |
 
 The [roadmap](implementation-plan.md) owns current source status and planned work. v0.13.0 is published and verified; v0.12.0 and v0.11.0 remain immutable historical evidence. v0.10.0 remains the historical baseline for the generic canonical engineering model. Published releases remain immutable; source changes do not update an installed release.
+
+[Research direction inputs](research/README.md) preserve owner-supplied hypotheses separately from current contracts and results.

@@ -1,0 +1,217 @@
+[
+  {
+    "surface": "code",
+    "path": "scripts/list_open_listings.py",
+    "baseCommit": "b5b3cff67e1214e0411888b96a67bcbbd889f99c",
+    "driftCommit": "c62a543087a40129f938e9b695d3ac77ff4f0f20",
+    "repairedCommit": "faa5d6a5fe8d5ebfa86db1b98df8f1f3997bdcd7",
+    "baselineStatus": "converged",
+    "intentDigest": "sha256:17b87e7cff4333180961f9025ff8259995560eaa967dd31fe345b3e83f367402",
+    "negativeStatus": "drift",
+    "negativeChecks": [
+      {
+        "name": "checker-tests",
+        "tool": "python",
+        "exitCode": 0,
+        "milliseconds": 124,
+        "output": "....\r\n----------------------------------------------------------------------\r\nRan 4 tests in 0.007s\r\n\r\nOK\r\n"
+      },
+      {
+        "name": "python-tests",
+        "tool": "python",
+        "exitCode": 1,
+        "milliseconds": 289,
+        "output": ".FF\r\n======================================================================\r\nFAIL: test_filters_sorts_and_preserves_complete_rows (test_list_open_listings.ListOpenListingsTests.test_filters_sorts_and_preserves_complete_rows)\r\n----------------------------------------------------------------------\r\nTraceback (most recent call last):\r\n  File \"<fixed-check-workspace>\\tests\\test_list_open_listings.py\", line 46, in test_filters_sorts_and_preserves_complete_rows\r\n    self.assertEqual([row[\"id\"] for row in rows], [\"early\", \"tie-a\", \"tie-z\", \"late\"])\r\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\r\nAssertionError: Lists differ: ['closed'] != ['early', 'tie-a', 'tie-z', 'late']\r\n\r\nFirst differing element 0:\r\n'closed'\r\n'early'\r\n\r\nSecond list contains 3 additional elements.\r\nFirst extra element 1:\r\n'tie-a'\r\n\r\n- ['closed']\r\n+ ['early', 'tie-a', 'tie-z', 'late']\r\n\r\n======================================================================\r\nFAIL: test_json_stdout_shape_is_single_object_with_items (test_list_open_listings.ListOpenListingsTests.test_json_stdout_shape_is_single_object_with_items)\r\n----------------------------------------------------------------------\r\nTraceback (most recent call last):\r\n  File \"<fixed-check-workspace>\\tests\\test_list_open_listings.py\", line 59, in test_json_stdout_shape_is_single_object_with_items\r\n    self.assertEqual(result, {\"items\": [\r\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^\r\n        {\"id\": \"a\", \"status\": \"Open\", \"openedAt\": \"2026-01-01T00:00:00Z\"},\r\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\r\n        {\"id\": \"b\", \"status\": \"Open\", \"openedAt\": \"2026-01-01T00:00:00Z\"},\r\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\r\n    ]})\r\n    ^^^\r\nAssertionError: {'items': [{'id': 'c', 'status': 'Closed', 'openedAt': '2026[15 chars]Z'}]} != {'items': [{'id': 'a', 'status': 'Open', 'openedAt': '2026-0[80 chars]Z'}]}\r\n- {'items': [{'id': 'c', 'openedAt': '2026-01-01T00:00:00Z', 'status': 'Closed'}]}\r\n?                    ^                                                  ^^^^ ^  ^^\r\n\r\n+ {'items': [{'id': 'a', 'openedAt': '2026-01-01T00:00:00Z', 'status': 'Open'},\r\n?                    ^                                                  ^^ ^  ^\r\n\r\n+            {'id': 'b', 'openedAt': '2026-01-01T00:00:00Z', 'status': 'Open'}]}\r\n\r\n----------------------------------------------------------------------\r\nRan 3 tests in 0.182s\r\n\r\nFAILED (failures=2)\r\n"
+      }
+    ],
+    "written": [
+      "scripts/list_open_listings.py"
+    ],
+    "repairStatus": "converged"
+  },
+  {
+    "surface": "documentation",
+    "path": "docs/markitect/dispatch/process.dispatchprocess.dispatch.example.org.v1alpha1.md",
+    "baseCommit": "b5b3cff67e1214e0411888b96a67bcbbd889f99c",
+    "driftCommit": "a8a5bc8dd59b90d0d15a6d2e45d6a764b2652e03",
+    "repairedCommit": "f77e29cf99e4e20bf4f25a04f73c2ebe043751a2",
+    "baselineStatus": "converged",
+    "intentDigest": "sha256:17b87e7cff4333180961f9025ff8259995560eaa967dd31fe345b3e83f367402",
+    "negativeStatus": "drift",
+    "negativeChecks": [
+      {
+        "name": "checker-tests",
+        "tool": "python",
+        "exitCode": 0,
+        "milliseconds": 124,
+        "output": "....\r\n----------------------------------------------------------------------\r\nRan 4 tests in 0.008s\r\n\r\nOK\r\n"
+      },
+      {
+        "name": "python-tests",
+        "tool": "python",
+        "exitCode": 0,
+        "milliseconds": 327,
+        "output": "...\r\n----------------------------------------------------------------------\r\nRan 3 tests in 0.202s\r\n\r\nOK\r\n"
+      },
+      {
+        "name": "independent-contract",
+        "tool": "python",
+        "exitCode": 0,
+        "milliseconds": 241,
+        "output": "projection contract: passed finite fixture\r\n"
+      }
+    ],
+    "written": [
+      "docs/markitect/dispatch/process.dispatchprocess.dispatch.example.org.v1alpha1.md"
+    ],
+    "repairStatus": "converged"
+  },
+  {
+    "surface": "codex",
+    "path": ".agents/skills/list-open-listings/SKILL.md",
+    "baseCommit": "b5b3cff67e1214e0411888b96a67bcbbd889f99c",
+    "driftCommit": "305e68a5b31e14f47e2449e8e1e7d6b525867749",
+    "repairedCommit": "2096de2e1c956dc409f0d82730549b7e3ab1aee9",
+    "baselineStatus": "converged",
+    "intentDigest": "sha256:17b87e7cff4333180961f9025ff8259995560eaa967dd31fe345b3e83f367402",
+    "negativeStatus": "drift",
+    "negativeChecks": [
+      {
+        "name": "checker-tests",
+        "tool": "python",
+        "exitCode": 0,
+        "milliseconds": 124,
+        "output": "....\r\n----------------------------------------------------------------------\r\nRan 4 tests in 0.007s\r\n\r\nOK\r\n"
+      },
+      {
+        "name": "python-tests",
+        "tool": "python",
+        "exitCode": 0,
+        "milliseconds": 284,
+        "output": "...\r\n----------------------------------------------------------------------\r\nRan 3 tests in 0.176s\r\n\r\nOK\r\n"
+      },
+      {
+        "name": "independent-contract",
+        "tool": "python",
+        "exitCode": 0,
+        "milliseconds": 204,
+        "output": "projection contract: passed finite fixture\r\n"
+      }
+    ],
+    "written": [
+      ".agents/skills/list-open-listings/SKILL.md"
+    ],
+    "repairStatus": "converged"
+  },
+  {
+    "surface": "claude",
+    "path": ".claude/rules/dispatch-process.md",
+    "baseCommit": "b5b3cff67e1214e0411888b96a67bcbbd889f99c",
+    "driftCommit": "7c36109f9f4a96845925169aa5a1da6fc3651ec1",
+    "repairedCommit": "2747c203be462e40105aa8864a552782a12dcbdb",
+    "baselineStatus": "converged",
+    "intentDigest": "sha256:17b87e7cff4333180961f9025ff8259995560eaa967dd31fe345b3e83f367402",
+    "negativeStatus": "drift",
+    "negativeChecks": [
+      {
+        "name": "checker-tests",
+        "tool": "python",
+        "exitCode": 0,
+        "milliseconds": 131,
+        "output": "....\r\n----------------------------------------------------------------------\r\nRan 4 tests in 0.008s\r\n\r\nOK\r\n"
+      },
+      {
+        "name": "python-tests",
+        "tool": "python",
+        "exitCode": 0,
+        "milliseconds": 298,
+        "output": "...\r\n----------------------------------------------------------------------\r\nRan 3 tests in 0.183s\r\n\r\nOK\r\n"
+      },
+      {
+        "name": "independent-contract",
+        "tool": "python",
+        "exitCode": 0,
+        "milliseconds": 303,
+        "output": "projection contract: passed finite fixture\r\n"
+      }
+    ],
+    "written": [
+      ".claude/rules/dispatch-process.md"
+    ],
+    "repairStatus": "converged"
+  },
+  {
+    "surface": "pipeline",
+    "path": ".github/workflows/ci.yaml",
+    "baseCommit": "b5b3cff67e1214e0411888b96a67bcbbd889f99c",
+    "driftCommit": "29e22374b14a76f8fde0e0089161b9e098a2ad62",
+    "repairedCommit": "86fd3d3ac10f84cfde8d4f7ff6f212ba0fd4a9d7",
+    "baselineStatus": "converged",
+    "intentDigest": "sha256:17b87e7cff4333180961f9025ff8259995560eaa967dd31fe345b3e83f367402",
+    "negativeStatus": "drift",
+    "negativeChecks": [
+      {
+        "name": "checker-tests",
+        "tool": "python",
+        "exitCode": 0,
+        "milliseconds": 132,
+        "output": "....\r\n----------------------------------------------------------------------\r\nRan 4 tests in 0.007s\r\n\r\nOK\r\n"
+      },
+      {
+        "name": "python-tests",
+        "tool": "python",
+        "exitCode": 0,
+        "milliseconds": 303,
+        "output": "...\r\n----------------------------------------------------------------------\r\nRan 3 tests in 0.189s\r\n\r\nOK\r\n"
+      },
+      {
+        "name": "independent-contract",
+        "tool": "python",
+        "exitCode": 1,
+        "milliseconds": 77,
+        "output": "projection contract: failed: CI workflow does not contain declared command: python tools/check_contract.py\r\n"
+      }
+    ],
+    "written": [
+      ".github/workflows/ci.yaml"
+    ],
+    "repairStatus": "converged"
+  },
+  {
+    "surface": "hook",
+    "path": ".githooks/pre-commit",
+    "baseCommit": "b5b3cff67e1214e0411888b96a67bcbbd889f99c",
+    "driftCommit": "8c6552e714404b1e66a733ba5ff21855eea4d2f5",
+    "repairedCommit": "c037fbef204808181a2891b7ff094d184ee281c8",
+    "baselineStatus": "converged",
+    "intentDigest": "sha256:17b87e7cff4333180961f9025ff8259995560eaa967dd31fe345b3e83f367402",
+    "negativeStatus": "drift",
+    "negativeChecks": [
+      {
+        "name": "checker-tests",
+        "tool": "python",
+        "exitCode": 0,
+        "milliseconds": 149,
+        "output": "....\r\n----------------------------------------------------------------------\r\nRan 4 tests in 0.011s\r\n\r\nOK\r\n"
+      },
+      {
+        "name": "python-tests",
+        "tool": "python",
+        "exitCode": 0,
+        "milliseconds": 304,
+        "output": "...\r\n----------------------------------------------------------------------\r\nRan 3 tests in 0.195s\r\n\r\nOK\r\n"
+      },
+      {
+        "name": "independent-contract",
+        "tool": "python",
+        "exitCode": 1,
+        "milliseconds": 71,
+        "output": "projection contract: failed: pre-commit hook does not contain the canonical checker command\r\n"
+      }
+    ],
+    "written": [
+      ".githooks/pre-commit"
+    ],
+    "repairStatus": "converged"
+  }
+]

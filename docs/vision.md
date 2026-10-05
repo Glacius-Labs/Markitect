@@ -16,7 +16,20 @@ Humans should spend more attention defining goals, concepts, architecture, invar
 
 ## Product definition
 
-**Markitect turns human engineering intent into an explicit, versioned, machine-consumable engineering system so AI agents can build and evolve software within deliberately designed boundaries.**
+**Markitect is the desired-state model for the software engineering intent a project deliberately governs.** Human owners decide what should exist and why; they represent selected, structured decisions canonically in Markitect. Explicit adapters and AI agents materialize those decisions into selected repository representations, which are then observed and checked against bounded evidence.
+
+The target flow is:
+
+```text
+human-owned engineering intent
+    → canonical Markitect desired state for selected decisions
+    → explicit projection contracts and plans
+    → deterministic renderers or AI materialization
+    → observed repository representations
+    → bounded verification and reconciliation
+```
+
+This is a scoped authority model, not a claim that every repository artifact is generated from Markitect. Human narrative, business requirements, implementation details outside modeled contracts, vendor/tool inputs and external observations retain explicit owners. Markitect is canonical for the selected decisions it models; AI output, observations and hashes do not silently become intent or approval.
 
 The product direction is an executable engineering-governance layer for autonomous software development. Markdown views, provider instructions, context, checks and adapters serve that purpose. Their existence or volume is not the product's success criterion.
 
@@ -30,7 +43,9 @@ Markitect lets humans program the shape and rules of software development instea
 | Markitect | Make selected engineering decisions explicit and versioned; validate declared structure and finite policy; compile relevant context and impact; preserve provenance; supply canonical meaning to independent projections, checks and reconciliation adapters. |
 | AI agents | Understand the task, consume its relevant context, implement within granted boundaries, test/refactor, update owned projections, run configured verification/reconciliation and continue routine work. Propose changes to intent separately and escalate decisions they are not authorized or equipped to make. |
 
-The intended flow is human decisions → explicit engineering model → relevant agent context and bounded checks → agent work and observed evidence. Architecture changes and proposed policies return to their human owner for deliberate review and adoption; observations do not silently rewrite the rules.
+For governed changes, the intended flow is accepted desired state → relevant agent context and bounded checks → materialization or repair of declared representations → observed evidence. An intent change updates its canonical owner and replans before materialization. When intent is unchanged, a bug or stale representation is repaired against that unchanged model; this is not a bypass and does not require a fake model edit. Architecture changes and proposed policies return to their human owner for deliberate review and adoption; observations do not silently rewrite the rules.
+
+This operating model is a target, not a claim that the current release intercepts every repository change or reconciles every artifact. Current workflow guidance and configured checks cover only their declared scope. Applying the target more broadly requires explicit representation ownership, adapters and bounded verification evidence.
 
 The target human role is specification and engineering judgment. Being a permanent agent scheduler, prompt supervisor, manual synchronizer or reader of every routine PR should not be necessary merely to keep declared intent consistent. Whether those activities can actually be reduced is a validation question. A project still defines which changes require human acceptance; passing technical checks do not grant authority or authenticate a reviewer.
 
@@ -42,7 +57,7 @@ Structured policies can become finite deterministic assertions. Project-owned ch
 
 Context helps agents find applicable intent; impact helps reviewers understand declared consequences; versioned packages make architecture evolution explicit; narrow exceptions record deliberate deviations; reconciliation can align owned representations. None proves that all relevant intent was modeled, that an agent obeyed it, or that arbitrary application code is correct.
 
-Continuous autonomous agents are the desired consumer operating model. They may call bounded Markitect operations from their own runtime, orchestration or CI. This does not require a continuously running Core, a scheduler, hidden policy activation or a background mutation controller. Current Observe/Plan/Apply/Verify trust boundaries remain in force; Apply still requires explicit authority and exact input-bound plans.
+Continuous autonomous agents are the desired consumer operating model. They may call bounded Markitect operations from their own runtime, orchestration or CI. For AI materialization, the agent is a non-deterministic producer of a candidate representation, not a deterministic renderer: permitted implementation freedom must be explicit and project-owned checks must state what they establish. This does not require a continuously running Core, hidden policy activation or a background mutation controller. Current Observe/Plan/Apply/Verify trust boundaries remain in force; Apply still requires explicit authority and exact input-bound plans. A plan digest binds inputs and operations; it does not authenticate an owner or prove prior approval.
 
 ## Desired operating model
 
@@ -76,8 +91,8 @@ Reconsider proposals that introduce another manually synchronized truth owner, h
 
 | Category | What is established or intended |
 |---|---|
-| Published capability | v0.12.0 provides generic versioned Domains, typed relations, finite assertions including bounded `same-target`, a normalized model, context/impact, exact-pinned packages, PolicyResults/exceptions, provider projections, configured checks/adapters, explicit reconciliation and the Copy Me proposal/review workflow. The roadmap owns precise coverage. |
-| Later source | Explicit read-only analysis of ordinary failed policies, bounded offline adapter/test slices, and selective preparation/Copy Me handoff validation. The handoff preserves owner-selected evidence and explicit adoption; it establishes no discovery-quality or upkeep benefit. These are not additions to an installed v0.12.0 release. |
+| Published capability | v0.13.0 retains versioned Domains, typed relations, finite assertions including bounded `same-target`, normalized model, context/impact, packages, PolicyResults/exceptions and configured projections/adapters. It adds read-only failed-policy analysis, selective preparation/Copy Me validation and the Markitect-first/accounting workflow. The roadmap owns precise coverage. |
+| Current unreleased source | Integrated Core/Host/Module consolidation and bounded local projection contracts with reviewed candidate Apply and immutable Verify. These are not additions to an installed v0.13.0 release and establish no real-adopter benefit. |
 | Aspirational operation | Many continuously working agents, less routine human supervision, architecture-level escalation and sustainable governance at greater scale. No current scheduler, dashboard or universal automatic acceptance is claimed. |
 | Unproven benefit | Reduced human intervention, lower total maintenance/synchronization cost, fewer missed updates or defects, better sustained autonomy, token savings and market demand. |
 
@@ -88,3 +103,8 @@ The central evaluation question is: **Can a small number of humans govern much m
 ## Decisions Markitect deliberately leaves to people
 
 Markitect does not decide which architecture is correct, which business goal matters, whether a policy is desirable, whether evidence is representative or which exceptional risk to accept. It does not understand arbitrary source-code semantics in Core, guarantee correctness or absence of drift, replace human product/architecture judgment or guarantee complete agent autonomy. Humans retain those decisions and may explicitly delegate routine work; machine evidence states only what its fixed inputs and declared checks establish.
+
+
+## Research refinement
+
+The [ontology, projection and assurance thesis](research/README.md) is owner-supplied research orientation. Its distinction between semantic authority, implementation freedom, independent evidence and integration obligations guides experiments. The [alignment assessment](design/projection-assurance-direction.md) identifies what this source slice supports and what remains research. It neither expands Core by naming concepts nor changes measured evidence into a benefit claim.

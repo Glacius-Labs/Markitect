@@ -1,0 +1,124 @@
+[
+  {
+    "variant": "a",
+    "toolSha256": "d41885bd9a6e762922fa337684316dfa9f7f195a95fb125ac36f2368ec728b81",
+    "planDigest": "d24914899a1e9276d6df7c4cc5440db19e262e4c1241cb81d9430864b27d85fb",
+    "intentDigest": "sha256:17b87e7cff4333180961f9025ff8259995560eaa967dd31fe345b3e83f367402",
+    "candidateDigest": "sha256:618a2f00ea3f791d9bf7bf73d07b9de0f2b4edf1d24fe804502c264a8306fa6e",
+    "commit": "b5b3cff67e1214e0411888b96a67bcbbd889f99c",
+    "applyStatus": "materialized-unverified",
+    "written": [
+      ".agents/skills/list-open-listings/SKILL.md",
+      ".claude/rules/dispatch-process.md",
+      ".claude/skills/list-open-listings/SKILL.md",
+      ".githooks/pre-commit",
+      ".github/workflows/ci.yaml",
+      "docs/markitect/README.md",
+      "docs/markitect/_domains/README.md",
+      "docs/markitect/_domains/dispatch.example.org.v1alpha1.domain.md",
+      "docs/markitect/dispatch/README.md",
+      "docs/markitect/dispatch/board.dispatchboard.dispatch.example.org.v1alpha1.md",
+      "docs/markitect/dispatch/dispatch-process.rule.md",
+      "docs/markitect/dispatch/list-open-listings.listingview.dispatch.example.org.v1alpha1.md",
+      "docs/markitect/dispatch/list-open-listings.skill.md",
+      "docs/markitect/dispatch/owner.owner.dispatch.example.org.v1alpha1.md",
+      "docs/markitect/dispatch/process.dispatchprocess.dispatch.example.org.v1alpha1.md",
+      "docs/markitect/dispatch/renewal-a.listing.dispatch.example.org.v1alpha1.md",
+      "docs/markitect/dispatch/renewal-b.listing.dispatch.example.org.v1alpha1.md",
+      "docs/markitect/dispatch/renewal-c.listing.dispatch.example.org.v1alpha1.md",
+      "scripts/list_open_listings.py",
+      "tests/test_list_open_listings.py"
+    ],
+    "verifyStatus": "converged",
+    "checks": [
+      {
+        "name": "checker-tests",
+        "tool": "python",
+        "exitCode": 0,
+        "milliseconds": 214,
+        "output": "....\r\n----------------------------------------------------------------------\r\nRan 4 tests in 0.006s\r\n\r\nOK\r\n"
+      },
+      {
+        "name": "python-tests",
+        "tool": "python",
+        "exitCode": 0,
+        "milliseconds": 281,
+        "output": "...\r\n----------------------------------------------------------------------\r\nRan 3 tests in 0.178s\r\n\r\nOK\r\n"
+      },
+      {
+        "name": "independent-contract",
+        "tool": "python",
+        "exitCode": 0,
+        "milliseconds": 195,
+        "output": "projection contract: passed finite fixture\r\n"
+      }
+    ],
+    "fileDigests": {
+      "scripts/list_open_listings.py": "f9015316bff4c6ab8ccf4058f15a111a2edc31cc8f44d6498fa99d6dd9945bd2",
+      "tests/test_list_open_listings.py": "26c6fcad27b71fa5af1a6929f29d6f4eca09f22948f15e712506753387909281",
+      ".github/workflows/ci.yaml": "54504abbd761bf78da9a8163c7cc6592f90e6a9b7fca0a418fe733b481d5745b",
+      ".githooks/pre-commit": "c6d0179905e9bb886f06c079403f4d767b0cce6cb0c6b8d34000b0223aa72155"
+    }
+  },
+  {
+    "variant": "b",
+    "toolSha256": "d41885bd9a6e762922fa337684316dfa9f7f195a95fb125ac36f2368ec728b81",
+    "planDigest": "d24914899a1e9276d6df7c4cc5440db19e262e4c1241cb81d9430864b27d85fb",
+    "intentDigest": "sha256:17b87e7cff4333180961f9025ff8259995560eaa967dd31fe345b3e83f367402",
+    "candidateDigest": "sha256:08e93d5e3aab669ec0133b8a316283efb0993574e050af14abea5b01b042f1a6",
+    "commit": "ec89da391e00d1b6b2ecc7942ff04329b3f382ab",
+    "applyStatus": "materialized-unverified",
+    "written": [
+      ".agents/skills/list-open-listings/SKILL.md",
+      ".claude/rules/dispatch-process.md",
+      ".claude/skills/list-open-listings/SKILL.md",
+      ".githooks/pre-commit",
+      ".github/workflows/ci.yaml",
+      "docs/markitect/README.md",
+      "docs/markitect/_domains/README.md",
+      "docs/markitect/_domains/dispatch.example.org.v1alpha1.domain.md",
+      "docs/markitect/dispatch/README.md",
+      "docs/markitect/dispatch/board.dispatchboard.dispatch.example.org.v1alpha1.md",
+      "docs/markitect/dispatch/dispatch-process.rule.md",
+      "docs/markitect/dispatch/list-open-listings.listingview.dispatch.example.org.v1alpha1.md",
+      "docs/markitect/dispatch/list-open-listings.skill.md",
+      "docs/markitect/dispatch/owner.owner.dispatch.example.org.v1alpha1.md",
+      "docs/markitect/dispatch/process.dispatchprocess.dispatch.example.org.v1alpha1.md",
+      "docs/markitect/dispatch/renewal-a.listing.dispatch.example.org.v1alpha1.md",
+      "docs/markitect/dispatch/renewal-b.listing.dispatch.example.org.v1alpha1.md",
+      "docs/markitect/dispatch/renewal-c.listing.dispatch.example.org.v1alpha1.md",
+      "scripts/list_open_listings.py",
+      "tests/test_list_open_listings.py"
+    ],
+    "verifyStatus": "converged",
+    "checks": [
+      {
+        "name": "checker-tests",
+        "tool": "python",
+        "exitCode": 0,
+        "milliseconds": 115,
+        "output": "....\r\n----------------------------------------------------------------------\r\nRan 4 tests in 0.007s\r\n\r\nOK\r\n"
+      },
+      {
+        "name": "python-tests",
+        "tool": "python",
+        "exitCode": 0,
+        "milliseconds": 526,
+        "output": "....\r\n----------------------------------------------------------------------\r\nRan 4 tests in 0.395s\r\n\r\nOK\r\n"
+      },
+      {
+        "name": "independent-contract",
+        "tool": "python",
+        "exitCode": 0,
+        "milliseconds": 200,
+        "output": "projection contract: passed finite fixture\r\n"
+      }
+    ],
+    "fileDigests": {
+      "scripts/list_open_listings.py": "6be0078307b09fbd30ae3476b30365625d2d35e840a8a8382cbf90a9b2269e5b",
+      "tests/test_list_open_listings.py": "fa8ce9f0b8d31ada184805eef1bbb0bc4f22dd3594cc85da235658d4d42a0b77",
+      ".github/workflows/ci.yaml": "54504abbd761bf78da9a8163c7cc6592f90e6a9b7fca0a418fe733b481d5745b",
+      ".githooks/pre-commit": "c6d0179905e9bb886f06c079403f4d767b0cce6cb0c6b8d34000b0223aa72155"
+    }
+  }
+]

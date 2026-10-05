@@ -1,0 +1,250 @@
+{
+  "base": "b5b3cff67e1214e0411888b96a67bcbbd889f99c",
+  "intentCandidate": "f738cf7b5b1b77e98adf966f07a30ea40b59473c",
+  "materialized": "2e0275afb95f0f98819075cdabd0ea3e2c6b2c6e",
+  "toolSha256": "f94680c790aaa45a946cfa5eac3003ea6e134d30836e421b5ffc4f8241f0ba63",
+  "changedIntent": [
+    "resources/process.yaml"
+  ],
+  "intentDigest": "sha256:e79d1236192b4deb5887d7c89f16e8a44cec11ec8440b6331c09dcf77b1544f2",
+  "preMaterializationStatus": "drift",
+  "affected": [
+    "dispatch/dispatch.example.org/v1alpha1/DispatchProcess/python-materialization",
+    "dispatch/dispatch.example.org/v1alpha1/ListingView/list-open-listings"
+  ],
+  "causes": [
+    {
+      "kind": "invalidation",
+      "path": "resources/list-open-listings.yaml",
+      "resource": "dispatch/dispatch.example.org/v1alpha1/ListingView/list-open-listings",
+      "from": "dispatch/dispatch.example.org/v1alpha1/ListingView/list-open-listings",
+      "to": "dispatch/dispatch.example.org/v1alpha1/DispatchProcess/python-materialization",
+      "relation": "usesProcess",
+      "domainApiVersion": "dispatch.example.org/v1alpha1",
+      "line": 1,
+      "snapshot": "base"
+    },
+    {
+      "kind": "invalidation",
+      "path": "resources/list-open-listings.yaml",
+      "resource": "dispatch/dispatch.example.org/v1alpha1/ListingView/list-open-listings",
+      "from": "dispatch/dispatch.example.org/v1alpha1/ListingView/list-open-listings",
+      "to": "dispatch/dispatch.example.org/v1alpha1/DispatchProcess/python-materialization",
+      "relation": "usesProcess",
+      "domainApiVersion": "dispatch.example.org/v1alpha1",
+      "line": 1,
+      "snapshot": "candidate"
+    },
+    {
+      "kind": "resource-change",
+      "path": "resources/process.yaml",
+      "resource": "dispatch/dispatch.example.org/v1alpha1/DispatchProcess/python-materialization"
+    }
+  ],
+  "changedInputs": [
+    "resources/process.yaml"
+  ],
+  "baseProjections": [
+    {
+      "configPath": "projections.config",
+      "configDigest": "sha256:e3898a7b2e5952d7a4f121c44262e565d0690a42f746f430a0a8f2ed54a15399",
+      "contractId": "dispatch-human-and-provider-views",
+      "sources": [
+        "/Project/projection-first-dispatch",
+        "dispatch/Rule/dispatch-process",
+        "dispatch/Skill/list-open-listings",
+        "dispatch/dispatch.example.org/v1alpha1/DispatchBoard/north",
+        "dispatch/dispatch.example.org/v1alpha1/DispatchProcess/python-materialization",
+        "dispatch/dispatch.example.org/v1alpha1/Listing/renewal-a",
+        "dispatch/dispatch.example.org/v1alpha1/Listing/renewal-b",
+        "dispatch/dispatch.example.org/v1alpha1/Listing/renewal-c",
+        "dispatch/dispatch.example.org/v1alpha1/ListingView/list-open-listings",
+        "dispatch/dispatch.example.org/v1alpha1/Owner/dispatch-team",
+        "domain:dispatch.example.org/v1alpha1/dispatch"
+      ],
+      "matchingSourceKeys": [
+        "dispatch/dispatch.example.org/v1alpha1/DispatchProcess/python-materialization",
+        "dispatch/dispatch.example.org/v1alpha1/ListingView/list-open-listings"
+      ],
+      "representation": "Human Markdown and registered Codex/Claude Rule and Skill views.",
+      "targets": [
+        ".agents/skills/list-open-listings/SKILL.md",
+        ".claude/rules/dispatch-process.md",
+        ".claude/skills/list-open-listings/SKILL.md",
+        "docs/markitect/README.md",
+        "docs/markitect/_domains/README.md",
+        "docs/markitect/_domains/dispatch.example.org.v1alpha1.domain.md",
+        "docs/markitect/dispatch/README.md",
+        "docs/markitect/dispatch/board.dispatchboard.dispatch.example.org.v1alpha1.md",
+        "docs/markitect/dispatch/dispatch-process.rule.md",
+        "docs/markitect/dispatch/list-open-listings.listingview.dispatch.example.org.v1alpha1.md",
+        "docs/markitect/dispatch/list-open-listings.skill.md",
+        "docs/markitect/dispatch/owner.owner.dispatch.example.org.v1alpha1.md",
+        "docs/markitect/dispatch/process.dispatchprocess.dispatch.example.org.v1alpha1.md",
+        "docs/markitect/dispatch/renewal-a.listing.dispatch.example.org.v1alpha1.md",
+        "docs/markitect/dispatch/renewal-b.listing.dispatch.example.org.v1alpha1.md",
+        "docs/markitect/dispatch/renewal-c.listing.dispatch.example.org.v1alpha1.md"
+      ],
+      "materializer": {
+        "name": "markitect-render",
+        "version": "v1alpha1",
+        "mode": "deterministic"
+      },
+      "freedom": [
+        "Registered renderers determine bytes from canonical resources and selected targets."
+      ]
+    },
+    {
+      "configPath": "projections.config",
+      "configDigest": "sha256:e3898a7b2e5952d7a4f121c44262e565d0690a42f746f430a0a8f2ed54a15399",
+      "contractId": "dispatch-python-materialization",
+      "sources": [
+        "dispatch/Rule/dispatch-process",
+        "dispatch/Skill/list-open-listings",
+        "dispatch/dispatch.example.org/v1alpha1/DispatchProcess/python-materialization",
+        "dispatch/dispatch.example.org/v1alpha1/ListingView/list-open-listings"
+      ],
+      "matchingSourceKeys": [
+        "dispatch/dispatch.example.org/v1alpha1/DispatchProcess/python-materialization",
+        "dispatch/dispatch.example.org/v1alpha1/ListingView/list-open-listings"
+      ],
+      "representation": "Python standard-library JSON-in/JSON-out listing command plus tests, CI, and pre-commit integration.",
+      "targets": [
+        ".githooks/pre-commit",
+        ".github/workflows/ci.yaml",
+        "scripts/list_open_listings.py",
+        "tests/test_list_open_listings.py"
+      ],
+      "materializer": {
+        "name": "coding-agent",
+        "version": "illustrative-v1",
+        "mode": "ai"
+      },
+      "freedom": [
+        "Choose internal decomposition while retaining the exact filter, sorting, row-preservation, and stdout behavior.",
+        "Keep project files unchanged while handling input and producing output.",
+        "Use only the Python standard library and no network access."
+      ],
+      "verificationChecks": [
+        "independent-contract",
+        "python-tests"
+      ]
+    }
+  ],
+  "candidateProjections": [
+    {
+      "configPath": "projections.config",
+      "configDigest": "sha256:e3898a7b2e5952d7a4f121c44262e565d0690a42f746f430a0a8f2ed54a15399",
+      "contractId": "dispatch-human-and-provider-views",
+      "sources": [
+        "/Project/projection-first-dispatch",
+        "dispatch/Rule/dispatch-process",
+        "dispatch/Skill/list-open-listings",
+        "dispatch/dispatch.example.org/v1alpha1/DispatchBoard/north",
+        "dispatch/dispatch.example.org/v1alpha1/DispatchProcess/python-materialization",
+        "dispatch/dispatch.example.org/v1alpha1/Listing/renewal-a",
+        "dispatch/dispatch.example.org/v1alpha1/Listing/renewal-b",
+        "dispatch/dispatch.example.org/v1alpha1/Listing/renewal-c",
+        "dispatch/dispatch.example.org/v1alpha1/ListingView/list-open-listings",
+        "dispatch/dispatch.example.org/v1alpha1/Owner/dispatch-team",
+        "domain:dispatch.example.org/v1alpha1/dispatch"
+      ],
+      "matchingSourceKeys": [
+        "dispatch/dispatch.example.org/v1alpha1/DispatchProcess/python-materialization",
+        "dispatch/dispatch.example.org/v1alpha1/ListingView/list-open-listings"
+      ],
+      "representation": "Human Markdown and registered Codex/Claude Rule and Skill views.",
+      "targets": [
+        ".agents/skills/list-open-listings/SKILL.md",
+        ".claude/rules/dispatch-process.md",
+        ".claude/skills/list-open-listings/SKILL.md",
+        "docs/markitect/README.md",
+        "docs/markitect/_domains/README.md",
+        "docs/markitect/_domains/dispatch.example.org.v1alpha1.domain.md",
+        "docs/markitect/dispatch/README.md",
+        "docs/markitect/dispatch/board.dispatchboard.dispatch.example.org.v1alpha1.md",
+        "docs/markitect/dispatch/dispatch-process.rule.md",
+        "docs/markitect/dispatch/list-open-listings.listingview.dispatch.example.org.v1alpha1.md",
+        "docs/markitect/dispatch/list-open-listings.skill.md",
+        "docs/markitect/dispatch/owner.owner.dispatch.example.org.v1alpha1.md",
+        "docs/markitect/dispatch/process.dispatchprocess.dispatch.example.org.v1alpha1.md",
+        "docs/markitect/dispatch/renewal-a.listing.dispatch.example.org.v1alpha1.md",
+        "docs/markitect/dispatch/renewal-b.listing.dispatch.example.org.v1alpha1.md",
+        "docs/markitect/dispatch/renewal-c.listing.dispatch.example.org.v1alpha1.md"
+      ],
+      "materializer": {
+        "name": "markitect-render",
+        "version": "v1alpha1",
+        "mode": "deterministic"
+      },
+      "freedom": [
+        "Registered renderers determine bytes from canonical resources and selected targets."
+      ]
+    },
+    {
+      "configPath": "projections.config",
+      "configDigest": "sha256:e3898a7b2e5952d7a4f121c44262e565d0690a42f746f430a0a8f2ed54a15399",
+      "contractId": "dispatch-python-materialization",
+      "sources": [
+        "dispatch/Rule/dispatch-process",
+        "dispatch/Skill/list-open-listings",
+        "dispatch/dispatch.example.org/v1alpha1/DispatchProcess/python-materialization",
+        "dispatch/dispatch.example.org/v1alpha1/ListingView/list-open-listings"
+      ],
+      "matchingSourceKeys": [
+        "dispatch/dispatch.example.org/v1alpha1/DispatchProcess/python-materialization",
+        "dispatch/dispatch.example.org/v1alpha1/ListingView/list-open-listings"
+      ],
+      "representation": "Python standard-library JSON-in/JSON-out listing command plus tests, CI, and pre-commit integration.",
+      "targets": [
+        ".githooks/pre-commit",
+        ".github/workflows/ci.yaml",
+        "scripts/list_open_listings.py",
+        "tests/test_list_open_listings.py"
+      ],
+      "materializer": {
+        "name": "coding-agent",
+        "version": "illustrative-v1",
+        "mode": "ai"
+      },
+      "freedom": [
+        "Choose internal decomposition while retaining the exact filter, sorting, row-preservation, and stdout behavior.",
+        "Keep project files unchanged while handling input and producing output.",
+        "Use only the Python standard library and no network access."
+      ],
+      "verificationChecks": [
+        "independent-contract",
+        "python-tests"
+      ]
+    }
+  ],
+  "written": [
+    ".github/workflows/ci.yaml",
+    "docs/markitect/dispatch/process.dispatchprocess.dispatch.example.org.v1alpha1.md"
+  ],
+  "verifyStatus": "converged",
+  "checks": [
+    {
+      "name": "checker-tests",
+      "tool": "python",
+      "exitCode": 0,
+      "milliseconds": 147,
+      "output": "....\r\n----------------------------------------------------------------------\r\nRan 4 tests in 0.007s\r\n\r\nOK\r\n"
+    },
+    {
+      "name": "python-tests",
+      "tool": "python",
+      "exitCode": 0,
+      "milliseconds": 283,
+      "output": "...\r\n----------------------------------------------------------------------\r\nRan 3 tests in 0.178s\r\n\r\nOK\r\n"
+    },
+    {
+      "name": "independent-contract",
+      "tool": "python",
+      "exitCode": 0,
+      "milliseconds": 214,
+      "output": "projection contract: passed finite fixture\r\n"
+    }
+  ],
+  "checkerUnchanged": true
+}

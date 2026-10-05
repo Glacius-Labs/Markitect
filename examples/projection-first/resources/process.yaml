@@ -1,0 +1,9 @@
+{
+  "apiVersion": "dispatch.example.org/v1alpha1", "kind": "DispatchProcess",
+  "metadata": { "name": "python-materialization", "namespace": "dispatch" },
+  "spec": {
+    "purpose": "Define the finite project validation and pre-commit commands for this materialization.",
+    "verificationCommands": ["python -m unittest discover -s tests", "python tools/check_contract.py"],
+    "preCommitCommand": "python tools/check_contract.py"
+  }
+}

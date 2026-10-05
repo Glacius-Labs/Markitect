@@ -13,6 +13,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/core/snapshot"
 	"github.com/Glacius-Labs/Markitect/internal/host/authoring"
 	"github.com/Glacius-Labs/Markitect/internal/host/inputs"
+	"github.com/Glacius-Labs/Markitect/internal/modules/projections"
 )
 
 // Project is one immutable input set and its resolved resources.
@@ -65,13 +66,44 @@ func Parse(snap *snapshot.Snapshot) (*Project, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	// Project-selected mapping configs and projection targets are opaque artifacts,
+	// including provider YAML. A target may never hide a typed canonical resource.
+	opaque := map[string]bool{}
+	for _, adapter := range config.Spec.Adapters {
+		if adapter.Type != "local-projection" {
+			continue
+		}
+		contracts, _ := adapter.Config["contracts"].(string)
+		coverage, _ := adapter.Config["coverage"].(string)
+		opaque[contracts] = true
+		opaque[coverage] = true
+		contractBytes, exists := snap.Files[contracts]
+		if !exists {
+			return nil, fmt.Errorf("registered projection config %s is absent", contracts)
+		}
+		projectionConfig, err := projections.ParseConfig(contractBytes)
+		if err != nil {
+			return nil, err
+		}
+		for _, contract := range projectionConfig.Contracts {
+			for _, target := range contract.Targets {
+				opaque[target.Path] = true
+			}
+		}
+	}
+	for _, name := range sortedFiles(snap.Files) {
+		if opaque[name] && (name == config.Path || p.isDomainInput("", name) || isCanonicalProjectionEnvelope(snap.Files[name], registry)) {
+			return nil, fmt.Errorf("projection mapping/target %s overlaps typed canonical source", name)
+		}
+	}
 	paths := sortedFiles(snap.Files)
 	var parseFindings []core.Diagnostic
 	for _, name := range paths {
 		if name == "markitect.yaml" || (path.Ext(name) != ".yaml" && path.Ext(name) != ".yml") {
 			continue
 		}
-		if p.isDomainInput("", name) {
+		if p.isDomainInput("", name) || opaque[name] {
 			continue
 		}
 		scoped := false

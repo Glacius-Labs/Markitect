@@ -1,0 +1,5 @@
+{
+  "apiVersion": "markitect.example.org/v1alpha1", "kind": "Rule",
+  "metadata": { "name": "dispatch-process", "namespace": "dispatch" },
+  "spec": { "text": "The listing projection is read-only: it does not alter source files while interpreting a board. Use the typed ListingView and DispatchProcess as the canonical behavior and process sources. Do not infer a different owner, filter, or ordering from prose or implementation details." }
+}

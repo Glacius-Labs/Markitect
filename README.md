@@ -7,9 +7,9 @@
 
 **Humans architect the system of work. AI performs the work. Markitect keeps them aligned.**
 
-Markitect turns human engineering intent into an explicit, versioned, machine-consumable engineering system so AI agents can build and evolve software within deliberately designed boundaries. Humans own goals, architecture, policy, exceptions and architecture evolution; agents perform routine work within their granted authority. The [canonical product vision](docs/vision.md) explains this direction and the benefit hypothesis: more autonomous engineering work per unit of human attention.
+Markitect's target is a desired-state model for the engineering intent a project deliberately governs. Human owners decide what should exist and why; selected structured decisions become canonical, versioned Markitect resources. The target operating model uses explicit deterministic adapters and AI agents to materialize declared repository representations, then bounded evidence to check observed state. Human narrative, implementation detail outside modeled contracts, vendor/tool inputs and external observations retain their explicit owners. The [canonical product vision](docs/vision.md) explains this direction and its still-unproven benefit hypothesis.
 
-Today, Markitect provides a compiler-like foundation for **canonical engineering knowledge**: typed Domains/resources, finite checks, context, impact and configured projections/adapters. Canonical ownership covers modeled facts and mappings; other project knowledge retains its own owners. Continuous agent operation and reduced human supervision are goals, not demonstrated properties of the current CLI.
+Today, Markitect provides a compiler-like foundation for **selected canonical engineering intent**: typed Domains/resources, finite checks, context, impact and explicitly configured projections/adapters. Core handles adopting-project artifacts as opaque exact bytes; a specialized adapter or project check may inspect declared formats within a stated evidence boundary. Existing output and artifact checks are scoped, not a repository-wide inventory or convergence guarantee. Continuous agent operation and reduced human supervision are goals, not demonstrated properties of the current CLI.
 
 The v0.10.0 release provides a generic canonical engineering model: Projects load versioned Domains, validate typed resources and relations, evaluate finite deterministic constraints, and expose one normalized semantic model to context, impact, projections, and configured adapters. Markitect does this without a model API. Exact declared project-artifact inputs remain opaque to the kernel; it does not infer their domain-specific meaning. See the [product boundary](docs/architecture.md#project-artifact-boundary).
 
@@ -22,6 +22,8 @@ The published [v0.12.0 release](https://github.com/Glacius-Labs/Markitect/releas
 The published [v0.13.0 release](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.13.0) adds explicit read-only policy-failure analysis, bounded selective adoption preparation and Copy Me handoff validation, .NET/source hardening, the provider-neutral Markitect-first Change workflow, and a standalone managed-artifact check. Offline GitHub/Azure consumers and MCP remain experimental source-only interfaces; no live provider Apply is included. The [real-project comparison](docs/validation/agents-md-vs-markitect.md) remains inconclusive about whether added maintenance pays for itself.
 
 The [Markitect-first](docs/markitect-first.md) workflow is the repository's durable agent entrypoint: read fixed engineering context, classify the change, update desired intent first when it changes, account for managed artifacts, then verify/reconcile. The standalone artifact helper ships through the source package and existing Project checks. The restricted owner-approved capture and candidate exercise remains separate from public sanitized replay evidence; it establishes neither owner acceptance nor adoption or productivity outcomes.
+
+Current source implements [bounded local projection contracts](docs/projections.md) for explicitly governed representations, with digest-reviewed candidate Apply and immutable Verify. The [synthetic validation](docs/validation/projection-first-reconciliation.md) records two fresh candidate materializations, controlled drift repair and retained negative findings. This is unreleased source behavior; published v0.13.0 remains unchanged, and no whole-repository controller or general benefit is claimed.
 
 ## Why Markitect?
 
@@ -73,23 +75,35 @@ Projects independently select the Markdown and provider projections they need.
 
 These mechanisms aim to remove independently maintained copies of modeled intent and make consistency questions answerable structurally, leaving human attention for engineering decisions. Their upkeep must be included when testing whether that goal is achieved.
 
-## One canonical model, multiple views
+## Desired intent and declared representations
 
-A Markitect project keeps canonical typed resources separate from their explicitly selected projections. Markdown views under `docs/markitect/` are optional; provider outputs read canonical sources independently.
+A Markitect project keeps canonical typed resources separate from explicitly selected projections and other project-owned artifacts. The target model applies only to a declared governed scope. Markdown views under `docs/markitect/` are optional; provider outputs read canonical sources independently.
 
 ```text
-                    Canonical resources
+             Human-owned engineering intent
+                           │
+                           ▼
+                 Canonical Markitect state
                   .markitect/areas/...
                            │
-             ┌─────────────┼─────────────┐
-             ▼             ▼             ▼
-      Markdown views     Codex         Claude
-      docs/markitect     outputs       outputs
+                    Explicit contracts
+                           │
+       ┌───────────┬───────┼────────┬───────────┐
+       ▼           ▼       ▼        ▼           ▼
+    Code/tests   Docs   CI/hooks  Agent rules  Other declared targets
+    AI/checks   render  adapters  projections   adapters
+       └───────────┴───────┴────────┴───────────┘
+                           │
+                           ▼
+                 Observed repository state
+                           │
+                           ▼
+                 Bounded verify/reconcile
 ```
 
-Project-owned verification commands run separately against a materialized fixed project snapshot.
+This diagram is the target flow, not a claim that current Markitect generates or semantically verifies each row. Project-owned verification commands run separately against a materialized fixed project snapshot. AI-created files are candidate representations whose permitted variation and evidence must be project-defined.
 
-Generated output is never the canonical owner. Provider projections can be regenerated from canonical resources, and ordinary project artifacts remain in their normal project-owned locations.
+Generated output is never the canonical owner. Provider projections can be regenerated from canonical resources. Human-authored narrative, external/vendor/tool inputs and implementation details not governed by a declared contract remain project-owned sources or observations; they are not automatically projections.
 
 ## The current workflow
 
@@ -221,7 +235,7 @@ markitect context --repo . --namespace engineering --kind Workflow --name review
 markitect render --repo .
 ```
 
-The canonical YAML remains the source of truth. Human documentation remains human-owned unless an explicit generated view is selected.
+The canonical YAML remains the source for the modeled engineering decisions. Human documentation remains human-owned unless an explicit generated view is selected.
 
 ## Why this matters for AI-first engineering
 
@@ -257,7 +271,7 @@ See [Repository layout](docs/repository-layout.md) for the exact current contrac
 
 - Models project-selected engineering concepts and policy as typed YAML resources; AI-working knowledge is one supplied Domain.
 - Gives each resource explicit identity, ownership, and graph relationships.
-- Keeps ordinary project files as explicit opaque inputs instead of pretending to understand their domain semantics.
+- Keeps project-file bytes opaque in Core; explicit adapters and project-owned checks may provide bounded evidence about declared representations.
 - Validates resource structure, references, bindings, contracts, cycles, file inputs, and configured documentation routers.
 - Compiles a selected resource's bounded context.
 - Supports committed fixed-run task context with exact selected project artifacts.
@@ -279,7 +293,7 @@ Markitect does not currently:
 - replace your CI platform, work-item system, or source-control system;
 - claim that a passing structural check proves human acceptance or software correctness.
 
-Project-owned checks and configured adapters integrate specialized tooling without moving domain-specific analysis into the deterministic core.
+Project-owned checks and configured adapters integrate specialized tooling without moving domain-specific analysis into the deterministic core. A projection plan is a bound work contract, not owner approval; successful evidence proves only its declared checks.
 
 ## The v0.10.0 canonical engineering model
 

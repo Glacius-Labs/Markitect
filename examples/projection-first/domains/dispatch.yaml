@@ -1,0 +1,104 @@
+apiVersion: markitect.example.org/v1alpha1
+kind: Domain
+metadata:
+    name: dispatch
+spec:
+    apiVersion: dispatch.example.org/v1alpha1
+    kinds:
+        Owner:
+            required: [displayName]
+            properties:
+                displayName: {type: string}
+        DispatchBoard:
+            required: [listings]
+            properties:
+                listings:
+                    type: array
+                    items: {type: ref, refKind: Listing}
+        Listing:
+            required: [board, owner, status, openedAt, summary]
+            properties:
+                board: {type: ref, refKind: DispatchBoard}
+                owner: {type: ref, refKind: Owner}
+                status: {type: string, enum: [Open, Closed]}
+                openedAt: {type: string}
+                summary: {type: string}
+        ListingView:
+            required: [board, process, purpose, filterStatus, sortFields, sortOrder, outputFormat, testCases]
+            inputsField: testCases
+            properties:
+                board: {type: ref, refKind: DispatchBoard}
+                process: {type: ref, refKind: DispatchProcess}
+                purpose: {type: string}
+                filterStatus: {type: string, enum: [Open]}
+                sortFields:
+                    type: array
+                    items: {type: string}
+                sortOrder: {type: string, enum: [ascending]}
+                outputFormat: {type: string, enum: [json-stdout]}
+                testCases:
+                    type: array
+                    items: {type: string}
+        DispatchProcess:
+            required: [purpose, verificationCommands, preCommitCommand]
+            properties:
+                purpose: {type: string}
+                verificationCommands:
+                    type: array
+                    items: {type: string}
+                preCommitCommand: {type: string}
+    relations:
+        hasListing:
+            description: A board explicitly names the listings shown by its view.
+            field: listings
+            sourceKinds: [DispatchBoard]
+            targetKinds: [Listing]
+            context: true
+            invalidate: true
+        belongsToBoard:
+            description: Each listing belongs to exactly one dispatch board.
+            field: board
+            sourceKinds: [Listing]
+            targetKinds: [DispatchBoard]
+            minTargets: 1
+            maxTargets: 1
+            context: true
+            invalidate: true
+        ownedBy:
+            description: Each listing refers to exactly one canonical owner.
+            field: owner
+            sourceKinds: [Listing]
+            targetKinds: [Owner]
+            minTargets: 1
+            maxTargets: 1
+            context: true
+            invalidate: true
+        viewsBoard:
+            description: The view is scoped to exactly one board.
+            field: board
+            sourceKinds: [ListingView]
+            targetKinds: [DispatchBoard]
+            minTargets: 1
+            maxTargets: 1
+            context: true
+            invalidate: true
+        usesProcess:
+            description: The view depends on exactly one canonical materialization process.
+            field: process
+            sourceKinds: [ListingView]
+            targetKinds: [DispatchProcess]
+            minTargets: 1
+            maxTargets: 1
+            context: true
+            invalidate: true
+    constraints:
+        - name: board-listing-capacity
+          description: A board contains between one and five explicitly modeled listings.
+          select:
+              kind: DispatchBoard
+          assert:
+              op: count
+              scope: resource
+              relation: hasListing
+              min: 1
+              max: 5

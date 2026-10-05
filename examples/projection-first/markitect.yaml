@@ -1,0 +1,42 @@
+apiVersion: markitect.example.org/v1alpha1
+kind: Project
+metadata:
+    name: projection-first-dispatch
+spec:
+    targets: [markdown, codex, claude]
+    adapters:
+        - name: representations
+          type: local-projection
+          version: v1alpha1
+          config:
+              contracts: projections.config
+              coverage: markitect-artifacts.yaml
+    areas:
+        - name: dispatch
+          path: resources
+          imports: [fixtures, scripts, tests, ci, hooks]
+          rules:
+              - name: dispatch-process
+        - name: fixtures
+          path: fixtures
+        - name: scripts
+          path: scripts
+        - name: tests
+          path: tests
+        - name: ci
+          path: .github/workflows
+        - name: hooks
+          path: .githooks
+    domains: [domains/dispatch.yaml]
+    ruleAdapters:
+        dispatch-process:
+            - kind: Rule
+              name: dispatch-process
+              namespace: dispatch
+    checks:
+        - name: checker-tests
+          run: [python, -m, unittest, discover, -s, tools, -p, test_contract_checker.py]
+        - name: python-tests
+          run: [python, -m, unittest, discover, -s, tests]
+        - name: independent-contract
+          run: [python, tools/check_contract.py]

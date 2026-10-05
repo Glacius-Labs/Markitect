@@ -314,6 +314,10 @@ markitect reconcile --repo . --action verify --adapter markitect-render --plan .
 
 `observe` and `plan` write results only to standard output. Save the plan in `.artifacts/markitect/reconcile/` before applying. Apply is limited to the working tree and requires the unchanged plan plus explicit `--write`; it rejects stale inputs or changed plan content. Verification checks outputs after application. Plans do not automatically remove stale files. External command adapter inputs, protocol, output limits, and local-authority boundary are detailed in the [adapter contract](provider-adapters.md#command-adapter-contract).
 
+### Project-local projections (current source; not yet released)
+
+A Project can register one `local-projection` adapter to bind exact contract and artifact-coverage configuration paths. The `projection` command observes and plans those declared representations, applies a reviewed candidate only with explicit write authorization, and verifies them at an immutable revision. `markitect check` can report structural and observed projection state, but it does not establish AI semantics or replace the configured verification checks. See the [projection guide](projections.md) for registration, complete AI candidates, digest review, verification, and partial-write recovery. This source API is not part of the published v0.13.0 release.
+
 ## Initialize a project
 
 For an existing repository that has no `markitect.yaml`, `init` previews a minimal Project and one area README:

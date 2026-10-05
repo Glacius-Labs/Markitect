@@ -52,6 +52,12 @@ Verify runs explicitly named Project checks against an immutable candidate snaps
 
 Converged means: structurally sound policy-governed model, required selected targets present, deterministic targets exact, required bounded checks passed over the fixed observed snapshot, and configured artifact accounting satisfied. It means no contradiction detected by those declared checks, not complete program correctness. Files outside configured coverage are unassessed. Verify evidence reflects an exact snapshot, not continuing runtime truth.
 
+## Project local-projection registration
+
+The local projection contract is selected explicitly by one Project `spec.adapters` entry with `type: local-projection`, `version: v1alpha1`, and only the closed config keys `contracts` and `coverage`. Both values are exact portable project-relative file paths; globs, aliases, traversal, reserved paths and path overlap are rejected. Paths are opaque files to the registration boundary and need no filename convention. At most one such registration is allowed. `contracts` names the projection contract configuration, while `coverage` names the required exact-path artifact coverage declaration; missing coverage is incomplete/invalid configuration, never implicit whole-project coverage. These paths are adopter-owned inputs and participate in ordinary fixed-snapshot Verify, Context and Impact input binding.
+
+The registration selects Host orchestration only. It does not add authoring semantics to Core, import a Module into authoring, or replace the existing command-adapter protocol. Coverage is required for planning and before Verify can claim configured convergence. Every AI target requires a separate candidate file plus the exact expected raw SHA-256 supplied by the invoking Host workflow; absent or partial candidates are rejected rather than being inferred from previous output. Deterministic-only Apply continues to use the registered renderer without AI candidate evidence.
+
 Context remains the relevant desired semantic closure. Impact remains semantic change causes plus a conservative review set; contracts expose the associated target fan-out with explicit owners. Unknown impact remains conservative. No generated output becomes a semantic owner and adapters never reconcile against one another's output as truth.
 
 ## Proof and limits
@@ -61,3 +67,27 @@ An executable greenfield example must define a previously unknown Kind, purpose,
 Negative cases corrupt code, docs, Codex, Claude, CI and hooks separately with unchanged desired state; observe/verify must report drift/incomplete and explicit repair must converge. Intent evolution fans out to declared representations. Two fresh isolated AI candidates may use different private names/algorithms while passing the same predeclared verification; this proves bounded allowable variation, not productivity or obedience outside coverage.
 
 Historical A/B records stay frozen/paused under PR #78, no overall winner, unopened holdout. Private Konfyra scope/adoption authority and published immutable assets are untouched. Release readiness is separate. Benefit and maintenance cost need a later real-adopter comparison.
+
+## Reviewed candidate and independent-check boundary
+
+AI Apply requires the complete declared AI target set and an explicitly supplied `--expect sha256:<hex>` matching the exact external candidate record bytes. The parsed object is also bound to those bytes; changing file contents while retaining a plan digest is rejected. Deterministic-only configurations need no AI candidate. Successful Apply reports only exact writes and materialized-unverified state, not acceptance. The Host writer workspace is reserved and cannot be a target.
+
+Projection verification runs each declared check in a freshly materialized copy of the same immutable snapshot. A command that changes, removes, or replaces an original snapshot file invalidates its evidence. Later checks never inherit a previous check's changes. Extra temporary check outputs are not adopted as observed state. This is bounded snapshot-integrity detection, not OS isolation or prevention of writes outside the temporary tree. Existing ordinary unregistered repository verification retains its contract. Checks remain explicitly trusted local executions; tool strings, model/materializer identities and successful exit codes do not authenticate semantic truth.
+
+
+## Opaque artifact and Domain provenance boundary
+
+An active registration reserves its exact mapping/configuration files and target paths as opaque artifacts, including CI/provider YAML inside an Area. Files declaring an active canonical API are rejected at those paths; Apply also rejects such envelopes before writing. Coverage's own noncanonical API envelope remains an opaque module configuration. Registration cannot hide Project, Domain, or typed resource authority.
+
+Active Domain descriptors are explicit projection sources using `domain:<apiVersion>/<name>`, with exact source/package/version provenance from the same normalized model. Context already supplies active Domain inputs; their contracts are therefore included without adding policy or context edges. Impact includes a Domain-only contract when its source, pinned archive, Project activation or contract configuration changes. Unrelated narrative edits do not imply that Domain fan-out.
+
+Fresh-check integrity compares fixed bytes, regular-file identity and, on supported Unix platforms, executable mode. Windows file permissions do not encode the Unix executable bit and no equivalent assurance is claimed there. This remains post-execution bounded detection, not a sandbox.
+
+Impact also closes over explicitly declared contract prerequisites and records `viaContracts` for dependent review targets. This is bounded contract status/review propagation; Context exposes `dependsOn` without automatically including prerequisite sources or creating semantic/context edges.
+
+
+Generic verification evaluates the owner's configured check contract; it cannot prove checker independence or semantic sufficiency. In particular, an AI-owned test may be selected as the sole check. Such a configuration gives weak self-produced evidence even if it meets its configured contract. Verify output names this boundary. Independent checker ownership is established separately by the synthetic proof, not inferred from argv or promised universally. A later explicit evidence-input/ownership design must address wrappers and trust before any stronger general assurance claim.
+
+Host Plan composes the pure contract plan with artifact accounting and required native-renderer findings, then binds those sorted causes into the plan digest. Matching per-contract targets do not imply overall convergence. Plan and Observe remain read-only and report missing runtime check evidence as incomplete; fixed Verify alone may establish configured convergence. This does not add a policy assertion or weaken Apply freshness.
+
+Verify uses the same composed aggregate status in its nested plan, retaining matching per-contract states separately. Accounting/rendering and required-check causes participate in the final plan digest; a failed required check outside a contract’s selected evidence cannot leave the aggregate plan converged.
