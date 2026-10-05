@@ -1,0 +1,219 @@
+actor_feedback: none
+actual_exports: 16
+before_repair: 8
+console_limit: Evaluation script Select-Object printed null because record was an ordered dictionary; persisted actual JSON is authoritative and intact.
+derived_receipt: Original logs and actual batch exit JSON unchanged; separate unsigned format receipts are not process attestations.
+evaluation_script_sha256: 7c3045c60c5d2362052b266fe1f0a80705e9191a27424a973c3548144f35071f
+exclusion_record_sha256: ef5fbd5bf5ec6e13b1806d5ff11f4775a6b9d4fff30d14b6b9846bab8c029cc6
+export_script_v1_sha256: dc5e0cacb7fa9f7fdd5881a8777ef43a0e61577118185e77fc6be2a10db1be37
+export_script_v2_sha256: 9dff3aa09b7ad03543be8c151b99f7d71ac4e991bb75733986d2a511b0ebde1e
+final: 8
+freeze_digest: cc6124d1bd179f0824cde31947b929412562d2991879474ba2d02e855f4062f7
+human_acceptance: false
+independent_task_boundaries: 8
+initial_export_refusal: retained svc3af/raw/service-export-partial-v1.json; wrong footer field name
+native_actor_status: Final native actor source status is used for both phases, not inferred initial-turn status.
+pair_excluded: true
+raw_failed: 16
+raw_passed: 0
+records:
+    - assessment_arena: svc3af
+      batch_reference_sha256: 80cb03599627c8c093d75b27d571f8bd5b51acf56c35d355bb9b7584f3e53e3d
+      derived_receipt_sha256: e79b06beac3ddca4ced0bf306c29b071a1980ffbb603294dc1083d227ce1874d
+      export_exit: 0
+      failed_component: idempotency-vector
+      original_log_sha256: 041c9df3a7e8e93e110c32220b298b449a237909735cf7c29de97f6519bdbcaa
+      phase: final
+      proof_sha256: 9ad579cb2c4224a39deed91c1e5048e7fe5a100924820cd524c9b822d8aa21e5
+      raw_evaluation_sha256: fca65385cea7e481aebb085fc788605f2091ce8121ea1213560b41c294f2e82e
+      raw_status: failed
+      run_id: modular-service-a-t03
+      task_id: "01"
+    - assessment_arena: svc3af
+      batch_reference_sha256: 80cb03599627c8c093d75b27d571f8bd5b51acf56c35d355bb9b7584f3e53e3d
+      derived_receipt_sha256: e79b06beac3ddca4ced0bf306c29b071a1980ffbb603294dc1083d227ce1874d
+      export_exit: 0
+      failed_component: idempotency-vector
+      original_log_sha256: 041c9df3a7e8e93e110c32220b298b449a237909735cf7c29de97f6519bdbcaa
+      phase: final
+      proof_sha256: bf50bb0b4985d93e1339fcfeed31c8474f6c2da0e0ad931117c934bc923d194c
+      raw_evaluation_sha256: f66d265d0c97b10d56d61169805e9831a8d26ab1441e840e8010c9be31345ab5
+      raw_status: failed
+      run_id: modular-service-a-t03
+      task_id: "02"
+    - assessment_arena: svc3af
+      batch_reference_sha256: 80cb03599627c8c093d75b27d571f8bd5b51acf56c35d355bb9b7584f3e53e3d
+      derived_receipt_sha256: e79b06beac3ddca4ced0bf306c29b071a1980ffbb603294dc1083d227ce1874d
+      export_exit: 0
+      failed_component: idempotency-vector
+      original_log_sha256: 041c9df3a7e8e93e110c32220b298b449a237909735cf7c29de97f6519bdbcaa
+      phase: final
+      proof_sha256: 9168156e6d5484af8a34e980fe09e3531da80d0bcd5d5437660f4d8520f2dbd6
+      raw_evaluation_sha256: 841927afb030dab617702eca78c81ad7f1fa44e563eae43fa7ed1b67a1c1d809
+      raw_status: failed
+      run_id: modular-service-a-t03
+      task_id: "03"
+    - assessment_arena: svc3af
+      batch_reference_sha256: 80cb03599627c8c093d75b27d571f8bd5b51acf56c35d355bb9b7584f3e53e3d
+      derived_receipt_sha256: e79b06beac3ddca4ced0bf306c29b071a1980ffbb603294dc1083d227ce1874d
+      export_exit: 0
+      failed_component: idempotency-vector
+      original_log_sha256: 041c9df3a7e8e93e110c32220b298b449a237909735cf7c29de97f6519bdbcaa
+      phase: final
+      proof_sha256: 8f3261c4e716c1e0bb4ed9ff5c1a336f9d6f9ccc75553f7cfd5100c757cfb386
+      raw_evaluation_sha256: e7dccbe2a2eee4c49717c282f7932b4bdbeb8b3fff1f86d219a83a1d78ed393c
+      raw_status: failed
+      run_id: modular-service-a-t03
+      task_id: "04"
+    - assessment_arena: svc3af
+      batch_reference_sha256: 80cb03599627c8c093d75b27d571f8bd5b51acf56c35d355bb9b7584f3e53e3d
+      derived_receipt_sha256: e79b06beac3ddca4ced0bf306c29b071a1980ffbb603294dc1083d227ce1874d
+      export_exit: 0
+      failed_component: idempotency-vector
+      original_log_sha256: 041c9df3a7e8e93e110c32220b298b449a237909735cf7c29de97f6519bdbcaa
+      phase: final
+      proof_sha256: 44dd6cc8cbd2a55e4368870fcd39d1dc8160a4a174edac9ebe865d2d48e2bae0
+      raw_evaluation_sha256: 7c36fedb122495e1af1fb85e834db50d6a39d25d6ad349bbf4eed3d4c47902ff
+      raw_status: failed
+      run_id: modular-service-a-t03
+      task_id: "05"
+    - assessment_arena: svc3af
+      batch_reference_sha256: 80cb03599627c8c093d75b27d571f8bd5b51acf56c35d355bb9b7584f3e53e3d
+      derived_receipt_sha256: e79b06beac3ddca4ced0bf306c29b071a1980ffbb603294dc1083d227ce1874d
+      export_exit: 0
+      failed_component: idempotency-vector
+      original_log_sha256: 041c9df3a7e8e93e110c32220b298b449a237909735cf7c29de97f6519bdbcaa
+      phase: final
+      proof_sha256: d2cc5233df541eabbe3cc412e28e3a6693f3f2cfe5956206169bd35d7ab36cfd
+      raw_evaluation_sha256: 1268e24ec8be70f14fcd9679060a6688836929905befe66fed213695f3fefe48
+      raw_status: failed
+      run_id: modular-service-a-t03
+      task_id: "06"
+    - assessment_arena: svc3af
+      batch_reference_sha256: 80cb03599627c8c093d75b27d571f8bd5b51acf56c35d355bb9b7584f3e53e3d
+      derived_receipt_sha256: e79b06beac3ddca4ced0bf306c29b071a1980ffbb603294dc1083d227ce1874d
+      export_exit: 0
+      failed_component: idempotency-vector
+      original_log_sha256: 041c9df3a7e8e93e110c32220b298b449a237909735cf7c29de97f6519bdbcaa
+      phase: final
+      proof_sha256: d6e3c6e455581ab37ae384d59a4b115f86ff002b2ff0e52c780b3c9987733396
+      raw_evaluation_sha256: 6081b1c7ab125818dc51f86d2e56227c551108d98832ec2ec5cbded67dd88de5
+      raw_status: failed
+      run_id: modular-service-a-t03
+      task_id: "07"
+    - assessment_arena: svc3af
+      batch_reference_sha256: 80cb03599627c8c093d75b27d571f8bd5b51acf56c35d355bb9b7584f3e53e3d
+      derived_receipt_sha256: e79b06beac3ddca4ced0bf306c29b071a1980ffbb603294dc1083d227ce1874d
+      export_exit: 0
+      failed_component: idempotency-vector
+      original_log_sha256: 041c9df3a7e8e93e110c32220b298b449a237909735cf7c29de97f6519bdbcaa
+      phase: final
+      proof_sha256: 9a39ab68cf307d202c9ea51e2b28c3721b508390a149d2778205f276137738a3
+      raw_evaluation_sha256: 4768a702fe8b76f11f9dc75299f43b070041b9cb51a62274fb622a160abff735
+      raw_status: failed
+      run_id: modular-service-a-t03
+      task_id: "08"
+    - assessment_arena: svc3ab
+      batch_reference_sha256: 30bde532ade608cd2163193c588a94723c8211c870dc5257b58ca60a9934af0d
+      derived_receipt_sha256: 6e4a5fef5339c5a3b228d275d8197f466fc77f33b0a2b75109e6a62498828753
+      export_exit: 0
+      failed_component: idempotency-vector
+      original_log_sha256: 041c9df3a7e8e93e110c32220b298b449a237909735cf7c29de97f6519bdbcaa
+      phase: before-repair
+      proof_sha256: 47bea4eeb4899cd46378e50c17b4d1efaacd5243493c637746eedc7ba281845d
+      raw_evaluation_sha256: fca65385cea7e481aebb085fc788605f2091ce8121ea1213560b41c294f2e82e
+      raw_status: failed
+      run_id: modular-service-a-t03
+      task_id: "01"
+    - assessment_arena: svc3ab
+      batch_reference_sha256: 30bde532ade608cd2163193c588a94723c8211c870dc5257b58ca60a9934af0d
+      derived_receipt_sha256: 6e4a5fef5339c5a3b228d275d8197f466fc77f33b0a2b75109e6a62498828753
+      export_exit: 0
+      failed_component: idempotency-vector
+      original_log_sha256: 041c9df3a7e8e93e110c32220b298b449a237909735cf7c29de97f6519bdbcaa
+      phase: before-repair
+      proof_sha256: 149489e78b44d06efac49d0b9fab83466b7daf95e2c66b799213a72ec2b6d169
+      raw_evaluation_sha256: f66d265d0c97b10d56d61169805e9831a8d26ab1441e840e8010c9be31345ab5
+      raw_status: failed
+      run_id: modular-service-a-t03
+      task_id: "02"
+    - assessment_arena: svc3ab
+      batch_reference_sha256: 30bde532ade608cd2163193c588a94723c8211c870dc5257b58ca60a9934af0d
+      derived_receipt_sha256: 6e4a5fef5339c5a3b228d275d8197f466fc77f33b0a2b75109e6a62498828753
+      export_exit: 0
+      failed_component: idempotency-vector
+      original_log_sha256: 041c9df3a7e8e93e110c32220b298b449a237909735cf7c29de97f6519bdbcaa
+      phase: before-repair
+      proof_sha256: 437339e44213be2aa067bc9539c2881ef8271e1dbfcfc6069cce37b4a1512bbd
+      raw_evaluation_sha256: 841927afb030dab617702eca78c81ad7f1fa44e563eae43fa7ed1b67a1c1d809
+      raw_status: failed
+      run_id: modular-service-a-t03
+      task_id: "03"
+    - assessment_arena: svc3ab
+      batch_reference_sha256: 30bde532ade608cd2163193c588a94723c8211c870dc5257b58ca60a9934af0d
+      derived_receipt_sha256: 6e4a5fef5339c5a3b228d275d8197f466fc77f33b0a2b75109e6a62498828753
+      export_exit: 0
+      failed_component: idempotency-vector
+      original_log_sha256: 041c9df3a7e8e93e110c32220b298b449a237909735cf7c29de97f6519bdbcaa
+      phase: before-repair
+      proof_sha256: 28254cdd5dd24d089f9612054a694c6adb7f65502398a5a9c75a2e054f7dd434
+      raw_evaluation_sha256: e7dccbe2a2eee4c49717c282f7932b4bdbeb8b3fff1f86d219a83a1d78ed393c
+      raw_status: failed
+      run_id: modular-service-a-t03
+      task_id: "04"
+    - assessment_arena: svc3ab
+      batch_reference_sha256: 30bde532ade608cd2163193c588a94723c8211c870dc5257b58ca60a9934af0d
+      derived_receipt_sha256: 6e4a5fef5339c5a3b228d275d8197f466fc77f33b0a2b75109e6a62498828753
+      export_exit: 0
+      failed_component: idempotency-vector
+      original_log_sha256: 041c9df3a7e8e93e110c32220b298b449a237909735cf7c29de97f6519bdbcaa
+      phase: before-repair
+      proof_sha256: 1fc7ae9ae55a6124fe9124f5d39160be733ef864214be9315bfd7544c566c528
+      raw_evaluation_sha256: 7c36fedb122495e1af1fb85e834db50d6a39d25d6ad349bbf4eed3d4c47902ff
+      raw_status: failed
+      run_id: modular-service-a-t03
+      task_id: "05"
+    - assessment_arena: svc3ab
+      batch_reference_sha256: 30bde532ade608cd2163193c588a94723c8211c870dc5257b58ca60a9934af0d
+      derived_receipt_sha256: 6e4a5fef5339c5a3b228d275d8197f466fc77f33b0a2b75109e6a62498828753
+      export_exit: 0
+      failed_component: idempotency-vector
+      original_log_sha256: 041c9df3a7e8e93e110c32220b298b449a237909735cf7c29de97f6519bdbcaa
+      phase: before-repair
+      proof_sha256: a519233aa14a97a5f7c37fc3760c6a299212616da08bcf0fa93761d3074dc844
+      raw_evaluation_sha256: 1268e24ec8be70f14fcd9679060a6688836929905befe66fed213695f3fefe48
+      raw_status: failed
+      run_id: modular-service-a-t03
+      task_id: "06"
+    - assessment_arena: svc3ab
+      batch_reference_sha256: 30bde532ade608cd2163193c588a94723c8211c870dc5257b58ca60a9934af0d
+      derived_receipt_sha256: 6e4a5fef5339c5a3b228d275d8197f466fc77f33b0a2b75109e6a62498828753
+      export_exit: 0
+      failed_component: idempotency-vector
+      original_log_sha256: 041c9df3a7e8e93e110c32220b298b449a237909735cf7c29de97f6519bdbcaa
+      phase: before-repair
+      proof_sha256: edabce6d46fce7800f343beded0ae7368831741c4e899855f57567585664f25d
+      raw_evaluation_sha256: 6081b1c7ab125818dc51f86d2e56227c551108d98832ec2ec5cbded67dd88de5
+      raw_status: failed
+      run_id: modular-service-a-t03
+      task_id: "07"
+    - assessment_arena: svc3ab
+      batch_reference_sha256: 30bde532ade608cd2163193c588a94723c8211c870dc5257b58ca60a9934af0d
+      derived_receipt_sha256: 6e4a5fef5339c5a3b228d275d8197f466fc77f33b0a2b75109e6a62498828753
+      export_exit: 0
+      failed_component: idempotency-vector
+      original_log_sha256: 041c9df3a7e8e93e110c32220b298b449a237909735cf7c29de97f6519bdbcaa
+      phase: before-repair
+      proof_sha256: 1d33984d9390d4013b311401a003372807822024f57174a74849083df338571a
+      raw_evaluation_sha256: 4768a702fe8b76f11f9dc75299f43b070041b9cb51a62274fb622a160abff735
+      raw_status: failed
+      run_id: modular-service-a-t03
+      task_id: "08"
+schema: autonomous-ab-service-trial3-a-assessment-validation/v2
+scoring: Both main trial3 arms were excluded before these hidden results; no failed raw result is rescored.
+source_arena: r1-service-oracle-v1
+stage_control_sha256: 02c19a1e59cb7e0f70682f9f06cdc838e09726421a734f0ed67f5fe60b346796
+staging_script_sha256: 61386fe702890d081aa13c82cc63c5430687b915a71d74cf9b423a67634652b9
+superseded_record: trial3-a-assessment-validation-invalid-v1.yaml; raw bytes preserved
+superseded_record_error: Wrong assumed proof sidecar directory and non-terminating PowerShell errors produced an empty records array. This is an invalid coordinator ledger, not an evaluator or product failure.
+superseded_record_sha256: ec4fabd38b43ee2c90b3127e3625741a3abfdc9f27cbacae3c5591d2e23ea22f

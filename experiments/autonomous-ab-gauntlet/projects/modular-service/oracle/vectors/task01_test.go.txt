@@ -3,12 +3,11 @@ package inventory
 import (
 	"context"
 	contract "example.com/acme/modular-service/internal/contracts/inventory"
-	"strings"
 	"testing"
 )
 
 func TestGauntletIdempotencyVector(t *testing.T) {
-	s := New(map[string]int{"S": 5})
+	s := New(map[string]int{"S": 10})
 	req := contract.ReserveRequest{OrderID: "O", SKU: "S", Quantity: 2}
 	first, err := s.Reserve(context.Background(), req)
 	if err != nil {
@@ -21,14 +20,14 @@ func TestGauntletIdempotencyVector(t *testing.T) {
 	if first != second {
 		t.Fatalf("retry differs: %+v %+v", first, second)
 	}
-	if s.Available("S") != 3 {
+	if s.Available("S") != 8 {
 		t.Fatalf("retry consumed stock: %d", s.Available("S"))
 	}
 	req.Quantity = 4
-	if _, err = s.Reserve(context.Background(), req); err == nil || !strings.Contains(err.Error(), "conflict") {
-		t.Fatalf("want explicit conflict, got %v", err)
+	if _, err = s.Reserve(context.Background(), req); err == nil {
+		t.Fatal("repeated key with a different quantity must be rejected")
 	}
-	if s.Available("S") != 3 {
+	if s.Available("S") != 8 {
 		t.Fatalf("conflict mutated stock: %d", s.Available("S"))
 	}
 }

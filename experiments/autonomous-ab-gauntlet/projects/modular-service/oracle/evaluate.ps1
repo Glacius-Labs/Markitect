@@ -7,6 +7,7 @@ param(
 )
 $ErrorActionPreference='Stop'
 $script:repoPath=(Resolve-Path -LiteralPath $Repo).Path
+$script:oracleRoot=$PSScriptRoot
 $script:checks=[System.Collections.Generic.List[object]]::new()
 $script:failures=[System.Collections.Generic.List[string]]::new()
 $script:commands=[System.Collections.Generic.List[string]]::new()
@@ -20,11 +21,6 @@ function Read-SeedFile([string]$Relative){$p=Join-Path $script:repoPath $Relativ
 function Has-Text([string]$Path,[string]$Pattern){return (Read-SeedFile $Path) -match $Pattern}
 function Has-CompleteOwnershipTable([string]$Text){
  $lines=$Text -split "`r?`n"
- $expected=@{
-  Orders='^(?:owns?\s+(?:the\s+)?order lifecycle(?:\s+and order decisions|\s+decisions)?|order lifecycle(?:\s+decisions)?(?:\s+owner)?)\.?$'
-  Inventory='^(?:owns?\s+(?:the\s+)?stock and reservations?|stock and reservations?(?:\s+owner)?)\.?$'
-  Billing='^(?:owns?\s+(?:the\s+)?invoice records and idempotency|invoice records and idempotency(?:\s+owner)?)\.?$'
- }
  $seen=@{}
  foreach($line in $lines){
   $line=$line.Trim()
@@ -38,8 +34,25 @@ function Has-CompleteOwnershipTable([string]$Text){
   $seen[$module]=$true
   $ownershipCells=@()
   foreach($cell in $cells){
-   $value=($cell -replace '[`*_]','').Trim().ToLowerInvariant() -replace '\s+',' '
-   if($value -match $expected[$module]){$ownershipCells+=$cell}
+   # Recognize the bounded ownership claims and the observed Orders coordination clause; this is not general prose interpretation.
+   $value=($cell -replace '[`*_]','').ToLowerInvariant() -replace '\s+',' '
+   $value=$value.Trim() -replace '\s+and\s+(?=coordinates?\b)','; '
+   $clauses=@($value -split '[;.!?]+'|ForEach-Object{$_.Trim()}|Where-Object{$_})
+   $ownershipPattern=switch($module){
+    'Orders' {'^(?:owns?\s+(?:the\s+)?order lifecycle(?:\s+and order decisions|\s+decisions)?|order lifecycle(?:\s+decisions)?(?:\s+owner)?)$'}
+    'Inventory' {'^(?:owns?\s+(?:the\s+)?stock and reservations?|stock and reservations?(?:\s+owner)?)$'}
+    'Billing' {'^(?:owns?\s+(?:the\s+)?invoice records and idempotency|invoice records and idempotency(?:\s+owner)?)$'}
+    default {return $false}
+   }
+   $ownershipClaims=@($clauses|Where-Object{$_ -match $ownershipPattern})
+   $validOwnership=$ownershipClaims.Count -eq 1
+   if($validOwnership){
+    $remaining=@($clauses|Where-Object{$_ -notmatch $ownershipPattern})
+    $coordinationPattern='^coordinates?\s+(?:the\s+)?reservation and invoice requests through contracts$'
+    if($module -ne 'Orders'){$validOwnership=$remaining.Count -eq 0}
+    else{foreach($clause in $remaining){if($clause -notmatch $coordinationPattern){$validOwnership=$false;break}}}
+   }
+   if($validOwnership){$ownershipCells+=$cell}
   }
   if($ownershipCells.Count -ne 1){return $false}
   $packageCells=@($cells|Where-Object{($_ -replace '[`*_]','').Trim() -match '(?i)^internal/modules/'})
@@ -75,9 +88,12 @@ function Has-MetadataName([string]$Text,[string]$Name){$metadata=[regex]::Match(
 function Has-Relation([string]$Text,[string]$Field,[string]$Kind,[string]$Name,[string]$Namespace){$lines=$Text -split "`r?`n";$fieldPattern='^(?<indent>\s*)'+[regex]::Escape($Field)+':\s*(?<value>.*)$';$kindPattern='(?im)(?:\bkind:\s*'+[regex]::Escape($Kind)+'\s*(?=,|\}|$)|^\s*kind:\s*'+[regex]::Escape($Kind)+'\s*$)';$namePattern='(?im)(?:\bname:\s*'+[regex]::Escape($Name)+'\s*(?=,|\}|$)|^\s*name:\s*'+[regex]::Escape($Name)+'\s*$)';$namespacePattern='(?im)(?:\bnamespace:\s*'+[regex]::Escape($Namespace)+'\s*(?=,|\}|$)|^\s*namespace:\s*'+[regex]::Escape($Namespace)+'\s*$)';for($i=0;$i -lt $lines.Count;$i++){$fieldMatch=[regex]::Match($lines[$i],$fieldPattern);if(-not $fieldMatch.Success){continue};$value=$fieldMatch.Groups['value'].Value;if($value -match '^\{.*\}$'){$block=$value}else{$indent=$fieldMatch.Groups['indent'].Value.Length;$parts=@();for($j=$i+1;$j -lt $lines.Count;$j++){if($lines[$j].Trim() -eq ''){continue};$nextIndent=([regex]::Match($lines[$j],'^\s*')).Length;if($nextIndent -le $indent){break};$parts+=$lines[$j]};$block=$parts -join "`n"};if($block -match $kindPattern -and $block -match $namePattern -and $block -match $namespacePattern){return $true}};return $false}
 function Run-Go([string[]]$GoArgs){$script:commands.Add(('go '+($GoArgs -join ' ')));Push-Location $script:repoPath;try{& go @GoArgs *> $null;return $LASTEXITCODE -eq 0}finally{Pop-Location}}
 function Run-Vector([int]$VectorTask,[string]$Dir,[string[]]$GoArgs){$from=Join-Path $PSScriptRoot ('vectors/task'+$VectorTask.ToString('00')+'_test.go.txt');$to=Join-Path (Join-Path $script:repoPath $Dir) 'gauntlet_hidden_test.go';if(Test-Path -LiteralPath $to){throw "Refusing to overwrite evaluator path $to"};$source=Get-Content -LiteralPath $from -Raw;if($VectorTask -eq 2 -and [int]$script:originTask -ge 4){$source=$source.Replace('IssueRequest','CreateInvoiceRequest')};if($VectorTask -eq 1 -and [int]$script:originTask -ge 11){$source=$source.Replace('Quantity','Units')};[IO.File]::WriteAllText($to,$source,[Text.UTF8Encoding]::new($false));try{return Run-Go $GoArgs}finally{Remove-Item -LiteralPath $to -Force}}
-function Get-CardScopes([string]$TaskId,[string]$Arm,[bool]$Parallel){$file=if($Parallel){'..\parallel-task-set.yaml'}else{'..\task-set.yaml'};$yaml=Get-Content -LiteralPath (Join-Path $PSScriptRoot $file) -Raw;$match=[regex]::Match($yaml,'(?ms)^  - id: "?'+[regex]::Escape($TaskId)+'"?\r?\n(?<body>.*?)(?=^  - id:|\z)');if(-not $match.Success){throw "Task $TaskId not found in $file"};$body=$match.Groups['body'].Value;$armLine=[regex]::Match($body,'(?m)^      '+[regex]::Escape($Arm)+': \[(?<items>[^\]]*)\]');$line=if($armLine.Success){$armLine.Groups['items'].Value}else{([regex]::Match($body,'(?m)^    allowed_paths: \[(?<items>[^\]]*)\]')).Groups['items'].Value};if([string]::IsNullOrWhiteSpace($line)){return @()};return @($line -split ',\s*'|ForEach-Object{$_.Trim().Trim('"').Trim("'")}|Where-Object{$_})}
+function Get-CardScopes([string]$TaskId,[string]$Arm,[bool]$Parallel){$file=if($Parallel){'..\parallel-task-set.yaml'}else{'..\task-set.yaml'};$yaml=Get-Content -LiteralPath (Join-Path $script:oracleRoot $file) -Raw;$match=[regex]::Match($yaml,'(?ms)^  - id: "?'+[regex]::Escape($TaskId)+'"?\r?\n(?<body>.*?)(?=^  - id:|\z)');if(-not $match.Success){throw "Task $TaskId not found in $file"};$body=$match.Groups['body'].Value;$armLine=[regex]::Match($body,'(?m)^      '+[regex]::Escape($Arm)+': \[(?<items>[^\]]*)\]');$line=if($armLine.Success){$armLine.Groups['items'].Value}else{([regex]::Match($body,'(?m)^    allowed_paths: \[(?<items>[^\]]*)\]')).Groups['items'].Value};if([string]::IsNullOrWhiteSpace($line)){return @()};return @($line -split ',\s*'|ForEach-Object{$_.Trim().Trim('"').Trim("'")}|Where-Object{$_})}
+function Test-ParallelIntegration([string]$TaskId,[string]$PriorTasksThrough,[bool]$PriorTasksThroughWasExplicit){return $TaskId -ceq '08' -and $PriorTasksThroughWasExplicit -and $PriorTasksThrough -ceq '06'}
+function Get-EffectiveCardScopes([string]$TaskId,[string]$Arm,[bool]$Parallel,[bool]$ParallelIntegration){if($ParallelIntegration){if($TaskId -cne '08'){throw 'Parallel integration scope applies only to combined task 08'};$scopes=@(Get-CardScopes 'P01' $Arm $true);$scopes+=@(Get-CardScopes 'P02' $Arm $true);return $scopes};return @(Get-CardScopes $TaskId $Arm $Parallel)}
 
-$scopes=Get-CardScopes $Task $script:arm $script:isParallel
+$parallelIntegration=Test-ParallelIntegration $Task $PriorTasksThrough $PSBoundParameters.ContainsKey('PriorTasksThrough')
+$scopes=Get-EffectiveCardScopes $Task $script:arm $script:isParallel $parallelIntegration
 $changed=@()
 if($Base){Push-Location $script:repoPath;try{$script:commands.Add("git diff --name-only $Base plus ordinary and ignored untracked paths");$changed+=@(git diff --name-only $Base);$changed+=@(git ls-files --others --exclude-standard);$changed+=@(git ls-files --others --ignored --exclude-standard|Where-Object{$_ -notmatch '^\.cache/'})}finally{Pop-Location};$bad=@($changed|Sort-Object -Unique|Where-Object{$p=$_ -replace '\\','/';$allowed=$false;foreach($scope in $scopes){$s=$scope -replace '\\','/';if($s.EndsWith('/')){if($p.StartsWith($s,[StringComparison]::OrdinalIgnoreCase)){$allowed=$true;break}}elseif($p.Equals($s,[StringComparison]::OrdinalIgnoreCase)){$allowed=$true;break}};-not $allowed});Add-Check 'allowed-paths' ($bad.Count -eq 0) (($changed|Sort-Object -Unique)-join ',')}
 else{Add-Check 'allowed-paths' $false 'Supply the task-start commit with -Base or GAUNTLET_TASK_BASE.'}

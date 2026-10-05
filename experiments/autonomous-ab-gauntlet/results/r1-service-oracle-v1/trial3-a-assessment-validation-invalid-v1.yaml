@@ -1,0 +1,24 @@
+actor_feedback: none
+actual_exports: 0
+before_repair: 8
+console_limit: Evaluation script Select-Object printed null because record was an ordered dictionary; persisted actual JSON is authoritative and intact.
+derived_receipt: Original logs and actual batch exit JSON unchanged; separate unsigned format receipts are not process attestations.
+evaluation_script_sha256: 7c3045c60c5d2362052b266fe1f0a80705e9191a27424a973c3548144f35071f
+exclusion_record_sha256: ef5fbd5bf5ec6e13b1806d5ff11f4775a6b9d4fff30d14b6b9846bab8c029cc6
+export_script_v1_sha256: dc5e0cacb7fa9f7fdd5881a8777ef43a0e61577118185e77fc6be2a10db1be37
+export_script_v2_sha256: 9dff3aa09b7ad03543be8c151b99f7d71ac4e991bb75733986d2a511b0ebde1e
+final: 8
+freeze_digest: cc6124d1bd179f0824cde31947b929412562d2991879474ba2d02e855f4062f7
+human_acceptance: false
+independent_task_boundaries: 8
+initial_export_refusal: retained svc3af/raw/service-export-partial-v1.json; wrong footer field name
+native_actor_status: Final native actor source status is used for both phases, not inferred initial-turn status.
+pair_excluded: true
+raw_failed: 16
+raw_passed: 0
+records: []
+schema: autonomous-ab-service-trial3-a-assessment-validation/v1
+scoring: Both main trial3 arms were excluded before these hidden results; no failed raw result is rescored.
+source_arena: r1-service-oracle-v1
+stage_control_sha256: 02c19a1e59cb7e0f70682f9f06cdc838e09726421a734f0ed67f5fe60b346796
+staging_script_sha256: 61386fe702890d081aa13c82cc63c5430687b915a71d74cf9b423a67634652b9

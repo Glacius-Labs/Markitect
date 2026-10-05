@@ -1,0 +1,23 @@
+schema: autonomous-ab-run-exclusions/v1
+arena: r1-service-oracle-v1
+freeze_digest: cc6124d1bd179f0824cde31947b929412562d2991879474ba2d02e855f4062f7
+runs:
+  - run_id: modular-service-a-t03
+    reason: Both main trial3 arms use the confirmed invalid cumulative task01 error-text predicate. Exclude the pair before inspecting its hidden outcomes; matching incidental wording would not repair the measurement contract. Retain raw/helper/component results without rescore.
+  - run_id: modular-service-b-t03
+    reason: Symmetric main trial3 exclusion for the same frozen error-word predicate, irrespective of this arm's actual wording or eventual outcome. Runtime/model/projection failures remain descriptive evidence.
+scope: exact-listed-existing-main-run-ids-only
+finding_reference: oracle-error-text-finding.yaml
+finding_reference_sha256: e8a77af34efc5d42a6fbd15d3281e9ce9874188558718580a057d6c4dd57acd4
+frozen_vector:
+  path: projects/modular-service/oracle/vectors/task01_test.go.txt
+  sha256: bb43425e68488be39b092e1e05e2138aa3ed880e8d997785db48774a9ec06266
+preservation:
+  trial1: already excluded through run-exclusions.yaml; no overlapping entry
+  trial2: already controller-excluded through runtime-run-exclusions.yaml; no overlapping entry
+  trial3: IDs exist; A01-08 terminal and B01 prepared at creation; no hidden trial3 outcome inspected
+  original_statuses: unchanged; incidental formatting is not a criterion for selective inclusion
+  actor_feedback: none
+  product_change: none
+  candidate_oracle_fix: separately gated and frozen paired replay only
+  human_acceptance: none

@@ -160,6 +160,418 @@ function Test-PythonAssertion([string]$Path, [string]$FunctionName, [string[]]$P
     return $true
 }
 
+function Test-A7FastCheckAssertionContract([string]$RepoRoot) {
+    # Read only the task's literal dict and literal unittest set; candidate code is never imported.
+    $python = @'
+import ast
+import pathlib
+import sys
+
+original = {
+    "Operations policy": "python scripts/check_operations.py",
+    "Operations checker tests": "python -m unittest discover -s scripts",
+    "Root module tests": "go test ./...",
+    "Nested module tests": "go -C tools/process-sentinel test ./...",
+}
+
+def fail(message):
+    print(message, file=sys.stderr)
+    raise SystemExit(1)
+
+def read_literal_dict(path, name):
+    tree = ast.parse(pathlib.Path(path).read_text(encoding="utf-8"))
+    matches = []
+    for node in tree.body:
+        if isinstance(node, ast.Assign) and any(
+            isinstance(target, ast.Name) and target.id == name for target in node.targets
+        ):
+            matches.append(node.value)
+        elif isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name) and node.target.id == name:
+            matches.append(node.value)
+    if len(matches) != 1:
+        fail(f"expected one literal {name} assignment")
+    value = ast.literal_eval(matches[0])
+    if type(value) is not dict or any(type(k) is not str or type(v) is not str for k, v in value.items()):
+        fail(f"{name} must be a literal string-to-string dict")
+    return value
+
+def is_expected_runs_set(node):
+    return (
+        isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Name)
+        and node.func.id == "set"
+        and len(node.args) == 1
+        and isinstance(node.args[0], ast.Name)
+        and node.args[0].id == "EXPECTED_RUNS"
+    )
+
+checker_path, tests_path = sys.argv[1:3]
+runs = read_literal_dict(checker_path, "EXPECTED_RUNS")
+if len(runs) != len(original) + 1 or any(runs.get(k) != v for k, v in original.items()):
+    fail("the four original EXPECTED_RUNS entries must remain exact with one addition")
+added = [(key, value) for key, value in runs.items() if key not in original]
+if len(added) != 1 or added[0][1] != "go vet ./...":
+    fail("the one added EXPECTED_RUNS entry must map its literal key to go vet ./...")
+expected_names = set(runs)
+
+tree = ast.parse(pathlib.Path(tests_path).read_text(encoding="utf-8"))
+methods = [n for n in ast.walk(tree) if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))
+           and n.name == "test_hook_and_pipeline_cover_each_declared_fast_check"]
+if len(methods) != 1:
+    fail("expected exactly one declared-fast-check test method")
+literal_sets = []
+# Only inspect direct method-body statements: nested functions and conditional/dead
+# branches are not evidence that the unittest actually asserts the contract.
+for statement in methods[0].body:
+    node = statement.value if isinstance(statement, ast.Expr) else None
+    if not isinstance(node, ast.Call) or not isinstance(node.func, ast.Attribute) or node.func.attr != "assertEqual" or len(node.args) != 2:
+        continue
+    if not isinstance(node.func.value, ast.Name) or node.func.value.id != "self":
+        continue
+    for left, right in ((node.args[0], node.args[1]), (node.args[1], node.args[0])):
+        if is_expected_runs_set(left) and isinstance(right, ast.Set):
+            try:
+                value = ast.literal_eval(right)
+            except (ValueError, TypeError):
+                continue
+            if type(value) is set and all(type(item) is str for item in value):
+                statement_index = methods[0].body.index(statement)
+                def is_bounded_terminator(previous):
+                    if isinstance(previous, (ast.Return, ast.Raise)):
+                        return True
+                    # Reject only an obvious direct literal guard, not general reachability.
+                    if isinstance(previous, ast.If) and isinstance(previous.test, ast.Constant) and previous.test.value is True:
+                        return any(isinstance(item, (ast.Return, ast.Raise)) for item in previous.body)
+                    return False
+                if any(is_bounded_terminator(previous) for previous in methods[0].body[:statement_index]):
+                    fail("the literal assertion follows a direct or literal-if-True terminating statement")
+                literal_sets.append(value)
+if len(literal_sets) != 1 or literal_sets[0] != expected_names:
+    fail("the test must compare set(EXPECTED_RUNS) with the four original names plus the mapped vet key")
+print("PASS")
+'@
+    $checkerPath = Join-Path $RepoRoot 'scripts/check_operations.py'
+    $testsPath = Join-Path $RepoRoot 'scripts/test_check_operations.py'
+    Push-Location $RepoRoot
+    try {
+        $output = @(& python -c $python $checkerPath $testsPath 2>&1)
+        $exit = $LASTEXITCODE
+        return $exit -eq 0 -and (($output -join "`n").Trim() -eq 'PASS')
+    } catch {
+        return $false
+    } finally {
+        Pop-Location
+    }
+}
+
+function Get-ProjectChecks([string]$Project) {
+    # Bounded YAML-subset reader for checks/name/run argv only; other YAML forms are unsupported.
+    $lines = $Project -split "`r?`n"
+    $checks = [System.Collections.Generic.List[object]]::new()
+    $inChecks = $false
+    $checkIndent = -1
+    $current = $null
+    $runIndent = -1
+    $argv = [System.Collections.Generic.List[string]]::new()
+    foreach ($line in $lines) {
+        if (-not $inChecks) {
+            if ($line -match '^(?<indent> *)checks:\s*(?:#.*)?$') {
+                $inChecks = $true
+                $checkIndent = $Matches.indent.Length
+            }
+            continue
+        }
+        if ($line -match '^\S') { break }
+        if ($line -match '^(?<indent> *)-\s+name:\s*(?<name>[^#]+?)\s*$' -and $Matches.indent.Length -gt $checkIndent) {
+            if ($null -ne $current) {
+                $current.Argv = @($argv)
+                $checks.Add($current)
+            }
+            $current = [pscustomobject]@{ Name = $Matches.name.Trim().Trim('"').Trim("'"); Argv = @() }
+            $runIndent = -1
+            $argv = [System.Collections.Generic.List[string]]::new()
+            continue
+        }
+        if ($null -eq $current) { continue }
+        if ($line -match '^(?<indent> *)run:\s*(?:#.*)?$') {
+            $runIndent = $Matches.indent.Length
+            continue
+        }
+        if ($runIndent -ge 0 -and $line -match '^(?<indent> *)-\s*(?<value>.*?)\s*$' -and $Matches.indent.Length -gt $runIndent) {
+            $argv.Add($Matches.value.Trim().Trim('"').Trim("'"))
+            continue
+        }
+        if ($line -match '^\s*\S' -and $line -notmatch '^\s+-\s') { $runIndent = -1 }
+    }
+    if ($null -ne $current) {
+        $current.Argv = @($argv)
+        $checks.Add($current)
+    }
+    return @($checks)
+}
+
+function Test-ArgvEquals([string[]]$Actual, [string[]]$Expected) {
+    if ($Actual.Count -ne $Expected.Count) { return $false }
+    for ($i = 0; $i -lt $Actual.Count; $i++) {
+        if ($Actual[$i] -cne $Expected[$i]) { return $false }
+    }
+    return $true
+}
+
+function Test-ProjectCheckArgv([object[]]$Checks, [string]$Name, [string[]]$ExpectedArgv) {
+    $matches = @($Checks | Where-Object { $_.Name -ceq $Name })
+    return $matches.Count -eq 1 -and (Test-ArgvEquals @($matches[0].Argv) $ExpectedArgv)
+}
+
+function Test-ActiveHookCommand([string]$Hook, [string]$Command) {
+    $inFunction = $false
+    $stopped = $false
+    foreach ($line in ($Hook -split "`r?`n")) {
+        if ($stopped) { break }
+        $trimmed = $line.Trim()
+        if ([string]::IsNullOrWhiteSpace($trimmed) -or $trimmed.StartsWith('#')) { continue }
+        if ($inFunction) {
+            if ($trimmed -match '^}\s*(?:#.*)?$') { $inFunction = $false }
+            continue
+        }
+        if ($trimmed -match '^(?:function\s+[A-Za-z_][\w-]*\s*(?:\(\s*\))?|[A-Za-z_][\w-]*\s*\(\s*\))\s*\{') {
+            $inFunction = $trimmed -notmatch '\}\s*(?:#.*)?$'
+            continue
+        }
+        $trimmed = ($trimmed -replace '\s+#.*$', '').Trim()
+        $segments = @($trimmed -split '\s*(?:&&|;)\s*' | ForEach-Object { $_.Trim() })
+        foreach ($segment in $segments) {
+            if ($segment -match '^exit(?:\s+\d+)?$') { $stopped = $true; break }
+            if ($segment -ceq $Command) { return $true }
+        }
+    }
+    return $false
+}
+
+function Get-CIQualitySteps([string]$Ci) {
+    # Bounded reader for top-level quality.steps. It preserves every step index and
+    # excludes commands with direct false/continue-on-error controls; it is not a YAML parser.
+    $lines = $Ci -split "`r?`n"
+    $inJobs = $false; $jobsIndent = -1; $inQuality = $false; $qualityIndent = -1
+    $inSteps = $false; $stepsIndent = -1; $stepIndent = -1
+    $steps = [System.Collections.Generic.List[object]]::new()
+    $current = $null
+    foreach ($line in $lines) {
+        if ($line -match '^\s*#' -or $line.Trim() -eq '') { continue }
+        if (-not $inJobs) {
+            if ($line -match '^(?<indent> *)jobs:\s*(?:#.*)?$') { $inJobs = $true; $jobsIndent = $Matches.indent.Length }
+            continue
+        }
+        $indent = ([regex]::Match($line, '^\s*')).Length
+        if (-not $inQuality) {
+            if ($indent -le $jobsIndent) { break }
+            if ($line -match '^(?<indent> *)quality:\s*(?:#.*)?$' -and $Matches.indent.Length -gt $jobsIndent) { $inQuality = $true; $qualityIndent = $Matches.indent.Length }
+            continue
+        }
+        if (-not $inSteps) {
+            if ($indent -le $qualityIndent) { break }
+            if ($line -match '^(?<indent> *)steps:\s*(?:#.*)?$' -and $Matches.indent.Length -gt $qualityIndent) { $inSteps = $true; $stepsIndent = $Matches.indent.Length }
+            continue
+        }
+        if ($indent -le $stepsIndent) { break }
+        if ($line -match '^(?<indent> *)-\s*(?<rest>.*)$' -and $Matches.indent.Length -gt $stepsIndent) {
+            $candidateIndent = $Matches.indent.Length
+            if ($stepIndent -ge 0 -and $candidateIndent -gt $stepIndent) { continue }
+            if ($stepIndent -ge 0 -and $candidateIndent -eq $stepIndent) { $steps.Add($current) }
+            if ($stepIndent -ge 0 -and $candidateIndent -lt $stepIndent) { return @() }
+            $stepIndent = $candidateIndent
+            $current = [pscustomobject]@{ Run = $null; Inactive = $false; Malformed = $false }
+            if ($Matches.rest -match '^run:\s*(?<value>.*)$') { $current.Run = $Matches.value.Trim() }
+            continue
+        }
+        if ($stepIndent -ge 0 -and $indent -eq ($stepIndent + 2)) {
+            if ($line -match '^\s+run:\s*(?<value>.*)$') {
+                if ($null -ne $current.Run) { $current.Malformed = $true } else { $current.Run = $Matches.value.Trim() }
+            } elseif ($line -match '^\s+if:\s*(?<value>.*?)\s*(?:#.*)?$') {
+                $condition = $Matches.value.Trim().Trim('"').Trim("'")
+                if ($condition -match '^(?i:false|\$\{\{\s*false\s*\}\})$') { $current.Inactive = $true }
+                elseif ($condition -notmatch '^\S+$') { $current.Malformed = $true }
+            } elseif ($line -match '^\s+continue-on-error:\s*(?<value>.*?)\s*(?:#.*)?$') {
+                $setting = $Matches.value.Trim().Trim('"').Trim("'")
+                if ($setting -match '^(?i:true)$') { $current.Inactive = $true }
+                elseif ($setting -notmatch '^(?i:false)$') { $current.Malformed = $true }
+            }
+        }
+    }
+    if ($stepIndent -ge 0) { $steps.Add($current) }
+    return @($steps)
+}
+
+function Get-CINormalizedRun([object]$Step) {
+    if ($null -eq $Step -or $Step.Inactive -or $Step.Malformed) { return $null }
+    $value = [string]$Step.Run
+    if ([string]::IsNullOrWhiteSpace($value) -or $value -in @('|', '>', '|-', '>-')) { return $null }
+    if ($value -match '^("[''])(.*)\1$') { $value = $Matches[2] }
+    if ($value -match '\s+#') { $value = ($value -split '\s+#', 2)[0].Trim() }
+    return $value
+}
+
+function Test-ActiveCIRunCommand([string]$Ci, [string]$Command) {
+    foreach ($step in (Get-CIQualitySteps $Ci)) {
+        if ((Get-CINormalizedRun $step) -ceq $Command) { return $true }
+    }
+    return $false
+}
+function Test-ActiveCheckGates([string]$Hook, [string]$Ci, [string[]]$Commands) {
+    foreach ($command in $Commands) {
+        if (-not (Test-ActiveHookCommand $Hook $command) -or -not (Test-ActiveCIRunCommand $Ci $command)) { return $false }
+    }
+    return $true
+}
+
+function Get-PipelineCheckPointer([string]$PipelineConfig, [string]$Name) {
+    $lines = $PipelineConfig -split "`r?`n"
+    $inExpected = $false
+    $expectedIndent = -1
+    $entryIndent = -1
+    $currentName = ''
+    $pointers = [System.Collections.Generic.List[string]]::new()
+    foreach ($line in $lines) {
+        if (-not $inExpected) {
+            if ($line -match '^(?<indent> *)expectedChecks:\s*(?:#.*)?$') {
+                $inExpected = $true
+                $expectedIndent = $Matches.indent.Length
+            }
+            continue
+        }
+        if ($line -match '^\s*#' -or $line.Trim() -eq '') { continue }
+        $lineIndent = ([regex]::Match($line, '^\s*')).Length
+        if ($lineIndent -le $expectedIndent) { break }
+        if ($line -match '^(?<indent> *)-\s+name:\s*(?<name>[^#]+?)\s*$' -and $Matches.indent.Length -gt $expectedIndent) {
+            $entryIndent = $Matches.indent.Length
+            $currentName = $Matches.name.Trim().Trim('"').Trim("'")
+            continue
+        }
+        if ($currentName -ceq $Name -and $lineIndent -gt $entryIndent -and $line -match '^\s*yamlPath:\s*(?<pointer>[^#]+?)\s*(?:#.*)?$') {
+            $pointers.Add($Matches.pointer.Trim().Trim('"').Trim("'"))
+        }
+    }
+    if ($pointers.Count -ne 1) { return $null }
+    return $pointers[0]
+}
+
+function Get-CIQualityRunAtPointer([string]$Ci, [string]$Pointer) {
+    $pointerMatch = [regex]::Match($Pointer, '^/jobs/quality/steps/(?<index>\d+)/run$')
+    if (-not $pointerMatch.Success) { return $null }
+    $steps = @(Get-CIQualitySteps $Ci)
+    $index = [int]$pointerMatch.Groups['index'].Value
+    if ($index -lt 0 -or $index -ge $steps.Count) { return $null }
+    return Get-CINormalizedRun $steps[$index]
+}
+function Test-B7VerificationAndGateContract([string]$RepoRoot) {
+    $verification = Get-Content -LiteralPath (Join-Path $RepoRoot '.markitect/areas/operations/verification.rule.yaml') -Raw
+    $skill = Get-Content -LiteralPath (Join-Path $RepoRoot '.markitect/areas/operations/engineering-operations.skill.yaml') -Raw
+    $codex = Get-Content -LiteralPath (Join-Path $RepoRoot '.agents/skills/engineering-operations/SKILL.md') -Raw
+    $claude = Get-Content -LiteralPath (Join-Path $RepoRoot '.claude/skills/engineering-operations/SKILL.md') -Raw
+    $project = Get-Content -LiteralPath (Join-Path $RepoRoot 'markitect.yaml') -Raw
+    $pipelineConfig = Get-Content -LiteralPath (Join-Path $RepoRoot '.markitect/modules/pipelines.config') -Raw
+    $hookConfig = Get-Content -LiteralPath (Join-Path $RepoRoot '.markitect/modules/githooks.config') -Raw
+    $hook = Get-Content -LiteralPath (Join-Path $RepoRoot '.githooks/pre-commit') -Raw
+    $ci = Get-Content -LiteralPath (Join-Path $RepoRoot '.github/workflows/ci.yaml') -Raw
+
+    # Guidance may name checks semantically; their exact argv remains owned by Project and module inputs below.
+    $hasGuidance = $verification -match '(?i)go vet|\bvet\b' -and
+        ($verification -match '(?i)root\s+(?:module\s+)?Go tests' -or $verification -match '(?i)go test \./\.\.\.') -and
+        ($verification -match '(?i)nested[- ]module Go tests' -or $verification -match '(?i)go -C tools/process-sentinel test \./\.\.\.') -and
+        $verification -match '(?i)Markitect'
+    $hasDeclaredInputs = @('.githooks/pre-commit', '.github/workflows/ci.yaml', '.markitect/modules/githooks.config', '.markitect/modules/pipelines.config') | Where-Object {
+        $verification -match '(?m)^\s+- ' + [regex]::Escape($_) + '\s*$'
+    }
+    $hasSkillRoute = $skill -match '(?m)^\s+- name: verification\s*$' -and
+        $codex -match '(?i)verification\.rule\.yaml' -and $claude -match '(?i)verification\.rule\.yaml'
+
+    $projectChecks = Get-ProjectChecks $project
+    $projectCheckContracts = @(
+        (Test-ProjectCheckArgv $projectChecks 'managed-artifacts' @('markitect-check-artifacts', '--repo', '.', '--config', 'markitect-artifacts.yaml')),
+        (Test-ProjectCheckArgv $projectChecks 'hook-and-pipeline-contracts' @('markitect-check-modules', '--repo', '.', '--hooks', '.markitect/modules/githooks.config', '--pipelines', '.markitect/modules/pipelines.config')),
+        (Test-ProjectCheckArgv $projectChecks 'root-tests' @('go', 'test', './...')),
+        (Test-ProjectCheckArgv $projectChecks 'nested-module-tests' @('go', '-C', 'tools/process-sentinel', 'test', './...'))
+    )
+    $vetChecks = @($projectChecks | Where-Object { Test-ArgvEquals @($_.Argv) @('go', 'vet', './...') })
+    $pipelinePath = $pipelineConfig -match '(?m)^\s+path: \.github/workflows/ci\.yaml\s*$' -and
+        $pipelineConfig -match '(?m)^\s+owner: operations/Rule/verification\s*$'
+    $rootTestsPointer = Get-PipelineCheckPointer $pipelineConfig 'root-tests'
+    $nestedTestsPointer = Get-PipelineCheckPointer $pipelineConfig 'nested-module-tests'
+    $rootTestsLinked = $null -ne $rootTestsPointer -and (Get-CIQualityRunAtPointer $ci $rootTestsPointer) -ceq 'go test ./...'
+    $nestedTestsLinked = $null -ne $nestedTestsPointer -and (Get-CIQualityRunAtPointer $ci $nestedTestsPointer) -ceq 'go -C tools/process-sentinel test ./...'
+    $vetPipelineLink = $false
+    if ($vetChecks.Count -eq 1) {
+        $vetPointer = Get-PipelineCheckPointer $pipelineConfig $vetChecks[0].Name
+        $vetPipelineLink = $null -ne $vetPointer -and (Get-CIQualityRunAtPointer $ci $vetPointer) -ceq 'go vet ./...'
+    }
+    $hookLink = $hookConfig -match '(?m)^\s+path: \.githooks/pre-commit\s*$' -and
+        $hookConfig -match '(?m)^\s+owner: operations/Rule/verification\s*$'
+    $hookCommands = @(
+        'markitect check --repo .',
+        'markitect-check-modules --repo . --hooks .markitect/modules/githooks.config --pipelines .markitect/modules/pipelines.config',
+        'markitect-check-artifacts --repo . --config markitect-artifacts.yaml',
+        'go vet ./...', 'go test ./...', 'go -C tools/process-sentinel test ./...'
+    ) | Where-Object { Test-ActiveHookCommand $hook $_ }
+    $ciProjection = Test-ActiveCIRunCommand $ci 'markitect verify --repo . --revision $GITHUB_SHA'
+    $originalNames = @('managed-artifacts', 'hook-and-pipeline-contracts', 'root-tests', 'nested-module-tests')
+    $presentOriginals = @($projectChecks | Where-Object { $_.Name -cin $originalNames } | Select-Object -ExpandProperty Name -Unique)
+    return $hasGuidance -and $hasSkillRoute -and $hasDeclaredInputs.Count -eq 4 -and
+        (@($projectCheckContracts | Where-Object { $_ }).Count -eq 4) -and $presentOriginals.Count -eq 4 -and
+        $vetChecks.Count -eq 1 -and $pipelinePath -and $rootTestsLinked -and $nestedTestsLinked -and $vetPipelineLink -and $hookLink -and
+        $hookCommands.Count -eq 6 -and $ciProjection
+}
+
+function Test-LeaseRenewalRunbookContract([string]$Runbook, [bool]$Declared) {
+    # These bounded alternatives recognize this runbook's retry contract, not general natural-language equivalence.
+    $sameIDRetry = $Runbook -match '(?is)(same|original)\s+request[ -]?id.{0,80}(every|each|all)\s+(retry|retries|attempt)' -or
+        $Runbook -match '(?is)(every|each|all)\s+(retry|retries|attempt).{0,80}(same|original)\s+request[ -]?id'
+    $deduplicatedRetry = $Runbook -match '(?is)(recogniz\w*|deduplicat\w*).{0,100}(repeated|duplicate|same)\s+(operation|renewal)' -or
+        $Runbook -match '(?is)(retry|retries).{0,100}(must not|does not|cannot|will not)\s+(create|cause|start).{0,60}(second|duplicate)\s+(renewal|operation)'
+    $duplicateRisk = $false
+    foreach ($clause in [regex]::Split($Runbook, '[.!?\r\n]+')) {
+        $warnsOfRisk = $clause -match '(?is)(retry|retries|repeat|repeated operation).{0,80}(?:may|can|could|will|might)\s+(?!not\b|never\b).{0,40}(create|cause|start).{0,60}(second|duplicate)\s+(renewal|operation)'
+        $correctsRisk = $clause -match '(?is)(therefore|thus|so|instead).{0,60}(reuse|use|retry with).{0,40}(same|original)\s+(?:request[ -]?)?id'
+        $normativeFreshID = $clause -match '(?i)^\s*(?:retry|use|assign|generate)\s+(?:with\s+)?(?:a\s+)?fresh(?:\s+request)?[ -]?id\b'
+        if ($warnsOfRisk -and (-not $correctsRisk -or $normativeFreshID)) {
+            $duplicateRisk = $true
+            break
+        }
+    }
+    $retentionDuration = $Runbook -match '(?is)(keep|retain|store).{0,80}request[ -]?id.{0,100}\b(for|during|throughout)\b.{0,50}\b(?:\d+\s*(?:hours?|days?|weeks?|months?)|(?:retry|reconciliation|retention)\s+(?:period|window|lifecycle))\b' -or
+        $Runbook -match '(?is)request[ -]?id.{0,80}\b(?:for\s+\d+\s*(?:hours?|days?|weeks?|months?)|until\s+(?:the\s+)?(?:final outcome|record expiry|operation (?:ends|completes|is finalized)))\b'
+    $recordScope = $Runbook -match '(?is)(keep|retain|store).{0,80}request[ -]?id.{0,100}(?:with|in|on|as part of).{0,50}(?:operation|renewal|request) record' -or
+        $Runbook -match '(?is)(operation|renewal|request) record.{0,100}request[ -]?id'
+    $retentionPurpose = $Runbook -match '(?is)(keep|retain|store).{0,80}request[ -]?id.{0,140}(retr(?:y|ies|ying)|reconcil|final outcome)'
+    $requestIDRetained = $retentionDuration -or $recordScope -or $retentionPurpose
+    $timeoutReporting = $false
+    $unsafeTimeoutSuccess = $false
+    foreach ($clause in [regex]::Split($Runbook, '[.!?\r\n]+')) {
+        $hasTimeout = $clause -match '(?i)timeout|time[- ]?out|timed out|times[- ]?out|deadline'
+        if ($hasTimeout -and $clause -match '(?i)\b(report|notify|tell|record|escalate|communicate)\b') { $timeoutReporting = $true }
+        if ($hasTimeout) {
+            foreach ($successMatch in [regex]::Matches($clause, '(?i)\b(success|successful|succeeded|complete|completed)\b')) {
+                $prefixStart = [Math]::Max(0, $successMatch.Index - 45)
+                $prefix = $clause.Substring($prefixStart, $successMatch.Index - $prefixStart)
+                $negatesSuccess = ($prefix -match '(?i)\b(?:not|never|no|rather than|instead of|without|do not|don\x27t)\b[^,;]{0,50}$') -or
+                    ($prefix -match ('(?i)\bdon' + [char]0x2019 + 't\b[^,;]{0,50}$'))
+                $suffixStart = $successMatch.Index + $successMatch.Length
+                $suffix = $clause.Substring($suffixStart)
+                $requiresConfirmation = $suffix -match '(?i)^\s+only after.{0,80}(?:final )?outcome.{0,30}(?:confirm|known|verif)'
+                if (-not $negatesSuccess -and -not $requiresConfirmation) { $unsafeTimeoutSuccess = $true; break }
+            }
+        }
+    }
+    $logNegation = '(?:never|must not|do not|don\x27t|don' + [char]0x2019 + 't)'
+    $secretsStayPrivate = ($Runbook -match "(?is)$logNegation.{0,50}(log|logging).{0,100}(secret|credential)|(secret|credential).{0,100}$logNegation.{0,50}(log|logging)") -or
+        $Runbook -match '(?is)(?:secrets?|credentials?).{0,50}(?:stay|remain|are kept|kept)\s+out of logs?' -or
+        $Runbook -match '(?is)(?:keep|store).{0,30}(?:secrets?|credentials?).{0,30}out of logs?'
+    $payloadStaysPrivate = ($Runbook -match "(?is)$logNegation.{0,50}(log|logging).{0,100}payload|payload.{0,100}$logNegation.{0,50}(log|logging)") -or
+        $Runbook -match '(?is)payloads?.{0,50}(?:stay|remain|are kept|kept)\s+out of logs?' -or
+        $Runbook -match '(?is)(?:keep|store).{0,30}payloads?.{0,30}out of logs?'
+    return $sameIDRetry -and $deduplicatedRetry -and -not $duplicateRisk -and $requestIDRetained -and $timeoutReporting -and -not $unsafeTimeoutSuccess -and
+        $secretsStayPrivate -and $payloadStaysPrivate -and $Declared
+}
+
 function Test-DeclaredRunbook([string]$RelativePath) {
     if ($arm -eq 'a') {
         $config = Read-RepoText 'docs/engineering/managed-files.yaml'
@@ -181,39 +593,22 @@ function Add-OriginalAssertionChecks([int]$Index) {
 
     if ((Test-EffectiveTask 7) -and $arm -eq 'a') {
         $managed = Test-PythonAssertion 'scripts/test_check_operations.py' 'test_managed_roots_and_exact_exclusion' @('internal/config', 'internal/config/parse\.go', 'testdata/vendor-snapshots', 'immutable parser-test input; no production policy ownership')
-        $fastChecks = Test-PythonAssertion 'scripts/test_check_operations.py' 'test_hook_and_pipeline_cover_each_declared_fast_check' @('Operations policy', 'Operations checker tests', 'Root module tests', 'Nested module tests', 'go vet \./\.\.\.')
-        $checker = Read-RepoText 'scripts/check_operations.py'
-        $runs = [regex]::Match($checker, '(?ms)EXPECTED_RUNS\s*=\s*\{(?<body>.*?)\}')
-        $expectedCommands = $runs.Success -and $runs.Groups['body'].Value -match 'python scripts/check_operations\.py' -and
-            $runs.Groups['body'].Value -match 'python -m unittest discover -s scripts' -and
-            $runs.Groups['body'].Value -match 'go test \./\.\.\.' -and
-            $runs.Groups['body'].Value -match 'go -C tools/process-sentinel test \./\.\.\.' -and
-            $runs.Groups['body'].Value -match 'go vet \./\.\.\.'
+        $fastChecks = Test-A7FastCheckAssertionContract $script:repoPath
         $oldGates = @('python scripts/check_operations.py', 'python -m unittest discover -s scripts', 'go test ./...', 'go -C tools/process-sentinel test ./...')
         $hook = Read-RepoText '.githooks/pre-commit'
         $ci = Read-RepoText '.github/workflows/ci.yaml'
-        $allGates = (@($oldGates + 'go vet ./...') | Where-Object { $hook.Contains($_) -and $ci.Contains($_) }).Count -eq 5
+        $allGates = Test-ActiveCheckGates $hook $ci @($oldGates + 'go vet ./...')
         $guidance = @('docs/engineering/agent-rules.md', 'AGENTS.md', '.claude/CLAUDE.md') | ForEach-Object { (Read-RepoText $_) -match '(?i)go vet \./\.\.\.' }
-        $ciScalar = $ci -match '(?m)^\s+run: go vet \./\.\.\.\s*$'
-        Add-Check 'original-a7-checker-assertions' ($managed -and $fastChecks -and $expectedCommands) 'Managed-artifact/exclusion and all original fast-check expectations remain; vet was added.'
+        $ciScalar = Test-ActiveCIRunCommand $ci 'go vet ./...'
+        Add-Check 'original-a7-checker-assertions' ($managed -and $fastChecks) 'Managed-artifact/exclusion and four original fast-check expectations remain; one mapped vet check was added.'
         Add-Check 'a7-guidance-and-gates' ($allGates -and $ciScalar -and (@($guidance | Where-Object { $_ }).Count -eq 3)) 'Canonical and provider guidance mention vet; hook and exact CI scalar retain all prior gates plus vet.'
     }
     if ((Test-EffectiveTask 7) -and $arm -eq 'b') {
         $project = Read-RepoText 'markitect.yaml'
         $checks = @('managed-artifacts', 'hook-and-pipeline-contracts', 'root-tests', 'nested-module-tests') | ForEach-Object { $project -match '(?m)^\s+- name: ' + [regex]::Escape($_) + '\s*$' }
-        $verification = Read-RepoText '.markitect/areas/operations/verification.rule.yaml'
-        $skill = Read-RepoText '.markitect/areas/operations/engineering-operations.skill.yaml'
-        $codex = Read-RepoText '.agents/skills/engineering-operations/SKILL.md'
-        $claude = Read-RepoText '.claude/skills/engineering-operations/SKILL.md'
-        $guidance = $verification -match '(?i)go vet \./\.\.\.' -and $verification -match '(?i)go test \./\.\.\.' -and
-            $verification -match '(?i)go -C tools/process-sentinel test \./\.\.\.' -and
-            $skill -match '(?i)verification' -and $codex -match '(?i)verification\.rule\.yaml' -and $claude -match '(?i)verification\.rule\.yaml'
-        $hook = Read-RepoText '.githooks/pre-commit'
-        $ci = Read-RepoText '.github/workflows/ci.yaml'
-        $oldGates = @('go test ./...', 'go -C tools/process-sentinel test ./...')
-        $allGates = (@($oldGates + 'go vet ./...') | Where-Object { $hook.Contains($_) -and $ci.Contains($_) }).Count -eq 3
+        $guidance = Test-B7VerificationAndGateContract $script:repoPath
         Add-Check 'original-b7-check-assertions' (@($checks | Where-Object { $_ }).Count -eq 4) 'All four configured Markitect checks remain enabled.'
-        Add-Check 'b7-guidance-and-gates' ($guidance -and $allGates) 'Canonical verification guidance and provider Skill links remain; hook and CI retain root/nested tests plus vet.'
+        Add-Check 'b7-guidance-and-gates' $guidance 'Canonical guidance routes to explicit Project and module check owners; hook and CI retain root/nested tests plus vet.'
     }
 }
 
@@ -284,7 +679,7 @@ function Add-TaskSpecificChecks([int]$Index) {
     if (Test-EffectiveTask 7) {
         $hook = Read-RepoText '.githooks/pre-commit'
         $ci = Read-RepoText '.github/workflows/ci.yaml'
-        Add-Check 'cumulative-vet-gates' ($hook -match '(?m)go vet ./\.\.\.' -and $ci -match 'go vet ./\.\.\.') 'go vet ./... remains enabled in both pre-commit and CI.'
+        Add-Check 'cumulative-vet-gates' (Test-ActiveCheckGates $hook $ci @('go vet ./...')) 'go vet ./... remains an active command in both pre-commit and CI.'
     }
     if (Test-EffectiveTask 5) {
         $newPath = Join-Path $script:repoPath 'docs/operations/runbooks/development-start.md'
@@ -299,13 +694,8 @@ function Add-TaskSpecificChecks([int]$Index) {
     }
     if (Test-EffectiveTask 8) {
         $runbook = Read-RepoText 'docs/operations/runbooks/lease-renewal.md'
-        $hasIdempotency = $runbook -match '(?i)idempot'
-        $hasRequestId = $runbook -match '(?i)request[ -]?id'
-        $hasTimeout = $runbook -match '(?i)timeout|deadline'
-        $secretsStayPrivate = $runbook -match '(?is)(secret|credential).{0,80}(log|logging)|(log|logging).{0,80}(secret|credential)'
-        $payloadStaysPrivate = $runbook -match '(?is)payload.{0,80}(log|logging)|(log|logging).{0,80}payload'
         $declared = Test-DeclaredRunbook 'docs/operations/runbooks/lease-renewal.md'
-        Add-Check 'lease-renewal-runbook' ($hasIdempotency -and $hasRequestId -and $hasTimeout -and $secretsStayPrivate -and $payloadStaysPrivate -and $declared) 'Runbook covers idempotency, request ID, timeout, secret/payload log privacy, and its arm-owned input declaration.'
+        Add-Check 'lease-renewal-runbook' (Test-LeaseRenewalRunbookContract $runbook $declared) 'Runbook explains same-ID duplicate prevention, ID retention, timeout reporting, private logs, and is declared as an input.'
     }
     if (Test-EffectiveTask 9) {
         $new = Test-Path -LiteralPath (Join-Path $script:repoPath 'docs/operations/runbooks/child-processes.md') -PathType Leaf
