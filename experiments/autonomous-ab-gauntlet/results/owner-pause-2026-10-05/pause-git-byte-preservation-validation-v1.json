@@ -1,0 +1,27 @@
+{
+  "version": "gauntlet-pause-staged-byte-validation/v1",
+  "requiresExplicitRenormalizeAfterAttributeChange": true,
+  "records": [
+    {
+      "path": "experiments/autonomous-ab-gauntlet/results/owner-pause-2026-10-05/ops-owner-pause.json",
+      "stagedAndSourceSha256": "9b80a07c12f0008d4bb5655787b810d9688a5160c36eed746fb9b64780e8d933",
+      "exactByteEquality": true
+    },
+    {
+      "path": "experiments/autonomous-ab-gauntlet/results/owner-pause-2026-10-05/ops-helper-count-erratum.json",
+      "stagedAndSourceSha256": "8f54b9fe8faf4778f3878cc1cca619671a48e7d7a8bbd516ab69422450c99bc6",
+      "exactByteEquality": true
+    },
+    {
+      "path": "experiments/autonomous-ab-gauntlet/results/owner-pause-2026-10-05/service-owner-pause.json",
+      "stagedAndSourceSha256": "481f8513d437702bba09e800ca6280f7a3ed4c52bdd82b5f7a8aac28c324f21c",
+      "exactByteEquality": true
+    },
+    {
+      "path": "experiments/autonomous-ab-gauntlet/results/owner-pause-2026-10-05/pause-aggregate-v1.json",
+      "stagedAndSourceSha256": "b9953bbe9530a81517f4522b5c0025789ed39a1054953dc6ab070988fa3eae08",
+      "exactByteEquality": true
+    }
+  ],
+  "outcomesReinterpreted": false
+}
