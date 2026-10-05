@@ -1,6 +1,6 @@
 # Projection-first source validation
 
-Status: local source slice validated; exact-head integration gates/review are pending; no CI or integration result is claimed yet. Not a release or real-adopter benefit claim. Starting main: `adef79d935399f8ac63ad874dbdeab8d15c418a1`; published v0.13.0 remains unchanged. [Design](../design/projection-first-reconciliation.md) owns the source contract. [Research alignment](../design/projection-assurance-direction.md) separates the owner-supplied thesis from implemented behavior.
+Status: bounded source implementation with local and commit-scoped CI validation recorded below. Current integration state and later exact-head receipts are linked through [PR #79](https://github.com/Glacius-Labs/Markitect/pull/79). This report is not a release or real-adopter benefit claim. Starting main: `adef79d935399f8ac63ad874dbdeab8d15c418a1`; published v0.13.0 remains unchanged. [Design](../design/projection-first-reconciliation.md) owns the source contract. [Research alignment](../design/projection-assurance-direction.md) separates the owner-supplied thesis from implemented behavior.
 
 ## Evidence
 
@@ -68,3 +68,16 @@ Final local reviewed-source gates on 2026-10-05: full `go test ./...` passed aft
 The first external candidate run (`268d087`, CI run 37355747893, Linux job 111917592877) reached the new example gate but correctly refused mismatched configuration: fixed Git acquisition selects the repository root Project, not a nested working-tree fixture. The gate had passed the monorepository commit while requesting nested fixture configuration. The corrected gate copies only the public fixture into a separate temporary Git repository, records source and fixture commits, and verifies that immutable fixture revision. Snapshot semantics and ownership refusal remain unchanged; the failed run is not relabeled as a successful fixture check.
 
 At candidate `3704576`, Linux quality passed the corrected fixture gate and the complete normal schema/example/package/bootstrap route (CI run 37356637009). The final independent read-bound review tightened the public fixture copier to preserve symlinks rather than dereference them; fixed snapshot acquisition then rejects unsupported links, or copying fails closed on a platform without symlink creation. The tested current fixture contains no links. Both-platform final-head evidence remains required and is linked through [PR #79](https://github.com/Glacius-Labs/Markitect/pull/79); this recorded Linux result does not claim a Windows pass.
+
+### Reviewed implementation CI receipt
+
+[CI run 37357257882](https://github.com/Glacius-Labs/Markitect/actions/runs/37357257882) passed for candidate head `ba5be89be0e1fedd8229939da7b304a15bd2bdaf`, based on unchanged main `adef79d935399f8ac63ad874dbdeab8d15c418a1`. The pull-request workflow checked and verified synthetic merge revision `2d4e815eb8ba4fbe5e2363b448bf26f0caa485fe`; this distinguishes candidate identity from the revision actually loaded by the gates.
+
+| Platform | Job | Result / UTC completion |
+|---|---|---|
+| Ubuntu 24.04 | 111923139657 | success, 2026-10-05 18:40:03 |
+| Windows | 111923139242 | success, 2026-10-05 18:49:16 |
+
+Both routes ran normal Go/vet/build/module/schema/examples/import gates, fixed Root and fixture Verify, independent candidate-byte replay, and package/bootstrap/adapter replays. Source artifact publication was skipped for this PR; no stable release was published. Independently, local fixed Root Verify at `268d087` with the recorded reviewed CLI returned passed and scoped projection convergence, running all declared Project checks on fresh captured copies.
+
+This receipt is bound to the named implementation candidate, not to future edits. The final receipt documentation is itself a new candidate and requires refreshed exact-head CI before integration. Final PR state and check metadata remain the integration receipt; recorded earlier failures and exclusions remain unchanged.
