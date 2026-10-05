@@ -18,7 +18,7 @@ func printUsage(out io.Writer) {
 	fmt.Fprintln(out, "usage: markitect COMMAND [options]")
 	fmt.Fprintln(out, "  check, verify, inventory    Validate a project and its repository gates")
 	fmt.Fprintln(out, "  model, context, impact, find, explain, review    Inspect fixed semantic inputs")
-	fmt.Fprintln(out, "  canonical                                    Compile, inspect, plan, apply and verify canonical projections (alpha)")
+	fmt.Fprintln(out, "  canonical                                    Inspect, plan, apply, verify and adopt canonical projections (alpha)")
 	fmt.Fprintln(out, "  init, authoring, render, format, reconcile, projection    Author and reconcile projections")
 	fmt.Fprintln(out, "  prepare, copy-me             Capture selected evidence and validate proposals (source)")
 	fmt.Fprintln(out, "  pack                         Build an offline content package")
