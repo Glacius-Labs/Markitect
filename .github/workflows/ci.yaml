@@ -84,7 +84,7 @@ jobs:
         run: |
           import os, pathlib, shutil, subprocess
           root = pathlib.Path(os.environ["RUNNER_TEMP"]) / ("markitect-projection-" + os.environ["GITHUB_SHA"])
-          shutil.copytree("examples/projection-first", root)
+          shutil.copytree("examples/projection-first", root, symlinks=True)
           def git(*args):
               return subprocess.check_output(["git", "-C", str(root), *args], text=True).strip()
           git("init", "-b", "codex/projection-example")
