@@ -1,0 +1,32 @@
+{
+  "version": "gauntlet-pause-git-byte-preservation/v1",
+  "corrects": "d9b0688 Git newline normalization of four pause receipt mirrors",
+  "action": "Add scoped -text attribute and stage original unchanged working-file bytes; prior commit and external originals retained",
+  "records": [
+    {
+      "path": "experiments/autonomous-ab-gauntlet/results/owner-pause-2026-10-05/ops-owner-pause.json",
+      "priorGitBlobSha256": "5cc546580493f221ea48dee8385f55c2f089eec9d2bf3e78c6a80ac89d3b815f",
+      "preservedSourceAndWorkingBytesSha256": "9b80a07c12f0008d4bb5655787b810d9688a5160c36eed746fb9b64780e8d933",
+      "different": true
+    },
+    {
+      "path": "experiments/autonomous-ab-gauntlet/results/owner-pause-2026-10-05/ops-helper-count-erratum.json",
+      "priorGitBlobSha256": "154a38e155d4aee3a9a1b7fd6ff5385f89a986a3244820cb0ea32097d0154844",
+      "preservedSourceAndWorkingBytesSha256": "8f54b9fe8faf4778f3878cc1cca619671a48e7d7a8bbd516ab69422450c99bc6",
+      "different": true
+    },
+    {
+      "path": "experiments/autonomous-ab-gauntlet/results/owner-pause-2026-10-05/service-owner-pause.json",
+      "priorGitBlobSha256": "c5605c502c3931f50bd5037ddc76c45a24062a4ba4bf74bd2745962708632831",
+      "preservedSourceAndWorkingBytesSha256": "481f8513d437702bba09e800ca6280f7a3ed4c52bdd82b5f7a8aac28c324f21c",
+      "different": true
+    },
+    {
+      "path": "experiments/autonomous-ab-gauntlet/results/owner-pause-2026-10-05/pause-aggregate-v1.json",
+      "priorGitBlobSha256": "4344ac9a884c464f57520997252fa19b07d5aef2d1521068b9da081e082b238f",
+      "preservedSourceAndWorkingBytesSha256": "b9953bbe9530a81517f4522b5c0025789ed39a1054953dc6ab070988fa3eae08",
+      "different": true
+    }
+  ],
+  "doesNotChange": "actor records, frozen inputs, scores, source receipt hashes, experiment semantics or holdout"
+}
