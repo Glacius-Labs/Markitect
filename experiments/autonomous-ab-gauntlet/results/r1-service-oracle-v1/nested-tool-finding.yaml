@@ -1,0 +1,49 @@
+schema: autonomous-ab-service-nested-tool-finding/v1
+arena: r1-service-oracle-v1
+freeze_digest: cc6124d1bd179f0824cde31947b929412562d2991879474ba2d02e855f4062f7
+scope: Completed trial1 B final public-helper receipts for development tasks01-03 only.
+observations:
+  - task: "01"
+    attempt: 2
+    recorded_actor_attempt: 3
+    helper_exit: 1
+    receipt: raw/modular-service-b-t01/01/helper-attempt-2.jsonl
+    receipt_sha256: cdce081a430d651fa9b3514678916b77e700b4b81554ecf00b619a404dd5dfed
+  - task: "02"
+    attempt: 2
+    recorded_actor_attempt: 3
+    helper_exit: 1
+    receipt: raw/modular-service-b-t01/02/helper-attempt-2.jsonl
+    receipt_sha256: aec3e17f456fce6c95aa6821c64622a0b798cf0c6f7f2d79c511671c9e5e2cbb
+  - task: "03"
+    attempt: 2
+    recorded_actor_attempt: 3
+    helper_exit: 1
+    receipt: raw/modular-service-b-t01/03/helper-attempt-2.jsonl
+    receipt_sha256: aa1cb9663be165cd21da1c1d25ccc52d47b4067211c96b54726bb2c1f1ae80ef
+shared_observation:
+  go_tests_and_architecture_tests: Receipt output reports passing checks.
+  markitect_check: Receipt output reports passed graph/policies.
+  markitect_verify: Reports verify.tool-missing for configured artifact-coverage check executable markitect-check-artifacts.
+  outer_helper: Also produces an artifact-coverage report in the separate direct command after the nested verify failure.
+  implication: Outer report availability does not prove nested PATH lookup availability or complete project verification.
+frozen_files_present_when_root_checked:
+  cli_sha256: 553b7077ce7b5db2df89567146fc1a877a03cb6edd75459be5a3e0a380676056
+  artifact_checker_sha256: e671a89e03c93c153dcbe8694b9c30f86cc0e9512b1dc026332ac24db5e1c9d8
+  module_checker_sha256: af14fa820f9c145ff44d1bee3129e15bb35ec3b7aeb26334d65cbff25f0702e1
+  limit: These hashes prove file identity at inspection, not which path/process environment each actor actually used or execution permission.
+source_review:
+  inspected: internal/host/verify.go findVerifyTool; internal/infrastructure/source/git_snapshot.go CleanGitEnv; frozen helper command-dispatch logic.
+  documented_behavior: Verification resolves a bare command with exec.LookPath; Git environment cleanup preserves PATH and refuses an unavailable tool.
+  supported_conclusion: Verification remained failing rather than ignoring a configured check.
+  actual_process_path_and_permissions: unavailable
+classification:
+  recurring_execution_environment_or_workflow_limitation: true
+  markitect_core_defect_proven: false
+  host_defect_proven: false
+  cause: unresolved; requires isolated reproduction with actual environment/permission evidence after first-round preservation.
+  product_fix: none during frozen round1
+preservation:
+  actor_responses_and_helper_receipts: unchanged
+  feedback_to_future_actors: none
+  scoring: Preserve failed complete-helper results; passing graph/component output never rescues them.
