@@ -80,7 +80,22 @@ jobs:
         run: go test ./internal/host -run '^TestProjectionGreenfieldCandidatesConvergeAgainstIndependentEvidence$' -count=1
 
       - name: Verify fixed projection-first example
-        run: go run ./cmd/markitect projection --repo examples/projection-first --action verify --config projections.config --coverage markitect-artifacts.yaml --revision ${{ github.sha }}
+        shell: python {0}
+        run: |
+          import os, pathlib, shutil, subprocess
+          root = pathlib.Path(os.environ["RUNNER_TEMP"]) / ("markitect-projection-" + os.environ["GITHUB_SHA"])
+          shutil.copytree("examples/projection-first", root)
+          def git(*args):
+              return subprocess.check_output(["git", "-C", str(root), *args], text=True).strip()
+          git("init", "-b", "codex/projection-example")
+          git("config", "user.name", "Markitect CI")
+          git("config", "user.email", "markitect-ci@users.noreply.github.com")
+          git("config", "core.autocrlf", "false")
+          git("add", ".")
+          git("commit", "-m", "Freeze projection example from " + os.environ["GITHUB_SHA"])
+          revision = git("rev-parse", "HEAD")
+          print("Projection fixture source=" + os.environ["GITHUB_SHA"] + " revision=" + revision, flush=True)
+          subprocess.run(["go", "run", "./cmd/markitect", "projection", "--repo", str(root), "--action", "verify", "--config", "projections.config", "--coverage", "markitect-artifacts.yaml", "--revision", revision], check=True)
 
       - name: Check generated schemas
         run: go run ./cmd/markitect schema --repo .
