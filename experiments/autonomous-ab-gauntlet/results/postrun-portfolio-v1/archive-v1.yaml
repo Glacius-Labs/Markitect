@@ -1,0 +1,54 @@
+schema: autonomous-ab-postrun-portfolio-tool-archive/v1
+source_head_at_validation: 1e490beb2981dca18c086512aad66191ef233926
+scope: Source-only postrun descriptive tool; actual arenas/reports/actors/holdout
+  were not processed.
+archive_directory: postrun-portfolio-v1-tools-2026-10-05
+files:
+- path: README.md
+  sha256: 7f923e53dfd8715a6a008790c299a27a8f67d2f7f152ee07128b65f05046e240
+  bytes: 4481
+- path: main.go
+  sha256: c6f15ecdba6dc0b01429f9d0ab0b36d3fb8d90a60f3a39fa6402ce11096b984b
+  bytes: 23946
+- path: main_test.go
+  sha256: 5213f561c84fb763cd05491f2fc8451721874beb3a66084af9ad09de9df0265a
+  bytes: 24192
+- path: portfolio-v1.exe
+  sha256: e5118e608aa9029d962cfa0e1976e54731cde10e16aa52e2360b92d060065db9
+  bytes: 4237312
+- path: root-qa.log
+  sha256: 4eaf526656f1c3529677c749a3665521a549c522df77d4681ad60099ceacf4d3
+  bytes: 6711
+- path: root-build.log
+  sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+  bytes: 0
+- path: synthetic-cli-qa.yaml
+  sha256: 6a9df55afcee296af6f81ce2f2c2ce965dce44f918c367db210a801c72add8d2
+  bytes: 914
+- path: independent-source-review.yaml
+  sha256: 4647cc33c7ff5a02fca7039233facb7e2f1f648b9df92f0fedec248e245a089f
+  bytes: 2609
+toolchain:
+  version: go1.27.1 windows/amd64
+  sdk_executable_sha256: d3ccdb604eafa6031133aefe1a3db24f0bb7362b857bc2125ac4e4c178b4b490
+  GOENV: 'off'
+  GOTOOLCHAIN: local
+root_validation:
+  go_test_exit_code: 0
+  go_vet_exit_code: 0
+  go_build_exit_code: 0
+  test_command: go test -count=1 -v ./experiments/autonomous-ab-gauntlet/portfolio/v1
+  vet_command: go vet ./experiments/autonomous-ab-gauntlet/portfolio/v1
+  independent_and_root_binary_hashes_equal: true
+  synthetic_cli_fresh_outputs_exit_codes:
+  - 0
+  - 0
+  synthetic_cli_existing_output_refusal_exit_code: 1
+limitations:
+- Byte hashes establish identity, not authentication or acceptance.
+- No actual portfolio input selection, report collection, outcome assessment or comparative
+  eligibility was performed.
+- No frozen product/harness/oracle/source input was changed.
+- Normal source commit-bound Windows/Linux gates remain a separate obligation.
+- Synthetic CLI fixtures prove refusal/determinism boundaries, not experiment outcomes
+  or tool usefulness.

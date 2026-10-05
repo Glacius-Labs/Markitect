@@ -1,0 +1,31 @@
+schema: autonomous-ab-additional-run-exclusion-binding/v1
+recorded_utc: '2026-10-05T13:04:55.367292+00:00'
+source_arena: r1-service-oracle-v3
+freeze_digest: 1daa5bb43552c0437bcfd085d8afa4916094f90f03e3370f1ab2ecabdc339ee9
+retained_runtime_record:
+  path: runtime-run-exclusions.yaml
+  sha256: 1dc58d017db27c31269633e5c32ee658667ec3eb7aa6234cd870e384d18bcc4a
+  runs: 5
+additional_record:
+  path: assessment-run-exclusions.yaml
+  sha256: 375c65e3a0246c5e0ef2694be49ac2ff3b380254499300d9a031ad5394f91379
+  runs: 3
+existing_native_bindings:
+- run_id: modular-service-b-t01-parallel-P01
+  task_id: P01
+  native_record: runs/modular-service-b-t01-parallel-P01/P01.native.yaml
+  sha256: 351b63457e7dec2ce23506470cf760fcfe4f482495912923ff812e76e582695b
+- run_id: modular-service-b-t01-parallel-P02
+  task_id: P02
+  native_record: runs/modular-service-b-t01-parallel-P02/P02.native.yaml
+  sha256: 905213c89b7d4fe2bd61fe012c48e807a44e71034684e3b01fd4504dd805f62d
+- run_id: modular-service-b-t01-integration
+  task_id: 08
+  native_record: runs/modular-service-b-t01-integration/08.native.yaml
+  sha256: 8ea220f1de876aa9703fb43535b6e1418272133069190a13e4fe375e4443100e
+duplicate_run_ids: []
+unstarted_run_ids: []
+raw_outcomes_changed: false
+collector_invoked: false
+other_trials_affected: false
+human_acceptance: false

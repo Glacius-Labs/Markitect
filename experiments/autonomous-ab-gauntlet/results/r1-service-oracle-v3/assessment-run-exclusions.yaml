@@ -1,0 +1,18 @@
+schema: assessment-run-exclusions/v1
+freeze_digest: 1daa5bb43552c0437bcfd085d8afa4916094f90f03e3370f1ab2ecabdc339ee9
+runs:
+- run_id: modular-service-b-t01-parallel-P01
+  reason: Service trial1 paired comparison remains controller-excluded after the irreversible
+    B01 repair-budget status error. This existing fork/integration inherits that accumulated
+    trial state. Retain raw outcomes and repair histories as descriptive; no product
+    verdict or reinstated comparison.
+- run_id: modular-service-b-t01-parallel-P02
+  reason: Service trial1 paired comparison remains controller-excluded after the irreversible
+    B01 repair-budget status error. This existing fork/integration inherits that accumulated
+    trial state. Retain raw outcomes and repair histories as descriptive; no product
+    verdict or reinstated comparison.
+- run_id: modular-service-b-t01-integration
+  reason: Service trial1 paired comparison remains controller-excluded after the irreversible
+    B01 repair-budget status error. This existing fork/integration inherits that accumulated
+    trial state. Retain raw outcomes and repair histories as descriptive; no product
+    verdict or reinstated comparison.

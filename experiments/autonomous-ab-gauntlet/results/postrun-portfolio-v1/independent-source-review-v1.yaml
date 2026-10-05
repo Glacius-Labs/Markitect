@@ -1,0 +1,35 @@
+record: postrun-portfolio-source-review/v1
+review_scope:
+  files:
+    - path: experiments/autonomous-ab-gauntlet/portfolio/README.md
+      sha256: 7f923e53dfd8715a6a008790c299a27a8f67d2f7f152ee07128b65f05046e240
+    - path: experiments/autonomous-ab-gauntlet/portfolio/v1/main.go
+      sha256: c6f15ecdba6dc0b01429f9d0ab0b36d3fb8d90a60f3a39fa6402ce11096b984b
+    - path: experiments/autonomous-ab-gauntlet/portfolio/v1/main_test.go
+      sha256: 5213f561c84fb763cd05491f2fc8451721874beb3a66084af9ad09de9df0265a
+  method: source-only static review
+  excluded:
+    - actual reports and arenas
+    - outcomes and scores
+    - actor responses or patches
+    - holdout evidence
+    - collector, evaluator, or test execution
+    - source edits or commits
+  acceptance: not assessed
+findings:
+  status: no_remaining_concrete_source_defect_found_within_scope
+  confirmed_guards:
+    - "main.go:375-382 validates project, arm, run_id, task_id, and run_kind identity fields without silently accepting padded identity strings."
+    - "main.go:385-386 rejects unknown, holdout, and run-kind-incompatible task identities."
+    - "main.go:388-402 rejects duplicate task identities, ambiguous run kinds, and divergent sequential run identities."
+    - "main.go:319-335 preserves raw outcome/exclusion metadata and the selected raw source row; integration task 08 expected-set and escalation interpretation is explicitly unavailable."
+    - "main_test.go:176-211 covers padded identity refusal for source and manifest inputs."
+    - "main_test.go:415-430 verifies a whitespace-padded raw outcome remains unchanged and does not create eligibility."
+    - "README.md states the tool is descriptive, does not derive comparison eligibility or score, and trusts pinned report contents without proving source collection completeness."
+  prior_pre_use_issue:
+    description: "A prior static review identified identity whitespace normalization as capable of converting malformed raw identity into a selector match. The final candidate now validates raw identity without normalization and includes refusal coverage."
+    disposition: corrected_in_final_source
+  limitations:
+    - "No actual report bytes were inspected, so the content or sensitivity of raw_row fields was not assessed. The source preserves selected raw rows after report hash/schema pinning."
+    - "No tests, vet, evaluator, collector, or runtime command was run as part of this independent review."
+    - "No claim is made about manifest completeness, collection completeness, outcome-independent selection, comparison validity, acceptance, or benchmark results."
