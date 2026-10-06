@@ -266,7 +266,7 @@ func evidenceGitEnvironment(indexPath string) []string {
 	env = append(env,
 		"GIT_INDEX_FILE="+indexPath,
 		"GIT_CONFIG_NOSYSTEM=1",
-		"GIT_CONFIG_GLOBAL=NUL",
+		"GIT_CONFIG_GLOBAL="+os.DevNull,
 		"GIT_AUTHOR_NAME=Markitect Evidence",
 		"GIT_AUTHOR_EMAIL=evidence@invalid",
 		"GIT_AUTHOR_DATE=2000-01-01T00:00:00+00:00",
