@@ -368,6 +368,7 @@ func safeTargetPath(prefix string, roots []string) (string, string, error) {
 	target := path.Join(cleanPrefix, "pre-commit")
 	allowed, seen := false, make(map[string]bool, len(roots))
 	for _, root := range roots {
+		root = strings.TrimSuffix(root, "/")
 		if !validRepoPath(root, true) {
 			return "", "", errors.New("allowed roots must be clean repository-relative slash paths")
 		}

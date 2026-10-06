@@ -278,3 +278,15 @@ func TestRenderIsCandidateOnlyAndProposeStillRefusesUnknownOwnership(t *testing.
 		t.Fatalf("rendering bypassed ownership: %#v", got)
 	}
 }
+
+func TestDirectoryRootConventionPreservesAliasRefusal(t *testing.T) {
+	target, _, err := safeTargetPath(".githooks/", []string{".githooks/"})
+	if err != nil || target != ".githooks/pre-commit" {
+		t.Fatalf("directory root: target=%s err=%v", target, err)
+	}
+	for _, roots := range [][]string{{".githooks//"}, {".githooks", ".githooks/"}, {".githooks/../other"}} {
+		if _, _, err := safeTargetPath(".githooks", roots); err == nil {
+			t.Fatalf("unsafe or duplicate root accepted: %v", roots)
+		}
+	}
+}
