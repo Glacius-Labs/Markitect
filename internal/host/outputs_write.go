@@ -49,19 +49,19 @@ func writeOutputs(root string, p *Project, selected []string) ([]string, error) 
 			return nil, err
 		}
 	}
-	lockDir := filepath.Join(rootAbs, ".artifacts", "markitect")
 	if _, err = safeDestination(rootAbs, ".artifacts/markitect/write.lock"); err != nil {
 		return nil, err
 	}
-	if err = os.MkdirAll(lockDir, 0755); err != nil {
+	writeRoot, err := openWriteRoot(rootAbs)
+	if err != nil {
 		return nil, err
 	}
-	lock, err := os.OpenFile(filepath.Join(lockDir, "write.lock"), os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0600)
+	defer writeRoot.Close()
+	release, err := writeRoot.LockWriter()
 	if err != nil {
 		return nil, fmt.Errorf("another renderer owns write.lock (inspect an abandoned lock before removing it): %w", err)
 	}
-	lock.Close()
-	defer os.Remove(filepath.Join(lockDir, "write.lock"))
+	defer release()
 	if branch != "" {
 		if err := ensureWriteBranch(rootAbs, branch); err != nil {
 			return nil, err
@@ -168,9 +168,6 @@ func writeOutputs(root string, p *Project, selected []string) ([]string, error) 
 		if err != nil {
 			return written, err
 		}
-		if err = os.MkdirAll(filepath.Dir(dest), 0755); err != nil {
-			return written, err
-		}
 		// The author must hold a single-writer worktree. Revalidation reduces accidental
 		// races; a filesystem cannot provide a multi-file transaction here.
 		if _, err = safeDestination(root, name); err != nil {
@@ -189,7 +186,7 @@ func writeOutputs(root string, p *Project, selected []string) ([]string, error) 
 				return written, err
 			}
 		}
-		if err = atomicWrite(dest, outputs[name]); err != nil {
+		if err = writeRoot.AtomicWrite(name, outputs[name], 0644); err != nil {
 			return written, err
 		}
 		written = append(written, name)
@@ -247,13 +244,18 @@ func verifyNoopWrite(root string, p *Project) ([]string, error) {
 // protects standalone tool checkouts that do not yet have Git metadata.
 func WriteSchemas(root string, outputs map[string][]byte) error {
 	branch := ""
+	writeRoot, err := openWriteRoot(root)
+	if err != nil {
+		return err
+	}
+	defer writeRoot.Close()
 	var unlock func()
 	if _, err := os.Lstat(filepath.Join(root, ".git")); err == nil {
 		branch, err = writeBranchName(root)
 		if err != nil {
 			return err
 		}
-		unlock, err = lockWriter(root)
+		unlock, err = writeRoot.LockWriter()
 		if err != nil {
 			return err
 		}
@@ -284,19 +286,12 @@ func WriteSchemas(root string, outputs map[string][]byte) error {
 				return err
 			}
 		}
-		dest, err := safeDestination(root, name)
-		if err != nil {
-			return err
-		}
-		if err = os.MkdirAll(filepath.Dir(dest), 0755); err != nil {
-			return err
-		}
 		if branch != "" {
 			if err := ensureWriteBranch(root, branch); err != nil {
 				return err
 			}
 		}
-		if err = atomicWrite(dest, outputs[name]); err != nil {
+		if err = writeRoot.AtomicWrite(name, outputs[name], 0644); err != nil {
 			return err
 		}
 	}

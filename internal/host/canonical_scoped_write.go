@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"path/filepath"
 	"sort"
 	"strings"
 
@@ -109,7 +108,12 @@ func writeCanonicalScopedOutputs(root string, captured canonicalScopedWriteCaptu
 	if inventory.MetadataDigest != captured.Inventory.MetadataDigest {
 		return nil, errors.New("declared target inventory changed since reviewed plan")
 	}
-	unlock, err := lockWriter(root)
+	writeRoot, err := openWriteRoot(root)
+	if err != nil {
+		return nil, err
+	}
+	defer writeRoot.Close()
+	unlock, err := writeRoot.LockWriter()
 	if err != nil {
 		return nil, err
 	}
@@ -159,21 +163,14 @@ func writeCanonicalScopedOutputs(root string, captured canonicalScopedWriteCaptu
 		if exists && bytes.Equal(current, outputs[name]) && captured.Observed.Modes[name] == mode {
 			continue
 		}
-		if err := os.MkdirAll(filepath.Dir(destination), 0755); err != nil {
-			return written, err
+		fileMode := os.FileMode(0644)
+		if mode == snapshot.ExecutableMode {
+			fileMode = 0755
 		}
-		if _, err := safeDestination(root, name); err != nil {
-			return written, err
-		}
-		if err := atomicWrite(destination, outputs[name]); err != nil {
+		if err := writeRoot.AtomicWrite(name, outputs[name], fileMode); err != nil {
 			return written, err
 		}
 		written = append(written, name)
-		if mode == snapshot.ExecutableMode {
-			if err := os.Chmod(destination, 0755); err != nil {
-				return written, fmt.Errorf("set executable artifact mode for %s: %w", name, err)
-			}
-		}
 	}
 	final, err := source.ObserveSelectedWorking(root, paths)
 	if err != nil {

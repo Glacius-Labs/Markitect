@@ -97,3 +97,73 @@ func TestSafeDestinationRejectsCaseOnlySymlinkAncestor(t *testing.T) {
 		t.Fatalf("safeDestination accepted case-only symlink ancestor %q: %v", root, err)
 	}
 }
+
+func TestAnchoredAtomicWriteRefusesRootSwap(t *testing.T) {
+	base := t.TempDir()
+	rootPath := filepath.Join(base, "repo")
+	if err := os.Mkdir(rootPath, 0755); err != nil {
+		t.Fatal(err)
+	}
+	outside := t.TempDir()
+	sentinel := filepath.Join(outside, "sentinel.txt")
+	if err := os.WriteFile(sentinel, []byte("keep\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	anchored, err := openWriteRoot(rootPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer anchored.Close()
+
+	movedRoot := filepath.Join(base, "repo-original")
+	if err := os.Rename(rootPath, movedRoot); err != nil {
+		t.Skipf("platform prevents swapping an open root handle: %v", err)
+	}
+	if err := os.Symlink(outside, rootPath); err != nil {
+		t.Skipf("directory symlink unavailable for deterministic root-swap test: %v", err)
+	}
+	if err := anchored.AtomicWrite("escaped.txt", []byte("must not write\n"), 0644); err == nil {
+		t.Fatal("anchored writer accepted a swapped repository root")
+	}
+	if _, err := os.Stat(filepath.Join(outside, "escaped.txt")); !os.IsNotExist(err) {
+		t.Fatalf("write escaped through replacement root: %v", err)
+	}
+	got, err := os.ReadFile(sentinel)
+	if err != nil || string(got) != "keep\n" {
+		t.Fatalf("external sentinel changed: bytes=%q error=%v", got, err)
+	}
+}
+
+func TestAnchoredAtomicWriteRefusesSwappedParent(t *testing.T) {
+	rootPath := tempRoot(t)
+	parent := filepath.Join(rootPath, "target")
+	if err := os.Mkdir(parent, 0755); err != nil {
+		t.Fatal(err)
+	}
+	outside := tempRoot(t)
+	sentinel := filepath.Join(outside, "sentinel.txt")
+	if err := os.WriteFile(sentinel, []byte("keep\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	anchored, err := openWriteRoot(rootPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer anchored.Close()
+	if err := os.Rename(parent, filepath.Join(rootPath, "target-original")); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(outside, parent); err != nil {
+		t.Skipf("directory symlink unavailable for deterministic parent-swap test: %v", err)
+	}
+	if err := anchored.AtomicWrite("target/escaped.txt", []byte("must not write\n"), 0644); err == nil {
+		t.Fatal("anchored writer accepted a swapped parent directory")
+	}
+	if _, err := os.Stat(filepath.Join(outside, "escaped.txt")); !os.IsNotExist(err) {
+		t.Fatalf("write escaped through replacement parent: %v", err)
+	}
+	got, err := os.ReadFile(sentinel)
+	if err != nil || string(got) != "keep\n" {
+		t.Fatalf("external sentinel changed: bytes=%q error=%v", got, err)
+	}
+}
