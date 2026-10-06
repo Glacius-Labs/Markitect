@@ -685,6 +685,8 @@ spec:
       owner: operating-model-proof-evidence
     - path: experiments/operating-model-proof/protocol-v4.md
       owner: operating-model-proof-evidence
+    - path: experiments/operating-model-proof/protocol-v5.md
+      owner: operating-model-proof-evidence
     - path: experiments/operating-model-proof/runs/c3-absent-02/events/assessment-structural-refusal.json
       owner: operating-model-proof-evidence
     - path: experiments/operating-model-proof/runs/c3-insufficient-02/events/provider-c44a99227877835d4db1454638c76e5c.json
