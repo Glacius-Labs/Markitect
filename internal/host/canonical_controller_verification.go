@@ -108,17 +108,18 @@ type canonicalVerifierChild struct {
 }
 
 type canonicalVerifierBinding struct {
-	Fingerprint        string
-	SourceRevision     string
-	EvidenceRevision   string
-	ModelDigest        string
-	RecordID           string
-	ProjectionID       string
-	ScopeIDs           []string
-	PolicyIDs          []string
-	EvidenceDigest     string
-	RequiredChecks     []records.CheckIdentity
-	DirectChildRecords []string
+	Fingerprint            string
+	ControllerConfigDigest string
+	SourceRevision         string
+	EvidenceRevision       string
+	ModelDigest            string
+	RecordID               string
+	ProjectionID           string
+	ScopeIDs               []string
+	PolicyIDs              []string
+	EvidenceDigest         string
+	RequiredChecks         []records.CheckIdentity
+	DirectChildRecords     []string
 }
 
 // VerifyCanonicalController verifies selected active materializations at
@@ -411,8 +412,12 @@ func prepareCanonicalControllerVerifications(root, sourceRevision, evidenceRevis
 			return nil, assurance.Input{}, nil, err
 		}
 		evidenceDigest := sha256Prefix(target.Digest())
+		controllerConfigDigest, err := digestCanonicalValue(cfg)
+		if err != nil {
+			return nil, assurance.Input{}, nil, err
+		}
 		agentCheckDigest, err := digestCanonicalValue(canonicalVerifierBinding{
-			Fingerprint: fingerprint, SourceRevision: sourceRevision, EvidenceRevision: evidenceRevision,
+			Fingerprint: fingerprint, ControllerConfigDigest: controllerConfigDigest, SourceRevision: sourceRevision, EvidenceRevision: evidenceRevision,
 			ModelDigest: record.ModelDigest, RecordID: record.ID, ProjectionID: record.ProjectionID,
 			ScopeIDs: append([]string(nil), record.ScopeIDs...), PolicyIDs: append([]string(nil), record.PolicyIDs...),
 			EvidenceDigest: evidenceDigest, RequiredChecks: checkIdentities(checks),
@@ -510,24 +515,10 @@ func loadCanonicalControllerScopeRequest(root, sourceRevision, evidenceRevision 
 	if !exists {
 		return canonical.ProjectionRequest{}, nil, fmt.Errorf("Projection %s is absent from the selected canonical Model", record.ProjectionID)
 	}
-	descendants, err := canonicalControllerDescendantScopes(cfg, record.ProjectionID)
+	paths, err := canonicalControllerScopeEvidencePaths(fixed, cfg, record, scope, recordsByProjection)
 	if err != nil {
 		return canonical.ProjectionRequest{}, nil, err
 	}
-	paths := canonicalSourcePaths(fixed)
-	for _, artifact := range record.Artifacts {
-		paths = append(paths, artifact.Path)
-	}
-	for _, descendant := range descendants {
-		child := recordsByProjection[descendant.ProjectionID]
-		for _, artifact := range child.Artifacts {
-			paths = append(paths, artifact.Path)
-		}
-		paths = append(paths, descendant.CheckInputs...)
-	}
-	paths = append(paths, cfg.CheckInputs...)
-	paths = append(paths, scope.CheckInputs...)
-	paths = sortedUniquePaths(paths)
 	selected, err := source.LoadSelected(root, evidenceRevision, paths)
 	if err != nil {
 		return canonical.ProjectionRequest{}, nil, fmt.Errorf("load selected evidence commit: %w", err)
@@ -555,6 +546,30 @@ func loadCanonicalControllerScopeRequest(root, sourceRevision, evidenceRevision 
 		return canonical.ProjectionRequest{}, nil, errors.New("active record ScopeIDs or PolicyIDs differ from the selected canonical Projection")
 	}
 	return request, selected.Snapshot, nil
+}
+
+func canonicalControllerScopeEvidencePaths(fixed *CanonicalSource, cfg CanonicalControllerConfig, record records.ProjectionRecord, scope CanonicalAssuranceScope, recordsByProjection map[string]records.ProjectionRecord) ([]string, error) {
+	descendants, err := canonicalControllerDescendantScopes(cfg, record.ProjectionID)
+	if err != nil {
+		return nil, err
+	}
+	paths := canonicalSourcePaths(fixed)
+	for _, artifact := range record.Artifacts {
+		paths = append(paths, artifact.Path)
+	}
+	for _, descendant := range descendants {
+		child, exists := recordsByProjection[descendant.ProjectionID]
+		if !exists {
+			return nil, fmt.Errorf("assurance descendant Projection %q has no active record", descendant.ProjectionID)
+		}
+		for _, artifact := range child.Artifacts {
+			paths = append(paths, artifact.Path)
+		}
+		paths = append(paths, descendant.CheckInputs...)
+	}
+	paths = append(paths, cfg.CheckInputs...)
+	paths = append(paths, scope.CheckInputs...)
+	return sortedUniquePaths(paths), nil
 }
 
 func canonicalControllerVerificationArtifacts(cfg CanonicalControllerConfig, record records.ProjectionRecord, scope CanonicalAssuranceScope, recordsByProjection map[string]records.ProjectionRecord, target *snapshot.Snapshot, fixedCheckInputs []string) ([]agentexec.Artifact, error) {
@@ -655,12 +670,9 @@ func canonicalDirectChildRecordIDs(scope CanonicalAssuranceScope, scopeIndex map
 	return values
 }
 
-func invokeCanonicalControllerVerifier(ctx context.Context, cfg CanonicalControllerConfig, item canonicalControllerPreparedVerification, node assurance.NodeRunInput, verifier records.VerifierIdentity, fingerprint, evidenceRevision string) (records.VerificationResult, CanonicalControllerVerifierRun, error) {
-	run := CanonicalControllerVerifierRun{
-		ScopeID: item.scope.ID, ProjectionID: item.record.ProjectionID, RecordID: item.record.ID,
-		EvidenceSnapshotDigest: item.evidenceDigest, ConfigFingerprint: fingerprint,
-		EvidenceRefs: []string{}, Observations: []agentexec.Observation{},
-	}
+// canonicalControllerVerifierRequest constructs the stable, nonce-free verifier
+// request shared by actual verification and cached freshness validation.
+func canonicalControllerVerifierRequest(cfg CanonicalControllerConfig, item canonicalControllerPreparedVerification, node assurance.NodeRunInput, evidenceRevision string) (agentexec.Request, error) {
 	children := make([]canonicalVerifierChild, 0, len(node.Children))
 	for _, child := range node.Children {
 		childContext := canonicalVerifierChild{
@@ -669,18 +681,18 @@ func invokeCanonicalControllerVerifier(ctx context.Context, cfg CanonicalControl
 		}
 		childScope, ok := item.scopeIndex[child.Result.NodeID]
 		if !ok {
-			return records.VerificationResult{}, run, errors.New("assurance scheduler supplied an undeclared direct child")
+			return agentexec.Request{}, errors.New("assurance scheduler supplied an undeclared direct child")
 		}
 		childRecord, ok := item.recordByScope[child.Result.NodeID]
 		if !ok || childRecord.ID != child.Result.RecordID {
-			return records.VerificationResult{}, run, errors.New("assurance scheduler child differs from the selected active record")
+			return agentexec.Request{}, errors.New("assurance scheduler child differs from the selected active record")
 		}
 		childContext.ProjectionID = childScope.ProjectionID
 		childContext.ScopeIDs = append([]string(nil), childRecord.ScopeIDs...)
 		childContext.ArtifactFacts = append([]records.Artifact(nil), childRecord.Artifacts...)
 		if child.Evidence != nil {
 			if child.Evidence.Record.ID != childRecord.ID || child.Evidence.Result.ID != child.Result.ResultID {
-				return records.VerificationResult{}, run, errors.New("assurance scheduler supplied mismatched direct-child evidence")
+				return agentexec.Request{}, errors.New("assurance scheduler supplied mismatched direct-child evidence")
 			}
 			childContext.Checks = append([]records.CheckResult(nil), child.Evidence.Result.Checks...)
 		}
@@ -701,20 +713,68 @@ func invokeCanonicalControllerVerifier(ctx context.Context, cfg CanonicalControl
 	}
 	contextBytes, err := json.Marshal(payload)
 	if err != nil {
-		return records.VerificationResult{}, run, err
+		return agentexec.Request{}, err
 	}
-	request := agentexec.Request{
+	return agentexec.Request{
 		Role: agentexec.RoleVerifier, SourceRevision: evidenceRevision, ModelDigest: item.record.ModelDigest,
 		ModulePin: item.record.Module.Digest, ProjectionID: item.record.ProjectionID,
 		ScopeIDs:  append([]string(nil), item.context.ScopeIDs...),
 		PolicyIDs: append([]string(nil), canonicalRequestPolicyIDs(item.request.Policies)...),
 		Context:   contextBytes, Artifacts: cloneCanonicalControllerArtifacts(item.artifacts),
+	}, nil
+}
+
+func canonicalControllerVerifierInputDigest(request agentexec.Request) (string, error) {
+	// agentexec normalizes Context through a JSON value before it hashes the
+	// request. Mirror that deterministic normalization without allocating a
+	// run ID or nonce so the same digest is available to read-only planning.
+	decoder := json.NewDecoder(bytes.NewReader(request.Context))
+	decoder.UseNumber()
+	var contextValue any
+	if err := decoder.Decode(&contextValue); err != nil {
+		return "", err
+	}
+	contextBytes, err := json.Marshal(contextValue)
+	if err != nil {
+		return "", err
+	}
+	request.Context = contextBytes
+	request.ScopeIDs = append([]string{}, request.ScopeIDs...)
+	request.PolicyIDs = append([]string{}, request.PolicyIDs...)
+	sort.Strings(request.ScopeIDs)
+	sort.Strings(request.PolicyIDs)
+	request.Artifacts = append([]agentexec.Artifact{}, cloneCanonicalControllerArtifacts(request.Artifacts)...)
+	sort.Slice(request.Artifacts, func(i, j int) bool { return request.Artifacts[i].Path < request.Artifacts[j].Path })
+	for i := range request.Artifacts {
+		if request.Artifacts[i].Content == nil {
+			request.Artifacts[i].Content = []byte{}
+		}
+	}
+	return digestCanonicalValue(request)
+}
+
+func invokeCanonicalControllerVerifier(ctx context.Context, cfg CanonicalControllerConfig, item canonicalControllerPreparedVerification, node assurance.NodeRunInput, verifier records.VerifierIdentity, fingerprint, evidenceRevision string) (records.VerificationResult, CanonicalControllerVerifierRun, error) {
+	run := CanonicalControllerVerifierRun{
+		ScopeID: item.scope.ID, ProjectionID: item.record.ProjectionID, RecordID: item.record.ID,
+		EvidenceSnapshotDigest: item.evidenceDigest, ConfigFingerprint: fingerprint,
+		EvidenceRefs: []string{}, Observations: []agentexec.Observation{},
+	}
+	request, err := canonicalControllerVerifierRequest(cfg, item, node, evidenceRevision)
+	if err != nil {
+		return records.VerificationResult{}, run, err
+	}
+	verifierInputDigest, err := canonicalControllerVerifierInputDigest(request)
+	if err != nil {
+		return records.VerificationResult{}, run, err
 	}
 	execution, invokeErr := agentexec.Run(ctx, cfg.Verifier.agentConfig(), request, agentexec.RunOptions{
 		TempParent: filepath.Dir(cfg.PrivateLogs), PrivateLogDirectory: cfg.PrivateLogs,
 	})
 	run.Receipt = execution.Receipt
 	run.InputDigest, run.RunID = execution.Receipt.InputDigest, execution.Receipt.RunID
+	if run.InputDigest != verifierInputDigest {
+		return records.VerificationResult{}, run, errors.New("Verifier receipt input digest differs from the reconstructed request")
+	}
 	run.ReceiptDigest, err = digestCanonicalValue(execution.Receipt)
 	if err != nil {
 		return records.VerificationResult{}, run, err
@@ -777,9 +837,16 @@ func invokeCanonicalControllerVerifier(ctx context.Context, cfg CanonicalControl
 	if run.Outcome == agentexec.OutcomeEscalated && invokeErr == nil {
 		reason += " Verifier explicitly requested escalation."
 	}
+	controllerConfigDigest, err := digestCanonicalValue(cfg)
+	if err != nil {
+		return records.VerificationResult{}, run, err
+	}
 	verification, err := records.NewVerificationResult(records.VerificationResult{
 		RecordID: item.record.ID, Revision: item.record.Revision, ModelDigest: item.record.ModelDigest,
-		TargetSnapshotDigest: item.record.TargetSnapshotDigest, Verifier: verifier, Checks: checks,
+		TargetSnapshotDigest: item.record.TargetSnapshotDigest,
+		EvidenceRevision:     evidenceRevision, EvidenceSnapshotDigest: item.evidenceDigest,
+		ControllerConfigDigest: controllerConfigDigest, ControllerVerifierInputDigest: verifierInputDigest,
+		Verifier: verifier, Checks: checks,
 		Outcome: outcome, Reason: reason,
 	})
 	if err != nil {

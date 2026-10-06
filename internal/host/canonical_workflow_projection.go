@@ -24,6 +24,7 @@ func prepareGitHooksProjectionInput(
 	inventory []source.WorkingFileMetadata,
 	observed *snapshot.Snapshot,
 	previous *records.ProjectionRecord,
+	verificationValues ...*githooks.VerificationBinding,
 ) (githooks.Input, []CanonicalProjectionEscalation, error) {
 	if observed == nil {
 		return githooks.Input{}, nil, fmt.Errorf("Git Hooks projection requires an observed target snapshot")
@@ -33,6 +34,10 @@ func prepareGitHooksProjectionInput(
 		return githooks.Input{}, nil, err
 	}
 	checks := selectedAuthoringChecks(names, suppliedChecks)
+	var verification *githooks.VerificationBinding
+	if len(verificationValues) > 0 {
+		verification = verificationValues[0]
+	}
 	input := githooks.Input{
 		Definitions:       request.Definitions,
 		Schemas:           request.Schemas,
@@ -42,6 +47,7 @@ func prepareGitHooksProjectionInput(
 		AllowedRoots:      request.Projector.AllowedRoots,
 		RequestDigest:     request.RequestDigest,
 		InventoryComplete: true,
+		Verification:      verification,
 	}
 	for _, check := range checks {
 		input.RequiredChecks = append(input.RequiredChecks, githooks.NamedCheck{Name: check.Name, Argv: append([]string(nil), check.Run...)})
@@ -76,6 +82,7 @@ func prepareAzurePipelinesProjectionInput(
 	observed *snapshot.Snapshot,
 	previous *records.ProjectionRecord,
 	canonicalAffected bool,
+	verificationValues ...*azurepipelines.VerificationBinding,
 ) (azurepipelines.Input, []CanonicalProjectionEscalation, error) {
 	if observed == nil {
 		return azurepipelines.Input{}, nil, fmt.Errorf("Azure Pipelines projection requires an observed target snapshot")
@@ -85,10 +92,15 @@ func prepareAzurePipelinesProjectionInput(
 		return azurepipelines.Input{}, nil, err
 	}
 	checks := selectedAuthoringChecks(names, suppliedChecks)
+	var verification *azurepipelines.VerificationBinding
+	if len(verificationValues) > 0 {
+		verification = verificationValues[0]
+	}
 	input := azurepipelines.Input{
 		Definitions: request.Definitions, Schemas: request.Schemas, Edges: request.Edges, Policies: request.Policies,
 		TargetPrefix: request.TargetPrefix, AllowedRoots: request.Projector.AllowedRoots, RequestDigest: request.RequestDigest,
 		CanonicalAffected: canonicalAffected, InventoryComplete: true,
+		Verification: verification,
 	}
 	for _, check := range checks {
 		input.Checks = append(input.Checks, azurepipelines.NamedCheck{Name: check.Name, Argv: append([]string(nil), check.Run...)})
@@ -116,14 +128,14 @@ func prepareAzurePipelinesProjectionInput(
 	return input, escalations, nil
 }
 
-func proposeAzurePipelinesProjection(request canonical.ProjectionRequest, checks []authoring.Check, inventory []source.WorkingFileMetadata, observed *snapshot.Snapshot, previous *records.ProjectionRecord, canonicalAffected bool) (CanonicalScopedProposal, error) {
+func proposeAzurePipelinesProjection(request canonical.ProjectionRequest, checks []authoring.Check, inventory []source.WorkingFileMetadata, observed *snapshot.Snapshot, previous *records.ProjectionRecord, canonicalAffected bool, verificationValues ...*azurepipelines.VerificationBinding) (CanonicalScopedProposal, error) {
 	p := CanonicalScopedProposal{ProjectionID: request.Projection.Identity().Key(), Module: request.ModulePin, Request: request}
 	if request.Projector.ID != azurepipelines.ProjectorID || request.Projector.Target != azurepipelines.TargetTechnology || request.Projector.Version != azurepipelines.ModuleVersion {
 		p.Decision = "escalate"
 		p.Escalations = []CanonicalProjectionEscalation{{Code: "projection.entrypoint-unsupported", Identity: p.ProjectionID, Message: "unsupported static Azure Pipelines Projector entrypoint"}}
 		return p, nil
 	}
-	input, checkEscalations, err := prepareAzurePipelinesProjectionInput(request, checks, inventory, observed, previous, canonicalAffected)
+	input, checkEscalations, err := prepareAzurePipelinesProjectionInput(request, checks, inventory, observed, previous, canonicalAffected, verificationValues...)
 	if err != nil {
 		return p, err
 	}
@@ -143,14 +155,14 @@ func proposeAzurePipelinesProjection(request canonical.ProjectionRequest, checks
 	}
 	return p, nil
 }
-func proposeGitHooksProjection(request canonical.ProjectionRequest, checks []authoring.Check, inventory []source.WorkingFileMetadata, observed *snapshot.Snapshot, previous *records.ProjectionRecord) (CanonicalScopedProposal, error) {
+func proposeGitHooksProjection(request canonical.ProjectionRequest, checks []authoring.Check, inventory []source.WorkingFileMetadata, observed *snapshot.Snapshot, previous *records.ProjectionRecord, verificationValues ...*githooks.VerificationBinding) (CanonicalScopedProposal, error) {
 	p := CanonicalScopedProposal{ProjectionID: request.Projection.Identity().Key(), Module: request.ModulePin, Request: request}
 	if request.Projector.ID != githooks.ProjectorID || request.Projector.Target != githooks.TargetTechnology || request.Projector.Version != "1.0.0" {
 		p.Decision = "escalate"
 		p.Escalations = []CanonicalProjectionEscalation{{Code: "projection.entrypoint-unsupported", Identity: p.ProjectionID, Message: "unsupported static Git Hooks Projector entrypoint"}}
 		return p, nil
 	}
-	input, checkEscalations, err := prepareGitHooksProjectionInput(request, checks, inventory, observed, previous)
+	input, checkEscalations, err := prepareGitHooksProjectionInput(request, checks, inventory, observed, previous, verificationValues...)
 	if err != nil {
 		return p, err
 	}

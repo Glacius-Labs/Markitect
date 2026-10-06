@@ -116,16 +116,20 @@ type CheckResult struct {
 	Outcome string `json:"outcome"`
 }
 type VerificationResult struct {
-	APIVersion           string           `json:"apiVersion"`
-	ID                   string           `json:"id"`
-	RecordID             string           `json:"recordId"`
-	Revision             string           `json:"revision"`
-	ModelDigest          string           `json:"modelDigest"`
-	TargetSnapshotDigest string           `json:"targetSnapshotDigest"`
-	Verifier             VerifierIdentity `json:"verifier"`
-	Checks               []CheckResult    `json:"checks"`
-	Outcome              string           `json:"outcome"`
-	Reason               string           `json:"reason,omitempty"`
+	APIVersion                    string           `json:"apiVersion"`
+	ID                            string           `json:"id"`
+	RecordID                      string           `json:"recordId"`
+	Revision                      string           `json:"revision"`
+	ModelDigest                   string           `json:"modelDigest"`
+	TargetSnapshotDigest          string           `json:"targetSnapshotDigest"`
+	EvidenceRevision              string           `json:"evidenceRevision,omitempty"`
+	EvidenceSnapshotDigest        string           `json:"evidenceSnapshotDigest,omitempty"`
+	ControllerConfigDigest        string           `json:"controllerConfigDigest,omitempty"`
+	ControllerVerifierInputDigest string           `json:"controllerVerifierInputDigest,omitempty"`
+	Verifier                      VerifierIdentity `json:"verifier"`
+	Checks                        []CheckResult    `json:"checks"`
+	Outcome                       string           `json:"outcome"`
+	Reason                        string           `json:"reason,omitempty"`
 }
 type verificationEnvelope struct {
 	Result        VerificationResult `json:"result"`
@@ -616,6 +620,28 @@ func validateVerificationFields(result VerificationResult) error {
 	}
 	if !isDigest(result.ModelDigest) || !isDigest(result.TargetSnapshotDigest) {
 		return errors.New("model and target snapshot digests must be sha256")
+	}
+	if (result.EvidenceRevision == "") != (result.EvidenceSnapshotDigest == "") {
+		return errors.New("verification evidence revision and snapshot digest must be supplied together")
+	}
+	if result.EvidenceRevision != "" {
+		if !revisionPattern.MatchString(result.EvidenceRevision) {
+			return errors.New("verification evidence revision must be a full immutable revision")
+		}
+		if !isDigest(result.EvidenceSnapshotDigest) {
+			return errors.New("verification evidence snapshot digest must be sha256")
+		}
+	}
+	if (result.ControllerConfigDigest == "") != (result.ControllerVerifierInputDigest == "") {
+		return errors.New("controller config and verifier input digests must be supplied together")
+	}
+	if result.ControllerConfigDigest != "" {
+		if result.EvidenceRevision == "" {
+			return errors.New("controller verification provenance requires evidence revision and snapshot digest")
+		}
+		if !isDigest(result.ControllerConfigDigest) || !isDigest(result.ControllerVerifierInputDigest) {
+			return errors.New("controller config and verifier input digests must be sha256")
+		}
 	}
 	if err := validateVerifier(result.Verifier); err != nil {
 		return err
