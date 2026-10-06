@@ -47,16 +47,17 @@ type CanonicalAssuranceScope struct {
 	CheckInputs  []string          `json:"checkInputs"`
 }
 type CanonicalControllerConfig struct {
-	APIVersion      string                    `json:"apiVersion"`
-	RecordStore     string                    `json:"recordStore"`
-	PrivateLogs     string                    `json:"privateLogs"`
-	ReferenceDepth  int                       `json:"referenceDepth"`
-	AuditAll        bool                      `json:"auditAll"`
-	CheckInputs     []string                  `json:"checkInputs"`
-	Executor        CanonicalRunnerConfig     `json:"executor"`
-	Verifier        CanonicalRunnerConfig     `json:"verifier"`
-	AssuranceRoots  []string                  `json:"assuranceRoots"`
-	AssuranceScopes []CanonicalAssuranceScope `json:"assuranceScopes"`
+	APIVersion       string                     `json:"apiVersion"`
+	RecordStore      string                     `json:"recordStore"`
+	PrivateLogs      string                     `json:"privateLogs"`
+	ReferenceDepth   int                        `json:"referenceDepth"`
+	AuditAll         bool                       `json:"auditAll"`
+	CheckInputs      []string                   `json:"checkInputs"`
+	Executor         CanonicalRunnerConfig      `json:"executor"`
+	Verifier         CanonicalRunnerConfig      `json:"verifier"`
+	AssuranceRoots   []string                   `json:"assuranceRoots"`
+	AssuranceScopes  []CanonicalAssuranceScope  `json:"assuranceScopes"`
+	TargetExclusions []CanonicalTargetExclusion `json:"targetExclusions,omitempty"`
 }
 type CanonicalControllerProposal struct {
 	APIVersion            string                       `json:"apiVersion"`
@@ -150,6 +151,9 @@ func DecodeCanonicalReviewedRun(data []byte) (CanonicalReviewedRun, error) {
 func validateControllerConfig(cfg CanonicalControllerConfig) error {
 	if cfg.APIVersion != CanonicalControllerAPIVersion {
 		return errors.New("unsupported controller configuration version")
+	}
+	if err := validateCanonicalTargetExclusionConfig(cfg.TargetExclusions); err != nil {
+		return err
 	}
 	if !filepath.IsAbs(cfg.RecordStore) || !filepath.IsAbs(cfg.PrivateLogs) {
 		return errors.New("controller recordStore and privateLogs must be explicit absolute external paths")
@@ -323,7 +327,7 @@ func ProposeCanonicalController(root, base, revision, configPath string, cfg Can
 	if err != nil {
 		return report, err
 	}
-	plan, err := ProposeScopedCanonicalReconciliation(root, base, revision, configPath, active, cfg.AuditAll)
+	plan, err := proposeScopedCanonicalReconciliation(root, base, revision, configPath, active, cfg.AuditAll, cfg.TargetExclusions, canonicalControllerCheckInputs(cfg))
 	report.Plan = plan
 	if err != nil {
 		return report, err

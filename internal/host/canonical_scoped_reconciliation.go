@@ -31,31 +31,39 @@ type CanonicalScopedProposal struct {
 // CanonicalScopedReconcilePlan records actual acquisition scope. Metadata-only
 // unrelated targets are visibly unobserved, not implicitly verified or clean.
 type CanonicalScopedReconcilePlan struct {
-	APIVersion              string                          `json:"apiVersion"`
-	Digest                  string                          `json:"digest"`
-	Status                  string                          `json:"status"`
-	BaseRevision            string                          `json:"baseRevision"`
-	Revision                string                          `json:"revision"`
-	ModelDigest             string                          `json:"modelDigest"`
-	SourceScope             *SelectedInputScope             `json:"sourceScope"`
-	ObservedPaths           []string                        `json:"observedPaths"`
-	ObservedDigest          string                          `json:"observedDigest"`
-	Inventory               *source.WorkingRootInventory    `json:"inventory"`
-	Impact                  CanonicalImpact                 `json:"impact"`
-	Proposals               []CanonicalScopedProposal       `json:"proposals"`
-	UnobservedProjections   []string                        `json:"unobservedProjections"`
-	EvidenceRefreshRequired []string                        `json:"evidenceRefreshRequired"`
-	UnknownArtifacts        []string                        `json:"unknownArtifacts"`
-	Escalations             []CanonicalProjectionEscalation `json:"escalations"`
-	fixed                   *CanonicalSource
-	observed                *snapshot.Snapshot
+	APIVersion                string                          `json:"apiVersion"`
+	Digest                    string                          `json:"digest"`
+	Status                    string                          `json:"status"`
+	BaseRevision              string                          `json:"baseRevision"`
+	Revision                  string                          `json:"revision"`
+	ModelDigest               string                          `json:"modelDigest"`
+	SourceScope               *SelectedInputScope             `json:"sourceScope"`
+	ObservedPaths             []string                        `json:"observedPaths"`
+	ObservedDigest            string                          `json:"observedDigest"`
+	Inventory                 *source.WorkingRootInventory    `json:"inventory"`
+	Impact                    CanonicalImpact                 `json:"impact"`
+	Proposals                 []CanonicalScopedProposal       `json:"proposals"`
+	UnobservedProjections     []string                        `json:"unobservedProjections"`
+	EvidenceRefreshRequired   []string                        `json:"evidenceRefreshRequired"`
+	UnknownArtifacts          []string                        `json:"unknownArtifacts"`
+	ExplicitExcludedArtifacts []CanonicalExcludedArtifact     `json:"explicitExcludedArtifacts"`
+	Escalations               []CanonicalProjectionEscalation `json:"escalations"`
+	fixed                     *CanonicalSource
+	observed                  *snapshot.Snapshot
 }
 
 // ProposeScopedCanonicalReconciliation reads exact canonical inputs and byte
 // content only for affected/new/runtime-changed scopes (or explicit auditAll).
 // It never invokes agents, writes a ledger, mutates artifacts or grants Apply.
 func ProposeScopedCanonicalReconciliation(root, baseRevision, revision, configPath string, active []records.ProjectionRecord, auditAll bool) (CanonicalScopedReconcilePlan, error) {
+	return proposeScopedCanonicalReconciliation(root, baseRevision, revision, configPath, active, auditAll, nil, nil)
+}
+
+func proposeScopedCanonicalReconciliation(root, baseRevision, revision, configPath string, active []records.ProjectionRecord, auditAll bool, exclusions []CanonicalTargetExclusion, checkPaths []string) (CanonicalScopedReconcilePlan, error) {
 	plan := CanonicalScopedReconcilePlan{APIVersion: "markitect.canonical/scoped-reconcile/v1alpha1", Status: "planned"}
+	if err := validateCanonicalTargetExclusionConfig(exclusions); err != nil {
+		return plan, err
+	}
 	base, err := LoadSelectedCanonicalSource(root, baseRevision, configPath, true)
 	if err != nil {
 		return plan, err
@@ -131,6 +139,10 @@ func ProposeScopedCanonicalReconciliation(root, baseRevision, revision, configPa
 			}
 		}
 	}
+	canonicalPaths := canonicalSourcePaths(current)
+	if err := validateCanonicalTargetExclusionScope(exclusions, keys, requests, prior, canonicalPaths, checkPaths); err != nil {
+		return plan, err
+	}
 	inventory, err := source.InventoryWorkingRoots(root, prefixes)
 	if err != nil {
 		return plan, err
@@ -143,7 +155,11 @@ func ProposeScopedCanonicalReconciliation(root, baseRevision, revision, configPa
 	for _, entry := range inventory.Entries {
 		inventoryByPath[entry.Path] = entry
 	}
-	canonicalPaths := canonicalSourcePaths(current)
+	if err := validateCanonicalTargetExclusionInventory(exclusions, inventory.Entries); err != nil {
+		return plan, err
+	}
+	plan.ExplicitExcludedArtifacts = classifyCanonicalTargetExclusions(exclusions, inventoryByPath)
+	excluded := canonicalTargetExclusionSet(exclusions)
 	protected := map[string]bool{}
 	for _, name := range canonicalPaths {
 		protected[name] = true
@@ -154,6 +170,9 @@ func ProposeScopedCanonicalReconciliation(root, baseRevision, revision, configPa
 		}
 	}
 	for _, entry := range inventory.Entries {
+		if _, isExcluded := excluded[entry.Path]; isExcluded {
+			continue
+		}
 		if _, owned := ownership.Artifacts[entry.Path]; !owned && !protected[entry.Path] {
 			plan.UnknownArtifacts = append(plan.UnknownArtifacts, entry.Path)
 		}
@@ -203,6 +222,9 @@ func ProposeScopedCanonicalReconciliation(root, baseRevision, revision, configPa
 	}
 	paths := append([]string(nil), canonicalPaths...)
 	for _, entry := range inventory.Entries {
+		if _, isExcluded := excluded[entry.Path]; isExcluded {
+			continue
+		}
 		for prefix := range selectedPrefixes {
 			if stringsHasPathPrefix(entry.Path, prefix) {
 				paths = append(paths, entry.Path)
@@ -248,6 +270,9 @@ func ProposeScopedCanonicalReconciliation(root, baseRevision, revision, configPa
 		if isCandidate {
 			input := dotnet.Input{Definitions: request.Definitions, Schemas: request.Schemas, Policies: request.Policies, TargetPrefix: request.TargetPrefix, AllowedRoots: request.Projector.AllowedRoots, RequestDigest: request.RequestDigest, CanonicalAffected: canonicalWork[key], InventoryComplete: true}
 			for _, entry := range inventory.Entries {
+				if _, isExcluded := excluded[entry.Path]; isExcluded {
+					continue
+				}
 				if stringsHasPathPrefix(entry.Path, request.TargetPrefix) {
 					input.ObservedArtifacts = append(input.ObservedArtifacts, dotnet.ArtifactObservation{Path: entry.Path, Bytes: observed.Snapshot.Files[entry.Path], Mode: entry.Mode})
 				}
@@ -310,6 +335,9 @@ func ProposeScopedCanonicalReconciliation(root, baseRevision, revision, configPa
 		} else {
 			input := markdown.Input{Definitions: request.Definitions, Schemas: request.Schemas, Policies: request.Policies, TargetPrefix: request.TargetPrefix, AllowedRoots: request.Projector.AllowedRoots, RequestDigest: request.RequestDigest, CanonicalAffected: canonicalWork[key], InventoryComplete: true}
 			for _, entry := range inventory.Entries {
+				if _, isExcluded := excluded[entry.Path]; isExcluded {
+					continue
+				}
 				if stringsHasPathPrefix(entry.Path, request.TargetPrefix) {
 					input.ObservedArtifacts = append(input.ObservedArtifacts, markdown.ArtifactObservation{Path: entry.Path, Bytes: observed.Snapshot.Files[entry.Path], Mode: entry.Mode})
 				}
