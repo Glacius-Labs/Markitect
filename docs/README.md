@@ -27,6 +27,7 @@
 | [Operations](operations.md) | Development, verification, rendering, and release operations |
 | [Refinement decisions](refinement.md) | Technical product decisions and deferred design choices in support of the vision |
 | [Implementation plan](implementation-plan.md) | Published v0.13.0 status, the source-only canonical projection reset, release evidence and planned work |
+| [Astra assessment](validation/astra-assessment-2026-10-06.md) | Frozen independent architecture/method/source review; finding disposition and next checkpoint belong to the roadmap |
 | [Development coordination](development/README.md) | Parallel baseline, current contracts, independence audit and risk evidence |
 | [Module architecture](development/modules.md) | Core, Host, independent Modules, Infrastructure/Tooling and how to extend the source |
 | [Architecture consolidation](validation/clean-architecture-consolidation.md) | Package inventory, Core audit, compatibility, dogfood and exact-source gate results |
@@ -45,7 +46,7 @@
 | [Source release assessment](release-assessment.md) | General technical findings from source-distribution work |
 | [Production assessment](production-assessment.md) | Dated release evidence and source-level assessment |
 
-The [roadmap](implementation-plan.md) owns current source status and planned work. v0.13.0 is published and verified; v0.12.0 and v0.11.0 remain immutable historical evidence. v0.10.0 remains the historical baseline for the generic canonical engineering model. Published releases remain immutable; source changes do not update an installed release.
+The [roadmap](implementation-plan.md) owns current source status and planned work, including [Astra finding disposition and the Coordinator handoff checkpoint](implementation-plan.md#astra-assessment-disposition-and-next-method-checkpoint). v0.13.0 is published and verified; v0.12.0 and v0.11.0 remain immutable historical evidence. v0.10.0 remains the historical baseline for the generic canonical engineering model. Published releases remain immutable; source changes do not update an installed release.
 
 [The current capability checkpoint](validation/proof-capability-checkpoint-2026-10-06.md) separates implemented mechanisms from actual trials, negative findings, and remaining gates. The [historical protocol-v1 proof program](research/proof-program.md) and its [matrix](research/capability-matrix.md) preserve the earlier full-acquisition stop; the later capability-before-proof steer resumes implementation and fresh trials without rescoring those records.
 

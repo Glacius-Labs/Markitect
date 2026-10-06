@@ -1,6 +1,6 @@
 # Development coordination
 
-Start with the canonical [product vision](../vision.md), [Architecture](../architecture.md), the [engineering constitution](../engineering-constitution.md), [Usage](../usage.md), [roadmap](../implementation-plan.md) and [CONTRIBUTING](../../CONTRIBUTING.md). This directory owns implementation coordination, not another product vision or constitution.
+Start with the canonical [product vision](../vision.md), [Architecture](../architecture.md), the [engineering constitution](../engineering-constitution.md), [Usage](../usage.md), [roadmap](../implementation-plan.md) and [CONTRIBUTING](../../CONTRIBUTING.md). Read the roadmap's [Astra disposition and handoff checkpoint](../implementation-plan.md#astra-assessment-disposition-and-next-method-checkpoint) before coordinating further method or proof work; it links the frozen review and defines the next bounded closure. This directory owns implementation coordination, not another product vision or constitution.
 
 | Document | Owns |
 |---|---|
