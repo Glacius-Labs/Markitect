@@ -10,4 +10,4 @@ spec:
     kind: BillingQuery
   targetTechnology: dotnet
   guidance: >
-    Expose public static long SumOutstandingCents(IEnumerable<long> amounts). Return zero for empty input, reject negative amounts, and use checked signed 64-bit addition. This is a semantic API contract, not a filename or implementation template.
+    Expose public static class RecursiveAssurance.Billing.BillingQuery with public static long SumOutstandingCents(IEnumerable<long> amounts). Return zero for empty input, reject negative amounts with ArgumentOutOfRangeException, and use checked signed 64-bit addition with OverflowException on overflow. This is a semantic API contract, not a filename or implementation template.

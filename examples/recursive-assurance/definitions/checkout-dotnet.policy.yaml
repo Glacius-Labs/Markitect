@@ -10,4 +10,4 @@ spec:
     kind: CheckoutComposition
   targetTechnology: dotnet
   guidance: >
-    Expose public static long AddAcceptedOrderToOutstandingCents(int quantity, long unitPriceCents, IEnumerable<long> priorAmounts). Use the selected Orders operation to validate and total the line, then pass that amount together with prior amounts to the selected Billing operation. Propagate invalid input and overflow. This is a semantic API contract, not a filename or implementation template.
+    Expose public static class RecursiveAssurance.Checkout.CheckoutComposer with public static long AddAcceptedOrderToOutstandingCents(int quantity, long unitPriceCents, IEnumerable<long> priorAmounts). Use the selected Orders operation to validate and total the line, then pass that amount together with prior amounts to the selected Billing operation. Throw ArgumentOutOfRangeException when Orders rejects its input, and propagate Billing negative-input and overflow exceptions. This is a semantic API contract, not a filename or implementation template.
