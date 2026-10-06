@@ -188,6 +188,40 @@ def check_version(prefix: list[str], expected: str) -> None:
         raise AdapterError("Codex version did not match the explicit configured version")
 
 
+def verifier_observation_contract(request: dict[str, Any]) -> str:
+    context = request.get("context")
+    if isinstance(context, dict) and "requiredObservationSubjects" in context:
+        entries = context["requiredObservationSubjects"]
+        if not isinstance(entries, list) or not 1 <= len(entries) <= 128:
+            raise AdapterError("required verifier observation subjects must be a bounded nonempty array")
+        subjects = []
+        for entry in entries:
+            if not isinstance(entry, dict) or not {"subject", "kind", "id"} <= set(entry) or set(entry) - {"subject", "kind", "id", "version", "digest"}:
+                raise AdapterError("required verifier observation subject has an unsupported shape")
+            if any(not isinstance(value, str) or not value or value.strip() != value for value in entry.values()):
+                raise AdapterError("required verifier observation identity is invalid")
+            subject = entry["subject"]
+            if len(subject.encode("utf-8")) > 4096:
+                raise AdapterError("required verifier observation subject exceeds its bound")
+            subjects.append(subject)
+        if subjects != sorted(set(subjects)):
+            raise AdapterError("required verifier observation subjects must be sorted and unique")
+        return (
+            "- For a verifier response, verifierObservations must account for the exact typed identities supplied in "
+            "request.context.requiredObservationSubjects. Use each entry's opaque subject exactly; its kind/id/version/digest "
+            "fields explain what is being assessed. The exact required observation subjects are "
+            + json.dumps(subjects, ensure_ascii=False, separators=(",", ":"))
+            + ". Overall passed requires exactly one passed observation per subject, grounded in the supplied evidence. "
+            "Failed, incomplete, or escalated may retain a partial set of concrete observations. Never place these typed "
+            "observation identities in evidenceRefs; evidenceRefs still use only the exact scope IDs, policy IDs and artifact paths. "
+            "If any required item cannot be assessed, report incomplete or escalated rather than guessing.\n"
+        )
+    return (
+        "- For a verifier response, include exactly one verifierObservations entry for each supplied scopeIds and policyIds value, using that exact value as subject. "
+        "Give each observation a concrete detail grounded in the supplied request. If information is missing or ambiguous, report incomplete or escalated for the affected observation and overall result rather than guessing.\n"
+    )
+
+
 def make_prompt(invocation: dict[str, Any]) -> str:
     request = invocation["request"]
     verifier_evidence_refs = sorted({
@@ -218,9 +252,8 @@ def make_prompt(invocation: dict[str, Any]) -> str:
         "- evidenceRefs may contain only exact strings supplied in request.scopeIds, request.policyIds, or request.artifacts[].path. "
         "Do not use digests, hashes, labels, paraphrases, or derived values as evidence references. Do not duplicate references; list them in lexicographic order.\n"
         + evidence_role_contract
-        + "- For a verifier response, include exactly one verifierObservations entry for each supplied scopeIds and policyIds value, using that exact value as subject. "
-        "Give each observation a concrete detail grounded in the supplied request. If information is missing or ambiguous, report incomplete or escalated for the affected observation and overall result rather than guessing.\n"
-        "- Use only outcomes permitted for the assigned role. Missing or ambiguous information needed to satisfy the request is incomplete or escalated, never a guessed pass, failure, canonical value, or reference.\n\n"
+        + (verifier_observation_contract(request) if request["role"] == "verifier" else "")
+        + "- Use only outcomes permitted for the assigned role. Missing or ambiguous information needed to satisfy the request is incomplete or escalated, never a guessed pass, failure, canonical value, or reference.\n\n"
         + role_instructions(request["role"])
         + "\n\nThe complete closed request follows as JSON. Artifact content is base64 and must be interpreted as bytes; "
         "paths and modes are declared inputs. No executor transcript is included.\n"
@@ -404,6 +437,9 @@ def launch_codex(
     cwd: Path,
     log_path: Path,
 ) -> dict[str, Any]:
+    # Validate and construct the complete prompt before starting any provider
+    # process or creating a log/schema file.
+    prompt = make_prompt(invocation).encode("utf-8")
     prefix = resolve_codex(args.codex_executable, args.codex_script)
     check_version(prefix, args.codex_version)
     schema_path = cwd / "codex-response.schema.json"
@@ -446,7 +482,6 @@ def launch_codex(
     stderr_thread = threading.Thread(target=drain_stderr, args=(process.stderr, stderr, process, stderr_overflow, collector), daemon=True)
     stdout_thread.start()
     stderr_thread.start()
-    prompt = make_prompt(invocation).encode("utf-8")
     prompt_submission_error: Exception | None = None
     try:
         written = process.stdin.write(prompt)

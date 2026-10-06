@@ -115,6 +115,38 @@ class CodexRunnerTests(unittest.TestCase):
         self.assertIn("The exact required list is " + encoded_refs, prompt)
         self.assertIn("Listing a reference is protocol bookkeeping", prompt)
 
+    def test_typed_observation_subjects_preserve_separate_evidence_references(self) -> None:
+        value = invocation("verifier")
+        entries = [
+            {"subject": "artifact:src/file.cs", "kind": "artifact", "id": "src/file.cs"},
+            {"subject": "check:opaque-tuple", "kind": "check", "id": "behavior", "version": "v1", "digest": "sha256:" + "a" * 64},
+            {"subject": "scope:scope/example", "kind": "scope", "id": "scope/example"},
+        ]
+        value["request"]["context"]["requiredObservationSubjects"] = entries
+        prompt = runner.make_prompt(value)
+        self.assertIn('The exact required observation subjects are ["artifact:src/file.cs","check:opaque-tuple","scope:scope/example"]', prompt)
+        self.assertIn("Overall passed requires exactly one passed observation per subject", prompt)
+        self.assertIn("Failed, incomplete, or escalated may retain a partial set", prompt)
+        self.assertIn("Never place these typed observation identities in evidenceRefs", prompt)
+        self.assertIn('The exact required list is ["scope/example"]', prompt)
+        self.assertNotIn("using that exact value as subject", prompt)
+
+    def test_invalid_typed_subjects_refuse_before_provider_or_workspace_writes(self) -> None:
+        entry = {"subject": "scope:scope/example", "kind": "scope", "id": "scope/example"}
+        invalid = [None, [], [entry, entry], [entry] * 129, [{"subject": "scope:x"}],
+                   [{**entry, "subject": "x" * 4097}], [{**entry, "unexpected": "x"}]]
+        for entries in invalid:
+            with self.subTest(entries=entries), tempfile.TemporaryDirectory() as directory:
+                value = invocation("verifier")
+                value["request"]["context"]["requiredObservationSubjects"] = entries
+                cwd = Path(directory)
+                with patch.object(runner, "resolve_codex") as resolve, patch.object(runner.subprocess, "Popen") as spawn:
+                    with self.assertRaises(runner.AdapterError):
+                        runner.launch_codex(value, argparse.Namespace(), {}, cwd, cwd / "events.jsonl")
+                    resolve.assert_not_called()
+                    spawn.assert_not_called()
+                    self.assertEqual(list(cwd.iterdir()), [])
+
     def test_executor_and_inference_may_cite_relevant_subsets(self) -> None:
         for role in ("executor", "infer"):
             with self.subTest(role=role):

@@ -1354,3 +1354,5 @@ spec:
       owner: controller-verification-freshness
     - path: internal/host/canonical_verification_refresh_test.go
       owner: controller-verification-freshness
+    - path: experiments/operating-model-proof/protocol-v8.md
+      owner: operating-model-proof-protocol
