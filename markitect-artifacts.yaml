@@ -81,6 +81,12 @@ spec:
     - internal/host/canonical_goal_modeling_test.go
     - docs/design/goal-led-modeling.md
     - docs/design/projection-evidence-refresh.md
+    - examples/unknown-ontology
+    - examples/unknown_ontology_test.go
+    - internal/host/canonical_target_exclusions.go
+    - internal/host/canonical_target_exclusions_test.go
+    - docs/design/scoped-target-exclusions.md
+    - internal/host/cli/adoption_inference_test.go
   tooling:
     - path: AGENTS.md
       owner: repository-agent-navigation
@@ -584,3 +590,85 @@ spec:
       owner: operating-model-proof-harness
     - path: experiments/operating-model-proof/test_run.py
       owner: operating-model-proof-harness-tests
+    - path: examples/unknown-ontology/README.md
+      owner: unknown-ontology-fixture
+    - path: examples/unknown-ontology/canonical.yaml
+      owner: unknown-ontology-fixture
+    - path: examples/unknown-ontology/checks/UnknownOntology.Checks.csproj
+      owner: unknown-ontology-fixture
+    - path: examples/unknown-ontology/checks/UnknownOntology.Program.cs
+      owner: unknown-ontology-fixture
+    - path: examples/unknown-ontology/definitions/axis-dotnet.policy.yaml
+      owner: unknown-ontology-fixture
+    - path: examples/unknown-ontology/definitions/axis.yaml
+      owner: unknown-ontology-fixture
+    - path: examples/unknown-ontology/definitions/capability-dotnet.policy.yaml
+      owner: unknown-ontology-fixture
+    - path: examples/unknown-ontology/definitions/capability.yaml
+      owner: unknown-ontology-fixture
+    - path: examples/unknown-ontology/definitions/mission-dotnet.policy.yaml
+      owner: unknown-ontology-fixture
+    - path: examples/unknown-ontology/definitions/mission.projection.yaml
+      owner: unknown-ontology-fixture
+    - path: examples/unknown-ontology/definitions/mission.yaml
+      owner: unknown-ontology-fixture
+    - path: examples/unknown-ontology/modules/dotnet/module.yaml
+      owner: unknown-ontology-fixture
+    - path: examples/unknown-ontology/modules/foundation/module.yaml
+      owner: unknown-ontology-fixture
+    - path: examples/unknown-ontology/modules/foundation/schema.yaml
+      owner: unknown-ontology-fixture
+    - path: examples/unknown-ontology/modules/mission/module.yaml
+      owner: unknown-ontology-fixture
+    - path: examples/unknown-ontology/modules/mission/schema.yaml
+      owner: unknown-ontology-fixture
+    - path: examples/unknown-ontology/negative-specifications.md
+      owner: unknown-ontology-fixture
+    - path: examples/unknown_ontology_test.go
+      owner: unknown-ontology-fixture
+    - path: experiments/operating-model-proof/protocol-v3.md
+      owner: bounded-controller-contract
+    - path: experiments/operating-model-proof/runs/c3-absent-01/binding.json
+      owner: operating-model-proof-evidence
+    - path: experiments/operating-model-proof/runs/c3-absent-01/events/correction-exit-code-basis.json
+      owner: operating-model-proof-evidence
+    - path: experiments/operating-model-proof/runs/c3-absent-01/events/invalid-f33344fb2a544399a75553f751181c19.json
+      owner: operating-model-proof-evidence
+    - path: experiments/operating-model-proof/runs/c3-absent-02/binding.json
+      owner: operating-model-proof-evidence
+    - path: experiments/operating-model-proof/runs/c3-absent-02/events.jsonl
+      owner: operating-model-proof-evidence
+    - path: experiments/operating-model-proof/runs/c3-absent-02/events/propose-99eb7e7adf1d404dafbd40bfa299fc8e.json
+      owner: operating-model-proof-evidence
+    - path: experiments/operating-model-proof/runs/c3-insufficient-01/binding.json
+      owner: operating-model-proof-evidence
+    - path: experiments/operating-model-proof/runs/c3-insufficient-01/events.jsonl
+      owner: operating-model-proof-evidence
+    - path: experiments/operating-model-proof/runs/c3-insufficient-01/events/execute-fb9754a390f44057b913c2f36c25fdd2.json
+      owner: operating-model-proof-evidence
+    - path: experiments/operating-model-proof/runs/c3-insufficient-01/events/propose-46790eeb5bee4dd4aacd5a9d4cfcd2d7.json
+      owner: operating-model-proof-evidence
+    - path: experiments/operating-model-proof/runs/c3-insufficient-02/binding.json
+      owner: operating-model-proof-evidence
+    - path: experiments/operating-model-proof/runs/c3-insufficient-02/events.jsonl
+      owner: operating-model-proof-evidence
+    - path: experiments/operating-model-proof/runs/c3-insufficient-02/events/execute-67085a4d8b414df68933edb19d01af13.json
+      owner: operating-model-proof-evidence
+    - path: experiments/operating-model-proof/runs/c3-insufficient-02/events/propose-c0ff6e55497c4908a8f57c3f53ddd089.json
+      owner: operating-model-proof-evidence
+    - path: experiments/operating-model-proof/runs/c3-positive-01/binding.json
+      owner: operating-model-proof-evidence
+    - path: experiments/operating-model-proof/runs/c3-positive-01/events.jsonl
+      owner: operating-model-proof-evidence
+    - path: experiments/operating-model-proof/runs/c3-positive-01/events/execute-dd3006c9c79646a99fb83150465f29ed.json
+      owner: operating-model-proof-evidence
+    - path: experiments/operating-model-proof/runs/c3-positive-01/events/propose-eb4a4daf44d34949b34cbfff90a459a8.json
+      owner: operating-model-proof-evidence
+    - path: internal/host/canonical_target_exclusions.go
+      owner: bounded-controller-contract
+    - path: internal/host/canonical_target_exclusions_test.go
+      owner: bounded-controller-contract
+    - path: docs/design/scoped-target-exclusions.md
+      owner: bounded-controller-contract
+    - path: internal/host/cli/adoption_inference_test.go
+      owner: bounded-controller-contract
