@@ -155,7 +155,7 @@ func proposeScopedCanonicalReconciliation(root, baseRevision, revision, configPa
 	for _, entry := range inventory.Entries {
 		inventoryByPath[entry.Path] = entry
 	}
-	if err := validateCanonicalTargetExclusionInventory(exclusions, inventory.Entries); err != nil {
+	if err := validateCanonicalTargetExclusionInventory(root, exclusions, inventory); err != nil {
 		return plan, err
 	}
 	plan.ExplicitExcludedArtifacts = classifyCanonicalTargetExclusions(exclusions, inventoryByPath)
