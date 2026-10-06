@@ -344,7 +344,16 @@ func proposeScopedCanonicalReconciliation(root, baseRevision, revision, configPa
 			if found {
 				previous = &old
 			}
-			p, err = proposeGitHooksProjection(request, current.Config.Checks, inventory.Entries, observed.Snapshot, previous)
+			p, err = proposeGitHooksProjection(request, current.Config.Checks, selectedCanonicalTargetInventory(inventory.Entries, request.TargetPrefix, excluded), observed.Snapshot, previous)
+			if err != nil {
+				return plan, err
+			}
+		} else if entrypoint == "azurepipelines" {
+			var previous *records.ProjectionRecord
+			if found {
+				previous = &old
+			}
+			p, err = proposeAzurePipelinesProjection(request, current.Config.Checks, selectedCanonicalTargetInventory(inventory.Entries, request.TargetPrefix, excluded), observed.Snapshot, previous, canonicalWork[key])
 			if err != nil {
 				return plan, err
 			}

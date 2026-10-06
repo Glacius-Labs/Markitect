@@ -8,6 +8,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/host/canonical"
 	"github.com/Glacius-Labs/Markitect/internal/host/records"
 	"github.com/Glacius-Labs/Markitect/internal/infrastructure/source"
+	"github.com/Glacius-Labs/Markitect/internal/modules/azurepipelines"
 	"github.com/Glacius-Labs/Markitect/internal/modules/githooks"
 )
 
@@ -46,8 +47,12 @@ func prepareGitHooksProjectionInput(
 		if !stringsHasPathPrefix(entry.Path, request.TargetPrefix) {
 			continue
 		}
+		content, present := observed.Files[entry.Path]
+		if !present {
+			return githooks.Input{}, nil, fmt.Errorf("Git Hooks inventory entry %q has no observed bytes", entry.Path)
+		}
 		input.ObservedArtifacts = append(input.ObservedArtifacts, githooks.ArtifactObservation{
-			Path: entry.Path, Bytes: append([]byte(nil), observed.Files[entry.Path]...), Mode: entry.Mode,
+			Path: entry.Path, Bytes: append([]byte(nil), content...), Mode: entry.Mode,
 		})
 	}
 	if previous != nil {
@@ -61,6 +66,80 @@ func prepareGitHooksProjectionInput(
 	return input, escalations, nil
 }
 
+func prepareAzurePipelinesProjectionInput(
+	request canonical.ProjectionRequest,
+	suppliedChecks []authoring.Check,
+	inventory []source.WorkingFileMetadata,
+	observed *snapshot.Snapshot,
+	previous *records.ProjectionRecord,
+	canonicalAffected bool,
+) (azurepipelines.Input, []CanonicalProjectionEscalation, error) {
+	if observed == nil {
+		return azurepipelines.Input{}, nil, fmt.Errorf("Azure Pipelines projection requires an observed target snapshot")
+	}
+	names, escalations, err := selectedCanonicalChecks(request.Projector, true, suppliedChecks)
+	if err != nil {
+		return azurepipelines.Input{}, nil, err
+	}
+	checks := selectedAuthoringChecks(names, suppliedChecks)
+	input := azurepipelines.Input{
+		Definitions: request.Definitions, Schemas: request.Schemas, Edges: request.Edges, Policies: request.Policies,
+		TargetPrefix: request.TargetPrefix, AllowedRoots: request.Projector.AllowedRoots, RequestDigest: request.RequestDigest,
+		CanonicalAffected: canonicalAffected, InventoryComplete: true,
+	}
+	for _, check := range checks {
+		input.Checks = append(input.Checks, azurepipelines.NamedCheck{Name: check.Name, Argv: append([]string(nil), check.Run...)})
+	}
+	for _, entry := range inventory {
+		if !stringsHasPathPrefix(entry.Path, request.TargetPrefix) {
+			continue
+		}
+		content, present := observed.Files[entry.Path]
+		if !present {
+			return azurepipelines.Input{}, nil, fmt.Errorf("Azure Pipelines inventory entry %q has no observed bytes", entry.Path)
+		}
+		input.ObservedArtifacts = append(input.ObservedArtifacts, azurepipelines.ArtifactObservation{
+			Path: entry.Path, Bytes: append([]byte(nil), content...), Mode: entry.Mode,
+		})
+	}
+	if previous != nil {
+		input.Previous = &azurepipelines.PriorProjection{RequestDigest: previous.RequestDigest, Complete: previous.State == records.StateMaterializedUnverified}
+		for _, artifact := range previous.Artifacts {
+			input.Previous.Artifacts = append(input.Previous.Artifacts, azurepipelines.ArtifactBinding{Path: artifact.Path, Digest: artifact.Digest, Mode: artifact.Mode})
+		}
+	}
+	// Scoped reconciliation does not load independent, freshness-validated
+	// VerificationResults, so the adapter cannot claim current evidence.
+	return input, escalations, nil
+}
+
+func proposeAzurePipelinesProjection(request canonical.ProjectionRequest, checks []authoring.Check, inventory []source.WorkingFileMetadata, observed *snapshot.Snapshot, previous *records.ProjectionRecord, canonicalAffected bool) (CanonicalScopedProposal, error) {
+	p := CanonicalScopedProposal{ProjectionID: request.Projection.Identity().Key(), Module: request.ModulePin, Request: request}
+	if request.Projector.ID != azurepipelines.ProjectorID || request.Projector.Target != azurepipelines.TargetTechnology || request.Projector.Version != azurepipelines.ModuleVersion {
+		p.Decision = "escalate"
+		p.Escalations = []CanonicalProjectionEscalation{{Code: "projection.entrypoint-unsupported", Identity: p.ProjectionID, Message: "unsupported static Azure Pipelines Projector entrypoint"}}
+		return p, nil
+	}
+	input, checkEscalations, err := prepareAzurePipelinesProjectionInput(request, checks, inventory, observed, previous, canonicalAffected)
+	if err != nil {
+		return p, err
+	}
+	proposal := azurepipelines.Propose(input)
+	p.Decision = string(proposal.Decision)
+	p.Reasons = proposal.Reasons
+	p.EvidenceRefreshRequired = proposal.EvidenceRefreshRequired
+	p.Outputs = make(map[string][]byte, len(proposal.Files))
+	p.OutputModes = make(map[string]string, len(proposal.Files))
+	for path, content := range proposal.Files {
+		p.Outputs[path] = append([]byte(nil), content...)
+		p.OutputModes[path] = proposal.Mode
+	}
+	p.Escalations = append(p.Escalations, checkEscalations...)
+	for _, escalation := range proposal.Escalations {
+		p.Escalations = append(p.Escalations, CanonicalProjectionEscalation{Code: escalation.Code, Identity: p.ProjectionID, Message: escalation.Message})
+	}
+	return p, nil
+}
 func proposeGitHooksProjection(request canonical.ProjectionRequest, checks []authoring.Check, inventory []source.WorkingFileMetadata, observed *snapshot.Snapshot, previous *records.ProjectionRecord) (CanonicalScopedProposal, error) {
 	p := CanonicalScopedProposal{ProjectionID: request.Projection.Identity().Key(), Module: request.ModulePin, Request: request}
 	if request.Projector.ID != githooks.ProjectorID || request.Projector.Target != githooks.TargetTechnology || request.Projector.Version != "1.0.0" {
@@ -102,7 +181,20 @@ func canonicalWorkflowEntrypoint(request canonical.ProjectionRequest) (string, e
 		return "markdown", nil
 	case request.Projector.ID == githooks.ProjectorID && request.Projector.Target == githooks.TargetTechnology:
 		return "githooks", nil
+	case request.Projector.ID == azurepipelines.ProjectorID && request.Projector.Target == azurepipelines.TargetTechnology:
+		return "azurepipelines", nil
 	default:
 		return "", fmt.Errorf("unsupported static Projector entrypoint %q targeting %q", request.Projector.ID, request.Projector.Target)
 	}
+}
+
+func selectedCanonicalTargetInventory(entries []source.WorkingFileMetadata, prefix string, excluded map[string]struct{}) []source.WorkingFileMetadata {
+	selected := make([]source.WorkingFileMetadata, 0, len(entries))
+	for _, entry := range entries {
+		if _, omit := excluded[entry.Path]; omit || !stringsHasPathPrefix(entry.Path, prefix) {
+			continue
+		}
+		selected = append(selected, entry)
+	}
+	return selected
 }

@@ -10,6 +10,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/host/canonical"
 	"github.com/Glacius-Labs/Markitect/internal/host/records"
 	"github.com/Glacius-Labs/Markitect/internal/infrastructure/source"
+	"github.com/Glacius-Labs/Markitect/internal/modules/azurepipelines"
 	"github.com/Glacius-Labs/Markitect/internal/modules/githooks"
 )
 
@@ -87,5 +88,64 @@ func TestCanonicalWorkflowEntrypointDoesNotTreatUnknownTargetAsMarkdown(t *testi
 	request.Projector = canonical.ProjectorRegistration{ID: "markdown-documentation", Version: "1.0.0", Target: "other"}
 	if entrypoint, err := canonicalWorkflowEntrypoint(request); err == nil {
 		t.Fatalf("unknown target resolved to %q", entrypoint)
+	}
+}
+
+func azurePipelinesRequest() canonical.ProjectionRequest {
+	request := gitHooksRequest()
+	request.TargetPrefix = "pipelines"
+	request.Projector = canonical.ProjectorRegistration{
+		ID: azurepipelines.ProjectorID, Version: azurepipelines.ModuleVersion, Target: azurepipelines.TargetTechnology,
+		AllowedRoots: []string{"pipelines"}, RequiredChecks: []string{azurepipelines.RequiredCheck},
+	}
+	request.Policies[0].Spec["targetTechnology"] = azurepipelines.TargetTechnology
+	return request
+}
+
+func TestPrepareAzurePipelinesProjectionInputUsesExactSelectedCheckAndScopedInventory(t *testing.T) {
+	checks := []authoring.Check{
+		{Name: azurepipelines.RequiredCheck, Run: []string{"go", "test", "./..."}},
+		{Name: "unselected", Run: []string{"go", "run", "./cmd/ignored"}},
+	}
+	inventory := []source.WorkingFileMetadata{{Path: "pipelines/notes.txt", Mode: snapshot.RegularMode}, {Path: "docs/README.md", Mode: snapshot.RegularMode}}
+	observed := &snapshot.Snapshot{Files: map[string][]byte{"pipelines/notes.txt": []byte("seen"), "docs/README.md": []byte("outside")}}
+	input, escalations, err := prepareAzurePipelinesProjectionInput(azurePipelinesRequest(), checks, inventory, observed, nil, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(escalations) != 0 || !input.InventoryComplete || !input.CanonicalAffected || len(input.Checks) != 1 {
+		t.Fatalf("input scope/checks = %#v, escalations=%#v", input, escalations)
+	}
+	if input.Checks[0].Name != azurepipelines.RequiredCheck || strings.Join(input.Checks[0].Argv, "\x00") != strings.Join(checks[0].Run, "\x00") {
+		t.Fatalf("selected Azure checks = %#v", input.Checks)
+	}
+	if len(input.ObservedArtifacts) != 1 || input.ObservedArtifacts[0].Path != "pipelines/notes.txt" || string(input.ObservedArtifacts[0].Bytes) != "seen" {
+		t.Fatalf("observed target inventory = %#v", input.ObservedArtifacts)
+	}
+}
+
+func TestProposeAzurePipelinesProjectionCarriesRegularOutputMode(t *testing.T) {
+	checks := []authoring.Check{{Name: azurepipelines.RequiredCheck, Run: []string{"go", "test", "./..."}}}
+	proposal, err := proposeAzurePipelinesProjection(azurePipelinesRequest(), checks, nil, &snapshot.Snapshot{Files: map[string][]byte{}}, nil, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	const path = "pipelines/azure-pipelines.yml"
+	if proposal.Decision != "work" || len(proposal.Outputs) != 1 || proposal.OutputModes[path] != snapshot.RegularMode {
+		t.Fatalf("Azure proposal = %#v", proposal)
+	}
+	if !strings.Contains(string(proposal.Outputs[path]), "displayName: 'canonical-workflow-check'") || !strings.Contains(string(proposal.Outputs[path]), "script: 'go test ./...'") {
+		t.Fatalf("pipeline omitted configured check: %s", proposal.Outputs[path])
+	}
+}
+
+func TestPrepareAdaptersFailClosedWhenSelectedInventoryBytesAreUnavailable(t *testing.T) {
+	_, _, err := prepareGitHooksProjectionInput(gitHooksRequest(), []authoring.Check{{Name: "canonical-workflow-check", Run: []string{"git", "diff", "--check"}}}, []source.WorkingFileMetadata{{Path: ".githooks/pre-commit", Mode: snapshot.ExecutableMode}}, &snapshot.Snapshot{Files: map[string][]byte{}}, nil)
+	if err == nil || !strings.Contains(err.Error(), "has no observed bytes") {
+		t.Fatalf("missing selected bytes error = %v", err)
+	}
+	_, _, err = prepareAzurePipelinesProjectionInput(azurePipelinesRequest(), []authoring.Check{{Name: azurepipelines.RequiredCheck, Run: []string{"go", "test", "./..."}}}, []source.WorkingFileMetadata{{Path: "pipelines/azure-pipelines.yml", Mode: snapshot.RegularMode}}, &snapshot.Snapshot{Files: map[string][]byte{}}, nil, false)
+	if err == nil || !strings.Contains(err.Error(), "has no observed bytes") {
+		t.Fatalf("missing selected bytes error = %v", err)
 	}
 }
