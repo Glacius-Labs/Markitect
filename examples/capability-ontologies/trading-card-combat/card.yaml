@@ -1,0 +1,5 @@
+apiVersion: cardgame.example.org/v1
+kind: Card
+metadata: {namespace: starter-deck, name: ember-fox}
+purpose: Defines a low-cost creature that can attack.
+spec: {name: Ember Fox, cost: 1, power: 2}

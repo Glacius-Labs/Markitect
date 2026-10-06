@@ -1,0 +1,8 @@
+apiVersion: architecture.example.org/v1
+kind: Dependency
+metadata: {namespace: shop, name: catalog-storage}
+purpose: Declares the catalog storage dependency.
+spec:
+  source: {namespace: shop, name: catalog}
+  target: {namespace: shop, name: catalog-db}
+  rationale: Catalog reads records from the selected store.
