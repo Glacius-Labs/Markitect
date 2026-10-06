@@ -13,6 +13,7 @@ spec:
     files:
         - docs/vision.md
         - docs/operating-methodology.md
+        - docs/design/standard-operating-model.md
         - docs/measurement.md
         - docs/implementation-plan.md
         - docs/architecture.md
