@@ -89,7 +89,8 @@ func TestRecursiveAssuranceScopesAreNestedAndIndependentlyChecked(t *testing.T) 
 				wantDefs[v] = true
 			}
 			for _, def := range prepared.Request.Definitions {
-				key := def.Kind + "/" + def.Namespace + "/" + def.Name
+				identity := def.Identity()
+				key := def.Kind + "/" + identity.Namespace + "/" + identity.Name
 				if !wantDefs[key] {
 					t.Errorf("unexpected selected Definition %s", key)
 				}
@@ -106,7 +107,7 @@ func TestRecursiveAssuranceScopesAreNestedAndIndependentlyChecked(t *testing.T) 
 				wantPolicies[v] = true
 			}
 			for _, policy := range prepared.Request.Policies {
-				delete(wantPolicies, policy.Name)
+				delete(wantPolicies, policy.Identity().Name)
 			}
 			if len(wantPolicies) > 0 {
 				t.Errorf("missing policies: %#v", wantPolicies)

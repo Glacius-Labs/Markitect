@@ -15,18 +15,42 @@ definitions:
   - examples/recursive-assurance/definitions/commerce.projection.yaml
 modules:
   - manifest: examples/recursive-assurance/modules/foundation/module.yaml
+    pin:
+      name: recursive-assurance-foundation
+      version: 1.0.0
+      digest: sha256:c1ea124d7fc6610e9832a2175c6807538417f18d11cc33547358f9a50d1f697b
     files:
       - examples/recursive-assurance/modules/foundation/schema.yaml
   - manifest: examples/recursive-assurance/modules/commerce/module.yaml
+    pin:
+      name: recursive-assurance-commerce
+      version: 1.0.0
+      digest: sha256:1dc1c8aef487ce5b0dfe98e34d3472a808233d149e4df51cf4895c493f998db9
     files:
       - examples/recursive-assurance/modules/commerce/schema.yaml
   - manifest: examples/recursive-assurance/modules/orders-dotnet/module.yaml
+    pin:
+      name: recursive-assurance-orders-dotnet
+      version: 1.0.0
+      digest: sha256:fbeaea5edb75f56e6a2bcb4de2cf2345ae26f3d01c35d50baf1bff44e44fc204
     files: []
   - manifest: examples/recursive-assurance/modules/billing-dotnet/module.yaml
+    pin:
+      name: recursive-assurance-billing-dotnet
+      version: 1.0.0
+      digest: sha256:616c6fb40d3361242034845a92484cb73e2f6aa178306f1dffee76b539e7af07
     files: []
   - manifest: examples/recursive-assurance/modules/checkout-dotnet/module.yaml
+    pin:
+      name: recursive-assurance-checkout-dotnet
+      version: 1.0.0
+      digest: sha256:08cd83a914d4a19e70858de6a12643fafb90349fe45a1714ee9bd51dcd4b13ac
     files: []
   - manifest: examples/recursive-assurance/modules/commerce-dotnet/module.yaml
+    pin:
+      name: recursive-assurance-commerce-dotnet
+      version: 1.0.0
+      digest: sha256:e01922f5227635357f7df4705ce3389310475b388be07bf8d0d6984931f04023
     files: []
 projectionBindings:
   - projection:
