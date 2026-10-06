@@ -1,0 +1,104 @@
+{
+  "runLabel": "c12-goal-propose-03",
+  "phase": "pre-call-freeze",
+  "frozenAtUtc": "2026-10-06T05:18:08Z",
+  "protocol": {
+    "id": "operating-model-proof/v5",
+    "commit": "658866480bafa37c8c2e94b5d58fc2074655f416",
+    "documentSha256": "9b0c42914ddf5d2337ac6a20de0a666242d659f9c7cc92851c2f5c472d0e9635"
+  },
+  "product": {
+    "sourceCommit": "0cf8d22fb9fb03bd87140eb01a84c79e54647ce6",
+    "evidenceWorktreeHead": "981763428b181e611cbfe0ccf649d20a0b24b826",
+    "binaryPath": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-live-proof-1hs4ntmh\\markitect-goal-reference.exe",
+    "binarySha256": "3740439442b223964899fa723ac8a23ba4525e023d07383755e19d06189a7908",
+    "buildReceiptPath": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-live-proof-1hs4ntmh\\build-receipt-goal-reference.json",
+    "buildReceiptSha256": "dcd7b01f5649cb7503e1a59e697e6803df00a274efc0e9f8392ba70b977cdca2"
+  },
+  "inputs": {
+    "goalInputPath": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-live-proof-1hs4ntmh\\c12-goal-propose-03\\goal-input.json",
+    "goalInputSha256": "810859a4e97616dd156e998ed5f76aa7bf63fd8c6f8f8dc883ab4ecfb088e9e9",
+    "goalDigest": "sha256:e1246709c39b8868cf159f233519901c538da036e963b1851708c9cc01831252",
+    "catalogDigest": "sha256:0b7cd9e45bc98a4ec09a8f15403b057c50e0035259ef303f4311fb3e9edce049",
+    "recommendationResultPath": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-live-proof-1hs4ntmh\\c12-goal-propose-03\\goal-recommendation-original.json",
+    "recommendationBytesSha256": "7055ae20a4c35580a489f1a26768b9fb2fae8a34751cc201deb0a2100534d20a",
+    "recommendationsDigest": "sha256:0e240974779360e037a0d7a59f0a3d803c4ff7eadb9acbbdf77b824db0cb3f22",
+    "selectionPath": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-live-proof-1hs4ntmh\\c12-goal-propose-03\\goal-selection.json",
+    "selectionSha256": "c24dcb48628bd1d54cbe2597cfa25851b4c51a6d89cf10b9502d6e33e804b44d",
+    "selectedRecommendationIds": [
+      "unknown-ontology-mission@1.0.0#sha256:7cbb9964571e912e416ca1e56ad9e66522d1f49a36d230216a160fb4b3f374be"
+    ],
+    "selectedSchemasDigest": "sha256:80a8478ffb16c1c1f079ec1cbc64ff70fc9b3ed5b6a01d04a0a082ee999fc1de",
+    "inputBindingDigest": "sha256:40cad91a36af5073c55c09e229e613ca2b5fe9e510dc6b21cc40508dde19cea6",
+    "contextDigest": "sha256:c880873728a42f0707260b3171f85508ec57f56cee574b5f3b1f43cd2ad2caa2",
+    "requestInputDigest": "sha256:f1097a4cb39832cefed5be1fedc4af9a11319ec2f832bf43f8cf4183d115e9ff",
+    "sourceRelation": "byte-identical public goal, saved recommendation result, and explicit selection from proposal-02"
+  },
+  "runtime": {
+    "envelopePath": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-live-proof-1hs4ntmh\\c12-goal-propose-03\\runtime.json",
+    "envelopeSha256": "5677761cad1efd9aefa5208d4f22c64c77f77ad7e89e27fde043b386936b8a01",
+    "apiVersion": "markitect.brownfield/inference-runtime/v1alpha1",
+    "configDigest": "sha256:d4a22030ea003e3aafe38d1895d18936e83eb7b12892623f793f47b18f46f746",
+    "commandDigest": "sha256:8431847e4362b6adadf62b8269fd268245c677d319eb9cc00851f38d30af632e",
+    "runtimeFilesDigest": "sha256:5898bea52150c07d81b7b0e1b690d0672da6b5ce0a76475733dd168b83e0a9b5",
+    "pythonExecutable": "C:/Python313/python.exe",
+    "pythonSha256": "d87063e5597f257004c731b66c59c56c91038861c6877b1a3dca6b8c4e919125",
+    "runnerPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\goal-propose-02\\Markitect\\internal\\tooling\\codexrunner\\runner.py",
+    "runnerSha256": "7806fabc774e2127ea29977009745c49d8043ffbcba63390e3d790b82d164d57",
+    "nativeProvider": "Codex CLI 0.130.0",
+    "nativeProviderVersion": "0.130.0",
+    "nativeExecutable": "C:\\Users\\Consiliari\\AppData\\Roaming\\npm\\node_modules\\@openai\\codex\\node_modules\\@openai\\codex-win32-x64\\vendor\\x86_64-pc-windows-msvc\\codex\\codex.exe",
+    "nativeExecutableSha256": "280cb1c4e3375d94dbdcba1a191f4f6adbf73c293be1e4f16c74b006662b9c54",
+    "model": "gpt-5.5",
+    "reasoning": "high",
+    "timeoutSeconds": 600,
+    "maxStdoutBytes": 8388608,
+    "maxStderrBytes": 4194304,
+    "tempParent": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-live-proof-1hs4ntmh\\c12-goal-propose-03\\temp",
+    "privateLogs": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-live-proof-1hs4ntmh\\c12-goal-propose-03\\private-logs"
+  },
+  "command": {
+    "executable": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-live-proof-1hs4ntmh\\markitect-goal-reference.exe",
+    "executableSha256": "3740439442b223964899fa723ac8a23ba4525e023d07383755e19d06189a7908",
+    "arguments": [
+      "canonical",
+      "--action",
+      "goal-propose",
+      "--goal-input",
+      "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-live-proof-1hs4ntmh\\c12-goal-propose-03\\goal-input.json",
+      "--goal-recommendations",
+      "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-live-proof-1hs4ntmh\\c12-goal-propose-03\\goal-recommendation-original.json",
+      "--goal-selection",
+      "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-live-proof-1hs4ntmh\\c12-goal-propose-03\\goal-selection.json",
+      "--runtime",
+      "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-live-proof-1hs4ntmh\\c12-goal-propose-03\\runtime.json"
+    ],
+    "argumentsJsonSha256": "f911699e66f789b403a8e1a472bbee3965389c4f078077c12cc342a56516774f",
+    "commandObjectSha256": "6d99f3fff3caed95a480896fcba80418ef139cacdec2b5c90388c735a01577da",
+    "workingDirectory": "C:\\Users\\Consiliari\\.codex\\worktrees\\goal-propose-02\\Markitect"
+  },
+  "invocationBinding": {
+    "apiVersion": "markitect.example.org/agent-execution/v1alpha1",
+    "role": "infer",
+    "runIdAndNonce": "generated fresh internally by agentexec for this invocation; exact values cannot be predicted or caller-supplied",
+    "responseMustEcho": [
+      "apiVersion",
+      "runId",
+      "nonce",
+      "role",
+      "inputDigest"
+    ],
+    "inputDigest": "sha256:f1097a4cb39832cefed5be1fedc4af9a11319ec2f832bf43f8cf4183d115e9ff",
+    "appendActualRunIdAndNonceFromReceiptAfterCall": true
+  },
+  "retryPolicy": "one fresh provider attempt; no retry; no response repair",
+  "scope": {
+    "operatorAuthoredGoalAndPublicModulePackagesUnchanged": true,
+    "noNewOwnerInstanceValues": true,
+    "candidateProposalOnly": true,
+    "automaticAdoption": false,
+    "canonicalWrite": false,
+    "ownerAcceptance": false
+  },
+  "providerCall": "not_started at freeze"
+}
