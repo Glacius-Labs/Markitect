@@ -152,7 +152,13 @@ func TestSameRefreshRelatedContextRejectsChangedDepthTwoGrandchild(t *testing.T)
 }
 
 func TestCanonicalEvidenceRefreshRequiresCurrentSourceHead(t *testing.T) {
-	root := "../.."
+	root := t.TempDir()
+	scopedTestGit(t, root, "init", "--template=", "--object-format=sha1", "-b", "codex/evidence-refresh-head")
+	scopedTestGit(t, root, "config", "user.name", "Evidence refresh test")
+	scopedTestGit(t, root, "config", "user.email", "evidence-refresh@example.invalid")
+	scopedTestWrite(t, root, "seed.txt", "fixed source head fixture\n")
+	scopedTestGit(t, root, "add", "seed.txt")
+	scopedTestGit(t, root, "commit", "-m", "fixed source head")
 	head, err := source.GitOutput(root, "rev-parse", "--verify", "--end-of-options", "HEAD^{commit}")
 	if err != nil {
 		t.Fatal(err)

@@ -9,12 +9,7 @@ import (
 )
 
 func TestLoadSelectedCanonicalSourceMatchesFullCompilerAndExposesScope(t *testing.T) {
-	root := "../.."
-	commitBytes, err := source.GitOutput(root, "rev-parse", "HEAD")
-	if err != nil {
-		t.Fatal(err)
-	}
-	commit := strings.TrimSpace(string(commitBytes))
+	root, commit, _ := scopedCanonicalFixture(t)
 	configPath := "examples/canonical-projection/canonical.yaml"
 	full, err := LoadCanonicalSource(root, commit, configPath, true)
 	if err != nil {
@@ -42,12 +37,7 @@ func TestLoadSelectedCanonicalSourceMatchesFullCompilerAndExposesScope(t *testin
 }
 
 func TestLoadSelectedCanonicalSourceAcquiresConfigThenExactDeclaredUnion(t *testing.T) {
-	root := "../.."
-	commitBytes, err := source.GitOutput(root, "rev-parse", "HEAD")
-	if err != nil {
-		t.Fatal(err)
-	}
-	commit := strings.TrimSpace(string(commitBytes))
+	root, commit, _ := scopedCanonicalFixture(t)
 	configPath := "examples/canonical-projection/canonical.yaml"
 	var acquisitions [][]string
 	loader := func(root, commit string, paths []string) (*source.SelectedSnapshot, error) {
@@ -73,12 +63,7 @@ func TestLoadSelectedCanonicalSourceAcquiresConfigThenExactDeclaredUnion(t *test
 }
 
 func TestLoadSelectedCanonicalSourceRejectsRepositoryIdentitySubstitution(t *testing.T) {
-	root := "../.."
-	commitBytes, err := source.GitOutput(root, "rev-parse", "HEAD")
-	if err != nil {
-		t.Fatal(err)
-	}
-	commit := strings.TrimSpace(string(commitBytes))
+	root, commit, _ := scopedCanonicalFixture(t)
 	configPath := "examples/canonical-projection/canonical.yaml"
 	calls := 0
 	loader := func(root, commit string, paths []string) (*source.SelectedSnapshot, error) {
