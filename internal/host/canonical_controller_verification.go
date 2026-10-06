@@ -23,7 +23,7 @@ import (
 const (
 	canonicalControllerVerificationAPIVersion = "markitect.canonical/controller-verification/v1alpha1"
 	canonicalControllerAgentCheckID           = "independent-verifier-receipt"
-	canonicalControllerAgentCheckVersion      = "agent-execution-receipt/v1alpha1"
+	canonicalControllerAgentCheckVersion      = "agent-execution-observation-coverage/v1alpha1"
 )
 
 var canonicalControllerVerificationLimits = []string{
@@ -85,6 +85,7 @@ type canonicalControllerPreparedVerification struct {
 
 type canonicalControllerVerifierContext struct {
 	Model                  CanonicalAgentContext    `json:"model"`
+	AgentExecutionAPIVersion string                  `json:"agentExecutionApiVersion"`
 	Objective              string                   `json:"objective"`
 	EvidenceRevision       string                   `json:"evidenceRevision"`
 	EvidenceSnapshotDigest string                   `json:"evidenceSnapshotDigest"`
@@ -92,6 +93,7 @@ type canonicalControllerVerifierContext struct {
 	TargetSnapshotDigest   string                   `json:"targetSnapshotDigest"`
 	FixedChecks            []records.CheckResult    `json:"fixedChecks"`
 	OwnChecks              []records.CheckIdentity  `json:"ownChecks"`
+	RequiredObservationSubjects []canonicalVerifierObservationSubject `json:"requiredObservationSubjects"`
 	Children               []canonicalVerifierChild `json:"children"`
 	Constraints            []string                 `json:"constraints"`
 }
@@ -698,15 +700,29 @@ func canonicalControllerVerifierRequest(cfg CanonicalControllerConfig, item cano
 		}
 		children = append(children, childContext)
 	}
+	scopeIDs := append([]string(nil), item.context.ScopeIDs...)
+	policyIDs := canonicalRequestPolicyIDs(item.request.Policies)
+	materializedPaths, err := canonicalControllerMaterializedArtifactPaths(cfg, item)
+	if err != nil {
+		return agentexec.Request{}, err
+	}
+	requiredSubjects, err := canonicalVerifierRequiredObservationSubjects(scopeIDs, policyIDs, materializedPaths, item.scopeCheckIdentities())
+	if err != nil {
+		return agentexec.Request{}, fmt.Errorf("build required Verifier observation coverage: %w", err)
+	}
 	payload := canonicalControllerVerifierContext{
 		Model:            item.context,
+		AgentExecutionAPIVersion: agentexec.APIVersion,
 		Objective:        "Independently verify the selected canonical Projection and its exact evidence bytes. Assess only the declared scope, policies, fixed command results, direct child outcomes, and supplied artifact bytes.",
 		EvidenceRevision: evidenceRevision, EvidenceSnapshotDigest: item.evidenceDigest,
 		RecordID: item.record.ID, TargetSnapshotDigest: item.record.TargetSnapshotDigest,
-		FixedChecks: item.checksWithoutAgent(), OwnChecks: item.scopeCheckIdentities(), Children: children,
+		FixedChecks: item.checksWithoutAgent(), OwnChecks: item.scopeCheckIdentities(),
+		RequiredObservationSubjects: requiredSubjects, Children: children,
 		Constraints: []string{
 			"Do not use Executor transcripts, hidden reasoning, workspace search, or unselected files.",
 			"Return every supplied canonical ScopeID, PolicyID, and target artifact path exactly once as an evidence reference; do not cite anything else.",
+			"Return exactly one verifier observation for every requiredObservationSubjects entry, using its exact subject string. Each entry exposes a typed kind and its exact identity fields; for a check, assess the declared check result identified by id, version, and digest.",
+			"A passed response requires every required observation subject exactly once with outcome passed. If any required item is missing or ambiguous, return incomplete or escalated; never pass with partial observation coverage.",
 			"Passing requires every fixed check and every required canonical obligation to pass.",
 			"Escalate when evidence is missing, ambiguous, or outside the selected scope.",
 		},
@@ -722,6 +738,27 @@ func canonicalControllerVerifierRequest(cfg CanonicalControllerConfig, item cano
 		PolicyIDs: append([]string(nil), canonicalRequestPolicyIDs(item.request.Policies)...),
 		Context:   contextBytes, Artifacts: cloneCanonicalControllerArtifacts(item.artifacts),
 	}, nil
+}
+
+func canonicalControllerMaterializedArtifactPaths(cfg CanonicalControllerConfig, item canonicalControllerPreparedVerification) ([]string, error) {
+	paths := make([]string, 0, len(item.record.Artifacts))
+	for _, artifact := range item.record.Artifacts {
+		paths = append(paths, artifact.Path)
+	}
+	descendants, err := canonicalControllerDescendantScopes(cfg, item.record.ProjectionID)
+	if err != nil {
+		return nil, err
+	}
+	for _, descendant := range descendants {
+		record, ok := item.recordByScope[descendant.ID]
+		if !ok || record.ProjectionID != descendant.ProjectionID {
+			return nil, fmt.Errorf("assurance descendant %q has no exact active ProjectionRecord", descendant.ID)
+		}
+		for _, artifact := range record.Artifacts {
+			paths = append(paths, artifact.Path)
+		}
+	}
+	return sortedUniquePaths(paths), nil
 }
 
 func canonicalControllerVerifierInputDigest(request agentexec.Request) (string, error) {
@@ -789,9 +826,18 @@ func invokeCanonicalControllerVerifier(ctx context.Context, cfg CanonicalControl
 		run.Outcome = execution.Response.Outcome
 		run.EvidenceRefs = append([]string(nil), execution.Response.EvidenceRefs...)
 		run.Observations = append([]agentexec.Observation(nil), execution.Response.VerifierObservations...)
-		if !canonicalControllerExactEvidenceRefs(execution.Response.EvidenceRefs, execution.Response.VerifierObservations, request) {
+		if !canonicalControllerExactEvidenceRefs(execution.Response.EvidenceRefs, request) {
 			invokeErr = errors.New("Verifier did not cite the exact supplied scope, policy and artifact references")
 			run.Outcome = agentexec.OutcomeEscalated
+		} else if required, requiredErr := canonicalControllerRequiredObservationSubjects(request); requiredErr != nil {
+			invokeErr = fmt.Errorf("Verifier required-observation context is invalid: %w", requiredErr)
+			run.Outcome = agentexec.OutcomeEscalated
+		} else if coverageErr := validateCanonicalVerifierObservationCoverage(execution.Response.VerifierObservations, required, execution.Response.Outcome); coverageErr != nil {
+			invokeErr = fmt.Errorf("Verifier observation coverage is invalid: %w", coverageErr)
+			run.Outcome = agentexec.OutcomeEscalated
+			if strings.Contains(coverageErr.Error(), "omitted required observations") || strings.Contains(coverageErr.Error(), "non-passing observation") {
+				run.Outcome = agentexec.OutcomeIncomplete
+			}
 		}
 	}
 	if execution.Receipt.ConfigDigest != fingerprint {
@@ -899,7 +945,7 @@ func duplicateCheckID(checks []records.CheckResult) string {
 	return ""
 }
 
-func canonicalControllerExactEvidenceRefs(refs []string, observations []agentexec.Observation, request agentexec.Request) bool {
+func canonicalControllerExactEvidenceRefs(refs []string, request agentexec.Request) bool {
 	expected := map[string]bool{}
 	for _, id := range request.ScopeIDs {
 		expected[id] = true
@@ -920,12 +966,20 @@ func canonicalControllerExactEvidenceRefs(refs []string, observations []agentexe
 		}
 		seen[ref] = true
 	}
-	for _, observation := range observations {
-		if !expected[observation.Subject] {
-			return false
-		}
-	}
 	return true
+}
+
+func canonicalControllerRequiredObservationSubjects(request agentexec.Request) ([]canonicalVerifierObservationSubject, error) {
+	// The stable request builder stores the exact set in context so actual and
+	// cached verification bind the same coverage contract.
+	var payload canonicalControllerVerifierContext
+	if err := json.Unmarshal(request.Context, &payload); err != nil {
+		return nil, err
+	}
+	if payload.AgentExecutionAPIVersion != agentexec.APIVersion {
+		return nil, fmt.Errorf("agent execution API version %q does not match current %q", payload.AgentExecutionAPIVersion, agentexec.APIVersion)
+	}
+	return payload.RequiredObservationSubjects, nil
 }
 
 func canonicalAgentCheckOutcome(response agentexec.Response) string {
