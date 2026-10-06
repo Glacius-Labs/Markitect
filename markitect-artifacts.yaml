@@ -1622,3 +1622,15 @@ spec:
       owner: live-operating-pilot-acceptance-harness
     - path: experiments/live-operating-pilot/.gitattributes
       owner: live-operating-pilot-frozen-fixture
+    - path: experiments/live-operating-pilot/protocol-attempt-02.json
+      owner: live-operating-pilot-protocol
+    - path: experiments/live-operating-pilot/protocol-attempt-03.json
+      owner: live-operating-pilot-protocol
+    - path: experiments/live-operating-pilot/attempt-01-result.json
+      owner: live-operating-pilot-protocol
+    - path: experiments/live-operating-pilot/attempt-02-result.json
+      owner: live-operating-pilot-protocol
+    - path: experiments/live-operating-pilot/transport-retry-01.json
+      owner: live-operating-pilot-protocol
+    - path: experiments/live-operating-pilot/result.json
+      owner: live-operating-pilot-protocol

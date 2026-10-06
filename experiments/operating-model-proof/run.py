@@ -22,7 +22,7 @@ from pathlib import Path
 from typing import Any
 
 PROTOCOL = "operating-model-proof/v9"
-CODEX_RUNNER_DIGEST = "sha256:87ee751453d325579c86de1e395d6462533fd21147436bf5d2c0243ff0539016"
+CODEX_RUNNER_DIGEST = "sha256:d08ad82ca5e47bd557fb6b6f8d45ef7aaa20f0e7bfa551f9766f9bc6ca887279"
 FULL_SHA = re.compile(r"^(?:[0-9a-f]{40}|[0-9a-f]{64})$")
 ROOT = Path(__file__).resolve().parents[2]
 

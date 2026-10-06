@@ -1,0 +1,9 @@
+{
+  "kind": "bounded-transport-retry",
+  "priorRunId": "e97e7e373d52d40503a5116b47d2b4a2",
+  "reason": "raw Verifier response role is null; required role is request.role=verifier. Bridge rejected it without stamping missing envelope data. Host result is invocation failure, not accepted semantic finding.",
+  "action": "One fresh controller-verify call on same source/evidence/runtime and unchanged prompts, creating fresh leaf and parent invocations. No candidate/model/runtime changes.",
+  "maxAdditionalVerifyCalls": 1,
+  "semanticRepairBudgetUnchanged": 1,
+  "priorVerificationResultDigest": "sha256:ca64e35ca3c9ec720c0e4a6c8c1f3d2dfc87b59c0a5b90ae9b13ea046f671807"
+}
