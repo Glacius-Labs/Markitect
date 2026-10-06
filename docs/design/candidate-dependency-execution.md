@@ -1,0 +1,11 @@
+# Candidate dependency execution
+
+Readiness finding at source `0ad8d78`: verification has a real child-first scheduler, but Executor preparation still follows a flat projection list. A Markdown parent that merely calls two leaf APIs in a fixed check cannot establish that independent, correct leaf implementations compose correctly. This remains a blocked C9 arrangement, not a passing agent experiment.
+
+The correction stays in Host. The existing explicit bounded assurance DAG supplies execution order and read-only dependency evidence. Children are prepared first; each parent receives exact child candidate bytes (or explicitly observed active artifacts for unchanged children), never Executor transcripts or hidden reasoning. Source scopes and artifact ownership are not enlarged implicitly. Each parent owns separate representation artifacts and its own checks.
+
+All candidates remain in memory until the existing reviewed aggregate Apply. Fixed parent checks run over the same hypothetical candidate cohort. Apply reconstructs that cohort in the same deterministic dependency order, validates every candidate and plan binding before any artifact write, then uses the original captured preimages and inventory for guarded writes. Candidate bytes are proposed state, not observed state or acceptance.
+
+Dependency-evidence acquisition is reported separately from materialization. Unchanged child bytes needed by a real composition check are relevant evidence even when that child has no implementation task. Drift or absence in such retained evidence blocks preparation rather than becoming a silent PASS. This does not claim that unrelated target bytes were examined.
+
+No Core traversal or composition primitive is added. The orchestration walks only the explicitly configured, previously validated finite DAG (128 nodes, depth 8). Independent projections retain deterministic ordering. Cycles, missing scopes and non-contained canonical source scopes fail before any agent invocation. A later protocol must test real parent-owned composition code, including correct leaves with incorrect glue and a higher parent's separate invariant.
