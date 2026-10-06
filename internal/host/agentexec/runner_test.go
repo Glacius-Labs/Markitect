@@ -253,6 +253,32 @@ func TestRunRejectsDuplicateUnknownAndMalformedJSON(t *testing.T) {
 	if err := rejectDuplicateKeys([]byte(`{"x":1,"x":2}`)); err == nil {
 		t.Fatal("duplicate nested JSON key was accepted")
 	}
+	var response Response
+	aliasedProtocolKeys := []byte(`{"apiVersion":"` + APIVersion + `","runId":"wrong","RunID":"expected","nonce":"n","role":"executor","inputDigest":"sha256:` + strings.Repeat("0", 64) + `","outcome":"incomplete","candidateFiles":[],"evidenceRefs":[],"verifierObservations":[],"uncertainty":[]}`)
+	if err := strictDecode(aliasedProtocolKeys, &response); err == nil || !strings.Contains(err.Error(), "duplicate protocol JSON key") {
+		t.Fatalf("case-variant protocol fields were accepted: %v", err)
+	}
+	opaqueCandidate := []byte(`{"apiVersion":"` + APIVersion + `","runId":"r","nonce":"n","role":"infer","inputDigest":"sha256:` + strings.Repeat("0", 64) + `","outcome":"incomplete","candidateFiles":[],"evidenceRefs":[],"verifierObservations":[],"candidateJson":{"Property":1,"property":2},"uncertainty":[]}`)
+	if err := strictDecode(opaqueCandidate, &response); err != nil {
+		t.Fatalf("case-distinct opaque candidate properties were rejected: %v", err)
+	}
+}
+
+func TestVerifyExecutableDigestDetectsPersistentChange(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "runner.bin")
+	original := []byte("runner-one")
+	if err := os.WriteFile(path, original, 0600); err != nil {
+		t.Fatal(err)
+	}
+	if err := verifyExecutableDigest(path, digest(original)); err != nil {
+		t.Fatalf("unchanged executable failed verification: %v", err)
+	}
+	if err := os.WriteFile(path, []byte("runner-two"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	if err := verifyExecutableDigest(path, digest(original)); err == nil {
+		t.Fatal("persistent executable change was not detected")
+	}
 }
 
 func TestRunRecordsFailureTimeoutAndOutputLimitWithoutRetry(t *testing.T) {
@@ -292,7 +318,13 @@ func TestRunStopsDescendantProcessesOnTimeoutOverflowAndNormalExit(t *testing.T)
 			t.Setenv("MARKITECT_AGENTEXEC_TEST_ROLE", "")
 			t.Setenv("MARKITECT_AGENTEXEC_TEST_HEARTBEAT", heartbeat)
 			config := testConfig()
-			config.Timeout = 250 * time.Millisecond
+			if mode == "spawn-child-timeout" {
+				config.Timeout = 250 * time.Millisecond
+			} else {
+				// These cases validate overflow and normal-exit cleanup, not fixture
+				// startup speed. Windows process startup can exceed 250 ms under load.
+				config.Timeout = 10 * time.Second
+			}
 			if mode == "spawn-child-overflow" {
 				config.MaxStdoutBytes = 16
 			}

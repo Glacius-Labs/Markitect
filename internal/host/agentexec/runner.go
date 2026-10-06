@@ -198,6 +198,10 @@ func run(parent context.Context, cfg Config, request Request, opts RunOptions) (
 		result.Receipt = receipt
 		return result, ErrInputChanged
 	}
+	if err := verifyExecutableDigest(executable, executableDigest); err != nil {
+		result.Receipt = receipt
+		return result, ErrInputChanged
+	}
 	if stdout.overflow || stderr.overflow {
 		result.Receipt = receipt
 		return result, ErrOutputTooLarge
@@ -843,6 +847,21 @@ func verifyRuntimeFiles(expected []runtimeState) error {
 	}
 	_, _, err := snapshotRuntimeFiles(files)
 	return err
+}
+
+// verifyExecutableDigest detects an executable that remains changed or becomes
+// unavailable during the invocation. It narrows the fingerprint window but
+// cannot prove which bytes the OS loaded if the path is replaced and restored
+// between checks.
+func verifyExecutableDigest(path, expected string) error {
+	content, err := readBoundedFile(path, 256<<20)
+	if err != nil {
+		return err
+	}
+	if digest(content) != expected {
+		return errors.New("configured runner executable changed during invocation")
+	}
+	return nil
 }
 
 func readBoundedFile(name string, limit int64) ([]byte, error) {
