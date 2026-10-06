@@ -257,7 +257,7 @@ func TestCanonicalEvidenceRefreshRetainsArtifactsAndRequiresFreshReview(t *testi
 	if err != nil {
 		t.Fatal(err)
 	}
-	prior, err := buildCanonicalProjectionRecord(prepared, observed.Snapshot, paths, records.StateMaterializedUnverified)
+	prior, err := buildCanonicalProjectionRecord(prepared, observed.Snapshot, observed.Snapshot, paths, records.StateMaterializedUnverified)
 	if err != nil {
 		t.Fatal(err)
 	}
