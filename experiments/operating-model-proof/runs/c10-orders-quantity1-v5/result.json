@@ -1,0 +1,273 @@
+{
+  "protocol": "operating-model-proof/v5",
+  "runId": "c10-orders-quantity1-v5",
+  "classification": "controlled-non-AI-semantic-challenge",
+  "defect": "Orders rejects quantity 1 although policy permits any positive quantity",
+  "fixtureSourceRevision": "f9c714ec84ce425001e9e671fff35e6a875a816c",
+  "fixtureEvidenceRevision": "ec6d8e972962c5bff6142f1bdfc19726c00c72b1",
+  "markitectSourceSHA": "6a79b0d015801f3f37e42cacd049179cc795be42",
+  "cliDigest": "sha256:03c551536335ee580b870e703a6a40ef8777c5a8139042f8f0f7e8e7e88729aa",
+  "runnerDigest": "sha256:7806fabc774e2127ea29977009745c49d8043ffbcba63390e3d790b82d164d57",
+  "reportDigest": "sha256:72e99ea85d494f1b59bafb4140f4f283181bb2b7211c85509812aa2a6095f4ea",
+  "status": "failed",
+  "outcome": "failed",
+  "ledgerHead": "sha256:7cdcef6356fd9567566c662cc8dc9b49f6d1834a5d81bede0fef0c97b08da68c",
+  "ledgerSelectionDigest": "sha256:5d78f36dde202bd52b85e7efdadf9443e3a28196a1b671902b9004c4e447a5d3",
+  "assuranceNodes": [
+    {
+      "nodeId": "billing",
+      "scopeIds": [
+        "[\"commerce.recursive-assurance/v1\",\"BillingQuery\",\"billing\",\"sum-outstanding\"]"
+      ],
+      "children": null,
+      "outcome": "passed",
+      "recordId": "sha256:d2f12f6bb29dfe149db2dd619aee2201df94c948b63971de71d85578b0fdde13",
+      "resultId": "sha256:f7649acacf0bbce32aba65f662abc2f9d426e6649d34dfae466fff863dbb053f"
+    },
+    {
+      "nodeId": "checkout",
+      "scopeIds": [
+        "[\"commerce.recursive-assurance/v1\",\"BillingQuery\",\"billing\",\"sum-outstanding\"]",
+        "[\"commerce.recursive-assurance/v1\",\"CheckoutComposition\",\"checkout\",\"add-order-to-outstanding\"]",
+        "[\"commerce.recursive-assurance/v1\",\"OrderRules\",\"orders\",\"calculate-line-total\"]"
+      ],
+      "children": [
+        "billing",
+        "orders"
+      ],
+      "outcome": "failed",
+      "recordId": "sha256:fbfcc18aec4a155c5fed5fa1a950b64fbee58e248105ffbc996f0f23ffb352fc",
+      "resultId": "sha256:8edf66c33e62b551966a6b80e523eccbc6ba6e6daacc8e01136ecfe4747f0c3e"
+    },
+    {
+      "nodeId": "commerce",
+      "scopeIds": [
+        "[\"commerce.recursive-assurance/v1\",\"BillingQuery\",\"billing\",\"sum-outstanding\"]",
+        "[\"commerce.recursive-assurance/v1\",\"CheckoutComposition\",\"checkout\",\"add-order-to-outstanding\"]",
+        "[\"commerce.recursive-assurance/v1\",\"CommerceComposition\",\"commerce\",\"combine-two-checkouts\"]",
+        "[\"commerce.recursive-assurance/v1\",\"OrderRules\",\"orders\",\"calculate-line-total\"]"
+      ],
+      "children": [
+        "billing",
+        "checkout"
+      ],
+      "outcome": "failed",
+      "recordId": "sha256:c0c214a00550acd460bd57e49be0a9f94f8ee9d82d99d223382d762fffe96480",
+      "resultId": "sha256:3e5e5003594e8f00c26ec9cbe9e41e1c1f4584d8b2552bd603bdfaefaf33ad54"
+    },
+    {
+      "nodeId": "orders",
+      "scopeIds": [
+        "[\"commerce.recursive-assurance/v1\",\"OrderRules\",\"orders\",\"calculate-line-total\"]"
+      ],
+      "children": null,
+      "outcome": "failed",
+      "recordId": "sha256:6cb7c701fc28e76516fbd27d685e83da1fcf1704fd4642052f6bc2d3dc81fb73",
+      "resultId": "sha256:b3d35c2c769d5e9be88c7cc14d2b63aff8464b450c66b3ae8aad7e5946ea8615"
+    }
+  ],
+  "assuranceRoots": [
+    {
+      "nodeId": "commerce",
+      "scopeIds": [
+        "[\"commerce.recursive-assurance/v1\",\"BillingQuery\",\"billing\",\"sum-outstanding\"]",
+        "[\"commerce.recursive-assurance/v1\",\"CheckoutComposition\",\"checkout\",\"add-order-to-outstanding\"]",
+        "[\"commerce.recursive-assurance/v1\",\"CommerceComposition\",\"commerce\",\"combine-two-checkouts\"]",
+        "[\"commerce.recursive-assurance/v1\",\"OrderRules\",\"orders\",\"calculate-line-total\"]"
+      ],
+      "children": [
+        "billing",
+        "checkout"
+      ],
+      "outcome": "failed",
+      "recordId": "sha256:c0c214a00550acd460bd57e49be0a9f94f8ee9d82d99d223382d762fffe96480",
+      "resultId": "sha256:3e5e5003594e8f00c26ec9cbe9e41e1c1f4584d8b2552bd603bdfaefaf33ad54"
+    }
+  ],
+  "scopes": [
+    {
+      "scopeId": "billing",
+      "recordId": "sha256:d2f12f6bb29dfe149db2dd619aee2201df94c948b63971de71d85578b0fdde13",
+      "resultId": "sha256:f7649acacf0bbce32aba65f662abc2f9d426e6649d34dfae466fff863dbb053f",
+      "outcome": "passed",
+      "checks": [
+        {
+          "id": "independent-verifier-receipt",
+          "version": "agent-execution-receipt/v1alpha1",
+          "digest": "sha256:575ffedfb1b51cefd61f3dcc70bc96a5e97e200e90c4d90be75013f7eb2d14e3",
+          "outcome": "passed"
+        },
+        {
+          "id": "recursive-assurance-billing",
+          "version": "fixed-command-input/v1",
+          "digest": "sha256:e893fae84545353fbec853a462b330c84a3e80494fbf942a5bbdf65a5cd0d416",
+          "outcome": "passed"
+        }
+      ],
+      "verifier": {
+        "scopeId": "billing",
+        "recordId": "sha256:d2f12f6bb29dfe149db2dd619aee2201df94c948b63971de71d85578b0fdde13",
+        "resultId": "sha256:f7649acacf0bbce32aba65f662abc2f9d426e6649d34dfae466fff863dbb053f",
+        "outcome": "passed",
+        "runId": "0264c08537b205805a3346ecbf93550f",
+        "inputDigest": "sha256:899ab479f7ea802c8327a196fd6f89ac853e62192f585414a5e603fedb4b2e52",
+        "receiptDigest": "sha256:2301acc29b4e6269cdec8c7201b6a67ed786025fa1970658252e831645ac9bf0",
+        "evidenceSnapshotDigest": "sha256:746002c81793856e0cc15c9df55b810e6592bac0d738810ad94cee2f5355fc99",
+        "evidenceRefsDigest": null,
+        "evidenceRefCount": null,
+        "configFingerprint": "sha256:7d6e2eb9aa80dace58ec3fa406ccb9373d222fc42aa6628c05486ff81c65bd2b"
+      },
+      "candidateDigest": "sha256:bbfdeb6305cd5c6b38bc2a50f5aa64c47a5023e24222600679c596a4e793e668",
+      "planDigest": "sha256:41113cafb9069806061b924ff3df314cd21425c302b74f36f584ab42eb2d8f6e",
+      "materializedArtifacts": [
+        {
+          "path": "src/Billing/BillingQuery.cs",
+          "digest": "sha256:42957746e493197674b04f7fc2f5e16f7cc38543b9a055902a8c25c159d0d7d2",
+          "mode": "100644",
+          "change": "created"
+        }
+      ]
+    },
+    {
+      "scopeId": "checkout",
+      "recordId": "sha256:fbfcc18aec4a155c5fed5fa1a950b64fbee58e248105ffbc996f0f23ffb352fc",
+      "resultId": "sha256:8edf66c33e62b551966a6b80e523eccbc6ba6e6daacc8e01136ecfe4747f0c3e",
+      "outcome": "failed",
+      "checks": [
+        {
+          "id": "independent-verifier-receipt",
+          "version": "agent-execution-receipt/v1alpha1",
+          "digest": "sha256:c7de9df9556431f82574c7f6641e515fa43ea69a0e9df6e6c3a2f275034e68fd",
+          "outcome": "failed"
+        },
+        {
+          "id": "recursive-assurance-checkout",
+          "version": "fixed-command-input/v1",
+          "digest": "sha256:ecee030e026a4bf029cd1ef058783dfa3e09af4fd4cc81c3fa3816da0749851c",
+          "outcome": "passed"
+        }
+      ],
+      "verifier": {
+        "scopeId": "checkout",
+        "recordId": "sha256:fbfcc18aec4a155c5fed5fa1a950b64fbee58e248105ffbc996f0f23ffb352fc",
+        "resultId": "sha256:8edf66c33e62b551966a6b80e523eccbc6ba6e6daacc8e01136ecfe4747f0c3e",
+        "outcome": "failed",
+        "runId": "0e03e4bdf5136b7da6f9debdeab3770b",
+        "inputDigest": "sha256:fcb18de0f679c4b559e2f469df9c893413dd24fa6880da0950e8b64b70fe7e28",
+        "receiptDigest": "sha256:ef5adc09a814c3fd9a1f47e40c8073e082ab62dbe68b35aa96aa3102b4685cf9",
+        "evidenceSnapshotDigest": "sha256:e31ea79a8a9536b567d6f189faf5cd408cab22d029799d526224c0145d89e185",
+        "evidenceRefsDigest": null,
+        "evidenceRefCount": null,
+        "configFingerprint": "sha256:7d6e2eb9aa80dace58ec3fa406ccb9373d222fc42aa6628c05486ff81c65bd2b"
+      },
+      "candidateDigest": "sha256:b00eb538a8ca6eb6bc08cbf7ef8759471ea7ab77e31e7f81e062f11a53e0f8e0",
+      "planDigest": "sha256:3de816a35ee3e2b8654903941a8156cb7fd6cc568cd2bb65b2037a1d3e8deb9c",
+      "materializedArtifacts": [
+        {
+          "path": "src/Checkout/CheckoutComposer.cs",
+          "digest": "sha256:728a6447521bac2d87cb943a1c0da477e194a54cb9cd7d8ed966af3540c92b7b",
+          "mode": "100644",
+          "change": "created"
+        }
+      ]
+    },
+    {
+      "scopeId": "commerce",
+      "recordId": "sha256:c0c214a00550acd460bd57e49be0a9f94f8ee9d82d99d223382d762fffe96480",
+      "resultId": "sha256:3e5e5003594e8f00c26ec9cbe9e41e1c1f4584d8b2552bd603bdfaefaf33ad54",
+      "outcome": "failed",
+      "checks": [
+        {
+          "id": "independent-verifier-receipt",
+          "version": "agent-execution-receipt/v1alpha1",
+          "digest": "sha256:7e7bde58c5c951a40cb65b6a9c887a37c7e098cac75e8e3218c1d53791c1b02b",
+          "outcome": "failed"
+        },
+        {
+          "id": "recursive-assurance-commerce",
+          "version": "fixed-command-input/v1",
+          "digest": "sha256:d6ba206501c0b649a57b6e7c826398648226c7aefd58035ce7a9e41463c0e842",
+          "outcome": "passed"
+        }
+      ],
+      "verifier": {
+        "scopeId": "commerce",
+        "recordId": "sha256:c0c214a00550acd460bd57e49be0a9f94f8ee9d82d99d223382d762fffe96480",
+        "resultId": "sha256:3e5e5003594e8f00c26ec9cbe9e41e1c1f4584d8b2552bd603bdfaefaf33ad54",
+        "outcome": "failed",
+        "runId": "437ef88f6a4877c5cf757974a44110b0",
+        "inputDigest": "sha256:db95d20de8776fecac735fcaeb71fb0a9b2a0319865434dff3ab77bbd0aa623a",
+        "receiptDigest": "sha256:29af8ca58f876d550a6e85db2093a40975fb5f7e0bf3cb73093109dbde08a615",
+        "evidenceSnapshotDigest": "sha256:261f8797aebed08f1cfedc6842ab4a6ddb88ab2ed58c6616f7cef5c99e424d61",
+        "evidenceRefsDigest": null,
+        "evidenceRefCount": null,
+        "configFingerprint": "sha256:7d6e2eb9aa80dace58ec3fa406ccb9373d222fc42aa6628c05486ff81c65bd2b"
+      },
+      "candidateDigest": "sha256:b5615104e8c6eb5e7c40c90559cb754447485d2a7a87282a12a3d4616cbb10a3",
+      "planDigest": "sha256:dfb190287d6c9033dee59805012395576ae8c8fe8db144267691198d9060b6d3",
+      "materializedArtifacts": [
+        {
+          "path": "src/Commerce/CommerceComposer.cs",
+          "digest": "sha256:f1121dd7ba1102e56c67dc29711315ad8ecd645ed7b9c16832692e89d5caf51f",
+          "mode": "100644",
+          "change": "created"
+        }
+      ]
+    },
+    {
+      "scopeId": "orders",
+      "recordId": "sha256:6cb7c701fc28e76516fbd27d685e83da1fcf1704fd4642052f6bc2d3dc81fb73",
+      "resultId": "sha256:b3d35c2c769d5e9be88c7cc14d2b63aff8464b450c66b3ae8aad7e5946ea8615",
+      "outcome": "failed",
+      "checks": [
+        {
+          "id": "independent-verifier-receipt",
+          "version": "agent-execution-receipt/v1alpha1",
+          "digest": "sha256:badc201b419b89d92ec2175ebb442fb6d0acb1ff3824cc0cc30dc5773ec8712a",
+          "outcome": "failed"
+        },
+        {
+          "id": "recursive-assurance-orders",
+          "version": "fixed-command-input/v1",
+          "digest": "sha256:37c0a89b0baf62d5fe28ea693355f447516fe5b12243705ddccdf9e27d73cbe9",
+          "outcome": "passed"
+        }
+      ],
+      "verifier": {
+        "scopeId": "orders",
+        "recordId": "sha256:6cb7c701fc28e76516fbd27d685e83da1fcf1704fd4642052f6bc2d3dc81fb73",
+        "resultId": "sha256:b3d35c2c769d5e9be88c7cc14d2b63aff8464b450c66b3ae8aad7e5946ea8615",
+        "outcome": "failed",
+        "runId": "fd30fc0d33d9f70f0f7569003bc50f3a",
+        "inputDigest": "sha256:aa6849b669b149f06393dd3db1dc939f699fb503995620be3bcc0773d6631249",
+        "receiptDigest": "sha256:6f57f9cdb5f432b9e25b381a36c5bab2619c37bc7161990503f61b6507d541cd",
+        "evidenceSnapshotDigest": "sha256:06ed76e2b64a59d35018fbe254cb5e2bc82a3c714c3d0df1ee074bc112873d4c",
+        "evidenceRefsDigest": null,
+        "evidenceRefCount": null,
+        "configFingerprint": "sha256:7d6e2eb9aa80dace58ec3fa406ccb9373d222fc42aa6628c05486ff81c65bd2b"
+      },
+      "candidateDigest": "sha256:a7a26b03e27a7841f7d557dbbfa9d5877f00160aa87f7cc084829cd84a9eae9a",
+      "planDigest": "sha256:d6420e2a0ef260245f9634b1c098594f8b4e5dfa0fbdc0a19dcad69229c4a079",
+      "materializedArtifacts": [
+        {
+          "path": "src/Orders/OrderRules.cs",
+          "digest": "sha256:1658a8d95c0be2447ade74dca926f76743ea99ba14aec7fad5a1ef7a9eb7354f",
+          "mode": "100644",
+          "change": "created"
+        }
+      ]
+    }
+  ],
+  "driverEvent": {
+    "exitCode": 1,
+    "elapsedWallMilliseconds": 158411,
+    "stdoutDigest": "sha256:86a7f94fadd11d5cabde04c34a65ef7269ad86840cb53c642bd506b4c67c0409",
+    "metricsDigest": "sha256:86a7f94fadd11d5cabde04c34a65ef7269ad86840cb53c642bd506b4c67c0409"
+  },
+  "limits": [
+    "The control bytes were explicit non-AI candidate inputs and are not attributed to an Executor.",
+    "Each listed Verifier was a fresh, separately fingerprinted invocation; the evidence does not authenticate provider identity or prove correctness or acceptance.",
+    "One controlled challenge does not establish an error or catch rate."
+  ],
+  "fixturePathDigest": null
+}
