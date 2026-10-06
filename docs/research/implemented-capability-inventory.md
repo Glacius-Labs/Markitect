@@ -39,5 +39,3 @@ Statuses distinguish bounded existing support from fresh proof-program trials. E
 | **C13 Brownfield adoption** | Source-alpha adoption plans/records bind selected existing bytes to exact scope and checks; focused tests preserve bytes and expose unknowns/collisions. | **PARTIAL; fresh C13 trial NOT RUN.** Supplied review reference is not authenticated; active records are caller claims; no whole-repository adoption or fresh full workflow. |
 
 The complete experiment format, frozen-input requirements, and success criteria belong to the [proof program](proof-program.md). The source boundary and current stop are tracked in the [capability matrix](capability-matrix.md).
-
-
