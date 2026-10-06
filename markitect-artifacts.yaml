@@ -1284,3 +1284,29 @@ spec:
       owner: immutable-operating-model-proof-records
     - path: docs/validation/independent-proof-capability-review.md
       owner: independent-proof-review
+    - path: experiments/operating-model-proof/runs/concurrency-witness-v7-a-retry1/binding.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/concurrency-witness-v7-a-retry1/events.jsonl
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/concurrency-witness-v7-a-retry1/events/propose-c16868725458461d96f23e800d2ad379.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/concurrency-witness-v7-b-retry1/binding.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/concurrency-witness-v7-b-retry1/events.jsonl
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/concurrency-witness-v7-b-retry1/events/propose-4fbe3fe1a5234abcab113e3923baee42.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/concurrency-witness-v7-precall/auto-review-rejection.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/concurrency-witness-v7-precall/control-plan.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/concurrency-witness-v7-precall/gate-amendment.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/concurrency-witness-v7-precall/invocation-binding-amendment.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/concurrency-witness-v7-precall/test-reference-correction.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/windows-host-selected-tree-79e/receipt.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/windows-host-selected-tree-79e/scope-note.md
+      owner: immutable-operating-model-proof-records
