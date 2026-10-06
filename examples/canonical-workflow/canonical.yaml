@@ -13,21 +13,31 @@ definitions:
   - examples/canonical-workflow/definitions/policy.rule-to-claude.yaml
   - examples/canonical-workflow/definitions/policy.rule-to-codex.yaml
   - examples/canonical-workflow/definitions/policy.rule-to-markdown.yaml
+  - examples/canonical-workflow/definitions/policy.rule-to-githooks.yaml
+  - examples/canonical-workflow/definitions/policy.process-to-githooks.yaml
+  - examples/canonical-workflow/definitions/policy.responsibility-to-githooks.yaml
+  - examples/canonical-workflow/definitions/policy.gate-to-githooks.yaml
+  - examples/canonical-workflow/definitions/policy.rule-to-azurepipelines.yaml
+  - examples/canonical-workflow/definitions/policy.process-to-azurepipelines.yaml
+  - examples/canonical-workflow/definitions/policy.responsibility-to-azurepipelines.yaml
+  - examples/canonical-workflow/definitions/policy.gate-to-azurepipelines.yaml
   - examples/canonical-workflow/definitions/projection.workflow-claude.yaml
   - examples/canonical-workflow/definitions/projection.workflow-codex.yaml
   - examples/canonical-workflow/definitions/projection.workflow-markdown.yaml
+  - examples/canonical-workflow/definitions/projection.workflow-githooks.yaml
+  - examples/canonical-workflow/definitions/projection.workflow-azurepipelines.yaml
   - examples/canonical-workflow/definitions/workflow.gate.yaml
   - examples/canonical-workflow/definitions/workflow.process.yaml
   - examples/canonical-workflow/definitions/workflow.responsibility.yaml
   - examples/canonical-workflow/definitions/workflow.rule.yaml
 modules:
-  - manifest: examples/canonical-workflow/modules/foundation-v1.1.0/module.yaml
+  - manifest: examples/canonical-workflow/modules/foundation-v1.2.0/module.yaml
     pin:
       name: markitect-foundation
-      version: 1.1.0
-      digest: sha256:e92ffd845fe7b3869acf3f30619ed1312923fe494484960adcea4adbe8ad47ae
+      version: 1.2.0
+      digest: sha256:6e42fe4d786693af2824a4fe7bbaed3cce9b2e372055f40938215cef6cf95fb4
     files:
-      - examples/canonical-workflow/modules/foundation-v1.1.0/schema.yaml
+      - examples/canonical-workflow/modules/foundation-v1.2.0/schema.yaml
   - manifest: examples/canonical-workflow/modules/workflow/module.yaml
     pin:
       name: canonical-workflow-example
@@ -53,6 +63,18 @@ modules:
       version: 1.0.0
       digest: sha256:029a61498008aa2c8e12e437abffe11d5eb74f9bab3de107d348cfa7d38f5c83
     files: []
+  - manifest: examples/canonical-workflow/modules/githooks-v1/module.yaml
+    pin:
+      name: markitect-git-hooks
+      version: 1.0.0
+      digest: sha256:b54e584232d7468c1a86046380578140fe781fc12df903312f38b98032d528d2
+    files: []
+  - manifest: examples/canonical-workflow/modules/azurepipelines-v1/module.yaml
+    pin:
+      name: markitect-azure-pipelines
+      version: 1.0.0
+      digest: sha256:f0b447cd5de88f809a83f1b2fcc7d45a254e324e62f20ae9377a1d485949dc8d
+    files: []
 projectionBindings:
   - projection:
       apiVersion: markitect.foundation/v1
@@ -72,3 +94,21 @@ projectionBindings:
       namespace: example
       name: workflow-markdown
     module: markitect-markdown
+  - projection:
+      apiVersion: markitect.foundation/v1
+      kind: Projection
+      namespace: example
+      name: workflow-githooks
+    module: markitect-git-hooks
+  - projection:
+      apiVersion: markitect.foundation/v1
+      kind: Projection
+      namespace: example
+      name: workflow-azurepipelines
+    module: markitect-azure-pipelines
+checks:
+  - name: canonical-workflow-check
+    run:
+      - go
+      - run
+      - ./examples/canonical-workflow/check/main.go
