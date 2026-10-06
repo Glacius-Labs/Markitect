@@ -38,6 +38,48 @@ func TestSafeDestinationRetainsReparseRejectionWithShortPath(t *testing.T) {
 	}
 }
 
+func TestAnchoredAtomicWriteRefusesSwappedJunctionParent(t *testing.T) {
+	root, err := os.MkdirTemp(os.TempDir(), "markitect-rooted-junction-")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(root)
+	parent := filepath.Join(root, "target")
+	if err := os.Mkdir(parent, 0755); err != nil {
+		t.Fatal(err)
+	}
+	outside, err := os.MkdirTemp(os.TempDir(), "markitect-rooted-outside-")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(outside)
+	sentinel := filepath.Join(outside, "sentinel.txt")
+	if err := os.WriteFile(sentinel, []byte("keep\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	anchored, err := openWriteRoot(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer anchored.Close()
+	if err := os.Rename(parent, filepath.Join(root, "target-original")); err != nil {
+		t.Fatal(err)
+	}
+	if err := makeWindowsJunction(parent, outside); err != nil {
+		t.Skipf("directory junction creation unavailable: %v", err)
+	}
+	if err := anchored.AtomicWrite("target/escaped.txt", []byte("must not write\n"), 0644); err == nil {
+		t.Fatal("anchored writer accepted a swapped junction parent")
+	}
+	if _, err := os.Stat(filepath.Join(outside, "escaped.txt")); !os.IsNotExist(err) {
+		t.Fatalf("write escaped through replacement junction: %v", err)
+	}
+	got, err := os.ReadFile(sentinel)
+	if err != nil || string(got) != "keep\n" {
+		t.Fatalf("external sentinel changed: bytes=%q error=%v", got, err)
+	}
+}
+
 func TestSafeDestinationSupportsLongWindowsPaths(t *testing.T) {
 	base, err := os.MkdirTemp(os.TempDir(), "markitect-long-path-test-")
 	if err != nil {

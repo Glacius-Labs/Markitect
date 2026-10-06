@@ -58,7 +58,12 @@ func Format(root string, p *Project, write bool) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	unlock, err := lockWriter(root)
+	writeRoot, err := openWriteRoot(root)
+	if err != nil {
+		return nil, err
+	}
+	defer writeRoot.Close()
+	unlock, err := writeRoot.LockWriter()
 	if err != nil {
 		return nil, err
 	}
@@ -100,17 +105,14 @@ func Format(root string, p *Project, write bool) ([]string, error) {
 		if err := ensureWriteBranch(root, branch); err != nil {
 			return written, err
 		}
-		if err = atomicWrite(dest, changed[name]); err != nil {
-			return written, err
-		}
-		written = append(written, name)
 		mode := os.FileMode(0644)
 		if p.Snapshot.Modes[name] == "100755" {
 			mode = 0755
 		}
-		if err = os.Chmod(dest, mode); err != nil {
+		if err = writeRoot.AtomicWrite(name, changed[name], mode); err != nil {
 			return written, err
 		}
+		written = append(written, name)
 	}
 	final, err := source.Load(root, "")
 	if err != nil {

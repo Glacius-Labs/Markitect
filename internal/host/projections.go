@@ -8,7 +8,6 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/core/snapshot"
 	"io"
 	"os"
-	"path/filepath"
 	"runtime"
 	"sort"
 	"strings"
@@ -620,19 +619,16 @@ func WriteProjectionArtifacts(root string, captured *snapshot.Snapshot, contents
 			return nil, err
 		}
 	}
-	lockPath, err := safeDestination(root, ".artifacts/markitect/write.lock")
+	writeRoot, err := openWriteRoot(root)
 	if err != nil {
 		return nil, err
 	}
-	if err = os.MkdirAll(filepath.Dir(lockPath), 0755); err != nil {
-		return nil, err
-	}
-	lock, err := os.OpenFile(lockPath, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0600)
+	defer writeRoot.Close()
+	release, err := writeRoot.LockWriter()
 	if err != nil {
 		return nil, fmt.Errorf("another writer owns lock: %w", err)
 	}
-	lock.Close()
-	defer os.Remove(lockPath)
+	defer release()
 	var written []string
 	for _, name := range names {
 		if branch != "" {
@@ -656,21 +652,14 @@ func WriteProjectionArtifacts(root string, captured *snapshot.Snapshot, contents
 		if exists && bytes.Equal(observed, contents[name]) && captured.Modes[name] == desiredMode {
 			continue
 		}
-		if err = os.MkdirAll(filepath.Dir(dest), 0755); err != nil {
-			return written, err
+		fileMode := os.FileMode(0644)
+		if desiredMode == snapshot.ExecutableMode {
+			fileMode = 0755
 		}
-		if _, err = safeDestination(root, name); err != nil {
-			return written, err
-		}
-		if err = atomicWrite(dest, contents[name]); err != nil {
+		if err = writeRoot.AtomicWrite(name, contents[name], fileMode); err != nil {
 			return written, err
 		}
 		written = append(written, name)
-		if desiredMode == snapshot.ExecutableMode {
-			if err = os.Chmod(dest, 0755); err != nil {
-				return written, fmt.Errorf("set executable artifact mode for %s: %w", name, err)
-			}
-		}
 	}
 	final, err := source.Load(root, "")
 	if err != nil {
