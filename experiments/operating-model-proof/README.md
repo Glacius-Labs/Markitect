@@ -1,6 +1,6 @@
 # Operating-model proof driver
 
-Protocol v1 preserves historical C5 FAIL and all prior NOT RUN statuses. Protocol v2 freezes the corrected separate recursive fixture and controlled C9 negative cases. Read [protocol-v1](protocol.md) or [protocol-v2](protocol-v2.md) before creating a run.
+Protocol v1 preserves historical C5 FAIL and all prior NOT RUN statuses. Protocol v2 freezes the corrected separate recursive fixture and controlled C9 negative cases. Protocol v3 adds the exact public unknown-ontology fixture for C3 and corrects the C9 staged-cohort order. Read [protocol-v1](protocol.md), [protocol-v2](protocol-v2.md), and [protocol-v3](protocol-v3.md) before creating a run.
 
 The staged Python driver calls the Markitect controller CLI. It never creates agent output. Run propose, execute, reviewed apply and verify as separate invocations. Use a fresh private clone of the public fixture and unique external RecordStore, private-log and staging paths for each run.
 
