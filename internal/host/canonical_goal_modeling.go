@@ -3,8 +3,6 @@ package host
 import (
 	"bytes"
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -74,6 +72,8 @@ type GoalModelingOptions struct {
 // only that the supplied Definitions satisfy the selected schemas and Core's
 // typed reference rules. The result is never adopted or written to disk.
 type GoalModelingResult struct {
+	Summary                        string            `json:"summary,omitempty"`
+	CandidateJSON                  string            `json:"candidateJson,omitempty"`
 	Status                         string            `json:"status"`
 	GoalDigest                     string            `json:"goalDigest"`
 	CatalogDigest                  string            `json:"catalogDigest"`
@@ -153,14 +153,14 @@ func RecommendGoalModules(ctx context.Context, input GoalModelingInput, config a
 		result.Uncertainty = append([]string(nil), run.Response.Uncertainty...)
 		return result, nil
 	}
-	if len(run.Response.Uncertainty) == 0 {
+	if !hasGoalUncertainty(run.Response.Uncertainty) {
 		return result, errors.New("goal recommendations must include explicit runner uncertainty")
 	}
 	var wire goalRecommendationOutput
 	if err := strictGoalJSON(run.Response.CandidateJSON, &wire); err != nil {
 		return result, fmt.Errorf("decode goal recommendations: %w", err)
 	}
-	if len(wire.Recommendations) > len(entries) || len(wire.Uncertainty) == 0 {
+	if len(wire.Recommendations) > len(entries) || !hasGoalUncertainty(wire.Uncertainty) || !hasGoalUncertainty(run.Response.Uncertainty) {
 		return result, errors.New("goal recommendation output exceeds the supplied catalog or omits uncertainty")
 	}
 	byID := make(map[string]goalCatalogEntry, len(entries))
@@ -173,7 +173,7 @@ func RecommendGoalModules(ctx context.Context, input GoalModelingInput, config a
 		if !ok || seen[recommendation.ID] {
 			return result, fmt.Errorf("goal recommendation names an unknown or repeated supplied Module ID %q", recommendation.ID)
 		}
-		if strings.TrimSpace(recommendation.Basis) == "" || len(recommendation.Uncertainty) == 0 {
+		if strings.TrimSpace(recommendation.Basis) == "" || !hasGoalUncertainty(recommendation.Uncertainty) {
 			return result, fmt.Errorf("goal recommendation %q must include a basis and uncertainty", recommendation.ID)
 		}
 		seen[recommendation.ID] = true
@@ -304,17 +304,19 @@ func ProposeGoalModel(ctx context.Context, input GoalModelingInput, prior GoalMo
 		result.Uncertainty = append([]string(nil), run.Response.Uncertainty...)
 		return result, nil
 	}
-	if len(run.Response.Uncertainty) == 0 {
+	if !hasGoalUncertainty(run.Response.Uncertainty) {
 		return result, errors.New("goal modeling proposal must include explicit runner uncertainty")
 	}
-	definitions, candidateDigest, uncertainties, err := decodeGoalDefinitions(run.Response.CandidateJSON)
+	definitions, summary, candidateDigest, uncertainties, err := decodeGoalDefinitions(run.Response.CandidateJSON)
 	if err != nil {
 		return result, err
 	}
-	if len(uncertainties) == 0 {
+	if !hasGoalUncertainty(uncertainties) {
 		return result, errors.New("goal modeling candidate must include explicit proposal uncertainty")
 	}
 	result.CandidateDigest = candidateDigest
+	result.Summary = summary
+	result.CandidateJSON = string(append([]byte(nil), run.Response.CandidateJSON...))
 	result.Uncertainty = append(append([]string(nil), run.Response.Uncertainty...), uncertainties...)
 	model, diagnostics := core.Compile(activation.Schemas, definitions, "goal/"+strings.TrimPrefix(goalDigest, "sha256:"))
 	result.Diagnostics = append([]core.Diagnostic(nil), diagnostics...)
@@ -333,32 +335,44 @@ type goalModelOutput struct {
 	Uncertainty []string          `json:"uncertainty"`
 }
 
-func decodeGoalDefinitions(data []byte) ([]core.Definition, string, []string, error) {
+func decodeGoalDefinitions(data []byte) ([]core.Definition, string, string, []string, error) {
 	var output goalModelOutput
 	if err := strictGoalJSON(data, &output); err != nil {
-		return nil, "", nil, fmt.Errorf("decode goal modeling candidate: %w", err)
+		return nil, "", "", nil, fmt.Errorf("decode goal modeling candidate: %w", err)
 	}
 	if len(output.Definitions) == 0 || len(output.Definitions) > core.MaxDefinitions || strings.TrimSpace(output.Summary) == "" {
-		return nil, "", nil, errors.New("goal modeling output must include Definitions and a summary")
+		return nil, "", "", nil, errors.New("goal modeling output must include Definitions and a summary")
 	}
 	definitions := make([]core.Definition, 0, len(output.Definitions))
 	for i, raw := range output.Definitions {
 		path := fmt.Sprintf("goal-proposal/definition-%06d.yaml", i+1)
 		definition, err := canonical.DecodeDefinition(path, raw)
 		if err != nil {
-			return nil, "", nil, fmt.Errorf("decode proposed Definition %d: %w", i+1, err)
+			return nil, "", "", nil, fmt.Errorf("decode proposed Definition %d: %w", i+1, err)
 		}
 		definitions = append(definitions, definition)
 	}
-	digest := digestBytes(data)
-	return definitions, digest, append([]string(nil), output.Uncertainty...), nil
+	digest := fileDigestBytes(data)
+	return definitions, output.Summary, digest, append([]string(nil), output.Uncertainty...), nil
+}
+
+func hasGoalUncertainty(values []string) bool {
+	if len(values) == 0 {
+		return false
+	}
+	for _, value := range values {
+		if strings.TrimSpace(value) == "" {
+			return false
+		}
+	}
+	return true
 }
 
 func strictGoalJSON(data []byte, dst any) error {
 	if len(data) == 0 || len(data) > 8<<20 {
 		return errors.New("JSON is empty or exceeds the 8 MiB goal-modeling bound")
 	}
-	if err := rejectGoalDuplicateKeys(data); err != nil {
+	if err := rejectDuplicateJSONKeys(data); err != nil {
 		return err
 	}
 	decoder := json.NewDecoder(bytes.NewReader(data))
@@ -367,63 +381,6 @@ func strictGoalJSON(data []byte, dst any) error {
 		return err
 	}
 	if err := decoder.Decode(new(any)); !errors.Is(err, io.EOF) {
-		return errors.New("JSON contains trailing data")
-	}
-	return nil
-}
-
-func rejectGoalDuplicateKeys(data []byte) error {
-	decoder := json.NewDecoder(bytes.NewReader(data))
-	var scan func() error
-	scan = func() error {
-		token, err := decoder.Token()
-		if err != nil {
-			return err
-		}
-		delim, ok := token.(json.Delim)
-		if !ok {
-			return nil
-		}
-		switch delim {
-		case '{':
-			seen := map[string]bool{}
-			for decoder.More() {
-				keyToken, err := decoder.Token()
-				if err != nil {
-					return err
-				}
-				key, ok := keyToken.(string)
-				if !ok || seen[key] {
-					return fmt.Errorf("JSON object has invalid or duplicate key %q", key)
-				}
-				seen[key] = true
-				if err := scan(); err != nil {
-					return err
-				}
-			}
-			end, err := decoder.Token()
-			if err != nil || end != json.Delim('}') {
-				return errors.New("JSON object is incomplete")
-			}
-		case '[':
-			for decoder.More() {
-				if err := scan(); err != nil {
-					return err
-				}
-			}
-			end, err := decoder.Token()
-			if err != nil || end != json.Delim(']') {
-				return errors.New("JSON array is incomplete")
-			}
-		default:
-			return errors.New("JSON has an invalid delimiter")
-		}
-		return nil
-	}
-	if err := scan(); err != nil {
-		return fmt.Errorf("invalid JSON: %w", err)
-	}
-	if _, err := decoder.Token(); !errors.Is(err, io.EOF) {
 		return errors.New("JSON contains trailing data")
 	}
 	return nil
@@ -439,7 +396,7 @@ func prepareGoalCatalog(input GoalModelingInput) (string, string, []goalCatalogE
 	if len(input.DecisionReferenceClaim) > 4096 || !utf8.ValidString(input.DecisionReferenceClaim) {
 		return "", "", nil, errors.New("decision reference claim must be valid UTF-8 text of at most 4096 bytes")
 	}
-	goalDigest := digestBytes([]byte(input.Goal))
+	goalDigest := fileDigestBytes([]byte(input.Goal))
 	entries := make([]goalCatalogEntry, 0, len(input.Packages))
 	seen := map[string]bool{}
 	totalBytes := len(input.Goal)
@@ -529,14 +486,5 @@ func recommendationDigest(values []GoalModuleRecommendation) (string, error) {
 }
 
 func digestJSON(value any) (string, error) {
-	data, err := json.Marshal(value)
-	if err != nil {
-		return "", err
-	}
-	return digestBytes(data), nil
-}
-
-func digestBytes(data []byte) string {
-	digest := sha256.Sum256(data)
-	return "sha256:" + hex.EncodeToString(digest[:])
+	return digestCanonicalValue(value)
 }
