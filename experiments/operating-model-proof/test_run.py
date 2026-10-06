@@ -4,6 +4,8 @@ import unittest
 from pathlib import Path
 
 from run import (
+    CODEX_RUNNER_DIGEST,
+    PROTOCOL,
     ProofError,
     assurance_node_count,
     new_attempt_paths,
@@ -21,6 +23,11 @@ from run import (
 
 
 class EvidenceSafetyTests(unittest.TestCase):
+    def test_current_protocol_freezes_actual_adapter_bytes(self):
+        root = Path(__file__).resolve().parents[2]
+        self.assertEqual(PROTOCOL, "operating-model-proof/v6")
+        self.assertEqual(sha((root / "internal/tooling/codexrunner/runner.py").read_bytes()), CODEX_RUNNER_DIGEST)
+
     def test_partial_cli_report_null_collections_are_empty(self):
         proposed = proposal_metrics({
             "status": "blocked",

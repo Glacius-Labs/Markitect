@@ -21,8 +21,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-PROTOCOL = "operating-model-proof/v5"
-CODEX_RUNNER_DIGEST = "sha256:7806fabc774e2127ea29977009745c49d8043ffbcba63390e3d790b82d164d57"
+PROTOCOL = "operating-model-proof/v6"
+CODEX_RUNNER_DIGEST = "sha256:d5af7ba511bf0bae7ed1aaca28bfbff4aefd36616cc6947d08de149e9ed363e9"
 FULL_SHA = re.compile(r"^(?:[0-9a-f]{40}|[0-9a-f]{64})$")
 ROOT = Path(__file__).resolve().parents[2]
 

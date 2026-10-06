@@ -1,6 +1,6 @@
 # Operating-model proof driver
 
-Protocol v1 preserves historical C5 FAIL and prior NOT RUN statuses. Protocols v2-v4 freeze fixture, source, and earlier runner-contract evidence. Protocol v5 separates Module-authorized new output paths from immutable evidence references, requires complete verifier references, and fixes assurance-count reporting. Read [protocol-v1](protocol.md), [protocol-v2](protocol-v2.md), [protocol-v3](protocol-v3.md), [protocol-v4](protocol-v4.md), and [protocol-v5](protocol-v5.md) before creating a run.
+Protocol v1 preserves historical C5 FAIL and prior NOT RUN statuses. Protocols v2-v4 freeze fixture, source, and earlier runner-contract evidence. Protocol v5 separates Module-authorized new output paths from immutable evidence references, requires complete verifier references, and fixes assurance-count reporting. Read [protocol-v1](protocol.md), [protocol-v2](protocol-v2.md), [protocol-v3](protocol-v3.md), [protocol-v4](protocol-v4.md), and [protocol-v5](protocol-v5.md) before creating a run. [Protocol v6](protocol-v6.md) pins the new prompt-delivery instrumentation without rescoring earlier trials.
 
 The staged Python driver calls the Markitect controller CLI. It never creates agent output. Run propose, execute, reviewed apply and verify as separate invocations. Use a fresh private clone of the public fixture and unique external RecordStore, private-log and staging paths for each run.
 
@@ -12,7 +12,7 @@ Example shape:
 
 Repeat with execute and the same source/runtime bindings. Review the external reviewed-run JSON and its digest, then call apply with --write, --reviewed-run and the exact --expect digest. After apply, call verify with --base set to the canonical source revision and --revision set to the immutable evidence revision, plus --write.
 
-For protocol-v2 C9 negative controls, first create the run binding with a clean-fixture propose. Use the normal canonical candidate plan/apply CLI actions separately for the frozen incorrect parent bytes; preserve their complete output only in external staging and do not hand-edit their emitted records. Then call this driver’s verify action with the source and object-only evidence revisions. The v2 protocol classifies the wrong parent bytes as controlled non-AI materialization, never as an Executor result.
+For protocol-v2 C9 negative controls, first create the run binding with a clean-fixture propose. Use the normal canonical candidate plan/apply CLI actions separately for the frozen incorrect parent bytes; preserve their complete output only in external staging and do not hand-edit their emitted records. Then call this driverâ€™s verify action with the source and object-only evidence revisions. The v2 protocol classifies the wrong parent bytes as controlled non-AI materialization, never as an Executor result.
 
 The driver stores unique raw captures outside the repository. Each retry gets new exclusive stdout/stderr and reviewed-run paths so prior failures remain available. The public event records exact action/flags with local paths replaced by logical placeholders, input/output digests, exits, elapsed time, scopes, record IDs and usage only when returned.
 
