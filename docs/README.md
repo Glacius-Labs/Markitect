@@ -9,6 +9,7 @@
 | [Operations](operations.md) | Development, verification, rendering, and release operations |
 | [Refinement decisions](refinement.md) | Product principles and deferred design choices |
 | [Implementation plan](implementation-plan.md) | The Markitect roadmap |
+| [Government of Coding Agents assessment](design/government-of-coding-agents-assessment.md) | Deferred product decision and design proposal after the Architect foundation checkpoint; not implemented behavior |
 | [Measurement](measurement.md) | Correctness scenarios and bounded measurements |
 | [Core authoring assessment](authoring-assessment.md) | A dated exercise using the synthetic product example |
 | [Documentation authoring pilot](authoring-pilot.md) | An incomplete two-run exercise, its limits, and fixed-source core measurements |
