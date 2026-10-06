@@ -1,0 +1,137 @@
+{
+  "protocol": "operating-model-proof/c8-auditall-readonly/v1",
+  "status": "invalid-preflight-no-controller-call",
+  "trial": "c8-orders-auditall-control-01",
+  "runId": "c8-orders-auditall-readonly-01",
+  "action": "controller-propose",
+  "attemptNumber": 1,
+  "command": [
+    "C:\\Python313\\python.exe",
+    "experiments/operating-model-proof/run.py",
+    "propose",
+    "--run-id",
+    "c8-orders-auditall-readonly-01",
+    "--fixture",
+    "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-operating-model-20261006-c8-orders-drift-fixture-02",
+    "--cli",
+    "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-final-gates-4465186-3b6ebea04111430cbe2ad670ba6621c0\\markitect-current.exe",
+    "--config",
+    "examples/operating-model/canonical-documentation-aligned.yaml",
+    "--runtime",
+    "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-operating-model-20261006-c8-orders-auditall-trial-01\\runtime.json",
+    "--build-receipt",
+    "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-final-gates-4465186-3b6ebea04111430cbe2ad670ba6621c0\\build-receipt-v2.json",
+    "--external-root",
+    "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-operating-model-20261006-c8-orders-auditall-trial-01\\staging",
+    "--base",
+    "86c46fd2a0da53dbcac407569a487f96e8198c04",
+    "--revision",
+    "606c1d6f243ee351f04ff0e20ee1685ce5b7c780"
+  ],
+  "runtimeSha256": "5db63e2eb8270db647ff2246266eaf23f75f8fb81e1d7957dfeedd1a5d0b662a",
+  "freezeSha256": "49cb0dad7663bd93c9249ebbfd7b904ab05f6934a54997b3d1b959919681f594",
+  "toolReportedText": "executor must use the repository Codex adapter",
+  "stdout": {
+    "path": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-operating-model-20261006-c8-orders-auditall-trial-01\\operator-attempt-01.stdout",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "stderr": {
+    "path": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-operating-model-20261006-c8-orders-auditall-trial-01\\operator-attempt-01.stderr",
+    "bytes": 47,
+    "sha256": "6f0571222a08fec748b9e0d0eb67f092f3e64da3d8193dbec0a1cec30a0676df",
+    "captureNote": "Exact displayed error preserved; driver source identifies ProofError output channel as stderr."
+  },
+  "exitCode": 2,
+  "exitCodeBasis": "Source-derived: run.py catches ProofError and exits 2; output exactly matches its adapter-path validation message.",
+  "failurePhase": "run.py inspect_runtime validation before CLI version/action subprocess",
+  "cliInvoked": false,
+  "controllerActionInvoked": false,
+  "providerInvoked": false,
+  "pythonVersionProbeMayHaveRun": true,
+  "sourceCodeBasis": "Source-derived from run.py: inspect_runtime validates the adapter path before CLI version/action subprocesses; exact emitted ProofError is caught in __main__, printed to stderr, then exits 2. The runtime inspection may run Python --version only; it invokes no controller or Codex provider.",
+  "proposalMetrics": null,
+  "observedPaths": null,
+  "interpretation": "No auditAll observation was produced. This is a harness adapter-path preflight failure, not a C8 capability result. No altered-binding retry was made.",
+  "fixtureAfter": {
+    "head": "606c1d6f243ee351f04ff0e20ee1685ce5b7c780",
+    "tree": "bd974f076ea51d28b1fa1b96addf62ff37a3da28",
+    "status": null,
+    "indexSha256": "1e49a2fe3a21355fd877617a1cbed41c8a9b0eba8de337dace728b99969c6234",
+    "targets": [
+      {
+        "path": "src/Orders/OrderRules.cs",
+        "bytes": 474,
+        "sha256": "5116feef3333a0b22203a6b0f127edaf9249c216b3a6d5e618017dd7b137c69b",
+        "exists": true
+      },
+      {
+        "path": "src/Billing/BillingQuery.cs",
+        "bytes": 684,
+        "sha256": "e115deb66b51e651d97d6323ff31648e256b6fb64e9ac546e78474a0472ac4dc",
+        "exists": true
+      },
+      {
+        "path": "docs/represented/index.md",
+        "bytes": 6592,
+        "sha256": "9d126d792f567a173988f3474563bfb46f79e9ff321056a4ee252a0635874ece",
+        "exists": true
+      }
+    ]
+  },
+  "ledgerAfter": {
+    "head": "sha256:aa16eda8bfa59b785f46edec864de1c118fd6dbafb69ffe36a7a3cd7fb9b049b",
+    "eventCount": 7,
+    "fileCount": 8,
+    "manifest": [
+      {
+        "path": "store.json",
+        "bytes": 207,
+        "sha256": "014c546c61071a061117df67199bbea3aaed90e6d54235436aaaa1fcedbdde1b"
+      },
+      {
+        "path": "events/00000000000000000001-39bba77860544b8d4828269aa20c581f2a4c2d6ff07121dc4d225f6177e242b7.json",
+        "bytes": 1675,
+        "sha256": "30c83e4d85ae86c232e9e70cad254bc73889dbf08aed4f479648b4881c9b7b05"
+      },
+      {
+        "path": "events/00000000000000000002-5a07e14f772785c5232255a15731da065f4c7b17c64909c3657aba2505561964.json",
+        "bytes": 1663,
+        "sha256": "b5b4a365447fc5da423d548e9cda1d496ab9eea2397560c5f37f7407f499a562"
+      },
+      {
+        "path": "events/00000000000000000003-815df38faa23ead40aa8be808d81b55172011b6b94e026c2b768c4affb7d8fc5.json",
+        "bytes": 2340,
+        "sha256": "dd7641ec0acfea7d26da0e26f1beb9656930253e3ebf2f0443a53306e041a057"
+      },
+      {
+        "path": "events/00000000000000000004-71b817a8ed465fe78ddbddc7bc59ee3b4ef8ca5b9c6e965da12410c1b682e925.json",
+        "bytes": 560,
+        "sha256": "8167970d3a6b1c18fac973cfd76cccec328c04ea45d5b71012a62faa268be703"
+      },
+      {
+        "path": "events/00000000000000000005-112f482e8d50aab708d622ef78491717a2391465df5d7b0bf2a7cbb648bc182c.json",
+        "bytes": 1844,
+        "sha256": "976ca8f72c1609d078ab60250143aa637f95b92854f40bcc9c7803d6fee54a44"
+      },
+      {
+        "path": "events/00000000000000000006-fbae197da05e3cc4d3403258dd6e8c1b7f114c63099aa8d7717a30c33a222c50.json",
+        "bytes": 1664,
+        "sha256": "2580f9be89d9119d39c16ed2848859979357e9c677fd1b295ffc8f82819f2854"
+      },
+      {
+        "path": "events/00000000000000000007-aa16eda8bfa59b785f46edec864de1c118fd6dbafb69ffe36a7a3cd7fb9b049b.json",
+        "bytes": 1663,
+        "sha256": "f3accc5a4f1647439c0a57017dd7e1176cf5baf55b27477247760504c0801de7"
+      }
+    ],
+    "matchesFrozenManifest": true
+  },
+  "sourceCheckoutAfter": {
+    "head": "cf34c6ab411a4799d8f474e72ec45bad59dd1808",
+    "status": null,
+    "runnerSha256": "b632fd3b7b5766183fcdb8bfccb3de9ad81053fda5f6acf35bac288b0b21a594"
+  },
+  "externalStageStillAbsent": true,
+  "priorAuditAllFalseMissPreserved": "experiments/operating-model-proof/runs/c8-orders-owned-drift-control-02 remains unchanged; its auditAll=false discovery miss stands."
+}
