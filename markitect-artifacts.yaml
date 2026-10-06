@@ -697,6 +697,140 @@ spec:
       owner: operating-model-proof-evidence
     - path: experiments/operating-model-proof/protocol-v4.md
       owner: operating-model-proof-evidence
+    - path: examples/capability-ontologies/canonical.yaml
+      owner: canonical-ontology-examples
+    - path: examples/capability-ontologies/delivery/module.yaml
+      owner: canonical-ontology-examples
+    - path: examples/capability-ontologies/filing-review/module.yaml
+      owner: canonical-ontology-examples
+    - path: examples/capability-ontologies/results/c1-cli-buildreceipt-216e101.json
+      owner: canonical-ontology-cli-evidence
+    - path: examples/capability-ontologies/results/c1-cli-evidence.json
+      owner: canonical-ontology-cli-evidence
+    - path: examples/capability-ontologies/results/c1-cli-proof.md
+      owner: canonical-ontology-cli-evidence
+    - path: examples/capability-ontologies/results/c1-cli-runs/combined-positive-collector-error2.bundle
+      owner: canonical-ontology-cli-evidence
+    - path: examples/capability-ontologies/results/c1-cli-runs/combined-positive-collector-error2.stderr.log
+      owner: canonical-ontology-cli-evidence
+    - path: examples/capability-ontologies/results/c1-cli-runs/combined-positive-collector-error2.stdout.log
+      owner: canonical-ontology-cli-evidence
+    - path: examples/capability-ontologies/results/c1-cli-runs/combined-positive-original-replay.bundle
+      owner: canonical-ontology-cli-evidence
+    - path: examples/capability-ontologies/results/c1-cli-runs/combined-positive-original-replay.receipt.json
+      owner: canonical-ontology-cli-evidence
+    - path: examples/capability-ontologies/results/c1-cli-runs/combined-positive-original-replay.stderr.log
+      owner: canonical-ontology-cli-evidence
+    - path: examples/capability-ontologies/results/c1-cli-runs/combined-positive-original-replay.stdout.log
+      owner: canonical-ontology-cli-evidence
+    - path: examples/capability-ontologies/results/c1-cli-runs/combined-positive.bundle
+      owner: canonical-ontology-cli-evidence
+    - path: examples/capability-ontologies/results/c1-cli-runs/combined-positive.receipt.json
+      owner: canonical-ontology-cli-evidence
+    - path: examples/capability-ontologies/results/c1-cli-runs/combined-positive.stderr.log
+      owner: canonical-ontology-cli-evidence
+    - path: examples/capability-ontologies/results/c1-cli-runs/combined-positive.stdout.log
+      owner: canonical-ontology-cli-evidence
+    - path: examples/capability-ontologies/results/c1-cli-runs/combined-reordered.bundle
+      owner: canonical-ontology-cli-evidence
+    - path: examples/capability-ontologies/results/c1-cli-runs/combined-reordered.receipt.json
+      owner: canonical-ontology-cli-evidence
+    - path: examples/capability-ontologies/results/c1-cli-runs/combined-reordered.stderr.log
+      owner: canonical-ontology-cli-evidence
+    - path: examples/capability-ontologies/results/c1-cli-runs/combined-reordered.stdout.log
+      owner: canonical-ontology-cli-evidence
+    - path: examples/capability-ontologies/results/c1-cli-runs/negative-cardinality-modules-preview-unpinned.stderr.log
+      owner: canonical-ontology-cli-evidence
+    - path: examples/capability-ontologies/results/c1-cli-runs/negative-cardinality-modules-preview-unpinned.stdout.log
+      owner: canonical-ontology-cli-evidence
+    - path: examples/capability-ontologies/results/c1-cli-runs/negative-cardinality-modules-preview.stderr.log
+      owner: canonical-ontology-cli-evidence
+    - path: examples/capability-ontologies/results/c1-cli-runs/negative-cardinality-modules-preview.stdout.log
+      owner: canonical-ontology-cli-evidence
+    - path: examples/capability-ontologies/results/c1-cli-runs/negative-cardinality.bundle
+      owner: canonical-ontology-cli-evidence
+    - path: examples/capability-ontologies/results/c1-cli-runs/negative-cardinality.receipt.json
+      owner: canonical-ontology-cli-evidence
+    - path: examples/capability-ontologies/results/c1-cli-runs/negative-cardinality.stderr.log
+      owner: canonical-ontology-cli-evidence
+    - path: examples/capability-ontologies/results/c1-cli-runs/negative-cardinality.stdout.log
+      owner: canonical-ontology-cli-evidence
+    - path: examples/capability-ontologies/results/c1-cli-runs/negative-kind-reference.bundle
+      owner: canonical-ontology-cli-evidence
+    - path: examples/capability-ontologies/results/c1-cli-runs/negative-kind-reference.receipt.json
+      owner: canonical-ontology-cli-evidence
+    - path: examples/capability-ontologies/results/c1-cli-runs/negative-kind-reference.stderr.log
+      owner: canonical-ontology-cli-evidence
+    - path: examples/capability-ontologies/results/c1-cli-runs/negative-kind-reference.stdout.log
+      owner: canonical-ontology-cli-evidence
+    - path: examples/capability-ontologies/results/c1-cli-runs/negative-unresolved.bundle
+      owner: canonical-ontology-cli-evidence
+    - path: examples/capability-ontologies/results/c1-cli-runs/negative-unresolved.receipt.json
+      owner: canonical-ontology-cli-evidence
+    - path: examples/capability-ontologies/results/c1-cli-runs/negative-unresolved.stderr.log
+      owner: canonical-ontology-cli-evidence
+    - path: examples/capability-ontologies/results/c1-cli-runs/negative-unresolved.stdout.log
+      owner: canonical-ontology-cli-evidence
+    - path: examples/capability-ontologies/results/c1-cli-runs/negative-wrong-kind.bundle
+      owner: canonical-ontology-cli-evidence
+    - path: examples/capability-ontologies/results/c1-cli-runs/negative-wrong-kind.receipt.json
+      owner: canonical-ontology-cli-evidence
+    - path: examples/capability-ontologies/results/c1-cli-runs/negative-wrong-kind.stderr.log
+      owner: canonical-ontology-cli-evidence
+    - path: examples/capability-ontologies/results/c1-cli-runs/negative-wrong-kind.stdout.log
+      owner: canonical-ontology-cli-evidence
+    - path: examples/capability-ontologies/results/c1-cli-runs/single-architecture.bundle
+      owner: canonical-ontology-cli-evidence
+    - path: examples/capability-ontologies/results/c1-cli-runs/single-architecture.receipt.json
+      owner: canonical-ontology-cli-evidence
+    - path: examples/capability-ontologies/results/c1-cli-runs/single-architecture.stderr.log
+      owner: canonical-ontology-cli-evidence
+    - path: examples/capability-ontologies/results/c1-cli-runs/single-architecture.stdout.log
+      owner: canonical-ontology-cli-evidence
+    - path: examples/capability-ontologies/results/c1-cli-runs/single-card-combat.bundle
+      owner: canonical-ontology-cli-evidence
+    - path: examples/capability-ontologies/results/c1-cli-runs/single-card-combat.receipt.json
+      owner: canonical-ontology-cli-evidence
+    - path: examples/capability-ontologies/results/c1-cli-runs/single-card-combat.stderr.log
+      owner: canonical-ontology-cli-evidence
+    - path: examples/capability-ontologies/results/c1-cli-runs/single-card-combat.stdout.log
+      owner: canonical-ontology-cli-evidence
+    - path: examples/capability-ontologies/results/c1-cli-runs/single-delivery.bundle
+      owner: canonical-ontology-cli-evidence
+    - path: examples/capability-ontologies/results/c1-cli-runs/single-delivery.receipt.json
+      owner: canonical-ontology-cli-evidence
+    - path: examples/capability-ontologies/results/c1-cli-runs/single-delivery.stderr.log
+      owner: canonical-ontology-cli-evidence
+    - path: examples/capability-ontologies/results/c1-cli-runs/single-delivery.stdout.log
+      owner: canonical-ontology-cli-evidence
+    - path: examples/capability-ontologies/results/c1-cli-runs/single-filing-review.bundle
+      owner: canonical-ontology-cli-evidence
+    - path: examples/capability-ontologies/results/c1-cli-runs/single-filing-review.receipt.json
+      owner: canonical-ontology-cli-evidence
+    - path: examples/capability-ontologies/results/c1-cli-runs/single-filing-review.stderr.log
+      owner: canonical-ontology-cli-evidence
+    - path: examples/capability-ontologies/results/c1-cli-runs/single-filing-review.stdout.log
+      owner: canonical-ontology-cli-evidence
+    - path: examples/capability-ontologies/results/c1-cli-runs/single-responsibility.bundle
+      owner: canonical-ontology-cli-evidence
+    - path: examples/capability-ontologies/results/c1-cli-runs/single-responsibility.receipt.json
+      owner: canonical-ontology-cli-evidence
+    - path: examples/capability-ontologies/results/c1-cli-runs/single-responsibility.stderr.log
+      owner: canonical-ontology-cli-evidence
+    - path: examples/capability-ontologies/results/c1-cli-runs/single-responsibility.stdout.log
+      owner: canonical-ontology-cli-evidence
+    - path: examples/capability-ontologies/results/c1-modules-preview-3308e7c.receipt.json
+      owner: canonical-ontology-cli-evidence
+    - path: examples/capability-ontologies/results/c1-modules-preview-3308e7c.stderr.log
+      owner: canonical-ontology-cli-evidence
+    - path: examples/capability-ontologies/results/c1-modules-preview-3308e7c.stdout.log
+      owner: canonical-ontology-cli-evidence
+    - path: examples/capability-ontologies/software-architecture/module.yaml
+      owner: canonical-ontology-examples
+    - path: examples/capability-ontologies/trading-card-combat/module.yaml
+      owner: canonical-ontology-examples
+    - path: examples/capability-ontologies/workflow-responsibility/module.yaml
+      owner: canonical-ontology-examples
     - path: experiments/operating-model-proof/protocol-v5.md
       owner: operating-model-proof-evidence
     - path: experiments/operating-model-proof/runs/c3-absent-02/events/assessment-structural-refusal.json
