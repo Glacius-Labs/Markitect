@@ -153,12 +153,27 @@ func TestAnchoredAtomicWriteContainsJunctionSwapAtPreOpenBoundary(t *testing.T) 
 	}
 	defer anchored.Close()
 	original := filepath.Join(root, "target-original")
+	var hookReached, injected bool
+	var injectionErr error
 	err = anchored.atomicWriteWithHook("target/escaped.txt", []byte("must not write\n"), 0644, func() error {
+		hookReached = true
 		if err := os.Rename(parent, original); err != nil {
+			injectionErr = err
 			return err
 		}
-		return makeWindowsJunction(parent, outside)
+		if err := makeWindowsJunction(parent, outside); err != nil {
+			injectionErr = err
+			return err
+		}
+		injected = true
+		return nil
 	})
+	if !hookReached {
+		t.Fatalf("pre-open race hook did not execute: %v", err)
+	}
+	if !injected {
+		t.Skipf("directory junction swap could not be injected: %v", injectionErr)
+	}
 	if err == nil {
 		t.Fatal("rooted OpenFile accepted a junction swapped after path and root identity validation")
 	}
@@ -200,12 +215,27 @@ func TestAnchoredAtomicWriteDoesNotFollowInRootJunctionAtPreOpenBoundary(t *test
 	}
 	defer anchored.Close()
 	original := filepath.Join(root, "target-original")
+	var hookReached, injected bool
+	var injectionErr error
 	err = anchored.atomicWriteWithHook("target/escaped.txt", []byte("must not write\n"), 0644, func() error {
+		hookReached = true
 		if err := os.Rename(parent, original); err != nil {
+			injectionErr = err
 			return err
 		}
-		return makeWindowsJunction(parent, sibling)
+		if err := makeWindowsJunction(parent, sibling); err != nil {
+			injectionErr = err
+			return err
+		}
+		injected = true
+		return nil
 	})
+	if !hookReached {
+		t.Fatalf("pre-open race hook did not execute: %v", err)
+	}
+	if !injected {
+		t.Skipf("in-root junction swap could not be injected: %v", injectionErr)
+	}
 	if err == nil {
 		t.Fatal("rooted writer accepted a parent identity change during temporary creation")
 	}
