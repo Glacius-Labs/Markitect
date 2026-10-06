@@ -1,0 +1,162 @@
+{
+  "schema": "markitect.c11-v5-proposal-assessment/v1",
+  "runId": "c11-v5-replacement",
+  "recordedAtUtc": "2026-10-06T08:58:27Z",
+  "classification": "DETERMINISTIC_PROPOSAL_PLANNED",
+  "protocol": "operating-model-proof/v8",
+  "action": "propose",
+  "sourceBinding": {
+    "harnessRoot": "C:\\Users\\Consiliari\\.codex\\worktrees\\canonical-assurance-preflight\\Markitect",
+    "harnessCommit": "8afa317477b9cddcce45273eb1e0d10660496ae8",
+    "binarySourceCommit": "4465186738d3980a0db2eb2c529683410fc9737f",
+    "fixtureRoot": "C:\\Users\\Consiliari\\.codex\\worktrees\\c11-module-replacement\\Markitect\\runs\\c11only\\v5\\replacement\\repo",
+    "fixtureCommit": "8d10fe232d24638fb7294580850bbf22c76e06dc",
+    "gitIdentity": {
+      "root": "C:\\Users\\Consiliari\\.codex\\worktrees\\c11-module-replacement\\Markitect\\runs\\c11only\\v5\\replacement\\repo",
+      "gitDir": "C:\\Users\\Consiliari\\.codex\\worktrees\\c11-module-replacement\\Markitect\\runs\\c11only\\v5\\replacement\\repo\\.git",
+      "commonDir": "C:\\Users\\Consiliari\\.codex\\worktrees\\c11-module-replacement\\Markitect\\runs\\c11only\\v5\\replacement\\repo\\.git",
+      "objectFormat": "sha1",
+      "sourceScopeDigest": "fef1f251d55109f9d61d7eeacdcf00994651dbffe5dd077a3beaaa9003ebcc3e"
+    },
+    "fixtureOriginLocator": "C:/Users/Consiliari/.codex/worktrees/c11-module-replacement/Markitect/runs\\c11only\\replacement\\repo",
+    "fixtureOriginInterpretation": "Exact local remote locator inherited from the v4 seed, informational only. The selected acquisition identity is sourceScope.repository.Root + fullCommit. No network/remote read occurred."
+  },
+  "selectedSourceConfig": {
+    "path": "examples/module-replacement/replacement.yaml",
+    "sha256": "0C7AE6B6EC47E0B6919E2BFAAA17161F754D9C017086D5C4B1320FA23E71EAE8",
+    "declaredAssuranceCheck": {
+      "name": "c11-workflow-markdown-replacement",
+      "run": [
+        "go",
+        "run",
+        "./runs/c11checktools/replacement"
+      ]
+    },
+    "runtimeScopeId": "workflow-markdown",
+    "fixedCheckInputs": [
+      {
+        "path": "runs/c11checktools/replacement/main.go",
+        "bytes": 5086,
+        "sha256": "C9D935DC972A7F99AAC6631979F20C2806F5D2C2DCFF511387EA0CA105C19E7B"
+      },
+      {
+        "path": "examples/module-replacement/modules/markdown-reference/module.yaml",
+        "bytes": 733,
+        "sha256": "3DDCB8FA6FB8D6E1E4297C26AC2BDEF049BDE387D931FF0887D562D2693861C4"
+      },
+      {
+        "path": "examples/module-replacement/replacement.yaml",
+        "bytes": 1894,
+        "sha256": "0C7AE6B6EC47E0B6919E2BFAAA17161F754D9C017086D5C4B1320FA23E71EAE8"
+      },
+      {
+        "path": "examples/canonical-workflow/modules/workflow/schema.yaml",
+        "bytes": 1799,
+        "sha256": "4D4D8546CF01C84E38747C66A5A50D676183593645200DEDBE7F1EA95057BB47"
+      },
+      {
+        "path": "examples/canonical-workflow/definitions/projection.workflow-markdown.yaml",
+        "bytes": 1358,
+        "sha256": "AA73590BE466FCD3A1BE5B6D00B9CE08670B84512BFE429F504769699E8D47D0"
+      },
+      {
+        "path": "examples/module-replacement/definitions/workflow.rule.yaml",
+        "bytes": 370,
+        "sha256": "DBD7787F42A780D8EE50133591FDC1B493F67633872034C7ED18019C7D211645"
+      },
+      {
+        "path": "examples/module-replacement/definitions/workflow.process.yaml",
+        "bytes": 816,
+        "sha256": "15266C867668569FAC2D3088F8D88A9351D85ABFE5232D12B7DFDEAF9E45BEC5"
+      },
+      {
+        "path": "examples/module-replacement/definitions/workflow.responsibility.yaml",
+        "bytes": 237,
+        "sha256": "EC843E6BC49EA692EB5B4BC963E8ED03F9DC420C930AEEA1BB370C8791E79A23"
+      },
+      {
+        "path": "examples/module-replacement/definitions/workflow.gate.yaml",
+        "bytes": 282,
+        "sha256": "5647326D9410885A01E6403FDD6338F096352F444D49D3C145FDDAC3E1BE3EFE"
+      },
+      {
+        "path": "examples/module-replacement/definitions/policy.rule-to-markdown.yaml",
+        "bytes": 576,
+        "sha256": "50957B507355D722535C3EB300269F7B4DDE4892624B215B8498E785FE60292C"
+      },
+      {
+        "path": "examples/module-replacement/definitions/policy.process-to-markdown.yaml",
+        "bytes": 585,
+        "sha256": "65258AC58570CC32E4156E6EFCF3B2B0D67C5E64D5E3BFD289E153DDB1CC7D2F"
+      },
+      {
+        "path": "examples/module-replacement/definitions/policy.responsibility-to-markdown.yaml",
+        "bytes": 606,
+        "sha256": "2144FC3C36D1440FA676495C4C0DCBD9FDBFC6E792193D264EEECDF6B63444B7"
+      },
+      {
+        "path": "examples/module-replacement/definitions/policy.gate-to-markdown.yaml",
+        "bytes": 576,
+        "sha256": "B943B1DBD9429121F1FB59EAA3AC2E56B69DF9FDD40E881228BF95CC157ABDBB"
+      }
+    ],
+    "checkExecuted": false
+  },
+  "module": {
+    "name": "markitect-markdown-reference",
+    "version": "1.0.0",
+    "digest": "sha256:a7029e5b3727206b998a6465b4d69af9312eacf152af17e0446a6f30ecd18a96"
+  },
+  "projectionId": "[\"markitect.foundation/v1\",\"Projection\",\"example\",\"workflow-markdown\"]",
+  "decision": "work",
+  "reasons": [
+    "initial-materialization"
+  ],
+  "proposalStatus": "planned",
+  "proposalDigest": "sha256:de58340a51b8e67e129cb8901a808c829e2c7a0689c971c2c90bb0f5e9aeb7b3",
+  "planDigest": "sha256:a79e23c431f81fe7ab99cc6a01997be8647eb9e45d4777b4a4ce980d0871f0da",
+  "requestDigest": "sha256:4a99952baf83c3e874cf42f9c20214b1743399353b88931cf700812dafa12a71",
+  "inputDigest": "sha256:e1975e6b13d759dc4b972cec8bc42440b92481044fc14e9a7e19248b2419c499",
+  "configDigest": "sha256:0467a0e61e8a68b554d8e27a892916c82b907597f4a28e018cb618ade7852bd1",
+  "modelDigest": "sha256:28c4b8778ae344abbc34196954d5ce2aa436a698599fdbe643aa1f4966b6c0c8",
+  "requestProjectionDigest": "sha256:3a361411fcd9ca80b81357b207bed3ea9e001f8223d8b7357853de55d89d563c",
+  "targetInventory": {
+    "entries": 0,
+    "missingPrefixes": [
+      "docs/represented/workflow.md"
+    ],
+    "ledgerHead": "",
+    "ledgerSelectionDigest": ""
+  },
+  "plannedOutputs": [
+    {
+      "path": "docs/represented/workflow.md/canonical-projection.md",
+      "mode": "100644",
+      "bytes": 10228,
+      "sha256": "417192b78fbdfd22b643e8c02091f46347819587cd02b68d0f73144415fddc71",
+      "materialized": false
+    }
+  ],
+  "unknownArtifacts": [],
+  "unobservedProjections": [],
+  "escalations": [],
+  "providerExecutorInvoked": false,
+  "independentVerifierInvoked": false,
+  "applyInvoked": false,
+  "verificationInvoked": false,
+  "ownerAcceptance": false,
+  "stdout": {
+    "path": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-c11-module-replacement-v10\\external\\replacement\\c11-v5-replacement\\propose-6e0b689c1b9f4cd99f1cb956fc429924.stdout.json",
+    "bytes": 39213,
+    "sha256": "058c2c7634fb528c55585ab14c0bfe80fa39d809f539be32e715ae99f2e69eac"
+  },
+  "stderr": {
+    "path": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-c11-module-replacement-v10\\external\\replacement\\c11-v5-replacement\\propose-6e0b689c1b9f4cd99f1cb956fc429924.stderr",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "recordStoreLeafAbsent": true,
+  "privateLogsLeafAbsent": true,
+  "fixtureWorkingTreeClean": true,
+  "limits": "Planned candidate bytes are actual deterministic proposal payloads, not materialized artifacts; no fixed assurance check ran during Propose."
+}
