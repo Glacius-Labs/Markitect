@@ -2,6 +2,8 @@ apiVersion: markitect.example.org/artifact-coverage/v1alpha1
 kind: ArtifactCoverage
 spec:
   roots:
+    - internal/host/cli/canonical_adoption_durable_test.go
+    - internal/host/canonical_adoption_store.go
     - internal/modules/markdownreference
     - examples/module-replacement
     - internal/host/canonical_markdown_reference.go
@@ -1215,3 +1217,61 @@ spec:
       owner: immutable-operating-model-proof-records
     - path: experiments/operating-model-proof/runs/gates-412only/shortscope-note.md
       owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c4-aligned-apply-control-freeze-01/control-plan.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c4-aligned-control-freeze-03/control-plan.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c4-aligned-control-freeze-03/fixture-manifest.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c4-aligned-preflight-layout-failure-01/binding.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c4-aligned-preflight-layout-failure-01/events.jsonl
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c4-aligned-preflight-layout-failure-01/events/propose-a8cc596e0b964e2e90006034528a6bc0.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c4-aligned-preflight-layout-failure-01/operator-note-correction-01.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c4-aligned-preflight-layout-failure-01/operator-note.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c4-aligned-verifier-control-freeze-01/control-plan.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c4-documentation-aligned-v2/binding.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c4-documentation-aligned-v2/events.jsonl
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c4-documentation-aligned-v2/events/apply-c9a7a86c74944facb0b5cdaf8edd3b24.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c4-documentation-aligned-v2/events/execute-598ae52cf8964c8ebba0988eb28be678.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c4-documentation-aligned-v2/events/propose-b24bf35e5491464da226c945178df29b.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c4-documentation-aligned-v2/events/verify-ee5c5cee6531409eb12e2f5a7fbc1726.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c4-documentation-aligned-v2/post-verify-revalidation.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c4-documentation-aligned-v2/pre-apply-revalidation.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c4-documentation-aligned-v2/pre-verify-revalidation.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c4-documentation-aligned-v2/verification-summary.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c4-postverify-convergence-propose-01/binding.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c4-postverify-convergence-propose-01/events.jsonl
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c4-postverify-convergence-propose-01/events/propose-45770d0a2e0c4a09adf4c946bfb2558c.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c4-postverify-convergence-propose-01/structured-summary.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c4-postverify-propose-readonly-01/binding.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c4-postverify-propose-readonly-01/events.jsonl
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c4-postverify-propose-readonly-01/events/propose-ab80327fccb048d1b019a002f8d3f893.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c4-postverify-propose-readonly-01/structured-summary.json
+      owner: immutable-operating-model-proof-records
+    - path: internal/host/canonical_adoption_store.go
+      owner: canonical-adoption-host
+    - path: internal/host/cli/canonical_adoption_durable_test.go
+      owner: canonical-adoption-host
