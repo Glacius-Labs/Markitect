@@ -27,17 +27,23 @@ modules:
       digest: sha256:b2c4377cf255696d0d5ddc4a06f049fa35f155f6eb5f449f87f205476105c7f3
     files:
       - examples/operating-model/modules/commerce/schema.yaml
-  - manifest: examples/operating-model/modules/dotnet/module.yaml
+  - manifest: examples/operating-model/modules/orders-dotnet/module.yaml
     pin:
-      name: operating-model-dotnet
+      name: operating-model-orders-dotnet
       version: 1.0.0
-      digest: sha256:973813c0cd327c13928c05ce49ddfd08d5dcb31eff27b2b1f9bb52284b9c6a31
+      digest: sha256:e124e776227fe16a467ca9bbaac541ae3ac831b08dde01f27c8221fcf2526b33
+    files: []
+  - manifest: examples/operating-model/modules/billing-dotnet/module.yaml
+    pin:
+      name: operating-model-billing-dotnet
+      version: 1.0.0
+      digest: sha256:7eef3878e46eff73aa96e7dc5158e60069ccc71e58fc2d69a946924a8d69e676
     files: []
   - manifest: examples/operating-model/modules/markdown/module.yaml
     pin:
       name: operating-model-markdown
       version: 1.0.0
-      digest: sha256:c7aa64a88d1060f4cb320895e6eb7ba05fd769f964c1521b04e54266eea6bec9
+      digest: sha256:2d06106ac77e5b356e7528dbac07e82de030b3d3eb100d496b3c06b7af794199
     files: []
 projectionBindings:
   - projection:
@@ -45,13 +51,13 @@ projectionBindings:
       kind: Projection
       namespace: operating-model
       name: orders-dotnet
-    module: operating-model-dotnet
+    module: operating-model-orders-dotnet
   - projection:
       apiVersion: markitect.foundation/v1
       kind: Projection
       namespace: operating-model
       name: billing-dotnet
-    module: operating-model-dotnet
+    module: operating-model-billing-dotnet
   - projection:
       apiVersion: markitect.foundation/v1
       kind: Projection

@@ -20,41 +20,56 @@ func TestOperatingModelProjectionScopesAreIndependentAndComposed(t *testing.T) {
 	}
 	root := filepath.Dir(filepath.Dir(testFile))
 
-	fixed, err := host.LoadCanonicalSource(root, "", operatingModelConfigPath, true)
+	revision := strings.TrimSpace(proofGit(t, root, "rev-parse", "HEAD"))
+	if len(revision) != 40 && len(revision) != 64 {
+		t.Fatalf("expected a full Git HEAD, got %q", revision)
+	}
+	fixed, err := host.LoadCanonicalSource(root, revision, operatingModelConfigPath, true)
 	if err != nil {
 		t.Fatal(err)
+	}
+	if fixed.Snapshot.Provisional || fixed.Snapshot.ID != revision || fixed.Model.Revision != revision {
+		t.Fatalf("canonical fixture is not bound to full Git HEAD %q: snapshot=%q model=%q provisional=%t", revision, fixed.Snapshot.ID, fixed.Model.Revision, fixed.Snapshot.Provisional)
 	}
 	if len(fixed.Diagnostics) != 0 {
 		t.Fatalf("operating-model canonical source has structural diagnostics: %#v", fixed.Diagnostics)
 	}
-	if len(fixed.Pins) != 4 || len(fixed.Activation.Projectors) != 2 {
-		t.Fatalf("expected four exact Module pins and two activated Projection Modules; pins=%d projectors=%d", len(fixed.Pins), len(fixed.Activation.Projectors))
+	if len(fixed.Pins) != 5 || len(fixed.Activation.Projectors) != 3 {
+		t.Fatalf("expected five exact Module pins and three activated Projection Modules; pins=%d projectors=%d", len(fixed.Pins), len(fixed.Activation.Projectors))
 	}
 	if len(fixed.Model.Edges) != 7 {
 		t.Fatalf("expected two ProductComposition child edges and five Projection-to-policy edges, got %d", len(fixed.Model.Edges))
 	}
 
-	observed, err := source.Load(root, "")
+	observed, err := source.Load(root, revision)
 	if err != nil {
 		t.Fatal(err)
 	}
+	// Use committed bytes for the empty target observation so checkout newline
+	// conversion cannot appear as canonical source drift on Windows.
+	observed = cloneSnapshot(observed)
+	observed.ID = ""
+	observed.Provisional = true
 	selected := []struct {
 		name        string
 		target      string
 		definition  map[string]bool
 		policyCount int
+		checkNames  []string
 	}{
 		{
 			name:        "orders-dotnet",
 			target:      "src/Orders",
 			definition:  map[string]bool{"[\"commerce.operating-model/v1\",\"OrderRules\",\"orders\",\"accepted-order-total\"]": true},
 			policyCount: 1,
+			checkNames:  []string{"operating-model-orders"},
 		},
 		{
 			name:        "billing-dotnet",
 			target:      "src/Billing",
 			definition:  map[string]bool{"[\"commerce.operating-model/v1\",\"BillingQuery\",\"billing\",\"outstanding-order-total\"]": true},
 			policyCount: 1,
+			checkNames:  []string{"operating-model-billing"},
 		},
 		{
 			name:   "product-markdown",
@@ -65,6 +80,7 @@ func TestOperatingModelProjectionScopesAreIndependentAndComposed(t *testing.T) {
 				"[\"commerce.operating-model/v1\",\"BillingQuery\",\"billing\",\"outstanding-order-total\"]":   true,
 			},
 			policyCount: 3,
+			checkNames:  []string{"operating-model-composition", "operating-model-documentation"},
 		},
 	}
 
@@ -76,6 +92,17 @@ func TestOperatingModelProjectionScopesAreIndependentAndComposed(t *testing.T) {
 				Namespace:  "operating-model",
 				Name:       projection.name,
 			}
+			checks := fixed.Config.Checks[:0:0]
+			for _, name := range projection.checkNames {
+				for _, configured := range fixed.Config.Checks {
+					if configured.Name == name {
+						checks = append(checks, configured)
+					}
+				}
+			}
+			if len(checks) != len(projection.checkNames) {
+				t.Fatalf("found %d configured checks, want %d", len(checks), len(projection.checkNames))
+			}
 			prepared, err := host.PrepareCanonicalProjection(
 				fixed,
 				observed,
@@ -83,6 +110,7 @@ func TestOperatingModelProjectionScopesAreIndependentAndComposed(t *testing.T) {
 				"operating-model-shape-test/1",
 				host.Hash([]byte("operating-model-shape-test")),
 				nil,
+				checks...,
 			)
 			if err != nil {
 				t.Fatal(err)
@@ -106,6 +134,48 @@ func TestOperatingModelProjectionScopesAreIndependentAndComposed(t *testing.T) {
 			if len(prepared.Request.Policies) != projection.policyCount {
 				t.Errorf("selected %d ProjectionPolicies, want %d", len(prepared.Request.Policies), projection.policyCount)
 			}
+			if len(prepared.Request.Projector.RequiredChecks) != len(projection.checkNames) {
+				t.Errorf("Projector requires %d checks, want %d", len(prepared.Request.Projector.RequiredChecks), len(projection.checkNames))
+			}
+			for _, name := range projection.checkNames {
+				found := false
+				for _, required := range prepared.Request.Projector.RequiredChecks {
+					if required == name {
+						found = true
+					}
+				}
+				if !found {
+					t.Errorf("Projector does not require its owner-selected check %q", name)
+				}
+			}
+			if projection.name == "product-markdown" {
+				if prepared.Plan == nil || len(prepared.Outputs) != 1 || len(prepared.Escalations) != 0 {
+					t.Fatalf("parent Markdown Prepare did not produce one bounded plan/output: plan=%t outputs=%d escalations=%#v", prepared.Plan != nil, len(prepared.Outputs), prepared.Escalations)
+				}
+				if len(prepared.Plan.Contracts) != 1 {
+					t.Fatalf("parent Markdown plan has %d contracts, want one", len(prepared.Plan.Contracts))
+				}
+				plannedChecks := map[string]bool{}
+				for _, check := range prepared.Plan.Contracts[0].VerificationChecks {
+					plannedChecks[check] = true
+				}
+				for _, name := range projection.checkNames {
+					if !plannedChecks[name] {
+						t.Errorf("parent Markdown plan omitted required check %q", name)
+					}
+				}
+			} else if prepared.Plan != nil || !hasOperatingModelEscalation(prepared.Escalations, "projection.candidate-required") {
+				t.Errorf(".NET leaf Prepare must await a request-bound candidate: plan=%t escalations=%#v", prepared.Plan != nil, prepared.Escalations)
+			}
 		})
 	}
+}
+
+func hasOperatingModelEscalation(escalations []host.CanonicalProjectionEscalation, code string) bool {
+	for _, escalation := range escalations {
+		if escalation.Code == code {
+			return true
+		}
+	}
+	return false
 }
