@@ -21,7 +21,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-PROTOCOL = "operating-model-proof/v1"
+PROTOCOL = "operating-model-proof/v2"
 FULL_SHA = re.compile(r"^(?:[0-9a-f]{40}|[0-9a-f]{64})$")
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -95,6 +95,73 @@ def strict_object(path: Path) -> dict[str, Any]:
     return value
 
 
+def strict_bytes(data: bytes) -> dict[str, Any]:
+    def unique(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+        result: dict[str, Any] = {}
+        for key, value in pairs:
+            if key in result:
+                raise ProofError("duplicate JSON object key")
+            result[key] = value
+        return result
+
+    try:
+        value = json.loads(data.decode("utf-8", "strict"), object_pairs_hook=unique)
+    except (UnicodeError, json.JSONDecodeError) as exc:
+        raise ProofError("CLI did not emit one UTF-8 JSON report") from exc
+    if not isinstance(value, dict):
+        raise ProofError("CLI report is not a JSON object")
+    return value
+
+
+def validate_build_receipt(receipt: dict[str, Any], source_sha: str, cli_digest: str) -> dict[str, Any]:
+    if not FULL_SHA.fullmatch(source_sha) or receipt.get("sourceSha") != source_sha:
+        raise ProofError("build receipt sourceSha must be the exact full source commit")
+    command = receipt.get("buildCommand")
+    if not ((isinstance(command, str) and command.strip()) or
+            (isinstance(command, list) and command and all(isinstance(part, str) and part for part in command))):
+        raise ProofError("build receipt must retain the actual build command")
+    if type(receipt.get("exitCode")) is not int or receipt["exitCode"] != 0:
+        raise ProofError("Markitect CLI build receipt must record exitCode 0")
+    if receipt.get("binaryDigest") != cli_digest:
+        raise ProofError("build receipt digest does not match the selected CLI executable")
+    return {
+        "sourceSha": source_sha,
+        "buildCommandDigest": sha(json.dumps(command, ensure_ascii=False, separators=(",", ":")).encode("utf-8")),
+        "exitCode": 0,
+        "binaryDigest": cli_digest,
+    }
+
+
+def write_new_bytes(path: Path, data: bytes) -> None:
+    with path.open("xb") as stream:
+        stream.write(data)
+
+
+def runtime_file_fact(path: Path, digest: str, size: int) -> dict[str, Any]:
+    return {"pathDigest": sha(str(path.resolve()).encode()), "digest": digest, "bytes": size}
+
+
+def new_attempt_paths(root: Path, action: str) -> tuple[str, Path, Path]:
+    attempt = uuid.uuid4().hex
+    return attempt, root / f"{action}-{attempt}.stdout.json", root / f"{action}-{attempt}.stderr"
+
+
+def safe_text_facts(items: Any) -> list[dict[str, Any]]:
+    result = []
+    if not isinstance(items, list):
+        return result
+    for item in items:
+        if not isinstance(item, dict):
+            continue
+        fact = {key: item[key] for key in ("code", "identity", "subject", "outcome") if key in item}
+        detail = item.get("message", item.get("detail"))
+        if isinstance(detail, str):
+            fact["detailDigest"] = sha(detail.encode("utf-8"))
+            fact["detailBytes"] = len(detail.encode("utf-8"))
+        result.append(fact)
+    return result
+
+
 def inspect_runtime(path: Path, fixture: Path) -> dict[str, Any]:
     raw = path.read_bytes()
     cfg = strict_object(path)
@@ -140,7 +207,8 @@ def inspect_runtime(path: Path, fixture: Path) -> dict[str, Any]:
             raise ProofError(f"{role} Codex CLI/model binding differs from protocol")
         if command.is_absolute() and command.is_file():
             digest, size = file_sha(command)
-            files[str(command)] = {"digest": digest, "bytes": size}
+            path_digest = sha(str(command.resolve()).encode())
+            files[path_digest] = runtime_file_fact(command, digest, size)
         args = runner.get("args")
         if not isinstance(args, list) or not args:
             raise ProofError(f"{role} command arguments are missing")
@@ -148,7 +216,8 @@ def inspect_runtime(path: Path, fixture: Path) -> dict[str, Any]:
             if isinstance(arg, str) and Path(arg).is_absolute() and Path(arg).is_file():
                 candidate = Path(arg)
                 digest, size = file_sha(candidate)
-                files[str(candidate)] = {"digest": digest, "bytes": size}
+                path_digest = sha(str(candidate.resolve()).encode())
+                files[path_digest] = runtime_file_fact(candidate, digest, size)
         for item in runner.get("runtimeFiles", []):
             if not isinstance(item, dict) or not isinstance(item.get("path"), str):
                 raise ProofError(f"{role} runtimeFiles entry is invalid")
@@ -156,7 +225,8 @@ def inspect_runtime(path: Path, fixture: Path) -> dict[str, Any]:
             digest, size = file_sha(runtime_file)
             if item.get("digest") != digest:
                 raise ProofError(f"{role} runtime file digest mismatch: {runtime_file}")
-            files[str(runtime_file)] = {"digest": digest, "bytes": size}
+            path_digest = sha(str(runtime_file.resolve()).encode())
+            files[path_digest] = runtime_file_fact(runtime_file, digest, size)
     total = sum(item["bytes"] for item in files.values())
     if total > 256 * 1024 * 1024:
         raise ProofError(f"configured runtime files exceed 256 MiB ({total} bytes)")
@@ -180,7 +250,12 @@ def summarize_receipt(value: Any) -> Any:
         "providerVersion", "providerVersionDigest", "stdoutDigest", "stderrDigest",
         "privateLogDigest", "outcome", "wallTimeMilliseconds", "retryCount", "usage",
     }
-    return {key: summarize_receipt(val) for key, val in value.items() if key in keep}
+    output = {key: summarize_receipt(val) for key, val in value.items() if key in keep and key != "usage"}
+    usage = value.get("usage")
+    if isinstance(usage, dict):
+        usage_fields = ("source", "inputTokens", "outputTokens", "cachedTokens", "toolCalls")
+        output["usage"] = {key: usage[key] for key in usage_fields if key in usage and usage[key] is not None}
+    return output
 
 
 def proposal_metrics(report: dict[str, Any]) -> dict[str, Any]:
@@ -202,9 +277,12 @@ def proposal_metrics(report: dict[str, Any]) -> dict[str, Any]:
         "unobservedProjections": plan.get("unobservedProjections", []) if isinstance(plan, dict) else [],
         "proposals": [{
             "projectionId": p.get("projectionId"),
+            "module": {k: p.get("module", {}).get(k) for k in ("name", "version", "digest")},
+            "requestDigest": p.get("request", {}).get("requestDigest"),
+            "targetDigests": p.get("request", {}).get("targetDigests", {}),
             "decision": p.get("decision"),
             "reasonCount": len(p.get("reasons", [])),
-            "escalations": p.get("escalations", []),
+            "escalations": safe_text_facts(p.get("escalations", [])),
         } for p in proposals if isinstance(p, dict)],
     }
 
@@ -230,12 +308,12 @@ def run_metrics(action: str, report: dict[str, Any]) -> dict[str, Any]:
                 "candidateBytes": len(base64.b64decode(item.get("candidate", ""), validate=True)),
                 "outputs": output_facts,
                 "executorReceipt": summarize_receipt(item.get("executor")),
-                "escalations": item.get("escalations", []),
+                "escalations": safe_text_facts(item.get("escalations", [])),
             })
         return {
             "status": report.get("status"),
             "runDigest": report.get("digest"),
-            "proposalDigest": report.get("proposal", {}).get("digest"),
+            "proposal": proposal_metrics(report.get("proposal", {})),
             "executorConfigDigest": report.get("executorDigest"),
             "verifierConfigDigest": report.get("verifierDigest"),
             "hostExecutableDigest": report.get("hostExecutableDigest"),
@@ -268,10 +346,13 @@ def run_metrics(action: str, report: dict[str, Any]) -> dict[str, Any]:
             "evidenceSnapshotDigest": v.get("evidenceSnapshotDigest"),
             "configFingerprint": v.get("configFingerprint"), "receiptDigest": v.get("receiptDigest"),
             "inputDigest": v.get("inputDigest"), "runId": v.get("runId"), "outcome": v.get("outcome"),
-            "evidenceRefs": v.get("evidenceRefs"), "observations": v.get("observations"),
+            "evidenceRefCount": len(v.get("evidenceRefs", [])),
+            "evidenceRefsDigest": sha(json.dumps(v.get("evidenceRefs", []), sort_keys=True, separators=(",", ":")).encode("utf-8")),
+            "observations": safe_text_facts(v.get("observations")),
             "receipt": summarize_receipt(v.get("receipt")),
         } for v in report.get("verifierRuns", [])],
-        "assurance": report.get("assurance"),
+        "assuranceNodeCount": len(report.get("assurance", {}).get("nodes", [])),
+        "assuranceDigest": sha(json.dumps(report.get("assurance", {}), sort_keys=True, separators=(",", ":")).encode("utf-8")),
         "limits": report.get("limits", []),
     }
 
@@ -284,6 +365,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--cli", required=True, type=Path)
     parser.add_argument("--config", required=True, help="fixture-relative canonical config path")
     parser.add_argument("--runtime", required=True, type=Path)
+    parser.add_argument("--build-receipt", required=True, type=Path, help="external source-SHA/build-command/exit/binary-digest receipt")
     parser.add_argument("--external-root", required=True, type=Path, help="fresh absolute directory outside the fixture")
     parser.add_argument("--base", required=True, help="full source base SHA")
     parser.add_argument("--revision", required=True, help="full candidate SHA, or evidence SHA for verify")
@@ -301,6 +383,8 @@ def main() -> int:
     cli = args.cli.resolve(strict=True)
     runtime_path = args.runtime.resolve(strict=True)
     ensure_external(runtime_path, fixture, "runtime configuration")
+    build_receipt_path = args.build_receipt.resolve(strict=True)
+    ensure_external(build_receipt_path, fixture, "CLI build receipt")
     external = args.external_root
     if not external.is_absolute():
         raise ProofError("external-root must be absolute")
@@ -336,6 +420,15 @@ def main() -> int:
     if not cli.is_file():
         raise ProofError("CLI executable is missing")
     cli_digest, cli_bytes = file_sha(cli)
+    build_receipt = strict_object(build_receipt_path)
+    source_sha = build_receipt.get("sourceSha", "")
+    git(ROOT, "cat-file", "-e", source_sha + "^{commit}")
+    build_facts = validate_build_receipt(build_receipt, source_sha, cli_digest)
+    build_facts["receiptDigest"] = file_sha(build_receipt_path)[0]
+    cli_version_result = subprocess.run([str(cli), "version"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=False, shell=False)
+    if cli_version_result.returncode:
+        raise ProofError("Markitect CLI version command failed")
+    cli_version = cli_version_result.stdout.decode("utf-8", "replace").strip()
 
     local_run = ROOT / "experiments" / "operating-model-proof" / "runs" / args.run_id
     local_run.mkdir(parents=True, exist_ok=False if args.action == "propose" else True)
@@ -350,12 +443,13 @@ def main() -> int:
             "runId": args.run_id,
             "fixtureOrigin": origin,
             "fixtureHead": git(fixture, "rev-parse", "HEAD"),
-            "markitectSourceSHA": git(ROOT, "rev-parse", "HEAD"),
+            "markitectSourceSHA": source_sha,
             "fixtureBase": base,
             "fixtureRevision": revision,
             "config": args.config,
             "runtime": runtime_facts,
-            "cli": {"pathDigest": sha(str(cli).encode()), "digest": cli_digest, "bytes": cli_bytes},
+            "buildReceipt": build_facts,
+            "cli": {"pathDigest": sha(str(cli).encode()), "digest": cli_digest, "bytes": cli_bytes, "version": cli_version},
             "createdAtUtc": datetime.now(timezone.utc).isoformat(),
         }
         write_json(meta_path, binding, exclusive=True)
@@ -363,8 +457,9 @@ def main() -> int:
         binding = strict_object(meta_path)
         if binding.get("protocol") != PROTOCOL or (args.action == "verify" and binding.get("fixtureRevision") != base) or (args.action != "verify" and (binding.get("fixtureBase") != base or binding.get("fixtureRevision") != revision)):
             raise ProofError("action does not match the run's frozen source/fixture bindings")
-        if binding.get("cli", {}).get("digest") != cli_digest or binding.get("runtime") != runtime_facts:
-            raise ProofError("CLI or runtime differs from the frozen run binding")
+        if (binding.get("cli", {}).get("digest") != cli_digest or
+                binding.get("runtime") != runtime_facts or binding.get("buildReceipt") != build_facts):
+            raise ProofError("CLI, source-bound build receipt or runtime differs from the frozen run binding")
 
     command = [str(cli), "canonical", "--action", {
         "propose": "controller-propose", "execute": "controller-execute",
@@ -385,26 +480,31 @@ def main() -> int:
     started = time.perf_counter()
     completed = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False, shell=False)
     elapsed_ms = round((time.perf_counter() - started) * 1000)
-    out_path = external_run / f"{args.action}.stdout.json"
-    err_path = external_run / f"{args.action}.stderr"
-    out_path.write_bytes(completed.stdout)
-    err_path.write_bytes(completed.stderr)
+    attempt_id, out_path, err_path = new_attempt_paths(external_run, args.action)
+    write_new_bytes(out_path, completed.stdout)
+    write_new_bytes(err_path, completed.stderr)
     try:
         report = strict_bytes(completed.stdout)
     except ProofError:
         report = {}
+    command_template = ["markitect", "canonical", "--action", command[3], "--repo", "<fixture>", "--config", args.config, "--runtime", "<runtime>", "--base", base, "--revision", revision]
+    if args.action == "apply":
+        command_template.extend(["--plan", "<reviewed-run>", "--expect", args.expect, "--write"])
+    elif args.action == "verify":
+        command_template.append("--write")
     event = {
         "protocol": PROTOCOL,
         "runId": args.run_id,
+        "attemptId": attempt_id,
         "action": args.action,
-        "commandTemplate": ["markitect", "canonical", "--action", command[3], "--repo", "<fixture>", "--config", args.config, "--runtime", "<runtime>", "--base", base, "--revision", revision],
+        "commandTemplate": command_template,
         "exitCode": completed.returncode,
         "elapsedWallMilliseconds": elapsed_ms,
         "stdoutDigest": sha(completed.stdout),
         "stdoutBytes": len(completed.stdout),
         "stderrDigest": sha(completed.stderr),
         "stderrBytes": len(completed.stderr),
-        "externalOutput": f"<external-stage>/{args.run_id}/{args.action}.stdout.json",
+        "externalOutput": f"<external-stage>/{args.run_id}/{out_path.name}",
         "externalOutputDigest": sha(completed.stdout),
         "metrics": run_metrics({"propose": "controller-propose", "execute": "controller-execute", "apply": "controller-apply", "verify": "controller-verify"}[args.action], report),
     }
@@ -416,8 +516,8 @@ def main() -> int:
         # Exact JSON is required for later guarded Apply; keep it outside the repository.
         if report:
             exact = completed.stdout.rstrip(b"\r\n") + b"\n"
-            run_path = external_run / "reviewed-run.json"
-            run_path.write_bytes(exact)
+            run_path = external_run / f"reviewed-run-{attempt_id}.json"
+            write_new_bytes(run_path, exact)
             print(json.dumps({"status": report.get("status"), "runDigest": report.get("digest"), "reviewedRunExternalPath": str(run_path), "stdoutDigest": sha(exact)}, sort_keys=True))
     else:
         print(json.dumps(event, sort_keys=True))
@@ -429,16 +529,6 @@ def write_json(path: Path, value: Any, *, exclusive: bool = False) -> None:
     with path.open(mode, encoding="utf-8", newline="\n") as stream:
         json.dump(value, stream, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
         stream.write("\n")
-
-
-def strict_bytes(data: bytes) -> dict[str, Any]:
-    try:
-        value = json.loads(data.decode("utf-8", "strict"))
-    except (UnicodeError, json.JSONDecodeError) as exc:
-        raise ProofError("CLI did not emit one UTF-8 JSON report") from exc
-    if not isinstance(value, dict):
-        raise ProofError("CLI report is not a JSON object")
-    return value
 
 
 if __name__ == "__main__":
