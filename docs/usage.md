@@ -352,7 +352,7 @@ A Project can register one `local-projection` adapter to bind exact contract and
 
 #### Canonical controller actions (source-only alpha)
 
-The unreleased canonical source exposes `controller-propose`, `controller-execute`, `controller-apply`, `controller-verify`, `controller-refresh-propose` and `controller-refresh-apply`. All require `--config`, a closed JSON `--runtime` file and full immutable Git commit IDs for `--base` and `--revision`. Proposal is read-only. Execute invokes the configured Executor and returns a digest-bound reviewed run; it does not run project fixed checks. Save its exact JSON output, review the candidate outputs and digest, then pass that same file and digest to Apply. Apply requires `--write`; it refreshes the proposal against current source and selected target evidence, validates runtime fingerprints, active-ledger head, plan, candidate preimages and aggregate write set before materializing. Its `materialized-unverified` status means verification has not yet been established. The published v0.13.0 release is unchanged by these source-only actions.
+The unreleased canonical source exposes `controller-propose`, `controller-execute`, `controller-apply`, `controller-verify`, `controller-audit`, `controller-refresh-propose` and `controller-refresh-apply`. All require `--config`, a closed JSON `--runtime` file and full immutable Git commit IDs for `--base` and `--revision`. Proposal is read-only. Execute invokes the configured Executor and returns a digest-bound reviewed run; it does not run project fixed checks. Save its exact JSON output, review the candidate outputs and digest, then pass that same file and digest to Apply. Apply requires `--write`; it refreshes the proposal against current source and selected target evidence, validates runtime fingerprints, active-ledger head, plan, candidate preimages and aggregate write set before materializing. Its `materialized-unverified` status means verification has not yet been established. The published v0.13.0 release is unchanged by these source-only actions.
 
 ```powershell
 $config = "examples/canonical-projection/canonical.yaml"
@@ -371,7 +371,21 @@ The runtime JSON top-level fields are `apiVersion` (string; `markitect.canonical
 
 When `auditAll` is explicitly enabled, Propose may reuse a previously passed controller VerificationResult only after reacquiring the exact immutable evidence and comparing current artifact bytes/modes, source/model, checks, runtime/configuration and child-result identities. Reuse is read-only and runs no check or agent. Missing provenance and any stale or failed input remain conservative; ordinary `auditAll=false` planning does not widen observation to look for cached passes. An unobserved projection is not a passing no-op. The reuse implementation exists, but real repeated fresh-agent convergence has not been demonstrated. See [verification reuse provenance](design/canonical-verification-refresh.md).
 
-Each controller action emits one JSON object on stdout, including when it returns a nonzero status. Controller actions exit 0 for `planned`, `refreshed`, `passed`, `materialized-unverified` or `no-materialization-work`; 1 for `failed`, `blocked`, `escalated`, `refused` or `partial-failure`; and 2 for `incomplete`, invalid invocation/configuration or another unrecognized status. A stale/refused refresh Apply reports its bounded JSON and exits 2. Preserve stdout on nonzero exits because it can contain the bounded report. These actions are source-only alpha and do not change the published v0.13.0 behavior.
+Each controller action emits one JSON object on stdout, including when it returns a nonzero status. Controller actions exit 0 for `complete`, `planned`, `refreshed`, `passed`, `materialized-unverified` or `no-materialization-work`; 1 for `failed`, `blocked`, `escalated`, `refused` or `partial-failure`; and 2 for `incomplete`, invalid invocation/configuration or another unrecognized status. A stale/refused refresh Apply reports its bounded JSON and exits 2. Preserve stdout on nonzero exits because it can contain the bounded report. These actions are source-only alpha and do not change the published v0.13.0 behavior.
+
+#### Declared-scope completion audit (source-only alpha)
+
+After materialization and recorded verification, use `controller-audit` to inspect whether the declared model and target scope is complete. Use the same fixed base/source revisions as proposal and the same runtime configuration, with `auditAll` already enabled:
+
+```powershell
+go run ./cmd/markitect canonical --repo . --config $config --runtime $runtime --action controller-audit --base BASE_REVISION --revision SOURCE_REVISION
+```
+
+The audit reads current target content and the external ledger without invoking the Executor, Verifier or fixed checks. It writes neither artifacts nor records. It requires the runtime's existing `auditAll: true`; changing that setting changes the configuration binding and can require new evidence. Mutation, saved-plan, report and target-selection flags are not accepted by this action.
+
+The JSON report accounts for every canonical Projection in the selected source, its canonical scope and policy references, assurance scopes, owned artifacts and current record/result identities. It reports missing selection or evidence, stale or failed verification, unfinished work and target-ownership problems. Fresh passing child results do not replace the parent's own composition result. Exact target-path exclusions remain visible with their reasons outside the managed claim; they do not remove canonical Projection obligations.
+
+`complete` exits 0 only when the declared scope has no remaining work or unknown targets and all required local and parent verification is current and passing. `incomplete` exits 2 with findings and next actions. Preserve the JSON even on a nonzero exit. The result binds one observed state; later source, target, runtime or ledger changes can invalidate it. It is not a claim about undeclared repository content, semantic sufficiency or human acceptance. The [standard operating model](design/standard-operating-model.md) defines this bounded completion contract and the later continuous-runtime direction.
 
 #### Goal-led modeling CLI (source-only alpha)
 

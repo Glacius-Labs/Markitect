@@ -25,7 +25,7 @@ Review and Apply remain explicit trust boundaries. A review need not be performe
 
 The first implementation checkpoint adds a read-only controller audit. It uses the same proposal, record, verification freshness and assurance semantics as the existing controller. It invokes neither an Executor nor a Verifier and does not append records or alter artifacts.
 
-The audit requires content observation of all declared targets through an already configured auditAll runtime. It must not silently change runtime configuration to manufacture fresh evidence. Each canonical Projection is represented in the report, including its canonical subject and policy references, assurance scope, owned artifacts and available current record and verification identities.
+The audit requires read-only content observation of all declared targets through an already configured auditAll runtime. Observation invokes no Executor, Verifier or fixed check and writes no operational state. It must not silently change runtime configuration to manufacture fresh evidence. Each canonical Projection is represented in the report, including its canonical subject and policy references, assurance scope, owned artifacts and available current record and verification identities.
 
 Technical completion requires:
 - every canonical Projection in the selected source to be accounted for;
@@ -34,7 +34,7 @@ Technical completion requires:
 - current passing verification for every required local and parent scope, with exact target, source, checks, runtime and child bindings;
 - stable ledger/active selection during the audit.
 
-Intentional exact exclusions remain visible outside the managed claim. An exclusion is not proof of conformity and need not block completion of the explicitly declared managed scope. Facts outside the declared model and target roots are not covered. A complete audit does not establish the sufficiency of arbitrary prose, unmodeled obligations, universal correctness or human acceptance.
+Intentional exact target-path exclusions remain visible in the report with their reasons, outside the managed claim. They do not remove canonical Projections or their obligations from accounting. An exclusion is not proof of conformity and need not block completion of the explicitly declared managed scope. Facts outside the declared model and target roots are not covered. A complete audit does not establish the sufficiency of arbitrary prose, unmodeled obligations, universal correctness or human acceptance.
 
 The report binds the selected source and proposal, runtime configuration, ledger state and exact evidence used. It presents uncovered or stale items and next actions; it never turns a no-op into PASS. Reading a previously passing result without reconstructing its current binding is insufficient.
 
