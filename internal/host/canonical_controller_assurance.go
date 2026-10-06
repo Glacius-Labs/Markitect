@@ -3,6 +3,7 @@ package host
 import (
 	"errors"
 	"fmt"
+
 	"github.com/Glacius-Labs/Markitect/internal/host/assurance"
 	"github.com/Glacius-Labs/Markitect/internal/host/records"
 )
@@ -47,6 +48,16 @@ func canonicalControllerAssuranceGraph(cfg CanonicalControllerConfig, fixed *Can
 	}
 	if len(report.Nodes) != len(graph.Nodes) {
 		return assurance.Input{}, errors.New("all configured assurance scopes must be reachable from explicit roots")
+	}
+	// A C11 lifecycle run reached verification before refusing scope checks
+	// absent from the selected source config. Reject that Host configuration
+	// before Execute can invoke an actor or materialize any candidate; this is
+	// source-bound input validation, not a model or verifier conclusion.
+	for _, scope := range cfg.AssuranceScopes {
+		request := requests[scope.ProjectionID]
+		if _, err := canonicalControllerScopedChecks(fixed, request.Projector, scope.Checks); err != nil {
+			return assurance.Input{}, fmt.Errorf("assurance scope %s: %w", scope.ID, err)
+		}
 	}
 	return graph, nil
 }
