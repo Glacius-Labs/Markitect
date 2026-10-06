@@ -1,4 +1,4 @@
-# Government of Coding Agents: Entscheidungspunkt und Designentwurf
+# Markitect-Produktzweck und Government: Prüfung vor Designentscheidung
 
 Stand: 2026-10-07, Europe/Berlin. **Diskussions- und Evaluationsentwurf; keine implementierte Funktion und kein Auftrag zum sofortigen Umbau.**
 
@@ -7,8 +7,8 @@ Stand: 2026-10-07, Europe/Berlin. **Diskussions- und Evaluationsentwurf; keine i
 Der Nutzer hat folgenden nächsten Entscheidungspunkt festgelegt:
 
 1. Der Architect schließt seinen derzeitigen Grundmodell-Schritt mit einem soliden, nachvollziehbar validierten Stand ab.
-2. An diesem Stand halten wir mit weiterem Ausbau an. Zuerst evaluieren wir die Government-Richtung und entscheiden gemeinsam, wie Markitect weitergeführt wird.
-3. Die bevorzugte zu evaluierende Richtung lautet: **Markitect selbst ist die Government of Coding Agents.** Die Metapher soll Produktmodell, Erweiterungen, Bedienung und Ablauf durchgängig bestimmen. Eine lose Government-Schicht neben einem gleichrangigen Projektionsmodell erfüllt diese Vorstellung nicht.
+2. An diesem Stand halten wir mit weiterem Ausbau an. Zuerst bestimmen wir Markitects Problem, Produktzweck und Zielbild; daran prüfen wir die Government-Richtung und entscheiden gemeinsam über das weitere Vorgehen. Spätere ausdrückliche Nutzeraufträge im Architect-Chat werden dabei berücksichtigt; laufende autorisierte Arbeit wird nicht durch eine veraltete Wiedervorlage unterbrochen.
+3. **Government als Produktidentität ist eine offene Hypothese, keine bevorzugt beschlossene Zukunft.** Der Nutzer hat die Reihenfolge ausdrücklich korrigiert: zuerst verstehen, wofür Markitect gebaut wird, dann prüfen, ob Government dazu passt oder ein anderes Produkt daraus macht. Falls die Metapher gewählt wird, soll sie durchgängig stimmig sein; diese Gestaltungspräferenz ersetzt keine Nutzenprüfung.
 4. Der Nutzer stellt sein Kabinett aus angebotenen, wiederverwendbaren Ministerien zusammen. **Eine Änderung wird nur akzeptiert, wenn jedes ausgewählte Ministerium der endgültigen Fassung ausdrücklich zugestimmt hat.**
 5. Jev/TypeSafe AI bleibt eine nachrangige Untersuchung. Zuerst erfolgt die Government-Entscheidung; Jev wird nicht in den laufenden Architect-Schritt aufgenommen.
 
@@ -39,7 +39,46 @@ Wichtige Quellanker relativ zum untersuchten Kandidaten:
 | `internal/host/canonical_controller_audit.go` | Abschluss für deklarierte Projektionen, aktuelle Nachweise und offene Arbeit |
 | `docs/canonical-projections.md`, `docs/usage.md` | Explizite Alpha-Aktionen; Materialisierung als Evidence-Commit bewegt HEAD und Index nicht |
 
-## Das erforderliche Umdenken
+## Produktzweck vor Metapher
+
+Die ältere Produktbeschreibung beginnt bei wartbarem AI-facing Engineering-Wissen: Regeln, Workflows, Skills, Agentenanweisungen und Verträge erhalten kanonische Eigentümer, explizite Beziehungen, passenden Kontext und nachvollziehbare Änderungsfolgen. Das Problem ist nicht nur fehlendes Review, sondern verteiltes, widersprüchliches oder vergessenes Wissen und unklarer Nachweisstand.
+
+Der aktuelle Architect-Entwurf entwickelt diesen Ansatz weiter. Seine kanonische Vision lautet: **Die gewünschte Projektwelt einmal definieren und ihre Darstellungen mit dieser Absicht in Einklang halten.** Menschen verantworten Ziele, Architektur, Grenzen, Regeln und echte Entscheidungen. Agenten setzen innerhalb dieser Vorgaben um, prüfen und reparieren. Markitect verbindet akzeptierte Absicht, relevante Folgen, betroffene Darstellungen und aktuelle unabhängige Nachweise.
+
+Das ist eine Entwicklung vom strukturierten Engineering-Wissen zum ausführbaren Sollmodell. Sie ist bereits im aktuellen Entwurf enthalten und wurde nicht erst durch die Ministeriumsidee eingeführt. Ob sie im Alltag genügend Qualität und Entlastung bringt, bleibt zu untersuchen. Der untersuchte Kandidat enthält begrenzte Ausführungs-, Prüf-, Reparatur- und Auditfunktionen sowie synthetische Durchläufe; er belegt weder allgemeine autonome Nutzbarkeit noch eine vollständig überwachte reale Codebasis. Die aktuellen Alpha-Verträge sind getrennt vom veröffentlichten Produkt zu behandeln.
+
+| Problem | Markitects vorgesehener Mechanismus | Beitrag beziehungsweise Grenze von Ministerien |
+|---|---|---|
+| Dieselbe Regel widerspricht sich in Dokumentation, Agentenanweisungen und Umsetzung. | Ein akzeptierter semantischer Eigentümer; abhängige Darstellungen statt konkurrierender Wahrheit. | Ressorts können Abweichungen erkennen. Eigene unabhängige Regelkopien würden das Problem wieder einführen. |
+| Eine Änderung vergisst betroffene Nachbarbereiche. | Explizite Beziehungen, konservativer Impact und Umsetzung aller betroffenen Darstellungen. | Mehrere fachliche Blickwinkel können Lücken finden; Zustimmung allein leitet fehlende Arbeit nicht zuverlässig ab. |
+| Eine notwendige Darstellung existiert noch gar nicht. | Gewünschte Darstellungen mit beobachtetem Bestand vergleichen und fehlende Arbeit planen. | Ein reines Diff-Review kann das Nichtvorhandene übersehen. |
+| Bestehende Dateien driften ohne neuen Änderungsauftrag. | Beobachten und gegen unveränderte akzeptierte Absicht reparieren. | Ein Abstimmungsverfahren braucht zusätzlich einen Auslöser für Beobachtung und Reparatur. |
+| Eine Implementierung wird nur anhand eigener Tests freigegeben. | Unabhängige Prüfung mit passender Evidenz und eigener Integrationsverantwortung. | Fachlich getrennte Ressorts können Prüfbreite erhöhen. Mehr Stimmen oder Modellaufrufe beweisen keine unabhängige Wahrheit. |
+| Menschen koordinieren jede Routineänderung und synchronisieren Regeln von Hand. | Wiederverwendbare Vorgaben, begrenzte Ausführung, Reparatur und gezielte Eskalation. | Klare Mandate können entlasten; obligatorische Einstimmigkeit kann auch zusätzliche Runden und vermeidbare Eskalationen erzeugen. |
+
+**Drei Ebenen sind getrennt zu entscheiden:** Die Regierungsmetapher ist eine Sprache für das Produkt. Ressorts sind eine mögliche Organisation fachlicher Verantwortlichkeiten. Einstimmigkeit ist eine konkrete Annahmepolitik. Keine dieser Entscheidungen folgt automatisch aus den anderen. Die Möglichkeit einer bestehenden gemeinsamen Ursache oder eines ausgelassenen Ressorts bleibt auch bei einstimmiger Zustimmung bestehen.
+
+### Vorläufige Einordnung
+
+Government kann zu Markitect passen, wenn Projektordnung und menschlich akzeptierte Absicht die Autorität behalten, Ressorts daraus ihre Mandate ableiten und das gesamte Verfahren auch fehlende Darstellungen, Änderungsfolgen und Drift behandelt. Dann dient die Organisation dem bestehenden Sollmodell.
+
+Wenn das Produkt hauptsächlich beliebige Codeänderungen durch auswählbare DDD-, Architektur- und Sicherheitsagenten abstimmen lässt, entsteht dagegen primär eine Review- und Freigabeplattform. Sie kann nützlich sein, erfüllt aber Markitects Sollmodell- und Abgleichversprechen nicht schon durch das Kabinett. Ob eine solche Plattform eigenständig sein oder Markitect nutzen sollte, wäre eine separate Produktentscheidung.
+
+Auch eine vollständig ausgeschmückte Regierung ist nicht automatisch die bessere Bedienung. Institutionen, Stimmen und Verfahren müssen konkrete Verantwortung verständlicher machen oder wiederkehrende Arbeit entfernen. Die Metapher darf weder neue semantische Autorität erzeugen noch zusätzliche Bürokratie zum Selbstzweck machen. Gegenwärtig ist kein vollständiger Government-Umbau begründet.
+
+### Entscheidungskriterien für den Checkpoint
+
+Zuerst einen konkreten Nutzerablauf benennen, den Markitect verbessern soll. Danach gegenüber dem vorhandenen Executor-/Verifier-Verfahren prüfen:
+
+1. Welche übersehene Pflicht, widersprüchliche Darstellung oder fehlende Folge wird mit Ressorts besser behandelt?
+2. Bleiben kanonische Absicht, vollständige betroffene Arbeit, Drift-Reparatur und gültige Implementierungsfreiheit erhalten?
+3. Welche menschliche Koordination entfällt, und welche neue Pflege, Wartezeit und Konfliktklärung entsteht?
+4. Liegt der Nutzen an fachlicher Spezialisierung, an Einstimmigkeit oder lediglich an einer verständlicheren Sprache?
+5. Rechtfertigt der belegte Nutzen Government als Markitect selbst, eine darauf aufbauende Anwendung, ein unabhängiges Projekt oder das Verwerfen der Idee?
+
+Erst aus dieser Prüfung folgt ein Architekturauftrag. Der nachfolgende Regierungsentwurf beschreibt ausschließlich, was bei Auswahl dieser Richtung zu gestalten wäre; er begründet die Auswahl nicht.
+
+## Das Umdenken bei Auswahl der Government-Richtung
 
 Heute organisiert Markitect Arbeit wesentlich entlang gewünschter Darstellungen: Eine Projection benennt Bedeutung, Scope und Ziel; ein gebundenes Modul liefert Zielwissen. Verifikation folgt dieser Darstellung und ihren Eltern-/Kindbeziehungen.
 
@@ -54,7 +93,7 @@ Beide Beziehungen müssen zusammenpassen. Sie dürfen nicht zu einer einzigen Da
 
 Die einheitliche Produktvorstellung wäre: Der Nutzer gestaltet die Projektordnung, stellt die Regierung zusammen und erteilt Änderungsaufträge. Markitect organisiert Ausführung, Ressortprüfung, Einwände, Überarbeitung und Annahme. Compiler, Projektionswerkzeuge und technische Adapter sind die darunterliegenden Werkzeuge dieser Regierung.
 
-## Was bleiben kann und was geändert werden muss
+## Was bei dieser Richtung bleiben kann und geändert werden müsste
 
 | Baustein | Bewertung | Government-Entsprechung und notwendige Änderung |
 |---|---|---|
@@ -150,7 +189,7 @@ Dasselbe Grundverfahren gilt für eine gewöhnliche Reparatur. Der Nutzer muss k
 
 | Frage | Entscheidungsvorschlag beziehungsweise offene Grenze |
 |---|---|
-| Ist Government die Produktidentität? | Bevorzugte Richtung des Nutzers: Markitect selbst. Vor Umbau gegen den kohärenten Gesamtentwurf bestätigen. |
+| Ist Government die Produktidentität? | Offen. Zuerst Zweck und Nutzen prüfen; Markitect selbst, darauf aufbauende Anwendung, unabhängiges Projekt und Verwerfen bleiben mögliche Ergebnisse. |
 | Was bedeutet Zustimmung fachlich? | Ressortgebundenes Urteil gegen geltende Regeln, keine freie Geschmacks- oder Mehrheitsentscheidung. |
 | Darf ein Ressort zugleich ausführen? | Getrennte konkrete Prüfinstanz und unabhängige Nachweise erforderlich; eigenes Ergebnis nicht allein selbst freigeben. |
 | Wer löst Ressortkonflikte? | Verwaltung sucht eine Lösung innerhalb der Ordnung. Unvereinbare Anforderungen erfordern eine konkrete Nutzerentscheidung. |
@@ -162,7 +201,7 @@ Dasselbe Grundverfahren gilt für eine gewöhnliche Reparatur. Der Nutzer muss k
 
 ## Begrenzte Evaluation nach Architect-Abschluss
 
-Zuerst den dokumentierten finalen Architect-Kandidaten sichern und gegen diese Bestandsaufnahme abgleichen. Dann den Government-Entwurf gemeinsam entscheiden. Ein möglicher anschließender begrenzter Prototyp verwendet drei Ministerien und dieselben Aufgaben wie der vorhandene Executor-/Verifier-Ablauf:
+Zuerst den dokumentierten finalen Architect-Kandidaten sichern und gegen diese Bestandsaufnahme abgleichen. Dann Produktzweck und Government-Fit gemeinsam entscheiden. Nur bei positivem Ergebnis kann ein separat beauftragter begrenzter Prototyp folgen; eine Möglichkeit wären drei Ministerien und dieselben Aufgaben wie der vorhandene Executor-/Verifier-Ablauf:
 
 1. **Gewöhnliche lokale Änderung:** alle Ressorts antworten, auch nicht betroffene; gültige Nachbarartefakte bleiben erhalten.
 2. **Übergreifende Verletzung:** ein relevantes Architektur- oder Sicherheitsproblem wird aus einer anderen Ressortperspektive entdeckt.
