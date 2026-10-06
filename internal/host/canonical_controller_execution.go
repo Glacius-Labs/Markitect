@@ -133,6 +133,9 @@ func ExecuteCanonicalController(ctx context.Context, root, base, revision, confi
 		if err != nil {
 			return run, err
 		}
+		if err := ValidateCanonicalControllerExclusionOutputs(prepared.Outputs, canonicalControllerExcludedPaths(cfg)); err != nil {
+			return run, err
+		}
 		item.Outputs = prepared.Outputs
 		item.CandidateDigest = prepared.CandidateDigest
 		item.Escalations = prepared.Escalations
@@ -303,6 +306,9 @@ func ApplyCanonicalController(root, configPath string, cfg CanonicalControllerCo
 		if prepared.Plan == nil || len(prepared.Escalations) != 0 || len(work.Escalations) != 0 || prepared.Plan.PlanDigest != work.PlanDigest || prepared.CandidateDigest != work.CandidateDigest || outputDigest(prepared.Outputs) != outputDigest(work.Outputs) {
 			return report, errors.New("reviewed candidate or exact plan bytes differ from fresh preparation")
 		}
+		if err := ValidateCanonicalControllerExclusionOutputs(prepared.Outputs, canonicalControllerExcludedPaths(cfg)); err != nil {
+			return report, err
+		}
 		if p.Task != nil && (work.Executor == nil || work.Executor.ConfigDigest != run.ExecutorDigest || work.Executor.Outcome != agentexec.OutcomeProposed) {
 			return report, errors.New("AI candidate lacks its exact Executor receipt")
 		}
@@ -351,7 +357,7 @@ func ApplyCanonicalController(root, configPath string, cfg CanonicalControllerCo
 	expectedLedgerHead := state.Head
 	report.LedgerHead = state.Head
 	// Check inputs are protected equally with canonical authored bytes.
-	protected := sortedUniquePaths(append(canonicalSourcePaths(fresh.fixed), canonicalControllerCheckInputs(cfg)...))
+	protected := sortedUniquePaths(append(append(canonicalSourcePaths(fresh.fixed), canonicalControllerCheckInputs(cfg)...), canonicalControllerExcludedPaths(cfg)...))
 	written, writeErr := writeCanonicalScopedOutputs(root, canonicalScopedWriteCapture{Revision: fresh.Plan.Revision, CanonicalPaths: protected, Observed: fresh.observed, Inventory: fresh.Plan.Inventory}, output)
 	report.Written = written
 	report.Status = records.StateMaterializedUnverified
@@ -426,7 +432,7 @@ func ApplyCanonicalController(root, configPath string, cfg CanonicalControllerCo
 	report.LedgerHead = state.Head
 	// Evidence refresh is separate from materialization. The immutable evidence
 	// commit contains only canonical/check inputs and explicitly active artifacts.
-	report.EvidencePaths = append([]string(nil), protected...)
+	report.EvidencePaths = sortedUniquePaths(append(canonicalSourcePaths(fresh.fixed), canonicalControllerCheckInputs(cfg)...))
 	byRecordID := map[string]records.ProjectionRecord{}
 	for _, r := range state.Records {
 		byRecordID[r.ID] = r
@@ -470,4 +476,12 @@ func canonicalRequestPolicyIDs(policies []core.Definition) []string {
 	}
 	sort.Strings(ids)
 	return ids
+}
+
+func canonicalControllerExcludedPaths(cfg CanonicalControllerConfig) []string {
+	paths := make([]string, 0, len(cfg.TargetExclusions))
+	for _, exclusion := range cfg.TargetExclusions {
+		paths = append(paths, exclusion.Path)
+	}
+	return sortedUniquePaths(paths)
 }
