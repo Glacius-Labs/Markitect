@@ -1,0 +1,51 @@
+# Operating-model capability checkpoint — 2026-10-06
+
+This checkpoint continues the owner's capability-before-proof steer. It supersedes no historical result: the protocol-v1 acquisition failure, insufficient-guidance failures, checker counterexamples, invalid harness attempts and blocked provider calls remain evidence. This is an unreleased source candidate, not a completed proof program or release decision.
+
+Inspected integration input: `6aded2d8a4f1381fccbbe06b914620a5349bb8ed`. Every trial below retains its own different source, binary, fixture, policy, runtime and evidence identities. A later source change does not retroactively strengthen an older trial.
+
+## Mechanisms and experiments are separate
+
+| Claim | Current mechanism and bounded observation | Remaining requirement / classification |
+|---|---|---|
+| C1 — generic structural Core | Explicit Schema/Definition compilation, nominal references, closed typing and pure IR remain the semantic kernel. Commerce, unknown-ontology and workflow fixtures supply their own Schemas. | PARTIAL for the broad claim; no universal ontology coverage or new primitive is inferred. |
+| C2 — independent Modules | Static Core/Host/Module import gate and disjoint installable Module types are executable. Independent Markdown reference implementation is registered separately. | PARTIAL; import isolation is not independent deployment or semantic equivalence. C11 is a separate implementation-switch trial. |
+| C3 — unfamiliar ontology projection | [Positive v5 assessment](../../experiments/operating-model-proof/runs/c3-positive-05/events/assessment-c3-result.json) records a fresh Executor, five files / 2,505 candidate bytes, guarded Apply, one fixed behavior check and a separate fresh Verifier passing. | Bounded positive PASS. Repeated insufficient-guidance Executors did not escalate; that control remains FAIL. No reliable prose-sufficiency detection claim. |
+| C4 — reconcile-first lifecycle | Module-owned work, child-first execution, guarded writes, durable records and separate recursive verification are implemented. [Aligned C4 evidence](../../experiments/operating-model-proof/runs/c4-documentation-aligned-v2/verification-summary.json) records the three-scope passing lifecycle. | PARTIAL for full convergence: skipped/unobserved scopes are not no-ops. Exact reusable verification provenance and recursive cached convergence are being completed separately. The original Documentation/check alignment failure remains FAIL. |
+| C5 — local materialization versus conservative freshness | The controller distinguishes direct canonical changes, Module work and conservative refresh. Selective acquisition no longer requires unrelated blob content. | New source-change trial not complete. C5-01 used the wrong ledger and is INVALID; corrected setups also exposed mismatched invoked/declaration paths and were not called. Fresh parsed runtime bindings are required. The original global-acquisition FAIL stays historical. |
+| C6 — provenance / new workflow representations | Records retain source, policy, Module, artifact and active-ownership identities. New workflow projections exist for agent rules, Markdown, Azure and Git targets. | PARTIAL. Provider/workflow replay is separately BLOCKED before external invocation pending exact payload/destination permission. These are new-model paths, not historical v0.13 consumers used as substitute evidence. |
+| C7 — unknown artifacts | Configured-target inventory and unknown/escalation reporting are implemented. | PARTIAL; a dedicated fresh unknown/exclusion control remains required. No whole-repository completeness is implied. |
+| C8 — owned drift repair | Explicit current target observation and bounded repair are available. | Fresh drift trial not complete. The ordinary `auditAll=false` control must retain any miss; an explicit audit is a distinct scope, not a silent broadened read. |
+| C9 — recursive assurance | [Positive and planted-parent trials](../../experiments/operating-model-proof/runs/c9-positive-02/result.json) use actual child and parent verification. Passing children did not make the planted composition failures pass. | Bounded positive/negative PASS, not proof of all composition semantics. Two checkout-defect verification attempts are preserved independently. |
+| C10 — additional verifier value | [Quantity-one challenge](../../experiments/operating-model-proof/runs/c10-orders-quantity1-v5/result.json) passed the configured fixed checker but failed the separate fresh Verifier and composed result. | One bounded challenge caught. No catch rate, statistical independence, general safety or semantic correctness claim. |
+| C11 — canonical intent versus implementation binding | Two independent deterministic Markdown implementations plan distinct outputs for the same canonical model/Projection identity. | PARTIAL; initial check paths and a later absent state parent were harness defects. Corrected runs need guarded materialization and fresh verification; zero AI Executor calls are not AI projection evidence. |
+| C12 — goals-led modeling | Fresh goal recommendation and candidate modeling can be invoked; candidates remain noncanonical. | PARTIAL: an invalid model and duplicate binding are retained. Next bounded external call is BLOCKED pending payload/destination permission. No end-to-end Greenfield acceptance claim. |
+| C13 — reverse inference and durable adoption | [Actual reverse-inference candidate](../../experiments/operating-model-proof/runs/c13-public-infer-01/result.json) retains support, counterevidence, qualifications and uncertainty. [Durable adoption replay](../../experiments/operating-model-proof/runs/c13-durable-01/result.json) selected one `origin: adopted` record without changing repository/target bytes. | PARTIAL: the durable record is materialized-unverified, with no VerificationResult or owner acceptance. A decision reference is a supplied claim, not authentication. The fixed check's Markdown-content blind spot remains evidence. |
+
+## Gaps found during implementation and review
+
+The next implementation steps are accepted operating-model completion, not additional Core operators:
+
+- Reuse passed verification only after recomputing exact immutable evidence, current working bytes/modes, checks, runtime, configuration and child-result provenance. Missing historical provenance remains conservative. An unrelated skipped target is unobserved, never a claimed passing no-op.
+- Require explicit passing observations for every selected scope, policy, artifact and fixed-check identity before an overall controller PASS. Complete reference lists alone do not establish observation coverage. This improves traceability and cannot prove that an AI understood its inputs.
+- Recover actual ledger selection after a commit/readback error, or report it as unknown. Never infer that an attempted record stayed inactive merely because a write API returned an error.
+
+These implementation slices require focused tests and final integrated gates before source readiness is claimed.
+
+## Acquired evidence and quality gates
+
+[Windows selected-tree diagnosis](../../experiments/operating-model-proof/runs/windows-host-selected-tree-79e/receipt.json) identified cumulative native Git startup cost. The correction batches only validated literal selected paths with bounded command lengths and preserves before/after identity checks. At that isolated base plus patch, source tests passed in 47.403 seconds, the focused Host case in 32.308 seconds and the full Host package in 496.551 seconds under the unchanged default timeout. Those are technical run observations, not productivity measurements.
+
+After integration, the source package passed in 77.383 seconds and focused Host/CLI adoption tests passed in 223.238 / 33.550 seconds. Those commands ran while only evidence-accounting commits changed HEAD; their source inputs were unchanged. They are not a final whole-repository gate. [The 49-command receipt](../../experiments/operating-model-proof/runs/gates-412only/receipt.json) and separate native Linux run bind the earlier 4121288 source, not this final candidate. Current-head Windows/Linux Go, schema, examples, bootstrap and review gates remain required.
+
+No `internal/core`, product schema, dependency-module or published release change is introduced by the implementation slices described here. Historical package/release meaning stays separate from source-only candidate behavior.
+
+## Authority and measurement limits
+
+No provider retry may bypass an automatic review rejection. The exact C6, C12 and concurrency payload/destination questions remain pending. Konfyra's approved private scope grants neither external transmission nor candidate acceptance; owner review is still required.
+
+Observed preparation errors are maintenance evidence: receipt-field aliases, escaped JSON paths, incorrect checker paths and absent state parents created invalid attempts. They are not quietly classified as Module successes or failures. Machine-derived parsed bindings replace manual hash/path copying, while original records remain unchanged.
+
+A fresh Verifier process/session separates responsibilities but does not prove uncorrelated reasoning. Supplied review identity is not authentication. Artifact ownership is not semantic truth. No economic, human-attention, productivity, token-saving, business or release claim follows from this checkpoint.
+
+The queue proceeds through the remaining mechanisms, real bounded runs and negative controls before the matched human-attention comparison. [Vision](../vision.md) owns the thesis; [Measurement](../measurement.md) owns future benefit evaluation.

@@ -1310,3 +1310,5 @@ spec:
       owner: immutable-operating-model-proof-records
     - path: experiments/operating-model-proof/runs/windows-host-selected-tree-79e/scope-note.md
       owner: immutable-operating-model-proof-records
+    - path: docs/validation/proof-capability-checkpoint-2026-10-06.md
+      owner: operating-model-proof-checkpoint

@@ -21,3 +21,5 @@ Static driver tests run with:
     python -m unittest discover -s experiments/operating-model-proof -p test_run.py
 
 These tests validate evidence boundaries only; they are not product checks or capability trials. No private real-agent trial is established by this directory until a new uniquely bound run record is executed.
+
+[The current capability checkpoint](../../docs/validation/proof-capability-checkpoint-2026-10-06.md) distinguishes actual later trials from the preliminary v3 results and remaining implementation/provider/owner boundaries. Each trial is bound to its own frozen source; later contract improvements do not rescore it.
