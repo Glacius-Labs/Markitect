@@ -16,7 +16,7 @@ Application plans bind exact canonical input bytes, observed target preimages/mo
 
 Markdown and .NET each own a private Core-facing proposal input and work/no-op/escalation output. They do not import one another, Host or shared work DTOs. Host translates validated IR, selected policies and operational observations. Markdown owns its output naming and rendering. .NET proposes a bounded Executor task and permitted target prefix/extensions; the Executor selects exact filenames. Host validates filenames, ownership, canonical-source protection and collisions before forming a plan.
 
-A no-op means the stated inspected evidence supports no materialization work; it does not imply semantic PASS, acceptance, or freshness of skipped/global evidence. Missing, conflicting or insufficient guidance escalates rather than inventing conventions. No Module deletes retired/unowned artifacts implicitly.
+A no-op means the stated inspected evidence supports no materialization work; it does not imply semantic PASS, acceptance, or freshness of skipped/global evidence. Host and Modules enforce structural constraints and explicit bindings, and can surface an escalation they receive or report; they do not judge whether arbitrary prose is semantically sufficient. Escalation for semantic insufficiency is a requested Executor behavior, not an automatic Host guarantee. The reported C3 insufficient-03 attempt returned `proposed` despite the protocol's expected escalation, so this behavior remains unproven. This observation does not rescore any frozen C5 failure or NOT RUN result. No Module deletes retired/unowned artifacts implicitly.
 
 ## Durable operational records
 
