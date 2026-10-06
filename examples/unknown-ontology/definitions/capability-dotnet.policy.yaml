@@ -10,4 +10,5 @@ spec:
     kind: Capability
   targetTechnology: dotnet
   guidance: >
+    Place the public target types in namespace UnknownOntology.
     Expose public sealed record Capability(string Name, string EffectAxisName, long MaximumMagnitude). Preserve the selected Definition's values. MissionEvaluator must match this capability by name, match its supported axis to EffectAxis.Name, and enforce its maximum magnitude. This is a semantic representation constraint, not a filename template.
