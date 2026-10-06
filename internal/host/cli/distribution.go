@@ -64,7 +64,7 @@ func commandFlags(command string) (map[string]bool, bool) {
 	case "prepare":
 		names = []string{"scope", "output", "expect", "write"}
 	case "copy-me":
-		names = []string{"workspace", "queue", "decision"}
+		names = []string{"action", "workspace", "queue", "decision", "runtime"}
 	case "authoring", "version", "licenses":
 	default:
 		return nil, false

@@ -60,7 +60,7 @@ func Run(args []string, out, errout io.Writer) int {
 		}
 		return 0
 	}
-	if command == "canonical" && isCanonicalControllerAction(o.action) {
+	if (command == "canonical" && isCanonicalControllerAction(o.action)) || (command == "copy-me" && o.action == "infer") {
 		emit = func(value any) int {
 			data, err := json.MarshalIndent(value, "", "  ")
 			if err != nil {
