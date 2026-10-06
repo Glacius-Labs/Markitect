@@ -442,7 +442,7 @@ func prepareCanonicalControllerVerifications(root, sourceRevision, evidenceRevis
 	return prepared, graph, current, nil
 }
 
-func canonicalControllerScopedChecks(fixed *CanonicalSource, projector core.Definition, requested []authoring.Check) ([]authoring.Check, error) {
+func canonicalControllerScopedChecks(fixed *CanonicalSource, projector canonical.ProjectorRegistration, requested []authoring.Check) ([]authoring.Check, error) {
 	if fixed == nil {
 		return nil, errors.New("fixed canonical source is required")
 	}
@@ -492,6 +492,14 @@ func canonicalControllerScopedChecks(fixed *CanonicalSource, projector core.Defi
 	}
 	sort.Slice(selected, func(i, j int) bool { return selected[i].Name < selected[j].Name })
 	return selected, nil
+}
+
+func cloneCanonicalControllerArtifacts(artifacts []agentexec.Artifact) []agentexec.Artifact {
+	cloned := append([]agentexec.Artifact(nil), artifacts...)
+	for i := range cloned {
+		cloned[i].Content = append([]byte(nil), artifacts[i].Content...)
+	}
+	return cloned
 }
 
 func loadCanonicalControllerScopeRequest(root, sourceRevision, evidenceRevision string, cfg CanonicalControllerConfig, fixed *CanonicalSource, record records.ProjectionRecord, scope CanonicalAssuranceScope, scopeIndex map[string]CanonicalAssuranceScope, recordsByProjection map[string]records.ProjectionRecord) (canonical.ProjectionRequest, *snapshot.Snapshot, error) {
@@ -675,7 +683,7 @@ func invokeCanonicalControllerVerifier(ctx context.Context, cfg CanonicalControl
 		ModulePin: item.record.Module.Digest, ProjectionID: item.record.ProjectionID,
 		ScopeIDs:  append([]string(nil), item.context.ScopeIDs...),
 		PolicyIDs: append([]string(nil), canonicalRequestPolicyIDs(item.request.Policies)...),
-		Context:   contextBytes, Artifacts: cloneAgentArtifacts(item.artifacts),
+		Context:   contextBytes, Artifacts: cloneCanonicalControllerArtifacts(item.artifacts),
 	}
 	execution, invokeErr := agentexec.Run(ctx, cfg.Verifier.agentConfig(), request, agentexec.RunOptions{
 		TempParent: filepath.Dir(cfg.PrivateLogs), PrivateLogDirectory: cfg.PrivateLogs,
