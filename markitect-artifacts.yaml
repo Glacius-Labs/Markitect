@@ -889,3 +889,9 @@ spec:
       owner: operating-model-proof-evidence
     - path: experiments/operating-model-proof/runs/c3-positive-02/events/correction-assurance-node-count.json
       owner: operating-model-proof-evidence
+    - path: experiments/operating-model-proof/c12-goal-propose-02.md
+      owner: goal-modeling-proposal-trial-evidence
+    - path: experiments/operating-model-proof/runs/c13-public-infer-01/result.json
+      owner: public-reverse-inference-trial-evidence
+    - path: experiments/operating-model-proof/runs/c13-public-infer-01/result.md
+      owner: public-reverse-inference-trial-evidence
