@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"path"
+	"sort"
 	"strings"
 
 	"github.com/Glacius-Labs/Markitect/internal/core"
@@ -246,7 +247,12 @@ func validatePolicies(policies []core.Definition, schemas []core.Schema, definit
 		}
 		seen[key] = true
 	}
+	selectedKeys := make([]string, 0, len(selected))
 	for key := range selected {
+		selectedKeys = append(selectedKeys, key)
+	}
+	sort.Strings(selectedKeys)
+	for _, key := range selectedKeys {
 		if !seen[key] {
 			return fmt.Errorf("Kind %s has no selected Markdown ProjectionPolicy", key)
 		}

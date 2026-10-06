@@ -136,3 +136,32 @@ func TestProposeCurrentVerificationClearsOldMaterializationRequest(t *testing.T)
 		t.Fatalf("current verification should clear old materialization request digest: %#v", got)
 	}
 }
+
+func TestProposeChoosesMissingKindPolicyEscalationDeterministically(t *testing.T) {
+	const api = "example.test/v1"
+	kinds := map[string]core.Kind{
+		"Zulu":  {Purpose: "Zulu purpose."},
+		"Alpha": {Purpose: "Alpha purpose."},
+		"Gamma": {Purpose: "Gamma purpose."},
+	}
+	input := Input{
+		Definitions: []core.Definition{
+			{APIVersion: api, Kind: "Zulu", Metadata: core.Metadata{Name: "zulu", Namespace: "test"}, Purpose: "Zulu definition."},
+			{APIVersion: api, Kind: "Gamma", Metadata: core.Metadata{Name: "gamma", Namespace: "test"}, Purpose: "Gamma definition."},
+			{APIVersion: api, Kind: "Alpha", Metadata: core.Metadata{Name: "alpha", Namespace: "test"}, Purpose: "Alpha definition."},
+		},
+		Schemas:      []core.Schema{{APIVersion: api, Purpose: "Three custom kinds.", Kinds: kinds}},
+		TargetPrefix: "docs/custom", AllowedRoots: []string{"docs"},
+		RequestDigest: "sha256:" + strings.Repeat("1", 64), InventoryComplete: true,
+	}
+
+	first := Propose(input)
+	if first.Decision != DecisionEscalate || len(first.Escalations) != 1 || !strings.Contains(first.Escalations[0].Message, "Alpha") {
+		t.Fatalf("first missing-guidance escalation was not the sorted Kind: %#v", first)
+	}
+	for i := 0; i < 100; i++ {
+		if got := Propose(input); !reflect.DeepEqual(got, first) {
+			t.Fatalf("same selected scope produced different policy escalation on iteration %d:\nfirst=%#v\ngot=%#v", i, first, got)
+		}
+	}
+}
