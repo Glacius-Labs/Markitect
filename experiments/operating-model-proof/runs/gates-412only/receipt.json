@@ -1,0 +1,296 @@
+[
+  {
+    "source": "4121288e03a84475afb7bcc2dbcef2ec9ff80927",
+    "command": "[external]\\markitect-proof-integrated.exe schema --repo .",
+    "exit": 0,
+    "digest": "d26a6015db4de687393ced49acfc26376942850acb5fd7b050462012e6600ff1"
+  },
+  {
+    "source": "4121288e03a84475afb7bcc2dbcef2ec9ff80927",
+    "command": "[external]\\markitect-proof-integrated.exe check --repo examples/minimal",
+    "exit": 0,
+    "digest": "843096fcc814160a3fe6cc9b5e1c74e2bed79e5472004e3c2c9404bc4dc98f98"
+  },
+  {
+    "source": "4121288e03a84475afb7bcc2dbcef2ec9ff80927",
+    "command": "[external]\\markitect-proof-integrated.exe check --repo examples/repository-layout",
+    "exit": 0,
+    "digest": "6e9ed2e4355f2b16e996770fa7bc3e64dbcaeb7e961f850a83bc05948cc85556"
+  },
+  {
+    "source": "4121288e03a84475afb7bcc2dbcef2ec9ff80927",
+    "command": "[external]\\markitect-proof-integrated.exe format --repo examples/repository-layout",
+    "exit": 0,
+    "digest": "3842b1adb1affb0a6741e8f659a2395887bad52c1eb73800f0a3120a2cfdce89"
+  },
+  {
+    "source": "4121288e03a84475afb7bcc2dbcef2ec9ff80927",
+    "command": "[external]\\markitect-proof-integrated.exe check --repo examples/canonical-engineering",
+    "exit": 0,
+    "digest": "6c5959be550668d7561c052ed82d868aae7a7d9b2b8499528d8504eecbdf5465"
+  },
+  {
+    "source": "4121288e03a84475afb7bcc2dbcef2ec9ff80927",
+    "command": "[external]\\markitect-proof-integrated.exe format --repo examples/canonical-engineering",
+    "exit": 0,
+    "digest": "3842b1adb1affb0a6741e8f659a2395887bad52c1eb73800f0a3120a2cfdce89"
+  },
+  {
+    "source": "4121288e03a84475afb7bcc2dbcef2ec9ff80927",
+    "command": "[external]\\markitect-proof-integrated.exe model --repo examples/canonical-engineering",
+    "exit": 0,
+    "digest": "d3c3acb9e858585230488959b81f67098a4570c0f15c02fd17561d55372d0b73"
+  },
+  {
+    "source": "4121288e03a84475afb7bcc2dbcef2ec9ff80927",
+    "command": "[external]\\markitect-proof-integrated.exe context --repo examples/canonical-engineering --namespace engineering --kind Skill --name architecture-review",
+    "exit": 0,
+    "digest": "a668e22e1175acfc4b76f9bea31037019cb09924e41c07608dcdecccf4b413db"
+  },
+  {
+    "source": "4121288e03a84475afb7bcc2dbcef2ec9ff80927",
+    "command": "[external]\\markitect-proof-integrated.exe check --repo examples/engineering-constitution",
+    "exit": 0,
+    "digest": "a43df7fe671fb958a89855627a2b80861ea30f4ba2984eb33554ad919e4c8af5"
+  },
+  {
+    "source": "4121288e03a84475afb7bcc2dbcef2ec9ff80927",
+    "command": "[external]\\markitect-proof-integrated.exe format --repo examples/engineering-constitution",
+    "exit": 0,
+    "digest": "3842b1adb1affb0a6741e8f659a2395887bad52c1eb73800f0a3120a2cfdce89"
+  },
+  {
+    "source": "4121288e03a84475afb7bcc2dbcef2ec9ff80927",
+    "command": "[external]\\markitect-proof-integrated.exe model --repo examples/engineering-constitution",
+    "exit": 0,
+    "digest": "8a4d27545fcabebcb7189a7471b1d36ff031fe57247b97541bc1b491da04104b"
+  },
+  {
+    "source": "4121288e03a84475afb7bcc2dbcef2ec9ff80927",
+    "command": "[external]\\markitect-proof-integrated.exe check --repo examples/engineering-discovery",
+    "exit": 0,
+    "digest": "68ae5952a409078bdf27c6e8a4adb093a73fc3a6fd9feb4975b245a6e7eacd0d"
+  },
+  {
+    "source": "4121288e03a84475afb7bcc2dbcef2ec9ff80927",
+    "command": "[external]\\markitect-proof-integrated.exe format --repo examples/engineering-discovery",
+    "exit": 0,
+    "digest": "3842b1adb1affb0a6741e8f659a2395887bad52c1eb73800f0a3120a2cfdce89"
+  },
+  {
+    "source": "4121288e03a84475afb7bcc2dbcef2ec9ff80927",
+    "command": "[external]\\markitect-proof-integrated.exe check --repo examples/software-architecture",
+    "exit": 0,
+    "digest": "5aa2b383083c20d8e440fa4c2ff73484b0268eedf6bda207b50f67586036d072"
+  },
+  {
+    "source": "4121288e03a84475afb7bcc2dbcef2ec9ff80927",
+    "command": "[external]\\markitect-proof-integrated.exe format --repo examples/software-architecture",
+    "exit": 0,
+    "digest": "3842b1adb1affb0a6741e8f659a2395887bad52c1eb73800f0a3120a2cfdce89"
+  },
+  {
+    "source": "4121288e03a84475afb7bcc2dbcef2ec9ff80927",
+    "command": "[external]\\markitect-proof-integrated.exe model --repo examples/software-architecture",
+    "exit": 0,
+    "digest": "dca313937aea8c4b2e6216e2e592711cbbfccbee6dc509d596a66f8efcf73cd9"
+  },
+  {
+    "source": "4121288e03a84475afb7bcc2dbcef2ec9ff80927",
+    "command": "[external]\\markitect-proof-integrated.exe context --repo examples/software-architecture --namespace engineering --kind Skill --name implement-order",
+    "exit": 0,
+    "digest": "a98ff5bce11c8f1c5438bcfca84dc11c1db8df321077346d866d70672de65812"
+  },
+  {
+    "source": "4121288e03a84475afb7bcc2dbcef2ec9ff80927",
+    "command": "[external]\\markitect-proof-integrated.exe check --repo examples/delivery-target-equality",
+    "exit": 0,
+    "digest": "ef76aa3b86ed35400300edf8cb8464a562d868b463c1007bfd7d034e637540dc"
+  },
+  {
+    "source": "4121288e03a84475afb7bcc2dbcef2ec9ff80927",
+    "command": "[external]\\markitect-proof-integrated.exe format --repo examples/delivery-target-equality",
+    "exit": 0,
+    "digest": "3842b1adb1affb0a6741e8f659a2395887bad52c1eb73800f0a3120a2cfdce89"
+  },
+  {
+    "source": "4121288e03a84475afb7bcc2dbcef2ec9ff80927",
+    "command": "[external]\\markitect-proof-integrated.exe model --repo examples/delivery-target-equality",
+    "exit": 0,
+    "digest": "3568a135e8626c3eb5098df11f90c9ef0325b1d5bdf379b82acac41022e6f204"
+  },
+  {
+    "source": "4121288e03a84475afb7bcc2dbcef2ec9ff80927",
+    "command": "[external]\\markitect-proof-integrated.exe context --repo examples/delivery-target-equality --namespace engineering --kind Skill --name deployment-review",
+    "exit": 0,
+    "digest": "3c2795b74dfcbc57dd662e69ab65f038398fd40a2695ed2a89a76a4c8301afa2"
+  },
+  {
+    "source": "4121288e03a84475afb7bcc2dbcef2ec9ff80927",
+    "command": "[external]\\markitect-proof-integrated.exe check --repo benchmark/fixtures/v2",
+    "exit": 0,
+    "digest": "0b9463b05f2855f2bbb07aa2a8ae1a73fb43aed390d920915df3d9b8b4d4a234"
+  },
+  {
+    "source": "4121288e03a84475afb7bcc2dbcef2ec9ff80927",
+    "command": "[external]\\markitect-proof-integrated.exe check --repo examples/markdown-navigation",
+    "exit": 0,
+    "digest": "8be349f982a6f20edceca2dfb9a8f91527e7abcf39305dc3fec0006d1689ad48"
+  },
+  {
+    "source": "4121288e03a84475afb7bcc2dbcef2ec9ff80927",
+    "command": "[external]\\markitect-proof-integrated.exe format --repo examples/markdown-navigation",
+    "exit": 0,
+    "digest": "3842b1adb1affb0a6741e8f659a2395887bad52c1eb73800f0a3120a2cfdce89"
+  },
+  {
+    "source": "4121288e03a84475afb7bcc2dbcef2ec9ff80927",
+    "command": "[external]\\markitect-proof-integrated.exe check --repo examples/documentation",
+    "exit": 0,
+    "digest": "61fe9be23eb42355bcdd7d6c1c683da3fd5aa95fe8d8564e892999acafd277f5"
+  },
+  {
+    "source": "4121288e03a84475afb7bcc2dbcef2ec9ff80927",
+    "command": "[external]\\markitect-proof-integrated.exe format --repo examples/documentation",
+    "exit": 0,
+    "digest": "3842b1adb1affb0a6741e8f659a2395887bad52c1eb73800f0a3120a2cfdce89"
+  },
+  {
+    "source": "4121288e03a84475afb7bcc2dbcef2ec9ff80927",
+    "command": "[external]\\markitect-proof-integrated.exe check --repo examples/onboarding/delivery-service",
+    "exit": 0,
+    "digest": "fa974c1a152958c6d3cb8a78f6f2f8d6509a91515063d789e71de07a8428ecc7"
+  },
+  {
+    "source": "4121288e03a84475afb7bcc2dbcef2ec9ff80927",
+    "command": "[external]\\markitect-proof-integrated.exe format --repo examples/onboarding/delivery-service",
+    "exit": 0,
+    "digest": "3842b1adb1affb0a6741e8f659a2395887bad52c1eb73800f0a3120a2cfdce89"
+  },
+  {
+    "source": "4121288e03a84475afb7bcc2dbcef2ec9ff80927",
+    "command": "[external]\\markitect-proof-integrated.exe check --repo examples/documentation-placement",
+    "exit": 0,
+    "digest": "8c8de42fc8d9b4a528ac895449c361c8745730820b418ed71f1ee61be8e8e753"
+  },
+  {
+    "source": "4121288e03a84475afb7bcc2dbcef2ec9ff80927",
+    "command": "[external]\\markitect-proof-integrated.exe format --repo examples/documentation-placement",
+    "exit": 0,
+    "digest": "3842b1adb1affb0a6741e8f659a2395887bad52c1eb73800f0a3120a2cfdce89"
+  },
+  {
+    "source": "4121288e03a84475afb7bcc2dbcef2ec9ff80927",
+    "command": "[external]\\markitect-proof-integrated.exe check --repo examples/package-consumer",
+    "exit": 0,
+    "digest": "aee2f753e68e07c24c15dd0a786a86d3a382beadfb835008774a5d1c9f1b5b83"
+  },
+  {
+    "source": "4121288e03a84475afb7bcc2dbcef2ec9ff80927",
+    "command": "[external]\\markitect-proof-integrated.exe context --repo examples/package-consumer --package review-guidance --namespace review --kind Workflow --name review-change",
+    "exit": 0,
+    "digest": "41c124b4f4b5d351b9fad9eac20c8c5f1e8aebf91523918ad7037ed826aae0d8"
+  },
+  {
+    "source": "4121288e03a84475afb7bcc2dbcef2ec9ff80927",
+    "command": "[external]\\markitect-proof-integrated.exe context --repo examples/package-consumer --namespace consumer --kind Skill --name local-review-entry",
+    "exit": 0,
+    "digest": "f8e4d784695536b69dbe4fe551dd9c17c8d3fffb0b7ce69232bf555d4ed9b59a"
+  },
+  {
+    "source": "4121288e03a84475afb7bcc2dbcef2ec9ff80927",
+    "command": "[external]\\markitect-proof-integrated.exe check --repo . --revision 4121288e03a84475afb7bcc2dbcef2ec9ff80927",
+    "exit": 0,
+    "digest": "83afbd4efe90ef26b36fe1e70646411f50e8a19052291f439dec1bffd9cc8511"
+  },
+  {
+    "source": "4121288e03a84475afb7bcc2dbcef2ec9ff80927",
+    "command": "[external]\\markitect-proof-integrated.exe format --repo .",
+    "exit": 0,
+    "digest": "3842b1adb1affb0a6741e8f659a2395887bad52c1eb73800f0a3120a2cfdce89"
+  },
+  {
+    "source": "4121288e03a84475afb7bcc2dbcef2ec9ff80927",
+    "command": "[external]\\markitect-proof-integrated.exe context --repo . --revision 4121288e03a84475afb7bcc2dbcef2ec9ff80927 --namespace development --kind Skill --name engineering-change",
+    "exit": 0,
+    "digest": "ddf01c06ea1e6799f1d7021144d94abaceafb155298fbba924eb28167da072a8"
+  },
+  {
+    "source": "4121288e03a84475afb7bcc2dbcef2ec9ff80927",
+    "command": "[external]\\go1.27.1\\bin\\go.exe run ./cmd/markitect-check-artifacts --repo . --config markitect-artifacts.yaml",
+    "exit": 0,
+    "digest": "35efea56f50304b62d8a4147bc3bd8929cf81a569140fdf6b63ed90b711509a0"
+  },
+  {
+    "source": "4121288e03a84475afb7bcc2dbcef2ec9ff80927",
+    "command": "[external]\\go1.27.1\\bin\\go.exe run ./cmd/markitect-check-modules --repo . --hooks .markitect/modules/githooks.config --pipelines .markitect/modules/pipelines.config",
+    "exit": 0,
+    "digest": "fc29a9bc526def21713075c0532ef8a23390df3fb07decf58e0cfbb0c885d6ec"
+  },
+  {
+    "source": "4121288e03a84475afb7bcc2dbcef2ec9ff80927",
+    "command": "[external]\\go1.27.1\\bin\\go.exe test ./internal/host/authoring/contentpackage -count=1",
+    "exit": 0,
+    "digest": "77918d2dcb6c68d277fa961819321cde6998974372fc6abfd2eaee40ec8f0f01"
+  },
+  {
+    "source": "4121288e03a84475afb7bcc2dbcef2ec9ff80927",
+    "command": "[external]\\go1.27.1\\bin\\go.exe test ./internal/host -run ^(TestPackageContextKeepsOriginsAndPrivateDependencies|TestPackageUpdateInvalidatesReviewAndReportsPhysicalChange|TestPackageDigestAndOriginBoundaryFailClosed|TestPackContentUsesFixedSnapshotAndIncludesOnlyDeclaredInputs|TestPackContentResolvesPrivatePackageBinding)$ -count=1",
+    "exit": 0,
+    "digest": "6530309b9512a5c074cefa26a9ae288eed314c4e5353507eec7179cb5a1239fc"
+  },
+  {
+    "source": "4121288e03a84475afb7bcc2dbcef2ec9ff80927",
+    "command": "[external]\\go1.27.1\\bin\\go.exe test ./internal/host/cli -run ^(TestPackUsesFixedGitRevisionAndRefusesOverwrite|TestPackageConsumerCLIContextAndArchiveIntegrity)$ -count=1",
+    "exit": 0,
+    "digest": "114680273db0c2861a97dccbfbe4a65061bc3e26b8138e3a7dc822b241aa1f64"
+  },
+  {
+    "source": "4121288e03a84475afb7bcc2dbcef2ec9ff80927",
+    "command": "[external]\\go1.27.1\\bin\\go.exe test integration/run-markitect.go integration/run-markitect_test.go -count=1",
+    "exit": 0,
+    "digest": "705ed6bc63422c021e5a7a90c9c04bc3a31b0415010f32436378c25e0f5e1a71"
+  },
+  {
+    "source": "4121288e03a84475afb7bcc2dbcef2ec9ff80927",
+    "command": "[external]\\markitect-proof-integrated.exe package --repo . --output [external]\\source-package",
+    "exit": 0,
+    "digest": "263deee4cd3f6be9b5a6e0824e3a182379c81c07c56d0fc58cc9936832053f92"
+  },
+  {
+    "source": "4121288e03a84475afb7bcc2dbcef2ec9ff80927",
+    "command": "[external]\\go1.27.1\\bin\\go.exe test .markitect/bootstrap/run.go .markitect/bootstrap/run_test.go -count=1",
+    "exit": 0,
+    "digest": "f7ce3d50a8ec851f5beece8127054c768b5972ddbc5480150087d453aa5c5b15"
+  },
+  {
+    "source": "4121288e03a84475afb7bcc2dbcef2ec9ff80927",
+    "command": "[external]\\go1.27.1\\bin\\go.exe run .markitect/bootstrap/run.go authoring",
+    "exit": 0,
+    "digest": "ae5acc9e39c06bb50e371914eca42f9db9c893a97f5c462d9464bfa85051826f"
+  },
+  {
+    "source": "4121288e03a84475afb7bcc2dbcef2ec9ff80927",
+    "command": "[external]\\go1.27.1\\bin\\go.exe run .markitect/bootstrap/run.go licenses",
+    "exit": 0,
+    "digest": "5ce6b7e82552446e197cbaf9fdb26e4e916974a67d353925911d7a793ea707f5"
+  },
+  {
+    "source": "4121288e03a84475afb7bcc2dbcef2ec9ff80927",
+    "command": "[external]\\go1.27.1\\bin\\go.exe run .markitect/bootstrap/run.go check --repo [worktree]\\examples\\minimal",
+    "exit": 0,
+    "digest": "02017722b9c5eeb467eb12781d5a1d4eae015743f0b0d1a8bcca108e3a632985"
+  },
+  {
+    "source": "4121288e03a84475afb7bcc2dbcef2ec9ff80927",
+    "command": "[external]\\go1.27.1\\bin\\go.exe mod verify",
+    "exit": 0,
+    "digest": "acdb6a6a98dc2c297af31bb3538319778be8c8ef263cd0a8c9799de9c4998533"
+  },
+  {
+    "source": "4121288e03a84475afb7bcc2dbcef2ec9ff80927",
+    "command": "git diff --check",
+    "exit": 0,
+    "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+]
