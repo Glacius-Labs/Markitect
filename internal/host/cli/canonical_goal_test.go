@@ -229,3 +229,20 @@ func TestCanonicalGoalCommandHasNoImplicitRepositoryInputs(t *testing.T) {
 		}
 	}
 }
+
+func TestCanonicalGoalEntryDelegatesWithoutRepositoryConfiguration(t *testing.T) {
+	t.Setenv(canonicalGoalHelperEnv, "1")
+	t.Setenv("MARKITECT_CANONICAL_GOAL_INVALID", "")
+	files := writeCanonicalGoalCLIInputs(t)
+	var out, errs bytes.Buffer
+	if code := Run([]string{"canonical", "--action", "goal-recommend", "--goal-input", files.goal, "--runtime", files.runtime}, &out, &errs); code != 0 {
+		t.Fatalf("entry exit %d: %s %s", code, out.String(), errs.String())
+	}
+	var report map[string]any
+	if err := json.Unmarshal(out.Bytes(), &report); err != nil {
+		t.Fatal(err)
+	}
+	if report["status"] != "proposed" || report["adopted"] != false {
+		t.Fatalf("entry did not produce a noncanonical goal proposal: %v", report)
+	}
+}
