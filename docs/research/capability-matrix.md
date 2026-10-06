@@ -1,5 +1,7 @@
 # Capability matrix
 
+Historical protocol-v1 checkpoint. The later owner steer supersedes its blanket implementation pause; [proof-readiness decisions](../design/proof-readiness-capabilities.md) govern continued implementation and fresh trials. Frozen observations and their FAIL status remain unchanged.
+
 Baseline: source commit `75031b8eca8161b0a247414741828bfb2e1d9069`. This matrix records bounded existing support separately from fresh proof status. All new C1–C13 trials are NOT RUN. A code path, unit test, or CI pass does not by itself prove the broad capability claim.
 
 | ID | Claim | Bounded existing support | Status | Next evidence |
