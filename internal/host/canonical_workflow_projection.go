@@ -8,8 +8,10 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/host/canonical"
 	"github.com/Glacius-Labs/Markitect/internal/host/records"
 	"github.com/Glacius-Labs/Markitect/internal/infrastructure/source"
+	"github.com/Glacius-Labs/Markitect/internal/modules/agentrules"
 	"github.com/Glacius-Labs/Markitect/internal/modules/azurepipelines"
 	"github.com/Glacius-Labs/Markitect/internal/modules/githooks"
+	"github.com/Glacius-Labs/Markitect/internal/modules/markdown"
 )
 
 // prepareGitHooksProjectionInput is a pure adapter from the Host's already
@@ -197,4 +199,80 @@ func selectedCanonicalTargetInventory(entries []source.WorkingFileMetadata, pref
 		selected = append(selected, entry)
 	}
 	return selected
+}
+
+// renderCanonicalDeterministicProjection composes installed static capabilities.
+// Ownership is evaluated by each Module's Propose before controller execution;
+// this stage derives only the same exact candidate bytes and declared modes.
+func renderCanonicalDeterministicProjection(fixed *CanonicalSource, observed *snapshot.Snapshot, request canonical.ProjectionRequest, checks []authoring.Check) (map[string][]byte, map[string]string, []CanonicalProjectionEscalation, error) {
+	files, modes := map[string][]byte{}, map[string]string{}
+	entrypoint, err := canonicalWorkflowEntrypoint(request)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	escalations := []CanonicalProjectionEscalation{}
+	switch entrypoint {
+	case "agent-rules":
+		input, err := canonicalProviderProjectionInput(fixed.Model, request)
+		if err != nil {
+			return nil, nil, nil, err
+		}
+		file, err := agentrules.Render(input)
+		if err != nil {
+			escalations = append(escalations, CanonicalProjectionEscalation{Code: "agent-rules.guidance-invalid", Message: err.Error()})
+		} else {
+			files[file.Path], modes[file.Path] = file.Content, snapshot.RegularMode
+		}
+	case "markdown":
+		rendered := markdown.RenderProjection(markdown.Input{Definitions: request.Definitions, Schemas: request.Schemas, Policies: request.Policies, TargetPrefix: request.TargetPrefix})
+		for _, d := range rendered.Diagnostics {
+			escalations = append(escalations, CanonicalProjectionEscalation{Code: d.Code, Identity: d.Identity, Message: d.Message})
+		}
+		if len(escalations) == 0 {
+			files = rendered.Files
+			for name := range files {
+				modes[name] = snapshot.RegularMode
+			}
+		}
+	case "githooks":
+		input, selectedEscalations, err := prepareGitHooksProjectionInput(request, checks, nil, observed, nil)
+		if err != nil {
+			return nil, nil, nil, err
+		}
+		escalations = append(escalations, selectedEscalations...)
+		if len(escalations) == 0 {
+			input.InventoryComplete = false // Rendering makes no inventory or ownership claim.
+			rendered := githooks.Render(input)
+			for _, e := range rendered.Escalations {
+				escalations = append(escalations, CanonicalProjectionEscalation{Code: e.Code, Identity: request.Projection.Identity().Key(), Message: e.Message})
+			}
+			if len(escalations) == 0 {
+				for _, file := range rendered.Files {
+					files[file.Path], modes[file.Path] = file.Content, file.Mode
+				}
+			}
+		}
+	case "azurepipelines":
+		input, selectedEscalations, err := prepareAzurePipelinesProjectionInput(request, checks, nil, observed, nil, true)
+		if err != nil {
+			return nil, nil, nil, err
+		}
+		escalations = append(escalations, selectedEscalations...)
+		if len(escalations) == 0 {
+			input.InventoryComplete = false // Rendering makes no inventory or ownership claim.
+			rendered := azurepipelines.Render(input)
+			for _, d := range rendered.Diagnostics {
+				escalations = append(escalations, CanonicalProjectionEscalation{Code: d.Code, Identity: d.Identity, Message: d.Message})
+			}
+			if len(escalations) == 0 {
+				files = rendered.Files
+				for name := range files {
+					modes[name] = rendered.Mode
+				}
+			}
+		}
+	default:
+		return nil, nil, nil, fmt.Errorf("static Projector %q requires an explicit candidate", request.Projector.ID)
+	}
+	return files, modes, escalations, nil
 }

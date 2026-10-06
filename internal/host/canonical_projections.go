@@ -21,9 +21,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/host/projectionengine"
 	"github.com/Glacius-Labs/Markitect/internal/host/records"
 	"github.com/Glacius-Labs/Markitect/internal/infrastructure/source"
-	"github.com/Glacius-Labs/Markitect/internal/modules/agentrules"
 	"github.com/Glacius-Labs/Markitect/internal/modules/dotnet"
-	"github.com/Glacius-Labs/Markitect/internal/modules/markdown"
 )
 
 var canonicalRevisionPattern = regexp.MustCompile("^(?:[0-9a-f]{40}|[0-9a-f]{64})$")
@@ -126,38 +124,22 @@ func PrepareCanonicalProjection(fixed *CanonicalSource, observed *snapshot.Snaps
 			return prepared, errors.New("deterministic Projector does not accept supplied candidate bytes")
 		}
 		if len(prepared.Escalations) == 0 {
-			if request.Projector.Target == "codex" || request.Projector.Target == "claude" {
-				input, err := canonicalProviderProjectionInput(fixed.Model, request)
-				if err != nil {
-					return prepared, err
-				}
-				file, err := agentrules.Render(input)
-				if err != nil {
-					prepared.Escalations = append(prepared.Escalations, CanonicalProjectionEscalation{Code: "agent-rules.guidance-invalid", Message: err.Error()})
-				} else {
-					desired = map[string][]byte{file.Path: file.Content}
-					prepared.Outputs = cloneByteMap(desired)
-					prepared.OutputModes = regularModes(desired)
-					targets = append(targets, file.Path)
-				}
-			} else {
-				rendered := markdown.RenderProjection(markdown.Input{Definitions: request.Definitions, Schemas: request.Schemas, Policies: request.Policies, TargetPrefix: request.TargetPrefix})
-				if len(rendered.Diagnostics) != 0 {
-					for _, d := range rendered.Diagnostics {
-						prepared.Escalations = append(prepared.Escalations, CanonicalProjectionEscalation{Code: d.Code, Message: d.Message})
+			rendered, modes, escalations, err := renderCanonicalDeterministicProjection(fixed, observed, request, checks)
+			if err != nil {
+				return prepared, err
+			}
+			prepared.Escalations = append(prepared.Escalations, escalations...)
+			if len(prepared.Escalations) == 0 {
+				desired = rendered
+				prepared.Outputs = cloneByteMap(rendered)
+				prepared.OutputModes = cloneStringMap(modes)
+				for target := range rendered {
+					if err := projectionengine.ValidateRelativePath(target); err != nil {
+						return prepared, err
 					}
-				} else {
-					desired = rendered.Files
-					prepared.Outputs = cloneByteMap(rendered.Files)
-					prepared.OutputModes = regularModes(rendered.Files)
-					for target := range rendered.Files {
-						if err := projectionengine.ValidateRelativePath(target); err != nil {
-							return prepared, err
-						}
-						targets = append(targets, target)
-					}
-					sort.Strings(targets)
+					targets = append(targets, target)
 				}
+				sort.Strings(targets)
 			}
 		}
 	} else {
@@ -299,20 +281,8 @@ func ApplyCanonicalProjection(root string, fixed *CanonicalSource, observed *sna
 }
 
 func selectedHostProjector(request canonical.ProjectionRequest) (bool, error) {
-	projector := request.Projector
-	if projector.Version != "1.0.0" {
-		return false, fmt.Errorf("unsupported static Projector entrypoint version %q", projector.Version)
-	}
-	switch {
-	case projector.ID == "markdown-documentation" && projector.Target == "markdown":
-		return false, nil
-	case (projector.ID == "agent-rules-codex" && projector.Target == "codex") || (projector.ID == "agent-rules-claude" && projector.Target == "claude"):
-		return false, nil
-	case projector.ID == "dotnet-source" && projector.Target == "dotnet":
-		return true, nil
-	default:
-		return false, fmt.Errorf("unsupported static Projector entrypoint %q targeting %q", projector.ID, projector.Target)
-	}
+	entrypoint, err := canonicalWorkflowEntrypoint(request)
+	return entrypoint == "dotnet", err
 }
 
 func selectedCanonicalChecks(projector canonical.ProjectorRegistration, candidate bool, supplied []authoring.Check) ([]string, []CanonicalProjectionEscalation, error) {
