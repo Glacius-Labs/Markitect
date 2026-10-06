@@ -97,8 +97,12 @@ func parseOptions(command string, args []string, allowed map[string]bool, out, e
 	}
 	invalid := ""
 	analyzePolicyFailuresProvided := false
+	decisionProvided := false
 	canonicalSelectors := map[string]bool{}
 	fs.Visit(func(f *flag.Flag) {
+		if f.Name == "decision" {
+			decisionProvided = true
+		}
 		if f.Name == "analyze-policy-failures" {
 			analyzePolicyFailuresProvided = true
 		}
@@ -112,6 +116,25 @@ func parseOptions(command string, args []string, allowed map[string]bool, out, e
 	if invalid != "" {
 		fmt.Fprintf(errout, "--%s does not apply to %s\n", invalid, command)
 		return commandOptions{}, 2, true
+	}
+	if command == "copy-me" {
+		if *action != "" && *action != "infer" {
+			fmt.Fprintln(errout, "copy-me supports the default validation action or --action infer")
+			return commandOptions{}, 2, true
+		}
+		if *action == "infer" {
+			if *workspace == "" || *queue == "" || *runtime == "" {
+				fmt.Fprintln(errout, "copy-me --action infer requires --workspace, --queue and --runtime")
+				return commandOptions{}, 2, true
+			}
+			if decisionProvided {
+				fmt.Fprintln(errout, "copy-me --action infer does not accept --decision")
+				return commandOptions{}, 2, true
+			}
+		} else if *runtime != "" {
+			fmt.Fprintln(errout, "copy-me --runtime applies only to --action infer")
+			return commandOptions{}, 2, true
+		}
 	}
 	canonicalApply := command == "canonical" && *action == "apply"
 	canonicalControllerApply := command == "canonical" && *action == "controller-apply"
