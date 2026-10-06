@@ -2,6 +2,8 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
+import run as driver
 
 from run import (
     CODEX_RUNNER_DIGEST,
@@ -90,6 +92,56 @@ class EvidenceSafetyTests(unittest.TestCase):
         with self.assertRaises(ProofError):
             require_runner_runtime_file([{"path": str(runner), "digest": "sha256:" + "b" * 64}], runner,
                                         "sha256:" + "a" * 64, "executor")
+
+    def test_runtime_inspection_binds_the_executed_script_not_a_later_argument(self):
+        wrapper_bytes = (driver.ROOT / "internal/tooling/codexrunner/runner.py").read_bytes()
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "source"
+            fixture = root / "fixture"
+            fixture.mkdir()
+            wrapper = source / "internal/tooling/codexrunner/runner.py"
+            wrapper.parent.mkdir(parents=True)
+            wrapper.write_bytes(wrapper_bytes)
+            other = root / "other.py"
+            other.write_bytes(b"unrelated script")
+            python = root / "python.exe"
+            python.write_bytes(b"offline test executable")
+            codex = root / "codex.exe"
+            codex.write_bytes(b"offline test provider; never executed")
+            runner = {
+                "command": str(python),
+                "args": [str(wrapper), "--codex-executable", str(codex),
+                         "--codex-version", "0.130.0", "--model", "gpt-5.5"],
+                "model": "gpt-5.5", "providerVersion": "0.130.0",
+                "modelOptions": {"model_reasoning_effort": "high"},
+                "runtimeFiles": [{"path": str(wrapper), "digest": CODEX_RUNNER_DIGEST}],
+            }
+            config = {
+                "apiVersion": "markitect.canonical/controller/v1alpha1",
+                "recordStore": str(root / "store"), "privateLogs": str(root / "logs"),
+                "executor": dict(runner), "verifier": dict(runner),
+            }
+            runtime = root / "runtime.json"
+            with patch.object(driver, "ROOT", source), patch.object(driver.subprocess, "run") as process:
+                process.return_value.stdout = b"Python 3.13.3\n"
+                runtime.write_text(json.dumps(config), encoding="utf-8")
+                result = driver.inspect_runtime(runtime, fixture)
+                self.assertEqual(result["runtimeConfigDigest"], sha(runtime.read_bytes()))
+                self.assertEqual([call.args[0] for call in process.call_args_list],
+                                 [[str(python), "--version"], [str(python), "--version"]])
+                # The old anywhere-in-args guard accepted this valid later mention.
+                config["executor"]["args"] = [str(other), *runner["args"]]
+                runtime.write_text(json.dumps(config), encoding="utf-8")
+                with self.assertRaisesRegex(ProofError, "first script argument"):
+                    driver.inspect_runtime(runtime, fixture)
+                config["executor"]["args"] = runner["args"]
+                config["executor"]["runtimeFiles"] = []
+                runtime.write_text(json.dumps(config), encoding="utf-8")
+                with self.assertRaisesRegex(ProofError, "exact repository Codex adapter"):
+                    driver.inspect_runtime(runtime, fixture)
+                self.assertTrue(all(call.args[0] == [str(python), "--version"]
+                                    for call in process.call_args_list))
 
     def test_runner_flag_values_are_bounded_and_never_index_missing_values(self):
         for args in (["--model"], ["--model", "--codex-version"], ["--model", "x" * 513], ["--model", "x", "--model", "y"]):

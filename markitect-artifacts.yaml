@@ -1575,3 +1575,6 @@ spec:
 
     - path: experiments/operating-model-proof/runs/gates-e788fc0/diagnostic-assessment.json
       owner: immutable-operating-model-proof-records
+
+    - path: experiments/operating-model-proof/protocol-v9.md
+      owner: operating-model-proof-protocol
