@@ -1,7 +1,7 @@
 # C12 goal-led Module recommendation trial 01
 
-Run ID: `c12-goal-recommend-01`  
-Protocol binding: `operating-model-proof/v5`, commit `658866480bafa37c8c2e94b5d58fc2074655f416`, protocol SHA-256 `9b0c42914ddf5d2337ac6a20de0a666242d659f9c7cc92851c2f5c472d0e9635`  
+Run ID: `c12-goal-recommend-01`
+Protocol binding: `operating-model-proof/v5`, commit `658866480bafa37c8c2e94b5d58fc2074655f416`, protocol SHA-256 `9b0c42914ddf5d2337ac6a20de0a666242d659f9c7cc92851c2f5c472d0e9635`
 Bounded claim: one fresh, read-only `goal-recommend` call over an experiment-authored public-fixture goal and exactly three supplied public Module packages. The coordinator approved this stage-1 freeze. It is technical feasibility only, not a full C12 result.
 
 ## Frozen inputs
