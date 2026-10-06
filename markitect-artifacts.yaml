@@ -703,3 +703,27 @@ spec:
       owner: bounded-host-proposal-contract
     - path: internal/host/cli/canonical_refresh_test.go
       owner: bounded-host-proposal-contract
+    - path: experiments/operating-model-proof/runs/c3-insufficient-03/binding.json
+      owner: operating-model-proof-evidence
+    - path: experiments/operating-model-proof/runs/c3-insufficient-03/events.jsonl
+      owner: operating-model-proof-evidence
+    - path: experiments/operating-model-proof/runs/c3-insufficient-03/events/assessment-controller-result.json
+      owner: operating-model-proof-evidence
+    - path: experiments/operating-model-proof/runs/c3-insufficient-03/events/execute-f27fd4dcbcec4ce281e5cddf70662454.json
+      owner: operating-model-proof-evidence
+    - path: experiments/operating-model-proof/runs/c3-insufficient-03/events/propose-9bfcbbeaa9a74788a28241a025d69ad9.json
+      owner: operating-model-proof-evidence
+    - path: experiments/operating-model-proof/runs/c3-positive-02/binding.json
+      owner: operating-model-proof-evidence
+    - path: experiments/operating-model-proof/runs/c3-positive-02/events.jsonl
+      owner: operating-model-proof-evidence
+    - path: experiments/operating-model-proof/runs/c3-positive-02/events/apply-ef360b8447084b308b3b30e4ba68187d.json
+      owner: operating-model-proof-evidence
+    - path: experiments/operating-model-proof/runs/c3-positive-02/events/assessment-controller-result.json
+      owner: operating-model-proof-evidence
+    - path: experiments/operating-model-proof/runs/c3-positive-02/events/execute-5e40121b32ad44da93b3d6242a7083f9.json
+      owner: operating-model-proof-evidence
+    - path: experiments/operating-model-proof/runs/c3-positive-02/events/propose-6445b5142c7b4c91b845e1a1ef4a53e7.json
+      owner: operating-model-proof-evidence
+    - path: experiments/operating-model-proof/runs/c3-positive-02/events/verify-c131f495bf3d47fea57d169310c0c6e8.json
+      owner: operating-model-proof-evidence
