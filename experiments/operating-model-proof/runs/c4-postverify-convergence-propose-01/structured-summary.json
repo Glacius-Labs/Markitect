@@ -1,0 +1,80 @@
+{
+  "trial": "c4-postverify-convergence-propose-01",
+  "attemptId": "592d7e86640c4b6791337e0d26f3cd53",
+  "observedPaths": [
+    "examples/operating-model/canonical-documentation-aligned.yaml",
+    "examples/operating-model/definitions/billing-dotnet.projection-policy.yaml",
+    "examples/operating-model/definitions/billing-markdown.projection-policy.yaml",
+    "examples/operating-model/definitions/billing.billing-query.yaml",
+    "examples/operating-model/definitions/billing.projection.yaml",
+    "examples/operating-model/definitions/orders-dotnet.projection-policy.yaml",
+    "examples/operating-model/definitions/orders-markdown.projection-policy.yaml",
+    "examples/operating-model/definitions/orders.order-rules.yaml",
+    "examples/operating-model/definitions/orders.projection.yaml",
+    "examples/operating-model/definitions/product-documentation-aligned.projection.yaml",
+    "examples/operating-model/definitions/product-markdown.projection-policy.yaml",
+    "examples/operating-model/definitions/product.composition.yaml",
+    "examples/operating-model/definitions/representation-policy-markdown.projection-policy.yaml",
+    "examples/operating-model/modules/billing-dotnet/module.yaml",
+    "examples/operating-model/modules/commerce/module.yaml",
+    "examples/operating-model/modules/commerce/schema.yaml",
+    "examples/operating-model/modules/foundation/module.yaml",
+    "examples/operating-model/modules/foundation/schema.yaml",
+    "examples/operating-model/modules/markdown/module.yaml",
+    "examples/operating-model/modules/orders-dotnet/module.yaml"
+  ],
+  "ledgerHeadAfter": "sha256:aa16eda8bfa59b785f46edec864de1c118fd6dbafb69ffe36a7a3cd7fb9b049b",
+  "ledgerSelectionDigest": "sha256:f525bd7e06deebc496997018df11bc52b9e2431dc2d2baf551565cfe8d1da50b",
+  "observedPathCount": 20,
+  "fixtureTree": "9817632eb7cc7d88a220afd06421360a773885f8",
+  "unobservedProjections": [
+    "[\"markitect.foundation/v1\",\"Projection\",\"operating-model\",\"billing-dotnet\"]",
+    "[\"markitect.foundation/v1\",\"Projection\",\"operating-model\",\"orders-dotnet\"]",
+    "[\"markitect.foundation/v1\",\"Projection\",\"operating-model\",\"product-markdown\"]"
+  ],
+  "exitCode": 0,
+  "proposals": [],
+  "revision": "86c46fd2a0da53dbcac407569a487f96e8198c04",
+  "unknownArtifactCount": 0,
+  "evidenceRefreshRequired": [
+    "[\"markitect.foundation/v1\",\"Projection\",\"operating-model\",\"billing-dotnet\"]",
+    "[\"markitect.foundation/v1\",\"Projection\",\"operating-model\",\"orders-dotnet\"]",
+    "[\"markitect.foundation/v1\",\"Projection\",\"operating-model\",\"product-markdown\"]"
+  ],
+  "proposalDigest": "sha256:7e50f63a4ce1899af720add9a4f546bd503c09e9dc67912bbc0bc0e969c6816e",
+  "fixtureHead": "86c46fd2a0da53dbcac407569a487f96e8198c04",
+  "elapsedWallMilliseconds": 8792,
+  "ledgerHeadBefore": "sha256:aa16eda8bfa59b785f46edec864de1c118fd6dbafb69ffe36a7a3cd7fb9b049b",
+  "runId": "c4-postverify-convergence-propose-01",
+  "providerInvocations": 0,
+  "ledgerEventCountAfter": 7,
+  "action": "controller-propose",
+  "fixtureStatus": null,
+  "baseRevision": "db72f5737eb2f68df8aa22a788279abde4ca4f0a",
+  "appliedTargets": [
+    {
+      "path": "docs/represented/index.md",
+      "sha256": "9d126d792f567a173988f3474563bfb46f79e9ff321056a4ee252a0635874ece"
+    },
+    {
+      "path": "src/Billing/BillingQuery.cs",
+      "sha256": "e115deb66b51e651d97d6323ff31648e256b6fb64e9ac546e78474a0472ac4dc"
+    },
+    {
+      "path": "src/Orders/OrderRules.cs",
+      "sha256": "553264bd9c7249d3e4ac755f0651b10006f32bed7ed8b9a39b0a964f44be7a30"
+    }
+  ],
+  "status": "planned",
+  "inputDigest": "sha256:06984f06bc84d38827bb80b4b325e43e23722b02a8911bc7d7bcb5726ab63e34",
+  "configDigest": "sha256:202c1d3d169f31294d8a4c816fe42af48b139de2f1a57bb38a8401d618b4f4f1",
+  "protocol": "operating-model-proof/v5",
+  "unknownArtifacts": [],
+  "ledgerEventCountBefore": 7,
+  "recordType": "post-verify-convergence-propose-result",
+  "externalOutputDigest": "sha256:6be6e9fd3498d750d2c84672c59b80535ada8bf1956c850614fce30f2fc8b876",
+  "observedDigest": "sha256:7ac58ff5f3a87bc88dd5b6677b30821810e37383650fea18d919058802721c50",
+  "interpretation": "Frozen source 17ad marks all three projections unobserved and requires refresh at evidence revision 86c46 from base db72. This is conservative revision staleness; no current verified result is manufactured.",
+  "explicitWrite": false,
+  "sourceModelDigest": "sha256:821f5ce6a5ad473c65baac60bbd91a2f1fcf0e5ffab2977d18191e31b5da6c90"
+}
