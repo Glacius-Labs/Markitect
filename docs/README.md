@@ -2,7 +2,8 @@
 
 | Document | Owns |
 |---|---|
-| [Product vision](vision.md) | Canonical authority thesis, human/agent responsibilities and benefit hypothesis |
+| [Product vision](vision.md) | Quality and intent-fidelity thesis, canonical authority, human/agent responsibilities and benefit hypothesis |
+| [Operating methodology](operating-methodology.md) | Ontology-driven reconciliation, recursive Executor/Verifier process, implementation freedom and usable-method target |
 | [Markitect-first](markitect-first.md) | Canonical change-protocol entrypoint, desired-intent ordering and declared artifact accounting |
 | [Usage](usage.md) | Current Project format, CLI behavior, safe initialization, and schema-upgrade guidance |
 | [Repository layout](repository-layout.md) | Recommended control-plane organization, ownership zones, and layout compatibility |
@@ -35,7 +36,7 @@
 | [Strategy source documents](strategy/README.md) | User-provided product and design proposals, their provenance, and the boundary between hypotheses and adopted behavior |
 | [Real-code adoption pilot](validation/real-project-adoption-pilot.md) | Baseline/assisted workflow observations, policy evolution, bounded evidence, negative findings and pending human discovery adoption |
 | [AGENTS.md versus Markitect](validation/agents-md-vs-markitect.md) | Frozen three-task comparison, implementation/governance upkeep, excluded runs and limits; no demonstrated cost or productivity advantage |
-| [Measurement](measurement.md) | Correctness scenarios, bounded measurements and future human-attention/autonomy evaluation |
+| [Measurement](measurement.md) | Staged method readiness, quality-first comparative evaluation, bounded measurements and human-attention/autonomy observations |
 | [Core authoring assessment](authoring-assessment.md) | A dated exercise using the synthetic product example |
 | [Onboarding](onboarding.md) | Scripted CLI workflow replay and dated command-path evidence |
 | [MCP evaluation](mcp-evaluation.md) | Bounded client comparison for the experimental read-only interface |

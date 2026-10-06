@@ -1,6 +1,32 @@
 # Measurement
 
-This document defines measurement procedure for Markitect product work. The [vision](vision.md) owns the human-attention and delegated-work thesis; the [roadmap](implementation-plan.md) owns delivery order. Product tests and measurement fixtures use Go; any Markitect-owned persisted measurement record uses YAML.
+This document defines measurement procedure for Markitect product work. The [vision](vision.md) owns the quality and intent-fidelity thesis, and [operating methodology](operating-methodology.md) owns the intended working process; the [roadmap](implementation-plan.md) owns delivery order. Product tests and measurement fixtures use Go; any Markitect-owned persisted measurement record uses YAML.
+
+## Staged method readiness
+
+Establish a usable ontology-to-reconciliation process before measuring comparative benefit. This procedure orders new work; it does not rescore historical cohorts, erase failures or waive contribution and release gates. A real missing capability from the accepted design must be implemented, not replaced by a mock and reported as working.
+
+Before each stage, record the specific obligation, fixed inputs, relevant scope, available capabilities, evidence method, finite exit criteria and known gaps. Select enough representative positive and negative cases to assess the named risk; do not impose a universal pass percentage or exhaustive enumeration without a reason. Repeated stochastic runs need their own predeclared uncertainty treatment. A controlled non-agent mutation and a real agent run answer different questions.
+
+| Stage | Required demonstration | Exit evidence and limit |
+|---|---|---|
+| 1. Component boundaries | Canonical ownership and structural compilation; relevant context, impact and fanout; explicit target binding; bounded candidate/apply/verify; stale input refusal and drift recognition. | Independent expected outcomes and targeted negative cases for the actual components. Unit/protocol checks establish their boundaries, not real agent usability. |
+| 2. One complete real change | An agent changes accepted intent through Markitect, derives affected work, materializes actual representations, receives independent verification, repairs a failure if needed and completes the accounted change. An unchanged-intent repair is also exercised. | Inspectable end-to-end evidence tied to intent and artifacts; no hand-prepared final target or mock replacing the capability being claimed. Include both a precise rule and a broad rule with declared assessment coverage. |
+| 3. Recursive composition | Bounded children form a slice and a parent/project candidate using the same responsibilities. Parent obligations detect a relevant integration defect even when child checks pass. | Local and parent outcomes reported separately; one successful hierarchy shows feasibility, not reliability across arbitrary projects. |
+| 4. Repeated usable operation | A small predeclared sequence combines local changes, shared rule changes, missed fanout, representation drift and routine repairs. Agents follow the declared process without constant manual steering. | Record completion, conformance, missed obligations, recovery and human intervention. State which evidence supports a reliability assessment and which remains unknown. Readiness is bounded to the tested configuration and scope. |
+| 5. Comparative project backlog | Matched Markitect and conventional actors implement an equivalent realistic backlog with ordinary changes and architectural evolution. | Independent quality, drift and process assessment over repeated changes, including upkeep and intervention. This is the benefit study, not another component certification round. |
+
+Once a stage meets its declared exit criteria, move to the next level. Reopen it for a concrete failure or material validity problem, not merely another possible test or a preference for stricter implementation detail. Keep technical prerequisites that genuinely block the next stage explicit. Bound infrastructure diagnosis to a named hypothesis and finite diagnostic attempts; unresolved timeout or environment evidence stays incomplete instead of being turned into a semantic product failure or silently passed.
+
+Correct implementation with a stale model, correct model with a missed target, passing local checks with a broken parent, and agents bypassing Markitect are distinct negative outcomes. Preserve them separately so a change to the model, a fanout repair, an integration check or process enforcement addresses the actual problem. A repaired known failure needs fresh evidence; leave the original result intact and use fresh holdout tasks when tuning affects the comparison.
+
+## Quality-first comparative evaluation
+
+The primary study asks whether the method better addresses the problems it is designed for: losing intent through forgotten obligations, overlooked consequences, contradictory representations or ignored rules. Compare a governed project backlog with a well-equipped conventional agentic approach using the same accepted requirements, quality obligations, tools, model settings and authorized freedom. The conventional baseline may use normal repository guidance, architecture tests and review; do not deliberately deprive it of useful engineering practice. Markitect adds its model and reconciliation method, whose authoring and upkeep count as work.
+
+Assess completed behavior and defects, model-to-representation consistency, rule conformity, impact/fanout misses, integration outcomes, observably followed process and necessary versus avoidable human interventions. Evaluate narrow and broad rules with the same predeclared expectations on both sides, while distinguishing Markitect-specific process requirements. Do not equate a tool-specific command count with overall compliance or favor Markitect merely because its records are easier to inspect.
+
+Keep initial setup, model maintenance, recovery and review effort visible. Record elapsed execution and actual token/cost data as secondary observations; a slower run may still improve quality, and a faster run with missed obligations is not a success. Report uncertainty, unavailable evidence and failures alongside advantages. Synthetic checks, one controlled failure or one real task cannot establish comparative superiority. The existing controlled-comparison procedure below supplies experimental controls; a longer backlog evaluates sustained coherence and usable autonomy.
 
 ## Human attention and delegated work
 
