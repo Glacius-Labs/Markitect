@@ -20,7 +20,7 @@ func TestCanonicalDurableAdoptionPartialFailureReportIncludesCASCause(t *testing
 	cause := errors.New("adoption attempt was appended but active selection failed; attempt remains inactive: projection record store head is stale")
 	setCanonicalAdoptionApplyReport(base, host.CanonicalAdoptionApply{
 		Status: records.StatePartialFailure, PlanDigest: "sha256:plan", LedgerHead: "sha256:head",
-		ActiveRecordIDs: []string{"sha256:prior"},
+		ActiveRecordIDs: []string{"sha256:prior"}, ActiveSelectionStatus: "observed-not-selected",
 	}, cause)
 	encoded, err := yaml.Marshal(base)
 	if err != nil {
@@ -31,12 +31,30 @@ func TestCanonicalDurableAdoptionPartialFailureReportIncludesCASCause(t *testing
 		Error           string   `yaml:"error"`
 		LedgerHead      string   `yaml:"ledgerHead"`
 		ActiveRecordIDs []string `yaml:"activeRecordIds"`
+		SelectionStatus string   `yaml:"activeSelectionStatus"`
 	}
 	if err := yaml.Unmarshal(encoded, &report); err != nil {
 		t.Fatal(err)
 	}
-	if report.Status != records.StatePartialFailure || report.Error != cause.Error() || report.LedgerHead != "sha256:head" || len(report.ActiveRecordIDs) != 1 || report.ActiveRecordIDs[0] != "sha256:prior" {
+	if report.Status != records.StatePartialFailure || report.Error != cause.Error() || report.LedgerHead != "sha256:head" || report.SelectionStatus != "observed-not-selected" || len(report.ActiveRecordIDs) != 1 || report.ActiveRecordIDs[0] != "sha256:prior" {
 		t.Fatalf("partial adoption report omitted the diagnostic or unchanged active set: %#v", report)
+	}
+}
+
+func TestCanonicalDurableAdoptionUnknownSelectionOmitsUnobservedLedgerState(t *testing.T) {
+	base := map[string]any{"ledgerHead": "stale", "activeRecordIds": []string{"stale"}}
+	setCanonicalAdoptionApplyReport(base, host.CanonicalAdoptionApply{
+		Status: records.StatePartialFailure, PlanDigest: "sha256:plan", Record: &records.ProjectionRecord{ID: "sha256:attempt"},
+		ActiveSelectionStatus: "unknown",
+	}, errors.New("selection call failed; recovery read failed"))
+	if _, ok := base["ledgerHead"]; ok {
+		t.Fatalf("unknown selection report retained an unobserved ledger head: %#v", base)
+	}
+	if _, ok := base["activeRecordIds"]; ok {
+		t.Fatalf("unknown selection report retained unobserved active ids: %#v", base)
+	}
+	if base["activeSelectionStatus"] != "unknown" || base["error"] != "selection call failed; recovery read failed" || base["record"].(*records.ProjectionRecord).ID != "sha256:attempt" {
+		t.Fatalf("unknown selection report omitted its supported facts: %#v", base)
 	}
 }
 

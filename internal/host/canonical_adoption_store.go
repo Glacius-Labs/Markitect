@@ -15,11 +15,12 @@ import (
 // CanonicalAdoptionApply reports durable ledger selection. It deliberately
 // contains no VerificationResult: adoption records remain unverified.
 type CanonicalAdoptionApply struct {
-	Status          string                    `json:"status"`
-	PlanDigest      string                    `json:"planDigest"`
-	Record          *records.ProjectionRecord `json:"record,omitempty"`
-	LedgerHead      string                    `json:"ledgerHead,omitempty"`
-	ActiveRecordIDs []string                  `json:"activeRecordIds,omitempty"`
+	Status                string                    `json:"status"`
+	PlanDigest            string                    `json:"planDigest"`
+	Record                *records.ProjectionRecord `json:"record,omitempty"`
+	LedgerHead            string                    `json:"ledgerHead,omitempty"`
+	ActiveRecordIDs       []string                  `json:"activeRecordIds,omitempty"`
+	ActiveSelectionStatus string                    `json:"activeSelectionStatus,omitempty"`
 }
 
 // CanonicalAdoptionEvidencePaths returns the exact immutable blobs needed by
@@ -87,7 +88,13 @@ func ApplyCanonicalAdoptionToLedger(root string, fixed *CanonicalSource, target 
 type canonicalAdoptionSelectActiveFunc func(*recordstore.Store, string, []string) (recordstore.State, error)
 
 func applyCanonicalAdoptionToLedger(root string, fixed *CanonicalSource, target *snapshot.Snapshot, identity core.DefinitionIdentity, selection CanonicalAdoptionSelection, cfg CanonicalControllerConfig, expect string, write bool, selectActive canonicalAdoptionSelectActiveFunc) (CanonicalAdoptionApply, error) {
-	result := CanonicalAdoptionApply{Status: "refused", ActiveRecordIDs: []string{}}
+	return applyCanonicalAdoptionToLedgerWithRecoveryRead(root, fixed, target, identity, selection, cfg, expect, write, selectActive, nil)
+}
+
+type canonicalAdoptionRecoveryReadFunc func(*recordstore.Store) (recordstore.State, error)
+
+func applyCanonicalAdoptionToLedgerWithRecoveryRead(root string, fixed *CanonicalSource, target *snapshot.Snapshot, identity core.DefinitionIdentity, selection CanonicalAdoptionSelection, cfg CanonicalControllerConfig, expect string, write bool, selectActive canonicalAdoptionSelectActiveFunc, recoveryRead canonicalAdoptionRecoveryReadFunc) (CanonicalAdoptionApply, error) {
+	result := CanonicalAdoptionApply{Status: "refused"}
 	if !write || expect == "" {
 		return result, errors.New("durable adoption requires explicit write and exact reviewed plan digest")
 	}
@@ -171,9 +178,24 @@ func applyCanonicalAdoptionToLedger(root string, fixed *CanonicalSource, target 
 	if err != nil {
 		result.Status = records.StatePartialFailure
 		result.Record = &plan.Record
-		result.LedgerHead = appended.Head
-		result.ActiveRecordIDs = append([]string{}, current.ActiveSelection.RecordIDs...)
-		return result, fmt.Errorf("adoption attempt was appended but active selection failed; attempt remains inactive: %w", err)
+		if recoveryRead == nil {
+			recoveryRead = (*recordstore.Store).Read
+		}
+		observed, readErr := recoveryRead(store)
+		if readErr != nil {
+			result.ActiveSelectionStatus = "unknown"
+			return result, fmt.Errorf("adoption attempt %s was appended but active selection failed; current selection state is unknown because ledger recovery read failed: %w (recovery read: %v)", plan.Record.ID, err, readErr)
+		}
+		result.LedgerHead = observed.Head
+		result.ActiveRecordIDs = append([]string{}, observed.ActiveSelection.RecordIDs...)
+		result.ActiveSelectionStatus = "observed-not-selected"
+		for _, id := range observed.ActiveSelection.RecordIDs {
+			if id == plan.Record.ID {
+				result.ActiveSelectionStatus = "observed-selected"
+				break
+			}
+		}
+		return result, fmt.Errorf("adoption attempt %s was appended but active selection call failed; current ledger selection was observed as %s: %w", plan.Record.ID, result.ActiveSelectionStatus, err)
 	}
 	result.Status = records.StateMaterializedUnverified
 	result.Record = &plan.Record

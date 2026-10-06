@@ -602,8 +602,16 @@ func runCanonicalAdoption(o commandOptions, fixed *host.CanonicalSource, base ma
 func setCanonicalAdoptionApplyReport(base map[string]any, applied host.CanonicalAdoptionApply, applyErr error) {
 	base["status"] = applied.Status
 	base["record"] = applied.Record
-	base["ledgerHead"] = applied.LedgerHead
-	base["activeRecordIds"] = applied.ActiveRecordIDs
+	if applied.ActiveSelectionStatus != "unknown" {
+		base["ledgerHead"] = applied.LedgerHead
+		base["activeRecordIds"] = applied.ActiveRecordIDs
+	} else {
+		delete(base, "ledgerHead")
+		delete(base, "activeRecordIds")
+	}
+	if applied.ActiveSelectionStatus != "" {
+		base["activeSelectionStatus"] = applied.ActiveSelectionStatus
+	}
 	base["planDigest"] = applied.PlanDigest
 	if applyErr != nil {
 		base["error"] = applyErr.Error()
