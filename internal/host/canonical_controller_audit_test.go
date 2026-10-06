@@ -1,9 +1,13 @@
 package host
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/Glacius-Labs/Markitect/internal/host/agentexec"
+	"github.com/Glacius-Labs/Markitect/internal/host/records"
 )
 
 func TestAuditCanonicalControllerRequiresAuditAll(t *testing.T) {
@@ -110,5 +114,63 @@ func TestCanonicalControllerAuditRecheckDetectsInventoryAndByteChanges(t *testin
 	_, inputsChanged, err := canonicalControllerAuditRecheckInputs(root, proposal)
 	if err != nil || !inputsChanged {
 		t.Fatalf("audit did not detect selected input bytes changed after planning: inputsChanged=%t err=%v", inputsChanged, err)
+	}
+}
+
+func TestAuditCanonicalControllerReportsConfiguredProjectionMissingFromPartialActiveSet(t *testing.T) {
+	root, sourceRevision, evidenceRevision, cfg, marker := canonicalControllerVerificationFixture(t)
+	cfg.AuditAll = true
+	setCanonicalControllerVerifierActor(t, marker, agentexec.OutcomePassed)
+	verified, err := VerifyCanonicalController(context.Background(), root, sourceRevision, evidenceRevision, "examples/canonical-projection/canonical.yaml", cfg, true)
+	if err != nil || verified.Outcome != records.OutcomePassed || len(verified.Results) != 2 {
+		t.Fatalf("prepare current two-Projection verification evidence: outcome=%s results=%d err=%v", verified.Outcome, len(verified.Results), err)
+	}
+
+	store, _, active, err := readCanonicalControllerLedger(root, cfg)
+	if err != nil || store == nil || len(active) != 2 {
+		t.Fatalf("read verified active records: count=%d err=%v", len(active), err)
+	}
+	state, err := store.Read()
+	if err != nil || len(state.Verifications) < 2 {
+		t.Fatalf("fixture did not retain verification evidence before reducing active selection: results=%d err=%v", len(state.Verifications), err)
+	}
+	keep := state.ActiveSelection.RecordIDs[0]
+	state, err = store.SelectActive(state.Head, []string{keep})
+	if err != nil || len(state.ActiveSelection.RecordIDs) != 1 {
+		t.Fatalf("select one of two verified Projection records: selection=%v err=%v", state.ActiveSelection.RecordIDs, err)
+	}
+	setCanonicalControllerVerifierActor(t, marker, agentexec.OutcomeFailed)
+	beforeInvocations := countCanonicalVerifierInvocations(t, marker)
+
+	report, err := AuditCanonicalController(root, sourceRevision, sourceRevision, "examples/canonical-projection/canonical.yaml", cfg)
+	if err != nil {
+		t.Fatalf("audit one missing active Projection alongside a fresh verification ledger: %v", err)
+	}
+	if report.Status != "incomplete" || len(report.Projections) != 2 {
+		t.Fatalf("partial active selection incorrectly closed or omitted canonical Projections: status=%s projections=%d", report.Status, len(report.Projections))
+	}
+	missingProjection := ""
+	activeCount := 0
+	for _, projection := range report.Projections {
+		if len(projection.ActiveRecordIDs) == 0 {
+			missingProjection = projection.ProjectionID
+		} else {
+			activeCount++
+		}
+	}
+	if missingProjection == "" || activeCount != 1 {
+		t.Fatalf("audit did not preserve the exact mixed active/missing state: active=%d missing=%q", activeCount, missingProjection)
+	}
+	foundMissing := false
+	for _, finding := range report.Findings {
+		if finding.Code == "record.missing-active" && finding.ProjectionID == missingProjection {
+			foundMissing = true
+		}
+	}
+	if !foundMissing {
+		t.Fatalf("audit omitted the configured Projection missing from active selection %s: %+v", missingProjection, report.Findings)
+	}
+	if got := countCanonicalVerifierInvocations(t, marker); got != beforeInvocations {
+		t.Fatalf("read-only audit invoked a Verifier: before=%d after=%d", beforeInvocations, got)
 	}
 }
