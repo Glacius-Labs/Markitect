@@ -124,7 +124,9 @@ func TestCapabilityProofGlobalAcquisitionStopWitness(t *testing.T) {
 	}
 
 	// Remove one unique unrelated loose blob in this temp repository only.
-	// A failed cat-file batch naming this path proves an actual read request.
+	// Git ls-tree size preflight can fail before cat-file opens the missing blob.
+	// This control proves whole-tree dependence; the positive snapshots separately
+	// prove the unrelated content was acquired. It is not a blob-open syscall trace.
 	oid := strings.TrimSpace(proofGit(t, root, "rev-parse", candidateRevision+":"+proofUnrelatedPath))
 	for _, name := range candidate.Config.Definitions {
 		if strings.TrimSpace(proofGit(t, root, "rev-parse", candidateRevision+":"+name)) == oid {
@@ -154,7 +156,7 @@ func TestCapabilityProofGlobalAcquisitionStopWitness(t *testing.T) {
 		t.Fatal(err)
 	}
 	if negativeCode != 2 || !strings.Contains(negativeDiagnostic, proofUnrelatedPath) {
-		t.Fatalf("negative control did not prove unrelated blob request: %d %s", negativeCode, negativeDiagnostic)
+		t.Fatalf("negative control did not expose unrelated acquisition dependency: %d %s", negativeCode, negativeDiagnostic)
 	}
 	// Selected blobs stayed readable, and restoration returns the unchanged plan.
 	for _, name := range candidate.Config.Definitions {
@@ -195,7 +197,7 @@ func TestCapabilityProofGlobalAcquisitionStopWitness(t *testing.T) {
 		"noApplicableWork": plan.NoApplicableWork, "planDigest": plan.Digest,
 		"acquisitions": acquisitions, "derivedPlan": plan,
 		"positiveCLIExit": code, "missingUnrelatedBlobCLIExit": negativeCode,
-		"missingUnrelatedBlobDiagnostic": negativeDiagnostic, "restoredCLIExit": restoredCode,
+		"missingUnrelatedBlobDiagnostic": negativeDiagnostic, "negativeControlLimit": "missing-object refusal may occur at full-tree metadata preflight, not blob opening", "restoredCLIExit": restoredCode,
 		"readOnlyContentDigest": final.Digest(), "artifactWritesByReconcile": 0,
 		"parentChecksRun": 0, "executorRuns": 0, "verifierRuns": 0,
 		"tokens": nil, "humanAttentionMinutes": nil, "syscallCounts": nil,
