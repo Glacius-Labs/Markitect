@@ -727,3 +727,5 @@ spec:
       owner: operating-model-proof-evidence
     - path: experiments/operating-model-proof/runs/c3-positive-02/events/verify-c131f495bf3d47fea57d169310c0c6e8.json
       owner: operating-model-proof-evidence
+    - path: experiments/operating-model-proof/runs/c3-positive-02/events/correction-assurance-node-count.json
+      owner: operating-model-proof-evidence
