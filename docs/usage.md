@@ -8,6 +8,8 @@ Unreleased source additionally exposes the separate [canonical intent and reconc
 
 For a repository that already contains a valid representation, canonical adoption records that exact state as a managed baseline without regenerating its files. It is an explicit owner-reviewed operation, not inference authority: the source revision supplies the canonical model, the target revision supplies the existing artifacts, and the selection report names the exact artifact paths, the current active record set (explicitly `[]` when empty), and an owner review reference. The plan also lists unselected files within the target surface as unmatched; adoption does not claim ownership of them.
 
+Brownfield inference is a separate bounded Host operation over an already prepared handoff, its selected blobs and an evidence queue with no existing candidates. It returns a candidate intent proposal, uncertainty and invocation/input bindings. This source alpha has no inference CLI action; inference cannot adopt the candidate, change canonical resources or select active records. Owner review and an explicit canonical change remain required.
+
 Create a bounded JSON selection, for example:
 
 ```json
@@ -347,6 +349,27 @@ markitect reconcile --repo . --action verify --adapter markitect-render --plan .
 ### Project-local projections (current source; not yet released)
 
 A Project can register one `local-projection` adapter to bind exact contract and artifact-coverage configuration paths. The `projection` command observes and plans those declared representations, applies a reviewed candidate only with explicit write authorization, and verifies them at an immutable revision. `markitect check` can report structural and observed projection state, but it does not establish AI semantics or replace the configured verification checks. See the [projection guide](projections.md) for registration, complete AI candidates, digest review, verification, and partial-write recovery. This source API is not part of the published v0.13.0 release.
+
+#### Canonical controller actions (source-only alpha)
+
+The unreleased canonical source exposes `controller-propose`, `controller-execute`, `controller-apply` and `controller-verify`. All require `--config`, a closed JSON `--runtime` file and full immutable Git commit IDs for `--base` and `--revision`. Proposal is read-only. Execute invokes the configured Executor and returns a digest-bound reviewed run; it does not run project fixed checks. Save its exact JSON output, review the candidate outputs and digest, then pass that same file and digest to Apply. Apply requires `--write`; it refreshes the proposal against current source and selected target evidence, validates runtime fingerprints, active-ledger head, plan, candidate preimages and aggregate write set before materializing. Its `materialized-unverified` status means verification has not yet been established.
+
+```powershell
+$config = "examples/canonical-projection/canonical.yaml"
+$runtime = "C:/review/controller-runtime.json"
+$run = "C:/review/controller-run.json"
+go run ./cmd/markitect canonical --repo . --config $config --runtime $runtime --action controller-propose --base BASE --revision REVISION
+$executeArgs = @("run", "./cmd/markitect", "canonical", "--repo", ".", "--config", $config, "--runtime", $runtime, "--action", "controller-execute", "--base", "BASE", "--revision", "REVISION")
+$process = Start-Process -FilePath "go" -ArgumentList $executeArgs -NoNewWindow -Wait -PassThru -RedirectStandardOutput $run
+# Review the saved JSON run's status, digest, work, candidate outputs and escalations.
+go run ./cmd/markitect canonical --repo . --config $config --runtime $runtime --action controller-apply --base BASE --revision REVISION --plan $run --expect REVIEWED_RUN_DIGEST --write
+```
+
+After committing materialized outputs, run `controller-verify` with `--base` set to the immutable canonical source commit and `--revision` set to the immutable evidence commit containing the target bytes. It runs the declared fixed checks and a separately configured fresh Verifier; optional `--write` appends the verification result to the external ledger. For example: `go run ./cmd/markitect canonical --repo . --config $config --runtime $runtime --action controller-verify --base REVISION --revision EVIDENCE_REVISION --write`. The regular `markitect verify --revision EVIDENCE` command remains the Project's configured-check lifecycle and is not replaced by candidate preparation. Passing checks and Verifier receipts are technical evidence, not semantic acceptance. Commands run with the caller's local authority; fresh runner directories and read-only declarations do not provide an OS sandbox, credential filter or provider privacy guarantee.
+
+The runtime JSON top-level fields are `apiVersion` (string; `markitect.canonical/controller/v1alpha1`), `recordStore` and `privateLogs` (absolute external path strings, disjoint from source/Git/target roots and each other), `referenceDepth` (integer, 0–2), `auditAll` (boolean), `checkInputs` (array of exact path strings), `executor` and `verifier` (runner objects), `assuranceRoots` (array of scope ID strings) and `assuranceScopes` (array of scope objects). Each runner has `command` (string), `args` (array of strings), `model` (string), `modelOptions` (JSON value), `providerVersion` (string), `timeoutSeconds` (integer, 1–600), `maxStdoutBytes` and `maxStderrBytes` (integers), and `runtimeFiles` (array of `{path, mode, digest}` objects with string fields). Each scope has `id` and `projectionId` strings, `children` (array of scope ID strings), `checks` (array of `{name, run}` objects where `name` is a string and `run` is an argument-string array), and `checkInputs` (array of exact path strings). Roots and scopes are supplied together; each configured scope has its own declared checks. The record store is created exclusively during the first Apply with materialization work; a later writer refusal can leave that empty external store for review.
+
+Each controller action emits one JSON object on stdout, including when it returns a nonzero status. Controller actions exit 0 for `planned`, `passed`, `materialized-unverified` or `no-materialization-work`; 1 for `failed`, `blocked`, `escalated`, `refused` or `partial-failure`; and 2 for `incomplete`, invalid invocation/configuration or another unrecognized status. Preserve stdout on nonzero exits because it can contain the bounded report. These actions are source-only alpha and do not change the published v0.13.0 behavior.
 
 ## Initialize a project
 
