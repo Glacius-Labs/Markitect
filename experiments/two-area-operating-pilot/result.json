@@ -1,0 +1,1248 @@
+{
+  "schema": "markitect-two-area-pilot-result/v1",
+  "status": "completed-with-retained-prior-failures-and-bounded-retries",
+  "sourceCommit": "74cbb7ca630e221b9b365e13e70165e9c7f59b6a",
+  "cliDigest": "sha256:17427bbaa65929bee1219b8f957f61d1f54f2ff6aa8ba775ffe5e06d982b1533",
+  "completedAtUtc": "2026-10-06T23:08:38.620507+00:00",
+  "protocol": "protocol-attempt-03.json",
+  "protocolDigest": "sha256:d8b3b1b68a361d9e4cf7387c722b2dccf347125f3cfa04047eedf52ef6d9366a",
+  "canonicalBaseline": "4644f3b556e742d8d5d2bffd92b228c72c85e02a",
+  "canonicalChanged": "9dac557171a82039370d76f66abcbf2152c46e5a",
+  "modelDigests": {
+    "baseline": {
+      "status": "passed",
+      "digest": "sha256:0f46d399063f8ae8c543095e2ef415f98539568b68a9cad0792a0d3bdcbeab6e"
+    },
+    "changed": {
+      "status": "passed",
+      "digest": "sha256:20a70b4313f965db0b0ab705335eded745de720e849d7ab72f8281ef0f3f2031"
+    }
+  },
+  "runtimeDigest": "sha256:042cf6286793a0ee2b18f48c4eb62bd8d70fac804a2334b9be0fc22f863ea44f",
+  "transport": "fresh gpt-6-luna high collaboration forks through frozen experimental file queue",
+  "completedActorInvocations": 26,
+  "providerVersion": "unavailable",
+  "tokenUsage": "unavailable",
+  "attempts": [
+    {
+      "attempt": 1,
+      "result": "attempt-01-result.json",
+      "outcome": "coordinator rejected before Apply because fixture omitted required project context; Host returned planned"
+    },
+    {
+      "attempt": 2,
+      "result": "attempt-02-result.json",
+      "outcome": "verification failed under ambiguous numeric-duplication policy; behavior passed476calls; stopped without repair"
+    },
+    {
+      "attempt": 3,
+      "outcome": "completed finite baseline/shared-rule-change/external-drift/unknown-artifact sequence",
+      "priorArtifactsAndLedgerRetained": true,
+      "baselineRetry": "transport-retry-baseline-03.json",
+      "changeRetry": "transport-retry-changed-03.json",
+      "changeRetryAttributionCorrection": "transport-retry-changed-03-attribution.json"
+    }
+  ],
+  "stages": {
+    "baseline": {
+      "status": "complete",
+      "verifyDigest": "sha256:64b87ed56b29977fce6bffacc04914529fb1e0072ce21e8ce5c4ba1c1a3e6544",
+      "evidenceRevision": "dfae978d19774d6b3deeb5abc7d6f1272d959425",
+      "auditDigest": "sha256:707c1c5cac5c1b3373fae7d6f8d10e797e0647b21d16ce1c6d3f9f0ae7908361",
+      "sourceRevision": "4644f3b556e742d8d5d2bffd92b228c72c85e02a",
+      "verifiers": [
+        {
+          "scopeId": "leaf-fulfillment",
+          "projectionId": "[\"markitect.foundation/v1\",\"Projection\",\"pilot\",\"fulfillment-dotnet\"]",
+          "recordId": "sha256:24087ac0b09240ca745ca611596e765a485c131573cb8af92a5cf7e657eb7267",
+          "resultId": "sha256:a202ed05d5d1cab7f633cb34d7728f16a7c3f8b2e4de2ff6ea969398afa50ec0",
+          "runId": "fb3ca94cb69e462fd3479e95f72ed93e",
+          "inputDigest": "sha256:173432283b407383e6f83a11ebb05f9c0659cedd54b19bcfb5db7b3ab5e53a4e",
+          "receiptDigest": "sha256:a91d89b5eeecb588757b9e8c017e7d70dd49415e57e14362066d45948e2631a2",
+          "outcome": "passed"
+        },
+        {
+          "scopeId": "leaf-orders",
+          "projectionId": "[\"markitect.foundation/v1\",\"Projection\",\"pilot\",\"orders-dotnet\"]",
+          "recordId": "sha256:2bdeb8db7774f7ae70afa0cb15382058ba592a7d4f81e38b20c99f52975fb070",
+          "resultId": "sha256:4b80c680fcdf86173a174df66195584f09fe2de5e8dd40b82727e51669bf3515",
+          "runId": "10836242e634eee2ca20e0fdb9460ff0",
+          "inputDigest": "sha256:3887ee15106f4203ea07e8839b9f2df3b8288c18a8a134f0def2078f61e6e820",
+          "receiptDigest": "sha256:be470dcd2131d2c9238fe317673431a89b8cd81ea4b49ccb1addce83715a4416",
+          "outcome": "passed"
+        },
+        {
+          "scopeId": "parent-commerce",
+          "projectionId": "[\"markitect.foundation/v1\",\"Projection\",\"pilot\",\"commerce-markdown\"]",
+          "recordId": "sha256:e26c0a0c46e7d8ee93b7cbe6e906bccae9be2bf9c3b1a1dbd50587e99621a670",
+          "resultId": "sha256:fb662f8438a63e8cece7ad8be78628eaa385c43c42cec1abddd733b618490dcd",
+          "runId": "d370c2af669a780be0407b98f629a238",
+          "inputDigest": "sha256:f64d70f7c4ce17399054755a8a7569340b6c658befa58117909f9f215383be55",
+          "receiptDigest": "sha256:0e7777e34e2172329039b43e0f547313c30ebdb2ff2ccd530d99978d5504ba87",
+          "outcome": "passed"
+        }
+      ],
+      "holdout": {
+        "resultSha256": "sha256:4a5f2e68ed1064dde4aa5018b169b16f64fa1e7997b1d0c1f91aad91955d6980",
+        "runId": "6309dce4759241cf94dae1aae09bef49",
+        "callCount": 476,
+        "failedCheckCount": 0,
+        "compiled": true,
+        "sourceUnchanged": true
+      }
+    },
+    "shared-rule-change": {
+      "status": "complete",
+      "verifyDigest": "sha256:bb85c9d17c3d16b6c913be56929436c970b07de16225c4164b1a3ba3033e27ef",
+      "evidenceRevision": "cc2259362325fb006f50fb453058fe8d8a4c077f",
+      "auditDigest": "sha256:80f182c26ef49f0a025f43f4b3b594818c4c009f0f6618c83d7fe52015c0e6bc",
+      "sourceRevision": "9dac557171a82039370d76f66abcbf2152c46e5a",
+      "verifiers": [
+        {
+          "scopeId": "leaf-fulfillment",
+          "projectionId": "[\"markitect.foundation/v1\",\"Projection\",\"pilot\",\"fulfillment-dotnet\"]",
+          "recordId": "sha256:8bc14c0efa889205b08b1b21cd568d1fb3b79b7f67483144bf6179c46eb7b6e2",
+          "resultId": "sha256:ad9df4345532e9825eac901416adad8b2cdaf6dafb59459fdaf4e26801dd13ec",
+          "runId": "e66b342d77dd7338004ca177cb0b75ad",
+          "inputDigest": "sha256:20b4ae0d12f30f7f596903f0a653af583658f6b81967008cfc47dce3cb26f51a",
+          "receiptDigest": "sha256:4df64b36d6c5b455bc27898c16a42f2d309fb77df2ea98d13d2d342de012cc29",
+          "outcome": "passed"
+        },
+        {
+          "scopeId": "leaf-orders",
+          "projectionId": "[\"markitect.foundation/v1\",\"Projection\",\"pilot\",\"orders-dotnet\"]",
+          "recordId": "sha256:1ef08ed82cc15a482025666df102312b6b694e321181d6037f7c7008e47bd852",
+          "resultId": "sha256:5d007b785f5d3afc02f1236215b01968d55a4cac9c3a4960facced7d136f2e3c",
+          "runId": "697665420bfcf3f6b0fbb4ba0a4c7e7d",
+          "inputDigest": "sha256:ac26d8f110c77f2f1f22e531d3a1b786fc92fb23cebd883eb9f941853d397d81",
+          "receiptDigest": "sha256:de191ca7e6254e4434b1a4cb2ae4f231d74d83feb4ead838c3b3473ea03dcbcd",
+          "outcome": "passed"
+        },
+        {
+          "scopeId": "parent-commerce",
+          "projectionId": "[\"markitect.foundation/v1\",\"Projection\",\"pilot\",\"commerce-markdown\"]",
+          "recordId": "sha256:bf7d4c4fdd72dc26804a8b192c4691587d1a16ddaab8cade6627e904652a962a",
+          "resultId": "sha256:426e416610a4ad65990105bb734abd8fb06761b3bf7c8a5d97bb7fdb87abcbc3",
+          "runId": "619185437665db448df578e99c70938f",
+          "inputDigest": "sha256:75f35c7b2270670ad66ee65df14ee8fa3c776a4b943b0b4e519c8d424cdf2508",
+          "receiptDigest": "sha256:61930b2f41fea88cb85d4cad7d5008c9f0de55088162be0cb382bc93cb79fee2",
+          "outcome": "passed"
+        }
+      ],
+      "holdout": {
+        "resultSha256": "sha256:5f38e1243c8a9ecb215fe1da0e8297e489506ad86db8447611e5dd64cd8c441a",
+        "runId": "eafa173ec8c44d96986f89f2babd2afb",
+        "callCount": 316,
+        "failedCheckCount": 0,
+        "compiled": true,
+        "sourceUnchanged": true
+      },
+      "canonicalChangedPaths": [
+        "definitions/rule.shared-quantity.yaml"
+      ],
+      "proposedWork": [
+        "[\"markitect.foundation/v1\",\"Projection\",\"pilot\",\"commerce-markdown\"]",
+        "[\"markitect.foundation/v1\",\"Projection\",\"pilot\",\"fulfillment-dotnet\"]",
+        "[\"markitect.foundation/v1\",\"Projection\",\"pilot\",\"orders-dotnet\"]"
+      ],
+      "writtenPaths": [
+        "docs/represented/index.md",
+        "src/Fulfillment/FulfillOrderHandler.cs",
+        "src/Orders/CreateOrderHandler.cs"
+      ]
+    },
+    "external-drift": {
+      "status": "complete",
+      "verifyDigest": "sha256:e0a6beb62a124fecf268f1892d633f2d83366ce958861a3a43c7a559951e5193",
+      "evidenceRevision": "8b9e790cd0d587a97336879e88e435944e9a3c55",
+      "auditDigest": "sha256:e3bb208ef48d522295a2199e21fa9ec2e4270f7b0f16c0b97be68224dbb1f169",
+      "sourceRevision": "9dac557171a82039370d76f66abcbf2152c46e5a",
+      "verifiers": [
+        {
+          "scopeId": "leaf-fulfillment",
+          "projectionId": "[\"markitect.foundation/v1\",\"Projection\",\"pilot\",\"fulfillment-dotnet\"]",
+          "recordId": "sha256:8bc14c0efa889205b08b1b21cd568d1fb3b79b7f67483144bf6179c46eb7b6e2",
+          "resultId": "sha256:ba77474ea4ae4489587971803e1c51e1ea0a16db328fb62a428f60bbb05d8775",
+          "runId": "96229922552a5b0a5036c9ce28caeb76",
+          "inputDigest": "sha256:093d9e89701426f6ca6fae900c580fb81529662afc75a17496363c79bde42a15",
+          "receiptDigest": "sha256:02e405302094a4fb7464ddb2f5e617c9d8e7b57bf54858b66946e0fba4601e19",
+          "outcome": "passed"
+        },
+        {
+          "scopeId": "leaf-orders",
+          "projectionId": "[\"markitect.foundation/v1\",\"Projection\",\"pilot\",\"orders-dotnet\"]",
+          "recordId": "sha256:e64abeffaf58c62eb7acc9e1c198d1d0dc7c930f1c9e0e74d144b944a6e3b993",
+          "resultId": "sha256:4787d0f9558650526aabf05c4860cd16064b1e2bb85861a7ca4ea44a42006c30",
+          "runId": "31de1ec729945480ad2e387f64a96526",
+          "inputDigest": "sha256:2a42440aaa7054acd27304e1113109e807efd0349c0bfb37f144962e04e07f6f",
+          "receiptDigest": "sha256:fd210e1a57f0992aeb4b2d6ce8f6bf9d2e743f23ff0444b12dbed0c1cbc0e101",
+          "outcome": "passed"
+        },
+        {
+          "scopeId": "parent-commerce",
+          "projectionId": "[\"markitect.foundation/v1\",\"Projection\",\"pilot\",\"commerce-markdown\"]",
+          "recordId": "sha256:bf7d4c4fdd72dc26804a8b192c4691587d1a16ddaab8cade6627e904652a962a",
+          "resultId": "sha256:917f58b8cd2fe4c0cafa89b470dee02e4bd43553d3702902f9775ed85e111249",
+          "runId": "df597c68e962adecf76b2e822ba99364",
+          "inputDigest": "sha256:dbe2e575eba89a86c53a2ad8bbe0dfea66a14ee6e49bd27fb9ca5330fe2c63aa",
+          "receiptDigest": "sha256:1a765078c4bdb04e76de311f94636ef1ddb27d861f77936812aed553930539d1",
+          "outcome": "passed"
+        }
+      ],
+      "holdout": {
+        "resultSha256": "sha256:bfd878f69050a48801efa5eea9843a8bd58e38298961c44cdb310bc40e11f321",
+        "runId": "357883b4c2c243d09e90722586abff12",
+        "callCount": 316,
+        "failedCheckCount": 0,
+        "compiled": true,
+        "sourceUnchanged": true
+      },
+      "classification": "ordinary projection-drift reconciliation, not persisted-finding Task.Repair",
+      "injection": {
+        "source": "9dac557171a82039370d76f66abcbf2152c46e5a",
+        "target": "src/Orders/CreateOrderHandler.cs",
+        "control": "predeclared external fault, not agent-authored",
+        "beforeSha256": "e1ddc05fd71fc22c478c1dbb71e89f34d9004c4efbb81cb0aa8dd268bf79cd0c",
+        "afterSha256": "d79964ddaddb2b16fa5561d0314e0bedd628bfde33ac7560683b27381715ec93",
+        "insertion": "if (quantity == 0) { Execute(1); return true; }",
+        "frozenBeforeWriteAt": "2026-10-06T22:59:09.731926+00:00"
+      },
+      "negativeHoldout": {
+        "resultSha256": "sha256:19940f98f4024a7cf8151a5f9c03822a1c0038aa0e579ec14626dfc5d83ead08",
+        "callCount": 316,
+        "failedCheckCount": 34,
+        "buildExitCode": 0,
+        "attribution": "deliberate external quantity-zero fault; not an agent mistake"
+      },
+      "proposals": [
+        {
+          "projectionId": "[\"markitect.foundation/v1\",\"Projection\",\"pilot\",\"commerce-markdown\"]",
+          "decision": "no-op",
+          "reasons": [
+            "evidence-refresh-required"
+          ]
+        },
+        {
+          "projectionId": "[\"markitect.foundation/v1\",\"Projection\",\"pilot\",\"fulfillment-dotnet\"]",
+          "decision": "no-op",
+          "reasons": [
+            "representation-current"
+          ]
+        },
+        {
+          "projectionId": "[\"markitect.foundation/v1\",\"Projection\",\"pilot\",\"orders-dotnet\"]",
+          "decision": "work",
+          "reasons": [
+            "projection-drift"
+          ]
+        }
+      ],
+      "writtenPaths": [
+        "src/Orders/CreateOrderHandler.cs",
+        "src/Orders/Orders.csproj"
+      ],
+      "scopePreservation": "Canonical source/runtime and all Fulfillment/Markdown bytes remained identical.",
+      "nonminimalChange": "Executor also removed the final LF in both Orders files, including otherwise unchanged Orders.csproj.",
+      "refreshDetour": {
+        "step": "drift-refresh-propose-03",
+        "status": "blocked",
+        "finding": "record.not-stale-complete",
+        "mutated": false,
+        "resolution": "Source and Markdown materialization were already current; normal fresh Verify established parent evidence without refresh Apply."
+      }
+    },
+    "unknown-artifact": {
+      "status": "control-passed",
+      "incompleteAuditDigest": "sha256:8b86725ffba1edaf9a64aa8bc97aec5395949f9097ff9ce1b7ab510ff7f7a48a",
+      "findings": [
+        {
+          "code": "artifact.unowned",
+          "artifactPath": "src/Orders/unowned-probe.txt",
+          "detail": "declared target inventory contains an unowned artifact",
+          "nextStep": "Resolve ownership for this target artifact, then audit again."
+        },
+        {
+          "code": "projection.escalated",
+          "projectionId": "[\"markitect.foundation/v1\",\"Projection\",\"pilot\",\"orders-dotnet\"]",
+          "detail": "Projection reconciliation has an unresolved escalation",
+          "nextStep": "Resolve the ownership, scope, or implementation escalation, then audit again."
+        },
+        {
+          "code": "reconcile.escalated",
+          "detail": "target contains an unowned artifact that must be classified before projection",
+          "nextStep": "Resolve the reconciliation escalation before declaring the declared scope complete."
+        },
+        {
+          "code": "reconcile.plan-incomplete",
+          "detail": "full-scope reconciliation plan is not in planned state",
+          "nextStep": "Resolve plan acquisition or impact uncertainty, then audit again."
+        }
+      ],
+      "unchangedDuringAudit": [
+        "source",
+        "managed-and-probe-bytes",
+        "runtime",
+        "ledger",
+        "queue",
+        "privateLogs"
+      ],
+      "disposition": {
+        "source": "src/Orders/unowned-probe.txt",
+        "quarantine": "controls/quarantine/unowned-probe.txt",
+        "sha256": "sha256:543bbaf71aec46fad0e16ad69c29450a8641deb73c1f7de64b837abd27ba0084",
+        "action": "move only exact predeclared injected probe; no model or exclusion change"
+      },
+      "finalAuditDigest": "sha256:e3bb208ef48d522295a2199e21fa9ec2e4270f7b0f16c0b97be68224dbb1f169",
+      "finalManagedStateEqualsPreProbe": true,
+      "limitation": "Audit source/tests establish no check invocation; boundary comparisons establish no observed queue/log/ledger/artifact mutation."
+    }
+  },
+  "steps": [
+    {
+      "label": "baseline-apply-02",
+      "receiptSha256": "sha256:050043cb14fc5fa94d16fb959590b446e6671e8364791f97f286ea0b64acf92e",
+      "exitCode": 0,
+      "timedOut": false,
+      "elapsedMilliseconds": 6798,
+      "stdoutSha256": "sha256:ecc54afb635d9be0eaef5479ae3e698fbfa65b4653ad32f38444654a9696b223",
+      "stderrSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "materialized-unverified",
+      "digest": "sha256:a28eee15732f8f5a5e460099eb3056ef1b6c700e36972376bc2a6b9f51f6c0f6"
+    },
+    {
+      "label": "baseline-apply-03",
+      "receiptSha256": "sha256:a7440052cfb629b964a6796f80d00abf55e12ed41e5cc923503ee5ce90d2c768",
+      "exitCode": 0,
+      "timedOut": false,
+      "elapsedMilliseconds": 12504,
+      "stdoutSha256": "sha256:331d6c18edd9337dfe428b640676a8f8d6b01e6e74d6ed0ba395616feb5a31b3",
+      "stderrSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "materialized-unverified",
+      "digest": "sha256:c83a30b8fed86cd36f09fd783ad8b7313bdbd3b12648b13dfe47f85a05a5cfa3"
+    },
+    {
+      "label": "baseline-audit-02",
+      "receiptSha256": "sha256:e99bada239027105d55037a053759c94a3e4cc6f80b65b64109ab16a0423cc6d",
+      "exitCode": 2,
+      "timedOut": false,
+      "elapsedMilliseconds": 7571,
+      "stdoutSha256": "sha256:d5cfc06b3bdc505be03dbe15184c22e8914c6b912b19d021d32195203944e7de",
+      "stderrSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "incomplete",
+      "digest": "sha256:146d1bc749c93e3478386dc0ce887b132fec96caf1ed4e85673cfaf10904cf5f"
+    },
+    {
+      "label": "baseline-audit-03",
+      "receiptSha256": "sha256:b866ccb8b96a2dd33145b95053110326ce925af3fa34bfc109686d0d47ab08f0",
+      "exitCode": 0,
+      "timedOut": false,
+      "elapsedMilliseconds": 7802,
+      "stdoutSha256": "sha256:7e9c89747819e48c7f1ecf83f811aba05029f55886069d47c8ce6f717e4f72e0",
+      "stderrSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "complete",
+      "digest": "sha256:707c1c5cac5c1b3373fae7d6f8d10e797e0647b21d16ce1c6d3f9f0ae7908361"
+    },
+    {
+      "label": "baseline-execute",
+      "receiptSha256": "sha256:a4446926140a87aec063c73a8972b93fe58c22b89f50db2f2062bfd7504ed6c5",
+      "exitCode": 0,
+      "timedOut": false,
+      "elapsedMilliseconds": 194413,
+      "stdoutSha256": "sha256:2aae96dd02e1e1b8de5ddc6ab88b66b07ed8c3c6011314870e5317058ac77a8b",
+      "stderrSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "planned",
+      "digest": "sha256:73c8e9544fafd6b5dd0a8ffc7fb6257614bf025149ae2d85c8d166189a8d320a"
+    },
+    {
+      "label": "baseline-execute-02",
+      "receiptSha256": "sha256:6252fc8b317bbf97f940a65da0b63a19bc6e75d376f8b8264e7048cb8f1442f8",
+      "exitCode": 0,
+      "timedOut": false,
+      "elapsedMilliseconds": 166136,
+      "stdoutSha256": "sha256:41ebece412c49f77903311398a23ea99833b9b56f24abd1dcbb4ae763c146bfd",
+      "stderrSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "planned",
+      "digest": "sha256:a28eee15732f8f5a5e460099eb3056ef1b6c700e36972376bc2a6b9f51f6c0f6"
+    },
+    {
+      "label": "baseline-execute-03",
+      "receiptSha256": "sha256:97aca59a3734aed662ca662e749bda1de6afd28024780e59115466ffd0f5993d",
+      "exitCode": 0,
+      "timedOut": false,
+      "elapsedMilliseconds": 97160,
+      "stdoutSha256": "sha256:cc86def3223db698f895af9e1a44343c08a916683d5a54352cd2826ab956f399",
+      "stderrSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "planned",
+      "digest": "sha256:c83a30b8fed86cd36f09fd783ad8b7313bdbd3b12648b13dfe47f85a05a5cfa3"
+    },
+    {
+      "label": "baseline-propose",
+      "receiptSha256": "sha256:255d3763ced1e373e5d3c11d42a7161adcafb7a7abf91a241e98cc1e44c9f2b2",
+      "exitCode": 0,
+      "timedOut": false,
+      "elapsedMilliseconds": 1876,
+      "stdoutSha256": "sha256:71609924c80bea767bcdf4e5e2a4d6245cdb627779a0eac8d341ccee0c4a726c",
+      "stderrSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "planned",
+      "digest": "sha256:c2324d2b15c4ca56279e37476ce6bd4dac57f5a08d8325d70b15650a84094ce5"
+    },
+    {
+      "label": "baseline-propose-02",
+      "receiptSha256": "sha256:a3d86cd9c2f6ad68a063f4ff3e9f7eab4efd25dbd3e43405b4691239e3dcae84",
+      "exitCode": 0,
+      "timedOut": false,
+      "elapsedMilliseconds": 2012,
+      "stdoutSha256": "sha256:6f2c2400f7bed5ce50561e5f997fa323841988d43a5365dbb66bc0488aac8903",
+      "stderrSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "planned",
+      "digest": "sha256:de0456abbcaa028fa72bfe652bfed8e37b783e45b0b27110cd6e5e93cb47f9f1"
+    },
+    {
+      "label": "baseline-propose-03",
+      "receiptSha256": "sha256:fb91e7b7fe5964ad0d085bc93439e7101c7f60468ab13783b445bf26165c2ce0",
+      "exitCode": 0,
+      "timedOut": false,
+      "elapsedMilliseconds": 3194,
+      "stdoutSha256": "sha256:8a0ffcf2adb75c44f30d8a59a679ce6944daaaac98d04cfdebabfaf0bdca9e69",
+      "stderrSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "planned",
+      "digest": "sha256:db9e8bdca5f3d88ab3d33198a418f190fb313631882a885692b15e23eee4552d"
+    },
+    {
+      "label": "baseline-refresh-apply-03",
+      "receiptSha256": "sha256:6a4a35df9ab0546051200ce7b6331dccb4c9425b8e0fab860ae02b192f018889",
+      "exitCode": 0,
+      "timedOut": false,
+      "elapsedMilliseconds": 5354,
+      "stdoutSha256": "sha256:787e98f37fee761387a3b44d162a9fbc05a70879d1286aee2a920d1a653af549",
+      "stderrSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "refreshed",
+      "digest": null
+    },
+    {
+      "label": "baseline-refresh-propose-03",
+      "receiptSha256": "sha256:c033fa692b7a310d96deffa3e513af959755c3cbed82f2b058aab6679931c4e6",
+      "exitCode": 0,
+      "timedOut": false,
+      "elapsedMilliseconds": 3573,
+      "stdoutSha256": "sha256:c3345deb1ff8509a51cd58128416e2876c3b2575349615474e4438e1ba398c10",
+      "stderrSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "planned",
+      "digest": "sha256:bd8e07403e1eea725f7ee612b16f9a1a14c30936e2cc839041b59695b5dc17f1"
+    },
+    {
+      "label": "baseline-verify-02",
+      "receiptSha256": "sha256:d2acb0ac7308899e0197375ab1ee3f528fc366f9566c96a7051cf238b0ec43bd",
+      "exitCode": 1,
+      "timedOut": false,
+      "elapsedMilliseconds": 287179,
+      "stdoutSha256": "sha256:694b0106189f4225e0639f2f3795815ec4d52644d67ad462a4c234c354435de7",
+      "stderrSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "failed",
+      "digest": "sha256:d356a036d3d4c3c25fb5dc927ec70a6176a94b28536f3b62afcd22dab994b15a"
+    },
+    {
+      "label": "baseline-verify-03",
+      "receiptSha256": "sha256:eec9100f93de3abfdc8ea6aed589797b023c9bc18f5e9a9e68bd6557756378a9",
+      "exitCode": 1,
+      "timedOut": false,
+      "elapsedMilliseconds": 275305,
+      "stdoutSha256": "sha256:c37ec876c89f586b990baf617496ddaa462486309bb08ec001db70075f8e906f",
+      "stderrSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "escalated",
+      "digest": "sha256:938653d698076ccbc5de2e8af8cbac3eb1c82c9da5e31aaf9cc0d79927ac594c"
+    },
+    {
+      "label": "baseline-verify-03-retry-01",
+      "receiptSha256": "sha256:735525a8e69d6ba1e0ecd2b324563353b0ebfff1934668816ae44a1e1d531309",
+      "exitCode": 0,
+      "timedOut": false,
+      "elapsedMilliseconds": 174011,
+      "stdoutSha256": "sha256:6e041cb6606605c57bbf0dc1b4e1ca009d35bd45b30a41fe9286db6fb2c4d54c",
+      "stderrSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "passed",
+      "digest": "sha256:64b87ed56b29977fce6bffacc04914529fb1e0072ce21e8ce5c4ba1c1a3e6544"
+    },
+    {
+      "label": "changed-apply-03",
+      "receiptSha256": "sha256:520a9c808a9a554d04c6cfc1ea6d621d08e4e1b0e3498a207bd5c1296b89bf96",
+      "exitCode": 0,
+      "timedOut": false,
+      "elapsedMilliseconds": 8328,
+      "stdoutSha256": "sha256:887896fe828e1915843f2d521f6c93b084645a1c410b7fc3d1c76b2681e78bae",
+      "stderrSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "materialized-unverified",
+      "digest": "sha256:498a93852ed9422694f47368c9eb7e5980ad169ae30fd09d3e4dc2d936171a3e"
+    },
+    {
+      "label": "changed-audit-03",
+      "receiptSha256": "sha256:4559ff7187364931b0c7fb61f8ff518a207e52c8d7c90d7d4dc247c517182111",
+      "exitCode": 0,
+      "timedOut": false,
+      "elapsedMilliseconds": 6582,
+      "stdoutSha256": "sha256:f74f026dd6f734fc5fcfc3847ff8a5f8835b56581b7bf416c077fa9901e92393",
+      "stderrSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "complete",
+      "digest": "sha256:80f182c26ef49f0a025f43f4b3b594818c4c009f0f6618c83d7fe52015c0e6bc"
+    },
+    {
+      "label": "changed-execute-03",
+      "receiptSha256": "sha256:cf00219ead1c962b8a0cc55ef2b32fb4099849e2de30429ec17303feabb7b9d7",
+      "exitCode": 2,
+      "timedOut": false,
+      "elapsedMilliseconds": 87988,
+      "stdoutSha256": "sha256:24663e8757384a7a0a992f8e4ad7cc2088c5008f550eb219df2b352d73ec66e2",
+      "stderrSha256": "sha256:bcf9b6079c67825fa639d5c80a48658b1e2f4aa578bfb3c4b04977065cd4758f",
+      "status": "incomplete",
+      "digest": "sha256:705d4aa454a896c95b143c32b6ef78f0545a5ca87d43b062d76b4c3d1d23287f"
+    },
+    {
+      "label": "changed-execute-03-retry-01",
+      "receiptSha256": "sha256:02b557e3a99d74dc6c339f936b228c8fa1105ff9913a8890048fde1242de31e7",
+      "exitCode": 0,
+      "timedOut": false,
+      "elapsedMilliseconds": 132456,
+      "stdoutSha256": "sha256:4febe1849a8c38e4c0c7c7e1432194370957b61fd6b50dda01f3a2e306398598",
+      "stderrSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "planned",
+      "digest": "sha256:498a93852ed9422694f47368c9eb7e5980ad169ae30fd09d3e4dc2d936171a3e"
+    },
+    {
+      "label": "changed-propose-03",
+      "receiptSha256": "sha256:a2a4358990884d866d8d7fbb057266eda563970e04fc0525f67aa0a43ae6dee4",
+      "exitCode": 0,
+      "timedOut": false,
+      "elapsedMilliseconds": 2226,
+      "stdoutSha256": "sha256:6d7e63b09192acaf9fd5b3f1d5e775d761d7c9cfd678818ad7f1764c78c876d6",
+      "stderrSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "planned",
+      "digest": "sha256:3e490ce8605f7c409b8298c1bafccc8c30d8243f0f983684611d33d654be4f55"
+    },
+    {
+      "label": "changed-stale-audit-03",
+      "receiptSha256": "sha256:b37310dd5627c23bd41e85a70080149439ef7da2a4e2c0a1471a2c0421e6ff39",
+      "exitCode": 2,
+      "timedOut": false,
+      "elapsedMilliseconds": 3753,
+      "stdoutSha256": "sha256:1b992ca320a0973dcca81cc1fc822de8a39933635dd968d194b9ad8f49d8987d",
+      "stderrSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "incomplete",
+      "digest": "sha256:cf4d81e743b9c2c9b0f5954f217295937e0e9106cb21b91124dd5f51ce9c9ebe"
+    },
+    {
+      "label": "changed-verify-03",
+      "receiptSha256": "sha256:567a45ded99cc1e26a7ccbba0178c823a26c9a3ab486a22c3e8fb7739b7af3ca",
+      "exitCode": 0,
+      "timedOut": false,
+      "elapsedMilliseconds": 244930,
+      "stdoutSha256": "sha256:c524a01ee3b1be969bbe3b42849a424b3b582ab12d81ab1f951372835233d42f",
+      "stderrSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "passed",
+      "digest": "sha256:bb85c9d17c3d16b6c913be56929436c970b07de16225c4164b1a3ba3033e27ef"
+    },
+    {
+      "label": "drift-apply-03",
+      "receiptSha256": "sha256:8337cbd6b21b93031feeaf1c0cbe7fe80d68ceed4b8c65e6a88ee5ab002accfa",
+      "exitCode": 0,
+      "timedOut": false,
+      "elapsedMilliseconds": 8039,
+      "stdoutSha256": "sha256:3efc26d96c7f7d3a6ecd0482737ecbbed348ac39e8ac8937340d4f30414641b7",
+      "stderrSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "materialized-unverified",
+      "digest": "sha256:70a454759d866ea510cf8980b0bf7d81212eb6f2ea9174e49b3a888743d0bd41"
+    },
+    {
+      "label": "drift-audit-03",
+      "receiptSha256": "sha256:d34c2dfedae1f6f74f69269e1c4ecadc03d7a479ec73a0928d707c85801b0796",
+      "exitCode": 2,
+      "timedOut": false,
+      "elapsedMilliseconds": 5500,
+      "stdoutSha256": "sha256:237fd94cad1d84c8124487fbae36421f301ade19683c54c8102ac0acad4f856c",
+      "stderrSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "incomplete",
+      "digest": "sha256:45021c5c008a7a12602a6cec5d3473f11028f2ec1fc5c2413e212d87930b4c0a"
+    },
+    {
+      "label": "drift-complete-audit-03",
+      "receiptSha256": "sha256:357b7db14085426bb32c03026fc388a5a29902594a65da989a19aeb58d85b67b",
+      "exitCode": 0,
+      "timedOut": false,
+      "elapsedMilliseconds": 6170,
+      "stdoutSha256": "sha256:7d4ed24e9f794a42e481e76093ceea93ed2ad2a2a6737f2d52a4dbc263a3849b",
+      "stderrSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "complete",
+      "digest": "sha256:e3bb208ef48d522295a2199e21fa9ec2e4270f7b0f16c0b97be68224dbb1f169"
+    },
+    {
+      "label": "drift-execute-03",
+      "receiptSha256": "sha256:2647107edc019c5cf4d2fd51c21ed7933d260734fb0d79dd34877d7630ae3770",
+      "exitCode": 0,
+      "timedOut": false,
+      "elapsedMilliseconds": 71563,
+      "stdoutSha256": "sha256:b6cd251993d30544ccd287fceba45b25de52aec43d3757800f2a06fefb4bdecd",
+      "stderrSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "planned",
+      "digest": "sha256:70a454759d866ea510cf8980b0bf7d81212eb6f2ea9174e49b3a888743d0bd41"
+    },
+    {
+      "label": "drift-propose-03",
+      "receiptSha256": "sha256:204bfaa2c41854e53678f90e0760b1e449cad4eedb12fd9540dc6388563364e5",
+      "exitCode": 0,
+      "timedOut": false,
+      "elapsedMilliseconds": 3485,
+      "stdoutSha256": "sha256:a914736c22c5a9965592aa17ea768ec9ada4088daec7c7aa2222989d0a93abbb",
+      "stderrSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "planned",
+      "digest": "sha256:1a0bb5a6354862b2c3e83a2b64fc948d1abdb7df4aa36f7d86e565c40d578d5e"
+    },
+    {
+      "label": "drift-refresh-propose-03",
+      "receiptSha256": "sha256:26a0d438370e0e503f14cabf48cdc9d3e1c8ce29d67c29d6c62547a3a2de1274",
+      "exitCode": 1,
+      "timedOut": false,
+      "elapsedMilliseconds": 1608,
+      "stdoutSha256": "sha256:5391b274e84abfec54c48b8d6d3c255a14df434c4c119d31265995f545e92a67",
+      "stderrSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "blocked",
+      "digest": null
+    },
+    {
+      "label": "drift-verify-03",
+      "receiptSha256": "sha256:9b97d3b0abc1af421e6a49f284d69ec200a1d4c8abcac35ee95313be96e5081f",
+      "exitCode": 0,
+      "timedOut": false,
+      "elapsedMilliseconds": 208680,
+      "stdoutSha256": "sha256:ae7eb5f142a218ea40190f41cab6e3104aea439a98b81bcedeaa0d540b15ce42",
+      "stderrSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "passed",
+      "digest": "sha256:e0a6beb62a124fecf268f1892d633f2d83366ce958861a3a43c7a559951e5193"
+    },
+    {
+      "label": "final-audit-03",
+      "receiptSha256": "sha256:76343fb0fbeff6d92d4073be501935b0b8e51a770e0da4ae1da416904c1c32c4",
+      "exitCode": 0,
+      "timedOut": false,
+      "elapsedMilliseconds": 5421,
+      "stdoutSha256": "sha256:7d4ed24e9f794a42e481e76093ceea93ed2ad2a2a6737f2d52a4dbc263a3849b",
+      "stderrSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "complete",
+      "digest": "sha256:e3bb208ef48d522295a2199e21fa9ec2e4270f7b0f16c0b97be68224dbb1f169"
+    },
+    {
+      "label": "unknown-audit-03",
+      "receiptSha256": "sha256:120e56223b92858e8332a80b5c026bf3319f7ddcbc973eb83791273707a5d207",
+      "exitCode": 2,
+      "timedOut": false,
+      "elapsedMilliseconds": 5680,
+      "stdoutSha256": "sha256:40aebe123439a1b7c94f0472e5e91f8ada747e98efb6cca702c7d20c524c5efc",
+      "stderrSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "incomplete",
+      "digest": "sha256:8b86725ffba1edaf9a64aa8bc97aec5395949f9097ff9ce1b7ab510ff7f7a48a"
+    }
+  ],
+  "actors": [
+    {
+      "runId": "142a3cbf47443601252f897f06641c95",
+      "role": "executor",
+      "inputDigest": "sha256:6a2620d8121af519a806bcf79243636e3494ec0afb77a147ca61b3cc1f8ca6ee",
+      "dispatch": {
+        "agentId": "/root/two_area_actor_01",
+        "model": "gpt-6-luna",
+        "reasoningEffort": "high"
+      },
+      "emittedOutcome": "proposed",
+      "hostOutcome": "proposed",
+      "fileDigests": {
+        "invocation.json": "sha256:5e8329abe3cf0a374fd8658ee73844252ef1bf766e54f1df014a2dd13098ea73",
+        "dispatch.json": "sha256:a5a87130587e4f474fc4bc0c10a778b73ce4fd922f48b14f1a69ff12d71c4ce6",
+        "emitted-response.json": "sha256:f497507fc0d20b0ad088c2eaffbb1fba215bf1e2bdb0a8f0060b197e500e0f21",
+        "normalized-response.json": "sha256:f497507fc0d20b0ad088c2eaffbb1fba215bf1e2bdb0a8f0060b197e500e0f21",
+        "raw-response.json": "sha256:e826df71810e98c118a85e6a08da1b9ef5a0e6d50c8d9884b4da8340e3573ecf",
+        "privateLog": "sha256:7045f3f93fa7458db8cc55b03c39a16c5fa6243150c29c6f2230c43a94d0c12a"
+      }
+    },
+    {
+      "runId": "8ea235eac25fcfd7e3a22d0f8e0ba741",
+      "role": "executor",
+      "inputDigest": "sha256:429a6fd3241a038916b19bc29a4aa182518b3a2f82de72213adda17a1057902b",
+      "dispatch": {
+        "agentId": "/root/two_area_actor_02",
+        "model": "gpt-6-luna",
+        "reasoningEffort": "high"
+      },
+      "emittedOutcome": "proposed",
+      "hostOutcome": "proposed",
+      "fileDigests": {
+        "invocation.json": "sha256:df1f72d42b25ad5e30c9bccf982087ab252b79364b32096b4c5e9b2f6f35542f",
+        "dispatch.json": "sha256:dc09ad5a82511d0d8a845d9c2f452cc5b725a22367255e0c21d32fc661e0b16d",
+        "emitted-response.json": "sha256:ded5c496758ee58b359cca3009f2e7b0985328316e5ce313abe5fd1328d43026",
+        "normalized-response.json": "sha256:ded5c496758ee58b359cca3009f2e7b0985328316e5ce313abe5fd1328d43026",
+        "raw-response.json": "sha256:90fe7a0ec0251de5f4821492ef170003ddb47bcc6a2808ed62125d56ca8861cf",
+        "privateLog": "sha256:436588bb154148ff494b14d18f93dbab416d95e55c33573757386d8b6e7c9ddc"
+      }
+    },
+    {
+      "runId": "fe43bbe3fa2b9d79d4a3393b4b1e4401",
+      "role": "executor",
+      "inputDigest": "sha256:d766ce0b44fbabdd14310f192d2fcaaa7c2abd5a4a530d8c5b11eb911d1cbc21",
+      "dispatch": {
+        "agentId": "/root/two_area_actor_03",
+        "model": "gpt-6-luna",
+        "reasoningEffort": "high"
+      },
+      "emittedOutcome": "proposed",
+      "hostOutcome": "proposed",
+      "fileDigests": {
+        "invocation.json": "sha256:25d68d587fd91969f9cb7299d5e30428660c510fea0a43c3d6738f6a61d71bc3",
+        "dispatch.json": "sha256:a8ea5794635f50655a80776d50ce41043c5fcaf6b2c6bc3edc5966510f65d2a1",
+        "emitted-response.json": "sha256:7654e6db4eb636a947fd8265f810270fbad382c68d635f06dd72fada76e78a56",
+        "normalized-response.json": "sha256:7654e6db4eb636a947fd8265f810270fbad382c68d635f06dd72fada76e78a56",
+        "raw-response.json": "sha256:8f6b9fe6cb4a6c9f973788b0c641550a83a5c226e177405188d9b069ff52c026",
+        "privateLog": "sha256:528a923e4b491a9d65913180a792166961581bba9118ab0bda75f96703cbeeb3"
+      }
+    },
+    {
+      "runId": "eadddeb1967d3158253f4f8c0f45b299",
+      "role": "executor",
+      "inputDigest": "sha256:1f115ed0a7f6f5007da183b445061f97d3abaa23e563828d44cb58c43e760499",
+      "dispatch": {
+        "agentId": "/root/two_area_actor_04",
+        "model": "gpt-6-luna",
+        "reasoningEffort": "high"
+      },
+      "emittedOutcome": "proposed",
+      "hostOutcome": "proposed",
+      "fileDigests": {
+        "invocation.json": "sha256:615ee7d80a0c05a6c3d419abb9d0d19f893f7d4c90613250fa1ace5be605a5ca",
+        "dispatch.json": "sha256:4b5ed428d0763e63c96ffae374b8c86813e87e09a6a5dfd853897aad28735b09",
+        "emitted-response.json": "sha256:a5f76a5e609ad0d8e26a93e1293590be790e8d88d7923838252bc2d9feddeb33",
+        "normalized-response.json": "sha256:a5f76a5e609ad0d8e26a93e1293590be790e8d88d7923838252bc2d9feddeb33",
+        "raw-response.json": "sha256:34d575e91bc76ec860a73e238e1539db3f7d3b211f607e35232ec2ab93024e88",
+        "privateLog": "sha256:ba21dd75deb3e567bfe153649e472744f9068ba77edfc4941d756d5bd2d8f7d9"
+      }
+    },
+    {
+      "runId": "7fa1b1b4bede7f8515a6c3589c96e66d",
+      "role": "verifier",
+      "inputDigest": "sha256:eca9b5d09844fa31771026a30b9a24d90992f78dedef85a947414fd9a387a0db",
+      "dispatch": {
+        "agentId": "/root/two_area_actor_05",
+        "model": "gpt-6-luna",
+        "reasoningEffort": "high"
+      },
+      "emittedOutcome": "failed",
+      "hostOutcome": "failed",
+      "fileDigests": {
+        "invocation.json": "sha256:5bcd1d40d43309e771a25950ae02b69a305af6ddd81704f9449d20f404ed832b",
+        "dispatch.json": "sha256:1fffb784f3eeb4db962ac1cd520ade2af0e7e662702eacd25dcba2e1fe00f988",
+        "emitted-response.json": "sha256:a6e33d1f726f78a224e8f8836afac0fb9463fabf30ca5d0c129a6654b0512054",
+        "normalized-response.json": "sha256:a6e33d1f726f78a224e8f8836afac0fb9463fabf30ca5d0c129a6654b0512054",
+        "raw-response.json": "sha256:4cfce3d11de1ac596bb57f6690291046bec0696f55985ad365d4416a705cbdd0",
+        "privateLog": "sha256:a7eed56945ba27940816a13908c47c3df8590ddd1c984b594e4e778eed658f13"
+      }
+    },
+    {
+      "runId": "92cb92d2b006f728b89a604c50e07231",
+      "role": "verifier",
+      "inputDigest": "sha256:2df310bc2fe371f75995f44cb7b8b091ff87b825be75f1b6c0956799b63e134d",
+      "dispatch": {
+        "agentId": "/root/two_area_actor_06",
+        "model": "gpt-6-luna",
+        "reasoningEffort": "high"
+      },
+      "emittedOutcome": "passed",
+      "hostOutcome": "passed",
+      "fileDigests": {
+        "invocation.json": "sha256:49e0d2ea6c1f7f4cac80d4fc969f6e19e9bf838aa77e5f421cfd924b49fb8e9d",
+        "dispatch.json": "sha256:6937f945a332a1948b1408a6fbdd094d147b74cec0d73ac2b043c652dc118014",
+        "emitted-response.json": "sha256:2704f3b0884a8536def2126699d328af201055a15e9ed48ab2951a4be6e5136b",
+        "normalized-response.json": "sha256:2704f3b0884a8536def2126699d328af201055a15e9ed48ab2951a4be6e5136b",
+        "raw-response.json": "sha256:78d17538380112eabc0bb50ff94e45c3a865fd601bbeb53712bf87c7b7517cb2",
+        "privateLog": "sha256:3cff5c519f7ede9ba1b5b8ced0b4ade0e6ce7bdfd10451930a0d4930dc41eaef"
+      }
+    },
+    {
+      "runId": "9fa9cced7ccf986c7b8944ca3fb360be",
+      "role": "verifier",
+      "inputDigest": "sha256:b9a869377f0ba39e6e6854ddd0882821ca2880f842514f16da5df8a4b0d3559a",
+      "dispatch": {
+        "agentId": "/root/two_area_actor_07",
+        "model": "gpt-6-luna",
+        "reasoningEffort": "high"
+      },
+      "emittedOutcome": "failed",
+      "hostOutcome": "failed",
+      "fileDigests": {
+        "invocation.json": "sha256:0ab539242ee05a298b64f8be97a03d84f6efc5a9860372d4de4aa283e480b8f7",
+        "dispatch.json": "sha256:13a72b675a3fe139be5ad70bb4335516fa2aa63c303adbd3588c56f724201232",
+        "emitted-response.json": "sha256:4d931f41ec8f9e5fbecdb297cd98226d2a181e5b0bd59718de3d59483131bdfd",
+        "normalized-response.json": "sha256:4d931f41ec8f9e5fbecdb297cd98226d2a181e5b0bd59718de3d59483131bdfd",
+        "raw-response.json": "sha256:cf40d5b82bd48e9c842d85ce91374f08aeed497829c8dd104922acf698b90ef0",
+        "privateLog": "sha256:f5533fed0ab64fad5c97de3a9b02d2039659ef5987694982f8581cdfcff830c5"
+      }
+    },
+    {
+      "runId": "824b2cd1f1f37586d976a8d80c525745",
+      "role": "executor",
+      "inputDigest": "sha256:59a7caa768e166e109afd01e31a5b8818be99c2292e0b588373cc7e140f19c22",
+      "dispatch": {
+        "agentId": "/root/two_area_actor_08",
+        "model": "gpt-6-luna",
+        "reasoningEffort": "high"
+      },
+      "emittedOutcome": "proposed",
+      "hostOutcome": "proposed",
+      "fileDigests": {
+        "invocation.json": "sha256:1810690e07e26f0a11851aa54fe53b2eea141cb404bd14e904e97a1b2f870c3d",
+        "dispatch.json": "sha256:5a9b6c4a9bc9d346b5143097f8927afbf47cf1f2247457d9aa55018e59fadcf2",
+        "emitted-response.json": "sha256:edfefd6f7caebe2e65205a4b78c21a53322004ce1bba188fc2d76b471b03a664",
+        "normalized-response.json": "sha256:edfefd6f7caebe2e65205a4b78c21a53322004ce1bba188fc2d76b471b03a664",
+        "raw-response.json": "sha256:22e7261ced3629791fcba7ae603bb27f999a92a59fb70bf2b9fd82de95eb718b",
+        "privateLog": "sha256:0901f6ea6797461e631756de3702d862aede46cd2f418eb546480e2d27073ef2"
+      }
+    },
+    {
+      "runId": "c1b0d6a31c452e637aef1e223257f2ad",
+      "role": "executor",
+      "inputDigest": "sha256:4f9cd91b81ee1b996599bb10f82b1fe48fff97f27f16bee4d33a2762781b3974",
+      "dispatch": {
+        "agentId": "/root/two_area_actor_09",
+        "model": "gpt-6-luna",
+        "reasoningEffort": "high"
+      },
+      "emittedOutcome": "proposed",
+      "hostOutcome": "proposed",
+      "fileDigests": {
+        "invocation.json": "sha256:14169b881557fce86a18e01daf02a97bdb62c2341bbedf392fa30e5541324835",
+        "dispatch.json": "sha256:53b15fbc5f01eb9e14412e5ed4d55c8bb4bb82fdf8f12c1aec6921ad3b57fa60",
+        "emitted-response.json": "sha256:e818c1b488b1b50d8b9a3953d32903b75e3cb1ced392b1fece7c5bb441082ddd",
+        "normalized-response.json": "sha256:e818c1b488b1b50d8b9a3953d32903b75e3cb1ced392b1fece7c5bb441082ddd",
+        "raw-response.json": "sha256:8d206b6cf953495f34e0d27466d06938a75e39b204e87b6083eb50ca2474469e",
+        "privateLog": "sha256:0695d7e747cf8a05e62a2271e8369b5764e724a011c2e15e743e7218d4265481"
+      }
+    },
+    {
+      "runId": "8118ccbd9a9d38ec4ccb79af5aca937e",
+      "role": "verifier",
+      "inputDigest": "sha256:173432283b407383e6f83a11ebb05f9c0659cedd54b19bcfb5db7b3ab5e53a4e",
+      "dispatch": {
+        "agentId": "/root/two_area_actor_10",
+        "model": "gpt-6-luna",
+        "reasoningEffort": "high"
+      },
+      "emittedOutcome": "passed",
+      "hostOutcome": "passed",
+      "fileDigests": {
+        "invocation.json": "sha256:50accc2fc4eadf2e4bc18bcd18e71e366c221755502416fa0ec030aeddf1aac7",
+        "dispatch.json": "sha256:dac18373603f62b3e3c7c2e3a620983e7ffb2f791616595eaaa22e6c461766c5",
+        "emitted-response.json": "sha256:7cb82a9630edfac6cf70b631478889218086af0d4829eef866aef95e6e55a7f6",
+        "normalized-response.json": "sha256:7cb82a9630edfac6cf70b631478889218086af0d4829eef866aef95e6e55a7f6",
+        "raw-response.json": "sha256:dbfc03bd0b0c3e6a9b7ac56c337c0550d18f9a78e1eb14f664f1bceee7ab3adc",
+        "privateLog": "sha256:f3702c49d44f707f70b166f94d5f094e2bbfda455678f123fe179945688589fe"
+      }
+    },
+    {
+      "runId": "baba6ede0b18250468f965a81d38fee1",
+      "role": "verifier",
+      "inputDigest": "sha256:3887ee15106f4203ea07e8839b9f2df3b8288c18a8a134f0def2078f61e6e820",
+      "dispatch": {
+        "agentId": "/root/two_area_actor_11",
+        "model": "gpt-6-luna",
+        "reasoningEffort": "high"
+      },
+      "emittedOutcome": "passed",
+      "hostOutcome": "escalated",
+      "fileDigests": {
+        "invocation.json": "sha256:2f9ed6c91d566016bff21a072fdf8ac547b40b2e7b03a83865d218d3769a1937",
+        "dispatch.json": "sha256:c336e0f769e787235819832c6516716dd007f34d3cc05aa5a25aba4138eca869",
+        "emitted-response.json": "sha256:596644808ee684aae62fe252d2d55c8ccd8a218c25f49cad19d0df9cd8a140b8",
+        "normalized-response.json": "sha256:596644808ee684aae62fe252d2d55c8ccd8a218c25f49cad19d0df9cd8a140b8",
+        "raw-response.json": "sha256:4d0e8ac843f12aa555fe1a962fedfae07f173a8cd52fd0be8b8f5c2305dff47e",
+        "privateLog": "sha256:a360d0274f973a15272e93536bb29f6cc53b3b02968878d0d47bac708eef6ad7"
+      }
+    },
+    {
+      "runId": "f8b0106763733d5befa2e73c1f473361",
+      "role": "verifier",
+      "inputDigest": "sha256:2d867e206b9fa728381ef619dd592e9561455588d965b8565bf52a72f171e7f8",
+      "dispatch": {
+        "agentId": "/root/two_area_actor_12",
+        "model": "gpt-6-luna",
+        "reasoningEffort": "high"
+      },
+      "emittedOutcome": "escalated",
+      "hostOutcome": "escalated",
+      "fileDigests": {
+        "invocation.json": "sha256:dfb6c54526d8f7250c8cd3241b6e7e37c26f628413f47fd628fd6bde6e16ef59",
+        "dispatch.json": "sha256:a61bc6bb132ce9d2e1f954f014c2c3e2839f0c6e49ec9a6ec475d50baf7a98b3",
+        "emitted-response.json": "sha256:9781494f0b15fbc8309068d2ac6ff7c80506b095fcee0ed887f42b4ef70c3576",
+        "normalized-response.json": "sha256:9781494f0b15fbc8309068d2ac6ff7c80506b095fcee0ed887f42b4ef70c3576",
+        "raw-response.json": "sha256:4b661a40b741f61e76fe010d80c42d464804c7755786f72330aac7f9202f931e",
+        "privateLog": "sha256:0b8f9d121e8c75cc88882506b34d434b40f775bd123a2a6037aa937b5ce04c07"
+      }
+    },
+    {
+      "runId": "fb3ca94cb69e462fd3479e95f72ed93e",
+      "role": "verifier",
+      "inputDigest": "sha256:173432283b407383e6f83a11ebb05f9c0659cedd54b19bcfb5db7b3ab5e53a4e",
+      "dispatch": {
+        "agentId": "/root/two_area_actor_13",
+        "model": "gpt-6-luna",
+        "reasoningEffort": "high"
+      },
+      "emittedOutcome": "passed",
+      "hostOutcome": "passed",
+      "fileDigests": {
+        "invocation.json": "sha256:c1eef625b923980c37121e06f4d5fe2cb949f47ffec4a822d2a93f4e1fd25950",
+        "dispatch.json": "sha256:cacec6c5a03b8b8596e948b9b21c0b7b5b6a9aa11f60dd3c682da5292bb4d8d0",
+        "emitted-response.json": "sha256:77e25ae26303f8ff9296ef120aa0054a614e3d3dc3e2483f0c685bf51fdcf43f",
+        "normalized-response.json": "sha256:77e25ae26303f8ff9296ef120aa0054a614e3d3dc3e2483f0c685bf51fdcf43f",
+        "raw-response.json": "sha256:30439e255fc7c745c79c2573448a1ea1f6752293d42e3d144e855e8063e2fe52",
+        "privateLog": "sha256:8a15839ee6b783982dff07c591e37c163b6ff8e25c9b437693789d8ec6a70528"
+      }
+    },
+    {
+      "runId": "10836242e634eee2ca20e0fdb9460ff0",
+      "role": "verifier",
+      "inputDigest": "sha256:3887ee15106f4203ea07e8839b9f2df3b8288c18a8a134f0def2078f61e6e820",
+      "dispatch": {
+        "agentId": "/root/two_area_actor_14",
+        "model": "gpt-6-luna",
+        "reasoningEffort": "high"
+      },
+      "emittedOutcome": "passed",
+      "hostOutcome": "passed",
+      "fileDigests": {
+        "invocation.json": "sha256:6c18d62558dd5ef5854950f70940979e5f9c2be5463d4c0e0817148fda003f6e",
+        "dispatch.json": "sha256:aa0a10bb9dcafc46bd1c9643f4456525162fc08dc6ffe0dd0273803ff77326b5",
+        "emitted-response.json": "sha256:7e915b400d62430910f41fa5036e969f64eb3a896ebe828971b6edef6e171807",
+        "normalized-response.json": "sha256:7e915b400d62430910f41fa5036e969f64eb3a896ebe828971b6edef6e171807",
+        "raw-response.json": "sha256:09dd74dc652212ae15b5e025a1fd67e83ef0fcb50918ddd47e4c2661f8fdcdd9",
+        "privateLog": "sha256:5f96f7776a712020468dc81428cccad9ceb351a86d6656d3c99f6e590d9fdaf7"
+      }
+    },
+    {
+      "runId": "d370c2af669a780be0407b98f629a238",
+      "role": "verifier",
+      "inputDigest": "sha256:f64d70f7c4ce17399054755a8a7569340b6c658befa58117909f9f215383be55",
+      "dispatch": {
+        "agentId": "/root/two_area_actor_15",
+        "model": "gpt-6-luna",
+        "reasoningEffort": "high"
+      },
+      "emittedOutcome": "passed",
+      "hostOutcome": "passed",
+      "fileDigests": {
+        "invocation.json": "sha256:d8617f78225e756d2d29e38d62f6ccd5d80ac6508eedefbb5a0d8ed8f0945423",
+        "dispatch.json": "sha256:68ca478254a963c6d028d046583c64536aac07eb041dade72cfe238d3f012cae",
+        "emitted-response.json": "sha256:88a84477bfe45bbc9bedcb25f856bbd5fb3e5f38cd00fb6b7c541b30aba9ca7b",
+        "normalized-response.json": "sha256:88a84477bfe45bbc9bedcb25f856bbd5fb3e5f38cd00fb6b7c541b30aba9ca7b",
+        "raw-response.json": "sha256:238570763fa0c646fef2f24079d718e8f02ae7454bd27a031750134346825024",
+        "privateLog": "sha256:81858ac95e91ebd70e3e53060c145404d63b6bb8e16a1bd6be28f740ddb96b67"
+      }
+    },
+    {
+      "runId": "ab9c4d586c7877577a69ab275f6b2480",
+      "role": "executor",
+      "inputDigest": "sha256:f278226be3037da8d1f2c572e8297d2b624bd461469604b4024f140933b5bb9c",
+      "dispatch": {
+        "agentId": "/root/two_area_actor_16",
+        "model": "gpt-6-luna",
+        "reasoningEffort": "high"
+      },
+      "emittedOutcome": "proposed",
+      "hostOutcome": "proposed",
+      "fileDigests": {
+        "invocation.json": "sha256:879be8d24aabe145746c1f63b4bb5cd6318d191d1e0106842254a09c20f824ef",
+        "dispatch.json": "sha256:839f4dd0d93078336d43c98c65695c7a52fb1b02b69b31b921c313058f3e050e",
+        "emitted-response.json": "sha256:0825a229a5465e0c0a5aa5afe2ab7370f0686e736d5fd908ba67c889da3ff676",
+        "normalized-response.json": "sha256:0825a229a5465e0c0a5aa5afe2ab7370f0686e736d5fd908ba67c889da3ff676",
+        "raw-response.json": "sha256:544ea7b9a91716fced4bb5399c3b8065240b1dd532d9e7a8eef47adf71eab356",
+        "privateLog": "sha256:5a4087318e38bad8723b51e207198df58fcc8fda9919901b0bc45bfe99485049"
+      }
+    },
+    {
+      "runId": "5a0fff0f6d54558b1128c995422280ae",
+      "role": "executor",
+      "inputDigest": "sha256:3e4468035e41cb578eb546eee355ab24833f9cc3254b62a47dc72b22941a534b",
+      "dispatch": {
+        "agentId": "/root/two_area_actor_17",
+        "model": "gpt-6-luna",
+        "reasoningEffort": "high"
+      },
+      "emittedOutcome": "proposed",
+      "hostOutcome": "incomplete",
+      "fileDigests": {
+        "invocation.json": "sha256:340f7abc5aad600ef05e56d1c88a5ccddb9ebd55a2aa3b4e817f2a6250a78c8d",
+        "dispatch.json": "sha256:ea6bffaf73c00c08b9217bba91cdd0f14a513087eb83be3f34be310c69f38ab8",
+        "emitted-response.json": "sha256:68447cd12371b0291a9f805acf0d2c010b4b13fe00fc00ba198ec6323ea0d70b",
+        "normalized-response.json": "sha256:68447cd12371b0291a9f805acf0d2c010b4b13fe00fc00ba198ec6323ea0d70b",
+        "raw-response.json": "sha256:111da5ceb603b15f0ab0e4b550a09958f4473d36caf2c6bad064700b7d2cd6aa",
+        "privateLog": "sha256:8eae1f8e2d3249ff3f13d6ff6472312890740d19921ca0bf176eff6e109266a6"
+      }
+    },
+    {
+      "runId": "17727ef12cae9b7d52f108ad4a857ca5",
+      "role": "executor",
+      "inputDigest": "sha256:f278226be3037da8d1f2c572e8297d2b624bd461469604b4024f140933b5bb9c",
+      "dispatch": {
+        "agentId": "/root/two_area_actor_18",
+        "model": "gpt-6-luna",
+        "reasoningEffort": "high"
+      },
+      "emittedOutcome": "proposed",
+      "hostOutcome": "proposed",
+      "fileDigests": {
+        "invocation.json": "sha256:fb8fd8868a37f303c668d94f0cb359dd189d3c3cf3ea7a6ab732ddf962917f40",
+        "dispatch.json": "sha256:dd05c29aaaa1ee5e92c5694f071b31dd681e59529ba68b25f59c504cdc194eb8",
+        "emitted-response.json": "sha256:1d060e0bf21b67967e51fd63c9bbbff177b1d7e2cd0147bc9c04debf0ab3e1e7",
+        "normalized-response.json": "sha256:1d060e0bf21b67967e51fd63c9bbbff177b1d7e2cd0147bc9c04debf0ab3e1e7",
+        "raw-response.json": "sha256:20dc4ad059683b9b4cbfe75e9fc3de4532d4bf8957d9120cb4a8be5d8a8ed078",
+        "privateLog": "sha256:5bc8c23e3e18b82591d4423ea3dbeff1e307bedcc3beff0565f54b12a9d53f9a"
+      }
+    },
+    {
+      "runId": "48f63c0ae528beb2f9e1b4bf0a7d0a21",
+      "role": "executor",
+      "inputDigest": "sha256:3e4468035e41cb578eb546eee355ab24833f9cc3254b62a47dc72b22941a534b",
+      "dispatch": {
+        "agentId": "/root/two_area_actor_19",
+        "model": "gpt-6-luna",
+        "reasoningEffort": "high"
+      },
+      "emittedOutcome": "proposed",
+      "hostOutcome": "proposed",
+      "fileDigests": {
+        "invocation.json": "sha256:375180bcb495bfb51e03c13d05f80761dd3f9cd8a7a624b46c5c4d0187e76778",
+        "dispatch.json": "sha256:e77712dada41322898d5676f01d665f1afae0319326d458407a973aeb631321e",
+        "emitted-response.json": "sha256:5b28f507791c13ae75cfdc72699a4a5774bcd7c5a7e31f510a75d6adc6b924cc",
+        "normalized-response.json": "sha256:5b28f507791c13ae75cfdc72699a4a5774bcd7c5a7e31f510a75d6adc6b924cc",
+        "raw-response.json": "sha256:98632c487daab35e9cc92f06f9e9fedeb5f5e61365509297dee830e565ca4378",
+        "privateLog": "sha256:cfaf3a5192a1f2b0488466dc5548df5e40c520be58a0ef50924fc8145f1ada4b"
+      }
+    },
+    {
+      "runId": "e66b342d77dd7338004ca177cb0b75ad",
+      "role": "verifier",
+      "inputDigest": "sha256:20b4ae0d12f30f7f596903f0a653af583658f6b81967008cfc47dce3cb26f51a",
+      "dispatch": {
+        "agentId": "/root/two_area_actor_20",
+        "model": "gpt-6-luna",
+        "reasoningEffort": "high"
+      },
+      "emittedOutcome": "passed",
+      "hostOutcome": "passed",
+      "fileDigests": {
+        "invocation.json": "sha256:e90bcbffb8dec97f403752599239c95d1c49c87bb1faa2b0b4193705008b3ddb",
+        "dispatch.json": "sha256:86305f38cad02128535ffb838242439e17cbadb2056fffaacaac887b7754f65a",
+        "emitted-response.json": "sha256:5e09eb810fc526228c13333c3c60b2bb6c7affaafdd6e38da95cb701163424a3",
+        "normalized-response.json": "sha256:5e09eb810fc526228c13333c3c60b2bb6c7affaafdd6e38da95cb701163424a3",
+        "raw-response.json": "sha256:9eb0e199a511ee4555b7c001c5a76db8ec92b8f0ce0b9d4c12d9faa93f8d867a",
+        "privateLog": "sha256:473d11028755cc020d0471f48b8b59a102998b5245a6790f7faa514ef7c7b450"
+      }
+    },
+    {
+      "runId": "697665420bfcf3f6b0fbb4ba0a4c7e7d",
+      "role": "verifier",
+      "inputDigest": "sha256:ac26d8f110c77f2f1f22e531d3a1b786fc92fb23cebd883eb9f941853d397d81",
+      "dispatch": {
+        "agentId": "/root/two_area_actor_21",
+        "model": "gpt-6-luna",
+        "reasoningEffort": "high"
+      },
+      "emittedOutcome": "passed",
+      "hostOutcome": "passed",
+      "fileDigests": {
+        "invocation.json": "sha256:a895c95586e30c1150044574866b16fcc3f17f498541304018d316fcba72d843",
+        "dispatch.json": "sha256:a8a1f8a5be9c8eaa4d3d8e25371183be562dadb2f963fb6e9e7d497c8064db89",
+        "emitted-response.json": "sha256:9e9072991b9c38afb6492df75478fba8972cf0b1d11542f0fc2218b889e6e0db",
+        "normalized-response.json": "sha256:9e9072991b9c38afb6492df75478fba8972cf0b1d11542f0fc2218b889e6e0db",
+        "raw-response.json": "sha256:aecdfa68ad469c2931eb0b368cea060649ea9e4011c536fe3624f64b9a4139fe",
+        "privateLog": "sha256:7dff00b878430fc50838c6e2dd6d6e840a95c68d5d4493920fd2eb9792fa05d6"
+      }
+    },
+    {
+      "runId": "619185437665db448df578e99c70938f",
+      "role": "verifier",
+      "inputDigest": "sha256:75f35c7b2270670ad66ee65df14ee8fa3c776a4b943b0b4e519c8d424cdf2508",
+      "dispatch": {
+        "agentId": "/root/two_area_actor_22",
+        "model": "gpt-6-luna",
+        "reasoningEffort": "high"
+      },
+      "emittedOutcome": "passed",
+      "hostOutcome": "passed",
+      "fileDigests": {
+        "invocation.json": "sha256:4c00db4e7d1937d8eda84574d286c8eb42650e4dc86a155a9819f59dc1c6ba8f",
+        "dispatch.json": "sha256:f0ff15f1d51e99a754b03a9010e0f728cf6b1d462bfc496c269cdc5e73fe38a9",
+        "emitted-response.json": "sha256:9b36f4d919e35647ad7a2be2f0466baa1865ea2e4118408c4571810552324ab6",
+        "normalized-response.json": "sha256:9b36f4d919e35647ad7a2be2f0466baa1865ea2e4118408c4571810552324ab6",
+        "raw-response.json": "sha256:598c965de0d3f097f556d09dd47a22201cb801dc1398571b810f7b44be1623a7",
+        "privateLog": "sha256:61d98c2e1e52e952a4742ea8aa4fc0d120e7fefc70d30ff66ac8072ee3b8471f"
+      }
+    },
+    {
+      "runId": "4bbcc0033eb8c54bae9499f2687a19eb",
+      "role": "executor",
+      "inputDigest": "sha256:0778a4255b0511d496680f9955961cde45d493f559ef848b246ed1afbea30265",
+      "dispatch": {
+        "agentId": "/root/two_area_actor_23",
+        "model": "gpt-6-luna",
+        "reasoningEffort": "high"
+      },
+      "emittedOutcome": "proposed",
+      "hostOutcome": "proposed",
+      "fileDigests": {
+        "invocation.json": "sha256:4e590ead9ef6750c65d51bebbbf76c14a43e0f92d5b45e14f8a891f087d9f980",
+        "dispatch.json": "sha256:96c24261b24a17278f08bd5a114dda83b571ad0cf666c31cc67d7bc0df749c1d",
+        "emitted-response.json": "sha256:595499e3631ce4e4a5d0fbac1c41cc5440021ea3a2748587bc1c8a2004f8c7c2",
+        "normalized-response.json": "sha256:595499e3631ce4e4a5d0fbac1c41cc5440021ea3a2748587bc1c8a2004f8c7c2",
+        "raw-response.json": "sha256:50f27b5108c45986a203c4b8687b783bd1355f3fec7182e22351a8b76bb98380",
+        "privateLog": "sha256:bd721130f576d5cdbd8eb7b36ee3e3f13cba1f3cff52a0ad37e0a70edb1f912a"
+      }
+    },
+    {
+      "runId": "96229922552a5b0a5036c9ce28caeb76",
+      "role": "verifier",
+      "inputDigest": "sha256:093d9e89701426f6ca6fae900c580fb81529662afc75a17496363c79bde42a15",
+      "dispatch": {
+        "agentId": "/root/two_area_actor_24",
+        "model": "gpt-6-luna",
+        "reasoningEffort": "high"
+      },
+      "emittedOutcome": "passed",
+      "hostOutcome": "passed",
+      "fileDigests": {
+        "invocation.json": "sha256:65a284d119d565e7419b318414cc7f233754b8faf5c4466d3abeb60a0d19579f",
+        "dispatch.json": "sha256:e85fecba88768dd8ce70a6506ece368c3fe6d09083990ec3779822ee097044a5",
+        "emitted-response.json": "sha256:dbfae82fe213752eeee661bdeea26e0b9584ea8a7fc142e5bba50c0205e98543",
+        "normalized-response.json": "sha256:dbfae82fe213752eeee661bdeea26e0b9584ea8a7fc142e5bba50c0205e98543",
+        "raw-response.json": "sha256:d0b8049b0e94554f6f05a56a788027542ae45090626855bb3f1b9ddea291c6ab",
+        "privateLog": "sha256:52448d87aaf3b1089cea1041767b7e7139dc0b487b79546e4e6b27bfdcb52e04"
+      }
+    },
+    {
+      "runId": "31de1ec729945480ad2e387f64a96526",
+      "role": "verifier",
+      "inputDigest": "sha256:2a42440aaa7054acd27304e1113109e807efd0349c0bfb37f144962e04e07f6f",
+      "dispatch": {
+        "agentId": "/root/two_area_actor_25",
+        "model": "gpt-6-luna",
+        "reasoningEffort": "high"
+      },
+      "emittedOutcome": "passed",
+      "hostOutcome": "passed",
+      "fileDigests": {
+        "invocation.json": "sha256:a96e1d107dba87b1099749fce4ba69faf1e00d4e2162e88debdf97d389116ec3",
+        "dispatch.json": "sha256:873a258e20e3bada344ac95e5af976e2bf2da92a26a43bd416ccc19cb43dcaf6",
+        "emitted-response.json": "sha256:4cf18047b8d8c241b1b4ceff9a72d208ea8531b707fc75321d3d89fd3a9b0d8a",
+        "normalized-response.json": "sha256:4cf18047b8d8c241b1b4ceff9a72d208ea8531b707fc75321d3d89fd3a9b0d8a",
+        "raw-response.json": "sha256:bc2f6074600b14b28adc8e4aa695d4df44db5b28fb64c431fa38eef97fbe5746",
+        "privateLog": "sha256:6c73125d73eabcaa0a495751aa24c088ab53a715d05d2458cb67bc586712547e"
+      }
+    },
+    {
+      "runId": "df597c68e962adecf76b2e822ba99364",
+      "role": "verifier",
+      "inputDigest": "sha256:dbe2e575eba89a86c53a2ad8bbe0dfea66a14ee6e49bd27fb9ca5330fe2c63aa",
+      "dispatch": {
+        "agentId": "/root/two_area_actor_26",
+        "model": "gpt-6-luna",
+        "reasoningEffort": "high"
+      },
+      "emittedOutcome": "passed",
+      "hostOutcome": "passed",
+      "fileDigests": {
+        "invocation.json": "sha256:9839ca1334943f2369622dae2e172cf9a4de86b222c3109134f465c6e0cdbcac",
+        "dispatch.json": "sha256:83338faf5b5c999c795aba224cfe07825854aec56da88843a720bd64601e1f2f",
+        "emitted-response.json": "sha256:f79b9e0a6afe812d0b0cfc3e46b20e98f31f861fe42d980fcd6caa7007d8b7f8",
+        "normalized-response.json": "sha256:f79b9e0a6afe812d0b0cfc3e46b20e98f31f861fe42d980fcd6caa7007d8b7f8",
+        "raw-response.json": "sha256:6ce7461cd5642fef3ad56f3cc3b81b251eb2e86ef51def99db1c0123b647a235",
+        "privateLog": "sha256:dfb611377ec3d37c7874c5a8322c897a7f84f5ed63ef4730e50e1a0c5df12920"
+      }
+    }
+  ],
+  "boundaryEvidence": {
+    "baseline-complete-03": {
+      "sha256": "sha256:8c2fc9249d853eb2cf9ab2a5d0123cc77c3ee801797f61d23ac9abca618ec7f1",
+      "head": "4644f3b556e742d8d5d2bffd92b228c72c85e02a",
+      "runtimeSha256": "sha256:042cf6286793a0ee2b18f48c4eb62bd8d70fac804a2334b9be0fc22f863ea44f"
+    },
+    "changed-before-work-03": {
+      "sha256": "sha256:f8c49f2d45a79148c73943876d59069086da58a8ec4159b2bf18f51e97c424ce",
+      "head": "9dac557171a82039370d76f66abcbf2152c46e5a",
+      "runtimeSha256": "sha256:042cf6286793a0ee2b18f48c4eb62bd8d70fac804a2334b9be0fc22f863ea44f"
+    },
+    "changed-complete-03": {
+      "sha256": "sha256:929083d194c47fb80b52051a376b2080c0550d716fbf7f019313a1e6c67a220a",
+      "head": "9dac557171a82039370d76f66abcbf2152c46e5a",
+      "runtimeSha256": "sha256:042cf6286793a0ee2b18f48c4eb62bd8d70fac804a2334b9be0fc22f863ea44f"
+    },
+    "drift-complete-03": {
+      "sha256": "sha256:2209ea9940071232e5deeb2f9e4e1f0157d2de5dffa8ba4aa87d35b5651b7f78",
+      "head": "9dac557171a82039370d76f66abcbf2152c46e5a",
+      "runtimeSha256": "sha256:042cf6286793a0ee2b18f48c4eb62bd8d70fac804a2334b9be0fc22f863ea44f"
+    },
+    "drift-injected-03": {
+      "sha256": "sha256:e04d78e5256a794573e726b78187a65a5b257538624a99af06d01537cf12d3a3",
+      "head": "9dac557171a82039370d76f66abcbf2152c46e5a",
+      "runtimeSha256": "sha256:042cf6286793a0ee2b18f48c4eb62bd8d70fac804a2334b9be0fc22f863ea44f"
+    },
+    "final-complete-03": {
+      "sha256": "sha256:753b9f8917d33e0095f593155021f74f4693863b74738d903af2c33371e7f9db",
+      "head": "9dac557171a82039370d76f66abcbf2152c46e5a",
+      "runtimeSha256": "sha256:042cf6286793a0ee2b18f48c4eb62bd8d70fac804a2334b9be0fc22f863ea44f"
+    },
+    "unknown-after-audit-03": {
+      "sha256": "sha256:aa7f7ba5e75b0c24d3dc917e1191d85e8ff4d3a149d07b0181dee61f84035521",
+      "head": "9dac557171a82039370d76f66abcbf2152c46e5a",
+      "runtimeSha256": "sha256:042cf6286793a0ee2b18f48c4eb62bd8d70fac804a2334b9be0fc22f863ea44f"
+    },
+    "unknown-before-audit-03": {
+      "sha256": "sha256:9e7fb31470a21ebba7d6d1b2d64537551ab865128117684e3061890ad613c7a0",
+      "head": "9dac557171a82039370d76f66abcbf2152c46e5a",
+      "runtimeSha256": "sha256:042cf6286793a0ee2b18f48c4eb62bd8d70fac804a2334b9be0fc22f863ea44f"
+    }
+  },
+  "actualArtifacts": {
+    "src/Orders/CreateOrderHandler.cs": {
+      "sha256": "sha256:0fde857d92af268bf54abb2dcc2031d3369a94a117522185e56598ef612d728e",
+      "packagedPath": "final-artifacts/src/Orders/CreateOrderHandler.cs",
+      "bytes": 377
+    },
+    "src/Orders/Orders.csproj": {
+      "sha256": "sha256:16a709894669b1d00ec3bc65fc8ba64e8942cddb1ed9d9d7ba65821bd169a76b",
+      "packagedPath": "final-artifacts/src/Orders/Orders.csproj",
+      "bytes": 204
+    },
+    "src/Fulfillment/Fulfillment.csproj": {
+      "sha256": "sha256:16a709894669b1d00ec3bc65fc8ba64e8942cddb1ed9d9d7ba65821bd169a76b",
+      "packagedPath": "final-artifacts/src/Fulfillment/Fulfillment.csproj",
+      "bytes": 204
+    },
+    "src/Fulfillment/FulfillOrderHandler.cs": {
+      "sha256": "sha256:16e3c0d8abdf780e7be392ff23ea09d163f91ea255cdeda43f56a4d8f991bab1",
+      "packagedPath": "final-artifacts/src/Fulfillment/FulfillOrderHandler.cs",
+      "bytes": 566
+    },
+    "docs/represented/index.md": {
+      "sha256": "sha256:59997dbd11c2a19613be0c29dc1196f8e49663474644734c878ec3188713ba8d",
+      "packagedPath": "final-artifacts/docs/represented/index.md",
+      "bytes": 6857
+    }
+  },
+  "limitations": [
+    "Two small synthetic business areas; no reliability-rate or productivity claim.",
+    "Broad-rule review is bounded evidence rather than universal semantic proof.",
+    "Experiment-only collaboration transport; no native Luna CLI support claim.",
+    "Prompt/history separation is not OS/filesystem isolation.",
+    "Provider exact version and token usage unavailable; dispatch metadata is not provider attestation.",
+    "No continuous daemon, resumption or human acceptance claim.",
+    "Coordinator orchestration and reviewed Apply remain part of the experiment.",
+    "This is a finite observed sequence with coordinator intervention, two fixture corrections, two transport retries and one rejected refresh detour; not first-pass success.",
+    "The mode omission occurred despite the generic schema requiring mode; experimental collaboration output did not establish native structured-output enforcement.",
+    "Caller composition is exercised by an independent harness; no third generated orchestrator is claimed.",
+    "Documentation is rendered deterministically; only the two .NET leaves use live Executors."
+  ],
+  "externalEvidenceSummarySha256": "sha256:7439f5cb3a32d0904fd8e96732cb4953d666bb5b14e493d6dbb83d7739efd130"
+}

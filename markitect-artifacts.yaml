@@ -138,6 +138,7 @@ spec:
     - internal/host/cli/canonical_goal_test.go
     - examples/public_fixture_test.go
     - experiments/live-operating-pilot
+    - experiments/two-area-operating-pilot
   tooling:
     - path: internal/host/canonical_controller_model_change_test.go
       owner: standard-operating-model-closure
@@ -1634,3 +1635,55 @@ spec:
       owner: live-operating-pilot-protocol
     - path: experiments/live-operating-pilot/result.json
       owner: live-operating-pilot-protocol
+    - path: experiments/two-area-operating-pilot/.gitattributes
+      owner: two-area-operating-pilot-evidence
+    - path: experiments/two-area-operating-pilot/attempt-01-result.json
+      owner: two-area-operating-pilot-evidence
+    - path: experiments/two-area-operating-pilot/attempt-02-result.json
+      owner: two-area-operating-pilot-evidence
+    - path: experiments/two-area-operating-pilot/attempts-01-02-evidence-index.json
+      owner: two-area-operating-pilot-evidence
+    - path: experiments/two-area-operating-pilot/bridge.py
+      owner: two-area-operating-pilot-evidence
+    - path: experiments/two-area-operating-pilot/fixture-manifest-attempt-02.json
+      owner: two-area-operating-pilot-evidence
+    - path: experiments/two-area-operating-pilot/fixture-manifest-attempt-03.json
+      owner: two-area-operating-pilot-evidence
+    - path: experiments/two-area-operating-pilot/fixture-manifest.json
+      owner: two-area-operating-pilot-evidence
+    - path: experiments/two-area-operating-pilot/holdout/run_holdout.py
+      owner: two-area-operating-pilot-evidence
+    - path: experiments/two-area-operating-pilot/prepare.py
+      owner: two-area-operating-pilot-evidence
+    - path: experiments/two-area-operating-pilot/protocol-attempt-02.json
+      owner: two-area-operating-pilot-evidence
+    - path: experiments/two-area-operating-pilot/protocol-attempt-03.json
+      owner: two-area-operating-pilot-evidence
+    - path: experiments/two-area-operating-pilot/protocol-final.json
+      owner: two-area-operating-pilot-evidence
+    - path: experiments/two-area-operating-pilot/README.md
+      owner: two-area-operating-pilot-evidence
+    - path: experiments/two-area-operating-pilot/source-attempt-02.bundle
+      owner: two-area-operating-pilot-evidence
+    - path: experiments/two-area-operating-pilot/source-attempt-03.bundle
+      owner: two-area-operating-pilot-evidence
+    - path: experiments/two-area-operating-pilot/source.bundle
+      owner: two-area-operating-pilot-evidence
+    - path: experiments/two-area-operating-pilot/final-artifacts/docs/represented/index.md
+      owner: two-area-operating-pilot-evidence
+    - path: experiments/two-area-operating-pilot/final-artifacts/src/Fulfillment/Fulfillment.csproj
+      owner: two-area-operating-pilot-evidence
+    - path: experiments/two-area-operating-pilot/final-artifacts/src/Fulfillment/FulfillOrderHandler.cs
+      owner: two-area-operating-pilot-evidence
+    - path: experiments/two-area-operating-pilot/final-artifacts/src/Orders/CreateOrderHandler.cs
+      owner: two-area-operating-pilot-evidence
+    - path: experiments/two-area-operating-pilot/final-artifacts/src/Orders/Orders.csproj
+      owner: two-area-operating-pilot-evidence
+    - path: experiments/two-area-operating-pilot/result.json
+      owner: two-area-operating-pilot-evidence
+    - path: experiments/two-area-operating-pilot/transport-retry-baseline-03.json
+      owner: two-area-operating-pilot-evidence
+    - path: experiments/two-area-operating-pilot/transport-retry-changed-03-attribution.json
+      owner: two-area-operating-pilot-evidence
+    - path: experiments/two-area-operating-pilot/transport-retry-changed-03.json
+      owner: two-area-operating-pilot-evidence
