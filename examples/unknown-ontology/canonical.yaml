@@ -10,12 +10,24 @@ definitions:
   - examples/unknown-ontology/definitions/mission.projection.yaml
 modules:
   - manifest: examples/unknown-ontology/modules/foundation/module.yaml
+    pin:
+      name: unknown-ontology-foundation
+      version: 1.0.0
+      digest: sha256:f6e1fff3e8ba4ca0336ccdabd74196595f8cd37778d831cffa655eb35fcb2b7b
     files:
       - examples/unknown-ontology/modules/foundation/schema.yaml
   - manifest: examples/unknown-ontology/modules/mission/module.yaml
+    pin:
+      name: unknown-ontology-mission
+      version: 1.0.0
+      digest: sha256:f4ab7bfc385fcca62bd6b8b5938e2dbce61462e92b4582bc94bb0190d244b7b8
     files:
       - examples/unknown-ontology/modules/mission/schema.yaml
   - manifest: examples/unknown-ontology/modules/dotnet/module.yaml
+    pin:
+      name: unknown-ontology-dotnet
+      version: 1.0.0
+      digest: sha256:14c81a45a1ff14da5f3b736cbf2ba8b63382b0e5cd89d1ff30e44ee9e2ea1fad
     files: []
 projectionBindings:
   - projection:
