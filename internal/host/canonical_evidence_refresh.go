@@ -4,7 +4,9 @@ import (
 	"errors"
 	"fmt"
 	"sort"
+	"strings"
 
+	"github.com/Glacius-Labs/Markitect/internal/core"
 	"github.com/Glacius-Labs/Markitect/internal/core/snapshot"
 	"github.com/Glacius-Labs/Markitect/internal/host/canonical"
 	"github.com/Glacius-Labs/Markitect/internal/host/records"
@@ -230,11 +232,14 @@ func ApplyCanonicalEvidenceRefresh(root, configPath string, cfg CanonicalControl
 	if !write || expect == "" || expect != reviewed.Digest || reviewed.Status != "planned" || reviewed.APIVersion != CanonicalEvidenceRefreshAPIVersion {
 		return report, errors.New("evidence refresh Apply requires explicit write and exact reviewed proposal digest")
 	}
+	if err := canonicalEvidenceRefreshHeadMatches(root, reviewed.SourceRevision); err != nil {
+		return report, err
+	}
 	fresh, err := ProposeCanonicalEvidenceRefresh(root, reviewed.SourceRevision, reviewed.EvidenceRevision, configPath, cfg, reviewed.ProjectionIDs)
 	if err != nil {
 		return report, err
 	}
-	if fresh.Status != "planned" || fresh.Digest != reviewed.Digest {
+	if !canonicalEvidenceRefreshReviewMatches(fresh, reviewed) {
 		return report, errors.New("evidence refresh proposal is stale for source, evidence, selected records, checks or ledger")
 	}
 	unlock, err := acquireCanonicalControllerLease(cfg)
@@ -242,11 +247,14 @@ func ApplyCanonicalEvidenceRefresh(root, configPath string, cfg CanonicalControl
 		return report, err
 	}
 	defer unlock()
+	if err := canonicalEvidenceRefreshHeadMatches(root, reviewed.SourceRevision); err != nil {
+		return report, err
+	}
 	fresh, err = ProposeCanonicalEvidenceRefresh(root, reviewed.SourceRevision, reviewed.EvidenceRevision, configPath, cfg, reviewed.ProjectionIDs)
 	if err != nil {
 		return report, err
 	}
-	if fresh.Status != "planned" || fresh.Digest != reviewed.Digest {
+	if !canonicalEvidenceRefreshReviewMatches(fresh, reviewed) {
 		return report, errors.New("evidence refresh changed while acquiring controller lease")
 	}
 	store, state, active, err := readCanonicalControllerLedger(root, cfg)
@@ -291,6 +299,21 @@ func ApplyCanonicalEvidenceRefresh(root, configPath string, cfg CanonicalControl
 	}
 	report.Status, report.LedgerHead = "refreshed", state.Head
 	return report, nil
+}
+
+func canonicalEvidenceRefreshReviewMatches(fresh, reviewed CanonicalEvidenceRefreshProposal) bool {
+	return fresh.Status == "planned" && fresh.Digest == reviewed.Digest && equalCanonicalValue(fresh, reviewed)
+}
+
+func canonicalEvidenceRefreshHeadMatches(root, sourceRevision string) error {
+	head, err := source.GitOutput(root, "rev-parse", "--verify", "--end-of-options", "HEAD^{commit}")
+	if err != nil {
+		return fmt.Errorf("read Git HEAD for retained evidence refresh: %w", err)
+	}
+	if strings.TrimSpace(string(head)) != sourceRevision {
+		return errors.New("source HEAD changed since reviewed evidence refresh; rerun preview")
+	}
+	return nil
 }
 
 func canonicalEvidenceRefreshBinding(root, sourceRevision string, fixed *CanonicalSource, evidence *snapshot.Snapshot, prior records.ProjectionRecord) (canonical.ProjectionRequest, []records.ArtifactFact, *CanonicalEvidenceRefreshFinding) {
@@ -357,6 +380,9 @@ func canonicalEvidenceRefreshBinding(root, sourceRevision string, fixed *Canonic
 	if !sameRefreshSelectedContract(oldRequest, newRequest) {
 		return finding("selected-contract.changed", "selected Projection, Definitions, Policies, Schemas, edges, Module or Projector changed; rematerialization or escalation is required")
 	}
+	if !sameRefreshExternalDependencies(old.Model, fixed.Model, oldRequest.Definitions, oldRequest.ExternalEdges, newRequest.ExternalEdges) {
+		return finding("external-dependency.changed", "a directly referenced external Definition or its schema changed; refresh requires unchanged dependency semantics")
+	}
 	if prior.Module.Name != oldRequest.ModulePin.Name || prior.Module.Version != oldRequest.ModulePin.Version || prior.Module.Digest != oldRequest.ModulePin.Digest ||
 		prior.Projector.ID != oldRequest.Projector.ID || prior.Projector.Version != oldRequest.Projector.Version ||
 		!equalStringSets(prior.ScopeIDs, requestScopeIDs(oldRequest.Definitions)) || !equalStringSets(prior.PolicyIDs, canonicalRequestPolicyIDs(oldRequest.Policies)) {
@@ -374,6 +400,56 @@ func canonicalEvidenceRefreshBinding(root, sourceRevision string, fixed *Canonic
 		return finding("artifact-facts.invalid", err.Error())
 	}
 	return newRequest, facts, nil
+}
+
+func sameRefreshExternalDependencies(oldModel, currentModel core.Model, selected []core.Definition, oldEdges, currentEdges []core.Edge) bool {
+	if !equalCanonicalValue(oldEdges, currentEdges) {
+		return false
+	}
+	selectedIDs := map[string]bool{}
+	for _, definition := range selected {
+		selectedIDs[definition.Identity().Key()] = true
+	}
+	oldDefinitions, currentDefinitions := map[string]core.Definition{}, map[string]core.Definition{}
+	for _, definition := range oldModel.Definitions {
+		oldDefinitions[definition.Identity().Key()] = definition
+	}
+	for _, definition := range currentModel.Definitions {
+		currentDefinitions[definition.Identity().Key()] = definition
+	}
+	oldSchemas, currentSchemas := map[string]core.Schema{}, map[string]core.Schema{}
+	for _, schema := range oldModel.Schemas {
+		oldSchemas[schema.APIVersion] = schema
+	}
+	for _, schema := range currentModel.Schemas {
+		currentSchemas[schema.APIVersion] = schema
+	}
+	externalIDs := map[string]bool{}
+	for _, edge := range oldEdges {
+		var external string
+		switch {
+		case selectedIDs[edge.From] && !selectedIDs[edge.To]:
+			external = edge.To
+		case selectedIDs[edge.To] && !selectedIDs[edge.From]:
+			external = edge.From
+		default:
+			return false
+		}
+		externalIDs[external] = true
+	}
+	for id := range externalIDs {
+		oldDefinition, oldOK := oldDefinitions[id]
+		currentDefinition, currentOK := currentDefinitions[id]
+		if !oldOK || !currentOK || !equalCanonicalValue(oldDefinition, currentDefinition) {
+			return false
+		}
+		oldSchema, oldOK := oldSchemas[oldDefinition.APIVersion]
+		currentSchema, currentOK := currentSchemas[currentDefinition.APIVersion]
+		if !oldOK || !currentOK || !equalCanonicalValue(oldSchema, currentSchema) {
+			return false
+		}
+	}
+	return true
 }
 
 func sameRefreshSelectedContract(old, current canonical.ProjectionRequest) bool {
