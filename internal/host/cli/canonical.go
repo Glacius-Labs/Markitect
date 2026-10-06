@@ -210,7 +210,7 @@ const (
 
 func isCanonicalControllerAction(action string) bool {
 	switch action {
-	case "controller-propose", "controller-execute", "controller-apply", "controller-verify", "controller-refresh-propose", "controller-refresh-apply":
+	case "controller-audit", "controller-propose", "controller-execute", "controller-apply", "controller-verify", "controller-refresh-propose", "controller-refresh-apply":
 		return true
 	default:
 		return false
@@ -232,6 +232,19 @@ func runCanonicalController(o commandOptions, emit func(any) int, fail func(erro
 	}
 
 	switch o.action {
+	case "controller-audit":
+		audit, err := host.AuditCanonicalController(o.root, o.base, o.revision, o.reviewConfig, cfg)
+		if err != nil {
+			if code := emit(audit); code != 0 {
+				return code
+			}
+			return fail(err)
+		}
+		if code := emit(audit); code != 0 {
+			return code
+		}
+		return canonicalControllerAuditStatusExit(audit.Status)
+
 	case "controller-propose":
 		proposal, err := host.ProposeCanonicalController(o.root, o.base, o.revision, o.reviewConfig, cfg)
 		if err != nil {
@@ -303,6 +316,17 @@ func runCanonicalController(o commandOptions, emit func(any) int, fail func(erro
 		return canonicalControllerStatusExit(verification.Status)
 	default:
 		return fail(fmt.Errorf("unsupported canonical controller action %q", o.action))
+	}
+}
+
+func canonicalControllerAuditStatusExit(status string) int {
+	switch status {
+	case "complete":
+		return 0
+	case "incomplete":
+		return 2
+	default:
+		return 2
 	}
 }
 
