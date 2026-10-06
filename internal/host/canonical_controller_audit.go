@@ -6,6 +6,7 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/internal/core"
 	"github.com/Glacius-Labs/Markitect/internal/host/records"
+	"github.com/Glacius-Labs/Markitect/internal/infrastructure/source"
 )
 
 const canonicalControllerAuditAPIVersion = "markitect.canonical/controller-audit/v1alpha1"
@@ -180,6 +181,9 @@ func AuditCanonicalController(root, base, revision, configPath string, cfg Canon
 		report.NextSteps = append(report.NextSteps, finding.NextStep)
 		complete = false
 	}
+	if !coverageOK {
+		addFinding(CanonicalControllerAuditFinding{Code: "assurance.active-coverage-incomplete", Detail: "configured assurance scopes do not map one-to-one to the current active records", NextStep: "Resolve missing or extra active Projection coverage, then create current local and parent verification evidence."})
+	}
 	for _, id := range projectionIDs {
 		request := requests[id]
 		item := CanonicalControllerAuditProjection{
@@ -269,6 +273,16 @@ func AuditCanonicalController(root, base, revision, configPath string, cfg Canon
 	if proposal.Plan.Status != "planned" {
 		addFinding(CanonicalControllerAuditFinding{Code: "reconcile.plan-incomplete", Detail: "full-scope reconciliation plan is not in planned state", NextStep: "Resolve plan acquisition or impact uncertainty, then audit again."})
 	}
+	inventoryChanged, inputsChanged, err := canonicalControllerAuditRecheckInputs(root, proposal)
+	if err != nil {
+		return report, err
+	}
+	if inventoryChanged {
+		addFinding(CanonicalControllerAuditFinding{Code: "inventory.changed-during-audit", Detail: "declared target-root inventory changed after planning", NextStep: "Rerun the audit against a stable declared target-root inventory."})
+	}
+	if inputsChanged {
+		addFinding(CanonicalControllerAuditFinding{Code: "input.changed-during-audit", Detail: "selected canonical, target, check, or dependency bytes changed after planning", NextStep: "Rerun the audit against stable current input bytes and refresh any affected verification evidence."})
+	}
 
 	_, finalState, _, err := readCanonicalControllerLedger(root, cfg)
 	if err != nil {
@@ -303,16 +317,59 @@ func AuditCanonicalController(root, base, revision, configPath string, cfg Canon
 	return report, err
 }
 
+func canonicalControllerAuditRecheckInputs(root string, proposal CanonicalControllerProposal) (inventoryChanged, inputsChanged bool, err error) {
+	plannedInventory := proposal.Plan.Inventory
+	if plannedInventory == nil {
+		return true, true, nil
+	}
+	currentInventory, err := source.InventoryWorkingRoots(root, plannedInventory.Prefixes)
+	if err != nil {
+		return false, false, err
+	}
+	if !equalCanonicalValue(plannedInventory, currentInventory) {
+		inventoryChanged = true
+	}
+	paths := append([]string(nil), proposal.InputPaths...)
+	expectedDigest := proposal.InputDigest
+	if proposal.observed == nil || len(paths) == 0 {
+		paths = append([]string(nil), proposal.Plan.ObservedPaths...)
+		expectedDigest = proposal.Plan.ObservedDigest
+	}
+	if len(paths) == 0 {
+		return inventoryChanged, true, nil
+	}
+	currentInputs, err := source.ObserveSelectedWorking(root, paths)
+	if err != nil {
+		return inventoryChanged, false, err
+	}
+	expectedIdentity := plannedInventory.Identity
+	if !equalCanonicalValue(expectedIdentity, currentInputs.Identity) {
+		return true, true, nil
+	}
+	currentDigest := sha256Prefix(currentInputs.Snapshot.Digest())
+	if expectedDigest == "" || currentDigest != expectedDigest {
+		inputsChanged = true
+	}
+	return inventoryChanged, inputsChanged, nil
+}
+
 func canonicalControllerAuditActiveScopeCoverage(cfg CanonicalControllerConfig, active []records.ProjectionRecord) bool {
-	if len(cfg.AssuranceScopes) == 0 || len(active) == 0 {
+	if len(cfg.AssuranceScopes) == 0 {
 		return true
 	}
 	covered := make(map[string]bool, len(cfg.AssuranceScopes))
+	activeProjections := make(map[string]bool, len(active))
+	for _, record := range active {
+		activeProjections[record.ProjectionID] = true
+	}
 	for _, scope := range cfg.AssuranceScopes {
-		if covered[scope.ProjectionID] {
+		if covered[scope.ProjectionID] || !activeProjections[scope.ProjectionID] {
 			return false
 		}
 		covered[scope.ProjectionID] = true
+	}
+	if len(covered) != len(activeProjections) {
+		return false
 	}
 	for _, record := range active {
 		if !covered[record.ProjectionID] {
