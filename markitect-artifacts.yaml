@@ -45,6 +45,23 @@ spec:
     - internal/host/canonical_adoption.go
     - internal/host/canonical_adoption_test.go
     - examples/capability_proof_test.go
+    - internal/host/agentexec
+    - internal/host/recordstore
+    - internal/modules/agentrules
+    - internal/tooling/codexrunner
+    - examples/capability-ontologies
+    - examples/capability_ontologies_test.go
+    - examples/operating-model
+    - examples/operating_model_test.go
+    - internal/host/canonical_agent_context.go
+    - internal/host/canonical_controller.go
+    - internal/host/canonical_controller_assurance.go
+    - internal/host/canonical_controller_execution.go
+    - internal/host/canonical_scoped_reconciliation.go
+    - internal/host/canonical_scoped_test.go
+    - internal/host/canonical_scoped_write.go
+    - internal/host/canonical_selected.go
+    - internal/host/canonical_selected_test.go
   tooling:
     - path: AGENTS.md
       owner: repository-agent-navigation
@@ -208,3 +225,175 @@ spec:
       owner: canonical-projection-lifecycle
     - path: examples/capability_proof_test.go
       owner: capability-proof-falsification-harness
+    - path: examples/capability-ontologies/README.md
+      owner: capability-ontology-proof-fixture
+    - path: examples/capability-ontologies/delivery/deployment.yaml
+      owner: capability-ontology-proof-fixture
+    - path: examples/capability-ontologies/delivery/rollout.yaml
+      owner: capability-ontology-proof-fixture
+    - path: examples/capability-ontologies/delivery/schema.yaml
+      owner: capability-ontology-proof-fixture
+    - path: examples/capability-ontologies/filing-review/filing.yaml
+      owner: capability-ontology-proof-fixture
+    - path: examples/capability-ontologies/filing-review/review.yaml
+      owner: capability-ontology-proof-fixture
+    - path: examples/capability-ontologies/filing-review/schema.yaml
+      owner: capability-ontology-proof-fixture
+    - path: examples/capability-ontologies/results/c1-8e1a430.exit-code.txt
+      owner: capability-ontology-proof-fixture
+    - path: examples/capability-ontologies/results/c1-8e1a430.go-version.txt
+      owner: capability-ontology-proof-fixture
+    - path: examples/capability-ontologies/results/c1-8e1a430.receipt.json
+      owner: capability-ontology-proof-fixture
+    - path: examples/capability-ontologies/results/c1-8e1a430.stderr.log
+      owner: capability-ontology-proof-fixture
+    - path: examples/capability-ontologies/results/c1-8e1a430.stdout.log
+      owner: capability-ontology-proof-fixture
+    - path: examples/capability-ontologies/software-architecture/components.yaml
+      owner: capability-ontology-proof-fixture
+    - path: examples/capability-ontologies/software-architecture/dependency.yaml
+      owner: capability-ontology-proof-fixture
+    - path: examples/capability-ontologies/software-architecture/schema.yaml
+      owner: capability-ontology-proof-fixture
+    - path: examples/capability-ontologies/software-architecture/storage.yaml
+      owner: capability-ontology-proof-fixture
+    - path: examples/capability-ontologies/trading-card-combat/action.yaml
+      owner: capability-ontology-proof-fixture
+    - path: examples/capability-ontologies/trading-card-combat/card.yaml
+      owner: capability-ontology-proof-fixture
+    - path: examples/capability-ontologies/trading-card-combat/schema.yaml
+      owner: capability-ontology-proof-fixture
+    - path: examples/capability-ontologies/workflow-responsibility/approver.yaml
+      owner: capability-ontology-proof-fixture
+    - path: examples/capability-ontologies/workflow-responsibility/owner.yaml
+      owner: capability-ontology-proof-fixture
+    - path: examples/capability-ontologies/workflow-responsibility/schema.yaml
+      owner: capability-ontology-proof-fixture
+    - path: examples/capability-ontologies/workflow-responsibility/work-item.yaml
+      owner: capability-ontology-proof-fixture
+    - path: examples/capability_ontologies_test.go
+      owner: capability-ontology-proof-tests
+    - path: examples/operating-model/README.md
+      owner: operating-model-proof-fixture
+    - path: examples/operating-model/canonical.yaml
+      owner: operating-model-proof-fixture
+    - path: examples/operating-model/checks/Billing.Checks.csproj
+      owner: operating-model-proof-fixture
+    - path: examples/operating-model/checks/Billing.Program.cs
+      owner: operating-model-proof-fixture
+    - path: examples/operating-model/checks/Composition.Checks.csproj
+      owner: operating-model-proof-fixture
+    - path: examples/operating-model/checks/Composition.Program.cs
+      owner: operating-model-proof-fixture
+    - path: examples/operating-model/checks/Documentation.Checks.csproj
+      owner: operating-model-proof-fixture
+    - path: examples/operating-model/checks/Documentation.Program.cs
+      owner: operating-model-proof-fixture
+    - path: examples/operating-model/checks/Orders.Checks.csproj
+      owner: operating-model-proof-fixture
+    - path: examples/operating-model/checks/Orders.Program.cs
+      owner: operating-model-proof-fixture
+    - path: examples/operating-model/definitions/billing-dotnet.projection-policy.yaml
+      owner: operating-model-proof-fixture
+    - path: examples/operating-model/definitions/billing-markdown.projection-policy.yaml
+      owner: operating-model-proof-fixture
+    - path: examples/operating-model/definitions/billing.billing-query.yaml
+      owner: operating-model-proof-fixture
+    - path: examples/operating-model/definitions/billing.projection.yaml
+      owner: operating-model-proof-fixture
+    - path: examples/operating-model/definitions/orders-dotnet.projection-policy.yaml
+      owner: operating-model-proof-fixture
+    - path: examples/operating-model/definitions/orders-markdown.projection-policy.yaml
+      owner: operating-model-proof-fixture
+    - path: examples/operating-model/definitions/orders.order-rules.yaml
+      owner: operating-model-proof-fixture
+    - path: examples/operating-model/definitions/orders.projection.yaml
+      owner: operating-model-proof-fixture
+    - path: examples/operating-model/definitions/product-markdown.projection-policy.yaml
+      owner: operating-model-proof-fixture
+    - path: examples/operating-model/definitions/product.composition.yaml
+      owner: operating-model-proof-fixture
+    - path: examples/operating-model/definitions/product.projection.yaml
+      owner: operating-model-proof-fixture
+    - path: examples/operating-model/modules/commerce/module.yaml
+      owner: operating-model-proof-fixture
+    - path: examples/operating-model/modules/commerce/schema.yaml
+      owner: operating-model-proof-fixture
+    - path: examples/operating-model/modules/dotnet/module.yaml
+      owner: operating-model-proof-fixture
+    - path: examples/operating-model/modules/foundation/module.yaml
+      owner: operating-model-proof-fixture
+    - path: examples/operating-model/modules/foundation/schema.yaml
+      owner: operating-model-proof-fixture
+    - path: examples/operating-model/modules/markdown/module.yaml
+      owner: operating-model-proof-fixture
+    - path: examples/operating-model/negative-specifications.md
+      owner: operating-model-proof-fixture
+    - path: examples/operating_model_test.go
+      owner: operating-model-proof-tests
+    - path: internal/host/agentexec/README.md
+      owner: bounded-agent-execution-host
+    - path: internal/host/agentexec/json.go
+      owner: bounded-agent-execution-host
+    - path: internal/host/agentexec/runner.go
+      owner: bounded-agent-execution-host
+    - path: internal/host/agentexec/runner_test.go
+      owner: bounded-agent-execution-host
+    - path: internal/host/agentexec/types.go
+      owner: bounded-agent-execution-host
+    - path: internal/host/assurance/run.go
+      owner: recursive-assurance-runner
+    - path: internal/host/assurance/run_test.go
+      owner: recursive-assurance-runner-tests
+    - path: internal/host/canonical/request_validation.go
+      owner: canonical-controller-validation
+    - path: internal/host/canonical_agent_context.go
+      owner: canonical-agent-context
+    - path: internal/host/canonical_controller.go
+      owner: canonical-controller
+    - path: internal/host/canonical_controller_assurance.go
+      owner: canonical-controller-assurance
+    - path: internal/host/canonical_controller_execution.go
+      owner: canonical-controller-execution
+    - path: internal/host/canonical_scoped_reconciliation.go
+      owner: canonical-scoped-reconciliation
+    - path: internal/host/canonical_scoped_test.go
+      owner: canonical-scoped-reconciliation-tests
+    - path: internal/host/canonical_scoped_write.go
+      owner: canonical-scoped-write
+    - path: internal/host/canonical_selected.go
+      owner: canonical-selected-source
+    - path: internal/host/canonical_selected_test.go
+      owner: canonical-selected-source-tests
+    - path: internal/host/recordstore/README.md
+      owner: projection-recordstore-host
+    - path: internal/host/recordstore/path.go
+      owner: projection-recordstore-host
+    - path: internal/host/recordstore/store.go
+      owner: projection-recordstore-host
+    - path: internal/host/recordstore/store_test.go
+      owner: projection-recordstore-host
+    - path: internal/modules/agentrules/README.md
+      owner: agent-rules-projection-module
+    - path: internal/modules/agentrules/agentrules.go
+      owner: agent-rules-projection-module
+    - path: internal/modules/agentrules/agentrules_test.go
+      owner: agent-rules-projection-module
+    - path: internal/modules/agentrules/claude.go
+      owner: agent-rules-projection-module
+    - path: internal/modules/agentrules/codex.go
+      owner: agent-rules-projection-module
+    - path: internal/tooling/codexrunner/README.md
+      owner: codex-runner-tooling
+    - path: internal/tooling/codexrunner/runner.py
+      owner: codex-runner-tooling
+    - path: internal/tooling/codexrunner/test_runner.py
+      owner: codex-runner-tooling
+    - path: internal/modules/dotnet/proposal.go
+      owner: canonical-dotnet-proposal-implementation
+    - path: internal/modules/dotnet/proposal_test.go
+      owner: canonical-dotnet-proposal-tests
+    - path: internal/modules/markdown/proposal.go
+      owner: canonical-markdown-proposal-implementation
+    - path: internal/modules/markdown/proposal_test.go
+      owner: canonical-markdown-proposal-tests
