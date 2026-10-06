@@ -137,6 +137,7 @@ spec:
     - internal/host/cli/canonical_goal.go
     - internal/host/cli/canonical_goal_test.go
     - examples/public_fixture_test.go
+    - experiments/live-operating-pilot
   tooling:
     - path: internal/host/canonical_controller_model_change_test.go
       owner: standard-operating-model-closure
@@ -1605,3 +1606,17 @@ spec:
 
     - path: experiments/operating-model-proof/runs/gates-23c2c30/diagnostic-assessment.json
       owner: immutable-operating-model-proof-records
+    - path: experiments/live-operating-pilot/README.md
+      owner: live-operating-pilot-package
+    - path: experiments/live-operating-pilot/source.bundle
+      owner: live-operating-pilot-frozen-fixture
+    - path: experiments/live-operating-pilot/fixture-manifest.json
+      owner: live-operating-pilot-frozen-fixture
+    - path: experiments/live-operating-pilot/bridge.py
+      owner: live-operating-pilot-transport
+    - path: experiments/live-operating-pilot/protocol-final.json
+      owner: live-operating-pilot-protocol
+    - path: experiments/live-operating-pilot/prepare.py
+      owner: live-operating-pilot-fixture-preparation
+    - path: experiments/live-operating-pilot/holdout/harness/run_acceptance.py
+      owner: live-operating-pilot-acceptance-harness
