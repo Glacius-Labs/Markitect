@@ -116,6 +116,12 @@ spec:
     - internal/host/cli/canonical_goal_test.go
     - examples/public_fixture_test.go
   tooling:
+    - path: experiments/operating-model-proof/runs/c8-orders-auditall-control-01/attempt-01-outcome.json
+      owner: c8-invalid-harness-preflight-evidence
+    - path: experiments/operating-model-proof/runs/c8-orders-auditall-control-01/pre-call-freeze.json
+      owner: c8-invalid-harness-preflight-evidence
+    - path: experiments/operating-model-proof/runs/c8-orders-auditall-control-01/record-limit.json
+      owner: c8-invalid-harness-preflight-evidence
     - path: experiments/operating-model-proof/runs/c11-v5-original/binding.json
       owner: c11-module-binding-readonly-evidence
     - path: experiments/operating-model-proof/runs/c11-v5-original/event-index.json

@@ -1,0 +1,6 @@
+{
+  "status": "INVALID_HARNESS_PREFLIGHT",
+  "basis": "Displayed adapter-path error plus pinned driver source order/catch; controller and provider were not invoked.",
+  "measurementLimit": "Attempt-01 exit code/channel are explicitly source-derived. The operator-preserved error text and empty-stdout file are not independent raw subprocess telemetry. No auditAll observation, elapsed time, content acquisition, or product result is inferred.",
+  "historicalAuditAllFalseMissUnchanged": true
+}
