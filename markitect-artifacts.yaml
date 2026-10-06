@@ -2,6 +2,7 @@ apiVersion: markitect.example.org/artifact-coverage/v1alpha1
 kind: ArtifactCoverage
 spec:
   roots:
+    - runs/c11checktools
     - internal/host/canonical_controller_reuse.go
     - internal/host/canonical_verification_refresh_test.go
     - docs/design/canonical-verification-refresh.md
@@ -1361,3 +1362,59 @@ spec:
       owner: operating-model-proof-protocol
     - path: internal/host/canonical_controller_reuse.go
       owner: controller-verification-freshness
+    - path: experiments/operating-model-proof/runs/c11-original-markdown/assessment.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c11-original-markdown/binding.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c11-original-markdown/events.jsonl
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c11-original-markdown/events/execute-cb8af01b8a2041fe90e2ff6a0a9c19ca.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c11-original-markdown/events/propose-80e03309b9264876b83708515177d737.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c11-replacement-markdown/assessment.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c11-replacement-markdown/binding.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c11-replacement-markdown/events.jsonl
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c11-replacement-markdown/events/execute-f4de207a37ac49629f416ae384216765.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c11-replacement-markdown/events/propose-5d1baafe1dac437eaef2bb1e829283ac.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c11-v3-original/assessment.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c11-v3-original/binding.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c11-v3-original/events.jsonl
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c11-v3-original/events/propose-245fac7a5584470ab3ba098286d7e4e5.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c11-v4-original/assessment.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c11-v4-original/binding.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c11-v4-original/events.jsonl
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c11-v4-original/events/apply-dfe814f71c3243dd93b91513ed2f32aa.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c11-v4-original/events/execute-edff631568b54617b5e45d496bc74e8e.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c11-v4-original/events/propose-53d844facc7340a7bf1f6789493d9ec9.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c11-v4-replacement/assessment.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c11-v4-replacement/binding.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c11-v4-replacement/events.jsonl
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c11-v4-replacement/events/apply-21885f1b495b4c54994e192a090dfd49.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c11-v4-replacement/events/execute-96e8495de9e1435b805b331cf5136cb1.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c11-v4-replacement/events/propose-f43a44ecf18645d485f6160c78eb755f.json
+      owner: immutable-operating-model-proof-records
+    - path: runs/c11checktools/original/main.go
+      owner: c11-project-owned-evidence-checks
+    - path: runs/c11checktools/replacement/main.go
+      owner: c11-project-owned-evidence-checks
