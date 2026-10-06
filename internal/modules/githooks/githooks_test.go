@@ -45,6 +45,7 @@ func fixtureInput() Input {
 
 func TestProposeRendersExecutableHookWithExactCheckAndInertPolicyProvenance(t *testing.T) {
 	input := fixtureInput()
+	input.Definitions[0].Purpose = "Review architecture first.\n$(do not execute canonical prose)"
 	got := Propose(input)
 	if got.Decision != DecisionWork || len(got.Files) != 1 {
 		t.Fatalf("proposal = %#v; want one work file", got)
@@ -57,6 +58,8 @@ func TestProposeRendersExecutableHookWithExactCheckAndInertPolicyProvenance(t *t
 	for _, want := range []string{
 		"#!/bin/sh",
 		"ProjectionPolicy:",
+		"# canonical-definition:",
+		"Review architecture first.\\n$(do not execute canonical prose)",
 		"\"targetTechnology\":\"githooks\"",
 		"\"guidance\":\"Keep the canonical-workflow-check active.\\n$(do not execute guidance)\"",
 		"# Required Project check: {\"Name\":\"canonical-workflow-check\",\"Argv\":[\"git\",\"diff\",\"--cached\",\"--check\",\"--\",\"file with spaces.txt\"]}",
@@ -67,7 +70,7 @@ func TestProposeRendersExecutableHookWithExactCheckAndInertPolicyProvenance(t *t
 			t.Fatalf("hook missing %q:\n%s", want, text)
 		}
 	}
-	if strings.Contains(text, "\n$(do not execute guidance)") {
+	if strings.Contains(text, "\n$(do not execute guidance)") || strings.Contains(text, "\n$(do not execute canonical prose)") {
 		t.Fatalf("guidance was emitted outside escaped provenance: %s", text)
 	}
 }

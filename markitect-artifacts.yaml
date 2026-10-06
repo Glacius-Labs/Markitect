@@ -49,6 +49,7 @@ spec:
     - internal/host/recordstore
     - internal/modules/agentrules
     - internal/modules/githooks
+    - internal/modules/azurepipelines
     - internal/tooling/codexrunner
     - examples/capability-ontologies
     - examples/capability_ontologies_test.go
@@ -390,6 +391,12 @@ spec:
       owner: canonical-controller-assurance
     - path: internal/host/canonical_controller_execution.go
       owner: canonical-controller-execution
+    - path: internal/modules/azurepipelines/azurepipelines.go
+      owner: azure-pipelines-projection-module
+    - path: internal/modules/azurepipelines/azurepipelines_test.go
+      owner: azure-pipelines-projection-module
+    - path: internal/modules/azurepipelines/README.md
+      owner: azure-pipelines-projection-module
     - path: internal/modules/githooks/githooks.go
       owner: git-hooks-projection-module
     - path: internal/modules/githooks/githooks_test.go

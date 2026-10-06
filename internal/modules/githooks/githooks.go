@@ -300,6 +300,20 @@ func render(target, request string, definitions map[string]core.Definition, edge
 		script.WriteString("# selected-definition: ")
 		script.Write(line)
 		script.WriteByte('\n')
+		// Canonical values remain inert, recoverable evidence in the target. Only
+		// the explicitly configured check argv below provides execution semantics.
+		definition := definitions[identity.Key()]
+		definitionLine, err := json.Marshal(struct {
+			Identity core.DefinitionIdentity `json:"identity"`
+			Purpose  string                  `json:"purpose"`
+			Spec     map[string]any          `json:"spec"`
+		}{identity, definition.Purpose, definition.Spec})
+		if err != nil {
+			return CandidateFile{}, err
+		}
+		script.WriteString("# canonical-definition: ")
+		script.Write(definitionLine)
+		script.WriteByte('\n')
 	}
 	orderedEdges := append([]core.Edge(nil), edges...)
 	sort.Slice(orderedEdges, func(i, j int) bool { return edgeKey(orderedEdges[i]) < edgeKey(orderedEdges[j]) })
