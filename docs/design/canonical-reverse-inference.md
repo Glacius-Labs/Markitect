@@ -1,0 +1,13 @@
+# Canonical reverse inference
+
+Status: bounded Host capability proposal for the accepted canonical operating model. The capability is source-only and adds no Core vocabulary or adoption authority.
+
+`host.RunBrownfieldInference` starts from an explicit adoption handoff, its exact selected byte map, and an owner-prepared Copy Me evidence queue. It validates every byte against the handoff and validates the queue through the existing Copy Me validator before execution. The fresh `RoleInfer` request contains only those selected bytes, the bounded handoff metadata, and evidence IDs already bound to selected source bytes. It does not accept a repository root, acquire Git state, discover paths, or widen selection. Handoff repository roots and Git directory identities are used only to reject temporary and private-log directories that overlap an adopter boundary.
+
+The runtime configuration is explicit and fingerprinted: literal command and arguments, model identity/options, provider version, timeout and output limits, plus declared runtime files with exact path, mode, and digest. Each call gets a new agent session through `agentexec`. Temporary workspace and private logs must be explicitly located outside every repository in the handoff. The existing subprocess boundary uses the caller's local authority; it does not claim an OS sandbox or provider privacy guarantee.
+
+A proposed output uses the existing Copy Me candidate record. Its support, counterexample, and qualifying references must be exact IDs from the supplied evidence queue; the response must repeat precisely those IDs in `evidenceRefs`. The candidate must state uncertainty, and the Copy Me validator binds the resulting proposal back to the exact selected bytes and handoff. The result retains the handoff byte and identity digests, input queue digest, runner configuration fingerprint, and execution receipt. Failed, incomplete, and escalated outcomes remain non-proposals.
+
+Every result is proposal-only. It has no review decision, creates no canonical Definition or Projector record, and cannot call adoption. A candidate is neither accepted intent nor proof that its inferred meaning is correct. A real owner must review, correct or reject the candidate, and make any deliberate canonical change through the normal canonical authoring boundary. Supplied handoff review fields and reviewer identities remain unauthenticated claims.
+
+Protocol tests use a fresh helper process that checks exact request binding and selected-byte scope. They validate serialization, evidence-reference rejection, receipt binding, and the non-authoritative result boundary; they do not measure inference quality. No model was invoked for these tests.
