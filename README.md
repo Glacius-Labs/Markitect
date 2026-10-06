@@ -7,7 +7,9 @@
 
 **Humans architect the system of work. AI performs the work. Markitect keeps them aligned.**
 
-Markitect's target is a desired-state model for the engineering intent a project deliberately governs. Human owners decide what should exist and why; selected structured decisions become canonical, versioned Markitect resources. The target operating model uses explicit deterministic adapters and AI agents to materialize declared repository representations, then bounded evidence to check observed state. Human narrative, implementation detail outside modeled contracts, vendor/tool inputs and external observations retain their explicit owners. The [canonical product vision](docs/vision.md) explains this direction and its still-unproven benefit hypothesis.
+Markitect's target is a canonical desired-state model of a project's selected ontology: its concepts, relationships, purpose, rules and responsibilities. Owners define the desired project world; governed code, documentation, agent guidance and automation are representations of it. Changing accepted intent should drive explicit impact, fanout and reconciliation, followed by independent verification of the resulting project. Human narrative, unmodeled implementation detail, vendor/tool inputs and external observations retain their explicit owners. The [canonical product vision](docs/vision.md) defines the goal and its still-unproven benefit hypothesis.
+
+The primary goal is **better project quality and consistency during autonomous engineering**: fewer forgotten obligations, overlooked consequences, contradictory representations and ignored rules. Adequate independent evidence and explicit delegation should reduce routine human supervision. Token and elapsed-time savings are secondary possible benefits, not the purpose of the method.
 
 Today, Markitect provides a compiler-like foundation for **selected canonical engineering intent**: typed Domains/resources, finite checks, context, impact and explicitly configured projections/adapters. Core handles adopting-project artifacts as opaque exact bytes; a specialized adapter or project check may inspect declared formats within a stated evidence boundary. Existing output and artifact checks are scoped, not a repository-wide inventory or convergence guarantee. Continuous agent operation and reduced human supervision are goals, not demonstrated properties of the current CLI.
 
@@ -29,7 +31,7 @@ The current [canonical projection reset](docs/design/canonical-projection-reset.
 
 ## Why Markitect?
 
-The product starts from a working assumption: implementation capacity will grow faster than human attention. Architecture and policy should guide that work without requiring people to rediscover, synchronize and supervise every routine detail. The vision treats this as a hypothesis to test, not a measured productivity claim.
+Autonomous implementation can produce correct local changes while losing broader intent: another representation remains stale, an affected module is overlooked, or a project rule is ignored. Markitect aims to make the desired world explicit and connect its evolution to the governed project's actual state. Owners should spend attention on architecture and meaningful decisions rather than repeatedly synchronizing every representation. This is a quality and autonomy hypothesis to test, not a measured result.
 
 Engineering rules often have several consumers.
 
@@ -76,6 +78,24 @@ bounded context and impact
 Projects independently select the Markdown and provider projections they need.
 
 These mechanisms aim to remove independently maintained copies of modeled intent and make consistency questions answerable structurally, leaving human attention for engineering decisions. Their upkeep must be included when testing whether that goal is achieved.
+
+## Working method
+
+The [canonical operating methodology](docs/operating-methodology.md) defines the target process:
+
+```text
+accepted project ontology
+    -> applicable context, explicit impact and affected work
+    -> Executor -> candidate -> independent Verifier
+    -> guarded materialization and final-state verification
+    -> completion, bounded repair or an owner decision
+```
+
+Use the same responsibilities at component, slice and parent/project scope. Passing child checks do not establish integration correctness. A valid representation may have different implementation details where the policy allows them; exact bytes are required only by an exact deterministic contract. Repair drift against unchanged intent without inventing a model edit. Real intent changes update their canonical owner before implementation.
+
+The [measurement procedure](docs/measurement.md#staged-method-readiness) establishes finite readiness stages: component boundaries, one complete real change, recursive composition, repeated usable operation, then a fair conventional-versus-Markitect project backlog. It evaluates quality, consistency, missed fanout, rule/process conformity and human intervention first, with tokens and duration as secondary observations. These stages do not claim current whole-repository convergence or waive contribution and release gates. The [roadmap](docs/implementation-plan.md) owns actual implementation and release status.
+
+Agents working on this repository begin through [AGENTS.md](AGENTS.md) and its fixed Markitect engineering context. The vision, operating methodology and measurement procedure are declared inputs of that context. Adopting projects select their own ontology, checks, ownership and delegation policy.
 
 ## Desired intent and declared representations
 
