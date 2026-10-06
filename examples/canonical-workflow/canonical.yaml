@@ -35,11 +35,17 @@ modules:
       digest: sha256:b8cef0bd63f766413de019f7b9de1db3727a67ad028aab2cc7fd124e62ca6995
     files:
       - examples/canonical-workflow/modules/workflow/schema.yaml
-  - manifest: examples/canonical-workflow/modules/agentrules-v1/module.yaml
+  - manifest: examples/canonical-workflow/modules/agentrules-codex-v1/module.yaml
     pin:
-      name: markitect-agent-rules
+      name: markitect-agent-rules-codex
       version: 1.0.0
-      digest: sha256:9e837b1694c3c35bcfd7ad8c38cbf2f4a3873c120ac39b6a7e02ea5eba10a939
+      digest: sha256:9607dbdec580016b6b5a250a0b75112d5f58bebfbb8fb15a60c1cefd5deca966
+    files: []
+  - manifest: examples/canonical-workflow/modules/agentrules-claude-v1/module.yaml
+    pin:
+      name: markitect-agent-rules-claude
+      version: 1.0.0
+      digest: sha256:376ed00fdd78ee17aa3cd4bf388244794f03a9d2b41bf9ba7355f36b89cc35af
     files: []
   - manifest: examples/canonical-projection/modules/markdown/module.yaml
     pin:
@@ -53,13 +59,13 @@ projectionBindings:
       kind: Projection
       namespace: example
       name: workflow-codex
-    module: markitect-agent-rules
+    module: markitect-agent-rules-codex
   - projection:
       apiVersion: markitect.foundation/v1
       kind: Projection
       namespace: example
       name: workflow-claude
-    module: markitect-agent-rules
+    module: markitect-agent-rules-claude
   - projection:
       apiVersion: markitect.foundation/v1
       kind: Projection
