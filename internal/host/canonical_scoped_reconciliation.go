@@ -24,6 +24,7 @@ type CanonicalScopedProposal struct {
 	Request                 canonical.ProjectionRequest     `json:"request"`
 	Task                    *dotnet.ExecutorTask            `json:"task,omitempty"`
 	Outputs                 map[string][]byte               `json:"outputs,omitempty"`
+	OutputModes             map[string]string               `json:"outputModes,omitempty"`
 	EvidenceRefreshRequired bool                            `json:"evidenceRefreshRequired"`
 	Escalations             []CanonicalProjectionEscalation `json:"escalations,omitempty"`
 }
@@ -261,13 +262,17 @@ func proposeScopedCanonicalReconciliation(root, baseRevision, revision, configPa
 		if err != nil {
 			return plan, err
 		}
-		isCandidate, err := selectedHostProjector(request)
-		if err != nil {
-			return plan, err
-		}
+		entrypoint, entrypointErr := canonicalWorkflowEntrypoint(request)
 		p := CanonicalScopedProposal{ProjectionID: key, Module: request.ModulePin, Request: request}
 		old, found := prior[key]
-		if isCandidate {
+		if entrypointErr != nil {
+			p.Decision = "escalate"
+			p.Escalations = append(p.Escalations, CanonicalProjectionEscalation{Code: "projection.entrypoint-unsupported", Identity: key, Message: entrypointErr.Error()})
+			plan.Escalations = append(plan.Escalations, p.Escalations...)
+			plan.Proposals = append(plan.Proposals, p)
+			continue
+		}
+		if entrypoint == "dotnet" {
 			input := dotnet.Input{Definitions: request.Definitions, Schemas: request.Schemas, Policies: request.Policies, TargetPrefix: request.TargetPrefix, AllowedRoots: request.Projector.AllowedRoots, RequestDigest: request.RequestDigest, CanonicalAffected: canonicalWork[key], InventoryComplete: true}
 			for _, entry := range inventory.Entries {
 				if _, isExcluded := excluded[entry.Path]; isExcluded {
@@ -291,7 +296,7 @@ func proposeScopedCanonicalReconciliation(root, baseRevision, revision, configPa
 			for _, e := range proposed.Escalations {
 				p.Escalations = append(p.Escalations, CanonicalProjectionEscalation{Code: e.Code, Identity: e.Identity, Message: e.Message})
 			}
-		} else if request.Projector.Target == "codex" || request.Projector.Target == "claude" {
+		} else if entrypoint == "agent-rules" {
 			input, err := canonicalProviderProjectionInput(current.Model, request)
 			if err != nil {
 				return plan, err
@@ -324,13 +329,24 @@ func proposeScopedCanonicalReconciliation(root, baseRevision, revision, configPa
 				p.Decision = string(proposed.Decision)
 				p.Reasons = proposed.Reasons
 				p.Outputs = map[string][]byte{}
+				p.OutputModes = map[string]string{}
 				for _, f := range proposed.Files {
 					p.Outputs[f.Path] = f.Content
+					p.OutputModes[f.Path] = snapshot.RegularMode
 				}
 				if p.Decision == "escalate" {
 					p.Escalations = append(p.Escalations, CanonicalProjectionEscalation{Code: "agent-rules.target-conflict", Identity: key, Message: strings.Join(p.Reasons, "; ")})
 				}
 				p.EvidenceRefreshRequired = found && (old.ModelDigest != request.ModelDigest || old.Revision != request.Revision)
+			}
+		} else if entrypoint == "githooks" {
+			var previous *records.ProjectionRecord
+			if found {
+				previous = &old
+			}
+			p, err = proposeGitHooksProjection(request, current.Config.Checks, inventory.Entries, observed.Snapshot, previous)
+			if err != nil {
+				return plan, err
 			}
 		} else {
 			input := markdown.Input{Definitions: request.Definitions, Schemas: request.Schemas, Policies: request.Policies, TargetPrefix: request.TargetPrefix, AllowedRoots: request.Projector.AllowedRoots, RequestDigest: request.RequestDigest, CanonicalAffected: canonicalWork[key], InventoryComplete: true}
@@ -352,6 +368,10 @@ func proposeScopedCanonicalReconciliation(root, baseRevision, revision, configPa
 			p.Decision = string(proposed.Decision)
 			p.Reasons = proposed.Reasons
 			p.Outputs = proposed.Files
+			p.OutputModes = make(map[string]string, len(proposed.Files))
+			for outputPath := range proposed.Files {
+				p.OutputModes[outputPath] = snapshot.RegularMode
+			}
 			p.EvidenceRefreshRequired = proposed.EvidenceRefreshRequired
 			for _, e := range proposed.Escalations {
 				p.Escalations = append(p.Escalations, CanonicalProjectionEscalation{Code: e.Code, Identity: key, Message: e.Message})
