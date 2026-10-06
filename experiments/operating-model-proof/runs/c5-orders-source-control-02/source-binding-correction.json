@@ -1,0 +1,135 @@
+{
+  "protocol": "operating-model-proof/c5-c8-source-binding-correction/v1",
+  "generatedAtUtc": "2026-10-06T07:01:32.3104259Z",
+  "receipt": {
+    "sha256": "161a135672f6b55a468dde2af5a9ab0b6b5283885170ab1325658ec4cb2dc53f",
+    "originalSchemaPropertyNames": [
+      "sourceCommit",
+      "sourceWorktreeCleanBeforeAndAfter",
+      "command",
+      "startedAtUtc",
+      "finishedAtUtc",
+      "exitCode",
+      "goVersion",
+      "stdoutSha256",
+      "stderrSha256",
+      "binaryPath",
+      "binaryBytes",
+      "binaryDigest"
+    ],
+    "sourceField": "sourceCommit",
+    "sourceCommit": "41a1d28c930e415af8ecb868d50b763d4ad15149",
+    "sourceWorktreeCleanBeforeAndAfter": true,
+    "command": [
+      "<go.exe>",
+      "build",
+      "-o",
+      "<external-build>/markitect-proof.exe",
+      "./cmd/markitect"
+    ],
+    "exitCode": 0,
+    "goVersion": "go version go1.27.1 windows/amd64",
+    "binaryBytes": 12903424,
+    "binaryDigest": "sha256:3ac34fd8373c7370178a68d148a02c57b723289f27ae0df9d5f96a3c249a61db"
+  },
+  "verifiedProductSource": {
+    "sourceSha": "41a1d28c930e415af8ecb868d50b763d4ad15149",
+    "fullCommitExists": true,
+    "cliSha256": "3ac34fd8373c7370178a68d148a02c57b723289f27ae0df9d5f96a3c249a61db",
+    "runnerSha256": "d5af7ba511bf0bae7ed1aaca28bfbff4aefd36616cc6947d08de149e9ed363e9",
+    "configSha256": "5291f6f3651fb5885930d3ccb700b47cdaa4f6c364ee240f9bb3f4c397f98f55",
+    "fixedCheckCount": 4,
+    "explicitInputCount": 8,
+    "fixedCheckInputs": [
+      {
+        "sha256": "6ec61ed84fcf6c12451f6a731b0a54071a7ef824d153ab19173028c005f7da8e",
+        "path": "examples/operating-model/checks/Orders.Checks.csproj"
+      },
+      {
+        "sha256": "ccc5783b7a3ae976b00ca4106627e8068bd752529211f90d485e441176a338ed",
+        "path": "examples/operating-model/checks/Orders.Program.cs"
+      },
+      {
+        "sha256": "083c2891ddfb4ec6373d1f0279325c2179f5c23da340db57ed4d80802a6b487c",
+        "path": "examples/operating-model/checks/Billing.Checks.csproj"
+      },
+      {
+        "sha256": "972099963b95215e6cd0dfaefc7961cf8986effc416dde32b3cb1414481381ae",
+        "path": "examples/operating-model/checks/Billing.Program.cs"
+      },
+      {
+        "sha256": "c279aa4f1d2cd6bcc2570ed913667bd64e0f788a35e75a3991f110725e26d3ae",
+        "path": "examples/operating-model/checks/Composition.Checks.csproj"
+      },
+      {
+        "sha256": "78132279a45d81e2946ce21669733bd3153ccbf13310dd70725da4cf2195e93b",
+        "path": "examples/operating-model/checks/Composition.Program.cs"
+      },
+      {
+        "sha256": "7ce85b8e09c299216bd28d7c5f389f78cbf155f23a28f4a2ae18996a526ac677",
+        "path": "examples/operating-model/checks/Documentation.Checks.csproj"
+      },
+      {
+        "sha256": "0bd602b938e87696c6d4d3e9b453dbda32ac475a4b33dfb0ee5b748d19092beb",
+        "path": "examples/operating-model/checks/Documentation.Program.cs"
+      }
+    ]
+  },
+  "c5Correction": {
+    "freeze": "c5-orders-source-control-02/control-plan.json",
+    "originalProductSourceSourceShaWas": null,
+    "reason": "Build receipt uses sourceCommit; sourceSha is not a receipt property.",
+    "correctedSourceSha": "41a1d28c930e415af8ecb868d50b763d4ad15149",
+    "baselineBlobFieldCorrection": {
+      "originalMislabelledValue": "821055452b3433525eb854ec4c51ce7bd8ea15788ed8e8a537e3a80a1be3f872",
+      "actualMeaning": "SHA-256 of baseline Orders Definition content, not Git blob OID",
+      "baselineBlobOid": "54d63b87292fe371c9ea6dd26bebd57026bb89be",
+      "candidateBlobOid": "a14233afa96ee97ff6bebd9890f1211befd7c4f4",
+      "baselineContentSha256": "821055452b3433525eb854ec4c51ce7bd8ea15788ed8e8a537e3a80a1be3f872",
+      "candidateContentSha256": "7c7fd5c6b7988c73ff24a3aee4f8180fd6853a3a9bd487683a48a011da06595b"
+    },
+    "exactLaunch": {
+      "workdir": "<managed-evidence-worktree-root>",
+      "args": [
+        "canonical",
+        "--action",
+        "controller-propose",
+        "--repo",
+        "<external-C5-fixture>",
+        "--config",
+        "examples/operating-model/canonical-documentation-aligned.yaml",
+        "--runtime",
+        "<external-C5-02-runtime.json>",
+        "--base",
+        "86c46fd2a0da53dbcac407569a487f96e8198c04",
+        "--revision",
+        "d6fb2d3d2bd1fefaa33b2bdad93f4f01952ebce0"
+      ]
+    }
+  },
+  "c8Validation": {
+    "freeze": "c8-orders-owned-drift-control-01/control-plan.json",
+    "sourceShaField": "41a1d28c930e415af8ecb868d50b763d4ad15149",
+    "equalsReceiptSourceCommit": true,
+    "baselineBlobOidLength": 40,
+    "driftBlobOidLength": 40,
+    "exactLaunch": {
+      "workdir": "<managed-evidence-worktree-root>",
+      "args": [
+        "canonical",
+        "--action",
+        "controller-propose",
+        "--repo",
+        "<external-C8-fixture>",
+        "--config",
+        "examples/operating-model/canonical-documentation-aligned.yaml",
+        "--runtime",
+        "<external-C8-runtime.json>",
+        "--base",
+        "86c46fd2a0da53dbcac407569a487f96e8198c04",
+        "--revision",
+        "606c1d6f243ee351f04ff0e20ee1685ce5b7c780"
+      ]
+    }
+  }
+}
