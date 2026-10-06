@@ -1312,3 +1312,27 @@ spec:
       owner: immutable-operating-model-proof-records
     - path: docs/validation/proof-capability-checkpoint-2026-10-06.md
       owner: operating-model-proof-checkpoint
+    - path: experiments/operating-model-proof/runs/c5-orders-source-control-01/control-plan.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c5-orders-source-control-01/proposal-summary.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c5-orders-source-control-01/propose-event.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c5-orders-source-control-01/runtime-binding-invalid.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c5-orders-source-control-02/control-plan.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c5-orders-source-control-02/runtime-binding-invalid.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c5-orders-source-control-02/source-binding-correction.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c5-orders-source-control-03/control-plan.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c8-orders-owned-drift-control-01/control-plan.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c8-orders-owned-drift-control-01/runtime-binding-invalid.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c8-orders-owned-drift-control-01/source-binding-audit.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c8-orders-owned-drift-control-02/control-plan.json
+      owner: immutable-operating-model-proof-records
