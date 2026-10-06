@@ -41,12 +41,18 @@ func TestCanonicalEvidenceRefreshFakeVerifier(t *testing.T) {
 		refs[artifact.Path] = true
 	}
 	evidenceRefs := make([]string, 0, len(refs))
-	observations := make([]agentexec.Observation, 0, len(refs))
 	for ref := range refs {
 		evidenceRefs = append(evidenceRefs, ref)
-		observations = append(observations, agentexec.Observation{Subject: ref, Outcome: agentexec.OutcomePassed, Detail: "fresh test verifier inspected the supplied evidence"})
 	}
 	sort.Strings(evidenceRefs)
+	var verifierContext canonicalControllerVerifierContext
+	if err := json.Unmarshal(invocation.Request.Context, &verifierContext); err != nil || len(verifierContext.RequiredObservationSubjects) == 0 {
+		os.Exit(43)
+	}
+	observations := make([]agentexec.Observation, 0, len(verifierContext.RequiredObservationSubjects))
+	for _, required := range verifierContext.RequiredObservationSubjects {
+		observations = append(observations, agentexec.Observation{Subject: required.Subject, Outcome: agentexec.OutcomePassed, Detail: "fresh test verifier inspected the supplied evidence"})
+	}
 	sort.Slice(observations, func(i, j int) bool { return observations[i].Subject < observations[j].Subject })
 	response := agentexec.Response{
 		APIVersion: agentexec.APIVersion, RunID: invocation.RunID, Nonce: invocation.Nonce,
@@ -55,7 +61,7 @@ func TestCanonicalEvidenceRefreshFakeVerifier(t *testing.T) {
 		VerifierObservations: observations, Uncertainty: []string{},
 	}
 	if err := json.NewEncoder(os.Stdout).Encode(response); err != nil {
-		os.Exit(42)
+		os.Exit(44)
 	}
 	os.Exit(0)
 }
