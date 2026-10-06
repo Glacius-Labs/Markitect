@@ -3,6 +3,7 @@ package host
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -155,36 +156,61 @@ func scopedCanonicalFixture(t *testing.T) (string, string, *CanonicalSource) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	sourceRevision := scopedTestGit(t, repo, "rev-parse", "HEAD")
-	fixed, err := LoadSelectedCanonicalSource(repo, sourceRevision, "examples/canonical-projection/canonical.yaml", true)
-	if err != nil {
-		t.Fatal(err)
-	}
 	root := t.TempDir()
 	scopedTestGit(t, root, "init", "--template=", "--object-format=sha1", "-b", "codex/scoped-canonical")
 	scopedTestGit(t, root, "config", "user.name", "Scoped canonical test")
 	scopedTestGit(t, root, "config", "user.email", "scoped@example.invalid")
 	scopedTestGit(t, root, "config", "core.autocrlf", "false")
+	copyScopedPublicFixture(t, repo, "examples/canonical-projection", root)
 	scopedTestWrite(t, root, ".gitattributes", "* -text\n")
-	for name, data := range fixed.Snapshot.Files {
-		path := filepath.Join(root, filepath.FromSlash(name))
-		if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
-			t.Fatal(err)
-		}
-		if err := os.WriteFile(path, data, 0644); err != nil {
-			t.Fatal(err)
-		}
-	}
 	addScopedMarkdownPolicies(t, root)
 	scopedTestWrite(t, root, "unrelated/Billing/note.txt", "unique content outside source and declared targets\n")
 	scopedTestGit(t, root, "add", ".")
 	scopedTestGit(t, root, "commit", "-m", "fixed canonical source")
 	revision := scopedTestGit(t, root, "rev-parse", "HEAD")
-	fixed, err = LoadSelectedCanonicalSource(root, revision, "examples/canonical-projection/canonical.yaml", true)
+	fixed, err := LoadSelectedCanonicalSource(root, revision, "examples/canonical-projection/canonical.yaml", true)
 	if err != nil {
 		t.Fatal(err)
 	}
 	return root, revision, fixed
+}
+
+// Copy the checked-in public fixture bytes into a new repository. The selected
+// loader then reads only that repository's immutable commit, never the
+// enclosing checkout's Git metadata or HEAD.
+func copyScopedPublicFixture(t *testing.T, sourceRoot, fixtureDirectory, targetRoot string) {
+	t.Helper()
+	sourceDirectory := filepath.Join(sourceRoot, filepath.FromSlash(fixtureDirectory))
+	targetDirectory := filepath.Join(targetRoot, filepath.FromSlash(fixtureDirectory))
+	err := filepath.WalkDir(sourceDirectory, func(path string, entry os.DirEntry, walkErr error) error {
+		if walkErr != nil {
+			return walkErr
+		}
+		relative, err := filepath.Rel(sourceDirectory, path)
+		if err != nil {
+			return err
+		}
+		target := filepath.Join(targetDirectory, relative)
+		if entry.IsDir() {
+			return os.MkdirAll(target, 0755)
+		}
+		if !entry.Type().IsRegular() {
+			return fmt.Errorf("public fixture contains unsupported file type: %s", path)
+		}
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		data = bytes.ReplaceAll(data, []byte("\r\n"), []byte("\n"))
+		data = bytes.ReplaceAll(data, []byte("\r"), []byte("\n"))
+		if err := os.MkdirAll(filepath.Dir(target), 0755); err != nil {
+			return err
+		}
+		return os.WriteFile(target, data, 0644)
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func TestScopedCanonicalPlannerKeepsSkippedTargetsUnobserved(t *testing.T) {

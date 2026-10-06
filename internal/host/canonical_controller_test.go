@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -62,7 +63,24 @@ func TestCanonicalControllerFakeActor(t *testing.T) {
 func canonicalControllerFixture(t *testing.T) (string, string, CanonicalControllerConfig) {
 	t.Helper()
 	root, revision, _ := scopedCanonicalFixture(t)
-	tempRoot := filepath.Join(os.Getenv("USERPROFILE"), "AppData", "Local", "Temp")
+	tempRoot := os.TempDir()
+	if runtime.GOOS == "windows" {
+		home, err := os.UserHomeDir()
+		if err != nil {
+			t.Fatalf("resolve user home for external controller state: %v", err)
+		}
+		// Avoid the shared Windows Temp directory, whose concurrent test usage
+		// can prevent canonical parent checks from opening the directory.
+		tempRoot = filepath.Join(home, "AppData", "Local")
+	}
+	tempRoot, err := filepath.EvalSymlinks(tempRoot)
+	if err != nil {
+		t.Fatalf("resolve external controller parent: %v", err)
+	}
+	tempRoot, err = realDirectory(tempRoot)
+	if err != nil {
+		t.Fatalf("validate external controller parent: %v", err)
+	}
 	external, err := os.MkdirTemp(tempRoot, "markitect-controller-")
 	if err != nil {
 		t.Fatalf("create canonical external controller directory: %v", err)
