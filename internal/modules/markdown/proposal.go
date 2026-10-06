@@ -76,6 +76,18 @@ type Escalation struct {
 
 const pageName = "index.md"
 
+// RenderProjection renders the canonical scope to the Markdown capability's
+// module-owned page beneath TargetPrefix. Render's exact TargetPath API remains
+// available to existing callers.
+func RenderProjection(input Input) Result {
+	root, err := normalizeTargetPrefix(input.TargetPrefix)
+	if err != nil {
+		return Result{Files: map[string][]byte{}, Diagnostics: []core.Diagnostic{{Code: "markdown.target-prefix.invalid", Message: err.Error()}}}
+	}
+	input.TargetPath = path.Join(root, pageName)
+	return Render(input)
+}
+
 // Propose decides whether the Markdown capability needs to materialize its
 // deterministic page. The page name and rendering convention belong here,
 // not in Host. This function never writes files or deletes retired artifacts.
