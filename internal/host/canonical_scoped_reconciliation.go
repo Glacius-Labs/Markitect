@@ -11,6 +11,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/host/canonical"
 	"github.com/Glacius-Labs/Markitect/internal/host/records"
 	"github.com/Glacius-Labs/Markitect/internal/infrastructure/source"
+	"github.com/Glacius-Labs/Markitect/internal/modules/agentrules"
 	"github.com/Glacius-Labs/Markitect/internal/modules/dotnet"
 	"github.com/Glacius-Labs/Markitect/internal/modules/markdown"
 )
@@ -63,7 +64,9 @@ func ProposeScopedCanonicalReconciliation(root, baseRevision, revision, configPa
 	if err != nil {
 		return plan, err
 	}
-	if !equalCanonicalValue(base.AcquisitionScope.Repository,current.AcquisitionScope.Repository) { return plan, errors.New("repository identity changed between base and candidate acquisition") }
+	if !equalCanonicalValue(base.AcquisitionScope.Repository, current.AcquisitionScope.Repository) {
+		return plan, errors.New("repository identity changed between base and candidate acquisition")
+	}
 	if len(base.Diagnostics) > 0 || len(current.Diagnostics) > 0 {
 		return plan, errors.New("scoped reconcile requires structurally valid canonical models")
 	}
@@ -262,6 +265,47 @@ func ProposeScopedCanonicalReconciliation(root, baseRevision, revision, configPa
 			p.EvidenceRefreshRequired = proposed.EvidenceRefreshRequired
 			for _, e := range proposed.Escalations {
 				p.Escalations = append(p.Escalations, CanonicalProjectionEscalation{Code: e.Code, Identity: e.Identity, Message: e.Message})
+			}
+		} else if request.Projector.Target == "codex" || request.Projector.Target == "claude" {
+			input, err := canonicalProviderProjectionInput(current.Model, request)
+			if err != nil {
+				return plan, err
+			}
+			file, err := agentrules.Render(input)
+			if err != nil {
+				p.Decision = "escalate"
+				p.Escalations = append(p.Escalations, CanonicalProjectionEscalation{Code: "agent-rules.guidance-invalid", Identity: key, Message: err.Error()})
+			} else {
+				// Missing desired files have explicit canonical target intent. Existing
+				// files require exact active ownership; unowned metadata already escalates.
+				owner := ""
+				entry, exists := inventoryByPath[file.Path]
+				if !exists {
+					owner = agentrules.Owner
+				} else if a, owned := ownership.Artifacts[file.Path]; owned && found && len(a.OwnerRecordIDs) == 1 && a.OwnerRecordIDs[0] == old.ID {
+					owner = agentrules.Owner
+				}
+				digest := ""
+				if exists {
+					digest = sha256Prefix(sha256Hex(observed.Snapshot.Files[file.Path]))
+				}
+				input.Observed = []agentrules.TargetObservation{{Path: file.Path, Owner: owner, Exists: exists, Digest: digest, Writable: !exists || entry.Mode == snapshot.RegularMode}}
+				if canonicalWork[key] {
+					for _, def := range request.Definitions {
+						input.CanonicalAffected = append(input.CanonicalAffected, def.Identity())
+					}
+				}
+				proposed := agentrules.Propose(input)
+				p.Decision = string(proposed.Decision)
+				p.Reasons = proposed.Reasons
+				p.Outputs = map[string][]byte{}
+				for _, f := range proposed.Files {
+					p.Outputs[f.Path] = f.Content
+				}
+				if p.Decision == "escalate" {
+					p.Escalations = append(p.Escalations, CanonicalProjectionEscalation{Code: "agent-rules.target-conflict", Identity: key, Message: strings.Join(p.Reasons, "; ")})
+				}
+				p.EvidenceRefreshRequired = found && (old.ModelDigest != request.ModelDigest || old.Revision != request.Revision)
 			}
 		} else {
 			input := markdown.Input{Definitions: request.Definitions, Schemas: request.Schemas, Policies: request.Policies, TargetPrefix: request.TargetPrefix, AllowedRoots: request.Projector.AllowedRoots, RequestDigest: request.RequestDigest, CanonicalAffected: canonicalWork[key], InventoryComplete: true}
