@@ -31,16 +31,19 @@ const (
 )
 
 var (
-	ErrStaleHead  = errors.New("projection record store head is stale")
-	ErrLocked     = errors.New("projection record store is locked")
-	ErrIncomplete = errors.New("projection record store is incomplete")
+	ErrStaleHead              = errors.New("projection record store head is stale")
+	ErrLocked                 = errors.New("projection record store is locked")
+	ErrIncomplete             = errors.New("projection record store is incomplete")
+	ErrCommittedButUnobserved = errors.New("projection record store committed event was not present in validated readback")
 )
 
 type Store struct {
-	root      string
-	forbidden []string
-	storeID   string
-	genesis   string
+	root           string
+	forbidden      []string
+	rootIdentity   os.FileInfo
+	eventsIdentity os.FileInfo
+	storeID        string
+	genesis        string
 }
 
 type State struct {
@@ -82,23 +85,51 @@ func Initialize(root string, forbiddenRoots []string) (*Store, error) {
 	if err != nil {
 		return nil, err
 	}
-	if _, err = os.Lstat(p.root); err == nil {
+	parentPath := filepath.Dir(p.root)
+	parentInfo, err := inspectDirectoryPath(parentPath)
+	if err != nil {
+		return nil, fmt.Errorf("inspect store parent: %w", err)
+	}
+	parent, err := openDirectoryHandle(parentPath, parentInfo)
+	if err != nil {
+		return nil, fmt.Errorf("open store parent: %w", err)
+	}
+	defer parent.Close()
+
+	rootName := filepath.Base(p.root)
+	if _, err = parent.Lstat(rootName); err == nil {
 		return nil, fmt.Errorf("store root already exists: %s", p.root)
 	} else if !os.IsNotExist(err) {
 		return nil, err
 	}
-	if err = os.Mkdir(p.root, 0700); err != nil {
+	rootIdentity, err := makeDirectoryAt(parent, rootName, 0700)
+	if err != nil {
 		return nil, fmt.Errorf("create store root exclusively %s: %w", p.root, err)
 	}
 	created := []string{p.root}
 	fail := func(path string, cause error) (*Store, error) {
 		return nil, fmt.Errorf("initialization stopped at %s; created paths retained: %s: %w", path, strings.Join(created, ", "), cause)
 	}
-	events := filepath.Join(p.root, eventsDir)
-	if err = os.Mkdir(events, 0700); err != nil {
-		return fail(events, err)
+	storeRoot, openedIdentity, err := openDirectoryAt(parent, rootName, rootIdentity)
+	if err != nil {
+		return fail(p.root, err)
 	}
-	created = append(created, events)
+	defer storeRoot.Close()
+	rootIdentity = openedIdentity
+
+	eventsIdentity, err := makeDirectoryAt(storeRoot, eventsDir, 0700)
+	if err != nil {
+		return fail(filepath.Join(p.root, eventsDir), err)
+	}
+	created = append(created, filepath.Join(p.root, eventsDir))
+	eventsRoot, eventsIdentity, err := openDirectoryAt(storeRoot, eventsDir, eventsIdentity)
+	if err != nil {
+		return fail(filepath.Join(p.root, eventsDir), err)
+	}
+	if err = eventsRoot.Close(); err != nil {
+		return fail(filepath.Join(p.root, eventsDir), err)
+	}
+
 	var randomID [16]byte
 	if _, err = rand.Read(randomID[:]); err != nil {
 		return fail(p.root, err)
@@ -111,12 +142,11 @@ func Initialize(root string, forbiddenRoots []string) (*Store, error) {
 	if err != nil {
 		return fail(p.root, err)
 	}
-	path := filepath.Join(p.root, marker)
-	if err = writeExclusive(path, data); err != nil {
-		return fail(path, err)
+	if err = writeExclusiveAt(storeRoot, marker, data); err != nil {
+		return fail(filepath.Join(p.root, marker), err)
 	}
-	created = append(created, path)
-	return &Store{root: p.root, forbidden: p.forbidden, storeID: storeID, genesis: meta.ContentDigest}, nil
+	created = append(created, filepath.Join(p.root, marker))
+	return &Store{root: p.root, forbidden: p.forbidden, rootIdentity: rootIdentity, eventsIdentity: eventsIdentity, storeID: storeID, genesis: meta.ContentDigest}, nil
 }
 
 // Open validates an existing external store without creating or repairing it.
@@ -125,11 +155,34 @@ func Open(root string, forbiddenRoots []string) (*Store, error) {
 	if err != nil {
 		return nil, err
 	}
-	meta, genesis, err := readMarker(p.root)
+	rootIdentity, err := inspectDirectoryPath(p.root)
 	if err != nil {
 		return nil, err
 	}
-	return &Store{root: p.root, forbidden: p.forbidden, storeID: meta.StoreID, genesis: genesis}, nil
+	storeRoot, err := openDirectoryHandle(p.root, rootIdentity)
+	if err != nil {
+		return nil, err
+	}
+	defer storeRoot.Close()
+	if _, err = preparePaths(p.root, p.forbidden, false); err != nil {
+		return nil, err
+	}
+	meta, genesis, err := readMarkerAt(storeRoot)
+	if err != nil {
+		return nil, err
+	}
+	eventsRoot, eventsIdentity, err := openDirectoryAt(storeRoot, eventsDir, nil)
+	if err != nil {
+		return nil, err
+	}
+	if err = eventsRoot.Close(); err != nil {
+		return nil, err
+	}
+	store := &Store{root: p.root, forbidden: p.forbidden, rootIdentity: rootIdentity, eventsIdentity: eventsIdentity, storeID: meta.StoreID, genesis: genesis}
+	if err = store.validateRootEntries(storeRoot); err != nil {
+		return nil, err
+	}
+	return store, nil
 }
 
 // Read returns a complete validated history without creating or changing files.
@@ -150,11 +203,13 @@ func (s *Store) Read() (State, error) {
 }
 
 func (s *Store) refuseWriterLock() error {
-	if err := s.validatePaths(); err != nil {
+	root, err := s.openRoot()
+	if err != nil {
 		return err
 	}
+	defer root.Close()
 	path := filepath.Join(s.root, lockName)
-	if _, err := os.Lstat(path); err == nil {
+	if _, err := root.Lstat(lockName); err == nil {
 		return fmt.Errorf("%w at %s; inspect writer before owner recovery: lock exists", ErrLocked, path)
 	} else if !os.IsNotExist(err) {
 		return fmt.Errorf("inspect writer lock %s: %w", path, err)
@@ -341,6 +396,13 @@ func (s *Store) SelectActive(expectedHead string, recordIDs []string) (State, er
 }
 
 func (s *Store) commit(body eventBody) (State, error) {
+	return s.commitAfterPublish(body, nil)
+}
+
+// commitAfterPublish keeps the publication boundary testable without replacing
+// filesystem operations. Production passes nil; tests can simulate a concurrent
+// external mutation after the event is published and before validated readback.
+func (s *Store) commitAfterPublish(body eventBody, afterPublish func(*os.Root, string) error) (State, error) {
 	event := envelopeFor(body)
 	data, err := canonicalJSON(event)
 	if err != nil {
@@ -352,22 +414,32 @@ func (s *Store) commit(body eventBody) (State, error) {
 	if body.Sequence == 0 || body.Sequence > maxEvents {
 		return State{}, errors.New("event count limit exceeded")
 	}
-	events := filepath.Join(s.root, eventsDir)
-	entries, err := os.ReadDir(events)
+	storeRoot, err := s.openRoot()
+	if err != nil {
+		return State{}, err
+	}
+	defer storeRoot.Close()
+	eventsRoot, err := s.openEventsRoot(storeRoot)
+	if err != nil {
+		return State{}, err
+	}
+	defer eventsRoot.Close()
+	entries, err := readDirAt(eventsRoot, ".")
 	if err != nil {
 		return State{}, err
 	}
 	var currentBytes int64
 	var eventCount int
 	for _, entry := range entries {
-		path := filepath.Join(events, entry.Name())
-		if strings.HasPrefix(entry.Name(), pending) {
+		name := entry.Name()
+		path := filepath.Join(s.root, eventsDir, name)
+		if strings.HasPrefix(name, pending) {
 			return State{}, fmt.Errorf("%w at %s; owner recovery required", ErrIncomplete, path)
 		}
-		if _, ok := parseEventName(entry.Name()); !ok {
+		if _, ok := parseEventName(name); !ok {
 			return State{}, fmt.Errorf("malformed event filename: %s", path)
 		}
-		info, err := os.Lstat(path)
+		info, err := eventsRoot.Lstat(name)
 		if err != nil {
 			return State{}, err
 		}
@@ -386,35 +458,47 @@ func (s *Store) commit(body eventBody) (State, error) {
 	if err = checkAppendCapacity(eventCount, currentBytes, int64(len(data))); err != nil {
 		return State{}, err
 	}
-	f, err := os.CreateTemp(events, pending+"*.json")
+	stageName, file, err := createPendingAt(eventsRoot)
 	if err != nil {
 		return State{}, err
 	}
-	stage := f.Name()
-	if _, err = f.Write(data); err != nil {
-		f.Close()
-		return State{}, fmt.Errorf("partial event retained at %s: %w", stage, err)
+	stagePath := filepath.Join(s.root, eventsDir, stageName)
+	written, writeErr := file.Write(data)
+	if writeErr == nil && written != len(data) {
+		writeErr = io.ErrShortWrite
 	}
-	if err = f.Sync(); err != nil {
-		f.Close()
-		return State{}, fmt.Errorf("partial event retained at %s: %w", stage, err)
+	if writeErr != nil {
+		_ = file.Close()
+		return State{}, fmt.Errorf("partial event retained at %s: %w", stagePath, writeErr)
 	}
-	if err = f.Close(); err != nil {
-		return State{}, fmt.Errorf("event retained at %s: %w", stage, err)
+	if err = file.Sync(); err != nil {
+		_ = file.Close()
+		return State{}, fmt.Errorf("partial event retained at %s: %w", stagePath, err)
 	}
-	name := eventName(body.Sequence, event.EventDigest)
-	dest := filepath.Join(events, name)
-	if _, err = os.Lstat(dest); err == nil {
-		return State{}, fmt.Errorf("event destination exists: %s", dest)
+	if err = file.Close(); err != nil {
+		return State{}, fmt.Errorf("event retained at %s: %w", stagePath, err)
+	}
+	destName := eventName(body.Sequence, event.EventDigest)
+	destPath := filepath.Join(s.root, eventsDir, destName)
+	if _, err = eventsRoot.Lstat(destName); err == nil {
+		return State{}, fmt.Errorf("event destination exists: %s", destPath)
 	} else if !os.IsNotExist(err) {
 		return State{}, err
 	}
-	if err = os.Rename(stage, dest); err != nil {
-		return State{}, fmt.Errorf("event staging file retained at %s: %w", stage, err)
+	if err = eventsRoot.Rename(stageName, destName); err != nil {
+		return State{}, fmt.Errorf("event staging file retained at %s: %w", stagePath, err)
+	}
+	if afterPublish != nil {
+		if err = afterPublish(eventsRoot, destName); err != nil {
+			return State{}, fmt.Errorf("%w: event %s was published but post-publication control failed: %w", ErrCommittedButUnobserved, destPath, err)
+		}
 	}
 	state, err := s.readUnlocked()
 	if err != nil {
-		return State{}, fmt.Errorf("event %s committed; readback failed: %w", dest, err)
+		return State{}, fmt.Errorf("%w: event %s was published but validated readback failed: %w", ErrCommittedButUnobserved, destPath, err)
+	}
+	if state.Sequence != body.Sequence || state.Head != event.EventDigest {
+		return State{}, fmt.Errorf("%w: event %s was published with sequence %d and head %s, but validated readback has sequence %d and head %s", ErrCommittedButUnobserved, destPath, body.Sequence, event.EventDigest, state.Sequence, state.Head)
 	}
 	return state, nil
 }
@@ -430,21 +514,31 @@ func checkAppendCapacity(eventCount int, currentBytes, nextEventBytes int64) err
 }
 
 func (s *Store) readUnlocked() (State, error) {
-	if err := s.validatePaths(); err != nil {
+	root, err := s.openRoot()
+	if err != nil {
 		return State{}, err
 	}
-	meta, genesis, err := readMarker(s.root)
+	defer root.Close()
+	return s.readUnlockedAt(root)
+}
+
+func (s *Store) readUnlockedAt(root *os.Root) (State, error) {
+	meta, genesis, err := readMarkerAt(root)
 	if err != nil {
 		return State{}, err
 	}
 	if meta.StoreID != s.storeID || genesis != s.genesis {
 		return State{}, errors.New("store identity changed")
 	}
-	if err = s.validateRootEntries(); err != nil {
+	if err = s.validateRootEntries(root); err != nil {
 		return State{}, err
 	}
-	dir := filepath.Join(s.root, eventsDir)
-	entries, err := os.ReadDir(dir)
+	eventsRoot, err := s.openEventsRoot(root)
+	if err != nil {
+		return State{}, err
+	}
+	defer eventsRoot.Close()
+	entries, err := readDirAt(eventsRoot, ".")
 	if err != nil {
 		return State{}, err
 	}
@@ -463,7 +557,7 @@ func (s *Store) readUnlocked() (State, error) {
 			return State{}, fmt.Errorf("event case alias %q / %q", old, name)
 		}
 		aliases[fold] = name
-		path := filepath.Join(dir, name)
+		path := filepath.Join(s.root, eventsDir, name)
 		if strings.HasPrefix(name, pending) {
 			return State{}, fmt.Errorf("%w at %s; owner recovery required", ErrIncomplete, path)
 		}
@@ -471,7 +565,7 @@ func (s *Store) readUnlocked() (State, error) {
 		if !ok {
 			return State{}, fmt.Errorf("malformed event filename: %s", path)
 		}
-		info, e := os.Lstat(path)
+		info, e := eventsRoot.Lstat(name)
 		if e != nil {
 			return State{}, e
 		}
@@ -500,7 +594,7 @@ func (s *Store) readUnlocked() (State, error) {
 		if item.seq != uint64(i+1) {
 			return State{}, fmt.Errorf("noncontiguous sequence at %s", item.path)
 		}
-		data, e := readRegular(item.path, maxEvent)
+		data, e := readRegularAt(eventsRoot, item.name, maxEvent)
 		if e != nil {
 			return State{}, e
 		}
@@ -680,34 +774,41 @@ func validateResultBinding(v records.VerificationResult, r records.ProjectionRec
 }
 
 func (s *Store) lock() (func(), error) {
-	if err := s.validatePaths(); err != nil {
+	root, err := s.openRoot()
+	if err != nil {
 		return nil, err
 	}
 	path := filepath.Join(s.root, lockName)
 	var nonce [16]byte
-	if _, err := rand.Read(nonce[:]); err != nil {
+	if _, err = rand.Read(nonce[:]); err != nil {
+		_ = root.Close()
 		return nil, err
 	}
 	value := hex.EncodeToString(nonce[:]) + "\n"
-	f, err := os.OpenFile(path, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0600)
+	f, err := root.OpenFile(lockName, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0600)
 	if err != nil {
+		_ = root.Close()
 		return nil, fmt.Errorf("%w at %s; inspect writer before owner recovery: %v", ErrLocked, path, err)
 	}
 	if _, err = f.WriteString(value); err != nil {
-		f.Close()
+		_ = f.Close()
+		_ = root.Close()
 		return nil, fmt.Errorf("lock retained at %s: %w", path, err)
 	}
 	if err = f.Sync(); err != nil {
-		f.Close()
+		_ = f.Close()
+		_ = root.Close()
 		return nil, fmt.Errorf("lock retained at %s: %w", path, err)
 	}
 	if err = f.Close(); err != nil {
+		_ = root.Close()
 		return nil, fmt.Errorf("lock retained at %s: %w", path, err)
 	}
 	return func() {
-		current, e := os.ReadFile(path)
-		if e == nil && string(current) == value {
-			_ = os.Remove(path)
+		defer root.Close()
+		current, readErr := readRegularAt(root, lockName, maxEvent)
+		if readErr == nil && string(current) == value {
+			_ = root.Remove(lockName)
 		}
 	}, nil
 }
@@ -722,15 +823,39 @@ func (s *Store) validatePaths() error {
 	}
 	return nil
 }
-func (s *Store) validateRootEntries() error {
-	entries, err := os.ReadDir(s.root)
+
+func (s *Store) openRoot() (*os.Root, error) {
+	if err := s.validatePaths(); err != nil {
+		return nil, err
+	}
+	root, err := openInspectedDirectory(s.root, s.rootIdentity)
+	if err != nil {
+		return nil, err
+	}
+	if _, err = preparePaths(s.root, s.forbidden, false); err != nil {
+		_ = root.Close()
+		return nil, err
+	}
+	return root, nil
+}
+
+func (s *Store) openEventsRoot(root *os.Root) (*os.Root, error) {
+	events, _, err := openDirectoryAt(root, eventsDir, s.eventsIdentity)
+	if err != nil {
+		return nil, err
+	}
+	return events, nil
+}
+
+func (s *Store) validateRootEntries(root *os.Root) error {
+	entries, err := readDirAt(root, ".")
 	if err != nil {
 		return err
 	}
 	allowed := map[string]bool{marker: true, eventsDir: true, lockName: true}
 	seen := map[string]string{}
-	for _, e := range entries {
-		name := e.Name()
+	for _, entry := range entries {
+		name := entry.Name()
 		fold := strings.ToLower(name)
 		if old, ok := seen[fold]; ok && old != name {
 			return fmt.Errorf("store path case alias %q / %q", old, name)
@@ -739,18 +864,19 @@ func (s *Store) validateRootEntries() error {
 		if !allowed[name] {
 			return fmt.Errorf("unknown store entry %s", filepath.Join(s.root, name))
 		}
-		path := filepath.Join(s.root, name)
-		info, er := os.Lstat(path)
+		info, er := root.Lstat(name)
 		if er != nil {
 			return er
 		}
+		path := filepath.Join(s.root, name)
 		if er = rejectReparse(path, info); er != nil {
 			return er
 		}
-		if name == eventsDir && !info.IsDir() {
-			return fmt.Errorf("events path is not a directory: %s", path)
-		}
-		if name != eventsDir && !info.Mode().IsRegular() {
+		if name == eventsDir {
+			if !info.IsDir() || s.eventsIdentity == nil || !os.SameFile(s.eventsIdentity, info) {
+				return fmt.Errorf("events directory identity changed: %s", path)
+			}
+		} else if !info.Mode().IsRegular() {
 			return fmt.Errorf("store entry is not a regular file: %s", path)
 		}
 	}
@@ -763,12 +889,8 @@ func (s *Store) validateRootEntries() error {
 	return nil
 }
 
-func readMarker(root string) (markerEnvelope, string, error) {
-	if err := checkDirectory(root); err != nil {
-		return markerEnvelope{}, "", err
-	}
-	path := filepath.Join(root, marker)
-	data, err := readRegular(path, maxEvent)
+func readMarkerAt(root *os.Root) (markerEnvelope, string, error) {
+	data, err := readRegularAt(root, marker, maxEvent)
 	if err != nil {
 		return markerEnvelope{}, "", err
 	}
@@ -780,48 +902,14 @@ func readMarker(root string) (markerEnvelope, string, error) {
 	encoded, _ := json.Marshal(body)
 	genesis := hash(encoded)
 	if m.APIVersion != APIVersion || len(m.StoreID) != 32 || m.ContentDigest != genesis {
-		return m, "", fmt.Errorf("invalid store marker: %s", path)
+		return m, "", fmt.Errorf("invalid store marker: %s", marker)
 	}
 	if _, err = hex.DecodeString(m.StoreID); err != nil {
-		return m, "", fmt.Errorf("invalid store ID: %s", path)
+		return m, "", fmt.Errorf("invalid store ID: %s", marker)
 	}
 	return m, genesis, nil
 }
-func writeExclusive(path string, data []byte) error {
-	f, err := os.OpenFile(path, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0600)
-	if err != nil {
-		return err
-	}
-	if _, err = f.Write(data); err != nil {
-		f.Close()
-		return err
-	}
-	if err = f.Sync(); err != nil {
-		f.Close()
-		return err
-	}
-	return f.Close()
-}
-func readRegular(path string, max int64) ([]byte, error) {
-	info, err := os.Lstat(path)
-	if err != nil {
-		return nil, err
-	}
-	if err = rejectReparse(path, info); err != nil {
-		return nil, err
-	}
-	if !info.Mode().IsRegular() || info.Size() < 1 || info.Size() > max {
-		return nil, fmt.Errorf("expected bounded regular file: %s", path)
-	}
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return nil, err
-	}
-	if int64(len(data)) != info.Size() {
-		return nil, fmt.Errorf("file changed while reading: %s", path)
-	}
-	return data, nil
-}
+
 func canonicalJSON(v any) ([]byte, error) {
 	b, err := json.Marshal(v)
 	if err != nil {

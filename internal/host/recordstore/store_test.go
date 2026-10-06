@@ -5,8 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"reflect"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -191,6 +193,83 @@ func TestAppendAndActiveSelectionRejectStaleHead(t *testing.T) {
 	_, err = store.AppendAttempt(oldHead, testProjection(t, "projection-c", "src/c.cs", records.StateMaterializedUnverified, "", "c"))
 	if !errors.Is(err, ErrStaleHead) {
 		t.Fatalf("stale append error=%v", err)
+	}
+}
+
+func TestOpenInspectedDirectoryRejectsReplacedRootAlias(t *testing.T) {
+	base := t.TempDir()
+	rootPath := filepath.Join(base, "store")
+	otherPath := filepath.Join(base, "other")
+	if err := os.Mkdir(rootPath, 0700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Mkdir(otherPath, 0700); err != nil {
+		t.Fatal(err)
+	}
+	identity, err := inspectDirectoryPath(rootPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err = os.Rename(rootPath, rootPath+"-saved"); err != nil {
+		t.Fatal(err)
+	}
+	createDirectoryAlias(t, rootPath, otherPath)
+	defer os.Remove(rootPath)
+	if _, err = openDirectoryHandle(rootPath, identity); err == nil {
+		t.Fatal("replaced store root was accepted")
+	}
+	if entries, readErr := os.ReadDir(otherPath); readErr != nil || len(entries) != 0 {
+		t.Fatalf("alias target was changed: entries=%v err=%v", entries, readErr)
+	}
+}
+
+func TestReadRejectsReplacedEventsDirectoryAlias(t *testing.T) {
+	store, root := openTestStore(t)
+	other := filepath.Join(filepath.Dir(root), "other-events")
+	if err := os.Mkdir(other, 0700); err != nil {
+		t.Fatal(err)
+	}
+	original := filepath.Join(root, eventsDir)
+	if err := os.Rename(original, original+"-saved"); err != nil {
+		t.Fatal(err)
+	}
+	createDirectoryAlias(t, original, other)
+	defer os.Remove(original)
+	if _, err := store.Read(); err == nil {
+		t.Fatal("Read accepted a replacement events-directory alias")
+	}
+	if entries, err := os.ReadDir(other); err != nil || len(entries) != 0 {
+		t.Fatalf("read alias target was changed: entries=%v err=%v", entries, err)
+	}
+}
+
+func TestCommitReportsPublishedEventMissingFromValidatedReadback(t *testing.T) {
+	store, _ := openTestStore(t)
+	state, err := store.Read()
+	if err != nil {
+		t.Fatal(err)
+	}
+	record := testProjection(t, "projection-a", "src/a.cs", records.StateMaterializedUnverified, "", "a")
+	body := eventBody{APIVersion: APIVersion, Sequence: state.Sequence + 1, PreviousEventDigest: state.Head, Kind: "attempt", Record: &record}
+	_, err = store.commitAfterPublish(body, func(events *os.Root, name string) error {
+		return events.Remove(name)
+	})
+	if !errors.Is(err, ErrCommittedButUnobserved) {
+		t.Fatalf("missing committed event was not reported as partial failure: %v", err)
+	}
+}
+
+func createDirectoryAlias(t *testing.T, alias, target string) {
+	t.Helper()
+	if runtime.GOOS == "windows" {
+		output, err := exec.Command("cmd", "/c", "mklink", "/J", alias, target).CombinedOutput()
+		if err != nil {
+			t.Fatalf("create junction: %v: %s", err, output)
+		}
+		return
+	}
+	if err := os.Symlink(target, alias); err != nil {
+		t.Skipf("directory symlink unavailable: %v", err)
 	}
 }
 
