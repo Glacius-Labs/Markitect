@@ -185,12 +185,27 @@ func TestAnchoredAtomicWriteContainsSwapAtPreOpenBoundary(t *testing.T) {
 	}
 	defer anchored.Close()
 	original := filepath.Join(rootPath, "target-original")
+	var hookReached, injected bool
+	var injectionErr error
 	err = anchored.atomicWriteWithHook("target/escaped.txt", []byte("must not write\n"), 0644, func() error {
+		hookReached = true
 		if err := os.Rename(parent, original); err != nil {
+			injectionErr = err
 			return err
 		}
-		return os.Symlink(outside, parent)
+		if err := os.Symlink(outside, parent); err != nil {
+			injectionErr = err
+			return err
+		}
+		injected = true
+		return nil
 	})
+	if !hookReached {
+		t.Fatalf("pre-open race hook did not execute: %v", err)
+	}
+	if !injected {
+		t.Skipf("directory swap could not be injected: %v", injectionErr)
+	}
 	if err == nil {
 		t.Fatal("rooted OpenFile accepted a parent swapped after path and root identity validation")
 	}
@@ -228,12 +243,27 @@ func TestAnchoredAtomicWriteDoesNotFollowInRootAliasAtPreOpenBoundary(t *testing
 	}
 	defer anchored.Close()
 	original := filepath.Join(rootPath, "target-original")
+	var hookReached, injected bool
+	var injectionErr error
 	err = anchored.atomicWriteWithHook("target/escaped.txt", []byte("must not write\n"), 0644, func() error {
+		hookReached = true
 		if err := os.Rename(parent, original); err != nil {
+			injectionErr = err
 			return err
 		}
-		return os.Symlink(sibling, parent)
+		if err := os.Symlink(sibling, parent); err != nil {
+			injectionErr = err
+			return err
+		}
+		injected = true
+		return nil
 	})
+	if !hookReached {
+		t.Fatalf("pre-open race hook did not execute: %v", err)
+	}
+	if !injected {
+		t.Skipf("in-root alias swap could not be injected: %v", injectionErr)
+	}
 	if err == nil {
 		t.Fatal("rooted writer accepted a parent identity change during temporary creation")
 	}
