@@ -154,3 +154,15 @@ func TestStandaloneBootstrapToolingHasNoProductDependencies(t *testing.T) {
 		}
 	}
 }
+
+func TestCanonicalWorkflowCheckIsIsolatedAdopterCode(t *testing.T) {
+	if findings := Check([]Edge{{From: "examples/canonical-workflow/check"}}); len(findings) != 0 {
+		t.Fatal(findings)
+	}
+	for _, target := range []string{"internal/core", "internal/host", "internal/modules/githooks"} {
+		findings := Check([]Edge{{From: "examples/canonical-workflow/check", To: target}})
+		if len(findings) != 1 || findings[0].Rule != "adopting-code fixture may not import Markitect product packages" {
+			t.Fatalf("project-owned check acquired product coupling: %v", findings)
+		}
+	}
+}
