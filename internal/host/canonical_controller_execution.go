@@ -45,7 +45,19 @@ func ExecuteCanonicalController(ctx context.Context, root, base, revision, confi
 	if err != nil {
 		return run, err
 	}
-	for _, p := range proposal.Plan.Proposals {
+	ordered, err := canonicalControllerOrderedProposals(cfg, proposal)
+	if err != nil {
+		return run, err
+	}
+	stage := cloneCanonicalCandidateSnapshot(proposal.observed)
+	staged := map[string]map[string][]byte{}
+	scheduled := map[string]bool{}
+	for _, p := range ordered {
+		if p.Decision == "work" {
+			scheduled[p.ProjectionID] = true
+		}
+	}
+	for _, p := range ordered {
 		if p.Decision != "work" {
 			continue
 		}
@@ -55,28 +67,24 @@ func ExecuteCanonicalController(ctx context.Context, root, base, revision, confi
 			if err != nil {
 				return run, err
 			}
+			artifacts, dependencyPaths, err := canonicalControllerExecutorArtifacts(cfg, p, proposal.active, stage, staged, scheduled)
+			if err != nil {
+				item.Escalations = []CanonicalProjectionEscalation{{Code: "dependency.unavailable", Identity: p.ProjectionID, Message: err.Error()}}
+				run.Work = append(run.Work, item)
+				run.Status = "escalated"
+				continue
+			}
 			contextBytes, err := json.Marshal(struct {
-				Model             CanonicalAgentContext `json:"model"`
-				Objective         string                `json:"objective"`
-				AllowedRoots      []string              `json:"allowedRoots"`
-				AllowedExtensions []string              `json:"allowedExtensions"`
-				Constraints       []string              `json:"constraints"`
-			}{contextModel, p.Task.Objective, p.Task.AllowedRoots, p.Task.AllowedExtensions, p.Task.Constraints})
+				Model              CanonicalAgentContext `json:"model"`
+				Objective          string                `json:"objective"`
+				AllowedRoots       []string              `json:"allowedRoots"`
+				AllowedExtensions  []string              `json:"allowedExtensions"`
+				Constraints        []string              `json:"constraints"`
+				DependencyEvidence []string              `json:"readOnlyDependencyEvidence"`
+				DependencyState    string                `json:"dependencyState"`
+			}{contextModel, p.Task.Objective, p.Task.AllowedRoots, p.Task.AllowedExtensions, p.Task.Constraints, dependencyPaths, "Child candidates are unapplied and unverified. Retained child bytes are observed evidence, not new semantic acceptance. Do not edit dependency artifacts outside your own allowed roots."})
 			if err != nil {
 				return run, err
-			}
-			artifactPaths := []string{}
-			for name := range p.Request.TargetFiles {
-				artifactPaths = append(artifactPaths, name)
-			}
-			sort.Strings(artifactPaths)
-			artifacts := []agentexec.Artifact{}
-			for _, name := range artifactPaths {
-				if proposal.observed.Modes[name] != snapshot.RegularMode {
-					return run, errors.New("Executor text scope contains an unsupported file mode")
-				}
-				data := p.Request.TargetFiles[name]
-				artifacts = append(artifacts, agentexec.Artifact{Path: name, Content: data, Mode: "0644", Digest: sha256Prefix(sha256Hex(data))})
 			}
 			result, invokeErr := agentexec.Run(ctx, cfg.Executor.agentConfig(), agentexec.Request{
 				Role: agentexec.RoleExecutor, SourceRevision: revision, ModelDigest: proposal.Plan.ModelDigest, ModulePin: p.Module.Digest, ProjectionID: p.ProjectionID,
@@ -121,7 +129,7 @@ func ExecuteCanonicalController(ctx context.Context, root, base, revision, confi
 				return run, err
 			}
 		}
-		prepared, err := PrepareCanonicalProjection(proposal.fixed, proposal.observed, p.Request.Projection.Identity(), toolVersion, toolDigest, item.Candidate, proposal.fixed.Config.Checks...)
+		prepared, err := PrepareCanonicalProjection(proposal.fixed, stage, p.Request.Projection.Identity(), toolVersion, toolDigest, item.Candidate, proposal.fixed.Config.Checks...)
 		if err != nil {
 			return run, err
 		}
@@ -146,6 +154,10 @@ func ExecuteCanonicalController(ctx context.Context, root, base, revision, confi
 			run.Status = "escalated"
 		}
 		run.Work = append(run.Work, item)
+		if len(item.Escalations) == 0 && item.PlanDigest != "" {
+			staged[item.ProjectionID] = item.Outputs
+			stageCanonicalCandidate(stage, item.Outputs)
+		}
 	}
 	// Execution does not grant stale input a fresh approval.
 	fresh, err := ProposeCanonicalController(root, base, revision, configPath, cfg)
@@ -264,13 +276,27 @@ func ApplyCanonicalController(root, configPath string, cfg CanonicalControllerCo
 	if len(proposals) != len(run.Work) {
 		return report, errors.New("reviewed work does not exactly cover current Module work")
 	}
-	for _, work := range run.Work {
+	ordered, err := canonicalControllerOrderedProposals(cfg, fresh)
+	if err != nil {
+		return report, err
+	}
+	expectedOrder := []string{}
+	for _, p := range ordered {
+		if p.Decision == "work" {
+			expectedOrder = append(expectedOrder, p.ProjectionID)
+		}
+	}
+	stage := cloneCanonicalCandidateSnapshot(fresh.observed)
+	for index, work := range run.Work {
+		if index >= len(expectedOrder) || work.ProjectionID != expectedOrder[index] {
+			return report, errors.New("reviewed work differs from deterministic child-first execution order")
+		}
 		p, ok := proposals[work.ProjectionID]
 		if !ok {
 			return report, errors.New("reviewed work has an extra or duplicate Projection")
 		}
 		delete(proposals, work.ProjectionID)
-		prepared, err := PrepareCanonicalProjection(fresh.fixed, fresh.observed, p.Request.Projection.Identity(), run.ToolVersion, run.ToolDigest, work.Candidate, fresh.fixed.Config.Checks...)
+		prepared, err := PrepareCanonicalProjection(fresh.fixed, stage, p.Request.Projection.Identity(), run.ToolVersion, run.ToolDigest, work.Candidate, fresh.fixed.Config.Checks...)
 		if err != nil {
 			return report, err
 		}
@@ -296,6 +322,7 @@ func ApplyCanonicalController(root, configPath string, cfg CanonicalControllerCo
 			}
 		}
 		preparedByID[work.ProjectionID] = prepared
+		stageCanonicalCandidate(stage, prepared.Outputs)
 	}
 	if len(output) == 0 {
 		report.Status = "no-materialization-work"

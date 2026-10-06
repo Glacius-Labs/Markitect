@@ -303,3 +303,21 @@ func TestExecuteRetriesAreBoundedAndInputDigestIsCanonical(t *testing.T) {
 		t.Fatal("expected excessive retry validation error")
 	}
 }
+
+func TestExecutionOrderUsesChildFirstSharedScopesWithoutEvidence(t *testing.T) {
+	identity := records.CheckIdentity{ID: "own", Version: "1", Digest: "sha256:" + strings.Repeat("a", 64)}
+	graph := Input{RootIDs: []string{"parent"}, Nodes: []Node{
+		{ID: "parent", ScopeIDs: []string{"a", "b"}, Children: []string{"right", "left"}, RequiredChecks: []records.CheckIdentity{identity}},
+		{ID: "left", ScopeIDs: []string{"a"}, Children: []string{"leaf"}, RequiredChecks: []records.CheckIdentity{identity}},
+		{ID: "right", ScopeIDs: []string{"a", "b"}, Children: []string{"leaf"}, RequiredChecks: []records.CheckIdentity{identity}},
+		{ID: "leaf", ScopeIDs: []string{"a"}, RequiredChecks: []records.CheckIdentity{identity}},
+	}}
+	order, err := ExecutionOrder(graph)
+	if err != nil || strings.Join(order, ",") != "leaf,left,right,parent" {
+		t.Fatalf("child-first order: %v %v", order, err)
+	}
+	graph.Nodes[3].Children = []string{"parent"}
+	if _, err := ExecutionOrder(graph); err == nil {
+		t.Fatal("cyclic execution order accepted")
+	}
+}

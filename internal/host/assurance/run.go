@@ -255,6 +255,20 @@ func Execute(ctx context.Context, input RunInput, runner Runner) (RunReport, err
 	return report, nil
 }
 
+// ExecutionOrder returns the validated deterministic child-first order without
+// inventing materialization or verification evidence.
+func ExecutionOrder(input Input) ([]string, error) {
+	graph := canonicalGraph(input)
+	report, err := Evaluate(graph)
+	if err != nil {
+		return nil, err
+	}
+	if len(report.Nodes) != len(graph.Nodes) {
+		return nil, errors.New("all execution scopes must be reachable from declared roots")
+	}
+	return postorder(graph), nil
+}
+
 func canonicalGraph(input Input) Input {
 	graph := Input{RootIDs: append([]string(nil), input.RootIDs...), Nodes: make([]Node, len(input.Nodes))}
 	sort.Strings(graph.RootIDs)

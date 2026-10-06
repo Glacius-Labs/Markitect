@@ -10,18 +10,23 @@ import (
 // Validate the declared composition graph before executing any actor. This is
 // structural graph validation, not fabricated verification evidence.
 func validateCanonicalControllerAssurance(cfg CanonicalControllerConfig, fixed *CanonicalSource) error {
+	_, err := canonicalControllerAssuranceGraph(cfg, fixed)
+	return err
+}
+
+func canonicalControllerAssuranceGraph(cfg CanonicalControllerConfig, fixed *CanonicalSource) (assurance.Input, error) {
 	if len(cfg.AssuranceScopes) == 0 {
-		return nil
+		return assurance.Input{}, nil
 	}
 	requests, err := projectionRequestIndex(fixed)
 	if err != nil {
-		return err
+		return assurance.Input{}, err
 	}
 	graph := assurance.Input{RootIDs: cfg.AssuranceRoots}
 	for _, scope := range cfg.AssuranceScopes {
 		request, found := requests[scope.ProjectionID]
 		if !found {
-			return fmt.Errorf("assurance scope %s selects unknown Projection %s", scope.ID, scope.ProjectionID)
+			return assurance.Input{}, fmt.Errorf("assurance scope %s selects unknown Projection %s", scope.ID, scope.ProjectionID)
 		}
 		node := assurance.Node{ID: scope.ID, Children: scope.Children}
 		for _, def := range request.Definitions {
@@ -30,7 +35,7 @@ func validateCanonicalControllerAssurance(cfg CanonicalControllerConfig, fixed *
 		for _, check := range scope.Checks {
 			digest, err := digestCanonicalValue(check)
 			if err != nil {
-				return err
+				return assurance.Input{}, err
 			}
 			node.RequiredChecks = append(node.RequiredChecks, records.CheckIdentity{ID: check.Name, Version: "configured/v1", Digest: digest})
 		}
@@ -38,10 +43,10 @@ func validateCanonicalControllerAssurance(cfg CanonicalControllerConfig, fixed *
 	}
 	report, err := assurance.Evaluate(graph)
 	if err != nil {
-		return err
+		return assurance.Input{}, err
 	}
 	if len(report.Nodes) != len(graph.Nodes) {
-		return errors.New("all configured assurance scopes must be reachable from explicit roots")
+		return assurance.Input{}, errors.New("all configured assurance scopes must be reachable from explicit roots")
 	}
-	return nil
+	return graph, nil
 }
