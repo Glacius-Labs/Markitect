@@ -1,0 +1,35 @@
+apiVersion: markitect.example.org/module/v1alpha1
+name: markitect-agent-rules
+version: 1.0.0
+type: projection
+purpose: Registers independent Codex and Claude Agent Rules projection targets.
+requires:
+  core: "1"
+  modules: []
+provides:
+  schemas: []
+  projectors:
+    - id: agent-rules-codex
+      version: 1.0.0
+      target: codex
+      allKinds: true
+      allowedRoots:
+        - agent/
+      guidance: >
+        Render only the selected canonical Definitions and explicitly supplied
+        ProjectionPolicy guidance. Explain that canonical Definitions and
+        Schemas are authoritative. Preserve references with exact identities and
+        provenance. Return proposed AGENTS.md content for review; do not claim
+        adoption or add requirements beyond selected source meaning and policy.
+    - id: agent-rules-claude
+      version: 1.0.0
+      target: claude
+      allKinds: true
+      allowedRoots:
+        - assistant/
+      guidance: >
+        Render only the selected canonical Definitions and explicitly supplied
+        ProjectionPolicy guidance. Explain that canonical Definitions and
+        Schemas are authoritative. Preserve references with exact identities and
+        provenance. Return proposed CLAUDE.md content for review; do not claim
+        adoption or add requirements beyond selected source meaning and policy.

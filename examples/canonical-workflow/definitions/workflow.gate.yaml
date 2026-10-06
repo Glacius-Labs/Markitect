@@ -1,0 +1,8 @@
+apiVersion: workflow.example.org/v1
+kind: Gate
+metadata:
+  namespace: example
+  name: source-review
+purpose: Require source review before a workflow change is treated as ready.
+spec:
+  condition: The workflow owner has reviewed the canonical Definition and its explicit references.
