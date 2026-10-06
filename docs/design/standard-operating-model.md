@@ -28,11 +28,12 @@ The first implementation checkpoint adds a read-only controller audit. It uses t
 The audit requires read-only content observation of all declared targets through an already configured auditAll runtime. Observation invokes no Executor, Verifier or fixed check and writes no operational state. It must not silently change runtime configuration to manufacture fresh evidence. Each canonical Projection is represented in the report, including its canonical subject and policy references, assurance scope, owned artifacts and available current record and verification identities.
 
 Technical completion requires:
+- at least one declared canonical Projection; an empty scope provides no completion evidence;
 - every canonical Projection in the selected source to be accounted for;
 - explicitly configured assurance scopes to be valid and reachable, including each required parent;
 - no pending materialization, escalation, evidence refresh, ownership conflict or unknown artifact within the declared target inventory;
 - current passing verification for every required local and parent scope, with exact target, source, checks, runtime and child bindings;
-- stable ledger/active selection during the audit.
+- stable target inventory, selected input bytes and ledger/active selection across final readback during the audit.
 
 Intentional exact target-path exclusions remain visible in the report with their reasons, outside the managed claim. They do not remove canonical Projections or their obligations from accounting. An exclusion is not proof of conformity and need not block completion of the explicitly declared managed scope. Facts outside the declared model and target roots are not covered. A complete audit does not establish the sufficiency of arbitrary prose, unmodeled obligations, universal correctness or human acceptance.
 
@@ -46,7 +47,7 @@ Existing projection records provide source-to-artifact provenance. The audit add
 
 ## Finite delivery sequence
 
-First implement and independently review the audit and executable operating example over the current controller. Then demonstrate one model change across two representations, a failing local or parent check, repair under unchanged intent, and final declared-scope closure. Preserve unaffected valid bytes and expose missing coverage.
+The audit and executable protocol examples are implemented over the current controller; their bounded coverage is recorded in [the validation guide](../validation/standard-operating-model.md). They exercise a model change across two representations, a failing local judgment, repair under unchanged intent, and final declared-scope closure. A live-agent demonstration with meaningful semantic checks remains the next evidence step. Preserve unaffected valid bytes and expose missing coverage.
 
 A continuous local runner follows only after the finite cycle is usable. It must reuse the same commands and contracts, persist enough state to resume safely, bound retries, reject stale work and become idle when no work remains. Kubernetes is a possible later execution environment, not a prerequisite. Long-running scheduling and general automatic repair are not claimed by the audit checkpoint.
 

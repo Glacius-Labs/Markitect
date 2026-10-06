@@ -13,6 +13,8 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/infrastructure/source"
 )
 
+// This exercises the real controller with deterministic protocol actors;
+// their passing responses do not establish semantic conformity.
 func TestCanonicalControllerModelChangeReconcilesBothRepresentationsAndCloses(t *testing.T) {
 	const (
 		configPath  = "examples/canonical-projection/canonical.yaml"
@@ -134,7 +136,7 @@ func TestCanonicalControllerModelChangeReconcilesBothRepresentationsAndCloses(t 
 	if err != nil || finalAudit.Status != "complete" {
 		t.Fatalf("freshly reconciled source did not close: status=%s findings=%+v err=%v", finalAudit.Status, finalAudit.Findings, err)
 	}
-	if finalAudit.SourceRevision != updatedSource || finalAudit.Status == initialAudit.Status && finalAudit.Digest == initialAudit.Digest {
+	if finalAudit.SourceRevision != updatedSource || finalAudit.Digest == initialAudit.Digest {
 		t.Fatal("final audit did not bind the changed source and current evidence")
 	}
 
@@ -142,9 +144,7 @@ func TestCanonicalControllerModelChangeReconcilesBothRepresentationsAndCloses(t 
 	if err != nil || len(newActive) != 2 {
 		t.Fatalf("read changed-model active records: count=%d err=%v", len(newActive), err)
 	}
-	newByProjection := map[string]records.ProjectionRecord{}
 	for _, record := range newActive {
-		newByProjection[record.ProjectionID] = record
 		old, ok := oldByProjection[record.ProjectionID]
 		if !ok || record.ModelDigest == old.ModelDigest || record.Revision != updatedSource {
 			t.Fatalf("materialized record did not bind changed source model: old=%+v new=%+v", old, record)

@@ -2,6 +2,12 @@ apiVersion: markitect.example.org/artifact-coverage/v1alpha1
 kind: ArtifactCoverage
 spec:
   roots:
+    - internal/host/canonical_controller_model_change_test.go
+    - internal/host/canonical_controller_audit.go
+    - internal/host/canonical_controller_audit_test.go
+    - internal/host/canonical_controller_operating_test.go
+    - internal/host/cli/canonical_audit_test.go
+    - docs/validation/standard-operating-model.md
     - internal/host/canonical_controller_verification_windows_test.go
     - internal/host/canonical_controller_lease_windows_test.go
     - internal/host/canonical_controller_lease_linux_test.go
@@ -132,6 +138,18 @@ spec:
     - internal/host/cli/canonical_goal_test.go
     - examples/public_fixture_test.go
   tooling:
+    - path: internal/host/canonical_controller_model_change_test.go
+      owner: standard-operating-model-closure
+    - path: internal/host/canonical_controller_audit.go
+      owner: standard-operating-model-closure
+    - path: internal/host/canonical_controller_audit_test.go
+      owner: standard-operating-model-closure
+    - path: internal/host/canonical_controller_operating_test.go
+      owner: standard-operating-model-closure
+    - path: internal/host/cli/canonical_audit_test.go
+      owner: standard-operating-model-closure
+    - path: docs/validation/standard-operating-model.md
+      owner: standard-operating-model-closure
     - path: internal/host/canonical_controller_verification_windows_test.go
       owner: controller-verifier-fixture-path-controls
     - path: experiments/operating-model-proof/runs/windows-verifier-fixture-paths/receipt.json
