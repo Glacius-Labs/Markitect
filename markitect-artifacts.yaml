@@ -1350,3 +1350,7 @@ spec:
       owner: controller-verifier-observation-coverage
     - path: internal/host/canonical_controller_coverage_test.go
       owner: controller-verifier-observation-coverage
+    - path: docs/design/canonical-verification-refresh.md
+      owner: controller-verification-freshness
+    - path: internal/host/canonical_verification_refresh_test.go
+      owner: controller-verification-freshness
