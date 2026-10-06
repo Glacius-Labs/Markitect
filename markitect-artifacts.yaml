@@ -77,6 +77,10 @@ spec:
     - internal/host/canonical_controller_test.go
     - docs/design/candidate-dependency-execution.md
     - examples/recursive_assurance_test.go
+    - internal/host/canonical_goal_modeling.go
+    - internal/host/canonical_goal_modeling_test.go
+    - docs/design/goal-led-modeling.md
+    - docs/design/projection-evidence-refresh.md
   tooling:
     - path: AGENTS.md
       owner: repository-agent-navigation
@@ -560,3 +564,23 @@ spec:
       owner: operating-model-proof-harness
     - path: examples/recursive_assurance_test.go
       owner: recursive-assurance-fixture-tests
+    - path: internal/host/agentexec/process_linux.go
+      owner: agent-process-lifecycle
+    - path: internal/host/agentexec/process_windows.go
+      owner: agent-process-lifecycle
+    - path: internal/host/agentexec/process_tree.go
+      owner: agent-process-lifecycle
+    - path: internal/host/agentexec/process_other.go
+      owner: agent-process-lifecycle
+    - path: internal/host/canonical_goal_modeling.go
+      owner: goal-led-modeling-proposal
+    - path: internal/host/canonical_goal_modeling_test.go
+      owner: goal-led-modeling-tests
+    - path: docs/design/goal-led-modeling.md
+      owner: goal-led-modeling-design
+    - path: docs/design/projection-evidence-refresh.md
+      owner: projection-evidence-refresh-design
+    - path: experiments/operating-model-proof/protocol-v2.md
+      owner: operating-model-proof-harness
+    - path: experiments/operating-model-proof/test_run.py
+      owner: operating-model-proof-harness-tests
