@@ -21,7 +21,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-PROTOCOL = "operating-model-proof/v8"
+PROTOCOL = "operating-model-proof/v9"
 CODEX_RUNNER_DIGEST = "sha256:b632fd3b7b5766183fcdb8bfccb3de9ad81053fda5f6acf35bac288b0b21a594"
 FULL_SHA = re.compile(r"^(?:[0-9a-f]{40}|[0-9a-f]{64})$")
 ROOT = Path(__file__).resolve().parents[2]
@@ -47,6 +47,58 @@ def list_or_empty(value: Any, label: str) -> list[Any]:
     return value
 
 
+def array_value(container: dict[str, Any], key: str, label: str) -> tuple[list[Any], str]:
+    if key not in container:
+        return [], "missing"
+    value = container[key]
+    if value is None:
+        return [], "null"
+    items = list_or_empty(value, label)
+    if len(items) > 4096:
+        raise ProofError(f"CLI report field {label} exceeds the summary array bound")
+    return items, "present"
+
+
+def bounded_runner_args(args: Any, role: str) -> list[str]:
+    if not isinstance(args, list) or not args or len(args) > 64:
+        raise ProofError(f"{role} command arguments are missing or exceed the argument bound")
+    if any(not isinstance(arg, str) or not arg or len(arg) > 2048 for arg in args):
+        raise ProofError(f"{role} command arguments must be bounded non-empty strings")
+    return args
+
+
+def runner_flag_value(args: list[str], flag: str, role: str) -> str:
+    positions = [index for index, value in enumerate(args) if value == flag]
+    if len(positions) != 1:
+        raise ProofError(f"{role} command must specify {flag} exactly once")
+    index = positions[0]
+    if index + 1 >= len(args):
+        raise ProofError(f"{role} command value for {flag} is missing")
+    value = args[index + 1]
+    if not value or value.startswith("--") or len(value) > 512:
+        raise ProofError(f"{role} command value for {flag} is invalid")
+    return value
+
+
+def require_first_script(args: list[str], expected_runner: Path, role: str) -> None:
+    script = Path(args[0])
+    if not script.is_absolute() or script.resolve() != expected_runner.resolve():
+        raise ProofError(f"{role} must use the repository Codex adapter as its first script argument")
+
+
+def require_runner_runtime_file(runtime_files: Any, expected_runner: Path, expected_digest: str, role: str) -> None:
+    if not isinstance(runtime_files, list):
+        raise ProofError(f"{role}.runtimeFiles must explicitly include the repository Codex adapter")
+    expected_path = expected_runner.resolve()
+    for item in runtime_files:
+        if (isinstance(item, dict) and isinstance(item.get("path"), str)
+                and Path(item["path"]).resolve() == expected_path):
+            if item.get("digest") != expected_digest:
+                raise ProofError(f"{role}.runtimeFiles Codex adapter digest mismatch")
+            return
+    raise ProofError(f"{role}.runtimeFiles must bind the exact repository Codex adapter path and digest")
+
+
 def assurance_node_count(value: Any) -> int | None:
     if value is None:
         return None
@@ -59,6 +111,22 @@ def assurance_node_count(value: Any) -> int | None:
     if nodes is None:
         return None
     return len(list_or_empty(nodes, "assurance.Evaluation.Nodes"))
+
+
+def assurance_nodes_availability(report: dict[str, Any]) -> str:
+    if "assurance" not in report:
+        return "missing"
+    value = report["assurance"]
+    if value is None:
+        return "null"
+    assurance = object_or_empty(value, "assurance")
+    if "Evaluation" not in assurance:
+        return "missing"
+    evaluation = assurance["Evaluation"]
+    if evaluation is None:
+        return "null"
+    evaluation = object_or_empty(evaluation, "assurance.Evaluation")
+    return array_value(evaluation, "Nodes", "assurance.Evaluation.Nodes")[1]
 
 
 def sha(data: bytes) -> str:
@@ -238,41 +306,37 @@ def inspect_runtime(path: Path, fixture: Path) -> dict[str, Any]:
         options = runner.get("modelOptions")
         if not isinstance(options, dict) or options.get("model_reasoning_effort") != "high":
             raise ProofError(f"{role} must explicitly bind high reasoning effort")
-        args = runner.get("args")
-        if not isinstance(args, list) or not args:
-            raise ProofError(f"{role} command arguments are missing")
+        args = bounded_runner_args(runner.get("args"), role)
         command = Path(runner.get("command", ""))
         if not command.is_absolute() or not command.is_file():
             raise ProofError(f"{role} command must be an absolute executable file")
         py_version = subprocess.run([str(command), "--version"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=False, shell=False).stdout.decode("utf-8", "replace").strip()
         if "Python 3.13." not in py_version:
             raise ProofError(f"{role} must use Python 3.13, got: {py_version}")
-        if "--codex-executable" not in args or "--codex-version" not in args or "--model" not in args:
-            raise ProofError(f"{role} command must bind the native Codex executable, version and model")
         expected_runner = ROOT / "internal" / "tooling" / "codexrunner" / "runner.py"
-        if not any(isinstance(a, str) and Path(a).resolve() == expected_runner.resolve() for a in args):
-            raise ProofError(f"{role} must use the repository Codex adapter")
+        require_first_script(args, expected_runner, role)
         wrapper_digest, _ = file_sha(expected_runner)
         require_digest(wrapper_digest, CODEX_RUNNER_DIGEST, "Codex runner wrapper")
-        codex_path = Path(args[args.index("--codex-executable") + 1])
+        require_runner_runtime_file(runner.get("runtimeFiles"), expected_runner, wrapper_digest, role)
+        codex_path = Path(runner_flag_value(args, "--codex-executable", role))
         if not codex_path.is_absolute() or codex_path.suffix.lower() != ".exe" or not codex_path.is_file():
             raise ProofError(f"{role} must bind an absolute native Windows Codex executable")
-        if args[args.index("--codex-version") + 1] != "0.130.0" or args[args.index("--model") + 1] != "gpt-5.5":
+        if runner_flag_value(args, "--codex-version", role) != "0.130.0" or runner_flag_value(args, "--model", role) != "gpt-5.5":
             raise ProofError(f"{role} Codex CLI/model binding differs from protocol")
         if command.is_absolute() and command.is_file():
             digest, size = file_sha(command)
             path_digest = sha(str(command.resolve()).encode())
             files[path_digest] = runtime_file_fact(command, digest, size)
-        args = runner.get("args")
-        if not isinstance(args, list) or not args:
-            raise ProofError(f"{role} command arguments are missing")
         for arg in args:
             if isinstance(arg, str) and Path(arg).is_absolute() and Path(arg).is_file():
                 candidate = Path(arg)
                 digest, size = file_sha(candidate)
                 path_digest = sha(str(candidate.resolve()).encode())
                 files[path_digest] = runtime_file_fact(candidate, digest, size)
-        for item in list_or_empty(runner.get("runtimeFiles"), f"{role}.runtimeFiles"):
+        runtime_files = runner.get("runtimeFiles")
+        if runtime_files is None:
+            raise ProofError(f"{role}.runtimeFiles must be an explicit array")
+        for item in list_or_empty(runtime_files, f"{role}.runtimeFiles"):
             if not isinstance(item, dict) or not isinstance(item.get("path"), str):
                 raise ProofError(f"{role} runtimeFiles entry is invalid")
             runtime_file = Path(item["path"])
@@ -315,7 +379,11 @@ def summarize_receipt(value: Any) -> Any:
 def proposal_metrics(report: dict[str, Any]) -> dict[str, Any]:
     report = object_or_empty(report, "proposalReport")
     plan = object_or_empty(report.get("plan"), "plan")
-    proposals = list_or_empty(plan.get("proposals"), "plan.proposals")
+    proposals, proposals_availability = array_value(plan, "proposals", "plan.proposals")
+    observed_paths, observed_paths_availability = array_value(plan, "observedPaths", "plan.observedPaths")
+    unknown_artifacts, unknown_artifacts_availability = array_value(plan, "unknownArtifacts", "plan.unknownArtifacts")
+    refresh, refresh_availability = array_value(plan, "evidenceRefreshRequired", "plan.evidenceRefreshRequired")
+    unobserved, unobserved_availability = array_value(plan, "unobservedProjections", "plan.unobservedProjections")
     result = {
         "status": report.get("status"),
         "proposalDigest": report.get("digest"),
@@ -326,10 +394,15 @@ def proposal_metrics(report: dict[str, Any]) -> dict[str, Any]:
         "baseRevision": plan.get("baseRevision"),
         "revision": plan.get("revision"),
         "sourceModelDigest": plan.get("modelDigest"),
-        "observedPaths": list_or_empty(plan.get("observedPaths"), "plan.observedPaths"),
-        "unknownArtifacts": list_or_empty(plan.get("unknownArtifacts"), "plan.unknownArtifacts"),
-        "evidenceRefreshRequired": list_or_empty(plan.get("evidenceRefreshRequired"), "plan.evidenceRefreshRequired"),
-        "unobservedProjections": list_or_empty(plan.get("unobservedProjections"), "plan.unobservedProjections"),
+        "observedPaths": observed_paths,
+        "observedPathsAvailability": observed_paths_availability,
+        "unknownArtifacts": unknown_artifacts,
+        "unknownArtifactsAvailability": unknown_artifacts_availability,
+        "evidenceRefreshRequired": refresh,
+        "evidenceRefreshRequiredAvailability": refresh_availability,
+        "unobservedProjections": unobserved,
+        "unobservedProjectionsAvailability": unobserved_availability,
+        "proposalsAvailability": proposals_availability,
         "proposals": [],
     }
     for proposal in proposals:
@@ -337,14 +410,18 @@ def proposal_metrics(report: dict[str, Any]) -> dict[str, Any]:
             continue
         module = object_or_empty(proposal.get("module"), "proposal.module")
         request = object_or_empty(proposal.get("request"), "proposal.request")
+        reasons, reasons_availability = array_value(proposal, "reasons", "proposal.reasons")
+        escalations, escalations_availability = array_value(proposal, "escalations", "proposal.escalations")
         result["proposals"].append({
             "projectionId": proposal.get("projectionId"),
             "module": {key: module.get(key) for key in ("name", "version", "digest")},
             "requestDigest": request.get("requestDigest"),
             "targetDigests": request.get("targetDigests"),
             "decision": proposal.get("decision"),
-            "reasonCount": len(list_or_empty(proposal.get("reasons"), "proposal.reasons")),
-            "escalations": safe_text_facts(proposal.get("escalations")),
+            "reasonCount": len(reasons) if reasons_availability == "present" else None,
+            "reasonsAvailability": reasons_availability,
+            "escalations": safe_text_facts(escalations),
+            "escalationsAvailability": escalations_availability,
         })
     return result
 
@@ -355,7 +432,8 @@ def run_metrics(action: str, report: dict[str, Any]) -> dict[str, Any]:
         return proposal_metrics(report)
     if action == "controller-execute":
         work = []
-        for item in list_or_empty(report.get("work"), "work"):
+        work_items, work_availability = array_value(report, "work", "work")
+        for item in work_items:
             if not isinstance(item, dict):
                 continue
             outputs = object_or_empty(item.get("outputs"), "work.outputs")
@@ -367,6 +445,7 @@ def run_metrics(action: str, report: dict[str, Any]) -> dict[str, Any]:
                 output_facts.append({"path": name, "digest": sha(data), "bytes": len(data)})
             candidate = item.get("candidate")
             candidate_bytes = base64.b64decode(candidate, validate=True) if isinstance(candidate, str) else b""
+            escalations, escalations_availability = array_value(item, "escalations", "work.escalations")
             work.append({
                 "projectionId": item.get("projectionId"),
                 "candidateDigest": item.get("candidateDigest"),
@@ -374,7 +453,8 @@ def run_metrics(action: str, report: dict[str, Any]) -> dict[str, Any]:
                 "candidateBytes": len(candidate_bytes),
                 "outputs": output_facts,
                 "executorReceipt": summarize_receipt(item.get("executor")),
-                "escalations": safe_text_facts(item.get("escalations")),
+                "escalations": safe_text_facts(escalations),
+                "escalationsAvailability": escalations_availability,
             })
         return {
             "status": report.get("status"),
@@ -386,36 +466,76 @@ def run_metrics(action: str, report: dict[str, Any]) -> dict[str, Any]:
             "toolVersion": report.get("toolVersion"),
             "toolDigest": report.get("toolDigest"),
             "work": work,
+            "workAvailability": work_availability,
         }
     if action == "controller-apply":
+        written, written_availability = array_value(report, "written", "written")
+        records, records_availability = array_value(report, "records", "records")
+        evidence_paths, evidence_paths_availability = array_value(report, "evidencePaths", "evidencePaths")
+        refresh, refresh_availability = array_value(report, "evidenceRefreshRequired", "evidenceRefreshRequired")
+        if len(records) > 128:
+            raise ProofError("Apply record count exceeds the summary bound")
+        record_facts = []
+        total_artifacts = 0
+        for index, record in enumerate(records):
+            if not isinstance(record, dict):
+                continue
+            artifacts, artifacts_availability = array_value(record, "artifacts", f"records[{index}].artifacts")
+            if len(artifacts) > 4096:
+                raise ProofError("Apply record artifact count exceeds the summary bound")
+            total_artifacts += len(artifacts)
+            if total_artifacts > 8192:
+                raise ProofError("Apply artifact total exceeds the summary bound")
+            artifact_facts = []
+            for artifact in artifacts:
+                if not isinstance(artifact, dict) or any(not isinstance(artifact.get(key), str) for key in ("path", "mode", "digest")):
+                    raise ProofError("Apply record artifact must include exact path, mode and digest strings")
+                if any(len(artifact[key]) > 4096 for key in ("path", "mode", "digest")):
+                    raise ProofError("Apply record artifact field exceeds the summary bound")
+                artifact_facts.append({key: artifact[key] for key in ("path", "mode", "digest")})
+            record_facts.append({
+                "id": record.get("id"),
+                "projectionId": record.get("projectionId"),
+                "artifacts": artifact_facts,
+                "artifactsAvailability": artifacts_availability,
+            })
         return {
             "status": report.get("status"),
             "runDigest": report.get("runDigest"),
-            "written": list_or_empty(report.get("written"), "written"),
-            "records": [{"id": record.get("id"), "projectionId": record.get("projectionId")} for record in list_or_empty(report.get("records"), "records") if isinstance(record, dict)],
+            "written": written,
+            "writtenAvailability": written_availability,
+            "records": record_facts,
+            "recordsAvailability": records_availability,
             "ledgerHead": report.get("ledgerHead"),
             "evidenceRevision": report.get("evidenceRevision"),
-            "evidencePaths": list_or_empty(report.get("evidencePaths"), "evidencePaths"),
-            "evidenceRefreshRequired": list_or_empty(report.get("evidenceRefreshRequired"), "evidenceRefreshRequired"),
+            "evidencePaths": evidence_paths,
+            "evidencePathsAvailability": evidence_paths_availability,
+            "evidenceRefreshRequired": refresh,
+            "evidenceRefreshRequiredAvailability": refresh_availability,
         }
     assurance = object_or_empty(report.get("assurance"), "assurance")
-    verifier_runs = list_or_empty(report.get("verifierRuns"), "verifierRuns")
+    verifier_runs, verifier_runs_availability = array_value(report, "verifierRuns", "verifierRuns")
     verifier_facts = []
     for verifier in verifier_runs:
         if not isinstance(verifier, dict):
             continue
-        evidence_refs = list_or_empty(verifier.get("evidenceRefs"), "verifier.evidenceRefs")
+        evidence_refs, evidence_refs_availability = array_value(verifier, "evidenceRefs", "verifier.evidenceRefs")
+        observations, observations_availability = array_value(verifier, "observations", "verifier.observations")
         verifier_facts.append({
             "scopeId": verifier.get("scopeId"), "projectionId": verifier.get("projectionId"),
             "recordId": verifier.get("recordId"), "resultId": verifier.get("resultId"),
             "evidenceSnapshotDigest": verifier.get("evidenceSnapshotDigest"),
             "configFingerprint": verifier.get("configFingerprint"), "receiptDigest": verifier.get("receiptDigest"),
             "inputDigest": verifier.get("inputDigest"), "runId": verifier.get("runId"), "outcome": verifier.get("outcome"),
-            "evidenceRefCount": len(evidence_refs),
-            "evidenceRefsDigest": sha(json.dumps(evidence_refs, sort_keys=True, separators=(",", ":")).encode("utf-8")),
-            "observations": safe_text_facts(verifier.get("observations")),
+            "evidenceRefCount": len(evidence_refs) if evidence_refs_availability == "present" else None,
+            "evidenceRefsAvailability": evidence_refs_availability,
+            "evidenceRefsDigest": None if evidence_refs_availability != "present" else sha(json.dumps(evidence_refs, sort_keys=True, separators=(",", ":")).encode("utf-8")),
+            "observations": safe_text_facts(observations),
+            "observationsAvailability": observations_availability,
             "receipt": summarize_receipt(verifier.get("receipt")),
         })
+    results, results_availability = array_value(report, "results", "results")
+    limits, limits_availability = array_value(report, "limits", "limits")
     return {
         "status": report.get("status"),
         "outcome": report.get("outcome"),
@@ -423,11 +543,15 @@ def run_metrics(action: str, report: dict[str, Any]) -> dict[str, Any]:
         "evidenceRevision": report.get("evidenceRevision"),
         "ledgerHead": report.get("ledgerHead"),
         "ledgerSelectionDigest": report.get("ledgerSelectionDigest"),
-        "results": [{"id": result.get("id"), "recordId": result.get("recordId"), "outcome": result.get("outcome")} for result in list_or_empty(report.get("results"), "results") if isinstance(result, dict)],
+        "results": [{"id": result.get("id"), "recordId": result.get("recordId"), "outcome": result.get("outcome")} for result in results if isinstance(result, dict)],
+        "resultsAvailability": results_availability,
         "verifierRuns": verifier_facts,
+        "verifierRunsAvailability": verifier_runs_availability,
         "assuranceNodeCount": assurance_node_count(report.get("assurance")),
+        "assuranceNodesAvailability": assurance_nodes_availability(report),
         "assuranceDigest": None if report.get("assurance") is None else sha(json.dumps(assurance, sort_keys=True, separators=(",", ":")).encode("utf-8")),
-        "limits": list_or_empty(report.get("limits"), "limits"),
+        "limits": limits,
+        "limitsAvailability": limits_availability,
     }
 
 def parse_args() -> argparse.Namespace:
