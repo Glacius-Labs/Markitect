@@ -1,0 +1,13 @@
+apiVersion: markitect.foundation/v1
+kind: ProjectionPolicy
+metadata:
+  namespace: unknown-ontology
+  name: capability-dotnet
+purpose: Defines the public .NET value for the project-owned Capability Kind.
+spec:
+  sourceKind:
+    apiVersion: public-mission.example.org/v1
+    kind: Capability
+  targetTechnology: dotnet
+  guidance: >
+    Expose public sealed record Capability(string Name, string EffectAxisName, long MaximumMagnitude). Preserve the selected Definition's values. MissionEvaluator must match this capability by name, match its supported axis to EffectAxis.Name, and enforce its maximum magnitude. This is a semantic representation constraint, not a filename template.
