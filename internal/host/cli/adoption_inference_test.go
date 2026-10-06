@@ -72,3 +72,14 @@ func TestCopyMeInferEmitsFlatJSONFailureAndDefaultValidationRemainsYAML(t *testi
 		t.Fatalf("default validation behavior changed: exit=%d stdout=%q stderr=%q", code, validated.String(), validationErr.String())
 	}
 }
+
+func TestBrownfieldInferenceRuntimeRejectsDuplicateKeys(t *testing.T) {
+	for _, data := range []string{
+		`{"apiVersion":"first","apiVersion":"second"}`,
+		`{"agent":{"timeoutSeconds":1,"timeoutSeconds":600}}`,
+	} {
+		if _, err := decodeBrownfieldInferenceRuntime([]byte(data)); err == nil {
+			t.Fatal("ambiguous runtime JSON accepted")
+		}
+	}
+}

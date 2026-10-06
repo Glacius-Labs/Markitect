@@ -170,6 +170,9 @@ func runCopyMeInference(o commandOptions, emit func(any) int) int {
 }
 
 func decodeBrownfieldInferenceRuntime(data []byte) (brownfieldInferenceRuntime, error) {
+	if err := rejectDuplicateCanonicalJSONFields(data); err != nil {
+		return brownfieldInferenceRuntime{}, err
+	}
 	var fields map[string]json.RawMessage
 	if err := json.Unmarshal(data, &fields); err != nil || fields == nil {
 		return brownfieldInferenceRuntime{}, errors.New("inference runtime must be a JSON object")
