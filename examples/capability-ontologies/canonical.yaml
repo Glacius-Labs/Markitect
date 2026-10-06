@@ -1,0 +1,31 @@
+apiVersion: markitect.canonical/v1alpha1
+kind: Source
+definitions:
+  - examples/capability-ontologies/software-architecture/components.yaml
+  - examples/capability-ontologies/software-architecture/dependency.yaml
+  - examples/capability-ontologies/software-architecture/storage.yaml
+  - examples/capability-ontologies/delivery/deployment.yaml
+  - examples/capability-ontologies/delivery/rollout.yaml
+  - examples/capability-ontologies/workflow-responsibility/owner.yaml
+  - examples/capability-ontologies/workflow-responsibility/approver.yaml
+  - examples/capability-ontologies/workflow-responsibility/work-item.yaml
+  - examples/capability-ontologies/trading-card-combat/card.yaml
+  - examples/capability-ontologies/trading-card-combat/action.yaml
+  - examples/capability-ontologies/filing-review/filing.yaml
+  - examples/capability-ontologies/filing-review/review.yaml
+modules:
+  - manifest: examples/capability-ontologies/software-architecture/module.yaml
+    files:
+      - examples/capability-ontologies/software-architecture/schema.yaml
+  - manifest: examples/capability-ontologies/delivery/module.yaml
+    files:
+      - examples/capability-ontologies/delivery/schema.yaml
+  - manifest: examples/capability-ontologies/workflow-responsibility/module.yaml
+    files:
+      - examples/capability-ontologies/workflow-responsibility/schema.yaml
+  - manifest: examples/capability-ontologies/trading-card-combat/module.yaml
+    files:
+      - examples/capability-ontologies/trading-card-combat/schema.yaml
+  - manifest: examples/capability-ontologies/filing-review/module.yaml
+    files:
+      - examples/capability-ontologies/filing-review/schema.yaml
