@@ -49,10 +49,8 @@ func canonicalControllerAssuranceGraph(cfg CanonicalControllerConfig, fixed *Can
 	if len(report.Nodes) != len(graph.Nodes) {
 		return assurance.Input{}, errors.New("all configured assurance scopes must be reachable from explicit roots")
 	}
-	// A C11 lifecycle run reached verification before refusing scope checks
-	// absent from the selected source config. Reject that Host configuration
-	// before Execute can invoke an actor or materialize any candidate; this is
-	// source-bound input validation, not a model or verifier conclusion.
+	// Validate exact source-declared checks before an actor or materialization
+	// can run. This binds Host configuration, not a verification conclusion.
 	for _, scope := range cfg.AssuranceScopes {
 		request := requests[scope.ProjectionID]
 		if _, err := canonicalControllerScopedChecks(fixed, request.Projector, scope.Checks); err != nil {

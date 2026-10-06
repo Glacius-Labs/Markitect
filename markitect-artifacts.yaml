@@ -2,6 +2,7 @@ apiVersion: markitect.example.org/artifact-coverage/v1alpha1
 kind: ArtifactCoverage
 spec:
   roots:
+    - internal/host/canonical_controller_assurance_preflight_test.go
     - docs/validation/proof-capability-checkpoint-2026-10-06.md
     - docs/design/canonical-verifier-observation-coverage.md
     - internal/host/canonical_controller_coverage.go
@@ -1462,3 +1463,5 @@ spec:
       owner: immutable-operating-model-proof-records
     - path: experiments/operating-model-proof/runs/c7-unknown-exclusion-01/scope-note.md
       owner: immutable-operating-model-proof-records
+    - path: internal/host/canonical_controller_assurance_preflight_test.go
+      owner: controller-source-check-preflight
