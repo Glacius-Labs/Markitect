@@ -18,6 +18,7 @@ from run import (
     strict_bytes,
     summarize_receipt,
     validate_build_receipt,
+    build_receipt_fields,
     write_new_bytes,
 )
 
@@ -25,7 +26,7 @@ from run import (
 class EvidenceSafetyTests(unittest.TestCase):
     def test_current_protocol_freezes_actual_adapter_bytes(self):
         root = Path(__file__).resolve().parents[2]
-        self.assertEqual(PROTOCOL, "operating-model-proof/v6")
+        self.assertEqual(PROTOCOL, "operating-model-proof/v7")
         self.assertEqual(sha((root / "internal/tooling/codexrunner/runner.py").read_bytes()), CODEX_RUNNER_DIGEST)
 
     def test_partial_cli_report_null_collections_are_empty(self):
@@ -139,6 +140,32 @@ class EvidenceSafetyTests(unittest.TestCase):
         failed = dict(receipt, exitCode=1)
         with self.assertRaises(ProofError):
             validate_build_receipt(failed, source_sha, binary_digest)
+
+    def test_captured_build_receipt_is_bound_without_rewriting(self):
+        source = "a" * 40
+        digest = "sha256:" + "b" * 64
+        receipt = {"sourceCommit": source, "command": ["/fixed/go", "build", "./cmd/markitect"],
+                   "exitCode": 0, "binaryDigest": digest, "sourceWorktreeCleanBeforeAndAfter": True}
+        original = json.dumps(receipt, sort_keys=True)
+        facts = validate_build_receipt(receipt, source, digest)
+        self.assertEqual(facts["receiptFieldSchema"], "sourceCommit/command")
+        self.assertEqual(facts["sourceSha"], source)
+        self.assertEqual(json.dumps(receipt, sort_keys=True), original)
+        with self.assertRaises(ProofError):
+            validate_build_receipt(receipt, "c" * 40, digest)
+        with self.assertRaises(ProofError):
+            validate_build_receipt(dict(receipt, exitCode=True), source, digest)
+
+    def test_build_receipt_rejects_mixed_missing_or_malformed_identity(self):
+        source = "a" * 40
+        for receipt in [{}, {"sourceCommit": source}, {"command": ["go", "build"]},
+                        {"sourceCommit": "main", "command": ["go", "build"]},
+                        {"sourceCommit": source, "command": []},
+                        {"sourceSha": source, "buildCommand": ["go", "build"],
+                         "sourceCommit": source, "command": ["go", "build"]},
+                        {"sourceSha": source, "command": ["go", "build"]}]:
+            with self.subTest(receipt=receipt), self.assertRaises(ProofError):
+                build_receipt_fields(receipt)
 
     def test_runtime_file_binding_does_not_publish_absolute_path(self):
         path = Path(tempfile.gettempdir()) / "private-runtime" / "codex.exe"

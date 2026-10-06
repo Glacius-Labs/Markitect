@@ -21,7 +21,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-PROTOCOL = "operating-model-proof/v6"
+PROTOCOL = "operating-model-proof/v7"
 CODEX_RUNNER_DIGEST = "sha256:d5af7ba511bf0bae7ed1aaca28bfbff4aefd36616cc6947d08de149e9ed363e9"
 FULL_SHA = re.compile(r"^(?:[0-9a-f]{40}|[0-9a-f]{64})$")
 ROOT = Path(__file__).resolve().parents[2]
@@ -149,10 +149,27 @@ def strict_bytes(data: bytes) -> dict[str, Any]:
     return value
 
 
+def build_receipt_fields(receipt: dict[str, Any]) -> tuple[str, Any, str]:
+    # Two explicitly supported existing receipt forms; mixed aliases are ambiguous.
+    legacy = "sourceSha" in receipt or "buildCommand" in receipt
+    captured = "sourceCommit" in receipt or "command" in receipt
+    if legacy == captured:
+        raise ProofError("build receipt requires exactly one supported source/command field pair")
+    source_key, command_key = ("sourceSha", "buildCommand") if legacy else ("sourceCommit", "command")
+    source = receipt.get(source_key)
+    command = receipt.get(command_key)
+    if not isinstance(source, str) or not FULL_SHA.fullmatch(source):
+        raise ProofError("build receipt source must be an exact full source commit")
+    if not ((isinstance(command, str) and command.strip()) or
+            (isinstance(command, list) and command and all(isinstance(part, str) and part for part in command))):
+        raise ProofError("build receipt must retain the actual build command")
+    return source, command, source_key + "/" + command_key
+
+
 def validate_build_receipt(receipt: dict[str, Any], source_sha: str, cli_digest: str) -> dict[str, Any]:
-    if not FULL_SHA.fullmatch(source_sha) or receipt.get("sourceSha") != source_sha:
-        raise ProofError("build receipt sourceSha must be the exact full source commit")
-    command = receipt.get("buildCommand")
+    actual_source, command, schema = build_receipt_fields(receipt)
+    if actual_source != source_sha:
+        raise ProofError("build receipt source must match the exact full source commit")
     if not ((isinstance(command, str) and command.strip()) or
             (isinstance(command, list) and command and all(isinstance(part, str) and part for part in command))):
         raise ProofError("build receipt must retain the actual build command")
@@ -162,6 +179,7 @@ def validate_build_receipt(receipt: dict[str, Any], source_sha: str, cli_digest:
         raise ProofError("build receipt digest does not match the selected CLI executable")
     return {
         "sourceSha": source_sha,
+        "receiptFieldSchema": schema,
         "buildCommandDigest": sha(json.dumps(command, ensure_ascii=False, separators=(",", ":")).encode("utf-8")),
         "exitCode": 0,
         "binaryDigest": cli_digest,
@@ -476,9 +494,9 @@ def main() -> int:
         raise ProofError("CLI executable is missing")
     cli_digest, cli_bytes = file_sha(cli)
     build_receipt = strict_object(build_receipt_path)
-    source_sha = build_receipt.get("sourceSha", "")
-    git(ROOT, "cat-file", "-e", source_sha + "^{commit}")
+    source_sha, _, _ = build_receipt_fields(build_receipt)
     build_facts = validate_build_receipt(build_receipt, source_sha, cli_digest)
+    git(ROOT, "cat-file", "-e", source_sha + "^{commit}")
     build_facts["receiptDigest"] = file_sha(build_receipt_path)[0]
     cli_version_result = subprocess.run([str(cli), "version"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=False, shell=False)
     if cli_version_result.returncode:
