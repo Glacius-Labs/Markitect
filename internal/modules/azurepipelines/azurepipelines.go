@@ -7,11 +7,13 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"path"
 	"sort"
 	"strconv"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/Glacius-Labs/Markitect/internal/core"
 )
@@ -24,6 +26,11 @@ const (
 	OutputName       = "azure-pipelines.yml"
 	OutputMode       = "100644"
 	RequiredCheck    = "canonical-workflow-check"
+	maxPathBytes     = 4096
+	maxPathParts     = 64
+	maxPathPartBytes = 255
+	maxScopeRecords  = 1024
+	maxOutputBytes   = 8 << 20
 )
 
 // NamedCheck is an exact Project check resolved by Host. The Module never
@@ -133,7 +140,11 @@ func Render(input Input) Result {
 		return diagnostic("azurepipelines.check.invalid", err.Error())
 	}
 	target := path.Join(root, OutputName)
-	result.Files[target] = renderYAML(target, input.Definitions, policies, checks)
+	data, err := renderYAML(target, input.Definitions, policies, checks)
+	if err != nil {
+		return diagnostic("azurepipelines.render.failed", err.Error())
+	}
+	result.Files[target] = data
 	return result
 }
 
@@ -253,14 +264,14 @@ func diagnostic(code, message string) Result {
 }
 
 type policyBinding struct {
-	identity string
+	definition core.Definition
 }
 
 func validateScope(input Input) (map[string]policyBinding, error) {
 	if len(input.Definitions) == 0 {
 		return nil, fmt.Errorf("selected Core scope contains no Definitions")
 	}
-	if len(input.Definitions) > core.MaxDefinitions || len(input.Schemas) > core.MaxSchemas || len(input.Policies) > core.MaxDefinitions {
+	if len(input.Definitions) > maxScopeRecords || len(input.Schemas) > core.MaxSchemas || len(input.Policies) > maxScopeRecords {
 		return nil, fmt.Errorf("selected Core scope exceeds the bounded Module input limits")
 	}
 	kinds := make(map[string]bool)
@@ -300,7 +311,7 @@ func validateScope(input Input) (map[string]policyBinding, error) {
 		if _, duplicate := matched[key]; duplicate {
 			return nil, fmt.Errorf("Kind %s has multiple selected Azure Pipelines ProjectionPolicies", key)
 		}
-		matched[key] = policyBinding{identity: identity}
+		matched[key] = policyBinding{definition: policy}
 	}
 	for key := range kinds {
 		if _, exists := matched[key]; !exists {
@@ -311,14 +322,14 @@ func validateScope(input Input) (map[string]policyBinding, error) {
 }
 
 func validateChecks(checks []NamedCheck) ([]NamedCheck, error) {
-	if len(checks) == 0 || len(checks) > core.MaxDefinitions {
+	if len(checks) == 0 || len(checks) > maxScopeRecords {
 		return nil, fmt.Errorf("at least one bounded required Project check must be supplied")
 	}
 	byName := make(map[string]bool, len(checks))
 	result := append([]NamedCheck(nil), checks...)
 	foundRequired := false
 	for _, check := range result {
-		if check.Name == "" || strings.TrimSpace(check.Name) != check.Name || strings.ContainsAny(check.Name, "\r\n") {
+		if check.Name == "" || len(check.Name) > 256 || !utf8.ValidString(check.Name) || strings.TrimSpace(check.Name) != check.Name || strings.ContainsAny(check.Name, "\r\n") {
 			return nil, fmt.Errorf("required Project check has an invalid name")
 		}
 		if byName[check.Name] {
@@ -332,7 +343,7 @@ func validateChecks(checks []NamedCheck) ([]NamedCheck, error) {
 			return nil, fmt.Errorf("required Project check %q has no bounded argv", check.Name)
 		}
 		for _, arg := range check.Argv {
-			if arg == "" || strings.TrimSpace(arg) != arg || strings.ContainsAny(arg, "\r\n") || !portableShellToken(arg) {
+			if arg == "" || len(arg) > maxPathBytes || !utf8.ValidString(arg) || strings.TrimSpace(arg) != arg || strings.ContainsAny(arg, "\r\n") || !portableShellToken(arg) {
 				return nil, fmt.Errorf("required Project check %q contains an argv token that cannot be projected without shell reinterpretation", check.Name)
 			}
 		}
@@ -356,14 +367,16 @@ func portableShellToken(value string) bool {
 	return true
 }
 
-func renderYAML(target string, definitions []core.Definition, policies map[string]policyBinding, checks []NamedCheck) []byte {
+func renderYAML(target string, definitions []core.Definition, policies map[string]policyBinding, checks []NamedCheck) ([]byte, error) {
 	definitions = append([]core.Definition(nil), definitions...)
 	sort.Slice(definitions, func(i, j int) bool { return definitions[i].Identity().Key() < definitions[j].Identity().Key() })
-	policyIDs := make([]string, 0, len(policies))
+	policyDefinitions := make([]core.Definition, 0, len(policies))
 	for _, value := range policies {
-		policyIDs = append(policyIDs, value.identity)
+		policyDefinitions = append(policyDefinitions, value.definition)
 	}
-	sort.Strings(policyIDs)
+	sort.Slice(policyDefinitions, func(i, j int) bool {
+		return policyDefinitions[i].Identity().Key() < policyDefinitions[j].Identity().Key()
+	})
 	var out bytes.Buffer
 	fmt.Fprintf(&out, "# Markitect Module: %s@%s\n", ModuleName, ModuleVersion)
 	fmt.Fprintf(&out, "# Projector: %s\n# Target: %s\n# Artifact: %s\n", ProjectorID, TargetTechnology, target)
@@ -371,10 +384,16 @@ func renderYAML(target string, definitions []core.Definition, policies map[strin
 	for _, definition := range definitions {
 		fmt.Fprintf(&out, "#   %s\n", definition.Identity().Key())
 		fmt.Fprintf(&out, "#     source: %s:%d %s\n", strconv.Quote(definition.Source.Path), definition.Source.Line, strconv.Quote(definition.Source.Digest))
+		if err := writeJSONComment(&out, "Markitect Definition JSON", definition); err != nil {
+			return nil, err
+		}
 	}
 	out.WriteString("# ProjectionPolicies:\n")
-	for _, identity := range policyIDs {
-		fmt.Fprintf(&out, "#   %s\n", identity)
+	for _, policy := range policyDefinitions {
+		fmt.Fprintf(&out, "#   %s\n", policy.Identity().Key())
+		if err := writeJSONComment(&out, "Markitect ProjectionPolicy JSON", policy); err != nil {
+			return nil, err
+		}
 	}
 	out.WriteString("steps:\n")
 	for _, check := range checks {
@@ -383,8 +402,26 @@ func renderYAML(target string, definitions []core.Definition, policies map[strin
 		out.WriteString("\n    displayName: ")
 		out.WriteString(yamlSingleQuote(check.Name))
 		out.WriteByte('\n')
+		if out.Len() > maxOutputBytes {
+			return nil, fmt.Errorf("rendered Azure pipeline exceeds the Module output size limit")
+		}
 	}
-	return out.Bytes()
+	if out.Len() > maxOutputBytes {
+		return nil, fmt.Errorf("rendered Azure pipeline exceeds the Module output size limit")
+	}
+	return out.Bytes(), nil
+}
+
+func writeJSONComment(out *bytes.Buffer, label string, value any) error {
+	encoded, err := json.Marshal(value)
+	if err != nil {
+		return fmt.Errorf("encode inert %s provenance: %w", label, err)
+	}
+	fmt.Fprintf(out, "# %s: %s\n", label, encoded)
+	if out.Len() > maxOutputBytes {
+		return fmt.Errorf("rendered Azure pipeline exceeds the Module output size limit")
+	}
+	return nil
 }
 
 func yamlSingleQuote(value string) string { return "'" + strings.ReplaceAll(value, "'", "''") + "'" }
@@ -416,16 +453,26 @@ func normalizePrefix(value string) (string, error) {
 // Windows and case-insensitive filesystems. Target paths are repository
 // relative slash paths, even when the eventual agent runs on another OS.
 func normalizePortablePath(value string) (string, error) {
+	if !utf8.ValidString(value) || len(value) > maxPathBytes {
+		return "", fmt.Errorf("target path must be valid UTF-8 within the path size limit")
+	}
 	clean, err := normalizePrefix(value)
 	if err != nil {
 		return "", err
 	}
-	for _, component := range strings.Split(clean, "/") {
+	components := strings.Split(clean, "/")
+	if len(components) > maxPathParts {
+		return "", fmt.Errorf("target path contains too many components")
+	}
+	for _, component := range components {
+		if len(component) > maxPathPartBytes {
+			return "", fmt.Errorf("target path component exceeds the size limit")
+		}
 		if component == "" || strings.HasSuffix(component, ".") || strings.HasSuffix(component, " ") {
 			return "", fmt.Errorf("target path contains an empty or non-portable component")
 		}
 		for _, r := range component {
-			if r < 0x20 || strings.ContainsRune(`<>:"|?*`, r) {
+			if r < 0x20 || r == 0x7f || strings.ContainsRune(`<>:"|?*`, r) {
 				return "", fmt.Errorf("target path contains a non-portable component")
 			}
 		}
@@ -458,6 +505,9 @@ func isReservedWindowsName(base string) bool {
 }
 
 func underAllowedRoot(target string, roots []string) bool {
+	if len(roots) == 0 || len(roots) > maxScopeRecords {
+		return false
+	}
 	for _, root := range roots {
 		clean, err := normalizePortablePath(root)
 		if err == nil && within(clean, target) {
@@ -470,10 +520,11 @@ func underAllowedRoot(target string, roots []string) bool {
 func within(root, name string) bool { return name == root || strings.HasPrefix(name, root+"/") }
 
 func validDigest(value string) bool {
-	value = strings.TrimPrefix(value, "sha256:")
-	if len(value) != 64 {
+	const prefix = "sha256:"
+	if !strings.HasPrefix(value, prefix) || len(value) != len(prefix)+64 {
 		return false
 	}
+	value = strings.TrimPrefix(value, prefix)
 	decoded, err := hex.DecodeString(value)
 	return err == nil && len(decoded) == 32 && strings.ToLower(value) == value
 }
