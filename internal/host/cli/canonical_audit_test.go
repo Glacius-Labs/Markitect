@@ -43,6 +43,9 @@ func TestCanonicalControllerAuditOptionBoundaries(t *testing.T) {
 		{"report forbidden", append(append([]string{}, common...), "--report", "report.json")},
 		{"evidence forbidden", append(append([]string{}, common...), "--evidence", "records.json")},
 		{"selector forbidden", append(append([]string{}, common...), "--kind", "Projection")},
+		{"explicit false write forbidden", append(append([]string{}, common...), "--write=false")},
+		{"explicit empty plan forbidden", append(append([]string{}, common...), "--plan=")},
+		{"explicit empty selector forbidden", append(append([]string{}, common...), "--namespace=")},
 		{"short base forbidden", replaceArg(common, base, "abc123")},
 	} {
 		t.Run(test.name, func(t *testing.T) {
@@ -77,6 +80,9 @@ func TestCanonicalControllerAuditStatusExitUsesIncompleteCode(t *testing.T) {
 	}
 	if got := canonicalControllerAuditStatusExit("incomplete"); got != 2 {
 		t.Fatalf("incomplete audit exit=%d, want 2", got)
+	}
+	if got := canonicalControllerAuditStatusExit("unexpected"); got == 0 {
+		t.Fatalf("unknown audit status exit=%d, want a nonzero code", got)
 	}
 }
 

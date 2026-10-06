@@ -243,6 +243,15 @@ func parseOptions(command string, args []string, allowed map[string]bool, out, e
 				fmt.Fprintf(errout, "canonical %s requires explicit --runtime closed JSON configuration\n", *action)
 				return commandOptions{}, 2, true
 			}
+			if *action == "controller-audit" {
+				auditFlags := map[string]bool{"action": true, "repo": true, "config": true, "runtime": true, "base": true, "revision": true}
+				for name := range providedFlags {
+					if !auditFlags[name] {
+						fmt.Fprintf(errout, "--%s does not apply to canonical controller-audit\n", name)
+						return commandOptions{}, 2, true
+					}
+				}
+			}
 			if !fullGitCommitID.MatchString(*base) || !fullGitCommitID.MatchString(*revision) {
 				fmt.Fprintf(errout, "canonical %s requires full immutable --base and --revision values\n", *action)
 				return commandOptions{}, 2, true
