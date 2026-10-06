@@ -1,7 +1,7 @@
 # C12 goal-model proposal trial 01
 
-Run label: `c12-goal-propose-01`  
-Protocol binding: `operating-model-proof/v5`, commit `658866480bafa37c8c2e94b5d58fc2074655f416`.  
+Run label: `c12-goal-propose-01`
+Protocol binding: `operating-model-proof/v5`, commit `658866480bafa37c8c2e94b5d58fc2074655f416`.
 Technical selection: exact `unknown-ontology-mission@1.0.0#sha256:7cbb9964571e912e416ca1e56ad9e66522d1f49a36d230216a160fb4b3f374be` recommendation from `c12-goal-recommend-01`. This is an experiment selection only, not owner acceptance.
 
 ## Frozen proposal inputs
