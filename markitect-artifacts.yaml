@@ -2,6 +2,7 @@ apiVersion: markitect.example.org/artifact-coverage/v1alpha1
 kind: ArtifactCoverage
 spec:
   roots:
+    - docs/validation/independent-proof-capability-review.md
     - internal/host/cli/canonical_adoption_durable_test.go
     - internal/host/canonical_adoption_store.go
     - internal/modules/markdownreference
@@ -1277,3 +1278,9 @@ spec:
       owner: canonical-adoption-host
     - path: experiments/operating-model-proof/runs/c4-current-host-propose-wt-01/direct-current-host-observation.json
       owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c13-durable-01/result.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c13-durable-01/result.md
+      owner: immutable-operating-model-proof-records
+    - path: docs/validation/independent-proof-capability-review.md
+      owner: independent-proof-review
