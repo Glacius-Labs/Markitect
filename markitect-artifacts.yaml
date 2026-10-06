@@ -2,6 +2,7 @@ apiVersion: markitect.example.org/artifact-coverage/v1alpha1
 kind: ArtifactCoverage
 spec:
   roots:
+    - internal/infrastructure/source/selective_identity_test.go
     - internal/host/canonical_controller_assurance_preflight_test.go
     - docs/validation/proof-capability-checkpoint-2026-10-06.md
     - docs/design/canonical-verifier-observation-coverage.md
@@ -115,6 +116,8 @@ spec:
     - internal/host/cli/canonical_goal_test.go
     - examples/public_fixture_test.go
   tooling:
+    - path: internal/infrastructure/source/selective_identity_test.go
+      owner: selective-git-identity-query-tests
     - path: AGENTS.md
       owner: repository-agent-navigation
     - path: markitect-artifacts.yaml
