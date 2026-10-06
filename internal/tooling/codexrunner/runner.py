@@ -55,7 +55,7 @@ RESPONSE_SCHEMA = {
                 "required": ["subject", "outcome", "detail"],
             },
         },
-        "candidateJson": {"type": "object"},
+        "candidateJson": {"type": ["string", "null"]},
         "uncertainty": {"type": "array", "items": {"type": "string"}},
     },
     "required": [
@@ -66,6 +66,7 @@ RESPONSE_SCHEMA = {
         "inputDigest",
         "outcome",
         "candidateFiles",
+        "candidateJson",
         "evidenceRefs",
         "verifierObservations",
         "uncertainty",
@@ -137,17 +138,17 @@ def role_instructions(role: str) -> str:
     if role == "executor":
         return (
             "You are the Executor for one bounded proposal. Return candidate files as UTF-8 path/content/mode values. "
-            "Do not write files, claim verification, claim acceptance, or claim that proposed bytes were applied. "
+            "Set candidateJson to null. Do not write files, claim verification, claim acceptance, or claim that proposed bytes were applied. "
             "Report incomplete work or escalation when needed."
         )
     if role == "verifier":
         return (
             "You are an independent Verifier in a fresh process. Inspect only the request context and explicitly supplied artifact bytes. "
             "Do not assume an Executor transcript exists and do not claim independence from this instruction alone. "
-            "Return passed, failed, incomplete, or escalated with concrete verifier observations. Do not return candidate files."
+            "Return passed, failed, incomplete, or escalated with concrete verifier observations. Set candidateJson to null and do not return candidate files."
         )
     return (
-        "You are an inference-only proposer. Return a JSON candidate proposal with uncertainty. "
+        "You are an inference-only proposer. Return a JSON candidate proposal encoded as a JSON string in candidateJson, with uncertainty. "
         "Do not write files or present inferred values as canonical or accepted. Do not return candidate files."
     )
 
@@ -314,6 +315,7 @@ def incomplete_response(invocation: dict[str, Any], reason: str, collector: Even
         "inputDigest": invocation["inputDigest"],
         "outcome": "incomplete",
         "candidateFiles": [],
+        "candidateJson": None,
         "evidenceRefs": [],
         "verifierObservations": [],
         "uncertainty": [reason],
@@ -321,6 +323,22 @@ def incomplete_response(invocation: dict[str, Any], reason: str, collector: Even
     telemetry = collector.telemetry()
     if telemetry is not None:
         response["usage"] = telemetry
+    return response
+
+
+def normalize_codex_response(response: Any) -> dict[str, Any]:
+    if not isinstance(response, dict) or "candidateJson" not in response:
+        raise AdapterError("Codex final response does not match the closed response shape")
+    candidate_text = response["candidateJson"]
+    if candidate_text is None:
+        response.pop("candidateJson")
+    elif isinstance(candidate_text, str):
+        candidate = strict_loads(candidate_text)
+        if not isinstance(candidate, dict):
+            raise AdapterError("Codex inference candidate must be a JSON object")
+        response["candidateJson"] = candidate
+    else:
+        raise AdapterError("Codex candidateJson transport must be a string or null")
     return response
 
 
@@ -420,9 +438,7 @@ def launch_codex(
         raise AdapterError("Codex did not produce a final response") from exc
     if len(response_bytes) > 8 * 1024 * 1024:
         raise AdapterError("Codex final response exceeded its size bound")
-    response = strict_loads(response_bytes)
-    if not isinstance(response, dict):
-        raise AdapterError("Codex final response must be an object")
+    response = normalize_codex_response(strict_loads(response_bytes))
     response.pop("usage", None)
     telemetry = collector.telemetry()
     if telemetry is not None:

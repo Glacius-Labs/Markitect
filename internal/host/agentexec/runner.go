@@ -22,7 +22,7 @@ import (
 const (
 	maxOutputBound      = 16 << 20
 	maxRuntimeFiles     = 32
-	maxRuntimeFileBytes = 8 << 20
+	maxRuntimeFileBytes = 256 << 20
 	maxSnapshotFiles    = 200000
 	maxSnapshotBytes    = 1 << 30
 )
@@ -131,7 +131,7 @@ func run(parent context.Context, cfg Config, request Request, opts RunOptions) (
 
 	before, err := snapshotRoots(roots)
 	if err != nil {
-		return RunResult{}, fmt.Errorf("input audit before invocation: %w", err)
+		return RunResult{}, errors.New("input audit before invocation failed")
 	}
 	runDir, err := os.MkdirTemp(tempParent, "markitect-agentexec-")
 	if err != nil {
@@ -500,7 +500,7 @@ func normalizeRoots(values []string) ([]string, error) {
 	for _, value := range values {
 		root, err := canonicalInputPath(value)
 		if err != nil {
-			return nil, fmt.Errorf("selected input path %q: %w", value, err)
+			return nil, errors.New("selected input path is invalid")
 		}
 		key := strings.ToLower(root)
 		if _, ok := seen[key]; ok {
@@ -664,7 +664,7 @@ func snapshotRuntimeFiles(files []RuntimeFile) ([]runtimeState, string, error) {
 			return nil, "", errors.New("runtime file must be a regular non-symlink file")
 		}
 		if info.Size() < 0 || info.Size() > maxRuntimeFileBytes || total+info.Size() > maxRuntimeFileBytes {
-			return nil, "", errors.New("runtime files exceed the 8 MiB bound")
+			return nil, "", errors.New("runtime files exceed the 256 MiB bound")
 		}
 		content, err := readBoundedFile(real, maxRuntimeFileBytes)
 		if err != nil || digest(content) != file.Digest || runtimeFileMode(info.Mode()) != file.Mode {

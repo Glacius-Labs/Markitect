@@ -82,6 +82,15 @@ class CodexRunnerTests(unittest.TestCase):
             ["--config", 'model_reasoning_effort="high"'],
         )
 
+    def test_inference_candidate_uses_closed_string_transport_and_is_parsed(self) -> None:
+        self.assertEqual(runner.RESPONSE_SCHEMA["properties"]["candidateJson"]["type"], ["string", "null"])
+        self.assertIn("candidateJson", runner.RESPONSE_SCHEMA["required"])
+        response = runner.normalize_codex_response({"candidateJson": '{"proposal":{"value":1}}'})
+        self.assertEqual(response["candidateJson"], {"proposal": {"value": 1}})
+        self.assertNotIn("candidateJson", runner.normalize_codex_response({"candidateJson": None}))
+        with self.assertRaises(runner.AdapterError):
+            runner.normalize_codex_response({"candidateJson": "[]"})
+
     def test_event_log_records_provider_usage_and_tool_count(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             log_path = Path(directory) / "events.jsonl"
@@ -117,6 +126,7 @@ class CodexRunnerTests(unittest.TestCase):
                     "inputDigest": value["inputDigest"],
                     "outcome": "proposed",
                     "candidateFiles": [{"path":"candidate.txt","mode":"0644","content":"candidate"}],
+                    "candidateJson": None,
                     "evidenceRefs": [],
                     "verifierObservations": [],
                     "uncertainty": [],
@@ -157,6 +167,7 @@ class CodexRunnerTests(unittest.TestCase):
             self.assertEqual(argv[-1], "-")
             self.assertLess(argv.index("--config"), len(argv) - 1)
             self.assertNotIn("--add-dir", argv)
+            self.assertNotIn("candidateJson", response)
             self.assertEqual(response["usage"], {
                 "source":"provider-reported", "inputTokens":7, "outputTokens":4, "toolCalls":1,
             })

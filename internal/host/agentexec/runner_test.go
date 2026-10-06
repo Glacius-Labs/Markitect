@@ -305,6 +305,25 @@ func TestRunRuntimeFileChangesConfigurationDigest(t *testing.T) {
 	}
 }
 
+func TestRuntimeFileCombinedBoundRejectsOversizedInput(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "oversized-runtime.bin")
+	file, err := os.Create(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := file.Truncate(maxRuntimeFileBytes + 1); err != nil {
+		_ = file.Close()
+		t.Fatal(err)
+	}
+	if err := file.Close(); err != nil {
+		t.Fatal(err)
+	}
+	_, _, err = snapshotRuntimeFiles([]RuntimeFile{{Path: path, Mode: "0644", Digest: "sha256:" + strings.Repeat("0", 64)}})
+	if err == nil || !strings.Contains(err.Error(), "256 MiB bound") {
+		t.Fatalf("expected bounded oversized runtime rejection, got %v", err)
+	}
+}
+
 func TestPortableArtifactAliasesRejected(t *testing.T) {
 	request := testRequest(RoleExecutor)
 	request.Artifacts = []Artifact{
