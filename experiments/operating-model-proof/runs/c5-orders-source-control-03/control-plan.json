@@ -1,0 +1,379 @@
+{
+  "protocol": "operating-model-proof/c5-readonly/v2",
+  "status": "frozen-awaiting-parent-review",
+  "trial": "c5-orders-source-control-03",
+  "createdAtUtc": "2026-10-06T07:07:52.6228434Z",
+  "fixture": {
+    "originSourceCommit": "b5e669419a86c340ee8c8c8548821e00c0c400b4",
+    "baselineCommit": "86c46fd2a0da53dbcac407569a487f96e8198c04",
+    "baselineTree": "9817632eb7cc7d88a220afd06421360a773885f8",
+    "candidateCommit": "d6fb2d3d2bd1fefaa33b2bdad93f4f01952ebce0",
+    "candidateTree": "95cf627b0bcdc5efca0114397d2642b3f0272db2",
+    "branch": "codex/operating-model-c5-orders-03",
+    "clean": true,
+    "trackedFileCount": 36,
+    "originRemote": "<local-exact-public-fixture-clone>"
+  },
+  "mutation": {
+    "path": "examples/operating-model/definitions/orders.order-rules.yaml",
+    "candidateGitBlob": "a14233afa96ee97ff6bebd9890f1211befd7c4f4",
+    "candidateSha256": "7c7fd5c6b7988c73ff24a3aee4f8180fd6853a3a9bd487683a48a011da06595b",
+    "onlyChangedPath": true,
+    "changeType": "equivalent-purpose wording; no functional clause changed",
+    "baselineContentSha256": "821055452b3433525eb854ec4c51ce7bd8ea15788ed8e8a537e3a80a1be3f872",
+    "baselineGitBlobOid": "54d63b87292fe371c9ea6dd26bebd57026bb89be"
+  },
+  "productSource": {
+    "sourceSha": "41a1d28c930e415af8ecb868d50b763d4ad15149",
+    "cliPath": "<external-build>/markitect-proof.exe",
+    "cliSha256": "3ac34fd8373c7370178a68d148a02c57b723289f27ae0df9d5f96a3c249a61db",
+    "buildReceiptPath": "<external-build>/build-receipt.json",
+    "buildReceiptSha256": "161a135672f6b55a468dde2af5a9ab0b6b5283885170ab1325658ec4cb2dc53f",
+    "runnerSha256": "d5af7ba511bf0bae7ed1aaca28bfbff4aefd36616cc6947d08de149e9ed363e9",
+    "runtimePath": "<external-state>/runtime.json",
+    "runtimeSha256": "65b2e7396a473b9b8c71b8730f04932bf140dfb49e85ac0defd2e3cedbd4736d"
+  },
+  "config": {
+    "path": "examples/operating-model/canonical-documentation-aligned.yaml",
+    "sha256": "5291f6f3651fb5885930d3ccb700b47cdaa4f6c364ee240f9bb3f4c397f98f55",
+    "fixedChecks": [
+      "operating-model-orders",
+      "operating-model-billing",
+      "operating-model-composition",
+      "operating-model-documentation"
+    ],
+    "explicitInputCount": 8
+  },
+  "action": {
+    "kind": "controller-propose",
+    "write": false,
+    "providerCall": false,
+    "fixtureRepo": "<external-fixture>",
+    "config": "examples/operating-model/canonical-documentation-aligned.yaml",
+    "runtime": "<external-state>/runtime.json",
+    "baseRevision": "86c46fd2a0da53dbcac407569a487f96e8198c04",
+    "revision": "d6fb2d3d2bd1fefaa33b2bdad93f4f01952ebce0",
+    "exactArgs": [
+      "canonical",
+      "--action",
+      "controller-propose",
+      "--repo",
+      "<external-fixture>",
+      "--config",
+      "examples/operating-model/canonical-documentation-aligned.yaml",
+      "--runtime",
+      "<external-state>/runtime.json",
+      "--base",
+      "86c46fd2a0da53dbcac407569a487f96e8198c04",
+      "--revision",
+      "d6fb2d3d2bd1fefaa33b2bdad93f4f01952ebce0"
+    ],
+    "approval": "read-only proposal only; no Executor/Verifier invocation authorized by this freeze"
+  },
+  "ledgerPreimage": {
+    "sourceRoot": "<external-C4-ledger-copy-source>",
+    "copiedRoot": "<external-state>/record-store",
+    "head": "sha256:aa16eda8bfa59b785f46edec864de1c118fd6dbafb69ffe36a7a3cd7fb9b049b",
+    "eventCount": 7,
+    "files": [
+      {
+        "path": "events/00000000000000000001-39bba77860544b8d4828269aa20c581f2a4c2d6ff07121dc4d225f6177e242b7.json",
+        "bytes": 1675,
+        "sha256": "30c83e4d85ae86c232e9e70cad254bc73889dbf08aed4f479648b4881c9b7b05"
+      },
+      {
+        "path": "events/00000000000000000002-5a07e14f772785c5232255a15731da065f4c7b17c64909c3657aba2505561964.json",
+        "bytes": 1663,
+        "sha256": "b5b4a365447fc5da423d548e9cda1d496ab9eea2397560c5f37f7407f499a562"
+      },
+      {
+        "path": "events/00000000000000000003-815df38faa23ead40aa8be808d81b55172011b6b94e026c2b768c4affb7d8fc5.json",
+        "bytes": 2340,
+        "sha256": "dd7641ec0acfea7d26da0e26f1beb9656930253e3ebf2f0443a53306e041a057"
+      },
+      {
+        "path": "events/00000000000000000004-71b817a8ed465fe78ddbddc7bc59ee3b4ef8ca5b9c6e965da12410c1b682e925.json",
+        "bytes": 560,
+        "sha256": "8167970d3a6b1c18fac973cfd76cccec328c04ea45d5b71012a62faa268be703"
+      },
+      {
+        "path": "events/00000000000000000005-112f482e8d50aab708d622ef78491717a2391465df5d7b0bf2a7cbb648bc182c.json",
+        "bytes": 1844,
+        "sha256": "976ca8f72c1609d078ab60250143aa637f95b92854f40bcc9c7803d6fee54a44"
+      },
+      {
+        "path": "events/00000000000000000006-fbae197da05e3cc4d3403258dd6e8c1b7f114c63099aa8d7717a30c33a222c50.json",
+        "bytes": 1664,
+        "sha256": "2580f9be89d9119d39c16ed2848859979357e9c677fd1b295ffc8f82819f2854"
+      },
+      {
+        "path": "events/00000000000000000007-aa16eda8bfa59b785f46edec864de1c118fd6dbafb69ffe36a7a3cd7fb9b049b.json",
+        "bytes": 1663,
+        "sha256": "f3accc5a4f1647439c0a57017dd7e1176cf5baf55b27477247760504c0801de7"
+      },
+      {
+        "path": "store.json",
+        "bytes": 207,
+        "sha256": "014c546c61071a061117df67199bbea3aaed90e6d54235436aaaa1fcedbdde1b"
+      }
+    ],
+    "copyFileCount": 8,
+    "sourceAndCopyHashesVerified": true
+  },
+  "targetPreimages": [
+    {
+      "path": "src/Orders/OrderRules.cs",
+      "exists": true,
+      "bytes": 475,
+      "sha256": "553264bd9c7249d3e4ac755f0651b10006f32bed7ed8b9a39b0a964f44be7a30"
+    },
+    {
+      "path": "src/Billing/BillingQuery.cs",
+      "exists": true,
+      "bytes": 684,
+      "sha256": "e115deb66b51e651d97d6323ff31648e256b6fb64e9ac546e78474a0472ac4dc"
+    },
+    {
+      "path": "docs/represented/index.md",
+      "exists": true,
+      "bytes": 6592,
+      "sha256": "9d126d792f567a173988f3474563bfb46f79e9ff321056a4ee252a0635874ece"
+    }
+  ],
+  "expectedScopes": {
+    "orders": "possible bounded target work from directly selected Orders source change",
+    "billing": "unrelated materialization not expected from the selected source change",
+    "evidenceRefresh": "record separately for all selected projections, including sourceRevision staleness",
+    "product": "possible bounded Markdown parent work from Orders child materialization"
+  },
+  "sourceFiles": [
+    {
+      "path": ".gitattributes",
+      "gitBlob": "fa1385d99a319b43c06f5309d1aae9fdd3adea46",
+      "bytes": 8,
+      "sha256": "705fd4d6451a31d36b3df7de96f83f30ac976c9b4a6d1e51671d8e2f33e2d0da"
+    },
+    {
+      "path": "docs/represented/index.md",
+      "gitBlob": "382c25a6e4dfa6ebb8ea491946b7cc1ae7514a85",
+      "bytes": 6592,
+      "sha256": "9d126d792f567a173988f3474563bfb46f79e9ff321056a4ee252a0635874ece"
+    },
+    {
+      "path": "examples/operating-model/README.md",
+      "gitBlob": "4671c04e9ce034ed0adfdc0b8a7c17b06b68b266",
+      "bytes": 3725,
+      "sha256": "45ae25269711af0bd330e19f3171e320a43e707404a8a5677fe271439cfc5376"
+    },
+    {
+      "path": "examples/operating-model/canonical-documentation-aligned.yaml",
+      "gitBlob": "e288a60e248f097efb98f76eee2b688b9b12d6fc",
+      "bytes": 3488,
+      "sha256": "5291f6f3651fb5885930d3ccb700b47cdaa4f6c364ee240f9bb3f4c397f98f55"
+    },
+    {
+      "path": "examples/operating-model/canonical.yaml",
+      "gitBlob": "5aba501bc067be5bd4bf7474d3a79b9d37128392",
+      "bytes": 3371,
+      "sha256": "d56dcb41f5a8b0917bed28223dbc6768fd93f90018aec58ae8619b5a96400e00"
+    },
+    {
+      "path": "examples/operating-model/checks/Billing.Checks.csproj",
+      "gitBlob": "59df3c667bfdef2f6e68b5e35e55b3a7d0c9bd88",
+      "bytes": 431,
+      "sha256": "083c2891ddfb4ec6373d1f0279325c2179f5c23da340db57ed4d80802a6b487c"
+    },
+    {
+      "path": "examples/operating-model/checks/Billing.Program.cs",
+      "gitBlob": "7f5588ff1cecf88e2129061880c2288185f4098c",
+      "bytes": 817,
+      "sha256": "972099963b95215e6cd0dfaefc7961cf8986effc416dde32b3cb1414481381ae"
+    },
+    {
+      "path": "examples/operating-model/checks/Composition.Checks.csproj",
+      "gitBlob": "78bf74fd9389ba4e569e9cdf503e60050615c2ce",
+      "bytes": 489,
+      "sha256": "c279aa4f1d2cd6bcc2570ed913667bd64e0f788a35e75a3991f110725e26d3ae"
+    },
+    {
+      "path": "examples/operating-model/checks/Composition.Program.cs",
+      "gitBlob": "0acb37fdac8ec8a859ab23df74e8a8aedb58c30b",
+      "bytes": 653,
+      "sha256": "78132279a45d81e2946ce21669733bd3153ccbf13310dd70725da4cf2195e93b"
+    },
+    {
+      "path": "examples/operating-model/checks/Documentation.Checks.csproj",
+      "gitBlob": "6ccd8cd20c4a20ad7192b28198126c98c9eb200b",
+      "bytes": 382,
+      "sha256": "7ce85b8e09c299216bd28d7c5f389f78cbf155f23a28f4a2ae18996a526ac677"
+    },
+    {
+      "path": "examples/operating-model/checks/Documentation.Program.cs",
+      "gitBlob": "ea4b2f9ef6cb7a8d815e341ce3d908f070a40219",
+      "bytes": 1137,
+      "sha256": "0bd602b938e87696c6d4d3e9b453dbda32ac475a4b33dfb0ee5b748d19092beb"
+    },
+    {
+      "path": "examples/operating-model/checks/Orders.Checks.csproj",
+      "gitBlob": "1f25342101a46221289433aa7f8c114f1bbf5f8e",
+      "bytes": 429,
+      "sha256": "6ec61ed84fcf6c12451f6a731b0a54071a7ef824d153ab19173028c005f7da8e"
+    },
+    {
+      "path": "examples/operating-model/checks/Orders.Program.cs",
+      "gitBlob": "b01ca604b22d59865268e5cdfbb9dcfac39e6dc7",
+      "bytes": 815,
+      "sha256": "ccc5783b7a3ae976b00ca4106627e8068bd752529211f90d485e441176a338ed"
+    },
+    {
+      "path": "examples/operating-model/definitions/billing-dotnet.projection-policy.yaml",
+      "gitBlob": "438de9e2e69a35969f6eb960efb2f6630d21adfc",
+      "bytes": 662,
+      "sha256": "284b8db6398e8c2df36d877e31bcf5fb3aba8383590e6e1dd9591ab6833e8cfa"
+    },
+    {
+      "path": "examples/operating-model/definitions/billing-markdown.projection-policy.yaml",
+      "gitBlob": "8a3cb011f63df64949b22fdb292f5b677211e90e",
+      "bytes": 532,
+      "sha256": "7f652d4fc5695b55a0327912b244919c945a7e3b6bd86d9ebacebd58b37d4a79"
+    },
+    {
+      "path": "examples/operating-model/definitions/billing.billing-query.yaml",
+      "gitBlob": "967b01331b7d26434485a496be3806416abe180c",
+      "bytes": 342,
+      "sha256": "48b90c7387f9f096edf81a570d862e868c3644c91f08cd9d689123c2a277affb"
+    },
+    {
+      "path": "examples/operating-model/definitions/billing.projection.yaml",
+      "gitBlob": "eaeb122d0a3e0944489fdc7910f33071bbce2cc8",
+      "bytes": 582,
+      "sha256": "c62ffef1363ebddaee1f6ee3ad1d392ec22934445c2cbe1f3bded3084acb5c25"
+    },
+    {
+      "path": "examples/operating-model/definitions/orders-dotnet.projection-policy.yaml",
+      "gitBlob": "461842edeb26cc6c840e5bd89044ac8e4f028a6c",
+      "bytes": 714,
+      "sha256": "2c592b36560ff2b6adea2a21f1edd01aab681bb53645b87bcd81cfdc0295d998"
+    },
+    {
+      "path": "examples/operating-model/definitions/orders-markdown.projection-policy.yaml",
+      "gitBlob": "0465818f8ecfd1c11a63e58d807ef87124d1ad59",
+      "bytes": 546,
+      "sha256": "ebf0e4827bfeb084786896355ec4d6999a526085cc2d0e5eb72530312b78efc4"
+    },
+    {
+      "path": "examples/operating-model/definitions/orders.order-rules.yaml",
+      "gitBlob": "a14233afa96ee97ff6bebd9890f1211befd7c4f4",
+      "bytes": 386,
+      "sha256": "7c7fd5c6b7988c73ff24a3aee4f8180fd6853a3a9bd487683a48a011da06595b"
+    },
+    {
+      "path": "examples/operating-model/definitions/orders.projection.yaml",
+      "gitBlob": "9260d9dd4232a125427983ea8a802d2c54ddc5c1",
+      "bytes": 571,
+      "sha256": "f046a2d8969a2bf71abb0873f2ace221630d92c6e53d4e73d795faa4fd0be890"
+    },
+    {
+      "path": "examples/operating-model/definitions/product-documentation-aligned.projection.yaml",
+      "gitBlob": "fc49cc16d24365bbcf4c9c7f29d2fdb5e844f199",
+      "bytes": 1599,
+      "sha256": "1f77f1edfe7a9320bea5b341cf71d84b0650d1a593bbd0a72a9792ce421a5b23"
+    },
+    {
+      "path": "examples/operating-model/definitions/product-markdown.projection-policy.yaml",
+      "gitBlob": "20c99afa219603d96e30c2f3a9c3da4b7bd6b49a",
+      "bytes": 555,
+      "sha256": "f7ae09216718b1fcfb7e4b5b6f0eaf501df6a2fae257b2304a3ad963cdffe564"
+    },
+    {
+      "path": "examples/operating-model/definitions/product.composition.yaml",
+      "gitBlob": "6b383fd89e0b0b15619a281855203e1610420ef5",
+      "bytes": 567,
+      "sha256": "107c587628f751ea5f2d68a9ee300b1bba43a0a9bf381700dec12b0ad812d684"
+    },
+    {
+      "path": "examples/operating-model/definitions/product.projection.yaml",
+      "gitBlob": "0a702df4d4227457b19b63563096bd2b17c8cd9d",
+      "bytes": 1157,
+      "sha256": "96d0fd8a20d61d55fd475911f4d525cc9021d989123aaee5abb9042ac15ab30b"
+    },
+    {
+      "path": "examples/operating-model/definitions/representation-policy-markdown.projection-policy.yaml",
+      "gitBlob": "f6e9ecde5f3011e777d80c051c098b7e2cce9164",
+      "bytes": 759,
+      "sha256": "e7a1f954591740eda21fa1b00f3f61023b7cd165d6b117fb00f8cde5819cf1a0"
+    },
+    {
+      "path": "examples/operating-model/modules/billing-dotnet/module.yaml",
+      "gitBlob": "cbb46933f1386de5940d9458c65175ac0f183f88",
+      "bytes": 861,
+      "sha256": "345321595390864adbd629897d2bcb999cc25ead8b8bb4cd9d573d47c1f9de18"
+    },
+    {
+      "path": "examples/operating-model/modules/commerce/module.yaml",
+      "gitBlob": "563b23689fb4d15b0b1539e8820118942112d2ab",
+      "bytes": 286,
+      "sha256": "337f695bda366b226c8ed0977279d0e24a67a09824943f51da214150345a8051"
+    },
+    {
+      "path": "examples/operating-model/modules/commerce/schema.yaml",
+      "gitBlob": "2e5b438211e8dc424863c987726dd28f07a105c4",
+      "bytes": 1086,
+      "sha256": "a348408bb0ed949506b9544bd36f02109eff474e1dfd9a11d7ecd0180e81b48e"
+    },
+    {
+      "path": "examples/operating-model/modules/foundation/module.yaml",
+      "gitBlob": "c9ad2323ccd4c61c55bd94e97bfa43425ea1212d",
+      "bytes": 276,
+      "sha256": "074d9275cb728f11030eccabb6db6d5b4215bb5152596b7efd29f67cf12790d6"
+    },
+    {
+      "path": "examples/operating-model/modules/foundation/schema.yaml",
+      "gitBlob": "649a6df84eeb4131944c270b61b5439bf7778685",
+      "bytes": 2822,
+      "sha256": "a06850f14a9e9cbea29881058f764493606200f430ac2334d121f605f0e643e2"
+    },
+    {
+      "path": "examples/operating-model/modules/markdown/module.yaml",
+      "gitBlob": "5352897b3fb333abfcf00e640bd38110dc584db2",
+      "bytes": 939,
+      "sha256": "ffba6965b341743ff1bd98bd3d3126c2606cef9ea0fb85d0ddc6f8dbc1f9576e"
+    },
+    {
+      "path": "examples/operating-model/modules/orders-dotnet/module.yaml",
+      "gitBlob": "a9c27d52e8bd49b7138611c340bfa39147cbdf38",
+      "bytes": 856,
+      "sha256": "eb6334933b4fdc93d540d25d2c23d981ebad540d985d72fcb4a577b48b0a09aa"
+    },
+    {
+      "path": "examples/operating-model/negative-specifications.md",
+      "gitBlob": "1c5f429ad8c46f6a4ad44433e3a476a161a3ab48",
+      "bytes": 1268,
+      "sha256": "dcaace49db88ef5fcd8a3258d23592de0fc1682d9371d13e15b556d7afc03e50"
+    },
+    {
+      "path": "src/Billing/BillingQuery.cs",
+      "gitBlob": "06eb6a3869794902a19a71dce94affd7f8f1ea48",
+      "bytes": 684,
+      "sha256": "e115deb66b51e651d97d6323ff31648e256b6fb64e9ac546e78474a0472ac4dc"
+    },
+    {
+      "path": "src/Orders/OrderRules.cs",
+      "gitBlob": "e36f4b64af6ce6cb880fd8f863b3411c3ca119c9",
+      "bytes": 475,
+      "sha256": "553264bd9c7249d3e4ac755f0651b10006f32bed7ed8b9a39b0a964f44be7a30"
+    }
+  ],
+  "priorInvalidAttempt": "c5-orders-source-control-01/runtime-binding-invalid.json",
+  "runtimeBindingAssertions": {
+    "executorArgs0": "<verified-runner-path>",
+    "executorRuntimeFilePath": "<verified-runner-path>",
+    "verifierArgs0": "<verified-runner-path>",
+    "verifierRuntimeFilePath": "<verified-runner-path>",
+    "allFourPathFieldsEqual": true,
+    "declaredAdapterSha256": "d5af7ba511bf0bae7ed1aaca28bfbff4aefd36616cc6947d08de149e9ed363e9",
+    "actualRunnerFileSha256": "d5af7ba511bf0bae7ed1aaca28bfbff4aefd36616cc6947d08de149e9ed363e9",
+    "machineVerified": true
+  },
+  "supersedesInvalidFreeze": "experiments/operating-model-proof/runs/c5-orders-source-control-02/control-plan.json"
+}
