@@ -12,11 +12,16 @@ import (
 
 // The Host supplies already selected semantic and observed facts. The Module
 // owns its representation, lifecycle decision and explicit ownership refusals.
-func prepareMarkdownReferenceInput(request canonical.ProjectionRequest, inventory []source.WorkingFileMetadata, observed *snapshot.Snapshot, previous *records.ProjectionRecord, affected bool) (markdownreference.Input, error) {
+func prepareMarkdownReferenceInput(request canonical.ProjectionRequest, inventory []source.WorkingFileMetadata, observed *snapshot.Snapshot, previous *records.ProjectionRecord, affected bool, verificationValues ...*markdownreference.Verification) (markdownreference.Input, error) {
+	var verification *markdownreference.Verification
+	if len(verificationValues) > 0 {
+		verification = verificationValues[0]
+	}
 	input := markdownreference.Input{
 		Schemas: request.Schemas, Definitions: request.Definitions, Policies: request.Policies,
-		Target: markdownreference.TargetConfig{Technology: request.Projector.Target, Prefix: request.TargetPrefix, AllowedRoots: request.Projector.AllowedRoots},
-		Check:  markdownreference.Check{ScopeComplete: true, InventoryComplete: true, CanonicalAffected: affected, RequestDigest: request.RequestDigest},
+		Target:   markdownreference.TargetConfig{Technology: request.Projector.Target, Prefix: request.TargetPrefix, AllowedRoots: request.Projector.AllowedRoots},
+		Check:    markdownreference.Check{ScopeComplete: true, InventoryComplete: true, CanonicalAffected: affected, RequestDigest: request.RequestDigest},
+		Verified: verification,
 	}
 	for _, definition := range request.Definitions {
 		input.Selected = append(input.Selected, definition.Identity())
@@ -44,9 +49,9 @@ func prepareMarkdownReferenceInput(request canonical.ProjectionRequest, inventor
 	return input, nil
 }
 
-func proposeMarkdownReferenceProjection(request canonical.ProjectionRequest, inventory []source.WorkingFileMetadata, observed *snapshot.Snapshot, previous *records.ProjectionRecord, affected bool) (CanonicalScopedProposal, error) {
+func proposeMarkdownReferenceProjection(request canonical.ProjectionRequest, inventory []source.WorkingFileMetadata, observed *snapshot.Snapshot, previous *records.ProjectionRecord, affected bool, verificationValues ...*markdownreference.Verification) (CanonicalScopedProposal, error) {
 	result := CanonicalScopedProposal{ProjectionID: request.Projection.Identity().Key(), Module: request.ModulePin, Request: request}
-	input, err := prepareMarkdownReferenceInput(request, inventory, observed, previous, affected)
+	input, err := prepareMarkdownReferenceInput(request, inventory, observed, previous, affected, verificationValues...)
 	if err != nil {
 		return result, err
 	}

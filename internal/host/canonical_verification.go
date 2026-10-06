@@ -142,7 +142,11 @@ func VerifyCanonicalProjection(fixed *CanonicalSource, target *snapshot.Snapshot
 		}
 		reason = verifyErr.Error()
 	}
-	report.Result, err = records.NewVerificationResult(records.VerificationResult{RecordID: record.ID, Revision: record.Revision, ModelDigest: record.ModelDigest, TargetSnapshotDigest: targetDigest, Verifier: verifier, Checks: results, Outcome: outcome, Reason: reason})
+	report.Result, err = records.NewVerificationResult(records.VerificationResult{
+		RecordID: record.ID, Revision: record.Revision, ModelDigest: record.ModelDigest, TargetSnapshotDigest: targetDigest,
+		EvidenceRevision: target.ID, EvidenceSnapshotDigest: sha256Prefix(target.Digest()),
+		Verifier: verifier, Checks: results, Outcome: outcome, Reason: reason,
+	})
 	if err != nil {
 		return report, err
 	}

@@ -165,6 +165,100 @@ func TestPassedVerificationRequiresCompleteDigestsAndPassingChecks(t *testing.T)
 		t.Fatal("incomplete check accepted")
 	}
 }
+
+func TestVerificationEvidenceProvenancePreservesLegacyDigestAndRequiresAtomicPair(t *testing.T) {
+	r := testRecord(t)
+	v := VerifierIdentity{ID: "verify", Version: "1", Digest: testDigest("verifier")}
+	checks := []CheckResult{{ID: "check", Version: "1", Digest: testDigest("check"), Outcome: CheckPassed}}
+	legacy, err := NewVerificationResult(VerificationResult{
+		RecordID: r.ID, Revision: r.Revision, ModelDigest: r.ModelDigest, TargetSnapshotDigest: r.TargetSnapshotDigest,
+		Verifier: v, Checks: checks, Outcome: OutcomePassed,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	encoded, err := VerificationAppendPayload(legacy)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var envelope map[string]json.RawMessage
+	if err := json.Unmarshal(encoded, &envelope); err != nil {
+		t.Fatal(err)
+	}
+	var payload map[string]json.RawMessage
+	if err := json.Unmarshal(envelope["result"], &payload); err != nil {
+		t.Fatal(err)
+	}
+	if _, exists := payload["evidenceRevision"]; exists {
+		t.Fatal("legacy result serialization gained evidenceRevision")
+	}
+	if _, exists := payload["evidenceSnapshotDigest"]; exists {
+		t.Fatal("legacy result serialization gained evidenceSnapshotDigest")
+	}
+	// Compute the old-format content ID independently to ensure omitempty keeps
+	// historical IDs stable after the optional fields are added.
+	type legacyResult struct {
+		APIVersion           string           `json:"apiVersion"`
+		ID                   string           `json:"id"`
+		RecordID             string           `json:"recordId"`
+		Revision             string           `json:"revision"`
+		ModelDigest          string           `json:"modelDigest"`
+		TargetSnapshotDigest string           `json:"targetSnapshotDigest"`
+		Verifier             VerifierIdentity `json:"verifier"`
+		Checks               []CheckResult    `json:"checks"`
+		Outcome              string           `json:"outcome"`
+		Reason               string           `json:"reason,omitempty"`
+	}
+	oldBytes, err := json.Marshal(legacyResult{
+		APIVersion: legacy.APIVersion, RecordID: legacy.RecordID, Revision: legacy.Revision,
+		ModelDigest: legacy.ModelDigest, TargetSnapshotDigest: legacy.TargetSnapshotDigest,
+		Verifier: legacy.Verifier, Checks: legacy.Checks, Outcome: legacy.Outcome,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	oldDigest := sha256.Sum256(oldBytes)
+	if want := "sha256:" + hex.EncodeToString(oldDigest[:]); legacy.ID != want {
+		t.Fatalf("legacy content ID changed: got %s want %s", legacy.ID, want)
+	}
+
+	withEvidence, err := NewVerificationResult(VerificationResult{
+		RecordID: r.ID, Revision: r.Revision, ModelDigest: r.ModelDigest, TargetSnapshotDigest: r.TargetSnapshotDigest,
+		EvidenceRevision: strings.Repeat("b", 40), EvidenceSnapshotDigest: testDigest("evidence"),
+		ControllerConfigDigest: testDigest("controller-config"), ControllerVerifierInputDigest: testDigest("verifier-input"),
+		Verifier: v, Checks: checks, Outcome: OutcomePassed,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := ValidateVerificationResult(withEvidence); err != nil {
+		t.Fatal(err)
+	}
+	for _, tc := range []struct {
+		name string
+		edit func(*VerificationResult)
+	}{
+		{"revision only", func(result *VerificationResult) { result.EvidenceRevision = strings.Repeat("c", 40) }},
+		{"digest only", func(result *VerificationResult) { result.EvidenceSnapshotDigest = testDigest("evidence") }},
+		{"controller config only", func(result *VerificationResult) { result.ControllerConfigDigest = testDigest("controller-config") }},
+		{"controller request only", func(result *VerificationResult) { result.ControllerVerifierInputDigest = testDigest("verifier-input") }},
+		{"controller fields without evidence", func(result *VerificationResult) {
+			result.ControllerConfigDigest = testDigest("controller-config")
+			result.ControllerVerifierInputDigest = testDigest("verifier-input")
+		}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			input := VerificationResult{
+				RecordID: r.ID, Revision: r.Revision, ModelDigest: r.ModelDigest, TargetSnapshotDigest: r.TargetSnapshotDigest,
+				Verifier: v, Checks: checks, Outcome: OutcomePassed,
+			}
+			tc.edit(&input)
+			if _, err := NewVerificationResult(input); err == nil {
+				t.Fatal("partial evidence provenance accepted")
+			}
+		})
+	}
+}
 func TestOwnershipIndexBidirectionalAndVisibleFacts(t *testing.T) {
 	r := testRecord(t)
 	idx, e := BuildOwnershipIndex([]ProjectionRecord{r}, testFacts(r))

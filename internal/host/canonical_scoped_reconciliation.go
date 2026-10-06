@@ -12,8 +12,11 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/host/records"
 	"github.com/Glacius-Labs/Markitect/internal/infrastructure/source"
 	"github.com/Glacius-Labs/Markitect/internal/modules/agentrules"
+	"github.com/Glacius-Labs/Markitect/internal/modules/azurepipelines"
 	"github.com/Glacius-Labs/Markitect/internal/modules/dotnet"
+	"github.com/Glacius-Labs/Markitect/internal/modules/githooks"
 	"github.com/Glacius-Labs/Markitect/internal/modules/markdown"
+	"github.com/Glacius-Labs/Markitect/internal/modules/markdownreference"
 )
 
 type CanonicalScopedProposal struct {
@@ -61,6 +64,10 @@ func ProposeScopedCanonicalReconciliation(root, baseRevision, revision, configPa
 }
 
 func proposeScopedCanonicalReconciliation(root, baseRevision, revision, configPath string, active []records.ProjectionRecord, auditAll bool, exclusions []CanonicalTargetExclusion, checkPaths []string) (CanonicalScopedReconcilePlan, error) {
+	return proposeScopedCanonicalReconciliationWithReuse(root, baseRevision, revision, configPath, active, auditAll, exclusions, checkPaths, nil)
+}
+
+func proposeScopedCanonicalReconciliationWithReuse(root, baseRevision, revision, configPath string, active []records.ProjectionRecord, auditAll bool, exclusions []CanonicalTargetExclusion, checkPaths []string, reuse *canonicalControllerVerificationReuse) (CanonicalScopedReconcilePlan, error) {
 	plan := CanonicalScopedReconcilePlan{APIVersion: "markitect.canonical/scoped-reconcile/v1alpha1", Status: "planned"}
 	if err := validateCanonicalTargetExclusionConfig(exclusions); err != nil {
 		return plan, err
@@ -233,6 +240,26 @@ func proposeScopedCanonicalReconciliation(root, baseRevision, revision, configPa
 			}
 		}
 	}
+	if reuse != nil {
+		paths = append(paths, checkPaths...)
+		for _, key := range keys {
+			if !scheduled[key] {
+				continue
+			}
+			old, found := prior[key]
+			if !found {
+				continue
+			}
+			request := requests[key]
+			for _, artifact := range old.Artifacts {
+				if stringsHasPathPrefix(artifact.Path, request.TargetPrefix) {
+					if _, isExcluded := excluded[artifact.Path]; !isExcluded {
+						paths = append(paths, artifact.Path)
+					}
+				}
+			}
+		}
+	}
 	paths = sortedUniquePaths(paths)
 	observed, err := source.ObserveSelectedWorking(root, paths)
 	if err != nil {
@@ -247,6 +274,7 @@ func proposeScopedCanonicalReconciliation(root, baseRevision, revision, configPa
 	if err := validateCanonicalSourceUnchanged(current, observed.Snapshot); err != nil {
 		return plan, err
 	}
+	verificationBindings := reuse.bindings(root, current, active, observed.Snapshot)
 	// Unknown paths are metadata only unless their scope was scheduled. They
 	// still stop execution; skipped unrelated bytes never become clean facts.
 	for _, key := range keys {
@@ -265,6 +293,12 @@ func proposeScopedCanonicalReconciliation(root, baseRevision, revision, configPa
 		entrypoint, entrypointErr := canonicalWorkflowEntrypoint(request)
 		p := CanonicalScopedProposal{ProjectionID: key, Module: request.ModulePin, Request: request}
 		old, found := prior[key]
+		verification, verified := verificationBindings[key]
+		if verified {
+			verification.RequestDigest = request.RequestDigest
+		} else {
+			verification = canonicalProjectionVerificationBinding{}
+		}
 		if entrypointErr != nil {
 			p.Decision = "escalate"
 			p.Escalations = append(p.Escalations, CanonicalProjectionEscalation{Code: "projection.entrypoint-unsupported", Identity: key, Message: entrypointErr.Error()})
@@ -274,6 +308,12 @@ func proposeScopedCanonicalReconciliation(root, baseRevision, revision, configPa
 		}
 		if entrypoint == "dotnet" {
 			input := dotnet.Input{Definitions: request.Definitions, Schemas: request.Schemas, Policies: request.Policies, TargetPrefix: request.TargetPrefix, AllowedRoots: request.Projector.AllowedRoots, RequestDigest: request.RequestDigest, CanonicalAffected: canonicalWork[key], InventoryComplete: true}
+			if verified {
+				input.Verification = &dotnet.VerificationBinding{Passed: true, RequestDigest: verification.RequestDigest}
+				for _, artifact := range verification.Artifacts {
+					input.Verification.Artifacts = append(input.Verification.Artifacts, dotnet.ArtifactBinding{Path: artifact.Path, Digest: artifact.Digest, Mode: artifact.Mode})
+				}
+			}
 			for _, entry := range inventory.Entries {
 				if _, isExcluded := excluded[entry.Path]; isExcluded {
 					continue
@@ -344,7 +384,14 @@ func proposeScopedCanonicalReconciliation(root, baseRevision, revision, configPa
 			if found {
 				previous = &old
 			}
-			p, err = proposeGitHooksProjection(request, current.Config.Checks, selectedCanonicalTargetInventory(inventory.Entries, request.TargetPrefix, excluded), observed.Snapshot, previous)
+			var verificationBinding *githooks.VerificationBinding
+			if verified {
+				verificationBinding = &githooks.VerificationBinding{Passed: true, RequestDigest: verification.RequestDigest}
+				for _, artifact := range verification.Artifacts {
+					verificationBinding.Artifacts = append(verificationBinding.Artifacts, githooks.ArtifactBinding{Path: artifact.Path, Digest: artifact.Digest, Mode: artifact.Mode})
+				}
+			}
+			p, err = proposeGitHooksProjection(request, current.Config.Checks, selectedCanonicalTargetInventory(inventory.Entries, request.TargetPrefix, excluded), observed.Snapshot, previous, verificationBinding)
 			if err != nil {
 				return plan, err
 			}
@@ -353,7 +400,14 @@ func proposeScopedCanonicalReconciliation(root, baseRevision, revision, configPa
 			if found {
 				previous = &old
 			}
-			p, err = proposeAzurePipelinesProjection(request, current.Config.Checks, selectedCanonicalTargetInventory(inventory.Entries, request.TargetPrefix, excluded), observed.Snapshot, previous, canonicalWork[key])
+			var verificationBinding *azurepipelines.VerificationBinding
+			if verified {
+				verificationBinding = &azurepipelines.VerificationBinding{Passed: true, RequestDigest: verification.RequestDigest}
+				for _, artifact := range verification.Artifacts {
+					verificationBinding.Artifacts = append(verificationBinding.Artifacts, azurepipelines.ArtifactBinding{Path: artifact.Path, Digest: artifact.Digest, Mode: artifact.Mode})
+				}
+			}
+			p, err = proposeAzurePipelinesProjection(request, current.Config.Checks, selectedCanonicalTargetInventory(inventory.Entries, request.TargetPrefix, excluded), observed.Snapshot, previous, canonicalWork[key], verificationBinding)
 			if err != nil {
 				return plan, err
 			}
@@ -362,12 +416,25 @@ func proposeScopedCanonicalReconciliation(root, baseRevision, revision, configPa
 			if found {
 				previous = &old
 			}
-			p, err = proposeMarkdownReferenceProjection(request, selectedCanonicalTargetInventory(inventory.Entries, request.TargetPrefix, excluded), observed.Snapshot, previous, canonicalWork[key])
+			var verificationBinding *markdownreference.Verification
+			if verified {
+				verificationBinding = &markdownreference.Verification{Passed: true, RequestDigest: verification.RequestDigest}
+				for _, artifact := range verification.Artifacts {
+					verificationBinding.Artifacts = append(verificationBinding.Artifacts, markdownreference.ArtifactBinding{Path: artifact.Path, Digest: artifact.Digest, Mode: artifact.Mode})
+				}
+			}
+			p, err = proposeMarkdownReferenceProjection(request, selectedCanonicalTargetInventory(inventory.Entries, request.TargetPrefix, excluded), observed.Snapshot, previous, canonicalWork[key], verificationBinding)
 			if err != nil {
 				return plan, err
 			}
 		} else if entrypoint == "markdown" {
 			input := markdown.Input{Definitions: request.Definitions, Schemas: request.Schemas, Policies: request.Policies, TargetPrefix: request.TargetPrefix, AllowedRoots: request.Projector.AllowedRoots, RequestDigest: request.RequestDigest, CanonicalAffected: canonicalWork[key], InventoryComplete: true}
+			if verified {
+				input.Verification = &markdown.VerificationBinding{Passed: true, RequestDigest: verification.RequestDigest}
+				for _, artifact := range verification.Artifacts {
+					input.Verification.Artifacts = append(input.Verification.Artifacts, markdown.ArtifactBinding{Path: artifact.Path, Digest: artifact.Digest, Mode: artifact.Mode})
+				}
+			}
 			for _, entry := range inventory.Entries {
 				if _, isExcluded := excluded[entry.Path]; isExcluded {
 					continue
