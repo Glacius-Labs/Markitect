@@ -1,0 +1,78 @@
+{
+  "evidenceRevisionTree": "9817632eb7cc7d88a220afd06421360a773885f8",
+  "fixtureStatus": [
+    "?? docs/",
+    "?? src/"
+  ],
+  "runId": "c4-documentation-aligned-v2",
+  "fixtureHead": "db72f5737eb2f68df8aa22a788279abde4ca4f0a",
+  "protocol": "operating-model-proof/v5",
+  "fixtureTree": "64cfac3f2fc8ec535c0cf21e90f3c5c9a1a59b43",
+  "recordType": "pre-verify-revalidation",
+  "wrapperSha256": "7806fabc774e2127ea29977009745c49d8043ffbcba63390e3d790b82d164d57",
+  "driverSha256": "a2dc55d213db619349885b8fd44a85078ce0190402e8f36fe46eb3a6a30d585b",
+  "checkedAtUtc": "2026-10-06T05:52:01Z",
+  "recordStoreHeadMarker": "00000000000000000004-71b817a8ed465fe78ddbddc7bc59ee3b4ef8ca5b9c6e965da12410c1b682e925.json",
+  "buildReceiptSha256": "4a7ca77cfbfb83c1e1b5e3f98b755f1de128d072372499438cd9e2d2ab0f3375",
+  "cliSha256": "8d179620a679fdfa04c92888ce2639755aa2bd91d15b7531ed709e17cb64bf76",
+  "evidenceRevision": "86c46fd2a0da53dbcac407569a487f96e8198c04",
+  "recordStoreEventCount": 4,
+  "checkInputs": [
+    {
+      "sha256": "6ec61ed84fcf6c12451f6a731b0a54071a7ef824d153ab19173028c005f7da8e",
+      "path": "examples/operating-model/checks/Orders.Checks.csproj",
+      "gitBlob": "1f25342101a46221289433aa7f8c114f1bbf5f8e"
+    },
+    {
+      "sha256": "ccc5783b7a3ae976b00ca4106627e8068bd752529211f90d485e441176a338ed",
+      "path": "examples/operating-model/checks/Orders.Program.cs",
+      "gitBlob": "b01ca604b22d59865268e5cdfbb9dcfac39e6dc7"
+    },
+    {
+      "sha256": "083c2891ddfb4ec6373d1f0279325c2179f5c23da340db57ed4d80802a6b487c",
+      "path": "examples/operating-model/checks/Billing.Checks.csproj",
+      "gitBlob": "59df3c667bfdef2f6e68b5e35e55b3a7d0c9bd88"
+    },
+    {
+      "sha256": "972099963b95215e6cd0dfaefc7961cf8986effc416dde32b3cb1414481381ae",
+      "path": "examples/operating-model/checks/Billing.Program.cs",
+      "gitBlob": "7f5588ff1cecf88e2129061880c2288185f4098c"
+    },
+    {
+      "sha256": "c279aa4f1d2cd6bcc2570ed913667bd64e0f788a35e75a3991f110725e26d3ae",
+      "path": "examples/operating-model/checks/Composition.Checks.csproj",
+      "gitBlob": "78bf74fd9389ba4e569e9cdf503e60050615c2ce"
+    },
+    {
+      "sha256": "78132279a45d81e2946ce21669733bd3153ccbf13310dd70725da4cf2195e93b",
+      "path": "examples/operating-model/checks/Composition.Program.cs",
+      "gitBlob": "0acb37fdac8ec8a859ab23df74e8a8aedb58c30b"
+    },
+    {
+      "sha256": "7ce85b8e09c299216bd28d7c5f389f78cbf155f23a28f4a2ae18996a526ac677",
+      "path": "examples/operating-model/checks/Documentation.Checks.csproj",
+      "gitBlob": "6ccd8cd20c4a20ad7192b28198126c98c9eb200b"
+    },
+    {
+      "sha256": "0bd602b938e87696c6d4d3e9b453dbda32ac475a4b33dfb0ee5b748d19092beb",
+      "path": "examples/operating-model/checks/Documentation.Program.cs",
+      "gitBlob": "ea4b2f9ef6cb7a8d815e341ce3d908f070a40219"
+    }
+  ],
+  "trial": "c4-documentation-aligned-v2",
+  "appliedTargets": [
+    {
+      "sha256": "9d126d792f567a173988f3474563bfb46f79e9ff321056a4ee252a0635874ece",
+      "path": "docs/represented/index.md"
+    },
+    {
+      "sha256": "e115deb66b51e651d97d6323ff31648e256b6fb64e9ac546e78474a0472ac4dc",
+      "path": "src/Billing/BillingQuery.cs"
+    },
+    {
+      "sha256": "553264bd9c7249d3e4ac755f0651b10006f32bed7ed8b9a39b0a964f44be7a30",
+      "path": "src/Orders/OrderRules.cs"
+    }
+  ],
+  "runtimeSha256": "8385a59915dec560d65ee3a1e954b1c9c07caa37365c51b3d055daeb0f8147fa"
+}
