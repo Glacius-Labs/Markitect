@@ -1,0 +1,62 @@
+{
+  "protocol": "operating-model-proof/v5",
+  "recordType": "pre-apply-control-freeze",
+  "status": "frozen",
+  "createdAtUtc": "2026-10-06T04:46:11.1455946Z",
+  "trial": "c4-module-proposal-v5-02",
+  "runId": "c4-module-proposal-v5-02",
+  "sourceSha": "6a79b0d015801f3f37e42cacd049179cc795be42",
+  "fixtureOriginSha": "140ffdb9547f025ec2a6e0dd0d2e38f9d0a090c7",
+  "fixtureSubsetCommit": "b24fd775b3537302ba2ebece970c55ffdef5f7eb",
+  "fixtureBranch": "codex/operating-model-c4-v5",
+  "runtimeSha256": "af2c31b099c2004ce3ed4792399c910eb24094fab077fea4fc5b2ae32a64cad2",
+  "cliSha256": "03c551536335ee580b870e703a6a40ef8777c5a8139042f8f0f7e8e7e88729aa",
+  "wrapperSha256": "7806fabc774e2127ea29977009745c49d8043ffbcba63390e3d790b82d164d57",
+  "proposalDigest": "sha256:4862af3e3336990012a73bb51b91b65792552978108be03227860af2c0bd1bdf",
+  "inputDigest": "sha256:5193a22361597226aab6e063e25af7b493aac96e492b1955d5de5c3866693573",
+  "ledgerHead": "sha256:f77a624521ea48ebd4a7e9f13e5c57619bdee5d32ce7a66fdd4e655d64a8092e",
+  "ledgerSelectionDigest": "sha256:bbd0dafc21986b54a40a68b028f6166eb5ac6ba8916faf8e7b94125a090ed2d8",
+  "executeAttempt": "931e96cdc96e49fbb16196e794abe2f5",
+  "reviewedRunPath": "C:/Users/Consiliari/AppData/Local/Temp/markitect-operating-model-20261006-c4-positive-v5-01/c4-module-proposal-v5-02/reviewed-run-931e96cdc96e49fbb16196e794abe2f5.json",
+  "reviewedRunFileSha256": "59e5a6d7c54a33f9a20c4e249a65508c1edf2063022baf051165545f3ba33341",
+  "reviewedRunDigest": "sha256:7763d3ce6bedbbbd1c415aca68c3749b0b1f2aa88206e715e3a14c360eba6a8e",
+  "writeFlag": true,
+  "exactCohort": [
+    {
+      "sha256": "2d5c1df498736970795c64a30719319cfc6a700750518c5d37a99a577ca7cd41",
+      "path": "src/Billing/BillingQuery.cs",
+      "projection": "billing-dotnet",
+      "bytes": 683
+    },
+    {
+      "sha256": "553264bd9c7249d3e4ac755f0651b10006f32bed7ed8b9a39b0a964f44be7a30",
+      "path": "src/Orders/OrderRules.cs",
+      "projection": "orders-dotnet",
+      "bytes": 475
+    },
+    {
+      "sha256": "b1f2e9dd8c4243bddf2eeab0ddf05c265a7b2270cde5e812ade67f6d0b7c68f1",
+      "path": "docs/represented/index.md",
+      "projection": "product-markdown",
+      "bytes": 3614
+    }
+  ],
+  "policyReview": {
+    "billing": "candidate conforms: null rejection, nonnegative amounts, checked Int64 sum",
+    "orders": "candidate conforms to exact projection policy",
+    "product": "candidate conforms to composition and independent child Definitions",
+    "method": "no agent candidates altered or repaired"
+  },
+  "documentationCheck": {
+    "requiredTerms": [
+      "TryCalculateTotalCents",
+      "SumOutstandingCents"
+    ],
+    "present": false,
+    "state": "predicted gap from exact frozen check input; will run actual check after Apply"
+  },
+  "fixedCheckCount": 4,
+  "explicitCheckInputCount": 8,
+  "targetWritesBeforeApply": 0,
+  "ownerAcceptance": "not claimed"
+}

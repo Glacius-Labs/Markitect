@@ -1,0 +1,24 @@
+{
+  "recordType": "operator-harness-setup-note",
+  "protocolEvent": false,
+  "runId": "c4-execute-v5-01",
+  "action": "execute",
+  "observedAtUtc": "2026-10-06T04:27:02.5686867Z",
+  "driver": "experiments/operating-model-proof/run.py",
+  "driverSha256": "a2dc55d213db619349885b8fd44a85078ce0190402e8f36fe46eb3a6a30d585b",
+  "driverOutput": "cannot read closed JSON: C:\\Users\\Consiliari\\.codex\\worktrees\\operating-proof-v5\\Markitect\\experiments\\operating-model-proof\\runs\\c4-execute-v5-01\\binding.json",
+  "result": "driver invocation error before controller/native execution",
+  "basis": "Root confirmed the driver reads binding.json before constructing/subprocess-running controller-execute; no Executor call was made.",
+  "createdFiles": [
+    "runs/c4-execute-v5-01/",
+    "runs/c4-execute-v5-01/events/",
+    "C:/Users/Consiliari/AppData/Local/Temp/markitect-operating-model-20261006-c4-positive-v5-01/c4-execute-v5-01/"
+  ],
+  "externalProviderOutputObserved": false,
+  "controllerBindingObserved": false,
+  "protocolEventObserved": false,
+  "providerInvocationCountForThisAttempt": 0,
+  "targetWrites": 0,
+  "nextCorrectAction": "Continue action execute using the successful proposal runId c4-module-proposal-v5-01 and unchanged fixture/runtime/build/source bindings; driver generates unique attempt IDs internally.",
+  "candidateRepair": false
+}
