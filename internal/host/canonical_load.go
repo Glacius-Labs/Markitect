@@ -57,15 +57,19 @@ type CanonicalModulePreview struct {
 // structural compilation. Snapshot is retained as evidence; callers must not
 // read files outside it after this boundary.
 type CanonicalSource struct {
-	Snapshot    *snapshot.Snapshot
-	ConfigPath  string
-	Config      CanonicalSourceConfig
-	Packages    []canonical.ModulePackage
-	Pins        []canonical.Pin
-	Previews    []CanonicalModulePreview
-	Activation  canonical.Activation
-	Model       core.Model
-	Diagnostics []core.Diagnostic
+	Snapshot *snapshot.Snapshot
+	// AcquisitionScope is non-nil only when Snapshot contains the exact
+	// canonical source inputs selected from a fixed Git revision. A sparse
+	// snapshot must never be presented as a repository-wide snapshot.
+	AcquisitionScope *SelectedInputScope
+	ConfigPath       string
+	Config           CanonicalSourceConfig
+	Packages         []canonical.ModulePackage
+	Pins             []canonical.Pin
+	Previews         []CanonicalModulePreview
+	Activation       canonical.Activation
+	Model            core.Model
+	Diagnostics      []core.Diagnostic
 }
 
 // LoadCanonicalSource reads a closed source config and its exact listed inputs
@@ -80,6 +84,17 @@ func LoadCanonicalSource(root, revision, configPath string, requirePins bool) (*
 	s, err := source.Load(root, revision)
 	if err != nil {
 		return nil, err
+	}
+	return loadCanonicalSourceSnapshot(s, configPath, requirePins)
+}
+
+// loadCanonicalSourceSnapshot is the shared decode, activation, and compiler
+// path for complete and explicitly selected source snapshots. The supplied
+// snapshot's ID remains the full source revision; its file map may be sparse
+// only when the caller also exposes a SelectedInputScope.
+func loadCanonicalSourceSnapshot(s *snapshot.Snapshot, configPath string, requirePins bool) (*CanonicalSource, error) {
+	if s == nil {
+		return nil, errors.New("canonical source snapshot is required")
 	}
 	configBytes, ok := s.Files[configPath]
 	if !ok {
