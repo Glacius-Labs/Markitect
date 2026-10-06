@@ -72,15 +72,23 @@ func TestUnknownOntologyLoadsExactPackagesAndPreparesBoundedScope(t *testing.T) 
 	if len(prepared.Request.Definitions) != 3 {
 		t.Fatalf("selected %d Definitions, want the Mission, EffectAxis and Capability", len(prepared.Request.Definitions))
 	}
-	want := map[string]bool{"Mission": true, "EffectAxis": true, "Capability": true}
+	want := map[string]bool{"Mission/mission-planning/daily-reflection": true, "EffectAxis/mission-planning/focus-duration": true, "Capability/mission-planning/guided-focus": true}
 	for _, definition := range prepared.Request.Definitions {
-		delete(want, definition.Kind)
+		identity := definition.Identity()
+		delete(want, identity.Kind+"/"+identity.Namespace+"/"+identity.Name)
 	}
 	if len(want) != 0 {
 		t.Fatalf("missing selected project-owned Kinds: %#v", want)
 	}
 	if len(prepared.Request.Policies) != 3 {
 		t.Fatalf("selected %d ProjectionPolicies, want one for each source Kind", len(prepared.Request.Policies))
+	}
+	policyNames := map[string]bool{"mission-dotnet": true, "effect-axis-dotnet": true, "capability-dotnet": true}
+	for _, policy := range prepared.Request.Policies {
+		delete(policyNames, policy.Identity().Name)
+	}
+	if len(policyNames) != 0 {
+		t.Fatalf("missing per-Kind policies: %#v", policyNames)
 	}
 	if prepared.Plan != nil || !hasUnknownOntologyEscalation(prepared.Escalations, "projection.candidate-required") {
 		t.Fatalf("no-candidate Prepare must remain incomplete, plan=%t escalations=%#v", prepared.Plan != nil, prepared.Escalations)
