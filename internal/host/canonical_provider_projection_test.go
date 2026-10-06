@@ -128,3 +128,68 @@ func copyCanonicalFixtureTree(source, destination string) error {
 		return os.WriteFile(target, data, 0644)
 	})
 }
+
+// This separate adopter fixture repairs selected intent, not the original C4
+// check or failed evidence. It deliberately reuses the existing public API owners.
+func TestCanonicalDocumentationAlignedFixtureSelectsExistingAPIIntent(t *testing.T) {
+	_, testFile, _, ok := runtime.Caller(0)
+	if !ok {
+		t.Fatal("cannot locate fixture source")
+	}
+	checkout := filepath.Clean(filepath.Join(filepath.Dir(testFile), "..", ".."))
+	root := t.TempDir()
+	if err := copyCanonicalFixtureTree(filepath.Join(checkout, "examples", "operating-model"), filepath.Join(root, "examples", "operating-model")); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, ".gitattributes"), []byte("* -text\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	scopedTestGit(t, root, "init", "--template=", "--object-format=sha1", "-b", "codex/documentation-intent-test")
+	scopedTestGit(t, root, "config", "user.name", "Canonical documentation test")
+	scopedTestGit(t, root, "config", "user.email", "documentation@example.invalid")
+	scopedTestGit(t, root, "add", ".")
+	scopedTestGit(t, root, "commit", "-m", "fixed documentation intent fixtures")
+	revision := scopedTestGit(t, root, "rev-parse", "HEAD")
+	projection := core.DefinitionIdentity{APIVersion: "markitect.foundation/v1", Kind: "Projection", Namespace: "operating-model", Name: "product-markdown"}
+	var original *CanonicalSource
+	for _, tc := range []struct {
+		config   string
+		subjects int
+		hasAPI   bool
+	}{
+		{"examples/operating-model/canonical.yaml", 3, false},
+		{"examples/operating-model/canonical-documentation-aligned.yaml", 5, true},
+	} {
+		fixed, err := LoadSelectedCanonicalSource(root, revision, tc.config, true)
+		if err != nil || len(fixed.Diagnostics) != 0 {
+			t.Fatalf("%s: %v %v", tc.config, err, fixed.Diagnostics)
+		}
+		observed := &snapshot.Snapshot{ID: "working", Provisional: true, Files: cloneByteMap(fixed.Snapshot.Files), Modes: fixed.Snapshot.Modes}
+		prepared, err := PrepareCanonicalProjection(fixed, observed, projection, "fixture-test/1", sha256Prefix(sha256Hex([]byte("fixture-test"))), nil, fixed.Config.Checks...)
+		if err != nil || len(prepared.Escalations) != 0 || len(prepared.Request.Definitions) != tc.subjects {
+			t.Fatalf("%s: %v %v", tc.config, err, prepared.Escalations)
+		}
+		content, ok := prepared.Outputs["docs/represented/index.md"]
+		if !ok {
+			t.Fatal("Module-owned Markdown target missing")
+		}
+		for _, name := range []string{"TryCalculateTotalCents", "SumOutstandingCents"} {
+			if bytes.Contains(content, []byte(name)) != tc.hasAPI {
+				t.Fatalf("%s: unexpected API presence for %s", tc.config, name)
+			}
+		}
+		if original == nil {
+			original = fixed
+			continue
+		}
+		if !equalCanonicalValue(original.Config.Checks, fixed.Config.Checks) || !equalCanonicalValue(original.Config.Modules, fixed.Config.Modules) {
+			t.Fatal("alignment changed existing checks or exact module pins")
+		}
+		for _, name := range []string{"orders.order-rules.yaml", "billing.billing-query.yaml", "product.composition.yaml", "orders-dotnet.projection-policy.yaml", "billing-dotnet.projection-policy.yaml"} {
+			path := "examples/operating-model/definitions/" + name
+			if !bytes.Equal(original.Snapshot.Files[path], fixed.Snapshot.Files[path]) {
+				t.Fatalf("alignment changed canonical owner %s", path)
+			}
+		}
+	}
+}

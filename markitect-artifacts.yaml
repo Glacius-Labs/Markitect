@@ -971,3 +971,11 @@ spec:
       owner: source-bound-c3-agent-trial-evidence
     - path: experiments/operating-model-proof/runs/c3-positive-05/events/verify-28dd9db4c2394c07b69250564daf6c24.json
       owner: source-bound-c3-agent-trial-evidence
+    - path: examples/operating-model/canonical-documentation-aligned.yaml
+      owner: operating-model-documentation-alignment
+    - path: examples/operating-model/definitions/product-documentation-aligned.projection.yaml
+      owner: operating-model-documentation-alignment
+    - path: examples/operating-model/definitions/representation-policy-markdown.projection-policy.yaml
+      owner: operating-model-documentation-alignment
+    - path: experiments/operating-model-proof/c4-documentation-alignment.md
+      owner: operating-model-documentation-alignment

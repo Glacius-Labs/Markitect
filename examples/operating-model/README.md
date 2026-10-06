@@ -19,3 +19,24 @@ Protocol identity: operating-model-proof/v1.
 A future C3/C4/C5 result requires a fresh Executor invocation and a separate fresh Verifier invocation bound to the same immutable canonical source and exact candidate. The Verifier receives the independently selected canonical obligations, actual candidate/materialized artifacts, and applicable fixed project checks. The Executor transcript or its authored tests are not verifier evidence. The fresh-run command/configuration and exact input bindings must be recorded with the result.
 
 The historical protocol-v1 checkpoint remains C5 FAIL. This prepared fixture, its unit/compiler checks, and its canonical shape result are setup evidence only; they are not an Executor/Verifier experiment or a replacement proof. No private adopter source is included, and no technical result records owner acceptance.
+
+## Separately versioned documentation alignment
+
+`canonical.yaml` and its original checks remain the original C4 experiment.
+The fresh v5 run exposed a mismatch: the Documentation check requires the two
+public API names, while the three selected Markdown subjects/policies do not
+contain those names. That failure is retained as evidence, not reclassified as a
+missing semantic renderer or a passing result.
+
+`canonical-documentation-aligned.yaml` is a new selected source. Its Product
+Markdown Projection additionally selects the existing Orders and Billing .NET
+ProjectionPolicy Definitions as documentation subjects, under the explicit
+`representation-policy-markdown` policy. Those exact existing Definitions remain
+the only owners of the public API contracts; their bytes, the business Definitions,
+module pins and all four check commands/implementations are unchanged. Markdown
+consumes canonical policy, never a sibling Module's generated source files.
+
+The fixture compile/render test establishes that the selected contract now
+contains the required API names. It does not establish agent behavior, fresh
+verification, owner acceptance or convergence. A new experiment must freeze this
+source separately and preserve the original failure.
