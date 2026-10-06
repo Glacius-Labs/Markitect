@@ -1,0 +1,69 @@
+apiVersion: markitect.canonical/v1alpha1
+kind: Source
+definitions:
+  - examples/operating-model/definitions/orders.order-rules.yaml
+  - examples/operating-model/definitions/billing.billing-query.yaml
+  - examples/operating-model/definitions/product.composition.yaml
+  - examples/operating-model/definitions/orders-dotnet.projection-policy.yaml
+  - examples/operating-model/definitions/billing-dotnet.projection-policy.yaml
+  - examples/operating-model/definitions/orders-markdown.projection-policy.yaml
+  - examples/operating-model/definitions/billing-markdown.projection-policy.yaml
+  - examples/operating-model/definitions/product-markdown.projection-policy.yaml
+  - examples/operating-model/definitions/orders.projection.yaml
+  - examples/operating-model/definitions/billing.projection.yaml
+  - examples/operating-model/definitions/product.projection.yaml
+modules:
+  - manifest: examples/operating-model/modules/foundation/module.yaml
+    pin:
+      name: markitect-foundation
+      version: 1.0.0
+      digest: sha256:85346f68790c0e5256dabc52fc0b871ded7a95d7c0c27ba335a168f998b8b56c
+    files:
+      - examples/operating-model/modules/foundation/schema.yaml
+  - manifest: examples/operating-model/modules/commerce/module.yaml
+    pin:
+      name: operating-model-commerce
+      version: 1.0.0
+      digest: sha256:b2c4377cf255696d0d5ddc4a06f049fa35f155f6eb5f449f87f205476105c7f3
+    files:
+      - examples/operating-model/modules/commerce/schema.yaml
+  - manifest: examples/operating-model/modules/dotnet/module.yaml
+    pin:
+      name: operating-model-dotnet
+      version: 1.0.0
+      digest: sha256:973813c0cd327c13928c05ce49ddfd08d5dcb31eff27b2b1f9bb52284b9c6a31
+    files: []
+  - manifest: examples/operating-model/modules/markdown/module.yaml
+    pin:
+      name: operating-model-markdown
+      version: 1.0.0
+      digest: sha256:c7aa64a88d1060f4cb320895e6eb7ba05fd769f964c1521b04e54266eea6bec9
+    files: []
+projectionBindings:
+  - projection:
+      apiVersion: markitect.foundation/v1
+      kind: Projection
+      namespace: operating-model
+      name: orders-dotnet
+    module: operating-model-dotnet
+  - projection:
+      apiVersion: markitect.foundation/v1
+      kind: Projection
+      namespace: operating-model
+      name: billing-dotnet
+    module: operating-model-dotnet
+  - projection:
+      apiVersion: markitect.foundation/v1
+      kind: Projection
+      namespace: operating-model
+      name: product-markdown
+    module: operating-model-markdown
+checks:
+  - name: operating-model-orders
+    run: [dotnet, run, --project, examples/operating-model/checks/Orders.Checks.csproj, --configuration, Release]
+  - name: operating-model-billing
+    run: [dotnet, run, --project, examples/operating-model/checks/Billing.Checks.csproj, --configuration, Release]
+  - name: operating-model-composition
+    run: [dotnet, run, --project, examples/operating-model/checks/Composition.Checks.csproj, --configuration, Release]
+  - name: operating-model-documentation
+    run: [dotnet, run, --project, examples/operating-model/checks/Documentation.Checks.csproj, --configuration, Release]

@@ -1,0 +1,12 @@
+apiVersion: markitect.example.org/module/v1alpha1
+name: operating-model-commerce
+version: 1.0.0
+type: schema
+purpose: Provides this example Project's Orders, Billing and composition vocabulary.
+requires:
+  core: "1"
+  modules: []
+provides:
+  schemas:
+    - schema.yaml
+  projectors: []

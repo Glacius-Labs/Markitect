@@ -1,0 +1,26 @@
+apiVersion: markitect.example.org/module/v1alpha1
+name: operating-model-dotnet
+version: 1.0.0
+type: projection
+purpose: Registers bounded .NET representation guidance for project-selected Definitions.
+requires:
+  core: "1"
+  modules: []
+provides:
+  schemas: []
+  projectors:
+    - id: operating-model-dotnet-source
+      version: 1.0.0
+      target: dotnet
+      allKinds: true
+      allowedRoots:
+        - src/Orders/
+        - src/Billing/
+      guidance: >
+        Represent only the selected canonical Definitions and their applicable
+        ProjectionPolicies. Keep the pure public API described by those owners
+        and place implementation source files inside the selected target root.
+        Choose filenames from the representation; this Module requires no
+        particular filename, project file, handler type or folder discovery.
+        Escalate unresolved meaning or conflicting guidance before returning
+        candidate bytes for independent verification.
