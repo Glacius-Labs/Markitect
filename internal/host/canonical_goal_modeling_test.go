@@ -27,6 +27,7 @@ func TestGoalModelingHelperProcess(t *testing.T) {
 	}
 	var contextValue struct {
 		Phase string `json:"phase"`
+		Task  string `json:"task"`
 	}
 	if err := json.Unmarshal(invocation.Request.Context, &contextValue); err != nil {
 		fmt.Fprintln(os.Stderr, "invalid request context")
@@ -47,6 +48,20 @@ func TestGoalModelingHelperProcess(t *testing.T) {
 		}
 		response.CandidateJSON = json.RawMessage(fmt.Sprintf(`{"recommendations":[{"id":%q,"basis":"The supplied schema can describe this goal.","uncertainty":["The goal needs owner review."]}],"uncertainty":["No provider-quality claim is made."]}`, id))
 	case "model-from-selected-modules":
+		for _, fragment := range []string{
+			`Property typed reference`,
+			`required string fields namespace and name`,
+			`Example: {"namespace":"commerce","name":"orders"}`,
+			`never wrap a Definition reference in metadata`,
+			`Property typed kindReference`,
+			`containing exactly apiVersion and kind`,
+			`this identifies a Kind, not a Definition`,
+		} {
+			if !strings.Contains(contextValue.Task, fragment) {
+				fmt.Fprintf(os.Stderr, "proposal task omits Core reference contract %q", fragment)
+				os.Exit(2)
+			}
+		}
 		definition := `{"apiVersion":"goals.example.org/v1","kind":"Module","metadata":{"name":"orders","namespace":"commerce"},"purpose":"Own order placement intent.","spec":{"name":"Orders"}}`
 		if os.Getenv("MARKITECT_GOAL_MODELING_TEST_INVALID_DEFINITION") == "1" {
 			definition = strings.Replace(definition, `"name":"Orders"`, `"undeclared":"Orders"`, 1)
