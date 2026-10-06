@@ -1,0 +1,29 @@
+{
+  "schema": "markitect.c11-run-assessment/v1",
+  "runId": "c11-replacement-markdown",
+  "recordScope": "sanitized binding/events only; full CLI JSON and runtime files remain external",
+  "recordedAtUtc": "2026-10-06T07:27:25.945823+00:00",
+  "freeze": "c11-module-replacement-amended-v2",
+  "freezeSha256": "44530C0DB4AEBCB802189DC3A8A0F66CC13E0F8122E4E146838FBA1E30E0A6A6",
+  "classification": "INVALID",
+  "reason": "The fixed check declared in the runtime reads docs/represented/canonical-projection.md, but the configured target prefix materializes docs/represented/workflow.md/canonical-projection.md. The replacement Propose and Execute completed, but this run cannot count as checked replacement evidence.",
+  "providerExecutorInvoked": false,
+  "applied": false,
+  "freshVerifier": false,
+  "propose": {
+    "attemptId": "23697cd6cc594f6ba74b00328ac5ce03",
+    "proposalDigest": "sha256:e57858dae6167435aa972c6212c8c19f3de6805fa12f0007452753999d7484a3",
+    "requestDigest": "sha256:e08d8d58943c84f5bf4e5dbffaaefe3fb6c0b967c036f4c417531e0ace090b18",
+    "inputDigest": "sha256:fd16d9dc94640327d5c830e05832332b0ee061fcf5226ac0dd9cc2130618b1c9"
+  },
+  "execute": {
+    "attemptId": "9a4fb9d571ca48568106f56158afe7f0",
+    "runDigest": "sha256:53b30558d15a6a28199c50fb35d2b6941f49243b2fb8ead4d0d085ff27751764",
+    "planDigest": "0a43d5cf0c59fa6bf98a3e4db8c0bc78e256eafd975a7bc2a75aa0b94bd91c27",
+    "output": {
+      "path": "docs/represented/workflow.md/canonical-projection.md",
+      "bytes": 10228,
+      "sha256": "417192b78fbdfd22b643e8c02091f46347819587cd02b68d0f73144415fddc71"
+    }
+  }
+}
