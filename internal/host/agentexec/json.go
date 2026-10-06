@@ -10,6 +10,7 @@ import (
 	"io"
 	"sort"
 	"strings"
+	"unicode"
 	"unicode/utf8"
 )
 
@@ -29,6 +30,9 @@ func strictDecode(data []byte, dst any) error {
 	if err := rejectDuplicateKeys(data); err != nil {
 		return err
 	}
+	if err := rejectProtocolKeyAliases(data); err != nil {
+		return err
+	}
 	decoder := json.NewDecoder(bytes.NewReader(data))
 	decoder.DisallowUnknownFields()
 	decoder.UseNumber()
@@ -39,6 +43,90 @@ func strictDecode(data []byte, dst any) error {
 		return errors.New("JSON protocol value contains trailing data")
 	}
 	return nil
+}
+
+// rejectProtocolKeyAliases rejects case-folded duplicate property names in the
+// outer execution protocol. encoding/json matches struct fields
+// case-insensitively, so `runId` and `RunID` otherwise write the same field
+// despite being distinct JSON strings. candidateJson is opaque caller data;
+// its own exact duplicate-key check is performed by canonicalObject when it is
+// interpreted, and its property names must remain case-sensitive.
+func rejectProtocolKeyAliases(data []byte) error {
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.UseNumber()
+	if err := scanJSONValueWithProtocolKeys(decoder, true); err != nil {
+		return err
+	}
+	if _, err := decoder.Token(); err != io.EOF {
+		if err == nil {
+			return errors.New("JSON contains trailing data")
+		}
+		return fmt.Errorf("invalid JSON: %w", err)
+	}
+	return nil
+}
+
+func scanJSONValueWithProtocolKeys(decoder *json.Decoder, protocolKeys bool) error {
+	token, err := decoder.Token()
+	if err != nil {
+		return fmt.Errorf("invalid JSON: %w", err)
+	}
+	delim, isDelim := token.(json.Delim)
+	if !isDelim {
+		return nil
+	}
+	switch delim {
+	case '{':
+		seen := make(map[string]string)
+		for decoder.More() {
+			keyToken, err := decoder.Token()
+			if err != nil {
+				return fmt.Errorf("invalid JSON object key: %w", err)
+			}
+			key, ok := keyToken.(string)
+			if !ok {
+				return errors.New("invalid JSON object key")
+			}
+			if protocolKeys {
+				folded := strings.Map(foldProtocolRune, key)
+				if prior, exists := seen[folded]; exists {
+					return fmt.Errorf("duplicate protocol JSON key %q conflicts with %q", key, prior)
+				}
+				seen[folded] = key
+			}
+			checkChild := protocolKeys && !strings.EqualFold(key, "candidateJson")
+			if err := scanJSONValueWithProtocolKeys(decoder, checkChild); err != nil {
+				return err
+			}
+		}
+		end, err := decoder.Token()
+		if err != nil || end != json.Delim('}') {
+			return errors.New("invalid JSON object")
+		}
+	case '[':
+		for decoder.More() {
+			if err := scanJSONValueWithProtocolKeys(decoder, protocolKeys); err != nil {
+				return err
+			}
+		}
+		end, err := decoder.Token()
+		if err != nil || end != json.Delim(']') {
+			return errors.New("invalid JSON array")
+		}
+	default:
+		return errors.New("invalid JSON delimiter")
+	}
+	return nil
+}
+
+func foldProtocolRune(value rune) rune {
+	folded := value
+	for next := unicode.SimpleFold(folded); next != value; next = unicode.SimpleFold(next) {
+		if next < folded {
+			folded = next
+		}
+	}
+	return folded
 }
 
 func rejectDuplicateKeys(data []byte) error {
