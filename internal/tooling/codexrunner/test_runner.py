@@ -76,6 +76,33 @@ class CodexRunnerTests(unittest.TestCase):
         self.assertIn("No executor transcript", runner.make_prompt(invocation("verifier")))
         self.assertNotIn("executor private", verifier)
 
+    def test_prompt_states_closed_wire_response_contract(self) -> None:
+        prompt = runner.make_prompt(invocation("verifier"))
+        for instruction in (
+            "Copy apiVersion, runId, nonce, role, and inputDigest exactly",
+            "Always include candidateFiles, evidenceRefs, verifierObservations, and uncertainty as arrays",
+            "exact strings supplied in request.scopeIds, request.policyIds, or request.artifacts[].path",
+            "Do not use digests, hashes, labels, paraphrases, or derived values as evidence references",
+            "with no duplicates, sorted lexicographically",
+            "exactly one verifierObservations entry for each supplied scopeIds and policyIds value",
+            "using that exact value as subject",
+            "incomplete or escalated",
+        ):
+            with self.subTest(instruction=instruction):
+                self.assertIn(instruction, prompt)
+
+    def test_role_instructions_list_role_specific_outcomes(self) -> None:
+        expected = {
+            "executor": ("proposed, failed, incomplete, or escalated", "proposed requires at least one candidate file"),
+            "verifier": ("passed, failed, incomplete, or escalated", "passed and failed require concrete verifier observations"),
+            "infer": ("proposed, failed, incomplete, or escalated", "proposed requires a JSON object candidate"),
+        }
+        for role, phrases in expected.items():
+            with self.subTest(role=role):
+                instructions = runner.role_instructions(role)
+                for phrase in phrases:
+                    self.assertIn(phrase, instructions)
+
     def test_explicit_model_options_become_literal_codex_config_arguments(self) -> None:
         self.assertEqual(
             runner.model_config_args({"model_reasoning_effort": "high"}),
