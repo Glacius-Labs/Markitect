@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"sort"
+	"strings"
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/internal/host/agentexec"
@@ -159,6 +161,47 @@ func TestCanonicalControllerOperatingFailureRepairClosure(t *testing.T) {
 	var executorContext map[string]json.RawMessage
 	if err := json.Unmarshal(invocation.Request.Context, &executorContext); err != nil {
 		t.Fatalf("decode actual repair Executor context: %v", err)
+	}
+	var ownedPaths []string
+	if err := json.Unmarshal(executorContext["existingOwnedArtifactPaths"], &ownedPaths); err != nil {
+		t.Fatalf("decode current-scope owned paths from Executor context: %v", err)
+	}
+	expectedOwnedPaths := make([]string, 0, len(leaf.Task.ExistingOwnedArtifacts))
+	for _, artifact := range leaf.Task.ExistingOwnedArtifacts {
+		expectedOwnedPaths = append(expectedOwnedPaths, artifact.Path)
+	}
+	sort.Strings(expectedOwnedPaths)
+	if len(ownedPaths) != len(expectedOwnedPaths) || len(ownedPaths) == 0 {
+		t.Fatalf("Executor context owned paths=%v, want nonempty task-owned paths %v", ownedPaths, expectedOwnedPaths)
+	}
+	for i, path := range expectedOwnedPaths {
+		if ownedPaths[i] != path {
+			t.Fatalf("Executor context owned paths=%v, want sorted exact paths %v", ownedPaths, expectedOwnedPaths)
+		}
+	}
+	var constraints []string
+	if err := json.Unmarshal(executorContext["constraints"], &constraints); err != nil {
+		t.Fatalf("decode Executor task constraints: %v", err)
+	}
+	completeOwnedRepresentation := false
+	for _, constraint := range constraints {
+		if strings.Contains(constraint, "complete owned representation") && strings.Contains(constraint, "existing owned artifact path") && strings.Contains(constraint, "unchanged") {
+			completeOwnedRepresentation = true
+		}
+	}
+	if !completeOwnedRepresentation {
+		t.Fatalf("Executor context omits the complete-owned-representation instruction: %v", constraints)
+	}
+	var dependencyPaths []string
+	if err := json.Unmarshal(executorContext["readOnlyDependencyEvidence"], &dependencyPaths); err != nil {
+		t.Fatalf("decode read-only dependency paths: %v", err)
+	}
+	for _, ownedPath := range ownedPaths {
+		for _, dependencyPath := range dependencyPaths {
+			if ownedPath == dependencyPath {
+				t.Fatalf("Executor conflates current owned artifact %s with read-only dependency evidence", ownedPath)
+			}
+		}
 	}
 	repairJSON, ok := executorContext["repair"]
 	if !ok {

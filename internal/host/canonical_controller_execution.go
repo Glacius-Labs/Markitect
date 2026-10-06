@@ -21,14 +21,15 @@ import (
 )
 
 type canonicalControllerExecutorContext struct {
-	Model              CanonicalAgentContext              `json:"model"`
-	Objective          string                             `json:"objective"`
-	AllowedRoots       []string                           `json:"allowedRoots"`
-	AllowedExtensions  []string                           `json:"allowedExtensions"`
-	Constraints        []string                           `json:"constraints"`
-	DependencyEvidence []string                           `json:"readOnlyDependencyEvidence"`
-	DependencyState    string                             `json:"dependencyState"`
-	Repair             *canonicalControllerExecutorRepair `json:"repair,omitempty"`
+	Model                      CanonicalAgentContext              `json:"model"`
+	Objective                  string                             `json:"objective"`
+	AllowedRoots               []string                           `json:"allowedRoots"`
+	AllowedExtensions          []string                           `json:"allowedExtensions"`
+	ExistingOwnedArtifactPaths []string                           `json:"existingOwnedArtifactPaths"`
+	Constraints                []string                           `json:"constraints"`
+	DependencyEvidence         []string                           `json:"readOnlyDependencyEvidence"`
+	DependencyState            string                             `json:"dependencyState"`
+	Repair                     *canonicalControllerExecutorRepair `json:"repair,omitempty"`
 }
 
 type canonicalControllerExecutorRepair struct {
@@ -55,6 +56,14 @@ func canonicalControllerExecutorRepairFrom(evidence *dotnet.RepairEvidence) *can
 		repair.Findings = append(repair.Findings, canonicalControllerExecutorRepairFinding{Subject: finding.Subject, Detail: finding.Detail})
 	}
 	return repair
+}
+
+func canonicalControllerOwnedArtifactPaths(artifacts []dotnet.ArtifactObservation) []string {
+	paths := make([]string, 0, len(artifacts))
+	for _, artifact := range artifacts {
+		paths = append(paths, artifact.Path)
+	}
+	return sortedUniquePaths(paths)
 }
 
 // ExecuteCanonicalController makes no Host adopter-artifact or ledger writes.
@@ -115,7 +124,8 @@ func ExecuteCanonicalController(ctx context.Context, root, base, revision, confi
 			}
 			contextBytes, err := json.Marshal(canonicalControllerExecutorContext{
 				Model: contextModel, Objective: p.Task.Objective, AllowedRoots: p.Task.AllowedRoots,
-				AllowedExtensions: p.Task.AllowedExtensions, Constraints: p.Task.Constraints,
+				AllowedExtensions: p.Task.AllowedExtensions, ExistingOwnedArtifactPaths: canonicalControllerOwnedArtifactPaths(p.Task.ExistingOwnedArtifacts),
+				Constraints:        p.Task.Constraints,
 				DependencyEvidence: dependencyPaths,
 				DependencyState:    "Child candidates are unapplied and unverified. Retained child bytes are observed evidence, not new semantic acceptance. Do not edit dependency artifacts outside your own allowed roots.",
 				Repair:             canonicalControllerExecutorRepairFrom(p.Task.Repair),

@@ -465,7 +465,12 @@ func work(input ProposalInput, prefix string, roots []string, kinds []KindContex
 		AllowedExtensions:      []string{".cs", ".csproj"},
 		Kinds:                  kinds,
 		ExistingOwnedArtifacts: owned,
-		Constraints:            []string{"Choose candidate filenames from the supplied semantics and project conventions.", "Return candidate files only under TargetPrefix and registered AllowedRoots.", "Do not delete or claim verification of any artifact."},
+		Constraints: []string{
+			"Choose candidate filenames from the supplied semantics and project conventions.",
+			"Return candidate files only under TargetPrefix and registered AllowedRoots.",
+			"Return the complete owned representation: include a candidate file for every existing owned artifact path listed in the task, even when its contents are unchanged. Omission is not deletion or retirement.",
+			"Do not delete or claim verification of any artifact.",
+		},
 	}}
 }
 func escalate(code, message string) Proposal {
