@@ -16,6 +16,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/host/agentexec"
 	"github.com/Glacius-Labs/Markitect/internal/host/assurance"
 	"github.com/Glacius-Labs/Markitect/internal/host/authoring"
+	"github.com/Glacius-Labs/Markitect/internal/host/canonical"
 	"github.com/Glacius-Labs/Markitect/internal/host/records"
 )
 
@@ -23,6 +24,7 @@ const (
 	canonicalControllerVerifierTestActorEnv   = "MARKITECT_CANONICAL_CONTROLLER_VERIFIER_TEST_ACTOR"
 	canonicalControllerVerifierTestOutcomeEnv = "MARKITECT_CANONICAL_CONTROLLER_VERIFIER_TEST_OUTCOME"
 	canonicalControllerVerifierTestMarkerEnv  = "MARKITECT_CANONICAL_CONTROLLER_VERIFIER_TEST_MARKER"
+	canonicalControllerVerifierTestPartialEnv = "MARKITECT_CANONICAL_CONTROLLER_VERIFIER_TEST_PARTIAL"
 )
 
 // This helper process speaks the runner protocol only. Its outcome is a test
@@ -55,8 +57,15 @@ func TestCanonicalControllerVerifierProtocolProcess(t *testing.T) {
 		refs = append(refs, artifact.Path)
 	}
 	sort.Strings(refs)
-	for _, ref := range refs {
-		observations = append(observations, agentexec.Observation{Subject: ref, Outcome: outcome, Detail: "protocol fixture observation"})
+	var verifierContext canonicalControllerVerifierContext
+	if err := json.Unmarshal(invocation.Request.Context, &verifierContext); err != nil {
+		os.Exit(44)
+	}
+	for _, subject := range verifierContext.RequiredObservationSubjects {
+		observations = append(observations, agentexec.Observation{Subject: subject.Subject, Outcome: outcome, Detail: "protocol fixture observation"})
+	}
+	if os.Getenv(canonicalControllerVerifierTestPartialEnv) == "1" && len(observations) > 1 {
+		observations = observations[:1]
 	}
 	response := agentexec.Response{
 		APIVersion: agentexec.APIVersion, RunID: invocation.RunID, Nonce: invocation.Nonce,
@@ -76,9 +85,8 @@ func TestCanonicalControllerVerifierRequiresExactEvidenceReferences(t *testing.T
 		PolicyIDs: []string{"core/v1:Rule:boundary"},
 		Artifacts: []agentexec.Artifact{{Path: "docs/orders.md"}},
 	}
-	observations := []agentexec.Observation{{Subject: "docs/orders.md", Outcome: agentexec.OutcomePassed, Detail: "selected output reviewed"}}
 	exact := []string{"docs/orders.md", "core/v1:Rule:boundary", "core/v1:UseCase:orders", "core/v1:Rule:policy"}
-	if !canonicalControllerExactEvidenceRefs(exact, observations, request) {
+	if !canonicalControllerExactEvidenceRefs(exact, request) {
 		t.Fatal("exact selected scope, policy, and artifact references were rejected")
 	}
 	for _, refs := range [][]string{
@@ -86,12 +94,48 @@ func TestCanonicalControllerVerifierRequiresExactEvidenceReferences(t *testing.T
 		{"docs/orders.md", "core/v1:Rule:boundary", "core/v1:UseCase:orders", "core/v1:Rule:policy", "README.md"},
 		{"docs/orders.md", "core/v1:Rule:boundary", "core/v1:UseCase:orders", "core/v1:UseCase:orders"},
 	} {
-		if canonicalControllerExactEvidenceRefs(refs, observations, request) {
+		if canonicalControllerExactEvidenceRefs(refs, request) {
 			t.Fatalf("inexact evidence references were accepted: %#v", refs)
 		}
 	}
-	if canonicalControllerExactEvidenceRefs(exact, []agentexec.Observation{{Subject: "README.md", Outcome: agentexec.OutcomePassed, Detail: "outside"}}, request) {
-		t.Fatal("observation subject outside the selected scope was accepted")
+}
+
+func TestCanonicalControllerVerifierRequestBindsAgentExecutionAPIAndCoverage(t *testing.T) {
+	record := controllerVerificationTestRecord(t, "core/v1:Projection:protocol", "core/v1:UseCase:orders")
+	check := records.CheckResult{ID: "fixed-check", Version: "command/v1", Digest: sha256Prefix(sha256Hex([]byte("fixed check"))), Outcome: records.CheckPassed}
+	item := canonicalControllerPreparedVerification{
+		scope: CanonicalAssuranceScope{ID: "orders", ProjectionID: record.ProjectionID}, record: record,
+		context: CanonicalAgentContext{RequestDigest: "sha256:" + strings.Repeat("1", 64), ScopeIDs: record.ScopeIDs},
+		request: canonical.ProjectionRequest{}, checks: []records.CheckResult{check},
+		artifacts: []agentexec.Artifact{{Path: "docs/orders.md", Mode: "0644", Digest: sha256Prefix(sha256Hex([]byte("doc"))), Content: []byte("doc")}},
+		recordByScope: map[string]records.ProjectionRecord{"orders": record}, scopeIndex: map[string]CanonicalAssuranceScope{"orders": {ID: "orders", ProjectionID: record.ProjectionID}},
+	}
+	request, err := canonicalControllerVerifierRequest(CanonicalControllerConfig{}, item, assurance.NodeRunInput{Node: assurance.Node{ID: "orders"}}, strings.Repeat("b", 40))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var payload canonicalControllerVerifierContext
+	if err := json.Unmarshal(request.Context, &payload); err != nil {
+		t.Fatal(err)
+	}
+	if payload.AgentExecutionAPIVersion != agentexec.APIVersion || len(payload.RequiredObservationSubjects) != 3 {
+		t.Fatalf("request context omitted API/required coverage binding: api=%q subjects=%#v", payload.AgentExecutionAPIVersion, payload.RequiredObservationSubjects)
+	}
+	before, err := canonicalControllerVerifierInputDigest(request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	payload.AgentExecutionAPIVersion += "/changed"
+	request.Context, err = json.Marshal(payload)
+	if err != nil {
+		t.Fatal(err)
+	}
+	after, err := canonicalControllerVerifierInputDigest(request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if before == after {
+		t.Fatal("changing the agent execution API context did not change the stable verifier request digest")
 	}
 }
 
@@ -237,6 +281,17 @@ func TestCanonicalControllerVerifierProtocolFailureAndIncompleteAreNotPassing(t 
 			}
 		})
 	}
+	t.Run("partial-passed-observations", func(t *testing.T) {
+		setCanonicalControllerVerifierActor(t, filepath.Join(external, "partial-runs.log"), agentexec.OutcomePassed)
+		t.Setenv(canonicalControllerVerifierTestPartialEnv, "1")
+		result, run, err := invokeCanonicalControllerVerifier(context.Background(), cfg, item, node, verifier, fingerprint, strings.Repeat("a", 40))
+		if err != nil {
+			t.Fatalf("partial protocol response invocation error: %v", err)
+		}
+		if result.Outcome != records.OutcomeIncomplete || run.Outcome != agentexec.OutcomeIncomplete || result.Checks[0].Outcome != records.CheckIncomplete {
+			t.Fatalf("partial observations composed to a passing verification: result=%#v run=%#v", result, run)
+		}
+	})
 }
 
 func TestCanonicalControllerVerifierBlocksSourceAndCheckDriftBeforeInvocation(t *testing.T) {
