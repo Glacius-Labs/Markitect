@@ -131,6 +131,10 @@ spec:
     - internal/host/cli/canonical_goal_test.go
     - examples/public_fixture_test.go
   tooling:
+    - path: experiments/operating-model-proof/runs/gates-59b3e812/sanitized-gates.json
+      owner: preserved-frozen-platform-gate-evidence
+    - path: experiments/operating-model-proof/runs/gates-59b3e812/README.md
+      owner: preserved-frozen-platform-gate-evidence
     - path: internal/host/format.go
       owner: anchored-host-write-boundary
     - path: internal/host/install.go
