@@ -1,0 +1,67 @@
+{
+  "name": "negative-unresolved",
+  "action": "canonical model",
+  "binary": {
+    "sourceCommit": "216e101baa2021fb6bf091206b323407aa471b26",
+    "sha256": "ba0fe8b3b6bd1676091eaa492c58600a08429f2f6e3ff79d9d8cff2d142b30f9"
+  },
+  "argv": [
+    "markitect",
+    "canonical",
+    "--action",
+    "model",
+    "--repo",
+    "<isolated-trial-repository>",
+    "--revision",
+    "cd69dca8edd4448eddd4e2624ea4d35af9bf4a7a",
+    "--config",
+    "examples/capability-ontologies/canonical.yaml"
+  ],
+  "revision": "cd69dca8edd4448eddd4e2624ea4d35af9bf4a7a",
+  "repository": "C:\\Users\\CONSIL~1\\AppData\\Local\\Temp\\c1-cli-negative-unresolved-6a6cf8a7710d476499d1468d9812b2dc",
+  "seedSourceCommit": "769d95062cb060e5eb688768a85b200ff3130602",
+  "sourceDigest": "c4c00d9f797b67ecf01da20aa6715a67a2518c377ca48d51b93a8b3d568cfef6",
+  "status": "failed",
+  "exitCode": 1,
+  "model": {
+    "digest": "",
+    "schemaCount": 0,
+    "definitionCount": 0,
+    "edgeCount": 0,
+    "edgesBlockSha256": ""
+  },
+  "expected": {
+    "status": "failed",
+    "exitCode": 1,
+    "diagnostic": "reference.unresolved",
+    "schemaCount": 0,
+    "definitionCount": 0,
+    "edgeCount": 0
+  },
+  "expectationMatched": true,
+  "diagnosticCodes": [
+    "reference.unresolved"
+  ],
+  "inputs": [
+    {
+      "path": "examples/capability-ontologies/canonical.yaml",
+      "sha256": "5cfd051f7a10f2ca479638cf4610bc1149cb6f8729019e799966033a7e3bd745",
+      "byteLength": 2397
+    }
+  ],
+  "stdout": {
+    "path": "examples/capability-ontologies/results/c1-cli-runs/negative-unresolved.stdout.log",
+    "sha256": "a0f3effdae51603005c37d0412683704eabcbfcc5eac05a668ee602eb804f1b2",
+    "byteLength": 619
+  },
+  "stderr": {
+    "path": "examples/capability-ontologies/results/c1-cli-runs/negative-unresolved.stderr.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "byteLength": 0
+  },
+  "repositoryBundle": {
+    "path": "examples/capability-ontologies/results/c1-cli-runs/negative-unresolved.bundle",
+    "sha256": "cbb446ec545bade7f72105300192496f85c5055c4b9966b78542a010a12f4062",
+    "byteLength": 6315
+  }
+}

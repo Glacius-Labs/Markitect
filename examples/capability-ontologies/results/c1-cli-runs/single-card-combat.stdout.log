@@ -1,0 +1,114 @@
+model:
+    revision: 08325243603c325f81c3e62269614462908e81af
+    digest: sha256:86235d35961349a8b10ac7e12784581cfa9a8461c60f14888693ec1b47f8b30f
+    schemas:
+        - apiVersion: cardgame.example.org/v1
+          purpose: Describes cards and combat actions in a turn-based duel.
+          kinds:
+            Card:
+                purpose: Defines a playable card and printed combat values.
+                properties:
+                    cost:
+                        purpose: States the resource cost.
+                        type: integer
+                        minCount: 1
+                        maxCount: 1
+                    name:
+                        purpose: Names the card.
+                        type: string
+                        minCount: 1
+                        maxCount: 1
+                    power:
+                        purpose: States the combat power.
+                        type: integer
+                        minCount: 1
+                        maxCount: 1
+            CombatAction:
+                purpose: Records a card's action for one turn.
+                properties:
+                    action:
+                        purpose: Selects the combat action.
+                        type: enum
+                        minCount: 1
+                        maxCount: 1
+                        values:
+                            - attack
+                            - block
+                            - support
+                    card:
+                        purpose: Identifies the acting card.
+                        type: reference
+                        minCount: 1
+                        maxCount: 1
+                        target:
+                            apiVersion: cardgame.example.org/v1
+                            kind: Card
+                    targets:
+                        purpose: Lists opposing targets.
+                        type: string
+                        minCount: 0
+                        maxCount: -1
+          source:
+            path: module:c1-trading-card-combat@1.0.0/schema.yaml
+            digest: sha256:5f54445aab595fd08422597a3a6ffde93dbf2c79697693e4b8055a1ae2166ef1
+            line: 1
+    definitions:
+        - apiVersion: cardgame.example.org/v1
+          kind: Card
+          metadata:
+            name: ember-fox
+            namespace: starter-deck
+          purpose: Defines a low-cost creature that can attack.
+          spec:
+            cost: 1
+            name: Ember Fox
+            power: 2
+          source:
+            path: examples/capability-ontologies/trading-card-combat/card.yaml
+            digest: sha256:a98b1445a4324cf7c71d80fbe1564c49cb9a7dc4ad98c50eecde084e6c100f70
+            line: 1
+        - apiVersion: cardgame.example.org/v1
+          kind: CombatAction
+          metadata:
+            name: fox-attack
+            namespace: match-7
+          purpose: Declares Ember Fox attacking the opposing sentinel.
+          spec:
+            action: attack
+            card:
+                apiVersion: cardgame.example.org/v1
+                kind: Card
+                name: ember-fox
+                namespace: starter-deck
+            targets:
+                - sentinel
+          source:
+            path: examples/capability-ontologies/trading-card-combat/action.yaml
+            digest: sha256:e97dfb8a09bb99dea44a63ac9438136453a0b8f9c4cb28b6f5020ace65810cfd
+            line: 1
+    edges:
+        - from: '["cardgame.example.org/v1","CombatAction","match-7","fox-attack"]'
+          to: '["cardgame.example.org/v1","Card","starter-deck","ember-fox"]'
+          property: card
+          source:
+            path: examples/capability-ontologies/trading-card-combat/action.yaml
+            digest: sha256:e97dfb8a09bb99dea44a63ac9438136453a0b8f9c4cb28b6f5020ace65810cfd
+            line: 1
+modules:
+    - pin:
+        name: c1-trading-card-combat
+        version: 1.0.0
+        digest: sha256:52052bc7934ecb0c1e16ef014ee3246a686fee5f461552cee40f38825b72bbce
+      type: schema
+      digest: sha256:52052bc7934ecb0c1e16ef014ee3246a686fee5f461552cee40f38825b72bbce
+      manifest: examples/capability-ontologies/trading-card-combat/module.yaml
+      files:
+        - examples/capability-ontologies/trading-card-combat/schema.yaml
+      schemas:
+        - schema.yaml
+      projectors: []
+projectors: []
+provisional: false
+revision: 08325243603c325f81c3e62269614462908e81af
+sourceDigest: b71aa49bcd09767b409e11360a59f6b82084a241416871e94eb7ba1dfc78f8c9
+status: passed
