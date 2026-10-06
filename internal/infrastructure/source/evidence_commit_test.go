@@ -152,6 +152,26 @@ func TestWriteSelectedEvidenceCommitRefusesSymlinkAndGitlinkReplacements(t *test
 	}
 }
 
+func TestReadEvidenceTreeUsesMetadataWithoutBlobSizes(t *testing.T) {
+	const commit = "0123456789012345678901234567890123456789"
+	const blob = "abcdefabcdefabcdefabcdefabcdefabcdefabcd"
+	var gotArgs []string
+	run := func(root string, args ...string) ([]byte, error) {
+		gotArgs = append([]string(nil), args...)
+		return []byte("100755 blob " + blob + "\ttool.sh\x00"), nil
+	}
+	tree, err := readEvidenceTreeWith("repo", commit, run)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(gotArgs, []string{"ls-tree", "-r", "-z", "--full-tree", commit}) {
+		t.Fatalf("tree metadata command = %#v", gotArgs)
+	}
+	if len(tree) != 1 || tree["tool.sh"].mode != "100755" || tree["tool.sh"].kind != "blob" || tree["tool.sh"].oid != blob {
+		t.Fatalf("parsed tree metadata = %#v", tree)
+	}
+}
+
 func TestWriteSelectedEvidenceCommitAllowsMissingUnselectedBlob(t *testing.T) {
 	root, parent := partialCloneFixture(t)
 	commit, err := WriteSelectedEvidenceCommit(root, parent, map[string][]byte{"selected.txt": []byte("replacement")}, map[string]string{"selected.txt": "100644"}, true)
