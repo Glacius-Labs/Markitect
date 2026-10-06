@@ -136,6 +136,146 @@ spec:
 	}
 }
 
+func TestCanonicalControllerActionOptionBoundaries(t *testing.T) {
+	const base = "0123456789abcdef0123456789abcdef01234567"
+	const revision = "89abcdef0123456789abcdef0123456789abcdef"
+	common := []string{"--action", "controller-propose", "--repo", ".", "--config", "canonical.yaml", "--runtime", "runtime.json", "--base", base, "--revision", revision}
+	parse := func(args ...string) (commandOptions, int) {
+		t.Helper()
+		options, code, done := parseOptions("canonical", append([]string{"canonical"}, args...), mustCommandFlags("canonical"), &bytes.Buffer{}, &bytes.Buffer{})
+		if !done {
+			return options, 0
+		}
+		return options, code
+	}
+	if options, code := parse(common...); code != 0 || options.action != "controller-propose" || options.runtime != "runtime.json" {
+		t.Fatalf("controller proposal options rejected: code=%d options=%#v", code, options)
+	}
+	for _, test := range []struct {
+		name string
+		args []string
+	}{
+		{"runtime required", []string{"--action", "controller-propose", "--repo", ".", "--config", "canonical.yaml", "--base", base, "--revision", revision}},
+		{"base required", []string{"--action", "controller-propose", "--repo", ".", "--config", "canonical.yaml", "--runtime", "runtime.json", "--revision", revision}},
+		{"revision required", []string{"--action", "controller-propose", "--repo", ".", "--config", "canonical.yaml", "--runtime", "runtime.json", "--base", base}},
+		{"write forbidden on proposal", append(append([]string{}, common...), "--write")},
+		{"plan forbidden on execute", append(append([]string{}, replaceArg(common, "controller-propose", "controller-execute")...), "--plan", "saved.json")},
+		{"report forbidden", append(append([]string{}, common...), "--report", "report.json")},
+		{"evidence forbidden", append(append([]string{}, common...), "--evidence", "evidence.json")},
+		{"selectors forbidden", append(append([]string{}, common...), "--kind", "Service")},
+		{"expect forbidden on proposal", append(append([]string{}, common...), "--expect", "sha256:abc")},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			if _, code := parse(test.args...); code != 2 {
+				t.Fatalf("invalid controller options returned code %d", code)
+			}
+		})
+	}
+
+	apply := replaceArg(common, "controller-propose", "controller-apply")
+	if _, code := parse(apply...); code != 2 {
+		t.Fatal("controller apply accepted missing explicit write, saved run and expected digest")
+	}
+	apply = append(apply, "--plan", "saved.json", "--expect", "sha256:reviewed-run", "--write")
+	if _, code := parse(apply...); code != 0 {
+		t.Fatal("controller apply rejected its required write tuple")
+	}
+	verify := replaceArg(common, "controller-propose", "controller-verify")
+	if _, code := parse(append(verify, "--write")...); code != 0 {
+		t.Fatal("controller verify must allow its explicit external-ledger write")
+	}
+	if _, code := parse(append(verify, "--plan", "saved.json")...); code != 2 {
+		t.Fatal("controller verify accepted --plan")
+	}
+
+	// Legacy canonical verbs retain their prior option contracts.
+	legacyVerify := []string{"--action", "verify", "--repo", ".", "--config", "canonical.yaml", "--base", base, "--revision", revision, "--evidence", "record.json"}
+	if _, code := parse(legacyVerify...); code != 0 {
+		t.Fatal("legacy canonical verify options regressed")
+	}
+	if _, code := parse(append(legacyVerify, "--write")...); code != 2 {
+		t.Fatal("legacy canonical verify unexpectedly accepted --write")
+	}
+	if _, code := parse(append(legacyVerify, "--runtime", "runtime.json")...); code != 2 {
+		t.Fatal("legacy canonical verify unexpectedly accepted --runtime")
+	}
+}
+
+func TestCanonicalControllerStatusExitKeepsMaterializationUnverified(t *testing.T) {
+	for status, want := range map[string]int{
+		"passed":                  0,
+		"planned":                 0,
+		"materialized-unverified": 0,
+		"failed":                  1,
+		"escalated":               1,
+		"incomplete":              2,
+		"unknown":                 2,
+	} {
+		if got := canonicalControllerStatusExit(status); got != want {
+			t.Errorf("status %q exit = %d, want %d", status, got, want)
+		}
+	}
+}
+
+func TestCanonicalControllerFailureEmitsPartialJSONReport(t *testing.T) {
+	runtimeFile := filepath.Join(t.TempDir(), "controller-runtime.json")
+	runner := host.CanonicalRunnerConfig{
+		Command: "agent", Args: []string{}, Model: "test-model", ModelOptions: json.RawMessage("null"),
+		ProviderVersion: "test", TimeoutSeconds: 1, MaxStdoutBytes: 1024, MaxStderrBytes: 1024,
+	}
+	controllerConfig := host.CanonicalControllerConfig{
+		APIVersion:  host.CanonicalControllerAPIVersion,
+		RecordStore: filepath.Join(t.TempDir(), "records"), PrivateLogs: filepath.Join(t.TempDir(), "logs"),
+		CheckInputs: []string{}, Executor: runner, Verifier: runner,
+	}
+	runtimeConfig, err := json.Marshal(controllerConfig)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(runtimeFile, runtimeConfig, 0600); err != nil {
+		t.Fatal(err)
+	}
+	missingRoot := filepath.Join(t.TempDir(), "missing-repository")
+	args := []string{
+		"canonical", "--action", "controller-propose", "--repo", missingRoot,
+		"--config", "canonical.yaml", "--runtime", runtimeFile,
+		"--base", strings.Repeat("a", 40), "--revision", strings.Repeat("b", 40),
+	}
+	var out, errout bytes.Buffer
+	if code := Run(args, &out, &errout); code != 2 {
+		t.Fatalf("controller proposal failure exit=%d stderr=%s", code, errout.String())
+	}
+	if !json.Valid(out.Bytes()) || len(out.Bytes()) == 0 || out.Bytes()[0] != '{' {
+		t.Fatalf("controller failure report is not JSON: %q", out.String())
+	}
+	var partial map[string]any
+	if err := json.Unmarshal(out.Bytes(), &partial); err != nil {
+		t.Fatalf("decode partial controller report: %v", err)
+	}
+	if partial["apiVersion"] != "markitect.canonical/controller/v1alpha1" {
+		t.Fatalf("partial report lost its available API version: %#v", partial)
+	}
+}
+
+func mustCommandFlags(command string) map[string]bool {
+	flags, ok := commandFlags(command)
+	if !ok {
+		panic("unknown test command " + command)
+	}
+	return flags
+}
+
+func replaceArg(args []string, old, replacement string) []string {
+	copy := append([]string(nil), args...)
+	for i := range copy {
+		if copy[i] == old {
+			copy[i] = replacement
+			return copy
+		}
+	}
+	return copy
+}
+
 func TestCanonicalStructuralDiagnosticsAndConfigErrorsUseDistinctExitCodes(t *testing.T) {
 	root := t.TempDir()
 	if err := os.WriteFile(filepath.Join(root, "bad.yaml"), []byte("apiVersion: markitect.canonical/v1alpha1\nkind: Source\ndefinitions: [a.yaml]\nmodules: []\nunknown: true\n"), 0644); err != nil {

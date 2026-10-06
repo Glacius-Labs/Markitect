@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"runtime"
@@ -58,6 +59,21 @@ func Run(args []string, out, errout io.Writer) int {
 			return 2
 		}
 		return 0
+	}
+	if command == "canonical" && isCanonicalControllerAction(o.action) {
+		emit = func(value any) int {
+			data, err := json.MarshalIndent(value, "", "  ")
+			if err != nil {
+				fmt.Fprintln(errout, err)
+				return 2
+			}
+			data = append(data, '\n')
+			if _, err = out.Write(data); err != nil {
+				fmt.Fprintln(errout, err)
+				return 2
+			}
+			return 0
+		}
 	}
 	fail := func(err error) int { fmt.Fprintln(errout, err); return 2 }
 	return dispatchCommand(command, o, out, errout, emit, fail)

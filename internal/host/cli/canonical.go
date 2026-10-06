@@ -2,6 +2,7 @@ package cli
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -42,6 +43,9 @@ type canonicalPlanEscalation struct {
 }
 
 func runCanonical(o commandOptions, emit func(any) int, fail func(error) int) int {
+	if isCanonicalControllerAction(o.action) {
+		return runCanonicalController(o, emit, fail)
+	}
 	requirePins := o.action != "modules"
 	loadRevision := o.revision
 	if o.action == "verify" || o.action == "adopt-plan" || o.action == "adopt" {
@@ -197,6 +201,137 @@ func canonicalRequestOutput(request canonical.ProjectionRequest) map[string]any 
 		"targetRepository": request.TargetRepository, "targetPath": request.TargetPath, "targetPrefix": request.TargetPrefix,
 		"targetFiles": request.TargetFiles, "targetDigests": request.TargetDigests,
 	}
+}
+
+const (
+	canonicalControllerConfigLimit = 1 << 20
+	canonicalReviewedRunLimit      = 32 << 20
+)
+
+func isCanonicalControllerAction(action string) bool {
+	switch action {
+	case "controller-propose", "controller-execute", "controller-apply", "controller-verify":
+		return true
+	default:
+		return false
+	}
+}
+
+func runCanonicalController(o commandOptions, emit func(any) int, fail func(error) int) int {
+	runtimeBytes, err := readBoundedControllerFile(o.runtime, canonicalControllerConfigLimit)
+	if err != nil {
+		return fail(fmt.Errorf("read controller runtime configuration: %w", err))
+	}
+	cfg, err := host.DecodeCanonicalControllerConfig(runtimeBytes)
+	if err != nil {
+		return fail(fmt.Errorf("decode controller runtime configuration: %w", err))
+	}
+
+	switch o.action {
+	case "controller-propose":
+		proposal, err := host.ProposeCanonicalController(o.root, o.base, o.revision, o.reviewConfig, cfg)
+		if err != nil {
+			if code := emit(proposal); code != 0 {
+				return code
+			}
+			return fail(err)
+		}
+		if code := emit(proposal); code != 0 {
+			return code
+		}
+		return canonicalControllerStatusExit(proposal.Status)
+
+	case "controller-execute":
+		toolDigest, err := currentToolDigest()
+		if err != nil {
+			return fail(err)
+		}
+		run, err := host.ExecuteCanonicalController(context.Background(), o.root, o.base, o.revision, o.reviewConfig, cfg, version, toolDigest)
+		if err != nil {
+			if code := emit(run); code != 0 {
+				return code
+			}
+			return fail(err)
+		}
+		if code := emit(run); code != 0 {
+			return code
+		}
+		return canonicalControllerStatusExit(run.Status)
+
+	case "controller-apply":
+		planBytes, err := readBoundedControllerFile(o.plan, canonicalReviewedRunLimit)
+		if err != nil {
+			return fail(fmt.Errorf("read reviewed controller run: %w", err))
+		}
+		run, err := host.DecodeCanonicalReviewedRun(planBytes)
+		if err != nil {
+			return fail(fmt.Errorf("decode reviewed controller run JSON: %w", err))
+		}
+		if run.Proposal.Plan.BaseRevision != o.base || run.Proposal.Plan.Revision != o.revision {
+			return fail(errors.New("--base and --revision must exactly match the saved reviewed run"))
+		}
+		if run.Digest != o.expect {
+			return fail(errors.New("--expect must exactly match the saved reviewed run digest"))
+		}
+		applied, err := host.ApplyCanonicalController(o.root, o.reviewConfig, cfg, run, o.expect, o.write)
+		if err != nil {
+			if code := emit(applied); code != 0 {
+				return code
+			}
+			return fail(err)
+		}
+		if code := emit(applied); code != 0 {
+			return code
+		}
+		return canonicalControllerStatusExit(applied.Status)
+
+	case "controller-verify":
+		verification, err := host.VerifyCanonicalController(context.Background(), o.root, o.base, o.revision, o.reviewConfig, cfg, o.write)
+		if err != nil {
+			if code := emit(verification); code != 0 {
+				return code
+			}
+			return fail(err)
+		}
+		if code := emit(verification); code != 0 {
+			return code
+		}
+		return canonicalControllerStatusExit(verification.Status)
+	default:
+		return fail(fmt.Errorf("unsupported canonical controller action %q", o.action))
+	}
+}
+
+func canonicalControllerStatusExit(status string) int {
+	switch status {
+	case "failed", "blocked", "escalated", "refused", "partial-failure":
+		return 1
+	case "incomplete":
+		return 2
+	case "planned", "passed", "materialized-unverified", "no-materialization-work":
+		return 0
+	default:
+		return 2
+	}
+}
+
+func readBoundedControllerFile(path string, max int64) ([]byte, error) {
+	if path == "" {
+		return nil, errors.New("path is required")
+	}
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+	data, err := io.ReadAll(io.LimitReader(file, max+1))
+	if err != nil {
+		return nil, err
+	}
+	if int64(len(data)) > max {
+		return nil, fmt.Errorf("file exceeds %d-byte limit", max)
+	}
+	return data, nil
 }
 
 func runCanonicalReconcilePlan(o commandOptions, current *host.CanonicalSource, base map[string]any, emit func(any) int, fail func(error) int) int {
