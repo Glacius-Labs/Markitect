@@ -7,6 +7,7 @@ import (
 	"path"
 	"sort"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/Glacius-Labs/Markitect/internal/core"
 )
@@ -43,6 +44,28 @@ type VerificationBinding struct {
 	Artifacts     []ArtifactBinding
 }
 
+// RepairFinding is a Host-translated semantic failure to address within the
+// already selected .NET projection scope.
+type RepairFinding struct {
+	Subject string
+	Detail  string
+}
+
+// RepairEvidence is supplied only after the Host validates a current,
+// completed semantic failure. Its IDs remain opaque to this Module.
+type RepairEvidence struct {
+	RecordID string
+	ResultID string
+	Findings []RepairFinding
+}
+
+const (
+	maxRepairFindings       = 128
+	maxRepairIdentifierSize = 512
+	maxRepairSubjectSize    = 512
+	maxRepairDetailSize     = 2 * 1024
+)
+
 // Decision is the Module's disposition for its bounded target scope.
 type Decision string
 
@@ -77,6 +100,7 @@ type ExecutorTask struct {
 	Kinds                  []KindContext
 	ExistingOwnedArtifacts []ArtifactObservation
 	Constraints            []string
+	Repair                 *RepairEvidence
 }
 
 // Proposal reports work, no materialization work, or a fail-closed escalation.
@@ -149,6 +173,18 @@ func Propose(input Input) Proposal {
 	if input.CanonicalAffected {
 		return work(input, prefix, roots, kinds, observedOwned(prior, observed), []string{"canonical-or-binding-change"})
 	}
+	if input.Repair != nil {
+		if err := validateRepairEvidence(input.Repair); err != nil {
+			return escalate("repair.evidence.invalid", err.Error())
+		}
+		proposal := work(input, prefix, roots, kinds, observedOwned(prior, observed), []string{"semantic-verification-failed"})
+		proposal.Task.Objective = "Repair the selected .NET representation to address the supplied semantic verification findings without changing canonical intent."
+		proposal.Task.Constraints = append(proposal.Task.Constraints, "Address only the supplied semantic findings within the existing selected scope and target bounds.")
+		repair := *input.Repair
+		repair.Findings = append([]RepairFinding(nil), input.Repair.Findings...)
+		proposal.Task.Repair = &repair
+		return proposal
+	}
 	refresh := !verificationCurrent(input.RequestDigest, input.Verification, prior, observed)
 	proposal := Proposal{Decision: DecisionNoop, EvidenceRefreshRequired: refresh}
 	if refresh {
@@ -157,6 +193,35 @@ func Propose(input Input) Proposal {
 		proposal.Reasons = []string{"representation-current"}
 	}
 	return proposal
+}
+
+func validateRepairEvidence(evidence *RepairEvidence) error {
+	if evidence == nil {
+		return fmt.Errorf("semantic repair evidence is missing")
+	}
+	if !validRepairIdentifier(evidence.RecordID) || !validRepairIdentifier(evidence.ResultID) {
+		return fmt.Errorf("semantic repair evidence requires bounded nonempty record and result IDs")
+	}
+	if len(evidence.Findings) == 0 || len(evidence.Findings) > maxRepairFindings {
+		return fmt.Errorf("semantic repair evidence must contain between 1 and %d findings", maxRepairFindings)
+	}
+	for _, finding := range evidence.Findings {
+		if !validRepairText(finding.Subject, maxRepairSubjectSize) {
+			return fmt.Errorf("semantic repair finding has an empty, invalid, or oversized subject")
+		}
+		if !validRepairText(finding.Detail, maxRepairDetailSize) {
+			return fmt.Errorf("semantic repair finding has an empty, invalid, or oversized detail")
+		}
+	}
+	return nil
+}
+
+func validRepairIdentifier(value string) bool {
+	return len(value) > 0 && len(value) <= maxRepairIdentifierSize && utf8.ValidString(value) && strings.TrimSpace(value) != ""
+}
+
+func validRepairText(value string, maxBytes int) bool {
+	return len(value) > 0 && len(value) <= maxBytes && utf8.ValidString(value) && strings.TrimSpace(value) != ""
 }
 
 func buildKindContexts(input ProposalInput) ([]KindContext, []Escalation) {

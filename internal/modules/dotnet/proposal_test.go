@@ -206,3 +206,88 @@ func TestProposeCurrentVerificationClearsOldMaterializationRequest(t *testing.T)
 		t.Fatalf("current verification should clear old materialization request digest: %#v", got)
 	}
 }
+
+func TestProposeRepairsOnlyCurrentOwnedBytesWithValidatedSemanticFindings(t *testing.T) {
+	input, binding := moduleRepairFixture()
+	evidence := &RepairEvidence{
+		RecordID: "opaque-record-id",
+		ResultID: "opaque-result-id",
+		Findings: []RepairFinding{{Subject: "scope/mission", Detail: "The selected Mission behavior does not preserve its declared effect boundary."}},
+	}
+	input.Repair = evidence
+	got := Propose(input)
+	if got.Decision != DecisionWork || got.Task == nil || !reflect.DeepEqual(got.Reasons, []string{"semantic-verification-failed"}) {
+		t.Fatalf("current semantic failure should propose bounded repair work: %#v", got)
+	}
+	if !reflect.DeepEqual(got.Task.Repair, evidence) || got.Task.Repair == evidence {
+		t.Fatalf("repair task did not retain an independent copy of the exact evidence: %#v", got.Task.Repair)
+	}
+	if len(got.Task.ExistingOwnedArtifacts) != 1 || got.Task.ExistingOwnedArtifacts[0].Path != binding.Path || !reflect.DeepEqual(got.Task.AllowedRoots, []string{"src"}) || !reflect.DeepEqual(got.Task.AllowedExtensions, []string{".cs", ".csproj"}) {
+		t.Fatalf("repair widened scope or omitted current owned bytes: %#v", got.Task)
+	}
+	if len(got.Task.Constraints) == 0 || !strings.Contains(got.Task.Constraints[len(got.Task.Constraints)-1], "only the supplied semantic findings") {
+		t.Fatalf("repair objective does not bound changes to the supplied findings: %#v", got.Task.Constraints)
+	}
+
+	withoutEvidence, _ := moduleRepairFixture()
+	refresh := Propose(withoutEvidence)
+	if refresh.Decision != DecisionNoop || !refresh.EvidenceRefreshRequired || refresh.Task != nil || containsCode(refresh.Reasons, "semantic-verification-failed") {
+		t.Fatalf("missing semantic failure evidence must not trigger code repair: %#v", refresh)
+	}
+
+	oldPass, oldBinding := moduleRepairFixture()
+	oldPass.Verification = &VerificationBinding{Passed: true, RequestDigest: oldPass.RequestDigest, Artifacts: []ArtifactBinding{oldBinding}}
+	if passed := Propose(oldPass); passed.Decision != DecisionNoop || passed.EvidenceRefreshRequired || passed.Task != nil {
+		t.Fatalf("an existing current PASS without failure evidence must not trigger repair: %#v", passed)
+	}
+}
+
+func TestProposeRejectsInvalidRepairEvidenceAfterOwnershipChecks(t *testing.T) {
+	invalid := []struct {
+		name   string
+		mutate func(*RepairEvidence)
+	}{
+		{"empty-record-id", func(value *RepairEvidence) { value.RecordID = "" }},
+		{"oversized-result-id", func(value *RepairEvidence) { value.ResultID = strings.Repeat("r", maxRepairIdentifierSize+1) }},
+		{"empty-findings", func(value *RepairEvidence) { value.Findings = nil }},
+		{"too-many-findings", func(value *RepairEvidence) { value.Findings = make([]RepairFinding, maxRepairFindings+1) }},
+		{"empty-subject", func(value *RepairEvidence) { value.Findings[0].Subject = "  " }},
+		{"oversized-subject", func(value *RepairEvidence) { value.Findings[0].Subject = strings.Repeat("s", maxRepairSubjectSize+1) }},
+		{"invalid-utf8-detail", func(value *RepairEvidence) { value.Findings[0].Detail = string([]byte{0xff}) }},
+		{"oversized-detail", func(value *RepairEvidence) { value.Findings[0].Detail = strings.Repeat("d", maxRepairDetailSize+1) }},
+	}
+	for _, tc := range invalid {
+		t.Run(tc.name, func(t *testing.T) {
+			input, _ := moduleRepairFixture()
+			input.Repair = &RepairEvidence{RecordID: "record", ResultID: "result", Findings: []RepairFinding{{Subject: "scope/mission", Detail: "repair it"}}}
+			tc.mutate(input.Repair)
+			got := Propose(input)
+			if got.Decision != DecisionEscalate || !reflect.DeepEqual(got.Reasons, []string{"repair.evidence.invalid"}) || got.Task != nil {
+				t.Fatalf("invalid repair evidence should escalate without producing a task: %#v", got)
+			}
+		})
+	}
+
+	input, _ := moduleRepairFixture()
+	input.Repair = &RepairEvidence{RecordID: "record", ResultID: "result", Findings: []RepairFinding{{Subject: "scope/mission", Detail: "repair it"}}}
+	input.ObservedArtifacts = append(input.ObservedArtifacts, ArtifactObservation{Path: "src/manual.cs", Bytes: []byte("unowned"), Mode: "regular"})
+	if got := Propose(input); got.Decision != DecisionEscalate || !reflect.DeepEqual(got.Reasons, []string{"artifact.unknown"}) {
+		t.Fatalf("repair evidence must not override competing ownership: %#v", got)
+	}
+	input, _ = moduleRepairFixture()
+	input.Repair = &RepairEvidence{RecordID: "record", ResultID: "result", Findings: []RepairFinding{{Subject: "scope/mission", Detail: "repair it"}}}
+	input.Previous.RetiredArtifacts = []string{"src/retired.cs"}
+	if got := Propose(input); got.Decision != DecisionEscalate || !reflect.DeepEqual(got.Reasons, []string{"artifact.retired"}) {
+		t.Fatalf("repair evidence must not override retired ownership: %#v", got)
+	}
+}
+
+func moduleRepairFixture() (Input, ArtifactBinding) {
+	input := moduleProposalFixture()
+	const ownedPath = "src/mission.cs"
+	current := []byte("class Mission { /* unchanged candidate */ }")
+	binding := ArtifactBinding{Path: ownedPath, Digest: digest(current), Mode: "regular"}
+	input.Previous = &PriorProjection{RequestDigest: input.RequestDigest, Complete: true, Artifacts: []ArtifactBinding{binding}}
+	input.ObservedArtifacts = []ArtifactObservation{{Path: ownedPath, Bytes: current, Mode: "regular"}}
+	return input, binding
+}

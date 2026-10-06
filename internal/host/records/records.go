@@ -115,21 +115,30 @@ type CheckResult struct {
 	Digest  string `json:"digest"`
 	Outcome string `json:"outcome"`
 }
+
+// VerificationFinding is a bounded semantic failure reported by a completed
+// controller verifier response. It is ordinary machine evidence, not an
+// authenticated claim or human acceptance.
+type VerificationFinding struct {
+	Subject string `json:"subject"`
+	Detail  string `json:"detail"`
+}
 type VerificationResult struct {
-	APIVersion                    string           `json:"apiVersion"`
-	ID                            string           `json:"id"`
-	RecordID                      string           `json:"recordId"`
-	Revision                      string           `json:"revision"`
-	ModelDigest                   string           `json:"modelDigest"`
-	TargetSnapshotDigest          string           `json:"targetSnapshotDigest"`
-	EvidenceRevision              string           `json:"evidenceRevision,omitempty"`
-	EvidenceSnapshotDigest        string           `json:"evidenceSnapshotDigest,omitempty"`
-	ControllerConfigDigest        string           `json:"controllerConfigDigest,omitempty"`
-	ControllerVerifierInputDigest string           `json:"controllerVerifierInputDigest,omitempty"`
-	Verifier                      VerifierIdentity `json:"verifier"`
-	Checks                        []CheckResult    `json:"checks"`
-	Outcome                       string           `json:"outcome"`
-	Reason                        string           `json:"reason,omitempty"`
+	APIVersion                    string                `json:"apiVersion"`
+	ID                            string                `json:"id"`
+	RecordID                      string                `json:"recordId"`
+	Revision                      string                `json:"revision"`
+	ModelDigest                   string                `json:"modelDigest"`
+	TargetSnapshotDigest          string                `json:"targetSnapshotDigest"`
+	EvidenceRevision              string                `json:"evidenceRevision,omitempty"`
+	EvidenceSnapshotDigest        string                `json:"evidenceSnapshotDigest,omitempty"`
+	ControllerConfigDigest        string                `json:"controllerConfigDigest,omitempty"`
+	ControllerVerifierInputDigest string                `json:"controllerVerifierInputDigest,omitempty"`
+	Verifier                      VerifierIdentity      `json:"verifier"`
+	Checks                        []CheckResult         `json:"checks"`
+	Outcome                       string                `json:"outcome"`
+	Reason                        string                `json:"reason,omitempty"`
+	SemanticFindings              []VerificationFinding `json:"semanticFindings,omitempty"`
 }
 type verificationEnvelope struct {
 	Result        VerificationResult `json:"result"`
@@ -251,6 +260,13 @@ func NewVerificationResult(input VerificationResult) (VerificationResult, error)
 	}
 	input.Checks = append([]CheckResult(nil), input.Checks...)
 	sort.Slice(input.Checks, func(i, j int) bool { return input.Checks[i].ID < input.Checks[j].ID })
+	input.SemanticFindings = append([]VerificationFinding(nil), input.SemanticFindings...)
+	sort.Slice(input.SemanticFindings, func(i, j int) bool { return input.SemanticFindings[i].Subject < input.SemanticFindings[j].Subject })
+	for i := 1; i < len(input.SemanticFindings); i++ {
+		if input.SemanticFindings[i-1].Subject == input.SemanticFindings[i].Subject {
+			return VerificationResult{}, fmt.Errorf("duplicate semantic finding subject %q", input.SemanticFindings[i].Subject)
+		}
+	}
 	var err error
 	input.ID, err = verificationDigest(input)
 	return input, err
@@ -264,6 +280,14 @@ func ValidateVerificationResult(result VerificationResult) error {
 	}
 	if !sort.SliceIsSorted(result.Checks, func(i, j int) bool { return result.Checks[i].ID < result.Checks[j].ID }) {
 		return errors.New("checks must be sorted by ID")
+	}
+	if !sort.SliceIsSorted(result.SemanticFindings, func(i, j int) bool { return result.SemanticFindings[i].Subject < result.SemanticFindings[j].Subject }) {
+		return errors.New("semantic findings must be sorted by subject")
+	}
+	for i := 1; i < len(result.SemanticFindings); i++ {
+		if result.SemanticFindings[i-1].Subject == result.SemanticFindings[i].Subject {
+			return fmt.Errorf("duplicate semantic finding subject %q", result.SemanticFindings[i].Subject)
+		}
 	}
 	for i := 1; i < len(result.Checks); i++ {
 		if result.Checks[i-1].ID == result.Checks[i].ID {
@@ -649,6 +673,19 @@ func validateVerificationFields(result VerificationResult) error {
 	if err := validateCheckResults(result.Checks); err != nil {
 		return err
 	}
+	if len(result.SemanticFindings) > 128 {
+		return errors.New("semantic finding count exceeds 128")
+	}
+	if len(result.SemanticFindings) > 0 {
+		if result.Outcome != OutcomeFailed || result.ControllerConfigDigest == "" || result.ControllerVerifierInputDigest == "" {
+			return errors.New("semantic findings require a failed controller verification result")
+		}
+		for _, finding := range result.SemanticFindings {
+			if !validBoundedFindingText(finding.Subject, 512) || !validBoundedFindingText(finding.Detail, 2*1024) {
+				return errors.New("semantic finding subject or detail is empty, invalid, or oversized")
+			}
+		}
+	}
 	switch result.Outcome {
 	case OutcomePassed, OutcomeFailed, OutcomeIncomplete, OutcomeEscalated:
 	default:
@@ -668,6 +705,10 @@ func validateVerificationFields(result VerificationResult) error {
 		return errors.New("escalated result requires a reason")
 	}
 	return nil
+}
+
+func validBoundedFindingText(value string, maxBytes int) bool {
+	return value != "" && len(value) <= maxBytes && utf8.ValidString(value) && strings.TrimSpace(value) != ""
 }
 func validateVerifier(v VerifierIdentity) error {
 	if err := validateText("verifier ID", v.ID); err != nil {

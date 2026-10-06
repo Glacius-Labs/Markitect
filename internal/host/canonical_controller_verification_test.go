@@ -266,6 +266,102 @@ func TestCanonicalControllerVerifierLifecycleBindsEvidenceAndPersistsOnlyOnWrite
 
 }
 
+func TestCanonicalControllerFreshSemanticFailureSuppliesOnlyLatestLeafRepairEvidence(t *testing.T) {
+	root, sourceRevision, evidenceRevision, cfg, marker := canonicalControllerVerificationFixture(t)
+	cfg.AuditAll = true
+	setCanonicalControllerVerifierActor(t, marker, agentexec.OutcomeFailed)
+	failed, err := VerifyCanonicalController(context.Background(), root, sourceRevision, evidenceRevision, "examples/canonical-projection/canonical.yaml", cfg, true)
+	if err != nil || failed.Outcome != records.OutcomeFailed {
+		t.Fatalf("persist completed semantic failure: outcome=%q err=%v", failed.Outcome, err)
+	}
+	failedByRecord := map[string]records.VerificationResult{}
+	for _, result := range failed.Results {
+		if !canonicalControllerResultSupportsRepair(result) {
+			t.Fatalf("failed response lacked complete fixed-check and semantic-findings provenance: %#v", result)
+		}
+		failedByRecord[result.RecordID] = result
+	}
+	if len(failedByRecord) != 2 {
+		t.Fatalf("verification did not produce both fixture results: %#v", failedByRecord)
+	}
+
+	proposal, err := ProposeCanonicalController(root, sourceRevision, sourceRevision, "examples/canonical-projection/canonical.yaml", cfg)
+	if err != nil {
+		t.Fatalf("propose from fresh semantic failure: %v", err)
+	}
+	var dotnet CanonicalScopedProposal
+	for _, candidate := range proposal.Plan.Proposals {
+		if candidate.Module.Name == "markitect-dotnet" {
+			dotnet = candidate
+		}
+		if candidate.Module.Name == "markitect-markdown" && candidate.Task != nil {
+			t.Fatal("failed child was converted into a parent repair task")
+		}
+	}
+	if dotnet.Task == nil || dotnet.Task.Repair == nil || dotnet.Decision != "work" {
+		t.Fatalf("fresh failed leaf did not produce a bounded module-owned repair task: %#v", dotnet)
+	}
+	latestLeaf := failedByRecord[dotnet.Task.Repair.RecordID]
+	if latestLeaf.ID != dotnet.Task.Repair.ResultID || len(dotnet.Task.Repair.Findings) != len(latestLeaf.SemanticFindings) {
+		t.Fatalf("repair task was not bound to the exact latest failed leaf result: task=%#v result=%#v", dotnet.Task.Repair, latestLeaf)
+	}
+	for i, finding := range latestLeaf.SemanticFindings {
+		if dotnet.Task.Repair.Findings[i].Subject != finding.Subject || dotnet.Task.Repair.Findings[i].Detail != finding.Detail {
+			t.Fatalf("repair finding %d differs from persisted semantic observation", i)
+		}
+	}
+	_, _, active, err := readCanonicalControllerLedger(root, cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var artifactPath string
+	for _, record := range active {
+		if record.ID == dotnet.Task.Repair.RecordID && len(record.Artifacts) > 0 {
+			artifactPath = filepath.Join(root, filepath.FromSlash(record.Artifacts[0].Path))
+			break
+		}
+	}
+	if artifactPath == "" {
+		t.Fatal("repair record had no exact owned artifact to use for the stale-evidence control")
+	}
+	artifactBefore, err := os.ReadFile(artifactPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(artifactPath, append(append([]byte(nil), artifactBefore...), []byte("// stale target evidence\n")...), 0644); err != nil {
+		t.Fatal(err)
+	}
+	staleProposal, staleErr := ProposeCanonicalController(root, sourceRevision, sourceRevision, "examples/canonical-projection/canonical.yaml", cfg)
+	if err := os.WriteFile(artifactPath, artifactBefore, 0644); err != nil {
+		t.Fatalf("restore stale-evidence control artifact: %v", err)
+	}
+	if staleErr != nil {
+		t.Fatalf("propose after selected target drift: %v", staleErr)
+	}
+	for _, candidate := range staleProposal.Plan.Proposals {
+		if candidate.Task != nil && candidate.Task.Repair != nil {
+			t.Fatalf("changed selected artifact retained stale semantic repair authority: %#v", candidate)
+		}
+	}
+
+	// A newer incomplete result must supersede the failed result; the older
+	// semantic finding cannot remain eligible through the append-only ledger.
+	setCanonicalControllerVerifierActor(t, marker, agentexec.OutcomeIncomplete)
+	incomplete, err := VerifyCanonicalController(context.Background(), root, sourceRevision, evidenceRevision, "examples/canonical-projection/canonical.yaml", cfg, true)
+	if err != nil || incomplete.Outcome != records.OutcomeIncomplete {
+		t.Fatalf("persist newer incomplete result: outcome=%q err=%v", incomplete.Outcome, err)
+	}
+	proposal, err = ProposeCanonicalController(root, sourceRevision, sourceRevision, "examples/canonical-projection/canonical.yaml", cfg)
+	if err != nil {
+		t.Fatalf("propose after newer incomplete result: %v", err)
+	}
+	for _, candidate := range proposal.Plan.Proposals {
+		if candidate.Task != nil && candidate.Task.Repair != nil {
+			t.Fatalf("older failed result masked the latest incomplete result: %#v", candidate)
+		}
+	}
+}
+
 func TestCanonicalControllerVerifierProtocolFailureAndIncompleteAreNotPassing(t *testing.T) {
 	repo, err := filepath.Abs("../..")
 	if err != nil {
@@ -295,7 +391,10 @@ func TestCanonicalControllerVerifierProtocolFailureAndIncompleteAreNotPassing(t 
 		context:        CanonicalAgentContext{RequestDigest: "sha256:" + strings.Repeat("1", 64), ScopeIDs: record.ScopeIDs},
 		artifacts:      []agentexec.Artifact{{Path: "docs/protocol.md", Mode: "0644", Digest: sha256Prefix(sha256Hex([]byte("artifact"))), Content: []byte("artifact")}},
 		evidenceDigest: sha256Prefix(sha256Hex([]byte("selected evidence"))),
-		checks:         []records.CheckResult{{ID: canonicalControllerAgentCheckID, Version: canonicalControllerAgentCheckVersion, Digest: sha256Prefix(sha256Hex([]byte("receipt binding"))), Outcome: records.CheckIncomplete}},
+		checks: []records.CheckResult{
+			{ID: "fixed-check", Version: "fixed/v1", Digest: sha256Prefix(sha256Hex([]byte("fixed"))), Outcome: records.CheckPassed},
+			{ID: canonicalControllerAgentCheckID, Version: canonicalControllerAgentCheckVersion, Digest: sha256Prefix(sha256Hex([]byte("receipt binding"))), Outcome: records.CheckIncomplete},
+		},
 	}
 	item.request.Policies = nil
 	node := assurance.NodeRunInput{Node: assurance.Node{ID: "scope"}}
@@ -306,8 +405,14 @@ func TestCanonicalControllerVerifierProtocolFailureAndIncompleteAreNotPassing(t 
 			if err != nil {
 				t.Fatalf("valid %s protocol response returned invocation error: %v", outcome, err)
 			}
-			if result.Outcome != outcome || run.Outcome != outcome || result.Checks[0].Outcome != map[string]string{agentexec.OutcomeFailed: records.CheckFailed, agentexec.OutcomeIncomplete: records.CheckIncomplete}[outcome] {
+			if result.Outcome != outcome || run.Outcome != outcome || canonicalControllerTestCheckOutcome(result, canonicalControllerAgentCheckID) != map[string]string{agentexec.OutcomeFailed: records.CheckFailed, agentexec.OutcomeIncomplete: records.CheckIncomplete}[outcome] {
 				t.Fatalf("%s was upgraded by verifier integration: result=%#v run=%#v", outcome, result, run)
+			}
+			if outcome == agentexec.OutcomeFailed && len(result.SemanticFindings) == 0 {
+				t.Fatalf("completed semantic failure did not persist its bounded negative observations: %#v", result.SemanticFindings)
+			}
+			if outcome != agentexec.OutcomeFailed && len(result.SemanticFindings) != 0 {
+				t.Fatalf("non-failed response persisted repair findings: %#v", result.SemanticFindings)
 			}
 		})
 	}
@@ -318,10 +423,83 @@ func TestCanonicalControllerVerifierProtocolFailureAndIncompleteAreNotPassing(t 
 		if err != nil {
 			t.Fatalf("partial protocol response invocation error: %v", err)
 		}
-		if result.Outcome != records.OutcomeIncomplete || run.Outcome != agentexec.OutcomeIncomplete || result.Checks[0].Outcome != records.CheckIncomplete {
+		if result.Outcome != records.OutcomeIncomplete || run.Outcome != agentexec.OutcomeIncomplete || canonicalControllerTestCheckOutcome(result, canonicalControllerAgentCheckID) != records.CheckIncomplete {
 			t.Fatalf("partial observations composed to a passing verification: result=%#v run=%#v", result, run)
 		}
 	})
+}
+
+func canonicalControllerTestCheckOutcome(result records.VerificationResult, id string) string {
+	for _, check := range result.Checks {
+		if check.ID == id {
+			return check.Outcome
+		}
+	}
+	return ""
+}
+
+func TestCanonicalControllerSemanticRepairEligibilityRejectsNonsemanticAndIncompleteEvidence(t *testing.T) {
+	response := agentexec.Response{Outcome: agentexec.OutcomeFailed, VerifierObservations: []agentexec.Observation{
+		{Subject: "scope/behavior", Outcome: agentexec.OutcomeFailed, Detail: "The represented behavior violates the declared boundary."},
+		{Subject: "artifact/docs.md", Outcome: agentexec.OutcomePassed, Detail: "The artifact exists and is readable."},
+	}}
+	checks := []records.CheckResult{
+		{ID: "fixed-check", Outcome: records.CheckPassed},
+		{ID: canonicalControllerAgentCheckID, Outcome: records.CheckFailed},
+	}
+	got, notice := canonicalControllerSemanticFindings(response, nil, agentexec.OutcomeFailed, checks)
+	if notice != "" || len(got) != 1 || got[0].Subject != "scope/behavior" || got[0].Detail != response.VerifierObservations[0].Detail {
+		t.Fatalf("repair findings differ from exact negative observation: %#v", got)
+	}
+	for _, tc := range []struct {
+		name       string
+		response   agentexec.Response
+		err        error
+		runOutcome string
+		checks     []records.CheckResult
+	}{
+		{"invocation-error", response, fmt.Errorf("provider invocation failed"), agentexec.OutcomeFailed, checks},
+		{"incomplete-response", agentexec.Response{Outcome: agentexec.OutcomeIncomplete, VerifierObservations: response.VerifierObservations}, nil, agentexec.OutcomeIncomplete, checks},
+		{"fixed-check-failed", response, nil, agentexec.OutcomeFailed, []records.CheckResult{{ID: "fixed-check", Outcome: records.CheckFailed}, checks[1]}},
+		{"no-negative-observation", agentexec.Response{Outcome: agentexec.OutcomeFailed, VerifierObservations: []agentexec.Observation{{Subject: "scope/behavior", Outcome: agentexec.OutcomeIncomplete, Detail: "not complete"}}}, nil, agentexec.OutcomeFailed, checks},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if findings, _ := canonicalControllerSemanticFindings(tc.response, tc.err, tc.runOutcome, tc.checks); len(findings) != 0 {
+				t.Fatalf("ineligible response supplied repair findings: %#v", findings)
+			}
+		})
+	}
+	oversized := agentexec.Response{Outcome: agentexec.OutcomeFailed, VerifierObservations: []agentexec.Observation{{Subject: "scope/behavior", Outcome: agentexec.OutcomeFailed, Detail: strings.Repeat("x", 2*1024+1)}}}
+	if findings, notice := canonicalControllerSemanticFindings(oversized, nil, agentexec.OutcomeFailed, checks); len(findings) != 0 || notice == "" {
+		t.Fatalf("oversized finding was silently truncated or left eligible: findings=%#v notice=%q", findings, notice)
+	}
+	tooMany := agentexec.Response{Outcome: agentexec.OutcomeFailed, VerifierObservations: make([]agentexec.Observation, agentexec.MaxVerifierObservations+1)}
+	for i := range tooMany.VerifierObservations {
+		tooMany.VerifierObservations[i] = agentexec.Observation{Subject: fmt.Sprintf("scope/%03d", i), Outcome: agentexec.OutcomeFailed, Detail: "bounded detail"}
+	}
+	if findings, notice := canonicalControllerSemanticFindings(tooMany, nil, agentexec.OutcomeFailed, checks); len(findings) != 0 || notice == "" {
+		t.Fatalf("over-count findings were not explicitly ineligible: findings=%#v notice=%q", findings, notice)
+	}
+
+	result := records.VerificationResult{
+		Outcome: records.OutcomeFailed, SemanticFindings: []records.VerificationFinding{{Subject: "scope/behavior", Detail: "failed"}},
+		Checks: checks,
+	}
+	if !canonicalControllerResultSupportsRepair(result) {
+		t.Fatal("failed result with all fixed checks passed was not repair-eligible")
+	}
+	result.Checks[1].Outcome = records.CheckIncomplete
+	if canonicalControllerResultSupportsRepair(result) {
+		t.Fatal("placeholder agent-check outcome was mistaken for a final semantic failure")
+	}
+	result.Checks[1].Outcome = records.CheckFailed
+	result.Checks[0].Outcome = records.CheckIncomplete
+	if canonicalControllerResultSupportsRepair(result) {
+		t.Fatal("incomplete fixed check did not suppress repair")
+	}
+	if !canonicalControllerChildrenPassed(nil) || canonicalControllerChildrenPassed([]assurance.ChildRunInput{{Result: assurance.NodeResult{Outcome: records.OutcomeFailed}}}) {
+		t.Fatal("repair eligibility ignored an incomplete/failed direct child")
+	}
 }
 
 func TestCanonicalControllerVerifierBlocksSourceAndCheckDriftBeforeInvocation(t *testing.T) {

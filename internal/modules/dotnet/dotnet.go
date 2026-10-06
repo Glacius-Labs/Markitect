@@ -28,6 +28,7 @@ type Input struct {
 	Previous          *PriorProjection
 	ObservedArtifacts []ArtifactObservation
 	Verification      *VerificationBinding
+	Repair            *RepairEvidence
 }
 
 // Escalation identifies a representation decision that needs explicit intent.

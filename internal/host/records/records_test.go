@@ -259,6 +259,70 @@ func TestVerificationEvidenceProvenancePreservesLegacyDigestAndRequiresAtomicPai
 		})
 	}
 }
+
+func TestVerificationSemanticFindingsAreBoundedAndContentDigested(t *testing.T) {
+	r := testRecord(t)
+	v := VerifierIdentity{ID: "verify", Version: "1", Digest: testDigest("verifier")}
+	checks := []CheckResult{
+		{ID: "independent-verifier-receipt", Version: "controller/v1", Digest: testDigest("agent-check"), Outcome: CheckFailed},
+		{ID: "unit", Version: "1", Digest: testDigest("unit"), Outcome: CheckPassed},
+	}
+	base := VerificationResult{
+		RecordID: r.ID, Revision: r.Revision, ModelDigest: r.ModelDigest, TargetSnapshotDigest: r.TargetSnapshotDigest,
+		EvidenceRevision: strings.Repeat("b", 40), EvidenceSnapshotDigest: testDigest("evidence"),
+		ControllerConfigDigest: testDigest("config"), ControllerVerifierInputDigest: testDigest("request"),
+		Verifier: v, Checks: checks, Outcome: OutcomeFailed,
+		SemanticFindings: []VerificationFinding{{Subject: "scope/z", Detail: "failure z"}, {Subject: "scope/a", Detail: "failure a"}},
+	}
+	result, err := NewVerificationResult(base)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.SemanticFindings[0].Subject != "scope/a" || result.SemanticFindings[1].Subject != "scope/z" {
+		t.Fatalf("semantic findings were not canonicalized: %#v", result.SemanticFindings)
+	}
+	if err := ValidateVerificationResult(result); err != nil {
+		t.Fatal(err)
+	}
+	changed := base
+	changed.SemanticFindings = append([]VerificationFinding(nil), base.SemanticFindings...)
+	changed.SemanticFindings[0].Detail = "changed failure"
+	other, err := NewVerificationResult(changed)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if other.ID == result.ID {
+		t.Fatal("semantic finding bytes were not bound by the result content ID")
+	}
+
+	for _, tc := range []struct {
+		name   string
+		mutate func(*VerificationResult)
+	}{
+		{"findings-without-controller", func(value *VerificationResult) {
+			value.ControllerConfigDigest = ""
+			value.ControllerVerifierInputDigest = ""
+		}},
+		{"findings-on-pass", func(value *VerificationResult) { value.Outcome = OutcomePassed; value.Checks[0].Outcome = CheckPassed }},
+		{"too-many", func(value *VerificationResult) { value.SemanticFindings = make([]VerificationFinding, 129) }},
+		{"empty-subject", func(value *VerificationResult) { value.SemanticFindings[0].Subject = " " }},
+		{"oversized-subject", func(value *VerificationResult) { value.SemanticFindings[0].Subject = strings.Repeat("s", 513) }},
+		{"invalid-utf8-detail", func(value *VerificationResult) { value.SemanticFindings[0].Detail = string([]byte{0xff}) }},
+		{"oversized-detail", func(value *VerificationResult) { value.SemanticFindings[0].Detail = strings.Repeat("d", 2049) }},
+		{"duplicate-subject", func(value *VerificationResult) { value.SemanticFindings[1].Subject = value.SemanticFindings[0].Subject }},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			input := base
+			input.Checks = append([]CheckResult(nil), base.Checks...)
+			input.SemanticFindings = append([]VerificationFinding(nil), base.SemanticFindings...)
+			tc.mutate(&input)
+			if _, err := NewVerificationResult(input); err == nil {
+				t.Fatal("invalid semantic findings were accepted")
+			}
+		})
+	}
+}
+
 func TestOwnershipIndexBidirectionalAndVisibleFacts(t *testing.T) {
 	r := testRecord(t)
 	idx, e := BuildOwnershipIndex([]ProjectionRecord{r}, testFacts(r))

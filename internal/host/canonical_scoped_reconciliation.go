@@ -293,12 +293,15 @@ func proposeScopedCanonicalReconciliationWithReuse(root, baseRevision, revision,
 		entrypoint, entrypointErr := canonicalWorkflowEntrypoint(request)
 		p := CanonicalScopedProposal{ProjectionID: key, Module: request.ModulePin, Request: request}
 		old, found := prior[key]
-		verification, verified := verificationBindings[key]
-		if verified {
+		verification, hasVerificationBinding := verificationBindings[key]
+		if hasVerificationBinding {
 			verification.RequestDigest = request.RequestDigest
 		} else {
 			verification = canonicalProjectionVerificationBinding{}
 		}
+		// A failed semantic result is useful only to the owning Module that has
+		// an explicit bounded repair input. Other providers receive no PASS bit.
+		verified := hasVerificationBinding && verification.Repair == nil
 		if entrypointErr != nil {
 			p.Decision = "escalate"
 			p.Escalations = append(p.Escalations, CanonicalProjectionEscalation{Code: "projection.entrypoint-unsupported", Identity: key, Message: entrypointErr.Error()})
@@ -308,10 +311,17 @@ func proposeScopedCanonicalReconciliationWithReuse(root, baseRevision, revision,
 		}
 		if entrypoint == "dotnet" {
 			input := dotnet.Input{Definitions: request.Definitions, Schemas: request.Schemas, Policies: request.Policies, TargetPrefix: request.TargetPrefix, AllowedRoots: request.Projector.AllowedRoots, RequestDigest: request.RequestDigest, CanonicalAffected: canonicalWork[key], InventoryComplete: true}
-			if verified {
-				input.Verification = &dotnet.VerificationBinding{Passed: true, RequestDigest: verification.RequestDigest}
+			if hasVerificationBinding {
+				input.Verification = &dotnet.VerificationBinding{Passed: verification.Repair == nil, RequestDigest: verification.RequestDigest}
 				for _, artifact := range verification.Artifacts {
 					input.Verification.Artifacts = append(input.Verification.Artifacts, dotnet.ArtifactBinding{Path: artifact.Path, Digest: artifact.Digest, Mode: artifact.Mode})
+				}
+				if verification.Repair != nil {
+					repair := &dotnet.RepairEvidence{RecordID: verification.Repair.RecordID, ResultID: verification.Repair.ResultID}
+					for _, finding := range verification.Repair.Findings {
+						repair.Findings = append(repair.Findings, dotnet.RepairFinding{Subject: finding.Subject, Detail: finding.Detail})
+					}
+					input.Repair = repair
 				}
 			}
 			for _, entry := range inventory.Entries {

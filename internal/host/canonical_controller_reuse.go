@@ -32,6 +32,13 @@ type canonicalControllerVerificationReuse struct {
 type canonicalProjectionVerificationBinding struct {
 	RequestDigest string
 	Artifacts     []records.Artifact
+	Repair        *canonicalControllerRepairEvidence
+}
+
+type canonicalControllerRepairEvidence struct {
+	RecordID string
+	ResultID string
+	Findings []records.VerificationFinding
 }
 
 func newCanonicalControllerVerificationReuse(cfg CanonicalControllerConfig, active []records.ProjectionRecord, results []records.VerificationResult, configDigest string) (*canonicalControllerVerificationReuse, error) {
@@ -96,13 +103,14 @@ func (reuse *canonicalControllerVerificationReuse) bindings(root string, fixed *
 	}
 	graph := assurance.Input{RootIDs: append([]string(nil), reuse.roots...), Nodes: nodes}
 	accepted := map[string]bool{}
+	repairs := map[string]canonicalControllerRepairEvidence{}
 	_, err := assurance.Execute(context.Background(), assurance.RunInput{Graph: graph, Current: current}, func(_ context.Context, in assurance.NodeRunInput) (assurance.NodeRunOutput, error) {
 		item, ok := items[in.Node.ID]
 		if !ok || !currentMatchesEvidence[in.Node.ID] {
 			return assurance.NodeRunOutput{NodeID: in.Node.ID, Disposition: assurance.RunSkipped, Reason: "cached verification provenance is unavailable or stale"}, nil
 		}
 		result := reuse.results[item.record.ID]
-		if result.Outcome != records.OutcomePassed || result.ControllerConfigDigest != reuse.configDigest ||
+		if result.ControllerConfigDigest != reuse.configDigest ||
 			result.EvidenceRevision != item.target.ID || result.EvidenceSnapshotDigest != item.evidenceDigest {
 			return assurance.NodeRunOutput{NodeID: in.Node.ID, Disposition: assurance.RunSkipped, Reason: "cached verification result does not bind the current evidence"}, nil
 		}
@@ -117,22 +125,64 @@ func (reuse *canonicalControllerVerificationReuse) bindings(root string, fixed *
 		if err := records.ValidateVerificationFreshness(result, item.record, in.Current); err != nil {
 			return assurance.NodeRunOutput{NodeID: in.Node.ID, Disposition: assurance.RunSkipped, Reason: "cached verification freshness check failed"}, nil
 		}
-		accepted[in.Node.ID] = true
+		if result.Outcome == records.OutcomePassed {
+			accepted[in.Node.ID] = true
+		} else if result.Outcome == records.OutcomeFailed && canonicalControllerResultSupportsRepair(result) && canonicalControllerChildrenPassed(in.Children) {
+			repairs[in.Node.ID] = canonicalControllerRepairEvidence{
+				RecordID: result.RecordID, ResultID: result.ID,
+				Findings: append([]records.VerificationFinding(nil), result.SemanticFindings...),
+			}
+		} else {
+			return assurance.NodeRunOutput{NodeID: in.Node.ID, Disposition: assurance.RunSkipped, Reason: "cached verifier result is not eligible for scoped repair"}, nil
+		}
 		return assurance.NodeRunOutput{NodeID: in.Node.ID, Disposition: assurance.RunCompleted, Record: item.record, Result: result}, nil
 	})
 	if err != nil {
 		return bindings
 	}
 	for scopeID, item := range items {
-		if !accepted[scopeID] {
+		if !accepted[scopeID] && repairs[scopeID].RecordID == "" {
 			continue
 		}
-		bindings[item.record.ProjectionID] = canonicalProjectionVerificationBinding{
+		binding := canonicalProjectionVerificationBinding{
 			RequestDigest: item.request.RequestDigest,
 			Artifacts:     append([]records.Artifact(nil), item.record.Artifacts...),
 		}
+		if repair, ok := repairs[scopeID]; ok {
+			binding.Repair = &repair
+		}
+		bindings[item.record.ProjectionID] = binding
 	}
 	return bindings
+}
+
+func canonicalControllerResultSupportsRepair(result records.VerificationResult) bool {
+	if result.Outcome != records.OutcomeFailed || len(result.SemanticFindings) == 0 {
+		return false
+	}
+	agentCheckFailed := false
+	for _, check := range result.Checks {
+		if check.ID == canonicalControllerAgentCheckID {
+			if check.Outcome != records.CheckFailed {
+				return false
+			}
+			agentCheckFailed = true
+			continue
+		}
+		if check.Outcome != records.CheckPassed {
+			return false
+		}
+	}
+	return agentCheckFailed
+}
+
+func canonicalControllerChildrenPassed(children []assurance.ChildRunInput) bool {
+	for _, child := range children {
+		if child.Result.Outcome != records.OutcomePassed {
+			return false
+		}
+	}
+	return true
 }
 
 func (reuse *canonicalControllerVerificationReuse) unavailableFreshness(record records.ProjectionRecord) records.Freshness {

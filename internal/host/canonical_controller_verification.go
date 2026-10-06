@@ -824,6 +824,7 @@ func invokeCanonicalControllerVerifier(ctx context.Context, cfg CanonicalControl
 		invokeErr = errors.New("Verifier receipt configuration fingerprint differs from the prepared identity")
 		run.Outcome = agentexec.OutcomeIncomplete
 	}
+	semanticFindings, semanticFindingNotice := canonicalControllerSemanticFindings(execution.Response, invokeErr, run.Outcome, item.checks)
 	checks := append([]records.CheckResult(nil), item.checks...)
 	for i := range checks {
 		if checks[i].ID == canonicalControllerAgentCheckID {
@@ -863,6 +864,9 @@ func invokeCanonicalControllerVerifier(ctx context.Context, cfg CanonicalControl
 	if run.Outcome == agentexec.OutcomeEscalated && invokeErr == nil {
 		reason += " Verifier explicitly requested escalation."
 	}
+	if semanticFindingNotice != "" {
+		reason += " " + semanticFindingNotice
+	}
 	controllerConfigDigest, err := digestCanonicalValue(cfg)
 	if err != nil {
 		return records.VerificationResult{}, run, err
@@ -873,13 +877,52 @@ func invokeCanonicalControllerVerifier(ctx context.Context, cfg CanonicalControl
 		EvidenceRevision:     evidenceRevision, EvidenceSnapshotDigest: item.evidenceDigest,
 		ControllerConfigDigest: controllerConfigDigest, ControllerVerifierInputDigest: verifierInputDigest,
 		Verifier: verifier, Checks: checks,
-		Outcome: outcome, Reason: reason,
+		Outcome: outcome, Reason: reason, SemanticFindings: semanticFindings,
 	})
 	if err != nil {
 		return records.VerificationResult{}, run, err
 	}
 	run.ResultID = verification.ID
 	return verification, run, nil
+}
+
+func canonicalControllerSemanticFindings(response agentexec.Response, invokeErr error, runOutcome string, checks []records.CheckResult) ([]records.VerificationFinding, string) {
+	if invokeErr != nil || response.Outcome != agentexec.OutcomeFailed || runOutcome != agentexec.OutcomeFailed {
+		return nil, ""
+	}
+	agentCheckPresent := false
+	for _, check := range checks {
+		if check.ID == canonicalControllerAgentCheckID {
+			agentCheckPresent = true
+			continue
+		}
+		if check.Outcome != records.CheckPassed {
+			return nil, ""
+		}
+	}
+	if !agentCheckPresent {
+		return nil, ""
+	}
+	findings := make([]records.VerificationFinding, 0, len(response.VerifierObservations))
+	for _, observation := range response.VerifierObservations {
+		if observation.Outcome == agentexec.OutcomeFailed {
+			if !validCanonicalRepairFindingText(observation.Subject, 512) || !validCanonicalRepairFindingText(observation.Detail, 2*1024) {
+				return nil, "Semantic repair observation exceeded the bounded repair input; no repair was scheduled."
+			}
+			findings = append(findings, records.VerificationFinding{Subject: observation.Subject, Detail: observation.Detail})
+		}
+	}
+	if len(findings) > agentexec.MaxVerifierObservations {
+		return nil, "Semantic repair observations exceeded the bounded finding count; no repair was scheduled."
+	}
+	if len(findings) == 0 {
+		return nil, ""
+	}
+	return findings, ""
+}
+
+func validCanonicalRepairFindingText(value string, maxBytes int) bool {
+	return value != "" && len(value) <= maxBytes && strings.TrimSpace(value) != ""
 }
 
 func (item canonicalControllerPreparedVerification) checksWithoutAgent() []records.CheckResult {
