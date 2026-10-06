@@ -197,6 +197,86 @@ func (s *Store) AppendAttempt(expectedHead string, record records.ProjectionReco
 	return s.commit(eventBody{APIVersion: APIVersion, Sequence: state.Sequence + 1, PreviousEventDigest: state.Head, Kind: "attempt", Record: &record})
 }
 
+// AppendRefresh appends a new record that retains every exact artifact from an
+// active prior record. It is distinct from a materialization attempt and uses
+// the same expected-head compare-and-swap contract.
+func (s *Store) AppendRefresh(expectedHead string, record records.ProjectionRecord) (State, error) {
+	if err := records.ValidateProjectionRecord(record); err != nil {
+		return State{}, fmt.Errorf("validate refreshed ProjectionRecord: %w", err)
+	}
+	if record.PriorRecordID == "" || record.State != records.StateMaterializedUnverified {
+		return State{}, errors.New("refresh requires a complete record with priorRecordId")
+	}
+	for _, artifact := range record.Artifacts {
+		if artifact.Change != records.ChangeRetained {
+			return State{}, errors.New("refresh artifact facts must all be retained")
+		}
+	}
+	unlock, err := s.lock()
+	if err != nil {
+		return State{}, err
+	}
+	defer unlock()
+	state, err := s.readUnlocked()
+	if err != nil {
+		return State{}, err
+	}
+	for _, old := range state.Records {
+		if old.ID == record.ID {
+			return state, nil
+		}
+	}
+	if state.Head != expectedHead {
+		return State{}, &StaleHeadError{expectedHead, state.Head}
+	}
+	prior, ok := findRecord(state.Records, record.PriorRecordID)
+	if !ok {
+		return State{}, errors.New("refresh priorRecordId must reference an earlier record")
+	}
+	active := false
+	for _, id := range state.ActiveSelection.RecordIDs {
+		if id == prior.ID {
+			active = true
+			break
+		}
+	}
+	if !active {
+		return State{}, errors.New("refresh prior record must be active")
+	}
+	if err := validateRefreshRecord(prior, record); err != nil {
+		return State{}, err
+	}
+	if len(state.Records) >= 50_000 {
+		return State{}, errors.New("ProjectionRecord limit exceeded")
+	}
+	return s.commit(eventBody{APIVersion: APIVersion, Sequence: state.Sequence + 1, PreviousEventDigest: state.Head, Kind: "refresh", Record: &record})
+}
+
+func validateRefreshRecord(prior, refreshed records.ProjectionRecord) error {
+	if prior.ID == refreshed.ID || refreshed.PriorRecordID != prior.ID || prior.ProjectionID != refreshed.ProjectionID {
+		return errors.New("refresh must link a distinct prior record for the same Projection")
+	}
+	if prior.State != records.StateMaterializedUnverified || refreshed.State != records.StateMaterializedUnverified {
+		return errors.New("refresh requires complete prior and current materialization records")
+	}
+	if prior.Revision == refreshed.Revision && prior.ModelDigest == refreshed.ModelDigest {
+		return errors.New("refresh must bind a changed source revision or model")
+	}
+	if prior.Origin != refreshed.Origin || prior.AdoptionRevision != refreshed.AdoptionRevision || prior.ReviewReference != refreshed.ReviewReference {
+		return errors.New("refresh must preserve prior record origin and adoption provenance")
+	}
+	if prior.TargetSnapshotDigest != refreshed.TargetSnapshotDigest || len(prior.Artifacts) != len(refreshed.Artifacts) {
+		return errors.New("refresh must preserve the exact prior artifact set")
+	}
+	for i, old := range prior.Artifacts {
+		current := refreshed.Artifacts[i]
+		if old.Path != current.Path || old.Digest != current.Digest || old.Mode != current.Mode || current.Change != records.ChangeRetained {
+			return errors.New("refresh artifact facts must exactly retain prior paths, bytes and modes")
+		}
+	}
+	return nil
+}
+
 // AppendVerification persists a result bound to an earlier record. Host must
 // first check current declared verifier/check identities. Outcomes never
 // promote or remove active ownership. Repeated result IDs are idempotent.
@@ -466,6 +546,39 @@ func applyEvent(s *State, b eventBody, eventID string, recordByID map[string]rec
 			if !ok || prior.ProjectionID != r.ProjectionID {
 				return errors.New("dangling or cross-Projection priorRecordId")
 			}
+		}
+		recordByID[r.ID] = r
+		s.Records = append(s.Records, r)
+		if len(s.Records) > 50_000 {
+			return errors.New("ProjectionRecord limit exceeded")
+		}
+	case "refresh":
+		if b.Record == nil || b.Verification != nil || b.Selection != nil {
+			return errors.New("refresh event has wrong payload shape")
+		}
+		r := *b.Record
+		if err := records.ValidateProjectionRecord(r); err != nil {
+			return err
+		}
+		if _, ok := recordByID[r.ID]; ok {
+			return errors.New("duplicate ProjectionRecord ID")
+		}
+		prior, ok := recordByID[r.PriorRecordID]
+		if !ok {
+			return errors.New("refresh references a missing prior ProjectionRecord")
+		}
+		active := false
+		for _, id := range s.ActiveSelection.RecordIDs {
+			if id == prior.ID {
+				active = true
+				break
+			}
+		}
+		if !active {
+			return errors.New("refresh prior record is not active")
+		}
+		if err := validateRefreshRecord(prior, r); err != nil {
+			return err
 		}
 		recordByID[r.ID] = r
 		s.Records = append(s.Records, r)

@@ -396,3 +396,121 @@ func TestSelectionRetryUsesSelectionDigestAndNoOpDoesNotAppend(t *testing.T) {
 		t.Fatal(fmt.Sprintf("selection retry changed state: %+v", retry))
 	}
 }
+
+func TestAppendRefreshCreatesRetainedRecordAndPreservesOldVerification(t *testing.T) {
+	store, root := openTestStore(t)
+	state, err := store.Read()
+	if err != nil {
+		t.Fatal(err)
+	}
+	prior := testProjection(t, "projection-a", "src/a.cs", records.StateMaterializedUnverified, "", "same-bytes")
+	state, err = store.AppendAttempt(state.Head, prior)
+	if err != nil {
+		t.Fatal(err)
+	}
+	state, err = store.SelectActive(state.Head, []string{prior.ID})
+	if err != nil {
+		t.Fatal(err)
+	}
+	oldResult := testVerification(t, prior, records.OutcomePassed)
+	state, err = store.AppendVerification(state.Head, oldResult)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	retained := prior
+	retained.Revision = strings.Repeat("b", 40)
+	retained.ModelDigest = testHash("new-model")
+	retained.PlanDigest = testHash("refresh-plan")
+	retained.InputSnapshotDigest = testHash("new-input")
+	retained.RequestDigest = testHash("new-request")
+	retained.PriorRecordID = prior.ID
+	retained.Artifacts = append([]records.Artifact(nil), prior.Artifacts...)
+	retained.Artifacts[0].Change = records.ChangeRetained
+	retained, err = records.NewProjectionRecord(retained)
+	if err != nil {
+		t.Fatal(err)
+	}
+	state, err = store.AppendRefresh(state.Head, retained)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(state.Records) != 2 || len(state.Verifications) != 1 || state.Verifications[0].ID != oldResult.ID {
+		t.Fatalf("refresh changed historical records/results: %#v", state)
+	}
+	if len(state.ActiveSelection.RecordIDs) != 1 || state.ActiveSelection.RecordIDs[0] != prior.ID {
+		t.Fatalf("refresh append changed active selection: %#v", state.ActiveSelection)
+	}
+	state, err = store.SelectActive(state.Head, []string{retained.ID})
+	if err != nil {
+		t.Fatal(err)
+	}
+	reopened, err := Open(root, store.forbidden)
+	if err != nil {
+		t.Fatal(err)
+	}
+	state, err = reopened.Read()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(state.Records) != 2 || len(state.Verifications) != 1 || state.ActiveSelection.RecordIDs[0] != retained.ID {
+		t.Fatalf("refresh event did not survive validated read: %#v", state)
+	}
+}
+
+func TestAppendRefreshRejectsChangedFactsInactivePriorAndStaleHead(t *testing.T) {
+	store, _ := openTestStore(t)
+	state, err := store.Read()
+	if err != nil {
+		t.Fatal(err)
+	}
+	prior := testProjection(t, "projection-a", "src/a.cs", records.StateMaterializedUnverified, "", "same-bytes")
+	state, err = store.AppendAttempt(state.Head, prior)
+	if err != nil {
+		t.Fatal(err)
+	}
+	makeRefresh := func() records.ProjectionRecord {
+		record := prior
+		record.Revision = strings.Repeat("b", 40)
+		record.ModelDigest = testHash("new-model")
+		record.PlanDigest = testHash("refresh-plan")
+		record.InputSnapshotDigest = testHash("new-input")
+		record.RequestDigest = testHash("new-request")
+		record.PriorRecordID = prior.ID
+		record.Artifacts = append([]records.Artifact(nil), prior.Artifacts...)
+		record.Artifacts[0].Change = records.ChangeRetained
+		created, createErr := records.NewProjectionRecord(record)
+		if createErr != nil {
+			t.Fatal(createErr)
+		}
+		return created
+	}
+	valid := makeRefresh()
+	if _, err = store.AppendRefresh(state.Head, valid); err == nil || !strings.Contains(err.Error(), "active") {
+		t.Fatalf("inactive prior record was accepted: %v", err)
+	}
+	state, err = store.SelectActive(state.Head, []string{prior.ID})
+	if err != nil {
+		t.Fatal(err)
+	}
+	changed := valid
+	changed.Artifacts = append([]records.Artifact(nil), valid.Artifacts...)
+	changed.Artifacts[0].Digest = testHash("different-bytes")
+	changed, err = records.NewProjectionRecord(changed)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err = store.AppendRefresh(state.Head, changed); err == nil || !strings.Contains(err.Error(), "exact prior artifact set") {
+		t.Fatalf("changed artifact facts were accepted: %v", err)
+	}
+	if _, err = store.AppendRefresh(testHash("stale-head"), valid); !errors.Is(err, ErrStaleHead) {
+		t.Fatalf("stale head was not rejected: %v", err)
+	}
+	state, err = store.AppendRefresh(state.Head, valid)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, err := store.AppendRefresh(testHash("stale-head"), valid); err != nil || got.Head != state.Head {
+		t.Fatalf("identical refresh retry was not idempotent: got=%s err=%v", got.Head, err)
+	}
+}
