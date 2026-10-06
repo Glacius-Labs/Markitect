@@ -3,6 +3,7 @@ import argparse
 import hashlib
 import io
 import json
+import time
 import subprocess
 import tempfile
 import unittest
@@ -371,6 +372,32 @@ class CodexRunnerTests(unittest.TestCase):
                 log = log_path.read_text(encoding="utf-8")
                 self.assertNotIn("adapter.prompt-submitted", log)
                 self.assertNotIn(value["nonce"], log)
+
+    def test_codex_timeout_bounds_large_prompt_to_child_that_never_reads_stdin(self) -> None:
+        value = invocation()
+        value["request"]["context"] = {"largeBoundedPrompt": "x" * (1024 * 1024)}
+        with tempfile.TemporaryDirectory() as directory:
+            cwd = Path(directory)
+            script = cwd / "nonreading-codex.py"
+            script.write_text("import time\ntime.sleep(30)\n", encoding="utf-8")
+            args = argparse.Namespace(
+                codex_executable=runner.sys.executable,
+                codex_script=str(script),
+                codex_version="0.130.0",
+                model="gpt-5.5",
+                timeout_seconds=1,
+            )
+            started = time.monotonic()
+            with patch.object(runner, "resolve_codex", return_value=[runner.sys.executable, str(script)]), \
+                 patch.object(runner, "check_version"):
+                response = runner.launch_codex(value, args, {}, cwd, cwd / "events.jsonl")
+            elapsed = time.monotonic() - started
+
+            self.assertEqual(response["outcome"], "incomplete")
+            self.assertLess(elapsed, 4, f"prompt delivery exceeded the configured timeout: {elapsed:.2f}s")
+            private_log = (cwd / "events.jsonl").read_text(encoding="utf-8")
+            self.assertNotIn("adapter.prompt-submitted", private_log)
+
     def test_incomplete_wrapper_timeout_echoes_bound_invocation(self) -> None:
         response = runner.incomplete_response(invocation("infer"), "timeout", type("Collector", (), {"telemetry": lambda self: None})())
         self.assertEqual(response["outcome"], "incomplete")

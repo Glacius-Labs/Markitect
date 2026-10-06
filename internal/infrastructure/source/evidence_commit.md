@@ -7,6 +7,10 @@ checks repository identity, requires the worktree `HEAD` to equal the supplied
 parent, validates the complete parent tree's portable names, then writes blobs
 and a tree through an isolated temporary index.
 
+Parent-tree metadata is streamed with a 64 MiB and 100,000-entry limit before
+it is retained in memory. Larger parent trees are rejected with a bounded
+diagnostic.
+
 The operation never updates a ref, `HEAD`, the user's index, or worktree files.
 A fixed non-author identity, date, and message make repeated inputs produce the
 same commit ID. `WriteSelectedEvidenceCommitContext` accepts cancellation, and each Git process has a timeout. `write=false` performs validation without creating Git objects.

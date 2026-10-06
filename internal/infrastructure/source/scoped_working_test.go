@@ -33,7 +33,7 @@ func TestObserveSelectedWorkingReadsExactPathsAndReportsMissing(t *testing.T) {
 
 func TestObserveSelectedWorkingRejectsUnsafeAndAliasedPaths(t *testing.T) {
 	root, _ := selectiveGitFixture(t)
-	for _, paths := range [][]string{{"../escape"}, {".git/config"}, {"A.txt", "a.txt"}} {
+	for _, paths := range [][]string{{"../escape"}, {".git/config"}, {".GIT/config"}, {"A.txt", "a.txt"}} {
 		if _, err := ObserveSelectedWorking(root, paths); err == nil {
 			t.Errorf("accepted unsafe selected paths %#v", paths)
 		}
@@ -123,11 +123,39 @@ func TestInventoryWorkingRootsRejectsOverlapsAndSymlinks(t *testing.T) {
 	if _, err := InventoryWorkingRoots(root, []string{"target", "target/nested"}); err == nil {
 		t.Fatal("accepted overlapping inventory prefixes")
 	}
+	if _, err := InventoryWorkingRoots(root, []string{".GIT"}); err == nil {
+		t.Fatal("accepted case-aliased Git metadata prefix")
+	}
 	target := filepath.Join(root, "target-link")
 	if err := os.Symlink(filepath.Join(root, "seed.txt"), target); err != nil {
 		t.Skipf("symlink creation unavailable: %v", err)
 	}
 	if _, err := InventoryWorkingRoots(root, []string{"target-link"}); err == nil || !strings.Contains(err.Error(), "symlink") {
 		t.Fatalf("symlink inventory error = %v", err)
+	}
+}
+
+func TestWalkScopedMetadataStopsAtEntryBound(t *testing.T) {
+	root := t.TempDir()
+	if err := os.WriteFile(filepath.Join(root, "one.txt"), []byte("1"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, "two.txt"), []byte("2"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	rootFS, err := os.OpenRoot(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer rootFS.Close()
+	var entries []WorkingFileMetadata
+	var total int64
+	visited := 0
+	err = walkScopedMetadata(rootFS, "target", &entries, &total, &visited, 1)
+	if err == nil || !strings.Contains(err.Error(), "entry-count limit of 1") {
+		t.Fatalf("walk error = %v, want entry-count bound", err)
+	}
+	if visited != 2 || len(entries) > 1 {
+		t.Fatalf("walk visited %d entries and recorded %d files after crossing bound", visited, len(entries))
 	}
 }

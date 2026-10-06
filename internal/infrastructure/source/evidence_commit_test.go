@@ -172,6 +172,18 @@ func TestReadEvidenceTreeUsesMetadataWithoutBlobSizes(t *testing.T) {
 	}
 }
 
+func TestReadEvidenceTreeEnforcesByteAndEntryBoundsDuringParsing(t *testing.T) {
+	const blob = "abcdefabcdefabcdefabcdefabcdefabcdefabcd"
+	record := []byte("100644 blob " + blob + "\tfile.txt\x00")
+	secondRecord := []byte("100644 blob " + blob + "\tother.txt\x00")
+	if _, err := readEvidenceTreeRecordsWithLimits(bytes.NewReader(record), int64(len(record)-1), 10); err == nil || !strings.Contains(err.Error(), "byte limit of") {
+		t.Fatalf("byte-bound error = %v", err)
+	}
+	if _, err := readEvidenceTreeRecordsWithLimits(bytes.NewReader(append(record, secondRecord...)), int64(len(record)+len(secondRecord)), 1); err == nil || !strings.Contains(err.Error(), "entry limit of 1") {
+		t.Fatalf("entry-bound error = %v", err)
+	}
+}
+
 func TestWriteSelectedEvidenceCommitAllowsMissingUnselectedBlob(t *testing.T) {
 	root, parent := partialCloneFixture(t)
 	commit, err := WriteSelectedEvidenceCommit(root, parent, map[string][]byte{"selected.txt": []byte("replacement")}, map[string]string{"selected.txt": "100644"}, true)

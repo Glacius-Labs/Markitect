@@ -417,7 +417,7 @@ func validateSelectedPaths(paths []string) error {
 			return err
 		}
 		for _, component := range strings.Split(selected, "/") {
-			if component == ".git" {
+			if strings.EqualFold(component, ".git") {
 				return fmt.Errorf("selected path %q enters Git metadata", selected)
 			}
 		}

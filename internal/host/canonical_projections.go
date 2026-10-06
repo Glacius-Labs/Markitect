@@ -264,7 +264,7 @@ func ApplyCanonicalProjection(root string, fixed *CanonicalSource, observed *sna
 	if writeErr != nil {
 		state = records.StatePartialFailure
 	}
-	actual, observeErr := source.Load(root, "")
+	actual, observeErr := observeCanonicalProjectionOutputs(root, written)
 	if observeErr != nil {
 		return report, fmt.Errorf("outputs remain; post-write artifact observation failed: %w", observeErr)
 	}
@@ -278,6 +278,21 @@ func ApplyCanonicalProjection(root string, fixed *CanonicalSource, observed *sna
 		report.Status = "already-materialized"
 	}
 	return report, writeErr
+}
+
+// observeCanonicalProjectionOutputs reads only the exact artifacts that Apply
+// will bind into its record. Repository-wide freshness was already checked by
+// the guarded writer; this readback confirms the materialized artifact bytes
+// and modes without widening the record's evidence scope.
+func observeCanonicalProjectionOutputs(root string, paths []string) (*snapshot.Snapshot, error) {
+	selected, err := source.ObserveSelectedWorking(root, paths)
+	if err != nil {
+		return nil, err
+	}
+	if len(selected.MissingPaths) != 0 {
+		return nil, fmt.Errorf("materialized projection artifacts are missing: %s", strings.Join(selected.MissingPaths, ", "))
+	}
+	return selected.Snapshot, nil
 }
 
 func selectedHostProjector(request canonical.ProjectionRequest) (bool, error) {

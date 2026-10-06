@@ -27,6 +27,9 @@ func strictDecode(data []byte, dst any) error {
 	if len(data) == 0 || len(data) > maxJSONBytes {
 		return errors.New("JSON size is outside the supported bound")
 	}
+	if !utf8.Valid(data) {
+		return errors.New("JSON protocol contains invalid UTF-8")
+	}
 	if err := rejectDuplicateKeys(data); err != nil {
 		return err
 	}

@@ -11,6 +11,7 @@ import re
 import subprocess
 import sys
 import threading
+import time
 from pathlib import Path
 from typing import Any
 
@@ -482,43 +483,64 @@ def launch_codex(
     stderr_thread = threading.Thread(target=drain_stderr, args=(process.stderr, stderr, process, stderr_overflow, collector), daemon=True)
     stdout_thread.start()
     stderr_thread.start()
-    prompt_submission_error: Exception | None = None
-    try:
-        written = process.stdin.write(prompt)
-        if written != len(prompt):
-            raise OSError("Codex accepted only part of the prompt")
-        process.stdin.flush()
-        process.stdin.close()
-    except (BrokenPipeError, OSError, ValueError) as exc:
-        prompt_submission_error = exc
+    prompt_submission_error: list[Exception | None] = [None]
+
+    def submit_prompt() -> None:
         try:
+            written = process.stdin.write(prompt)
+            if written != len(prompt):
+                raise OSError("Codex accepted only part of the prompt")
+            process.stdin.flush()
             process.stdin.close()
-        except (BrokenPipeError, OSError, ValueError):
-            pass
+            collector.record_prompt_submitted(invocation, prompt)
+        except (BrokenPipeError, OSError, ValueError) as exc:
+            prompt_submission_error[0] = exc
+            try:
+                process.stdin.close()
+            except (BrokenPipeError, OSError, ValueError):
+                pass
+            try:
+                process.terminate()
+            except OSError:
+                pass
+
+    deadline = time.monotonic() + args.timeout_seconds
+    prompt_thread = threading.Thread(target=submit_prompt, daemon=True)
+    prompt_thread.start()
+    timed_out = False
+    try:
+        return_code = process.wait(timeout=max(0.0, deadline - time.monotonic()))
+    except subprocess.TimeoutExpired:
+        timed_out = True
         try:
             process.terminate()
         except OSError:
             pass
-    else:
-        collector.record_prompt_submitted(invocation, prompt)
-    timed_out = False
-    try:
-        return_code = process.wait(timeout=args.timeout_seconds)
-    except subprocess.TimeoutExpired:
-        timed_out = True
-        process.terminate()
         try:
             return_code = process.wait(timeout=2)
         except subprocess.TimeoutExpired:
+            try:
+                process.kill()
+            except OSError:
+                pass
+            try:
+                return_code = process.wait(timeout=2)
+            except subprocess.TimeoutExpired as exc:
+                raise AdapterError("Codex process could not be stopped after timeout") from exc
+    prompt_thread.join(timeout=2)
+    if prompt_thread.is_alive():
+        try:
             process.kill()
-            return_code = process.wait()
+        except OSError:
+            pass
+        prompt_thread.join(timeout=2)
     stdout_thread.join(timeout=3)
     stderr_thread.join(timeout=3)
     collector.close()
     if drain_errors:
         raise AdapterError("Codex private event log could not be retained")
-    if prompt_submission_error is not None:
-        raise AdapterError("Codex prompt could not be submitted") from prompt_submission_error
+    if prompt_submission_error[0] is not None and not timed_out:
+        raise AdapterError("Codex prompt could not be submitted") from prompt_submission_error[0]
     if timed_out:
         return incomplete_response(invocation, "Codex execution timed out.", collector)
     if collector.overflow or stderr_overflow[0]:

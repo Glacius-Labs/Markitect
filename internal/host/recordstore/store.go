@@ -20,14 +20,15 @@ import (
 )
 
 const (
-	APIVersion = "markitect.example.org/projection-record-store/v1alpha1"
-	maxEvents  = 100_000
-	maxBytes   = 256 << 20
-	maxEvent   = 8 << 20
-	marker     = "store.json"
-	eventsDir  = "events"
-	lockName   = ".store.lock"
-	pending    = ".pending-"
+	APIVersion     = "markitect.example.org/projection-record-store/v1alpha1"
+	maxEvents      = 100_000
+	maxBytes       = 256 << 20
+	maxEvent       = 8 << 20
+	maxRootEntries = 3
+	marker         = "store.json"
+	eventsDir      = "events"
+	lockName       = ".store.lock"
+	pending        = ".pending-"
 )
 
 var (
@@ -424,7 +425,7 @@ func (s *Store) commitAfterPublish(body eventBody, afterPublish func(*os.Root, s
 		return State{}, err
 	}
 	defer eventsRoot.Close()
-	entries, err := readDirAt(eventsRoot, ".")
+	entries, err := readDirAt(eventsRoot, ".", maxEvents+1)
 	if err != nil {
 		return State{}, err
 	}
@@ -538,7 +539,7 @@ func (s *Store) readUnlockedAt(root *os.Root) (State, error) {
 		return State{}, err
 	}
 	defer eventsRoot.Close()
-	entries, err := readDirAt(eventsRoot, ".")
+	entries, err := readDirAt(eventsRoot, ".", maxEvents+1)
 	if err != nil {
 		return State{}, err
 	}
@@ -848,7 +849,7 @@ func (s *Store) openEventsRoot(root *os.Root) (*os.Root, error) {
 }
 
 func (s *Store) validateRootEntries(root *os.Root) error {
-	entries, err := readDirAt(root, ".")
+	entries, err := readDirAt(root, ".", maxRootEntries)
 	if err != nil {
 		return err
 	}

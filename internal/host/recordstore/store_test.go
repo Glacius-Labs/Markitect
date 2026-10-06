@@ -80,6 +80,23 @@ func TestAppendCapacityRejectsLimitCrossingBeforeStaging(t *testing.T) {
 	}
 }
 
+func TestReadDirAtRejectsEntryBeyondBound(t *testing.T) {
+	dir := t.TempDir()
+	for _, name := range []string{"one", "two", "three", "four"} {
+		if err := os.WriteFile(filepath.Join(dir, name), []byte("x"), 0600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	root, err := os.OpenRoot(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer root.Close()
+	if _, err = readDirAt(root, ".", 3); err == nil || !strings.Contains(err.Error(), "exceeds 3 entries") {
+		t.Fatalf("oversized directory was not rejected at the entry bound: %v", err)
+	}
+}
+
 func TestReadDoesNotCreateOrChangeStoreFiles(t *testing.T) {
 	store, root := openTestStore(t)
 	before := inventoryStoreFiles(t, root)

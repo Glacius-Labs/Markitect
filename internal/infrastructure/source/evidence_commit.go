@@ -1,11 +1,13 @@
 package source
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -16,6 +18,11 @@ import (
 )
 
 const evidenceGitTimeout = 30 * time.Second
+
+const (
+	maxEvidenceTreeBytes   = 64 << 20
+	maxEvidenceTreeEntries = DefaultMaxFiles
+)
 
 // WriteSelectedEvidenceCommit writes only Git objects for an immutable evidence
 // commit. It starts from parentFullCommit and replaces the exact regular-file
@@ -68,7 +75,7 @@ func WriteSelectedEvidenceCommitContext(ctx context.Context, root, parentFullCom
 		return "", fmt.Errorf("worktree HEAD does not match expected parent commit %s", parentFullCommit)
 	}
 
-	tree, err := readEvidenceTreeWith(identity.Root, parentFullCommit, run)
+	tree, err := readEvidenceTreeFromGit(ctx, identity.Root, parentFullCommit)
 	if err != nil {
 		return "", err
 	}
@@ -156,7 +163,7 @@ func validateEvidenceInput(files map[string][]byte, modes map[string]string) ([]
 			return nil, err
 		}
 		for _, component := range strings.Split(path, "/") {
-			if component == ".git" {
+			if strings.EqualFold(component, ".git") {
 				return nil, fmt.Errorf("selected evidence path %q enters Git metadata", path)
 			}
 		}
@@ -209,37 +216,114 @@ func validObjectID(objectFormat, oid string) bool {
 }
 
 func readEvidenceTreeWith(root, commit string, run gitOutputFunc) (map[string]selectedTreeEntry, error) {
-	// Do not request blob sizes here. Git may lazy-fetch a missing blob in a
-	// partial clone to report its size, even though this operation needs only
-	// tree metadata and must leave unselected blob contents untouched.
 	out, err := run(root, "ls-tree", "-r", "-z", "--full-tree", commit)
 	if err != nil {
 		return nil, fmt.Errorf("read parent tree metadata: %w", err)
 	}
-	tree := make(map[string]selectedTreeEntry)
-	for _, record := range bytes.Split(out, []byte{0}) {
-		if len(record) == 0 {
-			continue
+	if len(out) > maxEvidenceTreeBytes {
+		return nil, fmt.Errorf("parent tree metadata exceeds byte limit of %d", maxEvidenceTreeBytes)
+	}
+	return readEvidenceTreeRecords(bytes.NewReader(out))
+}
+
+func readEvidenceTreeFromGit(ctx context.Context, root, commit string) (map[string]selectedTreeEntry, error) {
+	bounded, cancel := context.WithTimeout(ctx, evidenceGitTimeout)
+	defer cancel()
+	abs, err := filepath.Abs(root)
+	if err != nil {
+		return nil, fmt.Errorf("resolve Git root: %w", err)
+	}
+	args := []string{"--no-replace-objects", "-c", "commit.gpgSign=false", "-c", "safe.directory=" + filepath.ToSlash(abs), "-C", abs, "ls-tree", "-r", "-z", "--full-tree", commit}
+	cmd := exec.CommandContext(bounded, "git", args...)
+	cmd.Env = selectiveGitEnvironment()
+	cmd.Stderr = io.Discard
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		return nil, fmt.Errorf("open parent tree metadata stream: %w", err)
+	}
+	if err := cmd.Start(); err != nil {
+		return nil, fmt.Errorf("start parent tree metadata query: %w", err)
+	}
+	tree, readErr := readEvidenceTreeRecords(stdout)
+	if readErr != nil {
+		_ = cmd.Process.Kill()
+		_ = cmd.Wait()
+		return nil, readErr
+	}
+	if err := cmd.Wait(); err != nil {
+		if bounded.Err() != nil {
+			return nil, fmt.Errorf("parent tree metadata query timed out or was canceled: %w", bounded.Err())
 		}
-		header, name, ok := bytes.Cut(record, []byte{'\t'})
-		if !ok {
-			return nil, errors.New("malformed parent Git tree record")
-		}
-		fields := strings.Fields(string(header))
-		if len(fields) != 3 {
-			return nil, errors.New("malformed parent Git tree metadata")
-		}
-		path := string(name)
-		if err := validateRepoPath(path); err != nil {
-			return nil, fmt.Errorf("unsafe parent tree path: %w", err)
-		}
-		entry := selectedTreeEntry{treeFile: treeFile{path: path, mode: fields[0], oid: fields[2]}, kind: fields[1]}
-		if _, exists := tree[path]; exists {
-			return nil, fmt.Errorf("duplicate parent tree path %q", path)
-		}
-		tree[path] = entry
+		return nil, fmt.Errorf("read parent tree metadata: %w", err)
 	}
 	return tree, nil
+}
+
+func readEvidenceTreeRecords(reader io.Reader) (map[string]selectedTreeEntry, error) {
+	return readEvidenceTreeRecordsWithLimits(reader, maxEvidenceTreeBytes, maxEvidenceTreeEntries)
+}
+
+func readEvidenceTreeRecordsWithLimits(reader io.Reader, maxBytes int64, maxEntries int) (map[string]selectedTreeEntry, error) {
+	// Do not request blob sizes here. Git may lazy-fetch a missing blob in a
+	// partial clone to report its size, even though this operation needs only
+	// tree metadata and must leave unselected blob contents untouched.
+	tree := make(map[string]selectedTreeEntry)
+	buffered := bufio.NewReaderSize(io.LimitReader(reader, maxBytes+1), 64*1024)
+	var record []byte
+	var total int64
+	for {
+		part, readErr := buffered.ReadSlice(0)
+		total += int64(len(part))
+		if total > maxBytes {
+			return nil, fmt.Errorf("parent tree metadata exceeds byte limit of %d", maxBytes)
+		}
+		record = append(record, part...)
+		if readErr == nil {
+			if len(record) == 1 {
+				return nil, errors.New("malformed empty parent Git tree record")
+			}
+			entry, err := parseEvidenceTreeRecord(record[:len(record)-1])
+			if err != nil {
+				return nil, err
+			}
+			if len(tree) >= maxEntries {
+				return nil, fmt.Errorf("parent tree metadata exceeds entry limit of %d", maxEntries)
+			}
+			if _, exists := tree[entry.path]; exists {
+				return nil, fmt.Errorf("duplicate parent tree path %q", entry.path)
+			}
+			tree[entry.path] = entry
+			record = record[:0]
+			continue
+		}
+		if errors.Is(readErr, bufio.ErrBufferFull) {
+			continue
+		}
+		if errors.Is(readErr, io.EOF) {
+			if len(record) != 0 {
+				return nil, errors.New("unterminated parent Git tree record")
+			}
+			return tree, nil
+		}
+		return nil, fmt.Errorf("read parent tree metadata stream: %w", readErr)
+	}
+}
+
+func parseEvidenceTreeRecord(record []byte) (selectedTreeEntry, error) {
+	header, name, ok := bytes.Cut(record, []byte{'\t'})
+	if !ok {
+		return selectedTreeEntry{}, errors.New("malformed parent Git tree record")
+	}
+	fields := strings.Fields(string(header))
+	if len(fields) != 3 {
+		return selectedTreeEntry{}, errors.New("malformed parent Git tree metadata")
+	}
+	path := string(name)
+	if err := validateRepoPath(path); err != nil {
+		return selectedTreeEntry{}, fmt.Errorf("unsafe parent tree path: %w", err)
+	}
+	entry := selectedTreeEntry{treeFile: treeFile{path: path, mode: fields[0], oid: fields[2]}, kind: fields[1]}
+	return entry, nil
 }
 
 func validateEvidenceTree(paths []string, modes map[string]string, tree map[string]selectedTreeEntry) error {

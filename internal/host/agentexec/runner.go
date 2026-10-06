@@ -187,7 +187,8 @@ func run(parent context.Context, cfg Config, request Request, opts RunOptions) (
 		WallTimeMilliseconds:  wallTime.Milliseconds(),
 		RetryCount:            0,
 	}
-	if logBytes, logErr := readOptionalBoundedFile(privateLogPath, maxOutputBound); logErr == nil && logBytes != nil {
+	logBytes, logErr := readOptionalBoundedFile(privateLogPath, maxOutputBound)
+	if logErr == nil && logBytes != nil {
 		receipt.PrivateLogDigest = digest(logBytes)
 	}
 	if !sameSnapshot(before, after) || auditErr != nil {
@@ -201,6 +202,10 @@ func run(parent context.Context, cfg Config, request Request, opts RunOptions) (
 	if err := verifyExecutableDigest(executable, executableDigest); err != nil {
 		result.Receipt = receipt
 		return result, ErrInputChanged
+	}
+	if logErr != nil {
+		result.Receipt = receipt
+		return result, errors.New("private log could not be read within its configured bound")
 	}
 	if stdout.overflow || stderr.overflow {
 		result.Receipt = receipt
@@ -505,7 +510,9 @@ func normalizeRoots(values []string) ([]string, error) {
 		if err != nil {
 			return nil, errors.New("selected input path is invalid")
 		}
-		key := strings.ToLower(root)
+		// Preserve distinct paths on case-sensitive filesystems. Dropping one
+		// selected root here would leave it outside the before/after audit.
+		key := root
 		if _, ok := seen[key]; ok {
 			continue
 		}
@@ -884,6 +891,9 @@ func readOptionalBoundedFile(name string, limit int64) ([]byte, error) {
 	data, err := readBoundedFile(name, limit)
 	if errors.Is(err, os.ErrNotExist) {
 		return nil, nil
+	}
+	if err == nil && data == nil {
+		return []byte{}, nil
 	}
 	return data, err
 }
