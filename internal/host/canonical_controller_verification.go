@@ -75,7 +75,6 @@ type canonicalControllerPreparedVerification struct {
 	request        canonical.ProjectionRequest
 	context        CanonicalAgentContext
 	target         *snapshot.Snapshot
-	fixed          CanonicalVerification
 	checks         []records.CheckResult
 	required       []records.CheckIdentity
 	artifacts      []agentexec.Artifact
@@ -407,7 +406,7 @@ func prepareCanonicalControllerVerifications(root, sourceRevision, evidenceRevis
 		if duplicate := duplicateCheckID(checks); duplicate != "" {
 			return nil, assurance.Input{}, nil, fmt.Errorf("assurance scope %q reuses check identity %q", scope.ID, duplicate)
 		}
-		artifacts, err := canonicalControllerVerificationArtifacts(record, scope, scopeIndex, recordsByProjection, target, cfg.CheckInputs)
+		artifacts, err := canonicalControllerVerificationArtifacts(cfg, record, scope, recordsByProjection, target, cfg.CheckInputs)
 		if err != nil {
 			return nil, assurance.Input{}, nil, err
 		}
@@ -428,7 +427,7 @@ func prepareCanonicalControllerVerifications(root, sourceRevision, evidenceRevis
 		graph.Nodes = append(graph.Nodes, assurance.Node{ID: scope.ID, ScopeIDs: append([]string(nil), record.ScopeIDs...), Children: append([]string(nil), scope.Children...), RequiredChecks: required})
 		prepared[scope.ID] = canonicalControllerPreparedVerification{
 			scope: scope, record: record, request: request, context: contextModel, target: target,
-			fixed: fixedVerification, checks: checks, required: required, artifacts: artifacts, evidenceDigest: evidenceDigest,
+			checks: checks, required: required, artifacts: artifacts, evidenceDigest: evidenceDigest,
 			scopeIndex: scopeIndex, recordByScope: recordByScope,
 		}
 	}
@@ -511,7 +510,7 @@ func loadCanonicalControllerScopeRequest(root, sourceRevision, evidenceRevision 
 	if !exists {
 		return canonical.ProjectionRequest{}, nil, fmt.Errorf("Projection %s is absent from the selected canonical Model", record.ProjectionID)
 	}
-	childRecords, err := canonicalControllerDirectChildRecords(scope, scopeIndex, recordsByProjection)
+	descendants, err := canonicalControllerDescendantScopes(cfg, record.ProjectionID)
 	if err != nil {
 		return canonical.ProjectionRequest{}, nil, err
 	}
@@ -519,10 +518,12 @@ func loadCanonicalControllerScopeRequest(root, sourceRevision, evidenceRevision 
 	for _, artifact := range record.Artifacts {
 		paths = append(paths, artifact.Path)
 	}
-	for _, child := range childRecords {
+	for _, descendant := range descendants {
+		child := recordsByProjection[descendant.ProjectionID]
 		for _, artifact := range child.Artifacts {
 			paths = append(paths, artifact.Path)
 		}
+		paths = append(paths, descendant.CheckInputs...)
 	}
 	paths = append(paths, cfg.CheckInputs...)
 	paths = append(paths, scope.CheckInputs...)
@@ -556,18 +557,22 @@ func loadCanonicalControllerScopeRequest(root, sourceRevision, evidenceRevision 
 	return request, selected.Snapshot, nil
 }
 
-func canonicalControllerVerificationArtifacts(record records.ProjectionRecord, scope CanonicalAssuranceScope, scopeIndex map[string]CanonicalAssuranceScope, recordsByProjection map[string]records.ProjectionRecord, target *snapshot.Snapshot, fixedCheckInputs []string) ([]agentexec.Artifact, error) {
+func canonicalControllerVerificationArtifacts(cfg CanonicalControllerConfig, record records.ProjectionRecord, scope CanonicalAssuranceScope, recordsByProjection map[string]records.ProjectionRecord, target *snapshot.Snapshot, fixedCheckInputs []string) ([]agentexec.Artifact, error) {
 	selected := map[string]bool{}
 	for _, artifact := range record.Artifacts {
 		selected[artifact.Path] = true
 	}
-	children, err := canonicalControllerDirectChildRecords(scope, scopeIndex, recordsByProjection)
+	descendants, err := canonicalControllerDescendantScopes(cfg, record.ProjectionID)
 	if err != nil {
 		return nil, err
 	}
-	for _, child := range children {
+	for _, descendant := range descendants {
+		child := recordsByProjection[descendant.ProjectionID]
 		for _, artifact := range child.Artifacts {
 			selected[artifact.Path] = true
+		}
+		for _, name := range descendant.CheckInputs {
+			selected[name] = true
 		}
 	}
 	for _, name := range fixedCheckInputs {
@@ -602,6 +607,26 @@ func canonicalControllerVerificationArtifacts(record records.ProjectionRecord, s
 		artifacts = append(artifacts, agentexec.Artifact{Path: name, Mode: agentMode, Digest: sha256Prefix(sha256Hex(data)), Content: append([]byte(nil), data...)})
 	}
 	return artifacts, nil
+}
+
+func canonicalControllerDescendantScopes(cfg CanonicalControllerConfig, projectionID string) ([]CanonicalAssuranceScope, error) {
+	projectionIDs, err := canonicalControllerDescendantProjections(cfg, projectionID)
+	if err != nil {
+		return nil, err
+	}
+	byProjection := make(map[string]CanonicalAssuranceScope, len(cfg.AssuranceScopes))
+	for _, scope := range cfg.AssuranceScopes {
+		byProjection[scope.ProjectionID] = scope
+	}
+	descendants := make([]CanonicalAssuranceScope, 0, len(projectionIDs))
+	for _, id := range projectionIDs {
+		scope, exists := byProjection[id]
+		if !exists {
+			return nil, fmt.Errorf("assurance descendant Projection %q has no scope", id)
+		}
+		descendants = append(descendants, scope)
+	}
+	return descendants, nil
 }
 
 func canonicalControllerDirectChildRecords(scope CanonicalAssuranceScope, scopeIndex map[string]CanonicalAssuranceScope, recordsByProjection map[string]records.ProjectionRecord) ([]records.ProjectionRecord, error) {
@@ -669,7 +694,7 @@ func invokeCanonicalControllerVerifier(ctx context.Context, cfg CanonicalControl
 		FixedChecks: item.checksWithoutAgent(), OwnChecks: item.scopeCheckIdentities(), Children: children,
 		Constraints: []string{
 			"Do not use Executor transcripts, hidden reasoning, workspace search, or unselected files.",
-			"Return evidence references only for supplied canonical scopes, policies, and target artifact paths.",
+			"Return every supplied canonical ScopeID, PolicyID, and target artifact path exactly once as an evidence reference; do not cite anything else.",
 			"Passing requires every fixed check and every required canonical obligation to pass.",
 			"Escalate when evidence is missing, ambiguous, or outside the selected scope.",
 		},
@@ -794,28 +819,6 @@ func requestScopeIDs(definitions []core.Definition) []string {
 	}
 	sort.Strings(values)
 	return values
-}
-
-func canonicalControllerFixedScopeChecks(checks []authoring.Check, target *snapshot.Snapshot) ([]records.CheckResult, []GateResult, error) {
-	gates, err := VerifySnapshotChecks(target, checks)
-	byName := map[string]GateResult{}
-	for _, gate := range gates {
-		byName[gate.Name] = gate
-	}
-	results := make([]records.CheckResult, 0, len(checks))
-	for _, check := range checks {
-		outcome := records.CheckIncomplete
-		if gate, ok := byName[check.Name]; ok {
-			outcome = records.CheckPassed
-			if gate.ExitCode != 0 {
-				outcome = records.CheckFailed
-			}
-		}
-		results = append(results, records.CheckResult{
-			ID: check.Name, Version: "fixed-command-input/v1", Digest: CanonicalCheckEvidenceDigest(check, target), Outcome: outcome,
-		})
-	}
-	return results, gates, err
 }
 
 func duplicateCheckID(checks []records.CheckResult) string {
