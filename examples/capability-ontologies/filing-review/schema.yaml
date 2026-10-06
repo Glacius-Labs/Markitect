@@ -10,6 +10,7 @@ kinds:
     purpose: Records one review disposition and explanation.
     properties:
       filing: {purpose: Identifies the filing under review., type: reference, minCount: 1, maxCount: 1, target: {apiVersion: filing.example.org/v1, kind: Filing}}
+      filingKind: {purpose: Identifies the reviewed subject's nominal Kind., type: kindReference, minCount: 1, maxCount: 1}
       reviewer: {purpose: Names the reviewer., type: string, minCount: 1, maxCount: 1}
       outcome: {purpose: Records the review disposition., type: enum, minCount: 1, maxCount: 1, values: [comment, return, accept]}
       reasons: {purpose: Lists concise findings., type: string, minCount: 0, maxCount: unbounded}

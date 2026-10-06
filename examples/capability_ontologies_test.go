@@ -105,6 +105,10 @@ func TestC1FiveDistinctTypedOntologiesCompileThroughCanonicalPipeline(t *testing
 			encoded, _ := json.Marshal(perDiagnostics)
 			t.Fatalf("ontology %s should compile independently: %s", api, encoded)
 		}
+		wantDefinitions, wantEdges := ontologyCounts(api)
+		if len(perModel.Schemas) != 1 || len(perModel.Definitions) != wantDefinitions || len(perModel.Edges) != wantEdges {
+			t.Fatalf("ontology %s compiled schemas=%d definitions=%d edges=%d; want 1, %d, %d", api, len(perModel.Schemas), len(perModel.Definitions), len(perModel.Edges), wantDefinitions, wantEdges)
+		}
 		t.Logf("C1_ONTOLOGY apiVersion=%s digest=%s definitions=%d edges=%d", api, perModel.Digest, len(perModel.Definitions), len(perModel.Edges))
 	}
 
@@ -135,6 +139,14 @@ func TestC1FiveDistinctTypedOntologiesCompileThroughCanonicalPipeline(t *testing
 		if !ok || definition.Purpose != expected.definitionPurpose {
 			t.Errorf("Definition purpose for %s/%s did not survive normalization: %#v", expected.api, expected.definition, definition)
 		}
+	}
+	review, ok := model.Definition(core.DefinitionIdentity{APIVersion: "filing.example.org/v1", Kind: "Review", Namespace: "vendor-a", Name: "initial-review"})
+	if !ok {
+		t.Fatal("compiled model is missing the filing review Definition")
+	}
+	filingKind, ok := review.Spec["filingKind"].(map[string]any)
+	if !ok || filingKind["apiVersion"] != "filing.example.org/v1" || filingKind["kind"] != "Filing" {
+		t.Fatalf("kindReference did not survive normalization: %#v", review.Spec["filingKind"])
 	}
 
 	permutedSchemas := reverseSchemas(schemas)
@@ -185,6 +197,18 @@ func TestC1TypedOntologyNegativeCasesAreRejected(t *testing.T) {
 			}
 			return data
 		}},
+		{"unresolved-kind-reference", "kind-reference.unresolved", func(path string, data []byte) []byte {
+			if path == "examples/capability-ontologies/filing-review/review.yaml" {
+				return bytes.Replace(data, []byte("kind: Filing"), []byte("kind: MissingKind"), 1)
+			}
+			return data
+		}},
+		{"closed-kind-reference", "kind-reference.value", func(path string, data []byte) []byte {
+			if path == "examples/capability-ontologies/filing-review/review.yaml" {
+				return bytes.Replace(data, []byte("kind: Filing}"), []byte("kind: Filing, name: ignored}"), 1)
+			}
+			return data
+		}},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -224,6 +248,23 @@ func namespaceForAPI(api string) string {
 	}
 }
 
+func ontologyCounts(api string) (definitions, edges int) {
+	switch api {
+	case "architecture.example.org/v1":
+		return 3, 2
+	case "delivery.example.org/v1":
+		return 2, 1
+	case "responsibility.example.org/v1":
+		return 3, 2
+	case "cardgame.example.org/v1":
+		return 2, 1
+	case "filing.example.org/v1":
+		return 2, 1
+	default:
+		return 0, 0
+	}
+}
+
 func reverseSchemas(values []core.Schema) []core.Schema {
 	result := append([]core.Schema(nil), values...)
 	for left, right := 0, len(result)-1; left < right; left, right = left+1, right-1 {
@@ -251,5 +292,3 @@ func equalEdges(left, right []core.Edge) bool {
 	}
 	return true
 }
-
-var _ = strings.Builder{}

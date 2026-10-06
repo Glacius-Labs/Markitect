@@ -4,6 +4,7 @@ metadata: {namespace: vendor-a, name: initial-review}
 purpose: Captures reviewer feedback on dossier 17.
 spec:
   filing: {namespace: vendor-a, name: dossier-17}
+  filingKind: {apiVersion: filing.example.org/v1, kind: Filing}
   reviewer: reviewer-42
   outcome: comment
   reasons: [Clarify the retention period]
