@@ -21,14 +21,6 @@ func TestAgentexecHelperProcess(t *testing.T) {
 		return
 	}
 	mode := os.Getenv("MARKITECT_AGENTEXEC_TEST_MODE")
-	if mode == "timeout" {
-		time.Sleep(5 * time.Second)
-		os.Exit(0)
-	}
-	if mode == "overflow" {
-		_, _ = os.Stdout.Write([]byte(strings.Repeat("x", 1024)))
-		os.Exit(0)
-	}
 	if mode == "failure" {
 		fmt.Fprintln(os.Stderr, "provider-private-failure")
 		os.Exit(7)
@@ -37,6 +29,37 @@ func TestAgentexecHelperProcess(t *testing.T) {
 	if err := json.NewDecoder(os.Stdin).Decode(&invocation); err != nil {
 		fmt.Fprintln(os.Stderr, "bad request")
 		os.Exit(8)
+	}
+	if mode == "timeout" || mode == "overflow" {
+		if mode == "timeout" {
+			time.Sleep(5 * time.Second)
+			os.Exit(0)
+		}
+		_, _ = os.Stdout.Write([]byte(strings.Repeat("x", 1024)))
+		os.Exit(0)
+	}
+	if strings.HasPrefix(mode, "spawn-child-") {
+		command := exec.Command(os.Args[0], "-test.run=TestAgentexecHeartbeatChild")
+		command.Env = append(os.Environ(), "MARKITECT_AGENTEXEC_HEARTBEAT="+os.Getenv("MARKITECT_AGENTEXEC_TEST_HEARTBEAT"))
+		if err := command.Start(); err != nil {
+			fmt.Fprintln(os.Stderr, "child start failed")
+			os.Exit(9)
+		}
+		heartbeat := os.Getenv("MARKITECT_AGENTEXEC_TEST_HEARTBEAT")
+		deadline := time.Now().Add(2 * time.Second)
+		for time.Now().Before(deadline) {
+			if info, err := os.Stat(heartbeat); err == nil && info.Size() > 0 {
+				break
+			}
+			time.Sleep(10 * time.Millisecond)
+		}
+		if mode == "spawn-child-timeout" || mode == "spawn-child-overflow" {
+			if mode == "spawn-child-overflow" {
+				_, _ = os.Stdout.Write([]byte(strings.Repeat("x", 1024)))
+			}
+			time.Sleep(5 * time.Second)
+			os.Exit(0)
+		}
 	}
 	if mode == "mutate" {
 		root := os.Getenv("MARKITECT_AGENTEXEC_TEST_ROOT")
@@ -88,6 +111,21 @@ func TestAgentexecHelperProcess(t *testing.T) {
 	}
 	_ = json.NewEncoder(os.Stdout).Encode(response)
 	os.Exit(0)
+}
+
+func TestAgentexecHeartbeatChild(t *testing.T) {
+	path := os.Getenv("MARKITECT_AGENTEXEC_HEARTBEAT")
+	if path == "" {
+		return
+	}
+	for {
+		file, err := os.OpenFile(path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
+		if err == nil {
+			_, _ = file.Write([]byte{'.'})
+			_ = file.Close()
+		}
+		time.Sleep(20 * time.Millisecond)
+	}
 }
 
 func testRequest(role string) Request {
@@ -242,6 +280,83 @@ func TestRunRecordsFailureTimeoutAndOutputLimitWithoutRetry(t *testing.T) {
 			t.Fatalf("expected bounded output failure, result=%#v err=%v", result, err)
 		}
 	})
+}
+
+func TestRunStopsDescendantProcessesOnTimeoutOverflowAndNormalExit(t *testing.T) {
+	for _, mode := range []string{"spawn-child-timeout", "spawn-child-overflow", "spawn-child-normal"} {
+		t.Run(mode, func(t *testing.T) {
+			opts := testOptions(t)
+			heartbeat := filepath.Join(t.TempDir(), "heartbeat")
+			t.Setenv("MARKITECT_AGENTEXEC_TEST_MODE", mode)
+			t.Setenv("MARKITECT_AGENTEXEC_TEST_ROLE", "")
+			t.Setenv("MARKITECT_AGENTEXEC_TEST_HEARTBEAT", heartbeat)
+			config := testConfig()
+			config.Timeout = 250 * time.Millisecond
+			if mode == "spawn-child-overflow" {
+				config.MaxStdoutBytes = 16
+			}
+			result, err := Run(context.Background(), config, testRequest(RoleExecutor), opts)
+			switch mode {
+			case "spawn-child-timeout":
+				if err == nil || result.Receipt.Outcome != OutcomeIncomplete {
+					t.Fatalf("expected incomplete timeout, result=%#v err=%v", result, err)
+				}
+			case "spawn-child-overflow":
+				if !errors.Is(err, ErrOutputTooLarge) || result.Receipt.Outcome != OutcomeIncomplete {
+					t.Fatalf("expected bounded output failure, result=%#v err=%v", result, err)
+				}
+			case "spawn-child-normal":
+				if err != nil || result.Response.Outcome != OutcomeProposed {
+					t.Fatalf("expected successful parent result, result=%#v err=%v", result, err)
+				}
+			}
+			before := heartbeatSize(t, heartbeat)
+			time.Sleep(150 * time.Millisecond)
+			after := heartbeatSize(t, heartbeat)
+			if after != before {
+				t.Fatalf("descendant remained active after Run returned: heartbeat grew from %d to %d", before, after)
+			}
+		})
+	}
+}
+
+func heartbeatSize(t *testing.T, path string) int64 {
+	t.Helper()
+	info, err := os.Stat(path)
+	if err != nil {
+		t.Fatalf("heartbeat was not started: %v", err)
+	}
+	return info.Size()
+}
+
+func TestPrivateLogPathWithinInputRootIsRejectedBeforeMutation(t *testing.T) {
+	root := t.TempDir()
+	marker := filepath.Join(root, "protected.txt")
+	if err := os.WriteFile(marker, []byte("preserve"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	beforeInfo, err := os.Stat(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	opts := RunOptions{InputRoots: []string{root}, TempParent: t.TempDir(), PrivateLogDirectory: filepath.Join(root, "nested", "logs")}
+	if _, err := Run(context.Background(), testConfig(), testRequest(RoleExecutor), opts); err == nil {
+		t.Fatal("protected private-log location was accepted")
+	}
+	afterInfo, err := os.Stat(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	contents, err := os.ReadFile(marker)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(contents) != "preserve" || !beforeInfo.ModTime().Equal(afterInfo.ModTime()) {
+		t.Fatalf("protected input root changed while rejecting private-log path: bytes=%q before=%v after=%v", contents, beforeInfo.ModTime(), afterInfo.ModTime())
+	}
+	if _, err := os.Lstat(filepath.Join(root, "nested")); !errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("private-log validation created a protected directory: %v", err)
+	}
 }
 
 func TestRunAuditsInputRootAfterProcess(t *testing.T) {
