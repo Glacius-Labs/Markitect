@@ -265,3 +265,16 @@ func TestGitRunsPassingAndFailingHookChecksWithExactArgv(t *testing.T) {
 		t.Fatalf("passing exact check argv did not allow commit: %v: %s", err, output)
 	}
 }
+
+func TestRenderIsCandidateOnlyAndProposeStillRefusesUnknownOwnership(t *testing.T) {
+	input := fixtureInput()
+	input.InventoryComplete = false
+	input.ObservedArtifacts = []ArtifactObservation{{Path: ".githooks/pre-commit", Bytes: []byte("unowned"), Mode: ArtifactMode}}
+	if got := Render(input); got.Decision != DecisionWork || len(got.Files) != 1 {
+		t.Fatalf("pure rendering = %#v", got)
+	}
+	input.InventoryComplete = true
+	if got := Propose(input); got.Decision != DecisionEscalate || got.Reasons[0] != "artifact.unowned" {
+		t.Fatalf("rendering bypassed ownership: %#v", got)
+	}
+}

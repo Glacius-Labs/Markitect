@@ -90,13 +90,14 @@ type Proposal struct {
 	Escalations             []Escalation
 }
 
-// Propose derives one executable pre-commit hook from selected policy and exact
-// check vectors. It performs no repository/provider I/O and never installs hooks.
-func Propose(input Input) Proposal {
+// Render derives candidate hook bytes from selected canonical data and exact
+// check vectors. It performs no observation or ownership decision; Host must
+// separately bind target preimages and authorize materialization.
+func Render(input Input) Proposal {
 	if !validDigest(input.RequestDigest) {
 		return escalate("request.digest.invalid", "a lowercase sha256 request digest is required")
 	}
-	target, prefix, err := safeTargetPath(input.TargetPrefix, input.AllowedRoots)
+	target, _, err := safeTargetPath(input.TargetPrefix, input.AllowedRoots)
 	if err != nil {
 		return escalate("target.invalid", err.Error())
 	}
@@ -116,6 +117,18 @@ func Propose(input Input) Proposal {
 	if err != nil {
 		return escalate("output.invalid", "validated Git Hooks facts could not be rendered")
 	}
+	return Proposal{Decision: DecisionWork, Files: []CandidateFile{candidate}}
+}
+
+// Propose derives work/no-op/escalation from the rendered candidate and supplied
+// target evidence. It performs no repository/provider I/O or hook installation.
+func Propose(input Input) Proposal {
+	rendered := Render(input)
+	if rendered.Decision == DecisionEscalate {
+		return rendered
+	}
+	candidate := rendered.Files[0]
+	target, prefix := candidate.Path, path.Dir(candidate.Path)
 	if !input.InventoryComplete {
 		return escalate("target.inventory.incomplete", "the selected target prefix was not completely observed")
 	}
