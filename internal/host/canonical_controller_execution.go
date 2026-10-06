@@ -21,14 +21,40 @@ import (
 )
 
 type canonicalControllerExecutorContext struct {
-	Model              CanonicalAgentContext  `json:"model"`
-	Objective          string                 `json:"objective"`
-	AllowedRoots       []string               `json:"allowedRoots"`
-	AllowedExtensions  []string               `json:"allowedExtensions"`
-	Constraints        []string               `json:"constraints"`
-	DependencyEvidence []string               `json:"readOnlyDependencyEvidence"`
-	DependencyState    string                 `json:"dependencyState"`
-	Repair             *dotnet.RepairEvidence `json:"repair,omitempty"`
+	Model              CanonicalAgentContext              `json:"model"`
+	Objective          string                             `json:"objective"`
+	AllowedRoots       []string                           `json:"allowedRoots"`
+	AllowedExtensions  []string                           `json:"allowedExtensions"`
+	Constraints        []string                           `json:"constraints"`
+	DependencyEvidence []string                           `json:"readOnlyDependencyEvidence"`
+	DependencyState    string                             `json:"dependencyState"`
+	Repair             *canonicalControllerExecutorRepair `json:"repair,omitempty"`
+}
+
+type canonicalControllerExecutorRepair struct {
+	RecordID string                                     `json:"recordId"`
+	ResultID string                                     `json:"resultId"`
+	Findings []canonicalControllerExecutorRepairFinding `json:"findings"`
+}
+
+type canonicalControllerExecutorRepairFinding struct {
+	Subject string `json:"subject"`
+	Detail  string `json:"detail"`
+}
+
+func canonicalControllerExecutorRepairFrom(evidence *dotnet.RepairEvidence) *canonicalControllerExecutorRepair {
+	if evidence == nil {
+		return nil
+	}
+	repair := &canonicalControllerExecutorRepair{
+		RecordID: evidence.RecordID,
+		ResultID: evidence.ResultID,
+		Findings: make([]canonicalControllerExecutorRepairFinding, 0, len(evidence.Findings)),
+	}
+	for _, finding := range evidence.Findings {
+		repair.Findings = append(repair.Findings, canonicalControllerExecutorRepairFinding{Subject: finding.Subject, Detail: finding.Detail})
+	}
+	return repair
 }
 
 // ExecuteCanonicalController makes no Host adopter-artifact or ledger writes.
@@ -92,7 +118,7 @@ func ExecuteCanonicalController(ctx context.Context, root, base, revision, confi
 				AllowedExtensions: p.Task.AllowedExtensions, Constraints: p.Task.Constraints,
 				DependencyEvidence: dependencyPaths,
 				DependencyState:    "Child candidates are unapplied and unverified. Retained child bytes are observed evidence, not new semantic acceptance. Do not edit dependency artifacts outside your own allowed roots.",
-				Repair:             p.Task.Repair,
+				Repair:             canonicalControllerExecutorRepairFrom(p.Task.Repair),
 			})
 			if err != nil {
 				return run, err

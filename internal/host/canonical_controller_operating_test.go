@@ -5,11 +5,9 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
-	"reflect"
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/internal/host/agentexec"
-	"github.com/Glacius-Labs/Markitect/internal/modules/dotnet"
 )
 
 const canonicalOperatingRepairActorEnv = "MARKITECT_CANONICAL_OPERATING_REPAIR_ACTOR"
@@ -166,12 +164,36 @@ func TestCanonicalControllerOperatingFailureRepairClosure(t *testing.T) {
 	if !ok {
 		t.Fatalf("actual repair Executor context omitted repair evidence: %s", invocation.Request.Context)
 	}
-	var capturedRepair dotnet.RepairEvidence
+	var repairFields map[string]json.RawMessage
+	if err := json.Unmarshal(repairJSON, &repairFields); err != nil {
+		t.Fatalf("decode repair field names from Executor context: %v", err)
+	}
+	if len(repairFields) != 3 || repairFields["recordId"] == nil || repairFields["resultId"] == nil || repairFields["findings"] == nil {
+		t.Fatalf("repair context does not use the stable camel-case wire keys: %s", repairJSON)
+	}
+	var findingFields []map[string]json.RawMessage
+	if err := json.Unmarshal(repairFields["findings"], &findingFields); err != nil {
+		t.Fatalf("decode finding field names from Executor context: %v", err)
+	}
+	if len(findingFields) != len(leaf.Task.Repair.Findings) {
+		t.Fatalf("Executor context findings=%d, want %d", len(findingFields), len(leaf.Task.Repair.Findings))
+	}
+	for _, finding := range findingFields {
+		if len(finding) != 2 || finding["subject"] == nil || finding["detail"] == nil {
+			t.Fatalf("repair finding does not use stable camel-case wire keys: %+v", finding)
+		}
+	}
+	var capturedRepair canonicalControllerExecutorRepair
 	if err := json.Unmarshal(repairJSON, &capturedRepair); err != nil {
 		t.Fatalf("decode typed repair evidence from Executor context: %v", err)
 	}
-	if capturedRepair.RecordID != leaf.Task.Repair.RecordID || capturedRepair.ResultID != leaf.Task.Repair.ResultID || !reflect.DeepEqual(capturedRepair.Findings, leaf.Task.Repair.Findings) {
+	if capturedRepair.RecordID != leaf.Task.Repair.RecordID || capturedRepair.ResultID != leaf.Task.Repair.ResultID || len(capturedRepair.Findings) != len(leaf.Task.Repair.Findings) {
 		t.Fatalf("Executor repair evidence differs from the exact current failure: got=%+v want=%+v", capturedRepair, leaf.Task.Repair)
+	}
+	for i, finding := range leaf.Task.Repair.Findings {
+		if capturedRepair.Findings[i].Subject != finding.Subject || capturedRepair.Findings[i].Detail != finding.Detail {
+			t.Fatalf("Executor repair finding %d differs from the exact current failure: got=%+v want=%+v", i, capturedRepair.Findings[i], finding)
+		}
 	}
 	applied, err := canonicalControllerApply(t, root, cfg, repairRun)
 	if err != nil || applied.EvidenceRevision == "" {
