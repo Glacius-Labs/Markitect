@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/internal/core"
+	"github.com/Glacius-Labs/Markitect/internal/core/snapshot"
 	"github.com/Glacius-Labs/Markitect/internal/host/authoring"
 	"github.com/Glacius-Labs/Markitect/internal/host/canonical"
 )
@@ -43,7 +44,7 @@ func TestDecodeCanonicalCandidateRejectsAmbiguousOrUnsafeFiles(t *testing.T) {
 	}{
 		{name: "duplicate paths", data: `{"requestDigest":"sha256:x","files":[{"path":"src/a.cs","content":"a"},{"path":"src/a.cs","content":"b"}]}`},
 		{name: "empty files", data: `{"requestDigest":"sha256:x","files":[]}`},
-		{name: "unknown fields", data: `{"requestDigest":"sha256:x","files":[{"path":"src/a.cs","content":"a","mode":"100755"}]}`},
+		{name: "unknown fields", data: `{"requestDigest":"sha256:x","files":[{"path":"src/a.cs","content":"a","unexpected":true}]}`},
 		{name: "trailing value", data: `{"requestDigest":"sha256:x","files":[{"path":"src/a.cs","content":"a"}]} {}`},
 	}
 	for _, tc := range cases {
@@ -55,7 +56,7 @@ func TestDecodeCanonicalCandidateRejectsAmbiguousOrUnsafeFiles(t *testing.T) {
 	}
 
 	candidate := CanonicalCandidate{RequestDigest: "sha256:x", Files: []CanonicalCandidateFile{{Path: "../outside.cs", Content: "x"}}}
-	if _, err := candidateMap(candidate, "src/"); err == nil {
+	if _, _, err := candidateMap(candidate, "src/"); err == nil {
 		t.Fatal("candidate outside exact target prefix was accepted")
 	}
 }
@@ -99,7 +100,30 @@ func TestCanonicalProjectionTargetFilesFiltersObservedSnapshot(t *testing.T) {
 	if len(files) != 1 || string(files["src/Orders.cs"]) != "selected" {
 		t.Fatalf("target filter returned unrelated snapshot files: %#v", files)
 	}
-	if _, err := candidateMap(CanonicalCandidate{Files: []CanonicalCandidateFile{{Path: "src-old/Orders.cs", Content: "outside"}}}, "src"); err == nil {
+	if _, _, err := candidateMap(CanonicalCandidate{Files: []CanonicalCandidateFile{{Path: "src-old/Orders.cs", Content: "outside"}}}, "src"); err == nil {
 		t.Fatal("candidate with a sibling-prefix path was accepted")
+	}
+}
+
+func TestCandidateArtifactModesDefaultAndValidate(t *testing.T) {
+	for _, tc := range []struct{ input, want string }{{"0644", snapshot.RegularMode}, {"0755", snapshot.ExecutableMode}} {
+		got, err := canonicalCandidateMode(tc.input)
+		if err != nil || got != tc.want {
+			t.Fatalf("agent candidate mode %s: got %s, err %v", tc.input, got, err)
+		}
+	}
+	if _, err := canonicalCandidateMode("0600"); err == nil {
+		t.Fatal("private agent candidate mode was treated as a Git artifact mode")
+	}
+	files, modes, err := candidateMap(CanonicalCandidate{Files: []CanonicalCandidateFile{{Path: "hooks/pre-commit", Content: "#!/bin/sh\n", Mode: snapshot.ExecutableMode}}}, "hooks")
+	if err != nil || string(files["hooks/pre-commit"]) != "#!/bin/sh\n" || modes["hooks/pre-commit"] != snapshot.ExecutableMode {
+		t.Fatalf("executable candidate mode lost: files=%v modes=%v err=%v", files, modes, err)
+	}
+	_, modes, err = candidateMap(CanonicalCandidate{Files: []CanonicalCandidateFile{{Path: "docs/readme.md", Content: "text"}}}, "")
+	if err != nil || modes["docs/readme.md"] != snapshot.RegularMode {
+		t.Fatalf("omitted mode did not default to regular: modes=%v err=%v", modes, err)
+	}
+	if _, _, err := candidateMap(CanonicalCandidate{Files: []CanonicalCandidateFile{{Path: "x", Content: "x", Mode: "100664"}}}, ""); err == nil {
+		t.Fatal("unsupported candidate mode was accepted")
 	}
 }

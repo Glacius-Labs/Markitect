@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -66,7 +67,7 @@ func TestCanonicalScopedWriterBindsOnlyExplicitBytesAndInventory(t *testing.T) {
 	root, capture := scopedWriteFixture(t)
 	// Changes to excluded unrelated bytes are not inferred semantic inputs.
 	scopedTestWrite(t, root, "unrelated/Billing.txt", "unrelated changed\n")
-	paths, err := writeCanonicalScopedOutputs(root, capture, map[string][]byte{"out/current.txt": []byte("new\n"), "out/new.txt": []byte("created\n")})
+	paths, err := writeCanonicalScopedOutputs(root, capture, map[string][]byte{"out/current.txt": []byte("new\n"), "out/new.txt": []byte("created\n")}, nil)
 	if err != nil || len(paths) != 2 {
 		t.Fatalf("scoped apply: paths=%v err=%v", paths, err)
 	}
@@ -75,6 +76,32 @@ func TestCanonicalScopedWriterBindsOnlyExplicitBytesAndInventory(t *testing.T) {
 	}
 	if data, _ := os.ReadFile(filepath.Join(root, "canonical.yaml")); !bytes.Equal(data, capture.Observed.Files["canonical.yaml"]) {
 		t.Fatal("canonical input changed")
+	}
+}
+
+func TestCanonicalScopedWriterAppliesAndObservesExecutableMode(t *testing.T) {
+	root, capture := scopedWriteFixture(t)
+	path := "out/pre-commit"
+	content := []byte("#!/bin/sh\nexit 0\n")
+	written, err := writeCanonicalScopedOutputs(root, capture, map[string][]byte{path: content}, map[string]string{path: snapshot.ExecutableMode})
+	if runtime.GOOS == "windows" {
+		if err == nil || !strings.Contains(err.Error(), "unsupported on Windows") || len(written) != 0 {
+			t.Fatalf("Windows accepted unobservable executable mode: paths=%v err=%v", written, err)
+		}
+		if _, statErr := os.Stat(filepath.Join(root, filepath.FromSlash(path))); !os.IsNotExist(statErr) {
+			t.Fatal("unsupported mode refusal left an output")
+		}
+		return
+	}
+	if err != nil || len(written) != 1 || written[0] != path {
+		t.Fatalf("scoped executable write: paths=%v err=%v", written, err)
+	}
+	observed, err := source.ObserveSelectedWorking(root, []string{path})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(observed.Snapshot.Files[path], content) || observed.Snapshot.Modes[path] != snapshot.ExecutableMode {
+		t.Fatalf("post-write mode was not observed: modes=%v", observed.Snapshot.Modes)
 	}
 }
 
@@ -98,7 +125,7 @@ func TestCanonicalScopedWriterRejectsStaleScopeBeforeMutation(t *testing.T) {
 				output["outside.txt"] = []byte("illegal")
 			}
 			old, _ := os.ReadFile(filepath.Join(root, "out/current.txt"))
-			written, err := writeCanonicalScopedOutputs(root, capture, output)
+			written, err := writeCanonicalScopedOutputs(root, capture, output, nil)
 			if err == nil || len(written) != 0 {
 				t.Fatalf("stale %s accepted: %v %v", mutation, written, err)
 			}
@@ -145,7 +172,7 @@ func TestCanonicalAgentContextExplainsBoundedReferenceInclusion(t *testing.T) {
 func TestCanonicalScopedWriterRequiresProvisionalEvidence(t *testing.T) {
 	root, capture := scopedWriteFixture(t)
 	capture.Observed = &snapshot.Snapshot{ID: capture.Revision, Files: capture.Observed.Files, Modes: capture.Observed.Modes}
-	if _, err := writeCanonicalScopedOutputs(root, capture, map[string][]byte{}); err == nil {
+	if _, err := writeCanonicalScopedOutputs(root, capture, map[string][]byte{}, nil); err == nil {
 		t.Fatal("immutable observation accepted for write")
 	}
 }
@@ -329,7 +356,7 @@ func TestCanonicalScopedWriterRejectsRepositorySubstitution(t *testing.T) {
 	if scopedTestGit(t, other, "rev-parse", "HEAD") != capture.Revision {
 		t.Fatal("fixture revision is not deterministic")
 	}
-	paths, err := writeCanonicalScopedOutputs(other, capture, map[string][]byte{"out/current.txt": []byte("wrong clone")})
+	paths, err := writeCanonicalScopedOutputs(other, capture, map[string][]byte{"out/current.txt": []byte("wrong clone")}, nil)
 	if err == nil || len(paths) != 0 {
 		t.Fatalf("substitution accepted: %v %v", paths, err)
 	}
@@ -437,7 +464,7 @@ func TestScopedCanonicalMarkdownMatchesDirectPreparation(t *testing.T) {
 		if err != nil || prepared.Plan == nil {
 			t.Fatalf("direct prepare: %v", err)
 		}
-		if outputDigest(prepared.Outputs) != outputDigest(p.Outputs) {
+		if outputDigest(prepared.Outputs, prepared.OutputModes) != outputDigest(p.Outputs, p.OutputModes) {
 			t.Fatal("Module proposal and direct Prepare render different Markdown")
 		}
 		for _, content := range p.Outputs {
@@ -463,12 +490,14 @@ func TestCanonicalRecordBindsMaterializedModeRatherThanDriftedPreimage(t *testin
 		name := "docs/represented/index.md"
 		observed.Files[name] = []byte("unchanged bytes\n")
 		observed.Modes[name] = snapshot.ExecutableMode
+		actual := &snapshot.Snapshot{Files: map[string][]byte{name: []byte("unchanged bytes\n")}, Modes: map[string]string{name: snapshot.RegularMode}}
 		prepared := PreparedCanonicalProjection{
-			Request: request,
-			Outputs: map[string][]byte{name: append([]byte(nil), observed.Files[name]...)},
-			Plan:    &projectionengine.Plan{PlanDigest: strings.Repeat("d", 64)},
+			Request:     request,
+			Outputs:     map[string][]byte{name: append([]byte(nil), observed.Files[name]...)},
+			OutputModes: map[string]string{name: snapshot.RegularMode},
+			Plan:        &projectionengine.Plan{PlanDigest: strings.Repeat("d", 64)},
 		}
-		record, err := buildCanonicalProjectionRecord(prepared, observed, []string{name}, records.StateMaterializedUnverified)
+		record, err := buildCanonicalProjectionRecord(prepared, observed, actual, []string{name}, records.StateMaterializedUnverified)
 		if err != nil {
 			t.Fatal(err)
 		}

@@ -109,8 +109,9 @@ func ExecuteCanonicalController(ctx context.Context, root, base, revision, confi
 			}
 			candidate := CanonicalCandidate{RequestDigest: p.Request.RequestDigest, Files: []CanonicalCandidateFile{}}
 			for _, file := range result.Response.CandidateFiles {
-				if file.Mode != "0644" {
-					return run, fmt.Errorf("unsupported Executor text candidate mode for %s", file.Path)
+				mode, err := canonicalCandidateMode(file.Mode)
+				if err != nil {
+					return run, fmt.Errorf("Executor candidate %s: %w", file.Path, err)
 				}
 				allowed := false
 				for _, ext := range p.Task.AllowedExtensions {
@@ -121,7 +122,7 @@ func ExecuteCanonicalController(ctx context.Context, root, base, revision, confi
 				if !allowed {
 					return run, fmt.Errorf("Executor candidate extension outside Module task: %s", file.Path)
 				}
-				candidate.Files = append(candidate.Files, CanonicalCandidateFile{Path: file.Path, Content: file.Content})
+				candidate.Files = append(candidate.Files, CanonicalCandidateFile{Path: file.Path, Content: file.Content, Mode: mode})
 			}
 			sort.Slice(candidate.Files, func(i, j int) bool { return candidate.Files[i].Path < candidate.Files[j].Path })
 			item.Candidate, err = json.Marshal(candidate)
@@ -160,6 +161,7 @@ func ExecuteCanonicalController(ctx context.Context, root, base, revision, confi
 		if len(item.Escalations) == 0 && item.PlanDigest != "" {
 			staged[item.ProjectionID] = item.Outputs
 			stageCanonicalCandidate(stage, item.Outputs)
+			stageCanonicalCandidateModes(stage, prepared.OutputModes)
 		}
 	}
 	// Execution does not grant stale input a fresh approval.
@@ -181,6 +183,27 @@ func finalizeCanonicalReviewedRun(run CanonicalReviewedRun) (CanonicalReviewedRu
 	run.Digest = digest
 	return run, err
 }
+
+func stageCanonicalCandidateModes(input *snapshot.Snapshot, modes map[string]string) {
+	if input == nil {
+		return
+	}
+	for name, mode := range modes {
+		input.Modes[name] = mode
+	}
+}
+
+func canonicalCandidateMode(mode string) (string, error) {
+	switch mode {
+	case "0644":
+		return snapshot.RegularMode, nil
+	case "0755":
+		return snapshot.ExecutableMode, nil
+	default:
+		return "", fmt.Errorf("unsupported file mode %q", mode)
+	}
+}
+
 func canonicalHostExecutableDigest() (string, error) {
 	executable, err := os.Executable()
 	if err != nil {
@@ -270,6 +293,7 @@ func ApplyCanonicalController(root, configPath string, cfg CanonicalControllerCo
 	}
 	preparedByID := map[string]PreparedCanonicalProjection{}
 	output := map[string][]byte{}
+	outputModes := map[string]string{}
 	proposals := map[string]CanonicalScopedProposal{}
 	for _, p := range fresh.Plan.Proposals {
 		if p.Decision == "work" {
@@ -303,7 +327,7 @@ func ApplyCanonicalController(root, configPath string, cfg CanonicalControllerCo
 		if err != nil {
 			return report, err
 		}
-		if prepared.Plan == nil || len(prepared.Escalations) != 0 || len(work.Escalations) != 0 || prepared.Plan.PlanDigest != work.PlanDigest || prepared.CandidateDigest != work.CandidateDigest || outputDigest(prepared.Outputs) != outputDigest(work.Outputs) {
+		if prepared.Plan == nil || len(prepared.Escalations) != 0 || len(work.Escalations) != 0 || prepared.Plan.PlanDigest != work.PlanDigest || prepared.CandidateDigest != work.CandidateDigest || outputDigest(prepared.Outputs, prepared.OutputModes) != outputDigest(work.Outputs, prepared.OutputModes) {
 			return report, errors.New("reviewed candidate or exact plan bytes differ from fresh preparation")
 		}
 		if err := ValidateCanonicalControllerExclusionOutputs(prepared.Outputs, canonicalControllerExcludedPaths(cfg)); err != nil {
@@ -317,6 +341,7 @@ func ApplyCanonicalController(root, configPath string, cfg CanonicalControllerCo
 				return report, fmt.Errorf("multiple candidates target %s", name)
 			}
 			output[name] = data
+			outputModes[name] = artifactMode(prepared.OutputModes, name)
 		}
 		for _, prior := range fresh.active {
 			if prior.ProjectionID == work.ProjectionID {
@@ -329,6 +354,7 @@ func ApplyCanonicalController(root, configPath string, cfg CanonicalControllerCo
 		}
 		preparedByID[work.ProjectionID] = prepared
 		stageCanonicalCandidate(stage, prepared.Outputs)
+		stageCanonicalCandidateModes(stage, prepared.OutputModes)
 	}
 	if len(output) == 0 {
 		report.Status = "no-materialization-work"
@@ -358,7 +384,7 @@ func ApplyCanonicalController(root, configPath string, cfg CanonicalControllerCo
 	report.LedgerHead = state.Head
 	// Check inputs are protected equally with canonical authored bytes.
 	protected := sortedUniquePaths(append(append(canonicalSourcePaths(fresh.fixed), canonicalControllerCheckInputs(cfg)...), canonicalControllerExcludedPaths(cfg)...))
-	written, writeErr := writeCanonicalScopedOutputs(root, canonicalScopedWriteCapture{Revision: fresh.Plan.Revision, CanonicalPaths: protected, Observed: fresh.observed, Inventory: fresh.Plan.Inventory}, output)
+	written, writeErr := writeCanonicalScopedOutputs(root, canonicalScopedWriteCapture{Revision: fresh.Plan.Revision, CanonicalPaths: protected, Observed: fresh.observed, Inventory: fresh.Plan.Inventory}, output, outputModes)
 	report.Written = written
 	report.Status = records.StateMaterializedUnverified
 	if writeErr != nil {
@@ -373,7 +399,7 @@ func ApplyCanonicalController(root, configPath string, cfg CanonicalControllerCo
 	for _, work := range run.Work {
 		names := []string{}
 		for name, data := range work.Outputs {
-			if writeErr == nil || writtenSet[name] || (bytes.Equal(fresh.observed.Files[name], data) && fresh.observed.Modes[name] == snapshot.RegularMode) {
+			if writeErr == nil || writtenSet[name] || (bytes.Equal(fresh.observed.Files[name], data) && fresh.observed.Modes[name] == artifactMode(preparedByID[work.ProjectionID].OutputModes, name)) {
 				names = append(names, name)
 			}
 		}
@@ -381,7 +407,11 @@ func ApplyCanonicalController(root, configPath string, cfg CanonicalControllerCo
 		if len(names) == 0 {
 			continue
 		} // No artifact means no honest materialization record.
-		record, err := buildCanonicalProjectionRecord(preparedByID[work.ProjectionID], fresh.observed, names, report.Status)
+		actual, observeErr := source.Load(root, "")
+		if observeErr != nil {
+			return report, fmt.Errorf("artifacts remain as reported; post-write artifact observation failed: %w", observeErr)
+		}
+		record, err := buildCanonicalProjectionRecord(preparedByID[work.ProjectionID], fresh.observed, actual, names, report.Status)
 		if err != nil {
 			return report, fmt.Errorf("artifacts remain as reported; record construction failed: %w", err)
 		}

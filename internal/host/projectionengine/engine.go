@@ -134,7 +134,9 @@ type Input struct {
 	ToolDigest     string
 	Sources        []SourceProvenance
 	Files          map[string][]byte
+	FileModes      map[string]string
 	Desired        map[string][]byte
+	DesiredModes   map[string]string
 	ProtectedPaths []string
 	Evidence       []CheckEvidence
 	Governance     Governance
@@ -144,7 +146,9 @@ type Input struct {
 type TargetPlan struct {
 	Path           string `yaml:"path" json:"path"`
 	ObservedDigest string `yaml:"observedDigest,omitempty" json:"observedDigest,omitempty"`
+	ObservedMode   string `yaml:"observedMode,omitempty" json:"observedMode,omitempty"`
 	DesiredDigest  string `yaml:"desiredDigest,omitempty" json:"desiredDigest,omitempty"`
+	DesiredMode    string `yaml:"desiredMode,omitempty" json:"desiredMode,omitempty"`
 	Status         string `yaml:"status" json:"status"`
 }
 
@@ -258,11 +262,14 @@ func Build(input Input) (Plan, error) {
 	if err := validateDesiredTargets(config, input.Desired); err != nil {
 		return Plan{}, err
 	}
+	if err := validateModeTargets(config, input.DesiredModes, "desired artifact mode"); err != nil {
+		return Plan{}, err
+	}
 	evidence, err := indexEvidence(config, input.Evidence)
 	if err != nil {
 		return Plan{}, err
 	}
-	filesDigest, err := digestFiles(input.Files)
+	filesDigest, err := digestFiles(input.Files, input.FileModes)
 	if err != nil {
 		return Plan{}, err
 	}
@@ -302,7 +309,10 @@ func validateInputBindings(input Input) error {
 	if len(input.Files) > maxInputFiles {
 		return fmt.Errorf("projection input exceeds %d explicit files", maxInputFiles)
 	}
-	return validatePathMap(input.Files, "observed file")
+	if err := validatePathMap(input.Files, "observed file"); err != nil {
+		return err
+	}
+	return validateModeMap(input.Files, input.FileModes, "observed artifact mode")
 }
 
 func validateConfig(config Config) error {
@@ -474,7 +484,9 @@ func evaluateContract(input Input, contract Contract, sources map[string]SourceP
 		observed, exists := input.Files[target.Path]
 		if exists {
 			targetPlan.ObservedDigest = sha256Hex(observed)
+			targetPlan.ObservedMode = artifactMode(input.FileModes, target.Path)
 		}
+		targetPlan.DesiredMode = artifactMode(input.DesiredModes, target.Path)
 		if contract.Materializer.Mode == ModeDeterministic {
 			desired, desiredExists := input.Desired[target.Path]
 			if !desiredExists {
@@ -482,11 +494,14 @@ func evaluateContract(input Input, contract Contract, sources map[string]SourceP
 				diagnostics = append(diagnostics, Diagnostic{Code: "projection.desired-missing", Severity: "warning", ContractID: contract.ID, Path: target.Path, Message: "registered deterministic renderer did not supply desired bytes"})
 			} else {
 				targetPlan.DesiredDigest = sha256Hex(desired)
+				if targetPlan.DesiredMode == "" {
+					targetPlan.DesiredMode = "100644"
+				}
 				switch {
 				case !exists:
 					targetPlan.Status = TargetMissing
 					diagnostics = append(diagnostics, Diagnostic{Code: "projection.target-missing", Severity: "warning", ContractID: contract.ID, Path: target.Path, Message: "required projection target is absent"})
-				case !bytes.Equal(observed, desired):
+				case !bytes.Equal(observed, desired) || targetPlan.ObservedMode != targetPlan.DesiredMode:
 					targetPlan.Status = TargetDrifted
 					diagnostics = append(diagnostics, Diagnostic{Code: "projection.target-drift", Severity: "warning", ContractID: contract.ID, Path: target.Path, Message: "observed target bytes differ from registered deterministic renderer output"})
 				default:
@@ -495,6 +510,9 @@ func evaluateContract(input Input, contract Contract, sources map[string]SourceP
 			}
 		} else {
 			targetPlan.Status = TargetIncomplete
+			if targetPlan.DesiredMode == "" {
+				targetPlan.DesiredMode = "100644"
+			}
 			if !exists {
 				diagnostics = append(diagnostics, Diagnostic{Code: "projection.candidate-missing", Severity: "warning", ContractID: contract.ID, Path: target.Path, Message: "AI materialization candidate is absent"})
 			}
@@ -783,7 +801,7 @@ func contractDigest(contract Contract, configDigest string) string {
 	return sha256Hex(encoded)
 }
 
-func digestFiles(files map[string][]byte) (string, error) {
+func digestFiles(files map[string][]byte, modes map[string]string) (string, error) {
 	paths := make([]string, 0, len(files))
 	for path := range files {
 		paths = append(paths, path)
@@ -792,16 +810,54 @@ func digestFiles(files map[string][]byte) (string, error) {
 	type fileDigest struct {
 		Path   string `json:"path"`
 		Digest string `json:"digest"`
+		Mode   string `json:"mode"`
 	}
 	rows := make([]fileDigest, 0, len(paths))
 	for _, path := range paths {
-		rows = append(rows, fileDigest{Path: path, Digest: sha256Hex(files[path])})
+		rows = append(rows, fileDigest{Path: path, Digest: sha256Hex(files[path]), Mode: artifactMode(modes, path)})
 	}
 	encoded, err := json.Marshal(rows)
 	if err != nil {
 		return "", err
 	}
 	return sha256Hex(encoded), nil
+}
+
+func validateModeMap(files map[string][]byte, modes map[string]string, label string) error {
+	for name, mode := range modes {
+		if _, exists := files[name]; !exists {
+			return fmt.Errorf("%s is bound to absent file %q", label, name)
+		}
+		if mode != "100644" && mode != "100755" {
+			return fmt.Errorf("%s for %q must be 100644 or 100755", label, name)
+		}
+	}
+	return nil
+}
+
+func validateModeTargets(config Config, modes map[string]string, label string) error {
+	owners := map[string]bool{}
+	for _, contract := range config.Contracts {
+		for _, target := range contract.Targets {
+			owners[target.Path] = true
+		}
+	}
+	for name, mode := range modes {
+		if !owners[name] {
+			return fmt.Errorf("%s %q is not a configured target", label, name)
+		}
+		if mode != "100644" && mode != "100755" {
+			return fmt.Errorf("%s for %q must be 100644 or 100755", label, name)
+		}
+	}
+	return nil
+}
+
+func artifactMode(modes map[string]string, name string) string {
+	if mode := modes[name]; mode != "" {
+		return mode
+	}
+	return "100644"
 }
 
 func digestStringSet(values []string) (string, error) {

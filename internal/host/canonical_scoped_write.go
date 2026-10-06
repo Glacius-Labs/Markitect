@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"strings"
 
@@ -25,9 +26,17 @@ type canonicalScopedWriteCapture struct {
 // writeCanonicalScopedOutputs is called only after the Host validates an exact
 // aggregate reviewed candidate and explicit write intent. It does not authorize
 // generation, adoption, deletion or overwrite of unknown ownership.
-func writeCanonicalScopedOutputs(root string, captured canonicalScopedWriteCapture, outputs map[string][]byte) ([]string, error) {
+func writeCanonicalScopedOutputs(root string, captured canonicalScopedWriteCapture, outputs map[string][]byte, outputModes map[string]string) ([]string, error) {
 	if captured.Observed == nil || !captured.Observed.Provisional || captured.Inventory == nil || !canonicalRevisionPattern.MatchString(captured.Revision) {
 		return nil, errors.New("scoped apply requires fixed source and explicit provisional byte/inventory capture")
+	}
+	if err := validateProjectionOutputModes(outputs, outputModes); err != nil {
+		return nil, err
+	}
+	for name := range outputs {
+		if projectionOutputMode(outputModes, name) == snapshot.ExecutableMode && runtime.GOOS == "windows" {
+			return nil, fmt.Errorf("executable artifact mode is unsupported on Windows working trees: %s", name)
+		}
 	}
 	branch, err := writeBranchName(root)
 	if err != nil {
@@ -60,9 +69,6 @@ func writeCanonicalScopedOutputs(root string, captured canonicalScopedWriteCaptu
 		}
 		if _, err := safeDestination(root, name); err != nil {
 			return nil, err
-		}
-		if mode := captured.Observed.Modes[name]; mode != "" && mode != snapshot.RegularMode {
-			return nil, fmt.Errorf("scoped text materialization cannot silently change executable mode: %s", name)
 		}
 		selected[name] = true
 		names = append(names, name)
@@ -155,7 +161,8 @@ func writeCanonicalScopedOutputs(root string, captured canonicalScopedWriteCaptu
 		if !exists && !os.IsNotExist(readErr) {
 			return written, fmt.Errorf("target appeared during scoped apply: %s", name)
 		}
-		if exists && bytes.Equal(current, outputs[name]) {
+		mode := projectionOutputMode(outputModes, name)
+		if exists && bytes.Equal(current, outputs[name]) && captured.Observed.Modes[name] == mode {
 			continue
 		}
 		if err := os.MkdirAll(filepath.Dir(destination), 0755); err != nil {
@@ -168,6 +175,11 @@ func writeCanonicalScopedOutputs(root string, captured canonicalScopedWriteCaptu
 			return written, err
 		}
 		written = append(written, name)
+		if mode == snapshot.ExecutableMode {
+			if err := os.Chmod(destination, 0755); err != nil {
+				return written, fmt.Errorf("set executable artifact mode for %s: %w", name, err)
+			}
+		}
 	}
 	final, err := source.ObserveSelectedWorking(root, paths)
 	if err != nil {
@@ -177,7 +189,7 @@ func writeCanonicalScopedOutputs(root string, captured canonicalScopedWriteCaptu
 		return written, errors.New("repository identity changed during scoped Apply")
 	}
 	for _, name := range names {
-		if !bytes.Equal(final.Snapshot.Files[name], outputs[name]) || final.Snapshot.Modes[name] != snapshot.RegularMode {
+		if !bytes.Equal(final.Snapshot.Files[name], outputs[name]) || final.Snapshot.Modes[name] != projectionOutputMode(outputModes, name) {
 			return written, fmt.Errorf("materialized target changed during apply: %s", name)
 		}
 		delete(final.Snapshot.Files, name)

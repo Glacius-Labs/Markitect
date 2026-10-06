@@ -20,6 +20,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/host/canonical"
 	"github.com/Glacius-Labs/Markitect/internal/host/projectionengine"
 	"github.com/Glacius-Labs/Markitect/internal/host/records"
+	"github.com/Glacius-Labs/Markitect/internal/infrastructure/source"
 	"github.com/Glacius-Labs/Markitect/internal/modules/agentrules"
 	"github.com/Glacius-Labs/Markitect/internal/modules/dotnet"
 	"github.com/Glacius-Labs/Markitect/internal/modules/markdown"
@@ -30,6 +31,7 @@ var canonicalRevisionPattern = regexp.MustCompile("^(?:[0-9a-f]{40}|[0-9a-f]{64}
 type CanonicalCandidateFile struct {
 	Path    string `json:"path"`
 	Content string `json:"content"`
+	Mode    string `json:"mode,omitempty"`
 }
 
 // CanonicalCandidate is an exact UTF-8 file set bound to the request that
@@ -50,6 +52,7 @@ type PreparedCanonicalProjection struct {
 	Plan            *projectionengine.Plan
 	CandidateDigest string
 	Outputs         map[string][]byte
+	OutputModes     map[string]string
 	Escalations     []CanonicalProjectionEscalation
 	candidateRaw    []byte
 	checks          []authoring.Check
@@ -65,7 +68,7 @@ type CanonicalProjectionApply struct {
 // provisional target snapshot. The Host selects its static Projector
 // implementation from the activated Module and Projector identities.
 func PrepareCanonicalProjection(fixed *CanonicalSource, observed *snapshot.Snapshot, selected core.DefinitionIdentity, toolVersion, toolDigest string, candidate []byte, checks ...authoring.Check) (PreparedCanonicalProjection, error) {
-	prepared := PreparedCanonicalProjection{Outputs: map[string][]byte{}}
+	prepared := PreparedCanonicalProjection{Outputs: map[string][]byte{}, OutputModes: map[string]string{}}
 	if err := validateCanonicalProjectionSnapshots(fixed, observed); err != nil {
 		return prepared, err
 	}
@@ -134,6 +137,7 @@ func PrepareCanonicalProjection(fixed *CanonicalSource, observed *snapshot.Snaps
 				} else {
 					desired = map[string][]byte{file.Path: file.Content}
 					prepared.Outputs = cloneByteMap(desired)
+					prepared.OutputModes = regularModes(desired)
 					targets = append(targets, file.Path)
 				}
 			} else {
@@ -145,6 +149,7 @@ func PrepareCanonicalProjection(fixed *CanonicalSource, observed *snapshot.Snaps
 				} else {
 					desired = rendered.Files
 					prepared.Outputs = cloneByteMap(rendered.Files)
+					prepared.OutputModes = regularModes(rendered.Files)
 					for target := range rendered.Files {
 						if err := projectionengine.ValidateRelativePath(target); err != nil {
 							return prepared, err
@@ -160,7 +165,7 @@ func PrepareCanonicalProjection(fixed *CanonicalSource, observed *snapshot.Snaps
 			prepared.Escalations = append(prepared.Escalations, CanonicalProjectionEscalation{Code: "projection.candidate-required", Message: "the .NET candidate Projector requires a request-bound UTF-8 candidate envelope"})
 			return prepared, nil
 		}
-		candidateFiles, err := candidateMap(*parsed, request.TargetPrefix)
+		candidateFiles, candidateModes, err := candidateMap(*parsed, request.TargetPrefix)
 		if err != nil {
 			return prepared, err
 		}
@@ -179,10 +184,11 @@ func PrepareCanonicalProjection(fixed *CanonicalSource, observed *snapshot.Snaps
 			}
 			if len(prepared.Escalations) == 0 {
 				prepared.Outputs = cloneByteMap(evaluated.Files)
+				prepared.OutputModes = candidateModes
 			}
 		}
 	}
-	prepared.CandidateDigest = candidateDigest(candidate, prepared.Outputs)
+	prepared.CandidateDigest = candidateDigest(candidate, prepared.Outputs, prepared.OutputModes)
 	if len(targets) == 0 {
 		return prepared, nil
 	}
@@ -221,7 +227,7 @@ func PrepareCanonicalProjection(fixed *CanonicalSource, observed *snapshot.Snaps
 		Config:       projectionengine.Config{APIVersion: projectionengine.ConfigAPIVersion, Version: projectionengine.ConfigVersion, Contracts: []projectionengine.Contract{contract}},
 		ConfigDigest: projectionConfigDigest(request.RequestDigest, selectedAuthoringChecks(checkNames, checks)), IntentDigest: request.RequestDigest,
 		ToolName: request.ModulePin.Name + "/" + request.Projector.ID, ToolVersion: toolVersion, ToolDigest: toolDigest,
-		Sources: facts, Files: request.TargetFiles, Desired: desired, ProtectedPaths: protected, OwnershipPaths: protected,
+		Sources: facts, Files: request.TargetFiles, FileModes: artifactModesForFiles(request.TargetFiles, observed.Modes), Desired: desired, DesiredModes: prepared.OutputModes, ProtectedPaths: protected, OwnershipPaths: protected,
 		Governance: projectionengine.Governance{Status: projectionengine.GovernanceNotConfigured},
 	})
 	if err != nil {
@@ -252,10 +258,10 @@ func ApplyCanonicalProjection(root string, fixed *CanonicalSource, observed *sna
 	if fresh.Plan == nil || len(fresh.Escalations) != 0 || len(fresh.Outputs) == 0 {
 		return report, errors.New("fresh Projection request is incomplete or escalated")
 	}
-	if !sameCanonicalProjectionRequest(fresh.Request, reviewed.Request) || fresh.Plan.PlanDigest != reviewed.Plan.PlanDigest || fresh.CandidateDigest != acceptedCandidateDigest || outputDigest(fresh.Outputs) != outputDigest(reviewed.Outputs) {
+	if !sameCanonicalProjectionRequest(fresh.Request, reviewed.Request) || fresh.Plan.PlanDigest != reviewed.Plan.PlanDigest || fresh.CandidateDigest != acceptedCandidateDigest || outputDigest(fresh.Outputs, fresh.OutputModes) != outputDigest(reviewed.Outputs, reviewed.OutputModes) {
 		return report, errors.New("reviewed Projection bindings or output bytes are stale or changed")
 	}
-	written, writeErr := WriteProjectionContents(root, observed, fresh.Outputs)
+	written, writeErr := WriteProjectionArtifacts(root, observed, fresh.Outputs, fresh.OutputModes)
 	report.Written = append([]string(nil), written...)
 	alreadyMaterialized := len(written) == 0 && writeErr == nil
 	if len(written) == 0 {
@@ -264,7 +270,7 @@ func ApplyCanonicalProjection(root string, fixed *CanonicalSource, observed *sna
 		}
 		for name, content := range fresh.Outputs {
 			old, exists := observed.Files[name]
-			if !exists || !bytes.Equal(old, content) {
+			if !exists || !bytes.Equal(old, content) || observed.Modes[name] != artifactMode(fresh.OutputModes, name) {
 				return report, errors.New("writer reported no writes but reviewed outputs are not already materialized")
 			}
 			written = append(written, name)
@@ -276,7 +282,11 @@ func ApplyCanonicalProjection(root string, fixed *CanonicalSource, observed *sna
 	if writeErr != nil {
 		state = records.StatePartialFailure
 	}
-	record, recordErr := buildCanonicalProjectionRecord(fresh, observed, written, state)
+	actual, observeErr := source.Load(root, "")
+	if observeErr != nil {
+		return report, fmt.Errorf("outputs remain; post-write artifact observation failed: %w", observeErr)
+	}
+	record, recordErr := buildCanonicalProjectionRecord(fresh, observed, actual, written, state)
 	if recordErr != nil {
 		return report, recordErr
 	}
@@ -478,18 +488,27 @@ func canonicalProjectionTargetFiles(projection core.Definition, observed map[str
 	return files, nil
 }
 
-func candidateMap(candidate CanonicalCandidate, prefix string) (map[string][]byte, error) {
+func candidateMap(candidate CanonicalCandidate, prefix string) (map[string][]byte, map[string]string, error) {
 	out := make(map[string][]byte, len(candidate.Files))
+	modes := make(map[string]string, len(candidate.Files))
 	for _, file := range candidate.Files {
 		if err := projectionengine.ValidateRelativePath(file.Path); err != nil {
-			return nil, fmt.Errorf("candidate path: %w", err)
+			return nil, nil, fmt.Errorf("candidate path: %w", err)
 		}
 		if prefix != "" && !strings.HasPrefix(file.Path, strings.TrimSuffix(prefix, "/")+"/") {
-			return nil, fmt.Errorf("candidate path %q is outside exact target prefix %q", file.Path, prefix)
+			return nil, nil, fmt.Errorf("candidate path %q is outside exact target prefix %q", file.Path, prefix)
+		}
+		mode := file.Mode
+		if mode == "" {
+			mode = snapshot.RegularMode
+		}
+		if mode != snapshot.RegularMode && mode != snapshot.ExecutableMode {
+			return nil, nil, fmt.Errorf("candidate mode for %q must be 100644 or 100755", file.Path)
 		}
 		out[file.Path] = []byte(file.Content)
+		modes[file.Path] = mode
 	}
-	return out, nil
+	return out, modes, nil
 }
 func validateCanonicalProjectionSnapshots(fixed *CanonicalSource, observed *snapshot.Snapshot) error {
 	if fixed == nil || fixed.Snapshot == nil {
@@ -538,7 +557,7 @@ func sortedUniquePaths(values []string) []string {
 	}
 	return append([]string(nil), out...)
 }
-func buildCanonicalProjectionRecord(p PreparedCanonicalProjection, observed *snapshot.Snapshot, written []string, state string) (records.ProjectionRecord, error) {
+func buildCanonicalProjectionRecord(p PreparedCanonicalProjection, observed, actual *snapshot.Snapshot, written []string, state string) (records.ProjectionRecord, error) {
 	request, plan := p.Request, *p.Plan
 	artifacts := make([]records.Artifact, 0, len(written))
 	facts := make([]records.ArtifactFact, 0, len(written))
@@ -548,9 +567,14 @@ func buildCanonicalProjectionRecord(p PreparedCanonicalProjection, observed *sna
 			return records.ProjectionRecord{}, fmt.Errorf("writer reported unreviewed path %q", target)
 		}
 		digest := sha256Prefix(sha256Hex(content))
-		// Both canonical writers materialize UTF-8 outputs as regular files.
-		// A drifted executable preimage must not become the output record mode.
-		mode := snapshot.RegularMode
+		materialized, exists := actual.Files[target]
+		if !exists || !bytes.Equal(materialized, content) {
+			return records.ProjectionRecord{}, fmt.Errorf("post-write observation does not confirm reviewed bytes for %q", target)
+		}
+		mode := actual.Modes[target]
+		if mode != snapshot.RegularMode && mode != snapshot.ExecutableMode {
+			return records.ProjectionRecord{}, fmt.Errorf("post-write observation has unsupported mode %q for %q", mode, target)
+		}
 		change := records.ChangeCreated
 		if old, exists := observed.Files[target]; exists {
 			if bytes.Equal(old, content) && observed.Modes[target] == mode {
@@ -589,13 +613,13 @@ func cloneAuthoringChecks(values []authoring.Check) []authoring.Check {
 	}
 	return out
 }
-func candidateDigest(raw []byte, outputs map[string][]byte) string {
+func candidateDigest(raw []byte, outputs map[string][]byte, modes map[string]string) string {
 	if len(raw) > 0 {
 		return sha256Prefix(sha256Hex(raw))
 	}
-	return outputDigest(outputs)
+	return outputDigest(outputs, modes)
 }
-func outputDigest(outputs map[string][]byte) string {
+func outputDigest(outputs map[string][]byte, modes map[string]string) string {
 	paths := make([]string, 0, len(outputs))
 	for p := range outputs {
 		paths = append(paths, p)
@@ -604,13 +628,39 @@ func outputDigest(outputs map[string][]byte) string {
 	type item struct {
 		Path   string `json:"path"`
 		Digest string `json:"digest"`
+		Mode   string `json:"mode"`
 	}
 	items := make([]item, 0, len(paths))
 	for _, p := range paths {
-		items = append(items, item{Path: p, Digest: sha256Hex(outputs[p])})
+		items = append(items, item{Path: p, Digest: sha256Hex(outputs[p]), Mode: artifactMode(modes, p)})
 	}
 	encoded, _ := json.Marshal(items)
 	return sha256Prefix(sha256Hex(encoded))
+}
+
+func regularModes(outputs map[string][]byte) map[string]string {
+	modes := make(map[string]string, len(outputs))
+	for name := range outputs {
+		modes[name] = snapshot.RegularMode
+	}
+	return modes
+}
+
+func artifactModesForFiles(files map[string][]byte, modes map[string]string) map[string]string {
+	selected := make(map[string]string, len(files))
+	for name := range files {
+		if mode := modes[name]; mode != "" {
+			selected[name] = mode
+		}
+	}
+	return selected
+}
+
+func artifactMode(modes map[string]string, name string) string {
+	if mode := modes[name]; mode != "" {
+		return mode
+	}
+	return snapshot.RegularMode
 }
 func sameCanonicalProjectionRequest(a, b canonical.ProjectionRequest) bool {
 	left, leftErr := json.Marshal(a)

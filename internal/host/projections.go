@@ -9,6 +9,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"strings"
 	"unicode/utf8"
@@ -578,8 +579,23 @@ func writeRepresentationContents(root string, p *Project, contents map[string][]
 // before calling; this low-level function does not grant projection authority.
 // No rollback is implied: every successfully written path is returned on failure.
 func WriteProjectionContents(root string, captured *snapshot.Snapshot, contents map[string][]byte) ([]string, error) {
+	return WriteProjectionArtifacts(root, captured, contents, nil)
+}
+
+// WriteProjectionArtifacts applies exact bytes and Git regular-file modes under
+// the same guarded write protocol. A requested executable bit must be confirmed
+// by the post-write source observation; unsupported filesystems fail explicitly.
+func WriteProjectionArtifacts(root string, captured *snapshot.Snapshot, contents map[string][]byte, modes map[string]string) ([]string, error) {
 	if captured == nil || !captured.Provisional {
 		return nil, errors.New("projection writes require the provisional isolated working tree")
+	}
+	if err := validateProjectionOutputModes(contents, modes); err != nil {
+		return nil, err
+	}
+	for name := range contents {
+		if projectionOutputMode(modes, name) == snapshot.ExecutableMode && runtime.GOOS == "windows" {
+			return nil, fmt.Errorf("executable artifact mode is unsupported on Windows working trees: %s", name)
+		}
 	}
 	branch := ""
 	var err error
@@ -634,12 +650,16 @@ func WriteProjectionContents(root string, captured *snapshot.Snapshot, contents 
 			return written, err
 		}
 		observed, exists := captured.Files[name]
+		desiredMode := projectionOutputMode(modes, name)
 		current, readErr := os.ReadFile(dest)
 		if exists && (readErr != nil || !bytes.Equal(observed, current)) {
 			return written, fmt.Errorf("target changed during apply: %s", name)
 		}
 		if !exists && !os.IsNotExist(readErr) {
 			return written, fmt.Errorf("target appeared during apply: %s", name)
+		}
+		if exists && bytes.Equal(observed, contents[name]) && captured.Modes[name] == desiredMode {
+			continue
 		}
 		if err = os.MkdirAll(filepath.Dir(dest), 0755); err != nil {
 			return written, err
@@ -651,14 +671,24 @@ func WriteProjectionContents(root string, captured *snapshot.Snapshot, contents 
 			return written, err
 		}
 		written = append(written, name)
+		if desiredMode == snapshot.ExecutableMode {
+			if err = os.Chmod(dest, 0755); err != nil {
+				return written, fmt.Errorf("set executable artifact mode for %s: %w", name, err)
+			}
+		}
 	}
 	final, err := source.Load(root, "")
 	if err != nil {
 		return written, err
 	}
 	for _, name := range names {
+		if !bytes.Equal(final.Files[name], contents[name]) || final.Modes[name] != projectionOutputMode(modes, name) {
+			return written, fmt.Errorf("post-write artifact observation does not match reviewed bytes/mode: %s", name)
+		}
 		delete(final.Files, name)
+		delete(final.Modes, name)
 		delete(fresh.Files, name)
+		delete(fresh.Modes, name)
 	}
 	if final.Digest() != fresh.Digest() {
 		return written, errors.New("non-target inputs changed during apply; materialization is provisional")
@@ -669,4 +699,23 @@ func WriteProjectionContents(root string, captured *snapshot.Snapshot, contents 
 		}
 	}
 	return written, nil
+}
+
+func validateProjectionOutputModes(contents map[string][]byte, modes map[string]string) error {
+	for name, mode := range modes {
+		if _, exists := contents[name]; !exists {
+			return fmt.Errorf("artifact mode is bound to absent output %q", name)
+		}
+		if mode != snapshot.RegularMode && mode != snapshot.ExecutableMode {
+			return fmt.Errorf("artifact mode for %q must be 100644 or 100755", name)
+		}
+	}
+	return nil
+}
+
+func projectionOutputMode(modes map[string]string, name string) string {
+	if mode := modes[name]; mode != "" {
+		return mode
+	}
+	return snapshot.RegularMode
 }
