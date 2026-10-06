@@ -1,0 +1,67 @@
+{
+    "name":  "negative-kind-reference",
+    "action":  "canonical model",
+    "binary":  {
+                   "sourceCommit":  "216e101baa2021fb6bf091206b323407aa471b26",
+                   "sha256":  "ba0fe8b3b6bd1676091eaa492c58600a08429f2f6e3ff79d9d8cff2d142b30f9"
+               },
+    "argv":  [
+                 "markitect",
+                 "canonical",
+                 "--action",
+                 "model",
+                 "--repo",
+                 "\u003cisolated-trial-repository\u003e",
+                 "--revision",
+                 "06446711196c2c2e431d03c9bfdc8e6adbf0c748",
+                 "--config",
+                 "examples/capability-ontologies/canonical.yaml"
+             ],
+    "revision":  "06446711196c2c2e431d03c9bfdc8e6adbf0c748",
+    "repository":  "C:\\Users\\CONSIL~1\\AppData\\Local\\Temp\\c1-cli-negative-kind-reference-abc884f2b94842a48780245dcc91520e",
+    "seedSourceCommit":  "769d95062cb060e5eb688768a85b200ff3130602",
+    "sourceDigest":  "e0be919783b95367b294512fb237d737155dfa30be462773f28d18c8e033c26e",
+    "status":  "failed",
+    "exitCode":  1,
+    "model":  {
+                  "digest":  "",
+                  "schemaCount":  0,
+                  "definitionCount":  0,
+                  "edgeCount":  0,
+                  "edgesBlockSha256":  ""
+              },
+    "expected":  {
+                     "status":  "failed",
+                     "exitCode":  1,
+                     "diagnostic":  "kind-reference.unresolved",
+                     "schemaCount":  0,
+                     "definitionCount":  0,
+                     "edgeCount":  0
+                 },
+    "expectationMatched":  true,
+    "diagnosticCodes":  [
+                            "kind-reference.unresolved"
+                        ],
+    "inputs":  [
+                   {
+                       "path":  "examples/capability-ontologies/canonical.yaml",
+                       "sha256":  "5cfd051f7a10f2ca479638cf4610bc1149cb6f8729019e799966033a7e3bd745",
+                       "byteLength":  2397
+                   }
+               ],
+    "stdout":  {
+                   "path":  "examples/capability-ontologies/results/c1-cli-runs/negative-kind-reference.stdout.log",
+                   "sha256":  "c4f94f25c26a16fbfe1410462a404153ec549cb7e0867661fd9300741a703ab7",
+                   "byteLength":  600
+               },
+    "stderr":  {
+                   "path":  "examples/capability-ontologies/results/c1-cli-runs/negative-kind-reference.stderr.log",
+                   "sha256":  "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                   "byteLength":  0
+               },
+    "repositoryBundle":  {
+                             "path":  "examples/capability-ontologies/results/c1-cli-runs/negative-kind-reference.bundle",
+                             "sha256":  "834b296a2d9a954acf12683c55c80d9d0ad65bb25295ab495ee92f037629f1e8",
+                             "byteLength":  6319
+                         }
+}

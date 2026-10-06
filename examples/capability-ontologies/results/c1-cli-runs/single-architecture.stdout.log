@@ -1,0 +1,134 @@
+model:
+    revision: 70b2763382f372d1833f6f6ad4c2df1b45f3074c
+    digest: sha256:b82d642d32f2dba349bf6140dd765bd49d4914e8a9a7571a0d757a20c92765b9
+    schemas:
+        - apiVersion: architecture.example.org/v1
+          purpose: Describes an application component map and dependencies.
+          kinds:
+            Component:
+                purpose: Identifies one owned software unit and its layer.
+                properties:
+                    layer:
+                        purpose: Places the component in a layer.
+                        type: enum
+                        minCount: 1
+                        maxCount: 1
+                        values:
+                            - presentation
+                            - domain
+                            - infrastructure
+                    name:
+                        purpose: Names the component.
+                        type: string
+                        minCount: 1
+                        maxCount: 1
+            Dependency:
+                purpose: Records a directed dependency between components.
+                properties:
+                    rationale:
+                        purpose: States the dependency reason.
+                        type: string
+                        minCount: 1
+                        maxCount: 1
+                    source:
+                        purpose: Identifies the dependent component.
+                        type: reference
+                        minCount: 1
+                        maxCount: 1
+                        target:
+                            apiVersion: architecture.example.org/v1
+                            kind: Component
+                    target:
+                        purpose: Identifies the dependency target.
+                        type: reference
+                        minCount: 1
+                        maxCount: 1
+                        target:
+                            apiVersion: architecture.example.org/v1
+                            kind: Component
+          source:
+            path: module:c1-software-architecture@1.0.0/schema.yaml
+            digest: sha256:eb448a92db6b3ece7ff93aacbf907c5c73d5d8f1d9aa025f922c035ca81f90a1
+            line: 1
+    definitions:
+        - apiVersion: architecture.example.org/v1
+          kind: Component
+          metadata:
+            name: catalog
+            namespace: shop
+          purpose: Publishes product catalog behavior.
+          spec:
+            layer: domain
+            name: Catalog
+          source:
+            path: examples/capability-ontologies/software-architecture/components.yaml
+            digest: sha256:be1acde21de51f7091540623a1ed81e1bd5f56ecb769abf436e7fc71ffdbe700
+            line: 1
+        - apiVersion: architecture.example.org/v1
+          kind: Component
+          metadata:
+            name: catalog-db
+            namespace: shop
+          purpose: Stores catalog records.
+          spec:
+            layer: infrastructure
+            name: Catalog database
+          source:
+            path: examples/capability-ontologies/software-architecture/storage.yaml
+            digest: sha256:5dbc7eb6b75ab58dfd3ae1f2aa507b42ab37327f3bd8d8a228f7e08f86d7932a
+            line: 1
+        - apiVersion: architecture.example.org/v1
+          kind: Dependency
+          metadata:
+            name: catalog-storage
+            namespace: shop
+          purpose: Declares the catalog storage dependency.
+          spec:
+            rationale: Catalog reads records from the selected store.
+            source:
+                apiVersion: architecture.example.org/v1
+                kind: Component
+                name: catalog
+                namespace: shop
+            target:
+                apiVersion: architecture.example.org/v1
+                kind: Component
+                name: catalog-db
+                namespace: shop
+          source:
+            path: examples/capability-ontologies/software-architecture/dependency.yaml
+            digest: sha256:74a915efe105d8701c97af1cf2415669627fecdb0b8a0e3af633f7d54d972135
+            line: 1
+    edges:
+        - from: '["architecture.example.org/v1","Dependency","shop","catalog-storage"]'
+          to: '["architecture.example.org/v1","Component","shop","catalog"]'
+          property: source
+          source:
+            path: examples/capability-ontologies/software-architecture/dependency.yaml
+            digest: sha256:74a915efe105d8701c97af1cf2415669627fecdb0b8a0e3af633f7d54d972135
+            line: 1
+        - from: '["architecture.example.org/v1","Dependency","shop","catalog-storage"]'
+          to: '["architecture.example.org/v1","Component","shop","catalog-db"]'
+          property: target
+          source:
+            path: examples/capability-ontologies/software-architecture/dependency.yaml
+            digest: sha256:74a915efe105d8701c97af1cf2415669627fecdb0b8a0e3af633f7d54d972135
+            line: 1
+modules:
+    - pin:
+        name: c1-software-architecture
+        version: 1.0.0
+        digest: sha256:80f463426a1e7ec6d0fbe1acd8df22006cbdb48e6737b5b5efe02011ddc4f129
+      type: schema
+      digest: sha256:80f463426a1e7ec6d0fbe1acd8df22006cbdb48e6737b5b5efe02011ddc4f129
+      manifest: examples/capability-ontologies/software-architecture/module.yaml
+      files:
+        - examples/capability-ontologies/software-architecture/schema.yaml
+      schemas:
+        - schema.yaml
+      projectors: []
+projectors: []
+provisional: false
+revision: 70b2763382f372d1833f6f6ad4c2df1b45f3074c
+sourceDigest: bb07196b3a65cb809e7cfb01393cb9a718d339cc54a68e223028099fcc9dc268
+status: passed

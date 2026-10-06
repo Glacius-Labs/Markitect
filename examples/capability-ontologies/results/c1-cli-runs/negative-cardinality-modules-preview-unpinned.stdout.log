@@ -1,0 +1,65 @@
+modules:
+    - pin:
+        name: c1-delivery
+        version: 1.0.0
+        digest: sha256:04e10d4cf322c0783981c2ead88c39240a62fd9384332f3d98766a550632206e
+      type: schema
+      digest: sha256:04e10d4cf322c0783981c2ead88c39240a62fd9384332f3d98766a550632206e
+      manifest: examples/capability-ontologies/delivery/module.yaml
+      files:
+        - examples/capability-ontologies/delivery/schema.yaml
+      schemas:
+        - schema.yaml
+      projectors: []
+    - pin:
+        name: c1-filing-review
+        version: 1.0.0
+        digest: sha256:67cb56a56472bfe920db6fbe5a9a3523b46e038434f837ccd72456000f536996
+      type: schema
+      digest: sha256:67cb56a56472bfe920db6fbe5a9a3523b46e038434f837ccd72456000f536996
+      manifest: examples/capability-ontologies/filing-review/module.yaml
+      files:
+        - examples/capability-ontologies/filing-review/schema.yaml
+      schemas:
+        - schema.yaml
+      projectors: []
+    - pin:
+        name: c1-software-architecture
+        version: 1.0.0
+        digest: sha256:80f463426a1e7ec6d0fbe1acd8df22006cbdb48e6737b5b5efe02011ddc4f129
+      type: schema
+      digest: sha256:80f463426a1e7ec6d0fbe1acd8df22006cbdb48e6737b5b5efe02011ddc4f129
+      manifest: examples/capability-ontologies/software-architecture/module.yaml
+      files:
+        - examples/capability-ontologies/software-architecture/schema.yaml
+      schemas:
+        - schema.yaml
+      projectors: []
+    - pin:
+        name: c1-trading-card-combat
+        version: 1.0.0
+        digest: sha256:52052bc7934ecb0c1e16ef014ee3246a686fee5f461552cee40f38825b72bbce
+      type: schema
+      digest: sha256:52052bc7934ecb0c1e16ef014ee3246a686fee5f461552cee40f38825b72bbce
+      manifest: examples/capability-ontologies/trading-card-combat/module.yaml
+      files:
+        - examples/capability-ontologies/trading-card-combat/schema.yaml
+      schemas:
+        - schema.yaml
+      projectors: []
+    - pin:
+        name: c1-workflow-responsibility
+        version: 1.0.0
+        digest: sha256:aebbb76a56d7866ee2e881c3957c0a2d2bce61893a78aa034f7d70ecde1713de
+      type: schema
+      digest: sha256:aebbb76a56d7866ee2e881c3957c0a2d2bce61893a78aa034f7d70ecde1713de
+      manifest: examples/capability-ontologies/workflow-responsibility/module.yaml
+      files:
+        - examples/capability-ontologies/workflow-responsibility/schema.yaml
+      schemas:
+        - schema.yaml
+      projectors: []
+provisional: false
+revision: 5bc3e258ae23de8b7841a1d8a2f56aca64f7366f
+sourceDigest: b68491fb62ea2d30da5cb24af7c38fd866d9bbf5d16a575020e85ab30ca9db04
+status: preview
