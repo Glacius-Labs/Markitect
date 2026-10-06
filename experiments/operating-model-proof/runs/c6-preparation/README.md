@@ -1,6 +1,6 @@
 # C6 five-target proof preparation
 
-Status: provider-backed execution blocked before process start by automatic review. No Executor or Verifier/provider invocation occurred. Exact scope and proposed command: [blocked Codex proposal scope](blocked-codex-propose-scope.md).
+Status: provider-backed execution blocked before process start by automatic review. No Executor or Verifier/provider invocation occurred. The original packet had incorrect source fixture paths and is invalid for approval. Use the corrected metadata-derived scope packet: [corrected blocked Codex proposal scope](blocked-codex-propose-scope-corrected.md). The original rejection record remains at [historical packet](blocked-codex-propose-scope.md).
 
 ## Frozen inputs
 
@@ -30,3 +30,4 @@ Each Source config contains the same four canonical Definitions and workflow Sch
 - Negative control: in a disposable clone add one unowned sibling under a target prefix and confirm proposal/apply refuses it without mutation. In a separate clone explicitly exclude a non-overlapping manual sibling with a reason; confirm it is reported as excluded and remains byte/mode-identical after successful materialization.
 - Windows Git cannot establish executable mode or shell execution for `.githooks/pre-commit`. A Linux checkout with `core.filemode=true` is required to prove Git mode 100755 and actual hook invocation. Until that run succeeds, report the Git Hooks execute/mode claim as blocked.
 - Deterministic Module output is not an Executor invocation. Do not claim the five target exercise used an Executor unless a configured real Executor invocation actually occurred. No Provider semantic sufficiency or human acceptance claim follows from fixed checks or a fresh Verifier receipt.
+
