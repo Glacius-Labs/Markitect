@@ -1422,3 +1422,21 @@ spec:
       owner: c11-project-owned-evidence-checks
     - path: runs/c11checktools/replacement/main.go
       owner: c11-project-owned-evidence-checks
+    - path: experiments/operating-model-proof/runs/c11-original-markdown/event-index.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c11-replacement-markdown/event-index.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c11-v3-original/event-index.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c11-v4-original/event-index.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c11-v4-original/post-apply-assessment.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c11-v4-replacement/event-index.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c11-v4-replacement/post-apply-assessment.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c11-v4-original/post-apply-assessment-v2.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c11-v4-replacement/post-apply-assessment-v2.json
+      owner: immutable-operating-model-proof-records
