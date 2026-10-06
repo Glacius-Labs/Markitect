@@ -1,0 +1,28 @@
+apiVersion: commerce.operating-model/v1
+purpose: Project-owned vocabulary for small pure Orders and Billing operations and their explicit product composition.
+kinds:
+  OrderRules:
+    purpose: Defines the Orders rule for validating quantity and unit price and calculating a total in cents.
+    properties: {}
+  BillingQuery:
+    purpose: Defines the Billing query for totaling nonnegative outstanding order amounts in cents.
+    properties: {}
+  ProductComposition:
+    purpose: Names the independent Orders and Billing definitions that together provide the operating model.
+    properties:
+      orders:
+        purpose: Selects the Orders behavior composed by this product view.
+        type: reference
+        minCount: 1
+        maxCount: 1
+        target:
+          apiVersion: commerce.operating-model/v1
+          kind: OrderRules
+      billing:
+        purpose: Selects the Billing query composed by this product view.
+        type: reference
+        minCount: 1
+        maxCount: 1
+        target:
+          apiVersion: commerce.operating-model/v1
+          kind: BillingQuery

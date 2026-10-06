@@ -1,0 +1,17 @@
+apiVersion: markitect.foundation/v1
+kind: ProjectionPolicy
+metadata:
+  namespace: operating-model
+  name: orders-dotnet
+purpose: Defines the Orders public .NET operation expected by this Project's check.
+spec:
+  sourceKind:
+    apiVersion: commerce.operating-model/v1
+    kind: OrderRules
+  targetTechnology: dotnet
+  guidance: >
+    Expose public static class OperatingModel.Orders.OrderRules with public
+    static bool TryCalculateTotalCents(int quantity, long unitPriceCents, out
+    long totalCents). It succeeds exactly for positive quantity, nonnegative
+    price and a product within Int64 range; it sets totalCents to zero on
+    false. This is an API contract, not a filename or implementation template.
