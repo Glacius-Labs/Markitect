@@ -7,6 +7,7 @@ Frozen schemas: software-architecture, delivery, workflow-responsibility, tradin
 Positive checks, frozen before execution:
 - Decode every Schema and Definition with canonical.DecodeSchema / DecodeDefinition, then compile their complete set using core.Compile.
 - Require all five schemas and every fixture Definition to compile without diagnostics, resolved reference edges, and selected Schema, Kind, Property and Definition purpose strings in the normalized Model.
+- Require the normalized Review Definition to retain its typed `kindReference` value to the Filing Kind.
 - Reverse Schema and Definition input order and require the same normalized model digest and edges. Provenance is derived from committed fixture bytes.
 
 Negative checks, each through the same decode-then-compile pipeline:
@@ -15,6 +16,8 @@ Negative checks, each through the same decode-then-compile pipeline:
 - Undeclared Definition Property: spec.unknown-property.
 - List supplied to a single-valued Property: property.cardinality.
 - Value outside a declared enum: property.enum-value.
+- Kind reference to a Kind outside the supplied Schemas: kind-reference.unresolved.
+- Kind reference with a closed-shape violation: kind-reference.value.
 
 PASS requires every positive and negative expectation. The trial does not test policy, source-code meaning, policy sufficiency, business correctness, human approval, deployment behavior, AI performance or benefits. No ontology-specific Core primitive is proposed.
 
