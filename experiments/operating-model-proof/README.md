@@ -1,22 +1,23 @@
 # Operating-model proof driver
 
-Protocol and claims are frozen in [protocol.md](protocol.md). This directory holds the driver and later sanitized, immutable run events under runs/<run-id>/. Historical protocol-v1 evidence under experiments/capability-proof/ is not modified.
+Protocol v1 preserves historical C5 FAIL and all prior NOT RUN statuses. Protocol v2 freezes the corrected separate recursive fixture and controlled C9 negative cases. Read [protocol-v1](protocol.md) or [protocol-v2](protocol-v2.md) before creating a run.
 
-The driver is a staged wrapper around the real controller CLI. It never emits agent candidates itself. Run each stage separately:
+The staged Python driver calls the Markitect controller CLI. It never creates agent output. Run propose, execute, reviewed apply and verify as separate invocations. Use a fresh private clone of the public fixture and unique external RecordStore, private-log and staging paths for each run.
 
-1. Create a fresh private Git clone of examples/operating-model and commit the exact source fixture. Keep the clone and all target roots separate from this Markitect checkout. Prepare an external runtime JSON with fresh absolute RecordStore and privateLogs directories and the exact Executor/Verifier bindings in protocol.md.
-2. Call propose and then execute with the same run ID, fixture, full base/candidate SHAs, CLI executable, config path and runtime. Execute requires the fixture HEAD to equal the candidate revision and the source tree to be clean.
-3. Review the external reviewed-run JSON and its digest. Call apply with --write, --reviewed-run and the exact --expect digest. Do not infer owner approval from this review step or from technical output.
-4. Call verify with --base set to the canonical source revision and --revision set to the immutable evidence revision reported by apply. Use --write to append verification results.
+Every invocation requires an external CLI build receipt with full sourceSha, actual buildCommand, integer exitCode 0, and binaryDigest matching the selected CLI bytes. Source SHA must resolve to a full Git commit in the repository. The driver binds its digest and source to the run. Runtime configuration binds Codex CLI 0.130.0, model gpt-5.5, high reasoning, Python 3.13, the repository's codexrunner adapter and the native Windows x64 executable. Raw provider logs, CLI output and candidate bytes stay in external directories; repository events contain digests and bounded observed fields only.
 
 Example shape:
 
-    python run.py propose --run-id c3-positive-01 --fixture C:\proof\fixture-c3 --cli C:\proof\markitect.exe --config canonical.yaml --runtime C:\proof\private\runtime.json --external-root C:\proof\private\staging --base FULL_BASE_SHA --revision FULL_CANDIDATE_SHA
+    python run.py propose --run-id c3-positive-01 --fixture C:\proof\fixture-c3 --cli C:\proof\markitect.exe --config canonical.yaml --runtime C:\proof\private\runtime.json --build-receipt C:\proof\private\markitect-build.json --external-root C:\proof\private\staging --base FULL_BASE_SHA --revision FULL_CANDIDATE_SHA
 
-Repeat the same arguments with execute. Then pass the exact external reviewed-run path and digest to apply. After apply, call verify with the source and evidence revision pair.
+Repeat with execute and the same source/runtime bindings. Review the external reviewed-run JSON and its digest, then call apply with --write, --reviewed-run and the exact --expect digest. After apply, call verify with --base set to the canonical source revision and --revision set to the immutable evidence revision, plus --write.
 
-Each action captures actual stdout/stderr digests and elapsed process time. Execute's complete candidate JSON is staged under external-root/<run-id>/reviewed-run.json for the guarded Apply command. Provider JSONL logs remain at runtime.privateLogs. Repository run events include digests, statuses, scopes, file sizes, actual receipts and available telemetry, never candidate bytes or provider logs. Do not copy external staging or private logs into this directory.
+For protocol-v2 C9 negative controls, first create the run binding with a clean-fixture propose. Use the normal canonical candidate plan/apply CLI actions separately for the frozen incorrect parent bytes; preserve their complete output only in external staging and do not hand-edit their emitted records. Then call this driver’s verify action with the source and object-only evidence revisions. The v2 protocol classifies the wrong parent bytes as controlled non-AI materialization, never as an Executor result.
 
-The script fails closed on non-full revisions, dirty pre-apply fixture source, CLI/runtime changes within a run, runtime digest mismatch, missing Codex/model bindings, output over the runtime ceiling, overlapping private paths, or mismatched reviewed-run digest. It requires explicit --write for Apply and Verify.
+The driver stores unique raw captures outside the repository. Each retry gets new exclusive stdout/stderr and reviewed-run paths so prior failures remain available. The public event records exact action/flags with local paths replaced by logical placeholders, input/output digests, exits, elapsed time, scopes, record IDs and usage only when returned.
 
-No real agent trial has been run from this directory. C9 remains BLOCKED for the current fixture arrangement as described in protocol.md.
+Static driver tests run with:
+
+    python -m unittest discover -s experiments/operating-model-proof -p test_run.py
+
+These tests validate evidence boundaries only; they are not product checks or capability trials. No private real-agent trial is established by this directory until a new uniquely bound run record is executed.
