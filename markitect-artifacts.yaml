@@ -895,3 +895,5 @@ spec:
       owner: public-reverse-inference-trial-evidence
     - path: experiments/operating-model-proof/runs/c13-public-infer-01/result.md
       owner: public-reverse-inference-trial-evidence
+    - path: experiments/operating-model-proof/runs/c12-goal-propose-02-binding-diagnosis.md
+      owner: goal-modeling-invocation-binding-diagnosis
