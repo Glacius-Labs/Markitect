@@ -23,3 +23,11 @@ The sanitized events do not contain actual provider token counts or cost. Missin
 ## Evidence boundary and next step
 
 The proposal and Execute events are source-bound to their run bindings and preserve CLI, input, config, runtime, and Executor receipt digests. They establish that proposal/Executor calls occurred with the stated outcomes. They do not establish candidate semantics, successful materialization, fixed-check passage, Verifier independence, owner acceptance, or generalized ontology coverage. The missing response-contract identifier handling needs correction without automatic repair; then repeat the failed controls and positive under new immutable run IDs and retain these outcomes unchanged.
+
+## Later bounded observations
+
+The separate `assessment-structural-refusal.json` event binds the actual `c3-absent-02` stderr and exit 2. It classifies only the absent-required-guidance structural control as PASS: the malformed policy was rejected before any Executor or write. It does not establish AI escalation.
+
+The two `provider-<receiptRunId>.json` supplements bind the exact private-log digests retained in the failed invocation receipts. The insufficient-guidance run reported 16,611 input tokens, 2,432 cached input tokens and 1,686 output tokens; the positive run reported 16,734 input tokens, 2,432 cached input tokens and 1,411 output tokens. The event streams contained zero tool invocations. Both final provider responses said `proposed`, with seven and six candidate files respectively. Host accepted neither response, and nothing was materialized. Provider usage is measured; monetary cost and human attention remain unavailable. These observations do not rescore either earlier outcome.
+
+Protocol v4 is a pre-invocation amendment for explicit wire-response instructions and empty request collections. It preserves all fixture meanings and controls. Corrected attempts use new IDs, new source-bound binary receipts, and newly pinned wrapper bytes. The earlier insufficient-guidance FAIL remains evidence against reliable automatic escalation.

@@ -1,0 +1,12 @@
+{
+  "actualError": "scoped reconcile requires structurally valid canonical models",
+  "claim": "C3 absent-guidance structural refusal control only",
+  "classification": "PASS",
+  "cliExitCode": 2,
+  "executorInvoked": false,
+  "limit": "This establishes structural refusal before Executor, not AI escalation or projection semantics.",
+  "materialized": false,
+  "protocol": "operating-model-proof/v3",
+  "runId": "c3-absent-02",
+  "stderrDigest": "sha256:e8abede61231cebaf3d3aa54c4b7b51177aac2e2d606946d24d0eebb3a619242"
+}
