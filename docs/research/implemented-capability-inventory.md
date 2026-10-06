@@ -6,7 +6,7 @@ Inventory baseline: integrated source commit `75031b8eca8161b0a247414741828bfb2e
 
 The canonical reset implementation is unreleased source. Published Markitect v0.13.0, its command contracts, historical Domains, package versions, and distributed artifacts remain unchanged. The new Definitions and structural Core do not lower into the v0.13.0 Resource model. Existing tests that import `internal/host/compat/v0_13/kernel` are evidence for the historical implementation, not direct tests of the new Core.
 
-Historical candidate `6212c157adc5866b2c3f65027911233495f5ff79` had successful CI run [37390711975](https://github.com/Glacius-Labs/Markitect/actions/runs/37390711975), as reported by the coordinator. The integrated-main post-merge run [37391871008](https://github.com/Glacius-Labs/Markitect/actions/runs/37391871008) was still in progress at inventory time. These are candidate quality-gate receipts, not capability-trial results, human acceptance, or release evidence.
+Historical candidate `6212c157adc5866b2c3f65027911233495f5ff79` had successful CI run [37390711975](https://github.com/Glacius-Labs/Markitect/actions/runs/37390711975), as confirmed by the coordinator. The integrated-main post-merge run [37391871008](https://github.com/Glacius-Labs/Markitect/actions/runs/37391871008) was still in progress at inventory time. These are candidate quality-gate receipts, not capability-trial results, human acceptance, or release evidence.
 
 ## Implemented source
 

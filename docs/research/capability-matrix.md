@@ -24,6 +24,8 @@ C5 is the current proof-phase stop: the owner-maintained [experiment checkpoint]
 
 Per the proof-program gate, all new C1–C13 trials are **NOT RUN**. In particular, fresh C3, C9, C10, C12, C13, the 30–50 change human-attention comparison, concurrency stress, and technology re-projection remain halted while this stop remains unresolved. Existing bounded evidence remains historical input and must not be rewritten as a new trial.
 
+The [executed checkpoint](../../experiments/capability-proof/results.md) reproduces one scoped proposal alongside complete base/candidate/working snapshot contents. The missing-object control refuses at full-tree metadata; positive snapshots separately contain the unrelated bytes. This is C5 FAIL for targeted acquisition, not a full three-projection execution trial.
+
 See the [implemented inventory](implemented-capability-inventory.md), the [proof program](proof-program.md), and the [experiment workspace](../../experiments/capability-proof/README.md) for details and frozen trial records. Readiness remains paused at C5; the proof phase is not complete. No broad capability claim, human-attention benefit, or semantic assurance is established here.
 
 
