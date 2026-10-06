@@ -95,9 +95,9 @@ func identifyGit(root string, run gitOutputFunc) (GitIdentity, gitIdentityStats,
 	}
 	canonicalRoot = filepath.Clean(canonicalRoot)
 
-	top, err := run(canonicalRoot, "rev-parse", "--show-toplevel")
+	top, gitDirOut, commonDirOut, objectFormatOut, err := identifyGitMetadata(canonicalRoot, run)
 	if err != nil {
-		return zero, stats, fmt.Errorf("identify Git worktree root: %w", err)
+		return zero, stats, err
 	}
 	canonicalTop, err := canonicalExistingPath(strings.TrimSpace(string(top)))
 	if err != nil {
@@ -110,14 +110,6 @@ func identifyGit(root string, run gitOutputFunc) (GitIdentity, gitIdentityStats,
 	// Use Git's spelling of the top-level path. On Windows this also expands
 	// short 8.3 path aliases returned by callers.
 	canonicalRoot = canonicalTop
-	gitDirOut, err := run(canonicalRoot, "rev-parse", "--path-format=absolute", "--git-dir")
-	if err != nil {
-		return zero, stats, fmt.Errorf("identify Git directory: %w", err)
-	}
-	commonDirOut, err := run(canonicalRoot, "rev-parse", "--path-format=absolute", "--git-common-dir")
-	if err != nil {
-		return zero, stats, fmt.Errorf("identify common Git directory: %w", err)
-	}
 	gitDir, err := canonicalExistingPath(strings.TrimSpace(string(gitDirOut)))
 	if err != nil {
 		return zero, stats, fmt.Errorf("canonicalize Git directory: %w", err)
@@ -134,10 +126,6 @@ func identifyGit(root string, run gitOutputFunc) (GitIdentity, gitIdentityStats,
 	if err != nil || !commonInfo.IsDir() {
 		return zero, stats, fmt.Errorf("common Git directory is not a readable directory: %s", commonDir)
 	}
-	objectFormatOut, err := run(canonicalRoot, "rev-parse", "--show-object-format")
-	if err != nil {
-		return zero, stats, fmt.Errorf("identify Git object format: %w", err)
-	}
 	objectFormat := strings.TrimSpace(string(objectFormatOut))
 	if objectFormat != "sha1" && objectFormat != "sha256" {
 		return zero, stats, fmt.Errorf("unsupported Git object format %q", objectFormat)
@@ -145,6 +133,53 @@ func identifyGit(root string, run gitOutputFunc) (GitIdentity, gitIdentityStats,
 	identity := GitIdentity{Root: canonicalRoot, GitDir: gitDir, CommonDir: commonDir, ObjectFormat: objectFormat}
 	identity.Digest = gitIdentityDigest(identity)
 	return identity, gitIdentityStats{root: info, git: gitInfo, common: commonInfo}, nil
+}
+
+// identifyGitMetadata obtains the same four identity fields with one Git
+// process in the usual case. rev-parse emits newline-delimited values rather
+// than a NUL-delimited record; if a repository path itself contains a newline
+// (or the output is otherwise ambiguous), fall back to the original one-field
+// queries so those paths retain their established handling.
+func identifyGitMetadata(root string, run gitOutputFunc) (top, gitDir, commonDir, objectFormat []byte, err error) {
+	combined, combinedErr := run(root, "rev-parse", "--path-format=absolute", "--show-toplevel", "--git-dir", "--git-common-dir", "--show-object-format")
+	if combinedErr == nil {
+		if fields, ok := parseGitIdentityMetadata(combined); ok {
+			return fields[0], fields[1], fields[2], fields[3], nil
+		}
+	}
+
+	top, err = run(root, "rev-parse", "--show-toplevel")
+	if err != nil {
+		return nil, nil, nil, nil, fmt.Errorf("identify Git worktree root: %w", err)
+	}
+	gitDir, err = run(root, "rev-parse", "--path-format=absolute", "--git-dir")
+	if err != nil {
+		return nil, nil, nil, nil, fmt.Errorf("identify Git directory: %w", err)
+	}
+	commonDir, err = run(root, "rev-parse", "--path-format=absolute", "--git-common-dir")
+	if err != nil {
+		return nil, nil, nil, nil, fmt.Errorf("identify common Git directory: %w", err)
+	}
+	objectFormat, err = run(root, "rev-parse", "--show-object-format")
+	if err != nil {
+		return nil, nil, nil, nil, fmt.Errorf("identify Git object format: %w", err)
+	}
+	return top, gitDir, commonDir, objectFormat, nil
+}
+
+func parseGitIdentityMetadata(output []byte) ([4][]byte, bool) {
+	var fields [4][]byte
+	parts := bytes.Split(output, []byte{'\n'})
+	if len(parts) != len(fields)+1 || len(parts[len(parts)-1]) != 0 {
+		return fields, false
+	}
+	for i := range fields {
+		if len(parts[i]) == 0 || bytes.ContainsAny(parts[i], "\r") {
+			return fields, false
+		}
+		fields[i] = parts[i]
+	}
+	return fields, true
 }
 
 func canonicalExistingPath(value string) (string, error) {
