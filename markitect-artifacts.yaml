@@ -897,3 +897,77 @@ spec:
       owner: public-reverse-inference-trial-evidence
     - path: experiments/operating-model-proof/runs/c12-goal-propose-02-binding-diagnosis.md
       owner: goal-modeling-invocation-binding-diagnosis
+    - path: examples/canonical-workflow/check/main.go
+      owner: canonical-workflow-provider-fixture
+    - path: examples/canonical-workflow/definitions/policy.gate-to-azurepipelines.yaml
+      owner: canonical-workflow-provider-fixture
+    - path: examples/canonical-workflow/definitions/policy.gate-to-githooks.yaml
+      owner: canonical-workflow-provider-fixture
+    - path: examples/canonical-workflow/definitions/policy.process-to-azurepipelines.yaml
+      owner: canonical-workflow-provider-fixture
+    - path: examples/canonical-workflow/definitions/policy.process-to-githooks.yaml
+      owner: canonical-workflow-provider-fixture
+    - path: examples/canonical-workflow/definitions/policy.responsibility-to-azurepipelines.yaml
+      owner: canonical-workflow-provider-fixture
+    - path: examples/canonical-workflow/definitions/policy.responsibility-to-githooks.yaml
+      owner: canonical-workflow-provider-fixture
+    - path: examples/canonical-workflow/definitions/policy.rule-to-azurepipelines.yaml
+      owner: canonical-workflow-provider-fixture
+    - path: examples/canonical-workflow/definitions/policy.rule-to-githooks.yaml
+      owner: canonical-workflow-provider-fixture
+    - path: examples/canonical-workflow/definitions/projection.workflow-azurepipelines.yaml
+      owner: canonical-workflow-provider-fixture
+    - path: examples/canonical-workflow/definitions/projection.workflow-githooks.yaml
+      owner: canonical-workflow-provider-fixture
+    - path: examples/canonical-workflow/modules/azurepipelines-v1/module.yaml
+      owner: canonical-workflow-provider-fixture
+    - path: examples/canonical-workflow/modules/foundation-v1.2.0/module.yaml
+      owner: canonical-workflow-provider-fixture
+    - path: examples/canonical-workflow/modules/foundation-v1.2.0/schema.yaml
+      owner: canonical-workflow-provider-fixture
+    - path: examples/canonical-workflow/modules/githooks-v1/module.yaml
+      owner: canonical-workflow-provider-fixture
+    - path: experiments/operating-model-proof/runs/c3-insufficient-04/binding.json
+      owner: source-bound-c3-agent-trial-evidence
+    - path: experiments/operating-model-proof/runs/c3-insufficient-04/events.jsonl
+      owner: source-bound-c3-agent-trial-evidence
+    - path: experiments/operating-model-proof/runs/c3-insufficient-04/events/assessment-invalid-setup.json
+      owner: source-bound-c3-agent-trial-evidence
+    - path: experiments/operating-model-proof/runs/c3-insufficient-04/events/propose-b3e3bd853b02413eb7a7bf355b2ee487.json
+      owner: source-bound-c3-agent-trial-evidence
+    - path: experiments/operating-model-proof/runs/c3-insufficient-05/binding.json
+      owner: source-bound-c3-agent-trial-evidence
+    - path: experiments/operating-model-proof/runs/c3-insufficient-05/events.jsonl
+      owner: source-bound-c3-agent-trial-evidence
+    - path: experiments/operating-model-proof/runs/c3-insufficient-05/events/assessment-insufficient-control.json
+      owner: source-bound-c3-agent-trial-evidence
+    - path: experiments/operating-model-proof/runs/c3-insufficient-05/events/execute-eea38c00e2f946c780e49e8cb2165679.json
+      owner: source-bound-c3-agent-trial-evidence
+    - path: experiments/operating-model-proof/runs/c3-insufficient-05/events/propose-18e2172f9a4b4601a1fdfbc9c864c56e.json
+      owner: source-bound-c3-agent-trial-evidence
+    - path: experiments/operating-model-proof/runs/c3-positive-04/binding.json
+      owner: source-bound-c3-agent-trial-evidence
+    - path: experiments/operating-model-proof/runs/c3-positive-04/events.jsonl
+      owner: source-bound-c3-agent-trial-evidence
+    - path: experiments/operating-model-proof/runs/c3-positive-04/events/apply-dc6d7d634be24f3c8d9eced9ba7c72bc.json
+      owner: source-bound-c3-agent-trial-evidence
+    - path: experiments/operating-model-proof/runs/c3-positive-04/events/assessment-apply-blocked.json
+      owner: source-bound-c3-agent-trial-evidence
+    - path: experiments/operating-model-proof/runs/c3-positive-04/events/execute-5d0bf5d90cd14770b6b58e7df7e7e777.json
+      owner: source-bound-c3-agent-trial-evidence
+    - path: experiments/operating-model-proof/runs/c3-positive-04/events/propose-167a7958c7a548f8b4856a1a84150efc.json
+      owner: source-bound-c3-agent-trial-evidence
+    - path: experiments/operating-model-proof/runs/c3-positive-05/binding.json
+      owner: source-bound-c3-agent-trial-evidence
+    - path: experiments/operating-model-proof/runs/c3-positive-05/events.jsonl
+      owner: source-bound-c3-agent-trial-evidence
+    - path: experiments/operating-model-proof/runs/c3-positive-05/events/apply-e7a1eca56e2c40c39446d97d5b8585fc.json
+      owner: source-bound-c3-agent-trial-evidence
+    - path: experiments/operating-model-proof/runs/c3-positive-05/events/assessment-c3-result.json
+      owner: source-bound-c3-agent-trial-evidence
+    - path: experiments/operating-model-proof/runs/c3-positive-05/events/execute-c73fbeb4d5e34fd0bf75fdc7f5ef9a8f.json
+      owner: source-bound-c3-agent-trial-evidence
+    - path: experiments/operating-model-proof/runs/c3-positive-05/events/propose-459d56ceb86c4f3f9a8b02e0e3f7f1de.json
+      owner: source-bound-c3-agent-trial-evidence
+    - path: experiments/operating-model-proof/runs/c3-positive-05/events/verify-28dd9db4c2394c07b69250564daf6c24.json
+      owner: source-bound-c3-agent-trial-evidence
