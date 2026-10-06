@@ -1197,3 +1197,21 @@ spec:
       owner: operating-model-proof-protocol
     - path: experiments/operating-model-proof/concurrency-v6-controls.md
       owner: operating-model-proof-protocol
+    - path: experiments/operating-model-proof/protocol-v7.md
+      owner: operating-model-proof-protocol
+    - path: experiments/operating-model-proof/runs/c6-preparation/README.md
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c6-preparation/blocked-codex-propose-scope-corrected.md
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c6-preparation/blocked-codex-propose-scope.md
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c6-preparation/runtimes/runtime-codex.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/concurrency-witness-preflight-01/preflight.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/concurrency-witness-v6-preflight-01/preflight.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/gates-412only/receipt.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/gates-412only/shortscope-note.md
+      owner: immutable-operating-model-proof-records
