@@ -2,6 +2,10 @@ apiVersion: markitect.example.org/artifact-coverage/v1alpha1
 kind: ArtifactCoverage
 spec:
   roots:
+    - docs/validation/proof-capability-checkpoint-2026-10-06.md
+    - docs/design/canonical-verifier-observation-coverage.md
+    - internal/host/canonical_controller_coverage.go
+    - internal/host/canonical_controller_coverage_test.go
     - runs/c11checktools
     - internal/host/canonical_controller_reuse.go
     - internal/host/canonical_verification_refresh_test.go
