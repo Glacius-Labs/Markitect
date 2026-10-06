@@ -210,7 +210,7 @@ const (
 
 func isCanonicalControllerAction(action string) bool {
 	switch action {
-	case "controller-propose", "controller-execute", "controller-apply", "controller-verify":
+	case "controller-propose", "controller-execute", "controller-apply", "controller-verify", "controller-refresh-propose", "controller-refresh-apply":
 		return true
 	default:
 		return false
@@ -225,6 +225,10 @@ func runCanonicalController(o commandOptions, emit func(any) int, fail func(erro
 	cfg, err := host.DecodeCanonicalControllerConfig(runtimeBytes)
 	if err != nil {
 		return fail(fmt.Errorf("decode controller runtime configuration: %w", err))
+	}
+
+	if o.action == "controller-refresh-propose" || o.action == "controller-refresh-apply" {
+		return runCanonicalEvidenceRefresh(o, cfg, emit, fail)
 	}
 
 	switch o.action {

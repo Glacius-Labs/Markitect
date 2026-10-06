@@ -14,7 +14,7 @@ import (
 )
 
 func printUsage(out io.Writer) {
-	fmt.Fprintln(out, "Markitect — desired engineering state and bounded reconciliation")
+	fmt.Fprintln(out, "Markitect â€” desired engineering state and bounded reconciliation")
 	fmt.Fprintln(out, "usage: markitect COMMAND [options]")
 	fmt.Fprintln(out, "  check, verify, inventory    Validate a project and its repository gates")
 	fmt.Fprintln(out, "  model, context, impact, find, explain, review    Inspect fixed semantic inputs")
@@ -50,7 +50,7 @@ func commandFlags(command string) (map[string]bool, bool) {
 	case "projection":
 		names = []string{"repo", "revision", "action", "config", "coverage", "plan", "report", "expect", "write"}
 	case "canonical":
-		names = []string{"repo", "revision", "base", "action", "config", "runtime", "api-version", "kind", "namespace", "name", "plan", "report", "evidence", "expect", "write"}
+		names = []string{"repo", "revision", "base", "action", "config", "runtime", "goal-input", "goal-recommendations", "goal-selection", "api-version", "kind", "namespace", "name", "plan", "report", "evidence", "expect", "write"}
 	case "schema":
 		names = []string{"repo", "write", "check"}
 	case "package":

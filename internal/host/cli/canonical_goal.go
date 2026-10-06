@@ -45,7 +45,10 @@ func runCanonicalGoal(action, goalInputPath, recommendationsPath, selectionPath,
 		return 0
 	}
 	fail := func(err error) int {
-		return emit(map[string]any{"status": "failed", "error": err.Error(), "adopted": false, "accepted": false})
+		if code := emit(map[string]any{"status": "failed", "error": err.Error(), "adopted": false, "accepted": false}); code != 0 {
+			return code
+		}
+		return 2
 	}
 	if action != "goal-recommend" && action != "goal-propose" {
 		return fail(errors.New("canonical goal action must be goal-recommend or goal-propose"))
@@ -160,11 +163,17 @@ func decodeCanonicalGoalJSON(data []byte, dst any) error {
 func emitGoalCLIResult(value any, runErr error, emit func(any) int) int {
 	data, err := json.Marshal(value)
 	if err != nil {
-		return emit(map[string]any{"status": "failed", "error": err.Error(), "adopted": false, "accepted": false})
+		if code := emit(map[string]any{"status": "failed", "error": err.Error(), "adopted": false, "accepted": false}); code != 0 {
+			return code
+		}
+		return 2
 	}
 	var flat map[string]any
 	if err := json.Unmarshal(data, &flat); err != nil || flat == nil {
-		return emit(map[string]any{"status": "failed", "error": "goal result was not an object", "adopted": false, "accepted": false})
+		if code := emit(map[string]any{"status": "failed", "error": "goal result was not an object", "adopted": false, "accepted": false}); code != 0 {
+			return code
+		}
+		return 2
 	}
 	flat["adopted"] = false
 	flat["accepted"] = false
@@ -188,4 +197,8 @@ func emitGoalCLIResult(value any, runErr error, emit func(any) int) int {
 		return 2
 	}
 	return 1
+}
+
+func isCanonicalGoalAction(action string) bool {
+	return action == "goal-recommend" || action == "goal-propose"
 }

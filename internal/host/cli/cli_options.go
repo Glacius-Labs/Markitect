@@ -41,6 +41,9 @@ type commandOptions struct {
 	reviewReport          string
 	reviewEvidence        string
 	runtime               string
+	goalInput             string
+	goalRecommendations   string
+	goalSelection         string
 	flagCount             int
 }
 
@@ -77,6 +80,9 @@ func parseOptions(command string, args []string, allowed map[string]bool, out, e
 	reviewReport := fs.String("report", "", "local report or owner-supplied selection input for the active action")
 	reviewEvidence := fs.String("evidence", "", "previous advisory review record or canonical Projection Record array (local file)")
 	runtime := fs.String("runtime", "", "explicit external canonical controller runtime configuration (closed JSON)")
+	goalInput := fs.String("goal-input", "", "explicit goal and supplied Module package bytes (closed JSON)")
+	goalRecommendations := fs.String("goal-recommendations", "", "exact saved goal recommendation result JSON")
+	goalSelection := fs.String("goal-selection", "", "explicit selected recommendation IDs (closed JSON)")
 	fs.Usage = func() {
 		fmt.Fprintf(out, "usage: markitect %s [options]\n", command)
 		fs.VisitAll(func(f *flag.Flag) {
@@ -99,7 +105,9 @@ func parseOptions(command string, args []string, allowed map[string]bool, out, e
 	analyzePolicyFailuresProvided := false
 	decisionProvided := false
 	canonicalSelectors := map[string]bool{}
+	providedFlags := map[string]bool{}
 	fs.Visit(func(f *flag.Flag) {
+		providedFlags[f.Name] = true
 		if f.Name == "decision" {
 			decisionProvided = true
 		}
@@ -115,6 +123,31 @@ func parseOptions(command string, args []string, allowed map[string]bool, out, e
 	})
 	if invalid != "" {
 		fmt.Fprintf(errout, "--%s does not apply to %s\n", invalid, command)
+		return commandOptions{}, 2, true
+	}
+	goalAction := command == "canonical" && isCanonicalGoalAction(*action)
+	if goalAction {
+		if *goalInput == "" || *runtime == "" {
+			fmt.Fprintln(errout, "canonical goal actions require --goal-input and --runtime")
+			return commandOptions{}, 2, true
+		}
+		allowedGoal := map[string]bool{"action": true, "goal-input": true, "goal-recommendations": true, "goal-selection": true, "runtime": true}
+		for name := range providedFlags {
+			if !allowedGoal[name] {
+				fmt.Fprintf(errout, "--%s does not apply to canonical goal actions\n", name)
+				return commandOptions{}, 2, true
+			}
+		}
+		if *action == "goal-recommend" && (providedFlags["goal-recommendations"] || providedFlags["goal-selection"]) {
+			fmt.Fprintln(errout, "goal-recommend does not accept recommendations or selection")
+			return commandOptions{}, 2, true
+		}
+		if *action == "goal-propose" && (*goalRecommendations == "" || *goalSelection == "") {
+			fmt.Fprintln(errout, "goal-propose requires --goal-recommendations and --goal-selection")
+			return commandOptions{}, 2, true
+		}
+	} else if providedFlags["goal-input"] || providedFlags["goal-recommendations"] || providedFlags["goal-selection"] {
+		fmt.Fprintln(errout, "goal inputs apply only to canonical goal-recommend or goal-propose")
 		return commandOptions{}, 2, true
 	}
 	if command == "copy-me" {
@@ -137,7 +170,7 @@ func parseOptions(command string, args []string, allowed map[string]bool, out, e
 		}
 	}
 	canonicalApply := command == "canonical" && *action == "apply"
-	canonicalControllerApply := command == "canonical" && *action == "controller-apply"
+	canonicalControllerApply := command == "canonical" && (*action == "controller-apply" || *action == "controller-refresh-apply")
 	canonicalControllerVerify := command == "canonical" && *action == "controller-verify"
 	if *write && ((command != "render" && command != "schema" && command != "format" && command != "install" && command != "init" && command != "reconcile" && command != "prepare" && command != "projection" && !canonicalApply && !canonicalControllerApply && !canonicalControllerVerify) || (*revision != "" && !canonicalApply && !canonicalControllerApply && !canonicalControllerVerify) || *check || ((command == "reconcile" || command == "projection" || command == "canonical") && *action != "apply" && !canonicalControllerApply && !canonicalControllerVerify)) {
 		fmt.Fprintln(errout, "--write supports render, format, schema, install, init, reconcile/projection --action apply, canonical --action apply/controller-apply, controller-verify external ledger append, or prepare external capture")
@@ -195,7 +228,7 @@ func parseOptions(command string, args []string, allowed map[string]bool, out, e
 			return commandOptions{}, 2, true
 		}
 	}
-	if command == "canonical" {
+	if command == "canonical" && !goalAction {
 		if *action != "model" && *action != "modules" && *action != "context" && *action != "request" && *action != "plan" && *action != "apply" && *action != "impact" && *action != "reconcile-plan" && *action != "verify" && *action != "adopt-plan" && *action != "adopt" && !isCanonicalControllerAction(*action) {
 			fmt.Fprintln(errout, "canonical requires --action model, modules, context, request, impact, reconcile-plan, plan, apply, verify, adopt-plan, adopt, controller-propose, controller-execute, controller-apply or controller-verify")
 			return commandOptions{}, 2, true
@@ -213,17 +246,22 @@ func parseOptions(command string, args []string, allowed map[string]bool, out, e
 				fmt.Fprintf(errout, "canonical %s requires full immutable --base and --revision values\n", *action)
 				return commandOptions{}, 2, true
 			}
-			if *apiVersion != "" || *kind != "" || *namespace != "" || *name != "" || *reviewReport != "" || *reviewEvidence != "" {
+			if *apiVersion != "" || *kind != "" || *namespace != "" || *name != "" || (*reviewReport != "" && *action != "controller-refresh-propose") || *reviewEvidence != "" {
 				fmt.Fprintf(errout, "canonical %s does not accept selectors, --report or --evidence\n", *action)
 				return commandOptions{}, 2, true
 			}
 			switch *action {
+			case "controller-refresh-propose":
+				if *write || *plan != "" || *expect != "" || *reviewReport == "" {
+					fmt.Fprintln(errout, "canonical controller-refresh-propose requires --report with exact Projection IDs and forbids --write, --plan and --expect")
+					return commandOptions{}, 2, true
+				}
 			case "controller-propose", "controller-execute":
 				if *write || *plan != "" || *expect != "" {
 					fmt.Fprintf(errout, "canonical %s is read-only and does not accept --write, --plan or --expect\n", *action)
 					return commandOptions{}, 2, true
 				}
-			case "controller-apply":
+			case "controller-apply", "controller-refresh-apply":
 				if !*write || *plan == "" || *expect == "" {
 					fmt.Fprintln(errout, "canonical controller-apply requires --write, --plan and --expect")
 					return commandOptions{}, 2, true
@@ -361,6 +399,9 @@ func parseOptions(command string, args []string, allowed map[string]bool, out, e
 		adapter:               *adapter,
 		plan:                  *plan,
 		runtime:               *runtime,
+		goalInput:             *goalInput,
+		goalRecommendations:   *goalRecommendations,
+		goalSelection:         *goalSelection,
 		coverage:              *coverage,
 		reviewConfig:          *reviewConfig,
 		reviewReport:          *reviewReport,

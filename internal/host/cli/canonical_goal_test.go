@@ -210,3 +210,22 @@ func writeCanonicalGoalCLIJSON(path string, value any) error {
 	}
 	return os.WriteFile(path, data, 0600)
 }
+
+func TestCanonicalGoalMalformedInputDoesNotExitSuccessfully(t *testing.T) {
+	var out bytes.Buffer
+	if code := runCanonicalGoal("goal-recommend", "missing-goal.json", "", "", "missing-runtime.json", &out); code != 2 {
+		t.Fatalf("malformed input returned %d: %s", code, out.String())
+	}
+}
+
+func TestCanonicalGoalCommandHasNoImplicitRepositoryInputs(t *testing.T) {
+	for _, extra := range [][]string{nil, {"--repo", "."}, {"--revision", strings.Repeat("a", 40)}, {"--config", "canonical.yaml"}, {"--write"}} {
+		args := append([]string{"canonical", "--action", "goal-recommend", "--goal-input", "goal.json", "--runtime", "runtime.json"}, extra...)
+		flags, _ := commandFlags("canonical")
+		var out, errs bytes.Buffer
+		_, _, done := parseOptions("canonical", args, flags, &out, &errs)
+		if done != (len(extra) > 0) {
+			t.Fatalf("unexpected goal option acceptance %v: %s", extra, errs.String())
+		}
+	}
+}
