@@ -20,7 +20,7 @@ type sourceResource struct {
 
 func main() {
 	fail := func(err error) { fmt.Fprintln(os.Stderr, err); os.Exit(1) }
-	output, err := os.ReadFile("docs/represented/index.md"); if err != nil { fail(err) }
+	output, err := os.ReadFile("docs/represented/workflow.md/index.md"); if err != nil { fail(err) }
 	text := string(output)
 	if !strings.HasPrefix(text, "# Canonical projection\n") { fail(fmt.Errorf("original Markdown layout marker is absent")) }
 	for _, fragment := range []string{

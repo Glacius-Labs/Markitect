@@ -32,7 +32,7 @@ type schema struct {
 
 func main() {
 	fail := func(err error) { fmt.Fprintln(os.Stderr, err); os.Exit(1) }
-	output, err := os.ReadFile("docs/represented/canonical-projection.md"); if err != nil { fail(err) }
+	output, err := os.ReadFile("docs/represented/workflow.md/canonical-projection.md"); if err != nil { fail(err) }
 	text := string(output)
 	if !strings.HasPrefix(text, "# Canonical Reference Bundle\n") || !strings.Contains(text, "## Schema contracts") || !strings.Contains(text, "## Selected canonical Definitions") || !strings.Contains(text, "## Selected ProjectionPolicies") { fail(fmt.Errorf("reference bundle sections or distinct layout are absent")) }
 	blocks := regexp.MustCompile("(?s)~~~json\\n(.*?)\\n~~~").FindAllSubmatch(output, -1)
