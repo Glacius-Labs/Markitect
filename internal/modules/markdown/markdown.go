@@ -13,9 +13,18 @@ import (
 // Input is a Host-bounded semantic projection request. TargetPath is the exact
 // artifact path selected by canonical projection intent.
 type Input struct {
-	Definitions []core.Definition
-	Schemas     []core.Schema
-	TargetPath  string
+	Definitions       []core.Definition
+	Schemas           []core.Schema
+	Policies          []core.Definition
+	TargetPath        string
+	TargetPrefix      string
+	AllowedRoots      []string
+	RequestDigest     string
+	CanonicalAffected bool
+	InventoryComplete bool
+	Previous          *PriorProjection
+	ObservedArtifacts []ArtifactObservation
+	Verification      *VerificationBinding
 }
 
 // Result contains proposed bytes and structural diagnostics. It does not apply
@@ -93,6 +102,22 @@ func Render(input Input) Result {
 			out.WriteString("~~~json\n")
 			out.Write(encoded)
 			out.WriteString("\n~~~\n")
+		}
+	}
+	if len(input.Policies) > 0 {
+		policies := append([]core.Definition(nil), input.Policies...)
+		sort.Slice(policies, func(i, j int) bool { return policies[i].Identity().Key() < policies[j].Identity().Key() })
+		out.WriteString("\n## Projection policies\n")
+		for _, policy := range policies {
+			out.WriteString("\n### ")
+			out.WriteString(policy.Metadata.Name)
+			out.WriteString("\n\n")
+			out.WriteString(policy.Purpose)
+			if encoded, err := json.MarshalIndent(policy.Spec, "", "  "); err == nil {
+				out.WriteString("\n\n~~~json\n")
+				out.Write(encoded)
+				out.WriteString("\n~~~\n")
+			}
 		}
 	}
 	result.Files[input.TargetPath] = []byte(out.String())

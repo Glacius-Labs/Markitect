@@ -1,11 +1,7 @@
 # .NET projector
 
-This Core-only implementation package evaluates candidate .cs and .csproj
-bytes against the exact paths and project-owned Kind guidance supplied by the
-Host. It does not generate C#, map Kind names to .NET conventions, interpret
-canonical YAML, or access the filesystem.
+`Evaluate(Input)` preserves the existing candidate shape check against exact paths and project-owned guidance. Accepted bytes remain `candidate-unverified`; this result does not establish semantic correctness.
 
-A returned result has status candidate-unverified: its paths and bytes passed
-this package's bounded shape checks only. The Host must run the declared checks
-and record their evidence. Missing Kind guidance is an explicit escalation, and
-an empty candidate is incomplete rather than a converged empty result.
+`Propose(Input)` consumes only the selected Core Schema/Definitions, matching .NET `ProjectionPolicy` guidance, registered roots, and Host-translated prior and observed state. It returns `work`, `no-op`, or `escalate`; work contains a bounded `ExecutorTask` with ontology purposes/contracts, policies, target prefix, registered roots, supported extensions, and observed currently-owned artifacts. The Executor chooses filenames from that task. The module does not hard-code Kind mappings, generate candidate files, or access the filesystem.
+
+A no-op requires a complete inspected inventory and byte/mode agreement with the active record. A current supplied verification binding clears `EvidenceRefreshRequired`; an older materialization request digest alone does not keep unchanged artifacts stale. unknown, retired, incomplete, or ambiguous ownership escalates. The Host runs declared checks and records their evidence. The module never deletes artifacts or claims verification.

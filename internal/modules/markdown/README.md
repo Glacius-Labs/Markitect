@@ -1,10 +1,5 @@
 # Markdown projector
 
-This Core-only implementation package renders an explicitly selected canonical
-scope into one exact Markdown target path. It presents Definition and Kind
-purposes, Property contracts, and normalized values in deterministic order.
-It has no Markdown filesystem access and does not infer ontology-specific
-sections or meaning.
+`Render` preserves the established candidate-byte API. `Propose(Input)` owns this module's projection decision and the `index.md` page convention under the supplied target prefix. It renders unfamiliar selected Kinds from Core Schema, Definition, and each selected Markdown `ProjectionPolicy`.
 
-The returned bytes are a projection candidate. The Host owns path authorization,
-Plan/Apply/Verify, artifact provenance, and any claim that checks passed.
+A complete inspected target inventory is required before a no-op. The proposal returns `work`, `no-op`, or `escalate` with stable reason codes; a current supplied verification binding is required to clear `EvidenceRefreshRequired`; an older materialization request digest alone does not make unchanged bytes stale. Unknown, retired, ambiguous, or incomplete ownership escalates. The module returns bytes but performs no writes or deletions. The Host owns path authorization, Plan/Apply/Verify, artifact provenance, and any claim that checks passed; a proposal does not claim semantic acceptance.
