@@ -121,13 +121,8 @@ func PrepareCanonicalProjection(fixed *CanonicalSource, observed *snapshot.Snaps
 		if parsed != nil {
 			return prepared, errors.New("deterministic Markdown Projector does not accept supplied candidate bytes")
 		}
-		targetPath := path.Join(strings.TrimSuffix(request.TargetPrefix, "/"), "index.md")
-		if err := projectionengine.ValidateRelativePath(targetPath); err != nil {
-			return prepared, fmt.Errorf("deterministic target: %w", err)
-		}
-		targets = []string{targetPath}
 		if len(prepared.Escalations) == 0 {
-			rendered := markdown.Render(markdown.Input{Definitions: request.Definitions, Schemas: request.Schemas, TargetPath: targetPath})
+			rendered := markdown.RenderProjection(markdown.Input{Definitions: request.Definitions, Schemas: request.Schemas, Policies: request.Policies, TargetPrefix: request.TargetPrefix})
 			if len(rendered.Diagnostics) != 0 {
 				for _, d := range rendered.Diagnostics {
 					prepared.Escalations = append(prepared.Escalations, CanonicalProjectionEscalation{Code: d.Code, Message: d.Message})
@@ -135,6 +130,13 @@ func PrepareCanonicalProjection(fixed *CanonicalSource, observed *snapshot.Snaps
 			} else {
 				desired = rendered.Files
 				prepared.Outputs = cloneByteMap(rendered.Files)
+				for target := range rendered.Files {
+					if err := projectionengine.ValidateRelativePath(target); err != nil {
+						return prepared, err
+					}
+					targets = append(targets, target)
+				}
+				sort.Strings(targets)
 			}
 		}
 	} else {
