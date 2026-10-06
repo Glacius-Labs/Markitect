@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -301,6 +302,10 @@ func (w *writeRoot) openDirectory(name string, create bool, mode os.FileMode) (*
 }
 
 func (w *writeRoot) ReadFile(name string) ([]byte, error) {
+	return w.readFileWithHooks(name, nil, nil)
+}
+
+func (w *writeRoot) readFileWithHooks(name string, beforeOpen, beforeAccept func() error) ([]byte, error) {
 	if err := validateWritePath(name); err != nil {
 		return nil, err
 	}
@@ -310,14 +315,47 @@ func (w *writeRoot) ReadFile(name string) ([]byte, error) {
 		return nil, err
 	}
 	defer closeParent(parent)
-	info, err := parent.Lstat(leaf)
+	expected, err := parent.Lstat(leaf)
 	if err != nil {
 		return nil, err
 	}
-	if isReparsePoint(info) {
-		return nil, fmt.Errorf("symlink or reparse point in output path %s", name)
+	if isReparsePoint(expected) || !expected.Mode().IsRegular() {
+		return nil, fmt.Errorf("non-regular file or reparse point in output path %s", name)
 	}
-	return parent.ReadFile(leaf)
+	if beforeOpen != nil {
+		if err := beforeOpen(); err != nil {
+			return nil, err
+		}
+	}
+	file, err := parent.Open(leaf)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+	opened, err := file.Stat()
+	if err != nil {
+		return nil, err
+	}
+	if isReparsePoint(opened) || !opened.Mode().IsRegular() || !os.SameFile(expected, opened) {
+		return nil, fmt.Errorf("output file identity changed while opening: %s", name)
+	}
+	data, err := io.ReadAll(file)
+	if err != nil {
+		return nil, err
+	}
+	if beforeAccept != nil {
+		if err := beforeAccept(); err != nil {
+			return nil, err
+		}
+	}
+	current, err := parent.Lstat(leaf)
+	if err != nil {
+		return nil, err
+	}
+	if isReparsePoint(current) || !current.Mode().IsRegular() || !os.SameFile(opened, current) {
+		return nil, fmt.Errorf("output file identity changed while reading: %s", name)
+	}
+	return data, nil
 }
 
 func (w *writeRoot) Lstat(name string) (os.FileInfo, error) {
@@ -341,12 +379,16 @@ func (w *writeRoot) Lstat(name string) (os.FileInfo, error) {
 }
 
 func (w *writeRoot) AtomicWrite(name string, data []byte, mode os.FileMode) error {
-	return w.atomicWriteWithHook(name, data, mode, nil)
+	return w.atomicWriteWithHooks(name, data, mode, nil, nil)
 }
 
 // atomicWriteWithHook exposes the final pre-open boundary to focused tests so
 // a directory swap can be injected in the exact former path-based race window.
 func (w *writeRoot) atomicWriteWithHook(name string, data []byte, mode os.FileMode, beforeOpen func() error) error {
+	return w.atomicWriteWithHooks(name, data, mode, beforeOpen, nil)
+}
+
+func (w *writeRoot) atomicWriteWithHooks(name string, data []byte, mode os.FileMode, beforeOpen, beforeRename func() error) error {
 	if err := w.checkPath(name); err != nil {
 		return err
 	}
@@ -424,8 +466,18 @@ func (w *writeRoot) atomicWriteWithHook(name string, data []byte, mode os.FileMo
 		cleanup()
 		return err
 	}
+	if beforeRename != nil {
+		if err := beforeRename(); err != nil {
+			cleanup()
+			return err
+		}
+	}
 	if err := parent.Rename(temporary, leaf); err != nil {
 		cleanup()
+		return err
+	}
+	if err := w.checkNamedDirectoryIdentity(parentName, parent); err != nil {
+		_ = parent.Remove(leaf)
 		return err
 	}
 	return nil

@@ -280,3 +280,145 @@ func TestAnchoredAtomicWriteDoesNotFollowInRootAliasAtPreOpenBoundary(t *testing
 		t.Fatalf("temporary artifact remained in pinned original parent: entries=%v error=%v", originalEntries, err)
 	}
 }
+
+func TestAnchoredAtomicWriteRejectsInRootAliasAtPreRenameBoundary(t *testing.T) {
+	rootPath := tempRoot(t)
+	parent := filepath.Join(rootPath, "target")
+	sibling := filepath.Join(rootPath, "sibling")
+	if err := os.Mkdir(parent, 0755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Mkdir(sibling, 0755); err != nil {
+		t.Fatal(err)
+	}
+	sentinel := filepath.Join(sibling, "sentinel.txt")
+	if err := os.WriteFile(sentinel, []byte("keep\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	anchored, err := openWriteRoot(rootPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer anchored.Close()
+	original := filepath.Join(rootPath, "target-original")
+	var hookReached, injected bool
+	var injectionErr error
+	err = anchored.atomicWriteWithHooks("target/escaped.txt", []byte("must not write\n"), 0644, nil, func() error {
+		hookReached = true
+		if err := os.Rename(parent, original); err != nil {
+			injectionErr = err
+			return err
+		}
+		if err := os.Symlink(sibling, parent); err != nil {
+			injectionErr = err
+			return err
+		}
+		injected = true
+		return nil
+	})
+	if !hookReached {
+		t.Fatalf("pre-rename race hook did not execute: %v", err)
+	}
+	if !injected {
+		t.Skipf("in-root alias swap could not be injected: %v", injectionErr)
+	}
+	if err == nil {
+		t.Fatal("write succeeded after destination parent identity changed before rename")
+	}
+	entries, err := os.ReadDir(sibling)
+	if err != nil || len(entries) != 1 || entries[0].Name() != "sentinel.txt" {
+		t.Fatalf("in-root sibling received artifact/temp writes: entries=%v error=%v", entries, err)
+	}
+	got, err := os.ReadFile(sentinel)
+	if err != nil || string(got) != "keep\n" {
+		t.Fatalf("in-root sibling sentinel changed: bytes=%q error=%v", got, err)
+	}
+	originalEntries, err := os.ReadDir(original)
+	if err != nil || len(originalEntries) != 0 {
+		t.Fatalf("artifact or temporary file remained in pinned original parent: entries=%v error=%v", originalEntries, err)
+	}
+}
+
+func TestWriteRootReadRejectsLeafIdentitySwapBeforeOpen(t *testing.T) {
+	rootPath := tempRoot(t)
+	target := filepath.Join(rootPath, "selected.txt")
+	sibling := filepath.Join(rootPath, "sibling.txt")
+	if err := os.WriteFile(target, []byte("selected bytes\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(sibling, []byte("sibling secret\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	anchored, err := openWriteRoot(rootPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer anchored.Close()
+	original := filepath.Join(rootPath, "selected-original.txt")
+	var hookReached, injected bool
+	var injectionErr error
+	data, err := anchored.readFileWithHooks("selected.txt", func() error {
+		hookReached = true
+		if err := os.Rename(target, original); err != nil {
+			injectionErr = err
+			return err
+		}
+		if err := os.Link(sibling, target); err != nil {
+			injectionErr = err
+			return err
+		}
+		injected = true
+		return nil
+	}, nil)
+	if !hookReached {
+		t.Fatalf("pre-open leaf-swap hook did not execute: %v", err)
+	}
+	if !injected {
+		t.Skipf("leaf identity swap could not be injected: %v", injectionErr)
+	}
+	if err == nil || data != nil {
+		t.Fatalf("read accepted bytes after the selected leaf identity changed: data=%q error=%v", data, err)
+	}
+}
+
+func TestWriteRootReadRejectsLeafIdentitySwapBeforeAccept(t *testing.T) {
+	rootPath := tempRoot(t)
+	target := filepath.Join(rootPath, "selected.txt")
+	sibling := filepath.Join(rootPath, "sibling.txt")
+	if err := os.WriteFile(target, []byte("selected bytes\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(sibling, []byte("sibling secret\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	anchored, err := openWriteRoot(rootPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer anchored.Close()
+	original := filepath.Join(rootPath, "selected-original.txt")
+	var hookReached, injected bool
+	var injectionErr error
+	data, err := anchored.readFileWithHooks("selected.txt", nil, func() error {
+		hookReached = true
+		if err := os.Rename(target, original); err != nil {
+			injectionErr = err
+			return err
+		}
+		if err := os.Link(sibling, target); err != nil {
+			injectionErr = err
+			return err
+		}
+		injected = true
+		return nil
+	})
+	if !hookReached {
+		t.Fatalf("pre-accept leaf-swap hook did not execute: %v", err)
+	}
+	if !injected {
+		t.Skipf("leaf identity swap could not be injected: %v", injectionErr)
+	}
+	if err == nil || data != nil {
+		t.Fatalf("read accepted bytes after the selected leaf identity changed: data=%q error=%v", data, err)
+	}
+}

@@ -253,6 +253,68 @@ func TestAnchoredAtomicWriteDoesNotFollowInRootJunctionAtPreOpenBoundary(t *test
 	}
 }
 
+func TestAnchoredAtomicWriteRejectsInRootJunctionAtPreRenameBoundary(t *testing.T) {
+	root, err := os.MkdirTemp(os.TempDir(), "markitect-rooted-internal-rename-race-")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(root)
+	parent := filepath.Join(root, "target")
+	sibling := filepath.Join(root, "sibling")
+	if err := os.Mkdir(parent, 0755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Mkdir(sibling, 0755); err != nil {
+		t.Fatal(err)
+	}
+	sentinel := filepath.Join(sibling, "sentinel.txt")
+	if err := os.WriteFile(sentinel, []byte("keep\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	anchored, err := openWriteRoot(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer anchored.Close()
+	original := filepath.Join(root, "target-original")
+	var hookReached, injected bool
+	var injectionErr error
+	err = anchored.atomicWriteWithHooks("target/escaped.txt", []byte("must not write\n"), 0644, nil, func() error {
+		hookReached = true
+		if err := os.Rename(parent, original); err != nil {
+			injectionErr = err
+			return err
+		}
+		if err := makeWindowsJunction(parent, sibling); err != nil {
+			injectionErr = err
+			return err
+		}
+		injected = true
+		return nil
+	})
+	if !hookReached {
+		t.Fatalf("pre-rename race hook did not execute: %v", err)
+	}
+	if !injected {
+		t.Skipf("in-root junction swap could not be injected: %v", injectionErr)
+	}
+	if err == nil {
+		t.Fatal("write succeeded after destination parent identity changed before rename")
+	}
+	entries, err := os.ReadDir(sibling)
+	if err != nil || len(entries) != 1 || entries[0].Name() != "sentinel.txt" {
+		t.Fatalf("in-root sibling received artifact/temp writes: entries=%v error=%v", entries, err)
+	}
+	got, err := os.ReadFile(sentinel)
+	if err != nil || string(got) != "keep\n" {
+		t.Fatalf("in-root sibling sentinel changed: bytes=%q error=%v", got, err)
+	}
+	originalEntries, err := os.ReadDir(original)
+	if err != nil || len(originalEntries) != 0 {
+		t.Fatalf("artifact or temporary file remained in pinned original parent: entries=%v error=%v", originalEntries, err)
+	}
+}
+
 func TestSafeDestinationSupportsLongWindowsPaths(t *testing.T) {
 	base, err := os.MkdirTemp(os.TempDir(), "markitect-long-path-test-")
 	if err != nil {
