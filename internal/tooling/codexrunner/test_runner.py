@@ -83,13 +83,44 @@ class CodexRunnerTests(unittest.TestCase):
             "Always include candidateFiles, evidenceRefs, verifierObservations, and uncertainty as arrays",
             "exact strings supplied in request.scopeIds, request.policyIds, or request.artifacts[].path",
             "Do not use digests, hashes, labels, paraphrases, or derived values as evidence references",
-            "with no duplicates, sorted lexicographically",
+            "Do not duplicate references; list them in lexicographic order",
             "exactly one verifierObservations entry for each supplied scopeIds and policyIds value",
             "using that exact value as subject",
             "incomplete or escalated",
         ):
             with self.subTest(instruction=instruction):
                 self.assertIn(instruction, prompt)
+
+    def test_verifier_prompt_requires_complete_sorted_unique_request_refs(self) -> None:
+        value = invocation("verifier")
+        value["request"]["scopeIds"] = ["scope/shared", "scope/z"]
+        value["request"]["policyIds"] = ["policy/a", "scope/shared"]
+        value["request"]["artifacts"] = [
+            {"path": "source/file.cs", "mode": "0644", "digest": "unused", "content": ""},
+            {"path": "checks/fixed-input.yaml", "mode": "0644", "digest": "unused", "content": ""},
+        ]
+
+        prompt = runner.make_prompt(value)
+
+        expected_refs = [
+            "checks/fixed-input.yaml",
+            "policy/a",
+            "scope/shared",
+            "scope/z",
+            "source/file.cs",
+        ]
+        encoded_refs = json.dumps(expected_refs, ensure_ascii=False, separators=(",", ":"))
+        self.assertIn("evidenceRefs must equal the complete sorted unique union", prompt)
+        self.assertIn("including fixed-check input artifact paths", prompt)
+        self.assertIn("The exact required list is " + encoded_refs, prompt)
+        self.assertIn("Listing a reference is protocol bookkeeping", prompt)
+
+    def test_executor_and_inference_may_cite_relevant_subsets(self) -> None:
+        for role in ("executor", "infer"):
+            with self.subTest(role=role):
+                prompt = runner.make_prompt(invocation(role))
+                self.assertIn("include only relevant exact references", prompt)
+                self.assertNotIn("evidenceRefs must equal the complete sorted unique union", prompt)
 
     def test_role_instructions_list_role_specific_outcomes(self) -> None:
         expected = {
