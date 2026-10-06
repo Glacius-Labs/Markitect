@@ -166,7 +166,7 @@ func normalizeRequest(input Request) (Request, []byte, error) {
 	if len(req.Artifacts) > maxArtifactCount {
 		return Request{}, nil, errors.New("artifacts are limited to 128 entries")
 	}
-	req.Artifacts = append([]Artifact(nil), req.Artifacts...)
+	req.Artifacts = append([]Artifact{}, req.Artifacts...)
 	sort.Slice(req.Artifacts, func(i, j int) bool { return req.Artifacts[i].Path < req.Artifacts[j].Path })
 	seen := make(map[string]struct{}, len(req.Artifacts))
 	total := 0
@@ -209,7 +209,7 @@ func normalizeRequest(input Request) (Request, []byte, error) {
 }
 
 func sortedUniqueStrings(values []string, label string) ([]string, error) {
-	out := append([]string(nil), values...)
+	out := append([]string{}, values...)
 	sort.Strings(out)
 	for i, value := range out {
 		if value == "" || len(value) > maxFieldBytes || !utf8.ValidString(value) {

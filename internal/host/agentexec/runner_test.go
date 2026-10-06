@@ -2,6 +2,7 @@ package agentexec
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -480,4 +481,34 @@ func TestRunnerReceivesOneClosedInvocationOnStdin(t *testing.T) {
 	}
 	_ = bufio.ErrInvalidUnreadByte
 	_ = exec.ErrNotFound
+}
+
+func TestEmptyRequestCollectionsHaveOneArrayEncoding(t *testing.T) {
+	request := testRequest(RoleExecutor)
+	request.Artifacts = nil
+	request.ScopeIDs = nil
+	request.PolicyIDs = nil
+	_, absent, err := normalizeRequest(request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	request.Artifacts = []Artifact{}
+	request.ScopeIDs = []string{}
+	request.PolicyIDs = []string{}
+	_, empty, err := normalizeRequest(request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(absent, empty) {
+		t.Fatal("nil and empty collections changed request identity")
+	}
+	var decoded map[string]json.RawMessage
+	if err := json.Unmarshal(absent, &decoded); err != nil {
+		t.Fatal(err)
+	}
+	for _, field := range []string{"artifacts", "scopeIds", "policyIds"} {
+		if string(decoded[field]) != "[]" {
+			t.Fatalf("%s must be an explicit empty array, got %s", field, decoded[field])
+		}
+	}
 }
