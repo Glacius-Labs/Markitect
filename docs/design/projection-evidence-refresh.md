@@ -1,0 +1,43 @@
+# Retained projection evidence refresh
+
+Status: Host-only design assessment, 2026-10-06. The protocol-v1 C5 checkpoint remains a targeted-read FAIL. This design addresses the separately accepted need to refresh broader revision-bound evidence after a localized materialization; it does not change the C5 acquisition contract or its measurement.
+
+## Problem and current boundary
+
+`ProposeScopedCanonicalReconciliation` deliberately avoids target bytes for unaffected projections. If their active record has an older source revision or global model digest, it reports `EvidenceRefreshRequired` and leaves the projection unobserved. `ApplyCanonicalController` currently returns `no-materialization-work` when there are no Module outputs to apply, so it cannot replace such a record. `VerifyCanonicalController` then rejects the old record: `loadCanonicalControllerScopeRequest` requires the current source revision and current global `ModelDigest`, and `VerifyCanonicalProjection` enforces the same binding before running fixed checks. A stored PASS also binds its original record ID, revision, model digest and target digest. It cannot be carried forward.
+
+A refresh is therefore a new Host evidence operation, not a relaxation of verification freshness and not a materialization. It must append a new record linked to the prior record, make that record active by explicit compare-and-swap, and run a separate current verifier. Historical records and results remain intact.
+
+## Eligibility proof
+
+Use the exact old source revision in the active record and the proposed current source revision. Load each selected canonical source through the normal Host loader and bind the same Projection against both models. Compare a normalized selected-request payload that omits only revision, global model digest, derived request digest and target bytes/digests. Keep the Projection, binding, pinned Module, registered Projector, selected Definitions, applicable Policies, selected Schemas, resolved internal/external edges, repository and target path in the comparison. This proves the local selected contract is unchanged while allowing unrelated global model changes. The ordinary `RequestDigest` cannot establish this: its contract explicitly includes revision, global model digest and target digests. A source-file digest change in a shared YAML file remains conservatively ineligible even when an operator believes the selected Definition text is unchanged.
+
+Eligibility also requires the prior record to be a complete active record for that Projection; the exact current Module pin and Projector registration to match; the Projection to remain present with the same owned target path set; and every prior owned target to exist at the chosen immutable evidence revision with the exact recorded byte digest and mode. Missing, changed, unsupported-mode, newly conflicting, or ambiguous ownership is not refreshable. No Module or Executor is invoked and no candidate is accepted. For AI Projectors, the prior owned bytes are retained only after this Host proof; they are not described as newly generated or newly semantically accepted.
+
+Capture only the explicitly selected current canonical inputs, those exact prior owned artifacts, and the declared fixed/scope check inputs from the immutable evidence revision. Require the evidence revision's selected canonical bytes to equal the selected source revision. Do not infer target-root cleanliness or inspect unrelated files from this capture. Keep any broader inventory observation separately labeled.
+
+## Review and apply contract
+
+The read-only refresh proposal binds the source revision, evidence revision, controller/check configuration and selected check-input digests, previous active record IDs, ledger head and active-selection digest, Module/Projector pins, normalized old/current selected-contract comparison, exact owned artifact paths/digests/modes, and the digest of the exact selected capture. This makes the review digest change when any relevant byte, metadata value, revision, binding or ledger selection changes.
+
+Apply requires explicit write intent and the exact reviewed digest. Under the existing Host controller lease, reload the ledger, selected source, evidence capture and inventory facts, recompute the entire proposal, and refuse if its digest or ledger head/selection differs. Append a new complete record whose `PriorRecordID` is the prior active record, whose revision/model/request fields bind the current source, whose plan digest binds the reviewed refresh proposal, and whose artifact facts are all `retained` with the observed exact digests and modes. Then CAS-select the replacement active set, preserving other complete active records. A refresh-specific append event in `recordstore` can distinguish this operation durably without changing the `ProjectionRecord` schema; its validator should require a same-Projection prior link and all-retained artifact facts. Do not mutate or relabel the prior receipt.
+
+The refresh operation does not append a verification result. After it completes, invoke the existing `VerifyCanonicalController` as a separate operation against the current source and immutable evidence revisions. It must run the configured current checks and independent Verifier for every active assurance scope, then append results bound to the new record IDs. Until that succeeds, refreshed records remain `materialized-unverified`; an old PASS remains attached only to its old record. Every stale active record in the requested global verification set must first be rematerialized or explicitly refreshed, or verification remains incomplete.
+
+## Minimal implementation points
+
+- `internal/host/canonical_scoped_reconciliation.go`: preserve the existing `EvidenceRefreshRequired` classification as a separate result from Module work; do not schedule an unaffected projection's Executor.
+- `internal/host/canonical_controller.go` and `internal/host/canonical_controller_execution.go`: add the bounded read-only proposal and explicit reviewed apply path. Keep it separate from `ExecuteCanonicalController` and from Apply's no-materialization early return so C5 work and refresh bytes remain distinct.
+- `internal/host/canonical_projections.go`: share canonical binding and artifact-fact validation where useful. Reuse `PrepareCanonicalProjection` plus `buildCanonicalProjectionRecord` only when deterministic output can be freshly reproduced and exactly equals the retained set. For candidate/AI Projectors, use a dedicated retained-record constructor; never fabricate a candidate or synthesize a materialization plan.
+- `internal/host/recordstore/store.go`: add a refresh-specific append event/method with expected-head CAS, prior-record validation and all-retained facts; keep `SelectActive` an explicit following CAS and preserve append-only history.
+- Keep `VerifyCanonicalController` and `records.ValidateVerificationFreshness` strict. The refresh makes a new current-bound record; it does not make an old result fresh.
+
+## Required focused tests
+
+1. With an unrelated global canonical change, unchanged Billing selected Definitions/Policies, identical Module/Projector pins and unchanged owned bytes/modes, proposal reports refresh without Executor calls; review/apply creates one all-retained record linked to the old ID, activates it, and a separately invoked Verifier creates a result bound to the new record and current revision. Assert old record and PASS bytes/IDs are unchanged.
+2. Change one Billing selected Definition or Policy, Module/Projector pin, target path set, artifact digest/mode, or prior completeness. Proposal refuses refresh and does not append/select; ordinary reconciliation handles actual work or escalation.
+3. Mutate any bound evidence/check-input byte, revision, active selection or ledger head after review. Apply refuses before append/selection. Include stale lock and retry/idempotency behavior for the new store event.
+4. Leave any other active record stale. Global verification remains incomplete until every active record in its assurance set is current; refreshing Billing alone cannot create a true global verified state.
+5. Record separately the bytes read for this refresh/verification from C5 materialization bytes and check/work counts. The historical C5 acquisition FAIL, old PASS and NOT RUN trial states remain unchanged.
+
+This is a bounded Host evidence-history capability. It establishes neither semantic equivalence beyond the exact selected comparison nor human acceptance, and it makes no C5 targeted-read, productivity, release, or AI-quality claim.
