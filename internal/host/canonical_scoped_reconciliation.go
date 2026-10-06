@@ -377,7 +377,7 @@ func proposeScopedCanonicalReconciliationWithReuse(root, baseRevision, revision,
 				if p.Decision == "escalate" {
 					p.Escalations = append(p.Escalations, CanonicalProjectionEscalation{Code: "agent-rules.target-conflict", Identity: key, Message: strings.Join(p.Reasons, "; ")})
 				}
-				p.EvidenceRefreshRequired = found && (old.ModelDigest != request.ModelDigest || old.Revision != request.Revision)
+				p.EvidenceRefreshRequired = found && (!verified || old.ModelDigest != request.ModelDigest || old.Revision != request.Revision)
 			}
 		} else if entrypoint == "githooks" {
 			var previous *records.ProjectionRecord

@@ -11,6 +11,7 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/internal/core"
 	"github.com/Glacius-Labs/Markitect/internal/core/snapshot"
+	"github.com/Glacius-Labs/Markitect/internal/host/records"
 )
 
 func TestCanonicalWorkflowProviderProjectionsShareOnlyCanonicalInputs(t *testing.T) {
@@ -191,5 +192,71 @@ func TestCanonicalDocumentationAlignedFixtureSelectsExistingAPIIntent(t *testing
 				t.Fatalf("alignment changed canonical owner %s", path)
 			}
 		}
+	}
+}
+
+// Matching provider bytes prove no materialization work, not independent
+// verification. The complete ownership records below intentionally have no
+// VerificationResult, while the canonical source/model are unchanged.
+func TestCanonicalAgentRulesNoOpStillRequiresIndependentVerification(t *testing.T) {
+	root, revision := canonicalWorkflowFixtureRepository(t)
+	configPath := "examples/canonical-workflow/canonical.yaml"
+	fixed, err := LoadSelectedCanonicalSource(root, revision, configPath, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	observed := &snapshot.Snapshot{ID: "working", Provisional: true, Files: cloneByteMap(fixed.Snapshot.Files), Modes: fixed.Snapshot.Modes}
+	active := []records.ProjectionRecord{}
+	wanted := map[string]bool{}
+	for _, provider := range []string{"codex", "claude"} {
+		identity := core.DefinitionIdentity{APIVersion: "markitect.foundation/v1", Kind: "Projection", Namespace: "example", Name: "workflow-" + provider}
+		prepared, err := PrepareCanonicalProjection(fixed, observed, identity, "provider-test/1", sha256Prefix(sha256Hex([]byte("provider-test"))), nil, fixed.Config.Checks...)
+		if err != nil {
+			t.Fatalf("prepare %s: %v", provider, err)
+		}
+		if prepared.Plan == nil || len(prepared.Escalations) != 0 {
+			t.Fatalf("prepare %s: %v", provider, prepared.Escalations)
+		}
+		actual := &snapshot.Snapshot{Files: map[string][]byte{}, Modes: map[string]string{}}
+		written := []string{}
+		for name, data := range prepared.Outputs {
+			scopedTestWrite(t, root, name, string(data))
+			actual.Files[name] = append([]byte(nil), data...)
+			actual.Modes[name] = prepared.OutputModes[name]
+			written = append(written, name)
+		}
+		record, err := buildCanonicalProjectionRecord(prepared, observed, actual, written, records.StateMaterializedUnverified)
+		if err != nil {
+			t.Fatal(err)
+		}
+		active = append(active, record)
+		wanted[identity.Key()] = true
+	}
+	plan, err := ProposeScopedCanonicalReconciliation(root, revision, revision, configPath, active, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	seen := map[string]bool{}
+	for _, proposal := range plan.Proposals {
+		if !wanted[proposal.ProjectionID] {
+			continue
+		}
+		seen[proposal.ProjectionID] = true
+		if proposal.Decision != "no-op" {
+			t.Errorf("%s matching provider bytes requested %s", proposal.ProjectionID, proposal.Decision)
+		}
+		if !proposal.EvidenceRefreshRequired {
+			t.Errorf("%s omitted independent verification refresh", proposal.ProjectionID)
+		}
+		inRefreshSet := false
+		for _, id := range plan.EvidenceRefreshRequired {
+			inRefreshSet = inRefreshSet || id == proposal.ProjectionID
+		}
+		if !inRefreshSet {
+			t.Errorf("%s missing from plan evidence refresh set", proposal.ProjectionID)
+		}
+	}
+	if len(seen) != len(wanted) {
+		t.Fatalf("provider proposals missing: %v", seen)
 	}
 }
