@@ -12,6 +12,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/modules/azurepipelines"
 	"github.com/Glacius-Labs/Markitect/internal/modules/githooks"
 	"github.com/Glacius-Labs/Markitect/internal/modules/markdown"
+	"github.com/Glacius-Labs/Markitect/internal/modules/markdownreference"
 )
 
 // prepareGitHooksProjectionInput is a pure adapter from the Host's already
@@ -181,6 +182,8 @@ func canonicalWorkflowEntrypoint(request canonical.ProjectionRequest) (string, e
 		return "agent-rules", nil
 	case request.Projector.ID == "markdown-documentation" && request.Projector.Target == "markdown":
 		return "markdown", nil
+	case request.Projector.ID == markdownreference.Entrypoint && request.Projector.Target == markdownreference.Target:
+		return "markdown-reference", nil
 	case request.Projector.ID == githooks.ProjectorID && request.Projector.Target == githooks.TargetTechnology:
 		return "githooks", nil
 	case request.Projector.ID == azurepipelines.ProjectorID && request.Projector.Target == azurepipelines.TargetTechnology:
@@ -232,6 +235,21 @@ func renderCanonicalDeterministicProjection(fixed *CanonicalSource, observed *sn
 			files = rendered.Files
 			for name := range files {
 				modes[name] = snapshot.RegularMode
+			}
+		}
+	case "markdown-reference":
+		input, err := prepareMarkdownReferenceInput(request, nil, observed, nil, false)
+		if err != nil {
+			return nil, nil, nil, err
+		}
+		input.Check.InventoryComplete = false // Render makes no ownership claim.
+		rendered := markdownreference.Render(input)
+		for _, issue := range rendered.Issues {
+			escalations = append(escalations, CanonicalProjectionEscalation{Code: issue.Code, Identity: request.Projection.Identity().Key(), Message: issue.Message})
+		}
+		if len(escalations) == 0 {
+			for name, artifact := range rendered.Files {
+				files[name], modes[name] = artifact.Bytes, artifact.Mode
 			}
 		}
 	case "githooks":

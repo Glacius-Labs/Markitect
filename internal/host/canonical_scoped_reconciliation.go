@@ -357,7 +357,16 @@ func proposeScopedCanonicalReconciliation(root, baseRevision, revision, configPa
 			if err != nil {
 				return plan, err
 			}
-		} else {
+		} else if entrypoint == "markdown-reference" {
+			var previous *records.ProjectionRecord
+			if found {
+				previous = &old
+			}
+			p, err = proposeMarkdownReferenceProjection(request, selectedCanonicalTargetInventory(inventory.Entries, request.TargetPrefix, excluded), observed.Snapshot, previous, canonicalWork[key])
+			if err != nil {
+				return plan, err
+			}
+		} else if entrypoint == "markdown" {
 			input := markdown.Input{Definitions: request.Definitions, Schemas: request.Schemas, Policies: request.Policies, TargetPrefix: request.TargetPrefix, AllowedRoots: request.Projector.AllowedRoots, RequestDigest: request.RequestDigest, CanonicalAffected: canonicalWork[key], InventoryComplete: true}
 			for _, entry := range inventory.Entries {
 				if _, isExcluded := excluded[entry.Path]; isExcluded {
@@ -385,6 +394,9 @@ func proposeScopedCanonicalReconciliation(root, baseRevision, revision, configPa
 			for _, e := range proposed.Escalations {
 				p.Escalations = append(p.Escalations, CanonicalProjectionEscalation{Code: e.Code, Identity: key, Message: e.Message})
 			}
+		}
+		if p.Decision == "" {
+			return plan, fmt.Errorf("uncomposed static Projector %q", request.Projector.ID)
 		}
 		if p.EvidenceRefreshRequired {
 			plan.EvidenceRefreshRequired = append(plan.EvidenceRefreshRequired, key)

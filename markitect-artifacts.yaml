@@ -2,6 +2,10 @@ apiVersion: markitect.example.org/artifact-coverage/v1alpha1
 kind: ArtifactCoverage
 spec:
   roots:
+    - internal/modules/markdownreference
+    - examples/module-replacement
+    - internal/host/canonical_markdown_reference.go
+    - internal/host/canonical_markdown_reference_test.go
     - .markitect
     - .githooks
     - .github/workflows
@@ -979,3 +983,37 @@ spec:
       owner: operating-model-documentation-alignment
     - path: experiments/operating-model-proof/c4-documentation-alignment.md
       owner: operating-model-documentation-alignment
+    - path: examples/module-replacement/README.md
+      owner: independent-markdown-reference-projection
+    - path: examples/module-replacement/definitions/policy.gate-to-markdown.yaml
+      owner: independent-markdown-reference-projection
+    - path: examples/module-replacement/definitions/policy.process-to-markdown.yaml
+      owner: independent-markdown-reference-projection
+    - path: examples/module-replacement/definitions/policy.responsibility-to-markdown.yaml
+      owner: independent-markdown-reference-projection
+    - path: examples/module-replacement/definitions/policy.rule-to-markdown.yaml
+      owner: independent-markdown-reference-projection
+    - path: examples/module-replacement/definitions/workflow.gate.yaml
+      owner: independent-markdown-reference-projection
+    - path: examples/module-replacement/definitions/workflow.process.yaml
+      owner: independent-markdown-reference-projection
+    - path: examples/module-replacement/definitions/workflow.responsibility.yaml
+      owner: independent-markdown-reference-projection
+    - path: examples/module-replacement/definitions/workflow.rule.yaml
+      owner: independent-markdown-reference-projection
+    - path: examples/module-replacement/modules/markdown-reference/module.yaml
+      owner: independent-markdown-reference-projection
+    - path: examples/module-replacement/original.yaml
+      owner: independent-markdown-reference-projection
+    - path: examples/module-replacement/replacement.yaml
+      owner: independent-markdown-reference-projection
+    - path: internal/host/canonical_markdown_reference.go
+      owner: independent-markdown-reference-projection
+    - path: internal/host/canonical_markdown_reference_test.go
+      owner: independent-markdown-reference-projection
+    - path: internal/modules/markdownreference/README.md
+      owner: independent-markdown-reference-projection
+    - path: internal/modules/markdownreference/markdownreference.go
+      owner: independent-markdown-reference-projection
+    - path: internal/modules/markdownreference/markdownreference_test.go
+      owner: independent-markdown-reference-projection
