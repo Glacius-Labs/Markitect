@@ -7,10 +7,16 @@ from run import (
     CODEX_RUNNER_DIGEST,
     PROTOCOL,
     ProofError,
+    array_value,
     assurance_node_count,
+    assurance_nodes_availability,
+    bounded_runner_args,
     new_attempt_paths,
     proposal_metrics,
     require_digest,
+    require_first_script,
+    require_runner_runtime_file,
+    runner_flag_value,
     runtime_file_fact,
     run_metrics,
     safe_text_facts,
@@ -26,34 +32,100 @@ from run import (
 class EvidenceSafetyTests(unittest.TestCase):
     def test_current_protocol_freezes_actual_adapter_bytes(self):
         root = Path(__file__).resolve().parents[2]
-        self.assertEqual(PROTOCOL, "operating-model-proof/v8")
+        self.assertEqual(PROTOCOL, "operating-model-proof/v9")
         self.assertEqual(sha((root / "internal/tooling/codexrunner/runner.py").read_bytes()), CODEX_RUNNER_DIGEST)
 
-    def test_partial_cli_report_null_collections_are_empty(self):
+    def test_partial_cli_report_preserves_array_availability(self):
         proposed = proposal_metrics({
             "status": "blocked",
             "plan": {
                 "proposals": None,
                 "observedPaths": None,
                 "unknownArtifacts": None,
+                "evidenceRefreshRequired": [],
             },
         })
         self.assertEqual(proposed["proposals"], [])
+        self.assertEqual(proposed["proposalsAvailability"], "null")
         self.assertEqual(proposed["observedPaths"], [])
+        self.assertEqual(proposed["observedPathsAvailability"], "null")
         self.assertEqual(proposed["unknownArtifacts"], [])
+        self.assertEqual(proposed["unknownArtifactsAvailability"], "null")
+        self.assertEqual(proposed["evidenceRefreshRequired"], [])
+        self.assertEqual(proposed["evidenceRefreshRequiredAvailability"], "present")
+        self.assertEqual(proposed["unobservedProjectionsAvailability"], "missing")
 
         verified = run_metrics("controller-verify", {
             "status": "blocked",
-            "results": None,
+            "results": [],
             "verifierRuns": None,
             "assurance": None,
             "limits": None,
         })
         self.assertEqual(verified["results"], [])
+        self.assertEqual(verified["resultsAvailability"], "present")
         self.assertEqual(verified["verifierRuns"], [])
+        self.assertEqual(verified["verifierRunsAvailability"], "null")
         self.assertIsNone(verified["assuranceNodeCount"])
         self.assertIsNone(verified["assuranceDigest"])
         self.assertEqual(verified["limits"], [])
+        self.assertEqual(verified["limitsAvailability"], "null")
+
+    def test_array_availability_distinguishes_missing_null_and_empty(self):
+        self.assertEqual(array_value({}, "items", "items"), ([], "missing"))
+        self.assertEqual(array_value({"items": None}, "items", "items"), ([], "null"))
+        self.assertEqual(array_value({"items": []}, "items", "items"), ([], "present"))
+
+    def test_codex_runner_must_be_first_argument_and_runtime_bound(self):
+        runner = Path(tempfile.gettempdir()) / "markitect" / "runner.py"
+        args = [str(runner), "--codex-executable", "C:/codex.exe", "--codex-version", "0.130.0", "--model", "gpt-5.5"]
+        self.assertEqual(bounded_runner_args(args, "executor"), args)
+        require_first_script(args, runner, "executor")
+        self.assertEqual(runner_flag_value(args, "--codex-executable", "executor"), "C:/codex.exe")
+        require_runner_runtime_file([{"path": str(runner), "digest": "sha256:" + "a" * 64}], runner,
+                                    "sha256:" + "a" * 64, "executor")
+        substituted = ["--something", str(runner), *args[1:]]
+        with self.assertRaises(ProofError):
+            require_first_script(substituted, runner, "executor")
+        with self.assertRaises(ProofError):
+            require_runner_runtime_file([{"path": str(runner), "digest": "sha256:" + "b" * 64}], runner,
+                                        "sha256:" + "a" * 64, "executor")
+
+    def test_runner_flag_values_are_bounded_and_never_index_missing_values(self):
+        for args in (["--model"], ["--model", "--codex-version"], ["--model", "x" * 513], ["--model", "x", "--model", "y"]):
+            with self.subTest(args=args), self.assertRaises(ProofError):
+                runner_flag_value(list(args), "--model", "executor")
+        with self.assertRaises(ProofError):
+            bounded_runner_args(["runner", 3], "executor")
+
+    def test_apply_summarizes_exact_artifacts_and_source_evidence_revision(self):
+        digest = "sha256:" + "d" * 64
+        applied = run_metrics("controller-apply", {
+            "status": "materialized-unverified",
+            "runDigest": "sha256:" + "e" * 64,
+            "evidenceRevision": "a" * 40,
+            "records": [{
+                "id": "sha256:" + "f" * 64,
+                "projectionId": "projection",
+                "artifacts": [{"path": "src/file.cs", "mode": "100644", "digest": digest, "change": "created"}],
+            }],
+            "written": [],
+            "evidencePaths": None,
+            "evidenceRefreshRequired": [],
+        })
+        self.assertEqual(applied["evidenceRevision"], "a" * 40)
+        self.assertEqual(applied["records"][0]["artifacts"], [{"path": "src/file.cs", "mode": "100644", "digest": digest}])
+        self.assertEqual(applied["records"][0]["artifactsAvailability"], "present")
+        self.assertEqual(applied["writtenAvailability"], "present")
+        self.assertEqual(applied["evidencePathsAvailability"], "null")
+        self.assertEqual(applied["evidenceRefreshRequiredAvailability"], "present")
+
+    def test_apply_keeps_record_artifact_array_availability(self):
+        for record, expected in (({"artifacts": []}, "present"), ({"artifacts": None}, "null"), ({}, "missing")):
+            with self.subTest(expected=expected):
+                result = run_metrics("controller-apply", {"records": [record]})
+                self.assertEqual(result["records"][0]["artifacts"], [])
+                self.assertEqual(result["records"][0]["artifactsAvailability"], expected)
 
     def test_wrong_collection_shape_fails_closed(self):
         with self.assertRaises(ProofError):
@@ -65,6 +137,10 @@ class EvidenceSafetyTests(unittest.TestCase):
 
         self.assertEqual(count({"Evaluation": {"Nodes": [{"NodeID": "root"}]}}), 1)
         self.assertEqual(count({"Evaluation": {"Nodes": []}}), 0)
+        self.assertEqual(assurance_nodes_availability({"assurance": {"Evaluation": {"Nodes": []}}}), "present")
+        self.assertEqual(assurance_nodes_availability({"assurance": {"Evaluation": {"Nodes": None}}}), "null")
+        self.assertEqual(assurance_nodes_availability({}), "missing")
+        self.assertEqual(assurance_nodes_availability({"assurance": None}), "null")
         self.assertIsNone(count({"Evaluation": {"Nodes": None}}))
         self.assertIsNone(count(None))
         self.assertIsNone(count({"unknown": {"nodes": [{"NodeID": "root"}]}}))
