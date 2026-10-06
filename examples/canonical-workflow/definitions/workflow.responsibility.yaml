@@ -1,0 +1,8 @@
+apiVersion: workflow.example.org/v1
+kind: Responsibility
+metadata:
+  namespace: example
+  name: workflow-owner
+purpose: Assign accountability for project workflow meaning.
+spec:
+  accountableParty: The project-designated workflow owner.

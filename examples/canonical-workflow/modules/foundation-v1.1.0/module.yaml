@@ -1,0 +1,12 @@
+apiVersion: markitect.example.org/module/v1alpha1
+name: markitect-foundation
+version: 1.1.0
+type: schema
+purpose: Provides the additive canonical Projection schema with Codex and Claude representations.
+requires:
+  core: "1"
+  modules: []
+provides:
+  schemas:
+    - schema.yaml
+  projectors: []
