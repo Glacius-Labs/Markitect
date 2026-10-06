@@ -180,11 +180,38 @@ func (w *writeRoot) MkdirAll(name string, mode os.FileMode) error {
 	return w.checkPath(name)
 }
 
+func (w *writeRoot) Mkdir(name string, mode os.FileMode) error {
+	if err := w.checkPath(name); err != nil {
+		return err
+	}
+	if err := w.checkIdentity(); err != nil {
+		return err
+	}
+	return w.root.Mkdir(filepath.FromSlash(name), mode)
+}
+
+func (w *writeRoot) CreateExclusive(name string, mode os.FileMode) (*os.File, error) {
+	if err := w.checkPath(name); err != nil {
+		return nil, err
+	}
+	if err := w.checkIdentity(); err != nil {
+		return nil, err
+	}
+	return w.root.OpenFile(filepath.FromSlash(name), os.O_WRONLY|os.O_CREATE|os.O_EXCL, mode)
+}
+
 func (w *writeRoot) ReadFile(name string) ([]byte, error) {
 	if err := w.checkPath(name); err != nil {
 		return nil, err
 	}
 	return w.root.ReadFile(filepath.FromSlash(name))
+}
+
+func (w *writeRoot) Lstat(name string) (os.FileInfo, error) {
+	if err := w.checkPath(name); err != nil {
+		return nil, err
+	}
+	return w.root.Lstat(filepath.FromSlash(name))
 }
 
 func (w *writeRoot) AtomicWrite(name string, data []byte, mode os.FileMode) error {
@@ -342,17 +369,4 @@ func ensureWriteBranch(root, expected string) error {
 		return fmt.Errorf("branch changed during write from %q to %q", expected, current)
 	}
 	return nil
-}
-
-func lockWriter(root string) (func(), error) {
-	anchored, err := openWriteRoot(root)
-	if err != nil {
-		return nil, err
-	}
-	release, err := anchored.LockWriter()
-	if err != nil {
-		anchored.Close()
-		return nil, fmt.Errorf("renderer lock is already present: %w", err)
-	}
-	return func() { release(); _ = anchored.Close() }, nil
 }
