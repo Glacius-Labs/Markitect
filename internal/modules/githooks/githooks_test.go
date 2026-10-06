@@ -100,6 +100,56 @@ func TestProposeEscalatesWhenPolicyChecksInventoryOrOwnershipAreInsufficient(t *
 	}
 }
 
+func TestProposeEscalatesPortableCaseAliasesBeforeWorkOrNoOp(t *testing.T) {
+	for _, observedPath := range []string{
+		".githooks/Pre-Commit",
+		".GitHooks/pre-commit",
+		".GitHooks/other-hook",
+	} {
+		t.Run(observedPath, func(t *testing.T) {
+			input := fixtureInput()
+			input.ObservedArtifacts = []ArtifactObservation{{
+				Path: observedPath, Bytes: []byte("manual"), Mode: "100755",
+			}}
+			got := Propose(input)
+			if got.Decision != DecisionEscalate || got.Reasons[0] != "target.inventory.invalid" {
+				t.Fatalf("case alias proposal = %#v; want escalation", got)
+			}
+			if len(got.Escalations) != 1 ||
+				(!strings.Contains(got.Escalations[0].Message, "alias") && !strings.Contains(got.Escalations[0].Message, "overlap")) {
+				t.Fatalf("case alias was not identified before materialization: %#v", got.Escalations)
+			}
+		})
+	}
+}
+
+func TestPortableRepositoryPathsRejectGitAndWindowsAliases(t *testing.T) {
+	for _, value := range []string{
+		".git", ".GIT/config", "folder/.Git/HEAD", "CON.txt", "aux", "COM1.log", "LPT9.ext",
+		"trailing.", "trailing ", "nul\\x00byte", "has:stream", "bad?name", "back\\\\slash",
+		string([]byte{0xff}),
+	} {
+		if validRepoPath(value, false) {
+			t.Errorf("unsafe portable path %q was accepted", value)
+		}
+	}
+	for _, prefix := range []string{
+		".git/", ".GIT", "hooks/CON.txt", "hooks/com9.ext", "hooks/trailing.",
+		"hooks/trailing ", "hooks/nul\\x00byte", "hooks/a|b",
+	} {
+		if _, _, err := safeTargetPath(prefix, []string{"."}); err == nil {
+			t.Errorf("unsafe target prefix %q was accepted", prefix)
+		}
+	}
+	if _, _, err := safeTargetPath(".githooks/", []string{".githooks"}); err != nil {
+		t.Fatalf("canonical Git Hooks prefix was rejected: %v", err)
+	}
+	longPrefix := strings.Repeat("a", 1024) + "/"
+	if _, _, err := safeTargetPath(longPrefix, []string{"."}); err == nil {
+		t.Fatal("overlong slash-terminated target prefix was accepted")
+	}
+}
+
 func TestProposeNoOpRequiresExactCompleteOwnershipAndVerification(t *testing.T) {
 	input := fixtureInput()
 	first := Propose(input)

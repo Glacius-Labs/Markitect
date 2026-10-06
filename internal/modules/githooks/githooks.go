@@ -11,6 +11,7 @@ import (
 	"path"
 	"sort"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/Glacius-Labs/Markitect/internal/core"
 )
@@ -334,7 +335,7 @@ func render(target, request string, definitions map[string]core.Definition, edge
 
 func safeTargetPath(prefix string, roots []string) (string, string, error) {
 	cleanPrefix := strings.TrimSuffix(prefix, "/")
-	if cleanPrefix == "" || !validRepoPath(cleanPrefix, true) || len(roots) == 0 {
+	if len(prefix) > 1024 || cleanPrefix == "" || !validRepoPath(cleanPrefix, true) || len(roots) == 0 {
 		return "", "", errors.New("target prefix and allowed roots must be clean repository-relative slash paths")
 	}
 	target := path.Join(cleanPrefix, "pre-commit")
@@ -356,18 +357,35 @@ func safeTargetPath(prefix string, roots []string) (string, string, error) {
 }
 
 func validRepoPath(value string, allowDot bool) bool {
-	if value == "" || strings.ContainsAny(value, `\\:`) || strings.HasPrefix(value, "/") || path.Clean(value) != value {
+	if value == "" || len(value) > 1024 || !utf8.ValidString(value) ||
+		strings.TrimSpace(value) != value || strings.Contains(value, "\\") ||
+		strings.HasPrefix(value, "/") || strings.ContainsAny(value, `:*?<>|"`) || path.Clean(value) != value {
 		return false
 	}
 	if value == "." {
 		return allowDot
 	}
-	for _, part := range strings.Split(value, "/") {
-		if part == "" || part == "." || part == ".." {
+	for _, component := range strings.Split(value, "/") {
+		if component == "" || component == "." || component == ".." ||
+			strings.TrimSpace(component) != component || strings.HasSuffix(component, ".") ||
+			strings.EqualFold(component, ".git") || reservedPathComponent(component) {
 			return false
+		}
+		for _, character := range component {
+			if character < 32 {
+				return false
+			}
 		}
 	}
 	return true
+}
+
+func reservedPathComponent(value string) bool {
+	base := strings.ToUpper(strings.SplitN(value, ".", 2)[0])
+	if base == "CON" || base == "PRN" || base == "AUX" || base == "NUL" {
+		return true
+	}
+	return len(base) == 4 && (strings.HasPrefix(base, "COM") || strings.HasPrefix(base, "LPT")) && base[3] >= '1' && base[3] <= '9'
 }
 func within(root, target string) bool {
 	return root == "." || root == target || strings.HasPrefix(target, root+"/")
@@ -380,8 +398,17 @@ func observeTarget(observations []ArtifactObservation, target, prefix string) (A
 	var found ArtifactObservation
 	count := 0
 	for _, item := range observations {
-		if !validRepoPath(item.Path, false) || !within(prefix, item.Path) || item.Mode == "" {
+		if !validRepoPath(item.Path, false) || item.Mode == "" {
 			return ArtifactObservation{}, false, errors.New("target inventory contains an invalid path or missing mode")
+		}
+		if item.Path != target && pathOverlap(item.Path, target) {
+			return ArtifactObservation{}, false, errors.New("target inventory contains a path alias or overlap with the Module-owned target")
+		}
+		if item.Path != target && prefixCaseAlias(item.Path, prefix) {
+			return ArtifactObservation{}, false, errors.New("target inventory contains a case alias of the selected target prefix")
+		}
+		if !within(prefix, item.Path) {
+			return ArtifactObservation{}, false, errors.New("target inventory contains a path outside the selected target prefix")
 		}
 		if item.Path == target {
 			found = item
@@ -392,6 +419,37 @@ func observeTarget(observations []ArtifactObservation, target, prefix string) (A
 		return ArtifactObservation{}, false, errors.New("target inventory contains a duplicate Module-owned path")
 	}
 	return found, count == 1, nil
+}
+
+func pathOverlap(left, right string) bool {
+	a, b := strings.Split(left, "/"), strings.Split(right, "/")
+	limit := len(a)
+	if len(b) < limit {
+		limit = len(b)
+	}
+	for i := 0; i < limit; i++ {
+		if !strings.EqualFold(a[i], b[i]) {
+			return false
+		}
+	}
+	return true
+}
+
+func prefixCaseAlias(candidate, prefix string) bool {
+	candidateParts, prefixParts := strings.Split(candidate, "/"), strings.Split(prefix, "/")
+	limit := len(candidateParts)
+	if len(prefixParts) < limit {
+		limit = len(prefixParts)
+	}
+	for i := 0; i < limit; i++ {
+		if !strings.EqualFold(candidateParts[i], prefixParts[i]) {
+			return false
+		}
+		if candidateParts[i] != prefixParts[i] {
+			return true
+		}
+	}
+	return false
 }
 
 func priorTarget(previous *PriorProjection, target, prefix string) (ArtifactBinding, bool, error) {
