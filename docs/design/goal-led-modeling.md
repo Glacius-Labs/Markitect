@@ -11,7 +11,7 @@ The API never scans a project, searches an installed catalog, downloads or insta
 3. The Host sends the selected Core Schemas and exact selected Module pins to a second fresh `RoleInfer` process. Its closed response contains Definition values, a summary, and uncertainty. It cannot add Schemas or Module pins.
 4. The Host decodes every Definition through the same closed Definition decoder as canonical source and compiles the full candidate with the selected Schemas using `core.Compile`. Unknown Properties, invalid values, unresolved References, and other Core diagnostics leave the result invalid.
 
-Both results carry the exact goal/catalog bindings and agent-run receipts. The model proposal also binds selected recommendation IDs, resolved pins, schema digest, candidate byte digest, and its runner input digest. An optional `DecisionReferenceClaim` is caller-supplied text; it is carried as a claim and is never authenticated or used as authorization.
+Both results carry the exact goal/catalog bindings and agent-run receipts. The model proposal also returns the exact candidate JSON bytes and summary, and binds selected recommendation IDs, resolved pins, schema digest, candidate byte digest, and its runner input digest. An optional `DecisionReferenceClaim` is caller-supplied text; it is carried as a claim and is never authenticated or used as authorization.
 
 ## Result boundary
 
