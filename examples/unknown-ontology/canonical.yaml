@@ -17,6 +17,10 @@ modules:
     files:
       - examples/unknown-ontology/modules/foundation/schema.yaml
   - manifest: examples/unknown-ontology/modules/mission/module.yaml
+    pin:
+      name: unknown-ontology-mission
+      version: 1.0.0
+      digest: sha256:7cbb9964571e912e416ca1e56ad9e66522d1f49a36d230216a160fb4b3f374be
     files:
       - examples/unknown-ontology/modules/mission/schema.yaml
   - manifest: examples/unknown-ontology/modules/dotnet/module.yaml
