@@ -548,10 +548,9 @@ func buildCanonicalProjectionRecord(p PreparedCanonicalProjection, observed *sna
 			return records.ProjectionRecord{}, fmt.Errorf("writer reported unreviewed path %q", target)
 		}
 		digest := sha256Prefix(sha256Hex(content))
-		mode := observed.Modes[target]
-		if mode == "" {
-			mode = snapshot.RegularMode
-		}
+		// Both canonical writers materialize UTF-8 outputs as regular files.
+		// A drifted executable preimage must not become the output record mode.
+		mode := snapshot.RegularMode
 		change := records.ChangeCreated
 		if old, exists := observed.Files[target]; exists {
 			if bytes.Equal(old, content) && observed.Modes[target] == mode {

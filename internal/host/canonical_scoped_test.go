@@ -11,6 +11,7 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/internal/core/snapshot"
 	"github.com/Glacius-Labs/Markitect/internal/host/canonical"
+	"github.com/Glacius-Labs/Markitect/internal/host/projectionengine"
 	"github.com/Glacius-Labs/Markitect/internal/host/records"
 	"github.com/Glacius-Labs/Markitect/internal/infrastructure/source"
 )
@@ -421,4 +422,34 @@ func TestScopedCanonicalMarkdownMatchesDirectPreparation(t *testing.T) {
 		return
 	}
 	t.Fatal("Markdown proposal missing")
+}
+
+func TestCanonicalRecordBindsMaterializedModeRatherThanDriftedPreimage(t *testing.T) {
+	fixed, observed := reconciliationFixture(t) // Supplied fixed identity tests pure record construction only.
+	requests, err := projectionRequestIndex(fixed)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, request := range requests {
+		if request.Projector.Target != "markdown" {
+			continue
+		}
+		name := "docs/represented/index.md"
+		observed.Files[name] = []byte("unchanged bytes\n")
+		observed.Modes[name] = snapshot.ExecutableMode
+		prepared := PreparedCanonicalProjection{
+			Request: request,
+			Outputs: map[string][]byte{name: append([]byte(nil), observed.Files[name]...)},
+			Plan:    &projectionengine.Plan{PlanDigest: strings.Repeat("d", 64)},
+		}
+		record, err := buildCanonicalProjectionRecord(prepared, observed, []string{name}, records.StateMaterializedUnverified)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(record.Artifacts) != 1 || record.Artifacts[0].Mode != snapshot.RegularMode || record.Artifacts[0].Change != records.ChangeModified {
+			t.Fatalf("record retained drifted preimage mode: %+v", record)
+		}
+		return
+	}
+	t.Fatal("fixture lacks Markdown Projection")
 }
