@@ -107,7 +107,10 @@ func TestCanonicalControllerVerifierRequestBindsAgentExecutionAPIAndCoverage(t *
 		scope: CanonicalAssuranceScope{ID: "orders", ProjectionID: record.ProjectionID}, record: record,
 		context: CanonicalAgentContext{RequestDigest: "sha256:" + strings.Repeat("1", 64), ScopeIDs: record.ScopeIDs},
 		request: canonical.ProjectionRequest{}, checks: []records.CheckResult{check},
-		artifacts: []agentexec.Artifact{{Path: "docs/orders.md", Mode: "0644", Digest: sha256Prefix(sha256Hex([]byte("doc"))), Content: []byte("doc")}},
+		artifacts: []agentexec.Artifact{
+			{Path: "docs/orders.md", Mode: "0644", Digest: sha256Prefix(sha256Hex([]byte("doc"))), Content: []byte("doc")},
+			{Path: "checks/orders.go", Mode: "0644", Digest: sha256Prefix(sha256Hex([]byte("check source"))), Content: []byte("check source")},
+		},
 		recordByScope: map[string]records.ProjectionRecord{"orders": record}, scopeIndex: map[string]CanonicalAssuranceScope{"orders": {ID: "orders", ProjectionID: record.ProjectionID}},
 	}
 	request, err := canonicalControllerVerifierRequest(CanonicalControllerConfig{}, item, assurance.NodeRunInput{Node: assurance.Node{ID: "orders"}}, strings.Repeat("b", 40))
@@ -118,8 +121,17 @@ func TestCanonicalControllerVerifierRequestBindsAgentExecutionAPIAndCoverage(t *
 	if err := json.Unmarshal(request.Context, &payload); err != nil {
 		t.Fatal(err)
 	}
-	if payload.AgentExecutionAPIVersion != agentexec.APIVersion || len(payload.RequiredObservationSubjects) != 3 {
+	if payload.AgentExecutionAPIVersion != agentexec.APIVersion || len(payload.RequiredObservationSubjects) != 4 {
 		t.Fatalf("request context omitted API/required coverage binding: api=%q subjects=%#v", payload.AgentExecutionAPIVersion, payload.RequiredObservationSubjects)
+	}
+	var sawCheckInputArtifact bool
+	for _, subject := range payload.RequiredObservationSubjects {
+		if subject.Kind == "artifact" && subject.ID == "checks/orders.go" {
+			sawCheckInputArtifact = true
+		}
+	}
+	if !sawCheckInputArtifact {
+		t.Fatal("exact supplied fixed-check input artifact was omitted from required observations")
 	}
 	before, err := canonicalControllerVerifierInputDigest(request)
 	if err != nil {
@@ -136,6 +148,22 @@ func TestCanonicalControllerVerifierRequestBindsAgentExecutionAPIAndCoverage(t *
 	}
 	if before == after {
 		t.Fatal("changing the agent execution API context did not change the stable verifier request digest")
+	}
+}
+
+func TestCanonicalControllerVerifierRequestRefusesOversizedRequiredCoverage(t *testing.T) {
+	record := controllerVerificationTestRecord(t, "core/v1:Projection:protocol", "core/v1:UseCase:orders")
+	item := canonicalControllerPreparedVerification{
+		scope: CanonicalAssuranceScope{ID: "orders", ProjectionID: record.ProjectionID}, record: record,
+		context:   CanonicalAgentContext{RequestDigest: "sha256:" + strings.Repeat("1", 64)},
+		artifacts: []agentexec.Artifact{{Path: "docs/orders.md", Mode: "0644", Digest: sha256Prefix(sha256Hex([]byte("doc"))), Content: []byte("doc")}},
+	}
+	for i := 0; i < agentexec.MaxVerifierObservations; i++ {
+		item.context.ScopeIDs = append(item.context.ScopeIDs, fmt.Sprintf("core/v1:UseCase:scope-%03d", i))
+	}
+	_, err := canonicalControllerVerifierRequest(CanonicalControllerConfig{}, item, assurance.NodeRunInput{Node: assurance.Node{ID: "orders"}}, strings.Repeat("b", 40))
+	if err == nil || !strings.Contains(err.Error(), "128-entry protocol bound") {
+		t.Fatalf("oversized required coverage was not refused before invocation: %v", err)
 	}
 }
 
