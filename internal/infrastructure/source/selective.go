@@ -13,6 +13,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"unicode/utf16"
 
 	"github.com/Glacius-Labs/Markitect/internal/core/snapshot"
 )
@@ -51,6 +52,12 @@ func LoadSelected(root, fullCommit string, paths []string) (*SelectedSnapshot, e
 
 type gitOutputFunc func(root string, args ...string) ([]byte, error)
 type selectedBlobReader func(root string, files []treeFile) (map[string][]byte, error)
+
+const (
+	maxSelectedTreePathsPerCommand = 128
+	// Leave headroom below CreateProcessW's 32767 UTF-16-code-unit limit.
+	maxSelectedTreeCommandUnits = 30000
+)
 
 type gitIdentityStats struct {
 	root   os.FileInfo
@@ -209,22 +216,40 @@ func loadSelected(root, fullCommit string, requested []string, run gitOutputFunc
 		return nil, errors.New("Git resolved selected commit to a different ID")
 	}
 
-	files := make([]treeFile, 0, len(paths))
-	var total int64
-	for _, path := range paths {
-		// --literal-pathspecs makes caller paths data, never Git pathspec syntax.
-		out, err := run(identity.Root, "--literal-pathspecs", "ls-tree", "-z", "--full-tree", "--long", fullCommit, "--", path)
+	pathBatches, err := selectedTreePathBatches(identity.Root, fullCommit, paths)
+	if err != nil {
+		return nil, err
+	}
+	entriesByPath := make(map[string]selectedTreeEntry, len(paths))
+	for _, batch := range pathBatches {
+		args := selectedTreeArgs(fullCommit, batch)
+		out, err := run(identity.Root, args...)
 		if err != nil {
-			return nil, fmt.Errorf("inspect selected path %q: %w", path, err)
+			return nil, fmt.Errorf("inspect selected paths %q: %w", batch, err)
 		}
 		entries, err := parseSelectedTreeEntries(out)
 		if err != nil {
-			return nil, fmt.Errorf("inspect selected path %q: %w", path, err)
+			return nil, fmt.Errorf("inspect selected paths %q: %w", batch, err)
 		}
-		if len(entries) != 1 || entries[0].path != path {
+		for _, entry := range entries {
+			batchIndex := sort.SearchStrings(batch, entry.path)
+			if batchIndex == len(batch) || batch[batchIndex] != entry.path {
+				return nil, fmt.Errorf("Git returned unselected tree entry %q", entry.path)
+			}
+			if _, duplicate := entriesByPath[entry.path]; duplicate {
+				return nil, fmt.Errorf("Git returned duplicate tree entry %q", entry.path)
+			}
+			entriesByPath[entry.path] = entry
+		}
+	}
+
+	files := make([]treeFile, 0, len(paths))
+	var total int64
+	for _, path := range paths {
+		file, ok := entriesByPath[path]
+		if !ok {
 			return nil, fmt.Errorf("selected path %q does not identify exactly one Git tree entry", path)
 		}
-		file := entries[0]
 		if file.mode == "120000" {
 			return nil, fmt.Errorf("Git symlink is not a source file: %q", path)
 		}
@@ -266,6 +291,88 @@ func loadSelected(root, fullCommit string, requested []string, run gitOutputFunc
 		return nil, err
 	}
 	return &SelectedSnapshot{Identity: identity, Snapshot: resolvedSnapshot}, nil
+}
+
+func selectedTreeArgs(fullCommit string, paths []string) []string {
+	args := []string{"--literal-pathspecs", "ls-tree", "-z", "--full-tree", "--long", fullCommit, "--"}
+	return append(args, paths...)
+}
+
+// selectedTreePathBatches keeps Git metadata queries scoped to validated
+// literal pathspecs while bounding both argument count and the Windows command
+// line. The command length calculation includes gitCommandWithEnv's fixed
+// arguments and leaves headroom below CreateProcessW's hard limit.
+func selectedTreePathBatches(root, fullCommit string, paths []string) ([][]string, error) {
+	abs, err := filepath.Abs(root)
+	if err != nil {
+		return nil, fmt.Errorf("resolve source root for selected metadata: %w", err)
+	}
+	baseArgs := []string{"git", "--no-replace-objects", "-c", "safe.directory=" + filepath.ToSlash(abs), "-C", abs}
+	baseArgs = append(baseArgs, "--literal-pathspecs", "ls-tree", "-z", "--full-tree", "--long", fullCommit, "--")
+	baseUnits := windowsCommandLineUnits(baseArgs)
+	if baseUnits > maxSelectedTreeCommandUnits {
+		return nil, errors.New("Git command base exceeds selected metadata command-line limit")
+	}
+
+	var batches [][]string
+	var batch []string
+	units := baseUnits
+	for _, path := range paths {
+		pathUnits := windowsCommandLineArgUnits(path) + 1 // separating space
+		if baseUnits+pathUnits > maxSelectedTreeCommandUnits {
+			return nil, fmt.Errorf("selected path %q exceeds Git command-line limit", path)
+		}
+		if len(batch) > 0 && (len(batch) >= maxSelectedTreePathsPerCommand || units+pathUnits > maxSelectedTreeCommandUnits) {
+			batches = append(batches, batch)
+			batch = nil
+			units = baseUnits
+		}
+		batch = append(batch, path)
+		units += pathUnits
+	}
+	if len(batch) > 0 {
+		batches = append(batches, batch)
+	}
+	return batches, nil
+}
+
+func windowsCommandLineUnits(args []string) int {
+	units := 1 // terminating NUL
+	for i, arg := range args {
+		if i > 0 {
+			units++ // separating space
+		}
+		units += windowsCommandLineArgUnits(arg)
+	}
+	return units
+}
+
+func windowsCommandLineArgUnits(arg string) int {
+	quoted := arg == "" || strings.ContainsAny(arg, " \t\"")
+	units := 0
+	if quoted {
+		units = 2 // surrounding quotes
+	}
+	backslashes := 0
+	for _, r := range arg {
+		if r == '\\' {
+			backslashes++
+			continue
+		}
+		if r == '"' {
+			// Each backslash before a quote is doubled, then the quote is escaped.
+			units += backslashes*2 + 1 + utf16.RuneLen(r)
+		} else {
+			units += backslashes + utf16.RuneLen(r)
+		}
+		backslashes = 0
+	}
+	if quoted {
+		units += backslashes * 2
+	} else {
+		units += backslashes
+	}
+	return units
 }
 
 func validateSelectedPaths(paths []string) error {
