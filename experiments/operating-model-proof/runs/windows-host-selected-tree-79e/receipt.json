@@ -1,0 +1,50 @@
+{
+  "kind": "windows-host-selected-tree-batching-diagnostic",
+  "baseCommit": "79e6b133d71426f1a69b4701d9d7ee0fbd468787",
+  "sourcePatchSha256": "a9c90e5b19ff59aeeb3c7dfb041defa9800d77af042e628adcc5665dd5397f8d",
+  "builder": {
+    "version": "go1.27.1 windows/amd64",
+    "sha256BeforeReceipt": "d3ccdb604eafa6031133aefe1a3db24f0bb7362b857bc2125ac4e4c178b4b490",
+    "sha256AfterReceipt": "d3ccdb604eafa6031133aefe1a3db24f0bb7362b857bc2125ac4e4c178b4b490",
+    "gitVersion": "2.52.0.windows.1",
+    "environment": {
+      "GOENV": "off",
+      "GOTOOLCHAIN": "local",
+      "GOCACHE": "pre-existing shared cache",
+      "pathOrder": "Git command directory, Go 1.27.1 bin, existing system PATH"
+    }
+  },
+  "diagnosisAtBase": {
+    "focusedTestSecondsUninstrumented": 87.78,
+    "instrumentedGitChildProcesses": 1180,
+    "instrumentedLsTreeProcesses": 570,
+    "instrumentedGitChildSecondsTotal": 93.913,
+    "longestGitChildMilliseconds": 577,
+    "finding": "Cumulative exact-path process startup and selected-tree lookup cost; no individual Git child was hung."
+  },
+  "afterChange": {
+    "focusedHostTest": {
+      "command": "go test ./internal/host -run ^TestCanonicalEvidenceRefreshRetainsArtifactsAndRequiresFreshReview$ -count=1 -v",
+      "exitCode": 0,
+      "elapsedSeconds": 32.308
+    },
+    "sourcePackage": {
+      "command": "go test ./internal/infrastructure/source -count=1",
+      "exitCode": 0,
+      "elapsedSeconds": 47.403
+    },
+    "hostPackage": {
+      "command": "go test ./internal/host -count=1",
+      "exitCode": 0,
+      "elapsedSeconds": 496.551,
+      "timeoutOverride": false
+    }
+  },
+  "claims": {
+    "selectedTreeMetadataIsBatched": true,
+    "onlyValidatedLiteralSelectedPathsAreQueried": true,
+    "repositoryIdentityProbesRemainBeforeAndAfter": true,
+    "fullRepositoryGoTestSuitePassed": false,
+    "providerOrHumanAcceptanceClaimed": false
+  }
+}

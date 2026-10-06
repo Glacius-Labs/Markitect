@@ -26,10 +26,12 @@ func TestLoadSelectedReadsOnlyExactBlobsAfterAllMetadata(t *testing.T) {
 	commit := strings.TrimSpace(gitTest(t, root, "rev-parse", "HEAD"))
 
 	var events []string
+	var treeArgs [][]string
 	run := func(repo string, args ...string) ([]byte, error) {
 		joined := strings.Join(args, " ")
 		if strings.Contains(joined, "ls-tree") {
 			events = append(events, "metadata:"+joined)
+			treeArgs = append(treeArgs, append([]string(nil), args...))
 		}
 		return GitOutput(repo, args...)
 	}
@@ -56,8 +58,68 @@ func TestLoadSelectedReadsOnlyExactBlobsAfterAllMetadata(t *testing.T) {
 	if got.Identity.Digest == "" || !samePath(got.Identity.Root, root) || got.Identity.ObjectFormat != "sha1" {
 		t.Fatalf("unexpected Git identity: %#v expectedRoot=%q rootSame=%v digestSame=%v", got.Identity, root, samePath(got.Identity.Root, root), got.Identity.Digest == gitIdentityDigest(got.Identity))
 	}
-	if len(events) != 3 || !strings.HasPrefix(events[0], "metadata:") || !strings.HasPrefix(events[1], "metadata:") || events[2] != "content" {
-		t.Fatalf("acquisition order = %#v, want both metadata checks before contents", events)
+	if len(events) != 2 || !strings.HasPrefix(events[0], "metadata:") || events[1] != "content" {
+		t.Fatalf("acquisition order = %#v, want one batched metadata check before contents", events)
+	}
+	if len(treeArgs) != 1 {
+		t.Fatalf("selected metadata calls = %d, want one", len(treeArgs))
+	}
+	args := treeArgs[0]
+	separator := -1
+	for i, arg := range args {
+		if arg == "--" {
+			separator = i
+			break
+		}
+	}
+	if separator < 0 || !reflect.DeepEqual(args[separator+1:], []string{"one.txt", "two.txt"}) {
+		t.Fatalf("selected metadata arguments = %#v, want only sorted literal selected paths", args)
+	}
+}
+
+func TestSelectedTreePathBatchesBoundCountAndWindowsCommandLength(t *testing.T) {
+	root, _ := selectiveGitFixture(t)
+	commit := strings.Repeat("a", 40)
+	paths := make([]string, maxSelectedTreePathsPerCommand+1)
+	for i := range paths {
+		paths[i] = fmt.Sprintf("file-%03d", i)
+	}
+	batches, err := selectedTreePathBatches(root, commit, paths)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(batches) != 2 || len(batches[0]) != maxSelectedTreePathsPerCommand || len(batches[1]) != 1 {
+		t.Fatalf("count-bounded batches = %#v", batches)
+	}
+	var flattened []string
+	for _, batch := range batches {
+		if len(batch) > maxSelectedTreePathsPerCommand {
+			t.Fatalf("batch has %d paths, limit is %d", len(batch), maxSelectedTreePathsPerCommand)
+		}
+		flattened = append(flattened, batch...)
+	}
+	if !reflect.DeepEqual(flattened, paths) {
+		t.Fatalf("batched paths = %#v, want original sorted paths", flattened)
+	}
+
+	longPaths := []string{strings.Repeat("a", 9000), strings.Repeat("b", 9000), strings.Repeat("c", 9000), strings.Repeat("d", 9000)}
+	longBatches, err := selectedTreePathBatches(root, commit, longPaths)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(longBatches) < 2 {
+		t.Fatalf("long paths fit in %d batch(es), want command-length splitting", len(longBatches))
+	}
+	abs, err := filepath.Abs(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	baseArgs := []string{"git", "--no-replace-objects", "-c", "safe.directory=" + filepath.ToSlash(abs), "-C", abs}
+	for _, batch := range longBatches {
+		args := append(append([]string(nil), baseArgs...), selectedTreeArgs(commit, batch)...)
+		if got := windowsCommandLineUnits(args); got > maxSelectedTreeCommandUnits {
+			t.Fatalf("batch command length = %d UTF-16 units, limit is %d", got, maxSelectedTreeCommandUnits)
+		}
 	}
 }
 
