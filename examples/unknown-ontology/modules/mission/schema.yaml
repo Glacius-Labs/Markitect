@@ -20,6 +20,11 @@ kinds:
         target:
           apiVersion: public-mission.example.org/v1
           kind: Capability
+      requestedUnit:
+        purpose: The unit of the requested magnitude.
+        type: string
+        minCount: 1
+        maxCount: 1
       requestedMagnitude:
         purpose: The mission's requested magnitude in the referenced axis unit.
         type: integer
