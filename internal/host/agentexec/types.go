@@ -17,6 +17,9 @@ const (
 	OutcomeFailed     = "failed"
 	OutcomeIncomplete = "incomplete"
 	OutcomeEscalated  = "escalated"
+	// MaxVerifierObservations is the existing per-response wire limit used by
+	// the Host to bound required observation coverage before invocation.
+	MaxVerifierObservations = maxScopeCount
 )
 
 var (
