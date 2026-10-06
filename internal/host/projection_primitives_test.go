@@ -1,8 +1,10 @@
 package host
 
 import (
+	"bytes"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -58,5 +60,34 @@ func TestProjectionPrimitivesPreserveTrustBoundaries(t *testing.T) {
 	}
 	if _, err := VerifySnapshotChecks(&snapshot.Snapshot{}, nil); err == nil {
 		t.Fatal("no-check verification accepted")
+	}
+}
+
+func TestProjectionWriterCarriesExecutableArtifactModeOnlyAfterReadback(t *testing.T) {
+	root := t.TempDir()
+	captured, err := source.Load(root, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	content := []byte("#!/bin/sh\nexit 0\n")
+	written, err := WriteProjectionArtifacts(root, captured, map[string][]byte{"hooks/pre-commit": content}, map[string]string{"hooks/pre-commit": snapshot.ExecutableMode})
+	if runtime.GOOS == "windows" {
+		if err == nil || !strings.Contains(err.Error(), "unsupported on Windows") || len(written) != 0 {
+			t.Fatalf("Windows accepted unobservable executable mode: paths=%v err=%v", written, err)
+		}
+		if _, statErr := os.Stat(filepath.Join(root, "hooks", "pre-commit")); !os.IsNotExist(statErr) {
+			t.Fatal("unsupported mode refusal left an output")
+		}
+		return
+	}
+	if err != nil || len(written) != 1 {
+		t.Fatalf("write executable artifact: paths=%v err=%v", written, err)
+	}
+	observed, err := source.Load(root, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(observed.Files["hooks/pre-commit"], content) || observed.Modes["hooks/pre-commit"] != snapshot.ExecutableMode {
+		t.Fatalf("actual artifact mode was not observed: files=%q modes=%v", observed.Files["hooks/pre-commit"], observed.Modes)
 	}
 }
