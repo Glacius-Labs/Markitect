@@ -49,6 +49,9 @@ func decodeAndCompileCapabilityFixtures(t *testing.T, mutate capabilityMutation)
 		if err != nil {
 			t.Fatalf("read %s: %v", path, err)
 		}
+		if mutate != nil {
+			data = mutate(path, bytes.Clone(data))
+		}
 		sum := sha256.Sum256(data)
 		manifest = append(manifest, fmt.Sprintf("%s sha256:%x", path, sum))
 		schema, err := canonical.DecodeSchema(path, data)
@@ -181,13 +184,18 @@ func TestC1TypedOntologyNegativeCasesAreRejected(t *testing.T) {
 		}},
 		{"closed-unknown-property", "spec.unknown-property", func(path string, data []byte) []byte {
 			if path == "examples/capability-ontologies/delivery/deployment.yaml" {
-				return bytes.Replace(data, []byte("replicas: 3"), []byte("replicas: 3\n  surprise: true"), 1)
+				return bytes.Replace(data,
+					[]byte("spec: {service: payments-api, environment: production, replicas: 3}"),
+					[]byte("spec:\n  service: payments-api\n  environment: production\n  replicas: 3\n  surprise: true"), 1)
 			}
 			return data
 		}},
 		{"cardinality", "property.cardinality", func(path string, data []byte) []byte {
+			if path == "examples/capability-ontologies/delivery/schema.yaml" {
+				return bytes.Replace(data, []byte("replicas: {purpose: Declares the requested instance count., type: integer, minCount: 1, maxCount: 1}"), []byte("replicas: {purpose: Declares the requested instance count., type: integer, minCount: 1, maxCount: 2}"), 1)
+			}
 			if path == "examples/capability-ontologies/delivery/deployment.yaml" {
-				return bytes.Replace(data, []byte("replicas: 3"), []byte("replicas: [3, 4]"), 1)
+				return bytes.Replace(data, []byte("replicas: 3"), []byte("replicas: [3, 4, 5]"), 1)
 			}
 			return data
 		}},
