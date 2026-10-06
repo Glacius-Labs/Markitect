@@ -31,6 +31,11 @@ func TestBrownfieldInferenceHelper(t *testing.T) {
 	if strings.Contains(string(invocation.Request.Context), "unselected.md") || strings.Contains(string(invocation.Request.Context), "GitDir") {
 		os.Exit(13)
 	}
+	for _, instruction := range []string{"candidateJsonSchema", "protocolExample", "apiVersion", "confidenceBasis", "counterexamples", "possible violation", "exact evidence IDs", "owner review and correction"} {
+		if !strings.Contains(string(invocation.Request.Context), instruction) {
+			os.Exit(15)
+		}
+	}
 	candidate := review.Candidate{
 		APIVersion: review.CandidateVersion, StableID: "inferred-rule", ProposedRule: "Keep the selected representation stable",
 		Scope: "the bounded selected document", Conditions: []string{}, Classification: "unclear", Support: []string{"support-1"},
@@ -114,6 +119,43 @@ func TestBrownfieldInferenceRuntimeLocationsCannotOverlapAdopterRoots(t *testing
 	}
 	if err := validateInferenceRuntimeDirectories(BrownfieldInferenceOptions{TempParent: root, PrivateLogDirectory: logs}, handoff); err == nil {
 		t.Fatal("temporary directory within adopter root accepted")
+	}
+}
+
+func TestBrownfieldInferenceRuntimeGuardDoesNotRequireOriginalRepositoryToExist(t *testing.T) {
+	input, originalRoot := brownfieldInferenceFixture(t)
+	var handoff capture.Handoff
+	if err := capture.Decode(input.HandoffBytes, &handoff); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.RemoveAll(originalRoot); err != nil {
+		t.Fatal(err)
+	}
+	options := brownfieldInferenceRuntime(t, originalRoot)
+	t.Setenv(brownfieldInferenceHelperEnv, "1")
+	result, err := RunBrownfieldInference(context.Background(), input, brownfieldInferenceConfig(), options)
+	if err != nil {
+		t.Fatalf("inference with copied handoff required the original repository: %v", err)
+	}
+	if result.Status != "proposed" || result.Adopted {
+		t.Fatalf("copied handoff did not produce a review-only proposal: %#v", result)
+	}
+
+	missingParent := t.TempDir()
+	missingRoot := filepath.Join(missingParent, "repository-no-longer-mounted")
+	if _, err := os.Stat(missingRoot); !os.IsNotExist(err) {
+		t.Fatalf("test repository boundary unexpectedly exists: %v", err)
+	}
+	handoff.Repositories[0].Identity.Root = missingRoot
+	handoff.Repositories[0].Identity.GitDir = filepath.Join(missingRoot, ".git")
+	handoff.Repositories[0].Identity.CommonDir = filepath.Join(missingRoot, ".git")
+	missingOptions := brownfieldInferenceRuntime(t, missingRoot)
+	if err := validateInferenceRuntimeDirectories(missingOptions, handoff); err != nil {
+		t.Fatalf("copied handoff required the source repository to remain mounted: %v", err)
+	}
+	logs := t.TempDir()
+	if err := validateInferenceRuntimeDirectories(BrownfieldInferenceOptions{TempParent: missingParent, PrivateLogDirectory: logs}, handoff); err == nil {
+		t.Fatal("runtime directory lexically overlapping the unavailable repository root was accepted")
 	}
 }
 
