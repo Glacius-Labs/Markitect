@@ -31,19 +31,19 @@ modules:
     pin:
       name: operating-model-orders-dotnet
       version: 1.0.0
-      digest: sha256:e124e776227fe16a467ca9bbaac541ae3ac831b08dde01f27c8221fcf2526b33
+      digest: sha256:0d3932a5297b4323f80b61a5f2dfa2e6ad6dc59e7afa5deaaa97ec142fc1d2ff
     files: []
   - manifest: examples/operating-model/modules/billing-dotnet/module.yaml
     pin:
       name: operating-model-billing-dotnet
       version: 1.0.0
-      digest: sha256:7eef3878e46eff73aa96e7dc5158e60069ccc71e58fc2d69a946924a8d69e676
+      digest: sha256:3d647c860061ef9d1cc5fd26b7b85824fba41fee500a687a68ef497e3f406cf8
     files: []
   - manifest: examples/operating-model/modules/markdown/module.yaml
     pin:
       name: operating-model-markdown
       version: 1.0.0
-      digest: sha256:2d06106ac77e5b356e7528dbac07e82de030b3d3eb100d496b3c06b7af794199
+      digest: sha256:619d67634c506f9907a58678cd3439533119b31fdaea9480022fbc69004aaee1
     files: []
 projectionBindings:
   - projection:
