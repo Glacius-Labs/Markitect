@@ -1,0 +1,25 @@
+{
+  "schema": "markitect.c11-event-index/v1",
+  "runId": "c11-v3-original",
+  "recordedAtUtc": "2026-10-06T07:50:33.565193+00:00",
+  "source": "events.jsonl and corresponding event files; maps local random filename to CLI attemptId",
+  "events": [
+    {
+      "eventFile": "propose-245fac7a5584470ab3ba098286d7e4e5.json",
+      "action": "propose",
+      "attemptId": "eede797c5c094f20b544768f99203d5f",
+      "exitCode": 2,
+      "stdoutDigest": "sha256:69fa9c21754ab0e4beb84ade1ca0c3b4e699f4b1bf21dd0bad2ecd95c969b716",
+      "stderrDigest": "sha256:a559f9d0440b9d1b34868445e48770ab9bb97ad8e824f2ea5f77994a12bb1a61",
+      "externalOutputDigest": "sha256:69fa9c21754ab0e4beb84ade1ca0c3b4e699f4b1bf21dd0bad2ecd95c969b716",
+      "status": "",
+      "proposalDigest": "",
+      "runDigest": null,
+      "evidenceRevision": null,
+      "ledgerHead": "",
+      "recordIds": [],
+      "written": null,
+      "plannedOutputs": []
+    }
+  ]
+}
