@@ -1,0 +1,69 @@
+{
+  "schema": "markitect.c11-event-index/v1",
+  "runId": "c11-v4-replacement",
+  "recordedAtUtc": "2026-10-06T07:50:33.565193+00:00",
+  "source": "events.jsonl and corresponding event files; maps local random filename to CLI attemptId",
+  "events": [
+    {
+      "eventFile": "propose-f43a44ecf18645d485f6160c78eb755f.json",
+      "action": "propose",
+      "attemptId": "2dddb1a2af5045fb99b21847181cfa58",
+      "exitCode": 0,
+      "stdoutDigest": "sha256:4c506d10099a13a87c9addba9ac5855e556af5cb78cba578cf9002f606e42624",
+      "stderrDigest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "externalOutputDigest": "sha256:4c506d10099a13a87c9addba9ac5855e556af5cb78cba578cf9002f606e42624",
+      "status": "planned",
+      "proposalDigest": "sha256:0e8f8f09b4c2ef36aa752269903595766aefb36246cfd05a9460aa3d557f51a6",
+      "runDigest": null,
+      "evidenceRevision": null,
+      "ledgerHead": "",
+      "recordIds": [],
+      "written": null,
+      "plannedOutputs": []
+    },
+    {
+      "eventFile": "execute-96e8495de9e1435b805b331cf5136cb1.json",
+      "action": "execute",
+      "attemptId": "af2009d1b53740c5af975a76715a9196",
+      "exitCode": 0,
+      "stdoutDigest": "sha256:0e6288a6762128c4226475fcebf15171d6ea8365a6801983fac07c1e133a5556",
+      "stderrDigest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "externalOutputDigest": "sha256:0e6288a6762128c4226475fcebf15171d6ea8365a6801983fac07c1e133a5556",
+      "status": "planned",
+      "proposalDigest": null,
+      "runDigest": "sha256:7e705beef3fbfa7dc73559d02138ca36abd2e1b6530fe35cf56fb739fd9bbe45",
+      "evidenceRevision": null,
+      "ledgerHead": null,
+      "recordIds": [],
+      "written": null,
+      "plannedOutputs": [
+        {
+          "bytes": 10228,
+          "digest": "sha256:417192b78fbdfd22b643e8c02091f46347819587cd02b68d0f73144415fddc71",
+          "path": "docs/represented/workflow.md/canonical-projection.md"
+        }
+      ]
+    },
+    {
+      "eventFile": "apply-21885f1b495b4c54994e192a090dfd49.json",
+      "action": "apply",
+      "attemptId": "3448d7df06cf4cae825320184fb473b3",
+      "exitCode": 0,
+      "stdoutDigest": "sha256:9f7052a0268440970322b958b4eb2f1367078a1142d1e4c1ac0872e8f7b02ba1",
+      "stderrDigest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "externalOutputDigest": "sha256:9f7052a0268440970322b958b4eb2f1367078a1142d1e4c1ac0872e8f7b02ba1",
+      "status": "materialized-unverified",
+      "proposalDigest": null,
+      "runDigest": "sha256:7e705beef3fbfa7dc73559d02138ca36abd2e1b6530fe35cf56fb739fd9bbe45",
+      "evidenceRevision": "3d53e0ddd00c20a117b3c658788d572fb3bb2777",
+      "ledgerHead": "sha256:e48915118c324a524d61376f9ee01188f280fd542a7bae0fb5f8fcc3a82c32a2",
+      "recordIds": [
+        "sha256:b42c1d5d5a393bf3a791ec10a6847ab346752d55a4294280c6151abf61db39ef"
+      ],
+      "written": [
+        "docs/represented/workflow.md/canonical-projection.md"
+      ],
+      "plannedOutputs": []
+    }
+  ]
+}
