@@ -1,0 +1,24 @@
+apiVersion: markitect.example.org/module/v1alpha1
+name: recursive-assurance-billing-dotnet
+version: 1.0.0
+type: projection
+purpose: Registers the Billing leaf target and exact leaf check.
+requires:
+  core: "1"
+  modules: []
+provides:
+  schemas: []
+  projectors:
+    - id: dotnet-source
+      version: 1.0.0
+      target: dotnet
+      allKinds: true
+      allowedRoots:
+        - src/Billing/
+      guidance: >
+        Preserve only selected canonical meaning and explicit ProjectionPolicies.
+        Expose the public pure operation required by those policies. Choose
+        filenames from the representation; this policy is not an implementation
+        template. Escalate unresolved meaning or conflicts.
+      requiredChecks:
+        - recursive-assurance-billing

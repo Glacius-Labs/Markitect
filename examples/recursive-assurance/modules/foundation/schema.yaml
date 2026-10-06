@@ -1,0 +1,37 @@
+apiVersion: markitect.foundation/v1
+purpose: Minimal shared schema for recursively composed bounded projections.
+kinds:
+  Projection:
+    purpose: Selects an exact set of Definitions, representation, target and policies.
+    properties:
+      source:
+        purpose: Selects the canonical Definitions represented by this Projection.
+        type: object
+        required: true
+      representation:
+        purpose: Names the target representation.
+        type: string
+        required: true
+      target:
+        purpose: Selects one independently owned target root.
+        type: object
+        required: true
+      policies:
+        purpose: Selects project-owned policies for each selected source Kind.
+        type: array
+        minCount: 1
+  ProjectionPolicy:
+    purpose: Defines project-owned representation semantics for a source Kind and target.
+    properties:
+      sourceKind:
+        purpose: Exact canonical Kind governed by this policy.
+        type: object
+        required: true
+      targetTechnology:
+        purpose: Target technology governed by this policy.
+        type: string
+        required: true
+      guidance:
+        purpose: Human-readable target constraints and public API obligations.
+        type: string
+        required: true

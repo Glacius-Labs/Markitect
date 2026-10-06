@@ -1,0 +1,13 @@
+apiVersion: markitect.foundation/v1
+kind: ProjectionPolicy
+metadata:
+  namespace: recursive-assurance
+  name: commerce-dotnet
+purpose: Defines the required public API and behavior for the CommerceComposition .NET representation.
+spec:
+  sourceKind:
+    apiVersion: commerce.recursive-assurance/v1
+    kind: CommerceComposition
+  targetTechnology: dotnet
+  guidance: >
+    Expose public static long CombineTwoCheckoutsAndOutstandingCents(int firstQuantity, long firstPriceCents, int secondQuantity, long secondPriceCents, IEnumerable<long> priorAmounts). Invoke the selected Checkout operation for both lines and combine both checkout totals with prior amounts using the shared Billing rule. This is a semantic API contract, not a filename or implementation template.
