@@ -1,5 +1,7 @@
 # Candidate dependency execution
 
+Historical prerequisite assessment: the opening finding below is bound to `0ad8d78`, before child-first candidate execution was implemented. The later [C9 positive and planted-parent trials](../../experiments/operating-model-proof/runs/c9-positive-02/result.json) record bounded actual child/parent verification; passing children did not make an incorrect parent pass. This does not establish all composition semantics. [The capability checkpoint](../validation/proof-capability-checkpoint-2026-10-06.md) owns current status. The remaining design paragraphs define the contract, rather than declaring those later trials unrun.
+
 Readiness finding at source `0ad8d78`: verification has a real child-first scheduler, but Executor preparation still follows a flat projection list. A Markdown parent that merely calls two leaf APIs in a fixed check cannot establish that independent, correct leaf implementations compose correctly. This remains a blocked C9 arrangement, not a passing agent experiment.
 
 The correction stays in Host. The existing explicit bounded assurance DAG supplies execution order and read-only dependency evidence. Children are prepared first; each parent receives exact child candidate bytes (or explicitly observed active artifacts for unchanged children), never Executor transcripts or hidden reasoning. Source scopes and artifact ownership are not enlarged implicitly. Each parent owns separate representation artifacts and its own checks.

@@ -1,6 +1,8 @@
 # Scoped target exclusions
 
-## Current boundary
+## Historical prerequisite boundary
+
+The paragraphs in this section describe source `5acbd06` before exact target exclusions were implemented. They are retained as the earlier prerequisite assessment, not current capability status. The later [C7 read-only control](../../experiments/operating-model-proof/runs/c7-unknown-exclusion-01/controller-propose-result-v2.json) records bounded unknown-artifact escalation and exclusion metadata visibility; it establishes no content hash, Executor, Apply or Verifier result. [The capability checkpoint](../validation/proof-capability-checkpoint-2026-10-06.md) owns current evidence status.
 
 At source revision `5acbd06df3e81954ae667393e8f458d4f2ac4140`, the Host scoped reconciliation controller has no owner-supplied exact-path exclusion capability. The historical C7 matrix entry remains **NOT RUN**: this records an absent capability, not an observed failing experiment. No C7 experiment has passed yet.
 
@@ -14,6 +16,6 @@ Excluded paths remain in the target inventory and in the proposal's explicit exc
 
 Exclusions define owner-selected artifact input scope for a bounded Module invocation. The Host records that scope but does not infer or claim that a Module semantically understood every file beneath the root. Exclusions are never inferred from history, path names, content, prior output, or Module behavior.
 
-## Evidence status
+## Historical required evidence
 
 The behavior above is proposed design. It needs source-bound controls demonstrating exact-path validation, preservation of unknowns, and non-acquisition of excluded bytes before any C7 result can be recorded as passed. This note does not report those controls as run or passed.

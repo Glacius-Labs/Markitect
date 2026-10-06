@@ -1578,3 +1578,12 @@ spec:
 
     - path: experiments/operating-model-proof/protocol-v9.md
       owner: operating-model-proof-protocol
+
+    - path: experiments/operating-model-proof/runs/gates-23c2c30/README.md
+      owner: immutable-operating-model-proof-records
+
+    - path: experiments/operating-model-proof/runs/gates-23c2c30/sanitized-gates.json
+      owner: immutable-operating-model-proof-records
+
+    - path: experiments/operating-model-proof/runs/gates-23c2c30/diagnostic-assessment.json
+      owner: immutable-operating-model-proof-records
