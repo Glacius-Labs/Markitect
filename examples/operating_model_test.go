@@ -1,8 +1,6 @@
 package examples
 
 import (
-	"path/filepath"
-	"runtime"
 	"strings"
 	"testing"
 
@@ -14,16 +12,7 @@ import (
 const operatingModelConfigPath = "examples/operating-model/canonical.yaml"
 
 func TestOperatingModelProjectionScopesAreIndependentAndComposed(t *testing.T) {
-	_, testFile, _, ok := runtime.Caller(0)
-	if !ok {
-		t.Fatal("cannot locate the operating-model example test file")
-	}
-	root := filepath.Dir(filepath.Dir(testFile))
-
-	revision := strings.TrimSpace(proofGit(t, root, "rev-parse", "HEAD"))
-	if len(revision) != 40 && len(revision) != 64 {
-		t.Fatalf("expected a full Git HEAD, got %q", revision)
-	}
+	root, revision := publicExampleFixture(t, "examples/operating-model")
 	fixed, err := host.LoadCanonicalSource(root, revision, operatingModelConfigPath, true)
 	if err != nil {
 		t.Fatal(err)

@@ -1,8 +1,6 @@
 package examples
 
 import (
-	"path/filepath"
-	"runtime"
 	"strings"
 	"testing"
 
@@ -15,15 +13,7 @@ import (
 const unknownOntologyConfigPath = "examples/unknown-ontology/canonical.yaml"
 
 func TestUnknownOntologyLoadsExactPackagesAndPreparesBoundedScope(t *testing.T) {
-	_, testFile, _, ok := runtime.Caller(0)
-	if !ok {
-		t.Fatal("cannot locate unknown-ontology fixture test")
-	}
-	root := filepath.Dir(filepath.Dir(testFile))
-	revision := strings.TrimSpace(proofGit(t, root, "rev-parse", "HEAD"))
-	if len(revision) != 40 && len(revision) != 64 {
-		t.Fatalf("expected full immutable Git HEAD, got %q", revision)
-	}
+	root, revision := publicExampleFixture(t, "examples/unknown-ontology")
 	fixed, err := host.LoadCanonicalSource(root, revision, unknownOntologyConfigPath, true)
 	if err != nil {
 		t.Fatal(err)
