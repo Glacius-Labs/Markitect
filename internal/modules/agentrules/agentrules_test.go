@@ -2,8 +2,6 @@ package agentrules
 
 import (
 	"bytes"
-	"crypto/sha256"
-	"encoding/hex"
 	"os"
 	"path/filepath"
 	"strings"
@@ -41,20 +39,16 @@ func fixture() ([]core.Schema, []core.Definition, []core.DefinitionIdentity) {
 
 func inputFor(provider Provider) Input {
 	schemas, definitions, ids := fixture()
-	filename := "AGENTS.md"
-	if provider == Claude {
-		filename = "CLAUDE.md"
-	}
-	prefix := `C:\repo\project`
+	prefix := "repo/project"
 	return Input{
 		Provider:      provider,
 		Schemas:       schemas,
 		Definitions:   definitions,
-		Policies:      []ProjectionPolicy{{ID: "ops-guidance", Provider: provider, TargetPath: prefix + `\` + filename, DefinitionIDs: ids, Guidance: "Keep the selected project statements intact."}},
+		Policies:      []ProjectionPolicy{{ID: "ops-guidance", Provider: provider, DefinitionIDs: ids, Guidance: "Keep the selected project statements intact."}},
 		TargetPrefix:  prefix,
-		AllowedRoots:  []string{`C:\repo`},
+		AllowedRoots:  []string{"repo"},
 		RequestDigest: "sha256:request-1",
-		Observed:      []TargetObservation{{Path: prefix + `\` + filename, Owner: Owner, Writable: true}},
+		Observed:      []TargetObservation{{Path: prefix + "/" + providerFilename(provider), Owner: Owner, Writable: true}},
 	}
 }
 
@@ -79,6 +73,9 @@ func TestProviderAdaptersRenderIndependentlyAndRepeatAfterDelete(t *testing.T) {
 			if provider == Claude && (!strings.Contains(string(first.Files[0].Content), "# CLAUDE.md") || strings.Contains(string(first.Files[0].Content), "# AGENTS.md")) {
 				t.Fatal("Claude adapter emitted another provider's framing")
 			}
+			if strings.Contains(first.Files[0].Path, `\`) || filepath.IsAbs(first.Files[0].Path) {
+				t.Fatalf("candidate path is not portable and repository relative: %q", first.Files[0].Path)
+			}
 		})
 	}
 }
@@ -87,7 +84,6 @@ func TestCanonicalRuleChangeAffectsBothProviders(t *testing.T) {
 	for _, provider := range []Provider{Codex, Claude} {
 		t.Run(string(provider), func(t *testing.T) {
 			before := inputFor(provider)
-			before.Observed[0].Exists = false
 			oldResult := Propose(before)
 			after := inputFor(provider)
 			after.Definitions[0].Purpose = "Preserve the reviewed release boundary."
@@ -119,6 +115,60 @@ func TestUnknownSchemaAndKindPurposesArePreserved(t *testing.T) {
 	}
 }
 
+func TestSelectedDefinitionMayReferenceReadOnlyRelatedContext(t *testing.T) {
+	input := inputFor(Codex)
+	input.Definitions = input.Definitions[:1]
+	input.RelatedDefinitions = []core.Definition{inputFor(Codex).Definitions[1]}
+	input.Policies[0].DefinitionIDs = []core.DefinitionIdentity{input.Definitions[0].Identity()}
+	input.CanonicalAffected = []core.DefinitionIdentity{input.Definitions[0].Identity()}
+	file, err := Render(input)
+	if err != nil {
+		t.Fatalf("Render with related context: %v", err)
+	}
+	content := string(file.Content)
+	for _, fact := range []string{"canonical-rule", "unknown-signal", "intent/rule.yaml", "related", "\"property\": \"related\"", "\"line\": 4"} {
+		if !strings.Contains(content, fact) {
+			t.Errorf("projected definition or resolved reference lacks %q", fact)
+		}
+	}
+	for _, omitted := range []string{"Retain this custom fact as supplied.", "custom value", "intent/signal.yaml"} {
+		if strings.Contains(content, omitted) {
+			t.Errorf("read-only related Definition was projected: %q", omitted)
+		}
+	}
+	input.Policies[0].DefinitionIDs = []core.DefinitionIdentity{input.RelatedDefinitions[0].Identity()}
+	if _, err := Render(input); err == nil {
+		t.Fatal("related Definition unexpectedly became projectable")
+	}
+}
+
+func TestRenderNeedsNoTargetObservationOrWritableTarget(t *testing.T) {
+	input := inputFor(Codex)
+	input.Observed = nil
+	input.ReadOnly = true
+	file, err := Render(input)
+	if err != nil {
+		t.Fatalf("pure desired render should not require target evidence: %v", err)
+	}
+	if file.Path != "repo/project/AGENTS.md" {
+		t.Fatalf("rendered path = %q", file.Path)
+	}
+	if got := Propose(input); got.Decision != DecisionEscalate {
+		t.Fatalf("proposal without observed ownership = %#v", got)
+	}
+	uniquePrefix := "agentrules-no-io-" + filepath.Base(t.TempDir())
+	input.TargetPrefix = uniquePrefix
+	input.AllowedRoots = []string{uniquePrefix}
+	input.Policies[0].TargetPath = ""
+	file, err = Render(input)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Lstat(file.Path); !os.IsNotExist(err) {
+		t.Fatalf("Render wrote desired target: %v", err)
+	}
+}
+
 func TestMissingOrAmbiguousGuidanceEscalates(t *testing.T) {
 	missing := inputFor(Codex)
 	missing.Policies = nil
@@ -132,12 +182,55 @@ func TestMissingOrAmbiguousGuidanceEscalates(t *testing.T) {
 	}
 }
 
-func TestTargetSafetyOwnershipAndReadOnlyEscalation(t *testing.T) {
-	unsafe := inputFor(Codex)
-	unsafe.Policies[0].TargetPath = `C:\outside\AGENTS.md`
-	if got := Propose(unsafe); got.Decision != DecisionEscalate {
-		t.Fatalf("unsafe target decision = %s", got.Decision)
+func TestRepositoryPathSafetyAndAliases(t *testing.T) {
+	explicit := inputFor(Codex)
+	explicit.Policies[0].TargetPath = "repo/project/AGENTS.md"
+	if file, err := Render(explicit); err != nil || file.Path != "repo/project/AGENTS.md" {
+		t.Fatalf("matching explicit provider target = %#v, %v", file, err)
 	}
+	for _, prefix := range []string{"../project", "repo//project", `C:\repo\project`, "repo/./project"} {
+		input := inputFor(Codex)
+		input.TargetPrefix = prefix
+		if _, err := Render(input); err == nil {
+			t.Errorf("unsafe or aliased target prefix %q was accepted", prefix)
+		}
+	}
+	traversalTarget := inputFor(Codex)
+	traversalTarget.Policies[0].TargetPath = "repo/project/../AGENTS.md"
+	if _, err := Render(traversalTarget); err == nil {
+		t.Fatal("traversal alias in explicit target path was accepted")
+	}
+	mismatchedTarget := inputFor(Codex)
+	mismatchedTarget.Policies[0].TargetPath = "repo/project/notes.md"
+	if _, err := Render(mismatchedTarget); err == nil {
+		t.Fatal("policy-selected filename was accepted")
+	}
+	rootCollision := inputFor(Codex)
+	rootCollision.AllowedRoots = []string{"repo", "REPO"}
+	if _, err := Render(rootCollision); err == nil {
+		t.Fatal("case-colliding allowed roots were accepted")
+	}
+}
+
+func TestCaseCollisionAndDuplicateTargetObservationEscalate(t *testing.T) {
+	caseCollision := inputFor(Codex)
+	caseCollision.Observed = append(caseCollision.Observed, TargetObservation{Path: "repo/project/agents.md", Owner: Owner, Writable: true})
+	if got := Propose(caseCollision); got.Decision != DecisionEscalate {
+		t.Fatalf("case-colliding inventory decision = %s (%v)", got.Decision, got.Reasons)
+	}
+	aliasCollision := inputFor(Codex)
+	aliasCollision.Observed = append(aliasCollision.Observed, TargetObservation{Path: `repo\project\AGENTS.md`, Owner: Owner, Writable: true})
+	if got := Propose(aliasCollision); got.Decision != DecisionEscalate {
+		t.Fatalf("separator-alias inventory decision = %s (%v)", got.Decision, got.Reasons)
+	}
+	duplicate := inputFor(Codex)
+	duplicate.Observed = append(duplicate.Observed, duplicate.Observed[0])
+	if got := Propose(duplicate); got.Decision != DecisionEscalate {
+		t.Fatalf("duplicate inventory decision = %s (%v)", got.Decision, got.Reasons)
+	}
+}
+
+func TestTargetOwnershipReadOnlyAndNoOp(t *testing.T) {
 	unknownOwner := inputFor(Codex)
 	unknownOwner.Observed[0].Owner = "unknown"
 	if got := Propose(unknownOwner); got.Decision != DecisionEscalate {
@@ -148,35 +241,16 @@ func TestTargetSafetyOwnershipAndReadOnlyEscalation(t *testing.T) {
 	if got := Propose(readOnly); got.Decision != DecisionEscalate || len(got.Files) != 0 {
 		t.Fatalf("read-only decision = %#v", got)
 	}
-}
-
-func TestNoOpRequiresExactObservedDigest(t *testing.T) {
 	input := inputFor(Claude)
-	candidate := Propose(input)
-	if len(candidate.Files) != 1 {
-		t.Fatalf("candidate = %#v", candidate)
+	candidate, err := Render(input)
+	if err != nil {
+		t.Fatal(err)
 	}
 	input.Observed[0].Exists = true
-	input.Observed[0].Digest = candidate.Files[0].Digest
+	input.Observed[0].Digest = candidate.Digest
 	input.Observed[0].Writable = false
 	if got := Propose(input); got.Decision != DecisionNoOp {
 		t.Fatalf("same bytes should be a no-op: %#v", got)
-	}
-}
-
-func TestProposeDoesNotReadOrWriteTarget(t *testing.T) {
-	input := inputFor(Codex)
-	input.TargetPrefix = t.TempDir()
-	input.AllowedRoots = []string{input.TargetPrefix}
-	input.Policies[0].TargetPath = filepathJoin(input.TargetPrefix, "AGENTS.md")
-	input.Observed[0].Path = input.Policies[0].TargetPath
-	input.Observed[0].Owner = Owner
-	before := sha256.Sum256([]byte("target absent"))
-	if got := Propose(input); got.Decision != DecisionWork || len(got.Files) != 1 {
-		t.Fatalf("proposal = %#v", got)
-	}
-	if _, err := os.Stat(input.Policies[0].TargetPath); !os.IsNotExist(err) {
-		t.Fatalf("Propose touched target path: %v (guard %s)", err, hex.EncodeToString(before[:]))
 	}
 }
 
@@ -187,8 +261,4 @@ func TestUncoveredAffectedDefinitionEscalates(t *testing.T) {
 	if got := Propose(input); got.Decision != DecisionEscalate {
 		t.Fatalf("uncovered affected identity decision = %s", got.Decision)
 	}
-}
-
-func filepathJoin(prefix, name string) string {
-	return prefix + string(filepath.Separator) + name
 }

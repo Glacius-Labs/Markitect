@@ -4,8 +4,9 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
-	"path/filepath"
+	"path"
 	"sort"
 	"strings"
 
@@ -30,18 +31,19 @@ const (
 	DecisionEscalate Decision = "escalate"
 )
 
-// ProjectionPolicy explicitly binds one provider file to the exact canonical
-// Definitions and project-owned guidance that may appear in it.
+// ProjectionPolicy explicitly binds one provider file to exact canonical
+// Definitions and project-owned guidance. TargetPath may be omitted; when set,
+// it must match the module-owned provider filename under TargetPrefix.
 type ProjectionPolicy struct {
 	ID            string                    `json:"id"`
 	Provider      Provider                  `json:"provider"`
-	TargetPath    string                    `json:"targetPath"`
+	TargetPath    string                    `json:"targetPath,omitempty"`
 	DefinitionIDs []core.DefinitionIdentity `json:"definitionIds"`
 	Guidance      string                    `json:"guidance"`
 }
 
-// TargetObservation is caller-supplied target evidence. Propose never reads or
-// writes this path; the caller supplies owner, existence, digest, and writability.
+// TargetObservation is caller-supplied target evidence. Neither Render nor
+// Propose reads or writes this path.
 type TargetObservation struct {
 	Path     string `json:"path"`
 	Owner    string `json:"owner"`
@@ -51,22 +53,24 @@ type TargetObservation struct {
 }
 
 type Input struct {
-	Provider          Provider
-	Schemas           []core.Schema
-	Definitions       []core.Definition
-	Policies          []ProjectionPolicy
-	TargetPrefix      string
-	AllowedRoots      []string
-	RequestDigest     string
-	CanonicalAffected []core.DefinitionIdentity
-	Observed          []TargetObservation
-	ReadOnly          bool
+	Provider           Provider
+	Schemas            []core.Schema
+	Definitions        []core.Definition // Definitions eligible for projection.
+	RelatedDefinitions []core.Definition // Read-only context for resolving selected references.
+	Policies           []ProjectionPolicy
+	TargetPrefix       string // Canonical repository-relative slash path; "." is repository root.
+	AllowedRoots       []string
+	RequestDigest      string
+	CanonicalAffected  []core.DefinitionIdentity
+	Observed           []TargetObservation
+	ReadOnly           bool
 }
 
 type CandidateFile struct {
-	Path    string
-	Content []byte
-	Digest  string
+	Path          string `json:"path"`
+	Content       []byte `json:"content"`
+	Digest        string `json:"digest"`
+	RequestDigest string `json:"requestDigest"`
 }
 
 type Result struct {
@@ -89,90 +93,121 @@ type semanticFacts struct {
 	References  []referenceFact   `json:"references"`
 }
 
-// Propose creates a deterministic provider document from explicit, validated
-// Core inputs. It performs no filesystem or provider I/O.
+// Render builds a deterministic desired provider file from explicit canonical
+// inputs. It does not require observed ownership or writability and performs no I/O.
+func Render(input Input) (CandidateFile, error) {
+	if strings.TrimSpace(input.RequestDigest) == "" {
+		return CandidateFile{}, errors.New("request digest is required")
+	}
+	if input.Provider != Codex && input.Provider != Claude {
+		return CandidateFile{}, errors.New("provider must be codex or claude")
+	}
+	model, policy, selected, err := canonicalSelection(input)
+	if err != nil {
+		return CandidateFile{}, err
+	}
+	filename := providerFilename(input.Provider)
+	candidatePath, err := safeTargetPath(policy.TargetPath, input.TargetPrefix, input.AllowedRoots, filename)
+	if err != nil {
+		return CandidateFile{}, err
+	}
+	content, err := render(input.Provider, policy, model, selected)
+	if err != nil {
+		return CandidateFile{}, errors.New("validated canonical facts could not be rendered")
+	}
+	return CandidateFile{Path: candidatePath, Content: content, Digest: digestBytes(content), RequestDigest: input.RequestDigest}, nil
+}
+
+// Propose compares a rendered candidate with caller-supplied target evidence.
+// It performs no filesystem or provider I/O.
 func Propose(input Input) Result {
 	result := Result{Decision: DecisionEscalate, RequestDigest: input.RequestDigest}
-	fail := func(reason string) Result {
+	file, err := Render(input)
+	if err != nil {
+		result.Reasons = []string{err.Error()}
+		return result
+	}
+	observation, ok, reason := targetObservation(input.Observed, file.Path)
+	if reason != "" {
 		result.Reasons = []string{reason}
+		return result
+	}
+	if !ok {
+		result.Reasons = []string{"target ownership or current target state is unknown"}
+		return result
+	}
+	if observation.Owner != Owner {
+		result.Reasons = []string{"target is not explicitly owned by this module"}
+		return result
+	}
+	if observation.Exists && !validDigest(observation.Digest) {
+		result.Reasons = []string{"existing target has no valid observed digest"}
+		return result
+	}
+	if !observation.Exists && observation.Digest != "" {
+		result.Reasons = []string{"absent target must not have an observed digest"}
+		return result
+	}
+	result.Files = []CandidateFile{file}
+	if observation.Exists && observation.Digest == file.Digest {
+		result.Decision = DecisionNoOp
+		return result
+	}
+	if input.ReadOnly || !observation.Writable {
+		result.Decision = DecisionEscalate
+		result.Reasons = []string{"target needs an update but is read-only"}
 		result.Files = nil
 		return result
 	}
-	if strings.TrimSpace(input.RequestDigest) == "" {
-		return fail("request digest is required")
-	}
-	if input.Provider != Codex && input.Provider != Claude {
-		return fail("provider must be codex or claude")
-	}
-	model, diagnostics := core.Compile(input.Schemas, input.Definitions, "")
+	result.Decision = DecisionWork
+	return result
+}
+
+func canonicalSelection(input Input) (core.Model, ProjectionPolicy, map[string]core.DefinitionIdentity, error) {
+	modelDefinitions := make([]core.Definition, 0, len(input.Definitions)+len(input.RelatedDefinitions))
+	modelDefinitions = append(modelDefinitions, input.Definitions...)
+	modelDefinitions = append(modelDefinitions, input.RelatedDefinitions...)
+	model, diagnostics := core.Compile(input.Schemas, modelDefinitions, "")
 	if len(diagnostics) != 0 {
-		return fail("canonical schemas or definitions do not compile")
+		return core.Model{}, ProjectionPolicy{}, nil, errors.New("canonical schemas or definitions do not compile")
 	}
 	policy, ok := providerPolicy(input.Policies, input.Provider)
 	if !ok {
-		return fail("provider projection guidance is missing or ambiguous")
+		return core.Model{}, ProjectionPolicy{}, nil, errors.New("provider projection guidance is missing or ambiguous")
 	}
 	if strings.TrimSpace(policy.ID) == "" || strings.TrimSpace(policy.Guidance) == "" || len(policy.DefinitionIDs) == 0 {
-		return fail("provider projection policy requires an id, exact definitions, and explicit guidance")
+		return core.Model{}, ProjectionPolicy{}, nil, errors.New("provider projection policy requires an id, exact definitions, and explicit guidance")
 	}
-	definitions := make(map[string]core.Definition, len(model.Definitions))
-	for _, definition := range model.Definitions {
-		definitions[definition.Identity().Key()] = definition
+	projectable := make(map[string]core.Definition, len(input.Definitions))
+	for _, definition := range input.Definitions {
+		projectable[definition.Identity().Key()] = definition
 	}
 	selected := make(map[string]core.DefinitionIdentity, len(policy.DefinitionIDs))
 	for _, identity := range policy.DefinitionIDs {
 		key := identity.Key()
 		if _, duplicate := selected[key]; duplicate {
-			return fail("provider policy selects a canonical Definition more than once")
+			return core.Model{}, ProjectionPolicy{}, nil, errors.New("provider policy selects a canonical Definition more than once")
 		}
-		if _, exists := definitions[key]; !exists {
-			return fail("provider policy selects a missing canonical Definition")
+		if _, exists := projectable[key]; !exists {
+			return core.Model{}, ProjectionPolicy{}, nil, errors.New("provider policy selects a Definition outside the projectable input scope")
 		}
 		selected[key] = identity
 	}
-	for _, affected := range input.CanonicalAffected {
-		if _, exists := definitions[affected.Key()]; !exists {
-			return fail("affected canonical Definition is absent from the supplied model")
+	affected := make(map[string]struct{}, len(input.CanonicalAffected))
+	for _, identity := range input.CanonicalAffected {
+		key := identity.Key()
+		if _, duplicate := affected[key]; duplicate {
+			return core.Model{}, ProjectionPolicy{}, nil, errors.New("affected canonical Definition is listed more than once")
 		}
-		if _, covered := selected[affected.Key()]; !covered {
-			return fail("affected canonical Definition has no explicit provider projection guidance")
+		if _, exists := projectable[key]; !exists {
+			return core.Model{}, ProjectionPolicy{}, nil, errors.New("affected canonical Definition is absent from the projectable input scope")
 		}
+		if _, covered := selected[key]; !covered {
+			return core.Model{}, ProjectionPolicy{}, nil, errors.New("affected canonical Definition has no explicit provider projection guidance")
+		}
+		affected[key] = struct{}{}
 	}
-
-	filename := providerFilename(input.Provider)
-	candidatePath, reason := safeTargetPath(policy.TargetPath, input.TargetPrefix, input.AllowedRoots, filename)
-	if reason != "" {
-		return fail(reason)
-	}
-	observation, ok := targetObservation(input.Observed, candidatePath)
-	if !ok {
-		return fail("target ownership or current target state is unknown")
-	}
-	if observation.Owner != Owner {
-		return fail("target is not explicitly owned by this module")
-	}
-	if observation.Exists && !validDigest(observation.Digest) {
-		return fail("existing target has no valid observed digest")
-	}
-	if !observation.Exists && observation.Digest != "" {
-		return fail("absent target must not have an observed digest")
-	}
-
-	content, err := render(input.Provider, policy, model, selected)
-	if err != nil {
-		return fail("validated canonical facts could not be rendered")
-	}
-	digest := digestBytes(content)
-	result.Files = []CandidateFile{{Path: candidatePath, Content: content, Digest: digest}}
-	if observation.Exists && observation.Digest == digest {
-		result.Decision = DecisionNoOp
-		return result
-	}
-	if input.ReadOnly || !observation.Writable {
-		return fail("target needs an update but is read-only")
-	}
-	result.Decision = DecisionWork
-	return result
+	return model, policy, selected, nil
 }
 
 func providerPolicy(policies []ProjectionPolicy, provider Provider) (ProjectionPolicy, bool) {
@@ -196,54 +231,85 @@ func providerFilename(provider Provider) string {
 	return "CLAUDE.md"
 }
 
-func safeTargetPath(policyPath, prefix string, roots []string, filename string) (string, string) {
-	if !filepath.IsAbs(prefix) || len(roots) == 0 {
-		return "", "target prefix and allowed roots must be absolute paths"
+func safeTargetPath(policyPath, prefix string, roots []string, filename string) (string, error) {
+	if !validRepoPath(prefix, true) || len(roots) == 0 {
+		return "", errors.New("target prefix and allowed roots must be canonical repository-relative slash paths")
 	}
-	cleanPrefix := filepath.Clean(prefix)
-	expected := filepath.Join(cleanPrefix, filename)
-	if !filepath.IsAbs(policyPath) || !samePath(filepath.Clean(policyPath), expected) {
-		return "", "policy target must be the provider file directly under the declared target prefix"
+	candidate := path.Join(prefix, filename)
+	if policyPath != "" && (!validRepoPath(policyPath, false) || policyPath != candidate) {
+		return "", errors.New("policy target must match the exact module-owned provider filename under TargetPrefix")
 	}
+	seen := make(map[string]string, len(roots))
+	allowed := false
 	for _, root := range roots {
-		if !filepath.IsAbs(root) {
-			continue
+		if !validRepoPath(root, true) {
+			return "", errors.New("allowed roots must be canonical repository-relative slash paths")
 		}
-		if within(filepath.Clean(root), expected) {
-			return expected, ""
+		for _, prior := range seen {
+			if strings.EqualFold(prior, root) {
+				if prior != root {
+					return "", errors.New("allowed roots contain a case collision")
+				}
+				return "", errors.New("allowed roots contain a duplicate path")
+			}
 		}
+		seen[root] = root
+		allowed = allowed || within(root, candidate)
 	}
-	return "", "provider target is outside every allowed root"
+	if !allowed {
+		return "", errors.New("provider target is outside every allowed root")
+	}
+	return candidate, nil
 }
 
-func targetObservation(observations []TargetObservation, path string) (TargetObservation, bool) {
-	var found TargetObservation
-	count := 0
-	for _, observation := range observations {
-		if samePath(filepath.Clean(observation.Path), path) {
-			found = observation
-			count++
+func validRepoPath(value string, allowDot bool) bool {
+	if value == "" || strings.ContainsAny(value, `\\:`) || strings.HasPrefix(value, "/") || path.Clean(value) != value {
+		return false
+	}
+	if value == "." {
+		return allowDot
+	}
+	for _, segment := range strings.Split(value, "/") {
+		if segment == "" || segment == "." || segment == ".." {
+			return false
 		}
 	}
-	return found, count == 1
+	return true
 }
 
-func within(root, path string) bool {
-	if samePath(root, path) {
+func within(root, candidate string) bool {
+	if root == "." || root == candidate {
 		return true
 	}
-	prefix := strings.TrimRight(root, `\\/`) + string(filepath.Separator)
-	if filepath.Separator == '\\' {
-		return strings.HasPrefix(strings.ToLower(path), strings.ToLower(prefix))
-	}
-	return strings.HasPrefix(path, prefix)
+	return strings.HasPrefix(candidate, root+"/")
 }
 
-func samePath(left, right string) bool {
-	if filepath.Separator == '\\' {
-		return strings.EqualFold(left, right)
+func targetObservation(observations []TargetObservation, candidate string) (TargetObservation, bool, string) {
+	var found TargetObservation
+	count := 0
+	candidateAlias := pathAlias(candidate)
+	for _, observation := range observations {
+		if !strings.EqualFold(pathAlias(observation.Path), candidateAlias) {
+			continue
+		}
+		if !validRepoPath(observation.Path, false) {
+			return TargetObservation{}, false, "observed target path is an unsafe alias of the provider file"
+		}
+		if observation.Path != candidate {
+			return TargetObservation{}, false, "observed target path has a case or path alias collision"
+		}
+		found = observation
+		count++
 	}
-	return left == right
+	if count > 1 {
+		return TargetObservation{}, false, "target inventory contains duplicate observations"
+	}
+	return found, count == 1, ""
+}
+
+func pathAlias(value string) string {
+	portable := strings.ReplaceAll(value, "\\", "/")
+	return path.Clean(portable)
 }
 
 func validDigest(value string) bool {
