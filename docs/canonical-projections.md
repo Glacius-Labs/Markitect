@@ -28,7 +28,7 @@ The source-alpha adoption commands take one exact Projection selector and an own
 }
 ```
 
-Replace the illustrative artifact paths with the exact existing paths under the selected Projection target. Caller-supplied active records are ownership claims for conflict checks; the command does not discover a durable ledger or infer missing history. Conflicts are checked before artifact verification. Existing target artifacts outside the exact selection are returned as unmatched and classified UNKNOWN. UNKNOWN does not mean rewrite or delete; ordinary reconciliation escalates it until ownership is resolved.
+Replace the illustrative artifact paths with the exact existing paths under the selected Projection target. In the compatibility read-only path, caller-supplied active records are ownership claims for conflict checks and no durable ledger is discovered. Conflicts are checked before artifact verification. Its full target snapshot can show existing files outside the exact selection as unmatched. UNKNOWN does not mean rewrite or delete; ordinary reconciliation escalates it until ownership is resolved.
 
 Create and inspect the read-only adoption plan against full immutable commits:
 
@@ -43,6 +43,17 @@ go run ./cmd/markitect canonical --repo . --config examples/canonical-projection
 ```
 
 `adopt` verifies only the existing selected artifact scope. It performs no generation, target writes, record persistence or active-record selection. It returns a ProjectionRecord with `origin: adopted` only when existing immutable checks pass. A failed or missing required check produces no adopted record. This proves the supplied bytes passed the declared checks for that bounded scope; it does not prove semantic adequacy, authenticate the review reference, or establish whole-repository adoption. Preserve the record through explicit caller-owned persistence and active selection, which remain separate operations.
+
+For durable first adoption, pass the closed canonical controller runtime configuration to both calls. Its `recordStore` and `checkInputs` supply the existing external ledger path and exact additional command inputs; its Executor and Verifier entries are required by the shared runtime format but are not invoked by adoption:
+
+```powershell
+go run ./cmd/markitect canonical --repo . --config examples/canonical-projection/canonical.yaml --runtime .artifacts/canonical-review/runtime.json --action adopt-plan --base SOURCE --revision TARGET --api-version markitect.foundation/v1 --kind Projection --namespace commerce --name application-dotnet --report .artifacts/canonical-review/selection.json
+go run ./cmd/markitect canonical --repo . --config examples/canonical-projection/canonical.yaml --runtime .artifacts/canonical-review/runtime.json --action adopt --base SOURCE --revision TARGET --api-version markitect.foundation/v1 --kind Projection --namespace commerce --name application-dotnet --report .artifacts/canonical-review/selection.json --expect PLAN_DIGEST --write
+```
+
+The durable plan binds the runtime digest and whether the external ledger is absent or its current StoreID, head and active record IDs. The selection must contain `activeRecords: []`; ownership is loaded from the ledger. Apply takes the controller lease, refreshes that binding, runs only the selected fixed commands over the exact selected evidence, and then initializes an absent external store if necessary, appends the retained adopted record and compare-and-swaps the active selection. A conflict, stale plan or failed check refuses before initialization. An append followed by a selection failure is reported as partial; the record remains in history but inactive. No repository artifact, canonical input, index or HEAD is changed.
+
+Durable mode reads only canonical source blobs, selected artifact blobs and runtime `checkInputs`. The output identifies its inventory as selected-evidence-only, so its unmatched list is not a complete target-prefix inventory. The persisted record remains `materialized-unverified`; run a separate fresh Verify to record verification. Fixed command success is bounded technical evidence, not semantic assurance, authenticated approval or human acceptance.
 
 ## Read-only inspection and reconcile planning
 

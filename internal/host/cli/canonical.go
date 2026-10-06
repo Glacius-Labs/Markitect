@@ -481,16 +481,75 @@ func runCanonicalVerify(o commandOptions, fixed *host.CanonicalSource, base map[
 }
 
 func runCanonicalAdoption(o commandOptions, fixed *host.CanonicalSource, base map[string]any, emit func(any) int, fail func(error) int) int {
-	target, err := source.Load(o.root, o.revision)
-	if err != nil {
-		return fail(err)
-	}
 	selection, err := readCanonicalAdoptionSelection(o.reviewReport)
 	if err != nil {
 		return fail(fmt.Errorf("read adoption selection: %w", err))
 	}
 	identity := core.DefinitionIdentity{APIVersion: o.apiVersion, Kind: o.kind, Namespace: o.namespace, Name: o.name}
 	base["sourceRevision"] = fixed.Snapshot.ID
+	if o.runtime != "" {
+		runtimeBytes, err := readBoundedControllerFile(o.runtime, canonicalControllerConfigLimit)
+		if err != nil {
+			return fail(fmt.Errorf("read canonical adoption runtime configuration: %w", err))
+		}
+		cfg, err := host.DecodeCanonicalControllerConfig(runtimeBytes)
+		if err != nil {
+			return fail(fmt.Errorf("decode canonical adoption runtime configuration: %w", err))
+		}
+		paths := host.CanonicalAdoptionEvidencePaths(fixed, selection, cfg)
+		selected, err := source.LoadSelected(o.root, o.revision, paths)
+		if err != nil {
+			return fail(fmt.Errorf("load exact canonical adoption evidence: %w", err))
+		}
+		target := selected.Snapshot
+		base["evidenceRevision"] = target.ID
+		base["evidencePaths"] = paths
+		base["inventoryScope"] = "selected-evidence-only; unmatched artifacts are not a complete target-prefix inventory"
+		if o.action == "adopt-plan" {
+			plan, err := host.PrepareCanonicalAdoptionForRuntime(o.root, fixed, target, identity, selection, cfg)
+			if err != nil {
+				return fail(err)
+			}
+			base["status"] = "planned"
+			ledger := map[string]any{
+				"present": plan.Ledger.Present, "activeRecordIds": plan.Ledger.ActiveRecordIDs,
+				"configDigest": plan.Ledger.ConfigDigest,
+			}
+			if plan.Ledger.StoreID != "" {
+				ledger["storeId"] = plan.Ledger.StoreID
+			}
+			if plan.Ledger.Head != "" {
+				ledger["head"] = plan.Ledger.Head
+			}
+			base["plan"] = map[string]any{
+				"apiVersion": plan.APIVersion, "planDigest": plan.PlanDigest, "evidenceRevision": plan.EvidenceRevision,
+				"record": plan.Record, "unmatchedArtifacts": plan.UnmatchedArtifacts, "ledger": ledger,
+				"inventoryScope": "exact loaded evidence paths only; not a complete target-prefix inventory",
+			}
+			return emit(base)
+		}
+		applied, applyErr := host.ApplyCanonicalAdoptionToLedger(o.root, fixed, target, identity, selection, cfg, o.expect, o.write)
+		base["status"] = applied.Status
+		base["record"] = applied.Record
+		base["ledgerHead"] = applied.LedgerHead
+		base["activeRecordIds"] = applied.ActiveRecordIDs
+		base["planDigest"] = applied.PlanDigest
+		if applyErr != nil {
+			if applied.Status == "" || applied.Status == "refused" {
+				return fail(applyErr)
+			}
+			if code := emit(base); code != 0 {
+				return code
+			}
+			return 1
+		}
+		return emit(base)
+	}
+
+	target, err := source.Load(o.root, o.revision)
+	if err != nil {
+		return fail(err)
+	}
 	base["evidenceRevision"] = target.ID
 	if o.action == "adopt-plan" {
 		plan, err := host.PrepareCanonicalAdoption(fixed, target, identity, selection)

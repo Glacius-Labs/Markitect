@@ -170,10 +170,11 @@ func parseOptions(command string, args []string, allowed map[string]bool, out, e
 		}
 	}
 	canonicalApply := command == "canonical" && *action == "apply"
+	canonicalDurableAdoptionApply := command == "canonical" && *action == "adopt" && *runtime != ""
 	canonicalControllerApply := command == "canonical" && (*action == "controller-apply" || *action == "controller-refresh-apply")
 	canonicalControllerVerify := command == "canonical" && *action == "controller-verify"
-	if *write && ((command != "render" && command != "schema" && command != "format" && command != "install" && command != "init" && command != "reconcile" && command != "prepare" && command != "projection" && !canonicalApply && !canonicalControllerApply && !canonicalControllerVerify) || (*revision != "" && !canonicalApply && !canonicalControllerApply && !canonicalControllerVerify) || *check || ((command == "reconcile" || command == "projection" || command == "canonical") && *action != "apply" && !canonicalControllerApply && !canonicalControllerVerify)) {
-		fmt.Fprintln(errout, "--write supports render, format, schema, install, init, reconcile/projection --action apply, canonical --action apply/controller-apply, controller-verify external ledger append, or prepare external capture")
+	if *write && ((command != "render" && command != "schema" && command != "format" && command != "install" && command != "init" && command != "reconcile" && command != "prepare" && command != "projection" && !canonicalApply && !canonicalDurableAdoptionApply && !canonicalControllerApply && !canonicalControllerVerify) || (*revision != "" && !canonicalApply && !canonicalDurableAdoptionApply && !canonicalControllerApply && !canonicalControllerVerify) || *check || ((command == "reconcile" || command == "projection" || command == "canonical") && *action != "apply" && !canonicalDurableAdoptionApply && !canonicalControllerApply && !canonicalControllerVerify)) {
+		fmt.Fprintln(errout, "--write supports render, format, schema, install, init, reconcile/projection apply, canonical apply/controller-apply/controller-verify, durable canonical adoption, or prepare external capture")
 		return commandOptions{}, 2, true
 	}
 	if command == "projection" {
@@ -273,8 +274,9 @@ func parseOptions(command string, args []string, allowed map[string]bool, out, e
 				}
 			}
 		} else {
-			if *runtime != "" {
-				fmt.Fprintln(errout, "canonical --runtime applies only to controller actions")
+			durableAdoption := (*action == "adopt-plan" || *action == "adopt") && *runtime != ""
+			if *runtime != "" && !durableAdoption {
+				fmt.Fprintln(errout, "canonical --runtime applies only to controller actions or durable adoption")
 				return commandOptions{}, 2, true
 			}
 			selectorFields := []string{*apiVersion, *kind, *namespace, *name}
@@ -293,7 +295,7 @@ func parseOptions(command string, args []string, allowed map[string]bool, out, e
 				fmt.Fprintln(errout, "canonical --api-version, --kind, --namespace and --name apply only to context, request, plan or apply")
 				return commandOptions{}, 2, true
 			}
-			if *write && !canonicalApply {
+			if *write && !canonicalApply && !canonicalDurableAdoptionApply {
 				fmt.Fprintln(errout, "canonical actions are read-only")
 				return commandOptions{}, 2, true
 			}
@@ -319,8 +321,8 @@ func parseOptions(command string, args []string, allowed map[string]bool, out, e
 					return commandOptions{}, 2, true
 				}
 				if *action == "adopt-plan" || *action == "adopt" {
-					if *write || *plan != "" || *reviewReport == "" {
-						fmt.Fprintf(errout, "canonical %s requires --report, forbids --write and does not use --plan\n", *action)
+					if *plan != "" || *reviewReport == "" || (*action == "adopt-plan" && *write) || (*action == "adopt" && *runtime == "" && *write) || (*action == "adopt" && *runtime != "" && !*write) {
+						fmt.Fprintf(errout, "canonical %s requires --report, does not use --plan, and durable adopt requires --runtime plus --write\n", *action)
 						return commandOptions{}, 2, true
 					}
 					if *action == "adopt-plan" && *expect != "" {
