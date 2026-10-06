@@ -15,6 +15,10 @@ definitions:
   - examples/recursive-assurance/definitions/commerce.projection.yaml
 modules:
   - manifest: examples/recursive-assurance/modules/foundation/module.yaml
+    pin:
+      name: recursive-assurance-foundation
+      version: 1.0.0
+      digest: sha256:45081eeb5aea4cdea5959f0da53f3ca0dcc110611870f4d15be6056dc74afbf9
     files:
       - examples/recursive-assurance/modules/foundation/schema.yaml
   - manifest: examples/recursive-assurance/modules/commerce/module.yaml
