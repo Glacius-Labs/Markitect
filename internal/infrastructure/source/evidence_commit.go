@@ -209,7 +209,10 @@ func validObjectID(objectFormat, oid string) bool {
 }
 
 func readEvidenceTreeWith(root, commit string, run gitOutputFunc) (map[string]selectedTreeEntry, error) {
-	out, err := run(root, "ls-tree", "-r", "-z", "--full-tree", "--long", commit)
+	// Do not request blob sizes here. Git may lazy-fetch a missing blob in a
+	// partial clone to report its size, even though this operation needs only
+	// tree metadata and must leave unselected blob contents untouched.
+	out, err := run(root, "ls-tree", "-r", "-z", "--full-tree", commit)
 	if err != nil {
 		return nil, fmt.Errorf("read parent tree metadata: %w", err)
 	}
@@ -223,7 +226,7 @@ func readEvidenceTreeWith(root, commit string, run gitOutputFunc) (map[string]se
 			return nil, errors.New("malformed parent Git tree record")
 		}
 		fields := strings.Fields(string(header))
-		if len(fields) != 4 {
+		if len(fields) != 3 {
 			return nil, errors.New("malformed parent Git tree metadata")
 		}
 		path := string(name)
