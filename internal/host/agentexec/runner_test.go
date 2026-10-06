@@ -48,11 +48,17 @@ func TestAgentexecHelperProcess(t *testing.T) {
 		}
 		heartbeat := os.Getenv("MARKITECT_AGENTEXEC_TEST_HEARTBEAT")
 		deadline := time.Now().Add(2 * time.Second)
+		ready := false
 		for time.Now().Before(deadline) {
 			if info, err := os.Stat(heartbeat); err == nil && info.Size() > 0 {
+				ready = true
 				break
 			}
 			time.Sleep(10 * time.Millisecond)
+		}
+		if !ready {
+			fmt.Fprintln(os.Stderr, "heartbeat child did not become ready")
+			os.Exit(10)
 		}
 		if mode == "spawn-child-timeout" || mode == "spawn-child-overflow" {
 			if mode == "spawn-child-overflow" {
@@ -319,10 +325,13 @@ func TestRunStopsDescendantProcessesOnTimeoutOverflowAndNormalExit(t *testing.T)
 			t.Setenv("MARKITECT_AGENTEXEC_TEST_HEARTBEAT", heartbeat)
 			config := testConfig()
 			if mode == "spawn-child-timeout" {
-				config.Timeout = 250 * time.Millisecond
+				// The helper waits up to two seconds for the child heartbeat before
+				// entering its intentional five-second wait. Keep the default three
+				// second test budget so process startup is inside the timeout window.
+				config.Timeout = 3 * time.Second
 			} else {
 				// These cases validate overflow and normal-exit cleanup, not fixture
-				// startup speed. Windows process startup can exceed 250 ms under load.
+				// startup speed, so allow ample time for the helper and child to start.
 				config.Timeout = 10 * time.Second
 			}
 			if mode == "spawn-child-overflow" {
@@ -331,7 +340,7 @@ func TestRunStopsDescendantProcessesOnTimeoutOverflowAndNormalExit(t *testing.T)
 			result, err := Run(context.Background(), config, testRequest(RoleExecutor), opts)
 			switch mode {
 			case "spawn-child-timeout":
-				if err == nil || result.Receipt.Outcome != OutcomeIncomplete {
+				if err == nil || err.Error() != "external runner timed out or was cancelled" || result.Receipt.Outcome != OutcomeIncomplete {
 					t.Fatalf("expected incomplete timeout, result=%#v err=%v", result, err)
 				}
 			case "spawn-child-overflow":
