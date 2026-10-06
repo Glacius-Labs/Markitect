@@ -1,0 +1,20 @@
+{
+  "schema": "markitect.c11-run-assessment/v1",
+  "runId": "c11-v3-original",
+  "recordScope": "sanitized binding/events only; full CLI JSON and runtime files remain external",
+  "recordedAtUtc": "2026-10-06T07:27:25.946312+00:00",
+  "freeze": "c11-module-replacement-amended-v3",
+  "freezeSha256": "A77527E38AA863326E05C991D6306CE046CE0672D132C21936FE2A2C6C128016",
+  "classification": "INVALID_SETUP",
+  "reason": "The controller could not validate the output-root ancestor because the required state/original parent directory was absent. The call exited 2 with an empty plan and made no provider call. This is a harness setup failure, not a Module result.",
+  "providerExecutorInvoked": false,
+  "applied": false,
+  "freshVerifier": false,
+  "propose": {
+    "attemptId": "eede797c5c094f20b544768f99203d5f",
+    "exitCode": 2,
+    "stdoutDigest": "sha256:69fa9c21754ab0e4beb84ade1ca0c3b4e699f4b1bf21dd0bad2ecd95c969b716",
+    "stderrDigest": "sha256:a559f9d0440b9d1b34868445e48770ab9bb97ad8e824f2ea5f77994a12bb1a61",
+    "planProduced": false
+  }
+}
