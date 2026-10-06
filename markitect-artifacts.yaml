@@ -1336,3 +1336,17 @@ spec:
       owner: immutable-operating-model-proof-records
     - path: experiments/operating-model-proof/runs/c8-orders-owned-drift-control-02/control-plan.json
       owner: immutable-operating-model-proof-records
+    - path: docs/design/canonical-verifier-observation-coverage.md
+      owner: controller-verifier-observation-coverage
+    - path: experiments/operating-model-proof/runs/c5-orders-source-control-03/proposal-summary.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c5-orders-source-control-03/propose-event.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c8-orders-owned-drift-control-02/proposal-summary.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c8-orders-owned-drift-control-02/propose-event.json
+      owner: immutable-operating-model-proof-records
+    - path: internal/host/canonical_controller_coverage.go
+      owner: controller-verifier-observation-coverage
+    - path: internal/host/canonical_controller_coverage_test.go
+      owner: controller-verifier-observation-coverage
