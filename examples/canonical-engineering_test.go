@@ -351,7 +351,8 @@ func TestCanonicalDotNetAdapterObservesAndVerifiesProjectDependencies(t *testing
 }
 
 func TestCanonicalPolicyValueDrivesCheckContextAndHumanView(t *testing.T) {
-	root := canonicalEngineeringRoot(t)
+	root := filepath.Join(t.TempDir(), "canonical-engineering")
+	copyCanonicalExample(t, root)
 	modulePath := filepath.Join(root, "resources", "module.yaml")
 	domainPath := filepath.Join(root, "domains", "software.yaml")
 	moduleOriginal, err := os.ReadFile(modulePath)
@@ -362,8 +363,6 @@ func TestCanonicalPolicyValueDrivesCheckContextAndHumanView(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer os.WriteFile(modulePath, moduleOriginal, 0644)
-	defer os.WriteFile(domainPath, domainOriginal, 0644)
 
 	moduleForModuleDependency := strings.Replace(string(moduleOriginal), "kind: Core\n          name: platform-core", "kind: Module\n          name: payments", 1)
 	if moduleForModuleDependency == string(moduleOriginal) {
