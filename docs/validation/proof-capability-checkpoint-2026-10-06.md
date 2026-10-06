@@ -40,6 +40,8 @@ After integration, the source package passed in 77.383 seconds and focused Host/
 
 No `internal/core`, product schema, dependency-module or published release change is introduced by the implementation slices described here. Historical package/release meaning stays separate from source-only candidate behavior.
 
+The [446 Windows gate attempt](../../experiments/operating-model-proof/runs/windows-gates-4465186/receipt.json) failed: one fake Verifier still used the prior observation contract, and cumulative native Git startup later exhausted the unchanged 600-second package timeout. The fake response was corrected separately; identity-query batching and final whole-repository gates remain pending. A gate-harness record overwrite is explicitly retained as a limitation, not a passing receipt. Independent review also found path-based write operations vulnerable to an ancestor symlink/junction swap; anchored write containment is being corrected before further Apply proofs. Neither review nor a proposed fix is a passing negative control.
+
 ## Authority and measurement limits
 
 No provider retry may bypass an automatic review rejection. The exact C6, C12 and concurrency payload/destination questions remain pending. Konfyra's approved private scope grants neither external transmission nor candidate acceptance; owner review is still required.
