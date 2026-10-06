@@ -62,6 +62,14 @@ spec:
     - internal/host/canonical_scoped_write.go
     - internal/host/canonical_selected.go
     - internal/host/canonical_selected_test.go
+    - docs/design/canonical-reverse-inference.md
+    - examples/canonical-workflow
+    - internal/host/canonical_inference.go
+    - internal/host/canonical_inference_test.go
+    - internal/host/canonical_provider_projection.go
+    - internal/host/canonical_provider_projection_test.go
+    - internal/host/canonical_controller_verification.go
+    - internal/host/canonical_controller_verification_test.go
   tooling:
     - path: AGENTS.md
       owner: repository-agent-navigation
@@ -397,3 +405,71 @@ spec:
       owner: canonical-markdown-proposal-implementation
     - path: internal/modules/markdown/proposal_test.go
       owner: canonical-markdown-proposal-tests
+    - path: docs/design/canonical-reverse-inference.md
+      owner: canonical-reverse-inference-design
+    - path: examples/canonical-workflow/README.md
+      owner: canonical-workflow-proof-fixture
+    - path: examples/canonical-workflow/canonical.yaml
+      owner: canonical-workflow-proof-fixture
+    - path: examples/canonical-workflow/definitions/policy.gate-to-claude.yaml
+      owner: canonical-workflow-proof-fixture
+    - path: examples/canonical-workflow/definitions/policy.gate-to-codex.yaml
+      owner: canonical-workflow-proof-fixture
+    - path: examples/canonical-workflow/definitions/policy.gate-to-markdown.yaml
+      owner: canonical-workflow-proof-fixture
+    - path: examples/canonical-workflow/definitions/policy.process-to-claude.yaml
+      owner: canonical-workflow-proof-fixture
+    - path: examples/canonical-workflow/definitions/policy.process-to-codex.yaml
+      owner: canonical-workflow-proof-fixture
+    - path: examples/canonical-workflow/definitions/policy.process-to-markdown.yaml
+      owner: canonical-workflow-proof-fixture
+    - path: examples/canonical-workflow/definitions/policy.responsibility-to-claude.yaml
+      owner: canonical-workflow-proof-fixture
+    - path: examples/canonical-workflow/definitions/policy.responsibility-to-codex.yaml
+      owner: canonical-workflow-proof-fixture
+    - path: examples/canonical-workflow/definitions/policy.responsibility-to-markdown.yaml
+      owner: canonical-workflow-proof-fixture
+    - path: examples/canonical-workflow/definitions/policy.rule-to-claude.yaml
+      owner: canonical-workflow-proof-fixture
+    - path: examples/canonical-workflow/definitions/policy.rule-to-codex.yaml
+      owner: canonical-workflow-proof-fixture
+    - path: examples/canonical-workflow/definitions/policy.rule-to-markdown.yaml
+      owner: canonical-workflow-proof-fixture
+    - path: examples/canonical-workflow/definitions/projection.workflow-claude.yaml
+      owner: canonical-workflow-proof-fixture
+    - path: examples/canonical-workflow/definitions/projection.workflow-codex.yaml
+      owner: canonical-workflow-proof-fixture
+    - path: examples/canonical-workflow/definitions/projection.workflow-markdown.yaml
+      owner: canonical-workflow-proof-fixture
+    - path: examples/canonical-workflow/definitions/workflow.gate.yaml
+      owner: canonical-workflow-proof-fixture
+    - path: examples/canonical-workflow/definitions/workflow.process.yaml
+      owner: canonical-workflow-proof-fixture
+    - path: examples/canonical-workflow/definitions/workflow.responsibility.yaml
+      owner: canonical-workflow-proof-fixture
+    - path: examples/canonical-workflow/definitions/workflow.rule.yaml
+      owner: canonical-workflow-proof-fixture
+    - path: examples/canonical-workflow/modules/agentrules-claude-v1/module.yaml
+      owner: canonical-workflow-proof-fixture
+    - path: examples/canonical-workflow/modules/agentrules-codex-v1/module.yaml
+      owner: canonical-workflow-proof-fixture
+    - path: examples/canonical-workflow/modules/foundation-v1.1.0/module.yaml
+      owner: canonical-workflow-proof-fixture
+    - path: examples/canonical-workflow/modules/foundation-v1.1.0/schema.yaml
+      owner: canonical-workflow-proof-fixture
+    - path: examples/canonical-workflow/modules/workflow/module.yaml
+      owner: canonical-workflow-proof-fixture
+    - path: examples/canonical-workflow/modules/workflow/schema.yaml
+      owner: canonical-workflow-proof-fixture
+    - path: internal/host/canonical_controller_verification.go
+      owner: canonical-controller-verification
+    - path: internal/host/canonical_controller_verification_test.go
+      owner: canonical-controller-verification-tests
+    - path: internal/host/canonical_inference.go
+      owner: canonical-inference-implementation
+    - path: internal/host/canonical_inference_test.go
+      owner: canonical-inference-tests
+    - path: internal/host/canonical_provider_projection.go
+      owner: canonical-provider-projection
+    - path: internal/host/canonical_provider_projection_test.go
+      owner: canonical-provider-projection-tests
