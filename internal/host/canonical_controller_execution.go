@@ -407,11 +407,23 @@ func ApplyCanonicalController(root, configPath string, cfg CanonicalControllerCo
 		if len(names) == 0 {
 			continue
 		} // No artifact means no honest materialization record.
-		actual, observeErr := source.Load(root, "")
+		actual, observeErr := source.ObserveSelectedWorking(root, names)
 		if observeErr != nil {
-			return report, fmt.Errorf("artifacts remain as reported; post-write artifact observation failed: %w", observeErr)
+			return report, fmt.Errorf("artifacts remain as reported; selected post-write artifact observation failed: %w", observeErr)
 		}
-		record, err := buildCanonicalProjectionRecord(preparedByID[work.ProjectionID], fresh.observed, actual, names, report.Status)
+		if !equalCanonicalValue(actual.Identity, fresh.Plan.SourceScope.Repository) {
+			return report, errors.New("artifacts remain as reported; repository identity changed before selected artifact observation")
+		}
+		prepared := preparedByID[work.ProjectionID]
+		for _, name := range names {
+			if actual.Snapshot.Modes[name] != artifactMode(prepared.OutputModes, name) {
+				if writeErr == nil {
+					writeErr = fmt.Errorf("post-write artifact mode differs from reviewed mode for %s", name)
+				}
+				report.Status = records.StatePartialFailure
+			}
+		}
+		record, err := buildCanonicalProjectionRecord(prepared, fresh.observed, actual.Snapshot, names, report.Status)
 		if err != nil {
 			return report, fmt.Errorf("artifacts remain as reported; record construction failed: %w", err)
 		}

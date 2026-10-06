@@ -504,6 +504,14 @@ func TestCanonicalRecordBindsMaterializedModeRatherThanDriftedPreimage(t *testin
 		if len(record.Artifacts) != 1 || record.Artifacts[0].Mode != snapshot.RegularMode || record.Artifacts[0].Change != records.ChangeModified {
 			t.Fatalf("record retained drifted preimage mode: %+v", record)
 		}
+		prepared.OutputModes[name] = snapshot.ExecutableMode
+		if _, err := buildCanonicalProjectionRecord(prepared, observed, actual, []string{name}, records.StateMaterializedUnverified); err == nil {
+			t.Fatal("complete materialization accepted observed mode that differs from reviewed mode")
+		}
+		partial, err := buildCanonicalProjectionRecord(prepared, observed, actual, []string{name}, records.StatePartialFailure)
+		if err != nil || partial.State != records.StatePartialFailure || partial.Artifacts[0].Mode != snapshot.RegularMode {
+			t.Fatalf("partial record did not preserve actual observed mode: record=%+v err=%v", partial, err)
+		}
 		return
 	}
 	t.Fatal("fixture lacks Markdown Projection")

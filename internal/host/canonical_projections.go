@@ -575,6 +575,9 @@ func buildCanonicalProjectionRecord(p PreparedCanonicalProjection, observed, act
 		if mode != snapshot.RegularMode && mode != snapshot.ExecutableMode {
 			return records.ProjectionRecord{}, fmt.Errorf("post-write observation has unsupported mode %q for %q", mode, target)
 		}
+		if state != records.StatePartialFailure && mode != artifactMode(p.OutputModes, target) {
+			return records.ProjectionRecord{}, fmt.Errorf("post-write observation mode %q does not match reviewed mode %q for %q", mode, artifactMode(p.OutputModes, target), target)
+		}
 		change := records.ChangeCreated
 		if old, exists := observed.Files[target]; exists {
 			if bytes.Equal(old, content) && observed.Modes[target] == mode {
