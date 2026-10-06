@@ -98,8 +98,8 @@ func BindProjection(model core.Model, activation Activation, bindings []Projecti
 	}
 	moduleName := binding.Module
 	representation, ok := stringField(projection.Spec, "representation")
-	if !ok || (representation != "dotnet" && representation != "markdown" && representation != "codex" && representation != "claude") {
-		return ProjectionRequest{}, fmt.Errorf("Projection representation must be exactly dotnet, markdown, codex or claude")
+	if !ok || strings.TrimSpace(representation) == "" || strings.TrimSpace(representation) != representation {
+		return ProjectionRequest{}, fmt.Errorf("Projection representation must be a nonempty exact target identity")
 	}
 	registered, err := selectedProjector(activation, moduleName)
 	if err != nil {
