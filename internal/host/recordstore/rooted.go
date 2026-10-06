@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"sort"
 )
 
 // inspectDirectoryPath performs the path-based part of an open. Callers must
@@ -144,20 +145,37 @@ func makeDirectoryAt(parent *os.Root, name string, mode os.FileMode) (os.FileInf
 	return info, nil
 }
 
-func readDirAt(root *os.Root, name string) ([]os.DirEntry, error) {
+func readDirAt(root *os.Root, name string, maxEntries int) (_ []os.DirEntry, retErr error) {
+	if maxEntries < 0 {
+		return nil, errors.New("directory entry limit cannot be negative")
+	}
 	file, err := root.Open(name)
 	if err != nil {
 		return nil, err
 	}
-	entries, readErr := file.ReadDir(-1)
-	closeErr := file.Close()
-	if readErr != nil {
-		return nil, readErr
+	defer func() {
+		if closeErr := file.Close(); retErr == nil {
+			retErr = closeErr
+		}
+	}()
+	entries := make([]os.DirEntry, 0, min(maxEntries, 128))
+	for len(entries) <= maxEntries {
+		remaining := maxEntries + 1 - len(entries)
+		batchSize := min(remaining, 128)
+		batch, readErr := file.ReadDir(batchSize)
+		entries = append(entries, batch...)
+		if len(entries) > maxEntries {
+			return nil, fmt.Errorf("directory %s exceeds %d entries", name, maxEntries)
+		}
+		if errors.Is(readErr, io.EOF) {
+			sort.Slice(entries, func(i, j int) bool { return entries[i].Name() < entries[j].Name() })
+			return entries, nil
+		}
+		if readErr != nil {
+			return nil, readErr
+		}
 	}
-	if closeErr != nil {
-		return nil, closeErr
-	}
-	return entries, nil
+	return nil, fmt.Errorf("directory %s exceeds %d entries", name, maxEntries)
 }
 
 func readRegularAt(root *os.Root, name string, max int64) ([]byte, error) {

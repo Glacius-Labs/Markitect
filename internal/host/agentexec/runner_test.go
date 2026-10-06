@@ -31,6 +31,24 @@ func TestAgentexecHelperProcess(t *testing.T) {
 		fmt.Fprintln(os.Stderr, "bad request")
 		os.Exit(8)
 	}
+	if mode == "private-log-oversized" || mode == "private-log-empty" {
+		file, err := os.Create(os.Getenv("MARKITECT_AGENT_PRIVATE_LOG"))
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "private log create failed")
+			os.Exit(11)
+		}
+		if mode == "private-log-oversized" {
+			if err := file.Truncate(maxOutputBound + 1); err != nil {
+				_ = file.Close()
+				fmt.Fprintln(os.Stderr, "private log truncate failed")
+				os.Exit(12)
+			}
+		}
+		if err := file.Close(); err != nil {
+			fmt.Fprintln(os.Stderr, "private log close failed")
+			os.Exit(13)
+		}
+	}
 	if mode == "timeout" || mode == "overflow" {
 		if mode == "timeout" {
 			time.Sleep(5 * time.Second)
@@ -267,6 +285,76 @@ func TestRunRejectsDuplicateUnknownAndMalformedJSON(t *testing.T) {
 	opaqueCandidate := []byte(`{"apiVersion":"` + APIVersion + `","runId":"r","nonce":"n","role":"infer","inputDigest":"sha256:` + strings.Repeat("0", 64) + `","outcome":"incomplete","candidateFiles":[],"evidenceRefs":[],"verifierObservations":[],"candidateJson":{"Property":1,"property":2},"uncertainty":[]}`)
 	if err := strictDecode(opaqueCandidate, &response); err != nil {
 		t.Fatalf("case-distinct opaque candidate properties were rejected: %v", err)
+	}
+}
+
+func TestStrictDecodeRejectsInvalidUTF8Response(t *testing.T) {
+	data := []byte(`{"candidateFiles":[{"path":"candidate.txt","mode":"0644","content":"`)
+	data = append(data, 0xff)
+	data = append(data, []byte(`"}]}`)...)
+	var response Response
+	if err := strictDecode(data, &response); err == nil || !strings.Contains(err.Error(), "invalid UTF-8") {
+		t.Fatalf("invalid UTF-8 response was not rejected before decoding: %v", err)
+	}
+}
+
+func TestNormalizeRootsPreservesDistinctCaseSensitivePaths(t *testing.T) {
+	parent := t.TempDir()
+	upper := filepath.Join(parent, "Input")
+	lower := filepath.Join(parent, "input")
+	if err := os.Mkdir(upper, 0700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Mkdir(lower, 0700); err != nil {
+		if os.IsExist(err) {
+			t.Skip("filesystem is case-insensitive")
+		}
+		t.Fatal(err)
+	}
+	upperInfo, err := os.Stat(upper)
+	if err != nil {
+		t.Fatal(err)
+	}
+	lowerInfo, err := os.Stat(lower)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if os.SameFile(upperInfo, lowerInfo) {
+		t.Skip("filesystem aliases paths that differ only by case")
+	}
+
+	roots, err := normalizeRoots([]string{upper, lower})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(roots) != 2 {
+		t.Fatalf("distinct case-sensitive roots collapsed: %v", roots)
+	}
+}
+
+func TestRunRejectsOversizedPrivateLog(t *testing.T) {
+	options := testOptions(t)
+	t.Setenv("MARKITECT_AGENTEXEC_TEST_MODE", "private-log-oversized")
+	t.Setenv("MARKITECT_AGENTEXEC_TEST_ROLE", "")
+	result, err := Run(context.Background(), testConfig(), testRequest(RoleExecutor), options)
+	if err == nil || !strings.Contains(err.Error(), "private log could not be read") {
+		t.Fatalf("expected explicit private-log read failure, result=%#v err=%v", result, err)
+	}
+	if result.Receipt.PrivateLogDigest != "" {
+		t.Fatalf("unreadable private log unexpectedly has a digest: %#v", result.Receipt)
+	}
+}
+
+func TestRunDigestsPresentEmptyPrivateLog(t *testing.T) {
+	options := testOptions(t)
+	t.Setenv("MARKITECT_AGENTEXEC_TEST_MODE", "private-log-empty")
+	t.Setenv("MARKITECT_AGENTEXEC_TEST_ROLE", "")
+	result, err := Run(context.Background(), testConfig(), testRequest(RoleExecutor), options)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.Receipt.PrivateLogDigest != digest(nil) {
+		t.Fatalf("empty private log digest = %q, want %q", result.Receipt.PrivateLogDigest, digest(nil))
 	}
 }
 

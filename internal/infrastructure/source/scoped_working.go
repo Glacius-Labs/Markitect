@@ -117,6 +117,7 @@ func InventoryWorkingRoots(root string, exactPrefixes []string) (*WorkingRootInv
 
 	result := &WorkingRootInventory{Identity: identity, Prefixes: prefixes, Entries: []WorkingFileMetadata{}, MissingPrefixes: []string{}}
 	var total int64
+	visited := 0
 	for _, prefix := range prefixes {
 		info, present, err := scopedLstat(rootFS, prefix)
 		if err != nil {
@@ -145,7 +146,7 @@ func InventoryWorkingRoots(root string, exactPrefixes []string) (*WorkingRootInv
 		if err != nil {
 			return nil, err
 		}
-		if err := walkScopedMetadata(directory, prefix, &result.Entries, &total); err != nil {
+		if err := walkScopedMetadata(directory, prefix, &result.Entries, &total, &visited); err != nil {
 			_ = directory.Close()
 			return nil, err
 		}
@@ -248,7 +249,7 @@ func normalizeInventoryPrefixes(input []string) ([]string, error) {
 			return nil, fmt.Errorf("invalid inventory prefix %q: %w", input[i], err)
 		}
 		for _, component := range strings.Split(prefix, "/") {
-			if component == ".git" || strings.ContainsAny(component, "*?[]") {
+			if strings.EqualFold(component, ".git") || strings.ContainsAny(component, "*?[]") {
 				return nil, fmt.Errorf("inventory prefix %q contains a reserved or non-exact component", prefix)
 			}
 		}
@@ -346,27 +347,29 @@ func openScopedDirectory(parent *os.Root, repoPath string, expected os.FileInfo)
 	return current, nil
 }
 
-func walkScopedMetadata(directory *os.Root, globalPrefix string, entries *[]WorkingFileMetadata, total *int64) error {
+func walkScopedMetadata(directory *os.Root, globalPrefix string, entries *[]WorkingFileMetadata, total *int64, visited *int) error {
 	listing, err := directory.Open(".")
 	if err != nil {
 		return fmt.Errorf("read scoped directory %q: %w", globalPrefix, err)
 	}
-	children, err := listing.ReadDir(-1)
-	closeErr := listing.Close()
-	if err != nil {
-		return fmt.Errorf("read scoped directory %q: %w", globalPrefix, err)
-	}
-	if closeErr != nil {
-		return fmt.Errorf("close scoped directory %q: %w", globalPrefix, closeErr)
-	}
-	sort.Slice(children, func(i, j int) bool { return children[i].Name() < children[j].Name() })
-	for _, child := range children {
+	defer listing.Close()
+	for {
+		children, readErr := listing.ReadDir(256)
+		if readErr != nil && !errors.Is(readErr, io.EOF) {
+			return fmt.Errorf("read scoped directory %q: %w", globalPrefix, readErr)
+		}
+		sort.Slice(children, func(i, j int) bool { return children[i].Name() < children[j].Name() })
+		for _, child := range children {
+			*visited++
+			if *visited > DefaultMaxFiles {
+				return fmt.Errorf("working inventory exceeds entry-count limit of %d", DefaultMaxFiles)
+			}
 		name := child.Name()
 		repoPath := globalPrefix + "/" + name
 		if err := validateRepoPath(repoPath); err != nil {
 			return err
 		}
-		if name == ".git" {
+		if strings.EqualFold(name, ".git") {
 			return fmt.Errorf("working inventory path %q enters Git metadata", repoPath)
 		}
 		info, err := directory.Lstat(name)
@@ -381,7 +384,7 @@ func walkScopedMetadata(directory *os.Root, globalPrefix string, entries *[]Work
 			if err != nil {
 				return err
 			}
-			walkErr := walkScopedMetadata(nested, repoPath, entries, total)
+			walkErr := walkScopedMetadata(nested, repoPath, entries, total, visited)
 			closeErr := nested.Close()
 			if walkErr != nil {
 				return walkErr
@@ -399,6 +402,10 @@ func walkScopedMetadata(directory *os.Root, globalPrefix string, entries *[]Work
 		*total += entry.Size
 		if err := checkInventoryLimits(*entries, *total, repoPath); err != nil {
 			return err
+		}
+		}
+		if errors.Is(readErr, io.EOF) {
+			break
 		}
 	}
 	return nil

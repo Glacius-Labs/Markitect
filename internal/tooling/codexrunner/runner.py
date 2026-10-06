@@ -8,9 +8,11 @@ import hashlib
 import json
 import os
 import re
+import signal
 import subprocess
 import sys
 import threading
+import time
 from pathlib import Path
 from typing import Any
 
@@ -334,6 +336,34 @@ class EventCollector:
         return {"source": "provider-reported", **usage}
 
 
+def signal_process_tree(process: subprocess.Popen[bytes], force: bool = False) -> None:
+    """Signal the isolated Codex process and descendants, with a safe fallback."""
+    pid = getattr(process, "pid", None)
+    if pid is None:
+        try:
+            process.kill() if force else process.terminate()
+        except OSError:
+            pass
+        return
+    try:
+        if os.name == "nt":
+            subprocess.run(
+                ["taskkill", "/PID", str(pid), "/T", "/F"],
+                stdin=subprocess.DEVNULL,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                timeout=3,
+                check=False,
+            )
+        else:
+            os.killpg(pid, signal.SIGKILL if force else signal.SIGTERM)
+    except (OSError, subprocess.TimeoutExpired):
+        try:
+            process.kill() if force else process.terminate()
+        except OSError:
+            pass
+
+
 def drain_stdout(stream: Any, collector: EventCollector, process: subprocess.Popen[bytes], errors: list[BaseException]) -> None:
     try:
         while True:
@@ -342,11 +372,11 @@ def drain_stdout(stream: Any, collector: EventCollector, process: subprocess.Pop
                 return
             if len(line) > MAX_LOG_BYTES:
                 collector.overflow = True
-                process.terminate()
+                signal_process_tree(process)
                 return
             collector.record_line(line)
             if collector.overflow:
-                process.terminate()
+                signal_process_tree(process)
                 return
     except BaseException as exc:
         errors.append(exc)
@@ -369,13 +399,13 @@ def drain_stderr(
                 buffer.extend(chunk[:remaining])
                 overflow[0] = True
                 collector.record_stderr(chunk[:remaining])
-                process.terminate()
+                signal_process_tree(process)
                 return
             buffer.extend(chunk)
             collector.record_stderr(chunk)
             if collector.overflow:
                 overflow[0] = True
-                process.terminate()
+                signal_process_tree(process)
                 return
     except BaseException:
         return
@@ -463,6 +493,11 @@ def launch_codex(
         "-",
     ]
     collector = EventCollector(log_path)
+    launch_options: dict[str, Any] = {}
+    if os.name == "nt":
+        launch_options["creationflags"] = getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
+    else:
+        launch_options["start_new_session"] = True
     try:
         process = subprocess.Popen(
             argv,
@@ -471,6 +506,7 @@ def launch_codex(
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             shell=False,
+            **launch_options,
         )
     except OSError as exc:
         collector.close()
@@ -482,43 +518,49 @@ def launch_codex(
     stderr_thread = threading.Thread(target=drain_stderr, args=(process.stderr, stderr, process, stderr_overflow, collector), daemon=True)
     stdout_thread.start()
     stderr_thread.start()
-    prompt_submission_error: Exception | None = None
-    try:
-        written = process.stdin.write(prompt)
-        if written != len(prompt):
-            raise OSError("Codex accepted only part of the prompt")
-        process.stdin.flush()
-        process.stdin.close()
-    except (BrokenPipeError, OSError, ValueError) as exc:
-        prompt_submission_error = exc
+    prompt_submission_error: list[Exception | None] = [None]
+
+    def submit_prompt() -> None:
         try:
+            written = process.stdin.write(prompt)
+            if written != len(prompt):
+                raise OSError("Codex accepted only part of the prompt")
+            process.stdin.flush()
             process.stdin.close()
-        except (BrokenPipeError, OSError, ValueError):
-            pass
-        try:
-            process.terminate()
-        except OSError:
-            pass
-    else:
-        collector.record_prompt_submitted(invocation, prompt)
+            collector.record_prompt_submitted(invocation, prompt)
+        except (BrokenPipeError, OSError, ValueError) as exc:
+            prompt_submission_error[0] = exc
+            try:
+                process.stdin.close()
+            except (BrokenPipeError, OSError, ValueError):
+                pass
+            signal_process_tree(process)
+
+    deadline = time.monotonic() + args.timeout_seconds
+    prompt_thread = threading.Thread(target=submit_prompt, daemon=True)
+    prompt_thread.start()
     timed_out = False
     try:
-        return_code = process.wait(timeout=args.timeout_seconds)
+        return_code = process.wait(timeout=max(0.0, deadline - time.monotonic()))
     except subprocess.TimeoutExpired:
         timed_out = True
-        process.terminate()
+        signal_process_tree(process)
         try:
             return_code = process.wait(timeout=2)
         except subprocess.TimeoutExpired:
-            process.kill()
+            signal_process_tree(process, force=True)
             return_code = process.wait()
+    prompt_thread.join(timeout=2)
+    if prompt_thread.is_alive():
+        signal_process_tree(process, force=True)
+        prompt_thread.join(timeout=2)
     stdout_thread.join(timeout=3)
     stderr_thread.join(timeout=3)
     collector.close()
     if drain_errors:
         raise AdapterError("Codex private event log could not be retained")
-    if prompt_submission_error is not None:
-        raise AdapterError("Codex prompt could not be submitted") from prompt_submission_error
+    if prompt_submission_error[0] is not None and not timed_out:
+        raise AdapterError("Codex prompt could not be submitted") from prompt_submission_error[0]
     if timed_out:
         return incomplete_response(invocation, "Codex execution timed out.", collector)
     if collector.overflow or stderr_overflow[0]:

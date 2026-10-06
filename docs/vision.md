@@ -1,10 +1,14 @@
 # Product vision
 
-This is the canonical owner of Markitect's product thesis, intended division of responsibility and long-term operating model. [Architecture](architecture.md) owns technical boundaries, the [engineering constitution](engineering-constitution.md) owns kernel invariants, the [roadmap](implementation-plan.md) owns released/source/planned status, and [Measurement](measurement.md) owns how to test benefits. This vision does not authorize a feature, weaken an acceptance gate or establish a measured outcome.
+This is the canonical owner of Markitect's product thesis, intended division of responsibility and long-term operating model. [Architecture](architecture.md) owns technical boundaries, the [engineering constitution](engineering-constitution.md) owns kernel invariants, the [roadmap](implementation-plan.md) owns released/source/planned status, and [Operating methodology](operating-methodology.md) owns how the intended process works, and [Measurement](measurement.md) owns staged readiness and how to test benefits. This vision does not authorize a feature, weaken an acceptance gate or establish a measured outcome.
 
 ## The thesis
 
-> **Implementation is becoming cheap. Human attention is not.**
+> **Define the desired project world once. Reconcile its representations without losing intent.**
+
+The primary goal is quality and consistency during autonomous engineering: fewer forgotten obligations, overlooked consequences, conflicting representations and ignored rules. The project ontology expresses accepted concepts, relationships, purpose and constraints; the governed repository is its representation. A change to that world should drive impact, fanout, reconciliation and independent verification. The [operating methodology](operating-methodology.md) defines that cycle.
+
+Human attention is scarce. Better independent evidence and explicit delegation should reduce routine supervision while preserving human ownership of meaningful decisions. Saving tokens or elapsed time is a secondary possible benefit, not the primary purpose or a prerequisite for the idea to be useful.
 
 Markitect's working assumption is that AI implementation capacity will grow and become increasingly parallel, while human engineering judgment remains scarce. If humans must implement, synchronize and review every routine change, that attention becomes the bottleneck. Architecture matters more as implementation becomes cheaper: increasing output without explicit boundaries can also increase accidental coupling, inconsistent policy and architecture drift.
 
@@ -35,7 +39,7 @@ The desired authority model extends to code, documentation, agent guidance and a
 
 The product direction is an executable engineering-governance layer for autonomous software development. Markdown views, provider instructions, context, checks and adapters serve that purpose. Their existence or volume is not the product's success criterion.
 
-Markitect lets humans program the shape and rules of software development instead of repeatedly supervising each implementation detail. AI should implement the project's architecture rather than invent a competing architecture on every task. The desired benefit is more autonomous engineering work per unit of human attention, with architectural authority remaining human-owned.
+Markitect lets humans program the shape and rules of software development instead of repeatedly supervising each implementation detail. AI should implement the project's architecture rather than invent a competing architecture on every task. The desired benefit is faithful, higher-quality autonomous engineering with architectural authority remaining human-owned. More work per unit of human attention is a consequence to measure alongside quality, reliability and model upkeep.
 
 ## Human, Markitect and agent responsibilities
 
@@ -83,7 +87,7 @@ These invented numbers describe an aspiration, not a current dashboard or measur
 
 ## Feature decision filter
 
-Ask: **Does this reduce human execution or supervision while increasing useful agent autonomy inside explicit boundaries, without transferring architectural authority away from humans?**
+Ask: **Does this improve fidelity to accepted intent and reliable autonomous reconciliation inside explicit boundaries, with enough independent evidence to reduce routine human supervision?**
 
 A proposal should identify the human activity it aims to remove, its canonical owner, the agent's remaining freedom, the exact evidence/check boundary and the new authoring or maintenance cost. Deterministic checks, task context, impact, policy evolution, exceptions, discovery and reconciliation can support this goal, but each needs a concrete workflow and evaluation.
 
@@ -100,7 +104,7 @@ Reconsider proposals that introduce another manually synchronized truth owner, h
 
 The [real-code adoption pilot](validation/real-project-adoption-pilot.md), [AGENTS.md comparison](validation/agents-md-vs-markitect.md) and [parallel-wave consumer inventory](validation/parallel-wave-konfyra.md) are evidence, not marketing demonstrations. The comparison remains inconclusive: additional model/projection maintenance was observed, and no independent truth owner or concrete human review step was removed. Missing context and broad impact remain meaningful findings. The parallel wave proved bounded subsystem independence, not reduced human coordination cost.
 
-The central evaluation question is: **Can a small number of humans govern much more autonomous engineering work without losing architectural intent?** [Measurement](measurement.md#human-attention-and-delegated-work) defines future metrics and falsification. A materially simpler owner document plus architecture tests remains a valid alternative.
+The central evaluation question is: **Does ontology-driven reconciliation preserve intent and project quality more reliably than conventional agentic work, and thereby support less routine human supervision?** [Measurement](measurement.md#human-attention-and-delegated-work) defines future metrics and falsification. A materially simpler owner document plus architecture tests remains a valid alternative.
 
 ## Decisions Markitect deliberately leaves to people
 
