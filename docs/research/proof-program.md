@@ -10,7 +10,7 @@ The inventory exposed a specified stop condition: ordinary canonical reconciliat
 
 ## Frozen first checkpoint
 
-The witness reuses the exact-pinned public canonical-projection fixture. Two existing representations share three commerce Definitions; one .NET-only ProjectionPolicy changes. A unique, unrelated Billing note is outside all canonical inputs and target roots. Existing materialization records are supplied explicitly and remain **unverified**; no semantic convergence is inferred from them.
+The witness reuses the exact-pinned public canonical-projection fixture. Two existing representations share three commerce Definitions; one .NET-only ProjectionPolicy changes. A unique, unrelated Billing note is outside all canonical inputs and target roots. Harness-created synthetic materialization records with a placeholder plan digest are supplied explicitly and remain **unverified**; no semantic convergence is inferred from them.
 
 Expected narrow positive observation: one scoped materialization proposal, one unchanged representation, and separately reported conservative evidence invalidation. The CLI is read-only. Target files, candidate tasks and checks are not executed.
 

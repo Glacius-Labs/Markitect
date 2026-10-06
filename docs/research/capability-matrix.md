@@ -29,3 +29,5 @@ The [executed checkpoint](../../experiments/capability-proof/results.md) reprodu
 See the [implemented inventory](implemented-capability-inventory.md), the [proof program](proof-program.md), and the [experiment workspace](../../experiments/capability-proof/README.md) for details and frozen trial records. Readiness remains paused at C5; the proof phase is not complete. No broad capability claim, human-attention benefit, or semantic assurance is established here.
 
 
+
+The C5 acquisition stop witness was executed and returned FAIL. NOT RUN refers to the other fresh trials and the full C5 three-projection execution scenario. The supplied materialization records are synthetic harness specimens, not pre-existing operational history.

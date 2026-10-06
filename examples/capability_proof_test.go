@@ -37,7 +37,7 @@ func TestCapabilityProofGlobalAcquisitionStopWitness(t *testing.T) {
 	writeFile(t, root, proofUnrelatedPath, unrelated)
 	writeFile(t, root, "src/Commerce/Existing.cs", []byte("// Unverified operational specimen; no business correctness is claimed.\n"))
 	writeFile(t, root, "docs/represented/index.md", []byte("Unverified operational specimen.\n"))
-	proofGit(t, root, "init", "--initial-branch=codex/capability-proof")
+	proofGit(t, root, "init", "--template=", "--object-format=sha1", "--initial-branch=codex/capability-proof")
 	proofGit(t, root, "config", "core.autocrlf", "false")
 	baseRevision := proofCommit(t, root, "Freeze capability proof seed")
 
@@ -137,6 +137,12 @@ func TestCapabilityProofGlobalAcquisitionStopWitness(t *testing.T) {
 	relative, err := filepath.Rel(root, objectPath)
 	if err != nil || filepath.IsAbs(relative) || relative == ".." || strings.HasPrefix(relative, ".."+string(filepath.Separator)) {
 		t.Fatal("refusing object mutation outside temporary fixture")
+	}
+	for _, directory := range []string{filepath.Join(root, ".git"), filepath.Join(root, ".git", "objects"), filepath.Dir(objectPath)} {
+		info, err := os.Lstat(directory)
+		if err != nil || info.Mode()&os.ModeSymlink != 0 || !info.IsDir() {
+			t.Fatal("refusing aliased temporary Git object directory")
+		}
 	}
 	blob, err := os.ReadFile(objectPath)
 	if err != nil {
@@ -286,4 +292,40 @@ func proofGit(t *testing.T, root string, args ...string) string {
 func proofDigest(data []byte) string {
 	value := sha256.Sum256(data)
 	return "sha256:" + hex.EncodeToString(value[:])
+}
+
+// Retained raw evidence must remain byte-identical after Git checkout on either
+// supported platform. This is integrity, not a semantic capability result.
+func TestCapabilityProofEvidenceManifest(t *testing.T) {
+	root := filepath.Join(filepath.Dir(canonicalProjectionFixtureRoot(t)), "..", "experiments", "capability-proof")
+	data, err := os.ReadFile(filepath.Join(root, "file-manifest.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var manifest struct {
+		Version int
+		Files   []struct {
+			Path   string
+			SHA256 string
+			Bytes  int
+		}
+	}
+	if err := json.Unmarshal(data, &manifest); err != nil {
+		t.Fatal(err)
+	}
+	if manifest.Version != 1 || len(manifest.Files) == 0 {
+		t.Fatal("missing evidence manifest")
+	}
+	for _, entry := range manifest.Files {
+		if filepath.IsAbs(entry.Path) || strings.Contains(entry.Path, "..") || strings.Contains(entry.Path, "\\") {
+			t.Fatal("unsafe evidence path")
+		}
+		data, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(entry.Path)))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(data) != entry.Bytes || strings.TrimPrefix(proofDigest(data), "sha256:") != entry.SHA256 {
+			t.Fatalf("retained evidence bytes changed: %s", entry.Path)
+		}
+	}
 }
