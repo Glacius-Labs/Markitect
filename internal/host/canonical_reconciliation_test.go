@@ -17,10 +17,12 @@ import (
 // real Git commits and guarded writes. This test never mutates fixture files.
 func reconciliationFixture(t *testing.T) (*CanonicalSource, *snapshot.Snapshot) {
 	t.Helper()
-	root, err := filepath.Abs("../..")
+	repo, err := filepath.Abs("../..")
 	if err != nil {
 		t.Fatal(err)
 	}
+	root := t.TempDir()
+	copyScopedPublicFixture(t, repo, "examples/canonical-projection", root)
 	source, err := LoadCanonicalSource(root, "", "examples/canonical-projection/canonical.yaml", true)
 	if err != nil {
 		t.Fatal(err)
