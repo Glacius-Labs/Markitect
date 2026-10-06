@@ -14,7 +14,7 @@ import (
 )
 
 func printUsage(out io.Writer) {
-	fmt.Fprintln(out, "Markitect â€” desired engineering state and bounded reconciliation")
+	fmt.Fprintln(out, "Markitect: desired engineering state and bounded reconciliation")
 	fmt.Fprintln(out, "usage: markitect COMMAND [options]")
 	fmt.Fprintln(out, "  check, verify, inventory    Validate a project and its repository gates")
 	fmt.Fprintln(out, "  model, context, impact, find, explain, review    Inspect fixed semantic inputs")
