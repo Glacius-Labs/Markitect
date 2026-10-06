@@ -1275,3 +1275,5 @@ spec:
       owner: canonical-adoption-host
     - path: internal/host/cli/canonical_adoption_durable_test.go
       owner: canonical-adoption-host
+    - path: experiments/operating-model-proof/runs/c4-current-host-propose-wt-01/direct-current-host-observation.json
+      owner: immutable-operating-model-proof-records
