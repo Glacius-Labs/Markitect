@@ -178,7 +178,7 @@ func ProposeCanonicalEvidenceRefresh(root, sourceRevision, evidenceRevision, con
 	bindings := make([]canonicalEvidenceRefreshItemBinding, 0, len(priors))
 	requests := make([]canonical.ProjectionRequest, 0, len(priors))
 	for _, prior := range priors {
-		request, facts, finding := canonicalEvidenceRefreshBinding(root, sourceRevision, fixed, selected.Snapshot, prior)
+		request, facts, finding := canonicalEvidenceRefreshBinding(root, sourceRevision, fixed, selected.Snapshot, prior, cfg.ReferenceDepth)
 		if finding != nil {
 			proposal.Findings = append(proposal.Findings, *finding)
 			continue
@@ -316,7 +316,7 @@ func canonicalEvidenceRefreshHeadMatches(root, sourceRevision string) error {
 	return nil
 }
 
-func canonicalEvidenceRefreshBinding(root, sourceRevision string, fixed *CanonicalSource, evidence *snapshot.Snapshot, prior records.ProjectionRecord) (canonical.ProjectionRequest, []records.ArtifactFact, *CanonicalEvidenceRefreshFinding) {
+func canonicalEvidenceRefreshBinding(root, sourceRevision string, fixed *CanonicalSource, evidence *snapshot.Snapshot, prior records.ProjectionRecord, referenceDepth int) (canonical.ProjectionRequest, []records.ArtifactFact, *CanonicalEvidenceRefreshFinding) {
 	finding := func(code, message string) (canonical.ProjectionRequest, []records.ArtifactFact, *CanonicalEvidenceRefreshFinding) {
 		return canonical.ProjectionRequest{}, nil, &CanonicalEvidenceRefreshFinding{ProjectionID: prior.ProjectionID, Code: code, Message: message}
 	}
@@ -380,8 +380,8 @@ func canonicalEvidenceRefreshBinding(root, sourceRevision string, fixed *Canonic
 	if !sameRefreshSelectedContract(oldRequest, newRequest) {
 		return finding("selected-contract.changed", "selected Projection, Definitions, Policies, Schemas, edges, Module or Projector changed; rematerialization or escalation is required")
 	}
-	if !sameRefreshExternalDependencies(old.Model, fixed.Model, oldRequest.Definitions, oldRequest.ExternalEdges, newRequest.ExternalEdges) {
-		return finding("external-dependency.changed", "a directly referenced external Definition or its schema changed; refresh requires unchanged dependency semantics")
+	if !sameRefreshCanonicalContext(old.Model, fixed.Model, oldRequest, newRequest, referenceDepth) {
+		return finding("related-context.changed", "a bounded declared reference-context Definition or schema changed; refresh requires unchanged supplied canonical context")
 	}
 	if prior.Module.Name != oldRequest.ModulePin.Name || prior.Module.Version != oldRequest.ModulePin.Version || prior.Module.Digest != oldRequest.ModulePin.Digest ||
 		prior.Projector.ID != oldRequest.Projector.ID || prior.Projector.Version != oldRequest.Projector.Version ||
@@ -402,54 +402,22 @@ func canonicalEvidenceRefreshBinding(root, sourceRevision string, fixed *Canonic
 	return newRequest, facts, nil
 }
 
-func sameRefreshExternalDependencies(oldModel, currentModel core.Model, selected []core.Definition, oldEdges, currentEdges []core.Edge) bool {
-	if !equalCanonicalValue(oldEdges, currentEdges) {
+func sameRefreshCanonicalContext(oldModel, currentModel core.Model, oldRequest, currentRequest canonical.ProjectionRequest, referenceDepth int) bool {
+	oldContext, err := BuildCanonicalAgentContext(oldModel, oldRequest, referenceDepth)
+	if err != nil {
 		return false
 	}
-	selectedIDs := map[string]bool{}
-	for _, definition := range selected {
-		selectedIDs[definition.Identity().Key()] = true
+	currentContext, err := BuildCanonicalAgentContext(currentModel, currentRequest, referenceDepth)
+	if err != nil {
+		return false
 	}
-	oldDefinitions, currentDefinitions := map[string]core.Definition{}, map[string]core.Definition{}
-	for _, definition := range oldModel.Definitions {
-		oldDefinitions[definition.Identity().Key()] = definition
-	}
-	for _, definition := range currentModel.Definitions {
-		currentDefinitions[definition.Identity().Key()] = definition
-	}
-	oldSchemas, currentSchemas := map[string]core.Schema{}, map[string]core.Schema{}
-	for _, schema := range oldModel.Schemas {
-		oldSchemas[schema.APIVersion] = schema
-	}
-	for _, schema := range currentModel.Schemas {
-		currentSchemas[schema.APIVersion] = schema
-	}
-	externalIDs := map[string]bool{}
-	for _, edge := range oldEdges {
-		var external string
-		switch {
-		case selectedIDs[edge.From] && !selectedIDs[edge.To]:
-			external = edge.To
-		case selectedIDs[edge.To] && !selectedIDs[edge.From]:
-			external = edge.From
-		default:
-			return false
-		}
-		externalIDs[external] = true
-	}
-	for id := range externalIDs {
-		oldDefinition, oldOK := oldDefinitions[id]
-		currentDefinition, currentOK := currentDefinitions[id]
-		if !oldOK || !currentOK || !equalCanonicalValue(oldDefinition, currentDefinition) {
-			return false
-		}
-		oldSchema, oldOK := oldSchemas[oldDefinition.APIVersion]
-		currentSchema, currentOK := currentSchemas[currentDefinition.APIVersion]
-		if !oldOK || !currentOK || !equalCanonicalValue(oldSchema, currentSchema) {
-			return false
-		}
-	}
-	return true
+	return sameRefreshRelatedContext(oldContext, currentContext)
+}
+
+func sameRefreshRelatedContext(oldContext, currentContext CanonicalAgentContext) bool {
+	return equalCanonicalValue(oldContext.RelatedDefinitions, currentContext.RelatedDefinitions) &&
+		equalCanonicalValue(oldContext.Schemas, currentContext.Schemas) &&
+		equalCanonicalValue(oldContext.Inclusions, currentContext.Inclusions)
 }
 
 func sameRefreshSelectedContract(old, current canonical.ProjectionRequest) bool {

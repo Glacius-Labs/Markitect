@@ -2,6 +2,8 @@ package host
 
 import (
 	"bytes"
+	"context"
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -11,11 +13,52 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/internal/core"
 	"github.com/Glacius-Labs/Markitect/internal/core/snapshot"
+	"github.com/Glacius-Labs/Markitect/internal/host/agentexec"
 	"github.com/Glacius-Labs/Markitect/internal/host/canonical"
 	"github.com/Glacius-Labs/Markitect/internal/host/records"
 	"github.com/Glacius-Labs/Markitect/internal/host/recordstore"
 	"github.com/Glacius-Labs/Markitect/internal/infrastructure/source"
 )
+
+const canonicalEvidenceRefreshVerifierEnv = "MARKITECT_EVIDENCE_REFRESH_TEST_VERIFIER"
+
+func TestCanonicalEvidenceRefreshFakeVerifier(t *testing.T) {
+	if os.Getenv(canonicalEvidenceRefreshVerifierEnv) != "1" {
+		return
+	}
+	var invocation agentexec.Invocation
+	if err := json.NewDecoder(os.Stdin).Decode(&invocation); err != nil || invocation.Request.Role != agentexec.RoleVerifier {
+		os.Exit(41)
+	}
+	refs := map[string]bool{}
+	for _, id := range invocation.Request.ScopeIDs {
+		refs[id] = true
+	}
+	for _, id := range invocation.Request.PolicyIDs {
+		refs[id] = true
+	}
+	for _, artifact := range invocation.Request.Artifacts {
+		refs[artifact.Path] = true
+	}
+	evidenceRefs := make([]string, 0, len(refs))
+	observations := make([]agentexec.Observation, 0, len(refs))
+	for ref := range refs {
+		evidenceRefs = append(evidenceRefs, ref)
+		observations = append(observations, agentexec.Observation{Subject: ref, Outcome: agentexec.OutcomePassed, Detail: "fresh test verifier inspected the supplied evidence"})
+	}
+	sort.Strings(evidenceRefs)
+	sort.Slice(observations, func(i, j int) bool { return observations[i].Subject < observations[j].Subject })
+	response := agentexec.Response{
+		APIVersion: agentexec.APIVersion, RunID: invocation.RunID, Nonce: invocation.Nonce,
+		Role: invocation.Request.Role, InputDigest: invocation.InputDigest, Outcome: agentexec.OutcomePassed,
+		CandidateFiles: []agentexec.CandidateFile{}, EvidenceRefs: evidenceRefs,
+		VerifierObservations: observations, Uncertainty: []string{},
+	}
+	if err := json.NewEncoder(os.Stdout).Encode(response); err != nil {
+		os.Exit(42)
+	}
+	os.Exit(0)
+}
 
 func TestSameRefreshSelectedContractNormalizesOnlyGlobalFreshnessFields(t *testing.T) {
 	base := canonical.ProjectionRequest{
@@ -70,25 +113,35 @@ func TestCanonicalEvidenceRefreshCheckInputsAreProjectionScoped(t *testing.T) {
 	}
 }
 
-func TestSameRefreshExternalDependenciesRejectsChangedRelatedDefinitionOrSchema(t *testing.T) {
+func TestSameRefreshRelatedContextRejectsChangedDepthTwoGrandchild(t *testing.T) {
 	selected := core.Definition{APIVersion: "example/v1", Kind: "Parent", Metadata: core.Metadata{Name: "parent", Namespace: "billing"}}
-	child := core.Definition{APIVersion: "example/v1", Kind: "Child", Metadata: core.Metadata{Name: "invoice", Namespace: "billing"}, Purpose: "stable"}
-	edge := core.Edge{From: selected.Identity().Key(), To: child.Identity().Key(), Property: "related"}
-	model := core.Model{Definitions: []core.Definition{selected, child}, Schemas: []core.Schema{{APIVersion: "example/v1", Purpose: "stable schema"}}}
-	if !sameRefreshExternalDependencies(model, model, []core.Definition{selected}, []core.Edge{edge}, []core.Edge{edge}) {
-		t.Fatal("unchanged direct external dependency should remain refreshable")
+	child := core.Definition{APIVersion: "example/v1", Kind: "Child", Metadata: core.Metadata{Name: "invoice", Namespace: "billing"}, Purpose: "stable child"}
+	grandchild := core.Definition{APIVersion: "example/v1", Kind: "Rule", Metadata: core.Metadata{Name: "retention", Namespace: "billing"}, Purpose: "stable grandchild"}
+	first := core.Edge{From: selected.Identity().Key(), To: child.Identity().Key(), Property: "related"}
+	second := core.Edge{From: child.Identity().Key(), To: grandchild.Identity().Key(), Property: "governedBy"}
+	oldContext := CanonicalAgentContext{
+		Definitions:        []core.Definition{selected},
+		RelatedDefinitions: []core.Definition{child, grandchild},
+		Schemas:            []core.Schema{{APIVersion: "example/v1", Purpose: "stable schema"}},
+		Inclusions: []CanonicalContextInclusion{
+			{Identity: child.Identity().Key(), Reason: "declared-outgoing-reference-context-only", Via: &first},
+			{Identity: grandchild.Identity().Key(), Reason: "declared-outgoing-reference-context-only", Via: &second},
+		},
 	}
-	changedChild := model
-	changedChild.Definitions = append([]core.Definition(nil), model.Definitions...)
-	changedChild.Definitions[1].Purpose = "changed child meaning"
-	if sameRefreshExternalDependencies(model, changedChild, []core.Definition{selected}, []core.Edge{edge}, []core.Edge{edge}) {
-		t.Fatal("changed external child was ignored because the edge id stayed fixed")
+	if !sameRefreshRelatedContext(oldContext, oldContext) {
+		t.Fatal("identical depth-two supplied context should remain refreshable")
 	}
-	changedSchema := model
-	changedSchema.Schemas = append([]core.Schema(nil), model.Schemas...)
-	changedSchema.Schemas[0].Purpose = "changed schema meaning"
-	if sameRefreshExternalDependencies(model, changedSchema, []core.Definition{selected}, []core.Edge{edge}, []core.Edge{edge}) {
-		t.Fatal("changed external schema was ignored")
+	changedGrandchild := oldContext
+	changedGrandchild.RelatedDefinitions = append([]core.Definition(nil), oldContext.RelatedDefinitions...)
+	changedGrandchild.RelatedDefinitions[1].Purpose = "changed grandchild meaning"
+	if sameRefreshRelatedContext(oldContext, changedGrandchild) {
+		t.Fatal("changed depth-two grandchild was ignored because the intermediate reference stayed fixed")
+	}
+	changedSchema := oldContext
+	changedSchema.Schemas = append([]core.Schema(nil), oldContext.Schemas...)
+	changedSchema.Schemas[0].Purpose = "changed related Kind contract"
+	if sameRefreshRelatedContext(oldContext, changedSchema) {
+		t.Fatal("changed schema in the supplied bounded context was ignored")
 	}
 }
 
@@ -107,7 +160,77 @@ func TestCanonicalEvidenceRefreshRequiresCurrentSourceHead(t *testing.T) {
 }
 
 func TestCanonicalEvidenceRefreshRetainsArtifactsAndRequiresFreshReview(t *testing.T) {
-	root, oldRevision, fixed := scopedCanonicalFixture(t)
+	root, _, _ := scopedCanonicalFixture(t)
+	projectionFile := "examples/canonical-projection/definitions/commerce.markdown-projection.yaml"
+	projectionBytes, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(projectionFile)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	projectionText := string(projectionBytes)
+	for _, reference := range []string{
+		"      - apiVersion: commerce.example.org/v1\n        kind: Handler\n        namespace: commerce\n        name: create-order-handler\n",
+		"      - apiVersion: commerce.example.org/v1\n        kind: EffectAxis\n        namespace: commerce\n        name: create-order-effects\n",
+	} {
+		projectionText = strings.Replace(projectionText, reference, "", 1)
+	}
+	if err := os.WriteFile(filepath.Join(root, filepath.FromSlash(projectionFile)), []byte(projectionText), 0644); err != nil {
+		t.Fatal(err)
+	}
+	schemaFile := "examples/canonical-projection/modules/commerce/schema.yaml"
+	schemaBytes, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(schemaFile)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	schemaText := strings.Replace(string(schemaBytes), "  Handler:\n    purpose: Describes one application component responsible for handling a use case.\n    properties: {}\n", "  Handler:\n    purpose: Describes one application component responsible for handling a use case.\n    properties:\n      effectAxis:\n        purpose: Identifies the effect contract referenced by this handler.\n        type: reference\n        minCount: 1\n        maxCount: 1\n        target:\n          apiVersion: commerce.example.org/v1\n          kind: EffectAxis\n", 1)
+	if schemaText == string(schemaBytes) {
+		t.Fatal("depth-two fixture schema did not change")
+	}
+	if err := os.WriteFile(filepath.Join(root, filepath.FromSlash(schemaFile)), []byte(schemaText), 0644); err != nil {
+		t.Fatal(err)
+	}
+	manifest, err := os.ReadFile(filepath.Join(root, "examples/canonical-projection/modules/commerce/module.yaml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	moduleDigest, err := canonical.DigestPackage(canonical.ModulePackage{ManifestBytes: manifest, Files: map[string][]byte{"schema.yaml": []byte(schemaText)}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	configFile := "examples/canonical-projection/canonical.yaml"
+	configBytes, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(configFile)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	configText := strings.Replace(string(configBytes), "sha256:586af5b08ee218c51f43bfed7e083a293d60b2674bcfad3b14354164faa0668f", moduleDigest, 1)
+	configText = strings.Replace(configText, "checks:\n  - name: canonical-projection-fixture\n    run: [go, run, examples/canonical-projection/evidence/check.go]\n", "checks:\n  - name: canonical-projection-fixture\n    run: [go, version]\n", 1)
+	if configText == string(configBytes) {
+		t.Fatal("depth-two fixture did not update the exact commerce Module pin")
+	}
+	if err := os.WriteFile(filepath.Join(root, filepath.FromSlash(configFile)), []byte(configText), 0644); err != nil {
+		t.Fatal(err)
+	}
+	handlerFile := "examples/canonical-projection/definitions/create-order.handler.yaml"
+	handlerBytes, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(handlerFile)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	handlerText := strings.Replace(string(handlerBytes), "spec: {}\n", "spec:\n  effectAxis:\n    apiVersion: commerce.example.org/v1\n    kind: EffectAxis\n    namespace: commerce\n    name: create-order-effects\n", 1)
+	if handlerText == string(handlerBytes) {
+		t.Fatal("depth-two fixture Handler did not change")
+	}
+	if err := os.WriteFile(filepath.Join(root, filepath.FromSlash(handlerFile)), []byte(handlerText), 0644); err != nil {
+		t.Fatal(err)
+	}
+	scopedTestGit(t, root, "add", ".")
+	scopedTestGit(t, root, "commit", "-m", "bound Markdown context through a declared grandchild")
+	oldRevision := scopedTestGit(t, root, "rev-parse", "HEAD")
+	fixed, err := LoadSelectedCanonicalSource(root, oldRevision, "examples/canonical-projection/canonical.yaml", true)
+	if err != nil {
+		t.Fatalf("load depth-two source fixture: %v", err)
+	}
+	if len(fixed.Diagnostics) != 0 {
+		t.Fatalf("load depth-two source fixture diagnostics: %v", fixed.Diagnostics)
+	}
 	projectionID := core.DefinitionIdentity{APIVersion: "markitect.foundation/v1", Kind: "Projection", Namespace: "commerce", Name: "application-markdown"}
 	working := &snapshot.Snapshot{ID: "working", Provisional: true, Files: cloneByteMap(fixed.Snapshot.Files), Modes: cloneStringMap(fixed.Snapshot.Modes)}
 	toolDigest := sha256Prefix(sha256Hex([]byte("refresh-integration-test")))
@@ -233,11 +356,40 @@ func TestCanonicalEvidenceRefreshRetainsArtifactsAndRequiresFreshReview(t *testi
 	}
 	scopedTestGit(t, root, "add", ".")
 	scopedTestGit(t, root, "commit", "-m", "change unrelated canonical Projection")
-	currentRevision := scopedTestGit(t, root, "rev-parse", "HEAD")
-	cfg := CanonicalControllerConfig{
-		APIVersion: CanonicalControllerAPIVersion, RecordStore: storeDir, PrivateLogs: filepath.Join(external, "logs"),
+	effectFile := "examples/canonical-projection/definitions/create-order.effect-axis.yaml"
+	effectPath := filepath.Join(root, filepath.FromSlash(effectFile))
+	effectOriginal, err := os.ReadFile(effectPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	effectChanged := strings.Replace(string(effectOriginal), "Keeps externally visible order effects behind the application boundary.", "Changed depth-two grandchild semantics.", 1)
+	if effectChanged == string(effectOriginal) {
+		t.Fatal("depth-two grandchild fixture did not change")
+	}
+	if err := os.WriteFile(effectPath, []byte(effectChanged), 0644); err != nil {
+		t.Fatal(err)
+	}
+	scopedTestGit(t, root, "add", ".")
+	scopedTestGit(t, root, "commit", "-m", "change bounded depth-two grandchild")
+	depthTwoRevision := scopedTestGit(t, root, "rev-parse", "HEAD")
+	blocked, err := ProposeCanonicalEvidenceRefresh(root, depthTwoRevision, depthTwoRevision, "examples/canonical-projection/canonical.yaml", CanonicalControllerConfig{
+		APIVersion: CanonicalControllerAPIVersion, RecordStore: storeDir, PrivateLogs: filepath.Join(external, "logs"), ReferenceDepth: 2,
 		Executor: CanonicalRunnerConfig{Command: "go", ProviderVersion: "test", TimeoutSeconds: 10},
 		Verifier: CanonicalRunnerConfig{Command: "go", ProviderVersion: "test", TimeoutSeconds: 10},
+	}, []string{projectionID.Key()})
+	if err != nil || blocked.Status != "blocked" || len(blocked.Findings) != 1 || blocked.Findings[0].Code != "related-context.changed" {
+		t.Fatalf("changed depth-two grandchild was not conservatively blocked: proposal=%+v err=%v", blocked, err)
+	}
+	if err := os.WriteFile(effectPath, effectOriginal, 0644); err != nil {
+		t.Fatal(err)
+	}
+	scopedTestGit(t, root, "add", ".")
+	scopedTestGit(t, root, "commit", "-m", "restore retained depth-two context")
+	currentRevision := scopedTestGit(t, root, "rev-parse", "HEAD")
+	cfg := CanonicalControllerConfig{
+		APIVersion: CanonicalControllerAPIVersion, RecordStore: storeDir, PrivateLogs: filepath.Join(external, "logs"), ReferenceDepth: 2,
+		Executor: CanonicalRunnerConfig{Command: "go", ProviderVersion: "test", TimeoutSeconds: 10},
+		Verifier: CanonicalRunnerConfig{Command: os.Args[0], Args: []string{"-test.run=^TestCanonicalEvidenceRefreshFakeVerifier$"}, Model: "refresh-test-verifier", ProviderVersion: "test", TimeoutSeconds: 10, MaxStdoutBytes: 1 << 20, MaxStderrBytes: 1 << 20},
 	}
 	configPath := "examples/canonical-projection/canonical.yaml"
 	proposal, err := ProposeCanonicalEvidenceRefresh(root, currentRevision, currentRevision, configPath, cfg, []string{projectionID.Key()})
@@ -278,6 +430,9 @@ func TestCanonicalEvidenceRefreshRetainsArtifactsAndRequiresFreshReview(t *testi
 	if err != nil || proposal.Status != "planned" {
 		t.Fatalf("fresh preview after HEAD advance: %s %v", proposal.Status, err)
 	}
+	if !equalStringSets(proposal.UnselectedStaleProjectionIDs, []string{otherID}) {
+		t.Fatalf("partial refresh lost unselected stale record notice: %#v", proposal.UnselectedStaleProjectionIDs)
+	}
 
 	// A ledger append after review invalidates the preview even if selected bytes stay fixed.
 	noise, err := records.NewProjectionRecord(records.ProjectionRecord{
@@ -301,9 +456,20 @@ func TestCanonicalEvidenceRefreshRetainsArtifactsAndRequiresFreshReview(t *testi
 	if err != nil || proposal.Status != "planned" {
 		t.Fatalf("fresh preview after unrelated ledger append: %s %v", proposal.Status, err)
 	}
+	beforeApplyHead := scopedTestGit(t, root, "rev-parse", "HEAD")
+	beforeApplyIndex := scopedTestGit(t, root, "diff", "--cached", "--binary")
+	beforeApplyStatus := scopedTestGit(t, root, "status", "--porcelain")
+	beforeTargets, err := source.ObserveSelectedWorking(root, paths)
+	if err != nil {
+		t.Fatal(err)
+	}
 	apply, err := ApplyCanonicalEvidenceRefresh(root, configPath, cfg, proposal, proposal.Digest, true)
 	if err != nil || apply.Status != "refreshed" || len(apply.Records) != 1 {
 		t.Fatalf("Apply retained evidence refresh: report=%+v err=%v", apply, err)
+	}
+	afterTargets, err := source.ObserveSelectedWorking(root, paths)
+	if err != nil || scopedTestGit(t, root, "rev-parse", "HEAD") != beforeApplyHead || scopedTestGit(t, root, "diff", "--cached", "--binary") != beforeApplyIndex || scopedTestGit(t, root, "status", "--porcelain") != beforeApplyStatus || afterTargets.Snapshot.Digest() != beforeTargets.Snapshot.Digest() {
+		t.Fatalf("retained refresh mutated source or target evidence: err=%v", err)
 	}
 	state, err = store.Read()
 	if err != nil {
@@ -327,6 +493,29 @@ func TestCanonicalEvidenceRefreshRetainsArtifactsAndRequiresFreshReview(t *testi
 		if record.ProjectionID == projectionID.Key() && (record.ID == prior.ID || record.State != records.StateMaterializedUnverified) {
 			t.Fatalf("old PASS was promoted or old record left active: %#v", record)
 		}
+	}
+	if _, err := VerifyCanonicalController(context.Background(), root, currentRevision, currentRevision, configPath, cfg, false); err == nil {
+		t.Fatal("strict Verify accepted the remaining active stale scope")
+	}
+	newRecord := apply.Records[0]
+	state, err = store.SelectActive(state.Head, []string{newRecord.ID})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv(canonicalEvidenceRefreshVerifierEnv, "1")
+	verification, err := VerifyCanonicalController(context.Background(), root, currentRevision, currentRevision, configPath, cfg, true)
+	if err != nil || verification.Outcome != records.OutcomePassed || len(verification.Results) != 1 {
+		t.Fatalf("fresh Verify after retained refresh: outcome=%s results=%#v err=%v", verification.Outcome, verification.Results, err)
+	}
+	if verification.Results[0].RecordID != newRecord.ID || verification.Results[0].RecordID == prior.ID {
+		t.Fatalf("fresh verification did not bind the new retained record: %#v", verification.Results[0])
+	}
+	state, err = store.Read()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(state.Verifications) != 2 || state.Verifications[0].RecordID != prior.ID || state.Verifications[1].RecordID != newRecord.ID {
+		t.Fatalf("fresh verification changed old result or failed to append a new result: %#v", state.Verifications)
 	}
 	for _, name := range paths {
 		data, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(name)))
