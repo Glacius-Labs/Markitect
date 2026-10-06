@@ -9,7 +9,7 @@ spec:
     - internal/host/artifactcli
     - internal/host/artifact_coverage.go
     - internal/host/artifact_coverage_test.go
-    - internal/modules/artifactcoverage
+    - internal/host/compat/v0_13/consumers/artifactcoverage
     - .agents
     - .claude
     - docs/markitect
@@ -18,6 +18,32 @@ spec:
     - markitect.yaml
     - markitect-artifacts.yaml
     - docs/markitect-first.md
+    - internal/core
+    - internal/host/canonical
+    - internal/host/records
+    - internal/host/assurance
+    - internal/host/projectionengine
+    - internal/modules/markdown
+    - internal/modules/dotnet
+    - internal/host/canonical_load.go
+    - internal/host/canonical_load_test.go
+    - internal/host/canonical_projections.go
+    - internal/host/canonical_projections_test.go
+    - internal/host/projection_primitives_test.go
+    - internal/host/cli/canonical.go
+    - internal/host/cli/canonical_test.go
+    - examples/canonical-projection
+    - internal/host/canonical_impact.go
+    - internal/host/canonical_impact_test.go
+    - internal/host/canonical_reconciliation.go
+    - internal/host/canonical_reconciliation_test.go
+    - internal/host/canonical_verification.go
+    - examples/canonical-projection_test.go
+    - internal/host/canonical_verification_test.go
+    - docs/design/brownfield-representation-adoption.md
+    - docs/strategy/sources/canonical-reset/markitect-coordinator-steer-latest-architecture-clarifications.md
+    - internal/host/canonical_adoption.go
+    - internal/host/canonical_adoption_test.go
   tooling:
     - path: AGENTS.md
       owner: repository-agent-navigation
@@ -49,9 +75,133 @@ spec:
       owner: embedded-authoring-host-tests
     - path: internal/host/embedded/project.yaml
       owner: embedded-project-configuration
-    - path: internal/modules/artifactcoverage/README.md
+    - path: internal/host/compat/v0_13/consumers/artifactcoverage/README.md
       owner: artifactcoverage-module-documentation
-    - path: internal/modules/artifactcoverage/artifactcoverage.go
+    - path: internal/host/compat/v0_13/consumers/artifactcoverage/artifactcoverage.go
       owner: artifactcoverage-module-implementation
-    - path: internal/modules/artifactcoverage/artifactcoverage_test.go
+    - path: internal/host/compat/v0_13/consumers/artifactcoverage/artifactcoverage_test.go
       owner: artifactcoverage-module-tests
+    - path: internal/core/compile.go
+      owner: canonical-core-implementation
+    - path: internal/core/compile_test.go
+      owner: canonical-core-implementation
+    - path: internal/core/README.md
+      owner: canonical-core-implementation
+    - path: internal/core/snapshot/snapshot.go
+      owner: canonical-core-implementation
+    - path: internal/core/snapshot/snapshot_test.go
+      owner: canonical-core-implementation
+    - path: internal/core/types.go
+      owner: canonical-core-implementation
+    - path: internal/host/canonical/binding.go
+      owner: canonical-implementation
+    - path: internal/host/canonical/binding_test.go
+      owner: canonical-implementation
+    - path: internal/host/canonical/catalog.go
+      owner: canonical-implementation
+    - path: internal/host/canonical/catalog_test.go
+      owner: canonical-implementation
+    - path: internal/host/canonical/codec.go
+      owner: canonical-implementation
+    - path: internal/host/canonical/codec_test.go
+      owner: canonical-implementation
+    - path: internal/host/records/README.md
+      owner: canonical-records-implementation
+    - path: internal/host/records/records.go
+      owner: canonical-records-implementation
+    - path: internal/host/records/records_test.go
+      owner: canonical-records-implementation
+    - path: internal/host/assurance/assurance.go
+      owner: canonical-assurance-implementation
+    - path: internal/host/assurance/assurance_test.go
+      owner: canonical-assurance-implementation
+    - path: internal/host/assurance/README.md
+      owner: canonical-assurance-implementation
+    - path: internal/host/projectionengine/engine.go
+      owner: canonical-projectionengine-implementation
+    - path: internal/host/projectionengine/engine_test.go
+      owner: canonical-projectionengine-implementation
+    - path: internal/host/projectionengine/README.md
+      owner: canonical-projectionengine-implementation
+    - path: internal/modules/markdown/markdown.go
+      owner: canonical-markdown-implementation
+    - path: internal/modules/markdown/markdown_test.go
+      owner: canonical-markdown-implementation
+    - path: internal/modules/markdown/README.md
+      owner: canonical-markdown-implementation
+    - path: internal/modules/dotnet/dotnet.go
+      owner: canonical-dotnet-implementation
+    - path: internal/modules/dotnet/dotnet_test.go
+      owner: canonical-dotnet-implementation
+    - path: internal/modules/dotnet/README.md
+      owner: canonical-dotnet-implementation
+    - path: internal/host/canonical_load.go
+      owner: canonical-load-implementation
+    - path: internal/host/canonical_load_test.go
+      owner: canonical-load-test-implementation
+    - path: internal/host/canonical_projections.go
+      owner: canonical-projections-implementation
+    - path: internal/host/canonical_projections_test.go
+      owner: canonical-projections-test-implementation
+    - path: internal/host/projection_primitives_test.go
+      owner: canonical-projection-primitives-test-implementation
+    - path: internal/host/cli/canonical.go
+      owner: canonical-implementation
+    - path: internal/host/cli/canonical_test.go
+      owner: canonical-test-implementation
+    - path: examples/canonical-projection/binding-notes.md
+      owner: canonical-projection-fixture
+    - path: examples/canonical-projection/canonical.yaml
+      owner: canonical-projection-fixture
+    - path: examples/canonical-projection/definitions/commerce.markdown-projection.yaml
+      owner: canonical-projection-fixture
+    - path: examples/canonical-projection/definitions/commerce.projection.yaml
+      owner: canonical-projection-fixture
+    - path: examples/canonical-projection/definitions/create-order.effect-axis.yaml
+      owner: canonical-projection-fixture
+    - path: examples/canonical-projection/definitions/create-order.handler.yaml
+      owner: canonical-projection-fixture
+    - path: examples/canonical-projection/definitions/create-order.projection-policy.yaml
+      owner: canonical-projection-fixture
+    - path: examples/canonical-projection/definitions/create-order.use-case.yaml
+      owner: canonical-projection-fixture
+    - path: examples/canonical-projection/definitions/effect-axis.projection-policy.yaml
+      owner: canonical-projection-fixture
+    - path: examples/canonical-projection/definitions/handler.projection-policy.yaml
+      owner: canonical-projection-fixture
+    - path: examples/canonical-projection/modules/commerce/module.yaml
+      owner: canonical-projection-fixture
+    - path: examples/canonical-projection/modules/commerce/schema.yaml
+      owner: canonical-projection-fixture
+    - path: examples/canonical-projection/modules/dotnet/module.yaml
+      owner: canonical-projection-fixture
+    - path: examples/canonical-projection/modules/foundation/module.yaml
+      owner: canonical-projection-fixture
+    - path: examples/canonical-projection/modules/foundation/schema.yaml
+      owner: canonical-projection-fixture
+    - path: examples/canonical-projection/modules/markdown/module.yaml
+      owner: canonical-projection-fixture
+    - path: internal/host/canonical_impact.go
+      owner: canonical-projection-lifecycle
+    - path: internal/host/canonical_impact_test.go
+      owner: canonical-projection-lifecycle
+    - path: internal/host/canonical_reconciliation.go
+      owner: canonical-projection-lifecycle
+    - path: internal/host/canonical_reconciliation_test.go
+      owner: canonical-projection-lifecycle
+    - path: internal/host/canonical_verification.go
+      owner: canonical-projection-lifecycle
+    - path: examples/canonical-projection_test.go
+      owner: canonical-projection-lifecycle
+    - path: examples/canonical-projection/evidence/check.go
+      owner: canonical-projection-lifecycle
+    - path: internal/host/canonical_verification_test.go
+      owner: canonical-projection-lifecycle
+    - path: docs/design/brownfield-representation-adoption.md
+      owner: canonical-adoption-design
+    - path: docs/strategy/sources/canonical-reset/markitect-coordinator-steer-latest-architecture-clarifications.md
+      owner: owner-supplied-architecture-direction
+    - path: internal/host/canonical_adoption.go
+      owner: canonical-projection-lifecycle
+    - path: internal/host/canonical_adoption_test.go
+      owner: canonical-projection-lifecycle

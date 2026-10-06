@@ -2,6 +2,36 @@
 
 This guide records the published v0.13.0 contract alongside its v0.12.0 and v0.11.0 baselines. The v0.9.1 resource model is historical; v0.10.0 is the generic canonical-model baseline. v0.11.0 adds reusable architecture contracts, structured PolicyResults, explicit exceptions, and authoring workflows. v0.12.0 adds the bounded `same-target` assertion. v0.13.0 adds read-only policy-failure analysis, bounded selective handoff, the provider-neutral Markitect-first workflow and managed-artifact accounting. Consult [GitHub Releases](https://github.com/Glacius-Labs/Markitect/releases) for available binaries. The [engineering constitution](engineering-constitution.md) explains scope and limits; the [roadmap](implementation-plan.md) owns verified coverage and known limits.
 
+Unreleased source additionally exposes the separate [canonical intent and reconciliation alpha](canonical-projections.md). It uses Schema/Definition inputs and runtime projection bindings; it does not reinterpret published Project/Domain commands.
+
+### Canonical brownfield adoption (unreleased source)
+
+For a repository that already contains a valid representation, canonical adoption records that exact state as a managed baseline without regenerating its files. It is an explicit owner-reviewed operation, not inference authority: the source revision supplies the canonical model, the target revision supplies the existing artifacts, and the selection report names the exact artifact paths, the current active record set (explicitly `[]` when empty), and an owner review reference. The plan also lists unselected files within the target surface as unmatched; adoption does not claim ownership of them.
+
+Create a bounded JSON selection, for example:
+
+```json
+{
+  "artifacts": ["src/Commerce/CreateOrderHandler.cs", "src/Commerce/EffectAxis.cs"],
+  "activeRecords": [],
+  "reviewReference": "architecture-review-2026-10-06"
+}
+```
+
+Plan and inspect the exact record proposal first. Both revisions must be full commit IDs; `--base` selects the canonical source and `--revision` selects the fixed target tree. The identity flags select one exact Projection Definition from that source:
+
+```powershell
+markitect canonical --action adopt-plan --repo . --config examples/canonical-projection/canonical.yaml --base CANONICAL_SOURCE_COMMIT --revision EXISTING_TARGET_COMMIT --api-version markitect.foundation/v1 --kind Projection --namespace commerce --name application-dotnet --report C:/review/dotnet-selection.json
+```
+
+Review the returned `plan.planDigest`, then approve that exact proposal by supplying its digest:
+
+```powershell
+markitect canonical --action adopt --repo . --config examples/canonical-projection/canonical.yaml --base CANONICAL_SOURCE_COMMIT --revision EXISTING_TARGET_COMMIT --api-version markitect.foundation/v1 --kind Projection --namespace commerce --name application-dotnet --report C:/review/dotnet-selection.json --expect REVIEWED_PLAN_DIGEST
+```
+
+`adopt` is read-only. It rechecks the source, target bytes and modes, selected artifacts, review reference, runtime Module binding and declared fixed checks. It emits a Projection Record only when those checks pass; failed or incomplete checks emit verification evidence without a Record. The approved digest becomes stale if any bound input changes. No target files or record ledger are written by these commands, and `reviewReference` is a supplied traceability value rather than authenticated reviewer identity.
+
 <a id="selective-adoption-preparation-and-copy-me-unreleased-source"></a>
 ## Selective adoption preparation and Copy Me (v0.13.0)
 

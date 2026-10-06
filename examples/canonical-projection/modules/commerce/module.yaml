@@ -1,0 +1,12 @@
+apiVersion: markitect.example.org/module/v1alpha1
+name: commerce-example
+version: 1.0.0
+type: schema
+purpose: Provides an independent commerce application Schema for the Projection example.
+requires:
+  core: "1"
+  modules: []
+provides:
+  schemas:
+    - schema.yaml
+  projectors: []

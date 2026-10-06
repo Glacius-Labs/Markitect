@@ -5,10 +5,10 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/Glacius-Labs/Markitect/internal/core"
+	"github.com/Glacius-Labs/Markitect/internal/host/compat/v0_13/consumers/agentrules"
+	"github.com/Glacius-Labs/Markitect/internal/host/compat/v0_13/consumers/markdown"
+	core "github.com/Glacius-Labs/Markitect/internal/host/compat/v0_13/kernel"
 	"github.com/Glacius-Labs/Markitect/internal/host/inputs"
-	"github.com/Glacius-Labs/Markitect/internal/modules/agentrules"
-	"github.com/Glacius-Labs/Markitect/internal/modules/markdown"
 )
 
 // GenerateOutputs composes independent projections from one normalized model.

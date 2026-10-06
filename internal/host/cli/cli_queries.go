@@ -3,8 +3,8 @@ package cli
 import (
 	"fmt"
 
-	"github.com/Glacius-Labs/Markitect/internal/core"
 	"github.com/Glacius-Labs/Markitect/internal/host"
+	core "github.com/Glacius-Labs/Markitect/internal/host/compat/v0_13/kernel"
 	"github.com/Glacius-Labs/Markitect/internal/infrastructure/source"
 )
 

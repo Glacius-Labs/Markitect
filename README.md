@@ -25,6 +25,8 @@ The [Markitect-first](docs/markitect-first.md) workflow is the repository's dura
 
 Current source implements [bounded local projection contracts](docs/projections.md) for explicitly governed representations, with digest-reviewed candidate Apply and immutable Verify. The [synthetic validation](docs/validation/projection-first-reconciliation.md) records two fresh candidate materializations, controlled drift repair and retained negative findings. This is unreleased source behavior; published v0.13.0 remains unchanged, and no whole-repository controller or general benefit is claimed.
 
+The current [canonical projection reset](docs/design/canonical-projection-reset.md) is a source-only candidate: Schema Modules extend canonical language, Projection Modules provide target tools, and explicit Projections select what is represented while runtime configuration selects the implementation. [Alpha usage](docs/canonical-projections.md) starts with canonical intent, impact and read-only reconciliation planning. All targets follow an Executor -> candidate -> Verifier model; deterministic renderers remain useful tools. The structural compiler and scoped evidence do not prove arbitrary implementation semantics or agent independence. Published v0.13.0 remains unchanged.
+
 ## Why Markitect?
 
 The product starts from a working assumption: implementation capacity will grow faster than human attention. Architecture and policy should guide that work without requiring people to rediscover, synchronize and supervise every routine detail. The vision treats this as a hypothesis to test, not a measured productivity claim.

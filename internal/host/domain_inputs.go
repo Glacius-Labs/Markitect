@@ -6,9 +6,9 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/Glacius-Labs/Markitect/internal/core"
 	"github.com/Glacius-Labs/Markitect/internal/host/authoring"
 	"github.com/Glacius-Labs/Markitect/internal/host/authoring/contentpackage"
+	core "github.com/Glacius-Labs/Markitect/internal/host/compat/v0_13/kernel"
 )
 
 // DomainInput identifies one explicitly activated compiler definition. Imported

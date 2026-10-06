@@ -6,10 +6,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/internal/core"
 	"github.com/Glacius-Labs/Markitect/internal/core/snapshot"
 	"github.com/Glacius-Labs/Markitect/internal/host/authoring"
-	"github.com/Glacius-Labs/Markitect/internal/modules/projections"
+	"github.com/Glacius-Labs/Markitect/internal/host/compat/v0_13/consumers/projections"
+	core "github.com/Glacius-Labs/Markitect/internal/host/compat/v0_13/kernel"
 )
 
 func representationFixture(t *testing.T) (string, *Project) {

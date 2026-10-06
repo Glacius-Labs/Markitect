@@ -97,6 +97,12 @@ jobs:
           print("Projection fixture source=" + os.environ["GITHUB_SHA"] + " revision=" + revision, flush=True)
           subprocess.run(["go", "run", "./cmd/markitect", "projection", "--repo", str(root), "--action", "verify", "--config", "projections.config", "--coverage", "markitect-artifacts.yaml", "--revision", revision], check=True)
 
+      - name: Compile fixed canonical source alpha
+        run: go run ./cmd/markitect canonical --repo . --config examples/canonical-projection/canonical.yaml --action model --revision ${{ github.sha }}
+
+      - name: Replay canonical candidate, records, verification and drift
+        run: go test ./examples -run '^TestCanonicalProjectionBoundCandidateApplyVerifyAndRepair$' -count=1
+
       - name: Check generated schemas
         run: go run ./cmd/markitect schema --repo .
 

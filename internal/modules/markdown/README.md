@@ -1,22 +1,10 @@
-# Markdown module
+# Markdown projector
 
-This module renders a bounded Markdown projection from `core.SemanticModel`, the
-host-supplied Markdown configuration, and the fixed snapshot's exact file bytes.
-It does not load or reinterpret authoring YAML, perform filesystem writes, or
-consume another provider's generated outputs as semantic input. `ViewPaths` and
-`DomainPaths` expose individual path groups; `OutputPaths` returns every output
-path and owner without rendering bytes or inspecting prose. Hosts can reserve
-that complete projection boundary before input classification.
+This Core-only implementation package renders an explicitly selected canonical
+scope into one exact Markdown target path. It presents Definition and Kind
+purposes, Property contracts, and normalized values in deterministic order.
+It has no Markdown filesystem access and does not infer ontology-specific
+sections or meaning.
 
-Local resource views retain their source-relative navigation behavior and
-custom-domain contract views serialize only the normalized Core schema and
-policy results. The host remains responsible for selecting the target and
-materializing returned bytes under the normal managed-output ownership rules.
-
-`Validate` applies explicitly configured functional-claim and documentation
-router checks to normalized resource data and the same fixed file map. The Host
-selects those settings from the Project model and remains responsible for
-snapshot acquisition and reporting returned diagnostics.
-
-Pinned package versions used in dependency text arrive only through explicit
-`Config.Packages` values supplied by the Host.
+The returned bytes are a projection candidate. The Host owns path authorization,
+Plan/Apply/Verify, artifact provenance, and any claim that checks passed.

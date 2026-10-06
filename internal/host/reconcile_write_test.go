@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Glacius-Labs/Markitect/internal/modules/agentrules"
+	"github.com/Glacius-Labs/Markitect/internal/host/compat/v0_13/consumers/agentrules"
 )
 
 func TestApplyProjectionNoopDoesNotWrite(t *testing.T) {

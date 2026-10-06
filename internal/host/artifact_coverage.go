@@ -3,15 +3,15 @@ package host
 import (
 	"errors"
 	"fmt"
-	"github.com/Glacius-Labs/Markitect/internal/core"
+	core "github.com/Glacius-Labs/Markitect/internal/host/compat/v0_13/kernel"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
 
 	"github.com/Glacius-Labs/Markitect/internal/core/snapshot"
+	"github.com/Glacius-Labs/Markitect/internal/host/compat/v0_13/consumers/artifactcoverage"
 	"github.com/Glacius-Labs/Markitect/internal/infrastructure/source"
-	"github.com/Glacius-Labs/Markitect/internal/modules/artifactcoverage"
 )
 
 // CheckArtifacts composes artifact ownership from one working-tree snapshot,

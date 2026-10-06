@@ -4,8 +4,8 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/host/authoring"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/internal/core"
 	"github.com/Glacius-Labs/Markitect/internal/core/snapshot"
+	core "github.com/Glacius-Labs/Markitect/internal/host/compat/v0_13/kernel"
 )
 
 func reviewResources(withRule, omitUnrelated, configureCodex bool) []*authoring.Resource {

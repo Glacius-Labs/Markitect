@@ -2,7 +2,7 @@
 // transient typed view; Core is the sole normalized semantic value.
 package authoring
 
-import "github.com/Glacius-Labs/Markitect/internal/core"
+import "github.com/Glacius-Labs/Markitect/internal/host/compat/v0_13/kernel"
 
 type Ref = core.Ref
 type Relationship = core.Relationship

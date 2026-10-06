@@ -6,8 +6,8 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/Glacius-Labs/Markitect/internal/core"
 	"github.com/Glacius-Labs/Markitect/internal/host/authoring"
+	core "github.com/Glacius-Labs/Markitect/internal/host/compat/v0_13/kernel"
 )
 
 func parseDomainDefinitions(manifest *authoring.Resource, files map[string][]byte) (*core.Registry, map[string]core.DomainDefinition, error) {

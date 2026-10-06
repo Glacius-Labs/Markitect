@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/Glacius-Labs/Markitect/internal/core/snapshot"
 	"io"
 	"os"
 	"path/filepath"
@@ -12,9 +13,9 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/Glacius-Labs/Markitect/internal/host/compat/v0_13/consumers/artifactcoverage"
+	"github.com/Glacius-Labs/Markitect/internal/host/compat/v0_13/consumers/projections"
 	"github.com/Glacius-Labs/Markitect/internal/infrastructure/source"
-	"github.com/Glacius-Labs/Markitect/internal/modules/artifactcoverage"
-	"github.com/Glacius-Labs/Markitect/internal/modules/projections"
 	"go.yaml.in/yaml/v3"
 )
 
@@ -563,11 +564,22 @@ func ApplyRepresentations(root string, p *Project, configPath, coveragePath, too
 // Writes reuse Host path, branch, lock and atomic-file safety. Local multi-file
 // apply is deliberately not a transaction; exact partial progress is returned.
 func writeRepresentationContents(root string, p *Project, contents map[string][]byte) ([]string, error) {
-	if !p.Snapshot.Provisional {
-		return nil, errors.New("projection writes require the provisional isolated working tree")
+	if p == nil || p.Snapshot == nil {
+		return nil, errors.New("a source snapshot is required")
 	}
 	if len(contents) == 0 {
 		return verifyNoopWrite(root, p)
+	}
+	return WriteProjectionContents(root, p.Snapshot, contents)
+}
+
+// WriteProjectionContents is the Host's guarded writer for a previously validated
+// plan. Callers must bind exact candidate bytes, canonical intent and owned paths
+// before calling; this low-level function does not grant projection authority.
+// No rollback is implied: every successfully written path is returned on failure.
+func WriteProjectionContents(root string, captured *snapshot.Snapshot, contents map[string][]byte) ([]string, error) {
+	if captured == nil || !captured.Provisional {
+		return nil, errors.New("projection writes require the provisional isolated working tree")
 	}
 	branch := ""
 	var err error
@@ -586,8 +598,11 @@ func writeRepresentationContents(root string, p *Project, contents map[string][]
 	if err != nil {
 		return nil, err
 	}
-	if fresh.Digest() != p.Snapshot.Digest() {
+	if fresh.Digest() != captured.Digest() {
 		return nil, errors.New("source changed since capture")
+	}
+	if len(contents) == 0 {
+		return nil, nil
 	}
 	for _, name := range names {
 		if _, err := safeDestination(root, name); err != nil {
@@ -618,7 +633,7 @@ func writeRepresentationContents(root string, p *Project, contents map[string][]
 		if err != nil {
 			return written, err
 		}
-		observed, exists := p.Snapshot.Files[name]
+		observed, exists := captured.Files[name]
 		current, readErr := os.ReadFile(dest)
 		if exists && (readErr != nil || !bytes.Equal(observed, current)) {
 			return written, fmt.Errorf("target changed during apply: %s", name)

@@ -7,16 +7,17 @@ For coordinated parallel work, read the [development guide](docs/development/REA
 | Path | Final responsibility |
 |---|---|
 | `cmd/...` | Thin executable entrypoints. Every CLI imports Host only and delegates to Host runtime functions. |
-| `internal/core` | Generic normalized resources, `Resource.Data`, empty registry, finite graph/policy semantics, IR and opaque snapshot values. No authoring source, Project/package activation or provider semantics. |
-| `internal/host` | Transient source specifications and codecs; Project/Package/Area/provider authoring and source normalization; generic exception provenance supply; content-package validation, embedded resources, inputs, root composition, model/context/impact, process execution and controlled writes. |
-| `internal/modules/adoption` | Private selected capture/review handoff. |
-| `internal/modules/agentrules` | Private Codex/Claude adapters and provider-owned configuration. |
-| `internal/modules/markdown` | Markdown projection, literal consistency and local router checks. |
-| `internal/modules/artifactcoverage` | Pure managed-artifact ownership checks over Host-supplied inventory. |
-| `internal/modules/projections` | Pure bounded source/target/materializer contracts and evidence binding; Host owns execution and writes. |
-| `internal/modules/githooks`, `internal/modules/pipelines` | Bounded configured hook/pipeline artifact ownership and check linkage. |
-| `internal/modules/dotnet` | Explicitly mapped captured project-reference declarations and literal XML checks. |
-| `internal/modules/github`, `internal/modules/azuredevops` | Offline consumers of explicitly mapped captured repository metadata; no live provider Apply. |
+| internal/core | Source-only vNext structural compiler for Schema, Kind, Property and Definition with pure normalized IR; no legacy policy, authoring source, activation, provider or execution semantics. |
+| internal/host | Host frontend and composition; installable manifest activation; compatibility use cases; explicit Core input selection; model/context/impact; request construction, process/check execution, operational persistence and controlled writes. |
+| internal/modules/adoption | New selected capture/review implementation helpers; Go package only, not an installable Module manifest. |
+| internal/host/compat/v0_13/consumers | Isolated historical v0.13.0 consumers with unchanged compatibility semantics; new capability packages remain separate. |
+| internal/host/compat/v0_13/consumers/agentrules | Historical v0.13 Codex/Claude consumers; compatibility only. |
+| internal/modules/markdown | New source-only Markdown capability implementation; not itself an installable manifest. |
+| internal/host/compat/v0_13/consumers/artifactcoverage | Historical v0.13 artifact accounting consumer; compatibility only. |
+| internal/host/records | Pure operational ProjectionRecord, VerificationResult and ownership-index validation/encoding; Host owns filesystem persistence, execution and safe writes. |
+| internal/host/compat/v0_13/consumers/githooks and consumers/pipelines | Historical v0.13 bounded artifact checks; compatibility only. |
+| internal/modules/dotnet | New source-only explicitly mapped .NET capability implementation; not itself an installable manifest. |
+| internal/host/compat/v0_13/consumers/github and consumers/azuredevops | Historical v0.13 offline consumers; compatibility only. |
 | `internal/infrastructure/source` | Git/working-tree acquisition, process hardening and materialization into snapshot values. |
 | `internal/tooling/architecture`, `internal/tooling/release`, `internal/tooling/publish`, `internal/tooling/licenses` | Mechanical import gate, immutable distribution/publication operations, and canonical notices. |
 | `integration` | Standalone public bootstrap/distribution Tooling; copied into installed packages, with no Markitect package imports. |
@@ -24,7 +25,7 @@ For coordinated parallel work, read the [development guide](docs/development/REA
 | `packaging/winget` | Versioned portable package manifests derived from verified releases. |
 | `docs` | Product architecture, usage, decisions and canonical roadmap. |
 
-The [architecture overview](docs/architecture.md#go-ownership-and-final-dependency-model) and [Module guide](docs/development/modules.md) define these boundaries. The published v0.13.0 release remains unchanged by this source architecture; exact implementation and gate evidence belong to the coordinator's migration report.
+The [architecture overview](docs/architecture.md#go-ownership-and-final-dependency-model) and [Module guide](docs/development/modules.md) define these boundaries. The accepted canonical reset is a source-only alpha direction: published v0.13.0 remains unchanged, historical kernel and consumers retain compatibility semantics, and the new minimal Core is not a released contract. The [vision](docs/vision.md) owns the product thesis; exact implementation and gate evidence belong to the coordinator's migration report.
 
 Snapshot semantics and the boundary between generic values and Git operations are documented in [Source snapshots](docs/source-snapshots.md). Keep Git resolution and process hardening in `internal/infrastructure/source`; keep deterministic comparison over resolved values in `internal/core/snapshot`. Repository branch, index, and worktree checks belong to the write use cases that require them. Do not add alternate production providers or a provider framework without a concrete consumer.
 
@@ -87,3 +88,11 @@ Markitect is licensed under [Apache-2.0](LICENSE); the root license is included 
 [Operations and releases](docs/operations.md) describes the supported source and publication gates. The [roadmap](docs/implementation-plan.md) owns current source status; [GitHub Releases](https://github.com/Glacius-Labs/Markitect/releases) lists available distributions. The [production assessment](docs/production-assessment.md) records dated release evidence. A source version does not imply acceptance by any adopting project.
 
 If a restricted local environment refuses the default Go build cache, use an explicit cache outside snapshot inputs, for example `GOCACHE` at `.cache/go-build` or an external workspace. Do not place a growing cache at an admitted source path and assume `.gitignore` filters working-tree snapshots: Markitect uses its own documented source exclusions. This is development-environment setup, not a change to snapshot semantics or the published CLI's permissions.
+
+## Canonical reset development boundary
+
+The source-only vNext candidate adds a minimal internal/core structural compiler for Schema, Kind, Property and Definition with pure normalized IR. The historical v0.13.0 Domain/policy kernel and its consumers remain supported behind Host compatibility; do not report them as obsolete or let new Definitions silently lower into their IR.
+
+Installable extension Modules have exactly one type: schema-only or projection-only. Go capability packages under internal/modules are implementation units, not installable Module manifests. Canonical Projection intent selects spec.representation (initially dotnet or markdown), exact scope, target and policies; it does not hard-bind an implementation. Runtime source configuration projectionBindings pairs the full Projection identity in projection with the exact installed Module name in module, which resolves through the installed version pin and one unique entrypoint. A compatible binding change leaves canonical semantic digest unchanged but stales request-bound plans and records. Reconcile planning follows canonical delta → impact → affected scopes/work proposals; it does not ask users to enumerate implementation files. Preserve fixed-input, stale-plan, exact-path, reviewed-candidate and guarded-apply protections. Conflicts stop before execution, and unknown scope broadens review rather than becoming a no-op.
+
+Operational ProjectionRecords and separate VerificationResults record materialization and bounded check facts; neither is canonical intent or proof of authorization, verifier independence, semantic sufficiency, whole-repository coverage or human acceptance. The reset design and [shared contracts](docs/development/shared-contracts.md#canonical-reset-candidate-contracts) own their source-only meanings. Do not make release or adopter-acceptance claims from a passing local protocol test.

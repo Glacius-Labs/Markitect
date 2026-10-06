@@ -1,9 +1,11 @@
-# .NET evidence Module
+# .NET projector
 
-`Run(Request)` consumes Core semantic IR, decoded project-file mappings, exact captured bytes/errors, and this Module's typed prior observation/plan. `CapturePaths(Config)` returns only configured project-file paths for Host acquisition. The Module performs no filesystem access or process execution.
+This Core-only implementation package evaluates candidate .cs and .csproj
+bytes against the exact paths and project-owned Kind guidance supplied by the
+Host. It does not generate C#, map Kind names to .NET conventions, interpret
+canonical YAML, or access the filesystem.
 
-Host owns strict adapter-request decoding, exact-path regular-file/size controls and stdout/exit behavior; the thin command delegates to that runtime. Module-owned configuration and typed evidence stay here, outside Core. Observe/Plan/Verify report mapped MSBuild ProjectReference declarations and bounded literal XML checks. Apply is unsupported.
-
-This proves correspondence to captured declarations, not runtime dependency architecture, business semantics or absence of alternative dependency mechanisms. Unmapped files are not implicitly scanned. Unit fixtures live in `module_test.go`; Host runtime and executable examples exercise the public command protocol.
-
-See [canonical engineering](../../../examples/canonical-engineering/README.md), [architecture](../../../docs/architecture.md) and [Module laws](../../../docs/development/modules.md). Public protocol/Domain meaning does not change with the internal package move.
+A returned result has status candidate-unverified: its paths and bytes passed
+this package's bounded shape checks only. The Host must run the declared checks
+and record their evidence. Missing Kind guidance is an explicit escalation, and
+an empty candidate is incomplete rather than a converged empty result.

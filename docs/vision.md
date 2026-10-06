@@ -16,20 +16,22 @@ Humans should spend more attention defining goals, concepts, architecture, invar
 
 ## Product definition
 
-**Markitect is the desired-state model for the software engineering intent a project deliberately governs.** Human owners decide what should exist and why; they represent selected, structured decisions canonically in Markitect. Explicit adapters and AI agents materialize those decisions into selected repository representations, which are then observed and checked against bounded evidence.
+**Markitect is the canonical desired-state model of an engineering system.** Human owners define durable, provider-independent meaning when it is needed: goals, rules, processes, responsibilities, invariants and other concepts that still make sense if today's providers and file formats disappear. This is a test for canonical ownership, not a requirement to add every such concept to a shared foundation. Schema Modules make selected intent expressible; Projection Modules supply target expertise and tools. Explicit desired representations and project-owned ProjectionPolicies connect meaning to target representations, while project configuration resolves installed target capabilities separately from that intent. Provider Skills, Workflows, agent definitions, human documentation and generated enforcement are normally representations of this meaning.
 
-The target flow is:
+**Users change canonical intent. Markitect reconciles representations.** The target flow is:
 
 ```text
 human-owned engineering intent
-    → canonical Markitect desired state for selected decisions
-    → explicit projection contracts and plans
-    → deterministic renderers or AI materialization
-    → observed repository representations
-    → bounded verification and reconciliation
+    -> canonical Markitect Definitions and purpose
+    -> compile, compare intent and derive explicit impact
+    -> plan reconciliation of desired representations
+    -> Executor Agent using resolved target tools
+    -> candidate representation
+    -> independent Verifier with bounded evidence
+    -> pass, repair or decision escalation
 ```
 
-This is a scoped authority model, not a claim that every repository artifact is generated from Markitect. Human narrative, business requirements, implementation details outside modeled contracts, vendor/tool inputs and external observations retain explicit owners. Markitect is canonical for the selected decisions it models; AI output, observations and hashes do not silently become intent or approval.
+The desired authority model extends to code, documentation, agent guidance and automation: they represent accepted canonical intent instead of becoming competing semantic owners. Brownfield work adds a reverse inference path: existing representations can inform a candidate intent, but never grant it authority. Owners review and correct that proposal, accept canonical intent, then match exact artifact scopes and verify existing representations before adopting valid bytes as a baseline. Adoption preserves valid bytes; it does not regenerate or normalize them to an Executor's preference. Unknown or excluded artifacts remain explicit and unresolved artifacts are not rewritten or deleted. A partially adopted repository must identify what remains unmodeled, externally owned, excluded or uncertain; installation alone does not govern the whole repository. Humans decide adoption and real intent changes; unchanged intent with a drifting artifact calls for repair of that artifact.
 
 The product direction is an executable engineering-governance layer for autonomous software development. Markdown views, provider instructions, context, checks and adapters serve that purpose. Their existence or volume is not the product's success criterion.
 
@@ -40,7 +42,7 @@ Markitect lets humans program the shape and rules of software development instea
 | Role | Responsibility |
 |---|---|
 | Humans | Decide what should exist and why; choose concepts, architecture, boundaries, invariants, policies, processes and owners; define implementation freedom, acceptance requirements and delegated authority; decide genuine ambiguity, conflicts, exceptions and architecture evolution. |
-| Markitect | Make selected engineering decisions explicit and versioned; validate declared structure and finite policy; compile relevant context and impact; preserve provenance; supply canonical meaning to independent projections, checks and reconciliation adapters. |
+| Markitect | Make selected engineering decisions explicit and versioned; compile declared structure deterministically; orchestrate explicitly supplied checks and policy mechanisms above Core; compile relevant context and impact; preserve provenance; supply canonical meaning to independent projections, checks and reconciliation adapters. |
 | AI agents | Understand the task, consume its relevant context, implement within granted boundaries, test/refactor, update owned projections, run configured verification/reconciliation and continue routine work. Propose changes to intent separately and escalate decisions they are not authorized or equipped to make. |
 
 For governed changes, the intended flow is accepted desired state → relevant agent context and bounded checks → materialization or repair of declared representations → observed evidence. An intent change updates its canonical owner and replans before materialization. When intent is unchanged, a bug or stale representation is repaired against that unchanged model; this is not a bypass and does not require a fake model edit. Architecture changes and proposed policies return to their human owner for deliberate review and adoption; observations do not silently rewrite the rules.
@@ -51,13 +53,13 @@ The target human role is specification and engineering judgment. Being a permane
 
 ## What executable governance means
 
-One owner exists per modeled fact or explicit mapping, not for all knowledge in a repository. Human narrative, business meaning and specialist implementation evidence can retain their own owners outside Markitect.
+One semantic owner exists per accepted engineering fact or representation decision. Natural-language rationale and guidance can be canonical Definition data. Human narrative not yet adopted, vendor inputs and specialist observations remain explicitly classified outside that scope; migrating them is a reviewed intent change, not automatic inference.
 
-Structured policies can become finite deterministic assertions. Project-owned checks and adapters can provide specialized implementation evidence. Rule and Workflow prose remains instruction and rationale where no executable assertion exists; storing it in a typed resource does not enforce the process or prove that an agent followed it.
+The new structural Core does not contain an engineering assertion DSL. Checks, policies and assurance live above Core; the historical finite Domain/policy contract remains supported through compatibility. Project-owned checks and target tools can provide specialized implementation evidence. Rule and Workflow prose remains instruction and rationale where no executable assertion exists; storing it in a typed resource does not enforce the process or prove that an agent followed it.
 
 Context helps agents find applicable intent; impact helps reviewers understand declared consequences; versioned packages make architecture evolution explicit; narrow exceptions record deliberate deviations; reconciliation can align owned representations. None proves that all relevant intent was modeled, that an agent obeyed it, or that arbitrary application code is correct.
 
-Continuous autonomous agents are the desired consumer operating model. They may call bounded Markitect operations from their own runtime, orchestration or CI. For AI materialization, the agent is a non-deterministic producer of a candidate representation, not a deterministic renderer: permitted implementation freedom must be explicit and project-owned checks must state what they establish. This does not require a continuously running Core, hidden policy activation or a background mutation controller. Current Observe/Plan/Apply/Verify trust boundaries remain in force; Apply still requires explicit authority and exact input-bound plans. A plan digest binds inputs and operations; it does not authenticate an owner or prove prior approval.
+Continuous autonomous agents are the desired consumer operating model. They may call bounded Markitect operations from their own runtime, orchestration or CI. An Executor produces a candidate representation using appropriate tools, including deterministic renderers when useful: permitted implementation freedom must be explicit and project-owned checks must state what they establish. This does not require a continuously running Core, hidden policy activation or a background mutation controller. Current Observe/Plan/Apply/Verify trust boundaries remain in force; Apply still requires explicit authority and exact input-bound plans. A plan digest binds inputs and operations; it does not authenticate an owner or prove prior approval.
 
 ## Desired operating model
 
@@ -92,7 +94,7 @@ Reconsider proposals that introduce another manually synchronized truth owner, h
 | Category | What is established or intended |
 |---|---|
 | Published capability | v0.13.0 retains versioned Domains, typed relations, finite assertions including bounded `same-target`, normalized model, context/impact, packages, PolicyResults/exceptions and configured projections/adapters. It adds read-only failed-policy analysis, selective preparation/Copy Me validation and the Markitect-first/accounting workflow. The roadmap owns precise coverage. |
-| Current unreleased source | Integrated Core/Host/Module consolidation and bounded local projection contracts with reviewed candidate Apply and immutable Verify. These are not additions to an installed v0.13.0 release and establish no real-adopter benefit. |
+| Current unreleased source | A source-only canonical projection reset is in development: minimal structural Core, strictly typed Schema/Projection Modules, explicit runtime binding, Host-derived scoped reconciliation, and separate operational evidence. The source alpha now includes read-only, exact-scope existing-target adoption; focused Host checks cover preserving selected bytes, failed/stale verification, UNKNOWN artifacts and ownership conflicts. Final exact-head gates remain pending. Its owner claim and candidate record do not establish semantic review or automatic active ownership. The prior bounded projection contracts retain their meaning in compatibility. These are not additions to an installed v0.13.0 release and establish no real-adopter benefit. |
 | Aspirational operation | Many continuously working agents, less routine human supervision, architecture-level escalation and sustainable governance at greater scale. No current scheduler, dashboard or universal automatic acceptance is claimed. |
 | Unproven benefit | Reduced human intervention, lower total maintenance/synchronization cost, fewer missed updates or defects, better sustained autonomy, token savings and market demand. |
 

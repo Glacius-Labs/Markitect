@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/Glacius-Labs/Markitect/internal/host/compat/v0_13/consumers/artifactcoverage"
 	"github.com/Glacius-Labs/Markitect/internal/infrastructure/source"
-	"github.com/Glacius-Labs/Markitect/internal/modules/artifactcoverage"
 )
 
 func TestCheckArtifactsUsesParsedOwnershipAndFindsNewFiles(t *testing.T) {

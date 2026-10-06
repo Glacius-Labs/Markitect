@@ -1,8 +1,8 @@
 package host
 
 import (
-	"github.com/Glacius-Labs/Markitect/internal/core"
-	"github.com/Glacius-Labs/Markitect/internal/modules/markdown"
+	"github.com/Glacius-Labs/Markitect/internal/host/compat/v0_13/consumers/markdown"
+	core "github.com/Glacius-Labs/Markitect/internal/host/compat/v0_13/kernel"
 )
 
 // CheckConsistency supplies the normalized model and explicit literal-assertion

@@ -1,6 +1,6 @@
 package authoring
 
-import "github.com/Glacius-Labs/Markitect/internal/core"
+import "github.com/Glacius-Labs/Markitect/internal/host/compat/v0_13/kernel"
 
 // NewRegistry builds the source frontend's vocabulary over an otherwise empty
 // Core registry. Project, Package and Domain are opaque source envelope kinds;

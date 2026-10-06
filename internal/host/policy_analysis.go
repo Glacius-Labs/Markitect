@@ -1,6 +1,6 @@
 package host
 
-import "github.com/Glacius-Labs/Markitect/internal/core"
+import "github.com/Glacius-Labs/Markitect/internal/host/compat/v0_13/kernel"
 
 const PolicyFailureAnalysisMode = "policy-failure-analysis"
 

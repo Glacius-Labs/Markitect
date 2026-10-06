@@ -8,9 +8,9 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/internal/core"
 	"github.com/Glacius-Labs/Markitect/internal/core/snapshot"
 	"github.com/Glacius-Labs/Markitect/internal/host"
+	core "github.com/Glacius-Labs/Markitect/internal/host/compat/v0_13/kernel"
 	"go.yaml.in/yaml/v3"
 )
 
