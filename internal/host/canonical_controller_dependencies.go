@@ -218,3 +218,31 @@ func canonicalControllerDependencyEvidencePaths(cfg CanonicalControllerConfig, p
 	}
 	return sortedUniquePaths(paths), nil
 }
+
+// Validate every retained child artifact before an Executor starts. A metadata
+// inventory cannot prove this equality, and a prior PASS does not refresh bytes.
+func validateCanonicalControllerDependencyEvidence(paths []string, active []records.ProjectionRecord, observed *snapshot.Snapshot) error {
+	if len(paths) == 0 {
+		return nil
+	}
+	if observed == nil {
+		return errors.New("retained dependency evidence is unavailable")
+	}
+	owners := map[string]records.Artifact{}
+	for _, record := range active {
+		for _, artifact := range record.Artifacts {
+			if _, exists := owners[artifact.Path]; exists {
+				return fmt.Errorf("retained dependency evidence has multiple owners: %s", artifact.Path)
+			}
+			owners[artifact.Path] = artifact
+		}
+	}
+	for _, name := range paths {
+		artifact, owned := owners[name]
+		data, present := observed.Files[name]
+		if !owned || !present || observed.Modes[name] != artifact.Mode || sha256Prefix(sha256Hex(data)) != artifact.Digest {
+			return fmt.Errorf("retained dependency artifact is missing or drifted: %s", name)
+		}
+	}
+	return nil
+}

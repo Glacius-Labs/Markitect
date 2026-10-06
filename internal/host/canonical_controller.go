@@ -60,18 +60,19 @@ type CanonicalControllerConfig struct {
 	TargetExclusions []CanonicalTargetExclusion `json:"targetExclusions,omitempty"`
 }
 type CanonicalControllerProposal struct {
-	APIVersion            string                       `json:"apiVersion"`
-	Digest                string                       `json:"digest"`
-	Status                string                       `json:"status"`
-	ConfigDigest          string                       `json:"configDigest"`
-	LedgerHead            string                       `json:"ledgerHead"`
-	LedgerSelectionDigest string                       `json:"ledgerSelectionDigest"`
-	Plan                  CanonicalScopedReconcilePlan `json:"plan"`
-	InputPaths            []string                     `json:"inputPaths"`
-	InputDigest           string                       `json:"inputDigest"`
-	fixed                 *CanonicalSource
-	observed              *snapshot.Snapshot
-	active                []records.ProjectionRecord
+	APIVersion              string                       `json:"apiVersion"`
+	Digest                  string                       `json:"digest"`
+	Status                  string                       `json:"status"`
+	ConfigDigest            string                       `json:"configDigest"`
+	LedgerHead              string                       `json:"ledgerHead"`
+	LedgerSelectionDigest   string                       `json:"ledgerSelectionDigest"`
+	Plan                    CanonicalScopedReconcilePlan `json:"plan"`
+	InputPaths              []string                     `json:"inputPaths"`
+	DependencyEvidencePaths []string                     `json:"dependencyEvidencePaths"`
+	InputDigest             string                       `json:"inputDigest"`
+	fixed                   *CanonicalSource
+	observed                *snapshot.Snapshot
+	active                  []records.ProjectionRecord
 }
 type CanonicalControllerWork struct {
 	ProjectionID    string                          `json:"projectionId"`
@@ -338,7 +339,13 @@ func ProposeCanonicalController(root, base, revision, configPath string, cfg Can
 		return report, err
 	}
 	report.active = active
-	report.InputPaths = sortedUniquePaths(append(append([]string(nil), plan.ObservedPaths...), canonicalControllerCheckInputs(cfg)...))
+	report.DependencyEvidencePaths, err = canonicalControllerDependencyEvidencePaths(cfg, plan, active)
+	if err != nil {
+		return report, err
+	}
+	// Dependency bytes are selected evidence for parent work, not child work or
+	// canonical context edges. Their digest participates in the reviewed input.
+	report.InputPaths = sortedUniquePaths(append(append(append([]string(nil), plan.ObservedPaths...), canonicalControllerCheckInputs(cfg)...), report.DependencyEvidencePaths...))
 	// Fixed check source is acquired only from explicit owner-supplied paths.
 	if len(canonicalControllerCheckInputs(cfg)) > 0 {
 		checks, err := source.LoadSelected(root, revision, canonicalControllerCheckInputs(cfg))
@@ -359,6 +366,9 @@ func ProposeCanonicalController(root, base, revision, configPath string, cfg Can
 	}
 	report.observed = observed.Snapshot
 	report.InputDigest = sha256Prefix(observed.Snapshot.Digest())
+	if err := validateCanonicalControllerDependencyEvidence(report.DependencyEvidencePaths, active, observed.Snapshot); err != nil {
+		return report, err
+	}
 	for _, name := range canonicalControllerCheckInputs(cfg) {
 		if !bytes.Equal(observed.Snapshot.Files[name], report.fixed.Snapshot.Files[name]) || observed.Snapshot.Modes[name] != report.fixed.Snapshot.Modes[name] {
 			return report, fmt.Errorf("declared check input changed since source revision: %s", name)

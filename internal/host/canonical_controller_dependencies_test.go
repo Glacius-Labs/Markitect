@@ -2,11 +2,16 @@ package host
 
 import (
 	"bytes"
+	"context"
+	"os"
+	"path/filepath"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/internal/core/snapshot"
 	"github.com/Glacius-Labs/Markitect/internal/host/records"
+	"github.com/Glacius-Labs/Markitect/internal/modules/dotnet"
 )
 
 func TestCanonicalCandidateDependenciesAreExplicitBoundedAndDeduplicated(t *testing.T) {
@@ -70,5 +75,57 @@ func TestCanonicalExecutorCannotSubstituteOldActiveBytesForFailedChildWork(t *te
 	active := []records.ProjectionRecord{{ProjectionID: "c", Artifacts: []records.Artifact{{Path: "child/code.cs", Mode: snapshot.RegularMode, Digest: sha256Prefix(sha256Hex(data))}}}}
 	if _, _, err := canonicalControllerExecutorArtifacts(cfg, CanonicalScopedProposal{ProjectionID: "p"}, active, stage, nil, map[string]bool{"c": true}); err == nil {
 		t.Fatal("parent used previous active bytes after scheduled child work failed")
+	}
+}
+
+func TestCanonicalControllerSelectsRetainedDependencyBytesSeparately(t *testing.T) {
+	cfg := CanonicalControllerConfig{AssuranceScopes: []CanonicalAssuranceScope{
+		{ID: "parent", ProjectionID: "parent", Children: []string{"child"}},
+		{ID: "child", ProjectionID: "child"},
+	}}
+	plan := CanonicalScopedReconcilePlan{Proposals: []CanonicalScopedProposal{{ProjectionID: "parent", Decision: "work", Task: &dotnet.ExecutorTask{}}}}
+	data := []byte("retained child")
+	active := []records.ProjectionRecord{{ProjectionID: "child", Artifacts: []records.Artifact{{Path: "child/code.cs", Digest: sha256Prefix(sha256Hex(data)), Mode: snapshot.RegularMode}}}}
+	paths, err := canonicalControllerDependencyEvidencePaths(cfg, plan, active)
+	if err != nil || !reflect.DeepEqual(paths, []string{"child/code.cs"}) {
+		t.Fatalf("retained child selection: %v %v", paths, err)
+	}
+	observed := &snapshot.Snapshot{Files: map[string][]byte{"child/code.cs": data}, Modes: map[string]string{"child/code.cs": snapshot.RegularMode}}
+	if err := validateCanonicalControllerDependencyEvidence(paths, active, observed); err != nil {
+		t.Fatal(err)
+	}
+	observed.Files["child/code.cs"] = []byte("changed")
+	if err := validateCanonicalControllerDependencyEvidence(paths, active, observed); err == nil {
+		t.Fatal("changed child bytes accepted")
+	}
+	observed.Files["child/code.cs"] = data
+	observed.Modes["child/code.cs"] = snapshot.ExecutableMode
+	if err := validateCanonicalControllerDependencyEvidence(paths, active, observed); err == nil {
+		t.Fatal("changed child mode accepted")
+	}
+	delete(observed.Files, "child/code.cs")
+	if err := validateCanonicalControllerDependencyEvidence(paths, active, observed); err == nil {
+		t.Fatal("missing child accepted")
+	}
+	plan.Proposals = append(plan.Proposals, CanonicalScopedProposal{ProjectionID: "child", Decision: "work"})
+	paths, err = canonicalControllerDependencyEvidencePaths(cfg, plan, active)
+	if err != nil || len(paths) != 0 {
+		t.Fatalf("scheduled child incorrectly selected old bytes: %v %v", paths, err)
+	}
+}
+
+func TestCanonicalControllerExecutorCannotProposeExcludedTarget(t *testing.T) {
+	root, revision, cfg := canonicalControllerFixture(t)
+	cfg.TargetExclusions = []CanonicalTargetExclusion{{Path: "src/ControllerTest.cs", Reason: "owner explicitly retains this external file boundary"}}
+	t.Setenv(canonicalControllerActorEnv, "1")
+	_, err := ExecuteCanonicalController(context.Background(), root, revision, revision, "examples/canonical-projection/canonical.yaml", cfg, "protocol-test", "sha256:"+strings.Repeat("a", 64))
+	if err == nil || !strings.Contains(err.Error(), "excluded") {
+		t.Fatalf("excluded candidate was not refused: %v", err)
+	}
+	if _, err := os.Lstat(filepath.Join(root, "src", "ControllerTest.cs")); !os.IsNotExist(err) {
+		t.Fatalf("refused candidate changed adopter target: %v", err)
+	}
+	if _, err := os.Lstat(cfg.RecordStore); !os.IsNotExist(err) {
+		t.Fatalf("read-only refusal created a ledger: %v", err)
 	}
 }
