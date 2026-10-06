@@ -1465,3 +1465,5 @@ spec:
       owner: immutable-operating-model-proof-records
     - path: internal/host/canonical_controller_assurance_preflight_test.go
       owner: controller-source-check-preflight
+    - path: experiments/operating-model-proof/runs/windows-gates-4465186/receipt.json
+      owner: immutable-operating-model-proof-records
