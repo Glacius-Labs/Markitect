@@ -1620,3 +1620,5 @@ spec:
       owner: live-operating-pilot-fixture-preparation
     - path: experiments/live-operating-pilot/holdout/harness/run_acceptance.py
       owner: live-operating-pilot-acceptance-harness
+    - path: experiments/live-operating-pilot/.gitattributes
+      owner: live-operating-pilot-frozen-fixture
