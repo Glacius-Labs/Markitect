@@ -70,6 +70,13 @@ spec:
     - internal/host/canonical_provider_projection_test.go
     - internal/host/canonical_controller_verification.go
     - internal/host/canonical_controller_verification_test.go
+    - examples/recursive-assurance
+    - experiments/operating-model-proof
+    - internal/host/canonical_controller_dependencies.go
+    - internal/host/canonical_controller_dependencies_test.go
+    - internal/host/canonical_controller_test.go
+    - docs/design/candidate-dependency-execution.md
+    - examples/recursive_assurance_test.go
   tooling:
     - path: AGENTS.md
       owner: repository-agent-navigation
@@ -475,3 +482,81 @@ spec:
       owner: canonical-provider-projection
     - path: internal/host/canonical_provider_projection_test.go
       owner: canonical-provider-projection-tests
+    - path: internal/host/canonical_controller_dependencies.go
+      owner: canonical-controller-dependency-preparation
+    - path: internal/host/canonical_controller_dependencies_test.go
+      owner: canonical-controller-dependency-tests
+    - path: internal/host/canonical_controller_test.go
+      owner: canonical-controller-lifecycle-tests
+    - path: docs/design/candidate-dependency-execution.md
+      owner: candidate-dependency-design
+    - path: examples/recursive-assurance/README.md
+      owner: recursive-assurance-fixture
+    - path: examples/recursive-assurance/canonical.yaml
+      owner: recursive-assurance-fixture
+    - path: examples/recursive-assurance/checks/Billing.Checks.csproj
+      owner: recursive-assurance-fixture
+    - path: examples/recursive-assurance/checks/Billing.Program.cs
+      owner: recursive-assurance-fixture
+    - path: examples/recursive-assurance/checks/Checkout.Checks.csproj
+      owner: recursive-assurance-fixture
+    - path: examples/recursive-assurance/checks/Checkout.Program.cs
+      owner: recursive-assurance-fixture
+    - path: examples/recursive-assurance/checks/Commerce.Checks.csproj
+      owner: recursive-assurance-fixture
+    - path: examples/recursive-assurance/checks/Commerce.Program.cs
+      owner: recursive-assurance-fixture
+    - path: examples/recursive-assurance/checks/Orders.Checks.csproj
+      owner: recursive-assurance-fixture
+    - path: examples/recursive-assurance/checks/Orders.Program.cs
+      owner: recursive-assurance-fixture
+    - path: examples/recursive-assurance/definitions/billing-dotnet.policy.yaml
+      owner: recursive-assurance-fixture
+    - path: examples/recursive-assurance/definitions/billing.intent.yaml
+      owner: recursive-assurance-fixture
+    - path: examples/recursive-assurance/definitions/billing.projection.yaml
+      owner: recursive-assurance-fixture
+    - path: examples/recursive-assurance/definitions/checkout-dotnet.policy.yaml
+      owner: recursive-assurance-fixture
+    - path: examples/recursive-assurance/definitions/checkout.intent.yaml
+      owner: recursive-assurance-fixture
+    - path: examples/recursive-assurance/definitions/checkout.projection.yaml
+      owner: recursive-assurance-fixture
+    - path: examples/recursive-assurance/definitions/commerce-dotnet.policy.yaml
+      owner: recursive-assurance-fixture
+    - path: examples/recursive-assurance/definitions/commerce.intent.yaml
+      owner: recursive-assurance-fixture
+    - path: examples/recursive-assurance/definitions/commerce.projection.yaml
+      owner: recursive-assurance-fixture
+    - path: examples/recursive-assurance/definitions/orders-dotnet.policy.yaml
+      owner: recursive-assurance-fixture
+    - path: examples/recursive-assurance/definitions/orders.intent.yaml
+      owner: recursive-assurance-fixture
+    - path: examples/recursive-assurance/definitions/orders.projection.yaml
+      owner: recursive-assurance-fixture
+    - path: examples/recursive-assurance/modules/billing-dotnet/module.yaml
+      owner: recursive-assurance-fixture
+    - path: examples/recursive-assurance/modules/checkout-dotnet/module.yaml
+      owner: recursive-assurance-fixture
+    - path: examples/recursive-assurance/modules/commerce-dotnet/module.yaml
+      owner: recursive-assurance-fixture
+    - path: examples/recursive-assurance/modules/commerce/module.yaml
+      owner: recursive-assurance-fixture
+    - path: examples/recursive-assurance/modules/commerce/schema.yaml
+      owner: recursive-assurance-fixture
+    - path: examples/recursive-assurance/modules/foundation/module.yaml
+      owner: recursive-assurance-fixture
+    - path: examples/recursive-assurance/modules/foundation/schema.yaml
+      owner: recursive-assurance-fixture
+    - path: examples/recursive-assurance/modules/orders-dotnet/module.yaml
+      owner: recursive-assurance-fixture
+    - path: examples/recursive-assurance/negative-specifications.md
+      owner: recursive-assurance-fixture
+    - path: experiments/operating-model-proof/README.md
+      owner: operating-model-proof-harness
+    - path: experiments/operating-model-proof/protocol.md
+      owner: operating-model-proof-harness
+    - path: experiments/operating-model-proof/run.py
+      owner: operating-model-proof-harness
+    - path: examples/recursive_assurance_test.go
+      owner: recursive-assurance-fixture-tests
