@@ -1440,3 +1440,25 @@ spec:
       owner: immutable-operating-model-proof-records
     - path: experiments/operating-model-proof/runs/c11-v4-replacement/post-apply-assessment-v2.json
       owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c11-v4-original/event-index-v2.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c11-v4-original/events/verify-7fcc93e58e074f4baab79a5c9e90f539.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c11-v4-original/verify-failure-assessment.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c11-v4-replacement/event-index-v2.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c11-v4-replacement/events/verify-1f22066f310148a1b4980a931a98e954.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c11-v4-replacement/verify-failure-assessment.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c7-unknown-exclusion-01/controller-propose-result-v2.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c7-unknown-exclusion-01/controller-propose-result.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c7-unknown-exclusion-01/pre-call-freeze.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c7-unknown-exclusion-01/record-correction.md
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c7-unknown-exclusion-01/scope-note.md
+      owner: immutable-operating-model-proof-records
