@@ -18,8 +18,10 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/infrastructure/source"
 )
 
-// ExecuteCanonicalController calls configured agents but never writes adopter
-// artifacts or ledger events. Its result is an exact, reviewable candidate.
+// ExecuteCanonicalController makes no Host adopter-artifact or ledger writes.
+// Configured runners execute with caller authority; this is not an OS sandbox
+// or an audit of unselected repository bytes. Selected inputs are rechecked.
+// Its result is an exact, reviewable candidate, never an acceptance result.
 func ExecuteCanonicalController(ctx context.Context, root, base, revision, configPath string, cfg CanonicalControllerConfig, toolVersion, toolDigest string) (CanonicalReviewedRun, error) {
 	run := CanonicalReviewedRun{APIVersion: CanonicalControllerAPIVersion, ConfigPath: configPath, ToolVersion: toolVersion, ToolDigest: toolDigest, Work: []CanonicalControllerWork{}}
 	proposal, err := ProposeCanonicalController(root, base, revision, configPath, cfg)

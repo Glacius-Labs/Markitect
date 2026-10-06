@@ -16,7 +16,10 @@ func canonicalProviderProjectionInput(model core.Model, request canonical.Projec
 	if err != nil {
 		return agentrules.Input{}, err
 	}
-	input := agentrules.Input{Provider: agentrules.Provider(request.Projector.Target), Schemas: context.Schemas, Definitions: request.Definitions, RelatedDefinitions: context.RelatedDefinitions, TargetPrefix: request.TargetPrefix, AllowedRoots: request.Projector.AllowedRoots, RequestDigest: request.RequestDigest}
+	input := agentrules.Input{Provider: agentrules.Provider(request.Projector.Target), Schemas: context.Schemas, Definitions: request.Definitions, RelatedDefinitions: context.RelatedDefinitions, TargetPrefix: request.TargetPrefix, AllowedRoots: append([]string(nil), request.Projector.AllowedRoots...), RequestDigest: request.RequestDigest}
+	for i, root := range input.AllowedRoots {
+		input.AllowedRoots[i] = strings.TrimSuffix(root, "/")
+	}
 	policy := agentrules.ProjectionPolicy{ID: request.Projection.Identity().Key(), Provider: input.Provider}
 	kinds := map[string]bool{}
 	for _, def := range request.Definitions {
