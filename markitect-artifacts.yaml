@@ -2,6 +2,9 @@ apiVersion: markitect.example.org/artifact-coverage/v1alpha1
 kind: ArtifactCoverage
 spec:
   roots:
+    - internal/host/canonical_controller_reuse.go
+    - internal/host/canonical_verification_refresh_test.go
+    - docs/design/canonical-verification-refresh.md
     - docs/validation/independent-proof-capability-review.md
     - internal/host/cli/canonical_adoption_durable_test.go
     - internal/host/canonical_adoption_store.go
@@ -1356,3 +1359,5 @@ spec:
       owner: controller-verification-freshness
     - path: experiments/operating-model-proof/protocol-v8.md
       owner: operating-model-proof-protocol
+    - path: internal/host/canonical_controller_reuse.go
+      owner: controller-verification-freshness
