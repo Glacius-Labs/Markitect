@@ -6,7 +6,9 @@ from pathlib import Path
 from run import (
     ProofError,
     new_attempt_paths,
+    proposal_metrics,
     runtime_file_fact,
+    run_metrics,
     safe_text_facts,
     sha,
     strict_bytes,
@@ -17,6 +19,35 @@ from run import (
 
 
 class EvidenceSafetyTests(unittest.TestCase):
+    def test_partial_cli_report_null_collections_are_empty(self):
+        proposed = proposal_metrics({
+            "status": "blocked",
+            "plan": {
+                "proposals": None,
+                "observedPaths": None,
+                "unknownArtifacts": None,
+            },
+        })
+        self.assertEqual(proposed["proposals"], [])
+        self.assertEqual(proposed["observedPaths"], [])
+        self.assertEqual(proposed["unknownArtifacts"], [])
+
+        verified = run_metrics("controller-verify", {
+            "status": "blocked",
+            "results": None,
+            "verifierRuns": None,
+            "assurance": None,
+            "limits": None,
+        })
+        self.assertEqual(verified["results"], [])
+        self.assertEqual(verified["verifierRuns"], [])
+        self.assertEqual(verified["assuranceNodeCount"], 0)
+        self.assertEqual(verified["limits"], [])
+
+    def test_wrong_collection_shape_fails_closed(self):
+        with self.assertRaises(ProofError):
+            proposal_metrics({"plan": {"proposals": {"not": "an array"}}})
+
     def test_cli_report_rejects_duplicate_nested_keys(self):
         with self.assertRaises(ProofError):
             strict_bytes(b'{"status":"passed","nested":{"value":1,"value":2}}')
