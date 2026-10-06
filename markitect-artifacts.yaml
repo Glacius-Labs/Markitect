@@ -60,6 +60,8 @@ spec:
     - internal/host/canonical_controller_assurance.go
     - internal/host/canonical_controller_execution.go
     - internal/host/canonical_scoped_reconciliation.go
+    - internal/host/canonical_workflow_projection_test.go
+    - internal/host/canonical_workflow_projection.go
     - internal/host/canonical_scoped_test.go
     - internal/host/canonical_scoped_write.go
     - internal/host/canonical_selected.go
@@ -831,6 +833,16 @@ spec:
       owner: canonical-ontology-examples
     - path: examples/capability-ontologies/workflow-responsibility/module.yaml
       owner: canonical-ontology-examples
+    - path: internal/host/canonical_workflow_projection.go
+      owner: canonical-projection-host
+    - path: internal/host/canonical_workflow_projection_test.go
+      owner: canonical-projection-host
+    - path: experiments/operating-model-proof/c12-goal-propose-01.md
+      owner: operating-model-proof-evidence
+    - path: experiments/operating-model-proof/c12-goal-recommend-01-precall-digest-correction.md
+      owner: operating-model-proof-evidence
+    - path: experiments/operating-model-proof/c12-goal-recommendation-01.md
+      owner: operating-model-proof-evidence
     - path: experiments/operating-model-proof/protocol-v5.md
       owner: operating-model-proof-evidence
     - path: experiments/operating-model-proof/runs/c3-absent-02/events/assessment-structural-refusal.json
