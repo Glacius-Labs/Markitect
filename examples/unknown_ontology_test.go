@@ -29,7 +29,7 @@ func TestUnknownOntologyLoadsExactPackagesAndPreparesBoundedScope(t *testing.T) 
 		t.Fatal(err)
 	}
 	if fixed.Snapshot.Provisional || fixed.Snapshot.ID != revision || fixed.Model.Revision != revision {
-		t.Fatalf("canonical source is not fixed to HEAD %q", revision)
+		t.Fatalf("canonical source is not fixed to HEAD %q: snapshot=%q model=%q provisional=%t", revision, fixed.Snapshot.ID, fixed.Model.Revision, fixed.Snapshot.Provisional)
 	}
 	if len(fixed.Diagnostics) != 0 {
 		t.Fatalf("unknown-ontology source has structural diagnostics: %#v", fixed.Diagnostics)
