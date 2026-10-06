@@ -1,0 +1,15 @@
+apiVersion: cardgame.example.org/v1
+purpose: Describes cards and combat actions in a turn-based duel.
+kinds:
+  Card:
+    purpose: Defines a playable card and printed combat values.
+    properties:
+      name: {purpose: Names the card., type: string, minCount: 1, maxCount: 1}
+      cost: {purpose: States the resource cost., type: integer, minCount: 1, maxCount: 1}
+      power: {purpose: States the combat power., type: integer, minCount: 1, maxCount: 1}
+  CombatAction:
+    purpose: Records a card's action for one turn.
+    properties:
+      card: {purpose: Identifies the acting card., type: reference, minCount: 1, maxCount: 1, target: {apiVersion: cardgame.example.org/v1, kind: Card}}
+      action: {purpose: Selects the combat action., type: enum, minCount: 1, maxCount: 1, values: [attack, block, support]}
+      targets: {purpose: Lists opposing targets., type: string, minCount: 0, maxCount: unbounded}

@@ -1,0 +1,15 @@
+apiVersion: filing.example.org/v1
+purpose: Tracks a submitted filing and its human review outcome.
+kinds:
+  Filing:
+    purpose: Records the state of a submitted dossier.
+    properties:
+      title: {purpose: Names the submitted filing., type: string, minCount: 1, maxCount: 1}
+      status: {purpose: Records the filing lifecycle state., type: enum, minCount: 1, maxCount: 1, values: [draft, submitted, returned, accepted]}
+  Review:
+    purpose: Records one review disposition and explanation.
+    properties:
+      filing: {purpose: Identifies the filing under review., type: reference, minCount: 1, maxCount: 1, target: {apiVersion: filing.example.org/v1, kind: Filing}}
+      reviewer: {purpose: Names the reviewer., type: string, minCount: 1, maxCount: 1}
+      outcome: {purpose: Records the review disposition., type: enum, minCount: 1, maxCount: 1, values: [comment, return, accept]}
+      reasons: {purpose: Lists concise findings., type: string, minCount: 0, maxCount: unbounded}
