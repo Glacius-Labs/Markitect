@@ -204,6 +204,24 @@ func TestCanonicalControllerLifecycleIsReadOnlyUntilExactReviewedApply(t *testin
 	if len(state.Verifications) != 0 {
 		t.Fatalf("Apply wrote verification results without a verifier: %d", len(state.Verifications))
 	}
+	artifactPaths := []string{}
+	recordedModes := map[string]string{}
+	for _, record := range state.Records {
+		for _, artifact := range record.Artifacts {
+			artifactPaths = append(artifactPaths, artifact.Path)
+			recordedModes[artifact.Path] = artifact.Mode
+		}
+	}
+	artifactPaths = sortedUniquePaths(artifactPaths)
+	postApply, err := source.ObserveSelectedWorking(root, artifactPaths)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for name, mode := range recordedModes {
+		if postApply.Snapshot.Modes[name] != mode {
+			t.Fatalf("recorded mode for %s differs from selected post-Apply observation: record=%s observed=%s", name, mode, postApply.Snapshot.Modes[name])
+		}
+	}
 	if applied.EvidenceRevision == "" {
 		t.Fatal("successful Apply omitted immutable evidence revision")
 	}
