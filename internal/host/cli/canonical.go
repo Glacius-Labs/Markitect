@@ -529,11 +529,7 @@ func runCanonicalAdoption(o commandOptions, fixed *host.CanonicalSource, base ma
 			return emit(base)
 		}
 		applied, applyErr := host.ApplyCanonicalAdoptionToLedger(o.root, fixed, target, identity, selection, cfg, o.expect, o.write)
-		base["status"] = applied.Status
-		base["record"] = applied.Record
-		base["ledgerHead"] = applied.LedgerHead
-		base["activeRecordIds"] = applied.ActiveRecordIDs
-		base["planDigest"] = applied.PlanDigest
+		setCanonicalAdoptionApplyReport(base, applied, applyErr)
 		if applyErr != nil {
 			if applied.Status == "" || applied.Status == "refused" {
 				return fail(applyErr)
@@ -601,6 +597,17 @@ func runCanonicalAdoption(o commandOptions, fixed *host.CanonicalSource, base ma
 	base["status"] = "adopted"
 	base["record"] = adoption.Record
 	return emit(base)
+}
+
+func setCanonicalAdoptionApplyReport(base map[string]any, applied host.CanonicalAdoptionApply, applyErr error) {
+	base["status"] = applied.Status
+	base["record"] = applied.Record
+	base["ledgerHead"] = applied.LedgerHead
+	base["activeRecordIds"] = applied.ActiveRecordIDs
+	base["planDigest"] = applied.PlanDigest
+	if applyErr != nil {
+		base["error"] = applyErr.Error()
+	}
 }
 
 func readCanonicalAdoptionSelection(file string) (host.CanonicalAdoptionSelection, error) {

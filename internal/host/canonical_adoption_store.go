@@ -81,6 +81,12 @@ func PrepareCanonicalAdoptionWithLedger(fixed *CanonicalSource, target *snapshot
 // The supplied fixed snapshots are immutable Git evidence; the ledger state
 // and runtime config are refreshed while the lease is held.
 func ApplyCanonicalAdoptionToLedger(root string, fixed *CanonicalSource, target *snapshot.Snapshot, identity core.DefinitionIdentity, selection CanonicalAdoptionSelection, cfg CanonicalControllerConfig, expect string, write bool) (CanonicalAdoptionApply, error) {
+	return applyCanonicalAdoptionToLedger(root, fixed, target, identity, selection, cfg, expect, write, nil)
+}
+
+type canonicalAdoptionSelectActiveFunc func(*recordstore.Store, string, []string) (recordstore.State, error)
+
+func applyCanonicalAdoptionToLedger(root string, fixed *CanonicalSource, target *snapshot.Snapshot, identity core.DefinitionIdentity, selection CanonicalAdoptionSelection, cfg CanonicalControllerConfig, expect string, write bool, selectActive canonicalAdoptionSelectActiveFunc) (CanonicalAdoptionApply, error) {
 	result := CanonicalAdoptionApply{Status: "refused", ActiveRecordIDs: []string{}}
 	if !write || expect == "" {
 		return result, errors.New("durable adoption requires explicit write and exact reviewed plan digest")
@@ -156,7 +162,12 @@ func ApplyCanonicalAdoptionToLedger(root string, fixed *CanonicalSource, target 
 	}
 	selected := append([]string{}, current.ActiveSelection.RecordIDs...)
 	selected = append(selected, plan.Record.ID)
-	updated, err := store.SelectActive(appended.Head, selected)
+	var updated recordstore.State
+	if selectActive == nil {
+		updated, err = store.SelectActive(appended.Head, selected)
+	} else {
+		updated, err = selectActive(store, appended.Head, selected)
+	}
 	if err != nil {
 		result.Status = records.StatePartialFailure
 		result.Record = &plan.Record

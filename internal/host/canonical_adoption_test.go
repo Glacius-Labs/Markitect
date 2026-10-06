@@ -2,6 +2,7 @@ package host
 
 import (
 	"encoding/json"
+	"errors"
 	"reflect"
 	"strings"
 	"testing"
@@ -10,6 +11,8 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/core/snapshot"
 	"github.com/Glacius-Labs/Markitect/internal/host/authoring"
 	"github.com/Glacius-Labs/Markitect/internal/host/records"
+	"github.com/Glacius-Labs/Markitect/internal/host/recordstore"
+	"github.com/Glacius-Labs/Markitect/internal/infrastructure/source"
 )
 
 func adoptionFixture(t *testing.T) (*CanonicalSource, *snapshot.Snapshot, core.DefinitionIdentity, CanonicalAdoptionSelection) {
@@ -136,6 +139,63 @@ func TestCanonicalDurableAdoptionBindsAbsentVersusPresentLedger(t *testing.T) {
 	selection.ActiveRecords = []records.ProjectionRecord{{}}
 	if _, err := PrepareCanonicalDurableAdoption(fixed, target, identity, selection, absent, []records.ProjectionRecord{}); err == nil {
 		t.Fatal("durable adoption trusted caller-supplied active ownership")
+	}
+}
+
+func TestCanonicalDurableAdoptionSelectionFailureLeavesInactiveAttempt(t *testing.T) {
+	root, baseRevision, cfg := canonicalControllerFixture(t)
+	fixed, err := LoadCanonicalSource(root, baseRevision, "examples/canonical-projection/canonical.yaml", true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for name, content := range map[string]string{
+		"src/Commerce/CreateOrderHandler.cs": "namespace Commerce; public class CreateOrderHandler { }\n",
+		"src/Commerce/EffectAxis.cs":         "namespace Commerce; public record EffectAxis { public string Boundary { get; init; } = \"application\"; }\n",
+		"src/Commerce/Commerce.csproj":       "<Project><PropertyGroup><TargetFramework>net8.0</TargetFramework></PropertyGroup></Project>\n",
+	} {
+		scopedTestWrite(t, root, name, content)
+	}
+	scopedTestGit(t, root, "add", "src/Commerce")
+	scopedTestGit(t, root, "commit", "-m", "add selected adoption artifacts")
+	targetRevision := scopedTestGit(t, root, "rev-parse", "HEAD")
+	target, err := source.Load(root, targetRevision)
+	if err != nil {
+		t.Fatal(err)
+	}
+	identity := core.DefinitionIdentity{APIVersion: "markitect.foundation/v1", Kind: "Projection", Namespace: "commerce", Name: "application-dotnet"}
+	selection := CanonicalAdoptionSelection{
+		ActiveRecords:   []records.ProjectionRecord{},
+		Artifacts:       []string{"src/Commerce/CreateOrderHandler.cs", "src/Commerce/EffectAxis.cs", "src/Commerce/Commerce.csproj"},
+		ReviewReference: "owner-review/partial-failure-test",
+	}
+	headBefore := scopedTestGit(t, root, "rev-parse", "HEAD")
+	indexBefore := scopedTestGit(t, root, "diff", "--cached", "--binary")
+	statusBefore := scopedTestGit(t, root, "status", "--porcelain")
+	plan, err := PrepareCanonicalAdoptionForRuntime(root, fixed, target, identity, selection, cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	failure := errors.New("injected stale-head CAS rejection")
+	applied, err := applyCanonicalAdoptionToLedger(root, fixed, target, identity, selection, cfg, plan.PlanDigest, true,
+		func(_ *recordstore.Store, _ string, _ []string) (recordstore.State, error) {
+			return recordstore.State{}, failure
+		})
+	if err == nil || !errors.Is(err, failure) || applied.Status != records.StatePartialFailure || applied.Record == nil || applied.LedgerHead == "" {
+		t.Fatalf("selection CAS failure was not reported as a partial attempt: result=%#v err=%v", applied, err)
+	}
+	store, err := recordstore.Open(cfg.RecordStore, canonicalControllerForbidden(t, root))
+	if err != nil {
+		t.Fatal(err)
+	}
+	state, err := store.Read()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(state.Records) != 1 || state.Records[0].ID != applied.Record.ID || len(state.ActiveSelection.RecordIDs) != 0 || len(state.Verifications) != 0 {
+		t.Fatalf("partial adoption did not retain one inactive, unverified attempt: %#v", state)
+	}
+	if scopedTestGit(t, root, "rev-parse", "HEAD") != headBefore || scopedTestGit(t, root, "diff", "--cached", "--binary") != indexBefore || scopedTestGit(t, root, "status", "--porcelain") != statusBefore {
+		t.Fatal("partial durable adoption changed source HEAD, index or worktree")
 	}
 }
 func TestCanonicalAdoptionRefusesUnsafeOrIncompleteSelection(t *testing.T) {
