@@ -164,13 +164,36 @@ class CodexRunnerTests(unittest.TestCase):
 
     def test_codex_launch_uses_read_only_ephemeral_flags_and_private_telemetry(self) -> None:
         value = invocation()
+        value["request"]["context"] = {"privatePromptSentinel": "DO_NOT_LOG_PROMPT_CONTENT"}
         captured = {}
+
+        class CapturingStdin(io.BytesIO):
+            def __init__(self):
+                super().__init__()
+                self.submitted = bytearray()
+                self.closed_after_flush = False
+                self.flushed = False
+
+            def write(self, data):
+                self.submitted.extend(data)
+                return super().write(data)
+
+            def flush(self):
+                self.flushed = True
+                return super().flush()
+
+            def close(self):
+                self.closed_after_flush = self.flushed
+                return super().close()
 
         class FakeProcess:
             def __init__(self, argv, **kwargs):
                 captured["argv"] = argv
-                self.stdin = io.BytesIO()
+                self.stdin = CapturingStdin()
+                captured["stdin"] = self.stdin
                 self.stdout = io.BytesIO(
+                    b'{"type":"thread.started","thread_id":"fresh-thread"}\n'
+                    b'{"type":"turn.started"}\n'
                     b'{"type":"item.started","item":{"type":"command_execution"}}\n'
                     b'{"type":"turn.completed","usage":{"input_tokens":7,"output_tokens":4}}\n'
                 )
@@ -232,6 +255,90 @@ class CodexRunnerTests(unittest.TestCase):
             private_log = log_path.read_text(encoding="utf-8")
             self.assertIn('"type":"provider.stderr"', private_log)
             self.assertNotIn("private model catalog detail", private_log)
+            self.assertNotIn("DO_NOT_LOG_PROMPT_CONTENT", private_log)
+            self.assertNotIn(value["nonce"], private_log)
+            self.assertEqual(bytes(captured["stdin"].submitted), runner.make_prompt(value).encode("utf-8"))
+            self.assertTrue(captured["stdin"].closed_after_flush)
+            prompt_events = [json.loads(line) for line in private_log.splitlines() if '"type":"adapter.prompt-submitted"' in line]
+            self.assertEqual(prompt_events, [{
+                "type": "adapter.prompt-submitted",
+                "runId": value["runId"],
+                "inputDigest": value["inputDigest"],
+                "promptSha256": "sha256:" + hashlib.sha256(runner.make_prompt(value).encode("utf-8")).hexdigest(),
+                "promptBytes": len(runner.make_prompt(value).encode("utf-8")),
+            }])
+            self.assertIn('"type":"thread.started"', private_log)
+            self.assertIn('"type":"turn.started"', private_log)
+
+    def test_codex_launch_does_not_mark_broken_or_partial_prompt_delivery(self) -> None:
+        value = invocation()
+        processes = []
+
+        class FakeStdin(io.BytesIO):
+            def __init__(self, behavior: str):
+                super().__init__()
+                self.behavior = behavior
+
+            def write(self, data):
+                if self.behavior == "broken":
+                    raise BrokenPipeError("closed child input")
+                if self.behavior == "partial":
+                    super().write(data[:-1])
+                    return len(data) - 1
+                return super().write(data)
+
+            def flush(self):
+                if self.behavior == "flush-error":
+                    raise OSError("flush failed")
+                return super().flush()
+
+            def close(self):
+                if self.behavior == "close-error":
+                    super().close()
+                    raise OSError("close failed")
+                return super().close()
+
+        for behavior in ("broken", "partial", "flush-error", "close-error"):
+            with self.subTest(behavior=behavior), tempfile.TemporaryDirectory() as directory:
+                cwd = Path(directory)
+                log_path = cwd / "events.jsonl"
+                args = argparse.Namespace(
+                    codex_executable="codex.exe",
+                    codex_script=None,
+                    codex_version="0.130.0",
+                    model="gpt-5.5",
+                    timeout_seconds=10,
+                )
+
+                class FakeProcess:
+                    def __init__(self, argv, **kwargs):
+                        self.stdin = FakeStdin(behavior)
+                        self.stdout = io.BytesIO()
+                        self.stderr = io.BytesIO()
+                        response_path = Path(argv[argv.index("--output-last-message") + 1])
+                        response_path.write_text("{}", encoding="utf-8")
+                        self.terminated = False
+                        processes.append(self)
+
+                    def wait(self, timeout=None):
+                        return 0
+
+                    def terminate(self):
+                        self.terminated = True
+
+                    def kill(self):
+                        return None
+
+                with patch.object(runner, "resolve_codex", return_value=["codex.exe"]), \
+                     patch.object(runner, "check_version"), \
+                     patch.object(runner.subprocess, "Popen", side_effect=FakeProcess):
+                    with self.assertRaisesRegex(runner.AdapterError, "prompt could not be submitted"):
+                        runner.launch_codex(value, args, {}, cwd, log_path)
+
+                self.assertTrue(processes[-1].terminated)
+                log = log_path.read_text(encoding="utf-8")
+                self.assertNotIn("adapter.prompt-submitted", log)
+                self.assertNotIn(value["nonce"], log)
     def test_incomplete_wrapper_timeout_echoes_bound_invocation(self) -> None:
         response = runner.incomplete_response(invocation("infer"), "timeout", type("Collector", (), {"telemetry": lambda self: None})())
         self.assertEqual(response["outcome"], "incomplete")
