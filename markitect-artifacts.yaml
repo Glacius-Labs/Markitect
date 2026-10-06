@@ -44,6 +44,7 @@ spec:
     - docs/strategy/sources/canonical-reset/markitect-coordinator-steer-latest-architecture-clarifications.md
     - internal/host/canonical_adoption.go
     - internal/host/canonical_adoption_test.go
+    - examples/capability_proof_test.go
   tooling:
     - path: AGENTS.md
       owner: repository-agent-navigation
@@ -205,3 +206,5 @@ spec:
       owner: canonical-projection-lifecycle
     - path: internal/host/canonical_adoption_test.go
       owner: canonical-projection-lifecycle
+    - path: examples/capability_proof_test.go
+      owner: capability-proof-falsification-harness

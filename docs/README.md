@@ -46,4 +46,6 @@
 
 The [roadmap](implementation-plan.md) owns current source status and planned work. v0.13.0 is published and verified; v0.12.0 and v0.11.0 remain immutable historical evidence. v0.10.0 remains the historical baseline for the generic canonical engineering model. Published releases remain immutable; source changes do not update an installed release.
 
+[Capability proof checkpoint](research/proof-program.md) and its [matrix](research/capability-matrix.md) separate implemented support from new trials and record the full-acquisition stop gate.
+
 [Research direction inputs](research/README.md) preserve owner-supplied hypotheses separately from current contracts and results.

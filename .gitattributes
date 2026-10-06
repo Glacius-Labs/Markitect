@@ -8,3 +8,6 @@ docs/strategy/markitect-strategic-positioning-and-validation.md -text whitespace
 docs/research/ontology-projection-assurance.md -text whitespace=-blank-at-eof,-blank-at-eol
 
 /docs/strategy/sources/canonical-reset/*.md -text whitespace=-blank-at-eof,-blank-at-eol
+
+# Proof raw-log hashes bind exact captured bytes, including original line endings.
+/experiments/capability-proof/runs/*/stdout.log -text whitespace=cr-at-eol
