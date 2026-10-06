@@ -9,7 +9,7 @@ requires:
 provides:
   schemas: []
   projectors:
-    - id: operating-model-markdown-docs
+    - id: markdown-documentation
       version: 1.0.0
       target: markdown
       allKinds: true
@@ -22,3 +22,6 @@ provides:
         Definition as the sole owner of its meaning. Escalate ambiguous or
         conflicting source intent and return a candidate for independent
         verification.
+      requiredChecks:
+        - operating-model-composition
+        - operating-model-documentation
