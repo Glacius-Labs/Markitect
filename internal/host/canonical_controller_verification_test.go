@@ -271,7 +271,9 @@ func TestCanonicalControllerVerifierProtocolFailureAndIncompleteAreNotPassing(t 
 	if err != nil {
 		t.Fatal(err)
 	}
-	external, err := os.MkdirTemp(filepath.Dir(repo), "canonical-verifier-outcome-")
+	repo = canonicalControllerTestDirectory(t, repo, "repository")
+	externalParent := canonicalControllerTestDirectory(t, filepath.Dir(repo), "external parent")
+	external, err := os.MkdirTemp(externalParent, "canonical-verifier-outcome-")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -470,7 +472,9 @@ func canonicalControllerVerificationFixture(t *testing.T) (root, sourceRevision,
 	if err != nil {
 		t.Fatal(err)
 	}
-	external, err := os.MkdirTemp(filepath.Dir(repo), "canonical-verifier-test-")
+	repo = canonicalControllerTestDirectory(t, repo, "repository")
+	externalParent := canonicalControllerTestDirectory(t, filepath.Dir(repo), "external parent")
+	external, err := os.MkdirTemp(externalParent, "canonical-verifier-test-")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -539,6 +543,19 @@ func canonicalControllerVerificationFixture(t *testing.T) (root, sourceRevision,
 	cfg.Verifier.Args = []string{"-test.run=^TestCanonicalControllerVerifierProtocolProcess$"}
 	marker = filepath.Join(filepath.Dir(cfg.RecordStore), "verifier-invocations.log")
 	return root, sourceRevision, evidenceRevision, cfg, marker
+}
+
+func canonicalControllerTestDirectory(t *testing.T, path, description string) string {
+	t.Helper()
+	canonical, err := canonicalUserPath(path)
+	if err != nil {
+		t.Fatalf("canonicalize verifier test %s: %v", description, err)
+	}
+	canonical, err = realDirectory(canonical)
+	if err != nil {
+		t.Fatalf("validate verifier test %s: %v", description, err)
+	}
+	return canonical
 }
 
 func setCanonicalControllerVerifierActor(t *testing.T, marker, outcome string) {
