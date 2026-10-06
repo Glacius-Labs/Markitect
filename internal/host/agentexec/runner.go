@@ -153,10 +153,9 @@ func run(parent context.Context, cfg Config, request Request, opts RunOptions) (
 	defer cancel()
 	stdout := &limitedBuffer{limit: cfg.MaxStdoutBytes, cancel: cancel}
 	stderr := &limitedBuffer{limit: cfg.MaxStderrBytes, cancel: cancel}
-	cmd := exec.CommandContext(ctx, executable, cfg.Args...)
+	cmd := exec.Command(executable, cfg.Args...)
 	cmd.Args[0] = cfg.Command
 	cmd.Dir = runDir
-	cmd.Stdin = bytes.NewReader(inputJSON)
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr
 	cmd.Env = setEnvironment(os.Environ(), "MARKITECT_AGENT_PRIVATE_LOG", privateLogPath)
@@ -167,7 +166,7 @@ func run(parent context.Context, cfg Config, request Request, opts RunOptions) (
 	}{cfg.Model, cfg.ModelOptions, cfg.ProviderVersion})
 	cmd.Env = setEnvironment(cmd.Env, "MARKITECT_AGENT_CONFIG_JSON", string(configJSON))
 	start := time.Now()
-	err = cmd.Run()
+	err = runGuardedProcess(ctx, cmd, inputJSON)
 	wallTime := time.Since(start)
 	after, auditErr := snapshotRoots(roots)
 	result := RunResult{}
@@ -568,6 +567,51 @@ func preparePrivateLogDirectory(value string, roots []string) (string, error) {
 	if err != nil {
 		return "", errors.New("private log directory path is invalid")
 	}
+	absolute = filepath.Clean(absolute)
+	info, statErr := os.Lstat(absolute)
+	if statErr == nil {
+		if !info.IsDir() || info.Mode()&os.ModeSymlink != 0 {
+			return "", errors.New("private log directory must be a real directory")
+		}
+		canonical, err := canonicalDir(absolute)
+		if err != nil || pathWithinAny(canonical, roots) {
+			return "", errors.New("private log directory must be outside audited input roots")
+		}
+		if err := os.Chmod(canonical, 0700); err != nil {
+			return "", errors.New("private log directory permissions could not be restricted")
+		}
+		return canonical, nil
+	}
+	if !errors.Is(statErr, os.ErrNotExist) {
+		return "", errors.New("private log directory could not be inspected")
+	}
+	parent := filepath.Dir(absolute)
+	for {
+		_, err := os.Lstat(parent)
+		if err == nil {
+			break
+		}
+		if !errors.Is(err, os.ErrNotExist) {
+			return "", errors.New("private log directory parent could not be inspected")
+		}
+		next := filepath.Dir(parent)
+		if next == parent {
+			return "", errors.New("private log directory parent could not be resolved")
+		}
+		parent = next
+	}
+	canonicalParent, err := canonicalDir(parent)
+	if err != nil {
+		return "", errors.New("private log directory parent must be a real directory")
+	}
+	relative, err := filepath.Rel(parent, absolute)
+	if err != nil || relative == "." || strings.HasPrefix(relative, ".."+string(filepath.Separator)) || relative == ".." {
+		return "", errors.New("private log directory path is invalid")
+	}
+	candidate := filepath.Join(canonicalParent, relative)
+	if pathWithinAny(candidate, roots) {
+		return "", errors.New("private log directory must be outside audited input roots")
+	}
 	if err := os.MkdirAll(absolute, 0700); err != nil {
 		return "", errors.New("private log directory could not be created")
 	}
@@ -579,6 +623,112 @@ func preparePrivateLogDirectory(value string, roots []string) (string, error) {
 		return "", errors.New("private log directory permissions could not be restricted")
 	}
 	return canonical, nil
+}
+
+// runGuardedProcess withholds the invocation until the operating-system process
+// tree guard owns the child. This is lifecycle containment for the configured
+// caller, not a sandbox: arbitrary programs that spawn before reading stdin can
+// still create an unguarded descendant. The supported Codex wrapper reads the
+// complete closed request before launching its provider process.
+func runGuardedProcess(ctx context.Context, cmd *exec.Cmd, input []byte) (resultErr error) {
+	guard, err := newProcessTreeGuard()
+	if err != nil {
+		return errors.New("runner process-tree guard could not be established")
+	}
+	var waitDone chan error
+	waitConsumed := false
+	defer func() {
+		if err := guard.close(); err != nil && resultErr == nil {
+			resultErr = errors.New("runner process-tree cleanup failed")
+		}
+		if waitDone != nil && !waitConsumed {
+			select {
+			case <-waitDone:
+				waitConsumed = true
+			case <-time.After(2 * time.Second):
+				if cmd.Process != nil {
+					_ = cmd.Process.Kill()
+				}
+				select {
+				case <-waitDone:
+					waitConsumed = true
+				case <-time.After(2 * time.Second):
+					resultErr = errors.New("runner process did not stop within its bound")
+				}
+			}
+		}
+	}()
+	if err := guard.prepare(cmd); err != nil {
+		return errors.New("runner process-tree guard could not be prepared")
+	}
+	stdin, err := cmd.StdinPipe()
+	if err != nil {
+		return errors.New("runner input pipe could not be opened")
+	}
+	if err := cmd.Start(); err != nil {
+		_ = stdin.Close()
+		return err
+	}
+	if err := guard.attach(cmd); err != nil {
+		_ = stdin.Close()
+		_ = cmd.Process.Kill()
+		waitDone = make(chan error, 1)
+		go func() { waitDone <- cmd.Wait() }()
+		select {
+		case <-waitDone:
+			waitConsumed = true
+		case <-time.After(2 * time.Second):
+			return errors.New("runner process could not be reaped after guard refusal")
+		}
+		return errors.New("runner process-tree guard could not be attached")
+	}
+	waitDone = make(chan error, 1)
+	go func() { waitDone <- cmd.Wait() }()
+	inputDone := make(chan error, 1)
+	go func() {
+		_, writeErr := stdin.Write(input)
+		closeErr := stdin.Close()
+		if writeErr != nil {
+			inputDone <- writeErr
+			return
+		}
+		inputDone <- closeErr
+	}()
+
+	var waitErr error
+	select {
+	case waitErr = <-waitDone:
+		waitConsumed = true
+	case <-ctx.Done():
+		if err := guard.terminate(); err != nil {
+			_ = cmd.Process.Kill()
+			return errors.New("runner process tree could not be stopped")
+		}
+		_ = stdin.Close()
+		select {
+		case waitErr = <-waitDone:
+			waitConsumed = true
+		case <-time.After(2 * time.Second):
+			_ = cmd.Process.Kill()
+			_ = guard.terminate()
+			select {
+			case <-waitDone:
+				waitConsumed = true
+			case <-time.After(2 * time.Second):
+				return errors.New("runner process did not stop within its bound")
+			}
+		}
+	}
+	if err := guard.terminate(); err != nil {
+		return errors.New("runner process tree could not be stopped after completion")
+	}
+	_ = stdin.Close()
+	select {
+	case <-inputDone:
+	case <-time.After(2 * time.Second):
+		return errors.New("runner input pipe did not close within its bound")
+	}
+	return waitErr
 }
 
 func snapshotRoots(roots []string) (workspaceSnapshot, error) {
