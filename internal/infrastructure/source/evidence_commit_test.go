@@ -191,6 +191,22 @@ func TestWriteSelectedEvidenceCommitSupportsLinkedWorktreeAndRejectsStaleHead(t 
 	}
 }
 
+func TestEvidenceGitEnvironmentUsesPlatformNullDevice(t *testing.T) {
+	values := make(map[string]string)
+	for _, entry := range evidenceGitEnvironment(filepath.Join(t.TempDir(), "index")) {
+		key, value, ok := strings.Cut(entry, "=")
+		if ok {
+			values[key] = value
+		}
+	}
+	if got := values["GIT_CONFIG_GLOBAL"]; got != os.DevNull {
+		t.Fatalf("GIT_CONFIG_GLOBAL = %q, want platform null device %q", got, os.DevNull)
+	}
+	if got := values["GIT_CONFIG_NOSYSTEM"]; got != "1" {
+		t.Fatalf("GIT_CONFIG_NOSYSTEM = %q, want 1", got)
+	}
+}
+
 func TestWriteSelectedEvidenceCommitHonorsCancellation(t *testing.T) {
 	root, parent := selectiveGitFixture(t)
 	before := evidenceRepoState(t, root)
