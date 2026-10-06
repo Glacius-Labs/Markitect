@@ -30,6 +30,22 @@ class ProofError(Exception):
     pass
 
 
+def object_or_empty(value: Any, label: str) -> dict[str, Any]:
+    if value is None:
+        return {}
+    if not isinstance(value, dict):
+        raise ProofError(f"CLI report field {label} is not an object")
+    return value
+
+
+def list_or_empty(value: Any, label: str) -> list[Any]:
+    if value is None:
+        return []
+    if not isinstance(value, list):
+        raise ProofError(f"CLI report field {label} is not an array")
+    return value
+
+
 def sha(data: bytes) -> str:
     return "sha256:" + hashlib.sha256(data).hexdigest()
 
@@ -148,9 +164,7 @@ def new_attempt_paths(root: Path, action: str) -> tuple[str, Path, Path]:
 
 def safe_text_facts(items: Any) -> list[dict[str, Any]]:
     result = []
-    if not isinstance(items, list):
-        return result
-    for item in items:
+    for item in list_or_empty(items, "textFacts"):
         if not isinstance(item, dict):
             continue
         fact = {key: item[key] for key in ("code", "identity", "subject", "outcome") if key in item}
@@ -218,7 +232,7 @@ def inspect_runtime(path: Path, fixture: Path) -> dict[str, Any]:
                 digest, size = file_sha(candidate)
                 path_digest = sha(str(candidate.resolve()).encode())
                 files[path_digest] = runtime_file_fact(candidate, digest, size)
-        for item in runner.get("runtimeFiles", []):
+        for item in list_or_empty(runner.get("runtimeFiles"), f"{role}.runtimeFiles"):
             if not isinstance(item, dict) or not isinstance(item.get("path"), str):
                 raise ProofError(f"{role} runtimeFiles entry is invalid")
             runtime_file = Path(item["path"])
@@ -259,61 +273,73 @@ def summarize_receipt(value: Any) -> Any:
 
 
 def proposal_metrics(report: dict[str, Any]) -> dict[str, Any]:
-    plan = report.get("plan", {})
-    proposals = plan.get("proposals", []) if isinstance(plan, dict) else []
-    return {
+    report = object_or_empty(report, "proposalReport")
+    plan = object_or_empty(report.get("plan"), "plan")
+    proposals = list_or_empty(plan.get("proposals"), "plan.proposals")
+    result = {
         "status": report.get("status"),
         "proposalDigest": report.get("digest"),
         "configDigest": report.get("configDigest"),
         "inputDigest": report.get("inputDigest"),
         "ledgerHead": report.get("ledgerHead"),
         "ledgerSelectionDigest": report.get("ledgerSelectionDigest"),
-        "baseRevision": plan.get("baseRevision") if isinstance(plan, dict) else None,
-        "revision": plan.get("revision") if isinstance(plan, dict) else None,
-        "sourceModelDigest": plan.get("modelDigest") if isinstance(plan, dict) else None,
-        "observedPaths": plan.get("observedPaths", []) if isinstance(plan, dict) else [],
-        "unknownArtifacts": plan.get("unknownArtifacts", []) if isinstance(plan, dict) else [],
-        "evidenceRefreshRequired": plan.get("evidenceRefreshRequired", []) if isinstance(plan, dict) else [],
-        "unobservedProjections": plan.get("unobservedProjections", []) if isinstance(plan, dict) else [],
-        "proposals": [{
-            "projectionId": p.get("projectionId"),
-            "module": {k: p.get("module", {}).get(k) for k in ("name", "version", "digest")},
-            "requestDigest": p.get("request", {}).get("requestDigest"),
-            "targetDigests": p.get("request", {}).get("targetDigests", {}),
-            "decision": p.get("decision"),
-            "reasonCount": len(p.get("reasons", [])),
-            "escalations": safe_text_facts(p.get("escalations", [])),
-        } for p in proposals if isinstance(p, dict)],
+        "baseRevision": plan.get("baseRevision"),
+        "revision": plan.get("revision"),
+        "sourceModelDigest": plan.get("modelDigest"),
+        "observedPaths": list_or_empty(plan.get("observedPaths"), "plan.observedPaths"),
+        "unknownArtifacts": list_or_empty(plan.get("unknownArtifacts"), "plan.unknownArtifacts"),
+        "evidenceRefreshRequired": list_or_empty(plan.get("evidenceRefreshRequired"), "plan.evidenceRefreshRequired"),
+        "unobservedProjections": list_or_empty(plan.get("unobservedProjections"), "plan.unobservedProjections"),
+        "proposals": [],
     }
+    for proposal in proposals:
+        if not isinstance(proposal, dict):
+            continue
+        module = object_or_empty(proposal.get("module"), "proposal.module")
+        request = object_or_empty(proposal.get("request"), "proposal.request")
+        result["proposals"].append({
+            "projectionId": proposal.get("projectionId"),
+            "module": {key: module.get(key) for key in ("name", "version", "digest")},
+            "requestDigest": request.get("requestDigest"),
+            "targetDigests": request.get("targetDigests"),
+            "decision": proposal.get("decision"),
+            "reasonCount": len(list_or_empty(proposal.get("reasons"), "proposal.reasons")),
+            "escalations": safe_text_facts(proposal.get("escalations")),
+        })
+    return result
 
 
 def run_metrics(action: str, report: dict[str, Any]) -> dict[str, Any]:
+    report = object_or_empty(report, "report")
     if action == "controller-propose":
         return proposal_metrics(report)
     if action == "controller-execute":
         work = []
-        for item in report.get("work", []):
+        for item in list_or_empty(report.get("work"), "work"):
             if not isinstance(item, dict):
                 continue
-            outputs = item.get("outputs", {})
+            outputs = object_or_empty(item.get("outputs"), "work.outputs")
             output_facts = []
-            if isinstance(outputs, dict):
-                for name, encoded in sorted(outputs.items()):
-                    data = base64.b64decode(encoded, validate=True)
-                    output_facts.append({"path": name, "digest": sha(data), "bytes": len(data)})
+            for name, encoded in sorted(outputs.items()):
+                if not isinstance(encoded, str):
+                    raise ProofError("CLI work output payload is not base64 text")
+                data = base64.b64decode(encoded, validate=True)
+                output_facts.append({"path": name, "digest": sha(data), "bytes": len(data)})
+            candidate = item.get("candidate")
+            candidate_bytes = base64.b64decode(candidate, validate=True) if isinstance(candidate, str) else b""
             work.append({
                 "projectionId": item.get("projectionId"),
                 "candidateDigest": item.get("candidateDigest"),
                 "planDigest": item.get("planDigest"),
-                "candidateBytes": len(base64.b64decode(item.get("candidate", ""), validate=True)),
+                "candidateBytes": len(candidate_bytes),
                 "outputs": output_facts,
                 "executorReceipt": summarize_receipt(item.get("executor")),
-                "escalations": safe_text_facts(item.get("escalations", [])),
+                "escalations": safe_text_facts(item.get("escalations")),
             })
         return {
             "status": report.get("status"),
             "runDigest": report.get("digest"),
-            "proposal": proposal_metrics(report.get("proposal", {})),
+            "proposal": proposal_metrics(report.get("proposal")),
             "executorConfigDigest": report.get("executorDigest"),
             "verifierConfigDigest": report.get("verifierDigest"),
             "hostExecutableDigest": report.get("hostExecutableDigest"),
@@ -325,13 +351,31 @@ def run_metrics(action: str, report: dict[str, Any]) -> dict[str, Any]:
         return {
             "status": report.get("status"),
             "runDigest": report.get("runDigest"),
-            "written": report.get("written", []),
-            "records": [{"id": r.get("id"), "projectionId": r.get("projectionId")} for r in report.get("records", [])],
+            "written": list_or_empty(report.get("written"), "written"),
+            "records": [{"id": record.get("id"), "projectionId": record.get("projectionId")} for record in list_or_empty(report.get("records"), "records") if isinstance(record, dict)],
             "ledgerHead": report.get("ledgerHead"),
             "evidenceRevision": report.get("evidenceRevision"),
-            "evidencePaths": report.get("evidencePaths", []),
-            "evidenceRefreshRequired": report.get("evidenceRefreshRequired", []),
+            "evidencePaths": list_or_empty(report.get("evidencePaths"), "evidencePaths"),
+            "evidenceRefreshRequired": list_or_empty(report.get("evidenceRefreshRequired"), "evidenceRefreshRequired"),
         }
+    assurance = object_or_empty(report.get("assurance"), "assurance")
+    verifier_runs = list_or_empty(report.get("verifierRuns"), "verifierRuns")
+    verifier_facts = []
+    for verifier in verifier_runs:
+        if not isinstance(verifier, dict):
+            continue
+        evidence_refs = list_or_empty(verifier.get("evidenceRefs"), "verifier.evidenceRefs")
+        verifier_facts.append({
+            "scopeId": verifier.get("scopeId"), "projectionId": verifier.get("projectionId"),
+            "recordId": verifier.get("recordId"), "resultId": verifier.get("resultId"),
+            "evidenceSnapshotDigest": verifier.get("evidenceSnapshotDigest"),
+            "configFingerprint": verifier.get("configFingerprint"), "receiptDigest": verifier.get("receiptDigest"),
+            "inputDigest": verifier.get("inputDigest"), "runId": verifier.get("runId"), "outcome": verifier.get("outcome"),
+            "evidenceRefCount": len(evidence_refs),
+            "evidenceRefsDigest": sha(json.dumps(evidence_refs, sort_keys=True, separators=(",", ":")).encode("utf-8")),
+            "observations": safe_text_facts(verifier.get("observations")),
+            "receipt": summarize_receipt(verifier.get("receipt")),
+        })
     return {
         "status": report.get("status"),
         "outcome": report.get("outcome"),
@@ -339,23 +383,12 @@ def run_metrics(action: str, report: dict[str, Any]) -> dict[str, Any]:
         "evidenceRevision": report.get("evidenceRevision"),
         "ledgerHead": report.get("ledgerHead"),
         "ledgerSelectionDigest": report.get("ledgerSelectionDigest"),
-        "results": [{"id": r.get("id"), "recordId": r.get("recordId"), "outcome": r.get("outcome")} for r in report.get("results", [])],
-        "verifierRuns": [{
-            "scopeId": v.get("scopeId"), "projectionId": v.get("projectionId"),
-            "recordId": v.get("recordId"), "resultId": v.get("resultId"),
-            "evidenceSnapshotDigest": v.get("evidenceSnapshotDigest"),
-            "configFingerprint": v.get("configFingerprint"), "receiptDigest": v.get("receiptDigest"),
-            "inputDigest": v.get("inputDigest"), "runId": v.get("runId"), "outcome": v.get("outcome"),
-            "evidenceRefCount": len(v.get("evidenceRefs", [])),
-            "evidenceRefsDigest": sha(json.dumps(v.get("evidenceRefs", []), sort_keys=True, separators=(",", ":")).encode("utf-8")),
-            "observations": safe_text_facts(v.get("observations")),
-            "receipt": summarize_receipt(v.get("receipt")),
-        } for v in report.get("verifierRuns", [])],
-        "assuranceNodeCount": len(report.get("assurance", {}).get("nodes", [])),
-        "assuranceDigest": sha(json.dumps(report.get("assurance", {}), sort_keys=True, separators=(",", ":")).encode("utf-8")),
-        "limits": report.get("limits", []),
+        "results": [{"id": result.get("id"), "recordId": result.get("recordId"), "outcome": result.get("outcome")} for result in list_or_empty(report.get("results"), "results") if isinstance(result, dict)],
+        "verifierRuns": verifier_facts,
+        "assuranceNodeCount": len(list_or_empty(assurance.get("nodes"), "assurance.nodes")),
+        "assuranceDigest": sha(json.dumps(assurance, sort_keys=True, separators=(",", ":")).encode("utf-8")),
+        "limits": list_or_empty(report.get("limits"), "limits"),
     }
-
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
