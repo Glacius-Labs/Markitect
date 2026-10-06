@@ -657,6 +657,9 @@ func WriteProjectionArtifacts(root string, captured *snapshot.Snapshot, contents
 			fileMode = 0755
 		}
 		if err = writeRoot.AtomicWrite(name, contents[name], fileMode); err != nil {
+			if writeWasPublished(err) {
+				written = append(written, name)
+			}
 			return written, err
 		}
 		written = append(written, name)

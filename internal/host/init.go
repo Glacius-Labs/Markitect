@@ -122,6 +122,9 @@ func Init(root string, options InitOptions, write bool) (*InitPlan, error) {
 		}
 		f, err := writeRoot.CreateExclusive(file.Path, 0644)
 		if err != nil {
+			if writeWasPublished(err) {
+				state.plan.Written = append(state.plan.Written, file.Path)
+			}
 			return initWriteFailure(state.plan, fmt.Errorf("create %s exclusively: %w", file.Path, err))
 		}
 		state.plan.Written = append(state.plan.Written, file.Path)

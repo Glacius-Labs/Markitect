@@ -168,6 +168,9 @@ func writeCanonicalScopedOutputs(root string, captured canonicalScopedWriteCaptu
 			fileMode = 0755
 		}
 		if err := writeRoot.AtomicWrite(name, outputs[name], fileMode); err != nil {
+			if writeWasPublished(err) {
+				written = append(written, name)
+			}
 			return written, err
 		}
 		written = append(written, name)
