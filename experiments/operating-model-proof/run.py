@@ -21,7 +21,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-PROTOCOL = "operating-model-proof/v4"
+PROTOCOL = "operating-model-proof/v5"
+CODEX_RUNNER_DIGEST = "sha256:7806fabc774e2127ea29977009745c49d8043ffbcba63390e3d790b82d164d57"
 FULL_SHA = re.compile(r"^(?:[0-9a-f]{40}|[0-9a-f]{64})$")
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -46,6 +47,20 @@ def list_or_empty(value: Any, label: str) -> list[Any]:
     return value
 
 
+def assurance_node_count(value: Any) -> int | None:
+    if value is None:
+        return None
+    assurance = object_or_empty(value, "assurance")
+    evaluation = assurance.get("Evaluation")
+    if evaluation is None:
+        return None
+    evaluation = object_or_empty(evaluation, "assurance.Evaluation")
+    nodes = evaluation.get("Nodes")
+    if nodes is None:
+        return None
+    return len(list_or_empty(nodes, "assurance.Evaluation.Nodes"))
+
+
 def sha(data: bytes) -> str:
     return "sha256:" + hashlib.sha256(data).hexdigest()
 
@@ -55,6 +70,11 @@ def file_sha(path: Path) -> tuple[str, int]:
         raise ProofError(f"required file is missing: {path}")
     data = path.read_bytes()
     return sha(data), len(data)
+
+
+def require_digest(actual: str, expected: str, label: str) -> None:
+    if actual != expected:
+        raise ProofError(f"{label} digest differs from the frozen runtime binding")
 
 
 def inside(child: Path, parent: Path) -> bool:
@@ -214,6 +234,8 @@ def inspect_runtime(path: Path, fixture: Path) -> dict[str, Any]:
         expected_runner = ROOT / "internal" / "tooling" / "codexrunner" / "runner.py"
         if not any(isinstance(a, str) and Path(a).resolve() == expected_runner.resolve() for a in args):
             raise ProofError(f"{role} must use the repository Codex adapter")
+        wrapper_digest, _ = file_sha(expected_runner)
+        require_digest(wrapper_digest, CODEX_RUNNER_DIGEST, "Codex runner wrapper")
         codex_path = Path(args[args.index("--codex-executable") + 1])
         if not codex_path.is_absolute() or codex_path.suffix.lower() != ".exe" or not codex_path.is_file():
             raise ProofError(f"{role} must bind an absolute native Windows Codex executable")
@@ -385,8 +407,8 @@ def run_metrics(action: str, report: dict[str, Any]) -> dict[str, Any]:
         "ledgerSelectionDigest": report.get("ledgerSelectionDigest"),
         "results": [{"id": result.get("id"), "recordId": result.get("recordId"), "outcome": result.get("outcome")} for result in list_or_empty(report.get("results"), "results") if isinstance(result, dict)],
         "verifierRuns": verifier_facts,
-        "assuranceNodeCount": len(list_or_empty(assurance.get("nodes"), "assurance.nodes")),
-        "assuranceDigest": sha(json.dumps(assurance, sort_keys=True, separators=(",", ":")).encode("utf-8")),
+        "assuranceNodeCount": assurance_node_count(report.get("assurance")),
+        "assuranceDigest": None if report.get("assurance") is None else sha(json.dumps(assurance, sort_keys=True, separators=(",", ":")).encode("utf-8")),
         "limits": list_or_empty(report.get("limits"), "limits"),
     }
 

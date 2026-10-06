@@ -5,8 +5,10 @@ from pathlib import Path
 
 from run import (
     ProofError,
+    assurance_node_count,
     new_attempt_paths,
     proposal_metrics,
+    require_digest,
     runtime_file_fact,
     run_metrics,
     safe_text_facts,
@@ -41,12 +43,33 @@ class EvidenceSafetyTests(unittest.TestCase):
         })
         self.assertEqual(verified["results"], [])
         self.assertEqual(verified["verifierRuns"], [])
-        self.assertEqual(verified["assuranceNodeCount"], 0)
+        self.assertIsNone(verified["assuranceNodeCount"])
+        self.assertIsNone(verified["assuranceDigest"])
         self.assertEqual(verified["limits"], [])
 
     def test_wrong_collection_shape_fails_closed(self):
         with self.assertRaises(ProofError):
             proposal_metrics({"plan": {"proposals": {"not": "an array"}}})
+
+    def test_assurance_count_uses_documented_evaluation_nodes_shape(self):
+        def count(assurance):
+            return run_metrics("controller-verify", {"assurance": assurance})["assuranceNodeCount"]
+
+        self.assertEqual(count({"Evaluation": {"Nodes": [{"NodeID": "root"}]}}), 1)
+        self.assertEqual(count({"Evaluation": {"Nodes": []}}), 0)
+        self.assertIsNone(count({"Evaluation": {"Nodes": None}}))
+        self.assertIsNone(count(None))
+        self.assertIsNone(count({"unknown": {"nodes": [{"NodeID": "root"}]}}))
+        with self.assertRaises(ProofError):
+            count({"Evaluation": {"Nodes": "not-an-array"}})
+        with self.assertRaises(ProofError):
+            count([{"NodeID": "root"}])
+
+    def test_runtime_wrapper_digest_must_match_frozen_bytes(self):
+        expected = "sha256:" + "a" * 64
+        require_digest(expected, expected, "Codex runner wrapper")
+        with self.assertRaises(ProofError):
+            require_digest("sha256:" + "b" * 64, expected, "Codex runner wrapper")
 
     def test_cli_report_rejects_duplicate_nested_keys(self):
         with self.assertRaises(ProofError):
