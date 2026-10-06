@@ -157,7 +157,7 @@ func TestOperatingModelProjectionScopesAreIndependentAndComposed(t *testing.T) {
 				}
 				plannedChecks := map[string]bool{}
 				for _, check := range prepared.Plan.Contracts[0].VerificationChecks {
-					plannedChecks[check] = true
+					plannedChecks[check.Check] = true
 				}
 				for _, name := range projection.checkNames {
 					if !plannedChecks[name] {
