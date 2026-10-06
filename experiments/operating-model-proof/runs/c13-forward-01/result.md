@@ -1,0 +1,9 @@
+# C13 forward-axis control
+
+**Result: PARTIAL.** Public `examples/canonical-projection/**` at Markitect source `6a79b0d015801f3f37e42cacd049179cc795be42` was isolated into a 17-file repository; all source bytes matched. Fixture source commit `603284871e3129189dae819237f212d918f988a4` has tree `922cad28e266dadf49dedc99a8f838569837c86b`. A deterministic canonical plan generated `docs/represented/index.md` (1,526 bytes; SHA-256 `414b55da45e62098ace33a148a1465aedc15fdcd04438474308e93c2ca055a19`). Those bytes, the three fixed-check inputs, and unselected `docs/represented/unknown.md` were frozen at evidence commit `2e9f197b201f9f65f5c6c10cab7ada65f533348b` (tree `80b0f652b3becc0abeb08f6ab8fc6807e2528e7c`). Exact source paths, target entries, build/runtime identity and stdout/stderr hashes are in `result.json`.
+
+Selection was `markitect.foundation/v1 / Projection / commerce / application-markdown`, only `docs/represented/index.md`, and `activeRecords: []`. The supplied review reference explicitly says it is not owner review or acceptance. `adopt-plan` returned planned/retained and kept the unknown sibling visible. `adopt` passed the single declared `canonical-projection-fixture` check. A wrong target path exited 2.
+
+At separate evidence commit `81744424dc5befbb62077fa83b69c9e725691b33`, one byte of the generated Markdown changed (`application` to `xpplication`). The changed artifact also planned and passed `adopt`: the fixed check reads three .NET fixture inputs and does not inspect Markdown, so it did not detect the mutation.
+
+For all five primary CLI invocations, `HEAD`, `git write-tree`, clean status and target tree entries were identical before and after. The adopted record was ephemeral; no active-owner record, durable integration, owner decision or project acceptance was created. This forward control does not consume or connect the separate C13 Infer candidate and does not complete C13. No provider call or full repository gate was run.
