@@ -108,6 +108,36 @@ func TestCanonicalAdoptionApprovalBindsEverySelectedInput(t *testing.T) {
 		})
 	}
 }
+
+func TestCanonicalDurableAdoptionBindsAbsentVersusPresentLedger(t *testing.T) {
+	fixed, target, identity, selection := adoptionFixture(t)
+	configDigest := sha256Prefix(sha256Hex([]byte("runtime-config")))
+	absent := CanonicalAdoptionLedgerBinding{Present: false, ActiveRecordIDs: []string{}, ConfigDigest: configDigest}
+	absentPlan, err := PrepareCanonicalDurableAdoption(fixed, target, identity, selection, absent, []records.ProjectionRecord{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	present := CanonicalAdoptionLedgerBinding{Present: true, StoreID: "store-id", Head: sha256Prefix(sha256Hex([]byte("head"))), ActiveRecordIDs: []string{}, ConfigDigest: configDigest}
+	presentPlan, err := PrepareCanonicalDurableAdoption(fixed, target, identity, selection, present, []records.ProjectionRecord{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if absentPlan.PlanDigest == presentPlan.PlanDigest {
+		t.Fatal("approval did not bind absent versus present ledger state")
+	}
+	present.Head = sha256Prefix(sha256Hex([]byte("new head")))
+	changedHead, err := PrepareCanonicalDurableAdoption(fixed, target, identity, selection, present, []records.ProjectionRecord{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if changedHead.PlanDigest == presentPlan.PlanDigest {
+		t.Fatal("approval did not bind external ledger head")
+	}
+	selection.ActiveRecords = []records.ProjectionRecord{{}}
+	if _, err := PrepareCanonicalDurableAdoption(fixed, target, identity, selection, absent, []records.ProjectionRecord{}); err == nil {
+		t.Fatal("durable adoption trusted caller-supplied active ownership")
+	}
+}
 func TestCanonicalAdoptionRefusesUnsafeOrIncompleteSelection(t *testing.T) {
 	for _, invalid := range []string{"missing", "outside", "duplicate", "symlink", "unsafe", "alias", "no-review", "no-checks", "provisional", "source-changed", "structural"} {
 		t.Run(invalid, func(t *testing.T) {
