@@ -116,6 +116,8 @@ spec:
     - internal/host/cli/canonical_goal_test.go
     - examples/public_fixture_test.go
   tooling:
+    - path: experiments/operating-model-proof/runs/linux-gates-4465186/receipt.json
+      owner: preserved-failed-linux-gate-evidence
     - path: internal/infrastructure/source/selective_identity_test.go
       owner: selective-git-identity-query-tests
     - path: AGENTS.md
