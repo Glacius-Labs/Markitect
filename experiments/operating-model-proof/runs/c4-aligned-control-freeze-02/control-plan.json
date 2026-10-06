@@ -1,0 +1,211 @@
+{
+  "protocol": "operating-model-proof/v5",
+  "recordType": "pre-call-control-freeze",
+  "status": "frozen-awaiting-parent-review",
+  "createdAtUtc": "2026-10-06T05:24:30.4986415Z",
+  "trial": "c4-documentation-aligned-v1",
+  "sourceSha": "17ad4205f15efbf7ae6ccd04b2d1085201602cd3",
+  "driver": {
+    "path": "experiments/operating-model-proof/run.py",
+    "sha256": "a2dc55d213db619349885b8fd44a85078ce0190402e8f36fe46eb3a6a30d585b"
+  },
+  "wrapper": {
+    "path": "internal/tooling/codexrunner/runner.py",
+    "sha256": "7806fabc774e2127ea29977009745c49d8043ffbcba63390e3d790b82d164d57"
+  },
+  "cli": {
+    "version": "Markitect 0.13.0 (windows/amd64)",
+    "sha256": "8d179620a679fdfa04c92888ce2639755aa2bd91d15b7531ed709e17cb64bf76",
+    "bytes": 12787200,
+    "buildReceiptSha256": "4a7ca77cfbfb83c1e1b5e3f98b755f1de128d072372499438cd9e2d2ab0f3375",
+    "buildReceiptSourceSha": "17ad4205f15efbf7ae6ccd04b2d1085201602cd3",
+    "buildReceiptExitCode": 0,
+    "buildReceiptBinaryDigest": "sha256:8d179620a679fdfa04c92888ce2639755aa2bd91d15b7531ed709e17cb64bf76"
+  },
+  "fixture": {
+    "originSha": "b5e669419a86c340ee8c8c8548821e00c0c400b4",
+    "commit": "55fc2b2329bd627acebd4ec30c0886fe6222edcf",
+    "tree": "76ba6a052b6ff752b5693906761ffde9d0ee9223",
+    "branch": "codex/operating-model-c4-aligned",
+    "manifestSha256": "9380a488a54b67f241dc002b8af49d551ad7e2c0515058926cec2a35beb66a0d",
+    "trackedFileCount": 33,
+    "status": "clean"
+  },
+  "canonicalConfig": {
+    "path": "canonical-documentation-aligned.yaml",
+    "sha256": "5291f6f3651fb5885930d3ccb700b47cdaa4f6c364ee240f9bb3f4c397f98f55"
+  },
+  "runtime": {
+    "sha256": "26e5b7432060aa46a0de498f89bb8add70c446b5d8bbe304ba631be25352035c",
+    "bytes": 5619,
+    "provider": "Codex CLI 0.130.0",
+    "model": "gpt-5.5",
+    "reasoning": "high",
+    "fileFacts": [
+      {
+        "sha256": "sha256:7806fabc774e2127ea29977009745c49d8043ffbcba63390e3d790b82d164d57",
+        "bytes": 23198
+      },
+      {
+        "sha256": "sha256:280cb1c4e3375d94dbdcba1a191f4f6adbf73c293be1e4f16c74b006662b9c54",
+        "bytes": 235079472
+      }
+    ],
+    "recordStore": "[external]/record-store",
+    "recordStoreLeafExists": false,
+    "privateLogs": "[external]/private-logs",
+    "privateLogsExists": true,
+    "staging": "[external]/staging",
+    "recordStorePathDigest": "6bc7783cd339bc113977b1c63e74f6de1ad9e6cdd4d6997d3ea1084babb35230",
+    "privateLogsPathDigest": "80cbb115336aa6310e6676b33bad47771f3994aa33f6ff23141ca99f83630971"
+  },
+  "scopePlan": {
+    "orders": "src/Orders/",
+    "billing": "src/Billing/",
+    "productMarkdown": "docs/represented/",
+    "fixedCheckCount": 4,
+    "explicitCheckInputCount": 8,
+    "checkInputs": [
+      "examples/operating-model/checks/Orders.Checks.csproj",
+      "examples/operating-model/checks/Orders.Program.cs",
+      "examples/operating-model/checks/Billing.Checks.csproj",
+      "examples/operating-model/checks/Billing.Program.cs",
+      "examples/operating-model/checks/Composition.Checks.csproj",
+      "examples/operating-model/checks/Composition.Program.cs",
+      "examples/operating-model/checks/Documentation.Checks.csproj",
+      "examples/operating-model/checks/Documentation.Program.cs"
+    ],
+    "assuranceScopes": [
+      {
+        "id": "orders",
+        "projectionId": "[\"markitect.foundation/v1\",\"Projection\",\"operating-model\",\"orders-dotnet\"]",
+        "children": [],
+        "checks": [
+          {
+            "name": "operating-model-orders",
+            "run": [
+              "dotnet",
+              "run",
+              "--project",
+              "examples/operating-model/checks/Orders.Checks.csproj",
+              "--configuration",
+              "Release"
+            ]
+          }
+        ],
+        "checkInputs": [
+          "examples/operating-model/checks/Orders.Checks.csproj",
+          "examples/operating-model/checks/Orders.Program.cs"
+        ]
+      },
+      {
+        "id": "billing",
+        "projectionId": "[\"markitect.foundation/v1\",\"Projection\",\"operating-model\",\"billing-dotnet\"]",
+        "children": [],
+        "checks": [
+          {
+            "name": "operating-model-billing",
+            "run": [
+              "dotnet",
+              "run",
+              "--project",
+              "examples/operating-model/checks/Billing.Checks.csproj",
+              "--configuration",
+              "Release"
+            ]
+          }
+        ],
+        "checkInputs": [
+          "examples/operating-model/checks/Billing.Checks.csproj",
+          "examples/operating-model/checks/Billing.Program.cs"
+        ]
+      },
+      {
+        "id": "product",
+        "projectionId": "[\"markitect.foundation/v1\",\"Projection\",\"operating-model\",\"product-markdown\"]",
+        "children": [
+          "orders",
+          "billing"
+        ],
+        "checks": [
+          {
+            "name": "operating-model-composition",
+            "run": [
+              "dotnet",
+              "run",
+              "--project",
+              "examples/operating-model/checks/Composition.Checks.csproj",
+              "--configuration",
+              "Release"
+            ]
+          },
+          {
+            "name": "operating-model-documentation",
+            "run": [
+              "dotnet",
+              "run",
+              "--project",
+              "examples/operating-model/checks/Documentation.Checks.csproj",
+              "--configuration",
+              "Release"
+            ]
+          }
+        ],
+        "checkInputs": [
+          "examples/operating-model/checks/Composition.Checks.csproj",
+          "examples/operating-model/checks/Composition.Program.cs",
+          "examples/operating-model/checks/Documentation.Checks.csproj",
+          "examples/operating-model/checks/Documentation.Program.cs"
+        ]
+      }
+    ]
+  },
+  "expectedNativeCalls": {
+    "executors": 2,
+    "freshIndependentVerifiers": 3,
+    "deterministicProductMarkdown": true
+  },
+  "writeFlag": "explicit --write only for reviewed exact cohort",
+  "ownerAcceptance": "not claimed",
+  "providerInvocationsBeforeFreeze": 0,
+  "invocationBinding": {
+    "runId": "c4-documentation-aligned-v1",
+    "config": "canonical-documentation-aligned.yaml",
+    "externalRoot": "[external]/staging",
+    "baseRevision": "55fc2b2329bd627acebd4ec30c0886fe6222edcf",
+    "proposalRevision": "55fc2b2329bd627acebd4ec30c0886fe6222edcf",
+    "actions": [
+      {
+        "write": false,
+        "action": "propose"
+      },
+      {
+        "write": false,
+        "action": "execute"
+      },
+      {
+        "write": true,
+        "action": "apply",
+        "expect": "exact reviewed run digest",
+        "reviewedRun": "[external reviewed-run JSON]"
+      },
+      {
+        "write": true,
+        "action": "verify",
+        "base": "55fc2b2329bd627acebd4ec30c0886fe6222edcf",
+        "revision": "exact Apply evidenceRevision"
+      }
+    ],
+    "controllerInvocation": "only through experiments/operating-model-proof/run.py",
+    "phaseRunIdMustRemainConstant": true
+  },
+  "policyAndCheckControls": {
+    "documentationCheckBytesUnchangedFrom": "140ffdb9547f025ec2a6e0dd0d2e38f9d0a090c7",
+    "allFourChecksAndEightInputsUnchanged": true,
+    "selectedDocumentationSubjects": [
+      "existing orders-dotnet ProjectionPolicy Definition",
+      "existing billing-dotnet ProjectionPolicy Definition"
+    ],
+    "newProjectionPolicy": "Foundation ProjectionPolicy sourceKind to Markdown; no duplicated method identifiers"
+  }
+}
