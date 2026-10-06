@@ -16,6 +16,7 @@ spec:
     - internal/host/write_safety.go
     - internal/host/writers_test.go
     - internal/host/writers_windows_test.go
+    - internal/host/writers_nonwindows_test.go
     - internal/infrastructure/source/selective_identity_test.go
     - internal/host/canonical_controller_assurance_preflight_test.go
     - docs/validation/proof-capability-checkpoint-2026-10-06.md
@@ -143,6 +144,8 @@ spec:
     - path: internal/host/writers_test.go
       owner: anchored-host-write-boundary
     - path: internal/host/writers_windows_test.go
+      owner: anchored-host-write-boundary
+    - path: internal/host/writers_nonwindows_test.go
       owner: anchored-host-write-boundary
     - path: experiments/operating-model-proof/runs/c8-orders-auditall-control-01/attempt-01-outcome.json
       owner: c8-invalid-harness-preflight-evidence
