@@ -1,0 +1,51 @@
+=== RUN   TestC1FiveDistinctTypedOntologiesCompileThroughCanonicalPipeline
+    capability_ontologies_test.go:87: C1_INPUT examples/capability-ontologies/delivery/deployment.yaml sha256:338e9a2fee16be8d8fadab447eec1f20165c9ebdd6918d6db67fc4ee3510d834
+    capability_ontologies_test.go:87: C1_INPUT examples/capability-ontologies/delivery/rollout.yaml sha256:5fc3a7bc64e6ed536e2181aaba627b2c915d38126d162cb73c641f093edacbf0
+    capability_ontologies_test.go:87: C1_INPUT examples/capability-ontologies/delivery/schema.yaml sha256:e71937c3f48a09a5e1b9632ca0e7375ee1dece8b7d2478fb4456c37dcb1d8e5e
+    capability_ontologies_test.go:87: C1_INPUT examples/capability-ontologies/filing-review/filing.yaml sha256:df2de78160029d925e8c50c12bb941685c6bbacb88a749cffd903322bb838544
+    capability_ontologies_test.go:87: C1_INPUT examples/capability-ontologies/filing-review/review.yaml sha256:85826a52aca5460f95a7e9f8331315616dffdc091e0d173617c27cc8c8ece9ce
+    capability_ontologies_test.go:87: C1_INPUT examples/capability-ontologies/filing-review/schema.yaml sha256:cd636f64d00c14a8c1863382a0ed4516f8cae196e357277b8fcebb9f975b75f0
+    capability_ontologies_test.go:87: C1_INPUT examples/capability-ontologies/software-architecture/components.yaml sha256:a87d72ba790611df979225dcf0e1c775078cdca06c2162f885fa510853d1f242
+    capability_ontologies_test.go:87: C1_INPUT examples/capability-ontologies/software-architecture/dependency.yaml sha256:9b2f53a73d405bfcc3de18decc959996e46e9ab13aacb00cbf9f2d69d991d8ee
+    capability_ontologies_test.go:87: C1_INPUT examples/capability-ontologies/software-architecture/schema.yaml sha256:97c79f51b6afa90146da05e5710877d9b1ed2a7a29ad21a9d16684b9e3cf7f17
+    capability_ontologies_test.go:87: C1_INPUT examples/capability-ontologies/software-architecture/storage.yaml sha256:dd906e162a71453ec94f071d9f2b9aa95a0e1dba1c7a11d0f17f0a310443f5fe
+    capability_ontologies_test.go:87: C1_INPUT examples/capability-ontologies/trading-card-combat/action.yaml sha256:3e1754f58fe6dd3fe807e522149677aa4abae896b090c85047802c2f17b24503
+    capability_ontologies_test.go:87: C1_INPUT examples/capability-ontologies/trading-card-combat/card.yaml sha256:4014d188b132cd4cc0a8b6d75f2dd9751639e4f7d230f8453804448d4f60fdbf
+    capability_ontologies_test.go:87: C1_INPUT examples/capability-ontologies/trading-card-combat/schema.yaml sha256:5fa41da2ab0c2479a6dae14a42b4006d8aa784ac1e947a48aa6bfdd7a9b7b5b9
+    capability_ontologies_test.go:87: C1_INPUT examples/capability-ontologies/workflow-responsibility/approver.yaml sha256:0b4d08ee5bb034b848b45c6fd03d0b32a351202f6dbdef0008860a12ea844612
+    capability_ontologies_test.go:87: C1_INPUT examples/capability-ontologies/workflow-responsibility/owner.yaml sha256:fd61bf35ddbbef156e43b9b5630481d3922fc8b0302dde59a2af0355dc76bd08
+    capability_ontologies_test.go:87: C1_INPUT examples/capability-ontologies/workflow-responsibility/schema.yaml sha256:e03121e36f773bb1bc87416bec99c1f71ede478b5cb332ee3704f8c79043f631
+    capability_ontologies_test.go:87: C1_INPUT examples/capability-ontologies/workflow-responsibility/work-item.yaml sha256:96d0c20346da8963214e4c5e2b18f6e12af86fbbfb3a9a1514599beec67ad4db
+    capability_ontologies_test.go:96: C1_COMBINED digest=sha256:b25f1e8f74858a867a8f9adddd1005e9f5d029a80b5a1e320adf316837978d59 schemas=5 definitions=12 edges=7
+    capability_ontologies_test.go:115: C1_ONTOLOGY apiVersion=architecture.example.org/v1 digest=sha256:b82d642d32f2dba349bf6140dd765bd49d4914e8a9a7571a0d757a20c92765b9 definitions=3 edges=2
+    capability_ontologies_test.go:115: C1_ONTOLOGY apiVersion=delivery.example.org/v1 digest=sha256:c8d2596bc3208d79ffe02ea4a2794337f86086b34d36a89d5278631f8080606f definitions=2 edges=1
+    capability_ontologies_test.go:115: C1_ONTOLOGY apiVersion=responsibility.example.org/v1 digest=sha256:1a4bb4bf97bcf8cba333430c6eece12d8ceabed18d68e9fb33b9781087bac881 definitions=3 edges=2
+    capability_ontologies_test.go:115: C1_ONTOLOGY apiVersion=cardgame.example.org/v1 digest=sha256:86235d35961349a8b10ac7e12784581cfa9a8461c60f14888693ec1b47f8b30f definitions=2 edges=1
+    capability_ontologies_test.go:115: C1_ONTOLOGY apiVersion=filing.example.org/v1 digest=sha256:852ba1b145f19cc59ea18e5f9f70a49bb36a9b00c61eb57e2a9f6eb6d4949fc4 definitions=2 edges=1
+    capability_ontologies_test.go:164: C1_PERMUTED digest=sha256:b25f1e8f74858a867a8f9adddd1005e9f5d029a80b5a1e320adf316837978d59 edges=7
+--- PASS: TestC1FiveDistinctTypedOntologiesCompileThroughCanonicalPipeline (0.01s)
+=== RUN   TestC1TypedOntologyNegativeCasesAreRejected
+=== RUN   TestC1TypedOntologyNegativeCasesAreRejected/unresolved-reference
+    capability_ontologies_test.go:234: C1_NEGATIVE name=unresolved-reference diagnostics=[{"code":"reference.unresolved","identity":"[\"delivery.example.org/v1\",\"Rollout\",\"payments\",\"production-rollout\"]","property":"deployment","message":"reference target [\"delivery.example.org/v1\",\"Deployment\",\"payments\",\"missing\"] is not defined","source":{"path":"examples/capability-ontologies/delivery/rollout.yaml","digest":"sha256:10dc2b150cb78eb9ad69e397055106cadb97dc49950cfe05b8f1b1b4ece2bedd","line":1}}]
+=== RUN   TestC1TypedOntologyNegativeCasesAreRejected/wrong-kind-reference
+    capability_ontologies_test.go:234: C1_NEGATIVE name=wrong-kind-reference diagnostics=[{"code":"reference.target-kind","identity":"[\"delivery.example.org/v1\",\"Rollout\",\"payments\",\"production-rollout\"]","property":"deployment","message":"reference kind does not match the declared target Kind","source":{"path":"examples/capability-ontologies/delivery/rollout.yaml","digest":"sha256:7a3397c1670b0ae71ea0b3b0a3ecc07dab02d9f2846b7a13f96fa9d5720ebc35","line":1}}]
+=== RUN   TestC1TypedOntologyNegativeCasesAreRejected/closed-unknown-property
+    capability_ontologies_test.go:234: C1_NEGATIVE name=closed-unknown-property diagnostics=[{"code":"spec.unknown-property","identity":"[\"delivery.example.org/v1\",\"Deployment\",\"payments\",\"production\"]","property":"surprise","message":"Kind \"Deployment\" does not declare Property \"surprise\"","source":{"path":"examples/capability-ontologies/delivery/deployment.yaml","digest":"sha256:8e9e8b916831274b903b3a95084157031a43629366231b29f2b79a5ec19886dd","line":1}}]
+=== RUN   TestC1TypedOntologyNegativeCasesAreRejected/cardinality
+    capability_ontologies_test.go:234: C1_NEGATIVE name=cardinality diagnostics=[{"code":"property.cardinality","identity":"[\"delivery.example.org/v1\",\"Deployment\",\"payments\",\"production\"]","property":"replicas","message":"list count 3 is outside declared bounds","source":{"path":"examples/capability-ontologies/delivery/deployment.yaml","digest":"sha256:3528fd76896df62ee46b149e1729cf0d5201e62ea52528e0e62d65dafe317f00","line":1}}]
+=== RUN   TestC1TypedOntologyNegativeCasesAreRejected/enum
+    capability_ontologies_test.go:234: C1_NEGATIVE name=enum diagnostics=[{"code":"property.enum-value","identity":"[\"delivery.example.org/v1\",\"Deployment\",\"payments\",\"production\"]","property":"environment","message":"value is not one of the declared enum strings","source":{"path":"examples/capability-ontologies/delivery/deployment.yaml","digest":"sha256:275f6d95e85e28199c44a92d9ec8a1478adc63b8d13368a40f2f07c555220839","line":1}}]
+=== RUN   TestC1TypedOntologyNegativeCasesAreRejected/unresolved-kind-reference
+    capability_ontologies_test.go:234: C1_NEGATIVE name=unresolved-kind-reference diagnostics=[{"code":"kind-reference.unresolved","identity":"[\"filing.example.org/v1\",\"Review\",\"vendor-a\",\"initial-review\"]","property":"filingKind","message":"Kind [\"filing.example.org/v1\",\"MissingKind\"] is not explicitly available","source":{"path":"examples/capability-ontologies/filing-review/review.yaml","digest":"sha256:86ab53c5bf33e9c17e6111e824aaf54be0e947f9445ac7f3fc7b86ba3a38d68d","line":1}}]
+=== RUN   TestC1TypedOntologyNegativeCasesAreRejected/closed-kind-reference
+    capability_ontologies_test.go:234: C1_NEGATIVE name=closed-kind-reference diagnostics=[{"code":"kind-reference.value","identity":"[\"filing.example.org/v1\",\"Review\",\"vendor-a\",\"initial-review\"]","property":"filingKind","message":"kindReference contains unknown field \"name\"","source":{"path":"examples/capability-ontologies/filing-review/review.yaml","digest":"sha256:29de2d7e034ef9ab9c7bacddcc3cf4416c63c653d7f6aac1b34eb9b9360036a4","line":1}}]
+--- PASS: TestC1TypedOntologyNegativeCasesAreRejected (0.03s)
+    --- PASS: TestC1TypedOntologyNegativeCasesAreRejected/unresolved-reference (0.00s)
+    --- PASS: TestC1TypedOntologyNegativeCasesAreRejected/wrong-kind-reference (0.00s)
+    --- PASS: TestC1TypedOntologyNegativeCasesAreRejected/closed-unknown-property (0.00s)
+    --- PASS: TestC1TypedOntologyNegativeCasesAreRejected/cardinality (0.00s)
+    --- PASS: TestC1TypedOntologyNegativeCasesAreRejected/enum (0.00s)
+    --- PASS: TestC1TypedOntologyNegativeCasesAreRejected/unresolved-kind-reference (0.00s)
+    --- PASS: TestC1TypedOntologyNegativeCasesAreRejected/closed-kind-reference (0.00s)
+PASS
+ok  	github.com/Glacius-Labs/Markitect/examples	0.468s
