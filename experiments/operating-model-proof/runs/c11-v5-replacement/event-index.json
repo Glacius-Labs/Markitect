@@ -1,0 +1,12 @@
+{
+  "schema": "markitect.c11-propose-event-index/v1",
+  "runId": "c11-v5-replacement",
+  "eventFile": "propose-913c506c076e4d5c8a271b52e9c49e0e.json",
+  "attemptId": "6e0b689c1b9f4cd99f1cb956fc429924",
+  "eventSha256": "3835e24b3776b8691c3beec12ae8e66f65f2d1669d19c73a492f8c74f0aeda98",
+  "stdoutSha256": "058c2c7634fb528c55585ab14c0bfe80fa39d809f539be32e715ae99f2e69eac",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "proposalDigest": "sha256:de58340a51b8e67e129cb8901a808c829e2c7a0689c971c2c90bb0f5e9aeb7b3",
+  "modelDigest": "sha256:28c4b8778ae344abbc34196954d5ce2aa436a698599fdbe643aa1f4966b6c0c8",
+  "status": "planned"
+}
