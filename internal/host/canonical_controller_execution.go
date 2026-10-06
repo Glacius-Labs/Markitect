@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"sync"
 
 	"github.com/Glacius-Labs/Markitect/internal/core"
 	"github.com/Glacius-Labs/Markitect/internal/core/snapshot"
@@ -244,18 +245,68 @@ func validateCanonicalControllerRuntime(run CanonicalReviewedRun, cfg CanonicalC
 // Controller operations share this external lease. Crash remnants block;
 // there is no automatic recovery or deletion of someone else's lease.
 func acquireCanonicalControllerLease(cfg CanonicalControllerConfig) (func(), error) {
+	return acquireCanonicalControllerLeaseWithHook(cfg, nil)
+}
+
+// The hook is deliberately limited to the race boundary after the external
+// parent has been pinned and before the exclusive lease creation. Production
+// callers pass nil; tests use it to deterministically replace the path.
+func acquireCanonicalControllerLeaseWithHook(cfg CanonicalControllerConfig, beforeCreate func() error) (func(), error) {
 	path := cfg.RecordStore + ".controller.lock"
-	if err := rejectReparseAncestors(filepath.Dir(path)); err != nil {
-		return nil, err
-	}
-	file, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
+	parent, err := openWriteRoot(filepath.Dir(path))
 	if err != nil {
+		return nil, fmt.Errorf("controller lease parent unavailable; inspect %s: %w", path, err)
+	}
+	leaf := filepath.Base(path)
+	if beforeCreate != nil {
+		if err := beforeCreate(); err != nil {
+			_ = parent.Close()
+			return nil, err
+		}
+	}
+	file, err := parent.CreateExclusive(leaf, 0600)
+	if err != nil {
+		_ = parent.Close()
 		return nil, fmt.Errorf("controller lease unavailable; inspect %s: %w", path, err)
 	}
-	if err = file.Close(); err != nil {
+	identity, err := file.Stat()
+	if err != nil {
+		_ = file.Close()
+		_ = parent.Close()
 		return nil, err
 	}
-	return func() { _ = os.Remove(path) }, nil
+	if err := parent.checkIdentity(); err != nil {
+		_ = file.Close()
+		_ = parent.Close()
+		return nil, fmt.Errorf("controller lease parent changed after creation: %w", err)
+	}
+	created, err := parent.Lstat(leaf)
+	if err != nil || !os.SameFile(identity, created) {
+		_ = file.Close()
+		_ = parent.Close()
+		if err != nil {
+			return nil, fmt.Errorf("inspect created controller lease: %w", err)
+		}
+		return nil, errors.New("created controller lease changed before acquisition completed")
+	}
+	var once sync.Once
+	return func() {
+		once.Do(func() {
+			defer parent.Close()
+			defer file.Close()
+			if parent.checkIdentity() != nil {
+				return
+			}
+			current, err := parent.Lstat(leaf)
+			if err != nil || !os.SameFile(identity, current) {
+				return
+			}
+			if parent.checkIdentity() != nil {
+				return
+			}
+			_ = parent.root.Remove(leaf)
+		})
+	}, nil
 }
 
 func ApplyCanonicalController(root, configPath string, cfg CanonicalControllerConfig, run CanonicalReviewedRun, expect string, write bool) (CanonicalControllerApply, error) {
