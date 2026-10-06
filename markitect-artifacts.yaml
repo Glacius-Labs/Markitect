@@ -1521,3 +1521,13 @@ spec:
       owner: controller-source-check-preflight
     - path: experiments/operating-model-proof/runs/windows-gates-4465186/receipt.json
       owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c8-orders-auditall-control-02/pre-call-freeze.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c8-orders-auditall-control-02/actual-result.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c8-orders-auditall-readonly-02/binding.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c8-orders-auditall-readonly-02/events.jsonl
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c8-orders-auditall-readonly-02/events/propose-507ed581e4af4cc39e30fc04b765def1.json
+      owner: immutable-operating-model-proof-records
