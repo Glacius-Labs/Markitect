@@ -92,6 +92,7 @@ func TestTargetExclusionRefusesProtectedAndAliasedPaths(t *testing.T) {
 		active     map[string]records.ProjectionRecord
 		want       string
 	}{
+		{name: "target root", exclusion: CanonicalTargetExclusion{Path: "docs/represented", Reason: "reason"}, want: "strictly beneath"},
 		{name: "outside target", exclusion: CanonicalTargetExclusion{Path: "docs/other/file.md", Reason: "reason"}, want: "beneath one declared target root"},
 		{name: "canonical input", exclusion: CanonicalTargetExclusion{Path: "docs/represented/canonical.yaml", Reason: "reason"}, canonical: []string{"docs/represented/canonical.yaml"}, want: "canonical input"},
 		{name: "check input", exclusion: CanonicalTargetExclusion{Path: "docs/represented/check.yaml", Reason: "reason"}, checkPaths: []string{"docs/represented/check.yaml"}, want: "check input"},
@@ -121,6 +122,18 @@ func TestTargetExclusionRefusesProtectedAndAliasedPaths(t *testing.T) {
 	}
 	if err := validateCanonicalTargetExclusionConfig([]CanonicalTargetExclusion{{Path: "docs/represented/a.md", Reason: "one"}, {Path: "docs/represented/A.md", Reason: "two"}}); err == nil {
 		t.Fatal("case-aliased exclusions were accepted")
+	}
+}
+
+func TestScopedPlannerRejectsEmptyDirectoryExclusion(t *testing.T) {
+	root, revision, _ := scopedCanonicalFixture(t)
+	directory := "docs/represented/empty-dir"
+	if err := os.MkdirAll(filepath.Join(root, filepath.FromSlash(directory)), 0755); err != nil {
+		t.Fatal(err)
+	}
+	_, err := proposeScopedCanonicalReconciliation(root, revision, revision, "examples/canonical-projection/canonical.yaml", nil, false, []CanonicalTargetExclusion{{Path: directory, Reason: "directory is not an exact file"}}, nil)
+	if err == nil || !strings.Contains(err.Error(), "directory or non-file path") {
+		t.Fatalf("empty directory was accepted as an exact-path exclusion: %v", err)
 	}
 }
 

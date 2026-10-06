@@ -43,11 +43,10 @@ func validateCanonicalTargetExclusionConfig(exclusions []CanonicalTargetExclusio
 		if !utf8.ValidString(exclusion.Reason) || len(exclusion.Reason) == 0 || len(exclusion.Reason) > 1024 || strings.TrimSpace(exclusion.Reason) == "" || strings.ContainsRune(exclusion.Reason, 0) {
 			return errors.New("target exclusion reason must be nonempty UTF-8 text of at most 1024 bytes")
 		}
-		for prior, path := range seen {
+		for _, path := range seen {
 			if strings.EqualFold(path, exclusion.Path) {
 				return fmt.Errorf("duplicate or aliased target exclusion paths %q and %q", path, exclusion.Path)
 			}
-			_ = prior
 		}
 		seen[strings.ToLower(exclusion.Path)] = exclusion.Path
 	}
@@ -58,7 +57,11 @@ func validateCanonicalTargetExclusionScope(exclusions []CanonicalTargetExclusion
 	for _, exclusion := range exclusions {
 		matches := 0
 		for _, id := range requestIDs {
-			if stringsHasPathPrefix(exclusion.Path, requests[id].TargetPrefix) {
+			prefix := requests[id].TargetPrefix
+			if exclusion.Path == prefix {
+				return fmt.Errorf("target exclusion %q must be a file strictly beneath its declared target root", exclusion.Path)
+			}
+			if stringsHasPathPrefix(exclusion.Path, prefix) {
 				matches++
 			}
 		}
@@ -86,15 +89,38 @@ func validateCanonicalTargetExclusionScope(exclusions []CanonicalTargetExclusion
 	return nil
 }
 
-func validateCanonicalTargetExclusionInventory(exclusions []CanonicalTargetExclusion, inventory []source.WorkingFileMetadata) error {
-	paths := make([]string, 0, len(inventory)+len(exclusions))
-	for _, entry := range inventory {
+func validateCanonicalTargetExclusionInventory(root string, exclusions []CanonicalTargetExclusion, inventory *source.WorkingRootInventory) error {
+	paths := make([]string, 0, len(inventory.Entries)+len(exclusions))
+	byPath := make(map[string]source.WorkingFileMetadata, len(inventory.Entries))
+	for _, entry := range inventory.Entries {
 		paths = append(paths, entry.Path)
+		byPath[entry.Path] = entry
 	}
 	for _, exclusion := range exclusions {
-		for _, entry := range inventory {
+		found := false
+		for _, entry := range inventory.Entries {
 			if strings.EqualFold(exclusion.Path, entry.Path) && exclusion.Path != entry.Path {
 				return fmt.Errorf("target exclusion %q is a path alias for inventoried artifact %q", exclusion.Path, entry.Path)
+			}
+			if exclusion.Path == entry.Path {
+				found = true
+			}
+		}
+		if !found {
+			probe, err := source.InventoryWorkingRoots(root, []string{exclusion.Path})
+			if err != nil {
+				return fmt.Errorf("inspect target exclusion metadata %q: %w", exclusion.Path, err)
+			}
+			if !equalCanonicalValue(probe.Identity, inventory.Identity) {
+				return errors.New("repository identity changed while validating target exclusion metadata")
+			}
+			if len(probe.MissingPrefixes) == 0 {
+				return fmt.Errorf("target exclusion %q resolves to a directory or non-file path", exclusion.Path)
+			}
+			for _, entry := range probe.Entries {
+				if prior, exists := byPath[entry.Path]; !exists || prior != entry {
+					return fmt.Errorf("target inventory changed while validating exclusion %q", exclusion.Path)
+				}
 			}
 		}
 		paths = append(paths, exclusion.Path)
