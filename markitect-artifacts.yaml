@@ -2,6 +2,7 @@ apiVersion: markitect.example.org/artifact-coverage/v1alpha1
 kind: ArtifactCoverage
 spec:
   roots:
+    - internal/host/canonical_controller_verification_windows_test.go
     - internal/host/canonical_controller_lease_windows_test.go
     - internal/host/canonical_controller_lease_linux_test.go
     - internal/host/canonical_controller_lease_test.go
@@ -131,6 +132,10 @@ spec:
     - internal/host/cli/canonical_goal_test.go
     - examples/public_fixture_test.go
   tooling:
+    - path: internal/host/canonical_controller_verification_windows_test.go
+      owner: controller-verifier-fixture-path-controls
+    - path: experiments/operating-model-proof/runs/windows-verifier-fixture-paths/receipt.json
+      owner: preserved-verifier-fixture-focused-evidence
     - path: experiments/operating-model-proof/runs/gates-59b3e812/sanitized-gates.json
       owner: preserved-frozen-platform-gate-evidence
     - path: experiments/operating-model-proof/runs/gates-59b3e812/README.md
