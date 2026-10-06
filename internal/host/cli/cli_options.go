@@ -231,7 +231,7 @@ func parseOptions(command string, args []string, allowed map[string]bool, out, e
 	}
 	if command == "canonical" && !goalAction {
 		if *action != "model" && *action != "modules" && *action != "context" && *action != "request" && *action != "plan" && *action != "apply" && *action != "impact" && *action != "reconcile-plan" && *action != "verify" && *action != "adopt-plan" && *action != "adopt" && !isCanonicalControllerAction(*action) {
-			fmt.Fprintln(errout, "canonical requires --action model, modules, context, request, impact, reconcile-plan, plan, apply, verify, adopt-plan, adopt, controller-propose, controller-execute, controller-apply or controller-verify")
+			fmt.Fprintln(errout, "canonical requires --action model, modules, context, request, impact, reconcile-plan, plan, apply, verify, adopt-plan, adopt, controller-audit, controller-propose, controller-execute, controller-apply or controller-verify")
 			return commandOptions{}, 2, true
 		}
 		if *reviewConfig == "" {
@@ -257,7 +257,7 @@ func parseOptions(command string, args []string, allowed map[string]bool, out, e
 					fmt.Fprintln(errout, "canonical controller-refresh-propose requires --report with exact Projection IDs and forbids --write, --plan and --expect")
 					return commandOptions{}, 2, true
 				}
-			case "controller-propose", "controller-execute":
+			case "controller-audit", "controller-propose", "controller-execute":
 				if *write || *plan != "" || *expect != "" {
 					fmt.Fprintf(errout, "canonical %s is read-only and does not accept --write, --plan or --expect\n", *action)
 					return commandOptions{}, 2, true
