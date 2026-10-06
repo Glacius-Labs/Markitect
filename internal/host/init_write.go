@@ -12,6 +12,11 @@ import (
 )
 
 func ensureInitStateUnchanged(state *initState) error {
+	if state.writer != nil {
+		if err := state.writer.checkIdentity(); err != nil {
+			return err
+		}
+	}
 	if err := ensureInitGitState(state); err != nil {
 		return err
 	}
@@ -28,14 +33,26 @@ func ensureInitStateUnchanged(state *initState) error {
 		return errors.New("source changed during init; rerun the plan")
 	}
 	if state.areaInfo != nil {
-		areaPath := filepath.Join(state.root, filepath.FromSlash(state.plan.Area.Path))
-		info, err := os.Lstat(areaPath)
+		var info os.FileInfo
+		var err error
+		if state.writer != nil {
+			info, err = state.writer.Lstat(state.plan.Area.Path)
+		} else {
+			areaPath := filepath.Join(state.root, filepath.FromSlash(state.plan.Area.Path))
+			info, err = os.Lstat(areaPath)
+		}
 		if err != nil || info.Mode()&os.ModeSymlink != 0 || !info.IsDir() || !os.SameFile(state.areaInfo, info) {
 			return errors.New("initialized area directory changed during init")
 		}
 	}
 	for _, file := range state.plan.Files {
-		data, err := os.ReadFile(filepath.Join(state.root, filepath.FromSlash(file.Path)))
+		var data []byte
+		var err error
+		if state.writer != nil {
+			data, err = state.writer.ReadFile(file.Path)
+		} else {
+			data, err = os.ReadFile(filepath.Join(state.root, filepath.FromSlash(file.Path)))
+		}
 		written := containsString(state.plan.Written, file.Path)
 		if written {
 			if err != nil || !bytes.Equal(data, []byte(file.Text)) {
@@ -52,6 +69,9 @@ func ensureInitStateUnchanged(state *initState) error {
 // requested area directory: its final mkdir is exclusive. Every directory
 // created before a later failure is retained in the plan for recovery.
 func createInitArea(state *initState) error {
+	if state.writer == nil {
+		return errors.New("init write root is not anchored")
+	}
 	parts := strings.Split(state.plan.Area.Path, "/")
 	current := state.root
 	for i, part := range parts {
@@ -67,23 +87,23 @@ func createInitArea(state *initState) error {
 			if err := ensureWriteBranch(state.root, state.branch); err != nil {
 				return err
 			}
-			if err := os.Mkdir(current, 0755); err != nil {
+			if err := state.writer.Mkdir(rel, 0755); err != nil {
 				return fmt.Errorf("create area directory exclusively %s: %w", rel, err)
 			}
 			state.plan.CreatedDirectories = append(state.plan.CreatedDirectories, rel)
-			info, err := os.Lstat(current)
+			info, err := state.writer.Lstat(rel)
 			if err != nil || !info.IsDir() || info.Mode()&os.ModeSymlink != 0 {
 				return fmt.Errorf("area directory became unsafe after creation: %s", rel)
 			}
 			state.areaInfo = info
 			continue
 		}
-		if err := os.Mkdir(current, 0755); err == nil {
+		if err := state.writer.Mkdir(rel, 0755); err == nil {
 			state.plan.CreatedDirectories = append(state.plan.CreatedDirectories, rel)
 		} else if !os.IsExist(err) {
 			return fmt.Errorf("create parent directory %s: %w", rel, err)
 		}
-		info, err := os.Lstat(current)
+		info, err := state.writer.Lstat(rel)
 		if err != nil || !info.IsDir() || info.Mode()&os.ModeSymlink != 0 {
 			return fmt.Errorf("unsafe init parent directory %s", rel)
 		}

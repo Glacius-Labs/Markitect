@@ -41,6 +41,7 @@ type InitPlan struct {
 
 type initState struct {
 	root      string
+	writer    *writeRoot
 	branch    string
 	insideGit bool
 	head      *snapshot.Snapshot
@@ -72,12 +73,18 @@ func Init(root string, options InitOptions, write bool) (*InitPlan, error) {
 
 	var branch string
 	var unlock func()
+	var writeRoot *writeRoot
 	if write {
 		branch, err = writeBranchName(rootAbs)
 		if err != nil {
 			return nil, fmt.Errorf("init write requires a named non-protected Git branch: %w", err)
 		}
-		unlock, err = lockWriter(rootAbs)
+		writeRoot, err = openWriteRoot(rootAbs)
+		if err != nil {
+			return nil, err
+		}
+		defer writeRoot.Close()
+		unlock, err = writeRoot.LockWriter()
 		if err != nil {
 			return nil, err
 		}
@@ -89,6 +96,7 @@ func Init(root string, options InitOptions, write bool) (*InitPlan, error) {
 		return nil, err
 	}
 	state.branch = branch
+	state.writer = writeRoot
 	if !write {
 		return state.plan, nil
 	}
@@ -103,8 +111,7 @@ func Init(root string, options InitOptions, write bool) (*InitPlan, error) {
 		if err := ensureInitStateUnchanged(state); err != nil {
 			return initWriteFailure(state.plan, err)
 		}
-		dest, err := safeDestination(rootAbs, file.Path)
-		if err != nil {
+		if _, err := safeDestination(rootAbs, file.Path); err != nil {
 			return initWriteFailure(state.plan, err)
 		}
 		if err := ensureWriteBranch(rootAbs, branch); err != nil {
@@ -113,7 +120,7 @@ func Init(root string, options InitOptions, write bool) (*InitPlan, error) {
 		if _, err := safeDestination(rootAbs, file.Path); err != nil {
 			return initWriteFailure(state.plan, err)
 		}
-		f, err := os.OpenFile(dest, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0644)
+		f, err := writeRoot.CreateExclusive(file.Path, 0644)
 		if err != nil {
 			return initWriteFailure(state.plan, fmt.Errorf("create %s exclusively: %w", file.Path, err))
 		}
