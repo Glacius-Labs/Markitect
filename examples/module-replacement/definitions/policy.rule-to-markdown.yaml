@@ -1,0 +1,13 @@
+apiVersion: markitect.foundation/v1
+kind: ProjectionPolicy
+metadata:
+  namespace: example
+  name: rule-to-markdown
+purpose: Provides bounded markdown rendering guidance for the selected Rule Kind.
+spec:
+  sourceKind:
+    apiVersion: workflow.example.org/v1
+    kind: Rule
+  targetTechnology: markdown
+  guidance: >
+    Render readable Markdown from the selected canonical Definitions and explicit policy. Preserve exact identities, schema purposes, typed facts, and reference provenance. Use only supplied meaning and guidance; do not invent workflow steps or claim adoption.
