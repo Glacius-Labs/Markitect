@@ -1195,3 +1195,5 @@ spec:
       owner: immutable-operating-model-proof-records
     - path: experiments/operating-model-proof/protocol-v6.md
       owner: operating-model-proof-protocol
+    - path: experiments/operating-model-proof/concurrency-v6-controls.md
+      owner: operating-model-proof-protocol
