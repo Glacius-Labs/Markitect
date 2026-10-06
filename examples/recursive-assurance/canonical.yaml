@@ -1,0 +1,64 @@
+apiVersion: markitect.canonical/v1alpha1
+kind: Source
+definitions:
+  - examples/recursive-assurance/definitions/orders.intent.yaml
+  - examples/recursive-assurance/definitions/billing.intent.yaml
+  - examples/recursive-assurance/definitions/checkout.intent.yaml
+  - examples/recursive-assurance/definitions/commerce.intent.yaml
+  - examples/recursive-assurance/definitions/orders-dotnet.policy.yaml
+  - examples/recursive-assurance/definitions/billing-dotnet.policy.yaml
+  - examples/recursive-assurance/definitions/checkout-dotnet.policy.yaml
+  - examples/recursive-assurance/definitions/commerce-dotnet.policy.yaml
+  - examples/recursive-assurance/definitions/orders.projection.yaml
+  - examples/recursive-assurance/definitions/billing.projection.yaml
+  - examples/recursive-assurance/definitions/checkout.projection.yaml
+  - examples/recursive-assurance/definitions/commerce.projection.yaml
+modules:
+  - manifest: examples/recursive-assurance/modules/foundation/module.yaml
+    files:
+      - examples/recursive-assurance/modules/foundation/schema.yaml
+  - manifest: examples/recursive-assurance/modules/commerce/module.yaml
+    files:
+      - examples/recursive-assurance/modules/commerce/schema.yaml
+  - manifest: examples/recursive-assurance/modules/orders-dotnet/module.yaml
+    files: []
+  - manifest: examples/recursive-assurance/modules/billing-dotnet/module.yaml
+    files: []
+  - manifest: examples/recursive-assurance/modules/checkout-dotnet/module.yaml
+    files: []
+  - manifest: examples/recursive-assurance/modules/commerce-dotnet/module.yaml
+    files: []
+projectionBindings:
+  - projection:
+      apiVersion: markitect.foundation/v1
+      kind: Projection
+      namespace: recursive-assurance
+      name: orders-dotnet
+    module: recursive-assurance-orders-dotnet
+  - projection:
+      apiVersion: markitect.foundation/v1
+      kind: Projection
+      namespace: recursive-assurance
+      name: billing-dotnet
+    module: recursive-assurance-billing-dotnet
+  - projection:
+      apiVersion: markitect.foundation/v1
+      kind: Projection
+      namespace: recursive-assurance
+      name: checkout-dotnet
+    module: recursive-assurance-checkout-dotnet
+  - projection:
+      apiVersion: markitect.foundation/v1
+      kind: Projection
+      namespace: recursive-assurance
+      name: commerce-dotnet
+    module: recursive-assurance-commerce-dotnet
+checks:
+  - name: recursive-assurance-orders
+    run: [dotnet, run, --project, examples/recursive-assurance/checks/Orders.Checks.csproj, --configuration, Release]
+  - name: recursive-assurance-billing
+    run: [dotnet, run, --project, examples/recursive-assurance/checks/Billing.Checks.csproj, --configuration, Release]
+  - name: recursive-assurance-checkout
+    run: [dotnet, run, --project, examples/recursive-assurance/checks/Checkout.Checks.csproj, --configuration, Release]
+  - name: recursive-assurance-commerce
+    run: [dotnet, run, --project, examples/recursive-assurance/checks/Commerce.Checks.csproj, --configuration, Release]

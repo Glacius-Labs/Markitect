@@ -1,0 +1,17 @@
+apiVersion: commerce.recursive-assurance/v1
+kind: CheckoutComposition
+metadata:
+  namespace: checkout
+  name: add-order-to-outstanding
+purpose: Validate and total one accepted order line, then include that amount with existing billing amounts.
+spec:
+  orders:
+    apiVersion: commerce.recursive-assurance/v1
+    kind: OrderRules
+    namespace: orders
+    name: calculate-line-total
+  billing:
+    apiVersion: commerce.recursive-assurance/v1
+    kind: BillingQuery
+    namespace: billing
+    name: sum-outstanding

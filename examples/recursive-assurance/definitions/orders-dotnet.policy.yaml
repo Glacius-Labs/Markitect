@@ -1,0 +1,13 @@
+apiVersion: markitect.foundation/v1
+kind: ProjectionPolicy
+metadata:
+  namespace: recursive-assurance
+  name: orders-dotnet
+purpose: Defines the required public API and behavior for the OrderRules .NET representation.
+spec:
+  sourceKind:
+    apiVersion: commerce.recursive-assurance/v1
+    kind: OrderRules
+  targetTechnology: dotnet
+  guidance: >
+    Expose public static bool TryCalculateLineTotalCents(int quantity, long unitPriceCents, out long totalCents). Succeed exactly for positive quantity, nonnegative price, and a product within Int64 range; set totalCents to zero on false. This is a semantic API contract, not a filename or implementation template.
