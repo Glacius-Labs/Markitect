@@ -589,13 +589,8 @@ func WriteProjectionArtifacts(root string, captured *snapshot.Snapshot, contents
 	if captured == nil || !captured.Provisional {
 		return nil, errors.New("projection writes require the provisional isolated working tree")
 	}
-	if err := validateProjectionOutputModes(contents, modes); err != nil {
+	if err := validateProjectionWriteModes(contents, modes); err != nil {
 		return nil, err
-	}
-	for name := range contents {
-		if projectionOutputMode(modes, name) == snapshot.ExecutableMode && runtime.GOOS == "windows" {
-			return nil, fmt.Errorf("executable artifact mode is unsupported on Windows working trees: %s", name)
-		}
 	}
 	branch := ""
 	var err error
@@ -699,6 +694,29 @@ func WriteProjectionArtifacts(root string, captured *snapshot.Snapshot, contents
 		}
 	}
 	return written, nil
+}
+
+// validateProjectionWriteModes rejects a known unsupported materialization
+// before either adopter bytes or an external ledger are created. Preparation
+// remains platform-neutral and can describe executable artifacts on Windows.
+func validateProjectionWriteModes(contents map[string][]byte, modes map[string]string) error {
+	if err := validateProjectionOutputModes(contents, modes); err != nil {
+		return err
+	}
+	if runtime.GOOS != "windows" {
+		return nil
+	}
+	names := make([]string, 0, len(contents))
+	for name := range contents {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	for _, name := range names {
+		if projectionOutputMode(modes, name) == snapshot.ExecutableMode {
+			return fmt.Errorf("executable artifact mode is unsupported on Windows working trees: %s", name)
+		}
+	}
+	return nil
 }
 
 func validateProjectionOutputModes(contents map[string][]byte, modes map[string]string) error {

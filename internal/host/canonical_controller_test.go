@@ -175,6 +175,30 @@ func TestCanonicalControllerLifecycleIsReadOnlyUntilExactReviewedApply(t *testin
 	if head, index, files := canonicalControllerSourceState(t, root); head != beforeHead || index != beforeIndex || !equalCanonicalValue(files, beforeFiles) {
 		t.Fatal("refused Apply changed source state")
 	}
+	branch := scopedTestGit(t, root, "branch", "--show-current")
+	for _, state := range []string{"protected", "detached"} {
+		if state == "protected" {
+			scopedTestGit(t, root, "branch", "-m", "main")
+		} else {
+			scopedTestGit(t, root, "checkout", "--detach", revision)
+		}
+		if _, err := canonicalControllerApply(t, root, cfg, run); err == nil {
+			t.Fatalf("Apply accepted %s checkout", state)
+		}
+		if _, err := os.Stat(cfg.RecordStore); !os.IsNotExist(err) {
+			t.Fatalf("%s refusal created ledger and invalidated reviewed run: %v", state, err)
+		}
+		if head, index, files := canonicalControllerSourceState(t, root); head != beforeHead || index != beforeIndex || !equalCanonicalValue(files, beforeFiles) {
+			t.Fatalf("%s refusal changed source state", state)
+		}
+		if state == "protected" {
+			scopedTestGit(t, root, "branch", "-m", branch)
+		} else {
+			scopedTestGit(t, root, "checkout", branch)
+		}
+	}
+	// Restoring the permitted branch can use the same reviewed run: neither
+	// refused attempt created a new empty-store selection binding.
 	applied, err := canonicalControllerApply(t, root, cfg, run)
 	if err != nil {
 		t.Fatalf("reviewed Apply: %v", err)

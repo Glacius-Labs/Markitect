@@ -361,8 +361,16 @@ func ApplyCanonicalController(root, configPath string, cfg CanonicalControllerCo
 		report.LedgerHead = fresh.LedgerHead
 		return report, nil
 	}
+	// Known branch/platform refusals must not create an empty ledger and stale
+	// an otherwise reviewed run. The scoped writer repeats these checks at the
+	// mutation boundary; failures after initialization remain explicit partials.
+	if _, err := writeBranchName(root); err != nil {
+		return report, err
+	}
+	if err := validateProjectionWriteModes(output, outputModes); err != nil {
+		return report, err
+	}
 	// Exclusive ledger initialization is validated before adopter mutations.
-	// A later writer refusal may leave this explicit empty external store.
 	store, state, _, err := readCanonicalControllerLedger(root, cfg)
 	if err != nil {
 		return report, err

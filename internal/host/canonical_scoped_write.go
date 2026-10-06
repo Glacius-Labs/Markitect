@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"runtime"
 	"sort"
 	"strings"
 
@@ -30,13 +29,8 @@ func writeCanonicalScopedOutputs(root string, captured canonicalScopedWriteCaptu
 	if captured.Observed == nil || !captured.Observed.Provisional || captured.Inventory == nil || !canonicalRevisionPattern.MatchString(captured.Revision) {
 		return nil, errors.New("scoped apply requires fixed source and explicit provisional byte/inventory capture")
 	}
-	if err := validateProjectionOutputModes(outputs, outputModes); err != nil {
+	if err := validateProjectionWriteModes(outputs, outputModes); err != nil {
 		return nil, err
-	}
-	for name := range outputs {
-		if projectionOutputMode(outputModes, name) == snapshot.ExecutableMode && runtime.GOOS == "windows" {
-			return nil, fmt.Errorf("executable artifact mode is unsupported on Windows working trees: %s", name)
-		}
 	}
 	branch, err := writeBranchName(root)
 	if err != nil {
