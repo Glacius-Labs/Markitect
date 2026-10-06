@@ -327,7 +327,9 @@ spec:
       owner: operating-model-proof-fixture
     - path: examples/operating-model/modules/commerce/schema.yaml
       owner: operating-model-proof-fixture
-    - path: examples/operating-model/modules/dotnet/module.yaml
+    - path: examples/operating-model/modules/orders-dotnet/module.yaml
+      owner: operating-model-proof-fixture
+    - path: examples/operating-model/modules/billing-dotnet/module.yaml
       owner: operating-model-proof-fixture
     - path: examples/operating-model/modules/foundation/module.yaml
       owner: operating-model-proof-fixture
