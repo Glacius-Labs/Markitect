@@ -116,6 +116,28 @@ spec:
     - internal/host/cli/canonical_goal_test.go
     - examples/public_fixture_test.go
   tooling:
+    - path: experiments/operating-model-proof/runs/c11-v5-original/binding.json
+      owner: c11-module-binding-readonly-evidence
+    - path: experiments/operating-model-proof/runs/c11-v5-original/event-index.json
+      owner: c11-module-binding-readonly-evidence
+    - path: experiments/operating-model-proof/runs/c11-v5-original/events.jsonl
+      owner: c11-module-binding-readonly-evidence
+    - path: experiments/operating-model-proof/runs/c11-v5-original/events/propose-8fc4b094b1bd4fd190ab20004f3b8590.json
+      owner: c11-module-binding-readonly-evidence
+    - path: experiments/operating-model-proof/runs/c11-v5-original/proposal-assessment.json
+      owner: c11-module-binding-readonly-evidence
+    - path: experiments/operating-model-proof/runs/c11-v5-proposal-results.json
+      owner: c11-module-binding-readonly-evidence
+    - path: experiments/operating-model-proof/runs/c11-v5-replacement/binding.json
+      owner: c11-module-binding-readonly-evidence
+    - path: experiments/operating-model-proof/runs/c11-v5-replacement/event-index.json
+      owner: c11-module-binding-readonly-evidence
+    - path: experiments/operating-model-proof/runs/c11-v5-replacement/events.jsonl
+      owner: c11-module-binding-readonly-evidence
+    - path: experiments/operating-model-proof/runs/c11-v5-replacement/events/propose-913c506c076e4d5c8a271b52e9c49e0e.json
+      owner: c11-module-binding-readonly-evidence
+    - path: experiments/operating-model-proof/runs/c11-v5-replacement/proposal-assessment.json
+      owner: c11-module-binding-readonly-evidence
     - path: experiments/operating-model-proof/runs/linux-gates-4465186/receipt.json
       owner: preserved-failed-linux-gate-evidence
     - path: internal/infrastructure/source/selective_identity_test.go
