@@ -41,3 +41,5 @@ content-ID and source/model/target relationship to the stored record.
 entries, and malformed names are refused. Digests prove byte identity and
 linkage only; they do not establish authorization, semantic adequacy, verifier
 independence, acceptance, or external filesystem isolation.
+
+Root and events-directory operations now use identity-checked opened handles. After event publication, validated readback must match the exact published sequence and event digest. Otherwise the operation returns `ErrCommittedButUnobserved`, preserves partial state, and performs no rollback or retry. This is byte/history consistency, not authentication or an OS sandbox. The [Host write identity contract](../../../docs/design/host-write-identity.md) explains the object-versus-path and partial-publication boundary.
