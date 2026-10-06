@@ -4,9 +4,11 @@ import (
 	"bytes"
 	"context"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/host/agentexec"
 	"github.com/Glacius-Labs/Markitect/internal/host/records"
@@ -16,6 +18,9 @@ import (
 // This exercises the real controller with deterministic protocol actors;
 // their passing responses do not establish semantic conformity.
 func TestCanonicalControllerModelChangeReconcilesBothRepresentationsAndCloses(t *testing.T) {
+	if !runCanonicalControllerScenarioInChild(t) {
+		return
+	}
 	const (
 		configPath  = "examples/canonical-projection/canonical.yaml"
 		useCasePath = "examples/canonical-projection/definitions/create-order.use-case.yaml"
@@ -188,4 +193,57 @@ func TestCanonicalControllerModelChangeReconcilesBothRepresentationsAndCloses(t 
 	if !markdownRecordFound {
 		t.Fatal("changed-model active set omitted the declared Markdown representation")
 	}
+}
+
+// Lifecycle scenarios use t.Setenv and isolated Git/ledger fixtures. The
+// parent wrappers run in parallel, but each assertion body runs in its own
+// test process so environment state cannot cross between scenarios.
+func runCanonicalControllerScenarioInChild(t *testing.T) bool {
+	const childSentinel = "MARKITECT_CONTROLLER_SCENARIO_CHILD"
+	name := t.Name()
+	if os.Getenv(childSentinel) == name {
+		return true
+	}
+	t.Parallel()
+	deadline, hasDeadline := t.Deadline()
+	if !hasDeadline {
+		t.Fatal("isolated controller scenario requires the parent test deadline")
+	}
+	remaining := time.Until(deadline)
+	if remaining <= 0 {
+		t.Fatal("parent test deadline expired before isolated controller scenario started")
+	}
+	ctx, cancel := context.WithDeadline(context.Background(), deadline)
+	defer cancel()
+	executable, err := os.Executable()
+	if err != nil {
+		t.Fatalf("resolve test executable: %v", err)
+	}
+	args := []string{"-test.run", "^" + name + "$", "-test.timeout", remaining.String()}
+	if testing.Verbose() {
+		args = append(args, "-test.v")
+	}
+	cmd := exec.CommandContext(ctx, executable, args...)
+	cmd.WaitDelay = 2 * time.Second
+	cmd.Env = replaceControllerScenarioEnv(os.Environ(), childSentinel, name)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Fatalf("isolated scenario %s failed before parent deadline %s: %v\n%s", name, deadline.Format(time.RFC3339Nano), err, output)
+	}
+	if testing.Verbose() && len(output) > 0 {
+		t.Logf("isolated scenario %s output:\n%s", name, output)
+	}
+	return false
+}
+
+func replaceControllerScenarioEnv(environ []string, key, value string) []string {
+	result := make([]string, 0, len(environ)+1)
+	for _, entry := range environ {
+		name, _, found := strings.Cut(entry, "=")
+		if found && strings.EqualFold(name, key) {
+			continue
+		}
+		result = append(result, entry)
+	}
+	return append(result, key+"="+value)
 }

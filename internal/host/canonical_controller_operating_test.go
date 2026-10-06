@@ -43,6 +43,9 @@ func TestCanonicalControllerOperatingRepairActor(t *testing.T) {
 }
 
 func TestCanonicalControllerOperatingFailureRepairClosure(t *testing.T) {
+	if !runCanonicalControllerScenarioInChild(t) {
+		return
+	}
 	root, sourceRevision, evidenceRevision, cfg, marker := canonicalControllerVerificationFixture(t)
 	cfg.Executor.Args = []string{"-test.run=^TestCanonicalControllerOperatingRepairActor$"}
 	t.Setenv(canonicalOperatingRepairActorEnv, "1")
