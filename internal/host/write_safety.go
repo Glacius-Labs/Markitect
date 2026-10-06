@@ -164,83 +164,229 @@ func (w *writeRoot) checkIdentity() error {
 	return nil
 }
 
-func (w *writeRoot) MkdirAll(name string, mode os.FileMode) error {
-	if name == "." || name == "" {
-		return nil
-	}
-	if err := w.checkPath(name); err != nil {
-		return err
-	}
-	if err := w.checkIdentity(); err != nil {
-		return err
-	}
-	if err := w.root.MkdirAll(filepath.FromSlash(name), mode); err != nil {
-		return err
-	}
-	return w.checkPath(name)
-}
-
 func (w *writeRoot) Mkdir(name string, mode os.FileMode) error {
-	if err := w.checkPath(name); err != nil {
+	if err := validateWritePath(name); err != nil {
 		return err
 	}
+	parentName, leaf := splitWritePath(name)
+	parent, closeParent, err := w.openDirectory(parentName, false, 0)
+	if err != nil {
+		return err
+	}
+	defer closeParent(parent)
 	if err := w.checkIdentity(); err != nil {
 		return err
 	}
-	return w.root.Mkdir(filepath.FromSlash(name), mode)
+	if err := parent.Mkdir(leaf, mode); err != nil {
+		return err
+	}
+	if err := w.checkNamedDirectoryIdentity(parentName, parent); err != nil {
+		_ = parent.Remove(leaf)
+		return err
+	}
+	return nil
 }
 
 func (w *writeRoot) CreateExclusive(name string, mode os.FileMode) (*os.File, error) {
-	if err := w.checkPath(name); err != nil {
+	if err := validateWritePath(name); err != nil {
 		return nil, err
 	}
+	parentName, leaf := splitWritePath(name)
+	parent, closeParent, err := w.openDirectory(parentName, false, 0)
+	if err != nil {
+		return nil, err
+	}
+	defer closeParent(parent)
 	if err := w.checkIdentity(); err != nil {
 		return nil, err
 	}
-	return w.root.OpenFile(filepath.FromSlash(name), os.O_WRONLY|os.O_CREATE|os.O_EXCL, mode)
+	file, err := parent.OpenFile(leaf, os.O_WRONLY|os.O_CREATE|os.O_EXCL, mode)
+	if err != nil {
+		return nil, err
+	}
+	if err := w.checkNamedDirectoryIdentity(parentName, parent); err != nil {
+		_ = file.Close()
+		_ = parent.Remove(leaf)
+		return nil, err
+	}
+	return file, nil
+}
+
+func splitWritePath(name string) (string, string) {
+	dir, leaf := filepath.Split(filepath.FromSlash(name))
+	dir = filepath.ToSlash(filepath.Clean(dir))
+	if dir == "." {
+		dir = ""
+	}
+	return dir, leaf
+}
+
+func (w *writeRoot) checkNamedDirectoryIdentity(name string, expected *os.Root) error {
+	actualRoot, closeActual, err := w.openDirectory(name, false, 0)
+	if err != nil {
+		return err
+	}
+	defer closeActual(actualRoot)
+	expectedInfo, err := expected.Stat(".")
+	if err != nil {
+		return err
+	}
+	actualInfo, err := actualRoot.Stat(".")
+	if err != nil {
+		return err
+	}
+	if !os.SameFile(expectedInfo, actualInfo) {
+		return fmt.Errorf("output parent changed during write: %s", name)
+	}
+	return nil
+}
+
+func (w *writeRoot) openDirectory(name string, create bool, mode os.FileMode) (*os.Root, func(*os.Root) error, error) {
+	if name == "" || name == "." {
+		return w.root, func(*os.Root) error { return nil }, nil
+	}
+	if err := validateWritePath(name); err != nil {
+		return nil, nil, err
+	}
+	if err := w.checkIdentity(); err != nil {
+		return nil, nil, err
+	}
+	var current *os.Root = w.root
+	owned := false
+	closeCurrent := func() {
+		if owned {
+			_ = current.Close()
+		}
+	}
+	for _, part := range strings.Split(name, "/") {
+		info, err := current.Lstat(part)
+		if os.IsNotExist(err) && create {
+			err = current.Mkdir(part, mode)
+			if err == nil || os.IsExist(err) {
+				info, err = current.Lstat(part)
+			}
+		}
+		if err != nil {
+			closeCurrent()
+			return nil, nil, err
+		}
+		if isReparsePoint(info) || !info.IsDir() {
+			closeCurrent()
+			return nil, nil, fmt.Errorf("non-directory or reparse point in output parent %s", name)
+		}
+		next, err := current.OpenRoot(part)
+		if err != nil {
+			closeCurrent()
+			return nil, nil, err
+		}
+		actual, err := next.Stat(".")
+		if err != nil || !os.SameFile(info, actual) {
+			next.Close()
+			closeCurrent()
+			if err != nil {
+				return nil, nil, err
+			}
+			return nil, nil, fmt.Errorf("output parent changed while opening: %s", name)
+		}
+		closeCurrent()
+		current = next
+		owned = true
+	}
+	return current, func(root *os.Root) error {
+		if root == w.root {
+			return nil
+		}
+		return root.Close()
+	}, nil
 }
 
 func (w *writeRoot) ReadFile(name string) ([]byte, error) {
-	if err := w.checkPath(name); err != nil {
+	if err := validateWritePath(name); err != nil {
 		return nil, err
 	}
-	return w.root.ReadFile(filepath.FromSlash(name))
+	parentName, leaf := splitWritePath(name)
+	parent, closeParent, err := w.openDirectory(parentName, false, 0)
+	if err != nil {
+		return nil, err
+	}
+	defer closeParent(parent)
+	info, err := parent.Lstat(leaf)
+	if err != nil {
+		return nil, err
+	}
+	if isReparsePoint(info) {
+		return nil, fmt.Errorf("symlink or reparse point in output path %s", name)
+	}
+	return parent.ReadFile(leaf)
 }
 
 func (w *writeRoot) Lstat(name string) (os.FileInfo, error) {
-	if err := w.checkPath(name); err != nil {
+	if err := validateWritePath(name); err != nil {
 		return nil, err
 	}
-	return w.root.Lstat(filepath.FromSlash(name))
+	parentName, leaf := splitWritePath(name)
+	parent, closeParent, err := w.openDirectory(parentName, false, 0)
+	if err != nil {
+		return nil, err
+	}
+	defer closeParent(parent)
+	info, err := parent.Lstat(leaf)
+	if err != nil {
+		return nil, err
+	}
+	if isReparsePoint(info) {
+		return nil, fmt.Errorf("symlink or reparse point in output path %s", name)
+	}
+	return info, nil
 }
 
 func (w *writeRoot) AtomicWrite(name string, data []byte, mode os.FileMode) error {
+	return w.atomicWriteWithHook(name, data, mode, nil)
+}
+
+// atomicWriteWithHook exposes the final pre-open boundary to focused tests so
+// a directory swap can be injected in the exact former path-based race window.
+func (w *writeRoot) atomicWriteWithHook(name string, data []byte, mode os.FileMode, beforeOpen func() error) error {
 	if err := w.checkPath(name); err != nil {
 		return err
 	}
-	parent := filepath.ToSlash(filepath.Dir(filepath.FromSlash(name)))
-	if parent == "." {
-		parent = ""
-	} else if err := w.MkdirAll(parent, 0755); err != nil {
-		return err
-	}
-	if err := w.checkPath(name); err != nil {
-		return err
-	}
+	parentName, leaf := splitWritePath(name)
 	if err := w.checkIdentity(); err != nil {
+		return err
+	}
+	parent, closeParent, err := w.openDirectory(parentName, true, 0755)
+	if err != nil {
+		return err
+	}
+	defer closeParent(parent)
+	if info, err := parent.Lstat(leaf); err == nil && isReparsePoint(info) {
+		return fmt.Errorf("symlink or reparse point in output path %s", name)
+	} else if err != nil && !os.IsNotExist(err) {
 		return err
 	}
 	var temporary string
 	var file *os.File
+	hookCalled := false
 	for attempts := 0; attempts < 8; attempts++ {
 		var random [12]byte
 		if _, err := rand.Read(random[:]); err != nil {
 			return err
 		}
-		temporary = filepath.Join(parent, ".markitect-"+hex.EncodeToString(random[:]))
-		created, openErr := w.root.OpenFile(temporary, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0600)
+		temporary = ".markitect-" + hex.EncodeToString(random[:])
+		if !hookCalled && beforeOpen != nil {
+			if err := beforeOpen(); err != nil {
+				return err
+			}
+			hookCalled = true
+		}
+		created, openErr := parent.OpenFile(temporary, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0600)
 		if openErr == nil {
 			file = created
+			if err := w.checkNamedDirectoryIdentity(parentName, parent); err != nil {
+				_ = file.Close()
+				_ = parent.Remove(temporary)
+				return err
+			}
 			break
 		}
 		if !os.IsExist(openErr) {
@@ -250,7 +396,7 @@ func (w *writeRoot) AtomicWrite(name string, data []byte, mode os.FileMode) erro
 	if file == nil {
 		return fmt.Errorf("could not allocate temporary output for %s", name)
 	}
-	cleanup := func() { _ = w.root.Remove(temporary) }
+	cleanup := func() { _ = parent.Remove(temporary) }
 	if _, err := file.Write(data); err != nil {
 		file.Close()
 		cleanup()
@@ -270,7 +416,7 @@ func (w *writeRoot) AtomicWrite(name string, data []byte, mode os.FileMode) erro
 		cleanup()
 		return err
 	}
-	if err := w.checkPath(name); err != nil {
+	if err := w.checkNamedDirectoryIdentity(parentName, parent); err != nil {
 		cleanup()
 		return err
 	}
@@ -278,7 +424,7 @@ func (w *writeRoot) AtomicWrite(name string, data []byte, mode os.FileMode) erro
 		cleanup()
 		return err
 	}
-	if err := w.root.Rename(temporary, filepath.FromSlash(name)); err != nil {
+	if err := parent.Rename(temporary, leaf); err != nil {
 		cleanup()
 		return err
 	}
@@ -286,22 +432,30 @@ func (w *writeRoot) AtomicWrite(name string, data []byte, mode os.FileMode) erro
 }
 
 func (w *writeRoot) LockWriter() (func(), error) {
-	const lockName = ".artifacts/markitect/write.lock"
-	if err := w.MkdirAll(".artifacts/markitect", 0755); err != nil {
+	parent, closeParent, err := w.openDirectory(".artifacts/markitect", true, 0755)
+	if err != nil {
 		return nil, err
 	}
 	if err := w.checkIdentity(); err != nil {
+		_ = closeParent(parent)
 		return nil, err
 	}
-	lock, err := w.root.OpenFile(lockName, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0600)
+	lock, err := parent.OpenFile("write.lock", os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0600)
 	if err != nil {
+		_ = closeParent(parent)
 		return nil, fmt.Errorf("renderer lock is already present: %w", err)
 	}
 	if err := lock.Close(); err != nil {
-		_ = w.root.Remove(lockName)
+		_ = parent.Remove("write.lock")
+		_ = closeParent(parent)
 		return nil, err
 	}
-	return func() { _ = w.root.Remove(lockName) }, nil
+	if err := w.checkNamedDirectoryIdentity(".artifacts/markitect", parent); err != nil {
+		_ = parent.Remove("write.lock")
+		_ = closeParent(parent)
+		return nil, err
+	}
+	return func() { _ = parent.Remove("write.lock"); _ = closeParent(parent) }, nil
 }
 
 func rejectReparseAncestors(path string) error {

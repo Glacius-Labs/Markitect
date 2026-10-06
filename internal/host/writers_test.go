@@ -167,3 +167,86 @@ func TestAnchoredAtomicWriteRefusesSwappedParent(t *testing.T) {
 		t.Fatalf("external sentinel changed: bytes=%q error=%v", got, err)
 	}
 }
+
+func TestAnchoredAtomicWriteContainsSwapAtPreOpenBoundary(t *testing.T) {
+	rootPath := tempRoot(t)
+	parent := filepath.Join(rootPath, "target")
+	if err := os.Mkdir(parent, 0755); err != nil {
+		t.Fatal(err)
+	}
+	outside := tempRoot(t)
+	sentinel := filepath.Join(outside, "sentinel.txt")
+	if err := os.WriteFile(sentinel, []byte("keep\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	anchored, err := openWriteRoot(rootPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer anchored.Close()
+	original := filepath.Join(rootPath, "target-original")
+	err = anchored.atomicWriteWithHook("target/escaped.txt", []byte("must not write\n"), 0644, func() error {
+		if err := os.Rename(parent, original); err != nil {
+			return err
+		}
+		return os.Symlink(outside, parent)
+	})
+	if err == nil {
+		t.Fatal("rooted OpenFile accepted a parent swapped after path and root identity validation")
+	}
+	entries, err := os.ReadDir(outside)
+	if err != nil || len(entries) != 1 || entries[0].Name() != "sentinel.txt" {
+		t.Fatalf("external directory received artifact/temp writes: entries=%v error=%v", entries, err)
+	}
+	got, err := os.ReadFile(sentinel)
+	if err != nil || string(got) != "keep\n" {
+		t.Fatalf("external sentinel changed: bytes=%q error=%v", got, err)
+	}
+	originalEntries, err := os.ReadDir(original)
+	if err != nil || len(originalEntries) != 0 {
+		t.Fatalf("race wrote a temporary artifact before rooted OpenFile: entries=%v error=%v", originalEntries, err)
+	}
+}
+
+func TestAnchoredAtomicWriteDoesNotFollowInRootAliasAtPreOpenBoundary(t *testing.T) {
+	rootPath := tempRoot(t)
+	parent := filepath.Join(rootPath, "target")
+	sibling := filepath.Join(rootPath, "sibling")
+	if err := os.Mkdir(parent, 0755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Mkdir(sibling, 0755); err != nil {
+		t.Fatal(err)
+	}
+	sentinel := filepath.Join(sibling, "sentinel.txt")
+	if err := os.WriteFile(sentinel, []byte("keep\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	anchored, err := openWriteRoot(rootPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer anchored.Close()
+	original := filepath.Join(rootPath, "target-original")
+	err = anchored.atomicWriteWithHook("target/escaped.txt", []byte("must not write\n"), 0644, func() error {
+		if err := os.Rename(parent, original); err != nil {
+			return err
+		}
+		return os.Symlink(sibling, parent)
+	})
+	if err == nil {
+		t.Fatal("rooted writer accepted a parent identity change during temporary creation")
+	}
+	entries, err := os.ReadDir(sibling)
+	if err != nil || len(entries) != 1 || entries[0].Name() != "sentinel.txt" {
+		t.Fatalf("in-root sibling received artifact/temp writes: entries=%v error=%v", entries, err)
+	}
+	got, err := os.ReadFile(sentinel)
+	if err != nil || string(got) != "keep\n" {
+		t.Fatalf("in-root sibling sentinel changed: bytes=%q error=%v", got, err)
+	}
+	originalEntries, err := os.ReadDir(original)
+	if err != nil || len(originalEntries) != 0 {
+		t.Fatalf("temporary artifact remained in pinned original parent: entries=%v error=%v", originalEntries, err)
+	}
+}
