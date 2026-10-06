@@ -88,6 +88,9 @@ func createInitArea(state *initState) error {
 				return err
 			}
 			if err := state.writer.Mkdir(rel, 0755); err != nil {
+				if writeWasPublished(err) {
+					state.plan.CreatedDirectories = append(state.plan.CreatedDirectories, rel)
+				}
 				return fmt.Errorf("create area directory exclusively %s: %w", rel, err)
 			}
 			state.plan.CreatedDirectories = append(state.plan.CreatedDirectories, rel)
@@ -100,6 +103,9 @@ func createInitArea(state *initState) error {
 		}
 		if err := state.writer.Mkdir(rel, 0755); err == nil {
 			state.plan.CreatedDirectories = append(state.plan.CreatedDirectories, rel)
+		} else if writeWasPublished(err) {
+			state.plan.CreatedDirectories = append(state.plan.CreatedDirectories, rel)
+			return fmt.Errorf("create parent directory %s: %w", rel, err)
 		} else if !os.IsExist(err) {
 			return fmt.Errorf("create parent directory %s: %w", rel, err)
 		}

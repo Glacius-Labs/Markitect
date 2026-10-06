@@ -151,6 +151,11 @@ func Install(root string, bundle *release.Bundle, write bool) (*InstallPlan, err
 			return installWriteFailure(plan, state, err)
 		}
 		if err = writeRoot.AtomicWrite(file.Path, bundle.Files[file.Path], 0644); err != nil {
+			if writeWasPublished(err) {
+				plan.Written = append(plan.Written, file.Path)
+				data := append([]byte(nil), bundle.Files[file.Path]...)
+				state.files[file.Path] = installFileState{data: data, canonical: canonicalInstallReadback(file.Path, data), exists: true}
+			}
 			return installWriteFailure(plan, state, fmt.Errorf("write %s: %w", file.Path, err))
 		}
 		plan.Written = append(plan.Written, file.Path)

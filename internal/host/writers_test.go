@@ -1,6 +1,7 @@
 package host
 
 import (
+	"errors"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -322,8 +323,9 @@ func TestAnchoredAtomicWriteRejectsInRootAliasAtPreRenameBoundary(t *testing.T) 
 	if !injected {
 		t.Skipf("in-root alias swap could not be injected: %v", injectionErr)
 	}
-	if err == nil {
-		t.Fatal("write succeeded after destination parent identity changed before rename")
+	var published *publishedWriteError
+	if !errors.As(err, &published) || published.Path != "target/escaped.txt" {
+		t.Fatalf("expected a retained-publication error after destination parent identity changed, got %v", err)
 	}
 	entries, err := os.ReadDir(sibling)
 	if err != nil || len(entries) != 1 || entries[0].Name() != "sentinel.txt" {
@@ -333,9 +335,43 @@ func TestAnchoredAtomicWriteRejectsInRootAliasAtPreRenameBoundary(t *testing.T) 
 	if err != nil || string(got) != "keep\n" {
 		t.Fatalf("in-root sibling sentinel changed: bytes=%q error=%v", got, err)
 	}
-	originalEntries, err := os.ReadDir(original)
-	if err != nil || len(originalEntries) != 0 {
-		t.Fatalf("artifact or temporary file remained in pinned original parent: entries=%v error=%v", originalEntries, err)
+	originalOutput := filepath.Join(original, "escaped.txt")
+	got, err = os.ReadFile(originalOutput)
+	if err != nil || string(got) != "must not write\n" {
+		t.Fatalf("published bytes were rolled back or lost from the pinned original parent: bytes=%q error=%v", got, err)
+	}
+}
+
+func TestLockWriterReleasePreservesReplacementLock(t *testing.T) {
+	rootPath, err := os.MkdirTemp(os.TempDir(), "markitect-lock-replacement-")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(rootPath)
+	lockDir := filepath.Join(rootPath, ".artifacts", "markitect")
+	if err := os.MkdirAll(lockDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+	root, err := openWriteRoot(rootPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer root.Close()
+	release, err := root.LockWriter()
+	if err != nil {
+		t.Fatal(err)
+	}
+	lock := filepath.Join(lockDir, "write.lock")
+	if err := os.Remove(lock); err != nil {
+		t.Skipf("platform prevents replacing an open lock file: %v", err)
+	}
+	if err := os.WriteFile(lock, []byte("replacement lock\n"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	release()
+	got, err := os.ReadFile(lock)
+	if err != nil || string(got) != "replacement lock\n" {
+		t.Fatalf("release removed or changed replacement lock: bytes=%q error=%v", got, err)
 	}
 }
 
@@ -420,5 +456,78 @@ func TestWriteRootReadRejectsLeafIdentitySwapBeforeAccept(t *testing.T) {
 	}
 	if err == nil || data != nil {
 		t.Fatalf("read accepted bytes after the selected leaf identity changed: data=%q error=%v", data, err)
+	}
+}
+
+func TestWriteRootReadRejectsAppendAtAcceptanceBoundary(t *testing.T) {
+	rootPath, err := os.MkdirTemp(os.TempDir(), "markitect-read-append-")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(rootPath)
+	target := filepath.Join(rootPath, "selected.txt")
+	if err := os.WriteFile(target, []byte("selected bytes\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	root, err := openWriteRoot(rootPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer root.Close()
+	var injected bool
+	data, err := root.readFileWithHooks("selected.txt", nil, func() error {
+		f, err := os.OpenFile(target, os.O_APPEND|os.O_WRONLY, 0644)
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+		if _, err := f.Write([]byte("late append\n")); err != nil {
+			return err
+		}
+		injected = true
+		return nil
+	})
+	if !injected {
+		t.Skipf("file append could not be injected at acceptance boundary: %v", err)
+	}
+	if err == nil || data != nil {
+		t.Fatalf("read accepted changed-size contents: data=%q error=%v", data, err)
+	}
+}
+
+func TestAnchoredAtomicWriteRetainsRootLevelPublicationAfterRootMove(t *testing.T) {
+	base, err := os.MkdirTemp(os.TempDir(), "markitect-root-level-publication-")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(base)
+	rootPath := filepath.Join(base, "repo")
+	if err := os.Mkdir(rootPath, 0755); err != nil {
+		t.Fatal(err)
+	}
+	root, err := openWriteRoot(rootPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer root.Close()
+	original := filepath.Join(base, "repo-original")
+	var moved bool
+	err = root.atomicWriteWithHooks("escaped.txt", []byte("published\n"), 0644, nil, func() error {
+		if err := os.Rename(rootPath, original); err != nil {
+			return err
+		}
+		moved = true
+		return nil
+	})
+	if !moved {
+		t.Skipf("platform prevents moving the open root directory: %v", err)
+	}
+	var published *publishedWriteError
+	if !errors.As(err, &published) || published.Path != "escaped.txt" {
+		t.Fatalf("expected retained root-level publication after root move, got %v", err)
+	}
+	got, err := os.ReadFile(filepath.Join(original, "escaped.txt"))
+	if err != nil || string(got) != "published\n" {
+		t.Fatalf("root-level published bytes were removed or lost: bytes=%q error=%v", got, err)
 	}
 }

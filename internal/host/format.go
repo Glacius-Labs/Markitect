@@ -110,6 +110,9 @@ func Format(root string, p *Project, write bool) ([]string, error) {
 			mode = 0755
 		}
 		if err = writeRoot.AtomicWrite(name, changed[name], mode); err != nil {
+			if writeWasPublished(err) {
+				written = append(written, name)
+			}
 			return written, err
 		}
 		written = append(written, name)

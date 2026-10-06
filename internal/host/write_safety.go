@@ -3,14 +3,36 @@ package host
 import (
 	"crypto/rand"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"github.com/Glacius-Labs/Markitect/internal/infrastructure/source"
 )
+
+// publishedWriteError reports that the bytes were atomically published into
+// the pinned destination directory, but the directory's current pathname no
+// longer resolves to that same directory. Callers must preserve the write in
+// their partial-write report; rolling it back could delete a replacement.
+type publishedWriteError struct {
+	Path  string
+	Cause error
+}
+
+func (e *publishedWriteError) Error() string {
+	return fmt.Sprintf("object at %s was created or published, but its named destination changed: %v", e.Path, e.Cause)
+}
+
+func (e *publishedWriteError) Unwrap() error { return e.Cause }
+
+func writeWasPublished(err error) bool {
+	var published *publishedWriteError
+	return errors.As(err, &published)
+}
 
 func safeDestination(root, name string) (string, error) {
 	if err := validateWritePath(name); err != nil {
@@ -166,6 +188,10 @@ func (w *writeRoot) checkIdentity() error {
 }
 
 func (w *writeRoot) Mkdir(name string, mode os.FileMode) error {
+	return w.mkdirWithHook(name, mode, nil)
+}
+
+func (w *writeRoot) mkdirWithHook(name string, mode os.FileMode, afterCreate func() error) error {
 	if err := validateWritePath(name); err != nil {
 		return err
 	}
@@ -181,14 +207,22 @@ func (w *writeRoot) Mkdir(name string, mode os.FileMode) error {
 	if err := parent.Mkdir(leaf, mode); err != nil {
 		return err
 	}
+	if afterCreate != nil {
+		if err := afterCreate(); err != nil {
+			return &publishedWriteError{Path: name, Cause: err}
+		}
+	}
 	if err := w.checkNamedDirectoryIdentity(parentName, parent); err != nil {
-		_ = parent.Remove(leaf)
-		return err
+		return &publishedWriteError{Path: name, Cause: err}
 	}
 	return nil
 }
 
 func (w *writeRoot) CreateExclusive(name string, mode os.FileMode) (*os.File, error) {
+	return w.createExclusiveWithHook(name, mode, nil)
+}
+
+func (w *writeRoot) createExclusiveWithHook(name string, mode os.FileMode, afterCreate func() error) (*os.File, error) {
 	if err := validateWritePath(name); err != nil {
 		return nil, err
 	}
@@ -205,10 +239,15 @@ func (w *writeRoot) CreateExclusive(name string, mode os.FileMode) (*os.File, er
 	if err != nil {
 		return nil, err
 	}
+	if afterCreate != nil {
+		if err := afterCreate(); err != nil {
+			_ = file.Close()
+			return nil, &publishedWriteError{Path: name, Cause: err}
+		}
+	}
 	if err := w.checkNamedDirectoryIdentity(parentName, parent); err != nil {
 		_ = file.Close()
-		_ = parent.Remove(leaf)
-		return nil, err
+		return nil, &publishedWriteError{Path: name, Cause: err}
 	}
 	return file, nil
 }
@@ -223,6 +262,9 @@ func splitWritePath(name string) (string, string) {
 }
 
 func (w *writeRoot) checkNamedDirectoryIdentity(name string, expected *os.Root) error {
+	if err := w.checkIdentity(); err != nil {
+		return err
+	}
 	actualRoot, closeActual, err := w.openDirectory(name, false, 0)
 	if err != nil {
 		return err
@@ -336,12 +378,22 @@ func (w *writeRoot) readFileWithHooks(name string, beforeOpen, beforeAccept func
 	if err != nil {
 		return nil, err
 	}
-	if isReparsePoint(opened) || !opened.Mode().IsRegular() || !os.SameFile(expected, opened) {
+	if isReparsePoint(opened) || !opened.Mode().IsRegular() || opened.Size() != expected.Size() || !os.SameFile(expected, opened) {
 		return nil, fmt.Errorf("output file identity changed while opening: %s", name)
 	}
-	data, err := io.ReadAll(file)
+	data, err := io.ReadAll(io.LimitReader(file, expected.Size()+1))
 	if err != nil {
 		return nil, err
+	}
+	if int64(len(data)) != expected.Size() {
+		return nil, fmt.Errorf("selected file size changed while reading: %s", name)
+	}
+	readInfo, err := file.Stat()
+	if err != nil {
+		return nil, err
+	}
+	if readInfo.Size() != expected.Size() || !os.SameFile(opened, readInfo) {
+		return nil, fmt.Errorf("selected file size or identity changed while reading: %s", name)
 	}
 	if beforeAccept != nil {
 		if err := beforeAccept(); err != nil {
@@ -352,8 +404,11 @@ func (w *writeRoot) readFileWithHooks(name string, beforeOpen, beforeAccept func
 	if err != nil {
 		return nil, err
 	}
-	if isReparsePoint(current) || !current.Mode().IsRegular() || !os.SameFile(opened, current) {
+	if isReparsePoint(current) || !current.Mode().IsRegular() || current.Size() != expected.Size() || !os.SameFile(opened, current) {
 		return nil, fmt.Errorf("output file identity changed while reading: %s", name)
+	}
+	if err := w.checkNamedDirectoryIdentity(parentName, parent); err != nil {
+		return nil, err
 	}
 	return data, nil
 }
@@ -477,8 +532,7 @@ func (w *writeRoot) atomicWriteWithHooks(name string, data []byte, mode os.FileM
 		return err
 	}
 	if err := w.checkNamedDirectoryIdentity(parentName, parent); err != nil {
-		_ = parent.Remove(leaf)
-		return err
+		return &publishedWriteError{Path: name, Cause: err}
 	}
 	return nil
 }
@@ -497,17 +551,29 @@ func (w *writeRoot) LockWriter() (func(), error) {
 		_ = closeParent(parent)
 		return nil, fmt.Errorf("renderer lock is already present: %w", err)
 	}
-	if err := lock.Close(); err != nil {
-		_ = parent.Remove("write.lock")
+	lockInfo, err := lock.Stat()
+	if err != nil {
+		_ = lock.Close()
 		_ = closeParent(parent)
-		return nil, err
+		return nil, &publishedWriteError{Path: ".artifacts/markitect/write.lock", Cause: err}
 	}
 	if err := w.checkNamedDirectoryIdentity(".artifacts/markitect", parent); err != nil {
-		_ = parent.Remove("write.lock")
+		_ = lock.Close()
 		_ = closeParent(parent)
-		return nil, err
+		return nil, &publishedWriteError{Path: ".artifacts/markitect/write.lock", Cause: err}
 	}
-	return func() { _ = parent.Remove("write.lock"); _ = closeParent(parent) }, nil
+	var releaseOnce sync.Once
+	return func() {
+		releaseOnce.Do(func() {
+			if w.checkIdentity() == nil && w.checkNamedDirectoryIdentity(".artifacts/markitect", parent) == nil {
+				if current, err := parent.Lstat("write.lock"); err == nil && !isReparsePoint(current) && os.SameFile(lockInfo, current) {
+					_ = parent.Remove("write.lock")
+				}
+			}
+			_ = lock.Close()
+			_ = closeParent(parent)
+		})
+	}, nil
 }
 
 func rejectReparseAncestors(path string) error {

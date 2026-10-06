@@ -187,6 +187,9 @@ func writeOutputs(root string, p *Project, selected []string) ([]string, error) 
 			}
 		}
 		if err = writeRoot.AtomicWrite(name, outputs[name], 0644); err != nil {
+			if writeWasPublished(err) {
+				written = append(written, name)
+			}
 			return written, err
 		}
 		written = append(written, name)
@@ -292,6 +295,9 @@ func WriteSchemas(root string, outputs map[string][]byte) error {
 			}
 		}
 		if err = writeRoot.AtomicWrite(name, outputs[name], 0644); err != nil {
+			if writeWasPublished(err) {
+				return fmt.Errorf("write schema %s: %w", name, err)
+			}
 			return err
 		}
 	}
