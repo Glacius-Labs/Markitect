@@ -1017,3 +1017,179 @@ spec:
       owner: independent-markdown-reference-projection
     - path: internal/modules/markdownreference/markdownreference_test.go
       owner: independent-markdown-reference-projection
+    - path: examples/canonical-workflow/canonical-azurepipelines-only.yaml
+      owner: immutable-operating-model-proof-records
+    - path: examples/canonical-workflow/canonical-claude-only.yaml
+      owner: immutable-operating-model-proof-records
+    - path: examples/canonical-workflow/canonical-codex-only.yaml
+      owner: immutable-operating-model-proof-records
+    - path: examples/canonical-workflow/canonical-githooks-only.yaml
+      owner: immutable-operating-model-proof-records
+    - path: examples/canonical-workflow/canonical-markdown-only.yaml
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c10-orders-quantity1-v5/binding.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c10-orders-quantity1-v5/events.jsonl
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c10-orders-quantity1-v5/events/propose-df995d184d9242ec95b03589b642eebc.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c10-orders-quantity1-v5/events/verify-51dab2cc10e5433491879c7a71325d95.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c10-orders-quantity1-v5/result.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c12-goal-propose-03/blocked-before-provider-invocation.md
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c12-goal-propose-03/pre-call-freeze.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c13-forward-01/result.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c13-forward-01/result.md
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c4-aligned-control-freeze-01/control-plan.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c4-aligned-control-freeze-01/fixture-manifest.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c4-aligned-control-freeze-01/operator-note.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c4-aligned-control-freeze-02/control-plan.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c4-aligned-control-freeze-02/fixture-manifest.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c4-apply-control-freeze-v5-01/control-plan.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c4-apply-control-freeze-v5-02/control-plan.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c4-apply-retry-control-freeze-v5-01/control-plan.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c4-control-freeze-v5-01/control-plan.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c4-control-freeze-v5-02/control-plan.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c4-execute-v5-01/operator-note.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c4-executor-control-freeze-v5-02/control-plan.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c4-final-report-v5-02/summary.md
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c4-fixture-setup-01/fixture-setup.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c4-module-proposal-setup-02/binding.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c4-module-proposal-setup-02/events.jsonl
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c4-module-proposal-setup-02/events/propose-7454fd19e29e4fa8a9276f96927627e3.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c4-module-proposal-setup-03/binding.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c4-module-proposal-setup-03/events.jsonl
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c4-module-proposal-setup-03/events/propose-e76d83f2f3c447618b49f3a4f2eadcaa.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c4-module-proposal-v5-01/binding.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c4-module-proposal-v5-01/events.jsonl
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c4-module-proposal-v5-01/events/apply-142eb289d6324b6290260d1f993de262.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c4-module-proposal-v5-01/events/apply-9b92853add114c9eb30e6bb3836e951b.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c4-module-proposal-v5-01/events/execute-5d77c1b913c9465689e188b69cd21191.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c4-module-proposal-v5-01/events/propose-ad7523a3ad0b4e73b6c93aa0bf1031d6.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c4-module-proposal-v5-01/execution-continuation-control.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c4-module-proposal-v5-02/binding.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c4-module-proposal-v5-02/events.jsonl
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c4-module-proposal-v5-02/events/apply-589c4326c8d14f12896abf4ad36d49e7.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c4-module-proposal-v5-02/events/execute-a32646b0a73c4695a401bffa4bbd3d05.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c4-module-proposal-v5-02/events/propose-318a433aea6547fe826cef11d7ba3378.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c4-module-proposal-v5-02/events/verify-0e5de29b297a4ec8aea3ab7e0e5a027e.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c4-source-lookup-01/lookup.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c4-verifier-control-freeze-v5-02/control-plan.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c9-checkout-defect-v5-02/binding.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c9-checkout-defect-v5-02/events.jsonl
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c9-checkout-defect-v5-02/events/propose-545c4adb3ddb4d0dab9a26751932cf84.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c9-checkout-defect-v5-02/events/verify-7ec7d0480ece411b8cae49144a11883a.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c9-checkout-defect-v5-02/events/verify-92b116286ee74b29af012227df104357.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c9-checkout-defect-v5-02/result.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c9-checkout-defect-v5/binding.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c9-checkout-defect-v5/events.jsonl
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c9-checkout-defect-v5/events/propose-9a56b764ab654a579749e5c1592a25fe.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c9-checkout-defect-v5/result.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c9-commerce-defect-v5/binding.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c9-commerce-defect-v5/events.jsonl
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c9-commerce-defect-v5/events/propose-f9403b4b03b64624872ce4e912dd3f3b.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c9-commerce-defect-v5/events/verify-6dfefacceacf4dfeafd2b533cfb95ec8.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c9-commerce-defect-v5/result.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c9-positive-01/binding.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c9-positive-01/events.jsonl
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c9-positive-01/events/propose-0f269db829d04638a11aafd2351bf926.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c9-positive-01/result.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c9-positive-02/binding.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c9-positive-02/events.jsonl
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c9-positive-02/events/apply-00d7029be3344052b876b3f2cab4a8f6.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c9-positive-02/events/execute-3f094d17150d45d8bb45a0ca63307517.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c9-positive-02/events/propose-1f587c0e6009412da46197b82fa5ab80.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c9-positive-02/events/verify-f3b9d00fa6b847a89a28326ba096a92d.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/c9-positive-02/result.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/concurrency-v5-01/binding.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/concurrency-v5-01/events.jsonl
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/concurrency-v5-01/events/propose-7914ba73e97f4d4d98cdfdbf507455f2.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/concurrency-v5-01b/binding.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/concurrency-v5-01b/events.jsonl
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/concurrency-v5-01b/events/execute-49610f91cf0c47e9af5013db4e095f61.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/concurrency-v5-01b/events/propose-7e4d5b8242fc45368582722f07118f02.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/concurrency-v5-02b/binding.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/concurrency-v5-02b/events.jsonl
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/concurrency-v5-02b/events/execute-f66727d2c3524d85b033b45ba948e444.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/concurrency-v5-02b/events/propose-f918b44054914fdfbc7c04720bfe1729.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/concurrency-v5-control/control-plan.json
+      owner: immutable-operating-model-proof-records
+    - path: experiments/operating-model-proof/runs/concurrency-v5-control/observation.json
+      owner: immutable-operating-model-proof-records
