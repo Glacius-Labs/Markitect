@@ -2,22 +2,25 @@ package host
 
 import (
 	"bytes"
-	"github.com/Glacius-Labs/Markitect/internal/core"
-	"github.com/Glacius-Labs/Markitect/internal/core/snapshot"
+	"io/fs"
+	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
+
+	"github.com/Glacius-Labs/Markitect/internal/core"
+	"github.com/Glacius-Labs/Markitect/internal/core/snapshot"
 )
 
 func TestCanonicalWorkflowProviderProjectionsShareOnlyCanonicalInputs(t *testing.T) {
-	root, err := filepath.Abs("../..")
-	if err != nil {
-		t.Fatal(err)
-	}
-	revision := scopedTestGit(t, root, "rev-parse", "HEAD")
+	root, revision := canonicalWorkflowFixtureRepository(t)
 	fixed, err := LoadSelectedCanonicalSource(root, revision, "examples/canonical-workflow/canonical.yaml", true)
-	if err != nil || len(fixed.Diagnostics) != 0 {
-		t.Fatalf("canonical workflow: %v %v", err, fixed.Diagnostics)
+	if err != nil {
+		t.Fatalf("canonical workflow: %v", err)
+	}
+	if len(fixed.Diagnostics) != 0 {
+		t.Fatalf("canonical workflow diagnostics: %v", fixed.Diagnostics)
 	}
 	observed := &snapshot.Snapshot{ID: "working", Provisional: true, Files: cloneByteMap(fixed.Snapshot.Files), Modes: fixed.Snapshot.Modes}
 	outputs := map[string][]byte{}
@@ -54,4 +57,61 @@ func TestCanonicalWorkflowProviderProjectionsShareOnlyCanonicalInputs(t *testing
 			t.Fatal("provider depended on sibling target bytes")
 		}
 	}
+}
+
+// canonicalWorkflowFixtureRepository creates the public example in an isolated
+// repository so provider tests never read the checkout's outer .git state.
+func canonicalWorkflowFixtureRepository(t *testing.T) (string, string) {
+	t.Helper()
+	_, testFile, _, ok := runtime.Caller(0)
+	if !ok {
+		t.Fatal("cannot locate provider projection test source")
+	}
+	checkout := filepath.Clean(filepath.Join(filepath.Dir(testFile), "..", ".."))
+	root := t.TempDir()
+	for _, fixture := range []string{
+		"examples/canonical-workflow",
+		"examples/canonical-projection/modules/markdown",
+	} {
+		if err := copyCanonicalFixtureTree(filepath.Join(checkout, filepath.FromSlash(fixture)), filepath.Join(root, filepath.FromSlash(fixture))); err != nil {
+			t.Fatalf("copy canonical workflow fixture %s: %v", fixture, err)
+		}
+	}
+	if err := os.WriteFile(filepath.Join(root, ".gitattributes"), []byte("* -text\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, "go.mod"), []byte("module example.invalid/canonical-workflow-fixture\n\ngo 1.22\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	scopedTestGit(t, root, "init", "--template=", "--object-format=sha1", "-b", "codex/canonical-workflow-test")
+	scopedTestGit(t, root, "config", "user.name", "Canonical workflow test")
+	scopedTestGit(t, root, "config", "user.email", "canonical-workflow@example.invalid")
+	scopedTestGit(t, root, "config", "core.autocrlf", "false")
+	scopedTestGit(t, root, "add", ".")
+	scopedTestGit(t, root, "commit", "-m", "fixed canonical workflow fixture")
+	return root, scopedTestGit(t, root, "rev-parse", "HEAD")
+}
+
+func copyCanonicalFixtureTree(source, destination string) error {
+	return filepath.WalkDir(source, func(path string, entry fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		relative, err := filepath.Rel(source, path)
+		if err != nil {
+			return err
+		}
+		target := filepath.Join(destination, relative)
+		if entry.IsDir() {
+			return os.MkdirAll(target, 0755)
+		}
+		if !entry.Type().IsRegular() {
+			return nil
+		}
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		return os.WriteFile(target, data, 0644)
+	})
 }

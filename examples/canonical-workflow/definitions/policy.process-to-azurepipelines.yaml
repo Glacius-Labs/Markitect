@@ -1,0 +1,13 @@
+apiVersion: markitect.foundation/v1
+kind: ProjectionPolicy
+metadata:
+  namespace: example
+  name: policy.process-to-azurepipelines
+purpose: Expresses the Process in the azurepipelines target.
+spec:
+  sourceKind:
+    apiVersion: workflow.example.org/v1
+    kind: Process
+  targetTechnology: azurepipelines
+  guidance: >
+    Preserve the project-defined workflow step order and render only the explicitly selected source.

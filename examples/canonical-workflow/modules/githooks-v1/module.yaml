@@ -1,0 +1,21 @@
+apiVersion: markitect.example.org/module/v1alpha1
+name: markitect-git-hooks
+version: 1.0.0
+type: projection
+purpose: Provides a target-specific Git hooks projection capability for selected workflow intent.
+requires:
+  core: "1"
+  modules: []
+provides:
+  schemas: []
+  projectors:
+    - id: git-hooks
+      version: 1.0.0
+      target: githooks
+      allKinds: true
+      allowedRoots:
+        - .githooks/
+      requiredChecks:
+        - canonical-workflow-check
+      guidance: >
+        Render selected workflow intent as a repository-owned pre-commit hook. Consume only supplied named checks and canonical inputs.
