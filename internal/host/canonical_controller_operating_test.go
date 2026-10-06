@@ -5,12 +5,15 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"reflect"
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/internal/host/agentexec"
+	"github.com/Glacius-Labs/Markitect/internal/modules/dotnet"
 )
 
 const canonicalOperatingRepairActorEnv = "MARKITECT_CANONICAL_OPERATING_REPAIR_ACTOR"
+const canonicalOperatingRepairInvocationEnv = "MARKITECT_CANONICAL_OPERATING_REPAIR_INVOCATION"
 
 // Test helper process: the output is deterministic protocol input, not semantic evidence.
 func TestCanonicalControllerOperatingRepairActor(t *testing.T) {
@@ -24,6 +27,15 @@ func TestCanonicalControllerOperatingRepairActor(t *testing.T) {
 	if marker := os.Getenv(canonicalControllerMarkerEnv); marker != "" {
 		if err := os.WriteFile(marker, []byte("invoked\n"), 0600); err != nil {
 			os.Exit(63)
+		}
+	}
+	if invocationPath := os.Getenv(canonicalOperatingRepairInvocationEnv); invocationPath != "" {
+		data, err := json.Marshal(invocation)
+		if err != nil {
+			os.Exit(64)
+		}
+		if err := os.WriteFile(invocationPath, data, 0600); err != nil {
+			os.Exit(65)
 		}
 	}
 	response := agentexec.Response{
@@ -129,9 +141,37 @@ func TestCanonicalControllerOperatingFailureRepairClosure(t *testing.T) {
 			}
 		}
 	}
+	invocationPath := filepath.Join(filepath.Dir(cfg.RecordStore), "repair-executor-invocation.json")
+	t.Setenv(canonicalOperatingRepairInvocationEnv, invocationPath)
 	repairRun := canonicalControllerExecute(t, root, sourceRevision, cfg)
 	if len(repairRun.Work) != 1 {
 		t.Fatalf("repair execution work items=%d, want the single failed leaf: %+v", len(repairRun.Work), repairRun.Work)
+	}
+	invocationBytes, err := os.ReadFile(invocationPath)
+	if err != nil {
+		t.Fatalf("read actual repair Executor invocation: %v", err)
+	}
+	var invocation agentexec.Invocation
+	if err := json.Unmarshal(invocationBytes, &invocation); err != nil {
+		t.Fatalf("decode actual repair Executor invocation: %v", err)
+	}
+	if invocation.Request.ProjectionID != leaf.ProjectionID {
+		t.Fatalf("captured repair invocation Projection=%s, want %s", invocation.Request.ProjectionID, leaf.ProjectionID)
+	}
+	var executorContext map[string]json.RawMessage
+	if err := json.Unmarshal(invocation.Request.Context, &executorContext); err != nil {
+		t.Fatalf("decode actual repair Executor context: %v", err)
+	}
+	repairJSON, ok := executorContext["repair"]
+	if !ok {
+		t.Fatalf("actual repair Executor context omitted repair evidence: %s", invocation.Request.Context)
+	}
+	var capturedRepair dotnet.RepairEvidence
+	if err := json.Unmarshal(repairJSON, &capturedRepair); err != nil {
+		t.Fatalf("decode typed repair evidence from Executor context: %v", err)
+	}
+	if capturedRepair.RecordID != leaf.Task.Repair.RecordID || capturedRepair.ResultID != leaf.Task.Repair.ResultID || !reflect.DeepEqual(capturedRepair.Findings, leaf.Task.Repair.Findings) {
+		t.Fatalf("Executor repair evidence differs from the exact current failure: got=%+v want=%+v", capturedRepair, leaf.Task.Repair)
 	}
 	applied, err := canonicalControllerApply(t, root, cfg, repairRun)
 	if err != nil || applied.EvidenceRevision == "" {
@@ -178,5 +218,19 @@ func TestCanonicalControllerOperatingFailureRepairClosure(t *testing.T) {
 	}
 	if !retainedFailure {
 		t.Fatal("repair discarded the historical failed verification result")
+	}
+}
+
+func TestCanonicalControllerExecutorContextOmitsAbsentRepair(t *testing.T) {
+	data, err := json.Marshal(canonicalControllerExecutorContext{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var contextEnvelope map[string]json.RawMessage
+	if err := json.Unmarshal(data, &contextEnvelope); err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := contextEnvelope["repair"]; ok {
+		t.Fatalf("ordinary Executor context serialized absent repair evidence: %s", data)
 	}
 }

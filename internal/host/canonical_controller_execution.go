@@ -17,7 +17,19 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/host/records"
 	"github.com/Glacius-Labs/Markitect/internal/host/recordstore"
 	"github.com/Glacius-Labs/Markitect/internal/infrastructure/source"
+	"github.com/Glacius-Labs/Markitect/internal/modules/dotnet"
 )
+
+type canonicalControllerExecutorContext struct {
+	Model              CanonicalAgentContext  `json:"model"`
+	Objective          string                 `json:"objective"`
+	AllowedRoots       []string               `json:"allowedRoots"`
+	AllowedExtensions  []string               `json:"allowedExtensions"`
+	Constraints        []string               `json:"constraints"`
+	DependencyEvidence []string               `json:"readOnlyDependencyEvidence"`
+	DependencyState    string                 `json:"dependencyState"`
+	Repair             *dotnet.RepairEvidence `json:"repair,omitempty"`
+}
 
 // ExecuteCanonicalController makes no Host adopter-artifact or ledger writes.
 // Configured runners execute with caller authority; this is not an OS sandbox
@@ -75,15 +87,13 @@ func ExecuteCanonicalController(ctx context.Context, root, base, revision, confi
 				run.Status = "escalated"
 				continue
 			}
-			contextBytes, err := json.Marshal(struct {
-				Model              CanonicalAgentContext `json:"model"`
-				Objective          string                `json:"objective"`
-				AllowedRoots       []string              `json:"allowedRoots"`
-				AllowedExtensions  []string              `json:"allowedExtensions"`
-				Constraints        []string              `json:"constraints"`
-				DependencyEvidence []string              `json:"readOnlyDependencyEvidence"`
-				DependencyState    string                `json:"dependencyState"`
-			}{contextModel, p.Task.Objective, p.Task.AllowedRoots, p.Task.AllowedExtensions, p.Task.Constraints, dependencyPaths, "Child candidates are unapplied and unverified. Retained child bytes are observed evidence, not new semantic acceptance. Do not edit dependency artifacts outside your own allowed roots."})
+			contextBytes, err := json.Marshal(canonicalControllerExecutorContext{
+				Model: contextModel, Objective: p.Task.Objective, AllowedRoots: p.Task.AllowedRoots,
+				AllowedExtensions: p.Task.AllowedExtensions, Constraints: p.Task.Constraints,
+				DependencyEvidence: dependencyPaths,
+				DependencyState:    "Child candidates are unapplied and unverified. Retained child bytes are observed evidence, not new semantic acceptance. Do not edit dependency artifacts outside your own allowed roots.",
+				Repair:             p.Task.Repair,
+			})
 			if err != nil {
 				return run, err
 			}
