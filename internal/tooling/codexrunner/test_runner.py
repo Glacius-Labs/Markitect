@@ -80,7 +80,7 @@ class CodexRunnerTests(unittest.TestCase):
     def test_prompt_states_closed_wire_response_contract(self) -> None:
         prompt = runner.make_prompt(invocation("verifier"))
         for instruction in (
-            "Copy apiVersion, runId, nonce, role, and inputDigest exactly",
+            "Copy apiVersion, runId, nonce, and inputDigest exactly from the invocation envelope into the response; copy role exactly from invocation.request.role",
             "Always include candidateFiles, evidenceRefs, verifierObservations, and uncertainty as arrays",
             "exact strings supplied in request.scopeIds, request.policyIds, or request.artifacts[].path",
             "Do not use digests, hashes, labels, paraphrases, or derived values as evidence references",
