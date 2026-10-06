@@ -1566,3 +1566,12 @@ spec:
       owner: controller-lease-identity
     - path: internal/host/canonical_controller_lease_windows_test.go
       owner: controller-lease-identity
+
+    - path: experiments/operating-model-proof/runs/gates-e788fc0/README.md
+      owner: immutable-operating-model-proof-records
+
+    - path: experiments/operating-model-proof/runs/gates-e788fc0/sanitized-gates.json
+      owner: immutable-operating-model-proof-records
+
+    - path: experiments/operating-model-proof/runs/gates-e788fc0/diagnostic-assessment.json
+      owner: immutable-operating-model-proof-records
