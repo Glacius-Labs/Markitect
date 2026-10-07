@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-07T22:17:31Z",
+  "updatedUtc": "2026-10-07T22:28:52Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -261,13 +261,13 @@
       "name": "Scientist",
       "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
       "hostId": "local",
-      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:68",
+      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:70",
       "lastObservedStatus": "active",
-      "activeTurn": "01a11862-d13c-7590-afe7-aa4045ff7dfd",
+      "activeTurn": "01a1187b-d972-7902-8be1-36f7b99d4862",
       "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac6c38fc55c8191b5a3cce9a02c4ab8",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "Actual pinned Classic/Government native integration with bounded deterministic fixtures and one final disabled-status metadata read; no real Actor or study.",
-      "latestProgress": "Der Metadatenlauf hat beide Leseantworten erhalten. Die neue Notification meldete disabled; es gab keine Warnungen, Wiederholung oder zusätzlichen RPCs. Sichtbar sind unter anderem die Inline-Featureflags und ein geerbtes Windows-Sandboxsetting. Das erklärt die früheren Prozessablehnungen noch nicht. Die native Arbeit läuft getrennt weiter.",
+      "latestProgress": "Existing incomplete22:01:32 native integration assignment resumed after compaction; active status confirmed. Metadata handoff and native preflight/budget WIP read by Overseer, no clean completion accepted.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-scientist/Markitect",
       "transferredDesignCommit": "b9e17c9896f14b4b1268e4bcb005395f5d324384",
       "candidateSha": "0e62d5f1469d772804d35f2832efe0fa5679389d",
@@ -845,18 +845,32 @@
           "metadataAppServerTreesConsumedCumulativeReported": 3,
           "realActorStartsCumulative": 5,
           "liveStudyCells": 0
+        },
+        "nativeIntegrationProgress": {
+          "observedUtc": "2026-10-07T22:28:52Z",
+          "evidenceLevel": "Root read unfinished handoff, point-in-time independent preflight and native-budget-snapshot; no final-source/hash acceptance or tests rerun.",
+          "sourceHead": "0e62d5f1469d772804d35f2832efe0fa5679389d",
+          "worktreeClean": false,
+          "governmentNativeStartsRecorded": 1,
+          "governmentInspectExit": 0,
+          "governmentInspectWallSecondsRecorded": 0.4530548000475392,
+          "realActorStartsInFixtureRecorded": 0,
+          "providerCallsRecorded": 0,
+          "liveStudyCells": 0,
+          "openFinding": "WIP preflight requires mandatory AcceptanceDecision and positive final Ressort votes before successful translation; reviewed source still changing, final preflight pending.",
+          "parserIssue": "Existing successful inspect stdout is YAML; downstream JSON parser error does not justify repeating native inspect.",
+          "classic": "Preparation-only in inspected document; native execute/apply/verify/audit/replay evidence still outstanding."
         }
       },
       "classicHandoffReceived": true,
       "lastContinuation": {
-        "sentUtc": "2026-10-07T21:08:16Z",
-        "key": "resume-existing-classified-metadata-and-s1-wip",
-        "reason": "Generic waiting answer after context compaction, no completed package; latest read contained no new human stop.",
-        "preservedBaseSha": "3be653384e1b83d8cbdab79a87f487a3ffdde050",
-        "preservedWork": "adapter.py,dispatch.py,test_dispatch.py,test_runtime.py plus government.py, s1-adapter-mechanics.md and classified-client staged request/enums/client",
-        "scope": "Complete existing20:54:59 assignment; recover own subagent results/WIP, inspect reservation before any single allowed session, independent review and focused tests, exact clean separate evidence handoff.",
+        "sentUtc": "2026-10-07T22:28:52Z",
+        "key": "resume-native-integration-after-compaction",
+        "reason": "Generic waiting final immediately after contextCompaction; root verified unchanged HEAD0e62d5f plus substantial unfinished adapter/fixture/evidence WIP. No newer direct user stop in recent turns.",
+        "preservedBaseSha": "0e62d5f1469d772804d35f2832efe0fa5679389d",
+        "scope": "Recover existing subagents and WIP; close documented Government decision/assent translation preflight finding, complete originally bounded native product integration and separate metadata handoff, record short resume anchor. Preserve consumed inspect and metadata allocation; do not rerun inspect after YAML parser mismatch.",
         "newGrant": false,
-        "newActorCallsAuthorized": 0,
+        "newRealActorCallsAuthorized": 0,
         "activeResumptionConfirmed": true
       },
       "publicGovernmentHandoff": {
@@ -867,7 +881,20 @@
         "binary": "C:/Users/Consiliari/.codex/worktrees/government-worker/Markitect/.artifacts/government-g5/markitect-04e225d.exe",
         "binarySha256": "12241f325e4af59451e4021b31d9e6f5b829b5de06c94d35eaabfb9d663aa51f",
         "scope": "Accepted local technical candidate for already assigned S1 adapters; no extra process, Actor or study grant; Classic c913/v0.14.1 unchanged."
-      }
+      },
+      "continuationHistory": [
+        {
+          "sentUtc": "2026-10-07T21:08:16Z",
+          "key": "resume-existing-classified-metadata-and-s1-wip",
+          "reason": "Generic waiting answer after context compaction, no completed package; latest read contained no new human stop.",
+          "preservedBaseSha": "3be653384e1b83d8cbdab79a87f487a3ffdde050",
+          "preservedWork": "adapter.py,dispatch.py,test_dispatch.py,test_runtime.py plus government.py, s1-adapter-mechanics.md and classified-client staged request/enums/client",
+          "scope": "Complete existing20:54:59 assignment; recover own subagent results/WIP, inspect reservation before any single allowed session, independent review and focused tests, exact clean separate evidence handoff.",
+          "newGrant": false,
+          "newActorCallsAuthorized": 0,
+          "activeResumptionConfirmed": true
+        }
+      ]
     },
     {
       "name": "Architect",
@@ -949,11 +976,11 @@
     "satPrinciples": "Deferred by direct user request on 2026-10-07; conceptual constraint/consistency/conflict-explanation principles first, no solver integration or current assignment change. See docs/design/government/deferred-research.md."
   },
   "lastReview": {
-    "reviewedUtc": "2026-10-07T22:17:31Z",
-    "evidenceLevel": "Three compact snapshots. Scientist reports completion of the one-time metadata read, but native integration remains active. No new clean handoff accepted; actual effective exec rights and rejection cause remain unresolved. Worker/Architect unchanged held.",
+    "reviewedUtc": "2026-10-07T22:28:52Z",
+    "evidenceLevel": "Three chats checked. Scientist generic final after explicit contextCompaction was not a milestone; root inspected recent turns, actual unchanged HEAD and uncommitted native/metadata work, existing preflight and recorded inspect usage. Metadata remains unaccepted until final source-bound handoff. Worker/Architect unchanged held.",
     "coordinationActions": [
-      "Recorded reported metadata consumption; remaining allocation zero to prevent reuse, independent acceptance pending.",
-      "Recorded progress/cursors only; no repeat assignment, additional grant or test run."
+      "Resumed existing Scientist assignment once at22:28:52Z with exact recovery context and unchanged consumed grants.",
+      "Confirmed Scientist active; saved new cursor. No new resources, real Actor, study, tests or product changes."
     ],
     "userDecisionRequired": false
   },
