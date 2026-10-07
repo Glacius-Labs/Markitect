@@ -110,6 +110,40 @@ func TestValidateRuntimeRequiresCompleteDistinctBoundedSlots(t *testing.T) {
 	}
 }
 
+func TestValidateRuntimeBoundsAmendmentRepairRounds(t *testing.T) {
+	runtime := testRuntime(t)
+	for _, repairs := range []int{0, 1, 2} {
+		runtime.Amendment = &AmendmentRuntime{MaxRepairs: repairs}
+		if err := ValidateRuntime(runtime); err != nil {
+			t.Fatalf("amendment repair bound %d should validate: %v", repairs, err)
+		}
+	}
+	runtime.Amendment = &AmendmentRuntime{MaxRepairs: 3}
+	if err := ValidateRuntime(runtime); err == nil || !strings.Contains(err.Error(), "amendment.maxRepairs") {
+		t.Fatalf("more than two amendment repairs should fail, got %v", err)
+	}
+	runtime.Amendment = &AmendmentRuntime{MaxRepairs: -1}
+	if err := ValidateRuntime(runtime); err == nil || !strings.Contains(err.Error(), "amendment.maxRepairs") {
+		t.Fatalf("negative amendment repairs should fail, got %v", err)
+	}
+}
+
+func TestFingerprintRuntimeBindsAmendmentRepairLimit(t *testing.T) {
+	runtime := testRuntime(t)
+	base, err := FingerprintRuntime(runtime)
+	if err != nil {
+		t.Fatal(err)
+	}
+	runtime.Amendment = &AmendmentRuntime{MaxRepairs: 1}
+	amended, err := FingerprintRuntime(runtime)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if amended == base {
+		t.Fatal("runtime fingerprint did not bind amendment repair configuration")
+	}
+}
+
 func TestDecodeRuntimeIsClosedAndRejectsDuplicateOrUnknownKeys(t *testing.T) {
 	runtime := testRuntime(t)
 	encoded, err := json.Marshal(runtime)

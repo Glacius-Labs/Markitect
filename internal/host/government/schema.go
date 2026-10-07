@@ -29,9 +29,10 @@ func Schema() core.Schema {
 	}
 	return core.Schema{APIVersion: APIVersion, Purpose: "Versioned responsibilities, prior authority and intended repository realization", Kinds: map[string]core.Kind{
 		"Constitution": {Purpose: "Joint domain and organization authority explicitly selected by the trusted caller", Properties: map[string]core.Property{
-			"root":     ref("Area", "Root integration responsibility", 1, 1),
-			"cabinet":  ref("Ressort", "Frozen unanimous review electorate", 1, core.Unbounded),
-			"approval": enum("All selected Ressorts explicitly assent to the final material and evidence", "unanimous-explicit-assent"),
+			"root":              ref("Area", "Root integration responsibility", 1, 1),
+			"cabinet":           ref("Ressort", "Frozen unanimous review electorate", 1, core.Unbounded),
+			"approval":          enum("All selected Ressorts explicitly assent to the final material and evidence", "unanimous-explicit-assent"),
+			"protectedSubjects": id("Exact domain identities that are root goals protected from delegated amendment", 0, core.Unbounded),
 		}},
 		"Area": {Purpose: "Recursive durable responsibility independent of technology", Properties: map[string]core.Property{
 			"parent":       ref("Area", "Parent retains integration responsibility", 0, 1),

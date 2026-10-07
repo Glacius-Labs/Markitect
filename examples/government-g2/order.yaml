@@ -1,7 +1,7 @@
 apiVersion: markitect.government-order/v1alpha1
 kind: Order
 purpose: Prevent reservation release from overflowing available inventory.
-activeConstitution: sha256:f2bea511721869bbe90761ee5a76520a1c4e837b207888ba700461f2ecdd993a
+activeConstitution: sha256:057f275af8537c73e2cc0a6479be0a4a3175315269c17a9e8c2e550e91db57e1
 action: implement
 subjects:
   - apiVersion: markitect.government-example/v1alpha1

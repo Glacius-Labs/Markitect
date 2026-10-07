@@ -74,6 +74,13 @@ type Runtime struct {
 	Ressorts           []RessortRunner   `json:"ressorts"`
 	Checks             []authoring.Check `json:"checks"`
 	Recursion          *RecursiveRuntime `json:"recursion,omitempty"`
+	Amendment          *AmendmentRuntime `json:"amendment,omitempty"`
+}
+
+// AmendmentRuntime opts an explicitly issued amend-model order into bounded
+// candidate repair. It does not grant authority; the active prior model does.
+type AmendmentRuntime struct {
+	MaxRepairs int `json:"maxRepairs"`
 }
 
 // DecodeRuntime decodes the closed JSON runtime contract. Exact and
@@ -315,6 +322,9 @@ func ValidateRuntime(runtime Runtime) error {
 		if err := validateRecursiveRuntime(*runtime.Recursion, slots); err != nil {
 			return fmt.Errorf("recursion: %w", err)
 		}
+	}
+	if runtime.Amendment != nil && (runtime.Amendment.MaxRepairs < 0 || runtime.Amendment.MaxRepairs > 2) {
+		return errors.New("amendment.maxRepairs must be between 0 and 2")
 	}
 	return nil
 }
@@ -614,6 +624,7 @@ type runtimeFingerprint struct {
 	} `json:"ressorts"`
 	Checks    []checkFingerprint           `json:"checks"`
 	Recursion *recursiveRuntimeFingerprint `json:"recursion,omitempty"`
+	Amendment *AmendmentRuntime            `json:"amendment,omitempty"`
 }
 
 // FingerprintRuntime returns a deterministic identity for the full runtime,
@@ -666,6 +677,10 @@ func FingerprintRuntime(runtime Runtime) (string, error) {
 			return "", err
 		}
 		value.Recursion = &fingerprint
+	}
+	if runtime.Amendment != nil {
+		amendment := *runtime.Amendment
+		value.Amendment = &amendment
 	}
 	encoded, err := json.Marshal(value)
 	if err != nil {

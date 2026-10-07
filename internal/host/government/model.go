@@ -136,6 +136,12 @@ func Compile(s Source) Model {
 			if key != s.Constitution.Key() {
 				add("constitution.multiple", key, "one active Constitution per source")
 			}
+			for _, protected := range identities(d.Spec["protectedSubjects"]) {
+				m.checkSubject(protected, key, add)
+				if protected.APIVersion == APIVersion {
+					add("constitution.protected-subject", key, "protected root goals must identify domain Definitions")
+				}
+			}
 		case "Area":
 			parent := optionalIdentity(d.Spec["parent"])
 			parents[key] = parent

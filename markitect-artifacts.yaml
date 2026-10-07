@@ -7,6 +7,7 @@ spec:
     - examples/government
     - examples/government-g2
     - examples/government-g3
+    - examples/government-g4
     - internal/host/cli/government.go
     - internal/host/cli/government_test.go
     - internal/host/cli/main.go
@@ -152,6 +153,42 @@ spec:
     - experiments/live-operating-pilot
     - experiments/two-area-operating-pilot
   tooling:
+    - path: internal/host/government/amendment.go
+      owner: government-experiment
+    - path: internal/host/government/amendment_test.go
+      owner: government-experiment
+    - path: internal/host/government/execution/amendment.go
+      owner: government-experiment
+    - path: internal/host/government/execution/amendment_authority.go
+      owner: government-experiment
+    - path: internal/host/government/execution/amendment_records.go
+      owner: government-experiment
+    - path: internal/host/government/execution/amendment_records_test.go
+      owner: government-experiment
+    - path: internal/host/government/execution/amendment_order_input_test.go
+      owner: government-experiment
+    - path: internal/host/government/execution/amendment_process_test.go
+      owner: government-experiment
+    - path: examples/government-g4/README.md
+      owner: government-experiment
+    - path: examples/government-g4/go.mod
+      owner: government-experiment
+    - path: examples/government-g4/government.yaml
+      owner: government-experiment
+    - path: examples/government-g4/delivery/rate.txt
+      owner: government-experiment
+    - path: examples/government-g4/independent/receipt.txt
+      owner: government-experiment
+    - path: examples/government-g4/invoice/invoice.go
+      owner: government-experiment
+    - path: examples/government-g4/invoice/invoice_test.go
+      owner: government-experiment
+    - path: examples/government-g4/invoice/protected-goal.txt
+      owner: government-experiment
+    - path: examples/government-g4/runner/main.go
+      owner: government-experiment
+    - path: examples/government-g4/trial.ps1
+      owner: government-experiment
     - path: examples/government-g3/README.md
       owner: government-experiment
     - path: examples/government-g3/go.mod

@@ -244,10 +244,15 @@ func BuildDelegationPlan(m Model, p Plan, limits DelegationLimits) DelegationPla
 		// Actions describe this frozen task, not every power retained in the
 		// underlying prior Mandate. The mandate identity remains available for
 		// authority context, while structural integration nodes receive no write
-		// action and a G3 executor receives only implement.
-		if len(node.Work.Paths) > 0 {
-			node.Actions = []string{"implement"}
+		// action. Only the exact caller-selected model path uses amend-model;
+		// every other selected path still requires implement.
+		for _, path := range node.Work.Paths {
+			action := delegationPathAction(p, path)
+			if !contains(node.Actions, action) {
+				node.Actions = append(node.Actions, action)
+			}
 		}
+		sort.Strings(node.Actions)
 		sortIDs(node.Work.Subjects)
 		sortIDs(node.Work.Mandates)
 		sort.Strings(node.Work.Paths)
@@ -259,9 +264,15 @@ func BuildDelegationPlan(m Model, p Plan, limits DelegationLimits) DelegationPla
 		if len(node.Work.Paths) == 0 && len(node.Work.Subjects) == 0 {
 			continue
 		}
-		for _, subject := range node.Work.Subjects {
-			if !localMandateAllows(mandatesByArea[node.Area.Key()], node.Work.Mandates, subject, "implement") {
-				add("delegation.authority", subject.Key(), "local implementation lacks an explicit prior implement Mandate")
+		if len(node.Work.Paths) == 0 {
+			action := p.Action
+			if action == "" {
+				action = "implement"
+			}
+			for _, subject := range node.Work.Subjects {
+				if !localMandateAllows(mandatesByArea[node.Area.Key()], node.Work.Mandates, subject, action) {
+					add("delegation.authority", subject.Key(), "accountable Area lacks an explicit prior "+action+" Mandate")
+				}
 			}
 		}
 		for _, path := range node.Work.Paths {
@@ -271,6 +282,10 @@ func BuildDelegationPlan(m Model, p Plan, limits DelegationLimits) DelegationPla
 				continue
 			}
 			for _, subject := range modeledSubjects {
+				action := delegationPathAction(p, path)
+				if !localMandateAllows(mandatesByArea[node.Area.Key()], node.Work.Mandates, subject, action) {
+					add("delegation.authority", subject.Key(), "local writer lacks an explicit prior "+action+" Mandate for "+path)
+				}
 				if !containsIdentity(node.Work.Subjects, subject) {
 					add("delegation.scope.missing", path, "local work omits modeled subject "+subject.Key())
 				}
@@ -369,9 +384,21 @@ func BuildDelegationPlan(m Model, p Plan, limits DelegationLimits) DelegationPla
 			if !subsetIDs(child.Subjects, parent.Subjects) {
 				add("delegation.scope.expansion", child.Area.Key(), "child task scope exceeds parent aggregate task scope")
 			}
-			if len(child.Subjects) > 0 && !mandateChainCovers(m, parent.Area, child.Subjects, "implement") {
-				add("delegation.authority.expansion", child.Area.Key(), "parent has no explicit prior Mandate covering the child implementation scope")
+			var checkScope func(DelegationNode)
+			checkScope = func(descendant DelegationNode) {
+				for _, path := range descendant.Work.Paths {
+					for _, subject := range artifactSubjects[strings.ToLower(path)] {
+						action := delegationPathAction(p, path)
+						if !mandateChainCovers(m, parent.Area, []core.DefinitionIdentity{subject}, action) {
+							add("delegation.authority.expansion", child.Area.Key(), "parent has no explicit prior "+action+" Mandate covering "+subject.Key())
+						}
+					}
+				}
+				for _, nested := range descendant.Children {
+					checkScope(nested)
+				}
 			}
+			checkScope(child)
 			validateEdges(child)
 		}
 	}
@@ -380,6 +407,13 @@ func BuildDelegationPlan(m Model, p Plan, limits DelegationLimits) DelegationPla
 		dp.Status = "blocked"
 	}
 	return finishDelegationPlan(dp)
+}
+
+func delegationPathAction(p Plan, path string) string {
+	if p.Action == "amend-model" && p.ModelPath != "" && path == p.ModelPath {
+		return "amend-model"
+	}
+	return "implement"
 }
 
 func cloneWork(w Work) Work {

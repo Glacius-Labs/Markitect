@@ -148,7 +148,7 @@ func runGovernment(args []string, out, errout io.Writer) int {
 	if err := government.Decode(orderBytes, &order); err != nil {
 		return fail(fmt.Errorf("Government order: %w", err))
 	}
-	p := government.BuildPlan(m, order, observation)
+	p := government.BuildPlan(m, order, observation, *config)
 	if code := emit(p); code != 0 {
 		return code
 	}

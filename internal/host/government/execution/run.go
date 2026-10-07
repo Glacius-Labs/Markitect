@@ -37,34 +37,39 @@ type ActorRecord struct {
 	Error      string              `json:"error,omitempty"`
 }
 type Report struct {
-	Delegation        *government.DelegationPlan     `json:"delegation,omitempty"`
-	RootArea          *AreaReport                    `json:"rootArea,omitempty"`
-	APIVersion        string                         `json:"apiVersion"`
-	RunID             string                         `json:"runId"`
-	Status            string                         `json:"status"`
-	Stage             string                         `json:"stage"`
-	Error             string                         `json:"error,omitempty"`
-	ReportPath        string                         `json:"reportPath,omitempty"`
-	ActiveRef         string                         `json:"activeRef"`
-	BaseRevision      string                         `json:"baseRevision"`
-	PriorConstitution string                         `json:"priorConstitution"`
-	RuntimePin        string                         `json:"runtimePin"`
-	ToolPins          string                         `json:"toolPins"`
-	TimeoutSeconds    int                            `json:"timeoutSeconds"`
-	Workspace         string                         `json:"workspace,omitempty"`
-	Plan              government.Plan                `json:"plan"`
-	Cabinet           []government.CabinetMember     `json:"cabinet"`
-	ChangedPaths      []string                       `json:"changedPaths"`
-	CandidateCommit   string                         `json:"candidateCommit,omitempty"`
-	CandidateTree     string                         `json:"candidateTree,omitempty"`
-	Candidate         *government.MaterialCandidate  `json:"candidate,omitempty"`
-	Checks            []host.GateResult              `json:"checks"`
-	Actors            []ActorRecord                  `json:"actors"`
-	Evidence          *government.Evidence           `json:"evidence,omitempty"`
-	Votes             []government.RessortVote       `json:"votes"`
-	Decision          *government.AcceptanceDecision `json:"decision,omitempty"`
-	Promotion         *government.PromotionResult    `json:"promotion,omitempty"`
-	Limits            []string                       `json:"limits"`
+	Delegation          *government.DelegationPlan      `json:"delegation,omitempty"`
+	RootArea            *AreaReport                     `json:"rootArea,omitempty"`
+	APIVersion          string                          `json:"apiVersion"`
+	RunID               string                          `json:"runId"`
+	Status              string                          `json:"status"`
+	Stage               string                          `json:"stage"`
+	Error               string                          `json:"error,omitempty"`
+	ReportPath          string                          `json:"reportPath,omitempty"`
+	ActiveRef           string                          `json:"activeRef"`
+	BaseRevision        string                          `json:"baseRevision"`
+	PriorConstitution   string                          `json:"priorConstitution"`
+	RuntimePin          string                          `json:"runtimePin"`
+	ToolPins            string                          `json:"toolPins"`
+	TimeoutSeconds      int                             `json:"timeoutSeconds"`
+	Workspace           string                          `json:"workspace,omitempty"`
+	Plan                government.Plan                 `json:"plan"`
+	Cabinet             []government.CabinetMember      `json:"cabinet"`
+	ChangedPaths        []string                        `json:"changedPaths"`
+	CandidateCommit     string                          `json:"candidateCommit,omitempty"`
+	CandidateTree       string                          `json:"candidateTree,omitempty"`
+	Candidate           *government.MaterialCandidate   `json:"candidate,omitempty"`
+	Checks              []host.GateResult               `json:"checks"`
+	Actors              []ActorRecord                   `json:"actors"`
+	Evidence            *government.Evidence            `json:"evidence,omitempty"`
+	Votes               []government.RessortVote        `json:"votes"`
+	Decision            *government.AcceptanceDecision  `json:"decision,omitempty"`
+	Promotion           *government.PromotionResult     `json:"promotion,omitempty"`
+	PriorModelDigest    string                          `json:"priorModelDigest,omitempty"`
+	ProposedModelDigest string                          `json:"proposedModelDigest,omitempty"`
+	AmendmentAssessment *government.AmendmentAssessment `json:"amendmentAssessment,omitempty"`
+	AmendmentRounds     []AmendmentRound                `json:"amendmentRounds,omitempty"`
+	Escalations         []EscalationRecord              `json:"escalations,omitempty"`
+	Limits              []string                        `json:"limits"`
 }
 
 // Run creates one isolated material candidate, runs actual configured processes,
@@ -74,7 +79,7 @@ func Run(ctx context.Context, opts Options) (report Report, runErr error) {
 	rt := opts.Runtime
 	report = Report{APIVersion: RuntimeVersion, Status: "incomplete", Stage: "prepare", ActiveRef: rt.ActiveRef, BaseRevision: rt.ExpectedBase, Limits: []string{
 		"Cooperative processes share caller OS rights; separated processes and input audits are not an OS sandbox or proof of institutional independence.",
-		"Recursive execution is opt-in and bounded; amendment activation, queue and complete recovery remain unavailable.",
+		"Recursive execution and model amendment are opt-in and bounded; persistent queue and complete recovery remain unavailable.",
 		"PromotionIntent and Git CAS are separate durable effects. No automatic rollback or atomic ledger/Git transaction is claimed.",
 		"Accepted-scoped records configured process and check outcomes; it does not establish semantic sufficiency or human acceptance.",
 		"Area review is read-only evidence assigned by the frozen plan, never a Ressort vote or acceptance/change/promotion authority; no per-Area review mandate is inferred from implement.",
@@ -172,6 +177,7 @@ func Run(ctx context.Context, opts Options) (report Report, runErr error) {
 	}
 	model := government.Compile(src)
 	report.PriorConstitution = model.Digest
+	report.PriorModelDigest = model.Digest
 	if len(model.Findings) > 0 {
 		return report, errors.New("active Government model is invalid")
 	}
@@ -179,8 +185,11 @@ func Run(ctx context.Context, opts Options) (report Report, runErr error) {
 	if err := government.Decode(base.Files[opts.OrderPath], &order); err != nil {
 		return report, err
 	}
-	if order.Action != "implement" {
-		return report, errors.New("execution only implements under unchanged prior authority; amendments require G4")
+	if order.Action != "implement" && order.Action != "amend-model" {
+		return report, errors.New("execution supports only implement or amend-model orders")
+	}
+	if order.Action == "amend-model" && rt.Amendment == nil {
+		return report, errors.New("amend-model order requires explicit bounded amendment runtime configuration")
 	}
 	workspace, err := os.MkdirTemp(temp, "government-candidate-")
 	if err != nil {
@@ -197,10 +206,18 @@ func Run(ctx context.Context, opts Options) (report Report, runErr error) {
 	if err != nil {
 		return report, err
 	}
-	report.Plan = government.BuildPlan(model, order, observation)
+	if order.Action == "amend-model" {
+		report.Plan = government.BuildPlan(model, order, observation, opts.ConfigPath)
+	} else {
+		report.Plan = government.BuildPlan(model, order, observation)
+	}
 	if report.Plan.Status == "blocked" {
 		report.Status = "blocked"
-		return report, errors.New("prior-authority plan is blocked")
+		if order.Action == "amend-model" {
+			escalationErr := appendPlanAmendmentEscalation(&report, opts, rt, model, order)
+			return report, errors.Join(errors.New("amendment prior-authority plan is blocked: "+planFindingsText(report.Plan.Findings)), escalationErr)
+		}
+		return report, errors.New("prior-authority plan is blocked: " + planFindingsText(report.Plan.Findings))
 	}
 	if rt.Recursion == nil && (len(report.Plan.Work) != 1 || len(report.Plan.Work[0].Paths) == 0) {
 		return report, errors.New("G2 requires exactly one nonempty Writer Area; recursive execution remains G3")
@@ -239,11 +256,20 @@ func Run(ctx context.Context, opts Options) (report Report, runErr error) {
 	selectedPaths := []string{}
 	for _, work := range report.Plan.Work {
 		for _, path := range work.Paths {
-			if path == opts.ConfigPath || path == opts.OrderPath {
+			if path == opts.OrderPath {
+				if order.Action == "amend-model" {
+					return blockAmendmentOrderPathWrite(&report, opts, rt, model, order, session, base)
+				}
+				return report, errors.New("implementation order cannot write constitutional or order input")
+			}
+			if path == opts.ConfigPath && order.Action != "amend-model" {
 				return report, errors.New("implementation order cannot write constitutional or order input")
 			}
 			selectedPaths = append(selectedPaths, path)
 		}
+	}
+	if order.Action == "amend-model" && !containsString(selectedPaths, opts.ConfigPath) {
+		return report, errors.New("amend-model plan must assign the canonical source ConfigPath to its prior Writer")
 	}
 	subjects := identityKeys(report.Plan.Affected)
 	invoke := func(phase string, spec RunnerSpec, scopes []string, s *snapshot.Snapshot, extra map[string]any) (agentexec.RunResult, error) {
@@ -264,6 +290,9 @@ func Run(ctx context.Context, opts Options) (report Report, runErr error) {
 			contextValue[k] = v
 		}
 		return session.invoke(phase, spec, scopes, s, workspace, selectedPaths, contextValue)
+	}
+	if order.Action == "amend-model" {
+		return runAmendment(ctx, amendmentInputs{opts: opts, repo: repo, base: base, source: src, model: model, order: order, workspace: workspace, runDir: runDir, report: &report, session: session, selectedPaths: selectedPaths, invoke: invoke})
 	}
 	var candidate *snapshot.Snapshot
 	if rt.Recursion != nil {

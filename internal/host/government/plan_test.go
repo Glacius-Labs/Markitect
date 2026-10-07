@@ -89,6 +89,78 @@ func realReport(t *testing.T, extra bool) inventory.Report {
 	return r
 }
 
+func TestAmendmentPlanRequiresCanonicalWriterPriorAmendmentMandate(t *testing.T) {
+	s := testSource()
+	// The root owns the business decision; another Area writes its canonical
+	// representation. The owner's permission cannot substitute for the writer's.
+	for _, name := range []string{"cancel", "release"} {
+		mutate(&s, "Responsibility", name, func(d *core.Definition) { d.Spec["area"] = testRef("Area", "root") })
+	}
+	s.Definitions = append(s.Definitions,
+		testDef("Artifact", "model", map[string]any{"path": "government.yaml", "class": "canonical", "writer": testRef("Area", "orders")}),
+		testDef("Realization", "cancel-model", map[string]any{"subject": testRef("Rule", "cancel"), "artifact": testRef("Artifact", "model"), "role": "canonical cancellation rule"}),
+	)
+	m := Compile(s)
+	if len(m.Findings) != 0 {
+		t.Fatal(m.Findings)
+	}
+	o := testOrder(m)
+	o.Action = "amend-model"
+	p := BuildPlan(m, o, realReport(t, false), "government.yaml")
+	if p.Status != "blocked" || !hasFinding(p.Findings, "writer.unauthorized") {
+		t.Fatalf("canonical writer inherited owner's authority: %+v", p)
+	}
+	mutate(&s, "Mandate", "orders", func(d *core.Definition) { d.Spec["actions"] = []any{"implement", "review", "amend-model"} })
+	m = Compile(s)
+	o.ActiveConstitution = m.Digest
+	p = BuildPlan(m, o, realReport(t, false), "government.yaml")
+	if p.Status == "blocked" || p.Action != "amend-model" {
+		t.Fatalf("explicit prior canonical writer mandate not used: %+v", p)
+	}
+	dp := BuildDelegationPlan(m, p, DelegationLimits{MaxDepth: 4, MaxFanout: 4, MaxCalls: 32})
+	if dp.Status != "planned" || len(dp.Root.Children) != 1 || !contains(dp.Root.Children[0].Actions, "amend-model") {
+		t.Fatalf("canonical writer amendment action missing: %+v", dp)
+	}
+	if len(dp.Root.Actions) != 0 {
+		t.Fatalf("structural parent inherited child write action: %v", dp.Root.Actions)
+	}
+}
+
+func TestAmendmentPlanSeparatesModelAndRealizationAuthorityPerSubject(t *testing.T) {
+	s := testSource()
+	for _, name := range []string{"cancel", "release"} {
+		mutate(&s, "Responsibility", name, func(d *core.Definition) { d.Spec["area"] = testRef("Area", "root") })
+	}
+	s.Definitions = append(s.Definitions,
+		testDef("Area", "model", map[string]any{"parent": testRef("Area", "root")}),
+		testDef("Mandate", "model-amend", map[string]any{"area": testRef("Area", "model"), "parent": testRef("Mandate", "root"), "scope": []any{testRef("Rule", "cancel")}, "actions": []any{"amend-model"}}),
+		testDef("Mandate", "model-code", map[string]any{"area": testRef("Area", "model"), "parent": testRef("Mandate", "root"), "scope": []any{testRef("Rule", "release")}, "actions": []any{"implement"}}),
+		testDef("Artifact", "model", map[string]any{"path": "government.yaml", "class": "canonical", "writer": testRef("Area", "model")}),
+		testDef("Artifact", "release-helper", map[string]any{"path": "release.go", "class": "realization", "writer": testRef("Area", "model")}),
+		testDef("Realization", "cancel-model", map[string]any{"subject": testRef("Rule", "cancel"), "artifact": testRef("Artifact", "model"), "role": "canonical cancellation rule"}),
+		testDef("Realization", "release-helper", map[string]any{"subject": testRef("Rule", "release"), "artifact": testRef("Artifact", "release-helper"), "role": "stock release helper"}),
+	)
+	m := Compile(s)
+	if len(m.Findings) != 0 {
+		t.Fatal(m.Findings)
+	}
+	o := testOrder(m)
+	o.Action = "amend-model"
+	p := BuildPlan(m, o, realReport(t, false), "government.yaml")
+	if p.Status == "blocked" {
+		t.Fatalf("model-only mandate required implement or unrelated amendment rights: %+v", p.Findings)
+	}
+	dp := BuildDelegationPlan(m, p, DelegationLimits{MaxDepth: 4, MaxFanout: 4, MaxCalls: 32})
+	if dp.Status != "planned" {
+		t.Fatalf("path/subject actions were merged: %+v", dp.Findings)
+	}
+	for _, child := range dp.Root.Children {
+		if child.Area == testID("Area", "model") && !reflect.DeepEqual(child.Actions, []string{"amend-model", "implement"}) {
+			t.Fatalf("missing exact local action classes: %v", child.Actions)
+		}
+	}
+}
+
 func TestGovernmentPlanJoinsRealFilesAndKeepsUnknowns(t *testing.T) {
 	s := testSource()
 	m := Compile(s)

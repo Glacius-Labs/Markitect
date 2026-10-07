@@ -155,6 +155,8 @@ type Work struct {
 
 type Plan struct {
 	APIVersion         string                    `json:"apiVersion" yaml:"apiVersion"`
+	Action             string                    `json:"action,omitempty" yaml:"action,omitempty"`
+	ModelPath          string                    `json:"modelPath,omitempty" yaml:"modelPath,omitempty"`
 	Status             string                    `json:"status" yaml:"status"`
 	Digest             string                    `json:"digest" yaml:"digest"`
 	ActiveConstitution string                    `json:"activeConstitution" yaml:"activeConstitution"`
@@ -173,7 +175,7 @@ type Plan struct {
 // BuildPlan is conservative and read-only. Edges in either direction and shared
 // realization files broaden the work; unknown scope widens to every subject and
 // root review. No absence of evidence turns into a successful empty plan.
-func BuildPlan(m Model, order Order, report inventory.Report) Plan {
+func BuildPlan(m Model, order Order, report inventory.Report, modelPaths ...string) Plan {
 	p := Plan{APIVersion: "markitect.government-plan/v1alpha1", Status: "planned-scoped", ActiveConstitution: m.Digest, OrderDigest: Digest(order), InventoryDigest: report.Digest, Provisional: report.Provisional, Cabinet: m.Cabinet, Survey: SurveyRepository(m, report), Findings: append([]Finding(nil), m.Findings...), Limits: []string{
 		"Read-only proposal; no execution, independent agent review, votes, acceptance or promotion occurred.",
 		"Native observation is provisional, not an atomic Git revision; G2 must rebind immutable inputs and revalidate prior authority.",
@@ -181,6 +183,14 @@ func BuildPlan(m Model, order Order, report inventory.Report) Plan {
 		"Cooperative process shares caller OS rights; worktree and path checks are not a sandbox.",
 	}}
 	add := func(code, subject, detail string) { p.Findings = append(p.Findings, Finding{code, subject, detail}) }
+	if order.Action == "amend-model" {
+		p.Action = order.Action
+		if len(modelPaths) != 1 || !SafePath(modelPaths[0]) {
+			add("amendment.source-path", "", "amend-model requires one exact caller-selected Government source path")
+		} else {
+			p.ModelPath = modelPaths[0]
+		}
+	}
 	if order.APIVersion != OrderVersion || order.Kind != "Order" || strings.TrimSpace(order.Purpose) == "" {
 		add("order.invalid", "", "version, kind Order and purpose are required")
 	}
@@ -264,6 +274,7 @@ func BuildPlan(m Model, order Order, report inventory.Report) Plan {
 		}
 	}
 	work := map[string]*Work{}
+	modelSelected := false
 	reviews := map[string]bool{}
 	if order.UnknownScope {
 		reviews[m.Root.Key()] = true
@@ -326,6 +337,14 @@ func BuildPlan(m Model, order Order, report inventory.Report) Plan {
 			continue
 		}
 		w := getWork(*a.Writer)
+		writerAction := "implement"
+		if p.ModelPath != "" && a.Path == p.ModelPath {
+			modelSelected = true
+			writerAction = "amend-model"
+			if a.Class != "canonical" {
+				add("amendment.source-class", a.Path, "Government source must be a prior-declared canonical Artifact")
+			}
+		}
 		w.Paths = append(w.Paths, a.Path)
 		for _, id := range a.Subjects {
 			if !subsetIDs([]core.DefinitionIdentity{id}, w.Subjects) {
@@ -336,8 +355,8 @@ func BuildPlan(m Model, order Order, report inventory.Report) Plan {
 			reviews[current] = true
 		}
 		for _, id := range a.Subjects {
-			if !authorize(m, *a.Writer, id, "implement", w) {
-				add("writer.unauthorized", a.Path, "writer lacks prior implement mandate for "+id.Key())
+			if !authorize(m, *a.Writer, id, writerAction, w) {
+				add("writer.unauthorized", a.Path, "writer lacks prior "+writerAction+" mandate for "+id.Key())
 			}
 		}
 		if a.Observed != nil && (a.Observed.Status != "observed" || a.Observed.Digest == "") {
@@ -346,6 +365,9 @@ func BuildPlan(m Model, order Order, report inventory.Report) Plan {
 		if a.Observed == nil && !withinRoots(a.Path, report.Roots) {
 			add("input.outside-boundary", a.Path, "target not observed and outside declared acquisition roots")
 		}
+	}
+	if order.Action == "amend-model" && !modelSelected {
+		add("amendment.source-unmapped", p.ModelPath, "selected Government source must have an affected prior realization and exactly one canonical writer")
 	}
 	for key := range affected {
 		if !realized[key] && m.byID[key].APIVersion != APIVersion {
