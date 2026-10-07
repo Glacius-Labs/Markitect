@@ -16,6 +16,36 @@ Dieser Entwurf verwendet „Verfassung“, „Regierung“ und „Ministerium“
 
 Der Nutzer hat kontinuierliche, weitgehend autonome Entwicklungsarbeit bei wenig Routineaufsicht als zentrale Erwartung benannt. Offen ist, wie weit der finale Architect-Kandidat dieses Ziel trägt und welche Government-Produktform dafür angemessen ist. Der [Architektur-Abgleich](delegated-engineering-change-map.md) ordnet bestehende Mechaniken zu; der [gestufte Validierungsplan](delegated-engineering-validation-plan.md) beschreibt mögliche Nachweise nach dem Architect-Checkpoint.
 
+## Festgehaltene Leitplanken
+
+Die folgenden Leitplanken wurden am 2026-10-07 in der Diskussion ausdrücklich festgehalten. Sie beschreiben das zu bewahrende Zielbild, keine bereits vollständig implementierte Fähigkeit. Die konkrete Government-Architektur und ein paralleler Implementierungsversuch bleiben zur Diskussion gestellt; der separat beauftragte Classic-Release wird dadurch nicht angehalten.
+
+### Repository als materialisiertes Abbild
+
+Das gesamte Projekt-Repository soll als Abbild des akzeptierten kanonischen Modells verstanden werden. Der Compiler-/Kubernetes-/Terraform-Gedanke bleibt zentral: akzeptiertes Soll, beobachteter Dateistand, abgeleitete Arbeit, kontrollierte Materialisierung und erneute Prüfung bilden einen Abgleichkreislauf. Ziel ist die vollständige Erfassung des Repository-Umfangs; die heutige deklarierte Teilabdeckung darf nicht als bereits vollständige Erfüllung dieses Ziels dargestellt werden.
+
+Eine Umsetzung im Repository muss sich in konkreten Dateien beziehungsweise Dateiänderungen nachweisen lassen. Dazu zählen Code, Dokumentation, Tests, Konfiguration, Automatisierung und andere Repository-Artefakte. Ein Plan, eine Agentenantwort oder eine Zustimmung allein ist keine implementierte Änderung. Vorhandene Dateien beweisen ihrerseits noch keine korrekte Umsetzung oder einen erfolgreichen externen Betrieb. Verpflichtungen über unerlaubte Abhängigkeiten oder andere Abwesenheiten brauchen geeignete Prüfevidenz, keine erfundene zusätzliche Implementierungsdatei.
+
+Die Beziehungen müssen in beide Richtungen nachvollziehbar sein: Welche Artefakte implementieren einen Modellgegenstand, und welche Modellgegenstände beziehungsweise Verpflichtungen begründen ein Artefakt? Ein Gegenstand kann mehrere Dateien betreffen; eine Datei kann mehrere Modellgegenstände realisieren. Diese Zuordnung ist von der eindeutigen Verantwortung für einen konkreten Schreibvorgang zu unterscheiden. Zielzustände dürfen als Vorgaben mit Implementierungsfreiheit beschrieben sein; nicht jeder Dateiname oder jede Methode muss vorab im Sollmodell stehen.
+
+Kanonische Quelldateien im selben Repository sind als Modelleingaben zu klassifizieren. Ihre Ablage macht sie nicht zu selbstgenerierenden Ausgaben. Fremdverwaltete und noch ungeklärte Dateien brauchen eine ausdrückliche Einordnung, damit der Anspruch auf vollständige Abdeckung überprüfbar bleibt. Die genaue Repräsentation dieser Zuordnungen und Kategorien ist eine offene Designfrage.
+
+Pflichtangabe `purpose`, explizite Modellbeziehungen und daraus abgeleitete Impact-Betrachtungen bleiben gewünschte Grundlagen. Ein Zwecktext erklärt die Existenz eines Gegenstands; er beweist weder dessen Sinnhaftigkeit noch die Einhaltung seiner Verpflichtungen.
+
+### Rekursive Managementhierarchie
+
+Das untersuchte Organisationsbild ist eine Managementhierarchie über Verantwortungsbereiche: Auftrag oder Änderung → betroffene Bereiche und Verantwortliche bestimmen → Ziele und Befugnisse nach unten delegieren → denselben Prozess bei Bedarf rekursiv durchlaufen → ausführen → unabhängig prüfen und Ergebnisse rekursiv nach oben integrieren. Jede Ebene behält die Verantwortung für ihren gesamten Auftrag und ihre eigenen Integrationspflichten.
+
+Das ersetzt den Abgleich zwischen Modell und Dateien nicht. Die Hierarchie organisiert, wer diesen Abgleich für welchen Teil verantwortet, wer entscheidet und wer unabhängig prüft. Fachlicher Modellgraph, Artefaktzuordnung, Codeabhängigkeiten, Delegationshierarchie und Prüfbeziehungen sind miteinander verbunden, haben aber unterschiedliche Bedeutungen. Ob und wie dauerhafte fachliche Ministerien zusätzlich in diese Hierarchie eingebunden werden, bleibt offen.
+
+### Veränderbare Granularität der Agentenarbeit
+
+Agenten sollen bei Bedarf für eng begrenzte Verantwortungen und Prüfaufträge erzeugt werden können, bis hin zu einem eigenen Prüflauf für eine einzelne Invariante. Verantwortlichkeit besteht dauerhaft im Modell; die konkrete Agenteninstanz kann für einen Vorgang entstehen. Jede zusätzliche Instanz erhält den für ihre Pflicht notwendigen Kontext und die gebundene Evidenz.
+
+Die geringe personelle Beschaffungs- und Einarbeitungshürde gegenüber menschlichen Teams ist eine Gestaltungsmöglichkeit. Kontextaufbereitung, Modellaufrufe, Tokenverbrauch, Laufzeit, Abstimmung und Ergebnisintegration bleiben reale Kosten. Ein gesonderter Agent pro Invariante ist deshalb eine mögliche Granularität, kein pauschaler Standard und kein automatischer Qualitätsnachweis. Deterministische Prüfungen bleiben dort sinnvoll, wo sie eine Verpflichtung verlässlich prüfen können.
+
+Die Granularität soll konfigurierbar beziehungsweise begründet wählbar sein. Bündeln oder Aufteilen darf keine Prüfpflicht entfernen: Verantwortlicher, betrachteter Stand, Ergebnis und offene Unsicherheit bleiben nachvollziehbar. Nach welchen Kriterien das System selbst weiter zerlegen darf, welche Grenzen gelten und wie Kosten gegen Qualität abgewogen werden, ist noch zu entscheiden.
+
 ## Vier getrennte Arbeitsgrundlagen
 
 | Grundlage | Inhalt und Zweck |
