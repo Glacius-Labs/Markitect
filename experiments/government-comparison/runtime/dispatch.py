@@ -55,7 +55,7 @@ def mechanical_pin():
 
 def runtime_pins():
     pins = {name: digest(Path(__file__).with_name(name).read_bytes()) for name in
-            ("dispatch.py", "adapter.py", "ledger.py", "process.py", "runner.py", "mechanical_actor.py", "identity_probe.py", "classic.py", "measurement_profile.py", "context_allocation.py", "context_tools_allocation.py", "diagnostic_history.py")}
+            ("dispatch.py", "adapter.py", "ledger.py", "process.py", "runner.py", "mechanical_actor.py", "identity_probe.py", "classic.py", "government.py", "government_roles.py", "government-pin.json", "measurement_profile.py", "context_allocation.py", "context_tools_allocation.py", "diagnostic_history.py")}
     pins["harness.py"] = digest(Path(__file__).parents[1].joinpath("harness.py").read_bytes())
     pins["prepare.py"] = digest(Path(__file__).parents[1].joinpath("prepare.py").read_bytes())
     for name in FILES.values():
@@ -324,7 +324,13 @@ def dispatch(request_path, result_path, authority):
             or (r["mode"] == "mechanical" and output == Path(r["mechanicalFixture"]).resolve())):
         raise ValueError("Result must be a separate external output, outside Actor/evidence/authority/input paths")
     result = base_result(r, raw)
-    if r["arm"] in {"classic", "government"}:
+    if r["arm"] == "government":
+        import government
+        result.update(status="readiness_gap", inferencePerformed=False)
+        result["gaps"] = government.readiness_gaps()
+        write_result(result_path, result)
+        return result
+    if r["arm"] == "classic":
         result.update(status="readiness_gap", inferencePerformed=False)
         result["gaps"] = ["native product dispatch/resume not integrated; no reservation or simulation"]
         write_result(result_path, result)

@@ -1,0 +1,866 @@
+{
+  "source": {
+    "archive": "../../policy-compatibility/run-1/protocol-schema.zip",
+    "archiveSha256": "cd24042eec4696f6b73368cfc6ce930726f3e10c28bae63cdbd1b2f502ff1d97",
+    "notificationSchema": "ServerNotification.json",
+    "notificationSchemaSha256": "28a42039eee1c3f45c92b6cf07111bacf6de2716f4d3365ff53ad65507fef00c",
+    "requestSchema": "ServerRequest.json",
+    "requestSchemaSha256": "3d7bc481f84dc042984a74420e65c5a8d3c423f37a91b7d5df2365c903a12ac6",
+    "schemaCount": 440,
+    "requestIdSchemaSha256": "9c72d59a306d827113020c6d31a14c326d55210d9bd6954f825196a52009f1c7"
+  },
+  "methodCounts": {
+    "ServerNotification": 83,
+    "ServerRequest": 11
+  },
+  "methods": {
+    "ServerNotification": {
+      "error": {
+        "class": "ErrorNotification",
+        "required": [
+          "method",
+          "params"
+        ]
+      },
+      "thread/started": {
+        "class": "Thread/startedNotification",
+        "required": [
+          "method",
+          "params"
+        ]
+      },
+      "thread/status/changed": {
+        "class": "Thread/status/changedNotification",
+        "required": [
+          "method",
+          "params"
+        ]
+      },
+      "thread/archived": {
+        "class": "Thread/archivedNotification",
+        "required": [
+          "method",
+          "params"
+        ]
+      },
+      "thread/deleted": {
+        "class": "Thread/deletedNotification",
+        "required": [
+          "method",
+          "params"
+        ]
+      },
+      "thread/unarchived": {
+        "class": "Thread/unarchivedNotification",
+        "required": [
+          "method",
+          "params"
+        ]
+      },
+      "thread/closed": {
+        "class": "Thread/closedNotification",
+        "required": [
+          "method",
+          "params"
+        ]
+      },
+      "thread/reverted": {
+        "class": "Thread/revertedNotification",
+        "required": [
+          "method",
+          "params"
+        ]
+      },
+      "skills/changed": {
+        "class": "Skills/changedNotification",
+        "required": [
+          "method",
+          "params"
+        ]
+      },
+      "thread/name/updated": {
+        "class": "Thread/name/updatedNotification",
+        "required": [
+          "method",
+          "params"
+        ]
+      },
+      "thread/attachment/updated": {
+        "class": "Thread/attachment/updatedNotification",
+        "required": [
+          "method",
+          "params"
+        ]
+      },
+      "thread/goal/updated": {
+        "class": "Thread/goal/updatedNotification",
+        "required": [
+          "method",
+          "params"
+        ]
+      },
+      "thread/goal/cleared": {
+        "class": "Thread/goal/clearedNotification",
+        "required": [
+          "method",
+          "params"
+        ]
+      },
+      "thread/queue/changed": {
+        "class": "Thread/queue/changedNotification",
+        "required": [
+          "method",
+          "params"
+        ]
+      },
+      "project/changed": {
+        "class": "Project/changedNotification",
+        "required": [
+          "method",
+          "params"
+        ]
+      },
+      "thread/project/updated": {
+        "class": "Thread/project/updatedNotification",
+        "required": [
+          "method",
+          "params"
+        ]
+      },
+      "thread/environment/connected": {
+        "class": "Thread/environment/connectedNotification",
+        "required": [
+          "method",
+          "params"
+        ]
+      },
+      "thread/environment/disconnected": {
+        "class": "Thread/environment/disconnectedNotification",
+        "required": [
+          "method",
+          "params"
+        ]
+      },
+      "thread/settings/updated": {
+        "class": "Thread/settings/updatedNotification",
+        "required": [
+          "method",
+          "params"
+        ]
+      },
+      "thread/tokenUsage/updated": {
+        "class": "Thread/tokenUsage/updatedNotification",
+        "required": [
+          "method",
+          "params"
+        ]
+      },
+      "turn/started": {
+        "class": "Turn/startedNotification",
+        "required": [
+          "method",
+          "params"
+        ]
+      },
+      "hook/started": {
+        "class": "Hook/startedNotification",
+        "required": [
+          "method",
+          "params"
+        ]
+      },
+      "turn/completed": {
+        "class": "Turn/completedNotification",
+        "required": [
+          "method",
+          "params"
+        ]
+      },
+      "hook/completed": {
+        "class": "Hook/completedNotification",
+        "required": [
+          "method",
+          "params"
+        ]
+      },
+      "turn/diff/updated": {
+        "class": "Turn/diff/updatedNotification",
+        "required": [
+          "method",
+          "params"
+        ]
+      },
+      "turn/plan/updated": {
+        "class": "Turn/plan/updatedNotification",
+        "required": [
+          "method",
+          "params"
+        ]
+      },
+      "item/started": {
+        "class": "Item/startedNotification",
+        "required": [
+          "method",
+          "params"
+        ]
+      },
+      "item/autoApprovalReview/started": {
+        "class": "Item/autoApprovalReview/startedNotification",
+        "required": [
+          "method",
+          "params"
+        ]
+      },
+      "item/autoApprovalReview/completed": {
+        "class": "Item/autoApprovalReview/completedNotification",
+        "required": [
+          "method",
+          "params"
+        ]
+      },
+      "autoApprovalReview/strictReviewRequired": {
+        "class": "AutoApprovalReview/strictReviewRequiredNotification",
+        "required": [
+          "method",
+          "params"
+        ]
+      },
+      "item/completed": {
+        "class": "Item/completedNotification",
+        "required": [
+          "method",
+          "params"
+        ]
+      },
+      "item/agentMessage/delta": {
+        "class": "Item/agentMessage/deltaNotification",
+        "required": [
+          "method",
+          "params"
+        ]
+      },
+      "item/plan/delta": {
+        "class": "Item/plan/deltaNotification",
+        "required": [
+          "method",
+          "params"
+        ]
+      },
+      "command/exec/outputDelta": {
+        "class": "Command/exec/outputDeltaNotification",
+        "required": [
+          "method",
+          "params"
+        ]
+      },
+      "process/outputDelta": {
+        "class": "Process/outputDeltaNotification",
+        "required": [
+          "method",
+          "params"
+        ]
+      },
+      "process/exited": {
+        "class": "Process/exitedNotification",
+        "required": [
+          "method",
+          "params"
+        ]
+      },
+      "item/commandExecution/outputDelta": {
+        "class": "Item/commandExecution/outputDeltaNotification",
+        "required": [
+          "method",
+          "params"
+        ]
+      },
+      "item/commandExecution/terminalInteraction": {
+        "class": "Item/commandExecution/terminalInteractionNotification",
+        "required": [
+          "method",
+          "params"
+        ]
+      },
+      "item/fileChange/outputDelta": {
+        "class": "Item/fileChange/outputDeltaNotification",
+        "required": [
+          "method",
+          "params"
+        ]
+      },
+      "item/fileChange/patchUpdated": {
+        "class": "Item/fileChange/patchUpdatedNotification",
+        "required": [
+          "method",
+          "params"
+        ]
+      },
+      "serverRequest/resolved": {
+        "class": "ServerRequest/resolvedNotification",
+        "required": [
+          "method",
+          "params"
+        ]
+      },
+      "item/mcpToolCall/progress": {
+        "class": "Item/mcpToolCall/progressNotification",
+        "required": [
+          "method",
+          "params"
+        ]
+      },
+      "mcpServer/oauthLogin/completed": {
+        "class": "McpServer/oauthLogin/completedNotification",
+        "required": [
+          "method",
+          "params"
+        ]
+      },
+      "mcpServer/startupStatus/updated": {
+        "class": "McpServer/startupStatus/updatedNotification",
+        "required": [
+          "method",
+          "params"
+        ]
+      },
+      "mcpServer/event/stream/notification": {
+        "class": "McpServer/event/stream/notificationNotification",
+        "required": [
+          "method",
+          "params"
+        ]
+      },
+      "account/updated": {
+        "class": "Account/updatedNotification",
+        "required": [
+          "method",
+          "params"
+        ]
+      },
+      "account/gatewayOAuth/changed": {
+        "class": "Account/gatewayOAuth/changedNotification",
+        "required": [
+          "method",
+          "params"
+        ]
+      },
+      "account/rateLimits/updated": {
+        "class": "Account/rateLimits/updatedNotification",
+        "required": [
+          "method",
+          "params"
+        ]
+      },
+      "app/list/updated": {
+        "class": "App/list/updatedNotification",
+        "required": [
+          "method",
+          "params"
+        ]
+      },
+      "remoteControl/status/changed": {
+        "class": "RemoteControl/status/changedNotification",
+        "required": [
+          "method",
+          "params"
+        ]
+      },
+      "externalAgentConfig/import/progress": {
+        "class": "ExternalAgentConfig/import/progressNotification",
+        "required": [
+          "method",
+          "params"
+        ]
+      },
+      "externalAgentConfig/import/completed": {
+        "class": "ExternalAgentConfig/import/completedNotification",
+        "required": [
+          "method",
+          "params"
+        ]
+      },
+      "fs/changed": {
+        "class": "Fs/changedNotification",
+        "required": [
+          "method",
+          "params"
+        ]
+      },
+      "item/reasoning/summaryTextDelta": {
+        "class": "Item/reasoning/summaryTextDeltaNotification",
+        "required": [
+          "method",
+          "params"
+        ]
+      },
+      "item/reasoning/summaryPartAdded": {
+        "class": "Item/reasoning/summaryPartAddedNotification",
+        "required": [
+          "method",
+          "params"
+        ]
+      },
+      "item/reasoning/textDelta": {
+        "class": "Item/reasoning/textDeltaNotification",
+        "required": [
+          "method",
+          "params"
+        ]
+      },
+      "thread/compacted": {
+        "class": "Thread/compactedNotification",
+        "required": [
+          "method",
+          "params"
+        ]
+      },
+      "model/rerouted": {
+        "class": "Model/reroutedNotification",
+        "required": [
+          "method",
+          "params"
+        ]
+      },
+      "model/verification": {
+        "class": "Model/verificationNotification",
+        "required": [
+          "method",
+          "params"
+        ]
+      },
+      "modelProvider/authRecoveryStarted": {
+        "class": "ModelProvider/authRecoveryStartedNotification",
+        "required": [
+          "method",
+          "params"
+        ]
+      },
+      "modelProvider/authRecoveryCompleted": {
+        "class": "ModelProvider/authRecoveryCompletedNotification",
+        "required": [
+          "method",
+          "params"
+        ]
+      },
+      "turn/moderationMetadata": {
+        "class": "Turn/moderationMetadataNotification",
+        "required": [
+          "method",
+          "params"
+        ]
+      },
+      "model/safetyBuffering/updated": {
+        "class": "Model/safetyBuffering/updatedNotification",
+        "required": [
+          "method",
+          "params"
+        ]
+      },
+      "warning": {
+        "class": "WarningNotification",
+        "required": [
+          "method",
+          "params"
+        ],
+        "paramsSchema": {
+          "properties": {
+            "message": {
+              "description": "Concise warning message for the user.",
+              "type": "string"
+            },
+            "threadId": {
+              "description": "Optional thread target when the warning applies to a specific thread.",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "message"
+          ],
+          "type": "object"
+        }
+      },
+      "guardianWarning": {
+        "class": "GuardianWarningNotification",
+        "required": [
+          "method",
+          "params"
+        ]
+      },
+      "deprecationNotice": {
+        "class": "DeprecationNoticeNotification",
+        "required": [
+          "method",
+          "params"
+        ],
+        "paramsSchema": {
+          "properties": {
+            "details": {
+              "description": "Optional extra guidance, such as migration steps or rationale.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "summary": {
+              "description": "Concise summary of what is deprecated.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "summary"
+          ],
+          "type": "object"
+        }
+      },
+      "configWarning": {
+        "class": "ConfigWarningNotification",
+        "required": [
+          "method",
+          "params"
+        ],
+        "paramsSchema": {
+          "properties": {
+            "details": {
+              "description": "Optional extra guidance or error details.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "path": {
+              "description": "Optional path to the config file that triggered the warning.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "range": {
+              "anyOf": [
+                {
+                  "properties": {
+                    "end": {
+                      "properties": {
+                        "column": {
+                          "description": "1-based column number (in Unicode scalar values).",
+                          "format": "uint",
+                          "minimum": 0.0,
+                          "type": "integer"
+                        },
+                        "line": {
+                          "description": "1-based line number.",
+                          "format": "uint",
+                          "minimum": 0.0,
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "column",
+                        "line"
+                      ],
+                      "type": "object"
+                    },
+                    "start": {
+                      "properties": {
+                        "column": {
+                          "description": "1-based column number (in Unicode scalar values).",
+                          "format": "uint",
+                          "minimum": 0.0,
+                          "type": "integer"
+                        },
+                        "line": {
+                          "description": "1-based line number.",
+                          "format": "uint",
+                          "minimum": 0.0,
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "column",
+                        "line"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "end",
+                    "start"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Optional range for the error location inside the config file."
+            },
+            "summary": {
+              "description": "Concise summary of the warning.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "summary"
+          ],
+          "type": "object"
+        }
+      },
+      "fuzzyFileSearch/sessionUpdated": {
+        "class": "FuzzyFileSearch/sessionUpdatedNotification",
+        "required": [
+          "method",
+          "params"
+        ]
+      },
+      "fuzzyFileSearch/sessionCompleted": {
+        "class": "FuzzyFileSearch/sessionCompletedNotification",
+        "required": [
+          "method",
+          "params"
+        ]
+      },
+      "thread/realtime/started": {
+        "class": "Thread/realtime/startedNotification",
+        "required": [
+          "method",
+          "params"
+        ]
+      },
+      "thread/realtime/itemAdded": {
+        "class": "Thread/realtime/itemAddedNotification",
+        "required": [
+          "method",
+          "params"
+        ]
+      },
+      "thread/realtime/item/started": {
+        "class": "Thread/realtime/item/startedNotification",
+        "required": [
+          "method",
+          "params"
+        ]
+      },
+      "thread/realtime/item/transcript/delta": {
+        "class": "Thread/realtime/item/transcript/deltaNotification",
+        "required": [
+          "method",
+          "params"
+        ]
+      },
+      "thread/realtime/item/completed": {
+        "class": "Thread/realtime/item/completedNotification",
+        "required": [
+          "method",
+          "params"
+        ]
+      },
+      "thread/realtime/transcript/delta": {
+        "class": "Thread/realtime/transcript/deltaNotification",
+        "required": [
+          "method",
+          "params"
+        ]
+      },
+      "thread/realtime/transcript/done": {
+        "class": "Thread/realtime/transcript/doneNotification",
+        "required": [
+          "method",
+          "params"
+        ]
+      },
+      "thread/realtime/outputAudio/delta": {
+        "class": "Thread/realtime/outputAudio/deltaNotification",
+        "required": [
+          "method",
+          "params"
+        ]
+      },
+      "thread/realtime/sdp": {
+        "class": "Thread/realtime/sdpNotification",
+        "required": [
+          "method",
+          "params"
+        ]
+      },
+      "thread/realtime/error": {
+        "class": "Thread/realtime/errorNotification",
+        "required": [
+          "method",
+          "params"
+        ]
+      },
+      "thread/realtime/closed": {
+        "class": "Thread/realtime/closedNotification",
+        "required": [
+          "method",
+          "params"
+        ]
+      },
+      "windows/worldWritableWarning": {
+        "class": "Windows/worldWritableWarningNotification",
+        "required": [
+          "method",
+          "params"
+        ],
+        "paramsSchema": {
+          "properties": {
+            "extraCount": {
+              "format": "uint",
+              "minimum": 0.0,
+              "type": "integer"
+            },
+            "failedScan": {
+              "type": "boolean"
+            },
+            "samplePaths": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "extraCount",
+            "failedScan",
+            "samplePaths"
+          ],
+          "type": "object"
+        }
+      },
+      "windowsSandbox/setupCompleted": {
+        "class": "WindowsSandbox/setupCompletedNotification",
+        "required": [
+          "method",
+          "params"
+        ]
+      },
+      "account/login/completed": {
+        "class": "Account/login/completedNotification",
+        "required": [
+          "method",
+          "params"
+        ]
+      }
+    },
+    "ServerRequest": {
+      "item/commandExecution/requestApproval": {
+        "class": "Item/commandExecution/requestApprovalRequest",
+        "required": [
+          "id",
+          "method",
+          "params"
+        ]
+      },
+      "item/fileChange/requestApproval": {
+        "class": "Item/fileChange/requestApprovalRequest",
+        "required": [
+          "id",
+          "method",
+          "params"
+        ]
+      },
+      "item/tool/requestUserInput": {
+        "class": "Item/tool/requestUserInputRequest",
+        "required": [
+          "id",
+          "method",
+          "params"
+        ]
+      },
+      "mcpServer/elicitation/request": {
+        "class": "McpServer/elicitation/requestRequest",
+        "required": [
+          "id",
+          "method",
+          "params"
+        ]
+      },
+      "item/permissions/requestApproval": {
+        "class": "Item/permissions/requestApprovalRequest",
+        "required": [
+          "id",
+          "method",
+          "params"
+        ]
+      },
+      "item/tool/call": {
+        "class": "Item/tool/callRequest",
+        "required": [
+          "id",
+          "method",
+          "params"
+        ]
+      },
+      "account/chatgptAuthTokens/refresh": {
+        "class": "Account/chatgptAuthTokens/refreshRequest",
+        "required": [
+          "id",
+          "method",
+          "params"
+        ]
+      },
+      "attestation/generate": {
+        "class": "Attestation/generateRequest",
+        "required": [
+          "id",
+          "method",
+          "params"
+        ]
+      },
+      "currentTime/read": {
+        "class": "CurrentTime/readRequest",
+        "required": [
+          "id",
+          "method",
+          "params"
+        ]
+      },
+      "applyPatchApproval": {
+        "class": "ApplyPatchApprovalRequest",
+        "required": [
+          "id",
+          "method",
+          "params"
+        ]
+      },
+      "execCommandApproval": {
+        "class": "ExecCommandApprovalRequest",
+        "required": [
+          "id",
+          "method",
+          "params"
+        ]
+      }
+    }
+  },
+  "discardableNotifications": [
+    "warning",
+    "configWarning",
+    "deprecationNotice",
+    "windows/worldWritableWarning"
+  ],
+  "provisionalConfigNotifications": [
+    "warning",
+    "configWarning",
+    "windows/worldWritableWarning"
+  ],
+  "notificationLimit": 16,
+  "classificationPolicy": "Exact method name maps to exact union member title; id presence distinguishes requests and notifications; only listed notifications with schema-valid params are discardable.",
+  "requestId": {
+    "stringAllowed": true,
+    "integerRange": [
+      -9223372036854775808,
+      9223372036854775807
+    ],
+    "schemaRef": "ServerRequest.json#/definitions/RequestId"
+  },
+  "notificationEnvelopeOptionalProperties": {
+    "emittedAtMs": {
+      "description": "Unix timestamp (in milliseconds) when app-server emitted this notification.",
+      "format": "int64",
+      "type": "integer"
+    }
+  }
+}

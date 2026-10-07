@@ -110,6 +110,9 @@ class RuntimeTests(unittest.TestCase):
         result = adapter.handle(path, self.root / "result.json")
         self.assertEqual(result["requestSha256"], adapter.sha(path))
         self.assertEqual(result["status"], "readiness_gap")
+        self.assertTrue(any("accepted" in gap for gap in result["gaps"]))
+        self.assertFalse(any("lease-record validation" in gap for gap in result["gaps"]))
+        self.assertTrue(any("common trial ledger" in gap for gap in result["gaps"]))
         self.assertEqual(result["receipts"], [])
         request["mode"] = "live"
         path.write_text(json.dumps(request), encoding="utf-8")

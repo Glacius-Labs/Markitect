@@ -1,0 +1,33 @@
+{
+  "product": "Markitect Government",
+  "phase": "G5",
+  "accepted": {
+    "sourceCommit": "04e225d5caee78c2a198607143863fca1e829750",
+    "handoff": {
+      "path": "C:/Users/Consiliari/.codex/worktrees/government-worker/Markitect/.artifacts/government-g5/handoff-04e225d.json",
+      "sha256": "b83103dc1f0c9d9985bfe540692869754abbd40249809e55c6aebc4a9d24417b"
+    },
+    "binary": {
+      "path": "C:/Users/Consiliari/.codex/worktrees/government-worker/Markitect/.artifacts/government-g5/markitect-04e225d.exe",
+      "sha256": "12241f325e4af59451e4021b31d9e6f5b829b5de06c94d35eaabfb9d663aa51f"
+    },
+    "acceptance": {
+      "status": "accepted",
+      "authority": "Overseer",
+      "sourceThreadId": "01a11367-a781-7683-a20f-46e12614dcb4",
+      "receivedDate": "2026-10-07",
+      "evidence": "Direct Overseer message: G5 accepted at exact source SHA 04e225d5caee78c2a198607143863fca1e829750"
+    }
+  },
+  "history": {
+    "priorProvisional": {
+      "sourceCommit": "ce021cef2d23002c3eca0b6a81e0913b3fc5a4f5",
+      "handoff": {
+        "path": "C:/Users/Consiliari/.codex/worktrees/government-worker/Markitect/.artifacts/government-g5/handoff-ce021ce.json",
+        "sha256": "bc07c4c9b08f58c8ea7c4fdb8a8f2e847c654f1b7cd518bd4cae606cd7d84ea5"
+      },
+      "binarySha256": "709480cab674212c2df81fbdaa9e9b23b92380693c4f6085b452967e6d1dde83",
+      "status": "superseded-provisional"
+    }
+  }
+}

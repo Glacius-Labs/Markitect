@@ -1,0 +1,38 @@
+{
+  "sourceThreadId": "01a11367-a781-7683-a20f-46e12614dcb4",
+  "sourceCoordinationPath": "C:\\Users\\Consiliari\\Glacius Labs\\Markitect\\docs\\design\\government\\coordination-state.json",
+  "sourceCoordinationSha256": "d6f496974dbe864acdcb9907a951684445c7de5ed51bc9d189b7ddafa905b9fa",
+  "sourceJsonPointer": "threads[name=Scientist].evidence.classifiedPolicyMetadataGrant",
+  "grant": {
+    "issuedUtc": "2026-10-07T20:54:59Z",
+    "key": "local-policy-read-classified-20261007",
+    "maxAdditionalAppServerSessions": 1,
+    "wallSeconds": 60,
+    "innerWallSeconds": 50,
+    "maxParallel": 1,
+    "allowedMethods": [
+      "initialize",
+      "initialized",
+      "config/read",
+      "configRequirements/read"
+    ],
+    "maxConfigReads": 1,
+    "maxRequirementsReads": 1,
+    "retries": 0,
+    "actorCalls": 0,
+    "modelCalls": 0,
+    "mutations": false,
+    "newPurchases": false,
+    "status": "Dispatched; preparatory tests and independent review required before one separately reserved frozen session; consumption not yet confirmed.",
+    "allowedInboundNotifications": [
+      "warning",
+      "configWarning",
+      "deprecationNotice",
+      "windows/worldWritableWarning"
+    ],
+    "maxInboundNotifications": 16,
+    "abortOn": "Every server request, unknown/malformed/mismatched frame, other notification, Actor/auth/approval activity; no reply.",
+    "warningResultRule": "Non-deprecation allowed warnings make any policy result provisional and unusable as effective exec-policy/access proof.",
+    "boundary": "Same pinned runner/cwd/fifteen inline config pairs. Enum-known identifier/class only, no payload/id. Preserve sanitization/byte/tree/single-start limits, old evidence and grants; no automatic additional diagnosis."
+  }
+}

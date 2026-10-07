@@ -1,0 +1,27 @@
+{
+  "allocationId": "local-policy-read-classified-20261007",
+  "maxTrees": 1,
+  "baseCommit": "3be653384e1b83d8cbdab79a87f487a3ffdde050",
+  "requestSha256": "6abc17e8ddccc61d8b16c7e16029fdf3f8610d1b6217ee40995905208080537f",
+  "clientSha256": "79925cf1f16459b53365d4f3bf1a016cacde664260b8ee43202ae742759bcbde",
+  "methodEnumsSha256": "f5c9bf21fc67bd1f41be0ca4dd2b0878f4c9fc1b1da23deffb31acc61483d4b2",
+  "pythonPath": "C:\\Python313\\python.exe",
+  "pythonSha256": "d87063e5597f257004c731b66c59c56c91038861c6877b1a3dca6b8c4e919125",
+  "files": {
+    "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\policy-read-classified\\run-1\\request.json": "6abc17e8ddccc61d8b16c7e16029fdf3f8610d1b6217ee40995905208080537f",
+    "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\policy-read-classified\\run-1\\classified-client.py": "79925cf1f16459b53365d4f3bf1a016cacde664260b8ee43202ae742759bcbde",
+    "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\policy-read-classified\\run-1\\frozen-method-enums.json": "f5c9bf21fc67bd1f41be0ca4dd2b0878f4c9fc1b1da23deffb31acc61483d4b2",
+    "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\policy-read-classified\\run-1\\test-classification.py": "7d214062f287d00d6ad74f49f01ac385fafc3bf851ce73bd30261d294aa38b65",
+    "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\policy-read-classified\\run-1\\test-classification.log": "92eda3ee3c977be25455477edf59ca223d3356d8ed14c65738b0bff7c269e930",
+    "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\policy-read-classified\\run-1\\test-classification-result.json": "b6fa4e444a337840d63cdf6e6d4135061796ca15053b8c858c534eae7eb419ff",
+    "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\policy-read-classified\\run-1\\launch-once.py": "8586369dd6c3a01b0f0a085bff3bd8a19706d82dc4ece490230c8cb0dcf1f198",
+    "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\policy-read-classified\\run-1\\authorization-grant.json": "568fae7189745a750fed712854666a790e386a89adab4c8d212fb5247a690374",
+    "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\runtime\\selected_metadata.py": "584c321dd217fcbca4c958b9283607602738fab392404bad2a7432c1bfac9652",
+    "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\runtime\\process.py": "d0cedb71d57be87095d9af119d9769fb0c3d311e1af073cba81f6337743c78ae",
+    "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\runtime\\runner.py": "9f8031a2c26c484cf3be92fef3bebafa8469096048989a3bbe76262a9d595e8a",
+    "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\policy-read\\run-1\\read-once.py": "998480229ae2573264904b00c8077ba2a6bed11349b04749cefdc6cd79724390",
+    "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\context-tools-live\\run-1\\raw\\process\\process.json": "d12d22c2178d144ad45613ffb5ebdd38fec4bda5c062873c492d19addf1c78aa"
+  },
+  "controlledTreeDeadlineSeconds": 38,
+  "activeRpcDeadlineSeconds": 33
+}

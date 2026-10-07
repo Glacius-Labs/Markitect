@@ -1,0 +1,47 @@
+{
+  "status": "stopped",
+  "stopReason": "non-discardable-notification",
+  "sentRpc": [
+    {
+      "method": "initialize",
+      "id": 0,
+      "params": {
+        "clientInfo": {
+          "name": "scientist_policy_read_once",
+          "version": "1.0"
+        }
+      }
+    },
+    {
+      "method": "initialized",
+      "params": {}
+    }
+  ],
+  "observations": [
+    {
+      "id": 0,
+      "method": "initialize",
+      "sanitizedResult": {
+        "handshakeAcknowledged": true
+      }
+    }
+  ],
+  "serverMethodEvents": [
+    {
+      "method": "remoteControl/status/changed",
+      "class": "RemoteControl/status/changedNotification"
+    }
+  ],
+  "notificationCount": 1,
+  "provisionalConfig": false,
+  "nativeReturnCode": 0,
+  "wallSeconds": 0.18164379999507219,
+  "rawResponseBytesDiscarded": 420,
+  "stderrBytesDiscarded": 0,
+  "totalRawBytesConsumedInMemory": 420,
+  "rawByteLimit": 4000000,
+  "queueCapacity": 32,
+  "rawConfigurationPersisted": false,
+  "rawFramePayloadsPersisted": false,
+  "automaticRetries": 0
+}

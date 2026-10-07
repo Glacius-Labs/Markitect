@@ -58,7 +58,9 @@ def handle(request_path, result_path, *, authority=None):
     if request["operation"] != "probe":
         result["gaps"] = ["No live invocation or persistent product resume is enabled; stop applies only to an active bounded call via its STOP sentinel"]
     elif request["arm"] == "government":
-        result["gaps"] = ["Government native handoff and immutable product pins absent", "G1-G5 evidence missing; no Government simulation is permitted"]
+        result["gaps"] = ["G1-G5 technical evidence is accepted; native queue/role/ledger integration still needs S1 validation"]
+        import government
+        result["gaps"].extend(government.readiness_gaps())
     else:
         try:
             if request["arm"] == "classic":

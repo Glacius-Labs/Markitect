@@ -1,0 +1,1 @@
+Earlier focused gate: 22 tests passed on the source hashes in validation.json. A later independent review identified an omitted operator token checkpoint; these files are preserved history, not validation of the final source.

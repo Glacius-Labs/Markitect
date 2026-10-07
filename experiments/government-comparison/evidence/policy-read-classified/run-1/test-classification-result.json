@@ -1,0 +1,14 @@
+{
+  "command": "python experiments/government-comparison/evidence/policy-read-classified/run-1/test-classification.py",
+  "startedAtUtc": "2026-10-07T21:18:14.620428+00:00",
+  "exitCode": 0,
+  "testsRun": 17,
+  "result": "passed",
+  "scope": "pure schema-binding, authorization/history/reference guards, frame-classifier, response-envelope, and sanitizer-shape tests; no request.json loaded, no client main, no subprocess/app-server/model/Actor started",
+  "sha256": {
+    "classified-client.py": "79925cf1f16459b53365d4f3bf1a016cacde664260b8ee43202ae742759bcbde",
+    "frozen-method-enums.json": "f5c9bf21fc67bd1f41be0ca4dd2b0878f4c9fc1b1da23deffb31acc61483d4b2",
+    "test-classification.py": "7d214062f287d00d6ad74f49f01ac385fafc3bf851ce73bd30261d294aa38b65",
+    "test-classification.log": "92eda3ee3c977be25455477edf59ca223d3356d8ed14c65738b0bff7c269e930"
+  }
+}

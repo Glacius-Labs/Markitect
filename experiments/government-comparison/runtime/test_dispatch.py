@@ -388,7 +388,11 @@ class DispatchTests(unittest.TestCase):
     def test_native_missing_products_do_not_reserve(self):
         _, path = self.request(arm="government")
         self.authorize()
-        self.assertEqual(self.call(path)["status"], "readiness_gap")
+        result = self.call(path)
+        self.assertEqual(result["status"], "readiness_gap")
+        self.assertTrue(any("accepted for preparation" in gap for gap in result["gaps"]))
+        self.assertFalse(any("lease-record validation" in gap for gap in result["gaps"]))
+        self.assertTrue(any("common trial ledger" in gap for gap in result["gaps"]))
         self.assertEqual(self.ledger.snapshot()["actorSessions"], 0)
 
     def test_no_mode_only_launch_or_arbitrary_mechanical_program(self):
