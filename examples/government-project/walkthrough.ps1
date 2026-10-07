@@ -236,7 +236,7 @@ New-Order $amendmentOrder $currentDigest 'amend-model' 'studio' 'booking-rule' '
 $implementationPlan = Invoke-Markitect @('--action','plan','--format','json','--config','government.yaml','--order','orders/implementation-order.json') 'plan-implementation'
 $amendmentPlan = Invoke-Markitect @('--action','plan','--format','json','--config','government.yaml','--order','orders/amendment-order.json') 'plan-amendment'
 foreach ($plan in @($implementationPlan,$amendmentPlan)) {
-    if ($plan.exitCode -ne 0 -or $null -eq $plan.value -or $plan.value.status -ne 'planned-scoped' -or $plan.value.findings) { throw "A prior-authorized order has no clean scoped plan; see $($plan.stderr)" }
+    if ($plan.exitCode -ne 0 -or $null -eq $plan.value -or $plan.value.status -ne 'planned-within-declared-boundary' -or $plan.value.findings) { throw "A prior-authorized order has no clean scoped plan; see $($plan.stderr)" }
 }
 if ($MechanicalSmoke) {
     $acceptanceKind = 'mechanical-fixture-acknowledgement'
