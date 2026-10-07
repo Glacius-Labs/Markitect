@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-07T22:28:52Z",
+  "updatedUtc": "2026-10-07T22:37:33Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -261,13 +261,13 @@
       "name": "Scientist",
       "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
       "hostId": "local",
-      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:70",
+      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:71",
       "lastObservedStatus": "active",
       "activeTurn": "01a1187b-d972-7902-8be1-36f7b99d4862",
-      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac6c38fc55c8191b5a3cce9a02c4ab8",
+      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac6c98674c48191a470c930c83245ae",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "Actual pinned Classic/Government native integration with bounded deterministic fixtures and one final disabled-status metadata read; no real Actor or study.",
-      "latestProgress": "Existing incomplete22:01:32 native integration assignment resumed after compaction; active status confirmed. Metadata handoff and native preflight/budget WIP read by Overseer, no clean completion accepted.",
+      "latestProgress": "Das unabhängige Metadatenreview ist abgeschlossen: Alle 15 Freeze-Bindungen und vier historischen Ledger stimmen. Es gab keinen weiteren Metadatenlauf; fünf reale Actor-Starts, 53.331 bekannte Tokens und die unbekannte Gesamtsumme bleiben unverändert. Offen ist jetzt nur noch der begrenzte native Integrationsnachweis.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-scientist/Markitect",
       "transferredDesignCommit": "b9e17c9896f14b4b1268e4bcb005395f5d324384",
       "candidateSha": "0e62d5f1469d772804d35f2832efe0fa5679389d",
@@ -838,13 +838,14 @@
           "consumedSessionsReported": 1
         },
         "localDisabledStatusMetadataProgress": {
-          "reportedUtc": "2026-10-07T22:17:31Z",
+          "reportedUtc": "2026-10-07T22:37:33Z",
           "outcome": "config/read and configRequirements/read responses received; remoteControl status disabled; no warnings/retries/additional RPCs reported. Inline flags and inherited Windows sandbox setting observed.",
           "acceptance": "Progress only; no clean final SHA or independent evidence review yet. Does not explain historical exec rejections or prove working Actor access.",
           "nativeIntegration": "Existing bounded native work remains active; no new completed integration evidence.",
           "metadataAppServerTreesConsumedCumulativeReported": 3,
           "realActorStartsCumulative": 5,
-          "liveStudyCells": 0
+          "liveStudyCells": 0,
+          "reportedReview": "Scientist reports independent review complete: all15freeze bindings and four historical ledgers match; no further metadata run. Final clean source-bound handoff and Overseer acceptance still pending."
         },
         "nativeIntegrationProgress": {
           "observedUtc": "2026-10-07T22:28:52Z",
@@ -976,11 +977,10 @@
     "satPrinciples": "Deferred by direct user request on 2026-10-07; conceptual constraint/consistency/conflict-explanation principles first, no solver integration or current assignment change. See docs/design/government/deferred-research.md."
   },
   "lastReview": {
-    "reviewedUtc": "2026-10-07T22:28:52Z",
-    "evidenceLevel": "Three chats checked. Scientist generic final after explicit contextCompaction was not a milestone; root inspected recent turns, actual unchanged HEAD and uncommitted native/metadata work, existing preflight and recorded inspect usage. Metadata remains unaccepted until final source-bound handoff. Worker/Architect unchanged held.",
+    "reviewedUtc": "2026-10-07T22:37:33Z",
+    "evidenceLevel": "Three compact snapshots. Scientist reports completed independent metadata review with15freeze bindings/four unchanged ledgers while native integration remains active. Progress report only; no new clean handoff or Overseer acceptance. Successful Actor access and historical exec rejection cause remain unproven despite metadata review. Worker/Architect unchanged held.",
     "coordinationActions": [
-      "Resumed existing Scientist assignment once at22:28:52Z with exact recovery context and unchanged consumed grants.",
-      "Confirmed Scientist active; saved new cursor. No new resources, real Actor, study, tests or product changes."
+      "Saved progress/cursors; no redundant assignment, additional resources, tests or product changes."
     ],
     "userDecisionRequired": false
   },
