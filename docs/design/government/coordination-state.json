@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-07T16:07:49Z",
+  "updatedUtc": "2026-10-07T16:16:21Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -18,13 +18,13 @@
       "name": "Worker",
       "threadId": "01a1169b-9357-7df3-a8f6-f913557c782a",
       "hostId": "local",
-      "afterCursor": "b2b8e43f-fcaa-41bf-828a-99c69527bdea:17",
+      "afterCursor": "b2b8e43f-fcaa-41bf-828a-99c69527bdea:18",
       "lastObservedStatus": "active",
       "activeTurn": "01a11715-a36a-72b2-98cf-6fc1dd4f7c2a",
-      "lastAssistantMessageId": "msg_0a7785839df196a4016ac66ce44f6881918cedc7dacd90a344",
+      "lastAssistantMessageId": "msg_0a7785839df196a4016ac66f88e2888191b6c7bf0d4112c218",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "G2: actual single-area candidate execution, independent review, unanimous final votes and fenced Active-Ref promotion",
-      "latestProgress": "Der G2-Vertrag trennt Material, Prüfevidenz, Stimmen und Beschluss strikt voneinander. Für den ersten Schnitt führe ich genau einen Writer-Bereich aus; sein Kandidat wird technisch geprüft, separat reviewt und danach jedem eingefrorenen Ressort vorgelegt. Die Übernahme erfolgt ausschließlich über eine dedizierte Active-Ref mit dauerhaftem Intent und Compare-and-Swap. Das Beispiel belegt zunächst diesen Prozess mit externen deterministischen Programmen.",
+      "latestProgress": "Die CLI verlangt für G2 nun einen expliziten Runtime-Pin und --write. Jeder tatsächlich gestartete Runner wird außerdem gegen seinen eingefrorenen Fingerprint geprüft. Als Nächstes prüfe ich den kompletten Ein-Area-Ablauf samt fehlender Zustimmung, veralteten Voten und verändertem Kandidaten.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-worker/Markitect",
       "transferredDesignCommit": "691ce1dee3484371c4aea725db4ed5cc3f2e3719",
       "candidateSha": "028c137dac733c0a9c8539727e14bdba55fca789",
@@ -93,21 +93,21 @@
       "name": "Scientist",
       "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
       "hostId": "local",
-      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:16",
+      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:18",
       "lastObservedStatus": "active",
-      "activeTurn": "01a11716-f566-7f71-a6c8-82e7552e2fe5",
-      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac66cce0f388191891e0e4f48e28039",
+      "activeTurn": "01a11726-9b99-7231-956f-b7c183d1d3ea",
+      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac6704a747c8191b123faa17db83dd2",
       "initialAssignmentDispatched": true,
-      "assignedMilestone": "Correct builtin-provider configuration; at most one remaining identity/usage start after offline validation",
-      "latestProgress": "Die offizielle Dokumentation bestätigt die Korrektur: Eingebaute Provider-IDs dürfen nicht über model_providers neu definiert werden. Für den verbleibenden Start bleiben diese beiden Overrides weg; Provider, Endpoint und Authentifizierung bleiben gleich. Der spätere Studienrahmen bleibt unverändert. Ich prüfe die korrigierten Optionen jetzt über die lokale Debug-Schnittstelle, die keinen Agent-Turn startet.",
+      "assignedMilestone": "Read-only runner/model compatibility diagnosis and minimal supported next path",
+      "latestProgress": "Ich kläre die Kompatibilität ausschließlich lesend: zuerst anhand des gesicherten Katalogs und vorhandener Runner-Metadaten, anschließend bei Bedarf mit offiziellen Quellen. Dabei trenne ich Modellbezeichnung, CLI-Protokoll und Account-Berechtigung. Es erfolgen keine Inferenzaufrufe oder Änderungen an Installation und Einstellungen.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-scientist/Markitect",
       "transferredDesignCommit": "b9e17c9896f14b4b1268e4bcb005395f5d324384",
-      "candidateSha": "667f39d4e6d925cbd32128906f0afecfdc3e4e27",
-      "acceptance": "Failed first-start evidence inspected; model/usage/access still unknown, S1 open",
+      "candidateSha": "66be8048a27dd0bb7ab5b993e73c1a4b7d08f22d",
+      "acceptance": "Final diagnostic evidence accepted; pinned CLI/ChatGPT invocation rejected requested model, 2/2 starts consumed and S1 open",
       "lastAssignment": {
-        "sentUtc": "2026-10-07T15:59:03Z",
-        "key": "fix-native-provider-config-and-last-probe",
-        "scope": "Supported builtin-provider config and read-only preflight; final one of two external starts may retry corrected identity probe. Wrapper retries remain zero; unchanged provider-internal defaults allowed within 180s. No extra access session, provider/endpoint/model substitution, global settings changes or study trials."
+        "sentUtc": "2026-10-07T16:16:08.000Z",
+        "key": "read-only-runner-model-compatibility",
+        "scope": "Classify pinned CLI model ID vs runner protocol/version vs account entitlement using existing catalog/local metadata/official docs; propose minimal supported path. No extra Actor starts, model substitution, install/global-config/auth mutation or study trials."
       },
       "evidence": {
         "sourcesHashChecked": 37,
@@ -145,6 +145,25 @@
           "rootInspection": "Read raw stderr/result and independent review; all manifest hashes matched",
           "resolvedModel": null,
           "providerUsage": null
+        },
+        "actualProbeR2": {
+          "sourceSha": "66be8048a27dd0bb7ab5b993e73c1a4b7d08f22d",
+          "sourceHashesChecked": 56,
+          "evidenceHashesChecked": 28,
+          "hashMismatches": 0,
+          "startsConsumedTotal": 2,
+          "remainingStarts": 0,
+          "agentTurnsStartedTotal": 1,
+          "agentTurnsCompleted": 0,
+          "httpStatus": 400,
+          "wallSeconds": 4.57096099993214,
+          "actualError": "The 'gpt-6.1-sol' model is not supported when using Codex with a ChatGPT account.",
+          "scope": "Pinned npm codex-cli 0.130.0 and existing ChatGPT-auth invocation only; not desktop-app model availability.",
+          "resolvedModel": null,
+          "providerUsage": null,
+          "internalRetries": null,
+          "targetedTestsPassed": 3,
+          "rootInspection": "Read raw stdout/result, observation, independent review and source validation; verified 56 source and 28 public evidence hashes, clean final SHA."
         }
       },
       "classicHandoffReceived": true
@@ -153,13 +172,13 @@
       "name": "Architect",
       "threadId": "01a111ec-a913-7830-91b0-925d0a1dd1b2",
       "hostId": "local",
-      "afterCursor": "71d9f5b2-c0f0-474c-9898-777d051b478a:31",
+      "afterCursor": "71d9f5b2-c0f0-474c-9898-777d051b478a:32",
       "lastObservedStatus": "active",
       "activeTurn": "01a11716-f468-71c0-b5f4-a59f722c0bbc",
-      "lastAssistantMessageId": "msg_0b6e7ce0ce9f843f016ac66df7354c87d2984b8326d3306448",
+      "lastAssistantMessageId": "msg_0b6e7ce0ce9f843f016ac66fc39f3087d2a7e578ebf23e9576",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "Complete required local source/integration gates for public Classic example; exclusive full-suite slot",
-      "latestProgress": "Die Budgetänderung ist geprüft; die Tests für Grenzwerte, Standardlimit, Kopien und Ergebnisbindung bestehen. Ich friere jetzt den Quellstand ein und starte genau einen festen Project-Verify. Dieser deckt Architektur-, Artefakt- und Modulprüfung sowie die frische Go-Vollsuite ab. Vet, Build, Schema, Beispiele und der Windows-Paketweg folgen separat.",
+      "latestProgress": "Die 34 Beispielbefehle, Onboarding und die Adoption mit gepackter CLI sind bestanden. Beim Bootstrap ist der erste lokale Versuch am Prozessstart gescheitert. Sein entpacktes Arbeitsverzeichnis ist 288 Zeichen lang; ich prüfe jetzt, ob die Pfadlänge die Ursache ist, und wiederhole nur diesen Teil mit unveränderten Eingaben unter einem kurzen Pfad. Der fehlgeschlagene Versuch bleibt erhalten.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/classic-public-example/Markitect",
       "transferredDesignCommit": null,
       "candidateSha": "b09d6b75a202f4fc6fe4855878a152aec938c29d",
@@ -198,7 +217,7 @@
       "heldWorktree": "C:/Users/Consiliari/.codex/worktrees/standard-operating-model/Markitect"
     }
   ],
-  "nextAction": "Review G2 implementation milestones, Architect exact final source gates and Scientist corrected last identity probe. No further full-suite concurrency or additional probe starts. Keep study live gate closed until complete product/runner/protocol readiness.",
+  "nextAction": "Review Scientist's read-only runner/model compatibility recommendation, Worker G2 and Architect final source gates. No additional Actor starts or full-suite concurrency; study live gate remains closed.",
   "boundaries": {
     "governmentPublication": false,
     "automaticClassicReplacement": false,
@@ -207,10 +226,12 @@
     "jev": "Deferred; no extra investigation started"
   },
   "lastReview": {
-    "reviewedUtc": "2026-10-07T16:07:49Z",
-    "evidenceLevel": "Compact live snapshots checked for all three chats. All active; new commentary is reported progress, no new completion or final candidate accepted and no source gates rerun.",
+    "reviewedUtc": "2026-10-07T16:16:21Z",
+    "evidenceLevel": "Compact live snapshots for all chats. Personally verified Scientist clean 66be804, raw HTTP400/error receipts, independent review, three targeted test results and all 84 manifest hashes. Worker/Architect updates remain reported progress; no tests rerun.",
     "coordinationActions": [
-      "No new assignments: Worker implementing G2, Scientist validating corrected builtin-provider config, Architect starting fixed Project-Verify in assigned exclusive full-suite slot."
+      "Accepted final diagnostic as failure evidence, not S1 readiness.",
+      "Assigned Scientist a bounded read-only compatibility investigation; observed active.",
+      "No repeated Worker or Architect tasks; Architect retains heavy suite slot."
     ],
     "userDecisionRequired": false
   },
@@ -260,23 +281,23 @@
     "purpose": "Actual model/version, raw metering, effective context and access on fresh public sentinels only",
     "limitations": "Token threshold 10000 is retrospective and can overshoot in-flight; provider request count unknown unless evidenced. No guaranteed hard token/call cap claimed. No study work, model substitution, retries, children or new purchases.",
     "previousProviderTurnsPerSession": 6,
-    "updatedUtc": "2026-10-07T15:59:03Z",
+    "updatedUtc": "2026-10-07T16:16:21Z",
     "providerRequestCap": null,
     "wrapperStartedAgentTurnsPerSession": 1,
-    "sessionsConsumedAtLastCompletedCheckpoint": 1,
+    "sessionsConsumedAtLastCompletedCheckpoint": 2,
     "amendment": "Coordinator's six internal request limit removed for readiness only; exec turn.completed must not be equated with provider requests. Hard 2-session/180s process bounds remain; full study commonLimits unchanged. At 15:59Z coordinator clarified wrapper vs provider-internal retries and allowed the remaining start after actual configuration correction; session quota unchanged.",
     "latestReportedAttempt": {
-      "reportedUtc": "2026-10-07T15:44:31Z",
-      "sessionsConsumed": 1,
-      "agentTurnsStarted": 0,
-      "outcome": "configuration rejected before agent turn",
-      "reason": "codex-cli 0.130.0 rejects overrides for built-in openai provider ID",
-      "evidenceStatus": "Verified raw error/result/independent review and all 70 hashes at 667f39d",
-      "secondAttemptStarted": false
+      "reportedUtc": "2026-10-07T16:14:17Z",
+      "sessionsConsumed": 2,
+      "agentTurnsStarted": 1,
+      "agentTurnsCompleted": 0,
+      "outcome": "HTTP400 account/model rejection for pinned CLI/auth invocation",
+      "evidenceStatus": "Personally verified raw error/result/reviews and 84 manifest hashes at 66be804",
+      "secondAttemptStarted": true
     },
-    "remainingSessions": 1,
+    "remainingSessions": 0,
     "retrySemantics": "No wrapper relaunch or continuation. If builtin provider retry controls unavailable, unchanged documented internal transport defaults allowed inside 180s for this probe only; counts/usage remain unknown unless evidenced.",
-    "remainingAttemptPurpose": "One corrected minimal identity/usage start allowed despite failed first attempt; no additional access probe afterward."
+    "remainingAttemptPurpose": "Exhausted. Current follow-up is read-only compatibility diagnosis; no new Actor/access probes."
   },
   "sourceTestTimeoutAuthorization": {
     "userInstruction": "Zur Not würde ich die Timeout Grenze erhöhen auf bis zu 30 minuten; Rückmeldung als Alternative",
