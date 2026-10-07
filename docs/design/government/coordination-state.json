@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-07T20:55:00Z",
+  "updatedUtc": "2026-10-07T20:57:30Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -22,13 +22,13 @@
       "name": "Worker",
       "threadId": "01a1169b-9357-7df3-a8f6-f913557c782a",
       "hostId": "local",
-      "afterCursor": "b2b8e43f-fcaa-41bf-828a-99c69527bdea:50",
+      "afterCursor": "b2b8e43f-fcaa-41bf-828a-99c69527bdea:51",
       "lastObservedStatus": "active",
       "activeTurn": "01a11825-4178-7fa0-a3f9-1864f60afc19",
-      "lastAssistantMessageId": "msg_0a7785839df196a4016ac6b17e0a048191a3e26c77a6c2faf1",
+      "lastAssistantMessageId": "msg_0a7785839df196a4016ac6b1ec5b248191921c575517e7c241",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "Close only G5 lease-format validation finding; new clean source-bound gates/recovery evidence, then hold for S1.",
-      "latestProgress": "Ich schließe die Lease-Lücke gezielt: Bestehende Records müssen das vollständige unterstützte Format erfüllen und bleiben bei Ablehnung bytegleich. Danach folgen eine enge unabhängige Prüfung und neue, SHA-gebundene Nachweise; die bisherigen Ergebnisse bleiben erhalten.",
+      "latestProgress": "Acquire und Verify werden denselben Decoder verwenden: genau sechs bekannte Felder, positive PID, 64-stelliger kleingeschriebener Hex-Token und ein gültiger UTC-Zeitstempel. Verify wird außerdem CreatedAt mit dem ursprünglich gehaltenen Record vergleichen. Die Tests prüfen auch, dass abgewiesene Records unverändert bleiben.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-worker/Markitect",
       "transferredDesignCommit": "691ce1dee3484371c4aea725db4ed5cc3f2e3719",
       "candidateSha": "d146201e0f004e671cb90cf77b6a107dc14429b5",
@@ -222,7 +222,7 @@
       "name": "Scientist",
       "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
       "hostId": "local",
-      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:57",
+      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:58",
       "lastObservedStatus": "active",
       "activeTurn": "01a11825-e6f1-70e1-857d-96efc90de59c",
       "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac6b1a848608191abb065f74d87bde2",
@@ -743,12 +743,10 @@
     "satPrinciples": "Deferred by direct user request on 2026-10-07; conceptual constraint/consistency/conflict-explanation principles first, no solver integration or current assignment change. See docs/design/government/deferred-research.md."
   },
   "lastReview": {
-    "reviewedUtc": "2026-10-07T20:55:00Z",
-    "evidenceLevel": "Three compact snapshots and both fresh completed handoffs examined. Two independent G5 reviews; root verified lease source/docs and handoff digest. Separate independent Scientist integrity/classifier review. No tests rerun.",
+    "reviewedUtc": "2026-10-07T20:57:30Z",
+    "evidenceLevel": "Compact snapshots for all three chats. Worker reports shared strict lease decoder plus immutable-refusal regressions in progress; Scientist continues classified metadata client and S1 adapters; Architect unchanged held Classic. No new completed handoff or newly accepted source evidence.",
     "coordinationActions": [
-      "Sent Worker one narrow G5 lease-recognition fix assignment after verified gates/native evidence; acceptance held.",
-      "Accepted Scientist negative metadata evidence, recorded consumption; issued one finite classified metadata session and parallel S1 adapter mechanics.",
-      "Architect unchanged, no assignment. Confirmed Worker and Scientist active after dispatch."
+      "Updated cursors and reported progress only; existing assignments continue. No duplicate message, new grant, product change or test run."
     ],
     "userDecisionRequired": false
   },
