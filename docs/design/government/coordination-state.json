@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-07T14:12:22.772Z",
+  "updatedUtc": "2026-10-07T14:14:23.9081751Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -9,7 +9,9 @@
   "automation": {
     "id": "jev-nach-markitect-grundmodell-untersuchen",
     "status": "ACTIVE",
-    "intervalMinutes": 10
+    "intervalMinutes": 10,
+    "reportEveryReview": true,
+    "reportTimezone": "Europe/Berlin"
   },
   "threads": [
     {
