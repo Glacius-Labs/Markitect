@@ -73,7 +73,7 @@ func Run(ctx context.Context, opts Options) (report Report, runErr error) {
 		"G2 executes one Writer Area; recursive child execution, amendment activation, queue and complete recovery remain unavailable.",
 		"PromotionIntent and Git CAS are separate durable effects. No automatic rollback or atomic ledger/Git transaction is claimed.",
 		"Accepted-scoped records configured process and check outcomes; it does not establish semantic sufficiency or human acceptance.",
-		"Area review is assigned read-only to the configured verifier over frozen plan scopes; no additional review-action mandate authority is inferred.",
+		"Area review is read-only evidence assigned by the frozen plan, never a Ressort vote or acceptance/change/promotion authority; no per-Area review mandate is inferred from implement.",
 	}}
 	defer func() {
 		if runErr != nil {
