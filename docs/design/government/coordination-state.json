@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-07T14:45:18.6939863Z",
+  "updatedUtc": "2026-10-07T15:01:30Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -18,60 +18,109 @@
       "name": "Worker",
       "threadId": "01a1169b-9357-7df3-a8f6-f913557c782a",
       "hostId": "local",
-      "afterCursor": "b2b8e43f-fcaa-41bf-828a-99c69527bdea:4",
+      "afterCursor": "b2b8e43f-fcaa-41bf-828a-99c69527bdea:6",
       "lastObservedStatus": "active",
-      "activeTurn": "01a116b3-6a7f-7de3-8b4a-80b142827738",
-      "lastAssistantMessageId": "msg_0a7785839df196a4016ac659faf3f4819188e889a82b2c40be",
+      "activeTurn": "01a116e1-aee9-7c02-b5a0-53f9065c6c49",
+      "lastAssistantMessageId": "msg_0a7785839df196a4016ac65ea55e2481919f796d76a5a6c617",
       "initialAssignmentDispatched": true,
-      "assignedMilestone": "G1 with G2 contracts",
-      "latestProgress": "Die vollständige Testsuite läuft inzwischen innerhalb der festen verify-Prüfung. Der G1-Nachweis bleibt auf Modell, Inventar und lesende Planung begrenzt: Echte Dateien und Modellidentitäten sind geprüft, G2-Agentenausführung und Host-Übernahme sind noch nicht implementiert.",
+      "assignedMilestone": "G1 source-gate closure; bounded isolated installation-test diagnosis",
+      "latestProgress": "Ich prüfe jetzt ausschließlich den offenen G1-Nachweis: höchstens zwei isolierte Diagnoseversuche mit jeweils maximal 120 Sekunden. Dabei erfasse ich die tatsächlichen Laufzeiten und Git-Kindprozesse. Einen weiteren Gesamtlauf starte ich nur, wenn die Diagnose ihn begründet; G2 bleibt zurückgestellt.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-worker/Markitect",
-      "transferredDesignCommit": "691ce1dee3484371c4aea725db4ed5cc3f2e3719"
+      "transferredDesignCommit": "691ce1dee3484371c4aea725db4ed5cc3f2e3719",
+      "candidateSha": "e2c834fe93fb39e7292e5acfeb7d8207af22371f",
+      "acceptance": "implemented and focused checks passed; full repository acceptance incomplete",
+      "lastAssignment": {
+        "sentUtc": "2026-10-07T15:00:51Z",
+        "key": "g1-install-test-timeout-diagnosis",
+        "scope": "At most two 120-second isolated diagnoses; no G2; at most one justified fixed-revision full verify after concrete diagnosis/fix; no relaxed gates"
+      },
+      "evidence": {
+        "summary": ".artifacts/government-g1/final-summary.json",
+        "focused": "passed",
+        "contributionCommands": 20,
+        "contributionFailures": 0,
+        "fullVerify": "incomplete: go-tests exceeded 600003 ms",
+        "independentReview": "reported no open findings in bounded review",
+        "overseerInspection": "Clean candidate, docs and evidence read. Read-only subagent traced historical timeout stack to installation Git commit; cause not established. Old fixture classification failure corrected on final candidate."
+      }
     },
     {
       "name": "Scientist",
       "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
       "hostId": "local",
-      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:4",
+      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:6",
       "lastObservedStatus": "active",
-      "activeTurn": "01a116b3-6b38-7163-ba3c-65e8f8010925",
-      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac65a2a338081918db45dd0fdcb122f",
+      "activeTurn": "01a116e1-affd-7800-a888-87fbda15caa1",
+      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac65ea543a88191b15f9835e44eb37e",
       "initialAssignmentDispatched": true,
-      "assignedMilestone": "Reference fixtures, public adapter contract and harness readiness",
-      "latestProgress": "Die Quellprüfung hat ihr reguläres Zehn-Minuten-Fenster erreicht, aber noch keinen Abschlussbericht geliefert. Ich prüfe jetzt den Prozessabschluss und halte dieses Ergebnis getrennt vom bestandenen Fixture-Paket. Ein fehlender Abschluss wird als unvollständige Evidenz dokumentiert und nicht als grünes Gate gewertet.",
+      "assignedMilestone": "Common adapter and bounded actual runner readiness; six-cell live study remains closed",
+      "latestProgress": "Ich prüfe zuerst das Classic-Readiness-Paket und die tatsächlich verfügbaren Codex-Schnittstellen. Danach baue ich die gemeinsame Hülle mit getrenntem Ressourcenledger und klaren Stop-Regeln. Die höchstens zwei Runner-Probes bleiben auf öffentliche Sentinels begrenzt; Government bleibt bis zu den erforderlichen Nachweisen readiness_gap.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-scientist/Markitect",
-      "transferredDesignCommit": "b9e17c9896f14b4b1268e4bcb005395f5d324384"
+      "transferredDesignCommit": "b9e17c9896f14b4b1268e4bcb005395f5d324384",
+      "candidateSha": "e4278c50ddc84daee3858e24c89e6cf5777b5dfe",
+      "acceptance": "Preparation package integrity verified; fixture validation reported passed; S1 live readiness pending",
+      "lastAssignment": {
+        "sentUtc": "2026-10-07T15:00:51Z",
+        "key": "runner-adapter-readiness-and-classic-handoff",
+        "scope": "Inspect exact Classic packet; implement shared adapter/ledger; at most two bounded actual runner sentinel probes; no full Go/Verify rerun or six-cell trial"
+      },
+      "evidence": {
+        "sourcesHashChecked": 37,
+        "publicEvidenceHashChecked": 70,
+        "hashMismatches": 0,
+        "reportedHarnessTests": 5,
+        "reportedMechanicalProbes": 6,
+        "reportedApiAssertions": 18,
+        "liveCells": 0,
+        "fullSourceGate": "historical b89f1abd86f0a03d76e991ef5898c245f0d735ec incomplete, no new full-suite rerun"
+      },
+      "classicHandoffReceived": true
     },
     {
       "name": "Architect",
       "threadId": "01a111ec-a913-7830-91b0-925d0a1dd1b2",
       "hostId": "local",
-      "afterCursor": "71d9f5b2-c0f0-474c-9898-777d051b478a:23",
-      "lastObservedStatus": "active",
+      "afterCursor": "71d9f5b2-c0f0-474c-9898-777d051b478a:24",
+      "lastObservedStatus": "idle",
       "activeTurn": "01a116ae-eda0-7551-87a2-84e23e9fc301",
-      "lastAssistantMessageId": "msg_0b6e7ce0ce9f843f016ac659e4e7b887d2a9b2b2db97abdae1",
+      "lastAssistantMessageId": "msg_0b6e7ce0ce9f843f016ac65cd1e43c87d2b73aa4feef3bd4e2",
       "initialAssignmentDispatched": true,
-      "assignedMilestone": "Classic final checks, cleanup and reproducible readiness packet",
-      "latestProgress": "Der erste Smoke hat einen weiteren Fehler in der Übergabehilfe sichtbar gemacht: Die Modellabfrage liefert YAML, während die Controller-Aktionen JSON liefern. Die Hilfe hatte beides als JSON behandelt. Ich korrigiere diese Unterscheidung und behalte den unvollständigen Lauf samt Ausgaben bei.",
-      "worktree": "Existing isolated Classic context; Architect owns exact selected worktree",
-      "transferredDesignCommit": null
+      "assignedMilestone": "Readiness accepted for finite CLI use; hold candidate for concrete Scientist product findings",
+      "latestProgress": "Completed finite Classic readiness packet and holds clean candidate. No new busywork assigned.",
+      "worktree": "C:/Users/Consiliari/.codex/worktrees/standard-operating-model/Markitect",
+      "transferredDesignCommit": null,
+      "candidateSha": "c91363b7ac4decbe87212ff0f588b5451581a152",
+      "runtimeSourceSha": "7dbd599c81540c8203a1b7f83afbc335174f4f1f",
+      "releaseVersion": "v0.14.1",
+      "acceptance": "finite CLI readiness; synthetic runner smoke is not autonomous semantic engineering evidence",
+      "evidence": {
+        "packet": ".artifacts/classic-readiness/v0.14.1-r1/",
+        "hashesChecked": 113,
+        "hashMismatches": 0,
+        "ciRun": "37632955089",
+        "ciConclusion": "success",
+        "ciHeadSha": "c91363b7ac4decbe87212ff0f588b5451581a152",
+        "productSmoke": "Apply -> fresh Verify -> Audit, synthetic runner; explicit scoped Markdown policy setup",
+        "windowsBinarySha256": "2cad55efad64f15d7f57638bea78312918fbf7d181c730f188b9921504da71c4"
+      }
     }
   ],
-  "nextAction": "Await existing final validation. Public adapter v1.1 was read and handed off; do not repeat these messages. Scientist owns study wrappers; product owners supply true invocation/evidence. Scientist to close known SKU 404 check and report pending source gate accurately before scheduling another heavy run.",
+  "nextAction": "Review bounded Worker G1 closure and Scientist runner/adapter readiness when complete; keep Architect held for concrete product defects. No duplicate assignments or parallel full source suites.",
   "boundaries": {
     "governmentPublication": false,
     "automaticClassicReplacement": false,
     "newExternalPurchases": false,
-    "liveStudy": "Await exact product readiness, versions, available authorized runtime and bounded resource profile",
+    "liveStudy": "Closed pending product G1-G5, S1, exact configuration pins, enforceable common accounting and coordinator live protocol freeze; finite ceilings selected",
     "jev": "Deferred; no extra investigation started"
   },
   "lastReview": {
-    "reviewedUtc": "2026-10-07T14:45:18.6939863Z",
-    "evidenceLevel": "Live chats; Scientist clean HEAD 3f1dcf47 and public adapter v1.1 directly read. No final product/fixture milestone accepted.",
+    "reviewedUtc": "2026-10-07T15:01:30Z",
+    "evidenceLevel": "Actual clean source SHAs and local evidence read. Classic 113 file hashes and exact held-head CI directly verified; Scientist 107 source/public-evidence hashes directly verified. Worker full source gate remains incomplete.",
     "coordinationActions": [
-      "Worker: public v1.1 adapter contract and G2 integration information sent; existing G1 checks continue.",
-      "Architect: align readiness handoff with public contract; Scientist owns wrapper; no new study or runner requested.",
-      "Scientist: clarify adapter ownership, close known public SKU 404 gap, retain source-gate failure evidence and coordinate any heavy rerun."
+      "Worker sent bounded G1 source-timeout diagnosis task; post-dispatch active.",
+      "Scientist sent exact Classic handoff and bounded adapter/runner-readiness task; post-dispatch active.",
+      "Selected finite future study ceiling and separate 2-session readiness probe. Six-cell live study remains closed.",
+      "Architect readiness recorded; existing hold respected, no repeat or expansion message."
     ],
     "userDecisionRequired": false
   },
@@ -84,6 +133,42 @@
       "Architect"
     ],
     "wrapperOwner": "Scientist",
-    "liveStudyApproved": false
+    "liveStudyApproved": false,
+    "latestScientistCommit": "e4278c50ddc84daee3858e24c89e6cf5777b5dfe"
+  },
+  "resourceProfile": {
+    "selectedUtc": "2026-10-07T15:00:51Z",
+    "source": "Scientist e4278c50ddc84daee3858e24c89e6cf5777b5dfe experiments/government-comparison/public/resource-proposal.json",
+    "status": "Ceilings selected; enforcement and live protocol freeze pending",
+    "taskWallSeconds": 1200,
+    "trialWallSeconds": 7200,
+    "taskActorCalls": 12,
+    "trialActorCalls": 72,
+    "taskProviderTurns": 80,
+    "trialProviderTurns": 480,
+    "taskProviderTokens": 120000,
+    "trialProviderTokens": 720000,
+    "maxParallelActors": 4,
+    "maxTransportRetriesPerCall": 1,
+    "maxSemanticRepairRoundsPerTask": 2,
+    "trialActiveHumanSeconds": 600,
+    "newPurchases": false,
+    "liveStudyApproved": false,
+    "scope": "One exploratory trial per six cells only after all readiness gates and final coordinator freeze; all setup, descendants, reviews, failures and model upkeep count"
+  },
+  "runnerProbe": {
+    "authorizedUtc": "2026-10-07T15:00:51Z",
+    "actorSessionsTotal": 2,
+    "wallSecondsPerSession": 180,
+    "providerTurnsPerSession": 6,
+    "maxParallelActors": 1,
+    "subagents": false,
+    "automaticRetries": 0,
+    "observedAggregateTokenStopThreshold": 10000,
+    "requestedModel": "gpt-6.1-sol",
+    "reasoning": "high",
+    "newPurchases": false,
+    "purpose": "Actual model/version, raw metering, effective context and access on fresh public sentinels only",
+    "limitations": "Missing/delayed token counters are a gap, not an enforceable hard-token-cap claim. No tasks/holdouts; separate actor roots; no silent model fallback."
   }
 }
