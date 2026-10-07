@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Government comparison event v1",
+  "type": "object",
+  "required": ["schemaVersion", "trialId", "kind", "mode", "arm", "condition", "startedUtc", "endedUtc", "status", "usage", "billedCost", "contaminated"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "trialId": {"type": "string", "minLength": 1},
+    "kind": {"enum": ["adapter_attempt", "setup", "modeling", "model_maintenance", "implementation", "verification", "integration", "retry", "recovery", "wait", "intervention", "freeze", "assessment", "leakage"]},
+    "mode": {"enum": ["fixture", "live"]},
+    "arm": {"enum": ["conventional", "classic", "government"]},
+    "condition": {"enum": ["greenfield", "brownfield"]},
+    "taskId": {"type": ["string", "null"]},
+    "startedUtc": {"type": "string", "format": "date-time"},
+    "endedUtc": {"type": "string", "format": "date-time"},
+    "wallSeconds": {"type": ["number", "null"], "minimum": 0},
+    "agentActiveSeconds": {"type": ["number", "null"], "minimum": 0},
+    "humanActiveSeconds": {"type": ["number", "null"], "minimum": 0},
+    "coordinatorActiveSeconds": {"type": ["number", "null"], "minimum": 0},
+    "waitSeconds": {"type": ["number", "null"], "minimum": 0},
+    "status": {"type": "string"},
+    "usage": {"oneOf": [{"type": "null"}, {"type": "object", "required": ["provider", "rawCounters", "semantics", "receiptSha256"], "properties": {
+      "provider": {"type": "string"}, "rawCounters": {"type": "object"},
+      "semantics": {"type": "string"}, "receiptSha256": {"type": "string"},
+      "inputTokens": {"type": ["integer", "null"], "minimum": 0},
+      "outputTokens": {"type": ["integer", "null"], "minimum": 0},
+      "cachedInputTokens": {"type": ["integer", "null"], "minimum": 0},
+      "reasoningTokens": {"type": ["integer", "null"], "minimum": 0},
+      "totalTokens": {"type": ["integer", "null"], "minimum": 0}
+    }}]},
+    "billedCost": {"type": ["object", "null"], "description": "Actual amount/currency/receipt; never inferred from tokens, bytes or duration"},
+    "priceEstimate": {"type": ["object", "null"], "description": "Separate estimate with source URL, price date, formula and disjoint counters"},
+    "intervention": {"type": ["object", "null"], "description": "Initiator, reason, scope, duration, required/avoidable under frozen criterion, consequence"},
+    "contaminated": {"type": "boolean"},
+    "candidateCommit": {"type": ["string", "null"]},
+    "parentEventId": {"type": ["string", "null"]}
+  },
+  "additionalProperties": true
+}

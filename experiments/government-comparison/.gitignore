@@ -1,0 +1,7 @@
+.study-data/
+__pycache__/
+fixtures/brownfield/**/bin/
+fixtures/brownfield/**/obj/
+*.db
+*.db-shm
+*.db-wal

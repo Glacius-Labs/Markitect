@@ -1,0 +1,112 @@
+{
+  "schemaVersion": 1,
+  "kind": "fixture-smoke",
+  "liveTrials": 0,
+  "status": "passed",
+  "starts": {
+    "greenfield": {
+      "commit": "0416e366626d31933443ce2901d6a3696261db7b",
+      "tree": "4b825dc642cb6eb9a060e54bf8d69288fbee4904",
+      "files": {}
+    },
+    "brownfield": {
+      "commit": "5d21ef02cd9d5485c26bc4053a35c61ad33024c1",
+      "tree": "ce824005c84d15dfced632ec65e0c4e7a4b25ab7",
+      "files": {
+        ".gitignore": "efae82d4d6b36a52d802384d6971e0a873befb8c2e133c58acf2ae4de98a0518",
+        "NuGet.Config": "f545a7e2ea14ac53cdfb91217cae67b8ff14275313f6298f9a3331d205b6c948",
+        "README.md": "04ffeba33fdc219fc92982d5f45b56d70f2c122c004a4219f7220be2894f1798",
+        "global.json": "5314e0a63f1dc01db433dc0044bb19713cfcf9876fb7df34e506c6d4dbffbe68",
+        "src/Orders.Api/Contracts.cs": "be7e031523eab597c325e9ad9c46a4e807a872e80574cf67c31cef79ebc59cf6",
+        "src/Orders.Api/Orders.Api.csproj": "f6c0660dc1975c2fab5a3c6df428ccf9fab814e1d4b84dd581c87cff77b3bb49",
+        "src/Orders.Api/OrdersStore.cs": "7dae3446081f0a8102e94dd109ded53a314d7689ad978646c199e7905a7ce59a",
+        "src/Orders.Api/Program.cs": "712324836674195b5796daad7dccf25f34ece92577caf03023f2faecf998727a",
+        "src/Orders.Api/Properties/launchSettings.json": "db86e574ed9384df0c8de11f1b6a5214f4612bc2287089f03676857638e6e3da",
+        "src/Orders.Api/appsettings.Development.json": "73f95f9e0ceb205fc1c4dc50c07697fcfa29d7087868c2aef1d504cb38c771ec",
+        "src/Orders.Api/appsettings.json": "200332b434757a0054a3d356c91cde01f2c48712be8aa2bcb0f3e973619f06e3",
+        "src/Orders.Api/packages.lock.json": "80949191d7388ec7b149d4cc85a70ccd213fd082d7aaa15d8d5e435f66bd42e0"
+      }
+    }
+  },
+  "cellProbes": [
+    {
+      "trialId": "conventional-greenfield-smoke",
+      "status": "readiness_gap",
+      "usage": null
+    },
+    {
+      "trialId": "classic-greenfield-smoke",
+      "status": "readiness_gap",
+      "usage": null
+    },
+    {
+      "trialId": "government-greenfield-smoke",
+      "status": "readiness_gap",
+      "usage": null
+    },
+    {
+      "trialId": "conventional-brownfield-smoke",
+      "status": "readiness_gap",
+      "usage": null
+    },
+    {
+      "trialId": "classic-brownfield-smoke",
+      "status": "readiness_gap",
+      "usage": null
+    },
+    {
+      "trialId": "government-brownfield-smoke",
+      "status": "readiness_gap",
+      "usage": null
+    }
+  ],
+  "apiChecks": [
+    "health",
+    "catalog prices",
+    "invalid zero",
+    "invalid negative",
+    "invalid fractional",
+    "invalid unknown",
+    "invalid empty",
+    "invalid limit",
+    "missing key",
+    "unknown order",
+    "created exact total",
+    "read order",
+    "semantic retry",
+    "key conflict",
+    "legacy existing path",
+    "order durable after restart",
+    "legacy idempotency after restart"
+  ],
+  "releasedInputs": [
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\.study-data\\smoke-v5\\released-task1\\01-create-order.md",
+      "sha256": "bf5c1e5bf148245bfbc8212e2ad90b7369d8a1a03765258eda078f1ec87075a9"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\.study-data\\smoke-v5\\released-task1\\architecture.md",
+      "sha256": "7459d9514358d1448c2353e0c0bf3d24d11a7eaf84b67c695724c88d20023700"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\.study-data\\smoke-v5\\released-task1\\brief.md",
+      "sha256": "4692ec98bbf8f8a140020e88182a62504689e6e6df5aa80af7c6783cdacb13c8"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\.study-data\\smoke-v5\\released-task1\\checks.py",
+      "sha256": "fc96859ce7cc71426ed774f3ff5d88a45adcf016d2250c259287d1da628ac0cc"
+    }
+  ],
+  "access": {
+    "probe": "same-user subprocess from cell cwd sees external nonsecret sentinel",
+    "externalFileReadable": true,
+    "osIsolationEstablished": false,
+    "actualActorRunnerTested": false
+  },
+  "limits": [
+    "No actual actor or product adapter invoked",
+    "Brownfield task1/restart only; tasks2-6 not baseline capabilities",
+    "No API fault-injection or full restart guarantee established",
+    "Private oracle stays outside handoff; same OS rights permit access"
+  ]
+}

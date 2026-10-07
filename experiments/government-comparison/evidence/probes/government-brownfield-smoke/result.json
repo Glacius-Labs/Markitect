@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "trialId": "government-brownfield-smoke",
+  "operation": "probe",
+  "mode": "fixture",
+  "status": "readiness_gap",
+  "candidateCommit": null,
+  "capabilities": [
+    "fixture-interchange-only"
+  ],
+  "gaps": [
+    "No actual actor runner configured",
+    "Product adapter not supplied/frozen"
+  ],
+  "receipts": [],
+  "usage": null
+}

@@ -1,0 +1,7 @@
+**/bin/
+**/obj/
+.local/
+.study/
+*.db
+*.db-shm
+*.db-wal

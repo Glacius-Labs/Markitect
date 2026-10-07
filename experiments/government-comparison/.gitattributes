@@ -1,0 +1,2 @@
+# Preserve exact fixture and receipt bytes across Windows/Linux snapshots.
+* -text
