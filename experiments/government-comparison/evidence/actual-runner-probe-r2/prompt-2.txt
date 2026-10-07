@@ -1,0 +1,2 @@
+Use no tools, subagents, or file access. This is a public identity/usage smoke, no project work. Reply exactly with this sentinel and nothing else:
+e0b071126586ab7abb59cee23f2817f0

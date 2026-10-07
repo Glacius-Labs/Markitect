@@ -19,15 +19,24 @@
     "requestedProfile": "Sol 6.1 High",
     "reasoning": "high",
     "toolConfigurationSha256": null,
-    "accessProbe": "not reached: native config rejected reserved built-in provider override",
+    "accessProbe": "not performed; final authorized identity start received HTTP400 account/model rejection",
     "meteringSemantics": "No actual usage receipt; agent/provider counts not equated; requested tiny threshold is retrospective input+output, not hard cap.",
     "actualReadinessProbe": {
-      "attempts": 1,
-      "startedAgentTurns": 0,
-      "status": "runtime-config-rejected",
-      "receipt": "evidence/actual-runner-probe-r1/observation.json",
+      "attempts": 2,
+      "startedAgentTurns": 1,
+      "status": "account-model-rejected",
+      "receipt": "evidence/actual-runner-probe-r2/observation.json",
       "tinySixProviderRequestBoundaryRemovedByOverseer": true,
-      "laterStudyLimitsUnchanged": true
+      "laterStudyLimitsUnchanged": true,
+      "maxAuthorizedAttempts": 2,
+      "remainingAttempts": 0,
+      "completedAgentTurns": 0,
+      "previousReceipt": "evidence/actual-runner-probe-r1/observation.json",
+      "remainingStartExplicitlyReauthorizedAfterFailure": true,
+      "wrapperRetries": 0,
+      "internalTransportRetryDefaultsPermittedForTinyDiagnosticOnly": true,
+      "internalRetriesObserved": null,
+      "allAttemptsTokenTotal": null
     }
   },
   "commonLimits": {

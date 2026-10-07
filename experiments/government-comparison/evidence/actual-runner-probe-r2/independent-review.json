@@ -1,0 +1,25 @@
+{
+  "reviewer": "/root/independent_review",
+  "scope": "Final authorized diagnostic code, quota, raw copied evidence and current reports; no Actor/provider calls or broad suites",
+  "disposition": "passed: no material public contradiction; S1 remains not cleared",
+  "originalFilesByteMatched": 7,
+  "invokedSourceHashesMatched": 4,
+  "requestResultAndPriorRequestBindings": true,
+  "quota": "Exactly attempts 1 and 2, both ended/failed; fixed ledger path and row check reject refill/root changes",
+  "targetedTestsObservedNotRerun": 3,
+  "attemptsConsumed": 2,
+  "remainingStarts": 0,
+  "agentTurnsStarted": 1,
+  "agentTurnsCompleted": 0,
+  "outcome": "HTTP400 requested model unsupported for pinned CLI/ChatGPT-account invocation",
+  "resolvedModel": null,
+  "providerRequests": null,
+  "providerUsage": null,
+  "internalRetries": null,
+  "contextAccess": "unmeasured",
+  "limitations": [
+    "Raw stderr preserves unrelated ambient skill and service model-catalog diagnostics",
+    "No actual model response, metered usage, access isolation or study execution",
+    "Final source manifest reconciliation follows separately"
+  ]
+}

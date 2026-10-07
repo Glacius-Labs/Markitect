@@ -1,0 +1,10 @@
+{
+  "ambientProviderEndpointOverridesPresent": false,
+  "ambientModelProviderIsDefaultOpenai": true,
+  "ambientBuiltinProviderDefinitionPresent": false,
+  "ambientMalformedAgentModelScalar": false,
+  "candidateUsesIgnoreUserConfig": true,
+  "candidateProvider": "openai",
+  "candidateHasProviderDefinitions": false,
+  "note": "No credential or endpoint values read into evidence; booleans only. Debug tools lack ignore-user-config; per-process agents.model={} resolves the known ambient scalar shape for metadata-only validation, with no file mutation."
+}

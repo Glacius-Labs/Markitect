@@ -1,0 +1,56 @@
+{
+  "argv": [
+    "C:/Users/Consiliari/AppData/Roaming/npm/node_modules/@openai/codex/node_modules/@openai/codex-win32-x64/vendor/x86_64-pc-windows-msvc/codex/codex.exe",
+    "features",
+    "list",
+    "--config",
+    "approval_policy=\"never\"",
+    "--config",
+    "apps._default.enabled=false",
+    "--config",
+    "features.goals=false",
+    "--config",
+    "features.hooks=false",
+    "--config",
+    "features.memories=false",
+    "--config",
+    "features.multi_agent=false",
+    "--config",
+    "features.plugins=false",
+    "--config",
+    "features.shell_tool=false",
+    "--config",
+    "features.unified_exec=false",
+    "--config",
+    "forced_login_method=\"chatgpt\"",
+    "--config",
+    "model=\"gpt-6.1-sol\"",
+    "--config",
+    "model_provider=\"openai\"",
+    "--config",
+    "model_reasoning_effort=\"high\"",
+    "--config",
+    "project_doc_max_bytes=0",
+    "--config",
+    "web_search=\"disabled\""
+  ],
+  "cwd": "C:\\Users\\Consiliari\\Documents\\Markitect Scientist Runner Readiness\\2026-10-07-real-probe-r2",
+  "returnCode": 0,
+  "wallSeconds": 0.12174009997397661,
+  "stopReason": null,
+  "processTreeControl": "windows-job-kill-on-close",
+  "filesystemIsolation": "not established by process wrapper",
+  "automaticRetries": 0,
+  "receipts": [
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Markitect Scientist Runner Readiness\\2026-10-07-real-probe-r2\\preflight-corrected-config\\stdout.log",
+      "sha256": "a4945aeb8cececdac4be8fa6264e9dd44ff1485fb125348bb68d3460e0d33078",
+      "kind": "stdout.log"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Markitect Scientist Runner Readiness\\2026-10-07-real-probe-r2\\preflight-corrected-config\\stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "kind": "stderr.log"
+    }
+  ]
+}

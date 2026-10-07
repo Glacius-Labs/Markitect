@@ -12,6 +12,10 @@ commit-bound; S1 and all live study gates remain open.
 The explicit tiny-probe addendum subsequently attempted a real Actor start. The
 native runner rejected its built-in-provider retry configuration before any agent
 turn; immutable receipts are in `evidence/actual-runner-probe-r1/`.
+The separately reauthorized final diagnostic removed the unsupported override and
+received HTTP 400: the requested model is unsupported for this CLI/ChatGPT-account
+invocation. Both external starts are consumed; no completed response or usage
+receipt exists. `evidence/actual-runner-probe-r2/` preserves the new evidence.
 
 ## Reproduce the fixture smoke
 
@@ -120,7 +124,8 @@ These are proposals, not measured/enforced limits or live authorization by fixtu
 
 Local `codex-cli 0.130.0` supports noninteractive execution and structured event
 output; [official documentation](https://learn.chatgpt.com/docs/non-interactive-mode)
-describes `codex exec --json`. No actor/provider request was made. The actual
+describes `codex exec --json`. At that preparation checkpoint no actor/provider
+request was made; the later two-start diagnostics are reported above. The actual
 account-supported model ID, exact executable/config, subagent metering and common
 aggregate cap enforcement must be pinned by a real runner-readiness checkpoint.
 Unknown billing stays null; no new purchase/subscription is part of this package.

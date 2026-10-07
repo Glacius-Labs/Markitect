@@ -1,12 +1,64 @@
 # Runner and common adapter readiness
 
 This is a finite readiness package, not a comparative result. Live trials: **0**.
-Actual external runner start attempts: **1 of the authorized maximum 2**; started
-agent turns: **0**. The real start was rejected while loading its configuration.
+Actual external runner start attempts: **2 of the authorized maximum 2**, remaining **0**;
+started agent turns: **1**, completed **0**. Attempt 1 failed configuration loading;
+attempt 2 reached the service and received an explicit account/model rejection.
 No model was substituted and no new authentication, purchase or user-config change occurred.
 The common public adapter contract remains v1.1.
 
-## Actual runner probe addendum
+## Final authorized diagnostic (attempt 2)
+
+The Overseer explicitly authorized the one remaining start despite attempt 1's
+failure and unknown usage. This exception applies only to this tiny diagnostic.
+No further Actor, access probe, continuation or retry start is authorized.
+The historical attempt-1 section and its frozen evidence remain unchanged below.
+
+`runtime/remaining_probe.py` removed the unsupported built-in-provider definitions
+while retaining the authenticated built-in OpenAI provider, explicit
+`gpt-6.1-sol/high`, original saved auth, 180-second Windows Job deadline, parallel 1,
+one wrapper-started turn, disabled tools/apps/plugins/hooks/subagents and no wrapper
+retry or continuation. It changed no endpoint, provider, global config or credential.
+The no-retry rule now concerns wrapper launches; unchanged built-in internal
+transport defaults were permitted. The official current config reference documents
+HTTP retry default 4 and stream retry default 5; the applied values in this binary
+and observed internal retry count remain unknown. `automaticRetries=0` in the
+process receipt describes wrapper launches only.
+
+Before launch, `features list` parsed the exact corrected settings successfully
+using an empty, credential-free CODEX_HOME for that non-Agent subprocess only.
+The actual Actor used the original auth location. Read-only account metadata
+commands failed on ambient agent scalar settings incompatible with this CLI;
+neither `agents.model={}` nor `agents={}` fixed that parsing. The bundled catalog
+command bypasses ambient config parsing; its six-model list omitted the requested
+model, which alone was not an account rejection. The original preflight-policy
+note was incomplete and is corrected in the separate observation, without changing
+the preserved raw file.
+
+The actual corrected start exited 1 after **4.57096099993214 seconds**, with
+`thread.started`, one `turn.started`, an error, and `turn.failed`. The service's
+HTTP 400 error explicitly says the requested model is unsupported when using
+Codex with a ChatGPT account. No agent message or token receipt arrived. Resolved
+model, provider-request count, internal retries, known token subtotal and aggregate
+tokens remain `null`; attempt 1's unknown usage also remains unknown. This is an
+account/model rejection for this pinned CLI/auth invocation, not evidence that
+the desktop app or a different runner cannot use that model.
+
+Native stderr also reports malformed local skill YAML and failure to decode the
+model cache/refreshed catalog because this binary does not recognize reasoning
+level `max`. It includes a raw service model catalog. No alternate model was tried.
+The skill-loading diagnostic shows that global resource discovery still occurred;
+the disabled execution flags and independent public directory do not establish
+effective context privacy. No successful model response, access isolation, token
+threshold stop or study execution was demonstrated.
+
+Exact new receipts, invoked source snapshots, preflight failures and the durable
+two-start ledger snapshot are in `evidence/actual-runner-probe-r2/`, separately
+frozen by `actual-runner-probe-r2-freeze.json`. The fixed operator ledger prevents
+refilling quota by changing the external directory. S1 stays open. Later study
+`commonLimits`, Classic v0.14.1 and the Government readiness gap remain unchanged.
+
+## Historical attempt-1 addendum
 
 After accepting infrastructure checkpoint `8df6085d938a1f73576743c3fa38ba3a5c51dd9a`,
 the Overseer explicitly removed the former six-internal-provider-request boundary
@@ -66,8 +118,8 @@ CLI help and generated app-server schema did not establish a pre-dispatch provid
 call limit. `exec` reports `turn.completed` for an agent turn; that event is not
 evidence of the number of provider requests inside it. Consequently that checkpoint
 launched no provider probe. The addendum above supersedes this former tiny-probe
-boundary. Account support and resolved model identity for
-the requested `gpt-6.1-sol`, reasoning `high`, remain a concrete readiness gap.
+boundary. The final diagnostic above records the later explicit account/model
+rejection; an executable supported identity remains a concrete readiness gap.
 
 `runtime/adapter.py` actually handles the v1.1 `--request`/`--result` interchange,
 binds the SHA-256 of exact request bytes and preserves raw native stdout, stderr,
@@ -147,7 +199,7 @@ commits, including `e4278c50ddc84daee3858e24c89e6cf5777b5dfe`; its
 the subsequently selected resource profile. The readiness manifest owns this
 checkpoint; it does not freeze a live protocol or modify historical receipts.
 
-**S1 is not cleared.** Remaining gates: correct native provider/retry configuration,
+**S1 is not cleared.** Remaining gates: a supported native runner/account configuration,
 account-supported actual model identity; successful real identity/usage/access
 probes under the selected probe rules; effective context and OS access measurement; complete shared live budgets
 including descendants/retries/repairs; real conventional and Classic setup/task

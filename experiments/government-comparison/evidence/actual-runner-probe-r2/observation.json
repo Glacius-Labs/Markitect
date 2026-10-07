@@ -1,0 +1,51 @@
+{
+  "kind": "final-authorized-tiny-diagnostic",
+  "date": "2026-10-07",
+  "priorAcceptedCommit": "667f39d4e6d925cbd32128906f0afecfdc3e4e27",
+  "authorization": "Exactly one remaining external start explicitly permitted after configuration failure and unknown prior usage; no subsequent start or access probe",
+  "attemptsConsumed": 2,
+  "remainingStarts": 0,
+  "startedAgentTurns": 1,
+  "completedAgentTurns": 0,
+  "status": "account-model-rejected",
+  "serviceStatus": 400,
+  "serviceMessage": "The 'gpt-6.1-sol' model is not supported when using Codex with a ChatGPT account.",
+  "scope": "Pinned codex-cli 0.130.0 / existing ChatGPT auth / builtin openai / requested gpt-6.1-sol high; not a desktop-app availability claim",
+  "wallSeconds": 4.57096099993214,
+  "wrapperRetries": 0,
+  "internalRetriesObserved": null,
+  "providerRequests": null,
+  "resolvedModel": null,
+  "oldUsage": "Exact unknown counters preserved in request-2.oldUsage and immutable attempt-1 evidence",
+  "newUsage": "Exact counters in result-2.usage: one started, zero completed, no raw usage events",
+  "knownObservedTokenSubtotal": null,
+  "allAttemptsTokenTotal": null,
+  "threshold": "10000 known input+output, retrospective with possible in-flight overshoot; no token receipt and no token-stop demonstration",
+  "preflight": {
+    "configParse": "features list exit0 with exact corrected settings; non-Agent empty credential-free CODEX_HOME only",
+    "accountMetadata": "Blocked by incompatible ambient agents scalar fields; no user config edited",
+    "bundledCatalog": "Six models, requested model absent; command skips ambient config parsing; absence was not treated as definitive account denial",
+    "correctionToPreservedPreflightPolicy": "agents.model scalar check missed actual default_subagent_model/default_subagent_reasoning_effort incompatibility; agents.model={} and agents={} did not repair parsing"
+  },
+  "additionalDiagnostics": [
+    "Malformed local emsctl skill YAML; global skill discovery occurred despite disabled tools/ignore rules",
+    "CLI model cache and refreshed catalog cannot decode reasoning max; raw returned catalog preserved in stderr"
+  ],
+  "contextAccess": "Not measured; no successful actor response; execution restrictions and independent root are not OS privacy",
+  "transportPolicy": "Unchanged builtin defaults permitted for this final diagnostic only; exact binary values and internal retry count not exposed",
+  "documentedDefaults": {
+    "requestMaxRetries": 4,
+    "streamMaxRetries": 5
+  },
+  "documentedDefaultScope": "Official current config reference; exact applied binary values not independently exposed",
+  "documentation": [
+    "https://learn.chatgpt.com/docs/config-file/config-reference",
+    "https://learn.chatgpt.com/docs/config-file/config-advanced"
+  ],
+  "liveTrials": 0,
+  "s1": "not-cleared",
+  "laterCommonLimitsUnchanged": true,
+  "studyClassicVersionUnchanged": true,
+  "sourceSnapshots": "Exact invoked four runtime files match request-2 runtimeSourceDigests",
+  "rawData": "No credentials copied; stderr contains raw service model catalog and instruction templates, preserved as diagnostic data only"
+}
