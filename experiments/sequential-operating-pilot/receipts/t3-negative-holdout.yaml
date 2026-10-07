@@ -1,0 +1,287 @@
+{
+  "schema": "markitect-sequence-holdout/v1",
+  "status": "failed",
+  "stage": "sku",
+  "fixture": "<external-path>",
+  "dotnet_sdk": "10.0.103",
+  "source_before": {
+    "Orders": {
+      "CreateOrderHandler.cs": {
+        "sha256": "cf51f9c7a355b3979859e32b86aea7b872116c03d34ed921bd788074cade2222",
+        "bytes": 568
+      },
+      "Orders.csproj": {
+        "sha256": "3472fccce5613343d3b55f6c2bbc48cbfd3de01f9cf32fd8607b8ac3a7e26395",
+        "bytes": 205
+      }
+    },
+    "Fulfillment": {
+      "Fulfillment.csproj": {
+        "sha256": "16a709894669b1d00ec3bc65fc8ba64e8942cddb1ed9d9d7ba65821bd169a76b",
+        "bytes": 204
+      },
+      "FulfillOrderHandler.cs": {
+        "sha256": "f4e25883bdcd2a8f66aa2abd3b4b483ad22a500463ef9da14c8fbdd72bf6bd0d",
+        "bytes": 695
+      }
+    }
+  },
+  "source_manifest_sha256": "2a59c0fe798f361c8b2db528217d3fef9531a651ce3c29d7632ae58f94d648fb",
+  "static_review": {
+    "Orders": {
+      "project_references": [],
+      "package_references": [],
+      "project_parse_errors": [],
+      "io_text_mentions_advisory": [],
+      "status": "passed"
+    },
+    "Fulfillment": {
+      "project_references": [],
+      "package_references": [],
+      "project_parse_errors": [],
+      "io_text_mentions_advisory": [],
+      "status": "passed"
+    }
+  },
+  "static_review_rejected": false,
+  "commands": [
+    {
+      "argv": [
+        "<external-path>",
+        "restore",
+        "<external-path>",
+        "--configfile",
+        "<external-path>",
+        "--ignore-failed-sources"
+      ],
+      "cwd": "<external-path>"
+    },
+    {
+      "argv": [
+        "<external-path>",
+        "build",
+        "<external-path>",
+        "--no-restore",
+        "--nologo"
+      ],
+      "cwd": "<external-path>"
+    },
+    {
+      "argv": [
+        "<external-path>",
+        "<external-path>",
+        "sku"
+      ],
+      "cwd": "<external-path>"
+    }
+  ],
+  "limitations": {
+    "scope": "Copied .cs files in temporary console; includes same-area helper .cs files. Declared behavioral observations only.",
+    "static": "External or unresolved ProjectReferences and any project PackageReference/PackageDownload reject the run; same-area project references are allowed when resolved under that copied area. IO API text matches are advisory only. XML scans do not establish imported/conditional/transitive build behavior or absence of hidden IO.",
+    "callback_effects": "No rollback claim for callback-owned effects."
+  },
+  "restore": {
+    "exit_code": 0,
+    "seconds": 0.704
+  },
+  "build": {
+    "exit_code": 0,
+    "seconds": 1.241
+  },
+  "behavior": {
+    "exit_code": 1,
+    "seconds": 0.086,
+    "stdout": "{\"passed\":false,\"checks\":700,\"failedCheckCount\":160,\"errors\":[\"Orders result   1\",\"Orders callback count\",\"Orders result   2\",\"Orders callback count\",\"Orders result   3\",\"Orders callback count\",\"Orders result   4\",\"Orders callback count\",\"Orders result   5\",\"Orders callback count\",\"Orders result   6\",\"Orders callback count\",\"Orders result   7\",\"Orders callback count\",\"Orders result   8\",\"Orders callback count\",\"Orders result   9\",\"Orders callback count\",\"Orders result   10\",\"Orders callback count\",\"Orders result \\t\\r\\n 1\",\"Orders callback count\",\"Orders result \\t\\r\\n 2\",\"Orders callback count\",\"Orders result \\t\\r\\n 3\",\"Orders callback count\",\"Orders result \\t\\r\\n 4\",\"Orders callback count\",\"Orders result \\t\\r\\n 5\",\"Orders callback count\",\"Orders result \\t\\r\\n 6\",\"Orders callback count\",\"Orders result \\t\\r\\n 7\",\"Orders callback count\",\"Orders result \\t\\r\\n 8\",\"Orders callback count\",\"Orders result \\t\\r\\n 9\",\"Orders callback count\",\"Orders result \\t\\r\\n 10\",\"Orders callback count\",\"Orders result \\u00A0 1\",\"Orders callback count\",\"Orders result \\u00A0 2\",\"Orders callback count\",\"Orders result \\u00A0 3\",\"Orders callback count\",\"Orders result \\u00A0 4\",\"Orders callback count\",\"Orders result \\u00A0 5\",\"Orders callback count\",\"Orders result \\u00A0 6\",\"Orders callback count\",\"Orders result \\u00A0 7\",\"Orders callback count\",\"Orders result \\u00A0 8\",\"Orders callback count\",\"Orders result \\u00A0 9\",\"Orders callback count\",\"Orders result \\u00A0 10\",\"Orders callback count\",\"Orders result \\u2007 1\",\"Orders callback count\",\"Orders result \\u2007 2\",\"Orders callback count\",\"Orders result \\u2007 3\",\"Orders callback count\",\"Orders result \\u2007 4\",\"Orders callback count\",\"Orders result \\u2007 5\",\"Orders callback count\",\"Orders result \\u2007 6\",\"Orders callback count\",\"Orders result \\u2007 7\",\"Orders callback count\",\"Orders result \\u2007 8\",\"Orders callback count\",\"Orders result \\u2007 9\",\"Orders callback count\",\"Orders result \\u2007 10\",\"Orders callback count\",\"Orders result \\u202F 1\",\"Orders callback count\",\"Orders result \\u202F 2\",\"Orders callback count\",\"Orders result \\u202F 3\",\"Orders callback count\",\"Orders result \\u202F 4\",\"Orders callback count\",\"Orders result \\u202F 5\",\"Orders callback count\",\"Orders result \\u202F 6\",\"Orders callback count\",\"Orders result \\u202F 7\",\"Orders callback count\",\"Orders result \\u202F 8\",\"Orders callback count\",\"Orders result \\u202F 9\",\"Orders callback count\",\"Orders result \\u202F 10\",\"Orders callback count\",\"Orders result \\u3000 1\",\"Orders callback count\",\"Orders result \\u3000 2\",\"Orders callback count\",\"Orders result \\u3000 3\",\"Orders callback count\",\"Orders result \\u3000 4\",\"Orders callback count\",\"Orders result \\u3000 5\",\"Orders callback count\",\"Orders result \\u3000 6\",\"Orders callback count\",\"Orders result \\u3000 7\",\"Orders callback count\",\"Orders result \\u3000 8\",\"Orders callback count\",\"Orders result \\u3000 9\",\"Orders callback count\",\"Orders result \\u3000 10\",\"Orders callback count\",\"Orders result  \\u00A0\\t 1\",\"Orders callback count\",\"Orders result  \\u00A0\\t 2\",\"Orders callback count\",\"Orders result  \\u00A0\\t 3\",\"Orders callback count\",\"Orders result  \\u00A0\\t 4\",\"Orders callback count\",\"Orders result  \\u00A0\\t 5\",\"Orders callback count\",\"Orders result  \\u00A0\\t 6\",\"Orders callback count\",\"Orders result  \\u00A0\\t 7\",\"Orders callback count\",\"Orders result  \\u00A0\\t 8\",\"Orders callback count\",\"Orders result  \\u00A0\\t 9\",\"Orders callback count\",\"Orders result  \\u00A0\\t 10\",\"Orders callback count\",\"composition result\",\"composition count\",\"composition result\",\"composition count\",\"composition result\",\"composition count\",\"composition result\",\"composition count\",\"composition result\",\"composition count\",\"composition result\",\"composition count\",\"composition result\",\"composition count\",\"composition result\",\"composition count\",\"composition result\",\"composition count\",\"composition result\",\"composition count\"]}",
+    "result": {
+      "passed": false,
+      "checks": 700,
+      "failedCheckCount": 160,
+      "errors": [
+        "Orders result   1",
+        "Orders callback count",
+        "Orders result   2",
+        "Orders callback count",
+        "Orders result   3",
+        "Orders callback count",
+        "Orders result   4",
+        "Orders callback count",
+        "Orders result   5",
+        "Orders callback count",
+        "Orders result   6",
+        "Orders callback count",
+        "Orders result   7",
+        "Orders callback count",
+        "Orders result   8",
+        "Orders callback count",
+        "Orders result   9",
+        "Orders callback count",
+        "Orders result   10",
+        "Orders callback count",
+        "Orders result \t\r\n 1",
+        "Orders callback count",
+        "Orders result \t\r\n 2",
+        "Orders callback count",
+        "Orders result \t\r\n 3",
+        "Orders callback count",
+        "Orders result \t\r\n 4",
+        "Orders callback count",
+        "Orders result \t\r\n 5",
+        "Orders callback count",
+        "Orders result \t\r\n 6",
+        "Orders callback count",
+        "Orders result \t\r\n 7",
+        "Orders callback count",
+        "Orders result \t\r\n 8",
+        "Orders callback count",
+        "Orders result \t\r\n 9",
+        "Orders callback count",
+        "Orders result \t\r\n 10",
+        "Orders callback count",
+        "Orders result   1",
+        "Orders callback count",
+        "Orders result   2",
+        "Orders callback count",
+        "Orders result   3",
+        "Orders callback count",
+        "Orders result   4",
+        "Orders callback count",
+        "Orders result   5",
+        "Orders callback count",
+        "Orders result   6",
+        "Orders callback count",
+        "Orders result   7",
+        "Orders callback count",
+        "Orders result   8",
+        "Orders callback count",
+        "Orders result   9",
+        "Orders callback count",
+        "Orders result   10",
+        "Orders callback count",
+        "Orders result   1",
+        "Orders callback count",
+        "Orders result   2",
+        "Orders callback count",
+        "Orders result   3",
+        "Orders callback count",
+        "Orders result   4",
+        "Orders callback count",
+        "Orders result   5",
+        "Orders callback count",
+        "Orders result   6",
+        "Orders callback count",
+        "Orders result   7",
+        "Orders callback count",
+        "Orders result   8",
+        "Orders callback count",
+        "Orders result   9",
+        "Orders callback count",
+        "Orders result   10",
+        "Orders callback count",
+        "Orders result   1",
+        "Orders callback count",
+        "Orders result   2",
+        "Orders callback count",
+        "Orders result   3",
+        "Orders callback count",
+        "Orders result   4",
+        "Orders callback count",
+        "Orders result   5",
+        "Orders callback count",
+        "Orders result   6",
+        "Orders callback count",
+        "Orders result   7",
+        "Orders callback count",
+        "Orders result   8",
+        "Orders callback count",
+        "Orders result   9",
+        "Orders callback count",
+        "Orders result   10",
+        "Orders callback count",
+        "Orders result 　 1",
+        "Orders callback count",
+        "Orders result 　 2",
+        "Orders callback count",
+        "Orders result 　 3",
+        "Orders callback count",
+        "Orders result 　 4",
+        "Orders callback count",
+        "Orders result 　 5",
+        "Orders callback count",
+        "Orders result 　 6",
+        "Orders callback count",
+        "Orders result 　 7",
+        "Orders callback count",
+        "Orders result 　 8",
+        "Orders callback count",
+        "Orders result 　 9",
+        "Orders callback count",
+        "Orders result 　 10",
+        "Orders callback count",
+        "Orders result   \t 1",
+        "Orders callback count",
+        "Orders result   \t 2",
+        "Orders callback count",
+        "Orders result   \t 3",
+        "Orders callback count",
+        "Orders result   \t 4",
+        "Orders callback count",
+        "Orders result   \t 5",
+        "Orders callback count",
+        "Orders result   \t 6",
+        "Orders callback count",
+        "Orders result   \t 7",
+        "Orders callback count",
+        "Orders result   \t 8",
+        "Orders callback count",
+        "Orders result   \t 9",
+        "Orders callback count",
+        "Orders result   \t 10",
+        "Orders callback count",
+        "composition result",
+        "composition count",
+        "composition result",
+        "composition count",
+        "composition result",
+        "composition count",
+        "composition result",
+        "composition count",
+        "composition result",
+        "composition count",
+        "composition result",
+        "composition count",
+        "composition result",
+        "composition count",
+        "composition result",
+        "composition count",
+        "composition result",
+        "composition count",
+        "composition result",
+        "composition count"
+      ]
+    }
+  },
+  "source_after": {
+    "Orders": {
+      "CreateOrderHandler.cs": {
+        "sha256": "cf51f9c7a355b3979859e32b86aea7b872116c03d34ed921bd788074cade2222",
+        "bytes": 568
+      },
+      "Orders.csproj": {
+        "sha256": "3472fccce5613343d3b55f6c2bbc48cbfd3de01f9cf32fd8607b8ac3a7e26395",
+        "bytes": 205
+      }
+    },
+    "Fulfillment": {
+      "Fulfillment.csproj": {
+        "sha256": "16a709894669b1d00ec3bc65fc8ba64e8942cddb1ed9d9d7ba65821bd169a76b",
+        "bytes": 204
+      },
+      "FulfillOrderHandler.cs": {
+        "sha256": "f4e25883bdcd2a8f66aa2abd3b4b483ad22a500463ef9da14c8fbdd72bf6bd0d",
+        "bytes": 695
+      }
+    }
+  },
+  "source_unchanged": true,
+  "finish_utc": "2026-10-07T01:25:14Z"
+}

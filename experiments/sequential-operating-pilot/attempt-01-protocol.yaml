@@ -1,0 +1,162 @@
+{
+  "protocolVersion": "markitect-sequence/v1",
+  "freezeStatus": "frozen-before-first-intent-actor",
+  "priorState": {
+    "fixtureRoot": "<external-path>",
+    "canonicalSourceCommit": "9dac557171a82039370d76f66abcbf2152c46e5a",
+    "finalEvidenceRef": "8b9e790cd0d587a97336879e88e435944e9a3c55",
+    "finalAuditRef": "sha256:e3bb208ef48d522295a2199e21fa9ec2e4270f7b0f16c0b97be68224dbb1f169",
+    "preservation": "Append-only: preserve prior fixture, ledger, artifacts, evidence, and old harness seq-* paths. Use distinct new sequence paths."
+  },
+  "productBindings": {
+    "originalCliSourceCommit": "74cbb7ca630e221b9b365e13e70165e9c7f59b6a",
+    "originalCliSourceAndDigest": {
+      "source": "74cbb7ca630e221b9b365e13e70165e9c7f59b6a",
+      "digest": "sha256:17427bbaa65929bee1219b8f957f61d1f54f2ff6aa8ba775ffe5e06d982b1533"
+    },
+    "bindingRule": "Original CLI/runtime remain frozen across sequence; later documentation-only integration source is separate.",
+    "integrationSourceCommit": "2c5299e0a876ba491e6d9fc93b8965fe21d62917",
+    "integrationGateStatus": "34 Windows gates passed; distinct from original CLI and prior pilot evidence."
+  },
+  "sequence": [
+    {
+      "id": "task-1-orders-local-sku",
+      "allowedCanonicalPathChanges": [
+        "definitions/orders.create-order.use-case.yaml"
+      ],
+      "contract": {
+        "api": "namespace Orders; public sealed CreateOrderHandler(Action<string,int> persist); public bool Execute(string sku, int quantity).",
+        "behavior": "For a nonnull persist callback, reject invalid quantity or SKU that is null, empty, or consists only of .NET whitespace characters before invoking the callback and return false. A SKU containing any non-whitespace character is valid with respect to this rule even if it has leading, internal, or trailing whitespace; preserve it exactly. For valid input, invoke persist exactly once with the original SKU and quantity. The Task 1 oracle covers normal callback return only: return true on normal return. Callback-exception behavior is not newly constrained or scored until Task 2.",
+        "unchanged": [
+          "Quantity Rule remains 1..10 inclusive.",
+          "Fulfillment API and target bytes unchanged.",
+          "External Orders-to-Fulfillment composition forwards original quantity."
+        ],
+        "implementationFreedom": "Any internal structure satisfying the exact API and behavior is allowed; do not require a preferred algorithm, helper layout, naming, or formatting."
+      },
+      "expectedProjectionWork": [
+        "orders-dotnet",
+        "commerce-markdown"
+      ],
+      "otherProjectionTreatment": "All 3 decisions may appear. fulfillment-dotnet may be no-op or freshness-only, never implementation work; target bytes remain identical.",
+      "holdout": [
+        "Compile the Orders and Fulfillment libraries.",
+        "Check null, empty, whitespace-only, and strings with leading/internal/trailing whitespace plus non-whitespace characters; check quantity edges.",
+        "Check callback count and exact original SKU/quantity payload.",
+        "Check normal external composition forwards quantity unchanged."
+      ],
+      "negativeControl": "Compare exact planned work to the independent oracle; stop before Apply for missing Orders/parent work or unnecessary Fulfillment work.",
+      "bounds": {
+        "sameInputTransportRetriesPerExecuteOrVerifyPhase": 1,
+        "semanticRepairs": 1,
+        "requireFreshVerificationAfterRepair": true
+      }
+    },
+    {
+      "id": "task-2-shared-callback-failure",
+      "allowedCanonicalPathChanges": [
+        "definitions/rule.effect-boundaries.yaml",
+        "definitions/orders.create-order.use-case.yaml",
+        "definitions/fulfillment.fulfill-order.use-case.yaml"
+      ],
+      "contract": {
+        "rulePath": "definitions/rule.effect-boundaries.yaml",
+        "rule": "Validate applicable inputs before invoking callbacks. Rejected input returns false without invoking a callback. For accepted input, invoke the callback exactly once; if it returns normally, return true. For any callback exception, do not retry. If the callback throws InvalidOperationException or a subclass, return false; propagate every other exception as the same exception instance. Do not claim callback effects are rolled back or absent after an exception. Preserve area boundaries and add no hidden side effects or shared mutable state.",
+        "useCaseText": "Remove unconditional valid-input-returns-true wording; retain input/payload/composition details and refer callback result/exception semantics to the shared Rule without duplicating it.",
+        "composition": "The external Orders callback calls Fulfillment.Execute once with the original quantity. If Fulfillment returns false, the adapter throws InvalidOperationException; Orders maps that callback failure to false. Exercise this path by having the Fulfillment dispatch callback throw InvalidOperationException: dispatch runs once, Fulfillment returns false, the Orders adapter runs once and throws, Orders returns false, and no exception escapes. Normal callbacks preserve successful composition. No rollback is promised.",
+        "implementationFreedom": "Any internal structure satisfying the exact API and behavior is allowed; do not require a preferred algorithm, helper layout, naming, or formatting."
+      },
+      "expectedProjectionWork": [
+        "orders-dotnet",
+        "fulfillment-dotnet",
+        "commerce-markdown"
+      ],
+      "holdout": [
+        "Compile both libraries.",
+        "For both handlers, check valid normal callback return, invalid input with zero callback invocations, callback throwing InvalidOperationException including a subclass (one invocation, false, no retry), and a different exception propagated as the same instance after one invocation.",
+        "Do not assert rollback or absence of partial side effects.",
+        "Check external downstream rejection propagation: one Orders adapter invocation, one Fulfillment dispatch invocation, false from Orders, no escaping InvalidOperationException, and original quantity preserved."
+      ],
+      "negativeControl": {
+        "id": "shared-rule-missed-fanout",
+        "timing": "After successful Task 2 closure.",
+        "steps": [
+          "Save exact Task 2 Fulfillment target bytes.",
+          "Under unchanged Task 2 canonical input, substitute the exact Task 1 Fulfillment target bytes.",
+          "Run read-only audit and independent negative holdout and require both to fail.",
+          "Restore the exact pre-control Task 2 Fulfillment bytes and require a fresh complete audit."
+        ],
+        "classification": "Simulated stale-representation negative/restoration check, not an actual missed planner outcome and not autonomous repair."
+      },
+      "bounds": {
+        "sameInputTransportRetriesPerExecuteOrVerifyPhase": 1,
+        "semanticRepairs": 1,
+        "requireFreshVerificationAfterRepair": true
+      }
+    },
+    {
+      "id": "task-3-unchanged-intent-drift-repair",
+      "allowedCanonicalPathChanges": [],
+      "injectedDrift": {
+        "target": "src/Orders/CreateOrderHandler.cs",
+        "fault": "Change only SKU guard so whitespace-only SKU is accepted.",
+        "mutationPlan": {
+          "freezeBeforeInjection": "Immediately before the controlled mutation, freeze the exact patch text and record hashes of the pre-mutation Orders handler and canonical source.",
+          "preferredPatch": "If present, replace only the call string.IsNullOrWhiteSpace(sku) with string.IsNullOrEmpty(sku), causing whitespace-only SKU to pass.",
+          "fallback": "If the preferred guard is absent but the concrete method body safely supports it, insert at method entry a whitespace-only branch that delegates to Execute(\"CONTROL-SKU\", quantity), making the whitespace input accepted through a valid control SKU.",
+          "unsupportedShape": "If neither exact mutation is safely applicable, stop the control incomplete. Do not tune or invent a different fault."
+        }
+      },
+      "expectedProjectionWork": [
+        "orders-dotnet"
+      ],
+      "otherProjectionTreatment": "Parent may receive freshness-only verification. No Fulfillment implementation work; require Fulfillment and Markdown target bytes to remain exactly unchanged. Measure formatting/noise within Orders separately; do not fail solely for formatting when the independent contract and checks pass. Primary successful repair work scope is Orders only.",
+      "flow": [
+        "Freeze the exact drift patch and pre-mutation hashes, then inject only the declared Orders handler drift and retain incomplete pre-repair evidence.",
+        "Use ordinary proposal, execution, and independent verification against unchanged canonical intent.",
+        "Permit at most one semantic repair.",
+        "Require fresh Orders verification, parent freshness verification, and complete final audit."
+      ],
+      "holdout": [
+        "Before repair, compile passes but an independent negative holdout must fail because whitespace-only SKU is accepted.",
+        "After repair, compile and check SKU behavior, exact valid payload, callback count, and Task 2 callback exception behavior.",
+        "Confirm the injected change touched only the Orders handler and Fulfillment and Markdown bytes are byte-identical."
+      ],
+      "bounds": {
+        "injectedDrifts": 1,
+        "sameInputTransportRetriesPerExecuteOrVerifyPhase": 1,
+        "semanticRepairs": 1,
+        "unsupportedMutationResponse": "Stop the control incomplete without trying another mutation."
+      },
+      "contract": "Canonical intent remains unchanged. Any internal implementation satisfying the exact existing API and unchanged canonical behavior is allowed; do not require a preferred algorithm, helper layout, naming, or formatting."
+    }
+  ],
+  "executionConstraints": {
+    "actors": "Fresh Luna High actors receive only versioned invocation context. Coordinator may review and execute exact Apply under existing user authorization; never handwrite/synthesize candidates.",
+    "prohibited": [
+      "No product-code or runtime/bridge implementation changes.",
+      "No unplanned fixture changes: only the listed per-task canonical paths and declared controlled target mutations are allowed.",
+      "No harness/provider/response tuning or retry-policy changes.",
+      "No unknown-artifact probe in this stage; that control was exercised in the prior pilot.",
+      "Any ambiguity or source correction after actor start ends that attempt; preserve evidence and declare a fresh attempt."
+    ],
+    "evidence": "Keep task authoring, fixture setup, root/Luna coordination, deliberate negative substitutions, restoration, stage execution results, and actual human attention in separate records. Human-attention is unavailable. Make no autonomy, reliability, productivity, or benefit claim.",
+    "taskStartGate": "Before any intent-authoring actor, root freezes the protocol file (with its external hash receipt), original base, original CLI, runtime/config, independent holdout, bridge, runner, and coordinator bindings. Each intent author may make only that task card allowed canonical edits. After those edits pass check/model/impact, but before any execution or verifier actor, record a separate immutable stage binding with that stage canonical source head, model/impact digests, expected work set, runtime and source bindings. Once execution or verifier actors start, the stage binding and inputs are immutable.",
+    "protocolFreeze": "Keep this file in draft status until root completes holdout preflight and final freeze. Future canonical heads remain null here and are recorded in separate immutable stage bindings before execution/verifier actors for that stage. Do not place this protocol file own hash inside itself; record its external file hash as the freeze receipt.",
+    "freezeStatusOnFinalFreeze": "frozen-before-first-intent-actor"
+  },
+  "finalBindings": {
+    "task1CanonicalBase": "9dac557171a82039370d76f66abcbf2152c46e5a",
+    "task1CanonicalHead": null,
+    "task2CanonicalHead": null,
+    "task3CanonicalHead": null,
+    "runtimeDigest": "sha256:042cf6286793a0ee2b18f48c4eb62bd8d70fac804a2334b9be0fc22f863ea44f",
+    "independentHoldoutDigest": "sha256:2ed57687f26eae41f555bd8ab4728fb83ad251d36062f089178ee364ac2b8ea7",
+    "startingBoundaryDigest": "sha256:695a2df5794ef9ea8e69993af8f3e8c8d0a378bd0827af156e14b59399aaf1a8",
+    "cliDigest": "sha256:17427bbaa65929bee1219b8f957f61d1f54f2ff6aa8ba775ffe5e06d982b1533",
+    "bridgeDigest": "sha256:b080a17fc1ee9f57b4bc65fe2262215d6e2146cec93849956b62b32f51c4327b",
+    "runnerDigest": "sha256:d08ad82ca5e47bd557fb6b6f8d45ef7aaa20f0e7bfa551f9766f9bc6ca887279",
+    "coordinatorDigest": "sha256:fff25900aafed6b78825634aa73515c9b004e89b502e6aa8d8b1aaee5a76d715"
+  },
+  "frozenAtUtc": "2026-10-06T23:48:56.870305+00:00"
+}

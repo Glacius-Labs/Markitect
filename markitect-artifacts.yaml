@@ -2,6 +2,7 @@ apiVersion: markitect.example.org/artifact-coverage/v1alpha1
 kind: ArtifactCoverage
 spec:
   roots:
+    - experiments/sequential-operating-pilot
     - internal/host/canonical_controller_model_change_test.go
     - internal/host/canonical_controller_audit.go
     - internal/host/canonical_controller_audit_test.go
@@ -1687,3 +1688,65 @@ spec:
       owner: two-area-operating-pilot-evidence
     - path: experiments/two-area-operating-pilot/transport-retry-changed-03.json
       owner: two-area-operating-pilot-evidence
+    - path: experiments/sequential-operating-pilot/.gitattributes
+      owner: sequential-operating-pilot-evidence
+    - path: experiments/sequential-operating-pilot/actor-response-instructions.template.txt
+      owner: sequential-operating-pilot-evidence
+    - path: experiments/sequential-operating-pilot/attempt-01-freeze-receipt.yaml
+      owner: sequential-operating-pilot-evidence
+    - path: experiments/sequential-operating-pilot/attempt-01-protocol.yaml
+      owner: sequential-operating-pilot-evidence
+    - path: experiments/sequential-operating-pilot/attempt-01-result.yaml
+      owner: sequential-operating-pilot-evidence
+    - path: experiments/sequential-operating-pilot/attempt-02-freeze-receipt.yaml
+      owner: sequential-operating-pilot-evidence
+    - path: experiments/sequential-operating-pilot/attempt-02-protocol.yaml
+      owner: sequential-operating-pilot-evidence
+    - path: experiments/sequential-operating-pilot/attempt-02-result.yaml
+      owner: sequential-operating-pilot-evidence
+    - path: experiments/sequential-operating-pilot/canonical-source.bundle
+      owner: sequential-operating-pilot-evidence
+    - path: experiments/sequential-operating-pilot/evidence-index.yaml
+      owner: sequential-operating-pilot-evidence
+    - path: experiments/sequential-operating-pilot/holdout/run_holdout.py
+      owner: sequential-operating-pilot-evidence
+    - path: experiments/sequential-operating-pilot/README.md
+      owner: sequential-operating-pilot-evidence
+    - path: experiments/sequential-operating-pilot/receipts/result-corrections.yaml
+      owner: sequential-operating-pilot-evidence
+    - path: experiments/sequential-operating-pilot/receipts/t1-sku-holdout.yaml
+      owner: sequential-operating-pilot-evidence
+    - path: experiments/sequential-operating-pilot/receipts/t2-callback-holdout.yaml
+      owner: sequential-operating-pilot-evidence
+    - path: experiments/sequential-operating-pilot/receipts/t2-control-binding.yaml
+      owner: sequential-operating-pilot-evidence
+    - path: experiments/sequential-operating-pilot/receipts/t2-negative-holdout.yaml
+      owner: sequential-operating-pilot-evidence
+    - path: experiments/sequential-operating-pilot/receipts/t3-drift-freeze.yaml
+      owner: sequential-operating-pilot-evidence
+    - path: experiments/sequential-operating-pilot/receipts/t3-negative-holdout.yaml
+      owner: sequential-operating-pilot-evidence
+    - path: experiments/sequential-operating-pilot/receipts/t3-planner-observation.yaml
+      owner: sequential-operating-pilot-evidence
+    - path: experiments/sequential-operating-pilot/receipts/t3-repaired-holdout.yaml
+      owner: sequential-operating-pilot-evidence
+    - path: experiments/sequential-operating-pilot/source-manifest.yaml
+      owner: sequential-operating-pilot-evidence
+    - path: experiments/sequential-operating-pilot/stage-bindings/attempt2-entry.yaml
+      owner: sequential-operating-pilot-evidence
+    - path: experiments/sequential-operating-pilot/stage-bindings/attempt2-final.yaml
+      owner: sequential-operating-pilot-evidence
+    - path: experiments/sequential-operating-pilot/stage-bindings/t1-original.yaml
+      owner: sequential-operating-pilot-evidence
+    - path: experiments/sequential-operating-pilot/stage-bindings/t2-final-source.yaml
+      owner: sequential-operating-pilot-evidence
+    - path: experiments/sequential-operating-pilot/target-samples/docs/represented/index.md
+      owner: sequential-operating-pilot-evidence
+    - path: experiments/sequential-operating-pilot/target-samples/src/Fulfillment/Fulfillment.csproj
+      owner: sequential-operating-pilot-evidence
+    - path: experiments/sequential-operating-pilot/target-samples/src/Fulfillment/FulfillOrderHandler.cs
+      owner: sequential-operating-pilot-evidence
+    - path: experiments/sequential-operating-pilot/target-samples/src/Orders/CreateOrderHandler.cs
+      owner: sequential-operating-pilot-evidence
+    - path: experiments/sequential-operating-pilot/target-samples/src/Orders/Orders.csproj
+      owner: sequential-operating-pilot-evidence

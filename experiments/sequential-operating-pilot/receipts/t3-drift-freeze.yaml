@@ -1,0 +1,15 @@
+{
+  "schema": "markitect-sequence-t3-drift-freeze/v1",
+  "canonicalSourceHead": "a2e0ab51eee175a9a5231fc2e833811b86d98281",
+  "canonicalYamlSha256": "8f828297a525fa6fedf6e802433a78e9471e8606eb6c227e6ea06bab0c05d8c7",
+  "t2StageBinding": "boundaries/seq-t2-stage-final.json",
+  "t2StageBoundarySha256": "5283fdde80da490e5bbca8f94d0e49e9c2890782a664e63cb27a7f4a90c9ee49",
+  "handlerPath": "src/Orders/CreateOrderHandler.cs",
+  "handlerPreMutationSha256": "cac4de1fda1b9b02fba6c2fa811d2a57ea40bde1d23bfcde6a49493d6f1feadc",
+  "mutationKind": "preferredPatch",
+  "oldExact": "string.IsNullOrWhiteSpace(sku)",
+  "newExact": "string.IsNullOrEmpty(sku)",
+  "occurrences": 1,
+  "patchPath": "controls/t3-drift/declared-drift.patch.txt",
+  "patchSha256": "d5924034af4858900f30eaaffb65106bb462d4f147a0450cbeb4f138c09ddf8c"
+}

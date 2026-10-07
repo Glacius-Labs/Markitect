@@ -1,0 +1,31 @@
+{
+  "schema": "markitect-sequence-planner-observation/v1",
+  "sourceReceiptSha256": "c2270ad549610323ce541ba09308b7f1fd554c0f65008aa73823cc168edfd581",
+  "reportDigest": "sha256:3a31b83c5c58c3f352fbeea3e5abdf2813e6f41a5e2dc8e88f36823731651423",
+  "planDigest": "sha256:d9b862e73ab1b05d1858ed82412dddfb0ec80ac4c394f2374320afab8d76637d",
+  "sourceRevision": "a2e0ab51eee175a9a5231fc2e833811b86d98281",
+  "decisions": [
+    {
+      "projectionId": "[\"markitect.foundation/v1\",\"Projection\",\"pilot\",\"commerce-markdown\"]",
+      "decision": "no-op",
+      "reasons": [
+        "evidence-refresh-required"
+      ]
+    },
+    {
+      "projectionId": "[\"markitect.foundation/v1\",\"Projection\",\"pilot\",\"fulfillment-dotnet\"]",
+      "decision": "no-op",
+      "reasons": [
+        "representation-current"
+      ]
+    },
+    {
+      "projectionId": "[\"markitect.foundation/v1\",\"Projection\",\"pilot\",\"orders-dotnet\"]",
+      "decision": "work",
+      "reasons": [
+        "projection-drift"
+      ]
+    }
+  ],
+  "meaning": "No-op does not itself establish current assurance. Markdown needed fresh evidence, supplied by final verification and audit."
+}
