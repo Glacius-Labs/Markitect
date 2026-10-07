@@ -301,6 +301,14 @@ def _promotion_filename(run_id: str, completion: bool) -> str:
     return prefix + sha256(run_id.encode("utf-8")) + ".json"
 
 
+def _has_evidence_identity(report: dict) -> bool:
+    evidence = report.get("evidence") if isinstance(report, dict) else None
+    return (isinstance(evidence, dict) and
+            isinstance(evidence.get("id"), str) and bool(evidence["id"]) and
+            isinstance(evidence.get("materialCandidateId"), str) and bool(evidence["materialCandidateId"]) and
+            type(evidence.get("round")) is int and evidence["round"] > 0)
+
+
 def _validate_run_report(report: dict, run_id: str, configured_slots: dict[str, tuple[str, str]],
                          *, require_acceptance: bool = False,
                          root_review_slots: set[str] | None = None) -> list[str]:
@@ -558,6 +566,7 @@ def translate_queue_result(request: dict, request_raw: bytes, stdout_path, exit_
     else:
         status = "incomplete"
     native_roles = []
+    incomplete_evidence_identity = False
     for job in jobs:
         path, digest_value, run_id = job.get("reportPath"), job.get("reportDigest"), job.get("runId")
         if any(x is not None for x in (path, digest_value, run_id)):
@@ -575,11 +584,20 @@ def translate_queue_result(request: dict, request_raw: bytes, stdout_path, exit_
             if sha256(report_path.read_bytes()) != digest_value:
                 raise ValueError("Government run report path/digest mismatch")
             report = json.loads(report_path.read_bytes())
-            role_kinds = _validate_run_report(report, run_id, {
-                role["slotId"]: (role["phase"], role["responseRole"]) for role in bound["roles"]},
-                require_acceptance=accepted_job,
-                root_review_slots={role["slotId"] for role in bound["roles"]
-                                   if role["phase"] == "review" and not role.get("area")})
+            if not isinstance(report, dict) or report.get("apiVersion") != RUN_API or report.get("runId") != run_id:
+                raise ValueError("Government run report identity mismatch")
+            if not _has_evidence_identity(report):
+                # A missing candidate/evidence identity makes a job non-accepting,
+                # even if the queue labels it accepted. Preserve its bound file
+                # receipt; only complete positive reports receive role/vote validation.
+                incomplete_evidence_identity = True
+                role_kinds = []
+            else:
+                role_kinds = _validate_run_report(report, run_id, {
+                    role["slotId"]: (role["phase"], role["responseRole"]) for role in bound["roles"]},
+                    require_acceptance=accepted_job,
+                    root_review_slots={role["slotId"] for role in bound["roles"]
+                                       if role["phase"] == "review" and not role.get("area")})
             receipts.append({"path": str(report_path), "sha256": digest_value, "kind": "government-run-report"})
             for kind in role_kinds:
                 receipts.append({"path": str(report_path), "sha256": digest_value, "kind": kind})
@@ -596,12 +614,19 @@ def translate_queue_result(request: dict, request_raw: bytes, stdout_path, exit_
 
     usage = value.get("usage") if isinstance(value.get("usage"), dict) else {}
     input_tokens, output_tokens = _counter(usage, "inputTokens"), _counter(usage, "outputTokens")
+    if incomplete_evidence_identity and status == "completed":
+        status = "incomplete"
+    gaps = ["Native queue/run status and role receipts are product evidence, not independent task acceptance.",
+            "Provider request/turn counts remain unknown; per-role middleware still needs native queue integration."]
+    capabilities = ["validated Government queue, job, role, vote and promotion receipts"]
+    if incomplete_evidence_identity:
+        gaps.append("Native run report lacks evidence identity; preserved bound queue/run receipts as incomplete.")
+        capabilities = ["validated Government queue, job and run-report file receipts"]
     return {"schemaVersion": 1, "trialId": request["trialId"], "operation": request["operation"],
             "mode": request["mode"], "requestSha256": request_sha256,
             "dispatchId": request.get("dispatchId"), "status": status, "candidateCommit": None,
-            "capabilities": ["validated Government queue, job, role, vote and promotion receipts"],
-            "gaps": ["Native queue/run status and role receipts are product evidence, not independent task acceptance.",
-                     "Provider request/turn counts remain unknown; per-role middleware still needs native queue integration."],
+            "capabilities": capabilities,
+            "gaps": gaps,
             "receipts": receipts,
             "usage": {"providerRequests": None, "providerTurns": None,
                       "reportedInputPlusOutputTokens": (input_tokens + output_tokens

@@ -256,6 +256,23 @@ def _runtime_file(path: str | os.PathLike[str]) -> dict:
     return {"path": str(target), "mode": _mode(target), "digest": "sha256:" + sha256(target.read_bytes())}
 
 
+def assert_record_store_absent(runtime: dict) -> Path:
+    """Require a fresh native RecordStore root without creating or deleting it.
+
+    Native Classic owns RecordStore initialization. Call this during fixture
+    preparation or immediately before the first product start; later controller
+    steps may legitimately observe a store created by Execute.
+    """
+    if not isinstance(runtime, dict) or not isinstance(runtime.get("recordStore"), str):
+        raise ValueError("Classic runtime must declare its RecordStore root")
+    record_store = Path(runtime["recordStore"])
+    if not record_store.is_absolute():
+        raise ValueError("Classic RecordStore root must be absolute")
+    if record_store.exists() or record_store.is_symlink():
+        raise FileExistsError("Classic RecordStore root must be absent before native initialization")
+    return record_store
+
+
 def build_role_authorization(*, trial_id: str, dispatch_id: str, task_id: str,
                              request_path: str | os.PathLike[str], ledger_path: str | os.PathLike[str],
                              runtime_path: str | os.PathLike[str], role_evidence_directory: str | os.PathLike[str],
@@ -440,8 +457,10 @@ def prepare_protocol_runtime(packet_path: str | os.PathLike[str], destination: s
     state = Path(state_directory) if state_directory is not None else destination / "controller-evidence"
     if not state.is_absolute():
         raise ValueError("Classic controller state directory must be absolute")
-    (state / "ledger").mkdir(parents=True, exist_ok=False)
-    (state / "private-logs").mkdir(parents=True, exist_ok=False)
+    record_store = (state / "ledger").resolve()
+    assert_record_store_absent({"recordStore": str(record_store)})
+    state.mkdir(parents=True, exist_ok=True)
+    (state / "private-logs").mkdir(exist_ok=False)
     double = packet / "smoke" / "protocol_test_double.py"
     raw = double.read_bytes()
     digest = "sha256:" + sha256(raw)
@@ -470,7 +489,7 @@ def prepare_protocol_runtime(packet_path: str | os.PathLike[str], destination: s
                   "runtimeFiles": bridge_files}
     check = {"name": "canonical-projection-fixture", "run": ["go", "run", "examples/canonical-projection/evidence/check.go"]}
     runtime = {"apiVersion": "markitect.canonical/controller/v1alpha1",
-               "recordStore": str((state / "ledger").resolve()), "privateLogs": str((state / "private-logs").resolve()),
+               "recordStore": str(record_store), "privateLogs": str((state / "private-logs").resolve()),
                "referenceDepth": 1, "auditAll": True,
                "checkInputs": ["examples/canonical-projection/evidence/check.go"],
                "executor": json.loads(json.dumps(run_config)), "verifier": json.loads(json.dumps(run_config)),

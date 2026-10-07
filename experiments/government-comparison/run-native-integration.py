@@ -25,9 +25,12 @@ import native_controller
 from native_fixture_budget import FixtureBudget, DEADLINE
 from process import bounded
 
-EXTERNAL = Path("C:/Users/Consiliari/Documents/Scientist-Probes/native-metadata-fixtures-20261008")
-EVIDENCE = ROOT / "evidence/native-integration/run-1"
-SOURCE_GRANT = EVIDENCE / "authorization-grant.json"
+LEGACY = Path("C:/Users/Consiliari/Documents/Scientist-Probes/native-metadata-fixtures-20261008")
+EXTERNAL = Path("C:/Users/Consiliari/Documents/Scientist-Probes/native-metadata-fixtures-20261008-r2")
+EVIDENCE = ROOT / "evidence/native-integration/run-2"
+SOURCE_GRANT = LEGACY / "released-native-grant.json"
+CORRECTION = EXTERNAL / "released-correction-grant.json"
+CORRECTION_KEY = "native-s1-corrected-integration-20261008-r2"
 GRANT_SHA = "b917f5a5eb99f0a607fd282a81acdf7b085e6a1dba14f89c8d0c32f349c82c3e"
 
 
@@ -45,10 +48,11 @@ def binding(path):
     return {"path": str(path), "sha256": dispatch.digest(path.read_bytes())}
 
 
-def budget():
-    return FixtureBudget(EXTERNAL / "native-starts.sqlite", SOURCE_GRANT, GRANT_SHA, {
+def budget(arm=None):
+    request = json.loads((EXTERNAL / arm / "released/request.json").read_bytes()) if arm else None
+    return FixtureBudget(LEGACY / "native-starts.sqlite", SOURCE_GRANT, GRANT_SHA, {
         "government": government.PIN["accepted"]["binary"]["path"],
-        "classic": classic.inspect_packet(classic_integration.PACKET)["binary"]["path"]})
+        "classic": classic.inspect_packet(classic_integration.PACKET)["binary"]["path"]}, request=request)
 
 
 def prepare(arm):
@@ -59,10 +63,8 @@ def prepare(arm):
     auth_binding = binding(released / "role-auth.json")
     repo = base / "actor"
     evidence = base / ("controller-evidence" if arm == "government" else "outer-controller-evidence")
-    # Earlier static preparation created empty evidence roots; actual dispatch
-    # owns creation. rmdir refuses any nonempty directory, preserving evidence.
     if evidence.exists():
-        evidence.rmdir()
+        raise ValueError("corrected controller evidence must be a fresh absent directory")
     results = base / "outer-results"
     results.mkdir(exist_ok=False)
     card = write_new(released / "task-card.txt", (
@@ -70,10 +72,8 @@ def prepare(arm):
         "product task and configured independent role slots. No model/provider, "
         "semantic or human acceptance claim.\n").encode())
     mechanical = write_new(released / "mechanical_actor.py", (ROOT / "runtime/mechanical_actor.py").read_bytes())
-    external_grant = EXTERNAL / "released-native-grant.json"
-    if not external_grant.exists():
-        write_new(external_grant, SOURCE_GRANT.read_bytes())
-    source = binding(external_grant)
+    source = binding(SOURCE_GRANT)
+    correction = {**binding(CORRECTION), "sourceKey": CORRECTION_KEY}
     if source["sha256"] != GRANT_SHA:
         raise ValueError("original source grant bytes changed")
     if arm == "government":
@@ -106,10 +106,13 @@ def prepare(arm):
         "evidenceDirectory": str(evidence.resolve()),
         "limits": common, "wallSeconds": 38 if arm == "government" else 180,
         "baseCommit": revision, "task": {"id": auth["taskId"], "card": card},
-        "purpose": "task", "releasedInputs": inputs + [source, card], "prompt": card,
+        "purpose": "task", "releasedInputs": inputs + [source, binding(CORRECTION),
+            binding(EXTERNAL / "coordinator-authority-snapshot.json"), binding(EXTERNAL / "history.json"),
+            auth["diagnostics"], card], "prompt": card,
         "mechanicalFixture": mechanical["path"], "nativeFixtureGrant": {**source,
             "sourceKey": "native-s1-integration-fixtures-20261008"},
         "fixtureAuthorization": dict(government_roles.NATIVE_FIXTURE_AUTH),
+        "nativeFixtureCorrection": correction,
         "product": {arm: product}}
     request_binding = write_new(released / "request.json", request)
     pin = dispatch.digest(dispatch.encoded(dispatch.mechanical_pin()))
@@ -122,7 +125,7 @@ def prepare(arm):
              "trialId": auth["trialId"], "notBefore": time.time() - 1, "expiresAt": auth["expiresAt"] + 60,
              "protocolSha256": protocol_binding["sha256"], "profileSha256": dispatch.digest(dispatch.encoded(common)),
              "runnerPinSha256": pin, "ledgerPath": auth["ledgerPath"], "resultDirectory": str(results.resolve()),
-             "maxActorSessions": 12, "maxSessionWallSeconds": request["wallSeconds"],
+             "maxActorSessions": 6, "maxSessionWallSeconds": request["wallSeconds"],
              "retrospectiveTokenThreshold": 10000, "fixtureSourceGrant": source,
              "authorizedRequests": [{"dispatchId": request["dispatchId"],
                  "executionSha256": dispatch.execution_sha(request), "initialRequestSha256": request_binding["sha256"]}]}
@@ -144,7 +147,7 @@ def authority(arm):
     # never an independent grant of actual Actor/provider/study sessions.
     source = {key: r["nativeFixtureGrant"][key] for key in ("path", "sha256")}
     if (a.grant.get("fixtureSourceGrant") != source or a.protocol.get("fixtureSourceGrant") != source or
-            a.grant.get("maxActorSessions") != 12 or a.mode != "mechanical" or
+            a.grant.get("maxActorSessions") != 6 or a.mode != "mechanical" or
             source["sha256"] != GRANT_SHA):
         raise ValueError("compiled mechanical Authority exceeds original source allocation")
     return a, r, raw, captured, Path(doc["request"]["path"])
@@ -168,7 +171,7 @@ def require_freeze():
     if freeze.get("status") != "independently-reviewed-mechanical-fixture":
         raise ValueError("independent final fixture preflight missing")
     expected = {str(Path(item["path"]).resolve()): item for item in freeze["inputs"]}
-    required = [Path(__file__), ROOT / "public/native-integration-preflight.md"]
+    required = [Path(__file__), ROOT / "public/native-integration-r2-preflight.md", CORRECTION]
     required += [EXTERNAL / arm / name for arm in ("government", "classic")
                  for name in ("authority.json", "grant.json", "protocol.json", "released/request.json")]
     for path in required:
@@ -184,12 +187,12 @@ def government_queue():
     validate("government")
     a, r, raw, captured, request_path = authority("government")
     argv = government.plan_request(r)["argv"]
-    b = budget()
-    b.reserve("government", "government-native-positive/queue", argv)
+    b = budget("government")
+    b.reserve("government", "government-native-corrected-r2/queue", argv)
     result = dispatch.dispatch(request_path, a.result_directory / "government-native-positive.json", a)
     process = Path(r["evidenceDirectory"]) / "process/process.json"
     if process.exists():
-        b.finish("government", "government-native-positive/queue", json.loads(process.read_bytes()))
+        b.finish("government", "government-native-corrected-r2/queue", json.loads(process.read_bytes()))
     write_new(EVIDENCE / "government/queue-result.json", result)
     snapshots = []
     for index, item in enumerate(result.get("receipts", [])):
@@ -217,11 +220,11 @@ def government_resume():
                                   r["actorRepository"], r["product"]["government"]["backlog"]["path"], queue)
     ledger = a.ledger()
     before = ledger.snapshot()
-    b = budget()
-    b.reserve("government", "government-native-positive/resume", argv)
+    b = budget("government")
+    b.reserve("government", "government-native-corrected-r2/resume", argv)
     process = bounded(argv, r["actorRepository"], Path(r["evidenceDirectory"]) / "resume-process", DEADLINE,
                       env=native_controller.strip_bootstrap_environment(os.environ))
-    b.finish("government", "government-native-positive/resume", process)
+    b.finish("government", "government-native-corrected-r2/resume", process)
     resumed = json.loads((Path(r["evidenceDirectory"]) / "resume-process/stdout.log").read_bytes())
     after = ledger.snapshot()
     result = {"process": process, "nativeResult": resumed,
@@ -238,26 +241,23 @@ def classic_flow():
     require_freeze()
     validate("classic")
     a, r, _, _, request_path = authority("classic")
+    classic_integration.assert_record_store_absent(json.loads(Path(r["product"]["classic"]["runtime"]["path"]).read_bytes()))
+    b = budget("classic")
     session = native_controller.begin_classic_controller(request_path, a)
-    b = budget()
-    execute = native_controller.run_classic_step(session, "execute", fixture_budget=b)
-    if execute.get("returnCode") != 0:
-        result = native_controller.finalize_classic_controller(session)
-        write_new(EVIDENCE / "classic/flow-result.json", result)
-        return result
-    print(json.dumps({"awaitingExactExecuteReview": execute,
+    try:
+        execute = native_controller.run_classic_step(session, "execute", fixture_budget=b)
+        if execute.get("returnCode") != 0:
+            raise RuntimeError("Classic Execute failed; stop corrected case without later actions")
+        print(json.dumps({"awaitingExactExecuteReview": execute,
                       "reviewPath": str(EXTERNAL / "classic/execute-review.json")}), flush=True)
     # Keep the same active controller Request/runtime across independent review.
-    review_path = EXTERNAL / "classic/execute-review.json"
-    deadline = time.monotonic() + 100
-    while not review_path.exists() and time.monotonic() < deadline:
-        time.sleep(0.2)
-    if not review_path.exists():
-        result = native_controller.finalize_classic_controller(session)
-        write_new(EVIDENCE / "classic/flow-result.json", result)
-        raise ValueError("exact Execute review absent; no Apply or automatic continuation")
-    review = json.loads(review_path.read_bytes())
-    try:
+        review_path = EXTERNAL / "classic/execute-review.json"
+        deadline = time.monotonic() + 100
+        while not review_path.exists() and time.monotonic() < deadline:
+            time.sleep(0.2)
+        if not review_path.exists():
+            raise ValueError("exact Execute review absent; no Apply or automatic continuation")
+        review = json.loads(review_path.read_bytes())
         for action in ("apply", "verify", "audit", "apply-replay"):
             capture = native_controller.run_classic_step(session, action, fixture_budget=b,
                 external_review=review if action in {"apply", "apply-replay"} else None)

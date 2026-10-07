@@ -443,6 +443,14 @@ def dispatch_government(request_path, result_path, authority, request, raw, capt
         return result
 
     evidence = Path(request["evidenceDirectory"])
+    bootstrap_path = None
+    bootstrap_sha = None
+    snapshot_root = None
+    process = None
+    process_raw = None
+    process_receipts = []
+    process_verified = False
+    controller_finished = False
     try:
         ledger.reserve_controller_dispatch(request["dispatchId"], execution_sha(request), raw, argv,
                                            request["task"]["id"], request["purpose"],
@@ -511,6 +519,7 @@ def dispatch_government(request_path, result_path, authority, request, raw, capt
             if (Path(item.get("path", "")).resolve() != log_path or
                     item.get("sha256") != digest(log_path.read_bytes())):
                 raise ValueError("native controller raw process receipt mismatch")
+        process_verified = True
         result = government.translate_queue_result(request, raw, evidence / "process" / "stdout.log",
                                                   receipt["returnCode"])
         result.update(controllerProcess=process, inferencePerformed=None,
@@ -531,9 +540,51 @@ def dispatch_government(request_path, result_path, authority, request, raw, capt
                   {"argv": argv, "cwd": request["actorRepository"], "process": process,
                    "processSha256": digest(process_raw), "bootstrapSha256": bootstrap_sha,
                    "elapsedSeconds": ledger.controller_elapsed(request["dispatchId"])})
-    except (OSError, ValueError, KeyError, LimitReached) as exc:
+        controller_finished = True
+    except Exception as exc:
         result.update(status="incomplete", inferencePerformed=None,
                       gaps=["native controller outcome is ambiguous; reservation consumed and relaunch disabled", str(exc)])
+        preserved = list(result.get("receipts", [])) if isinstance(result.get("receipts"), list) else []
+        if process_verified and isinstance(process, dict) and isinstance(process_raw, bytes):
+            result["controllerProcess"] = process
+            for item in process_receipts:
+                if isinstance(item, dict):
+                    preserved.append(item)
+            process_path = evidence / "process" / "process.json"
+            preserved.append({"path": str(process_path.resolve()), "sha256": digest(process_raw),
+                              "kind": "controller-process"})
+        if bootstrap_path is not None and bootstrap_sha is not None and Path(bootstrap_path).is_file():
+            preserved.append({"path": str(Path(bootstrap_path).resolve()), "sha256": bootstrap_sha,
+                              "kind": "controller-bootstrap"})
+        if snapshot_root is not None:
+            for index, item in enumerate(request["releasedInputs"]):
+                snapshot = snapshot_root / str(index)
+                try:
+                    snapshot_raw = snapshot.read_bytes()
+                except OSError:
+                    continue
+                if digest(snapshot_raw) == item["sha256"]:
+                    preserved.append({"path": str(snapshot.resolve()), "sha256": item["sha256"],
+                                      "kind": "released-input-snapshot"})
+        # Do not discard queue/run receipts from a translator result that was
+        # constructed before a later controller bookkeeping failure.
+        unique = {}
+        for item in preserved:
+            if isinstance(item, dict) and isinstance(item.get("path"), str) and isinstance(item.get("kind"), str):
+                unique[(item["path"], item["kind"])] = item
+        result["receipts"] = list(unique.values())
+        if not controller_finished:
+            process_record = {"argv": argv, "cwd": request["actorRepository"],
+                              "process": process, "processSha256": digest(process_raw)
+                              if isinstance(process_raw, bytes) else None,
+                              "bootstrapSha256": bootstrap_sha,
+                              "elapsedSeconds": ledger.controller_elapsed(request["dispatchId"]),
+                              "status": "incomplete"}
+            try:
+                result = ledger.finish_controller_dispatch(request["dispatchId"], result, process_record)
+                controller_finished = True
+            except (ValueError, OSError, KeyError):
+                result.setdefault("gaps", []).append("controller incomplete receipt could not be finalized")
     write_result(result_path, result)
     return result
 

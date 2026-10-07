@@ -1,0 +1,14 @@
+test_eight_spent_slots_cannot_refill_or_replay (test_native_fixture_budget.FixtureBudgetTests.test_eight_spent_slots_cannot_refill_or_replay) ... ok
+test_r2_adds_only_exact_remaining_allocation_to_original_history (test_native_fixture_budget.FixtureBudgetTests.test_r2_adds_only_exact_remaining_allocation_to_original_history) ... ok
+test_r2_rejects_replaced_original_binding_or_correction_source (test_native_fixture_budget.FixtureBudgetTests.test_r2_rejects_replaced_original_binding_or_correction_source) ... ok
+test_r2_requires_original_three_rows_and_serializes_products (test_native_fixture_budget.FixtureBudgetTests.test_r2_requires_original_three_rows_and_serializes_products) ... ok
+test_racing_same_claim_admits_exactly_one (test_native_fixture_budget.FixtureBudgetTests.test_racing_same_claim_admits_exactly_one) ... ok
+test_classic_bootstrap_failure_terminalizes_claim_without_product_process (test_native_controller.NativeClassicControllerTests.test_classic_bootstrap_failure_terminalizes_claim_without_product_process) ... ok
+test_five_step_flow_is_ordered_review_gated_and_process_accounted (test_native_controller.NativeClassicControllerTests.test_five_step_flow_is_ordered_review_gated_and_process_accounted) ... ok
+test_native_fixture_source_grant_is_released_and_product_pin_bound (test_native_controller.NativeClassicControllerTests.test_native_fixture_source_grant_is_released_and_product_pin_bound) ... ok
+test_skipped_action_and_missing_budget_fail_before_process (test_native_controller.NativeClassicControllerTests.test_skipped_action_and_missing_budget_fail_before_process) ... ok
+
+----------------------------------------------------------------------
+Ran 9 tests in 1.479s
+
+OK

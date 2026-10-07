@@ -301,7 +301,8 @@ def build_runtime(*, repository: str | Path, base_commit: str,
         raise ValueError("role authorization path bytes differ from supplied bytes")
     if auth.get("runtimePath") != str(runtime_target):
         raise ValueError("role authorization runtime path differs from output path")
-    if auth.get("roleEvidenceDirectory") is None or auth.get("maxCalls") != MAX_ROLE_CALLS:
+    if (auth.get("roleEvidenceDirectory") is None or type(auth.get("maxCalls")) is not int or
+            not 1 <= auth["maxCalls"] <= MAX_ROLE_CALLS):
         raise ValueError("operator role authorization does not match the finite fixture bounds")
     marker_path, marker = _fixture_marker(repo)
     if marker.get("constitutionDigest") != expected_constitution_digest:

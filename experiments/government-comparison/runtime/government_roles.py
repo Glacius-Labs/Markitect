@@ -16,6 +16,113 @@ import stat
 import sys
 import time
 
+
+def start_native_diagnostics(argv):
+    """Retain bounded wrapper output before dependent imports or bootstrap checks.
+
+    Only the explicitly hashed corrected-case configuration enables this path.
+    The native RuntimeFiles/freeze owns that configuration; it grants no delegate
+    authority. Every wrapper is counted even if a later import or check fails.
+    """
+    if "--diagnostics-config" not in argv:
+        return None
+    import atexit
+    import sqlite3
+    if (argv.count("--diagnostics-config") != 1 or argv.count("--diagnostics-sha256") != 1 or
+            argv.index("--diagnostics-config") + 1 >= len(argv) or
+            argv.index("--diagnostics-sha256") + 1 >= len(argv)):
+        raise ValueError("exact wrapper diagnostic path and digest arguments required")
+    config_path = Path(argv[argv.index("--diagnostics-config") + 1]).resolve(strict=True)
+    expected = argv[argv.index("--diagnostics-sha256") + 1]
+    raw = config_path.read_bytes()
+    if len(raw) > 1024 * 1024 or hashlib.sha256(raw).hexdigest() != expected:
+        raise ValueError("wrapper diagnostic configuration digest mismatch")
+    config = json.loads(raw)
+    if not isinstance(config, dict) or set(config) != {"arm", "correction", "requestPath"}:
+        raise ValueError("exact wrapper diagnostic configuration fields required")
+    correction = config["correction"]
+    if (not isinstance(correction, dict) or set(correction) != {"path", "sha256", "sourceKey"} or
+            correction.get("sourceKey") != "native-s1-corrected-integration-20261008-r2" or
+            not Path(correction.get("path", "")).is_absolute() or
+            not Path(config.get("requestPath", "")).is_absolute()):
+        raise ValueError("exact corrected wrapper diagnostic grant binding required")
+    correction_raw = Path(correction["path"]).read_bytes()
+    if hashlib.sha256(correction_raw).hexdigest() != correction["sha256"]:
+        raise ValueError("wrapper diagnostic correction grant digest mismatch")
+    source = json.loads(correction_raw)
+    snapshot_raw = Path(source["sourceCoordinationPath"]).read_bytes()
+    if hashlib.sha256(snapshot_raw).hexdigest() != source["sourceCoordinationSha256"]:
+        raise ValueError("wrapper diagnostic source snapshot digest mismatch")
+    scientist = next(item for item in json.loads(snapshot_raw)["threads"] if item["name"] == "Scientist")
+    grant = source["grant"]
+    arm = config["arm"]
+    if (source["sourceThreadId"] != "01a11367-a781-7683-a20f-46e12614dcb4" or
+            source["sourceJsonPointer"] != "threads[name=Scientist].evidence.correctedNativeIntegrationGrant" or
+            scientist["evidence"]["correctedNativeIntegrationGrant"] != grant or
+            grant["key"] != "native-s1-corrected-integration-20261008-r2" or
+            arm not in {"government", "classic"} or
+            grant["limits"][arm]["maxAdditionalRoleInvocationsIncludingFailedWrapperStarts"] != 6 or
+            any(grant[key] != 0 for key in ("realActorCalls", "providerCalls", "metadataAppServerTrees", "studyCells"))):
+        raise ValueError("wrapper diagnostic grant differs from corrected allocation")
+    directory = config_path.parent / "wrapper-diagnostics"
+    directory.mkdir(exist_ok=True)
+    db = sqlite3.connect(directory / "starts.sqlite", timeout=5)
+    try:
+        db.execute("CREATE TABLE IF NOT EXISTS starts(id INTEGER PRIMARY KEY, config_sha TEXT, started REAL)")
+        db.execute("BEGIN IMMEDIATE")
+        rows = db.execute("SELECT config_sha FROM starts").fetchall()
+        if len(rows) >= 6 or any(row[0] != expected for row in rows):
+            raise ValueError("corrected wrapper invocation cap exhausted or configuration changed")
+        cursor = db.execute("INSERT INTO starts(config_sha,started) VALUES(?,?)", (expected, time.time()))
+        invocation = cursor.lastrowid
+        db.commit()
+    finally:
+        db.close()
+    call = directory / f"wrapper-{invocation:06d}"
+    call.mkdir()
+    streams = {}
+    class Tee:
+        def __init__(self, original, path):
+            self.original, self.path = original, path
+            self.file = path.open("xb")
+            self.buffer = self
+            self.count = 0
+        def write(self, value):
+            data = value.encode("utf-8") if isinstance(value, str) else value
+            if self.count + len(data) > 16 * 1024 * 1024:
+                raise ValueError("bounded raw wrapper diagnostics exhausted")
+            self.file.write(data)
+            self.file.flush()
+            self.count += len(data)
+            written = self.original.buffer.write(data)
+            self.original.flush()
+            return len(value) if isinstance(value, str) else written
+        def flush(self):
+            self.file.flush()
+            self.original.flush()
+    start = {"arm": arm, "configSha256": expected, "correction": correction,
+             "requestPath": config["requestPath"], "invocation": invocation,
+             "argvSha256": hashlib.sha256(json.dumps(argv).encode()).hexdigest(),
+             "wrapperSha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+             "started": time.time(), "providerUsage": None}
+    (call / "start.json").write_text(json.dumps(start, sort_keys=True), encoding="utf-8")
+    for name in ("stdout", "stderr"):
+        streams[name] = Tee(getattr(sys, name), call / f"{name}.log")
+        setattr(sys, name, streams[name])
+    def finish():
+        receipts = []
+        for name, stream in streams.items():
+            stream.flush()
+            receipts.append({"path": str(stream.path), "sha256": hashlib.sha256(stream.path.read_bytes()).hexdigest()})
+        (call / "finished.json").write_text(json.dumps({"start": start, "receipts": receipts}, sort_keys=True), encoding="utf-8")
+    atexit.register(finish)
+    return {"config": config, "callDirectory": str(call), "finish": finish}
+
+
+# Execute before ledger/process/controller imports: their earliest exceptions
+# must reach the same raw stderr sink and consumed wrapper-start record.
+_NATIVE_DIAGNOSTICS = start_native_diagnostics(sys.argv) if __name__ == "__main__" else None
+
 from ledger import Ledger, LimitReached
 from process import bounded
 import government
@@ -222,6 +329,16 @@ def _role_auth(raw: bytes, expected_sha: str, request: dict, request_raw: bytes,
     wrapper_slot = slot_id if arm == "government" else None
     expected_args = wrapper_arguments(__file__, auth_path, expected_sha,
                                       auth["roleEvidenceDirectory"], wrapper_slot)
+    diagnostics = auth.get("diagnostics")
+    if request.get("nativeFixtureCorrection") is not None:
+        if not isinstance(diagnostics, dict) or set(diagnostics) != {"path", "sha256"}:
+            raise ValueError("corrected role requires released diagnostic configuration")
+        diagnostic_raw = _released(captured, diagnostics["path"], diagnostics["sha256"], "wrapper diagnostics")
+        diagnostic_value = json.loads(diagnostic_raw)
+        if (diagnostic_value.get("correction") != request["nativeFixtureCorrection"] or
+                diagnostic_value.get("requestPath") != auth["requestPath"] or diagnostic_value.get("arm") != arm):
+            raise ValueError("wrapper diagnostics do not match this corrected Request")
+        expected_args.extend(["--diagnostics-config", diagnostics["path"], "--diagnostics-sha256", diagnostics["sha256"]])
     if wrapper.get("command") != configured["command"] or configured["args"] != expected_args:
         raise ValueError("runtime wrapper argv is not the exact Scientist role bridge invocation")
     script_sha = digest(Path(__file__).resolve().read_bytes())
@@ -247,6 +364,8 @@ def _role_auth(raw: bytes, expected_sha: str, request: dict, request_raw: bytes,
     required_wrapper_files = {str(Path(__file__).resolve()): "sha256:" + script_sha,
                               str(controller_script): "sha256:" + controller_sha,
                               auth_path: "sha256:" + expected_sha}
+    if request.get("nativeFixtureCorrection") is not None:
+        required_wrapper_files[str(Path(diagnostics["path"]).resolve())] = "sha256:" + diagnostics["sha256"]
     if request.get("nativeFixtureGrant") is not None:
         budget_script = Path(__file__).with_name("native_fixture_budget.py").resolve()
         required_wrapper_files[str(budget_script)] = "sha256:" + digest(budget_script.read_bytes())
@@ -660,9 +779,17 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--authorization-sha256", required=True)
     parser.add_argument("--evidence", required=True)
     parser.add_argument("--slot")
+    parser.add_argument("--diagnostics-config")
+    parser.add_argument("--diagnostics-sha256")
     args = parser.parse_args(argv)
     invocation_raw = sys.stdin.buffer.read()
     context = native_controller.load_context(invocation_raw=invocation_raw)
+    if context.request.get("nativeFixtureCorrection") is not None:
+        if (_NATIVE_DIAGNOSTICS is None or
+                _NATIVE_DIAGNOSTICS["config"]["correction"] != context.request["nativeFixtureCorrection"] or
+                Path(_NATIVE_DIAGNOSTICS["config"]["requestPath"]).resolve() !=
+                Path(json.loads(context.authorization_raw)["requestPath"]).resolve()):
+            raise ValueError("corrected wrapper requires exact early diagnostic binding")
     if (Path(args.authorization).resolve(strict=True) != context.authorization_path or
             args.authorization_sha256 != context.authorization_sha256):
         raise ValueError("wrapper argv differs from the digest-bound controller authorization")

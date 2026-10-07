@@ -118,11 +118,18 @@ def validate_native_fixture_grant(request, captured, product_bound=None):
     if (product.get("sourceSha") != expected_source or product.get("binarySha256") != expected_binary or
             not executable or digest(Path(executable).read_bytes()) != expected_binary):
         raise ValueError("native fixture source grant product pin differs from the bound executable/source")
-    return {"path": str(path), "sha256": binding["sha256"], "sourceKey": binding["sourceKey"],
-            "product": name, "sourceSha": expected_source, "binarySha256": expected_binary,
-            "maxRoleStarts": per_product["deterministicRoleStartsMaximum"],
-            "maxRoleParallel": per_product["maxParallel"],
-            "maxRoleProcessSeconds": per_product["totalProcessSecondsMaximum"]}
+    result = {"path": str(path), "sha256": binding["sha256"], "sourceKey": binding["sourceKey"],
+              "product": name, "sourceSha": expected_source, "binarySha256": expected_binary,
+              "maxRoleStarts": per_product["deterministicRoleStartsMaximum"],
+              "maxRoleParallel": per_product["maxParallel"],
+              "maxRoleProcessSeconds": per_product["totalProcessSecondsMaximum"]}
+    if request.get("nativeFixtureCorrection") is not None:
+        from native_fixture_budget import CORRECTION_KEY, validate_correction_binding
+        correction = validate_correction_binding(request, path, binding["sha256"])
+        result.update(correctionKey=CORRECTION_KEY, correctionSha256=correction["sha256"],
+                      maxRoleStarts=correction["grant"]["limits"][name.lower()][
+                          "maxAdditionalRoleInvocationsIncludingFailedWrapperStarts"])
+    return result
 
 
 class ControllerContext(NamedTuple):
@@ -335,21 +342,34 @@ def begin_classic_controller(request_path, authority, *, request_raw=None, captu
                                        authority.grant["maxActorSessions"])
     if not ledger.claim_dispatch(request["dispatchId"], "launching"):
         raise ValueError("Classic controller claim lost; product launch is forbidden")
-    evidence = Path(request["evidenceDirectory"])
-    evidence.mkdir(parents=True, exist_ok=False)
-    (evidence / "request.json").write_bytes(raw)
-    released = evidence / "released-inputs"
-    released.mkdir()
-    for index, item in enumerate(request["releasedInputs"]):
-        (released / str(index)).write_bytes(authority_captured[item["path"]])
-    bundle_path, bundle_sha = write_bundle(
-        evidence / "controller-bootstrap.json", request_path=request_target, request_raw=raw,
-        authority=authority, authorization_path=auth_path,
-        authorization_sha256=role_binding["sha256"], allow_live=False)
-    context = load_context(env={BOOTSTRAP_PATH_ENV: str(bundle_path), BOOTSTRAP_SHA_ENV: bundle_sha})
-    reports = evidence / "classic-native"
-    reports.mkdir()
-    return ClassicControllerSession(context, ledger, bound, evidence, reports, product["controllerActions"])
+    try:
+        evidence = Path(request["evidenceDirectory"])
+        evidence.mkdir(parents=True, exist_ok=False)
+        (evidence / "request.json").write_bytes(raw)
+        released = evidence / "released-inputs"
+        released.mkdir()
+        for index, item in enumerate(request["releasedInputs"]):
+            (released / str(index)).write_bytes(authority_captured[item["path"]])
+        bundle_path, bundle_sha = write_bundle(
+            evidence / "controller-bootstrap.json", request_path=request_target, request_raw=raw,
+            authority=authority, authorization_path=auth_path,
+            authorization_sha256=role_binding["sha256"], allow_live=False)
+        context = load_context(env={BOOTSTRAP_PATH_ENV: str(bundle_path), BOOTSTRAP_SHA_ENV: bundle_sha})
+        reports = evidence / "classic-native"
+        reports.mkdir()
+        return ClassicControllerSession(context, ledger, bound, evidence, reports, product["controllerActions"])
+    except BaseException as exc:
+        # A durable claim may not be left in `launching` when bootstrap fails before the
+        # first product process. Preserve the error and terminalize the same reservation.
+        result = {"status": "incomplete", "inferencePerformed": None,
+                  "gaps": ["Classic controller bootstrap failed after reservation; no product process was started"]}
+        receipt = {"status": "incomplete", "controllerProcesses": [], "productProcessStarted": False,
+                   "bootstrapError": f"{type(exc).__name__}: {exc}"}
+        try:
+            ledger.finish_controller_dispatch(request["dispatchId"], result, receipt)
+        except BaseException as finish_error:
+            raise RuntimeError("Classic bootstrap failed and its controller reservation could not be terminalized") from finish_error
+        raise
 
 
 def _classic_step_spec(session, action, external_review):
@@ -411,6 +431,15 @@ def run_classic_step(session, action, *, fixture_budget, external_review=None):
     if (Path(spec["argv"][0]).resolve() != session.bound["executable"] or
             classic.sha256_file(session.bound["executable"]) != classic.EXPECTED_BINARY_SHA256):
         raise ValueError("Classic executable changed after preflight")
+    if action == "execute":
+        runtime_binding = session.context.request["product"]["classic"]["runtime"]
+        runtime_path = Path(runtime_binding["path"]).resolve(strict=True)
+        runtime_raw = next((raw for path, raw in session.context.captured_inputs.items()
+                            if Path(path).resolve() == runtime_path), None)
+        if (runtime_raw is None or digest(runtime_raw) != runtime_binding.get("sha256")):
+            raise ValueError("Classic runtime must remain the exact released Request input before Execute")
+        runtime_value = _strict_json(runtime_raw, "Classic runtime")
+        classic_integration.assert_record_store_absent(runtime_value)
     from native_fixture_budget import FixtureBudget
     binding = session.context.request.get("nativeFixtureGrant", {})
     if (not isinstance(fixture_budget, FixtureBudget) or

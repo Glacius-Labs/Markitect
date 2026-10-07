@@ -319,6 +319,27 @@ class GovernmentTranslationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "event log is required"):
             government.translate_queue_result(self.request, self._request_bytes(), stdout, 0)
 
+    def test_accepted_queue_job_without_evidence_identity_is_incomplete_with_bound_receipts(self):
+        stdout, value = self._queue("complete")
+        report_path = Path(value["jobs"][0]["reportPath"])
+        report = json.loads(report_path.read_bytes())
+        report.pop("evidence")
+        report_sha = write(report_path, report)
+        value["jobs"][0]["reportDigest"] = report_sha
+        queue_dir = Path(value["queueDirectory"])
+        write(queue_dir / "queue-report-00000001.json", value)
+        write(stdout, value)
+
+        result = government.translate_queue_result(self.request, self._request_bytes(), stdout, 0)
+        self.assertEqual(result["status"], "incomplete")
+        self.assertIsNone(result["candidateCommit"])
+        self.assertEqual(result["usage"]["nativeRolesObserved"], [])
+        kinds = {receipt["kind"] for receipt in result["receipts"]}
+        self.assertTrue({"government-queue-stdout", "government-queue-report",
+                         "government-queue-events", "government-run-report"}.issubset(kinds))
+        self.assertNotIn("government-decision", kinds)
+        self.assertTrue(any("lacks evidence identity" in gap for gap in result["gaps"]))
+
     def test_decision_round_must_match_evidence_round(self):
         report = self._report()
         report["decision"]["round"] = 2

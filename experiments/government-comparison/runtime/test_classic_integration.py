@@ -112,6 +112,8 @@ class ClassicIntegrationTests(unittest.TestCase):
         self.assertEqual(len(result["fixtureSourceCommit"]), 40)
         repo = Path(result["fixtureRepo"])
         runtime = json.loads(Path(result["runtimePath"]).read_text(encoding="utf-8"))
+        self.assertFalse(Path(runtime["recordStore"]).exists(),
+                         "fixture preparation must leave native RecordStore initialization to Classic")
         authorization_raw = Path(result["roleAuthorizationPath"]).read_bytes()
         authorization = json.loads(authorization_raw)
         self.assertEqual(authorization["status"], "approved")
@@ -159,6 +161,32 @@ class ClassicIntegrationTests(unittest.TestCase):
         status = __import__("subprocess").run(["git", "-C", str(repo), "status", "--porcelain"],
                                               capture_output=True, check=True).stdout
         self.assertEqual(status, b"")
+
+    def test_prepare_runtime_leaves_record_store_absent_and_preserves_preexisting_empty_root(self):
+        prepared = integration.prepare_fixture(PACKET, self.root / "record-store-check")
+        runtime = json.loads(Path(prepared["runtimePath"]).read_text(encoding="utf-8"))
+        record_store = Path(runtime["recordStore"])
+        self.assertFalse(record_store.exists())
+        self.assertEqual(integration.assert_record_store_absent(runtime), record_store)
+
+        state = self.root / "preexisting-controller-state"
+        root = state / "ledger"
+        root.mkdir(parents=True)
+        self.assertEqual(list(root.iterdir()), [])
+        rejected_runtime = Path(prepared["runtimePath"]).with_name("must-not-be-written.json")
+        with self.assertRaisesRegex(FileExistsError, "must be absent before native initialization"):
+            integration.prepare_protocol_runtime(
+                PACKET, self.root / "record-store-check", prepared["fixtureRepo"],
+                authorization_path=prepared["roleAuthorizationPath"],
+                authorization_sha256=prepared["roleAuthorizationSha256"],
+                role_evidence_directory=self.root / "record-store-check" / "role-evidence",
+                state_directory=state, runtime_path=rejected_runtime)
+        self.assertTrue(root.is_dir(), "the preexisting root must be preserved")
+        self.assertEqual(list(root.iterdir()), [], "the helper must not alter or populate an old empty root")
+        self.assertFalse((state / "private-logs").exists(), "reject before creating sibling controller state")
+        self.assertFalse(rejected_runtime.exists(), "reject before writing a runtime bound to old state")
+        with self.assertRaisesRegex(FileExistsError, "must be absent before native initialization"):
+            integration.assert_record_store_absent({"recordStore": str(root)})
 
     def test_bind_request_validates_external_auth_runtime_pins_and_clean_actor_base(self):
         prepared = integration.prepare_fixture(PACKET, self.root / "bound")

@@ -1,4 +1,24 @@
-# Native integration: bounded negative closure
+# Native integration: r2 correction in progress; r1 negative closure retained
+
+Active resumption point: Overseer accepted r1 at
+`f35c8209cd8902bff17e69f05ee7716e352ee4b2` and issued
+`native-s1-corrected-integration-20261008-r2`. Its exact envelope is
+`evidence/native-integration/run-2/authorization-grant.json`; external immutable
+snapshot and envelope are under `native-metadata-fixtures-20261008-r2`.
+Only the four confirmed harness corrections, focused gates/review, clean source
+commit/freeze, then one corrected case per held product are active. No new
+native starts have occurred at this checkpoint. Static disposable fixtures and
+explicit predecessor history are prepared. Source ownership: case_contracts
+Classic prep; s1_adapter Government translation/finalization; tools_source_review
+additive budget/controller validation; root early diagnostics and parent driver.
+Native limits are additive +2 Government/+5 Classic, six wrapper invocations
+per product, +300/+750 reserved seconds, original deadlines and no provider.
+Next: finish source review/gates, release exact runtime/Authority bindings, commit
+and freeze; execute products sequentially and stop each at its first failure.
+After compaction continue this active r2 task, not the r1 stop below. Historical
+r1 evidence and its open Government controller must remain unchanged.
+
+## Historical r1 closure
 
 **The integration attempt failed. Both positive cases are incomplete. No
 resume/replay, S1 readiness, comparison result, semantic or human acceptance,

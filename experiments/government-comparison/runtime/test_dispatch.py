@@ -13,6 +13,7 @@ import unittest
 from unittest.mock import patch
 
 from adapter import handle
+import dispatch as dispatch_module
 from dispatch import Authority, LIVE_GAPS, base_result, command, digest, encoded, execution_sha, mechanical_pin, runtime_pins, validate_listing, tool_observations
 from ledger import LimitReached
 from process import bounded
@@ -414,6 +415,62 @@ class DispatchTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "immutable receipt"):
             self.ledger.record_controller_process(r["dispatchId"], "synthetic-step", time.time(),
                                                   {"status": "completed", "argv": argv})
+
+    def test_government_translation_failure_finalizes_incomplete_with_valid_process_receipts(self):
+        r, path = self.request(arm="government")
+        auth_path = self.root / "native-role-auth.json"
+        auth_raw = b'{"synthetic":"released role authorization"}'
+        auth_path.write_bytes(auth_raw)
+        binding = {"path": str(auth_path.resolve()), "sha256": digest(auth_raw)}
+        r["product"] = {"government": {"roleAuthorization": binding}}
+        r["releasedInputs"].append(binding)
+        raw = encoded(r)
+        path.write_bytes(raw)
+        captured = {item["path"]: Path(item["path"]).read_bytes() for item in r["releasedInputs"]}
+        self.authorize()
+        evidence = Path(r["evidenceDirectory"])
+        result_path = self.results / "government-incomplete.json"
+
+        def write_bundle(path, **_kwargs):
+            path = Path(path)
+            path.write_bytes(b"synthetic controller bootstrap")
+            return path, digest(path.read_bytes())
+
+        def bounded_spy(argv, cwd, directory, _wall, **_kwargs):
+            directory = Path(directory)
+            directory.mkdir(parents=True)
+            stdout = directory / "stdout.log"
+            stderr = directory / "stderr.log"
+            stdout.write_bytes(b'{"queue":"native result fixture"}')
+            stderr.write_bytes(b"")
+            receipts = [{"path": str(target.resolve()), "sha256": digest(target.read_bytes())}
+                        for target in (stdout, stderr)]
+            process = {"argv": argv, "cwd": cwd, "returnCode": 0, "wallSeconds": 0.01,
+                       "receipts": receipts}
+            (directory / "process.json").write_bytes(encoded(process))
+            return {"returnCode": 0}
+
+        with patch("government.bind_request", return_value={}), \
+             patch("native_controller.validate_native_fixture_grant", return_value={}), \
+             patch("government_roles.preflight_authorization"), \
+             patch("government.plan_request", return_value={"argv": [str(self.fixture), "government"]}), \
+             patch("native_controller.write_bundle", side_effect=write_bundle), \
+             patch.object(dispatch_module, "bounded", side_effect=bounded_spy), \
+             patch("government.translate_queue_result", side_effect=ValueError("missing evidence identity")):
+            result = dispatch_module.dispatch_government(path, result_path, self.authority, r, raw,
+                                                         captured, dispatch_module.base_result(r, raw))
+
+        self.assertEqual(result["status"], "incomplete")
+        self.assertIsNone(result["candidateCommit"])
+        self.assertTrue(any("missing evidence identity" in gap for gap in result["gaps"]))
+        kinds = {item["kind"] for item in result["receipts"]}
+        self.assertTrue({"controller-process", "controller-bootstrap",
+                         "released-input-snapshot"}.issubset(kinds))
+        controller = self.ledger.snapshot()["controllerRuns"]
+        self.assertEqual(len(controller), 1)
+        self.assertEqual(controller[0]["status"], "incomplete")
+        self.assertIsNotNone(controller[0]["end"])
+        self.assertEqual(self.ledger.snapshot()["actorSessions"], 0)
 
     def test_no_mode_only_launch_or_arbitrary_mechanical_program(self):
         r, path = self.request()
