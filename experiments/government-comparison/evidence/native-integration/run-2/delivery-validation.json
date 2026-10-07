@@ -1,0 +1,138 @@
+{
+  "schemaVersion": 1,
+  "review": "independent-read-only-r2-delivery-validation",
+  "reviewedUtcDate": "2026-10-08",
+  "status": "validated-negative-delivery",
+  "scope": "Reconcile immutable r2 preflight, both completed negative attempts, evidence archive, cumulative accounting, and final handoff. No tests, product processes, or source edits were performed.",
+  "sourceBinding": {
+    "sourceCommit": "9b7ee8a1d2ba0a19ea3a717635afca22b1bd51df",
+    "preflightCommit": "5caad2f4004c769ff77974ea64bf8cfbe19dece7",
+    "head": "5caad2f4004c769ff77974ea64bf8cfbe19dece7",
+    "headParentEqualsSourceCommit": true,
+    "sourceFilesChangedAfterFreeze": false,
+    "preflightFreeze": {
+      "path": "experiments/government-comparison/evidence/native-integration/run-2/preflight-freeze.json",
+      "sha256": "55c53bf49b006165c3305e470c3258ba1807079511793ffc899e8dd46845d0b9",
+      "inputEntries": 82,
+      "matchingInputHashes": 82,
+      "mismatches": 0,
+      "preflightReviewSha256": "0109d475f15697ad1025f8bdae524d42fb1a617966959eb75b2b645dc0d41dad"
+    },
+    "currentRuntimePins": {
+      "government": {"pinned": 25, "matching": 25, "mismatches": 0},
+      "classic": {"pinned": 25, "matching": 25, "mismatches": 0}
+    }
+  },
+  "archive": {
+    "manifestPath": "experiments/government-comparison/evidence/native-integration/run-2/external-snapshots.json",
+    "manifestSha256": "59af681faabaec6aac3ade7f2aeafa4678c2137ab340a2755d4f137ed2d7f047",
+    "originalCopyPairs": 86,
+    "matchingOriginalCopyPairs": 86,
+    "mismatches": 0
+  },
+  "accounting": {
+    "quotaSummaryPath": "experiments/government-comparison/evidence/native-integration/run-2/quota-and-ledger-summary.json",
+    "quotaSummarySha256": "8474644f1b8480165fe2e2aa5321fc64f3ac8aab8895ee962323c4e0263fd280",
+    "sharedNativeStartLedger": {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\native-starts.sqlite",
+      "integrityCheck": "ok",
+      "sha256": "c5769c0c204cfbc5d17d95320c8b2288b746aa785c16796ce0d7ab433b58fbf5",
+      "totalRows": 5,
+      "originalRows": 3,
+      "originalRowsMatchPriorSnapshotExactly": true,
+      "r2AppendedRows": [
+        {"product": "government", "label": "government-native-corrected-r2/queue", "reservedSeconds": 150},
+        {"product": "classic", "label": "classic-native-corrected-r2/execute", "reservedSeconds": 150}
+      ],
+      "otherRowsOrRefills": 0,
+      "correctionKey": "native-s1-corrected-integration-20261008-r2",
+      "correctionSha256": "be78d1156bfe49f46793906d94dfd0ec82ace550cbb107b425d383d45e25870f"
+    },
+    "historicalCaseLedgers": {
+      "government": {
+        "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\fixture-ledger.sqlite",
+        "expectedSha256": "c00c116064ecc8cd910c72ffb6f6e250b403fded24e20f85e8b55d38f87140a5",
+        "currentSha256": "c00c116064ecc8cd910c72ffb6f6e250b403fded24e20f85e8b55d38f87140a5",
+        "unchanged": true
+      },
+      "classic": {
+        "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\fixture-ledger.sqlite",
+        "expectedSha256": "cf930cd89b2e97c8215e8526e1373f6eaf201788d7125bf47a87fa32ad2bddf7",
+        "currentSha256": "cf930cd89b2e97c8215e8526e1373f6eaf201788d7125bf47a87fa32ad2bddf7",
+        "unchanged": true
+      }
+    },
+    "cumulative": {
+      "government": {"nativeStarts": 3, "reservedSeconds": 450, "wrapperStarts": 2, "delegateAttempts": 0, "controllerStatus": "incomplete"},
+      "classic": {"nativeStarts": 2, "reservedSeconds": 300, "wrapperStarts": 1, "delegateAttempts": 0, "controllerStatus": "incomplete"},
+      "combined": {"nativeStarts": 5, "reservedSeconds": 750, "wrapperStarts": 3, "delegateAttempts": 0},
+      "realActorStarts": 0,
+      "providerCalls": 0,
+      "metadataTrees": 0,
+      "studyCells": 0,
+      "refills": 0,
+      "arbitraryOsDescendantWallSeconds": null
+    }
+  },
+  "runs": {
+    "government": {
+      "resultPath": "experiments/government-comparison/evidence/native-integration/run-2/government/queue-result.json",
+      "resultSha256": "37f09b9c8e390c92e023321e8da6b06e190eb39f18c9d3d06f3a5b88e77322dc",
+      "status": "incomplete",
+      "nativeExitCode": 0,
+      "nativeWallSeconds": 2.2807656000368297,
+      "wrapperStarts": 1,
+      "delegateAttempts": 0,
+      "controllerProcessRows": 0,
+      "wrapperStderrSha256": "5f3b56e9b6f4f85d29fe8f230695413118545da6f58b60351ad57f223dba6bd0",
+      "diagnostic": "ValueError: delegate argv does not begin with its bound command; no delegate call occurred.",
+      "providerRequests": null,
+      "providerTurns": null,
+      "reportedInputPlusOutputTokens": null,
+      "rawTokenAndToolCountersKnown": false,
+      "rawTokenAndToolCountersAreUnknown": true,
+      "furtherActions": "not run; no resume or replay"
+    },
+    "classic": {
+      "resultPath": "experiments/government-comparison/evidence/native-integration/run-2/classic/flow-result.json",
+      "resultSha256": "c4af3133a70ff5d4f17feffb150f18f69ec1683dfe2fd5dbdd517c96fcd61aca",
+      "status": "incomplete",
+      "nativeExitCode": 2,
+      "nativeWallSeconds": 3.3595962000545114,
+      "wrapperStarts": 1,
+      "delegateAttempts": 0,
+      "controllerProcessRows": 1,
+      "controllerProcessStatus": "incomplete",
+      "wrapperStderrSha256": "cbc7874bc14238a0e17d5a730bf833854e06e17ceba4d105273a1515ce00fea8",
+      "diagnostic": "Classic Invocation missing exact configured scope identity; no delegate admission.",
+      "usage": null,
+      "usageInterpretation": "unknown, not measured zero",
+      "furtherActions": "not run after Execute failure; no retry, Apply, Verify, Audit, or replay"
+    }
+  },
+  "reviewDocuments": {
+    "preflight": {"path": "experiments/government-comparison/public/native-integration-r2-preflight.md", "sha256": "0109d475f15697ad1025f8bdae524d42fb1a617966959eb75b2b645dc0d41dad"},
+    "governmentPostrun": {"path": "experiments/government-comparison/public/native-integration-r2-government-postrun.md", "sha256": "eec23b494f20ebf78fb62bc8b7f525560de3887fb90c2be9e6f8b55703cf7998"},
+    "classicPostrun": {"path": "experiments/government-comparison/public/native-integration-r2-classic-postrun.md", "sha256": "6ae84684ea3d0ed99a982643258120d7e373e0df24f668e60f08abd6ce663b5a"},
+    "mechanics": {"path": "experiments/government-comparison/public/native-integration-mechanics.md", "sha256": "40a9fa62d79be912aa3dc6316bc8b4e9f817dd105b996f24aa8eb63052f707d2"}
+  },
+  "handoff": {
+    "path": "experiments/government-comparison/native-integration-handoff.md",
+    "sha256": "9b352ba218b898d8ca0b2ed9f9762a8a81f1b812478e3798e90b9deee617ae9a",
+    "claimsReconciled": [
+      "Both r2 cases stopped incomplete after the first failed prerequisite.",
+      "No retries, resumes, repairs, later Classic actions, or additional starts occurred.",
+      "Five total native starts and 750 reserved seconds include the unchanged three-row historical prefix plus exactly two r2 appends.",
+      "Historical Government and Classic case ledgers remain byte-identical to their pre-r2 hashes.",
+      "Provider/token telemetry is unknown or null; arbitrary OS-descendant aggregate wall time remains null.",
+      "S1 and product readiness remain open; no acceptance or successful native integration is claimed."
+    ],
+    "smallestNextWork": [
+      "Add a focused regression using the exact prepared Government argv/bound-command shape, then seek a separately authorized case; do not repair old run ledgers.",
+      "Compare Classic Invocation scope fields with the resolver contract and preserve strict identity checks; do not relax or rerun from the current allocation.",
+      "Keep native runner access and semantic independent evaluation as separate unresolved gates."
+    ],
+    "executionStatus": "all granted r2 execution stopped"
+  },
+  "reviewConclusion": "Delivery is internally consistent and hash-reconciled. Both bounded native attempts are negative/incomplete; the package does not establish S1 readiness or semantic acceptance."
+}

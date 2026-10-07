@@ -1,0 +1,7 @@
+Traceback (most recent call last):
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\government-comparison\run-native-integration.py", line 281, in <module>
+    classic_flow() if args.action == "classic-flow" else budget().snapshot())
+    ~~~~~~~~~~~~^^
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\government-comparison\run-native-integration.py", line 250, in classic_flow
+    raise RuntimeError("Classic Execute failed; stop corrected case without later actions")
+RuntimeError: Classic Execute failed; stop corrected case without later actions

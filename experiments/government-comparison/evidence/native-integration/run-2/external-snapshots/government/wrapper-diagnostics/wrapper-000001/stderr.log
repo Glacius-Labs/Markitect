@@ -1,0 +1,18 @@
+Traceback (most recent call last):
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\government-comparison\runtime\government_roles.py", line 816, in <module>
+    raise SystemExit(main())
+                     ~~~~^^
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\government-comparison\runtime\government_roles.py", line 805, in main
+    response, receipt = run_role(invocation_raw, context.authorization_raw,
+                        ~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                                 context.authorization_sha256, str(context.authorization_path),
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                                 context.request_raw, context.authority, expected_slot=args.slot,
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                                 controller_context=context, role_resolver=role_resolver,
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                                 cwd=context.request["actorRepository"])
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\government-comparison\runtime\government_roles.py", line 691, in run_role
+    raise ValueError("delegate argv does not begin with its bound command")
+ValueError: delegate argv does not begin with its bound command

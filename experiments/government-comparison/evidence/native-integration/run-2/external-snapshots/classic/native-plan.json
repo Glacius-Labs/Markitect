@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "kind": "prospective-classic-native-plan",
+  "product": "Markitect Classic 0.14.1",
+  "productSourceSha": "7dbd599c81540c8203a1b7f83afbc335174f4f1f",
+  "binarySha256": "2cad55efad64f15d7f57638bea78312918fbf7d181c730f188b9921504da71c4",
+  "fixtureSourceCommit": "60b6835b4bbd3af7ad1103af85e52a01412f83cf",
+  "condition": "disposable-prepared-release-fixture",
+  "delegate": "shared Scientist role wrapper with packet protocol_test_double.py as the pinned deterministic delegate; not a model/verifier/human",
+  "calls": [
+    {
+      "action": "execute",
+      "argv": [
+        "C:\\Users\\Consiliari\\.codex\\worktrees\\standard-operating-model\\Markitect\\.artifacts\\classic-readiness\\v0.14.1-r1\\artifacts\\markitect-v0.14.1-windows-amd64.exe",
+        "canonical",
+        "--repo",
+        "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008-r2\\classic\\actor",
+        "--config",
+        "examples/canonical-projection/canonical.yaml",
+        "--runtime",
+        "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008-r2\\classic\\released\\runtime.json",
+        "--action",
+        "controller-execute",
+        "--base",
+        "60b6835b4bbd3af7ad1103af85e52a01412f83cf",
+        "--revision",
+        "60b6835b4bbd3af7ad1103af85e52a01412f83cf"
+      ],
+      "cwd": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008-r2\\classic\\actor",
+      "expectedReport": "json",
+      "timeoutSeconds": 180,
+      "automaticRetries": 0,
+      "stdoutPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008-r2\\classic\\results\\execute.json",
+      "stderrPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008-r2\\classic\\results\\execute.stderr.txt"
+    }
+  ],
+  "afterExecute": {
+    "executeReportPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008-r2\\classic\\results\\execute.json",
+    "review": "external reviewer must bind both exact Execute stdout SHA-256 and report.digest before guarded Apply"
+  },
+  "noNativeCallPerformed": true
+}

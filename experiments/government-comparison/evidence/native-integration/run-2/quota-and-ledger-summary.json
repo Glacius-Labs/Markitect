@@ -1,0 +1,126 @@
+{
+  "grantKey": "native-s1-corrected-integration-20261008-r2",
+  "sourceCommit": "9b7ee8a1d2ba0a19ea3a717635afca22b1bd51df",
+  "preflightCommit": "5caad2f4004c769ff77974ea64bf8cfbe19dece7",
+  "nativeStarts": [
+    {
+      "product": "government",
+      "label": "inspect-constitution",
+      "argv": "[\"C:\\\\Users\\\\Consiliari\\\\.codex\\\\worktrees\\\\government-worker\\\\Markitect\\\\.artifacts\\\\government-g5\\\\markitect-04e225d.exe\", \"government\", \"--repo\", \"C:\\\\Users\\\\Consiliari\\\\Documents\\\\Scientist-Probes\\\\native-metadata-fixtures-20261008\\\\government\\\\actor\", \"--config\", \"government.yaml\", \"--action\", \"inspect\"]",
+      "claimed": 1791411514.0208502,
+      "finished": 1791411514.4874947,
+      "reserved_seconds": 150,
+      "receipt": "{\"argv\": [\"C:\\\\Users\\\\Consiliari\\\\.codex\\\\worktrees\\\\government-worker\\\\Markitect\\\\.artifacts\\\\government-g5\\\\markitect-04e225d.exe\", \"government\", \"--repo\", \"C:\\\\Users\\\\Consiliari\\\\Documents\\\\Scientist-Probes\\\\native-metadata-fixtures-20261008\\\\government\\\\actor\", \"--config\", \"government.yaml\", \"--action\", \"inspect\"], \"automaticRetries\": 0, \"cwd\": \"C:\\\\Users\\\\Consiliari\\\\Documents\\\\Scientist-Probes\\\\native-metadata-fixtures-20261008\\\\government\\\\actor\", \"filesystemIsolation\": \"not established by process wrapper\", \"processTreeControl\": \"windows-job-kill-on-close\", \"receipts\": [{\"kind\": \"stdout.log\", \"path\": \"C:\\\\Users\\\\Consiliari\\\\.codex\\\\worktrees\\\\government-scientist\\\\Markitect\\\\experiments\\\\government-comparison\\\\evidence\\\\native-integration\\\\run-1\\\\government\\\\inspect\\\\stdout.log\", \"sha256\": \"384f55ed014eccab89ac88b3a8b93f8e15547a95605ca634c7b5609c04810e10\"}, {\"kind\": \"stderr.log\", \"path\": \"C:\\\\Users\\\\Consiliari\\\\.codex\\\\worktrees\\\\government-scientist\\\\Markitect\\\\experiments\\\\government-comparison\\\\evidence\\\\native-integration\\\\run-1\\\\government\\\\inspect\\\\stderr.log\", \"sha256\": \"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\"}], \"returnCode\": 0, \"stopReason\": null, \"wallSeconds\": 0.4530548000475392}"
+    },
+    {
+      "product": "government",
+      "label": "government-native-positive/queue",
+      "argv": "[\"C:\\\\Users\\\\Consiliari\\\\.codex\\\\worktrees\\\\government-worker\\\\Markitect\\\\.artifacts\\\\government-g5\\\\markitect-04e225d.exe\", \"government\", \"--repo\", \"C:\\\\Users\\\\Consiliari\\\\Documents\\\\Scientist-Probes\\\\native-metadata-fixtures-20261008\\\\government\\\\actor\", \"--action\", \"queue\", \"--backlog\", \"C:\\\\Users\\\\Consiliari\\\\Documents\\\\Scientist-Probes\\\\native-metadata-fixtures-20261008\\\\government\\\\released\\\\backlog.json\", \"--write\"]",
+      "claimed": 1791413179.1123998,
+      "finished": 1791413180.4834926,
+      "reserved_seconds": 150,
+      "receipt": "{\"argv\": [\"C:\\\\Users\\\\Consiliari\\\\.codex\\\\worktrees\\\\government-worker\\\\Markitect\\\\.artifacts\\\\government-g5\\\\markitect-04e225d.exe\", \"government\", \"--repo\", \"C:\\\\Users\\\\Consiliari\\\\Documents\\\\Scientist-Probes\\\\native-metadata-fixtures-20261008\\\\government\\\\actor\", \"--action\", \"queue\", \"--backlog\", \"C:\\\\Users\\\\Consiliari\\\\Documents\\\\Scientist-Probes\\\\native-metadata-fixtures-20261008\\\\government\\\\released\\\\backlog.json\", \"--write\"], \"automaticRetries\": 0, \"cwd\": \"C:\\\\Users\\\\Consiliari\\\\Documents\\\\Scientist-Probes\\\\native-metadata-fixtures-20261008\\\\government\\\\actor\", \"filesystemIsolation\": \"not established by process wrapper\", \"processTreeControl\": \"windows-job-kill-on-close\", \"receipts\": [{\"kind\": \"stdout.log\", \"path\": \"C:\\\\Users\\\\Consiliari\\\\Documents\\\\Scientist-Probes\\\\native-metadata-fixtures-20261008\\\\government\\\\controller-evidence\\\\process\\\\stdout.log\", \"sha256\": \"86420b46c3476029e939fbdc3068989643d7b9f1a25726874b0b8ef6a972c0be\"}, {\"kind\": \"stderr.log\", \"path\": \"C:\\\\Users\\\\Consiliari\\\\Documents\\\\Scientist-Probes\\\\native-metadata-fixtures-20261008\\\\government\\\\controller-evidence\\\\process\\\\stderr.log\", \"sha256\": \"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\"}], \"returnCode\": 0, \"stopReason\": null, \"wallSeconds\": 1.1934311999939382}"
+    },
+    {
+      "product": "classic",
+      "label": "classic-native-positive/execute",
+      "argv": "[\"C:\\\\Users\\\\Consiliari\\\\.codex\\\\worktrees\\\\standard-operating-model\\\\Markitect\\\\.artifacts\\\\classic-readiness\\\\v0.14.1-r1\\\\artifacts\\\\markitect-v0.14.1-windows-amd64.exe\", \"canonical\", \"--repo\", \"C:\\\\Users\\\\Consiliari\\\\Documents\\\\Scientist-Probes\\\\native-metadata-fixtures-20261008\\\\classic\\\\actor\", \"--config\", \"examples/canonical-projection/canonical.yaml\", \"--runtime\", \"C:\\\\Users\\\\Consiliari\\\\Documents\\\\Scientist-Probes\\\\native-metadata-fixtures-20261008\\\\classic\\\\released\\\\runtime.json\", \"--action\", \"controller-execute\", \"--base\", \"20c0b4c85135bc5d76fe4d337ff5450b8d7178bf\", \"--revision\", \"20c0b4c85135bc5d76fe4d337ff5450b8d7178bf\"]",
+      "claimed": 1791413406.5410833,
+      "finished": 1791413406.7290628,
+      "reserved_seconds": 150,
+      "receipt": "{\"argv\": [\"C:\\\\Users\\\\Consiliari\\\\.codex\\\\worktrees\\\\standard-operating-model\\\\Markitect\\\\.artifacts\\\\classic-readiness\\\\v0.14.1-r1\\\\artifacts\\\\markitect-v0.14.1-windows-amd64.exe\", \"canonical\", \"--repo\", \"C:\\\\Users\\\\Consiliari\\\\Documents\\\\Scientist-Probes\\\\native-metadata-fixtures-20261008\\\\classic\\\\actor\", \"--config\", \"examples/canonical-projection/canonical.yaml\", \"--runtime\", \"C:\\\\Users\\\\Consiliari\\\\Documents\\\\Scientist-Probes\\\\native-metadata-fixtures-20261008\\\\classic\\\\released\\\\runtime.json\", \"--action\", \"controller-execute\", \"--base\", \"20c0b4c85135bc5d76fe4d337ff5450b8d7178bf\", \"--revision\", \"20c0b4c85135bc5d76fe4d337ff5450b8d7178bf\"], \"processSha256\": \"c4c61f1d698e8469a3077e4281a5f22a1d6bfa991c60e1c3d5c6f514f15da58c\", \"processTreeControl\": \"windows-job-kill-on-close\", \"returnCode\": 2, \"status\": \"incomplete\", \"stderrSha256\": \"bbd8e15baca2efc8063c3a09bcab85c8e34e3d7734c594f3cb083a80355aa8f9\", \"stdoutSha256\": \"70a96e8656611bcd1eb5cc6d37988cfe2cad23b14f15a56ba2f46441e3ba2204\", \"stopReason\": null, \"timedOut\": false, \"wallSeconds\": 0.14956270006950945}"
+    },
+    {
+      "product": "government",
+      "label": "government-native-corrected-r2/queue",
+      "argv": "[\"C:\\\\Users\\\\Consiliari\\\\.codex\\\\worktrees\\\\government-worker\\\\Markitect\\\\.artifacts\\\\government-g5\\\\markitect-04e225d.exe\", \"government\", \"--repo\", \"C:\\\\Users\\\\Consiliari\\\\Documents\\\\Scientist-Probes\\\\native-metadata-fixtures-20261008-r2\\\\government\\\\actor\", \"--action\", \"queue\", \"--backlog\", \"C:\\\\Users\\\\Consiliari\\\\Documents\\\\Scientist-Probes\\\\native-metadata-fixtures-20261008-r2\\\\government\\\\released\\\\backlog.json\", \"--write\"]",
+      "claimed": 1791415569.1494575,
+      "finished": 1791415571.6491368,
+      "reserved_seconds": 150,
+      "receipt": "{\"argv\": [\"C:\\\\Users\\\\Consiliari\\\\.codex\\\\worktrees\\\\government-worker\\\\Markitect\\\\.artifacts\\\\government-g5\\\\markitect-04e225d.exe\", \"government\", \"--repo\", \"C:\\\\Users\\\\Consiliari\\\\Documents\\\\Scientist-Probes\\\\native-metadata-fixtures-20261008-r2\\\\government\\\\actor\", \"--action\", \"queue\", \"--backlog\", \"C:\\\\Users\\\\Consiliari\\\\Documents\\\\Scientist-Probes\\\\native-metadata-fixtures-20261008-r2\\\\government\\\\released\\\\backlog.json\", \"--write\"], \"automaticRetries\": 0, \"cwd\": \"C:\\\\Users\\\\Consiliari\\\\Documents\\\\Scientist-Probes\\\\native-metadata-fixtures-20261008-r2\\\\government\\\\actor\", \"filesystemIsolation\": \"not established by process wrapper\", \"processTreeControl\": \"windows-job-kill-on-close\", \"receipts\": [{\"kind\": \"stdout.log\", \"path\": \"C:\\\\Users\\\\Consiliari\\\\Documents\\\\Scientist-Probes\\\\native-metadata-fixtures-20261008-r2\\\\government\\\\controller-evidence\\\\process\\\\stdout.log\", \"sha256\": \"e951718e67fba246c0c058600dfcc8d71f6883670d7f84d86abf4e85e625edf9\"}, {\"kind\": \"stderr.log\", \"path\": \"C:\\\\Users\\\\Consiliari\\\\Documents\\\\Scientist-Probes\\\\native-metadata-fixtures-20261008-r2\\\\government\\\\controller-evidence\\\\process\\\\stderr.log\", \"sha256\": \"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\"}], \"returnCode\": 0, \"stopReason\": null, \"wallSeconds\": 2.2807656000368297}"
+    },
+    {
+      "product": "classic",
+      "label": "classic-native-corrected-r2/execute",
+      "argv": "[\"C:\\\\Users\\\\Consiliari\\\\.codex\\\\worktrees\\\\standard-operating-model\\\\Markitect\\\\.artifacts\\\\classic-readiness\\\\v0.14.1-r1\\\\artifacts\\\\markitect-v0.14.1-windows-amd64.exe\", \"canonical\", \"--repo\", \"C:\\\\Users\\\\Consiliari\\\\Documents\\\\Scientist-Probes\\\\native-metadata-fixtures-20261008-r2\\\\classic\\\\actor\", \"--config\", \"examples/canonical-projection/canonical.yaml\", \"--runtime\", \"C:\\\\Users\\\\Consiliari\\\\Documents\\\\Scientist-Probes\\\\native-metadata-fixtures-20261008-r2\\\\classic\\\\released\\\\runtime.json\", \"--action\", \"controller-execute\", \"--base\", \"60b6835b4bbd3af7ad1103af85e52a01412f83cf\", \"--revision\", \"60b6835b4bbd3af7ad1103af85e52a01412f83cf\"]",
+      "claimed": 1791415613.0250764,
+      "finished": 1791415616.4354055,
+      "reserved_seconds": 150,
+      "receipt": "{\"argv\": [\"C:\\\\Users\\\\Consiliari\\\\.codex\\\\worktrees\\\\standard-operating-model\\\\Markitect\\\\.artifacts\\\\classic-readiness\\\\v0.14.1-r1\\\\artifacts\\\\markitect-v0.14.1-windows-amd64.exe\", \"canonical\", \"--repo\", \"C:\\\\Users\\\\Consiliari\\\\Documents\\\\Scientist-Probes\\\\native-metadata-fixtures-20261008-r2\\\\classic\\\\actor\", \"--config\", \"examples/canonical-projection/canonical.yaml\", \"--runtime\", \"C:\\\\Users\\\\Consiliari\\\\Documents\\\\Scientist-Probes\\\\native-metadata-fixtures-20261008-r2\\\\classic\\\\released\\\\runtime.json\", \"--action\", \"controller-execute\", \"--base\", \"60b6835b4bbd3af7ad1103af85e52a01412f83cf\", \"--revision\", \"60b6835b4bbd3af7ad1103af85e52a01412f83cf\"], \"processSha256\": \"0a3cb0952702bcc3d2e8065fa5c48f0851ffecaa3b93d05ab5a8768510abe1df\", \"processTreeControl\": \"windows-job-kill-on-close\", \"returnCode\": 2, \"status\": \"incomplete\", \"stderrSha256\": \"67b2944b65106ea64c392608a653bc5a690979e5e4b8e2f90cf2c687ac64240e\", \"stdoutSha256\": \"cffa90f77ba974af5dbe30c06394f395d69984a2c8299af1bacd0fe86e947ec2\", \"stopReason\": null, \"timedOut\": false, \"wallSeconds\": 3.3595962000545114}"
+    }
+  ],
+  "products": {
+    "government": {
+      "cumulativeNativeStarts": 3,
+      "additionalNativeStarts": 1,
+      "cumulativeReservedSeconds": 450,
+      "additionalReservedSeconds": 150,
+      "cumulativeNativeProcessWallSeconds": 3.927251600078307,
+      "additionalNativeProcessWallSeconds": 2.2807656000368297,
+      "newWrapperStarts": [
+        {
+          "id": 1,
+          "config_sha": "279e29b5d93d2e1105ce7ce4c4c52fca8b05c7c5640bddaffe1802a3555c5759",
+          "started": 1791415571.4299545
+        }
+      ],
+      "delegateAttemptCount": 0,
+      "controllerRows": [
+        {
+          "dispatch_id": "government-native-corrected-r2",
+          "task": "positive-overflow-release",
+          "start": 1791415569.282673,
+          "end": 1791415571.6372206,
+          "status": "incomplete"
+        }
+      ],
+      "controllerProcessRows": [],
+      "usage": null,
+      "positiveCase": "incomplete",
+      "furtherActions": "not run after first blocker",
+      "cumulativeWrapperStarts": 2
+    },
+    "classic": {
+      "cumulativeNativeStarts": 2,
+      "additionalNativeStarts": 1,
+      "cumulativeReservedSeconds": 300,
+      "additionalReservedSeconds": 150,
+      "cumulativeNativeProcessWallSeconds": 3.509158900124021,
+      "additionalNativeProcessWallSeconds": 3.3595962000545114,
+      "newWrapperStarts": [
+        {
+          "id": 1,
+          "config_sha": "1d863c860292955d65fd0a4db4aa89d8cc51566e67b4e840cc9abba498f2e91f",
+          "started": 1791415616.306578
+        }
+      ],
+      "delegateAttemptCount": 0,
+      "controllerRows": [
+        {
+          "dispatch_id": "classic-native-corrected-r2",
+          "task": "native-classic-positive",
+          "start": 1791415612.6915567,
+          "end": 1791415616.4741743,
+          "status": "incomplete"
+        }
+      ],
+      "controllerProcessRows": [
+        {
+          "action": "execute",
+          "status": "incomplete"
+        }
+      ],
+      "usage": null,
+      "positiveCase": "incomplete",
+      "furtherActions": "not run after first blocker",
+      "cumulativeWrapperStarts": 1
+    }
+  },
+  "realActorStarts": 0,
+  "providerCalls": 0,
+  "metadataTrees": 0,
+  "studyCells": 0,
+  "arbitraryOsDescendantWallSeconds": null,
+  "accountingUnit": "150 seconds per native start includes bounded controller plus up to two concurrent role sessions and cleanup; role wall is not charged again",
+  "refills": 0
+}

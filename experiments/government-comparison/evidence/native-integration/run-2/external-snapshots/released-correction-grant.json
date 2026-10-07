@@ -1,0 +1,83 @@
+{
+  "sourceThreadId": "01a11367-a781-7683-a20f-46e12614dcb4",
+  "sourceJsonPointer": "threads[name=Scientist].evidence.correctedNativeIntegrationGrant",
+  "sourceCoordinationPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008-r2\\coordinator-authority-snapshot.json",
+  "sourceCoordinationSha256": "1b2e361ce2a321149a65694b6586bab57e74388dc5486bc2d4f8cbedb2b7a75c",
+  "grant": {
+    "key": "native-s1-corrected-integration-20261008-r2",
+    "issuedUtc": "2026-10-07T23:10:26Z",
+    "status": "Dispatched once; Scientist active preparing narrow fixes and frozen evidence. No new usage yet reported.",
+    "owner": "Scientist",
+    "purpose": "Repair only confirmed harness defects, retain first-wrapper diagnostics and perform one corrected native mechanical case per held product plus directly associated resume/replay.",
+    "basis": {
+      "negativeHandoffSha": "f35c8209cd8902bff17e69f05ee7716e352ee4b2",
+      "previousAllocation": "native-s1-integration-fixtures-20261008",
+      "previousNativeStarts": {
+        "government": 2,
+        "classic": 1
+      },
+      "previousReservedSessionSeconds": {
+        "government": 300,
+        "classic": 150
+      },
+      "previousNativeWrapperAttempts": {
+        "government": 1,
+        "classic": 0
+      },
+      "previousDelegateAttempts": 0
+    },
+    "fixScope": [
+      "Classic absent RecordStore root and preflight assertion without deleting old artifacts",
+      "Classic exact released budget-grant path",
+      "Government incomplete translation preserves raw process/queue receipts and terminalizes future controller ledger as incomplete",
+      "Minimal digest-bound retained raw wrapper diagnostics before first possible failure; no guessed primary fix or product code change"
+    ],
+    "limits": {
+      "government": {
+        "maxAdditionalNativeStarts": 2,
+        "maxAdditionalRoleInvocationsIncludingFailedWrapperStarts": 6,
+        "maxAdditionalReservedControllerAndRoleSessionSeconds": 300,
+        "cases": "One queue attempt; one directly related resume/replay only after the positive case succeeds. No repeated inspect."
+      },
+      "classic": {
+        "maxAdditionalNativeStarts": 5,
+        "maxAdditionalRoleInvocationsIncludingFailedWrapperStarts": 6,
+        "maxAdditionalReservedControllerAndRoleSessionSeconds": 750,
+        "cases": "One Execute, guarded Apply after bound external review, fresh Verify, Audit, and stale Apply replay; later steps only after their prerequisites pass."
+      },
+      "maxParallelRoles": 2,
+      "productsRunSequentially": true,
+      "cumulativeNativeStartCeiling": {
+        "government": 4,
+        "classic": 6,
+        "total": 10
+      },
+      "cumulativeReservedSessionSecondsCeiling": {
+        "government": 600,
+        "classic": 900,
+        "total": 1500
+      },
+      "previousOverallNativeStartCeiling": 16,
+      "previousOverallReservedSessionSecondsCeiling": 2400,
+      "nativeProcessDeadlineSeconds": 38,
+      "controllerWindowSeconds": {
+        "government": 38,
+        "classic": 180
+      },
+      "reservedSessionSecondsPerNativeStart": 150
+    },
+    "preconditions": "Narrow fixes committed to exact clean local source; independent focused source review and directly relevant regressions complete; immutable preflight with corrected source, runtime/role/authority/request/binary pins and explicit additive allocation before first start. This coordinator grant authorizes execution after those conditions without another general permission question; no missing prerequisite may be simulated.",
+    "history": "Fresh disposable corrected-case fixture/evidence namespace bound to old f35c820 handoff, old consumed starts/reservations and original overall ceilings. Failed runs/old controller row/unknown usage remain immutable and counted. No empty replacement of accounting history or automatic refills.",
+    "stopRule": "At first failed prerequisite, unexpected extra role/start, runtime/translation error, deadline or quota stop, preserve evidence and stop that product; no repair/relaunch within this allocation. The independently allocated other product may run if its preconditions hold. Remaining unused numerical quota alone never authorizes another case.",
+    "accountingBoundary": "Logical controller/role session reservations and native parent process wall time are recorded separately. Arbitrary OS-descendant aggregate wall time remains unknown unless measured; no measured zero token claim from no-provider fixtures.",
+    "realActorCalls": 0,
+    "providerCalls": 0,
+    "metadataAppServerTrees": 0,
+    "studyCells": 0,
+    "newPurchases": false,
+    "productMutations": false,
+    "consumedNativeStarts": null,
+    "consumedRoleInvocations": null,
+    "sentUtc": "2026-10-07T23:10:59Z"
+  }
+}

@@ -90,3 +90,13 @@ freezes, missing wrapper stderr, unfinished Government controller bookkeeping
 and Classic RecordStore setup failure. No resume/replay, provider, study or real
 Actor start followed. The fixed-delegate accounting path was not reached by
 either native execution; S1 remains open.
+
+The subsequent r2 correction adds a separately source-bound additive grant,
+preserves the original native-start ledger, caps early wrapper invocations at
+six per product, retains raw wrapper stdout/stderr before dependent imports,
+requires an absent Classic RecordStore root, and terminalizes new failed
+controllers with their validated receipts. Its focused gates passed 102 tests
+and then 9 final authority/controller tests. The two r2 native calls also ended
+incomplete, each before delegate reservation. Both new controllers ended
+incomplete; the historical r1 Government running row remains unchanged. See the
+current handoff for exact source/freeze bindings and cumulative consumption.
