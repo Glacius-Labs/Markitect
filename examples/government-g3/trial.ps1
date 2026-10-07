@@ -246,7 +246,9 @@ foreach ($group in $parallelGroups) {
     $qFinish = @($quantityEvents | Where-Object { $_.event -eq 'process-finish' } | Select-Object -First 1)
     $pFinish = @($priceEvents | Where-Object { $_.event -eq 'process-finish' } | Select-Object -First 1)
     if ($qStart.Count -and $pStart.Count -and $qOverlap.Count -and $pOverlap.Count -and $qFinish.Count -and $pFinish.Count) {
-        $overlapGroups += [pscustomobject]@{ generation = $group.Name; quantity = $quantityEvents; price = $priceEvents; quantityRunId = $qStart[0].runId; priceRunId = $pStart[0].runId; intervalOverlap = ([DateTimeOffset]::Parse($qStart[0].atUtc) -lt [DateTimeOffset]::Parse($pFinish[0].atUtc) -and [DateTimeOffset]::Parse($pStart[0].atUtc) -lt [DateTimeOffset]::Parse($qFinish[0].atUtc)) }
+        # ConvertFrom-Json can return DateTime values. Preserve their fractional
+        # seconds instead of implicitly formatting them as culture-specific text.
+        $overlapGroups += [pscustomobject]@{ generation = $group.Name; quantity = $quantityEvents; price = $priceEvents; quantityRunId = $qStart[0].runId; priceRunId = $pStart[0].runId; intervalOverlap = ([DateTimeOffset]$qStart[0].atUtc -lt [DateTimeOffset]$pFinish[0].atUtc -and [DateTimeOffset]$pStart[0].atUtc -lt [DateTimeOffset]$qFinish[0].atUtc) }
     }
 }
 $markerEvidence = @()
@@ -321,7 +323,7 @@ $votesFresh = ($votes.Count -eq 2 -and $candidateID -and $evidenceID -and @($vot
 $voteOutcomes = @($votes | ForEach-Object { $_.outcome })
 $unanimousRootVotes = ($votesFresh -and $voteOutcomes -contains 'assent' -and $voteOutcomes -contains 'assent-unaffected')
 $expected = if ($MaxRepairs -eq 0 -or $MaxCalls -lt 15 -or $OutsideScope) {
-    $boundedCondition = ($nativeExit -ne 0 -and $null -eq $parseError -and $active -eq $base -and $finalHead -eq $base -and $promotion -ne 'promoted')
+    $boundedCondition = ($nativeExit -ne 0 -and $null -eq $parseError -and $active -eq $base -and $finalHead -eq $base -and $promotion -ne 'promoted' -and $null -eq $evidenceID -and $null -eq $decisionID -and $votes.Count -eq 0)
     if ($MaxRepairs -eq 0) {
         $boundedCondition = $boundedCondition -and $candidateInvoice -eq 'total=11' -and $rootAttempts.Count -eq 1 -and $firstRootCheckFailed -and $firstAttemptReview -eq 'failed' -and $childrenPassed -and $null -eq $evidenceID -and $votes.Count -eq 0
     }
