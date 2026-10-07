@@ -1,0 +1,109 @@
+{
+  "apiVersion": "markitect.canonical/controller/v1alpha1",
+  "recordStore": "__LEDGER__",
+  "privateLogs": "__LOGS__",
+  "referenceDepth": 1,
+  "auditAll": true,
+  "checkInputs": [
+    "examples/classic-commerce/global.json",
+    "examples/classic-commerce/NuGet.Config",
+    "examples/classic-commerce/checks/ClassicCommerce.Check.csproj",
+    "examples/classic-commerce/checks/Program.cs",
+    "examples/classic-commerce/checks/check.py"
+  ],
+  "executor": {
+    "command": "__PYTHON__",
+    "args": [
+      "__RUNNER__",
+      "--mode",
+      "positive"
+    ],
+    "model": "classic-commerce-test-double",
+    "modelOptions": {
+      "classification": "synthetic protocol actor; no semantic assessment"
+    },
+    "providerVersion": "classic-commerce-test-double/1",
+    "timeoutSeconds": 20,
+    "maxStdoutBytes": 1048576,
+    "maxStderrBytes": 1048576,
+    "runtimeFiles": [
+      {
+        "path": "__RUNNER__",
+        "mode": "0644",
+        "digest": "sha256:__RUNNER_SHA256__"
+      }
+    ]
+  },
+  "verifier": {
+    "command": "__PYTHON__",
+    "args": [
+      "__RUNNER__",
+      "--mode",
+      "positive"
+    ],
+    "model": "classic-commerce-test-double",
+    "modelOptions": {
+      "classification": "synthetic protocol actor; no semantic assessment"
+    },
+    "providerVersion": "classic-commerce-test-double/1",
+    "timeoutSeconds": 20,
+    "maxStdoutBytes": 1048576,
+    "maxStderrBytes": 1048576,
+    "runtimeFiles": [
+      {
+        "path": "__RUNNER__",
+        "mode": "0644",
+        "digest": "sha256:__RUNNER_SHA256__"
+      }
+    ]
+  },
+  "assuranceRoots": [
+    "commerce-markdown"
+  ],
+  "assuranceScopes": [
+    {
+      "id": "commerce-markdown",
+      "projectionId": "[\"markitect.foundation/v1\",\"Projection\",\"commerce\",\"application-markdown\"]",
+      "children": [
+        "commerce-dotnet"
+      ],
+      "checks": [
+        {
+          "name": "classic-commerce-build-and-behavior",
+          "run": [
+            "python",
+            "examples/classic-commerce/checks/check.py"
+          ]
+        }
+      ],
+      "checkInputs": [
+        "examples/classic-commerce/global.json",
+        "examples/classic-commerce/NuGet.Config",
+        "examples/classic-commerce/checks/ClassicCommerce.Check.csproj",
+        "examples/classic-commerce/checks/Program.cs",
+        "examples/classic-commerce/checks/check.py"
+      ]
+    },
+    {
+      "id": "commerce-dotnet",
+      "projectionId": "[\"markitect.foundation/v1\",\"Projection\",\"commerce\",\"application-dotnet\"]",
+      "children": [],
+      "checks": [
+        {
+          "name": "classic-commerce-build-and-behavior",
+          "run": [
+            "python",
+            "examples/classic-commerce/checks/check.py"
+          ]
+        }
+      ],
+      "checkInputs": [
+        "examples/classic-commerce/global.json",
+        "examples/classic-commerce/NuGet.Config",
+        "examples/classic-commerce/checks/ClassicCommerce.Check.csproj",
+        "examples/classic-commerce/checks/Program.cs",
+        "examples/classic-commerce/checks/check.py"
+      ]
+    }
+  ]
+}

@@ -1,5 +1,7 @@
 <a id="canonical-intent-and-reconciliation-source-only-alpha"></a>
 # Canonical intent and reconciliation (experimental alpha bundled with v0.14.1)
+For a self-contained public end-to-end entrypoint, use the [Classic Commerce example](../examples/classic-commerce/README.md). It includes every selected policy, an explicit runtime, actual opt-in .NET compilation, an independent finite behavior probe and a compilable negative control. Its actor is a deterministic protocol test double; compiler success does not establish autonomous quality.
+
 
 The `canonical` command is bundled with v0.14.1 as an explicit experimental alpha preview, not stable support. The published v0.13.0 commands and Domain schemas retain their meaning; the v0.14.1 stable command contract remains additive. [Vision](vision.md) owns the product thesis; [the reset decision](design/canonical-projection-reset.md) owns the accepted semantic change. This guide describes the bounded executable slice, not a continuous agent controller or universal code generator.
 

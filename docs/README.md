@@ -15,6 +15,7 @@
 | [Factual consistency](consistency.md) | Opt-in sourced functional assertions and their limits |
 | [Architecture](architecture.md) | Published v0.14.1 status, the experimental canonical projection alpha, preserved v0.13.0 contract, product boundaries and evidence limits |
 | [Engineering constitution](engineering-constitution.md) | Kernel invariants, selected canonical intent, projection/evidence boundaries, policy analysis and human adoption authority |
+| [Complete Classic Commerce example](../examples/classic-commerce/README.md) | Self-contained canonical alpha walkthrough, opt-in real .NET build, independent behavior check and negative control |
 | [Canonical projection usage](canonical-projections.md) | Experimental alpha inspection, reconcile planning, Executor tools, guarded Apply and immutable verification |
 | [Canonical reset validation](validation/canonical-projection-reset.md) | Migration evidence, narrow gates, negative candidates and unresolved assurance pressure |
 | [Canonical projection reset](design/canonical-projection-reset.md) | Accepted minimal structural Core, strict Schema/Projection Module split, explicit binding and unified Executor/Verifier direction |

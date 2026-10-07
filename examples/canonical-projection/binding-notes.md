@@ -1,5 +1,7 @@
 # Projection binding notes
 
+This is a structural/binding slice, not a complete controller-start fixture: its Markdown Projection does not select per-Kind Markdown policies and correctly escalates when planning that representation. The [complete Classic Commerce example](../classic-commerce/README.md) supplies those policies and its own public build/behavior check and native CLI walkthrough. No internal test preparation is needed for that example.
+
 ## Finite first-slice scope
 
 A Projection declares the exact ordered set of canonical Definition identities to include, the desired representation (`dotnet` or `markdown`), the repository and target path, and zero or more typed ProjectionPolicy references. Runtime project configuration supplies one exact `ProjectionBinding` from this Projection identity to an installed Projection Module name. The Host rejects a missing or duplicate binding, a Schema Module, an ambiguous Module entrypoint, or a target that does not match the canonical representation. Switching between compatible Modules changes the runtime request and operational pin while leaving canonical intent and its Model digest unchanged. The Host resolves every listed identity against the compiled model, rejects missing or duplicate identities, and includes a reference edge only when both endpoints are in the declared set. An edge leaving that set remains an external dependency or gap; it does not silently enlarge scope.

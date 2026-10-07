@@ -2,6 +2,7 @@ apiVersion: markitect.example.org/artifact-coverage/v1alpha1
 kind: ArtifactCoverage
 spec:
   roots:
+    - examples/classic-commerce
     - internal/host/canonical_controller_apply_receipt.go
     - internal/host/canonical_controller_apply_receipt_test.go
     - internal/host/cli/canonical_apply_result_test.go
@@ -144,6 +145,60 @@ spec:
     - experiments/live-operating-pilot
     - experiments/two-area-operating-pilot
   tooling:
+    - path: examples/classic-commerce/NuGet.Config
+      owner: classic-commerce-public-example
+    - path: examples/classic-commerce/README.md
+      owner: classic-commerce-public-example
+    - path: examples/classic-commerce/canonical.yaml
+      owner: classic-commerce-public-example
+    - path: examples/classic-commerce/checks/ClassicCommerce.Check.csproj
+      owner: classic-commerce-public-example
+    - path: examples/classic-commerce/checks/Program.cs
+      owner: classic-commerce-public-example
+    - path: examples/classic-commerce/checks/check.py
+      owner: classic-commerce-public-example
+    - path: examples/classic-commerce/definitions/commerce.markdown-projection.yaml
+      owner: classic-commerce-public-example
+    - path: examples/classic-commerce/definitions/commerce.projection.yaml
+      owner: classic-commerce-public-example
+    - path: examples/classic-commerce/definitions/create-order.effect-axis.yaml
+      owner: classic-commerce-public-example
+    - path: examples/classic-commerce/definitions/create-order.handler.yaml
+      owner: classic-commerce-public-example
+    - path: examples/classic-commerce/definitions/create-order.projection-policy.yaml
+      owner: classic-commerce-public-example
+    - path: examples/classic-commerce/definitions/create-order.use-case.yaml
+      owner: classic-commerce-public-example
+    - path: examples/classic-commerce/definitions/effect-axis.projection-policy.yaml
+      owner: classic-commerce-public-example
+    - path: examples/classic-commerce/definitions/effectaxis-markdown.yaml
+      owner: classic-commerce-public-example
+    - path: examples/classic-commerce/definitions/handler-markdown.yaml
+      owner: classic-commerce-public-example
+    - path: examples/classic-commerce/definitions/handler.projection-policy.yaml
+      owner: classic-commerce-public-example
+    - path: examples/classic-commerce/definitions/usecase-markdown.yaml
+      owner: classic-commerce-public-example
+    - path: examples/classic-commerce/global.json
+      owner: classic-commerce-public-example
+    - path: examples/classic-commerce/modules/commerce/module.yaml
+      owner: classic-commerce-public-example
+    - path: examples/classic-commerce/modules/commerce/schema.yaml
+      owner: classic-commerce-public-example
+    - path: examples/classic-commerce/modules/dotnet/module.yaml
+      owner: classic-commerce-public-example
+    - path: examples/classic-commerce/modules/foundation/module.yaml
+      owner: classic-commerce-public-example
+    - path: examples/classic-commerce/modules/foundation/schema.yaml
+      owner: classic-commerce-public-example
+    - path: examples/classic-commerce/modules/markdown/module.yaml
+      owner: classic-commerce-public-example
+    - path: examples/classic-commerce/runtime.template.json
+      owner: classic-commerce-public-example
+    - path: examples/classic-commerce/tools/protocol_runner.py
+      owner: classic-commerce-public-example
+    - path: examples/classic-commerce/tools/smoke.py
+      owner: classic-commerce-public-example
     - path: internal/host/canonical_controller_apply_receipt.go
       owner: controller-apply-verification-handoff
     - path: internal/host/canonical_controller_apply_receipt_test.go
