@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-07T22:03:54Z",
+  "updatedUtc": "2026-10-07T22:07:34Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -261,13 +261,13 @@
       "name": "Scientist",
       "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
       "hostId": "local",
-      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:66",
+      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:67",
       "lastObservedStatus": "active",
       "activeTurn": "01a11862-d13c-7590-afe7-aa4045ff7dfd",
-      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac6c1401bd08191b66a07292458f0d7",
+      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac6c28f9b6081919e53c174f5a5824c",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "Actual pinned Classic/Government native integration with bounded deterministic fixtures and one final disabled-status metadata read; no real Actor or study.",
-      "latestProgress": "Ich bearbeite die beiden Stränge getrennt: die native Anbindung mit eigenen Fixture-Ledgern und den einmaligen Metadatenlauf mit eingefrorener Vorabprüfung. Zuerst gleiche ich Pins, Quoten und vorhandene Schnittstellen ab; die historischen Actor-Zähler bleiben erhalten.",
+      "latestProgress": "Die Grants sind jetzt als unveränderte Kopien mit Hash und Herkunft gesichert. Die native Anbindung bekommt einen Controller-Beleg ohne Actor-Buchung; Rollenaufrufe werden einzeln im gemeinsamen Ledger reserviert. Der neue Metadatenclient prüft bereits das vollständige Statusschema und lässt ausschließlich disabled passieren.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-scientist/Markitect",
       "transferredDesignCommit": "b9e17c9896f14b4b1268e4bcb005395f5d324384",
       "candidateSha": "0e62d5f1469d772804d35f2832efe0fa5679389d",
@@ -939,13 +939,10 @@
     "satPrinciples": "Deferred by direct user request on 2026-10-07; conceptual constraint/consistency/conflict-explanation principles first, no solver integration or current assignment change. See docs/design/government/deferred-research.md."
   },
   "lastReview": {
-    "reviewedUtc": "2026-10-07T22:03:54Z",
-    "evidenceLevel": "Independent 81 metadata/history hashes and 9 adapter source hashes plus logs reviewed; no tests rerun. Original preflight-review bytes missing, explicitly qualified acceptance. Actual native integration and real runner access remain open. Postassignment three-thread snapshot confirms Scientist active; Worker/Architect unchanged held.",
+    "reviewedUtc": "2026-10-07T22:07:34Z",
+    "evidenceLevel": "Three compact snapshots. Scientist reports immutable grant copies, controller process accounting without extra Actor reservation, individual role reservations and disabled-only status-schema filtering. Active implementation, no completed handoff or independent acceptance of these new changes. Worker/Architect unchanged held.",
     "coordinationActions": [
-      "Accepted qualified 0e62d5f negative metadata and synthetic adapter mechanics",
-      "Recorded consumed classified metadata grant without changing five real Actor starts or unknown historical tokens",
-      "Sent exactly one Scientist continuation at22:01:32Z with separate finite native fixture grant and final disabled-status metadata grant",
-      "No repeated Worker/Architect assignment or real Actor/study grant"
+      "Recorded reported progress and cursors; no repeated assignment, new grant, test run or product edit."
     ],
     "userDecisionRequired": false
   },
