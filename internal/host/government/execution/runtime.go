@@ -73,6 +73,7 @@ type Runtime struct {
 	Verifier           RunnerSpec        `json:"verifier"`
 	Ressorts           []RessortRunner   `json:"ressorts"`
 	Checks             []authoring.Check `json:"checks"`
+	Recursion          *RecursiveRuntime `json:"recursion,omitempty"`
 }
 
 // DecodeRuntime decodes the closed JSON runtime contract. Exact and
@@ -179,35 +180,64 @@ func runtimeKeyEqual(left, right string) bool {
 }
 
 func rejectNullCheckTimeouts(data []byte) error {
-	var document map[string]json.RawMessage
+	var document any
 	if err := json.Unmarshal(data, &document); err != nil {
 		return fmt.Errorf("invalid runtime JSON: %w", err)
 	}
-	var checksRaw json.RawMessage
-	for name, raw := range document {
-		if runtimeKeyEqual(name, "checks") {
-			checksRaw = raw
-			break
+	return rejectNullCheckTimeoutsAt(document, "")
+}
+
+func rejectNullCheckTimeoutsAt(value any, parent string) error {
+	switch object := value.(type) {
+	case map[string]any:
+		names := make([]string, 0, len(object))
+		for name := range object {
+			names = append(names, name)
 		}
-	}
-	var checks []json.RawMessage
-	if len(checksRaw) != 0 {
-		if err := json.Unmarshal(checksRaw, &checks); err != nil {
-			return nil // the main strict decode reports the malformed checks value
+		sort.Strings(names)
+		for _, name := range names {
+			child := object[name]
+			if runtimeKeyEqual(name, "checks") {
+				checks, ok := child.([]any)
+				if ok {
+					for index, rawCheck := range checks {
+						check, ok := rawCheck.(map[string]any)
+						if !ok {
+							continue // the strict decode reports malformed check values
+						}
+						keys := make([]string, 0, len(check))
+						for key := range check {
+							keys = append(keys, key)
+						}
+						sort.Strings(keys)
+						for _, key := range keys {
+							timeout := check[key]
+							if runtimeKeyEqual(key, "timeoutSeconds") && timeout == nil {
+								return fmt.Errorf("%s[%d].timeoutSeconds must be omitted or an integer, not null", joinRuntimePath(parent, name), index)
+							}
+						}
+					}
+				}
+			}
+			if err := rejectNullCheckTimeoutsAt(child, joinRuntimePath(parent, name)); err != nil {
+				return err
+			}
 		}
-	}
-	for index, rawCheck := range checks {
-		var check map[string]json.RawMessage
-		if err := json.Unmarshal(rawCheck, &check); err != nil {
-			continue // the main strict decode reports the malformed check value
-		}
-		for name, timeout := range check {
-			if runtimeKeyEqual(name, "timeoutSeconds") && bytes.Equal(bytes.TrimSpace(timeout), []byte("null")) {
-				return fmt.Errorf("checks[%d].timeoutSeconds must be omitted or an integer, not null", index)
+	case []any:
+		for index, child := range object {
+			if err := rejectNullCheckTimeoutsAt(child, fmt.Sprintf("%s[%d]", parent, index)); err != nil {
+				return err
 			}
 		}
 	}
 	return nil
+}
+
+func joinRuntimePath(parent, child string) string {
+	if parent == "" {
+		return child
+	}
+	return parent + "." + child
 }
 
 // ValidateRuntime checks structural completeness and conservative process,
@@ -280,6 +310,11 @@ func ValidateRuntime(runtime Runtime) error {
 			return fmt.Errorf("checks[%d] duplicates a check name", index)
 		}
 		checks[check.Name] = struct{}{}
+	}
+	if runtime.Recursion != nil {
+		if err := validateRecursiveRuntime(*runtime.Recursion, slots); err != nil {
+			return fmt.Errorf("recursion: %w", err)
+		}
 	}
 	return nil
 }
@@ -577,7 +612,8 @@ type runtimeFingerprint struct {
 		Ressort core.DefinitionIdentity `json:"ressort"`
 		Runner  runnerFingerprint       `json:"runner"`
 	} `json:"ressorts"`
-	Checks []checkFingerprint `json:"checks"`
+	Checks    []checkFingerprint           `json:"checks"`
+	Recursion *recursiveRuntimeFingerprint `json:"recursion,omitempty"`
 }
 
 // FingerprintRuntime returns a deterministic identity for the full runtime,
@@ -623,6 +659,13 @@ func FingerprintRuntime(runtime Runtime) (string, error) {
 			timeout = *check.TimeoutSeconds
 		}
 		value.Checks = append(value.Checks, checkFingerprint{check.Name, append([]string(nil), check.Run...), timeout, path, digest})
+	}
+	if runtime.Recursion != nil {
+		fingerprint, err := fingerprintRecursiveRuntime(*runtime.Recursion)
+		if err != nil {
+			return "", err
+		}
+		value.Recursion = &fingerprint
 	}
 	encoded, err := json.Marshal(value)
 	if err != nil {

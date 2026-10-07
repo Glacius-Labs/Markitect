@@ -1,0 +1,9 @@
+apiVersion: markitect.government-order/v1alpha1
+kind: Order
+purpose: Implement invoice quantity, unit price, and the parent-composed total.
+activeConstitution: sha256:b9737c60a2d2236d789052eced4008559e6df6a83d9d330c9a64d84e096e101e
+action: implement
+subjects:
+  - {apiVersion: markitect.government-example/v1alpha1, kind: Requirement, namespace: invoice, name: quantity}
+  - {apiVersion: markitect.government-example/v1alpha1, kind: Requirement, namespace: invoice, name: unit-price}
+  - {apiVersion: markitect.government-example/v1alpha1, kind: Requirement, namespace: invoice, name: composed-total}

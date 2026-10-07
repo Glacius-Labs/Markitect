@@ -6,6 +6,7 @@ spec:
     - internal/host/government
     - examples/government
     - examples/government-g2
+    - examples/government-g3
     - internal/host/cli/government.go
     - internal/host/cli/government_test.go
     - internal/host/cli/main.go
@@ -151,6 +152,46 @@ spec:
     - experiments/live-operating-pilot
     - experiments/two-area-operating-pilot
   tooling:
+    - path: examples/government-g3/README.md
+      owner: government-experiment
+    - path: examples/government-g3/go.mod
+      owner: government-experiment
+    - path: examples/government-g3/government.yaml
+      owner: government-experiment
+    - path: examples/government-g3/integration/invoice.txt
+      owner: government-experiment
+    - path: examples/government-g3/integration/invoice_test.go
+      owner: government-experiment
+    - path: examples/government-g3/order.yaml
+      owner: government-experiment
+    - path: examples/government-g3/price/price.txt
+      owner: government-experiment
+    - path: examples/government-g3/price/price_test.go
+      owner: government-experiment
+    - path: examples/government-g3/quantity/quantity.txt
+      owner: government-experiment
+    - path: examples/government-g3/quantity/quantity_test.go
+      owner: government-experiment
+    - path: examples/government-g3/runner/main.go
+      owner: government-experiment
+    - path: examples/government-g3/trial.ps1
+      owner: government-experiment
+    - path: internal/host/government/delegation.go
+      owner: government-experiment
+    - path: internal/host/government/delegation_test.go
+      owner: government-experiment
+    - path: internal/host/government/execution/actors.go
+      owner: government-experiment
+    - path: internal/host/government/execution/recursive.go
+      owner: government-experiment
+    - path: internal/host/government/execution/recursive_material_test.go
+      owner: government-experiment
+    - path: internal/host/government/execution/recursive_runtime.go
+      owner: government-experiment
+    - path: internal/host/government/execution/recursive_runtime_test.go
+      owner: government-experiment
+    - path: internal/host/government/execution/recursive_test.go
+      owner: government-experiment
     - path: internal/host/government/promotion_windows_test.go
       owner: government-experiment
     - path: internal/host/government/promotion_other_test.go

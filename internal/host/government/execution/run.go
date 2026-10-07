@@ -1,4 +1,4 @@
-// Package execution implements the bounded Government G2 vertical slice. It
+// Package execution implements the bounded Government execution lifecycle. It
 // consumes trusted runtime configuration; model outputs never select authority.
 package execution
 
@@ -17,7 +17,6 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/core/snapshot"
 	"github.com/Glacius-Labs/Markitect/internal/host"
 	"github.com/Glacius-Labs/Markitect/internal/host/agentexec"
-	"github.com/Glacius-Labs/Markitect/internal/host/authoring"
 	"github.com/Glacius-Labs/Markitect/internal/host/government"
 	"github.com/Glacius-Labs/Markitect/internal/host/government/inventory"
 	"github.com/Glacius-Labs/Markitect/internal/infrastructure/source"
@@ -28,13 +27,18 @@ type Options struct {
 	Runtime                     Runtime
 }
 type ActorRecord struct {
-	Phase  string              `json:"phase"`
-	SlotID string              `json:"slotId"`
-	Scopes []string            `json:"scopes"`
-	Result agentexec.RunResult `json:"result"`
-	Error  string              `json:"error,omitempty"`
+	Sequence   int                 `json:"sequence"`
+	StartedAt  time.Time           `json:"startedAt"`
+	FinishedAt time.Time           `json:"finishedAt"`
+	Phase      string              `json:"phase"`
+	SlotID     string              `json:"slotId"`
+	Scopes     []string            `json:"scopes"`
+	Result     agentexec.RunResult `json:"result"`
+	Error      string              `json:"error,omitempty"`
 }
 type Report struct {
+	Delegation        *government.DelegationPlan     `json:"delegation,omitempty"`
+	RootArea          *AreaReport                    `json:"rootArea,omitempty"`
 	APIVersion        string                         `json:"apiVersion"`
 	RunID             string                         `json:"runId"`
 	Status            string                         `json:"status"`
@@ -70,7 +74,7 @@ func Run(ctx context.Context, opts Options) (report Report, runErr error) {
 	rt := opts.Runtime
 	report = Report{APIVersion: RuntimeVersion, Status: "incomplete", Stage: "prepare", ActiveRef: rt.ActiveRef, BaseRevision: rt.ExpectedBase, Limits: []string{
 		"Cooperative processes share caller OS rights; separated processes and input audits are not an OS sandbox or proof of institutional independence.",
-		"G2 executes one Writer Area; recursive child execution, amendment activation, queue and complete recovery remain unavailable.",
+		"Recursive execution is opt-in and bounded; amendment activation, queue and complete recovery remain unavailable.",
 		"PromotionIntent and Git CAS are separate durable effects. No automatic rollback or atomic ledger/Git transaction is claimed.",
 		"Accepted-scoped records configured process and check outcomes; it does not establish semantic sufficiency or human acceptance.",
 		"Area review is read-only evidence assigned by the frozen plan, never a Ressort vote or acceptance/change/promotion authority; no per-Area review mandate is inferred from implement.",
@@ -176,7 +180,7 @@ func Run(ctx context.Context, opts Options) (report Report, runErr error) {
 		return report, err
 	}
 	if order.Action != "implement" {
-		return report, errors.New("G2 only executes implementation under unchanged prior authority; amendments require G4")
+		return report, errors.New("execution only implements under unchanged prior authority; amendments require G4")
 	}
 	workspace, err := os.MkdirTemp(temp, "government-candidate-")
 	if err != nil {
@@ -198,11 +202,15 @@ func Run(ctx context.Context, opts Options) (report Report, runErr error) {
 		report.Status = "blocked"
 		return report, errors.New("prior-authority plan is blocked")
 	}
-	if len(report.Plan.Work) != 1 || len(report.Plan.Work[0].Paths) == 0 {
+	if rt.Recursion == nil && (len(report.Plan.Work) != 1 || len(report.Plan.Work[0].Paths) == 0) {
 		return report, errors.New("G2 requires exactly one nonempty Writer Area; recursive execution remains G3")
 	}
-	if len(report.Plan.IntegrationReviews) == 0 || len(report.Plan.IntegrationReviews) > 128 {
-		return report, errors.New("G2 requires 1 through 128 explicit integration review scopes")
+	maxReviews := 128
+	if rt.Recursion != nil {
+		maxReviews = maxRuntimeAreas + 1
+	}
+	if len(report.Plan.IntegrationReviews) == 0 || len(report.Plan.IntegrationReviews) > maxReviews {
+		return report, errors.New("integration review scopes exceed the configured execution boundary")
 	}
 	report.Cabinet, err = freezeCabinet(model, rt)
 	if err != nil {
@@ -217,117 +225,101 @@ func Run(ctx context.Context, opts Options) (report Report, runErr error) {
 		return report, err
 	}
 	frozenRunners := map[string]runnerFingerprint{}
-	for _, spec := range append([]RunnerSpec{rt.Executor, rt.Verifier}, ressortRunners(rt)...) {
+	for _, spec := range configuredRunners(rt) {
 		pin, err := fingerprintRunner(spec)
 		if err != nil {
 			return report, err
 		}
 		frozenRunners[spec.SlotID] = pin
 	}
-	allowed := map[string]bool{}
-	for _, path := range report.Plan.Work[0].Paths {
-		if path == opts.ConfigPath || path == opts.OrderPath {
-			return report, errors.New("implementation order cannot write constitutional or order input")
-		}
-		allowed[path] = true
+	session := &actorSession{ctx: ctx, runtime: rt, report: &report, runDir: runDir, temporary: temp, frozen: frozenRunners, constitution: model.Constitution.Key()}
+	if rt.Recursion != nil {
+		session.semaphore = make(chan struct{}, rt.Recursion.Parallelism)
 	}
-	artifacts := func(s *snapshot.Snapshot) []agentexec.Artifact {
-		out := []agentexec.Artifact{}
-		for _, path := range sortedPaths(s.Files) {
-			if allowed[path] {
-				mode := "0644"
-				if s.Modes[path] == snapshot.ExecutableMode {
-					mode = "0755"
-				}
-				out = append(out, agentexec.Artifact{Path: path, Mode: mode, Digest: government.BytesDigest(s.Files[path]), Content: s.Files[path]})
+	selectedPaths := []string{}
+	for _, work := range report.Plan.Work {
+		for _, path := range work.Paths {
+			if path == opts.ConfigPath || path == opts.OrderPath {
+				return report, errors.New("implementation order cannot write constitutional or order input")
 			}
+			selectedPaths = append(selectedPaths, path)
 		}
-		return out
 	}
-	subjects := []string{}
-	for _, subject := range report.Plan.Affected {
-		subjects = append(subjects, subject.Key())
-	}
+	subjects := identityKeys(report.Plan.Affected)
 	invoke := func(phase string, spec RunnerSpec, scopes []string, s *snapshot.Snapshot, extra map[string]any) (agentexec.RunResult, error) {
-		pin, err := fingerprintRunner(spec)
-		if err != nil || pin != frozenRunners[spec.SlotID] {
-			return agentexec.RunResult{}, errors.Join(errors.New("runner differs from frozen runtime before invocation"), err)
+		contextValue := map[string]any{"phase": phase, "runId": report.RunID, "order": order, "plan": report.Plan, "priorModel": model.Canonical, "cabinet": report.Cabinet, "allowedPaths": selectedPaths, "inputPaths": selectedPaths, "workspace": workspace}
+		if rt.Recursion != nil {
+			contextValue["area"] = model.Root
+			contextValue["rootArea"] = report.RootArea
+			if report.RootArea != nil && len(report.RootArea.Attempts) > 0 {
+				latest := report.RootArea.Attempts[len(report.RootArea.Attempts)-1]
+				contextValue["childReports"] = latest.Children
+				contextValue["attempt"] = latest.Attempt
+				contextValue["repair"] = latest.Repair
+			}
+			contextValue["delegationDigest"] = report.Delegation.Digest
+			contextValue["allowedPaths"] = report.Delegation.Root.Work.Paths
 		}
-		contextValue := map[string]any{"phase": phase, "runId": report.RunID, "order": order, "plan": report.Plan, "priorModel": model.Canonical, "cabinet": report.Cabinet, "allowedPaths": report.Plan.Work[0].Paths, "workspace": workspace}
 		for k, v := range extra {
 			contextValue[k] = v
 		}
-		contextBytes, _ := json.Marshal(contextValue)
-		role := agentexec.RoleVerifier
-		if phase == "execute" {
-			role = agentexec.RoleExecutor
+		return session.invoke(phase, spec, scopes, s, workspace, selectedPaths, contextValue)
+	}
+	var candidate *snapshot.Snapshot
+	if rt.Recursion != nil {
+		delegation := government.BuildDelegationPlan(model, report.Plan, rt.Recursion.Limits)
+		report.Delegation = &delegation
+		if delegation.Status == "blocked" {
+			report.Status = "blocked"
+			return report, errors.New("recursive prior-authority delegation is blocked")
 		}
-		request := agentexec.Request{Role: role, SourceRevision: rt.ExpectedBase, ModelDigest: model.Digest, ModulePin: report.ToolPins, ProjectionID: "government/" + phase + "/" + spec.SlotID, ScopeIDs: scopes, PolicyIDs: []string{model.Constitution.Key()}, Context: contextBytes, Artifacts: artifacts(s)}
-		result, err := Invoke(ctx, spec, request, workspace, runDir, temp)
-		if err == nil && (result.Receipt.ConfigDigest != pin.ConfigDigest || result.Receipt.ExecutableDigest != pin.ExecutableDigest) {
-			err = errors.New("actual runner receipt differs from frozen runtime")
+		if delegation.EstimatedCalls+len(report.Cabinet)+1 > rt.Recursion.Limits.MaxCalls {
+			return report, errors.New("invocation budget cannot cover initial tree, final Root review and frozen cabinet")
 		}
-		record := ActorRecord{Phase: phase, SlotID: spec.SlotID, Scopes: scopes, Result: result}
+		if err := validateNodeWireBounds(delegation.Root); err != nil {
+			return report, err
+		}
+		if err := validateAreaAssignments(delegation.Root, rt); err != nil {
+			return report, err
+		}
+		if err := persistJSON(filepath.Join(runDir, "delegation.json"), delegation); err != nil {
+			return report, err
+		}
+		report.Stage = "recursive-execution"
+		engine := recursiveEngine{session: session, model: model, order: order, delegation: delegation}
+		var rootArea AreaReport
+		candidate, rootArea, err = engine.node(delegation.Root, base, "")
+		report.RootArea = &rootArea
+		sort.Slice(report.Actors, func(i, j int) bool { return report.Actors[i].Sequence < report.Actors[j].Sequence })
 		if err != nil {
-			record.Error = err.Error()
+			if rootArea.Status == "blocked" {
+				report.Status = "blocked"
+			}
+			return report, err
 		}
-		report.Actors = append(report.Actors, record)
-		persistErr := persistJSON(filepath.Join(runDir, fmt.Sprintf("actor-%02d.json", len(report.Actors))), record)
-		return result, errors.Join(err, persistErr)
-	}
-	report.Stage = "execute"
-	executed, err := invoke("execute", rt.Executor, subjects, base, nil)
-	if err != nil {
-		return report, err
-	}
-	if executed.Response.Outcome != agentexec.OutcomeProposed {
-		report.Status = "blocked"
-		return report, errors.New("executor did not propose material")
-	}
-	if err := confirmWorkspace(workspace, base); err != nil {
-		return report, err
-	}
-	candidate := &snapshot.Snapshot{Files: map[string][]byte{}, Modes: map[string]string{}}
-	for path, data := range base.Files {
-		candidate.Files[path] = append([]byte(nil), data...)
-		candidate.Modes[path] = base.Modes[path]
-	}
-	for _, file := range executed.Response.CandidateFiles {
-		if !allowed[file.Path] {
-			return report, fmt.Errorf("executor proposed path outside frozen Writer scope: %s", file.Path)
+	} else {
+		report.Stage = "execute"
+		executed, err := invoke("execute", rt.Executor, subjects, base, nil)
+		if err != nil {
+			return report, err
 		}
-		candidate.Files[file.Path] = []byte(file.Content)
-		candidate.Modes[file.Path] = snapshot.RegularMode
-		if file.Mode == "0755" {
-			candidate.Modes[file.Path] = snapshot.ExecutableMode
+		if executed.Response.Outcome != agentexec.OutcomeProposed {
+			report.Status = "blocked"
+			return report, errors.New("executor did not propose material")
+		}
+		if err := confirmWorkspace(workspace, base); err != nil {
+			return report, err
+		}
+		candidate, err = applyProposal(base, selectedPaths, executed.Response.CandidateFiles)
+		if err != nil {
+			return report, err
 		}
 	}
-	for path, data := range candidate.Files {
-		if government.BytesDigest(data) != government.BytesDigest(base.Files[path]) || candidate.Modes[path] != base.Modes[path] {
-			report.ChangedPaths = append(report.ChangedPaths, path)
-		}
-	}
-	sort.Strings(report.ChangedPaths)
+	report.ChangedPaths = changedPaths(base, candidate)
 	if len(report.ChangedPaths) == 0 {
 		return report, errors.New("executor proposal made no actual material change")
 	}
-	for _, path := range report.ChangedPaths {
-		dest := filepath.Join(workspace, filepath.FromSlash(path))
-		if err := os.MkdirAll(filepath.Dir(dest), 0755); err != nil {
-			return report, err
-		}
-		mode := os.FileMode(0644)
-		if candidate.Modes[path] == snapshot.ExecutableMode {
-			mode = 0755
-		}
-		if err := os.WriteFile(dest, candidate.Files[path], mode); err != nil {
-			return report, err
-		}
-		if err := os.Chmod(dest, mode); err != nil {
-			return report, err
-		}
-	}
-	if err := confirmWorkspace(workspace, candidate); err != nil {
+	if err := writeChanges(workspace, base, candidate); err != nil {
 		return report, err
 	}
 	report.CandidateCommit, report.CandidateTree, err = commitCandidate(ctx, repo, rt.ExpectedBase, report.RunID, runDir, report.ChangedPaths, candidate)
@@ -335,7 +327,7 @@ func Run(ctx context.Context, opts Options) (report Report, runErr error) {
 		return report, err
 	}
 	candidate.ID = report.CandidateCommit
-	material, err := government.NewMaterialCandidate(government.MaterialCandidateInput{PriorConstitutionDigest: model.Digest, BaseRevision: rt.ExpectedBase, RepositoryTreeDigest: government.Digest(struct{ Tree, Snapshot string }{report.CandidateTree, candidate.Digest()}), ModelDigest: model.Digest, PlanDigest: report.Plan.Digest, CheckDefinitionsDigest: government.Digest(rt.Checks), ToolPinsDigest: report.ToolPins, InventoryDigest: observation.Digest})
+	material, err := government.NewMaterialCandidate(government.MaterialCandidateInput{PriorConstitutionDigest: model.Digest, BaseRevision: rt.ExpectedBase, RepositoryTreeDigest: government.Digest(struct{ Tree, Snapshot string }{report.CandidateTree, candidate.Digest()}), ModelDigest: model.Digest, PlanDigest: report.Plan.Digest, CheckDefinitionsDigest: checkDefinitionsDigest(rt), ToolPinsDigest: report.ToolPins, InventoryDigest: observation.Digest})
 	if err != nil {
 		return report, err
 	}
@@ -347,28 +339,7 @@ func Run(ctx context.Context, opts Options) (report Report, runErr error) {
 	if pin, err := toolPins(rt); err != nil || pin != report.ToolPins {
 		return report, errors.Join(errors.New("runtime/tool pins changed before fresh technical checks"), err)
 	}
-	// The existing fixed-snapshot checker has its own per-command deadline.
-	// Reserve its complete cap before each call, then reject any elapsed run
-	// deadline before starting another stage. Snapshot IO remains cooperative.
-	for _, check := range rt.Checks {
-		seconds := authoring.DefaultCheckTimeoutSeconds
-		if check.TimeoutSeconds != nil {
-			seconds = *check.TimeoutSeconds
-		}
-		if deadline, ok := ctx.Deadline(); ok && time.Until(deadline) < time.Duration(seconds)*time.Second+3*time.Second {
-			err = errors.New("remaining run budget cannot cover the next technical check cap")
-			break
-		}
-		var gates []host.GateResult
-		gates, err = host.VerifySnapshotChecks(candidate, []authoring.Check{check})
-		report.Checks = append(report.Checks, gates...)
-		if err != nil {
-			break
-		}
-		if err = ctx.Err(); err != nil {
-			break
-		}
-	}
+	report.Checks, err = freshChecks(ctx, candidate, rt.Checks)
 	if persistErr := persistJSON(filepath.Join(runDir, "checks.json"), report.Checks); persistErr != nil {
 		return report, persistErr
 	}
@@ -379,7 +350,11 @@ func Run(ctx context.Context, opts Options) (report Report, runErr error) {
 		return report, err
 	}
 	report.Stage = "independent-review"
-	for _, area := range report.Plan.IntegrationReviews {
+	reviewAreas := report.Plan.IntegrationReviews
+	if rt.Recursion != nil {
+		reviewAreas = []core.DefinitionIdentity{model.Root}
+	}
+	for _, area := range reviewAreas {
 		scopes := append([]string{area.Key()}, subjects...)
 		result, err := invoke("review", rt.Verifier, scopes, candidate, map[string]any{"candidate": material, "candidateCommit": report.CandidateCommit, "checks": report.Checks, "reviewArea": area})
 		if err != nil {
@@ -391,6 +366,9 @@ func Run(ctx context.Context, opts Options) (report Report, runErr error) {
 		}
 	}
 	resultDigests := []string{government.Digest(report.Checks)}
+	if report.RootArea != nil {
+		resultDigests = append(resultDigests, government.Digest(report.RootArea), report.Delegation.Digest)
+	}
 	for _, actor := range report.Actors {
 		resultDigests = append(resultDigests, government.Digest(actor))
 	}

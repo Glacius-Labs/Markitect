@@ -1,0 +1,187 @@
+apiVersion: markitect.government-source/v1alpha1
+kind: GovernmentSource
+constitution:
+  apiVersion: markitect.government/v1alpha1
+  kind: Constitution
+  namespace: invoice
+  name: active
+schemas:
+  - apiVersion: markitect.government-example/v1alpha1
+    purpose: Requirements and acceptance statements for a small composed invoice.
+    kinds:
+      Requirement:
+        purpose: A required observable invoice behavior.
+        properties:
+          statement: {purpose: Required behavior, type: string, minCount: 1, maxCount: 1}
+          acceptance: {purpose: Deterministic acceptance condition, type: string, minCount: 1, maxCount: 1}
+definitions:
+  - apiVersion: markitect.government-example/v1alpha1
+    kind: Requirement
+    metadata: {namespace: invoice, name: quantity}
+    purpose: The quantity child Area supplies three invoice units.
+    spec:
+      statement: The invoice quantity is three.
+      acceptance: The local quantity test reads quantity/quantity.txt and requires units=3.
+  - apiVersion: markitect.government-example/v1alpha1
+    kind: Requirement
+    metadata: {namespace: invoice, name: unit-price}
+    purpose: The unit-price child Area supplies four currency units per item.
+    spec:
+      statement: The invoice unit price is four.
+      acceptance: The local price test reads price/price.txt and requires unit=4.
+  - apiVersion: markitect.government-example/v1alpha1
+    kind: Requirement
+    metadata: {namespace: invoice, name: composed-total}
+    purpose: The root Area integrates both independently owned values.
+    spec:
+      statement: The invoice total equals quantity multiplied by unit price.
+      acceptance: The parent integration test reads all three actual files and requires total=units*unit.
+  - apiVersion: markitect.government/v1alpha1
+    kind: Area
+    metadata: {namespace: invoice, name: root}
+    purpose: Integrates independently delegated invoice values and owns the composed total.
+    spec: {capabilities: []}
+  - apiVersion: markitect.government/v1alpha1
+    kind: Area
+    metadata: {namespace: invoice, name: quantity}
+    purpose: Owns the independently valid quantity value.
+    spec:
+      parent: {apiVersion: markitect.government/v1alpha1, kind: Area, namespace: invoice, name: root}
+      capabilities: []
+  - apiVersion: markitect.government/v1alpha1
+    kind: Area
+    metadata: {namespace: invoice, name: price}
+    purpose: Owns the independently valid unit price value.
+    spec:
+      parent: {apiVersion: markitect.government/v1alpha1, kind: Area, namespace: invoice, name: root}
+      capabilities: []
+  - apiVersion: markitect.government/v1alpha1
+    kind: Mandate
+    metadata: {namespace: invoice, name: root-prior}
+    purpose: Prior Constitution authority for root integration and unanimous final review.
+    spec:
+      area: {apiVersion: markitect.government/v1alpha1, kind: Area, namespace: invoice, name: root}
+      scope:
+        - {apiVersion: markitect.government-example/v1alpha1, kind: Requirement, namespace: invoice, name: quantity}
+        - {apiVersion: markitect.government-example/v1alpha1, kind: Requirement, namespace: invoice, name: unit-price}
+        - {apiVersion: markitect.government-example/v1alpha1, kind: Requirement, namespace: invoice, name: composed-total}
+      actions: [implement, review, amend-model]
+  - apiVersion: markitect.government/v1alpha1
+    kind: Mandate
+    metadata: {namespace: invoice, name: quantity-delegation}
+    purpose: Explicit bounded delegation for the quantity child Area.
+    spec:
+      area: {apiVersion: markitect.government/v1alpha1, kind: Area, namespace: invoice, name: quantity}
+      parent: {apiVersion: markitect.government/v1alpha1, kind: Mandate, namespace: invoice, name: root-prior}
+      scope:
+        - {apiVersion: markitect.government-example/v1alpha1, kind: Requirement, namespace: invoice, name: quantity}
+      actions: [implement, review]
+  - apiVersion: markitect.government/v1alpha1
+    kind: Mandate
+    metadata: {namespace: invoice, name: price-delegation}
+    purpose: Explicit bounded delegation for the unit-price child Area.
+    spec:
+      area: {apiVersion: markitect.government/v1alpha1, kind: Area, namespace: invoice, name: price}
+      parent: {apiVersion: markitect.government/v1alpha1, kind: Mandate, namespace: invoice, name: root-prior}
+      scope:
+        - {apiVersion: markitect.government-example/v1alpha1, kind: Requirement, namespace: invoice, name: unit-price}
+      actions: [implement, review]
+  - apiVersion: markitect.government/v1alpha1
+    kind: Ressort
+    metadata: {namespace: invoice, name: arithmetic}
+    purpose: Independently reviews the exact composed invoice behavior.
+    spec:
+      mandate: {apiVersion: markitect.government/v1alpha1, kind: Mandate, namespace: invoice, name: root-prior}
+  - apiVersion: markitect.government/v1alpha1
+    kind: Ressort
+    metadata: {namespace: invoice, name: unaffected}
+    purpose: Records explicit assent-unaffected for the final root candidate.
+    spec:
+      mandate: {apiVersion: markitect.government/v1alpha1, kind: Mandate, namespace: invoice, name: root-prior}
+  - apiVersion: markitect.government/v1alpha1
+    kind: Responsibility
+    metadata: {namespace: invoice, name: quantity-owner}
+    purpose: Assigns quantity requirement to its direct child Area.
+    spec:
+      subject: {apiVersion: markitect.government-example/v1alpha1, kind: Requirement, namespace: invoice, name: quantity}
+      area: {apiVersion: markitect.government/v1alpha1, kind: Area, namespace: invoice, name: quantity}
+  - apiVersion: markitect.government/v1alpha1
+    kind: Responsibility
+    metadata: {namespace: invoice, name: price-owner}
+    purpose: Assigns unit-price requirement to its direct child Area.
+    spec:
+      subject: {apiVersion: markitect.government-example/v1alpha1, kind: Requirement, namespace: invoice, name: unit-price}
+      area: {apiVersion: markitect.government/v1alpha1, kind: Area, namespace: invoice, name: price}
+  - apiVersion: markitect.government/v1alpha1
+    kind: Responsibility
+    metadata: {namespace: invoice, name: integration-owner}
+    purpose: Keeps composition accountability at the root Area.
+    spec:
+      subject: {apiVersion: markitect.government-example/v1alpha1, kind: Requirement, namespace: invoice, name: composed-total}
+      area: {apiVersion: markitect.government/v1alpha1, kind: Area, namespace: invoice, name: root}
+  - apiVersion: markitect.government/v1alpha1
+    kind: Artifact
+    metadata: {namespace: invoice, name: quantity-data}
+    purpose: Child-owned quantity value.
+    spec:
+      path: quantity/quantity.txt
+      class: realization
+      writer: {apiVersion: markitect.government/v1alpha1, kind: Area, namespace: invoice, name: quantity}
+  - apiVersion: markitect.government/v1alpha1
+    kind: Artifact
+    metadata: {namespace: invoice, name: price-data}
+    purpose: Child-owned unit price.
+    spec:
+      path: price/price.txt
+      class: realization
+      writer: {apiVersion: markitect.government/v1alpha1, kind: Area, namespace: invoice, name: price}
+  - apiVersion: markitect.government/v1alpha1
+    kind: Artifact
+    metadata: {namespace: invoice, name: invoice-total}
+    purpose: Root-owned integration output for the composed total.
+    spec:
+      path: integration/invoice.txt
+      class: realization
+      writer: {apiVersion: markitect.government/v1alpha1, kind: Area, namespace: invoice, name: root}
+  - apiVersion: markitect.government/v1alpha1
+    kind: Realization
+    metadata: {namespace: invoice, name: quantity-realization}
+    purpose: Quantity data implements the quantity requirement.
+    spec:
+      subject: {apiVersion: markitect.government-example/v1alpha1, kind: Requirement, namespace: invoice, name: quantity}
+      artifact: {apiVersion: markitect.government/v1alpha1, kind: Artifact, namespace: invoice, name: quantity-data}
+      role: Supplies the independently checked quantity value.
+  - apiVersion: markitect.government/v1alpha1
+    kind: Realization
+    metadata: {namespace: invoice, name: price-realization}
+    purpose: Price data implements the unit-price requirement.
+    spec:
+      subject: {apiVersion: markitect.government-example/v1alpha1, kind: Requirement, namespace: invoice, name: unit-price}
+      artifact: {apiVersion: markitect.government/v1alpha1, kind: Artifact, namespace: invoice, name: price-data}
+      role: Supplies the independently checked price value.
+  - apiVersion: markitect.government/v1alpha1
+    kind: Realization
+    metadata: {namespace: invoice, name: total-realization}
+    purpose: Root invoice data implements the cross-Area composition requirement.
+    spec:
+      subject: {apiVersion: markitect.government-example/v1alpha1, kind: Requirement, namespace: invoice, name: composed-total}
+      artifact: {apiVersion: markitect.government/v1alpha1, kind: Artifact, namespace: invoice, name: invoice-total}
+      role: Integrates quantity and price into the required total.
+  - apiVersion: markitect.government/v1alpha1
+    kind: Constitution
+    metadata: {namespace: invoice, name: active}
+    purpose: Prior model for the recursive invoice execution fixture.
+    spec:
+      root: {apiVersion: markitect.government/v1alpha1, kind: Area, namespace: invoice, name: root}
+      cabinet:
+        - {apiVersion: markitect.government/v1alpha1, kind: Ressort, namespace: invoice, name: arithmetic}
+        - {apiVersion: markitect.government/v1alpha1, kind: Ressort, namespace: invoice, name: unaffected}
+      approval: unanimous-explicit-assent
+observation:
+  roots: ["."]
+  exclusions:
+    - path: README.md
+      reason: Operating instructions are outside the candidate boundary.
+    - path: trial.ps1
+      reason: The trial harness is invoked externally and is outside the candidate boundary.
+  admitIgnored: []
