@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-07T20:11:56Z",
+  "updatedUtc": "2026-10-07T20:18:19Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -22,13 +22,13 @@
       "name": "Worker",
       "threadId": "01a1169b-9357-7df3-a8f6-f913557c782a",
       "hostId": "local",
-      "afterCursor": "b2b8e43f-fcaa-41bf-828a-99c69527bdea:45",
+      "afterCursor": "b2b8e43f-fcaa-41bf-828a-99c69527bdea:46",
       "lastObservedStatus": "active",
       "activeTurn": "01a117d5-737b-73d1-8d9e-067a046228d0",
-      "lastAssistantMessageId": "msg_0a7785839df196a4016ac6a649216c8191a31c556b7093c6ea",
+      "lastAssistantMessageId": "msg_0a7785839df196a4016ac6a886f7cc8191986745a4b24fa16e",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "G5 finite persistent queue, cumulative resources, safe interruption/restart and promotion recovery; then S1 handoff hold",
-      "latestProgress": "Die unabhängige Prüfung bestätigt das Verhalten bei unbekannten Actor-Prozessen. Sie hat noch einen Fehler gefunden: Abgewiesene Reservierungs-IDs verändern bereits die Budgetzähler. Dieser Fix samt Regressionstest wird vor dem Commit abgeschlossen.",
+      "latestProgress": "Auch der Fall mit blockierter Voraussetzung ist bestätigt: Der abhängige Auftrag stoppt, der unabhängige wird geprüft und übernommen. Veränderte Backlog- oder Runtime-Bytes stoppen die alte Queue und erhalten abgeschlossene Reports als historische Evidenz.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-worker/Markitect",
       "transferredDesignCommit": "691ce1dee3484371c4aea725db4ed5cc3f2e3719",
       "candidateSha": "d146201e0f004e671cb90cf77b6a107dc14429b5",
@@ -197,13 +197,13 @@
       "name": "Scientist",
       "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
       "hostId": "local",
-      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:51",
+      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:52",
       "lastObservedStatus": "active",
       "activeTurn": "01a117fd-fe00-74a0-b51c-8770ccadf893",
-      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac6a76d401c8191add51423b23e6158",
+      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac6a836a51c8191a07b6ead13fe537b",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "One bounded pinned-runner metadata/effective-policy inspection, no inference; common Q1 intent-reflection setup and observations before any trial.",
-      "latestProgress": "Ich prüfe die Unterstützung im gepinnten Runner mit vorhandenen Belegen und höchstens sechs ausdrücklich lokalen Metadatenaufrufen. Parallel übernehme ich den neuen Q1-Beschluss als versionierte Setup-Anweisung für alle Arme. Der alte Snapshot bleibt erhalten; es gibt keinen Actor-Start.",
+      "latestProgress": "Die lokale Hilfe zeigt bisher keinen auswählbaren Permission-Profil-Schalter. doctor bietet keinen abgegrenzten Modus für reine Konfigurationsprüfung und würde auch Authentifizierung prüfen; deshalb führe ich ihn nicht aus. Als sechsten und letzten Metadatenaufruf exportiere ich nur das lokal dokumentierte Protokollschema, um die Felder dieser Version zu prüfen.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-scientist/Markitect",
       "transferredDesignCommit": "b9e17c9896f14b4b1268e4bcb005395f5d324384",
       "candidateSha": "d165f18c5cb377e351d233de372c4c56f3dbe4f7",
@@ -617,12 +617,10 @@
     "satPrinciples": "Deferred by direct user request on 2026-10-07; conceptual constraint/consistency/conflict-explanation principles first, no solver integration or current assignment change. See docs/design/government/deferred-research.md."
   },
   "lastReview": {
-    "reviewedUtc": "2026-10-07T20:11:56Z",
-    "evidenceLevel": "All three compact snapshots; Scientist d165f18 documentation package independently accepted after source/hash/raw/ledger checks. Worker active reports fixing budget mutation on rejected reservation IDs; G5 not accepted. Architect unchanged held Classic.",
+    "reviewedUtc": "2026-10-07T20:18:19Z",
+    "evidenceLevel": "All three compact snapshots only; no new completed handoff. Worker reports blocked-dependency/independent-order behavior and conservative invalidation on changed queue inputs. Scientist active, reports no profile selector in help and avoids auth-checking doctor; final metadata/schema result pending. Architect unchanged held Classic.",
     "coordinationActions": [
-      "Accepted scoped Scientist policy/coverage handoff without causal or S1-success claim.",
-      "Committed common Q1 setup decision5162a67, within unchanged resources and quality weights.",
-      "Sent one bounded metadata/Q1 preparation assignment and confirmed active; no duplicate Worker/Architect orders, model grant or repeated tests."
+      "Recorded reported progress and cursors. No repeated assignments, new Actor grant, product changes, or tests."
     ],
     "userDecisionRequired": false
   },
