@@ -375,6 +375,14 @@ Each controller action emits one JSON object on stdout, including when it return
 
 #### Declared-scope completion audit (source-only alpha)
 
+A successful materializing `controller-apply` emits both `sourceRevision` and `evidenceRevision`. Save its JSON output and continue in a fresh process without copying those values:
+
+```powershell
+go run ./cmd/markitect canonical --repo . --config $config --runtime $runtime --action controller-verify --apply-result APPLY_RESULT.json --write
+```
+
+`--apply-result` is supported only by `controller-verify` and cannot be combined with `--base` or `--revision`, even when those flags are explicitly empty. It accepts a bounded, closed JSON report from a successful `materialized-unverified` Apply with full source/evidence commits and valid records that share the source. Partial, refused, no-materialization or inconsistent reports are rejected before verification. Retained projections needing fresh assurance remain subject to the ordinary Verify checks. The saved file selects revisions; it is not proof of review, authorization or freshness. Verify still reconstructs current runtime, ledger selection, target evidence and required checks. Old Apply reports without `sourceRevision` remain usable through the explicit revision form above. Saving a report does not automatically apply or retry anything.
+
 After materialization and recorded verification, use `controller-audit` to inspect whether the declared model and target scope is complete. Use the same fixed base/source revisions as proposal and the same runtime configuration, with `auditAll` already enabled:
 
 ```powershell

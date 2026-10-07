@@ -21,6 +21,14 @@ The government analogy describes durable responsibilities: establish intent, coo
 
 Review and Apply remain explicit trust boundaries. A review need not be performed by a human for every routine change, but an operating wrapper must not silently drop the existing exact-candidate review, stale-plan or write-intent contracts. No new command gains implicit mutation authority.
 
+## Saved Apply-to-Verify handoff
+
+A successful materializing Apply reports its exact canonical `sourceRevision` and immutable `evidenceRevision`. The optional `controller-verify --apply-result FILE` input reads that saved JSON report instead of asking an operator to copy the two revisions. The existing explicit `--base`/`--revision` form remains supported; the forms cannot be combined, including explicitly empty revision flags.
+
+The saved report must be closed, bounded JSON for a `materialized-unverified` Apply, with full immutable source/evidence commits and nonempty, valid materialization records that all bind the same source. Refused, partial, no-materialization, inconsistent or malformed reports do not start verification. A retained projection needing fresh assurance is allowed: the normal Verify path decides whether current verification or separate evidence refresh is necessary.
+
+The file is an explicit navigation input, not authenticated evidence of review, authorization, freshness or current ledger selection. Verify reconstructs the selected source, runtime, active records, artifacts, checks and child bindings exactly as in the explicit-revision path. A saved post-Apply report lets a fresh process continue with verification after an interruption; it does not reapply targets or supply an automatic retry policy. Reports predating the explicit source field can still be used through the existing revision form.
+
 ## Completion audit
 
 The first implementation checkpoint adds a read-only controller audit. It uses the same proposal, record, verification freshness and assurance semantics as the existing controller. It invokes neither an Executor nor a Verifier and does not append records or alter artifacts.
