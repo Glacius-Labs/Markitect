@@ -1,0 +1,6 @@
+test_process_deadline_kills_grandchild (test_runtime.RuntimeTests.test_process_deadline_kills_grandchild) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 2.714s
+
+OK

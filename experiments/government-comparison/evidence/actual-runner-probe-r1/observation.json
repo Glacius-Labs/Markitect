@@ -1,0 +1,38 @@
+{
+  "kind": "actual-native-runner-configuration-rejection",
+  "startAttemptsConsumed": 1,
+  "agentTurnsStarted": 0,
+  "remainingAuthorizedStarts": 1,
+  "secondProbeLaunched": false,
+  "secondProbeReason": "Probe 1 not executable; conditional authorization not satisfied",
+  "status": "runtime-config-rejected",
+  "exitCode": 1,
+  "wallSeconds": 0.17828049999661744,
+  "requestedModel": "gpt-6.1-sol",
+  "requestedReasoning": "high",
+  "resolvedModel": null,
+  "providerRequests": null,
+  "providerUsage": null,
+  "nativeRejection": "Reserved built-in provider openai cannot be overridden in model_providers",
+  "failedSettings": [
+    "model_providers.openai.request_max_retries=0",
+    "model_providers.openai.stream_max_retries=0"
+  ],
+  "accountSupport": "not reached/unknown",
+  "effectiveContextAccess": "not reached/unknown",
+  "sentinelEchoMatched": false,
+  "hardLimitsApplied": {
+    "processTree": "Windows Job kill-on-close; target released after assignment",
+    "wallSeconds": 180,
+    "parallel": 1,
+    "noWrapperRetry": true
+  },
+  "tokenThreshold": "10000 retrospective input+output as receipts arrive; no receipt arrived, no actual token-stop claim",
+  "laterStudyProfileChanged": false,
+  "liveTrials": 0,
+  "historicalInfrastructureCandidate": "8df6085d938a1f73576743c3fa38ba3a5c51dd9a",
+  "requiredNextDecision": "Supported builtin-provider retry configuration or explicit probe-rule adjustment before another start",
+  "originRoot": "C:\\Users\\Consiliari\\Documents\\Markitect Scientist Runner Readiness\\2026-10-07-real-probe-r1",
+  "frozenRoot": "evidence/actual-runner-probe-r1",
+  "rawFilesUnchanged": true
+}

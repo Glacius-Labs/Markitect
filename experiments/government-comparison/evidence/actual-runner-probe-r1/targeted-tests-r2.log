@@ -1,0 +1,8 @@
+test_agent_usage_is_not_provider_request_count_or_double_added (test_identity_probe.IdentityProbeTests.test_agent_usage_is_not_provider_request_count_or_double_added) ... ok
+test_failed_start_consumes_attempt_and_prevents_second_probe (test_identity_probe.IdentityProbeTests.test_failed_start_consumes_attempt_and_prevents_second_probe) ... ok
+test_observer_threshold_stops_process_without_retry (test_identity_probe.IdentityProbeTests.test_observer_threshold_stops_process_without_retry) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.444s
+
+OK

@@ -1,0 +1,42 @@
+test_agent_usage_is_not_provider_request_count_or_double_added (test_identity_probe.IdentityProbeTests.test_agent_usage_is_not_provider_request_count_or_double_added) ... ok
+test_failed_start_consumes_attempt_and_prevents_second_probe (test_identity_probe.IdentityProbeTests.test_failed_start_consumes_attempt_and_prevents_second_probe) ... ERROR
+test_observer_threshold_stops_process_without_retry (test_identity_probe.IdentityProbeTests.test_observer_threshold_stops_process_without_retry) ... ok
+
+======================================================================
+ERROR: test_failed_start_consumes_attempt_and_prevents_second_probe (test_identity_probe.IdentityProbeTests.test_failed_start_consumes_attempt_and_prevents_second_probe)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Python313\Lib\shutil.py", line 625, in _rmtree_unsafe
+    os.unlink(fullname)
+    ~~~~~~~~~^^^^^^^^^^
+PermissionError: [WinError 32] The process cannot access the file because it is being used by another process: 'C:\\Users\\CONSIL~1\\AppData\\Local\\Temp\\scientist-probe-limit-77aw4cjc\\budget.sqlite'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\government-comparison\runtime\test_identity_probe.py", line 16, in test_failed_start_consumes_attempt_and_prevents_second_probe
+    with tempfile.TemporaryDirectory(prefix="scientist-probe-limit-") as directory:
+         ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\tempfile.py", line 950, in __exit__
+    self.cleanup()
+    ~~~~~~~~~~~~^^
+  File "C:\Python313\Lib\tempfile.py", line 954, in cleanup
+    self._rmtree(self.name, ignore_errors=self._ignore_cleanup_errors)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\tempfile.py", line 934, in _rmtree
+    _shutil.rmtree(name, onexc=onexc)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\shutil.py", line 790, in rmtree
+    return _rmtree_unsafe(path, onexc)
+  File "C:\Python313\Lib\shutil.py", line 629, in _rmtree_unsafe
+    onexc(os.unlink, fullname, err)
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\tempfile.py", line 909, in onexc
+    _os.unlink(path)
+    ~~~~~~~~~~^^^^^^
+PermissionError: [WinError 32] The process cannot access the file because it is being used by another process: 'C:\\Users\\CONSIL~1\\AppData\\Local\\Temp\\scientist-probe-limit-77aw4cjc\\budget.sqlite'
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.147s
+
+FAILED (errors=1)

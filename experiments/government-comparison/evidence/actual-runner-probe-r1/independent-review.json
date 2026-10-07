@@ -1,0 +1,31 @@
+{
+  "reviewer": "/root/independent_review",
+  "scope": "Actual probe refusal, quota/usage semantics, original receipts and invoked source",
+  "disposition": "bounded failed-config-probe evidence consistent; S1 not cleared",
+  "startAttempts": 1,
+  "agentTurnsStarted": 0,
+  "nativeExit": 1,
+  "wallSeconds": 0.17828049999661744,
+  "secondProbeLaunched": false,
+  "providerRequests": null,
+  "resolvedModel": null,
+  "providerUsage": null,
+  "checksPassed": [
+    "one completed failed attempt in SQLite",
+    "request-file SHA binding",
+    "raw native stdout/stderr and process result agree",
+    "three invoked-source digests match",
+    "requested gpt-6.1-sol/high only",
+    "account and context/access unknown/not reached",
+    "zero tracked private data"
+  ],
+  "testsObservedNotRerun": {
+    "targetedTestsAfterFixPassed": 3,
+    "firstTargetedRun": "SQLite handle cleanup error; original log preserved"
+  },
+  "limitations": [
+    "No actual model/provider/access result",
+    "No additional provider or tests/full Go suite executed by reviewer",
+    "Source-manifest reconciliation follows separately"
+  ]
+}

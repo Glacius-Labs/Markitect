@@ -1,0 +1,2 @@
+This is a public identity/usage smoke, not project work. Use no tools or subagents. Do not read files. Reply exactly with the following public random sentinel and no other text:
+c921be50fe38ed8ad0165487c68c62b8

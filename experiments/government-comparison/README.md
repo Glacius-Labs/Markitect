@@ -9,6 +9,9 @@ The subsequent [runner/adapter readiness checkpoint](public/runner-readiness.md)
 adds genuine native version probes and a tested common process/ledger shell.
 Its separate manifest owns the new checkpoint. Earlier preparation freezes stay
 commit-bound; S1 and all live study gates remain open.
+The explicit tiny-probe addendum subsequently attempted a real Actor start. The
+native runner rejected its built-in-provider retry configuration before any agent
+turn; immutable receipts are in `evidence/actual-runner-probe-r1/`.
 
 ## Reproduce the fixture smoke
 

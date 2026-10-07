@@ -1,9 +1,54 @@
 # Runner and common adapter readiness
 
 This is a finite readiness package, not a comparative result. Live trials: **0**.
-Actual provider/Actor probe sessions: **0 of the authorized maximum 2**. No model
-was substituted and no new authentication, purchase or user-config change occurred.
+Actual external runner start attempts: **1 of the authorized maximum 2**; started
+agent turns: **0**. The real start was rejected while loading its configuration.
+No model was substituted and no new authentication, purchase or user-config change occurred.
 The common public adapter contract remains v1.1.
+
+## Actual runner probe addendum
+
+After accepting infrastructure checkpoint `8df6085d938a1f73576743c3fa38ba3a5c51dd9a`,
+the Overseer explicitly removed the former six-internal-provider-request boundary
+for this tiny probe only. The current authorization is at most two fresh starts,
+180 seconds per owned process tree, parallel 1, one wrapper-started agent turn,
+no continuation/retry/subagents/plugins/hooks or additional runners, and a
+retrospective aggregate stop threshold of 10000 reported input-plus-output tokens.
+Internal provider requests remain separately unknown. This does not change the
+selected later-study `commonLimits` or clear their enforcement gaps.
+
+Scientist actually started the pinned `codex-cli 0.130.0` with explicit
+`gpt-6.1-sol/high`, existing saved ChatGPT auth, no API-key environment fallback,
+ephemeral/read-only mode, disabled shell/unified execution, memory, apps, plugins,
+hooks, goals and subagents, and a new public random sentinel in an independent
+Documents root. It was one launch, protected by the existing Windows Job and
+180-second deadline; no real study inputs or project work were supplied.
+
+The native CLI exited 1 after approximately 0.18 seconds, before emitting any
+JSONL event or starting an agent turn. Its unchanged stderr says that
+`model_providers` contains the reserved built-in ID `openai`, which cannot be
+overridden. The prospective zero-retry overrides
+`model_providers.openai.request_max_retries=0` and
+`model_providers.openai.stream_max_retries=0` were therefore incompatible with
+this actual runner. This is a demonstrated runtime/configuration failure, not
+an account rejection or evidence that the requested model is unsupported.
+
+The failed start consumes attempt 1. Probe 2 is not launched because it was
+authorized only after an executable Probe 1 and remaining observed budget.
+Resolved provider model, provider usage/request count and effective Actor context/
+access remain unknown; no model self-report is used. There is no token receipt,
+so the observed-threshold monitor cannot be credited with an actual provider-token
+stop. Its lossless raw stderr/stdout, command/config/request binding, process
+receipt, durable attempt ledger and source hashes are preserved under
+`evidence/actual-runner-probe-r1/`.
+
+Before another real start, the coordinator must settle a supported way to obtain
+the required retry behavior from the built-in authenticated provider, or explicitly
+adjust that tiny-probe rule. No renamed/custom provider, alternate model, second
+retry start or global configuration repair was attempted. The later live dispatcher
+also still needs aggregate accounting, concurrency reservations, retry/repair
+policy, effective context/access measurement and real setup/task evidence.
+Classic v0.14.1 / runtime `7dbd599` / held `c91363b` remains unchanged.
 
 ## Decision and enforced boundary
 
@@ -14,13 +59,14 @@ tokens; per trial 7200 seconds, 72 sessions, 480 calls and 720000 tokens; parall
 seconds. All setup, model creation/upkeep, ministries, descendants and reviews
 consume the same profile. Selected limits are not a claim of technical enforcement.
 
-The separate tiny runner authorization permits at most two fresh sessions, each
+At the historical infrastructure checkpoint, the separate tiny runner authorization permitted at most two fresh sessions, each
 180 seconds and six provider calls, parallel 1, no descendants or retries, and a
 10000-token aggregate stop threshold as counters arrive. The installed runner's
 CLI help and generated app-server schema did not establish a pre-dispatch provider
 call limit. `exec` reports `turn.completed` for an agent turn; that event is not
-evidence of the number of provider requests inside it. Consequently the package
-does not launch a provider probe. Account support and resolved model identity for
+evidence of the number of provider requests inside it. Consequently that checkpoint
+launched no provider probe. The addendum above supersedes this former tiny-probe
+boundary. Account support and resolved model identity for
 the requested `gpt-6.1-sol`, reasoning `high`, remain a concrete readiness gap.
 
 `runtime/adapter.py` actually handles the v1.1 `--request`/`--result` interchange,
@@ -101,9 +147,9 @@ commits, including `e4278c50ddc84daee3858e24c89e6cf5777b5dfe`; its
 the subsequently selected resource profile. The readiness manifest owns this
 checkpoint; it does not freeze a live protocol or modify historical receipts.
 
-**S1 is not cleared.** Remaining gates: account-supported actual model identity;
-an enforced small provider-call boundary enabling real identity/usage/access
-probes; effective context and OS access measurement; complete shared live budgets
+**S1 is not cleared.** Remaining gates: correct native provider/retry configuration,
+account-supported actual model identity; successful real identity/usage/access
+probes under the selected probe rules; effective context and OS access measurement; complete shared live budgets
 including descendants/retries/repairs; real conventional and Classic setup/task
 smokes; Government native pins and G1-G5; private oracle/rubric freeze and task-6
 equivalence mapping. No six-cell comparison is authorized by this checkpoint.

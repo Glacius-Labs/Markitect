@@ -19,8 +19,16 @@
     "requestedProfile": "Sol 6.1 High",
     "reasoning": "high",
     "toolConfigurationSha256": null,
-    "accessProbe": "not executed; no evidenced pre-dispatch six-provider-call limit",
-    "meteringSemantics": "Retrospective exec agent-turn usage; provider-call count unknown. No hard token/turn ceiling claimed."
+    "accessProbe": "not reached: native config rejected reserved built-in provider override",
+    "meteringSemantics": "No actual usage receipt; agent/provider counts not equated; requested tiny threshold is retrospective input+output, not hard cap.",
+    "actualReadinessProbe": {
+      "attempts": 1,
+      "startedAgentTurns": 0,
+      "status": "runtime-config-rejected",
+      "receipt": "evidence/actual-runner-probe-r1/observation.json",
+      "tinySixProviderRequestBoundaryRemovedByOverseer": true,
+      "laterStudyLimitsUnchanged": true
+    }
   },
   "commonLimits": {
     "taskWallSeconds": 1200,
