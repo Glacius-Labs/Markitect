@@ -173,6 +173,8 @@ spec:
       owner: government-public-workflow
     - path: examples/government-project/runner/main.go
       owner: government-public-workflow
+    - path: examples/government-project/runner/main_test.go
+      owner: government-public-workflow
     - path: examples/government-project/studio/protected-goal.txt
       owner: government-public-workflow
     - path: examples/government-project/studio/studio_test.go

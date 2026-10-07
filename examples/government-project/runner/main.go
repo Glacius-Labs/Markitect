@@ -25,10 +25,15 @@ type identity struct {
 	Name       string `json:"name"`
 }
 type request struct {
-	Role      string          `json:"role"`
-	Context   json.RawMessage `json:"context"`
-	Artifacts []artifact      `json:"artifacts"`
-	ScopeIDs  []string        `json:"scopeIds"`
+	Role           string          `json:"role"`
+	SourceRevision string          `json:"sourceRevision"`
+	ModelDigest    string          `json:"modelDigest"`
+	ModulePin      string          `json:"modulePin"`
+	ProjectionID   string          `json:"projectionId"`
+	ScopeIDs       []string        `json:"scopeIds"`
+	PolicyIDs      []string        `json:"policyIds"`
+	Context        json.RawMessage `json:"context"`
+	Artifacts      []artifact      `json:"artifacts"`
 }
 type invocation struct {
 	APIVersion  string  `json:"apiVersion"`
@@ -86,18 +91,12 @@ func main() {
 	if len(os.Args) != 2 {
 		fatal(errors.New("usage: runner independent|propose|review|review-independent|assent|assent-unaffected"))
 	}
-	dec := json.NewDecoder(io.LimitReader(os.Stdin, 32<<20))
-	dec.DisallowUnknownFields()
-	var inv invocation
-	if err := dec.Decode(&inv); err != nil {
+	inv, err := decodeInvocation(os.Stdin)
+	if err != nil {
 		fatal(fmt.Errorf("decode invocation: %w", err))
-	}
-	if dec.Decode(new(any)) != io.EOF || inv.APIVersion != protocolVersion || inv.RunID == "" || inv.Nonce == "" || inv.InputDigest == "" {
-		fatal(errors.New("invocation must be one complete, bound protocol record"))
 	}
 	mode := os.Args[1]
 	var out response
-	var err error
 	if mode == "assent-unaffected" || mode == "assent" {
 		out, err = assent(mode, inv)
 	} else {
@@ -109,6 +108,19 @@ func main() {
 	if err := json.NewEncoder(os.Stdout).Encode(out); err != nil {
 		fatal(err)
 	}
+}
+
+func decodeInvocation(input io.Reader) (invocation, error) {
+	dec := json.NewDecoder(io.LimitReader(input, 32<<20))
+	dec.DisallowUnknownFields()
+	var inv invocation
+	if err := dec.Decode(&inv); err != nil {
+		return invocation{}, err
+	}
+	if dec.Decode(new(any)) != io.EOF || inv.APIVersion != protocolVersion || inv.RunID == "" || inv.Nonce == "" || inv.InputDigest == "" {
+		return invocation{}, errors.New("invocation must be one complete, bound protocol record")
+	}
+	return inv, nil
 }
 
 func runRole(mode string, inv invocation) (response, error) {
