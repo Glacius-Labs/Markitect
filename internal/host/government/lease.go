@@ -1,6 +1,7 @@
 package government
 
 import (
+	"bytes"
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
@@ -11,6 +12,7 @@ import (
 	"os/user"
 	"strings"
 	"time"
+	"unicode/utf8"
 )
 
 // Lease holds an OS exclusion lock while a Government writer is active. The
@@ -81,9 +83,9 @@ func AcquireLease(path string) (*Lease, error) {
 		return failed(errors.New("cannot establish local user identity for lease"))
 	}
 	if !created {
-		var previous leaseOwner
-		if err := json.Unmarshal(data, &previous); err != nil || previous.Version != 1 || previous.Token == "" || previous.Host == "" || previous.User == "" {
-			return failed(errors.New("exclusive repository promotion lock has an unrecognized legacy record; refusing to take it over"))
+		previous, err := decodeLeaseOwner(data)
+		if err != nil {
+			return failed(fmt.Errorf("exclusive repository promotion lock has an unrecognized record; refusing to take it over: %w", err))
 		}
 		if previous.Host != host || previous.User != user {
 			return failed(fmt.Errorf("existing lease belongs to foreign host or user %q/%q", previous.Host, previous.User))
@@ -97,6 +99,9 @@ func AcquireLease(path string) (*Lease, error) {
 	encoded, err := json.Marshal(owner)
 	if err != nil {
 		return failed(err)
+	}
+	if _, err := decodeLeaseOwner(encoded); err != nil {
+		return failed(fmt.Errorf("invalid local lease owner: %w", err))
 	}
 	if err := file.Truncate(0); err != nil {
 		return failed(fmt.Errorf("truncate lease record: %w", err))
@@ -156,14 +161,78 @@ func (l *Lease) Verify() error {
 	if err != nil {
 		return err
 	}
-	var current leaseOwner
-	if err := json.Unmarshal(data, &current); err != nil {
+	current, err := decodeLeaseOwner(data)
+	if err != nil {
 		return fmt.Errorf("decode lease owner record: %w", err)
 	}
-	if current.Version != 1 || current.Host != l.owner.Host || current.User != l.owner.User || current.PID != l.owner.PID || current.Token != l.token {
+	if current.Version != l.owner.Version || current.Host != l.owner.Host || current.User != l.owner.User || current.PID != l.owner.PID || current.Token != l.token || !current.CreatedAt.Equal(l.owner.CreatedAt) {
 		return errors.New("lease fencing record changed")
 	}
 	return nil
+}
+
+// decodeLeaseOwner recognizes only the complete format written by this version.
+// Field recognition is exact: encoding/json's aliases and duplicate-key
+// replacement must not turn an unrecognized record into takeover authority.
+func decodeLeaseOwner(data []byte) (leaseOwner, error) {
+	var owner leaseOwner
+	if len(data) > 8192 || !utf8.Valid(data) {
+		return owner, errors.New("lease record must be bounded UTF-8 JSON")
+	}
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	start, err := decoder.Token()
+	if err != nil || start != json.Delim('{') {
+		return owner, errors.New("lease record must be a JSON object")
+	}
+	fields := map[string]json.RawMessage{}
+	for decoder.More() {
+		key, err := decoder.Token()
+		if err != nil {
+			return owner, err
+		}
+		name, ok := key.(string)
+		if !ok {
+			return owner, errors.New("lease field name must be a string")
+		}
+		switch name {
+		case "version", "host", "user", "pid", "token", "createdAt":
+		default:
+			return owner, fmt.Errorf("unrecognized lease field %q", name)
+		}
+		if _, exists := fields[name]; exists {
+			return owner, fmt.Errorf("duplicate lease field %q", name)
+		}
+		var value json.RawMessage
+		if err := decoder.Decode(&value); err != nil {
+			return owner, err
+		}
+		fields[name] = value
+	}
+	end, err := decoder.Token()
+	if err != nil || end != json.Delim('}') || len(fields) != 6 {
+		return owner, errors.New("lease record requires all six supported fields")
+	}
+	if _, err := decoder.Token(); err != io.EOF {
+		return owner, errors.New("lease record contains trailing data")
+	}
+	if err := json.Unmarshal(data, &owner); err != nil {
+		return owner, err
+	}
+	validIdentity := func(value string) bool {
+		return value != "" && strings.TrimSpace(value) == value && !strings.ContainsAny(value, "\x00\r\n")
+	}
+	if owner.Version != 1 || !validIdentity(owner.Host) || !validIdentity(owner.User) || owner.PID <= 0 {
+		return owner, errors.New("lease version, host, user or PID is invalid")
+	}
+	token, err := hex.DecodeString(owner.Token)
+	if err != nil || len(token) != 32 || strings.ToLower(owner.Token) != owner.Token {
+		return owner, errors.New("lease token must be 64 lowercase hexadecimal characters")
+	}
+	var stamp string
+	if err := json.Unmarshal(fields["createdAt"], &stamp); err != nil || owner.CreatedAt.IsZero() || owner.CreatedAt.Year() < 1 || stamp != owner.CreatedAt.UTC().Format(time.RFC3339Nano) {
+		return owner, errors.New("lease createdAt must be a nonzero canonical UTC timestamp")
+	}
+	return owner, nil
 }
 
 func readLeaseFile(file *os.File, maxBytes int64) ([]byte, error) {

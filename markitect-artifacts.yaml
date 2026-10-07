@@ -190,6 +190,8 @@ spec:
       owner: government-experiment
     - path: internal/host/government/lease.go
       owner: government-experiment
+    - path: internal/host/government/lease_test.go
+      owner: government-experiment
     - path: internal/host/government/lease_other.go
       owner: government-experiment
     - path: internal/host/government/lease_windows.go
