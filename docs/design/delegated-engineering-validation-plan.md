@@ -2,6 +2,8 @@
 
 Stand: 2026-10-07. **Vorbereitender, begrenzter Validierungsplan.** Keine implementierte Funktion, keine Produktentscheidung und kein Nachweis autonomer Nutzbarkeit.
 
+**Fortführung:** Der [aktuelle Studienplan](government/evaluation.md) konkretisiert inzwischen den vom Nutzer gewünschten Vergleich mit drei Ansätzen und zwei kontrollierten Ausgangszuständen. Der [Lieferplan](government/delivery-plan.md) ordnet die Funktionsnachweise vor diesem Vergleich. Dieses Dokument bleibt die frühere Validierungsskizze.
+
 ## Zweck und Ausgangspunkt
 
 Untersucht wird, ob Markitects vorhandener Modellierungs-, Ausführungs- und Prüfablauf zu einer hierarchisch delegierten Arbeitsweise erweitert werden kann: Ziele, Befugnisse und relevanter Kontext gehen entlang eines Mandats nach unten; Ergebnisse, offene Fragen und begründete Vorschläge gehen nach oben. Eine zuständige Ebene darf Änderungen am kanonischen Modell nur innerhalb ihres geltenden Mandats beschließen. Außerhalb dieses Rahmens wird eine konkrete Entscheidung eskaliert.

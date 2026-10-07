@@ -2,6 +2,8 @@
 
 **Status:** Architekturvorbereitung und prüfbarer Diskussionsentwurf. Kein angenommener Vertrag, keine implementierte Funktion und kein Auftrag zum Umbau.
 
+**Fortgeführter Entwurf:** Das [Government-Designpaket](government/README.md) konsolidiert die nachfolgende Diskussion und die vom Koordinator gewählten Entscheidungen. Für die geplante Variante ist es der aktuelle Designvertrag. Dieses Dokument bewahrt die Vorarbeit und ihre Herkunft; seine früher offenen Punkte sind gegen den neuen Entwurf zu lesen. Die Implementierung wartet auf das angekündigte Go.
+
 **Vergleichsbasis:** finaler Architect-Kandidat `1ea5c76f55526fc4d721e865885436153f48b497`. Der [Abschlussabgleich](architect-government-checkpoint.md) bestätigt den begrenzten Grundmodell-Checkpoint und unveränderte technische Verträge gegenüber der ursprünglichen Vorbereitung auf `dc10f54`. Der Entwurf selbst ist weiterhin nicht angenommen oder implementiert.
 
 ## Zweck und Ziel

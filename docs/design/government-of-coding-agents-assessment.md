@@ -2,6 +2,8 @@
 
 Stand: 2026-10-07, Europe/Berlin. **Diskussions- und Evaluationsentwurf; keine implementierte Funktion und kein Auftrag zum sofortigen Umbau.**
 
+**Aktueller Planungsauftrag:** Der Nutzer hat dem Koordinator die Gestaltung und spätere Verantwortung für die angekündigten Chats Implementer und Case Study übertragen. Vor deren Beauftragung wird das [Government-Designpaket](government/README.md) ausgearbeitet und geprüft; das Go zur Koordination folgt gesondert. Architect führt seinen direkt beauftragten Classic-Auftrag weiter. Die folgenden Gesprächsstufen und ihre damaligen Haltepunkte bleiben historischer Kontext.
+
 **Checkpoint erreicht:** Der Architect hat den begrenzten Grundmodell-Schritt auf `1ea5c76f55526fc4d721e865885436153f48b497` abgeschlossen. Der [Abschlussabgleich](architect-government-checkpoint.md) dokumentiert 34 bestandene Windows-Gates, die endliche Pilotfolge und verbleibende Grenzen. Die drei vorbereiteten Entwürfe sind auf den finalen Stand abgeglichen; weitere Umsetzung wartet auf die Government-Entscheidung. Die folgenden früheren Arbeitsanweisungen und die Bestandsaufnahme auf `2c5299e` bleiben als Entwicklungskontext erhalten.
 
 ## Verbindlicher Arbeitsauftrag und Reihenfolge

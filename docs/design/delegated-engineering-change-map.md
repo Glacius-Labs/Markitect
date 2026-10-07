@@ -1,5 +1,7 @@
 # Architektur-Abgleich: delegierte Engineering-Arbeit
 
+Der [aktuelle Quellübergang](government/source-transition.md) und die [Government-Architektur](government/architecture.md) führen diese ursprüngliche Zuordnung für die geplante experimentelle Variante fort. Die Angaben unten bleiben an ihren historischen Untersuchungsstand gebunden.
+
 **Untersuchungsbasis:** finaler Architekt-Kandidat `1ea5c76f55526fc4d721e865885436153f48b497`. Der [Abschlussabgleich](architect-government-checkpoint.md)
    bestätigt 34 bestandene Windows-Gates und unveränderte technische Verträge gegenüber der Vorbereitung auf `dc10f54`. Diese Landkarte ist eine
    Produkt- und Architekturprüfung, keine Änderung am Code, CLI-Vertrag oder veröffentlichten Release.
