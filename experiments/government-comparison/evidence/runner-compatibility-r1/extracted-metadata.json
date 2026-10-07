@@ -1,0 +1,79 @@
+{
+  "date": "2026-10-07",
+  "baselineCommit": "66be8048a27dd0bb7ab5b993e73c1a4b7d08f22d",
+  "installedVersion": "codex-cli 0.160.1",
+  "targetMetadata": {
+    "slug": "gpt-6.1-sol",
+    "display_name": "GPT-6.1-Sol",
+    "minimal_client_version": null,
+    "default_reasoning_level": "low",
+    "supported_reasoning_levels": [
+      {
+        "effort": "low",
+        "description": "Fast responses with lighter reasoning"
+      },
+      {
+        "effort": "medium",
+        "description": "Balances speed and reasoning depth for everyday tasks"
+      },
+      {
+        "effort": "high",
+        "description": "Greater reasoning depth for complex problems"
+      },
+      {
+        "effort": "xhigh",
+        "description": "Extra high reasoning depth for complex problems"
+      },
+      {
+        "effort": "max",
+        "description": "Maximum reasoning depth for the hardest problems"
+      },
+      {
+        "effort": "ultra",
+        "description": "Maximum reasoning with automatic task delegation"
+      }
+    ],
+    "supported_in_api": true,
+    "visibility": "list"
+  },
+  "catalogCount": 11,
+  "targetMetadataScope": "Bundled client metadata only, no account entitlement or actual resolved model proof",
+  "parserChecks": {
+    "correctedTargetHigh": "features list exit0",
+    "reasoningMax": "features list exit0, parser check only; requested target remains high"
+  },
+  "parameterDrift": {
+    "passedUnifiedExec": false,
+    "reportedUnifiedExec": true,
+    "reportedUnifiedExecTty": true,
+    "reportedShellTool": false,
+    "effectiveTools": "unresolved; no actor or access probe"
+  },
+  "oldRemoteCatalog": {
+    "source": "../actual-runner-probe-r2/session-2/stderr.log",
+    "slugs": [
+      "gpt-5.5",
+      "codex-auto-review"
+    ],
+    "maxFoundIn": "codex-auto-review",
+    "targetPresent": false,
+    "accountEntitlement": "not established"
+  },
+  "actorStartsAdded": 0,
+  "startsConsumed": 2,
+  "startsRemaining": 0,
+  "liveTrials": 0,
+  "s1": "not-cleared",
+  "preferredCorrection": "Future candidate selects exact installed absolute binary and new SHA, same gpt-6.1-sol/high, builtin authenticated openai and corrected config; no runtime pin changed now",
+  "openDecisions": [
+    "Adopt exact current runner candidate",
+    "Resolve effective tool controls",
+    "Obtain current account/client availability evidence under a separate bounded authorization; no existing inference/access budget remains"
+  ],
+  "officialSources": [
+    "https://learn.chatgpt.com/docs/models",
+    "https://learn.chatgpt.com/docs/developer-commands",
+    "https://learn.chatgpt.com/docs/config-file/config-reference",
+    "https://learn.chatgpt.com/docs/app-server"
+  ]
+}

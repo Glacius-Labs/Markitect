@@ -1,0 +1,18 @@
+{
+  "executable": "C:\\Users\\Consiliari\\AppData\\Local\\OpenAI\\Codex\\bin\\5ea220ae823df3d7\\codex.exe",
+  "sha256": "3b8f6e33caa75f232558a3cf76ff9b87bb5ef6dbcf4996372f24e55c78b1b916",
+  "commands": "version/help/bundled model catalog only; no inference, login/account metadata or remote model refresh",
+  "environment": "temporary empty CODEX_HOME for metadata commands; existing auth not read/copied; API-key environment excluded",
+  "agentStarts": 0,
+  "priorStartsConsumed": 2,
+  "remainingStarts": 0,
+  "globalConfigurationModified": false,
+  "installationsModified": false,
+  "otherInventoryObservation": "Second desktop bin directory 26f5cb65bac96647 contains no codex.exe; no fallback invoked",
+  "metadataInvocations": 6,
+  "additionalMetadataCommands": [
+    "features list with corrected gpt-6.1-sol/high settings",
+    "features list with model_reasoning_effort=max to check local parser only"
+  ],
+  "effectiveFeatureCaveat": "features.unified_exec=false was passed but features list reports unified_exec=true; shell_tool=false. Tool suppression is not proven and requires later clarification; no access/inference probe performed."
+}

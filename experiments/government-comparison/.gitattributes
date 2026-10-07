@@ -5,3 +5,4 @@ evidence/runner-readiness/**/exec-help/stdout.log -whitespace
 # Native startup diagnostics include a final blank line; keep unchanged receipts.
 evidence/actual-runner-probe-r1/session-1/*.log -whitespace
 evidence/actual-runner-probe-r2/**/*.log -whitespace
+evidence/runner-compatibility-r1/**/*.log -whitespace

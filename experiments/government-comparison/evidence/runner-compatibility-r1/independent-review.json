@@ -1,0 +1,17 @@
+{
+  "reviewer": "/root/independent_review",
+  "status": "passed",
+  "scope": "Existing raw catalog extraction and compatibility report; no new runner/provider/Actor commands or tests",
+  "checks": [
+    "Old bundled and saved remote catalog contain no target slug; max decode failure is bounded to the old runner",
+    "New path/version/SHA match metadata policy exactly",
+    "Exact gpt-6.1-sol target includes high in bundled metadata",
+    "Account entitlement, successful inference and fresh authenticated catalog decoding remain unknown",
+    "features.unified_exec=false request versus true output discrepancy preserved",
+    "No effective tool suppression or study readiness claimed",
+    "Report agrees with metadata policy: empty credential-free CODEX_HOME, zero new Actor starts, no install/global config changes"
+  ],
+  "reviewTiming": "Manifest created after this content review; its hashes are verified separately by Scientist",
+  "remainingActorStarts": 0,
+  "s1": "not-cleared"
+}

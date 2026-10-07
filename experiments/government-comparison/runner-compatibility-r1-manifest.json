@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "kind": "read-only-runner-compatibility",
+  "date": "2026-10-07",
+  "baselineCommit": "66be8048a27dd0bb7ab5b993e73c1a4b7d08f22d",
+  "newActorStarts": 0,
+  "consumedActorStarts": 2,
+  "remainingActorStarts": 0,
+  "inferenceOrAccessProbes": 0,
+  "metadataCommands": 6,
+  "runtimePinsChanged": false,
+  "commonLimitsAndClassicUnchanged": true,
+  "s1": "not-cleared",
+  "sources": {
+    ".gitattributes": "0691b337bf639a1ba2da3c7f96da163d0a3f5b6356f6064b1b73869abb067c3a",
+    "README.md": "5140b919f2078a570574601a0fb9814edb8799e513be3f2abcc7f6b995985b2b",
+    "public/runner-compatibility.md": "48bd84148c0ff8a929f65bc30466c1cc9739bfe96e3cf10439df46ed2ebc903f"
+  },
+  "supportingInputs": {
+    "runtime/remaining_probe.py": "7ecb3d824787704e9be710ffd31481705a5538f5b39aa4bfb6240771b079b8a1",
+    "runtime/runner.py": "b419731b5f57ec105d2bdbbcbb92bdae3419ceb8004cf805c8a0ac70c8421e05",
+    "evidence/actual-runner-probe-r2/request-2.json": "eb6bbed6d543f96a5f944f39a5ce2ab391401001a82d43d22b9fee8fdc89a094",
+    "evidence/actual-runner-probe-r2/session-2/stdout.log": "22a8c96b9d8aed1b39bbb216489996b6c01d184f7f74fa10535bf496e8cdca7c",
+    "evidence/actual-runner-probe-r2/session-2/stderr.log": "59cce90237201e268491db5a49006b5d9251f5a07f7cad855d2ca6c59a49a55a",
+    "evidence/actual-runner-probe-r2/preflight-bundled-models/stdout.log": "36b475ecc3ab6d02726b985f0bdf8091a2f974c4b8625349e33b9b20a1870aca"
+  },
+  "publicEvidence": {
+    "evidence/runner-compatibility-r1/bundled-models/process.json": "af06a3e8b937e2572f2fec1e48ced539803503f8c944671bd52fba60916e462b",
+    "evidence/runner-compatibility-r1/bundled-models/stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/runner-compatibility-r1/bundled-models/stdout.log": "262dc36e0e7beb290aef8196bd59f42acf51647b8f7b68dafa533ae7742019e6",
+    "evidence/runner-compatibility-r1/corrected-config-high/process.json": "915cd62fe57d8d09647d20c97089bd83f8cc60c45764f4abc65ef1d9049bad37",
+    "evidence/runner-compatibility-r1/corrected-config-high/stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/runner-compatibility-r1/corrected-config-high/stdout.log": "53266b864aa01576a507f9e3753c25109d782e8b2e118fe2de7af6d4023bf701",
+    "evidence/runner-compatibility-r1/exec-help/process.json": "27ab1fe8645d0bd6ad4a74c9b4c13f5229270cd383a8f8ade85651b46c5669c5",
+    "evidence/runner-compatibility-r1/exec-help/stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/runner-compatibility-r1/exec-help/stdout.log": "0e82cfde0122715250e93dc65866caa956b2ac5b9d0b20ec4ad4f9e81486509e",
+    "evidence/runner-compatibility-r1/extracted-metadata.json": "8f03dff8e5f990ea63592863a55848979d62544c9c08f4916a2cb407aeaf2c55",
+    "evidence/runner-compatibility-r1/independent-review.json": "aec0ad5cd728aac06b7e2f161717db7f48487296267a08bce4ae6d2e4cb0cd66",
+    "evidence/runner-compatibility-r1/metadata-policy.json": "5fcfc36c81e1421fadb27719004682245a682004a64400c98004adf9d05997ee",
+    "evidence/runner-compatibility-r1/models-help/process.json": "08e59aeaf8d327c2f6f87d9d4d2b05cb8eb8754c4feb0da5f948e40c02e8aa45",
+    "evidence/runner-compatibility-r1/models-help/stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/runner-compatibility-r1/models-help/stdout.log": "6b856e8b57c3e466b52be3d179ffc760b6b7bcd1f09d16ebb9c2e78a8a9b1b6a",
+    "evidence/runner-compatibility-r1/reasoning-max-parser/process.json": "b80fbfaf9f6ec872d996567ff1627afbab437189c721633b43a22b0ab9165e6e",
+    "evidence/runner-compatibility-r1/reasoning-max-parser/stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/runner-compatibility-r1/reasoning-max-parser/stdout.log": "53266b864aa01576a507f9e3753c25109d782e8b2e118fe2de7af6d4023bf701",
+    "evidence/runner-compatibility-r1/version/process.json": "9ac132b9ac37b0c54e810e11aa6fdf0de6e5306c1a9bf691e6163d932c23808c",
+    "evidence/runner-compatibility-r1/version/stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/runner-compatibility-r1/version/stdout.log": "eeecd3950ed2edf22e2f7ac0317480e921226b0a28df75a7f4af0f4bfe91fa49"
+  }
+}

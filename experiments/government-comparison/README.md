@@ -16,6 +16,9 @@ The separately reauthorized final diagnostic removed the unsupported override an
 received HTTP 400: the requested model is unsupported for this CLI/ChatGPT-account
 invocation. Both external starts are consumed; no completed response or usage
 receipt exists. `evidence/actual-runner-probe-r2/` preserves the new evidence.
+The subsequent read-only [compatibility report](public/runner-compatibility.md)
+identifies an installed 0.160.1 candidate for the same model, with account and
+effective-tool questions still open. It adds no Actor start or study authorization.
 
 ## Reproduce the fixture smoke
 
