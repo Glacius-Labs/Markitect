@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-07T22:37:33Z",
+  "updatedUtc": "2026-10-07T22:47:30Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -261,13 +261,13 @@
       "name": "Scientist",
       "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
       "hostId": "local",
-      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:71",
+      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:72",
       "lastObservedStatus": "active",
       "activeTurn": "01a1187b-d972-7902-8be1-36f7b99d4862",
-      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac6c98674c48191a470c930c83245ae",
+      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac6cbe06dd88191882cd4b4d0b30a4a",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "Actual pinned Classic/Government native integration with bounded deterministic fixtures and one final disabled-status metadata read; no real Actor or study.",
-      "latestProgress": "Das unabhängige Metadatenreview ist abgeschlossen: Alle 15 Freeze-Bindungen und vier historischen Ledger stimmen. Es gab keinen weiteren Metadatenlauf; fünf reale Actor-Starts, 53.331 bekannte Tokens und die unbekannte Gesamtsumme bleiben unverändert. Offen ist jetzt nur noch der begrenzte native Integrationsnachweis.",
+      "latestProgress": "Der erste Government-Lauf ist gestoppt: Der native Controller meldet incomplete und „external runner failed“ beim ersten Wrapper-Start. Es gibt keine Entscheidung, keine Ressortstimmen und keine gebuchte Delegate-Ausführung. Ich sichere diesen Befund ohne Wiederholung oder Reparatur nach dem Lauf. Der separat zugeteilte Classic-Fall folgt als Nächstes.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-scientist/Markitect",
       "transferredDesignCommit": "b9e17c9896f14b4b1268e4bcb005395f5d324384",
       "candidateSha": "0e62d5f1469d772804d35f2832efe0fa5679389d",
@@ -860,7 +860,14 @@
           "liveStudyCells": 0,
           "openFinding": "WIP preflight requires mandatory AcceptanceDecision and positive final Ressort votes before successful translation; reviewed source still changing, final preflight pending.",
           "parserIssue": "Existing successful inspect stdout is YAML; downstream JSON parser error does not justify repeating native inspect.",
-          "classic": "Preparation-only in inspected document; native execute/apply/verify/audit/replay evidence still outstanding."
+          "classic": "Preparation-only in inspected document; native execute/apply/verify/audit/replay evidence still outstanding.",
+          "latestReportedAttempt": {
+            "reportedUtc": "2026-10-07T22:47:30Z",
+            "product": "Government",
+            "outcome": "Native controller incomplete; external runner failed at first wrapper start. No acceptance decision, Ressort votes or booked delegate execution reported.",
+            "nextWithinExistingAssignment": "Scientist preserves failed run without retry/repair and continues separately allocated Classic fixture.",
+            "acceptance": "Active-turn report only; exact final SHA, raw records, quota usage, cause and product-versus-adapter attribution not yet reviewed."
+          }
         }
       },
       "classicHandoffReceived": true,
@@ -967,7 +974,7 @@
       "heldWorktree": "C:/Users/Consiliari/.codex/worktrees/standard-operating-model/Markitect"
     }
   ],
-  "nextAction": "Review actual native Classic/Government integration, common role/process accounting and final disabled-status metadata handoff. Then identify exact allowed runner path and separately decide any sixth real Actor grant before S1/six-cell study. Worker and Architect held; SAT/Jev deferred.",
+  "nextAction": "Review completed source-bound native integration handoff and first-wrapper failure, distinguish harness/runner/product cause before directing any owner. Classic fixture continues within existing allocation. Also review final metadata packet and remaining actual Actor access gap before any separately bounded sixth Actor or study grant. Worker/Architect held; SAT/Jev deferred.",
   "boundaries": {
     "governmentPublication": false,
     "automaticClassicReplacement": false,
@@ -977,10 +984,10 @@
     "satPrinciples": "Deferred by direct user request on 2026-10-07; conceptual constraint/consistency/conflict-explanation principles first, no solver integration or current assignment change. See docs/design/government/deferred-research.md."
   },
   "lastReview": {
-    "reviewedUtc": "2026-10-07T22:37:33Z",
-    "evidenceLevel": "Three compact snapshots. Scientist reports completed independent metadata review with15freeze bindings/four unchanged ledgers while native integration remains active. Progress report only; no new clean handoff or Overseer acceptance. Successful Actor access and historical exec rejection cause remain unproven despite metadata review. Worker/Architect unchanged held.",
+    "reviewedUtc": "2026-10-07T22:47:30Z",
+    "evidenceLevel": "Three compact snapshots. Scientist reports failed first Government wrapper launch, no decision/votes or booked delegate run, and proceeds with already allocated Classic fixture. No completed handoff accepted and no cause attributed. Worker/Architect unchanged held.",
     "coordinationActions": [
-      "Saved progress/cursors; no redundant assignment, additional resources, tests or product changes."
+      "Recorded reported failure and cursor. Await exact evidence/cause before assigning product owner; no redundant active-task message, added quota, test or source edit."
     ],
     "userDecisionRequired": false
   },
