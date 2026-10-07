@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-07T20:18:19Z",
+  "updatedUtc": "2026-10-07T20:31:40Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -22,13 +22,13 @@
       "name": "Worker",
       "threadId": "01a1169b-9357-7df3-a8f6-f913557c782a",
       "hostId": "local",
-      "afterCursor": "b2b8e43f-fcaa-41bf-828a-99c69527bdea:46",
+      "afterCursor": "b2b8e43f-fcaa-41bf-828a-99c69527bdea:47",
       "lastObservedStatus": "active",
       "activeTurn": "01a117d5-737b-73d1-8d9e-067a046228d0",
-      "lastAssistantMessageId": "msg_0a7785839df196a4016ac6a886f7cc8191986745a4b24fa16e",
+      "lastAssistantMessageId": "msg_0a7785839df196a4016ac6ab1c18588191a7fa84815a7cd2a4",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "G5 finite persistent queue, cumulative resources, safe interruption/restart and promotion recovery; then S1 handoff hold",
-      "latestProgress": "Auch der Fall mit blockierter Voraussetzung ist bestätigt: Der abhängige Auftrag stoppt, der unabhängige wird geprüft und übernommen. Veränderte Backlog- oder Runtime-Bytes stoppen die alte Queue und erhalten abgeschlossene Reports als historische Evidenz.",
+      "latestProgress": "Der neue saubere Kandidat ist ce021ce. Die 20 CLI-Prüfungen, Check/Impact und go vet bestehen erneut. Verify und die vier nativen Fälle laufen auf der daraus gebauten Binary; der abgebrochene Lauf auf 1498e91 bleibt als verworfener Vorversuch dokumentiert.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-worker/Markitect",
       "transferredDesignCommit": "691ce1dee3484371c4aea725db4ed5cc3f2e3719",
       "candidateSha": "d146201e0f004e671cb90cf77b6a107dc14429b5",
@@ -197,21 +197,21 @@
       "name": "Scientist",
       "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
       "hostId": "local",
-      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:52",
+      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:54",
       "lastObservedStatus": "active",
-      "activeTurn": "01a117fd-fe00-74a0-b51c-8770ccadf893",
-      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac6a836a51c8191a07b6ead13fe537b",
+      "activeTurn": "01a11810-3b8e-7042-9d41-919a89522889",
+      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac6ac18b01c81919c531f0c7cd3817c",
       "initialAssignmentDispatched": true,
-      "assignedMilestone": "One bounded pinned-runner metadata/effective-policy inspection, no inference; common Q1 intent-reflection setup and observations before any trial.",
-      "latestProgress": "Die lokale Hilfe zeigt bisher keinen auswählbaren Permission-Profil-Schalter. doctor bietet keinen abgegrenzten Modus für reine Konfigurationsprüfung und würde auch Authentifizierung prüfen; deshalb führe ich ihn nicht aus. Als sechsten und letzten Metadatenaufruf exportiere ich nur das lokal dokumentierte Protokollschema, um die Felder dieser Version zu prüfen.",
+      "assignedMilestone": "One separately authorized local stdio metadata session to read config and managed requirements, <=60s, no Actor or policy mutation.",
+      "latestProgress": "Ich prüfe zuerst, ob der vorhandene stdio-Client einen Start mit genau diesen lesenden Methoden und gefilterten Ausgaben erlaubt. Falls ja, führe ich die eine freigegebene Sitzung aus. Q1 bleibt unverändert; die Ergebnisse werde ich ausdrücklich von der fehlgeschlagenen exec-Route unterscheiden.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-scientist/Markitect",
       "transferredDesignCommit": "b9e17c9896f14b4b1268e4bcb005395f5d324384",
-      "candidateSha": "d165f18c5cb377e351d233de372c4c56f3dbe4f7",
-      "acceptance": "Documentation-only policy/coverage package accepted after independent verification; cause/corrected permissions unestablished; S1 remains open.",
+      "candidateSha": "f3eeb57e54408f3ba127c22681f39c2c31491ca9",
+      "acceptance": "Accepted policy interface/Q1 documentation and metadata evidence; no supported exec correction or S1 success. Q1 shared setup ready for protocol freeze.",
       "lastAssignment": {
-        "sentUtc": "2026-10-07T20:11:24Z",
-        "key": "pinned-policy-metadata-and-q1-setup",
-        "scope": "At most six explicit local no-inference CLI metadata calls, <=30s each; retain read-only/never and all protections, no denied-command retry, shell/path bypass, global edits/install/credentials. Concrete supported proposal or authority/environment blocker. Adopt 5162a67 common Q1 setup within existing budget, preserve prior contract, no new functional requirements/weights/fixtures. No sixth Actor or study."
+        "sentUtc": "2026-10-07T20:31:19Z",
+        "key": "single-local-config-requirements-read",
+        "scope": "One pinned app-server process tree <=60s; initialize/initialized, one config/read, one configRequirements/read only. Sanitize relevant policy/origin fields before persistence, preserve boundaries, no auth/model/thread/command/fs/write/setup RPC, no retry or new Actor. Distinguish app-server config from failed exec; return concrete known values/differences and remaining blocker."
       },
       "evidence": {
         "sourcesHashChecked": 37,
@@ -525,6 +525,47 @@
           "review": "No scoped integrity or coverage fairness blocker. Process completed but two reads denied. Specific policy cause and pinned-version compatible correction unresolved.",
           "rootInspection": "Clean SHA, latest chat instructions, public diagnosis/mapping/independent coverage review read; no repeated tests or Actor run.",
           "limits": "Documentation-only; no successful file access, native S1 or study result. Five starts remain consumed, no sixth grant."
+        },
+        "policyQ1Acceptance": {
+          "acceptedUtc": "2026-10-07T20:31:40Z",
+          "sourceSha": "f3eeb57e54408f3ba127c22681f39c2c31491ca9",
+          "handoff": "experiments/government-comparison/policy-q1-handoff.md",
+          "validationSha256": "773f63d079602205861b958093b85ccae3bba0ccab5f7f890a5fd6a0351a082b",
+          "documentPriorEvidenceLedgerHashesIndependentlyChecked": 30,
+          "metadataReceiptHashesIndependentlyChecked": 6,
+          "schemaArchiveMembersIndependentlyChecked": 440,
+          "hashMismatches": 0,
+          "schemaArchiveSha256": "cd24042eec4696f6b73368cfc6ce930726f3e10c28bae63cdbd1b2f502ff1d97",
+          "contractSourceSha": "5162a678cf151a6c42fb723567472c7e43c226b1",
+          "contractSnapshotSha256": "ed8e50429ba2de41f7074acec10be07f7fe09d1ee34909c87ef788202fb7cf17",
+          "reviewer": "/root/research_policy_acceptance",
+          "review": "No package blockers. Named permission-profile interfaces present but actual exec policy, denial cause and correction unknown. Unanswered technical issue does not establish a substantive required user policy choice.",
+          "rootInspection": "Read clean SHA/latest chat/public handoff/policy/Q1/review, local metadata client and exported config schemas; official app-server docs confirm read-only config/requirements endpoints. No launch or test by Overseer.",
+          "metadataCallsConsumed": 6,
+          "actorCallsThisPackage": 0,
+          "liveCells": 0
+        },
+        "localPolicyMetadataGrant": {
+          "issuedUtc": "2026-10-07T20:31:19Z",
+          "key": "single-local-config-requirements-read",
+          "maxAdditionalAppServerSessions": 1,
+          "wallSeconds": 60,
+          "maxParallel": 1,
+          "allowedMethods": [
+            "initialize",
+            "initialized",
+            "config/read",
+            "configRequirements/read"
+          ],
+          "maxConfigReads": 1,
+          "maxRequirementsReads": 1,
+          "retries": 0,
+          "actorCalls": 0,
+          "modelCalls": 0,
+          "mutations": false,
+          "newPurchases": false,
+          "status": "Dispatched and active; consumption not yet confirmed. Old six calls remain consumed.",
+          "boundary": "Relevant allowlisted policy/origin fields only before storage/display; no raw secrets. No authority weakening, denied-command repeat or exec-policy equivalence claim."
         }
       },
       "classicHandoffReceived": true,
@@ -607,7 +648,7 @@
       "heldWorktree": "C:/Users/Consiliari/.codex/worktrees/standard-operating-model/Markitect"
     }
   ],
-  "nextAction": "Finish Worker G5; Scientist resolves pinned-runner metadata/effective-policy route or concrete blocker and fixes common Q1 setup protocol. No sixth Actor grant; then native S1 and six frozen comparative cells only after readiness.",
+  "nextAction": "Worker finishes exact G5 gates/native handoff; Scientist performs one bounded sanitized config/requirements read and reports known values or concrete blocker. Q1 setup accepted. No sixth Actor, study or security relaxation authorized.",
   "boundaries": {
     "governmentPublication": false,
     "automaticClassicReplacement": false,
@@ -617,10 +658,12 @@
     "satPrinciples": "Deferred by direct user request on 2026-10-07; conceptual constraint/consistency/conflict-explanation principles first, no solver integration or current assignment change. See docs/design/government/deferred-research.md."
   },
   "lastReview": {
-    "reviewedUtc": "2026-10-07T20:18:19Z",
-    "evidenceLevel": "All three compact snapshots only; no new completed handoff. Worker reports blocked-dependency/independent-order behavior and conservative invalidation on changed queue inputs. Scientist active, reports no profile selector in help and avoids auth-checking doctor; final metadata/schema result pending. Architect unchanged held Classic.",
+    "reviewedUtc": "2026-10-07T20:31:40Z",
+    "evidenceLevel": "Compact snapshots for all three; independent acceptance of Scientist f3eeb57 Q1/schema/metadata package, 30 document/prior/ledger hashes, six receipts, 440 ZIP members. Worker reports clean ce021ce and passing preliminary checks; final Verify/native cases running, no G5 acceptance. Architect unchanged.",
     "coordinationActions": [
-      "Recorded reported progress and cursors. No repeated assignments, new Actor grant, product changes, or tests."
+      "Accepted Scientist package; identified remaining technical question rather than assumed user policy choice.",
+      "Authorized exactly one separate local <=60s config/requirements metadata session under unchanged protections, confirmed active. No new Actor grant.",
+      "Recorded Q1 setup adoption; no repeated Worker/Architect tasks or tests."
     ],
     "userDecisionRequired": false
   },
@@ -965,7 +1008,7 @@
       "decidedUtc": "2026-10-07T20:11:56Z",
       "commit": "5162a678cf151a6c42fb723567472c7e43c226b1",
       "scope": "Common short pre-implementation intent reflection from already released inputs; free format, documented sources/assumptions/questions, existing shared resource ceiling. Independent fidelity assessment is not personal user acceptance.",
-      "implementationStatus": "Assigned to Scientist before any cell, exact public protocol still pending",
+      "implementationStatus": "Accepted public Q1 setup and exact snapshot at f3eeb57; no actual study cell or human acceptance.",
       "unchanged": "Six task cards/fixtures/outcome weights, no future task leakage; no added sessions or run grant."
     }
   }
