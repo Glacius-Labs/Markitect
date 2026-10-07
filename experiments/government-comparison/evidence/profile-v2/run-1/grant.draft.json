@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 1,
+  "status": "draft",
+  "mode": "live",
+  "purpose": "s1-public-smoke",
+  "trialId": "overseer-2026-10-07-1826-runner-01601",
+  "sourceCandidate": "e07d04011d74f59fa360b2ab800c453dc11074ce",
+  "notBefore": null,
+  "expiresAt": null,
+  "protocolSha256": "e102af2c99882174afe490ac4aa9605f5cb9e91645fb50f1a4aa34f45ae8b12b",
+  "profileSha256": "9519c757fbc5531a5c9daca205800bd995e47c3c5d4f49fe7aa4167b278995f4",
+  "runnerPinSha256": "4f58aee457ba7d2db242c50ed8f21f5c2024ca779a0ac884f85ae55b0fb3548e",
+  "measurementProfileId": "observed-native-usage-v2",
+  "measurementProfileSha256": "354c021a25adfbdd84d9768e5d51396e5b89dfc8be3e06de91d2c59eb9e9b51a",
+  "ledgerPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\.study-data\\runner-01601-diagnostic.sqlite",
+  "resultDirectory": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\profile-v2-20261007-1791395973561\\context-drafts\\results",
+  "maxActorSessions": 4,
+  "maxAdditionalActorSessions": 1,
+  "maxParallelSessions": 1,
+  "maxSessionWallSeconds": 180,
+  "wrapperAgentTurns": 1,
+  "wrapperRetries": 0,
+  "continuations": 0,
+  "children": 0,
+  "semanticRepairs": 0,
+  "newPurchases": false,
+  "retrospectiveTokenThreshold": 10000,
+  "hardTokenCap": false,
+  "providerRequests": null,
+  "internalTransportRetries": null,
+  "acceptedObservabilityGaps": [
+    "provider-requests-and-internal-retries-unknown",
+    "retrospective-token-overshoot",
+    "unobserved-native-descendants",
+    "same-user-filesystem-access",
+    "serving-model-may-be-null",
+    "unified-exec-may-remain-active-tool-suppression-unproven"
+  ],
+  "allowedReadPaths": [
+    "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\profile-v2-20261007-1791395973561\\context-drafts\\released\\context.txt",
+    "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\profile-v2-20261007-1791395973561\\context-drafts\\actor-workspace\\actor-own.txt"
+  ],
+  "contextOnly": true,
+  "authorizedRequests": [
+    {
+      "dispatchId": "public-context-1",
+      "initialRequestSha256": "fc4e07be4d506167ef6dafec3c19b63014732797f70c8bd94386b75731b4f050",
+      "executionSha256": "074253724e7d7033db3104a886e797de352f07678d6b7e0d0cfcc8a0d339392c"
+    }
+  ],
+  "historicalAccounting": {
+    "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\profile-v2-20261007-1791395973561\\context-drafts\\diagnostic-history.json",
+    "sha256": "857de01cc28760cb8dc3c206e5061241b7d70dcee9b6c6f0de43a7b819c7cdae"
+  },
+  "cumulativeLedgerBinding": {
+    "status": "blocked-legacy-diagnostic-schema",
+    "trialId": "overseer-2026-10-07-1826-runner-01601",
+    "existingLedgerPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\.study-data\\runner-01601-diagnostic.sqlite",
+    "existingLedgerSha256": "33bd2ba59b11ab6d54f75c55e6d12b00ec6b90df00106a1419aed239cef2982c",
+    "allHistoricalLedgers": {
+      "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\.study-data\\actual-runner-authorized-starts.sqlite": "74dfd51e2802bc67131891b28c6858129ff5ef4a50a6f1fe06a8793a7250732f",
+      "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\.study-data\\runner-01601-diagnostic.sqlite": "33bd2ba59b11ab6d54f75c55e6d12b00ec6b90df00106a1419aed239cef2982c"
+    },
+    "actorStartsConsumed": 3,
+    "proposedCumulativeSessionCeiling": 4,
+    "additionalActorSessions": 1,
+    "unknownTokensBlockAdmission": true,
+    "migrationReceipt": null,
+    "attemptMappingRule": "source grant label + ':' + original attempt/grant id; status, finished flag and token/request counters identical",
+    "requires": "Explicit cumulative migration of both legacy ledgers; unknown historical tokens remain blocking. No fresh ledger/trial substitution."
+  },
+  "resourceAllocation": "Proposed separate one-context-session allocation; old exhausted grants remain unchanged; no approval or refill",
+  "approvalStillRequired": [
+    "Coordinator approves exact one-session resource grant and finite validity interval",
+    "Cumulative legacy ledger/trial migration bound explicitly; unknown historical tokens still block admission",
+    "Ledger profile adoption draft approved; protocol frozen and final hashes rebound"
+  ]
+}

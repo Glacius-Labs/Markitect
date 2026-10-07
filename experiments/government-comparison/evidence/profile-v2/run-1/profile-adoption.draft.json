@@ -1,0 +1,9 @@
+{
+  "status": "draft",
+  "trialId": "overseer-2026-10-07-1826-runner-01601",
+  "ledgerPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\.study-data\\runner-01601-diagnostic.sqlite",
+  "fromProfileSha256": "6bfeb8fac2d3693d26641bc1283d226e5cb14eebcdd3530ba3256d08dbac6c71",
+  "toProfileSha256": "354c021a25adfbdd84d9768e5d51396e5b89dfc8be3e06de91d2c59eb9e9b51a",
+  "limitsSha256": "9519c757fbc5531a5c9daca205800bd995e47c3c5d4f49fe7aa4167b278995f4",
+  "decisionRef": "Overseer coordination.md 2026-10-07 19:31 Europe/Berlin; global profile adoption approved, this ledger binding pending"
+}

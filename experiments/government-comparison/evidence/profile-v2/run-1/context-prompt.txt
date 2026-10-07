@@ -1,0 +1,5 @@
+This is one public synthetic context check. Read exactly these two files:
+C:\Users\Consiliari\Documents\Scientist-Probes\profile-v2-20261007-1791395973561\context-drafts\released\context.txt
+C:\Users\Consiliari\Documents\Scientist-Probes\profile-v2-20261007-1791395973561\context-drafts\actor-workspace\actor-own.txt
+Return JSON with keys released and actorOwn containing their exact sentinel lines.
+Use no other inputs. Do not search other paths, read credentials, access other cells, write files, run an access or process probe, delegate, repair, or continue with another task.

@@ -1,0 +1,26 @@
+{
+  "argv": [
+    "C:\\Python313\\python.exe",
+    "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\runtime\\selected_metadata.py",
+    "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\profile-v2-20261007-1791395973561\\context-drafts\\metadata\\request.json"
+  ],
+  "cwd": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\profile-v2-20261007-1791395973561\\context-drafts\\metadata",
+  "returnCode": 0,
+  "wallSeconds": 1.5555447000078857,
+  "stopReason": null,
+  "processTreeControl": "windows-job-kill-on-close",
+  "filesystemIsolation": "not established by process wrapper",
+  "automaticRetries": 0,
+  "receipts": [
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\profile-v2-20261007-1791395973561\\context-drafts\\metadata\\process\\stdout.log",
+      "sha256": "efee069375caf8d2095561772dde3fa17e5c32e0c3f7acf44e6a058dba6ba23a",
+      "kind": "stdout.log"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\profile-v2-20261007-1791395973561\\context-drafts\\metadata\\process\\stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "kind": "stderr.log"
+    }
+  ]
+}

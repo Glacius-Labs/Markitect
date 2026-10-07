@@ -1,0 +1,77 @@
+{
+  "schemaVersion": 1,
+  "status": "drafts-only-no-live-authorization",
+  "sourceCandidate": "e07d04011d74f59fa360b2ab800c453dc11074ce",
+  "request": {
+    "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\profile-v2-20261007-1791395973561\\context-drafts\\request.draft.json",
+    "sha256": "fc4e07be4d506167ef6dafec3c19b63014732797f70c8bd94386b75731b4f050"
+  },
+  "protocol": {
+    "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\profile-v2-20261007-1791395973561\\context-drafts\\protocol.draft.json",
+    "sha256": "e102af2c99882174afe490ac4aa9605f5cb9e91645fb50f1a4aa34f45ae8b12b"
+  },
+  "grant": {
+    "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\profile-v2-20261007-1791395973561\\context-drafts\\grant.draft.json",
+    "sha256": "d0d5ca49e98664c60e41148ca8596642fbc7d65737519304e8e2d63c5d456b2f"
+  },
+  "profileAdoption": {
+    "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\profile-v2-20261007-1791395973561\\context-drafts\\profile-adoption.draft.json",
+    "sha256": "dee87b9679eb34d8c73c91ff5d2371faec2abd881a2eac555990560b07626aed"
+  },
+  "executionSha256": "074253724e7d7033db3104a886e797de352f07678d6b7e0d0cfcc8a0d339392c",
+  "modelListing": {
+    "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\profile-v2-20261007-1791395973561\\context-drafts\\metadata\\result.json",
+    "sha256": "71bc27367e6b07e9dc94b61ca06d916110895293f88155f0e2ae3ea20cd0eef4"
+  },
+  "diagnosticHistory": {
+    "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\profile-v2-20261007-1791395973561\\context-drafts\\diagnostic-history.json",
+    "sha256": "857de01cc28760cb8dc3c206e5061241b7d70dcee9b6c6f0de43a7b819c7cdae"
+  },
+  "publicInputs": [
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\profile-v2-20261007-1791395973561\\context-drafts\\released\\task-card.txt",
+      "sha256": "0c2a60a2188673ec2347c6a6801ad194aa5a64c0c797e99614a7a387e7b94389"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\profile-v2-20261007-1791395973561\\context-drafts\\released\\prompt.txt",
+      "sha256": "b5d631d46bfc4b17448c066d60a7e3006d24484f333410363f02ea5e4b607a6a"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\profile-v2-20261007-1791395973561\\context-drafts\\released\\context.txt",
+      "sha256": "44f4a76f61669e64e41192330b6c555e434efbe283149918ec36f5395588eca2"
+    }
+  ],
+  "actorOwnedInputs": [
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\profile-v2-20261007-1791395973561\\context-drafts\\actor-workspace\\actor-own.txt",
+      "sha256": "d61740fc82210e4c3ecd6be3d5fa75bd76ad82125bbc597d5b8762f146d5593b"
+    }
+  ],
+  "actorBaseCommit": "1441ee3a2b109be7d82e0a38a563ee56312e5881",
+  "requestedModel": "gpt-6.1-sol",
+  "requestedReasoning": "high",
+  "actorStarts": 0,
+  "inferenceCalls": 0,
+  "liveGrantIssued": false,
+  "ledgerCreated": false,
+  "metadataOnly": true,
+  "liveExecutable": false,
+  "cumulativeLedgerBinding": {
+    "status": "blocked-legacy-diagnostic-schema",
+    "trialId": "overseer-2026-10-07-1826-runner-01601",
+    "existingLedgerPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\.study-data\\runner-01601-diagnostic.sqlite",
+    "existingLedgerSha256": "33bd2ba59b11ab6d54f75c55e6d12b00ec6b90df00106a1419aed239cef2982c",
+    "allHistoricalLedgers": {
+      "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\.study-data\\actual-runner-authorized-starts.sqlite": "74dfd51e2802bc67131891b28c6858129ff5ef4a50a6f1fe06a8793a7250732f",
+      "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\.study-data\\runner-01601-diagnostic.sqlite": "33bd2ba59b11ab6d54f75c55e6d12b00ec6b90df00106a1419aed239cef2982c"
+    },
+    "actorStartsConsumed": 3,
+    "proposedCumulativeSessionCeiling": 4,
+    "additionalActorSessions": 1,
+    "unknownTokensBlockAdmission": true,
+    "migrationReceipt": null,
+    "attemptMappingRule": "source grant label + ':' + original attempt/grant id; status, finished flag and token/request counters identical",
+    "requires": "Explicit cumulative migration of both legacy ledgers; unknown historical tokens remain blocking. No fresh ledger/trial substitution."
+  },
+  "actorScope": "Only the two named synthetic context files; no separate access/write/process probe"
+}

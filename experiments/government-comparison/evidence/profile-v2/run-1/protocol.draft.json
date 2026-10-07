@@ -1,0 +1,148 @@
+{
+  "schemaVersion": 1,
+  "status": "draft",
+  "mode": "live",
+  "sourceCandidate": "e07d04011d74f59fa360b2ab800c453dc11074ce",
+  "commonLimits": {
+    "taskWallSeconds": 1200,
+    "trialWallSeconds": 7200,
+    "taskActorCalls": 12,
+    "trialActorCalls": 72,
+    "taskProviderTurns": 80,
+    "trialProviderTurns": 480,
+    "taskProviderTokens": 120000,
+    "trialProviderTokens": 720000,
+    "maxParallelActors": 4,
+    "maxTransportRetriesPerCall": 1,
+    "maxSemanticRepairRoundsPerTask": 2,
+    "trialActiveHumanSeconds": 600,
+    "newPurchases": false
+  },
+  "runtimeSourceSha256": {
+    "dispatch.py": "60db12aa741120fecce2346c30c1f216fe0356e6e08b26e101a2931378a14f21",
+    "adapter.py": "df2fbc500531311ee2274422e6ab3562a2384970ad5e087dcf82cf1001fb2da4",
+    "ledger.py": "76e4a9bcc644f8cb5d413efbba62cce7adfeff69b847d50c9920a21bd47fbfc7",
+    "process.py": "d0cedb71d57be87095d9af119d9769fb0c3d311e1af073cba81f6337743c78ae",
+    "runner.py": "345aebe33560721a53384bf9e6f1eac575b9b8a7e58c6b02adeb3ffdd7f30993",
+    "mechanical_actor.py": "02609c2e1b5d82db42640c97dc72c4e34b1a4a3fc9168e657da64c8b9f13f2be",
+    "identity_probe.py": "6d31e3f535e8ce707aa1a7c358e180bfdbb159afde966ac35e8107a467c12e74",
+    "classic.py": "9801a7df7145dcbff87f4d1bc5d479bd5254748195ea98abea0119953f436898",
+    "measurement_profile.py": "c64713c178164a94b96ad90064f33227f625eb04ea6061818c4e15fff057f69c",
+    "harness.py": "b7c99dbd0c2c0c905b819bbce3328be1b50133283cece51751cf2526e1640395",
+    "prepare.py": "4c1162e0203bb68fa47ee1677c8fe8d563daad99566eee4000db931cd8cfeca7",
+    "public/measurement-profile-v1.json": "d16f3a485098ffd26d36f956e8ceb3563c6f4954b2d6c43e185082ae6a6a8361",
+    "public/measurement-profile-v2.json": "670572616658318a7498c13e16265707f4293c472072abb072f629505c402e2f"
+  },
+  "wrapperPythonSha256": "d87063e5597f257004c731b66c59c56c91038861c6877b1a3dca6b8c4e919125",
+  "wrapperPython": "C:\\Python313\\python.exe",
+  "runnerExecutable": "C:\\Users\\Consiliari\\AppData\\Local\\OpenAI\\Codex\\bin\\5ea220ae823df3d7\\codex.exe",
+  "runnerPinSha256": "4f58aee457ba7d2db242c50ed8f21f5c2024ca779a0ac884f85ae55b0fb3548e",
+  "runnerPin": {
+    "path": "C:\\Users\\Consiliari\\AppData\\Local\\OpenAI\\Codex\\bin\\5ea220ae823df3d7\\codex.exe",
+    "sha256": "3b8f6e33caa75f232558a3cf76ff9b87bb5ef6dbcf4996372f24e55c78b1b916",
+    "version": "codex-cli 0.160.1",
+    "requestedModel": "gpt-6.1-sol",
+    "requestedReasoning": "high",
+    "actualModel": null,
+    "modelSupport": "exact requested model/high; dispatcher requires a frozen authenticated listing; serving identity may remain null",
+    "providerProbeSessions": null,
+    "counterScope": "Pin metadata only; actual attempts belong to separate immutable ledgers",
+    "prospectiveConfig": {
+      "approval_policy": "never",
+      "forced_login_method": "chatgpt",
+      "model_reasoning_effort": "high",
+      "project_doc_max_bytes": 0,
+      "features.memories": false,
+      "features.multi_agent": false,
+      "features.plugins": false,
+      "features.hooks": false,
+      "features.goals": false,
+      "model_provider": "openai",
+      "features.apps": false,
+      "features.shell_tool": false,
+      "features.unified_exec": false,
+      "apps._default.enabled": false,
+      "web_search": "disabled"
+    },
+    "configSha256": "ae55b94cefc42840bfbb8979512f51adc38aaee327ba506640e79b30def45f47",
+    "gaps": [
+      "Account model-list advertisement is separate from execution; resolved serving identity remains unreported",
+      "No pre-dispatch aggregate provider-call controller is established for the later study",
+      "exec turn.completed is an agent-turn completion event; provider-turn count inside it remains unknown",
+      "Provider token usage arrives retrospectively; no hard aggregate token ceiling is established",
+      "Effective instruction/memory/config/tool and filesystem access boundaries have not been probed by an actual Actor",
+      "0.160.1 features list reports unified_exec=true despite requested false; no disabled-tool guarantee"
+    ]
+  },
+  "configSha256": "ae55b94cefc42840bfbb8979512f51adc38aaee327ba506640e79b30def45f47",
+  "requestedModel": "gpt-6.1-sol",
+  "requestedReasoning": "high",
+  "authenticatedModelListing": {
+    "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\profile-v2-20261007-1791395973561\\context-drafts\\metadata\\result.json",
+    "sha256": "71bc27367e6b07e9dc94b61ca06d916110895293f88155f0e2ae3ea20cd0eef4"
+  },
+  "measurementProfileId": "observed-native-usage-v2",
+  "measurementProfileSha256": "354c021a25adfbdd84d9768e5d51396e5b89dfc8be3e06de91d2c59eb9e9b51a",
+  "profileAdoption": {
+    "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\profile-v2-20261007-1791395973561\\context-drafts\\profile-adoption.draft.json",
+    "sha256": "dee87b9679eb34d8c73c91ff5d2371faec2abd881a2eac555990560b07626aed"
+  },
+  "toolPolicy": "ordinary-tools",
+  "sandbox": "read-only",
+  "allowedReadPaths": [
+    "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\profile-v2-20261007-1791395973561\\context-drafts\\released\\context.txt",
+    "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\profile-v2-20261007-1791395973561\\context-drafts\\actor-workspace\\actor-own.txt"
+  ],
+  "contextOnly": true,
+  "forbiddenActions": [
+    "write",
+    "access-probe",
+    "process-probe",
+    "credential-read",
+    "other-cell-read"
+  ],
+  "toolRuleSemantics": "Cooperative exact-file-read rule; requested read-only sandbox and disabled features are not a proven access barrier",
+  "acceptedObservabilityGaps": [
+    "provider-requests-and-internal-retries-unknown",
+    "retrospective-token-overshoot",
+    "unobserved-native-descendants",
+    "same-user-filesystem-access",
+    "serving-model-may-be-null",
+    "unified-exec-may-remain-active-tool-suppression-unproven"
+  ],
+  "historicalAccounting": {
+    "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\profile-v2-20261007-1791395973561\\context-drafts\\diagnostic-history.json",
+    "sha256": "857de01cc28760cb8dc3c206e5061241b7d70dcee9b6c6f0de43a7b819c7cdae"
+  },
+  "cumulativeLedgerBinding": {
+    "status": "blocked-legacy-diagnostic-schema",
+    "trialId": "overseer-2026-10-07-1826-runner-01601",
+    "existingLedgerPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\.study-data\\runner-01601-diagnostic.sqlite",
+    "existingLedgerSha256": "33bd2ba59b11ab6d54f75c55e6d12b00ec6b90df00106a1419aed239cef2982c",
+    "allHistoricalLedgers": {
+      "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\.study-data\\actual-runner-authorized-starts.sqlite": "74dfd51e2802bc67131891b28c6858129ff5ef4a50a6f1fe06a8793a7250732f",
+      "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\.study-data\\runner-01601-diagnostic.sqlite": "33bd2ba59b11ab6d54f75c55e6d12b00ec6b90df00106a1419aed239cef2982c"
+    },
+    "actorStartsConsumed": 3,
+    "proposedCumulativeSessionCeiling": 4,
+    "additionalActorSessions": 1,
+    "unknownTokensBlockAdmission": true,
+    "migrationReceipt": null,
+    "attemptMappingRule": "source grant label + ':' + original attempt/grant id; status, finished flag and token/request counters identical",
+    "requires": "Explicit cumulative migration of both legacy ledgers; unknown historical tokens remain blocking. No fresh ledger/trial substitution."
+  },
+  "taskCard": {
+    "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\profile-v2-20261007-1791395973561\\context-drafts\\released\\task-card.txt",
+    "sha256": "0c2a60a2188673ec2347c6a6801ad194aa5a64c0c797e99614a7a387e7b94389"
+  },
+  "prompt": {
+    "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\profile-v2-20261007-1791395973561\\context-drafts\\released\\prompt.txt",
+    "sha256": "b5d631d46bfc4b17448c066d60a7e3006d24484f333410363f02ea5e4b607a6a"
+  },
+  "actorOwnedInputs": [
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\profile-v2-20261007-1791395973561\\context-drafts\\actor-workspace\\actor-own.txt",
+      "sha256": "d61740fc82210e4c3ecd6be3d5fa75bd76ad82125bbc597d5b8762f146d5593b"
+    }
+  ]
+}
