@@ -1,16 +1,21 @@
 # Öffentliche Zuordnung des erweiterten Forschungsauftrags
 
 Stand 2026-10-07; **Vorab-Zuordnung und Coverage-Lücken, keine Studienergebnisse**.
-Maßgeblich ist der [gebundene Studienvertrag](study-contract-2026-10-07.md) aus
-Commit `d929aa7c6f4b590bac2251333a62987bf04ec0da`; Herkunft, Blob und Hash stehen
-in [study-contract-source.json](study-contract-source.json). Der kanonische Owner
+Maßgeblich ist der [aktuelle gebundene Studienvertrag](study-contract-2026-10-07-q1-v2.md)
+aus Commit `5162a678cf151a6c42fb723567472c7e43c226b1`; Herkunft, Blob und Hash stehen
+in [study-contract-q1-source.json](study-contract-q1-source.json). Der vorherige
+[Snapshot](study-contract-2026-10-07.md) aus `d929aa7c…` bleibt unverändert erhalten.
+Der kanonische Owner
 bleibt `docs/design/government/evaluation.md` am referenzierten Stand. Relative
 Links im bytegleichen Snapshot beziehen sich auf dessen ursprüngliches Verzeichnis.
 
 Diese Matrix ist ein gemeinsames öffentliches Bewertungs-/Berichtssupplement.
 Sie ändert weder Taskkarten noch Fixture-Code, Gewichte oder fachliche Regeln.
 Eine ausdrücklich als Vorschlag bezeichnete Ergänzung gehört noch nicht zu den
-Actor-Eingaben oder zum Scoring. Vor einer Übernahme wird sie allen Armen gleich
+Actor-Eingaben oder zum Scoring. Die kurze gemeinsame Absichtswiedergabe ist
+inzwischen durch Overseer übernommen und als [Setup v1](q1-intent-setup-v1.md)
+öffentlich fixiert; sie erhält weder neue Gewichte noch zusätzliche Ressourcen.
+Vor der Übernahme weiterer Vorschläge werden sie allen Armen gleich
 mitgeteilt und in einem neuen Protokollstand eingefroren. Öffentlich bedeutet
 hier nicht, dass alle zukünftigen Taskkarten vorzeitig in Actor-Pakete gelangen:
 Brief, Karten, Checks und Anforderungen bleiben nach dem gleichen Task-Cutoff
@@ -29,7 +34,7 @@ Beobachtung ist unbekannt oder ungetestet, kein angenommener Erfolg.
 
 | Nutzerfrage | Vorhandene Aufgabe und Messung | Gleiche unabhängige Kriterien | Coverage und konkrete Grenze |
 |---|---|---|---|
-| **Q1: Kann ich mein gedankliches Modell ausdrücken?** | Gemeinsamer Brief, Architektur-Freiheitsgrade und T1-Regeln; `setup`, `modeling`, `intervention`, Einrichtungs-/Aufsichtszeit. | Nur bereits freigegebene Begriffe, Invarianten, Prioritäten und erlaubte Freiheit vergleichen; ausgelassene Regeln, unbegründete Annahmen, erkannte Unsicherheit und erforderliche Rückfragen einzeln belegen. Conventional darf gute normale Dokumente verwenden. Markitect-Modellzuordnung ist zusätzliche Methodenfähigkeit. | **Teilweise:** vorgegebene synthetische Absicht ist vorhanden. Keine gemeinsame Pflicht zur expliziten Absichtswiedergabe, keine echte Prioritäten-Elicitation oder menschliche Modellannahme; kein Nachweis, dass ein realer Nutzer sein eigenes Modell bequem ausdrücken kann. |
+| **Q1: Kann ich mein gedankliches Modell ausdrücken?** | Gemeinsamer Brief, Architektur-Freiheitsgrade, T1-Regeln und übernommene kurze Absichtswiedergabe im bestehenden Setup; `setup`, `modeling`, `intervention`, Einrichtungs-/Aufsichtszeit. | Nur bereits freigegebene Begriffe, Invarianten, Prioritäten und erlaubte Freiheit vergleichen; Quellen, ausgelassene Regeln, unbegründete Annahmen, Unsicherheit und erforderliche Rückfragen einzeln belegen. Conventional darf gute normale Dokumente verwenden. Unabhängiger Abgleich ist keine Nutzerannahme; Markitect-Modellzuordnung bleibt Methodenfähigkeit. | **Beobachtungsweg fixiert, noch ungetestet:** kurze Wiedergabe bereits normalisierter synthetischer Absicht. Keine echte Prioritäten-Elicitation oder menschliche Modellannahme; kein Nachweis, dass ein realer Nutzer sein eigenes Modell bequem ausdrücken kann. |
 | **Q2: Verstehen die Agenten die Absicht?** | T1 Validierung/Idempotenz; T2 Atomizität/Konkurrenz; T3 Neustart; T4 Übergänge; T5 neue Regel; T6 Diagnose. Öffentliche Checks und unabhängiger Holdout nach Freeze. | `functional_behavior`, `state_and_data_integrity`, `verification_quality`: tatsächliches Verhalten an freigegebenen Regeln prüfen; falsche Interpretation, unbefugte Vereinfachung und offen erklärte Unsicherheit dokumentieren. Eigene grüne Tests oder prosebasierte Selbstauskunft genügen nicht. | **Direkt, eng:** semantische Treue an konkreten Bestellregeln. Keine offene Ideenumsetzung oder absichtlich echte Mehrdeutigkeit; daraus kein allgemeiner Verständnisnachweis. |
 | **Q3: Bleiben Modell und Repository konsistent?** | T5 verlangt dieselbe Änderung an allen aktiven Eingängen, Checks und betroffener Dokumentation. T6 verlangt Reparatur gegen den akzeptierten Stand. `model_maintenance`, `verification`, `assessment`, Zeit-/Kandidatenfolge. | `regression_and_compatibility`, `verification_quality`; veraltete Regeln, verpasste Drift, Fehlalarme und Zeit bis zur belegten Ausrichtung erfassen. Verhaltenspass getrennt von Modell-/Dateizuordnung und Nachweisfrische. Modelländerung oder Beobachtung darf nicht still akzeptierte Absicht ersetzen. | **Direkt für lokale Regelpropagation/Reparatur, teilweise für Modellpflege:** T6 kündigt eine Regression an und misst daher keine spontane unaufgeforderte Driftentdeckung. Delegierte Modell-Evolution mit echten Entscheidungsrechten wird durch diese Karten nicht vollständig geprüft. |
 | **Q4: Bleibt das Projekt über Änderungen wartbar?** | T1–T4 wachsende Zustands-/Integrationsaufgaben; T5 zweite Eingangsstelle; T6 Reparatur ohne Pfadangabe. `implementation`, `integration`, `retry`, `recovery`, `assessment`; betroffene Stellen und Nacharbeit. | `maintainability_and_operability`, `regression_and_compatibility`: nachvollziehbare Zuständigkeit, sachlich notwendige Änderungspropagation, Wiederholbarkeit und erhaltenes Nachbarverhalten begründen. Unerwartete Kopplung und Such-/Anpassungsaufwand an konkreten Änderungen belegen. Nur ausdrücklich vereinbarte Grenzen sind bindend. | **Lokaler Hinweis:** kleiner endlicher Dienst, keine vorgeschriebene Modulstruktur und kein Langzeitverlauf. Kein Nachweis dauerhafter Vermeidung eines Big Ball of Mud. Ein größerer sinnvoller Diff ist nicht schlechter als eine lokale Scheinreparatur. |
@@ -83,19 +88,17 @@ abgerechnete Kosten bleiben getrennt von datierten Preislisten-Schätzungen.
 
 ## Benannte Lücken und kleinste gemeinsame Ergänzung
 
-**G1 — Ausdruck/Elicitation:** Für Q1 fehlt ein gemeinsamer öffentlicher Schritt,
-in dem jeder Arm vor Umsetzung die freigegebenen Begriffe, Regeln, Prioritäten,
-offenen Annahmen und Freiheitsgrade zurückgibt und die tatsächliche Nutzerannahme
-gebunden wird. **Vorschlag:** ein kurzer identischer Absichts-/Entscheidungsbogen
-zum gemeinsamen Brief, Ausgabeformat frei, einschließlich gewöhnlicher Markdown-
-Dokumentation im Conventional-Arm. Keine API-/Fixture-Neukonstruktion. Dieser
-Bogen ist noch keine Actor-Pflicht und wird ohne vorherige gemeinsame Übernahme
-nicht gegen bestehende Karten benotet. Ohne ihn bleibt Q1 im Basisvergleich eng
-auf vorgegebene Regeln beschränkt; reale Nutzerbedienbarkeit bleibt ungetestet.
-Nutzerklärungen und Annahme folgen in allen Armen denselben vorab freigegebenen
-Regeln; jede Antwort, Hilfe und Annahme samt Zeit-/Interventionsaufwand wird
-erfasst. Der Schritt darf keine zusätzliche unbegrenzte Nachhilfe für einen Arm
-einführen.
+**G1 — Ausdruck/Elicitation:** Overseer hat die kleinste gemeinsame Ergänzung
+übernommen: [kurze Absichtswiedergabe im bestehenden Setup](q1-intent-setup-v1.md)
+vor der ersten Implementierung, Format frei einschließlich vorhandener Markdown-
+Planung. Begriffe, Regeln, Prioritäten, Freiheitsgrade und Quellen bleiben auf den
+gleichen freigegebenen Stand beschränkt; Annahmen und Fragen sind ausdrücklich.
+Klärungen zeigen nur bereits freigegebene Angaben. Echte fehlende Entscheidungen
+bleiben offen und zählen nach gemeinsamen Interventionsregeln. Unabhängige
+semantische Prüfung ist keine menschliche Nutzerannahme und wird während der
+Zelle nicht als Nachhilfe zurückgespielt. Kein neues Budget, keine zusätzliche
+Session, Ergebnisgewichte oder fachliche Anforderung. Das macht bekannte Absicht
+beobachtbar; echte Elicitation, Nutzerannahme und Bedienbarkeit bleiben ungetestet.
 
 **G2 — Echte Modelllücke/Ideenumsetzung:** T5 ist eindeutig, T6 eine angekündigte
 Reparatur. Sie prüfen weder echte Zielmehrdeutigkeit noch eine neue offene Idee

@@ -1,0 +1,576 @@
+{
+  "v2/ConfigReadResponse.json": {
+    "sha256": "4ec77e1a3eed746037149799c3b6bb8fe7b4b593e5930fc9f410e6282de9df50",
+    "topLevelProperties": [
+      "config",
+      "layers",
+      "origins"
+    ],
+    "definitions": {
+      "AskForApproval": {
+        "oneOf": [
+          {
+            "enum": [
+              "untrusted",
+              "on-request",
+              "never"
+            ],
+            "type": "string"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "granular": {
+                "properties": {
+                  "mcp_elicitations": {
+                    "type": "boolean"
+                  },
+                  "request_permissions": {
+                    "default": false,
+                    "type": "boolean"
+                  },
+                  "rules": {
+                    "type": "boolean"
+                  },
+                  "sandbox_approval": {
+                    "type": "boolean"
+                  },
+                  "skill_approval": {
+                    "default": false,
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "mcp_elicitations",
+                  "rules",
+                  "sandbox_approval"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "granular"
+            ],
+            "title": "GranularAskForApproval",
+            "type": "object"
+          }
+        ]
+      },
+      "Config": {
+        "properties": [
+          "analytics",
+          "approval_policy",
+          "approvals_reviewer",
+          "apps",
+          "browser_use",
+          "compact_prompt",
+          "computer_use",
+          "desktop",
+          "developer_instructions",
+          "forced_chatgpt_workspace_id",
+          "forced_login_method",
+          "instructions",
+          "model",
+          "model_auto_compact_token_limit",
+          "model_auto_compact_token_limit_scope",
+          "model_context_window",
+          "model_provider",
+          "model_reasoning_effort",
+          "model_reasoning_summary",
+          "model_verbosity",
+          "review_model",
+          "sandbox_mode",
+          "sandbox_workspace_write",
+          "service_tier",
+          "tools",
+          "web_search"
+        ],
+        "additionalProperties": true,
+        "description": null,
+        "permissionSandboxApprovalFields": {
+          "approval_policy": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/AskForApproval"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "approvals_reviewer": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/ApprovalsReviewer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "[UNSTABLE] Optional default for where approval requests are routed for review."
+          },
+          "sandbox_mode": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/SandboxMode"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "sandbox_workspace_write": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/SandboxWorkspaceWrite"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "SandboxMode": {
+        "enum": [
+          "read-only",
+          "workspace-write",
+          "danger-full-access"
+        ],
+        "type": "string"
+      }
+    }
+  },
+  "v2/ConfigRequirementsReadResponse.json": {
+    "sha256": "23133727e5dac0fcd77ca0db8bb47f4bef7c3e880b96846aec612d1dedba7e5b",
+    "topLevelProperties": [
+      "requirements"
+    ],
+    "definitions": {
+      "AskForApproval": {
+        "oneOf": [
+          {
+            "enum": [
+              "untrusted",
+              "on-request",
+              "never"
+            ],
+            "type": "string"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "granular": {
+                "properties": {
+                  "mcp_elicitations": {
+                    "type": "boolean"
+                  },
+                  "request_permissions": {
+                    "default": false,
+                    "type": "boolean"
+                  },
+                  "rules": {
+                    "type": "boolean"
+                  },
+                  "sandbox_approval": {
+                    "type": "boolean"
+                  },
+                  "skill_approval": {
+                    "default": false,
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "mcp_elicitations",
+                  "rules",
+                  "sandbox_approval"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "granular"
+            ],
+            "title": "GranularAskForApproval",
+            "type": "object"
+          }
+        ]
+      },
+      "ConfigRequirements": {
+        "properties": [
+          "additionalDeveloperInstructions",
+          "allowAppshots",
+          "allowBrowserAndComputerUse",
+          "allowLoginShell",
+          "allowManagedHooksOnly",
+          "allowRemoteControl",
+          "allowedApprovalPolicies",
+          "allowedApprovalsReviewers",
+          "allowedLoginMethods",
+          "allowedPermissionProfiles",
+          "allowedSandboxModes",
+          "allowedWebSearchModes",
+          "allowedWindowsSandboxImplementations",
+          "application",
+          "autoReview",
+          "browserUse",
+          "chatgptBaseUrl",
+          "checkForUpdateOnStartup",
+          "cliAuthCredentialsStore",
+          "computerUse",
+          "defaultPermissions",
+          "enforceResidency",
+          "featureRequirements",
+          "feedback",
+          "hooks",
+          "inAppBrowser",
+          "logDir",
+          "modelCatalogJson",
+          "modelProvider",
+          "modelProviders",
+          "models",
+          "network",
+          "sqliteHome"
+        ],
+        "additionalProperties": null,
+        "description": null,
+        "permissionSandboxApprovalFields": {
+          "allowedApprovalPolicies": {
+            "items": {
+              "$ref": "#/definitions/AskForApproval"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "allowedApprovalsReviewers": {
+            "items": {
+              "$ref": "#/definitions/ApprovalsReviewer"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "allowedPermissionProfiles": {
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "allowedSandboxModes": {
+            "items": {
+              "$ref": "#/definitions/SandboxMode"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "allowedWindowsSandboxImplementations": {
+            "items": {
+              "$ref": "#/definitions/WindowsSandboxImplementation"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "defaultPermissions": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "SandboxMode": {
+        "enum": [
+          "read-only",
+          "workspace-write",
+          "danger-full-access"
+        ],
+        "type": "string"
+      }
+    }
+  },
+  "v2/ThreadStartParams.json": {
+    "sha256": "80a40a7fac15b4bf70efb7f893fb353acc0a0d30c68f54aee4f01923deca85de",
+    "topLevelProperties": [
+      "allowProviderModelFallback",
+      "approvalPolicy",
+      "approvalsReviewer",
+      "baseInstructions",
+      "config",
+      "cwd",
+      "daybreakEnabled",
+      "developerInstructions",
+      "dynamicTools",
+      "environments",
+      "ephemeral",
+      "experimentalRawEvents",
+      "historyMode",
+      "mockExperimentalField",
+      "model",
+      "modelProvider",
+      "multiAgentMode",
+      "permissions",
+      "personality",
+      "projectId",
+      "runtimeWorkspaceRoots",
+      "sandbox",
+      "selectedCapabilityRoots",
+      "serviceName",
+      "serviceTier",
+      "sessionStartSource",
+      "threadSource"
+    ],
+    "definitions": {
+      "AskForApproval": {
+        "oneOf": [
+          {
+            "enum": [
+              "untrusted",
+              "on-request",
+              "never"
+            ],
+            "type": "string"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "granular": {
+                "properties": {
+                  "mcp_elicitations": {
+                    "type": "boolean"
+                  },
+                  "request_permissions": {
+                    "default": false,
+                    "type": "boolean"
+                  },
+                  "rules": {
+                    "type": "boolean"
+                  },
+                  "sandbox_approval": {
+                    "type": "boolean"
+                  },
+                  "skill_approval": {
+                    "default": false,
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "mcp_elicitations",
+                  "rules",
+                  "sandbox_approval"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "granular"
+            ],
+            "title": "GranularAskForApproval",
+            "type": "object"
+          }
+        ]
+      },
+      "SandboxMode": {
+        "enum": [
+          "read-only",
+          "workspace-write",
+          "danger-full-access"
+        ],
+        "type": "string"
+      }
+    },
+    "selectedProperties": {
+      "permissions": {
+        "description": "Named profile id for this thread. Cannot be combined with `sandbox`.",
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "sandbox": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/SandboxMode"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "approvalPolicy": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/AskForApproval"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    }
+  },
+  "v2/CommandExecParams.json": {
+    "sha256": "fd034b4c85d7b6f466e30a3cbb73db86be1263aca3f81b89b547f14817dfb62e",
+    "topLevelProperties": [
+      "command",
+      "cwd",
+      "disableOutputCap",
+      "disableTimeout",
+      "env",
+      "outputBytesCap",
+      "permissionProfile",
+      "processId",
+      "sandboxPolicy",
+      "size",
+      "streamStdin",
+      "streamStdoutStderr",
+      "timeoutMs",
+      "tty"
+    ],
+    "definitions": {
+      "SandboxPolicy": {
+        "oneOf": [
+          {
+            "properties": {
+              "type": {
+                "enum": [
+                  "dangerFullAccess"
+                ],
+                "title": "DangerFullAccessSandboxPolicyType",
+                "type": "string"
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "title": "DangerFullAccessSandboxPolicy",
+            "type": "object"
+          },
+          {
+            "properties": {
+              "networkAccess": {
+                "default": false,
+                "type": "boolean"
+              },
+              "type": {
+                "enum": [
+                  "readOnly"
+                ],
+                "title": "ReadOnlySandboxPolicyType",
+                "type": "string"
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "title": "ReadOnlySandboxPolicy",
+            "type": "object"
+          },
+          {
+            "properties": {
+              "networkAccess": {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/NetworkAccess"
+                  }
+                ],
+                "default": "restricted"
+              },
+              "type": {
+                "enum": [
+                  "externalSandbox"
+                ],
+                "title": "ExternalSandboxSandboxPolicyType",
+                "type": "string"
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "title": "ExternalSandboxSandboxPolicy",
+            "type": "object"
+          },
+          {
+            "properties": {
+              "excludeSlashTmp": {
+                "default": false,
+                "type": "boolean"
+              },
+              "excludeTmpdirEnvVar": {
+                "default": false,
+                "type": "boolean"
+              },
+              "networkAccess": {
+                "default": false,
+                "type": "boolean"
+              },
+              "type": {
+                "enum": [
+                  "workspaceWrite"
+                ],
+                "title": "WorkspaceWriteSandboxPolicyType",
+                "type": "string"
+              },
+              "writableRoots": {
+                "default": [],
+                "items": {
+                  "$ref": "#/definitions/AbsolutePathBuf"
+                },
+                "type": "array"
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "title": "WorkspaceWriteSandboxPolicy",
+            "type": "object"
+          }
+        ]
+      }
+    },
+    "selectedProperties": {
+      "permissionProfile": {
+        "description": "Optional active permissions profile id for this command.\n\nDefaults to the user's configured permissions when omitted. Cannot be combined with `sandboxPolicy`.",
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "sandboxPolicy": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/SandboxPolicy"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "description": "Optional sandbox policy for this command.\n\nUses the same shape as thread/turn execution sandbox configuration and defaults to the user's configured policy when omitted. Cannot be combined with `permissionProfile`."
+      }
+    }
+  },
+  "v2/ConfigReadParams.json": {
+    "sha256": "257c54a423b47c1d209ff1076765a1564d82322fd5161670fd489a2874de1bac",
+    "selectedProperties": {
+      "cwd": {
+        "description": "Optional working directory to resolve project config layers. If specified, return the effective config as seen from that directory (i.e., including any project layers between `cwd` and the project/repo root).",
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "includeLayers": {
+        "type": "boolean"
+      }
+    }
+  }
+}

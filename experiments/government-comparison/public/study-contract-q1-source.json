@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "kind": "exact-canonical-study-contract-snapshot",
+  "sourceRepository": "C:\\Users\\Consiliari\\Glacius Labs\\Markitect",
+  "sourceCommit": "5162a678cf151a6c42fb723567472c7e43c226b1",
+  "sourcePath": "docs/design/government/evaluation.md",
+  "sourceGitBlob": "e51cb07255e6a56e0cbd53e3137c17d053098721",
+  "sha256": "ed8e50429ba2de41f7074acec10be07f7fe09d1ee34909c87ef788202fb7cf17",
+  "bytes": 29625,
+  "snapshotPath": "study-contract-2026-10-07-q1-v2.md",
+  "scope": "Exact committed evaluation document bytes; no product source imported",
+  "sectionsApplied": [
+    "Gemeinsame Absichtswiedergabe vor der Implementierung"
+  ],
+  "previousSnapshot": {
+    "snapshotPath": "study-contract-2026-10-07.md",
+    "sourceCommit": "d929aa7c6f4b590bac2251333a62987bf04ec0da",
+    "sha256": "55db78d1148338259b182d9e6f15b0618cbec97cd01043484beeea275748faae",
+    "manifestPath": "study-contract-source.json",
+    "manifestUnchanged": true
+  },
+  "authority": "Canonical owner remains docs/design/government/evaluation.md at the referenced source commit; this is a bound study snapshot",
+  "relativeLinkSemantics": "Relative links in the exact snapshot refer to the original docs/design/government directory at sourceCommit, not this export directory"
+}

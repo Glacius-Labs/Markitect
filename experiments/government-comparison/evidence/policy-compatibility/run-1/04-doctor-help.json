@@ -1,0 +1,16 @@
+{
+  "callNumber": 4,
+  "purpose": "Doctor help only; no health/config/auth inspection is executed",
+  "argv": [
+    "C:\\Users\\Consiliari\\AppData\\Local\\OpenAI\\Codex\\bin\\5ea220ae823df3d7\\codex.exe",
+    "doctor",
+    "--help"
+  ],
+  "timeoutSeconds": 30,
+  "startedAtUtc": "2026-10-07T20:14:17.384561+00:00",
+  "wallSeconds": 0.03856190002989024,
+  "returnCode": 0,
+  "stdout": "Diagnose local Codex installation, config, auth, and runtime health\n\nUsage: codex doctor [OPTIONS]\n\nOptions:\n  -c, --config <key=value>\n          Override a configuration value that would otherwise be loaded from `~/.codex/config.toml`.\n          Use a dotted path (`foo.bar.baz`) to override nested values. The `value` portion is parsed\n          as TOML. If it fails to parse as TOML, the raw string is used as a literal.\n          \n          Examples: - `-c model=\"o3\"` - `-c 'sandbox_permissions=[\"disk-full-read-access\"]'` - `-c\n          shell_environment_policy.inherit=all`\n\n      --enable <FEATURE>\n          Enable a feature (repeatable). Equivalent to `-c features.<name>=true`\n\n      --json\n          Emit a redacted machine-readable report\n\n      --disable <FEATURE>\n          Disable a feature (repeatable). Equivalent to `-c features.<name>=false`\n\n      --summary\n          Only show grouped check rows and the final count summary\n\n      --all\n          Expand long lists in detailed human output\n\n      --no-color\n          Disable ANSI color in human output\n\n      --ascii\n          Use ASCII status labels and separators in human output\n\n  -h, --help\n          Print help (see a summary with '-h')\n",
+  "stderr": "",
+  "executableSha256": "3b8f6e33caa75f232558a3cf76ff9b87bb5ef6dbcf4996372f24e55c78b1b916"
+}

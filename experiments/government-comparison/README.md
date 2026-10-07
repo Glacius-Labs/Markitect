@@ -138,6 +138,11 @@ The [extended user-goal coverage](public/user-goal-coverage.md) binds the six
 research questions to existing cards, independent criteria and explicit gaps.
 Its [exact canonical contract snapshot](public/study-contract-2026-10-07.md) comes
 from `d929aa7c6f4b590bac2251333a62987bf04ec0da`; product source was not imported.
+The later [Q1 contract snapshot](public/study-contract-2026-10-07-q1-v2.md) from
+`5162a678cf151a6c42fb723567472c7e43c226b1` adopts a
+[short shared intent replay](public/q1-intent-setup-v1.md) within existing setup
+for every arm. It adds no session, resource allocation, business rule or outcome
+weight; independent fidelity assessment is not human acceptance.
 No new fixture requirement, score, trial or budget follows from a proposed gap
 closure. The fifth context session completed technically but both reads were
 policy-rejected; [its evidence](context-tools-live-handoff.md) keeps S1 open.
@@ -151,7 +156,10 @@ receipts remain accounted for; known input-plus-output tokens total 53,331,
 while the complete historical total remains unknown. The
 [policy diagnosis](public/policy-block-diagnosis.md) separates the observed
 rejection from its unverified cause and proposes a decision on supported scoped
-permissions. It authorizes no sixth start or study cell.
+permissions. The [bounded pinned-version passage](public/policy-compatibility-01601.md)
+used six local metadata calls and found named-profile protocol fields, but no
+resolved effective exec policy or verified correction. The environment/runner
+owner must resolve that blocker. It authorizes no sixth start or study cell.
 
 The common [measurement profile v2](public/measurement-profile-v2.md) is adopted
 equally for all arms. Numeric common limits remain unchanged. Known tokens with

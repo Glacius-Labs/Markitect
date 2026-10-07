@@ -1,0 +1,19 @@
+{
+  "callNumber": 6,
+  "purpose": "Documented static local app-server protocol-schema export, not server start/config resolution or model request",
+  "argv": [
+    "C:\\Users\\Consiliari\\AppData\\Local\\OpenAI\\Codex\\bin\\5ea220ae823df3d7\\codex.exe",
+    "app-server",
+    "generate-json-schema",
+    "--experimental",
+    "--out",
+    "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\policy-compatibility\\run-1\\protocol-schema"
+  ],
+  "timeoutSeconds": 30,
+  "startedAtUtc": "2026-10-07T20:15:22.756925+00:00",
+  "wallSeconds": 0.2950195000739768,
+  "returnCode": 0,
+  "stdout": "",
+  "stderr": "",
+  "executableSha256": "3b8f6e33caa75f232558a3cf76ff9b87bb5ef6dbcf4996372f24e55c78b1b916"
+}

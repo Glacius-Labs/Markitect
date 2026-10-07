@@ -1,0 +1,145 @@
+{
+  "kind": "bounded-local-metadata-and-q1-setup-validation",
+  "validatedAtUtc": "2026-10-07T20:24:57.163801+00:00",
+  "baseCommit": "d165f18c5cb377e351d233de372c4c56f3dbe4f7",
+  "executableSha256": "3b8f6e33caa75f232558a3cf76ff9b87bb5ef6dbcf4996372f24e55c78b1b916",
+  "metadataCalls": [
+    {
+      "callNumber": 1,
+      "file": "01-global-help.json",
+      "sha256": "3a98df1cfa9b40184bfdfdfcc1b3f1f558f3edf13d15d339bcfa92a4fa3ce0f7",
+      "returnCode": 0,
+      "wallSeconds": 0.04488270008005202
+    },
+    {
+      "callNumber": 2,
+      "file": "02-debug-help.json",
+      "sha256": "7edafca767abe94a6e14681d86ae7d3414b1201efcba953f928cd1a4ebb42e1b",
+      "returnCode": 0,
+      "wallSeconds": 0.0518770000198856
+    },
+    {
+      "callNumber": 3,
+      "file": "03-app-server-help.json",
+      "sha256": "c76ba72a413b9b72de2e12a673fa823378859b0f00184197109478548d01cc16",
+      "returnCode": 0,
+      "wallSeconds": 0.06040089996531606
+    },
+    {
+      "callNumber": 4,
+      "file": "04-doctor-help.json",
+      "sha256": "62e1952871822874d8ad4c3b3f8bf516affeb4ac8a66f52622095c40fcfa9b81",
+      "returnCode": 0,
+      "wallSeconds": 0.03856190002989024
+    },
+    {
+      "callNumber": 5,
+      "file": "05-schema-help.json",
+      "sha256": "b0a246eb40138b421535ebb47827e744a840ec8f58f45af792aeab7e62f761b1",
+      "returnCode": 0,
+      "wallSeconds": 0.03892500000074506
+    },
+    {
+      "callNumber": 6,
+      "file": "06-schema-export.json",
+      "sha256": "f2f7d5c9f27b340b0fda6390b2777a73fa49513fb36c3bfca9318344e7520b5b",
+      "returnCode": 0,
+      "wallSeconds": 0.2950195000739768
+    }
+  ],
+  "metadataCallLimit": 6,
+  "callsRemaining": 0,
+  "schemaArchive": {
+    "file": "protocol-schema.zip",
+    "sha256": "cd24042eec4696f6b73368cfc6ce930726f3e10c28bae63cdbd1b2f502ff1d97",
+    "membersVerified": 440
+  },
+  "canonicalSource": {
+    "schemaVersion": 1,
+    "kind": "exact-canonical-study-contract-snapshot",
+    "sourceRepository": "C:\\Users\\Consiliari\\Glacius Labs\\Markitect",
+    "sourceCommit": "5162a678cf151a6c42fb723567472c7e43c226b1",
+    "sourcePath": "docs/design/government/evaluation.md",
+    "sourceGitBlob": "e51cb07255e6a56e0cbd53e3137c17d053098721",
+    "sha256": "ed8e50429ba2de41f7074acec10be07f7fe09d1ee34909c87ef788202fb7cf17",
+    "bytes": 29625,
+    "snapshotPath": "study-contract-2026-10-07-q1-v2.md",
+    "scope": "Exact committed evaluation document bytes; no product source imported",
+    "sectionsApplied": [
+      "Gemeinsame Absichtswiedergabe vor der Implementierung"
+    ],
+    "previousSnapshot": {
+      "snapshotPath": "study-contract-2026-10-07.md",
+      "sourceCommit": "d929aa7c6f4b590bac2251333a62987bf04ec0da",
+      "sha256": "55db78d1148338259b182d9e6f15b0618cbec97cd01043484beeea275748faae",
+      "manifestPath": "study-contract-source.json",
+      "manifestUnchanged": true
+    },
+    "authority": "Canonical owner remains docs/design/government/evaluation.md at the referenced source commit; this is a bound study snapshot",
+    "relativeLinkSemantics": "Relative links in the exact snapshot refer to the original docs/design/government directory at sourceCommit, not this export directory"
+  },
+  "files": {
+    "README.md": "8d271109bdb10ea179affb57b3a0b9bb7fdd570da9dc1d970922c5ec3965a7d3",
+    "public/user-goal-coverage.md": "157f24f25459bb0fd7c89d7be5861d3bbf99a937f8f71a972b90ec0c62142ba2",
+    "public/q1-intent-setup-v1.md": "40bba049ac18da05deaa31943e3f6452280220f560f39e55a908704b8397312e",
+    "public/study-contract-2026-10-07-q1-v2.md": "ed8e50429ba2de41f7074acec10be07f7fe09d1ee34909c87ef788202fb7cf17",
+    "public/study-contract-q1-source.json": "f0d85257924ddf0eb8d51fe3af7405e2cd281073bed420291ae23d05c0a95ec6",
+    "public/policy-compatibility-01601.md": "46270476c5ad08becc900e2bb52208fba2101f0bff9af054160b99c53c8a8089",
+    "public/policy-q1-review.md": "5439d853a10c3a34ac9095647a2ac184199be71e4a651d583fe526e047253507",
+    "policy-q1-handoff.md": "dd80f7db59e6a1c996402ebc886d4a7baae8821a6d5d3e1d3bd5dfef34cb0e0d",
+    "evidence/policy-compatibility/run-1/01-global-help.json": "3a98df1cfa9b40184bfdfdfcc1b3f1f558f3edf13d15d339bcfa92a4fa3ce0f7",
+    "evidence/policy-compatibility/run-1/02-debug-help.json": "7edafca767abe94a6e14681d86ae7d3414b1201efcba953f928cd1a4ebb42e1b",
+    "evidence/policy-compatibility/run-1/03-app-server-help.json": "c76ba72a413b9b72de2e12a673fa823378859b0f00184197109478548d01cc16",
+    "evidence/policy-compatibility/run-1/04-doctor-help.json": "62e1952871822874d8ad4c3b3f8bf516affeb4ac8a66f52622095c40fcfa9b81",
+    "evidence/policy-compatibility/run-1/05-schema-help.json": "b0a246eb40138b421535ebb47827e744a840ec8f58f45af792aeab7e62f761b1",
+    "evidence/policy-compatibility/run-1/06-schema-export.json": "f2f7d5c9f27b340b0fda6390b2777a73fa49513fb36c3bfca9318344e7520b5b",
+    "evidence/policy-compatibility/run-1/protocol-schema.zip": "cd24042eec4696f6b73368cfc6ce930726f3e10c28bae63cdbd1b2f502ff1d97",
+    "evidence/policy-compatibility/run-1/schema-manifest.json": "9814e94caa484e27c06ea7c1cc5c20934552022905583bb5f71827ede8e991b6",
+    "evidence/policy-compatibility/run-1/schema-observations.json": "321742605a87025d91d9eb10cb18b9cb42d64fe1c8d7b331faa8f0eccfd82d66"
+  },
+  "unchangedPreviousFiles": {
+    "public/study-contract-2026-10-07.md": "55db78d1148338259b182d9e6f15b0618cbec97cd01043484beeea275748faae",
+    "public/study-contract-source.json": "d1d79c4c7ac54a6f10138961afacf58adbaeddd18a991e237edacb8ab059c306",
+    "public/policy-block-diagnosis.md": "2c2c219ed26e2466ae3e841dfef49ac50b144ce058dfabd23d66a1ab2c64090b",
+    "evidence/research-policy/run-1/validation.json": "04035002f42ea42fae4f34b7a3e2dd43fab7a86237a6ffce9295fc9a1b6f0efd",
+    "evidence/context-tools-live/run-1/raw/process/stdout.log": "386a00e490fdc8d5f38fb0420cd1c25e000d867148ef035501bdc8611052d9f1",
+    "evidence/context-tools-live/run-1/raw/process/stderr.log": "1b17bf8f6d36c77fe081014ff363b45ea5ed3c88a4d84f6e47c83502b464934c",
+    "evidence/context-tools-live/run-1/raw/process/process.json": "d12d22c2178d144ad45613ffb5ebdd38fec4bda5c062873c492d19addf1c78aa",
+    "context-tools-live-freeze.json": "7489ce5758d6ecb687a6dcdd66b3871c89b64770a928bee98544bb8092e4c044",
+    "context-tools-live-review.json": "0c0053a08e734882f9b8e88de46e9da8ed2bab391feb4cbf58cd7f4b6c3e95ca"
+  },
+  "unchangedPriorLedgers": {
+    "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\.study-data\\actual-runner-authorized-starts.sqlite": "74dfd51e2802bc67131891b28c6858129ff5ef4a50a6f1fe06a8793a7250732f",
+    "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\.study-data\\runner-01601-diagnostic.sqlite": "33bd2ba59b11ab6d54f75c55e6d12b00ec6b90df00106a1419aed239cef2982c",
+    "C:/Users/Consiliari/Documents/Scientist-Probes/context-additional-20261007/dispatch.sqlite": "b4f13c5053ad1f00e477bf9be9831a5075f2ea0d8d33d8db6ce8a2173a6a0be8",
+    "C:/Users/Consiliari/Documents/Scientist-Probes/context-tools-20261007/dispatch.sqlite": "c4af6de468bd93a7373c56295075771da7981d5d541bcf2261e20556ec31bb89"
+  },
+  "checks": {
+    "exactNewCanonicalBytesAndBlob": true,
+    "oldSnapshotAndProvenancePreserved": true,
+    "sixExplicitMetadataCommandsOnly": true,
+    "allNativeExitZeroAndUnder30Seconds": true,
+    "completeSchemaArchiveAndFocusedMembers": true,
+    "localLinks": 54,
+    "gitWhitespace": true,
+    "noTrackedChangesOutsideREADMEAndCoverage": true
+  },
+  "status": {
+    "effectiveExecPolicy": "unknown",
+    "pinnedProfileRuntimeEffect": "unproven",
+    "readOnlyNeverFileAccess": "unproven",
+    "S1": "open",
+    "actorStartsCumulative": 5,
+    "actorStartsAdded": 0,
+    "knownTokenSubtotal": 53331,
+    "historicalTokenTotal": null
+  },
+  "limits": [
+    "Static protocol fields prove interface presence, not parsing, effective policy or access success",
+    "No app-server RPC, provider/model probe, rejected-command retry, alternative shell/path, config/permission/global change, credentials inspection, installation or full suite",
+    "Original snapshot source-relative links intentionally excluded from local existence validation",
+    "No private holdout inspection; no outcome-weight or fixture change",
+    "One collector terminal-print encoding failure after saved native receipt and one absent optional archive-member read caused no retry",
+    "Shared Scientist and two-subagent preparation effort/token/cost totals unavailable, not zero"
+  ]
+}
