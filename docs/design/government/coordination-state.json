@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-07T20:31:40Z",
+  "updatedUtc": "2026-10-07T20:37:49Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -22,13 +22,13 @@
       "name": "Worker",
       "threadId": "01a1169b-9357-7df3-a8f6-f913557c782a",
       "hostId": "local",
-      "afterCursor": "b2b8e43f-fcaa-41bf-828a-99c69527bdea:47",
+      "afterCursor": "b2b8e43f-fcaa-41bf-828a-99c69527bdea:48",
       "lastObservedStatus": "active",
       "activeTurn": "01a117d5-737b-73d1-8d9e-067a046228d0",
-      "lastAssistantMessageId": "msg_0a7785839df196a4016ac6ab1c18588191a7fa84815a7cd2a4",
+      "lastAssistantMessageId": "msg_0a7785839df196a4016ac6ad82100481918c9605b9bdeacae3",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "G5 finite persistent queue, cumulative resources, safe interruption/restart and promotion recovery; then S1 handoff hold",
-      "latestProgress": "Der neue saubere Kandidat ist ce021ce. Die 20 CLI-Prüfungen, Check/Impact und go vet bestehen erneut. Verify und die vier nativen Fälle laufen auf der daraus gebauten Binary; der abgebrochene Lauf auf 1498e91 bleibt als verworfener Vorversuch dokumentiert.",
+      "latestProgress": "Das Host-Paket führt jetzt zusätzliche Test-Unterprozesse aus. Sie gehören zur laufenden Suite; eine weitere vollständige Suite wurde für ce021ce nicht gestartet. Nach Abschluss prüfe ich den vollständigen Bericht und die Source-Bindung für die Übergabe.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-worker/Markitect",
       "transferredDesignCommit": "691ce1dee3484371c4aea725db4ed5cc3f2e3719",
       "candidateSha": "d146201e0f004e671cb90cf77b6a107dc14429b5",
@@ -197,13 +197,13 @@
       "name": "Scientist",
       "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
       "hostId": "local",
-      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:54",
+      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:55",
       "lastObservedStatus": "active",
       "activeTurn": "01a11810-3b8e-7042-9d41-919a89522889",
-      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac6ac18b01c81919c531f0c7cd3817c",
+      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac6ad29da5481919697691fe8edcc94",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "One separately authorized local stdio metadata session to read config and managed requirements, <=60s, no Actor or policy mutation.",
-      "latestProgress": "Ich prüfe zuerst, ob der vorhandene stdio-Client einen Start mit genau diesen lesenden Methoden und gefilterten Ausgaben erlaubt. Falls ja, führe ich die eine freigegebene Sitzung aus. Q1 bleibt unverändert; die Ergebnisse werde ich ausdrücklich von der fehlgeschlagenen exec-Route unterscheiden.",
+      "latestProgress": "Die Filterprüfung mit synthetischen Daten hat bestanden: Providerkonfiguration, Header, API-Schlüssel und unbekannte Felder werden verworfen; relevante Policy-Werte bleiben erhalten. Der vorbereitete Start ist an Binary-Hash, ursprüngliches Arbeitsverzeichnis und exakt die eingefrorenen Inline-Vorgaben gebunden. Er hat noch nicht stattgefunden; vorher prüft der unabhängige Reviewer die begrenzte Client-Variante.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-scientist/Markitect",
       "transferredDesignCommit": "b9e17c9896f14b4b1268e4bcb005395f5d324384",
       "candidateSha": "f3eeb57e54408f3ba127c22681f39c2c31491ca9",
@@ -566,6 +566,11 @@
           "newPurchases": false,
           "status": "Dispatched and active; consumption not yet confirmed. Old six calls remain consumed.",
           "boundary": "Relevant allowlisted policy/origin fields only before storage/display; no raw secrets. No authority weakening, denied-command repeat or exec-policy equivalence claim."
+        },
+        "localPolicyMetadataProgress": {
+          "observedUtc": "2026-10-07T20:37:49Z",
+          "reportedStatus": "Filtering passed synthetic checks; exact pinned metadata client under independent review before its single authorized start. No session started according to Scientist.",
+          "inspection": "Compact progress only; not an accepted client/session handoff."
         }
       },
       "classicHandoffReceived": true,
@@ -658,12 +663,10 @@
     "satPrinciples": "Deferred by direct user request on 2026-10-07; conceptual constraint/consistency/conflict-explanation principles first, no solver integration or current assignment change. See docs/design/government/deferred-research.md."
   },
   "lastReview": {
-    "reviewedUtc": "2026-10-07T20:31:40Z",
-    "evidenceLevel": "Compact snapshots for all three; independent acceptance of Scientist f3eeb57 Q1/schema/metadata package, 30 document/prior/ledger hashes, six receipts, 440 ZIP members. Worker reports clean ce021ce and passing preliminary checks; final Verify/native cases running, no G5 acceptance. Architect unchanged.",
+    "reviewedUtc": "2026-10-07T20:37:49Z",
+    "evidenceLevel": "All three compact snapshots; no completed handoff. Worker continues existing ce021ce suite with host subprocess tests. Scientist reports filtered client preparation and independent review, authorized metadata session not yet started. Architect unchanged held Classic.",
     "coordinationActions": [
-      "Accepted Scientist package; identified remaining technical question rather than assumed user policy choice.",
-      "Authorized exactly one separate local <=60s config/requirements metadata session under unchanged protections, confirmed active. No new Actor grant.",
-      "Recorded Q1 setup adoption; no repeated Worker/Architect tasks or tests."
+      "Recorded reported progress and cursors; no repeated assignments, model grants, product edits or redundant tests."
     ],
     "userDecisionRequired": false
   },
