@@ -1,0 +1,22 @@
+apiVersion: markitect.example.org/module/v1alpha1
+name: markitect-markdown
+version: 1.0.0
+type: projection
+purpose: Registers target guidance and an internal Markdown execution entrypoint.
+requires:
+  core: "1"
+  modules: []
+provides:
+  schemas: []
+  projectors:
+    - id: markdown-documentation
+      version: 1.0.0
+      target: markdown
+      allKinds: true
+      allowedRoots:
+        - docs/represented/
+      guidance: >
+        Produce source-derived documentation within the declared target surface.
+        A deterministic Markdown renderer may be used as an Executor tool. Its
+        output is never canonical semantic authority. Return a candidate for
+        independent verification.

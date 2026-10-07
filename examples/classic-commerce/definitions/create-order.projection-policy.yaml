@@ -1,0 +1,18 @@
+apiVersion: markitect.foundation/v1
+kind: ProjectionPolicy
+metadata:
+  namespace: commerce
+  name: use-case-to-dotnet
+purpose: Guides the representation of commerce use cases in the selected .NET target.
+spec:
+  sourceKind:
+    apiVersion: commerce.example.org/v1
+    kind: UseCase
+  targetTechnology: dotnet
+  guidance: >
+    Preserve externally visible behavior and keep application orchestration
+    separate from persistence details. Represent this finite example as
+    Commerce.Application.CreateOrderHandler with decimal Handle(int quantity,
+    decimal unitPrice). Enforce positive quantity and non-negative unit price
+    with ArgumentOutOfRangeException; return quantity multiplied by unitPrice
+    using decimal arithmetic. No persistence or external service is needed.
