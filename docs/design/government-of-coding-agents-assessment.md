@@ -64,6 +64,16 @@ Der Nutzer hat den gewünschten Einsatz präzisiert: ein aktiv entwickeltes, wen
 
 Hier wäre Government umfassender als eine Sammlung von Prüfern. Es würde Bestandsaufnahme, Zielbildung, Priorisierung, Umsetzung, Ressortprüfung, Reparatur und Betrieb organisieren. Markitect könnte das verbindliche Projektmodell und den nachvollziehbaren Abgleich tragen. Diese Verbindung ist plausibel zu untersuchen, entscheidet aber noch nicht über die Produktidentität.
 
+#### Haupterwartung: kontinuierliche autonome Entwicklungsarbeit
+
+Der Nutzer präzisiert den zentralen Produktnutzen: Nach Überführung und Modellierung soll eine große Menge offener Arbeit in eine kontinuierlich arbeitende Maschine eingegeben werden können. Expliziter beobachteter Bestand, akzeptiertes kanonisches Modell, Engineering-Methodik, AI, Koordination und Parallelisierung sollen gemeinsam ein sauberes, einheitliches und gut verifiziertes Repository hervorbringen, bei möglichst wenig laufender Aufsicht. Einrichtung und Modellierung sind der Aufbau; über längere Aufgabenfolgen zuverlässig erledigte Arbeit ist der erwartete Nutzen. Dies ist ein Zielbild, keine Behauptung, dass der aktuelle Kandidat diese Maschine bereits liefert.
+
+Der erforderliche Betriebsablauf umfasst Arbeitsaufnahme und Klärung innerhalb der delegierten Ziele; Zerlegung und Reihenfolge nach Abhängigkeiten; parallele Umsetzung tatsächlich unabhängiger Arbeit; getrennte Prüfung; Zusammenführung und eigene Integrationsprüfung; begrenzte Reparatur; Wiederaufnahme nach Unterbrechungen; sowie Aktualisierung von Arbeitsstand, betroffenen Darstellungen und Nachweisen. Ergebnisse einzelner Agenten müssen gegen den aktuellen gemeinsamen Stand zusammenpassen. Gleichzeitige Agentenaufrufe allein belegen diese Fähigkeit nicht.
+
+Routinearbeit innerhalb der vereinbarten Befugnisse soll ohne einzelne menschliche Freigaben fortgesetzt werden können. Konkrete Entscheidungen außerhalb dieser Befugnisse werden gebündelt und verständlich vorgelegt; unabhängige Arbeit kann währenddessen weitergehen. Ein bloß wiederholtes Nachfragen nach gewöhnlichen Implementierungsdetails oder ein durch notwendige manuelle Integration verdeckter Stillstand verfehlt diese Erwartung.
+
+Am Architect-Checkpoint ist daher neben dem Grundmodell ausdrücklich die Distanz zu diesem Betriebsziel zu bestimmen. Maßgeblich sind eine vorab benannte realistische Aufgabenfolge, funktional und architektonisch bewertete Ergebnisse, vollständige betroffene Arbeit, Integration, verbleibende Fehler, Wiederaufnahme und tatsächlich benötigte menschliche Koordination einschließlich Modellpflege. Weder grüne Einzelaufgaben noch größere Agentenzahl oder ein formal vollständiges Kabinett reichen als Nachweis. Government bleibt eine mögliche Organisation dieser Arbeit; die Produktidentität ist weiterhin offen.
+
 Vier Dinge müssen unterscheidbar bleiben; sie erfordern nicht automatisch vier neue Core-Ressourcentypen:
 
 | Gegenstand | Bedeutung |
