@@ -8,7 +8,7 @@ import sys
 import unittest
 import zipfile
 
-from diagnostic_history import read_history
+from diagnostic_history import read_context_history
 from dispatch import CHECKOUT, digest, encoded, external, runtime_pins
 import test_dispatch
 
@@ -16,8 +16,8 @@ import test_dispatch
 def verify(destination):
     root = external(destination)
     root.mkdir(parents=True, exist_ok=False)
-    before = read_history()
-    modules = ("test_measurement_profile", "test_dispatch", "test_runtime", "test_context_allocation")
+    before = read_context_history()
+    modules = ("test_measurement_profile", "test_dispatch", "test_runtime", "test_context_allocation", "test_runner_tools", "test_context_tools_allocation")
     suite = unittest.TestSuite(unittest.defaultTestLoader.loadTestsFromName(name) for name in modules)
     with (root / "targeted-tests.log").open("w", encoding="utf-8") as log:
         log.write("Deterministic profile/admission tests only; no native Actor/model/metadata call.\n")
@@ -31,9 +31,9 @@ def verify(destination):
                 archive.writestr(name, raw)
                 entries.append({"path": name, "sha256": digest(raw), "bytes": len(raw)})
     (root / "mechanical-records-manifest.json").write_bytes(encoded(entries) + b"\n")
-    after = read_history()
+    after = read_context_history()
     (root / "diagnostic-history.json").write_bytes(encoded(after) + b"\n")
-    observation = {"schemaVersion": 1, "kind": "measurement-profile-v2-mechanics-only",
+    observation = {"schemaVersion": 1, "kind": "corrected-tools-fixed-successor-mechanics-only",
                    "actorStarts": 0, "inferenceCalls": 0, "nativeRunnerStarts": 0, "studyCellsExecuted": 0,
                    "metadataRpcCalls": 0, "testsRun": result.testsRun, "failures": len(result.failures),
                    "errors": len(result.errors), "successful": result.wasSuccessful(), "testModules": list(modules),

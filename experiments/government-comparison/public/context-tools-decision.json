@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "decisionId": "overseer-context-tools-2026-10-07",
+  "resourceDecision": "Overseer selected a draft-only next context window after correcting work tools; exact fifth-start Run-Grant remains unapproved",
+  "runGrantIssued": false,
+  "maxNewSessions": 1,
+  "predecessorSessions": 4,
+  "cumulativeSessionCeiling": 5,
+  "wallSeconds": 180,
+  "maxParallelSessions": 1,
+  "wrapperAgentTurns": 1,
+  "retrospectiveTokenThreshold": 50000,
+  "wrapperRetries": 0,
+  "children": 0,
+  "continuations": 0,
+  "semanticRepairs": 0,
+  "newPurchases": false,
+  "historicalLedgerSha256": ["74dfd51e2802bc67131891b28c6858129ff5ef4a50a6f1fe06a8793a7250732f", "33bd2ba59b11ab6d54f75c55e6d12b00ec6b90df00106a1419aed239cef2982c", "b4f13c5053ad1f00e477bf9be9831a5075f2ea0d8d33d8db6ce8a2173a6a0be8"],
+  "scope": "Same two existing synthetic context files; requested read-only; no separate access/write/process probe",
+  "history": "Four consumed starts, tokens null/null/10009/20501; known subtotal 30510, total null; no prior budget compliance claim",
+  "studyProfile": "unchanged observed-native-usage-v2; no general unknown-token override"
+}

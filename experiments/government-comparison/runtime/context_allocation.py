@@ -41,8 +41,11 @@ def validate_allocation(grant, protocol):
 
 class ContextAllocationLedger(Ledger):
     """The fixed successor file retains predecessors separately from its new window."""
+    expected_binding = staticmethod(allocation_binding)
+
     def __init__(self, path, trial_id, limits, *, binding, profile_id, resume_dispatch_id=None):
-        if str(Path(path).resolve()) != str(ALLOCATION_PATH) or trial_id != ALLOCATION_ID or binding != allocation_binding():
+        expected = self.expected_binding()
+        if str(Path(path).resolve()) != expected["ledgerPath"] or trial_id != expected["trialId"] or binding != expected:
             raise ValueError("fixed allocation identity/path/predecessors required")
         if profile_id is None and not Path(path).is_file():
             raise ValueError("allocation resume requires existing ledger; no new file")
@@ -54,7 +57,7 @@ class ContextAllocationLedger(Ledger):
                     record = db.execute("SELECT 1 FROM dispatches WHERE id=?", (resume_dispatch_id,)).fetchone()
                 finally:
                     db.close()
-                if old != [(ALLOCATION_ID, json.dumps(binding, sort_keys=True))] or not record:
+                if old != [(trial_id, json.dumps(binding, sort_keys=True))] or not record:
                     raise ValueError("allocation resume requires existing exact dispatch and binding")
             except sqlite3.Error as exc:
                 raise ValueError("allocation resume requires existing exact dispatch and binding") from exc
@@ -64,12 +67,12 @@ class ContextAllocationLedger(Ledger):
             db.execute("CREATE TABLE IF NOT EXISTS context_allocation(id TEXT PRIMARY KEY, binding TEXT)")
             prior = db.execute("SELECT id,binding FROM context_allocation").fetchall()
             value = json.dumps(binding, sort_keys=True)
-            if prior and prior != [(ALLOCATION_ID, value)]:
+            if prior and prior != [(trial_id, value)]:
                 raise ValueError("additional allocation history cannot change or refill")
             if not prior:
                 if db.execute("SELECT 1 FROM attempts").fetchone():
                     raise ValueError("unbound attempts cannot become a new allocation")
-                db.execute("INSERT INTO context_allocation VALUES(?,?)", (ALLOCATION_ID, value))
+                db.execute("INSERT INTO context_allocation VALUES(?,?)", (trial_id, value))
 
     def bind_dispatch(self, authority, *, maximum=None, transition=None, adoption=None):
         # The base transaction rechecks authority and adopts the profile atomically.
@@ -85,8 +88,8 @@ class ContextAllocationLedger(Ledger):
 
     def _reserve(self, db, task, purpose):
         stored = db.execute("SELECT id,binding FROM context_allocation").fetchall()
-        if (stored != [(ALLOCATION_ID, json.dumps(self.context_binding, sort_keys=True))] or
-                self.context_binding != allocation_binding()):
+        if (stored != [(self.context_binding["trialId"], json.dumps(self.context_binding, sort_keys=True))] or
+                self.context_binding != self.expected_binding()):
             raise ValueError("durable additional allocation predecessors changed")
         if self.profile_id != OBSERVED:
             raise ValueError("additional context allocation requires explicit v2 binding")
@@ -94,26 +97,26 @@ class ContextAllocationLedger(Ledger):
         if any(end is not None and tokens is None for end, tokens in rows):
             raise LimitReached("new context usage tokens unknown; further admission blocked")
         if rows:
-            raise LimitReached("additional context allocation exhausted; cumulative four starts maximum")
+            raise LimitReached("additional context allocation exhausted; fixed cumulative ceiling reached")
         if purpose != "context-access":
             raise ValueError("fixed additional allocation permits context-access only")
         return super()._reserve(db, task, purpose)
 
     def _complete_dispatch(self, db, execution_id, result, requests, tokens):
         result = dict(result, contextAllocation=self.context_binding,
-                      cumulativeAccounting={"predecessorStarts": 3,
+                      cumulativeAccounting={"predecessorStarts": self.context_binding["predecessors"]["actorStartsConsumed"],
                           "additionalStarts": db.execute("SELECT COUNT(*) FROM attempts").fetchone()[0],
-                          "historicalStartsRemaining": 0, "maximumAllStarts": 4,
+                          "historicalStartsRemaining": 0, "maximumAllStarts": self.context_binding["cumulativeSessionCeiling"],
                           "allHistoryTokens": None, "allHistoryProviderRequests": None,
-                          "knownTokenSubtotal": 10009 + (tokens or 0),
+                          "knownTokenSubtotal": self.context_binding["predecessors"]["knownTokenSubtotal"] + (tokens or 0),
                           "newWindowTokens": tokens, "oldBudgetCompliance": "unknown; not claimed"})
         return super()._complete_dispatch(db, execution_id, result, requests, tokens)
 
     def snapshot(self):
         value = super().snapshot()
         old = self.context_binding["predecessors"]
-        value.update(contextAllocation=self.context_binding, predecessorActorSessions=3,
-                     cumulativeActorSessions=3 + value["actorSessions"], cumulativeProviderTokens=None,
+        value.update(contextAllocation=self.context_binding, predecessorActorSessions=old["actorStartsConsumed"],
+                     cumulativeActorSessions=old["actorStartsConsumed"] + value["actorSessions"], cumulativeProviderTokens=None,
                      cumulativeProviderRequests=None, historicalStartsRemaining=0,
                      knownCumulativeTokenSubtotal=old["knownTokenSubtotal"] + sum(a["tokens"] or 0 for a in value["attempts"]))
         return value

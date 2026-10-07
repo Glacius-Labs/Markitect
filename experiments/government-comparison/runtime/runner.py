@@ -20,8 +20,8 @@ CONFIG = {
     "features.goals": False,
     "model_provider": "openai",
     "features.apps": False,
-    "features.shell_tool": False,
-    "features.unified_exec": False,
+    "features.shell_tool": True,
+    "features.unified_exec": True,
     "apps._default.enabled": False,
     "web_search": "disabled",
 }
@@ -30,9 +30,15 @@ GAPS = [
     "No pre-dispatch aggregate provider-call controller is established for the later study",
     "exec turn.completed is an agent-turn completion event; provider-turn count inside it remains unknown",
     "Provider token usage arrives retrospectively; no hard aggregate token ceiling is established",
-    "Effective instruction/memory/config/tool and filesystem access boundaries have not been probed by an actual Actor",
-    "0.160.1 features list reports unified_exec=true despite requested false; no disabled-tool guarantee",
+    "The prior Actor returned null sentinels with no observed tools; corrected work flags do not prove effective Actor file tools",
+    "Local feature listing is not an Actor tool inventory or proof of filesystem isolation",
 ]
+
+
+def validate_work_config():
+    """Ordinary work cannot silently use the metadata-only tool suppression."""
+    if any(CONFIG.get(key) is not True for key in ("features.shell_tool", "features.unified_exec")):
+        raise ValueError("ordinary-tools requires explicit shell_tool=true and unified_exec=true")
 
 
 def inspect(executable):
@@ -51,6 +57,7 @@ def inspect(executable):
 
 def prospective_argv(executable, actor_root, *, sandbox="workspace-write"):
     """Describe equal configuration across arms; never launch this from readiness."""
+    validate_work_config()
     pin = inspect(executable)
     root = Path(actor_root).resolve(strict=True)
     if sandbox not in {"workspace-write", "read-only"}:
@@ -65,7 +72,7 @@ def prospective_argv(executable, actor_root, *, sandbox="workspace-write"):
 def metadata_argv(executable):
     """Exact metadata transport command; cannot select an exec/thread/turn route."""
     pin = inspect(executable)
-    settings = {**CONFIG, "model": MODEL}
+    settings = {**CONFIG, "model": MODEL, "features.shell_tool": False, "features.unified_exec": False}
     overrides = [part for key, value in sorted(settings.items()) for part in ("-c", key + "=" + json.dumps(value))]
     return [pin["path"], "app-server", "--stdio", *overrides]
 

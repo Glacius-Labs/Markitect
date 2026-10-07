@@ -134,6 +134,14 @@ freeze the resulting context policy equally across arms.
 
 ## Next finite checkpoint
 
+The accepted [real context result](context-additional-live-handoff.md) consumed
+the fourth start but returned neither sentinel. The next
+[corrected work-tool package](public/context-tools-readiness.md) explicitly
+enables shell/unified execution for ordinary Actors and separates metadata-only
+diagnostics. Its fixed one-session follow-up is **draft only**, with a 50,000
+retrospective token threshold; it grants no fifth start. All four prior starts,
+unknown historical totals and immutable receipts remain preserved.
+
 The common [measurement profile v2](public/measurement-profile-v2.md) is adopted
 equally for all arms. Numeric common limits remain unchanged. Known tokens with
 unknown provider requests permit later admission; unknown tokens still block.

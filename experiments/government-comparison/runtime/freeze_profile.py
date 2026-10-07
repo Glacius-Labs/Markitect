@@ -5,10 +5,10 @@ from pathlib import Path
 import subprocess
 import zipfile
 
-from diagnostic_history import read_history
+from diagnostic_history import read_context_history
 from dispatch import Authority, CHECKOUT, LIVE_GAPS, digest, encoded, execution_sha, runtime_pins, validate_listing
 from measurement_profile import OBSERVED, profile_sha
-from context_allocation import ALLOCATION_PATH, allocation_binding
+from context_tools_allocation import ALLOCATION_PATH, allocation_binding
 
 
 def freeze(evidence_path, drafts_path, output):
@@ -45,9 +45,9 @@ def freeze(evidence_path, drafts_path, output):
             "dispatchId": request["dispatchId"], "initialRequestSha256": manifest["request"]["sha256"],
             "executionSha256": manifest["executionSha256"]}] or grant["protocolSha256"] != manifest["protocol"]["sha256"]):
         raise ValueError("exact Request/execution/Protocol binding mismatch")
-    if (grant["maxActorSessions"] != 1 or grant["cumulativeSessionCeiling"] != 4 or grant["maxAdditionalActorSessions"] != 1 or
+    if (grant["maxActorSessions"] != 1 or grant["cumulativeSessionCeiling"] != 5 or grant["maxAdditionalActorSessions"] != 1 or
             grant["maxParallelSessions"] != 1 or grant["maxSessionWallSeconds"] != 180 or
-            grant["wrapperAgentTurns"] != 1 or grant["retrospectiveTokenThreshold"] != 10000 or
+            grant["wrapperAgentTurns"] != 1 or grant["retrospectiveTokenThreshold"] != 50000 or
             any(grant[key] != 0 for key in ("children", "wrapperRetries", "continuations", "semanticRepairs")) or
             grant["newPurchases"] or grant["hardTokenCap"] or grant["providerRequests"] is not None or
             grant["internalTransportRetries"] is not None or grant["notBefore"] is not None or grant["expiresAt"] is not None):
@@ -79,10 +79,11 @@ def freeze(evidence_path, drafts_path, output):
     names = [name if name.startswith("public/") or name in {"harness.py", "prepare.py"} else "runtime/" + name
              for name in runtime_pins()]
     names += ["runtime/" + name + ".py" for name in ("test_dispatch", "test_measurement_profile", "test_runtime", "verify_profile",
-              "freeze_profile", "freeze_s1", "context_drafts", "diagnostic_history", "metadata_readonly", "selected_metadata", "test_context_allocation")]
+              "freeze_profile", "freeze_s1", "context_drafts", "diagnostic_history", "metadata_readonly", "selected_metadata", "test_context_allocation", "test_context_tools_allocation", "test_runner_tools")]
     names += ["README.md", "runtime/runner-pin.json", "public/resource-proposal.json", "public/measurement-profile-v2.md",
               "public/measurement-profile-v2-review.md", "public/s1-dispatch.md", "public/context-additional-allocation.md",
               "public/context-additional-review.md"]
+    names += ["public/context-tools-readiness.md", "public/context-tools-review.md"]
     sources = {name: digest((root / name).read_bytes()) for name in sorted(set(names))}
     for name, sha in sources.items():
         committed = subprocess.check_output(["git", "-C", str(CHECKOUT), "show", head + ":experiments/government-comparison/" + name])
@@ -92,15 +93,16 @@ def freeze(evidence_path, drafts_path, output):
         "b16d70407016ca25651935c2c9283ed5511212e1:experiments/government-comparison/public/resource-proposal.json"])
     if original != (root / "public/resource-proposal.json").read_bytes():
         raise ValueError("numeric proposal source changed")
-    history = read_history()
+    history = read_context_history()
     if json.loads(Path(manifest["diagnosticHistory"]["path"]).read_bytes()) != history:
         raise ValueError("historical cumulative accounting changed")
-    value = {"schemaVersion": 1, "kind": "explicit-additional-context-allocation-drafts-freeze", "sourceCandidate": head,
+    value = {"schemaVersion": 1, "kind": "corrected-tools-fixed-context-drafts-freeze", "sourceCandidate": head,
              "sources": sources, "evidence": {p.relative_to(root).as_posix(): digest(p.read_bytes()) for p in sorted(evidence.iterdir()) if p.is_file()},
              "draftFiles": files, "draftManifestPath": str(drafts / "draft-manifest.json"), "draftAuthorityRejection": draft_rejection,
              "mechanicalArchiveEntries": len(entries), "testsRun": observation["testsRun"], "measurementProfileSha256": profile_sha(OBSERVED),
              "commonLimitsUnchanged": True, "historicalDiagnosticAccounting": history, "actorStarts": 0, "inferenceCalls": 0,
-             "authenticatedMetadataOnly": True, "liveProtocolFrozen": False, "liveRunGrantIssued": False, "s1": "open", "nextAction": "hold"}
+             "priorAuthenticatedMetadataReused": True, "newMetadataRpcCalls": 0,
+             "liveProtocolFrozen": False, "liveRunGrantIssued": False, "s1": "open", "nextAction": "hold"}
     with Path(output).open("xb") as out:
         out.write(encoded(value) + b"\n")
     print(json.dumps({"sourceCandidate": head, "sources": len(sources), "evidence": len(value["evidence"]),

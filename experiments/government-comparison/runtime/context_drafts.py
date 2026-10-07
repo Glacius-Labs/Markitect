@@ -5,12 +5,11 @@ from pathlib import Path
 import subprocess
 import sys
 
-from diagnostic_history import read_history
-from dispatch import CHECKOUT, LIVE_GAPS, digest, encoded, execution_sha, external, runtime_pins
+from diagnostic_history import read_context_history
+from dispatch import CHECKOUT, LIVE_GAPS, digest, encoded, execution_sha, external, runtime_pins, validate_listing
 from measurement_profile import LEGACY, OBSERVED, limits_sha, profile_sha
-from metadata_readonly import collect
 import runner
-from context_allocation import ALLOCATION_ID, ALLOCATION_PATH, allocation_binding
+from context_tools_allocation import ALLOCATION_ID, ALLOCATION_PATH, allocation_binding
 
 
 def write(path, value):
@@ -18,20 +17,20 @@ def write(path, value):
     return {"path": str(path), "sha256": digest(path.read_bytes())}
 
 
-def prepare(destination, executable, *, collect_current_metadata=False):
-    """Use a clean committed wrapper. Metadata is explicit and never inference."""
+def prepare(destination, executable, *, frozen_model_listing):
+    """Use a clean wrapper and explicit prior catalog receipt; no native/model call."""
     root = external(destination)
     if root.exists():
         raise ValueError("fresh context-draft directory required")
     revision = subprocess.check_output(["git", "-C", str(CHECKOUT), "rev-parse", "HEAD"], text=True).strip()
     if subprocess.check_output(["git", "-C", str(CHECKOUT), "status", "--porcelain"], text=True).strip():
         raise ValueError("clean committed source required before concrete Draft preparation")
-    if collect_current_metadata is not True:
-        raise ValueError("explicit metadata-only collection required; no cached substitution")
+    listing = {"path": str(Path(frozen_model_listing).resolve()), "sha256": digest(Path(frozen_model_listing).read_bytes())}
+    validate_listing(listing)
+    runner.validate_work_config()
     pin = runner.inspect(executable)
     root.mkdir(parents=True)
-    listing = collect(root / "metadata", executable)
-    history = read_history()
+    history = read_context_history()
     history_receipt = write(root / "diagnostic-history.json", history)
     previous = json.loads(Path(__file__).parents[1].joinpath("evidence/profile-v2/run-1/request.draft.json").read_bytes())
     actor, results = Path(previous["actorRepository"]), root / "results"
@@ -62,7 +61,7 @@ def prepare(destination, executable, *, collect_current_metadata=False):
     adoption = {"status": "draft", "trialId": trial, "ledgerPath": str(ledger_path),
                 "fromProfileSha256": profile_sha(LEGACY), "toProfileSha256": profile_sha(OBSERVED),
                 "limitsSha256": limits_sha(common),
-                "decisionRef": ALLOCATION_ID + "; resource decision approved, exact Run-Grant and this profile binding remain drafts"}
+                "decisionRef": ALLOCATION_ID + "; draft frame selected, exact Run-Grant and profile binding remain unapproved"}
     adoption_receipt = write(root / "profile-adoption.draft.json", adoption)
     protocol = {"schemaVersion": 1, "status": "draft", "mode": "live", "sourceCandidate": revision,
                 "commonLimits": common, "runtimeSourceSha256": runtime_pins(),
@@ -73,7 +72,7 @@ def prepare(destination, executable, *, collect_current_metadata=False):
                 "measurementProfileSha256": profile_sha(OBSERVED), "profileAdoption": adoption_receipt,
                 "toolPolicy": "ordinary-tools", "sandbox": "read-only", "allowedReadPaths": reads,
                 "contextOnly": True, "forbiddenActions": ["write", "access-probe", "process-probe", "credential-read", "other-cell-read"],
-                "toolRuleSemantics": "Cooperative exact-file-read rule; requested read-only sandbox and disabled features are not a proven access barrier",
+                "toolRuleSemantics": "Ordinary shell/unified tools requested explicitly; exact-file-read rule is cooperative, read-only is not proof of OS isolation",
                 "acceptedObservabilityGaps": LIVE_GAPS, "historicalAccounting": history_receipt, "contextAllocation": cumulative,
                 "taskCard": binding(card), "prompt": binding(prompt_path), "actorOwnedInputs": request["actorOwnedInputs"]}
     protocol_receipt = write(root / "protocol.draft.json", protocol)
@@ -81,16 +80,16 @@ def prepare(destination, executable, *, collect_current_metadata=False):
              "sourceCandidate": revision, "notBefore": None, "expiresAt": None, "protocolSha256": protocol_receipt["sha256"],
              "profileSha256": limits_sha(common), "runnerPinSha256": protocol["runnerPinSha256"],
              "measurementProfileId": OBSERVED, "measurementProfileSha256": profile_sha(OBSERVED),
-             "ledgerPath": str(ledger_path.resolve()), "resultDirectory": str(results), "maxActorSessions": 1, "cumulativeSessionCeiling": 4,
+             "ledgerPath": str(ledger_path.resolve()), "resultDirectory": str(results), "maxActorSessions": 1, "cumulativeSessionCeiling": 5,
              "maxAdditionalActorSessions": 1, "maxParallelSessions": 1,
              "maxSessionWallSeconds": 180, "wrapperAgentTurns": 1, "wrapperRetries": 0, "continuations": 0, "children": 0,
-             "semanticRepairs": 0, "newPurchases": False, "retrospectiveTokenThreshold": 10000,
+             "semanticRepairs": 0, "newPurchases": False, "retrospectiveTokenThreshold": 50000,
              "hardTokenCap": False, "providerRequests": None, "internalTransportRetries": None,
              "acceptedObservabilityGaps": LIVE_GAPS, "allowedReadPaths": reads, "contextOnly": True,
              "authorizedRequests": [{"dispatchId": request["dispatchId"], "initialRequestSha256": request_receipt["sha256"],
                                      "executionSha256": execution_sha(request)}],
              "historicalAccounting": history_receipt, "contextAllocation": cumulative,
-             "resourceAllocation": "One additional resource allocation explicitly decided; exact Run-Grant remains draft; old grants exhausted, no refill",
+             "resourceAllocation": "Only next draft frame selected; exact fifth-start Run-Grant unapproved; four old starts exhausted, no refill",
              "approvalStillRequired": ["Coordinator approves exact one-session resource grant and finite validity interval",
                                        "Ledger profile adoption draft approved; protocol frozen and final hashes rebound"]}
     grant_receipt = write(root / "grant.draft.json", grant)
@@ -100,7 +99,8 @@ def prepare(destination, executable, *, collect_current_metadata=False):
                 "modelListing": listing, "diagnosticHistory": history_receipt, "publicInputs": request["releasedInputs"],
                 "actorOwnedInputs": request["actorOwnedInputs"], "actorBaseCommit": base, "requestedModel": runner.MODEL,
                 "requestedReasoning": runner.REASONING, "actorStarts": 0, "inferenceCalls": 0,
-                "liveGrantIssued": False, "ledgerCreated": False, "metadataOnly": True,
+                "liveGrantIssued": False, "ledgerCreated": False, "metadataRpcCalls": 0,
+                "modelListingIsPriorMetadata": True, "modelListingScope": "Exact previously authenticated catalog receipt; may be cached, no fresh availability or serving proof",
                 "liveExecutable": False, "contextAllocation": cumulative,
                 "actorScope": "Only the two named synthetic context files; no separate access/write/process probe"}
     manifest_receipt = write(root / "draft-manifest.json", manifest)
@@ -112,6 +112,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--destination", required=True)
     parser.add_argument("--runner", required=True)
-    parser.add_argument("--collect-current-metadata", action="store_true")
+    parser.add_argument("--frozen-model-listing", required=True)
     args = parser.parse_args()
-    prepare(args.destination, args.runner, collect_current_metadata=args.collect_current_metadata)
+    prepare(args.destination, args.runner, frozen_model_listing=args.frozen_model_listing)

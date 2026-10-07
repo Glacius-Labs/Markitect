@@ -16,7 +16,7 @@ from measurement_profile import LEGACY, OBSERVED, FILES, profile, profile_sha
 CHECKOUT = Path(__file__).resolve().parents[3]
 LIVE_GAPS = ["provider-requests-and-internal-retries-unknown", "retrospective-token-overshoot",
              "unobserved-native-descendants", "same-user-filesystem-access", "serving-model-may-be-null",
-             "unified-exec-may-remain-active-tool-suppression-unproven"]
+             "effective-actor-file-tools-unproven-by-local-flags"]
 
 
 def digest(raw):
@@ -55,12 +55,13 @@ def mechanical_pin():
 
 def runtime_pins():
     pins = {name: digest(Path(__file__).with_name(name).read_bytes()) for name in
-            ("dispatch.py", "adapter.py", "ledger.py", "process.py", "runner.py", "mechanical_actor.py", "identity_probe.py", "classic.py", "measurement_profile.py", "context_allocation.py", "diagnostic_history.py")}
+            ("dispatch.py", "adapter.py", "ledger.py", "process.py", "runner.py", "mechanical_actor.py", "identity_probe.py", "classic.py", "measurement_profile.py", "context_allocation.py", "context_tools_allocation.py", "diagnostic_history.py")}
     pins["harness.py"] = digest(Path(__file__).parents[1].joinpath("harness.py").read_bytes())
     pins["prepare.py"] = digest(Path(__file__).parents[1].joinpath("prepare.py").read_bytes())
     for name in FILES.values():
         pins["public/" + name] = digest(Path(__file__).parents[1].joinpath("public", name).read_bytes())
     pins["public/context-additional-decision.json"] = digest(Path(__file__).parents[1].joinpath("public/context-additional-decision.json").read_bytes())
+    pins["public/context-tools-decision.json"] = digest(Path(__file__).parents[1].joinpath("public/context-tools-decision.json").read_bytes())
     return pins
 
 
@@ -110,8 +111,15 @@ class Authority:
                 for item in (g, p)):
             raise ValueError("same explicit versioned measurement profile required in Grant and Protocol")
         self.context_allocation = None
+        maximum_threshold = 10000
         if (self.mode == "live" and self.profile_id == OBSERVED) or any("contextAllocation" in item for item in (g, p)):
-            from context_allocation import validate_allocation
+            from context_allocation import validate_allocation, ContextAllocationLedger
+            self.context_ledger_class = ContextAllocationLedger
+            from context_tools_allocation import ALLOCATION_ID, ContextToolsAllocationLedger
+            if g.get("contextAllocation", {}).get("decisionId") == ALLOCATION_ID:
+                from context_tools_allocation import validate_allocation
+                self.context_ledger_class = ContextToolsAllocationLedger
+                maximum_threshold = 50000
             self.context_allocation = validate_allocation(g, p)
         if g.get("protocolSha256") != protocol_sha256 or p.get("runtimeSourceSha256") != runtime_pins():
             raise ValueError("protocol/runtime source binding mismatch")
@@ -121,7 +129,8 @@ class Authority:
             raise ValueError("integer session bound required")
         positive(g["maxActorSessions"], common["trialActorCalls"])
         positive(g["maxSessionWallSeconds"], 180)
-        positive(g["retrospectiveTokenThreshold"], 10000)
+        # Only the exact new fixed decision can select the 50k draft window.
+        positive(g["retrospectiveTokenThreshold"], maximum_threshold)
         if not (type(g.get("notBefore")) in (int, float) and type(g.get("expiresAt")) in (int, float)
                 and float('-inf') < g["notBefore"] < g["expiresAt"] < float('inf')):
             raise ValueError("finite Coordinator grant validity interval required")
@@ -190,10 +199,11 @@ class Authority:
         if r.get("purpose") not in {"setup", "context-access", "task", "review", "child", "repair"}:
             raise ValueError("explicit counted role required")
         if self.mode == "live":
+            runner.validate_work_config()
             if r["purpose"] not in {"setup", "context-access"}:
                 raise ValueError("this finite live route allows public S1 smokes only")
-            if r.get("toolPolicy") not in {"forbidden", "ordinary-tools"} or r["toolPolicy"] != self.protocol.get("toolPolicy"):
-                raise ValueError("explicit frozen common tool policy required")
+            if r.get("toolPolicy") != "ordinary-tools" or r["toolPolicy"] != self.protocol.get("toolPolicy"):
+                raise ValueError("live work requires ordinary-tools; use metadata-only route for identity diagnostics")
             if r.get("sandbox", "workspace-write") != self.protocol.get("sandbox", "workspace-write"):
                 raise ValueError("frozen common sandbox request required")
             if self.profile_id == OBSERVED and r["purpose"] == "context-access" and r.get("sandbox") != "read-only":
@@ -222,8 +232,7 @@ class Authority:
     def ledger(self, operation="run_task", *, dispatch_id=None):
         def open_ledger(profile_id):
             if self.context_allocation:
-                from context_allocation import ContextAllocationLedger
-                return ContextAllocationLedger(self.ledger_path, self.grant["trialId"], self.limits,
+                return self.context_ledger_class(self.ledger_path, self.grant["trialId"], self.limits,
                                                binding=self.context_allocation, profile_id=profile_id,
                                                resume_dispatch_id=dispatch_id)
             return Ledger(self.ledger_path, self.grant["trialId"], self.limits, profile_id=profile_id)

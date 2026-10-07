@@ -40,3 +40,41 @@ def read_history():
             "knownTokenSubtotal": sum(known), "unknownTokenAttempts": len(attempts) - len(known),
             "allHistoryProviderRequests": None, "internalRetries": None, "ledgerSha256Before": before,
             "ledgerSha256After": after, "historicalLedgersUnchanged": True}
+
+
+def read_context_history():
+    """Append the exhausted fourth start read only; never rewrite its ledger."""
+    old = read_history()
+    path = (Path.home() / "Documents/Scientist-Probes/context-additional-20261007/dispatch.sqlite").resolve()
+    before = digest(path.read_bytes())
+    db = sqlite3.connect(path.as_uri() + "?mode=ro", uri=True)
+    try:
+        bindings = db.execute("SELECT binding FROM context_allocation").fetchall()
+        rows = db.execute("SELECT a.id,a.start,a.end,a.status,a.tokens,d.request,d.result,d.phase "
+                          "FROM attempts a JOIN dispatches d ON d.attempt=a.id").fetchall()
+        attempt_count = db.execute("SELECT COUNT(*) FROM attempts").fetchone()[0]
+        dispatch_count = db.execute("SELECT COUNT(*) FROM dispatches").fetchone()[0]
+    finally:
+        db.close()
+    after = digest(path.read_bytes())
+    if (before != after or len(bindings) != 1 or json.loads(bindings[0][0])["predecessors"] != old or
+            attempt_count != 1 or dispatch_count != 1 or len(rows) != 1):
+        raise ValueError("immutable fourth diagnostic history differs")
+    identity, start, end, status, tokens, raw_request, raw_result, phase = rows[0]
+    result = json.loads(raw_result) if raw_result else {}
+    usage = result.get("usage") or {}
+    if (end is None or phase != "finished" or status != "stopped" or result.get("status") != status or
+            tokens != 20501 or usage.get("reportedInputPlusOutputTokens") != tokens or
+            result.get("requestSha256") != digest(raw_request)):
+        raise ValueError("exhausted fourth diagnostic result differs")
+    attempt = {"grant": "additional-context-one-start", "id": identity, "finished": True,
+               "startedAt": start, "endedAt": end, "status": status, "tokens": tokens,
+               "providerRequests": usage.get("providerRequests"), "requestSha256": digest(raw_request),
+               "resultSha256": digest(raw_result.encode()), "runnerArgv": result.get("process", {}).get("argv"),
+               "originalGrantMaxStarts": 1, "originalGrantRemainingStarts": 0,
+               "originalGrantHistorySha256": None, "grantSha256": result.get("grantSha256"),
+               "protocolSha256": result.get("protocolSha256"), "accountingStopReason": result.get("accountingStopReason")}
+    return {**old, "actorStartsConsumed": 4, "attempts": old["attempts"] + [attempt],
+            "knownTokenSubtotal": 30510,
+            "ledgerSha256Before": {**old["ledgerSha256Before"], str(path): before},
+            "ledgerSha256After": {**old["ledgerSha256After"], str(path): after}}
