@@ -70,7 +70,13 @@ func runGovernment(args []string, out, errout io.Writer) int {
 		}
 		return 0
 	}
-	if *write || *runtimePath != "" {
+	executionFlagPresent := false
+	fs.Visit(func(f *flag.Flag) {
+		if f.Name == "write" || f.Name == "runtime" {
+			executionFlagPresent = true
+		}
+	})
+	if executionFlagPresent {
 		return fail(errors.New("write and runtime are only valid for action run"))
 	}
 	if *action == "schema" {
