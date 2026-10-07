@@ -219,6 +219,9 @@ func controllerVerificationTestRecord(t *testing.T, projectionID, scopeID string
 }
 
 func TestCanonicalControllerVerifierLifecycleBindsEvidenceAndPersistsOnlyOnWrite(t *testing.T) {
+	if !runCanonicalControllerScenarioInChild(t) {
+		return
+	}
 	root, sourceRevision, evidenceRevision, cfg, marker := canonicalControllerVerificationFixture(t)
 	beforeHead := scopedTestGit(t, root, "rev-parse", "HEAD")
 	store, before, active, err := readCanonicalControllerLedger(root, cfg)
@@ -267,6 +270,9 @@ func TestCanonicalControllerVerifierLifecycleBindsEvidenceAndPersistsOnlyOnWrite
 }
 
 func TestCanonicalControllerFreshSemanticFailureSuppliesOnlyLatestLeafRepairEvidence(t *testing.T) {
+	if !runCanonicalControllerScenarioInChild(t) {
+		return
+	}
 	root, sourceRevision, evidenceRevision, cfg, marker := canonicalControllerVerificationFixture(t)
 	cfg.AuditAll = true
 	setCanonicalControllerVerifierActor(t, marker, agentexec.OutcomeFailed)

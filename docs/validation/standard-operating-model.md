@@ -80,6 +80,14 @@ The negative control changes only the saved report's source revision to the prio
 
 The bounded result supports resumed verification from the original saved Apply report after a later legitimate ledger refresh, and early refusal of an internally inconsistent report. It retains coordinator errors, one full Verify repetition and two local write-permission continuations. It does not close repeated practical readiness or establish autonomous operation; full source/platform/package gates and release publication remain separate exact-candidate evidence.
 
+## Exact-candidate source gate follow-up
+
+Candidate `c55b3fc9be0dbf6c2e1f6eca6a8753cf006c8562` passed 33 of 34 local Windows gates. Its standalone fresh Go suite passed in 592.31 seconds, including 1,642 passed and 20 skipped test events; the Host package took 587.286 seconds. The configured fixed Verify remained **INCOMPLETE**: its `go-tests` command reached the unchanged ten-minute execution limit, with the two-second process wait reflected in 602,000 milliseconds. The complete Verify command took 741.44 seconds and exited 2. The standalone result is not the missing fixed-snapshot result. The evidence does not isolate the reason for the additional elapsed time or establish the cause of historical timeouts.
+
+The same candidate passed the full offline Linux source, fixed Verify and packaged-bootstrap gates. Windows bundle installation, bootstrap, packaged adapter/examples and saved-report flag smoke also passed after a separate measurement-script correction: the first script falsely rejected an actual `status: passed` because its anchored comparison did not normalize CRLF. The original failure and runner remain preserved; the versioned runner checks LF/CRLF positives and negative statuses. Both Windows attempts produced the same bundle SHA-256 `08d56632574bf9cd25f55a53b28a32f9e1a9cbf53bd15cf3e71a130a4e348fac`. These passes do not turn the incomplete Windows Verify into PASS.
+
+Four additional independent controller scenario tests now reuse the existing isolated-child helper before changing process environment. Each assertion body retains its own repository, ledger and marker; only the parent scheduling becomes parallel. This test-only mitigation changes no assertion, product behavior, check selection or timeout. Its acceptance requires complete exact-candidate Windows/Linux and package gates on the new commit. A later successful run must remain distinct from the retained incomplete attempt.
+
 ## Reproduction and interpretation
 
 Run the focused audit and operating tests from this checkout with the contribution toolchain:

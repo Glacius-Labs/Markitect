@@ -9,6 +9,9 @@ import (
 )
 
 func TestCanonicalControllerCachedVerificationClearsRefreshForUnchangedEvidence(t *testing.T) {
+	if !runCanonicalControllerScenarioInChild(t) {
+		return
+	}
 	root, sourceRevision, evidenceRevision, cfg, marker := canonicalControllerVerificationFixture(t)
 	cfg.AuditAll = true
 	setCanonicalControllerVerifierActor(t, marker, agentexec.OutcomePassed)

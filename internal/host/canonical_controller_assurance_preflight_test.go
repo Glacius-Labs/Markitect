@@ -12,6 +12,9 @@ import (
 )
 
 func TestCanonicalControllerAssuranceChecksAreSourceBoundBeforeExecution(t *testing.T) {
+	if !runCanonicalControllerScenarioInChild(t) {
+		return
+	}
 	root, revision, baseConfig := canonicalControllerFixture(t)
 	fixed, err := LoadSelectedCanonicalSource(root, revision, "examples/canonical-projection/canonical.yaml", true)
 	if err != nil {
