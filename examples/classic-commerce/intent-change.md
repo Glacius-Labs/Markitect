@@ -12,7 +12,7 @@ An author proposes the canonical Definitions and selected projection policies. T
 |---|---|---|
 | Quantity, price, total and invalid inputs | `definitions/create-order.use-case.yaml`, `purpose` | `src/Commerce/CreateOrderHandler.cs`; finite cases in `checks/Program.cs` |
 | Handler public signature | `definitions/create-order.projection-policy.yaml` | `CreateOrderHandler.Handle(int, decimal)` |
-| Application boundary | `definitions/create-order.effect-axis.yaml`, `spec.boundary`, and its .NET policy | `src/Commerce/EffectAxis.cs`; separate boundary assertion |
+| Application boundary | `definitions/create-order.effect-axis.yaml`, `spec.boundary`, and `definitions/effect-axis.projection-policy.yaml` | `src/Commerce/EffectAxis.cs`; separate boundary assertion |
 | Selected .NET representation | `definitions/commerce.projection.yaml` plus `canonical.yaml` Module binding | Three declared files under `src/Commerce/` |
 | Readable representation | `definitions/commerce.markdown-projection.yaml` and selected Markdown policies | `docs/represented/index.md` |
 | Build and finite business checks | `canonical.yaml` named check; five runtime `checkInputs` | Immutable check receipts for local and parent assurance scopes |

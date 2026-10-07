@@ -51,3 +51,39 @@ The subsequent integration source selectively adopts the generic bounded check-b
 The local evidence handoff is frozen separately under `.artifacts/classic-public-example/` in the follow-up worktree, with raw stdout/stderr, argv/cwd/exit/durations, runtime and candidate digests, fixed-check receipts, toolchain inventory, independent reviews, source bundle, checksum manifest and archive hash. It is excluded from source and is not a public release asset. Captured receipt paths identify the original runs; reruns use new output directories rather than rewriting old evidence.
 
 No general autonomous engineering reliability, provider quality, economic benefit or human acceptance is established. No daemon, new runtime, study adapter or Government change was introduced. This checkpoint makes the existing Classic alpha independently runnable and provides bounded positive and meaningful negative execution evidence.
+
+
+## Intent-change follow-up, 2026-10-08
+
+The [owner-intent walkthrough](../../examples/classic-commerce/intent-change.md) closes two public-entry gaps: mapping a concrete request to reviewed canonical intent and explicit check/file owners, and following a later accepted business-rule change through the existing native controller. The example changes minimum order quantity from one to two. Its .NET policy now refers business behavior to the UseCase purpose rather than maintaining another quantity rule. No Core, production Host, provider, scheduler or acceptance lifecycle was added.
+
+| Input or result | Exact identity |
+|---|---|
+| First scripted example source | `3a30e207f9a3ffef4f5dfc6473a7eaf762e589f2` |
+| Second scripted example source | `03e0d755a6497609fcd4a2bceec81e5c9336b95f` |
+| Corrected helper / seven-test source | `11967c2c7b5bc5a6304d98425c4d5b6741adb5ae` |
+| Native runtime | Published v0.14.1 Windows amd64; SHA-256 `2cad55efad64f15d7f57638bea78312918fbf7d181c730f188b9921504da71c4` |
+| Second attempt initial accepted fixture | `4c8d65f927f5db481a26a6eb32cb577ade4a5c53` |
+| Second attempt initial materialized evidence | `7e5f1886409257b7e7222a2ebbc83f875f3bf3f5` |
+| Accepted minimum-two fixture source | `146721c7e4ad0bd2da43ddbf4ad79e9c3ba2daf6` |
+| Minimum-two materialized evidence | `e3301b2b79ece2c7860a4ddabc5ca786da1f9c1d` |
+| Exact accepted two-file diff SHA-256 | `a877d9f581a5cc11d9eb53d0acfae20915d3b64d0cba722275c8f62752b4258e` |
+| First incomplete receipt SHA-256 | `034368169c834f96ad1546f922c7465236325b6834dca33421f342ad7d31bf60` |
+| Second incomplete receipt SHA-256 | `c34d3fd85b18bf6c744ccb57b3912770f998e17ab43d3b18efcff0c5c421bdd2` |
+| Successful continuation receipt SHA-256 | `4d6de2ef93c2ac7c22defffc2b4e24d27adca442c30777eef4d194d824109029` |
+
+Both initial cycles compiled and passed fresh Verify plus Audit. Attempt 1 then stopped because the example expected exit 1 for an invalid saved-run source binding; the native CLI correctly returned exit 2 and the exact binding diagnostic. Commit `03e0d75` corrected only that expectation. The no-mutation assertions after the unexpected exit did not run in attempt 1.
+
+Attempt 2 passed read-only impact/reconcile planning, exposed incomplete old assurance under changed intent, and rejected the old Apply at the CLI saved-run binding boundary. Exact HEAD, index, all four target bytes and ledger bytes stayed unchanged through that refusal. Fresh Execute and Apply succeeded. Apply wrote only the changed handler and Markdown; project-file and EffectAxis bytes were retained. The example then stopped because its reused first-materialization assertion expected all four paths in `written`.
+
+Commit `11967c2` corrects the helper's write-set expectation without weakening full-target checks. The baseline default still requires all reviewed paths. The changed cycle derives its expected writes from baseline versus reviewed bytes and requires exactly handler plus Markdown. Seven focused stdlib tests pass, including strict/default/subset refusal, real fixture markers, explicit change selection, quota refusal and timeout-output preservation.
+
+No third complete pass ran. A separately recorded continuation consumed the exact saved attempt-2 Apply JSON and unchanged runtime/repository. The independently reviewed corrected read-only postcondition passed first. One native `controller-verify --apply-result ... --write` then passed both `commerce-dotnet` and `commerce-markdown`; each scope ran actual SDK selection, offline restore/build of candidate and probe, and the finite behavior probe. Two synthetic protocol Verifier responses remain separate from those compiler/behavior results. A subsequent read-only Audit was complete, and final all-four target-byte, HEAD/index and history checks passed. Both original receipts remain incomplete and byte-identical.
+
+The continuation wrapper's optional `assuranceScopes` summary contains null entries because VerificationResults do not expose a `scopeId` field. This summary is not used as evidence: the native `verifierRuns[].scopeId`, Audit scope/record/result bindings and raw fixed-check receipts identify the two scopes. The raw receipt is preserved with a separate metadata note.
+
+The cumulative development allocation is closed: two full attempts, eleven native mutating starts, nine deterministic role reservations and **196.744 seconds** of outer smoke time, within 2/12/24/1800 limits. There were no model/provider calls, tool installations, publication, study-fixture edits or study-candidate substitutions. The continuation adds one Verify start; it does not repeat Execute or Apply. Source tests and normal contribution checks are recorded separately from this smoke allocation.
+
+The local source checks passed: fixed check/context/impact and canonical model/context at `3a30e20`; managed-artifact accounting, configured Module checks, schema, formatting, vet, build, module verification and architecture imports. The first standalone Module invocation omitted required `--hooks`/`--pipelines`; that diagnostic remains preserved, and the corrected declared argv passed. The seven-test correction is source-bound to `11967c2`. A new complete Go suite and hosted Windows/Linux CI were not run for this example/documentation follow-up; the shared heavy slot belongs to Worker. The earlier exact-base `8927704` full-suite evidence is not relabeled as a new-candidate result.
+
+The native initial-to-change journey is demonstrated with the explicit saved-Apply continuation. **The corrected public script has not completed an uninterrupted replay.** Keep that replay and release/platform gates open for a separately bounded next allocation. This checkpoint does not establish real-agent quality, authenticated owner acceptance, complete repository semantics, comparative benefit or stable release support.
