@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-07T15:04:33Z",
+  "updatedUtc": "2026-10-07T15:11:50Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -18,21 +18,21 @@
       "name": "Worker",
       "threadId": "01a1169b-9357-7df3-a8f6-f913557c782a",
       "hostId": "local",
-      "afterCursor": "b2b8e43f-fcaa-41bf-828a-99c69527bdea:7",
+      "afterCursor": "b2b8e43f-fcaa-41bf-828a-99c69527bdea:9",
       "lastObservedStatus": "active",
-      "activeTurn": "01a116e1-aee9-7c02-b5a0-53f9065c6c49",
-      "lastAssistantMessageId": "msg_0a7785839df196a4016ac65f6543708191987e245987eb4658",
+      "activeTurn": "01a116eb-bb06-7932-a115-10777b106262",
+      "lastAssistantMessageId": null,
       "initialAssignmentDispatched": true,
-      "assignedMilestone": "G1 source-gate closure; bounded isolated installation-test diagnosis",
-      "latestProgress": "Der erste isolierte Lauf besteht nach 5,99 Sekunden. Alle 33 Git-Aufrufe wurden abgeschlossen; der längste dauerte 462 Millisekunden. Ich nutze den zweiten erlaubten Versuch zur Wiederholung. Das Ergebnis belegt bisher keinen Git-Hänger und erklärt den Timeout des Gesamtlaufs noch nicht.",
+      "assignedMilestone": "G1 source-gate closure with user-authorized maximum 30-minute monitored suite",
+      "latestProgress": "New bounded full-suite task dispatched after isolated diagnosis passed twice; full source gate remains open.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-worker/Markitect",
       "transferredDesignCommit": "691ce1dee3484371c4aea725db4ed5cc3f2e3719",
       "candidateSha": "e2c834fe93fb39e7292e5acfeb7d8207af22371f",
       "acceptance": "implemented and focused checks passed; full repository acceptance incomplete",
       "lastAssignment": {
-        "sentUtc": "2026-10-07T15:00:51Z",
-        "key": "g1-install-test-timeout-diagnosis",
-        "scope": "At most two 120-second isolated diagnoses; no G2; at most one justified fixed-revision full verify after concrete diagnosis/fix; no relaxed gates"
+        "sentUtc": "2026-10-07T15:11:50Z",
+        "key": "g1-monitored-thirty-minute-suite",
+        "scope": "One fixed-source full suite, outer wall and Go-test limit at most 30 minutes, timestamped progress. Only if runtime evidence warrants it, minimal explicit bounded verifier configuration plus independent review and one final fixed-revision Verify. No G2 yet; no general actor/study budget increase."
       },
       "evidence": {
         "summary": ".artifacts/government-g1/final-summary.json",
@@ -41,20 +41,32 @@
         "contributionFailures": 0,
         "fullVerify": "incomplete: go-tests exceeded 600003 ms",
         "independentReview": "reported no open findings in bounded review",
-        "overseerInspection": "Clean candidate, docs and evidence read. Read-only subagent traced historical timeout stack to installation Git commit; cause not established. Old fixture classification failure corrected on final candidate."
+        "overseerInspection": "Clean candidate, docs and evidence read. Read-only subagent traced historical timeout stack to installation Git commit; cause not established. Old fixture classification failure corrected on final candidate.",
+        "isolatedDiagnosis": {
+          "path": ".artifacts/government-g1/diagnosis/README.md",
+          "sourceSha": "e2c834fe93fb39e7292e5acfeb7d8207af22371f",
+          "attempts": 2,
+          "wallSeconds": [
+            5.987,
+            5.49
+          ],
+          "gitCallsCompletedEach": 33,
+          "conclusion": "No Git hang reproduced; whole-suite timeout cause unknown",
+          "overseerInspection": "Read diagnosis report/data, clean SHA and actual verifier source; local go help confirms separate test-binary default timeout."
+        }
       }
     },
     {
       "name": "Scientist",
       "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
       "hostId": "local",
-      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:7",
+      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:8",
       "lastObservedStatus": "active",
       "activeTurn": "01a116e1-affd-7800-a888-87fbda15caa1",
-      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac65f4efe9081918c728c2081f10718",
+      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac66129394881919c76861881887605",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "Common adapter and bounded actual runner readiness; six-cell live study remains closed",
-      "latestProgress": "Das Classic-Paket bindet die ausführbare Version eindeutig an den Release-Quellstand 7dbd599; der spätere gehaltene Stand c91363b ist separat dokumentiert. Beim Codex-Runner ist die Umgebungskonfiguration fehlerhaft. Ich ändere sie nicht, sondern prüfe den dokumentierten Start ohne Benutzerkonfiguration und halte diese Einschränkung im Nachweis fest.",
+      "latestProgress": "Reports native common-wrapper probes remain readiness_gap. Independent review found separate request hash/JSON reads and insufficient manifest binding for Classic configuration pins; fixes in progress.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-scientist/Markitect",
       "transferredDesignCommit": "b9e17c9896f14b4b1268e4bcb005395f5d324384",
       "candidateSha": "e4278c50ddc84daee3858e24c89e6cf5777b5dfe",
@@ -105,7 +117,7 @@
       }
     }
   ],
-  "nextAction": "Await bounded Worker diagnosis and Scientist runner/adapter results. No repeated assignments; full source gate and runner readiness remain open.",
+  "nextAction": "Await one monitored Worker full suite, at most 30 minutes, and Scientist adapter readiness fixes. Use duration evidence before permanent verifier configuration changes; keep existing study budgets and Classic hold.",
   "boundaries": {
     "governmentPublication": false,
     "automaticClassicReplacement": false,
@@ -114,13 +126,11 @@
     "jev": "Deferred; no extra investigation started"
   },
   "lastReview": {
-    "reviewedUtc": "2026-10-07T15:04:33Z",
-    "evidenceLevel": "Compact live chat snapshots only; new in-progress statements are agent reports, not independently accepted completion evidence. Previous fixed-candidate checks remain recorded per thread.",
-    "coordinationActions": [],
-    "findings": [
-      "Worker reports first isolated installation test passed in 5.99 seconds; all 33 Git calls completed, maximum 462 ms. Full-suite timeout cause remains unproven; second bounded diagnosis under way.",
-      "Scientist reports faulty local runner configuration and is testing documented startup without user configuration, leaving shared settings untouched. Classic release/held-source distinction confirmed by Scientist.",
-      "Architect unchanged, holding previously verified Classic readiness candidate."
+    "reviewedUtc": "2026-10-07T15:11:50Z",
+    "evidenceLevel": "Worker clean source SHA and completed diagnosis files inspected. Verify source sets ten minutes per check; local Go help confirms distinct ten-minute default per test binary. Scientist progress from compact live snapshot; Architect unchanged.",
+    "coordinationActions": [
+      "Direct user maximum-30-minute permission forwarded as concrete bounded Worker continuation; Worker active.",
+      "No duplicate Scientist/Architect instructions."
     ],
     "userDecisionRequired": false
   },
@@ -170,5 +180,19 @@
     "newPurchases": false,
     "purpose": "Actual model/version, raw metering, effective context and access on fresh public sentinels only",
     "limitations": "Missing/delayed token counters are a gap, not an enforceable hard-token-cap claim. No tasks/holdouts; separate actor roots; no silent model fallback."
+  },
+  "sourceTestTimeoutAuthorization": {
+    "userInstruction": "Zur Not würde ich die Timeout Grenze erhöhen auf bis zu 30 minuten; Rückmeldung als Alternative",
+    "recordedUtc": "2026-10-07T15:11:50Z",
+    "maxSeconds": 1800,
+    "scope": "G1 full source test diagnosis and, if demonstrated necessary, explicit bounded repository-check configuration",
+    "supersedes": "Earlier absolute prohibition of timeout extension for G1",
+    "constraints": [
+      "Real timestamped progress, no heartbeat-driven endless extension",
+      "No assertion removal or silent failure acceptance",
+      "No automatic increase of actor or study budgets",
+      "No Classic candidate mutation or publication by Worker"
+    ],
+    "owner": "Worker"
   }
 }
