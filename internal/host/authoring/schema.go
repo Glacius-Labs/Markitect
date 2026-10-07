@@ -178,6 +178,9 @@ func filteredSpecSchema(kind string, fields []string) map[string]any {
 		checkShape := checksShape["items"].(map[string]any)
 		checkProperties := checkShape["properties"].(map[string]any)
 		checkProperties["name"].(map[string]any)["pattern"] = CheckNamePattern
+		checkProperties["timeoutSeconds"] = map[string]any{
+			"type": "integer", "minimum": 1, "maximum": MaxCheckTimeoutSeconds, "default": DefaultCheckTimeoutSeconds,
+		}
 		runShape := checkProperties["run"].(map[string]any)
 		runShape["minItems"] = 1
 		noNUL := map[string]any{"pattern": `\u0000`}

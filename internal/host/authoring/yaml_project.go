@@ -105,7 +105,7 @@ func validateChecks(file string, n *yaml.Node) error {
 		if err := requireMapping(file, item, "project check"); err != nil {
 			return err
 		}
-		if err := checkKeys(file, item, set("name", "run")); err != nil {
+		if err := checkKeys(file, item, set("name", "run", "timeoutSeconds")); err != nil {
 			return err
 		}
 		if err := requireFields(file, item, "name", "run"); err != nil {
@@ -120,6 +120,16 @@ func validateChecks(file string, n *yaml.Node) error {
 			return err
 		}
 		check := Check{Name: name.Value, Run: make([]string, 0, len(run.Content))}
+		if value := child(item, "timeoutSeconds"); value != nil {
+			if err := checkScalar(file, value, "integer"); err != nil {
+				return err
+			}
+			var seconds int
+			if err := value.Decode(&seconds); err != nil {
+				return diagnostic(file, value.Line, "check timeoutSeconds must be between 1 and %d", MaxCheckTimeoutSeconds)
+			}
+			check.TimeoutSeconds = &seconds
+		}
 		for _, arg := range run.Content {
 			if err := checkScalar(file, arg, "string"); err != nil {
 				return err

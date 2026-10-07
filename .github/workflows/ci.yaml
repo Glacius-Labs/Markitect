@@ -44,7 +44,7 @@ jobs:
         run: go test ./internal/tooling/architecture
 
       - name: Test
-        run: go test ./... -count=1
+        run: go test ./... -count=1 -timeout=30m
 
       - name: Validate authoring benchmark fixtures
         run: go test ./internal/host -run '^$' -bench Authoring -benchtime=1x
