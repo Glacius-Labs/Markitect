@@ -279,7 +279,10 @@ func proofCommit(t *testing.T, root, message string) string {
 func proofGit(t *testing.T, root string, args ...string) string {
 	t.Helper()
 	prefix := []string{"-C", root, "-c", "core.hooksPath=" + filepath.Join(root, ".git", "proof-empty-hooks"), "-c", "user.name=Capability Proof",
-		"-c", "user.email=capability-proof@example.invalid", "-c", "commit.gpgsign=false", "-c", "core.autocrlf=false"}
+		"-c", "user.email=capability-proof@example.invalid", "-c", "commit.gpgsign=false", "-c", "core.autocrlf=false",
+		"-c", "maintenance.auto=false", "-c", "maintenance.autoDetach=false", "-c", "gc.auto=0", "-c", "gc.autoDetach=false"}
+	// These short-lived repositories are removed after Git returns; disable automatic
+	// maintenance so a detached worker cannot race t.TempDir cleanup.
 	command := exec.Command("git", append(prefix, args...)...)
 	command.Env = append(source.CleanGitEnv(), "GIT_AUTHOR_DATE=2000-01-01T00:00:00Z", "GIT_COMMITTER_DATE=2000-01-01T00:00:00Z")
 	output, err := command.CombinedOutput()
