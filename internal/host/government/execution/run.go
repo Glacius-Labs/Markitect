@@ -268,7 +268,7 @@ func Run(ctx context.Context, opts Options) (report Report, runErr error) {
 			selectedPaths = append(selectedPaths, path)
 		}
 	}
-	if order.Action == "amend-model" && !containsString(selectedPaths, opts.ConfigPath) {
+	if order.Action == "amend-model" && !amendmentHasString(selectedPaths, opts.ConfigPath) {
 		return report, errors.New("amend-model plan must assign the canonical source ConfigPath to its prior Writer")
 	}
 	subjects := identityKeys(report.Plan.Affected)
