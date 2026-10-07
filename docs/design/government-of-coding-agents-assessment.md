@@ -58,6 +58,39 @@ Das ist eine Entwicklung vom strukturierten Engineering-Wissen zum ausführbaren
 
 **Drei Ebenen sind getrennt zu entscheiden:** Die Regierungsmetapher ist eine Sprache für das Produkt. Ressorts sind eine mögliche Organisation fachlicher Verantwortlichkeiten. Einstimmigkeit ist eine konkrete Annahmepolitik. Keine dieser Entscheidungen folgt automatisch aus den anderen. Die Möglichkeit einer bestehenden gemeinsamen Ursache oder eines ausgelassenen Ressorts bleibt auch bei einstimmiger Zustimmung bestehen.
 
+### Konkretes Referenzszenario: ein ungeordnetes bestehendes Repository
+
+Der Nutzer hat den gewünschten Einsatz präzisiert: ein aktiv entwickeltes, wenig dokumentiertes Repository mit zunächst unbekanntem Stack, Frontend, Backend, CI/CD, verschiedenen Bereichen sowie Stories, Tasks und Ideen. Ein Teil funktioniert, ein Teil nicht. Im eigenen Branch soll zuerst verstanden und geordnet werden, was existiert und gewollt ist. Danach sollen Agenten das Repository schrittweise konsolidieren und offene Arbeit unter einem belastbaren Verfahren umsetzen. Ziel sind ein nachvollziehbar strukturiertes Repository und überwiegend autonome Entwicklung mit wenig Routineaufsicht. Dies ist ein gewünschtes Anwendungsszenario, kein aktuelles Liefer- oder Zuverlässigkeitsversprechen.
+
+Hier wäre Government umfassender als eine Sammlung von Prüfern. Es würde Bestandsaufnahme, Zielbildung, Priorisierung, Umsetzung, Ressortprüfung, Reparatur und Betrieb organisieren. Markitect könnte das verbindliche Projektmodell und den nachvollziehbaren Abgleich tragen. Diese Verbindung ist plausibel zu untersuchen, entscheidet aber noch nicht über die Produktidentität.
+
+Vier Dinge müssen unterscheidbar bleiben; sie erfordern nicht automatisch vier neue Core-Ressourcentypen:
+
+| Gegenstand | Bedeutung |
+|---|---|
+| Beobachteter Bestand | Stack, Komponenten, Abhängigkeiten, Pipeline- und Laufzeitbefunde, dokumentierte Entscheidungen, unbekannte Bereiche und Unsicherheit; jeweils mit Herkunft. Eine vorhandene Konvention ist zunächst eine Beobachtung. |
+| Akzeptiertes Zielbild / Projektordnung | Was das Projekt leisten soll, gewünschte Grenzen, Verantwortlichkeiten, Qualitätsmaßstäbe und Entscheidungsbefugnisse. Geltendes Soll und noch nicht beschlossene Vorschläge bleiben unterscheidbar. |
+| Backlog und Übergangsplan | Produktarbeit, Defekte, Konsolidierung, fehlende Nachweise und Abweichungen vom Soll; mit Abhängigkeiten, Priorität und überprüfbaren Erledigungskriterien. Nicht jede Idee ist ein angenommener Auftrag. |
+| Betriebs- und Prüfevidenz | Was an welchem Stand untersucht, geändert und geprüft wurde, welche Einwände offen sind und welche Grenzen verbleiben. Nachweise legitimieren keine neue Absicht. |
+
+Eine Verfassung kann Ziele und tragende Regeln ausdrücken; sie sollte nicht automatisch jede Datei oder jedes gewöhnliche Implementierungsdetail festschreiben. Ein zugehöriges Projektmodell kann die benötigten konkreten Beziehungen führen. Die genaue sprachliche Aufteilung ist offen. Das Zielbild ist nicht einfach eine Abschrift des chaotischen Ist-Zustands.
+
+Der Übergang wäre schrittweise: Bestand und funktionierendes Verhalten erfassen; ein erstes begrenztes Zielbild bestätigen; Build-/Test-/Pipeline-Grundlagen und besonders hinderliche Lücken stabilisieren; dann kleine überprüfbare Konsolidierungs- und Produktänderungen bearbeiten. Bestehende gültige Implementierungen erhalten. Kein vorausgesetzter Komplettumbau, kein stilles Löschen ungeklärter Artefakte und kein Zwang, das ganze Repository vor dem ersten Nutzen vollständig zu modellieren. Die konkrete Reihenfolge folgt Produktzielen, Risiken und Abhängigkeiten.
+
+#### Verfassung gemeinsam entwerfen und delegiert weiterentwickeln
+
+Agenten beziehungsweise Ressorts können Bestandsbefunde zusammentragen, Konflikte erkennen und Entwürfe für Regeln und Zielbild vorlegen. Anfangs fehlen häufig Informationen über Produktabsicht, erwünschtes Verhalten und Prioritäten; diese sind gezielt einzuholen und dürfen nicht aus Code oder grünen Tests erfunden werden.
+
+Automatische Weiterentwicklung ist als separate Designfrage denkbar. Eine vorher festgelegte Delegation könnte gewöhnliche Modellpflege und bestimmte fachliche Entscheidungen ohne einzelne menschliche Freigabe erlauben. Welche Änderungen darunter fallen, muss inhaltlich beschrieben werden; auch eine vermeintliche Präzisierung kann eine neue Verpflichtung schaffen. Jede wirksame Änderung braucht eine bereits akzeptierte Grundlage oder passende delegierte Befugnis, eine getrennte Prüfung sowie nachvollziehbare Folgen. Außerhalb dieses Rahmens bleibt sie ein Vorschlag für den zuständigen Entscheider.
+
+Agenten dürfen ihre eigenen Befugnisse nicht durch ein Modell-Update erweitern. Eine fehlgeschlagene Umsetzung darf nicht durch nachträgliches Abschwächen ihrer Anforderungen als erfolgreich erscheinen. Eine echte Änderung des Solls braucht einen eigenen begründeten Änderungsweg und erneute Planung/Prüfung; eine bekannte historische Abweichung wird dadurch nicht rückwirkend konform. Das Verfahren für Verfassungsänderungen und das für gewöhnliche Umsetzung sind getrennt zu gestalten. Einstimmigkeit der ausgewählten Ressorts ersetzt die nötige Änderungsbefugnis nicht.
+
+Mandate benennen fachliche Belange; sie bestimmen nicht allein die politischen Produktprioritäten. Welche Ressorts sinnvoll sind, folgt aus Ziel und Bestand. Ein DDD-Ministerium ist kein vorausgesetzter Bedarf jedes unbekannten Repositories. Die bisher vorgeschlagene Zustimmung jedes ausgewählten Ressorts bleibt eine zu evaluierende Annahmepolitik.
+
+#### Liefergrenze
+
+Der untersuchte Architect-Kandidat enthält Bausteine für explizite Brownfield-Inferenz, eng begrenzte Adoption, Reconciliation, Verifikation und Audit. Die Inferenz verarbeitet ausdrücklich ausgewählte Eingaben; sie entdeckt nicht selbstständig das unbekannte Repository und beweist keine Bestandsvollständigkeit. Ein verlässlicher Ablauf für beliebige unbekannte Repositories, ausreichende stackbezogene Analyse, Backlog-Konsolidierung und Priorisierung sowie ein dauerhafter autonomer Arbeitsbetrieb mit delegierter Verfassungsentwicklung sind damit nicht nachgewiesen. Diese Lücken sind beim späteren Checkpoint anhand des finalen Kandidaten getrennt von einem funktionierenden ersten Grundmodell zu bewerten. Ein grundlegender stabiler Ablauf kann einen ersten begrenzten Bereich tragen, ohne bereits das gesamte Anwendungsszenario abzudecken.
+
 ### Vorläufige Einordnung
 
 Government kann zu Markitect passen, wenn Projektordnung und menschlich akzeptierte Absicht die Autorität behalten, Ressorts daraus ihre Mandate ableiten und das gesamte Verfahren auch fehlende Darstellungen, Änderungsfolgen und Drift behandelt. Dann dient die Organisation dem bestehenden Sollmodell.
