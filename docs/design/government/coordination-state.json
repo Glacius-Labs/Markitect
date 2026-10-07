@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-07T21:47:28Z",
+  "updatedUtc": "2026-10-07T22:03:54Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -24,7 +24,7 @@
       "hostId": "local",
       "afterCursor": "b2b8e43f-fcaa-41bf-828a-99c69527bdea:54",
       "lastObservedStatus": "idle",
-      "activeTurn": null,
+      "activeTurn": "01a1183b-f6e9-7602-8cc8-9a68b60f6e52",
       "lastAssistantMessageId": "msg_0a7785839df196a4016ac6b7512bc481919a1e46e97a1472bb",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "Hold accepted G1-G5 source/binary/evidence; available for concrete Scientist product findings only.",
@@ -261,21 +261,22 @@
       "name": "Scientist",
       "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
       "hostId": "local",
-      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:64",
+      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:66",
       "lastObservedStatus": "active",
-      "activeTurn": "01a11832-0d47-7961-b9de-aefdcd64b8c8",
-      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac6bd8b4e2481918b25569416c7be01",
+      "activeTurn": "01a11862-d13c-7590-afe7-aa4045ff7dfd",
+      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac6c1401bd08191b66a07292458f0d7",
       "initialAssignmentDispatched": true,
-      "assignedMilestone": "One corrected classified local metadata session plus parallel missing native S1 adapter mechanics; no Actor or study.",
-      "latestProgress": "Die Token-Schwelle wird passend zum bestehenden Dispatcher auf den aktuellen Dispatch begrenzt. Frühere Dispatches dürfen dessen Schwelle nicht verbrauchen; die gemeinsamen Trial-Grenzen gelten weiterhin. Der frühere Teststand bleibt archiviert, anschließend prüfe ich die korrigierte Fassung.",
+      "assignedMilestone": "Actual pinned Classic/Government native integration with bounded deterministic fixtures and one final disabled-status metadata read; no real Actor or study.",
+      "latestProgress": "Ich bearbeite die beiden Stränge getrennt: die native Anbindung mit eigenen Fixture-Ledgern und den einmaligen Metadatenlauf mit eingefrorener Vorabprüfung. Zuerst gleiche ich Pins, Quoten und vorhandene Schnittstellen ab; die historischen Actor-Zähler bleiben erhalten.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-scientist/Markitect",
       "transferredDesignCommit": "b9e17c9896f14b4b1268e4bcb005395f5d324384",
-      "candidateSha": "3be653384e1b83d8cbdab79a87f487a3ffdde050",
-      "acceptance": "Negative metadata evidence accepted; config not queried, cause unknown. S1 and all real study cells remain open.",
+      "candidateSha": "0e62d5f1469d772804d35f2832efe0fa5679389d",
+      "acceptance": "Qualified negative metadata and static/synthetic adapter mechanics accepted; original preflight-review bytes missing. No actual native integration or S1/real study acceptance.",
       "lastAssignment": {
-        "sentUtc": "2026-10-07T20:54:59Z",
-        "key": "classified-policy-read-and-native-s1-adapters",
-        "scope": "Bounded classified metadata client and one separately reserved session; preserve history. In parallel implement only missing native request/result/roles/ledger mechanics from public v1.2; no silent product repairs. Final Government pin awaits lease fix, Classic held c913/v0.14.1. No heavy suite, real Actor or study."
+        "sentUtc": "2026-10-07T22:01:32Z",
+        "key": "native-s1-integration-and-final-disabled-status-read",
+        "scope": "Actual pinned Classic/Government native agentexec-wrapper-ledger-result integration with bounded deterministic fixtures, plus one final separately reserved disabled-status-only metadata session; no real Actor, model or study grant.",
+        "activeConfirmed": true
       },
       "evidence": {
         "sourcesHashChecked": 37,
@@ -679,7 +680,7 @@
           "modelCalls": 0,
           "mutations": false,
           "newPurchases": false,
-          "status": "Dispatched; preparatory tests and independent review required before one separately reserved frozen session; consumption not yet confirmed.",
+          "status": "Consumed once; negative result accepted with preflight archive limitation",
           "allowedInboundNotifications": [
             "warning",
             "configWarning",
@@ -689,7 +690,151 @@
           "maxInboundNotifications": 16,
           "abortOn": "Every server request, unknown/malformed/mismatched frame, other notification, Actor/auth/approval activity; no reply.",
           "warningResultRule": "Non-deprecation allowed warnings make any policy result provisional and unusable as effective exec-policy/access proof.",
-          "boundary": "Same pinned runner/cwd/fifteen inline config pairs. Enum-known identifier/class only, no payload/id. Preserve sanitization/byte/tree/single-start limits, old evidence and grants; no automatic additional diagnosis."
+          "boundary": "Same pinned runner/cwd/fifteen inline config pairs. Enum-known identifier/class only, no payload/id. Preserve sanitization/byte/tree/single-start limits, old evidence and grants; no automatic additional diagnosis.",
+          "consumedSessions": 1,
+          "remainingSessions": 0
+        },
+        "classifiedPolicyMetadataAcceptance": {
+          "acceptedUtc": "2026-10-07T22:03:54Z",
+          "sourceSha": "0e62d5f1469d772804d35f2832efe0fa5679389d",
+          "cleanAtReview": true,
+          "handoff": "experiments/government-comparison/classified-policy-s1-handoff.md",
+          "hashesChecked": 81,
+          "hashMismatches": 0,
+          "frozenInputsMatched": 13,
+          "validationSha256": "5ace264c64479c095cb00401978eaa396dbd760a8a69d3c3045ba8a82348a6a7",
+          "requestSha256": "6abc17e8ddccc61d8b16c7e16029fdf3f8610d1b6217ee40995905208080537f",
+          "clientSha256": "79925cf1f16459b53365d4f3bf1a016cacde664260b8ee43202ae742759bcbde",
+          "freezeSha256": "5c97c405389fa4590bb51660bdc84fe4ac3bd5aadc7c3e76fda89988e40ed54d",
+          "reservationSha256": "ec16a0879bb31ae45e6360725da4dd90758f2bdeb3cb8a972fb7be1a2469b376",
+          "independentReview": "research_policy_acceptance verified hashes and recorded negative outcome; root inspected handoff, sanitized result and frozen notification schema. No tests rerun.",
+          "preflightArchiveGap": {
+            "originalReviewSha256": "e8d07fb7214c61739c1944d14d0fef05ef97fc136bfed1c4c0848631f1c7acb1",
+            "originalBytesAvailable": false,
+            "reason": "Postreview appended to original preflight file; prior hash checked at reservation and chat clearance retained, but original review cannot be independently reconstructed. Qualified acceptance only; do not fabricate original."
+          },
+          "focusedTestsRecordedPassed": 17,
+          "configReadsSent": 0,
+          "requirementsReadsSent": 0,
+          "unexpectedMethod": "remoteControl/status/changed",
+          "notificationClass": "RemoteControl/status/changedNotification",
+          "originalNotificationStatus": null,
+          "nativeExit": 0,
+          "clientExit": 1,
+          "nativeWallSeconds": 0.1816438,
+          "outerWallSeconds": 0.5277093,
+          "rawProtocolBytesDiscarded": 420,
+          "stderrBytes": 0,
+          "retries": 0,
+          "metadataAppServerTreesConsumedCumulative": 2,
+          "localMetadataCliCallsConsumed": 6,
+          "realActorStartsCumulative": 5,
+          "knownHistoricalTokens": 53331,
+          "historicalTokenTotal": null,
+          "liveStudyCells": 0,
+          "boundary": "Method/class only retained. Status and remote identity were discarded and are unknown. No config/policy/access proof or assertion about remote-control connection; metadata invocation differs from historical exec invocation."
+        },
+        "nativeAdapterMechanicsAcceptance": {
+          "acceptedUtc": "2026-10-07T22:03:54Z",
+          "sourceSha": "0e62d5f1469d772804d35f2832efe0fa5679389d",
+          "validationSha256": "ee4a71c4bfeba103781f57217e7f9a7f53bdd69212b0db1a045d8d8272c39134",
+          "sourceHashesChecked": 9,
+          "hashMismatches": 0,
+          "focusedTestsRecordedPassed": 23,
+          "testsRerun": false,
+          "independentReview": "s1_dispatch_acceptance verified source hashes, validation/test log and dispatch accounting; root read native invocation/receipt contract and integration gaps.",
+          "acceptedScope": "Static/synthetic library mechanics: authority/request binding, native role invoke/response/receipt mapping, pre-reservation, persistent spent/inflight/unknown usage, per-dispatch observed token threshold within unchanged cumulative trial/task ceilings.",
+          "historicalTestSnapshotPreserved": "before-token-threshold-fix (22 tests) is historical; 23-test validation is final.",
+          "actualNativeProductExecution": false,
+          "realActorCalls": 0,
+          "s1Ready": false,
+          "gaps": [
+            "Acyclic authority bootstrap",
+            "Executable native wrapper and top-level integration for both products",
+            "Actual native receipt/ledger/result and replay/resume evidence",
+            "Separate controller process bookkeeping instead of extra phantom Actor",
+            "Real runner access capability remains unresolved"
+          ]
+        },
+        "nativeIntegrationPreparationGrant": {
+          "issuedUtc": "2026-10-07T22:01:32Z",
+          "key": "native-s1-integration-fixtures-20261008",
+          "status": "Assigned; usage not yet reported",
+          "owner": "Scientist",
+          "products": [
+            {
+              "name": "Government",
+              "sourceSha": "04e225d5caee78c2a198607143863fca1e829750",
+              "binarySha256": "12241f325e4af59451e4021b31d9e6f5b829b5de06c94d35eaabfb9d663aa51f"
+            },
+            {
+              "name": "Classic",
+              "sourceSha": "c91363b7ac4decbe87212ff0f588b5451581a152",
+              "releaseVersion": "v0.14.1",
+              "binarySha256": "2cad55efad64f15d7f57638bea78312918fbf7d181c730f188b9921504da71c4"
+            }
+          ],
+          "perProduct": {
+            "positiveCases": 1,
+            "additionalCase": "Directly related interruption/resume or replay refusal",
+            "nativeCliOrControllerStartsMaximum": 8,
+            "deterministicRoleStartsMaximum": 12,
+            "maxParallel": 2,
+            "totalProcessSecondsMaximum": 1200
+          },
+          "combined": {
+            "nativeCliOrControllerStartsMaximum": 16,
+            "deterministicRoleStartsMaximum": 24,
+            "totalProcessSecondsMaximum": 2400
+          },
+          "realActorStartsAuthorized": 0,
+          "providerCallsAuthorized": 0,
+          "studyCellsAuthorized": 0,
+          "constraints": "Disposable public fixture repositories with separate clearly synthetic ledgers. Preserve historical real usage/stops/nulls. Each actual role pre-reserved; controller has process/time accounting but is not an extra role. Native positive Government result requires all independent reviewers and final Ressort votes. Validate authority/inputs/pins/deadlines before effects; locator alone never grants authority. Stop on concrete product blocker or exhausted grant.",
+          "excluded": "No product source changes, hidden repairs, heavy full product suites, new platform, inference, publication or budget refill.",
+          "usage": {
+            "nativeCliOrControllerStarts": null,
+            "deterministicRoleStarts": null,
+            "totalProcessSeconds": null
+          }
+        },
+        "localDisabledStatusMetadataGrant": {
+          "issuedUtc": "2026-10-07T22:01:32Z",
+          "key": "local-policy-read-disabled-status-20261008",
+          "status": "Assigned; independent preflight, freeze and separate one-time reservation required; usage not yet confirmed",
+          "maxAdditionalAppServerSessions": 1,
+          "previousAppServerSessionsConsumed": 2,
+          "cumulativeAppServerSessionsMaximum": 3,
+          "wallSeconds": 60,
+          "innerWallSeconds": 50,
+          "maxParallel": 1,
+          "allowedMethods": [
+            "initialize",
+            "initialized",
+            "config/read",
+            "configRequirements/read"
+          ],
+          "maxConfigReads": 1,
+          "maxRequirementsReads": 1,
+          "retries": 0,
+          "allowedInboundNotifications": [
+            "warning",
+            "configWarning",
+            "deprecationNotice",
+            "windows/worldWritableWarning",
+            "remoteControl/status/changed"
+          ],
+          "remoteControlRule": "Exact frozen notification schema required. Retain only method/class/status enum; discard installationId, environmentId, serverName and all other parameters/identities. Only disabled may pass without reply. connecting/connected/errored/malformed abort; never enable/connect remote control.",
+          "maxInboundNotifications": 16,
+          "warningResultRule": "Existing provisional-result rule retained for non-deprecation warnings.",
+          "abortOn": "Every server request and all other unexpected messages/activity, no replies or retries. No further automatic diagnostic cascade.",
+          "boundary": "Same pinned 0.160.1 binary, cwd and fifteen inline pairs. Preserve old ledgers, grants, raw historical unknowns and sanitizer/process limits. Immutable preflight and postreview in separate files; no fabricated archive recovery. This remains metadata, not historical exec-policy/access proof.",
+          "realActorCallsAuthorized": 0,
+          "modelCallsAuthorized": 0,
+          "mutations": false,
+          "newPurchases": false,
+          "remainingSessions": 1,
+          "consumedSessions": null
         }
       },
       "classicHandoffReceived": true,
@@ -720,7 +865,7 @@
       "hostId": "local",
       "afterCursor": "71d9f5b2-c0f0-474c-9898-777d051b478a:35",
       "lastObservedStatus": "notLoaded",
-      "activeTurn": null,
+      "activeTurn": "01a11716-f468-71c0-b5f4-a59f722c0bbc",
       "lastAssistantMessageId": "msg_0b6e7ce0ce9f843f016ac6730f8ea087d2bc8886150602885f",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "Hold accepted local Classic public example follow-up and held v0.14.1 study candidate; available for concrete product findings",
@@ -784,7 +929,7 @@
       "heldWorktree": "C:/Users/Consiliari/.codex/worktrees/standard-operating-model/Markitect"
     }
   ],
-  "nextAction": "Scientist finishes existing classified metadata session and native S1 adapter handoff using accepted Government04e225d and held Classicc913/v0.14.1. Review actual runner access/capability gaps before any separately bounded next Actor or six-cell study grant. Worker/Architect held; SAT/Jev deferred.",
+  "nextAction": "Review actual native Classic/Government integration, common role/process accounting and final disabled-status metadata handoff. Then identify exact allowed runner path and separately decide any sixth real Actor grant before S1/six-cell study. Worker and Architect held; SAT/Jev deferred.",
   "boundaries": {
     "governmentPublication": false,
     "automaticClassicReplacement": false,
@@ -794,10 +939,13 @@
     "satPrinciples": "Deferred by direct user request on 2026-10-07; conceptual constraint/consistency/conflict-explanation principles first, no solver integration or current assignment change. See docs/design/government/deferred-research.md."
   },
   "lastReview": {
-    "reviewedUtc": "2026-10-07T21:47:28Z",
-    "evidenceLevel": "Three compact snapshots. Scientist reports correcting the observed token threshold scope to the current dispatch while preserving common trial ceilings; prior test snapshot archived, corrected checks in progress. This is not yet independently accepted accounting evidence. Worker and Architect unchanged held.",
+    "reviewedUtc": "2026-10-07T22:03:54Z",
+    "evidenceLevel": "Independent 81 metadata/history hashes and 9 adapter source hashes plus logs reviewed; no tests rerun. Original preflight-review bytes missing, explicitly qualified acceptance. Actual native integration and real runner access remain open. Postassignment three-thread snapshot confirms Scientist active; Worker/Architect unchanged held.",
     "coordinationActions": [
-      "Recorded progress/cursors only, no additional instructions or resources. At final handoff verify dispatch-local versus cumulative trial accounting, no reset of consumed starts or unknown usage."
+      "Accepted qualified 0e62d5f negative metadata and synthetic adapter mechanics",
+      "Recorded consumed classified metadata grant without changing five real Actor starts or unknown historical tokens",
+      "Sent exactly one Scientist continuation at22:01:32Z with separate finite native fixture grant and final disabled-status metadata grant",
+      "No repeated Worker/Architect assignment or real Actor/study grant"
     ],
     "userDecisionRequired": false
   },
@@ -905,7 +1053,7 @@
     },
     "remainingSessions": 0,
     "retrySemantics": "No wrapper relaunch or continuation. If builtin provider retry controls unavailable, unchanged documented internal transport defaults allowed inside 180s for this probe only; counts/usage remain unknown unless evidenced.",
-    "remainingAttemptPurpose": "No remaining approved model start. Diagnostic-only policy cause/allowed path and public research coverage before any next concrete run decision.",
+    "remainingAttemptPurpose": "No remaining approved real model start. Complete separately bounded native fixture integration and final local metadata session; review actual access/policy gaps before any next concrete real-run decision.",
     "originalActorSessionsTotal": 2,
     "followupGrant": {
       "id": "installed-runner-01601-identity-r1",
