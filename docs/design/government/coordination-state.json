@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-07T21:08:16Z",
+  "updatedUtc": "2026-10-07T21:19:05Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -22,17 +22,17 @@
       "name": "Worker",
       "threadId": "01a1169b-9357-7df3-a8f6-f913557c782a",
       "hostId": "local",
-      "afterCursor": "b2b8e43f-fcaa-41bf-828a-99c69527bdea:52",
-      "lastObservedStatus": "active",
-      "activeTurn": "01a11825-4178-7fa0-a3f9-1864f60afc19",
-      "lastAssistantMessageId": "msg_0a7785839df196a4016ac6b45baddc819199828ae241f25c6f",
+      "afterCursor": "b2b8e43f-fcaa-41bf-828a-99c69527bdea:54",
+      "lastObservedStatus": "idle",
+      "activeTurn": null,
+      "lastAssistantMessageId": "msg_0a7785839df196a4016ac6b7512bc481919a1e46e97a1472bb",
       "initialAssignmentDispatched": true,
-      "assignedMilestone": "Close only G5 lease-format validation finding; new clean source-bound gates/recovery evidence, then hold for S1.",
-      "latestProgress": "Das CLI-Testpaket ist beendet; Host und Execution laufen noch. Die neue Übergabe führt ce021ce als historischen Vorgänger mit eigenen Nachweisen. Seine Ergebnisse werden nicht als Beleg für 04e225d ausgegeben.",
+      "assignedMilestone": "Hold accepted G1-G5 source/binary/evidence; available for concrete Scientist product findings only.",
+      "latestProgress": "Bestätigt. Ich halte 04e225d5caee78c2a198607143863fca1e829750 samt Binary und Belegen unverändert für S1 bereit und warte auf konkrete Produktbefunde aus der Studie.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-worker/Markitect",
       "transferredDesignCommit": "691ce1dee3484371c4aea725db4ed5cc3f2e3719",
-      "candidateSha": "d146201e0f004e671cb90cf77b6a107dc14429b5",
-      "acceptance": "G4 accepted; ce021ce G5 evidence verified but final acceptance withheld for narrow lease-record recognition defect.",
+      "candidateSha": "04e225d5caee78c2a198607143863fca1e829750",
+      "acceptance": "G5 accepted; G1-G5 finite technical mechanics sequence complete. Hold exact candidate for S1.",
       "lastAssignment": {
         "sentUtc": "2026-10-07T20:54:17Z",
         "key": "g5-recognized-lease-validation",
@@ -209,26 +209,65 @@
           "acceptance": "Pending narrow lease fix; not final G5 accepted.",
           "blockingFinding": "AcquireLease accepts incomplete same-host/user v1 JSON with nonempty token, lacking PID/time/token-format checks; may overwrite unrecognized record contrary to docs. Refusal must preserve bytes.",
           "supersededAttempt": "1498e91 retained; no completed full Verify",
-          "limits": "Local Windows deterministic mechanics only; no real model quality, human acceptance, productivity, CI/Linux proof"
+          "limits": "Local Windows deterministic mechanics only; no real model quality, human acceptance, productivity, CI/Linux proof",
+          "resolvedBy": "04e225d5caee78c2a198607143863fca1e829750"
+        },
+        "g5Acceptance": {
+          "acceptedUtc": "2026-10-07T21:19:05Z",
+          "sourceSha": "04e225d5caee78c2a198607143863fca1e829750",
+          "worktree": "C:/Users/Consiliari/.codex/worktrees/government-worker/Markitect",
+          "clean": true,
+          "handoff": ".artifacts/government-g5/handoff-04e225d.json",
+          "handoffSha256": "b83103dc1f0c9d9985bfe540692869754abbd40249809e55c6aebc4a9d24417b",
+          "binary": ".artifacts/government-g5/markitect-04e225d.exe",
+          "binarySha256": "12241f325e4af59451e4021b31d9e6f5b829b5de06c94d35eaabfb9d663aa51f",
+          "sourceManifestSha256": "7915e345c8081d207c0bb51c9e7a303522e92ca87ad96a534115fbbd8d59f553",
+          "nativeManifestSha256": "759f2af31d0dadded6a8f4b22f28bea5e5f6f0c90f19fbcfc5ead798ba5f2c7c",
+          "sourceHashesChecked": 35,
+          "gitBlobMatches": 35,
+          "nativeFilesChecked": 344,
+          "hashMismatches": 0,
+          "nativeReportsBound": 8,
+          "fixedVerifyExit": 0,
+          "gateCount": 4,
+          "completedFullGoSuites": 1,
+          "verifyWallMs": 871615.1379,
+          "goTestsMs": 736184,
+          "vetExit": 0,
+          "contributionCommands": 20,
+          "nativeCases": 4,
+          "nativeWallMs": 84319.6323,
+          "nativeSummarySha256": "2bdd255ebfa3112ec3a8ccbd153931303758f4e9e931e400e181d1a4fb872c6a",
+          "independentReviewSha256": "a3e5b2ebd1e77ca13effd4e4718a3a2afe38d69de6e084a1bf52bb7970d232d5",
+          "independentReview": "Two root read-only reviewers verified evidence integrity and closure of exact lease finding; no material blocker. Root source/docs diff inspected. No tests/binaries rerun.",
+          "leaseFinding": "Closed: strict complete record before mutation, Verify same decoder/full owner incl CreatedAt; regressions retain rejected bytes and validate fresh-token reacquisition.",
+          "priorEvidence": "ce021ce handoff/native/Verify hashes verified unchanged, 1498e91 remains zero-completed-suite historical candidate.",
+          "limits": "Windows-local deterministic mechanics only; no real-model engineering quality, productivity, human acceptance, institutional independence, Linux runtime/CI/release/deployment or OS sandbox claim."
         }
       },
       "lastResearchContext": {
         "sentUtc": "2026-10-07T19:42:17Z",
         "designCommit": "d929aa7c6f4b590bac2251333a62987bf04ec0da",
         "scope": "New user objective shared; G5 unchanged, actual user inputs/commands/results/human decisions in handoff; no unsolicited new feature batch."
+      },
+      "lastHoldNotification": {
+        "sentUtc": "2026-10-07T21:19:05Z",
+        "key": "g5-accepted-hold-exact-s1-candidate",
+        "confirmed": true,
+        "newDevelopment": false
       }
     },
     {
       "name": "Scientist",
       "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
       "hostId": "local",
-      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:60",
+      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:61",
       "lastObservedStatus": "active",
       "activeTurn": "01a11832-0d47-7961-b9de-aefdcd64b8c8",
-      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac6b4c084b481918dce5af3d01ba2d2",
+      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac6b66d97648191a9baf0dad6f1a67c",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "One corrected classified local metadata session plus parallel missing native S1 adapter mechanics; no Actor or study.",
-      "latestProgress": "Ich setze den bestehenden Auftrag am erhaltenen Stand fort. Zuerst prüfe ich, ob die Metadatenquote bereits reserviert oder verbraucht wurde; anschließend folgen Clientprüfung, der gegebenenfalls noch erlaubte einzelne Lauf und der getrennte Adapter-Handoff.",
+      "latestProgress": "Die Klassifikation prüft jetzt auch das optionale Zeitstempelfeld der eingefrorenen Notification-Schemata. Alle 17 gezielten Tests bestehen. Die endgültigen Dateien werden noch einmal mit dem Review abgeglichen; erst danach wird die einzelne Sitzung dauerhaft reserviert und gestartet.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-scientist/Markitect",
       "transferredDesignCommit": "b9e17c9896f14b4b1268e4bcb005395f5d324384",
       "candidateSha": "3be653384e1b83d8cbdab79a87f487a3ffdde050",
@@ -664,6 +703,15 @@
         "newGrant": false,
         "newActorCallsAuthorized": 0,
         "activeResumptionConfirmed": true
+      },
+      "publicGovernmentHandoff": {
+        "sentUtc": "2026-10-07T21:19:05Z",
+        "sourceSha": "04e225d5caee78c2a198607143863fca1e829750",
+        "handoff": "C:/Users/Consiliari/.codex/worktrees/government-worker/Markitect/.artifacts/government-g5/handoff-04e225d.json",
+        "handoffSha256": "b83103dc1f0c9d9985bfe540692869754abbd40249809e55c6aebc4a9d24417b",
+        "binary": "C:/Users/Consiliari/.codex/worktrees/government-worker/Markitect/.artifacts/government-g5/markitect-04e225d.exe",
+        "binarySha256": "12241f325e4af59451e4021b31d9e6f5b829b5de06c94d35eaabfb9d663aa51f",
+        "scope": "Accepted local technical candidate for already assigned S1 adapters; no extra process, Actor or study grant; Classic c913/v0.14.1 unchanged."
       }
     },
     {
@@ -736,21 +784,22 @@
       "heldWorktree": "C:/Users/Consiliari/.codex/worktrees/standard-operating-model/Markitect"
     }
   ],
-  "nextAction": "Inspect corrected G5 final candidate/gates/recovery; inspect classified metadata outcome and native adapter mechanics. No sixth Actor/study until separate justified grant and full S1 readiness. SAT/Jev deferred.",
+  "nextAction": "Scientist finishes existing classified metadata session and native S1 adapter handoff using accepted Government04e225d and held Classicc913/v0.14.1. Review actual runner access/capability gaps before any separately bounded next Actor or six-cell study grant. Worker/Architect held; SAT/Jev deferred.",
   "boundaries": {
     "governmentPublication": false,
     "automaticClassicReplacement": false,
     "newExternalPurchases": false,
-    "liveStudy": "Closed pending product G1-G5, S1, exact configuration pins, enforceable common accounting and coordinator live protocol freeze; finite ceilings selected",
+    "liveStudy": "Closed pending complete S1, actual runner ability, native adapters, exact tool/model/config pins, common accounting and coordinator live protocol freeze. G1-G5 accepted on04e225d; no comparative cells yet.",
     "jev": "Deferred; no extra investigation started",
     "satPrinciples": "Deferred by direct user request on 2026-10-07; conceptual constraint/consistency/conflict-explanation principles first, no solver integration or current assignment change. See docs/design/government/deferred-research.md."
   },
   "lastReview": {
-    "reviewedUtc": "2026-10-07T21:08:16Z",
-    "evidenceLevel": "All three compact snapshots. Worker reports CLI package finished while Host/Execution continue on 04e225d; no new final evidence accepted. Scientist stopped after context compaction with preserved uncommitted work, no new human stop instruction in inspected latest turns. Read thread and filesystem status; existing task resumed. Architect unchanged.",
+    "reviewedUtc": "2026-10-07T21:19:05Z",
+    "evidenceLevel": "Worker completed 04e225d; actual clean SHA/diff/handoff/gates inspected. Independent source/evidence and exact recovery-fix reviews accepted. Scientist active, reports17 focused client tests; no fresh Scientist completion accepted. Architect unchanged held.",
     "coordinationActions": [
-      "Sent one concrete continuation to Scientist to finish preserved client and adapter work under same existing grant; no extra quota or repeated start. Active resumption confirmed.",
-      "Recorded Worker progress only; no duplicate task or test. Architect remains held."
+      "Accepted G5 and complete G1-G5 finite technical sequence; Worker hold notified once and confirmed.",
+      "Sent public exact Government candidate/binary/handoff pin to Scientist for existing S1 work; no added grant or reset.",
+      "No root product edits or test reruns; full suite slot freed."
     ],
     "userDecisionRequired": false
   },
@@ -946,12 +995,11 @@
     "owner": "Worker"
   },
   "fullSuiteSlot": {
-    "owner": "Worker",
-    "assignedUtc": "2026-10-07T20:54:17Z",
-    "scope": "Necessary final source gates after narrow G5 lease correction; no duplicate suites without new change/failure.",
+    "owner": null,
+    "releasedUtc": "2026-10-07T21:19:05Z",
     "previousOwner": "Worker",
-    "previousOwnerGate": "ce021ce four gates passed; final G5 acceptance held on independent lease finding",
-    "others": "Scientist focused metadata/adapter mechanics; Architect held Classic"
+    "previousOwnerGate": "G5 accepted04e225d; four fixed gates passed including one full Go suite",
+    "scope": "No further complete product suite needed without new source changes or concrete findings."
   },
   "contextSmokePreparation": {
     "selectedUtc": "2026-10-07T17:31:12Z",
@@ -1080,7 +1128,7 @@
       "Measured comparison against strong conventional and Classic workflows",
       "Actionable minimal product architecture and version-bound usage example"
     ],
-    "currentWorkUnchanged": "G5 completion plus S1 readiness precede six base trials.",
+    "currentWorkUnchanged": "G1-G5 accepted04e225d. Complete actual S1 readiness before six base trials; no change to bounded research plan.",
     "followupLimit": {
       "baseTrials": 6,
       "additionalFullTrialsMaximum": 8,
