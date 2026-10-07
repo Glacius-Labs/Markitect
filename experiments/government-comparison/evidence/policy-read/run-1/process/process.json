@@ -1,0 +1,25 @@
+{
+  "argv": [
+    "C:/Python313/python.exe",
+    "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\policy-read\\run-1\\read-once.py"
+  ],
+  "cwd": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\policy-read\\run-1",
+  "returnCode": 1,
+  "wallSeconds": 0.5027771999593824,
+  "stopReason": null,
+  "processTreeControl": "windows-job-kill-on-close",
+  "filesystemIsolation": "not established by process wrapper",
+  "automaticRetries": 0,
+  "receipts": [
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\policy-read\\run-1\\process\\stdout.log",
+      "sha256": "1736e8e2553f7f5232d347d005233d3a017317b8fc3249f3559b307cfd8c87cb",
+      "kind": "stdout.log"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\policy-read\\run-1\\process\\stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "kind": "stderr.log"
+    }
+  ]
+}

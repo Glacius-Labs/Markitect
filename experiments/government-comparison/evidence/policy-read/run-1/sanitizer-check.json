@@ -1,0 +1,13 @@
+{
+  "kind": "in-memory-synthetic-sanitizer-check",
+  "status": "passed",
+  "checks": [
+    "Provider config/header/API-key and unknown nested fields omitted",
+    "Relevant approval/windows/feature values preserved",
+    "Only policy origins/layer config retained",
+    "Initialize fields omitted",
+    "Null requirements preserved"
+  ],
+  "nativeCliStarts": 0,
+  "actualConfigurationRead": false
+}

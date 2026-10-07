@@ -1,0 +1,38 @@
+{
+  "status": "stopped",
+  "stopReason": "unexpected-server-method; contents discarded",
+  "sentRpc": [
+    {
+      "method": "initialize",
+      "id": 0,
+      "params": {
+        "clientInfo": {
+          "name": "scientist_policy_read_once",
+          "version": "1.0"
+        }
+      }
+    },
+    {
+      "method": "initialized",
+      "params": {}
+    }
+  ],
+  "observations": [
+    {
+      "id": 0,
+      "method": "initialize",
+      "sanitizedResult": {
+        "handshakeAcknowledged": true
+      }
+    }
+  ],
+  "nativeReturnCode": 0,
+  "wallSeconds": 0.14277249993756413,
+  "rawResponseBytesDiscarded": 420,
+  "stderrBytesDiscarded": 0,
+  "totalRawBytesConsumedInMemory": 420,
+  "rawByteLimit": 4000000,
+  "queueCapacity": 32,
+  "rawConfigurationPersisted": false,
+  "automaticRetries": 0
+}

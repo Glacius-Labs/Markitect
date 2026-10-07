@@ -1,0 +1,109 @@
+{
+  "kind": "single-authorized-policy-read-session",
+  "baseCommit": "f3eeb57e54408f3ba127c22681f39c2c31491ca9",
+  "argv": [
+    "C:\\Users\\Consiliari\\AppData\\Local\\OpenAI\\Codex\\bin\\5ea220ae823df3d7\\codex.exe",
+    "app-server",
+    "--stdio",
+    "--config",
+    "approval_policy=\"never\"",
+    "--config",
+    "apps._default.enabled=false",
+    "--config",
+    "features.apps=false",
+    "--config",
+    "features.goals=false",
+    "--config",
+    "features.hooks=false",
+    "--config",
+    "features.memories=false",
+    "--config",
+    "features.multi_agent=false",
+    "--config",
+    "features.plugins=false",
+    "--config",
+    "features.shell_tool=true",
+    "--config",
+    "features.unified_exec=true",
+    "--config",
+    "forced_login_method=\"chatgpt\"",
+    "--config",
+    "model_provider=\"openai\"",
+    "--config",
+    "model_reasoning_effort=\"high\"",
+    "--config",
+    "project_doc_max_bytes=0",
+    "--config",
+    "web_search=\"disabled\""
+  ],
+  "cwd": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\profile-v2-20261007-1791395973561\\context-drafts\\actor-workspace",
+  "executableSha256": "3b8f6e33caa75f232558a3cf76ff9b87bb5ef6dbcf4996372f24e55c78b1b916",
+  "frozenExecProcess": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\context-tools-live\\run-1\\raw\\process\\process.json",
+  "frozenExecProcessSha256": "d12d22c2178d144ad45613ffb5ebdd38fec4bda5c062873c492d19addf1c78aa",
+  "rpc": [
+    {
+      "method": "initialize",
+      "id": 0,
+      "params": {
+        "clientInfo": {
+          "name": "scientist_policy_read_once",
+          "version": "1.0"
+        }
+      }
+    },
+    {
+      "method": "initialized",
+      "params": {}
+    },
+    {
+      "method": "config/read",
+      "id": 1,
+      "params": {
+        "includeLayers": true,
+        "cwd": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\profile-v2-20261007-1791395973561\\context-drafts\\actor-workspace"
+      }
+    },
+    {
+      "method": "configRequirements/read",
+      "id": 2
+    }
+  ],
+  "limits": {
+    "appServerProcessTrees": 1,
+    "wallSeconds": 60,
+    "parallelism": 1,
+    "retries": 0,
+    "actorStarts": 0,
+    "queuedFrames": 32,
+    "rawByteIngestionThreshold": 4000000
+  },
+  "notTransferred": [
+    "exec route",
+    "--ignore-user-config",
+    "--ignore-rules",
+    "--model gpt-6.1-sol",
+    "--sandbox read-only",
+    "--ephemeral",
+    "--json",
+    "--skip-git-repo-check",
+    "--cd (process cwd and config/read cwd used instead)",
+    "stdin Actor prompt"
+  ],
+  "differences": [
+    "App-server accepts --config/--stdio per captured help; exec-only flags not asserted on this route",
+    "Only exact inline settings from frozen exec argv transferred; no new profile/sandbox key guessed",
+    "Global/user/project configuration can participate because exec ignore flags are not documented for app-server",
+    "No extra rights selected; resolved metadata may differ from prior exec",
+    "Native server stderr and JSON responses consumed in memory and allowlist-filtered before persistence; no raw output retained"
+  ],
+  "sourceHashes": {
+    "selected_metadata.py": "584c321dd217fcbca4c958b9283607602738fab392404bad2a7432c1bfac9652",
+    "process.py": "d0cedb71d57be87095d9af119d9769fb0c3d311e1af073cba81f6337743c78ae",
+    "runner.py": "9f8031a2c26c484cf3be92fef3bebafa8469096048989a3bbe76262a9d595e8a"
+  },
+  "clientSha256": "998480229ae2573264904b00c8077ba2a6bed11349b04749cefdc6cd79724390",
+  "authorizationReference": {
+    "sourceThreadId": "01a11367-a781-7683-a20f-46e12614dcb4",
+    "scope": "One separately authorized local app-server process tree; initialize/initialized, one config/read, one configRequirements/read; <=60 seconds, no retry/inference"
+  }
+}

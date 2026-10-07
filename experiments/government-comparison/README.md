@@ -160,6 +160,10 @@ permissions. The [bounded pinned-version passage](public/policy-compatibility-01
 used six local metadata calls and found named-profile protocol fields, but no
 resolved effective exec policy or verified correction. The environment/runner
 owner must resolve that blocker. It authorizes no sixth start or study cell.
+The separately authorized [single config-read session](policy-read-handoff.md)
+stopped on an unexpected server method after initialization, before sending either
+policy query. No effective values or corrected execution route were obtained;
+the old six metadata calls and all five Actor starts remain consumed.
 
 The common [measurement profile v2](public/measurement-profile-v2.md) is adopted
 equally for all arms. Numeric common limits remain unchanged. Known tokens with
