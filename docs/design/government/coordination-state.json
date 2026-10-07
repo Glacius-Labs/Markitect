@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-07T19:47:17Z",
+  "updatedUtc": "2026-10-07T20:04:37Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -598,7 +598,8 @@
     "automaticClassicReplacement": false,
     "newExternalPurchases": false,
     "liveStudy": "Closed pending product G1-G5, S1, exact configuration pins, enforceable common accounting and coordinator live protocol freeze; finite ceilings selected",
-    "jev": "Deferred; no extra investigation started"
+    "jev": "Deferred; no extra investigation started",
+    "satPrinciples": "Deferred by direct user request on 2026-10-07; conceptual constraint/consistency/conflict-explanation principles first, no solver integration or current assignment change. See docs/design/government/deferred-research.md."
   },
   "lastReview": {
     "reviewedUtc": "2026-10-07T19:47:17Z",

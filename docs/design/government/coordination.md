@@ -4,6 +4,8 @@ Stand: 2026-10-07. Der Nutzer hat das Go zur Umsetzung und Koordination erteilt.
 
 ## Auftrag und Eigentümer
 
+Am 7. Oktober wurde auf ausdrücklichen Nutzerwunsch die [SAT-inspirierte Modellidee neben Jev vorgemerkt](deferred-research.md): Bedingungen statt vorgegebener Abläufe, gemeinsame Konsistenz, erklärbare Konflikte und begründete Modellpflege. Zunächst sind die allgemeinen Prinzipien zu untersuchen, nicht automatisch ein Solver einzubauen. Laufende Aufträge, Studienkriterien und Budgets bleiben unverändert; die spätere Forschungs-/Produktpriorisierung greift die Liste wieder auf.
+
 | Chat | Lokale Chat-ID | Verantwortung |
 |---|---|---|
 | Overseer | `01a11367-a781-7683-a20f-46e12614dcb4` | Architekturentscheidungen, Auftragsteilung, unabhängige Abnahme, Fortschrittskoordination |

@@ -39,6 +39,7 @@ Die Elternprüfung untersucht, ob Stornierung und Bestandsfreigabe zusammen funk
 | [Quellübergang](source-transition.md) | An festen Classic-Quellen geprüfte Wiederverwendung, technische Lücken und Implementierungsreihenfolge |
 | [Studienprotokoll](evaluation.md) | Gemeinsame Fälle, drei Versuchsarme, Messung, faire Ausgangslage und unabhängige Bewertung |
 | [Liefer- und Koordinationsplan](delivery-plan.md) | Arbeitspakete, Endkriterien, Zuständigkeiten und vorbereitete Aufträge für die zukünftigen Chats |
+| [Vorgemerkte Untersuchungsthemen](deferred-research.md) | Nachrangige Ideen zu SAT-inspirierten Modellprinzipien und Jev; keine aktiven Implementierungsaufträge |
 
 Änderungen am fachlichen Design gehören in die Architektur, Änderungen an Bewertungskriterien ins Studienprotokoll. Der Lieferplan verweist darauf und führt keine zweite Version dieser Verträge. Bei Widersprüchen sind Implementierung und Versuch für den betroffenen Vertrag anzuhalten, bis der Koordinator die Dokumente konsistent berichtigt; Regeln werden nicht durch Auswahl des bequemeren Dokuments umgangen.
 
