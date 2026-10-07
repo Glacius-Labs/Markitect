@@ -1,0 +1,10 @@
+apiVersion: markitect.government-order/v1alpha1
+kind: Order
+purpose: Negative case proving the inventory child cannot amend accepted model intent.
+activeConstitution: sha256:9c94d00054effeff3477850f1872c250d0ea7b9f5602e384fe6a6853148fe70a
+action: amend-model
+subjects:
+  - apiVersion: markitect.government-example/v1alpha1
+    kind: Requirement
+    namespace: commerce
+    name: release-reservation

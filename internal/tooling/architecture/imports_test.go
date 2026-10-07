@@ -22,6 +22,15 @@ func TestPermittedEdges(t *testing.T) {
 	}
 }
 
+func TestGovernmentApplicationFixtureCannotImportProduct(t *testing.T) {
+	for _, target := range []string{"internal/core", "internal/host/government", "internal/modules/dotnet"} {
+		findings := Check([]Edge{{From: "examples/government/inventory", To: target}})
+		if len(findings) != 1 || findings[0].Rule != "adopting-code fixture may not import Markitect product packages" {
+			t.Fatalf("fixture boundary weakened for %s: %+v", target, findings)
+		}
+	}
+}
+
 func TestCoreExternalDependencyRequiresApproval(t *testing.T) {
 	root := t.TempDir()
 	dir := filepath.Join(root, "internal", "core")

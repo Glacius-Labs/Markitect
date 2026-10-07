@@ -2,6 +2,15 @@ apiVersion: markitect.example.org/artifact-coverage/v1alpha1
 kind: ArtifactCoverage
 spec:
   roots:
+    - internal/tooling/architecture
+    - internal/host/government
+    - examples/government
+    - internal/host/cli/government.go
+    - internal/host/cli/government_test.go
+    - internal/host/cli/main.go
+    - internal/host/cli/distribution.go
+    - docs/government.md
+    - docs/validation/government-g1.md
     - experiments/sequential-operating-pilot
     - internal/host/canonical_controller_model_change_test.go
     - internal/host/canonical_controller_audit.go
@@ -141,6 +150,58 @@ spec:
     - experiments/live-operating-pilot
     - experiments/two-area-operating-pilot
   tooling:
+    - path: internal/tooling/architecture/imports.go
+      owner: architecture-import-boundary
+    - path: internal/tooling/architecture/imports_test.go
+      owner: architecture-import-boundary
+    - path: docs/government.md
+      owner: government-experiment
+    - path: docs/validation/government-g1.md
+      owner: government-experiment
+    - path: examples/government/docs/requirements.md
+      owner: government-experiment
+    - path: examples/government/government.yaml
+      owner: government-experiment
+    - path: examples/government/inventory/reservation_test.go
+      owner: government-experiment
+    - path: examples/government/inventory/reservation.go
+      owner: government-experiment
+    - path: examples/government/misc/unassigned.md
+      owner: government-experiment
+    - path: examples/government/negative-order.yaml
+      owner: government-experiment
+    - path: examples/government/order.yaml
+      owner: government-experiment
+    - path: examples/government/README.md
+      owner: government-experiment
+    - path: internal/host/cli/distribution.go
+      owner: government-experiment
+    - path: internal/host/cli/government_test.go
+      owner: government-experiment
+    - path: internal/host/cli/government.go
+      owner: government-experiment
+    - path: internal/host/cli/main.go
+      owner: government-experiment
+    - path: internal/host/government/bindings_test.go
+      owner: government-experiment
+    - path: internal/host/government/bindings.go
+      owner: government-experiment
+    - path: internal/host/government/inventory/filemode_windows.go
+      owner: government-experiment
+    - path: internal/host/government/inventory/filemode.go
+      owner: government-experiment
+    - path: internal/host/government/inventory/inventory_test.go
+      owner: government-experiment
+    - path: internal/host/government/inventory/inventory.go
+      owner: government-experiment
+    - path: internal/host/government/model.go
+      owner: government-experiment
+    - path: internal/host/government/plan_test.go
+      owner: government-experiment
+    - path: internal/host/government/plan.go
+      owner: government-experiment
+    - path: internal/host/government/schema.go
+      owner: government-experiment
     - path: internal/host/canonical_controller_model_change_test.go
       owner: standard-operating-model-closure
     - path: internal/host/canonical_controller_audit.go

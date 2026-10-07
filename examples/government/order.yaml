@@ -1,0 +1,10 @@
+apiVersion: markitect.government-order/v1alpha1
+kind: Order
+purpose: Implement the reservation release invariant and integrate its shared commerce behavior.
+activeConstitution: sha256:9c94d00054effeff3477850f1872c250d0ea7b9f5602e384fe6a6853148fe70a
+action: implement
+subjects:
+  - apiVersion: markitect.government-example/v1alpha1
+    kind: Requirement
+    namespace: commerce
+    name: release-reservation

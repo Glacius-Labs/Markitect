@@ -27,6 +27,9 @@ func Run(args []string, out, errout io.Writer) int {
 		return 2
 	}
 	command := args[0]
+	if command == "government" {
+		return runGovernment(args[1:], out, errout)
+	}
 	allowed, known := commandFlags(command)
 	if !known {
 		fmt.Fprintf(errout, "unknown command %q\n", command)

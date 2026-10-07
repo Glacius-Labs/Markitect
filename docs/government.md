@@ -1,0 +1,34 @@
+# Government G1: read-only model, native inventory and plan
+
+This experimental source-only branch implements G1 of the [delivery plan](design/government/delivery-plan.md), on Classic `1ea5c76f55526fc4d721e865885436153f48b497` plus design transfer `691ce1dee3484371c4aea725db4ed5cc3f2e3719`. It does not update an installed release. [The architecture](design/government/architecture.md) remains the design contract; this page owns the executable G1 format and limits.
+
+## Commands and input
+
+```powershell
+go run ./cmd/markitect government --action schema
+go run ./cmd/markitect government --repo examples/government --config government.yaml --action inspect
+go run ./cmd/markitect government --repo examples/government --config government.yaml --action plan --order order.yaml
+go run ./cmd/markitect government --repo examples/government --config government.yaml --action plan --order negative-order.yaml
+```
+
+`schema` emits the actual built-in `markitect.government/v1alpha1` structural Schema. `GovernmentSource` is one strict YAML document with `apiVersion: markitect.government-source/v1alpha1`, `constitution` (full identity), inline `schemas` and `definitions`, and `observation`. Custom domain Schemas and the built-in Schema compile through the unchanged minimal Core. Definitions and relation Definitions carry `purpose`. Full identities contain `apiVersion`, `kind`, explicit `namespace` (possibly empty), and `name`. Host resolves arbitrary `subject` and mandate `scope` identities exactly; these are object values, not polymorphic Core references.
+
+`Constitution` selects one root Area, a nonempty Ressort cabinet and `unanimous-explicit-assent`. Areas recursively reference parents and optional pinned Capabilities. Ressorts reference review Mandates without implicit writer permission. Mandates contain an Area, exact subject scope, allowed actions (`implement`, `review`, `amend-model`) and, below root, a higher mandate. Host validates acyclic delegation, hierarchy and scope/action subsets. `Responsibility` assigns one accountable Area per subject. `Artifact` declares an exact path, class (`canonical`, `realization`, `generated`, `foreign`) and, for managed material, one Area writer. Purpose-bearing `Realization` connects subjects to artifacts many-to-many. File ownership is independent of subject responsibility and crosscutting review.
+
+The caller explicitly selects an already accepted Constitution input. Its digest covers the compiled domain model and organization together, excluding observed bytes and provenance. G1 cannot authenticate this acceptance. `Order` is a separate strict document with `apiVersion: markitect.government-order/v1alpha1`, `kind: Order`, `purpose`, `activeConstitution` (exact prior digest), `action`, and `subjects` and/or exact `paths`. Optional `unknownScope: true` widens to all modeled subjects and root review, and blocks unresolved work. Proposed amendments cannot change the authority of their own plan. Organizational authority changes require owner escalation. Actual model amendment review and activation remain G4 work.
+
+## Native acquisition and coverage
+
+`observation.roots` requires normalized, non-overlapping repository-relative roots; `.` selects the repository. `exclusions` and `admitIgnored` contain `{path, reason}` boundaries. The scanner enumerates tracked, untracked and ignored entries, including conventionally filtered build directories. Excluded directories remain visible without reading their contents. Ignored bytes are read only under explicit `admitIgnored` entries. `.git` metadata is an automatic reasoned exclusion; links, Windows reparse points, special files and Git submodules remain boundaries and are not traversed. Classification errors inside Git repositories fail closed. Non-Git directories are supported as native sources.
+
+Each observed regular file carries a bytes digest, mode, source and status. The report binds roots, exclusion/admission reasons, entries, HEAD when available, and traversal completeness. It is **always provisional**: HEAD is provenance, not a claim that these are HEAD's bytes or an atomic filesystem snapshot. Config and Order must be admitted, unchanged captured inputs. Traversal is bounded to 100,000 entries, 64 MiB per file and 512 MiB total. Unreadable paths remain incomplete; entry-limit exhaustion aborts acquisition.
+
+Survey joins intended artifacts with captured entries. Unassigned files retain `purpose: unknown`; absent artifacts are missing; descendants of excluded/linked boundaries or paths outside roots are unavailable. Exclusion is never conformance. `accounted-within-declared-boundary` means structural accounting only, not implementation or semantic verification. `inspect` exits 1 for incomplete accounting, 0 for accounted scope, and 2 for invalid acquisition/input. The example intentionally exits 1 because it contains unassigned files.
+
+## Planning and G2 boundary
+
+Planning follows explicit domain references in both directions and shared realization paths conservatively. It resolves accountable Areas, authorized writers, prior Mandates, parent integration review and the frozen cabinet. Source-code or prose-link semantics are not inferred. Foreign inputs alone cannot fulfill implementation work. Unknown identities, conflicting responsibility/writers, insufficient authority, unavailable selected inputs and empty work block the plan. Unrelated unknown artifacts remain visible and allow only a scoped proposal. Status is `blocked`, `planned-scoped`, or `planned-within-declared-boundary`; none means implementation or acceptance. A blocked plan exits 1, a proposal 0, and invalid input/acquisition 2.
+
+Pure G2 records establish an acyclic chain: `MaterialCandidateID` binds prior authority, base revision, material tree/model, plan, check definitions, tool pins and optional inventory; `EvidenceID` binds immutable result/report digests and round; Voten bind both IDs and prior mandate/configured slot; `DecisionID` binds a complete, current, unanimous vote set from the supplied frozen cabinet. Constructors validate consistency, not authentication, independent review, check sufficiency or promotion rights. No G1 command creates or consumes acceptance decisions.
+
+G2's next bounded task is an actual isolated candidate change: immutable capture and prior-cabinet freeze, real Executor output, separately configured semantic review and checks, every selected Ressort's current vote, then fenced compare-and-swap promotion of a dedicated managed Active-Ref with durable intent and success/abort reports. Missing votes, stale material/evidence and missing review must prevent takeover. G1 has no runner, Active-Ref writer, persistent queue, restart recovery or OS sandbox. Processes share caller rights; path checks and worktrees provide a cooperative boundary only.

@@ -1,0 +1,194 @@
+apiVersion: markitect.government-source/v1alpha1
+kind: GovernmentSource
+constitution:
+  apiVersion: markitect.government/v1alpha1
+  kind: Constitution
+  namespace: sample
+  name: constitution
+schemas:
+  - apiVersion: markitect.government-example/v1alpha1
+    purpose: Small order and inventory obligations used to exercise Government mapping.
+    kinds:
+      Requirement:
+        purpose: A desired, reviewable behavior with an explicit acceptance condition.
+        properties:
+          statement:
+            purpose: User-visible behavior the implementation must provide.
+            type: string
+            minCount: 1
+            maxCount: 1
+          acceptance:
+            purpose: Observable condition a reviewer can check.
+            type: string
+            minCount: 1
+            maxCount: 1
+definitions:
+  - apiVersion: markitect.government-example/v1alpha1
+    kind: Requirement
+    metadata: {namespace: commerce, name: cancel-order}
+    purpose: A cancelled order releases the stock reserved for it.
+    spec:
+      statement: Cancelling an order releases its active reservation.
+      acceptance: A focused cancellation test observes the reservation as released.
+  - apiVersion: markitect.government-example/v1alpha1
+    kind: Requirement
+    metadata: {namespace: commerce, name: release-reservation}
+    purpose: Reservation release is consistent with order cancellation and inventory state.
+    spec:
+      statement: Releasing a reservation cannot make available stock negative.
+      acceptance: The inventory test rejects release beyond the active reservation.
+
+  - apiVersion: markitect.government/v1alpha1
+    kind: Area
+    metadata: {namespace: sample, name: root}
+    purpose: Integrates the full commerce change and retains responsibility for its result.
+    spec:
+      capabilities: []
+  - apiVersion: markitect.government/v1alpha1
+    kind: Area
+    metadata: {namespace: sample, name: orders}
+    purpose: Implements order lifecycle behavior as a child of root integration.
+    spec:
+      parent: {apiVersion: markitect.government/v1alpha1, kind: Area, namespace: sample, name: root}
+      capabilities: []
+  - apiVersion: markitect.government/v1alpha1
+    kind: Area
+    metadata: {namespace: sample, name: inventory}
+    purpose: Implements reservation and available-stock behavior as a child of root integration.
+    spec:
+      parent: {apiVersion: markitect.government/v1alpha1, kind: Area, namespace: sample, name: root}
+      capabilities: []
+
+  - apiVersion: markitect.government/v1alpha1
+    kind: Mandate
+    metadata: {namespace: sample, name: root-commerce}
+    purpose: Prior root delegation covers both requirements and permits implementation, review, and model amendment.
+    spec:
+      area: {apiVersion: markitect.government/v1alpha1, kind: Area, namespace: sample, name: root}
+      scope:
+        - {apiVersion: markitect.government-example/v1alpha1, kind: Requirement, namespace: commerce, name: cancel-order}
+        - {apiVersion: markitect.government-example/v1alpha1, kind: Requirement, namespace: commerce, name: release-reservation}
+      actions: [implement, review, amend-model]
+  - apiVersion: markitect.government/v1alpha1
+    kind: Mandate
+    metadata: {namespace: sample, name: orders-child}
+    purpose: Root delegates only the cancellation requirement to the orders child for implementation and review.
+    spec:
+      area: {apiVersion: markitect.government/v1alpha1, kind: Area, namespace: sample, name: orders}
+      parent: {apiVersion: markitect.government/v1alpha1, kind: Mandate, namespace: sample, name: root-commerce}
+      scope:
+        - {apiVersion: markitect.government-example/v1alpha1, kind: Requirement, namespace: commerce, name: cancel-order}
+      actions: [implement, review]
+  - apiVersion: markitect.government/v1alpha1
+    kind: Mandate
+    metadata: {namespace: sample, name: inventory-child}
+    purpose: Root delegates only the reservation requirement to the inventory child for implementation and review.
+    spec:
+      area: {apiVersion: markitect.government/v1alpha1, kind: Area, namespace: sample, name: inventory}
+      parent: {apiVersion: markitect.government/v1alpha1, kind: Mandate, namespace: sample, name: root-commerce}
+      scope:
+        - {apiVersion: markitect.government-example/v1alpha1, kind: Requirement, namespace: commerce, name: release-reservation}
+      actions: [implement, review]
+  - apiVersion: markitect.government/v1alpha1
+    kind: Ressort
+    metadata: {namespace: sample, name: commerce-review}
+    purpose: Crosscuts order and inventory files to review the combined commerce behavior.
+    spec:
+      mandate: {apiVersion: markitect.government/v1alpha1, kind: Mandate, namespace: sample, name: root-commerce}
+
+  - apiVersion: markitect.government/v1alpha1
+    kind: Responsibility
+    metadata: {namespace: sample, name: cancellation-owner}
+    purpose: Orders owns implementation of the cancellation requirement.
+    spec:
+      subject: {apiVersion: markitect.government-example/v1alpha1, kind: Requirement, namespace: commerce, name: cancel-order}
+      area: {apiVersion: markitect.government/v1alpha1, kind: Area, namespace: sample, name: orders}
+  - apiVersion: markitect.government/v1alpha1
+    kind: Responsibility
+    metadata: {namespace: sample, name: reservation-owner}
+    purpose: Inventory owns implementation of the reservation requirement.
+    spec:
+      subject: {apiVersion: markitect.government-example/v1alpha1, kind: Requirement, namespace: commerce, name: release-reservation}
+      area: {apiVersion: markitect.government/v1alpha1, kind: Area, namespace: sample, name: inventory}
+
+  - apiVersion: markitect.government/v1alpha1
+    kind: Artifact
+    metadata: {namespace: sample, name: constitution-source}
+    purpose: This file is the canonical input for the selected desired model and its observation boundary.
+    spec:
+      path: government.yaml
+      class: canonical
+      writer: {apiVersion: markitect.government/v1alpha1, kind: Area, namespace: sample, name: root}
+  - apiVersion: markitect.government/v1alpha1
+    kind: Artifact
+    metadata: {namespace: sample, name: shared-requirements}
+    purpose: One shared behavior document records both commerce requirements.
+    spec:
+      path: docs/requirements.md
+      class: realization
+      writer: {apiVersion: markitect.government/v1alpha1, kind: Area, namespace: sample, name: root}
+  - apiVersion: markitect.government/v1alpha1
+    kind: Artifact
+    metadata: {namespace: sample, name: reservation-implementation}
+    purpose: The reservation source implements the inventory side of release behavior.
+    spec:
+      path: inventory/reservation.go
+      class: realization
+      writer: {apiVersion: markitect.government/v1alpha1, kind: Area, namespace: sample, name: inventory}
+  - apiVersion: markitect.government/v1alpha1
+    kind: Artifact
+    metadata: {namespace: sample, name: reservation-test}
+    purpose: The reservation test checks the available-stock invariant.
+    spec:
+      path: inventory/reservation_test.go
+      class: realization
+      writer: {apiVersion: markitect.government/v1alpha1, kind: Area, namespace: sample, name: inventory}
+  - apiVersion: markitect.government/v1alpha1
+    kind: Realization
+    metadata: {namespace: sample, name: cancellation-shared-doc}
+    purpose: The shared requirements document records the cancellation behavior.
+    spec:
+      subject: {apiVersion: markitect.government-example/v1alpha1, kind: Requirement, namespace: commerce, name: cancel-order}
+      artifact: {apiVersion: markitect.government/v1alpha1, kind: Artifact, namespace: sample, name: shared-requirements}
+      role: States the cancellation obligation and its observable release condition.
+  - apiVersion: markitect.government/v1alpha1
+    kind: Realization
+    metadata: {namespace: sample, name: reservation-shared-doc}
+    purpose: The shared requirements document records the reservation behavior.
+    spec:
+      subject: {apiVersion: markitect.government-example/v1alpha1, kind: Requirement, namespace: commerce, name: release-reservation}
+      artifact: {apiVersion: markitect.government/v1alpha1, kind: Artifact, namespace: sample, name: shared-requirements}
+      role: States the stock invariant and its testable condition.
+  - apiVersion: markitect.government/v1alpha1
+    kind: Realization
+    metadata: {namespace: sample, name: reservation-source}
+    purpose: The inventory source contributes implementation behavior to the reservation requirement.
+    spec:
+      subject: {apiVersion: markitect.government-example/v1alpha1, kind: Requirement, namespace: commerce, name: release-reservation}
+      artifact: {apiVersion: markitect.government/v1alpha1, kind: Artifact, namespace: sample, name: reservation-implementation}
+      role: Implements guarded reservation release.
+  - apiVersion: markitect.government/v1alpha1
+    kind: Realization
+    metadata: {namespace: sample, name: reservation-source-test}
+    purpose: The inventory test verifies the reservation requirement.
+    spec:
+      subject: {apiVersion: markitect.government-example/v1alpha1, kind: Requirement, namespace: commerce, name: release-reservation}
+      artifact: {apiVersion: markitect.government/v1alpha1, kind: Artifact, namespace: sample, name: reservation-test}
+      role: Checks over-release rejection.
+
+  - apiVersion: markitect.government/v1alpha1
+    kind: Constitution
+    metadata: {namespace: sample, name: constitution}
+    purpose: Selects the complete initial commerce model and review cabinet.
+    spec:
+      root: {apiVersion: markitect.government/v1alpha1, kind: Area, namespace: sample, name: root}
+      cabinet:
+        - {apiVersion: markitect.government/v1alpha1, kind: Ressort, namespace: sample, name: commerce-review}
+      approval: unanimous-explicit-assent
+
+observation:
+  roots: ["."]
+  exclusions:
+    - path: README.md
+      reason: Example instructions are not part of the modeled project artifact boundary.
+  admitIgnored: []

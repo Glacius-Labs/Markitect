@@ -1,5 +1,7 @@
 # Markitect Government: Designpaket
 
+**Worker-Stand:** Die isolierte G1-Implementierung ist unter [Government G1](../../government.md) beschrieben. [Validierung](../../validation/government-g1.md) trennt lokale Quellprüfungen und unabhängigen Review von noch fehlender G2-Ausführung und Host-Übernahme. Ursprüngliche Entwurfsstatus unten bleiben historische Designaussagen.
+
 **Aktiviert am 7. Oktober 2026:** Das Nutzer-Go liegt vor. [Aktive Koordination](coordination.md) bindet die tatsächlichen Chats Worker, Scientist und Architect, Arbeitsbereiche und Erstaufträge. Hinweise auf ein noch ausstehendes Go im ursprünglichen Entwurf sind damit historisch.
 
 Stand: 2026-10-07. Design v0.1 des Koordinators, vorbereitet vor dem Go zur Koordination und Implementierung. Dieses Paket beschreibt die zu bauende Variante; es behauptet keine implementierten Fähigkeiten oder Versuchsergebnisse. Die beiden vom Nutzer angekündigten Chats erhalten erst nach seinem Go konkrete Aufträge.
