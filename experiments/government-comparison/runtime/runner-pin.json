@@ -1,12 +1,13 @@
 {
-  "path": "C:\\Users\\Consiliari\\AppData\\Roaming\\npm\\node_modules\\@openai\\codex\\node_modules\\@openai\\codex-win32-x64\\vendor\\x86_64-pc-windows-msvc\\codex\\codex.exe",
-  "sha256": "280cb1c4e3375d94dbdcba1a191f4f6adbf73c293be1e4f16c74b006662b9c54",
-  "version": "codex-cli 0.130.0",
+  "path": "C:\\Users\\Consiliari\\AppData\\Local\\OpenAI\\Codex\\bin\\5ea220ae823df3d7\\codex.exe",
+  "sha256": "3b8f6e33caa75f232558a3cf76ff9b87bb5ef6dbcf4996372f24e55c78b1b916",
+  "version": "codex-cli 0.160.1",
   "requestedModel": "gpt-6.1-sol",
   "requestedReasoning": "high",
   "actualModel": null,
-  "modelSupport": "unverified",
-  "providerProbeSessions": 0,
+  "modelSupport": "bundled exact model/high known; account and execution require diagnostic receipts",
+  "providerProbeSessions": null,
+  "counterScope": "Pin metadata only; actual attempts belong to separate immutable ledgers",
   "prospectiveConfig": {
     "model_reasoning_effort": "high",
     "project_doc_max_bytes": 0,
@@ -15,16 +16,20 @@
     "features.plugins": false,
     "features.hooks": false,
     "features.goals": false,
-    "model_providers.openai.request_max_retries": 0,
-    "model_providers.openai.stream_max_retries": 0,
+    "model_provider": "openai",
+    "features.apps": false,
+    "features.shell_tool": false,
+    "features.unified_exec": false,
+    "apps._default.enabled": false,
     "web_search": "disabled"
   },
-  "configSha256": "381453d46c0ec3174d7126db7c0fbeac4663df8556e6839ee0688ed8ae2bb6fd",
+  "configSha256": "d76e3fb0b5ab5a7204a65df154997e88afc6fe9f58da914c1136b06207f13edb",
   "gaps": [
     "Account support and resolved identity for gpt-6.1-sol/high have not been established by a provider receipt",
-    "No documented pre-dispatch provider-call cap found in installed exec interface or generated app-server protocol; six-call probe limit cannot yet be enforced",
+    "No pre-dispatch aggregate provider-call controller is established for the later study",
     "exec turn.completed is an agent-turn completion event; provider-turn count inside it remains unknown",
     "Provider token usage arrives retrospectively; no hard aggregate token ceiling is established",
-    "Effective instruction/memory/config/tool and filesystem access boundaries have not been probed by an actual Actor"
+    "Effective instruction/memory/config/tool and filesystem access boundaries have not been probed by an actual Actor",
+    "0.160.1 features list reports unified_exec=true despite requested false; no disabled-tool guarantee"
   ]
 }

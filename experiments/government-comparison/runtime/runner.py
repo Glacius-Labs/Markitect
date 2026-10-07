@@ -3,8 +3,8 @@ import hashlib
 import json
 from pathlib import Path
 
-EXPECTED_SHA256 = "280cb1c4e3375d94dbdcba1a191f4f6adbf73c293be1e4f16c74b006662b9c54"
-EXPECTED_VERSION = "codex-cli 0.130.0"
+EXPECTED_SHA256 = "3b8f6e33caa75f232558a3cf76ff9b87bb5ef6dbcf4996372f24e55c78b1b916"
+EXPECTED_VERSION = "codex-cli 0.160.1"
 MODEL = "gpt-6.1-sol"
 REASONING = "high"
 CONFIG = {
@@ -15,16 +15,20 @@ CONFIG = {
     "features.plugins": False,
     "features.hooks": False,
     "features.goals": False,
-    "model_providers.openai.request_max_retries": 0,
-    "model_providers.openai.stream_max_retries": 0,
+    "model_provider": "openai",
+    "features.apps": False,
+    "features.shell_tool": False,
+    "features.unified_exec": False,
+    "apps._default.enabled": False,
     "web_search": "disabled",
 }
 GAPS = [
     "Account support and resolved identity for gpt-6.1-sol/high have not been established by a provider receipt",
-    "No documented pre-dispatch provider-call cap found in installed exec interface or generated app-server protocol; six-call probe limit cannot yet be enforced",
+    "No pre-dispatch aggregate provider-call controller is established for the later study",
     "exec turn.completed is an agent-turn completion event; provider-turn count inside it remains unknown",
     "Provider token usage arrives retrospectively; no hard aggregate token ceiling is established",
     "Effective instruction/memory/config/tool and filesystem access boundaries have not been probed by an actual Actor",
+    "0.160.1 features list reports unified_exec=true despite requested false; no disabled-tool guarantee",
 ]
 
 
@@ -35,7 +39,8 @@ def inspect(executable):
         raise ValueError("Codex binary differs from readiness pin")
     return {"path": str(path), "sha256": digest, "version": EXPECTED_VERSION,
             "requestedModel": MODEL, "requestedReasoning": REASONING, "actualModel": None,
-            "modelSupport": "unverified", "providerProbeSessions": 0,
+            "modelSupport": "bundled exact model/high known; account and execution require diagnostic receipts",
+            "providerProbeSessions": None, "counterScope": "Pin metadata only; actual attempts belong to separate immutable ledgers",
             "prospectiveConfig": CONFIG, "configSha256": hashlib.sha256(
                 json.dumps(CONFIG, sort_keys=True, separators=(",", ":")).encode()).hexdigest(),
             "gaps": GAPS}

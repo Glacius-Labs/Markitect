@@ -77,6 +77,7 @@ def reserve(database, number):
 
 
 def run(root, executable, number=1):
+    raise ValueError("Historical two-start grant exhausted; this launch path is closed")
     root = Path(root).resolve()
     checkout = Path(__file__).resolve().parents[3]
     if root == checkout or checkout in root.parents or root in checkout.parents:

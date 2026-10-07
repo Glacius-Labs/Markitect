@@ -55,6 +55,7 @@ def reserve_last(database, previous, request_sha, actor_root):
 
 
 def run(root, executable):
+    raise ValueError("Historical two-start grant exhausted; this launch path is closed")
     root = Path(root).resolve(strict=True)
     checkout = ROOT.parents[1]
     if root == checkout or checkout in root.parents or root in checkout.parents:
