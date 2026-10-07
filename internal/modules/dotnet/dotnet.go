@@ -14,11 +14,21 @@ const CandidateUnverified = "candidate-unverified"
 // Input carries a bounded semantic scope and candidate bytes supplied by the
 // Host or its agent. Guidance is keyed by core.KindIdentity.Key().
 type Input struct {
-	Definitions    []core.Definition
-	Schemas        []core.Schema
-	Guidance       map[string]string
-	AllowedPaths   []string
-	CandidateFiles map[string][]byte
+	Definitions       []core.Definition
+	Schemas           []core.Schema
+	Guidance          map[string]string
+	AllowedPaths      []string
+	CandidateFiles    map[string][]byte
+	Policies          []core.Definition
+	TargetPrefix      string
+	AllowedRoots      []string
+	RequestDigest     string
+	CanonicalAffected bool
+	InventoryComplete bool
+	Previous          *PriorProjection
+	ObservedArtifacts []ArtifactObservation
+	Verification      *VerificationBinding
+	Repair            *RepairEvidence
 }
 
 // Escalation identifies a representation decision that needs explicit intent.

@@ -28,7 +28,7 @@ The source-alpha adoption commands take one exact Projection selector and an own
 }
 ```
 
-Replace the illustrative artifact paths with the exact existing paths under the selected Projection target. Caller-supplied active records are ownership claims for conflict checks; the command does not discover a durable ledger or infer missing history. Conflicts are checked before artifact verification. Existing target artifacts outside the exact selection are returned as unmatched and classified UNKNOWN. UNKNOWN does not mean rewrite or delete; ordinary reconciliation escalates it until ownership is resolved.
+Replace the illustrative artifact paths with the exact existing paths under the selected Projection target. In the compatibility read-only path, caller-supplied active records are ownership claims for conflict checks and no durable ledger is discovered. Conflicts are checked before artifact verification. Its full target snapshot can show existing files outside the exact selection as unmatched. UNKNOWN does not mean rewrite or delete; ordinary reconciliation escalates it until ownership is resolved.
 
 Create and inspect the read-only adoption plan against full immutable commits:
 
@@ -43,6 +43,17 @@ go run ./cmd/markitect canonical --repo . --config examples/canonical-projection
 ```
 
 `adopt` verifies only the existing selected artifact scope. It performs no generation, target writes, record persistence or active-record selection. It returns a ProjectionRecord with `origin: adopted` only when existing immutable checks pass. A failed or missing required check produces no adopted record. This proves the supplied bytes passed the declared checks for that bounded scope; it does not prove semantic adequacy, authenticate the review reference, or establish whole-repository adoption. Preserve the record through explicit caller-owned persistence and active selection, which remain separate operations.
+
+For durable first adoption, pass the closed canonical controller runtime configuration to both calls. Its `recordStore` and `checkInputs` supply the existing external ledger path and exact additional command inputs; its Executor and Verifier entries are required by the shared runtime format but are not invoked by adoption:
+
+```powershell
+go run ./cmd/markitect canonical --repo . --config examples/canonical-projection/canonical.yaml --runtime .artifacts/canonical-review/runtime.json --action adopt-plan --base SOURCE --revision TARGET --api-version markitect.foundation/v1 --kind Projection --namespace commerce --name application-dotnet --report .artifacts/canonical-review/selection.json
+go run ./cmd/markitect canonical --repo . --config examples/canonical-projection/canonical.yaml --runtime .artifacts/canonical-review/runtime.json --action adopt --base SOURCE --revision TARGET --api-version markitect.foundation/v1 --kind Projection --namespace commerce --name application-dotnet --report .artifacts/canonical-review/selection.json --expect PLAN_DIGEST --write
+```
+
+The durable plan binds the runtime digest and whether the external ledger is absent or its current StoreID, head and active record IDs. The selection must contain `activeRecords: []`; ownership is loaded from the ledger. Apply takes the controller lease, refreshes that binding, runs only the selected fixed commands over the exact selected evidence, and then initializes an absent external store if necessary, appends the retained adopted record and compare-and-swaps the active selection. A conflict, stale plan or failed check refuses before initialization. An append followed by a selection error is reported as partial. Host rereads the authoritative ledger: `activeSelectionStatus` is `observed-selected` or `observed-not-selected` when readable, or `unknown` when readback fails. An error may follow a committed selection, so inactive ownership is never assumed. Unobserved ledger head and active IDs are omitted; the attempted record and original error remain visible. No rollback or automatic retry occurs. No repository artifact, canonical input, index or HEAD is changed.
+
+Durable mode reads only canonical source blobs, selected artifact blobs and runtime `checkInputs`. The output identifies its inventory as selected-evidence-only, so its unmatched list is not a complete target-prefix inventory. The persisted record remains `materialized-unverified`; run a separate fresh Verify to record verification. Fixed command success is bounded technical evidence, not semantic assurance, authenticated approval or human acceptance.
 
 ## Read-only inspection and reconcile planning
 
@@ -62,7 +73,81 @@ Context shows the exact selected Definition, its Kind purpose/contract and outgo
 
 The output separates `scopeAffectedProjections` from `conservativeInvalidatedProjections`. Requests still bind full model digest and revision: a local change may stale every prior plan/evidence binding even when only a subset needs edits. `evidenceRefreshRequired` identifies retained representations that need new binding/evidence without inventing materialization edits. This limitation is explicit. Recorded artifacts are attributed to their own Projection, even when two representations share Definition scope.
 
-Conflicting active owners fail. Unknown files within configured target roots, retired ownership and overlapping proposed target scopes escalate before execution. The initial overlap check is deliberately broader than exact output collision. Caller-selected records do not establish a complete append history or full repository inventory. Arbitrary target exclusions/classification and autonomous per-Module work discovery are later steps.
+Conflicting active owners fail. Unknown files within configured target roots, retired ownership and overlapping proposed target scopes escalate before execution. The initial overlap check is deliberately broader than exact output collision. Caller-selected records do not establish a complete append history or full repository inventory. The separate controller source-alpha runtime supports exact per-file `targetExclusions` with owner-supplied reasons. Its proposal reports exclusion path, reason, present/missing state and available inventory metadata (path, mode and size); it does not report target-content hashes or imply whole-repository inventory. Subtree/pattern exclusions and undeclared background repository discovery remain unsupported. The separate [controller actions in Usage](usage.md#canonical-controller-actions-source-only-alpha) support Module-owned work proposals over explicit Host-supplied scopes. The section below documents the supported proposal/materialization/verification and evidence-refresh flows. The [live pilot](validation/standard-operating-model.md#live-protocol-pilot) demonstrates one bounded semantic repair with fresh local and parent verification and audited closure; repeated practical reliability remains unproven. The [roadmap assessment disposition](implementation-plan.md#astra-assessment-disposition-and-next-method-checkpoint) owns current operational evidence and remaining work.
+
+## Bounded controller path (source-only alpha)
+
+The controller actions provide a current, explicit path from a fixed source revision to candidate materialization and fresh verification. They are separate from `reconcile-plan` and the targeted `request`/`plan`/`apply` tools above. Use the [canonical controller runtime and command contract](usage.md#canonical-controller-actions-source-only-alpha) to prepare the closed runtime JSON, select a finite assurance scope, and keep reports and private logs outside the source snapshot.
+
+Use three full immutable commit IDs with distinct roles: `BASE` is the earlier comparison revision, `SOURCE` is the canonical source/target revision to reconcile, and `EVIDENCE` is the object-only commit returned by successful controller Apply. The following PowerShell 7.4+ sequence keeps every report and log outside the repository. Native stdout redirection preserves the CLI JSON bytes in a separate file; stderr is saved separately for diagnostics. Set the external runtime and these commit IDs for the project; the runtime must satisfy the closed schema in [Usage](usage.md#canonical-controller-actions-source-only-alpha).
+
+For fresh-process Verify, save the successful Apply JSON and use the alpha's `--apply-result` alternative instead of copying `SOURCE` and `EVIDENCE`; see [the controller command contract in Usage](usage.md#canonical-controller-actions-source-only-alpha). The explicit revision form below remains supported.
+
+```powershell
+$config = "examples/canonical-projection/canonical.yaml"
+$runtime = "C:/review/controller-runtime.json"
+$review = "C:/review"
+New-Item -ItemType Directory -Force $review | Out-Null
+$base = "FULL_BASE_COMMIT"
+$source = "FULL_SOURCE_COMMIT"
+
+function Invoke-MarkitectJson([string]$name, [string[]]$arguments) {
+    $stdout = Join-Path $review "$name.stdout.json"
+    $stderr = Join-Path $review "$name.stderr.txt"
+    & go @arguments 1> $stdout 2> $stderr
+    $exitCode = $LASTEXITCODE
+    [pscustomobject]@{ ExitCode = $exitCode; Stdout = $stdout; Stderr = $stderr }
+}
+
+$common = @("run", "./cmd/markitect", "canonical", "--repo", ".", "--config", $config, "--runtime", $runtime)
+$proposal = Invoke-MarkitectJson "controller-propose" ($common + @("--action", "controller-propose", "--base", $base, "--revision", $source))
+if ($proposal.ExitCode -ne 0) { Get-Content -Raw $proposal.Stdout; throw "Propose returned $($proposal.ExitCode); preserve its JSON and stderr for review." }
+$proposalReport = Get-Content -Raw $proposal.Stdout | ConvertFrom-Json
+if ($proposalReport.status -ne "planned") { Get-Content -Raw $proposal.Stdout; throw "Propose status is $($proposalReport.status); resolve its findings before Execute." }
+$work = @($proposalReport.plan.proposals | Where-Object { $_.decision -eq "work" })
+if ($work.Count -eq 0) { Get-Content -Raw $proposal.Stdout; throw "No materialization work was proposed; do not invoke Executor or expect an evidence revision." }
+
+$execute = Invoke-MarkitectJson "controller-execute" ($common + @("--action", "controller-execute", "--base", $base, "--revision", $source))
+if ($execute.ExitCode -ne 0) { Get-Content -Raw $execute.Stdout; throw "Execute returned $($execute.ExitCode); preserve its JSON and stderr for review." }
+$runPath = $execute.Stdout
+$run = Get-Content -Raw $runPath | ConvertFrom-Json
+if ($run.status -ne "planned" -or @($run.work).Count -eq 0) { Get-Content -Raw $runPath; throw "Execute produced no reviewed materialization work; leave this outcome open." }
+# Review $run.status, $run.work, candidate outputs, escalations and $run.digest before continuing.
+
+$apply = Invoke-MarkitectJson "controller-apply" ($common + @("--action", "controller-apply", "--base", $base, "--revision", $source, "--plan", $runPath, "--expect", "REVIEWED_RUN_DIGEST", "--write"))
+if ($apply.ExitCode -ne 0) { Get-Content -Raw $apply.Stdout; throw "Apply returned $($apply.ExitCode); do not continue with stale or partial evidence." }
+$applyReport = Get-Content -Raw $apply.Stdout | ConvertFrom-Json
+$evidence = $applyReport.evidenceRevision
+if (-not $evidence) { throw "Apply returned no evidenceRevision; preserve the report and do not claim materialization." }
+
+$verify = Invoke-MarkitectJson "controller-verify" ($common + @("--action", "controller-verify", "--base", $source, "--revision", $evidence, "--write"))
+if ($verify.ExitCode -ne 0) { Get-Content -Raw $verify.Stdout; throw "Verify returned $($verify.ExitCode); preserve its JSON and stderr and leave the outcome open." }
+Get-Content -Raw $verify.Stdout
+```
+
+`REVIEWED_RUN_DIGEST` is the digest from the exact saved Execute report, reviewed before Apply. A nonzero action still emits a bounded JSON report; preserve both stdout and stderr and inspect the status rather than treating the exit code alone as the full result. Execute invokes a configured Executor only for proposed work and does not run the fixed checks. Apply revalidates the saved proposal and writes an object-only `EVIDENCE` commit; it does not move `HEAD` or the index. The resulting records are `materialized-unverified`. Verify uses `--base SOURCE` and `--revision EVIDENCE`, runs the configured fixed checks and fresh Verifier across the configured assurance graph, and appends results only because this example supplies explicit `--write`.
+
+Keep the requested assurance roots/scopes explicit. For a content audit of every configured target scope, set `auditAll: true` in the runtime and include each intended projection in the configured assurance scopes; targeted `auditAll: false` planning leaves unchanged, unobserved projections unresolved. Even `auditAll` is bounded by declared targets and available evidence, does not inventory arbitrary repository files, and is not semantic proof. A `no-materialization-work` proposal is not a verification PASS. A technical `passed` Verify result is limited to its exact scope, checks and evidence and is not human acceptance or proof of repository-wide completeness.
+
+Evidence-only refresh is a separate guarded path for an existing complete materialization whose bytes still match but whose evidence binding is stale. For this separate case, set `$source` and `$evidence` to the exact immutable source and evidence revisions for the selected records, and save a JSON array of exact active Projection IDs in `$refreshIds`; the list is caller-selected, not discovered from arbitrary artifacts. Use the same external runtime and immutable source/evidence revisions:
+
+```powershell
+$refreshIds = "C:/review/projection-ids.json"
+$refresh = Invoke-MarkitectJson "controller-refresh-propose" ($common + @("--action", "controller-refresh-propose", "--base", $source, "--revision", $evidence, "--report", $refreshIds))
+if ($refresh.ExitCode -ne 0) { Get-Content -Raw $refresh.Stdout; throw "Refresh Propose returned $($refresh.ExitCode); review findings before proceeding." }
+$refreshPath = $refresh.Stdout
+$refreshReport = Get-Content -Raw $refreshPath | ConvertFrom-Json
+# Review selected IDs, findings, status and $refreshReport.digest. Preserve the exact proposal.
+$refreshApply = Invoke-MarkitectJson "controller-refresh-apply" ($common + @("--action", "controller-refresh-apply", "--base", $source, "--revision", $evidence, "--plan", $refreshPath, "--expect", "REVIEWED_REFRESH_DIGEST", "--write"))
+if ($refreshApply.ExitCode -ne 0) { Get-Content -Raw $refreshApply.Stdout; throw "Refresh Apply returned $($refreshApply.ExitCode); preserve its report and leave the outcome open." }
+$postRefreshVerify = Invoke-MarkitectJson "controller-verify-after-refresh" ($common + @("--action", "controller-verify", "--base", $source, "--revision", $evidence, "--write"))
+if ($postRefreshVerify.ExitCode -ne 0) { Get-Content -Raw $postRefreshVerify.Stdout; throw "Post-refresh Verify returned $($postRefreshVerify.ExitCode); preserve its report and leave the outcome open." }
+Get-Content -Raw $postRefreshVerify.Stdout
+```
+
+Refresh Apply retains eligible owned bytes and appends new `materialized-unverified` records; it invokes no Module, Executor or Verifier and never replays an old PASS. Run fresh `controller-verify` against the same `SOURCE` and `EVIDENCE` revisions after refresh. The full eligibility and refusal conditions are in the [retained evidence refresh contract](usage.md#retained-evidence-refresh-source-only-alpha).
+
+A failed semantic Verifier result remains failed. The source-alpha controller supports narrowly gated Dotnet repair scheduling on a subsequent reviewed proposal/run; it is not a general repair controller and is not part of published v0.13.0. After a failed result has been appended, a later explicit `controller-propose` may schedule one repair run only if `auditAll: true` is set in the unchanged runtime, canonical intent is unchanged, the exact previously verified artifact, check, runtime and child evidence are still current, and the latest record/result identifies a validated completed semantic failure with bounded findings. Keep `auditAll: true` from the initial Verify because its result binds the runtime configuration; changing it later invalidates reuse. Missing, stale, incomplete, invocation-error, owner-escalated or fixed-check-failure evidence remains inspection or eligible evidence refresh; deterministic Modules do not gain semantic repair behavior. A scheduled repair still requires one separately reviewed Execute/Apply/Verify run with no hidden retry. The capability alone is not repair evidence. The [live pilot](validation/standard-operating-model.md#live-protocol-pilot) separately records one real Executor repair, fresh local and parent verification, and final audited-scope closure; this bounded result does not establish a general repair success rate. Do not treat rerunning Verify, cached evidence or `no-materialization-work` as repair or closure. Incomplete, escalated, refused, or missing required scope/check/Verifier evidence leaves the configured assurance outcome open; resolve the stated gap and obtain fresh evidence before reporting technical completion.
 
 ## Executor tools and explicit mutation
 

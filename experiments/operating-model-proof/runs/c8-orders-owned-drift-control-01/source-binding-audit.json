@@ -1,0 +1,25 @@
+{
+  "freeze": "c8-orders-owned-drift-control-01/control-plan.json",
+  "sourceShaField": "41a1d28c930e415af8ecb868d50b763d4ad15149",
+  "equalsReceiptSourceCommit": true,
+  "baselineBlobOidLength": 40,
+  "driftBlobOidLength": 40,
+  "exactLaunch": {
+    "workdir": "<managed-evidence-worktree-root>",
+    "args": [
+      "canonical",
+      "--action",
+      "controller-propose",
+      "--repo",
+      "<external-C8-fixture>",
+      "--config",
+      "examples/operating-model/canonical-documentation-aligned.yaml",
+      "--runtime",
+      "<external-C8-runtime.json>",
+      "--base",
+      "86c46fd2a0da53dbcac407569a487f96e8198c04",
+      "--revision",
+      "606c1d6f243ee351f04ff0e20ee1685ce5b7c780"
+    ]
+  }
+}

@@ -1,0 +1,38 @@
+apiVersion: markitect.foundation/v1
+kind: Projection
+metadata:
+  namespace: unknown-ontology
+  name: mission-dotnet
+purpose: Represents the selected Mission, EffectAxis and Capability Definitions in one bounded .NET target.
+spec:
+  source:
+    definitions:
+      - apiVersion: public-mission.example.org/v1
+        kind: Mission
+        namespace: mission-planning
+        name: daily-reflection
+      - apiVersion: public-mission.example.org/v1
+        kind: EffectAxis
+        namespace: mission-planning
+        name: focus-duration
+      - apiVersion: public-mission.example.org/v1
+        kind: Capability
+        namespace: mission-planning
+        name: guided-focus
+  representation: dotnet
+  target:
+    repository: .
+    path: src/UnknownOntology/
+  policies:
+    - apiVersion: markitect.foundation/v1
+      kind: ProjectionPolicy
+      namespace: unknown-ontology
+      name: mission-dotnet
+    - apiVersion: markitect.foundation/v1
+      kind: ProjectionPolicy
+      namespace: unknown-ontology
+      name: effect-axis-dotnet
+    - apiVersion: markitect.foundation/v1
+      kind: ProjectionPolicy
+      namespace: unknown-ontology
+      name: capability-dotnet

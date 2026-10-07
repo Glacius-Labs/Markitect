@@ -1,0 +1,643 @@
+{
+  "schema": "markitect.sanitized-platform-gates-draft/v1",
+  "evidenceStatus": "candidate-draft",
+  "preparedUtc": "2026-10-06",
+  "sourceSha": "23c2c30d5e352b9172a0d24b82528012bfba1c18",
+  "overall": "MIXED: exact-head Linux gate harness passed. Windows build and gates 0-14 passed; direct full Go JSON tests passed in 416.148 s. Fixed-snapshot Verify exited 2/incomplete after its internal go-tests check reached 602000 ms; later gates did not run. The reason the check exceeded its limit remains UNPROVEN. No diagnostic fix is claimed.",
+  "linux": {
+    "runId": "20261006-153305-89a3a80e",
+    "platform": "linux/amd64",
+    "status": "PASS",
+    "sourceSha": "23c2c30d5e352b9172a0d24b82528012bfba1c18",
+    "actualHead": "23c2c30d5e352b9172a0d24b82528012bfba1c18",
+    "headMatches": true,
+    "exitCode": 0,
+    "dockerExitCode": 0,
+    "startedUtc": "2026-10-06T13:33:05.1037951Z",
+    "finishedUtc": "2026-10-06T13:34:29.9896908Z",
+    "network": "none",
+    "timeout": "Go default; no -timeout override",
+    "bundleSha256": "b46651c0a94f842926bbb1e3e5860bc446c47ddad249453684fcfc1fcbabbf10",
+    "harnessSha256": "80bb3e0ef8ffeb852413412a3b710a770da452ee1abdd132052861e68402e84d",
+    "containerImage": "sha256:69a7b9788769bec032d238959b61854e9ae87f57be9029ec04e9885fabf99195",
+    "receiptSha256": "sha256:ac902a9553764e10b9c63e4370f014802455f41f5874e02ae118d6f7b5af2216",
+    "gateLogSha256": "sha256:e1bceb5763d86aacf046b2d57b34e02e4a8f63d0e64cac4c3766ea0cc89e0d97",
+    "commandTraceCount": 87,
+    "commandTrace": [
+      "python3 --version",
+      "git diff --check",
+      "go mod verify",
+      "go test ./internal/tooling/architecture",
+      "go test ./internal/host -run '^(TestAnchored|TestWriteRootRead|TestLockWriter|TestCanonicalControllerLease)' -count=1 -v",
+      "go test -count=1 -v ./internal/host/recordstore",
+      "go test ./... -count=1",
+      "go test ./internal/host -run '^$' -bench Authoring -benchtime=1x",
+      "go vet ./...",
+      "go build ./...",
+      "go mod verify",
+      "go run ./cmd/markitect check --repo . --revision 23c2c30d5e352b9172a0d24b82528012bfba1c18",
+      "go run ./cmd/markitect format --repo .",
+      "go run ./cmd/markitect-check-artifacts --repo . --config markitect-artifacts.yaml",
+      "go run ./cmd/markitect-check-modules --repo . --hooks .markitect/modules/githooks.config --pipelines .markitect/modules/pipelines.config",
+      "go run ./cmd/markitect context --repo . --revision 23c2c30d5e352b9172a0d24b82528012bfba1c18 --namespace development --kind Skill --name engineering-change",
+      "go run ./cmd/markitect verify --repo . --revision 23c2c30d5e352b9172a0d24b82528012bfba1c18",
+      "go test ./internal/host -run '^TestProjectionGreenfieldCandidatesConvergeAgainstIndependentEvidence$' -count=1",
+      "python3 -",
+      "go run ./cmd/markitect canonical --repo . --config examples/canonical-projection/canonical.yaml --action model --revision 23c2c30d5e352b9172a0d24b82528012bfba1c18",
+      "go test ./examples -run '^TestCanonicalProjectionBoundCandidateApplyVerifyAndRepair$' -count=1",
+      "go run ./cmd/markitect schema --repo .",
+      "go run ./cmd/markitect format --repo examples/minimal",
+      "go run ./cmd/markitect check --repo examples/minimal",
+      "go run ./cmd/markitect check --repo examples/repository-layout",
+      "go run ./cmd/markitect format --repo examples/repository-layout",
+      "go run ./cmd/markitect check --repo examples/markdown-navigation",
+      "go run ./cmd/markitect format --repo examples/markdown-navigation",
+      "go run ./cmd/markitect check --repo benchmark/fixtures/v2",
+      "go run ./cmd/markitect check --repo examples/documentation",
+      "go run ./cmd/markitect format --repo examples/documentation",
+      "go run ./cmd/markitect check --repo examples/onboarding/delivery-service",
+      "go run ./cmd/markitect format --repo examples/onboarding/delivery-service",
+      "go run ./cmd/markitect check --repo examples/canonical-engineering",
+      "go run ./cmd/markitect context --repo examples/canonical-engineering --kind Skill --name architecture-review --namespace engineering",
+      "go run ./cmd/markitect model --repo examples/canonical-engineering",
+      "go run ./cmd/markitect format --repo examples/canonical-engineering",
+      "go run ./cmd/markitect check --repo examples/engineering-constitution",
+      "go run ./cmd/markitect context --repo examples/engineering-constitution --namespace engineering --kind Skill --name add-order",
+      "go run ./cmd/markitect model --repo examples/engineering-constitution",
+      "go run ./cmd/markitect format --repo examples/engineering-constitution",
+      "go run ./cmd/markitect check --repo examples/engineering-discovery",
+      "go run ./cmd/markitect format --repo examples/engineering-discovery",
+      "go run ./cmd/markitect check --repo examples/software-architecture",
+      "go run ./cmd/markitect context --repo examples/software-architecture --namespace engineering --kind Skill --name implement-order",
+      "go run ./cmd/markitect model --repo examples/software-architecture",
+      "go run ./cmd/markitect format --repo examples/software-architecture",
+      "go run ./cmd/markitect check --repo examples/delivery-target-equality",
+      "go run ./cmd/markitect model --repo examples/delivery-target-equality",
+      "go run ./cmd/markitect context --repo examples/delivery-target-equality --namespace engineering --kind Skill --name deployment-review",
+      "go run ./cmd/markitect format --repo examples/delivery-target-equality",
+      "go run ./cmd/markitect check --repo examples/documentation-placement",
+      "go run ./cmd/markitect format --repo examples/documentation-placement",
+      "go run ./cmd/markitect check --repo examples/package-consumer",
+      "go run ./cmd/markitect context --repo examples/package-consumer --package review-guidance --namespace review --kind Workflow --name review-change",
+      "go run ./cmd/markitect context --repo examples/package-consumer --namespace consumer --kind Skill --name local-review-entry",
+      "go run ./cmd/markitect package --repo . --output /work/package",
+      "go test .markitect/bootstrap/run.go .markitect/bootstrap/run_test.go",
+      "python3 -c 'import zipfile; zipfile.ZipFile(\"/work/package/.markitect/tool/source.zip\").extractall(\"/work/package-source\")'",
+      "go build -trimpath -buildvcs=false -o /work/package-bin/markitect-adapter-dotnet ./cmd/markitect-adapter-dotnet",
+      "go run .markitect/bootstrap/run.go context --repo /work/source/examples/canonical-engineering --kind Skill --name architecture-review --namespace engineering",
+      "go run .markitect/bootstrap/run.go model --repo /work/source/examples/canonical-engineering",
+      "go run .markitect/bootstrap/run.go format --repo /work/source/examples/canonical-engineering",
+      "go run .markitect/bootstrap/run.go check --repo /work/source/examples/software-architecture",
+      "go run .markitect/bootstrap/run.go model --repo /work/source/examples/software-architecture",
+      "go run .markitect/bootstrap/run.go context --repo /work/source/examples/software-architecture --namespace engineering --kind Skill --name implement-order",
+      "go run .markitect/bootstrap/run.go format --repo /work/source/examples/software-architecture",
+      "go run .markitect/bootstrap/run.go check --repo /work/source/examples/delivery-target-equality",
+      "go run .markitect/bootstrap/run.go model --repo /work/source/examples/delivery-target-equality",
+      "go run .markitect/bootstrap/run.go context --repo /work/source/examples/delivery-target-equality --namespace engineering --kind Skill --name deployment-review",
+      "go run .markitect/bootstrap/run.go format --repo /work/source/examples/delivery-target-equality",
+      "go run .markitect/bootstrap/run.go reconcile --repo /work/canonical-engineering --action observe --adapter markitect-render",
+      "go run .markitect/bootstrap/run.go reconcile --repo /work/canonical-engineering --action plan --adapter markitect-render",
+      "go run .markitect/bootstrap/run.go reconcile --repo /work/canonical-engineering --action apply --adapter markitect-render --plan /work/canonical-engineering/.artifacts/markitect/reconcile/plan.yaml --write",
+      "go run .markitect/bootstrap/run.go reconcile --repo /work/canonical-engineering --action verify --adapter markitect-render --plan /work/canonical-engineering/.artifacts/markitect/reconcile/plan.yaml",
+      "go run .markitect/bootstrap/run.go reconcile --repo /work/canonical-engineering --action observe --adapter dotnet-dependencies",
+      "go run .markitect/bootstrap/run.go reconcile --repo /work/canonical-engineering --action plan --adapter dotnet-dependencies",
+      "go run .markitect/bootstrap/run.go reconcile --repo /work/canonical-engineering --action verify --adapter dotnet-dependencies --plan /work/canonical-engineering/.artifacts/markitect/reconcile/dotnet-plan.yaml",
+      "go run .markitect/bootstrap/run.go init --repo /work/init-project --name started-project --namespace engineering",
+      "go run .markitect/bootstrap/run.go init --repo /work/init-project --name started-project --namespace engineering --write",
+      "go build -trimpath -buildvcs=false -o /work/package-bin/markitect ./cmd/markitect",
+      "go test ./examples -run '^TestSelectiveAdoptionCLI$' -count=1",
+      "go test ./internal/host/cli -run '^(TestPolicyFailureAnalysisCLIIsExplicitAndKeepsAcceptanceStrict|TestPolicyFailingWorkingTreeRejectsReconciliationAndWritersWithoutMutation|TestPolicyFailureAnalysisBlocksStructuralDiagnostics)$' -count=1",
+      "go build -trimpath -buildvcs=false -o /work/package-bin/markitect-check-artifacts ./cmd/markitect-check-artifacts",
+      "python3 -B experiments/operating-model-proof/test_run.py",
+      "python3 -B internal/tooling/codexrunner/test_runner.py",
+      "git diff --check"
+    ],
+    "gates": "PASS: full go test ./..., vet/build, fixed-source check/context/verify, schema, examples, packaging/bootstrap, focused Host and recordstore controls, architecture and runner/experiment checks.",
+    "checkoutCleanAtCompletion": true
+  },
+  "windows": {
+    "runId": "20261006T133109Z-cc5731cf998443d6b2cea942bdfc5d65",
+    "platform": "windows/amd64",
+    "sourceSha": "23c2c30d5e352b9172a0d24b82528012bfba1c18",
+    "headBefore": "23c2c30d5e352b9172a0d24b82528012bfba1c18",
+    "headAfter": "23c2c30d5e352b9172a0d24b82528012bfba1c18",
+    "cleanBefore": true,
+    "cleanAfter": true,
+    "gateLedgerSha256": "sha256:62b137306b809303fa4a9d3f80bee152bac51c078e848b7c50fee5e700a61c9c",
+    "environmentSha256": "sha256:b8af4633d1a744f76c6dd7c4b240ba7c47f300e87e323cdb16443e64e5315338",
+    "build": {
+      "goVersion": "go1.27.1 windows/amd64",
+      "argv": [
+        "<GO_EXE>",
+        "build",
+        "-trimpath",
+        "-buildvcs=false",
+        "-o",
+        "<RUN>/markitect.exe",
+        "./cmd/markitect"
+      ],
+      "exitCode": 0,
+      "seconds": 4.106,
+      "binarySha256": "sha256:4aff96eb448c189d846b74425d6237bd64980613f1e243b28a137a6a3185c8c1",
+      "buildReceiptSha256": "sha256:911c54e7a0270b1faa7ab16c072caf7c4a6064e46592a12b2cd7c3912857f8dd"
+    },
+    "fullGo": {
+      "sequence": 5,
+      "argv": [
+        "<GO_EXE>",
+        "test",
+        "./...",
+        "-count=1",
+        "-json"
+      ],
+      "status": "PASS",
+      "exitCode": 0,
+      "timedOut": false,
+      "seconds": 416.148,
+      "stdoutSha256": "sha256:f2c1ffd8b8e9f28027bf0d9de73e3731bf9dfa4ceae8b019c243a12df7033a33",
+      "passEvents": 1596,
+      "failEvents": 0,
+      "skipEvents": 36,
+      "noTestPackageEvents": 17,
+      "topLevelTestSkipEvents": 17,
+      "subtestSkipEvents": 2,
+      "skippedTests": [
+        {
+          "package": "github.com/Glacius-Labs/Markitect/internal/tooling/release",
+          "test": "TestPackageRejectsSymlinksInSourceTree"
+        },
+        {
+          "package": "github.com/Glacius-Labs/Markitect/internal/host",
+          "test": "TestCheckArtifactsRejectsCollisionsAndSymlinks"
+        },
+        {
+          "package": "github.com/Glacius-Labs/Markitect/internal/infrastructure/source",
+          "test": "TestInventoryWorkingRootsRejectsOverlapsAndSymlinks"
+        },
+        {
+          "package": "github.com/Glacius-Labs/Markitect/examples",
+          "test": "TestEngineeringDiscoveryDossierBindsEvidenceAndCandidateToDecision/rejects_symlink_aliases_into_Project"
+        },
+        {
+          "package": "github.com/Glacius-Labs/Markitect/internal/infrastructure/source",
+          "test": "TestLoadRejectsWorkingTreeSymlinks"
+        },
+        {
+          "package": "github.com/Glacius-Labs/Markitect/internal/host",
+          "test": "TestCanonicalControllerLeaseReleaseAfterParentRenameDoesNotDeleteReplacement"
+        },
+        {
+          "package": "github.com/Glacius-Labs/Markitect/internal/host",
+          "test": "TestCanonicalControllerLeaseRejectsParentSwapBeforeCreate"
+        },
+        {
+          "package": "github.com/Glacius-Labs/Markitect/internal/host",
+          "test": "TestInstallRejectsSymlinkedPinPath"
+        },
+        {
+          "package": "github.com/Glacius-Labs/Markitect/internal/host",
+          "test": "TestRepresentationCheckCannotChangeExecutableMode"
+        },
+        {
+          "package": "github.com/Glacius-Labs/Markitect/internal/host",
+          "test": "TestWriteSchemasRefusesSymlinkPath"
+        },
+        {
+          "package": "github.com/Glacius-Labs/Markitect/internal/host",
+          "test": "TestSafeDestinationRejectsCaseOnlySymlinkAncestor"
+        },
+        {
+          "package": "github.com/Glacius-Labs/Markitect/internal/host",
+          "test": "TestAnchoredAtomicWriteRefusesRootSwap"
+        },
+        {
+          "package": "github.com/Glacius-Labs/Markitect/internal/host",
+          "test": "TestAnchoredAtomicWriteRefusesSwappedParent"
+        },
+        {
+          "package": "github.com/Glacius-Labs/Markitect/internal/host",
+          "test": "TestAnchoredAtomicWriteContainsSwapAtPreOpenBoundary"
+        },
+        {
+          "package": "github.com/Glacius-Labs/Markitect/internal/host",
+          "test": "TestAnchoredAtomicWriteDoesNotFollowInRootAliasAtPreOpenBoundary"
+        },
+        {
+          "package": "github.com/Glacius-Labs/Markitect/internal/host",
+          "test": "TestAnchoredAtomicWriteRejectsInRootAliasAtPreRenameBoundary"
+        },
+        {
+          "package": "github.com/Glacius-Labs/Markitect/internal/host",
+          "test": "TestAnchoredAtomicWriteRetainsRootLevelPublicationAfterRootMove"
+        },
+        {
+          "package": "github.com/Glacius-Labs/Markitect/internal/host",
+          "test": "TestAnchoredAtomicWriteRefusesReplacedRootJunction"
+        },
+        {
+          "package": "github.com/Glacius-Labs/Markitect/internal/host",
+          "test": "TestAnchoredExclusiveCreationReportsPublishedObjectsAfterParentSwap/exclusive-file"
+        }
+      ],
+      "noTestPackages": [
+        "github.com/Glacius-Labs/Markitect/cmd/markitect",
+        "github.com/Glacius-Labs/Markitect/cmd/markitect-adapter-azure-devops",
+        "github.com/Glacius-Labs/Markitect/cmd/markitect-adapter-dotnet",
+        "github.com/Glacius-Labs/Markitect/cmd/markitect-adapter-github",
+        "github.com/Glacius-Labs/Markitect/cmd/markitect-check-architecture",
+        "github.com/Glacius-Labs/Markitect/cmd/markitect-check-artifacts",
+        "github.com/Glacius-Labs/Markitect/cmd/markitect-check-modules",
+        "github.com/Glacius-Labs/Markitect/cmd/markitect-release",
+        "github.com/Glacius-Labs/Markitect/examples/canonical-projection/evidence",
+        "github.com/Glacius-Labs/Markitect/examples/canonical-workflow/check",
+        "github.com/Glacius-Labs/Markitect/examples/documentation/docs/implementation/src",
+        "github.com/Glacius-Labs/Markitect/examples/engineering-discovery",
+        "github.com/Glacius-Labs/Markitect/examples/selective-adoption",
+        "github.com/Glacius-Labs/Markitect/examples/selective-adoption/pathspell",
+        "github.com/Glacius-Labs/Markitect/internal/tooling/licenses",
+        "github.com/Glacius-Labs/Markitect/runs/c11checktools/original",
+        "github.com/Glacius-Labs/Markitect/runs/c11checktools/replacement"
+      ]
+    },
+    "verify": {
+      "sequence": 15,
+      "argv": [
+        "<RUN>/markitect.exe",
+        "verify",
+        "--repo",
+        ".",
+        "--revision",
+        "23c2c30d5e352b9172a0d24b82528012bfba1c18"
+      ],
+      "status": "INCOMPLETE",
+      "exitCode": 2,
+      "outerTimedOut": false,
+      "elapsedSeconds": 729.823,
+      "stdoutSha256": "sha256:afc0a49d40c64732e03798c627f1034c33e84fa3ef7efcfb2b863dd380dadc1b",
+      "internalGoTestsCheck": {
+        "name": "go-tests",
+        "tool": "go",
+        "exitCode": -1,
+        "limitMilliseconds": 602000,
+        "message": "exceeded 10m0s execution limit",
+        "timeoutCause": "UNPROVEN"
+      },
+      "laterGates": "NOT RUN"
+    },
+    "gates": [
+      {
+        "sequence": 0,
+        "name": "build-markitect-first",
+        "exitCode": 0,
+        "timedOut": false,
+        "seconds": 4.106,
+        "argv": [
+          "<GO_EXE>",
+          "build",
+          "-trimpath",
+          "-buildvcs=false",
+          "-o",
+          "<RUN>\\markitect.exe",
+          "./cmd/markitect"
+        ],
+        "sourceSha": "23c2c30d5e352b9172a0d24b82528012bfba1c18",
+        "headBefore": "23c2c30d5e352b9172a0d24b82528012bfba1c18",
+        "headAfter": "23c2c30d5e352b9172a0d24b82528012bfba1c18",
+        "cleanBefore": true,
+        "cleanAfter": true,
+        "stdoutSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderrSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "sequence": 1,
+        "name": "python-operating-model-driver-tests",
+        "exitCode": 0,
+        "timedOut": false,
+        "seconds": 0.382,
+        "argv": [
+          "<PYTHON_EXE>",
+          "<SOURCE_WORKTREE>\\experiments\\operating-model-proof\\test_run.py"
+        ],
+        "sourceSha": "23c2c30d5e352b9172a0d24b82528012bfba1c18",
+        "headBefore": "23c2c30d5e352b9172a0d24b82528012bfba1c18",
+        "headAfter": "23c2c30d5e352b9172a0d24b82528012bfba1c18",
+        "cleanBefore": true,
+        "cleanAfter": true,
+        "stdoutSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderrSha256": "sha256:830f9b7041f47584ecddacda7fe77bbc56bdf411be74ca322f0e32f4d5e59d00"
+      },
+      {
+        "sequence": 2,
+        "name": "python-codexrunner-wrapper-tests",
+        "exitCode": 0,
+        "timedOut": false,
+        "seconds": 0.368,
+        "argv": [
+          "<PYTHON_EXE>",
+          "<SOURCE_WORKTREE>\\internal\\tooling\\codexrunner\\test_runner.py"
+        ],
+        "sourceSha": "23c2c30d5e352b9172a0d24b82528012bfba1c18",
+        "headBefore": "23c2c30d5e352b9172a0d24b82528012bfba1c18",
+        "headAfter": "23c2c30d5e352b9172a0d24b82528012bfba1c18",
+        "cleanBefore": true,
+        "cleanAfter": true,
+        "stdoutSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderrSha256": "sha256:f7d15f4b38b5fd2febd97b6b8be6d35c87133131f5f49e836e9b6aeff0218e15"
+      },
+      {
+        "sequence": 3,
+        "name": "go-mod-verify-initial",
+        "exitCode": 0,
+        "timedOut": false,
+        "seconds": 0.163,
+        "argv": [
+          "<GO_EXE>",
+          "mod",
+          "verify"
+        ],
+        "sourceSha": "23c2c30d5e352b9172a0d24b82528012bfba1c18",
+        "headBefore": "23c2c30d5e352b9172a0d24b82528012bfba1c18",
+        "headAfter": "23c2c30d5e352b9172a0d24b82528012bfba1c18",
+        "cleanBefore": true,
+        "cleanAfter": true,
+        "stdoutSha256": "sha256:b4537ed75f533f993f371954de47e42a793b8e5b0587577de7e27fb3e50696bd",
+        "stderrSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "sequence": 4,
+        "name": "architecture-import-gate",
+        "exitCode": 0,
+        "timedOut": false,
+        "seconds": 1.479,
+        "argv": [
+          "<GO_EXE>",
+          "test",
+          "./internal/tooling/architecture",
+          "-count=1"
+        ],
+        "sourceSha": "23c2c30d5e352b9172a0d24b82528012bfba1c18",
+        "headBefore": "23c2c30d5e352b9172a0d24b82528012bfba1c18",
+        "headAfter": "23c2c30d5e352b9172a0d24b82528012bfba1c18",
+        "cleanBefore": true,
+        "cleanAfter": true,
+        "stdoutSha256": "sha256:27ca7f2410156c94b805ecb5362b5a60f6f04d429347c9353e48aa9d5f547a84",
+        "stderrSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "sequence": 5,
+        "name": "full-go-test-default-timeout",
+        "exitCode": 0,
+        "timedOut": false,
+        "seconds": 416.148,
+        "argv": [
+          "<GO_EXE>",
+          "test",
+          "./...",
+          "-count=1",
+          "-json"
+        ],
+        "sourceSha": "23c2c30d5e352b9172a0d24b82528012bfba1c18",
+        "headBefore": "23c2c30d5e352b9172a0d24b82528012bfba1c18",
+        "headAfter": "23c2c30d5e352b9172a0d24b82528012bfba1c18",
+        "cleanBefore": true,
+        "cleanAfter": true,
+        "stdoutSha256": "sha256:f2c1ffd8b8e9f28027bf0d9de73e3731bf9dfa4ceae8b019c243a12df7033a33",
+        "stderrSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "sequence": 6,
+        "name": "authoring-benchmark",
+        "exitCode": 0,
+        "timedOut": false,
+        "seconds": 1.43,
+        "argv": [
+          "<GO_EXE>",
+          "test",
+          "./internal/host",
+          "-run",
+          "^$",
+          "-bench",
+          "Authoring",
+          "-benchtime=1x"
+        ],
+        "sourceSha": "23c2c30d5e352b9172a0d24b82528012bfba1c18",
+        "headBefore": "23c2c30d5e352b9172a0d24b82528012bfba1c18",
+        "headAfter": "23c2c30d5e352b9172a0d24b82528012bfba1c18",
+        "cleanBefore": true,
+        "cleanAfter": true,
+        "stdoutSha256": "sha256:29b23de5b3cac0971da308c74d3c347c1720fe772f38257312ccfa39cb0f9422",
+        "stderrSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "sequence": 7,
+        "name": "go-vet",
+        "exitCode": 0,
+        "timedOut": false,
+        "seconds": 4.189,
+        "argv": [
+          "<GO_EXE>",
+          "vet",
+          "./..."
+        ],
+        "sourceSha": "23c2c30d5e352b9172a0d24b82528012bfba1c18",
+        "headBefore": "23c2c30d5e352b9172a0d24b82528012bfba1c18",
+        "headAfter": "23c2c30d5e352b9172a0d24b82528012bfba1c18",
+        "cleanBefore": true,
+        "cleanAfter": true,
+        "stdoutSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderrSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "sequence": 8,
+        "name": "go-build-all",
+        "exitCode": 0,
+        "timedOut": false,
+        "seconds": 3.317,
+        "argv": [
+          "<GO_EXE>",
+          "build",
+          "./..."
+        ],
+        "sourceSha": "23c2c30d5e352b9172a0d24b82528012bfba1c18",
+        "headBefore": "23c2c30d5e352b9172a0d24b82528012bfba1c18",
+        "headAfter": "23c2c30d5e352b9172a0d24b82528012bfba1c18",
+        "cleanBefore": true,
+        "cleanAfter": true,
+        "stdoutSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderrSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "sequence": 9,
+        "name": "markitect-schema",
+        "exitCode": 0,
+        "timedOut": false,
+        "seconds": 0.508,
+        "argv": [
+          "<RUN>\\markitect.exe",
+          "schema",
+          "--repo",
+          "."
+        ],
+        "sourceSha": "23c2c30d5e352b9172a0d24b82528012bfba1c18",
+        "headBefore": "23c2c30d5e352b9172a0d24b82528012bfba1c18",
+        "headAfter": "23c2c30d5e352b9172a0d24b82528012bfba1c18",
+        "cleanBefore": true,
+        "cleanAfter": true,
+        "stdoutSha256": "sha256:cc6efb4402aef43041442ea29e6a9b1459af4ecb12b2ab78557d4063f4e7f1c8",
+        "stderrSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "sequence": 10,
+        "name": "dogfood-check-fixed-source",
+        "exitCode": 0,
+        "timedOut": false,
+        "seconds": 1.823,
+        "argv": [
+          "<RUN>\\markitect.exe",
+          "check",
+          "--repo",
+          ".",
+          "--revision",
+          "23c2c30d5e352b9172a0d24b82528012bfba1c18"
+        ],
+        "sourceSha": "23c2c30d5e352b9172a0d24b82528012bfba1c18",
+        "headBefore": "23c2c30d5e352b9172a0d24b82528012bfba1c18",
+        "headAfter": "23c2c30d5e352b9172a0d24b82528012bfba1c18",
+        "cleanBefore": true,
+        "cleanAfter": true,
+        "stdoutSha256": "sha256:3afee081e0209044d6049715e1c52d6b19161246109afe00e5e92cf2a49c0c2d",
+        "stderrSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "sequence": 11,
+        "name": "dogfood-format",
+        "exitCode": 0,
+        "timedOut": false,
+        "seconds": 0.797,
+        "argv": [
+          "<RUN>\\markitect.exe",
+          "format",
+          "--repo",
+          "."
+        ],
+        "sourceSha": "23c2c30d5e352b9172a0d24b82528012bfba1c18",
+        "headBefore": "23c2c30d5e352b9172a0d24b82528012bfba1c18",
+        "headAfter": "23c2c30d5e352b9172a0d24b82528012bfba1c18",
+        "cleanBefore": true,
+        "cleanAfter": true,
+        "stdoutSha256": "sha256:4b76e2b7f4db654f3736ea75209b020b879643b772daacda173436ff1160039b",
+        "stderrSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "sequence": 12,
+        "name": "dogfood-artifact-accounting",
+        "exitCode": 0,
+        "timedOut": false,
+        "seconds": 2.052,
+        "argv": [
+          "<GO_EXE>",
+          "run",
+          "./cmd/markitect-check-artifacts",
+          "--repo",
+          ".",
+          "--config",
+          "markitect-artifacts.yaml"
+        ],
+        "sourceSha": "23c2c30d5e352b9172a0d24b82528012bfba1c18",
+        "headBefore": "23c2c30d5e352b9172a0d24b82528012bfba1c18",
+        "headAfter": "23c2c30d5e352b9172a0d24b82528012bfba1c18",
+        "cleanBefore": true,
+        "cleanAfter": true,
+        "stdoutSha256": "sha256:507a91a67e2eea6e35f74190e2216a062705cf672a0025e34e4f9d8a3c732e50",
+        "stderrSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "sequence": 13,
+        "name": "dogfood-module-checks",
+        "exitCode": 0,
+        "timedOut": false,
+        "seconds": 1.419,
+        "argv": [
+          "<GO_EXE>",
+          "run",
+          "./cmd/markitect-check-modules",
+          "--repo",
+          ".",
+          "--hooks",
+          ".markitect/modules/githooks.config",
+          "--pipelines",
+          ".markitect/modules/pipelines.config"
+        ],
+        "sourceSha": "23c2c30d5e352b9172a0d24b82528012bfba1c18",
+        "headBefore": "23c2c30d5e352b9172a0d24b82528012bfba1c18",
+        "headAfter": "23c2c30d5e352b9172a0d24b82528012bfba1c18",
+        "cleanBefore": true,
+        "cleanAfter": true,
+        "stdoutSha256": "sha256:fe1658a7476d68906454943f0eda32c2675ba14aece19aeadae85c438509b546",
+        "stderrSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "sequence": 14,
+        "name": "dogfood-context-fixed-source",
+        "exitCode": 0,
+        "timedOut": false,
+        "seconds": 0.553,
+        "argv": [
+          "<RUN>\\markitect.exe",
+          "context",
+          "--repo",
+          ".",
+          "--revision",
+          "23c2c30d5e352b9172a0d24b82528012bfba1c18",
+          "--namespace",
+          "development",
+          "--kind",
+          "Skill",
+          "--name",
+          "engineering-change"
+        ],
+        "sourceSha": "23c2c30d5e352b9172a0d24b82528012bfba1c18",
+        "headBefore": "23c2c30d5e352b9172a0d24b82528012bfba1c18",
+        "headAfter": "23c2c30d5e352b9172a0d24b82528012bfba1c18",
+        "cleanBefore": true,
+        "cleanAfter": true,
+        "stdoutSha256": "sha256:87833bc5c687b4734895702e9055c5db884efe77f19afdde785f893dc2c4bf69",
+        "stderrSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "sequence": 15,
+        "name": "dogfood-verify-fixed-source",
+        "exitCode": 2,
+        "timedOut": false,
+        "seconds": 729.823,
+        "argv": [
+          "<RUN>\\markitect.exe",
+          "verify",
+          "--repo",
+          ".",
+          "--revision",
+          "23c2c30d5e352b9172a0d24b82528012bfba1c18"
+        ],
+        "sourceSha": "23c2c30d5e352b9172a0d24b82528012bfba1c18",
+        "headBefore": "23c2c30d5e352b9172a0d24b82528012bfba1c18",
+        "headAfter": "23c2c30d5e352b9172a0d24b82528012bfba1c18",
+        "cleanBefore": true,
+        "cleanAfter": true,
+        "stdoutSha256": "sha256:afc0a49d40c64732e03798c627f1034c33e84fa3ef7efcfb2b863dd380dadc1b",
+        "stderrSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    ],
+    "note": "The outer Verify row has timedOut=false; the nested go-tests check reached its recorded 602000 ms limit. The underlying reason is unproven."
+  },
+  "priorEvidence": {
+    "e788GatePacketSha256": "sha256:5e0b0206a33890331f414b6520794e7cea832ecc535e50e257a11f33da07d581",
+    "e788SeparateDiagnosticAssessmentSha256": "sha256:72b06697abfe5d5e2ca2a04f8cc0bc160b2d476593d761b78e27a49cded829be",
+    "diagnosticDisposition": "Separate diagnostic work remains unresolved; this 23c2 platform packet asserts no diagnosis or fix and does not rescore prior receipts."
+  },
+  "limits": [
+    "Linux trace count is a harness command count and is not comparable to Windows Go JSON event counts.",
+    "These are technical gate receipts for the stated source/platforms; they do not establish semantic assurance, runtime/deployment behavior, acceptance, or release readiness.",
+    "Raw receipts, full logs, and environment.json are not copied; hashes bind retained artifacts.",
+    "Timeout cause remains UNPROVEN; no diagnostic fix is claimed."
+  ]
+}

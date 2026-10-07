@@ -64,6 +64,7 @@ spec:
             - go
             - test
             - ./...
+            - -count=1
     adapters:
         - name: engineering-representations
           type: local-projection

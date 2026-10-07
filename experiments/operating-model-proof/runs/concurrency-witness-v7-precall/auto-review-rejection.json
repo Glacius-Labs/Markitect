@@ -1,0 +1,15 @@
+{
+  "protocol": "operating-model-proof/v7",
+  "status": "NOT RUN - AUTO-REVIEW REJECTED BEFORE PROCESS START",
+  "attemptedAction": "Start exactly the two frozen external controller Execute calls for the public C4 fixture using native Codex CLI 0.130.0 and gpt-5.5 high.",
+  "rejection": "This action was rejected due to unacceptable risk. Reason: This launches two external Codex provider executions that may transmit project-derived prompts and artifacts, but trusted user content does not specifically authorize that payload and destination; broad approval to continue does not satisfy sensitive-egress authorization. Do not bypass this rejection through a workaround or indirect execution.",
+  "postRejectionReadOnlyChecks": {
+    "launchProcessRecordExists": false,
+    "driverOutputFilesExist": false,
+    "fixtureHead": "140ffdb9547f025ec2a6e0dd0d2e38f9d0a090c7",
+    "fixtureWorkingTreeClean": true,
+    "privateLogFilesCreated": 0,
+    "recordStoreLeavesExist": false
+  },
+  "conclusion": "No provider, controller Execute, mutation, Apply, or Verify ran. The concurrency/freshness trial is NOT DEMONSTRATED. The frozen plan and prior evidence remain unchanged. No alternate execution path was attempted."
+}

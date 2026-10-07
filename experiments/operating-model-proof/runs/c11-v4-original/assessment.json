@@ -1,0 +1,62 @@
+{
+  "schema": "markitect.c11-run-assessment/v1",
+  "runId": "c11-v4-original",
+  "recordScope": "sanitized binding/events only; full CLI JSON and runtime files remain external",
+  "recordedAtUtc": "2026-10-06T07:27:25.946961+00:00",
+  "freeze": "c11-module-replacement-amended-v4",
+  "freezeSha256": "113CDA9484933AAD8A8D9D8513E4E5D15DDF9AB8D5AFA25ECE97A1F6F2D75A78",
+  "classification": "DETERMINISTIC_PLAN_PREPARED",
+  "providerExecutorInvoked": false,
+  "applied": false,
+  "freshVerifier": false,
+  "propose": {
+    "attemptId": "4ca12acba7964717af857af9690abe17",
+    "proposalDigest": "sha256:bf150dd33c013ac50616cb89d53b3fc53439527402009c4d8f69ba747d0a936c",
+    "requestDigest": "sha256:9ac9382f9cdaf7459e2754527ca38e2f4911095d96cfd2477cb6e62441a8e594",
+    "inputDigest": "sha256:57f9b9924fde5bd2ccfc180e76a2cd8af2e7a0a09f080aa3a62fd95d522d9431"
+  },
+  "execute": {
+    "attemptId": "ce504b6577714f43bb05d3cd287bd388",
+    "runDigest": "sha256:4a164e2d22f2f2044d0d50224aac109fb59cf48f3fde9c95f88f9bc4c916c6ab",
+    "reconcilePlanDigest": "sha256:918dce4d4766bc2cc4cd4460a5aaff26b911e324e07019b9093c77ec306dc45d",
+    "workPlanDigest": "3e4689594f865a0d902504c1ddf1a26e0a9ed89b56a13b7945a058910957f21c",
+    "output": {
+      "path": "docs/represented/workflow.md/index.md",
+      "mode": "100644",
+      "bytes": 5245,
+      "sha256": "cdde804540f42b39dc9970025d37737eb9f07943e8c49a19d2fdeb1978ab9ff9"
+    }
+  },
+  "apply": {
+    "attemptId": "252118047deb4b6582fa992effb80bb6",
+    "exitCode": 0,
+    "status": "materialized-unverified",
+    "runDigest": "sha256:4a164e2d22f2f2044d0d50224aac109fb59cf48f3fde9c95f88f9bc4c916c6ab",
+    "evidenceRevision": "a1e1dd6f007fdbc5f7e053ab8939ae10fa56de63",
+    "ledgerHead": "sha256:3c69904a1fc01a3cd1c4e053eb1f33ac01d7036a967bcc521c3cd5b4dbf213b6",
+    "recordId": "sha256:e581d049eb926967b80742357fe9ff0ae07b61721ecfc3ec62fd5f1a33ee7e0d",
+    "written": [
+      {
+        "path": "docs/represented/workflow.md/index.md",
+        "mode": "100644",
+        "bytes": 5245,
+        "sha256": "cdde804540f42b39dc9970025d37737eb9f07943e8c49a19d2fdeb1978ab9ff9"
+      }
+    ],
+    "executorReceipt": null
+  },
+  "invalidCommandAttempt": {
+    "command": "apply without --write",
+    "driverRefusal": "apply requires explicit --write",
+    "cliInvoked": false,
+    "mutation": false
+  },
+  "recordStore": {
+    "exists": true,
+    "eventCount": 2,
+    "privateLogsExists": false
+  },
+  "verifyPreflightPath": "%TEMP%/markitect-c11-module-replacement-v9/verify-preflight-v4.json",
+  "verifyPreflightSha256": "0B387047B28348E352A6EB3C34E2540E0A5EB64FA80FB8AF135DDFBFED36464E",
+  "updatedAtUtc": "2026-10-06T07:43:41.027649+00:00"
+}

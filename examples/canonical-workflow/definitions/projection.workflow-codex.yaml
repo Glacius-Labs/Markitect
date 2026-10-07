@@ -1,0 +1,46 @@
+apiVersion: markitect.foundation/v1
+kind: Projection
+metadata:
+  namespace: example
+  name: workflow-codex
+purpose: Select the canonical workflow meaning for an independent codex representation.
+spec:
+  source:
+    definitions:
+      - apiVersion: workflow.example.org/v1
+        kind: Rule
+        namespace: example
+        name: retain-source-authority
+      - apiVersion: workflow.example.org/v1
+        kind: Process
+        namespace: example
+        name: review-workflow-change
+      - apiVersion: workflow.example.org/v1
+        kind: Responsibility
+        namespace: example
+        name: workflow-owner
+      - apiVersion: workflow.example.org/v1
+        kind: Gate
+        namespace: example
+        name: source-review
+  representation: codex
+  target:
+    repository: .
+    path: agent/
+  policies:
+    - apiVersion: markitect.foundation/v1
+      kind: ProjectionPolicy
+      namespace: example
+      name: rule-to-codex
+    - apiVersion: markitect.foundation/v1
+      kind: ProjectionPolicy
+      namespace: example
+      name: process-to-codex
+    - apiVersion: markitect.foundation/v1
+      kind: ProjectionPolicy
+      namespace: example
+      name: responsibility-to-codex
+    - apiVersion: markitect.foundation/v1
+      kind: ProjectionPolicy
+      namespace: example
+      name: gate-to-codex

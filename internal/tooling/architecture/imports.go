@@ -52,7 +52,7 @@ func layer(p string) (string, string) {
 		return "cli", p
 	// This isolated adopting-code fixture is compiled by Go, but is not a
 	// Markitect capability. It cannot import any Markitect product package.
-	case p == "examples/documentation/docs/implementation/src" || p == "examples/canonical-projection/evidence":
+	case p == "examples/documentation/docs/implementation/src" || p == "examples/canonical-projection/evidence" || p == "examples/canonical-workflow/check":
 		return "fixture", p
 	case p == "integration":
 		return "bootstrap", "bootstrap"

@@ -1,5 +1,7 @@
 # Capability proof program
 
+Historical protocol-v1 checkpoint. The later owner steer supersedes its blanket implementation pause; [proof-readiness decisions](../design/proof-readiness-capabilities.md) govern continued implementation and fresh trials. Frozen observations and their FAIL status remain unchanged.
+
 Protocol v1, frozen before execution on 2026-10-06. Product baseline: integrated main `75031b8eca8161b0a247414741828bfb2e1d9069` (PR #80). Published v0.13.0 remains unchanged. [Vision](../vision.md) owns the thesis; this program tests it rather than extending it.
 
 ## Inventory and architecture freeze

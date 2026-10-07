@@ -1,0 +1,11 @@
+apiVersion: markitect.example.org/module/v1alpha1
+name: markitect-foundation
+version: 1.2.0
+type: schema
+purpose: Provides the additive canonical Projection representation values for Git hooks and Azure Pipelines.
+requires:
+  core: "1"
+  modules: []
+provides:
+  schemas: [schema.yaml]
+  projectors: []

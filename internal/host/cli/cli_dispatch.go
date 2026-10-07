@@ -42,6 +42,9 @@ func dispatchCommand(command string, o commandOptions, out, errout io.Writer, em
 		return runSchema(o, errout, emit, fail)
 	}
 	if command == "canonical" {
+		if isCanonicalGoalAction(o.action) {
+			return runCanonicalGoal(o.action, o.goalInput, o.goalRecommendations, o.goalSelection, o.runtime, out)
+		}
 		return runCanonical(o, emit, fail)
 	}
 	if command == "package" {

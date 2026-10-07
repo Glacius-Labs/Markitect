@@ -1,0 +1,13 @@
+apiVersion: markitect.foundation/v1
+kind: ProjectionPolicy
+metadata:
+  namespace: recursive-assurance
+  name: billing-dotnet
+purpose: Defines the required public API and behavior for the BillingQuery .NET representation.
+spec:
+  sourceKind:
+    apiVersion: commerce.recursive-assurance/v1
+    kind: BillingQuery
+  targetTechnology: dotnet
+  guidance: >
+    Expose public static class RecursiveAssurance.Billing.BillingQuery with public static long SumOutstandingCents(IEnumerable<long> amounts). Return zero for empty input, reject negative amounts with ArgumentOutOfRangeException, and use checked signed 64-bit addition with OverflowException on overflow. This is a semantic API contract, not a filename or implementation template.

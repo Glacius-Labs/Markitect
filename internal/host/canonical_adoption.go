@@ -25,11 +25,12 @@ type CanonicalAdoptionSelection struct {
 	ReviewReference string                     `json:"reviewReference"`
 }
 type CanonicalAdoptionPlan struct {
-	UnmatchedArtifacts []string                 `json:"unmatchedArtifacts"`
-	APIVersion         string                   `json:"apiVersion"`
-	PlanDigest         string                   `json:"planDigest"`
-	EvidenceRevision   string                   `json:"evidenceRevision"`
-	Record             records.ProjectionRecord `json:"record"`
+	UnmatchedArtifacts []string                        `json:"unmatchedArtifacts"`
+	APIVersion         string                          `json:"apiVersion"`
+	PlanDigest         string                          `json:"planDigest"`
+	EvidenceRevision   string                          `json:"evidenceRevision"`
+	Ledger             *CanonicalAdoptionLedgerBinding `json:"ledger,omitempty"`
+	Record             records.ProjectionRecord        `json:"record"`
 }
 type CanonicalAdoption struct {
 	UnmatchedArtifacts []string                  `json:"unmatchedArtifacts"`
@@ -41,6 +42,55 @@ type CanonicalAdoption struct {
 // renderer, candidate generator or check. The prospective record is not active
 // ownership, acceptance or verified evidence. Both snapshots must be fixed.
 func PrepareCanonicalAdoption(fixed *CanonicalSource, target *snapshot.Snapshot, identity core.DefinitionIdentity, selection CanonicalAdoptionSelection) (CanonicalAdoptionPlan, error) {
+	return prepareCanonicalAdoption(fixed, target, identity, selection, nil)
+}
+
+// CanonicalAdoptionLedgerBinding freezes the external active-ownership state
+// and controller runtime used by durable adoption. Present=false is an
+// explicit absent-store observation, not an implicit empty ledger.
+type CanonicalAdoptionLedgerBinding struct {
+	Present         bool     `json:"present"`
+	StoreID         string   `json:"storeId,omitempty"`
+	Head            string   `json:"head,omitempty"`
+	ActiveRecordIDs []string `json:"activeRecordIds"`
+	ConfigDigest    string   `json:"configDigest"`
+}
+
+// PrepareCanonicalDurableAdoption prepares an opt-in ledger-backed adoption.
+// Active records come from the validated ledger, never from the caller's
+// selection file; that file must still contain an explicit empty array.
+func PrepareCanonicalDurableAdoption(fixed *CanonicalSource, target *snapshot.Snapshot, identity core.DefinitionIdentity, selection CanonicalAdoptionSelection, binding CanonicalAdoptionLedgerBinding, active []records.ProjectionRecord) (CanonicalAdoptionPlan, error) {
+	if len(selection.ActiveRecords) != 0 {
+		return CanonicalAdoptionPlan{}, errors.New("durable adoption requires activeRecords: []; current ownership is read from the external ledger")
+	}
+	if binding.ActiveRecordIDs == nil || binding.ConfigDigest == "" {
+		return CanonicalAdoptionPlan{}, errors.New("durable adoption requires an explicit ledger state and runtime configuration digest")
+	}
+	if binding.Present {
+		if binding.StoreID == "" || binding.Head == "" {
+			return CanonicalAdoptionPlan{}, errors.New("present adoption ledger requires its StoreID and head")
+		}
+	} else if binding.StoreID != "" || binding.Head != "" || len(binding.ActiveRecordIDs) != 0 || len(active) != 0 {
+		return CanonicalAdoptionPlan{}, errors.New("absent adoption ledger cannot contain history or active ownership")
+	}
+	if len(binding.ActiveRecordIDs) != len(active) {
+		return CanonicalAdoptionPlan{}, errors.New("durable adoption ledger active IDs do not match its records")
+	}
+	activeIDs := make([]string, 0, len(active))
+	for _, record := range active {
+		activeIDs = append(activeIDs, record.ID)
+	}
+	sort.Strings(activeIDs)
+	boundIDs := append([]string(nil), binding.ActiveRecordIDs...)
+	sort.Strings(boundIDs)
+	if !equalStringSets(activeIDs, boundIDs) {
+		return CanonicalAdoptionPlan{}, errors.New("durable adoption ledger active IDs do not match its records")
+	}
+	selection.ActiveRecords = append([]records.ProjectionRecord{}, active...)
+	return prepareCanonicalAdoption(fixed, target, identity, selection, &binding)
+}
+
+func prepareCanonicalAdoption(fixed *CanonicalSource, target *snapshot.Snapshot, identity core.DefinitionIdentity, selection CanonicalAdoptionSelection, ledger *CanonicalAdoptionLedgerBinding) (CanonicalAdoptionPlan, error) {
 	plan := CanonicalAdoptionPlan{}
 	if fixed == nil || fixed.Snapshot == nil || target == nil || fixed.Snapshot.Provisional || target.Provisional || !canonicalRevisionPattern.MatchString(fixed.Snapshot.ID) || !canonicalRevisionPattern.MatchString(target.ID) {
 		return plan, errors.New("adoption requires full fixed canonical and evidence revisions")
@@ -158,7 +208,8 @@ func PrepareCanonicalAdoption(fixed *CanonicalSource, target *snapshot.Snapshot,
 	envelope := struct {
 		Plan            any
 		ActiveRecordIDs []string
-	}{payload, activeIDs}
+		Ledger          *CanonicalAdoptionLedgerBinding `json:"ledger,omitempty"`
+	}{payload, activeIDs, ledger}
 	encoded, err := json.Marshal(envelope)
 	if err != nil {
 		return plan, err
@@ -194,7 +245,13 @@ func PrepareCanonicalAdoption(fixed *CanonicalSource, target *snapshot.Snapshot,
 			unmatched = append(unmatched, name)
 		}
 	}
-	return CanonicalAdoptionPlan{APIVersion: CanonicalAdoptionPlanAPIVersion, PlanDigest: digest, EvidenceRevision: target.ID, Record: record, UnmatchedArtifacts: unmatched}, nil
+	var binding *CanonicalAdoptionLedgerBinding
+	if ledger != nil {
+		copy := *ledger
+		copy.ActiveRecordIDs = append([]string{}, ledger.ActiveRecordIDs...)
+		binding = &copy
+	}
+	return CanonicalAdoptionPlan{APIVersion: CanonicalAdoptionPlanAPIVersion, PlanDigest: digest, EvidenceRevision: target.ID, Ledger: binding, Record: record, UnmatchedArtifacts: unmatched}, nil
 }
 
 // AdoptCanonicalProjection approves the freshly bound adoption identity, then

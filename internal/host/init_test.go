@@ -121,6 +121,11 @@ func TestInitAreaCreationRejectsDirectoryAppearingAfterPreflight(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	state.writer, err = openWriteRoot(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer state.writer.Close()
 	areaPath := filepath.Join(root, "docs", "general")
 	if err := os.MkdirAll(areaPath, 0755); err != nil {
 		t.Fatal(err)

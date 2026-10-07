@@ -2,7 +2,9 @@
 
 | Document | Owns |
 |---|---|
-| [Product vision](vision.md) | Canonical authority thesis, human/agent responsibilities and benefit hypothesis |
+| [Product vision](vision.md) | Quality and intent-fidelity thesis, canonical authority, human/agent responsibilities and benefit hypothesis |
+| [Operating methodology](operating-methodology.md) | Ontology-driven reconciliation, recursive Executor/Verifier process, implementation freedom and usable-method target |
+| [Standard operating model](design/standard-operating-model.md) | Reusable coordination, projection coverage, independent review and declared-scope closure |
 | [Markitect-first](markitect-first.md) | Canonical change-protocol entrypoint, desired-intent ordering and declared artifact accounting |
 | [Usage](usage.md) | Current Project format, CLI behavior, safe initialization, and schema-upgrade guidance |
 | [Repository layout](repository-layout.md) | Recommended control-plane organization, ownership zones, and layout compatibility |
@@ -26,6 +28,7 @@
 | [Operations](operations.md) | Development, verification, rendering, and release operations |
 | [Refinement decisions](refinement.md) | Technical product decisions and deferred design choices in support of the vision |
 | [Implementation plan](implementation-plan.md) | Published v0.13.0 status, the source-only canonical projection reset, release evidence and planned work |
+| [Astra assessment](validation/astra-assessment-2026-10-06.md) | Frozen independent architecture/method/source review; finding disposition and next checkpoint belong to the roadmap |
 | [Development coordination](development/README.md) | Parallel baseline, current contracts, independence audit and risk evidence |
 | [Module architecture](development/modules.md) | Core, Host, independent Modules, Infrastructure/Tooling and how to extend the source |
 | [Architecture consolidation](validation/clean-architecture-consolidation.md) | Package inventory, Core audit, compatibility, dogfood and exact-source gate results |
@@ -35,7 +38,7 @@
 | [Strategy source documents](strategy/README.md) | User-provided product and design proposals, their provenance, and the boundary between hypotheses and adopted behavior |
 | [Real-code adoption pilot](validation/real-project-adoption-pilot.md) | Baseline/assisted workflow observations, policy evolution, bounded evidence, negative findings and pending human discovery adoption |
 | [AGENTS.md versus Markitect](validation/agents-md-vs-markitect.md) | Frozen three-task comparison, implementation/governance upkeep, excluded runs and limits; no demonstrated cost or productivity advantage |
-| [Measurement](measurement.md) | Correctness scenarios, bounded measurements and future human-attention/autonomy evaluation |
+| [Measurement](measurement.md) | Staged method readiness, quality-first comparative evaluation, bounded measurements and human-attention/autonomy observations |
 | [Core authoring assessment](authoring-assessment.md) | A dated exercise using the synthetic product example |
 | [Onboarding](onboarding.md) | Scripted CLI workflow replay and dated command-path evidence |
 | [MCP evaluation](mcp-evaluation.md) | Bounded client comparison for the experimental read-only interface |
@@ -44,8 +47,8 @@
 | [Source release assessment](release-assessment.md) | General technical findings from source-distribution work |
 | [Production assessment](production-assessment.md) | Dated release evidence and source-level assessment |
 
-The [roadmap](implementation-plan.md) owns current source status and planned work. v0.13.0 is published and verified; v0.12.0 and v0.11.0 remain immutable historical evidence. v0.10.0 remains the historical baseline for the generic canonical engineering model. Published releases remain immutable; source changes do not update an installed release.
+The [roadmap](implementation-plan.md) owns current source status and planned work, including [Astra finding disposition and the Coordinator handoff checkpoint](implementation-plan.md#astra-assessment-disposition-and-next-method-checkpoint). v0.13.0 is published and verified; v0.12.0 and v0.11.0 remain immutable historical evidence. v0.10.0 remains the historical baseline for the generic canonical engineering model. Published releases remain immutable; source changes do not update an installed release.
 
-[Capability proof checkpoint](research/proof-program.md) and its [matrix](research/capability-matrix.md) separate implemented support from new trials and record the full-acquisition stop gate.
+[The current capability checkpoint](validation/proof-capability-checkpoint-2026-10-06.md) separates implemented mechanisms from actual trials, negative findings, and remaining gates. The [historical protocol-v1 proof program](research/proof-program.md) and its [matrix](research/capability-matrix.md) preserve the earlier full-acquisition stop; the later capability-before-proof steer resumes implementation and fresh trials without rescoring those records.
 
 [Research direction inputs](research/README.md) preserve owner-supplied hypotheses separately from current contracts and results.

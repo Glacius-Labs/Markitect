@@ -1,0 +1,44 @@
+{
+  "protocol": "operating-model-proof/v7",
+  "kind": "append-only-invocation-binding-gate-amendment",
+  "amends": [
+    "experiments/operating-model-proof/runs/concurrency-witness-v7-precall/control-plan.json",
+    "experiments/operating-model-proof/runs/concurrency-witness-v7-precall/gate-amendment.json"
+  ],
+  "supersedes": "Any requirement to compare the adapter marker's runId with the cohort-level runId, or its inputDigest with the top-level proposal inputDigest or a prior cohort's remembered digest.",
+  "pinnedAdapter": {
+    "sha256": "sha256:d5af7ba511bf0bae7ed1aaca28bfbff4aefd36616cc6947d08de149e9ed363e9",
+    "sourceCommit": "d081b0aa151d3771ac672bbc0d59fc5d1a2170a1",
+    "invocationPath": "internal/tooling/codexrunner/runner.py",
+    "implementation": [
+      "main reads the exact bounded Host stdin JSON payload, strict-parses it, and validates the invocation envelope before launch_codex.",
+      "validate_invocation preserves the validated runId and inputDigest from that Host envelope.",
+      "launch_codex prepares the complete UTF-8 prompt from that invocation; the marker is emitted only after stdin.write returns the complete byte count, flush succeeds, and stdin close succeeds.",
+      "EventCollector.record_prompt_submitted copies runId and inputDigest from the validated invocation and hashes/counts the exact prepared prompt bytes written to the provider pipe."
+    ],
+    "focusedTestCoverage": [
+      "test_codex_launch_uses_bounded_native_invocation_and_records_only_provider_usage verifies exact submitted prompt bytes and corresponding runId/inputDigest/prompt hash/length marker fields.",
+      "test_codex_launch_does_not_mark_broken_or_partial_prompt_delivery verifies broken, partial, flush-error, and close-error cases produce no submission marker."
+    ]
+  },
+  "singleSnapshotRequirements": {
+    "bothControllerProcessesAlive": true,
+    "bothDistinctNativeCodexProcessChainsAlive": true,
+    "perChainPrivateLog": "Use the actual private JSONL file inside that cohort's frozen privateLogs directory. Its filename stem is the Host-generated invocation runId, not the cohort-level driver runId.",
+    "perChainPromptWitness": {
+      "type": "adapter.prompt-submitted",
+      "runId": "must exactly equal that private JSONL filename stem",
+      "inputDigest": "must be copied from the exact validated Host invocation JSON payload parsed from stdin by the pinned adapter; do not compare with top-level proposal inputDigest or a prior-run digest",
+      "promptSha256": "must be a sha256 digest of the exact prepared UTF-8 prompt bytes",
+      "promptBytes": "must equal the byte length of those exact prepared UTF-8 prompt bytes and be positive"
+    },
+    "perChainNativeEvents": ["thread.started", "turn.started"],
+    "eventAssociation": "both native events and the matching prompt witness must be in that chain's own private log while its native process is live",
+    "simultaneity": "all evidence for both cohorts must be captured in one snapshot while both controller processes and both associated native Codex process chains are live"
+  },
+  "evidenceLimit": "The adapter witness binds to the validated Host invocation fields and records prompt delivery. It does not independently preserve the raw Host request JSON, prove semantic reading, or prove provider identity/authenticity.",
+  "fallback": "If the actual invocation-bound markers, both thread.started and turn.started events per chain, and simultaneous live process evidence cannot all be captured, do not mutate and preserve NOT DEMONSTRATED.",
+  "executionLimit": "exactly the two already frozen cohort Execute calls, at most four Executor invocations, no third cohort or retry after refusal",
+  "mutationLimit": "only the frozen selected Orders .NET projection-policy guidance text, and only after this complete corrected gate passes",
+  "apply": "NOT APPLICABLE without an authentic complete digest-bound reviewed run; never fabricate a digest"
+}

@@ -1,0 +1,13 @@
+apiVersion: markitect.foundation/v1
+kind: ProjectionPolicy
+metadata:
+  namespace: example
+  name: policy.responsibility-to-githooks
+purpose: Expresses the Responsibility in the githooks target.
+spec:
+  sourceKind:
+    apiVersion: workflow.example.org/v1
+    kind: Responsibility
+  targetTechnology: githooks
+  guidance: >
+    Identify the project-designated workflow owner as accountable for workflow review.

@@ -1,0 +1,6 @@
+bridge.py -text
+protocol-*.json -text whitespace=cr-at-eol
+holdout/harness/run_acceptance.py -text
+source.bundle -text
+attempt-*-result.json -text whitespace=cr-at-eol
+transport-retry-*.json -text whitespace=cr-at-eol

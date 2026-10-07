@@ -1,0 +1,72 @@
+{
+  "schema": "markitect-two-area-pilot-attempt-result/v1",
+  "attempt": 2,
+  "outcome": "stopped-after-failed-verification-ambiguous-canonical-policy",
+  "sourceCommit": "74cbb7ca630e221b9b365e13e70165e9c7f59b6a",
+  "canonicalSource": "7f3cf2b3c18fbddb015a3278d88a8321ce959eaa",
+  "protocolDigest": "sha256:9210a69de5a4bca3c167b5f69e7b04ea413d6d3abdbabbe14393d84d267ca7c7",
+  "verifyDigest": "sha256:d356a036d3d4c3c25fb5dc927ec70a6176a94b28536f3b62afcd22dab994b15a",
+  "evidenceRevision": "461baa87f23dfff8e0e9e7633a21f035b5ec9f38",
+  "auditDigest": "sha256:146d1bc749c93e3478386dc0ce887b132fec96caf1ed4e85673cfaf10904cf5f",
+  "auditStatus": "incomplete",
+  "attribution": "The supplied policy prohibited numeric duplication outside the canonical Rule but did not distinguish independent authored authority from faithful target encoding. Fulfillment named bounds failed; Orders inline bounds passed. This is an ambiguous fixture contract, not demonstrated actor unreliability.",
+  "observedOutcomes": [
+    {
+      "scopeId": "leaf-fulfillment",
+      "resultId": "sha256:a3c3ec0324e0d7455f291bfeff419c98cb6377235060de47bea1820a0deb8421",
+      "outcome": "failed",
+      "runId": "7fa1b1b4bede7f8515a6c3589c96e66d",
+      "inputDigest": "sha256:eca9b5d09844fa31771026a30b9a24d90992f78dedef85a947414fd9a387a0db",
+      "receiptDigest": "sha256:fe1b0fad9094dc810a720ab17b28103167a74b5245a52fd9231c7c94d59db3ac"
+    },
+    {
+      "scopeId": "leaf-orders",
+      "resultId": "sha256:bfe691bebe93b637c626019c3f2fd474cd832fab1cee8e195bea9ccab7d776ff",
+      "outcome": "passed",
+      "runId": "92cb92d2b006f728b89a604c50e07231",
+      "inputDigest": "sha256:2df310bc2fe371f75995f44cb7b8b091ff87b825be75f1b6c0956799b63e134d",
+      "receiptDigest": "sha256:fc72bcbef8e98fbc7b8ec3eb228d6c9a779afdacf296c333a03244e45bccbaad"
+    },
+    {
+      "scopeId": "parent-commerce",
+      "resultId": "sha256:b605e10918d29c909593a9171160f86a420362234a5a9850f6ae4a8c05624d66",
+      "outcome": "failed",
+      "runId": "9fa9cced7ccf986c7b8944ca3fb360be",
+      "inputDigest": "sha256:b9a869377f0ba39e6e6854ddd0882821ca2880f842514f16da5df8a4b0d3559a",
+      "receiptDigest": "sha256:a02fae2c916797fce584e68079b328bfe94b437272f11feaceb11ebf65c42430"
+    }
+  ],
+  "behaviorHoldout": {
+    "relativeResult": "holdout/results/0bfeaf520bfa4fa6b52d61333a4e23af.json",
+    "sha256": "sha256:b66640d3fa242837ed9abb925e2d55421831a21ee88310b41e3940ba4de20498",
+    "calls": 476,
+    "failedChecks": 0
+  },
+  "repairAttempted": false,
+  "reasonForStop": "Independent contract review identified a source specification defect; do not force a passing semantic repair under contradictory readings. A separately frozen source correction will preserve outputs and all prior records.",
+  "nextStages": "not-run-under-attempt-02",
+  "stepReceipts": {
+    "baseline-propose-02": "sha256:6f2c2400f7bed5ce50561e5f997fa323841988d43a5365dbb66bc0488aac8903",
+    "baseline-execute-02": "sha256:41ebece412c49f77903311398a23ea99833b9b56f24abd1dcbb4ae763c146bfd",
+    "baseline-apply-02": "sha256:ecc54afb635d9be0eaef5479ae3e698fbfa65b4653ad32f38444654a9696b223",
+    "baseline-verify-02": "sha256:694b0106189f4225e0639f2f3795815ec4d52644d67ad462a4c234c354435de7",
+    "baseline-audit-02": "sha256:d5cfc06b3bdc505be03dbe15184c22e8914c6b912b19d021d32195203944e7de"
+  },
+  "artifactManifest": {
+    "src/Fulfillment/Fulfillment.csproj": "sha256:16a709894669b1d00ec3bc65fc8ba64e8942cddb1ed9d9d7ba65821bd169a76b",
+    "src/Fulfillment/FulfillOrderHandler.cs": "sha256:fd4982342772f8ce263863289ecb24c697b18086c5b96c1be86b5ef0710a9ec8",
+    "src/Orders/CreateOrderHandler.cs": "sha256:05b996e9dce266574060ac0b2a113a9910a086fc53ce86db175c78e68a8de28c",
+    "src/Orders/Orders.csproj": "sha256:3472fccce5613343d3b55f6c2bbc48cbfd3de01f9cf32fd8607b8ac3a7e26395",
+    "docs/represented/index.md": "sha256:5c7e4760e35f0c5fd36944c356f49a23454296c34979ffbc954456c170d81c15"
+  },
+  "ledgerFiles": {
+    "events/00000000000000000001-c913f08568090a9a6929e6dcaf10e7256d14c2a16a9d6ae0882ee1d8e97b0393.json": "sha256:601dd11f8ed6b8e7c1080b37dc89cd21c0bf9266af2abd7f1ccbdb77957afc67",
+    "events/00000000000000000002-73a72c2fe7e73cb6e21594556b23ace225da26f810af522e31c61b51ef62bbb0.json": "sha256:4ac52bce2e211191aff25d7c0b61d6f910c890472922fd26ed88f373a2e201d5",
+    "events/00000000000000000003-52b0beae9a1ee7f04378d43e4379d5dc4c76ea494e774a17e7826e618a39c077.json": "sha256:845b7580aa034e43eee8b29b606401f14614370819b0cd09d909c1d7b7d24b7e",
+    "events/00000000000000000004-c4d853910cc0c4a3e9b5491e485eaa1014c3ae3a3bc24118e5980300c8ffb27c.json": "sha256:33c8109ad63802c7058eb9ee2e8e09887e153d1402d296b6953496059693b533",
+    "events/00000000000000000005-441482c5127545418a127add0346f086dfb8d1b95300b242276dd76427cd62f8.json": "sha256:1a4ca43ec6da074ccdc412043979e40cc70ba2ce849d5807e5ef466a65af3e67",
+    "events/00000000000000000006-43072eb8b276815ab7e43652431fe1eeaca3145ff04931271487b8a7bc13a89c.json": "sha256:9c9ecc99fde4d3d349373f8ac38538d49ae42617de3a4f488343bbc889c9c25b",
+    "events/00000000000000000007-7ab9e5410b15f93df62767b26982d09cf1eae6ccf5c25459d952945d3df5ccf5.json": "sha256:ba7e0fdf8e4f6db125ee0875b1654b274e8467c1efc7c39581e106f80a6defb3",
+    "store.json": "sha256:a9bf235eaedbd57c3994c2d4042999b77a347b2dc888ab91015112819afdbcea"
+  }
+}

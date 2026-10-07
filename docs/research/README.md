@@ -6,4 +6,6 @@ These documents preserve owner-supplied research orientation. They do not overri
 
 [The alignment assessment](../design/projection-assurance-direction.md) separates existing implementation, current proof scope and future research. [Vision](../vision.md), [Architecture](../architecture.md), [Roadmap](../implementation-plan.md) and [Measurement](../measurement.md) remain the canonical owners for their respective responsibilities.
 
-The [capability proof program](proof-program.md), [implemented inventory](implemented-capability-inventory.md) and [matrix](capability-matrix.md) test the integrated canonical reset. Their current checkpoint is paused at the global-acquisition stop condition; it is not a benefit claim or a new feature wave.
+The [capability proof program](proof-program.md), [implemented inventory](implemented-capability-inventory.md) and [matrix](capability-matrix.md) test the integrated canonical reset. Their frozen first checkpoint records a global-acquisition FAIL. The later owner steer makes missing accepted capabilities implementation work under the [proof-readiness decisions](../design/proof-readiness-capabilities.md), followed by fresh trials; the historical evidence remains unchanged.
+
+The [2026-10-06 operating-model checkpoint](../validation/proof-capability-checkpoint-2026-10-06.md) records subsequent implemented mechanisms, actual bounded trials and unresolved gaps. The first inventory and matrix above stay frozen; read their date/source rather than interpreting their NOT RUN statements as current status.

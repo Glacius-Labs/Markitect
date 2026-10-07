@@ -1,0 +1,38 @@
+apiVersion: markitect.foundation/v1
+kind: Projection
+metadata:
+  namespace: operating-model
+  name: product-markdown
+purpose: Represents ProductComposition and its exact Orders and Billing child scopes in Markdown.
+spec:
+  source:
+    definitions:
+      - apiVersion: commerce.operating-model/v1
+        kind: ProductComposition
+        namespace: commerce
+        name: orders-and-billing
+      - apiVersion: commerce.operating-model/v1
+        kind: OrderRules
+        namespace: orders
+        name: accepted-order-total
+      - apiVersion: commerce.operating-model/v1
+        kind: BillingQuery
+        namespace: billing
+        name: outstanding-order-total
+  representation: markdown
+  target:
+    repository: .
+    path: docs/represented/
+  policies:
+    - apiVersion: markitect.foundation/v1
+      kind: ProjectionPolicy
+      namespace: operating-model
+      name: orders-markdown
+    - apiVersion: markitect.foundation/v1
+      kind: ProjectionPolicy
+      namespace: operating-model
+      name: billing-markdown
+    - apiVersion: markitect.foundation/v1
+      kind: ProjectionPolicy
+      namespace: operating-model
+      name: product-markdown

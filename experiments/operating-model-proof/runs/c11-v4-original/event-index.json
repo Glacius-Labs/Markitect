@@ -1,0 +1,69 @@
+{
+  "schema": "markitect.c11-event-index/v1",
+  "runId": "c11-v4-original",
+  "recordedAtUtc": "2026-10-06T07:50:33.565193+00:00",
+  "source": "events.jsonl and corresponding event files; maps local random filename to CLI attemptId",
+  "events": [
+    {
+      "eventFile": "propose-53d844facc7340a7bf1f6789493d9ec9.json",
+      "action": "propose",
+      "attemptId": "4ca12acba7964717af857af9690abe17",
+      "exitCode": 0,
+      "stdoutDigest": "sha256:76a15285e4dd739836fdbbd0ad634c6f4dca7d5dc893857dc8c5003183cdf1db",
+      "stderrDigest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "externalOutputDigest": "sha256:76a15285e4dd739836fdbbd0ad634c6f4dca7d5dc893857dc8c5003183cdf1db",
+      "status": "planned",
+      "proposalDigest": "sha256:bf150dd33c013ac50616cb89d53b3fc53439527402009c4d8f69ba747d0a936c",
+      "runDigest": null,
+      "evidenceRevision": null,
+      "ledgerHead": "",
+      "recordIds": [],
+      "written": null,
+      "plannedOutputs": []
+    },
+    {
+      "eventFile": "execute-edff631568b54617b5e45d496bc74e8e.json",
+      "action": "execute",
+      "attemptId": "ce504b6577714f43bb05d3cd287bd388",
+      "exitCode": 0,
+      "stdoutDigest": "sha256:638bb119b096d6fb7da7f816bc0d592ec895a92156de5c8865baf1eb8bf22c0a",
+      "stderrDigest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "externalOutputDigest": "sha256:638bb119b096d6fb7da7f816bc0d592ec895a92156de5c8865baf1eb8bf22c0a",
+      "status": "planned",
+      "proposalDigest": null,
+      "runDigest": "sha256:4a164e2d22f2f2044d0d50224aac109fb59cf48f3fde9c95f88f9bc4c916c6ab",
+      "evidenceRevision": null,
+      "ledgerHead": null,
+      "recordIds": [],
+      "written": null,
+      "plannedOutputs": [
+        {
+          "bytes": 5245,
+          "digest": "sha256:cdde804540f42b39dc9970025d37737eb9f07943e8c49a19d2fdeb1978ab9ff9",
+          "path": "docs/represented/workflow.md/index.md"
+        }
+      ]
+    },
+    {
+      "eventFile": "apply-dfe814f71c3243dd93b91513ed2f32aa.json",
+      "action": "apply",
+      "attemptId": "252118047deb4b6582fa992effb80bb6",
+      "exitCode": 0,
+      "stdoutDigest": "sha256:25033bba3b22e4a3b0af2374e5e0883348a076798c41d5be44b030853dfc3ed8",
+      "stderrDigest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "externalOutputDigest": "sha256:25033bba3b22e4a3b0af2374e5e0883348a076798c41d5be44b030853dfc3ed8",
+      "status": "materialized-unverified",
+      "proposalDigest": null,
+      "runDigest": "sha256:4a164e2d22f2f2044d0d50224aac109fb59cf48f3fde9c95f88f9bc4c916c6ab",
+      "evidenceRevision": "a1e1dd6f007fdbc5f7e053ab8939ae10fa56de63",
+      "ledgerHead": "sha256:3c69904a1fc01a3cd1c4e053eb1f33ac01d7036a967bcc521c3cd5b4dbf213b6",
+      "recordIds": [
+        "sha256:e581d049eb926967b80742357fe9ff0ae07b61721ecfc3ec62fd5f1a33ee7e0d"
+      ],
+      "written": [
+        "docs/represented/workflow.md/index.md"
+      ],
+      "plannedOutputs": []
+    }
+  ]
+}

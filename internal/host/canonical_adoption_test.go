@@ -2,6 +2,7 @@ package host
 
 import (
 	"encoding/json"
+	"errors"
 	"reflect"
 	"strings"
 	"testing"
@@ -10,6 +11,8 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/core/snapshot"
 	"github.com/Glacius-Labs/Markitect/internal/host/authoring"
 	"github.com/Glacius-Labs/Markitect/internal/host/records"
+	"github.com/Glacius-Labs/Markitect/internal/host/recordstore"
+	"github.com/Glacius-Labs/Markitect/internal/infrastructure/source"
 )
 
 func adoptionFixture(t *testing.T) (*CanonicalSource, *snapshot.Snapshot, core.DefinitionIdentity, CanonicalAdoptionSelection) {
@@ -107,6 +110,138 @@ func TestCanonicalAdoptionApprovalBindsEverySelectedInput(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestCanonicalDurableAdoptionBindsAbsentVersusPresentLedger(t *testing.T) {
+	fixed, target, identity, selection := adoptionFixture(t)
+	configDigest := sha256Prefix(sha256Hex([]byte("runtime-config")))
+	absent := CanonicalAdoptionLedgerBinding{Present: false, ActiveRecordIDs: []string{}, ConfigDigest: configDigest}
+	absentPlan, err := PrepareCanonicalDurableAdoption(fixed, target, identity, selection, absent, []records.ProjectionRecord{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	present := CanonicalAdoptionLedgerBinding{Present: true, StoreID: "store-id", Head: sha256Prefix(sha256Hex([]byte("head"))), ActiveRecordIDs: []string{}, ConfigDigest: configDigest}
+	presentPlan, err := PrepareCanonicalDurableAdoption(fixed, target, identity, selection, present, []records.ProjectionRecord{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if absentPlan.PlanDigest == presentPlan.PlanDigest {
+		t.Fatal("approval did not bind absent versus present ledger state")
+	}
+	present.Head = sha256Prefix(sha256Hex([]byte("new head")))
+	changedHead, err := PrepareCanonicalDurableAdoption(fixed, target, identity, selection, present, []records.ProjectionRecord{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if changedHead.PlanDigest == presentPlan.PlanDigest {
+		t.Fatal("approval did not bind external ledger head")
+	}
+	selection.ActiveRecords = []records.ProjectionRecord{{}}
+	if _, err := PrepareCanonicalDurableAdoption(fixed, target, identity, selection, absent, []records.ProjectionRecord{}); err == nil {
+		t.Fatal("durable adoption trusted caller-supplied active ownership")
+	}
+}
+
+func canonicalDurableAdoptionSelectionFailureFixture(t *testing.T) (string, string, *CanonicalSource, *snapshot.Snapshot, core.DefinitionIdentity, CanonicalAdoptionSelection, CanonicalControllerConfig, string, string, string) {
+	t.Helper()
+	root, baseRevision, cfg := canonicalControllerFixture(t)
+	fixed, err := LoadCanonicalSource(root, baseRevision, "examples/canonical-projection/canonical.yaml", true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for name, content := range map[string]string{
+		"src/Commerce/CreateOrderHandler.cs": "namespace Commerce; public class CreateOrderHandler { }\n",
+		"src/Commerce/EffectAxis.cs":         "namespace Commerce; public record EffectAxis { public string Boundary { get; init; } = \"application\"; }\n",
+		"src/Commerce/Commerce.csproj":       "<Project><PropertyGroup><TargetFramework>net8.0</TargetFramework></PropertyGroup></Project>\n",
+	} {
+		scopedTestWrite(t, root, name, content)
+	}
+	scopedTestGit(t, root, "add", "src/Commerce")
+	scopedTestGit(t, root, "commit", "-m", "add selected adoption artifacts")
+	targetRevision := scopedTestGit(t, root, "rev-parse", "HEAD")
+	target, err := source.Load(root, targetRevision)
+	if err != nil {
+		t.Fatal(err)
+	}
+	identity := core.DefinitionIdentity{APIVersion: "markitect.foundation/v1", Kind: "Projection", Namespace: "commerce", Name: "application-dotnet"}
+	selection := CanonicalAdoptionSelection{
+		ActiveRecords:   []records.ProjectionRecord{},
+		Artifacts:       []string{"src/Commerce/CreateOrderHandler.cs", "src/Commerce/EffectAxis.cs", "src/Commerce/Commerce.csproj"},
+		ReviewReference: "owner-review/partial-failure-test",
+	}
+	headBefore := scopedTestGit(t, root, "rev-parse", "HEAD")
+	indexBefore := scopedTestGit(t, root, "diff", "--cached", "--binary")
+	statusBefore := scopedTestGit(t, root, "status", "--porcelain")
+	plan, err := PrepareCanonicalAdoptionForRuntime(root, fixed, target, identity, selection, cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return root, plan.PlanDigest, fixed, target, identity, selection, cfg, headBefore, indexBefore, statusBefore
+}
+
+func assertCanonicalDurableAdoptionAttemptUnverified(t *testing.T, root string, cfg CanonicalControllerConfig, applied CanonicalAdoptionApply, activeIDs []string) {
+	t.Helper()
+	store, err := recordstore.Open(cfg.RecordStore, canonicalControllerForbidden(t, root))
+	if err != nil {
+		t.Fatal(err)
+	}
+	state, err := store.Read()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(state.Records) != 1 || state.Records[0].ID != applied.Record.ID || !reflect.DeepEqual(state.ActiveSelection.RecordIDs, activeIDs) || len(state.Verifications) != 0 {
+		t.Fatalf("partial adoption did not retain the expected unverified attempt state: %#v", state)
+	}
+	if applied.Record.Origin != records.OriginAdopted || applied.Record.State != records.StateMaterializedUnverified {
+		t.Fatalf("adoption attempt claimed unsupported origin or verification: %#v", applied.Record)
+	}
+}
+
+func TestCanonicalDurableAdoptionSelectionFailureReportsObservedInactiveAttempt(t *testing.T) {
+	root, digest, fixed, target, identity, selection, cfg, headBefore, indexBefore, statusBefore := canonicalDurableAdoptionSelectionFailureFixture(t)
+	failure := errors.New("injected stale-head CAS rejection")
+	applied, err := applyCanonicalAdoptionToLedger(root, fixed, target, identity, selection, cfg, digest, true,
+		func(_ *recordstore.Store, _ string, _ []string) (recordstore.State, error) {
+			return recordstore.State{}, failure
+		})
+	if err == nil || !errors.Is(err, failure) || !strings.Contains(err.Error(), failure.Error()) || applied.Status != records.StatePartialFailure || applied.Record == nil || applied.ActiveSelectionStatus != "observed-not-selected" || applied.LedgerHead == "" || len(applied.ActiveRecordIDs) != 0 {
+		t.Fatalf("selection failure did not report the observed inactive attempt and original cause: result=%#v err=%v", applied, err)
+	}
+	assertCanonicalDurableAdoptionAttemptUnverified(t, root, cfg, applied, []string{})
+	if scopedTestGit(t, root, "rev-parse", "HEAD") != headBefore || scopedTestGit(t, root, "diff", "--cached", "--binary") != indexBefore || scopedTestGit(t, root, "status", "--porcelain") != statusBefore {
+		t.Fatal("partial durable adoption changed source HEAD, index or worktree")
+	}
+}
+
+func TestCanonicalDurableAdoptionSelectionErrorReportsCommittedSelection(t *testing.T) {
+	root, digest, fixed, target, identity, selection, cfg, _, _, _ := canonicalDurableAdoptionSelectionFailureFixture(t)
+	failure := errors.New("selection event committed; response readback failed")
+	applied, err := applyCanonicalAdoptionToLedger(root, fixed, target, identity, selection, cfg, digest, true,
+		func(store *recordstore.Store, head string, ids []string) (recordstore.State, error) {
+			if _, selectErr := store.SelectActive(head, ids); selectErr != nil {
+				t.Fatalf("commit active selection: %v", selectErr)
+			}
+			return recordstore.State{}, failure
+		})
+	if err == nil || !errors.Is(err, failure) || applied.ActiveSelectionStatus != "observed-selected" || applied.Record == nil || applied.LedgerHead == "" || len(applied.ActiveRecordIDs) != 1 || applied.ActiveRecordIDs[0] != applied.Record.ID {
+		t.Fatalf("committed selection was not reported from recovery state: result=%#v err=%v", applied, err)
+	}
+	assertCanonicalDurableAdoptionAttemptUnverified(t, root, cfg, applied, []string{applied.Record.ID})
+}
+
+func TestCanonicalDurableAdoptionSelectionErrorWithUnreadableRecoveryReportsUnknown(t *testing.T) {
+	root, digest, fixed, target, identity, selection, cfg, _, _, _ := canonicalDurableAdoptionSelectionFailureFixture(t)
+	failure := errors.New("injected selection failure")
+	recoveryFailure := errors.New("injected recovery read failure")
+	applied, err := applyCanonicalAdoptionToLedgerWithRecoveryRead(root, fixed, target, identity, selection, cfg, digest, true,
+		func(_ *recordstore.Store, _ string, _ []string) (recordstore.State, error) {
+			return recordstore.State{}, failure
+		},
+		func(_ *recordstore.Store) (recordstore.State, error) { return recordstore.State{}, recoveryFailure })
+	if err == nil || !errors.Is(err, failure) || !strings.Contains(err.Error(), recoveryFailure.Error()) || applied.ActiveSelectionStatus != "unknown" || applied.LedgerHead != "" || applied.ActiveRecordIDs != nil || applied.Record == nil {
+		t.Fatalf("unreadable recovery did not preserve unknown state and both causes: result=%#v err=%v", applied, err)
+	}
+	assertCanonicalDurableAdoptionAttemptUnverified(t, root, cfg, applied, []string{})
 }
 func TestCanonicalAdoptionRefusesUnsafeOrIncompleteSelection(t *testing.T) {
 	for _, invalid := range []string{"missing", "outside", "duplicate", "symlink", "unsafe", "alias", "no-review", "no-checks", "provisional", "source-changed", "structural"} {

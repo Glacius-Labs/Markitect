@@ -83,12 +83,18 @@ func Install(root string, bundle *release.Bundle, write bool) (*InstallPlan, err
 
 	var branch string
 	var unlock func()
+	var writeRoot *writeRoot
 	if write {
 		branch, err = installableBranch(rootAbs)
 		if err != nil {
 			return nil, err
 		}
-		unlock, err = lockWriter(rootAbs)
+		writeRoot, err = openWriteRoot(rootAbs)
+		if err != nil {
+			return nil, err
+		}
+		defer writeRoot.Close()
+		unlock, err = writeRoot.LockWriter()
 		if err != nil {
 			return nil, err
 		}
@@ -127,12 +133,8 @@ func Install(root string, bundle *release.Bundle, write bool) (*InstallPlan, err
 		if err := ensureInstallStateUnchanged(rootAbs, state); err != nil {
 			return installWriteFailure(plan, state, err)
 		}
-		dest, err := safeInstallDestination(rootAbs, file.Path)
-		if err != nil {
+		if _, err := safeInstallDestination(rootAbs, file.Path); err != nil {
 			return installWriteFailure(plan, state, err)
-		}
-		if err = os.MkdirAll(filepath.Dir(dest), 0755); err != nil {
-			return installWriteFailure(plan, state, fmt.Errorf("create parent directory for %s: %w", file.Path, err))
 		}
 		if _, err = safeInstallDestination(rootAbs, file.Path); err != nil {
 			return installWriteFailure(plan, state, err)
@@ -148,7 +150,12 @@ func Install(root string, bundle *release.Bundle, write bool) (*InstallPlan, err
 		if err := ensureWriteBranch(rootAbs, state.branch); err != nil {
 			return installWriteFailure(plan, state, err)
 		}
-		if err = atomicWrite(dest, bundle.Files[file.Path]); err != nil {
+		if err = writeRoot.AtomicWrite(file.Path, bundle.Files[file.Path], 0644); err != nil {
+			if writeWasPublished(err) {
+				plan.Written = append(plan.Written, file.Path)
+				data := append([]byte(nil), bundle.Files[file.Path]...)
+				state.files[file.Path] = installFileState{data: data, canonical: canonicalInstallReadback(file.Path, data), exists: true}
+			}
 			return installWriteFailure(plan, state, fmt.Errorf("write %s: %w", file.Path, err))
 		}
 		plan.Written = append(plan.Written, file.Path)

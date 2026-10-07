@@ -1,0 +1,50 @@
+{
+  "cacheable": {
+    "argv": [
+      "go",
+      "test",
+      "./..."
+    ],
+    "childExitCodeAfterTreeStop": 1,
+    "completedTestPackages": 5,
+    "diagnosticOption": "GODEBUG=gocachetest=1",
+    "exitCode": 124,
+    "limitSeconds": 600,
+    "receiptSha256": "70e1fdfea77082d653d7561a67027f60fafad45c349c24155932ec82247a21d5",
+    "reportedFailedPackagesBeforeCutoff": 0,
+    "seconds": 600.418,
+    "stderrSha256": "8c7dcb39282ea35466662a6ad52b2c99e97c1be4fd72dce22f1453e982d26be7",
+    "stdoutSha256": "3298740e18fbe29af8ef3d6af789a8b1ed308d1637a365849ba1aa35231f70f4",
+    "timedOut": true
+  },
+  "interpretation": "Separate diagnostic runs, not normal Verify and not a rescore. Cache misses/bookkeeping were observed; cache causality, per-test stall identity and bootstrap causality remain UNPROVEN. The project-owned check now explicitly requests fresh execution with -count=1. No test is omitted and no time limit is raised. New-source normal gates remain required.",
+  "schema": "markitect.snapshot-diagnostic-assessment/v1",
+  "sourceArchiveSha256": "98ca14698b52ad649eadfe3f56e7177417c10fdfe3e0f1a562ee18cb52c6a676",
+  "sourceManifestSha256": "fc784d87fa97dc88065956c46cfb39c5d33b0753e72988c7f166b196228eabd0",
+  "sourceSha": "23c2c30d5e352b9172a0d24b82528012bfba1c18",
+  "sourceTree": "4dec8126e167369fd4e4c3cfe645c80cb5bb462a",
+  "toolchain": {
+    "bootstrapSha256": "fb4031767a39a83380e7aa1beda423565d27c5850b036177a586fca5f3d1bc50",
+    "bootstrapVersionWithAutoDisabled": "go1.24.1",
+    "sameSelectedToolchainAndCache": true,
+    "selectedGoSha256": "d3ccdb604eafa6031133aefe1a3db24f0bb7362b857bc2125ac4e4c178b4b490",
+    "selectedVersion": "go1.27.1"
+  },
+  "uncached": {
+    "argv": [
+      "go",
+      "test",
+      "./...",
+      "-count=1",
+      "-json"
+    ],
+    "exitCode": 0,
+    "limitSeconds": 600,
+    "seconds": 373.165,
+    "stdoutSha256": "4171ef113d3d83d71dd284e9969d3d6aafb51763ca019e915ea0de0d3df17db2",
+    "testsFailed": 0,
+    "testsPassed": 1549,
+    "testsSkipped": 19,
+    "testsStarted": 1568
+  }
+}

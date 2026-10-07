@@ -1,0 +1,9 @@
+# Azure Pipelines Projection Module
+
+`Render` accepts only the Host-selected normalized Core scope, matching Azure Pipelines `ProjectionPolicy` Definitions, target bounds, and Host-resolved named Project checks. It derives `azure-pipelines.yml` under the supplied target prefix and emits one executable `script` step for each supplied check. It does not infer commands from canonical prose, inspect repository files, run checks, or call Azure.
+
+`Propose` owns the `work`, `no-op`, or `escalate` decision for that one output. A no-op requires a complete target inventory, an exact prior path/digest/mode binding, byte equality with this Module's deterministic result, and current verification evidence. Unknown artifacts, case aliases, incomplete inputs, missing or ambiguous policies, and missing required checks escalate. Candidate mode is `100644`.
+
+Check argv is rendered only when every token is safe to join without shell reinterpretation across the common Azure script shells. Unsupported tokens escalate for an explicit Project decision. The YAML carries Module, projector, target, source Definition identity/provenance, policy identity, and check display names. It also retains each exact selected Definition and ProjectionPolicy as compact JSON on YAML comment lines. Those inert records keep canonical meaning available for explanation; they cannot add YAML steps or shell commands. Only Host-supplied argv becomes an executable step.
+
+Target paths are bounded, valid UTF-8 repository-relative paths. The Module rejects Git metadata, Windows-reserved or otherwise non-portable components, and case-fold aliases of its output. Request, prior, and artifact digests require the literal `sha256:` prefix. Passing Module tests establishes local YAML mapping and proposal behavior only; Azure execution, remote registration, branch policy, and human acceptance remain outside this Module.

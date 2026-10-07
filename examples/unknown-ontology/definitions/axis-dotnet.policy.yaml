@@ -1,0 +1,14 @@
+apiVersion: markitect.foundation/v1
+kind: ProjectionPolicy
+metadata:
+  namespace: unknown-ontology
+  name: effect-axis-dotnet
+purpose: Defines the public .NET value for the project-owned EffectAxis Kind.
+spec:
+  sourceKind:
+    apiVersion: public-mission.example.org/v1
+    kind: EffectAxis
+  targetTechnology: dotnet
+  guidance: >
+    Place the public target types in namespace UnknownOntology.
+    Expose public sealed record EffectAxis(string Name, string Unit, long MinimumMagnitude, long MaximumMagnitude). Preserve the selected Definition's values. MissionEvaluator uses the unit and inclusive lower and upper bounds; do not replace those values with constants. This is a semantic representation constraint, not a filename template.

@@ -1,0 +1,13 @@
+apiVersion: markitect.foundation/v1
+kind: ProjectionPolicy
+metadata:
+  namespace: example
+  name: rule-to-claude
+purpose: Provides bounded claude rendering guidance for the selected Rule Kind.
+spec:
+  sourceKind:
+    apiVersion: workflow.example.org/v1
+    kind: Rule
+  targetTechnology: claude
+  guidance: >
+    Render a concise CLAUDE.md projection. Begin by stating that canonical Definitions and their Schema remain authoritative. Preserve each selected Definition identity, purpose, typed facts, and exact referenced identity with source provenance. Use only semantics and guidance present in this input; do not invent workflow steps or claim the file has been adopted.

@@ -396,3 +396,66 @@ func cloneProjectionModel(t *testing.T, model core.Model, identity core.Definiti
 func identityValue(apiVersion, kind, namespace, name string) map[string]any {
 	return map[string]any{"apiVersion": apiVersion, "kind": kind, "namespace": namespace, "name": name}
 }
+
+// Binding validates the installed target contract without keeping a second
+// provider allowlist. Host execution remains an explicit static composition.
+func TestBindProjectionAcceptsExplicitModuleTargetWithoutProviderAllowlist(t *testing.T) {
+	model, activation := loadBindingFixture(t, "application-dotnet", nil)
+	identity := core.DefinitionIdentity{APIVersion: foundationAPIVersion, Kind: projectionKind, Namespace: "commerce", Name: "application-dotnet"}
+	const target = "another-target"
+	encoded, err := json.Marshal(model.Schemas)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var schemas []core.Schema
+	if err := json.Unmarshal(encoded, &schemas); err != nil {
+		t.Fatal(err)
+	}
+	for i := range schemas {
+		if schemas[i].APIVersion == foundationAPIVersion {
+			kind := schemas[i].Kinds[projectionKind]
+			property := kind.Properties["representation"]
+			property.Values = append(property.Values, target)
+			kind.Properties["representation"] = property
+			schemas[i].Kinds[projectionKind] = kind
+		}
+	}
+	encoded, err = json.Marshal(model.Definitions)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var definitions []core.Definition
+	if err := json.Unmarshal(encoded, &definitions); err != nil {
+		t.Fatal(err)
+	}
+	for i := range definitions {
+		if definitions[i].Identity() == identity {
+			definitions[i].Spec["representation"] = target
+		}
+		if definitions[i].Kind == projectionPolicyKind {
+			definitions[i].Spec["targetTechnology"] = target
+		}
+	}
+	compiled, diagnostics := core.Compile(schemas, definitions, model.Revision)
+	if len(diagnostics) != 0 {
+		t.Fatalf("explicit target Schema: %v", diagnostics)
+	}
+	activation.Projectors = append([]RegisteredProjector(nil), activation.Projectors...)
+	for i := range activation.Projectors {
+		if activation.Projectors[i].Module.Name == "markitect-dotnet" {
+			activation.Projectors[i].Registration.Target = target
+		}
+	}
+	bound, err := bindFixtureProjection(compiled, activation, identity, nil)
+	if err != nil || bound.Projector.Target != target {
+		t.Fatalf("explicit installed target: %v %+v", err, bound)
+	}
+	for i := range activation.Projectors {
+		if activation.Projectors[i].Module.Name == "markitect-dotnet" {
+			activation.Projectors[i].Registration.Target = "dotnet"
+		}
+	}
+	if _, err := bindFixtureProjection(compiled, activation, identity, nil); err == nil || !strings.Contains(err.Error(), "does not match") {
+		t.Fatalf("target mismatch accepted: %v", err)
+	}
+}

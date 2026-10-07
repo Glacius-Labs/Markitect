@@ -53,3 +53,33 @@ func TestRenderRequiresExactTargetAndNonemptyScope(t *testing.T) {
 		t.Fatalf("expected empty-scope diagnostic, got %#v", result)
 	}
 }
+
+func TestRenderProjectionOwnsPageNameAndValidatesTargetPrefix(t *testing.T) {
+	const api = "example.test/v1"
+	input := Input{
+		Definitions:  []core.Definition{{APIVersion: api, Kind: "Widget", Metadata: core.Metadata{Name: "example", Namespace: "apps"}, Purpose: "A project-owned widget."}},
+		Schemas:      []core.Schema{{APIVersion: api, Purpose: "Widget schema.", Kinds: map[string]core.Kind{"Widget": {Purpose: "A deployable unit."}}}},
+		TargetPrefix: "docs/widgets/",
+	}
+	got := RenderProjection(input)
+	if len(got.Diagnostics) != 0 || len(got.Files) != 1 {
+		t.Fatalf("module-owned projection render = %#v", got)
+	}
+	if _, ok := got.Files["docs/widgets/index.md"]; !ok {
+		t.Fatalf("module did not choose its page name: %#v", got.Files)
+	}
+
+	legacy := Render(Input{Definitions: input.Definitions, Schemas: input.Schemas, TargetPath: "custom/widgets.md"})
+	if _, ok := legacy.Files["custom/widgets.md"]; !ok {
+		t.Fatalf("legacy exact TargetPath API changed: %#v", legacy.Files)
+	}
+}
+
+func TestRenderProjectionRejectsInvalidTargetPrefix(t *testing.T) {
+	for _, prefix := range []string{"", " ", "/absolute", "../outside", "docs/../../outside", `docs\\widgets`} {
+		got := RenderProjection(Input{TargetPrefix: prefix})
+		if len(got.Diagnostics) != 1 || got.Diagnostics[0].Code != "markdown.target-prefix.invalid" || len(got.Files) != 0 {
+			t.Errorf("prefix %q was not rejected cleanly: %#v", prefix, got)
+		}
+	}
+}

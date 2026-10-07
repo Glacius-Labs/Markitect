@@ -1,0 +1,47 @@
+{
+  "protocol": "operating-model-proof/v5",
+  "recordType": "pre-apply-retry-control-freeze",
+  "status": "frozen",
+  "createdAtUtc": "2026-10-06T04:37:49.6104622Z",
+  "priorApplyAttempt": "9dbacb893e004007a6d537b8058ff44c",
+  "priorApplyFailure": "protected branch refusal before fixture writes",
+  "fixturePath": "C:/Users/Consiliari/AppData/Local/Temp/markitect-operating-model-20261006-c4-fixture-subset",
+  "fixtureOriginSha": "140ffdb9547f025ec2a6e0dd0d2e38f9d0a090c7",
+  "fixtureSubsetHead": "b24fd775b3537302ba2ebece970c55ffdef5f7eb",
+  "fixtureBranch": "codex/operating-model-c4-v5",
+  "fixtureClean": true,
+  "targetPreimages": [
+    {
+      "exists": false,
+      "path": "src/Billing/BillingQuery.cs"
+    },
+    {
+      "exists": false,
+      "path": "src/Orders/OrderRules.cs"
+    },
+    {
+      "exists": false,
+      "path": "docs/represented/index.md"
+    }
+  ],
+  "runtimeSha256": "af2c31b099c2004ce3ed4792399c910eb24094fab077fea4fc5b2ae32a64cad2",
+  "cliSha256": "03c551536335ee580b870e703a6a40ef8777c5a8139042f8f0f7e8e7e88729aa",
+  "providerWrapperSha256": "7806fabc774e2127ea29977009745c49d8043ffbcba63390e3d790b82d164d57",
+  "reviewFileSha256": "697281517b1ad3c78256eace2088e45ad87ceff38699f0e0b4564450d183351a",
+  "reviewRunDigest": "sha256:d63ed27b967a909c00ec565f7bbbadbb6501e789c80074d1713468e7268f6291",
+  "ledgerStorePath": "C:/Users/Consiliari/AppData/Local/Temp/markitect-operating-model-20261006-c4-positive-v5-01/record-store",
+  "ledgerStoreFileSha256": "75ba25d5691ac0a2db24c5921e5d90b09e211fc432041f6d76170b40ac37a32b",
+  "ledgerContentDigest": "sha256:f77a624521ea48ebd4a7e9f13e5c57619bdee5d32ce7a66fdd4e655d64a8092e",
+  "ledgerEventFileCount": 0,
+  "retryAction": "apply",
+  "runId": "c4-module-proposal-v5-01",
+  "exactReviewedCohort": [
+    "src/Billing/BillingQuery.cs",
+    "src/Orders/OrderRules.cs",
+    "docs/represented/index.md"
+  ],
+  "explicitWrite": true,
+  "noCandidateChanges": true,
+  "noSecondExecutor": true,
+  "ownerAcceptance": "not claimed"
+}

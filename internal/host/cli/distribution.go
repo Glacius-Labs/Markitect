@@ -14,11 +14,11 @@ import (
 )
 
 func printUsage(out io.Writer) {
-	fmt.Fprintln(out, "Markitect — desired engineering state and bounded reconciliation")
+	fmt.Fprintln(out, "Markitect: desired engineering state and bounded reconciliation")
 	fmt.Fprintln(out, "usage: markitect COMMAND [options]")
 	fmt.Fprintln(out, "  check, verify, inventory    Validate a project and its repository gates")
 	fmt.Fprintln(out, "  model, context, impact, find, explain, review    Inspect fixed semantic inputs")
-	fmt.Fprintln(out, "  canonical                                    Inspect, plan, apply, verify and adopt canonical projections (alpha)")
+	fmt.Fprintln(out, "  canonical                                    Inspect, plan, apply, verify, adopt and control canonical projections (alpha)")
 	fmt.Fprintln(out, "  init, authoring, render, format, reconcile, projection    Author and reconcile projections")
 	fmt.Fprintln(out, "  prepare, copy-me             Capture selected evidence and validate proposals (source)")
 	fmt.Fprintln(out, "  pack                         Build an offline content package")
@@ -50,7 +50,7 @@ func commandFlags(command string) (map[string]bool, bool) {
 	case "projection":
 		names = []string{"repo", "revision", "action", "config", "coverage", "plan", "report", "expect", "write"}
 	case "canonical":
-		names = []string{"repo", "revision", "base", "action", "config", "api-version", "kind", "namespace", "name", "plan", "report", "evidence", "expect", "write"}
+		names = []string{"repo", "revision", "base", "action", "config", "runtime", "goal-input", "goal-recommendations", "goal-selection", "api-version", "kind", "namespace", "name", "plan", "apply-result", "report", "evidence", "expect", "write"}
 	case "schema":
 		names = []string{"repo", "write", "check"}
 	case "package":
@@ -64,7 +64,7 @@ func commandFlags(command string) (map[string]bool, bool) {
 	case "prepare":
 		names = []string{"scope", "output", "expect", "write"}
 	case "copy-me":
-		names = []string{"workspace", "queue", "decision"}
+		names = []string{"action", "workspace", "queue", "decision", "runtime"}
 	case "authoring", "version", "licenses":
 	default:
 		return nil, false

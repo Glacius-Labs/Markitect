@@ -1,0 +1,41 @@
+apiVersion: markitect.canonical/v1alpha1
+kind: Source
+definitions:
+  - examples/unknown-ontology/definitions/axis.yaml
+  - examples/unknown-ontology/definitions/capability.yaml
+  - examples/unknown-ontology/definitions/mission.yaml
+  - examples/unknown-ontology/definitions/mission-dotnet.policy.yaml
+  - examples/unknown-ontology/definitions/axis-dotnet.policy.yaml
+  - examples/unknown-ontology/definitions/capability-dotnet.policy.yaml
+  - examples/unknown-ontology/definitions/mission.projection.yaml
+modules:
+  - manifest: examples/unknown-ontology/modules/foundation/module.yaml
+    pin:
+      name: unknown-ontology-foundation
+      version: 1.0.0
+      digest: sha256:f6e1fff3e8ba4ca0336ccdabd74196595f8cd37778d831cffa655eb35fcb2b7b
+    files:
+      - examples/unknown-ontology/modules/foundation/schema.yaml
+  - manifest: examples/unknown-ontology/modules/mission/module.yaml
+    pin:
+      name: unknown-ontology-mission
+      version: 1.0.0
+      digest: sha256:7cbb9964571e912e416ca1e56ad9e66522d1f49a36d230216a160fb4b3f374be
+    files:
+      - examples/unknown-ontology/modules/mission/schema.yaml
+  - manifest: examples/unknown-ontology/modules/dotnet/module.yaml
+    pin:
+      name: unknown-ontology-dotnet
+      version: 1.0.0
+      digest: sha256:14c81a45a1ff14da5f3b736cbf2ba8b63382b0e5cd89d1ff30e44ee9e2ea1fad
+    files: []
+projectionBindings:
+  - projection:
+      apiVersion: markitect.foundation/v1
+      kind: Projection
+      namespace: unknown-ontology
+      name: mission-dotnet
+    module: unknown-ontology-dotnet
+checks:
+  - name: unknown-ontology-behavior
+    run: [dotnet, run, --project, examples/unknown-ontology/checks/UnknownOntology.Checks.csproj, --configuration, Release]

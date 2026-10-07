@@ -1,0 +1,13 @@
+apiVersion: markitect.foundation/v1
+kind: ProjectionPolicy
+metadata:
+  namespace: example
+  name: responsibility-to-markdown
+purpose: Provides bounded markdown rendering guidance for the selected Responsibility Kind.
+spec:
+  sourceKind:
+    apiVersion: workflow.example.org/v1
+    kind: Responsibility
+  targetTechnology: markdown
+  guidance: >
+    Render readable Markdown from the selected canonical Definitions and explicit policy. Preserve exact identities, schema purposes, typed facts, and reference provenance. Use only supplied meaning and guidance; do not invent workflow steps or claim adoption.

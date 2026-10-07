@@ -1,0 +1,86 @@
+{
+  "proposalDigest": "sha256:b3ab72f66407601086815aa08f51ca87a07549c682f1d7ce7f43e5b54b1955f2",
+  "recordType": "post-verify-readonly-propose-result",
+  "trial": "c4-postverify-propose-readonly-01",
+  "fixtureHead": "db72f5737eb2f68df8aa22a788279abde4ca4f0a",
+  "evidenceRefreshRequiredCount": 0,
+  "unobservedProjectionCount": 0,
+  "action": "controller-propose",
+  "attemptId": "1fdc3be142624334a6f00ed932256f5c",
+  "unknownArtifacts": [],
+  "unobservedProjections": [],
+  "observedPathCount": 20,
+  "ledgerEventCountBefore": 7,
+  "ledgerHeadAfter": "sha256:aa16eda8bfa59b785f46edec864de1c118fd6dbafb69ffe36a7a3cd7fb9b049b",
+  "interpretation": "All three projections planned work because the exact db72 revision omits the applied target paths. This query does not test no-op convergence against the Apply evidence revision.",
+  "revision": "db72f5737eb2f68df8aa22a788279abde4ca4f0a",
+  "providerInvocations": 0,
+  "configDigest": "sha256:202c1d3d169f31294d8a4c816fe42af48b139de2f1a57bb38a8401d618b4f4f1",
+  "runId": "c4-postverify-propose-readonly-01",
+  "protocol": "operating-model-proof/v5",
+  "explicitWrite": false,
+  "inputDigest": "sha256:06984f06bc84d38827bb80b4b325e43e23722b02a8911bc7d7bcb5726ab63e34",
+  "ledgerEventCountAfter": 7,
+  "status": "planned",
+  "baseRevision": "db72f5737eb2f68df8aa22a788279abde4ca4f0a",
+  "externalOutputDigest": "sha256:ffb4c8876d6bec0d7b7ad99b2bbd58e0559ca74d9e8cdfbafd1e1760863e33cb",
+  "elapsedWallMilliseconds": 6963,
+  "evidenceRefreshRequired": [],
+  "sourceModelDigest": "sha256:821f5ce6a5ad473c65baac60bbd91a2f1fcf0e5ffab2977d18191e31b5da6c90",
+  "fixtureTree": "64cfac3f2fc8ec535c0cf21e90f3c5c9a1a59b43",
+  "exitCode": 0,
+  "observedDigest": "sha256:7ac58ff5f3a87bc88dd5b6677b30821810e37383650fea18d919058802721c50",
+  "ledgerHeadBefore": "sha256:aa16eda8bfa59b785f46edec864de1c118fd6dbafb69ffe36a7a3cd7fb9b049b",
+  "unknownArtifactCount": 0,
+  "proposals": [
+    {
+      "reasons": [
+        "projection-drift"
+      ],
+      "decision": "work",
+      "module": "operating-model-billing-dotnet",
+      "targetDigests": null,
+      "projectionId": "[\"markitect.foundation/v1\",\"Projection\",\"operating-model\",\"billing-dotnet\"]"
+    },
+    {
+      "reasons": [
+        "projection-drift"
+      ],
+      "decision": "work",
+      "module": "operating-model-orders-dotnet",
+      "targetDigests": null,
+      "projectionId": "[\"markitect.foundation/v1\",\"Projection\",\"operating-model\",\"orders-dotnet\"]"
+    },
+    {
+      "reasons": [
+        "projection-drift"
+      ],
+      "decision": "work",
+      "module": "operating-model-markdown",
+      "targetDigests": null,
+      "projectionId": "[\"markitect.foundation/v1\",\"Projection\",\"operating-model\",\"product-markdown\"]"
+    }
+  ],
+  "observedPaths": [
+    "examples/operating-model/canonical-documentation-aligned.yaml",
+    "examples/operating-model/definitions/billing-dotnet.projection-policy.yaml",
+    "examples/operating-model/definitions/billing-markdown.projection-policy.yaml",
+    "examples/operating-model/definitions/billing.billing-query.yaml",
+    "examples/operating-model/definitions/billing.projection.yaml",
+    "examples/operating-model/definitions/orders-dotnet.projection-policy.yaml",
+    "examples/operating-model/definitions/orders-markdown.projection-policy.yaml",
+    "examples/operating-model/definitions/orders.order-rules.yaml",
+    "examples/operating-model/definitions/orders.projection.yaml",
+    "examples/operating-model/definitions/product-documentation-aligned.projection.yaml",
+    "examples/operating-model/definitions/product-markdown.projection-policy.yaml",
+    "examples/operating-model/definitions/product.composition.yaml",
+    "examples/operating-model/definitions/representation-policy-markdown.projection-policy.yaml",
+    "examples/operating-model/modules/billing-dotnet/module.yaml",
+    "examples/operating-model/modules/commerce/module.yaml",
+    "examples/operating-model/modules/commerce/schema.yaml",
+    "examples/operating-model/modules/foundation/module.yaml",
+    "examples/operating-model/modules/foundation/schema.yaml",
+    "examples/operating-model/modules/markdown/module.yaml",
+    "examples/operating-model/modules/orders-dotnet/module.yaml"
+  ]
+}

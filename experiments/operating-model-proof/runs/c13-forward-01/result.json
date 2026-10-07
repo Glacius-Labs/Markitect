@@ -1,0 +1,158 @@
+{
+  "apiVersion": "markitect.operating-model-proof/c13-forward-result-v1alpha1",
+  "status": "partial",
+  "claim": "A fixed public canonical projection was matched to existing exact target bytes and its configured fixed check passed through CLI adoption without target-repository changes.",
+  "originalMarkitectRevision": "6a79b0d015801f3f37e42cacd049179cc795be42",
+  "fixture": {
+    "scope": "examples/canonical-projection/** only",
+    "sourceCommit": "603284871e3129189dae819237f212d918f988a4",
+    "sourceTree": "922cad28e266dadf49dedc99a8f838569837c86b",
+    "sourceFileCount": 17,
+    "byteEqualToOriginalSourceCount": 17,
+    "sourcePaths": [
+      "examples/canonical-projection/binding-notes.md",
+      "examples/canonical-projection/canonical.yaml",
+      "examples/canonical-projection/definitions/commerce.markdown-projection.yaml",
+      "examples/canonical-projection/definitions/commerce.projection.yaml",
+      "examples/canonical-projection/definitions/create-order.effect-axis.yaml",
+      "examples/canonical-projection/definitions/create-order.handler.yaml",
+      "examples/canonical-projection/definitions/create-order.projection-policy.yaml",
+      "examples/canonical-projection/definitions/create-order.use-case.yaml",
+      "examples/canonical-projection/definitions/effect-axis.projection-policy.yaml",
+      "examples/canonical-projection/definitions/handler.projection-policy.yaml",
+      "examples/canonical-projection/evidence/check.go",
+      "examples/canonical-projection/modules/commerce/module.yaml",
+      "examples/canonical-projection/modules/commerce/schema.yaml",
+      "examples/canonical-projection/modules/dotnet/module.yaml",
+      "examples/canonical-projection/modules/foundation/module.yaml",
+      "examples/canonical-projection/modules/foundation/schema.yaml",
+      "examples/canonical-projection/modules/markdown/module.yaml"
+    ],
+    "excluded": "All other repository content, other fixtures, private sources, and separate C13 inference evidence/candidate queue. Not a full-repository inventory."
+  },
+  "build": {
+    "sourceRevision": "6a79b0d015801f3f37e42cacd049179cc795be42",
+    "command": "go build -o <external-temp>/markitect-c13-forward-6a79b0d.exe ./cmd/markitect",
+    "goVersion": "go1.27.1 windows/amd64",
+    "goExeSha256": "d3ccdb604eafa6031133aefe1a3db24f0bb7362b857bc2125ac4e4c178b4b490",
+    "markitectExeSha256": "3d832f132dd7a71e19ddd2fd7aa0642540c7fc4d49ff65926e63d5dd015efe9c"
+  },
+  "selection": {
+    "projection": "markitect.foundation/v1/Projection/commerce/application-markdown",
+    "module": "markitect-markdown@1.0.0",
+    "projector": "markdown-documentation@1.0.0",
+    "artifacts": [
+      "docs/represented/index.md"
+    ],
+    "activeRecords": [],
+    "reviewReference": "technical-proof-only/C13-forward-01 (not owner review or acceptance)",
+    "unmatched": [
+      "docs/represented/unknown.md"
+    ]
+  },
+  "evidence": {
+    "goodCommit": "2e9f197b201f9f65f5c6c10cab7ada65f533348b",
+    "goodTree": "80b0f652b3becc0abeb08f6ab8fc6807e2528e7c",
+    "mutatedCommit": "81744424dc5befbb62077fa83b69c9e725691b33",
+    "mutatedTree": "c97d2cbc034b6869195f3bb25f5cf29195013f0c",
+    "goodMarkdownSha256": "414b55da45e62098ace33a148a1465aedc15fdcd04438474308e93c2ca055a19",
+    "goodMarkdownBytes": 1526,
+    "mutatedMarkdownSha256": "ab4c44bb2e89da0c57053e6cabdbf5cd6bc0839878b88cdb8c3fb63e8eef5cb1",
+    "mutation": "byte offset 174 changes the first application token initial a to x",
+    "targetEntriesAtGoodCommit": [
+      "100644 152e7b8aefa9263e9e0f2c0ba9e6f0b450246d18 docs/represented/index.md",
+      "100644 75ae9eb89beba369a09615b9839e9de2028a2373 docs/represented/unknown.md",
+      "100644 a2d0f0c71486691e3dc1d15a6308a2cd3eae6eeb src/Commerce/Commerce.csproj",
+      "100644 7e11beb211941bb1042d0acdc3ccce17cc20a8a5 src/Commerce/CreateOrderHandler.cs",
+      "100644 908526fb649a79353437b12027d0bb5ce343cdc0 src/Commerce/EffectAxis.cs"
+    ],
+    "fixedCheck": {
+      "name": "canonical-projection-fixture",
+      "argv": [
+        "go",
+        "run",
+        "examples/canonical-projection/evidence/check.go"
+      ],
+      "sourceSha256": "22da5d8081ed35fdfb30f0e8f5f009efb50bb8a278a9db36225c9005d572c49e"
+    },
+    "inferenceQueueConsumed": false,
+    "providerRuntime": null
+  },
+  "controls": [
+    {
+      "name": "correct-plan",
+      "exit": 0,
+      "status": "planned",
+      "plan": "sha256:505d1b5d3c4fdf1dd6ab6ae5f87108c4344c25ed18fa241b5f3695a556c0e33e",
+      "selectedChange": "retained",
+      "unmatched": [
+        "docs/represented/unknown.md"
+      ],
+      "stdoutSha256": "f08820a830d06587a10b23e080c36edc969cbf1c101942932d467196586d2c63",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "zeroChurn": true
+    },
+    {
+      "name": "correct-adopt",
+      "exit": 0,
+      "status": "adopted",
+      "verification": "passed",
+      "gate": "canonical-projection-fixture",
+      "gateExit": 0,
+      "record": "ephemeral only",
+      "unmatched": [
+        "docs/represented/unknown.md"
+      ],
+      "stdoutSha256": "679344a446f4aa90845e0b06722f3304fc0b290489bde16e55b463cfb8b6cb24",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "zeroChurn": true
+    },
+    {
+      "name": "wrong-path",
+      "path": "docs/represented/not-index.md",
+      "exit": 2,
+      "status": "command error",
+      "error": "adoption artifact is absent or outside selected representation target",
+      "stderrSha256": "f3a05f9bd9a47b8c358f596a8dcc590a2fae07bd773d3d20e75a57599de6f2f7",
+      "zeroChurn": true
+    },
+    {
+      "name": "mutated-plan",
+      "exit": 0,
+      "status": "planned",
+      "plan": "sha256:ce001080a5f56eb2320afc030f7e5f3c930ffbba6e17dfc8082a9470d2ae5903",
+      "artifactSha256": "ab4c44bb2e89da0c57053e6cabdbf5cd6bc0839878b88cdb8c3fb63e8eef5cb1",
+      "stdoutSha256": "bfa870a171ebd6740c5669c54201a503302668059d959343e6a2c0e038e90504",
+      "zeroChurn": true
+    },
+    {
+      "name": "mutated-adopt",
+      "exit": 0,
+      "status": "adopted",
+      "verification": "passed",
+      "gate": "canonical-projection-fixture",
+      "gateExit": 0,
+      "record": "ephemeral only",
+      "stdoutSha256": "f9b1ad20b52427dde17104a616a033609f07bdf0cd8dbdd950281258b1842f31",
+      "zeroChurn": true,
+      "interpretation": "Fixed check does not inspect Markdown; pass does not detect or validate mutation."
+    }
+  ],
+  "integrity": {
+    "primaryInvocations": 5,
+    "compared": [
+      "HEAD",
+      "git write-tree",
+      "git status --porcelain",
+      "target paths/modes/blob IDs"
+    ],
+    "allEqual": true
+  },
+  "limitations": [
+    "No durable active-owner record or integration was written.",
+    "reviewReference is test input, not authenticated owner review/acceptance.",
+    "Fixed check ignores Markdown; mutated artifact passed.",
+    "No link to separate C13 Infer candidate; this does not complete C13.",
+    "No provider/model, private evidence, or full repository gates."
+  ]
+}
