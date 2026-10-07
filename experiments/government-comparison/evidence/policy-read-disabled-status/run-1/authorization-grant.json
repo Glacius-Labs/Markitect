@@ -1,0 +1,45 @@
+{
+  "sourceThreadId": "01a11367-a781-7683-a20f-46e12614dcb4",
+  "sourceCoordinationPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\coordinator-authority-snapshot.json",
+  "sourceCoordinationSha256": "04484d4220dd7383af1d2675a95384554380dccc5a14ee8fc5908c3a474ede58",
+  "sourceOriginalCoordinationPath": "C:\\Users\\Consiliari\\Glacius Labs\\Markitect\\docs\\design\\government\\coordination-state.json",
+  "sourceJsonPointer": "threads[name=Scientist].evidence.localDisabledStatusMetadataGrant",
+  "grant": {
+    "issuedUtc": "2026-10-07T22:01:32Z",
+    "key": "local-policy-read-disabled-status-20261008",
+    "status": "Assigned; independent preflight, freeze and separate one-time reservation required; usage not yet confirmed",
+    "maxAdditionalAppServerSessions": 1,
+    "previousAppServerSessionsConsumed": 2,
+    "cumulativeAppServerSessionsMaximum": 3,
+    "wallSeconds": 60,
+    "innerWallSeconds": 50,
+    "maxParallel": 1,
+    "allowedMethods": [
+      "initialize",
+      "initialized",
+      "config/read",
+      "configRequirements/read"
+    ],
+    "maxConfigReads": 1,
+    "maxRequirementsReads": 1,
+    "retries": 0,
+    "allowedInboundNotifications": [
+      "warning",
+      "configWarning",
+      "deprecationNotice",
+      "windows/worldWritableWarning",
+      "remoteControl/status/changed"
+    ],
+    "remoteControlRule": "Exact frozen notification schema required. Retain only method/class/status enum; discard installationId, environmentId, serverName and all other parameters/identities. Only disabled may pass without reply. connecting/connected/errored/malformed abort; never enable/connect remote control.",
+    "maxInboundNotifications": 16,
+    "warningResultRule": "Existing provisional-result rule retained for non-deprecation warnings.",
+    "abortOn": "Every server request and all other unexpected messages/activity, no replies or retries. No further automatic diagnostic cascade.",
+    "boundary": "Same pinned 0.160.1 binary, cwd and fifteen inline pairs. Preserve old ledgers, grants, raw historical unknowns and sanitizer/process limits. Immutable preflight and postreview in separate files; no fabricated archive recovery. This remains metadata, not historical exec-policy/access proof.",
+    "realActorCallsAuthorized": 0,
+    "modelCallsAuthorized": 0,
+    "mutations": false,
+    "newPurchases": false,
+    "remainingSessions": 1,
+    "consumedSessions": null
+  }
+}

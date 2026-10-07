@@ -1,0 +1,16 @@
+{
+  "command": "python experiments/government-comparison/evidence/policy-read-disabled-status/run-1/test-classification.py",
+  "startedAtUtc": "2026-10-07T22:08:38.692919+00:00",
+  "exitCode": 0,
+  "testsRun": 22,
+  "passed": 22,
+  "skipped": 0,
+  "result": "passed",
+  "scope": "pure archived schema-binding, authorization-grant/history/reference guards, explicit disabled gate, status classifier, global notification cap, response-envelope and sanitizer tests; no request loaded, no client main, no subprocess/app-server/model/Actor started",
+  "sha256": {
+    "classified-client.py": "95c8486ad8962e14ad0c2da2989adcf154fa28f51d19c1fe983c532d1a885926",
+    "frozen-method-enums.json": "6553df9ac4a37d11402728992ed5e684ea379fbadeee790700867ae4542594cf",
+    "test-classification.py": "7bd7d63687936bb727d448f08a139b00d3752762a4093602b4d7bf32fb6dd335",
+    "test-classification.log": "75fc8bb5bb235c63dc6b361beeb69d67614cf2c2e3734e66a7b43a29cf2e8616"
+  }
+}

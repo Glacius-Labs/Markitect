@@ -1,0 +1,19 @@
+{
+  "allocationId": "local-policy-read-disabled-status-20261008",
+  "maxTrees": 1,
+  "requestSha256": "eaeaa66ecc1f4ba1620997324cfc83d2df181da6114523e1d63b92f1cc69ccbe",
+  "clientSha256": "95c8486ad8962e14ad0c2da2989adcf154fa28f51d19c1fe983c532d1a885926",
+  "methodEnumsSha256": "6553df9ac4a37d11402728992ed5e684ea379fbadeee790700867ae4542594cf",
+  "freezeSha256": "03406bb50e51562a8b0c73fba675f969b0002bc583c0aee6000b8e3fb3e5898a",
+  "sourceThreadId": "01a11367-a781-7683-a20f-46e12614dcb4",
+  "priorConsumption": {
+    "localCliMetadataCalls": 6,
+    "appServerPolicyReadTrees": 2,
+    "actorStarts": 5,
+    "knownActorInputPlusOutputTokens": 53331,
+    "historicalActorTokenTotal": null
+  },
+  "reservedAtUtc": "2026-10-07T22:10:19.902446+00:00",
+  "reviewSha256": "ce09e57c865bda015e63f3b36e4cc19eca0727c038f8f77c89aaafc45ec4a134",
+  "status": "reserved-one-tree-no-retry"
+}

@@ -1,0 +1,194 @@
+{
+  "status": "read-responses-received",
+  "stopReason": null,
+  "sentRpc": [
+    {
+      "method": "initialize",
+      "id": 0,
+      "params": {
+        "clientInfo": {
+          "name": "scientist_policy_read_once",
+          "version": "1.0"
+        }
+      }
+    },
+    {
+      "method": "initialized",
+      "params": {}
+    },
+    {
+      "method": "config/read",
+      "id": 1,
+      "params": {
+        "includeLayers": true,
+        "cwd": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\profile-v2-20261007-1791395973561\\context-drafts\\actor-workspace"
+      }
+    },
+    {
+      "method": "configRequirements/read",
+      "id": 2
+    }
+  ],
+  "observations": [
+    {
+      "id": 0,
+      "method": "initialize",
+      "sanitizedResult": {
+        "handshakeAcknowledged": true
+      }
+    },
+    {
+      "id": 1,
+      "method": "config/read",
+      "sanitizedResult": {
+        "config": {
+          "approval_policy": "never",
+          "approvals_reviewer": null,
+          "sandbox_mode": null,
+          "windows": {
+            "sandbox": "elevated"
+          },
+          "features": {
+            "apps": false,
+            "goals": false,
+            "hooks": false,
+            "memories": false,
+            "multi_agent": false,
+            "plugins": false,
+            "shell_tool": true,
+            "unified_exec": true,
+            "windows_sandbox_service": false
+          }
+        },
+        "origins": {
+          "features.unified_exec": {
+            "version": "sha256:d48757c807b20f661cd7696815ab8a45c78ab3641f248e8963786b141bf2aa13",
+            "name": {
+              "type": "sessionFlags"
+            }
+          },
+          "features.goals": {
+            "version": "sha256:d48757c807b20f661cd7696815ab8a45c78ab3641f248e8963786b141bf2aa13",
+            "name": {
+              "type": "sessionFlags"
+            }
+          },
+          "features.apps": {
+            "version": "sha256:d48757c807b20f661cd7696815ab8a45c78ab3641f248e8963786b141bf2aa13",
+            "name": {
+              "type": "sessionFlags"
+            }
+          },
+          "features.memories": {
+            "version": "sha256:d48757c807b20f661cd7696815ab8a45c78ab3641f248e8963786b141bf2aa13",
+            "name": {
+              "type": "sessionFlags"
+            }
+          },
+          "features.shell_tool": {
+            "version": "sha256:d48757c807b20f661cd7696815ab8a45c78ab3641f248e8963786b141bf2aa13",
+            "name": {
+              "type": "sessionFlags"
+            }
+          },
+          "features.multi_agent": {
+            "version": "sha256:d48757c807b20f661cd7696815ab8a45c78ab3641f248e8963786b141bf2aa13",
+            "name": {
+              "type": "sessionFlags"
+            }
+          },
+          "approval_policy": {
+            "version": "sha256:d48757c807b20f661cd7696815ab8a45c78ab3641f248e8963786b141bf2aa13",
+            "name": {
+              "type": "sessionFlags"
+            }
+          },
+          "features.hooks": {
+            "version": "sha256:d48757c807b20f661cd7696815ab8a45c78ab3641f248e8963786b141bf2aa13",
+            "name": {
+              "type": "sessionFlags"
+            }
+          },
+          "features.plugins": {
+            "version": "sha256:d48757c807b20f661cd7696815ab8a45c78ab3641f248e8963786b141bf2aa13",
+            "name": {
+              "type": "sessionFlags"
+            }
+          }
+        },
+        "layers": [
+          {
+            "version": "sha256:d48757c807b20f661cd7696815ab8a45c78ab3641f248e8963786b141bf2aa13",
+            "name": {
+              "type": "sessionFlags"
+            },
+            "config": {
+              "approval_policy": "never",
+              "features": {
+                "apps": false,
+                "goals": false,
+                "hooks": false,
+                "memories": false,
+                "multi_agent": false,
+                "plugins": false,
+                "shell_tool": true,
+                "unified_exec": true
+              }
+            }
+          },
+          {
+            "version": "sha256:3eb4afddd3ca1914236354e73da8792c068fe1b9098a6972fdc3a1dad9987738",
+            "name": {
+              "type": "user",
+              "file": "C:\\Users\\Consiliari\\.codex\\config.toml"
+            },
+            "config": {
+              "windows": {
+                "sandbox": "elevated"
+              },
+              "features": {
+                "memories": true
+              }
+            }
+          },
+          {
+            "version": "sha256:44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+            "name": {
+              "type": "system",
+              "file": "C:\\ProgramData\\OpenAI\\Codex\\config.toml"
+            },
+            "config": {}
+          }
+        ]
+      }
+    },
+    {
+      "id": 2,
+      "method": "configRequirements/read",
+      "sanitizedResult": {
+        "requirements": {
+          "network": null
+        }
+      }
+    }
+  ],
+  "serverMethodEvents": [
+    {
+      "method": "remoteControl/status/changed",
+      "class": "RemoteControl/status/changedNotification",
+      "status": "disabled"
+    }
+  ],
+  "notificationCount": 1,
+  "provisionalConfig": false,
+  "nativeReturnCode": 0,
+  "wallSeconds": 0.1032078000716865,
+  "rawResponseBytesDiscarded": 49985,
+  "stderrBytesDiscarded": 0,
+  "totalRawBytesConsumedInMemory": 49985,
+  "rawByteLimit": 4000000,
+  "queueCapacity": 32,
+  "rawConfigurationPersisted": false,
+  "rawFramePayloadsPersisted": false,
+  "automaticRetries": 0
+}

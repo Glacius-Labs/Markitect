@@ -1,0 +1,106 @@
+{
+  "kind": "disabled-status-metadata-delivery-validation",
+  "scope": "Read-only reconciliation of the single completed policy-read allocation, its frozen sources, receipts, and historical preservation. No tests, CLI, native, model, or Actor calls were made for this validation.",
+  "candidate": {
+    "allocationId": "local-policy-read-disabled-status-20261008",
+    "baseCommit": "0e62d5f1469d772804d35f2832efe0fa5679389d",
+    "freezeSha256": "03406bb50e51562a8b0c73fba675f969b0002bc583c0aee6000b8e3fb3e5898a",
+    "freezeInputs": {
+      "count": 15,
+      "matched": 15,
+      "mismatched": 0
+    },
+    "requestSha256": "eaeaa66ecc1f4ba1620997324cfc83d2df181da6114523e1d63b92f1cc69ccbe",
+    "reservationSha256": "fe353b4c0768899d05a0b20431c4f76d9370c7ff975ea499c61a51ef9372623f",
+    "reservationMatchesFreeze": true,
+    "reservationMatchesPreflightReview": true,
+    "preflightReviewSha256": "ce09e57c865bda015e63f3b36e4cc19eca0727c038f8f77c89aaafc45ec4a134",
+    "postrunReviewSha256": "632a881133b638aeed27928e11e63baec4b0e67a4f556edd1785cd331e5f3f1a",
+    "markersMatchReservation": true,
+    "authorizedTrees": 1,
+    "retries": 0
+  },
+  "testReceipt": {
+    "resultSha256": "aebb8605a3cfccf7d4226ee68ac324f51331bb3145c8aaa51304c82e3bb4580d",
+    "testSourceSha256": "7bd7d63687936bb727d448f08a139b00d3752762a4093602b4d7bf32fb6dd335",
+    "logSha256": "75fc8bb5bb235c63dc6b361beeb69d67614cf2c2e3734e66a7b43a29cf2e8616",
+    "passed": 22,
+    "total": 22,
+    "scope": "Pure schema, grant/history, status classifier, response-envelope, and sanitizer tests; no client main or subprocess execution."
+  },
+  "executionReceipts": {
+    "launchClaimedOnce": true,
+    "startedOnce": true,
+    "sanitizedResultSha256": "6a6ef142c7e6e3293ce8789e5b342e54643615898cccb6e7dff433b149cf4b61",
+    "processReceiptSha256": "55031f91b9c201b73044ef7e9378fc8325bcb9f06002cf05a2a56a2d5bc95f89",
+    "stdoutSha256": "df8f8fd140b55088c6a8f253f64aace2a9066cadcd3c0b54138f301412f016eb",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "nativeReturnCode": 0,
+    "clientReturnCode": 0,
+    "nativeWallSeconds": 0.1032078000716865,
+    "outerWallSeconds": 0.45617280004080385,
+    "sentRpcCount": 4,
+    "readResponsesReceived": 2,
+    "statusNotification": {
+      "method": "remoteControl/status/changed",
+      "class": "RemoteControl/status/changedNotification",
+      "status": "disabled"
+    },
+    "warnings": 0,
+    "provisionalConfig": false,
+    "rawResponseBytesDiscarded": 49985,
+    "rawConfigurationPersisted": false,
+    "rawFramePayloadsPersisted": false,
+    "automaticRetries": 0,
+    "filesystemIsolation": "not established by process wrapper"
+  },
+  "historicalSourceReconciliation": {
+    "comparison": "SHA-256 of frozen request source entries against Git blobs at baseCommit, not current worktree files.",
+    "matched": 4,
+    "total": 4,
+    "sources": {
+      "selected_metadata.py": "584c321dd217fcbca4c958b9283607602738fab392404bad2a7432c1bfac9652",
+      "process.py": "d0cedb71d57be87095d9af119d9769fb0c3d311e1af073cba81f6337743c78ae",
+      "runner.py": "9f8031a2c26c484cf3be92fef3bebafa8469096048989a3bbe76262a9d595e8a",
+      "priorPolicyClient.py": "998480229ae2573264904b00c8077ba2a6bed11349b04749cefdc6cd79724390"
+    }
+  },
+  "historicalValidation": {
+    "source": "experiments/government-comparison/evidence/policy-read-classified/run-1/validation.json",
+    "sourceSha256": "5ace264c64479c095cb00401978eaa396dbd760a8a69d3c3045ba8a82348a6a7",
+    "previousStatus": "Overseer accepted G5 technical mechanics; S1 open; no study cells",
+    "preservedLedgers": {
+      "actual-runner-authorized-starts.sqlite": {
+        "sha256": "74dfd51e2802bc67131891b28c6858129ff5ef4a50a6f1fe06a8793a7250732f",
+        "unchanged": true
+      },
+      "runner-01601-diagnostic.sqlite": {
+        "sha256": "33bd2ba59b11ab6d54f75c55e6d12b00ec6b90df00106a1419aed239cef2982c",
+        "unchanged": true
+      },
+      "context-additional/dispatch.sqlite": {
+        "sha256": "b4f13c5053ad1f00e477bf9be9831a5075f2ea0d8d33d8db6ce8a2173a6a0be8",
+        "unchanged": true
+      },
+      "context-tools/dispatch.sqlite": {
+        "sha256": "c4af6de468bd93a7373c56295075771da7981d5d541bcf2261e20556ec31bb89",
+        "unchanged": true
+      }
+    },
+    "unchangedLedgerCount": 4
+  },
+  "cumulativeAccounting": {
+    "appServerPolicyReadTrees": 3,
+    "cliMetadataCalls": 6,
+    "actorStarts": 5,
+    "knownActorInputPlusOutputTokens": 53331,
+    "historicalActorTokenTotal": null,
+    "historicalRemoteControlStatus": "unknown"
+  },
+  "limitations": [
+    "Returned app-server configuration is metadata evidence only; it does not establish effective permissions, read-only enforcement, network reachability, or S1 readiness.",
+    "The current disabled status does not resolve historical remote-control status.",
+    "Filesystem isolation is not established by the process wrapper.",
+    "No Actor or model call was made by this validation, and no new start was made."
+  ]
+}
