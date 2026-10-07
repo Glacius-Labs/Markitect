@@ -299,6 +299,16 @@ func scheduleQueue(ctx context.Context, repo string, q *queueControl) (QueueRepo
 			}
 			continue
 		}
+		requiredParallelism := runtimeParallelism(f.Runtime)
+		if q.state.Report.InFlightActors+requiredParallelism > q.state.Report.Limits.MaxParallelism {
+			result.State = "blocked"
+			result.NextStep = "inspect unknown in-flight actors and issue a fresh queue if capacity is unavailable"
+			result.Error = fmt.Sprintf("unknown in-flight actor reservations occupy %d queue slots; job runtime requires %d of maximum %d", q.state.Report.InFlightActors, requiredParallelism, q.state.Report.Limits.MaxParallelism)
+			if err := q.event("job-blocked", result); err != nil {
+				return q.state.Report, err
+			}
+			continue
+		}
 		elapsed := int64(time.Since(q.state.Report.StartedAt).Seconds())
 		if q.state.Report.ReservedWallTime+int64(f.Runtime.TimeoutSeconds) > q.state.Report.Limits.MaxWallTimeSeconds || elapsed+int64(f.Runtime.TimeoutSeconds) > q.state.Report.Limits.MaxWallTimeSeconds {
 			result.State = "blocked"

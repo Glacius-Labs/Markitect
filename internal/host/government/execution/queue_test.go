@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -106,6 +107,112 @@ func TestQueueRejectedActorReservationsDoNotMutateState(t *testing.T) {
 	}
 	if replayed.Report.ActorStarts != 1 || replayed.Report.InFlightActors != 1 || replayed.Report.PeakParallelism != 1 || len(replayed.pendingActors) != 1 || len(replayed.actorReservations) != 1 {
 		t.Fatalf("journal replay disagrees with accepted reservation: report=%+v pending=%v reservations=%v", replayed.Report, replayed.pendingActors, replayed.actorReservations)
+	}
+}
+
+func TestUnknownInFlightActorCapacityBlocksNewRuntime(t *testing.T) {
+	opts := fixtureOptions(t)
+	setRuntimeModelOptions(&opts.Runtime)
+	root := filepath.Dir(opts.Repo)
+	runtimePath := filepath.Join(root, "capacity-runtime.json")
+	runtimeBytes, err := json.Marshal(opts.Runtime)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(runtimePath, runtimeBytes, 0600); err != nil {
+		t.Fatal(err)
+	}
+	parallelism := runtimeParallelism(opts.Runtime)
+	timeout := int64(opts.Runtime.TimeoutSeconds)
+	backlog := QueueBacklog{APIVersion: QueueVersion, StateDirectory: opts.Runtime.StateDirectory, Limits: QueueLimits{ActorStarts: 20, MaxRepairs: 8, MaxWallTimeSeconds: timeout * 3, MaxParallelism: parallelism}}
+	for _, id := range []string{"interrupted", "independent"} {
+		backlog.Jobs = append(backlog.Jobs, QueueJob{ID: id, ConfigPath: opts.ConfigPath, OrderPath: opts.OrderPath, RuntimePath: runtimePath, DependsOn: []string{}})
+	}
+	backlogPath := filepath.Join(root, "capacity-queue.json")
+	raw, err := json.Marshal(backlog)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(backlogPath, raw, 0600); err != nil {
+		t.Fatal(err)
+	}
+	if err := validateQueueBacklog(opts.Repo, backlog, raw); err != nil {
+		t.Fatal(err)
+	}
+	dir, err := government.CreateOperationalDirectory(opts.Runtime.StateDirectory, "government-queue-")
+	if err != nil {
+		t.Fatal(err)
+	}
+	lease, err := government.AcquireLease(filepath.Join(dir, "queue.lease"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	identity, err := queueRepositoryIdentity(opts.Repo)
+	if err != nil {
+		t.Fatal(err)
+	}
+	pin, err := FingerprintRuntime(opts.Runtime)
+	if err != nil {
+		t.Fatal(err)
+	}
+	tool, err := toolPins(opts.Runtime)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := government.WriteOperationalRecord(filepath.Join(dir, "events.jsonl"), []byte{}); err != nil {
+		t.Fatal(err)
+	}
+	state := &queueState{BacklogBytes: raw, Jobs: map[string]frozenJob{}, Dependencies: map[string][]string{}, Checkpoints: map[string]Report{}, pendingActors: map[string]bool{}, actorReservations: map[string]bool{}, repoIdentity: identity}
+	state.Report = QueueReport{APIVersion: QueueVersion, QueueID: filepath.Base(dir), QueueDirectory: dir, Status: "queued", NextStep: "run finite backlog", BacklogDigest: digestBytes(raw), Limits: backlog.Limits, StartedAt: time.Now().UTC(), Jobs: []QueueJobResult{}}
+	bindings := map[string]frozenJob{}
+	for _, job := range backlog.Jobs {
+		frozen := frozenJob{QueueJob: job, TimeoutSeconds: opts.Runtime.TimeoutSeconds, RuntimeDigest: digestBytes(runtimeBytes), RuntimePin: pin, ToolPins: tool}
+		state.Jobs[job.ID] = frozen
+		state.Dependencies[job.ID] = job.DependsOn
+		bindings[job.ID] = frozen
+		state.Report.Jobs = append(state.Report.Jobs, QueueJobResult{ID: job.ID, State: "queued", NextStep: "await dependencies"})
+	}
+	if err := appendQueueEvent(dir, state, "created", map[string]any{"backlog": raw, "queueId": state.Report.QueueID, "startedAt": state.Report.StartedAt, "bindings": bindings, "repoIdentity": identity}); err != nil {
+		t.Fatal(err)
+	}
+	q := &queueControl{dir: dir, state: state, lease: lease}
+	q.state.activeJob = "interrupted"
+	oldJob := &q.state.Report.Jobs[0]
+	oldJob.State = "running"
+	oldJob.NextStep = "run once"
+	q.state.Report.ReservedWallTime += timeout
+	if err := q.event("attempt-reserved", map[string]any{"jobId": oldJob.ID, "job": *oldJob, "wallSeconds": timeout, "reserved": q.state.Report.ReservedWallTime}); err != nil {
+		t.Fatal(err)
+	}
+	if err := q.StartRun("interrupted-run", filepath.Join(dir, "interrupted", "report.json")); err != nil {
+		t.Fatal(err)
+	}
+	if err := q.ReserveActor("interrupted-run", 1, "execute", opts.Runtime.Executor); err != nil {
+		t.Fatal(err)
+	}
+	if err := lease.Close(); err != nil {
+		t.Fatal(err)
+	}
+
+	resumed, err := ResumeQueue(context.Background(), QueueOptions{Repo: opts.Repo, BacklogPath: backlogPath, QueueDirectory: dir})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if resumed.Limits.ActorStarts <= resumed.ActorStarts || resumed.Limits.MaxRepairs > 0 && resumed.Repairs >= resumed.Limits.MaxRepairs || resumed.ReservedWallTime+timeout > resumed.Limits.MaxWallTimeSeconds {
+		t.Fatalf("fixture did not retain independent actor, repair and wall budgets: %+v", resumed)
+	}
+	if resumed.Jobs[0].State != "incomplete" || resumed.Jobs[1].State != "blocked" || !strings.Contains(resumed.Jobs[1].Error, "unknown in-flight actor reservations") {
+		t.Fatalf("insufficient unknown-slot capacity did not block the independent runtime: %+v", resumed.Jobs)
+	}
+	if resumed.ActorStarts != 1 || resumed.InFlightActors != 1 || resumed.PeakParallelism != 1 || resumed.Repairs != 0 || resumed.ReservedWallTime != timeout {
+		t.Fatalf("blocked runtime changed cumulative reservations: %+v", resumed)
+	}
+	repeated, err := ResumeQueue(context.Background(), QueueOptions{Repo: opts.Repo, BacklogPath: backlogPath, QueueDirectory: dir})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if repeated.JournalSequence != resumed.JournalSequence || repeated.ActorStarts != resumed.ActorStarts || repeated.InFlightActors != 1 || repeated.Jobs[1].State != "blocked" {
+		t.Fatalf("capacity-blocked terminal queue changed on resume: first=%+v second=%+v", resumed, repeated)
 	}
 }
 
