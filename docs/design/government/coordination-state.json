@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-07T15:17:00Z",
+  "updatedUtc": "2026-10-07T15:24:29Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -18,13 +18,13 @@
       "name": "Worker",
       "threadId": "01a1169b-9357-7df3-a8f6-f913557c782a",
       "hostId": "local",
-      "afterCursor": "b2b8e43f-fcaa-41bf-828a-99c69527bdea:10",
+      "afterCursor": "b2b8e43f-fcaa-41bf-828a-99c69527bdea:11",
       "lastObservedStatus": "active",
       "activeTurn": "01a116eb-bb06-7932-a115-10777b106262",
-      "lastAssistantMessageId": "msg_0a7785839df196a4016ac661af72848191aa9f13d012c58d3e",
+      "lastAssistantMessageId": "msg_0a7785839df196a4016ac663f2e71481919f6d2df8991a0a5b",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "G1 source-gate closure with user-authorized maximum 30-minute monitored suite",
-      "latestProgress": "Nach rund einer Minute sind 46 Pakete und 1.042 Tests einschließlich Untertests erfolgreich abgeschlossen; bisher kein Fehler. Aktiv sind noch examples, host, host/cli und infrastructure/source. Die letzten Abschlüsse liegen wenige Sekunden zurück; der Lauf macht Fortschritt.",
+      "latestProgress": "Der Lauf hat die frühere Grenze überschritten und steht bei 10 Minuten 34 Sekunden. Die letzten terminalen Testereignisse zählen weiterhin 1.671 erfolgreiche Tests samt Untertests. Danach meldete eines der drei Controller-Szenarien bereits eine erfolgreiche PASS-Ausgabe nach 41 Sekunden; die übrigen liefern noch kein Endergebnis. Kein Fehler gemeldet.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-worker/Markitect",
       "transferredDesignCommit": "691ce1dee3484371c4aea725db4ed5cc3f2e3719",
       "candidateSha": "e2c834fe93fb39e7292e5acfeb7d8207af22371f",
@@ -60,13 +60,13 @@
       "name": "Scientist",
       "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
       "hostId": "local",
-      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:9",
+      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:10",
       "lastObservedStatus": "active",
       "activeTurn": "01a116e1-affd-7800-a888-87fbda15caa1",
-      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac66129394881919c76861881887605",
+      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac66402d4148191bac3be787c5ae878",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "Common adapter and bounded actual runner readiness; six-cell live study remains closed",
-      "latestProgress": "Die nativen Probes sind durch die gemeinsame Hülle gelaufen; Conventional, Classic und Government melden nachvollziehbar readiness_gap. Die unabhängige Prüfung hat dabei zwei relevante Schwächen gefunden: Request-Hash und JSON wurden getrennt gelesen, und die Classic-Konfigurationspins waren nicht gegen einen ausgetauschten Paketmanifest abgesichert. Ich korrigiere beides vor dem Freeze.",
+      "latestProgress": "Check, Context und Impact sind am Quellstand 55d1dec erfolgreich. Das Manifest stimmt für 50 Quellen und 80 Belegdateien mit den committed Bytes überein; der abschließende Metadaten-Commit ist e2e2d03, der Arbeitsbaum ist sauber. Es gab keine Actor-Probes und keinen Live-Vergleich. Die unabhängige Hash-Abstimmung läuft noch.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-scientist/Markitect",
       "transferredDesignCommit": "b9e17c9896f14b4b1268e4bcb005395f5d324384",
       "candidateSha": "e4278c50ddc84daee3858e24c89e6cf5777b5dfe",
@@ -92,13 +92,13 @@
       "name": "Architect",
       "threadId": "01a111ec-a913-7830-91b0-925d0a1dd1b2",
       "hostId": "local",
-      "afterCursor": "71d9f5b2-c0f0-474c-9898-777d051b478a:25",
+      "afterCursor": "71d9f5b2-c0f0-474c-9898-777d051b478a:26",
       "lastObservedStatus": "active",
       "activeTurn": "01a116f0-47c6-7770-ace4-b522caf9bae3",
-      "lastAssistantMessageId": "msg_0b6e7ce0ce9f843f016ac662619f2087d2b445de13070e9dd6",
+      "lastAssistantMessageId": "msg_0b6e7ce0ce9f843f016ac663cb823887d2b0e9598b1d1c6e92",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "Bounded public Classic onboarding example with explicit policies, real compilation and positive/negative verification; held study candidate unchanged",
-      "latestProgress": "Ich ergänze Classic um einen eigenständig ausführbaren öffentlichen Einstieg mit vollständigen Policies, echtem .NET-Build und einer fachlichen Negativprobe. Dafür trenne ich die Arbeit vom übergebenen v0.14.1-Kandidaten; dessen Stand und Belege bleiben erhalten. Eine volle Go-Prüfung starte ich vorerst nicht parallel zum belegten Prüfslot.",
+      "latestProgress": "Das neue Beispiel liegt auf einem separaten Folgebranch. Sein Modell enthält die vollständigen Markdown-Policies und einen kleinen, klar definierten Bestellvorgang. Ein Agent erstellt den .NET-Build und die fachliche Prüfung, ein zweiter den begrenzten CLI-Smoke; ein weiterer prüft unabhängig. Verwendet wird das bereits installierte .NET SDK 8.0.418.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/standard-operating-model/Markitect",
       "transferredDesignCommit": null,
       "candidateSha": "c91363b7ac4decbe87212ff0f588b5451581a152",
@@ -125,7 +125,7 @@
       "followupWorktree": null
     }
   ],
-  "nextAction": "Review Worker monitored suite and Scientist adapter readiness; inspect Architect's separate public-example follow-up when complete. Keep Classic v0.14.1 study candidate held until explicit version selection. Coordinate full-suite slot after Worker finishes.",
+  "nextAction": "Await completed Worker suite and Scientist independent final evidence; Architect continues bounded example. No repeated instructions or concurrent full Go suite.",
   "boundaries": {
     "governmentPublication": false,
     "automaticClassicReplacement": false,
@@ -134,16 +134,13 @@
     "jev": "Deferred; no extra investigation started"
   },
   "lastReview": {
-    "reviewedUtc": "2026-10-07T15:17:00Z",
-    "evidenceLevel": "Compact live snapshots. Architect readiness/source example directly read: extra Markdown-policy setup and marker-only C# checker confirmed. New follow-up is dispatched and active, not an accepted new candidate. Worker and Scientist interim progress is reported, not a finished milestone.",
-    "coordinationActions": [
-      "Architect given one bounded product onboarding/real-build follow-up on user's request; held Classic candidate retained.",
-      "No duplicate Worker or Scientist assignments; Worker owns current full Go-suite slot."
-    ],
+    "reviewedUtc": "2026-10-07T15:24:29Z",
+    "evidenceLevel": "Compact live snapshots; all three turns remain active. New durations, counts and candidate progress are agent-reported, not independently accepted completion evidence.",
+    "coordinationActions": [],
     "findings": [
-      "Worker reports continuing progress: 46 packages and 1042 tests/subtests passed after about a minute; remaining packages active.",
-      "Scientist fixing request-byte/hash race and Classic manifest/config binding findings in shared adapter.",
-      "Architect now active on complete public example; no parallel full Go suite."
+      "Worker reports 10m34s elapsed with 1671 completed successful tests/subtests and further controller PASS output; full suite ongoing under authorized 30-minute cap.",
+      "Scientist reports clean metadata candidate e2e2d03, check/context/impact at 55d1dec and 50 source/80 evidence hash matches. Independent hash review still running. No actor probes/live comparison.",
+      "Architect reports separate public-example branch, complete Markdown policies and parallel build/smoke/review work using installed .NET SDK 8.0.418."
     ],
     "userDecisionRequired": false
   },
