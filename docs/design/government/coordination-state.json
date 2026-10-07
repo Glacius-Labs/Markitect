@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-07T14:32:38.9365549Z",
+  "updatedUtc": "2026-10-07T14:45:18.6939863Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -18,13 +18,13 @@
       "name": "Worker",
       "threadId": "01a1169b-9357-7df3-a8f6-f913557c782a",
       "hostId": "local",
-      "afterCursor": "b2b8e43f-fcaa-41bf-828a-99c69527bdea:3",
+      "afterCursor": "b2b8e43f-fcaa-41bf-828a-99c69527bdea:4",
       "lastObservedStatus": "active",
       "activeTurn": "01a116b3-6a7f-7de3-8b4a-80b142827738",
-      "lastAssistantMessageId": "msg_0a7785839df196a4016ac6576150a88191a2e320d73761f0ae",
+      "lastAssistantMessageId": "msg_0a7785839df196a4016ac659faf3f4819188e889a82b2c40be",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "G1 with G2 contracts",
-      "latestProgress": "Alle 20 vorgeschriebenen Schema-, Beispiel-, Format-, Modell- und Kontextprüfungen sind erfolgreich. Auch Build, Modulprüfungen und Root-Formatierung bestehen. Die vollständige Testsuite läuft noch im Host-Paket; erst nach ihrem Ergebnis friere ich den Commit ein und prüfe den festen Kandidaten.",
+      "latestProgress": "Die vollständige Testsuite läuft inzwischen innerhalb der festen verify-Prüfung. Der G1-Nachweis bleibt auf Modell, Inventar und lesende Planung begrenzt: Echte Dateien und Modellidentitäten sind geprüft, G2-Agentenausführung und Host-Übernahme sind noch nicht implementiert.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-worker/Markitect",
       "transferredDesignCommit": "691ce1dee3484371c4aea725db4ed5cc3f2e3719"
     },
@@ -32,13 +32,13 @@
       "name": "Scientist",
       "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
       "hostId": "local",
-      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:3",
+      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:4",
       "lastObservedStatus": "active",
       "activeTurn": "01a116b3-6b38-7163-ba3c-65e8f8010925",
-      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac657a510f881919bfd320d7768fbcc",
+      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac65a2a338081918db45dd0fdcb122f",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "Reference fixtures, public adapter contract and harness readiness",
-      "latestProgress": "Die unabhängige Prüfung findet keine wesentlichen Vertragswidersprüche; private Holdout-Dateien sind nicht versioniert. Die Prüfung der Git-Blobs fand noch eine Zeilenenden-Abweichung bei zuvor gestagten Dateien. Diese ist mit e4a3aa2 korrigiert. Die laufende Quellprüfung gehört weiterhin zum früheren Kandidaten; ich werde ihren Befund ausdrücklich getrennt von der finalen Byteprüfung ausweisen.",
+      "latestProgress": "Die Quellprüfung hat ihr reguläres Zehn-Minuten-Fenster erreicht, aber noch keinen Abschlussbericht geliefert. Ich prüfe jetzt den Prozessabschluss und halte dieses Ergebnis getrennt vom bestandenen Fixture-Paket. Ein fehlender Abschluss wird als unvollständige Evidenz dokumentiert und nicht als grünes Gate gewertet.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-scientist/Markitect",
       "transferredDesignCommit": "b9e17c9896f14b4b1268e4bcb005395f5d324384"
     },
@@ -46,18 +46,18 @@
       "name": "Architect",
       "threadId": "01a111ec-a913-7830-91b0-925d0a1dd1b2",
       "hostId": "local",
-      "afterCursor": "71d9f5b2-c0f0-474c-9898-777d051b478a:22",
+      "afterCursor": "71d9f5b2-c0f0-474c-9898-777d051b478a:23",
       "lastObservedStatus": "active",
       "activeTurn": "01a116ae-eda0-7551-87a2-84e23e9fc301",
-      "lastAssistantMessageId": "msg_0b6e7ce0ce9f843f016ac656d300a087d281448fcb8e016eba",
+      "lastAssistantMessageId": "msg_0b6e7ce0ce9f843f016ac659e4e7b887d2a9b2b2db97abdae1",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "Classic final checks, cleanup and reproducible readiness packet",
-      "latestProgress": "Der Smoke prüft den tatsächlich veröffentlichten Binärhash und kopiert nur unveränderte Git-Dateien der bestehenden Beispiele. Für Apply und das anschließende Verify bleiben die ausgegebenen JSON-Berichte bytegenau erhalten. Nach dem letzten Review führe ich diesen einen begrenzten Lauf aus.",
+      "latestProgress": "Der erste Smoke hat einen weiteren Fehler in der Übergabehilfe sichtbar gemacht: Die Modellabfrage liefert YAML, während die Controller-Aktionen JSON liefern. Die Hilfe hatte beides als JSON behandelt. Ich korrigiere diese Unterscheidung und behalte den unvollständigen Lauf samt Ausgaben bei.",
       "worktree": "Existing isolated Classic context; Architect owns exact selected worktree",
       "transferredDesignCommit": null
     }
   ],
-  "nextAction": "All three tasks remain active in validation. Await Worker final suite and fixed candidate; Scientist final byte/source evidence; Architect bounded released-binary smoke. No new completion accepted or duplicate assignment sent.",
+  "nextAction": "Await existing final validation. Public adapter v1.1 was read and handed off; do not repeat these messages. Scientist owns study wrappers; product owners supply true invocation/evidence. Scientist to close known SKU 404 check and report pending source gate accurately before scheduling another heavy run.",
   "boundaries": {
     "governmentPublication": false,
     "automaticClassicReplacement": false,
@@ -66,9 +66,24 @@
     "jev": "Deferred; no extra investigation started"
   },
   "lastReview": {
-    "reviewedUtc": "2026-10-07T14:32:38.9365549Z",
-    "evidenceLevel": "Live chat progress snapshots; reported gate results not independently accepted as final",
-    "coordinationActions": [],
+    "reviewedUtc": "2026-10-07T14:45:18.6939863Z",
+    "evidenceLevel": "Live chats; Scientist clean HEAD 3f1dcf47 and public adapter v1.1 directly read. No final product/fixture milestone accepted.",
+    "coordinationActions": [
+      "Worker: public v1.1 adapter contract and G2 integration information sent; existing G1 checks continue.",
+      "Architect: align readiness handoff with public contract; Scientist owns wrapper; no new study or runner requested.",
+      "Scientist: clarify adapter ownership, close known public SKU 404 gap, retain source-gate failure evidence and coordinate any heavy rerun."
+    ],
     "userDecisionRequired": false
+  },
+  "publicAdapterHandoff": {
+    "version": "1.1",
+    "scientistCommit": "3f1dcf47aff80b29b8f4f3cc39711adcf2e72b88",
+    "path": "experiments/government-comparison/public/adapter-contract.md",
+    "forwardedTo": [
+      "Worker",
+      "Architect"
+    ],
+    "wrapperOwner": "Scientist",
+    "liveStudyApproved": false
   }
 }
