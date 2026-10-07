@@ -63,6 +63,8 @@ before those checks can be claimed complete.
 [Public adapter contract](public/adapter-contract.md) was published early at
 `775338555d2f2743128462af13d998c7d179c7ac`. Worker and Architect provide exact
 product inputs, invocation argv, results and receipts against that contract.
+The current contract is v1.1: results also echo the exact request-file SHA-256;
+use the final package version rather than the earlier v1 bytes.
 `harness.py` currently runs bounded fixture probes only, validates start/input and
 answer bindings, and preserves failed attempts. Live mode is deliberately closed.
 It does not yet implement live process-tree containment, shared budget scheduling,
@@ -86,6 +88,11 @@ necessarily per actual task-5 candidate and remains unset. Private files are not
 copied into actors. The same-user sentinel probe demonstrates that current OS
 rights permit external reads; an actual Actor-runner access probe still remains.
 This is cooperative separation, with contamination recorded if access occurs.
+Live actor roots also need an effective-context probe: these mechanical fixture
+copies sit under a Markitect checkout, whose ancestor instructions must not leak
+into Conventional or reveal the study. Use independently provisioned roots or
+verify that the actual runner suppresses unintended ancestor/config/memory input;
+freeze the resulting context policy equally across arms.
 
 ## Next finite checkpoint
 

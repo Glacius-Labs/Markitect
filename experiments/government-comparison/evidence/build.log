@@ -1,9 +1,9 @@
   Determining projects to restore...
-  Restored C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\government-comparison\.study-data\smoke-v5\starts\brownfield\src\Orders.Api\Orders.Api.csproj (in 140 ms).
-  Orders.Api -> C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\government-comparison\.study-data\smoke-v5\starts\brownfield\src\Orders.Api\bin\Debug\net10.0\Orders.Api.dll
+  Restored C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\government-comparison\.study-data\smoke-v6\starts\brownfield\src\Orders.Api\Orders.Api.csproj (in 143 ms).
+  Orders.Api -> C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\government-comparison\.study-data\smoke-v6\starts\brownfield\src\Orders.Api\bin\Debug\net10.0\Orders.Api.dll
 
 Build succeeded.
     0 Warning(s)
     0 Error(s)
 
-Time Elapsed 00:00:00.97
+Time Elapsed 00:00:00.95

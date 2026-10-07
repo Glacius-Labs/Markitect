@@ -9,11 +9,12 @@ Preparation attempts are retained in ignored `.study-data/`:
 
 | Attempt | Result | Interpretation |
 |---|---|---|
-| smoke-v1 | Failed before product probe | Windows inherited autocrlf changed clone bytes relative to the fixed check configuration; corrected explicit clone setting |
+| smoke-v1 | Failed at Brownfield start validation after 3 mechanical Greenfield probes | Windows inherited autocrlf changed clone bytes relative to the fixed check configuration; corrected explicit clone setting |
 | smoke-v2 | Passed; 6 probes / 16 API assertions | First complete interchange/API/restart smoke, before adding fixture-local build/database ignores |
 | smoke-v3 | Passed; 6 probes / 16 API assertions | New Brownfield start after its own .gitignore was included |
 | smoke-v4 | Passed; 6 probes / 17 API assertions | Public task1 includes unknown-order 404; preliminary source freeze retained privately before final byte preservation/README cleanup |
-| smoke-v5 | Passed; 6 probes / 17 API assertions | Final Brownfield README/local output ignores; exact byte attributes added to the enclosing study source; evidence preserved here |
+| smoke-v5 | Passed; 6 probes / 17 API assertions | Final Brownfield README/local output ignores and exact source bytes; retained before adapter v1.1 binding tightening |
+| smoke-v6 | Passed; 6 probes / 17 API assertions | Adapter v1.1 binds exact request digest, including same-trial changes; final evidence preserved here |
 
 The initial vulnerable native SQLite graph and inherited Azure feed 401 were
 preparation failures, corrected and disclosed in the Brownfield provenance.

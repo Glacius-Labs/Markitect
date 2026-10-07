@@ -2,6 +2,7 @@
   "schemaVersion": 1,
   "trialId": "conventional-brownfield-smoke",
   "operation": "probe",
+  "requestSha256": "302d9cf34143e48d9f0e64a73bdce25506b6a95f6141c1cd633097e750c1ac0d",
   "mode": "fixture",
   "status": "readiness_gap",
   "candidateCommit": null,

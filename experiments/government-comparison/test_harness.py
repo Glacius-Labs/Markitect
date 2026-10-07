@@ -46,13 +46,14 @@ class BindingAndReleaseTests(unittest.TestCase):
 
     def test_stale_or_cross_trial_result_rejected(self):
         request = {"schemaVersion": 1, "trialId": "a", "operation": "probe", "mode": "fixture"}
-        result = {**request, "status": "readiness_gap", "candidateCommit": None, "capabilities": [], "gaps": [], "receipts": [], "usage": None}
-        validate_result(request, result)
-        for field, wrong in (("trialId", "b"), ("schemaVersion", 2), ("operation", "run_task"), ("mode", "live")):
+        request_digest = "e" * 64
+        result = {**request, "requestSha256": request_digest, "status": "readiness_gap", "candidateCommit": None, "capabilities": [], "gaps": [], "receipts": [], "usage": None}
+        validate_result(request, result, request_digest)
+        for field, wrong in (("trialId", "b"), ("schemaVersion", 2), ("operation", "run_task"), ("mode", "live"), ("requestSha256", "f" * 64)):
             with self.subTest(field=field), self.assertRaises(ValueError):
-                validate_result(request, {**result, field: wrong})
+                validate_result(request, {**result, field: wrong}, request_digest)
         with self.assertRaises(ValueError):
-            validate_result(request, {**result, "candidateCommit": "a" * 40})
+            validate_result(request, {**result, "candidateCommit": "a" * 40}, request_digest)
 
     def test_future_checks_absent_until_release(self):
         for cutoff in range(1, 7):

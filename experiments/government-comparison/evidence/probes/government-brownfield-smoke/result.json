@@ -2,6 +2,7 @@
   "schemaVersion": 1,
   "trialId": "government-brownfield-smoke",
   "operation": "probe",
+  "requestSha256": "25d027010070f681ed72c49bfd7f3b6952037e029f6b88df491332a47c7cc1a2",
   "mode": "fixture",
   "status": "readiness_gap",
   "candidateCommit": null,

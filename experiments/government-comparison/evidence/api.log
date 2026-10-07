@@ -1,13 +1,13 @@
 info: Microsoft.Hosting.Lifetime[14]
-      Now listening on: http://127.0.0.1:63449
+      Now listening on: http://127.0.0.1:63393
 info: Microsoft.Hosting.Lifetime[0]
       Application started. Press Ctrl+C to shut down.
 info: Microsoft.Hosting.Lifetime[0]
       Hosting environment: Production
 info: Microsoft.Hosting.Lifetime[0]
-      Content root path: C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\government-comparison\.study-data\smoke-v5\starts\brownfield
+      Content root path: C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\government-comparison\.study-data\smoke-v6\starts\brownfield
 info: Microsoft.AspNetCore.Hosting.Diagnostics[1]
-      Request starting HTTP/1.1 GET http://127.0.0.1:63449/health - application/json -
+      Request starting HTTP/1.1 GET http://127.0.0.1:63393/health - application/json -
 info: Microsoft.AspNetCore.Routing.EndpointMiddleware[0]
       Executing endpoint 'HTTP: GET /health'
 info: Microsoft.AspNetCore.Http.Result.OkObjectResult[1]
@@ -17,9 +17,9 @@ info: Microsoft.AspNetCore.Http.Result.OkObjectResult[3]
 info: Microsoft.AspNetCore.Routing.EndpointMiddleware[1]
       Executed endpoint 'HTTP: GET /health'
 info: Microsoft.AspNetCore.Hosting.Diagnostics[2]
-      Request finished HTTP/1.1 GET http://127.0.0.1:63449/health - 200 - application/json;+charset=utf-8 94.0880ms
+      Request finished HTTP/1.1 GET http://127.0.0.1:63393/health - 200 - application/json;+charset=utf-8 58.8984ms
 info: Microsoft.AspNetCore.Hosting.Diagnostics[1]
-      Request starting HTTP/1.1 GET http://127.0.0.1:63449/health - application/json -
+      Request starting HTTP/1.1 GET http://127.0.0.1:63393/health - application/json -
 info: Microsoft.AspNetCore.Routing.EndpointMiddleware[0]
       Executing endpoint 'HTTP: GET /health'
 info: Microsoft.AspNetCore.Http.Result.OkObjectResult[1]
@@ -29,9 +29,9 @@ info: Microsoft.AspNetCore.Http.Result.OkObjectResult[3]
 info: Microsoft.AspNetCore.Routing.EndpointMiddleware[1]
       Executed endpoint 'HTTP: GET /health'
 info: Microsoft.AspNetCore.Hosting.Diagnostics[2]
-      Request finished HTTP/1.1 GET http://127.0.0.1:63449/health - 200 - application/json;+charset=utf-8 1.6677ms
+      Request finished HTTP/1.1 GET http://127.0.0.1:63393/health - 200 - application/json;+charset=utf-8 0.9549ms
 info: Microsoft.AspNetCore.Hosting.Diagnostics[1]
-      Request starting HTTP/1.1 GET http://127.0.0.1:63449/catalog - application/json -
+      Request starting HTTP/1.1 GET http://127.0.0.1:63393/catalog - application/json -
 info: Microsoft.AspNetCore.Routing.EndpointMiddleware[0]
       Executing endpoint 'HTTP: GET /catalog'
 info: Microsoft.AspNetCore.Http.Result.OkObjectResult[1]
@@ -41,9 +41,9 @@ info: Microsoft.AspNetCore.Http.Result.OkObjectResult[3]
 info: Microsoft.AspNetCore.Routing.EndpointMiddleware[1]
       Executed endpoint 'HTTP: GET /catalog'
 info: Microsoft.AspNetCore.Hosting.Diagnostics[2]
-      Request finished HTTP/1.1 GET http://127.0.0.1:63449/catalog - 200 - application/json;+charset=utf-8 6.3878ms
+      Request finished HTTP/1.1 GET http://127.0.0.1:63393/catalog - 200 - application/json;+charset=utf-8 4.8234ms
 info: Microsoft.AspNetCore.Hosting.Diagnostics[1]
-      Request starting HTTP/1.1 POST http://127.0.0.1:63449/orders - application/json 45
+      Request starting HTTP/1.1 POST http://127.0.0.1:63393/orders - application/json 45
 info: Microsoft.AspNetCore.Routing.EndpointMiddleware[0]
       Executing endpoint 'HTTP: POST /orders'
 info: Microsoft.AspNetCore.Http.Result.BadRequestObjectResult[1]
@@ -53,9 +53,9 @@ info: Microsoft.AspNetCore.Http.Result.BadRequestObjectResult[3]
 info: Microsoft.AspNetCore.Routing.EndpointMiddleware[1]
       Executed endpoint 'HTTP: POST /orders'
 info: Microsoft.AspNetCore.Hosting.Diagnostics[2]
-      Request finished HTTP/1.1 POST http://127.0.0.1:63449/orders - 400 - application/json;+charset=utf-8 16.1837ms
+      Request finished HTTP/1.1 POST http://127.0.0.1:63393/orders - 400 - application/json;+charset=utf-8 8.5754ms
 info: Microsoft.AspNetCore.Hosting.Diagnostics[1]
-      Request starting HTTP/1.1 POST http://127.0.0.1:63449/orders - application/json 46
+      Request starting HTTP/1.1 POST http://127.0.0.1:63393/orders - application/json 46
 info: Microsoft.AspNetCore.Routing.EndpointMiddleware[0]
       Executing endpoint 'HTTP: POST /orders'
 info: Microsoft.AspNetCore.Http.Result.BadRequestObjectResult[1]
@@ -65,9 +65,9 @@ info: Microsoft.AspNetCore.Http.Result.BadRequestObjectResult[3]
 info: Microsoft.AspNetCore.Routing.EndpointMiddleware[1]
       Executed endpoint 'HTTP: POST /orders'
 info: Microsoft.AspNetCore.Hosting.Diagnostics[2]
-      Request finished HTTP/1.1 POST http://127.0.0.1:63449/orders - 400 - application/json;+charset=utf-8 0.4804ms
+      Request finished HTTP/1.1 POST http://127.0.0.1:63393/orders - 400 - application/json;+charset=utf-8 0.2256ms
 info: Microsoft.AspNetCore.Hosting.Diagnostics[1]
-      Request starting HTTP/1.1 POST http://127.0.0.1:63449/orders - application/json 47
+      Request starting HTTP/1.1 POST http://127.0.0.1:63393/orders - application/json 47
 info: Microsoft.AspNetCore.Routing.EndpointMiddleware[0]
       Executing endpoint 'HTTP: POST /orders'
 info: Microsoft.AspNetCore.Http.Result.BadRequestObjectResult[1]
@@ -77,9 +77,9 @@ info: Microsoft.AspNetCore.Http.Result.BadRequestObjectResult[3]
 info: Microsoft.AspNetCore.Routing.EndpointMiddleware[1]
       Executed endpoint 'HTTP: POST /orders'
 info: Microsoft.AspNetCore.Hosting.Diagnostics[2]
-      Request finished HTTP/1.1 POST http://127.0.0.1:63449/orders - 400 - application/json;+charset=utf-8 0.4682ms
+      Request finished HTTP/1.1 POST http://127.0.0.1:63393/orders - 400 - application/json;+charset=utf-8 0.2493ms
 info: Microsoft.AspNetCore.Hosting.Diagnostics[1]
-      Request starting HTTP/1.1 POST http://127.0.0.1:63449/orders - application/json 43
+      Request starting HTTP/1.1 POST http://127.0.0.1:63393/orders - application/json 43
 info: Microsoft.AspNetCore.Routing.EndpointMiddleware[0]
       Executing endpoint 'HTTP: POST /orders'
 info: Microsoft.AspNetCore.Http.Result.BadRequestObjectResult[1]
@@ -89,9 +89,9 @@ info: Microsoft.AspNetCore.Http.Result.BadRequestObjectResult[3]
 info: Microsoft.AspNetCore.Routing.EndpointMiddleware[1]
       Executed endpoint 'HTTP: POST /orders'
 info: Microsoft.AspNetCore.Hosting.Diagnostics[2]
-      Request finished HTTP/1.1 POST http://127.0.0.1:63449/orders - 400 - application/json;+charset=utf-8 19.0172ms
+      Request finished HTTP/1.1 POST http://127.0.0.1:63393/orders - 400 - application/json;+charset=utf-8 12.4165ms
 info: Microsoft.AspNetCore.Hosting.Diagnostics[1]
-      Request starting HTTP/1.1 POST http://127.0.0.1:63449/orders - application/json 13
+      Request starting HTTP/1.1 POST http://127.0.0.1:63393/orders - application/json 13
 info: Microsoft.AspNetCore.Routing.EndpointMiddleware[0]
       Executing endpoint 'HTTP: POST /orders'
 info: Microsoft.AspNetCore.Http.Result.BadRequestObjectResult[1]
@@ -101,9 +101,9 @@ info: Microsoft.AspNetCore.Http.Result.BadRequestObjectResult[3]
 info: Microsoft.AspNetCore.Routing.EndpointMiddleware[1]
       Executed endpoint 'HTTP: POST /orders'
 info: Microsoft.AspNetCore.Hosting.Diagnostics[2]
-      Request finished HTTP/1.1 POST http://127.0.0.1:63449/orders - 400 - application/json;+charset=utf-8 0.2539ms
+      Request finished HTTP/1.1 POST http://127.0.0.1:63393/orders - 400 - application/json;+charset=utf-8 0.2103ms
 info: Microsoft.AspNetCore.Hosting.Diagnostics[1]
-      Request starting HTTP/1.1 POST http://127.0.0.1:63449/orders - application/json 46
+      Request starting HTTP/1.1 POST http://127.0.0.1:63393/orders - application/json 46
 info: Microsoft.AspNetCore.Routing.EndpointMiddleware[0]
       Executing endpoint 'HTTP: POST /orders'
 info: Microsoft.AspNetCore.Http.Result.BadRequestObjectResult[1]
@@ -113,9 +113,9 @@ info: Microsoft.AspNetCore.Http.Result.BadRequestObjectResult[3]
 info: Microsoft.AspNetCore.Routing.EndpointMiddleware[1]
       Executed endpoint 'HTTP: POST /orders'
 info: Microsoft.AspNetCore.Hosting.Diagnostics[2]
-      Request finished HTTP/1.1 POST http://127.0.0.1:63449/orders - 400 - application/json;+charset=utf-8 0.1891ms
+      Request finished HTTP/1.1 POST http://127.0.0.1:63393/orders - 400 - application/json;+charset=utf-8 0.1336ms
 info: Microsoft.AspNetCore.Hosting.Diagnostics[1]
-      Request starting HTTP/1.1 POST http://127.0.0.1:63449/orders - application/json 45
+      Request starting HTTP/1.1 POST http://127.0.0.1:63393/orders - application/json 45
 info: Microsoft.AspNetCore.Routing.EndpointMiddleware[0]
       Executing endpoint 'HTTP: POST /orders'
 info: Microsoft.AspNetCore.Http.Result.BadRequestObjectResult[1]
@@ -125,9 +125,9 @@ info: Microsoft.AspNetCore.Http.Result.BadRequestObjectResult[3]
 info: Microsoft.AspNetCore.Routing.EndpointMiddleware[1]
       Executed endpoint 'HTTP: POST /orders'
 info: Microsoft.AspNetCore.Hosting.Diagnostics[2]
-      Request finished HTTP/1.1 POST http://127.0.0.1:63449/orders - 400 - application/json;+charset=utf-8 0.1819ms
+      Request finished HTTP/1.1 POST http://127.0.0.1:63393/orders - 400 - application/json;+charset=utf-8 0.0979ms
 info: Microsoft.AspNetCore.Hosting.Diagnostics[1]
-      Request starting HTTP/1.1 GET http://127.0.0.1:63449/orders/public-unknown-order - application/json -
+      Request starting HTTP/1.1 GET http://127.0.0.1:63393/orders/public-unknown-order - application/json -
 info: Microsoft.AspNetCore.Routing.EndpointMiddleware[0]
       Executing endpoint 'HTTP: GET /orders/{id}'
 info: Microsoft.AspNetCore.Http.Result.NotFoundObjectResult[1]
@@ -137,9 +137,9 @@ info: Microsoft.AspNetCore.Http.Result.NotFoundObjectResult[3]
 info: Microsoft.AspNetCore.Routing.EndpointMiddleware[1]
       Executed endpoint 'HTTP: GET /orders/{id}'
 info: Microsoft.AspNetCore.Hosting.Diagnostics[2]
-      Request finished HTTP/1.1 GET http://127.0.0.1:63449/orders/public-unknown-order - 404 - application/json;+charset=utf-8 1.4688ms
+      Request finished HTTP/1.1 GET http://127.0.0.1:63393/orders/public-unknown-order - 404 - application/json;+charset=utf-8 1.0698ms
 info: Microsoft.AspNetCore.Hosting.Diagnostics[1]
-      Request starting HTTP/1.1 POST http://127.0.0.1:63449/orders - application/json 113
+      Request starting HTTP/1.1 POST http://127.0.0.1:63393/orders - application/json 113
 info: Microsoft.AspNetCore.Routing.EndpointMiddleware[0]
       Executing endpoint 'HTTP: POST /orders'
 info: Microsoft.AspNetCore.Http.Result.CreatedResult[1]
@@ -149,9 +149,9 @@ info: Microsoft.AspNetCore.Http.Result.CreatedResult[3]
 info: Microsoft.AspNetCore.Routing.EndpointMiddleware[1]
       Executed endpoint 'HTTP: POST /orders'
 info: Microsoft.AspNetCore.Hosting.Diagnostics[2]
-      Request finished HTTP/1.1 POST http://127.0.0.1:63449/orders - 201 - application/json;+charset=utf-8 15.4830ms
+      Request finished HTTP/1.1 POST http://127.0.0.1:63393/orders - 201 - application/json;+charset=utf-8 12.8960ms
 info: Microsoft.AspNetCore.Hosting.Diagnostics[1]
-      Request starting HTTP/1.1 GET http://127.0.0.1:63449/orders/971ceb5fcbcc43ad8aae2cc88a633dd9 - application/json -
+      Request starting HTTP/1.1 GET http://127.0.0.1:63393/orders/b3db80f2f438402ab89af2b7472f9eb6 - application/json -
 info: Microsoft.AspNetCore.Routing.EndpointMiddleware[0]
       Executing endpoint 'HTTP: GET /orders/{id}'
 info: Microsoft.AspNetCore.Http.Result.OkObjectResult[1]
@@ -161,9 +161,9 @@ info: Microsoft.AspNetCore.Http.Result.OkObjectResult[3]
 info: Microsoft.AspNetCore.Routing.EndpointMiddleware[1]
       Executed endpoint 'HTTP: GET /orders/{id}'
 info: Microsoft.AspNetCore.Hosting.Diagnostics[2]
-      Request finished HTTP/1.1 GET http://127.0.0.1:63449/orders/971ceb5fcbcc43ad8aae2cc88a633dd9 - 200 - application/json;+charset=utf-8 1.8331ms
+      Request finished HTTP/1.1 GET http://127.0.0.1:63393/orders/b3db80f2f438402ab89af2b7472f9eb6 - 200 - application/json;+charset=utf-8 1.5907ms
 info: Microsoft.AspNetCore.Hosting.Diagnostics[1]
-      Request starting HTTP/1.1 POST http://127.0.0.1:63449/orders - application/json 79
+      Request starting HTTP/1.1 POST http://127.0.0.1:63393/orders - application/json 79
 info: Microsoft.AspNetCore.Routing.EndpointMiddleware[0]
       Executing endpoint 'HTTP: POST /orders'
 info: Microsoft.AspNetCore.Http.Result.OkObjectResult[1]
@@ -173,9 +173,9 @@ info: Microsoft.AspNetCore.Http.Result.OkObjectResult[3]
 info: Microsoft.AspNetCore.Routing.EndpointMiddleware[1]
       Executed endpoint 'HTTP: POST /orders'
 info: Microsoft.AspNetCore.Hosting.Diagnostics[2]
-      Request finished HTTP/1.1 POST http://127.0.0.1:63449/orders - 200 - application/json;+charset=utf-8 0.8143ms
+      Request finished HTTP/1.1 POST http://127.0.0.1:63393/orders - 200 - application/json;+charset=utf-8 0.5947ms
 info: Microsoft.AspNetCore.Hosting.Diagnostics[1]
-      Request starting HTTP/1.1 POST http://127.0.0.1:63449/orders - application/json 45
+      Request starting HTTP/1.1 POST http://127.0.0.1:63393/orders - application/json 45
 info: Microsoft.AspNetCore.Routing.EndpointMiddleware[0]
       Executing endpoint 'HTTP: POST /orders'
 info: Microsoft.AspNetCore.Http.Result.ConflictObjectResult[1]
@@ -185,9 +185,9 @@ info: Microsoft.AspNetCore.Http.Result.ConflictObjectResult[3]
 info: Microsoft.AspNetCore.Routing.EndpointMiddleware[1]
       Executed endpoint 'HTTP: POST /orders'
 info: Microsoft.AspNetCore.Hosting.Diagnostics[2]
-      Request finished HTTP/1.1 POST http://127.0.0.1:63449/orders - 409 - application/json;+charset=utf-8 0.5924ms
+      Request finished HTTP/1.1 POST http://127.0.0.1:63393/orders - 409 - application/json;+charset=utf-8 0.6422ms
 info: Microsoft.AspNetCore.Hosting.Diagnostics[1]
-      Request starting HTTP/1.1 POST http://127.0.0.1:63449/legacy/orders - application/json 45
+      Request starting HTTP/1.1 POST http://127.0.0.1:63393/legacy/orders - application/json 45
 info: Microsoft.AspNetCore.Routing.EndpointMiddleware[0]
       Executing endpoint 'HTTP: POST /legacy/orders'
 info: Microsoft.AspNetCore.Http.Result.CreatedResult[1]
@@ -197,17 +197,17 @@ info: Microsoft.AspNetCore.Http.Result.CreatedResult[3]
 info: Microsoft.AspNetCore.Routing.EndpointMiddleware[1]
       Executed endpoint 'HTTP: POST /legacy/orders'
 info: Microsoft.AspNetCore.Hosting.Diagnostics[2]
-      Request finished HTTP/1.1 POST http://127.0.0.1:63449/legacy/orders - 201 - application/json;+charset=utf-8 8.0565ms
+      Request finished HTTP/1.1 POST http://127.0.0.1:63393/legacy/orders - 201 - application/json;+charset=utf-8 8.4504ms
 info: Microsoft.Hosting.Lifetime[14]
-      Now listening on: http://127.0.0.1:63449
+      Now listening on: http://127.0.0.1:63393
 info: Microsoft.Hosting.Lifetime[0]
       Application started. Press Ctrl+C to shut down.
 info: Microsoft.Hosting.Lifetime[0]
       Hosting environment: Production
 info: Microsoft.Hosting.Lifetime[0]
-      Content root path: C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\government-comparison\.study-data\smoke-v5\starts\brownfield
+      Content root path: C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\government-comparison\.study-data\smoke-v6\starts\brownfield
 info: Microsoft.AspNetCore.Hosting.Diagnostics[1]
-      Request starting HTTP/1.1 GET http://127.0.0.1:63449/health - application/json -
+      Request starting HTTP/1.1 GET http://127.0.0.1:63393/health - application/json -
 info: Microsoft.AspNetCore.Routing.EndpointMiddleware[0]
       Executing endpoint 'HTTP: GET /health'
 info: Microsoft.AspNetCore.Http.Result.OkObjectResult[1]
@@ -217,9 +217,9 @@ info: Microsoft.AspNetCore.Http.Result.OkObjectResult[3]
 info: Microsoft.AspNetCore.Routing.EndpointMiddleware[1]
       Executed endpoint 'HTTP: GET /health'
 info: Microsoft.AspNetCore.Hosting.Diagnostics[2]
-      Request finished HTTP/1.1 GET http://127.0.0.1:63449/health - 200 - application/json;+charset=utf-8 58.8151ms
+      Request finished HTTP/1.1 GET http://127.0.0.1:63393/health - 200 - application/json;+charset=utf-8 61.7700ms
 info: Microsoft.AspNetCore.Hosting.Diagnostics[1]
-      Request starting HTTP/1.1 GET http://127.0.0.1:63449/orders/971ceb5fcbcc43ad8aae2cc88a633dd9 - application/json -
+      Request starting HTTP/1.1 GET http://127.0.0.1:63393/orders/b3db80f2f438402ab89af2b7472f9eb6 - application/json -
 info: Microsoft.AspNetCore.Routing.EndpointMiddleware[0]
       Executing endpoint 'HTTP: GET /orders/{id}'
 info: Microsoft.AspNetCore.Http.Result.OkObjectResult[1]
@@ -229,9 +229,9 @@ info: Microsoft.AspNetCore.Http.Result.OkObjectResult[3]
 info: Microsoft.AspNetCore.Routing.EndpointMiddleware[1]
       Executed endpoint 'HTTP: GET /orders/{id}'
 info: Microsoft.AspNetCore.Hosting.Diagnostics[2]
-      Request finished HTTP/1.1 GET http://127.0.0.1:63449/orders/971ceb5fcbcc43ad8aae2cc88a633dd9 - 200 - application/json;+charset=utf-8 13.4935ms
+      Request finished HTTP/1.1 GET http://127.0.0.1:63393/orders/b3db80f2f438402ab89af2b7472f9eb6 - 200 - application/json;+charset=utf-8 11.0332ms
 info: Microsoft.AspNetCore.Hosting.Diagnostics[1]
-      Request starting HTTP/1.1 POST http://127.0.0.1:63449/legacy/orders - application/json 79
+      Request starting HTTP/1.1 POST http://127.0.0.1:63393/legacy/orders - application/json 79
 info: Microsoft.AspNetCore.Routing.EndpointMiddleware[0]
       Executing endpoint 'HTTP: POST /legacy/orders'
 info: Microsoft.AspNetCore.Http.Result.OkObjectResult[1]
@@ -241,4 +241,4 @@ info: Microsoft.AspNetCore.Http.Result.OkObjectResult[3]
 info: Microsoft.AspNetCore.Routing.EndpointMiddleware[1]
       Executed endpoint 'HTTP: POST /legacy/orders'
 info: Microsoft.AspNetCore.Hosting.Diagnostics[2]
-      Request finished HTTP/1.1 POST http://127.0.0.1:63449/legacy/orders - 200 - application/json;+charset=utf-8 14.4255ms
+      Request finished HTTP/1.1 POST http://127.0.0.1:63393/legacy/orders - 200 - application/json;+charset=utf-8 13.8552ms

@@ -1,4 +1,4 @@
-# Public study adapter contract v1
+# Public study adapter contract v1.1
 
 Owner: Scientist. Product owners provide adapters; Scientist validates and freezes them.
 This is an interchange contract, not a claim that any product currently supports it.
@@ -61,6 +61,7 @@ Git repository. Modeling, discovery and setup are actor work and charged to tria
 {
   "schemaVersion":1,
   "trialId":"conventional-greenfield-smoke",
+  "requestSha256":"SHA256_OF_EXACT_REQUEST_FILE_BYTES",
   "operation":"probe",
   "mode":"fixture",
   "status":"readiness_gap",
@@ -71,6 +72,11 @@ Git repository. Modeling, discovery and setup are actor work and charged to tria
   "usage":null
 }
 ```
+
+The result must echo `requestSha256`, the SHA-256 of the exact request file bytes,
+including resolved evidence directory, released inputs, product pins and limits.
+Matching trial/operation alone cannot establish freshness within a trial. This
+required field was added in v1.1 after the early v1 publication.
 
 Statuses: `ready`, `completed`, `incomplete`, `blocked`, `readiness_gap`, `failed`,
 `stopped`. `ready` only answers `probe`; `completed` only means adapter work ended.

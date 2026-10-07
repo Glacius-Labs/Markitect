@@ -2,6 +2,7 @@
   "schemaVersion": 1,
   "trialId": "classic-greenfield-smoke",
   "operation": "probe",
+  "requestSha256": "b3803113891234e7c96a3a4624c0b3d5cb902cee0db806f35f45587772785272",
   "mode": "fixture",
   "status": "readiness_gap",
   "candidateCommit": null,

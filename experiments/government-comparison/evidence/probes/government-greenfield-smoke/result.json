@@ -2,6 +2,7 @@
   "schemaVersion": 1,
   "trialId": "government-greenfield-smoke",
   "operation": "probe",
+  "requestSha256": "7ff2b94c0e48944e0c2040393236572858dcf5acc6a45ca420dde643279596b2",
   "mode": "fixture",
   "status": "readiness_gap",
   "candidateCommit": null,

@@ -13,7 +13,9 @@ def utc():
     return datetime.now(timezone.utc).isoformat()
 
 
-def validate_result(request, result):
+def validate_result(request, result, request_sha256):
+    if result.get("requestSha256") != request_sha256:
+        raise ValueError("Result belongs to another exact request")
     for field in ("schemaVersion", "trialId", "operation", "mode"):
         if result.get(field) != request[field]:
             raise ValueError(f"Result binding mismatch: {field}")
@@ -62,7 +64,7 @@ def probe(request, adapter, directory):
         if code != 0:
             raise ValueError(f"adapter exit {code}")
         result = json.loads(result_file.read_text(encoding="utf-8"))
-        validate_result(request, result)
+        validate_result(request, result, digest(request_file))
         status = result["status"]
     except (OSError, subprocess.TimeoutExpired, ValueError, KeyError) as exc:
         error = str(exc)
