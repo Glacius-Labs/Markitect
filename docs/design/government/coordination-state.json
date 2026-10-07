@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-07T20:37:49Z",
+  "updatedUtc": "2026-10-07T20:55:00Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -22,21 +22,21 @@
       "name": "Worker",
       "threadId": "01a1169b-9357-7df3-a8f6-f913557c782a",
       "hostId": "local",
-      "afterCursor": "b2b8e43f-fcaa-41bf-828a-99c69527bdea:48",
+      "afterCursor": "b2b8e43f-fcaa-41bf-828a-99c69527bdea:50",
       "lastObservedStatus": "active",
-      "activeTurn": "01a117d5-737b-73d1-8d9e-067a046228d0",
-      "lastAssistantMessageId": "msg_0a7785839df196a4016ac6ad82100481918c9605b9bdeacae3",
+      "activeTurn": "01a11825-4178-7fa0-a3f9-1864f60afc19",
+      "lastAssistantMessageId": "msg_0a7785839df196a4016ac6b17e0a048191a3e26c77a6c2faf1",
       "initialAssignmentDispatched": true,
-      "assignedMilestone": "G5 finite persistent queue, cumulative resources, safe interruption/restart and promotion recovery; then S1 handoff hold",
-      "latestProgress": "Das Host-Paket führt jetzt zusätzliche Test-Unterprozesse aus. Sie gehören zur laufenden Suite; eine weitere vollständige Suite wurde für ce021ce nicht gestartet. Nach Abschluss prüfe ich den vollständigen Bericht und die Source-Bindung für die Übergabe.",
+      "assignedMilestone": "Close only G5 lease-format validation finding; new clean source-bound gates/recovery evidence, then hold for S1.",
+      "latestProgress": "Ich schließe die Lease-Lücke gezielt: Bestehende Records müssen das vollständige unterstützte Format erfüllen und bleiben bei Ablehnung bytegleich. Danach folgen eine enge unabhängige Prüfung und neue, SHA-gebundene Nachweise; die bisherigen Ergebnisse bleiben erhalten.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-worker/Markitect",
       "transferredDesignCommit": "691ce1dee3484371c4aea725db4ed5cc3f2e3719",
       "candidateSha": "d146201e0f004e671cb90cf77b6a107dc14429b5",
-      "acceptance": "G4 accepted as locally verified delegated model/conflict mechanics; G5 active",
+      "acceptance": "G4 accepted; ce021ce G5 evidence verified but final acceptance withheld for narrow lease-record recognition defect.",
       "lastAssignment": {
-        "sentUtc": "2026-10-07T19:27:07Z",
-        "key": "g5-bounded-queue-resume-promotion",
-        "scope": "Finite explicit backlog and persisted budgets/state; safe idempotent intent/CAS recovery, no stale votes or reset/false success; blocked versus independent work; quiet terminal queue. Actual interruption/native tests, independent recovery/fencing review, one final source gate pass and exact S1-ready handoff. No publication/study."
+        "sentUtc": "2026-10-07T20:54:17Z",
+        "key": "g5-recognized-lease-validation",
+        "scope": "Reject incomplete/malformed same-host records without mutation; complete supported format/value validation, appropriate Verify checks, focused regressions and independent review; final SHA/gates/recovery evidence; preserve prior evidence, no expansion."
       },
       "evidence": {
         "summary": ".artifacts/government-g1/budget-final-summary.json",
@@ -185,6 +185,31 @@
           "review": "No material blocker; source/native/binary/fixed gate bindings checked, six prior review findings resolved",
           "rootInspection": "Clean SHA/latest instructions, handoff fixed Verify and review, G4/G5 architecture/usage contract read; no tests repeated",
           "limitations": "Local Windows deterministic actors; no real model semantic quality, institutional independence, Linux/CI/release or G5 claim."
+        },
+        "g5CandidateReview": {
+          "reviewedUtc": "2026-10-07T20:55:00Z",
+          "sourceSha": "ce021cef2d23002c3eca0b6a81e0913b3fc5a4f5",
+          "clean": true,
+          "handoff": ".artifacts/government-g5/handoff-ce021ce.json",
+          "handoffSha256": "bc07c4c9b08f58c8ea7c4fdb8a8f2e847c654f1b7cd518bd4cae606cd7d84ea5",
+          "binarySha256": "709480cab674212c2df81fbdaa9e9b23b92380693c4f6085b452967e6d1dde83",
+          "sourceHashesChecked": 34,
+          "gitBlobMatches": 34,
+          "nativeFilesChecked": 344,
+          "hashMismatches": 0,
+          "fixedVerifyExit": 0,
+          "gateCount": 4,
+          "verifyWallMs": 801086.5584,
+          "goTestsMs": 666956,
+          "vetExit": 0,
+          "contributionCommands": 20,
+          "nativeCases": 4,
+          "independentEvidenceReview": "passed",
+          "independentRecoveryReview": "Core bounded queue/recovery aligned; concrete unrecognized lease-record validation gap. Root confirmed source.",
+          "acceptance": "Pending narrow lease fix; not final G5 accepted.",
+          "blockingFinding": "AcquireLease accepts incomplete same-host/user v1 JSON with nonempty token, lacking PID/time/token-format checks; may overwrite unrecognized record contrary to docs. Refusal must preserve bytes.",
+          "supersededAttempt": "1498e91 retained; no completed full Verify",
+          "limits": "Local Windows deterministic mechanics only; no real model quality, human acceptance, productivity, CI/Linux proof"
         }
       },
       "lastResearchContext": {
@@ -197,21 +222,21 @@
       "name": "Scientist",
       "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
       "hostId": "local",
-      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:55",
+      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:57",
       "lastObservedStatus": "active",
-      "activeTurn": "01a11810-3b8e-7042-9d41-919a89522889",
-      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac6ad29da5481919697691fe8edcc94",
+      "activeTurn": "01a11825-e6f1-70e1-857d-96efc90de59c",
+      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac6b1a848608191abb065f74d87bde2",
       "initialAssignmentDispatched": true,
-      "assignedMilestone": "One separately authorized local stdio metadata session to read config and managed requirements, <=60s, no Actor or policy mutation.",
-      "latestProgress": "Die Filterprüfung mit synthetischen Daten hat bestanden: Providerkonfiguration, Header, API-Schlüssel und unbekannte Felder werden verworfen; relevante Policy-Werte bleiben erhalten. Der vorbereitete Start ist an Binary-Hash, ursprüngliches Arbeitsverzeichnis und exakt die eingefrorenen Inline-Vorgaben gebunden. Er hat noch nicht stattgefunden; vorher prüft der unabhängige Reviewer die begrenzte Client-Variante.",
+      "assignedMilestone": "One corrected classified local metadata session plus parallel missing native S1 adapter mechanics; no Actor or study.",
+      "latestProgress": "Ich trenne die Arbeit in den klassifizierenden Metadaten-Client und die noch fehlende S1-Adaptermechanik. Die nächste Metadatensitzung wird separat reserviert und erst nach gezielten Tests und unabhängiger Clientprüfung gestartet. Government bleibt bis zur G5-Abnahme ungepinnt; echte Actor-Aufrufe und Studienzellen bleiben gesperrt.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-scientist/Markitect",
       "transferredDesignCommit": "b9e17c9896f14b4b1268e4bcb005395f5d324384",
-      "candidateSha": "f3eeb57e54408f3ba127c22681f39c2c31491ca9",
-      "acceptance": "Accepted policy interface/Q1 documentation and metadata evidence; no supported exec correction or S1 success. Q1 shared setup ready for protocol freeze.",
+      "candidateSha": "3be653384e1b83d8cbdab79a87f487a3ffdde050",
+      "acceptance": "Negative metadata evidence accepted; config not queried, cause unknown. S1 and all real study cells remain open.",
       "lastAssignment": {
-        "sentUtc": "2026-10-07T20:31:19Z",
-        "key": "single-local-config-requirements-read",
-        "scope": "One pinned app-server process tree <=60s; initialize/initialized, one config/read, one configRequirements/read only. Sanitize relevant policy/origin fields before persistence, preserve boundaries, no auth/model/thread/command/fs/write/setup RPC, no retry or new Actor. Distinguish app-server config from failed exec; return concrete known values/differences and remaining blocker."
+        "sentUtc": "2026-10-07T20:54:59Z",
+        "key": "classified-policy-read-and-native-s1-adapters",
+        "scope": "Bounded classified metadata client and one separately reserved session; preserve history. In parallel implement only missing native request/result/roles/ledger mechanics from public v1.2; no silent product repairs. Final Government pin awaits lease fix, Classic held c913/v0.14.1. No heavy suite, real Actor or study."
       },
       "evidence": {
         "sourcesHashChecked": 37,
@@ -564,13 +589,68 @@
           "modelCalls": 0,
           "mutations": false,
           "newPurchases": false,
-          "status": "Dispatched and active; consumption not yet confirmed. Old six calls remain consumed.",
-          "boundary": "Relevant allowlisted policy/origin fields only before storage/display; no raw secrets. No authority weakening, denied-command repeat or exec-policy equivalence claim."
+          "status": "Consumed exactly one process tree; stopped after handshake before both reads; no retry.",
+          "boundary": "Relevant allowlisted policy/origin fields only before storage/display; no raw secrets. No authority weakening, denied-command repeat or exec-policy equivalence claim.",
+          "consumedSessions": 1,
+          "remainingSessions": 0
         },
         "localPolicyMetadataProgress": {
           "observedUtc": "2026-10-07T20:37:49Z",
           "reportedStatus": "Filtering passed synthetic checks; exact pinned metadata client under independent review before its single authorized start. No session started according to Scientist.",
           "inspection": "Compact progress only; not an accepted client/session handoff."
+        },
+        "localPolicyMetadataAcceptance": {
+          "acceptedUtc": "2026-10-07T20:55:00Z",
+          "sourceSha": "3be653384e1b83d8cbdab79a87f487a3ffdde050",
+          "clean": true,
+          "validationSha256": "45e04af36ce533d6933f182096163e8497cded11d1d2fddd4558b3376b210428",
+          "hashesChecked": 40,
+          "hashMismatches": 0,
+          "independentReview": "No evidence-integrity blockers; classification correction reviewed separately.",
+          "nativeExit": 0,
+          "clientExit": 1,
+          "outerWallSeconds": 0.5027772,
+          "rawProtocolBytesDiscarded": 420,
+          "configReadsSent": 0,
+          "requirementsReadsSent": 0,
+          "unexpectedMethod": "unknown, discarded and unrecoverable",
+          "policyConclusion": "none; no effective config or cause. Metadata route differs from old exec.",
+          "actorStartsCumulative": 5,
+          "knownTokensCumulative": 53331,
+          "totalHistoricalTokens": null,
+          "liveStudyCells": 0
+        },
+        "classifiedPolicyMetadataGrant": {
+          "issuedUtc": "2026-10-07T20:54:59Z",
+          "key": "local-policy-read-classified-20261007",
+          "maxAdditionalAppServerSessions": 1,
+          "wallSeconds": 60,
+          "innerWallSeconds": 50,
+          "maxParallel": 1,
+          "allowedMethods": [
+            "initialize",
+            "initialized",
+            "config/read",
+            "configRequirements/read"
+          ],
+          "maxConfigReads": 1,
+          "maxRequirementsReads": 1,
+          "retries": 0,
+          "actorCalls": 0,
+          "modelCalls": 0,
+          "mutations": false,
+          "newPurchases": false,
+          "status": "Dispatched; preparatory tests and independent review required before one separately reserved frozen session; consumption not yet confirmed.",
+          "allowedInboundNotifications": [
+            "warning",
+            "configWarning",
+            "deprecationNotice",
+            "windows/worldWritableWarning"
+          ],
+          "maxInboundNotifications": 16,
+          "abortOn": "Every server request, unknown/malformed/mismatched frame, other notification, Actor/auth/approval activity; no reply.",
+          "warningResultRule": "Non-deprecation allowed warnings make any policy result provisional and unusable as effective exec-policy/access proof.",
+          "boundary": "Same pinned runner/cwd/fifteen inline config pairs. Enum-known identifier/class only, no payload/id. Preserve sanitization/byte/tree/single-start limits, old evidence and grants; no automatic additional diagnosis."
         }
       },
       "classicHandoffReceived": true,
@@ -589,7 +669,7 @@
       "hostId": "local",
       "afterCursor": "71d9f5b2-c0f0-474c-9898-777d051b478a:35",
       "lastObservedStatus": "notLoaded",
-      "activeTurn": "01a11716-f468-71c0-b5f4-a59f722c0bbc",
+      "activeTurn": null,
       "lastAssistantMessageId": "msg_0b6e7ce0ce9f843f016ac6730f8ea087d2bc8886150602885f",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "Hold accepted local Classic public example follow-up and held v0.14.1 study candidate; available for concrete product findings",
@@ -653,7 +733,7 @@
       "heldWorktree": "C:/Users/Consiliari/.codex/worktrees/standard-operating-model/Markitect"
     }
   ],
-  "nextAction": "Worker finishes exact G5 gates/native handoff; Scientist performs one bounded sanitized config/requirements read and reports known values or concrete blocker. Q1 setup accepted. No sixth Actor, study or security relaxation authorized.",
+  "nextAction": "Inspect corrected G5 final candidate/gates/recovery; inspect classified metadata outcome and native adapter mechanics. No sixth Actor/study until separate justified grant and full S1 readiness. SAT/Jev deferred.",
   "boundaries": {
     "governmentPublication": false,
     "automaticClassicReplacement": false,
@@ -663,10 +743,12 @@
     "satPrinciples": "Deferred by direct user request on 2026-10-07; conceptual constraint/consistency/conflict-explanation principles first, no solver integration or current assignment change. See docs/design/government/deferred-research.md."
   },
   "lastReview": {
-    "reviewedUtc": "2026-10-07T20:37:49Z",
-    "evidenceLevel": "All three compact snapshots; no completed handoff. Worker continues existing ce021ce suite with host subprocess tests. Scientist reports filtered client preparation and independent review, authorized metadata session not yet started. Architect unchanged held Classic.",
+    "reviewedUtc": "2026-10-07T20:55:00Z",
+    "evidenceLevel": "Three compact snapshots and both fresh completed handoffs examined. Two independent G5 reviews; root verified lease source/docs and handoff digest. Separate independent Scientist integrity/classifier review. No tests rerun.",
     "coordinationActions": [
-      "Recorded reported progress and cursors; no repeated assignments, model grants, product edits or redundant tests."
+      "Sent Worker one narrow G5 lease-recognition fix assignment after verified gates/native evidence; acceptance held.",
+      "Accepted Scientist negative metadata evidence, recorded consumption; issued one finite classified metadata session and parallel S1 adapter mechanics.",
+      "Architect unchanged, no assignment. Confirmed Worker and Scientist active after dispatch."
     ],
     "userDecisionRequired": false
   },
@@ -863,11 +945,11 @@
   },
   "fullSuiteSlot": {
     "owner": "Worker",
-    "assignedUtc": "2026-10-07T19:27:07Z",
-    "scope": "Final required G5 source gates after implementation, no duplicate full suite",
+    "assignedUtc": "2026-10-07T20:54:17Z",
+    "scope": "Necessary final source gates after narrow G5 lease correction; no duplicate suites without new change/failure.",
     "previousOwner": "Worker",
-    "previousOwnerGate": "G4 completed and accepted",
-    "others": "Scientist focused harness/readiness work; Architect holding accepted Classic"
+    "previousOwnerGate": "ce021ce four gates passed; final G5 acceptance held on independent lease finding",
+    "others": "Scientist focused metadata/adapter mechanics; Architect held Classic"
   },
   "contextSmokePreparation": {
     "selectedUtc": "2026-10-07T17:31:12Z",
