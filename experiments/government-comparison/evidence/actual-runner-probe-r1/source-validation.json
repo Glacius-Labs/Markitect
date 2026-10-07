@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "kind": "actual-runner-config-refusal-source-validation",
+  "sourceCandidate": "b724ccd645a41f6600d896f82eba42ae20b2caed",
+  "manifestSha256": "44a7e9a3a6bdeb047b062560992e0adebea6281fc9bcf5ea52dc78359ef05aa5",
+  "committedSourceDigestsVerified": 53,
+  "committedEvidenceDigestsVerified": 17,
+  "startAttempts": 1,
+  "agentTurnsStarted": 0,
+  "secondAttempt": false,
+  "actualOutcome": "native config rejected built-in provider overrides before agent turn",
+  "actualModel": null,
+  "providerUsage": null,
+  "providerRequests": null,
+  "targetedTests": {
+    "probeTestsPassed": 3,
+    "descendantDeadlinePassed": 1,
+    "originalTestCleanupFailureRetained": true
+  },
+  "oldCommonProfileAndClassicPinsUnchanged": true,
+  "privateDataTracked": false,
+  "liveTrials": 0,
+  "s1": "not-cleared",
+  "fullGoVerifyRepeated": false,
+  "mechanicalWholeStudyRepeated": false,
+  "newGoCheckContextImpactRun": false,
+  "priorSourceGates": "Accepted infrastructure source55d1dec; historical full Verify incomplete, unchanged",
+  "invokedSourceSnapshot": "evidence/actual-runner-probe-r1/invoked-source",
+  "nextRequiredDecision": "Supported builtin-provider retry control or explicit tiny-probe rule adjustment; no second start follows current failed-Probe1 branch",
+  "independentFinalReconciliation": {
+    "reviewer": "/root/independent_review",
+    "status": "passed",
+    "sourceCandidate": "b724ccd645a41f6600d896f82eba42ae20b2caed",
+    "sourceHashes": 53,
+    "evidenceHashes": 17,
+    "originalFilesByteMatched": 8,
+    "invokedSourceHashesMatched": 3,
+    "commonLimitsAndClassicUnchanged": true,
+    "startAttempts": 1,
+    "agentTurnsStarted": 0,
+    "s1": "not-cleared"
+  }
+}
