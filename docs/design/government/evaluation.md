@@ -1,6 +1,6 @@
 # Vergleichsprotokoll: Agentic, Markitect Classic und Markitect Government
 
-Stand: 2026-10-07. **Designvorschlag für eine spätere Evaluation; kein Lauf, keine Implementierung und keine Wirksamkeitsbehauptung.** Das angekündigte Nutzer-Go steht noch aus. Nach diesem Go führt der Koordinator die Phasen innerhalb des bereits autorisierten Auftrags und Ressourcenrahmens weiter; eine zusätzliche Freigabe ist nur für Schritte außerhalb dieser Grenzen nötig. Während der Designphase erfolgen keine Modell-/Provideraufrufe.
+Stand: 2026-10-07. **Aktiver Evaluationsauftrag; noch kein Nachweis einer überlegenen Methode.** Das Nutzer-Go und die spätere Erweiterung des Forschungsauftrags sind in [coordination.md](coordination.md) festgehalten. Der Koordinator führt die endlichen Phasen und gewöhnlichen technischen Entscheidungen eigenständig weiter. Konkrete Modellläufe bleiben an Readiness, unveränderliche Eingaben und eine ausdrücklich begrenzte Ressourcenzuteilung gebunden. Aktuelle Implementierungs- und Diagnosenachweise stehen in der Koordinationsakte; sie ersetzen keine Vergleichsstudie.
 
 ## Frage und Versuchsarme
 
@@ -13,6 +13,25 @@ Die Studie soll prüfen, ob eine kanonische Modell- und Reconciliation-Arbeitswe
 | **Markitect Government** | Dieselbe Markitect-Grundlage plus die für den Versuch festgelegte Hierarchie aus Mandaten, begrenztem Kontext, Berichten nach oben, delegierter Modell-Evolution und ausdrücklich zustimmenden ausgewählten Ministerien. |
 
 Die Modellierung und Pflege der beiden Markitect-Arme gehört zu ihren Kosten. Der Government-Arm erhält weder ein kostenlos vorgefertigtes Modell noch gratis Ministeriumsprüfungen; Conventional erhält gute Planung, Architekturtests, Reviews und Subagents, statt absichtlich eingeschränkt zu werden. DDD oder Clean Architecture sind in keinem Arm pauschale Pflicht. Fachliche Anforderungen und Qualitätsrubrik nennen beobachtbare Invarianten und erlaubte Freiheit, keine ungetesteten Stilpräferenzen.
+
+## Nutzerziel: gedankliches Modell und dauerhafte Änderbarkeit
+
+Der am 7. Oktober präzisierte Auftrag untersucht den gesamten Weg von einer Idee und ausdrücklich benannten Prioritäten über ein akzeptiertes kanonisches Modell bis zum weiterentwickelten Repository. Der Nutzer soll ausdrücken können, welche Begriffe, Grenzen, Regeln und Freiheitsgrade ihm wichtig sind. Agenten sollen daraus mit wenig Routineaufsicht Änderungen umsetzen, Modelllücken sichtbar behandeln und schleichende Architekturverschlechterung vermeiden. Government ist eine mögliche Arbeitsweise für dieses Ziel, keine vorab feststehende Siegerarchitektur.
+
+Das Modell besitzt akzeptierte Absicht, Definitionen, Gründe und Beziehungen. Beobachteter Ist-Zustand, Annahmen, offene Fragen und Ausführungsbelege haben einen ausdrücklichen Status; eine Beobachtung oder Agentenantwort darf nicht still zur neuen Absicht werden. Datei-Zuordnung und ein formal gültiger Graph beweisen nicht, dass eine Geschäftsregel richtig verstanden oder umgesetzt wurde. Semantische Treue benötigt unabhängige Verhaltens- und Änderungsprüfungen. Kernanalyse, Projektwissen und Agentenurteil bleiben als unterschiedliche Mechanismen sichtbar.
+
+Vor dem ersten Vergleich bindet Scientist jede folgende Frage an vorhandene öffentliche Aufgaben und eine vorab festgelegte Rubrik. Eine neue notwendige Aufgabe wird allen Armen gleich mitgeteilt und erzeugt einen neuen Protokollstand; kein nachträgliches Scoring gegen unbekannte Anforderungen. Lücken des kleinen Referenzfalls werden als ungetestet markiert, statt dafür pauschal einen breiteren Nachweis zu behaupten.
+
+| Frage | Beobachtbarer Nachweis |
+|---|---|
+| Kann ich mein gedankliches Modell ausdrücken? | Aus den gleichen Nutzerangaben werden akzeptierte Begriffe, Invarianten, Prioritäten und erlaubte Freiheit korrekt wiedergegeben. Ausgelassene Regeln, unbegründete Annahmen, notwendige Rückfragen und aktive Einrichtungszeit werden erfasst. |
+| Verstehen die Agenten die Absicht? | Unabhängig geprüfte Anforderungsabdeckung, falsche Interpretation, unbefugte Vereinfachung und erkannte Unsicherheit; ein eigener grüner Test allein genügt nicht. |
+| Bleiben Modell und Repository konsistent? | Tatsächliches Verhalten, aktive Eingänge, Tests und Dokumentation folgen derselben Regeländerung. Erkannte/verpasste Drift, Fehlalarme und Aktualisierungslatenz werden pro Arbeitspaket belegt. |
+| Bleibt das Projekt über Änderungen wartbar? | Explizit vereinbarte Modulgrenzen und Abhängigkeitsregeln halten; nachvollziehbare Änderungen propagieren nur soweit sachlich erforderlich. Unabhängige Änderungsaufgaben zeigen Regressionen, unerwartete Kopplung und den Aufwand, die zuständigen Stellen zu finden und anzupassen. |
+| Wie viel Aufsicht braucht die Arbeit wirklich? | Anteil fachlich akzeptierter Aufgaben ohne Nachhilfe, längste korrekt abgeschlossene Aufgabenfolge, erforderliche Eingriffe, selbständig gelöste Probleme, unnötige Eskalationen, ungelöste Blockaden und Wiederaufnahmeaufwand. Autonome Agentenkoordination zählt zum Aufwand, externe Overseer-Nachhilfe als Intervention. |
+| Lohnt sich der zusätzliche Mechanismus? | Ergebnisqualität und Fehlerschwere getrennt von vollständiger Einrichtungs-, Modellpflege-, Prüf-, Koordinations-, Token- und Zeitbilanz; fehlende Nutzungswerte bleiben unbekannt. |
+
+Alle Arme bekommen dieselbe fachliche Absicht. Conventional darf diese in guten normalen Dokumenten und Architekturtests festhalten; fehlendes Markitect-YAML ist kein Qualitätsfehler. Markitect-spezifische Modell-/Dateizuordnung wird zusätzlich als Methodenfähigkeit bewertet. Ordnerzahl, Anzahl von Klassen/Schichten/Agenten, DDD-/Clean-Architecture-Bezeichnungen oder ein bloß kleiner Diff sind keine eigenständigen Qualitätsmaße. Ein sinnvolles gemeinsames Refactoring darf größer sein als eine schlechte lokale Reparatur. Ein endlicher Fall kann nur lokale Hinweise auf Architekturdrift liefern, keine langfristige Vermeidung eines Big Ball of Mud beweisen.
 
 ## Gemeinsamer kontrollierter Fall
 
@@ -70,7 +89,24 @@ Es gibt zwei getrennte Bewertungsachsen. **Gemeinsame Ergebnisqualität** bewert
 5. **Gepaarte Replikation planen:** Zunächst zusätzliche gematchte Läufe zur Schätzung der Streuung innerhalb der Zellen sammeln. Erst danach zusammen mit vorab relevanten Effektgrößen, Varianz, Ressourcen und Abbruchgrenzen eine angemessene Zahl weiterer Wiederholungen und gegebenenfalls Präzisions-/Powerziele berechnen. Keine Wiederholungszahl oder Konfidenz wird ohne diese Grundlage erfunden. Falls Wiederholungen nicht tragfähig sind, Ergebnisse ausdrücklich explorativ belassen.
 6. **Matched Replikation/Holdout:** Innerhalb des bereits autorisierten Umfangs frische, gematchte Trials mit eingefrorenen Eingaben und neuen Holdout-Aufgaben fortsetzen. Änderungen an Prompt, Rubrik, Modell oder Government-Regeln gelten als neue Studienversion; getunte Aufgaben werden nicht erneut als unabhängiger Holdout ausgegeben.
 
-Eine reale Modell-/Providerantwort ist nur Teil eines echten Live-Laufs. Deterministische Fixtures, nachgestellte Abstimmungen und handgeschriebene Zielartefakte werden jeweils als Simulation/Fixture markiert und nie in die Live-Lauf-Erfolgsquote gemischt. Derzeit laufen weder solche Actor-Sessions noch API-Aufrufe.
+Eine reale Modell-/Providerantwort ist nur Teil eines echten Live-Laufs. Deterministische Fixtures, nachgestellte Abstimmungen und handgeschriebene Zielartefakte werden jeweils als Simulation/Fixture markiert und nie in die Live-Lauf-Erfolgsquote gemischt. Die bereits einzeln freigegebenen Runner-Diagnosen sind keine Studienzellen. Ihr aktueller Stand und Verbrauch stehen in der Koordinationsakte.
+
+## Begrenzte Folgefragen nach dem Basisvergleich
+
+Der neue Auftrag erlaubt gezielte Weiterentwicklung und Folgeversuche innerhalb des beschriebenen Ziels. Zuerst wird der bestehende Vergleich mit drei Armen und zwei Startbedingungen durchgeführt und unabhängig ausgewertet. Ein beobachteter Vorteil einer kompletten Variante zeigt noch nicht, welcher Bestandteil ihn verursacht. Ein Entwicklungsbefund wird an den Produkteigentümer gegeben; die Reparatur erzeugt eine neue Version außerhalb der eingefrorenen Läufe.
+
+Danach priorisiert der Koordinator höchstens zwei konkrete Fragestellungen aus den tatsächlich beobachteten Kosten, Fehlern und offenen Fähigkeiten. Kandidaten sind:
+
+- **Rekursion und Zuschnitt:** Flacher gegenüber rekursivem Ablauf oder fachliche Verantwortung gegenüber technischem Zuschnitt, jeweils als getrennte Faktoren. Kind- und Elternfehler, Kontextlücken, Koordinations- und Integrationsaufwand vergleichen.
+- **Unabhängige Fachprüfung:** Nutzen spezialisierter Ressorts gegenüber einer allgemeinen unabhängigen Prüfung bei gleichem Gesamtbudget; übersehene Defekte, sachlich unbegründete Einwände und Blockaden messen. Jedes ausgewählte Ressort stimmt weiterhin zum endgültigen Kandidaten ausdrücklich zu. Eine Variante ohne Kabinett wird klar als andere Versuchskonfiguration bezeichnet.
+- **Modellpflege:** Vorher delegierte Modelländerungen gegenüber Rückfrage/Eskalation bei denselben Entscheidungsrechten und fachlichen Grenzen; korrekt gelöste Modelllücken, unberechtigte Regelabschwächung und tatsächliche Aufsichtskosten prüfen.
+- **Kontext und Granularität:** Wenige breitere gegenüber mehreren eng begrenzten Agenten oder Prüfungen, mit gleichen Informationen, Tools und Gesamtressourcen. Einen möglichen Gewinn durch mehr Gesamtcompute nicht als Strukturvorteil ausgeben.
+
+Ein neuer Gerichtspfad, weitere Ministerien, Namensmigrationen oder komfortablere Oberflächen werden erst gebaut, wenn sie einen konkreten Befund oder die Bedienbarkeit des Zielablaufs adressieren. Sie entstehen nicht allein, um die Metapher vollständiger zu machen. Keine Änderung hebt nachträglich fehlende Zustimmung oder Autorität auf.
+
+Für den ersten Forschungsblock gilt als organisatorische Obergrenze: sechs Basis-Trials und höchstens acht zusätzliche vollständige Trials. Die Zusatzplätze dienen maximal zwei frisch gepaarten A/B-Fragen in Greenfield und Brownfield oder passenden Replikationen innerhalb derselben Gesamtgrenze. Das ist eine Arbeitsbegrenzung, keine statistisch ausreichende Stichprobengröße und keine vorab erteilte Modellfreigabe. Jeder Block erhält vorher genaue Stände, eine falsifizierbare Hypothese, Erfolg-/Abbruchkriterien und gleiche kumulative Ressourcen je Vergleichspartner. Neue Käufe, unbegrenzte Aufrufe und automatische Wiederauffüllungen sind nicht autorisiert. Ohne tragfähige Varianz oder bei zu kleinem Umfang bleibt das Ergebnis explorativ.
+
+Ein Readiness-Fehler wird eng diagnostiziert; zusätzliche Prüfplattformen und allgemeine Erweiterungen sind kein Selbstzweck. Jeder Folgeauftrag nennt den konkreten offenen Befund und ein überprüfbares Ende. Bleibt ein benötigter Ausführungspfad technisch oder durch Richtlinien unbenutzbar, wird die Grenze offengelegt; Schutzregeln werden nicht umgangen und Vergleichsergebnisse nicht simuliert. Nach dem Basisvergleich wird bereits ein Zwischenfazit geliefert. Nach dem endlichen Forschungsblock erfolgt die Produktempfehlung; weitere offene Hypothesen werden als nicht beantwortet dokumentiert.
 
 ## Aufwand und Interventionen
 
@@ -88,4 +124,8 @@ Primär berichtet werden Qualität, kritische Fehler, vollständige/teilweise/un
 
 Ergebnisse werden getrennt für Greenfield/Brownfield, pro Arm und über Arbeitspakete dargestellt. Einzelne exploratorische Läufe belegen Machbarkeit im getesteten Setup, nicht Zuverlässigkeit in beliebigen Projekten. Die konventionelle Variante, Markitect Classic oder Markitect Government darf jeweils als bessere Wahl hervorgehen. Kein gemeinsamer Qualitätsscore kompensiert einen verpassten harten Invariant, veraltete Evidenz oder eine nicht erlaubte Modelländerung. Fehlende Ressortzustimmung ist zusätzlich ein fehlender Government-Annahmebeleg und wird nur dort als Methodenergebnis bewertet.
 
-Der Studienplan ist bereit für spätere konkrete Präregistrierung, sobald Readiness, Fall, Government-Befugnisse, Actor-Stack und Messbudget entschieden sind. Er genehmigt noch keine Studien- oder Modellläufe, Implementierung, Veröffentlichung oder Produktentscheidung.
+Der Abschluss liefert eine nach Ausgangslage differenzierte Empfehlung einschließlich negativer und unklarer Ergebnisse: wann Conventional genügt, welchen messbaren Nutzen Classic bietet und ob welche Government-Mechanismen den Mehraufwand rechtfertigen. Er trennt Umgebungsfehler, Produktfehler, Agentenfehler, Modellierungsprobleme und Studiengrenzen. Jede wesentliche Aussage verweist auf genaue Kandidaten und tatsächliche Belege.
+
+Zusätzlich entsteht ein praktisch ausführbarer Bedienvorschlag: Nutzerabsicht und Prioritäten erfassen; offene Fragen und Ist-/Sollgrenzen klären; kanonisches Modell mit purpose und Realisierungen aufbauen; in einem Branch einrichten; Ideen als begrenzte Aufträge umsetzen lassen; Änderungen und Modellpflege prüfen; bei Konflikt oder Unterbrechung nachvollziehbar weiterarbeiten. Ein versionsgebundenes Beispiel zeigt Eingaben, tatsächliche Dateien/Befehle, Ergebnisse und verbleibende menschliche Entscheidungen. Geplante Fähigkeiten werden nicht als bereits nutzbar beschrieben.
+
+Die Empfehlung benennt einen minimalen sinnvollen Produktkern, optionale organisatorische Mechanismen, zu vereinfachende oder zu verwerfende Teile und einen begründeten Weg für Markitect. Classic, Government, eine optionale Schicht oder ein separates Produkt bleiben mögliche Ergebnisse. Gestaltungsspielraum für Prototypen und Untersuchung ersetzt keine automatische Veröffentlichung oder Ablösung des stabilen Classic-Kandidaten. Konkrete Ressourcenfreigaben bleiben Sache des Koordinators unter dem erteilten Nutzerauftrag.
