@@ -1,0 +1,15 @@
+{
+  "name": "failed-noarg-03",
+  "executable": "C:\\Users\\Consiliari\\AppData\\Local\\OpenAI\\Codex\\bin\\5ea220ae823df3d7\\codex.exe",
+  "executableSha256": "3b8f6e33caa75f232558a3cf76ff9b87bb5ef6dbcf4996372f24e55c78b1b916",
+  "argv": [
+    "C:\\Users\\Consiliari\\AppData\\Local\\OpenAI\\Codex\\bin\\5ea220ae823df3d7\\codex.exe"
+  ],
+  "exitCode": 1,
+  "stdout": "",
+  "stderr": "ERROR: TERM is set to \"dumb\". Refusing to start the interactive TUI because no terminal is available for a confirmation prompt (stdin/stderr is not a TTY). Run in a supported terminal or unset TERM.",
+  "invocationTimestampUtc": null,
+  "timestampNote": "Individual process timestamps were not captured; this receipt records the exact identical argv/stdout/stderr/exit returned by the first failed capture output.",
+  "evidenceProvenance": "Reconstructed from the initial tool-capture output, which displayed the exact no-argument argv, empty stdout, stderr, and exit code. This is not an individual contemporaneously saved process receipt.",
+  "individualTimestampAvailable": false
+}

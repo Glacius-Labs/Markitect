@@ -1,0 +1,50 @@
+{
+  "cli-diagnosis-before-source-label-correction.json": {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\context-tools-20261007\\local-diagnosis\\diagnosis-before-source-label-correction.json",
+    "sha256": "9418df248e258f683e32a819d6a4e073d2004691e599e4cfed40d7b549fa6bd3"
+  },
+  "cli-diagnosis.json": {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\context-tools-20261007\\local-diagnosis\\diagnosis.json",
+    "sha256": "73dee39c0a7afe9fade52729bf6f8b62ac79438ba582a6ea39caab1f0db7482e"
+  },
+  "cli-exec-help.json": {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\context-tools-20261007\\local-diagnosis\\exec-help.json",
+    "sha256": "09213a8b120f168300abab8f2a1d4a620046696297015d127ad6bcc82b11c361"
+  },
+  "cli-failed-noarg-01.json": {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\context-tools-20261007\\local-diagnosis\\failed-noarg-01.json",
+    "sha256": "60a22877299e4ef1a6a78088d7d6c3272fa93d523ee155652944123097ab5c87"
+  },
+  "cli-failed-noarg-02.json": {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\context-tools-20261007\\local-diagnosis\\failed-noarg-02.json",
+    "sha256": "de3bb032cd28eb8fefca6aa060fb754b88553e891b088789e34e3b9304dc3a8c"
+  },
+  "cli-failed-noarg-03.json": {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\context-tools-20261007\\local-diagnosis\\failed-noarg-03.json",
+    "sha256": "351a369098b6f2b70039a99581dccfb08003553c66e6b1cb1d025a3d5e73e4e9"
+  },
+  "cli-failed-noarg-04.json": {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\context-tools-20261007\\local-diagnosis\\failed-noarg-04.json",
+    "sha256": "69606785a75cda23be2b9dddb70346455a562f5f83caff724cf8b7813c5fc113"
+  },
+  "cli-features-enabled-config-values.json": {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\context-tools-20261007\\local-diagnosis\\features-enabled-config-values.json",
+    "sha256": "91b21b380e9cf1496ad8fdacb27930d6aee0705df9a6fa0318d8e34fbe2624c0"
+  },
+  "cli-features-explicitly-enabled.json": {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\context-tools-20261007\\local-diagnosis\\features-explicitly-enabled.json",
+    "sha256": "3aa55783558c491e9fcafd5040ec8c962b295a69023541d99851d21748026c17"
+  },
+  "cli-features-list-help.json": {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\context-tools-20261007\\local-diagnosis\\features-list-help.json",
+    "sha256": "9e903b801f628d1b499bba4ac5f31194348697679cc0f4d51e0a563c6cca1862"
+  },
+  "cli-features-old-config-values.json": {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\context-tools-20261007\\local-diagnosis\\features-old-config-values.json",
+    "sha256": "3a606a6afeb7a866f588a1ac3ddedcee6861715f0f88e118cf5de8cc094e40c0"
+  },
+  "cli-features-old-requested-disabled.json": {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\context-tools-20261007\\local-diagnosis\\features-old-requested-disabled.json",
+    "sha256": "ed91a533016f21a1acd6dbeac0a2b46416e1ea2042c51669ac01b4683ddce54d"
+  }
+}

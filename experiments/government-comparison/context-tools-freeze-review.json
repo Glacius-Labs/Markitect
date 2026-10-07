@@ -1,0 +1,155 @@
+{
+  "schemaVersion": 1,
+  "reviewType": "independent-read-only-context-tools-freeze-reconciliation",
+  "reviewedUtc": "2026-10-07",
+  "verdict": "pass_with_scope_limits",
+  "findings": [],
+  "scope": "Read-only hash, source, artifact and historical-record reconciliation. No tests, CLI, model, metadata, Authority, access probe, dispatch or resume were run by this review.",
+  "checks": {
+    "freeze": {
+      "sha256": "cf82ba0a26fb5a28ff271cef3a79f44e733f285bdf52f7ff9af66c4d4fd326b6",
+      "expectedSha256": "cf82ba0a26fb5a28ff271cef3a79f44e733f285bdf52f7ff9af66c4d4fd326b6",
+      "sourceCandidate": "56d2e578ce105a77e4f8be4e3364925efc9d813d",
+      "currentHead": "56d2e578ce105a77e4f8be4e3364925efc9d813d",
+      "sourcePinsCurrentAndGitBlobs": {
+        "matchedCurrent": 40,
+        "matchedCandidateCommit": 40,
+        "total": 40
+      },
+      "evidenceCopies": {
+        "matched": 33,
+        "total": 33
+      },
+      "externalDraftInputMetadata": {
+        "matched": 15,
+        "total": 15
+      },
+      "archive": {
+        "zipEntries": 375,
+        "manifestEntries": 375,
+        "contentSizeAndPathMatches": 375,
+        "exactInventory": true
+      }
+    },
+    "authorityAndSuccessor": {
+      "draftSha256": {
+        "request.draft.json": "39a62a4da246ab3e48ff4ee1bb21f0265753c0ecbaa98f3077567d862d484970",
+        "protocol.draft.json": "bbc054bee6cb7e3e89211cb466d48f34a6a9822d4aab781ec3ed54d312bf70d7",
+        "grant.draft.json": "8d553c4bd254926324ac8c113d26c8d31d1df9c0daaefbf9c2f4facc1002e3c1",
+        "profile-adoption.draft.json": "4c3bffa866f0781a88ac302e0d892b50cc5e27d2bfcfcd195618685f94a61be0"
+      },
+      "grantProtocolProfileAdoptionStatuses": {
+        "grant.draft.json": {
+          "status": "draft",
+          "notBefore": null,
+          "expiresAt": null
+        },
+        "protocol.draft.json": {
+          "status": "draft",
+          "notBefore": null,
+          "expiresAt": null
+        },
+        "profile-adoption.draft.json": {
+          "status": "draft",
+          "notBefore": null,
+          "expiresAt": null
+        }
+      },
+      "successorDispatchDatabaseExists": false,
+      "liveGrantOrFifthStartAuthorized": false
+    },
+    "history": {
+      "priorStarts": 4,
+      "perAttemptTokens": [
+        null,
+        null,
+        10009,
+        20501
+      ],
+      "knownSubtotal": 30510,
+      "allHistoryTotal": null,
+      "expectedTokenSequence": [
+        null,
+        null,
+        10009,
+        20501
+      ],
+      "threeOldDatabases": [
+        {
+          "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\.study-data\\actual-runner-authorized-starts.sqlite",
+          "expectedSha256": "74dfd51e2802bc67131891b28c6858129ff5ef4a50a6f1fe06a8793a7250732f",
+          "actualSha256": "74dfd51e2802bc67131891b28c6858129ff5ef4a50a6f1fe06a8793a7250732f",
+          "unchanged": true
+        },
+        {
+          "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\.study-data\\runner-01601-diagnostic.sqlite",
+          "expectedSha256": "33bd2ba59b11ab6d54f75c55e6d12b00ec6b90df00106a1419aed239cef2982c",
+          "actualSha256": "33bd2ba59b11ab6d54f75c55e6d12b00ec6b90df00106a1419aed239cef2982c",
+          "unchanged": true
+        },
+        {
+          "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\context-additional-20261007\\dispatch.sqlite",
+          "expectedSha256": "b4f13c5053ad1f00e477bf9be9831a5075f2ea0d8d33d8db6ce8a2173a6a0be8",
+          "actualSha256": "b4f13c5053ad1f00e477bf9be9831a5075f2ea0d8d33d8db6ce8a2173a6a0be8",
+          "unchanged": true
+        }
+      ],
+      "commonProfileAndLedgerFilesUnchangedVs462556": {
+        "experiments/government-comparison/runtime/ledger.py": true,
+        "experiments/government-comparison/runtime/measurement_profile.py": true,
+        "experiments/government-comparison/public/measurement-profile-v1.json": true,
+        "experiments/government-comparison/public/measurement-profile-v2.json": true,
+        "experiments/government-comparison/public/resource-proposal.json": true
+      },
+      "priorFreezeAndLiveHandoffUnchangedVs462556": {
+        "experiments/government-comparison/context-additional-freeze.json": true,
+        "experiments/government-comparison/context-additional-live-handoff.md": true,
+        "experiments/government-comparison/context-additional-live-review.json": true
+      },
+      "priorLiveRawReceiptFilesUnchanged": {
+        "matched": 21,
+        "total": 21
+      }
+    },
+    "inputsAndCliDiagnosis": {
+      "actorBaseExpected": "1441ee3a2b109be7d82e0a38a563ee56312e5881",
+      "actorHead": "1441ee3a2b109be7d82e0a38a563ee56312e5881",
+      "actorClean": true,
+      "cliManifestRecords": 12,
+      "cliOriginalAndCopyHashesMatched": 12,
+      "failedNoArgumentTuiReceipts": 4,
+      "totalCliProcessInvocations": 18,
+      "actorExecObserved": false,
+      "modelCallObserved": false,
+      "threadTurnObserved": false,
+      "diagnosisSourceCorrectionRecorded": true
+    },
+    "focusedTestLog": {
+      "reported": 70,
+      "logHas70Pass": true,
+      "executedByReviewer": false
+    }
+  },
+  "interpretation": {
+    "toolFlags": "The reviewed ordinary Actor configuration requests shell_tool=true and unified_exec=true, consistently in runner argv construction and admission. The frozen source/CLI evidence does not establish actual Actor tool inventory or successful file access.",
+    "cliEvidence": "The 12 external CLI records and 18 process invocations describe CLI help/config queries; four no-argument TUI refusals are reconstructed from captured output and have unknown individual timestamps. They are not Actor/model/thread/turn calls.",
+    "metadata": "The prior authenticated model catalog receipt was reused. No fresh metadata call or serving-identity claim is made.",
+    "accounting": "Four prior starts remain exhausted with tokens [null,null,10009,20501], known subtotal 30,510 and total null; all three historical database hashes match.",
+    "study": "S1 remains open. The package contains exact drafts only; no successor database exists and no fifth start is authorized."
+  },
+  "evidenceSha256": {
+    "handoff": "c4c65ec88fad84bb9f6b18a8e3d72ed97d8d826ebe450c070b6542eff189cd5c",
+    "publicSourceReview": "086f4980e669009f466f743d0d13fc3acd47a9ec62819193ca78b8505ec136f8",
+    "freeze": "cf82ba0a26fb5a28ff271cef3a79f44e733f285bdf52f7ff9af66c4d4fd326b6",
+    "cliDiagnosis": "73dee39c0a7afe9fade52729bf6f8b62ac79438ba582a6ea39caab1f0db7482e",
+    "cliManifest": "539dd61f68e1f30cd127568af16c7feed7f27fa798df783c56efca1e8cc37527",
+    "observation": "3ef9810957288f8210882088dd2152a7497ad8f39f32ff1b28a7fde2b2a8e4d6",
+    "targetedTestsLog": "22674c3f5e7852372cd3173fed326716145bbef2fc1e538eb5d13cd36a9b4234",
+    "mechanicalArchive": "e69a31bb9c66346b88d255fd084ac8c114d88eb92dd23b3fb7da8e68a5ee3a36",
+    "mechanicalArchiveManifest": "8983cfae5ffe403319dd89960dfae0411e7c5e89dd13147db564e23eacd36419"
+  },
+  "limitations": [
+    "The source and CLI evidence establish requested configuration and reported CLI behavior, not tool visibility to an Actor or OS filesystem isolation.",
+    "The 70 passing tests are reported in the preserved log; this reconciliation did not execute tests."
+  ]
+}
