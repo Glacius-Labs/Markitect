@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-07T19:42:39Z",
+  "updatedUtc": "2026-10-07T19:47:17Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -22,13 +22,13 @@
       "name": "Worker",
       "threadId": "01a1169b-9357-7df3-a8f6-f913557c782a",
       "hostId": "local",
-      "afterCursor": "b2b8e43f-fcaa-41bf-828a-99c69527bdea:43",
+      "afterCursor": "b2b8e43f-fcaa-41bf-828a-99c69527bdea:44",
       "lastObservedStatus": "active",
       "activeTurn": "01a117d5-737b-73d1-8d9e-067a046228d0",
-      "lastAssistantMessageId": "msg_0a7785839df196a4016ac69eda7f348191a779039087a262b8",
+      "lastAssistantMessageId": "msg_0a7785839df196a4016ac6a0b00a608191a0fc178155ff9494",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "G5 finite persistent queue, cumulative resources, safe interruption/restart and promotion recovery; then S1 handoff hold",
-      "latestProgress": "Die Queue-Anbindung setzt jetzt dauerhafte Reservierungen vor Actor-Starts und Reparaturen. Vor der Promotion speichert sie außerdem den vollständig gebundenen Kandidaten samt Evidenz und Entscheidung. Die öffentlichen Prozessfälle werden den Host gezielt vor und nach dem Git-CAS beenden, um beide Wiederaufnahmepfade zu prüfen.",
+      "latestProgress": "Die neue Leitlinie ist aufgenommen; G5 bleibt unverändert begrenzt. In der Übergabe zeige ich konkret, welche Modell-, Auftrags- und Runtime-Dateien der Anwender liefert, welche CLI-Ergebnisse entstehen und welche unklaren Zustände eine menschliche Entscheidung brauchen. Danach halte ich den Kandidaten für S1.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-worker/Markitect",
       "transferredDesignCommit": "691ce1dee3484371c4aea725db4ed5cc3f2e3719",
       "candidateSha": "d146201e0f004e671cb90cf77b6a107dc14429b5",
@@ -197,13 +197,13 @@
       "name": "Scientist",
       "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
       "hostId": "local",
-      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:48",
+      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:49",
       "lastObservedStatus": "active",
       "activeTurn": "01a117e2-d632-7a00-ba90-82582d224b5c",
-      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac6a08bd6848191bbf5671bfd3e122b",
+      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac6a11b401081919f64ce8f04482f94",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "No-inference diagnosis of exact read-command policy rejection plus public mapping of expanded research questions to existing tasks/metrics; then bounded handoff",
-      "latestProgress": "Ich bearbeite Richtliniendiagnose und Studien-Coverage getrennt. Ein Subagent untersucht die konkrete Blockade, ein zweiter prüft die Zuordnung zu den Nutzerfragen unabhängig. Ich übernehme den gebundenen Studienvertrag in den Studienbereich und gleiche ihn mit Taskkarten und Messungen ab. Abgewiesene Befehle werden nicht erneut ausgeführt; es gibt keinen sechsten Actor-Start.",
+      "latestProgress": "Der erweiterte Vertrag ist als bytegleicher Snapshot aus d929aa7c… übernommen; Produktcode wurde nicht übernommen. Die erste Coverage-Prüfung zeigt: Task 5 deckt Regelweitergabe über Eingänge, Tests und Dokumentation ab, Task 6 die kontrollierte Drift-Reparatur. Nutzerprioritäten in ein akzeptiertes Modell zu überführen und echte Unklarheiten zu klären, ist im bestehenden Backlog dagegen nur teilweise beziehungsweise gar nicht geprüft.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-scientist/Markitect",
       "transferredDesignCommit": "b9e17c9896f14b4b1268e4bcb005395f5d324384",
       "candidateSha": "098a7931f9f350b007046e858b6b348bee08feec",
@@ -504,6 +504,12 @@
           "newLedgerSha256": "c4af6de468bd93a7373c56295075771da7981d5d541bcf2261e20556ec31bb89",
           "historicalLedgersUnchanged": true,
           "limitations": "No successful tool/file read, policy root cause or OS-isolation proof. Raw stdout tool count does not include stderr rejected attempts. No comparison cells."
+        },
+        "policyAndCoverageProgress": {
+          "observedUtc": "2026-10-07T19:47:17Z",
+          "status": "Active; no completed diagnosis or coverage package",
+          "reportedCoverage": "Byte-identical d929aa7 contract imported. Existing task5covers rule propagation/code/tests/docs,task6controlleddrift; translating user priorities into accepted model only partial and genuine ambiguity clarification missing.",
+          "inspection": "Compact chat snapshot only; findings await concrete completed mapping and proposed smallest common extension."
         }
       },
       "classicHandoffReceived": true,
@@ -595,13 +601,10 @@
     "jev": "Deferred; no extra investigation started"
   },
   "lastReview": {
-    "reviewedUtc": "2026-10-07T19:42:39Z",
-    "evidenceLevel": "G5 active progress reported; Scientist fifth-run exact SHA/raw stderr/result/handoff and independent hash/ledger review accepted as negative capability. Architect held Classic unchanged (chat notLoaded). Updated research contract/automation verified; Scientist diagnostic/coverage followup observed active.",
+    "reviewedUtc": "2026-10-07T19:47:17Z",
+    "evidenceLevel": "All3compact snapshots. Worker active G5 and confirms concrete user-facing input/CLI/decision handoff. Scientist active reports coverage gaps for initial mental-model translation/ambiguity; no final policy diagnosis or completed source handoff. Architect unchanged, held Classic (chat notLoaded).",
     "coordinationActions": [
-      "Saved direct user's expanded target, evaluation measures, finite followup limits and practical product/use deliverable atd929aa7.",
-      "Updated existing10minute heartbeat to expanded finite research mandate.",
-      "Accepted fifth context result with policy rejection, consumed5starts/known53331tokens/fulltotalunknown; no sixth model grant.",
-      "Dispatched Scientist diagnostic-only policy investigation and independent public coverage mapping; sent Worker new goal context while preserving G5."
+      "Recorded progress/cursors and reported study-coverage gap; no repeated assignments, model grant, product edits or tests."
     ],
     "userDecisionRequired": false
   },
