@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-07T18:09:29Z",
+  "updatedUtc": "2026-10-07T18:11:25Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -21,13 +21,13 @@
       "name": "Worker",
       "threadId": "01a1169b-9357-7df3-a8f6-f913557c782a",
       "hostId": "local",
-      "afterCursor": "b2b8e43f-fcaa-41bf-828a-99c69527bdea:32",
+      "afterCursor": "b2b8e43f-fcaa-41bf-828a-99c69527bdea:33",
       "lastObservedStatus": "active",
       "activeTurn": "01a1178c-8696-7011-a7d9-0b4285d6ca75",
-      "lastAssistantMessageId": "msg_0a7785839df196a4016ac68a69bb748191bc5bb26a89511b93",
+      "lastAssistantMessageId": "msg_0a7785839df196a4016ac68b3a9528819198395065b8555562",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "G4 delegated substantial model/realization amendment under prior authority and bounded conflict escalation; no G5 queue",
-      "latestProgress": "G3 ist abgenommen. Ich beginne G4 auf dem angenommenen SHA und prüfe zuerst die Vorgaben für Modelländerungen und Konflikteskalation gegen den bestehenden Ablauf. Danach teile ich getrennte Implementierungs- und Review-Aufgaben auf. Die aktive Vorverfassung bleibt die Entscheidungsgrundlage; vor G5 halte ich wieder an.",
+      "latestProgress": "Der bisherige Host verweigert Modelländerungen vollständig. G4 erhält dafür einen eigenen Prüfpfad: Der alte Auftrag bestimmt Schreibrechte und Änderungsmandat; der vorgeschlagene Modellstand wird separat geprüft und an den Materialkandidaten gebunden. Eine unabhängige Implementierung prüft die Änderungsbefugnis, ein weiterer Reviewer prüft die Grenzen. Root-Ziele werden dafür ausdrücklich in der alten Verfassung als geschützt markiert.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-worker/Markitect",
       "transferredDesignCommit": "691ce1dee3484371c4aea725db4ed5cc3f2e3719",
       "candidateSha": "97a55bd572b9a730fa1e206232ee37e54025a144",
@@ -164,7 +164,7 @@
       "name": "Scientist",
       "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
       "hostId": "local",
-      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:34",
+      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:35",
       "lastObservedStatus": "active",
       "activeTurn": "01a1178e-2fb1-7763-b2ce-0f1fff1eb60d",
       "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac68acdfdbc819181fcdeb9bac9333d",
@@ -420,12 +420,10 @@
     "jev": "Deferred; no extra investigation started"
   },
   "lastReview": {
-    "reviewedUtc": "2026-10-07T18:09:29Z",
-    "evidenceLevel": "Extra user-requested live check of all3, saved automation/app view. New clean Worker/Scientist completions independently hash/contract verified and public handoffs read. Followup dispatches observed active.",
+    "reviewedUtc": "2026-10-07T18:11:25Z",
+    "evidenceLevel": "Compact snapshots for all3. Worker reports implementing separate prior-authority model-amendment validation and protected root goals; Scientist additive diagnostic allocation active; Architect unchanged. No new completion accepted.",
     "coordinationActions": [
-      "Accepted WorkerG3; dispatched G4 at18:07.",
-      "Accepted Scientist v2 mechanics; decided minimal explicit additive readiness allocation and dispatched implementation/review/drafts at18:09.",
-      "Confirmed active10minute monitor; no duplicate automation, no new Architect work, no tests or live inference run by Overseer."
+      "Saved current cursors and reported progress; no repeated assignments, test runs or new live grant."
     ],
     "userDecisionRequired": false
   },
