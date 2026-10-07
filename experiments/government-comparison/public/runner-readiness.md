@@ -64,7 +64,10 @@ diagnostic, access probe, study task or comparative trial followed.
 
 `evidence/actual-runner-probe-r3/` preserves raw metadata, features, Actor events,
 requests, five invoked source snapshots, the separate grant ledger, six focused
-regressions and independent review. `actual-runner-probe-r3-freeze.json` separately
+regressions and independent review. The chronology is five tests in
+`targeted-tests-final.log`, followed by six in `targeted-tests-gate-fix.log` after
+the gate fix; these are successive runs, not eleven distinct regressions.
+`actual-runner-probe-r3-freeze.json` separately
 binds the new checkpoint. Both old freezes remain historical and unchanged.
 Later study commonLimits, Classic v0.14.1 and Government readiness_gap are unchanged.
 **S1 remains open** for effective context/access, aggregate live budgets, product

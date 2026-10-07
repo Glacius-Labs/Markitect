@@ -5,10 +5,12 @@
   "requestedModel": "gpt-6.1-sol",
   "requestedReasoning": "high",
   "actualModel": null,
-  "modelSupport": "bundled exact model/high known; account and execution require diagnostic receipts",
+  "modelSupport": "exact requested model/high; dispatcher requires a frozen authenticated listing; serving identity may remain null",
   "providerProbeSessions": null,
   "counterScope": "Pin metadata only; actual attempts belong to separate immutable ledgers",
   "prospectiveConfig": {
+    "approval_policy": "never",
+    "forced_login_method": "chatgpt",
     "model_reasoning_effort": "high",
     "project_doc_max_bytes": 0,
     "features.memories": false,
@@ -23,9 +25,9 @@
     "apps._default.enabled": false,
     "web_search": "disabled"
   },
-  "configSha256": "d76e3fb0b5ab5a7204a65df154997e88afc6fe9f58da914c1136b06207f13edb",
+  "configSha256": "ae55b94cefc42840bfbb8979512f51adc38aaee327ba506640e79b30def45f47",
   "gaps": [
-    "Account support and resolved identity for gpt-6.1-sol/high have not been established by a provider receipt",
+    "Account model-list advertisement is separate from execution; resolved serving identity remains unreported",
     "No pre-dispatch aggregate provider-call controller is established for the later study",
     "exec turn.completed is an agent-turn completion event; provider-turn count inside it remains unknown",
     "Provider token usage arrives retrospectively; no hard aggregate token ceiling is established",

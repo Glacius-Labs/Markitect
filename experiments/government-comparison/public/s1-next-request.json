@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "status": "proposed-not-a-run-grant",
+  "purpose": "One later non-scored public S1 effective-context sentinel, then hold",
+  "model": "gpt-6.1-sol",
+  "reasoning": "high",
+  "runtime": "Exact selected Codex 0.160.1 binary SHA plus frozen wrapper/config/source pins; no alias",
+  "requestedActorSessions": 1,
+  "maxParallelSessions": 1,
+  "sessionWallSeconds": 180,
+  "retrospectiveInputPlusOutputThreshold": 10000,
+  "hardTokenCap": false,
+  "wrapperRetries": 0,
+  "continuations": 0,
+  "subagents": 0,
+  "semanticRepairs": 0,
+  "inputs": "New artificial context package only; exact public card, prompt and input hashes; explicit clean Actor baseline",
+  "toolPolicy": "ordinary-tools only for explicit synthetic context-file reads; same-user access is an accepted gap",
+  "prerequisites": [
+    "Independent dispatcher review and frozen candidate/evidence accepted",
+    "Coordinator issues exact Request-bound valid grant AND Protocol Freeze",
+    "Exact authenticated model/high listing and runner/wrapper pins bound",
+    "All dispatcher LIVE_GAPS explicitly accepted",
+    "Common measurement profile correction decided explicitly if multi-session continuation is desired"
+  ],
+  "stopAfter": "One session or any stop/error/unknown usage; no second session implied",
+  "currentStrictLedgerConsequence": "Native providerRequests is null even when tokens are known: terminal result incomplete and later admission blocked",
+  "conditionalLaterRequests": [
+    "Separate artificial filesystem read/write/process access smoke after context evidence and profile/accounting decision",
+    "Separate Conventional public setup smoke after access and the same decision",
+    "Classic and Government each remain readiness_gap until native integration; no speculative reservations"
+  ],
+  "unchanged": ["resource-proposal.json commonLimits", "exhausted three diagnostic starts", "Classic v0.14.1 runtime7dbd599 heldc91363b"],
+  "notAuthorized": ["inference in this package", "six cells", "private holdouts", "other-cell access", "credentials", "full Go/Verify", "installed release changes"]
+}

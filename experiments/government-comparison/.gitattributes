@@ -7,3 +7,4 @@ evidence/actual-runner-probe-r1/session-1/*.log -whitespace
 evidence/actual-runner-probe-r2/**/*.log -whitespace
 evidence/runner-compatibility-r1/**/*.log -whitespace
 evidence/actual-runner-probe-r3/**/*.log -whitespace
+evidence/s1-dispatch-mechanics/**/*.log -whitespace

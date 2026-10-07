@@ -24,6 +24,15 @@ the correct sentinel: 9989 input + 20 output tokens. The retrospective 10000-tok
 observer then stopped the process, with nine tokens overshoot. Both grants are
 exhausted; raw receipts are in `evidence/actual-runner-probe-r3/`. S1 stays open.
 
+The later [finite S1 dispatcher](public/s1-dispatch.md) connects exact operator
+authority, Request, reservation, owned process, raw usage and durable Result.
+Its verification uses external deterministic programs only. The
+[synthetic context/access package](public/context-access-smoke.md),
+[reviewed enforcement matrix](public/dispatch-enforcement.md) and
+[proposed profile correction](public/s1-profile-correction-proposal.md) prepare
+one later public context session; no new native Actor or inference starts are
+authorized. Classic/Government native study integration remains a gap.
+
 ## Reproduce the fixture smoke
 
 Run from the Scientist checkout using Python 3.13.3, Git 2.52.0.windows.1,
@@ -89,10 +98,13 @@ Scientist owns the common study adapter wrapper, Request/Result translation,
 request digest binding, metrics/limits and trial invocation; product owners supply
 native product calls and evidence for that wrapper. Their readiness work stays
 bounded to their own product and smoke.
-The current contract is v1.1: results also echo the exact request-file SHA-256;
+The current contract is v1.2: results echo the exact request-file SHA-256, and
+the finite S1 extension requires a separate grant/protocol pair;
 use the final package version rather than the earlier v1 bytes.
-`harness.py` currently runs bounded fixture probes only, validates start/input and
-answer bindings, and preserves failed attempts. Live mode is deliberately closed.
+The historical `harness.py` CLI runs bounded fixture probes, validates start/input
+and answer bindings, and preserves failed attempts. Its finite `dispatch` API
+routes every counted Actor role through the S1 adapter and ledger. Live starts
+require explicit operator authority; no grant is issued by this package.
 It does not yet implement live process-tree containment, shared budget scheduling,
 provider event ingestion, candidate acceptance or stateful resume semantics.
 

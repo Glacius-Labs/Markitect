@@ -9,6 +9,24 @@ import time
 from prepare import digest, git
 
 
+def dispatch(request_path, result_path, *, grant_path, grant_sha256, protocol_path, protocol_sha256, allow_live=False):
+    """Shared finite path for every harness-launched Actor role; no inference by default.
+
+    The dispatcher books the Actor, not this Python orchestration frame. A child,
+    review, repair or setup Actor needs its own granted Request on the same ledger.
+    """
+    import sys
+    runtime = str(Path(__file__).with_name("runtime"))
+    if runtime not in sys.path:
+        sys.path.insert(0, runtime)
+    from adapter import handle
+    from dispatch import Authority
+    authority = Authority(grant_path, grant_sha256, protocol_path, protocol_sha256, allow_live=allow_live)
+    result = handle(request_path, result_path, authority=authority)
+    validate_result(json.loads(Path(request_path).read_bytes()), result, digest(request_path))
+    return result
+
+
 def utc():
     return datetime.now(timezone.utc).isoformat()
 
@@ -24,6 +42,8 @@ def validate_result(request, result, request_sha256):
         raise ValueError("Unknown adapter status")
     if request["mode"] == "fixture" and result.get("candidateCommit") is not None:
         raise ValueError("Fixture may not supply a study candidate")
+    if request["mode"] == "mechanical" and (result.get("candidateCommit") is not None or result.get("inferencePerformed") is not False):
+        raise ValueError("Mechanical result may not claim inference or a study candidate")
     if result["status"] == "ready" and request["operation"] != "probe":
         raise ValueError("ready is probe-only")
     if not isinstance(result.get("capabilities"), list) or not isinstance(result.get("gaps"), list):

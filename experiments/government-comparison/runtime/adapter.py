@@ -40,8 +40,13 @@ def read_request(raw):
     return request
 
 
-def handle(request_path, result_path):
+def handle(request_path, result_path, *, authority=None):
     raw = Path(request_path).read_bytes()
+    if json.loads(raw).get("mode") in {"mechanical", "live"}:
+        if authority is None:
+            raise ValueError("Live study gate closed: explicit operator-pinned Coordinator grant and Protocol Freeze required")
+        from dispatch import dispatch
+        return dispatch(request_path, result_path, authority)
     raw_digest = hashlib.sha256(raw).hexdigest()
     request = read_request(raw)
     result = {"schemaVersion": 1, "trialId": request["trialId"], "requestSha256": raw_digest,
@@ -93,9 +98,21 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--request", required=True)
     parser.add_argument("--result", required=True)
+    parser.add_argument("--grant")
+    parser.add_argument("--grant-sha256")
+    parser.add_argument("--protocol")
+    parser.add_argument("--protocol-sha256")
+    parser.add_argument("--allow-live", action="store_true")
     args = parser.parse_args()
     try:
-        handle(args.request, args.result)
+        authority = None
+        if any((args.grant, args.grant_sha256, args.protocol, args.protocol_sha256, args.allow_live)):
+            if not all((args.grant, args.grant_sha256, args.protocol, args.protocol_sha256)):
+                raise ValueError("all four operator authority arguments required")
+            from dispatch import Authority
+            authority = Authority(args.grant, args.grant_sha256, args.protocol, args.protocol_sha256,
+                                  allow_live=args.allow_live)
+        handle(args.request, args.result, authority=authority)
     except (OSError, ValueError, KeyError, TypeError) as exc:
         print(str(exc), file=sys.stderr)
         raise SystemExit(1)

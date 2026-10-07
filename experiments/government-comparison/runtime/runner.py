@@ -1,13 +1,16 @@
-"""Actual CLI pins and prospective common actor profile. Provider gate stays closed."""
+"""Pinned native argv; launch authority belongs exclusively to the finite dispatcher."""
 import hashlib
 import json
 from pathlib import Path
+import subprocess
 
 EXPECTED_SHA256 = "3b8f6e33caa75f232558a3cf76ff9b87bb5ef6dbcf4996372f24e55c78b1b916"
 EXPECTED_VERSION = "codex-cli 0.160.1"
 MODEL = "gpt-6.1-sol"
 REASONING = "high"
 CONFIG = {
+    "approval_policy": "never",
+    "forced_login_method": "chatgpt",
     "model_reasoning_effort": REASONING,
     "project_doc_max_bytes": 0,
     "features.memories": False,
@@ -23,7 +26,7 @@ CONFIG = {
     "web_search": "disabled",
 }
 GAPS = [
-    "Account support and resolved identity for gpt-6.1-sol/high have not been established by a provider receipt",
+    "Account model-list advertisement is separate from execution; resolved serving identity remains unreported",
     "No pre-dispatch aggregate provider-call controller is established for the later study",
     "exec turn.completed is an agent-turn completion event; provider-turn count inside it remains unknown",
     "Provider token usage arrives retrospectively; no hard aggregate token ceiling is established",
@@ -39,7 +42,7 @@ def inspect(executable):
         raise ValueError("Codex binary differs from readiness pin")
     return {"path": str(path), "sha256": digest, "version": EXPECTED_VERSION,
             "requestedModel": MODEL, "requestedReasoning": REASONING, "actualModel": None,
-            "modelSupport": "bundled exact model/high known; account and execution require diagnostic receipts",
+            "modelSupport": "exact requested model/high; dispatcher requires a frozen authenticated listing; serving identity may remain null",
             "providerProbeSessions": None, "counterScope": "Pin metadata only; actual attempts belong to separate immutable ledgers",
             "prospectiveConfig": CONFIG, "configSha256": hashlib.sha256(
                 json.dumps(CONFIG, sort_keys=True, separators=(",", ":")).encode()).hexdigest(),
@@ -59,3 +62,15 @@ def prospective_argv(executable, actor_root):
 
 def require_provider_ready():
     raise ValueError("Provider launch gate closed: " + "; ".join(GAPS))
+
+
+def validate_start(request):
+    """Public smoke starts from the exact clean Git candidate granted by the operator."""
+    def git(*args):
+        return subprocess.check_output(["git", "-C", request["actorRepository"], *args], text=True,
+                                       stderr=subprocess.PIPE, timeout=10).strip()
+    base = request.get("baseCommit", "")
+    if len(base) != 40 or any(c not in "0123456789abcdef" for c in base):
+        raise ValueError("full public Actor baseCommit required")
+    if git("rev-parse", "HEAD") != base or git("status", "--porcelain"):
+        raise ValueError("public Actor start changed or dirty")

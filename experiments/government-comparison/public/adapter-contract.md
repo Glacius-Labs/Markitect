@@ -1,4 +1,4 @@
-# Public study adapter contract v1.1
+# Public study adapter contract v1.2
 
 Owner: Scientist. Scientist implements, maintains, validates and freezes the common
 study adapter wrapper: Request/Result translation, exact `requestSha256` binding,
@@ -7,6 +7,10 @@ native product invocation paths, supported capabilities/gaps, immutable pins and
 actual receipts. This handoff bounds their product-readiness work; Scientist maps
 it into the study interchange below.
 This is an interchange contract, not a claim that any product currently supports it.
+The finite S1 dispatch extension is specified in [s1-dispatch.md](s1-dispatch.md):
+operator-pinned grant/protocol authority, counted reservation/process/usage/Result,
+conservative recovery and separate mechanical/live gates. It preserves this
+fixture probe schema and does not authorize inference or product readiness.
 The historical preparation source baseline is `1ea5c76f55526fc4d721e865885436153f48b497`.
 Subsequent inspected product identities belong to `runtime/classic-pin.json` and
 the runner readiness checkpoint; inspection does not clear the live-study gate.
@@ -33,7 +37,7 @@ The native readiness wrapper additionally requires `profile.runnerExecutable`
 `product.packetPath` (absolute frozen packet directory) for a Classic version
 probe. These are operator inputs; they are never passed to an Actor. The exact
 request digest binds them. Missing fields return a capability gap. An actual
-Actor call stays disabled until the separate runner readiness gates pass.
+Actor call requires the explicit finite S1 grant/protocol gates; mode alone cannot enable it.
 
 ## Request JSON
 
