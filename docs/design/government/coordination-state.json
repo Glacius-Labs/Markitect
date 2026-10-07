@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-07T16:16:21Z",
+  "updatedUtc": "2026-10-07T16:27:56Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -18,13 +18,13 @@
       "name": "Worker",
       "threadId": "01a1169b-9357-7df3-a8f6-f913557c782a",
       "hostId": "local",
-      "afterCursor": "b2b8e43f-fcaa-41bf-828a-99c69527bdea:18",
+      "afterCursor": "b2b8e43f-fcaa-41bf-828a-99c69527bdea:19",
       "lastObservedStatus": "active",
       "activeTurn": "01a11715-a36a-72b2-98cf-6fc1dd4f7c2a",
-      "lastAssistantMessageId": "msg_0a7785839df196a4016ac66f88e2888191b6c7bf0d4112c218",
+      "lastAssistantMessageId": "msg_0a7785839df196a4016ac670ef53708191b9d2fe160fa22238",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "G2: actual single-area candidate execution, independent review, unanimous final votes and fenced Active-Ref promotion",
-      "latestProgress": "Die CLI verlangt für G2 nun einen expliziten Runtime-Pin und --write. Jeder tatsächlich gestartete Runner wird außerdem gegen seinen eingefrorenen Fingerprint geprüft. Als Nächstes prüfe ich den kompletten Ein-Area-Ablauf samt fehlender Zustimmung, veralteten Voten und verändertem Kandidaten.",
+      "latestProgress": "Die unabhängige Prüfung hat zusätzliche Schutzlücken bei Git-Hooks und der Berichtspersistenz gefunden; deren Korrekturen laufen. Die Ablaufprobe startet echte externe Prozesse. Ihre Voten sind ausdrücklich mechanische Testdaten und kein Nachweis für Modellqualität oder menschliche Abnahme.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-worker/Markitect",
       "transferredDesignCommit": "691ce1dee3484371c4aea725db4ed5cc3f2e3719",
       "candidateSha": "028c137dac733c0a9c8539727e14bdba55fca789",
@@ -93,21 +93,21 @@
       "name": "Scientist",
       "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
       "hostId": "local",
-      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:18",
+      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:20",
       "lastObservedStatus": "active",
-      "activeTurn": "01a11726-9b99-7231-956f-b7c183d1d3ea",
-      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac6704a747c8191b123faa17db83dd2",
+      "activeTurn": "01a11731-38bb-7372-ad4a-cb5acb8821e4",
+      "lastAssistantMessageId": null,
       "initialAssignmentDispatched": true,
-      "assignedMilestone": "Read-only runner/model compatibility diagnosis and minimal supported next path",
-      "latestProgress": "Ich kläre die Kompatibilität ausschließlich lesend: zuerst anhand des gesicherten Katalogs und vorhandener Runner-Metadaten, anschließend bei Bedarf mit offiziellen Quellen. Dabei trenne ich Modellbezeichnung, CLI-Protokoll und Account-Berechtigung. Es erfolgen keine Inferenzaufrufe oder Änderungen an Installation und Einstellungen.",
+      "assignedMilestone": "Pin installed current runner, verify settings/account metadata, at most one new bounded identity/usage diagnostic",
+      "latestProgress": "New bounded runner correction and identity diagnostic assigned; observed active, no progress message yet.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-scientist/Markitect",
       "transferredDesignCommit": "b9e17c9896f14b4b1268e4bcb005395f5d324384",
-      "candidateSha": "66be8048a27dd0bb7ab5b993e73c1a4b7d08f22d",
-      "acceptance": "Final diagnostic evidence accepted; pinned CLI/ChatGPT invocation rejected requested model, 2/2 starts consumed and S1 open",
+      "candidateSha": "434c046411eaa293ea459f27b7e161278fd47753",
+      "acceptance": "Read-only compatibility report accepted; existing CLI0.160.1 metadata supports exact target model, real account/execution unresolved",
       "lastAssignment": {
-        "sentUtc": "2026-10-07T16:16:08.000Z",
-        "key": "read-only-runner-model-compatibility",
-        "scope": "Classify pinned CLI model ID vs runner protocol/version vs account entitlement using existing catalog/local metadata/official docs; propose minimal supported path. No extra Actor starts, model substitution, install/global-config/auth mutation or study trials."
+        "key": "pin-current-runner-and-single-identity-diagnostic",
+        "scope": "Adopt existing pinned CLI0.160.1 same model; verify effective settings/current account metadata, at most one additional 180s identity/usage start; preserve two failed historical starts; no study/access/extra attempts.",
+        "sentUtc": "2026-10-07T16:27:44.000Z"
       },
       "evidence": {
         "sourcesHashChecked": 37,
@@ -164,6 +164,18 @@
           "internalRetries": null,
           "targetedTestsPassed": 3,
           "rootInspection": "Read raw stdout/result, observation, independent review and source validation; verified 56 source and 28 public evidence hashes, clean final SHA."
+        },
+        "runnerCompatibility": {
+          "sourceSha": "434c046411eaa293ea459f27b7e161278fd47753",
+          "manifestBindingsChecked": 30,
+          "hashMismatches": 0,
+          "runnerVersion": "0.160.1",
+          "runnerPath": "C:/Users/Consiliari/AppData/Local/OpenAI/Codex/bin/5ea220ae823df3d7/codex.exe",
+          "runnerSha256": "3b8f6e33caa75f232558a3cf76ff9b87bb5ef6dbcf4996372f24e55c78b1b916",
+          "binaryHashPersonallyChecked": true,
+          "modelMetadata": "Exact gpt-6.1-sol/high bundled and locally parsed; not account grant",
+          "settingsGap": "unified_exec true despite false override; shell_tool false; effective boundary unresolved",
+          "review": "Independent content review read; 30 bindings personally checked; no new Actor/test runs by Overseer"
         }
       },
       "classicHandoffReceived": true
@@ -172,13 +184,13 @@
       "name": "Architect",
       "threadId": "01a111ec-a913-7830-91b0-925d0a1dd1b2",
       "hostId": "local",
-      "afterCursor": "71d9f5b2-c0f0-474c-9898-777d051b478a:32",
+      "afterCursor": "71d9f5b2-c0f0-474c-9898-777d051b478a:33",
       "lastObservedStatus": "active",
       "activeTurn": "01a11716-f468-71c0-b5f4-a59f722c0bbc",
-      "lastAssistantMessageId": "msg_0b6e7ce0ce9f843f016ac66fc39f3087d2a7e578ebf23e9576",
+      "lastAssistantMessageId": "msg_0b6e7ce0ce9f843f016ac67199094087d2b9a73b201d6af45f",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "Complete required local source/integration gates for public Classic example; exclusive full-suite slot",
-      "latestProgress": "Die 34 Beispielbefehle, Onboarding und die Adoption mit gepackter CLI sind bestanden. Beim Bootstrap ist der erste lokale Versuch am Prozessstart gescheitert. Sein entpacktes Arbeitsverzeichnis ist 288 Zeichen lang; ich prüfe jetzt, ob die Pfadlänge die Ursache ist, und wiederhole nur diesen Teil mit unveränderten Eingaben unter einem kurzen Pfad. Der fehlgeschlagene Versuch bleibt erhalten.",
+      "latestProgress": "Der feste Verify ist bestanden. Die Go-Vollsuite lief rund 11 Minuten 40 Sekunden erfolgreich innerhalb des deklarierten 30-Minuten-Limits; alle vier Project-Gates sind grün. Ich lasse die abschließenden Nachweise noch unabhängig prüfen und friere die Übergabe ein. Für diesen Quellstand fehlen dann nur die gehosteten CI- und Linux-Nachweise.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/classic-public-example/Markitect",
       "transferredDesignCommit": null,
       "candidateSha": "b09d6b75a202f4fc6fe4855878a152aec938c29d",
@@ -217,7 +229,7 @@
       "heldWorktree": "C:/Users/Consiliari/.codex/worktrees/standard-operating-model/Markitect"
     }
   ],
-  "nextAction": "Review Scientist's read-only runner/model compatibility recommendation, Worker G2 and Architect final source gates. No additional Actor starts or full-suite concurrency; study live gate remains closed.",
+  "nextAction": "Inspect Scientist corrected-runner single diagnostic and account outcome, Worker G2 review fixes, and Architect final source-gate handoff. No extra probes or full-suite concurrency. Study live gate closed.",
   "boundaries": {
     "governmentPublication": false,
     "automaticClassicReplacement": false,
@@ -226,12 +238,12 @@
     "jev": "Deferred; no extra investigation started"
   },
   "lastReview": {
-    "reviewedUtc": "2026-10-07T16:16:21Z",
-    "evidenceLevel": "Compact live snapshots for all chats. Personally verified Scientist clean 66be804, raw HTTP400/error receipts, independent review, three targeted test results and all 84 manifest hashes. Worker/Architect updates remain reported progress; no tests rerun.",
+    "reviewedUtc": "2026-10-07T16:27:56Z",
+    "evidenceLevel": "Compact snapshots read. Scientist clean434c046, report and independent review inspected; 30 manifest bindings and actual installed runner hash verified. Worker/Architect remain running with reported progress; no final gate acceptance or tests repeated.",
     "coordinationActions": [
-      "Accepted final diagnostic as failure evidence, not S1 readiness.",
-      "Assigned Scientist a bounded read-only compatibility investigation; observed active.",
-      "No repeated Worker or Architect tasks; Architect retains heavy suite slot."
+      "Selected installed CLI0.160.1 with exact same gpt-6.1-sol/high; documented one additional bounded identity diagnostic after preflight.",
+      "Scientist task dispatched and observed active.",
+      "No duplicate Worker/Architect assignments; Architect retains heavy-suite slot until handoff."
     ],
     "userDecisionRequired": false
   },
@@ -269,7 +281,7 @@
   },
   "runnerProbe": {
     "authorizedUtc": "2026-10-07T15:00:51Z",
-    "actorSessionsTotal": 2,
+    "actorSessionsTotal": 3,
     "wallSecondsPerSession": 180,
     "maxParallelActors": 1,
     "subagents": false,
@@ -281,7 +293,7 @@
     "purpose": "Actual model/version, raw metering, effective context and access on fresh public sentinels only",
     "limitations": "Token threshold 10000 is retrospective and can overshoot in-flight; provider request count unknown unless evidenced. No guaranteed hard token/call cap claimed. No study work, model substitution, retries, children or new purchases.",
     "previousProviderTurnsPerSession": 6,
-    "updatedUtc": "2026-10-07T16:16:21Z",
+    "updatedUtc": "2026-10-07T16:27:56Z",
     "providerRequestCap": null,
     "wrapperStartedAgentTurnsPerSession": 1,
     "sessionsConsumedAtLastCompletedCheckpoint": 2,
@@ -295,9 +307,30 @@
       "evidenceStatus": "Personally verified raw error/result/reviews and 84 manifest hashes at 66be804",
       "secondAttemptStarted": true
     },
-    "remainingSessions": 0,
+    "remainingSessions": 1,
     "retrySemantics": "No wrapper relaunch or continuation. If builtin provider retry controls unavailable, unchanged documented internal transport defaults allowed inside 180s for this probe only; counts/usage remain unknown unless evidenced.",
-    "remainingAttemptPurpose": "Exhausted. Current follow-up is read-only compatibility diagnosis; no new Actor/access probes."
+    "remainingAttemptPurpose": "One new explicitly granted identity/usage diagnostic on existing pinned CLI0.160.1; original two-attempt grant remains exhausted.",
+    "originalActorSessionsTotal": 2,
+    "followupGrant": {
+      "id": "installed-runner-01601-identity-r1",
+      "authorizedUtc": "2026-10-07T16:27:44.000Z",
+      "source": "Overseer technical coordination under direct user Go, recorded coordination.md 18:26",
+      "maxAdditionalSessions": 1,
+      "wallSeconds": 180,
+      "maxParallelActors": 1,
+      "wrapperTurns": 1,
+      "requestedModel": "gpt-6.1-sol",
+      "reasoning": "high",
+      "runnerVersion": "0.160.1",
+      "runnerSha256": "3b8f6e33caa75f232558a3cf76ff9b87bb5ef6dbcf4996372f24e55c78b1b916",
+      "prerequisite": "Pinned corrected config and read-only account/model metadata assessment; definitive current rejection stops before inference",
+      "toolBoundary": "Native read-only/never, optional integrations disabled, no requested tool action; reported unified_exec may remain true for this diagnostic only, unexpected action aborts reactively. No isolation claim.",
+      "tokens": "10000 observed input+output threshold for new diagnostic only, possible in-flight overshoot. Historical usage remains unknown.",
+      "children": false,
+      "wrapperRetries": 0,
+      "accessOrStudyProbe": false,
+      "newPurchases": false
+    }
   },
   "sourceTestTimeoutAuthorization": {
     "userInstruction": "Zur Not würde ich die Timeout Grenze erhöhen auf bis zu 30 minuten; Rückmeldung als Alternative",
