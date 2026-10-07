@@ -46,6 +46,10 @@ jobs:
       - name: Test
         run: go test ./... -count=1
 
+      - name: Repeat temporary Git fixture cleanup regression (Linux)
+        if: runner.os == 'Linux'
+        run: go test ./examples -run '^TestUnknownOntologyLoadsExactPackagesAndPreparesBoundedScope$' -count=100
+
       - name: Validate authoring benchmark fixtures
         run: go test ./internal/host -run '^$' -bench Authoring -benchtime=1x
 
