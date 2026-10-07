@@ -1,5 +1,7 @@
 # Markitect Government: Designpaket
 
+**Aktiviert am 7. Oktober 2026:** Das Nutzer-Go liegt vor. [Aktive Koordination](coordination.md) bindet die tatsächlichen Chats Worker, Scientist und Architect, Arbeitsbereiche und Erstaufträge. Hinweise auf ein noch ausstehendes Go im ursprünglichen Entwurf sind damit historisch.
+
 Stand: 2026-10-07. Design v0.1 des Koordinators, vorbereitet vor dem Go zur Koordination und Implementierung. Dieses Paket beschreibt die zu bauende Variante; es behauptet keine implementierten Fähigkeiten oder Versuchsergebnisse. Die beiden vom Nutzer angekündigten Chats erhalten erst nach seinem Go konkrete Aufträge.
 
 ## Ziel und Auftrag
