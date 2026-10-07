@@ -2,13 +2,11 @@ package government
 
 import (
 	"context"
-	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -39,18 +37,20 @@ type PromotionRequest struct {
 // incomplete result means the caller must retain the report and inspect the
 // intent/ref; it does not promise rollback or ledger atomicity.
 type PromotionResult struct {
-	Status       string `json:"status"`
-	IntentPath   string `json:"intentPath,omitempty"`
-	ExpectedOld  string `json:"expectedOld"`
-	NewCommit    string `json:"newCommit"`
-	ActualActive string `json:"actualActive,omitempty"`
-	FencingToken string `json:"fencingToken,omitempty"`
+	Status         string `json:"status"`
+	IntentPath     string `json:"intentPath,omitempty"`
+	CompletionPath string `json:"completionPath,omitempty"`
+	ExpectedOld    string `json:"expectedOld"`
+	NewCommit      string `json:"newCommit"`
+	ActualActive   string `json:"actualActive,omitempty"`
+	FencingToken   string `json:"fencingToken,omitempty"`
 }
 
 type promotionIntent struct {
 	Version             int       `json:"version"`
 	ExpectedOld         string    `json:"expectedOld"`
 	NewCommit           string    `json:"newCommit"`
+	ExpectedTreeID      string    `json:"expectedTreeId"`
 	MaterialCandidateID string    `json:"materialCandidateId"`
 	EvidenceID          string    `json:"evidenceId"`
 	DecisionID          string    `json:"decisionId"`
@@ -115,13 +115,13 @@ func Promote(ctx context.Context, request PromotionRequest) (PromotionResult, er
 	}
 
 	lockPath := filepath.Join(commonDir, promotionLockName(request.ActiveRef))
-	lock, err := acquirePromotionLock(lockPath)
+	lock, err := AcquireLease(lockPath)
 	if err != nil {
 		return result, err
 	}
-	defer lock.close()
-	result.FencingToken = lock.token
-	if err := lock.verify(); err != nil {
+	defer lock.Close()
+	result.FencingToken = lock.Token()
+	if err := lock.Verify(); err != nil {
 		return result, fmt.Errorf("promotion fencing lost before intent: %w", err)
 	}
 	actual, err = readPromotionRef(ctx, repo, request.ActiveRef)
@@ -133,14 +133,14 @@ func Promote(ctx context.Context, request PromotionRequest) (PromotionResult, er
 		result.Status = "stale-base"
 		return result, fmt.Errorf("active ref changed before intent: expected %s, observed %s", request.ExpectedOld, actual)
 	}
-	if err := lock.verify(); err != nil {
+	if err := lock.Verify(); err != nil {
 		return result, fmt.Errorf("promotion fencing lost before intent: %w", err)
 	}
 	intent := promotionIntent{
-		Version: 1, ExpectedOld: request.ExpectedOld, NewCommit: request.NewCommit,
+		Version: 2, ExpectedOld: request.ExpectedOld, NewCommit: request.NewCommit, ExpectedTreeID: request.ExpectedTreeID,
 		MaterialCandidateID: request.MaterialCandidateID, EvidenceID: request.EvidenceID,
 		DecisionID: request.DecisionID, IdempotencyKey: request.IdempotencyKey,
-		ActiveRef: request.ActiveRef, FencingToken: lock.token, CreatedAt: time.Now().UTC(),
+		ActiveRef: request.ActiveRef, FencingToken: lock.Token(), CreatedAt: time.Now().UTC(),
 	}
 	intentPath := filepath.Join(stateDir, promotionIntentName(request.IdempotencyKey))
 	result.IntentPath = intentPath
@@ -151,7 +151,7 @@ func Promote(ctx context.Context, request PromotionRequest) (PromotionResult, er
 		return result, fmt.Errorf("write durable promotion intent: %w", err)
 	}
 	result.Status = "incomplete"
-	if err := lock.verify(); err != nil {
+	if err := lock.Verify(); err != nil {
 		return result, fmt.Errorf("promotion fencing lost before compare-and-swap: %w", err)
 	}
 	// The Git worktree registry has no lock shared with unrelated Git clients.
@@ -160,10 +160,10 @@ func Promote(ctx context.Context, request PromotionRequest) (PromotionResult, er
 	if err := rejectCheckedOutRef(ctx, repo, request.ActiveRef); err != nil {
 		return result, fmt.Errorf("active ref became checked out before compare-and-swap: %w", err)
 	}
-	if err := lock.verify(); err != nil {
+	if err := lock.Verify(); err != nil {
 		return result, fmt.Errorf("promotion fencing lost immediately before compare-and-swap: %w", err)
 	}
-	if _, err := runPromotionGit(ctx, repo, "update-ref", "--create-reflog", "-m", "markitect government promotion "+lock.token, request.ActiveRef, request.NewCommit, request.ExpectedOld); err != nil {
+	if _, err := runPromotionGit(ctx, repo, "update-ref", "--create-reflog", "-m", "markitect government promotion "+lock.Token(), request.ActiveRef, request.NewCommit, request.ExpectedOld); err != nil {
 		observed, readErr := readPromotionRef(ctx, repo, request.ActiveRef)
 		if readErr == nil {
 			result.ActualActive = observed
@@ -184,6 +184,11 @@ func Promote(ctx context.Context, request PromotionRequest) (PromotionResult, er
 		return result, fmt.Errorf("promotion compare-and-swap returned success but active ref is %s; intent retained", result.ActualActive)
 	}
 	result.Status = "promoted"
+	result.CompletionPath = filepath.Join(stateDir, promotionCompletionName(request.IdempotencyKey))
+	if err := writePromotionCompletion(stateDir, intent); err != nil {
+		result.Status = "incomplete"
+		return result, fmt.Errorf("promotion applied but completion record could not be written; intent retained: %w", err)
+	}
 	return result, nil
 }
 
@@ -402,68 +407,9 @@ func promotionIntentName(idempotencyKey string) string {
 	return "promotion-" + hex.EncodeToString(digest[:]) + ".json"
 }
 
-type promotionLock struct {
-	path  string
-	token string
-	file  *os.File
-	info  fs.FileInfo
-}
-
-func acquirePromotionLock(path string) (*promotionLock, error) {
-	var random [32]byte
-	if _, err := rand.Read(random[:]); err != nil {
-		return nil, fmt.Errorf("create promotion fencing token: %w", err)
-	}
-	token := hex.EncodeToString(random[:])
-	f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
-	if err != nil {
-		return nil, fmt.Errorf("acquire exclusive repository promotion lock %s: %w", path, err)
-	}
-	info, err := f.Stat()
-	if err != nil {
-		_ = f.Close()
-		return nil, err
-	}
-	content := []byte(token + "\n")
-	if _, err = f.Write(content); err == nil {
-		err = f.Sync()
-	}
-	if err == nil {
-		err = f.Close()
-	} else {
-		_ = f.Close()
-	}
-	if err != nil {
-		return nil, fmt.Errorf("persist promotion lock: %w", err)
-	}
-	return &promotionLock{path: path, token: token, info: info}, nil
-}
-
-func (l *promotionLock) verify() error {
-	info, err := os.Lstat(l.path)
-	if err != nil {
-		return err
-	}
-	if promotionIsReparsePoint(info) || !os.SameFile(l.info, info) {
-		return errors.New("repository promotion lock ownership changed")
-	}
-	bytes, err := os.ReadFile(l.path)
-	if err != nil {
-		return err
-	}
-	if string(bytes) != l.token+"\n" {
-		return errors.New("repository promotion lock fencing token changed")
-	}
-	return nil
-}
-
-func (l *promotionLock) close() {
-	if l == nil {
-		return
-	}
-	if err := l.verify(); err == nil {
-		_ = os.Remove(l.path)
-	}
+func promotionCompletionName(idempotencyKey string) string {
+	digest := sha256.Sum256([]byte(idempotencyKey))
+	return "promotion-completion-" + hex.EncodeToString(digest[:]) + ".json"
 }
 
 func writePromotionIntent(path string, intent promotionIntent) error {

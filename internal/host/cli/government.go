@@ -23,11 +23,13 @@ func runGovernment(args []string, out, errout io.Writer) int {
 	repo := fs.String("repo", ".", "explicit native repository root")
 	config := fs.String("config", "", "repository-relative trusted GovernmentSource YAML")
 	orderPath := fs.String("order", "", "repository-relative Order YAML bound to prior Constitution")
-	action := fs.String("action", "inspect", "schema, inspect, plan or run (experimental)")
+	action := fs.String("action", "inspect", "schema, inspect, plan, run, queue or resume (experimental)")
 	runtimePath := fs.String("runtime", "", "absolute external runtime JSON for run")
+	backlogPath := fs.String("backlog", "", "absolute external finite backlog JSON for queue or resume")
+	queuePath := fs.String("queue", "", "absolute existing queue directory for resume")
 	write := fs.Bool("write", false, "explicitly execute and promote the scoped candidate")
 	fs.Usage = func() {
-		fmt.Fprintln(out, "usage: markitect government --repo PATH --config FILE --action inspect|plan [--order FILE]\n       markitect government --action schema\n       markitect government --repo PATH --config FILE --order FILE --action run --runtime ABS_JSON --write")
+		fmt.Fprintln(out, "usage: markitect government --repo PATH --config FILE --action inspect|plan [--order FILE]\n       markitect government --action schema\n       markitect government --repo PATH --config FILE --order FILE --action run --runtime ABS_JSON --write\n       markitect government --repo PATH --action queue --backlog ABS_JSON --write\n       markitect government --repo PATH --action resume --backlog ABS_JSON --queue ABS_DIR --write")
 		fs.PrintDefaults()
 	}
 	if err := fs.Parse(args); err != nil {
@@ -49,6 +51,41 @@ func runGovernment(args []string, out, errout io.Writer) int {
 	}
 	if fs.NArg() != 0 {
 		return fail(errors.New("government accepts no positional arguments"))
+	}
+	if *action == "queue" || *action == "resume" {
+		if !*write || !filepath.IsAbs(*backlogPath) || *runtimePath != "" || *config != "" || *orderPath != "" {
+			return fail(errors.New("queue and resume require an absolute backlog JSON and --write; config, order and runtime belong to its jobs"))
+		}
+		if (*action == "queue" && *queuePath != "") || (*action == "resume" && !filepath.IsAbs(*queuePath)) {
+			return fail(errors.New("queue creates a new queue; resume requires an absolute existing --queue directory"))
+		}
+		opts := execution.QueueOptions{Repo: *repo, BacklogPath: *backlogPath, QueueDirectory: *queuePath}
+		var result execution.QueueReport
+		var runErr error
+		if *action == "queue" {
+			result, runErr = execution.StartQueue(context.Background(), opts)
+		} else {
+			result, runErr = execution.ResumeQueue(context.Background(), opts)
+		}
+		encoder := json.NewEncoder(out)
+		encoder.SetIndent("", "  ")
+		if err := encoder.Encode(result); err != nil {
+			return fail(err)
+		}
+		if runErr != nil {
+			fmt.Fprintln(errout, runErr)
+			return 1
+		}
+		return 0
+	}
+	queueFlagPresent := false
+	fs.Visit(func(f *flag.Flag) {
+		if f.Name == "backlog" || f.Name == "queue" {
+			queueFlagPresent = true
+		}
+	})
+	if queueFlagPresent {
+		return fail(errors.New("backlog and queue are only valid for actions queue and resume"))
 	}
 	if *action == "run" {
 		if !*write || *runtimePath == "" || !filepath.IsAbs(*runtimePath) || *config == "" || *orderPath == "" {
@@ -86,7 +123,7 @@ func runGovernment(args []string, out, errout io.Writer) int {
 		return emit(government.Schema())
 	}
 	if *action != "inspect" && *action != "plan" {
-		return fail(errors.New("government action must be schema, inspect, plan or run"))
+		return fail(errors.New("government action must be schema, inspect, plan, run, queue or resume"))
 	}
 	if *config == "" || (*action == "plan" && *orderPath == "") || (*action == "inspect" && *orderPath != "") {
 		return fail(errors.New("inspect requires config; plan requires config and order"))

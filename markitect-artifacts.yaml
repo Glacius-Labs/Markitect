@@ -7,6 +7,7 @@ spec:
     - examples/government
     - examples/government-g2
     - examples/government-g3
+    - examples/government-g5
     - examples/government-g4
     - internal/host/cli/government.go
     - internal/host/cli/government_test.go
@@ -153,6 +154,48 @@ spec:
     - experiments/live-operating-pilot
     - experiments/two-area-operating-pilot
   tooling:
+    - path: examples/government-g5/README.md
+      owner: government-experiment
+    - path: examples/government-g5/delivery/rate.txt
+      owner: government-experiment
+    - path: examples/government-g5/git-gate/main.go
+      owner: government-experiment
+    - path: examples/government-g5/go.mod
+      owner: government-experiment
+    - path: examples/government-g5/government.yaml
+      owner: government-experiment
+    - path: examples/government-g5/independent/receipt.txt
+      owner: government-experiment
+    - path: examples/government-g5/invoice/invoice.go
+      owner: government-experiment
+    - path: examples/government-g5/invoice/invoice_test.go
+      owner: government-experiment
+    - path: examples/government-g5/invoice/protected-goal.txt
+      owner: government-experiment
+    - path: examples/government-g5/runner/main.go
+      owner: government-experiment
+    - path: examples/government-g5/trial.ps1
+      owner: government-experiment
+    - path: internal/host/government/execution/control.go
+      owner: government-experiment
+    - path: internal/host/government/execution/control_integration_test.go
+      owner: government-experiment
+    - path: internal/host/government/execution/queue.go
+      owner: government-experiment
+    - path: internal/host/government/execution/queue_input.go
+      owner: government-experiment
+    - path: internal/host/government/execution/queue_journal.go
+      owner: government-experiment
+    - path: internal/host/government/execution/queue_test.go
+      owner: government-experiment
+    - path: internal/host/government/lease.go
+      owner: government-experiment
+    - path: internal/host/government/lease_other.go
+      owner: government-experiment
+    - path: internal/host/government/lease_windows.go
+      owner: government-experiment
+    - path: internal/host/government/promotion_recovery.go
+      owner: government-experiment
     - path: internal/host/government/amendment.go
       owner: government-experiment
     - path: internal/host/government/amendment_test.go

@@ -86,6 +86,11 @@ roundLoop:
 		if err := ctx.Err(); err != nil {
 			return *r, err
 		}
+		if index > 1 && in.session.control != nil {
+			if err := in.session.control.ReserveRepair(r.RunID, "amend-model", index-1); err != nil {
+				return *r, err
+			}
+		}
 		round := AmendmentRound{Round: index, Status: "executing", Checks: []host.GateResult{}, ReviewActorSequences: []int{}, Votes: []government.RessortVote{}}
 		r.AmendmentRounds = append(r.AmendmentRounds, round)
 		roundIndex := len(r.AmendmentRounds) - 1
@@ -304,7 +309,7 @@ roundLoop:
 		if pins, err := toolPins(in.session.runtime); err != nil || pins != r.ToolPins {
 			return *r, errors.Join(errors.New("runtime/tool pins changed before amendment checks"), err)
 		}
-		checks, checkErr := freshChecks(ctx, candidate, in.session.runtime.Checks)
+		checks, checkErr := freshChecks(ctx, candidate, in.session.runtime.Checks, in.session.control)
 		current.Checks, r.Checks = checks, checks
 		if err := persistJSON(filepath.Join(filepath.Dir(r.ReportPath), fmt.Sprintf("amendment-checks-%02d.json", index)), checks); err != nil {
 			return *r, err
@@ -460,6 +465,14 @@ roundLoop:
 		finalPins, err := toolPins(in.session.runtime)
 		if err != nil || finalPins != r.ToolPins {
 			return *r, errors.Join(errors.New("runtime/tool pins changed after amendment material binding"), err)
+		}
+		if in.session.control != nil {
+			if err := in.session.control.Checkpoint(*r); err != nil {
+				return *r, err
+			}
+			if err := in.session.control.Fence(); err != nil {
+				return *r, err
+			}
 		}
 		promoted, err := government.Promote(ctx, government.PromotionRequest{Repo: in.repo, ActiveRef: in.session.runtime.ActiveRef, ExpectedOld: in.session.runtime.ExpectedBase, NewCommit: commit, ExpectedTreeID: tree, MaterialCandidateID: material.ID, EvidenceID: evidence.ID, DecisionID: decision.ID, StateDirectory: filepath.Dir(r.ReportPath), IdempotencyKey: r.RunID})
 		r.Promotion = &promoted

@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -156,6 +157,118 @@ func TestPromoteSuppressesConfiguredReferenceTransactionHook(t *testing.T) {
 	}
 }
 
+func TestRecoverPromotionUsesExactRefHistoryAfterActiveAdvances(t *testing.T) {
+	fixture := newPromotionFixture(t)
+	request := fixture.request()
+	result, err := Promote(context.Background(), request)
+	if err != nil {
+		t.Fatalf("Promote() error = %v", err)
+	}
+	if err := os.Remove(result.CompletionPath); err != nil {
+		t.Fatalf("remove completion to simulate crash window: %v", err)
+	}
+	advanced := fixture.git("commit-tree", request.ExpectedTreeID, "-p", request.NewCommit, "-m", "later active revision")
+	fixture.git("update-ref", "--create-reflog", request.ActiveRef, advanced, request.NewCommit)
+	recovered, err := RecoverPromotion(context.Background(), request)
+	if err != nil {
+		t.Fatalf("RecoverPromotion() error = %v", err)
+	}
+	if recovered.Status != "promoted" || recovered.ActualActive != advanced || recovered.FencingToken != result.FencingToken {
+		t.Fatalf("recovery did not recognize exact prior edge and later active ref: %+v", recovered)
+	}
+	if active := fixture.git("rev-parse", request.ActiveRef); active != advanced {
+		t.Fatalf("recovery moved active ref to %s, want %s", active, advanced)
+	}
+	again, err := RecoverPromotion(context.Background(), request)
+	if err != nil || again.Status != "promoted" || again.ActualActive != advanced {
+		t.Fatalf("repeat recovery = (%+v, %v)", again, err)
+	}
+	if active := fixture.git("rev-parse", request.ActiveRef); active != advanced {
+		t.Fatalf("repeat recovery changed active ref to %s", active)
+	}
+}
+
+func TestRecoverPromotionLeavesPreCASIntentIncomplete(t *testing.T) {
+	fixture := newPromotionFixture(t)
+	request := fixture.request()
+	intent := promotionIntent{Version: 2, ExpectedOld: request.ExpectedOld, NewCommit: request.NewCommit, ExpectedTreeID: request.ExpectedTreeID,
+		MaterialCandidateID: request.MaterialCandidateID, EvidenceID: request.EvidenceID, DecisionID: request.DecisionID,
+		IdempotencyKey: request.IdempotencyKey, ActiveRef: request.ActiveRef, FencingToken: strings.Repeat("a", 64), CreatedAt: time.Now().UTC()}
+	path := filepath.Join(fixture.state, promotionIntentName(request.IdempotencyKey))
+	if err := writePromotionIntent(path, intent); err != nil {
+		t.Fatal(err)
+	}
+	recovered, err := RecoverPromotion(context.Background(), request)
+	if err == nil || recovered.Status != "incomplete" || !strings.Contains(err.Error(), "no exact tokenized promotion edge") {
+		t.Fatalf("RecoverPromotion() = (%+v, %v), want incomplete pre-CAS effect", recovered, err)
+	}
+	if active := fixture.git("rev-parse", request.ActiveRef); active != request.ExpectedOld {
+		t.Fatalf("recovery replayed CAS: active=%s", active)
+	}
+	if _, err := os.Stat(recovered.CompletionPath); !errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("pre-CAS recovery wrote completion: %v", err)
+	}
+	wrongTree := request
+	wrongTree.ExpectedTreeID = fixture.oldTree
+	if result, err := RecoverPromotion(context.Background(), wrongTree); err == nil || result.Status != "rejected" {
+		t.Fatalf("recovery accepted a changed candidate tree binding: (%+v, %v)", result, err)
+	}
+}
+
+func TestAcquireLeaseExcludesLiveRunnerAndRecognizesOnlySameHostRecord(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "writer.lease")
+	first, err := AcquireLease(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if second, err := AcquireLease(path); err == nil {
+		_ = second.Close()
+		t.Fatal("second live runner acquired the lease")
+	}
+	firstToken := first.Token()
+	if err := first.Verify(); err != nil {
+		t.Fatalf("Verify() error = %v", err)
+	}
+	if err := first.Close(); err != nil {
+		t.Fatalf("Close() error = %v", err)
+	}
+	second, err := AcquireLease(path)
+	if err != nil {
+		t.Fatalf("same-host orphan takeover was not proven by OS exclusion: %v", err)
+	}
+	if second.Token() == firstToken {
+		t.Fatal("new lease reused the previous fencing token")
+	}
+	_ = second.Close()
+	if err := os.WriteFile(path, []byte("legacy lock format\n"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	if lease, err := AcquireLease(path); err == nil {
+		_ = lease.Close()
+		t.Fatal("unrecognized legacy lock was taken over")
+	}
+	if err := os.WriteFile(path, nil, 0600); err != nil {
+		t.Fatal(err)
+	}
+	if lease, err := AcquireLease(path); err == nil {
+		_ = lease.Close()
+		t.Fatal("empty preexisting lock file was treated as a fresh lease")
+	}
+}
+
+func TestValidReflogTimestampRejectsMalformedValues(t *testing.T) {
+	for _, value := range []string{"", "+", "-", "999999999999999999999999999999999", "1x"} {
+		if validReflogTimestamp(value) {
+			t.Errorf("validReflogTimestamp(%q) = true, want false", value)
+		}
+	}
+	for _, value := range []string{"0", "1791401677", "-1"} {
+		if !validReflogTimestamp(value) {
+			t.Errorf("validReflogTimestamp(%q) = false, want true", value)
+		}
+	}
+}
+
 func TestOperationalDirectoryAndRecordAreDurablyPublished(t *testing.T) {
 	parent := t.TempDir()
 	directory, err := CreateOperationalDirectory(parent, "government-run-")
@@ -285,4 +398,22 @@ func (f *promotionFixture) git(args ...string) string {
 func testPromotionDigest(value string) string {
 	digest := sha256.Sum256([]byte(value))
 	return "sha256:" + hex.EncodeToString(digest[:])
+}
+
+func TestRecoverPromotionRejectsMalformedHistoryIdentity(t *testing.T) {
+	fixture := newPromotionFixture(t)
+	request := fixture.request()
+	result, err := Promote(context.Background(), request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(fixture.repo, ".git", "logs", filepath.FromSlash(request.ActiveRef))
+	line := request.ExpectedOld + " " + request.NewCommit + " arbitrary 0 +0000\tmarkitect government promotion " + result.FencingToken + "\n"
+	if err := os.WriteFile(path, []byte(line), 0600); err != nil {
+		t.Fatal(err)
+	}
+	recovered, err := RecoverPromotion(context.Background(), request)
+	if err == nil || recovered.Status == "promoted" {
+		t.Fatalf("malformed history counted as promotion: %+v: %v", recovered, err)
+	}
 }

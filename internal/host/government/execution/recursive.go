@@ -113,6 +113,11 @@ func (e *recursiveEngine) node(node government.DelegationNode, input *snapshot.S
 		if err := s.ctx.Err(); err != nil {
 			return nil, report, err
 		}
+		if attempt > 0 && s.control != nil {
+			if err := s.control.ReserveRepair(s.report.RunID, node.Area.Key(), attempt); err != nil {
+				return nil, report, err
+			}
+		}
 		report.Attempts = append(report.Attempts, AreaAttempt{Attempt: attempt, InputDigest: input.Digest(), Repair: repair, Status: "incomplete", Children: []AreaReport{}, Checks: []host.GateResult{}})
 		entry := &report.Attempts[len(report.Attempts)-1]
 		// Each sibling gets a private branch rooted in this exact input. Nested
@@ -261,11 +266,18 @@ func (e *recursiveEngine) checks(candidate *snapshot.Snapshot, checks []authorin
 	if pin, err := toolPins(s.runtime); err != nil || pin != s.report.ToolPins {
 		return nil, errors.Join(errors.New("runtime/tool pins changed before Area checks"), err)
 	}
-	return freshChecks(s.ctx, candidate, checks)
+	return freshChecks(s.ctx, candidate, checks, s.control)
 }
 
-func freshChecks(ctx context.Context, candidate *snapshot.Snapshot, checks []authoring.Check) (results []host.GateResult, err error) {
+func freshChecks(ctx context.Context, candidate *snapshot.Snapshot, checks []authoring.Check, controls ...Control) (results []host.GateResult, err error) {
 	for _, check := range checks {
+		for _, control := range controls {
+			if control != nil {
+				if err := control.Fence(); err != nil {
+					return results, err
+				}
+			}
+		}
 		seconds := authoring.DefaultCheckTimeoutSeconds
 		if check.TimeoutSeconds != nil {
 			seconds = *check.TimeoutSeconds

@@ -91,3 +91,24 @@ func TestGovernmentCLIRejectsMutationAndMalformedRequests(t *testing.T) {
 		t.Fatalf("schema: %s %s", out.String(), errout.String())
 	}
 }
+
+func TestGovernmentQueueCLIRejectsUnboundAndMixedRequests(t *testing.T) {
+	backlog := filepath.Join(t.TempDir(), "backlog.json")
+	queue := filepath.Join(t.TempDir(), "queue")
+	for _, args := range [][]string{
+		{"--action", "queue", "--backlog", backlog},
+		{"--action", "queue", "--backlog", "relative.json", "--write"},
+		{"--action", "queue", "--backlog", backlog, "--queue", queue, "--write"},
+		{"--action", "resume", "--backlog", backlog, "--write"},
+		{"--action", "resume", "--backlog", backlog, "--queue", "relative", "--write"},
+		{"--action", "queue", "--backlog", backlog, "--runtime", backlog, "--write"},
+		{"--action", "resume", "--backlog", backlog, "--queue", queue, "--config", "government.yaml", "--write"},
+		{"--action", "run", "--backlog="},
+		{"--action", "schema", "--queue="},
+	} {
+		var out, errout bytes.Buffer
+		if Run(append([]string{"government"}, args...), &out, &errout) != 2 {
+			t.Fatalf("accepted unbound queue invocation %v: %s", args, out.String())
+		}
+	}
+}

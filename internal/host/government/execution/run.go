@@ -25,6 +25,7 @@ import (
 type Options struct {
 	Repo, ConfigPath, OrderPath string
 	Runtime                     Runtime
+	Control                     Control
 }
 type ActorRecord struct {
 	Sequence   int                 `json:"sequence"`
@@ -79,7 +80,7 @@ func Run(ctx context.Context, opts Options) (report Report, runErr error) {
 	rt := opts.Runtime
 	report = Report{APIVersion: RuntimeVersion, Status: "incomplete", Stage: "prepare", ActiveRef: rt.ActiveRef, BaseRevision: rt.ExpectedBase, Limits: []string{
 		"Cooperative processes share caller OS rights; separated processes and input audits are not an OS sandbox or proof of institutional independence.",
-		"Recursive execution and model amendment are opt-in and bounded; persistent queue and complete recovery remain unavailable.",
+		"Recursive execution, model amendment and persistent queue operation are opt-in and finite; interrupted actors are never automatically replayed.",
 		"PromotionIntent and Git CAS are separate durable effects. No automatic rollback or atomic ledger/Git transaction is claimed.",
 		"Accepted-scoped records configured process and check outcomes; it does not establish semantic sufficiency or human acceptance.",
 		"Area review is read-only evidence assigned by the frozen plan, never a Ressort vote or acceptance/change/promotion authority; no per-Area review mandate is inferred from implement.",
@@ -89,6 +90,13 @@ func Run(ctx context.Context, opts Options) (report Report, runErr error) {
 			report.Error = runErr.Error()
 		}
 		if report.ReportPath != "" {
+			if opts.Control != nil {
+				if err := opts.Control.Checkpoint(report); err != nil {
+					report.Status = "incomplete"
+					runErr = errors.Join(runErr, fmt.Errorf("persist queue checkpoint: %w", err))
+					report.Error = runErr.Error()
+				}
+			}
 			if err := persistJSON(report.ReportPath, report); err != nil {
 				report.Status = "incomplete"
 				runErr = errors.Join(runErr, fmt.Errorf("persist run report: %w", err))
@@ -135,6 +143,11 @@ func Run(ctx context.Context, opts Options) (report Report, runErr error) {
 	}
 	report.RunID = filepath.Base(runDir)
 	report.ReportPath = filepath.Join(runDir, "report.json")
+	if opts.Control != nil {
+		if err := opts.Control.StartRun(report.RunID, report.ReportPath); err != nil {
+			return report, err
+		}
+	}
 	if err := ValidateRuntime(rt); err != nil {
 		return report, err
 	}
@@ -249,7 +262,12 @@ func Run(ctx context.Context, opts Options) (report Report, runErr error) {
 		}
 		frozenRunners[spec.SlotID] = pin
 	}
-	session := &actorSession{ctx: ctx, runtime: rt, report: &report, runDir: runDir, temporary: temp, frozen: frozenRunners, constitution: model.Constitution.Key()}
+	if opts.Control != nil {
+		if err := opts.Control.Checkpoint(report); err != nil {
+			return report, err
+		}
+	}
+	session := &actorSession{ctx: ctx, runtime: rt, report: &report, runDir: runDir, temporary: temp, frozen: frozenRunners, constitution: model.Constitution.Key(), control: opts.Control}
 	if rt.Recursion != nil {
 		session.semaphore = make(chan struct{}, rt.Recursion.Parallelism)
 	}
@@ -368,7 +386,7 @@ func Run(ctx context.Context, opts Options) (report Report, runErr error) {
 	if pin, err := toolPins(rt); err != nil || pin != report.ToolPins {
 		return report, errors.Join(errors.New("runtime/tool pins changed before fresh technical checks"), err)
 	}
-	report.Checks, err = freshChecks(ctx, candidate, rt.Checks)
+	report.Checks, err = freshChecks(ctx, candidate, rt.Checks, opts.Control)
 	if persistErr := persistJSON(filepath.Join(runDir, "checks.json"), report.Checks); persistErr != nil {
 		return report, persistErr
 	}
@@ -442,6 +460,14 @@ func Run(ctx context.Context, opts Options) (report Report, runErr error) {
 	finalPins, err := toolPins(rt)
 	if err != nil || finalPins != report.ToolPins {
 		return report, errors.Join(errors.New("runtime/tool pins changed after material binding"), err)
+	}
+	if opts.Control != nil {
+		if err := opts.Control.Checkpoint(report); err != nil {
+			return report, err
+		}
+		if err := opts.Control.Fence(); err != nil {
+			return report, err
+		}
 	}
 	promoted, err := government.Promote(ctx, government.PromotionRequest{Repo: repo, ActiveRef: rt.ActiveRef, ExpectedOld: rt.ExpectedBase, NewCommit: report.CandidateCommit, ExpectedTreeID: report.CandidateTree, MaterialCandidateID: material.ID, EvidenceID: evidence.ID, DecisionID: decision.ID, StateDirectory: runDir, IdempotencyKey: report.RunID})
 	report.Promotion = &promoted

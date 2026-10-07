@@ -23,7 +23,7 @@ func TestPermittedEdges(t *testing.T) {
 }
 
 func TestGovernmentApplicationFixtureCannotImportProduct(t *testing.T) {
-	for _, from := range []string{"examples/government/inventory", "examples/government-g2/inventory", "examples/government-g2/runner", "examples/government-g3/runner", "examples/government-g3/quantity", "examples/government-g3/price", "examples/government-g3/integration", "examples/government-g4/runner", "examples/government-g4/invoice"} {
+	for _, from := range []string{"examples/government/inventory", "examples/government-g2/inventory", "examples/government-g2/runner", "examples/government-g3/runner", "examples/government-g3/quantity", "examples/government-g3/price", "examples/government-g3/integration", "examples/government-g4/runner", "examples/government-g4/invoice", "examples/government-g5/gitproxy"} {
 		for _, target := range []string{"internal/core", "internal/host/government", "internal/modules/dotnet"} {
 			findings := Check([]Edge{{From: from, To: target}})
 			if len(findings) != 1 || findings[0].Rule != "adopting-code fixture may not import Markitect product packages" {

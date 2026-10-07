@@ -26,6 +26,7 @@ type actorSession struct {
 	mu                sync.Mutex
 	calls             int
 	semaphore         chan struct{}
+	control           Control
 }
 
 func (s *actorSession) invoke(phase string, spec RunnerSpec, scopes []string, candidate *snapshot.Snapshot, workspace string, inputPaths []string, contextValue map[string]any) (result agentexec.RunResult, runErr error) {
@@ -58,6 +59,14 @@ func (s *actorSession) invoke(phase string, spec RunnerSpec, scopes []string, ca
 		role = agentexec.RoleExecutor
 	}
 	request := agentexec.Request{Role: role, SourceRevision: s.runtime.ExpectedBase, ModelDigest: s.report.PriorConstitution, ModulePin: s.report.ToolPins, ProjectionID: "government/" + phase + "/" + spec.SlotID, ScopeIDs: scopes, PolicyIDs: []string{s.constitution}, Context: contextBytes, Artifacts: scopedArtifacts(candidate, inputPaths)}
+	if s.control != nil {
+		if err := s.control.ReserveActor(s.report.RunID, index, phase, spec); err != nil {
+			return result, err
+		}
+		if err := s.control.Fence(); err != nil {
+			return result, err
+		}
+	}
 	started := time.Now().UTC()
 	result, runErr = Invoke(s.ctx, spec, request, workspace, s.runDir, s.temporary)
 	if runErr == nil && (result.Receipt.ConfigDigest != pin.ConfigDigest || result.Receipt.ExecutableDigest != pin.ExecutableDigest) {
@@ -70,7 +79,11 @@ func (s *actorSession) invoke(phase string, spec RunnerSpec, scopes []string, ca
 	s.mu.Lock()
 	s.report.Actors = append(s.report.Actors, record)
 	s.mu.Unlock()
-	return result, errors.Join(runErr, persistJSON(filepath.Join(s.runDir, fmt.Sprintf("actor-%04d.json", index)), record))
+	persistErr := persistJSON(filepath.Join(s.runDir, fmt.Sprintf("actor-%04d.json", index)), record)
+	if s.control != nil {
+		persistErr = errors.Join(persistErr, s.control.CompleteActor(s.report.RunID, record))
+	}
+	return result, errors.Join(runErr, persistErr)
 }
 
 func scopedArtifacts(candidate *snapshot.Snapshot, paths []string) []agentexec.Artifact {
