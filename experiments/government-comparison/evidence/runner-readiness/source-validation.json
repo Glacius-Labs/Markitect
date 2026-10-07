@@ -51,5 +51,18 @@
     "Shared ledger not integrated into live dispatcher; no hard token cap",
     "Government G1-G5 and native handoff absent"
   ],
-  "compression": "Decode losslessGzipBase64 then gzip-decompress; verify rawSha256 for original source-gate bytes."
+  "compression": "Decode losslessGzipBase64 then gzip-decompress; verify rawSha256 for original source-gate bytes.",
+  "independentFinalReconciliation": {
+    "reviewer": "/root/independent_review",
+    "status": "passed",
+    "sourceCandidate": "55d1dec14dc7594c8143e6839fe9b740ff89d5f6",
+    "metadataHeadInspected": "e2e2d03594bd1ffe69326a21fd10da60ffea99d9",
+    "committedSourceHashes": 50,
+    "committedEvidenceHashes": 80,
+    "r3RuntimeSourceHashes": 10,
+    "r3RequestsAndEventDigestsVerified": 3,
+    "allReferencedNativeReceiptHashesMatched": true,
+    "privateFilesTracked": false,
+    "testsOrProviderCallsRepeated": false
+  }
 }
