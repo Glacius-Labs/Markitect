@@ -1,2 +1,2 @@
 # Preserve exact fixture and receipt bytes across Windows/Linux snapshots.
-* -text
+* -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol

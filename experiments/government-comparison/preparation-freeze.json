@@ -44,7 +44,7 @@
     }
   },
   "sources": {
-    ".gitattributes": "bdadf544ff8f24c81b09af64458f9d238bbbc28b501093785177177f44937e07",
+    ".gitattributes": "00ddeac0510ebef5fcab9c2076aaaea453530036216aae02d3c9c6d0e490bd7f",
     ".gitignore": "4e7a0888966b54e07017ee6d2c67b94b97cc4ed280bf81ab9fb1fe1b969fbae9",
     "fixture_adapter.py": "4835da9fab679c4daf4605469f4e3b81d9d9b931a66bd6c42968195918bd7d68",
     "fixtures/brownfield/.gitignore": "efae82d4d6b36a52d802384d6971e0a873befb8c2e133c58acf2ae4de98a0518",
@@ -128,5 +128,11 @@
   "studyGovernmentVersion": null,
   "actualRunnerProfile": null,
   "liveTrials": 0,
-  "readiness": "fixture preparation passed; actual product arms and live measurement remain unready"
+  "readiness": "fixture preparation passed; actual product arms and live measurement remain unready",
+  "correctionHistory": [
+    {
+      "reason": "Treat receipt CRLF as valid line endings while preserving exact bytes; no fixture results changed",
+      "priorCommit": "937afed10ed940f5c74786e531fc0f9266aa6265"
+    }
+  ]
 }
