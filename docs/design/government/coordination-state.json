@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-07T20:04:37Z",
+  "updatedUtc": "2026-10-07T20:11:56Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -22,13 +22,13 @@
       "name": "Worker",
       "threadId": "01a1169b-9357-7df3-a8f6-f913557c782a",
       "hostId": "local",
-      "afterCursor": "b2b8e43f-fcaa-41bf-828a-99c69527bdea:44",
+      "afterCursor": "b2b8e43f-fcaa-41bf-828a-99c69527bdea:45",
       "lastObservedStatus": "active",
       "activeTurn": "01a117d5-737b-73d1-8d9e-067a046228d0",
-      "lastAssistantMessageId": "msg_0a7785839df196a4016ac6a0b00a608191a0fc178155ff9494",
+      "lastAssistantMessageId": "msg_0a7785839df196a4016ac6a649216c8191a31c556b7093c6ea",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "G5 finite persistent queue, cumulative resources, safe interruption/restart and promotion recovery; then S1 handoff hold",
-      "latestProgress": "Die neue Leitlinie ist aufgenommen; G5 bleibt unverändert begrenzt. In der Übergabe zeige ich konkret, welche Modell-, Auftrags- und Runtime-Dateien der Anwender liefert, welche CLI-Ergebnisse entstehen und welche unklaren Zustände eine menschliche Entscheidung brauchen. Danach halte ich den Kandidaten für S1.",
+      "latestProgress": "Die unabhängige Prüfung bestätigt das Verhalten bei unbekannten Actor-Prozessen. Sie hat noch einen Fehler gefunden: Abgewiesene Reservierungs-IDs verändern bereits die Budgetzähler. Dieser Fix samt Regressionstest wird vor dem Commit abgeschlossen.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-worker/Markitect",
       "transferredDesignCommit": "691ce1dee3484371c4aea725db4ed5cc3f2e3719",
       "candidateSha": "d146201e0f004e671cb90cf77b6a107dc14429b5",
@@ -197,21 +197,21 @@
       "name": "Scientist",
       "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
       "hostId": "local",
-      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:49",
+      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:51",
       "lastObservedStatus": "active",
-      "activeTurn": "01a117e2-d632-7a00-ba90-82582d224b5c",
-      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac6a11b401081919f64ce8f04482f94",
+      "activeTurn": "01a117fd-fe00-74a0-b51c-8770ccadf893",
+      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac6a76d401c8191add51423b23e6158",
       "initialAssignmentDispatched": true,
-      "assignedMilestone": "No-inference diagnosis of exact read-command policy rejection plus public mapping of expanded research questions to existing tasks/metrics; then bounded handoff",
-      "latestProgress": "Der erweiterte Vertrag ist als bytegleicher Snapshot aus d929aa7c… übernommen; Produktcode wurde nicht übernommen. Die erste Coverage-Prüfung zeigt: Task 5 deckt Regelweitergabe über Eingänge, Tests und Dokumentation ab, Task 6 die kontrollierte Drift-Reparatur. Nutzerprioritäten in ein akzeptiertes Modell zu überführen und echte Unklarheiten zu klären, ist im bestehenden Backlog dagegen nur teilweise beziehungsweise gar nicht geprüft.",
+      "assignedMilestone": "One bounded pinned-runner metadata/effective-policy inspection, no inference; common Q1 intent-reflection setup and observations before any trial.",
+      "latestProgress": "Ich prüfe die Unterstützung im gepinnten Runner mit vorhandenen Belegen und höchstens sechs ausdrücklich lokalen Metadatenaufrufen. Parallel übernehme ich den neuen Q1-Beschluss als versionierte Setup-Anweisung für alle Arme. Der alte Snapshot bleibt erhalten; es gibt keinen Actor-Start.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-scientist/Markitect",
       "transferredDesignCommit": "b9e17c9896f14b4b1268e4bcb005395f5d324384",
-      "candidateSha": "098a7931f9f350b007046e858b6b348bee08feec",
-      "acceptance": "Fifth actual context session accepted as valid negative capability evidence; S1 remains open, no further Actor grant.",
+      "candidateSha": "d165f18c5cb377e351d233de372c4c56f3dbe4f7",
+      "acceptance": "Documentation-only policy/coverage package accepted after independent verification; cause/corrected permissions unestablished; S1 remains open.",
       "lastAssignment": {
-        "sentUtc": "2026-10-07T19:41:44Z",
-        "key": "s1-policy-diagnosis-and-research-coverage",
-        "scope": "Existing logs/local supported config/docs only; diagnose policy cause and permitted next path, no re-execution/bypass/weakened policy/global edits/install/model calls. Independently map updated evaluation atd929aa7 to public tasks/rubric/gaps, preserve hidden assessment and fairness, no fixture redesign without concrete gap. Clean bounded handoff then coordinator decision."
+        "sentUtc": "2026-10-07T20:11:24Z",
+        "key": "pinned-policy-metadata-and-q1-setup",
+        "scope": "At most six explicit local no-inference CLI metadata calls, <=30s each; retain read-only/never and all protections, no denied-command retry, shell/path bypass, global edits/install/credentials. Concrete supported proposal or authority/environment blocker. Adopt 5162a67 common Q1 setup within existing budget, preserve prior contract, no new functional requirements/weights/fixtures. No sixth Actor or study."
       },
       "evidence": {
         "sourcesHashChecked": 37,
@@ -506,10 +506,25 @@
           "limitations": "No successful tool/file read, policy root cause or OS-isolation proof. Raw stdout tool count does not include stderr rejected attempts. No comparison cells."
         },
         "policyAndCoverageProgress": {
-          "observedUtc": "2026-10-07T19:47:17Z",
-          "status": "Active; no completed diagnosis or coverage package",
-          "reportedCoverage": "Byte-identical d929aa7 contract imported. Existing task5covers rule propagation/code/tests/docs,task6controlleddrift; translating user priorities into accepted model only partial and genuine ambiguity clarification missing.",
-          "inspection": "Compact chat snapshot only; findings await concrete completed mapping and proposed smallest common extension."
+          "observedUtc": "2026-10-07T20:11:56Z",
+          "status": "Accepted; see policyAndCoverageAcceptance",
+          "reportedCoverage": "Common pre-implementation intent reflection selected in root contract5162a67; real user elicitation/acceptance and long-term maintainability remain unproven."
+        },
+        "policyAndCoverageAcceptance": {
+          "acceptedUtc": "2026-10-07T20:11:56Z",
+          "sourceSha": "d165f18c5cb377e351d233de372c4c56f3dbe4f7",
+          "handoff": "experiments/government-comparison/research-policy-handoff.md",
+          "validationSha256": "04035002f42ea42fae4f34b7a3e2dd43fab7a86237a6ffce9295fc9a1b6f0efd",
+          "documentationHashesIndependentlyChecked": 7,
+          "ledgerHashesIndependentlyChecked": 4,
+          "rawFilesIndependentlyChecked": 3,
+          "hashMismatches": 0,
+          "contractSourceSha": "d929aa7c6f4b590bac2251333a62987bf04ec0da",
+          "contractSnapshotSha256": "55db78d1148338259b182d9e6f15b0618cbec97cd01043484beeea275748faae",
+          "reviewer": "/root/research_policy_acceptance",
+          "review": "No scoped integrity or coverage fairness blocker. Process completed but two reads denied. Specific policy cause and pinned-version compatible correction unresolved.",
+          "rootInspection": "Clean SHA, latest chat instructions, public diagnosis/mapping/independent coverage review read; no repeated tests or Actor run.",
+          "limits": "Documentation-only; no successful file access, native S1 or study result. Five starts remain consumed, no sixth grant."
         }
       },
       "classicHandoffReceived": true,
@@ -528,7 +543,7 @@
       "hostId": "local",
       "afterCursor": "71d9f5b2-c0f0-474c-9898-777d051b478a:35",
       "lastObservedStatus": "notLoaded",
-      "activeTurn": null,
+      "activeTurn": "01a11716-f468-71c0-b5f4-a59f722c0bbc",
       "lastAssistantMessageId": "msg_0b6e7ce0ce9f843f016ac6730f8ea087d2bc8886150602885f",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "Hold accepted local Classic public example follow-up and held v0.14.1 study candidate; available for concrete product findings",
@@ -592,7 +607,7 @@
       "heldWorktree": "C:/Users/Consiliari/.codex/worktrees/standard-operating-model/Markitect"
     }
   ],
-  "nextAction": "Complete G5 and bounded policy-cause/public-coverage handoff. Diagnose safe supported runner route without rerun or policy weakening; S1/native adapters still required. Then six frozen comparable trials and evidence-selected bounded followups to product/use synthesis, with10minute reports.",
+  "nextAction": "Finish Worker G5; Scientist resolves pinned-runner metadata/effective-policy route or concrete blocker and fixes common Q1 setup protocol. No sixth Actor grant; then native S1 and six frozen comparative cells only after readiness.",
   "boundaries": {
     "governmentPublication": false,
     "automaticClassicReplacement": false,
@@ -602,10 +617,12 @@
     "satPrinciples": "Deferred by direct user request on 2026-10-07; conceptual constraint/consistency/conflict-explanation principles first, no solver integration or current assignment change. See docs/design/government/deferred-research.md."
   },
   "lastReview": {
-    "reviewedUtc": "2026-10-07T19:47:17Z",
-    "evidenceLevel": "All3compact snapshots. Worker active G5 and confirms concrete user-facing input/CLI/decision handoff. Scientist active reports coverage gaps for initial mental-model translation/ambiguity; no final policy diagnosis or completed source handoff. Architect unchanged, held Classic (chat notLoaded).",
+    "reviewedUtc": "2026-10-07T20:11:56Z",
+    "evidenceLevel": "All three compact snapshots; Scientist d165f18 documentation package independently accepted after source/hash/raw/ledger checks. Worker active reports fixing budget mutation on rejected reservation IDs; G5 not accepted. Architect unchanged held Classic.",
     "coordinationActions": [
-      "Recorded progress/cursors and reported study-coverage gap; no repeated assignments, model grant, product edits or tests."
+      "Accepted scoped Scientist policy/coverage handoff without causal or S1-success claim.",
+      "Committed common Q1 setup decision5162a67, within unchanged resources and quality weights.",
+      "Sent one bounded metadata/Q1 preparation assignment and confirmed active; no duplicate Worker/Architect orders, model grant or repeated tests."
     ],
     "userDecisionRequired": false
   },
@@ -945,6 +962,13 @@
       "limits": "Each block separately frozen and resource-bounded; existing grants/history unchanged; no purchases/unlimited calls."
     },
     "completion": "Baseline interim report, then evidence-selected bounded followups and product/use synthesis; pause after finite synthesis or genuine user decision, not automatically after first baseline report.",
-    "guardrails": "No predetermined Government winner, hidden new requirements, retrospective scoring, security bypass, automatic publication or replacement of Classic."
+    "guardrails": "No predetermined Government winner, hidden new requirements, retrospective scoring, security bypass, automatic publication or replacement of Classic.",
+    "setupAmendment": {
+      "decidedUtc": "2026-10-07T20:11:56Z",
+      "commit": "5162a678cf151a6c42fb723567472c7e43c226b1",
+      "scope": "Common short pre-implementation intent reflection from already released inputs; free format, documented sources/assumptions/questions, existing shared resource ceiling. Independent fidelity assessment is not personal user acceptance.",
+      "implementationStatus": "Assigned to Scientist before any cell, exact public protocol still pending",
+      "unchanged": "Six task cards/fixtures/outcome weights, no future task leakage; no added sessions or run grant."
+    }
   }
 }
