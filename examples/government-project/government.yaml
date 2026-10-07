@@ -718,6 +718,10 @@
         "path": "runner/main.go"
       },
       {
+        "reason": "Regression tests for the mechanics-only adapter protocol, not a Government-owned project realization.",
+        "path": "runner/main_test.go"
+      },
+      {
         "reason": "Native example orchestration.",
         "path": "walkthrough.ps1"
       }
