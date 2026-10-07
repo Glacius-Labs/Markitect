@@ -12,7 +12,7 @@
   "finalNativeSmoke": "evidence/runner-readiness/native-r3/readiness-smoke.json",
   "historicalNativeSmoke": "evidence/runner-readiness/readiness-smoke.json",
   "sources": {
-    ".gitattributes": "00ddeac0510ebef5fcab9c2076aaaea453530036216aae02d3c9c6d0e490bd7f",
+    ".gitattributes": "210ae874dd17b33f41b10c2d7c5a30d668eded49bf53ca9b42522d35a009ca9e",
     ".gitignore": "4e7a0888966b54e07017ee6d2c67b94b97cc4ed280bf81ab9fb1fe1b969fbae9",
     "fixture_adapter.py": "c82ddec8fcd367481f92e2cb16695eb1a3bb64cfc57a143238f4eee51c57fb11",
     "fixtures/brownfield/.gitignore": "efae82d4d6b36a52d802384d6971e0a873befb8c2e133c58acf2ae4de98a0518",

@@ -1,2 +1,4 @@
 # Preserve exact fixture and receipt bytes across Windows/Linux snapshots.
 * -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+# Native CLI help contains intentional indented blank lines. Keep exact raw bytes.
+evidence/runner-readiness/**/exec-help/stdout.log -whitespace
