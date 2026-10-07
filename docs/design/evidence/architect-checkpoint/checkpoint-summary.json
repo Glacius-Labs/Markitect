@@ -1,0 +1,41 @@
+{
+  "schema": "markitect-operating-checkpoint-summary/v1",
+  "sourceRevision": "1ea5c76f55526fc4d721e865885436153f48b497",
+  "branch": "codex/standard-operating-model",
+  "workingTreeClean": true,
+  "platform": "Windows",
+  "sourceGates": {
+    "passed": 34,
+    "receiptPath": "receipt.json",
+    "receiptSha256": "c7c749c7a2a2f01230d46e6710baabff7a333715230eb3aafac3df12b9a812bf",
+    "freshGoTestEvents": {
+      "pass": 1607,
+      "skip": 20
+    },
+    "fixedVerifyExitCode": 0,
+    "fixedVerifySeconds": 672.67
+  },
+  "retainedPriorAttempt": {
+    "revision": "dc10f5454af381887a2f41004d0987294bd1fe62",
+    "standaloneGoTests": "passed",
+    "fixedVerify": "incomplete: go-tests exceeded unchanged 10-minute execution limit",
+    "cause": "not established; later success does not establish a fix"
+  },
+  "boundedCheckpoint": "complete",
+  "completedCapabilities": [
+    "declared-scope completion audit",
+    "model-change reconciliation",
+    "bounded repair from persisted semantic findings",
+    "shared-rule fanout and parent verification",
+    "selective unchanged-intent drift reconciliation",
+    "unknown-artifact refusal",
+    "three-task live continuation with negative controls and retained failures"
+  ],
+  "pilotScope": "synthetic project with experiment queue and fresh Luna High actors; no universal correctness or unattended-operation claim",
+  "nextWorkBoundary": [
+    "compare Government preparation with this fixed baseline before further expansion",
+    "dependable routine coordination and unattended resumption are future work",
+    "revision-flag ergonomics are optional follow-up, not a closure blocker"
+  ],
+  "publication": "local feature branch only; no push, merge, release or deployment performed"
+}

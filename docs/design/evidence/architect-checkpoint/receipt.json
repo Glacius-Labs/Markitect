@@ -1,0 +1,417 @@
+{
+  "revision": "1ea5c76f55526fc4d721e865885436153f48b497",
+  "base": "5808ea586979cb48e20f94157b6ccfa9ed318c60",
+  "root": "C:\\Users\\Consiliari\\.codex\\worktrees\\standard-operating-model\\Markitect",
+  "platform": "win32",
+  "gates": [
+    {
+      "name": "build-cli",
+      "args": [
+        "go",
+        "build",
+        "-o",
+        "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-standard-operating-evidence\\1ea5c76f55526fc4d721e865885436153f48b497\\markitect.exe",
+        "./cmd/markitect"
+      ],
+      "exitCode": 0,
+      "seconds": 1.3
+    },
+    {
+      "name": "mod-verify",
+      "args": [
+        "go",
+        "mod",
+        "verify"
+      ],
+      "exitCode": 0,
+      "seconds": 0.14
+    },
+    {
+      "name": "vet",
+      "args": [
+        "go",
+        "vet",
+        "./..."
+      ],
+      "exitCode": 0,
+      "seconds": 1.37
+    },
+    {
+      "name": "build-all",
+      "args": [
+        "go",
+        "build",
+        "./..."
+      ],
+      "exitCode": 0,
+      "seconds": 3.0
+    },
+    {
+      "name": "fixed-check",
+      "args": [
+        "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-standard-operating-evidence\\1ea5c76f55526fc4d721e865885436153f48b497\\markitect.exe",
+        "check",
+        "--repo",
+        ".",
+        "--revision",
+        "1ea5c76f55526fc4d721e865885436153f48b497"
+      ],
+      "exitCode": 0,
+      "seconds": 1.71
+    },
+    {
+      "name": "fixed-context",
+      "args": [
+        "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-standard-operating-evidence\\1ea5c76f55526fc4d721e865885436153f48b497\\markitect.exe",
+        "context",
+        "--repo",
+        ".",
+        "--revision",
+        "1ea5c76f55526fc4d721e865885436153f48b497",
+        "--namespace",
+        "development",
+        "--kind",
+        "Skill",
+        "--name",
+        "engineering-change"
+      ],
+      "exitCode": 0,
+      "seconds": 0.46
+    },
+    {
+      "name": "fixed-impact",
+      "args": [
+        "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-standard-operating-evidence\\1ea5c76f55526fc4d721e865885436153f48b497\\markitect.exe",
+        "impact",
+        "--repo",
+        ".",
+        "--base",
+        "5808ea586979cb48e20f94157b6ccfa9ed318c60",
+        "--revision",
+        "1ea5c76f55526fc4d721e865885436153f48b497"
+      ],
+      "exitCode": 0,
+      "seconds": 0.83
+    },
+    {
+      "name": "format",
+      "args": [
+        "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-standard-operating-evidence\\1ea5c76f55526fc4d721e865885436153f48b497\\markitect.exe",
+        "format",
+        "--repo",
+        "."
+      ],
+      "exitCode": 0,
+      "seconds": 0.31
+    },
+    {
+      "name": "render-check",
+      "args": [
+        "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-standard-operating-evidence\\1ea5c76f55526fc4d721e865885436153f48b497\\markitect.exe",
+        "render",
+        "--repo",
+        ".",
+        "--check"
+      ],
+      "exitCode": 0,
+      "seconds": 0.35
+    },
+    {
+      "name": "schema",
+      "args": [
+        "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-standard-operating-evidence\\1ea5c76f55526fc4d721e865885436153f48b497\\markitect.exe",
+        "schema",
+        "--repo",
+        "."
+      ],
+      "exitCode": 0,
+      "seconds": 0.26
+    },
+    {
+      "name": "artifact-ownership",
+      "args": [
+        "go",
+        "run",
+        "./cmd/markitect-check-artifacts",
+        "--repo",
+        ".",
+        "--config",
+        "markitect-artifacts.yaml"
+      ],
+      "exitCode": 0,
+      "seconds": 1.32
+    },
+    {
+      "name": "module-checks",
+      "args": [
+        "go",
+        "run",
+        "./cmd/markitect-check-modules",
+        "--repo",
+        ".",
+        "--hooks",
+        ".markitect/modules/githooks.config",
+        "--pipelines",
+        ".markitect/modules/pipelines.config"
+      ],
+      "exitCode": 0,
+      "seconds": 0.67
+    },
+    {
+      "name": "fixture-minimal-check",
+      "args": [
+        "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-standard-operating-evidence\\1ea5c76f55526fc4d721e865885436153f48b497\\markitect.exe",
+        "check",
+        "--repo",
+        "examples/minimal"
+      ],
+      "exitCode": 0,
+      "seconds": 0.03
+    },
+    {
+      "name": "fixture-repository-layout-check",
+      "args": [
+        "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-standard-operating-evidence\\1ea5c76f55526fc4d721e865885436153f48b497\\markitect.exe",
+        "check",
+        "--repo",
+        "examples/repository-layout"
+      ],
+      "exitCode": 0,
+      "seconds": 0.03
+    },
+    {
+      "name": "fixture-canonical-engineering-check",
+      "args": [
+        "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-standard-operating-evidence\\1ea5c76f55526fc4d721e865885436153f48b497\\markitect.exe",
+        "check",
+        "--repo",
+        "examples/canonical-engineering"
+      ],
+      "exitCode": 0,
+      "seconds": 0.04
+    },
+    {
+      "name": "fixture-canonical-engineering-format",
+      "args": [
+        "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-standard-operating-evidence\\1ea5c76f55526fc4d721e865885436153f48b497\\markitect.exe",
+        "format",
+        "--repo",
+        "examples/canonical-engineering"
+      ],
+      "exitCode": 0,
+      "seconds": 0.03
+    },
+    {
+      "name": "fixture-canonical-engineering-model",
+      "args": [
+        "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-standard-operating-evidence\\1ea5c76f55526fc4d721e865885436153f48b497\\markitect.exe",
+        "model",
+        "--repo",
+        "examples/canonical-engineering"
+      ],
+      "exitCode": 0,
+      "seconds": 0.04
+    },
+    {
+      "name": "fixture-engineering-constitution-check",
+      "args": [
+        "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-standard-operating-evidence\\1ea5c76f55526fc4d721e865885436153f48b497\\markitect.exe",
+        "check",
+        "--repo",
+        "examples/engineering-constitution"
+      ],
+      "exitCode": 0,
+      "seconds": 0.04
+    },
+    {
+      "name": "fixture-engineering-constitution-format",
+      "args": [
+        "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-standard-operating-evidence\\1ea5c76f55526fc4d721e865885436153f48b497\\markitect.exe",
+        "format",
+        "--repo",
+        "examples/engineering-constitution"
+      ],
+      "exitCode": 0,
+      "seconds": 0.03
+    },
+    {
+      "name": "fixture-engineering-constitution-model",
+      "args": [
+        "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-standard-operating-evidence\\1ea5c76f55526fc4d721e865885436153f48b497\\markitect.exe",
+        "model",
+        "--repo",
+        "examples/engineering-constitution"
+      ],
+      "exitCode": 0,
+      "seconds": 0.03
+    },
+    {
+      "name": "fixture-engineering-discovery-check",
+      "args": [
+        "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-standard-operating-evidence\\1ea5c76f55526fc4d721e865885436153f48b497\\markitect.exe",
+        "check",
+        "--repo",
+        "examples/engineering-discovery"
+      ],
+      "exitCode": 0,
+      "seconds": 0.03
+    },
+    {
+      "name": "fixture-engineering-discovery-format",
+      "args": [
+        "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-standard-operating-evidence\\1ea5c76f55526fc4d721e865885436153f48b497\\markitect.exe",
+        "format",
+        "--repo",
+        "examples/engineering-discovery"
+      ],
+      "exitCode": 0,
+      "seconds": 0.03
+    },
+    {
+      "name": "fixture-software-architecture-check",
+      "args": [
+        "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-standard-operating-evidence\\1ea5c76f55526fc4d721e865885436153f48b497\\markitect.exe",
+        "check",
+        "--repo",
+        "examples/software-architecture"
+      ],
+      "exitCode": 0,
+      "seconds": 0.06
+    },
+    {
+      "name": "fixture-software-architecture-format",
+      "args": [
+        "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-standard-operating-evidence\\1ea5c76f55526fc4d721e865885436153f48b497\\markitect.exe",
+        "format",
+        "--repo",
+        "examples/software-architecture"
+      ],
+      "exitCode": 0,
+      "seconds": 0.05
+    },
+    {
+      "name": "fixture-software-architecture-model",
+      "args": [
+        "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-standard-operating-evidence\\1ea5c76f55526fc4d721e865885436153f48b497\\markitect.exe",
+        "model",
+        "--repo",
+        "examples/software-architecture"
+      ],
+      "exitCode": 0,
+      "seconds": 0.06
+    },
+    {
+      "name": "fixture-delivery-target-equality-check",
+      "args": [
+        "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-standard-operating-evidence\\1ea5c76f55526fc4d721e865885436153f48b497\\markitect.exe",
+        "check",
+        "--repo",
+        "examples/delivery-target-equality"
+      ],
+      "exitCode": 0,
+      "seconds": 0.04
+    },
+    {
+      "name": "fixture-delivery-target-equality-format",
+      "args": [
+        "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-standard-operating-evidence\\1ea5c76f55526fc4d721e865885436153f48b497\\markitect.exe",
+        "format",
+        "--repo",
+        "examples/delivery-target-equality"
+      ],
+      "exitCode": 0,
+      "seconds": 0.03
+    },
+    {
+      "name": "fixture-delivery-target-equality-model",
+      "args": [
+        "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-standard-operating-evidence\\1ea5c76f55526fc4d721e865885436153f48b497\\markitect.exe",
+        "model",
+        "--repo",
+        "examples/delivery-target-equality"
+      ],
+      "exitCode": 0,
+      "seconds": 0.03
+    },
+    {
+      "name": "fixture-software-context",
+      "args": [
+        "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-standard-operating-evidence\\1ea5c76f55526fc4d721e865885436153f48b497\\markitect.exe",
+        "context",
+        "--repo",
+        "examples/software-architecture",
+        "--namespace",
+        "engineering",
+        "--kind",
+        "Skill",
+        "--name",
+        "implement-order"
+      ],
+      "exitCode": 0,
+      "seconds": 0.05
+    },
+    {
+      "name": "fixture-delivery-context",
+      "args": [
+        "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-standard-operating-evidence\\1ea5c76f55526fc4d721e865885436153f48b497\\markitect.exe",
+        "context",
+        "--repo",
+        "examples/delivery-target-equality",
+        "--namespace",
+        "engineering",
+        "--kind",
+        "Skill",
+        "--name",
+        "deployment-review"
+      ],
+      "exitCode": 0,
+      "seconds": 0.03
+    },
+    {
+      "name": "fixture-benchmark",
+      "args": [
+        "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-standard-operating-evidence\\1ea5c76f55526fc4d721e865885436153f48b497\\markitect.exe",
+        "check",
+        "--repo",
+        "benchmark/fixtures/v2"
+      ],
+      "exitCode": 0,
+      "seconds": 0.03
+    },
+    {
+      "name": "go-test-all",
+      "args": [
+        "go",
+        "test",
+        "./...",
+        "-count=1",
+        "-json"
+      ],
+      "exitCode": 0,
+      "seconds": 542.29
+    },
+    {
+      "name": "fixed-verify",
+      "args": [
+        "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-standard-operating-evidence\\1ea5c76f55526fc4d721e865885436153f48b497\\markitect.exe",
+        "verify",
+        "--repo",
+        ".",
+        "--revision",
+        "1ea5c76f55526fc4d721e865885436153f48b497"
+      ],
+      "exitCode": 0,
+      "seconds": 672.67
+    },
+    {
+      "name": "diff-check",
+      "args": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exitCode": 0,
+      "seconds": 0.05
+    }
+  ]
+}
