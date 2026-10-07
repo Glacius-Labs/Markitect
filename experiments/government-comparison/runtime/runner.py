@@ -49,15 +49,25 @@ def inspect(executable):
             "gaps": GAPS}
 
 
-def prospective_argv(executable, actor_root):
+def prospective_argv(executable, actor_root, *, sandbox="workspace-write"):
     """Describe equal configuration across arms; never launch this from readiness."""
     pin = inspect(executable)
     root = Path(actor_root).resolve(strict=True)
+    if sandbox not in {"workspace-write", "read-only"}:
+        raise ValueError("explicit supported sandbox required")
     argv = [pin["path"], "exec", "--ignore-user-config", "--ignore-rules", "--model", MODEL,
-            "--sandbox", "workspace-write", "--ephemeral", "--json", "--skip-git-repo-check"]
+            "--sandbox", sandbox, "--ephemeral", "--json", "--skip-git-repo-check"]
     for key, value in sorted(CONFIG.items()):
         argv += ["--config", key + "=" + json.dumps(value)]
     return [*argv, "--cd", str(root), "-"]
+
+
+def metadata_argv(executable):
+    """Exact metadata transport command; cannot select an exec/thread/turn route."""
+    pin = inspect(executable)
+    settings = {**CONFIG, "model": MODEL}
+    overrides = [part for key, value in sorted(settings.items()) for part in ("-c", key + "=" + json.dumps(value))]
+    return [pin["path"], "app-server", "--stdio", *overrides]
 
 
 def require_provider_ready():

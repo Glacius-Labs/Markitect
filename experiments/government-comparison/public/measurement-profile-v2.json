@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "profileId": "observed-native-usage-v2",
+  "version": 2,
+  "arms": ["conventional", "classic", "government"],
+  "unknownTokensAdmission": "block",
+  "unknownProviderRequestsAdmission": "permit-with-null-counter-and-gap",
+  "knownProviderRequestAdmissionCaps": false,
+  "hardProviderRequestCap": false,
+  "hardTokenCap": false,
+  "tokenControl": "retrospective input plus output; cache and reasoning retained raw without addition",
+  "internalTransportRetries": "unknown, never inferred from agent turns",
+  "providerTransportDefaults": "unchanged pinned defaults permitted inside finite process deadline",
+  "wrapperRetries": 0,
+  "numericLimitsOwner": "resource-proposal.json commonLimits, unchanged; 80/480 provider turns and internal retry 1 are unsupported caps",
+  "nativeDescendants": "unobserved; each harness-launched Actor needs its own reservation"
+}

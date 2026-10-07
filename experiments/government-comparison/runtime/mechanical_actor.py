@@ -8,7 +8,7 @@ import time
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("case", choices=["success", "no_usage", "sleep", "child"])
+    parser.add_argument("case", choices=["success", "unknown_requests", "no_usage", "sleep", "child"])
     parser.add_argument("dispatch_id")
     args = parser.parse_args()
     with Path("launches.jsonl").open("a", encoding="utf-8") as out:
@@ -18,6 +18,6 @@ if __name__ == "__main__":
     if args.case in {"sleep", "child"}:
         time.sleep(30)
     print(json.dumps({"type": "mechanical.completed", "dispatchId": args.dispatch_id}), flush=True)
-    if args.case == "success":
-        print(json.dumps({"type": "mechanical.usage", "providerRequests": 1, "input_tokens": 3,
+    if args.case in {"success", "unknown_requests"}:
+        print(json.dumps({"type": "mechanical.usage", "providerRequests": 1 if args.case == "success" else None, "input_tokens": 3,
                           "output_tokens": 2, "counterScope": "synthetic-only"}), flush=True)

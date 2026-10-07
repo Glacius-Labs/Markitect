@@ -25,7 +25,8 @@ def freeze(evidence_path, output):
             if len(raw) != item["bytes"] or digest(raw) != item["sha256"]:
                 raise ValueError("mechanical archive digest mismatch")
     names = ["README.md", "harness.py", "prepare.py", ".gitattributes"]
-    names += ["runtime/" + name for name in runtime_pins() if name not in {"harness.py", "prepare.py"}]
+    names += [name if name.startswith("public/") else "runtime/" + name
+              for name in runtime_pins() if name not in {"harness.py", "prepare.py"}]
     names += ["runtime/" + name + ".py" for name in
               ("context_smoke", "test_context_smoke", "test_dispatch", "test_runtime", "verify_s1", "freeze_s1")]
     names += ["runtime/runner-pin.json", "runtime/classic-pin.json"]

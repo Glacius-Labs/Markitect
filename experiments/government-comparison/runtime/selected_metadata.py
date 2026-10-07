@@ -4,12 +4,18 @@ import json
 from pathlib import Path
 import subprocess
 import sys
+import runner
 
 METHODS = {"initialize", "initialized", "account/read", "model/list"}
 
 
 def client(request_file):
     request = json.loads(Path(request_file).read_bytes())
+    pin = request.get("runnerPin") or runner.inspect(request["argv"][0])
+    if not pin.get("path") or request.get("argv") != runner.metadata_argv(pin["path"]) or pin != runner.inspect(pin["path"]):
+        raise ValueError("exact pinned metadata argv required")
+    if request.get("initialize", {}).get("method") != "initialize" or request["initialize"].get("id") != 0:
+        raise ValueError("metadata initialize identity required")
     server = subprocess.Popen(request["argv"], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                               stderr=sys.stderr.buffer, shell=False)
     responses = {}

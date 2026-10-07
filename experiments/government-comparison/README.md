@@ -134,6 +134,12 @@ freeze the resulting context policy equally across arms.
 
 ## Next finite checkpoint
 
+The common [measurement profile v2](public/measurement-profile-v2.md) is adopted
+equally for all arms. Numeric common limits remain unchanged. Known tokens with
+unknown provider requests permit later admission; unknown tokens still block.
+Concrete context-only drafts follow focused verification and metadata-only
+collection. They authorize no Actor session; the frozen handoff ends on hold.
+
 [Resource proposal](public/resource-proposal.json) proposes one exploratory trial
 per six cells, 20 minutes/12 actor calls/80 provider turns/120,000 provider tokens
 per task and 120 minutes/72 calls/480 turns/720,000 tokens per trial, parallelism 4,

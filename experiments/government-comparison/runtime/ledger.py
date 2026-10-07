@@ -5,6 +5,8 @@ from pathlib import Path
 import sqlite3
 import time
 import uuid
+import hashlib
+from measurement_profile import LEGACY, OBSERVED, profile, profile_sha, limits_sha
 
 
 class LimitReached(ValueError):
@@ -12,15 +14,19 @@ class LimitReached(ValueError):
 
 
 class Ledger:
-    def __init__(self, path, trial_id, limits):
-        self.path = str(path)
+    def __init__(self, path, trial_id, limits, *, profile_id=LEGACY):
+        self.path = str(Path(path).resolve())
+        self.profile_id = profile_id
+        self.authority_key = None
         Path(path).parent.mkdir(parents=True, exist_ok=True)
         with self.transaction() as db:
             schema = """CREATE TABLE IF NOT EXISTS trial(id TEXT PRIMARY KEY, limits TEXT, start REAL, stopped INTEGER);
                 CREATE TABLE IF NOT EXISTS tasks(id TEXT PRIMARY KEY, start REAL);
                 CREATE TABLE IF NOT EXISTS attempts(id TEXT PRIMARY KEY, task TEXT, purpose TEXT, start REAL,
                     end REAL, status TEXT, turns INTEGER, tokens INTEGER, receipt TEXT);
-                CREATE TABLE IF NOT EXISTS human(seconds REAL, note TEXT);"""
+                CREATE TABLE IF NOT EXISTS human(seconds REAL, note TEXT);
+                CREATE TABLE IF NOT EXISTS measurement_profiles(sequence INTEGER PRIMARY KEY,
+                    profile_id TEXT, profile_sha TEXT, profile_json TEXT, prior_sha TEXT, approval TEXT, adopted REAL);"""
             for statement in schema.split(";"):
                 if statement.strip():
                     db.execute(statement)
@@ -30,7 +36,48 @@ class Ledger:
                 raise ValueError("ledger identity/profile cannot change or refill")
             if not prior:
                 db.execute("INSERT INTO trial VALUES(?,?,?,0)", (trial_id, encoded, time.time()))
+            if not db.execute("SELECT 1 FROM measurement_profiles").fetchone():
+                db.execute("INSERT INTO measurement_profiles VALUES(1,?,?,?,?,?,?)",
+                           (LEGACY, profile_sha(LEGACY), json.dumps(profile(LEGACY), sort_keys=True), None,
+                            json.dumps({"kind": "original-strict-profile-preserved"}), time.time()))
+            self._profile(db)
         self.limits = dict(limits)
+
+    def _profile(self, db):
+        row = db.execute("SELECT profile_id,profile_sha,profile_json FROM measurement_profiles ORDER BY sequence DESC LIMIT 1").fetchone()
+        if row[1] != profile_sha(row[0]) or json.loads(row[2]) != profile(row[0]):
+            raise ValueError("stored measurement profile differs from pinned definition")
+        if self.profile_id is not None and row[0] != self.profile_id:
+            raise ValueError("explicit measurement profile binding mismatch; adoption required")
+        return json.loads(row[2])
+
+    def adopt_profile(self, target_id, approval):
+        """Explicit append-only v1→v2 adoption. No row, counter, stop or start reset."""
+        with self.transaction() as db:
+            self._adopt_profile(db, target_id, approval)
+        self.profile_id = target_id
+
+    def _adopt_profile(self, db, target_id, approval):
+        old = self._profile(db)
+        trial_id = db.execute("SELECT id FROM trial").fetchone()[0]
+        expected = {"status": "approved", "trialId": trial_id, "ledgerPath": self.path,
+                    "fromProfileSha256": profile_sha(LEGACY), "toProfileSha256": profile_sha(OBSERVED),
+                    "limitsSha256": limits_sha(self.limits)}
+        if old["profileId"] != LEGACY or target_id != OBSERVED:
+            raise ValueError("only explicit successive v1 to v2 adoption is supported")
+        if not isinstance(approval, dict) or any(approval.get(key) != value for key, value in expected.items()) or not approval.get("decisionRef"):
+            raise ValueError("profile adoption approval identity/digests mismatch")
+        if db.execute("SELECT 1 FROM attempts WHERE end IS NULL").fetchone():
+            raise ValueError("active/ambiguous attempts prevent profile adoption")
+        recorded_approval = {**approval, "approvalSha256": limits_sha(approval),
+                             "migrationSourceSha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest()}
+        db.execute("INSERT INTO measurement_profiles VALUES(2,?,?,?,?,?,?)",
+                   (OBSERVED, profile_sha(OBSERVED), json.dumps(profile(OBSERVED), sort_keys=True),
+                    profile_sha(LEGACY), json.dumps(recorded_approval, sort_keys=True), time.time()))
+
+    def measurement(self):
+        with self.transaction() as db:
+            return self._profile(db)
 
     @contextmanager
     def transaction(self):
@@ -48,13 +95,16 @@ class Ledger:
     def reserve(self, task, purpose):
         """Reserve a session before launch; failed launches also consume it.
 
-        Unknown or retrospective provider usage is never a reservation for unseen
-        provider calls. A live dispatcher still needs an enforced provider-turn gate.
+        Usage admission follows the bound measurement profile. Neither profile
+        enforces an unseen provider request or an in-flight token cap.
         """
         with self.transaction() as db:
             return self._reserve(db, task, purpose)
 
     def _reserve(self, db, task, purpose):
+        if self.profile_id is None:
+            raise ValueError("recovery-only ledger cannot reserve a new session")
+        measurement = self._profile(db)
         now, limits = time.time(), self.limits
         trial = db.execute("SELECT start,stopped FROM trial").fetchone()
         if trial[1] or now - trial[0] >= limits["trialWallSeconds"]:
@@ -73,27 +123,66 @@ class Ledger:
         for rows, prefix in ((all_rows, "trial"), (task_rows, "task")):
             if len(rows) >= limits[prefix + "ActorCalls"]:
                 raise LimitReached(prefix + " actor-session limit")
-            if any(row[1] is not None and (row[2] is None or row[3] is None) for row in rows):
+            if any(row[1] is not None and row[3] is None for row in rows):
+                raise LimitReached("unknown provider usage: tokens unknown; next actor blocked")
+            if measurement["unknownProviderRequestsAdmission"] == "block" and any(row[1] is not None and row[2] is None for row in rows):
                 raise LimitReached("unknown provider usage: next actor blocked")
             for index, metric in ((2, "ProviderTurns"), (3, "ProviderTokens")):
+                if index == 2 and not measurement["knownProviderRequestAdmissionCaps"]:
+                    continue
                 if sum(row[index] or 0 for row in rows) >= limits[prefix + metric]:
                     raise LimitReached(prefix + metric)
         attempt = uuid.uuid4().hex
         db.execute("INSERT INTO attempts(id,task,purpose,start) VALUES(?,?,?,?)", (attempt, task, purpose, now))
         return attempt
 
-    def bind_dispatch(self, authority):
-        """One immutable grant/protocol/profile/ledger binding for this trial."""
+    def bind_dispatch(self, authority, *, maximum=None, transition=None, adoption=None):
+        """Preserve the original row; append explicitly allocated successor grants."""
         with self.transaction() as db:
+            measurement = self._profile(db)
+            if adoption is not None:
+                self._adopt_profile(db, OBSERVED, adoption)
+                measurement = profile(OBSERVED)
             db.execute("CREATE TABLE IF NOT EXISTS dispatch_authority(value TEXT)")
+            db.execute("""CREATE TABLE IF NOT EXISTS dispatch_authority_history(sequence INTEGER PRIMARY KEY,
+                       authority_sha TEXT UNIQUE, value TEXT, profile_sha TEXT, ceiling INTEGER)""")
             db.execute("""CREATE TABLE IF NOT EXISTS dispatches(id TEXT PRIMARY KEY, execution_sha TEXT,
-                       attempt TEXT UNIQUE, phase TEXT, request BLOB, command TEXT, result TEXT)""")
+                       attempt TEXT UNIQUE, phase TEXT, request BLOB, command TEXT, result TEXT, measurement_profile TEXT, authority_sha TEXT)""")
+            if "measurement_profile" not in {row[1] for row in db.execute("PRAGMA table_info(dispatches)")}:
+                db.execute("ALTER TABLE dispatches ADD COLUMN measurement_profile TEXT")
+            if "authority_sha" not in {row[1] for row in db.execute("PRAGMA table_info(dispatches)")}:
+                db.execute("ALTER TABLE dispatches ADD COLUMN authority_sha TEXT")
             value = json.dumps(authority, sort_keys=True)
+            key = limits_sha(authority)
             prior = db.execute("SELECT value FROM dispatch_authority").fetchone()
-            if prior and prior[0] != value:
-                raise ValueError("dispatch authority cannot change or refill")
             if not prior:
                 db.execute("INSERT INTO dispatch_authority VALUES(?)", (value,))
+                db.execute("INSERT INTO dispatch_authority_history VALUES(1,?,?,?,?)",
+                           (key, value, profile_sha(measurement["profileId"]), maximum))
+            elif not db.execute("SELECT 1 FROM dispatch_authority_history").fetchone():
+                original = json.loads(prior[0])
+                db.execute("INSERT INTO dispatch_authority_history VALUES(1,?,?,?,?)",
+                           (limits_sha(original), prior[0], profile_sha(LEGACY), maximum if prior[0] == value else None))
+            known = db.execute("SELECT ceiling FROM dispatch_authority_history WHERE authority_sha=?", (key,)).fetchone()
+            if known:
+                if known[0] is not None and maximum is not None and known[0] != maximum:
+                    raise ValueError("grant ceiling cannot change or refill")
+            else:
+                latest = db.execute("SELECT sequence,authority_sha FROM dispatch_authority_history ORDER BY sequence DESC LIMIT 1").fetchone()
+                count = db.execute("SELECT COUNT(*) FROM attempts").fetchone()[0]
+                valid = (measurement["profileId"] == OBSERVED and isinstance(transition, dict)
+                         and transition.get("priorAuthoritySha256") == latest[1]
+                         and type(transition.get("priorActorSessions")) is int and transition["priorActorSessions"] == count
+                         and type(transition.get("additionalActorSessions")) is int and transition["additionalActorSessions"] > 0
+                         and type(maximum) is int and maximum == count + transition["additionalActorSessions"]
+                         and maximum <= self.limits["trialActorCalls"])
+                if not valid:
+                    raise ValueError("dispatch authority cannot change or refill without explicit cumulative successor allocation")
+                db.execute("INSERT INTO dispatch_authority_history VALUES(?,?,?,?,?)",
+                           (latest[0] + 1, key, value, profile_sha(OBSERVED), maximum))
+        if adoption is not None:
+            self.profile_id = OBSERVED
+        self.authority_key = key
 
     def dispatch_record(self, execution_id):
         with self.transaction() as db:
@@ -105,12 +194,40 @@ class Ledger:
         with self.transaction() as db:
             if db.execute("SELECT id FROM dispatches WHERE id=?", (execution_id,)).fetchone():
                 raise LimitReached("dispatch already booked; use resume")
+            bound = db.execute("SELECT profile_sha,ceiling FROM dispatch_authority_history WHERE authority_sha=?",
+                               (self.authority_key,)).fetchone()
+            if not bound or bound[0] != profile_sha(self._profile(db)["profileId"]):
+                raise ValueError("new dispatch requires current profile-bound authority")
+            if bound[1] is not None and maximum != bound[1]:
+                raise ValueError("reservation cannot change bound grant ceiling")
             if db.execute("SELECT COUNT(*) FROM attempts").fetchone()[0] >= maximum:
                 raise LimitReached("grant session limit")
             attempt = self._reserve(db, task, purpose)
-            db.execute("INSERT INTO dispatches VALUES(?,?,?,'reserved',?,?,NULL)",
-                       (execution_id, execution_sha, attempt, raw_request, json.dumps(command)))
+            measurement = self._profile(db)
+            db.execute("INSERT INTO dispatches VALUES(?,?,?,'reserved',?,?,NULL,?,?)",
+                       (execution_id, execution_sha, attempt, raw_request, json.dumps(command), json.dumps(measurement, sort_keys=True), self.authority_key))
             return attempt
+
+    def verify_dispatch_binding(self, record, requested_profile):
+        with self.transaction() as db:
+            origin = db.execute("SELECT value FROM dispatch_authority").fetchone()
+            key = record["authority_sha"] or (limits_sha(json.loads(origin[0])) if origin else None)
+            stored = json.loads(record["measurement_profile"]) if record["measurement_profile"] else profile(LEGACY)
+            if key != self.authority_key or stored != profile(requested_profile):
+                raise ValueError("original dispatch authority/profile binding mismatch")
+            binding = db.execute("SELECT value,profile_sha FROM dispatch_authority_history WHERE authority_sha=?", (key,)).fetchone()
+            if not binding or binding[1] != profile_sha(requested_profile):
+                raise ValueError("stored authority/profile history binding mismatch")
+            if record["result"]:
+                result = json.loads(record["result"])
+                authority = json.loads(binding[0])
+                if any(result.get(field, authority.get(field)) != authority.get(field)
+                       for field in ("grantSha256", "protocolSha256")):
+                    raise ValueError("stored Result authority binding mismatch")
+                if (result.get("measurementProfileId", LEGACY) != requested_profile or
+                        result.get("measurementProfileSha256", profile_sha(LEGACY)) != profile_sha(requested_profile)):
+                    raise ValueError("stored Result profile binding mismatch")
+            return stored
 
     def claim_dispatch(self, execution_id, phase):
         with self.transaction() as db:
@@ -129,6 +246,7 @@ class Ledger:
     def running_bound(self, task):
         """Known aggregate counters are retrospective; no in-flight token reservation."""
         with self.transaction() as db:
+            measurement = self._profile(db)
             now = time.time()
             start, stopped = db.execute("SELECT start,stopped FROM trial").fetchone()
             task_start = db.execute("SELECT start FROM tasks WHERE id=?", (task,)).fetchone()[0]
@@ -137,6 +255,8 @@ class Ledger:
             reason = "trial_stopped" if stopped else ("cumulative_wall_deadline" if remaining <= 0 else None)
             for prefix, where, args in (("trial", "", ()), ("task", " WHERE task=?", (task,))):
                 for column, metric in (("turns", "ProviderTurns"), ("tokens", "ProviderTokens")):
+                    if column == "turns" and not measurement["knownProviderRequestAdmissionCaps"]:
+                        continue
                     total = db.execute("SELECT COALESCE(SUM(" + column + "),0) FROM attempts" + where, args).fetchone()[0]
                     if total >= self.limits[prefix + metric]:
                         reason = reason or "retrospective_" + prefix + metric
@@ -202,6 +322,8 @@ class Ledger:
             db.row_factory = sqlite3.Row
             attempts = [dict(row) for row in db.execute("SELECT * FROM attempts ORDER BY start,id")]
             return {"attempts": attempts, "actorSessions": len(attempts),
+                    "measurementProfile": self._profile(db),
+                    "profileHistory": [dict(row) for row in db.execute("SELECT * FROM measurement_profiles ORDER BY sequence")],
                     "providerTurns": None if any(row["turns"] is None for row in attempts) else sum(row["turns"] for row in attempts),
                     "providerTokens": None if any(row["tokens"] is None for row in attempts) else sum(row["tokens"] for row in attempts),
                     "hardProviderTurnTokenCap": False, "remainingActiveCalls": sum(row["end"] is None for row in attempts),

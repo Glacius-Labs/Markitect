@@ -6,11 +6,13 @@ import os
 from pathlib import Path
 import sys
 import time
+import sqlite3
 
 from identity_probe import events, summarize
 from ledger import Ledger, LimitReached
 from process import bounded
 import runner
+from measurement_profile import LEGACY, OBSERVED, FILES, profile, profile_sha
 
 CHECKOUT = Path(__file__).resolve().parents[3]
 LIVE_GAPS = ["provider-requests-and-internal-retries-unknown", "retrospective-token-overshoot",
@@ -54,9 +56,11 @@ def mechanical_pin():
 
 def runtime_pins():
     pins = {name: digest(Path(__file__).with_name(name).read_bytes()) for name in
-            ("dispatch.py", "adapter.py", "ledger.py", "process.py", "runner.py", "mechanical_actor.py", "identity_probe.py", "classic.py")}
+            ("dispatch.py", "adapter.py", "ledger.py", "process.py", "runner.py", "mechanical_actor.py", "identity_probe.py", "classic.py", "measurement_profile.py")}
     pins["harness.py"] = digest(Path(__file__).parents[1].joinpath("harness.py").read_bytes())
     pins["prepare.py"] = digest(Path(__file__).parents[1].joinpath("prepare.py").read_bytes())
+    for name in FILES.values():
+        pins["public/" + name] = digest(Path(__file__).parents[1].joinpath("public", name).read_bytes())
     return pins
 
 
@@ -75,6 +79,58 @@ def validate_listing(listing):
         raise ValueError("successful authenticated exact model/high listing required")
 
 
+def validate_cumulative_context(grant, protocol, common):
+    """Fail closed until a real cumulative legacy migration is separately supplied."""
+    from diagnostic_history import read_history
+    history = read_history()
+    binding = grant.get("cumulativeLedgerBinding")
+    expected_path = str((Path(__file__).parents[1] / ".study-data/runner-01601-diagnostic.sqlite").resolve())
+    expected_trial = "overseer-2026-10-07-1826-runner-01601"
+    expected = {"status": "ready", "trialId": expected_trial, "existingLedgerPath": expected_path,
+                "existingLedgerSha256": digest(Path(expected_path).read_bytes()),
+                "allHistoricalLedgers": history["ledgerSha256After"], "actorStartsConsumed": 3,
+                "proposedCumulativeSessionCeiling": 4, "additionalActorSessions": 1,
+                "unknownTokensBlockAdmission": True}
+    if (not isinstance(binding, dict) or protocol.get("cumulativeLedgerBinding") != binding or
+            any(binding.get(key) != value for key, value in expected.items()) or
+            grant.get("trialId") != expected_trial or str(Path(grant.get("ledgerPath", "")).resolve()) != expected_path or
+            grant.get("maxActorSessions") != 4 or grant.get("maxAdditionalActorSessions") != 1):
+        raise ValueError("complete cumulative context identity/history/allocation binding required")
+    receipt = binding.get("migrationReceipt", {})
+    if not isinstance(receipt, dict):
+        raise ValueError("approved cumulative migration receipt required")
+    try:
+        raw = Path(receipt["path"]).read_bytes()
+        if digest(raw) != receipt["sha256"]:
+            raise ValueError("cumulative migration receipt digest mismatch")
+        migration = json.loads(raw)
+        if (migration.get("status") != "approved" or migration.get("trialId") != expected_trial or
+                migration.get("ledgerPath") != expected_path or migration.get("preservedHistory") != history or
+                migration.get("profileAdoption") != protocol.get("profileAdoption")):
+            raise ValueError("cumulative migration receipt binding mismatch")
+        db = sqlite3.connect(Path(expected_path).as_uri() + "?mode=ro", uri=True)
+        try:
+            identity = db.execute("SELECT id,limits FROM trial").fetchone()
+            rows = db.execute("SELECT id,end,status,turns,tokens FROM attempts ORDER BY id").fetchall()
+        finally:
+            db.close()
+        validate_migrated_attempts(rows, history)
+        if identity != (expected_trial, json.dumps(common, sort_keys=True)):
+            raise ValueError("cumulative migrated trial identity/limits not preserved")
+    except (KeyError, OSError, sqlite3.Error, json.JSONDecodeError) as exc:
+        raise ValueError("cumulative legacy migration absent or unsupported") from exc
+
+
+def validate_migrated_attempts(rows, history):
+    """Stable source-grant:id mapping; all observed status/counters stay identical."""
+    expected = sorted((str(a["grant"]) + ":" + str(a["id"]), a["finished"], a["status"],
+                       a["providerRequests"], a["tokens"]) for a in history["attempts"])
+    actual = sorted((identity, end is not None, status, requests, tokens)
+                    for identity, end, status, requests, tokens in rows)
+    if actual != expected:
+        raise ValueError("cumulative migrated attempt identity/status/unknown counters not preserved")
+
+
 class Authority:
     """Paths/digests come from the operator, never from Request-provided authority."""
     def __init__(self, grant_path, grant_sha256, protocol_path, protocol_sha256, *, allow_live=False):
@@ -87,6 +143,9 @@ class Authority:
         g, p = self.grant, self.protocol
         if g.get("schemaVersion") != 1 or g.get("status") != "approved" or p.get("status") != "frozen":
             raise ValueError("approved Coordinator grant and frozen protocol required")
+        if any("cumulativeLedgerBinding" in item and (not isinstance(item["cumulativeLedgerBinding"], dict) or
+                item["cumulativeLedgerBinding"].get("status") != "ready") for item in (g, p)):
+            raise ValueError("cumulative historical ledger binding unresolved; no fresh ledger/trial substitution")
         self.mode = g["mode"]
         if self.mode not in {"mechanical", "live"} or p.get("mode") != self.mode:
             raise ValueError("authority mode mismatch")
@@ -97,6 +156,14 @@ class Authority:
         common = json.loads(Path(__file__).parents[1].joinpath("public/resource-proposal.json").read_bytes())["commonLimits"]
         if p.get("commonLimits") != common or g.get("profileSha256") != digest(encoded(common)):
             raise ValueError("unchanged shared commonLimits required")
+        self.profile_id = p.get("measurementProfileId", LEGACY)
+        profile(self.profile_id)
+        if self.profile_id != LEGACY and any(
+                item.get("measurementProfileId") != self.profile_id or item.get("measurementProfileSha256") != profile_sha(self.profile_id)
+                for item in (g, p)):
+            raise ValueError("same explicit versioned measurement profile required in Grant and Protocol")
+        if self.mode == "live" and self.profile_id == OBSERVED:
+            validate_cumulative_context(g, p, common)
         if g.get("protocolSha256") != protocol_sha256 or p.get("runtimeSourceSha256") != runtime_pins():
             raise ValueError("protocol/runtime source binding mismatch")
         if p.get("wrapperPythonSha256") != digest(Path(sys.executable).read_bytes()):
@@ -125,6 +192,14 @@ class Authority:
         if not self.result_directory.is_dir():
             raise ValueError("dedicated existing Result directory required")
         self.paths = [Path(grant_path).resolve(), Path(protocol_path).resolve(), self.ledger_path]
+        self.adoption = None
+        if self.profile_id == OBSERVED:
+            adoption = p["profileAdoption"]
+            content = Path(adoption["path"]).read_bytes()
+            if digest(content) != adoption["sha256"]:
+                raise ValueError("profile adoption digest mismatch")
+            self.adoption = json.loads(content)
+            self.paths.append(Path(adoption["path"]).resolve())
         if any(path == self.result_directory or self.result_directory in path.parents for path in self.paths):
             raise ValueError("Result directory cannot contain authority/ledger")
 
@@ -152,6 +227,9 @@ class Authority:
             raise ValueError("authority/ledger cannot reside in Actor root")
         if r.get("limits") != self.limits:
             raise ValueError("Request commonLimits mismatch")
+        if (r.get("measurementProfileId", LEGACY) != self.profile_id
+                or (self.profile_id == OBSERVED and r.get("measurementProfileSha256") != profile_sha(OBSERVED))):
+            raise ValueError("Request measurement profile mismatch; arm-specific profiles forbidden")
         positive(r["wallSeconds"], self.grant["maxSessionWallSeconds"])
         if r.get("purpose") not in {"setup", "context-access", "task", "review", "child", "repair"}:
             raise ValueError("explicit counted role required")
@@ -160,6 +238,10 @@ class Authority:
                 raise ValueError("this finite live route allows public S1 smokes only")
             if r.get("toolPolicy") not in {"forbidden", "ordinary-tools"} or r["toolPolicy"] != self.protocol.get("toolPolicy"):
                 raise ValueError("explicit frozen common tool policy required")
+            if r.get("sandbox", "workspace-write") != self.protocol.get("sandbox", "workspace-write"):
+                raise ValueError("frozen common sandbox request required")
+            if self.profile_id == OBSERVED and r["purpose"] == "context-access" and r.get("sandbox") != "read-only":
+                raise ValueError("v2 context sentinel requires requested read-only sandbox")
         if not isinstance(r["task"].get("id"), str) or not r["task"]["id"]:
             raise ValueError("explicit task identity required")
         released = r["releasedInputs"]
@@ -175,12 +257,28 @@ class Authority:
             captured[item["path"]] = content
         if r["task"]["card"] not in released or r["prompt"] not in released:
             raise ValueError("public task card and explicit prompt must be released inputs")
+        for entry in r.get("actorOwnedInputs", []):
+            owned = external(entry["path"], existing=True)
+            if root not in owned.parents or digest(owned.read_bytes()) != entry["sha256"]:
+                raise ValueError("explicit Actor-owned input binding mismatch")
         return r, captured
 
-    def ledger(self):
-        ledger = Ledger(self.ledger_path, self.grant["trialId"], self.limits)
-        ledger.bind_dispatch({"grantSha256": self.grant_sha, "protocolSha256": self.protocol_sha,
-                              "mode": self.mode, "ledgerPath": str(self.ledger_path)})
+    def ledger(self, operation="run_task"):
+        binding = {"grantSha256": self.grant_sha, "protocolSha256": self.protocol_sha,
+                   "mode": self.mode, "ledgerPath": str(self.ledger_path)}
+        if operation in {"resume", "stop"}:
+            ledger = Ledger(self.ledger_path, self.grant["trialId"], self.limits, profile_id=None)
+        else:
+            try:
+                ledger = Ledger(self.ledger_path, self.grant["trialId"], self.limits, profile_id=self.profile_id)
+            except ValueError as exc:
+                if self.profile_id != OBSERVED or "profile binding mismatch" not in str(exc):
+                    raise
+                ledger = Ledger(self.ledger_path, self.grant["trialId"], self.limits)
+        transition = {key: self.grant.get(key) for key in
+                      ("priorAuthoritySha256", "priorActorSessions", "additionalActorSessions")}
+        ledger.bind_dispatch(binding, maximum=self.grant["maxActorSessions"], transition=transition,
+                             adoption=self.adoption if ledger.profile_id == LEGACY and self.profile_id == OBSERVED else None)
         return ledger
 
 
@@ -192,10 +290,10 @@ def command(request, authority):
         if digest(fixture.read_bytes()) != authority.pin["fixtureSha256"]:
             raise ValueError("only known deterministic fixture bytes allowed")
         case = request["mechanicalCase"]
-        if case not in {"success", "no_usage", "sleep", "child"}:
+        if case not in {"success", "unknown_requests", "no_usage", "sleep", "child"}:
             raise ValueError("unknown deterministic fixture case")
         return [authority.pin["executable"], str(fixture), case, request["dispatchId"]]
-    return runner.prospective_argv(authority.pin["path"], request["actorRepository"])
+    return runner.prospective_argv(authority.pin["path"], request["actorRepository"], sandbox=request.get("sandbox", "workspace-write"))
 
 
 def usage(directory, request):
@@ -206,8 +304,10 @@ def usage(directory, request):
         return observed
     counters = [v for v in values if v.get("type") == "mechanical.usage"]
     valid = len(counters) == 1 and all(type(counters[0].get(k)) is int and counters[0][k] >= 0
-                                       for k in ("providerRequests", "input_tokens", "output_tokens"))
-    return {"providerRequests": counters[0]["providerRequests"] if valid else None,
+                                       for k in ("input_tokens", "output_tokens"))
+    requests = counters[0].get("providerRequests") if len(counters) == 1 else None
+    requests = requests if type(requests) is int and requests >= 0 else None
+    return {"providerRequests": requests,
             "reportedInputPlusOutputTokens": counters[0]["input_tokens"] + counters[0]["output_tokens"] if valid else None,
             "rawUsage": counters, "counterScope": "synthetic-only", "resolvedProviderModel": None,
             "agentTurnsStarted": 0, "agentTurnsCompleted": 0}
@@ -224,6 +324,8 @@ def base_result(request, raw):
     return {"schemaVersion": 1, "trialId": request["trialId"], "operation": request["operation"],
             "mode": request["mode"], "requestSha256": digest(raw), "executionSha256": execution_sha(request),
             "dispatchId": request["dispatchId"], "status": "blocked", "candidateCommit": None,
+            "measurementProfileId": request.get("measurementProfileId", LEGACY),
+            "measurementProfileSha256": profile_sha(request.get("measurementProfileId", LEGACY)),
             "capabilities": [], "gaps": [], "receipts": [], "usage": None,
             "inferencePerformed": False}
 
@@ -258,8 +360,10 @@ def dispatch(request_path, result_path, authority):
     argv = command(r, authority)
     if r["mode"] == "live" and r["operation"] == "run_task":
         runner.validate_start(r)
-    ledger = authority.ledger()
+    ledger = authority.ledger(r["operation"])
     record = ledger.dispatch_record(r["dispatchId"])
+    if record:
+        ledger.verify_dispatch_binding(record, authority.profile_id)
     if record and record["execution_sha"] != execution_sha(r):
         raise ValueError("booked execution mismatch")
     if r["operation"] == "stop":
@@ -346,10 +450,16 @@ def finalize(request, raw, argv, ledger, attempt, authority):
                   requestedModel=runner.MODEL if request["mode"] == "live" else None,
                   requestedReasoning=runner.REASONING if request["mode"] == "live" else None,
                   resolvedServingModel=None, runnerPin=authority.pin)
+    measurement = ledger.measurement()
+    result["measurementProfileId"] = measurement["profileId"]
+    result["measurementProfileSha256"] = profile_sha(measurement["profileId"])
     result["contaminated"] = bool(observed.get("unexpectedToolActivity"))
     result["status"] = "stopped" if process["stopReason"] or stop else ("completed" if process["returnCode"] == 0 else "failed")
-    if observed["providerRequests"] is None or observed["reportedInputPlusOutputTokens"] is None:
-        result["gaps"].append("unknown provider usage blocks later admission; agent turns are not provider requests")
+    if observed["providerRequests"] is None:
+        result["gaps"].append("provider requests unobservable/null; agent turns are not provider requests")
+    if (observed["reportedInputPlusOutputTokens"] is None or
+            (observed["providerRequests"] is None and measurement["unknownProviderRequestsAdmission"] == "block")):
+        result["gaps"].append("unknown required usage blocks later admission")
         if result["status"] == "completed":
             result["status"] = "incomplete"
     result["receipts"] = process["receipts"] + [{"path": str(directory / "process.json"),

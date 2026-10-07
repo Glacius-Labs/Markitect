@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "profileId": "strict-provider-usage-v1",
+  "version": 1,
+  "arms": ["conventional", "classic", "government"],
+  "unknownTokensAdmission": "block",
+  "unknownProviderRequestsAdmission": "block",
+  "knownProviderRequestAdmissionCaps": true,
+  "hardProviderRequestCap": false,
+  "hardTokenCap": false,
+  "tokenControl": "retrospective input plus output; cache and reasoning retained raw without addition",
+  "internalTransportRetries": "unknown, never inferred from agent turns",
+  "providerTransportDefaults": "not authorized by this profile alone",
+  "wrapperRetries": 0,
+  "numericLimitsOwner": "resource-proposal.json commonLimits, unchanged",
+  "nativeDescendants": "unobserved; each harness-launched Actor needs its own reservation"
+}

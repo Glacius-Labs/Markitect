@@ -1,5 +1,10 @@
 # Finite S1 dispatch and accounting
 
+The strict-profile behavior below records the preceding S1 package. The current
+common admission semantics and append-only successor authority are specified in
+[measurement-profile-v2.md](measurement-profile-v2.md). S1 remains open; this
+update creates context-session drafts only and issues no live grant.
+
 This candidate connects `harness.dispatch` → `adapter.handle` → `dispatch` →
 `Ledger`/`process.bounded`/the pinned `runner` argv. It does not clear S1 or
 authorize a model call. The package executes only deterministic external Python
