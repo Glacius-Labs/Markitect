@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-07T18:11:25Z",
+  "updatedUtc": "2026-10-07T18:21:23Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -21,13 +21,13 @@
       "name": "Worker",
       "threadId": "01a1169b-9357-7df3-a8f6-f913557c782a",
       "hostId": "local",
-      "afterCursor": "b2b8e43f-fcaa-41bf-828a-99c69527bdea:33",
+      "afterCursor": "b2b8e43f-fcaa-41bf-828a-99c69527bdea:34",
       "lastObservedStatus": "active",
       "activeTurn": "01a1178c-8696-7011-a7d9-0b4285d6ca75",
-      "lastAssistantMessageId": "msg_0a7785839df196a4016ac68b3a9528819198395065b8555562",
+      "lastAssistantMessageId": "msg_0a7785839df196a4016ac68ce803848191877fa67fa6292f2a",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "G4 delegated substantial model/realization amendment under prior authority and bounded conflict escalation; no G5 queue",
-      "latestProgress": "Der bisherige Host verweigert Modelländerungen vollständig. G4 erhält dafür einen eigenen Prüfpfad: Der alte Auftrag bestimmt Schreibrechte und Änderungsmandat; der vorgeschlagene Modellstand wird separat geprüft und an den Materialkandidaten gebunden. Eine unabhängige Implementierung prüft die Änderungsbefugnis, ein weiterer Reviewer prüft die Grenzen. Root-Ziele werden dafür ausdrücklich in der alten Verfassung als geschützt markiert.",
+      "latestProgress": "Das unabhängige Review hat eine zu grobe Prüfung gefunden: „kanonisch“ bezeichnet nicht nur die ausgewählte Government-Modelldatei. Ich binde die Änderungsbefugnis deshalb an genau diesen Pfad und prüfe sie je betroffenem Subject. So benötigen reine Realisierungsarbeiten kein zusätzliches Modelländerungsrecht.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-worker/Markitect",
       "transferredDesignCommit": "691ce1dee3484371c4aea725db4ed5cc3f2e3719",
       "candidateSha": "97a55bd572b9a730fa1e206232ee37e54025a144",
@@ -164,13 +164,13 @@
       "name": "Scientist",
       "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
       "hostId": "local",
-      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:35",
+      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:36",
       "lastObservedStatus": "active",
       "activeTurn": "01a1178e-2fb1-7763-b2ce-0f1fff1eb60d",
-      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac68acdfdbc819181fcdeb9bac9333d",
+      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac68d44518c819182df760ff8a811a0",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "Minimal explicit additive one-context-session allocation with immutable cumulative diagnostic history; reviewed exact drafts, no inference",
-      "latestProgress": "Ich setze die ausdrücklich zusätzliche Diagnose-Zuteilung um: ein neuer Start, dauerhaft an die drei verbrauchten Starts und beide unveränderten Ledger gebunden. Die Unknown-Token-Sperre des Studienprofils bleibt bestehen. Danach liefere ich geprüfte neue Entwürfe ohne ausführbaren Grant oder Inferenz.",
+      "latestProgress": "Der Review ist abgeschlossen; die beiden Befunde sind behoben. Der Historienleser ist im Runtime-Pin enthalten, und Resume prüft die gespeicherte Zuteilung sowie den konkreten Dispatch lesend, bevor SQLite etwas initialisieren kann. Ich friere jetzt die endgültigen Testbelege und die neuen Entwürfe ein. Ein ausführbarer Run-Grant bleibt ausstehend.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-scientist/Markitect",
       "transferredDesignCommit": "b9e17c9896f14b4b1268e4bcb005395f5d324384",
       "candidateSha": "0e00bfd5d81c259a8c7fac0731ef27a4a2a27e20",
@@ -420,10 +420,10 @@
     "jev": "Deferred; no extra investigation started"
   },
   "lastReview": {
-    "reviewedUtc": "2026-10-07T18:11:25Z",
-    "evidenceLevel": "Compact snapshots for all3. Worker reports implementing separate prior-authority model-amendment validation and protected root goals; Scientist additive diagnostic allocation active; Architect unchanged. No new completion accepted.",
+    "reviewedUtc": "2026-10-07T18:21:23Z",
+    "evidenceLevel": "Compact snapshots all3. Worker reports narrowing amendment authority to selected Government model path and affected subjects after review; Scientist reports two review fixes complete and freezes final evidence/drafts. Both active; no new exact completion accepted. Architect unchanged.",
     "coordinationActions": [
-      "Saved current cursors and reported progress; no repeated assignments, test runs or new live grant."
+      "Saved cursors and reported review progress; no redundant instructions, tests or live grant."
     ],
     "userDecisionRequired": false
   },
