@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-07T23:02:45Z",
+  "updatedUtc": "2026-10-07T23:11:57Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -261,21 +261,21 @@
       "name": "Scientist",
       "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
       "hostId": "local",
-      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:80",
+      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:82",
       "lastObservedStatus": "active",
-      "activeTurn": "01a11897-89c6-7b20-b218-05e3adde8c1b",
-      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac6cf7e2a1081919ea91155393806c0",
+      "activeTurn": "01a118a2-6ae8-73e1-8e73-d7970fbda0a6",
+      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac6d1860b2481918bfd8e71aa0d1ace",
       "initialAssignmentDispatched": true,
-      "assignedMilestone": "Actual pinned Classic/Government native integration with bounded deterministic fixtures and one final disabled-status metadata read; no real Actor or study.",
-      "latestProgress": "Scientist reports updated negative handoff and310readonly hash comparisons without mismatches; final independent handoff review ongoing before local commit. No new native/real starts.",
+      "assignedMilestone": "Corrected native mechanical integration r2 after accepted negativef35c820; actual S1 runner access still open.",
+      "latestProgress": "Ich lese den neuen Grant und begrenze die Änderungen auf die vier belegten Fehler der Versuchshülle. Vor den neuen Fällen sichere ich Regressionen, gezielten unabhängigen Review, einen sauberen Quellcommit und den Freeze; alte Läufe und Buchungen bleiben erhalten.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-scientist/Markitect",
       "transferredDesignCommit": "b9e17c9896f14b4b1268e4bcb005395f5d324384",
-      "candidateSha": "498faa073c91acf9d66d375a061d37b851cca355",
-      "acceptance": "Committed metadata package accepted independently; unrelated uncommitted native integration remains incomplete and unaccepted. S1 and real study not ready.",
+      "candidateSha": "f35c8209cd8902bff17e69f05ee7716e352ee4b2",
+      "acceptance": "Clean negative native integration handoff accepted; both workflows incomplete, no S1 or semantic/product superiority claim. Metadata498faa0 remains accepted separately.",
       "lastAssignment": {
-        "sentUtc": "2026-10-07T22:01:32Z",
-        "key": "native-s1-integration-and-final-disabled-status-read",
-        "scope": "Actual pinned Classic/Government native agentexec-wrapper-ledger-result integration with bounded deterministic fixtures, plus one final separately reserved disabled-status-only metadata session; no real Actor, model or study grant.",
+        "sentUtc": "2026-10-07T23:10:59Z",
+        "key": "corrected-native-integration-r2",
+        "scope": "Narrow Scientist harness fixes, clean source/regressions/independent review/freeze, then one corrected bounded native case per pinned product under native-s1-corrected-integration-20261008-r2. No real model/metadata/study calls or product edits.",
         "activeConfirmed": true
       },
       "evidence": {
@@ -759,7 +759,7 @@
         "nativeIntegrationPreparationGrant": {
           "issuedUtc": "2026-10-07T22:01:32Z",
           "key": "native-s1-integration-fixtures-20261008",
-          "status": "Assigned; usage not yet reported",
+          "status": "Closed after failed first case per product; no further starts under this allocation without explicit successor.",
           "owner": "Scientist",
           "products": [
             {
@@ -793,9 +793,11 @@
           "constraints": "Disposable public fixture repositories with separate clearly synthetic ledgers. Preserve historical real usage/stops/nulls. Each actual role pre-reserved; controller has process/time accounting but is not an extra role. Native positive Government result requires all independent reviewers and final Ressort votes. Validate authority/inputs/pins/deadlines before effects; locator alone never grants authority. Stop on concrete product blocker or exhausted grant.",
           "excluded": "No product source changes, hidden repairs, heavy full product suites, new platform, inference, publication or budget refill.",
           "usage": {
-            "nativeCliOrControllerStarts": null,
-            "deterministicRoleStarts": null,
-            "totalProcessSeconds": null
+            "nativeCliOrControllerStarts": 3,
+            "governmentNativeWrapperAttempts": 1,
+            "deterministicDelegateStarts": 0,
+            "reservedControllerAndRoleSessionSeconds": 450,
+            "arbitraryOsDescendantProcessSeconds": null
           }
         },
         "localDisabledStatusMetadataGrant": {
@@ -936,6 +938,118 @@
           "historicalTokenTotal": null,
           "liveStudyCells": 0,
           "limitations": "Different app-server versus historical exec invocation/layers: no effective historical policy, denial cause, working file access, permission-change rationale or S1 proof. Historical remote-control status and missing older preflight bytes remain unknown/unavailable."
+        },
+        "nativeIntegrationNegativeAcceptance": {
+          "acceptedUtc": "2026-10-07T23:10:26Z",
+          "sourceSha": "f35c8209cd8902bff17e69f05ee7716e352ee4b2",
+          "clean": true,
+          "rootChangedCommitFilesByteCompared": 174,
+          "commitFileMismatches": 0,
+          "handoffSha256": "1fdec4451d04d9012be488d7dff80b427ed9457043655049f245bc3a2bff0442",
+          "validationSha256": "ac5e68e7ca79d178ba34a7ed982ad9c3f2d09b6f0d784c5d82a719a240ab667e",
+          "preflightFreezeSha256": "746df37019541ffa7c395afc5b7f6189f93d5b7b75a540f7b5d1431e015b2c10",
+          "recoveryFreezeSha256": "a57987a790b6568482666718e76ae60d61d7f7dda2bc19e788e334f1876c662d",
+          "priorIndependentReview": "s1_dispatch_acceptance verified77executed freeze inputs and112snapshot hashes; no rerun. Root now bound committed clean files and final handoff to that reviewed packet. Delivery records3recovery inputs, pinned binaries and focused88/34/23tests.",
+          "nativeStarts": {
+            "government": 2,
+            "classic": 1
+          },
+          "nativeWrapperAttempts": {
+            "government": 1,
+            "classic": 0
+          },
+          "delegateAttempts": 0,
+          "reservedControllerAndRoleSessionSeconds": {
+            "government": 300,
+            "classic": 150
+          },
+          "realActorCalls": 0,
+          "providerCalls": 0,
+          "studyCells": 0,
+          "primaryGovFailure": "Wrapper failure unknown without raw stderr.",
+          "confirmedHarnessFindings": [
+            "Classic fixture precreates absent-required RecordStore root",
+            "Government failed-result translation omits terminal incomplete controller/process persistence",
+            "Classic main helper grant path differs from exact Request binding; same-booking recovery separately preserved"
+          ],
+          "limitations": "Negative protocol evidence only. Old Governmentcontroller row remains running and consumed; unknownusage preserved. Native process completion is not successful integration. Actor access remains unproven."
+        },
+        "correctedNativeIntegrationGrant": {
+          "key": "native-s1-corrected-integration-20261008-r2",
+          "issuedUtc": "2026-10-07T23:10:26Z",
+          "status": "Dispatched once; Scientist active preparing narrow fixes and frozen evidence. No new usage yet reported.",
+          "owner": "Scientist",
+          "purpose": "Repair only confirmed harness defects, retain first-wrapper diagnostics and perform one corrected native mechanical case per held product plus directly associated resume/replay.",
+          "basis": {
+            "negativeHandoffSha": "f35c8209cd8902bff17e69f05ee7716e352ee4b2",
+            "previousAllocation": "native-s1-integration-fixtures-20261008",
+            "previousNativeStarts": {
+              "government": 2,
+              "classic": 1
+            },
+            "previousReservedSessionSeconds": {
+              "government": 300,
+              "classic": 150
+            },
+            "previousNativeWrapperAttempts": {
+              "government": 1,
+              "classic": 0
+            },
+            "previousDelegateAttempts": 0
+          },
+          "fixScope": [
+            "Classic absent RecordStore root and preflight assertion without deleting old artifacts",
+            "Classic exact released budget-grant path",
+            "Government incomplete translation preserves raw process/queue receipts and terminalizes future controller ledger as incomplete",
+            "Minimal digest-bound retained raw wrapper diagnostics before first possible failure; no guessed primary fix or product code change"
+          ],
+          "limits": {
+            "government": {
+              "maxAdditionalNativeStarts": 2,
+              "maxAdditionalRoleInvocationsIncludingFailedWrapperStarts": 6,
+              "maxAdditionalReservedControllerAndRoleSessionSeconds": 300,
+              "cases": "One queue attempt; one directly related resume/replay only after the positive case succeeds. No repeated inspect."
+            },
+            "classic": {
+              "maxAdditionalNativeStarts": 5,
+              "maxAdditionalRoleInvocationsIncludingFailedWrapperStarts": 6,
+              "maxAdditionalReservedControllerAndRoleSessionSeconds": 750,
+              "cases": "One Execute, guarded Apply after bound external review, fresh Verify, Audit, and stale Apply replay; later steps only after their prerequisites pass."
+            },
+            "maxParallelRoles": 2,
+            "productsRunSequentially": true,
+            "cumulativeNativeStartCeiling": {
+              "government": 4,
+              "classic": 6,
+              "total": 10
+            },
+            "cumulativeReservedSessionSecondsCeiling": {
+              "government": 600,
+              "classic": 900,
+              "total": 1500
+            },
+            "previousOverallNativeStartCeiling": 16,
+            "previousOverallReservedSessionSecondsCeiling": 2400,
+            "nativeProcessDeadlineSeconds": 38,
+            "controllerWindowSeconds": {
+              "government": 38,
+              "classic": 180
+            },
+            "reservedSessionSecondsPerNativeStart": 150
+          },
+          "preconditions": "Narrow fixes committed to exact clean local source; independent focused source review and directly relevant regressions complete; immutable preflight with corrected source, runtime/role/authority/request/binary pins and explicit additive allocation before first start. This coordinator grant authorizes execution after those conditions without another general permission question; no missing prerequisite may be simulated.",
+          "history": "Fresh disposable corrected-case fixture/evidence namespace bound to old f35c820 handoff, old consumed starts/reservations and original overall ceilings. Failed runs/old controller row/unknown usage remain immutable and counted. No empty replacement of accounting history or automatic refills.",
+          "stopRule": "At first failed prerequisite, unexpected extra role/start, runtime/translation error, deadline or quota stop, preserve evidence and stop that product; no repair/relaunch within this allocation. The independently allocated other product may run if its preconditions hold. Remaining unused numerical quota alone never authorizes another case.",
+          "accountingBoundary": "Logical controller/role session reservations and native parent process wall time are recorded separately. Arbitrary OS-descendant aggregate wall time remains unknown unless measured; no measured zero token claim from no-provider fixtures.",
+          "realActorCalls": 0,
+          "providerCalls": 0,
+          "metadataAppServerTrees": 0,
+          "studyCells": 0,
+          "newPurchases": false,
+          "productMutations": false,
+          "consumedNativeStarts": null,
+          "consumedRoleInvocations": null,
+          "sentUtc": "2026-10-07T23:10:59Z"
         }
       },
       "classicHandoffReceived": true,
@@ -978,6 +1092,14 @@
           "newGrant": false,
           "newRealActorCallsAuthorized": 0,
           "activeResumptionConfirmed": true
+        }
+      ],
+      "assignmentHistory": [
+        {
+          "sentUtc": "2026-10-07T22:01:32Z",
+          "key": "native-s1-integration-and-final-disabled-status-read",
+          "scope": "Actual pinned Classic/Government native agentexec-wrapper-ledger-result integration with bounded deterministic fixtures, plus one final separately reserved disabled-status-only metadata session; no real Actor, model or study grant.",
+          "activeConfirmed": true
         }
       ]
     },
@@ -1051,7 +1173,7 @@
       "heldWorktree": "C:/Users/Consiliari/.codex/worktrees/standard-operating-model/Markitect"
     }
   ],
-  "nextAction": "Finish and accept clean negative native integration handoff; reconcile recorded three native starts and controller bookkeeping, identify smallest harness/setup/runner fix from frozen evidence before authorizing another bounded attempt. Metadata diagnostic allocation closed; no further metadata cascade or sixth real Actor grant. Worker/Architect held; SAT/Jev deferred.",
+  "nextAction": "Scientist: narrow harness fixes and one separately bounded corrected native case per product after clean source, focused regression, independent review and exact freeze. Preserve first negative packet and cumulative accounting. No additional model/metadata/study calls; Worker/Architect held.",
   "boundaries": {
     "governmentPublication": false,
     "automaticClassicReplacement": false,
@@ -1061,13 +1183,12 @@
     "satPrinciples": "Deferred by direct user request on 2026-10-07; conceptual constraint/consistency/conflict-explanation principles first, no solver integration or current assignment change. See docs/design/government/deferred-research.md."
   },
   "lastReview": {
-    "reviewedUtc": "2026-10-07T23:02:45Z",
-    "evidenceLevel": "Metadata498faa0 independently accepted. Native77freeze inputs and112snapshots independently verified as exact uncommitted run bytes: three native starts, zero delegates/providers, both incomplete. Two harness defects identified; primary Governmentwrapper cause unresolved without rawstderr. Scientist final handoff review/commit active, not yet clean-candidate acceptance. Worker/Architect held.",
+    "reviewedUtc": "2026-10-07T23:11:57Z",
+    "evidenceLevel": "All three checked. Clean f35c820 verified;174changed commit files byte-match. Previously independently verified77frozen inputs/112snapshots and source-bound postrun reviews support negative closure; no test rerun. No new human stop in Scientist turn. Metadata498faa0 accepted separately. Worker/Architect unchanged held.",
     "coordinationActions": [
-      "Accepted only source-bound metadata498faa0 and recorded consumed third app-server grant.",
-      "Resumed Scientist once to finalize existing negative native handoff without any new starts or repair.",
-      "Independent readonly native evidence/cause review in progress; do not delegate product repair before attribution.",
-      "Recorded independent native failure attribution and minimal followup; no Worker/Architect product repair or new launch grant."
+      "Accepted negative native handoff and closed firstcase allocation, preserving historical failures/usage.",
+      "Recorded explicit finite corrected-case successor within original overall numeric ceilings before dispatch.",
+      "Assigned Scientist only confirmed harness fixes and digest-bound wrapper diagnostics, guarded by focused review/freeze; active status confirmed. No product-owner assignment, extra model/metadata/study call or policy change."
     ],
     "userDecisionRequired": false
   },
