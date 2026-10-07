@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "trialId": "government-greenfield-smoke",
+  "operation": "probe",
+  "requestSha256": "0e9ec95a6f1714080d4e5e46594f075071604e158af7623ebcc7d5c901a5636a",
+  "mode": "fixture",
+  "status": "readiness_gap",
+  "candidateCommit": null,
+  "capabilities": [
+    "fixture-interchange-only"
+  ],
+  "gaps": [
+    "No actual actor runner configured",
+    "Product adapter not supplied/frozen"
+  ],
+  "receipts": [],
+  "usage": null
+}

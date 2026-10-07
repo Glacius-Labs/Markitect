@@ -99,6 +99,11 @@ def smoke(destination):
         service.start()
         checks = checks_type(service.url)
         checkpoint = checks.run(1, "brownfield")
+        # The existing Brownfield inventory route already has this contract.
+        # Greenfield receives its check only when task 2 is released.
+        inventory_checks = load_checks(ROOT / "public" / "checks.py")(service.url)
+        inventory_checks.unknown_inventory()
+        checks.passed.extend(inventory_checks.passed)
         service.stop()
         service.start()
         checks.restart(checkpoint)

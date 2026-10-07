@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "kind": "bounded-preparation-followup",
+  "previousPackageCommit": "746215ccbdb008f80add627b0c37690a43f405c4",
+  "liveTrials": 0,
+  "ownership": "Scientist owns common Request/Result wrapper, requestSha256, metrics/limits and trial invocation; Worker/Architect own native product calls/capabilities/pins/receipts",
+  "closedFinding": "Unknown inventory SKU: real HTTP 404, code unknown_sku, nonempty useful message",
+  "fixtureSmoke": {
+    "status": "passed",
+    "adapterProbes": 6,
+    "adapterStatus": "readiness_gap",
+    "apiAssertions": 18,
+    "evidence": "evidence/inventory-404-followup/fixture-smoke.json"
+  },
+  "harnessTests": {
+    "status": "passed",
+    "count": 5,
+    "command": [
+      "python",
+      "-m",
+      "unittest",
+      "discover",
+      "-s",
+      "experiments/government-comparison",
+      "-p",
+      "test_harness.py",
+      "-v"
+    ],
+    "testSourceSha256": "41ba1f65c89014ed8e98775a845fd3aa46543e8dfb2408095ef73e7f9fbe7f50"
+  },
+  "stageRelease": "Unknown inventory check/helper omitted from Greenfield task1 release; included from task2",
+  "startsUnchanged": {
+    "greenfield": "0416e366626d31933443ce2901d6a3696261db7b",
+    "brownfield": "5d21ef02cd9d5485c26bc4053a35c61ad33024c1"
+  },
+  "privateAssessmentDigestsUnchanged": {
+    "holdout-plan.json": "c290bb53e93eace8f3a8b91e4e7d91d4fbc1799c6dd387bfef6fabc9608588a5",
+    "holdout_checks.py": "4fefc910a1c10eb1ca261fef1847920f432d2379de83ecc22d9e84a6eac392eb"
+  },
+  "repositorySourceGate": {
+    "status": "incomplete",
+    "candidateCommit": "b89f1abd86f0a03d76e991ef5898c245f0d735ec",
+    "check": "go-tests",
+    "milliseconds": 600007,
+    "reason": "10-minute execution timeout",
+    "historicalEvidence": "evidence/validation.json",
+    "rawLogGzip": "evidence/source-verify-b89f1ab.log.gz",
+    "fullSourceSuiteRerun": false
+  },
+  "followupMarkitectBinding": null,
+  "limits": [
+    "No live study or actual product adapter readiness claimed",
+    "Runner/model/resource profile remains unset",
+    "Actual runner effective context/access probe remains pending",
+    "Task6 equivalent defect mapping remains pending",
+    "Private holdout not executed"
+  ]
+}

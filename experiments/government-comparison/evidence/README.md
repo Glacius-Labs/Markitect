@@ -14,7 +14,8 @@ Preparation attempts are retained in ignored `.study-data/`:
 | smoke-v3 | Passed; 6 probes / 16 API assertions | New Brownfield start after its own .gitignore was included |
 | smoke-v4 | Passed; 6 probes / 17 API assertions | Public task1 includes unknown-order 404; preliminary source freeze retained privately before final byte preservation/README cleanup |
 | smoke-v5 | Passed; 6 probes / 17 API assertions | Final Brownfield README/local output ignores and exact source bytes; retained before adapter v1.1 binding tightening |
-| smoke-v6 | Passed; 6 probes / 17 API assertions | Adapter v1.1 binds exact request digest, including same-trial changes; final evidence preserved here |
+| smoke-v6 | Passed; 6 probes / 17 API assertions | Adapter v1.1 binds exact request digest, including same-trial changes; retained before follow-up |
+| smoke-v7 | Passed; 6 probes / 18 API assertions | Follow-up checks existing Brownfield unknown-inventory 404, code and useful message; preserved under `inventory-404-followup/` |
 
 The initial vulnerable native SQLite graph and inherited Azure feed 401 were
 preparation failures, corrected and disclosed in the Brownfield provenance.
@@ -32,3 +33,13 @@ recording, stale input refusal and the closed live gate. Test results, source ga
 and final commit binding are recorded in `validation.json` after package commit.
 Source checks only establish their declared coverage; the new harness is verified
 by Python/API checks, not inferred from the Markitect graph.
+
+The follow-up clarifies Scientist ownership of the common adapter wrapper and
+closes the public unknown-inventory check. Greenfield receives that check only
+from task 2; task 1's generated checker excludes the future helper. The start SHAs
+and private oracle are unchanged. `followup-validation.json` binds the new public
+checks and retains the earlier `validation.json` as historical evidence.
+The configured source verify on `b89f1abd86f0a03d76e991ef5898c245f0d735ec`
+ended `incomplete` after the `go-tests` 600007 ms timeout; architecture-imports,
+managed-artifacts and module-checks passed. Its compressed raw log and exact SHA
+remain preserved. This follow-up starts no new full source suite or live trial.

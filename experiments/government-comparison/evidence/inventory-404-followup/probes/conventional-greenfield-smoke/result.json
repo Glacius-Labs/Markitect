@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "trialId": "conventional-greenfield-smoke",
+  "operation": "probe",
+  "requestSha256": "14708db9a1032f1c0016b582cc435d4dee51a5692e676e8bdf5bd0406b4d6e05",
+  "mode": "fixture",
+  "status": "readiness_gap",
+  "candidateCommit": null,
+  "capabilities": [
+    "fixture-interchange-only"
+  ],
+  "gaps": [
+    "No actual actor runner configured",
+    "Product adapter not supplied/frozen"
+  ],
+  "receipts": [],
+  "usage": null
+}

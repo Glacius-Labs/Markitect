@@ -34,6 +34,9 @@ canonical Markitect/Government model. No production/customer history is claimed.
 The Brownfield evidence packet names known ownership and the visible unmodeled
 legacy path. Exact source, hashes and dated preparation results belong to
 [preparation-freeze.json](preparation-freeze.json) and [evidence](evidence/README.md).
+The latest follow-up adds the public unknown-inventory 404 regression and clarifies
+Scientist's adapter ownership; its results are in `evidence/followup-validation.json`.
+The preceding source-gate timeout remains historical `incomplete` evidence.
 
 ## Public handoff and staged requirements
 
@@ -63,6 +66,10 @@ before those checks can be claimed complete.
 [Public adapter contract](public/adapter-contract.md) was published early at
 `775338555d2f2743128462af13d998c7d179c7ac`. Worker and Architect provide exact
 product inputs, invocation argv, results and receipts against that contract.
+Scientist owns the common study adapter wrapper, Request/Result translation,
+request digest binding, metrics/limits and trial invocation; product owners supply
+native product calls and evidence for that wrapper. Their readiness work stays
+bounded to their own product and smoke.
 The current contract is v1.1: results also echo the exact request-file SHA-256;
 use the final package version rather than the earlier v1 bytes.
 `harness.py` currently runs bounded fixture probes only, validates start/input and

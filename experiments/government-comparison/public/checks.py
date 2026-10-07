@@ -38,6 +38,11 @@ class Checks:
         self.expect(f"inventory {sku} readable", status == 200)
         return value
 
+    def unknown_inventory(self):
+        status, error = self.http("GET", "/inventory/PUBLIC-UNKNOWN-SKU")
+        self.expect("unknown inventory SKU", status == 404 and error.get("code") == "unknown_sku"
+                    and isinstance(error.get("message"), str) and bool(error["message"].strip()))
+
     def run(self, through, condition):
         self.expect("health", self.http("GET", "/health")[0] == 200)
         status, catalog = self.http("GET", "/catalog")
@@ -66,6 +71,7 @@ class Checks:
         checkpoint = {"order": order, "inventory": None}
         if through < 2:
             return checkpoint
+        self.unknown_inventory()
         inv = self.inventory()
         self.expect("reservation accounting", inv["onHand"] == 10 and inv["reserved"] == (3 if condition == "brownfield" else 2)
                     and inv["available"] == inv["onHand"] - inv["reserved"])

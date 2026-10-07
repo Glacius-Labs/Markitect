@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "trialId": "classic-brownfield-smoke",
+  "operation": "probe",
+  "requestSha256": "623e126f71c8b31f8f3c33ac8fbd21e87682d1aa0a4ba1b5c7f241d50fef8e65",
+  "mode": "fixture",
+  "status": "readiness_gap",
+  "candidateCommit": null,
+  "capabilities": [
+    "fixture-interchange-only"
+  ],
+  "gaps": [
+    "No actual actor runner configured",
+    "Product adapter not supplied/frozen"
+  ],
+  "receipts": [],
+  "usage": null
+}

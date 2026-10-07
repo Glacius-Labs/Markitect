@@ -62,6 +62,7 @@ class BindingAndReleaseTests(unittest.TestCase):
             self.assertEqual("boundary-six" in source, cutoff >= 5)
             self.assertEqual("parallel-" in source, cutoff >= 2)
             self.assertEqual("cancel releases once" in source, cutoff >= 4)
+            self.assertEqual("unknown inventory SKU" in source, cutoff >= 2)
 
     def test_handoff_outside_repo_current_cards_only(self):
         with tempfile.TemporaryDirectory() as temp:

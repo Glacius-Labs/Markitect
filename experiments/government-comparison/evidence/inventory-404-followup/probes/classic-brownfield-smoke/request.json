@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "operation": "probe",
+  "mode": "fixture",
+  "trialId": "classic-brownfield-smoke",
+  "arm": "classic",
+  "condition": "brownfield",
+  "baseCommit": "5d21ef02cd9d5485c26bc4053a35c61ad33024c1",
+  "repository": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\.study-data\\smoke-v7\\cells\\classic-brownfield",
+  "actorRepository": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\.study-data\\smoke-v7\\cells\\classic-brownfield",
+  "task": null,
+  "releasedInputs": [
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\.study-data\\smoke-v7\\released-brownfield-task1\\01-create-order.md",
+      "sha256": "bf5c1e5bf148245bfbc8212e2ad90b7369d8a1a03765258eda078f1ec87075a9"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\.study-data\\smoke-v7\\released-brownfield-task1\\architecture.md",
+      "sha256": "7459d9514358d1448c2353e0c0bf3d24d11a7eaf84b67c695724c88d20023700"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\.study-data\\smoke-v7\\released-brownfield-task1\\brief.md",
+      "sha256": "4692ec98bbf8f8a140020e88182a62504689e6e6df5aa80af7c6783cdacb13c8"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\.study-data\\smoke-v7\\released-brownfield-task1\\brownfield-provenance.md",
+      "sha256": "155f6f736adf4d48b71074f74a9221d9f8ac796a938b5b8b0650f741d59eb548"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\.study-data\\smoke-v7\\released-brownfield-task1\\checks.py",
+      "sha256": "fc96859ce7cc71426ed774f3ff5d88a45adcf016d2250c259287d1da628ac0cc"
+    }
+  ],
+  "product": null,
+  "profile": {
+    "model": null,
+    "reasoning": null,
+    "runnerVersion": null
+  },
+  "limits": {
+    "wallSeconds": 30,
+    "maxActorCalls": 0,
+    "maxParallelActors": 1
+  },
+  "evidenceDirectory": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\.study-data\\smoke-v7\\probe\\classic-brownfield-smoke"
+}

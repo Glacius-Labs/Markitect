@@ -10,6 +10,11 @@ from prepare import ROOT, digest
 
 def staged_checks(cutoff):
     tree = ast.parse((ROOT / "public" / "checks.py").read_text(encoding="utf-8"))
+    if cutoff == 1:
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ClassDef) and node.name == "Checks":
+                node.body = [member for member in node.body if not
+                             (isinstance(member, ast.FunctionDef) and member.name == "unknown_inventory")]
     # Truncate at explicit stage boundaries; later implementation/rule text is absent.
     for node in ast.walk(tree):
         if isinstance(node, ast.FunctionDef) and node.name == "run":
