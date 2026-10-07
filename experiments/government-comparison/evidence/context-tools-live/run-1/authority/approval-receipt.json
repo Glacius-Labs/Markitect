@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "approvedBy": "Overseer 01a11367-a781-7683-a20f-46e12614dcb4",
+  "authority": "Direct user Go and delegated ordinary technical/resource decisions",
+  "approvedUtc": "2026-10-07T19:27:50+00:00",
+  "expiresUtc": "2026-10-07T19:57:50+00:00",
+  "deliverySha": "ac998adf88e7bad1517d98b9e4a4a6265016dbe6",
+  "implementationSha": "56d2e578ce105a77e4f8be4e3364925efc9d813d",
+  "grant": {
+    "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\context-tools-20261007\\context-drafts\\overseer-approved-20261007\\grant.approved.json",
+    "sha256": "8ff308caf381c4629f72f357bb264e21bd866dc8c4ef549f9fc450b06d7cebe8"
+  },
+  "protocol": {
+    "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\context-tools-20261007\\context-drafts\\overseer-approved-20261007\\protocol.frozen.json",
+    "sha256": "bcf32b9ab46005855e7ec8379a7b1007681539cf860c7a1f4f7c650ed5897598"
+  },
+  "profileAdoption": {
+    "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\context-tools-20261007\\context-drafts\\overseer-approved-20261007\\profile-adoption.approved.json",
+    "sha256": "28159c5fbebd637fb92272229779915fb1a720654887f45811a51dbf7197cc43"
+  },
+  "request": {
+    "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\context-tools-20261007\\context-drafts\\overseer-approved-20261007\\request.json",
+    "sha256": "39a62a4da246ab3e48ff4ee1bb21f0265753c0ecbaa98f3077567d862d484970"
+  },
+  "executionSha256": "e2f318252cdb28da09149d9c5c0285dafe6ddab7ec15ebebf70e2cc6cd6a482c",
+  "draftHashes": {
+    "request.draft.json": "39a62a4da246ab3e48ff4ee1bb21f0265753c0ecbaa98f3077567d862d484970",
+    "protocol.draft.json": "bbc054bee6cb7e3e89211cb466d48f34a6a9822d4aab781ec3ed54d312bf70d7",
+    "grant.draft.json": "8d553c4bd254926324ac8c113d26c8d31d1df9c0daaefbf9c2f4facc1002e3c1",
+    "profile-adoption.draft.json": "4c3bffa866f0781a88ac302e0d892b50cc5e27d2bfcfcd195618685f94a61be0"
+  },
+  "limits": {
+    "additionalSessions": 1,
+    "cumulativeMaximum": 5,
+    "wallSeconds": 180,
+    "parallel": 1,
+    "wrapperTurns": 1,
+    "retrospectiveTokenThreshold": 50000,
+    "wrapperRetries": 0,
+    "children": 0,
+    "continuations": 0,
+    "semanticRepairs": 0,
+    "newPurchases": false
+  },
+  "history": {
+    "consumedStarts": 4,
+    "knownTokenSubtotal": 30510,
+    "allHistoryTokens": null
+  },
+  "authorityValidation": "Authority and exact Request validated; no ledger or inference created",
+  "acceptedObservabilityGaps": [
+    "provider-requests-and-internal-retries-unknown",
+    "retrospective-token-overshoot",
+    "unobserved-native-descendants",
+    "same-user-filesystem-access",
+    "serving-model-may-be-null",
+    "effective-actor-file-tools-unproven-by-local-flags"
+  ],
+  "next": "Execute this exact request once through shared dispatcher, preserve raw response/tool/usage/process/ledger evidence; hold without further starts."
+}

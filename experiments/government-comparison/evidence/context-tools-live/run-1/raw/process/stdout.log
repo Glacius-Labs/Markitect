@@ -1,0 +1,5 @@
+{"type":"thread.started","thread_id":"01a117d7-10eb-7ba2-b89c-cccb39893dfb"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"I’ll read only the two specified files and return their sentinel lines as JSON.\n"}}
+{"type":"item.completed","item":{"id":"item_1","type":"agent_message","text":"{\n  \"released\": null,\n  \"actorOwn\": null,\n  \"error\": \"Both file reads were blocked by policy; no sentinel lines were retrieved.\"\n}"}}
+{"type":"turn.completed","usage":{"input_tokens":22478,"cached_input_tokens":10752,"cache_write_input_tokens":0,"output_tokens":343,"reasoning_output_tokens":106}}

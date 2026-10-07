@@ -1,0 +1,20 @@
+{
+  "utc": "2026-10-07T19:28:42.968795+00:00",
+  "sourceHead": "ac998adf88e7bad1517d98b9e4a4a6265016dbe6",
+  "sourceCandidate": "56d2e578ce105a77e4f8be4e3364925efc9d813d",
+  "sourcesVerified": 40,
+  "externalDraftsInputsVerified": 15,
+  "approvedAuthorityHashesVerified": true,
+  "historicalLedgerHashes": {
+    "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\.study-data\\actual-runner-authorized-starts.sqlite": "74dfd51e2802bc67131891b28c6858129ff5ef4a50a6f1fe06a8793a7250732f",
+    "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\.study-data\\runner-01601-diagnostic.sqlite": "33bd2ba59b11ab6d54f75c55e6d12b00ec6b90df00106a1419aed239cef2982c",
+    "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\context-additional-20261007\\dispatch.sqlite": "b4f13c5053ad1f00e477bf9be9831a5075f2ea0d8d33d8db6ce8a2173a6a0be8"
+  },
+  "historyEqual": true,
+  "successorAbsent": true,
+  "evidenceAbsent": true,
+  "resultAbsent": true,
+  "resultPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\context-tools-20261007\\context-drafts\\results\\context-result.json",
+  "grantCurrentlyValid": true,
+  "newActorStarts": 0
+}

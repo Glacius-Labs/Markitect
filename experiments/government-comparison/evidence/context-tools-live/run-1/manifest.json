@@ -1,0 +1,86 @@
+{
+  "files": {
+    "authority/approval-receipt.json": {
+      "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\context-tools-20261007\\context-drafts\\overseer-approved-20261007\\approval-receipt.json",
+      "sha256": "cadaa10e0b41ed4b370912e4fcb22912639de969c835c41b04e9a3787712ee71"
+    },
+    "authority/request.json": {
+      "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\context-tools-20261007\\context-drafts\\overseer-approved-20261007\\request.json",
+      "sha256": "39a62a4da246ab3e48ff4ee1bb21f0265753c0ecbaa98f3077567d862d484970"
+    },
+    "authority/grant.approved.json": {
+      "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\context-tools-20261007\\context-drafts\\overseer-approved-20261007\\grant.approved.json",
+      "sha256": "8ff308caf381c4629f72f357bb264e21bd866dc8c4ef549f9fc450b06d7cebe8"
+    },
+    "authority/protocol.frozen.json": {
+      "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\context-tools-20261007\\context-drafts\\overseer-approved-20261007\\protocol.frozen.json",
+      "sha256": "bcf32b9ab46005855e7ec8379a7b1007681539cf860c7a1f4f7c650ed5897598"
+    },
+    "authority/profile-adoption.approved.json": {
+      "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\context-tools-20261007\\context-drafts\\overseer-approved-20261007\\profile-adoption.approved.json",
+      "sha256": "28159c5fbebd637fb92272229779915fb1a720654887f45811a51dbf7197cc43"
+    },
+    "preflight.json": {
+      "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\context-tools-20261007\\context-drafts\\run-preflight.json",
+      "sha256": "44798c27b8be1e0da8f7ac61451bccd5b850826bb8bb9c5c8954194a9324378f"
+    },
+    "context-result.json": {
+      "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\context-tools-20261007\\context-drafts\\results\\context-result.json",
+      "sha256": "beaadbc4a9aae26b934d318e7c89c1e8e635a29e53f7b8bfd5940abaad70493b"
+    },
+    "dispatch.sqlite": {
+      "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\context-tools-20261007\\dispatch.sqlite",
+      "sha256": "c4af6de468bd93a7373c56295075771da7981d5d541bcf2261e20556ec31bb89"
+    },
+    "raw/process/process.json": {
+      "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\context-tools-20261007\\context-drafts\\context-evidence\\process\\process.json",
+      "sha256": "d12d22c2178d144ad45613ffb5ebdd38fec4bda5c062873c492d19addf1c78aa"
+    },
+    "raw/process/stderr.log": {
+      "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\context-tools-20261007\\context-drafts\\context-evidence\\process\\stderr.log",
+      "sha256": "1b17bf8f6d36c77fe081014ff363b45ea5ed3c88a4d84f6e47c83502b464934c"
+    },
+    "raw/process/stdout.log": {
+      "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\context-tools-20261007\\context-drafts\\context-evidence\\process\\stdout.log",
+      "sha256": "386a00e490fdc8d5f38fb0420cd1c25e000d867148ef035501bdc8611052d9f1"
+    },
+    "raw/released-inputs/0": {
+      "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\context-tools-20261007\\context-drafts\\context-evidence\\released-inputs\\0",
+      "sha256": "0c2a60a2188673ec2347c6a6801ad194aa5a64c0c797e99614a7a387e7b94389"
+    },
+    "raw/released-inputs/1": {
+      "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\context-tools-20261007\\context-drafts\\context-evidence\\released-inputs\\1",
+      "sha256": "b5d631d46bfc4b17448c066d60a7e3006d24484f333410363f02ea5e4b607a6a"
+    },
+    "raw/released-inputs/2": {
+      "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\context-tools-20261007\\context-drafts\\context-evidence\\released-inputs\\2",
+      "sha256": "44f4a76f61669e64e41192330b6c555e434efbe283149918ec36f5395588eca2"
+    },
+    "raw/request.json": {
+      "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\context-tools-20261007\\context-drafts\\context-evidence\\request.json",
+      "sha256": "39a62a4da246ab3e48ff4ee1bb21f0265753c0ecbaa98f3077567d862d484970"
+    },
+    "inputs/actor-own.txt": {
+      "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\profile-v2-20261007-1791395973561\\context-drafts\\actor-workspace\\actor-own.txt",
+      "sha256": "d61740fc82210e4c3ecd6be3d5fa75bd76ad82125bbc597d5b8762f146d5593b"
+    },
+    "inputs/context.txt": {
+      "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\profile-v2-20261007-1791395973561\\context-drafts\\released\\context.txt",
+      "sha256": "44f4a76f61669e64e41192330b6c555e434efbe283149918ec36f5395588eca2"
+    },
+    "ledger-readonly.json": {
+      "sha256": "e60ba73d4432100616f1fe572c0bcb4af73d8a7c585462b28917c68e992fa199"
+    },
+    "invocation.json": {
+      "sha256": "3009fdb97c764e12ee59c73cce7953bcb1f944fb604b0d42042018278bbcbf6e"
+    },
+    "observation.json": {
+      "sha256": "ad982efe9040ea0ff2480630cd3845a3d105318e29ea7f4301551d348c0ae89a"
+    },
+    "tool-attempts.json": {
+      "sha256": "5a16edea566646b62e273f3f486c5082779b03e8fb2de2f977eaa076f0d69fc5"
+    }
+  },
+  "sourceCandidate": "56d2e578ce105a77e4f8be4e3364925efc9d813d",
+  "sourceHeadAtInvocation": "ac998adf88e7bad1517d98b9e4a4a6265016dbe6"
+}

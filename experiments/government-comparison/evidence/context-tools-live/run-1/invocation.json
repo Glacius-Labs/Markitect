@@ -1,0 +1,31 @@
+{
+  "sourceHeadAtInvocation": "ac998adf88e7bad1517d98b9e4a4a6265016dbe6",
+  "sourceCandidate": "56d2e578ce105a77e4f8be4e3364925efc9d813d",
+  "cwd": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect",
+  "argv": [
+    "C:/Python313/python.exe",
+    "experiments/government-comparison/runtime/adapter.py",
+    "--request",
+    "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\context-tools-20261007\\context-drafts\\overseer-approved-20261007\\request.json",
+    "--result",
+    "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\context-tools-20261007\\context-drafts\\results\\context-result.json",
+    "--grant",
+    "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\context-tools-20261007\\context-drafts\\overseer-approved-20261007\\grant.approved.json",
+    "--grant-sha256",
+    "8ff308caf381c4629f72f357bb264e21bd866dc8c4ef549f9fc450b06d7cebe8",
+    "--protocol",
+    "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\context-tools-20261007\\context-drafts\\overseer-approved-20261007\\protocol.frozen.json",
+    "--protocol-sha256",
+    "bcf32b9ab46005855e7ec8379a7b1007681539cf860c7a1f4f7c650ed5897598",
+    "--allow-live"
+  ],
+  "pathSpellingNote": "Forward-slash absolute paths in the shell invocation resolve to these exact receipt paths",
+  "dispatcherInvocations": 1,
+  "dispatcherExitCode": 0,
+  "resumeInvocations": 0,
+  "newActorStarts": 1,
+  "priorStarts": 4,
+  "cumulativeStarts": 5,
+  "furtherStartsAuthorized": 0,
+  "outerToolSessionId": 20288
+}

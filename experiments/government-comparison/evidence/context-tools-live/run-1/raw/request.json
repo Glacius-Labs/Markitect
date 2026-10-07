@@ -1,0 +1,71 @@
+{
+  "schemaVersion": 1,
+  "operation": "run_task",
+  "mode": "live",
+  "trialId": "overseer-context-tools-2026-10-07",
+  "dispatchId": "public-context-1",
+  "arm": "conventional",
+  "condition": "greenfield",
+  "purpose": "context-access",
+  "smokeKind": "effective-context-only",
+  "actorRepository": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\profile-v2-20261007-1791395973561\\context-drafts\\actor-workspace",
+  "baseCommit": "1441ee3a2b109be7d82e0a38a563ee56312e5881",
+  "evidenceDirectory": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\context-tools-20261007\\context-drafts\\context-evidence",
+  "limits": {
+    "taskWallSeconds": 1200,
+    "trialWallSeconds": 7200,
+    "taskActorCalls": 12,
+    "trialActorCalls": 72,
+    "taskProviderTurns": 80,
+    "trialProviderTurns": 480,
+    "taskProviderTokens": 120000,
+    "trialProviderTokens": 720000,
+    "maxParallelActors": 4,
+    "maxTransportRetriesPerCall": 1,
+    "maxSemanticRepairRoundsPerTask": 2,
+    "trialActiveHumanSeconds": 600,
+    "newPurchases": false
+  },
+  "wallSeconds": 180,
+  "task": {
+    "id": "public-synthetic-context-1",
+    "card": {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\profile-v2-20261007-1791395973561\\context-drafts\\released\\task-card.txt",
+      "sha256": "0c2a60a2188673ec2347c6a6801ad194aa5a64c0c797e99614a7a387e7b94389"
+    }
+  },
+  "prompt": {
+    "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\profile-v2-20261007-1791395973561\\context-drafts\\released\\prompt.txt",
+    "sha256": "b5d631d46bfc4b17448c066d60a7e3006d24484f333410363f02ea5e4b607a6a"
+  },
+  "releasedInputs": [
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\profile-v2-20261007-1791395973561\\context-drafts\\released\\task-card.txt",
+      "sha256": "0c2a60a2188673ec2347c6a6801ad194aa5a64c0c797e99614a7a387e7b94389"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\profile-v2-20261007-1791395973561\\context-drafts\\released\\prompt.txt",
+      "sha256": "b5d631d46bfc4b17448c066d60a7e3006d24484f333410363f02ea5e4b607a6a"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\profile-v2-20261007-1791395973561\\context-drafts\\released\\context.txt",
+      "sha256": "44f4a76f61669e64e41192330b6c555e434efbe283149918ec36f5395588eca2"
+    }
+  ],
+  "actorOwnedInputs": [
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\profile-v2-20261007-1791395973561\\context-drafts\\actor-workspace\\actor-own.txt",
+      "sha256": "d61740fc82210e4c3ecd6be3d5fa75bd76ad82125bbc597d5b8762f146d5593b"
+    }
+  ],
+  "toolPolicy": "ordinary-tools",
+  "sandbox": "read-only",
+  "allowedReadPaths": [
+    "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\profile-v2-20261007-1791395973561\\context-drafts\\released\\context.txt",
+    "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\profile-v2-20261007-1791395973561\\context-drafts\\actor-workspace\\actor-own.txt"
+  ],
+  "sourceCandidate": "56d2e578ce105a77e4f8be4e3364925efc9d813d",
+  "contextAllocationDecisionId": "overseer-context-tools-2026-10-07",
+  "measurementProfileId": "observed-native-usage-v2",
+  "measurementProfileSha256": "354c021a25adfbdd84d9768e5d51396e5b89dfc8be3e06de91d2c59eb9e9b51a"
+}

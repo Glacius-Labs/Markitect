@@ -1,0 +1,146 @@
+{
+  "schemaVersion": 1,
+  "reviewType": "independent-read-only-context-tools-live-reconciliation",
+  "reviewedUtc": "2026-10-07",
+  "verdict": "pass_with_scope_limits",
+  "findings": [],
+  "scope": "Read-only hashes, raw receipts, Result, and successor SQLite opened with mode=ro&immutable=1. No tests, CLI, model/metadata, Authority, dispatch/resume, or probes were run by this reviewer.",
+  "checks": {
+    "manifest": {
+      "manifestSha256": "86a554430f124d6d714cf39b998dc4e70e5d7cf3a900edfb7827e1d6c90be89e",
+      "expectedSha256": "86a554430f124d6d714cf39b998dc4e70e5d7cf3a900edfb7827e1d6c90be89e",
+      "evidenceCopiesMatched": 21,
+      "evidenceCopiesTotal": 21,
+      "originalsMatched": 17,
+      "originalsTotal": 17,
+      "allCopiesAndOriginalsMatch": true
+    },
+    "sourcePins": {
+      "currentMatched": 40,
+      "candidateCommitMatched": 40,
+      "total": 40,
+      "candidate": "56d2e578ce105a77e4f8be4e3364925efc9d813d",
+      "invocationDelivery": "ac998adf88e7bad1517d98b9e4a4a6265016dbe6",
+      "currentHead": "ac998adf88e7bad1517d98b9e4a4a6265016dbe6"
+    },
+    "authorityChain": {
+      "request": true,
+      "grant": true,
+      "protocol": true,
+      "profileAdoption": true,
+      "execution": true,
+      "delivery": true,
+      "trial": true
+    },
+    "actorWorkspace": {
+      "expectedBase": "1441ee3a2b109be7d82e0a38a563ee56312e5881",
+      "actualHead": "1441ee3a2b109be7d82e0a38a563ee56312e5881",
+      "clean": true
+    },
+    "ledger": {
+      "successorSha256": "c4af6de468bd93a7373c56295075771da7981d5d541bcf2261e20556ec31bb89",
+      "attemptRows": 1,
+      "dispatchRows": 1,
+      "attemptId": "afe620c991834a158b299338714d17c6",
+      "attemptStatus": "completed",
+      "attemptTokens": 22821,
+      "fullPredecessorBindingMatchesGrantProtocolResultAndLedger": true,
+      "priorStarts": 4,
+      "tokenSequence": [
+        null,
+        null,
+        10009,
+        20501
+      ],
+      "knownSubtotal": 53331,
+      "allHistoryTokens": null,
+      "cumulativeStarts": 5,
+      "oldDatabases": {
+        "actual-runner-authorized-starts.sqlite": {
+          "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\.study-data\\actual-runner-authorized-starts.sqlite",
+          "expectedSha256": "74dfd51e2802bc67131891b28c6858129ff5ef4a50a6f1fe06a8793a7250732f",
+          "actualSha256": "74dfd51e2802bc67131891b28c6858129ff5ef4a50a6f1fe06a8793a7250732f",
+          "matches": true
+        },
+        "runner-01601-diagnostic.sqlite": {
+          "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\.study-data\\runner-01601-diagnostic.sqlite",
+          "expectedSha256": "33bd2ba59b11ab6d54f75c55e6d12b00ec6b90df00106a1419aed239cef2982c",
+          "actualSha256": "33bd2ba59b11ab6d54f75c55e6d12b00ec6b90df00106a1419aed239cef2982c",
+          "matches": true
+        },
+        "context-additional-20261007/dispatch.sqlite": {
+          "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\context-additional-20261007\\dispatch.sqlite",
+          "expectedSha256": "b4f13c5053ad1f00e477bf9be9831a5075f2ea0d8d33d8db6ce8a2173a6a0be8",
+          "actualSha256": "b4f13c5053ad1f00e477bf9be9831a5075f2ea0d8d33d8db6ce8a2173a6a0be8",
+          "matches": true
+        }
+      }
+    },
+    "executionAndAnswer": {
+      "dispatcherInvocations": 1,
+      "resumeInvocations": 0,
+      "newActorStarts": 1,
+      "nativeExitCode": 0,
+      "nativeWallSeconds": 26.037334900000133,
+      "nativeStopReason": null,
+      "dispatcherExitCode": 0,
+      "resultStatus": "completed",
+      "completedAnswer": true,
+      "stdoutEventTypes": [
+        "thread.started",
+        "turn.started",
+        "item.completed",
+        "item.completed",
+        "turn.completed"
+      ],
+      "stdoutStructuredToolEvents": 0,
+      "stderrRouterToolAttempts": 2,
+      "attemptOutcomes": [
+        "CreateProcess rejected: blocked by policy",
+        "CreateProcess rejected: blocked by policy"
+      ],
+      "successfulReads": 0,
+      "sentinelMatches": {
+        "released": false,
+        "actorOwn": false
+      },
+      "rawResultToolEventCount": 0,
+      "inputTokens": 22478,
+      "outputTokens": 343,
+      "reportedTokens": 22821,
+      "threshold": 50000,
+      "remainingToThreshold": 27179,
+      "providerRequests": null,
+      "providerRetriesUnknown": true,
+      "resolvedServingModel": null,
+      "inferencePerformed": null
+    }
+  },
+  "evidenceSha256": {
+    "handoff": "b02e6efc0df1a77b3d5856934bffbf504a3dec1f035f9708b1a1ca393547fa76",
+    "manifest": "86a554430f124d6d714cf39b998dc4e70e5d7cf3a900edfb7827e1d6c90be89e",
+    "observation": "ad982efe9040ea0ff2480630cd3845a3d105318e29ea7f4301551d348c0ae89a",
+    "toolAttempts": "5a16edea566646b62e273f3f486c5082779b03e8fb2de2f977eaa076f0d69fc5",
+    "result": "beaadbc4a9aae26b934d318e7c89c1e8e635a29e53f7b8bfd5940abaad70493b",
+    "successorDatabase": "c4af6de468bd93a7373c56295075771da7981d5d541bcf2261e20556ec31bb89",
+    "approvalReceipt": "cadaa10e0b41ed4b370912e4fcb22912639de969c835c41b04e9a3787712ee71",
+    "request": "39a62a4da246ab3e48ff4ee1bb21f0265753c0ecbaa98f3077567d862d484970",
+    "grant": "8ff308caf381c4629f72f357bb264e21bd866dc8c4ef549f9fc450b06d7cebe8",
+    "protocol": "bcf32b9ab46005855e7ec8379a7b1007681539cf860c7a1f4f7c650ed5897598",
+    "profileAdoption": "28159c5fbebd637fb92272229779915fb1a720654887f45811a51dbf7197cc43",
+    "stdout": "386a00e490fdc8d5f38fb0420cd1c25e000d867148ef035501bdc8611052d9f1",
+    "stderr": "1b17bf8f6d36c77fe081014ff363b45ea5ed3c88a4d84f6e47c83502b464934c",
+    "process": "d12d22c2178d144ad45613ffb5ebdd38fec4bda5c062873c492d19addf1c78aa"
+  },
+  "interpretation": {
+    "answerAndTask": "The agent turn and native process completed, Result status is completed, but task semantics failed because both sentinel values are null.",
+    "toolEvidence": "Raw stdout has five events and no structured tool events. Raw stderr records two exec_command attempts against the exact authorized paths, each rejected by CreateProcess policy. Result toolEventCount=0 is stdout-only and does not represent zero actual attempts. No successful read was observed.",
+    "usage": "22,478 input + 343 output = 22,821 tokens, below the retrospective 50,000 threshold. Cached/reasoning counters are retained separately.",
+    "history": "Five starts consumed; known subtotal 53,331; total unknown. All three predecessor database hashes match.",
+    "study": "S1 remains open. The policy rejection reason does not establish OS isolation or the root cause. No sixth start or additional probe is authorized."
+  },
+  "limitations": [
+    "The observed stderr rejections prove attempted commands and CreateProcess policy denials, not successful shell execution or filesystem reads.",
+    "Provider request count, internal retries, and resolved serving identity remain unknown."
+  ]
+}

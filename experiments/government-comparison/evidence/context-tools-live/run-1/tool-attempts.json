@@ -1,0 +1,31 @@
+{
+  "stdoutStructuredToolEvents": 0,
+  "stderrRouterToolAttempts": [
+    {
+      "tool": "exec_command",
+      "source": "stderr codex_core::tools::router",
+      "stderrLine": 2,
+      "timestampUtc": "2026-10-07T19:29:07.459042Z",
+      "normalizedShellCommand": "Get-Content -LiteralPath 'C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\profile-v2-20261007-1791395973561\\context-drafts\\actor-workspace\\actor-own.txt'",
+      "normalization": "Literal command and unique filename from raw rejection; full target mapped to exact authorized Request path",
+      "readTarget": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\profile-v2-20261007-1791395973561\\context-drafts\\actor-workspace\\actor-own.txt",
+      "outcome": "CreateProcess rejected: blocked by policy",
+      "nativeShellExecutionSucceeded": false,
+      "fileReadObserved": false
+    },
+    {
+      "tool": "exec_command",
+      "source": "stderr codex_core::tools::router",
+      "stderrLine": 3,
+      "timestampUtc": "2026-10-07T19:29:07.459043Z",
+      "normalizedShellCommand": "Get-Content -LiteralPath 'C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\profile-v2-20261007-1791395973561\\context-drafts\\released\\context.txt'",
+      "normalization": "Literal command and unique filename from raw rejection; full target mapped to exact authorized Request path",
+      "readTarget": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\profile-v2-20261007-1791395973561\\context-drafts\\released\\context.txt",
+      "outcome": "CreateProcess rejected: blocked by policy",
+      "nativeShellExecutionSucceeded": false,
+      "fileReadObserved": false
+    }
+  ],
+  "successfulFileReadsObserved": 0,
+  "observationGap": "stdout-only tool counter misses policy-rejected exec_command attempts surfaced in stderr"
+}
