@@ -134,13 +134,24 @@ freeze the resulting context policy equally across arms.
 
 ## Next finite checkpoint
 
-The accepted [real context result](context-additional-live-handoff.md) consumed
-the fourth start but returned neither sentinel. The next
-[corrected work-tool package](public/context-tools-readiness.md) explicitly
-enables shell/unified execution for ordinary Actors and separates metadata-only
-diagnostics. Its fixed one-session follow-up is **draft only**, with a 50,000
-retrospective token threshold; it grants no fifth start. All four prior starts,
-unknown historical totals and immutable receipts remain preserved.
+The [extended user-goal coverage](public/user-goal-coverage.md) binds the six
+research questions to existing cards, independent criteria and explicit gaps.
+Its [exact canonical contract snapshot](public/study-contract-2026-10-07.md) comes
+from `d929aa7c6f4b590bac2251333a62987bf04ec0da`; product source was not imported.
+No new fixture requirement, score, trial or budget follows from a proposed gap
+closure. The fifth context session completed technically but both reads were
+policy-rejected; [its evidence](context-tools-live-handoff.md) keeps S1 open.
+
+The accepted [fourth context result](context-additional-live-handoff.md) returned
+neither sentinel. The [corrected work-tool package](public/context-tools-readiness.md)
+enabled shell/unified execution; its separately authorized
+[fifth context result](context-tools-live-handoff.md) still returned neither
+sentinel after two policy-rejected attempts. Five starts and their immutable
+receipts remain accounted for; known input-plus-output tokens total 53,331,
+while the complete historical total remains unknown. The
+[policy diagnosis](public/policy-block-diagnosis.md) separates the observed
+rejection from its unverified cause and proposes a decision on supported scoped
+permissions. It authorizes no sixth start or study cell.
 
 The common [measurement profile v2](public/measurement-profile-v2.md) is adopted
 equally for all arms. Numeric common limits remain unchanged. Known tokens with

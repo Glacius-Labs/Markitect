@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "kind": "exact-canonical-study-contract-snapshot",
+  "sourceRepository": "C:\\Users\\Consiliari\\Glacius Labs\\Markitect",
+  "sourceCommit": "d929aa7c6f4b590bac2251333a62987bf04ec0da",
+  "sourcePath": "docs/design/government/evaluation.md",
+  "sourceGitBlob": "ab75e8207391636caac9d024900b117c26c729e3",
+  "sha256": "55db78d1148338259b182d9e6f15b0618cbec97cd01043484beeea275748faae",
+  "snapshotPath": "study-contract-2026-10-07.md",
+  "scope": "Documentation-only exact bytes; no product source imported",
+  "sectionsApplied": [
+    "Nutzerziel: gedankliches Modell und dauerhafte \u00c4nderbarkeit",
+    "Begrenzte Folgefragen nach dem Basisvergleich",
+    "Aussagegrenzen und Abschluss"
+  ],
+  "authority": "Canonical owner remains docs/design/government/evaluation.md at the referenced commit; this is a bound study snapshot",
+  "relativeLinkSemantics": "Relative links in exact snapshot refer to original docs/design/government directory at sourceCommit, not this export directory"
+}

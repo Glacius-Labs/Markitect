@@ -1,0 +1,64 @@
+{
+  "kind": "documentation-only-research-policy-validation",
+  "validatedAtUtc": "2026-10-07T19:59:10.082074+00:00",
+  "baseCommit": "098a7931f9f350b007046e858b6b348bee08feec",
+  "sourceContract": {
+    "schemaVersion": 1,
+    "kind": "exact-canonical-study-contract-snapshot",
+    "sourceRepository": "C:\\Users\\Consiliari\\Glacius Labs\\Markitect",
+    "sourceCommit": "d929aa7c6f4b590bac2251333a62987bf04ec0da",
+    "sourcePath": "docs/design/government/evaluation.md",
+    "sourceGitBlob": "ab75e8207391636caac9d024900b117c26c729e3",
+    "sha256": "55db78d1148338259b182d9e6f15b0618cbec97cd01043484beeea275748faae",
+    "snapshotPath": "study-contract-2026-10-07.md",
+    "scope": "Documentation-only exact bytes; no product source imported",
+    "sectionsApplied": [
+      "Nutzerziel: gedankliches Modell und dauerhafte Änderbarkeit",
+      "Begrenzte Folgefragen nach dem Basisvergleich",
+      "Aussagegrenzen und Abschluss"
+    ],
+    "authority": "Canonical owner remains docs/design/government/evaluation.md at the referenced commit; this is a bound study snapshot",
+    "relativeLinkSemantics": "Relative links in exact snapshot refer to original docs/design/government directory at sourceCommit, not this export directory"
+  },
+  "files": {
+    "README.md": "2427b5013468dbef988566e30a031ff64311ea161159519ae63080cd23e0f8a2",
+    "research-policy-handoff.md": "a437f693ddf639aee95ea141dd438d10a2b974b2c893757ec9e970eaa611d622",
+    "public/policy-block-diagnosis.md": "2c2c219ed26e2466ae3e841dfef49ac50b144ce058dfabd23d66a1ab2c64090b",
+    "public/research-coverage-review.md": "c7e6e5c3b902cfffefe135c5bcf09e4a5e3617c329ab345209db8ad2401056fe",
+    "public/study-contract-2026-10-07.md": "55db78d1148338259b182d9e6f15b0618cbec97cd01043484beeea275748faae",
+    "public/study-contract-source.json": "d1d79c4c7ac54a6f10138961afacf58adbaeddd18a991e237edacb8ab059c306",
+    "public/user-goal-coverage.md": "407f2021a95ac48365e956787562fa5cc9cd7da52057d12619867dbf693a6338"
+  },
+  "priorLedgerHashes": {
+    "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\.study-data\\actual-runner-authorized-starts.sqlite": "74dfd51e2802bc67131891b28c6858129ff5ef4a50a6f1fe06a8793a7250732f",
+    "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\.study-data\\runner-01601-diagnostic.sqlite": "33bd2ba59b11ab6d54f75c55e6d12b00ec6b90df00106a1419aed239cef2982c",
+    "C:/Users/Consiliari/Documents/Scientist-Probes/context-additional-20261007/dispatch.sqlite": "b4f13c5053ad1f00e477bf9be9831a5075f2ea0d8d33d8db6ce8a2173a6a0be8",
+    "C:/Users/Consiliari/Documents/Scientist-Probes/context-tools-20261007/dispatch.sqlite": "c4af6de468bd93a7373c56295075771da7981d5d541bcf2261e20556ec31bb89"
+  },
+  "fifthRunRawHashes": {
+    "stdout.log": "386a00e490fdc8d5f38fb0420cd1c25e000d867148ef035501bdc8611052d9f1",
+    "stderr.log": "1b17bf8f6d36c77fe081014ff363b45ea5ed3c88a4d84f6e47c83502b464934c",
+    "process.json": "d12d22c2178d144ad45613ffb5ebdd38fec4bda5c062873c492d19addf1c78aa"
+  },
+  "observations": {
+    "stdoutEvents": 5,
+    "structuredStdoutToolEvents": 0,
+    "stderrRejectedExecAttempts": 2,
+    "nativeReturnCode": 0,
+    "sentinelSuccess": false
+  },
+  "checks": {
+    "exactCanonicalBytes": true,
+    "exactGitBlob": true,
+    "priorLedgersUnchanged": true,
+    "fifthRunEvidenceUnchanged": true,
+    "gitDiffWhitespace": true,
+    "localDocumentLinks": 39
+  },
+  "limits": [
+    "No model or Actor start, rejected-command retry, Codex CLI probe, full suite or behavioral test",
+    "No private holdout inspected",
+    "Current official docs do not establish pinned CLI cause or corrected execution support",
+    "Snapshot relative links intentionally resolve in original source directory; existence checks below exclude that byte-identical document"
+  ]
+}
