@@ -13,6 +13,6 @@ spec:
     Preserve externally visible behavior and keep application orchestration
     separate from persistence details. Represent this finite example as
     Commerce.Application.CreateOrderHandler with decimal Handle(int quantity,
-    decimal unitPrice). Enforce positive quantity and non-negative unit price
-    with ArgumentOutOfRangeException; return quantity multiplied by unitPrice
-    using decimal arithmetic. No persistence or external service is needed.
+    decimal unitPrice). Enforce the business behavior declared by the selected
+    UseCase purpose, including its invalid-input exceptions and decimal
+    arithmetic. No persistence or external service is needed.

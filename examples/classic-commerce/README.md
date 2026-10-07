@@ -12,6 +12,45 @@ The canonical UseCase requires positive integer quantity, non-negative decimal u
 
 .NET is required only for this opt-in example. It is not a new prerequisite for the general Markitect CLI or Go test suite. The model/config/checks and runtime digest must be frozen anew if the SDK, fixed inputs or candidate changes.
 
+## Author intent and change it later
+
+The [intent-change walkthrough](intent-change.md) maps a concrete owner request to canonical Definitions, projection policies, output files and an independent probe. It explains accepting a fixed model before implementation and changing the minimum quantity from one to two afterward. The canonical model records what applies, without a brainstorming or permissions lifecycle.
+
+This later-change path is an unreleased source example. Its native runtime remains published v0.14.1 alpha; source revisions and binary identity are recorded separately. The existing positive/negative smoke below remains a separate recipe. Do not add it to a bounded later-change run just to repeat existing coverage.
+
+## One bounded initial-to-change smoke
+
+First read the [proposed model and independent-check change](intent-change.md#change-one-accepted-rule). From a clean committed source checkout, select that known fixture change and its exact candidate review explicitly:
+
+```powershell
+$sourceRoot = (Get-Location).Path
+$sourceRevision = (git rev-parse HEAD).Trim()
+if ($LASTEXITCODE -ne 0) { throw 'Cannot bind example source' }
+$binary = 'REQUIRED_ABSOLUTE_PATH_TO_VERIFIED_markitect-v0.14.1-windows-amd64.exe'
+$output = Join-Path $env:TEMP ('mc-change-' + [guid]::NewGuid().ToString('N'))
+python examples/classic-commerce/tools/change_smoke.py --binary $binary --source-root $sourceRoot --source-revision $sourceRevision --output $output --approve-known-fixture --accept-minimum-two
+if ($LASTEXITCODE -ne 0) { throw "Change smoke incomplete; preserve $output" }
+Get-Content -Raw (Join-Path $output 'receipt.json')
+```
+
+On Linux, select the verified Linux amd64 asset:
+
+```bash
+set -eu
+source_root="$PWD"
+source_revision="$(git rev-parse HEAD)"
+binary='/REQUIRED/ABSOLUTE/PATH/TO/markitect-v0.14.1-linux-amd64'
+output="$(mktemp -d)/run"
+python examples/classic-commerce/tools/change_smoke.py --binary "$binary" --source-root "$source_root" --source-revision "$source_revision" --output "$output" --approve-known-fixture --accept-minimum-two
+cat "$output/receipt.json"
+```
+
+Review the selected source commit, fixture policies and executable check/actor scripts before running it. The clean `--source-revision` is an explicit trusted input. Marker checks recognize the documented two-file transformation; they do not certify arbitrary modified fixtures or the sufficiency of their checks. Copied Git-blob hashes are retained for inspection.
+
+`--accept-minimum-two` selects only the exact documented two-file source change in the disposable repository. `--approve-known-fixture` selects only the exact known materialization bytes. Neither flag authenticates human acceptance. For real requirements, review the proposed intent and implementation independently instead of extending a fixture flag into general authority.
+
+The mechanical development profile allows at most two full attempts, twelve native mutating controller starts (including refused writes), twenty-four deterministic role starts, parallelism at most two and 1800 seconds of cumulative outer smoke time. Every process is finitely bounded. Preserve failed attempts and cumulative usage; changing the output directory does not replenish this development allocation. The recipe executes one initial-to-change workflow and has no automatic retry. It is separate from source tests and from the positive/negative smoke below.
+
 ## One bounded positive and negative smoke
 
 Run from a clean committed Markitect source checkout containing this example. The binary remains the published 0.14.1 asset; the example source commit is the current checkout's separate identity.

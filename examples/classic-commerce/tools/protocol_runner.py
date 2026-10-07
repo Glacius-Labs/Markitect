@@ -16,6 +16,11 @@ DOTNET_PROJECTION = '["markitect.foundation/v1","Projection","commerce","applica
 
 
 def candidate_files(mode: str) -> list[dict[str, str]]:
+    quantity_guard = (
+        "        if (quantity < 2) throw new ArgumentOutOfRangeException(nameof(quantity));\n"
+        if mode == "minimum-two"
+        else "        if (quantity <= 0) throw new ArgumentOutOfRangeException(nameof(quantity));\n"
+    )
     handler_body = (
         "using System;\n\n"
         "namespace Commerce.Application;\n\n"
@@ -23,8 +28,8 @@ def candidate_files(mode: str) -> list[dict[str, str]]:
         "{\n"
         "    public decimal Handle(int quantity, decimal unitPrice)\n"
         "    {\n"
-        "        if (quantity <= 0) throw new ArgumentOutOfRangeException(nameof(quantity));\n"
-        "        if (unitPrice < 0m) throw new ArgumentOutOfRangeException(nameof(unitPrice));\n"
+        + quantity_guard
+        + "        if (unitPrice < 0m) throw new ArgumentOutOfRangeException(nameof(unitPrice));\n"
         + ("        return quantity + unitPrice;\n" if mode == "bad-business" else "        return quantity * unitPrice;\n")
         + "    }\n"
         "}\n"
@@ -70,7 +75,7 @@ def required_subjects(context: Any) -> list[str]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--mode", choices=("positive", "bad-business"), required=True)
+    parser.add_argument("--mode", choices=("positive", "bad-business", "minimum-two"), required=True)
     args = parser.parse_args()
     try:
         invocation = json.load(sys.stdin)

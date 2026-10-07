@@ -152,6 +152,8 @@ spec:
       owner: classic-commerce-public-example
     - path: examples/classic-commerce/README.md
       owner: classic-commerce-public-example
+    - path: examples/classic-commerce/intent-change.md
+      owner: classic-commerce-public-example
     - path: examples/classic-commerce/canonical.yaml
       owner: classic-commerce-public-example
     - path: examples/classic-commerce/checks/ClassicCommerce.Check.csproj
@@ -199,6 +201,10 @@ spec:
     - path: examples/classic-commerce/runtime.template.json
       owner: classic-commerce-public-example
     - path: examples/classic-commerce/tools/protocol_runner.py
+      owner: classic-commerce-public-example
+    - path: examples/classic-commerce/tools/change_smoke.py
+      owner: classic-commerce-public-example
+    - path: examples/classic-commerce/tools/test_change_smoke.py
       owner: classic-commerce-public-example
     - path: examples/classic-commerce/tools/smoke.py
       owner: classic-commerce-public-example

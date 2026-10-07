@@ -142,15 +142,6 @@ def main() -> int:
         "sdkRequired": SDK_VERSION,
         "targetFramework": FRAMEWORK,
         "steps": [],
-        "behaviorCases": [
-            "whole-value total",
-            "fractional decimal total",
-            "zero unit price is allowed",
-            "zero quantity throws ArgumentOutOfRangeException",
-            "negative quantity throws ArgumentOutOfRangeException",
-            "negative unit price throws ArgumentOutOfRangeException",
-            "EffectAxis boundary is application",
-        ],
     }
 
     try:

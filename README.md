@@ -115,7 +115,19 @@ This diagram is the target flow, not a claim that current Markitect generates or
 
 Generated output is never the canonical owner. Provider projections can be regenerated from canonical resources. Human-authored narrative, external/vendor/tool inputs and implementation details not governed by a declared contract remain project-owned sources or observations; they are not automatically projections.
 
-## The current workflow
+## From a request to a governed change
+
+For the canonical alpha, start with a concrete request and review the intended rule in its canonical owner before implementing it. The model contains what applies; brainstorming and alternatives stay outside it. Ordinary implementation choices do not need a permissions checklist.
+
+The [intent-change walkthrough](examples/classic-commerce/intent-change.md) follows one rule from `UseCase.purpose` through selected .NET and Markdown policies to a handler, readable documentation and an independent behavior probe. It then changes the minimum order quantity from one to two, exposes stale evidence, refuses reuse of the old Apply candidate, and requests fresh verification. Model acceptance and review of exact materialization bytes are separate decisions.
+
+This walkthrough is an unreleased source example using the published v0.14.1 **experimental alpha** CLI. Its fixed actor demonstrates protocol mechanics; it does not translate arbitrary requests, establish semantic acceptance or run an autonomous team. The [example README](examples/classic-commerce/README.md) gives prerequisites and commands.
+
+<a id="the-current-workflow"></a>
+
+## Stable Project/Domain workflow
+
+The following resource kinds and `spec.targets` configuration belong to the stable Project/Domain path. The canonical alpha instead uses Schema/Definition sources, explicit Projection Definitions and runtime bindings; follow its example rather than combining the two formats.
 
 ### Define
 
