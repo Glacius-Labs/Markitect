@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-07T17:54:32Z",
+  "updatedUtc": "2026-10-07T18:09:29Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -11,28 +11,31 @@
     "status": "ACTIVE",
     "intervalMinutes": 10,
     "reportEveryReview": true,
-    "reportTimezone": "Europe/Berlin"
+    "reportTimezone": "Europe/Berlin",
+    "lastVerifiedUtc": "2026-10-07T18:04:04Z",
+    "verification": "Read saved automation.toml: ACTIVE,10minutes,this thread; app automation view rendered. No duplicate or schedule change.",
+    "userReaffirmed": "Latest direct user request: every10minutes plus immediate extra review; existing monitor retained."
   },
   "threads": [
     {
       "name": "Worker",
       "threadId": "01a1169b-9357-7df3-a8f6-f913557c782a",
       "hostId": "local",
-      "afterCursor": "b2b8e43f-fcaa-41bf-828a-99c69527bdea:30",
+      "afterCursor": "b2b8e43f-fcaa-41bf-828a-99c69527bdea:32",
       "lastObservedStatus": "active",
-      "activeTurn": "01a11756-d1a8-7973-a56f-935f53607e58",
-      "lastAssistantMessageId": "msg_0a7785839df196a4016ac686fe206c819180e47c498cb4ea90",
+      "activeTurn": "01a1178c-8696-7011-a7d9-0b4285d6ca75",
+      "lastAssistantMessageId": "msg_0a7785839df196a4016ac68a69bb748191bc5bb26a89511b93",
       "initialAssignmentDispatched": true,
-      "assignedMilestone": "G3: bounded recursive delegation, real parent integration, detect composition failure despite green children and fresh root repair",
-      "latestProgress": "Die vier Trial-Checkouts sind weiterhin sauber. Nur im erfolgreichen Fall zeigt die aktive Government-Ref auf den neuen Kandidaten; bei allen drei Abbrüchen bleibt sie auf der Basis. Die Übergabe hält auch die früheren Skriptfehler und den unterbrochenen Verify-Versuch fest, damit sie nicht als erfolgreiche Nachweise zählen.",
+      "assignedMilestone": "G4 delegated substantial model/realization amendment under prior authority and bounded conflict escalation; no G5 queue",
+      "latestProgress": "G3 ist abgenommen. Ich beginne G4 auf dem angenommenen SHA und prüfe zuerst die Vorgaben für Modelländerungen und Konflikteskalation gegen den bestehenden Ablauf. Danach teile ich getrennte Implementierungs- und Review-Aufgaben auf. Die aktive Vorverfassung bleibt die Entscheidungsgrundlage; vor G5 halte ich wieder an.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-worker/Markitect",
       "transferredDesignCommit": "691ce1dee3484371c4aea725db4ed5cc3f2e3719",
-      "candidateSha": "2b604d1aeabd8cef49fb19177cc5d29cfa3b1493",
-      "acceptance": "G2 accepted with fixed source gates and native deterministic positive/three negative mechanics; G3 now active",
+      "candidateSha": "97a55bd572b9a730fa1e206232ee37e54025a144",
+      "acceptance": "G3 accepted as locally verified bounded recursive mechanics; G4 active",
       "lastAssignment": {
-        "sentUtc": "2026-10-07T17:08:48.000Z",
-        "key": "g3-recursive-delegation-parent-integration",
-        "scope": "Recursively bounded real child execution with isolated contexts/writers, independent review and actual parent integration; green children failing composition refused, bounded repair yields newly checked root and all fresh ministry votes; no G4/G5/publication."
+        "sentUtc": "2026-10-07T18:07:28Z",
+        "key": "g4-delegated-model-amendment-and-conflict",
+        "scope": "Prior Constitution-authorized substantive model+realization candidate, fresh review/all final votes; refuse self-authority/nondelegated goals; conflict blocks only dependent work; independent order may progress without G5 queue. Final exact-source gates and independent review."
       },
       "evidence": {
         "summary": ".artifacts/government-g1/budget-final-summary.json",
@@ -123,12 +126,37 @@
         "g3Progress": {
           "observedUtc": "2026-10-07T17:54:32Z",
           "reportedSourceSha": "5613e93d8128cf560b2b6e99872ee8ee0f577e7e",
-          "status": "Active final evidence preparation; no G3 acceptance",
+          "status": "Accepted; see g3Acceptance",
           "reportedChecks": "Four native CLI cases,15positive actor receipts,vet,20Contribution commands,Check and Impact passed; final Verify interrupted",
           "currentIssue": "Trial timestamp evaluation lost subsecond precision and falsely reported no process overlap; Worker correcting source/evidence and rerunning affected final checks.",
           "verify": "Worker says stopped before Go suite; recent tool output confirms own Verify process stopped and failed wrapper result. No completed final Verify accepted.",
           "inspection": "Read latest failure marker and surrounding chat output to distinguish active evidence correction from a finished gate; no test rerun by Overseer.",
           "latestReportedEvidence": "Four clean trial checkouts, only positive case promotes Active Ref; all3refusals retain base. Historical script errors and interrupted Verify remain documented. No final complete gate inspected."
+        },
+        "g3Acceptance": {
+          "acceptedUtc": "2026-10-07T18:07:28Z",
+          "sourceSha": "97a55bd572b9a730fa1e206232ee37e54025a144",
+          "handoff": ".artifacts/government-g3/handoff-97a55bd.json",
+          "handoffSha256": "d4123f239a4149364228fa79c7c9d595d9e83969b0c4aecca6631f3621664a27",
+          "sourceHashesIndependentlyChecked": 29,
+          "sourceGitBlobsMatched": true,
+          "nativeHashesIndependentlyChecked": 415,
+          "hashMismatches": 0,
+          "binarySha256": "93f6e6a2557be13ae4ea6f815f0839ce97e1f7afb51c77bc108e98571656b54c",
+          "fixedVerifyExit": 0,
+          "provisional": false,
+          "gateCount": 4,
+          "verifyElapsedMilliseconds": 801465.9652,
+          "goSuiteMilliseconds": 676135,
+          "completedFullGoSuites": 1,
+          "contributionCommandsPassed": 20,
+          "otherGates": "Vet, fixed Check/Impact passed",
+          "native": "Green child results compose wrongly; parent check/review rejects; bounded repair yields fresh root verification/votes and promotion. Independent child processes overlap. Three negative cases refuse.",
+          "threeLevelCase": "Root without own writer covered by source regression",
+          "history": "Prior timestamp/depth/rendezvous/sparse-abort fixes and interrupted pre-suite Verify preserved, not passed evidence",
+          "reviewer": "/root/g3_handoff_acceptance",
+          "rootInspection": "Clean candidate, final thread instructions/handoff sourceVerify details and G4 design contract read; no tests repeated",
+          "limitations": "Local Windows deterministic mechanics, no real model quality, Linux/CI or G4/G5 claims"
         }
       }
     },
@@ -136,21 +164,21 @@
       "name": "Scientist",
       "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
       "hostId": "local",
-      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:32",
+      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:34",
       "lastObservedStatus": "active",
-      "activeTurn": "01a1176b-0388-72c2-9de5-75d944702a60",
-      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac68636a8c08191a71d5349a4ead7d7",
+      "activeTurn": "01a1178e-2fb1-7763-b2ce-0f1fff1eb60d",
+      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac68acdfdbc819181fcdeb9bac9333d",
       "initialAssignmentDispatched": true,
-      "assignedMilestone": "S1 common measurable profile correction, preserved cumulative-ledger binding and exact one-context-smoke Request/Protocol/Grant drafts; no inference",
-      "latestProgress": "Der Review hat zwei wichtige Punkte gefunden. Profilwechsel und Grant-Bindung werden jetzt gemeinsam zurückgerollt, wenn die zusätzliche Zuteilung ungültig ist. Die Kontext-Entwürfe binde ich an die vorhandene Diagnose-Historie. Deren altes Ledger-Format unterstützt der Dispatcher noch nicht; der Entwurf weist diese Sperre ausdrücklich aus und eröffnet keine leere Ersatzdatenbank.",
+      "assignedMilestone": "Minimal explicit additive one-context-session allocation with immutable cumulative diagnostic history; reviewed exact drafts, no inference",
+      "latestProgress": "Ich setze die ausdrücklich zusätzliche Diagnose-Zuteilung um: ein neuer Start, dauerhaft an die drei verbrauchten Starts und beide unveränderten Ledger gebunden. Die Unknown-Token-Sperre des Studienprofils bleibt bestehen. Danach liefere ich geprüfte neue Entwürfe ohne ausführbaren Grant oder Inferenz.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-scientist/Markitect",
       "transferredDesignCommit": "b9e17c9896f14b4b1268e4bcb005395f5d324384",
-      "candidateSha": "021bdd7f07447e50a0d637bc7cb42f7a8e3c9133",
-      "acceptance": "S1 dispatcher/accounting mechanical checkpoint accepted; profile correction active, no actual context/access proof or S1 live clearance",
+      "candidateSha": "0e00bfd5d81c259a8c7fac0731ef27a4a2a27e20",
+      "acceptance": "Measurement v2 and blocked concrete drafts accepted as mechanics; explicit additive context-allocation implementation active",
       "lastAssignment": {
-        "sentUtc": "2026-10-07T17:30:51Z",
-        "key": "s1-measurable-profile-and-context-grant-draft",
-        "scope": "Explicit shared profile separates unknown internal provider counts from unknown tokens, preserves cumulative ledgers/stops; targeted negative/resume/migration checks and independent review; prepare exact one-context-session drafts, without approval or inference."
+        "sentUtc": "2026-10-07T18:09:17Z",
+        "key": "s1-explicit-additive-context-allocation",
+        "scope": "Keep historical ledgers/grants exhausted and usage null; bind one additional finite diagnostic allocation to both ledgers and3consumed starts (cumulative4). No generic unknown bypass, no v2 study change. Focused checks/review and new exact source/request/protocol/grant drafts; no live grant or inference."
       },
       "evidence": {
         "sourcesHashChecked": 37,
@@ -276,10 +304,31 @@
         },
         "measurementProfileProgress": {
           "observedUtc": "2026-10-07T17:54:32Z",
-          "status": "Active review corrections; no new acceptance",
+          "status": "Accepted; see measurementProfileAcceptance. Historical accounting policy resolved by explicit additional allocation, implementation not yet accepted.",
           "reportedFix": "Atomic rollback of profile migration and grant binding when supplemental allocation invalid",
           "openReadinessGap": "Existing historical diagnostic ledger format unsupported by dispatcher; context draft records block, no empty replacement database",
           "nextAssessment": "Inspect completed profile/draft and decide minimal migration/history binding before any live grant"
+        },
+        "measurementProfileAcceptance": {
+          "acceptedUtc": "2026-10-07T18:09:17Z",
+          "sourceSha": "0e00bfd5d81c259a8c7fac0731ef27a4a2a27e20",
+          "implementationSha": "e07d04011d74f59fa360b2ab800c453dc11074ce",
+          "handoff": "experiments/government-comparison/profile-v2-handoff.md",
+          "profileId": "observed-native-usage-v2",
+          "profileSha256": "354c021a25adfbdd84d9768e5d51396e5b89dfc8be3e06de91d2c59eb9e9b51a",
+          "sourceHashesIndependentlyChecked": 29,
+          "evidenceHashesIndependentlyChecked": 17,
+          "draftHashesIndependentlyChecked": 15,
+          "archiveEntriesIndependentlyChecked": 337,
+          "hashMismatches": 0,
+          "targetedTestsReported": 52,
+          "reviewer": "/root/s1_profile_v2_acceptance",
+          "review": "No material findings; tests not repeated",
+          "rootInspection": "Clean SHA, latest chat instructions, public handoff/profile/grant/history read",
+          "metadata": "Authenticated catalog advertises exact gpt-6.1-sol/high, no inference/serving-ID claim",
+          "remainingGap": "Faithful legacy migration still retains unknown tokens and blocks literal v2; narrow new additive readiness allocation explicitly decided, not yet implemented/frozen",
+          "liveGrantIssued": false,
+          "liveCells": 0
         }
       },
       "classicHandoffReceived": true,
@@ -362,7 +411,7 @@
       "heldWorktree": "C:/Users/Consiliari/.codex/worktrees/standard-operating-model/Markitect"
     }
   ],
-  "nextAction": "Review Worker G3 final evidence and Scientist shared-profile correction plus exact one-context-session drafts; coordinator run grant follows pinned acceptance. Architect held; no live comparison or publication.",
+  "nextAction": "Review Worker G4 and Scientist explicit additive history-bound context allocation. Approve exact one-session live Grant only after ready frozen source/request/protocol. Continue10minute checks with short reports; Architect held.",
   "boundaries": {
     "governmentPublication": false,
     "automaticClassicReplacement": false,
@@ -371,10 +420,12 @@
     "jev": "Deferred; no extra investigation started"
   },
   "lastReview": {
-    "reviewedUtc": "2026-10-07T17:54:32Z",
-    "evidenceLevel": "Compact snapshots for all3chats. Worker final evidence and Scientist ledger/profile review corrections still active. No new exact-source completed package or final gate accepted. Architect unchanged.",
+    "reviewedUtc": "2026-10-07T18:09:29Z",
+    "evidenceLevel": "Extra user-requested live check of all3, saved automation/app view. New clean Worker/Scientist completions independently hash/contract verified and public handoffs read. Followup dispatches observed active.",
     "coordinationActions": [
-      "Recorded reported ActiveRef cases and Scientist historical-ledger compatibility gap; no duplicate active assignments or test runs."
+      "Accepted WorkerG3; dispatched G4 at18:07.",
+      "Accepted Scientist v2 mechanics; decided minimal explicit additive readiness allocation and dispatched implementation/review/drafts at18:09.",
+      "Confirmed active10minute monitor; no duplicate automation, no new Architect work, no tests or live inference run by Overseer."
     ],
     "userDecisionRequired": false
   },
@@ -390,17 +441,17 @@
     "liveStudyApproved": false,
     "latestScientistCommit": "8df6085d938a1f73576743c3fa38ba3a5c51dd9a",
     "governmentInterim": {
-      "sourceSha": "2b604d1aeabd8cef49fb19177cc5d29cfa3b1493",
-      "path": ".artifacts/government-g2/handoff-2b604d1.json",
+      "sourceSha": "97a55bd572b9a730fa1e206232ee37e54025a144",
+      "path": ".artifacts/government-g3/handoff-97a55bd.json",
       "forwardedTo": "Scientist",
-      "sentUtc": "2026-10-07T17:09:12Z",
-      "scope": "One-writer native G2 only; G3-G5/readiness gaps preserved; not final study freeze"
+      "sentUtc": "2026-10-07T18:09:17Z",
+      "scope": "Recursive G3 mechanics; G4/G5 and final study freeze still pending"
     }
   },
   "resourceProfile": {
     "selectedUtc": "2026-10-07T15:00:51Z",
     "source": "Scientist e4278c50ddc84daee3858e24c89e6cf5777b5dfe experiments/government-comparison/public/resource-proposal.json",
-    "status": "Explicit measurable common profile correction selected; implementation/review and live freeze pending",
+    "status": "observed-native-usage-v2 mechanically accepted; native integration/S1/final live-study freeze pending",
     "taskWallSeconds": 1200,
     "trialWallSeconds": 7200,
     "taskActorCalls": 12,
@@ -416,7 +467,7 @@
     "newPurchases": false,
     "liveStudyApproved": false,
     "scope": "One exploratory trial per six cells only after all readiness gates and final coordinator freeze; all setup, descendants, reviews, failures and model upkeep count",
-    "updatedUtc": "2026-10-07T17:31:12Z",
+    "updatedUtc": "2026-10-07T18:09:29Z",
     "maxWrapperRetries": 0,
     "providerCountPolicy": "Internal requests/retries unknown/null, never proxy with Agent turns. Legacy80/480/1unsupported; pinned unchanged transport defaults permitted inside finite process wall.",
     "tokenPolicy": "Raw input/output totals, retrospective threshold/overshoot explicit; unknown tokens block later admission.",
@@ -441,7 +492,9 @@
       "liveStudyApproved": false,
       "scope": "One exploratory trial per six cells only after all readiness gates and final coordinator freeze; all setup, descendants, reviews, failures and model upkeep count"
     },
-    "correctionSource": "Scientist021bdd7 public/s1-profile-correction-proposal.md; Overseer19:31 decision"
+    "correctionSource": "Scientist021bdd7 public/s1-profile-correction-proposal.md; Overseer19:31 decision",
+    "measurementProfileId": "observed-native-usage-v2",
+    "measurementProfileSha256": "354c021a25adfbdd84d9768e5d51396e5b89dfc8be3e06de91d2c59eb9e9b51a"
   },
   "runnerProbe": {
     "authorizedUtc": "2026-10-07T15:00:51Z",
@@ -515,15 +568,15 @@
   },
   "fullSuiteSlot": {
     "owner": "Worker",
-    "assignedUtc": "2026-10-07T17:08:48.000Z",
-    "scope": "Final required G3 source gates after implementation; no duplicate full suite",
+    "assignedUtc": "2026-10-07T18:07:28Z",
+    "scope": "Final required G4 source gates after implementation, no duplicate full suite",
     "previousOwner": "Worker",
-    "previousOwnerGate": "G2 completed and accepted",
+    "previousOwnerGate": "G3 completed and accepted",
     "others": "Scientist focused harness checks; Architect holding accepted Classic"
   },
   "contextSmokePreparation": {
     "selectedUtc": "2026-10-07T17:31:12Z",
-    "status": "Concrete drafts requested; run grant NOT issued",
+    "status": "Explicit additional resource decision selected; minimal cumulative-history successor implementation and exact drafts pending. Run grant NOT issued.",
     "maxSessions": 1,
     "maxWallSeconds": 180,
     "maxParallelActors": 1,
@@ -539,6 +592,19 @@
     "continuation": false,
     "newPurchases": false,
     "prerequisite": "Accepted profile correction and exact source/request/protocol/config/runner/Python/input pins, authenticated metadata, coordinator run grant",
-    "historicalDiagnostics": "All3prior starts exhausted; ledgers/unknown total preserved. No new inference authorized."
+    "historicalDiagnostics": "All3prior starts exhausted; ledgers/unknown total preserved. No new inference authorized.",
+    "updatedUtc": "2026-10-07T18:09:29Z",
+    "accountingDecision": "One additional finite readiness allocation despite unknown historical total. Old3starts consumed, oldgrants exhausted, knownsubtotal10009/allhistorynull retained; cumulative starts<=4. Within new allocation unknown tokens still block. No blanket v2 study bypass.",
+    "historicalLedgerHashes": [
+      "74dfd51e2802bc67131891b28c6858129ff5ef4a50a6f1fe06a8793a7250732f",
+      "33bd2ba59b11ab6d54f75c55e6d12b00ec6b90df00106a1419aed239cef2982c"
+    ],
+    "historicalStarts": 3,
+    "cumulativeMaximumStarts": 4,
+    "historicalTotalTokens": null,
+    "knownHistoricalTokenSubtotal": 10009,
+    "physicalMigrationRequired": false,
+    "successorLedger": "Only explicit immutable predecessor binding and cumulative grants/counts; not empty replacement or reset",
+    "liveGrantIssued": false
   }
 }
