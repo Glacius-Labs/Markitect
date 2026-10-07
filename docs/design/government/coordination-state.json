@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-07T21:27:26Z",
+  "updatedUtc": "2026-10-07T21:37:30Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -261,13 +261,13 @@
       "name": "Scientist",
       "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
       "hostId": "local",
-      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:62",
+      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:63",
       "lastObservedStatus": "active",
       "activeTurn": "01a11832-0d47-7961-b9de-aefdcd64b8c8",
-      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac6b885d6908191952d1c187ef00d0c",
+      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac6bac4281c81919e943d0521101961",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "One corrected classified local metadata session plus parallel missing native S1 adapter mechanics; no Actor or study.",
-      "latestProgress": "Die Adapterprüfung hat eine zu weitgehende Annahme korrigiert: Das native agentexec-Protokoll ist bereits dokumentiert. Ich ergänze deshalb die Scientist-seitige Middleware für die Vorabreservierung jeder Rolle im gemeinsamen Ledger und prüfe sie mit deterministischen Programmen. Nativer Dispatch bleibt bis zum integrierten S1-Nachweis gesperrt.",
+      "latestProgress": "Die Adapterkorrekturen werden jetzt gegen die tatsächlichen nativen Formate geprüft: unter anderem Digest-Präfixe, rekursive Rollen und Run-Berichte, die neben dem Queue-Verzeichnis liegen. Damit prüfen die mechanischen Tests die echte Schnittstelle; ein nativer S1-Lauf bleibt weiterhin offen.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-scientist/Markitect",
       "transferredDesignCommit": "b9e17c9896f14b4b1268e4bcb005395f5d324384",
       "candidateSha": "3be653384e1b83d8cbdab79a87f487a3ffdde050",
@@ -794,10 +794,10 @@
     "satPrinciples": "Deferred by direct user request on 2026-10-07; conceptual constraint/consistency/conflict-explanation principles first, no solver integration or current assignment change. See docs/design/government/deferred-research.md."
   },
   "lastReview": {
-    "reviewedUtc": "2026-10-07T21:27:26Z",
-    "evidenceLevel": "Three compact snapshots; no new completed handoff. Scientist reports recognizing documented native agentexec protocol and adding per-role common-ledger pre-reservation middleware with deterministic checks. This is reported progress, not accepted integrated S1 evidence. Worker holds accepted04e225d; Architect unchanged.",
+    "reviewedUtc": "2026-10-07T21:37:30Z",
+    "evidenceLevel": "All three compact snapshots. Scientist reports checking adapter corrections against native digest prefixes, recursive roles and run-report paths outside queue directory. No new completed handoff, native S1 result or accepted source evidence. Worker and Architect unchanged held.",
     "coordinationActions": [
-      "Recorded progress and cursors only; no repeated task, additional resources, product changes or tests. Existing S1 assignment continues."
+      "Recorded reported adapter progress and cursors. Existing assignment continues; no repeated messages, new grants, root product changes or tests."
     ],
     "userDecisionRequired": false
   },
