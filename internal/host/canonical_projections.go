@@ -353,7 +353,7 @@ func selectedAuthoringChecks(names []string, supplied []authoring.Check) []autho
 	out := make([]authoring.Check, 0, len(names))
 	for _, name := range names {
 		check := byName[name]
-		out = append(out, authoring.Check{Name: check.Name, Run: append([]string(nil), check.Run...)})
+		out = append(out, cloneAuthoringCheck(check))
 	}
 	return out
 }
@@ -597,9 +597,17 @@ func buildCanonicalProjectionRecord(p PreparedCanonicalProjection, observed, act
 func cloneAuthoringChecks(values []authoring.Check) []authoring.Check {
 	out := make([]authoring.Check, len(values))
 	for i, v := range values {
-		out[i] = authoring.Check{Name: v.Name, Run: append([]string(nil), v.Run...)}
+		out[i] = cloneAuthoringCheck(v)
 	}
 	return out
+}
+func cloneAuthoringCheck(value authoring.Check) authoring.Check {
+	value.Run = append([]string(nil), value.Run...)
+	if value.TimeoutSeconds != nil {
+		seconds := *value.TimeoutSeconds
+		value.TimeoutSeconds = &seconds
+	}
+	return value
 }
 func candidateDigest(raw []byte, outputs map[string][]byte, modes map[string]string) string {
 	if len(raw) > 0 {

@@ -65,6 +65,8 @@ spec:
             - test
             - ./...
             - -count=1
+            - -timeout=30m
+          timeoutSeconds: 1800
     adapters:
         - name: engineering-representations
           type: local-projection

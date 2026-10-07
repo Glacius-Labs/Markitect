@@ -4,7 +4,7 @@ Updated 2026-10-07. This is the canonical owner of shipped source and planned-wo
 
 ## Public Classic entrypoint follow-up (source candidate)
 
-The [Classic Commerce example](../examples/classic-commerce/README.md) is a separate, complete public entrypoint for the existing canonical controller alpha. It includes selected .NET/Markdown policies, an explicit runtime, an opt-in pinned local .NET build and independent finite behavior check, with a compilable negative candidate. It does not change the held v0.14.1-r1 study candidate, publish a new version, add an autonomous runner, or require .NET for other users. Its [source-bound validation report](validation/classic-commerce-entrypoint.md) records positive/negative native CLI evidence and separates focused checks from still-required full integration gates. The earlier structural binding example retains its missing-policy escalation.
+The [Classic Commerce example](../examples/classic-commerce/README.md) is a separate, complete public entrypoint for the existing canonical controller alpha. It includes selected .NET/Markdown policies, an explicit runtime, an opt-in pinned local .NET build and independent finite behavior check, with a compilable negative candidate. It does not change the held v0.14.1-r1 study candidate, publish a new version, add an autonomous runner, or require .NET for other users. Its [source-bound validation report](validation/classic-commerce-entrypoint.md) records positive/negative native CLI evidence and separates the initial focused checks from subsequent source-bound integration gates. The earlier structural binding example retains its missing-policy escalation.
 
 ## Standard operating model checkpoint
 

@@ -193,6 +193,10 @@ func TestProjectCheckSchemaConstraints(t *testing.T) {
 		t.Fatalf("check name and run must be required: %#v", item["required"])
 	}
 	checkProperties := mapping(t, item["properties"])
+	timeout := mapping(t, checkProperties["timeoutSeconds"])
+	if timeout["type"] != "integer" || timeout["minimum"] != 1 || timeout["maximum"] != 1800 || timeout["default"] != 600 || containsString(sequence(t, item["required"]), "timeoutSeconds") {
+		t.Fatalf("optional timeout bounds/default are incorrect: %#v", timeout)
+	}
 	if mapping(t, checkProperties["name"])["pattern"] != CheckNamePattern {
 		t.Errorf("check name pattern = %v, want %s", mapping(t, checkProperties["name"])["pattern"], CheckNamePattern)
 	}

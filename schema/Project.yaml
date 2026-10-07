@@ -296,6 +296,11 @@ properties:
                                   pattern: ^[^/\\\s]+$
                                   type: string
                             type: array
+                        timeoutSeconds:
+                            default: 600
+                            maximum: 1800
+                            minimum: 1
+                            type: integer
                     required:
                         - name
                         - run

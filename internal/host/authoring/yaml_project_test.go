@@ -1,6 +1,7 @@
 package authoring
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 )
@@ -42,6 +43,12 @@ spec:
 		{name: "relative executable path", body: `- {name: test, run: [./scripts/check]}`, want: "bare PATH command name"},
 		{name: "NUL argument", body: `- {name: test, run: [go, "bad\0arg"]}`, want: "NUL"},
 		{name: "nonstring argument", body: `- {name: test, run: [go, true]}`, want: "expected string"},
+		{name: "zero timeout", body: `- {name: test, run: [go, test], timeoutSeconds: 0}`, want: "between 1 and 1800"},
+		{name: "negative timeout", body: `- {name: test, run: [go, test], timeoutSeconds: -1}`, want: "between 1 and 1800"},
+		{name: "excessive timeout", body: `- {name: test, run: [go, test], timeoutSeconds: 1801}`, want: "between 1 and 1800"},
+		{name: "fractional timeout", body: `- {name: test, run: [go, test], timeoutSeconds: 1.5}`, want: "expected integer"},
+		{name: "string timeout", body: `- {name: test, run: [go, test], timeoutSeconds: "30"}`, want: "expected integer"},
+		{name: "null timeout", body: `- {name: test, run: [go, test], timeoutSeconds: null}`, want: "expected integer"},
 	}
 	for _, tt := range invalidChecks {
 		t.Run(tt.name, func(t *testing.T) {
@@ -61,6 +68,29 @@ spec:
 `
 	if _, err := Parse("skill.yaml", []byte(nonProject)); err == nil || !strings.Contains(err.Error(), "unknown field") {
 		t.Fatalf("checks should only be valid on Project: %v", err)
+	}
+}
+
+func TestProjectCheckTimeoutBoundsPreserveOmissionAndExplicitValues(t *testing.T) {
+	for _, field := range []string{"", ", timeoutSeconds: 1", ", timeoutSeconds: 1800"} {
+		input := "apiVersion: markitect.example.org/v1alpha1\nkind: Project\nmetadata: {name: workspace}\nspec:\n  checks: [{name: test, run: [go, test]" + field + "}]\n"
+		project, err := Parse("project.yaml", []byte(input))
+		if err != nil {
+			t.Fatal(err)
+		}
+		check := project.Spec.Checks[0]
+		if (check.TimeoutSeconds == nil) != (field == "") {
+			t.Fatalf("omitted/explicit timeout changed: %#v", check)
+		}
+		if check.TimeoutSeconds != nil && !strings.HasSuffix(field, ": "+fmt.Sprint(*check.TimeoutSeconds)) {
+			t.Fatalf("explicit timeout changed: %#v", check)
+		}
+	}
+	for _, seconds := range []int{-1, 0, 1, 1800, 1801} {
+		err := ValidateCheck(Check{Name: "test", Run: []string{"go", "test"}, TimeoutSeconds: &seconds})
+		if (err == nil) != (seconds >= 1 && seconds <= 1800) {
+			t.Fatalf("shared validation accepted wrong timeout %d: %v", seconds, err)
+		}
 	}
 }
 

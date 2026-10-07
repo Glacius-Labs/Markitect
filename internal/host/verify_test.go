@@ -50,6 +50,48 @@ func TestPlanVerifyCommandsPreservesDeclaredArgv(t *testing.T) {
 	}
 }
 
+func TestVerifyUsesEachCheckTimeoutAndRecordsEffectiveBound(t *testing.T) {
+	executable := mustTestExecutable(t)
+	t.Setenv("PATH", filepath.Dir(executable))
+	t.Setenv("MARKITECT_VERIFY_HELPER", "short-sleep")
+	seconds := 1
+	argv := []string{filepath.Base(executable), "-test.run=^TestVerifyCommandHelper$"}
+	checks := []authoring.Check{
+		{Name: "explicit", Run: argv, TimeoutSeconds: &seconds},
+		{Name: "fallback", Run: argv},
+	}
+	results, err := verifyRepositoryWithTimeout(verifyProject(nil, checks), 50*time.Millisecond)
+	var verifyErr *VerifyError
+	if len(results) != 2 || results[0].ExitCode != 0 || results[0].TimeoutMilliseconds != 1000 || results[1].ExitCode != -1 || results[1].TimeoutMilliseconds != 50 || !errors.As(err, &verifyErr) || verifyErr.Kind != "timeout" || verifyErr.Gate != "fallback" || !strings.Contains(err.Error(), "50ms execution limit") {
+		t.Fatalf("configured/fallback bounds or incomplete timeout classification changed: results=%#v error=%v", results, err)
+	}
+	maximum := 1800
+	checks[0].TimeoutSeconds = &maximum
+	commands, err := planVerifyCommands(checks)
+	if err != nil || commands[0].timeout != 30*time.Minute || commands[1].timeout != 0 || verifyDefaultTime != 10*time.Minute {
+		t.Fatalf("explicit maximum or unchanged default lost: %#v error=%v", commands, err)
+	}
+}
+
+func TestCheckCopiesAndDigestsPreserveTimeoutWithoutAliasing(t *testing.T) {
+	seconds := 1800
+	checks := []authoring.Check{{Name: "test", Run: []string{"go", "test"}, TimeoutSeconds: &seconds}}
+	cloned := cloneAuthoringChecks(checks)
+	selected := selectedAuthoringChecks([]string{"test"}, checks)
+	before := projectionConfigDigest("request", checks)
+	seconds = 1
+	checks[0].Run[1] = "version"
+	for _, copied := range [][]authoring.Check{cloned, selected} {
+		if *copied[0].TimeoutSeconds != 1800 || copied[0].Run[1] != "test" || projectionConfigDigest("request", copied) != before {
+			t.Fatalf("check copy lost or aliased timeout/argv: %#v", copied)
+		}
+	}
+	*cloned[0].TimeoutSeconds = 1
+	if projectionConfigDigest("request", cloned) == before {
+		t.Fatal("changed check timeout reused the old request-bound configuration digest")
+	}
+}
+
 func TestVerifyRunsCheckAgainstMaterializedSnapshot(t *testing.T) {
 	if _, err := exec.LookPath("go"); err != nil {
 		t.Skip("Go unavailable for the portable snapshot check")
@@ -163,6 +205,8 @@ func TestVerifyCommandSanitizesGitAndGoEnvironment(t *testing.T) {
 
 func TestVerifyCommandHelper(t *testing.T) {
 	switch os.Getenv("MARKITECT_VERIFY_HELPER") {
+	case "short-sleep":
+		time.Sleep(150 * time.Millisecond)
 	case "large":
 		_, _ = os.Stdout.Write([]byte(strings.Repeat("x", verifyOutputLimit+1)))
 	case "sleep":

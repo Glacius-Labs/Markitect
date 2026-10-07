@@ -71,8 +71,9 @@ type Binding struct {
 	Implementation core.Ref `yaml:"implementation"`
 }
 type Check struct {
-	Name string   `yaml:"name"`
-	Run  []string `yaml:"run"`
+	Name           string   `yaml:"name"`
+	Run            []string `yaml:"run"`
+	TimeoutSeconds *int     `yaml:"timeoutSeconds,omitempty" json:"timeoutSeconds,omitempty"`
 }
 type Documentation struct {
 	Roots []string `yaml:"roots"`

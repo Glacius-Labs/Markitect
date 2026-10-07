@@ -132,4 +132,4 @@ The independent authored console probe is separate from candidate code and tests
 
 The earlier [canonical projection binding example](../canonical-projection/binding-notes.md) is a structural/binding slice with incomplete Markdown policy selection; its initial escalation remains deliberate rather than being weakened. Use this complete example for a fresh end-to-end operator exercise.
 
-The [dated validation report](../../docs/validation/classic-commerce-entrypoint.md) records the first real Windows compiler smoke, its compiling negative control, exact source/runtime identities and pending full integration gates. Linux commands above are rerun instructions, not a claim of Linux validation for this checkpoint.
+The [dated validation report](../../docs/validation/classic-commerce-entrypoint.md) records the first real Windows compiler smoke, its compiling negative control, exact source/runtime identities and the initial integration-gate boundary. Linux commands above are rerun instructions, not a claim of Linux validation for this checkpoint.
