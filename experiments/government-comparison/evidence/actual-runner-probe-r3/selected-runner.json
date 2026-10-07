@@ -1,0 +1,35 @@
+{
+  "path": "C:\\Users\\Consiliari\\AppData\\Local\\OpenAI\\Codex\\bin\\5ea220ae823df3d7\\codex.exe",
+  "sha256": "3b8f6e33caa75f232558a3cf76ff9b87bb5ef6dbcf4996372f24e55c78b1b916",
+  "version": "codex-cli 0.160.1",
+  "requestedModel": "gpt-6.1-sol",
+  "requestedReasoning": "high",
+  "actualModel": null,
+  "modelSupport": "bundled exact model/high known; account and execution require diagnostic receipts",
+  "providerProbeSessions": null,
+  "counterScope": "Pin metadata only; actual attempts belong to separate immutable ledgers",
+  "prospectiveConfig": {
+    "model_reasoning_effort": "high",
+    "project_doc_max_bytes": 0,
+    "features.memories": false,
+    "features.multi_agent": false,
+    "features.plugins": false,
+    "features.hooks": false,
+    "features.goals": false,
+    "model_provider": "openai",
+    "features.apps": false,
+    "features.shell_tool": false,
+    "features.unified_exec": false,
+    "apps._default.enabled": false,
+    "web_search": "disabled"
+  },
+  "configSha256": "d76e3fb0b5ab5a7204a65df154997e88afc6fe9f58da914c1136b06207f13edb",
+  "gaps": [
+    "Account support and resolved identity for gpt-6.1-sol/high have not been established by a provider receipt",
+    "No pre-dispatch aggregate provider-call controller is established for the later study",
+    "exec turn.completed is an agent-turn completion event; provider-turn count inside it remains unknown",
+    "Provider token usage arrives retrospectively; no hard aggregate token ceiling is established",
+    "Effective instruction/memory/config/tool and filesystem access boundaries have not been probed by an actual Actor",
+    "0.160.1 features list reports unified_exec=true despite requested false; no disabled-tool guarantee"
+  ]
+}

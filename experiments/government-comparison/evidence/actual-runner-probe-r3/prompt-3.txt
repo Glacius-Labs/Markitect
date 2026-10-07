@@ -1,0 +1,2 @@
+Use no tools, subagents, commands, or files. Public identity/usage sentinel only, no project work. Reply exactly with this sentinel and nothing else:
+34393579edd86767bad9a7174e70ff7a

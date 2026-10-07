@@ -1,0 +1,25 @@
+{
+  "argv": [
+    "C:/Users/Consiliari/AppData/Local/OpenAI/Codex/bin/5ea220ae823df3d7/codex.exe",
+    "--version"
+  ],
+  "cwd": "C:\\Users\\Consiliari\\Documents\\Markitect Scientist Runner Readiness\\2026-10-07-real-probe-r3",
+  "returnCode": 0,
+  "wallSeconds": 0.11985700007062405,
+  "stopReason": null,
+  "processTreeControl": "windows-job-kill-on-close",
+  "filesystemIsolation": "not established by process wrapper",
+  "automaticRetries": 0,
+  "receipts": [
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Markitect Scientist Runner Readiness\\2026-10-07-real-probe-r3\\version\\stdout.log",
+      "sha256": "eeecd3950ed2edf22e2f7ac0317480e921226b0a28df75a7f4af0f4bfe91fa49",
+      "kind": "stdout.log"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Markitect Scientist Runner Readiness\\2026-10-07-real-probe-r3\\version\\stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "kind": "stderr.log"
+    }
+  ]
+}

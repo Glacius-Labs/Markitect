@@ -19,6 +19,10 @@ receipt exists. `evidence/actual-runner-probe-r2/` preserves the new evidence.
 The subsequent read-only [compatibility report](public/runner-compatibility.md)
 identifies an installed 0.160.1 candidate for the same model, with account and
 effective-tool questions still open. It adds no Actor start or study authorization.
+A separately authorized third start used the selected 0.160.1 runner and returned
+the correct sentinel: 9989 input + 20 output tokens. The retrospective 10000-token
+observer then stopped the process, with nine tokens overshoot. Both grants are
+exhausted; raw receipts are in `evidence/actual-runner-probe-r3/`. S1 stays open.
 
 ## Reproduce the fixture smoke
 

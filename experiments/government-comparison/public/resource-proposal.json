@@ -10,7 +10,7 @@
   },
   "studyGovernmentVersion": null,
   "runner": {
-    "candidate": "codex-cli 0.130.0",
+    "candidate": "codex-cli 0.160.1",
     "actualAdapterArgv": [
       "C:\\Python313\\python.exe",
       "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\runtime\\adapter.py"
@@ -19,24 +19,38 @@
     "requestedProfile": "Sol 6.1 High",
     "reasoning": "high",
     "toolConfigurationSha256": null,
-    "accessProbe": "not performed; final authorized identity start received HTTP400 account/model rejection",
-    "meteringSemantics": "No actual usage receipt; agent/provider counts not equated; requested tiny threshold is retrospective input+output, not hard cap.",
+    "accessProbe": "not performed; completed public sentinel followed by retrospective token stop",
+    "meteringSemantics": "Attempt3 raw turn usage:9989input+20output=10009; cached/reasoning not doubleadded. Oldusage andallhistorytotal null; internalprovider counts unknown; retrospective threshold with9tokenovershoot, not hardcap.",
     "actualReadinessProbe": {
-      "attempts": 2,
-      "startedAgentTurns": 1,
-      "status": "account-model-rejected",
-      "receipt": "evidence/actual-runner-probe-r2/observation.json",
-      "tinySixProviderRequestBoundaryRemovedByOverseer": true,
-      "laterStudyLimitsUnchanged": true,
-      "maxAuthorizedAttempts": 2,
+      "attempts": 3,
+      "maxAuthorizedAttempts": 3,
       "remainingAttempts": 0,
-      "completedAgentTurns": 0,
-      "previousReceipt": "evidence/actual-runner-probe-r1/observation.json",
-      "remainingStartExplicitlyReauthorizedAfterFailure": true,
+      "startedAgentTurns": 2,
+      "completedAgentTurns": 1,
+      "status": "completed-turn-retrospective-threshold-stop",
+      "receipt": "evidence/actual-runner-probe-r3/observation.json",
+      "historicalTwoStartGrant": {
+        "attempts": 2,
+        "remaining": 0,
+        "unknownUsagePreserved": true,
+        "receipt": "evidence/actual-runner-probe-r2/observation.json"
+      },
+      "selectedRunnerGrant": {
+        "attempts": 1,
+        "maximum": 1,
+        "remaining": 0,
+        "sourceCandidate": "c075d48a49d00a818ecfdbe95ce897a47c979bc4",
+        "knownInputPlusOutputTokens": 10009,
+        "thresholdOvershoot": 9
+      },
       "wrapperRetries": 0,
       "internalTransportRetryDefaultsPermittedForTinyDiagnosticOnly": true,
       "internalRetriesObserved": null,
-      "allAttemptsTokenTotal": null
+      "allAttemptsTokenTotal": null,
+      "laterStudyLimitsUnchanged": true,
+      "resolvedServingModel": null,
+      "authenticatedCatalogExactTargetHigh": true,
+      "toolSuppression": "not established; unified_exec reportedtrue"
     }
   },
   "commonLimits": {

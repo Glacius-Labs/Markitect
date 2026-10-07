@@ -1,0 +1,18 @@
+{
+  "grantId": "overseer-2026-10-07-1826-runner-01601",
+  "newExternalStarts": 1,
+  "historicalStartsConsumed": 2,
+  "diagnosticHistoryMaximum": 3,
+  "wallSeconds": 180,
+  "parallel": 1,
+  "wrapperTurns": 1,
+  "wrapperRetries": 0,
+  "continuations": false,
+  "children": false,
+  "purpose": "Public sentinel identity/usage only; no study or access probe",
+  "transportRetries": "Unchanged built-in defaults permitted; observed internal count unknown unless exposed",
+  "knownNewTokenThreshold": 10000,
+  "thresholdIsHardCap": false,
+  "oldUnknownUsageRemainsUnknown": true,
+  "toolBoundary": "Read-only/approval never; unified exec may remain active; unexpected tools stopped reactively"
+}

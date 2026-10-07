@@ -1,13 +1,76 @@
 # Runner and common adapter readiness
 
 This is a finite readiness package, not a comparative result. Live trials: **0**.
-Actual external runner start attempts: **2 of the authorized maximum 2**, remaining **0**;
-started agent turns: **1**, completed **0**. Attempt 1 failed configuration loading;
-attempt 2 reached the service and received an explicit account/model rejection.
+Actual external runner starts: **3** (historical grant **2/2**, separate selected-runner
+grant **1/1**), remaining **0**; started agent turns: **2**, completed **1**.
+Attempt 3 returned the correct public sentinel, then hit the retrospective token
+threshold. Attempts 1 and 2 remain configuration and account/model failures.
 No model was substituted and no new authentication, purchase or user-config change occurred.
 The common public adapter contract remains v1.1.
 
-## Final authorized diagnostic (attempt 2)
+## Selected-runner diagnostic (attempt 3, separate grant)
+
+Overseer selected the existing desktop `codex-cli 0.160.1`, SHA-256
+`3b8f6e33caa75f232558a3cf76ff9b87bb5ef6dbcf4996372f24e55c78b1b916`,
+and explicitly granted one additional start in coordination.md at 18:26. The
+historical two-start grant and unknown usage were not replenished or reset.
+Source candidate `c075d48a49d00a818ecfdbe95ce897a47c979bc4` prepares the new pin,
+compatible built-in-provider config and a separate fixed SQLite grant. Historical
+launch helpers now reject execution before side effects; their invoked snapshots
+and original ledgers/receipts remain unchanged. No installation, global setting,
+credential extraction, endpoint/provider change or model substitution occurred.
+
+Before inference, the normal current client's app-server completed only
+`initialize`, `initialized`, `account/read(refreshToken=false)` and `model/list`.
+It reported ChatGPT auth and advertised the exact `gpt-6.1-sol` model with `high`.
+No thread or turn was created by metadata operations. Model-list data may be
+cached and is not a resolved-serving-model receipt. The metadata process exited 0
+with empty stderr. Its raw account metadata contains type/email/plan, no tokens.
+[Official metadata interface](https://learn.chatgpt.com/docs/app-server).
+
+The native feature check accepted the requested configuration and reported apps,
+hooks, plugins, memory, multi-agent and shell_tool false, but unified_exec true
+despite the requested false. No documented independent alternate disable setting
+was established. Overseer explicitly allowed this disclosed active-tool possibility
+for the minimal no-tool sentinel task with native read-only and approval never.
+The implementation reacts to unexpected tool items; it does not prevent access
+or prove a disabled tool surface, effective context privacy or OS isolation.
+
+The single new launch requested exactly `gpt-6.1-sol/high`, existing built-in
+OpenAI/ChatGPT auth, a fresh independent Documents root, ephemeral/read-only mode,
+one turn and no wrapper retry/continuation/subagent. The 180-second Windows Job
+bound and reactive observer were active. Raw stdout records one started turn,
+one agent message matching the random sentinel, and one completed turn. No tool
+item was observed. Native stderr reports unsupported PowerShell shell snapshot
+startup; this is not evidence of an Actor tool action or absence of internal
+runtime activity.
+
+The actual usage receipt reports **9989 input + 20 output = 10009 tokens**;
+cached input, cache write and reasoning output counters are all 0 and are not
+added again. After turn completion, the threshold observer terminated the owned
+process tree with `retrospective_new_token_threshold`, exit 1, approximately
+**3.8283794 seconds**. The result is correctly `stopped` even though the sentinel
+turn completed. This is a demonstrated retrospective stop with a **9-token
+overshoot**, not an account rejection or hard token cap. Internal provider request
+and retry counts remain unknown. Built-in transport defaults were permitted;
+documented HTTP/stream defaults 4/5 are not measured counts for this invocation.
+
+The requested identity, native runner pin, authenticated exact model listing and
+completed response are proven at their respective boundaries. CLI events expose
+no resolved serving-model field, so that value remains null. Historical token
+usage and the all-history token total remain null; only attempt 3's 10009-token
+subtotal is known. The earlier live ledger's hash is unchanged. No additional
+diagnostic, access probe, study task or comparative trial followed.
+
+`evidence/actual-runner-probe-r3/` preserves raw metadata, features, Actor events,
+requests, five invoked source snapshots, the separate grant ledger, six focused
+regressions and independent review. `actual-runner-probe-r3-freeze.json` separately
+binds the new checkpoint. Both old freezes remain historical and unchanged.
+Later study commonLimits, Classic v0.14.1 and Government readiness_gap are unchanged.
+**S1 remains open** for effective context/access, aggregate live budgets, product
+smokes, Government receipts and private assessment/task-equivalence gates.
+
+## Historical final diagnostic under the two-start grant (attempt 2)
 
 The Overseer explicitly authorized the one remaining start despite attempt 1's
 failure and unknown usage. This exception applies only to this tiny diagnostic.
@@ -118,8 +181,9 @@ CLI help and generated app-server schema did not establish a pre-dispatch provid
 call limit. `exec` reports `turn.completed` for an agent turn; that event is not
 evidence of the number of provider requests inside it. Consequently that checkpoint
 launched no provider probe. The addendum above supersedes this former tiny-probe
-boundary. The final diagnostic above records the later explicit account/model
-rejection; an executable supported identity remains a concrete readiness gap.
+boundary. Historical attempt 2 records the account/model rejection; the later
+selected-runner attempt 3 completed the sentinel turn. Its resolved serving-model
+identity remains unreported.
 
 `runtime/adapter.py` actually handles the v1.1 `--request`/`--result` interchange,
 binds the SHA-256 of exact request bytes and preserves raw native stdout, stderr,
@@ -146,23 +210,26 @@ do not have provider-token/turn reservations. Trial/task elapsed time uses the
 persisted system clock; process deadlines use a monotonic clock. Active calls and
 crashed reservations are not automatically forgiven. Transport/repair limits have
 no live dispatcher yet. The ledger is tested infrastructure, not a demonstrated
-end-to-end study budget controller. No Actor dispatch path is enabled by this package.
+end-to-end study budget controller. Live study Actor dispatch remains closed;
+the exhausted diagnostic grants are separate.
 
 ## Configuration, context and provenance
 
-The actual native runner is `codex-cli 0.130.0`, SHA-256
+The historical infrastructure/attempt-1 runner was `codex-cli 0.130.0`, SHA-256
 `280cb1c4e3375d94dbdcba1a191f4f6adbf73c293be1e4f16c74b006662b9c54`.
-`runtime/runner.py` records its exact executable and a prospective common profile,
-with `--ignore-user-config`, `--ignore-rules`, ephemeral sessions, explicit model
+Its original pin/config remain in historical evidence. The selected current pin
+is 0.160.1 as documented above; the historical prospective profile requested
+`--ignore-user-config`, `--ignore-rules`, ephemeral sessions, explicit model
 and reasoning, a zero project-AGENTS byte limit, disabled memory, plugins, hooks,
-goals and subagents, and zero provider transport retries. These settings are
-proposed explicit inputs; their effective application, including global or
-managed instructions, has not been validated in an Actor session.
+goals and subagents, and zero provider transport retries. Those retry definitions
+were rejected in attempt 1. Current effective feature differences and remaining
+context/isolation limits are documented in the attempt-3 section above.
 
 An earlier native `login status` inspection failed while parsing ambient config
 at `C:\Users\Consiliari\.codex\config.toml:7:1`: string `gpt-6-luna` where
 `AgentRoleToml` was expected. The file was not edited. The intended `exec`
-`--ignore-user-config` path is documented, but auth/model execution was not exercised.
+`--ignore-user-config` path was documented, but auth/model execution had not been
+exercised at that inspection; attempt 3 supplies the later bounded response evidence.
 No credential values are included in the package.
 
 The native version probes use new independent empty Git roots outside every
@@ -199,9 +266,10 @@ commits, including `e4278c50ddc84daee3858e24c89e6cf5777b5dfe`; its
 the subsequently selected resource profile. The readiness manifest owns this
 checkpoint; it does not freeze a live protocol or modify historical receipts.
 
-**S1 is not cleared.** Remaining gates: a supported native runner/account configuration,
-account-supported actual model identity; successful real identity/usage/access
-probes under the selected probe rules; effective context and OS access measurement; complete shared live budgets
+**S1 is not cleared.** Attempt 3 establishes one completed sentinel/usage result
+under the explicitly requested model and current account metadata; resolved serving
+identity remains unreported. Remaining gates: effective context and OS access
+measurement; complete shared live budgets
 including descendants/retries/repairs; real conventional and Classic setup/task
 smokes; Government native pins and G1-G5; private oracle/rubric freeze and task-6
 equivalence mapping. No six-cell comparison is authorized by this checkpoint.

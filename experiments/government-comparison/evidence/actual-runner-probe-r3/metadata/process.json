@@ -1,0 +1,26 @@
+{
+  "argv": [
+    "C:\\Python313\\python.exe",
+    "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\runtime\\selected_metadata.py",
+    "C:\\Users\\Consiliari\\Documents\\Markitect Scientist Runner Readiness\\2026-10-07-real-probe-r3\\metadata-request.json"
+  ],
+  "cwd": "C:\\Users\\Consiliari\\Documents\\Markitect Scientist Runner Readiness\\2026-10-07-real-probe-r3",
+  "returnCode": 0,
+  "wallSeconds": 1.0881211999803782,
+  "stopReason": null,
+  "processTreeControl": "windows-job-kill-on-close",
+  "filesystemIsolation": "not established by process wrapper",
+  "automaticRetries": 0,
+  "receipts": [
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Markitect Scientist Runner Readiness\\2026-10-07-real-probe-r3\\metadata\\stdout.log",
+      "sha256": "8c975d221c94e792ba372df81beaf6e1918fd1d23ce803e6e78218d303217796",
+      "kind": "stdout.log"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Markitect Scientist Runner Readiness\\2026-10-07-real-probe-r3\\metadata\\stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "kind": "stderr.log"
+    }
+  ]
+}
