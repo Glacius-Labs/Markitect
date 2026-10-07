@@ -171,7 +171,7 @@ $runtime = @{
     )
     checks = @(@{ name = 'invoice-composition'; run = @('go', 'test', './...', '-count=1'); timeoutSeconds = 90 })
     recursion = @{
-        limits = @{ maxDepth = 1; maxFanout = 2; maxCalls = $MaxCalls }
+        limits = @{ maxDepth = 2; maxFanout = 2; maxCalls = $MaxCalls }
         parallelism = 2
         maxRepairs = $MaxRepairs
         areas = @(
@@ -209,7 +209,7 @@ $stage = Get-OptionalProperty $report 'stage'
 $candidateCommit = Get-OptionalProperty $report 'candidateCommit'
 $promotionRecord = Get-OptionalProperty $report 'promotion'
 $promotion = Get-OptionalProperty $promotionRecord 'status'
-$actorRows = @(Get-OptionalProperty $report 'actors')
+$actorRows = @(Get-OptionalProperty $report 'actors' | Where-Object { $null -ne $_ })
 $childExecution = @($actorRows | Where-Object { $_.slotId -in @('quantity-executor', 'price-executor') })
 $childWall = 0
 foreach ($actor in $childExecution) {
