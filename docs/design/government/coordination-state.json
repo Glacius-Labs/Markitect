@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-07T23:50:17Z",
+  "updatedUtc": "2026-10-07T23:59:51Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -22,13 +22,13 @@
       "name": "Worker",
       "threadId": "01a1169b-9357-7df3-a8f6-f913557c782a",
       "hostId": "local",
-      "afterCursor": "b2b8e43f-fcaa-41bf-828a-99c69527bdea:59",
+      "afterCursor": "b2b8e43f-fcaa-41bf-828a-99c69527bdea:60",
       "lastObservedStatus": "active",
       "activeTurn": "01a118bd-3faf-7723-98c1-6bbf2e27a4c3",
-      "lastAssistantMessageId": "msg_0a7785839df196a4016ac6da501910819185f5a6224f89703f",
+      "lastAssistantMessageId": "msg_0a7785839df196a4016ac6dc7a0d788191a7c30503835d14bf",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "At most two evidenced usability/product gaps in intent-to-model-to-project/change workflow; independent successor worktree; reviewed version-bound public entrypoint.",
-      "latestProgress": "Das Beispiel trennt jetzt den unangenommenen Entwurf, die ausdrückliche Digest-Bestätigung und die technischen Ausführungsergebnisse. Ein eigener Smoke-Modus kennzeichnet die Testbestätigung als Mechanikbeleg, ohne menschliche Annahme zu behaupten. Laufzeitdaten liegen neben dem Projekt; ein gespeicherter Zähler begrenzt die mutierenden Starts.",
+      "latestProgress": "Der nächste Versuch erreichte den ersten Rollenstart und scheiterte am Beispieladapter: Beim Kürzen fehlten Felder des vollständigen Aufrufprotokolls, die dessen strikter Decoder dann ablehnte. Das wird mit einer gezielten Protokollregression korrigiert. Bisher verbraucht: 1 mutierender Controllerstart, 1 Rollenstart, kein vollständiger Durchlauf und rund 22 Sekunden Smoke-Laufzeit. Weitere Schritte bleiben innerhalb derselben Gesamtgrenzen; die bisherigen Belege bleiben erhalten.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-worker/Markitect",
       "transferredDesignCommit": "691ce1dee3484371c4aea725db4ed5cc3f2e3719",
       "candidateSha": "04e225d5caee78c2a198607143863fca1e829750",
@@ -275,7 +275,16 @@
           "studyCells": 0,
           "fullSuites": "Required gates only; coordinate shared heavy slot after Scientist timed R2 cases."
         },
-        "sentUtc": "2026-10-07T23:28:12Z"
+        "sentUtc": "2026-10-07T23:28:12Z",
+        "latestReportedProgress": {
+          "observedUtc": "2026-10-07T23:59:51Z",
+          "status": "Active; first role call exposed example adapter protocol omissions, focused regression/fix underway.",
+          "nativeMutatingStarts": 1,
+          "roleStarts": 1,
+          "completeSmokePasses": 0,
+          "smokeWallSecondsApproximate": 22,
+          "evidenceLevel": "Chat report only; no completed candidate accepted."
+        }
       },
       "assignmentHistory": [
         {
@@ -299,13 +308,13 @@
       "name": "Scientist",
       "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
       "hostId": "local",
-      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:90",
+      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:91",
       "lastObservedStatus": "active",
       "activeTurn": "01a118c6-0f9c-70b0-bb4b-7728297fffa5",
-      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac6daa3da5c819194a8f2419edfff90",
+      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac6dca3ebd0819195591a3571b14f93",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "Offline exact native/adapter contract repair, focused regression and independent review; no new live grant.",
-      "latestProgress": "Ich setze das bestehende R3-Offline-Paket fort, sammle die beauftragten Ergebnisse ein und prüfe die gemeinsame Vertragskette. Native Aufrufe, Delegates und zusätzliche Quoten bleiben gesperrt.",
+      "latestProgress": "Der gezielte Gate-Lauf ist mit 18/18 Tests grün; auch die eingefrorene sechs-Rollen-Prüfung wurde nochmals erfolgreich ausgeführt. Die alten R1/R2-Belege sind bytegleich zum akzeptierten Stand, der native Ledger unverändert. Jetzt folgen der unabhängige Review und der lokale Abschlusscommit. Die nächste native Allocation bleibt ein Vorschlag.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-scientist/Markitect",
       "transferredDesignCommit": "b9e17c9896f14b4b1268e4bcb005395f5d324384",
       "candidateSha": "419775ab0ea5f421655ab3c8bd97e286ffbb6e0a",
@@ -1141,12 +1150,13 @@
           ]
         },
         "offlineAdapterContractProgress": {
-          "observedUtc": "2026-10-07T23:50:17Z",
+          "observedUtc": "2026-10-07T23:59:51Z",
           "head": "419775ab0ea5f421655ab3c8bd97e286ffbb6e0a",
           "worktreeClean": false,
           "evidenceLevel": "Root observed actual WIP in three runtime modules/associated tests, active handoff, new errata/preparation files; implementation/test completion not accepted.",
-          "nextNativeProposal": "Present but not approved; no actual allocation or launch permission.",
-          "status": "Existing offline task resumed once after compaction; collect existing subagent work rather than restarting."
+          "nextNativeProposal": "Still proposed only; no execution authority.",
+          "status": "Active; reports18/18targeted gates and six-role offline chain passed; independent review and final source commit pending.",
+          "historicalEvidence": "Reported R1/R2 bytes and native ledger unchanged; not reverified by root this turn."
         }
       },
       "classicHandoffReceived": true,
@@ -1230,13 +1240,13 @@
       "name": "Architect",
       "threadId": "01a111ec-a913-7830-91b0-925d0a1dd1b2",
       "hostId": "local",
-      "afterCursor": "71d9f5b2-c0f0-474c-9898-777d051b478a:40",
+      "afterCursor": "71d9f5b2-c0f0-474c-9898-777d051b478a:41",
       "lastObservedStatus": "active",
       "activeTurn": "01a118b2-2f03-7980-9dd8-47464472252b",
-      "lastAssistantMessageId": "msg_0b6e7ce0ce9f843f016ac6da302f8487d2b72e901e0f74017b",
+      "lastAssistantMessageId": "msg_0b6e7ce0ce9f843f016ac6dc737b7487d2bf8c5de0e0a13bd3",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "At most two evidenced usability/product gaps in intent-to-model-to-project/change workflow; independent successor worktree; reviewed version-bound public entrypoint.",
-      "latestProgress": "Die sechs gezielten Beispieltests und die Quellchecks sind bestanden; das unabhängige Review hat keine wesentlichen offenen Befunde mehr. Jetzt starte ich einen begrenzten Durchlauf mit der veröffentlichten CLI: Erstzustand, Regeländerung, Ablehnung des alten Apply-Kandidaten und frische .NET-Verifikation.",
+      "latestProgress": "Die Fortsetzung hat bestanden: Die neue Regel ist durch die unabhängigen .NET-Prüfungen verifiziert, der Audit ist vollständig. Insgesamt wurden 11 von 12 nativen Starts genutzt. Die zwei ursprünglichen Skriptläufe bleiben als unvollständig dokumentiert; ein vollständiger Lauf des korrigierten Skripts steht noch aus.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/classic-public-example/Markitect",
       "transferredDesignCommit": null,
       "candidateSha": "8927704c5bc2c83601d36eb2ff99ae8332c7b406",
@@ -1313,7 +1323,14 @@
           "studyCells": 0,
           "fullSuites": "Required gates only; coordinate shared heavy slot after Scientist timed R2 cases."
         },
-        "sentUtc": "2026-10-07T23:28:13Z"
+        "sentUtc": "2026-10-07T23:28:13Z",
+        "latestReportedProgress": {
+          "observedUtc": "2026-10-07T23:59:51Z",
+          "status": "Continuation reports independent .NET verification and complete audit; original two script runs incomplete and complete corrected-script replay outstanding.",
+          "nativeStartsConsumed": 11,
+          "nativeStartLimit": 12,
+          "evidenceLevel": "Chat report only; no complete P1 acceptance or budget renewal."
+        }
       },
       "assignmentHistory": [
         {
@@ -1324,7 +1341,7 @@
       ]
     }
   ],
-  "nextAction": "Worker GOV-P1 and Architect CLASSIC-P1 continue unchanged; Worker retains heavy slot. Scientist resumed existing offline R3 WIP after compaction, with no additional quota. Review actual clean completion before any next native decision.",
+  "nextAction": "Await Scientist offline R3 independent review and clean completion, then verify exact source/evidence before any native grant. Worker fixes own example protocol within P1 limits and retains heavy slot. Architect has reported11/12native starts; complete script replay still unproven, no automatic refill.",
   "boundaries": {
     "governmentPublication": false,
     "automaticClassicReplacement": false,
@@ -1334,11 +1351,10 @@
     "satPrinciples": "Deferred by direct user request on 2026-10-07; conceptual constraint/consistency/conflict-explanation principles first, no solver integration or current assignment change. See docs/design/government/deferred-research.md."
   },
   "lastReview": {
-    "reviewedUtc": "2026-10-07T23:50:17Z",
-    "evidenceLevel": "All three checked. Worker reports draft/explicit digest acceptance/execution separation and persistent start cap. Architect reports six focused tests and review passed, starts bounded native example smoke; reported only. Scientist idle after compaction is not completion; root verified unfinished WIP and read direct user history before resuming. No new milestone accepted or root tests run.",
+    "reviewedUtc": "2026-10-07T23:59:51Z",
+    "evidenceLevel": "All three active in joint compact snapshot. New progress and counters are owner reports, not root-accepted completion. No tests/processes repeated.",
     "coordinationActions": [
-      "Resumed existing Scientist offline R3 once after context-loss wait; no new budget or duplicate task.",
-      "Saved all cursors and active resumption. Heavy slot remains Worker; study pins unchanged."
+      "Saved progress/cursors and explicitly retained P1 ceilings and Scientist zero live quota. No repeated assignments or new allocations."
     ],
     "userDecisionRequired": false
   },
