@@ -36,6 +36,7 @@ type commandOptions struct {
 	action                string
 	adapter               string
 	plan                  string
+	applyResult           string
 	coverage              string
 	reviewConfig          string
 	reviewReport          string
@@ -75,6 +76,7 @@ func parseOptions(command string, args []string, allowed map[string]bool, out, e
 	action := fs.String("action", "", "action for reconciliation, projection or canonical operations")
 	adapter := fs.String("adapter", "", "configured reconciliation adapter name")
 	plan := fs.String("plan", "", "saved concrete action plan; controller apply reads a closed JSON reviewed run")
+	applyResult := fs.String("apply-result", "", "saved canonical controller Apply result JSON (controller-verify)")
 	coverage := fs.String("coverage", "", "explicit repository-relative artifact accounting configuration (projection)")
 	reviewConfig := fs.String("config", "", "repository-relative review configuration in the fixed snapshot")
 	reviewReport := fs.String("report", "", "local report or owner-supplied selection input for the active action")
@@ -123,6 +125,10 @@ func parseOptions(command string, args []string, allowed map[string]bool, out, e
 	})
 	if invalid != "" {
 		fmt.Fprintf(errout, "--%s does not apply to %s\n", invalid, command)
+		return commandOptions{}, 2, true
+	}
+	if providedFlags["apply-result"] && (command != "canonical" || *action != "controller-verify") {
+		fmt.Fprintln(errout, "--apply-result applies only to canonical --action controller-verify")
 		return commandOptions{}, 2, true
 	}
 	goalAction := command == "canonical" && isCanonicalGoalAction(*action)
@@ -252,7 +258,16 @@ func parseOptions(command string, args []string, allowed map[string]bool, out, e
 					}
 				}
 			}
-			if !fullGitCommitID.MatchString(*base) || !fullGitCommitID.MatchString(*revision) {
+			if *action == "controller-verify" && providedFlags["apply-result"] {
+				if providedFlags["base"] || providedFlags["revision"] {
+					fmt.Fprintln(errout, "canonical controller-verify --apply-result cannot be combined with --base or --revision")
+					return commandOptions{}, 2, true
+				}
+				if *applyResult == "" {
+					fmt.Fprintln(errout, "canonical controller-verify --apply-result requires a file path")
+					return commandOptions{}, 2, true
+				}
+			} else if !fullGitCommitID.MatchString(*base) || !fullGitCommitID.MatchString(*revision) {
 				fmt.Fprintf(errout, "canonical %s requires full immutable --base and --revision values\n", *action)
 				return commandOptions{}, 2, true
 			}
@@ -409,6 +424,7 @@ func parseOptions(command string, args []string, allowed map[string]bool, out, e
 		action:                *action,
 		adapter:               *adapter,
 		plan:                  *plan,
+		applyResult:           *applyResult,
 		runtime:               *runtime,
 		goalInput:             *goalInput,
 		goalRecommendations:   *goalRecommendations,

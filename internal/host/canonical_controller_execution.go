@@ -356,7 +356,7 @@ func acquireCanonicalControllerLeaseWithHook(cfg CanonicalControllerConfig, befo
 }
 
 func ApplyCanonicalController(root, configPath string, cfg CanonicalControllerConfig, run CanonicalReviewedRun, expect string, write bool) (CanonicalControllerApply, error) {
-	report := CanonicalControllerApply{Status: "refused", RunDigest: run.Digest, Written: []string{}, Records: []records.ProjectionRecord{}, EvidenceRefreshRequired: run.Proposal.Plan.EvidenceRefreshRequired}
+	report := CanonicalControllerApply{Status: "refused", SourceRevision: run.Proposal.Plan.Revision, RunDigest: run.Digest, Written: []string{}, Records: []records.ProjectionRecord{}, EvidenceRefreshRequired: run.Proposal.Plan.EvidenceRefreshRequired}
 	if !write || expect == "" || expect != run.Digest {
 		return report, errors.New("controller Apply requires explicit write and exact reviewed run digest")
 	}

@@ -2,6 +2,9 @@ apiVersion: markitect.example.org/artifact-coverage/v1alpha1
 kind: ArtifactCoverage
 spec:
   roots:
+    - internal/host/canonical_controller_apply_receipt.go
+    - internal/host/canonical_controller_apply_receipt_test.go
+    - internal/host/cli/canonical_apply_result_test.go
     - experiments/sequential-operating-pilot
     - internal/host/canonical_controller_model_change_test.go
     - internal/host/canonical_controller_audit.go
@@ -141,6 +144,12 @@ spec:
     - experiments/live-operating-pilot
     - experiments/two-area-operating-pilot
   tooling:
+    - path: internal/host/canonical_controller_apply_receipt.go
+      owner: controller-apply-verification-handoff
+    - path: internal/host/canonical_controller_apply_receipt_test.go
+      owner: controller-apply-verification-handoff
+    - path: internal/host/cli/canonical_apply_result_test.go
+      owner: controller-apply-verification-handoff
     - path: internal/host/canonical_controller_model_change_test.go
       owner: standard-operating-model-closure
     - path: internal/host/canonical_controller_audit.go

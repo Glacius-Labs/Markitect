@@ -50,7 +50,7 @@ func commandFlags(command string) (map[string]bool, bool) {
 	case "projection":
 		names = []string{"repo", "revision", "action", "config", "coverage", "plan", "report", "expect", "write"}
 	case "canonical":
-		names = []string{"repo", "revision", "base", "action", "config", "runtime", "goal-input", "goal-recommendations", "goal-selection", "api-version", "kind", "namespace", "name", "plan", "report", "evidence", "expect", "write"}
+		names = []string{"repo", "revision", "base", "action", "config", "runtime", "goal-input", "goal-recommendations", "goal-selection", "api-version", "kind", "namespace", "name", "plan", "apply-result", "report", "evidence", "expect", "write"}
 	case "schema":
 		names = []string{"repo", "write", "check"}
 	case "package":

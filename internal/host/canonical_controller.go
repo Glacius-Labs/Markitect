@@ -99,6 +99,7 @@ type CanonicalReviewedRun struct {
 }
 type CanonicalControllerApply struct {
 	Status                  string                     `json:"status"`
+	SourceRevision          string                     `json:"sourceRevision"`
 	RunDigest               string                     `json:"runDigest"`
 	Written                 []string                   `json:"written"`
 	Records                 []records.ProjectionRecord `json:"records"`

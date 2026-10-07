@@ -303,6 +303,18 @@ func runCanonicalController(o commandOptions, emit func(any) int, fail func(erro
 		return canonicalControllerStatusExit(applied.Status)
 
 	case "controller-verify":
+		if o.applyResult != "" {
+			applyBytes, err := readBoundedControllerFile(o.applyResult, canonicalReviewedRunLimit)
+			if err != nil {
+				return fail(fmt.Errorf("read saved controller apply result: %w", err))
+			}
+			decoded, err := host.DecodeCanonicalControllerApply(applyBytes)
+			if err != nil {
+				return fail(fmt.Errorf("decode saved controller apply result JSON: %w", err))
+			}
+			o.base = decoded.SourceRevision
+			o.revision = decoded.EvidenceRevision
+		}
 		verification, err := host.VerifyCanonicalController(context.Background(), o.root, o.base, o.revision, o.reviewConfig, cfg, o.write)
 		if err != nil {
 			if code := emit(verification); code != 0 {
