@@ -2,16 +2,21 @@
 
 This experimental source-only branch implements G1 accounting, G2 bounded execution, G3 recursive integration, G4 delegated model maintenance and G5 finite persistent operation from the [delivery plan](design/government/delivery-plan.md). It does not update an installed release. [The architecture](design/government/architecture.md) remains the design contract; this page owns the executable format and limits. Exact candidate gate results and milestone acceptance belong to the source-bound handoff.
 
+Start with the [public project walkthrough](../examples/government-project/README.md) for one connected authoring path: explicit terms, priorities, fixed rules, permitted discretion and assumptions; a reviewable model draft and exact file assignments; explicit acceptance of its digest; bounded implementation; a previously delegated model amendment; and interruption recovery. Model authoring and human acceptance remain manual decisions. The example's deterministic roles demonstrate mechanics, not autonomous engineering quality or human approval.
+
 ## Commands and input
 
 ```powershell
 go run ./cmd/markitect government --action schema
 go run ./cmd/markitect government --repo examples/government --config government.yaml --action inspect
+go run ./cmd/markitect government --repo examples/government --config government.yaml --action inspect --format json
 go run ./cmd/markitect government --repo examples/government --config government.yaml --action plan --order order.yaml
 go run ./cmd/markitect government --repo examples/government --config government.yaml --action plan --order negative-order.yaml
 ```
 
 `schema` emits the actual built-in `markitect.government/v1alpha1` structural Schema. `GovernmentSource` is one strict YAML document with `apiVersion: markitect.government-source/v1alpha1`, `constitution` (full identity), inline `schemas` and `definitions`, and `observation`. Custom domain Schemas and the built-in Schema compile through the unchanged minimal Core. Definitions and relation Definitions carry `purpose`. Full identities contain `apiVersion`, `kind`, explicit `namespace` (possibly empty), and `name`. Host resolves arbitrary `subject` and mandate `scope` identities exactly; these are object values, not polymorphic Core references.
+
+Read-only `schema`, `inspect` and `plan` accept `--format json`; the default is `yaml`. Format changes neither scope nor status: compile findings, incomplete inspection and blocked plans still exit 1; malformed CLI arguments, input acquisition or decoding failures exit 2. JSON inspection exposes `model.digest`, so PowerShell can use `ConvertFrom-Json` rather than scrape YAML. Always inspect the exit code and findings before using a digest. Obtaining a digest is not acceptance. Mutating actions already emit JSON and reject `--format`.
 
 `Constitution` selects one root Area, a nonempty Ressort cabinet and `unanimous-explicit-assent`. Areas recursively reference parents and optional pinned Capabilities. Ressorts reference review Mandates without implicit writer permission. Mandates contain an Area, exact subject scope, allowed actions (`implement`, `review`, `amend-model`) and, below root, a higher mandate. Host validates acyclic delegation, hierarchy and scope/action subsets. `Responsibility` assigns one accountable Area per subject. `Artifact` declares an exact path, class (`canonical`, `realization`, `generated`, `foreign`) and, for managed material, one Area writer. Purpose-bearing `Realization` connects subjects to artifacts many-to-many. File ownership is independent of subject responsibility and crosscutting review.
 

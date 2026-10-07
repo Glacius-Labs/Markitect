@@ -24,6 +24,7 @@ func runGovernment(args []string, out, errout io.Writer) int {
 	config := fs.String("config", "", "repository-relative trusted GovernmentSource YAML")
 	orderPath := fs.String("order", "", "repository-relative Order YAML bound to prior Constitution")
 	action := fs.String("action", "inspect", "schema, inspect, plan, run, queue or resume (experimental)")
+	format := fs.String("format", "yaml", "read-only output format: yaml or json")
 	runtimePath := fs.String("runtime", "", "absolute external runtime JSON for run")
 	backlogPath := fs.String("backlog", "", "absolute external finite backlog JSON for queue or resume")
 	queuePath := fs.String("queue", "", "absolute existing queue directory for resume")
@@ -40,6 +41,14 @@ func runGovernment(args []string, out, errout io.Writer) int {
 	}
 	fail := func(err error) int { fmt.Fprintln(errout, err); return 2 }
 	emit := func(v any) int {
+		if *format == "json" {
+			encoder := json.NewEncoder(out)
+			encoder.SetIndent("", "  ")
+			if err := encoder.Encode(v); err != nil {
+				return fail(err)
+			}
+			return 0
+		}
 		data, err := host.YAML(v)
 		if err != nil {
 			return fail(err)
@@ -51,6 +60,18 @@ func runGovernment(args []string, out, errout io.Writer) int {
 	}
 	if fs.NArg() != 0 {
 		return fail(errors.New("government accepts no positional arguments"))
+	}
+	formatPresent := false
+	fs.Visit(func(f *flag.Flag) {
+		if f.Name == "format" {
+			formatPresent = true
+		}
+	})
+	if *format != "yaml" && *format != "json" {
+		return fail(errors.New("government format must be yaml or json"))
+	}
+	if formatPresent && *action != "schema" && *action != "inspect" && *action != "plan" {
+		return fail(errors.New("format is only valid for read-only actions schema, inspect and plan; execution emits JSON"))
 	}
 	if *action == "queue" || *action == "resume" {
 		if !*write || !filepath.IsAbs(*backlogPath) || *runtimePath != "" || *config != "" || *orderPath != "" {
@@ -162,9 +183,9 @@ func runGovernment(args []string, out, errout io.Writer) int {
 	if *action == "inspect" {
 		survey := government.SurveyRepository(m, observation)
 		result := struct {
-			APIVersion string            `yaml:"apiVersion"`
-			Model      government.Model  `yaml:"model"`
-			Survey     government.Survey `yaml:"survey"`
+			APIVersion string            `json:"apiVersion" yaml:"apiVersion"`
+			Model      government.Model  `json:"model" yaml:"model"`
+			Survey     government.Survey `json:"survey" yaml:"survey"`
 		}{"markitect.government-inspection/v1alpha1", m, survey}
 		if code := emit(result); code != 0 {
 			return code

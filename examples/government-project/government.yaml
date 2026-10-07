@@ -1,0 +1,727 @@
+{
+  "apiVersion": "markitect.government-source/v1alpha1",
+  "kind": "GovernmentSource",
+  "constitution": {
+    "apiVersion": "markitect.government/v1alpha1",
+    "kind": "Constitution",
+    "namespace": "studio",
+    "name": "active"
+  },
+  "schemas": [
+    {
+      "apiVersion": "markitect.government-example/v1alpha1",
+      "purpose": "Requirements for a small studio and its independently owned participant format.",
+      "kinds": {
+        "Requirement": {
+          "purpose": "A required studio or participant behavior.",
+          "properties": {
+            "statement": {
+              "purpose": "Normative observable behavior.",
+              "type": "string",
+              "minCount": 1,
+              "maxCount": 1
+            },
+            "acceptance": {
+              "purpose": "Deterministic acceptance condition.",
+              "type": "string",
+              "minCount": 1,
+              "maxCount": 1
+            },
+            "priority": {
+              "maxCount": 1,
+              "purpose": "Ranks importance.",
+              "type": "string",
+              "minCount": 0
+            },
+            "fixedRule": {
+              "maxCount": 1,
+              "purpose": "States an explicit fixed rule.",
+              "type": "string",
+              "minCount": 0
+            },
+            "allowedDiscretion": {
+              "maxCount": 1,
+              "purpose": "Records allowed choice.",
+              "type": "string",
+              "minCount": 0
+            },
+            "assumptions": {
+              "maxCount": 1,
+              "purpose": "Records explicit assumptions.",
+              "type": "string",
+              "minCount": 0
+            },
+            "openQuestions": {
+              "maxCount": 1,
+              "purpose": "Records unresolved questions.",
+              "type": "string",
+              "minCount": 0
+            },
+            "terms": {
+              "purpose": "Defines the domain terms used in this requirement.",
+              "type": "string",
+              "minCount": 0,
+              "maxCount": 1
+            }
+          }
+        }
+      }
+    }
+  ],
+  "definitions": [
+    {
+      "apiVersion": "markitect.government-example/v1alpha1",
+      "kind": "Requirement",
+      "metadata": {
+        "namespace": "studio",
+        "name": "booking-rule"
+      },
+      "purpose": "Priority P1: calculate the amount due for a workshop booking.",
+      "spec": {
+        "statement": "The current studio booking total equals seat count multiplied by seat price; it does not yet include the separately published booking fee.",
+        "acceptance": "For 3 seats at 4 euros, the current total is 12 euros.",
+        "priority": "P1",
+        "fixedRule": "The separately published booking fee remains exactly 2 euros.",
+        "allowedDiscretion": "Implementation details may vary; the protected amount goal and published fee value stay fixed.",
+        "assumptions": "Seat count and seat price are nonnegative integers.",
+        "openQuestions": "The current total omits the separately published fee; the delegated amendment request is to add it once per booking. Refund handling remains outside this change.",
+        "terms": "seat; seat price; booking fee"
+      }
+    },
+    {
+      "apiVersion": "markitect.government-example/v1alpha1",
+      "kind": "Requirement",
+      "metadata": {
+        "namespace": "studio",
+        "name": "published-booking"
+      },
+      "purpose": "P0 fixed rule: the published booking fee remains exactly 2 euros.",
+      "spec": {
+        "statement": "The published fee is exactly 2 euros per booking.",
+        "acceptance": "booking/rate.txt contains fee=2.",
+        "priority": "P0",
+        "fixedRule": "The published fee remains exactly 2 euros per booking.",
+        "allowedDiscretion": "None for the fee value.",
+        "assumptions": "booking/rate.txt contains fee=2.",
+        "openQuestions": "None for the fixed fee."
+      }
+    },
+    {
+      "apiVersion": "markitect.government-example/v1alpha1",
+      "kind": "Requirement",
+      "metadata": {
+        "namespace": "studio",
+        "name": "protected-total"
+      },
+      "purpose": "Protected root goal that the final studio booking total is correct.",
+      "spec": {
+        "statement": "The displayed studio booking total is the amount the customer owes.",
+        "acceptance": "The active root goal and its protection are unchanged by delegated work.",
+        "priority": "P0",
+        "fixedRule": "The customer amount goal remains protected.",
+        "allowedDiscretion": "None; this subject is protected.",
+        "assumptions": "The displayed total is the amount the customer owes.",
+        "openQuestions": "None in this bounded case."
+      }
+    },
+    {
+      "apiVersion": "markitect.government-example/v1alpha1",
+      "kind": "Requirement",
+      "metadata": {
+        "namespace": "participant",
+        "name": "participant-format"
+      },
+      "purpose": "Defines the stable serialization label for an issued participant.",
+      "spec": {
+        "statement": "Issued participant confirmations use the web-v2 channel label.",
+        "acceptance": "independent/participant.txt contains channel=web-v2."
+      }
+    },
+    {
+      "apiVersion": "markitect.government/v1alpha1",
+      "kind": "Area",
+      "metadata": {
+        "namespace": "studio",
+        "name": "root"
+      },
+      "purpose": "Owns the workshop booking model, fee calculation, and bounded confirmation task.",
+      "spec": {
+        "capabilities": []
+      }
+    },
+    {
+      "apiVersion": "markitect.government/v1alpha1",
+      "kind": "Mandate",
+      "metadata": {
+        "namespace": "studio",
+        "name": "root-prior"
+      },
+      "purpose": "Prior authority for studio behavior, protected goal review, and independent participant implementation.",
+      "spec": {
+        "area": {
+          "apiVersion": "markitect.government/v1alpha1",
+          "kind": "Area",
+          "namespace": "studio",
+          "name": "root"
+        },
+        "scope": [
+          {
+            "apiVersion": "markitect.government-example/v1alpha1",
+            "kind": "Requirement",
+            "namespace": "studio",
+            "name": "booking-rule"
+          },
+          {
+            "apiVersion": "markitect.government-example/v1alpha1",
+            "kind": "Requirement",
+            "namespace": "studio",
+            "name": "published-booking"
+          },
+          {
+            "apiVersion": "markitect.government-example/v1alpha1",
+            "kind": "Requirement",
+            "namespace": "studio",
+            "name": "protected-total"
+          },
+          {
+            "apiVersion": "markitect.government-example/v1alpha1",
+            "kind": "Requirement",
+            "namespace": "participant",
+            "name": "participant-format"
+          }
+        ],
+        "actions": [
+          "implement",
+          "review",
+          "amend-model"
+        ]
+      }
+    },
+    {
+      "apiVersion": "markitect.government/v1alpha1",
+      "kind": "Ressort",
+      "metadata": {
+        "namespace": "studio",
+        "name": "pricing"
+      },
+      "purpose": "Assesses the fixed booking fee and the studio total calculation.",
+      "spec": {
+        "mandate": {
+          "apiVersion": "markitect.government/v1alpha1",
+          "kind": "Mandate",
+          "namespace": "studio",
+          "name": "root-prior"
+        }
+      }
+    },
+    {
+      "apiVersion": "markitect.government/v1alpha1",
+      "kind": "Ressort",
+      "metadata": {
+        "namespace": "studio",
+        "name": "schedule"
+      },
+      "purpose": "Assesses schedule policy and explicitly records when the confirmation-label task does not affect it.",
+      "spec": {
+        "mandate": {
+          "apiVersion": "markitect.government/v1alpha1",
+          "kind": "Mandate",
+          "namespace": "studio",
+          "name": "root-prior"
+        }
+      }
+    },
+    {
+      "apiVersion": "markitect.government/v1alpha1",
+      "kind": "Constitution",
+      "metadata": {
+        "namespace": "studio",
+        "name": "active"
+      },
+      "purpose": "Prior active model and complete frozen authority for this bounded fixture.",
+      "spec": {
+        "root": {
+          "apiVersion": "markitect.government/v1alpha1",
+          "kind": "Area",
+          "namespace": "studio",
+          "name": "root"
+        },
+        "cabinet": [
+          {
+            "apiVersion": "markitect.government/v1alpha1",
+            "kind": "Ressort",
+            "namespace": "studio",
+            "name": "pricing"
+          },
+          {
+            "apiVersion": "markitect.government/v1alpha1",
+            "kind": "Ressort",
+            "namespace": "studio",
+            "name": "schedule"
+          }
+        ],
+        "approval": "unanimous-explicit-assent",
+        "protectedSubjects": [
+          {
+            "apiVersion": "markitect.government-example/v1alpha1",
+            "kind": "Requirement",
+            "namespace": "studio",
+            "name": "protected-total"
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "markitect.government/v1alpha1",
+      "kind": "Responsibility",
+      "metadata": {
+        "namespace": "studio",
+        "name": "booking-owner"
+      },
+      "purpose": "Root remains accountable for the booking-rule requirement.",
+      "spec": {
+        "subject": {
+          "apiVersion": "markitect.government-example/v1alpha1",
+          "kind": "Requirement",
+          "namespace": "studio",
+          "name": "booking-rule"
+        },
+        "area": {
+          "apiVersion": "markitect.government/v1alpha1",
+          "kind": "Area",
+          "namespace": "studio",
+          "name": "root"
+        }
+      }
+    },
+    {
+      "apiVersion": "markitect.government/v1alpha1",
+      "kind": "Responsibility",
+      "metadata": {
+        "namespace": "studio",
+        "name": "published-booking-owner"
+      },
+      "purpose": "Root remains accountable for the exact published booking amount.",
+      "spec": {
+        "subject": {
+          "apiVersion": "markitect.government-example/v1alpha1",
+          "kind": "Requirement",
+          "namespace": "studio",
+          "name": "published-booking"
+        },
+        "area": {
+          "apiVersion": "markitect.government/v1alpha1",
+          "kind": "Area",
+          "namespace": "studio",
+          "name": "root"
+        }
+      }
+    },
+    {
+      "apiVersion": "markitect.government/v1alpha1",
+      "kind": "Responsibility",
+      "metadata": {
+        "namespace": "studio",
+        "name": "protected-owner"
+      },
+      "purpose": "Root is accountable for protecting the customer amount goal.",
+      "spec": {
+        "subject": {
+          "apiVersion": "markitect.government-example/v1alpha1",
+          "kind": "Requirement",
+          "namespace": "studio",
+          "name": "protected-total"
+        },
+        "area": {
+          "apiVersion": "markitect.government/v1alpha1",
+          "kind": "Area",
+          "namespace": "studio",
+          "name": "root"
+        }
+      }
+    },
+    {
+      "apiVersion": "markitect.government/v1alpha1",
+      "kind": "Responsibility",
+      "metadata": {
+        "namespace": "studio",
+        "name": "participant-owner"
+      },
+      "purpose": "Root is accountable for the independent participant label.",
+      "spec": {
+        "subject": {
+          "apiVersion": "markitect.government-example/v1alpha1",
+          "kind": "Requirement",
+          "namespace": "participant",
+          "name": "participant-format"
+        },
+        "area": {
+          "apiVersion": "markitect.government/v1alpha1",
+          "kind": "Area",
+          "namespace": "studio",
+          "name": "root"
+        }
+      }
+    },
+    {
+      "apiVersion": "markitect.government/v1alpha1",
+      "kind": "Artifact",
+      "metadata": {
+        "namespace": "studio",
+        "name": "government-source"
+      },
+      "purpose": "Canonical Government model source used to assess and compile the active Constitution.",
+      "spec": {
+        "path": "government.yaml",
+        "class": "canonical",
+        "writer": {
+          "apiVersion": "markitect.government/v1alpha1",
+          "kind": "Area",
+          "namespace": "studio",
+          "name": "root"
+        }
+      }
+    },
+    {
+      "apiVersion": "markitect.government/v1alpha1",
+      "kind": "Artifact",
+      "metadata": {
+        "namespace": "studio",
+        "name": "protected-goal-record"
+      },
+      "purpose": "Separate realization record for the protected root customer amount goal.",
+      "spec": {
+        "path": "studio/protected-goal.txt",
+        "class": "realization",
+        "writer": {
+          "apiVersion": "markitect.government/v1alpha1",
+          "kind": "Area",
+          "namespace": "studio",
+          "name": "root"
+        }
+      }
+    },
+    {
+      "apiVersion": "markitect.government/v1alpha1",
+      "kind": "Artifact",
+      "metadata": {
+        "namespace": "studio",
+        "name": "booking-rate"
+      },
+      "purpose": "Published booking fee read by studio composition.",
+      "spec": {
+        "path": "booking/rate.txt",
+        "class": "realization",
+        "writer": {
+          "apiVersion": "markitect.government/v1alpha1",
+          "kind": "Area",
+          "namespace": "studio",
+          "name": "root"
+        }
+      }
+    },
+    {
+      "apiVersion": "markitect.government/v1alpha1",
+      "kind": "Artifact",
+      "metadata": {
+        "namespace": "studio",
+        "name": "studio-source"
+      },
+      "purpose": "Executable pricing that realizes the booking and booking total requirements.",
+      "spec": {
+        "path": "studio/studio.go",
+        "class": "realization",
+        "writer": {
+          "apiVersion": "markitect.government/v1alpha1",
+          "kind": "Area",
+          "namespace": "studio",
+          "name": "root"
+        }
+      }
+    },
+    {
+      "apiVersion": "markitect.government/v1alpha1",
+      "kind": "Artifact",
+      "metadata": {
+        "namespace": "studio",
+        "name": "studio-check"
+      },
+      "purpose": "Deterministic integration acceptance check for the active booking rule.",
+      "spec": {
+        "path": "studio/studio_test.go",
+        "class": "realization",
+        "writer": {
+          "apiVersion": "markitect.government/v1alpha1",
+          "kind": "Area",
+          "namespace": "studio",
+          "name": "root"
+        }
+      }
+    },
+    {
+      "apiVersion": "markitect.government/v1alpha1",
+      "kind": "Artifact",
+      "metadata": {
+        "namespace": "participant",
+        "name": "participant-file"
+      },
+      "purpose": "Concrete participant serialization label, separate from studio dependencies.",
+      "spec": {
+        "path": "independent/participant.txt",
+        "class": "realization",
+        "writer": {
+          "apiVersion": "markitect.government/v1alpha1",
+          "kind": "Area",
+          "namespace": "studio",
+          "name": "root"
+        }
+      }
+    },
+    {
+      "apiVersion": "markitect.government/v1alpha1",
+      "kind": "Realization",
+      "metadata": {
+        "namespace": "studio",
+        "name": "booking-implementation"
+      },
+      "purpose": "Studio source implements the active booking rule.",
+      "spec": {
+        "subject": {
+          "apiVersion": "markitect.government-example/v1alpha1",
+          "kind": "Requirement",
+          "namespace": "studio",
+          "name": "booking-rule"
+        },
+        "artifact": {
+          "apiVersion": "markitect.government/v1alpha1",
+          "kind": "Artifact",
+          "namespace": "studio",
+          "name": "studio-source"
+        },
+        "role": "Calculates the studio booking total from seats and seat price."
+      }
+    },
+    {
+      "apiVersion": "markitect.government/v1alpha1",
+      "kind": "Realization",
+      "metadata": {
+        "namespace": "studio",
+        "name": "booking-rule-source"
+      },
+      "purpose": "Canonical Government source declares the booking-rule domain requirement.",
+      "spec": {
+        "subject": {
+          "apiVersion": "markitect.government-example/v1alpha1",
+          "kind": "Requirement",
+          "namespace": "studio",
+          "name": "booking-rule"
+        },
+        "artifact": {
+          "apiVersion": "markitect.government/v1alpha1",
+          "kind": "Artifact",
+          "namespace": "studio",
+          "name": "government-source"
+        },
+        "role": "Declares the active booking rule in the source model."
+      }
+    },
+    {
+      "apiVersion": "markitect.government/v1alpha1",
+      "kind": "Realization",
+      "metadata": {
+        "namespace": "studio",
+        "name": "booking-acceptance"
+      },
+      "purpose": "The integration test checks the active booking rule against actual model and rate bytes.",
+      "spec": {
+        "subject": {
+          "apiVersion": "markitect.government-example/v1alpha1",
+          "kind": "Requirement",
+          "namespace": "studio",
+          "name": "booking-rule"
+        },
+        "artifact": {
+          "apiVersion": "markitect.government/v1alpha1",
+          "kind": "Artifact",
+          "namespace": "studio",
+          "name": "studio-check"
+        },
+        "role": "Checks both the active requirement text and calculated studio amount."
+      }
+    },
+    {
+      "apiVersion": "markitect.government/v1alpha1",
+      "kind": "Realization",
+      "metadata": {
+        "namespace": "studio",
+        "name": "booking-rate-input"
+      },
+      "purpose": "The published rate supplies the explicit booking fee when the rule is amended.",
+      "spec": {
+        "subject": {
+          "apiVersion": "markitect.government-example/v1alpha1",
+          "kind": "Requirement",
+          "namespace": "studio",
+          "name": "booking-rule"
+        },
+        "artifact": {
+          "apiVersion": "markitect.government/v1alpha1",
+          "kind": "Artifact",
+          "namespace": "studio",
+          "name": "booking-rate"
+        },
+        "role": "Provides the rate consumed by studio composition."
+      }
+    },
+    {
+      "apiVersion": "markitect.government/v1alpha1",
+      "kind": "Realization",
+      "metadata": {
+        "namespace": "studio",
+        "name": "published-booking-value"
+      },
+      "purpose": "The same rate artifact realizes the existing exactly-two booking amount.",
+      "spec": {
+        "subject": {
+          "apiVersion": "markitect.government-example/v1alpha1",
+          "kind": "Requirement",
+          "namespace": "studio",
+          "name": "published-booking"
+        },
+        "artifact": {
+          "apiVersion": "markitect.government/v1alpha1",
+          "kind": "Artifact",
+          "namespace": "studio",
+          "name": "booking-rate"
+        },
+        "role": "Publishes exactly one fixed fee of 2 euros per booking."
+      }
+    },
+    {
+      "apiVersion": "markitect.government/v1alpha1",
+      "kind": "Realization",
+      "metadata": {
+        "namespace": "studio",
+        "name": "protected-goal-record"
+      },
+      "purpose": "A separate artifact realizes the protected customer amount goal without widening booking change scope.",
+      "spec": {
+        "subject": {
+          "apiVersion": "markitect.government-example/v1alpha1",
+          "kind": "Requirement",
+          "namespace": "studio",
+          "name": "protected-total"
+        },
+        "artifact": {
+          "apiVersion": "markitect.government/v1alpha1",
+          "kind": "Artifact",
+          "namespace": "studio",
+          "name": "protected-goal-record"
+        },
+        "role": "Records the protected customer booking total goal independently of booking implementation."
+      }
+    },
+    {
+      "apiVersion": "markitect.government/v1alpha1",
+      "kind": "Realization",
+      "metadata": {
+        "namespace": "participant",
+        "name": "participant-format-file"
+      },
+      "purpose": "The standalone participant file realizes the independent participant-format requirement.",
+      "spec": {
+        "subject": {
+          "apiVersion": "markitect.government-example/v1alpha1",
+          "kind": "Requirement",
+          "namespace": "participant",
+          "name": "participant-format"
+        },
+        "artifact": {
+          "apiVersion": "markitect.government/v1alpha1",
+          "kind": "Artifact",
+          "namespace": "participant",
+          "name": "participant-file"
+        },
+        "role": "Stores the participant format label."
+      }
+    },
+    {
+      "apiVersion": "markitect.government/v1alpha1",
+      "kind": "Artifact",
+      "metadata": {
+        "name": "implementation-order",
+        "namespace": "studio"
+      },
+      "spec": {
+        "class": "canonical",
+        "path": "orders/implementation-order.json",
+        "writer": {
+          "apiVersion": "markitect.government/v1alpha1",
+          "kind": "Area",
+          "namespace": "studio",
+          "name": "root"
+        }
+      },
+      "purpose": "Immutable input order for the scoped confirmation-label implementation."
+    },
+    {
+      "apiVersion": "markitect.government/v1alpha1",
+      "kind": "Artifact",
+      "metadata": {
+        "name": "amendment-order",
+        "namespace": "studio"
+      },
+      "spec": {
+        "class": "canonical",
+        "path": "orders/amendment-order.json",
+        "writer": {
+          "apiVersion": "markitect.government/v1alpha1",
+          "kind": "Area",
+          "namespace": "studio",
+          "name": "root"
+        }
+      },
+      "purpose": "Immutable input order for the prior-authorized booking rule amendment."
+    }
+  ],
+  "observation": {
+    "roots": [
+      "."
+    ],
+    "exclusions": [
+      {
+        "reason": "Fixture housekeeping is not a candidate product file.",
+        "path": ".gitignore"
+      },
+      {
+        "reason": "Temporary interruption adapter for mechanics only.",
+        "path": "git-gate/main.go"
+      },
+      {
+        "reason": "Fixed example module setup.",
+        "path": "go.mod"
+      },
+      {
+        "reason": "Operator or fixture acknowledgement is provenance, not a source artifact.",
+        "path": "human-acceptance.json"
+      },
+      {
+        "reason": "Human-authored intake notes are explicit inputs, not an implicit model source.",
+        "path": "intent.yaml"
+      },
+      {
+        "reason": "Public walkthrough prose is not a candidate product file.",
+        "path": "README.md"
+      },
+      {
+        "reason": "Deterministic role adapter for mechanics only.",
+        "path": "runner/main.go"
+      },
+      {
+        "reason": "Native example orchestration.",
+        "path": "walkthrough.ps1"
+      }
+    ],
+    "admitIgnored": []
+  }
+}

@@ -9,6 +9,7 @@ spec:
     - examples/government-g3
     - examples/government-g5
     - examples/government-g4
+    - examples/government-project
     - internal/host/cli/government.go
     - internal/host/cli/government_test.go
     - internal/host/cli/main.go
@@ -154,6 +155,32 @@ spec:
     - experiments/live-operating-pilot
     - experiments/two-area-operating-pilot
   tooling:
+    - path: examples/government-project/.gitignore
+      owner: government-public-workflow
+    - path: examples/government-project/booking/rate.txt
+      owner: government-public-workflow
+    - path: examples/government-project/git-gate/main.go
+      owner: government-public-workflow
+    - path: examples/government-project/go.mod
+      owner: government-public-workflow
+    - path: examples/government-project/government.yaml
+      owner: government-public-workflow
+    - path: examples/government-project/independent/participant.txt
+      owner: government-public-workflow
+    - path: examples/government-project/intent.yaml
+      owner: government-public-workflow
+    - path: examples/government-project/README.md
+      owner: government-public-workflow
+    - path: examples/government-project/runner/main.go
+      owner: government-public-workflow
+    - path: examples/government-project/studio/protected-goal.txt
+      owner: government-public-workflow
+    - path: examples/government-project/studio/studio_test.go
+      owner: government-public-workflow
+    - path: examples/government-project/studio/studio.go
+      owner: government-public-workflow
+    - path: examples/government-project/walkthrough.ps1
+      owner: government-public-workflow
     - path: examples/government-g5/README.md
       owner: government-experiment
     - path: examples/government-g5/delivery/rate.txt

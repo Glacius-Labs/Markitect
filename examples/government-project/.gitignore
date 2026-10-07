@@ -1,0 +1,10 @@
+bin/
+state/
+temporary/
+git-shim/
+*.runtime.json
+*.backlog.json
+*.stdout.json
+*.stderr.txt
+runner-build.*
+gate-build.*

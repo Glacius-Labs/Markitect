@@ -2,6 +2,7 @@ package cli
 
 import (
 	"bytes"
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -109,6 +110,117 @@ func TestGovernmentQueueCLIRejectsUnboundAndMixedRequests(t *testing.T) {
 		var out, errout bytes.Buffer
 		if Run(append([]string{"government"}, args...), &out, &errout) != 2 {
 			t.Fatalf("accepted unbound queue invocation %v: %s", args, out.String())
+		}
+	}
+}
+
+func TestGovernmentReadonlyFormatsPreserveMeaningAndExitStatus(t *testing.T) {
+	repo, err := filepath.Abs("../../../examples/government")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, tc := range []struct {
+		name  string
+		args  []string
+		code  int
+		value func() any
+	}{
+		{"schema", []string{"--action", "schema"}, 0, func() any { return reflect.New(reflect.TypeOf(government.Schema())).Interface() }},
+		{"inspect-incomplete", []string{"--config", "government.yaml", "--action", "inspect"}, 1, func() any {
+			return &struct {
+				APIVersion string            `json:"apiVersion" yaml:"apiVersion"`
+				Model      government.Model  `json:"model" yaml:"model"`
+				Survey     government.Survey `json:"survey" yaml:"survey"`
+			}{}
+		}},
+		{"plan", []string{"--config", "government.yaml", "--action", "plan", "--order", "order.yaml"}, 0, func() any { return &government.Plan{} }},
+		{"blocked-plan", []string{"--config", "government.yaml", "--action", "plan", "--order", "negative-order.yaml"}, 1, func() any { return &government.Plan{} }},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			args := append([]string{"government", "--repo", repo}, tc.args...)
+			var defaultOut, jsonOut, errout bytes.Buffer
+			if code := Run(args, &defaultOut, &errout); code != tc.code {
+				t.Fatalf("default exit %d: %s", code, errout.String())
+			}
+			if code := Run(append(args, "--format", "json"), &jsonOut, &errout); code != tc.code {
+				t.Fatalf("JSON exit %d: %s", code, errout.String())
+			}
+			if !json.Valid(jsonOut.Bytes()) {
+				t.Fatalf("invalid JSON: %s", jsonOut.String())
+			}
+			if tc.name == "inspect-incomplete" {
+				var envelope map[string]json.RawMessage
+				if err := json.Unmarshal(jsonOut.Bytes(), &envelope); err != nil {
+					t.Fatal(err)
+				}
+				var model map[string]json.RawMessage
+				if err := json.Unmarshal(envelope["model"], &model); err != nil {
+					t.Fatal(err)
+				}
+				if len(envelope["apiVersion"]) == 0 || len(envelope["survey"]) == 0 || len(model["digest"]) == 0 {
+					t.Fatal("inspection JSON must expose apiVersion, survey and model.digest")
+				}
+			}
+			// Decode the public types: YAML [] and JSON null both denote a
+			// zero-length slice and must not be mistaken for changed meaning.
+			want, got := tc.value(), tc.value()
+			if err := yaml.Unmarshal(defaultOut.Bytes(), want); err != nil {
+				t.Fatal(err)
+			}
+			if err := json.Unmarshal(jsonOut.Bytes(), got); err != nil {
+				t.Fatal(err)
+			}
+			wantJSON, err := json.Marshal(want)
+			if err != nil {
+				t.Fatal(err)
+			}
+			gotJSON, err := json.Marshal(got)
+			if err != nil {
+				t.Fatal(err)
+			}
+			// Normalize empty collections, whose wire representation differs.
+			var wantValue, gotValue any
+			if err := json.Unmarshal(wantJSON, &wantValue); err != nil {
+				t.Fatal(err)
+			}
+			if err := json.Unmarshal(gotJSON, &gotValue); err != nil {
+				t.Fatal(err)
+			}
+			if !reflect.DeepEqual(normalizeGovernmentCollections(wantValue), normalizeGovernmentCollections(gotValue)) {
+				t.Fatal("format changed public object meaning")
+			}
+		})
+	}
+}
+
+func normalizeGovernmentCollections(v any) any {
+	switch value := v.(type) {
+	case []any:
+		if len(value) == 0 {
+			return nil
+		}
+		for i := range value {
+			value[i] = normalizeGovernmentCollections(value[i])
+		}
+	case map[string]any:
+		for key := range value {
+			value[key] = normalizeGovernmentCollections(value[key])
+		}
+	}
+	return v
+}
+
+func TestGovernmentFormatRejectedBeforeExecution(t *testing.T) {
+	for _, args := range [][]string{
+		{"--action", "schema", "--format", "xml"},
+		{"--action", "schema", "--format="},
+		{"--action", "run", "--format", "json"},
+		{"--action", "queue", "--format", "yaml"},
+		{"--action", "resume", "--format", "json"},
+	} {
+		var out, errout bytes.Buffer
+		if code := Run(append([]string{"government"}, args...), &out, &errout); code != 2 || out.Len() != 0 || !strings.Contains(errout.String(), "format") {
+			t.Fatalf("accepted format %v: exit %d, %s %s", args, code, out.String(), errout.String())
 		}
 	}
 }

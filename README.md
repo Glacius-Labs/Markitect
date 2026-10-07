@@ -79,6 +79,8 @@ Projects independently select the Markdown and provider projections they need.
 
 These mechanisms aim to remove independently maintained copies of modeled intent and make consistency questions answerable structurally, leaving human attention for engineering decisions. Their upkeep must be included when testing whether that goal is achieved.
 
+The experimental source-only [Government project walkthrough](examples/government-project/README.md) connects explicit authored intent and a reviewed model digest with a bounded project implementation, prior-authorized rule amendment and interruption recovery. Its editable model and read-only JSON inspection aim to reduce manual digest copying and searching across separate mechanics examples. Human model review remains explicit; deterministic fixture runs establish mechanics, not measured productivity. This source path does not change the installed release.
+
 ## Working method
 
 The [canonical operating methodology](docs/operating-methodology.md) defines the target process:

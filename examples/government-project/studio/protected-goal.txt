@@ -1,0 +1,1 @@
+The displayed studio booking total is the amount the customer owes.

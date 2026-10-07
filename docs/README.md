@@ -16,7 +16,8 @@
 | [Architecture](architecture.md) | Published v0.13.0 capabilities, the source-only canonical projection reset, product boundaries and evidence limits; v0.12.0 records bounded resolved-target equality |
 | [Engineering constitution](engineering-constitution.md) | Kernel invariants, selected canonical intent, projection/evidence boundaries, policy analysis and human adoption authority |
 | [Canonical projection usage](canonical-projections.md) | Source-only alpha inspection, reconcile planning, Executor tools, guarded Apply and immutable verification |
-| [Government](government.md) | Experimental source-only responsibility model, native inventory, recursive execution, model maintenance and finite persistent queues |
+| [Government](government.md) | Experimental source-only responsibility model, read-only YAML/JSON inspection, execution, model maintenance and finite persistent queues |
+| [Government project walkthrough](../examples/government-project/README.md) | Public authored-intent draft, explicit acceptance, bounded implementation, delegated amendment and interruption recovery |
 | [Canonical reset validation](validation/canonical-projection-reset.md) | Migration evidence, narrow gates, negative candidates and unresolved assurance pressure |
 | [Canonical projection reset](design/canonical-projection-reset.md) | Accepted minimal structural Core, strict Schema/Projection Module split, explicit binding and unified Executor/Verifier direction |
 | [Projection-first reconciliation](design/projection-first-reconciliation.md) | Earlier design superseded by the canonical reset; retained for validated bounded lifecycle mechanics and historical limitations |

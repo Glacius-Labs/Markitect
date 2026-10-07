@@ -1,0 +1,28 @@
+apiVersion: markitect.government-project-intent/v1alpha1
+kind: AuthoredIntent
+project: Workshop booking total
+terms:
+  workshop: A scheduled class with a fixed per-seat price.
+  booking fee: The published fee added once to the total.
+priorities:
+  - P0: Preserve the customer's protected amount goal.
+  - P0: Keep the published booking fee at exactly 2 euros.
+  - P1: Calculate the booking amount from seat count and seat price.
+fixedRules:
+  - The fee input is booking/rate.txt and contains fee=2.
+  - The current total uses seat count multiplied by seat price; the published fee is a separate rule awaiting an explicit amendment.
+allowedDiscretion:
+  - The implementation may choose local variable names and code structure.
+  - A previously delegated amendment may incorporate the fixed fee once per booking; it may not change the published fee or protected goal.
+assumptions:
+  - Seat count and seat price are nonnegative integers.
+openQuestions:
+  - Refund handling is undecided and outside this change.
+  - The current total omits the published fee; the requested amendment adds it once per booking.
+fileAssignments:
+  government.yaml: Root owns the canonical model and its delegated amendment authority.
+  studio/studio.go: Root realizes the booking total.
+  studio/studio_test.go: Root checks the current rule against model and fee bytes.
+  booking/rate.txt: Root publishes the fixed fee.
+  studio/protected-goal.txt: Root records the protected customer amount goal.
+  independent/participant.txt: Root realizes the separate confirmation-label requirement.
