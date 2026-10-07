@@ -114,6 +114,30 @@ class ChangeSmokeTests(unittest.TestCase):
             self.assertIn(b"started", Path(command["stdoutPath"]).read_bytes())
             self.assertTrue(Path(command["stderrPath"]).is_file())
 
+    def test_apply_write_set_can_be_exact_subset_without_weakening_target_checks(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            repo = fixture_repo(root)
+            reviewed = {"a.txt": b"changed bytes", "b.txt": b"retained bytes"}
+            for path, data in reviewed.items():
+                (repo / path).write_bytes(data)
+            source_revision = subprocess.run(
+                ["git", "-C", str(repo), "rev-parse", "HEAD"],
+                check=True, capture_output=True, text=True,
+            ).stdout.strip()
+            initial_index_tree = subprocess.run(
+                ["git", "-C", str(repo), "write-tree"],
+                check=True, capture_output=True, text=True,
+            ).stdout.strip()
+            apply = {"written": ["a.txt"]}
+            with self.assertRaises(change.smoke.SmokeFailure):
+                change.smoke.assert_git_after_apply(repo, source_revision, reviewed, apply, initial_index_tree)
+            with self.assertRaises(change.smoke.SmokeFailure):
+                change.smoke.assert_git_after_apply(repo, source_revision, reviewed, apply, initial_index_tree, expected_written={"b.txt"})
+            change.smoke.assert_git_after_apply(repo, source_revision, reviewed, apply, initial_index_tree, expected_written={"a.txt"})
+            with self.assertRaises(change.smoke.SmokeFailure):
+                change.smoke.assert_git_after_apply(repo, source_revision, reviewed, apply, initial_index_tree, expected_written={"missing.txt"})
+
 
 if __name__ == "__main__":
     unittest.main()

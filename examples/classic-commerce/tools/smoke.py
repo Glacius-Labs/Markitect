@@ -348,7 +348,7 @@ def check_receipts(parent: Path, mode: str) -> list[dict[str, Any]]:
     return decoded
 
 
-def assert_git_after_apply(repo: Path, source_revision: str, reviewed: dict[str, bytes], apply: dict[str, Any], initial_index_tree: str) -> None:
+def assert_git_after_apply(repo: Path, source_revision: str, reviewed: dict[str, bytes], apply: dict[str, Any], initial_index_tree: str, expected_written: set[str] | None = None) -> None:
     if git(repo, "rev-parse", "HEAD").decode("ascii").strip() != source_revision:
         raise SmokeFailure("controller changed fixture HEAD")
     if git(repo, "diff", "--quiet", "HEAD", "--").strip() or git(repo, "diff", "--cached", "--quiet").strip():
@@ -362,9 +362,12 @@ def assert_git_after_apply(repo: Path, source_revision: str, reviewed: dict[str,
     }
     if untracked != set(reviewed):
         raise SmokeFailure(f"post-Apply untracked outputs differ from reviewed candidate: {sorted(untracked ^ set(reviewed))}")
+    expected_paths = set(reviewed) if expected_written is None else expected_written
+    if not expected_paths.issubset(reviewed):
+        raise SmokeFailure("expected Apply write set contains paths outside the reviewed candidate")
     written = apply.get("written")
-    if not isinstance(written, list) or set(written) != set(reviewed) or len(written) != len(reviewed):
-        raise SmokeFailure("Apply written-path list differs from the pre-reviewed output set")
+    if not isinstance(written, list) or set(written) != expected_paths or len(written) != len(expected_paths):
+        raise SmokeFailure("Apply written-path list differs from the expected reviewed write set")
     for path, expected in reviewed.items():
         actual = repo.joinpath(*path.split("/")).read_bytes()
         if actual != expected:

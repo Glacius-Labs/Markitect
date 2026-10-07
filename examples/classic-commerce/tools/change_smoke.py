@@ -497,6 +497,9 @@ def changed_pass(args: argparse.Namespace, binary: Path, repo: Path, old_revisio
         plan_path.write_bytes(execute_bytes)
         run = json.loads(execute_bytes)
         reviewed = review_minimum_two(run)
+        expected_changed = {path for path, data in reviewed.items() if baseline_outputs[path] != data}
+        if expected_changed != {"src/Commerce/CreateOrderHandler.cs", smoke.MARKDOWN_OUTPUT}:
+            raise ChangeSmokeFailure(f"min-two intent must change only the handler and Markdown outputs, got {sorted(expected_changed)}")
         initial_tree = git(repo, "write-tree").decode("ascii").strip()
         trial["executeDigest"] = run.get("digest")
         trial["reviewedOutputs"] = {path: sha256(data) for path, data in sorted(reviewed.items())}
@@ -510,7 +513,7 @@ def changed_pass(args: argparse.Namespace, binary: Path, repo: Path, old_revisio
         applied = json.loads(apply_bytes)
         if applied.get("status") != "materialized-unverified":
             raise ChangeSmokeFailure("changed Apply did not return materialized-unverified")
-        smoke.assert_git_after_apply(repo, revision, reviewed, applied, initial_tree)
+        smoke.assert_git_after_apply(repo, revision, reviewed, applied, initial_tree, expected_written=expected_changed)
         verify = run_step(trial, "changed-verify", [str(binary), "canonical", *common, "--action", "controller-verify", "--apply-result", str(apply_path), "--write"], repo, env)
         verification = smoke.parse_json_output(verify)
         if verification.get("status") != "passed" or not verification.get("results") or any(item.get("outcome") != "passed" for item in verification["results"]):
@@ -531,7 +534,7 @@ def changed_pass(args: argparse.Namespace, binary: Path, repo: Path, old_revisio
             raise ChangeSmokeFailure("changed-intent audit is not complete")
         trial["auditStatus"] = audit_report.get("status")
         trial["auditDigest"] = audit_report.get("digest")
-        smoke.assert_git_after_apply(repo, revision, reviewed, applied, initial_tree)
+        smoke.assert_git_after_apply(repo, revision, reviewed, applied, initial_tree, expected_written=expected_changed)
         trial["status"] = "passed"
         return trial
     except Exception as exc:
