@@ -5,6 +5,7 @@ spec:
     - internal/tooling/architecture
     - internal/host/government
     - examples/government
+    - examples/government-g2
     - internal/host/cli/government.go
     - internal/host/cli/government_test.go
     - internal/host/cli/main.go
@@ -150,6 +151,46 @@ spec:
     - experiments/live-operating-pilot
     - experiments/two-area-operating-pilot
   tooling:
+    - path: internal/host/government/promotion_windows_test.go
+      owner: government-experiment
+    - path: internal/host/government/promotion_other_test.go
+      owner: government-experiment
+    - path: examples/government-g2/trial.ps1
+      owner: government-experiment
+    - path: internal/host/government/execution/runtime_input.go
+      owner: government-experiment
+    - path: examples/government-g2/go.mod
+      owner: government-experiment
+    - path: examples/government-g2/government.yaml
+      owner: government-experiment
+    - path: examples/government-g2/inventory/reservation_test.go
+      owner: government-experiment
+    - path: examples/government-g2/inventory/reservation.go
+      owner: government-experiment
+    - path: examples/government-g2/order.yaml
+      owner: government-experiment
+    - path: examples/government-g2/README.md
+      owner: government-experiment
+    - path: examples/government-g2/runner/main.go
+      owner: government-experiment
+    - path: internal/host/government/execution/run_test.go
+      owner: government-experiment
+    - path: internal/host/government/execution/run.go
+      owner: government-experiment
+    - path: internal/host/government/execution/runtime_test.go
+      owner: government-experiment
+    - path: internal/host/government/execution/runtime.go
+      owner: government-experiment
+    - path: internal/host/government/execution/workspace.go
+      owner: government-experiment
+    - path: internal/host/government/promotion_path_other.go
+      owner: government-experiment
+    - path: internal/host/government/promotion_path_windows.go
+      owner: government-experiment
+    - path: internal/host/government/promotion_test.go
+      owner: government-experiment
+    - path: internal/host/government/promotion.go
+      owner: government-experiment
     - path: internal/tooling/architecture/imports.go
       owner: architecture-import-boundary
     - path: internal/tooling/architecture/imports_test.go

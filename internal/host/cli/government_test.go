@@ -80,7 +80,7 @@ func TestGovernmentCLIRealFixtureIsReadonlyAndBounded(t *testing.T) {
 }
 
 func TestGovernmentCLIRejectsMutationAndMalformedRequests(t *testing.T) {
-	for _, args := range [][]string{{"--write"}, {"--revision", "HEAD"}, {"--action", "promote"}, {"--action", "plan"}, {"--action", "inspect", "--order", "order.yaml"}, {"--action", "schema", "--config", "government.yaml"}, {"--action", "schema", "positional"}} {
+	for _, args := range [][]string{{"--write"}, {"--runtime", "runtime.json"}, {"--revision", "HEAD"}, {"--action", "run"}, {"--action", "run", "--write", "--config", "government.yaml", "--order", "order.yaml", "--runtime", "relative.json"}, {"--action", "promote"}, {"--action", "plan"}, {"--action", "inspect", "--order", "order.yaml"}, {"--action", "schema", "--config", "government.yaml"}, {"--action", "schema", "positional"}} {
 		var out, errout bytes.Buffer
 		if Run(append([]string{"government"}, args...), &out, &errout) != 2 {
 			t.Fatalf("accepted %v", args)

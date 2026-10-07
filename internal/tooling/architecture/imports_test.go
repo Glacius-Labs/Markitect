@@ -23,10 +23,12 @@ func TestPermittedEdges(t *testing.T) {
 }
 
 func TestGovernmentApplicationFixtureCannotImportProduct(t *testing.T) {
-	for _, target := range []string{"internal/core", "internal/host/government", "internal/modules/dotnet"} {
-		findings := Check([]Edge{{From: "examples/government/inventory", To: target}})
-		if len(findings) != 1 || findings[0].Rule != "adopting-code fixture may not import Markitect product packages" {
-			t.Fatalf("fixture boundary weakened for %s: %+v", target, findings)
+	for _, from := range []string{"examples/government/inventory", "examples/government-g2/inventory", "examples/government-g2/runner"} {
+		for _, target := range []string{"internal/core", "internal/host/government", "internal/modules/dotnet"} {
+			findings := Check([]Edge{{From: from, To: target}})
+			if len(findings) != 1 || findings[0].Rule != "adopting-code fixture may not import Markitect product packages" {
+				t.Fatalf("fixture boundary weakened for %s: %+v", target, findings)
+			}
 		}
 	}
 }

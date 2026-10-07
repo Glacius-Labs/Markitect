@@ -1,0 +1,158 @@
+apiVersion: markitect.government-source/v1alpha1
+kind: GovernmentSource
+constitution:
+  apiVersion: markitect.government/v1alpha1
+  kind: Constitution
+  namespace: inventory
+  name: active
+schemas:
+  - apiVersion: markitect.government-example/v1alpha1
+    purpose: One concrete inventory behavior with a directly testable boundary condition.
+    kinds:
+      Requirement:
+        purpose: Desired externally observable behavior.
+        properties:
+          statement:
+            purpose: The required inventory invariant.
+            type: string
+            minCount: 1
+            maxCount: 1
+          acceptance:
+            purpose: A deterministic observation that exercises the invariant.
+            type: string
+            minCount: 1
+            maxCount: 1
+definitions:
+  - apiVersion: markitect.government-example/v1alpha1
+    kind: Requirement
+    metadata: {namespace: inventory, name: safe-release}
+    purpose: Releasing a reservation must not wrap available inventory at the integer boundary.
+    spec:
+      statement: Release returns an overflow error when adding the release amount would exceed MaxInt64.
+      acceptance: The inventory test calls Release(MaxInt64, 1), expects ErrOverflow, and keeps an in-range addition successful.
+
+  - apiVersion: markitect.government/v1alpha1
+    kind: Area
+    metadata: {namespace: inventory, name: root}
+    purpose: Owns the complete bounded inventory behavior, its executable example and all resulting files.
+    spec:
+      capabilities: []
+  - apiVersion: markitect.government/v1alpha1
+    kind: Mandate
+    metadata: {namespace: inventory, name: release-change}
+    purpose: Prior authority for implementing, independently reviewing and amending this one inventory Requirement.
+    spec:
+      area: {apiVersion: markitect.government/v1alpha1, kind: Area, namespace: inventory, name: root}
+      scope:
+        - {apiVersion: markitect.government-example/v1alpha1, kind: Requirement, namespace: inventory, name: safe-release}
+      actions: [implement, review, amend-model]
+  - apiVersion: markitect.government/v1alpha1
+    kind: Ressort
+    metadata: {namespace: inventory, name: correctness}
+    purpose: Independently checks the integer-boundary behavior and its focused test.
+    spec:
+      mandate: {apiVersion: markitect.government/v1alpha1, kind: Mandate, namespace: inventory, name: release-change}
+  - apiVersion: markitect.government/v1alpha1
+    kind: Ressort
+    metadata: {namespace: inventory, name: maintainability}
+    purpose: Reviews the scoped change shape and may explicitly assent that it leaves its concern unaffected.
+    spec:
+      mandate: {apiVersion: markitect.government/v1alpha1, kind: Mandate, namespace: inventory, name: release-change}
+  - apiVersion: markitect.government/v1alpha1
+    kind: Responsibility
+    metadata: {namespace: inventory, name: release-owner}
+    purpose: The root Area is accountable for the one inventory Requirement.
+    spec:
+      subject: {apiVersion: markitect.government-example/v1alpha1, kind: Requirement, namespace: inventory, name: safe-release}
+      area: {apiVersion: markitect.government/v1alpha1, kind: Area, namespace: inventory, name: root}
+  - apiVersion: markitect.government/v1alpha1
+    kind: Artifact
+    metadata: {namespace: inventory, name: government-source}
+    purpose: Canonical source for the prior model and declared observation boundary.
+    spec:
+      path: government.yaml
+      class: canonical
+      writer: {apiVersion: markitect.government/v1alpha1, kind: Area, namespace: inventory, name: root}
+  - apiVersion: markitect.government/v1alpha1
+    kind: Artifact
+    metadata: {namespace: inventory, name: prior-order}
+    purpose: Explicit prior-Constitution-bound request used by the bounded scenario.
+    spec:
+      path: order.yaml
+      class: canonical
+      writer: {apiVersion: markitect.government/v1alpha1, kind: Area, namespace: inventory, name: root}
+  - apiVersion: markitect.government/v1alpha1
+    kind: Artifact
+    metadata: {namespace: inventory, name: standalone-module}
+    purpose: Declares the dependency-free module used to test the candidate in isolation.
+    spec:
+      path: go.mod
+      class: realization
+      writer: {apiVersion: markitect.government/v1alpha1, kind: Area, namespace: inventory, name: root}
+  - apiVersion: markitect.government/v1alpha1
+    kind: Artifact
+    metadata: {namespace: inventory, name: mechanics-runner}
+    purpose: Standalone deterministic process used to exercise external invocation and receipt mechanics.
+    spec:
+      path: runner/main.go
+      class: canonical
+      writer: {apiVersion: markitect.government/v1alpha1, kind: Area, namespace: inventory, name: root}
+  - apiVersion: markitect.government/v1alpha1
+    kind: Artifact
+    metadata: {namespace: inventory, name: release-source}
+    purpose: Source implementation of overflow-safe inventory release.
+    spec:
+      path: inventory/reservation.go
+      class: realization
+      writer: {apiVersion: markitect.government/v1alpha1, kind: Area, namespace: inventory, name: root}
+  - apiVersion: markitect.government/v1alpha1
+    kind: Artifact
+    metadata: {namespace: inventory, name: release-test}
+    purpose: Focused test of the integer overflow boundary and ordinary addition.
+    spec:
+      path: inventory/reservation_test.go
+      class: realization
+      writer: {apiVersion: markitect.government/v1alpha1, kind: Area, namespace: inventory, name: root}
+  - apiVersion: markitect.government/v1alpha1
+    kind: Realization
+    metadata: {namespace: inventory, name: release-source-realization}
+    purpose: The inventory release implementation realizes the Requirement.
+    spec:
+      subject: {apiVersion: markitect.government-example/v1alpha1, kind: Requirement, namespace: inventory, name: safe-release}
+      artifact: {apiVersion: markitect.government/v1alpha1, kind: Artifact, namespace: inventory, name: release-source}
+      role: Adds released stock with explicit integer-overflow protection.
+  - apiVersion: markitect.government/v1alpha1
+    kind: Realization
+    metadata: {namespace: inventory, name: release-module-realization}
+    purpose: The standalone Go module lets the focused Requirement check run from the isolated candidate root.
+    spec:
+      subject: {apiVersion: markitect.government-example/v1alpha1, kind: Requirement, namespace: inventory, name: safe-release}
+      artifact: {apiVersion: markitect.government/v1alpha1, kind: Artifact, namespace: inventory, name: standalone-module}
+      role: Defines the module context for the overflow behavior check.
+  - apiVersion: markitect.government/v1alpha1
+    kind: Realization
+    metadata: {namespace: inventory, name: release-test-realization}
+    purpose: The focused test verifies the Requirement's boundary and normal behavior.
+    spec:
+      subject: {apiVersion: markitect.government-example/v1alpha1, kind: Requirement, namespace: inventory, name: safe-release}
+      artifact: {apiVersion: markitect.government/v1alpha1, kind: Artifact, namespace: inventory, name: release-test}
+      role: Checks overflow rejection and in-range addition.
+  - apiVersion: markitect.government/v1alpha1
+    kind: Constitution
+    metadata: {namespace: inventory, name: active}
+    purpose: Selects the prior inventory Requirement, its sole Area and two-Ressort unanimous review cabinet.
+    spec:
+      root: {apiVersion: markitect.government/v1alpha1, kind: Area, namespace: inventory, name: root}
+      cabinet:
+        - {apiVersion: markitect.government/v1alpha1, kind: Ressort, namespace: inventory, name: correctness}
+        - {apiVersion: markitect.government/v1alpha1, kind: Ressort, namespace: inventory, name: maintainability}
+      approval: unanimous-explicit-assent
+
+observation:
+  roots: ["."]
+  exclusions:
+    - path: README.md
+      reason: Human operation and evidence-limit instructions are not candidate project inputs.
+    - path: trial.ps1
+      reason: The reproducible trial harness orchestrates the example from outside its modeled candidate scope.
+  admitIgnored: []
