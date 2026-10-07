@@ -1,0 +1,136 @@
+{
+  "schemaVersion": 1,
+  "reviewType": "independent-read-only-context-session-receipt-review",
+  "reviewedUtc": "2026-10-07",
+  "scope": "Static hashes, raw receipts, result, and successor SQLite opened read-only immutable; no inference, native/model/metadata call, dispatch, resume, probe, or tests.",
+  "verdict": "pass_with_scope_limits",
+  "findings": [],
+  "checks": {
+    "manifestCopies": {
+      "verified": 20,
+      "total": 20,
+      "allMatch": true
+    },
+    "manifestOriginals": {
+      "verified": 17,
+      "total": 17,
+      "allPresentAndMatch": true
+    },
+    "frozenSourcePins": {
+      "verified": 34,
+      "total": 34,
+      "allMatch": true,
+      "sourceCandidate": "efc78ef619b3f8bcafe9cffee0c2c7ebbc34b0a0",
+      "deliveredHead": "95cc60d5f936f732a39493a0b2e622b718b19679"
+    },
+    "actorRepository": {
+      "expectedBaseCommit": "1441ee3a2b109be7d82e0a38a563ee56312e5881",
+      "actualHead": "1441ee3a2b109be7d82e0a38a563ee56312e5881",
+      "clean": true
+    },
+    "approvedAuthorityChain": {
+      "receiptGrantMatches": true,
+      "receiptProtocolMatches": true,
+      "receiptRequestMatches": true,
+      "receiptAdoptionMatches": true,
+      "receiptCandidateMatches": true,
+      "approvedTrialMatches": true,
+      "profileApprovalPersisted": true
+    },
+    "dispatchAndLedger": {
+      "dispatcherInvocations": 1,
+      "resumeInvocations": 0,
+      "newActorStarts": 1,
+      "attemptRows": 1,
+      "attemptStatus": "stopped",
+      "attemptId": "378f1aa256ab4865bc17d54c3cd94a92",
+      "attemptTokenUsage": 20501,
+      "successorSha256": "b4f13c5053ad1f00e477bf9be9831a5075f2ea0d8d33d8db6ce8a2173a6a0be8",
+      "readOnlyImmutableConnection": true,
+      "singleContextAllocationRow": true,
+      "fullPredecessorBindingEqualAcrossGrantProtocolResultAndLedger": true,
+      "historicalDatabaseHashes": {
+        "actual-runner-authorized-starts.sqlite": {
+          "path": "experiments/government-comparison/.study-data/actual-runner-authorized-starts.sqlite",
+          "expectedSha256": "74dfd51e2802bc67131891b28c6858129ff5ef4a50a6f1fe06a8793a7250732f",
+          "actualSha256": "74dfd51e2802bc67131891b28c6858129ff5ef4a50a6f1fe06a8793a7250732f",
+          "matches": true
+        },
+        "runner-01601-diagnostic.sqlite": {
+          "path": "experiments/government-comparison/.study-data/runner-01601-diagnostic.sqlite",
+          "expectedSha256": "33bd2ba59b11ab6d54f75c55e6d12b00ec6b90df00106a1419aed239cef2982c",
+          "actualSha256": "33bd2ba59b11ab6d54f75c55e6d12b00ec6b90df00106a1419aed239cef2982c",
+          "matches": true
+        }
+      }
+    },
+    "runtimeObservation": {
+      "rawStdoutEventTypes": [
+        "thread.started",
+        "turn.started",
+        "item.completed",
+        "item.completed",
+        "turn.completed"
+      ],
+      "rawToolEvents": 0,
+      "answerCompleted": true,
+      "turnsStarted": 1,
+      "turnsCompleted": 1,
+      "sentinelsMatched": {
+        "released": false,
+        "actorOwn": false
+      },
+      "reportedUsageInputPlusOutput": 20501,
+      "threshold": 10000,
+      "overshoot": 10501,
+      "nativeExitCode": 1,
+      "nativeStopReason": "retrospective_session_token_threshold",
+      "nativeWallSeconds": 11.379775999928825,
+      "dispatcherExitCode": 0,
+      "providerRequests": null,
+      "providerInternalRetries": null,
+      "resolvedServingModel": null,
+      "resultInferencePerformed": null
+    },
+    "cumulativeAccounting": {
+      "priorStarts": 3,
+      "additionalStartedAttempts": 1,
+      "cumulativeStarts": 4,
+      "knownHistoricalTokens": 10009,
+      "newReportedTokens": 20501,
+      "knownSubtotal": 30510,
+      "totalTokens": null,
+      "oldBudgetCompliance": "unknown; not claimed"
+    }
+  },
+  "evidenceSha256": {
+    "manifest": "f0392137215b58e33d889c60883f0eacf1f048b074b9067298bb50dc0b53e207",
+    "freeze": "bf9d92ff60e80a579506535344dfc2701ac59bb9403c7927d31a8bfaa2d4a2d3",
+    "handoff": "562a1e4f5a68c1cc04b397805308c3b557265228ac11cba4a900f96954e7812c",
+    "preflight": "7c6476e66afc17915b489929e260511b4c4b402f1e357d768ee9ff8dd8934db3",
+    "observation": "4dd888e9ffdfd6408b89d5e6ab76175e7b3bd9f0a8d2e86e2620b1f170624fd5",
+    "result": "e82b653f70f63c83eb200903c53adf60f3ba7081ac1d6cb97857a9be60d1b2aa",
+    "approvalReceipt": "f5b44019a85a4bdf69d139bd47699288bb28db8f10ebef597f5d7f93ca518b24",
+    "request": "da65b4b722c8c9582a9ca5b2cbd06a021ae1d055dab7a54f84aab4c051339138",
+    "grant": "dbe31c7da231df51e1d0c554a225f1ad384b740742e0bd6a0822d75b00e16de2",
+    "protocol": "1f8b7688efb73fd2b880cb7ed2be4dffca05ca03dc1b1ec889e7ea9a6c95bbab",
+    "profileAdoption": "df121b2b6f5ee264ce119f3bff8965a38436ae33974a88b80f573bc07f8f8e76",
+    "successorDatabase": "b4f13c5053ad1f00e477bf9be9831a5075f2ea0d8d33d8db6ce8a2173a6a0be8",
+    "ledgerReadonlyExport": "cb743003f77be82a53963837f393f9aff8defaa599f9a9dbcb7b7872d37b7169",
+    "stdout": "6367ce9b75c0a228f9460c4e7b2c9e4125ddc7ae6282b60900cb7851fd883edd",
+    "stderr": "a0c5d6174b6c2d345c64dee3f309b24a54d1e196a0ed67e83ae8e669f022cf20",
+    "process": "364a41df8e056b50437318362c2811731c2d6e439e78d9fc212a7e153a1de611"
+  },
+  "interpretation": {
+    "answer": "Completed agent turn returned both sentinel values null and actor-reported no file-reading tool.",
+    "contextAccess": "No successful context access demonstrated; no tool or file-read events in raw stream. OS access/isolation is unproved.",
+    "process": "Native process returned 1 after retrospective token threshold; dispatcher returned 0 and preserved stopped Result. Completed turn is distinct from successful native exit.",
+    "usage": "20,267 input + 234 output = 20,501; cached/reasoning counters preserved separately. Threshold 10,000 was exceeded retrospectively by 10,501. Provider request/retry count and serving model remain unknown.",
+    "cumulative": "Four consumed starts total; known token subtotal 30,510; all-history total null.",
+    "study": "S1 remains open because effective context access criterion was not met. No product-quality or OS-isolation conclusion."
+  },
+  "limitations": [
+    "Raw receipts substantiate the recorded process and tool-event stream but cannot establish unobserved OS filesystem access or provider-internal calls.",
+    "Result inferencePerformed is null; one completed agent turn is not equated with a known provider request count."
+  ]
+}

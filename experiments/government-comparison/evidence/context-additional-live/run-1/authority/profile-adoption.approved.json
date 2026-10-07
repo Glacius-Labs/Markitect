@@ -1,0 +1,9 @@
+{
+  "decisionRef": "Overseer 2026-10-07T18:34:01Z; user Go; exactly one additional public context session; no retry, continuation, children, study or extra purchase",
+  "fromProfileSha256": "6bfeb8fac2d3693d26641bc1283d226e5cb14eebcdd3530ba3256d08dbac6c71",
+  "ledgerPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\context-additional-20261007\\dispatch.sqlite",
+  "limitsSha256": "9519c757fbc5531a5c9daca205800bd995e47c3c5d4f49fe7aa4167b278995f4",
+  "status": "approved",
+  "toProfileSha256": "354c021a25adfbdd84d9768e5d51396e5b89dfc8be3e06de91d2c59eb9e9b51a",
+  "trialId": "overseer-context-additional-2026-10-07"
+}

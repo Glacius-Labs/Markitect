@@ -1,0 +1,30 @@
+{
+  "sourceHeadAtInvocation": "95cc60d5f936f732a39493a0b2e622b718b19679",
+  "sourceCandidate": "efc78ef619b3f8bcafe9cffee0c2c7ebbc34b0a0",
+  "cwd": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect",
+  "argv": [
+    "C:/Python313/python.exe",
+    "experiments/government-comparison/runtime/adapter.py",
+    "--request",
+    "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\context-additional-final-20261007-1791397271410\\context-drafts\\overseer-approved-20261007\\request.json",
+    "--result",
+    "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\context-additional-final-20261007-1791397271410\\context-drafts\\results\\context-result.json",
+    "--grant",
+    "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\context-additional-final-20261007-1791397271410\\context-drafts\\overseer-approved-20261007\\grant.approved.json",
+    "--grant-sha256",
+    "dbe31c7da231df51e1d0c554a225f1ad384b740742e0bd6a0822d75b00e16de2",
+    "--protocol",
+    "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\context-additional-final-20261007-1791397271410\\context-drafts\\overseer-approved-20261007\\protocol.frozen.json",
+    "--protocol-sha256",
+    "1f8b7688efb73fd2b880cb7ed2be4dffca05ca03dc1b1ec889e7ea9a6c95bbab",
+    "--allow-live"
+  ],
+  "dispatcherInvocations": 1,
+  "dispatcherExitCode": 0,
+  "resumeInvocations": 0,
+  "newActorStarts": 1,
+  "priorStarts": 3,
+  "cumulativeStarts": 4,
+  "furtherStartsAuthorized": 0,
+  "outerToolSessionId": 96487
+}
