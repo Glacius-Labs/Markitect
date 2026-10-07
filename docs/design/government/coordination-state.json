@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-07T18:21:23Z",
+  "updatedUtc": "2026-10-07T18:35:23Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -21,13 +21,13 @@
       "name": "Worker",
       "threadId": "01a1169b-9357-7df3-a8f6-f913557c782a",
       "hostId": "local",
-      "afterCursor": "b2b8e43f-fcaa-41bf-828a-99c69527bdea:34",
+      "afterCursor": "b2b8e43f-fcaa-41bf-828a-99c69527bdea:35",
       "lastObservedStatus": "active",
       "activeTurn": "01a1178c-8696-7011-a7d9-0b4285d6ca75",
-      "lastAssistantMessageId": "msg_0a7785839df196a4016ac68ce803848191877fa67fa6292f2a",
+      "lastAssistantMessageId": "msg_0a7785839df196a4016ac68fe74bf48191865a8515799c594f",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "G4 delegated substantial model/realization amendment under prior authority and bounded conflict escalation; no G5 queue",
-      "latestProgress": "Das unabhängige Review hat eine zu grobe Prüfung gefunden: „kanonisch“ bezeichnet nicht nur die ausgewählte Government-Modelldatei. Ich binde die Änderungsbefugnis deshalb an genau diesen Pfad und prüfe sie je betroffenem Subject. So benötigen reine Realisierungsarbeiten kein zusätzliches Modelländerungsrecht.",
+      "latestProgress": "Der Host-Pfad bindet nun alte und vorgeschlagene Modell-Digests getrennt und behält die einzelnen Entscheidungsrunden. Ich prüfe noch, dass die finale Evidenz auch die tatsächlichen Executor-Belege und gegebenenfalls die rekursive Prüfkette enthält. Anschließend laufen die integrierten nativen Fälle; die vollständigen Quellgates folgen erst am endgültigen sauberen SHA.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-worker/Markitect",
       "transferredDesignCommit": "691ce1dee3484371c4aea725db4ed5cc3f2e3719",
       "candidateSha": "97a55bd572b9a730fa1e206232ee37e54025a144",
@@ -164,21 +164,21 @@
       "name": "Scientist",
       "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
       "hostId": "local",
-      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:36",
+      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:38",
       "lastObservedStatus": "active",
-      "activeTurn": "01a1178e-2fb1-7763-b2ce-0f1fff1eb60d",
-      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac68d44518c819182df760ff8a811a0",
+      "activeTurn": "01a117a6-1885-7fa1-86e4-c5b078796b9e",
+      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac690ed3bfc8191ac97e13cb005f131",
       "initialAssignmentDispatched": true,
-      "assignedMilestone": "Minimal explicit additive one-context-session allocation with immutable cumulative diagnostic history; reviewed exact drafts, no inference",
-      "latestProgress": "Der Review ist abgeschlossen; die beiden Befunde sind behoben. Der Historienleser ist im Runtime-Pin enthalten, und Resume prüft die gespeicherte Zuteilung sowie den konkreten Dispatch lesend, bevor SQLite etwas initialisieren kann. Ich friere jetzt die endgültigen Testbelege und die neuen Entwürfe ein. Ein ausführbarer Run-Grant bleibt ausstehend.",
+      "assignedMilestone": "Execute exactly one granted public two-file context smoke, preserve raw usage/tool/process/ledger evidence and independent read-only handoff; then hold",
+      "latestProgress": "Ich prüfe die Freigabe, ihre Gültigkeit und die eingefrorenen Pins lesend. Wenn alles übereinstimmt, führe ich den Dispatcher genau einmal aus und sichere anschließend die Rohbelege und Auswertung.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-scientist/Markitect",
       "transferredDesignCommit": "b9e17c9896f14b4b1268e4bcb005395f5d324384",
-      "candidateSha": "0e00bfd5d81c259a8c7fac0731ef27a4a2a27e20",
-      "acceptance": "Measurement v2 and blocked concrete drafts accepted as mechanics; explicit additive context-allocation implementation active",
+      "candidateSha": "95cc60d5f936f732a39493a0b2e622b718b19679",
+      "acceptance": "Additional context-allocation mechanics accepted; exact one-session run grant frozen/validated and dispatched, actual response/evidence pending",
       "lastAssignment": {
-        "sentUtc": "2026-10-07T18:09:17Z",
-        "key": "s1-explicit-additive-context-allocation",
-        "scope": "Keep historical ledgers/grants exhausted and usage null; bind one additional finite diagnostic allocation to both ledgers and3consumed starts (cumulative4). No generic unknown bypass, no v2 study change. Focused checks/review and new exact source/request/protocol/grant drafts; no live grant or inference."
+        "sentUtc": "2026-10-07T18:35:23Z",
+        "key": "s1-approved-one-public-context-run",
+        "scope": "One exact request through approved shared dispatcher, max180seconds/1session/10000retrospective tokens,3historical starts retained,cumulative4, no retry/children/continuation; actual receipts and independent read-only handoff then hold."
       },
       "evidence": {
         "sourcesHashChecked": 37,
@@ -329,6 +329,25 @@
           "remainingGap": "Faithful legacy migration still retains unknown tokens and blocks literal v2; narrow new additive readiness allocation explicitly decided, not yet implemented/frozen",
           "liveGrantIssued": false,
           "liveCells": 0
+        },
+        "additionalContextAcceptance": {
+          "acceptedUtc": "2026-10-07T18:34:01Z",
+          "sourceSha": "95cc60d5f936f732a39493a0b2e622b718b19679",
+          "implementationSha": "efc78ef619b3f8bcafe9cffee0c2c7ebbc34b0a0",
+          "handoff": "experiments/government-comparison/context-additional-handoff.md",
+          "freezeSha256": "bf9d92ff60e80a579506535344dfc2701ac59bb9403c7927d31a8bfaa2d4a2d3",
+          "sourceHashesIndependentlyChecked": 34,
+          "evidenceHashesIndependentlyChecked": 17,
+          "externalDraftHashesIndependentlyChecked": 15,
+          "archiveEntriesIndependentlyChecked": 375,
+          "hashMismatches": 0,
+          "targetedTestsReported": 60,
+          "reviewer": "/root/s1_additional_context_acceptance",
+          "review": "No material blocker after exact grant/protocol approval; no reruns or inference by reviewer",
+          "rootInspection": "Clean delivery SHA/public handoff and actual authority/adoption/allocation rules read; post-compaction generic wait response was not mistaken for missing finished package",
+          "historicalLedgerUnchanged": true,
+          "startsBeforeGrant": 0,
+          "liveStudyCells": 0
         }
       },
       "classicHandoffReceived": true,
@@ -411,7 +430,7 @@
       "heldWorktree": "C:/Users/Consiliari/.codex/worktrees/standard-operating-model/Markitect"
     }
   ],
-  "nextAction": "Review Worker G4 and Scientist explicit additive history-bound context allocation. Approve exact one-session live Grant only after ready frozen source/request/protocol. Continue10minute checks with short reports; Architect held.",
+  "nextAction": "Inspect actual one-context-smoke receipts and Worker G4 completion when available. No further Actor session after this grant without concrete next decision; six-cell study still closed. Continue10minute reports.",
   "boundaries": {
     "governmentPublication": false,
     "automaticClassicReplacement": false,
@@ -420,10 +439,11 @@
     "jev": "Deferred; no extra investigation started"
   },
   "lastReview": {
-    "reviewedUtc": "2026-10-07T18:21:23Z",
-    "evidenceLevel": "Compact snapshots all3. Worker reports narrowing amendment authority to selected Government model path and affected subjects after review; Scientist reports two review fixes complete and freezes final evidence/drafts. Both active; no new exact completion accepted. Architect unchanged.",
+    "reviewedUtc": "2026-10-07T18:35:23Z",
+    "evidenceLevel": "All3snapshots; Scientist clean exact completed package and recent instructions read despite generic wait response. Independent34/17/15/375hash checks and documented60tests. Exact external grant/protocol/profile/request created and read-only Authority validation passed. Scientist active after dispatch. Worker G4 ongoing; Architect unchanged.",
     "coordinationActions": [
-      "Saved cursors and reported review progress; no redundant instructions, tests or live grant."
+      "Accepted additional context mechanics; approved and sent exact one-session live smoke, then hold.",
+      "No repeated Worker assignment, no Architect busywork, no tests or model calls run by Overseer."
     ],
     "userDecisionRequired": false
   },
@@ -525,7 +545,7 @@
     },
     "remainingSessions": 0,
     "retrySemantics": "No wrapper relaunch or continuation. If builtin provider retry controls unavailable, unchanged documented internal transport defaults allowed inside 180s for this probe only; counts/usage remain unknown unless evidenced.",
-    "remainingAttemptPurpose": "All3diagnostic grants exhausted. Current dispatcher/context preparation allows no new inference.",
+    "remainingAttemptPurpose": "Exactly one newly approved public two-file context smoke, separate additive window with immutable old3starts. No fifth start or extra access/study probe.",
     "originalActorSessionsTotal": 2,
     "followupGrant": {
       "id": "installed-runner-01601-identity-r1",
@@ -548,6 +568,27 @@
       "newPurchases": false,
       "consumedSessions": 1,
       "remainingSessions": 0
+    },
+    "additionalContextGrant": {
+      "id": "overseer-context-additional-2026-10-07",
+      "issuedUtc": "2026-10-07T18:34:01Z",
+      "expiresUtc": "2026-10-07T19:04:01Z",
+      "maxAdditionalSessions": 1,
+      "previousConsumedSessions": 3,
+      "cumulativeMaximumSessions": 4,
+      "wallSeconds": 180,
+      "maxParallelActors": 1,
+      "wrapperTurns": 1,
+      "retrospectiveTokenThreshold": 10000,
+      "wrapperRetries": 0,
+      "children": false,
+      "continuation": false,
+      "newPurchases": false,
+      "runStatus": "Dispatched, result pending",
+      "approvalReceipt": {
+        "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\context-additional-final-20261007-1791397271410\\context-drafts\\overseer-approved-20261007\\approval-receipt.json",
+        "sha256": "f5b44019a85a4bdf69d139bd47699288bb28db8f10ebef597f5d7f93ca518b24"
+      }
     }
   },
   "sourceTestTimeoutAuthorization": {
@@ -574,7 +615,7 @@
   },
   "contextSmokePreparation": {
     "selectedUtc": "2026-10-07T17:31:12Z",
-    "status": "Explicit additional resource decision selected; minimal cumulative-history successor implementation and exact drafts pending. Run grant NOT issued.",
+    "status": "Exact one-session Run Grant issued, frozen/read-only validated, execution delegated to Scientist; response not yet inspected",
     "maxSessions": 1,
     "maxWallSeconds": 180,
     "maxParallelActors": 1,
@@ -591,7 +632,7 @@
     "newPurchases": false,
     "prerequisite": "Accepted profile correction and exact source/request/protocol/config/runner/Python/input pins, authenticated metadata, coordinator run grant",
     "historicalDiagnostics": "All3prior starts exhausted; ledgers/unknown total preserved. No new inference authorized.",
-    "updatedUtc": "2026-10-07T18:09:29Z",
+    "updatedUtc": "2026-10-07T18:35:23Z",
     "accountingDecision": "One additional finite readiness allocation despite unknown historical total. Old3starts consumed, oldgrants exhausted, knownsubtotal10009/allhistorynull retained; cumulative starts<=4. Within new allocation unknown tokens still block. No blanket v2 study bypass.",
     "historicalLedgerHashes": [
       "74dfd51e2802bc67131891b28c6858129ff5ef4a50a6f1fe06a8793a7250732f",
@@ -603,6 +644,33 @@
     "knownHistoricalTokenSubtotal": 10009,
     "physicalMigrationRequired": false,
     "successorLedger": "Only explicit immutable predecessor binding and cumulative grants/counts; not empty replacement or reset",
-    "liveGrantIssued": false
+    "liveGrantIssued": true,
+    "grant": {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\context-additional-final-20261007-1791397271410\\context-drafts\\overseer-approved-20261007\\grant.approved.json",
+      "sha256": "dbe31c7da231df51e1d0c554a225f1ad384b740742e0bd6a0822d75b00e16de2"
+    },
+    "protocol": {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\context-additional-final-20261007-1791397271410\\context-drafts\\overseer-approved-20261007\\protocol.frozen.json",
+      "sha256": "1f8b7688efb73fd2b880cb7ed2be4dffca05ca03dc1b1ec889e7ea9a6c95bbab"
+    },
+    "profileAdoption": {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\context-additional-final-20261007-1791397271410\\context-drafts\\overseer-approved-20261007\\profile-adoption.approved.json",
+      "sha256": "df121b2b6f5ee264ce119f3bff8965a38436ae33974a88b80f573bc07f8f8e76"
+    },
+    "request": {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\context-additional-final-20261007-1791397271410\\context-drafts\\overseer-approved-20261007\\request.json",
+      "sha256": "da65b4b722c8c9582a9ca5b2cbd06a021ae1d055dab7a54f84aab4c051339138"
+    },
+    "approvalReceipt": {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\context-additional-final-20261007-1791397271410\\context-drafts\\overseer-approved-20261007\\approval-receipt.json",
+      "sha256": "f5b44019a85a4bdf69d139bd47699288bb28db8f10ebef597f5d7f93ca518b24"
+    },
+    "resultPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\context-additional-final-20261007-1791397271410\\context-drafts\\results\\context-result.json",
+    "validFromUtc": "2026-10-07T18:34:01Z",
+    "expiresUtc": "2026-10-07T19:04:01Z",
+    "deliveredCandidate": "95cc60d5f936f732a39493a0b2e622b718b19679",
+    "implementationSha": "efc78ef619b3f8bcafe9cffee0c2c7ebbc34b0a0",
+    "authorityValidation": "Authority and exact Request valid; no ledger or inference created by validation",
+    "newSessionsConsumed": null
   }
 }
