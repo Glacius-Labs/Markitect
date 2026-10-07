@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-07T15:38:00Z",
+  "updatedUtc": "2026-10-07T15:44:31Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -18,13 +18,13 @@
       "name": "Worker",
       "threadId": "01a1169b-9357-7df3-a8f6-f913557c782a",
       "hostId": "local",
-      "afterCursor": "b2b8e43f-fcaa-41bf-828a-99c69527bdea:13",
+      "afterCursor": "b2b8e43f-fcaa-41bf-828a-99c69527bdea:14",
       "lastObservedStatus": "active",
       "activeTurn": "01a116eb-bb06-7932-a115-10777b106262",
-      "lastAssistantMessageId": "msg_0a7785839df196a4016ac6665f7ff081919dc8cada3dc539f0",
+      "lastAssistantMessageId": "msg_0a7785839df196a4016ac668c093748191a2bb17315b03e193",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "G1 source-gate closure with user-authorized maximum 30-minute monitored suite",
-      "latestProgress": "Nach 1 Minute 42 Sekunden ist die Go-Suite im materialisierten Commit gestartet; aktuell laufen Kompilierung und Linken. Der Verify gibt seinen Gesamtbericht erst am Ende aus. Deshalb berichte ich währenddessen beobachtete Prozessschritte und zähle keine noch nicht ausgegebenen Testergebnisse als bestanden.",
+      "latestProgress": "Nach knapp zwölf Minuten ist ein konkreter Phasenwechsel sichtbar: Der Host-Prozess hat seine drei isolierten Controller-Szenarien gestartet — Audit, Reparaturabschluss und Modelländerung. Das entspricht der Schlussphase des zuvor bestandenen Laufs. Ihre Ergebnisse stehen noch aus.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-worker/Markitect",
       "transferredDesignCommit": "691ce1dee3484371c4aea725db4ed5cc3f2e3719",
       "candidateSha": "028c137dac733c0a9c8539727e14bdba55fca789",
@@ -76,13 +76,13 @@
       "name": "Scientist",
       "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
       "hostId": "local",
-      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:12",
+      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:13",
       "lastObservedStatus": "active",
       "activeTurn": "01a11702-fd2a-7b30-8023-54ea2f3474b4",
-      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac6672bacc48191bed363dbae27436b",
+      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac66802006c8191b46b477b4537841c",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "At most two actual identity/usage/access probes with hard session/time/process bounds; full study remains closed",
-      "latestProgress": "Ich führe jetzt den begrenzten realen Runner-Probe aus. Die neue Vorgabe ersetzt nur für diese höchstens zwei Sessions die bisherige Sechs-Request-Grenze; das spätere Studienprofil bleibt unverändert. Ich sichere zuerst den Einmalstart, die Prozessbaum-Frist und die Rohereignisse, dann prüfe ich gpt-6.1-sol/high ohne Modellwechsel.",
+      "latestProgress": "Der erste Start wurde bereits beim Laden der Konfiguration abgewiesen: Codex 0.130.0 erlaubt keine Overrides für die eingebaute Provider-ID openai. Damit ist meine bisher vorgesehene Retry-Konfiguration nachweislich inkompatibel. Der Versuch zählt als verbraucht; es begann kein Agent-Turn. Weil Probe 1 nicht ausführbar war, starte ich Probe 2 nicht. Ich friere den unveränderten Fehlerbeleg und den offenen Korrekturbedarf ein.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-scientist/Markitect",
       "transferredDesignCommit": "b9e17c9896f14b4b1268e4bcb005395f5d324384",
       "candidateSha": "8df6085d938a1f73576743c3fa38ba3a5c51dd9a",
@@ -122,13 +122,13 @@
       "name": "Architect",
       "threadId": "01a111ec-a913-7830-91b0-925d0a1dd1b2",
       "hostId": "local",
-      "afterCursor": "71d9f5b2-c0f0-474c-9898-777d051b478a:27",
+      "afterCursor": "71d9f5b2-c0f0-474c-9898-777d051b478a:28",
       "lastObservedStatus": "active",
       "activeTurn": "01a116f0-47c6-7770-ace4-b522caf9bae3",
-      "lastAssistantMessageId": "msg_0b6e7ce0ce9f843f016ac66605174c87d2a83f5307061b4081",
+      "lastAssistantMessageId": "msg_0b6e7ce0ce9f843f016ac668bc598487d2bd7f126fb9a47fdc",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "Bounded public Classic onboarding example with explicit policies, real compilation and positive/negative verification; held study candidate unchanged",
-      "latestProgress": "Die unabhängige Prüfung des Modells und der .NET-Checks ist ohne offenen Befund abgeschlossen. Die Negativprobe verwendet absichtlich kompilierbaren Code, der addiert statt multipliziert. Damit muss die fachliche Prüfung den Fehler erkennen und Markitect den Verify-Abschluss verweigern. Die README beschreibt dabei ausdrücklich: Apply schreibt zunächst ungeprüfte Artefakte; bestanden ist erst das anschließende Verify.",
+      "latestProgress": "Die README, der Beispielleitfaden und der datierte Prüfbericht sind fertig. Auch der abschließende Dokumentationsstand besteht Struktur- und Artefaktprüfung. Ich friere jetzt die Nachweise für die Übergabe ein. Die vollständigen Integrationsgates bleiben offen; der bestehende v0.14.1-r1-Kandidat ist unverändert.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/standard-operating-model/Markitect",
       "transferredDesignCommit": null,
       "candidateSha": "c91363b7ac4decbe87212ff0f588b5451581a152",
@@ -155,7 +155,7 @@
       "followupWorktree": null
     }
   ],
-  "nextAction": "Inspect Worker final fixed-revision Verify and actual Scientist probe receipts when complete; Architect finishes finite public example. Reserve full Go-suite slot to Worker until release; no full study yet.",
+  "nextAction": "When Scientist finalizes, inspect exact config rejection and authorize narrow correction within remaining single session allowance; no blind retry or added sessions. Await Worker final Verify before releasing full-suite slot for Architect pending integration gates.",
   "boundaries": {
     "governmentPublication": false,
     "automaticClassicReplacement": false,
@@ -164,17 +164,13 @@
     "jev": "Deferred; no extra investigation started"
   },
   "lastReview": {
-    "reviewedUtc": "2026-10-07T15:38:00Z",
-    "evidenceLevel": "Worker diagnostic suite summary and current source inspected; Scientist clean final SHA, review/source-validation receipts and all 130 source/public-evidence hashes verified. Architect progress from live chat only; its new example not accepted.",
-    "coordinationActions": [
-      "Scientist dispatched actual bounded probe after explicit coordinator-only probe-limit amendment; observed active.",
-      "Worker final Verify running, no duplicate order.",
-      "Architect bounded onboarding follow-up running, no duplicate order."
-    ],
+    "reviewedUtc": "2026-10-07T15:44:31Z",
+    "evidenceLevel": "Compact live chat snapshots; all turns active. Interim claims and new runner error are reported by owners, not yet independently accepted final evidence.",
+    "coordinationActions": [],
     "findings": [
-      "Worker diagnostic suite passed in 659.97s; optional bounded per-check budget candidate 028c137 awaits final Verify.",
-      "Scientist infrastructure checkpoint accepted within its scope; real model/config/access and live dispatcher readiness remain unproven.",
-      "Architect reports independent model/.NET-check review closed; semantic negative uses compiling code with wrong addition-vs-multiplication."
+      "Worker final fixed-revision Verify reaches controller scenarios after about twelve minutes; results still pending.",
+      "Scientist first real-runner attempt rejected during configuration parsing because built-in openai provider overrides are unsupported; reports no agent turn, one attempt consumed, second not started. Error evidence being finalized.",
+      "Architect public-example docs and targeted structural/artifact checks reported ready; evidence freeze underway, full integration gates pending. Held Classic remains unchanged."
     ],
     "userDecisionRequired": false
   },
@@ -228,7 +224,16 @@
     "providerRequestCap": null,
     "wrapperStartedAgentTurnsPerSession": 1,
     "sessionsConsumedAtLastCompletedCheckpoint": 0,
-    "amendment": "Coordinator's six internal request limit removed for readiness only; exec turn.completed must not be equated with provider requests. Hard 2-session/180s process bounds remain; full study commonLimits unchanged."
+    "amendment": "Coordinator's six internal request limit removed for readiness only; exec turn.completed must not be equated with provider requests. Hard 2-session/180s process bounds remain; full study commonLimits unchanged.",
+    "latestReportedAttempt": {
+      "reportedUtc": "2026-10-07T15:44:31Z",
+      "sessionsConsumed": 1,
+      "agentTurnsStarted": 0,
+      "outcome": "configuration rejected before agent turn",
+      "reason": "codex-cli 0.130.0 rejects overrides for built-in openai provider ID",
+      "evidenceStatus": "Owner report; final source/receipt inspection pending",
+      "secondAttemptStarted": false
+    }
   },
   "sourceTestTimeoutAuthorization": {
     "userInstruction": "Zur Not würde ich die Timeout Grenze erhöhen auf bis zu 30 minuten; Rückmeldung als Alternative",
