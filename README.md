@@ -7,29 +7,13 @@
 
 **Humans architect the system of work. AI performs the work. Markitect keeps them aligned.**
 
-Markitect's target is a canonical desired-state model of a project's selected ontology: its concepts, relationships, purpose, rules and responsibilities. Owners define the desired project world; governed code, documentation, agent guidance and automation are representations of it. Changing accepted intent should drive explicit impact, fanout and reconciliation, followed by independent verification of the resulting project. Human narrative, unmodeled implementation detail, vendor/tool inputs and external observations retain their explicit owners. The [canonical product vision](docs/vision.md) defines the goal and its still-unproven benefit hypothesis.
+Markitect connects owner-selected engineering intent—concepts, relationships, purposes, rules and responsibilities—to the code, documentation and other representations a project chooses to govern. A change to accepted intent should expose affected work and lead to independently checked results. The goal is better project quality and consistency through fewer missed obligations and contradictions. The [product vision](docs/vision.md) owns the quality hypothesis and human/agent responsibilities.
 
-The primary goal is **better project quality and consistency during autonomous engineering**: fewer forgotten obligations, overlooked consequences, contradictory representations and ignored rules. Adequate independent evidence and explicit delegation should reduce routine human supervision. Token and elapsed-time savings are secondary possible benefits, not the purpose of the method.
+The published [v0.14.1 release](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.14.1) preserves Markitect's stable Project/Domain CLI. The stable CLI validates typed resources and relations, produces scoped context and impact, and runs explicitly declared checks and outputs. The same distribution bundles a separate canonical alpha: Schema/Definition intent, Schema Modules and Projection Modules, explicit projection bindings, reviewed materialization, fresh declared verification, and read-only declared-scope audit. The saved Apply-to-Verify handoff belongs only to this experimental canonical controller alpha. These reset/controller capabilities are not stable support for an autonomous operator or continuous agent runtime. See the [alpha guide](docs/canonical-projections.md) for its command and evidence boundaries.
 
-Today, Markitect provides a compiler-like foundation for **selected canonical engineering intent**: typed Domains/resources, finite checks, context, impact and explicitly configured projections/adapters. Core handles adopting-project artifacts as opaque exact bytes; a specialized adapter or project check may inspect declared formats within a stated evidence boundary. Existing output and artifact checks are scoped, not a repository-wide inventory or convergence guarantee. Continuous agent operation and reduced human supervision are goals, not demonstrated properties of the current CLI.
+Across both paths, evidence is finite. Configured checks establish only what their selected inputs and declared scopes test; they do not prove arbitrary implementation semantics or complete repository consistency. Continuous agent operation and reduced human supervision remain goals, not demonstrated properties. The [roadmap](docs/implementation-plan.md) records shipped capabilities, negative findings and remaining limits.
 
-The v0.10.0 release provides a generic canonical engineering model: Projects load versioned Domains, validate typed resources and relations, evaluate finite deterministic constraints, and expose one normalized semantic model to context, impact, projections, and configured adapters. Markitect does this without a model API. Exact declared project-artifact inputs remain opaque to the kernel; it does not infer their domain-specific meaning. See the [product boundary](docs/architecture.md#project-artifact-boundary).
-
-The published v0.11.0 release builds on that foundation with [reusable engineering constitutions](docs/engineering-constitution.md): package-owned architecture contracts, generated Domain views, per-subject policy outcomes, and explicit source-bound exceptions. Its provider-independent Copy Me workflow prepares proposals from explicitly selected fixed evidence for human review; it does not automatically adopt inferred rules. These bounded examples do not establish human acceptance or measured business benefit. The [roadmap](docs/implementation-plan.md) records shipped scenarios and evidence limits.
-
-> **AI should implement your architecture, not reinvent it on every task.**
-
-The published [v0.12.0 release](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.12.0) adds one finite `same-target` assertion after independent [Software architecture](examples/software-architecture/README.md) and [Delivery topology](examples/delivery-target-equality/README.md) cases demonstrated the same singleton ownership comparison. Its [design assessment](docs/design/resolved-target-equality.md) explains alternatives, explicit selection, policy traces, bounded impact and source-bound exceptions. The [language-pressure report](docs/design/domain-language-pressure.md) keeps the other gaps visible. The release establishes these bounded capabilities, not real-project benefit.
-
-The published [v0.13.0 release](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.13.0) adds explicit read-only policy-failure analysis, bounded selective adoption preparation and Copy Me handoff validation, .NET/source hardening, the provider-neutral Markitect-first Change workflow, and a standalone managed-artifact check. Offline GitHub/Azure consumers and MCP remain experimental source-only interfaces; no live provider Apply is included. The [real-project comparison](docs/validation/agents-md-vs-markitect.md) remains inconclusive about whether added maintenance pays for itself.
-
-Current source targets an additive v0.14.1 candidate with a saved Apply-to-Verify handoff. The canonical reset and controller remain an explicit alpha preview; this candidate does not promote them to stable support, and the published v0.13.0 release remains unchanged.
-
-The [Markitect-first](docs/markitect-first.md) workflow is the repository's durable agent entrypoint: read fixed engineering context, classify the change, update desired intent first when it changes, account for managed artifacts, then verify/reconcile. The standalone artifact helper ships through the source package and existing Project checks. The restricted owner-approved capture and candidate exercise remains separate from public sanitized replay evidence; it establishes neither owner acceptance nor adoption or productivity outcomes.
-
-Current source implements [bounded local projection contracts](docs/projections.md) for explicitly governed representations, with digest-reviewed candidate Apply and immutable Verify. The [synthetic validation](docs/validation/projection-first-reconciliation.md) records two fresh candidate materializations, controlled drift repair and retained negative findings. This is unreleased source behavior; published v0.13.0 remains unchanged, and no whole-repository controller or general benefit is claimed.
-
-The current [canonical projection reset](docs/design/canonical-projection-reset.md) is a source-only candidate: Schema Modules extend canonical language, Projection Modules provide target tools, and explicit Projections select what is represented while runtime configuration selects the implementation. [Alpha usage](docs/canonical-projections.md) starts with canonical intent, impact and read-only reconciliation planning. All targets follow an Executor -> candidate -> Verifier model; deterministic renderers remain useful tools. The structural compiler and scoped evidence do not prove arbitrary implementation semantics or agent independence. Published v0.13.0 remains unchanged.
+The earlier additive releases remain compatibility history: [v0.13.0](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.13.0) added policy-failure analysis, selective handoff and Markitect-first; [v0.12.0](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.12.0) added bounded `same-target`; [v0.11.0](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.11.0) added reusable architecture contracts; and [v0.10.0](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.10.0) established the generic canonical engineering model. [Architecture](docs/architecture.md) describes the compatibility boundary; historical comparisons and their inconclusive or negative findings remain linked from the roadmap.
 
 ## Why Markitect?
 
@@ -333,15 +317,15 @@ Machine results establish only configured assertions for their fixed inputs. The
 
 ## Install Markitect
 
-The current [v0.13.0 release](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.13.0) provides Windows and Linux amd64 binaries. The commands below download a fixed version from the public release, check its published SHA-256 digest, and install it for your user. No Go installation or GitHub login is needed. Git is needed for Markitect commands that read Git revisions.
+The current [v0.14.1 release](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.14.1) provides Windows and Linux amd64 binaries. The commands below download a fixed version from the public release, check its published SHA-256 digest, and install it for your user. No Go installation or GitHub login is needed. Git is needed for Markitect commands that read Git revisions.
 
 **Windows (PowerShell):**
 
 ```powershell
 if (-not [Runtime.InteropServices.RuntimeInformation]::IsOSPlatform([Runtime.InteropServices.OSPlatform]::Windows) -or [Runtime.InteropServices.RuntimeInformation]::OSArchitecture -ne [Runtime.InteropServices.Architecture]::X64) { throw 'Only Windows amd64 is released.' }
-$tag = 'v0.13.0'
+$tag = 'v0.14.1'
 $asset = "markitect-$tag-windows-amd64.exe"
-$sha256 = 'ac40c666ff549e2f6a7af0923a716278ecf4e019589fdd0de0982259bde17054'
+$sha256 = '2cad55efad64f15d7f57638bea78312918fbf7d181c730f188b9921504da71c4'
 $download = Join-Path $env:TEMP ("markitect-" + [guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Path $download -ErrorAction Stop | Out-Null
 $source = Join-Path $download $asset
@@ -356,7 +340,7 @@ if ($bin -notin ($userPath -split ';')) {
 }
 $env:Path = "$bin;$env:Path"
 $installed = & (Join-Path $bin 'markitect.exe') version
-if ($LASTEXITCODE -ne 0 -or $installed -ne 'Markitect 0.13.0 (windows/amd64)') { throw 'Installed CLI version check failed.' }
+if ($LASTEXITCODE -ne 0 -or $installed -ne 'Markitect 0.14.1 (windows/amd64)') { throw 'Installed CLI version check failed.' }
 $installed
 Remove-Item -LiteralPath $source, $download
 ```
@@ -367,9 +351,9 @@ Remove-Item -LiteralPath $source, $download
 (
   set -e
   [ "$(uname -s)" = Linux ] && [ "$(uname -m)" = x86_64 ] || { echo 'Only Linux amd64 is released.' >&2; exit 1; }
-  tag=v0.13.0
+  tag=v0.14.1
   asset="markitect-$tag-linux-amd64"
-  sha256=7163bea66f539c3bf558770cdbd0745beea6b5b26a50e5f3fc4f1021a22abf2c
+  sha256=f515f8fb37335ff5bd36f77cbbd0af227c3558d0d5aa8ba80503bae40314fbdc
   download="$(mktemp -d)"
   trap 'rm -rf "$download"' EXIT
   curl -fLsS "https://github.com/Glacius-Labs/Markitect/releases/download/$tag/$asset" -o "$download/$asset"
@@ -380,7 +364,7 @@ Remove-Item -LiteralPath $source, $download
 export PATH="$HOME/.local/bin:$PATH"
 ```
 
-Add `~/.local/bin` to your shell startup file if it is not already on `PATH`. For developers who already use Go 1.27.1 or later, `go install github.com/Glacius-Labs/Markitect/cmd/markitect@v0.13.0` is a shorter source-build option. macOS and arm64 binaries are not currently released. For signed release and asset attestation verification, project pinning, and upgrades, follow the [distribution guide](integration/README.md). The CLI's `install` command installs a **project pin**, not the CLI on your computer.
+Add `~/.local/bin` to your shell startup file if it is not already on `PATH`. For developers who already use Go 1.27.1 or later, `go install github.com/Glacius-Labs/Markitect/cmd/markitect@v0.14.1` is a shorter source-build option. macOS and arm64 binaries are not currently released. For signed release and asset attestation verification, project pinning, and upgrades, follow the [distribution guide](integration/README.md). The CLI's `install` command installs a **project pin**, not the CLI on your computer.
 
 <!-- markitect-release:install:end -->
 
@@ -388,16 +372,16 @@ Add `~/.local/bin` to your shell startup file if it is not already on `PATH`. Fo
 
 ## Try the installed CLI
 
-Clone the v0.13.0 synthetic example and run a structural check with the installed binary. This reads the example without modifying an adopting repository.
+Clone the v0.14.1 synthetic example and run a structural check with the installed binary. This reads the example without modifying an adopting repository.
 
 Windows PowerShell:
 
 ~~~powershell
-git clone --depth 1 --branch v0.13.0 https://github.com/Glacius-Labs/Markitect.git markitect-sample-v0.13.0
-if ($LASTEXITCODE -ne 0) { throw 'Could not get the v0.13.0 synthetic example.' }
+git clone --depth 1 --branch v0.14.1 https://github.com/Glacius-Labs/Markitect.git markitect-sample-v0.14.1
+if ($LASTEXITCODE -ne 0) { throw 'Could not get the v0.14.1 synthetic example.' }
 markitect version
 if ($LASTEXITCODE -ne 0) { throw 'Version check failed.' }
-markitect check --repo .\markitect-sample-v0.13.0\examples\minimal
+markitect check --repo .\markitect-sample-v0.14.1\examples\minimal
 if ($LASTEXITCODE -ne 0) { throw 'Example check failed.' }
 ~~~
 
@@ -405,9 +389,9 @@ Linux amd64:
 
 ~~~sh
 set -e
-git clone --depth 1 --branch v0.13.0 https://github.com/Glacius-Labs/Markitect.git markitect-sample-v0.13.0
+git clone --depth 1 --branch v0.14.1 https://github.com/Glacius-Labs/Markitect.git markitect-sample-v0.14.1
 markitect version
-markitect check --repo ./markitect-sample-v0.13.0/examples/minimal
+markitect check --repo ./markitect-sample-v0.14.1/examples/minimal
 ~~~
 
 The [minimal example](examples/minimal/README.md) is a synthetic, executable fixture. To use Markitect in your own repository, follow the [release installation and verification guide](integration/README.md) to preview and install a project pin.

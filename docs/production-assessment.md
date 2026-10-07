@@ -1,6 +1,38 @@
 # Markitect production assessment
 
-**Recorded:** 2026-10-02; v0.12.0 evidence added 2026-10-03; v0.13.0 evidence added 2026-10-04. This dated assessment records release evidence and distinguishes it from source behavior. It reports only the Markitect source, its distributions, and source-owned gates; project adoption and acceptance are outside its scope.
+**Recorded:** 2026-10-02; v0.12.0 evidence added 2026-10-03; v0.13.0 evidence added 2026-10-04; v0.14.1 evidence added 2026-10-07. This dated assessment records release evidence and distinguishes it from source behavior. It reports only the Markitect source, its distributions, and source-owned gates; project adoption and acceptance are outside its scope.
+
+## v0.14.1 published release
+
+The immutable [v0.14.1 release](https://github.com/Glacius-Labs/Markitect/releases/tag/v0.14.1), release ID `405781964`, binds source [`7dbd599c81540c8203a1b7f83afbc335174f4f1f`](https://github.com/Glacius-Labs/Markitect/commit/7dbd599c81540c8203a1b7f83afbc335174f4f1f). Its tracked tree matches reviewed candidate `e2fd633d8983eb4a9e24bb55bc81d1467d487d12`, integrated by [PR 84](https://github.com/Glacius-Labs/Markitect/pull/84) after [PR 83](https://github.com/Glacius-Labs/Markitect/pull/83) integrated the additive projection work. The annotated tag is unsigned; immutable-release and asset attestations were verified separately.
+
+The release preserves the published Project/Domain CLI contract and bundles canonical Schema/Definition, Schema/Projection Modules and the bounded controller as an **experimental alpha preview**. Its saved Apply-result handoff supports fresh Verify without manually copying revision pairs; declared-scope Audit reports bounded completion. These alpha capabilities do not establish stable support for an autonomous operator, continuous runtime or whole-repository semantic assurance. [Alpha usage](canonical-projections.md) owns the command boundaries.
+
+| Evidence | Exact basis | Result |
+|---|---|---|
+| Candidate Windows/Linux CI | [Run 37622476334](https://github.com/Glacius-Labs/Markitect/actions/runs/37622476334), candidate `e2fd633d8983eb4a9e24bb55bc81d1467d487d12` | Passed: fresh tests, fixed Verify, schemas, Modules, examples and packaged/bootstrap checks; Linux additionally repeated the fixture regression 100 times |
+| Main CI and source artifact | [Run 37624622908](https://github.com/Glacius-Labs/Markitect/actions/runs/37624622908), source `7dbd599c81540c8203a1b7f83afbc335174f4f1f` | Passed; source archive, lock and both bootstrap files match the release bundle byte-for-byte |
+| Release CI | [Run 37624704624](https://github.com/Glacius-Labs/Markitect/actions/runs/37624704624), attempt 1, same source | Passed: Windows/Linux source quality, installation/bootstrap smoke and exact-source release asset assembly |
+| Owner publisher | Release `405781964`, same source/run/attempt | `published-verified`: reviewed read-only plan, exact artifact/provenance/asset binding, immutable publication, release and all four asset attestations, remote tag recheck |
+| Public downloads and platform versions | Anonymous downloads of all four assets; separately verified asset attestations | All SHA-256 values matched the run assets; Windows reported `Markitect 0.14.1 (windows/amd64)`, Linux reported `Markitect 0.14.1 (linux/amd64)` in the pinned, offline Linux container |
+| Distribution metadata | `markitect-release distribution --tag v0.14.1 --repo . --write`, followed by its read-only check | Passed; generated README installation/example pins and three versioned WinGet manifests. No new community catalog submission or catalog install is claimed |
+
+The nested source archive SHA-256 is `5c5c55d90d4ba18a06780e6867c263a9e0df4665560f486f75217aa6cdae726a`.
+
+| Asset | Verified SHA-256 |
+|---|---|
+| `markitect-v0.14.1-bundle.zip` | `f57f3ff41a0a01f6e12a57e7529ebf6e9ef4fe3afa1a8bf59d0c2a783d7cb297` |
+| `markitect-v0.14.1-linux-amd64` | `f515f8fb37335ff5bd36f77cbbd0af227c3558d0d5aa8ba80503bae40314fbdc` |
+| `markitect-v0.14.1-provenance.yaml` | `7cd30dff6b2fc2023a7528abdee9b8edbce18e9ca6f091cb067c63fbb6da1a5a` |
+| `markitect-v0.14.1-windows-amd64.exe` | `2cad55efad64f15d7f57638bea78312918fbf7d181c730f188b9921504da71c4` |
+
+### Retained failed attempts and limits
+
+The original `v0.14.0` tag remains unchanged and unpublished at `c59acc45f05c7cd1368376f8ea5bac707615a1fc`. [Release run 37619287880](https://github.com/Glacius-Labs/Markitect/actions/runs/37619287880) failed temporary `.git` fixture cleanup on attempt 1 and again inside fixed Verify on the single unchanged retry. The v0.14.1 correction disables automatic detached maintenance/GC in the temporary test Git commands and adds 100 Linux repetitions without relaxing assertions or timeouts. The passing new-source gates validate this correction's bounded behavior; the historical concurrent writer has not been identified.
+
+Initial PR 84 candidate `906b3abe1bbf93353cc2ea49d99d12badccc77c8` failed [CI run 37621719876](https://github.com/Glacius-Labs/Markitect/actions/runs/37621719876) because the new CI step left a stale pipeline digest and shifted exact check-reference positions. Its Linux fresh suite and 100 repetitions had passed before the Module check refused that configuration. Updating those bindings produced the final passing candidate; the failed overall run remains failed.
+
+The [standard operating model pilots](validation/standard-operating-model.md) retain their original source bindings, failed attempts, coordination interventions and negative controls. Release verification does not turn those finite observations into general reliability, human acceptance, reduced supervision, comparative benefit or unattended operation. Government-specific redesign is outside this release.
 
 ## v0.13.0 published release
 
