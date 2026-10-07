@@ -39,5 +39,4 @@ def read_history():
             "allHistoryTokens": sum(known) if len(known) == len(attempts) else None,
             "knownTokenSubtotal": sum(known), "unknownTokenAttempts": len(attempts) - len(known),
             "allHistoryProviderRequests": None, "internalRetries": None, "ledgerSha256Before": before,
-            "ledgerSha256After": after, "historicalLedgersUnchanged": True,
-            "newContextSession": "separate proposed allocation of one; not approved, not a refill or reset"}
+            "ledgerSha256After": after, "historicalLedgersUnchanged": True}
