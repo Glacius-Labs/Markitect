@@ -470,7 +470,7 @@ def changed_pass(args: argparse.Namespace, binary: Path, repo: Path, old_revisio
         pre_refusal_ledger = file_tree_hashes(record_store_root)
         pre_refusal_targets = {path: sha256(repo.joinpath(*path.split("/")).read_bytes()) for path in baseline_outputs}
         old_plan = json.loads(old_plan_path.read_bytes())
-        refuse = run_step(trial, "refuse-stale-apply", [str(binary), "canonical", *baseline_common, "--action", "controller-apply", "--base", old_revision, "--revision", revision, "--plan", str(old_plan_path), "--expect", str(old_plan.get("digest", "")), "--write"], repo, env, expected_exit=1)
+        refuse = run_step(trial, "refuse-stale-apply", [str(binary), "canonical", *baseline_common, "--action", "controller-apply", "--base", old_revision, "--revision", revision, "--plan", str(old_plan_path), "--expect", str(old_plan.get("digest", "")), "--write"], repo, env, expected_exit=2)
         refusal_text = Path(refuse["stderrPath"]).read_bytes().decode("utf-8", errors="replace")
         if "--base and --revision must exactly match the saved reviewed run" not in refusal_text:
             raise ChangeSmokeFailure("old reviewed Apply was not refused for its source binding")
