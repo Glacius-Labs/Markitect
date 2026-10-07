@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-07T19:14:37Z",
+  "updatedUtc": "2026-10-07T19:28:23Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -21,21 +21,21 @@
       "name": "Worker",
       "threadId": "01a1169b-9357-7df3-a8f6-f913557c782a",
       "hostId": "local",
-      "afterCursor": "b2b8e43f-fcaa-41bf-828a-99c69527bdea:39",
+      "afterCursor": "b2b8e43f-fcaa-41bf-828a-99c69527bdea:41",
       "lastObservedStatus": "active",
-      "activeTurn": "01a1178c-8696-7011-a7d9-0b4285d6ca75",
-      "lastAssistantMessageId": "msg_0a7785839df196a4016ac699d1c9fc8191a39a1fa82790e110",
+      "activeTurn": "01a117d5-737b-73d1-8d9e-067a046228d0",
+      "lastAssistantMessageId": "msg_0a7785839df196a4016ac69d1286088191983a6b288b6b24c3",
       "initialAssignmentDispatched": true,
-      "assignedMilestone": "G4 delegated substantial model/realization amendment under prior authority and bounded conflict escalation; no G5 queue",
-      "latestProgress": "Verify läuft weiter, aktuell seit rund zwölf Minuten. Der Host-Testprozess ist noch aktiv, und der Quellstand ist weiterhin unverändert. Eine Abnahme oder Vollsuite-Freigabe leite ich daraus noch nicht ab.",
+      "assignedMilestone": "G5 finite persistent queue, cumulative resources, safe interruption/restart and promotion recovery; then S1 handoff hold",
+      "latestProgress": "G4 ist angenommen. Ich beginne G5 im bestehenden Government-Worktree: eine endliche persistente Queue mit dauerhaft gezählten Limits und einer Wiederaufnahme, die unklare Promotion-Wirkungen ausdrücklich offen hält. Dafür trenne ich Queue-/Budget-Implementierung und unabhängiges Recovery-/Fencing-Review.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-worker/Markitect",
       "transferredDesignCommit": "691ce1dee3484371c4aea725db4ed5cc3f2e3719",
-      "candidateSha": "97a55bd572b9a730fa1e206232ee37e54025a144",
-      "acceptance": "G3 accepted as locally verified bounded recursive mechanics; G4 active",
+      "candidateSha": "d146201e0f004e671cb90cf77b6a107dc14429b5",
+      "acceptance": "G4 accepted as locally verified delegated model/conflict mechanics; G5 active",
       "lastAssignment": {
-        "sentUtc": "2026-10-07T18:07:28Z",
-        "key": "g4-delegated-model-amendment-and-conflict",
-        "scope": "Prior Constitution-authorized substantive model+realization candidate, fresh review/all final votes; refuse self-authority/nondelegated goals; conflict blocks only dependent work; independent order may progress without G5 queue. Final exact-source gates and independent review."
+        "sentUtc": "2026-10-07T19:27:07Z",
+        "key": "g5-bounded-queue-resume-promotion",
+        "scope": "Finite explicit backlog and persisted budgets/state; safe idempotent intent/CAS recovery, no stale votes or reset/false success; blocked versus independent work; quiet terminal queue. Actual interruption/native tests, independent recovery/fencing review, one final source gate pass and exact S1-ready handoff. No publication/study."
       },
       "evidence": {
         "summary": ".artifacts/government-g1/budget-final-summary.json",
@@ -157,6 +157,33 @@
           "reviewer": "/root/g3_handoff_acceptance",
           "rootInspection": "Clean candidate, final thread instructions/handoff sourceVerify details and G4 design contract read; no tests repeated",
           "limitations": "Local Windows deterministic mechanics, no real model quality, Linux/CI or G4/G5 claims"
+        },
+        "g4Acceptance": {
+          "acceptedUtc": "2026-10-07T19:27:07Z",
+          "sourceSha": "d146201e0f004e671cb90cf77b6a107dc14429b5",
+          "handoff": ".artifacts/government-g4/handoff-d146201.json",
+          "handoffSha256": "7e8c6ea11c4fbb5f5e9c8531c8eeb0b64aedb515d1384279d023e9a3df33645f",
+          "binarySha256": "fd20bad0488ad31d1811a77ddf0857dea94cbb182b6da47f4bedc3fcd2c6a37e",
+          "sourceHashesIndependentlyChecked": 38,
+          "sourceGitBlobsMatched": true,
+          "nativeHashesIndependentlyChecked": 391,
+          "hashMismatches": 0,
+          "fixedVerifyExit": 0,
+          "provisional": false,
+          "gateCount": 4,
+          "verifyElapsedMilliseconds": 895596.0427,
+          "goSuiteMilliseconds": 763284,
+          "completedFullGoSuites": 1,
+          "contributionCommandsPassed": 20,
+          "reportedFocusedTestsPassed": 9,
+          "nativeCasesPassed": 7,
+          "nativeTerminalRuns": 8,
+          "otherGates": "Vet, fixed Check/Impact and diff-check passed",
+          "native": "Prior-authorized substantive model/code change, fresh final votes and bounded veto repair; missing mandate, self-authority, persistent veto and stale vote refuse; durable escalation and disjoint order progress.",
+          "reviewer": "/root/g4_handoff_acceptance",
+          "review": "No material blocker; source/native/binary/fixed gate bindings checked, six prior review findings resolved",
+          "rootInspection": "Clean SHA/latest instructions, handoff fixed Verify and review, G4/G5 architecture/usage contract read; no tests repeated",
+          "limitations": "Local Windows deterministic actors; no real model semantic quality, institutional independence, Linux/CI/release or G5 claim."
         }
       }
     },
@@ -164,21 +191,21 @@
       "name": "Scientist",
       "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
       "hostId": "local",
-      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:43",
+      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:45",
       "lastObservedStatus": "active",
-      "activeTurn": "01a117b7-8296-7850-974f-a8848085ac76",
-      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac699f49f4081919ac11cf89281be30",
+      "activeTurn": "01a117d6-7598-7762-a865-15d0c56adf99",
+      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac69d53e4c881918d946c92340818b8",
       "initialAssignmentDispatched": true,
-      "assignedMilestone": "S1 no-inference correction of ordinary-tool runner configuration; exact same two-file context draft with independent review, then hold for concrete grant",
-      "latestProgress": "Die unabhängige Reconciliation ist ohne wesentliche Befunde abgeschlossen: 40/40 Quellpins, 33/33 Belege, 15/15 externe Dateien und 375/375 Archiveinträge stimmen. Alle drei historischen Datenbankhashes sind erhalten, der Actor-Checkout ist sauber und der neue Ledger fehlt weiterhin. Ich schließe das Paket jetzt mit einem Commit ausschließlich für Belege und Handoff ab.",
+      "assignedMilestone": "Execute exactly one approved corrected-tools two-file context request, preserve raw/evidence/ledger and independent handoff; then hold",
+      "latestProgress": "Ich prüfe den neuen Approval-Receipt, das Zeitfenster und die eingefrorenen Pins lesend. Bei Übereinstimmung führe ich den einen freigegebenen Zwei-Dateien-Request aus, sichere Antwort, Toolereignisse, Usage und Ledger und halte danach ohne sechsten Start.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-scientist/Markitect",
       "transferredDesignCommit": "b9e17c9896f14b4b1268e4bcb005395f5d324384",
-      "candidateSha": "46255638ae54d85f564aa024c7ddba5661ce4578",
-      "acceptance": "Actual fourth diagnostic accepted as valid negative context evidence. Neither sentinel read, no tool calls. S1 and live study remain open.",
+      "candidateSha": "ac998adf88e7bad1517d98b9e4a4a6265016dbe6",
+      "acceptance": "Corrected working-tool preparation accepted; exact one-session context run grant frozen/validated and dispatched; actual file capability unproven",
       "lastAssignment": {
-        "sentUtc": "2026-10-07T18:54:25Z",
-        "key": "s1-enable-working-tools-and-context-redraft",
-        "scope": "Inspect pinned local help/features/config; enable ordinary execution tools consistently for all3arms, retain same model/provider/auth and metadata isolation. Minimal regression, independent review, clean SHA and exact follow-up request/protocol/grant draft. Proposed single180s session with50000retrospective input+output threshold, no fifth start or executable grant yet."
+        "sentUtc": "2026-10-07T19:28:13Z",
+        "key": "s1-approved-corrected-tools-context-run",
+        "scope": "One exact two-file context session under approved shared dispatcher/pins,180s/50000retrospective threshold,cumulative5 including consumed4; no retries/children/continuation/repair/purchases/extra probes or study. Actual evidence/independent handoff then hold."
       },
       "evidence": {
         "sourcesHashChecked": 37,
@@ -401,13 +428,33 @@
         },
         "contextToolsPreparationProgress": {
           "observedUtc": "2026-10-07T19:14:37Z",
-          "status": "Active final evidence/handoff commit; no completed candidate accepted",
+          "status": "Accepted; see contextToolsPreparationAcceptance",
           "inspection": "Read latest chat and local diagnosis.json. CLI feature flags supported; features-list does not reproduce exec isolation flags and cannot prove Actor tool availability. Independent review and focused source gates ongoing.",
           "captureAnomaly": "Four intended metadata/help invocations lost arguments through PowerShell automatic args shadowing and received no-TTY TUI refusal. Scientist preserves corrected and failed receipts; no Actor/model invocation observed. Not counted as four additional granted Actor sessions.",
           "nativeCliInvocationsReported": 18,
           "noArgumentRefusalsReported": 4,
           "newModelRunAuthorized": false,
           "latestReportedEvidence": "Independent reconciliation reports40source pins,33evidence,15external files,375archiveentries matched;3historical database hashes retained; actorcheckoutclean/newledgerabsent. Not yet personally inspected as finished handoff."
+        },
+        "contextToolsPreparationAcceptance": {
+          "acceptedUtc": "2026-10-07T19:27:50Z",
+          "sourceSha": "ac998adf88e7bad1517d98b9e4a4a6265016dbe6",
+          "implementationSha": "56d2e578ce105a77e4f8be4e3364925efc9d813d",
+          "handoff": "experiments/government-comparison/context-tools-handoff.md",
+          "freezeSha256": "cf82ba0a26fb5a28ff271cef3a79f44e733f285bdf52f7ff9af66c4d4fd326b6",
+          "sourceHashesIndependentlyChecked": 40,
+          "evidenceHashesIndependentlyChecked": 33,
+          "externalDraftHashesIndependentlyChecked": 15,
+          "archiveEntriesIndependentlyChecked": 375,
+          "hashMismatches": 0,
+          "targetedTestsReported": 70,
+          "reviewer": "/root/s1_additional_context_acceptance",
+          "review": "No material blocker; zero new model starts, three historical database hashes intact",
+          "configSha256": "e3ab0c0425f536220914a8f2f51db256b6a6fe1b4cfa53da6bccdee93509308e",
+          "runnerPinSha256": "8d64bb5e8204b80b0e8d248c34fceecc4eb9d5199961b29dcac871371713e1c3",
+          "toolConfig": "Ordinary Actors explicitly request shell_tool/unified_exec true; disabled settings refused; metadata route remains separate",
+          "rootInspection": "Clean SHA, latest instructions, public handoff, actual config/Authority/request/protocol/history and exact two-file prompt read; final approved Authority+Request validated without ledger/inference",
+          "limitations": "Feature config not actual tool or OS-isolation proof; previous metadata may be cached. Four accidental CLI no-argument TTY refusals documented, no Actor inference observed; no study readiness claim."
         }
       },
       "classicHandoffReceived": true,
@@ -490,7 +537,7 @@
       "heldWorktree": "C:/Users/Consiliari/.codex/worktrees/standard-operating-model/Markitect"
     }
   ],
-  "nextAction": "Review corrected ordinary-tool runner and exact context redraft before any fifth diagnostic; no current runnable grant. Await actual G4 source/native/review handoff, then finite G5. Architect unchanged;10minute reporting continues.",
+  "nextAction": "Worker G5 active; Scientist executing exact single approved corrected-tools context smoke then independent handoff. Inspect actual result before any next allocation; six-cell study still closed. Continue10minute reports.",
   "boundaries": {
     "governmentPublication": false,
     "automaticClassicReplacement": false,
@@ -499,10 +546,12 @@
     "jev": "Deferred; no extra investigation started"
   },
   "lastReview": {
-    "reviewedUtc": "2026-10-07T19:14:37Z",
-    "evidenceLevel": "Compact snapshots all3. Worker final unchanged-source Verify active, no completion; Scientist reports completed independent reconciliation and final evidence commit underway; no new exact-source handoff accepted. Architect unchanged.",
+    "reviewedUtc": "2026-10-07T19:28:23Z",
+    "evidenceLevel": "New exact G4 and corrected-tools preparation handoffs independently hash/source reviewed and accepted. Root inspected latest instructions/contracts/raw handoffs/authority and created+read-only-validated exact grant. Both follow-up tasks observed active; Architect unchanged.",
     "coordinationActions": [
-      "Recorded progress and cursors; no repeated instructions, new grant, or test execution."
+      "G4 accepted; sent finite G5 implementation/recovery task19:27:07Z.",
+      "Scientist corrected-tools preparation accepted; explicit1session180s/50000retrospective grant created19:27:50Z and dispatched19:28:13Z; G4 public handoff shared.",
+      "No repeated tests, provider calls, or product edits by Overseer."
     ],
     "userDecisionRequired": false
   },
@@ -523,6 +572,13 @@
       "forwardedTo": "Scientist",
       "sentUtc": "2026-10-07T18:09:17Z",
       "scope": "Recursive G3 mechanics; G4/G5 and final study freeze still pending"
+    },
+    "governmentModelAmendment": {
+      "sourceSha": "d146201e0f004e671cb90cf77b6a107dc14429b5",
+      "path": ".artifacts/government-g4/handoff-d146201.json",
+      "forwardedTo": "Scientist",
+      "sentUtc": "2026-10-07T19:28:13Z",
+      "scope": "G4 mechanics accepted; G5 and S1/final study freeze still pending"
     }
   },
   "resourceProfile": {
@@ -575,7 +631,7 @@
   },
   "runnerProbe": {
     "authorizedUtc": "2026-10-07T15:00:51Z",
-    "actorSessionsTotal": 4,
+    "actorSessionsTotal": 5,
     "wallSecondsPerSession": 180,
     "maxParallelActors": 1,
     "subagents": false,
@@ -587,7 +643,7 @@
     "purpose": "Actual model/version, raw metering, effective context and access on fresh public sentinels only",
     "limitations": "Token threshold 10000 is retrospective and can overshoot in-flight; provider request count unknown unless evidenced. No guaranteed hard token/call cap claimed. No study work, model substitution, retries, children or new purchases.",
     "previousProviderTurnsPerSession": 6,
-    "updatedUtc": "2026-10-07T19:00:23Z",
+    "updatedUtc": "2026-10-07T19:28:23Z",
     "providerRequestCap": null,
     "wrapperStartedAgentTurnsPerSession": 1,
     "sessionsConsumedAtLastCompletedCheckpoint": 4,
@@ -601,9 +657,9 @@
       "knownHistoricalTokenSubtotal": 30510,
       "historicalTokenTotal": null
     },
-    "remainingSessions": 0,
+    "remainingSessions": 1,
     "retrySemantics": "No wrapper relaunch or continuation. If builtin provider retry controls unavailable, unchanged documented internal transport defaults allowed inside 180s for this probe only; counts/usage remain unknown unless evidenced.",
-    "remainingAttemptPurpose": "No remaining approved start. Correct working-tool configuration and deliver exact follow-up draft; fifth start requires new concrete grant.",
+    "remainingAttemptPurpose": "Exactly one approved corrected-tools two-file context smoke; no sixth start, no extra access/study probe.",
     "originalActorSessionsTotal": 2,
     "followupGrant": {
       "id": "installed-runner-01601-identity-r1",
@@ -650,7 +706,29 @@
       "consumedSessionsReported": 1,
       "consumedSessions": 1,
       "remainingSessions": 0
-    }
+    },
+    "correctedToolsContextGrant": {
+      "id": "overseer-context-tools-2026-10-07",
+      "issuedUtc": "2026-10-07T19:27:50+00:00",
+      "expiresUtc": "2026-10-07T19:57:50+00:00",
+      "maxAdditionalSessions": 1,
+      "previousConsumedSessions": 4,
+      "cumulativeMaximumSessions": 5,
+      "wallSeconds": 180,
+      "maxParallelActors": 1,
+      "wrapperTurns": 1,
+      "retrospectiveTokenThreshold": 50000,
+      "wrapperRetries": 0,
+      "children": false,
+      "continuation": false,
+      "newPurchases": false,
+      "runStatus": "Granted and dispatched; actual result pending",
+      "approvalReceipt": {
+        "path": "C:/Users/Consiliari/Documents/Scientist-Probes/context-tools-20261007/context-drafts/overseer-approved-20261007/approval-receipt.json",
+        "sha256": "cadaa10e0b41ed4b370912e4fcb22912639de969c835c41b04e9a3787712ee71"
+      }
+    },
+    "remainingSessionsEvidence": "At19:27:50grant validation, successor ledger absent; actual execution may now consume sole new allowance"
   },
   "sourceTestTimeoutAuthorization": {
     "userInstruction": "Zur Not würde ich die Timeout Grenze erhöhen auf bis zu 30 minuten; Rückmeldung als Alternative",
@@ -668,11 +746,11 @@
   },
   "fullSuiteSlot": {
     "owner": "Worker",
-    "assignedUtc": "2026-10-07T18:07:28Z",
-    "scope": "Final required G4 source gates after implementation, no duplicate full suite",
+    "assignedUtc": "2026-10-07T19:27:07Z",
+    "scope": "Final required G5 source gates after implementation, no duplicate full suite",
     "previousOwner": "Worker",
-    "previousOwnerGate": "G3 completed and accepted",
-    "others": "Scientist focused harness checks; Architect holding accepted Classic"
+    "previousOwnerGate": "G4 completed and accepted",
+    "others": "Scientist focused harness/readiness work; Architect holding accepted Classic"
   },
   "contextSmokePreparation": {
     "selectedUtc": "2026-10-07T17:31:12Z",
@@ -738,7 +816,7 @@
   },
   "nextContextProbePreparation": {
     "selectedUtc": "2026-10-07T18:54:25Z",
-    "status": "No-inference configuration correction and exact draft only",
+    "status": "Exact one-session grant approved and dispatched; actual result pending",
     "maxAdditionalSessions": 1,
     "maxWallSeconds": 180,
     "maxParallelActors": 1,
@@ -755,7 +833,36 @@
     "knownHistoricalTokenSubtotal": 30510,
     "historicalTotalTokens": null,
     "reason": "Prior10000threshold exceeded by20267input+234output without successful tools; next proposed threshold accommodates measured session overhead.",
-    "liveGrantIssued": false,
-    "prerequisites": "Minimal corrected source, local supported-config observations, meaningful regression, independent review and exact immutable source/input/config/runner/request/protocol pins. No old grant/receipt rewriting or budget refill."
+    "liveGrantIssued": true,
+    "prerequisites": "Minimal corrected source, local supported-config observations, meaningful regression, independent review and exact immutable source/input/config/runner/request/protocol pins. No old grant/receipt rewriting or budget refill.",
+    "updatedUtc": "2026-10-07T19:28:23Z",
+    "grant": {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\context-tools-20261007\\context-drafts\\overseer-approved-20261007\\grant.approved.json",
+      "sha256": "8ff308caf381c4629f72f357bb264e21bd866dc8c4ef549f9fc450b06d7cebe8"
+    },
+    "protocol": {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\context-tools-20261007\\context-drafts\\overseer-approved-20261007\\protocol.frozen.json",
+      "sha256": "bcf32b9ab46005855e7ec8379a7b1007681539cf860c7a1f4f7c650ed5897598"
+    },
+    "profileAdoption": {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\context-tools-20261007\\context-drafts\\overseer-approved-20261007\\profile-adoption.approved.json",
+      "sha256": "28159c5fbebd637fb92272229779915fb1a720654887f45811a51dbf7197cc43"
+    },
+    "request": {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\context-tools-20261007\\context-drafts\\overseer-approved-20261007\\request.json",
+      "sha256": "39a62a4da246ab3e48ff4ee1bb21f0265753c0ecbaa98f3077567d862d484970"
+    },
+    "executionSha256": "e2f318252cdb28da09149d9c5c0285dafe6ddab7ec15ebebf70e2cc6cd6a482c",
+    "approvalReceipt": {
+      "path": "C:/Users/Consiliari/Documents/Scientist-Probes/context-tools-20261007/context-drafts/overseer-approved-20261007/approval-receipt.json",
+      "sha256": "cadaa10e0b41ed4b370912e4fcb22912639de969c835c41b04e9a3787712ee71"
+    },
+    "validFromUtc": "2026-10-07T19:27:50+00:00",
+    "expiresUtc": "2026-10-07T19:57:50+00:00",
+    "deliveredCandidate": "ac998adf88e7bad1517d98b9e4a4a6265016dbe6",
+    "implementationSha": "56d2e578ce105a77e4f8be4e3364925efc9d813d",
+    "authorityValidation": "Authority and exact Request validated; no ledger or inference created",
+    "newSessionsConsumedAtGrantValidation": 0,
+    "resultPath": "C:/Users/Consiliari/Documents/Scientist-Probes/context-tools-20261007/context-drafts/results/context-result.json"
   }
 }
