@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-07T22:07:34Z",
+  "updatedUtc": "2026-10-07T22:17:31Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -261,13 +261,13 @@
       "name": "Scientist",
       "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
       "hostId": "local",
-      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:67",
+      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:68",
       "lastObservedStatus": "active",
       "activeTurn": "01a11862-d13c-7590-afe7-aa4045ff7dfd",
-      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac6c28f9b6081919e53c174f5a5824c",
+      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac6c38fc55c8191b5a3cce9a02c4ab8",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "Actual pinned Classic/Government native integration with bounded deterministic fixtures and one final disabled-status metadata read; no real Actor or study.",
-      "latestProgress": "Die Grants sind jetzt als unveränderte Kopien mit Hash und Herkunft gesichert. Die native Anbindung bekommt einen Controller-Beleg ohne Actor-Buchung; Rollenaufrufe werden einzeln im gemeinsamen Ledger reserviert. Der neue Metadatenclient prüft bereits das vollständige Statusschema und lässt ausschließlich disabled passieren.",
+      "latestProgress": "Der Metadatenlauf hat beide Leseantworten erhalten. Die neue Notification meldete disabled; es gab keine Warnungen, Wiederholung oder zusätzlichen RPCs. Sichtbar sind unter anderem die Inline-Featureflags und ein geerbtes Windows-Sandboxsetting. Das erklärt die früheren Prozessablehnungen noch nicht. Die native Arbeit läuft getrennt weiter.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-scientist/Markitect",
       "transferredDesignCommit": "b9e17c9896f14b4b1268e4bcb005395f5d324384",
       "candidateSha": "0e62d5f1469d772804d35f2832efe0fa5679389d",
@@ -801,7 +801,7 @@
         "localDisabledStatusMetadataGrant": {
           "issuedUtc": "2026-10-07T22:01:32Z",
           "key": "local-policy-read-disabled-status-20261008",
-          "status": "Assigned; independent preflight, freeze and separate one-time reservation required; usage not yet confirmed",
+          "status": "Reported consumed once; two read responses received, disabled status, no warnings/retries/additional RPCs. Final packet and independent acceptance pending.",
           "maxAdditionalAppServerSessions": 1,
           "previousAppServerSessionsConsumed": 2,
           "cumulativeAppServerSessionsMaximum": 3,
@@ -833,8 +833,18 @@
           "modelCallsAuthorized": 0,
           "mutations": false,
           "newPurchases": false,
-          "remainingSessions": 1,
-          "consumedSessions": null
+          "remainingSessions": 0,
+          "consumedSessions": null,
+          "consumedSessionsReported": 1
+        },
+        "localDisabledStatusMetadataProgress": {
+          "reportedUtc": "2026-10-07T22:17:31Z",
+          "outcome": "config/read and configRequirements/read responses received; remoteControl status disabled; no warnings/retries/additional RPCs reported. Inline flags and inherited Windows sandbox setting observed.",
+          "acceptance": "Progress only; no clean final SHA or independent evidence review yet. Does not explain historical exec rejections or prove working Actor access.",
+          "nativeIntegration": "Existing bounded native work remains active; no new completed integration evidence.",
+          "metadataAppServerTreesConsumedCumulativeReported": 3,
+          "realActorStartsCumulative": 5,
+          "liveStudyCells": 0
         }
       },
       "classicHandoffReceived": true,
@@ -939,10 +949,11 @@
     "satPrinciples": "Deferred by direct user request on 2026-10-07; conceptual constraint/consistency/conflict-explanation principles first, no solver integration or current assignment change. See docs/design/government/deferred-research.md."
   },
   "lastReview": {
-    "reviewedUtc": "2026-10-07T22:07:34Z",
-    "evidenceLevel": "Three compact snapshots. Scientist reports immutable grant copies, controller process accounting without extra Actor reservation, individual role reservations and disabled-only status-schema filtering. Active implementation, no completed handoff or independent acceptance of these new changes. Worker/Architect unchanged held.",
+    "reviewedUtc": "2026-10-07T22:17:31Z",
+    "evidenceLevel": "Three compact snapshots. Scientist reports completion of the one-time metadata read, but native integration remains active. No new clean handoff accepted; actual effective exec rights and rejection cause remain unresolved. Worker/Architect unchanged held.",
     "coordinationActions": [
-      "Recorded reported progress and cursors; no repeated assignment, new grant, test run or product edit."
+      "Recorded reported metadata consumption; remaining allocation zero to prevent reuse, independent acceptance pending.",
+      "Recorded progress/cursors only; no repeat assignment, additional grant or test run."
     ],
     "userDecisionRequired": false
   },
