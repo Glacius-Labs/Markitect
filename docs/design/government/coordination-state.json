@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-07T21:37:30Z",
+  "updatedUtc": "2026-10-07T21:47:28Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -261,13 +261,13 @@
       "name": "Scientist",
       "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
       "hostId": "local",
-      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:63",
+      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:64",
       "lastObservedStatus": "active",
       "activeTurn": "01a11832-0d47-7961-b9de-aefdcd64b8c8",
-      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac6bac4281c81919e943d0521101961",
+      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac6bd8b4e2481918b25569416c7be01",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "One corrected classified local metadata session plus parallel missing native S1 adapter mechanics; no Actor or study.",
-      "latestProgress": "Die Adapterkorrekturen werden jetzt gegen die tatsächlichen nativen Formate geprüft: unter anderem Digest-Präfixe, rekursive Rollen und Run-Berichte, die neben dem Queue-Verzeichnis liegen. Damit prüfen die mechanischen Tests die echte Schnittstelle; ein nativer S1-Lauf bleibt weiterhin offen.",
+      "latestProgress": "Die Token-Schwelle wird passend zum bestehenden Dispatcher auf den aktuellen Dispatch begrenzt. Frühere Dispatches dürfen dessen Schwelle nicht verbrauchen; die gemeinsamen Trial-Grenzen gelten weiterhin. Der frühere Teststand bleibt archiviert, anschließend prüfe ich die korrigierte Fassung.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-scientist/Markitect",
       "transferredDesignCommit": "b9e17c9896f14b4b1268e4bcb005395f5d324384",
       "candidateSha": "3be653384e1b83d8cbdab79a87f487a3ffdde050",
@@ -794,10 +794,10 @@
     "satPrinciples": "Deferred by direct user request on 2026-10-07; conceptual constraint/consistency/conflict-explanation principles first, no solver integration or current assignment change. See docs/design/government/deferred-research.md."
   },
   "lastReview": {
-    "reviewedUtc": "2026-10-07T21:37:30Z",
-    "evidenceLevel": "All three compact snapshots. Scientist reports checking adapter corrections against native digest prefixes, recursive roles and run-report paths outside queue directory. No new completed handoff, native S1 result or accepted source evidence. Worker and Architect unchanged held.",
+    "reviewedUtc": "2026-10-07T21:47:28Z",
+    "evidenceLevel": "Three compact snapshots. Scientist reports correcting the observed token threshold scope to the current dispatch while preserving common trial ceilings; prior test snapshot archived, corrected checks in progress. This is not yet independently accepted accounting evidence. Worker and Architect unchanged held.",
     "coordinationActions": [
-      "Recorded reported adapter progress and cursors. Existing assignment continues; no repeated messages, new grants, root product changes or tests."
+      "Recorded progress/cursors only, no additional instructions or resources. At final handoff verify dispatch-local versus cumulative trial accounting, no reset of consumed starts or unknown usage."
     ],
     "userDecisionRequired": false
   },
