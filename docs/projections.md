@@ -1,6 +1,6 @@
 # Project-local projections
 
-> This describes the current source API. It is not part of the published v0.13.0 release.
+> This describes the experimental Project-local projection API bundled with v0.14.1. It remains a preview alongside the preserved v0.13.0 Project/Domain contract.
 
 A local projection is a project-owned representation of explicitly selected Markitect inputs. The contract records its sources, target paths, and materializer. Deterministic materializers can be reproduced by the CLI; AI materializers accept a separately prepared candidate whose exact bytes are reviewed before writing. A candidate or a ready plan is not evidence of convergence or human acceptance.
 
