@@ -64,9 +64,9 @@ function Invoke-Git {
 
 function Get-OptionalProperty {
     param([AllowNull()][object] $Object, [Parameter(Mandatory = $true)][string] $Name)
-    if ($null -eq $Object) { return $null }
+    if ($null -eq $Object) { return }
     $property = $Object.PSObject.Properties[$Name]
-    if ($null -eq $property) { return $null }
+    if ($null -eq $property -or $null -eq $property.Value) { return }
     return $property.Value
 }
 
@@ -156,8 +156,8 @@ $priceArea = @{ apiVersion = 'markitect.government/v1alpha1'; kind = 'Area'; nam
 $parallelToken = 'g3-' + [guid]::NewGuid().ToString('N')
 $quantityMode = if ($OutsideScope) { 'outside-scope' } else { 'quantity' }
 $runner = {
-    param([string] $slot, [string] $mode)
-    return New-RunnerSpec -Slot $slot -Mode $mode
+    param([string] $slot, [string] $mode, [string] $token = '')
+    return New-RunnerSpec -Slot $slot -Mode $mode -ParallelToken $token
 }
 $runtime = @{
     apiVersion = 'markitect.government-execution/v1alpha1'
@@ -234,7 +234,7 @@ foreach ($actor in $childExecution) {
         $actorLogs += [pscustomobject]@{ slotId = $actor.slotId; runId = $actorRunId; receiptPrivateLogDigest = $privateLogDigest; fileSha256 = "sha256:$logHash"; digestMatchesReceipt = ($privateLogDigest -eq "sha256:$logHash"); path = $privateLogPath; events = $events }
     }
 }
-$parallelGroups = @($actorLogs | ForEach-Object { $_.events } | ForEach-Object { $_ } | Where-Object { $_.token -eq $parallelToken } | Group-Object generation)
+$parallelGroups = @($actorLogs | ForEach-Object { $_.events } | ForEach-Object { $_ } | Where-Object { (Get-OptionalProperty $_ 'token') -eq $parallelToken } | Group-Object generation)
 $overlapGroups = @()
 foreach ($group in $parallelGroups) {
 	$quantityEvents = @($group.Group | Where-Object { $_.side -eq 'quantity' })
@@ -296,7 +296,7 @@ $childrenPassed = ($firstChildren.Count -eq 2 -and @($firstChildren | Where-Obje
     $childChecks = @(Get-OptionalProperty $childAttempts[0] 'checks')
     $childReview = Get-OptionalProperty $childAttempts[0] 'review'
     $childReviewOutcome = Get-OptionalProperty $childReview 'outcome'
-    ($childChecks.Count -eq 0 -or @($childChecks | Where-Object { $_.exitCode -ne 0 }).Count -gt 0 -or $childReviewOutcome -ne 'passed')
+    ($childChecks.Count -eq 0 -or @($childChecks | Where-Object { (Get-OptionalProperty $_ 'exitCode') -ne 0 }).Count -gt 0 -or $childReviewOutcome -ne 'passed')
 }).Count -eq 0)
 $firstRootCheckFailed = $false
 $repairRootChecksPassed = $false
@@ -306,7 +306,7 @@ $lastCandidateID = $null
 if ($rootAttempts.Count -gt 0) {
     $firstCandidateID = Get-OptionalProperty $rootAttempts[0] 'candidateId'
     $firstChecks = @(Get-OptionalProperty $rootAttempts[0] 'checks')
-    $firstRootCheckFailed = ($firstChecks.Count -gt 0 -and @($firstChecks | Where-Object { $_.exitCode -ne 0 }).Count -gt 0)
+    $firstRootCheckFailed = ($firstChecks.Count -gt 0 -and @($firstChecks | Where-Object { (Get-OptionalProperty $_ 'exitCode') -ne 0 }).Count -gt 0)
 }
 if ($rootAttempts.Count -gt 1) {
     $lastAttempt = $rootAttempts[$rootAttempts.Count - 1]
@@ -314,7 +314,7 @@ if ($rootAttempts.Count -gt 1) {
     $lastChecks = @(Get-OptionalProperty $lastAttempt 'checks')
     $lastReview = Get-OptionalProperty $lastAttempt 'review'
     $lastReviewOutcome = Get-OptionalProperty $lastReview 'outcome'
-    $repairRootChecksPassed = ($lastChecks.Count -gt 0 -and @($lastChecks | Where-Object { $_.exitCode -ne 0 }).Count -eq 0)
+    $repairRootChecksPassed = ($lastChecks.Count -gt 0 -and @($lastChecks | Where-Object { (Get-OptionalProperty $_ 'exitCode') -ne 0 }).Count -eq 0)
     $repairReviewPassed = ($lastReviewOutcome -eq 'passed')
 }
 $votesFresh = ($votes.Count -eq 2 -and $candidateID -and $evidenceID -and @($votes | Where-Object { $_.materialCandidateId -ne $candidateID -or $_.evidenceId -ne $evidenceID }).Count -eq 0)
