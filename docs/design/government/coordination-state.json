@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-07T23:11:57Z",
+  "updatedUtc": "2026-10-07T23:19:51Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -261,13 +261,13 @@
       "name": "Scientist",
       "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
       "hostId": "local",
-      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:82",
+      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:83",
       "lastObservedStatus": "active",
       "activeTurn": "01a118a2-6ae8-73e1-8e73-d7970fbda0a6",
-      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac6d1860b2481918bfd8e71aa0d1ace",
+      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac6d25e3c8481919fb521ff7b1c8c6c",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "Corrected native mechanical integration r2 after accepted negativef35c820; actual S1 runner access still open.",
-      "latestProgress": "Ich lese den neuen Grant und begrenze die Änderungen auf die vier belegten Fehler der Versuchshülle. Vor den neuen Fällen sichere ich Regressionen, gezielten unabhängigen Review, einen sauberen Quellcommit und den Freeze; alte Läufe und Buchungen bleiben erhalten.",
+      "latestProgress": "Der neue Grant ist als eigener, hashgebundener Snapshot gesichert. Die nativen Buchungen werden im bisherigen Ledger ergänzt; die alte Fehlbuchung bleibt unverändert. Classic-Vorbereitung und Government-Fehlerabschluss sind korrigiert und gezielt getestet. Ich ergänze noch die frühen Wrapperdiagnosen und die verbindlichen R2-Grenzen.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-scientist/Markitect",
       "transferredDesignCommit": "b9e17c9896f14b4b1268e4bcb005395f5d324384",
       "candidateSha": "f35c8209cd8902bff17e69f05ee7716e352ee4b2",
@@ -1050,6 +1050,13 @@
           "consumedNativeStarts": null,
           "consumedRoleInvocations": null,
           "sentUtc": "2026-10-07T23:10:59Z"
+        },
+        "correctedNativeIntegrationProgress": {
+          "observedUtc": "2026-10-07T23:19:51Z",
+          "evidenceLevel": "Compact chat report only; no new clean-source, test-log, freeze or completed-run acceptance in this review.",
+          "reported": "R2 grant snapshot bound; existing native ledger will be extended with old failed booking preserved. Classic setup and Government incomplete finalization corrected and targeted tests reported. Early wrapper diagnostics and R2 enforcement still being completed.",
+          "status": "Active on existing R2 assignment; no new completion or usage reported.",
+          "grantKey": "native-s1-corrected-integration-20261008-r2"
         }
       },
       "classicHandoffReceived": true,
@@ -1183,12 +1190,10 @@
     "satPrinciples": "Deferred by direct user request on 2026-10-07; conceptual constraint/consistency/conflict-explanation principles first, no solver integration or current assignment change. See docs/design/government/deferred-research.md."
   },
   "lastReview": {
-    "reviewedUtc": "2026-10-07T23:11:57Z",
-    "evidenceLevel": "All three checked. Clean f35c820 verified;174changed commit files byte-match. Previously independently verified77frozen inputs/112snapshots and source-bound postrun reviews support negative closure; no test rerun. No new human stop in Scientist turn. Metadata498faa0 accepted separately. Worker/Architect unchanged held.",
+    "reviewedUtc": "2026-10-07T23:19:51Z",
+    "evidenceLevel": "All three checked jointly using saved cursors. Scientist reports narrow R2 harness corrections and targeted tests; work remains active, no new completed candidate accepted. Worker and Architect unchanged held. No suites or product calls rerun.",
     "coordinationActions": [
-      "Accepted negative native handoff and closed firstcase allocation, preserving historical failures/usage.",
-      "Recorded explicit finite corrected-case successor within original overall numeric ceilings before dispatch.",
-      "Assigned Scientist only confirmed harness fixes and digest-bound wrapper diagnostics, guarded by focused review/freeze; active status confirmed. No product-owner assignment, extra model/metadata/study call or policy change."
+      "Saved updated cursors and reported R2 progress. Existing assignment and finite grant unchanged; no duplicate message or additional allocation."
     ],
     "userDecisionRequired": false
   },
