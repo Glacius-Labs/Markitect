@@ -47,7 +47,7 @@ Existing projection records provide source-to-artifact provenance. The audit add
 
 ## Finite delivery sequence
 
-The audit and executable protocol examples are implemented over the current controller; their bounded coverage is recorded in [the validation guide](../validation/standard-operating-model.md). They exercise a model change across two representations, a failing local judgment, repair under unchanged intent, and final declared-scope closure. A live-agent demonstration with meaningful semantic checks remains the next evidence step. Preserve unaffected valid bytes and expose missing coverage.
+The audit and executable protocol examples are implemented over the current controller; their bounded coverage is recorded in [the validation guide](../validation/standard-operating-model.md). They exercise a model change across two representations, a failing local judgment, repair under unchanged intent, and final declared-scope closure. Completed live-agent pilots and their limits are recorded there as well; [the roadmap](../implementation-plan.md#standard-operating-model-checkpoint) owns the next evidence step. Preserve unaffected valid bytes and expose missing coverage.
 
 A continuous local runner follows only after the finite cycle is usable. It must reuse the same commands and contracts, persist enough state to resume safely, bound retries, reject stale work and become idle when no work remains. Kubernetes is a possible later execution environment, not a prerequisite. Long-running scheduling and general automatic repair are not claimed by the audit checkpoint.
 
