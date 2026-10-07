@@ -2,6 +2,8 @@
 
 Stand: 2026-10-07, Europe/Berlin. **Diskussions- und Evaluationsentwurf; keine implementierte Funktion und kein Auftrag zum sofortigen Umbau.**
 
+**Checkpoint erreicht:** Der Architect hat den begrenzten Grundmodell-Schritt auf `1ea5c76f55526fc4d721e865885436153f48b497` abgeschlossen. Der [Abschlussabgleich](architect-government-checkpoint.md) dokumentiert 34 bestandene Windows-Gates, die endliche Pilotfolge und verbleibende Grenzen. Die drei vorbereiteten Entwürfe sind auf den finalen Stand abgeglichen; weitere Umsetzung wartet auf die Government-Entscheidung. Die folgenden früheren Arbeitsanweisungen und die Bestandsaufnahme auf `2c5299e` bleiben als Entwicklungskontext erhalten.
+
 ## Verbindlicher Arbeitsauftrag und Reihenfolge
 
 Der Nutzer hat folgenden nächsten Entscheidungspunkt festgelegt:
@@ -22,7 +24,7 @@ Ein grüner Einzeltest, ein inaktiver Chat oder ein erfolgreicher Teilversuch si
 
 Untersucht wurde der separate Architect-Worktree `C:/Users/Consiliari/.codex/worktrees/standard-operating-model/Markitect`, Kandidat `2c5299e0a876ba491e6d9fc93b8965fe21d62917` (`codex/standard-operating-model`). Quellverträge wurden zusätzlich mit `git show` aus dieser Revision gelesen. Diese Notiz liegt auf einem eigenen Dokumentationsbranch des ursprünglichen Checkouts; dessen ältere `main` ist **nicht** die technische Vergleichsbasis.
 
-Die Analyse ist keine erneute Testsuite oder Releasefreigabe. Der Architect führt seine abschließenden Kandidatenprüfungen selbst durch. Beim späteren Checkpoint wird dessen tatsächlicher finaler Stand erneut abgeglichen.
+Die ursprüngliche Analyse ist keine erneute Testsuite oder Releasefreigabe. Der spätere finale Stand und seine abgeschlossenen Prüfungen sind gesondert im [Abschlussabgleich](architect-government-checkpoint.md) dokumentiert.
 
 Wichtige Quellanker relativ zum untersuchten Kandidaten:
 

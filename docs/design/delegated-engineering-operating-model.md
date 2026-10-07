@@ -2,7 +2,7 @@
 
 **Status:** Architekturvorbereitung und prüfbarer Diskussionsentwurf. Kein angenommener Vertrag, keine implementierte Funktion und kein Auftrag zum Umbau.
 
-**Vergleichsbasis:** Architect-Grundlage `dc10f5454af381887a2f41004d0987294bd1fe62`. Der Abgleich mit dem finalen Architect-Kandidaten steht aus. Dieser Entwurf beansprucht daher keine Aussage über dessen endgültigen Stand oder Abschluss.
+**Vergleichsbasis:** finaler Architect-Kandidat `1ea5c76f55526fc4d721e865885436153f48b497`. Der [Abschlussabgleich](architect-government-checkpoint.md) bestätigt den begrenzten Grundmodell-Checkpoint und unveränderte technische Verträge gegenüber der ursprünglichen Vorbereitung auf `dc10f54`. Der Entwurf selbst ist weiterhin nicht angenommen oder implementiert.
 
 ## Zweck und Ziel
 
@@ -164,7 +164,7 @@ Bewertet werden übersehene Pflichten, falsche Einwände, Integrationsfehler, Mo
 
 ## Baseline und belegbare Grenzen
 
-Die technische Vergleichsbasis ist der unveränderliche Commit `dc10f5454af381887a2f41004d0987294bd1fe62`. Der finale Architect-Kandidat, dessen Abschlusslauf und die daraus entstehenden Änderungen sind noch gesondert zu vergleichen.
+Die technische Vergleichsbasis ist der unveränderliche Commit `1ea5c76f55526fc4d721e865885436153f48b497`. Der finale Abschlusslauf und die einzige Dokumentationsänderung gegenüber der Vorbereitung sind im [Abschlussabgleich](architect-government-checkpoint.md) festgehalten.
 
 Für die zugrunde liegende Projektions- und Controller-Architektur sind insbesondere die quellgebundenen Beschreibungen und Verträge aus dieser Revision zu prüfen:
 

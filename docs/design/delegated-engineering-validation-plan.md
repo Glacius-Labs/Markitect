@@ -8,7 +8,7 @@ Untersucht wird, ob Markitects vorhandener Modellierungs-, Ausführungs- und Pr�
 
 Die zu prüfende Nutzenthese ist weniger notwendige menschliche Routinekoordination bei gleichbleibender oder besserer Qualität und Absichtstreue. Der Versuch entscheidet weder über die Produktidentität „Government“ noch über eine allgemeine Regierungssimulation.
 
-Ausgangspunkt für die spätere Durchführung ist der dokumentierte Architect-Kandidat `dc10f5454af381887a2f41004d0987294bd1fe62`. Der Architect schließt derzeit noch seinen begrenzten Ablauf und den abschließenden Abgleich gegen den finalen Quellstand ab. Vor einer Durchführung sind der tatsächlich abgeschlossene Kandidat und seine verbleibenden Grenzen erneut festzustellen. Ein Teilversuch oder ein grüner Einzelcheck ersetzt diesen Checkpoint nicht.
+Ausgangspunkt für die spätere Durchführung ist der abgeschlossene Architect-Kandidat `1ea5c76f55526fc4d721e865885436153f48b497`. Der [Abschlussabgleich](architect-government-checkpoint.md) hält den begrenzten Praxisablauf, 34 bestandene Windows-Gates, den früheren Timeout und verbleibende Grenzen fest. Damit ist die Kandidatenfeststellung erledigt; Government-Nutzen, reale Pilotwahl und unbeaufsichtigter Betrieb sind weiterhin offen.
 
 Ein geeignetes reales Repository ist noch nicht ausgewählt. Daher werden weder Sprache, Framework, Domäne, Qualität des Ist-Zustands noch vorhandene Regeln als Tatsache vorausgesetzt. Für die Durchführung sind der konkrete Zielumfang, die Revision, die zuständigen Mandate und die Grenzen der bereits erteilten Autorisierung festzustellen. Das konkretisiert den Pilot; es verlangt keine erneute pauschale Zustimmung für bereits autorisierte Arbeit. Nur Schritte außerhalb dieser Autorisierung benötigen eine neue Entscheidung. Bis dahin beschreibt dieser Plan Prüffälle und Evidenz, keine Repository-Befunde.
 
@@ -110,4 +110,4 @@ Für den Checkpoint sind diese Dateien am tatsächlich abgeschlossenen Architect
 - `internal/host/agentexec/types.go` und `internal/host/assurance/assurance.go` – Agent-Aufträge und begrenzte Eltern-/Kind-Prüfgraphen.
 - `internal/core/types.go` und `internal/core/compile.go` – struktureller Core; keine Quelle für semantische Wahrheit, Agentenbefugnis oder menschliche Annahme.
 
-Keine Implementierung, echten Agenten-API-Läufe oder Tests werden durch dieses Dokument gestartet. Der Architect-Abschluss und der Abgleich des endgültigen Kandidaten bleiben offen.
+Keine Implementierung, echten Agenten-API-Läufe oder Tests werden durch dieses Dokument gestartet. Architect-Abschluss und Kandidatenabgleich sind dokumentiert; Produktentscheidung und Durchführung dieses Validierungsplans bleiben offen.

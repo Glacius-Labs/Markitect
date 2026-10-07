@@ -1,8 +1,8 @@
 # Architektur-Abgleich: delegierte Engineering-Arbeit
 
-**Untersuchungsbasis:** unveränderlicher Architekt-Kandidat `dc10f5454af381887a2f41004d0987294bd1fe62`. Diese Landkarte ist eine Produkt- und
-   Architekturprüfung, keine Änderung am Code, CLI-Vertrag oder veröffentlichten Release. Der finale Gate-Stand dieses Kandidaten ist hier nicht
-   bestätigt.
+**Untersuchungsbasis:** finaler Architekt-Kandidat `1ea5c76f55526fc4d721e865885436153f48b497`. Der [Abschlussabgleich](architect-government-checkpoint.md)
+   bestätigt 34 bestandene Windows-Gates und unveränderte technische Verträge gegenüber der Vorbereitung auf `dc10f54`. Diese Landkarte ist eine
+   Produkt- und Architekturprüfung, keine Änderung am Code, CLI-Vertrag oder veröffentlichten Release.
 
 ## Zweck und Lesart
 
@@ -15,7 +15,7 @@ Diese Notiz ordnet die bestehenden Markitect-Mechaniken einer möglichen, stärk
 Der Kandidat beschreibt Markitect als kanonisches Modell akzeptierter Engineering-Absicht, das ausgewählte Repräsentationen abgleicht. Sein Host
    bietet bereits einen begrenzten Controller-Zyklus. Das ist eine Grundlage für delegierte Arbeit, aber weder ein dauerhaft laufender
    Organisations-Runner noch eine automatische Annahme von Regeln oder Ergebnissen. Alle Quellverweise beziehen sich auf den oben genannten
-   unveränderlichen Commit und sind mit `git show dc10f5454af381887a2f41004d0987294bd1fe62:<Pfad>` prüfbar: `docs/vision.md`, Abschnitt „Product
+   unveränderlichen Commit und sind mit `git show 1ea5c76f55526fc4d721e865885436153f48b497:<Pfad>` prüfbar: `docs/vision.md`, Abschnitt „Product
    definition“; `docs/architecture.md`, Abschnitt „Current implementation boundary“; `docs/operating-methodology.md`, Abschnitt „The change and
    reconciliation cycle“.
 
@@ -94,10 +94,10 @@ Brownfield-Vorschlag bleibt strikt von Kanonisierung getrennt. Die Adoption-Hand
 ## Kleinster sinnvoller Vertikalschnitt nach Abschluss des Architects
 
 Diese Reihenfolge ist eine Bewertungsgrundlage, keine bereits genehmigte Umsetzung. Alle Angaben zu internem Code und Dokumentation beziehen sich auf
-   den unveränderlichen Untersuchungs-Commit `dc10f5454af381887a2f41004d0987294bd1fe62`.
+   den unveränderlichen Untersuchungs-Commit `1ea5c76f55526fc4d721e865885436153f48b497`.
 
-1. **Kandidat einfrieren und Grenzen prüfen.** Architect-Arbeit abschließen, finalen Candidate-SHA und Gates ermitteln, Unterschiede zu
-   `dc10f5454af381887a2f41004d0987294bd1fe62` dokumentieren. Die vorliegende Landkarte auf diesen finalen Snapshot neu binden.
+1. **Kandidat einfrieren und Grenzen prüfen — erledigt.** Finaler Candidate-SHA und Gates sind im [Abschlussabgleich](architect-government-checkpoint.md)
+   festgehalten. Gegenüber `dc10f5454af381887a2f41004d0987294bd1fe62` änderte sich nur ein Dokumentationssatz; die Landkarte ist auf den finalen Snapshot gebunden.
 
 2. **Begriffe und
    Authority-Modell entscheiden.** Ein kleines reales Projektmodell aufteilen in Projektordnung, ein versioniertes Ressortmandat, eine dauerhafte
