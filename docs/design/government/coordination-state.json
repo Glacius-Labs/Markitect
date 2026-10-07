@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-07T17:15:02Z",
+  "updatedUtc": "2026-10-07T17:31:12Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -18,13 +18,13 @@
       "name": "Worker",
       "threadId": "01a1169b-9357-7df3-a8f6-f913557c782a",
       "hostId": "local",
-      "afterCursor": "b2b8e43f-fcaa-41bf-828a-99c69527bdea:25",
+      "afterCursor": "b2b8e43f-fcaa-41bf-828a-99c69527bdea:26",
       "lastObservedStatus": "active",
       "activeTurn": "01a11756-d1a8-7973-a56f-935f53607e58",
-      "lastAssistantMessageId": "msg_0a7785839df196a4016ac67d1091ec819193f77c3aff809ce4",
+      "lastAssistantMessageId": "msg_0a7785839df196a4016ac67f2edc3081919ccc4799f11153c2",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "G3: bounded recursive delegation, real parent integration, detect composition failure despite green children and fresh root repair",
-      "latestProgress": "Die vorhandene Hierarchie und Mandatsprüfung liefern die Grundlage für G3. Ich leite daraus einen eingefrorenen Baum ab: Kinder behalten ihre eigenen Writer-Pfade; Eltern integrieren die tatsächlichen Dateien und erhalten frische Checks und Reviews. Eltern ohne eigene Writer-Pfade werden durch den Host zusammengesetzt und separat geprüft. Ein fehlgeschlagener Gesamtstand wird nur innerhalb der festgelegten Reparatur- und Aufrufgrenzen erneut bearbeitet.",
+      "latestProgress": "Ein Review hat eine Kontextlücke gefunden: Die Actor-Eingaben enthielten Pfade und Pflichten, aber noch nicht deren explizite Realisierungsbeziehungen. Ich ergänze diese gefilterten Definitionen. Außerdem erhält ein technisch fehlgeschlagener Kandidat nun ein unabhängiges Elternreview, sofern der Check regulär abgeschlossen wurde. Beide Ergebnisse bleiben für die Annahme erforderlich.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-worker/Markitect",
       "transferredDesignCommit": "691ce1dee3484371c4aea725db4ed5cc3f2e3719",
       "candidateSha": "2b604d1aeabd8cef49fb19177cc5d29cfa3b1493",
@@ -126,21 +126,21 @@
       "name": "Scientist",
       "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
       "hostId": "local",
-      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:27",
+      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:29",
       "lastObservedStatus": "active",
-      "activeTurn": "01a1174a-d641-7132-920b-a869238bf9cc",
-      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac67d1524e081918d5037136e34bd92",
+      "activeTurn": "01a1176b-0388-72c2-9de5-75d944702a60",
+      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac681ccdc648191a376edb3addde259",
       "initialAssignmentDispatched": true,
-      "assignedMilestone": "S1 shared dispatcher/accounting implementation and public context-smoke preparation; mechanical fixtures only",
-      "latestProgress": "Die abschließende Review bestätigt die beiden weiteren Korrekturen: Prompt-Bytes werden vor dem Start festgehalten, und ungestartete Buchungen werden atomar abgeschlossen. Alle 24 Dispatcher-Tests bestehen. Den neuen Government-G2-Zwischenhandoff berücksichtige ich als Produktstand; ein endgültiger Studien-Pin und G3–G5 fehlen weiterhin.",
+      "assignedMilestone": "S1 common measurable profile correction, preserved cumulative-ledger binding and exact one-context-smoke Request/Protocol/Grant drafts; no inference",
+      "latestProgress": "Ich setze die gemeinsame Messprofilkorrektur um und prüfe die Migration unter Erhalt aller Ledger-Daten. Danach bereite ich konkrete Drafts für genau eine Kontext-Sitzung vor. Modellmetadaten prüfe ich ohne Inferenz; ein genehmigter Live-Grant wird noch nicht erstellt.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-scientist/Markitect",
       "transferredDesignCommit": "b9e17c9896f14b4b1268e4bcb005395f5d324384",
-      "candidateSha": "b16d70407016ca25651935c2c9283ed5511212e1",
-      "acceptance": "First completed sentinel response/usage at requested gpt-6.1-sol/high accepted as bounded diagnostic evidence; retrospective10009token stop, not S1 or access proof",
+      "candidateSha": "021bdd7f07447e50a0d637bc7cb42f7a8e3c9133",
+      "acceptance": "S1 dispatcher/accounting mechanical checkpoint accepted; profile correction active, no actual context/access proof or S1 live clearance",
       "lastAssignment": {
-        "sentUtc": "2026-10-07T16:47:29.000Z",
-        "key": "s1-dispatch-accounting-context-preparation",
-        "scope": "Implement bounded shared dispatcher/accounting and resume admission using existing pinned runner and deterministic external mechanics fixtures; propose honest enforceable common profile and prepare public-sentinel context smoke; no new inference/live cells/full Go suite."
+        "sentUtc": "2026-10-07T17:30:51Z",
+        "key": "s1-measurable-profile-and-context-grant-draft",
+        "scope": "Explicit shared profile separates unknown internal provider counts from unknown tokens, preserves cumulative ledgers/stops; targeted negative/resume/migration checks and independent review; prepare exact one-context-session drafts, without approval or inference."
       },
       "evidence": {
         "sourcesHashChecked": 37,
@@ -241,15 +241,28 @@
           "rootInspection": "Clean final SHA, raw stdout/observation/reviews/source validation read; all93 manifest hashes matched."
         },
         "s1DispatcherProgress": {
-          "status": "Incomplete WIP; no acceptance",
-          "checkedUtc": "2026-10-07T16:55:43Z",
-          "sourceHead": "b16d70407016ca25651935c2c9283ed5511212e1",
-          "untrackedFiles": [
-            "experiments/government-comparison/public/context-access-smoke.md",
-            "experiments/government-comparison/public/dispatch-enforcement.md",
-            "experiments/government-comparison/runtime/context_smoke.py",
-            "experiments/government-comparison/runtime/test_context_smoke.py"
-          ]
+          "status": "Accepted; see s1DispatcherAcceptance",
+          "sourceHead": "021bdd7f07447e50a0d637bc7cb42f7a8e3c9133",
+          "checkedUtc": "2026-10-07T17:31:12Z"
+        },
+        "s1DispatcherAcceptance": {
+          "acceptedUtc": "2026-10-07T17:31:12Z",
+          "sourceSha": "021bdd7f07447e50a0d637bc7cb42f7a8e3c9133",
+          "implementationSha": "4f615a0e5866c0e045d6dd2371678622a02d9cdf",
+          "sourceHashesIndependentlyChecked": 28,
+          "evidenceHashesIndependentlyChecked": 5,
+          "archiveEntriesIndependentlyChecked": 241,
+          "hashMismatches": 0,
+          "reportedTargetedTestsPassed": 45,
+          "independentDispatcherTestsReported": 25,
+          "independentReview": "No material findings; acceptance reviewer inspected source/evidence without reruns",
+          "reviewer": "/root/s1_dispatch_acceptance",
+          "rootInspection": "Clean final SHA, latest chat instructions and public dispatcher/enforcement/context/next-request/profile handoff read; no repeated tests",
+          "mechanics": "Atomic reservation/one-time launch, durable Result, resume without double-start/refill, ambiguous launch fail-closed",
+          "actorSessionsStarted": 0,
+          "inferenceCalls": 0,
+          "liveStudyCells": 0,
+          "limitations": "Deterministic/synthetic only; actual Actor context/rights unmeasured; Classic/Government native readiness_gap, S1/live grant remain closed"
         }
       },
       "classicHandoffReceived": true,
@@ -332,7 +345,7 @@
       "heldWorktree": "C:/Users/Consiliari/.codex/worktrees/standard-operating-model/Markitect"
     }
   ],
-  "nextAction": "Review Worker G3 recursion/integration progress and Scientist S1 dispatcher/accounting package. No repeated active assignments, no new model calls or automatic study/publication. Architect unchanged.",
+  "nextAction": "Review Worker G3 final evidence and Scientist shared-profile correction plus exact one-context-session drafts; coordinator run grant follows pinned acceptance. Architect held; no live comparison or publication.",
   "boundaries": {
     "governmentPublication": false,
     "automaticClassicReplacement": false,
@@ -341,10 +354,12 @@
     "jev": "Deferred; no extra investigation started"
   },
   "lastReview": {
-    "reviewedUtc": "2026-10-07T17:15:02Z",
-    "evidenceLevel": "Compact live snapshots for all three chats. Worker G3 and Scientist S1 still active; comments are reported progress, no new completed package or source evidence accepted. Architect unchanged at held accepted local state.",
+    "reviewedUtc": "2026-10-07T17:31:12Z",
+    "evidenceLevel": "All3compact snapshots. Scientist clean SHA/public handoff read; independent source/evidence/archive hash acceptance. Worker G3 reported progress, no final acceptance. Architect unchanged.",
     "coordinationActions": [
-      "No new assignments or test runs: Worker implementing frozen recursion/integration tree; Scientist finishing reviewed dispatcher package after reported24tests."
+      "Accepted Scientist021bdd7 mechanics; no tests repeated.",
+      "Selected common measurable profile correction; sent one bounded implementation/review/context-draft assignment and confirmed active.",
+      "No repeated Worker/Architect instruction. No live/inference grant issued."
     ],
     "userDecisionRequired": false
   },
@@ -370,22 +385,48 @@
   "resourceProfile": {
     "selectedUtc": "2026-10-07T15:00:51Z",
     "source": "Scientist e4278c50ddc84daee3858e24c89e6cf5777b5dfe experiments/government-comparison/public/resource-proposal.json",
-    "status": "Ceilings selected; enforcement and live protocol freeze pending",
+    "status": "Explicit measurable common profile correction selected; implementation/review and live freeze pending",
     "taskWallSeconds": 1200,
     "trialWallSeconds": 7200,
     "taskActorCalls": 12,
     "trialActorCalls": 72,
-    "taskProviderTurns": 80,
-    "trialProviderTurns": 480,
+    "taskProviderTurns": null,
+    "trialProviderTurns": null,
     "taskProviderTokens": 120000,
     "trialProviderTokens": 720000,
     "maxParallelActors": 4,
-    "maxTransportRetriesPerCall": 1,
+    "maxTransportRetriesPerCall": null,
     "maxSemanticRepairRoundsPerTask": 2,
     "trialActiveHumanSeconds": 600,
     "newPurchases": false,
     "liveStudyApproved": false,
-    "scope": "One exploratory trial per six cells only after all readiness gates and final coordinator freeze; all setup, descendants, reviews, failures and model upkeep count"
+    "scope": "One exploratory trial per six cells only after all readiness gates and final coordinator freeze; all setup, descendants, reviews, failures and model upkeep count",
+    "updatedUtc": "2026-10-07T17:31:12Z",
+    "maxWrapperRetries": 0,
+    "providerCountPolicy": "Internal requests/retries unknown/null, never proxy with Agent turns. Legacy80/480/1unsupported; pinned unchanged transport defaults permitted inside finite process wall.",
+    "tokenPolicy": "Raw input/output totals, retrospective threshold/overshoot explicit; unknown tokens block later admission.",
+    "ledgerPolicy": "Profile transition preserves cumulative counters, attempts, unknowns and stops; no reset or new identity to refill.",
+    "previousSelectedProfile": {
+      "selectedUtc": "2026-10-07T15:00:51Z",
+      "source": "Scientist e4278c50ddc84daee3858e24c89e6cf5777b5dfe experiments/government-comparison/public/resource-proposal.json",
+      "status": "Ceilings selected; enforcement and live protocol freeze pending",
+      "taskWallSeconds": 1200,
+      "trialWallSeconds": 7200,
+      "taskActorCalls": 12,
+      "trialActorCalls": 72,
+      "taskProviderTurns": 80,
+      "trialProviderTurns": 480,
+      "taskProviderTokens": 120000,
+      "trialProviderTokens": 720000,
+      "maxParallelActors": 4,
+      "maxTransportRetriesPerCall": 1,
+      "maxSemanticRepairRoundsPerTask": 2,
+      "trialActiveHumanSeconds": 600,
+      "newPurchases": false,
+      "liveStudyApproved": false,
+      "scope": "One exploratory trial per six cells only after all readiness gates and final coordinator freeze; all setup, descendants, reviews, failures and model upkeep count"
+    },
+    "correctionSource": "Scientist021bdd7 public/s1-profile-correction-proposal.md; Overseer19:31 decision"
   },
   "runnerProbe": {
     "authorizedUtc": "2026-10-07T15:00:51Z",
@@ -464,5 +505,25 @@
     "previousOwner": "Worker",
     "previousOwnerGate": "G2 completed and accepted",
     "others": "Scientist focused harness checks; Architect holding accepted Classic"
+  },
+  "contextSmokePreparation": {
+    "selectedUtc": "2026-10-07T17:31:12Z",
+    "status": "Concrete drafts requested; run grant NOT issued",
+    "maxSessions": 1,
+    "maxWallSeconds": 180,
+    "maxParallelActors": 1,
+    "wrapperTurns": 1,
+    "retrospectiveTokenThreshold": 10000,
+    "requestedModel": "gpt-6.1-sol",
+    "reasoning": "high",
+    "runnerVersion": "0.160.1",
+    "runnerSha256": "3b8f6e33caa75f232558a3cf76ff9b87bb5ef6dbcf4996372f24e55c78b1b916",
+    "scope": "Explicit synthetic released and Actor-owned context reads only; access/write/process probe excluded",
+    "wrapperRetries": 0,
+    "children": false,
+    "continuation": false,
+    "newPurchases": false,
+    "prerequisite": "Accepted profile correction and exact source/request/protocol/config/runner/Python/input pins, authenticated metadata, coordinator run grant",
+    "historicalDiagnostics": "All3prior starts exhausted; ledgers/unknown total preserved. No new inference authorized."
   }
 }
