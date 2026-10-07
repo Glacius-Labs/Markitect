@@ -1,0 +1,395 @@
+{
+  "schemaVersion": 1,
+  "packageCandidate": "3f1dcf47aff80b29b8f4f3cc39711adcf2e72b88",
+  "date": "2026-10-07",
+  "liveTrials": 0,
+  "harnessTests": {
+    "status": "passed",
+    "count": 5,
+    "command": [
+      "python",
+      "-m",
+      "unittest",
+      "discover",
+      "-s",
+      "experiments/government-comparison",
+      "-p",
+      "test_harness.py",
+      "-v"
+    ],
+    "sourceSha256": "5a0a7b0bee7db66759bedf0d067bd4cb82b7a6728efe685f06102f0b2d718e5f"
+  },
+  "fixtureSmoke": {
+    "status": "passed",
+    "adapterProbes": 6,
+    "allAdapterStatuses": "readiness_gap",
+    "apiAssertions": 17,
+    "source": "evidence/fixture-smoke.json"
+  },
+  "independentReview": {
+    "status": "passed",
+    "committedSourceDigests": 37,
+    "committedEvidenceDigests": 35,
+    "privateFilesTracked": 0,
+    "privateHoldoutExecuted": false
+  },
+  "additionalReadinessRisks": [
+    "No actual product adapters or frozen StudyClassicVersion/Government yet",
+    "No actual actor runner/model/tool context or aggregate budget enforcement frozen",
+    "Same-user external file reads succeed; actual runner access probe remains",
+    "Live actor root must suppress unintended ancestor Markitect instructions, global config/memory and other cell inputs",
+    "Task6 equivalent defect mapping requires actual frozen task5 candidates",
+    "Unknown-inventory 404 requirement not covered by current public/private checks",
+    "Failure-during-save/recovery semantics and malformed request cases are not exhaustively covered"
+  ],
+  "nextStep": "Overseer chooses finite common profile; Scientist inspects exact product readiness, then wires real adapters and performs common bounded public setup/task smoke before live pilot",
+  "providerUsage": null,
+  "billedCost": null,
+  "repositoryGates": {
+    "finalBinding": {
+      "gates": [
+        {
+          "exitCode": 0,
+          "argv": [
+            "check",
+            "--repo",
+            ".",
+            "--revision",
+            "3f1dcf47aff80b29b8f4f3cc39711adcf2e72b88"
+          ],
+          "logSha256": "9b32f38f9085a9758cdb016d618ab91a7bfd46c3aaef34b4a0ec7fa5e02ec367",
+          "name": "check"
+        },
+        {
+          "exitCode": 0,
+          "argv": [
+            "context",
+            "--repo",
+            ".",
+            "--revision",
+            "3f1dcf47aff80b29b8f4f3cc39711adcf2e72b88",
+            "--namespace",
+            "development",
+            "--kind",
+            "Skill",
+            "--name",
+            "engineering-change"
+          ],
+          "logSha256": "de1fce62055bba38dbf5a23b4e55cdaf8038939bb4bb03d20a297d085f6765f2",
+          "name": "context"
+        },
+        {
+          "exitCode": 0,
+          "argv": [
+            "impact",
+            "--repo",
+            ".",
+            "--base",
+            "b9e17c9896f14b4b1268e4bcb005395f5d324384",
+            "--revision",
+            "3f1dcf47aff80b29b8f4f3cc39711adcf2e72b88"
+          ],
+          "logSha256": "729d56d12fc6863494505000eeed168ef8349820436837b56c5e1790ab21de8b",
+          "name": "impact"
+        }
+      ],
+      "candidateCommit": "3f1dcf47aff80b29b8f4f3cc39711adcf2e72b88"
+    },
+    "standalone": {
+      "candidateCommit": "e4a3aa253431520bd88f70de2fe5bde86be5d24c",
+      "gates": [
+        {
+          "argv": [
+            "schema",
+            "--repo",
+            "."
+          ],
+          "logSha256": "d26a6015db4de687393ced49acfc26376942850acb5fd7b050462012e6600ff1",
+          "exitCode": 0
+        },
+        {
+          "argv": [
+            "check",
+            "--repo",
+            "examples/minimal"
+          ],
+          "logSha256": "dcc7cee9e44bf9a12db8df58f86d84508237f3099c3afcce978e390d84ba199a",
+          "exitCode": 0
+        },
+        {
+          "argv": [
+            "check",
+            "--repo",
+            "examples/repository-layout"
+          ],
+          "logSha256": "f7967b788568c599a651116bc4d99994aab190c7d02a7c30b46f4f31cc9b608a",
+          "exitCode": 0
+        },
+        {
+          "argv": [
+            "check",
+            "--repo",
+            "examples/canonical-engineering"
+          ],
+          "logSha256": "9e8e1795707034e5c0f606b6cd95e0388859be08dc8436fd03d8d4e256c624ba",
+          "exitCode": 0
+        },
+        {
+          "argv": [
+            "format",
+            "--repo",
+            "examples/canonical-engineering"
+          ],
+          "logSha256": "3842b1adb1affb0a6741e8f659a2395887bad52c1eb73800f0a3120a2cfdce89",
+          "exitCode": 0
+        },
+        {
+          "argv": [
+            "model",
+            "--repo",
+            "examples/canonical-engineering"
+          ],
+          "logSha256": "d3c3acb9e858585230488959b81f67098a4570c0f15c02fd17561d55372d0b73",
+          "exitCode": 0
+        },
+        {
+          "argv": [
+            "check",
+            "--repo",
+            "examples/engineering-constitution"
+          ],
+          "logSha256": "a82131fbc51bd984f7e6489cbe293094b109d01ab10036ee2fa1973020b5ffe8",
+          "exitCode": 0
+        },
+        {
+          "argv": [
+            "format",
+            "--repo",
+            "examples/engineering-constitution"
+          ],
+          "logSha256": "3842b1adb1affb0a6741e8f659a2395887bad52c1eb73800f0a3120a2cfdce89",
+          "exitCode": 0
+        },
+        {
+          "argv": [
+            "model",
+            "--repo",
+            "examples/engineering-constitution"
+          ],
+          "logSha256": "8a4d27545fcabebcb7189a7471b1d36ff031fe57247b97541bc1b491da04104b",
+          "exitCode": 0
+        },
+        {
+          "argv": [
+            "check",
+            "--repo",
+            "examples/engineering-discovery"
+          ],
+          "logSha256": "adfd6143200e3c68839460de08efc830c84604118e5efb4a5eb45dcb1d0b8692",
+          "exitCode": 0
+        },
+        {
+          "argv": [
+            "format",
+            "--repo",
+            "examples/engineering-discovery"
+          ],
+          "logSha256": "3842b1adb1affb0a6741e8f659a2395887bad52c1eb73800f0a3120a2cfdce89",
+          "exitCode": 0
+        },
+        {
+          "argv": [
+            "check",
+            "--repo",
+            "examples/software-architecture"
+          ],
+          "logSha256": "8826dbaaef82ada14a9cf5667ae96a5de448d4a06b110a3c75693241841b327a",
+          "exitCode": 0
+        },
+        {
+          "argv": [
+            "format",
+            "--repo",
+            "examples/software-architecture"
+          ],
+          "logSha256": "3842b1adb1affb0a6741e8f659a2395887bad52c1eb73800f0a3120a2cfdce89",
+          "exitCode": 0
+        },
+        {
+          "argv": [
+            "model",
+            "--repo",
+            "examples/software-architecture"
+          ],
+          "logSha256": "dca313937aea8c4b2e6216e2e592711cbbfccbee6dc509d596a66f8efcf73cd9",
+          "exitCode": 0
+        },
+        {
+          "argv": [
+            "context",
+            "--repo",
+            "examples/software-architecture",
+            "--namespace",
+            "engineering",
+            "--kind",
+            "Skill",
+            "--name",
+            "implement-order"
+          ],
+          "logSha256": "355883b5df6cbdddb01cc991ffa8f3192a40d24f51c82d643c887894cb5ea818",
+          "exitCode": 0
+        },
+        {
+          "argv": [
+            "check",
+            "--repo",
+            "examples/delivery-target-equality"
+          ],
+          "logSha256": "670d607aadfdf3e32b9064d6cac5e0a98703c8f5bb663c45ca816d34415b019a",
+          "exitCode": 0
+        },
+        {
+          "argv": [
+            "format",
+            "--repo",
+            "examples/delivery-target-equality"
+          ],
+          "logSha256": "3842b1adb1affb0a6741e8f659a2395887bad52c1eb73800f0a3120a2cfdce89",
+          "exitCode": 0
+        },
+        {
+          "argv": [
+            "model",
+            "--repo",
+            "examples/delivery-target-equality"
+          ],
+          "logSha256": "3568a135e8626c3eb5098df11f90c9ef0325b1d5bdf379b82acac41022e6f204",
+          "exitCode": 0
+        },
+        {
+          "argv": [
+            "context",
+            "--repo",
+            "examples/delivery-target-equality",
+            "--namespace",
+            "engineering",
+            "--kind",
+            "Skill",
+            "--name",
+            "deployment-review"
+          ],
+          "logSha256": "f3a55c826625de4a1aed4a671d3e23623a399ef4ccf4a1603447af6ec4e29fec",
+          "exitCode": 0
+        },
+        {
+          "argv": [
+            "check",
+            "--repo",
+            "benchmark/fixtures/v2"
+          ],
+          "logSha256": "b30e92b9df3fd9d2ff866524784af4f44a73f00cd02e54c0756f0fc44376bd0f",
+          "exitCode": 0
+        }
+      ]
+    },
+    "earlierSourceGates": {
+      "gates": [
+        {
+          "logSha256": "d0b90c35ef432bce3edbcc20a72bc90d83f63614e5d4375e7e797dac748b9bc1",
+          "argv": [
+            "run",
+            "./cmd/markitect",
+            "check",
+            "--repo",
+            ".",
+            "--revision",
+            "b89f1abd86f0a03d76e991ef5898c245f0d735ec"
+          ],
+          "elapsedSeconds": 2.3191478,
+          "name": "check",
+          "exitCode": 0
+        },
+        {
+          "logSha256": "cfef1a713e6af7a16ff1684342be1a4b43263af8e8840715b3aa5b4b1026779c",
+          "argv": [
+            "run",
+            "./cmd/markitect",
+            "context",
+            "--repo",
+            ".",
+            "--revision",
+            "b89f1abd86f0a03d76e991ef5898c245f0d735ec",
+            "--namespace",
+            "development",
+            "--kind",
+            "Skill",
+            "--name",
+            "engineering-change"
+          ],
+          "elapsedSeconds": 1.0382855,
+          "name": "context",
+          "exitCode": 0
+        },
+        {
+          "logSha256": "0bc6d9d69adb9c80d36e572654618168bed9d5c7a457f3046fd1d9836dffaa1e",
+          "argv": [
+            "run",
+            "./cmd/markitect",
+            "impact",
+            "--repo",
+            ".",
+            "--base",
+            "b9e17c9896f14b4b1268e4bcb005395f5d324384",
+            "--revision",
+            "b89f1abd86f0a03d76e991ef5898c245f0d735ec"
+          ],
+          "elapsedSeconds": 1.8058824,
+          "name": "impact",
+          "exitCode": 0
+        },
+        {
+          "logSha256": "e9e63da0b036a4f187fe857f46c8ae9b7e1c85765faf7f6798503776e96ee2f9",
+          "argv": [
+            "run",
+            "./cmd/markitect",
+            "verify",
+            "--repo",
+            ".",
+            "--revision",
+            "b89f1abd86f0a03d76e991ef5898c245f0d735ec"
+          ],
+          "elapsedSeconds": 745.5687638,
+          "name": "verify",
+          "exitCode": 1
+        },
+        {
+          "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "argv": [
+            "vet",
+            "./..."
+          ],
+          "elapsedSeconds": 5.1879456,
+          "name": "vet",
+          "exitCode": 0
+        }
+      ],
+      "candidateCommit": "b89f1abd86f0a03d76e991ef5898c245f0d735ec"
+    },
+    "configuredVerify": {
+      "status": "incomplete",
+      "candidateCommit": "b89f1abd86f0a03d76e991ef5898c245f0d735ec",
+      "reason": "go-tests exceeded 10m execution limit",
+      "gateMilliseconds": 600007,
+      "gateExitCode": -1,
+      "driverExitCode": 1,
+      "otherConfiguredGates": "architecture-imports, managed-artifacts, module-checks passed",
+      "rawLogSha256": "e9e63da0b036a4f187fe857f46c8ae9b7e1c85765faf7f6798503776e96ee2f9",
+      "compressedLog": "evidence/source-verify-b89f1ab.log.gz",
+      "compressedLogSha256": "0be5490deb1550afa871b133fd100a599f689d9b8d4c9d12381791e7e07db0f1",
+      "notRetried": true
+    }
+  },
+  "productionSourceUnchangedSinceFullVerify": true,
+  "gateScopeNote": "Full configured verify belongs to b89f1ab, not the later harness-binding changes. Production Go/module/check inputs are unchanged. Final study bytes are separately bound to 3f1dcf4 and fixture/harness evidence. New harness paths are not inferred covered from managed-artifact check.",
+  "overall": "Preparation fixtures/harness passed; repository full-source verification incomplete; live readiness remains open"
+}
