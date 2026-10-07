@@ -15,7 +15,13 @@ import (
 	"time"
 )
 
-const helperEnv = "MARKITECT_AGENTEXEC_TEST_HELPER"
+const (
+	helperEnv = "MARKITECT_AGENTEXEC_TEST_HELPER"
+
+	descendantFixtureReadinessTimeout = 10 * time.Second
+	descendantFixtureRunTimeout       = 15 * time.Second
+	descendantFixtureIntentionalWait  = 30 * time.Second
+)
 
 func TestAgentexecHelperProcess(t *testing.T) {
 	if os.Getenv(helperEnv) != "1" {
@@ -65,7 +71,7 @@ func TestAgentexecHelperProcess(t *testing.T) {
 			os.Exit(9)
 		}
 		heartbeat := os.Getenv("MARKITECT_AGENTEXEC_TEST_HEARTBEAT")
-		deadline := time.Now().Add(2 * time.Second)
+		deadline := time.Now().Add(descendantFixtureReadinessTimeout)
 		ready := false
 		for time.Now().Before(deadline) {
 			if info, err := os.Stat(heartbeat); err == nil && info.Size() > 0 {
@@ -82,7 +88,7 @@ func TestAgentexecHelperProcess(t *testing.T) {
 			if mode == "spawn-child-overflow" {
 				_, _ = os.Stdout.Write([]byte(strings.Repeat("x", 1024)))
 			}
-			time.Sleep(5 * time.Second)
+			time.Sleep(descendantFixtureIntentionalWait)
 			os.Exit(0)
 		}
 	}
@@ -412,16 +418,10 @@ func TestRunStopsDescendantProcessesOnTimeoutOverflowAndNormalExit(t *testing.T)
 			t.Setenv("MARKITECT_AGENTEXEC_TEST_ROLE", "")
 			t.Setenv("MARKITECT_AGENTEXEC_TEST_HEARTBEAT", heartbeat)
 			config := testConfig()
-			if mode == "spawn-child-timeout" {
-				// The helper waits up to two seconds for the child heartbeat before
-				// entering its intentional five-second wait. Keep the default three
-				// second test budget so process startup is inside the timeout window.
-				config.Timeout = 3 * time.Second
-			} else {
-				// These cases validate overflow and normal-exit cleanup, not fixture
-				// startup speed, so allow ample time for the helper and child to start.
-				config.Timeout = 10 * time.Second
-			}
+			// All descendant modes get the same bounded run budget. Readiness has
+			// its own allowance; the timeout fixture's longer intentional wait keeps
+			// runtime timeout behavior distinct from hosted-Windows startup latency.
+			config.Timeout = descendantFixtureRunTimeout
 			if mode == "spawn-child-overflow" {
 				config.MaxStdoutBytes = 16
 			}
