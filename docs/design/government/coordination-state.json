@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-07T23:19:51Z",
+  "updatedUtc": "2026-10-07T23:28:18Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -22,21 +22,23 @@
       "name": "Worker",
       "threadId": "01a1169b-9357-7df3-a8f6-f913557c782a",
       "hostId": "local",
-      "afterCursor": "b2b8e43f-fcaa-41bf-828a-99c69527bdea:54",
-      "lastObservedStatus": "idle",
-      "activeTurn": "01a1183b-f6e9-7602-8cc8-9a68b60f6e52",
-      "lastAssistantMessageId": "msg_0a7785839df196a4016ac6b7512bc481919a1e46e97a1472bb",
+      "afterCursor": "b2b8e43f-fcaa-41bf-828a-99c69527bdea:55",
+      "lastObservedStatus": "active",
+      "activeTurn": "01a118b2-2b03-77c2-80cc-7f90030ef66a",
+      "lastAssistantMessageId": "msg_0a7785839df196a4016ac6d58d1b388191924efc32bc7d9e3d",
       "initialAssignmentDispatched": true,
-      "assignedMilestone": "Hold accepted G1-G5 source/binary/evidence; available for concrete Scientist product findings only.",
-      "latestProgress": "Bestätigt. Ich halte 04e225d5caee78c2a198607143863fca1e829750 samt Binary und Belegen unverändert für S1 bereit und warte auf konkrete Produktbefunde aus der Studie.",
+      "assignedMilestone": "At most two evidenced usability/product gaps in intent-to-model-to-project/change workflow; independent successor worktree; reviewed version-bound public entrypoint.",
+      "latestProgress": "Ich prüfe zuerst den öffentlichen Bedienweg und die aktuelle Koordination. Die Weiterentwicklung kommt in einen separaten Worktree ab 04e225d; der Studienkandidat und seine Belege bleiben unverändert. Danach wähle ich höchstens zwei reproduzierbare Lücken für den durchgängigen Anwenderfall.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-worker/Markitect",
       "transferredDesignCommit": "691ce1dee3484371c4aea725db4ed5cc3f2e3719",
       "candidateSha": "04e225d5caee78c2a198607143863fca1e829750",
       "acceptance": "G5 accepted; G1-G5 finite technical mechanics sequence complete. Hold exact candidate for S1.",
       "lastAssignment": {
-        "sentUtc": "2026-10-07T20:54:17Z",
-        "key": "g5-recognized-lease-validation",
-        "scope": "Reject incomplete/malformed same-host records without mutation; complete supported format/value validation, appropriate Verify checks, focused regressions and independent review; final SHA/gates/recovery evidence; preserve prior evidence, no expansion."
+        "key": "government-usable-model-p1",
+        "sentUtc": "2026-10-07T23:28:12Z",
+        "status": "Active; not completed",
+        "scope": "At most two evidenced usability/product gaps in intent-to-model-to-project/change workflow; independent successor worktree; reviewed version-bound public entrypoint.",
+        "baseSha": "04e225d5caee78c2a198607143863fca1e829750"
       },
       "evidence": {
         "summary": ".artifacts/government-g1/budget-final-summary.json",
@@ -255,19 +257,45 @@
         "key": "g5-accepted-hold-exact-s1-candidate",
         "confirmed": true,
         "newDevelopment": false
-      }
+      },
+      "parallelDevelopmentAssignment": {
+        "key": "government-usable-model-p1",
+        "authorizedUtc": "2026-10-07T23:27:20Z",
+        "status": "Dispatched once; active turn confirmed",
+        "baseSha": "04e225d5caee78c2a198607143863fca1e829750",
+        "scope": "At most two evidenced usability/product gaps in intent-to-model-to-project/change workflow; independent successor worktree; reviewed version-bound public entrypoint.",
+        "prompt": "Neuer direkter Nutzerauftrag an Overseer vom 8. Oktober: „Können architekt und impmemter während der scientist arbeiten nicht weiter jeweils an ihrer version arbeiten?“ Ich setze dies als parallele Weiterentwicklung um. Der bisherige allgemeine Arbeits-Hold ist für das folgende begrenzte Paket aufgehoben; der Studienkandidat bleibt eingefroren.\n\nPaket GOV-P1: Government vom gedanklichen Modell zum benutzbaren Projekt. Ausgangspunkt ausschließlich 04e225d5caee78c2a198607143863fca1e829750. Den bestehenden government-worker-Worktree, seine Binary und sämtliche G1–G5-Belege unverändert halten. Über list_artifacts einen passenden separaten Folgeworktree suchen oder create_worktree mit ref=04e225d5caee78c2a198607143863fca1e829750 anlegen; Branch codex/. Keine Produktarbeit aus der alten Overseer-Basis.\n\nZiel: Ein Anwender kann eigene Begriffe, Prioritäten, feste Regeln, erlaubte Entscheidungsfreiheit und offene Annahmen ausdrücklich festhalten, daraus das kanonische Modell und seine Dateizuordnung erstellen und einen begrenzten Auftrag einschließlich nachfolgender Modellpflege und Wiederaufnahme nachvollziehen. Arbeite am vorhandenen Government-Produkt, nicht an Scientists Versuchshülle. Prüfe zuerst den aktuellen öffentlichen Bedienweg und wähle höchstens zwei konkret reproduzierbare Lücken mit dem größten Nutzen für dieses Ziel. Schließe sie mit dem kleinsten sinnvollen Quell-/CLI-/Dokumentationszuschnitt, statt nur Vorschläge zu liefern. Wo bestehende Mechanismen ausreichen, verbessere deren Benutzbarkeit und Beispiele; erfinde kein neues Core-Modell oder G6. Keine automatische Annahme einer Interpretation als Nutzerzustimmung.\n\nLiefere einen zusammenhängenden öffentlichen, ausführbaren Bedienweg und einen kleinen eigenen Entwicklungsfall außerhalb von experiments/government-comparison: Absicht -> überprüfbarer Modellentwurf -> explizit angenommener Modellstand -> Repository/Branch -> begrenzte Umsetzung -> eine ausdrücklich delegierte Regel-/Modelländerung -> nachvollziehbare Fortsetzung nach Unterbrechung. Nutze vorhandene Schnittstellen und zeige ehrlich, welche Schritte heute manuell sind. Keine privaten Studienfälle lesen, keine gemeinsame Studienfixture/Methodik anpassen. Alle ausgewählten Ressorts behalten ihre explizite finale Zustimmung; Modelländerung darf sich nicht selbst ermächtigen. Keine Quellsemantik aus Prosa ableiten.\n\nNormale lokale Implementierung und passende Regressionen sind autorisiert. Für den öffentlichen mechanischen Bedien-Smoke gelten getrennte Entwicklungsgrenzen: höchstens zwei vollständige Durchgänge, zusammen höchstens zwölf native mutierende Controller-/Queue-Starts, 24 deterministische Rollenstarts, Parallelität höchstens zwei und 30 Minuten äußere Gesamtlaufzeit der Smokes; jeden Prozess endlich begrenzen. Keine neuen realen Modell-/Providerläufe, keine Studienzellen oder automatische Budgetauffüllung. Deterministische Rollen eindeutig als Mechanikbeleg kennzeichnen. Alte Belege nie überschreiben. Normale gezielte Quelltests und erforderliche Repositorygates sind von diesem Smoke getrennt; keine redundanten Vollsuiten. Scientists laufende zeitgebundene R2-Fälle haben Vorrang. Eine schwere vollständige Suite erst nach Koordination des freien Prüfslots, währenddessen unabhängig weiterarbeiten.\n\nGezielte Subagenten für unabhängiges Bedien-/Quellreview sind erwünscht. Konkrete Fehler mit passenden Regressionen prüfen; finalen Kandidaten mit nötigen Gates, unabhängigen Befunden, Ausgangs-/End-SHA, Dateien, tatsächlichen Befehlen, Fehlversuchen, Grenzen und Restlücken liefern. README/Navigation anpassen. Kurz begründen, welchen Aufwand die Änderungen sparen sollen; keinen Produktivitätsnachweis aus dem Smoke behaupten. Höchstens drei weitere priorisierte Möglichkeiten festhalten, danach Paket beenden. Keine Government-Veröffentlichung/Main-Übernahme, SAT/Jev bleiben vorgemerkt. Ein Vergleichskandidat wird erst durch explizite spätere Versionsentscheidung ersetzt. Berichte in deinem Chat, Overseer liest alle zehn Minuten. Aktuelle Koordination: C:/Users/Consiliari/Glacius Labs/Markitect/docs/design/government/coordination.md und coordination-state.json.",
+        "limits": {
+          "developmentSmokeMaxPasses": 2,
+          "maxNativeMutatingStarts": 12,
+          "maxDeterministicRoleStarts": 24,
+          "maxParallelRoles": 2,
+          "smokeAggregateOuterWallSeconds": 1800,
+          "newModelProviderCalls": 0,
+          "studyCells": 0,
+          "fullSuites": "Required gates only; coordinate shared heavy slot after Scientist timed R2 cases."
+        },
+        "sentUtc": "2026-10-07T23:28:12Z"
+      },
+      "assignmentHistory": [
+        {
+          "sentUtc": "2026-10-07T20:54:17Z",
+          "key": "g5-recognized-lease-validation",
+          "scope": "Reject incomplete/malformed same-host records without mutation; complete supported format/value validation, appropriate Verify checks, focused regressions and independent review; final SHA/gates/recovery evidence; preserve prior evidence, no expansion."
+        }
+      ]
     },
     {
       "name": "Scientist",
       "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
       "hostId": "local",
-      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:83",
+      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:85",
       "lastObservedStatus": "active",
       "activeTurn": "01a118a2-6ae8-73e1-8e73-d7970fbda0a6",
-      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac6d25e3c8481919fb521ff7b1c8c6c",
+      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac6d55b9cac8191a004313a35fafcd8",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "Corrected native mechanical integration r2 after accepted negativef35c820; actual S1 runner access still open.",
-      "latestProgress": "Der neue Grant ist als eigener, hashgebundener Snapshot gesichert. Die nativen Buchungen werden im bisherigen Ledger ergänzt; die alte Fehlbuchung bleibt unverändert. Classic-Vorbereitung und Government-Fehlerabschluss sind korrigiert und gezielt getestet. Ich ergänze noch die frühen Wrapperdiagnosen und die verbindlichen R2-Grenzen.",
+      "latestProgress": "Auch Classic ist gestoppt: Execute endet mit Exit 2. Der Wrapper scheitert an der Scope-Identitätsprüfung vor jeder Delegate-Reservierung. Apply, Verify, Audit und Replay wurden nicht ausgeführt. Ich sichere jetzt Rohdiagnosen, kumulative Zähler und Nachreviews; innerhalb dieses Grants folgen keine Reparaturen oder Nachstarts.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-scientist/Markitect",
       "transferredDesignCommit": "b9e17c9896f14b4b1268e4bcb005395f5d324384",
       "candidateSha": "f35c8209cd8902bff17e69f05ee7716e352ee4b2",
@@ -1052,10 +1080,10 @@
           "sentUtc": "2026-10-07T23:10:59Z"
         },
         "correctedNativeIntegrationProgress": {
-          "observedUtc": "2026-10-07T23:19:51Z",
-          "evidenceLevel": "Compact chat report only; no new clean-source, test-log, freeze or completed-run acceptance in this review.",
-          "reported": "R2 grant snapshot bound; existing native ledger will be extended with old failed booking preserved. Classic setup and Government incomplete finalization corrected and targeted tests reported. Early wrapper diagnostics and R2 enforcement still being completed.",
-          "status": "Active on existing R2 assignment; no new completion or usage reported.",
+          "observedUtc": "2026-10-07T23:28:18Z",
+          "evidenceLevel": "Compact chat report only; completed handoff, source and raw outcome not yet reviewed.",
+          "reported": "Auch Classic ist gestoppt: Execute endet mit Exit 2. Der Wrapper scheitert an der Scope-Identitätsprüfung vor jeder Delegate-Reservierung. Apply, Verify, Audit und Replay wurden nicht ausgeführt. Ich sichere jetzt Rohdiagnosen, kumulative Zähler und Nachreviews; innerhalb dieses Grants folgen keine Reparaturen oder Nachstarts.",
+          "status": "Active packaging negative R2 results; no additional repair or start assigned.",
           "grantKey": "native-s1-corrected-integration-20261008-r2"
         }
       },
@@ -1114,12 +1142,12 @@
       "name": "Architect",
       "threadId": "01a111ec-a913-7830-91b0-925d0a1dd1b2",
       "hostId": "local",
-      "afterCursor": "71d9f5b2-c0f0-474c-9898-777d051b478a:35",
-      "lastObservedStatus": "notLoaded",
-      "activeTurn": "01a11716-f468-71c0-b5f4-a59f722c0bbc",
+      "afterCursor": "71d9f5b2-c0f0-474c-9898-777d051b478a:36",
+      "lastObservedStatus": "active",
+      "activeTurn": "01a118b2-2f03-7980-9dd8-47464472252b",
       "lastAssistantMessageId": "msg_0b6e7ce0ce9f843f016ac6730f8ea087d2bc8886150602885f",
       "initialAssignmentDispatched": true,
-      "assignedMilestone": "Hold accepted local Classic public example follow-up and held v0.14.1 study candidate; available for concrete product findings",
+      "assignedMilestone": "At most two evidenced usability/product gaps in intent-to-model-to-project/change workflow; independent successor worktree; reviewed version-bound public entrypoint.",
       "latestProgress": "Der Classic-Folgestand ist lokal vollständig geprüft und wird gehalten. Finaler, sauberer SHA: 8927704c5bc2c83601d36eb2ff99ae8332c7b406 Fester Project-Verify einschließlich einer frischen Go-Vollsuite bestanden. Vet, Build, Schema, 34 Beispielrouten und Windows-Paket-/Onboarding-Prüfungen bestanden. Unabhängiges Review bestanden. Der erste Bootstrap-Versuch scheiterte am 288 Zeichen langen Arbeitsverzeichnis. Derselbe Prüfablauf bestand unter einem kurzen Pfad; beide Versuche bleiben dokumentiert. Die Übergabe mit Prüfnachweisen ist eingefroren. Offen bleiben gehostete Windows-/Linux-CI und der Linux-Stresstest. Nichts veröffentlicht oder auf main gemergt; v0.14.1-r1 bleibt unverändert. Der schwere Prüfslot ist frei.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/classic-public-example/Markitect",
       "transferredDesignCommit": null,
@@ -1171,16 +1199,44 @@
         }
       },
       "lastAssignment": {
-        "sentUtc": "2026-10-07T15:59:02Z",
-        "key": "classic-example-final-source-gates",
-        "scope": "Finish pending local gates; optional selective generic timeout budget port from 028c137 if needed, no Government feature import; <=1800s and actual progress; no new features/publication/held-candidate replacement."
+        "key": "classic-usable-model-p1",
+        "sentUtc": "2026-10-07T23:28:13Z",
+        "status": "Active; not completed",
+        "scope": "At most two evidenced usability/product gaps in intent-to-model-to-project/change workflow; independent successor worktree; reviewed version-bound public entrypoint.",
+        "baseSha": "8927704c5bc2c83601d36eb2ff99ae8332c7b406"
       },
       "heldCandidateSha": "c91363b7ac4decbe87212ff0f588b5451581a152",
       "followupWorktree": "C:/Users/Consiliari/.codex/worktrees/classic-public-example/Markitect",
-      "heldWorktree": "C:/Users/Consiliari/.codex/worktrees/standard-operating-model/Markitect"
+      "heldWorktree": "C:/Users/Consiliari/.codex/worktrees/standard-operating-model/Markitect",
+      "parallelDevelopmentAssignment": {
+        "key": "classic-usable-model-p1",
+        "authorizedUtc": "2026-10-07T23:27:20Z",
+        "status": "Dispatched once; active turn confirmed",
+        "baseSha": "8927704c5bc2c83601d36eb2ff99ae8332c7b406",
+        "scope": "At most two evidenced usability/product gaps in intent-to-model-to-project/change workflow; independent successor worktree; reviewed version-bound public entrypoint.",
+        "prompt": "Neuer direkter Nutzerauftrag an Overseer vom 8. Oktober: „Können architekt und impmemter während der scientist arbeiten nicht weiter jeweils an ihrer version arbeiten?“ Ich setze dies als parallele Weiterentwicklung um. Deine direkten Vorgaben bleiben: Classic stabilisieren, Government getrennt halten und README pflegen. Der allgemeine Weiterentwicklungs-Hold ist für dieses begrenzte Paket aufgehoben; Scientists Classic-Pin c91363b7ac4decbe87212ff0f588b5451581a152 / v0.14.1 samt Runtime und Readiness-Belegen bleibt unverändert.\n\nPaket CLASSIC-P1: Benutzbarer Weg von Nutzerabsicht und kanonischem Modell zur kontrollierten Umsetzung und späteren Änderung. Entwicklungsbasis ist dein sauberer, lokal angenommener Folgestand 8927704c5bc2c83601d36eb2ff99ae8332c7b406. Bisherige Worktrees/Belege nicht verändern. Über list_artifacts einen geeigneten getrennten Folgeworktree suchen oder create_worktree auf diesem exakten ref anlegen; Branch codex/. Kein Government-Code und keine alte Overseer-Dokumentationsbasis als Produktquelle.\n\nPrüfe deinen bereits gelieferten öffentlichen Classic-Commerce-Einstieg und den tatsächlichen Bedienweg: Wo gibt ein Anwender Begriffe, Prioritäten, feste Regeln, Freiheiten und offene Annahmen vor? Wie werden diese in ein prüfbares kanonisches Modell überführt und ausdrücklich angenommen? Wie folgen Repository/Branch, Umsetzung, eine spätere fachliche Regeländerung samt Modell-/Dateipflege und frische Prüfung? Wähle höchstens zwei konkret reproduzierbare Bedien-/Produktlücken, die diesen Weg heute unnötig manuell oder missverständlich machen, und implementiere den kleinsten sinnvollen, unabhängig nutzbaren Verbesserungszuschnitt. Bestehende APIs verwenden, wo sie reichen; keine neue allgemeine Plattform, automatische Bedeutungsannahme oder Government-Mechanismen.\n\nErweitere dafür deinen eigenen öffentlichen Produktbedienweg und seine kopierbaren Beispiele einschließlich README. Mindestens ein konkreter Änderungsvorgang muss die Beziehung zwischen Nutzerabsicht, Modell und erzeugten/bearbeiteten Dateien sichtbar machen; veraltete oder fehlende Evidenz bleibt sichtbar und darf keine Übernahme legitimieren. Bestehende Classic-Verträge, unabhängige Prüfung, konservative Invalidierung, explizite Apply-Grenzen und menschliche Annahme erhalten. Private Scientist-Holdouts und gemeinsame Studienfixtures/-methodik sind ausgeschlossen. Dieses Produktpaket ändert keine gefrorenen Vergleichseingaben oder -kandidaten.\n\nNormale lokale Implementierung und relevante Regressionen sind autorisiert. Für zusätzliche öffentliche mechanische Bedien-Smokes gilt ein getrenntes endliches Entwicklungsprofil: höchstens zwei vollständige Durchgänge, insgesamt zwölf native mutierende Controllerstarts, 24 deterministische Rollenstarts, Parallelität höchstens zwei und 30 Minuten äußere Gesamtlaufzeit dieser Smokes; jeden Prozess endlich begrenzen. Keine neuen realen Modell-/Providerläufe, Studienzellen, Käufe oder Budgetauffüllung. Mechanische/skriptbasierte Nachweise klar kennzeichnen. Normale gezielte Quelltests und verbindliche Projektgates bleiben getrennt; keine redundanten Vollsuiten. Scientists zeitgebundene R2-Versuche haben Vorrang. Eine schwere vollständige Suite erst nach Koordination des freien Prüfslots; bis dahin unabhängig weiterarbeiten. Bestehende gehostete/Linux-Gatelücken korrekt benennen, nichts daraus als erledigt übernehmen.\n\nNutze ein gezieltes unabhängiges Bedien-/Quellreview. Liefere sauberen Folge-SHA, konkrete Dateien und gelöste Probleme, passende Tests/Gates und tatsächliche Befehle/Fehlversuche, unabhängige Befunde, Grenzen und einen verständlichen versionierten Bedienpfad. Keine Produktivität aus einem Beispiel behaupten. Höchstens drei weitere priorisierte Möglichkeiten festhalten, dann dieses Paket beenden. Keine neue Veröffentlichung oder Main-Übernahme durch diesen Auftrag; bereits separat direkt autorisierte Release-Arbeit behält nur ihren bestehenden Umfang. SAT/Jev und Government gehören nicht hierher. Berichte in deinem Chat, Overseer liest alle zehn Minuten. Aktuelle Koordination: C:/Users/Consiliari/Glacius Labs/Markitect/docs/design/government/coordination.md und coordination-state.json.",
+        "limits": {
+          "developmentSmokeMaxPasses": 2,
+          "maxNativeMutatingStarts": 12,
+          "maxDeterministicRoleStarts": 24,
+          "maxParallelRoles": 2,
+          "smokeAggregateOuterWallSeconds": 1800,
+          "newModelProviderCalls": 0,
+          "studyCells": 0,
+          "fullSuites": "Required gates only; coordinate shared heavy slot after Scientist timed R2 cases."
+        },
+        "sentUtc": "2026-10-07T23:28:13Z"
+      },
+      "assignmentHistory": [
+        {
+          "sentUtc": "2026-10-07T15:59:02Z",
+          "key": "classic-example-final-source-gates",
+          "scope": "Finish pending local gates; optional selective generic timeout budget port from 028c137 if needed, no Government feature import; <=1800s and actual progress; no new features/publication/held-candidate replacement."
+        }
+      ]
     }
   ],
-  "nextAction": "Scientist: narrow harness fixes and one separately bounded corrected native case per product after clean source, focused regression, independent review and exact freeze. Preserve first negative packet and cumulative accounting. No additional model/metadata/study calls; Worker/Architect held.",
+  "nextAction": "Review independent successor development from Worker/Architect without replacing held study candidates. Scientist finishes R2 raw diagnostics, accounting and negative handoff; verify final source/evidence before any next bounded action. No extra study/model calls.",
   "boundaries": {
     "governmentPublication": false,
     "automaticClassicReplacement": false,
@@ -1190,10 +1246,11 @@
     "satPrinciples": "Deferred by direct user request on 2026-10-07; conceptual constraint/consistency/conflict-explanation principles first, no solver integration or current assignment change. See docs/design/government/deferred-research.md."
   },
   "lastReview": {
-    "reviewedUtc": "2026-10-07T23:19:51Z",
-    "evidenceLevel": "All three checked jointly using saved cursors. Scientist reports narrow R2 harness corrections and targeted tests; work remains active, no new completed candidate accepted. Worker and Architect unchanged held. No suites or product calls rerun.",
+    "reviewedUtc": "2026-10-07T23:28:18Z",
+    "evidenceLevel": "Both successor assignments dispatched and active confirmed; Worker acknowledges separate worktree. Scientist newly reports Classic Execute scope-identity failure before delegation and is preserving receipts, no completed R2 handoff accepted. Recent target human orders read from exact local rollouts before dispatch.",
     "coordinationActions": [
-      "Saved updated cursors and reported R2 progress. Existing assignment and finite grant unchanged; no duplicate message or additional allocation."
+      "Recorded direct user authority and sent GOV-P1 and CLASSIC-P1 once on distinct product successors.",
+      "Saved all cursors; immutable study pins and existing Scientist grant unchanged. No additional Scientist assignment."
     ],
     "userDecisionRequired": false
   },
@@ -1522,7 +1579,7 @@
       "Measured comparison against strong conventional and Classic workflows",
       "Actionable minimal product architecture and version-bound usage example"
     ],
-    "currentWorkUnchanged": "G1-G5 accepted04e225d. Complete actual S1 readiness before six base trials; no change to bounded research plan.",
+    "currentWorkUnchanged": "G1-G5 accepted04e225d; S1 and six base trials retain held pins. Independent successor product development now authorized in parallel under P1 packages.",
     "followupLimit": {
       "baseTrials": 6,
       "additionalFullTrialsMaximum": 8,
@@ -1539,6 +1596,13 @@
       "scope": "Common short pre-implementation intent reflection from already released inputs; free format, documented sources/assumptions/questions, existing shared resource ceiling. Independent fidelity assessment is not personal user acceptance.",
       "implementationStatus": "Accepted public Q1 setup and exact snapshot at f3eeb57; no actual study cell or human acceptance.",
       "unchanged": "Six task cards/fixtures/outcome weights, no future task leakage; no added sessions or run grant."
+    },
+    "parallelDevelopment": {
+      "authorizedUtc": "2026-10-07T23:27:20Z",
+      "source": "Direct user request to let Architect and Implementer continue their versions while Scientist works. Supersedes blanket development hold; immutable study pins remain.",
+      "status": "GOV-P1 and CLASSIC-P1 dispatched once and both active; study versions remain unchanged.",
+      "scope": "Intent authoring, canonical model, project setup, model/file upkeep and clear user workflow; up to two demonstrated gaps per owner. No arbitrary extension queue or study fixture changes.",
+      "candidatePolicy": "Independent development versions do not replace frozen study inputs. Adoption in a subsequent matched block requires explicit version freeze, prerequisites and finite resource allocation. Results always identify tested version and exclude unretested improvements."
     }
   }
 }
