@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "trialId": "classic-native-readiness",
+  "requestSha256": "f4afed19ddeb818dd6ea012a533b210989e5710a1191cea8f8b96d2a257b5d10",
+  "operation": "probe",
+  "mode": "fixture",
+  "status": "readiness_gap",
+  "candidateCommit": null,
+  "capabilities": [
+    "version and read-only project/model/context/impact inspection",
+    "canonical controller proposal and Execute through configured Executor/Verifier",
+    "guarded Apply after external exact-digest review",
+    "fresh Verify from saved Apply result",
+    "read-only scoped Audit",
+    "native version probe succeeded; zero provider calls"
+  ],
+  "gaps": [
+    "no native Scientist study role or --request/--result interface",
+    "no general persistent resume or native study stop operation",
+    "no provider/model provisioned by product; provider/model pins and auth are external",
+    "Apply authorization is not authenticated by the CLI",
+    "actual provider usage is optional; product does not enforce shared trial token/session budgets",
+    "controller is experimental alpha; semantic quality and unattended operation unproven",
+    "local caller filesystem/process authority; no OS sandbox or selected-scope privacy claim",
+    "protocol/readiness packet synthetic smoke is not a live-agent result",
+    "Account support and resolved identity for gpt-6.1-sol/high have not been established by a provider receipt",
+    "No documented pre-dispatch provider-call cap found in installed exec interface or generated app-server protocol; six-call probe limit cannot yet be enforced",
+    "exec turn.completed is an agent-turn completion event; provider-turn count inside it remains unknown",
+    "Provider token usage arrives retrospectively; no hard aggregate token ceiling is established",
+    "Effective instruction/memory/config/tool and filesystem access boundaries have not been probed by an actual Actor"
+  ],
+  "receipts": [
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Markitect Scientist Runner Readiness\\2026-10-07-native-r2\\receipts\\classic\\native-probe\\stdout.log",
+      "sha256": "5544e9c7499e54e7346b45e02e301f601e775e071ffe3db6da3150f2a16df58d",
+      "kind": "stdout.log"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Markitect Scientist Runner Readiness\\2026-10-07-native-r2\\receipts\\classic\\native-probe\\stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "kind": "stderr.log"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Markitect Scientist Runner Readiness\\2026-10-07-native-r2\\receipts\\classic\\native-identity.json",
+      "sha256": "26647ef3a68d31c2719d13df8dea8121ac983e76f8500fe5e435daf90c656516",
+      "kind": "native-identity"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Markitect Scientist Runner Readiness\\2026-10-07-native-r2\\receipts\\classic\\native-probe\\process.json",
+      "sha256": "c55487dd5561e693e3f08c29848b5dce5071c5f1bbc0cff5bbcf8b40ea774595",
+      "kind": "process"
+    }
+  ],
+  "usage": null
+}

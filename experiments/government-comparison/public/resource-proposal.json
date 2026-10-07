@@ -1,10 +1,27 @@
 {
   "schemaVersion": 1,
-  "status": "proposal-not-live-freeze",
+  "status": "coordinator-selected-profile-not-technically-enforced",
   "purpose": "Finite feasibility pilot, one fresh trial per six cells; no superiority or variance claim",
-  "studyClassicVersion": null,
+  "studyClassicVersion": {
+    "version": "0.14.1",
+    "runtimeSource": "7dbd599c81540c8203a1b7f83afbc335174f4f1f",
+    "heldSource": "c91363b7ac4decbe87212ff0f588b5451581a152",
+    "windowsBinarySha256": "2cad55efad64f15d7f57638bea78312918fbf7d181c730f188b9921504da71c4"
+  },
   "studyGovernmentVersion": null,
-  "runner": {"candidate": "codex-cli 0.130.0", "actualAdapterArgv": null, "actualModelId": null, "requestedProfile": "Sol 6.1 High", "reasoning": "high", "toolConfigurationSha256": null, "accessProbe": null, "meteringSemantics": null},
+  "runner": {
+    "candidate": "codex-cli 0.130.0",
+    "actualAdapterArgv": [
+      "C:\\Python313\\python.exe",
+      "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\runtime\\adapter.py"
+    ],
+    "actualModelId": null,
+    "requestedProfile": "Sol 6.1 High",
+    "reasoning": "high",
+    "toolConfigurationSha256": null,
+    "accessProbe": "not executed; no evidenced pre-dispatch six-provider-call limit",
+    "meteringSemantics": "Retrospective exec agent-turn usage; provider-call count unknown. No hard token/turn ceiling claimed."
+  },
   "commonLimits": {
     "taskWallSeconds": 1200,
     "trialWallSeconds": 7200,
@@ -22,8 +39,31 @@
   },
   "accounting": "All calls, reviews, ministries, subagents, failed attempts, setup, modeling, upkeep and coordination are charged. Actor call = externally launched actor session; provider turns/tokens must include internal continuation and all descendants. Token ceiling uses only documented disjoint provider counters. Missing receipts remain null and preclude claiming enforceable token caps. Reserve capacity before parallel calls; stop before limits, never silently top up. Actual aggregate enforcement must be settled before live freeze.",
   "supervision": "Same available role/response policy in every arm: start/stop and explicit public requirement clarifications; no private debugging or secret test feedback. Required environmental repairs and interventions are logged and count against limits. If unavailable or above cap, incomplete/blocked. No silent replenishment.",
-  "orderProposal": ["conventional-greenfield", "classic-brownfield", "government-greenfield", "conventional-brownfield", "classic-greenfield", "government-brownfield"],
+  "orderProposal": [
+    "conventional-greenfield",
+    "classic-brownfield",
+    "government-greenfield",
+    "conventional-brownfield",
+    "classic-greenfield",
+    "government-brownfield"
+  ],
   "nextMatchedOrder": "Reverse and rotate arm order before any replication; fix sequence/seed in live protocol. Fresh conversations; no cross-cell files/results.",
-  "stopRules": ["wall/call/turn/token/human cap reached", "missing/stale product or protocol binding", "private/future/cross-cell data exposure", "non-equivalent task6 injection", "unrecoverable environment failure", "direct user stop"],
-  "remainingFreezeRequirements": ["actual account-supported model identity", "exact Classic and Government source/binary/module/config pins", "real adapters pass common setup/task smokes", "G1-G5 evidence for full Government claim", "provider counter semantics and aggregate budget enforcement including subagents", "effective read/write/process isolation probe with actual runner", "private oracle and rubric digests frozen", "task6 per-candidate mutation equivalence mapping after task5", "coordinator records selected finite profile"]
+  "stopRules": [
+    "wall/call/turn/token/human cap reached",
+    "missing/stale product or protocol binding",
+    "private/future/cross-cell data exposure",
+    "non-equivalent task6 injection",
+    "unrecoverable environment failure",
+    "direct user stop"
+  ],
+  "remainingFreezeRequirements": [
+    "actual account-supported model identity",
+    "exact Classic and Government source/binary/module/config pins",
+    "real adapters pass common setup/task smokes",
+    "G1-G5 evidence for full Government claim",
+    "provider counter semantics and aggregate budget enforcement including subagents",
+    "effective read/write/process isolation probe with actual runner",
+    "private oracle and rubric digests frozen",
+    "task6 per-candidate mutation equivalence mapping after task5"
+  ]
 }

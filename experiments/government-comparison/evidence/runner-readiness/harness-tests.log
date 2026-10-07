@@ -1,0 +1,10 @@
+test_failed_adapter_preserved_and_live_refused (test_harness.BindingAndReleaseTests.test_failed_adapter_preserved_and_live_refused) ... ok
+test_future_checks_absent_until_release (test_harness.BindingAndReleaseTests.test_future_checks_absent_until_release) ... ok
+test_handoff_outside_repo_current_cards_only (test_harness.BindingAndReleaseTests.test_handoff_outside_repo_current_cards_only) ... ok
+test_reproducible_empty_and_brownfield_starts (test_harness.BindingAndReleaseTests.test_reproducible_empty_and_brownfield_starts) ... ok
+test_stale_or_cross_trial_result_rejected (test_harness.BindingAndReleaseTests.test_stale_or_cross_trial_result_rejected) ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 31.682s
+
+OK

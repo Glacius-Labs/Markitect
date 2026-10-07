@@ -1,0 +1,47 @@
+{
+  "product": "Markitect Classic",
+  "version": "0.14.1",
+  "releaseId": "405781964",
+  "packet": "C:/Users/Consiliari/.codex/worktrees/standard-operating-model/Markitect/.artifacts/classic-readiness/v0.14.1-r1",
+  "packetManifestVerifiedFiles": 113,
+  "windowsAmd64": {
+    "binary": "artifacts/markitect-v0.14.1-windows-amd64.exe",
+    "sha256": "2cad55efad64f15d7f57638bea78312918fbf7d181c730f188b9921504da71c4",
+    "versionOutput": "Markitect 0.14.1 (windows/amd64)"
+  },
+  "linuxAmd64Sha256": "f515f8fb37335ff5bd36f77cbbd0af227c3558d0d5aa8ba80503bae40314fbdc",
+  "canonicalConfig": {
+    "path": "examples/canonical-projection/canonical.yaml",
+    "sha256": "dfe363d8ecd304333ec061a7563034c2f1c73fc9ddfdcf7fcdbbc47d6be2f9e6"
+  },
+  "modules": [
+    {
+      "name": "markitect-foundation",
+      "version": "1.0.0",
+      "sha256": "85346f68790c0e5256dabc52fc0b871ded7a95d7c0c27ba335a168f998b8b56c"
+    },
+    {
+      "name": "commerce-example",
+      "version": "1.0.0",
+      "sha256": "586af5b08ee218c51f43bfed7e083a293d60b2674bcfad3b14354164faa0668f"
+    },
+    {
+      "name": "markitect-dotnet",
+      "version": "1.0.0",
+      "sha256": "b701c32f9a15afbf025566fa3f9618dfe4b856549580394ef6b9fc2e15520d5c"
+    },
+    {
+      "name": "markitect-markdown",
+      "version": "1.0.0",
+      "sha256": "029a61498008aa2c8e12e437abffe11d5eb74f9bab3de107d348cfa7d38f5c83"
+    }
+  ],
+  "controllerMaturity": "experimental alpha",
+  "sourceBuildRequirement": "Go 1.27.1+",
+  "providerRuntime": "external Codex CLI/model/auth; not bundled or pinned by the packet",
+  "packetManifestSha256": "c6c2b6c081e31b5373fc6d30898f5c502c35cc3c8d2b244b193da79a7e1b8ddf",
+  "sourceBundleSha256": "5a785b9d55f8bb0f83a03e6f393925834d4acf6231495716a979b5d8f70093f8",
+  "runtimeSourceSha": "7dbd599c81540c8203a1b7f83afbc335174f4f1f",
+  "heldSourceSha": "c91363b7ac4decbe87212ff0f588b5451581a152",
+  "annotatedTagObjectSha": "784d3c3c61443b291ac7db9727c7c5856e253d66"
+}

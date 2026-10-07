@@ -1,0 +1,1 @@
+PUBLIC readiness sentinel; no private or study task data.

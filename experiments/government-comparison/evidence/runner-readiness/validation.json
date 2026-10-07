@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "kind": "bounded-runner-adapter-readiness",
+  "preparationCandidate": "e4278c50ddc84daee3858e24c89e6cf5777b5dfe",
+  "classification": "implementation-only experiment harness; no product internal/cmd changes",
+  "date": "2026-10-07",
+  "runtimeTests": {
+    "passed": 13,
+    "log": "runtime-tests.log"
+  },
+  "preparationHarnessTests": {
+    "passed": 5,
+    "log": "harness-tests.log"
+  },
+  "nativeWrapperSmoke": "wrapper-smoke-passed-live-gate-closed",
+  "providerProbeSessions": 0,
+  "authorizedProbeMaximum": 2,
+  "liveTrials": 0,
+  "modelIdentity": null,
+  "requestedModel": "gpt-6.1-sol",
+  "requestedReasoning": "high",
+  "commonProfileSelected": true,
+  "commonLimitsUnchanged": true,
+  "hardProviderTurnTokenCap": false,
+  "providerProbeBlocker": "No evidenced pre-dispatch six-provider-call gate",
+  "s1": "not-cleared",
+  "baselineCheck": "passed",
+  "baselineContext": "passed",
+  "historicalFullVerify": {
+    "status": "incomplete",
+    "candidate": "b89f1abd86f0a03d76e991ef5898c245f0d735ec",
+    "goTestsTimeoutMilliseconds": 600007,
+    "repeated": false
+  },
+  "receiptCopy": {
+    "originalRoot": "C:/Users/Consiliari/Documents/Markitect Scientist Runner Readiness/2026-10-07-native-r2",
+    "copyRoot": "evidence/runner-readiness",
+    "rule": "Preserve original absolute paths and bytes; map originalRoot-relative paths to copyRoot, then verify SHA-256."
+  },
+  "baselineGateLogs": [
+    "base-check.log.gz",
+    "base-context.log.gz"
+  ]
+}

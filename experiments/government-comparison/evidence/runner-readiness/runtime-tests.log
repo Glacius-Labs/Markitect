@@ -1,0 +1,24 @@
+test_apply_requires_external_exact_digest_gate (test_classic.ClassicAdapterTests.test_apply_requires_external_exact_digest_gate) ... ok
+test_documented_flow_uses_explicit_argv_and_no_retries (test_classic.ClassicAdapterTests.test_documented_flow_uses_explicit_argv_and_no_retries) ... ok
+test_packet_hashes_and_runtime_pins (test_classic.ClassicAdapterTests.test_packet_hashes_and_runtime_pins) ... ok
+test_replaced_packet_manifest_is_rejected_before_native_call (test_classic.ClassicAdapterTests.test_replaced_packet_manifest_is_rejected_before_native_call) ... ok
+test_version_probe_runs_actual_packet_binary (test_classic.ClassicAdapterTests.test_version_probe_runs_actual_packet_binary) ... ok
+test_known_cap_and_human_stop_persist_across_reopen (test_runtime.RuntimeTests.test_known_cap_and_human_stop_persist_across_reopen) ... ok
+test_no_provider_launch_path_before_counter_and_context_evidence (test_runtime.RuntimeTests.test_no_provider_launch_path_before_counter_and_context_evidence) ... ok
+test_parallel_reservation_is_atomic_and_counts_setup_reviews_failures (test_runtime.RuntimeTests.test_parallel_reservation_is_atomic_and_counts_setup_reviews_failures) ... ok
+test_preexisting_stop_never_releases_target (test_runtime.RuntimeTests.test_preexisting_stop_never_releases_target) ... C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\government-comparison\runtime\test_runtime.py:98: ResourceWarning: unclosed file <_io.BufferedWriter name=5>
+  receipt = bounded([sys.executable, "-c", "import pathlib;pathlib.Path(" + repr(str(marker)) + ").touch()"],
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_process_deadline_kills_grandchild (test_runtime.RuntimeTests.test_process_deadline_kills_grandchild) ... ok
+test_request_digest_binds_native_probe_and_government_stays_gap (test_runtime.RuntimeTests.test_request_digest_binds_native_probe_and_government_stays_gap) ... ok
+test_stop_sentinel_kills_active_process (test_runtime.RuntimeTests.test_stop_sentinel_kills_active_process) ... C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\government-comparison\runtime\test_runtime.py:87: ResourceWarning: unclosed file <_io.BufferedWriter name=5>
+  receipt = bounded([sys.executable, "-c", "import time;time.sleep(30)"],
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_unknown_usage_blocks_next_call_and_cannot_refill_profile (test_runtime.RuntimeTests.test_unknown_usage_blocks_next_call_and_cannot_refill_profile) ... ok
+
+----------------------------------------------------------------------
+Ran 13 tests in 4.025s
+
+OK

@@ -1,0 +1,49 @@
+{
+  "reviewer": "/root/independent_review",
+  "kind": "independent bounded code and evidence review",
+  "disposition": "corrected-wrapper-and-boundary-docs-pass; S1-not-cleared",
+  "testsRerunByReviewer": false,
+  "observedSavedTests": {
+    "runtimePassed": 13,
+    "harnessPassed": 5
+  },
+  "reviewed": [
+    "single-buffer exact request binding",
+    "documented native readiness profile extension",
+    "externally pinned Classic manifest/modules/config/source bundle",
+    "common Windows Job process-tree wrapper",
+    "atomic no-refill ledger and unknown-usage fail closed",
+    "prospective versus effective configuration and OS-context limits"
+  ],
+  "r2EvidenceVerified": {
+    "armResults": 3,
+    "nativeReceiptFiles": 8,
+    "status": "readiness_gap",
+    "providerSessions": 0,
+    "privateHoldoutDataFound": false
+  },
+  "findingsResolved": [
+    "request TOCTOU",
+    "native helper bypass of process-tree control",
+    "readiness input field documentation",
+    "self-consistent packet replacing module/config pins"
+  ],
+  "reviewLimitations": [
+    "No provider/Actor or access probe",
+    "No rerun of tests or full Go suite",
+    "Final r3 source-byte check performed by root after review; independent reviewer examined r2 native receipts"
+  ],
+  "finalizationRequirements": [
+    "Include this review and final manifest",
+    "Bind r3 to final runtime/config/pin bytes"
+  ],
+  "s1Remaining": [
+    "actual account-supported requested model",
+    "pre-dispatch provider-call bound",
+    "actual usage and context/access probe",
+    "end-to-end common budget dispatcher",
+    "live conventional and Classic setup/task smoke",
+    "Government native handoff and G1-G5",
+    "private/rubric freeze and task-6 equivalence"
+  ]
+}

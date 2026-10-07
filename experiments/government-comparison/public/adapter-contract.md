@@ -7,8 +7,9 @@ native product invocation paths, supported capabilities/gaps, immutable pins and
 actual receipts. This handoff bounds their product-readiness work; Scientist maps
 it into the study interchange below.
 This is an interchange contract, not a claim that any product currently supports it.
-The source baseline is Classic `1ea5c76f55526fc4d721e865885436153f48b497`;
-study product versions remain unset until readiness inspection.
+The historical preparation source baseline is `1ea5c76f55526fc4d721e865885436153f48b497`.
+Subsequent inspected product identities belong to `runtime/classic-pin.json` and
+the runner readiness checkpoint; inspection does not clear the live-study gate.
 
 ## Invocation
 
@@ -26,6 +27,13 @@ Operations: `probe` (read-only availability/version/capabilities), `run_task` (o
 released task on the same trial), `resume` (same request identity and persisted
 run), `stop` (bounded shutdown). Only `probe` is required for this package's fixture
 smokes. Stateful product support is reported explicitly rather than simulated.
+
+The native readiness wrapper additionally requires `profile.runnerExecutable`
+(absolute pinned Codex executable) for a Conventional version probe and
+`product.packetPath` (absolute frozen packet directory) for a Classic version
+probe. These are operator inputs; they are never passed to an Actor. The exact
+request digest binds them. Missing fields return a capability gap. An actual
+Actor call stays disabled until the separate runner readiness gates pass.
 
 ## Request JSON
 

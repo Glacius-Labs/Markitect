@@ -1,0 +1,60 @@
+{
+  "packetPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\standard-operating-model\\Markitect\\.artifacts\\classic-readiness\\v0.14.1-r1",
+  "packetFilesVerified": 113,
+  "product": "Markitect Classic",
+  "version": "0.14.1",
+  "runtimeSourceSha": "7dbd599c81540c8203a1b7f83afbc335174f4f1f",
+  "heldSourceSha": "c91363b7ac4decbe87212ff0f588b5451581a152",
+  "sourceBundleSha256": "5a785b9d55f8bb0f83a03e6f393925834d4acf6231495716a979b5d8f70093f8",
+  "annotatedTagObject": "784d3c3c61443b291ac7db9727c7c5856e253d66",
+  "releaseId": "405781964",
+  "binary": {
+    "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\standard-operating-model\\Markitect\\.artifacts\\classic-readiness\\v0.14.1-r1\\artifacts\\markitect-v0.14.1-windows-amd64.exe",
+    "platform": "windows/amd64",
+    "sha256": "2cad55efad64f15d7f57638bea78312918fbf7d181c730f188b9921504da71c4"
+  },
+  "modulePins": [
+    {
+      "digest": "sha256:85346f68790c0e5256dabc52fc0b871ded7a95d7c0c27ba335a168f998b8b56c",
+      "name": "markitect-foundation",
+      "version": "1.0.0"
+    },
+    {
+      "digest": "sha256:586af5b08ee218c51f43bfed7e083a293d60b2674bcfad3b14354164faa0668f",
+      "name": "commerce-example",
+      "version": "1.0.0"
+    },
+    {
+      "digest": "sha256:b701c32f9a15afbf025566fa3f9618dfe4b856549580394ef6b9fc2e15520d5c",
+      "name": "markitect-dotnet",
+      "version": "1.0.0"
+    },
+    {
+      "digest": "sha256:029a61498008aa2c8e12e437abffe11d5eb74f9bab3de107d348cfa7d38f5c83",
+      "name": "markitect-markdown",
+      "version": "1.0.0"
+    }
+  ],
+  "canonicalConfig": {
+    "path": "examples/canonical-projection/canonical.yaml",
+    "sha256": "dfe363d8ecd304333ec061a7563034c2f1c73fc9ddfdcf7fcdbbc47d6be2f9e6"
+  },
+  "capabilities": [
+    "version and read-only project/model/context/impact inspection",
+    "canonical controller proposal and Execute through configured Executor/Verifier",
+    "guarded Apply after external exact-digest review",
+    "fresh Verify from saved Apply result",
+    "read-only scoped Audit"
+  ],
+  "gaps": [
+    "no native Scientist study role or --request/--result interface",
+    "no general persistent resume or native study stop operation",
+    "no provider/model provisioned by product; provider/model pins and auth are external",
+    "Apply authorization is not authenticated by the CLI",
+    "actual provider usage is optional; product does not enforce shared trial token/session budgets",
+    "controller is experimental alpha; semantic quality and unattended operation unproven",
+    "local caller filesystem/process authority; no OS sandbox or selected-scope privacy claim",
+    "protocol/readiness packet synthetic smoke is not a live-agent result"
+  ],
+  "policyPreparation": "The published Commerce smoke explicitly prepares three Markdown policies using the release-test helper; bare canonical fixture escalates without this setup. This is synthetic setup, not model intent."
+}

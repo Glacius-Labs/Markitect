@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "trialId": "government-native-readiness",
+  "requestSha256": "1f38ccfa0c75225016355984d9c7560fa8ee0f148f324a3143b4aba8528bbff0",
+  "operation": "probe",
+  "mode": "fixture",
+  "status": "readiness_gap",
+  "candidateCommit": null,
+  "capabilities": [],
+  "gaps": [
+    "Government native handoff and immutable product pins absent",
+    "G1-G5 evidence missing; no Government simulation is permitted"
+  ],
+  "receipts": [],
+  "usage": null
+}

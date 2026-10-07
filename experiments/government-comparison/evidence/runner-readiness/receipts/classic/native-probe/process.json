@@ -1,0 +1,25 @@
+{
+  "argv": [
+    "C:\\Users\\Consiliari\\.codex\\worktrees\\standard-operating-model\\Markitect\\.artifacts\\classic-readiness\\v0.14.1-r1\\artifacts\\markitect-v0.14.1-windows-amd64.exe",
+    "version"
+  ],
+  "cwd": "C:\\Users\\Consiliari\\Documents\\Markitect Scientist Runner Readiness\\2026-10-07-native-r2\\classic-actor",
+  "returnCode": 0,
+  "wallSeconds": 0.33023960003629327,
+  "stopReason": null,
+  "processTreeControl": "windows-job-kill-on-close",
+  "filesystemIsolation": "not established by process wrapper",
+  "automaticRetries": 0,
+  "receipts": [
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Markitect Scientist Runner Readiness\\2026-10-07-native-r2\\receipts\\classic\\native-probe\\stdout.log",
+      "sha256": "5544e9c7499e54e7346b45e02e301f601e775e071ffe3db6da3150f2a16df58d",
+      "kind": "stdout.log"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Markitect Scientist Runner Readiness\\2026-10-07-native-r2\\receipts\\classic\\native-probe\\stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "kind": "stderr.log"
+    }
+  ]
+}

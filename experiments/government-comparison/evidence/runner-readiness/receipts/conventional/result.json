@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "trialId": "conventional-native-readiness",
+  "requestSha256": "4d95e2a93c04fd573b9744defabb1c60c34284586d400de5ce03bd16746a735b",
+  "operation": "probe",
+  "mode": "fixture",
+  "status": "readiness_gap",
+  "candidateCommit": null,
+  "capabilities": [
+    "native Codex executable version probe",
+    "prospective conventional Actor with ordinary tools; same public requirements and common profile",
+    "native version probe succeeded; zero provider calls"
+  ],
+  "gaps": [
+    "Account support and resolved identity for gpt-6.1-sol/high have not been established by a provider receipt",
+    "No documented pre-dispatch provider-call cap found in installed exec interface or generated app-server protocol; six-call probe limit cannot yet be enforced",
+    "exec turn.completed is an agent-turn completion event; provider-turn count inside it remains unknown",
+    "Provider token usage arrives retrospectively; no hard aggregate token ceiling is established",
+    "Effective instruction/memory/config/tool and filesystem access boundaries have not been probed by an actual Actor"
+  ],
+  "receipts": [
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Markitect Scientist Runner Readiness\\2026-10-07-native-r2\\receipts\\conventional\\native-probe\\stdout.log",
+      "sha256": "f4678cefd0750fecc391f1cfbad6fccb12f4e00124324c34a10b821bbcf752e5",
+      "kind": "stdout.log"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Markitect Scientist Runner Readiness\\2026-10-07-native-r2\\receipts\\conventional\\native-probe\\stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "kind": "stderr.log"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Markitect Scientist Runner Readiness\\2026-10-07-native-r2\\receipts\\conventional\\native-identity.json",
+      "sha256": "33aa92d81ab689bccf8b0556de999e89b70c348ada2448518a00cfc6a16a5d29",
+      "kind": "native-identity"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Markitect Scientist Runner Readiness\\2026-10-07-native-r2\\receipts\\conventional\\native-probe\\process.json",
+      "sha256": "6315c39b5957d1c853d85cca5daccc5fe7035b18c5106d0ea5e99a3aa01a9d3f",
+      "kind": "process"
+    }
+  ],
+  "usage": null
+}

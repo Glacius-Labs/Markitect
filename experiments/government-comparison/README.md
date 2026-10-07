@@ -5,6 +5,11 @@ under [evaluation](../../docs/design/government/evaluation.md) and active
 [coordination](../../docs/design/government/coordination.md). It changes no
 production Markitect source and makes no product benefit claim. Live trials: **0**.
 
+The subsequent [runner/adapter readiness checkpoint](public/runner-readiness.md)
+adds genuine native version probes and a tested common process/ledger shell.
+Its separate manifest owns the new checkpoint. Earlier preparation freezes stay
+commit-bound; S1 and all live study gates remain open.
+
 ## Reproduce the fixture smoke
 
 Run from the Scientist checkout using Python 3.13.3, Git 2.52.0.windows.1,
