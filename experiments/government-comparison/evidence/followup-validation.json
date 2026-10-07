@@ -47,12 +47,67 @@
     "rawLogGzip": "evidence/source-verify-b89f1ab.log.gz",
     "fullSourceSuiteRerun": false
   },
-  "followupMarkitectBinding": null,
+  "followupMarkitectBinding": {
+    "candidateCommit": "9a1d11eab14435e0189c7f0b93145498f67cdd11",
+    "gates": [
+      {
+        "argv": [
+          "check",
+          "--repo",
+          ".",
+          "--revision",
+          "9a1d11eab14435e0189c7f0b93145498f67cdd11"
+        ],
+        "name": "check",
+        "exitCode": 0,
+        "logSha256": "2b19808dfee66923e9511434ae9905b906befbbf11e3a18003ebfeeba99506e6"
+      },
+      {
+        "argv": [
+          "context",
+          "--repo",
+          ".",
+          "--revision",
+          "9a1d11eab14435e0189c7f0b93145498f67cdd11",
+          "--namespace",
+          "development",
+          "--kind",
+          "Skill",
+          "--name",
+          "engineering-change"
+        ],
+        "name": "context",
+        "exitCode": 0,
+        "logSha256": "6e94ee5f5cd5fcc913ae7ac19a9f721bc27280ac6a8173a78db203be2562dce9"
+      },
+      {
+        "argv": [
+          "impact",
+          "--repo",
+          ".",
+          "--base",
+          "746215ccbdb008f80add627b0c37690a43f405c4",
+          "--revision",
+          "9a1d11eab14435e0189c7f0b93145498f67cdd11"
+        ],
+        "name": "impact",
+        "exitCode": 0,
+        "logSha256": "79af8463304d27adb64e494bd56ed3d1611bf68cff3a21fcac8a9ace8a5de37a"
+      }
+    ]
+  },
   "limits": [
     "No live study or actual product adapter readiness claimed",
     "Runner/model/resource profile remains unset",
     "Actual runner effective context/access probe remains pending",
     "Task6 equivalent defect mapping remains pending",
     "Private holdout not executed"
-  ]
+  ],
+  "packageCandidate": "9a1d11eab14435e0189c7f0b93145498f67cdd11",
+  "committedHashVerification": {
+    "status": "passed",
+    "sources": 37,
+    "publicEvidence": 70,
+    "privateFilesTracked": 0
+  }
 }
