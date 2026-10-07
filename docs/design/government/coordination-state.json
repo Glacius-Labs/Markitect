@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-07T17:44:53Z",
+  "updatedUtc": "2026-10-07T17:54:32Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -18,13 +18,13 @@
       "name": "Worker",
       "threadId": "01a1169b-9357-7df3-a8f6-f913557c782a",
       "hostId": "local",
-      "afterCursor": "b2b8e43f-fcaa-41bf-828a-99c69527bdea:29",
+      "afterCursor": "b2b8e43f-fcaa-41bf-828a-99c69527bdea:30",
       "lastObservedStatus": "active",
       "activeTurn": "01a11756-d1a8-7973-a56f-935f53607e58",
-      "lastAssistantMessageId": "msg_0a7785839df196a4016ac684fd25e08191ab209dcaecaa7c3f",
+      "lastAssistantMessageId": "msg_0a7785839df196a4016ac686fe206c819180e47c498cb4ea90",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "G3: bounded recursive delegation, real parent integration, detect composition failure despite green children and fresh root repair",
-      "latestProgress": "Bei der abschließenden Belegprüfung fiel ein Zeitstempelproblem im Trial-Skript auf: PowerShell verlor bei der Auswertung Sekundenbruchteile und meldete dadurch einmal fälschlich fehlende Prozessüberlappung. Ich habe Verify vor Beginn der Go-Suite gestoppt, korrigiere die Auswertung und wiederhole die finalen Nachweise am korrigierten Commit.",
+      "latestProgress": "Die vier Trial-Checkouts sind weiterhin sauber. Nur im erfolgreichen Fall zeigt die aktive Government-Ref auf den neuen Kandidaten; bei allen drei Abbrüchen bleibt sie auf der Basis. Die Übergabe hält auch die früheren Skriptfehler und den unterbrochenen Verify-Versuch fest, damit sie nicht als erfolgreiche Nachweise zählen.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-worker/Markitect",
       "transferredDesignCommit": "691ce1dee3484371c4aea725db4ed5cc3f2e3719",
       "candidateSha": "2b604d1aeabd8cef49fb19177cc5d29cfa3b1493",
@@ -121,13 +121,14 @@
           "limitations": "Mechanics only; no provider/model quality or human acceptance, no G3-G5 capability yet"
         },
         "g3Progress": {
-          "observedUtc": "2026-10-07T17:44:53Z",
+          "observedUtc": "2026-10-07T17:54:32Z",
           "reportedSourceSha": "5613e93d8128cf560b2b6e99872ee8ee0f577e7e",
-          "status": "Active correction; G3 not accepted",
+          "status": "Active final evidence preparation; no G3 acceptance",
           "reportedChecks": "Four native CLI cases,15positive actor receipts,vet,20Contribution commands,Check and Impact passed; final Verify interrupted",
           "currentIssue": "Trial timestamp evaluation lost subsecond precision and falsely reported no process overlap; Worker correcting source/evidence and rerunning affected final checks.",
           "verify": "Worker says stopped before Go suite; recent tool output confirms own Verify process stopped and failed wrapper result. No completed final Verify accepted.",
-          "inspection": "Read latest failure marker and surrounding chat output to distinguish active evidence correction from a finished gate; no test rerun by Overseer."
+          "inspection": "Read latest failure marker and surrounding chat output to distinguish active evidence correction from a finished gate; no test rerun by Overseer.",
+          "latestReportedEvidence": "Four clean trial checkouts, only positive case promotes Active Ref; all3refusals retain base. Historical script errors and interrupted Verify remain documented. No final complete gate inspected."
         }
       }
     },
@@ -135,13 +136,13 @@
       "name": "Scientist",
       "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
       "hostId": "local",
-      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:31",
+      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:32",
       "lastObservedStatus": "active",
       "activeTurn": "01a1176b-0388-72c2-9de5-75d944702a60",
-      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac684d15b508191b833ab0f41a16d6f",
+      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac68636a8c08191a71d5349a4ead7d7",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "S1 common measurable profile correction, preserved cumulative-ledger binding and exact one-context-smoke Request/Protocol/Grant drafts; no inference",
-      "latestProgress": "Die Migration braucht auch eine fortlaufende Grant-Historie: Ein neuer Grant darf das alte Kontingent nicht erneuern. Ich prüfe jetzt den Wechsel von einem abgeschlossenen v1-Versuch zu einer zusätzlichen v2-Zuteilung sowie die Wiederaufnahme beider Ergebnisse ohne neuen Start.",
+      "latestProgress": "Der Review hat zwei wichtige Punkte gefunden. Profilwechsel und Grant-Bindung werden jetzt gemeinsam zurückgerollt, wenn die zusätzliche Zuteilung ungültig ist. Die Kontext-Entwürfe binde ich an die vorhandene Diagnose-Historie. Deren altes Ledger-Format unterstützt der Dispatcher noch nicht; der Entwurf weist diese Sperre ausdrücklich aus und eröffnet keine leere Ersatzdatenbank.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-scientist/Markitect",
       "transferredDesignCommit": "b9e17c9896f14b4b1268e4bcb005395f5d324384",
       "candidateSha": "021bdd7f07447e50a0d637bc7cb42f7a8e3c9133",
@@ -272,6 +273,13 @@
           "inferenceCalls": 0,
           "liveStudyCells": 0,
           "limitations": "Deterministic/synthetic only; actual Actor context/rights unmeasured; Classic/Government native readiness_gap, S1/live grant remain closed"
+        },
+        "measurementProfileProgress": {
+          "observedUtc": "2026-10-07T17:54:32Z",
+          "status": "Active review corrections; no new acceptance",
+          "reportedFix": "Atomic rollback of profile migration and grant binding when supplemental allocation invalid",
+          "openReadinessGap": "Existing historical diagnostic ledger format unsupported by dispatcher; context draft records block, no empty replacement database",
+          "nextAssessment": "Inspect completed profile/draft and decide minimal migration/history binding before any live grant"
         }
       },
       "classicHandoffReceived": true,
@@ -363,11 +371,10 @@
     "jev": "Deferred; no extra investigation started"
   },
   "lastReview": {
-    "reviewedUtc": "2026-10-07T17:44:53Z",
-    "evidenceLevel": "All3compact snapshots plus recent Worker failure context. G3 reported mechanics green but timestamp evidence correction/final Verify pending. Scientist actively correcting ledger profile/grant-history migration. Architect unchanged.",
+    "reviewedUtc": "2026-10-07T17:54:32Z",
+    "evidenceLevel": "Compact snapshots for all3chats. Worker final evidence and Scientist ledger/profile review corrections still active. No new exact-source completed package or final gate accepted. Architect unchanged.",
     "coordinationActions": [
-      "Persisted progress and precise open G3 evidence issue; existing Worker assignment covers correction.",
-      "No repeated assignments or extra test runs; no new acceptance/live grant."
+      "Recorded reported ActiveRef cases and Scientist historical-ledger compatibility gap; no duplicate active assignments or test runs."
     ],
     "userDecisionRequired": false
   },
