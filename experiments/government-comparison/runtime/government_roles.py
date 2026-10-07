@@ -1,26 +1,32 @@
-"""Importable bounded middleware helper for one native agentexec role call.
+"""Bounded middleware helper for one native agentexec role call.
 
-It accepts the documented Invocation bytes, a previously validated Coordinator
-Authority and operator authorization, reserves before one delegate, and returns
-response bytes unchanged. The native CLI bootstrap stays disabled until the
-outer Authority can be supplied without a Request/runtime digest cycle.
+It accepts the documented Invocation bytes, a validated acyclic controller
+bootstrap, and operator role authorization, reserves before one delegate, and
+returns response bytes unchanged. It makes no OS isolation claim.
 """
 from __future__ import annotations
 
 import hashlib
+import argparse
 import json
 import os
 from pathlib import Path
 import re
 import stat
+import sys
 import time
 
 from ledger import Ledger, LimitReached
 from process import bounded
 import government
+import native_controller
 
 INVOCATION_API = "markitect.example.org/agent-execution/v1alpha1"
 ROLE_AUTH_API = "markitect.scientist-role-authorization/v1alpha1"
+NATIVE_FIXTURE_AUTH = {"sourceGrantKey": "native-s1-integration-fixtures-20261008",
+                       "classification": "nativeFixture", "providerUse": "noProvider"}
+_GOVERNMENT_FIXTURE_DELEGATE_SHA256 = "bcb541ab827e293f215e1a621205c68d840271eb263191476dfc3a45463ec9c1"
+_CLASSIC_FIXTURE_DELEGATE_SHA256 = "ddac10f2d0cb7884d24d2e31b4933ec500d87857d88a0688ead7a5dcaa450c20"
 _HEX256 = re.compile(r"^[0-9a-f]{64}$")
 _DIGEST = re.compile(r"^sha256:[0-9a-f]{64}$")
 _MAX_INVOCATION_BYTES = 32 * 1024 * 1024
@@ -100,10 +106,13 @@ def role_projection(projection_id: str) -> tuple[str, str]:
 
 
 def wrapper_arguments(script_path: str, authorization_path: str, authorization_sha256: str,
-                      evidence_path: str, slot_id: str) -> list[str]:
-    return [str(Path(script_path).resolve()), "--authorization", str(Path(authorization_path).resolve()),
-            "--authorization-sha256", authorization_sha256,
-            "--evidence", str(Path(evidence_path).resolve()), "--slot", slot_id]
+                      evidence_path: str, slot_id: str | None = None) -> list[str]:
+    result = [str(Path(script_path).resolve()), "--authorization", str(Path(authorization_path).resolve()),
+              "--authorization-sha256", authorization_sha256,
+              "--evidence", str(Path(evidence_path).resolve())]
+    if slot_id is not None:
+        result.extend(["--slot", slot_id])
+    return result
 
 
 def _released(captured: dict, path: str, expected_sha: str, label: str) -> bytes:
@@ -129,7 +138,7 @@ def _file_digest(path: str, expected: str, label: str, *, native=False) -> None:
 
 def _role_auth(raw: bytes, expected_sha: str, request: dict, request_raw: bytes,
                authority, captured: dict, invocation: dict, authorization_path: str,
-               expected_slot: str | None) -> tuple[dict, dict, dict]:
+               expected_slot: str | None, role_resolver=None) -> tuple[dict, dict, dict]:
     if not _HEX256.fullmatch(expected_sha) or digest(raw) != expected_sha:
         raise ValueError("operator-supplied role authorization digest mismatch")
     if len(raw) > _MAX_AUTH_BYTES:
@@ -139,6 +148,8 @@ def _role_auth(raw: bytes, expected_sha: str, request: dict, request_raw: bytes,
     auth = _strict_json(raw, "role authorization")
     if not isinstance(auth, dict) or auth.get("apiVersion") != ROLE_AUTH_API or auth.get("status") != "approved":
         raise ValueError("approved Scientist role authorization required")
+    if request.get("mode") == "mechanical" and auth.get("fixtureAuthorization") != NATIVE_FIXTURE_AUTH:
+        raise ValueError("mechanical native role authorization requires the explicit no-provider fixture grant")
     ledger_path = getattr(authority, "ledger_path", None)
     if (auth.get("trialId") != request.get("trialId") or auth.get("dispatchId") != request.get("dispatchId") or
             auth.get("taskId") != request.get("task", {}).get("id") or
@@ -163,7 +174,8 @@ def _role_auth(raw: bytes, expected_sha: str, request: dict, request_raw: bytes,
         raise ValueError("outer Request file changed after operator authorization")
     auth_path = str(Path(authorization_path).resolve(strict=True))
 
-    product = request.get("product", {}).get("government", {})
+    arm = request.get("arm")
+    product = request.get("product", {}).get(arm, {})
     runtime_path, runtime_sha = product.get("runtime", {}).get("path"), product.get("runtime", {}).get("sha256")
     if not isinstance(runtime_path, str) or not isinstance(runtime_sha, str):
         raise ValueError("Request-bound Government runtime required")
@@ -171,7 +183,13 @@ def _role_auth(raw: bytes, expected_sha: str, request: dict, request_raw: bytes,
     if auth.get("runtimePath") != str(Path(runtime_path).resolve()):
         raise ValueError("role authorization runtime binding mismatch")
     runtime = _strict_json(runtime_raw, "Government runtime")
-    roles = government.configured_roles(runtime)
+    if arm == "government":
+        roles = government.configured_roles(runtime)
+    elif arm == "classic":
+        import classic_integration
+        roles = classic_integration.configured_roles(runtime)
+    else:
+        raise ValueError("role bridge only supports native Government or Classic arms")
     by_slot = {role["slotId"]: role for role in roles}
     if len(by_slot) != len(roles):
         raise ValueError("configured Government role slots are ambiguous")
@@ -181,18 +199,29 @@ def _role_auth(raw: bytes, expected_sha: str, request: dict, request_raw: bytes,
     auth_by_slot = {slot.get("slotId"): slot for slot in auth_slots if isinstance(slot, dict)}
     if len(auth_by_slot) != len(auth_slots) or set(auth_by_slot) != set(by_slot):
         raise ValueError("authorized role slots do not exactly match the native runtime")
-    phase, slot_id = role_projection(invocation["request"]["projectionId"])
+    if role_resolver is not None:
+        selected = role_resolver(invocation, auth, runtime)
+        if not isinstance(selected, dict) or set(selected) != {"slotId", "phase", "responseRole"}:
+            raise ValueError("native product role resolver returned a malformed slot binding")
+        slot_id, phase = selected["slotId"], selected["phase"]
+        response_role = selected["responseRole"]
+    else:
+        if arm != "government":
+            raise ValueError("non-Government role bridge requires an adapter role resolver")
+        phase, slot_id = role_projection(invocation["request"]["projectionId"])
+        response_role = invocation["request"]["role"]
     if expected_slot is not None and slot_id != expected_slot:
         raise ValueError("native invocation arrived at a different configured wrapper slot")
     role_slot = auth_by_slot.get(slot_id)
     configured = by_slot.get(slot_id)
-    if not role_slot or not configured or (phase, invocation["request"]["role"]) != (configured["phase"], configured["responseRole"]):
+    if not role_slot or not configured or (phase, response_role) != (configured["phase"], configured["responseRole"]):
         raise ValueError("agentexec invocation role/phase is not authorized for this slot")
-    if (role_slot.get("phase"), role_slot.get("responseRole")) != (phase, invocation["request"]["role"]):
+    if (role_slot.get("phase"), role_slot.get("responseRole")) != (phase, response_role):
         raise ValueError("operator role grant phase/role mismatch")
     wrapper = role_slot.get("wrapper", {})
+    wrapper_slot = slot_id if arm == "government" else None
     expected_args = wrapper_arguments(__file__, auth_path, expected_sha,
-                                      auth["roleEvidenceDirectory"], slot_id)
+                                      auth["roleEvidenceDirectory"], wrapper_slot)
     if wrapper.get("command") != configured["command"] or configured["args"] != expected_args:
         raise ValueError("runtime wrapper argv is not the exact Scientist role bridge invocation")
     script_sha = digest(Path(__file__).resolve().read_bytes())
@@ -213,9 +242,24 @@ def _role_auth(raw: bytes, expected_sha: str, request: dict, request_raw: bytes,
         if _native_mode(Path(item["path"])) != item["mode"]:
             raise ValueError("native role runtime file mode differs from its bound mode")
         wrapper_files[key] = item["digest"]
-    if (wrapper_files.get(str(Path(__file__).resolve())) != "sha256:" + script_sha or
-            wrapper_files.get(auth_path) != "sha256:" + expected_sha):
-        raise ValueError("wrapper script and role authorization must be runtime-file pinned")
+    controller_script = Path(native_controller.__file__).resolve()
+    controller_sha = digest(controller_script.read_bytes())
+    required_wrapper_files = {str(Path(__file__).resolve()): "sha256:" + script_sha,
+                              str(controller_script): "sha256:" + controller_sha,
+                              auth_path: "sha256:" + expected_sha}
+    if request.get("nativeFixtureGrant") is not None:
+        budget_script = Path(__file__).with_name("native_fixture_budget.py").resolve()
+        required_wrapper_files[str(budget_script)] = "sha256:" + digest(budget_script.read_bytes())
+    if arm == "classic":
+        import classic_integration
+        classic_pin = Path(__file__).with_name("classic-pin.json")
+        classic_source = Path(__file__).with_name("classic.py")
+        required_wrapper_files.update({
+            str(Path(classic_integration.__file__).resolve()): "sha256:" + digest(Path(classic_integration.__file__).read_bytes()),
+            str(classic_pin.resolve()): "sha256:" + digest(classic_pin.read_bytes()),
+            str(classic_source.resolve()): "sha256:" + digest(classic_source.read_bytes())})
+    if any(wrapper_files.get(path) != value for path, value in required_wrapper_files.items()):
+        raise ValueError("wrapper scripts and role authorization must be runtime-file pinned")
     delegate = role_slot.get("delegate")
     if not isinstance(delegate, dict):
         raise ValueError("operator delegate runner binding required")
@@ -250,9 +294,50 @@ def _role_auth(raw: bytes, expected_sha: str, request: dict, request_raw: bytes,
             delegate.get("modelOptions") != configured.get("modelOptions") or
             delegate.get("providerVersion") != configured.get("providerVersion")):
         raise ValueError("delegate model/provider configuration differs from the native role slot")
-    if request.get("arm") != "government" or request.get("operation") != "run_task":
-        raise ValueError("role bridge only supports an operator-authorized Government run_task")
+    if request.get("arm") not in {"government", "classic"} or request.get("operation") != "run_task":
+        raise ValueError("native role bridge supports only an authorized Government or Classic run_task")
     return auth, role_slot, runtime
+
+
+def preflight_authorization(request: dict, request_raw: bytes, authority, captured: dict,
+                            authorization_path: str, authorization_raw: bytes,
+                            authorization_sha256: str) -> None:
+    """Validate every static slot and runtime pin before starting a native controller."""
+    from dispatch import digest as dispatch_digest
+    if dispatch_digest(authorization_raw) != authorization_sha256:
+        raise ValueError("operator role authorization digest mismatch")
+    product = request.get("product", {}).get(request.get("arm"), {})
+    binding = product.get("roleAuthorization")
+    auth_target = Path(authorization_path).resolve(strict=True)
+    captured_auth = next((content for source, content in captured.items()
+                          if Path(source).resolve() == auth_target), None)
+    if (not isinstance(binding, dict) or Path(binding.get("path", "")).resolve() != auth_target or
+            binding.get("sha256") != authorization_sha256 or captured_auth != authorization_raw):
+        raise ValueError("operator authorization must be an exact released Request input")
+    runtime_path = product.get("runtime", {}).get("path")
+    runtime_raw = _released(captured, runtime_path, product.get("runtime", {}).get("sha256", ""),
+                            "native role runtime")
+    runtime = _strict_json(runtime_raw, "native role runtime")
+    roles = (government.configured_roles(runtime) if request.get("arm") == "government" else
+             __import__("classic_integration").configured_roles(runtime))
+    if request.get("arm") == "classic":
+        resolver = __import__("classic_integration").resolve_role
+    else:
+        resolver = None
+    for role in roles:
+        if request.get("arm") == "government":
+            projection = f"government/{role['phase']}/{role['slotId']}"
+            scope_ids = ["preflight-scope"]
+        else:
+            projection = role["projectionId"]
+            scope_ids = [role["scopeId"]]
+        invocation = {"apiVersion": INVOCATION_API,
+                     "request": {"role": role["responseRole"], "sourceRevision": "preflight",
+                     "modelDigest": "sha256:" + "0" * 64, "modulePin": "sha256:" + "0" * 64,
+                     "projectionId": projection, "scopeIds": scope_ids, "policyIds": [],
+                     "context": {}, "artifacts": []}}
+        _role_auth(authorization_raw, authorization_sha256, request, request_raw, authority,
+                   captured, invocation, authorization_path, role["slotId"], role_resolver=resolver)
 
 
 def _execution_sha(request: dict) -> str:
@@ -280,9 +365,48 @@ def _response_usage(raw: bytes, invocation: dict) -> tuple[dict | None, int | No
     return response, tokens
 
 
+def _known_no_provider_fixture_accounting(request, authorization, role_slot, fixture_bounds):
+    """Return explicit zero-use accounting only for the two hash-pinned deterministic delegates."""
+    if (fixture_bounds is None or request.get("mode") != "mechanical" or
+            authorization.get("fixtureAuthorization") != NATIVE_FIXTURE_AUTH or
+            fixture_bounds.get("sourceKey") != native_controller.NATIVE_FIXTURE_GRANT_KEY or
+            fixture_bounds.get("product") != request.get("arm", "").title()):
+        return None
+    python = Path(sys.executable).resolve()
+    delegate = role_slot.get("delegate") if isinstance(role_slot, dict) else None
+    if (not isinstance(delegate, dict) or not isinstance(delegate.get("argv"), list) or
+            not delegate["argv"] or Path(delegate["argv"][0]).resolve() != python or
+            delegate.get("commandDigest") != native_digest(python.read_bytes())):
+        return None
+    if request.get("arm") == "government":
+        script = Path(__file__).with_name("fixtures") / "government_positive" / "deterministic_delegate.py"
+        expected_sha = _GOVERNMENT_FIXTURE_DELEGATE_SHA256
+        expected_argv = [str(python), str(script.resolve()), "--phase", role_slot.get("phase")]
+    elif request.get("arm") == "classic":
+        import classic_integration
+        script = (classic_integration.PACKET / "smoke" / "protocol_test_double.py").resolve()
+        expected_sha = _CLASSIC_FIXTURE_DELEGATE_SHA256
+        expected_argv = [str(python), str(script)]
+    else:
+        return None
+    script = script.resolve(strict=True)
+    if (script.is_symlink() or digest(script.read_bytes()) != expected_sha or
+            delegate.get("argv") != expected_argv):
+        return None
+    pinned_files = delegate.get("runtimeFiles")
+    if not isinstance(pinned_files, list) or not any(
+            isinstance(item, dict) and Path(item.get("path", "")).resolve() == script and
+            item.get("digest") == native_digest(script.read_bytes()) for item in pinned_files):
+        return None
+    return {"knownNoProviderCalls": 0, "knownNoProviderTokens": 0,
+            "basis": "approved deterministic no-provider fixture delegate"}
+
+
 def _reserve(ledger: Ledger, auth: dict, invocation: dict, invocation_sha: str,
              authorization_sha: str, role_slot: dict, evidence_path: Path,
-             grant_token_threshold: int) -> tuple[str, str]:
+             grant_token_threshold: int, *, fixture_role_limit: int | None = None,
+             fixture_parallel_limit: int | None = None,
+             fixture_process_limit: int | None = None, requested_timeout: float | None = None) -> tuple[str, str]:
     call_id = digest(encoded({"dispatchId": auth["dispatchId"], "runId": invocation["runId"],
                               "nonce": invocation["nonce"], "inputDigest": invocation["inputDigest"]}))
     with ledger.transaction() as db:
@@ -291,13 +415,37 @@ def _reserve(ledger: Ledger, auth: dict, invocation: dict, invocation_sha: str,
             authorization_sha256 TEXT NOT NULL, invocation_sha256 TEXT NOT NULL,
             input_digest TEXT NOT NULL, run_id TEXT NOT NULL, nonce_sha256 TEXT NOT NULL,
             slot_id TEXT NOT NULL, phase TEXT NOT NULL, evidence_path TEXT NOT NULL,
-            status TEXT NOT NULL, receipt TEXT)""")
+            status TEXT NOT NULL, receipt TEXT, reserved_wall_seconds REAL NOT NULL DEFAULT 0,
+            wall_seconds REAL)""")
+        columns = {row[1] for row in db.execute("PRAGMA table_info(government_role_calls)")}
+        if "reserved_wall_seconds" not in columns:
+            db.execute("ALTER TABLE government_role_calls ADD COLUMN reserved_wall_seconds REAL NOT NULL DEFAULT 0")
+        if "wall_seconds" not in columns:
+            db.execute("ALTER TABLE government_role_calls ADD COLUMN wall_seconds REAL")
         prior = db.execute("SELECT 1 FROM government_role_calls WHERE call_id=?", (call_id,)).fetchone()
         if prior:
             raise ValueError("agentexec invocation replay is already reserved; no delegate relaunch")
         count = db.execute("SELECT COUNT(*) FROM government_role_calls WHERE dispatch_id=?", (auth["dispatchId"],)).fetchone()[0]
         if count >= auth["maxCalls"]:
             raise LimitReached("operator role-call authorization exhausted")
+        if fixture_role_limit is not None or fixture_process_limit is not None or fixture_parallel_limit is not None:
+            if (type(fixture_role_limit) is not int or type(fixture_parallel_limit) is not int or
+                    type(fixture_process_limit) is not int or
+                    fixture_role_limit <= 0 or fixture_process_limit <= 0 or
+                    fixture_parallel_limit <= 0 or
+                    type(requested_timeout) not in (int, float) or requested_timeout <= 0):
+                raise ValueError("validated source-grant role-count and process-time bounds are required")
+            active_calls = db.execute("SELECT COUNT(*) FROM government_role_calls WHERE status='reserved'").fetchone()[0]
+            if active_calls >= fixture_parallel_limit:
+                raise LimitReached("source grant role parallelism ceiling")
+            source_calls = db.execute("SELECT COUNT(*) FROM government_role_calls").fetchone()[0]
+            if source_calls >= fixture_role_limit:
+                raise LimitReached("source grant deterministic role-start ceiling")
+            source_seconds = db.execute("SELECT COALESCE(SUM(CASE WHEN wall_seconds IS NULL "
+                                        "THEN reserved_wall_seconds ELSE wall_seconds END),0) "
+                                        "FROM government_role_calls").fetchone()[0]
+            if source_seconds + requested_timeout > fixture_process_limit:
+                raise LimitReached("source grant deterministic role-process seconds ceiling")
         grant = db.execute("SELECT ceiling FROM dispatch_authority_history WHERE authority_sha=?",
                            (ledger.authority_key,)).fetchone()
         if not grant or type(grant[0]) is not int:
@@ -311,18 +459,31 @@ def _reserve(ledger: Ledger, auth: dict, invocation: dict, invocation_sha: str,
                                       (auth["dispatchId"],)).fetchone()
         if not dispatch_attempt:
             raise ValueError("current outer dispatch booking is absent from the common ledger")
-        reported_tokens = db.execute("""SELECT COALESCE(SUM(tokens),0) FROM attempts
-            WHERE id=? OR id IN (SELECT attempt_id FROM government_role_calls WHERE dispatch_id=?)""",
-                                     (dispatch_attempt[0], auth["dispatchId"])).fetchone()[0]
+        controller = db.execute("SELECT 1 FROM controller_runs WHERE dispatch_id=?",
+                                (auth["dispatchId"],)).fetchone()
+        if dispatch_attempt[0] is None and not controller:
+            raise ValueError("controller timing record is absent for a nullable outer Actor attempt")
+        if dispatch_attempt[0] is None:
+            reported_tokens = db.execute("""SELECT COALESCE(SUM(a.tokens),0) FROM attempts a
+                WHERE a.id IN (SELECT attempt_id FROM government_role_calls WHERE dispatch_id=?)""",
+                                         (auth["dispatchId"],)).fetchone()[0]
+        else:
+            reported_tokens = db.execute("""SELECT COALESCE(SUM(tokens),0) FROM attempts
+                WHERE id=? OR id IN (SELECT attempt_id FROM government_role_calls WHERE dispatch_id=?)""",
+                                         (dispatch_attempt[0], auth["dispatchId"])).fetchone()[0]
         if reported_tokens >= grant_token_threshold:
             raise LimitReached("Coordinator retrospective token threshold")
         task_id = auth["taskId"]
         purpose = "task" if role_slot["phase"] == "execute" else "review"
         attempt_id = ledger._reserve(db, task_id, purpose)
-        db.execute("INSERT INTO government_role_calls VALUES(?,?,?,?,?,?,?,?,?,?,?,'reserved',NULL)",
+        db.execute("""INSERT INTO government_role_calls(
+                    call_id,dispatch_id,attempt_id,authorization_sha256,invocation_sha256,input_digest,
+                    run_id,nonce_sha256,slot_id,phase,evidence_path,status,receipt,reserved_wall_seconds,wall_seconds)
+                    VALUES(?,?,?,?,?,?,?,?,?,?,?,'reserved',NULL,?,NULL)""",
                    (call_id, auth["dispatchId"], attempt_id, authorization_sha, invocation_sha,
                     invocation["inputDigest"], invocation["runId"], digest(invocation["nonce"].encode()),
-                    role_slot["slotId"], role_slot["phase"], str(evidence_path)))
+                    role_slot["slotId"], role_slot["phase"], str(evidence_path),
+                    float(requested_timeout or 0)))
     return call_id, attempt_id
 
 
@@ -333,8 +494,12 @@ def _finish(ledger: Ledger, call_id: str, attempt_id: str, status: str,
                              (time.time(), status, turns, tokens, json.dumps([receipt], sort_keys=True), attempt_id)).rowcount
         if changed != 1:
             raise ValueError("role reservation is unknown or already finalized")
-        changed = db.execute("UPDATE government_role_calls SET status=?,receipt=? WHERE call_id=? AND status='reserved'",
-                             (status, json.dumps(receipt, sort_keys=True), call_id)).rowcount
+        wall_seconds = receipt.get("wallSeconds")
+        if type(wall_seconds) not in (int, float) or wall_seconds < 0:
+            wall_seconds = None
+        changed = db.execute("UPDATE government_role_calls SET status=?,receipt=?,wall_seconds=? "
+                             "WHERE call_id=? AND status='reserved'",
+                             (status, json.dumps(receipt, sort_keys=True), wall_seconds, call_id)).rowcount
         if changed != 1:
             raise ValueError("role invocation receipt is unknown or already finalized")
 
@@ -351,7 +516,10 @@ def _effective_timeout(ledger: Ledger, request: dict, authorization: dict, autho
     with ledger.transaction() as db:
         trial = db.execute("SELECT start,stopped FROM trial").fetchone()
         task = db.execute("SELECT start FROM tasks WHERE id=?", (request["task"]["id"],)).fetchone()
-        outer = db.execute("SELECT start FROM attempts WHERE id=?", (attempt_id,)).fetchone()
+        outer = (db.execute("SELECT start FROM attempts WHERE id=?", (attempt_id,)).fetchone()
+                 if attempt_id is not None else
+                 db.execute("SELECT start FROM controller_runs WHERE dispatch_id=?",
+                            (request["dispatchId"],)).fetchone())
     if not trial or not task or not outer or trial[1]:
         raise LimitReached("shared wall-clock authority is stopped or unavailable")
     bounds = [float(requested_seconds), float(grant["maxSessionWallSeconds"]),
@@ -368,6 +536,8 @@ def _effective_timeout(ledger: Ledger, request: dict, authorization: dict, autho
 def run_role(invocation_raw: bytes, authorization_raw: bytes, authorization_sha256: str,
              authorization_path: str, request_raw: bytes, authority, *,
              expected_slot: str | None = None,
+             controller_context=None,
+             role_resolver=None,
              cwd: str | None = None) -> tuple[bytes, dict]:
     """Validate one per-call operator grant, reserve, then execute one delegate.
 
@@ -378,8 +548,11 @@ def run_role(invocation_raw: bytes, authorization_raw: bytes, authorization_sha2
     """
     invocation = parse_invocation(invocation_raw)
     request, captured = authority.validate(request_raw)
+    fixture_bounds = (native_controller.validate_native_fixture_grant(request, captured)
+                      if request.get("nativeFixtureGrant") is not None else None)
     auth, role_slot, runtime = _role_auth(authorization_raw, authorization_sha256, request, request_raw,
-                                         authority, captured, invocation, authorization_path, expected_slot)
+                                         authority, captured, invocation, authorization_path, expected_slot,
+                                         role_resolver=role_resolver)
     if not (time.time() < auth["expiresAt"]):
         raise ValueError("operator role authorization expired before delegate reservation")
     ledger = authority.ledger("run_task", dispatch_id=request["dispatchId"])
@@ -387,6 +560,12 @@ def run_role(invocation_raw: bytes, authorization_raw: bytes, authorization_sha2
     if (not record or record.get("phase") != "launching" or record.get("result") is not None or
             record.get("request") != request_raw or record.get("execution_sha") != _execution_sha(request)):
         raise ValueError("active operator-authorized outer dispatch binding required")
+    if record.get("attempt") is None:
+        if (controller_context is None or controller_context.request_raw != request_raw or
+                controller_context.authority.grant_sha != authority.grant_sha or
+                controller_context.authorization_raw != authorization_raw or
+                controller_context.authorization_path.resolve() != Path(authorization_path).resolve()):
+            raise ValueError("validated controller bootstrap context required for native role calls")
     delegate = role_slot["delegate"]
     argv = delegate["argv"]
     if argv[0] != delegate.get("command"):
@@ -398,9 +577,12 @@ def run_role(invocation_raw: bytes, authorization_raw: bytes, authorization_sha2
     authority_paths = getattr(authority, "paths", [])
     if not isinstance(authority_paths, list):
         raise ValueError("validated Authority path set is malformed")
+    product = request.get("product", {}).get(request.get("arm"), {})
     protected_paths = [request["actorRepository"], request["evidenceDirectory"], authority.ledger_path,
-                       authorization_path, auth["requestPath"], *authority_paths,
-                       request["product"]["government"]["queueStateDirectory"], runtime.get("stateDirectory")]
+                       authorization_path, auth["requestPath"], *authority_paths]
+    protected_paths.extend(value for value in (product.get("queueStateDirectory"),
+                            runtime.get("stateDirectory"), runtime.get("recordStore"),
+                            runtime.get("privateLogs")) if value is not None)
     protected_paths = [str(path) if isinstance(path, Path) else path for path in protected_paths]
     for path in protected_paths:
         if not isinstance(path, str) or not Path(path).is_absolute():
@@ -414,15 +596,19 @@ def run_role(invocation_raw: bytes, authorization_raw: bytes, authorization_sha2
                               "nonce": invocation["nonce"], "inputDigest": invocation["inputDigest"]}))
     evidence_path = evidence_parent / call_id
     # Reserve and persist the unique invocation identity before any delegate effect.
-    reserved_id, attempt_id = _reserve(ledger, auth, invocation, invocation_sha,
-                                       authorization_sha256, role_slot, evidence_path,
-                                       authority.grant["retrospectiveTokenThreshold"])
-    if reserved_id != call_id:
-        raise AssertionError("internal role invocation identity mismatch")
     effective_timeout = _effective_timeout(ledger, request, auth, authority, record,
                                           delegate["timeoutSeconds"])
+    reserved_id, attempt_id = _reserve(ledger, auth, invocation, invocation_sha,
+                                       authorization_sha256, role_slot, evidence_path,
+                                       authority.grant["retrospectiveTokenThreshold"],
+                                       fixture_role_limit=fixture_bounds["maxRoleStarts"] if fixture_bounds else None,
+                                       fixture_parallel_limit=fixture_bounds["maxRoleParallel"] if fixture_bounds else None,
+                                       fixture_process_limit=fixture_bounds["maxRoleProcessSeconds"] if fixture_bounds else None,
+                                       requested_timeout=effective_timeout if fixture_bounds else None)
+    if reserved_id != call_id:
+        raise AssertionError("internal role invocation identity mismatch")
     evidence_parent.mkdir(parents=True, exist_ok=True)
-    environment = dict(os.environ)
+    environment = native_controller.strip_bootstrap_environment(os.environ)
     result = bounded(argv, str(Path(cwd or os.getcwd()).resolve()), evidence_path,
                      effective_timeout, stdin=invocation_raw, env=environment,
                      max_log_bytes=min(delegate["maxStdoutBytes"], delegate["maxStderrBytes"]))
@@ -434,6 +620,9 @@ def run_role(invocation_raw: bytes, authorization_raw: bytes, authorization_sha2
     response, tokens = _response_usage(stdout, invocation) if result["returnCode"] == 0 else (None, None)
     protocol_ok = response is not None
     status = "protocol-echo-valid" if result["returnCode"] == 0 and protocol_ok else "failed"
+    fixture_accounting = (_known_no_provider_fixture_accounting(request, auth, role_slot, fixture_bounds)
+                          if tokens is None else None)
+    ledger_turns, ledger_tokens = (0, 0) if fixture_accounting is not None else (None, tokens)
     receipt = {"apiVersion": "markitect.scientist-role-receipt/v1alpha1", "callId": call_id,
                "dispatchId": request["dispatchId"], "trialId": request["trialId"],
                "taskId": request["task"]["id"], "authorizationSha256": authorization_sha256,
@@ -442,6 +631,7 @@ def run_role(invocation_raw: bytes, authorization_raw: bytes, authorization_sha2
                "nonceSha256": digest(invocation["nonce"].encode()), "slotId": role_slot["slotId"],
                "phase": role_slot["phase"], "responseRole": invocation["request"]["role"],
                "delegateArgvSha256": digest(encoded(argv)), "returnCode": result["returnCode"],
+               "wallSeconds": result["wallSeconds"],
                "effectiveTimeoutSeconds": effective_timeout,
                "stdoutPath": str(stdout_path.resolve()), "stderrPath": str(stderr_path.resolve()),
                "processReceiptPath": str(process_path.resolve()),
@@ -450,9 +640,12 @@ def run_role(invocation_raw: bytes, authorization_raw: bytes, authorization_sha2
                "providerRequests": None, "providerTurns": None,
                "reportedInputPlusOutputTokens": tokens,
                "usageSource": "agentexec-provider-reported" if tokens is not None else "unknown"}
+    if fixture_accounting is not None:
+        receipt["fixtureAccounting"] = fixture_accounting
     # Missing request/turn telemetry is preserved as unknown; the Ledger's bound
-    # measurement profile decides whether another invocation can be admitted.
-    _finish(ledger, call_id, attempt_id, status, None, tokens, receipt)
+    # measurement profile decides whether another invocation can be admitted,
+    # except for the exact source-authorized no-provider fixture branch above.
+    _finish(ledger, call_id, attempt_id, status, ledger_turns, ledger_tokens, receipt)
     if result["returnCode"] != 0:
         raise RuntimeError("authorized Government delegate process failed; reservation remains consumed")
     if not protocol_ok:
@@ -461,8 +654,35 @@ def run_role(invocation_raw: bytes, authorization_raw: bytes, authorization_sha2
 
 
 def main(argv: list[str] | None = None) -> int:
-    """Native execution is disabled until an acyclic validated-Authority bootstrap exists."""
-    raise RuntimeError("role bridge is a library helper; native CLI bootstrap is not integrated")
+    """Run one already-reserved native agentexec invocation through the Ledger."""
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--authorization", required=True)
+    parser.add_argument("--authorization-sha256", required=True)
+    parser.add_argument("--evidence", required=True)
+    parser.add_argument("--slot")
+    args = parser.parse_args(argv)
+    invocation_raw = sys.stdin.buffer.read()
+    context = native_controller.load_context(invocation_raw=invocation_raw)
+    if (Path(args.authorization).resolve(strict=True) != context.authorization_path or
+            args.authorization_sha256 != context.authorization_sha256):
+        raise ValueError("wrapper argv differs from the digest-bound controller authorization")
+    expected_evidence = json.loads(context.authorization_raw)["roleEvidenceDirectory"]
+    if Path(args.evidence).resolve() != Path(expected_evidence).resolve():
+        raise ValueError("wrapper evidence path differs from the operator authorization")
+    role_resolver = None
+    if context.request["arm"] == "classic":
+        import classic_integration
+        role_resolver = classic_integration.resolve_role
+    elif not args.slot:
+        raise ValueError("Government role wrapper requires its fixed --slot argument")
+    response, receipt = run_role(invocation_raw, context.authorization_raw,
+                                 context.authorization_sha256, str(context.authorization_path),
+                                 context.request_raw, context.authority, expected_slot=args.slot,
+                                 controller_context=context, role_resolver=role_resolver,
+                                 cwd=context.request["actorRepository"])
+    sys.stdout.buffer.write(response)
+    sys.stderr.write(json.dumps({"roleReceipt": receipt}, sort_keys=True) + "\n")
+    return 0
 
 
 if __name__ == "__main__":

@@ -1,0 +1,55 @@
+{
+  "government": {
+    "nativeStartClaims": 2,
+    "nativeProcessesWithReceipts": 2,
+    "reservedControllerAndRoleSessionSeconds": 300,
+    "recordedNativeProcessWallSeconds": 1.6464860000414774,
+    "delegateAttempts": [],
+    "controllerRows": [
+      [
+        "government-native-positive",
+        "positive-overflow-release",
+        1791413179.2348819,
+        null,
+        "running",
+        null,
+        null
+      ]
+    ],
+    "controllerProcessRows": [],
+    "positiveCase": "incomplete",
+    "resumeOrReplay": "not run after blocker",
+    "newRealActorSessions": 0,
+    "providerCalls": 0,
+    "nativeWrapperAttempts": 1
+  },
+  "classic": {
+    "nativeStartClaims": 1,
+    "nativeProcessesWithReceipts": 1,
+    "reservedControllerAndRoleSessionSeconds": 150,
+    "recordedNativeProcessWallSeconds": 0.14956270006950945,
+    "delegateAttempts": [],
+    "controllerRows": [
+      [
+        "classic-native-positive",
+        "native-classic-positive",
+        1791413252.1295412,
+        1791413406.7649841,
+        "incomplete",
+        "{\"actions\": [{\"action\": \"execute\", \"argv\": [\"C:\\\\Users\\\\Consiliari\\\\.codex\\\\worktrees\\\\standard-operating-model\\\\Markitect\\\\.artifacts\\\\classic-readiness\\\\v0.14.1-r1\\\\artifacts\\\\markitect-v0.14.1-windows-amd64.exe\", \"canonical\", \"--repo\", \"C:\\\\Users\\\\Consiliari\\\\Documents\\\\Scientist-Probes\\\\native-metadata-fixtures-20261008\\\\classic\\\\actor\", \"--config\", \"examples/canonical-projection/canonical.yaml\", \"--runtime\", \"C:\\\\Users\\\\Consiliari\\\\Documents\\\\Scientist-Probes\\\\native-metadata-fixtures-20261008\\\\classic\\\\released\\\\runtime.json\", \"--action\", \"controller-execute\", \"--base\", \"20c0b4c85135bc5d76fe4d337ff5450b8d7178bf\", \"--revision\", \"20c0b4c85135bc5d76fe4d337ff5450b8d7178bf\"], \"processPath\": \"C:\\\\Users\\\\Consiliari\\\\Documents\\\\Scientist-Probes\\\\native-metadata-fixtures-20261008\\\\classic\\\\outer-controller-evidence\\\\classic-native\\\\execute.process.json\", \"processSha256\": \"c4c61f1d698e8469a3077e4281a5f22a1d6bfa991c60e1c3d5c6f514f15da58c\", \"processTreeControl\": \"windows-job-kill-on-close\", \"returnCode\": 2, \"status\": \"incomplete\", \"stderrSha256\": \"bbd8e15baca2efc8063c3a09bcab85c8e34e3d7734c594f3cb083a80355aa8f9\", \"stdoutSha256\": \"70a96e8656611bcd1eb5cc6d37988cfe2cad23b14f15a56ba2f46441e3ba2204\", \"stopReason\": null, \"timedOut\": false, \"wallSeconds\": 0.14956270006950945}], \"bootstrapSha256\": \"1a6c7baae18808457d4531d263462b0df02e5e55022f11fe4345a33b346abe77\", \"elapsedSeconds\": 154.6156120300293}",
+        "d02c28b15b1c65dea01df7d651103a53267da4ec257bad084dff5377db26d68c"
+      ]
+    ],
+    "controllerProcessRows": [
+      [
+        "execute",
+        "incomplete"
+      ]
+    ],
+    "positiveCase": "incomplete",
+    "resumeOrReplay": "not run after blocker",
+    "newRealActorSessions": 0,
+    "providerCalls": 0,
+    "nativeWrapperAttempts": 0
+  }
+}

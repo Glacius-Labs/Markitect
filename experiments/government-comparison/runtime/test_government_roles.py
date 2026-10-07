@@ -13,6 +13,8 @@ from unittest.mock import patch
 sys.path.insert(0, str(Path(__file__).parent))
 import government
 import government_roles
+import classic_integration
+import native_controller
 from dispatch import Authority, digest as dispatch_digest, encoded as dispatch_encoded
 from ledger import Ledger, LimitReached
 from measurement_profile import LEGACY, OBSERVED, limits_sha, profile_sha
@@ -105,6 +107,7 @@ sys.stdout.write(json.dumps(response, separators=(",", ":")))
                                                 {"path": str(self.delegate_path), "mode": native_mode(self.delegate_path), "digest": self.native_delegate_script_digest}]}})
 
         auth_value = {"apiVersion": government_roles.ROLE_AUTH_API, "status": "approved",
+                      "fixtureAuthorization": dict(government_roles.NATIVE_FIXTURE_AUTH),
                       "trialId": "trial-bridge", "dispatchId": "dispatch-bridge", "taskId": "task-bridge",
                       "requestPath": str(self.request_path), "ledgerPath": str(self.ledger_path),
                       "runtimePath": str(self.runtime_path), "roleEvidenceDirectory": str(self.role_evidence),
@@ -121,6 +124,9 @@ sys.stdout.write(json.dumps(response, separators=(",", ":")))
         native_runtime_files = [
             {"path": str(Path(government_roles.__file__).resolve()), "mode": native_mode(government_roles.__file__),
              "digest": "sha256:" + sha(Path(government_roles.__file__).read_bytes())},
+            {"path": str(Path(government_roles.native_controller.__file__).resolve()),
+             "mode": native_mode(government_roles.native_controller.__file__),
+             "digest": "sha256:" + sha(Path(government_roles.native_controller.__file__).read_bytes())},
             {"path": str(self.auth_path), "mode": native_mode(self.auth_path), "digest": "sha256:" + self.auth_sha},
             {"path": sys.executable, "mode": native_mode(sys.executable), "digest": self.native_python_digest},
             {"path": str(self.delegate_path), "mode": native_mode(self.delegate_path), "digest": self.native_delegate_script_digest}]
@@ -152,7 +158,9 @@ sys.stdout.write(json.dumps(response, separators=(",", ":")))
         card_binding = {"path": str(self.card_path), "sha256": self.card_sha}
         self.request["task"]["card"] = card_binding
         self.request["prompt"] = card_binding
-        self.request["releasedInputs"].append(card_binding)
+        auth_binding = {"path": str(self.auth_path), "sha256": self.auth_sha}
+        self.request["releasedInputs"].extend([card_binding, auth_binding])
+        self.request["product"]["government"]["roleAuthorization"] = auth_binding
         self.request_raw = raw_json(self.request)
         write(self.request_path, self.request_raw)
 
@@ -231,6 +239,37 @@ sys.stdout.write(json.dumps(response, separators=(",", ":")))
                  "inputDigest": "sha256:" + sha(go_json(request)), "request": request}
         return raw_json(value)
 
+    @staticmethod
+    def _classic_invocation(role, projection_id, scope_id):
+        request = {"role": role, "sourceRevision": "7dbd599c81540c8203a1b7f83afbc335174f4f1f",
+                   "modelDigest": "sha256:" + "1" * 64, "modulePin": "sha256:" + "2" * 64,
+                   "projectionId": projection_id, "scopeIds": [scope_id], "policyIds": [],
+                   "context": {}, "artifacts": []}
+        value = {"apiVersion": government_roles.INVOCATION_API, "runId": "classic-verify",
+                 "nonce": "classic-verify-nonce", "inputDigest": "sha256:" + sha(go_json(request)),
+                 "request": request}
+        return raw_json(value)
+
+    def test_classic_dirty_workspace_allowed_only_after_same_dispatch_successful_apply_for_verifier(self):
+        from dispatch import execution_sha
+
+        dispatch_id = "classic-materialized-context"
+        outer_request = {**self.request, "arm": "classic", "dispatchId": dispatch_id}
+        request_raw = raw_json(outer_request)
+        self.ledger.reserve_controller_dispatch(dispatch_id, execution_sha(outer_request), request_raw,
+                                                ["synthetic-classic-controller"], "task-bridge", "task",
+                                                self.max_calls)
+        self.assertTrue(self.ledger.claim_dispatch(dispatch_id, "launching"))
+        request = {"arm": "classic", "dispatchId": dispatch_id}
+        verifier = self._classic_invocation("verifier", classic_integration.DOTNET_PROJECTION,
+                                            "commerce-dotnet")
+        executor = self._classic_invocation("executor", classic_integration.DOTNET_PROJECTION,
+                                            "commerce-dotnet")
+        self.assertFalse(native_controller._classic_materialized_workspace_allowed(request, verifier, self.ledger))
+        self.ledger.record_controller_process(dispatch_id, "apply", time.time(), {"status": "completed"})
+        self.assertTrue(native_controller._classic_materialized_workspace_allowed(request, verifier, self.ledger))
+        self.assertFalse(native_controller._classic_materialized_workspace_allowed(request, executor, self.ledger))
+
     def _call(self, raw=None):
         return government_roles.run_role(raw or self.invocation, self.auth_raw, self.auth_sha,
                                          str(self.auth_path), self.request_raw, self.authority,
@@ -269,6 +308,130 @@ sys.stdout.write(json.dumps(response, separators=(",", ":")))
         self.assertEqual(len(self.marker_path.read_text().splitlines()), 3)
         self.assertEqual(len(self.ledger.snapshot()["attempts"]), 4)
 
+    def _reserve_with_source_bounds(self, invocation_raw, *, role_limit, process_limit, timeout):
+        invocation = government_roles.parse_invocation(invocation_raw)
+        auth_value = json.loads(self.auth_raw)
+        role_slot = {"slotId": "root-writer", "phase": "execute"}
+        evidence_path = self.role_evidence / sha(invocation_raw)
+        return government_roles._reserve(
+            self.ledger, auth_value, invocation, sha(invocation_raw), self.auth_sha,
+            role_slot, evidence_path, self.authority.grant["retrospectiveTokenThreshold"],
+            fixture_role_limit=role_limit, fixture_parallel_limit=2,
+            fixture_process_limit=process_limit,
+            requested_timeout=timeout)
+
+    def test_source_grant_role_start_ceiling_is_atomic_before_second_effect(self):
+        self._reserve_with_source_bounds(self.invocation, role_limit=1,
+                                         process_limit=20, timeout=4)
+        next_raw = self._invocation(run_id="run-after-source-cap", nonce="nonce-after-source-cap")
+        with self.assertRaisesRegex(LimitReached, "source grant deterministic role-start ceiling"):
+            self._reserve_with_source_bounds(next_raw, role_limit=1,
+                                             process_limit=20, timeout=4)
+        self.assertEqual(len(self.ledger.snapshot()["attempts"]), 2)
+        with self.ledger.transaction() as db:
+            self.assertEqual(db.execute("SELECT COUNT(*) FROM government_role_calls").fetchone()[0], 1)
+        self.assertFalse(self.marker_path.exists())
+
+    def test_source_grant_parallel_limit_is_reserved_atomically(self):
+        self._reserve_with_source_bounds(self.invocation, role_limit=12,
+                                         process_limit=20, timeout=4)
+        second = self._invocation(run_id="run-parallel-2", nonce="nonce-parallel-2")
+        self._reserve_with_source_bounds(second, role_limit=12,
+                                         process_limit=20, timeout=4)
+        third = self._invocation(run_id="run-parallel-3", nonce="nonce-parallel-3")
+        with self.assertRaisesRegex(LimitReached, "source grant role parallelism ceiling"):
+            self._reserve_with_source_bounds(third, role_limit=12,
+                                             process_limit=20, timeout=4)
+        self.assertEqual(len(self.ledger.snapshot()["attempts"]), 3)
+        with self.ledger.transaction() as db:
+            self.assertEqual(db.execute("SELECT COUNT(*) FROM government_role_calls").fetchone()[0], 2)
+
+    def test_exact_no_provider_fixture_accounts_zero_without_fabricating_raw_usage_and_admits_next_role(self):
+        script = Path(government_roles.__file__).with_name("fixtures") / "government_positive" / "deterministic_delegate.py"
+        script = script.resolve(strict=True)
+        role_slot = {"phase": "execute", "delegate": {
+            "commandDigest": government_roles.native_digest(Path(sys.executable).read_bytes()),
+            "argv": [str(Path(sys.executable).resolve()), str(script), "--phase", "execute"],
+            "runtimeFiles": [{"path": str(script), "digest": government_roles.native_digest(script.read_bytes())}]}}
+        authorization = {"fixtureAuthorization": dict(government_roles.NATIVE_FIXTURE_AUTH)}
+        bounds = {"sourceKey": government_roles.native_controller.NATIVE_FIXTURE_GRANT_KEY,
+                  "product": "Government"}
+        accounting = government_roles._known_no_provider_fixture_accounting(
+            self.request, authorization, role_slot, bounds)
+        self.assertEqual(accounting["knownNoProviderCalls"], 0)
+        self.assertEqual(accounting["knownNoProviderTokens"], 0)
+        self.assertIsNone(accounting.get("reportedInputPlusOutputTokens"))
+
+        call_id, attempt_id = self._reserve_with_source_bounds(
+            self.invocation, role_limit=12, process_limit=20, timeout=4)
+        receipt = {"wallSeconds": 0.01, "reportedInputPlusOutputTokens": None,
+                   "providerTurns": None, "usageSource": "unknown", "fixtureAccounting": accounting}
+        government_roles._finish(self.ledger, call_id, attempt_id, "protocol-echo-valid", 0, 0, receipt)
+        second = self._invocation(run_id="known-zero-second-role", nonce="known-zero-second-role")
+        self._reserve_with_source_bounds(second, role_limit=12, process_limit=20, timeout=4)
+        self.assertEqual(len(self.ledger.snapshot()["attempts"]), 3)
+
+    def test_unknown_usage_without_exact_fixture_authority_still_blocks_next_role(self):
+        first_id, first_attempt = self._reserve_with_source_bounds(
+            self.invocation, role_limit=12, process_limit=20, timeout=4)
+        government_roles._finish(self.ledger, first_id, first_attempt, "protocol-echo-valid", None, None,
+                                 {"wallSeconds": 0.01, "reportedInputPlusOutputTokens": None,
+                                  "providerTurns": None, "usageSource": "unknown"})
+        second = self._invocation(run_id="unknown-usage-second-role", nonce="unknown-usage-second-role")
+        with self.assertRaisesRegex(LimitReached, "unknown provider usage"):
+            government_roles._reserve(self.ledger, json.loads(self.auth_raw),
+                government_roles.parse_invocation(second), sha(second), self.auth_sha,
+                {"slotId": "root-writer", "phase": "execute"}, self.role_evidence / "unknown-second",
+                self.authority.grant["retrospectiveTokenThreshold"])
+
+    def test_fixture_zero_usage_requires_mechanical_mode_exact_authorization_and_fixed_delegate(self):
+        script = Path(government_roles.__file__).with_name("fixtures") / "government_positive" / "deterministic_delegate.py"
+        script = script.resolve(strict=True)
+        role_slot = {"phase": "execute", "delegate": {
+            "commandDigest": government_roles.native_digest(Path(sys.executable).read_bytes()),
+            "argv": [str(Path(sys.executable).resolve()), str(script), "--phase", "execute"],
+            "runtimeFiles": [{"path": str(script), "digest": government_roles.native_digest(script.read_bytes())}]}}
+        authorization = {"fixtureAuthorization": dict(government_roles.NATIVE_FIXTURE_AUTH)}
+        bounds = {"sourceKey": government_roles.native_controller.NATIVE_FIXTURE_GRANT_KEY,
+                  "product": "Government"}
+        self.assertIsNone(government_roles._known_no_provider_fixture_accounting(
+            {**self.request, "mode": "live"}, authorization, role_slot, bounds))
+        self.assertIsNone(government_roles._known_no_provider_fixture_accounting(
+            self.request, {"fixtureAuthorization": {"providerUse": "noProvider"}}, role_slot, bounds))
+        changed = {**role_slot, "delegate": {**role_slot["delegate"],
+                   "argv": role_slot["delegate"]["argv"] + ["--unapproved"]}}
+        self.assertIsNone(government_roles._known_no_provider_fixture_accounting(
+            self.request, authorization, changed, bounds))
+
+        classic_script = (classic_integration.PACKET / "smoke" / "protocol_test_double.py").resolve(strict=True)
+        classic_slot = {"phase": "review", "delegate": {
+            "commandDigest": government_roles.native_digest(Path(sys.executable).read_bytes()),
+            "argv": [str(Path(sys.executable).resolve()), str(classic_script)],
+            "runtimeFiles": [{"path": str(classic_script),
+                              "digest": government_roles.native_digest(classic_script.read_bytes())}]}}
+        classic_bounds = {"sourceKey": government_roles.native_controller.NATIVE_FIXTURE_GRANT_KEY,
+                          "product": "Classic"}
+        classic_request = {"arm": "classic", "mode": "mechanical"}
+        classic_accounting = government_roles._known_no_provider_fixture_accounting(
+            classic_request, authorization, classic_slot, classic_bounds)
+        self.assertEqual(classic_accounting["knownNoProviderCalls"], 0)
+        altered_classic = {**classic_slot, "delegate": {**classic_slot["delegate"],
+                          "argv": classic_slot["delegate"]["argv"] + ["--provider"]}}
+        self.assertIsNone(government_roles._known_no_provider_fixture_accounting(
+            classic_request, authorization, altered_classic, classic_bounds))
+
+    def test_source_grant_process_seconds_reserve_inflight_time_atomically(self):
+        self._reserve_with_source_bounds(self.invocation, role_limit=3,
+                                         process_limit=5, timeout=4)
+        next_raw = self._invocation(run_id="run-after-time-cap", nonce="nonce-after-time-cap")
+        with self.assertRaisesRegex(LimitReached, "source grant deterministic role-process seconds ceiling"):
+            self._reserve_with_source_bounds(next_raw, role_limit=3,
+                                             process_limit=5, timeout=1.1)
+        self.assertEqual(len(self.ledger.snapshot()["attempts"]), 2)
+        with self.ledger.transaction() as db:
+            self.assertEqual(db.execute("SELECT COUNT(*) FROM government_role_calls").fetchone()[0], 1)
+        self.assertFalse(self.marker_path.exists())
+
     def test_coordinator_token_threshold_blocks_following_role_atomically(self):
         self._rebind_real_authority_with_token_threshold(18)
         self.assertLess(18, self.ledger.limits["trialProviderTokens"])
@@ -306,7 +469,7 @@ sys.stdout.write(json.dumps(response, separators=(",", ":")))
             (output / "stdout.log").write_bytes(raw_json(response))
             (output / "stderr.log").write_bytes(b"")
             (output / "process.json").write_bytes(b"{}")
-            return {"returnCode": 0}
+            return {"returnCode": 0, "wallSeconds": 0.01}
 
         with patch.object(government_roles, "bounded", side_effect=bounded_spy):
             government_roles.run_role(self.invocation, self.auth_raw, self.auth_sha, str(self.auth_path),
@@ -316,6 +479,59 @@ sys.stdout.write(json.dumps(response, separators=(",", ":")))
         self.assertGreater(observed[0], 0)
         self.assertLessEqual(observed[0], 0.81)
         self.assertFalse(self.marker_path.exists())
+
+    def test_acyclic_bootstrap_claims_controller_without_actor_placeholder(self):
+        from native_controller import BOOTSTRAP_PATH_ENV, BOOTSTRAP_SHA_ENV, load_context, write_bundle
+        self.ledger_path.unlink()
+        self.authority = Authority(self.grant_path, self.authority.grant_sha, self.protocol_path,
+                                   self.authority.protocol_sha)
+        self.ledger = self.authority.ledger()
+        from dispatch import execution_sha
+        self.ledger.reserve_controller_dispatch(self.request["dispatchId"], execution_sha(self.request),
+                                                self.request_raw, ["native-controller"],
+                                                self.request["task"]["id"], "task", self.max_calls)
+        self.assertTrue(self.ledger.claim_dispatch(self.request["dispatchId"], "launching"))
+        path, bundle_sha = write_bundle(self.evidence / "controller-bootstrap.json",
+                                        request_path=self.request_path, request_raw=self.request_raw,
+                                        authority=self.authority, authorization_path=self.auth_path,
+                                        authorization_sha256=self.auth_sha, allow_live=False)
+        context = load_context(env={BOOTSTRAP_PATH_ENV: str(path), BOOTSTRAP_SHA_ENV: bundle_sha})
+        self.assertIsNone(context.controller_record["attempt"])
+        self.assertEqual(context.request_raw, self.request_raw)
+        self.assertEqual(len(self.ledger.snapshot()["attempts"]), 0)
+        controller_rows = self.ledger.snapshot()["controllerRuns"]
+        self.assertEqual(len(controller_rows), 1)
+        self.assertEqual(controller_rows[0]["status"], "running")
+        self.assertIsNone(controller_rows[0]["end"])
+        response, receipt = government_roles.run_role(
+            self.invocation, self.auth_raw, self.auth_sha, str(self.auth_path), self.request_raw,
+            self.authority, expected_slot="root-writer", controller_context=context,
+            cwd=str(self.actor))
+        self.assertEqual(json.loads(response)["runId"], "run-1")
+        self.assertEqual(receipt["status"], "protocol-echo-valid")
+        self.assertEqual(len(self.ledger.snapshot()["attempts"]), 1)
+        self.assertIsNone(self.ledger.dispatch_record(self.request["dispatchId"])["attempt"])
+        self.assertGreaterEqual(self.ledger.controller_elapsed(self.request["dispatchId"]), 0)
+        stored = self.ledger.finish_controller_dispatch(self.request["dispatchId"],
+                    {"status": "incomplete", "receipts": []},
+                    {"syntheticProcessReceipt": "digest-bound"})
+        self.assertEqual(stored["status"], "incomplete")
+        final_controller = self.ledger.snapshot()["controllerRuns"][0]
+        self.assertIsNotNone(final_controller["end"])
+        self.assertEqual(final_controller["status"], "incomplete")
+        self.assertEqual(len(self.ledger.snapshot()["attempts"]), 1)
+
+    def test_controller_bootstrap_requires_explicit_path_and_digest_pair(self):
+        from native_controller import BOOTSTRAP_PATH_ENV, load_context
+        with self.assertRaisesRegex(ValueError, "explicit controller bootstrap path"):
+            load_context(env={BOOTSTRAP_PATH_ENV: str(self.evidence / "bootstrap.json")})
+
+    def test_controller_bootstrap_rejects_digest_substitution_before_authority(self):
+        from native_controller import BOOTSTRAP_PATH_ENV, BOOTSTRAP_SHA_ENV, load_context
+        path = self.evidence / "bootstrap.json"
+        path.write_bytes(b'{"apiVersion":"not-the-controller"}')
+        with self.assertRaisesRegex(ValueError, "bootstrap digest mismatch"):
+            load_context(env={BOOTSTRAP_PATH_ENV: str(path), BOOTSTRAP_SHA_ENV: "0" * 64})
 
     def test_changed_authorization_digest_fails_before_reservation_or_effect(self):
         with self.assertRaisesRegex(ValueError, "authorization digest"):
@@ -358,9 +574,10 @@ sys.stdout.write(json.dumps(response, separators=(",", ":")))
                           ("child-exec", "execute", "executor"), ("child-review", "review", "verifier"),
                           ("budget-vote", "vote", "verifier")])
 
-    def test_native_cli_remains_closed_without_acyclic_authority_bootstrap(self):
-        with self.assertRaisesRegex(RuntimeError, "not integrated"):
-            government_roles.main([])
+    def test_native_cli_requires_acyclic_authority_bootstrap(self):
+        with self.assertRaisesRegex(ValueError, "explicit controller bootstrap path"):
+            government_roles.main(["--authorization", str(self.auth_path), "--authorization-sha256", self.auth_sha,
+                                   "--evidence", str(self.role_evidence), "--slot", "root-writer"])
 
 
 if __name__ == "__main__":

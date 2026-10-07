@@ -1,0 +1,21 @@
+{
+  "allocationId": "native-s1-integration-fixtures-20261008",
+  "grantSha256": "b917f5a5eb99f0a607fd282a81acdf7b085e6a1dba14f89c8d0c32f349c82c3e",
+  "starts": [
+    {
+      "product": "government",
+      "label": "inspect-constitution",
+      "argv": "[\"C:\\\\Users\\\\Consiliari\\\\.codex\\\\worktrees\\\\government-worker\\\\Markitect\\\\.artifacts\\\\government-g5\\\\markitect-04e225d.exe\", \"government\", \"--repo\", \"C:\\\\Users\\\\Consiliari\\\\Documents\\\\Scientist-Probes\\\\native-metadata-fixtures-20261008\\\\government\\\\actor\", \"--config\", \"government.yaml\", \"--action\", \"inspect\"]",
+      "claimed": 1791411514.0208502,
+      "finished": 1791411514.4874947,
+      "reserved_seconds": 150,
+      "receipt": "{\"argv\": [\"C:\\\\Users\\\\Consiliari\\\\.codex\\\\worktrees\\\\government-worker\\\\Markitect\\\\.artifacts\\\\government-g5\\\\markitect-04e225d.exe\", \"government\", \"--repo\", \"C:\\\\Users\\\\Consiliari\\\\Documents\\\\Scientist-Probes\\\\native-metadata-fixtures-20261008\\\\government\\\\actor\", \"--config\", \"government.yaml\", \"--action\", \"inspect\"], \"automaticRetries\": 0, \"cwd\": \"C:\\\\Users\\\\Consiliari\\\\Documents\\\\Scientist-Probes\\\\native-metadata-fixtures-20261008\\\\government\\\\actor\", \"filesystemIsolation\": \"not established by process wrapper\", \"processTreeControl\": \"windows-job-kill-on-close\", \"receipts\": [{\"kind\": \"stdout.log\", \"path\": \"C:\\\\Users\\\\Consiliari\\\\.codex\\\\worktrees\\\\government-scientist\\\\Markitect\\\\experiments\\\\government-comparison\\\\evidence\\\\native-integration\\\\run-1\\\\government\\\\inspect\\\\stdout.log\", \"sha256\": \"384f55ed014eccab89ac88b3a8b93f8e15547a95605ca634c7b5609c04810e10\"}, {\"kind\": \"stderr.log\", \"path\": \"C:\\\\Users\\\\Consiliari\\\\.codex\\\\worktrees\\\\government-scientist\\\\Markitect\\\\experiments\\\\government-comparison\\\\evidence\\\\native-integration\\\\run-1\\\\government\\\\inspect\\\\stderr.log\", \"sha256\": \"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\"}], \"returnCode\": 0, \"stopReason\": null, \"wallSeconds\": 0.4530548000475392}"
+    }
+  ],
+  "deadlineSeconds": 38,
+  "reservedSecondsPerStart": 150,
+  "refills": 0,
+  "realActorStarts": 0,
+  "providerCalls": 0,
+  "studyCells": 0
+}

@@ -1,0 +1,31 @@
+{
+  "kind": "read-only-inspect-preparation",
+  "marker": {
+    "fixtureId": "government-native-positive-v1",
+    "repository": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\actor",
+    "managedRef": "refs/markitect/government/active/scientist-positive",
+    "baseCommit": "8cc3573a2530b9e5c2508653187394ccfb2f7af0",
+    "constitutionDigest": null,
+    "orderSha256": "46c8a5242d608543d8be84c33c81c85ba6db74eb933d0270e40a85715df0ee0a"
+  },
+  "argv": [
+    "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\markitect-04e225d.exe",
+    "government",
+    "--repo",
+    "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\actor",
+    "--config",
+    "government.yaml",
+    "--action",
+    "inspect"
+  ],
+  "cwd": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\actor",
+  "allocationId": "native-s1-integration-fixtures-20261008",
+  "binarySha256": "12241f325e4af59451e4021b31d9e6f5b829b5de06c94d35eaabfb9d663aa51f",
+  "roleStarts": 0,
+  "timeoutSeconds": 38,
+  "sourceFiles": {
+    "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\runtime\\government_integration.py": "e75c45ac66986e18354448a0eb2b2f7c7d592c8c227426644eee2fb730cfdac4",
+    "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\actor\\government.yaml": "816041553684dc5710baf63217d435f62e9f997d1bbba4b74d9a2c4803da4325",
+    "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\actor\\order.yaml": "46c8a5242d608543d8be84c33c81c85ba6db74eb933d0270e40a85715df0ee0a"
+  }
+}

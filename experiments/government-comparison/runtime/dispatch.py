@@ -55,7 +55,7 @@ def mechanical_pin():
 
 def runtime_pins():
     pins = {name: digest(Path(__file__).with_name(name).read_bytes()) for name in
-            ("dispatch.py", "adapter.py", "ledger.py", "process.py", "runner.py", "mechanical_actor.py", "identity_probe.py", "classic.py", "government.py", "government_roles.py", "government-pin.json", "measurement_profile.py", "context_allocation.py", "context_tools_allocation.py", "diagnostic_history.py")}
+            ("dispatch.py", "adapter.py", "ledger.py", "process.py", "runner.py", "mechanical_actor.py", "identity_probe.py", "classic.py", "classic_integration.py", "government.py", "government_roles.py", "native_controller.py", "native_fixture_budget.py", "government-pin.json", "classic-pin.json", "measurement_profile.py", "context_allocation.py", "context_tools_allocation.py", "diagnostic_history.py")}
     pins["harness.py"] = digest(Path(__file__).parents[1].joinpath("harness.py").read_bytes())
     pins["prepare.py"] = digest(Path(__file__).parents[1].joinpath("prepare.py").read_bytes())
     for name in FILES.values():
@@ -325,11 +325,7 @@ def dispatch(request_path, result_path, authority):
         raise ValueError("Result must be a separate external output, outside Actor/evidence/authority/input paths")
     result = base_result(r, raw)
     if r["arm"] == "government":
-        import government
-        result.update(status="readiness_gap", inferencePerformed=False)
-        result["gaps"] = government.readiness_gaps()
-        write_result(result_path, result)
-        return result
+        return dispatch_government(request_path, result_path, authority, r, raw, captured, result)
     if r["arm"] == "classic":
         result.update(status="readiness_gap", inferencePerformed=False)
         result["gaps"] = ["native product dispatch/resume not integrated; no reservation or simulation"]
@@ -395,6 +391,149 @@ def dispatch(request_path, result_path, authority):
                     # A launch may have occurred. Keep the reservation active without a terminal receipt.
                     result["inferencePerformed"] = None if r["mode"] == "live" else False
                     result["gaps"] = ["dispatch interrupted/ambiguous; resume without relaunch", str(exc)]
+    write_result(result_path, result)
+    return result
+
+
+def dispatch_government(request_path, result_path, authority, request, raw, captured, result):
+    """Run one accepted native queue under an acyclic, digest-bound bootstrap."""
+    import government
+    import native_controller
+    from native_fixture_budget import DEADLINE as FIXTURE_PROCESS_DEADLINE
+    product = request.get("product", {}).get("government") if isinstance(request.get("product"), dict) else None
+    if not isinstance(product, dict) or not isinstance(product.get("roleAuthorization"), dict):
+        result.update(status="readiness_gap", inferencePerformed=False,
+                      gaps=government.readiness_gaps())
+        write_result(result_path, result)
+        return result
+    if request["operation"] != "run_task":
+        result.update(status="readiness_gap", inferencePerformed=False,
+                      gaps=["native Government resume/recovery is not yet integrated; no relaunch"])
+        write_result(result_path, result)
+        return result
+    bound = government.bind_request(request)
+    import native_controller
+    native_controller.validate_native_fixture_grant(request, captured, bound)
+    binding = request.get("product", {}).get("government", {}).get("roleAuthorization")
+    if not isinstance(binding, dict):
+        raise ValueError("Request.product.government.roleAuthorization binding required")
+    auth_path = Path(binding.get("path", ""))
+    if not auth_path.is_absolute():
+        raise ValueError("absolute role authorization path required")
+    auth_path = auth_path.resolve(strict=True)
+    auth_raw = auth_path.read_bytes()
+    captured_auth = next((content for source, content in captured.items()
+                          if Path(source).resolve() == auth_path), None)
+    if digest(auth_raw) != binding.get("sha256") or captured_auth != auth_raw:
+        raise ValueError("role authorization must be an exact released Request input")
+    import government_roles
+    government_roles.preflight_authorization(request, raw, authority, captured,
+                                            str(auth_path), auth_raw, binding["sha256"])
+    queue_plan = government.plan_request(request)
+    argv = queue_plan["argv"]
+    ledger = authority.ledger("run_task", dispatch_id=request["dispatchId"])
+    record = ledger.dispatch_record(request["dispatchId"])
+    if record:
+        ledger.verify_dispatch_binding(record, authority.profile_id)
+        if record.get("execution_sha") != execution_sha(request):
+            raise ValueError("booked Government execution mismatch")
+        result.update(status="incomplete", inferencePerformed=None,
+                      gaps=["controller launch may have occurred; native resume is disabled and no relaunch is allowed"])
+        write_result(result_path, result)
+        return result
+
+    evidence = Path(request["evidenceDirectory"])
+    try:
+        ledger.reserve_controller_dispatch(request["dispatchId"], execution_sha(request), raw, argv,
+                                           request["task"]["id"], request["purpose"],
+                                           authority.grant["maxActorSessions"])
+    except LimitReached as exc:
+        result.update(status="blocked", gaps=[str(exc)])
+        write_result(result_path, result)
+        return result
+    if not ledger.claim_dispatch(request["dispatchId"], "launching"):
+        result.update(status="blocked", gaps=["controller booking claimed by recovery; launch forbidden"])
+        write_result(result_path, result)
+        return result
+    try:
+        evidence.mkdir(parents=True, exist_ok=False)
+        (evidence / "request.json").write_bytes(raw)
+        snapshot_root = evidence / "released-inputs"
+        snapshot_root.mkdir()
+        for index, item in enumerate(request["releasedInputs"]):
+            (snapshot_root / str(index)).write_bytes(captured[item["path"]])
+        bootstrap_path, bootstrap_sha = native_controller.write_bundle(
+            evidence / "controller-bootstrap.json", request_path=request_path, request_raw=raw,
+            authority=authority, authorization_path=auth_path,
+            authorization_sha256=binding["sha256"], allow_live=(request["mode"] == "live"))
+        controller_env = {key: value for key, value in os.environ.items()
+                          if key not in ("OPENAI_API_KEY", "CODEX_API_KEY")}
+        controller_env[native_controller.BOOTSTRAP_PATH_ENV] = str(bootstrap_path)
+        controller_env[native_controller.BOOTSTRAP_SHA_ENV] = bootstrap_sha
+
+        def monitor(directory):
+            remaining, reason = ledger.running_bound(request["task"]["id"])
+            if time.time() >= authority.grant["expiresAt"]:
+                reason = reason or "grant_expired"
+            elapsed = ledger.controller_elapsed(request["dispatchId"])
+            if elapsed >= min(request["wallSeconds"], authority.grant["maxSessionWallSeconds"]):
+                reason = reason or "controller_wall_deadline"
+            if directory.joinpath("STOP").exists():
+                reason = reason or "operator_stop_sentinel"
+            return reason
+
+        remaining, reason = ledger.running_bound(request["task"]["id"])
+        if reason:
+            result.update(status="stopped", inferencePerformed=False, gaps=[reason])
+            result = ledger.finish_controller_dispatch(request["dispatchId"], result,
+                                                      {"status": "not-launched", "reason": reason})
+            write_result(result_path, result)
+            return result
+        # Divide remaining wall time conservatively across the controller plus
+        # the maximum two concurrent native role processes.
+        wall = min(float(request["wallSeconds"]), float(FIXTURE_PROCESS_DEADLINE),
+                   float(authority.grant["maxSessionWallSeconds"]),
+                   remaining / 3.0, max(0.0, float(authority.grant["expiresAt"]) - time.time()))
+        if wall <= 0:
+            raise LimitReached("no shared wall-time remains for native controller launch")
+        receipt = bounded(argv, request["actorRepository"], evidence / "process", wall,
+                          env=controller_env, stop_path=evidence / "STOP", poll_stop=monitor)
+        process_path = evidence / "process" / "process.json"
+        process_raw = process_path.read_bytes()
+        process = json.loads(process_raw)
+        if process.get("argv") != argv or process.get("cwd") != request["actorRepository"]:
+            raise ValueError("native controller process receipt identity mismatch")
+        process_receipts = process.get("receipts")
+        if not isinstance(process_receipts, list) or len(process_receipts) != 2:
+            raise ValueError("native controller stdout/stderr receipts are required")
+        for item, name in zip(process_receipts, ("stdout.log", "stderr.log")):
+            log_path = (evidence / "process" / name).resolve(strict=True)
+            if (Path(item.get("path", "")).resolve() != log_path or
+                    item.get("sha256") != digest(log_path.read_bytes())):
+                raise ValueError("native controller raw process receipt mismatch")
+        result = government.translate_queue_result(request, raw, evidence / "process" / "stdout.log",
+                                                  receipt["returnCode"])
+        result.update(controllerProcess=process, inferencePerformed=None,
+                      grantSha256=authority.grant_sha, protocolSha256=authority.protocol_sha,
+                      runtimeSourceSha256=runtime_pins())
+        result["receipts"].extend(process_receipts)
+        result["receipts"].append({"path": str(process_path.resolve()), "sha256": digest(process_raw),
+                                   "kind": "controller-process"})
+        result["receipts"].append({"path": str(bootstrap_path), "sha256": bootstrap_sha,
+                                   "kind": "controller-bootstrap"})
+        for index, item in enumerate(request["releasedInputs"]):
+            snapshot = snapshot_root / str(index)
+            if digest(snapshot.read_bytes()) != item["sha256"]:
+                raise ValueError("controller released-input snapshot mismatch")
+            result["receipts"].append({"path": str(snapshot.resolve()), "sha256": item["sha256"],
+                                       "kind": "released-input-snapshot"})
+        result = ledger.finish_controller_dispatch(request["dispatchId"], result,
+                  {"argv": argv, "cwd": request["actorRepository"], "process": process,
+                   "processSha256": digest(process_raw), "bootstrapSha256": bootstrap_sha,
+                   "elapsedSeconds": ledger.controller_elapsed(request["dispatchId"])})
+    except (OSError, ValueError, KeyError, LimitReached) as exc:
+        result.update(status="incomplete", inferencePerformed=None,
+                      gaps=["native controller outcome is ambiguous; reservation consumed and relaunch disabled", str(exc)])
     write_result(result_path, result)
     return result
 

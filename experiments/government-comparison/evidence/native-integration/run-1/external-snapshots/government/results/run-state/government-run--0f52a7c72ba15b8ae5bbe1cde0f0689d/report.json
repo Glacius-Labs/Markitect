@@ -1,0 +1,368 @@
+{
+  "apiVersion": "markitect.government-execution/v1alpha1",
+  "runId": "government-run--0f52a7c72ba15b8ae5bbe1cde0f0689d",
+  "status": "incomplete",
+  "stage": "execute",
+  "error": "external runner failed",
+  "reportPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\results\\run-state\\government-run--0f52a7c72ba15b8ae5bbe1cde0f0689d\\report.json",
+  "activeRef": "refs/markitect/government/active/scientist-positive",
+  "baseRevision": "fb6bfc1c6eefa799606dc19cb990bad139f34662",
+  "priorConstitution": "sha256:c1d7194bd6a8961001c68cbace3f7da40d5daf1b22570026d097e6091cf63e93",
+  "runtimePin": "sha256:ffc04075b45f4ffdf0568c7f3cd4ab18793492743c9c4bfeea0c1be734f41222",
+  "toolPins": "sha256:a30d75cdf3ea86afe2714414f6da87781391b957e4d55ed691b834441e2eadc9",
+  "timeoutSeconds": 40,
+  "workspace": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\results\\temporary\\government-candidate-756269072",
+  "plan": {
+    "apiVersion": "markitect.government-plan/v1alpha1",
+    "status": "planned-within-declared-boundary",
+    "digest": "sha256:bb2f6b8a71a29d9d334eeb198d18732c43fa31a188b67da460dde0d9df141533",
+    "activeConstitution": "sha256:c1d7194bd6a8961001c68cbace3f7da40d5daf1b22570026d097e6091cf63e93",
+    "orderDigest": "sha256:13da04887f293b0586504b4d0f91c85c0aeedf1c44612db8634986b6eb245107",
+    "inventoryDigest": "sha256:bb21629d2be0f05990bac9f96223e7a27aa85cd5464442cbb5e99bc3246cbe91",
+    "provisional": true,
+    "affected": [
+      {
+        "apiVersion": "markitect.government-example/v1alpha1",
+        "kind": "Requirement",
+        "namespace": "inventory",
+        "name": "safe-release"
+      }
+    ],
+    "work": [
+      {
+        "area": {
+          "apiVersion": "markitect.government/v1alpha1",
+          "kind": "Area",
+          "namespace": "inventory",
+          "name": "root"
+        },
+        "subjects": [
+          {
+            "apiVersion": "markitect.government-example/v1alpha1",
+            "kind": "Requirement",
+            "namespace": "inventory",
+            "name": "safe-release"
+          }
+        ],
+        "paths": [
+          "inventory/reservation.go",
+          "inventory/reservation_test.go"
+        ],
+        "mandates": [
+          {
+            "apiVersion": "markitect.government/v1alpha1",
+            "kind": "Mandate",
+            "namespace": "inventory",
+            "name": "release-change"
+          }
+        ]
+      }
+    ],
+    "integrationReviews": [
+      {
+        "apiVersion": "markitect.government/v1alpha1",
+        "kind": "Area",
+        "namespace": "inventory",
+        "name": "root"
+      }
+    ],
+    "cabinet": [
+      {
+        "apiVersion": "markitect.government/v1alpha1",
+        "kind": "Ressort",
+        "namespace": "inventory",
+        "name": "correctness"
+      }
+    ],
+    "survey": {
+      "observation": {
+        "roots": [
+          "."
+        ],
+        "exclusions": [
+          {
+            "path": "README.md",
+            "reason": "Human fixture operation and evidence-limit instructions are outside candidate scope."
+          }
+        ],
+        "entries": [
+          {
+            "path": "README.md",
+            "type": "file",
+            "mode": "100644",
+            "source": "native",
+            "status": "excluded",
+            "reason": "Human fixture operation and evidence-limit instructions are outside candidate scope."
+          },
+          {
+            "path": "go.mod",
+            "type": "file",
+            "mode": "100644",
+            "digest": "sha256:4b2ce0ea5c1d5ccbd8f974e642bcd3581bd4e3a6094b565d6414bd03c816ff8d",
+            "source": "native",
+            "status": "observed"
+          },
+          {
+            "path": "government.yaml",
+            "type": "file",
+            "mode": "100644",
+            "digest": "sha256:816041553684dc5710baf63217d435f62e9f997d1bbba4b74d9a2c4803da4325",
+            "source": "native",
+            "status": "observed"
+          },
+          {
+            "path": "inventory",
+            "type": "directory",
+            "mode": "directory",
+            "source": "native",
+            "status": "observed"
+          },
+          {
+            "path": "inventory/reservation.go",
+            "type": "file",
+            "mode": "100644",
+            "digest": "sha256:d08e4543e86e22600b73686ea3408159953cb1bf90f153df939da81aecf8f49c",
+            "source": "native",
+            "status": "observed"
+          },
+          {
+            "path": "inventory/reservation_test.go",
+            "type": "file",
+            "mode": "100644",
+            "digest": "sha256:fbf4ff362a7c3ac8a4a52142e78495658244f2e42e78bfea19d0987c10dde264",
+            "source": "native",
+            "status": "observed"
+          },
+          {
+            "path": "order.yaml",
+            "type": "file",
+            "mode": "100644",
+            "digest": "sha256:7707549c484a2af0f864bb914b9b192e9352a603985f7cede093a2c32655223d",
+            "source": "native",
+            "status": "observed"
+          }
+        ],
+        "digest": "sha256:bb21629d2be0f05990bac9f96223e7a27aa85cd5464442cbb5e99bc3246cbe91",
+        "provisional": true,
+        "complete": true
+      },
+      "artifacts": [
+        {
+          "path": "README.md",
+          "class": "excluded",
+          "purpose": "Human fixture operation and evidence-limit instructions are outside candidate scope.",
+          "subjects": null,
+          "observed": {
+            "path": "README.md",
+            "type": "file",
+            "mode": "100644",
+            "source": "native",
+            "status": "excluded",
+            "reason": "Human fixture operation and evidence-limit instructions are outside candidate scope."
+          }
+        },
+        {
+          "path": "go.mod",
+          "class": "realization",
+          "purpose": "Declares the dependency-free module used to test the candidate in isolation.",
+          "writer": {
+            "apiVersion": "markitect.government/v1alpha1",
+            "kind": "Area",
+            "namespace": "inventory",
+            "name": "root"
+          },
+          "subjects": null,
+          "observed": {
+            "path": "go.mod",
+            "type": "file",
+            "mode": "100644",
+            "digest": "sha256:4b2ce0ea5c1d5ccbd8f974e642bcd3581bd4e3a6094b565d6414bd03c816ff8d",
+            "source": "native",
+            "status": "observed"
+          }
+        },
+        {
+          "path": "government.yaml",
+          "class": "canonical",
+          "purpose": "Canonical source for the prior model and declared observation boundary.",
+          "writer": {
+            "apiVersion": "markitect.government/v1alpha1",
+            "kind": "Area",
+            "namespace": "inventory",
+            "name": "root"
+          },
+          "subjects": null,
+          "observed": {
+            "path": "government.yaml",
+            "type": "file",
+            "mode": "100644",
+            "digest": "sha256:816041553684dc5710baf63217d435f62e9f997d1bbba4b74d9a2c4803da4325",
+            "source": "native",
+            "status": "observed"
+          }
+        },
+        {
+          "path": "inventory/reservation.go",
+          "class": "realization",
+          "purpose": "Source implementation of overflow-safe inventory release.",
+          "writer": {
+            "apiVersion": "markitect.government/v1alpha1",
+            "kind": "Area",
+            "namespace": "inventory",
+            "name": "root"
+          },
+          "subjects": [
+            {
+              "apiVersion": "markitect.government-example/v1alpha1",
+              "kind": "Requirement",
+              "namespace": "inventory",
+              "name": "safe-release"
+            }
+          ],
+          "observed": {
+            "path": "inventory/reservation.go",
+            "type": "file",
+            "mode": "100644",
+            "digest": "sha256:d08e4543e86e22600b73686ea3408159953cb1bf90f153df939da81aecf8f49c",
+            "source": "native",
+            "status": "observed"
+          }
+        },
+        {
+          "path": "inventory/reservation_test.go",
+          "class": "realization",
+          "purpose": "Focused test of the integer overflow boundary and ordinary addition.",
+          "writer": {
+            "apiVersion": "markitect.government/v1alpha1",
+            "kind": "Area",
+            "namespace": "inventory",
+            "name": "root"
+          },
+          "subjects": [
+            {
+              "apiVersion": "markitect.government-example/v1alpha1",
+              "kind": "Requirement",
+              "namespace": "inventory",
+              "name": "safe-release"
+            }
+          ],
+          "observed": {
+            "path": "inventory/reservation_test.go",
+            "type": "file",
+            "mode": "100644",
+            "digest": "sha256:fbf4ff362a7c3ac8a4a52142e78495658244f2e42e78bfea19d0987c10dde264",
+            "source": "native",
+            "status": "observed"
+          }
+        },
+        {
+          "path": "order.yaml",
+          "class": "canonical",
+          "purpose": "Explicit prior-Constitution-bound request used by the bounded scenario.",
+          "writer": {
+            "apiVersion": "markitect.government/v1alpha1",
+            "kind": "Area",
+            "namespace": "inventory",
+            "name": "root"
+          },
+          "subjects": null,
+          "observed": {
+            "path": "order.yaml",
+            "type": "file",
+            "mode": "100644",
+            "digest": "sha256:7707549c484a2af0f864bb914b9b192e9352a603985f7cede093a2c32655223d",
+            "source": "native",
+            "status": "observed"
+          }
+        }
+      ],
+      "unknown": null,
+      "missing": null,
+      "unavailable": null,
+      "unassignedSubjects": null,
+      "unrealizedSubjects": null,
+      "coverage": "accounted-within-declared-boundary"
+    },
+    "findings": null,
+    "limits": [
+      "Read-only proposal; no execution, independent agent review, votes, acceptance or promotion occurred.",
+      "Native observation is provisional, not an atomic Git revision; G2 must rebind immutable inputs and revalidate prior authority.",
+      "Declared assignments and purposes are structural claims, not proof of implementation semantics or sufficient cabinet selection.",
+      "Cooperative process shares caller OS rights; worktree and path checks are not a sandbox."
+    ]
+  },
+  "cabinet": [
+    {
+      "ressort": {
+        "apiVersion": "markitect.government/v1alpha1",
+        "kind": "Ressort",
+        "namespace": "inventory",
+        "name": "correctness"
+      },
+      "priorMandate": {
+        "apiVersion": "markitect.government/v1alpha1",
+        "kind": "Mandate",
+        "namespace": "inventory",
+        "name": "release-change"
+      },
+      "mandateDigest": "sha256:513c7252137c282e6bb2223536bfc8ec3fb44715b4c38bc8c0a280ae8a0cbefb",
+      "slotId": "positive-ressort-correctness"
+    }
+  ],
+  "changedPaths": null,
+  "checks": null,
+  "actors": [
+    {
+      "sequence": 1,
+      "startedAt": "2026-10-07T22:46:20.2209525Z",
+      "finishedAt": "2026-10-07T22:46:20.3896219Z",
+      "phase": "execute",
+      "slotId": "positive-root-executor",
+      "scopes": [
+        "[\"markitect.government-example/v1alpha1\",\"Requirement\",\"inventory\",\"safe-release\"]"
+      ],
+      "result": {
+        "Response": {
+          "apiVersion": "",
+          "runId": "",
+          "nonce": "",
+          "role": "",
+          "inputDigest": "",
+          "outcome": "",
+          "candidateFiles": null,
+          "evidenceRefs": null,
+          "verifierObservations": null,
+          "uncertainty": null
+        },
+        "Receipt": {
+          "apiVersion": "markitect.example.org/agent-execution/v1alpha1",
+          "runId": "90e24412d5d7c187eb30fcb3ab627035",
+          "inputDigest": "sha256:590de9df2fea26b356d54705165b1e7b5a96aafae1258428441fc143ce26704f",
+          "contextDigest": "sha256:70dc634529794afb2f08090cfa8f3d566147792aa628154c61f65a4a03b0e29b",
+          "configDigest": "sha256:09da54bce244f4c5f9b0c9b78b927ce8974b349212e8f155963ea111ee64f9d3",
+          "commandDigest": "sha256:a048c0b0ec91f1bb93f659cb2df209aef0549be477fa3af1e29f6feb6422dbaa",
+          "executableDigest": "sha256:d87063e5597f257004c731b66c59c56c91038861c6877b1a3dca6b8c4e919125",
+          "runtimeFilesDigest": "sha256:88b7c9cdb4b53fd7d88c4844e9f9cf9ce59bc1d0c22a06e84c22eaadbab1af25",
+          "providerVersion": "python-fixed-role-response-v1",
+          "providerVersionDigest": "sha256:724397c0b5615e3a70af28508cd6b20e6857a6b1340d6e352d8c7b71c6cc1621",
+          "stdoutDigest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderrDigest": "sha256:5a1eb70373ac4e071278441cdec844ec0cd01c8ff64094d428c932447d563477",
+          "privateLogDigest": "",
+          "outcome": "failed",
+          "wallTimeMilliseconds": 159,
+          "retryCount": 0
+        }
+      },
+      "error": "external runner failed"
+    }
+  ],
+  "votes": null,
+  "priorModelDigest": "sha256:c1d7194bd6a8961001c68cbace3f7da40d5daf1b22570026d097e6091cf63e93",
+  "limits": [
+    "Cooperative processes share caller OS rights; separated processes and input audits are not an OS sandbox or proof of institutional independence.",
+    "Recursive execution, model amendment and persistent queue operation are opt-in and finite; interrupted actors are never automatically replayed.",
+    "PromotionIntent and Git CAS are separate durable effects. No automatic rollback or atomic ledger/Git transaction is claimed.",
+    "Accepted-scoped records configured process and check outcomes; it does not establish semantic sufficiency or human acceptance.",
+    "Area review is read-only evidence assigned by the frozen plan, never a Ressort vote or acceptance/change/promotion authority; no per-Area review mandate is inferred from implement."
+  ]
+}

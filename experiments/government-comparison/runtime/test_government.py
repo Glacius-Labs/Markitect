@@ -98,6 +98,36 @@ class GovernmentTranslationTests(unittest.TestCase):
         self.assertTrue(any("accepted for preparation" in gap for gap in plan["gaps"]))
         self.assertTrue(any("not yet wired" in gap for gap in plan["gaps"]))
 
+    def test_static_binding_allows_controller_to_create_evidence_and_run_state(self):
+        self.evidence.rmdir()
+        self.run_state.rmdir()
+        bound = government.bind_request(self.request)
+        self.assertEqual(bound["runStateDirectory"], self.run_state.resolve())
+        self.assertFalse(self.evidence.exists())
+        self.assertFalse(self.run_state.exists())
+
+    def test_native_fixture_backlog_cannot_exceed_source_parallel_limit(self):
+        self.request["nativeFixtureGrant"] = {"path": str(self.root / "grant.json"),
+                                               "sha256": "0" * 64,
+                                               "sourceKey": "native-s1-integration-fixtures-20261008"}
+        self.backlog_value["limits"]["maxParallelism"] = 3
+        self.backlog_sha = write(self.backlog, self.backlog_value)
+        self.request["releasedInputs"][-1]["sha256"] = self.backlog_sha
+        self.request["product"]["government"]["backlog"]["sha256"] = self.backlog_sha
+        with self.assertRaisesRegex(ValueError, "source-grant parallel limit"):
+            government.bind_request(self.request)
+
+    def test_native_fixture_backlog_allows_zero_semantic_repairs(self):
+        self.request["nativeFixtureGrant"] = {"path": str(self.root / "grant.json"),
+                                               "sha256": "0" * 64,
+                                               "sourceKey": "native-s1-integration-fixtures-20261008"}
+        self.backlog_value["limits"]["maxRepairs"] = 0
+        self.backlog_sha = write(self.backlog, self.backlog_value)
+        self.request["releasedInputs"][-1]["sha256"] = self.backlog_sha
+        self.request["product"]["government"]["backlog"]["sha256"] = self.backlog_sha
+        bound = government.bind_request(self.request)
+        self.assertEqual(bound["backlogValue"]["limits"]["maxRepairs"], 0)
+
     def test_pin_preserves_accepted_source_and_superseded_provisional_history(self):
         accepted = self.real_pin["accepted"]
         history = self.real_pin["history"]["priorProvisional"]
@@ -133,6 +163,8 @@ class GovernmentTranslationTests(unittest.TestCase):
         mandate = {"apiVersion": "markitect.government/v1alpha1", "kind": "Mandate",
                    "namespace": "orders", "name": "prior"}
         return {"apiVersion": government.RUN_API, "runId": run_id, "status": "accepted-scoped",
+                "priorConstitution": "sha256:" + "9" * 64,
+                "plan": {"integrationReviews": [{"namespace": "orders", "name": "root"}]},
                 "evidence": {"id": evidence, "materialCandidateId": candidate, "round": 1},
                 "cabinet": [{"ressort": {"apiVersion": "markitect.government/v1alpha1", "kind": "Ressort",
                                            "namespace": "orders", "name": "finance"},
@@ -144,8 +176,19 @@ class GovernmentTranslationTests(unittest.TestCase):
                            {"phase": "execute", "slotId": "child-writer", "result": {
                     "Response": {"runId": "actor-3", "role": "executor", "inputDigest": "sha256:" + "7" * 64},
                     "Receipt": {"runId": "actor-3", "inputDigest": "sha256:" + "7" * 64}}},
+                           {"phase": "review", "slotId": "reviewer", "scopes": ["orders/root"], "result": {
+                    "Response": {"runId": "actor-review", "role": "verifier", "inputDigest": "sha256:" + "8" * 64,
+                                 "outcome": "passed", "uncertainty": [],
+                                 "verifierObservations": [{"subject": "orders/root", "outcome": "passed",
+                                                           "detail": "reviewed planned integration scope"}]},
+                    "Receipt": {"runId": "actor-review", "inputDigest": "sha256:" + "8" * 64}}},
                            {"phase": "vote", "slotId": "vote-finance", "result": {
-                    "Response": {"runId": "actor-2", "role": "verifier", "inputDigest": "sha256:" + "5" * 64},
+                    "Response": {"runId": "actor-2", "role": "verifier", "inputDigest": "sha256:" + "5" * 64,
+                                 "outcome": "passed", "uncertainty": [],
+                                 "verifierObservations": [{"subject": "government-vote", "outcome": "passed",
+                                     "detail": json.dumps({"outcome": "assent-unaffected", "reason": "reviewed exact evidence",
+                                                           "materialCandidateId": candidate, "evidenceId": evidence,
+                                                           "round": 1})}]},
                     "Receipt": {"runId": "actor-2", "inputDigest": "sha256:" + "5" * 64}}}],
                 "votes": [{"ressort": {"namespace": "orders", "name": "finance"},
                            "id": "sha256:" + "6" * 64,
@@ -153,7 +196,8 @@ class GovernmentTranslationTests(unittest.TestCase):
                            "materialCandidateId": candidate, "evidenceId": evidence,
                            "round": 1, "outcome": "assent-unaffected",
                            "provenance": {"runId": "actor-2", "slotId": "vote-finance"}}],
-                "decision": {"materialCandidateId": candidate, "evidenceId": evidence, "round": 1,
+                "decision": {"id": "sha256:" + "a" * 64, "priorAuthorityDigest": "sha256:" + "9" * 64,
+                             "materialCandidateId": candidate, "evidenceId": evidence, "round": 1,
                              "voteIds": ["sha256:" + "6" * 64]},
                 "promotion": {"status": "promoted", "intentPath": "", "completionPath": ""}}
 
@@ -282,6 +326,28 @@ class GovernmentTranslationTests(unittest.TestCase):
             government._validate_run_report(report, "government-run-abc", {
                 "writer": ("execute", "executor"),
                 "vote-finance": ("vote", "verifier")})
+
+    def test_accepted_report_requires_positive_votes_and_passing_planned_reviews(self):
+        report = self._report()
+        configured = {"writer": ("execute", "executor"), "reviewer": ("review", "verifier"),
+                      "child-writer": ("execute", "executor"), "vote-finance": ("vote", "verifier")}
+        government._validate_run_report(report, "government-run-abc", configured,
+                                        require_acceptance=True, root_review_slots={"reviewer"})
+        no_decision = json.loads(json.dumps(report))
+        no_decision["decision"] = None
+        with self.assertRaisesRegex(ValueError, "requires a complete native AcceptanceDecision"):
+            government._validate_run_report(no_decision, "government-run-abc", configured,
+                                            require_acceptance=True, root_review_slots={"reviewer"})
+        objection = json.loads(json.dumps(report))
+        objection["votes"][0]["outcome"] = "objection"
+        with self.assertRaisesRegex(ValueError, "positive final votes"):
+            government._validate_run_report(objection, "government-run-abc", configured,
+                                            require_acceptance=True, root_review_slots={"reviewer"})
+        no_review = json.loads(json.dumps(report))
+        no_review["actors"] = [actor for actor in no_review["actors"] if actor["phase"] != "review"]
+        with self.assertRaisesRegex(ValueError, "root-review actor receipt"):
+            government._validate_run_report(no_review, "government-run-abc", configured,
+                                            require_acceptance=True, root_review_slots={"reviewer"})
 
 
 if __name__ == "__main__":

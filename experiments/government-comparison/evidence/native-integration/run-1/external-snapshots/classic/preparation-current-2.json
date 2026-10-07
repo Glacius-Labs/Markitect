@@ -1,0 +1,23 @@
+{
+  "supersedes": "all prior provisional runtime and common-authority preparation records",
+  "runtime": {
+    "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\classic\\released\\runtime.json",
+    "sha256": "0c98e760ce6c398e7a147a34dcf313310cf5d081adddea42a5018a72713ca599"
+  },
+  "authority": {
+    "request": {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\classic\\released\\request.json",
+      "sha256": "f62f113bd59f790c9efac576cb15f4542be494dd925a7f7671dfc5f3957058f5"
+    },
+    "grant": {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\classic\\grant.json",
+      "sha256": "8748076d272fd7e4f4dfb34e2b245e0b1e2fbb7f180da6922f9c2996666b220e"
+    },
+    "protocol": {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\classic\\protocol.json",
+      "sha256": "08cb03ab88c927b8faebbc99bb1bad5bb82f5f2a544673b87c538c247a844787"
+    }
+  },
+  "priorInputs": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\classic\\pre-actual-static-validation-2",
+  "nativeStartsByThisPreparation": 0
+}

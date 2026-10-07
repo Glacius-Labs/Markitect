@@ -1,0 +1,18 @@
+{
+  "inputs": [
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\recover-classic-prelaunch.py",
+      "sha256": "0517759625cc449714a1ebe807392d2ac28bd57518c62415aae67ad25f6d4fd9"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\public\\classic-prelaunch-recovery-review.md",
+      "sha256": "f20a32d4f49e1cbdde0d15c6b1f93841ac930603346a6eb11c168203717f6b88"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\preflight-freeze.json",
+      "sha256": "746df37019541ffa7c395afc5b7f6189f93d5b7b75a540f7b5d1431e015b2c10"
+    }
+  ],
+  "noClockReset": true,
+  "newControllerBooking": false
+}

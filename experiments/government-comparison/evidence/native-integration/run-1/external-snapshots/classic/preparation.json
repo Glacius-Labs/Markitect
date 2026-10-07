@@ -1,0 +1,153 @@
+{
+  "kind": "classic-fixture-preparation",
+  "productSource": "7dbd599c81540c8203a1b7f83afbc335174f4f1f",
+  "heldSource": "c91363b7ac4decbe87212ff0f588b5451581a152",
+  "runtimeBinarySha256": "2cad55efad64f15d7f57638bea78312918fbf7d181c730f188b9921504da71c4",
+  "fixtureRepo": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\classic\\actor",
+  "fixtureSourceCommit": "20c0b4c85135bc5d76fe4d337ff5450b8d7178bf",
+  "runtimePath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\classic\\released\\runtime.json",
+  "roleAuthorizationPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\classic\\released\\role-auth.json",
+  "roleAuthorizationSha256": "fd096fc4f03d03d97b73f5d5ee17cf6aa74138cf1cef52e7f90d22b5d6f8bd72",
+  "reportsDirectory": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\results\\classic",
+  "preparation": {
+    "schema": "markitect.fixture-preparation/v1",
+    "source": "internal/host/canonical_scoped_test.go:addScopedMarkdownPolicies",
+    "sourceCommit": "7dbd599c81540c8203a1b7f83afbc335174f4f1f",
+    "qualification": "Explicit existing test-fixture setup only; not supplied project intent or unchanged public example",
+    "originalFiles": {
+      "examples/canonical-projection/canonical.yaml": "dfe363d8ecd304333ec061a7563034c2f1c73fc9ddfdcf7fcdbbc47d6be2f9e6",
+      "examples/canonical-projection/definitions/commerce.markdown-projection.yaml": "4e7f2bcbc78936e4ce8eaa570e46a10e594c5e8a2b63dde78567858159072760"
+    },
+    "files": [
+      {
+        "path": "examples/canonical-projection/canonical.yaml",
+        "sha256": "92ac27abb89f8bc2ce851501c497c3a848f4bd31a9fdf8f315afcb36fed079c0"
+      },
+      {
+        "path": "examples/canonical-projection/definitions/commerce.markdown-projection.yaml",
+        "sha256": "027fa54edb3aa7896bf92bbcb0640e1ace916281b6925273f3c51be8961a83d5"
+      },
+      {
+        "path": "examples/canonical-projection/definitions/effectaxis-markdown.yaml",
+        "sha256": "13bfbfe194698b3aa7b0c75285ebf123646e1fcaa246ffeed758f9dd1b78ec93"
+      },
+      {
+        "path": "examples/canonical-projection/definitions/handler-markdown.yaml",
+        "sha256": "5befdb5cb91673df5a2ca11b46083d1bf5757306e8580612eb0d1d59cb8e9737"
+      },
+      {
+        "path": "examples/canonical-projection/definitions/usecase-markdown.yaml",
+        "sha256": "5d08963d97b4bb39dff8d2717629e95d1eafd6acb587774c2efcb3ceeb345579"
+      }
+    ]
+  },
+  "commands": [
+    {
+      "name": "autocrlf",
+      "argv": [
+        "git",
+        "-C",
+        "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\classic\\actor",
+        "config",
+        "core.autocrlf",
+        "false"
+      ],
+      "returnCode": 0,
+      "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "checkout",
+      "argv": [
+        "git",
+        "-C",
+        "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\classic\\actor",
+        "switch",
+        "-c",
+        "codex/classic-study-fixture",
+        "7dbd599c81540c8203a1b7f83afbc335174f4f1f"
+      ],
+      "returnCode": 0,
+      "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSha256": "82970fe6a6e8419f84719c6e8403c9721f54a06a231986bba3668c950456668c"
+    },
+    {
+      "name": "fixture-setup",
+      "argv": [
+        "C:\\Python313\\python.exe",
+        "C:\\Users\\Consiliari\\.codex\\worktrees\\standard-operating-model\\Markitect\\.artifacts\\classic-readiness\\v0.14.1-r1\\smoke\\prepare_commerce.py",
+        "--repo",
+        "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\classic\\actor"
+      ],
+      "returnCode": 0,
+      "stdoutSha256": "26bdd8ea95954fde1c13383821c22bf10ac7c092de5d614b49dbd8eb44e9a0c9",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "classification": "existing explicit release-test fixture preparation"
+    },
+    {
+      "name": "stage-fixture",
+      "argv": [
+        "git",
+        "-C",
+        "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\classic\\actor",
+        "add",
+        "--",
+        "examples/canonical-projection"
+      ],
+      "returnCode": 0,
+      "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "commit-fixture",
+      "argv": [
+        "git",
+        "-C",
+        "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\classic\\actor",
+        "-c",
+        "user.name=Markitect Classic Fixture",
+        "-c",
+        "user.email=classic-fixture@example.invalid",
+        "-c",
+        "commit.gpgsign=false",
+        "commit",
+        "-m",
+        "Prepare established Markdown policy fixture"
+      ],
+      "returnCode": 0,
+      "stdoutSha256": "a7eb35fb87304f5a9020348144ccb1ff8beda38ea9c147365a1a474df4767851",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "source-revision",
+      "argv": [
+        "git",
+        "-C",
+        "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\classic\\actor",
+        "rev-parse",
+        "HEAD"
+      ],
+      "returnCode": 0,
+      "stdoutSha256": "4723d151129bd4595d8d0d7d664611398fec8f6d1887a33e5516ad62a74236f1",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "clean-status",
+      "argv": [
+        "git",
+        "-C",
+        "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\classic\\actor",
+        "status",
+        "--porcelain",
+        "--untracked-files=all"
+      ],
+      "returnCode": 0,
+      "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "planPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\classic\\native-plan.json",
+  "planSha256": "b04224cf720e45a3991bf36e4898217eac6c9492a9efddb05181947afd62bc02",
+  "nativeOrActorProcessesStarted": false,
+  "classification": "prepared disposable fixture and prospective native plan only"
+}

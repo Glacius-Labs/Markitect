@@ -1,0 +1,37 @@
+{
+  "argv": [
+    "C:\\Users\\Consiliari\\.codex\\worktrees\\standard-operating-model\\Markitect\\.artifacts\\classic-readiness\\v0.14.1-r1\\artifacts\\markitect-v0.14.1-windows-amd64.exe",
+    "canonical",
+    "--repo",
+    "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\classic\\actor",
+    "--config",
+    "examples/canonical-projection/canonical.yaml",
+    "--runtime",
+    "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\classic\\released\\runtime.json",
+    "--action",
+    "controller-execute",
+    "--base",
+    "20c0b4c85135bc5d76fe4d337ff5450b8d7178bf",
+    "--revision",
+    "20c0b4c85135bc5d76fe4d337ff5450b8d7178bf"
+  ],
+  "cwd": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\classic\\actor",
+  "returnCode": 2,
+  "wallSeconds": 0.14956270006950945,
+  "stopReason": null,
+  "processTreeControl": "windows-job-kill-on-close",
+  "filesystemIsolation": "not established by process wrapper",
+  "automaticRetries": 0,
+  "receipts": [
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\classic\\outer-controller-evidence\\classic-native\\process\\execute\\stdout.log",
+      "sha256": "70a96e8656611bcd1eb5cc6d37988cfe2cad23b14f15a56ba2f46441e3ba2204",
+      "kind": "stdout.log"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\classic\\outer-controller-evidence\\classic-native\\process\\execute\\stderr.log",
+      "sha256": "bbd8e15baca2efc8063c3a09bcab85c8e34e3d7734c594f3cb083a80355aa8f9",
+      "kind": "stderr.log"
+    }
+  ]
+}

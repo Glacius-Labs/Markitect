@@ -93,7 +93,7 @@ def bind_request(request: dict) -> dict:
     evidence = Path(request.get("evidenceDirectory", ""))
     if not evidence.is_absolute():
         raise ValueError("absolute evidenceDirectory required")
-    evidence = evidence.resolve(strict=True)
+    evidence = evidence.resolve()
     if _inside(evidence, root) or _inside(root, evidence):
         raise ValueError("Actor and evidence directories must be separate")
     product = request.get("product")
@@ -166,7 +166,7 @@ def bind_request(request: dict) -> dict:
     run_state_dir = Path(runtime_config.get("stateDirectory", ""))
     if not run_state_dir.is_absolute():
         raise ValueError("Government runtime stateDirectory must be absolute")
-    run_state_dir = run_state_dir.resolve(strict=True)
+    run_state_dir = run_state_dir.resolve()
     if _inside(run_state_dir, root) or _inside(run_state_dir, evidence) or _inside(evidence, run_state_dir):
         raise ValueError("Government runtime stateDirectory must be separate from Actor and evidence")
     limits = request.get("limits")
@@ -177,8 +177,13 @@ def bind_request(request: dict) -> dict:
               ("maxWallTimeSeconds", "taskWallSeconds"), ("maxParallelism", "maxParallelActors"))
     for native_key, common_key in bounds:
         native_value, common_value = native_limits.get(native_key), limits.get(common_key)
-        if type(native_value) is not int or type(common_value) is not int or not 0 < native_value <= common_value:
+        minimum = 0 if native_key == "maxRepairs" else 1
+        if (type(native_value) is not int or type(common_value) is not int or
+                not minimum <= native_value <= common_value):
             raise ValueError(f"Government backlog {native_key} exceeds or lacks its common Request bound")
+        if (native_key == "maxParallelism" and request.get("nativeFixtureGrant") is not None and
+                native_value > 2):
+            raise ValueError("Government native fixture backlog exceeds its source-grant parallel limit")
     timeout = runtime_config.get("timeoutSeconds")
     if type(timeout) is not int or not 0 < timeout <= limits["taskWallSeconds"]:
         raise ValueError("Government runtime timeout exceeds the common task wall bound")
@@ -296,7 +301,9 @@ def _promotion_filename(run_id: str, completion: bool) -> str:
     return prefix + sha256(run_id.encode("utf-8")) + ".json"
 
 
-def _validate_run_report(report: dict, run_id: str, configured_slots: dict[str, tuple[str, str]]) -> list[str]:
+def _validate_run_report(report: dict, run_id: str, configured_slots: dict[str, tuple[str, str]],
+                         *, require_acceptance: bool = False,
+                         root_review_slots: set[str] | None = None) -> list[str]:
     if not isinstance(report, dict):
         raise ValueError("Government run report must be an object")
     if report.get("apiVersion") != RUN_API or report.get("runId") != run_id:
@@ -307,18 +314,28 @@ def _validate_run_report(report: dict, run_id: str, configured_slots: dict[str, 
     material = evidence.get("materialCandidateId")
     evidence_id = evidence.get("id")
     decision = report.get("decision")
+    if require_acceptance and decision is None:
+        raise ValueError("accepted Government job requires a complete native AcceptanceDecision")
     if decision is not None and not isinstance(decision, dict):
         raise ValueError("Government decision record malformed")
     if decision is not None and (decision.get("materialCandidateId") != material or
                                  decision.get("evidenceId") != evidence_id or
                                  decision.get("round") != evidence.get("round")):
         raise ValueError("Government decision is not bound to report evidence/candidate")
+    if decision is not None:
+        digest_id = re.compile(r"^sha256:[0-9a-f]{64}$")
+        if (not digest_id.fullmatch(str(decision.get("id", ""))) or
+                not digest_id.fullmatch(str(decision.get("priorAuthorityDigest", ""))) or
+                decision.get("priorAuthorityDigest") != report.get("priorConstitution")):
+            raise ValueError("Government decision identity/prior authority binding is malformed")
     round_number = evidence.get("round")
     cabinet = report.get("cabinet") or []
     votes = report.get("votes") or []
     actors = report.get("actors") or []
     if not all(isinstance(items, list) for items in (cabinet, votes, actors)):
         raise ValueError("Government cabinet/vote/actor records must be arrays")
+    if require_acceptance and not cabinet:
+        raise ValueError("accepted Government job requires a nonempty frozen cabinet")
     if decision is not None and len(votes) != len(cabinet):
         raise ValueError("Government decision lacks one explicit vote per selected Ressort")
     expected_voters = set()
@@ -334,6 +351,7 @@ def _validate_run_report(report: dict, run_id: str, configured_slots: dict[str, 
         expected_voters.add(key)
     observed_voters = set()
     actor_run_slots = {}
+    actor_responses = {}
     for actor in actors:
         if not isinstance(actor, dict):
             raise ValueError("Government actor record malformed")
@@ -343,6 +361,7 @@ def _validate_run_report(report: dict, run_id: str, configured_slots: dict[str, 
         response = result.get("Response", {})
         if response.get("runId"):
             actor_run_slots[response["runId"]] = actor.get("slotId")
+            actor_responses[response["runId"]] = response
     observed_vote_ids = []
     for vote in votes:
         if not isinstance(vote, dict):
@@ -356,6 +375,8 @@ def _validate_run_report(report: dict, run_id: str, configured_slots: dict[str, 
         key = (identity.get("namespace"), identity.get("name"))
         if not all(isinstance(part, str) and part for part in key):
             raise ValueError("Government vote Ressort identity malformed")
+        if require_acceptance and vote.get("outcome") not in {"assent", "assent-unaffected"}:
+            raise ValueError("accepted Government job requires positive final votes from every Ressort")
         if key not in expected_voters or key in observed_voters:
             raise ValueError("Government vote is outside or duplicated in the selected cabinet")
         seat = next(item for item in cabinet if (item.get("ressort", {}).get("namespace"),
@@ -368,6 +389,24 @@ def _validate_run_report(report: dict, run_id: str, configured_slots: dict[str, 
                 actor_run_slots.get(provenance.get("runId")) != provenance.get("slotId") or
                 provenance.get("slotId") != seat.get("slotId")):
             raise ValueError("Government vote is not bound to the selected native verifier role")
+        if require_acceptance:
+            response = actor_responses.get(provenance.get("runId"), {})
+            observations = response.get("verifierObservations")
+            if (response.get("role") != "verifier" or response.get("outcome") != "passed" or
+                    response.get("uncertainty") != [] or not isinstance(observations, list) or
+                    len(observations) != 1 or not isinstance(observations[0], dict) or
+                    observations[0].get("subject") != "government-vote" or
+                    observations[0].get("outcome") != "passed"):
+                raise ValueError("accepted Government vote requires its one explicit passing native verifier observation")
+            try:
+                vote_body = json.loads(observations[0].get("detail", ""))
+            except (TypeError, json.JSONDecodeError) as exc:
+                raise ValueError("accepted Government vote observation detail is malformed") from exc
+            if (not isinstance(vote_body, dict) or vote_body.get("outcome") != vote.get("outcome") or
+                    vote_body.get("materialCandidateId") != material or vote_body.get("evidenceId") != evidence_id or
+                    vote_body.get("round") != round_number or not isinstance(vote_body.get("reason"), str) or
+                    not vote_body["reason"].strip()):
+                raise ValueError("accepted Government vote record differs from its native passing observation")
         observed_vote_ids.append(vote["id"])
         observed_voters.add(key)
     if decision is not None and observed_voters != expected_voters:
@@ -396,7 +435,40 @@ def _validate_run_report(report: dict, run_id: str, configured_slots: dict[str, 
             raise ValueError("Government actor role/receipt binding is incomplete")
         if response.get("inputDigest") != receipt.get("inputDigest"):
             raise ValueError("Government actor response/receipt input binding mismatch")
+        if require_acceptance and phase == "review":
+            observations = response.get("verifierObservations")
+            uncertainty = response.get("uncertainty")
+            if (response.get("outcome") != "passed" or uncertainty != [] or
+                    not isinstance(observations, list) or not observations or
+                    any(not isinstance(item, dict) or item.get("outcome") != "passed" or
+                        not isinstance(item.get("subject"), str) or not item["subject"] or
+                        not isinstance(item.get("detail"), str) or not item["detail"].strip()
+                        for item in observations)):
+                raise ValueError("accepted Government job requires explicit passing review observations without uncertainty")
         kinds.append(f"government-role:{phase}:{slot}:{role}")
+    if require_acceptance:
+        expected_root_review_slots = root_review_slots or set()
+        observed_root_reviews = {actor.get("slotId") for actor in actors if isinstance(actor, dict)
+                                 and actor.get("phase") == "review"}
+        if not expected_root_review_slots.intersection(observed_root_reviews):
+            raise ValueError("accepted Government job lacks a configured passing root-review actor receipt")
+        plan = report.get("plan")
+        integration_reviews = plan.get("integrationReviews") if isinstance(plan, dict) else None
+        if not isinstance(integration_reviews, list) or not integration_reviews:
+            raise ValueError("accepted Government job lacks its frozen integration-review plan")
+        covered = set()
+        for actor in actors:
+            if isinstance(actor, dict) and actor.get("phase") == "review":
+                scopes = actor.get("scopes")
+                if not isinstance(scopes, list) or not all(isinstance(scope, str) for scope in scopes):
+                    raise ValueError("accepted Government review actor must bind its reviewed scopes")
+                covered.update(scopes)
+        for identity in integration_reviews:
+            if (not isinstance(identity, dict) or
+                    not all(isinstance(identity.get(key), str) and identity[key]
+                            for key in ("namespace", "name")) or
+                    f"{identity['namespace']}/{identity['name']}" not in covered):
+                raise ValueError("accepted Government job lacks a passing review receipt for a planned integration scope")
     for vote in votes:
         ressort = vote.get("ressort", {})
         identity = f"{ressort.get('namespace', '')}/{ressort.get('name', '')}".strip("/")
@@ -504,7 +576,10 @@ def translate_queue_result(request: dict, request_raw: bytes, stdout_path, exit_
                 raise ValueError("Government run report path/digest mismatch")
             report = json.loads(report_path.read_bytes())
             role_kinds = _validate_run_report(report, run_id, {
-                role["slotId"]: (role["phase"], role["responseRole"]) for role in bound["roles"]})
+                role["slotId"]: (role["phase"], role["responseRole"]) for role in bound["roles"]},
+                require_acceptance=accepted_job,
+                root_review_slots={role["slotId"] for role in bound["roles"]
+                                   if role["phase"] == "review" and not role.get("area")})
             receipts.append({"path": str(report_path), "sha256": digest_value, "kind": "government-run-report"})
             for kind in role_kinds:
                 receipts.append({"path": str(report_path), "sha256": digest_value, "kind": kind})
@@ -546,9 +621,9 @@ def readiness_gaps():
     """Return concrete S1 blockers while retaining the accepted G5 pin."""
     return [
         (f"Government G5 source {G5_SOURCE} / binary SHA-256 {G5_BINARY_SHA256} is accepted for preparation; "
-         "the Scientist harness has not enabled native dispatch"),
+         "no native product process has been validated by this Scientist harness"),
         "product pin, project config, Order, runtime, backlog, queue state and all exact digests must be frozen in Request.product",
-        "the operator-bound Government role authorization and wrapper runtime must be frozen for every root, recursive Area, and Ressort slot",
-        "the common trial ledger still needs the accepted outer dispatch binding and native queue integration before nested role reservations are usable for dispatch",
-        "the role middleware is not yet wired or integration-tested through native queue dispatch; provider requests and turns remain unknown in agentexec Usage",
+        "the operator-bound Government role authorization and wrapper runtime must be frozen and released for every root, recursive Area, and Ressort slot",
+        "the common trial ledger controller/role bridge is implemented but has not been exercised through native queue dispatch",
+        "provider request and turn counts remain unknown in agentexec Usage; native queue evidence is not independent acceptance",
     ]

@@ -24,6 +24,14 @@ class Ledger:
                 CREATE TABLE IF NOT EXISTS tasks(id TEXT PRIMARY KEY, start REAL);
                 CREATE TABLE IF NOT EXISTS attempts(id TEXT PRIMARY KEY, task TEXT, purpose TEXT, start REAL,
                     end REAL, status TEXT, turns INTEGER, tokens INTEGER, receipt TEXT);
+                CREATE TABLE IF NOT EXISTS controller_runs(
+                    dispatch_id TEXT PRIMARY KEY, task TEXT NOT NULL, start REAL NOT NULL,
+                    end REAL, status TEXT, process_receipt TEXT, receipt_sha256 TEXT);
+                CREATE TABLE IF NOT EXISTS controller_processes(
+                    dispatch_id TEXT NOT NULL, sequence INTEGER NOT NULL, action TEXT NOT NULL,
+                    start REAL NOT NULL, end REAL NOT NULL, status TEXT NOT NULL,
+                    process_receipt TEXT NOT NULL, receipt_sha256 TEXT NOT NULL,
+                    PRIMARY KEY(dispatch_id,sequence), UNIQUE(dispatch_id,action));
                 CREATE TABLE IF NOT EXISTS human(seconds REAL, note TEXT);
                 CREATE TABLE IF NOT EXISTS measurement_profiles(sequence INTEGER PRIMARY KEY,
                     profile_id TEXT, profile_sha TEXT, profile_json TEXT, prior_sha TEXT, approval TEXT, adopted REAL);"""
@@ -148,6 +156,14 @@ class Ledger:
                        authority_sha TEXT UNIQUE, value TEXT, profile_sha TEXT, ceiling INTEGER)""")
             db.execute("""CREATE TABLE IF NOT EXISTS dispatches(id TEXT PRIMARY KEY, execution_sha TEXT,
                        attempt TEXT UNIQUE, phase TEXT, request BLOB, command TEXT, result TEXT, measurement_profile TEXT, authority_sha TEXT)""")
+            db.execute("""CREATE TABLE IF NOT EXISTS controller_runs(
+                       dispatch_id TEXT PRIMARY KEY, task TEXT NOT NULL, start REAL NOT NULL,
+                       end REAL, status TEXT, process_receipt TEXT, receipt_sha256 TEXT)""")
+            db.execute("""CREATE TABLE IF NOT EXISTS controller_processes(
+                       dispatch_id TEXT NOT NULL, sequence INTEGER NOT NULL, action TEXT NOT NULL,
+                       start REAL NOT NULL, end REAL NOT NULL, status TEXT NOT NULL,
+                       process_receipt TEXT NOT NULL, receipt_sha256 TEXT NOT NULL,
+                       PRIMARY KEY(dispatch_id,sequence), UNIQUE(dispatch_id,action))""")
             if "measurement_profile" not in {row[1] for row in db.execute("PRAGMA table_info(dispatches)")}:
                 db.execute("ALTER TABLE dispatches ADD COLUMN measurement_profile TEXT")
             if "authority_sha" not in {row[1] for row in db.execute("PRAGMA table_info(dispatches)")}:
@@ -208,6 +224,99 @@ class Ledger:
                        (execution_id, execution_sha, attempt, raw_request, json.dumps(command), json.dumps(measurement, sort_keys=True), self.authority_key))
             return attempt
 
+    def reserve_controller_dispatch(self, execution_id, execution_sha, raw_request, command,
+                                    task, purpose, maximum):
+        """Book the native orchestrator without pretending it is an Actor session.
+
+        Actual configured role invocations reserve Actor attempts separately through
+        the common Ledger before each delegate effect. The controller row supplies
+        only an elapsed-time anchor and immutable native-process receipt.
+        """
+        with self.transaction() as db:
+            if db.execute("SELECT id FROM dispatches WHERE id=?", (execution_id,)).fetchone():
+                raise LimitReached("dispatch already booked; use resume")
+            bound = db.execute("SELECT profile_sha,ceiling FROM dispatch_authority_history WHERE authority_sha=?",
+                               (self.authority_key,)).fetchone()
+            if not bound or bound[0] != profile_sha(self._profile(db)["profileId"]):
+                raise ValueError("new dispatch requires current profile-bound authority")
+            if bound[1] is not None and maximum != bound[1]:
+                raise ValueError("reservation cannot change bound grant ceiling")
+            now = time.time()
+            trial = db.execute("SELECT start,stopped FROM trial").fetchone()
+            if trial[1] or now - trial[0] >= self.limits["trialWallSeconds"]:
+                raise LimitReached("trial stopped/deadline")
+            db.execute("INSERT OR IGNORE INTO tasks VALUES(?,?)", (task, now))
+            task_start = db.execute("SELECT start FROM tasks WHERE id=?", (task,)).fetchone()[0]
+            if now - task_start >= self.limits["taskWallSeconds"]:
+                raise LimitReached("task deadline")
+            measurement = self._profile(db)
+            db.execute("INSERT INTO dispatches VALUES(?,?,NULL,'reserved',?,?,NULL,?,?)",
+                       (execution_id, execution_sha, raw_request, json.dumps(command),
+                        json.dumps(measurement, sort_keys=True), self.authority_key))
+            db.execute("INSERT INTO controller_runs(dispatch_id,task,start,status) VALUES(?,?,?,'reserved')",
+                       (execution_id, task, now))
+            return now
+
+    def controller_elapsed(self, execution_id):
+        with self.transaction() as db:
+            row = db.execute("SELECT start FROM controller_runs WHERE dispatch_id=?", (execution_id,)).fetchone()
+            if not row:
+                raise ValueError("controller dispatch timing record is absent")
+            return max(0.0, time.time() - row[0])
+
+    def record_controller_process(self, execution_id, action, started_at, process_receipt):
+        """Append one immutable native-product process receipt to a controller run."""
+        if not isinstance(action, str) or not action or type(started_at) not in (int, float):
+            raise ValueError("controller action and finite start time are required")
+        if not isinstance(process_receipt, dict):
+            raise ValueError("controller process receipt object required")
+        raw = json.dumps(process_receipt, sort_keys=True)
+        receipt_sha = hashlib.sha256(raw.encode()).hexdigest()
+        ended = time.time()
+        if ended < started_at:
+            raise ValueError("controller process time moved backwards")
+        with self.transaction() as db:
+            controller = db.execute("SELECT end,status FROM controller_runs WHERE dispatch_id=?",
+                                    (execution_id,)).fetchone()
+            dispatch = db.execute("SELECT phase,attempt FROM dispatches WHERE id=?",
+                                  (execution_id,)).fetchone()
+            if (not controller or controller[0] is not None or controller[1] != "running" or
+                    not dispatch or dispatch[0] != "launching" or dispatch[1] is not None):
+                raise ValueError("active claimed controller dispatch is required")
+            if db.execute("SELECT 1 FROM controller_processes WHERE dispatch_id=? AND action=?",
+                          (execution_id, action)).fetchone():
+                raise ValueError("controller process action already has an immutable receipt")
+            sequence = db.execute("SELECT COALESCE(MAX(sequence),0)+1 FROM controller_processes WHERE dispatch_id=?",
+                                  (execution_id,)).fetchone()[0]
+            db.execute("INSERT INTO controller_processes VALUES(?,?,?,?,?,?,?,?)",
+                       (execution_id, sequence, action, started_at, ended,
+                        process_receipt.get("status", "unknown"), raw, receipt_sha))
+            return {"dispatchId": execution_id, "sequence": sequence, "action": action,
+                    "start": started_at, "end": ended, "status": process_receipt.get("status", "unknown"),
+                    "processReceipt": process_receipt, "receiptSha256": receipt_sha}
+
+    def finish_controller_dispatch(self, execution_id, result, process_receipt):
+        """Persist the controller receipt/result without adding an Actor attempt."""
+        raw_receipt = json.dumps(process_receipt, sort_keys=True)
+        receipt_sha = hashlib.sha256(raw_receipt.encode()).hexdigest()
+        with self.transaction() as db:
+            row = db.execute("SELECT phase,result FROM dispatches WHERE id=?", (execution_id,)).fetchone()
+            if not row:
+                raise ValueError("unknown controller dispatch")
+            if row[1] is not None:
+                return json.loads(row[1])
+            if row[0] not in {"launching", "recovering"}:
+                raise ValueError("controller dispatch was not claimed before process completion")
+            changed = db.execute("UPDATE controller_runs SET end=?,status=?,process_receipt=?,receipt_sha256=? "
+                                 "WHERE dispatch_id=? AND end IS NULL",
+                                 (time.time(), result["status"], raw_receipt, receipt_sha,
+                                  execution_id)).rowcount
+            if changed != 1:
+                raise ValueError("controller timing record is already terminal")
+            db.execute("UPDATE dispatches SET phase='finished',result=? WHERE id=?",
+                       (json.dumps(result), execution_id))
+            return result
+
     def verify_dispatch_binding(self, record, requested_profile):
         with self.transaction() as db:
             origin = db.execute("SELECT value FROM dispatch_authority").fetchone()
@@ -231,8 +340,12 @@ class Ledger:
 
     def claim_dispatch(self, execution_id, phase):
         with self.transaction() as db:
-            return db.execute("UPDATE dispatches SET phase=? WHERE id=? AND phase='reserved'",
-                              (phase, execution_id)).rowcount == 1
+            changed = db.execute("UPDATE dispatches SET phase=? WHERE id=? AND phase='reserved'",
+                                 (phase, execution_id)).rowcount
+            if changed == 1:
+                db.execute("UPDATE controller_runs SET status='running' WHERE dispatch_id=? AND end IS NULL",
+                           (execution_id,))
+            return changed == 1
 
     def observe(self, attempt, requests, tokens):
         for value in (requests, tokens):
@@ -282,6 +395,8 @@ class Ledger:
             raise ValueError("unknown dispatch")
         if row[1] is not None:
             return json.loads(row[1])
+        if row[0] is None:
+            raise ValueError("nullable controller dispatch requires finish_controller_dispatch")
         prior = db.execute("SELECT turns,tokens FROM attempts WHERE id=?", (row[0],)).fetchone()
         for previous, final in zip(prior, (requests, tokens)):
             if final is not None and (type(final) is not int or final < 0):
@@ -321,7 +436,11 @@ class Ledger:
         with self.transaction() as db:
             db.row_factory = sqlite3.Row
             attempts = [dict(row) for row in db.execute("SELECT * FROM attempts ORDER BY start,id")]
+            controller_runs = [dict(row) for row in db.execute("SELECT * FROM controller_runs ORDER BY start,dispatch_id")]
+            controller_processes = [dict(row) for row in db.execute(
+                "SELECT * FROM controller_processes ORDER BY dispatch_id,sequence")]
             return {"attempts": attempts, "actorSessions": len(attempts),
+                    "controllerRuns": controller_runs, "controllerProcesses": controller_processes,
                     "measurementProfile": self._profile(db),
                     "profileHistory": [dict(row) for row in db.execute("SELECT * FROM measurement_profiles ORDER BY sequence")],
                     "providerTurns": None if any(row["turns"] is None for row in attempts) else sum(row["turns"] for row in attempts),

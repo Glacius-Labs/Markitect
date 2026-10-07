@@ -1,0 +1,562 @@
+[
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\native-starts.sqlite",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\native-starts.sqlite",
+    "sha256": "a8d6901e1298674b933e84f1b1e8fb0bf5d854a2b3fd246dcecb164e7767eac7"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\fixture-ledger.sqlite",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\fixture-ledger.sqlite",
+    "sha256": "cf930cd89b2e97c8215e8526e1373f6eaf201788d7125bf47a87fa32ad2bddf7"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\released-native-grant.json",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\released-native-grant.json",
+    "sha256": "b917f5a5eb99f0a607fd282a81acdf7b085e6a1dba14f89c8d0c32f349c82c3e"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\coordinator-authority-snapshot.json",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\coordinator-authority-snapshot.json",
+    "sha256": "04484d4220dd7383af1d2675a95384554380dccc5a14ee8fc5908c3a474ede58"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\authority.json",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\government\\authority.json",
+    "sha256": "f4b5fad9d4fca3ba0cf2b008cd2c1c817ae869320e0ce1cff07ac4087ff71c14"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\fixture-ledger.sqlite",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\government\\fixture-ledger.sqlite",
+    "sha256": "c00c116064ecc8cd910c72ffb6f6e250b403fded24e20f85e8b55d38f87140a5"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\grant.json",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\government\\grant.json",
+    "sha256": "45cdac59df11a345aa0cf9662c4df669cbe258eea41687a569bf3e30320487a2"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\preparation-actual-final.json",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\government\\preparation-actual-final.json",
+    "sha256": "c335d84b47a1221a7601815e4e19e5033141a1fc85cef8b4d0dc093e1abfafbc"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\preparation-current-2.json",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\government\\preparation-current-2.json",
+    "sha256": "8a030acc427f4289c419944835157839bae59a45c551a73751b11c4da3e0513c"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\preparation-current-3.json",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\government\\preparation-current-3.json",
+    "sha256": "a586b715cc008c9110d333a5a5969d748448e2057449d6b4a9233a995eefcbbe"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\preparation-current.json",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\government\\preparation-current.json",
+    "sha256": "54f52603bf0e84a858a609c78793bc5a8fedbd900a88380a92eb12eff45482a4"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\preparation-final.json",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\government\\preparation-final.json",
+    "sha256": "b4437fa11c6744a4ac811dc33ee939f19e0f2a19002305e1ddd7bd739c04b906"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\preparation.json",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\government\\preparation.json",
+    "sha256": "67433487584444d56656c4d8bceb3af14122f4b21bcd0ffc5f5152ea780b176e"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\protocol.json",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\government\\protocol.json",
+    "sha256": "33ac6e763c84e5e97fc85e97438443a41dce8c7844f4f9fc92a0bc2d111125ed"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\released-native-grant.json",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\government\\released-native-grant.json",
+    "sha256": "b917f5a5eb99f0a607fd282a81acdf7b085e6a1dba14f89c8d0c32f349c82c3e"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\controller-evidence\\controller-bootstrap.json",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\government\\controller-evidence\\controller-bootstrap.json",
+    "sha256": "3207025b3a250462f25c02ed66cb3f772b85c92d115d183b08b02c0f6898c186"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\controller-evidence\\request.json",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\government\\controller-evidence\\request.json",
+    "sha256": "79c482e910116a57597af9c0a856e6892ff3a0c947a8b66d2462ac58fecc1a97"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\outer-results\\government-native-positive.json",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\government\\outer-results\\government-native-positive.json",
+    "sha256": "ea5c1e6484d60906f878af1f72bf427c5e9fb94ae104aedfaafb80188969cf30"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\pre-actual-static-validation\\authority.json",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\government\\pre-actual-static-validation\\authority.json",
+    "sha256": "43f8d524031297a6dee4144afdde5e4a1a10e08670311b35f505164a666c53c9"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\pre-actual-static-validation\\grant.json",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\government\\pre-actual-static-validation\\grant.json",
+    "sha256": "3813bc533a8dcf3b4255dd7f380c25f370415b6b98a73b090cea2c0c3933d72d"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\pre-actual-static-validation\\protocol.json",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\government\\pre-actual-static-validation\\protocol.json",
+    "sha256": "462a93dab47e5f722b1eaedcfbbd3477fc3fe78eb4c8116d1c40bd383eff6c1f"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\pre-actual-static-validation-2\\authority.json",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\government\\pre-actual-static-validation-2\\authority.json",
+    "sha256": "0d41009d96bd8692f474343ea7672b0f074ca133cca8f20fa58306427e37401e"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\pre-actual-static-validation-2\\grant.json",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\government\\pre-actual-static-validation-2\\grant.json",
+    "sha256": "7bf982f7e5a5c956b42ef10d25b89afe654451c8b5348b0710a5113e247ff716"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\pre-actual-static-validation-2\\protocol.json",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\government\\pre-actual-static-validation-2\\protocol.json",
+    "sha256": "3a578c690e98d7969f2ddf0c8e533df5d0f8681c996ba7204c16155820eb0709"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\pre-actual-static-validation-3\\authority.json",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\government\\pre-actual-static-validation-3\\authority.json",
+    "sha256": "dce3c169c843e54e0833450a599cfde6b26293ba29e92a18ce6d7747f95a618a"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\pre-actual-static-validation-3\\grant.json",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\government\\pre-actual-static-validation-3\\grant.json",
+    "sha256": "bc3fff93347f6fbeb93cd2335e7fa626a834815f6afc7b2992501a0d05c81947"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\pre-actual-static-validation-3\\protocol.json",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\government\\pre-actual-static-validation-3\\protocol.json",
+    "sha256": "08cb03ab88c927b8faebbc99bb1bad5bb82f5f2a544673b87c538c247a844787"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\released\\backlog.json",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\government\\released\\backlog.json",
+    "sha256": "d6e0f2a8da02dc2262043b53233ccb2bb6f18aecfab258e08cc4d7fe3206d6d7"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\released\\mechanical_actor.py",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\government\\released\\mechanical_actor.py",
+    "sha256": "02609c2e1b5d82db42640c97dc72c4e34b1a4a3fc9168e657da64c8b9f13f2be"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\released\\request.json",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\government\\released\\request.json",
+    "sha256": "79c482e910116a57597af9c0a856e6892ff3a0c947a8b66d2462ac58fecc1a97"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\released\\role-auth.json",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\government\\released\\role-auth.json",
+    "sha256": "f549cecbb87a7dde4db8063f32297598464fde65ebbc3b255a169aada16045b2"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\released\\runtime-before-actual-final.json",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\government\\released\\runtime-before-actual-final.json",
+    "sha256": "033bfa9e8edbc41e4ab654197c4255ba90bf0772252654bc1350cf6ba5225086"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\released\\runtime-pre-final-freeze.json",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\government\\released\\runtime-pre-final-freeze.json",
+    "sha256": "e6c2e9cbd21f89ff59970d7d8f583298af52c436347b63338ed7ccf77ecad670"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\released\\runtime.json",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\government\\released\\runtime.json",
+    "sha256": "00c945cbe6ecc10c33da15b4d2ab7f9ac1a57f5c0f74bc1ed58a25ac642268c8"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\released\\task-card.txt",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\government\\released\\task-card.txt",
+    "sha256": "09e982cf8f4bf8bf93a5785dbb6201d33e112393956cbf7a0cdba3304cfea476"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\results\\temporary\\government-candidate-756269072\\go.mod",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\government\\results\\temporary\\government-candidate-756269072\\go.mod",
+    "sha256": "4b2ce0ea5c1d5ccbd8f974e642bcd3581bd4e3a6094b565d6414bd03c816ff8d"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\results\\temporary\\government-candidate-756269072\\government.yaml",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\government\\results\\temporary\\government-candidate-756269072\\government.yaml",
+    "sha256": "816041553684dc5710baf63217d435f62e9f997d1bbba4b74d9a2c4803da4325"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\results\\temporary\\government-candidate-756269072\\order.yaml",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\government\\results\\temporary\\government-candidate-756269072\\order.yaml",
+    "sha256": "7707549c484a2af0f864bb914b9b192e9352a603985f7cede093a2c32655223d"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\results\\temporary\\government-candidate-756269072\\README.md",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\government\\results\\temporary\\government-candidate-756269072\\README.md",
+    "sha256": "0f8f755da63e5117ecc332cf6365cdd6570079633dbe33f117bd51d6053f14e1"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\results\\temporary\\government-candidate-756269072\\inventory\\reservation.go",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\government\\results\\temporary\\government-candidate-756269072\\inventory\\reservation.go",
+    "sha256": "d08e4543e86e22600b73686ea3408159953cb1bf90f153df939da81aecf8f49c"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\results\\temporary\\government-candidate-756269072\\inventory\\reservation_test.go",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\government\\results\\temporary\\government-candidate-756269072\\inventory\\reservation_test.go",
+    "sha256": "fbf4ff362a7c3ac8a4a52142e78495658244f2e42e78bfea19d0987c10dde264"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\results\\run-state\\government-run--0f52a7c72ba15b8ae5bbe1cde0f0689d\\actor-0001.json",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\government\\results\\run-state\\government-run--0f52a7c72ba15b8ae5bbe1cde0f0689d\\actor-0001.json",
+    "sha256": "7b5e02b4203eafa64f01303c9928bff88d30787ba07ed7589bffe39a529f409c"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\results\\run-state\\government-run--0f52a7c72ba15b8ae5bbe1cde0f0689d\\report.json",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\government\\results\\run-state\\government-run--0f52a7c72ba15b8ae5bbe1cde0f0689d\\report.json",
+    "sha256": "cee003ddd3ae118ad20295d588b76b5e1f4e30818869622551266c0fe15f1d98"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\results\\queue-state\\government-queue--aa4c45ec2f3a888078e5036eb0fd7e5d\\events.jsonl",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\government\\results\\queue-state\\government-queue--aa4c45ec2f3a888078e5036eb0fd7e5d\\events.jsonl",
+    "sha256": "35ae29b7ad40cc897d95d084c303e5e3f7d1bd86bf219132fc49567dd46d9930"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\results\\queue-state\\government-queue--aa4c45ec2f3a888078e5036eb0fd7e5d\\queue-report-00000001.json",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\government\\results\\queue-state\\government-queue--aa4c45ec2f3a888078e5036eb0fd7e5d\\queue-report-00000001.json",
+    "sha256": "0568caccc907c7d92a91e48bcaba665eed18567f17f2ace7936eecc54a99ce32"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\results\\queue-state\\government-queue--aa4c45ec2f3a888078e5036eb0fd7e5d\\queue-report-00000002.json",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\government\\results\\queue-state\\government-queue--aa4c45ec2f3a888078e5036eb0fd7e5d\\queue-report-00000002.json",
+    "sha256": "3c0f466fb976804545907b052b8560d12acd7a3c0e410036ebd2014f754ae481"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\results\\queue-state\\government-queue--aa4c45ec2f3a888078e5036eb0fd7e5d\\queue-report-00000009.json",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\government\\results\\queue-state\\government-queue--aa4c45ec2f3a888078e5036eb0fd7e5d\\queue-report-00000009.json",
+    "sha256": "86420b46c3476029e939fbdc3068989643d7b9f1a25726874b0b8ef6a972c0be"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\results\\queue-state\\government-queue--aa4c45ec2f3a888078e5036eb0fd7e5d\\queue.lease",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\government\\results\\queue-state\\government-queue--aa4c45ec2f3a888078e5036eb0fd7e5d\\queue.lease",
+    "sha256": "5e0c7e7893ff82b36f0b6da4978f12ecbfac0c993e1460af5ab7586a2eeff207"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\pre-actual-static-validation-3\\released\\request.json",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\government\\pre-actual-static-validation-3\\released\\request.json",
+    "sha256": "27932c81c623311d07250c5f5a9fd3b56079e4aaa91e11032bbea90aad9fb665"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\pre-actual-static-validation-3\\released\\runtime.json",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\government\\pre-actual-static-validation-3\\released\\runtime.json",
+    "sha256": "55df1320d636d49ea678b43810a41e874aa21e11b48078600df7ebc69d5960ec"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\pre-actual-static-validation-2\\released\\request.json",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\government\\pre-actual-static-validation-2\\released\\request.json",
+    "sha256": "27932c81c623311d07250c5f5a9fd3b56079e4aaa91e11032bbea90aad9fb665"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\pre-actual-static-validation-2\\released\\runtime.json",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\government\\pre-actual-static-validation-2\\released\\runtime.json",
+    "sha256": "55df1320d636d49ea678b43810a41e874aa21e11b48078600df7ebc69d5960ec"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\pre-actual-static-validation\\released\\request.json",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\government\\pre-actual-static-validation\\released\\request.json",
+    "sha256": "7689893705afc00212375cc642a356a445779bae3bd74c37fb4f21744b6a1088"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\pre-actual-static-validation\\released\\runtime.json",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\government\\pre-actual-static-validation\\released\\runtime.json",
+    "sha256": "03b161f61d464c5b865f9a72c1386b7bd939e6b4469b2a9df011f1189311a9b9"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\controller-evidence\\process\\process.json",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\government\\controller-evidence\\process\\process.json",
+    "sha256": "a14c90d15e040e7591e2cbbd9d98a016d4e8ec2ab9ae60e74a2fea795c3f8bc1"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\controller-evidence\\process\\stderr.log",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\government\\controller-evidence\\process\\stderr.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\controller-evidence\\process\\stdout.log",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\government\\controller-evidence\\process\\stdout.log",
+    "sha256": "86420b46c3476029e939fbdc3068989643d7b9f1a25726874b0b8ef6a972c0be"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\controller-evidence\\released-inputs\\0",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\government\\controller-evidence\\released-inputs\\0",
+    "sha256": "b83103dc1f0c9d9985bfe540692869754abbd40249809e55c6aebc4a9d24417b"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\controller-evidence\\released-inputs\\1",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\government\\controller-evidence\\released-inputs\\1",
+    "sha256": "00c945cbe6ecc10c33da15b4d2ab7f9ac1a57f5c0f74bc1ed58a25ac642268c8"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\controller-evidence\\released-inputs\\2",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\government\\controller-evidence\\released-inputs\\2",
+    "sha256": "d6e0f2a8da02dc2262043b53233ccb2bb6f18aecfab258e08cc4d7fe3206d6d7"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\controller-evidence\\released-inputs\\3",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\government\\controller-evidence\\released-inputs\\3",
+    "sha256": "f549cecbb87a7dde4db8063f32297598464fde65ebbc3b255a169aada16045b2"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\controller-evidence\\released-inputs\\4",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\government\\controller-evidence\\released-inputs\\4",
+    "sha256": "b917f5a5eb99f0a607fd282a81acdf7b085e6a1dba14f89c8d0c32f349c82c3e"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\controller-evidence\\released-inputs\\5",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\government\\controller-evidence\\released-inputs\\5",
+    "sha256": "09e982cf8f4bf8bf93a5785dbb6201d33e112393956cbf7a0cdba3304cfea476"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\classic\\authority.json",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\classic\\authority.json",
+    "sha256": "b498f4f4b3d1916ea10c11ed026d8590bf023addc4c4298b5c4eca00ffb0b9fb"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\classic\\grant.json",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\classic\\grant.json",
+    "sha256": "5441e08d00ede1eae95e48492a92907603f52b03bd2dd7890c8e8a9cd5e336c7"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\classic\\native-plan.json",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\classic\\native-plan.json",
+    "sha256": "b04224cf720e45a3991bf36e4898217eac6c9492a9efddb05181947afd62bc02"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\classic\\preparation-actual-final.json",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\classic\\preparation-actual-final.json",
+    "sha256": "34838beb24190e036ca6c27b753b92ae518b406ebe05f78e3245ad4e7678cf07"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\classic\\preparation-current-2.json",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\classic\\preparation-current-2.json",
+    "sha256": "67e4bb6c3cc3a74fe04a08cc468c9eec4237bb1cbfacd1a21a9f373bf4eac449"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\classic\\preparation-current-3.json",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\classic\\preparation-current-3.json",
+    "sha256": "623f0b6b8e6409d6459fbde99a59f340f04fb2e98e292d4cc5ee4c022f6fa59f"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\classic\\preparation-current.json",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\classic\\preparation-current.json",
+    "sha256": "4674cac3be5aec5a55175261de96ce000139ecb6a4fd4b57dcc0e63cf88648b5"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\classic\\preparation-final-2.json",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\classic\\preparation-final-2.json",
+    "sha256": "a555617c0747982ba65377fa7d144e506a68ac2e68a86f23be1767cbc7087a39"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\classic\\preparation-final-3.json",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\classic\\preparation-final-3.json",
+    "sha256": "750dbc8bbe814cd8f72e77b1b236c816fb32d0ecbeb068f422c0e1a6a1b7d30b"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\classic\\preparation-final.json",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\classic\\preparation-final.json",
+    "sha256": "9b591dfdd5bbc4c473439282d7193016d64d488c13b017301cf6cddf176d5be2"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\classic\\preparation.json",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\classic\\preparation.json",
+    "sha256": "a4ec131aec2c869255ad277b9b5bd0afb4de392c8098bf917cbc0dfa13707832"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\classic\\protocol.json",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\classic\\protocol.json",
+    "sha256": "33ac6e763c84e5e97fc85e97438443a41dce8c7844f4f9fc92a0bc2d111125ed"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\classic\\outer-controller-evidence\\controller-bootstrap.json",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\classic\\outer-controller-evidence\\controller-bootstrap.json",
+    "sha256": "1a6c7baae18808457d4531d263462b0df02e5e55022f11fe4345a33b346abe77"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\classic\\outer-controller-evidence\\request.json",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\classic\\outer-controller-evidence\\request.json",
+    "sha256": "ccbe23720348b96488b63c6ff7a54ac5653e499a99d70d62bf8949bdd5cc0f2a"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\classic\\outer-results\\classic-native-positive.json",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\classic\\outer-results\\classic-native-positive.json",
+    "sha256": "ea1954e231b5143ae5cb3e61e345726d0d653649539803c84702d8c871567046"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\classic\\pre-actual-static-validation\\authority.json",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\classic\\pre-actual-static-validation\\authority.json",
+    "sha256": "1d354b086a9cea38dcf9317dea8a949fc1e4d06381ca13439c563f2a79062669"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\classic\\pre-actual-static-validation\\grant.json",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\classic\\pre-actual-static-validation\\grant.json",
+    "sha256": "293af4d77004c5f855eeab3a4e49afca7b03190486ee342018f3bc4ebbadf9c4"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\classic\\pre-actual-static-validation\\protocol.json",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\classic\\pre-actual-static-validation\\protocol.json",
+    "sha256": "462a93dab47e5f722b1eaedcfbbd3477fc3fe78eb4c8116d1c40bd383eff6c1f"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\classic\\pre-actual-static-validation-2\\authority.json",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\classic\\pre-actual-static-validation-2\\authority.json",
+    "sha256": "adfdcab5e962661e561b36d9f590f2b958f1ac60e28e11b6a39f784a32b8ae9e"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\classic\\pre-actual-static-validation-2\\grant.json",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\classic\\pre-actual-static-validation-2\\grant.json",
+    "sha256": "23bfeb17e2eb70b3dab9c66bf2b2e93c0c896586cd2e2882db1b7936a01e054e"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\classic\\pre-actual-static-validation-2\\protocol.json",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\classic\\pre-actual-static-validation-2\\protocol.json",
+    "sha256": "3a578c690e98d7969f2ddf0c8e533df5d0f8681c996ba7204c16155820eb0709"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\classic\\pre-actual-static-validation-3\\authority.json",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\classic\\pre-actual-static-validation-3\\authority.json",
+    "sha256": "ef8e53cdf3170acc88d0a34488cbc6ef0ecdcd78cc74ce108683a2c75864fcdc"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\classic\\pre-actual-static-validation-3\\grant.json",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\classic\\pre-actual-static-validation-3\\grant.json",
+    "sha256": "8748076d272fd7e4f4dfb34e2b245e0b1e2fbb7f180da6922f9c2996666b220e"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\classic\\pre-actual-static-validation-3\\protocol.json",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\classic\\pre-actual-static-validation-3\\protocol.json",
+    "sha256": "08cb03ab88c927b8faebbc99bb1bad5bb82f5f2a544673b87c538c247a844787"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\classic\\released\\mechanical_actor.py",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\classic\\released\\mechanical_actor.py",
+    "sha256": "02609c2e1b5d82db42640c97dc72c4e34b1a4a3fc9168e657da64c8b9f13f2be"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\classic\\released\\request.json",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\classic\\released\\request.json",
+    "sha256": "ccbe23720348b96488b63c6ff7a54ac5653e499a99d70d62bf8949bdd5cc0f2a"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\classic\\released\\role-auth.json",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\classic\\released\\role-auth.json",
+    "sha256": "fd096fc4f03d03d97b73f5d5ee17cf6aa74138cf1cef52e7f90d22b5d6f8bd72"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\classic\\released\\runtime-before-actual-final.json",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\classic\\released\\runtime-before-actual-final.json",
+    "sha256": "d8d9e4bcf9e804166ec52111de74fb6de1019d53245605e0e6fdadb5518e22bd"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\classic\\released\\runtime.json",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\classic\\released\\runtime.json",
+    "sha256": "878af9d3e01e8afe0a870e29df729956f8375ab4c690f9feea412acff5521c60"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\classic\\released\\runtime.pre-final-2.json",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\classic\\released\\runtime.pre-final-2.json",
+    "sha256": "c0fd27c5280aa6325197fc16fbb0d15d812c1562d60718ee10ac13537a6baced"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\classic\\released\\runtime.pre-final-3.json",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\classic\\released\\runtime.pre-final-3.json",
+    "sha256": "bfdee2f8cdd0840d082db414e2f205f3494a598a1aa2efb12d3fd02196972549"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\classic\\released\\runtime.pre-final.json",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\classic\\released\\runtime.pre-final.json",
+    "sha256": "2af54e9071a0dcfc9689ca545136a2d0d7c331f0b2058dbe0fe8ef6499807048"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\classic\\released\\task-card.txt",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\classic\\released\\task-card.txt",
+    "sha256": "09e982cf8f4bf8bf93a5785dbb6201d33e112393956cbf7a0cdba3304cfea476"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\classic\\pre-actual-static-validation-3\\released\\request.json",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\classic\\pre-actual-static-validation-3\\released\\request.json",
+    "sha256": "f62f113bd59f790c9efac576cb15f4542be494dd925a7f7671dfc5f3957058f5"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\classic\\pre-actual-static-validation-3\\released\\runtime.json",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\classic\\pre-actual-static-validation-3\\released\\runtime.json",
+    "sha256": "0c98e760ce6c398e7a147a34dcf313310cf5d081adddea42a5018a72713ca599"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\classic\\pre-actual-static-validation-2\\released\\request.json",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\classic\\pre-actual-static-validation-2\\released\\request.json",
+    "sha256": "3c90cf26b520eba9abdb654ca87ffe7ca6df8cde9527bdaac533aa1bb07c819f"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\classic\\pre-actual-static-validation-2\\released\\runtime.json",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\classic\\pre-actual-static-validation-2\\released\\runtime.json",
+    "sha256": "a33378ba4a16693a250f0c87c1e951f19191b1623ade317e7b58c91c39eb5aaa"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\classic\\pre-actual-static-validation\\released\\request.json",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\classic\\pre-actual-static-validation\\released\\request.json",
+    "sha256": "a9c2ad26dc1b519578d6d9685bac4656a34cd9f67f06a21268c6f2fdbfd39f2b"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\classic\\pre-actual-static-validation\\released\\runtime.json",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\classic\\pre-actual-static-validation\\released\\runtime.json",
+    "sha256": "cb85239434487b0fb1c025f8d19fefe48ac771d8ec64470c971eb15cfdbbdfa7"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\classic\\outer-controller-evidence\\classic-native\\execute.json",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\classic\\outer-controller-evidence\\classic-native\\execute.json",
+    "sha256": "70a96e8656611bcd1eb5cc6d37988cfe2cad23b14f15a56ba2f46441e3ba2204"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\classic\\outer-controller-evidence\\classic-native\\execute.process.json",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\classic\\outer-controller-evidence\\classic-native\\execute.process.json",
+    "sha256": "c4c61f1d698e8469a3077e4281a5f22a1d6bfa991c60e1c3d5c6f514f15da58c"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\classic\\outer-controller-evidence\\classic-native\\execute.stderr.txt",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\classic\\outer-controller-evidence\\classic-native\\execute.stderr.txt",
+    "sha256": "bbd8e15baca2efc8063c3a09bcab85c8e34e3d7734c594f3cb083a80355aa8f9"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\classic\\outer-controller-evidence\\released-inputs\\0",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\classic\\outer-controller-evidence\\released-inputs\\0",
+    "sha256": "878af9d3e01e8afe0a870e29df729956f8375ab4c690f9feea412acff5521c60"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\classic\\outer-controller-evidence\\released-inputs\\1",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\classic\\outer-controller-evidence\\released-inputs\\1",
+    "sha256": "fd096fc4f03d03d97b73f5d5ee17cf6aa74138cf1cef52e7f90d22b5d6f8bd72"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\classic\\outer-controller-evidence\\released-inputs\\2",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\classic\\outer-controller-evidence\\released-inputs\\2",
+    "sha256": "b917f5a5eb99f0a607fd282a81acdf7b085e6a1dba14f89c8d0c32f349c82c3e"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\classic\\outer-controller-evidence\\released-inputs\\3",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\classic\\outer-controller-evidence\\released-inputs\\3",
+    "sha256": "09e982cf8f4bf8bf93a5785dbb6201d33e112393956cbf7a0cdba3304cfea476"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\classic\\outer-controller-evidence\\classic-native\\process\\execute\\process.json",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\classic\\outer-controller-evidence\\classic-native\\process\\execute\\process.json",
+    "sha256": "f5f79880a85a6d1b5a1b46bc63b6e4071e50f26953fefab87ad46ed8d4c6d067"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\classic\\outer-controller-evidence\\classic-native\\process\\execute\\stderr.log",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\classic\\outer-controller-evidence\\classic-native\\process\\execute\\stderr.log",
+    "sha256": "bbd8e15baca2efc8063c3a09bcab85c8e34e3d7734c594f3cb083a80355aa8f9"
+  },
+  {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\classic\\outer-controller-evidence\\classic-native\\process\\execute\\stdout.log",
+    "snapshotPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\external-snapshots\\classic\\outer-controller-evidence\\classic-native\\process\\execute\\stdout.log",
+    "sha256": "70a96e8656611bcd1eb5cc6d37988cfe2cad23b14f15a56ba2f46441e3ba2204"
+  }
+]

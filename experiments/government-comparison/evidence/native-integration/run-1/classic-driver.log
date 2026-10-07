@@ -1,0 +1,9 @@
+Traceback (most recent call last):
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\government-comparison\run-native-integration.py", line 281, in <module>
+    classic_flow() if args.action == "classic-flow" else budget().snapshot())
+    ~~~~~~~~~~~~^^
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\government-comparison\run-native-integration.py", line 243, in classic_flow
+    execute = native_controller.run_classic_step(session, "execute", fixture_budget=b)
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\government-comparison\runtime\native_controller.py", line 420, in run_classic_step
+    raise ValueError("exact parent FixtureBudget bound to this grant and Classic binary is mandatory")
+ValueError: exact parent FixtureBudget bound to this grant and Classic binary is mandatory

@@ -1,0 +1,783 @@
+apiVersion: markitect.government-inspection/v1alpha1
+model:
+    digest: sha256:c1d7194bd6a8961001c68cbace3f7da40d5daf1b22570026d097e6091cf63e93
+    canonical:
+        digest: sha256:f7c3eb82a5d11c61b3159889bb59c3ef2522c61349510d677d0de5a9708d6e1c
+        schemas:
+            - apiVersion: markitect.government-example/v1alpha1
+              purpose: One concrete inventory behavior with a directly testable boundary condition.
+              kinds:
+                Requirement:
+                    purpose: Desired externally observable behavior.
+                    properties:
+                        acceptance:
+                            purpose: A deterministic observation that exercises the invariant.
+                            type: string
+                            minCount: 1
+                            maxCount: 1
+                        statement:
+                            purpose: The required inventory invariant.
+                            type: string
+                            minCount: 1
+                            maxCount: 1
+              source:
+                path: government.yaml
+                digest: sha256:816041553684dc5710baf63217d435f62e9f997d1bbba4b74d9a2c4803da4325
+            - apiVersion: markitect.government/v1alpha1
+              purpose: Versioned responsibilities, prior authority and intended repository realization
+              kinds:
+                Area:
+                    purpose: Recursive durable responsibility independent of technology
+                    properties:
+                        capabilities:
+                            purpose: Available technical skills confer no authority
+                            type: reference
+                            minCount: 0
+                            maxCount: -1
+                            target:
+                                apiVersion: markitect.government/v1alpha1
+                                kind: Capability
+                        parent:
+                            purpose: Parent retains integration responsibility
+                            type: reference
+                            minCount: 0
+                            maxCount: 1
+                            target:
+                                apiVersion: markitect.government/v1alpha1
+                                kind: Area
+                Artifact:
+                    purpose: Intended exact repository path and exclusive writer
+                    properties:
+                        class:
+                            purpose: Normative role, never inferred from file contents
+                            type: enum
+                            minCount: 1
+                            maxCount: 1
+                            values:
+                                - canonical
+                                - realization
+                                - generated
+                                - foreign
+                        path:
+                            purpose: Exact normalized repository-relative path
+                            type: string
+                            minCount: 1
+                            maxCount: 1
+                        writer:
+                            purpose: Unique writer for managed material
+                            type: reference
+                            minCount: 0
+                            maxCount: 1
+                            target:
+                                apiVersion: markitect.government/v1alpha1
+                                kind: Area
+                Capability:
+                    purpose: Pinned tool or skill orthogonal to responsibility
+                    properties:
+                        digest:
+                            purpose: Immutable tool or skill bytes digest
+                            type: string
+                            minCount: 1
+                            maxCount: 1
+                        tool:
+                            purpose: Explicit tool identity
+                            type: string
+                            minCount: 1
+                            maxCount: 1
+                        version:
+                            purpose: Exact tool version
+                            type: string
+                            minCount: 1
+                            maxCount: 1
+                Constitution:
+                    purpose: Joint domain and organization authority explicitly selected by the trusted caller
+                    properties:
+                        approval:
+                            purpose: All selected Ressorts explicitly assent to the final material and evidence
+                            type: enum
+                            minCount: 1
+                            maxCount: 1
+                            values:
+                                - unanimous-explicit-assent
+                        cabinet:
+                            purpose: Frozen unanimous review electorate
+                            type: reference
+                            minCount: 1
+                            maxCount: -1
+                            target:
+                                apiVersion: markitect.government/v1alpha1
+                                kind: Ressort
+                        protectedSubjects:
+                            purpose: Exact domain identities that are root goals protected from delegated amendment
+                            type: object
+                            minCount: 0
+                            maxCount: -1
+                            properties:
+                                apiVersion:
+                                    purpose: Exact Schema version
+                                    type: string
+                                    minCount: 1
+                                    maxCount: 1
+                                kind:
+                                    purpose: Exact Kind
+                                    type: string
+                                    minCount: 1
+                                    maxCount: 1
+                                name:
+                                    purpose: Definition name
+                                    type: string
+                                    minCount: 1
+                                    maxCount: 1
+                                namespace:
+                                    purpose: Explicit namespace, including empty
+                                    type: string
+                                    minCount: 1
+                                    maxCount: 1
+                        root:
+                            purpose: Root integration responsibility
+                            type: reference
+                            minCount: 1
+                            maxCount: 1
+                            target:
+                                apiVersion: markitect.government/v1alpha1
+                                kind: Area
+                Mandate:
+                    purpose: Bounded prior delegation; child delegation must be a subset
+                    properties:
+                        actions:
+                            purpose: Explicit allowed decision classes
+                            type: enum
+                            minCount: 1
+                            maxCount: -1
+                            values:
+                                - implement
+                                - review
+                                - amend-model
+                        area:
+                            purpose: Area holding the delegated responsibility
+                            type: reference
+                            minCount: 1
+                            maxCount: 1
+                            target:
+                                apiVersion: markitect.government/v1alpha1
+                                kind: Area
+                        parent:
+                            purpose: Prior higher delegation
+                            type: reference
+                            minCount: 0
+                            maxCount: 1
+                            target:
+                                apiVersion: markitect.government/v1alpha1
+                                kind: Mandate
+                        scope:
+                            purpose: Explicit model subjects whose changes are delegated
+                            type: object
+                            minCount: 1
+                            maxCount: -1
+                            properties:
+                                apiVersion:
+                                    purpose: Exact Schema version
+                                    type: string
+                                    minCount: 1
+                                    maxCount: 1
+                                kind:
+                                    purpose: Exact Kind
+                                    type: string
+                                    minCount: 1
+                                    maxCount: 1
+                                name:
+                                    purpose: Definition name
+                                    type: string
+                                    minCount: 1
+                                    maxCount: 1
+                                namespace:
+                                    purpose: Explicit namespace, including empty
+                                    type: string
+                                    minCount: 1
+                                    maxCount: 1
+                Realization:
+                    purpose: Many-to-many intended subject-to-file relation, without observed bytes
+                    properties:
+                        artifact:
+                            purpose: Intended concrete artifact
+                            type: reference
+                            minCount: 1
+                            maxCount: 1
+                            target:
+                                apiVersion: markitect.government/v1alpha1
+                                kind: Artifact
+                        role:
+                            purpose: Contribution of this file to the subject
+                            type: string
+                            minCount: 1
+                            maxCount: 1
+                        subject:
+                            purpose: Exact subject being realized
+                            type: object
+                            minCount: 1
+                            maxCount: 1
+                            properties:
+                                apiVersion:
+                                    purpose: Exact Schema version
+                                    type: string
+                                    minCount: 1
+                                    maxCount: 1
+                                kind:
+                                    purpose: Exact Kind
+                                    type: string
+                                    minCount: 1
+                                    maxCount: 1
+                                name:
+                                    purpose: Definition name
+                                    type: string
+                                    minCount: 1
+                                    maxCount: 1
+                                namespace:
+                                    purpose: Explicit namespace, including empty
+                                    type: string
+                                    minCount: 1
+                                    maxCount: 1
+                Responsibility:
+                    purpose: One accountable Area per subject, separate from realization and review
+                    properties:
+                        area:
+                            purpose: Accountable Area
+                            type: reference
+                            minCount: 1
+                            maxCount: 1
+                            target:
+                                apiVersion: markitect.government/v1alpha1
+                                kind: Area
+                        subject:
+                            purpose: Exact arbitrary Definition identity
+                            type: object
+                            minCount: 1
+                            maxCount: 1
+                            properties:
+                                apiVersion:
+                                    purpose: Exact Schema version
+                                    type: string
+                                    minCount: 1
+                                    maxCount: 1
+                                kind:
+                                    purpose: Exact Kind
+                                    type: string
+                                    minCount: 1
+                                    maxCount: 1
+                                name:
+                                    purpose: Definition name
+                                    type: string
+                                    minCount: 1
+                                    maxCount: 1
+                                namespace:
+                                    purpose: Explicit namespace, including empty
+                                    type: string
+                                    minCount: 1
+                                    maxCount: 1
+                Ressort:
+                    purpose: Crosscutting reviewer, never an implicit file writer
+                    properties:
+                        mandate:
+                            purpose: Pinned review authority
+                            type: reference
+                            minCount: 1
+                            maxCount: 1
+                            target:
+                                apiVersion: markitect.government/v1alpha1
+                                kind: Mandate
+              source: {}
+        definitions:
+            - apiVersion: markitect.government-example/v1alpha1
+              kind: Requirement
+              metadata:
+                name: safe-release
+                namespace: inventory
+              purpose: Releasing a reservation must not wrap available inventory at the integer boundary.
+              spec:
+                acceptance: The inventory test calls Release(MaxInt64, 1), expects ErrOverflow, and keeps an in-range addition successful.
+                statement: Release returns an overflow error when adding the release amount would exceed MaxInt64.
+              source:
+                path: government.yaml
+                digest: sha256:816041553684dc5710baf63217d435f62e9f997d1bbba4b74d9a2c4803da4325
+            - apiVersion: markitect.government/v1alpha1
+              kind: Area
+              metadata:
+                name: root
+                namespace: inventory
+              purpose: Owns the complete bounded inventory behavior, its executable example and all resulting files.
+              spec:
+                capabilities: []
+              source:
+                path: government.yaml
+                digest: sha256:816041553684dc5710baf63217d435f62e9f997d1bbba4b74d9a2c4803da4325
+            - apiVersion: markitect.government/v1alpha1
+              kind: Artifact
+              metadata:
+                name: government-source
+                namespace: inventory
+              purpose: Canonical source for the prior model and declared observation boundary.
+              spec:
+                class: canonical
+                path: government.yaml
+                writer:
+                    apiVersion: markitect.government/v1alpha1
+                    kind: Area
+                    name: root
+                    namespace: inventory
+              source:
+                path: government.yaml
+                digest: sha256:816041553684dc5710baf63217d435f62e9f997d1bbba4b74d9a2c4803da4325
+            - apiVersion: markitect.government/v1alpha1
+              kind: Artifact
+              metadata:
+                name: prior-order
+                namespace: inventory
+              purpose: Explicit prior-Constitution-bound request used by the bounded scenario.
+              spec:
+                class: canonical
+                path: order.yaml
+                writer:
+                    apiVersion: markitect.government/v1alpha1
+                    kind: Area
+                    name: root
+                    namespace: inventory
+              source:
+                path: government.yaml
+                digest: sha256:816041553684dc5710baf63217d435f62e9f997d1bbba4b74d9a2c4803da4325
+            - apiVersion: markitect.government/v1alpha1
+              kind: Artifact
+              metadata:
+                name: release-source
+                namespace: inventory
+              purpose: Source implementation of overflow-safe inventory release.
+              spec:
+                class: realization
+                path: inventory/reservation.go
+                writer:
+                    apiVersion: markitect.government/v1alpha1
+                    kind: Area
+                    name: root
+                    namespace: inventory
+              source:
+                path: government.yaml
+                digest: sha256:816041553684dc5710baf63217d435f62e9f997d1bbba4b74d9a2c4803da4325
+            - apiVersion: markitect.government/v1alpha1
+              kind: Artifact
+              metadata:
+                name: release-test
+                namespace: inventory
+              purpose: Focused test of the integer overflow boundary and ordinary addition.
+              spec:
+                class: realization
+                path: inventory/reservation_test.go
+                writer:
+                    apiVersion: markitect.government/v1alpha1
+                    kind: Area
+                    name: root
+                    namespace: inventory
+              source:
+                path: government.yaml
+                digest: sha256:816041553684dc5710baf63217d435f62e9f997d1bbba4b74d9a2c4803da4325
+            - apiVersion: markitect.government/v1alpha1
+              kind: Artifact
+              metadata:
+                name: standalone-module
+                namespace: inventory
+              purpose: Declares the dependency-free module used to test the candidate in isolation.
+              spec:
+                class: realization
+                path: go.mod
+                writer:
+                    apiVersion: markitect.government/v1alpha1
+                    kind: Area
+                    name: root
+                    namespace: inventory
+              source:
+                path: government.yaml
+                digest: sha256:816041553684dc5710baf63217d435f62e9f997d1bbba4b74d9a2c4803da4325
+            - apiVersion: markitect.government/v1alpha1
+              kind: Constitution
+              metadata:
+                name: active
+                namespace: inventory
+              purpose: Selects the prior inventory Requirement, its sole Area and one-Ressort unanimous review cabinet.
+              spec:
+                approval: unanimous-explicit-assent
+                cabinet:
+                    - apiVersion: markitect.government/v1alpha1
+                      kind: Ressort
+                      name: correctness
+                      namespace: inventory
+                root:
+                    apiVersion: markitect.government/v1alpha1
+                    kind: Area
+                    name: root
+                    namespace: inventory
+              source:
+                path: government.yaml
+                digest: sha256:816041553684dc5710baf63217d435f62e9f997d1bbba4b74d9a2c4803da4325
+            - apiVersion: markitect.government/v1alpha1
+              kind: Mandate
+              metadata:
+                name: release-change
+                namespace: inventory
+              purpose: Prior authority for implementing and independently reviewing this one inventory Requirement.
+              spec:
+                actions:
+                    - implement
+                    - review
+                area:
+                    apiVersion: markitect.government/v1alpha1
+                    kind: Area
+                    name: root
+                    namespace: inventory
+                scope:
+                    - apiVersion: markitect.government-example/v1alpha1
+                      kind: Requirement
+                      name: safe-release
+                      namespace: inventory
+              source:
+                path: government.yaml
+                digest: sha256:816041553684dc5710baf63217d435f62e9f997d1bbba4b74d9a2c4803da4325
+            - apiVersion: markitect.government/v1alpha1
+              kind: Realization
+              metadata:
+                name: release-source-realization
+                namespace: inventory
+              purpose: The inventory release implementation realizes the Requirement.
+              spec:
+                artifact:
+                    apiVersion: markitect.government/v1alpha1
+                    kind: Artifact
+                    name: release-source
+                    namespace: inventory
+                role: Adds released stock with explicit integer-overflow protection.
+                subject:
+                    apiVersion: markitect.government-example/v1alpha1
+                    kind: Requirement
+                    name: safe-release
+                    namespace: inventory
+              source:
+                path: government.yaml
+                digest: sha256:816041553684dc5710baf63217d435f62e9f997d1bbba4b74d9a2c4803da4325
+            - apiVersion: markitect.government/v1alpha1
+              kind: Realization
+              metadata:
+                name: release-test-realization
+                namespace: inventory
+              purpose: The focused test verifies the Requirement boundary and ordinary addition.
+              spec:
+                artifact:
+                    apiVersion: markitect.government/v1alpha1
+                    kind: Artifact
+                    name: release-test
+                    namespace: inventory
+                role: Checks overflow rejection and in-range addition.
+                subject:
+                    apiVersion: markitect.government-example/v1alpha1
+                    kind: Requirement
+                    name: safe-release
+                    namespace: inventory
+              source:
+                path: government.yaml
+                digest: sha256:816041553684dc5710baf63217d435f62e9f997d1bbba4b74d9a2c4803da4325
+            - apiVersion: markitect.government/v1alpha1
+              kind: Responsibility
+              metadata:
+                name: release-owner
+                namespace: inventory
+              purpose: The root Area is accountable for the one inventory Requirement.
+              spec:
+                area:
+                    apiVersion: markitect.government/v1alpha1
+                    kind: Area
+                    name: root
+                    namespace: inventory
+                subject:
+                    apiVersion: markitect.government-example/v1alpha1
+                    kind: Requirement
+                    name: safe-release
+                    namespace: inventory
+              source:
+                path: government.yaml
+                digest: sha256:816041553684dc5710baf63217d435f62e9f997d1bbba4b74d9a2c4803da4325
+            - apiVersion: markitect.government/v1alpha1
+              kind: Ressort
+              metadata:
+                name: correctness
+                namespace: inventory
+              purpose: Independently checks the integer-boundary behavior and its focused test.
+              spec:
+                mandate:
+                    apiVersion: markitect.government/v1alpha1
+                    kind: Mandate
+                    name: release-change
+                    namespace: inventory
+              source:
+                path: government.yaml
+                digest: sha256:816041553684dc5710baf63217d435f62e9f997d1bbba4b74d9a2c4803da4325
+        edges:
+            - from: '["markitect.government/v1alpha1","Artifact","inventory","government-source"]'
+              to: '["markitect.government/v1alpha1","Area","inventory","root"]'
+              property: writer
+              source:
+                path: government.yaml
+                digest: sha256:816041553684dc5710baf63217d435f62e9f997d1bbba4b74d9a2c4803da4325
+            - from: '["markitect.government/v1alpha1","Artifact","inventory","prior-order"]'
+              to: '["markitect.government/v1alpha1","Area","inventory","root"]'
+              property: writer
+              source:
+                path: government.yaml
+                digest: sha256:816041553684dc5710baf63217d435f62e9f997d1bbba4b74d9a2c4803da4325
+            - from: '["markitect.government/v1alpha1","Artifact","inventory","release-source"]'
+              to: '["markitect.government/v1alpha1","Area","inventory","root"]'
+              property: writer
+              source:
+                path: government.yaml
+                digest: sha256:816041553684dc5710baf63217d435f62e9f997d1bbba4b74d9a2c4803da4325
+            - from: '["markitect.government/v1alpha1","Artifact","inventory","release-test"]'
+              to: '["markitect.government/v1alpha1","Area","inventory","root"]'
+              property: writer
+              source:
+                path: government.yaml
+                digest: sha256:816041553684dc5710baf63217d435f62e9f997d1bbba4b74d9a2c4803da4325
+            - from: '["markitect.government/v1alpha1","Artifact","inventory","standalone-module"]'
+              to: '["markitect.government/v1alpha1","Area","inventory","root"]'
+              property: writer
+              source:
+                path: government.yaml
+                digest: sha256:816041553684dc5710baf63217d435f62e9f997d1bbba4b74d9a2c4803da4325
+            - from: '["markitect.government/v1alpha1","Constitution","inventory","active"]'
+              to: '["markitect.government/v1alpha1","Ressort","inventory","correctness"]'
+              property: cabinet[0]
+              source:
+                path: government.yaml
+                digest: sha256:816041553684dc5710baf63217d435f62e9f997d1bbba4b74d9a2c4803da4325
+            - from: '["markitect.government/v1alpha1","Constitution","inventory","active"]'
+              to: '["markitect.government/v1alpha1","Area","inventory","root"]'
+              property: root
+              source:
+                path: government.yaml
+                digest: sha256:816041553684dc5710baf63217d435f62e9f997d1bbba4b74d9a2c4803da4325
+            - from: '["markitect.government/v1alpha1","Mandate","inventory","release-change"]'
+              to: '["markitect.government/v1alpha1","Area","inventory","root"]'
+              property: area
+              source:
+                path: government.yaml
+                digest: sha256:816041553684dc5710baf63217d435f62e9f997d1bbba4b74d9a2c4803da4325
+            - from: '["markitect.government/v1alpha1","Realization","inventory","release-source-realization"]'
+              to: '["markitect.government/v1alpha1","Artifact","inventory","release-source"]'
+              property: artifact
+              source:
+                path: government.yaml
+                digest: sha256:816041553684dc5710baf63217d435f62e9f997d1bbba4b74d9a2c4803da4325
+            - from: '["markitect.government/v1alpha1","Realization","inventory","release-test-realization"]'
+              to: '["markitect.government/v1alpha1","Artifact","inventory","release-test"]'
+              property: artifact
+              source:
+                path: government.yaml
+                digest: sha256:816041553684dc5710baf63217d435f62e9f997d1bbba4b74d9a2c4803da4325
+            - from: '["markitect.government/v1alpha1","Responsibility","inventory","release-owner"]'
+              to: '["markitect.government/v1alpha1","Area","inventory","root"]'
+              property: area
+              source:
+                path: government.yaml
+                digest: sha256:816041553684dc5710baf63217d435f62e9f997d1bbba4b74d9a2c4803da4325
+            - from: '["markitect.government/v1alpha1","Ressort","inventory","correctness"]'
+              to: '["markitect.government/v1alpha1","Mandate","inventory","release-change"]'
+              property: mandate
+              source:
+                path: government.yaml
+                digest: sha256:816041553684dc5710baf63217d435f62e9f997d1bbba4b74d9a2c4803da4325
+    constitution:
+        apiVersion: markitect.government/v1alpha1
+        kind: Constitution
+        namespace: inventory
+        name: active
+    cabinet:
+        - apiVersion: markitect.government/v1alpha1
+          kind: Ressort
+          namespace: inventory
+          name: correctness
+    root:
+        apiVersion: markitect.government/v1alpha1
+        kind: Area
+        namespace: inventory
+        name: root
+    findings: []
+survey:
+    observation:
+        roots:
+            - .
+        exclusions:
+            - path: README.md
+              reason: Human fixture operation and evidence-limit instructions are outside candidate scope.
+        entries:
+            - path: .git
+              type: directory
+              mode: directory
+              source: native
+              status: boundary
+              reason: .git is Git metadata
+            - path: README.md
+              type: file
+              mode: "100644"
+              source: tracked
+              status: excluded
+              reason: Human fixture operation and evidence-limit instructions are outside candidate scope.
+            - path: go.mod
+              type: file
+              mode: "100644"
+              digest: sha256:4b2ce0ea5c1d5ccbd8f974e642bcd3581bd4e3a6094b565d6414bd03c816ff8d
+              source: tracked
+              status: observed
+            - path: government.yaml
+              type: file
+              mode: "100644"
+              digest: sha256:816041553684dc5710baf63217d435f62e9f997d1bbba4b74d9a2c4803da4325
+              source: tracked
+              status: observed
+            - path: inventory
+              type: directory
+              mode: directory
+              source: native
+              status: observed
+            - path: inventory/reservation.go
+              type: file
+              mode: "100644"
+              digest: sha256:d08e4543e86e22600b73686ea3408159953cb1bf90f153df939da81aecf8f49c
+              source: tracked
+              status: observed
+            - path: inventory/reservation_test.go
+              type: file
+              mode: "100644"
+              digest: sha256:fbf4ff362a7c3ac8a4a52142e78495658244f2e42e78bfea19d0987c10dde264
+              source: tracked
+              status: observed
+            - path: order.yaml
+              type: file
+              mode: "100644"
+              digest: sha256:46c8a5242d608543d8be84c33c81c85ba6db74eb933d0270e40a85715df0ee0a
+              source: tracked
+              status: observed
+        digest: sha256:183a979818d2979dde40b58e4cff55d18cd3b2b6af8f82246c6899464ac17432
+        revision: 8cc3573a2530b9e5c2508653187394ccfb2f7af0
+        provisional: true
+        complete: true
+    artifacts:
+        - path: .git
+          class: excluded
+          purpose: .git is Git metadata
+          subjects: []
+          observed:
+            path: .git
+            type: directory
+            mode: directory
+            source: native
+            status: boundary
+            reason: .git is Git metadata
+        - path: README.md
+          class: excluded
+          purpose: Human fixture operation and evidence-limit instructions are outside candidate scope.
+          subjects: []
+          observed:
+            path: README.md
+            type: file
+            mode: "100644"
+            source: tracked
+            status: excluded
+            reason: Human fixture operation and evidence-limit instructions are outside candidate scope.
+        - path: go.mod
+          class: realization
+          purpose: Declares the dependency-free module used to test the candidate in isolation.
+          writer:
+            apiVersion: markitect.government/v1alpha1
+            kind: Area
+            namespace: inventory
+            name: root
+          subjects: []
+          observed:
+            path: go.mod
+            type: file
+            mode: "100644"
+            digest: sha256:4b2ce0ea5c1d5ccbd8f974e642bcd3581bd4e3a6094b565d6414bd03c816ff8d
+            source: tracked
+            status: observed
+        - path: government.yaml
+          class: canonical
+          purpose: Canonical source for the prior model and declared observation boundary.
+          writer:
+            apiVersion: markitect.government/v1alpha1
+            kind: Area
+            namespace: inventory
+            name: root
+          subjects: []
+          observed:
+            path: government.yaml
+            type: file
+            mode: "100644"
+            digest: sha256:816041553684dc5710baf63217d435f62e9f997d1bbba4b74d9a2c4803da4325
+            source: tracked
+            status: observed
+        - path: inventory/reservation.go
+          class: realization
+          purpose: Source implementation of overflow-safe inventory release.
+          writer:
+            apiVersion: markitect.government/v1alpha1
+            kind: Area
+            namespace: inventory
+            name: root
+          subjects:
+            - apiVersion: markitect.government-example/v1alpha1
+              kind: Requirement
+              namespace: inventory
+              name: safe-release
+          observed:
+            path: inventory/reservation.go
+            type: file
+            mode: "100644"
+            digest: sha256:d08e4543e86e22600b73686ea3408159953cb1bf90f153df939da81aecf8f49c
+            source: tracked
+            status: observed
+        - path: inventory/reservation_test.go
+          class: realization
+          purpose: Focused test of the integer overflow boundary and ordinary addition.
+          writer:
+            apiVersion: markitect.government/v1alpha1
+            kind: Area
+            namespace: inventory
+            name: root
+          subjects:
+            - apiVersion: markitect.government-example/v1alpha1
+              kind: Requirement
+              namespace: inventory
+              name: safe-release
+          observed:
+            path: inventory/reservation_test.go
+            type: file
+            mode: "100644"
+            digest: sha256:fbf4ff362a7c3ac8a4a52142e78495658244f2e42e78bfea19d0987c10dde264
+            source: tracked
+            status: observed
+        - path: order.yaml
+          class: canonical
+          purpose: Explicit prior-Constitution-bound request used by the bounded scenario.
+          writer:
+            apiVersion: markitect.government/v1alpha1
+            kind: Area
+            namespace: inventory
+            name: root
+          subjects: []
+          observed:
+            path: order.yaml
+            type: file
+            mode: "100644"
+            digest: sha256:46c8a5242d608543d8be84c33c81c85ba6db74eb933d0270e40a85715df0ee0a
+            source: tracked
+            status: observed
+    unknown: []
+    missing: []
+    unavailable: []
+    unassignedSubjects: []
+    unrealizedSubjects: []
+    coverage: accounted-within-declared-boundary

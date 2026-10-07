@@ -1,0 +1,73 @@
+{
+  "kind": "native-integration-negative-handoff-review",
+  "scope": "Read-only consistency review of the revised handoff and mechanics verification section against the frozen preflight, post-run records, and prior delivery validation. No tests or starts were made.",
+  "reviewedDocuments": {
+    "native-integration-handoff.md": "1fdec4451d04d9012be488d7dff80b427ed9457043655049f245bc3a2bff0442",
+    "public/native-integration-mechanics.md": "73e6065515b4b9921feb795ebc89eb060f6c10173d69d764ba0f9392e90c2e53"
+  },
+  "boundEvidence": {
+    "preflightFreezeSha256": "746df37019541ffa7c395afc5b7f6189f93d5b7b75a540f7b5d1431e015b2c10",
+    "preflightReviewSha256": "b2088a9c1caa4a511273666d223f02fc25c7b182565e8998040cf04598db10cc",
+    "governmentPostrunSha256": "30bc6c4ba137425f0051b65ea25cd9cc0c0bffdf826a73878c50101a18110a78",
+    "classicPostrunSha256": "bc9e86e40e04a19c9f554aa1379b24bde1434d1c9e1707c698334d5bfea23954",
+    "classicRecoveryReviewSha256": "f20a32d4f49e1cbdde0d15c6b1f93841ac930603346a6eb11c168203717f6b88",
+    "recoveryFreezeSha256": "a57987a790b6568482666718e76ae60d61d7f7dda2bc19e788e334f1876c662d",
+    "deliveryValidationSha256": "ac5e68e7ca79d178ba34a7ed982ad9c3f2d09b6f0d784c5d82a719a240ab667e"
+  },
+  "findings": {
+    "negativeClosureConsistent": true,
+    "bothPositiveCasesIncomplete": true,
+    "noResumeReplayOrAdditionalAttempt": true,
+    "s1RemainsOpen": true,
+    "deadlineAndReservationClaimsMatch": {
+      "perProductNativeStartCap": 8,
+      "perProductDeterministicRoleCap": 12,
+      "perProductParallelism": 2,
+      "perProductReservedSecondsCap": 1200,
+      "reservedSecondsPerStart": 150,
+      "nativeProcessDeadlineSeconds": 38,
+      "governmentControllerWindowSeconds": 38,
+      "classicControllerWindowSeconds": 180,
+      "sameBookingRecoveryWithoutClockReset": true,
+      "refills": 0
+    },
+    "classicSetupSourceClaim": {
+      "classicIntegrationSourceSha256": "63860426ac9412f591ffe2b8ab1d3944bba5bc49a2c7f45c2c8bd0634a83b48c",
+      "prepareProtocolRuntimeCreatesRecordStoreDirectory": true,
+      "recordStoreUsesThatDirectory": true,
+      "prelaunchRecoveryReviewBoundToHelper": true,
+      "attributionOfWhoCreatedTheObservedDirectory": "not established; the post-run review correctly makes no attribution"
+    },
+    "classicInitialBudgetBindingFailure": {
+      "originalDriverFailureBeforeNativeClaim": true,
+      "driverLoadsGrantFromRepositoryEvidencePath": true,
+      "requestUsesExternalReleasedGrantCopy": true,
+      "originalDriverLogSha256": "db7cdf953a3a621e390da3920a6de4425c085c4ef29d5b4d0870c128ac1d8bf4"
+    },
+    "accountingClaimsMatch": {
+      "governmentNativeStarts": 2,
+      "governmentWrapperAttempts": 1,
+      "governmentDelegateAttempts": 0,
+      "governmentControllerRemainsRunningWithoutProcessRow": true,
+      "classicNativeStarts": 1,
+      "classicRoleAttempts": 0,
+      "classicStatus": "incomplete",
+      "reservedSessionSeconds": {"government": 300, "classic": 150, "combined": 450},
+      "measuredNativeProcessWallSeconds": {"government": 1.646486, "classic": 0.149563, "combined": 1.796049}
+    },
+    "unknownUsageAndHistoricalLimits": {
+      "noRealActorSessionsOrProviderCallsInNativePackage": true,
+      "usageTelemetryRemainsNullUnknown": true,
+      "historicalActualActorStarts": 5,
+      "historicalKnownActorInputOutputTokens": 53331,
+      "historicalTokenTotal": null,
+      "historicalRemoteControlStatus": "unknown",
+      "priorBValidationAndFourLedgerHashesReusedWithoutReread": true,
+      "priorBFreezeSha256": "03406bb50e51562a8b0c73fba675f969b0002bc583c0aee6000b8e3fb3e5898a",
+      "priorBDeliveryValidationSha256": "174f0776b7590da9bc62a0b2c41aeddbec6dae1196f65b2e99284fd81541430b"
+    },
+    "mechanicsTestCountsMatchReceipts": {"focused": 88, "finalDelta": 34, "finalFixtureAccounting": 23},
+    "deliveryCommitBinding": "The handoff's statement that a later delivery commit preserves the frozen bytes was not independently checkable before that commit existed; verify the committed tree against the preflight freeze after commit."
+  },
+  "disposition": "Approve negative closure only. The reviewed documents consistently report incomplete/failed technical fixture attempts, preserve unknown usage and historical ledgers, and make no positive integration, product, semantic, human-acceptance, or S1 claim. The delivery-commit byte-preservation sentence remains subject to post-commit hash reconciliation."
+}

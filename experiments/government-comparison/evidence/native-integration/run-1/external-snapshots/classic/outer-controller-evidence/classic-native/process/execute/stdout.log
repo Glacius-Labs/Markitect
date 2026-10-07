@@ -1,0 +1,50 @@
+{
+  "apiVersion": "markitect.canonical/controller/v1alpha1",
+  "digest": "",
+  "status": "",
+  "configPath": "examples/canonical-projection/canonical.yaml",
+  "proposal": {
+    "apiVersion": "markitect.canonical/controller/v1alpha1",
+    "digest": "",
+    "status": "",
+    "configDigest": "",
+    "ledgerHead": "",
+    "ledgerSelectionDigest": "",
+    "plan": {
+      "apiVersion": "",
+      "digest": "",
+      "status": "",
+      "baseRevision": "",
+      "revision": "",
+      "modelDigest": "",
+      "sourceScope": null,
+      "observedPaths": null,
+      "observedDigest": "",
+      "inventory": null,
+      "impact": {
+        "baseRevision": "",
+        "candidateRevision": "",
+        "changedDefinitions": null,
+        "affectedDefinitions": null,
+        "definitionCauses": null,
+        "scopeAffectedProjections": null,
+        "conservativeInvalidatedProjections": null
+      },
+      "proposals": null,
+      "unobservedProjections": null,
+      "evidenceRefreshRequired": null,
+      "unknownArtifacts": null,
+      "explicitExcludedArtifacts": null,
+      "escalations": null
+    },
+    "inputPaths": null,
+    "dependencyEvidencePaths": null,
+    "inputDigest": ""
+  },
+  "executorDigest": "",
+  "verifierDigest": "",
+  "hostExecutableDigest": "",
+  "toolVersion": "0.14.1",
+  "toolDigest": "sha256:2cad55efad64f15d7f57638bea78312918fbf7d181c730f188b9921504da71c4",
+  "work": []
+}

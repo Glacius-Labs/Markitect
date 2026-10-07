@@ -1,0 +1,10 @@
+apiVersion: markitect.government-order/v1alpha1
+kind: Order
+purpose: Prevent reservation release from overflowing available inventory.
+activeConstitution: REPLACE_FROM_GOVERNMENT_INSPECT
+action: implement
+subjects:
+  - apiVersion: markitect.government-example/v1alpha1
+    kind: Requirement
+    namespace: inventory
+    name: safe-release

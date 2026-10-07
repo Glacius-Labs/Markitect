@@ -1,0 +1,15 @@
+{
+  "inspectionFormat": "YAML",
+  "inspectionStdoutSha256": "384f55ed014eccab89ac88b3a8b93f8e15547a95605ca634c7b5609c04810e10",
+  "constitutionDigest": "sha256:c1d7194bd6a8961001c68cbace3f7da40d5daf1b22570026d097e6091cf63e93",
+  "orderBinding": {
+    "baseCommit": "fb6bfc1c6eefa799606dc19cb990bad139f34662",
+    "constitutionDigest": "sha256:c1d7194bd6a8961001c68cbace3f7da40d5daf1b22570026d097e6091cf63e93",
+    "fixtureId": "government-native-positive-v1",
+    "managedRef": "refs/markitect/government/active/scientist-positive",
+    "orderSha256": "7707549c484a2af0f864bb914b9b192e9352a603985f7cede093a2c32655223d",
+    "repository": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\actor"
+  },
+  "nativeStartsAddedByParsingOrBinding": 0,
+  "parserCorrection": "Initial post-process JSON parser failed; existing YAML output parsed without another native start or candidate repair"
+}

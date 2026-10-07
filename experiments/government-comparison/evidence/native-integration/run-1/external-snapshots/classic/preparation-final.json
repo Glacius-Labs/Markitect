@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "kind": "classic-final-preparation",
+  "initialPreparation": {
+    "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\classic\\preparation.json",
+    "sha256": "a4ec131aec2c869255ad277b9b5bd0afb4de392c8098bf917cbc0dfa13707832"
+  },
+  "preFinalRuntime": {
+    "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\classic\\released\\runtime.pre-final.json",
+    "sha256": "2af54e9071a0dcfc9689ca545136a2d0d7c331f0b2058dbe0fe8ef6499807048"
+  },
+  "finalRuntime": {
+    "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\classic\\released\\runtime.json",
+    "sha256": "c0fd27c5280aa6325197fc16fbb0d15d812c1562d60718ee10ac13537a6baced"
+  },
+  "updatedRuntimeFileDigests": [
+    {
+      "role": "executor",
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\runtime\\government.py",
+      "oldDigest": "sha256:2e9bd1fac00f8a82dee9076b6ce08bd2fd5e42edd2206bc28f309b17666d0cef",
+      "newDigest": "sha256:324cabb649eb508bf804ae8b9714134c642851f186c28139c89320867fff5359"
+    },
+    {
+      "role": "verifier",
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\runtime\\government.py",
+      "oldDigest": "sha256:2e9bd1fac00f8a82dee9076b6ce08bd2fd5e42edd2206bc28f309b17666d0cef",
+      "newDigest": "sha256:324cabb649eb508bf804ae8b9714134c642851f186c28139c89320867fff5359"
+    }
+  ],
+  "roleAuthorization": {
+    "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\classic\\released\\role-auth.json",
+    "sha256": "fd096fc4f03d03d97b73f5d5ee17cf6aa74138cf1cef52e7f90d22b5d6f8bd72"
+  },
+  "actorRepository": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\classic\\actor",
+  "baseCommit": "20c0b4c85135bc5d76fe4d337ff5450b8d7178bf",
+  "actorGitClean": true,
+  "fixtureLedger": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\fixture-ledger.sqlite",
+  "controllerActions": [
+    "execute",
+    "apply",
+    "verify",
+    "audit",
+    "apply-replay"
+  ],
+  "nativeOrActorProcessesStarted": false,
+  "providerCalls": 0,
+  "classification": "source-frozen runtime pin refresh only; no native/controller/Actor/provider launch"
+}

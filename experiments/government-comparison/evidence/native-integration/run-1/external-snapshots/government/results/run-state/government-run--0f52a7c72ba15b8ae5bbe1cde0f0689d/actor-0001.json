@@ -1,0 +1,43 @@
+{
+  "sequence": 1,
+  "startedAt": "2026-10-07T22:46:20.2209525Z",
+  "finishedAt": "2026-10-07T22:46:20.3896219Z",
+  "phase": "execute",
+  "slotId": "positive-root-executor",
+  "scopes": [
+    "[\"markitect.government-example/v1alpha1\",\"Requirement\",\"inventory\",\"safe-release\"]"
+  ],
+  "result": {
+    "Response": {
+      "apiVersion": "",
+      "runId": "",
+      "nonce": "",
+      "role": "",
+      "inputDigest": "",
+      "outcome": "",
+      "candidateFiles": null,
+      "evidenceRefs": null,
+      "verifierObservations": null,
+      "uncertainty": null
+    },
+    "Receipt": {
+      "apiVersion": "markitect.example.org/agent-execution/v1alpha1",
+      "runId": "90e24412d5d7c187eb30fcb3ab627035",
+      "inputDigest": "sha256:590de9df2fea26b356d54705165b1e7b5a96aafae1258428441fc143ce26704f",
+      "contextDigest": "sha256:70dc634529794afb2f08090cfa8f3d566147792aa628154c61f65a4a03b0e29b",
+      "configDigest": "sha256:09da54bce244f4c5f9b0c9b78b927ce8974b349212e8f155963ea111ee64f9d3",
+      "commandDigest": "sha256:a048c0b0ec91f1bb93f659cb2df209aef0549be477fa3af1e29f6feb6422dbaa",
+      "executableDigest": "sha256:d87063e5597f257004c731b66c59c56c91038861c6877b1a3dca6b8c4e919125",
+      "runtimeFilesDigest": "sha256:88b7c9cdb4b53fd7d88c4844e9f9cf9ce59bc1d0c22a06e84c22eaadbab1af25",
+      "providerVersion": "python-fixed-role-response-v1",
+      "providerVersionDigest": "sha256:724397c0b5615e3a70af28508cd6b20e6857a6b1340d6e352d8c7b71c6cc1621",
+      "stdoutDigest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrDigest": "sha256:5a1eb70373ac4e071278441cdec844ec0cd01c8ff64094d428c932447d563477",
+      "privateLogDigest": "",
+      "outcome": "failed",
+      "wallTimeMilliseconds": 159,
+      "retryCount": 0
+    }
+  },
+  "error": "external runner failed"
+}

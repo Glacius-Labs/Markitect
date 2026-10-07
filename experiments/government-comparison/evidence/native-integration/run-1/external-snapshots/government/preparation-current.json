@@ -1,0 +1,40 @@
+{
+  "classification": "supersedes all prior provisional runtime closure preparation records; pre-positive no native start",
+  "runtime": {
+    "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\released\\runtime.json",
+    "sha256": "55df1320d636d49ea678b43810a41e874aa21e11b48078600df7ebc69d5960ec"
+  },
+  "authority": {
+    "request": {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\released\\request.json",
+      "sha256": "27932c81c623311d07250c5f5a9fd3b56079e4aaa91e11032bbea90aad9fb665"
+    },
+    "grant": {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\grant.json",
+      "sha256": "7bf982f7e5a5c956b42ef10d25b89afe654451c8b5348b0710a5113e247ff716"
+    },
+    "protocol": {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\protocol.json",
+      "sha256": "3a578c690e98d7969f2ddf0c8e533df5d0f8681c996ba7204c16155820eb0709"
+    }
+  },
+  "priorInputs": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\pre-actual-static-validation",
+  "changes": [
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\runtime\\government_roles.py",
+      "prior": "sha256:0ff5ab068607b1b38435f62771807450e602f6818bce5c4e53c6c01e62a8f023",
+      "final": "sha256:f5d6727d8074fe1a4089a39ab48de5708401483a4935761d2751b27a06671c6f"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\runtime\\government_roles.py",
+      "prior": "sha256:0ff5ab068607b1b38435f62771807450e602f6818bce5c4e53c6c01e62a8f023",
+      "final": "sha256:f5d6727d8074fe1a4089a39ab48de5708401483a4935761d2751b27a06671c6f"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\runtime\\government_roles.py",
+      "prior": "sha256:0ff5ab068607b1b38435f62771807450e602f6818bce5c4e53c6c01e62a8f023",
+      "final": "sha256:f5d6727d8074fe1a4089a39ab48de5708401483a4935761d2751b27a06671c6f"
+    }
+  ],
+  "nativeStartsByThisPreparation": 0
+}

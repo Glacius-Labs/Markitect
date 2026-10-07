@@ -1,0 +1,32 @@
+{
+  "argv": [
+    "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\markitect-04e225d.exe",
+    "government",
+    "--repo",
+    "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\actor",
+    "--action",
+    "queue",
+    "--backlog",
+    "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\released\\backlog.json",
+    "--write"
+  ],
+  "cwd": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\actor",
+  "returnCode": 0,
+  "wallSeconds": 1.1934311999939382,
+  "stopReason": null,
+  "processTreeControl": "windows-job-kill-on-close",
+  "filesystemIsolation": "not established by process wrapper",
+  "automaticRetries": 0,
+  "receipts": [
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\controller-evidence\\process\\stdout.log",
+      "sha256": "86420b46c3476029e939fbdc3068989643d7b9f1a25726874b0b8ef6a972c0be",
+      "kind": "stdout.log"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\controller-evidence\\process\\stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "kind": "stderr.log"
+    }
+  ]
+}

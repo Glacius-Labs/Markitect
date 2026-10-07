@@ -395,6 +395,26 @@ class DispatchTests(unittest.TestCase):
         self.assertTrue(any("common trial ledger" in gap for gap in result["gaps"]))
         self.assertEqual(self.ledger.snapshot()["actorSessions"], 0)
 
+    def test_controller_process_receipts_are_append_only_without_actor_booking(self):
+        r, path = self.request()
+        self.authorize()
+        argv = [str(Path(sys.executable).resolve()), "synthetic-controller"]
+        self.ledger.reserve_controller_dispatch(r["dispatchId"], execution_sha(r), path.read_bytes(), argv,
+                                                r["task"]["id"], r["purpose"],
+                                                self.authority.grant["maxActorSessions"])
+        self.assertTrue(self.ledger.claim_dispatch(r["dispatchId"], "launching"))
+        recorded = self.ledger.record_controller_process(r["dispatchId"], "synthetic-step", time.time(),
+                                                         {"status": "completed", "argv": argv,
+                                                          "stdoutSha256": "1" * 64})
+        snapshot = self.ledger.snapshot()
+        self.assertEqual(snapshot["actorSessions"], 0)
+        self.assertEqual(len(snapshot["controllerProcesses"]), 1)
+        self.assertEqual(snapshot["controllerProcesses"][0]["action"], "synthetic-step")
+        self.assertEqual(snapshot["controllerProcesses"][0]["receipt_sha256"], recorded["receiptSha256"])
+        with self.assertRaisesRegex(ValueError, "immutable receipt"):
+            self.ledger.record_controller_process(r["dispatchId"], "synthetic-step", time.time(),
+                                                  {"status": "completed", "argv": argv})
+
     def test_no_mode_only_launch_or_arbitrary_mechanical_program(self):
         r, path = self.request()
         with self.assertRaises(ValueError):

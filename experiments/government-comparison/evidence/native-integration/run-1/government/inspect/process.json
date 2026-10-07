@@ -1,0 +1,31 @@
+{
+  "argv": [
+    "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\markitect-04e225d.exe",
+    "government",
+    "--repo",
+    "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\actor",
+    "--config",
+    "government.yaml",
+    "--action",
+    "inspect"
+  ],
+  "cwd": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\actor",
+  "returnCode": 0,
+  "wallSeconds": 0.4530548000475392,
+  "stopReason": null,
+  "processTreeControl": "windows-job-kill-on-close",
+  "filesystemIsolation": "not established by process wrapper",
+  "automaticRetries": 0,
+  "receipts": [
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\government\\inspect\\stdout.log",
+      "sha256": "384f55ed014eccab89ac88b3a8b93f8e15547a95605ca634c7b5609c04810e10",
+      "kind": "stdout.log"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-integration\\run-1\\government\\inspect\\stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "kind": "stderr.log"
+    }
+  ]
+}

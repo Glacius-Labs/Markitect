@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "kind": "classic-final-preparation",
+  "previousFinalPreparation": {
+    "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\classic\\preparation-final-2.json",
+    "sha256": "a555617c0747982ba65377fa7d144e506a68ac2e68a86f23be1767cbc7087a39"
+  },
+  "preFinalRuntime": {
+    "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\classic\\released\\runtime.pre-final-3.json",
+    "sha256": "bfdee2f8cdd0840d082db414e2f205f3494a598a1aa2efb12d3fd02196972549"
+  },
+  "finalRuntime": {
+    "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\classic\\released\\runtime.json",
+    "sha256": "d8d9e4bcf9e804166ec52111de74fb6de1019d53245605e0e6fdadb5518e22bd"
+  },
+  "updatedRuntimeFileDigests": [
+    {
+      "role": "executor",
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\runtime\\government.py",
+      "oldDigest": "sha256:324cabb649eb508bf804ae8b9714134c642851f186c28139c89320867fff5359",
+      "newDigest": "sha256:f14869c0d1977163a40900512ddb249cefae593a119169a17a5220875c503cd3"
+    },
+    {
+      "role": "verifier",
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\runtime\\government.py",
+      "oldDigest": "sha256:324cabb649eb508bf804ae8b9714134c642851f186c28139c89320867fff5359",
+      "newDigest": "sha256:f14869c0d1977163a40900512ddb249cefae593a119169a17a5220875c503cd3"
+    }
+  ],
+  "roleAuthorization": {
+    "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\classic\\released\\role-auth.json",
+    "sha256": "fd096fc4f03d03d97b73f5d5ee17cf6aa74138cf1cef52e7f90d22b5d6f8bd72"
+  },
+  "actorRepository": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\classic\\actor",
+  "baseCommit": "20c0b4c85135bc5d76fe4d337ff5450b8d7178bf",
+  "actorGitClean": true,
+  "controllerActions": [
+    "execute",
+    "apply",
+    "verify",
+    "audit",
+    "apply-replay"
+  ],
+  "nativeOrActorProcessesStarted": false,
+  "providerCalls": 0,
+  "classification": "final source-frozen RuntimeFile digest refresh only; no native/controller/Actor/provider launch"
+}

@@ -1,0 +1,60 @@
+{
+  "classification": "static pre-native runtime closure refresh only",
+  "arm": "government",
+  "priorRuntime": {
+    "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\released\\runtime-before-actual-final.json",
+    "sha256": "033bfa9e8edbc41e4ab654197c4255ba90bf0772252654bc1350cf6ba5225086"
+  },
+  "finalRuntime": {
+    "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\released\\runtime.json",
+    "sha256": "03b161f61d464c5b865f9a72c1386b7bd939e6b4469b2a9df011f1189311a9b9"
+  },
+  "changes": [
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\runtime\\government_roles.py",
+      "prior": "sha256:a4efe11e040e299c519639cb7548a1f96aaa2b4fadc5e8908e2ac8fedbc5dec6",
+      "final": "sha256:0ff5ab068607b1b38435f62771807450e602f6818bce5c4e53c6c01e62a8f023"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\runtime\\native_controller.py",
+      "prior": "sha256:c8535e504ad293124a769d379c2a935162515841ee251ffd995a3cb2c083fc55",
+      "final": "sha256:1f2e92652593805c8e4f38e3db92b7ebcd6cb4fcb5553be4752420159b440ec6"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\runtime\\native_fixture_budget.py",
+      "prior": "sha256:10dcdc1270617208c4c8dbe64ea56d21b9f9e04718d1c79f4919a2f66ad00db8",
+      "final": "sha256:379e6109de05d909a2867d84b6f9b75f401b5f661da7ae6f06c9e91c32732d34"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\runtime\\government_roles.py",
+      "prior": "sha256:a4efe11e040e299c519639cb7548a1f96aaa2b4fadc5e8908e2ac8fedbc5dec6",
+      "final": "sha256:0ff5ab068607b1b38435f62771807450e602f6818bce5c4e53c6c01e62a8f023"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\runtime\\native_controller.py",
+      "prior": "sha256:c8535e504ad293124a769d379c2a935162515841ee251ffd995a3cb2c083fc55",
+      "final": "sha256:1f2e92652593805c8e4f38e3db92b7ebcd6cb4fcb5553be4752420159b440ec6"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\runtime\\native_fixture_budget.py",
+      "prior": "sha256:10dcdc1270617208c4c8dbe64ea56d21b9f9e04718d1c79f4919a2f66ad00db8",
+      "final": "sha256:379e6109de05d909a2867d84b6f9b75f401b5f661da7ae6f06c9e91c32732d34"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\runtime\\government_roles.py",
+      "prior": "sha256:a4efe11e040e299c519639cb7548a1f96aaa2b4fadc5e8908e2ac8fedbc5dec6",
+      "final": "sha256:0ff5ab068607b1b38435f62771807450e602f6818bce5c4e53c6c01e62a8f023"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\runtime\\native_controller.py",
+      "prior": "sha256:c8535e504ad293124a769d379c2a935162515841ee251ffd995a3cb2c083fc55",
+      "final": "sha256:1f2e92652593805c8e4f38e3db92b7ebcd6cb4fcb5553be4752420159b440ec6"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\runtime\\native_fixture_budget.py",
+      "prior": "sha256:10dcdc1270617208c4c8dbe64ea56d21b9f9e04718d1c79f4919a2f66ad00db8",
+      "final": "sha256:379e6109de05d909a2867d84b6f9b75f401b5f661da7ae6f06c9e91c32732d34"
+    }
+  ],
+  "nativeStarts": 0
+}

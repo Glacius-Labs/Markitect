@@ -1,0 +1,49 @@
+{
+  "sourceThreadId": "01a11367-a781-7683-a20f-46e12614dcb4",
+  "sourceCoordinationPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\coordinator-authority-snapshot.json",
+  "sourceCoordinationSha256": "04484d4220dd7383af1d2675a95384554380dccc5a14ee8fc5908c3a474ede58",
+  "sourceOriginalCoordinationPath": "C:\\Users\\Consiliari\\Glacius Labs\\Markitect\\docs\\design\\government\\coordination-state.json",
+  "sourceJsonPointer": "threads[name=Scientist].evidence.nativeIntegrationPreparationGrant",
+  "grant": {
+    "issuedUtc": "2026-10-07T22:01:32Z",
+    "key": "native-s1-integration-fixtures-20261008",
+    "status": "Assigned; usage not yet reported",
+    "owner": "Scientist",
+    "products": [
+      {
+        "name": "Government",
+        "sourceSha": "04e225d5caee78c2a198607143863fca1e829750",
+        "binarySha256": "12241f325e4af59451e4021b31d9e6f5b829b5de06c94d35eaabfb9d663aa51f"
+      },
+      {
+        "name": "Classic",
+        "sourceSha": "c91363b7ac4decbe87212ff0f588b5451581a152",
+        "releaseVersion": "v0.14.1",
+        "binarySha256": "2cad55efad64f15d7f57638bea78312918fbf7d181c730f188b9921504da71c4"
+      }
+    ],
+    "perProduct": {
+      "positiveCases": 1,
+      "additionalCase": "Directly related interruption/resume or replay refusal",
+      "nativeCliOrControllerStartsMaximum": 8,
+      "deterministicRoleStartsMaximum": 12,
+      "maxParallel": 2,
+      "totalProcessSecondsMaximum": 1200
+    },
+    "combined": {
+      "nativeCliOrControllerStartsMaximum": 16,
+      "deterministicRoleStartsMaximum": 24,
+      "totalProcessSecondsMaximum": 2400
+    },
+    "realActorStartsAuthorized": 0,
+    "providerCallsAuthorized": 0,
+    "studyCellsAuthorized": 0,
+    "constraints": "Disposable public fixture repositories with separate clearly synthetic ledgers. Preserve historical real usage/stops/nulls. Each actual role pre-reserved; controller has process/time accounting but is not an extra role. Native positive Government result requires all independent reviewers and final Ressort votes. Validate authority/inputs/pins/deadlines before effects; locator alone never grants authority. Stop on concrete product blocker or exhausted grant.",
+    "excluded": "No product source changes, hidden repairs, heavy full product suites, new platform, inference, publication or budget refill.",
+    "usage": {
+      "nativeCliOrControllerStarts": null,
+      "deterministicRoleStarts": null,
+      "totalProcessSeconds": null
+    }
+  }
+}

@@ -1,0 +1,110 @@
+{
+  "kind": "native-integration-negative-complete-delivery-validation",
+  "scope": "Read-only validation of frozen inputs, external snapshots, SQLite ledgers, pins, and preserved prior evidence. No tests, native binaries, app-server, product, provider, model, or Actor calls were made.",
+  "preflight": {
+    "freezeSha256": "746df37019541ffa7c395afc5b7f6189f93d5b7b75a540f7b5d1431e015b2c10",
+    "inputCount": 77,
+    "matched": 77,
+    "mismatched": 0
+  },
+  "recovery": {
+    "freezeSha256": "a57987a790b6568482666718e76ae60d61d7f7dda2bc19e788e334f1876c662d",
+    "boundInputs": [
+      "recover-classic-prelaunch.py",
+      "classic-prelaunch-recovery-review.md",
+      "preflight-freeze.json"
+    ],
+    "inputCount": 3,
+    "matched": 3,
+    "noClockReset": true,
+    "newControllerBooking": false
+  },
+  "externalSnapshots": {
+    "manifestSha256": "2708a610bd1a18b167b59dd896e0e63011aaee020b5fcf0b60914dea8f3c91e4",
+    "count": 112,
+    "originalsMatched": 112,
+    "capturedSnapshotsMatched": 112,
+    "mismatches": 0,
+    "sqliteSnapshots": {
+      "native-starts.sqlite": "a8d6901e1298674b933e84f1b1e8fb0bf5d854a2b3fd246dcecb164e7767eac7",
+      "fixture-ledger.sqlite": "cf930cd89b2e97c8215e8526e1373f6eaf201788d7125bf47a87fa32ad2bddf7",
+      "government/fixture-ledger.sqlite": "c00c116064ecc8cd910c72ffb6f6e250b403fded24e20f85e8b55d38f87140a5"
+    }
+  },
+  "quotaAndLedgers": {
+    "summarySha256": "44b3c5a51459cb161552ccec11e92870dfb3b987b5afcb0eab2ea22a66333b89",
+    "budgetSnapshotSha256": "cdea6577d7c4699920b53063cf5bb94d589a0e264abf27d80e5fa939bc955647",
+    "postInspectBudgetSha256": "7ccd289e4da57a92a7382cc3e7c558d8ec40859d9f8ece779eb6a5660482a94a",
+    "sqliteAccess": "All three captured SQLite databases were opened using URI mode=ro; only counts, grouped statuses, product, and reserved seconds were queried.",
+    "nativeStarts": {
+      "government": {"count": 2, "reservedSeconds": 300},
+      "classic": {"count": 1, "reservedSeconds": 150},
+      "total": 3,
+      "reservedSecondsTotal": 450
+    },
+    "government": {
+      "nativeStartClaims": 2,
+      "nativeProcessesWithReceipts": 2,
+      "wrapperAttempts": 1,
+      "delegateAttempts": 0,
+      "reservedControllerAndRoleSessionSeconds": 300,
+      "controllerRunStatus": "running",
+      "controllerProcessRows": 0,
+      "positiveCase": "incomplete",
+      "resumeOrReplay": "not run after blocker"
+    },
+    "classic": {
+      "nativeStartClaims": 1,
+      "nativeProcessesWithReceipts": 1,
+      "wrapperAttempts": 0,
+      "roleAttempts": 0,
+      "reservedControllerAndRoleSessionSeconds": 150,
+      "controllerRunStatus": "incomplete",
+      "controllerProcessStatus": "incomplete",
+      "positiveCase": "incomplete",
+      "resumeOrReplay": "not run after blocker"
+    },
+    "refills": 0,
+    "newRealActorSessions": 0,
+    "providerCalls": 0,
+    "studyCells": 0,
+    "bookkeepingLimitation": "Government controller bookkeeping remains running with no controller-process row despite two native receipts; Classic is incomplete. These are negative/incomplete outcomes, not successful integration evidence."
+  },
+  "pinnedBinariesAndGitBases": {
+    "governmentPinSha256": "9599e6be0ced1cdbb96a3f2a288a7826ab74e5053c8aa5508e017dbdea20d92a",
+    "governmentBinarySha256": "12241f325e4af59451e4021b31d9e6f5b829b5de06c94d35eaabfb9d663aa51f",
+    "governmentBinaryMatchesPin": true,
+    "governmentProductHead": "04e225d5caee78c2a198607143863fca1e829750",
+    "governmentProductHeadMatchesAcceptedPin": true,
+    "governmentActorBase": "fb6bfc1c6eefa799606dc19cb990bad139f34662",
+    "governmentActorWorktreeClean": true,
+    "classicPinSha256": "097a42d2e6ea3553f0ee69c922b2df166186c7d9841057f1d6355ffa6831ff8c",
+    "classicBinarySha256": "2cad55efad64f15d7f57638bea78312918fbf7d181c730f188b9921504da71c4",
+    "classicBinaryMatchesPin": true,
+    "classicActorBase": "20c0b4c85135bc5d76fe4d337ff5450b8d7178bf",
+    "classicActorWorktreeClean": true,
+    "classicHeldProductHead": "c91363b7ac4decbe87212ff0f588b5451581a152",
+    "classicHeldHeadMatchesPin": true,
+    "classicPinnedRuntimeSource": "7dbd599c81540c8203a1b7f83afbc335174f4f1f",
+    "allFourGitWorktreesClean": true
+  },
+  "preservedEarlierEvidence": {
+    "bMetadataFreezeSha256": "03406bb50e51562a8b0c73fba675f969b0002bc583c0aee6000b8e3fb3e5898a",
+    "bDeliveryValidationSha256": "174f0776b7590da9bc62a0b2c41aeddbec6dae1196f65b2e99284fd81541430b",
+    "historicalValidationSha256": "5ace264c64479c095cb00401978eaa396dbd760a8a69d3c3045ba8a82348a6a7",
+    "historicalLedgers": {
+      "actual-runner-authorized-starts.sqlite": "74dfd51e2802bc67131891b28c6858129ff5ef4a50a6f1fe06a8793a7250732f",
+      "runner-01601-diagnostic.sqlite": "33bd2ba59b11ab6d54f75c55e6d12b00ec6b90df00106a1419aed239cef2982c",
+      "context-additional/dispatch.sqlite": "b4f13c5053ad1f00e477bf9be9831a5075f2ea0d8d33d8db6ce8a2173a6a0be8",
+      "context-tools/dispatch.sqlite": "c4af6de468bd93a7373c56295075771da7981d5d541bcf2261e20556ec31bb89"
+    },
+    "historicalLedgerRecheck": "Not re-read for this validation; the four hashes and unchanged result are reused from the prior delivery-validation."
+  },
+  "limitations": [
+    "Government native work has an unresolved running-controller bookkeeping gap; the positive case is incomplete and was not resumed or replayed.",
+    "Classic native execution is incomplete; no missing stage was retried.",
+    "The package records no delegate attempts, real Actor sessions, provider calls, or study cells.",
+    "Process wrappers record Windows Job control but do not establish filesystem isolation or independent OS identities.",
+    "This validation makes no positive integration, product-readiness, semantic-success, human-acceptance, or S1-readiness claim."
+  ]
+}
