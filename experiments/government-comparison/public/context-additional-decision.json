@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "decisionId": "overseer-context-additional-2026-10-07",
+  "resourceDecision": "one additional public context allocation despite unknown historical total, explicitly authorized by Overseer under user Go",
+  "runGrantIssued": false,
+  "maxNewSessions": 1,
+  "predecessorSessions": 3,
+  "cumulativeSessionCeiling": 4,
+  "wallSeconds": 180,
+  "maxParallelSessions": 1,
+  "wrapperAgentTurns": 1,
+  "retrospectiveTokenThreshold": 10000,
+  "wrapperRetries": 0,
+  "children": 0,
+  "continuations": 0,
+  "semanticRepairs": 0,
+  "newPurchases": false,
+  "historicalLedgerSha256": ["74dfd51e2802bc67131891b28c6858129ff5ef4a50a6f1fe06a8793a7250732f", "33bd2ba59b11ab6d54f75c55e6d12b00ec6b90df00106a1419aed239cef2982c"],
+  "scope": "Only the two existing synthetic context files; no separate access/write/process probe",
+  "history": "Three old starts remain consumed; unknown tokens remain null, known subtotal 10009, total null; no old budget compliance claim",
+  "studyProfile": "unchanged observed-native-usage-v2; local unknown tokens block further admission; no general ignore-unknown control"
+}

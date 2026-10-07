@@ -137,6 +137,9 @@ freeze the resulting context policy equally across arms.
 The common [measurement profile v2](public/measurement-profile-v2.md) is adopted
 equally for all arms. Numeric common limits remain unchanged. Known tokens with
 unknown provider requests permit later admission; unknown tokens still block.
+The [explicit additional context allocation](public/context-additional-allocation.md)
+retains three exhausted diagnostic starts and permits only one new resource
+window. It changes no study-profile rule and issues no executable Run-Grant.
 Concrete context-only drafts follow focused verification and metadata-only
 collection. They authorize no Actor session; the frozen handoff ends on hold.
 

@@ -1,5 +1,12 @@
 # Common measurement profile v2
 
+Current diagnostic follow-up: Overseer explicitly authorized a separate one-start
+resource allocation despite unknown historical total tokens. See
+[context-additional-allocation.md](context-additional-allocation.md). This replaces
+the in-place diagnostic migration prerequisite described below; the v2 study
+profile and its unknown-token rule remain unchanged. Earlier frozen drafts stay
+unapproved historical evidence.
+
 Overseer adopted this common measurement correction on 2026-10-07 at 19:31
 Europe/Berlin. This changes admission semantics for all three arms equally;
 it grants no Actor session and clears no S1 readiness gate. The canonical files

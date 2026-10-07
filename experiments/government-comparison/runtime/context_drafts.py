@@ -2,7 +2,6 @@
 import argparse
 import json
 from pathlib import Path
-import secrets
 import subprocess
 import sys
 
@@ -11,6 +10,7 @@ from dispatch import CHECKOUT, LIVE_GAPS, digest, encoded, execution_sha, extern
 from measurement_profile import LEGACY, OBSERVED, limits_sha, profile_sha
 from metadata_readonly import collect
 import runner
+from context_allocation import ALLOCATION_ID, ALLOCATION_PATH, allocation_binding
 
 
 def write(path, value):
@@ -33,42 +33,22 @@ def prepare(destination, executable, *, collect_current_metadata=False):
     listing = collect(root / "metadata", executable)
     history = read_history()
     history_receipt = write(root / "diagnostic-history.json", history)
-    actor, release, results = root / "actor-workspace", root / "released", root / "results"
-    actor.mkdir()
-    release.mkdir()
+    previous = json.loads(Path(__file__).parents[1].joinpath("evidence/profile-v2/run-1/request.draft.json").read_bytes())
+    actor, results = Path(previous["actorRepository"]), root / "results"
     results.mkdir()
-    nonce = secrets.token_hex(16)
-    external_file, owned_file = release / "context.txt", actor / "actor-own.txt"
-    external_file.write_bytes(("released-context-" + nonce + "\n").encode())
-    owned_file.write_bytes(("actor-own-" + nonce + "\n").encode())
+    external_file, owned_file = map(Path, previous["allowedReadPaths"])
     def binding(path):
         return {"path": str(path), "sha256": digest(path.read_bytes())}
     reads = [str(external_file), str(owned_file)]
-    prompt = ("This is one public synthetic context check. Read exactly these two files:\n" +
-              "\n".join(reads) + "\nReturn JSON with keys released and actorOwn containing their exact sentinel lines.\n"
-              "Use no other inputs. Do not search other paths, read credentials, access other cells, write files, "
-              "run an access or process probe, delegate, repair, or continue with another task.\n")
-    prompt_path, card = release / "prompt.txt", release / "task-card.txt"
-    prompt_path.write_bytes(prompt.encode())
-    card.write_bytes(("Public S1 effective-context-only check.\n" + prompt).encode())
-    subprocess.run(["git", "-c", "core.autocrlf=false", "init", "--initial-branch=synthetic-context", str(actor)],
-                   check=True, capture_output=True, timeout=10)
-    subprocess.run(["git", "-C", str(actor), "-c", "core.autocrlf=false", "add", "actor-own.txt"],
-                   check=True, capture_output=True, timeout=10)
-    subprocess.run(["git", "-C", str(actor), "-c", "user.name=Synthetic Context Preparation",
-                    "-c", "user.email=scientist-context@example.invalid", "-c", "core.autocrlf=false", "commit", "-m", "Synthetic context baseline"],
-                   check=True, capture_output=True, timeout=10)
-    base = subprocess.check_output(["git", "-C", str(actor), "rev-parse", "HEAD"], text=True).strip()
+    prompt_path, card = Path(previous["prompt"]["path"]), Path(previous["task"]["card"]["path"])
+    for item in previous["releasedInputs"] + previous["actorOwnedInputs"]:
+        if digest(Path(item["path"]).read_bytes()) != item["sha256"]:
+            raise ValueError("previously named context input changed")
+    runner.validate_start(previous)
+    base = previous["baseCommit"]
     common = json.loads(Path(__file__).parents[1].joinpath("public/resource-proposal.json").read_bytes())["commonLimits"]
-    # Existing diagnostic authority identity, never a fresh trial/empty ledger.
-    trial = "overseer-2026-10-07-1826-runner-01601"
-    ledger_path = Path(__file__).parents[1] / ".study-data/runner-01601-diagnostic.sqlite"
-    cumulative = {"status": "blocked-legacy-diagnostic-schema", "trialId": trial, "existingLedgerPath": str(ledger_path.resolve()),
-                  "existingLedgerSha256": digest(ledger_path.read_bytes()), "allHistoricalLedgers": history["ledgerSha256After"],
-                  "actorStartsConsumed": 3, "proposedCumulativeSessionCeiling": 4, "additionalActorSessions": 1,
-                  "unknownTokensBlockAdmission": True, "migrationReceipt": None,
-                  "attemptMappingRule": "source grant label + ':' + original attempt/grant id; status, finished flag and token/request counters identical",
-                  "requires": "Explicit cumulative migration of both legacy ledgers; unknown historical tokens remain blocking. No fresh ledger/trial substitution."}
+    trial, ledger_path = ALLOCATION_ID, ALLOCATION_PATH
+    cumulative = allocation_binding()
     request = {"schemaVersion": 1, "operation": "run_task", "mode": "live", "trialId": trial,
                "dispatchId": "public-context-1", "arm": "conventional", "condition": "greenfield",
                "purpose": "context-access", "smokeKind": "effective-context-only", "actorRepository": str(actor),
@@ -76,13 +56,13 @@ def prepare(destination, executable, *, collect_current_metadata=False):
                "wallSeconds": 180, "task": {"id": "public-synthetic-context-1", "card": binding(card)},
                "prompt": binding(prompt_path), "releasedInputs": [binding(card), binding(prompt_path), binding(external_file)],
                "actorOwnedInputs": [binding(owned_file)], "toolPolicy": "ordinary-tools", "sandbox": "read-only",
-               "allowedReadPaths": reads, "sourceCandidate": revision,
+               "allowedReadPaths": reads, "sourceCandidate": revision, "contextAllocationDecisionId": ALLOCATION_ID,
                "measurementProfileId": OBSERVED, "measurementProfileSha256": profile_sha(OBSERVED)}
     request_receipt = write(root / "request.draft.json", request)
     adoption = {"status": "draft", "trialId": trial, "ledgerPath": str(ledger_path),
                 "fromProfileSha256": profile_sha(LEGACY), "toProfileSha256": profile_sha(OBSERVED),
                 "limitsSha256": limits_sha(common),
-                "decisionRef": "Overseer coordination.md 2026-10-07 19:31 Europe/Berlin; global profile adoption approved, this ledger binding pending"}
+                "decisionRef": ALLOCATION_ID + "; resource decision approved, exact Run-Grant and this profile binding remain drafts"}
     adoption_receipt = write(root / "profile-adoption.draft.json", adoption)
     protocol = {"schemaVersion": 1, "status": "draft", "mode": "live", "sourceCandidate": revision,
                 "commonLimits": common, "runtimeSourceSha256": runtime_pins(),
@@ -94,14 +74,14 @@ def prepare(destination, executable, *, collect_current_metadata=False):
                 "toolPolicy": "ordinary-tools", "sandbox": "read-only", "allowedReadPaths": reads,
                 "contextOnly": True, "forbiddenActions": ["write", "access-probe", "process-probe", "credential-read", "other-cell-read"],
                 "toolRuleSemantics": "Cooperative exact-file-read rule; requested read-only sandbox and disabled features are not a proven access barrier",
-                "acceptedObservabilityGaps": LIVE_GAPS, "historicalAccounting": history_receipt, "cumulativeLedgerBinding": cumulative,
+                "acceptedObservabilityGaps": LIVE_GAPS, "historicalAccounting": history_receipt, "contextAllocation": cumulative,
                 "taskCard": binding(card), "prompt": binding(prompt_path), "actorOwnedInputs": request["actorOwnedInputs"]}
     protocol_receipt = write(root / "protocol.draft.json", protocol)
     grant = {"schemaVersion": 1, "status": "draft", "mode": "live", "purpose": "s1-public-smoke", "trialId": trial,
              "sourceCandidate": revision, "notBefore": None, "expiresAt": None, "protocolSha256": protocol_receipt["sha256"],
              "profileSha256": limits_sha(common), "runnerPinSha256": protocol["runnerPinSha256"],
              "measurementProfileId": OBSERVED, "measurementProfileSha256": profile_sha(OBSERVED),
-             "ledgerPath": str(ledger_path.resolve()), "resultDirectory": str(results), "maxActorSessions": 4,
+             "ledgerPath": str(ledger_path.resolve()), "resultDirectory": str(results), "maxActorSessions": 1, "cumulativeSessionCeiling": 4,
              "maxAdditionalActorSessions": 1, "maxParallelSessions": 1,
              "maxSessionWallSeconds": 180, "wrapperAgentTurns": 1, "wrapperRetries": 0, "continuations": 0, "children": 0,
              "semanticRepairs": 0, "newPurchases": False, "retrospectiveTokenThreshold": 10000,
@@ -109,10 +89,9 @@ def prepare(destination, executable, *, collect_current_metadata=False):
              "acceptedObservabilityGaps": LIVE_GAPS, "allowedReadPaths": reads, "contextOnly": True,
              "authorizedRequests": [{"dispatchId": request["dispatchId"], "initialRequestSha256": request_receipt["sha256"],
                                      "executionSha256": execution_sha(request)}],
-             "historicalAccounting": history_receipt, "cumulativeLedgerBinding": cumulative,
-             "resourceAllocation": "Proposed separate one-context-session allocation; old exhausted grants remain unchanged; no approval or refill",
+             "historicalAccounting": history_receipt, "contextAllocation": cumulative,
+             "resourceAllocation": "One additional resource allocation explicitly decided; exact Run-Grant remains draft; old grants exhausted, no refill",
              "approvalStillRequired": ["Coordinator approves exact one-session resource grant and finite validity interval",
-                                       "Cumulative legacy ledger/trial migration bound explicitly; unknown historical tokens still block admission",
                                        "Ledger profile adoption draft approved; protocol frozen and final hashes rebound"]}
     grant_receipt = write(root / "grant.draft.json", grant)
     manifest = {"schemaVersion": 1, "status": "drafts-only-no-live-authorization", "sourceCandidate": revision,
@@ -122,7 +101,7 @@ def prepare(destination, executable, *, collect_current_metadata=False):
                 "actorOwnedInputs": request["actorOwnedInputs"], "actorBaseCommit": base, "requestedModel": runner.MODEL,
                 "requestedReasoning": runner.REASONING, "actorStarts": 0, "inferenceCalls": 0,
                 "liveGrantIssued": False, "ledgerCreated": False, "metadataOnly": True,
-                "liveExecutable": False, "cumulativeLedgerBinding": cumulative,
+                "liveExecutable": False, "contextAllocation": cumulative,
                 "actorScope": "Only the two named synthetic context files; no separate access/write/process probe"}
     manifest_receipt = write(root / "draft-manifest.json", manifest)
     print(json.dumps({**manifest, "manifest": manifest_receipt}, indent=2))

@@ -13,7 +13,7 @@ import unittest
 from unittest.mock import patch
 
 from adapter import handle
-from dispatch import Authority, LIVE_GAPS, base_result, command, digest, encoded, execution_sha, mechanical_pin, runtime_pins, validate_listing, tool_observations, validate_cumulative_context, validate_migrated_attempts
+from dispatch import Authority, LIVE_GAPS, base_result, command, digest, encoded, execution_sha, mechanical_pin, runtime_pins, validate_listing, tool_observations
 from ledger import LimitReached
 from process import bounded
 from measurement_profile import LEGACY, OBSERVED, profile_sha, limits_sha
@@ -48,7 +48,18 @@ class DispatchTests(unittest.TestCase):
         self.requests.append((r, path))
         return r, path
 
-    def authorize(self, maximum=8, threshold=10000, profile_id=LEGACY, label="", successor=None):
+    def authorize(self, maximum=8, threshold=10000, profile_id=LEGACY, label="", successor=None, allocation=False):
+        trial_id = self._testMethodName
+        if allocation:
+            from context_allocation import ALLOCATION_ID, allocation_binding, DECISION
+            maximum, profile_id, trial_id = 1, OBSERVED, ALLOCATION_ID
+            owned = self.actor / "actor-own.txt"
+            owned.write_text("synthetic-owned-context\n")
+            reads = [str(self.card), str(owned)]
+            for r, path in self.requests:
+                r.update(trialId=trial_id, purpose="context-access", smokeKind="effective-context-only",
+                         contextAllocationDecisionId=ALLOCATION_ID, allowedReadPaths=reads,
+                         actorOwnedInputs=[{"path": str(owned), "sha256": digest(owned.read_bytes())}])
         pin = digest(encoded(mechanical_pin()))
         p = {"status": "frozen", "mode": "mechanical", "commonLimits": COMMON,
              "runnerPinSha256": pin, "runtimeSourceSha256": runtime_pins(),
@@ -57,7 +68,7 @@ class DispatchTests(unittest.TestCase):
             for r, path in self.requests:
                 r.update(measurementProfileId=OBSERVED, measurementProfileSha256=profile_sha(OBSERVED))
                 path.write_bytes(encoded(r))
-            adoption = {"status": "approved", "trialId": self._testMethodName,
+            adoption = {"status": "approved", "trialId": trial_id,
                         "ledgerPath": str((self.root / "trial.sqlite").resolve()), "fromProfileSha256": profile_sha(LEGACY),
                         "toProfileSha256": profile_sha(OBSERVED), "limitsSha256": limits_sha(COMMON),
                         "decisionRef": "synthetic-profile-adoption-test"}
@@ -65,12 +76,14 @@ class DispatchTests(unittest.TestCase):
             adoption_path.write_bytes(encoded(adoption))
             p.update(measurementProfileId=OBSERVED, measurementProfileSha256=profile_sha(OBSERVED),
                      profileAdoption={"path": str(adoption_path), "sha256": digest(encoded(adoption))})
+        if allocation:
+            p.update(contextAllocation=allocation_binding(), allowedReadPaths=reads, contextOnly=True)
         self.protocol_path = self.root / (label + "protocol.json")
         self.protocol_path.write_bytes(encoded(p))
         g = {"schemaVersion": 1, "status": "approved", "purpose": "s1-mechanics", "mode": "mechanical",
-             "trialId": self._testMethodName, "notBefore": time.time() - 1, "expiresAt": time.time() + 600,
+             "trialId": trial_id, "notBefore": time.time() - 1, "expiresAt": time.time() + 600,
              "protocolSha256": digest(encoded(p)), "profileSha256": digest(encoded(COMMON)), "runnerPinSha256": pin,
-             "ledgerPath": str(self.root / "trial.sqlite"), "resultDirectory": str(self.results), "maxActorSessions": maximum,
+             "ledgerPath": str((self.root / "trial.sqlite").resolve()), "resultDirectory": str(self.results), "maxActorSessions": maximum,
              "maxSessionWallSeconds": 10, "retrospectiveTokenThreshold": threshold,
              "authorizedRequests": [{"dispatchId": r["dispatchId"], "executionSha256": execution_sha(r),
                                       "initialRequestSha256": digest(path.read_bytes())} for r, path in self.requests]}
@@ -78,6 +91,11 @@ class DispatchTests(unittest.TestCase):
             g.update(measurementProfileId=OBSERVED, measurementProfileSha256=profile_sha(OBSERVED))
         if successor:
             g.update(successor)
+        if allocation:
+            g.update({key: DECISION[key] for key in ("maxParallelSessions", "wrapperAgentTurns", "wrapperRetries",
+                     "children", "continuations", "semanticRepairs", "newPurchases", "cumulativeSessionCeiling")})
+            g.update(contextAllocation=allocation_binding(), maxAdditionalActorSessions=1,
+                     maxSessionWallSeconds=180, allowedReadPaths=reads)
         self.grant_path = self.root / (label + "grant.json")
         self.grant_path.write_bytes(encoded(g))
         self.authority = Authority(self.grant_path, digest(encoded(g)), self.protocol_path, digest(encoded(p)))
@@ -136,6 +154,57 @@ class DispatchTests(unittest.TestCase):
         self.assertEqual(self.ledger.snapshot()["providerTokens"], 10)
         self.assertEqual(self.ledger.snapshot()["actorSessions"], 2)
         self.assertIsNone(self.ledger.snapshot()["providerTurns"])
+
+    def test_additional_allocation_dispatch_duplicate_resume_and_new_grant_no_refill(self):
+        import context_allocation
+        with patch.object(context_allocation, "ALLOCATION_PATH", (self.root / "trial.sqlite").resolve()):
+            r, path = self.request(case="unknown_requests")
+            self.authorize(allocation=True)
+            result = self.call(path)
+            self.assertEqual(result["status"], "completed")
+            self.assertEqual(result["cumulativeAccounting"]["knownTokenSubtotal"], 10014)
+            self.assertIsNone(result["cumulativeAccounting"]["allHistoryTokens"])
+            self.assertEqual(self.call(path)["status"], "blocked")
+            resumed = self.call(self.operation(r, "resume"))
+            self.assertEqual(resumed["attemptId"], result["attemptId"])
+            self.assertEqual(self.launches(), 1)
+            self.assertEqual(self.ledger.snapshot()["cumulativeActorSessions"], 4)
+            changed = json.loads(self.grant_path.read_bytes())
+            changed["expiresAt"] += 1
+            self.grant_path.write_bytes(encoded(changed))
+            replacement = Authority(self.grant_path, digest(encoded(changed)), self.protocol_path, self.authority.protocol_sha)
+            with self.assertRaisesRegex(ValueError, "authority cannot change or refill"):
+                replacement.ledger()
+            self.assertEqual(self.launches(), 1)
+
+    def test_additional_allocation_unknown_new_usage_remains_incomplete_and_blocks(self):
+        import context_allocation
+        with patch.object(context_allocation, "ALLOCATION_PATH", (self.root / "trial.sqlite").resolve()):
+            _, path = self.request(case="no_usage")
+            self.authorize(allocation=True)
+            result = self.call(path)
+            self.assertEqual(result["status"], "incomplete")
+            self.assertIsNone(result["cumulativeAccounting"]["newWindowTokens"])
+            with self.assertRaisesRegex(LimitReached, "new context usage tokens unknown"):
+                self.ledger.reserve("next", "context-access")
+            self.assertEqual(self.launches(), 1)
+
+    def test_additional_allocation_resume_empty_or_unbooked_file_is_read_only(self):
+        import context_allocation
+        path = (self.root / "trial.sqlite").resolve()
+        with patch.object(context_allocation, "ALLOCATION_PATH", path):
+            path.write_bytes(b"")
+            with self.assertRaisesRegex(ValueError, "existing exact dispatch"):
+                context_allocation.ContextAllocationLedger(path, context_allocation.ALLOCATION_ID, COMMON,
+                    binding=context_allocation.allocation_binding(), profile_id=None, resume_dispatch_id="one")
+            self.assertEqual(path.read_bytes(), b"")
+            r, request_path = self.request()
+            self.authorize(allocation=True)
+            before = digest(path.read_bytes())
+            with self.assertRaisesRegex(ValueError, "existing exact dispatch"):
+                self.call(self.operation(r, "resume"))
+            self.assertEqual(digest(path.read_bytes()), before)
+            self.assertEqual(self.launches(), 0)
 
     def test_v2_unknown_tokens_still_block_and_profile_mismatch_rejected(self):
         _, one = self.request(case="no_usage")
@@ -473,34 +542,22 @@ class DispatchTests(unittest.TestCase):
         grant = json.loads(self.grant_path.read_bytes())
         grant["cumulativeLedgerBinding"] = {"status": "blocked-legacy-diagnostic-schema"}
         self.grant_path.write_bytes(encoded(grant))
-        with self.assertRaisesRegex(ValueError, "cumulative historical ledger binding unresolved"):
+        with self.assertRaisesRegex(ValueError, "superseded cumulative migration binding"):
             Authority(self.grant_path, digest(encoded(grant)), self.protocol_path, self.authority.protocol_sha)
         self.assertEqual(self.launches(), 0)
 
     def test_missing_partial_or_fresh_cumulative_binding_fails_closed(self):
+        from context_allocation import validate_allocation
         for binding in (None, {}, {"status": "ready"}, {"status": "ready", "existingLedgerPath": str(self.root / "fresh.sqlite")}):
             with self.subTest(binding=binding):
                 g = {"trialId": "fresh", "ledgerPath": str(self.root / "fresh.sqlite"), "maxActorSessions": 1}
                 p = {}
                 if binding is not None:
-                    g["cumulativeLedgerBinding"] = binding
-                    p["cumulativeLedgerBinding"] = binding
-                with self.assertRaisesRegex(ValueError, "complete cumulative context"):
-                    validate_cumulative_context(g, p, COMMON)
+                    g["contextAllocation"] = binding
+                    p["contextAllocation"] = binding
+                with self.assertRaisesRegex(ValueError, "complete fixed additional context"):
+                    validate_allocation(g, p)
                 self.assertFalse((self.root / "fresh.sqlite").exists())
-
-    def test_migrated_history_does_not_convert_unknown_requests_or_change_identity_status(self):
-        from diagnostic_history import read_history
-        history = read_history()
-        rows = [(str(a["grant"]) + ":" + str(a["id"]), 1.0, a["status"], a["providerRequests"], a["tokens"])
-                for a in history["attempts"]]
-        validate_migrated_attempts(rows, history)
-        for index, wrong in ((0, "new-identity"), (1, None), (2, "completed"), (3, 0), (4, 0)):
-            with self.subTest(column=index):
-                changed = [list(row) for row in rows]
-                changed[0][index] = wrong
-                with self.assertRaisesRegex(ValueError, "unknown counters not preserved"):
-                    validate_migrated_attempts(changed, history)
 
     def test_metadata_client_rejects_exec_argv_before_subprocess(self):
         import runner

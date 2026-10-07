@@ -8,6 +8,7 @@ import zipfile
 from diagnostic_history import read_history
 from dispatch import Authority, CHECKOUT, LIVE_GAPS, digest, encoded, execution_sha, runtime_pins, validate_listing
 from measurement_profile import OBSERVED, profile_sha
+from context_allocation import ALLOCATION_PATH, allocation_binding
 
 
 def freeze(evidence_path, drafts_path, output):
@@ -37,14 +38,14 @@ def freeze(evidence_path, drafts_path, output):
     request, protocol, grant, adoption = [json.loads(Path(manifest[key]["path"]).read_bytes())
                                          for key in ("request", "protocol", "grant", "profileAdoption")]
     if (any(item["status"] != "draft" for item in (protocol, grant, adoption)) or manifest["liveExecutable"] or
-            grant["cumulativeLedgerBinding"]["status"] != "blocked-legacy-diagnostic-schema" or
-            digest(Path(grant["ledgerPath"]).read_bytes()) != grant["cumulativeLedgerBinding"]["existingLedgerSha256"]):
-        raise ValueError("unapproved drafts must preserve existing blocked ledger binding")
+            grant["contextAllocation"] != allocation_binding() or protocol["contextAllocation"] != allocation_binding() or
+            Path(grant["ledgerPath"]) != ALLOCATION_PATH or ALLOCATION_PATH.exists()):
+        raise ValueError("unapproved drafts must bind the fixed additional allocation without creating its ledger")
     if (execution_sha(request) != manifest["executionSha256"] or grant["authorizedRequests"] != [{
             "dispatchId": request["dispatchId"], "initialRequestSha256": manifest["request"]["sha256"],
             "executionSha256": manifest["executionSha256"]}] or grant["protocolSha256"] != manifest["protocol"]["sha256"]):
         raise ValueError("exact Request/execution/Protocol binding mismatch")
-    if (grant["maxActorSessions"] != 4 or grant["maxAdditionalActorSessions"] != 1 or
+    if (grant["maxActorSessions"] != 1 or grant["cumulativeSessionCeiling"] != 4 or grant["maxAdditionalActorSessions"] != 1 or
             grant["maxParallelSessions"] != 1 or grant["maxSessionWallSeconds"] != 180 or
             grant["wrapperAgentTurns"] != 1 or grant["retrospectiveTokenThreshold"] != 10000 or
             any(grant[key] != 0 for key in ("children", "wrapperRetries", "continuations", "semanticRepairs")) or
@@ -78,9 +79,10 @@ def freeze(evidence_path, drafts_path, output):
     names = [name if name.startswith("public/") or name in {"harness.py", "prepare.py"} else "runtime/" + name
              for name in runtime_pins()]
     names += ["runtime/" + name + ".py" for name in ("test_dispatch", "test_measurement_profile", "test_runtime", "verify_profile",
-              "freeze_profile", "freeze_s1", "context_drafts", "diagnostic_history", "metadata_readonly", "selected_metadata")]
+              "freeze_profile", "freeze_s1", "context_drafts", "diagnostic_history", "metadata_readonly", "selected_metadata", "test_context_allocation")]
     names += ["README.md", "runtime/runner-pin.json", "public/resource-proposal.json", "public/measurement-profile-v2.md",
-              "public/measurement-profile-v2-review.md", "public/s1-dispatch.md"]
+              "public/measurement-profile-v2-review.md", "public/s1-dispatch.md", "public/context-additional-allocation.md",
+              "public/context-additional-review.md"]
     sources = {name: digest((root / name).read_bytes()) for name in sorted(set(names))}
     for name, sha in sources.items():
         committed = subprocess.check_output(["git", "-C", str(CHECKOUT), "show", head + ":experiments/government-comparison/" + name])
@@ -93,7 +95,7 @@ def freeze(evidence_path, drafts_path, output):
     history = read_history()
     if json.loads(Path(manifest["diagnosticHistory"]["path"]).read_bytes()) != history:
         raise ValueError("historical cumulative accounting changed")
-    value = {"schemaVersion": 1, "kind": "measurement-profile-v2-and-context-drafts-freeze", "sourceCandidate": head,
+    value = {"schemaVersion": 1, "kind": "explicit-additional-context-allocation-drafts-freeze", "sourceCandidate": head,
              "sources": sources, "evidence": {p.relative_to(root).as_posix(): digest(p.read_bytes()) for p in sorted(evidence.iterdir()) if p.is_file()},
              "draftFiles": files, "draftManifestPath": str(drafts / "draft-manifest.json"), "draftAuthorityRejection": draft_rejection,
              "mechanicalArchiveEntries": len(entries), "testsRun": observation["testsRun"], "measurementProfileSha256": profile_sha(OBSERVED),

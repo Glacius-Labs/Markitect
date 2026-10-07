@@ -17,7 +17,7 @@ def verify(destination):
     root = external(destination)
     root.mkdir(parents=True, exist_ok=False)
     before = read_history()
-    modules = ("test_measurement_profile", "test_dispatch", "test_runtime")
+    modules = ("test_measurement_profile", "test_dispatch", "test_runtime", "test_context_allocation")
     suite = unittest.TestSuite(unittest.defaultTestLoader.loadTestsFromName(name) for name in modules)
     with (root / "targeted-tests.log").open("w", encoding="utf-8") as log:
         log.write("Deterministic profile/admission tests only; no native Actor/model/metadata call.\n")

@@ -15,15 +15,20 @@ def read_history():
         db = sqlite3.connect(path.resolve().as_uri() + "?mode=ro", uri=True)
         try:
             if index == 0:
-                rows = db.execute("SELECT number,end,result FROM attempts ORDER BY number").fetchall()
+                rows = db.execute("SELECT number,start,end,request_sha,result,NULL FROM attempts ORDER BY number").fetchall()
             else:
-                rows = db.execute("SELECT id,end,result FROM grants ORDER BY start").fetchall()
-            for identity, end, raw in rows:
+                rows = db.execute("SELECT id,start,end,request_sha,result,history FROM grants ORDER BY start").fetchall()
+            for identity, start, end, request_sha, raw, old_history in rows:
                 result = json.loads(raw) if raw else {}
                 usage = result.get("usage") or {}
                 attempts.append({"grant": "historical-two-start" if index == 0 else "selected-runner-one-start",
                                  "id": identity, "finished": end is not None, "status": result.get("status"),
-                                 "tokens": usage.get("reportedInputPlusOutputTokens"), "providerRequests": usage.get("providerRequests")})
+                                 "tokens": usage.get("reportedInputPlusOutputTokens"), "providerRequests": usage.get("providerRequests"),
+                                 "startedAt": start, "endedAt": end, "requestSha256": request_sha,
+                                 "resultSha256": digest(raw.encode()) if raw else None,
+                                 "runnerArgv": result.get("process", {}).get("argv"),
+                                 "originalGrantMaxStarts": 2 if index == 0 else 1, "originalGrantRemainingStarts": 0,
+                                 "originalGrantHistorySha256": digest(old_history.encode()) if old_history else None})
         finally:
             db.close()
     after = {str(path): digest(path.read_bytes()) for path in paths}
