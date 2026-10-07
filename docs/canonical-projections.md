@@ -81,6 +81,8 @@ The controller actions provide a current, explicit path from a fixed source revi
 
 Use three full immutable commit IDs with distinct roles: `BASE` is the earlier comparison revision, `SOURCE` is the canonical source/target revision to reconcile, and `EVIDENCE` is the object-only commit returned by successful controller Apply. The following PowerShell 7.4+ sequence keeps every report and log outside the repository. Native stdout redirection preserves the CLI JSON bytes in a separate file; stderr is saved separately for diagnostics. Set the external runtime and these commit IDs for the project; the runtime must satisfy the closed schema in [Usage](usage.md#canonical-controller-actions-source-only-alpha).
 
+For fresh-process Verify, save the successful Apply JSON and use the alpha's `--apply-result` alternative instead of copying `SOURCE` and `EVIDENCE`; see [the controller command contract in Usage](usage.md#canonical-controller-actions-source-only-alpha). The explicit revision form below remains supported.
+
 ```powershell
 $config = "examples/canonical-projection/canonical.yaml"
 $runtime = "C:/review/controller-runtime.json"
