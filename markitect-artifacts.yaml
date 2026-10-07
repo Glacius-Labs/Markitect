@@ -2,6 +2,7 @@ apiVersion: markitect.example.org/artifact-coverage/v1alpha1
 kind: ArtifactCoverage
 spec:
   roots:
+    - docs/validation/classic-commerce-entrypoint.md
     - examples/classic-commerce
     - internal/host/canonical_controller_apply_receipt.go
     - internal/host/canonical_controller_apply_receipt_test.go
@@ -145,6 +146,8 @@ spec:
     - experiments/live-operating-pilot
     - experiments/two-area-operating-pilot
   tooling:
+    - path: docs/validation/classic-commerce-entrypoint.md
+      owner: classic-commerce-public-example-validation
     - path: examples/classic-commerce/NuGet.Config
       owner: classic-commerce-public-example
     - path: examples/classic-commerce/README.md
