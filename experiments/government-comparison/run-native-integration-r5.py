@@ -39,6 +39,16 @@ R1_GRANT_SHA = "b917f5a5eb99f0a607fd282a81acdf7b085e6a1dba14f89c8d0c32f349c82c3e
 COORDINATION = Path(r"C:\Users\Consiliari\Glacius Labs\Markitect\docs\design\government\coordination-state.json")
 
 
+def fixture_grant_bindings(original, successor, coordinator_snapshot):
+    """Keep released file identities separate from the R5 Request metadata."""
+    return {
+        "releasedInputs": [dict(original), dict(successor), dict(coordinator_snapshot)],
+        "nativeFixtureGrant": {
+            **original, "sourceKey": "native-s1-integration-fixtures-20261008"},
+        "nativeFixtureR5Grant": {**successor, "sourceKey": R5_KEY},
+    }
+
+
 def prepare():
     """Bind the outer mechanical Request/Authority to the already prepared R5 fixture."""
     base = EXTERNAL / "government"
@@ -61,7 +71,9 @@ def prepare():
     original = binding(SOURCE_GRANT)
     if original["sha256"] != R1_GRANT_SHA:
         raise ValueError("R5 requires the exact immutable original R1 source grant")
-    r5 = {**binding(SUCCESSOR_GRANT), "sourceKey": R5_KEY}
+    grants = fixture_grant_bindings(
+        original, binding(SUCCESSOR_GRANT), binding(COORDINATOR_SNAPSHOT))
+    r5 = grants["nativeFixtureR5Grant"]
     if r5["sha256"] != GRANT_SHA:
         raise ValueError("R5 envelope bytes differ from the exact released grant")
     product = preparation["productGovernment"]
@@ -74,7 +86,7 @@ def prepare():
         authorization_raw=Path(authorization_binding["path"]).read_bytes(),
         queue_state_directory=product["queueStateDirectory"])
     common = json.loads((ROOT / "public/resource-proposal.json").read_bytes())["commonLimits"]
-    released_inputs = inputs + [original, r5, mechanical, binding(COORDINATOR_SNAPSHOT),
+    released_inputs = inputs + grants["releasedInputs"] + [mechanical,
                                 binding(EXTERNAL_HISTORY), role["diagnostics"], card,
                                 binding(Path("C:/Python313/python.exe"))]
     request = {
@@ -86,7 +98,7 @@ def prepare():
         "task": {"id": role["taskId"], "card": card}, "purpose": "task",
         "releasedInputs": released_inputs, "prompt": card,
         "mechanicalFixture": mechanical["path"],
-        "nativeFixtureGrant": {**original, "sourceKey": "native-s1-integration-fixtures-20261008"},
+        "nativeFixtureGrant": grants["nativeFixtureGrant"],
         "fixtureAuthorization": dict(government_roles.NATIVE_FIXTURE_AUTH),
         "nativeFixtureR5Grant": r5, "product": {"government": product}}
     request_binding = write_new(released / "request.json", request)
