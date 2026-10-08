@@ -489,11 +489,21 @@ func invokeManager(ctx context.Context, host Host, invoker Invoker, root string,
 		}
 	}
 	managerContext.Children = filteredChildren
+	artifacts, err := scopedArtifacts(project, task, configAgent, runtime.Limits, phase, activeChildIDs)
+	if err != nil {
+		return result, log, err
+	}
+	writePaths := allowedWritePaths(project.Config, project.Report, task, phase, conflicts)
+	artifactRelations, foreignOwnership := suppliedArtifactOwnership(project.Report, artifacts, task.ManagerID, writePaths)
 	ctxPayload := struct {
 		Phase                string                      `json:"phase"`
 		PhaseGuidance        string                      `json:"phaseGuidance"`
 		EscalationTarget     string                      `json:"escalationTarget"`
-		Goal                 string                      `json:"goal"`
+		GlobalGoal           string                      `json:"globalGoal"`
+		OwnTask              string                      `json:"ownTask"`
+		AllowedWritePaths    []string                    `json:"allowedWritePaths"`
+		ArtifactRelations    []artifactPathRelation      `json:"artifactRelations"`
+		ForeignOwnership     []foreignOwnershipMetadata  `json:"foreignOwnership"`
 		Manager              projectmodel.ManagerContext `json:"manager"`
 		DirectChildren       []string                    `json:"directChildren"`
 		DirectChildContracts []projectmodel.Statement    `json:"directChildContracts"`
@@ -502,7 +512,8 @@ func invokeManager(ctx context.Context, host Host, invoker Invoker, root string,
 		ConflictPaths        []string                    `json:"conflictPaths,omitempty"`
 		CandidateDigest      string                      `json:"candidateDigest"`
 		ResponseSchema       json.RawMessage             `json:"responseSchema"`
-	}{Phase: phase, PhaseGuidance: phaseGuidance(phase), EscalationTarget: escalationTarget(task), Goal: task.Goal,
+	}{Phase: phase, PhaseGuidance: phaseGuidance(phase), EscalationTarget: escalationTarget(task), GlobalGoal: plan.Goal, OwnTask: task.Goal,
+		AllowedWritePaths: writePaths, ArtifactRelations: artifactRelations, ForeignOwnership: foreignOwnership,
 		Manager: managerContext, DirectChildren: activeChildrenFromContext(managerContext),
 		DirectChildContracts: publicChildContracts(project.Report, activeChildIDs), DirectChildArtifacts: requiredChildArtifacts(project.Report, activeChildIDs),
 		ChildReports: childReports, ConflictPaths: conflicts, CandidateDigest: project.Snapshot.Digest(), ResponseSchema: taskResponseSchema(phase)}
@@ -510,10 +521,6 @@ func invokeManager(ctx context.Context, host Host, invoker Invoker, root string,
 	// never their transcripts or private logs.
 	_ = start
 	contextJSON, err := json.Marshal(ctxPayload)
-	if err != nil {
-		return result, log, err
-	}
-	artifacts, err := scopedArtifacts(project, task, configAgent, runtime.Limits, phase, activeChildIDs)
 	if err != nil {
 		return result, log, err
 	}
@@ -595,12 +602,127 @@ type childReport struct {
 }
 
 func phaseGuidance(phase string) string {
-	const work = "Host protocol for work: complete the assigned goal for this Manager's own mandate and delegate to every ID in directChildren exactly once with a concrete, bounded goal, and to no other Manager. The outer agent outcome must be proposed even when this report status is partial; status describes this Manager's local work only. Status complete means this Manager completed its own work and all required delegations, not that children or the whole project are already complete. Status no-op is valid when this Manager has no own-scope edit to make; it still must provide every required delegation. Use status partial only for genuinely incomplete own-scope work, with an actionable question or risk. Propose only this Manager's own selected-inventory files; do not edit child-owned files. Child implementation files are intentionally not supplied during work: their absence is not a blocker or risk because those children receive their own task. Keep resolvedQuestions and resolvedRisks empty during work. Do not claim integration or verification."
-	const integrate = "Host protocol for integration: inspect every direct child report and the current merged candidate artifacts supplied for active direct children, plus directChildContracts and directChildArtifacts. Integrate the actual child candidate bytes against this Manager's mandate and the supplied contracts; do not merely repeat the reports. Set integrated=true only after checking each child result. Do not create delegations. Propose only this Manager's own files, except a listed conflict path authorized for this integration. If no additional integration edit is needed, return status complete with an empty candidateFiles array; status no-op is not valid for integration. Resolve only exact question/risk text present in this Manager or direct child reports, copying it verbatim to resolvedQuestions/resolvedRisks. Keep unresolved obligations in questions/risks and escalate to escalationTarget; do not claim checks passed."
+	const work = "Host protocol for work: globalGoal is context; implement only ownTask under this Manager's mandate. Treat allowedWritePaths as the complete set of paths this invocation may propose; exact files are exact paths, and paths ending in / are directory scopes. Propose candidateFiles only for owned files or this Manager's Artifact paths within those scopes. ArtifactRelations and ForeignOwnership describe read context and path ownership, not write permission. Do not write a path owned by another Manager, even if an Artifact references it or its contents were supplied for reading. If a relevant change belongs to another Manager, describe the path and owner briefly in the summary for integration; do not implement that Manager's file, tests, or docs, and do not turn its work into a blocker or risk when that Manager is active. .markitect and other control-plane paths are never writable. Delegate to every ID in directChildren exactly once with a concrete, bounded ownTask and to no other Manager. The outer agent outcome must be proposed even when this report status is partial; status describes this Manager's local work only. Status complete means this Manager completed its own work and all required delegations, not that children or the whole project are already complete. Status no-op is valid when this Manager has no own-scope edit to make; it still must provide every required delegation. Use status partial only for genuinely incomplete own-scope work, with an actionable question or risk. Child implementation files are intentionally not supplied during work: their absence is not a blocker or risk because those children receive their own task. Keep resolvedQuestions and resolvedRisks empty during work. Do not claim integration or verification."
+	const integrate = "Host protocol for integration: globalGoal is context; implement only this Manager's ownTask and mandate. Inspect every direct child report and current merged candidate artifacts supplied for active direct children, plus directChildContracts, directChildArtifacts, ArtifactRelations, and ForeignOwnership. Integrate actual child candidate bytes against the mandate and supplied contracts; do not merely repeat reports. Set integrated=true only after checking each child result. Do not create delegations. Propose candidateFiles only within allowedWritePaths, except an exact path in conflictPaths is authorized for this integration. Readable artifact relationships or foreign ownership do not grant write authority. If no additional integration edit is needed, return status complete with an empty candidateFiles array; status no-op is not valid for integration. Resolve only exact question/risk text present in this Manager or direct child reports, copying it verbatim to resolvedQuestions/resolvedRisks. Keep unresolved obligations in questions/risks and escalate to escalationTarget; do not claim checks passed."
 	if phase == "integrate" {
 		return integrate
 	}
 	return work
+}
+
+type artifactPathRelation struct {
+	ArtifactID    string `json:"artifactId"`
+	ArtifactOwner string `json:"artifactOwner"`
+	DeclaredPath  string `json:"declaredPath"`
+	Path          string `json:"path"`
+	PathOwner     string `json:"pathOwner,omitempty"`
+	PathClass     string `json:"pathClass,omitempty"`
+	Readable      bool   `json:"readable"`
+	Writable      bool   `json:"writable"`
+}
+
+type foreignOwnershipMetadata struct {
+	Path       string   `json:"path"`
+	Owner      string   `json:"owner"`
+	Class      string   `json:"class,omitempty"`
+	Artifacts  []string `json:"artifacts"`
+	Checks     []string `json:"checks"`
+	Statements []string `json:"statements"`
+}
+
+func allowedWritePaths(config projectwork.Config, report projectmodel.Report, task ManagerTask, phase string, conflicts []string) []string {
+	paths := map[string]bool{}
+	for _, file := range report.Files {
+		if file.Owner == task.ManagerID && projectPathAllowed(config, file.Path) {
+			paths[file.Path] = true
+		}
+	}
+	artifactIDs := map[string]bool{}
+	for _, id := range task.Artifacts {
+		artifactIDs[id] = true
+	}
+	for _, artifact := range report.Artifacts {
+		if !artifactIDs[artifact.ID] || artifact.Owner != task.ManagerID {
+			continue
+		}
+		for _, declared := range artifact.Paths {
+			if !projectPathAllowed(config, strings.TrimSuffix(declared, "/")) {
+				continue
+			}
+			if !strings.HasSuffix(declared, "/") {
+				if owner, known := ownerForPath(report, declared); known && owner != task.ManagerID {
+					continue
+				}
+			}
+			paths[declared] = true
+		}
+	}
+	if phase == "integrate" {
+		for _, path := range conflicts {
+			if projectPathAllowed(config, path) {
+				paths[path] = true
+			}
+		}
+	}
+	out := make([]string, 0, len(paths))
+	for path := range paths {
+		out = append(out, path)
+	}
+	sort.Strings(out)
+	return out
+}
+
+func suppliedArtifactOwnership(report projectmodel.Report, supplied []agentexec.Artifact, managerID string, writePaths []string) ([]artifactPathRelation, []foreignOwnershipMetadata) {
+	pathFiles := map[string]projectmodel.FileEntry{}
+	for _, file := range report.Files {
+		pathFiles[file.Path] = file
+	}
+	writable := func(path string) bool {
+		for _, allowed := range writePaths {
+			if strings.HasSuffix(allowed, "/") && strings.HasPrefix(path, allowed) || path == allowed {
+				return true
+			}
+		}
+		return false
+	}
+	var relations []artifactPathRelation
+	foreign := map[string]foreignOwnershipMetadata{}
+	for _, input := range supplied {
+		entry, exists := pathFiles[input.Path]
+		pathOwner, known := ownerForPath(report, input.Path)
+		if exists && known && pathOwner != "" && pathOwner != managerID {
+			foreign[input.Path] = foreignOwnershipMetadata{Path: input.Path, Owner: pathOwner, Class: entry.Class,
+				Artifacts: append([]string(nil), entry.Artifacts...), Checks: append([]string(nil), entry.Checks...), Statements: append([]string(nil), entry.Statements...)}
+		}
+		for _, artifact := range report.Artifacts {
+			for _, declared := range artifact.Paths {
+				if (strings.HasSuffix(declared, "/") && strings.HasPrefix(input.Path, declared)) || declared == input.Path {
+					relations = append(relations, artifactPathRelation{ArtifactID: artifact.ID, ArtifactOwner: artifact.Owner,
+						DeclaredPath: declared, Path: input.Path, PathOwner: pathOwner, PathClass: entry.Class, Readable: true,
+						Writable: writable(input.Path) && pathOwner == managerID})
+				}
+			}
+		}
+	}
+	sort.Slice(relations, func(i, j int) bool {
+		if relations[i].Path != relations[j].Path {
+			return relations[i].Path < relations[j].Path
+		}
+		if relations[i].ArtifactID != relations[j].ArtifactID {
+			return relations[i].ArtifactID < relations[j].ArtifactID
+		}
+		return relations[i].DeclaredPath < relations[j].DeclaredPath
+	})
+	foreignPaths := make([]string, 0, len(foreign))
+	for path := range foreign {
+		foreignPaths = append(foreignPaths, path)
+	}
+	sort.Strings(foreignPaths)
+	foreignOut := make([]foreignOwnershipMetadata, 0, len(foreignPaths))
+	for _, path := range foreignPaths {
+		foreignOut = append(foreignOut, foreign[path])
+	}
+	return relations, foreignOut
 }
 
 func publicChildContracts(report projectmodel.Report, activeChildren []string) []projectmodel.Statement {

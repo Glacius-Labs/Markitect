@@ -1,6 +1,7 @@
 package projectrun
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
@@ -153,16 +154,61 @@ func TestSinceImpactAndExplicitManagerRouteThroughRequiredHierarchy(t *testing.T
 
 func TestPhaseGuidanceDefinesLocalWorkAndIntegrationResponsibilities(t *testing.T) {
 	work := phaseGuidance("work")
-	for _, required := range []string{"outer agent outcome must be proposed", "Status complete means this Manager completed its own work", "Child implementation files are intentionally not supplied", "resolvedQuestions and resolvedRisks empty"} {
+	for _, required := range []string{"globalGoal is context", "implement only ownTask", "allowedWritePaths as the complete set", "ArtifactRelations and ForeignOwnership describe read context", "do not implement that Manager's file, tests, or docs", "outer agent outcome must be proposed", "Status complete means this Manager completed its own work", "Child implementation files are intentionally not supplied", "resolvedQuestions and resolvedRisks empty"} {
 		if !strings.Contains(work, required) {
 			t.Errorf("work guidance omitted %q", required)
 		}
 	}
 	integrate := phaseGuidance("integrate")
-	for _, required := range []string{"inspect every direct child report", "actual child candidate bytes", "Set integrated=true", "Do not create delegations"} {
+	for _, required := range []string{"globalGoal is context", "Inspect every direct child report", "actual child candidate bytes", "Set integrated=true", "Do not create delegations", "allowedWritePaths"} {
 		if !strings.Contains(integrate, required) {
 			t.Errorf("integration guidance omitted %q", required)
 		}
+	}
+}
+
+func TestAllowedWritePathsSeparateArtifactReadRelationsFromOwnership(t *testing.T) {
+	orders := e2eManagerID("orders", "orders")
+	engineering := e2eManagerID("engineering", "engineering")
+	report := projectmodel.Report{
+		Files: []projectmodel.FileEntry{
+			{Path: "src/shop/orders/order.py", Owner: orders, Class: "source"},
+			{Path: "tests/test_cancellation.py", Owner: engineering, Class: "test", Artifacts: []string{"orders-lifecycle"}, Checks: []string{"cancellation-tests"}},
+		},
+		Artifacts: []projectmodel.Artifact{{ID: "orders-lifecycle", Owner: orders, Paths: []string{"src/shop/orders/", "tests/test_cancellation.py"}}},
+	}
+	task := ManagerTask{ManagerID: orders, Artifacts: []string{"orders-lifecycle"}}
+	config := projectwork.Config{InventoryRoots: []string{"src", "tests"}}
+	paths := allowedWritePaths(config, report, task, "work", nil)
+	if !containsString(paths, "src/shop/orders/") || !containsString(paths, "src/shop/orders/order.py") {
+		t.Fatalf("owned artifact scope or file missing from write paths: %v", paths)
+	}
+	if containsString(paths, "tests/test_cancellation.py") {
+		t.Fatalf("artifact relation incorrectly granted ownership of another Manager's test: %v", paths)
+	}
+
+	inputs := []agentexec.Artifact{{Path: "tests/test_cancellation.py", Mode: "0644", Content: []byte("read-only supplied content")}}
+	relations, foreign := suppliedArtifactOwnership(report, inputs, orders, paths)
+	if len(relations) != 1 || relations[0].ArtifactOwner != orders || relations[0].PathOwner != engineering || !relations[0].Readable || relations[0].Writable {
+		t.Fatalf("artifact relation did not distinguish readable from writable ownership: %+v", relations)
+	}
+	if len(foreign) != 1 || foreign[0].Path != "tests/test_cancellation.py" || foreign[0].Owner != engineering || !containsString(foreign[0].Checks, "cancellation-tests") {
+		t.Fatalf("foreign ownership metadata missing: %+v", foreign)
+	}
+	encoded, err := json.Marshal(struct {
+		Relations []artifactPathRelation     `json:"artifactRelations"`
+		Foreign   []foreignOwnershipMetadata `json:"foreignOwnership"`
+	}{relations, foreign})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(encoded), "read-only supplied content") || strings.Contains(string(encoded), "sha256:") {
+		t.Fatalf("ownership context included source content or file digest: %s", encoded)
+	}
+
+	integrated := allowedWritePaths(config, report, task, "integrate", []string{"tests/test_cancellation.py"})
+	if !containsString(integrated, "tests/test_cancellation.py") {
+		t.Fatalf("exact authorized integration conflict path was omitted: %v", integrated)
 	}
 }
 
