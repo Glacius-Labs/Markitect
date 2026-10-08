@@ -1,0 +1,13 @@
+{
+  "primary": "Pinned 0.160.1 protocol-schema.zip and schema-contract.json",
+  "officialCorroboration": "https://learn.chatgpt.com/docs/app-server",
+  "readDate": "2026-10-08",
+  "scope": "experimentalApi opt-in for experimental fields; permissions instead of simultaneous sandbox; ordinary commandExecution item/result route",
+  "limitations": "Current docs corroborate protocol use only. Neither schema nor configuration proves OS enforcement, actual serving identity, or historical failure cause.",
+  "validator": "Narrow bounded local Draft7 subset; unsupported keywords fail before launch. No dependency installation.",
+  "purePreparationSchemaCheck": {
+    "frozenMembers": 26,
+    "outgoingTemplates": "validated",
+    "processStarts": 0
+  }
+}

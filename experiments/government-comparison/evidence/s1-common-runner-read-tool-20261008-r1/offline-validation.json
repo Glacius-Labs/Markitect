@@ -1,0 +1,41 @@
+{
+  "key": "s1-common-runner-read-tool-20261008-r1",
+  "recordedUtc": "2026-10-08T06:27:31.554204+00:00",
+  "scope": "Only new synthetic collector/transport/schema cases; no historical/full product suite or app-server/Actor execution",
+  "executionHistory": {
+    "initialRun": {
+      "cases": 26,
+      "passed": 25,
+      "failed": 1,
+      "reason": "Incorrect test expectation: early ID mismatch correctly rejected sooner than test expected"
+    },
+    "correctedRun": {
+      "cases": 26,
+      "passed": 26,
+      "durationSeconds": 0.018
+    },
+    "targetedFollowUp": {
+      "cases": 9,
+      "passed": 9,
+      "durationSeconds": 0.016,
+      "reason": "New actual-Protocol integration, CRLF normalization, actual item-completion proof, turn.error and observed command accounting"
+    }
+  },
+  "distinctFinalTestCases": 31,
+  "finalCodeHashes": {
+    "client.py": "798a9443e80515f7675b20b26680ed3790ab68070f2663d42abb960cb25f073e",
+    "collector.py": "ee1f73d76de17afcf5a5ea892f820446a110b5593356b6b09d6aa1cf0e78a3a3",
+    "protocol.py": "ebd087657febf63846904d83a75bc226a5412458418d20abe024ed267febb822",
+    "run_once.py": "16ba63ee83835dc579e0adaa77500e4f2cc9f86ec06cf66a33f01b40fbbbbedf",
+    "test_client.py": "a88b7881789e87f3fa69ab804260688bb6702a7165737306bca1a2bc81f838e8",
+    "profile.json": "6a1d9c043758563d59b576c0a2c526e375f6bc819002768a535333b7cb1a128c",
+    "schema-contract.json": "f13df7b695435aaff3939be94acadcef510be00abd3b14c70d0b04764dc0ea35"
+  },
+  "logSha256": "dab26f9e38503115cf3308ceba4e1dbeb82005de114c9f2684f9d93ca1b92f96",
+  "realValidatorIntegratedSuccess": true,
+  "schemaRequiredFieldNegatives": true,
+  "processStarts": 0,
+  "ledgerWrites": 0,
+  "rootRepeatedTests": false,
+  "meaning": "Contract/harness validation only; no observed real tool capability, semantic engineering quality or human acceptance"
+}

@@ -1,0 +1,95 @@
+test_command_must_match_exact_frozen_command_cwd_and_zero_exit (test_client.CollectorLifecycleTests.test_command_must_match_exact_frozen_command_cwd_and_zero_exit) ... ok
+test_early_turn_event_must_match_start_response_id (test_client.CollectorLifecycleTests.test_early_turn_event_must_match_start_response_id) ... FAIL
+test_explicit_readonly_profile_and_null_or_absent_parent_are_allowed (test_client.CollectorLifecycleTests.test_explicit_readonly_profile_and_null_or_absent_parent_are_allowed) ... ok
+test_full_success_requires_correlated_thread_command_and_completed_turn (test_client.CollectorLifecycleTests.test_full_success_requires_correlated_thread_command_and_completed_turn) ... ok
+test_missing_tool_or_wrong_correlated_ids_fail_closed (test_client.CollectorLifecycleTests.test_missing_tool_or_wrong_correlated_ids_fail_closed) ... ok
+test_only_completed_turn_notification_closes_collection (test_client.CollectorLifecycleTests.test_only_completed_turn_notification_closes_collection) ... ok
+test_permission_profile_and_effective_readonly_sandbox_are_both_required (test_client.CollectorLifecycleTests.test_permission_profile_and_effective_readonly_sandbox_are_both_required) ... ok
+test_second_native_command_in_terminal_snapshot_is_rejected (test_client.CollectorLifecycleTests.test_second_native_command_in_terminal_snapshot_is_rejected) ... ok
+test_second_native_command_is_rejected (test_client.CollectorLifecycleTests.test_second_native_command_is_rejected) ... ok
+test_second_native_command_is_rejected_at_first_observation (test_client.CollectorLifecycleTests.test_second_native_command_is_rejected_at_first_observation) ... ok
+test_start_response_completed_is_not_terminal_proof (test_client.CollectorLifecycleTests.test_start_response_completed_is_not_terminal_proof) ... ok
+test_successful_command_without_final_sentinel_is_insufficient (test_client.CollectorLifecycleTests.test_successful_command_without_final_sentinel_is_insufficient) ... ok
+test_unknown_notifications_and_notification_limit_stop (test_client.CollectorLifecycleTests.test_unknown_notifications_and_notification_limit_stop) ... ok
+test_user_final_answer_without_completed_native_command_is_insufficient (test_client.CollectorLifecycleTests.test_user_final_answer_without_completed_native_command_is_insufficient) ... ok
+test_disabled_remote_status_is_reduced_and_does_not_reach_collector (test_client.TransportAndSchemaTests.test_disabled_remote_status_is_reduced_and_does_not_reach_collector) ... ok
+test_duplicate_json_keys_and_nonstandard_numbers_are_rejected (test_client.TransportAndSchemaTests.test_duplicate_json_keys_and_nonstandard_numbers_are_rejected) ... ok
+test_interrupt_requires_current_validated_owned_ids_and_only_one_send (test_client.TransportAndSchemaTests.test_interrupt_requires_current_validated_owned_ids_and_only_one_send) ... ok
+test_lifecycle_notifications_are_blocked_during_metadata_handshake (test_client.TransportAndSchemaTests.test_lifecycle_notifications_are_blocked_during_metadata_handshake) ... ok
+test_protocol_constructs_from_pinned_archive_and_rejects_bad_member_values (test_client.TransportAndSchemaTests.test_protocol_constructs_from_pinned_archive_and_rejects_bad_member_values) ... ok
+test_raw_notification_requires_frozen_protocol_validation_and_safe_reduction (test_client.TransportAndSchemaTests.test_raw_notification_requires_frozen_protocol_validation_and_safe_reduction) ... ok
+test_route_notification_rejects_server_requests_bad_envelopes_and_unknowns (test_client.TransportAndSchemaTests.test_route_notification_rejects_server_requests_bad_envelopes_and_unknowns) ... ok
+test_latest_cumulative_usage_snapshots_are_not_added (test_client.UsageAndBoundaryTests.test_latest_cumulative_usage_snapshots_are_not_added) ... ok
+test_missing_usage_remains_unknown_in_safe_receipt (test_client.UsageAndBoundaryTests.test_missing_usage_remains_unknown_in_safe_receipt) ... ok
+test_threshold_uses_input_plus_output_and_records_overshoot (test_client.UsageAndBoundaryTests.test_threshold_uses_input_plus_output_and_records_overshoot) ... ok
+test_timestamp_and_reasoning_indices_reject_bool_and_int64_overflow (test_client.UsageAndBoundaryTests.test_timestamp_and_reasoning_indices_reject_bool_and_int64_overflow) ... ok
+test_usage_bool_negative_and_int64_overflow_are_rejected (test_client.UsageAndBoundaryTests.test_usage_bool_negative_and_int64_overflow_are_rejected) ... ok
+
+======================================================================
+FAIL: test_early_turn_event_must_match_start_response_id (test_client.CollectorLifecycleTests.test_early_turn_event_must_match_start_response_id)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\government-comparison\evidence\s1-common-runner-read-tool-20261008-r1\test_client.py", line 168, in test_early_turn_event_must_match_start_response_id
+    self.assertEqual(c.failure_reason, "turn-response-id-conflicts-with-pending-event")
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'turn-response-id-conflicts-with-early-event' != 'turn-response-id-conflicts-with-pending-event'
+- turn-response-id-conflicts-with-early-event
+?                                  ^^^^
++ turn-response-id-conflicts-with-pending-event
+?                                 + ^^^^^
+
+
+----------------------------------------------------------------------
+Ran 26 tests in 0.026s
+
+FAILED (failures=1)
+test_command_must_match_exact_frozen_command_cwd_and_zero_exit (test_client.CollectorLifecycleTests.test_command_must_match_exact_frozen_command_cwd_and_zero_exit) ... ok
+test_early_turn_event_must_match_start_response_id (test_client.CollectorLifecycleTests.test_early_turn_event_must_match_start_response_id) ... ok
+test_explicit_readonly_profile_and_null_or_absent_parent_are_allowed (test_client.CollectorLifecycleTests.test_explicit_readonly_profile_and_null_or_absent_parent_are_allowed) ... ok
+test_full_success_requires_correlated_thread_command_and_completed_turn (test_client.CollectorLifecycleTests.test_full_success_requires_correlated_thread_command_and_completed_turn) ... ok
+test_missing_tool_or_wrong_correlated_ids_fail_closed (test_client.CollectorLifecycleTests.test_missing_tool_or_wrong_correlated_ids_fail_closed) ... ok
+test_only_completed_turn_notification_closes_collection (test_client.CollectorLifecycleTests.test_only_completed_turn_notification_closes_collection) ... ok
+test_permission_profile_and_effective_readonly_sandbox_are_both_required (test_client.CollectorLifecycleTests.test_permission_profile_and_effective_readonly_sandbox_are_both_required) ... ok
+test_second_native_command_in_terminal_snapshot_is_rejected (test_client.CollectorLifecycleTests.test_second_native_command_in_terminal_snapshot_is_rejected) ... ok
+test_second_native_command_is_rejected (test_client.CollectorLifecycleTests.test_second_native_command_is_rejected) ... ok
+test_second_native_command_is_rejected_at_first_observation (test_client.CollectorLifecycleTests.test_second_native_command_is_rejected_at_first_observation) ... ok
+test_start_response_completed_is_not_terminal_proof (test_client.CollectorLifecycleTests.test_start_response_completed_is_not_terminal_proof) ... ok
+test_successful_command_without_final_sentinel_is_insufficient (test_client.CollectorLifecycleTests.test_successful_command_without_final_sentinel_is_insufficient) ... ok
+test_unknown_notifications_and_notification_limit_stop (test_client.CollectorLifecycleTests.test_unknown_notifications_and_notification_limit_stop) ... ok
+test_user_final_answer_without_completed_native_command_is_insufficient (test_client.CollectorLifecycleTests.test_user_final_answer_without_completed_native_command_is_insufficient) ... ok
+test_disabled_remote_status_is_reduced_and_does_not_reach_collector (test_client.TransportAndSchemaTests.test_disabled_remote_status_is_reduced_and_does_not_reach_collector) ... ok
+test_duplicate_json_keys_and_nonstandard_numbers_are_rejected (test_client.TransportAndSchemaTests.test_duplicate_json_keys_and_nonstandard_numbers_are_rejected) ... ok
+test_interrupt_requires_current_validated_owned_ids_and_only_one_send (test_client.TransportAndSchemaTests.test_interrupt_requires_current_validated_owned_ids_and_only_one_send) ... ok
+test_lifecycle_notifications_are_blocked_during_metadata_handshake (test_client.TransportAndSchemaTests.test_lifecycle_notifications_are_blocked_during_metadata_handshake) ... ok
+test_protocol_constructs_from_pinned_archive_and_rejects_bad_member_values (test_client.TransportAndSchemaTests.test_protocol_constructs_from_pinned_archive_and_rejects_bad_member_values) ... ok
+test_raw_notification_requires_frozen_protocol_validation_and_safe_reduction (test_client.TransportAndSchemaTests.test_raw_notification_requires_frozen_protocol_validation_and_safe_reduction) ... ok
+test_route_notification_rejects_server_requests_bad_envelopes_and_unknowns (test_client.TransportAndSchemaTests.test_route_notification_rejects_server_requests_bad_envelopes_and_unknowns) ... ok
+test_latest_cumulative_usage_snapshots_are_not_added (test_client.UsageAndBoundaryTests.test_latest_cumulative_usage_snapshots_are_not_added) ... ok
+test_missing_usage_remains_unknown_in_safe_receipt (test_client.UsageAndBoundaryTests.test_missing_usage_remains_unknown_in_safe_receipt) ... ok
+test_threshold_uses_input_plus_output_and_records_overshoot (test_client.UsageAndBoundaryTests.test_threshold_uses_input_plus_output_and_records_overshoot) ... ok
+test_timestamp_and_reasoning_indices_reject_bool_and_int64_overflow (test_client.UsageAndBoundaryTests.test_timestamp_and_reasoning_indices_reject_bool_and_int64_overflow) ... ok
+test_usage_bool_negative_and_int64_overflow_are_rejected (test_client.UsageAndBoundaryTests.test_usage_bool_negative_and_int64_overflow_are_rejected) ... ok
+
+----------------------------------------------------------------------
+Ran 26 tests in 0.018s
+
+OK
+
+=== TARGETED FOLLOW-UP: actual pinned schema, completion evidence, and command counts ===
+test_actual_protocol_schema_rejects_missing_thread_required_field (test_client.ActualSchemaIntegrationTests.test_actual_protocol_schema_rejects_missing_thread_required_field) ... ok
+test_actual_schema_rejects_missing_required_usage_last_breakdown (test_client.ActualSchemaIntegrationTests.test_actual_schema_rejects_missing_required_usage_last_breakdown) ... ok
+test_full_schema_valid_lifecycle_with_usage_and_trailing_newline_delta (test_client.ActualSchemaIntegrationTests.test_full_schema_valid_lifecycle_with_usage_and_trailing_newline_delta) ... ok
+test_terminal_command_snapshot_alone_is_not_an_item_completion_event (test_client.ActualSchemaIntegrationTests.test_terminal_command_snapshot_alone_is_not_an_item_completion_event) ... ok
+test_turn_error_prevents_actual_schema_lifecycle_admission (test_client.ActualSchemaIntegrationTests.test_turn_error_prevents_actual_schema_lifecycle_admission) ... ok
+test_command_must_match_exact_frozen_command_cwd_and_zero_exit (test_client.CollectorLifecycleTests.test_command_must_match_exact_frozen_command_cwd_and_zero_exit) ... ok
+test_second_native_command_is_rejected (test_client.CollectorLifecycleTests.test_second_native_command_is_rejected) ... ok
+test_second_native_command_is_rejected_at_first_observation (test_client.CollectorLifecycleTests.test_second_native_command_is_rejected_at_first_observation) ... ok
+test_second_native_command_in_terminal_snapshot_is_rejected (test_client.CollectorLifecycleTests.test_second_native_command_in_terminal_snapshot_is_rejected) ... ok
+
+----------------------------------------------------------------------
+Ran 9 tests in 0.016s
+
+OK
+
+=== RUN HISTORY NOTE ===
+Initial run: 25/26; sole failure was an incorrect expected stop-reason assertion (early-event binding vs pending-event). Assertion corrected; complete focused suite rerun: 26/26 passed. Targeted follow-up: 9/9 passed. Validated collector SHA-256: EE1F73D76DE17AFCF5A5EA892F820446A110B5593356B6B09D6AA1CF0E78A3A3. No subprocesses or native commands launched.

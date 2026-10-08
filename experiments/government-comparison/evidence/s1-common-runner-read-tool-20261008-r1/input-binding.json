@@ -1,0 +1,14 @@
+{
+  "cwd": "C:/Users/Consiliari/Documents/Scientist-Probes/s1-common-runner-read-tool-20261008-r1/actor",
+  "inventory": {
+    "probe-input.txt": "9c9b152a51daf10dbc38765feec7b72c9d42587d6300c6cf7fcb8fd1e9ab29c5",
+    "README.md": "b986640bbeea4d174ff450cd27bb50d68697e78d8ad9fd0757fe3427b2904a59"
+  },
+  "commandSha256": "2bba0012686f10074619acfedc2e499f5f7f354f92f8f43a28434b0dc37fb57d",
+  "promptSha256": "dd3ba27e5d0072d95b051eddf4445afe2d2f0cfd53b3c7c87c3fd3a7b55ff875",
+  "expectedSha256": "7e597454eb597c163c0354c40b4d214e14787ae270f5735d86b0bc0a67999512",
+  "sentinelInPrompt": false,
+  "sentinelInReadme": false,
+  "expectedStoredOutsideActorCwd": true,
+  "newEvidenceEmpty": true
+}
