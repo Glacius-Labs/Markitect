@@ -2070,6 +2070,8 @@ spec:
       owner: project-world-implementation
     - path: internal/host/projectrun/verification_budget_test.go
       owner: project-world-implementation
+    - path: internal/host/projectrun/resume_crash_test.go
+      owner: project-world-implementation
     - path: internal/host/projectwork/runtime_edit_test.go
       owner: project-world-implementation
     - path: docs/validation/project-world-delivery.md
