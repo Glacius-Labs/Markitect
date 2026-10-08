@@ -64,6 +64,15 @@ def validate_native_fixture_grant(request, captured, product_bound=None):
     """Bind an explicitly released, zero-real-Actor fixture grant to a native pin."""
     if request.get("mode") != "mechanical":
         raise ValueError("no-provider native fixture grant cannot authorize live/provider mode")
+    expected_r3_arm = {
+        "government-native-contract-corrected-r3": "government",
+        "classic-native-contract-corrected-r3": "classic",
+    }.get(request.get("dispatchId"))
+    if expected_r3_arm is not None and (
+            request.get("arm") != expected_r3_arm or
+            request.get("nativeFixtureR3Grant") is None or
+            request.get("nativeFixtureCorrection") is not None):
+        raise ValueError("R3 dispatch requires its exact R3 grant binding and cannot reuse the R2 correction binding")
     binding = request.get("nativeFixtureGrant")
     if (not isinstance(binding, dict) or set(binding) != {"path", "sha256", "sourceKey"} or
             binding.get("sourceKey") != NATIVE_FIXTURE_GRANT_KEY):
@@ -123,12 +132,32 @@ def validate_native_fixture_grant(request, captured, product_bound=None):
               "maxRoleStarts": per_product["deterministicRoleStartsMaximum"],
               "maxRoleParallel": per_product["maxParallel"],
               "maxRoleProcessSeconds": per_product["totalProcessSecondsMaximum"]}
+    r3_binding = request.get("nativeFixtureR3Grant")
+    if request.get("nativeFixtureCorrection") is not None and r3_binding is not None:
+        raise ValueError("an R3 Request cannot reuse the R2 correction binding")
     if request.get("nativeFixtureCorrection") is not None:
         from native_fixture_budget import CORRECTION_KEY, validate_correction_binding
         correction = validate_correction_binding(request, path, binding["sha256"])
         result.update(correctionKey=CORRECTION_KEY, correctionSha256=correction["sha256"],
                       maxRoleStarts=correction["grant"]["limits"][name.lower()][
                           "maxAdditionalRoleInvocationsIncludingFailedWrapperStarts"])
+    elif r3_binding is not None:
+        from native_fixture_budget import validate_r3_grant_binding
+        validated = validate_r3_grant_binding(request, path, binding["sha256"])
+        expected_native_starts, expected_seconds = ((2, 300) if name == "Government" else (5, 750))
+        if (not isinstance(validated, dict) or
+                validated.get("grantKey") != r3_binding.get("sourceKey") or
+                validated.get("grantKey") != "native-s1-contract-corrected-integration-20261008-r3" or
+                validated.get("maxRoleStarts") != 6 or
+                validated.get("maxDeterministicDelegates") != 6 or
+                validated.get("maxNativeStarts") != expected_native_starts or
+                validated.get("maxReservedSessionSeconds") != expected_seconds):
+            raise ValueError("validated R3 bounds differ from the exact additive native allocation")
+        result.update(grantKey=validated["grantKey"], maxRoleStarts=validated["maxRoleStarts"],
+                      maxDeterministicDelegates=validated["maxDeterministicDelegates"],
+                      maxNativeStarts=validated["maxNativeStarts"],
+                      maxReservedSessionSeconds=validated["maxReservedSessionSeconds"],
+                      r3Grant=validated)
     return result
 
 
@@ -144,6 +173,7 @@ class ControllerContext(NamedTuple):
     bootstrap_sha256: str
     controller_record: dict
     request_path: Path
+    native_fixture_bounds: dict | None
 
 
 def write_bundle(path, *, request_path, request_raw, authority, authorization_path,
@@ -264,8 +294,9 @@ def load_context(*, env=None, invocation_raw=None):
         product_bound = classic_integration.bind_request(
             request, request_path=request_path,
             allow_materialized_workspace=allow_materialized_workspace)
+    fixture_bounds = None
     if request.get("nativeFixtureGrant") is not None:
-        validate_native_fixture_grant(request, captured, product_bound)
+        fixture_bounds = validate_native_fixture_grant(request, captured, product_bound)
     product_binding = request.get("product", {}).get(request.get("arm"), {}).get("roleAuthorization")
     captured_authorization = next((content for source, content in captured.items()
                                    if Path(source).resolve() == authorization_path), None)
@@ -275,7 +306,7 @@ def load_context(*, env=None, invocation_raw=None):
         raise ValueError("bootstrap role authorization is not the released Request-bound file")
     return ControllerContext(authority, request, request_raw, captured, authorization_path,
                              authorization_raw, bundle["roleAuthorization"]["sha256"],
-                             path, expected, record, request_path)
+                             path, expected, record, request_path, fixture_bounds)
 
 
 CLASSIC_ACTIONS = ("execute", "apply", "verify", "audit", "apply-replay")

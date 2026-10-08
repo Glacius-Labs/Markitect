@@ -1,0 +1,9 @@
+test_changed_configuration_digest_is_rejected_before_reserving_a_start (runtime.test_native_role_diagnostics.NativeRoleDiagnosticsTests.test_changed_configuration_digest_is_rejected_before_reserving_a_start) ... ok
+test_correction_source_key_and_configuration_shape_are_bound (runtime.test_native_role_diagnostics.NativeRoleDiagnosticsTests.test_correction_source_key_and_configuration_shape_are_bound) ... ok
+test_retains_early_raw_stderr_and_digest_receipt (runtime.test_native_role_diagnostics.NativeRoleDiagnosticsTests.test_retains_early_raw_stderr_and_digest_receipt) ... ok
+test_six_wrapper_starts_are_retained_and_seventh_is_rejected (runtime.test_native_role_diagnostics.NativeRoleDiagnosticsTests.test_six_wrapper_starts_are_retained_and_seventh_is_rejected) ... ok
+
+----------------------------------------------------------------------
+Ran 4 tests in 0.174s
+
+OK

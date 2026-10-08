@@ -42,28 +42,55 @@ def start_native_diagnostics(argv):
         raise ValueError("exact wrapper diagnostic configuration fields required")
     correction = config["correction"]
     if (not isinstance(correction, dict) or set(correction) != {"path", "sha256", "sourceKey"} or
-            correction.get("sourceKey") != "native-s1-corrected-integration-20261008-r2" or
             not Path(correction.get("path", "")).is_absolute() or
             not Path(config.get("requestPath", "")).is_absolute()):
         raise ValueError("exact corrected wrapper diagnostic grant binding required")
-    correction_raw = Path(correction["path"]).read_bytes()
-    if hashlib.sha256(correction_raw).hexdigest() != correction["sha256"]:
-        raise ValueError("wrapper diagnostic correction grant digest mismatch")
-    source = json.loads(correction_raw)
-    snapshot_raw = Path(source["sourceCoordinationPath"]).read_bytes()
-    if hashlib.sha256(snapshot_raw).hexdigest() != source["sourceCoordinationSha256"]:
-        raise ValueError("wrapper diagnostic source snapshot digest mismatch")
-    scientist = next(item for item in json.loads(snapshot_raw)["threads"] if item["name"] == "Scientist")
-    grant = source["grant"]
     arm = config["arm"]
-    if (source["sourceThreadId"] != "01a11367-a781-7683-a20f-46e12614dcb4" or
-            source["sourceJsonPointer"] != "threads[name=Scientist].evidence.correctedNativeIntegrationGrant" or
-            scientist["evidence"]["correctedNativeIntegrationGrant"] != grant or
-            grant["key"] != "native-s1-corrected-integration-20261008-r2" or
-            arm not in {"government", "classic"} or
-            grant["limits"][arm]["maxAdditionalRoleInvocationsIncludingFailedWrapperStarts"] != 6 or
-            any(grant[key] != 0 for key in ("realActorCalls", "providerCalls", "metadataAppServerTrees", "studyCells"))):
-        raise ValueError("wrapper diagnostic grant differs from corrected allocation")
+    request_path = Path(config["requestPath"]).resolve()
+    if arm not in {"government", "classic"}:
+        raise ValueError("wrapper diagnostic requires an exact native arm")
+
+    if correction["sourceKey"] == "native-s1-corrected-integration-20261008-r2":
+        # Preserve the already released R2 wire shape and provenance check.
+        request = json.loads(request_path.read_bytes()) if request_path.is_file() else None
+        if request is not None and (
+                request.get("nativeFixtureR3Grant") is not None or
+                request.get("nativeFixtureCorrection") != correction):
+            raise ValueError("R2 wrapper diagnostics cannot authorize an R3 Request")
+        correction_raw = Path(correction["path"]).read_bytes()
+        if hashlib.sha256(correction_raw).hexdigest() != correction["sha256"]:
+            raise ValueError("wrapper diagnostic correction grant digest mismatch")
+        source = json.loads(correction_raw)
+        snapshot_raw = Path(source["sourceCoordinationPath"]).read_bytes()
+        if hashlib.sha256(snapshot_raw).hexdigest() != source["sourceCoordinationSha256"]:
+            raise ValueError("wrapper diagnostic source snapshot digest mismatch")
+        scientist = next(item for item in json.loads(snapshot_raw)["threads"] if item["name"] == "Scientist")
+        grant = source["grant"]
+        if (source["sourceThreadId"] != "01a11367-a781-7683-a20f-46e12614dcb4" or
+                source["sourceJsonPointer"] != "threads[name=Scientist].evidence.correctedNativeIntegrationGrant" or
+                scientist["evidence"]["correctedNativeIntegrationGrant"] != grant or
+                grant["key"] != "native-s1-corrected-integration-20261008-r2" or
+                grant["limits"][arm]["maxAdditionalRoleInvocationsIncludingFailedWrapperStarts"] != 6 or
+                any(grant[key] != 0 for key in ("realActorCalls", "providerCalls", "metadataAppServerTrees", "studyCells"))):
+            raise ValueError("wrapper diagnostic grant differs from corrected allocation")
+        max_starts = grant["limits"][arm]["maxAdditionalRoleInvocationsIncludingFailedWrapperStarts"]
+    elif correction["sourceKey"] == "native-s1-contract-corrected-integration-20261008-r3":
+        request_path = request_path.resolve(strict=True)
+        request = json.loads(request_path.read_bytes())
+        r3_binding = request.get("nativeFixtureR3Grant")
+        original = request.get("nativeFixtureGrant")
+        if (request.get("arm") != arm or request.get("nativeFixtureCorrection") is not None or
+                r3_binding != correction or
+                not isinstance(original, dict) or set(original) != {"path", "sha256", "sourceKey"}):
+            raise ValueError("R3 wrapper diagnostics must bind the exact R3 Request and retain original provenance")
+        from native_fixture_budget import validate_r3_grant_binding
+        validated = validate_r3_grant_binding(request, original["path"], original["sha256"])
+        if (validated.get("grantKey") != correction["sourceKey"] or
+                validated.get("maxRoleStarts") != 6 or validated.get("maxDeterministicDelegates") != 6):
+            raise ValueError("wrapper diagnostic grant differs from the exact R3 role allocation")
+        max_starts = validated["maxRoleStarts"]
+    else:
+        raise ValueError("wrapper diagnostic grant key is not authorized")
     directory = config_path.parent / "wrapper-diagnostics"
     directory.mkdir(exist_ok=True)
     db = sqlite3.connect(directory / "starts.sqlite", timeout=5)
@@ -71,7 +98,7 @@ def start_native_diagnostics(argv):
         db.execute("CREATE TABLE IF NOT EXISTS starts(id INTEGER PRIMARY KEY, config_sha TEXT, started REAL)")
         db.execute("BEGIN IMMEDIATE")
         rows = db.execute("SELECT config_sha FROM starts").fetchall()
-        if len(rows) >= 6 or any(row[0] != expected for row in rows):
+        if len(rows) >= max_starts or any(row[0] != expected for row in rows):
             raise ValueError("corrected wrapper invocation cap exhausted or configuration changed")
         cursor = db.execute("INSERT INTO starts(config_sha,started) VALUES(?,?)", (expected, time.time()))
         invocation = cursor.lastrowid
@@ -339,12 +366,17 @@ def _role_auth(raw: bytes, expected_sha: str, request: dict, request_raw: bytes,
     expected_args = wrapper_arguments(__file__, auth_path, expected_sha,
                                       auth["roleEvidenceDirectory"], wrapper_slot)
     diagnostics = auth.get("diagnostics")
-    if request.get("nativeFixtureCorrection") is not None:
+    r3_grant = request.get("nativeFixtureR3Grant")
+    r2_correction = request.get("nativeFixtureCorrection")
+    if r3_grant is not None and r2_correction is not None:
+        raise ValueError("an R3 Request cannot reuse the R2 correction binding")
+    diagnostic_grant = r3_grant if r3_grant is not None else r2_correction
+    if diagnostic_grant is not None:
         if not isinstance(diagnostics, dict) or set(diagnostics) != {"path", "sha256"}:
             raise ValueError("corrected role requires released diagnostic configuration")
         diagnostic_raw = _released(captured, diagnostics["path"], diagnostics["sha256"], "wrapper diagnostics")
         diagnostic_value = json.loads(diagnostic_raw)
-        if (diagnostic_value.get("correction") != request["nativeFixtureCorrection"] or
+        if (diagnostic_value.get("correction") != diagnostic_grant or
                 diagnostic_value.get("requestPath") != auth["requestPath"] or diagnostic_value.get("arm") != arm):
             raise ValueError("wrapper diagnostics do not match this corrected Request")
         expected_args.extend(["--diagnostics-config", diagnostics["path"], "--diagnostics-sha256", diagnostics["sha256"]])
@@ -373,7 +405,7 @@ def _role_auth(raw: bytes, expected_sha: str, request: dict, request_raw: bytes,
     required_wrapper_files = {str(Path(__file__).resolve()): "sha256:" + script_sha,
                               str(controller_script): "sha256:" + controller_sha,
                               auth_path: "sha256:" + expected_sha}
-    if request.get("nativeFixtureCorrection") is not None:
+    if diagnostic_grant is not None:
         required_wrapper_files[str(Path(diagnostics["path"]).resolve())] = "sha256:" + diagnostics["sha256"]
     if request.get("nativeFixtureGrant") is not None:
         budget_script = Path(__file__).with_name("native_fixture_budget.py").resolve()
@@ -743,6 +775,14 @@ def run_role(invocation_raw: bytes, authorization_raw: bytes, authorization_sha2
     # Reserve and persist the unique invocation identity before any delegate effect.
     effective_timeout = _effective_timeout(ledger, request, auth, authority, record,
                                           delegate["timeoutSeconds"])
+    r3_binding = request.get("nativeFixtureR3Grant")
+    if r3_binding is not None:
+        validated_r3 = fixture_bounds.get("r3Grant") if isinstance(fixture_bounds, dict) else None
+        if (not isinstance(validated_r3, dict) or
+                validated_r3.get("grantKey") != r3_binding.get("sourceKey")):
+            raise ValueError("R3 role call requires the exact validated additive grant before reservation")
+        from native_fixture_budget import validate_r3_entry_gate
+        validate_r3_entry_gate(validated_r3)
     reserved_id, attempt_id = _reserve(ledger, auth, invocation, invocation_sha,
                                        authorization_sha256, role_slot, evidence_path,
                                        authority.grant["retrospectiveTokenThreshold"],
@@ -810,12 +850,19 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     invocation_raw = sys.stdin.buffer.read()
     context = native_controller.load_context(invocation_raw=invocation_raw)
-    if context.request.get("nativeFixtureCorrection") is not None:
+    diagnostic_grant = (context.request.get("nativeFixtureR3Grant") or
+                        context.request.get("nativeFixtureCorrection"))
+    if diagnostic_grant is not None:
         if (_NATIVE_DIAGNOSTICS is None or
-                _NATIVE_DIAGNOSTICS["config"]["correction"] != context.request["nativeFixtureCorrection"] or
+                _NATIVE_DIAGNOSTICS["config"]["correction"] != diagnostic_grant or
                 Path(_NATIVE_DIAGNOSTICS["config"]["requestPath"]).resolve() !=
                 Path(json.loads(context.authorization_raw)["requestPath"]).resolve()):
             raise ValueError("corrected wrapper requires exact early diagnostic binding")
+    if context.request.get("nativeFixtureR3Grant") is not None:
+        bounds = context.native_fixture_bounds
+        validated = bounds.get("r3Grant") if isinstance(bounds, dict) else None
+        if not isinstance(validated, dict) or validated.get("grantKey") != diagnostic_grant.get("sourceKey"):
+            raise ValueError("wrapper requires the exact validated R3 fixture grant before delegation")
     if (Path(args.authorization).resolve(strict=True) != context.authorization_path or
             args.authorization_sha256 != context.authorization_sha256):
         raise ValueError("wrapper argv differs from the digest-bound controller authorization")

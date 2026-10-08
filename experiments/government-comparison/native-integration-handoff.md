@@ -1,4 +1,50 @@
-# Native integration: r3 offline package complete; native execution stopped
+# Native integration: R3 conditional native grant active; offline preflight in progress
+
+Current authorized task: `native-s1-contract-corrected-integration-20261008-r3`,
+starting from accepted clean offline package
+`f5cd8871b84f45541044110057b59f0bb1ca0804`. Proceed with narrow new-grant
+admission, real offline Grant/Classic bind_request checks, focused regressions,
+independent preflight review, clean source commit and immutable fresh-case freeze.
+Do not treat the initial wait instruction or the preceding offline closure as
+a stop of this active task after compaction.
+
+TEMPORAL GATE: `C:/Users/Consiliari/Glacius Labs/Markitect/docs/design/government/coordination-state.json`
+initially assigned `fullSuiteSlot` to Worker. Overseer assigned Scientist this
+exact R3 key at `2026-10-08T00:20:56Z`, after Worker's explicit release at
+`2026-10-08T00:16:55.5233253Z`; root read and retained the live activation state
+separately from the issued grant snapshot. The slot condition is now satisfied,
+while source/tests/real binding/review/freeze prerequisites remain outstanding.
+No native start has been performed. Every later effect must revalidate the live
+Scientist slot and exact R3 key before reservation or delegate execution.
+Queue: Worker -> Scientist R3 -> Architect P1. If offline preparation completes
+before slot assignment, hand off exact clean preflight/readiness; the native
+package remains incomplete and requires no new general permission question.
+
+Finite additive allocation: Government +2 native starts/+6 wrapper attempts/
++6 fixed deterministic delegates/300 reserved seconds; Classic +5/+6/+6/750.
+Products sequential, role parallelism <=2, native process deadline38s,
+controller windows38/180s,150 logical reserved session seconds/start including
+roles/cleanup. Overseer's pre-native amendment `r3-a1` at 00:30:59Z clarifies
+contiguous Government then Classic blocks: Government queue is its own entry
+checkpoint, then positive-only Resume; Classic Execute is its own entry
+checkpoint, then positive-only reviewed continuation. Their entry calls sum to
+two starts/300 seconds but create no shared temporal barrier. No quota changed.
+The amended envelope and Coordinator snapshot are retained separately from the
+initial issued grant and activation snapshots. First failure/missing
+prerequisite/deadline/quota stop closes that product without repair/relaunch.
+Preserve historical5starts/3wrappers/0delegates/750seconds additively; cumulative
+ceiling12starts/1800seconds. No inspect, new cases, real Actor/model/provider,
+metadata session, study cell, full product suite, product mutation or publication.
+Government04e225d and Classicc91363b/Runtime7dbd599 pins remain fixed; no P1.
+
+Owners: s1_adapter narrow budget/new grant/slot gate; tools_allocation_tests
+wrapper diagnostics/controller new-key admission; case_contracts unmocked
+offline Classic Grant/bind_request integration; independent_review preflight;
+root source snapshot/fresh cases/driver/freeze/commit and later bounded runs.
+All preparation effects are offline only; original native budget DB must not be
+opened for mutation until the actual separately gated start.
+
+## Accepted R3 offline package
 
 Completed package: `s1-offline-adapter-contract-repair-r3-preparation`, delegated
 by Overseer after accepted r2 delivery

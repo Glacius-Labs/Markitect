@@ -1,0 +1,48 @@
+test_bind_request_validates_external_auth_runtime_pins_and_clean_actor_base (runtime.test_classic_integration.ClassicIntegrationTests.test_bind_request_validates_external_auth_runtime_pins_and_clean_actor_base) ... ok
+test_exact_review_gates_apply_and_fresh_verify_then_records_result_captures (runtime.test_classic_integration.ClassicIntegrationTests.test_exact_review_gates_apply_and_fresh_verify_then_records_result_captures) ... ok
+test_invocation_replay_identity_is_stable_and_nonce_bound (runtime.test_classic_integration.ClassicIntegrationTests.test_invocation_replay_identity_is_stable_and_nonce_bound) ... ok
+test_native_projection_to_fixed_classic_slot_preserves_invocation (runtime.test_classic_integration.ClassicIntegrationTests.test_native_projection_to_fixed_classic_slot_preserves_invocation) ... ok
+test_native_subject_projection_context_and_authorized_slot_are_all_bound (runtime.test_classic_integration.ClassicIntegrationTests.test_native_subject_projection_context_and_authorized_slot_are_all_bound) ... ok
+test_prepare_real_pinned_disposable_fixture_and_exact_initial_native_plan (runtime.test_classic_integration.ClassicIntegrationTests.test_prepare_real_pinned_disposable_fixture_and_exact_initial_native_plan) ... ok
+test_prepare_runtime_leaves_record_store_absent_and_preserves_preexisting_empty_root (runtime.test_classic_integration.ClassicIntegrationTests.test_prepare_runtime_leaves_record_store_absent_and_preserves_preexisting_empty_root) ... ok
+test_shared_role_ledger_refuses_exact_replay_before_delegate_or_second_attempt (runtime.test_classic_integration.ClassicIntegrationTests.test_shared_role_ledger_refuses_exact_replay_before_delegate_or_second_attempt) ... ok
+test_three_native_slots_have_actual_prefixed_runtime_file_digests (runtime.test_government_integration.GovernmentIntegrationPreparationTests.test_three_native_slots_have_actual_prefixed_runtime_file_digests) ... ok
+test_missing_or_changed_delegate_command_fails_preflight_before_reservation (runtime.test_government_roles.GovernmentRoleBridgeTests.test_missing_or_changed_delegate_command_fails_preflight_before_reservation) ... ok
+test_classic_preflight_invocations_preserve_native_projection_scope_and_context (runtime.test_government_roles.GovernmentRoleBridgeTests.test_classic_preflight_invocations_preserve_native_projection_scope_and_context) ... ok
+test_classic_dirty_workspace_allowed_only_after_same_dispatch_successful_apply_for_verifier (runtime.test_government_roles.GovernmentRoleBridgeTests.test_classic_dirty_workspace_allowed_only_after_same_dispatch_successful_apply_for_verifier) ... ok
+test_classic_bootstrap_failure_terminalizes_claim_without_product_process (runtime.test_native_controller.NativeClassicControllerTests.test_classic_bootstrap_failure_terminalizes_claim_without_product_process) ... ok
+test_five_step_flow_is_ordered_review_gated_and_process_accounted (runtime.test_native_controller.NativeClassicControllerTests.test_five_step_flow_is_ordered_review_gated_and_process_accounted) ... ok
+test_native_fixture_source_grant_is_released_and_product_pin_bound (runtime.test_native_controller.NativeClassicControllerTests.test_native_fixture_source_grant_is_released_and_product_pin_bound) ... ok
+test_skipped_action_and_missing_budget_fail_before_process (runtime.test_native_controller.NativeClassicControllerTests.test_skipped_action_and_missing_budget_fail_before_process) ... ok
+test_all_six_frozen_r2_roles_complete_the_offline_contract_chain (runtime.test_native_adapter_contracts.NativeAdapterContractTests.test_all_six_frozen_r2_roles_complete_the_offline_contract_chain) ... ok
+test_r2_commandless_shape_fails_in_pinned_predecessor_before_reservation (runtime.test_native_adapter_contracts.NativeAdapterContractTests.test_r2_commandless_shape_fails_in_pinned_predecessor_before_reservation) ... ok
+test_eight_spent_slots_cannot_refill_or_replay (runtime.test_native_fixture_budget.FixtureBudgetTests.test_eight_spent_slots_cannot_refill_or_replay) ... ok
+test_r2_adds_only_exact_remaining_allocation_to_original_history (runtime.test_native_fixture_budget.FixtureBudgetTests.test_r2_adds_only_exact_remaining_allocation_to_original_history) ... ok
+test_r2_rejects_replaced_original_binding_or_correction_source (runtime.test_native_fixture_budget.FixtureBudgetTests.test_r2_rejects_replaced_original_binding_or_correction_source) ... ok
+test_r2_requires_original_three_rows_and_serializes_products (runtime.test_native_fixture_budget.FixtureBudgetTests.test_r2_requires_original_three_rows_and_serializes_products) ... ok
+test_r3_appends_only_granted_labels_and_preserves_all_five_prior_rows (runtime.test_native_fixture_budget.FixtureBudgetTests.test_r3_appends_only_granted_labels_and_preserves_all_five_prior_rows) ... ok
+test_r3_live_assignment_timestamp_must_match_grant_and_slot (runtime.test_native_fixture_budget.FixtureBudgetTests.test_r3_live_assignment_timestamp_must_match_grant_and_slot) ... ok
+test_r3_validator_binds_exact_grant_source_and_product_caps (runtime.test_native_fixture_budget.FixtureBudgetTests.test_r3_validator_binds_exact_grant_source_and_product_caps) ... ok
+test_r3_worker_slot_fails_closed_without_writing_original_history (runtime.test_native_fixture_budget.FixtureBudgetTests.test_r3_worker_slot_fails_closed_without_writing_original_history) ... ok
+test_racing_same_claim_admits_exactly_one (runtime.test_native_fixture_budget.FixtureBudgetTests.test_racing_same_claim_admits_exactly_one) ... ok
+test_native_diagnostics (unittest.loader._FailedTest.test_native_diagnostics) ... ERROR
+test_direct_run_role_checks_live_gate_before_reservation_or_delegate (runtime.test_native_r3_diagnostics.NativeR3DiagnosticsTests.test_direct_run_role_checks_live_gate_before_reservation_or_delegate) ... ok
+test_exact_r3_grant_caps_six_and_retains_raw_stream_receipts (runtime.test_native_r3_diagnostics.NativeR3DiagnosticsTests.test_exact_r3_grant_caps_six_and_retains_raw_stream_receipts) ... ok
+test_r3_diagnostics_reject_mismatched_validated_bounds_before_start_record (runtime.test_native_r3_diagnostics.NativeR3DiagnosticsTests.test_r3_diagnostics_reject_mismatched_validated_bounds_before_start_record) ... ok
+test_r3_request_binding_must_match_and_cannot_reuse_r2_correction (runtime.test_native_r3_diagnostics.NativeR3DiagnosticsTests.test_r3_request_binding_must_match_and_cannot_reuse_r2_correction) ... ok
+test_actual_r3_grant_and_classic_request_reach_bootstrap_without_product_start (runtime.test_r3_classic_preflight.R3ClassicPreflightTests.test_actual_r3_grant_and_classic_request_reach_bootstrap_without_product_start) ... ok
+
+======================================================================
+ERROR: test_native_diagnostics (unittest.loader._FailedTest.test_native_diagnostics)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: test_native_diagnostics
+Traceback (most recent call last):
+  File "C:\Python313\Lib\unittest\loader.py", line 137, in loadTestsFromName
+    module = __import__(module_name)
+ModuleNotFoundError: No module named 'runtime.test_native_diagnostics'
+
+
+----------------------------------------------------------------------
+Ran 33 tests in 30.037s
+
+FAILED (errors=1)

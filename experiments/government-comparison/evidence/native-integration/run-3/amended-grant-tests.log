@@ -1,0 +1,18 @@
+test_eight_spent_slots_cannot_refill_or_replay (runtime.test_native_fixture_budget.FixtureBudgetTests.test_eight_spent_slots_cannot_refill_or_replay) ... ok
+test_r2_adds_only_exact_remaining_allocation_to_original_history (runtime.test_native_fixture_budget.FixtureBudgetTests.test_r2_adds_only_exact_remaining_allocation_to_original_history) ... ok
+test_r2_rejects_replaced_original_binding_or_correction_source (runtime.test_native_fixture_budget.FixtureBudgetTests.test_r2_rejects_replaced_original_binding_or_correction_source) ... ok
+test_r2_requires_original_three_rows_and_serializes_products (runtime.test_native_fixture_budget.FixtureBudgetTests.test_r2_requires_original_three_rows_and_serializes_products) ... ok
+test_r3_appends_only_granted_labels_and_preserves_all_five_prior_rows (runtime.test_native_fixture_budget.FixtureBudgetTests.test_r3_appends_only_granted_labels_and_preserves_all_five_prior_rows) ... ok
+test_r3_live_assignment_timestamp_must_match_grant_and_slot (runtime.test_native_fixture_budget.FixtureBudgetTests.test_r3_live_assignment_timestamp_must_match_grant_and_slot) ... ok
+test_r3_validator_binds_exact_grant_source_and_product_caps (runtime.test_native_fixture_budget.FixtureBudgetTests.test_r3_validator_binds_exact_grant_source_and_product_caps) ... ok
+test_r3_worker_slot_fails_closed_without_writing_original_history (runtime.test_native_fixture_budget.FixtureBudgetTests.test_r3_worker_slot_fails_closed_without_writing_original_history) ... ok
+test_racing_same_claim_admits_exactly_one (runtime.test_native_fixture_budget.FixtureBudgetTests.test_racing_same_claim_admits_exactly_one) ... ok
+test_direct_run_role_checks_live_gate_before_reservation_or_delegate (runtime.test_native_r3_diagnostics.NativeR3DiagnosticsTests.test_direct_run_role_checks_live_gate_before_reservation_or_delegate) ... ok
+test_exact_r3_grant_caps_six_and_retains_raw_stream_receipts (runtime.test_native_r3_diagnostics.NativeR3DiagnosticsTests.test_exact_r3_grant_caps_six_and_retains_raw_stream_receipts) ... ok
+test_r3_diagnostics_reject_mismatched_validated_bounds_before_start_record (runtime.test_native_r3_diagnostics.NativeR3DiagnosticsTests.test_r3_diagnostics_reject_mismatched_validated_bounds_before_start_record) ... ok
+test_r3_request_binding_must_match_and_cannot_reuse_r2_correction (runtime.test_native_r3_diagnostics.NativeR3DiagnosticsTests.test_r3_request_binding_must_match_and_cannot_reuse_r2_correction) ... ok
+
+----------------------------------------------------------------------
+Ran 13 tests in 1.530s
+
+OK

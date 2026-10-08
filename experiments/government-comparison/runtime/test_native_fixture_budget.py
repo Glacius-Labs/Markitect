@@ -2,9 +2,11 @@
 import hashlib
 import json
 from pathlib import Path
+import shutil
 import tempfile
 from concurrent.futures import ThreadPoolExecutor
 import unittest
+from unittest.mock import patch
 
 import native_fixture_budget
 from native_fixture_budget import (CORRECTION_BASIS, CORRECTION_KEY, CORRECTION_POINTER,
@@ -110,6 +112,47 @@ class FixtureBudgetTests(unittest.TestCase):
             budget.reserve(product, label, argv)
             budget.finish(product, label, {"argv": argv, "wallSeconds": .5})
 
+    def _r3_request(self, product="government"):
+        base_path = Path(native_fixture_budget.R3_BASE_GRANT_PATH)
+        r3_path = Path(native_fixture_budget.R3_ENVELOPE_PATH)
+        source_path = Path(native_fixture_budget.R3_SOURCE_PATH)
+        return {"mode": "mechanical", "arm": product,
+                "dispatchId": native_fixture_budget.R3_DISPATCH_IDS[product],
+                "nativeFixtureGrant": {"path": str(base_path), "sha256": native_fixture_budget.R3_BASE_GRANT_SHA256,
+                                       "sourceKey": KEY},
+                "nativeFixtureR3Grant": {"path": str(r3_path),
+                                         "sha256": native_fixture_budget.R3_ENVELOPE_SHA256,
+                                         "sourceKey": native_fixture_budget.R3_KEY},
+                "releasedInputs": [
+                    {"path": str(base_path), "sha256": native_fixture_budget.R3_BASE_GRANT_SHA256},
+                    {"path": str(r3_path), "sha256": native_fixture_budget.R3_ENVELOPE_SHA256},
+                    {"path": str(source_path), "sha256": native_fixture_budget.R3_SOURCE_SHA256}]}
+
+    @staticmethod
+    def _r3_binaries():
+        return {
+            "government": r"C:\Users\Consiliari\.codex\worktrees\government-worker\Markitect\.artifacts\government-g5\markitect-04e225d.exe",
+            "classic": r"C:\Users\Consiliari\.codex\worktrees\standard-operating-model\Markitect\.artifacts\classic-readiness\v0.14.1-r1\artifacts\markitect-v0.14.1-windows-amd64.exe"}
+
+    def _r3_live_slot(self, path):
+        snapshot = json.loads(Path(native_fixture_budget.R3_SOURCE_PATH).read_text(encoding="utf-8"))
+        snapshot["fullSuiteSlot"]["owner"] = "Scientist"
+        snapshot["fullSuiteSlot"]["key"] = native_fixture_budget.R3_KEY
+        assigned_utc = "2026-10-08T00:20:56Z"
+        snapshot["fullSuiteSlot"]["assignedUtc"] = assigned_utc
+        grant = next(item for item in snapshot["threads"] if item["name"] == "Scientist")[
+            "evidence"]["contractCorrectedNativeIntegrationGrant"]
+        grant["slotAssignedUtc"] = assigned_utc
+        grant["status"] = native_fixture_budget.R3_ACTIVE_STATUS
+        path.write_text(json.dumps(snapshot, sort_keys=True), encoding="utf-8")
+        return path
+
+    def _r3_budget(self, path, request=None):
+        shutil.copy2(native_fixture_budget.R3_HISTORY_PATH, path)
+        return FixtureBudget(path, native_fixture_budget.R3_BASE_GRANT_PATH,
+                             native_fixture_budget.R3_BASE_GRANT_SHA256,
+                             self._r3_binaries(), request=request or self._r3_request())
+
     def test_eight_spent_slots_cannot_refill_or_replay(self):
         for i in range(8):
             self.budget.reserve("government",str(i),self.argv)
@@ -211,3 +254,155 @@ class FixtureBudgetTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "digest mismatch"):
             FixtureBudget(path, self.grant_path, self.grant_sha,
                           {"government": str(self.binary), "classic": str(self.binary)}, request=request)
+
+    def test_r3_validator_binds_exact_grant_source_and_product_caps(self):
+        request = self._r3_request("classic")
+        validated = native_fixture_budget.validate_r3_grant_binding(
+            request, native_fixture_budget.R3_BASE_GRANT_PATH,
+            native_fixture_budget.R3_BASE_GRANT_SHA256)
+        self.assertEqual(validated["grantKey"], native_fixture_budget.R3_KEY)
+        self.assertEqual(validated["maxRoleStarts"], 6)
+        self.assertEqual(validated["maxDeterministicDelegates"], 6)
+        self.assertEqual(validated["maxNativeStarts"], 5)
+        self.assertEqual(validated["maxReservedSessionSeconds"], 750)
+        self.assertEqual(validated["products"], native_fixture_budget.R3_BASE_PRODUCTS)
+        government = native_fixture_budget.validate_r3_grant_binding(
+            self._r3_request("government"), native_fixture_budget.R3_BASE_GRANT_PATH,
+            native_fixture_budget.R3_BASE_GRANT_SHA256)
+        self.assertEqual((government["maxRoleStarts"], government["maxDeterministicDelegates"],
+                          government["maxNativeStarts"], government["maxReservedSessionSeconds"]),
+                         (6, 6, 2, 300))
+
+        missing = dict(request)
+        missing.pop("nativeFixtureR3Grant")
+        with self.assertRaisesRegex(ValueError, "exact nativeFixtureR3Grant"):
+            native_fixture_budget.validate_r3_grant_binding(
+                missing, native_fixture_budget.R3_BASE_GRANT_PATH,
+                native_fixture_budget.R3_BASE_GRANT_SHA256)
+        missing_budget_request = dict(request)
+        missing_budget_request.pop("nativeFixtureR3Grant")
+        missing_budget_path = self.root / "r3-missing-grant.sqlite"
+        shutil.copy2(native_fixture_budget.R3_HISTORY_PATH, missing_budget_path)
+        before = hashlib.sha256(missing_budget_path.read_bytes()).hexdigest()
+        with self.assertRaisesRegex(ValueError, "required for the corrected R3 dispatch"):
+            FixtureBudget(missing_budget_path, native_fixture_budget.R3_BASE_GRANT_PATH,
+                          native_fixture_budget.R3_BASE_GRANT_SHA256,
+                          self._r3_binaries(), request=missing_budget_request)
+        self.assertEqual(hashlib.sha256(missing_budget_path.read_bytes()).hexdigest(), before)
+        altered = dict(request, nativeFixtureR3Grant={
+            **request["nativeFixtureR3Grant"], "sha256": "0" * 64})
+        with self.assertRaisesRegex(ValueError, "path or digest"):
+            native_fixture_budget.validate_r3_grant_binding(
+                altered, native_fixture_budget.R3_BASE_GRANT_PATH,
+                native_fixture_budget.R3_BASE_GRANT_SHA256)
+        reused_r2 = dict(request, nativeFixtureCorrection={"path": str(self.grant_path),
+                                                           "sha256": self.grant_sha,
+                                                           "sourceKey": CORRECTION_KEY})
+        with self.assertRaisesRegex(ValueError, "cannot reuse"):
+            native_fixture_budget.validate_r3_grant_binding(
+                reused_r2, native_fixture_budget.R3_BASE_GRANT_PATH,
+                native_fixture_budget.R3_BASE_GRANT_SHA256)
+
+    def test_r3_worker_slot_fails_closed_without_writing_original_history(self):
+        path = self.root / "r3-readonly-native-starts.sqlite"
+        budget = self._r3_budget(path)
+        before = hashlib.sha256(path.read_bytes()).hexdigest()
+        live_path = self.root / "live-coordination-worker.json"
+        state = json.loads(Path(native_fixture_budget.R3_SOURCE_PATH).read_text(encoding="utf-8"))
+        state["fullSuiteSlot"]["owner"] = "Worker"
+        live_path.write_text(json.dumps(state, sort_keys=True), encoding="utf-8")
+        with patch.object(native_fixture_budget, "R3_COORDINATION_PATH",
+                          str(live_path)):
+            preflight = budget.preflight_snapshot()
+            self.assertFalse(preflight["entryGate"]["ready"])
+            with self.assertRaisesRegex(ValueError, "not explicitly assigned"):
+                budget.reserve("government", "government-native-contract-corrected-r3/queue",
+                               [self._r3_binaries()["government"], "government"])
+        self.assertEqual(hashlib.sha256(path.read_bytes()).hexdigest(), before)
+        self.assertEqual(before, native_fixture_budget.R3_HISTORY_SHA256)
+
+    def test_r3_live_assignment_timestamp_must_match_grant_and_slot(self):
+        validated = native_fixture_budget.validate_r3_grant_binding(
+            self._r3_request(), native_fixture_budget.R3_BASE_GRANT_PATH,
+            native_fixture_budget.R3_BASE_GRANT_SHA256)
+        live_path = self._r3_live_slot(self.root / "live-coordination-timestamp.json")
+        state = json.loads(live_path.read_text(encoding="utf-8"))
+        grant = next(item for item in state["threads"] if item["name"] == "Scientist")[
+            "evidence"]["contractCorrectedNativeIntegrationGrant"]
+        grant["status"] = native_fixture_budget.R3_ACTIVE_STATUS
+        grant["sentUtc"] = "2026-10-08T00:20:56Z"
+        live_path.write_text(json.dumps(state, sort_keys=True), encoding="utf-8")
+        with patch.object(native_fixture_budget, "R3_COORDINATION_PATH", str(live_path)):
+            gate = native_fixture_budget.validate_r3_entry_gate(validated)
+            self.assertEqual(gate["slotKey"], native_fixture_budget.R3_KEY)
+            for status in ("Closed", "revoked", "active but unrecognized"):
+                state = json.loads(live_path.read_text(encoding="utf-8"))
+                status_grant = next(item for item in state["threads"] if item["name"] == "Scientist")[
+                    "evidence"]["contractCorrectedNativeIntegrationGrant"]
+                status_grant["status"] = status
+                live_path.write_text(json.dumps(state, sort_keys=True), encoding="utf-8")
+                with self.assertRaisesRegex(ValueError, "exact active assignment status"):
+                    native_fixture_budget.validate_r3_entry_gate(validated)
+            state = json.loads(live_path.read_text(encoding="utf-8"))
+            status_grant = next(item for item in state["threads"] if item["name"] == "Scientist")[
+                "evidence"]["contractCorrectedNativeIntegrationGrant"]
+            status_grant["status"] = native_fixture_budget.R3_ACTIVE_STATUS
+            live_path.write_text(json.dumps(state, sort_keys=True), encoding="utf-8")
+            state = json.loads(live_path.read_text(encoding="utf-8"))
+            state["fullSuiteSlot"]["grantKey"] = "another-grant"
+            live_path.write_text(json.dumps(state, sort_keys=True), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "exactly one matching explicit grant key"):
+                native_fixture_budget.validate_r3_entry_gate(validated)
+            state["fullSuiteSlot"].pop("grantKey")
+            state["fullSuiteSlot"]["assignedUtc"] = "2026-10-08T00:21:00Z"
+            live_path.write_text(json.dumps(state, sort_keys=True), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "slotAssignedUtc must exactly match"):
+                native_fixture_budget.validate_r3_entry_gate(validated)
+
+    def test_r3_appends_only_granted_labels_and_preserves_all_five_prior_rows(self):
+        path = self.root / "r3-cumulative-native-starts.sqlite"
+        request = self._r3_request("government")
+        budget = self._r3_budget(path, request)
+        live_path = self._r3_live_slot(self.root / "live-coordination.json")
+        with patch.object(native_fixture_budget, "R3_COORDINATION_PATH", str(live_path)):
+            gate = native_fixture_budget.validate_r3_entry_gate(budget.r3)
+            self.assertEqual((gate["slotOwner"], gate["slotKey"], gate["grantKey"]),
+                             ("Scientist", native_fixture_budget.R3_KEY, native_fixture_budget.R3_KEY))
+            self.assertTrue(budget.preflight_snapshot()["entryGate"]["ready"])
+
+            binaries = self._r3_binaries()
+            gov_labels = sorted(native_fixture_budget.R3_LABELS["government"])
+            for label in gov_labels:
+                argv = [binaries["government"], "--fixture", label]
+                budget.reserve("government", label, argv)
+                budget.finish("government", label, {"argv": argv, "wallSeconds": .5})
+            with self.assertRaisesRegex(ValueError, "not allocated by the exact R3"):
+                budget.reserve("government", "government-native-contract-corrected-r3/third",
+                               [binaries["government"], "third"])
+
+            for label in sorted(native_fixture_budget.R3_LABELS["classic"]):
+                argv = [binaries["classic"], "--fixture", label]
+                budget.reserve("classic", label, argv)
+                budget.finish("classic", label, {"argv": argv, "wallSeconds": .5})
+            with self.assertRaisesRegex(ValueError, "not allocated by the exact R3"):
+                budget.reserve("classic", "classic-native-contract-corrected-r3/sixth",
+                               [binaries["classic"], "sixth"])
+
+        snapshot = budget.preflight_snapshot()
+        self.assertEqual(len(snapshot["starts"]), 12)
+        totals = {product: (sum(row["product"] == product for row in snapshot["starts"]),
+                            sum(row["reserved_seconds"] for row in snapshot["starts"]
+                                if row["product"] == product))
+                  for product in ("government", "classic")}
+        self.assertEqual(totals, {"government": (5, 750), "classic": (7, 1050)})
+        base_allocation, base_starts, base_corrections = native_fixture_budget._history_rows(
+            native_fixture_budget.R3_HISTORY_PATH)
+        current_allocation, current_starts, current_corrections = native_fixture_budget._history_rows(path)
+        prior_keys = {(product, label) for product, labels in native_fixture_budget.R3_PRIOR_LABELS.items()
+                      for label in labels}
+        self.assertEqual([row for row in current_starts if (row[0], row[1]) in prior_keys],
+                         [row for row in base_starts if (row[0], row[1]) in prior_keys])
+        self.assertEqual(current_allocation, base_allocation)
+        self.assertEqual([row for row in current_corrections if row[0] != native_fixture_budget.R3_KEY],
+                         base_corrections)
+        self.assertEqual(len(current_corrections), 2)
