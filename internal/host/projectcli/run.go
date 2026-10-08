@@ -221,6 +221,10 @@ func runAction(opts options, out io.Writer) error {
 			if err != nil {
 				return err
 			}
+			targetContext, err := projectadoption.TargetContextForProject(project)
+			if err != nil {
+				return err
+			}
 			prices, err := parsePositiveRates(opts.inputMicros, opts.outputMicros, opts.maxCost)
 			if err != nil {
 				return err
@@ -228,6 +232,7 @@ func runAction(opts options, out io.Writer) error {
 			report, receipt, err := projectadoption.GenerateDistillation(ctx, opts.repo, discovery, agentConfig, projectadoption.DistillationRunOptions{
 				MaxTimeout: agentConfig.Timeout, MaxStdoutBytes: agentConfig.MaxStdoutBytes, MaxStderrBytes: agentConfig.MaxStderrBytes,
 				MaxCostMicros: prices.maxCost, InputPriceMicrosPerMillion: prices.input, OutputPriceMicrosPerMillion: prices.output,
+				TargetContext: targetContext,
 			})
 			if err != nil {
 				return err
@@ -263,6 +268,44 @@ func runAction(opts options, out io.Writer) error {
 			return err
 		}
 		return emitRecord(opts.repo, opts.output, encoded, out)
+	case "resolve":
+		discoveryBytes, err := readRecord(opts.sourceRepo, opts.discovery)
+		if err != nil {
+			return err
+		}
+		discovery, err := projectadoption.DecodeDiscovery(discoveryBytes)
+		if err != nil {
+			return err
+		}
+		reportBytes, err := readRecord(opts.sourceRepo, opts.report)
+		if err != nil {
+			return err
+		}
+		report, err := projectadoption.DecodeDistillation(reportBytes, discovery)
+		if err != nil {
+			return err
+		}
+		choiceBytes, err := readRecord(opts.sourceRepo, opts.input)
+		if err != nil {
+			return err
+		}
+		choices, err := decodeResolutionChoices(choiceBytes)
+		if err != nil {
+			return err
+		}
+		target, err := projectwork.Load(opts.repo, opts.revision)
+		if err != nil {
+			return err
+		}
+		resolution, err := buildResolution(discovery, report, target, choices)
+		if err != nil {
+			return err
+		}
+		encoded, err := projectadoption.EncodeResolution(resolution)
+		if err != nil {
+			return err
+		}
+		return emitRecord(opts.sourceRepo, opts.output, encoded, out)
 	case "adopt":
 		discoveryBytes, err := readRecord(opts.sourceRepo, opts.discovery)
 		if err != nil {
@@ -460,7 +503,7 @@ func writeJSON(out io.Writer, value any) error {
 
 func printUsage(out io.Writer, action string) {
 	if action == "" {
-		_, _ = io.WriteString(out, "Usage: markitect project <action> [flags]\nActions: init check index context impact document edit discover distill adopt setup doctor plan run resume status verify apply\n")
+		_, _ = io.WriteString(out, "Usage: markitect project <action> [flags]\nActions: init check index context impact document edit discover distill resolve adopt setup doctor plan run resume status verify apply\n")
 		return
 	}
 	if spec, ok := actionSpecs[action]; ok {
