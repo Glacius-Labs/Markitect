@@ -2,6 +2,8 @@ package projectadoption
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -30,25 +32,57 @@ const (
 // microcurrency per million provider-reported tokens; they estimate accepted
 // output cost and cannot cap a provider's pre-receipt invoice.
 type DistillationRunOptions struct {
-	MaxTimeout                  time.Duration `json:"maxTimeout"`
-	MaxStdoutBytes              int           `json:"maxStdoutBytes"`
-	MaxStderrBytes              int           `json:"maxStderrBytes"`
-	MaxCostMicros               int64         `json:"maxCostMicros"`
-	InputPriceMicrosPerMillion  int64         `json:"inputPriceMicrosPerMillion"`
-	OutputPriceMicrosPerMillion int64         `json:"outputPriceMicrosPerMillion"`
-	TempParent                  string        `json:"tempParent,omitempty"`
-	PrivateLogDirectory         string        `json:"privateLogDirectory,omitempty"`
+	MaxTimeout                  time.Duration             `json:"maxTimeout"`
+	MaxStdoutBytes              int                       `json:"maxStdoutBytes"`
+	MaxStderrBytes              int                       `json:"maxStderrBytes"`
+	MaxCostMicros               int64                     `json:"maxCostMicros"`
+	InputPriceMicrosPerMillion  int64                     `json:"inputPriceMicrosPerMillion"`
+	OutputPriceMicrosPerMillion int64                     `json:"outputPriceMicrosPerMillion"`
+	TempParent                  string                    `json:"tempParent,omitempty"`
+	PrivateLogDirectory         string                    `json:"privateLogDirectory,omitempty"`
+	TargetContext               DistillationTargetContext `json:"targetContext"`
 }
 
 // DistillationDraft contains only model-proposed content. Binding metadata is
-// supplied by the Host after a successful agentexec invocation.
+// supplied by the Host after a successful agentexec invocation. Provider DTO
+// fields are required even when empty so the closed Python adapter schema can
+// require every property. RuntimeObservationJSON is empty when a claim makes
+// no submitted-runtime-record assertion.
 type DistillationDraft struct {
-	Claims         []Claim         `json:"claims"`
-	Terms          []Term          `json:"terms"`
-	Contradictions []Contradiction `json:"contradictions"`
-	Questions      []Question      `json:"questions"`
-	Scopes         []ScopeProposal `json:"scopes"`
-	Proposal       ModelProposal   `json:"proposal"`
+	Claims         []DistillationDraftClaim    `json:"claims"`
+	Terms          []Term                      `json:"terms"`
+	Contradictions []Contradiction             `json:"contradictions"`
+	Questions      []DistillationDraftQuestion `json:"questions"`
+	Scopes         []DistillationDraftScope    `json:"scopes"`
+	Proposal       ModelProposal               `json:"proposal"`
+}
+
+type DistillationDraftClaim struct {
+	ID                     string        `json:"id"`
+	ScopeID                string        `json:"scopeId"`
+	Kind                   string        `json:"kind"`
+	Method                 string        `json:"method"`
+	Statement              string        `json:"statement"`
+	Evidence               []EvidenceRef `json:"evidence"`
+	Uncertainty            []string      `json:"uncertainty"`
+	RuntimeObservationJSON string        `json:"runtimeObservationJson"`
+}
+
+type DistillationDraftQuestion struct {
+	ID           string   `json:"id"`
+	ScopeID      string   `json:"scopeId"`
+	Prompt       string   `json:"prompt"`
+	Alternatives []string `json:"alternatives"`
+	ClaimIDs     []string `json:"claimIds"`
+	Blocking     bool     `json:"blocking"`
+}
+
+type DistillationDraftScope struct {
+	ID             string   `json:"id"`
+	Name           string   `json:"name"`
+	ParentID       string   `json:"parentId"`
+	ClaimIDs       []string `json:"claimIds"`
+	OwnerCandidate string   `json:"ownerCandidate"`
 }
 
 // DistillationReceipt preserves the real runner receipt and explicit cost
@@ -56,7 +90,9 @@ type DistillationDraft struct {
 type DistillationReceipt struct {
 	APIVersion                  string            `json:"apiVersion"`
 	DiscoveryDigest             string            `json:"discoveryDigest"`
+	TargetContextDigest         string            `json:"targetContextDigest"`
 	SchemaDigest                string            `json:"schemaDigest"`
+	DistillationDigest          string            `json:"distillationDigest,omitempty"`
 	RunnerIdentity              string            `json:"runnerIdentity"`
 	RunnerDigest                string            `json:"runnerDigest"`
 	Execution                   agentexec.Receipt `json:"execution"`
@@ -68,16 +104,17 @@ type DistillationReceipt struct {
 }
 
 type distillationRequestContext struct {
-	Instructions    string          `json:"instructions"`
-	DiscoveryDigest string          `json:"discoveryDigest"`
-	Purpose         string          `json:"purpose"`
-	Review          string          `json:"review"`
-	ScopeRoots      []string        `json:"scopeRoots"`
-	Selected        []SelectedPath  `json:"selected"`
-	Exclusions      []PathReason    `json:"exclusions"`
-	Unselected      []PathReason    `json:"unselected"`
-	Schema          any             `json:"schema"`
-	ResponseSchema  json.RawMessage `json:"responseSchema"`
+	Instructions    string                    `json:"instructions"`
+	DiscoveryDigest string                    `json:"discoveryDigest"`
+	Purpose         string                    `json:"purpose"`
+	Review          string                    `json:"review"`
+	ScopeRoots      []string                  `json:"scopeRoots"`
+	Selected        []SelectedPath            `json:"selected"`
+	Exclusions      []PathReason              `json:"exclusions"`
+	Unselected      []PathReason              `json:"unselected"`
+	Schema          any                       `json:"schema"`
+	ResponseSchema  json.RawMessage           `json:"responseSchema"`
+	TargetContext   DistillationTargetContext `json:"targetContext"`
 }
 
 // GenerateDistillation invokes one configured Host executor against the exact
@@ -94,6 +131,9 @@ func GenerateDistillation(ctx context.Context, sourceRoot string, discovery Disc
 	}
 	if err := validateDistillationRunnerOptions(sourceRoot, config, options); err != nil {
 		return empty, receipt, err
+	}
+	if err := ValidateTargetContext(options.TargetContext); err != nil {
+		return empty, receipt, fmt.Errorf("validate accepted target context: %w", err)
 	}
 	if len(discovery.Evidence) > maxDistillationArtifacts {
 		return empty, receipt, fmt.Errorf("distillation supports at most %d selected evidence files per invocation", maxDistillationArtifacts)
@@ -118,13 +158,14 @@ func GenerateDistillation(ctx context.Context, sourceRoot string, discovery Disc
 		})
 	}
 	contextData := distillationRequestContext{
-		Instructions:    `Analyze only the supplied fixed Discovery evidence artifacts and the provided project-model schema. Produce a proposal-only Brownfield distillation: distinguish static source observations, documented intent, submitted runtime records, and synthesis hypotheses; cite exact evidence excerpts with line bounds; preserve contradictions; surface terminology, synonyms, ambiguities, and precise owner questions; suggest scopes and canonical model files without adopting them. Never infer behavior from filenames alone. Do not claim runtime behavior unless the selected evidence itself is a submitted runtime record, and do not treat that record as authenticated execution. Never claim human acceptance. Return only the closed reportJson object described by responseSchema; do not return candidate files or modify any source. Empty arrays must be explicit.`,
+		Instructions:    `Analyze only the supplied fixed Discovery evidence artifacts and the provided project-model schema. The separately supplied targetContext is accepted target guidance, not source evidence: use it only to suggest placement under existing Manager identities/namespaces and avoid conflicting public contracts. Produce a proposal-only Brownfield distillation: distinguish static source observations, documented intent, submitted runtime records, and synthesis hypotheses; cite exact evidence excerpts with line bounds; preserve contradictions; surface terminology, synonyms, ambiguities, and precise owner questions; suggest scopes and canonical model files without adopting them. Never infer behavior from filenames alone. Do not claim runtime behavior unless the selected evidence itself is a submitted runtime record, and do not treat that record as authenticated execution. Never claim human acceptance. Return only the closed reportJson object described by responseSchema; do not return candidate files or modify any source. Empty arrays and empty optional-string values must be explicit.`,
 		DiscoveryDigest: discovery.Digest, Purpose: discovery.Purpose,
 		Review: discovery.Review, ScopeRoots: append([]string{}, discovery.ScopeRoots...),
 		Selected:   append([]SelectedPath{}, discovery.Selected...),
 		Exclusions: append([]PathReason{}, discovery.Exclusions...),
 		Unselected: append([]PathReason{}, discovery.Unselected...),
 		Schema:     projectmodel.Schema(), ResponseSchema: distillationDraftJSONSchema(),
+		TargetContext: options.TargetContext,
 	}
 	contextJSON, err := json.Marshal(contextData)
 	if err != nil {
@@ -141,7 +182,10 @@ func GenerateDistillation(ctx context.Context, sourceRoot string, discovery Disc
 		tempParent = os.TempDir()
 	}
 	if logDirectory == "" {
-		logDirectory = os.TempDir()
+		logDirectory, err = newPrivateLogDirectory(os.TempDir())
+		if err != nil {
+			return empty, receipt, fmt.Errorf("prepare private agent log location: %w", err)
+		}
 	}
 	result, runErr := agentexec.Run(ctx, config, request, agentexec.RunOptions{
 		InputRoots: []string{}, TempParent: tempParent,
@@ -180,13 +224,42 @@ func GenerateDistillation(ctx context.Context, sourceRoot string, discovery Disc
 		APIVersion: DistillationVersion, DiscoveryDigest: discovery.Digest,
 		Method: "agent-assisted", RunnerIdentity: distillationRunnerIdentity(config),
 		RunnerDigest: digestWithoutPrefix(result.Receipt.ConfigDigest), SchemaDigest: schemaDigest,
-		Claims: draft.Claims, Terms: draft.Terms, Contradictions: draft.Contradictions,
-		Questions: draft.Questions, Scopes: draft.Scopes, Proposal: draft.Proposal,
+		Claims: []Claim{}, Terms: draft.Terms, Contradictions: draft.Contradictions,
+		Questions: []Question{}, Scopes: []ScopeProposal{}, Proposal: draft.Proposal,
+	}
+	for _, claim := range draft.Claims {
+		var runtimeObservation *RuntimeObservation
+		if claim.RuntimeObservationJSON != "" {
+			var parsed RuntimeObservation
+			if err := decodeClosedJSON([]byte(claim.RuntimeObservationJSON), &parsed); err != nil {
+				return empty, receipt, fmt.Errorf("decode claim %q submitted runtime record: %w", claim.ID, err)
+			}
+			runtimeObservation = &parsed
+		}
+		report.Claims = append(report.Claims, Claim{
+			ID: claim.ID, ScopeID: claim.ScopeID, Kind: claim.Kind, Method: claim.Method,
+			Statement: claim.Statement, Evidence: claim.Evidence, Uncertainty: claim.Uncertainty,
+			Runtime: runtimeObservation,
+		})
+	}
+	for _, question := range draft.Questions {
+		blocking := question.Blocking
+		report.Questions = append(report.Questions, Question{
+			ID: question.ID, ScopeID: question.ScopeID, Prompt: question.Prompt,
+			Alternatives: question.Alternatives, ClaimIDs: question.ClaimIDs, Blocking: &blocking,
+		})
+	}
+	for _, scope := range draft.Scopes {
+		report.Scopes = append(report.Scopes, ScopeProposal{
+			ID: scope.ID, Name: scope.Name, ParentID: scope.ParentID,
+			ClaimIDs: scope.ClaimIDs, OwnerCandidate: scope.OwnerCandidate,
+		})
 	}
 	SealDistillation(&report)
 	if err := ValidateDistillation(discovery, report); err != nil {
 		return empty, receipt, fmt.Errorf("validate generated distillation: %w", err)
 	}
+	receipt.DistillationDigest = report.Digest
 	return report, receipt, nil
 }
 
@@ -253,6 +326,30 @@ func requireOutsideRepository(root, candidate string) error {
 	return nil
 }
 
+func newPrivateLogDirectory(parent string) (string, error) {
+	absolute, err := filepath.Abs(parent)
+	if err != nil {
+		return "", errors.New("private log parent path is invalid")
+	}
+	info, err := os.Stat(absolute)
+	if err != nil || !info.IsDir() {
+		return "", errors.New("private log parent must be an existing directory")
+	}
+	for attempt := 0; attempt < 8; attempt++ {
+		var token [16]byte
+		if _, err := rand.Read(token[:]); err != nil {
+			return "", errors.New("could not allocate a unique private log path")
+		}
+		candidate := filepath.Join(absolute, "markitect-distillation-"+hex.EncodeToString(token[:]))
+		if _, err := os.Lstat(candidate); errors.Is(err, os.ErrNotExist) {
+			return candidate, nil
+		} else if err != nil {
+			return "", errors.New("private log path could not be inspected")
+		}
+	}
+	return "", errors.New("could not allocate an unused private log path")
+}
+
 func resolveExistingPrefix(absolute string) (string, error) {
 	absolute = filepath.Clean(absolute)
 	for current := absolute; ; current = filepath.Dir(current) {
@@ -316,7 +413,8 @@ func distillationRunnerIdentity(config agentexec.Config) string {
 func bindDistillationReceipt(discovery Discovery, schemaDigest string, config agentexec.Config, execution agentexec.Receipt, options DistillationRunOptions) DistillationReceipt {
 	return DistillationReceipt{
 		APIVersion: distillationRunnerVersion, DiscoveryDigest: discovery.Digest,
-		SchemaDigest: schemaDigest, RunnerIdentity: distillationRunnerIdentity(config),
+		TargetContextDigest: options.TargetContext.Digest,
+		SchemaDigest:        schemaDigest, RunnerIdentity: distillationRunnerIdentity(config),
 		RunnerDigest: digestWithoutPrefix(execution.ConfigDigest), Execution: execution,
 		ExecutionReceiptDigest: digestValue(execution), MaxCostMicros: options.MaxCostMicros,
 		InputPriceMicrosPerMillion:  options.InputPriceMicrosPerMillion,
