@@ -1,0 +1,28 @@
+{
+  "status": "NOT ADMITTED; await clean owner handoff",
+  "designSourceSha": null,
+  "designBinarySha256": null,
+  "publicRoleContract": null,
+  "mapping": {
+    "requestIdentityAndOpaqueContext": null,
+    "candidateFilesPathsModesAndOwnership": null,
+    "suppliedEvidenceReferencesAndObservations": null,
+    "actualInputRootsAndRuntimeFileFingerprints": null,
+    "runnerTimeoutAndStopContract": null,
+    "nativeInheritedModelReasoningTools": null,
+    "runResumeRepairVerifyApply": null,
+    "brownfieldConflictResolveSelectiveAdoption": null,
+    "evidenceAndMigrationRollback": null
+  },
+  "conditions": [
+    "Exact clean accepted source/binary/public runtime contract from Design owner; do not adapt to WIP or substitute older candidate",
+    "Compare equal staged requirements and actual resources, preserving implementation freedom and method setup costs",
+    "Establish exact compatible structural profile against actual public contract; no invented semantic payload/evidence/votes",
+    "Bind every actual audited root and runtime input before choosing external own state/output/log paths",
+    "Freeze supported common model/reasoning/tools, actual RunnerSpec timeout and finite global review/trial allocation; no silent CLI/model fallback",
+    "Independently review prospective oracle/outcomes and Task6 equivalence before any matched trial is admitted"
+  ],
+  "actualDesignWIPReads": 0,
+  "speculativeAdaptersCreated": 0,
+  "fullTrialsAdmitted": 0
+}

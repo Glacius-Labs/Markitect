@@ -1,0 +1,24 @@
+{
+  "key": "v4-classic-existing-toolchain-build-correction-20261009",
+  "issuedUtc": "2026-10-08T23:34:40Z",
+  "notAfterUtc": "2026-10-09T00:10:57Z",
+  "source": "New specific finite correction after direct Scientist callback and root-confirmed raw failure: wrong GOTOOLCHAIN=local selected existing older baseGo. Direct user authorizes ordinary technical work; no new trial/model authority.",
+  "status": "Dispatched once; awaiting separately reserved existing-toolchain attempt",
+  "buildAttemptsMax": 1,
+  "buildTimeoutSeconds": 600,
+  "newActors": 0,
+  "providerCalls": 0,
+  "codexCLICalls": 0,
+  "appserverCalls": 0,
+  "applicationServerStarts": 0,
+  "fullTrials": 0,
+  "sourceSha": "a97cbd5ef3e0b22b9e6397501047a4e01dc90204",
+  "conditions": [
+    "Keep original failed build and consumed1/1 original quota unchanged; log a separately reserved additional build before execution, no automatic refill.",
+    "Locate only the already available Go1.27.1 executable/cache, bind exact path/version/hash, and use that existing toolchain directly. No install/download/toolchain fallback/global configuration changes. GOTOOLCHAIN=local is suitable only when the selected binary itself is the required existingGo1.27.1.",
+    "One build only in the already owned isolated exact-source checkout, timeout min600s/remaining grantwall; ordinary pinned module restore allowed. Stop if required existing toolchain cannot be established or build fails.",
+    "No extra metadata/test/correction quotas, unchanged original deadline and all other original grant limits. Reuse already allowed four ordinary Markitect metadata/context calls only after exact binary binding.",
+    "No other diagnostics/preparation loop. Deliver runtime packet and concrete remaining Design/admission blockers; no actual study starts."
+  ],
+  "usage": null
+}

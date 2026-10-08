@@ -1,0 +1,19 @@
+{
+  "kind": "offline-preparation",
+  "key": "v4-classic-main-runtime-binding-20261009",
+  "issued": 1791502257.0,
+  "end": 1791504657.0,
+  "executionAllowed": false,
+  "admissionComplete": false,
+  "cells": [],
+  "maxActivations": 0,
+  "maxConcurrent": 4,
+  "maxActiveCells": 2,
+  "profileSha256": "d153c97695ee95521331606ce413950df7c8c8f47f69c8441853fc3499883552",
+  "profileStatus": "proposal only; actual common tool/role support not admitted",
+  "actualInputRootsFromBoundClassicCallers": [],
+  "conservativeAdditionalForbiddenRoots": [
+    "C:\\Users\\Consiliari\\Documents\\Scientist-v4-runtime-binding-20261009\\classic-main"
+  ],
+  "classicBinarySha256": "0621e6ce827278d4410136cdc608286150d5d16caa566cc8d823891acc0712b8"
+}

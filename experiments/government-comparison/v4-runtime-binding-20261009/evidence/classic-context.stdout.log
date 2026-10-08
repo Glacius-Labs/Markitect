@@ -1,0 +1,44 @@
+provisional: false
+revision: a97cbd5ef3e0b22b9e6397501047a4e01dc90204
+selection:
+    definition:
+        apiVersion: commerce.example.org/v1
+        kind: UseCase
+        metadata:
+            name: create-order
+            namespace: commerce
+        purpose: Allows a customer to create an order.
+        spec:
+            handledBy:
+                apiVersion: commerce.example.org/v1
+                kind: Handler
+                name: create-order-handler
+                namespace: commerce
+        source:
+            path: examples/canonical-projection/definitions/create-order.use-case.yaml
+            digest: sha256:a7378a24a0dc7e93ba7f477a2e5e9d9b610406899f770777d9b81ae774829ca3
+            line: 1
+    outgoingReferences:
+        - from: '["commerce.example.org/v1","UseCase","commerce","create-order"]'
+          to: '["commerce.example.org/v1","Handler","commerce","create-order-handler"]'
+          property: handledBy
+          source:
+            path: examples/canonical-projection/definitions/create-order.use-case.yaml
+            digest: sha256:a7378a24a0dc7e93ba7f477a2e5e9d9b610406899f770777d9b81ae774829ca3
+            line: 1
+    schema:
+        apiVersion: commerce.example.org/v1
+        kind:
+            purpose: Describes one independently meaningful unit of application behavior.
+            properties:
+                handledBy:
+                    purpose: Names the handler realizing this use case.
+                    type: reference
+                    minCount: 1
+                    maxCount: 1
+                    target:
+                        apiVersion: commerce.example.org/v1
+                        kind: Handler
+        purpose: Independent example application vocabulary used to demonstrate ontology-neutral Projection binding.
+sourceDigest: dd299dc3c80af0669f23f7ab2c32f656b6c5d2664b0ee9bd259708922a21ebdd
+status: selected

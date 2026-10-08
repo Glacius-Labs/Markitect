@@ -1,0 +1,51 @@
+modules:
+    - pin:
+        name: commerce-example
+        version: 1.0.0
+        digest: sha256:586af5b08ee218c51f43bfed7e083a293d60b2674bcfad3b14354164faa0668f
+      type: schema
+      digest: sha256:586af5b08ee218c51f43bfed7e083a293d60b2674bcfad3b14354164faa0668f
+      manifest: examples/canonical-projection/modules/commerce/module.yaml
+      files:
+        - examples/canonical-projection/modules/commerce/schema.yaml
+      schemas:
+        - schema.yaml
+      projectors: []
+    - pin:
+        name: markitect-dotnet
+        version: 1.0.0
+        digest: sha256:b701c32f9a15afbf025566fa3f9618dfe4b856549580394ef6b9fc2e15520d5c
+      type: projection
+      digest: sha256:b701c32f9a15afbf025566fa3f9618dfe4b856549580394ef6b9fc2e15520d5c
+      manifest: examples/canonical-projection/modules/dotnet/module.yaml
+      files: []
+      schemas: []
+      projectors:
+        - dotnet-source
+    - pin:
+        name: markitect-foundation
+        version: 1.0.0
+        digest: sha256:85346f68790c0e5256dabc52fc0b871ded7a95d7c0c27ba335a168f998b8b56c
+      type: schema
+      digest: sha256:85346f68790c0e5256dabc52fc0b871ded7a95d7c0c27ba335a168f998b8b56c
+      manifest: examples/canonical-projection/modules/foundation/module.yaml
+      files:
+        - examples/canonical-projection/modules/foundation/schema.yaml
+      schemas:
+        - schema.yaml
+      projectors: []
+    - pin:
+        name: markitect-markdown
+        version: 1.0.0
+        digest: sha256:029a61498008aa2c8e12e437abffe11d5eb74f9bab3de107d348cfa7d38f5c83
+      type: projection
+      digest: sha256:029a61498008aa2c8e12e437abffe11d5eb74f9bab3de107d348cfa7d38f5c83
+      manifest: examples/canonical-projection/modules/markdown/module.yaml
+      files: []
+      schemas: []
+      projectors:
+        - markdown-documentation
+provisional: false
+revision: a97cbd5ef3e0b22b9e6397501047a4e01dc90204
+sourceDigest: dd299dc3c80af0669f23f7ab2c32f656b6c5d2664b0ee9bd259708922a21ebdd
+status: preview

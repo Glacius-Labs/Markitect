@@ -1,0 +1,387 @@
+{
+  "sourceSha": "a97cbd5ef3e0b22b9e6397501047a4e01dc90204",
+  "sourceTree": "5912f8d850c3a8013b3509d07eee2d621e856fb1",
+  "branch": "codex/scientist-v4-runtime-bound",
+  "sourceClean": true,
+  "checkout": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-runtime-binding-20261009\\classic-main",
+  "binary": {
+    "path": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-runtime-binding-20261009\\runtime\\markitect.exe",
+    "sha256": "0621e6ce827278d4410136cdc608286150d5d16caa566cc8d823891acc0712b8",
+    "bytes": 13222912
+  },
+  "toolchain": {
+    "path": "C:\\Users\\Consiliari\\go\\pkg\\mod\\golang.org\\toolchain@v0.0.1-go1.27.1.windows-amd64\\bin\\go.exe",
+    "version": "go version go1.27.1 windows/amd64",
+    "sha256": "d3ccdb604eafa6031133aefe1a3db24f0bb7362b857bc2125ac4e4c178b4b490"
+  },
+  "modulePins": [
+    {
+      "name": "commerce-example",
+      "version": "1.0.0",
+      "digest": "sha256:586af5b08ee218c51f43bfed7e083a293d60b2674bcfad3b14354164faa0668f"
+    },
+    {
+      "name": "markitect-dotnet",
+      "version": "1.0.0",
+      "digest": "sha256:b701c32f9a15afbf025566fa3f9618dfe4b856549580394ef6b9fc2e15520d5c"
+    },
+    {
+      "name": "markitect-foundation",
+      "version": "1.0.0",
+      "digest": "sha256:85346f68790c0e5256dabc52fc0b871ded7a95d7c0c27ba335a168f998b8b56c"
+    },
+    {
+      "name": "markitect-markdown",
+      "version": "1.0.0",
+      "digest": "sha256:029a61498008aa2c8e12e437abffe11d5eb74f9bab3de107d348cfa7d38f5c83"
+    }
+  ],
+  "sourceFiles": [
+    {
+      "path": "docs/canonical-projections.md",
+      "workingSha256": "85c6d006345870002445a4c64a1f71ac9031b1815c5c539d7e8236542913dccf",
+      "gitSha256": "85c6d006345870002445a4c64a1f71ac9031b1815c5c539d7e8236542913dccf",
+      "gitBlob": "a8a330cc9651e668fcd1a5ea650aef5ca9254403",
+      "bytes": 27827
+    },
+    {
+      "path": "docs/usage.md",
+      "workingSha256": "978bc65456132c84f426c312dd2c586b67a88bcd600fa2c3938fc296f437cfc9",
+      "gitSha256": "978bc65456132c84f426c312dd2c586b67a88bcd600fa2c3938fc296f437cfc9",
+      "gitBlob": "20de7203868a28b245f33bf2a87445c18deadafe",
+      "bytes": 66566
+    },
+    {
+      "path": "examples/canonical-projection/binding-notes.md",
+      "workingSha256": "56a37899200ebe4d0ca829eeb1f0d44edafba54ff017c9473a0e2ed5517f0511",
+      "gitSha256": "56a37899200ebe4d0ca829eeb1f0d44edafba54ff017c9473a0e2ed5517f0511",
+      "gitBlob": "3518b7d11e3c9431133674e450df5d36b7784d94",
+      "bytes": 4077
+    },
+    {
+      "path": "examples/canonical-projection/canonical.yaml",
+      "workingSha256": "dfe363d8ecd304333ec061a7563034c2f1c73fc9ddfdcf7fcdbbc47d6be2f9e6",
+      "gitSha256": "dfe363d8ecd304333ec061a7563034c2f1c73fc9ddfdcf7fcdbbc47d6be2f9e6",
+      "gitBlob": "9d0be781bcd94a2d2d9baa16542843a6aa624c35",
+      "bytes": 2225
+    },
+    {
+      "path": "examples/canonical-projection/definitions/commerce.markdown-projection.yaml",
+      "workingSha256": "4e7f2bcbc78936e4ce8eaa570e46a10e594c5e8a2b63dde78567858159072760",
+      "gitSha256": "4e7f2bcbc78936e4ce8eaa570e46a10e594c5e8a2b63dde78567858159072760",
+      "gitBlob": "2809a6c25a8897ac4e76db2f7909b18da5edd641",
+      "bytes": 706
+    },
+    {
+      "path": "examples/canonical-projection/definitions/commerce.projection.yaml",
+      "workingSha256": "74ee6f2ea2690017ef0bd5636f1faba564917b72e33e4a2c3360b13d86e09962",
+      "gitSha256": "74ee6f2ea2690017ef0bd5636f1faba564917b72e33e4a2c3360b13d86e09962",
+      "gitBlob": "a4d3dfb7be2fbc051e136ea79c75c5fd91c74903",
+      "bytes": 1091
+    },
+    {
+      "path": "examples/canonical-projection/definitions/create-order.effect-axis.yaml",
+      "workingSha256": "581648c57dd2fffdac622e1b44d9c7c951e7b68119ef2d8403a16662eb83bb9e",
+      "gitSha256": "581648c57dd2fffdac622e1b44d9c7c951e7b68119ef2d8403a16662eb83bb9e",
+      "gitBlob": "17ca7befcd5da9b344284cab8701e002855f76ef",
+      "bytes": 225
+    },
+    {
+      "path": "examples/canonical-projection/definitions/create-order.handler.yaml",
+      "workingSha256": "72c556e9504d13aeed165dacc3923ce0c28ea46ded1be76fe0dbea3b7b3f539f",
+      "gitSha256": "72c556e9504d13aeed165dacc3923ce0c28ea46ded1be76fe0dbea3b7b3f539f",
+      "gitBlob": "bce68fc41637de8e01d72e65fd0d01eecb9da42e",
+      "bytes": 189
+    },
+    {
+      "path": "examples/canonical-projection/definitions/create-order.projection-policy.yaml",
+      "workingSha256": "db31cfc61942e619bcf3a91445e164181bb74df929875bda173e0cc86e8963c0",
+      "gitSha256": "db31cfc61942e619bcf3a91445e164181bb74df929875bda173e0cc86e8963c0",
+      "gitBlob": "689e7d93a2ee15dd3cae30c044054ef63b18e62c",
+      "bytes": 438
+    },
+    {
+      "path": "examples/canonical-projection/definitions/create-order.use-case.yaml",
+      "workingSha256": "a7378a24a0dc7e93ba7f477a2e5e9d9b610406899f770777d9b81ae774829ca3",
+      "gitSha256": "a7378a24a0dc7e93ba7f477a2e5e9d9b610406899f770777d9b81ae774829ca3",
+      "gitBlob": "e92d6e8a65306c89b3bf0a3e0566432677b616f1",
+      "bytes": 282
+    },
+    {
+      "path": "examples/canonical-projection/definitions/effect-axis.projection-policy.yaml",
+      "workingSha256": "4c8730a36075feaa9d7e7aaab647bd56aa8239f56be4542ea7be98bccffee3cf",
+      "gitSha256": "4c8730a36075feaa9d7e7aaab647bd56aa8239f56be4542ea7be98bccffee3cf",
+      "gitBlob": "ca93c1989333837c2fd2eba86543b1758b09ef07",
+      "bytes": 447
+    },
+    {
+      "path": "examples/canonical-projection/definitions/handler.projection-policy.yaml",
+      "workingSha256": "5e71e214134895ec5d02856e9d6d049f9cbf7eb89f5f892b4b68873e235a64a9",
+      "gitSha256": "5e71e214134895ec5d02856e9d6d049f9cbf7eb89f5f892b4b68873e235a64a9",
+      "gitBlob": "3a4f635c911567496c17e31ad50fd5636f547178",
+      "bytes": 427
+    },
+    {
+      "path": "examples/canonical-projection/evidence/check.go",
+      "workingSha256": "22da5d8081ed35fdfb30f0e8f5f009efb50bb8a278a9db36225c9005d572c49e",
+      "gitSha256": "22da5d8081ed35fdfb30f0e8f5f009efb50bb8a278a9db36225c9005d572c49e",
+      "gitBlob": "6fcef1874c69adb672274a831868d865068bd696",
+      "bytes": 1371
+    },
+    {
+      "path": "examples/canonical-projection/modules/commerce/module.yaml",
+      "workingSha256": "d24a2a70c48291bcd94b15ae7d785ccca69f450f6606265cfd7fd96e29cfc0f7",
+      "gitSha256": "d24a2a70c48291bcd94b15ae7d785ccca69f450f6606265cfd7fd96e29cfc0f7",
+      "gitBlob": "467d16ad3bbbbc59985d5057ce6da86d58c5b323",
+      "bytes": 282
+    },
+    {
+      "path": "examples/canonical-projection/modules/commerce/schema.yaml",
+      "workingSha256": "645f78a7668f72970ddab47508a97280c19b9f9ca97bc79554d8d2022dd1eb02",
+      "gitSha256": "645f78a7668f72970ddab47508a97280c19b9f9ca97bc79554d8d2022dd1eb02",
+      "gitBlob": "93b8f8965240de26fafc56b8a3646176c32bd57c",
+      "bytes": 872
+    },
+    {
+      "path": "examples/canonical-projection/modules/dotnet/module.yaml",
+      "workingSha256": "97e79a16e88f81babb7303994907135c273fa45ccc98e65ced86f1494b181023",
+      "gitSha256": "97e79a16e88f81babb7303994907135c273fa45ccc98e65ced86f1494b181023",
+      "gitBlob": "e0196139794172e639656bf1d544eecfc72d3381",
+      "bytes": 664
+    },
+    {
+      "path": "examples/canonical-projection/modules/foundation/module.yaml",
+      "workingSha256": "074d9275cb728f11030eccabb6db6d5b4215bb5152596b7efd29f67cf12790d6",
+      "gitSha256": "074d9275cb728f11030eccabb6db6d5b4215bb5152596b7efd29f67cf12790d6",
+      "gitBlob": "c9ad2323ccd4c61c55bd94e97bfa43425ea1212d",
+      "bytes": 276
+    },
+    {
+      "path": "examples/canonical-projection/modules/foundation/schema.yaml",
+      "workingSha256": "a06850f14a9e9cbea29881058f764493606200f430ac2334d121f605f0e643e2",
+      "gitSha256": "a06850f14a9e9cbea29881058f764493606200f430ac2334d121f605f0e643e2",
+      "gitBlob": "649a6df84eeb4131944c270b61b5439bf7778685",
+      "bytes": 2822
+    },
+    {
+      "path": "examples/canonical-projection/modules/markdown/module.yaml",
+      "workingSha256": "02472764536ba55ef0378f70dd25dcf1d404d31bc828ee8e3ce50f00bffd5a47",
+      "gitSha256": "02472764536ba55ef0378f70dd25dcf1d404d31bc828ee8e3ce50f00bffd5a47",
+      "gitBlob": "c40f5e86c1d9ac13b063460c9b5fee711fd010d5",
+      "bytes": 698
+    },
+    {
+      "path": "examples/classic-commerce/runtime.template.json",
+      "workingSha256": "f1007abd6e0b1d873514a1d1b8bacb12b66be07ae14e403876354bbe1003292c",
+      "gitSha256": "f1007abd6e0b1d873514a1d1b8bacb12b66be07ae14e403876354bbe1003292c",
+      "gitBlob": "ccccd19de13d29d6c5abbafb7fa1c8de18c45e39",
+      "bytes": 3075
+    },
+    {
+      "path": "go.mod",
+      "workingSha256": "c710445a3b7484bddd88420ee47ae9b764e370bf8d019825f216faeeac410e3b",
+      "gitSha256": "c710445a3b7484bddd88420ee47ae9b764e370bf8d019825f216faeeac410e3b",
+      "gitBlob": "150b6b38d180d749ef22359075151211e8ab28ef",
+      "bytes": 87
+    },
+    {
+      "path": "go.sum",
+      "workingSha256": "ff6dac09ab3f5857925f01c0336e5c9499120ef2f3e7050ec60f55e39a408fec",
+      "gitSha256": "ff6dac09ab3f5857925f01c0336e5c9499120ef2f3e7050ec60f55e39a408fec",
+      "gitBlob": "8675e7fd10805a7f501830963822898d96e020f3",
+      "bytes": 155
+    },
+    {
+      "path": "internal/host/agentexec/README.md",
+      "workingSha256": "80178c5b90bc63575aa3e1e4e8fe5b2e25da9394252bba8fec015db6fa049f46",
+      "gitSha256": "80178c5b90bc63575aa3e1e4e8fe5b2e25da9394252bba8fec015db6fa049f46",
+      "gitBlob": "0fb39dd4d63372b63f9393ddd8317acf35af6335",
+      "bytes": 5129
+    },
+    {
+      "path": "internal/host/agentexec/json.go",
+      "workingSha256": "b6f7ee75a8bf007d0f1facfafc5b6a9ee72aaae270e641170aab53815d861104",
+      "gitSha256": "b6f7ee75a8bf007d0f1facfafc5b6a9ee72aaae270e641170aab53815d861104",
+      "gitBlob": "7b33564ce88a06e615e994187b7179f885cd2b46",
+      "bytes": 10715
+    },
+    {
+      "path": "internal/host/agentexec/runner.go",
+      "workingSha256": "26d1713a3ffeacc87b03b7a5be6231375b39984dcd61f9e35753ae1dd2320e5b",
+      "gitSha256": "26d1713a3ffeacc87b03b7a5be6231375b39984dcd61f9e35753ae1dd2320e5b",
+      "gitBlob": "84893e927a96edd787152a769d5ae55b042e506a",
+      "bytes": 30150
+    },
+    {
+      "path": "internal/host/agentexec/types.go",
+      "workingSha256": "3c2875d87473406831f28803beec71b19d17d8334e70befe41e6fb381f345ac4",
+      "gitSha256": "3c2875d87473406831f28803beec71b19d17d8334e70befe41e6fb381f345ac4",
+      "gitBlob": "664a36e5984ae2a3360b733f50b40b3c18f41cbb",
+      "bytes": 5106
+    },
+    {
+      "path": "internal/host/canonical_controller.go",
+      "workingSha256": "5983b052f452116635bf39050bc2ac86ba8a27b87db18114399c6eef9aee45da",
+      "gitSha256": "5983b052f452116635bf39050bc2ac86ba8a27b87db18114399c6eef9aee45da",
+      "gitBlob": "b991b55bf3ca516fb7774a7c407a6269f9751285",
+      "bytes": 16194
+    },
+    {
+      "path": "internal/host/canonical_controller_execution.go",
+      "workingSha256": "a74b935a4b50d63984286f29931909c8632afeca5e2c3e2888d225b1f12b9d0b",
+      "gitSha256": "a74b935a4b50d63984286f29931909c8632afeca5e2c3e2888d225b1f12b9d0b",
+      "gitBlob": "e712ca738cf5af86d58ebc50d216461e92feba66",
+      "bytes": 25136
+    },
+    {
+      "path": "internal/host/canonical_controller_verification.go",
+      "workingSha256": "eff91796689e2139626e9e8847077cd26b3fab82f116e8b61a8ea76f81a1ab55",
+      "gitSha256": "eff91796689e2139626e9e8847077cd26b3fab82f116e8b61a8ea76f81a1ab55",
+      "gitBlob": "e935556d13315ce1dc148a0886a811d71946ed33",
+      "bytes": 50297
+    },
+    {
+      "path": "internal/host/canonical_goal_modeling.go",
+      "workingSha256": "c988985e3e53bad082ca9eb217e84f1fc06a6a6f131f1ca48b33b205c91d244d",
+      "gitSha256": "c988985e3e53bad082ca9eb217e84f1fc06a6a6f131f1ca48b33b205c91d244d",
+      "gitBlob": "d1c82dfc69a68a59df5237bb87c46f81c03091a3",
+      "bytes": 23216
+    },
+    {
+      "path": "internal/host/canonical_inference.go",
+      "workingSha256": "37189cae7dd63c3e70c91982d361fffb6941390a87b46c165ddbf6a9af2a1dd6",
+      "gitSha256": "37189cae7dd63c3e70c91982d361fffb6941390a87b46c165ddbf6a9af2a1dd6",
+      "gitBlob": "172c16d5e6e26d91abb46fa72b23a5bb5c19ee68",
+      "bytes": 18419
+    },
+    {
+      "path": "internal/host/cli/cli_options.go",
+      "workingSha256": "324fd5900bef65289e2be6e9fd8917d7f2c4c69ec1a2c6654b44c31d55d3321f",
+      "gitSha256": "324fd5900bef65289e2be6e9fd8917d7f2c4c69ec1a2c6654b44c31d55d3321f",
+      "gitBlob": "36cb4662629105f26a2cc96a005b7070af3efdd6",
+      "bytes": 22269
+    }
+  ],
+  "sourceArchive": {
+    "path": "evidence/classic-main-bound-source.zip",
+    "sha256": "668a832da07f42e8fa1217ad9e2191a620c5fa4bfea0fe4b52bb8f7a61df18d7"
+  },
+  "inspectionConfig": {
+    "path": "examples/canonical-projection/canonical.yaml",
+    "sha256": "dfe363d8ecd304333ec061a7563034c2f1c73fc9ddfdcf7fcdbbc47d6be2f9e6",
+    "selectedRevision": "a97cbd5ef3e0b22b9e6397501047a4e01dc90204"
+  },
+  "goDependencies": {
+    "module": "github.com/Glacius-Labs/Markitect",
+    "go": "1.27.1",
+    "requirements": {
+      "go.yaml.in/yaml/v3": "v3.0.5"
+    },
+    "goModSha256": "c710445a3b7484bddd88420ee47ae9b764e370bf8d019825f216faeeac410e3b",
+    "goSumSha256": "ff6dac09ab3f5857925f01c0336e5c9499120ef2f3e7050ec60f55e39a408fec"
+  },
+  "metadataCalls": [
+    {
+      "reservedUtc": "2026-10-09T01:40:33.320752+02:00",
+      "argv": [
+        "C:\\Users\\Consiliari\\Documents\\Scientist-v4-runtime-binding-20261009\\runtime\\markitect.exe",
+        "canonical",
+        "--repo",
+        "C:\\Users\\Consiliari\\Documents\\Scientist-v4-runtime-binding-20261009\\classic-main",
+        "--config",
+        "examples/canonical-projection/canonical.yaml",
+        "--action",
+        "modules",
+        "--revision",
+        "a97cbd5ef3e0b22b9e6397501047a4e01dc90204"
+      ],
+      "cwd": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-runtime-binding-20261009\\classic-main",
+      "timeoutSeconds": 60,
+      "status": "completed",
+      "binarySha256": "0621e6ce827278d4410136cdc608286150d5d16caa566cc8d823891acc0712b8",
+      "exitCode": 0,
+      "stdout": {
+        "path": "evidence\\classic-modules.stdout.log",
+        "sha256": "89cd2d6b6e0b6cc4e272364f90d8c4ba7c9f13c1168a8c42529e82438c15897f"
+      },
+      "stderr": {
+        "path": "evidence\\classic-modules.stderr.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "finishedUtc": "2026-10-09T01:40:33.707625+02:00",
+      "elapsedSeconds": 0.3864064999979746
+    },
+    {
+      "reservedUtc": "2026-10-09T01:40:33.707949+02:00",
+      "argv": [
+        "C:\\Users\\Consiliari\\Documents\\Scientist-v4-runtime-binding-20261009\\runtime\\markitect.exe",
+        "canonical",
+        "--repo",
+        "C:\\Users\\Consiliari\\Documents\\Scientist-v4-runtime-binding-20261009\\classic-main",
+        "--config",
+        "examples/canonical-projection/canonical.yaml",
+        "--action",
+        "model",
+        "--revision",
+        "a97cbd5ef3e0b22b9e6397501047a4e01dc90204"
+      ],
+      "cwd": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-runtime-binding-20261009\\classic-main",
+      "timeoutSeconds": 60,
+      "status": "completed",
+      "binarySha256": "0621e6ce827278d4410136cdc608286150d5d16caa566cc8d823891acc0712b8",
+      "exitCode": 0,
+      "stdout": {
+        "path": "evidence\\classic-model.stdout.log",
+        "sha256": "1edf62a784910fde5ff05fe703e32738b6e2074c709dd510cc5f7c1f2e97d9e9"
+      },
+      "stderr": {
+        "path": "evidence\\classic-model.stderr.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "finishedUtc": "2026-10-09T01:40:33.889563+02:00",
+      "elapsedSeconds": 0.18137799999749404
+    },
+    {
+      "reservedUtc": "2026-10-09T01:40:33.889874+02:00",
+      "argv": [
+        "C:\\Users\\Consiliari\\Documents\\Scientist-v4-runtime-binding-20261009\\runtime\\markitect.exe",
+        "canonical",
+        "--repo",
+        "C:\\Users\\Consiliari\\Documents\\Scientist-v4-runtime-binding-20261009\\classic-main",
+        "--config",
+        "examples/canonical-projection/canonical.yaml",
+        "--action",
+        "context",
+        "--revision",
+        "a97cbd5ef3e0b22b9e6397501047a4e01dc90204",
+        "--api-version",
+        "commerce.example.org/v1",
+        "--kind",
+        "UseCase",
+        "--namespace",
+        "commerce",
+        "--name",
+        "create-order"
+      ],
+      "cwd": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-runtime-binding-20261009\\classic-main",
+      "timeoutSeconds": 60,
+      "status": "completed",
+      "binarySha256": "0621e6ce827278d4410136cdc608286150d5d16caa566cc8d823891acc0712b8",
+      "exitCode": 0,
+      "stdout": {
+        "path": "evidence\\classic-context.stdout.log",
+        "sha256": "ae019e12d5e5fce2dc7fbcad9ad68091f2249ca9b3f6426d4a2c2312846247fb"
+      },
+      "stderr": {
+        "path": "evidence\\classic-context.stderr.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "finishedUtc": "2026-10-09T01:40:34.068651+02:00",
+      "elapsedSeconds": 0.1785005000019737
+    }
+  ],
+  "actualRoleRuntimeConfig": null,
+  "actualNativeRoleSupport": null,
+  "commonProfileSupport": null,
+  "limits": "Binary build and read-only fixture metadata/context only. No agentexec role, native bridge, compiler service, semantic trial or release acceptance."
+}

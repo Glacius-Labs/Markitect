@@ -1,0 +1,394 @@
+model:
+    revision: a97cbd5ef3e0b22b9e6397501047a4e01dc90204
+    digest: sha256:970de9c5e9570f494cb3d404d806f5961a0d3ebf7995b591e7be8988161c45a1
+    schemas:
+        - apiVersion: commerce.example.org/v1
+          purpose: Independent example application vocabulary used to demonstrate ontology-neutral Projection binding.
+          kinds:
+            EffectAxis:
+                purpose: Declares an application operation's effect boundary and ordering intent.
+                properties:
+                    boundary:
+                        purpose: States the explicit application boundary for this effect.
+                        type: string
+                        minCount: 1
+                        maxCount: 1
+            Handler:
+                purpose: Describes one application component responsible for handling a use case.
+                properties: {}
+            UseCase:
+                purpose: Describes one independently meaningful unit of application behavior.
+                properties:
+                    handledBy:
+                        purpose: Names the handler realizing this use case.
+                        type: reference
+                        minCount: 1
+                        maxCount: 1
+                        target:
+                            apiVersion: commerce.example.org/v1
+                            kind: Handler
+          source:
+            path: module:commerce-example@1.0.0/schema.yaml
+            digest: sha256:645f78a7668f72970ddab47508a97280c19b9f9ca97bc79554d8d2022dd1eb02
+            line: 1
+        - apiVersion: markitect.foundation/v1
+          purpose: Declares canonical Projection intent and target representation guidance.
+          kinds:
+            Projection:
+                purpose: Selects the exact canonical scope, desired representation type, target, and policies.
+                properties:
+                    policies:
+                        purpose: Applicable representation constraints and guidance.
+                        type: reference
+                        minCount: 0
+                        maxCount: -1
+                        target:
+                            apiVersion: markitect.foundation/v1
+                            kind: ProjectionPolicy
+                    representation:
+                        purpose: Desired representation type, independent of the installed Module that realizes it.
+                        type: enum
+                        minCount: 1
+                        maxCount: 1
+                        values:
+                            - dotnet
+                            - markdown
+                    source:
+                        purpose: Exact ordered Definition identities included by this Projection.
+                        type: object
+                        minCount: 1
+                        maxCount: 1
+                        properties:
+                            definitions:
+                                purpose: Explicit selected Definitions; graph closure is not inferred.
+                                type: object
+                                minCount: 1
+                                maxCount: -1
+                                properties:
+                                    apiVersion:
+                                        purpose: Semantic Schema version.
+                                        type: string
+                                        minCount: 1
+                                        maxCount: 1
+                                    kind:
+                                        purpose: Nominal Definition Kind.
+                                        type: string
+                                        minCount: 1
+                                        maxCount: 1
+                                    name:
+                                        purpose: Definition name.
+                                        type: string
+                                        minCount: 1
+                                        maxCount: 1
+                                    namespace:
+                                        purpose: Explicit namespace; empty is valid.
+                                        type: string
+                                        minCount: 1
+                                        maxCount: 1
+                    target:
+                        purpose: Repository and path where the representation should exist.
+                        type: object
+                        minCount: 1
+                        maxCount: 1
+                        properties:
+                            path:
+                                purpose: Repository-relative representation path.
+                                type: string
+                                minCount: 1
+                                maxCount: 1
+                            repository:
+                                purpose: Repository selector accepted by the Host.
+                                type: string
+                                minCount: 1
+                                maxCount: 1
+            ProjectionPolicy:
+                purpose: Constrains how a selected source Kind should appear for one target technology.
+                properties:
+                    guidance:
+                        purpose: Human-readable representation decisions and constraints.
+                        type: string
+                        minCount: 1
+                        maxCount: 1
+                    sourceKind:
+                        purpose: Exact source Kind to which the guidance applies.
+                        type: kindReference
+                        minCount: 1
+                        maxCount: 1
+                    targetTechnology:
+                        purpose: Target technology or representation format.
+                        type: string
+                        minCount: 1
+                        maxCount: 1
+          source:
+            path: module:markitect-foundation@1.0.0/schema.yaml
+            digest: sha256:a06850f14a9e9cbea29881058f764493606200f430ac2334d121f605f0e643e2
+            line: 1
+    definitions:
+        - apiVersion: commerce.example.org/v1
+          kind: EffectAxis
+          metadata:
+            name: create-order-effects
+            namespace: commerce
+          purpose: Keeps externally visible order effects behind the application boundary.
+          spec:
+            boundary: application
+          source:
+            path: examples/canonical-projection/definitions/create-order.effect-axis.yaml
+            digest: sha256:581648c57dd2fffdac622e1b44d9c7c951e7b68119ef2d8403a16662eb83bb9e
+            line: 1
+        - apiVersion: commerce.example.org/v1
+          kind: Handler
+          metadata:
+            name: create-order-handler
+            namespace: commerce
+          purpose: Coordinates the application behavior for creating an order.
+          spec: {}
+          source:
+            path: examples/canonical-projection/definitions/create-order.handler.yaml
+            digest: sha256:72c556e9504d13aeed165dacc3923ce0c28ea46ded1be76fe0dbea3b7b3f539f
+            line: 1
+        - apiVersion: commerce.example.org/v1
+          kind: UseCase
+          metadata:
+            name: create-order
+            namespace: commerce
+          purpose: Allows a customer to create an order.
+          spec:
+            handledBy:
+                apiVersion: commerce.example.org/v1
+                kind: Handler
+                name: create-order-handler
+                namespace: commerce
+          source:
+            path: examples/canonical-projection/definitions/create-order.use-case.yaml
+            digest: sha256:a7378a24a0dc7e93ba7f477a2e5e9d9b610406899f770777d9b81ae774829ca3
+            line: 1
+        - apiVersion: markitect.foundation/v1
+          kind: Projection
+          metadata:
+            name: application-dotnet
+            namespace: commerce
+          purpose: Materializes the explicitly selected commerce application scope in the .NET source tree.
+          spec:
+            policies:
+                - apiVersion: markitect.foundation/v1
+                  kind: ProjectionPolicy
+                  name: use-case-to-dotnet
+                  namespace: commerce
+                - apiVersion: markitect.foundation/v1
+                  kind: ProjectionPolicy
+                  name: handler-to-dotnet
+                  namespace: commerce
+                - apiVersion: markitect.foundation/v1
+                  kind: ProjectionPolicy
+                  name: effect-axis-to-dotnet
+                  namespace: commerce
+            representation: dotnet
+            source:
+                definitions:
+                    - apiVersion: commerce.example.org/v1
+                      kind: UseCase
+                      name: create-order
+                      namespace: commerce
+                    - apiVersion: commerce.example.org/v1
+                      kind: Handler
+                      name: create-order-handler
+                      namespace: commerce
+                    - apiVersion: commerce.example.org/v1
+                      kind: EffectAxis
+                      name: create-order-effects
+                      namespace: commerce
+            target:
+                path: src/
+                repository: .
+          source:
+            path: examples/canonical-projection/definitions/commerce.projection.yaml
+            digest: sha256:74ee6f2ea2690017ef0bd5636f1faba564917b72e33e4a2c3360b13d86e09962
+            line: 1
+        - apiVersion: markitect.foundation/v1
+          kind: Projection
+          metadata:
+            name: application-markdown
+            namespace: commerce
+          purpose: Materializes an independent documentation representation of the same commerce scope.
+          spec:
+            representation: markdown
+            source:
+                definitions:
+                    - apiVersion: commerce.example.org/v1
+                      kind: UseCase
+                      name: create-order
+                      namespace: commerce
+                    - apiVersion: commerce.example.org/v1
+                      kind: Handler
+                      name: create-order-handler
+                      namespace: commerce
+                    - apiVersion: commerce.example.org/v1
+                      kind: EffectAxis
+                      name: create-order-effects
+                      namespace: commerce
+            target:
+                path: docs/represented/
+                repository: .
+          source:
+            path: examples/canonical-projection/definitions/commerce.markdown-projection.yaml
+            digest: sha256:4e7f2bcbc78936e4ce8eaa570e46a10e594c5e8a2b63dde78567858159072760
+            line: 1
+        - apiVersion: markitect.foundation/v1
+          kind: ProjectionPolicy
+          metadata:
+            name: effect-axis-to-dotnet
+            namespace: commerce
+          purpose: Constrains representation of the project-specific EffectAxis in the .NET target.
+          spec:
+            guidance: |
+                Preserve the declared application boundary and keep this responsibility visible in the application layer.
+            sourceKind:
+                apiVersion: commerce.example.org/v1
+                kind: EffectAxis
+            targetTechnology: dotnet
+          source:
+            path: examples/canonical-projection/definitions/effect-axis.projection-policy.yaml
+            digest: sha256:4c8730a36075feaa9d7e7aaab647bd56aa8239f56be4542ea7be98bccffee3cf
+            line: 1
+        - apiVersion: markitect.foundation/v1
+          kind: ProjectionPolicy
+          metadata:
+            name: handler-to-dotnet
+            namespace: commerce
+          purpose: Guides representation of commerce handlers in the selected .NET target.
+          spec:
+            guidance: |
+                Keep application orchestration explicit and isolate infrastructure access behind declared boundaries.
+            sourceKind:
+                apiVersion: commerce.example.org/v1
+                kind: Handler
+            targetTechnology: dotnet
+          source:
+            path: examples/canonical-projection/definitions/handler.projection-policy.yaml
+            digest: sha256:5e71e214134895ec5d02856e9d6d049f9cbf7eb89f5f892b4b68873e235a64a9
+            line: 1
+        - apiVersion: markitect.foundation/v1
+          kind: ProjectionPolicy
+          metadata:
+            name: use-case-to-dotnet
+            namespace: commerce
+          purpose: Guides the representation of commerce use cases in the selected .NET target.
+          spec:
+            guidance: |
+                Preserve externally visible behavior and keep application orchestration separate from persistence details.
+            sourceKind:
+                apiVersion: commerce.example.org/v1
+                kind: UseCase
+            targetTechnology: dotnet
+          source:
+            path: examples/canonical-projection/definitions/create-order.projection-policy.yaml
+            digest: sha256:db31cfc61942e619bcf3a91445e164181bb74df929875bda173e0cc86e8963c0
+            line: 1
+    edges:
+        - from: '["commerce.example.org/v1","UseCase","commerce","create-order"]'
+          to: '["commerce.example.org/v1","Handler","commerce","create-order-handler"]'
+          property: handledBy
+          source:
+            path: examples/canonical-projection/definitions/create-order.use-case.yaml
+            digest: sha256:a7378a24a0dc7e93ba7f477a2e5e9d9b610406899f770777d9b81ae774829ca3
+            line: 1
+        - from: '["markitect.foundation/v1","Projection","commerce","application-dotnet"]'
+          to: '["markitect.foundation/v1","ProjectionPolicy","commerce","use-case-to-dotnet"]'
+          property: policies[0]
+          source:
+            path: examples/canonical-projection/definitions/commerce.projection.yaml
+            digest: sha256:74ee6f2ea2690017ef0bd5636f1faba564917b72e33e4a2c3360b13d86e09962
+            line: 1
+        - from: '["markitect.foundation/v1","Projection","commerce","application-dotnet"]'
+          to: '["markitect.foundation/v1","ProjectionPolicy","commerce","handler-to-dotnet"]'
+          property: policies[1]
+          source:
+            path: examples/canonical-projection/definitions/commerce.projection.yaml
+            digest: sha256:74ee6f2ea2690017ef0bd5636f1faba564917b72e33e4a2c3360b13d86e09962
+            line: 1
+        - from: '["markitect.foundation/v1","Projection","commerce","application-dotnet"]'
+          to: '["markitect.foundation/v1","ProjectionPolicy","commerce","effect-axis-to-dotnet"]'
+          property: policies[2]
+          source:
+            path: examples/canonical-projection/definitions/commerce.projection.yaml
+            digest: sha256:74ee6f2ea2690017ef0bd5636f1faba564917b72e33e4a2c3360b13d86e09962
+            line: 1
+modules:
+    - pin:
+        name: markitect-foundation
+        version: 1.0.0
+        digest: sha256:85346f68790c0e5256dabc52fc0b871ded7a95d7c0c27ba335a168f998b8b56c
+      type: schema
+      digest: sha256:85346f68790c0e5256dabc52fc0b871ded7a95d7c0c27ba335a168f998b8b56c
+      manifest: examples/canonical-projection/modules/foundation/module.yaml
+      files:
+        - examples/canonical-projection/modules/foundation/schema.yaml
+      schemas:
+        - schema.yaml
+      projectors: []
+    - pin:
+        name: commerce-example
+        version: 1.0.0
+        digest: sha256:586af5b08ee218c51f43bfed7e083a293d60b2674bcfad3b14354164faa0668f
+      type: schema
+      digest: sha256:586af5b08ee218c51f43bfed7e083a293d60b2674bcfad3b14354164faa0668f
+      manifest: examples/canonical-projection/modules/commerce/module.yaml
+      files:
+        - examples/canonical-projection/modules/commerce/schema.yaml
+      schemas:
+        - schema.yaml
+      projectors: []
+    - pin:
+        name: markitect-dotnet
+        version: 1.0.0
+        digest: sha256:b701c32f9a15afbf025566fa3f9618dfe4b856549580394ef6b9fc2e15520d5c
+      type: projection
+      digest: sha256:b701c32f9a15afbf025566fa3f9618dfe4b856549580394ef6b9fc2e15520d5c
+      manifest: examples/canonical-projection/modules/dotnet/module.yaml
+      files: []
+      schemas: []
+      projectors:
+        - dotnet-source
+    - pin:
+        name: markitect-markdown
+        version: 1.0.0
+        digest: sha256:029a61498008aa2c8e12e437abffe11d5eb74f9bab3de107d348cfa7d38f5c83
+      type: projection
+      digest: sha256:029a61498008aa2c8e12e437abffe11d5eb74f9bab3de107d348cfa7d38f5c83
+      manifest: examples/canonical-projection/modules/markdown/module.yaml
+      files: []
+      schemas: []
+      projectors:
+        - markdown-documentation
+projectors:
+    - module:
+        name: markitect-dotnet
+        version: 1.0.0
+        digest: sha256:b701c32f9a15afbf025566fa3f9618dfe4b856549580394ef6b9fc2e15520d5c
+      registration:
+        id: dotnet-source
+        version: 1.0.0
+        target: dotnet
+        allKinds: true
+        allowedRoots:
+            - src/
+        guidance: |
+            Use canonical semantics and applicable ProjectionPolicy guidance as inputs to a bounded Executor task. Escalate when representation intent is missing or ambiguous; return a candidate for independent verification.
+    - module:
+        name: markitect-markdown
+        version: 1.0.0
+        digest: sha256:029a61498008aa2c8e12e437abffe11d5eb74f9bab3de107d348cfa7d38f5c83
+      registration:
+        id: markdown-documentation
+        version: 1.0.0
+        target: markdown
+        allKinds: true
+        allowedRoots:
+            - docs/represented/
+        guidance: |
+            Produce source-derived documentation within the declared target surface. A deterministic Markdown renderer may be used as an Executor tool. Its output is never canonical semantic authority. Return a candidate for independent verification.
+provisional: false
+revision: a97cbd5ef3e0b22b9e6397501047a4e01dc90204
+sourceDigest: dd299dc3c80af0669f23f7ab2c32f656b6c5d2664b0ee9bd259708922a21ebdd
+status: passed

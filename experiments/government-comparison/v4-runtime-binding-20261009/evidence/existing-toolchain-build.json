@@ -1,0 +1,34 @@
+{
+  "grantKey": "v4-classic-existing-toolchain-build-correction-20261009",
+  "reservedUtc": "2026-10-08T23:39:54.147771+00:00",
+  "status": "completed",
+  "argv": [
+    "C:\\Users\\Consiliari\\go\\pkg\\mod\\golang.org\\toolchain@v0.0.1-go1.27.1.windows-amd64\\bin\\go.exe",
+    "build",
+    "-mod=readonly",
+    "-trimpath",
+    "-o",
+    "C:\\Users\\Consiliari\\Documents\\Scientist-v4-runtime-binding-20261009\\runtime\\markitect.exe",
+    "./cmd/markitect"
+  ],
+  "cwd": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-runtime-binding-20261009\\classic-main",
+  "timeoutSeconds": 600,
+  "environmentOverride": {
+    "GOTOOLCHAIN": "local"
+  },
+  "toolchain": {
+    "path": "C:\\Users\\Consiliari\\go\\pkg\\mod\\golang.org\\toolchain@v0.0.1-go1.27.1.windows-amd64\\bin\\go.exe",
+    "version": "go version go1.27.1 windows/amd64",
+    "sha256": "d3ccdb604eafa6031133aefe1a3db24f0bb7362b857bc2125ac4e4c178b4b490"
+  },
+  "sourceSha": "a97cbd5ef3e0b22b9e6397501047a4e01dc90204",
+  "exitCode": 0,
+  "finishedUtc": "2026-10-08T23:39:56.358726+00:00",
+  "elapsedSeconds": 2.199689100001706,
+  "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "binary": {
+    "path": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-runtime-binding-20261009\\runtime\\markitect.exe",
+    "sha256": "0621e6ce827278d4410136cdc608286150d5d16caa566cc8d823891acc0712b8",
+    "bytes": 13222912
+  }
+}

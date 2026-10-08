@@ -1,0 +1,47 @@
+test_all_product_modes (test_binding.DTO.test_all_product_modes) ... ok
+test_closed_invocation_and_request (test_binding.DTO.test_closed_invocation_and_request) ... ok
+test_closed_response (test_binding.DTO.test_closed_response) ... ok
+test_context_case_sensitive_payload (test_binding.DTO.test_context_case_sensitive_payload) ... ok
+test_exact_context_duplicate_refused (test_binding.DTO.test_exact_context_duplicate_refused) ... ok
+test_git_mode_is_not_wire_mode (test_binding.DTO.test_git_mode_is_not_wire_mode) ... ok
+test_inference_payload_is_opaque (test_binding.DTO.test_inference_payload_is_opaque) ... ok
+test_old_bare_digest_fixture_is_refused (test_binding.DTO.test_old_bare_digest_fixture_is_refused) ... ok
+test_protocol_alias_refused (test_binding.DTO.test_protocol_alias_refused) ... ok
+test_publish_preserves_raw_bytes_and_guard (test_binding.DTO.test_publish_preserves_raw_bytes_and_guard) ... ok
+test_unsupplied_ref (test_binding.DTO.test_unsupplied_ref) ... ok
+test_wrong_identity (test_binding.DTO.test_wrong_identity) ... ok
+test_assessment_reserve (test_binding.Deadlines.test_assessment_reserve) ... ok
+test_bridge_cannot_extend_actual_runner (test_binding.Deadlines.test_bridge_cannot_extend_actual_runner) ... ok
+test_assessment_candidate_mutation_before_call (test_binding.Dispatch.test_assessment_candidate_mutation_before_call) ... ok
+test_assessment_candidate_mutation_before_result (test_binding.Dispatch.test_assessment_candidate_mutation_before_result) ... ok
+test_audited_root_collision (test_binding.Dispatch.test_audited_root_collision) ... ok
+test_concurrency_and_no_quota_refund (test_binding.Dispatch.test_concurrency_and_no_quota_refund) ... ok
+test_current_grant_cannot_authorize_actors (test_binding.Dispatch.test_current_grant_cannot_authorize_actors) ... ok
+test_exact_native_argument_preparation_remains_mock (test_binding.Dispatch.test_exact_native_argument_preparation_remains_mock) ... ok
+test_expired_unstarted_reservation_has_no_fake_actor_stop (test_binding.Dispatch.test_expired_unstarted_reservation_has_no_fake_actor_stop) ... ok
+test_external_grant_dict_cannot_extend_bound_grant (test_binding.Dispatch.test_external_grant_dict_cannot_extend_bound_grant) ... ok
+test_freeze_refuses_active_implementation (test_binding.Dispatch.test_freeze_refuses_active_implementation) ... ok
+test_fresh_actor_identity (test_binding.Dispatch.test_fresh_actor_identity) ... ok
+test_late_reservation (test_binding.Dispatch.test_late_reservation) ... ok
+test_late_start_receipt_refused (test_binding.Dispatch.test_late_start_receipt_refused) ... ok
+test_maximum_two_active_cells (test_binding.Dispatch.test_maximum_two_active_cells) ... ok
+test_missing_or_consumed_reservation (test_binding.Dispatch.test_missing_or_consumed_reservation) ... ok
+test_missing_state_with_journal_cannot_refill_quota (test_binding.Dispatch.test_missing_state_with_journal_cannot_refill_quota) ... ok
+test_monotonic_boundary_survives_backward_utc (test_binding.Dispatch.test_monotonic_boundary_survives_backward_utc) ... ok
+test_monotonic_phase_min_after_clock_adjustment (test_binding.Dispatch.test_monotonic_phase_min_after_clock_adjustment) ... ok
+test_next_task_requires_pass (test_binding.Dispatch.test_next_task_requires_pass) ... ok
+test_no_task_deadline_reset (test_binding.Dispatch.test_no_task_deadline_reset) ... ok
+test_phase_requires_frozen_candidate (test_binding.Dispatch.test_phase_requires_frozen_candidate) ... ok
+test_reservation_precedes_mock_boundary (test_binding.Dispatch.test_reservation_precedes_mock_boundary) ... ok
+test_result_identity (test_binding.Dispatch.test_result_identity) ... ok
+test_runner_min_and_stop_receipt (test_binding.Dispatch.test_runner_min_and_stop_receipt) ... ok
+test_runtime_input_tamper (test_binding.Dispatch.test_runtime_input_tamper) ... ok
+test_serialized_total_quota_across_gate_instances (test_binding.Dispatch.test_serialized_total_quota_across_gate_instances) ... ok
+test_staged_input_tamper (test_binding.Dispatch.test_staged_input_tamper) ... ok
+test_task6_requires_bound_independent_equivalence (test_binding.Dispatch.test_task6_requires_bound_independent_equivalence) ... ok
+test_task_twelve_activation_cap (test_binding.Dispatch.test_task_twelve_activation_cap) ... ok
+
+----------------------------------------------------------------------
+Ran 42 tests in 1.668s
+
+OK

@@ -1,0 +1,249 @@
+{
+  "sourceSha": "a97cbd5ef3e0b22b9e6397501047a4e01dc90204",
+  "scope": "inspected canonical Executor/Verifier/Inference/goal-modeling callers; role invocation not run",
+  "actualInputRootsFromBoundCallers": [],
+  "executorContextHasWorkspace": false,
+  "executorAllowedRootsMeaning": "logical output target allowlist, not filesystem InputRoots",
+  "immutableInputs": "full acquired source revision/model and explicit serialized request artifacts; command executable and declared runtime files fingerprinted independently",
+  "conservativeAdditionalForbiddenRoots": [
+    "C:\\Users\\Consiliari\\Documents\\Scientist-v4-runtime-binding-20261009\\classic-main"
+  ],
+  "boundHelperRoot": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\v4-runtime-binding-20261009\\helpers",
+  "boundOutputAndLogRoot": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\v4-runtime-binding-20261009\\evidence",
+  "dispatcherStateRoot": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-runtime-binding-20261009\\state\\dispatch",
+  "futureActorPaths": "<dispatcherStateRoot>/actors/<unique action ID>/{response.json,logs}",
+  "noAuditNarrowing": true,
+  "osIsolation": false,
+  "actualNativeStopTimerProven": false,
+  "osCancellation": null,
+  "providerCancellation": null,
+  "excerpts": [
+    {
+      "path": "internal/host/agentexec/types.go",
+      "firstLine": 110,
+      "lastLine": 114,
+      "sourceWorkingSha256": "3c2875d87473406831f28803beec71b19d17d8334e70befe41e6fb381f345ac4",
+      "lines": [
+        "type RunOptions struct {",
+        "\tInputRoots          []string",
+        "\tTempParent          string",
+        "\tPrivateLogDirectory string",
+        "}"
+      ]
+    },
+    {
+      "path": "internal/host/agentexec/types.go",
+      "firstLine": 141,
+      "lastLine": 146,
+      "sourceWorkingSha256": "3c2875d87473406831f28803beec71b19d17d8334e70befe41e6fb381f345ac4",
+      "lines": [
+        "// Run starts one new external process in an empty temporary directory. InputRoots",
+        "// optionally selects read-only snapshots to compare before and after execution;",
+        "// empty InputRoots does not acquire or audit a repository tree. The process receives",
+        "// the serialized request on stdin and declared command arguments, with no automatic",
+        "// workspace writes.",
+        "func Run(ctx context.Context, cfg Config, req Request, opts RunOptions) (RunResult, error) {"
+      ]
+    },
+    {
+      "path": "internal/host/agentexec/runner.go",
+      "firstLine": 73,
+      "lastLine": 104,
+      "sourceWorkingSha256": "26d1713a3ffeacc87b03b7a5be6231375b39984dcd61f9e35753ae1dd2320e5b",
+      "lines": [
+        "func run(parent context.Context, cfg Config, request Request, opts RunOptions) (RunResult, error) {",
+        "\tif parent == nil {",
+        "\t\treturn RunResult{}, errors.New(\"execution context is required\")",
+        "\t}",
+        "\treq, requestJSON, err := normalizeRequest(request)",
+        "\tif err != nil {",
+        "\t\treturn RunResult{}, err",
+        "\t}",
+        "\troots, err := normalizeRoots(opts.InputRoots)",
+        "\tif err != nil {",
+        "\t\treturn RunResult{}, err",
+        "\t}",
+        "\ttempParent := opts.TempParent",
+        "\tif tempParent == \"\" {",
+        "\t\ttempParent = os.TempDir()",
+        "\t}",
+        "\ttempParent, err = canonicalDir(tempParent)",
+        "\tif err != nil {",
+        "\t\treturn RunResult{}, fmt.Errorf(\"temporary parent: %w\", err)",
+        "\t}",
+        "\tif pathWithinAny(tempParent, roots) {",
+        "\t\treturn RunResult{}, errors.New(\"temporary parent is within an audited input root\")",
+        "\t}",
+        "\tprivateLogDir, err := preparePrivateLogDirectory(opts.PrivateLogDirectory, roots)",
+        "\tif err != nil {",
+        "\t\treturn RunResult{}, err",
+        "\t}",
+        "",
+        "\tcfg, executable, runtimeBefore, runtimeDigest, executableDigest, configDigest, err := fingerprintConfig(cfg)",
+        "\tif err != nil {",
+        "\t\treturn RunResult{}, err",
+        "\t}"
+      ]
+    },
+    {
+      "path": "internal/host/agentexec/runner.go",
+      "firstLine": 111,
+      "lastLine": 139,
+      "sourceWorkingSha256": "26d1713a3ffeacc87b03b7a5be6231375b39984dcd61f9e35753ae1dd2320e5b",
+      "lines": [
+        "\trunID, err := randomID()",
+        "\tif err != nil {",
+        "\t\treturn RunResult{}, errors.New(\"could not allocate an invocation identity\")",
+        "\t}",
+        "\tnonce, err := randomID()",
+        "\tif err != nil {",
+        "\t\treturn RunResult{}, errors.New(\"could not allocate an invocation nonce\")",
+        "\t}",
+        "\tinputDigest := digest(requestJSON)",
+        "\tinvocation := Invocation{",
+        "\t\tAPIVersion:  APIVersion,",
+        "\t\tRunID:       runID,",
+        "\t\tNonce:       nonce,",
+        "\t\tInputDigest: inputDigest,",
+        "\t\tRequest:     req,",
+        "\t}",
+        "\tinputJSON, err := json.Marshal(invocation)",
+        "\tif err != nil || len(inputJSON) > maxJSONBytes {",
+        "\t\treturn RunResult{}, errors.New(\"invocation could not be encoded within the protocol bound\")",
+        "\t}",
+        "",
+        "\tbefore, err := snapshotRoots(roots)",
+        "\tif err != nil {",
+        "\t\treturn RunResult{}, errors.New(\"input audit before invocation failed\")",
+        "\t}",
+        "\trunDir, err := os.MkdirTemp(tempParent, \"markitect-agentexec-\")",
+        "\tif err != nil {",
+        "\t\treturn RunResult{}, errors.New(\"could not create a fresh private invocation directory\")",
+        "\t}"
+      ]
+    },
+    {
+      "path": "internal/host/agentexec/json.go",
+      "firstLine": 199,
+      "lastLine": 220,
+      "sourceWorkingSha256": "b6f7ee75a8bf007d0f1facfafc5b6a9ee72aaae270e641170aab53815d861104",
+      "lines": [
+        "func canonicalObject(raw json.RawMessage, label string, max int) (json.RawMessage, error) {",
+        "\tif len(raw) == 0 || len(raw) > max {",
+        "\t\treturn nil, fmt.Errorf(\"%s is empty or exceeds its size bound\", label)",
+        "\t}",
+        "\tif err := rejectDuplicateKeys(raw); err != nil {",
+        "\t\treturn nil, fmt.Errorf(\"%s: %w\", label, err)",
+        "\t}",
+        "\tvar value any",
+        "\tdecoder := json.NewDecoder(bytes.NewReader(raw))",
+        "\tdecoder.UseNumber()",
+        "\tif err := decoder.Decode(&value); err != nil {",
+        "\t\treturn nil, fmt.Errorf(\"%s is invalid JSON: %w\", label, err)",
+        "\t}",
+        "\tobject, ok := value.(map[string]any)",
+        "\tif !ok || object == nil {",
+        "\t\treturn nil, fmt.Errorf(\"%s must be a JSON object\", label)",
+        "\t}",
+        "\tcanonical, err := json.Marshal(object)",
+        "\tif err != nil {",
+        "\t\treturn nil, fmt.Errorf(\"%s cannot be encoded: %w\", label, err)",
+        "\t}",
+        "\treturn canonical, nil"
+      ]
+    },
+    {
+      "path": "internal/host/agentexec/json.go",
+      "firstLine": 353,
+      "lastLine": 355,
+      "sourceWorkingSha256": "b6f7ee75a8bf007d0f1facfafc5b6a9ee72aaae270e641170aab53815d861104",
+      "lines": [
+        "func digest(data []byte) string {",
+        "\tsum := sha256.Sum256(data)",
+        "\treturn \"sha256:\" + hex.EncodeToString(sum[:])"
+      ]
+    },
+    {
+      "path": "internal/host/canonical_controller_execution.go",
+      "firstLine": 23,
+      "lastLine": 33,
+      "sourceWorkingSha256": "a74b935a4b50d63984286f29931909c8632afeca5e2c3e2888d225b1f12b9d0b",
+      "lines": [
+        "type canonicalControllerExecutorContext struct {",
+        "\tModel                      CanonicalAgentContext              `json:\"model\"`",
+        "\tObjective                  string                             `json:\"objective\"`",
+        "\tAllowedRoots               []string                           `json:\"allowedRoots\"`",
+        "\tAllowedExtensions          []string                           `json:\"allowedExtensions\"`",
+        "\tExistingOwnedArtifactPaths []string                           `json:\"existingOwnedArtifactPaths\"`",
+        "\tConstraints                []string                           `json:\"constraints\"`",
+        "\tDependencyEvidence         []string                           `json:\"readOnlyDependencyEvidence\"`",
+        "\tDependencyState            string                             `json:\"dependencyState\"`",
+        "\tRepair                     *canonicalControllerExecutorRepair `json:\"repair,omitempty\"`",
+        "}"
+      ]
+    },
+    {
+      "path": "internal/host/canonical_controller_execution.go",
+      "firstLine": 125,
+      "lastLine": 139,
+      "sourceWorkingSha256": "a74b935a4b50d63984286f29931909c8632afeca5e2c3e2888d225b1f12b9d0b",
+      "lines": [
+        "\t\t\tcontextBytes, err := json.Marshal(canonicalControllerExecutorContext{",
+        "\t\t\t\tModel: contextModel, Objective: p.Task.Objective, AllowedRoots: p.Task.AllowedRoots,",
+        "\t\t\t\tAllowedExtensions: p.Task.AllowedExtensions, ExistingOwnedArtifactPaths: canonicalControllerOwnedArtifactPaths(p.Task.ExistingOwnedArtifacts),",
+        "\t\t\t\tConstraints:        p.Task.Constraints,",
+        "\t\t\t\tDependencyEvidence: dependencyPaths,",
+        "\t\t\t\tDependencyState:    \"Child candidates are unapplied and unverified. Retained child bytes are observed evidence, not new semantic acceptance. Do not edit dependency artifacts outside your own allowed roots.\",",
+        "\t\t\t\tRepair:             canonicalControllerExecutorRepairFrom(p.Task.Repair),",
+        "\t\t\t})",
+        "\t\t\tif err != nil {",
+        "\t\t\t\treturn run, err",
+        "\t\t\t}",
+        "\t\t\tresult, invokeErr := agentexec.Run(ctx, cfg.Executor.agentConfig(), agentexec.Request{",
+        "\t\t\t\tRole: agentexec.RoleExecutor, SourceRevision: revision, ModelDigest: proposal.Plan.ModelDigest, ModulePin: p.Module.Digest, ProjectionID: p.ProjectionID,",
+        "\t\t\t\tScopeIDs: contextModel.ScopeIDs, PolicyIDs: canonicalRequestPolicyIDs(p.Request.Policies), Context: contextBytes, Artifacts: artifacts,",
+        "\t\t\t}, agentexec.RunOptions{TempParent: filepath.Dir(cfg.PrivateLogs), PrivateLogDirectory: cfg.PrivateLogs})"
+      ]
+    },
+    {
+      "path": "internal/host/canonical_controller_verification.go",
+      "firstLine": 786,
+      "lastLine": 788,
+      "sourceWorkingSha256": "eff91796689e2139626e9e8847077cd26b3fab82f116e8b61a8ea76f81a1ab55",
+      "lines": [
+        "\texecution, invokeErr := agentexec.Run(ctx, cfg.Verifier.agentConfig(), request, agentexec.RunOptions{",
+        "\t\tTempParent: filepath.Dir(cfg.PrivateLogs), PrivateLogDirectory: cfg.PrivateLogs,",
+        "\t})"
+      ]
+    },
+    {
+      "path": "internal/host/canonical_inference.go",
+      "firstLine": 160,
+      "lastLine": 162,
+      "sourceWorkingSha256": "37189cae7dd63c3e70c91982d361fffb6941390a87b46c165ddbf6a9af2a1dd6",
+      "lines": [
+        "\trun, err := agentexec.Run(ctx, config, request, agentexec.RunOptions{",
+        "\t\tTempParent: options.TempParent, PrivateLogDirectory: options.PrivateLogDirectory,",
+        "\t})"
+      ]
+    },
+    {
+      "path": "internal/host/canonical_goal_modeling.go",
+      "firstLine": 139,
+      "lastLine": 139,
+      "sourceWorkingSha256": "c988985e3e53bad082ca9eb217e84f1fc06a6a6f131f1ca48b33b205c91d244d",
+      "lines": [
+        "\trun, runErr := agentexec.Run(ctx, config, request, agentexec.RunOptions{TempParent: options.TempParent, PrivateLogDirectory: options.PrivateLogDirectory})"
+      ]
+    },
+    {
+      "path": "internal/host/canonical_goal_modeling.go",
+      "firstLine": 293,
+      "lastLine": 293,
+      "sourceWorkingSha256": "c988985e3e53bad082ca9eb217e84f1fc06a6a6f131f1ca48b33b205c91d244d",
+      "lines": [
+        "\trun, runErr := agentexec.Run(ctx, config, request, agentexec.RunOptions{TempParent: options.TempParent, PrivateLogDirectory: options.PrivateLogDirectory})"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,190 @@
+{
+  "createdUtc": "2026-10-08T23:52:48.3268437Z",
+  "scientistParentSha": "c7d55105a1f0183d6517e263d15c0fadef7d4b2d",
+  "sourceBinding": "exact working bytes; packet .gitattributes preserves them in Git",
+  "classicSourceSha": "a97cbd5ef3e0b22b9e6397501047a4e01dc90204",
+  "status": "qualified preparation, correction batches3/limit2, NOT ADMITTED",
+  "files": [
+    {
+      "path": ".gitattributes",
+      "sha256": "705fd4d6451a31d36b3df7de96f83f30ac976c9b4a6d1e51671d8e2f33e2d0da",
+      "bytes": 8
+    },
+    {
+      "path": "candidate-admission.json",
+      "sha256": "799f13d502e1687a36f62d4f42492971dc61a38540a9bd3f6e46eace6e092c81",
+      "bytes": 2591
+    },
+    {
+      "path": "design-contract-admission.json",
+      "sha256": "c4a19be8c8ab805113798c50d1222404c5f4db0c53dcee344b325db1c9a15be2",
+      "bytes": 1470
+    },
+    {
+      "path": "dispatch-config.json",
+      "sha256": "447c1df2141a1de5dc46be40a991d8e08b2c127759e9ae35daf8190440f8bd75",
+      "bytes": 751
+    },
+    {
+      "path": "evidence/archival-events.json",
+      "sha256": "0544bf75d4851ad6baa9c586fc632974d46bf986cc72fad754521e23cee0ae9c",
+      "bytes": 1355
+    },
+    {
+      "path": "evidence/audit-root-binding.json",
+      "sha256": "0001bc8eed0cc61bf8012bbb0962824751795dedf2d54585c59b0c91f7718c35",
+      "bytes": 12278
+    },
+    {
+      "path": "evidence/authorization-grant.json",
+      "sha256": "e667a77f107c29139ba67acb76cab8a0f3ee2c08033eb2b047f0516535b3e2d6",
+      "bytes": 4107
+    },
+    {
+      "path": "evidence/classic-build.log",
+      "sha256": "4cd84ef6d6dde9b5c2cad1669fc03ca67d03cabe3e86e0168c5747a08edc8d52",
+      "bytes": 73
+    },
+    {
+      "path": "evidence/classic-context.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "evidence/classic-context.stdout.log",
+      "sha256": "ae019e12d5e5fce2dc7fbcad9ad68091f2249ca9b3f6426d4a2c2312846247fb",
+      "bytes": 1875
+    },
+    {
+      "path": "evidence/classic-main-binding.json",
+      "sha256": "132da3a0e856b8a097f0181b7a434bbb992dd160f8e88fcde11be58998080029",
+      "bytes": 17597
+    },
+    {
+      "path": "evidence/classic-main-bound-source.partial-1.zip",
+      "sha256": "ae53b185835ff3526d2f213529ae6f7d7b95a1e8b1a22a7d8a6a2fdae15a8991",
+      "bytes": 64224
+    },
+    {
+      "path": "evidence/classic-main-bound-source.zip",
+      "sha256": "668a832da07f42e8fa1217ad9e2191a620c5fa4bfea0fe4b52bb8f7a61df18d7",
+      "bytes": 95213
+    },
+    {
+      "path": "evidence/classic-model.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "evidence/classic-model.stdout.log",
+      "sha256": "1edf62a784910fde5ff05fe703e32738b6e2074c709dd510cc5f7c1f2e97d9e9",
+      "bytes": 18020
+    },
+    {
+      "path": "evidence/classic-modules.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "evidence/classic-modules.stdout.log",
+      "sha256": "89cd2d6b6e0b6cc4e272364f90d8c4ba7c9f13c1168a8c42529e82438c15897f",
+      "bytes": 1963
+    },
+    {
+      "path": "evidence/existing-toolchain-build-grant.json",
+      "sha256": "8ca399c655df4e725cc723c317694872c9441ec20bcdf5363ff9661cb0eaad23",
+      "bytes": 1849
+    },
+    {
+      "path": "evidence/existing-toolchain-build.json",
+      "sha256": "024fb5e9e0012570b00dd045fc3b55852945dcb8d9c6b4af626a290f978f5b82",
+      "bytes": 1439
+    },
+    {
+      "path": "evidence/existing-toolchain-build.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "evidence/focused-test-1.log",
+      "sha256": "58529ac039452152c85f66b49660d05de1e07673813cc1a6eb8a45efb6f5885b",
+      "bytes": 3224
+    },
+    {
+      "path": "evidence/focused-test-2.log",
+      "sha256": "ae66e18a299ea5b80df9ca7925dbe3a530aa398bf4c780ff0f6563776e76397e",
+      "bytes": 4394
+    },
+    {
+      "path": "evidence/human-callback-authorization.json",
+      "sha256": "e34d9cec85483d9cc1f02366146cc8c15f74b392ba22c46b910d1efd80cd4415",
+      "bytes": 790
+    },
+    {
+      "path": "evidence/ledger.json",
+      "sha256": "aced6a8e65affe9c526d1fcd232d49fee7872580b8d43a6c1187fd8d09a9e365",
+      "bytes": 8673
+    },
+    {
+      "path": "evidence/preservation-check.json",
+      "sha256": "d94b5b7ff81525668da14d32bca60bf9ba5f58153c90136f1e1696f7bcddf058",
+      "bytes": 35075
+    },
+    {
+      "path": "handoff.md",
+      "sha256": "a7cd7b7333e791763cb25a3fa71c9a92e10946604de4b8e87043da274239cb0f",
+      "bytes": 11632
+    },
+    {
+      "path": "helpers/bind_metadata.py",
+      "sha256": "bb24f8b5c72ebec51f83ba7f24faa1590df22f5feb60abb04209999b2b7e6df5",
+      "bytes": 2282
+    },
+    {
+      "path": "helpers/build_existing.py",
+      "sha256": "a2949388185dd6438da77c38bb9905d024af8d8637d7ef72452387b275c4568a",
+      "bytes": 2751
+    },
+    {
+      "path": "helpers/deadlines.py",
+      "sha256": "7e025a3e49625134abaad80036832746cb2b21f2e1bf976387f872ccb2437165",
+      "bytes": 1229
+    },
+    {
+      "path": "helpers/dispatch_gate.py",
+      "sha256": "7d1cf2a8813e0d447923dd62a7621bddcef9029aa00a283c22f405adadbe704e",
+      "bytes": 16545
+    },
+    {
+      "path": "helpers/dto_preflight.py",
+      "sha256": "7e3153729a6ef7c1c82ba828ea8c37506d26e30ab553e7d0d37d0582ef5528ad",
+      "bytes": 9244
+    },
+    {
+      "path": "helpers/native_boundary.py",
+      "sha256": "470fd1f7d3dadeb20e53af1762ccd683805b6bc8d5a951b1f2c44a3f1b617122",
+      "bytes": 1373
+    },
+    {
+      "path": "helpers/owned_transport.py",
+      "sha256": "ba596d9362ed1fb3335088da01ebee7118313938e609ce1515effe0b4281a487",
+      "bytes": 3279
+    },
+    {
+      "path": "helpers/run_focused.py",
+      "sha256": "015eacf7cc7a88fde1b605cac2925bc682ecf0b09ab4dab953e70af728ad0454",
+      "bytes": 1574
+    },
+    {
+      "path": "helpers/test_binding.py",
+      "sha256": "2a4c42852015157ecc690b4f65836d113ba4be7d27423868d448555553d9a3a5",
+      "bytes": 15443
+    },
+    {
+      "path": "seal_bindings.py",
+      "sha256": "f711d159265d0b726d915daebcedd1498cc1b86c45a21f70f3efd05c78d48aff",
+      "bytes": 9849
+    }
+  ],
+  "selfExcluded": "evidence/source-manifest.json"
+}

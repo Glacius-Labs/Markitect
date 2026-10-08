@@ -1,0 +1,27 @@
+{
+  "scope": "Read-only hash/archive bookkeeping; no product/runtime/test execution",
+  "attempts": [
+    {
+      "attempt": 1,
+      "command": "C:/Python313/python.exe experiments/government-comparison/v4-runtime-binding-20261009/seal_bindings.py",
+      "exitCode": 1,
+      "failure": "FileNotFoundError: assumed internal/host/canonical_controller_runtime.go does not exist at pinned Main. Actual config definition is canonical_controller.go.",
+      "failureRecordKind": "Tool-output transcription; raw terminal stream not separately archived",
+      "partialArchive": "evidence/classic-main-bound-source.partial-1.zip",
+      "resolution": "Correct only archival file list; tested helper files unchanged. Preserve partial archive and rerun read-only binding reconciliation."
+    },
+    {
+      "attempt": 2,
+      "recordedUtc": "2026-10-08T23:52:20.5064710Z",
+      "command": "C:/Python313/python.exe experiments/government-comparison/v4-runtime-binding-20261009/seal_bindings.py",
+      "exitCode": 0,
+      "sourceFiles": 32,
+      "modulePins": 4,
+      "acceptedV4Preserved": 37,
+      "olderEvidencePreserved": 115,
+      "originalV3PinChecks": 264,
+      "privateFilesPreserved": 4,
+      "correctionBudgetDeviation": "Filename fix counts as ordinary batch3/limit2; no additional tests/builds/runtime"
+    }
+  ]
+}

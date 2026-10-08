@@ -1,0 +1,212 @@
+{
+  "key": "v4-classic-main-runtime-binding-20261009",
+  "issuedUtc": "2026-10-08T23:30:57Z",
+  "notAfterUtc": "2026-10-09T00:10:57Z",
+  "actualActors": 0,
+  "providerAPICalls": 0,
+  "codexCLICalls": 0,
+  "appserverCalls": 0,
+  "applicationServerStarts": 0,
+  "fullTrials": 0,
+  "buildAttempts": [
+    {
+      "reservedUtc": "2026-10-09T01:32:52.903038+02:00",
+      "argv": [
+        "C:/Program Files/Go/bin/go.exe",
+        "build",
+        "-mod=readonly",
+        "-trimpath",
+        "-o",
+        "C:\\Users\\Consiliari\\Documents\\Scientist-v4-runtime-binding-20261009\\runtime\\markitect.exe",
+        "./cmd/markitect"
+      ],
+      "cwd": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-runtime-binding-20261009\\classic-main",
+      "timeoutSeconds": 600,
+      "environmentOverride": {
+        "GOTOOLCHAIN": "local"
+      },
+      "status": "completed",
+      "exitCode": 1,
+      "finishedUtc": "2026-10-09T01:32:53.156465+02:00",
+      "elapsedSeconds": 0.25303229999917676,
+      "logSha256": "4cd84ef6d6dde9b5c2cad1669fc03ca67d03cabe3e86e0168c5747a08edc8d52"
+    }
+  ],
+  "metadataCalls": [
+    {
+      "reservedUtc": "2026-10-09T01:40:33.320752+02:00",
+      "argv": [
+        "C:\\Users\\Consiliari\\Documents\\Scientist-v4-runtime-binding-20261009\\runtime\\markitect.exe",
+        "canonical",
+        "--repo",
+        "C:\\Users\\Consiliari\\Documents\\Scientist-v4-runtime-binding-20261009\\classic-main",
+        "--config",
+        "examples/canonical-projection/canonical.yaml",
+        "--action",
+        "modules",
+        "--revision",
+        "a97cbd5ef3e0b22b9e6397501047a4e01dc90204"
+      ],
+      "cwd": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-runtime-binding-20261009\\classic-main",
+      "timeoutSeconds": 60,
+      "status": "completed",
+      "binarySha256": "0621e6ce827278d4410136cdc608286150d5d16caa566cc8d823891acc0712b8",
+      "exitCode": 0,
+      "stdout": {
+        "path": "evidence\\classic-modules.stdout.log",
+        "sha256": "89cd2d6b6e0b6cc4e272364f90d8c4ba7c9f13c1168a8c42529e82438c15897f"
+      },
+      "stderr": {
+        "path": "evidence\\classic-modules.stderr.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "finishedUtc": "2026-10-09T01:40:33.707625+02:00",
+      "elapsedSeconds": 0.3864064999979746
+    },
+    {
+      "reservedUtc": "2026-10-09T01:40:33.707949+02:00",
+      "argv": [
+        "C:\\Users\\Consiliari\\Documents\\Scientist-v4-runtime-binding-20261009\\runtime\\markitect.exe",
+        "canonical",
+        "--repo",
+        "C:\\Users\\Consiliari\\Documents\\Scientist-v4-runtime-binding-20261009\\classic-main",
+        "--config",
+        "examples/canonical-projection/canonical.yaml",
+        "--action",
+        "model",
+        "--revision",
+        "a97cbd5ef3e0b22b9e6397501047a4e01dc90204"
+      ],
+      "cwd": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-runtime-binding-20261009\\classic-main",
+      "timeoutSeconds": 60,
+      "status": "completed",
+      "binarySha256": "0621e6ce827278d4410136cdc608286150d5d16caa566cc8d823891acc0712b8",
+      "exitCode": 0,
+      "stdout": {
+        "path": "evidence\\classic-model.stdout.log",
+        "sha256": "1edf62a784910fde5ff05fe703e32738b6e2074c709dd510cc5f7c1f2e97d9e9"
+      },
+      "stderr": {
+        "path": "evidence\\classic-model.stderr.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "finishedUtc": "2026-10-09T01:40:33.889563+02:00",
+      "elapsedSeconds": 0.18137799999749404
+    },
+    {
+      "reservedUtc": "2026-10-09T01:40:33.889874+02:00",
+      "argv": [
+        "C:\\Users\\Consiliari\\Documents\\Scientist-v4-runtime-binding-20261009\\runtime\\markitect.exe",
+        "canonical",
+        "--repo",
+        "C:\\Users\\Consiliari\\Documents\\Scientist-v4-runtime-binding-20261009\\classic-main",
+        "--config",
+        "examples/canonical-projection/canonical.yaml",
+        "--action",
+        "context",
+        "--revision",
+        "a97cbd5ef3e0b22b9e6397501047a4e01dc90204",
+        "--api-version",
+        "commerce.example.org/v1",
+        "--kind",
+        "UseCase",
+        "--namespace",
+        "commerce",
+        "--name",
+        "create-order"
+      ],
+      "cwd": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-runtime-binding-20261009\\classic-main",
+      "timeoutSeconds": 60,
+      "status": "completed",
+      "binarySha256": "0621e6ce827278d4410136cdc608286150d5d16caa566cc8d823891acc0712b8",
+      "exitCode": 0,
+      "stdout": {
+        "path": "evidence\\classic-context.stdout.log",
+        "sha256": "ae019e12d5e5fce2dc7fbcad9ad68091f2249ca9b3f6426d4a2c2312846247fb"
+      },
+      "stderr": {
+        "path": "evidence\\classic-context.stderr.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "finishedUtc": "2026-10-09T01:40:34.068651+02:00",
+      "elapsedSeconds": 0.1785005000019737
+    }
+  ],
+  "testInvocations": [
+    {
+      "reservedUtc": "2026-10-09T01:42:41.354561+02:00",
+      "argv": [
+        "C:\\Python313\\python.exe",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "helpers",
+        "-p",
+        "test_binding.py",
+        "-v"
+      ],
+      "cwd": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\v4-runtime-binding-20261009",
+      "timeoutSeconds": 120,
+      "status": "completed",
+      "kind": "synthetic-mechanics-no-native-callbacks",
+      "exitCode": 0,
+      "finishedUtc": "2026-10-09T01:42:42.415911+02:00",
+      "elapsedSeconds": 1.061015800001769,
+      "log": "evidence\\focused-test-1.log",
+      "logSha256": "58529ac039452152c85f66b49660d05de1e07673813cc1a6eb8a45efb6f5885b"
+    },
+    {
+      "reservedUtc": "2026-10-09T01:46:56.023705+02:00",
+      "argv": [
+        "C:\\Python313\\python.exe",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "helpers",
+        "-p",
+        "test_binding.py",
+        "-v"
+      ],
+      "cwd": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\v4-runtime-binding-20261009",
+      "timeoutSeconds": 120,
+      "status": "completed",
+      "kind": "synthetic-mechanics-no-native-callbacks",
+      "exitCode": 0,
+      "finishedUtc": "2026-10-09T01:46:57.889701+02:00",
+      "elapsedSeconds": 1.865616899998713,
+      "log": "evidence\\focused-test-2.log",
+      "logSha256": "ae66e18a299ea5b80df9ca7925dbe3a530aa398bf4c780ff0f6563776e76397e"
+    }
+  ],
+  "correctionBatches": [
+    {
+      "number": 1,
+      "recordedUtc": "2026-10-08T23:42:41.2983573Z",
+      "scope": "Additive opaque-context correction and durable dispatcher implementation/review before first focused invocation; no old files or product sources changed"
+    },
+    {
+      "number": 2,
+      "recordedUtc": "2026-10-08T23:44:08.8710084Z",
+      "scope": "Bound source review found sha256-prefixed real inputDigest versus old synthetic bare digest fixture; correct additive DTO copy/closed invocation fields and focused regression. Tighten native start/expired reservation interface. Preserve first passing mechanical log and old draft unchanged."
+    },
+    {
+      "number": 3,
+      "recordedUtc": "2026-10-08T23:52:20.4910637Z",
+      "scope": "After archive FileNotFoundError, corrected only canonical_controller_runtime.go to actual canonical_controller.go in archival list; tested helpers unchanged",
+      "preReserved": false,
+      "countsAgainstOrdinaryCorrectionLimit": true,
+      "limit": 2,
+      "deviation": "Third ordinary correction batch exceeds maximum two; no separate exemption/authorization; stop further implementation/tests and close evidence only"
+    }
+  ],
+  "externalRoot": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-runtime-binding-20261009",
+  "classicCheckout": "C:\\Users\\Consiliari\\Documents\\Scientist-v4-runtime-binding-20261009\\classic-main",
+  "status": "closed-qualified-preparation-with-correction-budget-deviation-not-admitted",
+  "usage": null,
+  "closedUtc": "2026-10-09T01:49:40.333845+02:00",
+  "separateBuildCorrectionReceipt": "evidence/existing-toolchain-build.json",
+  "finalMechanicalTestsPassed": 42,
+  "limits": "No real native role/timer/cancellation, matched profile, Design adapter, trial or human acceptance. No further executions under these consumed mechanical quotas."
+}

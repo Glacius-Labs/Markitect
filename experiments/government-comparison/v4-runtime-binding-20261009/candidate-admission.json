@@ -1,0 +1,60 @@
+{
+  "version": "v4-runtime-binding",
+  "status": "NOT ADMITTED; binary/metadata and dispatch mechanics bound",
+  "design": {
+    "source": null,
+    "binarySha256": null,
+    "acceptedReadiness": false,
+    "publicRoleContract": null,
+    "actualCommonProfileSupport": null,
+    "gap": "Await exact clean accepted readiness handoff; no57fa+WIP substitution or source read."
+  },
+  "classicMain": {
+    "source": "a97cbd5ef3e0b22b9e6397501047a4e01dc90204",
+    "binarySha256": "0621e6ce827278d4410136cdc608286150d5d16caa566cc8d823891acc0712b8",
+    "runtimeConfigSha256": null,
+    "modulePins": [
+      {
+        "name": "commerce-example",
+        "version": "1.0.0",
+        "digest": "sha256:586af5b08ee218c51f43bfed7e083a293d60b2674bcfad3b14354164faa0668f"
+      },
+      {
+        "name": "markitect-dotnet",
+        "version": "1.0.0",
+        "digest": "sha256:b701c32f9a15afbf025566fa3f9618dfe4b856549580394ef6b9fc2e15520d5c"
+      },
+      {
+        "name": "markitect-foundation",
+        "version": "1.0.0",
+        "digest": "sha256:85346f68790c0e5256dabc52fc0b871ded7a95d7c0c27ba335a168f998b8b56c"
+      },
+      {
+        "name": "markitect-markdown",
+        "version": "1.0.0",
+        "digest": "sha256:029a61498008aa2c8e12e437abffe11d5eb74f9bab3de107d348cfa7d38f5c83"
+      }
+    ],
+    "acceptedReadiness": false,
+    "publicWireProfile": "classic-main-agentexec-v1alpha1",
+    "actualNativeRoleSupport": null,
+    "gap": "Exact Main source/binary/inspection config and modules bound. Real common-profile agent runtime configuration and role support remain unbound; no native role launched.",
+    "inspectionConfigSha256": "dfe363d8ecd304333ec061a7563034c2f1c73fc9ddfdcf7fcdbbc47d6be2f9e6"
+  },
+  "conventional": {
+    "methodBriefSha256": "5b9dddff5d07d9cb1e6427c43e46f1259e9fb49fd030fc0a6e1e44b21e60aadc",
+    "actualNativeProfileHistorical": "gpt-6.1-sol/high inherited native collaboration worked in v3/posthoc",
+    "newRunnerConfigFreeze": null,
+    "acceptedReadiness": false,
+    "gap": "Freeze exact current native dispatcher/tools/config with other arms; no historical capability-loop rerun."
+  },
+  "heldV3ClassicUnchanged": "c91363b7ac4decbe87212ff0f588b5451581a152",
+  "mainOrReleaseDecision": false,
+  "dispatch": {
+    "configSha256": "447c1df2141a1de5dc46be40a991d8e08b2c127759e9ae35daf8190440f8bd75",
+    "executionAllowed": false,
+    "boundary": "helpers/native_boundary.py prepares exact spawn args, no tool invoked",
+    "mechanicalTests": 42,
+    "actualNativeTimerEnforcement": null
+  }
+}
