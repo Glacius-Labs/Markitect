@@ -1,0 +1,12 @@
+apiVersion: project.markitect.example.org/v1alpha1
+kind: Statement
+metadata:
+  name: reservation
+  namespace: commerce.sales.inventory.reservations
+purpose: Defines inventory held for an order before shipment.
+spec:
+  category: concept
+  description: An active reservation holds a quantity for one order and may be released once.
+  public: true
+  uses: []
+  requires: []

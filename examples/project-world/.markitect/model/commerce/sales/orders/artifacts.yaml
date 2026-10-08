@@ -1,0 +1,25 @@
+apiVersion: project.markitect.example.org/v1alpha1
+kind: Artifact
+metadata:
+  name: order-lifecycle
+  namespace: commerce.sales.orders
+purpose: Maps order behavior to code, documentation, and focused tests.
+spec:
+  role: implementation
+  realizes:
+    - namespace: commerce.sales.orders
+      name: order
+    - namespace: commerce.sales.orders
+      name: cancel-order
+    - namespace: commerce.sales.orders
+      name: cancel-before-shipped
+  paths:
+    - src/shop/orders/
+    - src/shop/commerce/cancellation.py
+    - tests/test_cancellation.py
+    - docs/cancellation.md
+  checks:
+    - namespace: engineering
+      name: cancellation-tests
+  required: true
+  reason: The user-visible cancellation operation must preserve its lifecycle constraints and be exercised at the cross-slice boundary.

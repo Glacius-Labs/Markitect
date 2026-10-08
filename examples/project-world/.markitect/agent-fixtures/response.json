@@ -1,0 +1,13 @@
+{
+  "apiVersion": "markitect.example.org/agent-execution/v1alpha1",
+  "runId": "fixture-run-001",
+  "nonce": "fixture-nonce-not-a-secret",
+  "role": "executor",
+  "inputDigest": "sha256:fixture-input-digest",
+  "outcome": "proposed",
+  "candidateFiles": [],
+  "evidenceRefs": ["tests/test_cancellation.py"],
+  "verifierObservations": [],
+  "candidateJson": {"summary": "No source edits in this protocol-only fixture."},
+  "uncertainty": ["This fixture was not produced by an agent process." ]
+}

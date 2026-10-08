@@ -1,0 +1,10 @@
+apiVersion: project.markitect.example.org/v1alpha1
+kind: Manager
+metadata:
+  name: shop
+  namespace: ""
+purpose: Owns the complete Shop project and integrates all delegated work.
+spec:
+  owns:
+    - .
+  instructions: Decide routine project questions within the accepted Shop mandate; return only unresolved cross-cutting or reserved decisions to the owner.

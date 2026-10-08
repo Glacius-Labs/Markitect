@@ -1,0 +1,14 @@
+apiVersion: project.markitect.example.org/v1alpha1
+kind: Statement
+metadata:
+  name: change-delivery
+  namespace: engineering
+purpose: Defines the expected review and verification sequence for a project change.
+spec:
+  category: workflow
+  description: Review the manager context and impact, propose a model edit when intent changes, plan the authorized work, run the candidate, verify declared checks, and apply only the exact verified candidate.
+  public: true
+  uses:
+    - namespace: commerce
+      name: cancellation-transaction
+  requires: []

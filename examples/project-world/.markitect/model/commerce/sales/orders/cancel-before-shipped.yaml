@@ -1,0 +1,14 @@
+apiVersion: project.markitect.example.org/v1alpha1
+kind: Statement
+metadata:
+  name: cancel-before-shipped
+  namespace: commerce.sales.orders
+purpose: Restricts cancellation to orders that have not entered shipment.
+spec:
+  category: rule
+  description: Cancellation is valid only while the order is confirmed; a shipped order cannot be cancelled.
+  public: true
+  uses:
+    - namespace: commerce.sales.orders
+      name: order
+  requires: []

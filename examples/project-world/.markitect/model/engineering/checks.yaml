@@ -1,0 +1,22 @@
+apiVersion: project.markitect.example.org/v1alpha1
+kind: Check
+metadata:
+  name: cancellation-tests
+  namespace: engineering
+purpose: Exercises the cancellation state transition and the order-inventory transaction boundary.
+spec:
+  command:
+    - python
+    - -B
+    - -m
+    - unittest
+    - discover
+    - -s
+    - tests
+    - -v
+  uses:
+    - namespace: commerce.sales.orders
+      name: cancel-order
+    - namespace: commerce.sales.inventory.reservations
+      name: release-reservation
+  limitation: This finite in-memory SQLite suite does not establish production database behavior, concurrency beyond the tested transaction path, or completeness of the project model.

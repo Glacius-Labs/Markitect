@@ -1,0 +1,12 @@
+apiVersion: project.markitect.example.org/v1alpha1
+kind: Manager
+metadata:
+  name: sales
+  namespace: commerce.sales
+purpose: Delegates order and inventory responsibilities and integrates their contracts.
+spec:
+  parent:
+    namespace: commerce
+    name: commerce
+  owns:
+    - src/shop/
