@@ -1,0 +1,13 @@
+{
+  "key": "s1-final-output-diagnostic-20261008-r1",
+  "excerptStatusAtReceipt": "written-private",
+  "ownedExactFileRemovedWithoutContentRead": true,
+  "privateFileBytesMetadataOnly": 638,
+  "privateContentReads": 0,
+  "privateContentParses": 0,
+  "privateContentHashes": 0,
+  "privateDirectoryEmpty": true,
+  "removedUtc": "2026-10-08T19:06:39.000442+00:00",
+  "unexpectedFiles": false,
+  "stdoutRawPayloadReads": 0
+}

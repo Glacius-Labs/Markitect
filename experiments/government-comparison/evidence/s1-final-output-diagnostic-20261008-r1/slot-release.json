@@ -1,0 +1,18 @@
+{
+  "key": "s1-final-output-diagnostic-20261008-r1",
+  "grantIssuedUtc": "2026-10-08T18:56:50Z",
+  "releasedUtc": "2026-10-08T19:08:53.935847+00:00",
+  "releaseReason": "one terminal actual attempt; owned Job/native/worker lifecycle ended, no retry/residual",
+  "grantClosed": true,
+  "remainingAppServerTrees": 0,
+  "remainingDiagnosticReservations": 0,
+  "actualNewNativeTrees": 1,
+  "diagnosticReservationsConsumed": 1,
+  "actualNativeTreesCumulative": 12,
+  "readinessAttemptOrdinal": 1,
+  "maxFurtherActualAttemptsConsideredAfterThis": 1,
+  "automaticSecondGrant": false,
+  "canonicalCoordinationMutationByScientist": false,
+  "fullSuiteSlotReleasedByScientist": true,
+  "privateDirectoryEmpty": true
+}

@@ -1,0 +1,17 @@
+{
+  "key": "s1-final-output-diagnostic-20261008-r1",
+  "outerReturnCode": 1,
+  "stopReason": null,
+  "outerThroughReceiptReadbackSeconds": 13.690342199999577,
+  "withinOuterBound": true,
+  "controllerReceiptSha256": "a4dd2f742f0995b3d39b959766d7da770480ce53029a6b34a6a590d412cfe6d2",
+  "sanitizedResultSha256": "7ff9f142e747617a1ae375787fab9ff92ca77545139b4775be56da67ba69567d",
+  "terminalResultPresent": true,
+  "status": "stopped",
+  "nativeStartAttemptRecorded": true,
+  "diagnosticReservations": 1,
+  "actorTaskReservations": 0,
+  "nativeProviderRequests": null,
+  "nativeProviderRetries": null,
+  "remainingGrantClosed": true
+}

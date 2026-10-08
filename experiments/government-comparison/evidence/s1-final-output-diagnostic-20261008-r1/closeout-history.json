@@ -1,0 +1,34 @@
+{
+  "key": "s1-final-output-diagnostic-20261008-r1",
+  "firstActionUtc": "2026-10-08T18:58:50Z",
+  "preparationDeadlineUtc": "2026-10-08T19:18:50Z",
+  "maxPreparationSeconds": 1200,
+  "sourceTestCorrectionIterations": 0,
+  "maxSourceTestCorrectionIterations": 2,
+  "testInvocations": 1,
+  "maxTestInvocations": 3,
+  "newTestMethods": 4,
+  "testFailures": 0,
+  "sourceValidationFailures": 0,
+  "sourceChangesAfterS": 0,
+  "runtimeRetries": 0,
+  "validationScriptRefinements": [
+    {
+      "phase": "postrun metadata verification",
+      "change": "Replace redundant tautological PID assertion with meaningful exact-int distinct worker/native PID and fixed Job control label check",
+      "sourceTestOrRuntimeChanged": false,
+      "failure": false
+    }
+  ],
+  "actualNewNativeTrees": 1,
+  "actualNewDiagnosticReservations": 1,
+  "privateContentReadsParsesHashes": 0,
+  "privateOwnExactFileRemovedBytesMetadataOnly": 638,
+  "initialExecYieldWallSeconds": 10.0028436,
+  "finalPollWallSeconds": 0.6141992,
+  "fullToolWallAcrossYieldedGap": null,
+  "preparationToReservationSeconds": 429.239971,
+  "preparationToNativeSessionBoundarySeconds": 437.235004,
+  "preparationToTerminalSeconds": 437.561433,
+  "closureArtifactsPreparedUtc": "2026-10-08T19:08:53.935847+00:00"
+}

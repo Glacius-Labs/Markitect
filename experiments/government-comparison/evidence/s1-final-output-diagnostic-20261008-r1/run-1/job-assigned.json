@@ -1,0 +1,13 @@
+{
+  "key": "s1-final-output-diagnostic-20261008-r1",
+  "grantIssuedUtc": "2026-10-08T18:56:50Z",
+  "slotAssignedUtc": "2026-10-08T18:56:50Z",
+  "requestSha256": "1c60f21603b4e335efef64f63fb7991b6f8aab54d562fb5d88a9e685d9bef72a",
+  "freezeSha256": "12430b622275f07ed93ad7e42f2288575407577713b6199593f9fded8d8c6c5e",
+  "reservationSha256": "b6068c067a424c5fa7c5e77781d347bea5448584650b0f11281820f3efa77ff9",
+  "sourceCommit": "ca71a5d64242ab0db29072e8e88d46a27de67acf",
+  "freezeCommit": "301bcdb7e112b5722c6886ec03d223d59286818b",
+  "controllerPid": 37924,
+  "workerPid": 40208,
+  "processTreeControl": "windows-job-kill-on-close"
+}

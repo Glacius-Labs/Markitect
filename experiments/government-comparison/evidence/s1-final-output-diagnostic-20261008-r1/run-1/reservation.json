@@ -1,0 +1,21 @@
+{
+  "key": "s1-final-output-diagnostic-20261008-r1",
+  "reservedAtUnix": 1791486359.2399714,
+  "grantIssuedUtc": "2026-10-08T18:56:50Z",
+  "slotAssignedUtc": "2026-10-08T18:56:50Z",
+  "sourceCommit": "ca71a5d64242ab0db29072e8e88d46a27de67acf",
+  "freezeCommit": "301bcdb7e112b5722c6886ec03d223d59286818b",
+  "requestSha256": "1c60f21603b4e335efef64f63fb7991b6f8aab54d562fb5d88a9e685d9bef72a",
+  "freezeSha256": "12430b622275f07ed93ad7e42f2288575407577713b6199593f9fded8d8c6c5e",
+  "readinessWindowKey": "s1-readiness-final-window-20261008",
+  "notAfterUtc": "2026-10-08T20:42:00Z",
+  "latestActualStartUtc": "2026-10-08T20:40:40Z",
+  "readinessAttemptOrdinal": 1,
+  "maxTrees": 1,
+  "maxDiagnosticReservations": 1,
+  "maxActorTaskReservations": 0,
+  "priorAppServerTrees": 11,
+  "priorActorReservations": 6,
+  "priorCliMetadataCalls": 8,
+  "cumulativeAppServerMaximum": 12
+}

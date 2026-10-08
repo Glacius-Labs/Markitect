@@ -1,0 +1,133 @@
+{
+  "key": "s1-final-output-diagnostic-20261008-r1",
+  "status": "STOPPED BEFORE TURN; current first rejected notification observed",
+  "stopReason": "unexpected-final-output",
+  "baseSha": "bfadd142720299d0d92d969a767304211939637b",
+  "sourceCommit": "ca71a5d64242ab0db29072e8e88d46a27de67acf",
+  "freezeCommit": "301bcdb7e112b5722c6886ec03d223d59286818b",
+  "requestSha256": "1c60f21603b4e335efef64f63fb7991b6f8aab54d562fb5d88a9e685d9bef72a",
+  "freezeSha256": "12430b622275f07ed93ad7e42f2288575407577713b6199593f9fded8d8c6c5e",
+  "sourcePinsAgainstS": 82,
+  "freezePins": 95,
+  "mismatches": 0,
+  "firstProtocolFailure": {
+    "version": 1,
+    "phase": "cleanup",
+    "stage": "notification-gate",
+    "envelopeCategory": "notification",
+    "method": {
+      "category": "listed",
+      "name": "mcpServer/startupStatus/updated"
+    },
+    "exceptionClass": "ValueError",
+    "refusalCode": "forbidden-or-unknown-notification"
+  },
+  "firstProtocolFailureDefaultJsonBytes": 261,
+  "firstProtocolFailureLimit": 2048,
+  "diagnosticHelperSha256": "776365db287479a23be67a4e22ac083f54ce881fa1452337d0e281529adcb38f",
+  "threadResponseValidated": true,
+  "allResponseIdentityReadonlyPermissionEphemeralParentEmptyTurnGates": true,
+  "fieldComparison": {
+    "comparisons": [
+      {
+        "field": "cwd",
+        "expectedType": "string",
+        "actualType": "string",
+        "equal": true
+      },
+      {
+        "field": "model",
+        "expectedType": "string",
+        "actualType": "string",
+        "equal": true
+      },
+      {
+        "field": "modelProvider",
+        "expectedType": "string",
+        "actualType": "string",
+        "equal": true
+      },
+      {
+        "field": "approvalPolicy",
+        "expectedType": "string",
+        "actualType": "string",
+        "equal": true
+      }
+    ],
+    "cwdLexicallyEquivalent": true
+  },
+  "fieldComparisonCompactJsonBytes": 370,
+  "threadStartedCorrelated": true,
+  "threadClosedCorrelated": false,
+  "overallLifecycleSuccessful": false,
+  "acceptedEventCounts": {
+    "remoteControl/status/changed": 1,
+    "thread/started": 1
+  },
+  "notificationCount": 4,
+  "currentEvidenceMeaning": "First instrumented cleanup rejection is a public-catalog MCP startup status notification prohibited by unchanged lifecycle admission; no payload or startup-status value retained. It does not show an MCP failure, permit admission, or identify the historical discarded frame.",
+  "historicalFinalFrameMethodRefusal": null,
+  "nativeReturnCode": 0,
+  "workerReturnCode": 1,
+  "outerReturnCode": 1,
+  "nativeSessionSeconds": 0.32643300000017916,
+  "cleanupSeconds": 0.01725359999909415,
+  "controllerSeconds": 5.752262600000904,
+  "outerThroughReceiptReadbackSeconds": 13.690342199999577,
+  "phaseTimes": {
+    "metadataSeconds": 0.2118421999985003,
+    "threadStartSeconds": 0.09733609999966575
+  },
+  "preparationToReservationSeconds": 429.239971,
+  "preparationToNativeSessionBoundarySeconds": 437.235004,
+  "preparationToTerminalSeconds": 437.561433,
+  "firstActionUtc": "2026-10-08T18:58:50Z",
+  "terminalUtc": "2026-10-08T19:06:07.561433+00:00",
+  "summaryUtc": "2026-10-08T19:08:53.935847+00:00",
+  "preparationEnvelopeRespected": true,
+  "readinessLatestStartAndDeadlineRespected": true,
+  "testInvocations": 1,
+  "newSyntheticCases": 4,
+  "testFailures": 0,
+  "sourceTestCorrections": 0,
+  "verificationScriptRefinements": 1,
+  "sourceChangesAfterS": 0,
+  "actualNewNativeTrees": 1,
+  "newDiagnosticReservations": 1,
+  "nativeTreesCumulative": 12,
+  "newActorReservationsTurnsToolsCliMetadataWebStudyCellsRetries": 0,
+  "historicalActorReservations": 6,
+  "includedHistoricalModelAttempts": 5,
+  "historicalCliMetadataCalls": 8,
+  "knownHistoricalTokens": 53331,
+  "totalCurrentTokens": null,
+  "nativeHistoricalVector": [
+    15,
+    16,
+    13,
+    2250
+  ],
+  "actualProviderRequestsServingModelBilling": null,
+  "stderrObservedBytes": 216,
+  "stderrCompleteLines": 1,
+  "privateOwnExactFileRemovedBytesMetadataOnly": 638,
+  "privateContentReadsParsesHashes": 0,
+  "privateDirectoryEmpty": true,
+  "approvedMetadataFilesArchived": 8,
+  "grantClosed": true,
+  "remainingRuntimeAllocation": 0,
+  "slotReleaseSha256": "e2b8c6f88f99235b6129edf2be16fad73a3f4313219cceb93993293c9c396605",
+  "s1Established": false,
+  "sixStudyCells": [
+    "NOT RUN",
+    "NOT RUN",
+    "NOT RUN",
+    "NOT RUN",
+    "NOT RUN",
+    "NOT RUN"
+  ],
+  "nextBoundary": "At most one further actual readiness attempt may be considered only by fresh concrete finite grant before2026-10-08T20:42:00Z; no automatic execution, admission change or second allocation. If S1 remains unavailable, close diagnosis with actual mechanics/product/effort and NOT RUN study balance.",
+  "recorderRetainsOnlyFirstRejection": true,
+  "independentPostreviewSha256": "be0cec7c23bb373843a775cb07440c0bfe43bb4b0998f20a65ec556ecadf0e98",
+  "closeoutPreparedUtc": "2026-10-08T19:09:49.713912+00:00"
+}

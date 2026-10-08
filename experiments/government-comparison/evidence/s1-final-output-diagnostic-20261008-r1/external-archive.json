@@ -1,0 +1,42 @@
+{
+  "key": "s1-final-output-diagnostic-20261008-r1",
+  "externalDirectory": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\s1-final-output-diagnostic-20261008-r1",
+  "copiedApprovedMetadataFiles": {
+    "output-root-created.json": {
+      "sha256": "86de5ae31dcefe644ad5ff7306546bdd1b72f5eb0d2a37a40cf721042f859d41",
+      "bytes": 219
+    },
+    "reservation.json": {
+      "sha256": "b6068c067a424c5fa7c5e77781d347bea5448584650b0f11281820f3efa77ff9",
+      "bytes": 896
+    },
+    "controller-once.json": {
+      "sha256": "900a7eb6a19584820e624c91df0bf8a53e192c069aa6b98729e8ee0148cddc32",
+      "bytes": 581
+    },
+    "job-assigned.json": {
+      "sha256": "8798490254077fd23e5bd461d879d3e950f034404785cd28d136f6fc1d9a8688",
+      "bytes": 645
+    },
+    "started-once.json": {
+      "sha256": "d72f04a6fa03d65d5c457e0a428130b4c392df9def3b4da3113c5f58abb88fba",
+      "bytes": 580
+    },
+    "sanitized-result.json": {
+      "sha256": "7ff9f142e747617a1ae375787fab9ff92ca77545139b4775be56da67ba69567d",
+      "bytes": 21265
+    },
+    "controller-receipt.json": {
+      "sha256": "a4dd2f742f0995b3d39b959766d7da770480ce53029a6b34a6a590d412cfe6d2",
+      "bytes": 1039
+    },
+    "outer-receipt.json": {
+      "sha256": "91bf7f9b919d2911e3c7f855d79b69a8061fa62f36ef94bd7d225837e61f2449",
+      "bytes": 651
+    }
+  },
+  "rawOrPrivateArtifactsCopied": false,
+  "privateExcerptContentReadParsedHashed": false,
+  "privateDirectoryEmpty": true,
+  "archivedUtc": "2026-10-08T19:06:39.016476+00:00"
+}
