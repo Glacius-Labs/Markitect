@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-08T04:55:56Z",
+  "updatedUtc": "2026-10-08T05:14:29Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -428,30 +428,30 @@
       "name": "Scientist",
       "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
       "hostId": "local",
-      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:120",
+      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:122",
       "lastObservedStatus": "active",
       "activeTurn": {
-        "id": "01a119dd-cff2-7782-a915-626fe3866f64",
+        "id": "01a119ee-ee73-75d2-a8bf-b5bb9e00fff8",
         "status": "inProgress",
         "error": null,
-        "startedAt": 1791435329,
+        "startedAt": 1791436451,
         "completedAt": null,
         "durationMs": null
       },
-      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac72243c0e48191b7f55068d16ecd3a",
+      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac726ab2374819192009f012772efb4",
       "initialAssignmentDispatched": true,
-      "assignedMilestone": "s1-common-runner-policy-metadata-20261008",
-      "latestProgress": "Ich bereite den eng begrenzten Metadatenversuch vor: ein neuer gebundener Client, Offline-Prüfungen und ein unabhängiger Vorabreview vor dem einzigen erlaubten Start. Ein positives Ergebnis gilt nur als beobachtete argv-Annahme und gemeldete Konfigurationsvorbedingung; die Wirksamkeit des Schlüssels und der tatsächliche Zugriff bleiben damit unbelegt.",
+      "assignedMilestone": "s1-selected-feature-contract-offline-20261008",
+      "latestProgress": "Ich korrigiere den ausgewählten Feature-Vertrag in einem separaten Offline-Modul. Der archivierte Client und sein insufficient-Ergebnis bleiben unverändert. Die Tests werden die echten Parser und Verbraucher aufrufen; anschließend folgt ein enger unabhängiger Review.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-scientist/Markitect",
       "transferredDesignCommit": "b9e17c9896f14b4b1268e4bcb005395f5d324384",
-      "candidateSha": "e42ba917e765169b1e5c1737f8310da41904b22e",
+      "candidateSha": "f4bea6dd9b92d72d828751d9a05411c86edd66fa",
       "acceptance": "R7 bounded native+outer Queue and terminal Resume mechanics accepted; S1 real common Actor/tools and study cells remain open.",
       "lastAssignment": {
-        "key": "s1-common-runner-policy-metadata-20261008",
-        "authorizedUtc": "2026-10-08T04:54:29Z",
-        "status": "Dispatched; narrow preparation then at most one metadata process conditional on reviewed prerequisites.",
-        "scope": "One prospectively bound metadata process after narrow client preparation, tests and independent review; no real Actor or product/study execution.",
-        "sentUtc": "2026-10-08T04:55:29Z"
+        "key": "s1-selected-feature-contract-offline-20261008",
+        "authorizedUtc": "2026-10-08T05:13:30Z",
+        "status": "Dispatched; offline correction only, no runtime grant.",
+        "scope": "Separate untyped selected config observation from typed managed featureRequirements; bounded safe diagnostic classes and real offline consumer regression. Preserve all frozen clients/evidence; no runtime grant.",
+        "sentUtc": "2026-10-08T05:14:11Z"
       },
       "evidence": {
         "sourcesHashChecked": 37,
@@ -2239,7 +2239,7 @@
         "commonRunnerPolicyMetadataGrant": {
           "key": "s1-common-runner-policy-metadata-20261008",
           "issuedUtc": "2026-10-08T04:54:29Z",
-          "status": "Dispatched; preparation/review preconditions before one process tree.",
+          "status": "Closed terminal INSUFFICIENT; consumed once, residual expired. No retry.",
           "ownerThreadId": "01a1169c-3df6-7571-997d-48ab57365875",
           "sourceThreadId": "01a11367-a781-7683-a20f-46e12614dcb4",
           "baseSha": "e42ba917e765169b1e5c1737f8310da41904b22e",
@@ -2302,10 +2302,88 @@
           "newPurchases": false,
           "globalConfigurationChanges": false,
           "policyBypass": false,
-          "remainingSessions": 1,
-          "consumedSessions": 0,
+          "remainingSessions": 0,
+          "consumedSessions": 1,
           "sentUtc": "2026-10-08T04:55:29Z",
-          "prompt": "Overseer nimmt den sauberen Dokumentationsabschluss e42ba917e765169b1e5c1737f8310da41904b22e qualifiziert an. Root hat zwölf Manifest-/Payloaddateien, 3890 historische Dateien, 15 Quellpins, 13 Belegpins, fünf Schema-Mitglieder, ursprüngliche Matrix, alten Handoff-Suffix und fünf unveränderte Liveledger geprüft. Keine neue Ausführung.\n\nDer zusätzliche unabhängige Root-Review bestätigt den Nutzen EINER prospektiven Konfigurations-Vorprüfung, verschärft aber die Aussagegrenze: Die gepinnte Hilfe beschreibt strict-config für config.toml; gleiche Prüfung eines inline --config-Werts ist unbelegt. ConfigReadResponse lässt zusätzliche Properties zu. Ein Prozessstart und zurückgemeldeter Default samt Origin beweisen deshalb keine Erkennung als wirksamer Schlüssel und kein Enforcement. Bezeichne ein positives Ergebnis ausschließlich als beobachtete argv-Annahme und gemeldete Konfigurationsvorbedingung; fehlender/null/ungültiger/mehrdeutiger Wert oder Origin ergibt insufficient. Bestehenden eingefrorenen Plan und Review erhalten; diese Einschränkung in neuen aktuellen Grant-/Handoffbelegen festhalten.\n\nNeuer einmaliger Grant: s1-common-runner-policy-metadata-20261008, dokumentiert 2026-10-08T04:54:29Z in Root docs/design/government/coordination-state.json unter Scientist.evidence.commonRunnerPolicyMetadataGrant. Der freie Slot ist Scientist mit genau diesem Schlüssel und Zeitpunkt zugewiesen. Dieser Auftrag erlaubt eng notwendige Vorbereitung UND danach genau einen Metadatenversuch, sofern alle Vorbedingungen bestanden sind. Keine Zwischenmeldung nur für eine weitere pauschale Freigabe nötig.\n\nVorbereitung: Leite einen kleinen neuen, separat gebundenen Client/ein geschlossenes Profil aus dem erhaltenen classified-client ab. Nur Präsenzklassifikation missing/null/present/invalid, begrenzte Sanitization, exakte geplante 17 Konfigurationspaare/RPCs/cwd, Warnungsabbruch und frische Grant-/Quell-/Request-/Schema-/Freeze-/Reservationbindung. Bestehende Clients/Grants/Belege bleiben unverändert; kein allgemeiner Runnerumbau. Fokussierte Offline-Regressionsfälle durch die tatsächlichen betroffenen Parser/Guards, ohne Codex-Prozess oder Modell, plus enger unabhängiger Vorabreview. Auf sauberem Quellstand neue unveränderliche Vorabbindungen erstellen. Die neue Metadatenreservation einmal vor Start protokollieren; historische fünf Liveledger nicht verändern.\n\nErlaubt ist ausschließlich das im Plan genannte neue öffentliche Metadaten-cwd C:/Users/Consiliari/Documents/Scientist-Probes/s1-common-runner-prospective-20261008/actor und eine getrennte kleine Evidenzablage. Sein Erstellen ist jetzt autorisiert; keine Studienaufgabe, privaten Daten, alten Actorverläufe oder fremden Zellergebnisse dort ablegen. Tatsächliche Existenz, unverfängliche öffentliche Inhalte und exakt identisches Prozess-/RPC-cwd vor Start binden. Bei unerwartetem Altinhalt stoppen, nichts löschen oder umnutzen. Keine Installation, globalen Konfigurations-/Trust-/Policyänderungen oder Kopie/Umleitung von CODEX_HOME/Auth. Pinned Binary 0.160.1 mit SHA 3b8f6e33caa75f232558a3cf76ff9b87bb5ef6dbcf4996372f24e55c78b1b916 vor Start bestätigen.\n\nGenau das geplante argv mit app-server --stdio --strict-config und 17 Paaren verwenden, gewünschtes gpt-6.1-sol/high, openai, bestehende ChatGPT-Route. Keine zusätzlichen Help-/Metadata-Aufrufe. Nur initialize/initialized, einmal config/read(includeLayers=true, exact cwd), einmal configRequirements/read. Keine Thread-/Turn-/Tool-/Datei-/Command-/Account-/Auth-/Modell-/Write-RPCs. Verwaltete und systemweite Grenzen bleiben erhalten; der Pfad ist prospektiv und erklärt nicht die früheren exec-Ablehnungen.\n\nEndliche Grenzen: ein neuer app-server-Prozessbaum einschließlich fehlgeschlagenem Startversuch; Parallelität eins; keine Retries. Aktive RPC-Arbeit höchstens 33 s, Prozessfrist 38 s, Cleanup höchstens 10 s, Controllerabschluss einschließlich Cleanup spätestens 50 s, äußere Receipt/Sanitization spätestens 60 s. Vorhandenes Windows-Job-Kill-on-close nutzen und nur eigene Prozesse beenden. Maximal 32 Frames Queue, 4000000 Rawbytes insgesamt, 16 Notifications. Nur exakt schema-valides remoteControl/status/changed=disabled ohne Antwort verwerfen. Jede Warnung (auch bislang tolerierte), provisorische Antwort, andere/ungültige Notification, Serveranfrage, Auth-Aktivität, RPC-Fehler, fehlende Voraussetzung oder Grenze stoppt terminal. Keine Reparatur mit Nachstart oder andere Route bei Laufproblemen.\n\nSanitisiertes Resultat nach geplantem engstem Allowlistvertrag: Präsenzklassen, genau angefragter Built-in-Default, typisierte Default-/Allowlist-/Legacy-/Windows-/Featurebeschränkungen, Origin/Layers ohne fremde Rohtexte oder Pfade; Customnamen nur konsistente opake Aliasse. Keine Rawframes oder stderr/config-Texte persistieren. Bei widersprechender Legacy-/Managed-Konfiguration, fehlender oder mehrdeutiger Herkunft/Wert insufficient bzw. inkompatibel. Keine Constraints entfernen. Kein Ergebnis erlaubt automatisch einen Actor. Aktives Profil, echte Werkzeuge, Lesen/Schreiben/Build/Test, Serving-/Providerdetails bleiben unbeobachtet. Null angeforderte Modell-RPCs nicht als null native interne Netzwerk- oder Inferenzaktivität ausgeben.\n\nVorher drei Policy-Prozessbäume, neu maximal einer, kumulativ höchstens vier; sechs CLI-Metadatencalls bleiben sechs. Native Historie 15 Starts/16 Wrapper/13 deterministische Delegates/2250 reservierte Sekunden unverändert. Reale Historie fünf Actors/53331 bekannte Tokens/Gesamtverbrauch unbekannt. Neu null reale Actors, native Produktstarts, Produktwrapper/-delegates, Studienzellen oder volle Produkttests. Keine P1-Übernahme, Produktreparatur, Veröffentlichung oder Käufe.\n\nNach dem einen terminalen Resultat oder einer echten Vorbereitungssperre: unabhängiger enger Nachreview, genaue Istgrenzen/Timing/Usage und Sanitizationlimits, unveränderte Historie, sauberer Abschluss-SHA, ausdrückliche Slotfreigabe und eine direkte Abschluss-/Bedarfsmeldung. Restquote danach verfallen; keine automatische Diagnosefortsetzung. Keine Empfangsbestätigung oder Meldeschleife. Worker, Architect und Oldschool bleiben unverändert."
+          "prompt": "Overseer nimmt den sauberen Dokumentationsabschluss e42ba917e765169b1e5c1737f8310da41904b22e qualifiziert an. Root hat zwölf Manifest-/Payloaddateien, 3890 historische Dateien, 15 Quellpins, 13 Belegpins, fünf Schema-Mitglieder, ursprüngliche Matrix, alten Handoff-Suffix und fünf unveränderte Liveledger geprüft. Keine neue Ausführung.\n\nDer zusätzliche unabhängige Root-Review bestätigt den Nutzen EINER prospektiven Konfigurations-Vorprüfung, verschärft aber die Aussagegrenze: Die gepinnte Hilfe beschreibt strict-config für config.toml; gleiche Prüfung eines inline --config-Werts ist unbelegt. ConfigReadResponse lässt zusätzliche Properties zu. Ein Prozessstart und zurückgemeldeter Default samt Origin beweisen deshalb keine Erkennung als wirksamer Schlüssel und kein Enforcement. Bezeichne ein positives Ergebnis ausschließlich als beobachtete argv-Annahme und gemeldete Konfigurationsvorbedingung; fehlender/null/ungültiger/mehrdeutiger Wert oder Origin ergibt insufficient. Bestehenden eingefrorenen Plan und Review erhalten; diese Einschränkung in neuen aktuellen Grant-/Handoffbelegen festhalten.\n\nNeuer einmaliger Grant: s1-common-runner-policy-metadata-20261008, dokumentiert 2026-10-08T04:54:29Z in Root docs/design/government/coordination-state.json unter Scientist.evidence.commonRunnerPolicyMetadataGrant. Der freie Slot ist Scientist mit genau diesem Schlüssel und Zeitpunkt zugewiesen. Dieser Auftrag erlaubt eng notwendige Vorbereitung UND danach genau einen Metadatenversuch, sofern alle Vorbedingungen bestanden sind. Keine Zwischenmeldung nur für eine weitere pauschale Freigabe nötig.\n\nVorbereitung: Leite einen kleinen neuen, separat gebundenen Client/ein geschlossenes Profil aus dem erhaltenen classified-client ab. Nur Präsenzklassifikation missing/null/present/invalid, begrenzte Sanitization, exakte geplante 17 Konfigurationspaare/RPCs/cwd, Warnungsabbruch und frische Grant-/Quell-/Request-/Schema-/Freeze-/Reservationbindung. Bestehende Clients/Grants/Belege bleiben unverändert; kein allgemeiner Runnerumbau. Fokussierte Offline-Regressionsfälle durch die tatsächlichen betroffenen Parser/Guards, ohne Codex-Prozess oder Modell, plus enger unabhängiger Vorabreview. Auf sauberem Quellstand neue unveränderliche Vorabbindungen erstellen. Die neue Metadatenreservation einmal vor Start protokollieren; historische fünf Liveledger nicht verändern.\n\nErlaubt ist ausschließlich das im Plan genannte neue öffentliche Metadaten-cwd C:/Users/Consiliari/Documents/Scientist-Probes/s1-common-runner-prospective-20261008/actor und eine getrennte kleine Evidenzablage. Sein Erstellen ist jetzt autorisiert; keine Studienaufgabe, privaten Daten, alten Actorverläufe oder fremden Zellergebnisse dort ablegen. Tatsächliche Existenz, unverfängliche öffentliche Inhalte und exakt identisches Prozess-/RPC-cwd vor Start binden. Bei unerwartetem Altinhalt stoppen, nichts löschen oder umnutzen. Keine Installation, globalen Konfigurations-/Trust-/Policyänderungen oder Kopie/Umleitung von CODEX_HOME/Auth. Pinned Binary 0.160.1 mit SHA 3b8f6e33caa75f232558a3cf76ff9b87bb5ef6dbcf4996372f24e55c78b1b916 vor Start bestätigen.\n\nGenau das geplante argv mit app-server --stdio --strict-config und 17 Paaren verwenden, gewünschtes gpt-6.1-sol/high, openai, bestehende ChatGPT-Route. Keine zusätzlichen Help-/Metadata-Aufrufe. Nur initialize/initialized, einmal config/read(includeLayers=true, exact cwd), einmal configRequirements/read. Keine Thread-/Turn-/Tool-/Datei-/Command-/Account-/Auth-/Modell-/Write-RPCs. Verwaltete und systemweite Grenzen bleiben erhalten; der Pfad ist prospektiv und erklärt nicht die früheren exec-Ablehnungen.\n\nEndliche Grenzen: ein neuer app-server-Prozessbaum einschließlich fehlgeschlagenem Startversuch; Parallelität eins; keine Retries. Aktive RPC-Arbeit höchstens 33 s, Prozessfrist 38 s, Cleanup höchstens 10 s, Controllerabschluss einschließlich Cleanup spätestens 50 s, äußere Receipt/Sanitization spätestens 60 s. Vorhandenes Windows-Job-Kill-on-close nutzen und nur eigene Prozesse beenden. Maximal 32 Frames Queue, 4000000 Rawbytes insgesamt, 16 Notifications. Nur exakt schema-valides remoteControl/status/changed=disabled ohne Antwort verwerfen. Jede Warnung (auch bislang tolerierte), provisorische Antwort, andere/ungültige Notification, Serveranfrage, Auth-Aktivität, RPC-Fehler, fehlende Voraussetzung oder Grenze stoppt terminal. Keine Reparatur mit Nachstart oder andere Route bei Laufproblemen.\n\nSanitisiertes Resultat nach geplantem engstem Allowlistvertrag: Präsenzklassen, genau angefragter Built-in-Default, typisierte Default-/Allowlist-/Legacy-/Windows-/Featurebeschränkungen, Origin/Layers ohne fremde Rohtexte oder Pfade; Customnamen nur konsistente opake Aliasse. Keine Rawframes oder stderr/config-Texte persistieren. Bei widersprechender Legacy-/Managed-Konfiguration, fehlender oder mehrdeutiger Herkunft/Wert insufficient bzw. inkompatibel. Keine Constraints entfernen. Kein Ergebnis erlaubt automatisch einen Actor. Aktives Profil, echte Werkzeuge, Lesen/Schreiben/Build/Test, Serving-/Providerdetails bleiben unbeobachtet. Null angeforderte Modell-RPCs nicht als null native interne Netzwerk- oder Inferenzaktivität ausgeben.\n\nVorher drei Policy-Prozessbäume, neu maximal einer, kumulativ höchstens vier; sechs CLI-Metadatencalls bleiben sechs. Native Historie 15 Starts/16 Wrapper/13 deterministische Delegates/2250 reservierte Sekunden unverändert. Reale Historie fünf Actors/53331 bekannte Tokens/Gesamtverbrauch unbekannt. Neu null reale Actors, native Produktstarts, Produktwrapper/-delegates, Studienzellen oder volle Produkttests. Keine P1-Übernahme, Produktreparatur, Veröffentlichung oder Käufe.\n\nNach dem einen terminalen Resultat oder einer echten Vorbereitungssperre: unabhängiger enger Nachreview, genaue Istgrenzen/Timing/Usage und Sanitizationlimits, unveränderte Historie, sauberer Abschluss-SHA, ausdrückliche Slotfreigabe und eine direkte Abschluss-/Bedarfsmeldung. Restquote danach verfallen; keine automatische Diagnosefortsetzung. Keine Empfangsbestätigung oder Meldeschleife. Worker, Architect und Oldschool bleiben unverändert.",
+          "closedUtc": "2026-10-08T05:13:30Z"
+        },
+        "commonRunnerPolicyMetadataAcceptance": {
+          "acceptedUtc": "2026-10-08T05:13:30Z",
+          "candidateSha": "f4bea6dd9b92d72d828751d9a05411c86edd66fa",
+          "sourceSha": "54cdcffaeb9024197589182c03fefe0103db656b",
+          "freezeCommit": "c73c02e883c97c3b0e3e62eb9604f742223235be",
+          "clean": true,
+          "disposition": "Accepted terminal INSUFFICIENT, not metadata readiness.",
+          "manifestSha256": "f30273f9090d6a2c3ef1af382b9f7f608780faf62b7b0c7d93739f34663817d0",
+          "requestSha256": "462725e25338e1dc9a7b9a5fe5e2c9180de6e12b8e9752d7823f042a6365e16c",
+          "freezeSha256": "9676e05a01fffc0497af1e0b222a2703284dec02a65aa11418c93332ea82d7b6",
+          "independentPostreviewSha256": "0d5ec76ee35d1f47292c969922068e3b04c686a38fd9848a0b7830016e53ffda",
+          "rootVerification": {
+            "payloadsPlusManifest": 30,
+            "protectedHistoricalFiles": 3901,
+            "sourcePins": 15,
+            "freezeInputs": 24,
+            "liveLedgerHashes": 5,
+            "sanitizedOriginalCopyPairs": 7,
+            "handoffSuffixExact": true,
+            "mismatches": 0,
+            "testsRerun": false
+          },
+          "rootIndependentReviewer": "/root/r4_terminal_acceptance",
+          "stopReason": "requested-features-unobserved",
+          "methodsSent": [
+            "initialize",
+            "initialized",
+            "config/read"
+          ],
+          "requirementsRead": "NOT SENT",
+          "observed": "Requested :read-only reported with sessionFlags origin and one matching versioned layer; model/provider/reasoning and approval reported; aggregate effective features invalid under frozen sanitizer; selected layer values cannot replace effective result.",
+          "confirmedContractFinding": "Shared feature_map requires bool for every config.features value before filtering. ConfigReadResponse leaves features untyped; requirement featureRequirements is separately typed bool map. Distinct parser contracts required.",
+          "unknownCause": "Raw response discarded. Cannot identify triggering member, type, container or count; no inference that requested flags disabled or managed policy incompatible.",
+          "claimBoundary": "No key recognition/enforcement, active profile, tool access, serving-model, requirements clearance or historical policy-cause proof. Six study cells NOT RUN.",
+          "recordedOfflineTests": "13 focused cases passed before launch; missed mixed untyped config-map contract. No postrun tests/source repair.",
+          "nativeExit": 0,
+          "workerExit": 1,
+          "outerExit": 1,
+          "actualSeconds": {
+            "nativeWithCleanup": 0.1818253000965342,
+            "cleanup": 0.01108229998499155,
+            "controllerWithJobClose": 2.6255461000837386,
+            "outerThroughReadback": 5.090213899966329,
+            "activeRpc": "not separately measured; upper-bounded by native session"
+          },
+          "limitsMet": true,
+          "discardedStdoutBytes": 49287,
+          "stderrBytes": 0,
+          "notifications": {
+            "disabled": 1,
+            "warnings": 0
+          },
+          "newConsumption": {
+            "metadataAppServerTrees": 1,
+            "cliMetadataCalls": 0,
+            "actors": 0,
+            "threads": 0,
+            "turns": 0,
+            "requestedModelCalls": 0,
+            "nativeProducts": 0,
+            "studyCells": 0,
+            "retries": 0
+          },
+          "cumulative": {
+            "policyTrees": 4,
+            "cliMetadataCalls": 6,
+            "realActors": 5,
+            "knownActorTokens": 53331,
+            "totalActorTokens": null,
+            "nativeProducts": 15,
+            "productWrappers": 16,
+            "deterministicDelegates": 13,
+            "reservedNativeSeconds": 2250
+          },
+          "nativeInternalNetworkOrInference": null,
+          "explicitSlotReleaseUtc": "2026-10-08T05:07:18.279104Z"
         }
       },
       "classicHandoffReceived": true,
@@ -2455,9 +2533,16 @@
         {
           "key": "s1-common-runner-policy-metadata-20261008",
           "authorizedUtc": "2026-10-08T04:54:29Z",
-          "status": "Dispatched; narrow preparation then at most one metadata process conditional on reviewed prerequisites.",
+          "status": "Completed and accepted terminal INSUFFICIENT; no continuation under old grant.",
           "scope": "One prospectively bound metadata process after narrow client preparation, tests and independent review; no real Actor or product/study execution.",
           "sentUtc": "2026-10-08T04:55:29Z"
+        },
+        {
+          "key": "s1-selected-feature-contract-offline-20261008",
+          "authorizedUtc": "2026-10-08T05:13:30Z",
+          "status": "Dispatched; offline correction only, no runtime grant.",
+          "scope": "Separate untyped selected config observation from typed managed featureRequirements; bounded safe diagnostic classes and real offline consumer regression. Preserve all frozen clients/evidence; no runtime grant.",
+          "sentUtc": "2026-10-08T05:14:11Z"
         }
       ],
       "offlineAdapterContractAssignment": {
@@ -2601,6 +2686,27 @@
         "liveLedgerWrites": 0,
         "exitCondition": "Clean public readiness reconciliation and independently reviewed exact next operation with meaningful evidence gain; no execution or historical rescoring.",
         "sentUtc": "2026-10-08T04:37:27Z"
+      },
+      "selectedFeatureContractOfflineAssignment": {
+        "key": "s1-selected-feature-contract-offline-20261008",
+        "authorizedUtc": "2026-10-08T05:13:30Z",
+        "status": "Dispatched; offline correction only, no runtime grant.",
+        "baseSha": "f4bea6dd9b92d72d828751d9a05411c86edd66fa",
+        "scope": "Separate untyped selected config observation from typed managed featureRequirements; bounded safe diagnostic classes and real offline consumer regression. Preserve all frozen clients/evidence; no runtime grant.",
+        "maxNewMetadataProcesses": 0,
+        "maxNewCLIInvocations": 0,
+        "maxNewActors": 0,
+        "maxNewModelsOrProviders": 0,
+        "maxNewNativeProducts": 0,
+        "maxNewStudyCells": 0,
+        "maxNewActualCases": 0,
+        "maxNewAdmissions": 0,
+        "maxNewFreezes": 0,
+        "liveLedgerWrites": 0,
+        "fullProductSuites": 0,
+        "exitCondition": "One minimal reusable parser/consumer correction with focused offline tests, independent source review and clean exact SHA; existing actual result stays insufficient. No follow-on invocation.",
+        "sentUtc": "2026-10-08T05:14:11Z",
+        "prompt": "Overseer nimmt f4bea6dd9b92d72d828751d9a05411c86edd66fa als sauberen terminalen INSUFFICIENT-Nachweis an. Root bestätigte 30 Manifest-/Payloaddateien gegen Hash/Git, 3901 alte Dateien, 15 Quellpins, 24 Freezeinputs, fünf unveränderte Liveledger, sieben sanitisierte Original/Kopie-Paare, Handoff-Suffix und tatsächliche Receipts/Zeiten. Unabhängiger Root-Code-/Resultreview bestätigt die Grenzen. Vierte Policy-Sitzung verbraucht, alter Grant geschlossen, Restquote verfallen. Deine Slotfreigabe 05:07:18.279104 UTC ist angenommen, Slot frei. Kein Retry oder Umwerten des Ergebnisses.\n\nNeuer begrenzter Auftrag s1-selected-feature-contract-offline-20261008, dokumentiert in Root coordination-state.json: NUR eine minimale Offline-Korrektur des ausgewählten Feature-Parservertrags. Kein neuer Ausführungsgrant. Basis f4bea6d, bestehende eingefrorene Clients/Pläne/Reviews/Receipts/Historie bleiben bytegleich.\n\nRoot-Befund: client.py feature_map verlangt für config.features alle Werte bool und filtert erst danach. Das gepinnte ConfigReadResponse typisiert features nicht (zusätzliche Properties erlaubt); gefragt sind acht konkrete Schalter. featureRequirements in ConfigRequirementsReadResponse ist dagegen eine schema-typisierte bool-Map. Diese beiden Verträge dürfen nicht denselben Pauschalvalidator verwenden. Der aktuelle tatsächliche Auslöser bleibt unbekannt: falscher Container, Größe, angefragter oder anderer Wert lassen sich aus invalid nicht rekonstruieren. Gemeldete Session-Layer-Werte ersetzen die effektive Beobachtung nicht.\n\nImplementiere genau die kleine weiterverwendbare Parser-/Consumerkorrektur für einen späteren Kandidaten, ohne alten archivierten Client zu ändern und ohne neue Laufprofile/Driverplattform. Gewöhnliche Wahl der minimalen Quelldateien liegt bei dir. Echte sanitize_config_read/assess-Verbraucher müssen den korrigierten Vertrag in den gezielten Offlineprüfungen tatsächlich verwenden; keine nur von Hand positiv gebauten Zwischenergebnisse oder gemockten Parser.\n\nConfig.features: Container dict und bestehende Größenobergrenze behalten. Ausschließlich die acht angefragten Namen (apps, goals, hooks, memories, multi_agent, plugins, shell_tool, unified_exec) jeweils missing/null/present mit echtem bool/invalid klassifizieren. Nur exakt alle gewünschten Werte können diese einzelne Vorbedingung erfüllen. Fehlende/null/falsch typisierte/entgegengesetzte Werte bleiben unzureichend oder Konflikt. Nicht angefragte Werte weder typprüfen noch speichern; der Rest gilt ausdrücklich als nicht ausgewertet, niemals als insgesamt gültige Featuremap. Container-/Größen-/Feld-/Typ-/Wertprobleme durch feste sichere Codes unterscheiden, ohne beliebige Fehlertexte, Feldnamen oder Werte zu leaken.\n\nRequirements.featureRequirements: Die schemaweite Bool-Prüfung aller Values beibehalten. Nicht interpretierte oder unbekannte Requirementnamen dürfen nicht still weggefiltert und dann als konfliktfrei behandelt werden: sichere unaufgelöste Constraint-Klasse/insufficient ohne Name/Wert zu speichern. Bekannte Konflikte bleiben blockierend. Limits, Strict-JSON/Duplikatschutz, Datenschutz, Herkunftsbindung, Warnungs-/Abbruchregeln und die Trennung von Konfigurationsmeldung und tatsächlichen Rechten nicht aufweichen.\n\nGezielte synthetische Offlinefälle:\n- acht richtige ausgewählte bools plus nicht ausgewählte string/null/object-Werte: Auswahl bleibt prüfbar, Extras bleiben unveröffentlicht und unbewertet;\n- jeder angefragte Schalter missing/null/string/number/opposite bool: nie positive Vorbedingung;\n- falscher/fehlender Container und Überschreitung der bestehenden Mapgrenze: klare unzureichende Diagnose;\n- typisierte Requirements mit beliebigem non-bool: ungültig; unbekannter bool-Requirementname: unaufgelöst;\n- die tatsächlich gespeicherte terminale Receipt bleibt insufficient, ohne verlorene Rawdaten synthetisch als historische Wahrheit auszugeben. Kein zweiter Read, Retry oder Realprozess bei Tests. Keine Behauptung, diese synthetischen Extras seien der echte Auslöser.\n\nKeine neue tatsächliche Fallvorbereitung/Admission/Freeze, Codex-CLI-/app-server-/Metadatensitzung, Actor-/Modell-/Provider-/Produkt-/Studienausführung oder Ledgeränderung. Keine volle Produktsuite, P1-Übernahme, Produktreparatur oder Veröffentlichung. Testlauf nur für die betroffenen Offlineverträge; keine komplette alte Suite wiederholen. Historie bleibt vier Policybäume, sechs CLI-Metadatencalls, fünf reale Actors/53331 bekannte Tokens/Gesamtnutzung unbekannt sowie native 15/16/13/2250.\n\nEnger unabhängiger Quell-/Testreview, sauberer kleiner Abschluss-SHA, genaue Dateien/Prüfbelege und eine direkte Abschluss-/Bedarfsmeldung beenden den Auftrag. Benenne, was damit offline korrigiert und was weiterhin real unbeobachtet ist. Ein späterer tatsächlicher Aufruf benötigt einen neuen endlichen Grant nach Abnahme. Keine automatische Fortsetzung; andere Eigentümer bleiben unverändert."
       }
     },
     {
@@ -2991,7 +3097,7 @@
       "lastAssistantMessageId": "msg_0dc7fbe822793640016ac6f69ccac88191ac99728328af381f"
     }
   ],
-  "nextAction": "Await one finite prospective policy metadata result or preparation block via direct callback; independently verify then decide. No automatic Actor or diagnosis continuation.",
+  "nextAction": "Await Scientist offline selected-feature parser/consumer correction and independent review via direct callback. No new metadata/Actor/study grant.",
   "boundaries": {
     "governmentPublication": false,
     "automaticClassicReplacement": false,
@@ -3001,11 +3107,12 @@
     "satPrinciples": "Deferred by direct user request on 2026-10-07; conceptual constraint/consistency/conflict-explanation principles first, no solver integration or current assignment change. See docs/design/government/deferred-research.md."
   },
   "lastReview": {
-    "reviewedUtc": "2026-10-08T04:54:29Z",
-    "evidenceLevel": "Root exact payload/Git/history/schema/ledger verification plus independent narrow source/readiness review. No tests or experimental execution by root.",
+    "reviewedUtc": "2026-10-08T05:13:30Z",
+    "evidenceLevel": "Exact hashes/Git/freeze/history/sanitized receipts/ledger preservation plus independent code and result review. No repeated tests.",
     "coordinationActions": [
-      "Accepted public S1 reconciliation with strict-config claim qualification.",
-      "Authorized one prospective metadata operation after reviewed preparation; zero real Actors/study cells."
+      "Accepted terminal INSUFFICIENT and closed the fourth policy tree.",
+      "Released slot.",
+      "Authorized one offline parser contract correction; no new experimental grant."
     ],
     "userDecisionRequired": false
   },
@@ -3201,10 +3308,11 @@
     "owner": "Worker"
   },
   "fullSuiteSlot": {
-    "owner": "Scientist",
-    "key": "s1-common-runner-policy-metadata-20261008",
-    "status": "Assigned to one bounded prospective metadata operation, not a full product suite.",
-    "assignedUtc": "2026-10-08T04:54:29Z",
+    "owner": null,
+    "key": null,
+    "status": "Free after explicit terminal metadata release; next correction is offline only.",
+    "releasedUtc": "2026-10-08T05:07:18.279104Z",
+    "releaseVerifiedUtc": "2026-10-08T05:13:30Z",
     "queue": []
   },
   "contextSmokePreparation": {
