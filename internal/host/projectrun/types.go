@@ -185,25 +185,55 @@ type CheckPlan struct {
 }
 
 type RunReport struct {
-	APIVersion    string          `json:"apiVersion"`
-	ID            string          `json:"id"`
-	PlanID        string          `json:"planId"`
-	Status        string          `json:"status"`
-	Mode          string          `json:"mode"`
-	StartedAt     time.Time       `json:"startedAt"`
-	UpdatedAt     time.Time       `json:"updatedAt"`
-	BaseRevision  string          `json:"baseRevision"`
-	BaseSnapshot  string          `json:"baseSnapshot"`
-	ModelDigest   string          `json:"modelDigest"`
-	RuntimeDigest string          `json:"runtimeDigest"`
-	Candidate     CandidateRef    `json:"candidate"`
-	Tasks         []ManagerTask   `json:"tasks"`
-	Invocations   []InvocationLog `json:"invocations"`
-	Checks        []CheckResult   `json:"checks"`
-	Findings      []string        `json:"findings,omitempty"`
-	Escalations   []Escalation    `json:"escalations,omitempty"`
-	Revision      uint64          `json:"revision"`
-	Digest        string          `json:"digest"`
+	APIVersion              string          `json:"apiVersion"`
+	ID                      string          `json:"id"`
+	PlanID                  string          `json:"planId"`
+	Status                  string          `json:"status"`
+	Mode                    string          `json:"mode"`
+	StartedAt               time.Time       `json:"startedAt"`
+	UpdatedAt               time.Time       `json:"updatedAt"`
+	BaseRevision            string          `json:"baseRevision"`
+	BaseSnapshot            string          `json:"baseSnapshot"`
+	ModelDigest             string          `json:"modelDigest"`
+	RuntimeDigest           string          `json:"runtimeDigest"`
+	Candidate               CandidateRef    `json:"candidate"`
+	Tasks                   []ManagerTask   `json:"tasks"`
+	Invocations             []InvocationLog `json:"invocations"`
+	Checks                  []CheckResult   `json:"checks"`
+	Findings                []string        `json:"findings,omitempty"`
+	Escalations             []Escalation    `json:"escalations,omitempty"`
+	RepairRounds            []RepairRound   `json:"repairRounds,omitempty"`
+	ActiveRepairCandidateID string          `json:"activeRepairCandidateId,omitempty"`
+	Revision                uint64          `json:"revision"`
+	Digest                  string          `json:"digest"`
+}
+
+// RepairRound records an explicit manager loop started from a candidate whose
+// required declared checks failed. Prior task and verification evidence remain
+// durable here while the active task ledger is reset for this round.
+type RepairRound struct {
+	Number             int                   `json:"number"`
+	Status             string                `json:"status"`
+	StartedAt          time.Time             `json:"startedAt"`
+	PriorCandidateID   string                `json:"priorCandidateId"`
+	SeedCandidateID    string                `json:"seedCandidateId"`
+	CandidateID        string                `json:"candidateId,omitempty"`
+	VerificationDigest string                `json:"verificationDigest"`
+	CheckFeedback      []RepairCheckFeedback `json:"checkFeedback"`
+	PriorTasks         []ManagerTask         `json:"priorTasks"`
+}
+
+// RepairCheckFeedback is a bounded diagnostic extracted from a failed,
+// required check. Output is treated as untrusted data by manager prompts.
+type RepairCheckFeedback struct {
+	ID       string   `json:"id"`
+	Owner    string   `json:"owner"`
+	Command  []string `json:"command"`
+	ExitCode int      `json:"exitCode"`
+	Duration string   `json:"duration"`
+	Error    string   `json:"error,omitempty"`
+	Stdout   string   `json:"stdout,omitempty"`
+	Stderr   string   `json:"stderr,omitempty"`
 }
 
 type CandidateRef struct {
