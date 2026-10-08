@@ -1,0 +1,16 @@
+{
+  "key": "s1-common-runner-read-tool-20261008-r1",
+  "outerReturnCode": 1,
+  "stopReason": null,
+  "outerThroughReceiptReadbackSeconds": 7.4295653000008315,
+  "withinOuterBound": true,
+  "controllerReceiptSha256": "b14fc105f885bfd6f0224838a9eb87169636799938dd93e886df8386dba63aa1",
+  "sanitizedResultSha256": "871a3102ab9ebf9fd63c940e6a86bcf6054f3210e765f60613dc86c9237fef11",
+  "terminalResultPresent": true,
+  "status": "stopped",
+  "nativeStartAttemptRecorded": true,
+  "actorReservations": 1,
+  "nativeProviderRequests": null,
+  "nativeProviderRetries": null,
+  "remainingGrantClosed": true
+}

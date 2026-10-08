@@ -1,0 +1,48 @@
+{
+  "pairs": [
+    {
+      "original": "C:/Users/Consiliari/Documents/Scientist-Probes/s1-common-runner-read-tool-20261008-r1/evidence/controller-once.json",
+      "copy": "evidence/s1-common-runner-read-tool-20261008-r1/run-1/controller-once.json",
+      "sha256": "70ea6ec1abf4f1666af6abb786596ca38375e8277303f15b5e151fe526e4d95e",
+      "bytes": 490
+    },
+    {
+      "original": "C:/Users/Consiliari/Documents/Scientist-Probes/s1-common-runner-read-tool-20261008-r1/evidence/controller-receipt.json",
+      "copy": "evidence/s1-common-runner-read-tool-20261008-r1/run-1/controller-receipt.json",
+      "sha256": "b14fc105f885bfd6f0224838a9eb87169636799938dd93e886df8386dba63aa1",
+      "bytes": 951
+    },
+    {
+      "original": "C:/Users/Consiliari/Documents/Scientist-Probes/s1-common-runner-read-tool-20261008-r1/evidence/job-assigned.json",
+      "copy": "evidence/s1-common-runner-read-tool-20261008-r1/run-1/job-assigned.json",
+      "sha256": "0f11b49d8a7f2d6263600bac2cbe205bd16cdd02548a9936064dea5b854223fe",
+      "bytes": 554
+    },
+    {
+      "original": "C:/Users/Consiliari/Documents/Scientist-Probes/s1-common-runner-read-tool-20261008-r1/evidence/outer-receipt.json",
+      "copy": "evidence/s1-common-runner-read-tool-20261008-r1/run-1/outer-receipt.json",
+      "sha256": "24d3f03b4e09fbd9efe1a012ab4f4c7a9e6c438472d530d78c1a3e06d60c0e76",
+      "bytes": 615
+    },
+    {
+      "original": "C:/Users/Consiliari/Documents/Scientist-Probes/s1-common-runner-read-tool-20261008-r1/evidence/reservation.json",
+      "copy": "evidence/s1-common-runner-read-tool-20261008-r1/run-1/reservation.json",
+      "sha256": "10f712343034bdd8a81f56ab3693dae1ef187e8d4122c0fb69ecf87468b22835",
+      "bytes": 565
+    },
+    {
+      "original": "C:/Users/Consiliari/Documents/Scientist-Probes/s1-common-runner-read-tool-20261008-r1/evidence/sanitized-result.json",
+      "copy": "evidence/s1-common-runner-read-tool-20261008-r1/run-1/sanitized-result.json",
+      "sha256": "871a3102ab9ebf9fd63c940e6a86bcf6054f3210e765f60613dc86c9237fef11",
+      "bytes": 19230
+    },
+    {
+      "original": "C:/Users/Consiliari/Documents/Scientist-Probes/s1-common-runner-read-tool-20261008-r1/evidence/started-once.json",
+      "copy": "evidence/s1-common-runner-read-tool-20261008-r1/run-1/started-once.json",
+      "sha256": "1cdbabbbfe5ae46a9271392aca545b4d5f9e1f3b9360d665eaae528be63fedb1",
+      "bytes": 490
+    }
+  ],
+  "rawFramesArchived": false,
+  "rawStderrArchived": false
+}

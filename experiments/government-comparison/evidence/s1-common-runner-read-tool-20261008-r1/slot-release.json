@@ -1,0 +1,15 @@
+{
+  "key": "s1-common-runner-read-tool-20261008-r1",
+  "owner": "Scientist",
+  "releasedAtUtc": "2026-10-08T06:32:45.438113+00:00",
+  "status": "Explicitly released after first terminal result; residual grant expired",
+  "reason": "server-stderr-activity",
+  "newActorReservationsConsumed": 1,
+  "newAppServerTreesConsumed": 1,
+  "threadStartRequestsWritten": 1,
+  "turnStartRequestsWritten": 0,
+  "remainingNewReservations": 0,
+  "remainingAppServerTrees": 0,
+  "noAutomaticFollowup": true,
+  "overseerOwnsCanonicalSlotUpdate": true
+}

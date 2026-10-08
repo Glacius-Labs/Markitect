@@ -1,0 +1,11 @@
+{
+  "key": "s1-common-runner-read-tool-20261008-r1",
+  "requestSha256": "2e386a3debc01f1ac26989abaf474823fe85c2b308fe85b495feb7c42c7cc020",
+  "freezeSha256": "e1a9df2b58156c398f4a354c518554aa8c8cafa6d5828ae32c02bd54ee54f79a",
+  "reservationSha256": "10f712343034bdd8a81f56ab3693dae1ef187e8d4122c0fb69ecf87468b22835",
+  "sourceCommit": "1ed5d31dfc0a74dd13d09e74472fef31975d0839",
+  "freezeCommit": "38d6eeb4d42deb2778f2843a02f1c2a5d7666788",
+  "controllerPid": 20120,
+  "workerPid": 23688,
+  "processTreeControl": "windows-job-kill-on-close"
+}

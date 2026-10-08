@@ -1,0 +1,33 @@
+{
+  "status": "read-only-preservation-and-receipt-validation-passed",
+  "baseSha": "f24b7e097564d771d3ad438ab6b5f9f5321b6301",
+  "protectedHistoricalFiles": 3993,
+  "historicalWorkingBytesUnchanged": true,
+  "historicalSourcePinsUnchanged": 15,
+  "historicalFreezeInputsUnchanged": 24,
+  "historicalLiveLedgersUnchanged": 5,
+  "historicalSchemaMembersUnchanged": 5,
+  "r3SourcePinsUnchanged": 21,
+  "r3FreezeInputsUnchanged": 30,
+  "externalOriginalCopyPairsVerified": {
+    "s1-common-runner-policy-metadata-20261008": 7,
+    "s1-selected-feature-metadata-20261008-r3": 7,
+    "s1-common-runner-read-tool-20261008-r1": 7
+  },
+  "newSourcePinsUnchanged": 27,
+  "newFreezeInputsUnchanged": 37,
+  "newSchemaMembersVerified": 26,
+  "sourceCommit": "1ed5d31dfc0a74dd13d09e74472fef31975d0839",
+  "freezeCommit": "38d6eeb4d42deb2778f2843a02f1c2a5d7666788",
+  "requestReceiptHashBindingsVerified": true,
+  "publicCwdInventoryVerified": {
+    "probe-input.txt": "9c9b152a51daf10dbc38765feec7b72c9d42587d6300c6cf7fcb8fd1e9ab29c5",
+    "README.md": "b986640bbeea4d174ff450cd27bb50d68697e78d8ad9fd0757fe3427b2904a59"
+  },
+  "r2ExternalEvidenceStillEmpty": true,
+  "postrunTests": 0,
+  "postrunSourceChanges": 0,
+  "postrunArtifactScriptCorrection": "Initial read-only archival summary script assumed sourceFiles map rather than list; failed after copies and new/old byte checks. Corrected evidence-only extraction; no runner/process/Actor relaunch.",
+  "allSixStudyCells": "NOT RUN",
+  "retries": 0
+}

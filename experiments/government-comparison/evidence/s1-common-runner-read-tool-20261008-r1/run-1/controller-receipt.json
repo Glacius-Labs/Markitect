@@ -1,0 +1,21 @@
+{
+  "key": "s1-common-runner-read-tool-20261008-r1",
+  "requestSha256": "2e386a3debc01f1ac26989abaf474823fe85c2b308fe85b495feb7c42c7cc020",
+  "freezeSha256": "e1a9df2b58156c398f4a354c518554aa8c8cafa6d5828ae32c02bd54ee54f79a",
+  "reservationSha256": "10f712343034bdd8a81f56ab3693dae1ef187e8d4122c0fb69ecf87468b22835",
+  "sourceCommit": "1ed5d31dfc0a74dd13d09e74472fef31975d0839",
+  "freezeCommit": "38d6eeb4d42deb2778f2843a02f1c2a5d7666788",
+  "workerReturnCode": 1,
+  "stopReason": null,
+  "controllerSeconds": 4.947002099943347,
+  "jobCloseSeconds": 2.0600040443241596e-05,
+  "processTreeControl": "windows-job-kill-on-close",
+  "deadlineSeconds": 180,
+  "controllerLimitSeconds": 195,
+  "outerLimitSeconds": 210,
+  "rawLogsPersisted": false,
+  "automaticRetries": 0,
+  "terminalResultPresent": true,
+  "terminalResultSha256": "871a3102ab9ebf9fd63c940e6a86bcf6054f3210e765f60613dc86c9237fef11",
+  "withinControllerBound": true
+}
