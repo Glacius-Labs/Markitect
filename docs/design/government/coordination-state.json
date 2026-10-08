@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-08T00:31:39Z",
+  "updatedUtc": "2026-10-08T00:41:08Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -22,21 +22,21 @@
       "name": "Worker",
       "threadId": "01a1169b-9357-7df3-a8f6-f913557c782a",
       "hostId": "local",
-      "afterCursor": "b2b8e43f-fcaa-41bf-828a-99c69527bdea:65",
-      "lastObservedStatus": "active",
-      "activeTurn": "01a118e6-3635-7aa2-a742-3ea22dc01267",
-      "lastAssistantMessageId": "msg_0a7785839df196a4016ac6e3ddbdf881918ead3d3bae8a45ef",
+      "afterCursor": "b2b8e43f-fcaa-41bf-828a-99c69527bdea:66",
+      "lastObservedStatus": "idle",
+      "activeTurn": null,
+      "lastAssistantMessageId": "msg_0a7785839df196a4016ac6e3ffaa2081918c42723c112f1cb6",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "At most two evidenced usability/product gaps in intent-to-model-to-project/change workflow; independent successor worktree; reviewed version-bound public entrypoint.",
-      "latestProgress": "Die Prüfung bestätigt alle 122 alten Dateigrößen und Hashes unverändert, ebenso Handoff und Index. Neu liegen Abschriften von 14 verfügbaren Reviewer-Nachrichten vor. Sie sind als nachträgliche Archivierung gekennzeichnet; Original-Zeitstempel und exakte Prüf-SHAs je Nachricht bleiben unbekannt.",
+      "latestProgress": "Unverändert sauber: 839dc4e3f6078aa051e08c50c2b958150ca45f49. Alle 122 alten Dateien, Handoff und Index sind hashgleich erhalten. Bilanz: 4 statt 2 Versuche — Abweichung, davon 3 fehlgeschlagen. Tatsächlich: 5 native Starts, 10 Rollenstarts, 16 gebundene Rollenreservierungen, 65,129 Sekunden, Peak 1. Globale mechanische Durchsetzung ist nicht nachgewiesen. Keine neuen Ausführungen. Neue Datei SHA256 Errata 472a816e3c2dc6435294ef6a647eabc68755015173acf557b09d3f8fe9f5fd44 Alte Evidenz geprüft 3f2d2d47b742ee09919db177195f1a0876a7bdbdd87ecaaf132f2fc87e5729f3 Usability-Nachrichten 3e336a5f0b256300afbedc61c56d3fd733dd2d95b2d39687808bbd860193d9b3 Quellreview-Nachrichten 58ed828b5941d0b7fe5fa3ee68b4a3cdec52987faa9a72ee549cc0e9f73f0020 Abschlussindex 8bf251744729d126f79bde4e74062c64f2c98cd6b6ec179e416cbe2a02aa9c2f Reviewer-Abschriften sind keine Raw-Originale. Technische Qualifikation und CRLF/Git-Normalisierungsgrenze sind dokumentiert; Modell-, Menschen-, Provider-, Linux- und Releaseaussagen bleiben offen. Hold.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-worker/Markitect",
       "transferredDesignCommit": "691ce1dee3484371c4aea725db4ed5cc3f2e3719",
       "candidateSha": "839dc4e3f6078aa051e08c50c2b958150ca45f49",
-      "acceptance": "GOV-P1 technical mechanics qualified accepted; four attempts vs conservative two-attempt cap is a recorded deviation, not retroactively authorized. Additive evidence closure pending.",
+      "acceptance": "GOV-P1 technical mechanics and additive evidence closure accepted with explicit four-vs-two attempt deviation and archival/semantic limits; no retrospective execution authority or study-pin replacement.",
       "lastAssignment": {
         "key": "government-p1-additive-evidence-closure",
         "authorizedUtc": "2026-10-08T00:25:02Z",
-        "status": "Sent once; active evidence-only closure acknowledged",
+        "status": "Completed and accepted; source and historical artifacts unchanged. Hold for concrete future findings.",
         "scope": "Additive evidence-only errata and available original review messages; preserve old122files/index/ledger/source. No new tests or runtime.",
         "sentUtc": "2026-10-08T00:25:02Z"
       },
@@ -322,6 +322,22 @@
           "independentReviewArchiveGap": "Original P1 review findings summarized in handoff; original reports not in122fileindex. Current root post-review exists and is distinct; additive archiving requested if originals available.",
           "limitations": "Deterministic local Windows mechanics only; manual authored/reconciled model and digest attestation; no human acceptance, semantic/real-model quality, productivity, Linux/CI or release claim.",
           "sourceChangesRequired": false
+        },
+        "govP1EvidenceClosureAcceptance": {
+          "acceptedUtc": "2026-10-08T00:41:08Z",
+          "sourceSha": "839dc4e3f6078aa051e08c50c2b958150ca45f49",
+          "cleanObserved": true,
+          "oldFilesSizeAndHashChecked": 122,
+          "newIndexedFilesSizeAndHashChecked": 4,
+          "hashMismatches": 0,
+          "oldIndexSha256": "4dd862595a4f04e1b68868f89b9c3b255a73792a448fdfece9d6e30b48e9a96e",
+          "oldHandoffSha256": "f99884cf066cf6627feefb9bc4020eb1c33a4d06e531295f5af1e5c58afe4be8",
+          "closureIndexSha256": "8bf251744729d126f79bde4e74062c64f2c98cd6b6ec179e416cbe2a02aa9c2f",
+          "errataSha256": "472a816e3c2dc6435294ef6a647eabc68755015173acf557b09d3f8fe9f5fd44",
+          "reviewArchive": "14retrospective message transcriptions; raw originals,original timestamps/message IDs and exact review SHAs unavailable; not final-SHA original preflight proof.",
+          "accounting": "4attempts,3failed,1passed;5native,10actualroles,16committedreservations,65.129s,peak1. Conservative2attemptcapdeviation preserved; no globally mechanical enforcement proven.",
+          "executionChange": "No new execution/tests/source change; no evidence overwritten.",
+          "scope": "Evidence-only closure; technical qualification and former independent root review remain, no model/human/provider/Linux/release inference."
         }
       },
       "lastResearchContext": {
@@ -389,7 +405,7 @@
       "govP1EvidenceClosureAssignment": {
         "key": "government-p1-additive-evidence-closure",
         "authorizedUtc": "2026-10-08T00:25:02Z",
-        "status": "Sent once; active evidence-only closure acknowledged; no runtime/source change",
+        "status": "Completed and accepted; source and historical artifacts unchanged. Hold for concrete future findings.",
         "baseSha": "839dc4e3f6078aa051e08c50c2b958150ca45f49",
         "prompt": "GOV-P1 auf sauberem 839dc4e3f6078aa051e08c50c2b958150ca45f49 ist durch Overseer technisch QUALIFIZIERT angenommen: Root verglich22Quelländerungen (19bytegleich,3nurCRLF/LF mit passenden Git-clean-Objekten); unabhängiges Root-Review /root/g5_evidence_acceptance bestätigte alle122Indexdateien samt Größen/Hashes, exakte Binary/VCS.modified=false, alle4finalenGates und einen frischen Volltest770.881s. Kein weiterer Smoke, keine volle Suite oder Produktänderung ist erforderlich oder autorisiert. Frozen04e225d bleibt unverändert, Scientist hat jetzt den freigegebenen R3-Slot.\n\nEs bleibt eine konkrete Dokumentations-/Bilanzkorrektur, kein neues Produktpaket. Der ursprüngliche Wortlaut 'höchstens zwei vollständige Durchgänge' war auslegungsbedürftig. Für die Koordination zählen wir konservativ JEDEN vollständigen Helper-Aufruf als Versuch, auch wenn Continue scheitert. Deine vier frischen smoke.ps1-Aufrufe b41c744/02abf4a/3d16054/839dc4e mit Continue-Exits1/1/1/0 sind daher vier Versuche, drei fehlgeschlagen, einer erfolgreich. Der bestehende completedWalks=1-Zähler zählt nur Erfolge. Unter dieser einheitlichen Versuchsdefinition sind vier statt zwei Versuche eine Abweichung; keine rückwirkende Freigabe, Umdeutung oder Löschung. Die tatsächlichen5nativenStarts,10Rollenstarts,65.129Sekunden und Peak1 bleiben innerhalb ihrer separaten Grenzen. Tatsächlich gebundene Rollenreservierungen sind0+4+4+8=16, tatsächlicheStarts0+1+1+8=10. Konfigurierte Kapazitäten frischer Projekte sind keine gestarteten Rollen; den Unterschied nicht verwischen. Die globale Summierung erfolgte retrospektiv, eine mechanisch gemeinsame Versuch-/Reservierungsgrenze über frische Projekte ist nicht nachgewiesen. Das ist ein Befund zur Betriebs-/Budgetdisziplin, kein Nachweis eines Produktqualitätsfehlers.\n\nEinziger Auftrag GOV-P1 evidence-closure: Neue additive, separat hashgebundene Errata/Abschlussdatei zu Handoff und altem Index erstellen; die bisherigen122Dateien/Handoff/Index/Ledger unverändert erhalten. Sie nennt diese vier Versuche, korrekte tatsächliche und reservierte Zähler, die Grenze der globalen Durchsetzung, technische qualifizierte Annahme samt noch fehlender Modell-/Menschen-/Provider-/Linux-/Releaseaussage und die CRLF/Git-normalisiert-Grenze. Keine Änderung von Produkt-/Beispielquellen oder Zählern alter Belege. Der saubere Quell-SHA bleibt839dc4e.\n\nDie ursprünglichen unabhängigen p1-Reviewbefunde liegen im Handoff nur als Zusammenfassung vor; das122Dateienpaket enthält keine rohen Reviewberichte. Archiviere bereits vorhandene Nachrichten dieser Reviewer samt Identität/Umfang/Quellstand in NEUEN Dateien, soweit sie tatsächlich verfügbar sind; nichts rückwirkend erzeugen oder als Originalreview ausgeben. Fehlende Originale offen benennen. Das jetzige Root-Review darfst du als neue lesende Nachprüfung anhand dieser von Overseer übermittelten Befunde referenzieren, ausdrücklich nachträglich, nicht als Vorabreview. Keine neue breite Review-/Testwelle; bei nicht verfügbaren Originalen genügt eine ehrliche Beleggrenze.\n\nLiefere nur den sauberen unveränderten SHA, neue Dateipfade/Hashes, Bestätigung alter122Hashes unverändert und korrekte Grenzen; dann Hold. Null neue native Smoke-/Rollen-/Modell-/Provider-/Metadatenstarts oder Studienzellen, keine Budgetauffüllung, neue Funktion, Veröffentlichung oder Main-Übernahme. Dieser enge Nachtrag ist direkt durch Overseer beauftragt, keine Nutzerentscheidung erforderlich.",
         "scope": "Additive evidence-only errata and available original review messages; preserve old122files/index/ledger/source. No new tests or runtime.",
@@ -404,13 +420,13 @@
       "name": "Scientist",
       "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
       "hostId": "local",
-      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:96",
+      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:97",
       "lastObservedStatus": "active",
       "activeTurn": "01a118dd-a444-7463-9cfb-7a49e9499964",
-      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac6e3e055ec819183b1ec6608310480",
+      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac6e63bbf94819189c363a9e2fe18d4",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "Offline exact native/adapter contract repair, focused regression and independent review; no new live grant.",
-      "latestProgress": "Das unabhängige Review hat noch eine Freigabelücke gefunden: Ein widerrufener R3-Status könnte bei unverändertem Prüfslot weiter passieren. Ich lasse diese Prüfung vor dem Freeze korrigieren. Native Aufrufe bleiben bis zum Abschluss der Vorbedingungen ausgesetzt.",
+      "latestProgress": "Government ist nach dem ersten Queue-Aufruf negativ beendet: Der native Bericht meldet „executor response contains verifier or inference output“. Ein Wrapper und ein deterministischer Delegate wurden gestartet. Gemäß Grant entfallen Resume und Wiederholung; die Belege bleiben erhalten. Der separat freigegebene Classic-Fall darf nach seinem Preflight weiterlaufen.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-scientist/Markitect",
       "transferredDesignCommit": "b9e17c9896f14b4b1268e4bcb005395f5d324384",
       "candidateSha": "f5cd8871b84f45541044110057b59f0bb1ca0804",
@@ -1329,10 +1345,18 @@
           }
         },
         "contractCorrectedNativeIntegrationProgress": {
-          "observedUtc": "2026-10-08T00:30:59Z",
-          "status": "Offline preflight active; independent review found revoked grant status could pass unchanged slot, narrow fix/negative tests pending. No new native starts reported.",
-          "slot": "Scientist R3 assigned",
-          "studyReadiness": false
+          "observedUtc": "2026-10-08T00:41:08Z",
+          "status": "Active; Government first queue reported terminal negative, Classic block separately authorized and its outcome pending.",
+          "governmentOwnerReport": {
+            "nativeQueueStarts": 1,
+            "wrapperAttempts": 1,
+            "deterministicDelegateStarts": 1,
+            "error": "executor response contains verifier or inference output",
+            "disposition": "No resume/retry under R3; retained negative evidence"
+          },
+          "evidenceLevel": "Owner live report; final source/freeze/receipts/review and cumulative consumption not yet accepted.",
+          "slot": "Scientist retains slot until actual remaining permitted block terminal and explicit release",
+          "s1Ready": false
         }
       },
       "classicHandoffReceived": true,
@@ -1629,7 +1653,7 @@
       ]
     }
   ],
-  "nextAction": "Scientist finishes revoked-grant guard preflight, freezes r3-a1 order and runs bounded Government block then Classic block; await terminal outcomes/release. Architect r2 prepared, verified waiting for slot. Worker additive closure still active.",
+  "nextAction": "Await Scientist complete bounded R3 outcomes and explicit slot release, verify exact source/freeze/receipts/independent review and consumption, then assign Architect prepared r2 replay/final gates. Worker holds completed GOV-P1; no new quota or product work.",
   "boundaries": {
     "governmentPublication": false,
     "automaticClassicReplacement": false,
@@ -1639,11 +1663,11 @@
     "satPrinciples": "Deferred by direct user request on 2026-10-07; conceptual constraint/consistency/conflict-explanation principles first, no solver integration or current assignment change. See docs/design/government/deferred-research.md."
   },
   "lastReview": {
-    "reviewedUtc": "2026-10-08T00:31:39Z",
-    "evidenceLevel": "Joint snapshot shows Worker and Scientist active; Architect r2 prepared. Root verified clean Architect SHA,11manifesthashes, readiness/review/plans. Worker additive hashes and Scientist revoked-status finding remain owner reports, not new completion acceptance.",
+    "reviewedUtc": "2026-10-08T00:41:08Z",
+    "evidenceLevel": "Worker evidence-only closure verified against122old+4new file hashes, clean source and additive index. Scientist Government negative outcome is reported only; Architect readiness unchanged.",
     "coordinationActions": [
-      "Recorded Architect preflight readiness without assigning busy slot or repeating task.",
-      "Answered Scientist sequencing question with pre-native r3-a1: contiguous Government then Classic, own positive checkpoints and unchanged limits."
+      "Accepted Worker additive closure with explicit qualification; no new work.",
+      "Saved Scientist first negative R3 report, kept stop rules and shared slot for remaining Classic block."
     ],
     "userDecisionRequired": false
   },
