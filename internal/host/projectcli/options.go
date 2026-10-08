@@ -32,6 +32,7 @@ type actionSpec struct {
 }
 
 var actionSpecs = map[string]actionSpec{
+	"schema":   {usage: "schema", flags: []string{}},
 	"init":     {usage: "init --repo PATH --name NAME [--write]", flags: []string{"repo", "name", "write"}, required: []string{"repo", "name"}, write: true},
 	"check":    {usage: "check --repo PATH [--revision COMMIT]", flags: []string{"repo", "revision"}, required: []string{"repo"}},
 	"index":    {usage: "index --repo PATH [--revision COMMIT]", flags: []string{"repo", "revision"}, required: []string{"repo"}},

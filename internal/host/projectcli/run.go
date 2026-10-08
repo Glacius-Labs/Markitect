@@ -53,6 +53,8 @@ func runAction(opts options, out io.Writer) error {
 		ctx = bounded
 	}
 	switch opts.action {
+	case "schema":
+		return writeJSON(out, projectmodel.Schema())
 	case "init":
 		plan, err := projectwork.Init(opts.repo, opts.name, opts.write)
 		if err != nil {
@@ -518,7 +520,7 @@ func writeJSON(out io.Writer, value any) error {
 
 func printUsage(out io.Writer, action string) {
 	if action == "" {
-		_, _ = io.WriteString(out, "Usage: markitect project <action> [flags]\nActions: init check index context impact document edit discover distill resolve adopt setup doctor plan run resume status verify apply\n")
+		_, _ = io.WriteString(out, "Usage: markitect project <action> [flags]\nActions: schema init check index context impact document edit discover distill resolve adopt setup doctor plan run resume status verify apply\n")
 		return
 	}
 	if spec, ok := actionSpecs[action]; ok {
