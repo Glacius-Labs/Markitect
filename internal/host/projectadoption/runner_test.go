@@ -85,7 +85,7 @@ func TestGenerateDistillationUsesBoundedExecutorAndValidatesReport(t *testing.T)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if report.Method != "agent-assisted" || report.DiscoveryDigest != discovery.Digest || report.SchemaDigest != receipt.SchemaDigest {
+	if report.Method != "agent-assisted" || report.DiscoveryDigest != discovery.Digest || report.SchemaDigest != receipt.SchemaDigest || report.TargetBasis != target.ProjectDigest || report.TargetRevision != target.Revision || report.TargetContextDigest != target.Digest {
 		t.Fatalf("generated report did not bind its source, method and schema: %+v", report)
 	}
 	if report.RunnerIdentity != receipt.RunnerIdentity || report.RunnerDigest != receipt.RunnerDigest || report.RunnerDigest != digestWithoutPrefix(receipt.Execution.ConfigDigest) || receipt.RunnerDigest == "" {
@@ -229,6 +229,21 @@ func TestNewPrivateLogDirectoryIsUniqueAndUncreated(t *testing.T) {
 	}
 }
 
+func TestTargetContextRejectsUncommittedProject(t *testing.T) {
+	root, _ := committedRepository(t, map[string]string{"README.md": "target\n"})
+	gitRun(t, root, "checkout", "-b", "codex/project-adoption-provisional-target")
+	if _, err := projectwork.Init(root, "Provisional target", true); err != nil {
+		t.Fatal(err)
+	}
+	project, err := projectwork.Load(root, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := TargetContextForProject(project); err == nil || !strings.Contains(err.Error(), "fixed committed Project revision") {
+		t.Fatalf("provisional target context error = %v", err)
+	}
+}
+
 func distillationDiscovery(t *testing.T) (string, Discovery, DistillationTargetContext) {
 	t.Helper()
 	root, commit := committedRepository(t, map[string]string{"src/orders/cancel.go": "package orders\nfunc Cancel() {}\n"})
@@ -246,7 +261,10 @@ func distillationDiscovery(t *testing.T) (string, Discovery, DistillationTargetC
 	if _, err := projectwork.Init(targetRoot, "Target fixture", true); err != nil {
 		t.Fatal(err)
 	}
-	targetProject, err := projectwork.Load(targetRoot, "")
+	gitRun(t, targetRoot, "add", "--all")
+	gitRun(t, targetRoot, "commit", "--quiet", "-m", "initialize target project")
+	targetRevision := gitRun(t, targetRoot, "rev-parse", "HEAD")
+	targetProject, err := projectwork.Load(targetRoot, targetRevision)
 	if err != nil {
 		t.Fatal(err)
 	}

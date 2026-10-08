@@ -38,6 +38,15 @@ func PlanAdoption(sourceRoot string, target *projectwork.Project, discovery Disc
 	if resolution.TargetBasis != target.Digest {
 		return AdoptionPlan{}, errors.New("resolution target basis differs from the loaded project snapshot")
 	}
+	if report.TargetBasis != "" {
+		targetContext, contextErr := TargetContextForProject(target)
+		if contextErr != nil {
+			return AdoptionPlan{}, fmt.Errorf("validate fixed target context: %w", contextErr)
+		}
+		if report.TargetBasis != target.Digest || report.TargetRevision != target.Revision || report.TargetContextDigest != targetContext.Digest {
+			return AdoptionPlan{}, errors.New("generated distillation target basis, revision, or context differs from the loaded fixed target project")
+		}
+	}
 	if resolution.SchemaDigest != schemaDigest || !validDigest(schemaDigest) {
 		return AdoptionPlan{}, errors.New("resolution schema digest differs from the current project schema")
 	}
