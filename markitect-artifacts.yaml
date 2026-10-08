@@ -145,6 +145,17 @@ spec:
     - examples/public_fixture_test.go
     - experiments/live-operating-pilot
     - experiments/two-area-operating-pilot
+    - docs/design/project-world
+    - internal/modules/projectmodel
+    - internal/host/projectwork
+    - internal/host/projectadoption
+    - internal/tooling/clauderunner
+    - internal/host/project_guarded_write.go
+    - internal/host/project_guarded_write_test.go
+    - internal/host/tool_build_digest.go
+    - internal/host/tool_build_digest_test.go
+    - internal/infrastructure/source/scoped_revision.go
+    - internal/infrastructure/source/scoped_revision_test.go
   tooling:
     - path: docs/validation/classic-commerce-entrypoint.md
       owner: classic-commerce-public-example-validation
@@ -1823,3 +1834,107 @@ spec:
       owner: sequential-operating-pilot-evidence
     - path: experiments/sequential-operating-pilot/target-samples/src/Orders/Orders.csproj
       owner: sequential-operating-pilot-evidence
+    - path: docs/design/project-world/conceptual-modules.md
+      owner: project-world-implementation
+    - path: docs/design/project-world/implementation-plan.md
+      owner: project-world-implementation
+    - path: docs/design/project-world/model.md
+      owner: project-world-implementation
+    - path: docs/design/project-world/operating-protocol.md
+      owner: project-world-implementation
+    - path: docs/design/project-world/shop-example/README.md
+      owner: project-world-implementation
+    - path: docs/design/project-world/shop-example/before/model/commerce.yaml.example
+      owner: project-world-implementation
+    - path: docs/design/project-world/shop-example/before/model/realization.yaml.example
+      owner: project-world-implementation
+    - path: docs/design/project-world/shop-example/before/model/sales.yaml.example
+      owner: project-world-implementation
+    - path: docs/design/project-world/shop-example/changes/add-cancellation.md
+      owner: project-world-implementation
+    - path: docs/design/project-world/shop-example/project/markitect.runtime.yaml.example
+      owner: project-world-implementation
+    - path: docs/design/project-world/shop-example/project/markitect.yaml.example
+      owner: project-world-implementation
+    - path: docs/design/project-world/shop-example/project/model/commerce.yaml.example
+      owner: project-world-implementation
+    - path: docs/design/project-world/shop-example/project/model/engineering.yaml.example
+      owner: project-world-implementation
+    - path: docs/design/project-world/shop-example/project/model/inventory.yaml.example
+      owner: project-world-implementation
+    - path: docs/design/project-world/shop-example/project/model/modules.yaml.example
+      owner: project-world-implementation
+    - path: docs/design/project-world/shop-example/project/model/organization.yaml.example
+      owner: project-world-implementation
+    - path: docs/design/project-world/shop-example/project/model/realization.yaml.example
+      owner: project-world-implementation
+    - path: docs/design/project-world/shop-example/project/model/sales.yaml.example
+      owner: project-world-implementation
+    - path: docs/design/project-world/shop-example/verify_design.py
+      owner: project-world-implementation
+    - path: docs/design/project-world/shop-walkthrough.md
+      owner: project-world-implementation
+    - path: internal/host/agentexec/private_log_other.go
+      owner: project-world-implementation
+    - path: internal/host/agentexec/private_log_windows.go
+      owner: project-world-implementation
+    - path: internal/host/agentexec/private_log_windows_test.go
+      owner: project-world-implementation
+    - path: internal/host/project_guarded_write.go
+      owner: project-world-implementation
+    - path: internal/host/project_guarded_write_test.go
+      owner: project-world-implementation
+    - path: internal/host/projectadoption/adopt.go
+      owner: project-world-implementation
+    - path: internal/host/projectadoption/bindings.go
+      owner: project-world-implementation
+    - path: internal/host/projectadoption/discovery.go
+      owner: project-world-implementation
+    - path: internal/host/projectadoption/projectadoption_test.go
+      owner: project-world-implementation
+    - path: internal/host/projectadoption/types.go
+      owner: project-world-implementation
+    - path: internal/host/projectadoption/validate.go
+      owner: project-world-implementation
+    - path: internal/host/projectadoption/wire.go
+      owner: project-world-implementation
+    - path: internal/host/projectwork/config.go
+      owner: project-world-implementation
+    - path: internal/host/projectwork/document.go
+      owner: project-world-implementation
+    - path: internal/host/projectwork/init.go
+      owner: project-world-implementation
+    - path: internal/host/projectwork/inventory.go
+      owner: project-world-implementation
+    - path: internal/host/projectwork/mutation.go
+      owner: project-world-implementation
+    - path: internal/host/projectwork/project.go
+      owner: project-world-implementation
+    - path: internal/host/projectwork/projectwork_test.go
+      owner: project-world-implementation
+    - path: internal/host/projectwork/types.go
+      owner: project-world-implementation
+    - path: internal/host/tool_build_digest.go
+      owner: project-world-implementation
+    - path: internal/host/tool_build_digest_test.go
+      owner: project-world-implementation
+    - path: internal/infrastructure/source/scoped_revision.go
+      owner: project-world-implementation
+    - path: internal/infrastructure/source/scoped_revision_test.go
+      owner: project-world-implementation
+    - path: internal/modules/projectmodel/analyze.go
+      owner: project-world-implementation
+    - path: internal/modules/projectmodel/impact.go
+      owner: project-world-implementation
+    - path: internal/modules/projectmodel/projectmodel.go
+      owner: project-world-implementation
+    - path: internal/modules/projectmodel/projectmodel_test.go
+      owner: project-world-implementation
+    - path: internal/modules/projectmodel/types.go
+      owner: project-world-implementation
+    - path: internal/tooling/clauderunner/README.md
+      owner: project-world-implementation
+    - path: internal/tooling/clauderunner/runner.py
+      owner: project-world-implementation
+    - path: internal/tooling/clauderunner/test_runner.py
+      owner: project-world-implementation

@@ -77,6 +77,9 @@ jobs:
       - name: Check Claude proposal adapter protocol
         run: python -B -m unittest discover -s internal/tooling/clauderunner
 
+      - name: Check Codex proposal adapter protocol
+        run: python -B -m unittest discover -s internal/tooling/codexrunner
+
       - name: Compile fixed dogfood engineering context
         run: go run ./cmd/markitect context --repo . --revision ${{ github.sha }} --namespace development --kind Skill --name engineering-change
 

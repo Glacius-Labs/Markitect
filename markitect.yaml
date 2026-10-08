@@ -76,6 +76,15 @@ spec:
             - discover
             - -s
             - internal/tooling/clauderunner
+        - name: codex-protocol
+          run:
+            - python
+            - -B
+            - -m
+            - unittest
+            - discover
+            - -s
+            - internal/tooling/codexrunner
     adapters:
         - name: engineering-representations
           type: local-projection
