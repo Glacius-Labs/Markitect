@@ -7,8 +7,57 @@
   "maxActivations": 2,
   "maxConcurrent": 1,
   "perActorWallSeconds": 600,
-  "activations": [],
+  "activations": [
+    {
+      "id": "posthoc-01",
+      "role": "public-review",
+      "reservedUtc": "2026-10-08T22:54:39.090072+00:00",
+      "deadlineUtc": "2026-10-08T23:04:39.090072+00:00",
+      "status": "completed",
+      "actor": "/root/posthoc_v3_public_review",
+      "promptPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-v3-conventional-gf-posthoc-validation-20261009\\public-review-prompt.txt",
+      "promptSha256": "0f23e650e8b770d46a17dcd7ea213b109b276ad15c08d55234da294cb5c7d2f1",
+      "usage": null,
+      "observedUtc": "2026-10-08T22:56:28.023298+00:00",
+      "resultPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\public-review\\state\\report.json",
+      "resultSha256": "0bbc77d6f6c26b00993f43fa01b89c523b806915401742dae99f43c2fc1b816c"
+    },
+    {
+      "id": "posthoc-02",
+      "role": "independent-evaluation",
+      "reservedUtc": "2026-10-08T22:56:28.079663+00:00",
+      "deadlineUtc": "2026-10-08T23:06:28.079663+00:00",
+      "status": "completed",
+      "actor": "/root/posthoc_v3_independent_evaluation",
+      "promptPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-v3-conventional-gf-posthoc-validation-20261009\\independent-evaluation-prompt.txt",
+      "promptSha256": "7e9b0b482d1b68ffdcfca7b0aa53f42e492811cb7611be2f934719bac0f8368f",
+      "usage": null,
+      "observedUtc": "2026-10-08T22:58:09.627160+00:00",
+      "resultPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\state\\report.json",
+      "resultSha256": "c25db8a11cd0597c24e77f768efa4804985824d87576ed1e6af3fe9ac8cac1e8"
+    }
+  ],
   "usage": null,
   "originalStudyOutcome": "incomplete-at-limit/coordinator-interruption",
-  "task6": "NOT RUN"
+  "task6": "NOT RUN",
+  "status": "closed",
+  "outcome": "inconclusive_runtime_port_bind_failure",
+  "closedUtc": "2026-10-08T22:59:46.194527+00:00",
+  "actualActivations": 2,
+  "maxObservedConcurrent": 1,
+  "preparationElapsedFromGrantIssueSeconds": 208.090072,
+  "elapsedFromGrantIssueAtSealSeconds": 515.194527,
+  "remainingActualActivations": 0,
+  "actorReportedElapsedSeconds": [
+    85,
+    95
+  ],
+  "conservativeReservationToCompletionObservationSeconds": [
+    108.933226,
+    101.547497
+  ],
+  "humanInterventionSeconds": null,
+  "providerRequests": null,
+  "rawTokens": null,
+  "cost": null
 }

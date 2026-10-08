@@ -1,0 +1,821 @@
+{
+  "checkedUtc": "2026-10-08T22:57:06.481477+00:00",
+  "originalPinChecks": 264,
+  "allOriginalPinsMatch": true,
+  "original30ReservationsUnchanged": true,
+  "supplementBindings": [
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-v3-conventional-gf-posthoc-validation-20261009\\authorization-grant.json",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-v3-conventional-gf-posthoc-validation-20261009\\control.py",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-v3-conventional-gf-posthoc-validation-20261009\\independent-evaluation-prompt.txt",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-v3-conventional-gf-posthoc-validation-20261009\\ledger.json",
+      "matches": true,
+      "bindingKind": "initial ledger Git source blob"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-v3-conventional-gf-posthoc-validation-20261009\\native-configuration.json",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-v3-conventional-gf-posthoc-validation-20261009\\original-ledger-at-reconciliation.json",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-v3-conventional-gf-posthoc-validation-20261009\\public-review-prompt.txt",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\public-review\\inputs\\native-configuration.json",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\public-review\\inputs\\resource-lease.json",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\public-review\\inputs\\public\\architecture.md",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\public-review\\inputs\\public\\brief.md",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\public-review\\inputs\\public\\holdout-procedure.md",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\public-review\\inputs\\public\\rubric.json",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\public-review\\inputs\\stage-1\\01-create-order.md",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\public-review\\inputs\\stage-1\\architecture.md",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\public-review\\inputs\\stage-1\\brief.md",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\public-review\\inputs\\stage-1\\checks.py",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\public-review\\inputs\\stage-1\\release.json",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\public-review\\inputs\\stage-2\\01-create-order.md",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\public-review\\inputs\\stage-2\\02-reserve-stock.md",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\public-review\\inputs\\stage-2\\architecture.md",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\public-review\\inputs\\stage-2\\brief.md",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\public-review\\inputs\\stage-2\\checks.py",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\public-review\\inputs\\stage-2\\release.json",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\public-review\\inputs\\stage-3\\01-create-order.md",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\public-review\\inputs\\stage-3\\02-reserve-stock.md",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\public-review\\inputs\\stage-3\\03-persist-state.md",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\public-review\\inputs\\stage-3\\architecture.md",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\public-review\\inputs\\stage-3\\brief.md",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\public-review\\inputs\\stage-3\\checks.py",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\public-review\\inputs\\stage-3\\release.json",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\public-review\\inputs\\stage-4\\01-create-order.md",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\public-review\\inputs\\stage-4\\02-reserve-stock.md",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\public-review\\inputs\\stage-4\\03-persist-state.md",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\public-review\\inputs\\stage-4\\04-order-lifecycle.md",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\public-review\\inputs\\stage-4\\architecture.md",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\public-review\\inputs\\stage-4\\brief.md",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\public-review\\inputs\\stage-4\\checks.py",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\public-review\\inputs\\stage-4\\release.json",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\public-review\\inputs\\stage-5\\01-create-order.md",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\public-review\\inputs\\stage-5\\02-reserve-stock.md",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\public-review\\inputs\\stage-5\\03-persist-state.md",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\public-review\\inputs\\stage-5\\04-order-lifecycle.md",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\public-review\\inputs\\stage-5\\05-change-limit.md",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\public-review\\inputs\\stage-5\\architecture.md",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\public-review\\inputs\\stage-5\\brief.md",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\public-review\\inputs\\stage-5\\checks.py",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\public-review\\inputs\\stage-5\\release.json",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\public-review\\inputs\\public\\tasks\\01-create-order.md",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\public-review\\inputs\\public\\tasks\\02-reserve-stock.md",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\public-review\\inputs\\public\\tasks\\03-persist-state.md",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\public-review\\inputs\\public\\tasks\\04-order-lifecycle.md",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\public-review\\inputs\\public\\tasks\\05-change-limit.md",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\native-configuration.json",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\resource-lease.json",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\method-evidence\\own-cell-ledger.json",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\method-evidence\\public-review-task1-checkpoint.json",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\method-evidence\\public-review-task1.json",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\method-evidence\\public-review-task2-checkpoint.json",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\method-evidence\\public-review-task2.json",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\method-evidence\\public-review-task3-activation-0018-checkpoint.json",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\method-evidence\\public-review-task3.json",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\method-evidence\\public-review-task4.json",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\method-evidence\\public-review-task5-activation-0028-boundary.py",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\method-evidence\\public-review-task5-activation-0028-checkpoint.json",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\method-evidence\\public-review-task5.json",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\method-evidence\\q1-intent-task1.md",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\method-evidence\\q1-intent-task2.md",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\method-evidence\\q1-intent-task3.md",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\method-evidence\\q1-intent-task4.md",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\method-evidence\\q1-intent-task5-repair-1.md",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\method-evidence\\q1-intent-task5.md",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\method-evidence\\request-task1.json",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\method-evidence\\stage-1-result.json",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\method-evidence\\stage-2-result.json",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\method-evidence\\stage-3-result.json",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\method-evidence\\stage-4-result.json",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\method-evidence\\stage-5-repair-1-result.json",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\method-evidence\\stage-5-result.json",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\method-evidence\\task1-checkpoint.json",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\method-evidence\\task2-checkpoint-a.json",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\method-evidence\\task3-checkpoint.json",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\method-evidence\\task4-checkpoint.json",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\method-evidence\\task4-lifecycle-checkpoint.json",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\method-evidence\\task4-lifecycle-race-probe-0024.py",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\method-evidence\\task4-public-review-0024-checkpoint.json",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\method-evidence\\task4-public-review-0024-service.err.log",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\method-evidence\\task4-public-review-0024-service.out.log",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\method-evidence\\task4-unknown-id-0024-service.err.log",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\method-evidence\\task4-unknown-id-0024-service.out.log",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\method-evidence\\task4-unknown-id-0024.py",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\method-evidence\\task5-checkpoint.json",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\method-evidence\\task5-repair1-checkpoint.json",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\method-evidence\\task5-repair1-repro.py",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\public\\architecture.md",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\public\\brief.md",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\public\\holdout-procedure.md",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\public\\rubric.json",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\stage-1\\01-create-order.md",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\stage-1\\architecture.md",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\stage-1\\brief.md",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\stage-1\\checks.py",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\stage-1\\release.json",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\stage-2\\01-create-order.md",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\stage-2\\02-reserve-stock.md",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\stage-2\\architecture.md",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\stage-2\\brief.md",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\stage-2\\checks.py",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\stage-2\\release.json",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\stage-3\\01-create-order.md",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\stage-3\\02-reserve-stock.md",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\stage-3\\03-persist-state.md",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\stage-3\\architecture.md",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\stage-3\\brief.md",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\stage-3\\checks.py",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\stage-3\\release.json",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\stage-4\\01-create-order.md",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\stage-4\\02-reserve-stock.md",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\stage-4\\03-persist-state.md",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\stage-4\\04-order-lifecycle.md",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\stage-4\\architecture.md",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\stage-4\\brief.md",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\stage-4\\checks.py",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\stage-4\\release.json",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\stage-5\\01-create-order.md",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\stage-5\\02-reserve-stock.md",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\stage-5\\03-persist-state.md",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\stage-5\\04-order-lifecycle.md",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\stage-5\\05-change-limit.md",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\stage-5\\architecture.md",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\stage-5\\brief.md",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\stage-5\\checks.py",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\stage-5\\release.json",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\public\\tasks\\01-create-order.md",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\public\\tasks\\02-reserve-stock.md",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\public\\tasks\\03-persist-state.md",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\public\\tasks\\04-order-lifecycle.md",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\public\\tasks\\05-change-limit.md",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\oracle\\private\\holdout-plan.json",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\oracle\\private\\holdout_checks.py",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\oracle\\public\\architecture.md",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\oracle\\public\\brief.md",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\oracle\\public\\holdout-procedure.md",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\oracle\\public\\rubric.json",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\oracle\\public\\tasks\\01-create-order.md",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\oracle\\public\\tasks\\02-reserve-stock.md",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\oracle\\public\\tasks\\03-persist-state.md",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\oracle\\public\\tasks\\04-order-lifecycle.md",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\posthoc-20261009\\independent-evaluation\\inputs\\oracle\\public\\tasks\\05-change-limit.md",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-codex-exploratory-v3-20261008\\cells\\conventional-greenfield\\candidate.bundle",
+      "matches": true,
+      "bindingKind": "immutable live input"
+    }
+  ],
+  "zipContainers": [
+    {
+      "path": "experiments\\government-comparison\\evidence\\native-codex-exploratory-v3-20261008\\cells\\classic-brownfield\\diff.zip",
+      "members": 1,
+      "sha256": "abb240b47ef886accf5e62caf516c5c1ef0a290f99fa61f35a72a3221da67edf"
+    },
+    {
+      "path": "experiments\\government-comparison\\evidence\\native-codex-exploratory-v3-20261008\\cells\\classic-brownfield\\evidence.zip",
+      "members": 56,
+      "sha256": "03b5bbb255a52ac524c99b4bf1e24ee310dbf86c8f0bfa8e1467b4cd0d3ee8ed"
+    },
+    {
+      "path": "experiments\\government-comparison\\evidence\\native-codex-exploratory-v3-20261008\\cells\\classic-brownfield\\worktree.zip",
+      "members": 33,
+      "sha256": "5c5b1fdde95662a6e99df34921510523696757648cc5741fec365be406254ba1"
+    },
+    {
+      "path": "experiments\\government-comparison\\evidence\\native-codex-exploratory-v3-20261008\\cells\\classic-greenfield\\evidence.zip",
+      "members": 43,
+      "sha256": "b5907636d0a56c3d097da7fb91889c7c75aca7ababb2da8017849d0bcb0ea651"
+    },
+    {
+      "path": "experiments\\government-comparison\\evidence\\native-codex-exploratory-v3-20261008\\cells\\conventional-brownfield\\diff.zip",
+      "members": 1,
+      "sha256": "148ba776bd5c2b085df27c1c5356f9b7d0fe8f6c8f217848b3557bbb1113a83e"
+    },
+    {
+      "path": "experiments\\government-comparison\\evidence\\native-codex-exploratory-v3-20261008\\cells\\conventional-brownfield\\evidence.zip",
+      "members": 12,
+      "sha256": "3dc0c5632c760e5497cfc47aafe3341eb348940c92705a2abbe8cdc5e24fa6b4"
+    },
+    {
+      "path": "experiments\\government-comparison\\evidence\\native-codex-exploratory-v3-20261008\\cells\\conventional-brownfield\\worktree.zip",
+      "members": 12,
+      "sha256": "3cbf6cc8e68d852602e69c061fdaaf990eceffdc789d8c2e0a23ce539256eed7"
+    },
+    {
+      "path": "experiments\\government-comparison\\evidence\\native-codex-exploratory-v3-20261008\\cells\\conventional-greenfield\\evidence.zip",
+      "members": 107,
+      "sha256": "38a040ce7f9489d6e6ea6e671e1c3f7c682e78d0591ee308fe81e7bab7feef7c"
+    },
+    {
+      "path": "experiments\\government-comparison\\evidence\\native-codex-exploratory-v3-20261008\\cells\\government-brownfield\\diff.zip",
+      "members": 1,
+      "sha256": "abb240b47ef886accf5e62caf516c5c1ef0a290f99fa61f35a72a3221da67edf"
+    },
+    {
+      "path": "experiments\\government-comparison\\evidence\\native-codex-exploratory-v3-20261008\\cells\\government-brownfield\\evidence.zip",
+      "members": 46,
+      "sha256": "e0e836fbe8e2da52b07c1d2a708a8b3dc3bbd9a399f758f51226f5c84cd9edb7"
+    },
+    {
+      "path": "experiments\\government-comparison\\evidence\\native-codex-exploratory-v3-20261008\\cells\\government-brownfield\\worktree.zip",
+      "members": 14,
+      "sha256": "7f632ea41a1249402bd530337ed0fc0b2aad463168ef5ae8b7d31252b865bdf3"
+    },
+    {
+      "path": "experiments\\government-comparison\\evidence\\native-codex-exploratory-v3-20261008\\cells\\government-greenfield\\evidence.zip",
+      "members": 67,
+      "sha256": "5a3a0624fc56ae576360a6771c0d28ea7b1732c49debf42642fe4f1cb7595bc8"
+    }
+  ],
+  "initialLedgerBindingPolicy": "freeze binds initial ledger at clean source904a7d; runtime ledger is intentionally mutable and independently archived at closure, not claimed unchanged."
+}
