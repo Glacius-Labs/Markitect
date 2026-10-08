@@ -50,6 +50,9 @@ func TestDistillationExecutorHelper(t *testing.T) {
 		!strings.Contains(prompt.Instructions, `Root scope proposals MUST have parentId = ""`) ||
 		!strings.Contains(prompt.Instructions, "every non-root scope's parentId must name another declared scope ID, and parent relationships must be acyclic") ||
 		!strings.Contains(prompt.Instructions, "Every proposed scope must contain at least one grounded claim assigned to it and at least one model-proposal file") ||
+		!strings.Contains(prompt.Instructions, "For each term, its text must appear as a case-sensitive, contiguous literal substring in EACH cited occurrence excerpt") ||
+		!strings.Contains(prompt.Instructions, "do not humanize, pluralize, or normalize terms") ||
+		!strings.Contains(prompt.Instructions, "Omit a term when no selected excerpt contains its exact text") ||
 		!strings.Contains(prompt.Instructions, "Existing target Managers are guidance only and do not need mirrored as adoption scopes") ||
 		!strings.Contains(prompt.Instructions, "observation/static-source") ||
 		!strings.Contains(prompt.Instructions, "one-based line bounds") ||
@@ -75,6 +78,13 @@ func TestDistillationExecutorHelper(t *testing.T) {
 		Claims: []DistillationDraftClaim{claim}, Terms: []Term{}, Contradictions: []Contradiction{}, Questions: []DistillationDraftQuestion{},
 		Scopes:   []DistillationDraftScope{{ID: "orders", Name: "Order management", ParentID: "", ClaimIDs: []string{claim.ID}, OwnerCandidate: ""}},
 		Proposal: ModelProposal{Goal: "Represent the proposed order scope", Files: []ProposedFile{{ScopeID: "orders", Path: ".markitect/model/orders/statement.yaml", Content: "apiVersion: project.markitect.example.org/v1alpha1\n"}}},
+	}
+	if os.Getenv(distillationModeEnv) == "bad-term-grounding" {
+		draft.Terms = []Term{{
+			ID: "active-reservations", Text: "active-reservations", Context: "A proposed term without a literal source anchor.",
+			Occurrences: []TermOccurrence{{EvidenceID: "implementation", StartLine: 2, EndLine: 2, Excerpt: "func Cancel() {}"}},
+			Synonyms:    []string{}, Ambiguities: []string{},
+		}}
 	}
 	reportBytes, _ := json.Marshal(draft)
 	if os.Getenv(distillationModeEnv) == "bad-grounding" {
@@ -143,6 +153,26 @@ func TestGenerateDistillationRejectsMissingUsageAndBadGrounding(t *testing.T) {
 		if err == nil {
 			t.Errorf("mode %q should produce an incomplete or invalid distillation", mode)
 		}
+	}
+}
+
+func TestGenerateDistillationRejectsUngroundedTermWithSafeReceiptCategory(t *testing.T) {
+	root, discovery, target, _ := distillationDiscovery(t)
+	config := testDistillationConfig(t)
+	t.Setenv(distillationModeEnv, "bad-term-grounding")
+	_, receipt, err := GenerateDistillation(context.Background(), root, discovery, config, testDistillationOptions(t, target))
+	if err == nil || !strings.Contains(err.Error(), "term \"active-reservations\" occurrence excerpt does not contain the exact term") {
+		t.Fatalf("term without an exact evidence anchor should be rejected: %v", err)
+	}
+	if receipt.RejectionPhase != distillationRejectionPhaseReportValidation || receipt.RejectionCategory != distillationRejectionCategoryInvalidReport {
+		t.Fatalf("invalid proposal receipt omitted its fixed safe rejection category: %+v", receipt)
+	}
+	encoded, err := json.Marshal(receipt)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(encoded), "occurrence excerpt does not contain") || strings.Contains(string(encoded), "A proposed term without a literal source anchor") {
+		t.Fatal("receipt exposed provider report content or raw validation details")
 	}
 }
 
