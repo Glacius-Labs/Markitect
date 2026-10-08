@@ -56,7 +56,11 @@ func TestDistillationExecutorHelper(t *testing.T) {
 		!strings.Contains(prompt.Instructions, "candidateFiles must be [], and candidateJson must be null") ||
 		!strings.Contains(prompt.Instructions, "only typed DistillationDraft belongs in reportJson as a JSON-encoded string") ||
 		!strings.Contains(prompt.Instructions, "Put proposed YAML only inside reportJson.proposal.files entries with scopeId, path, and content") ||
-		!strings.Contains(prompt.Instructions, "Never put proposed YAML in outer candidateFiles or candidateJson") {
+		!strings.Contains(prompt.Instructions, "Never put proposed YAML in outer candidateFiles or candidateJson") ||
+		!strings.Contains(prompt.Instructions, "Required authoring shape: apiVersion, kind: Statement, metadata.name, metadata.namespace, top-level purpose") ||
+		!strings.Contains(prompt.Instructions, "uses and requires are arrays of reference objects with namespace and name, never stringified compiled IDs") ||
+		!strings.Contains(prompt.Instructions, "namespace: sales") ||
+		!strings.Contains(prompt.Instructions, "requires: []\nThe example ends at the closing YAML line.") {
 		os.Exit(36)
 	}
 	artifact := invocation.Request.Artifacts[0]
@@ -91,6 +95,12 @@ func TestDistillationExecutorHelper(t *testing.T) {
 		Outcome: agentexec.OutcomeProposed, CandidateFiles: []agentexec.CandidateFile{},
 		EvidenceRefs: []string{artifact.Path}, VerifierObservations: []agentexec.Observation{},
 		ReportJSON: reportBytes, Uncertainty: []string{"Proposal requires owner review."}, Usage: usage,
+	}
+	if os.Getenv(distillationModeEnv) == "outer-candidates" {
+		response.CandidateFiles = []agentexec.CandidateFile{
+			{Path: ".markitect/model/orders/statement.yaml", Mode: "0644", Content: "first YAML proposal"},
+			{Path: ".markitect/model/sales/statement.yaml", Mode: "0644", Content: "second YAML proposal"},
+		}
 	}
 	_ = json.NewEncoder(os.Stdout).Encode(response)
 	os.Exit(0)
@@ -133,6 +143,19 @@ func TestGenerateDistillationRejectsMissingUsageAndBadGrounding(t *testing.T) {
 		if err == nil {
 			t.Errorf("mode %q should produce an incomplete or invalid distillation", mode)
 		}
+	}
+}
+
+func TestRejectedOuterCandidateFilesRetainKnownUsageCost(t *testing.T) {
+	root, discovery, target, _ := distillationDiscovery(t)
+	config := testDistillationConfig(t)
+	t.Setenv(distillationModeEnv, "outer-candidates")
+	_, receipt, err := GenerateDistillation(context.Background(), root, discovery, config, testDistillationOptions(t, target))
+	if err == nil || !strings.Contains(err.Error(), "report-only distillation proposal") {
+		t.Fatalf("outer candidate files should be rejected: %v", err)
+	}
+	if receipt.EstimatedCostMicros != 2 || receipt.Execution.Usage == nil || receipt.Execution.Usage.InputTokens == nil || receipt.Execution.Usage.OutputTokens == nil {
+		t.Fatalf("known provider usage cost was lost from rejected proposal receipt: %+v", receipt)
 	}
 }
 
