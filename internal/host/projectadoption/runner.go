@@ -222,7 +222,9 @@ func GenerateDistillation(ctx context.Context, sourceRoot string, discovery Disc
 	}
 	report := Distillation{
 		APIVersion: DistillationVersion, DiscoveryDigest: discovery.Digest,
-		Method: "agent-assisted", RunnerIdentity: distillationRunnerIdentity(config),
+		TargetBasis: options.TargetContext.ProjectDigest, TargetRevision: options.TargetContext.Revision,
+		TargetContextDigest: options.TargetContext.Digest,
+		Method:              "agent-assisted", RunnerIdentity: distillationRunnerIdentity(config),
 		RunnerDigest: digestWithoutPrefix(result.Receipt.ConfigDigest), SchemaDigest: schemaDigest,
 		Claims: []Claim{}, Terms: draft.Terms, Contradictions: draft.Contradictions,
 		Questions: []Question{}, Scopes: []ScopeProposal{}, Proposal: draft.Proposal,

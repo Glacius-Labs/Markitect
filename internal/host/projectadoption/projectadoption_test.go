@@ -323,6 +323,13 @@ func TestPlanAndApplyAdoptOnlyResolvedModelScope(t *testing.T) {
 	}
 	report := validDistillation(discovery)
 	report.SchemaDigest = schemaDigest
+	targetContext, err := TargetContextForProject(target)
+	if err != nil {
+		t.Fatal(err)
+	}
+	report.TargetBasis = target.Digest
+	report.TargetRevision = target.Revision
+	report.TargetContextDigest = targetContext.Digest
 	statement := "apiVersion: " + projectmodel.APIVersion + "\nkind: Statement\nmetadata:\n  name: cancel-order\n  namespace: orders\npurpose: Record the cancellation context.\nspec:\n  category: concept\n  description: Cancel an order before dispatch.\n"
 	deferredStatement := strings.ReplaceAll(statement, "namespace: orders", "namespace: inventory")
 	report.Proposal.Files[0].Content = statement
@@ -339,6 +346,17 @@ func TestPlanAndApplyAdoptOnlyResolvedModelScope(t *testing.T) {
 		Scopes:    []ScopeResolution{{ScopeID: "orders", Status: "adopt", Reason: "Confirmed scope"}, {ScopeID: "inventory", Status: "defer", Reason: "Not reviewed"}},
 	}
 	SealResolution(&resolution)
+	retargetedReport := report
+	retargetedReport.TargetBasis = strings.Repeat("a", 64)
+	retargetedReport.TargetRevision = strings.Repeat("b", 40)
+	retargetedReport.TargetContextDigest = strings.Repeat("c", 64)
+	SealDistillation(&retargetedReport)
+	retargetedResolution := resolution
+	retargetedResolution.DistillationDigest = retargetedReport.Digest
+	SealResolution(&retargetedResolution)
+	if _, err := PlanAdoption(root, target, discovery, retargetedReport, retargetedResolution, schemaDigest, buildDigest); err == nil {
+		t.Fatal("adoption must reject a generated report bound to another target project")
+	}
 	if _, err := PlanAdoption(root, target, discovery, report, resolution, strings.Repeat("e", 64), strings.Repeat("f", 64)); err == nil {
 		t.Fatal("adoption must reject caller-invented schema/build bindings")
 	}

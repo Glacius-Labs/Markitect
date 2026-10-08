@@ -166,19 +166,22 @@ type ProposedFile struct {
 // validator checks its exact evidence grounding and bindings; it does not run
 // a provider or treat a confidence value as authority.
 type Distillation struct {
-	APIVersion      string          `json:"apiVersion"`
-	DiscoveryDigest string          `json:"discoveryDigest"`
-	Method          string          `json:"method"` // human-review, static-tool, or agent-assisted
-	RunnerIdentity  string          `json:"runnerIdentity,omitempty"`
-	RunnerDigest    string          `json:"runnerDigest,omitempty"`
-	SchemaDigest    string          `json:"schemaDigest"`
-	Claims          []Claim         `json:"claims"`
-	Terms           []Term          `json:"terms"`
-	Contradictions  []Contradiction `json:"contradictions"`
-	Questions       []Question      `json:"questions"`
-	Scopes          []ScopeProposal `json:"scopes"`
-	Proposal        ModelProposal   `json:"proposal"`
-	Digest          string          `json:"digest"`
+	APIVersion          string          `json:"apiVersion"`
+	DiscoveryDigest     string          `json:"discoveryDigest"`
+	TargetBasis         string          `json:"targetBasis,omitempty"`
+	TargetRevision      string          `json:"targetRevision,omitempty"`
+	TargetContextDigest string          `json:"targetContextDigest,omitempty"`
+	Method              string          `json:"method"` // human-review, static-tool, or agent-assisted
+	RunnerIdentity      string          `json:"runnerIdentity,omitempty"`
+	RunnerDigest        string          `json:"runnerDigest,omitempty"`
+	SchemaDigest        string          `json:"schemaDigest"`
+	Claims              []Claim         `json:"claims"`
+	Terms               []Term          `json:"terms"`
+	Contradictions      []Contradiction `json:"contradictions"`
+	Questions           []Question      `json:"questions"`
+	Scopes              []ScopeProposal `json:"scopes"`
+	Proposal            ModelProposal   `json:"proposal"`
+	Digest              string          `json:"digest"`
 }
 
 type QuestionResolution struct {

@@ -19,6 +19,11 @@ func ValidateDistillation(discovery Discovery, report Distillation) error {
 	if report.APIVersion != DistillationVersion || report.DiscoveryDigest != discovery.Digest || !validDigest(report.SchemaDigest) {
 		return errors.New("distillation must bind the exact discovery and schema digest")
 	}
+	if report.TargetBasis != "" || report.TargetRevision != "" || report.TargetContextDigest != "" {
+		if !validDigest(report.TargetBasis) || !validFullCommit(report.TargetRevision) || !validDigest(report.TargetContextDigest) {
+			return errors.New("target-bound distillation must bind a project digest, full revision, and target-context digest together")
+		}
+	}
 	switch report.Method {
 	case "human-review", "static-tool", "agent-assisted":
 	default:

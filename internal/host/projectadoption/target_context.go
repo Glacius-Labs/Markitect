@@ -38,6 +38,8 @@ type DistillationTargetContract struct {
 // excludes target inventory bytes and does not turn target facts into source
 // evidence.
 type DistillationTargetContext struct {
+	ProjectDigest   string                       `json:"projectDigest"`
+	Revision        string                       `json:"revision"`
 	ModelDigest     string                       `json:"modelDigest"`
 	RootManagerID   string                       `json:"rootManagerId"`
 	Managers        []DistillationTargetManager  `json:"managers"`
@@ -49,10 +51,15 @@ type DistillationTargetContext struct {
 // TargetContextForProject derives a bounded target context from a Project
 // already loaded and accepted by the caller. It performs no repository reads.
 func TargetContextForProject(project *projectwork.Project) (DistillationTargetContext, error) {
-	if project == nil || project.Report.ModelDigest == "" {
-		return DistillationTargetContext{}, errors.New("loaded target Project with a model digest is required")
+	if project == nil || project.Snapshot == nil || project.Provisional || project.Snapshot.Provisional || !validFullCommit(project.Revision) || project.Snapshot.ID != project.Revision {
+		return DistillationTargetContext{}, errors.New("target context requires a fixed committed Project revision and snapshot")
+	}
+	if !validDigest(project.Digest) || !validDigest(digestWithoutPrefix(project.Report.ModelDigest)) || project.Report.ModelDigest != project.Model.Digest || project.Report.Status != "succeeded" || !validDigest(digestWithoutPrefix(project.Report.Digest)) {
+		return DistillationTargetContext{}, errors.New("target context requires a successful project-model report and bound model digest")
 	}
 	target := DistillationTargetContext{
+		ProjectDigest:   project.Digest,
+		Revision:        project.Revision,
 		ModelDigest:     strings.TrimPrefix(project.Report.ModelDigest, "sha256:"),
 		Managers:        []DistillationTargetManager{},
 		PublicContracts: []DistillationTargetContract{},
@@ -114,8 +121,8 @@ func SealTargetContext(target *DistillationTargetContext) {
 }
 
 func ValidateTargetContext(target DistillationTargetContext) error {
-	if !validDigest(target.ModelDigest) || target.RootManagerID == "" || target.Managers == nil || target.PublicContracts == nil || target.ModelFiles == nil {
-		return errors.New("target context requires a model digest, root Manager, and explicit Manager, contract, and model-file lists")
+	if !validDigest(target.ProjectDigest) || !validFullCommit(target.Revision) || !validDigest(target.ModelDigest) || target.RootManagerID == "" || target.Managers == nil || target.PublicContracts == nil || target.ModelFiles == nil {
+		return errors.New("target context requires fixed project/model digests, revision, root Manager, and explicit Manager, contract, and model-file lists")
 	}
 	managerIDs := map[string]DistillationTargetManager{}
 	namespaces := map[string]string{}
