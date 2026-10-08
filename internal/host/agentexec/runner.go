@@ -288,7 +288,15 @@ func fingerprintConfig(input Config, inheritedEnvironment []string) (Config, str
 	if err != nil {
 		return Config{}, "", nil, "", "", "", nil, "", err
 	}
-	configDigest := digest(append(append([]byte(nil), configBytes...), []byte("executable:"+executableDigest+"runtime:"+runtimeDigest+"environment:"+environmentDigest)...))
+	bindings := "executable:" + executableDigest + "runtime:" + runtimeDigest
+	// A nil allowlist is the historical inherit-all contract. Keep its config
+	// identity independent of ambient values so older prepared plans do not
+	// become stale when the caller's environment changes. New project flows use
+	// an explicit (possibly empty) allowlist and bind those effective values.
+	if cfg.EnvironmentAllowlist != nil {
+		bindings += "environment:" + environmentDigest
+	}
+	configDigest := digest(append(append([]byte(nil), configBytes...), []byte(bindings)...))
 	return cfg, executable, runtimeBefore, runtimeDigest, executableDigest, configDigest, childEnvironment, environmentDigest, nil
 }
 

@@ -636,6 +636,30 @@ func TestEnvironmentAllowlistSemanticsAndDigest(t *testing.T) {
 	}
 }
 
+func TestLegacyNilAllowlistFingerprintIgnoresAmbientChanges(t *testing.T) {
+	config := testConfig()
+	if config.EnvironmentAllowlist != nil {
+		t.Fatal("fixture must retain the historical nil allowlist")
+	}
+	const ambientName = "MARKITECT_AGENTEXEC_LEGACY_FINGERPRINT_TEST"
+	t.Setenv(ambientName, "prepared-value")
+	_, _, _, _, _, preparedFingerprint, _, preparedEnvironmentDigest, err := fingerprintConfig(config, os.Environ())
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv(ambientName, "invocation-value")
+	_, _, _, _, _, invocationFingerprint, _, invocationEnvironmentDigest, err := fingerprintConfig(config, os.Environ())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if invocationFingerprint != preparedFingerprint {
+		t.Fatalf("legacy nil-allowlist fingerprint changed with ambient environment: prepared=%s invocation=%s", preparedFingerprint, invocationFingerprint)
+	}
+	if invocationEnvironmentDigest == preparedEnvironmentDigest {
+		t.Fatal("receipt environment digest did not capture the changed inherited environment")
+	}
+}
+
 func TestEnvironmentAllowlistIsBoundIntoFingerprintAndReceipt(t *testing.T) {
 	config := testConfig()
 	config.EnvironmentAllowlist = stringList("MARKITECT_AGENTEXEC_TEST_SECRET", helperEnv, "MARKITECT_AGENTEXEC_TEST_MODE", "MARKITECT_AGENTEXEC_TEST_ROLE")
