@@ -26,6 +26,7 @@ Markitect soll ein gemeinsames, kanonisches Verständnis des Projekts ausdrücke
 | Dokument | Verantworteter Inhalt |
 |---|---|
 | [Zielmodell](model.md) | Begriffe, vorgeschlagene Verträge, Verantwortungsregeln und durchgehendes Order-Beispiel |
+| [Fachliche Module und Vertical Slices](conceptual-modules.md) | Neueste Gliederungsdiskussion: fachliche Slices, gemeinsamer Modulbegriff als Vorschlag und ausdrückliche Verträge über Grenzen; Shop-Beleg noch im ersten Zuschnitt |
 | [Umsetzungsplan](implementation-plan.md) | Quellabgleich, endliche Schritte, Abnahmeszenarien und offene Entscheidungen |
 | [Shop-Walkthrough](shop-walkthrough.md) | Konkrete Antworten zu Dateistruktur, Modell, Änderungen und Start der Umsetzung |
 | [Shop-Modellbeleg](shop-example/README.md) | Vollständige vorgeschlagene YAML-Dateien, Vorher-/Nachher-Stand und lokaler Belegprüfer |

@@ -47,6 +47,8 @@ Für einen definierten Begriff ohne ausführbaren Check bleibt die Durchsetzung 
 
 ## 3. Bereiche, Namespaces und Module
 
+**Fortgeführter Entwurf:** Die [neueste Gliederungsdiskussion](conceptual-modules.md) hält die Nutzerkorrektur fest: `area` ist kein geeigneter öffentlicher Name; die Ablage soll nach fachlichen Vertical Slices gegliedert werden. Die folgende getrennte Begriffstabelle ist der erste Entwurfsstand. Der neuere Vorschlag vereinigt die lokale Gliederung unter einem primären Modulbegriff; dessen endgültiger Name und Syntax sind noch offen.
+
 | Begriff | Vorgeschlagene Bedeutung | Verantwortung |
 |---|---|---|
 | Bereich | Dauerhafte Verantwortung für einen Teil des Projekts; kann weitere Bereiche enthalten | Genau ein verantwortlicher Rollenbezug, eigener Zweck, klarer Scope und Integrationspflicht |
