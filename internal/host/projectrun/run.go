@@ -495,25 +495,27 @@ func invokeManager(ctx context.Context, host Host, invoker Invoker, root string,
 	}
 	writePaths := allowedWritePaths(project.Config, project.Report, task, phase, conflicts)
 	artifactRelations, foreignOwnership := suppliedArtifactOwnership(project.Report, artifacts, task.ManagerID, writePaths)
+	responsibilities := activeResponsibilities(project.Report, plan.Managers)
 	ctxPayload := struct {
-		Phase                string                      `json:"phase"`
-		PhaseGuidance        string                      `json:"phaseGuidance"`
-		EscalationTarget     string                      `json:"escalationTarget"`
-		GlobalGoal           string                      `json:"globalGoal"`
-		OwnTask              string                      `json:"ownTask"`
-		AllowedWritePaths    []string                    `json:"allowedWritePaths"`
-		ArtifactRelations    []artifactPathRelation      `json:"artifactRelations"`
-		ForeignOwnership     []foreignOwnershipMetadata  `json:"foreignOwnership"`
-		Manager              projectmodel.ManagerContext `json:"manager"`
-		DirectChildren       []string                    `json:"directChildren"`
-		DirectChildContracts []projectmodel.Statement    `json:"directChildContracts"`
-		DirectChildArtifacts []projectmodel.Artifact     `json:"directChildArtifacts"`
-		ChildReports         []childReport               `json:"childReports,omitempty"`
-		ConflictPaths        []string                    `json:"conflictPaths,omitempty"`
-		CandidateDigest      string                      `json:"candidateDigest"`
-		ResponseSchema       json.RawMessage             `json:"responseSchema"`
+		Phase                  string                      `json:"phase"`
+		PhaseGuidance          string                      `json:"phaseGuidance"`
+		EscalationTarget       string                      `json:"escalationTarget"`
+		GlobalGoal             string                      `json:"globalGoal"`
+		OwnTask                string                      `json:"ownTask"`
+		AllowedWritePaths      []string                    `json:"allowedWritePaths"`
+		ArtifactRelations      []artifactPathRelation      `json:"artifactRelations"`
+		ForeignOwnership       []foreignOwnershipMetadata  `json:"foreignOwnership"`
+		ActiveResponsibilities []activeResponsibility      `json:"activeResponsibilities"`
+		Manager                projectmodel.ManagerContext `json:"manager"`
+		DirectChildren         []string                    `json:"directChildren"`
+		DirectChildContracts   []projectmodel.Statement    `json:"directChildContracts"`
+		DirectChildArtifacts   []projectmodel.Artifact     `json:"directChildArtifacts"`
+		ChildReports           []childReport               `json:"childReports,omitempty"`
+		ConflictPaths          []string                    `json:"conflictPaths,omitempty"`
+		CandidateDigest        string                      `json:"candidateDigest"`
+		ResponseSchema         json.RawMessage             `json:"responseSchema"`
 	}{Phase: phase, PhaseGuidance: phaseGuidance(phase), EscalationTarget: escalationTarget(task), GlobalGoal: plan.Goal, OwnTask: task.Goal,
-		AllowedWritePaths: writePaths, ArtifactRelations: artifactRelations, ForeignOwnership: foreignOwnership,
+		AllowedWritePaths: writePaths, ArtifactRelations: artifactRelations, ForeignOwnership: foreignOwnership, ActiveResponsibilities: responsibilities,
 		Manager: managerContext, DirectChildren: activeChildrenFromContext(managerContext),
 		DirectChildContracts: publicChildContracts(project.Report, activeChildIDs), DirectChildArtifacts: requiredChildArtifacts(project.Report, activeChildIDs),
 		ChildReports: childReports, ConflictPaths: conflicts, CandidateDigest: project.Snapshot.Digest(), ResponseSchema: taskResponseSchema(phase)}
@@ -602,8 +604,8 @@ type childReport struct {
 }
 
 func phaseGuidance(phase string) string {
-	const work = "Host protocol for work: globalGoal is context; implement only ownTask under this Manager's mandate. Treat allowedWritePaths as the complete set of paths this invocation may propose; exact files are exact paths, and paths ending in / are directory scopes. Propose candidateFiles only for owned files or this Manager's Artifact paths within those scopes. ArtifactRelations and ForeignOwnership describe read context and path ownership, not write permission. Do not write a path owned by another Manager, even if an Artifact references it or its contents were supplied for reading. If a relevant change belongs to another Manager, describe the path and owner briefly in the summary for integration; do not implement that Manager's file, tests, or docs, and do not turn its work into a blocker or risk when that Manager is active. .markitect and other control-plane paths are never writable. Delegate to every ID in directChildren exactly once with a concrete, bounded ownTask and to no other Manager. The outer agent outcome must be proposed even when this report status is partial; status describes this Manager's local work only. Status complete means this Manager completed its own work and all required delegations, not that children or the whole project are already complete. Status no-op is valid when this Manager has no own-scope edit to make; it still must provide every required delegation. Use status partial only for genuinely incomplete own-scope work, with an actionable question or risk. Child implementation files are intentionally not supplied during work: their absence is not a blocker or risk because those children receive their own task. Keep resolvedQuestions and resolvedRisks empty during work. Do not claim integration or verification."
-	const integrate = "Host protocol for integration: globalGoal is context; implement only this Manager's ownTask and mandate. Inspect every direct child report and current merged candidate artifacts supplied for active direct children, plus directChildContracts, directChildArtifacts, ArtifactRelations, and ForeignOwnership. Integrate actual child candidate bytes against the mandate and supplied contracts; do not merely repeat reports. Set integrated=true only after checking each child result. Do not create delegations. Propose candidateFiles only within allowedWritePaths, except an exact path in conflictPaths is authorized for this integration. Readable artifact relationships or foreign ownership do not grant write authority. If no additional integration edit is needed, return status complete with an empty candidateFiles array; status no-op is not valid for integration. Resolve only exact question/risk text present in this Manager or direct child reports, copying it verbatim to resolvedQuestions/resolvedRisks. Keep unresolved obligations in questions/risks and escalate to escalationTarget; do not claim checks passed."
+	const work = "Host protocol for work: globalGoal is context; implement only ownTask under this Manager's mandate. Treat allowedWritePaths as the complete set of paths this invocation may propose; exact files are exact paths, and paths ending in / are directory scopes. Propose candidateFiles only for owned files or this Manager's Artifact paths within those scopes. ArtifactRelations and ForeignOwnership describe read context and path ownership, not write permission. Do not write a path owned by another Manager, even if an Artifact references it or its contents were supplied for reading. Use activeResponsibilities to identify which active Manager owns another needed file or test. If relevant work belongs to another active Manager, state the owner and need briefly in the summary for routing by an empowered parent; do not implement that Manager's files, tests, or docs, and do not ask a parent to authorize a path. Its active presence means this is routing information, not a blocker or risk. If no active Manager owns the needed work, report the exact mandate gap as an actionable question or risk. .markitect and other control-plane paths are never writable. Delegate to every ID in directChildren exactly once with a concrete, bounded ownTask and to no other Manager. The outer outcome must be proposed when escalateTo is empty, and escalated when escalateTo names escalationTarget. Status describes this Manager's local work only: complete means own work and required delegations are done, not that children or the whole project are complete. Status no-op is valid when this Manager has no own-scope edit to make; it still must provide every required delegation. Use status partial only for genuinely incomplete own-scope work, with an actionable question or risk. Child implementation files are intentionally not supplied during work: their absence is not a blocker or risk because those children receive their own task. Keep resolvedQuestions and resolvedRisks empty during work. Do not claim integration or verification."
+	const integrate = "Host protocol for integration: globalGoal is context; implement only this Manager's ownTask and mandate. Use activeResponsibilities to interpret cross-branch ownership and route any still-needed work through this Manager's parent when that owner is not a direct child. Inspect every direct child report and current merged candidate artifacts supplied for active direct children, plus directChildContracts, directChildArtifacts, ArtifactRelations, and ForeignOwnership. Integrate actual child candidate bytes against the mandate and supplied contracts; do not merely repeat reports. Set integrated=true only after checking each child result. Do not create delegations. Propose candidateFiles only within allowedWritePaths, except an exact path in conflictPaths is authorized for this integration. Readable artifact relationships or foreign ownership do not grant write authority. If no additional integration edit is needed, return status complete with an empty candidateFiles array; status no-op is not valid for integration. Resolve only exact question/risk text present in this Manager or direct child reports, copying it verbatim to resolvedQuestions/resolvedRisks. Keep unresolved obligations in questions/risks. The outer outcome must be proposed when escalateTo is empty, and escalated when escalateTo names escalationTarget. Do not claim checks passed."
 	if phase == "integrate" {
 		return integrate
 	}
@@ -628,6 +630,27 @@ type foreignOwnershipMetadata struct {
 	Artifacts  []string `json:"artifacts"`
 	Checks     []string `json:"checks"`
 	Statements []string `json:"statements"`
+}
+
+type activeResponsibility struct {
+	ManagerID string   `json:"managerId"`
+	Purpose   string   `json:"purpose"`
+	Owns      []string `json:"owns"`
+}
+
+func activeResponsibilities(report projectmodel.Report, tasks []ManagerTask) []activeResponsibility {
+	active := map[string]bool{}
+	for _, task := range tasks {
+		active[task.ManagerID] = true
+	}
+	out := make([]activeResponsibility, 0, len(active))
+	for _, manager := range report.Managers {
+		if active[manager.ID] {
+			out = append(out, activeResponsibility{ManagerID: manager.ID, Purpose: manager.Purpose, Owns: append([]string(nil), manager.Owns...)})
+		}
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].ManagerID < out[j].ManagerID })
+	return out
 }
 
 func allowedWritePaths(config projectwork.Config, report projectmodel.Report, task ManagerTask, phase string, conflicts []string) []string {
