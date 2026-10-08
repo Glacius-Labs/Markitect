@@ -31,9 +31,11 @@ type GuardedWriteFile struct {
 type GuardedWriteCapture struct {
 	Root     string
 	Identity source.GitIdentity
-	Head     string
-	Branch   string
-	Files    map[string]GuardedWriteFile
+	// Head is a full commit ID, or `unborn:<symbolic-ref>` for a new named
+	// branch with no commit yet. A later first commit invalidates that capture.
+	Head   string
+	Branch string
+	Files  map[string]GuardedWriteFile
 
 	rootIdentity os.FileInfo
 	seal         string
@@ -256,22 +258,27 @@ func normalizeGuardedPaths(input []string) ([]string, error) {
 		return nil, errors.New("guarded capture requires at least one selected path")
 	}
 	paths := append([]string(nil), input...)
+	seen := make(map[string]struct{}, len(paths))
 	for _, name := range paths {
 		if err := validateWritePath(name); err != nil {
 			return nil, err
 		}
+		if _, exists := seen[name]; exists {
+			return nil, fmt.Errorf("duplicate selected path %q", name)
+		}
+		seen[name] = struct{}{}
+	}
+	if err := source.ValidateIncludedPaths(paths); err != nil {
+		return nil, fmt.Errorf("selected paths are unsafe or have portable aliases: %w", err)
 	}
 	sort.Strings(paths)
-	for i := 1; i < len(paths); i++ {
-		if strings.EqualFold(paths[i-1], paths[i]) {
-			return nil, fmt.Errorf("duplicate or aliased selected path %q", paths[i])
-		}
-	}
 	return paths, nil
 }
 
 func normalizeGuardedChanges(changes []GuardedWriteChange, selected map[string]GuardedWriteFile) ([]GuardedWriteChange, error) {
 	result := append([]GuardedWriteChange(nil), changes...)
+	paths := make([]string, 0, len(result))
+	seen := make(map[string]struct{}, len(result))
 	for i := range result {
 		change := &result[i]
 		if err := validateWritePath(change.Path); err != nil {
@@ -280,6 +287,11 @@ func normalizeGuardedChanges(changes []GuardedWriteChange, selected map[string]G
 		if _, ok := selected[change.Path]; !ok {
 			return nil, fmt.Errorf("guarded change is outside the captured selection: %s", change.Path)
 		}
+		if _, exists := seen[change.Path]; exists {
+			return nil, fmt.Errorf("duplicate guarded change %q", change.Path)
+		}
+		seen[change.Path] = struct{}{}
+		paths = append(paths, change.Path)
 		if change.Delete {
 			if len(change.Bytes) != 0 || change.Mode != 0 {
 				return nil, fmt.Errorf("delete change must not include bytes or mode: %s", change.Path)
@@ -291,12 +303,10 @@ func normalizeGuardedChanges(changes []GuardedWriteChange, selected map[string]G
 		}
 		change.Bytes = append([]byte(nil), change.Bytes...)
 	}
-	sort.Slice(result, func(i, j int) bool { return result[i].Path < result[j].Path })
-	for i := 1; i < len(result); i++ {
-		if strings.EqualFold(result[i-1].Path, result[i].Path) {
-			return nil, fmt.Errorf("duplicate or aliased guarded change %q", result[i].Path)
-		}
+	if err := source.ValidateIncludedPaths(paths); err != nil {
+		return nil, fmt.Errorf("guarded changes have unsafe or portable path aliases: %w", err)
 	}
+	sort.Slice(result, func(i, j int) bool { return result[i].Path < result[j].Path })
 	return result, nil
 }
 
@@ -311,7 +321,15 @@ func guardedGitState(root string) (source.GitIdentity, string, string, error) {
 	}
 	head, err := source.GitOutput(root, "rev-parse", "--verify", "HEAD^{commit}")
 	if err != nil {
-		return source.GitIdentity{}, "", "", fmt.Errorf("read guarded write HEAD: %w", err)
+		headRef, refErr := source.GitOutput(root, "symbolic-ref", "--quiet", "HEAD")
+		if refErr != nil {
+			return source.GitIdentity{}, "", "", fmt.Errorf("read guarded write HEAD: %w", err)
+		}
+		ref := strings.TrimSpace(string(headRef))
+		if ref != "refs/heads/"+branch {
+			return source.GitIdentity{}, "", "", fmt.Errorf("unborn guarded write HEAD %q does not match named branch %q", ref, branch)
+		}
+		return identity, branch, "unborn:" + ref, nil
 	}
 	return identity, branch, strings.TrimSpace(string(head)), nil
 }
