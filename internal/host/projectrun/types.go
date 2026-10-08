@@ -159,6 +159,10 @@ type ManagerTask struct {
 	State                  string       `json:"state"`
 	ReportStatus           string       `json:"reportStatus"`
 	Attempts               int          `json:"attempts,omitempty"`
+	WorkAttempts           int          `json:"workAttempts,omitempty"`
+	IntegrationAttempts    int          `json:"integrationAttempts,omitempty"`
+	RepairPhase            string       `json:"repairPhase,omitempty"`
+	RepairDiagnostic       string       `json:"repairDiagnostic,omitempty"`
 	ReportID               string       `json:"reportId,omitempty"`
 	CandidateID            string       `json:"candidateId,omitempty"`
 	IntegrationReportID    string       `json:"integrationReportId,omitempty"`
