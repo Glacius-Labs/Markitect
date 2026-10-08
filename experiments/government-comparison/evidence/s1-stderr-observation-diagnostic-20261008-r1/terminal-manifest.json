@@ -1,0 +1,39 @@
+{
+  "key": "s1-stderr-observation-diagnostic-20261008-r1",
+  "baseSha": "517319e5c5d333ebdb52b96e08892bd460a0bc22",
+  "sealedUtc": "2026-10-08T17:30:08.868422+00:00",
+  "status": "terminal-preparation-blocked",
+  "files": {
+    "authorization-grant.json": {
+      "bytes": 7788,
+      "sha256": "e8de6b368f0e411de175137354f6761c2322fc58587197fb6f6863d9514f62fc"
+    },
+    "closure-validation.json": {
+      "bytes": 1869,
+      "sha256": "b9c62b90c8334e8bd9546129dcb90b4d41cafe11c82024897cf4f78acae56cf7"
+    },
+    "current-handoff.md": {
+      "bytes": 1625,
+      "sha256": "7e78124750cb85aa61e4e0533781dbadaec2c3cbc9a054606ba76e92346c35f7"
+    },
+    "postreview.md": {
+      "bytes": 2175,
+      "sha256": "586945e374e172995541dfba3215250799411b366b95a143b3fc3744021c7f2e"
+    },
+    "slot-release.json": {
+      "bytes": 563,
+      "sha256": "4b7a85dbeb7fa3dab2f318420f02aad53d7f19a12c210cbf74136dc613004410"
+    },
+    "terminal-summary.json": {
+      "bytes": 2853,
+      "sha256": "55b8d0bc157755b71289c7ed158c79e1f4c38002811512fbd2d99d73d5243548"
+    }
+  },
+  "payloadFiles": 6,
+  "totalFilesIncludingManifest": 7,
+  "privateExcerptIncluded": false,
+  "runtimeSourceCommit": null,
+  "runtimeFreezeCommit": null,
+  "remainingRuntimeAllocation": 0,
+  "claimBoundary": "Terminal metadata and independent review only; no runtime attempt or hypothesis result."
+}
