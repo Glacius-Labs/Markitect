@@ -22,17 +22,18 @@ import (
 const (
 	verifyOutputLimit = 1 << 20
 	verifyWaitDelay   = 2 * time.Second
-	verifyDefaultTime = 10 * time.Minute
+	verifyDefaultTime = authoring.DefaultCheckTimeoutSeconds * time.Second
 )
 
 // GateResult records one explicitly declared repository check run against the
 // fixed Markitect snapshot. Tool is the executable token declared in spec.checks.
 type GateResult struct {
-	Name         string `yaml:"name"`
-	Tool         string `yaml:"tool"`
-	ExitCode     int    `yaml:"exitCode"`
-	Milliseconds int64  `yaml:"milliseconds"`
-	Output       string `yaml:"output,omitempty"`
+	Name                string `yaml:"name"`
+	Tool                string `yaml:"tool"`
+	ExitCode            int    `yaml:"exitCode"`
+	Milliseconds        int64  `yaml:"milliseconds"`
+	TimeoutMilliseconds int64  `yaml:"timeoutMilliseconds"`
+	Output              string `yaml:"output,omitempty"`
 }
 
 // VerifyError classifies why repository verification did not complete. Kind is
@@ -53,15 +54,17 @@ func (e *VerifyError) Error() string {
 func (e *VerifyError) Unwrap() error { return e.Err }
 
 type verifyCommand struct {
-	name string
-	tool string
-	args []string
-	env  []string
+	name    string
+	tool    string
+	args    []string
+	env     []string
+	timeout time.Duration
 }
 
 // VerifyRepository runs only checks explicitly declared on the Project from
-// the same immutable snapshot used by the graph. Each check has a 10-minute
-// execution limit. An absent checks list is incomplete repository evidence;
+// the same immutable snapshot used by the graph. Checks default to 10 minutes;
+// an explicit timeoutSeconds may select 1 through 1800 seconds per check.
+// An absent checks list is incomplete repository evidence;
 // callers may still use graph-only validation.
 func VerifyRepository(p *Project) ([]GateResult, error) {
 	return verifyRepositoryWithTimeout(p, verifyDefaultTime)
@@ -137,7 +140,11 @@ func verifySnapshotScoped(captured *snapshot.Snapshot, checks []authoring.Check,
 				return results, &VerifyError{Kind: "incomplete-evidence", Gate: command.name, Err: err}
 			}
 		}
-		result, runErr := runVerifyCommand(command, executable, directory, timeout)
+		commandTimeout := timeout
+		if command.timeout > 0 {
+			commandTimeout = command.timeout
+		}
+		result, runErr := runVerifyCommand(command, executable, directory, commandTimeout)
 		if immutableInputs {
 			integrityErr := snapshotFilesUnchanged(captured, directory)
 			os.RemoveAll(directory)
@@ -171,7 +178,11 @@ func planVerifyCommands(checks []authoring.Check) ([]verifyCommand, error) {
 		names[name] = true
 		tool := check.Run[0]
 		args := append([]string(nil), check.Run[1:]...)
-		commands = append(commands, verifyCommand{name: name, tool: tool, args: args})
+		var timeout time.Duration
+		if check.TimeoutSeconds != nil {
+			timeout = time.Duration(*check.TimeoutSeconds) * time.Second
+		}
+		commands = append(commands, verifyCommand{name: name, tool: tool, args: args, timeout: timeout})
 	}
 	return commands, nil
 }
@@ -204,6 +215,7 @@ func runVerifyCommand(command verifyCommand, executable, directory string, timeo
 	result := GateResult{
 		Name: command.name, Tool: command.tool,
 		ExitCode: 0, Milliseconds: time.Since(started).Milliseconds(), Output: output.String(),
+		TimeoutMilliseconds: timeout.Milliseconds(),
 	}
 	if output.exceeded() {
 		result.ExitCode = -1

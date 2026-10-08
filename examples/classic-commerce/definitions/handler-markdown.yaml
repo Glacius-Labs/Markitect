@@ -1,0 +1,12 @@
+apiVersion: markitect.foundation/v1
+kind: ProjectionPolicy
+metadata:
+  namespace: commerce
+  name: handler-markdown
+purpose: Document the selected canonical meaning with explicit source provenance.
+spec:
+  sourceKind:
+    apiVersion: commerce.example.org/v1
+    kind: Handler
+  targetTechnology: markdown
+  guidance: Preserve canonical purpose and declared relationships; generated prose has no canonical authority.

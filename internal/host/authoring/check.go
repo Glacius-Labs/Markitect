@@ -9,11 +9,16 @@ import (
 
 const CheckNamePattern = `^[A-Za-z0-9][A-Za-z0-9._-]*$`
 const CheckExecutablePattern = `^[^/\\\s]+$`
+const DefaultCheckTimeoutSeconds = 600
+const MaxCheckTimeoutSeconds = 1800
 
 var checkNamePattern = regexp.MustCompile(CheckNamePattern)
 var checkExecutablePattern = regexp.MustCompile(CheckExecutablePattern)
 
 func ValidateCheck(check Check) error {
+	if check.TimeoutSeconds != nil && (*check.TimeoutSeconds < 1 || *check.TimeoutSeconds > MaxCheckTimeoutSeconds) {
+		return fmt.Errorf("timeoutSeconds must be between 1 and %d", MaxCheckTimeoutSeconds)
+	}
 	if !checkNamePattern.MatchString(check.Name) {
 		return fmt.Errorf("name must match %q", CheckNamePattern)
 	}
