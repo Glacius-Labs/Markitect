@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-08T01:42:49Z",
+  "updatedUtc": "2026-10-08T01:49:02Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -12,12 +12,18 @@
     "intervalMinutes": 120,
     "reportEveryReview": false,
     "reportTimezone": "Europe/Berlin",
-    "lastVerifiedUtc": "2026-10-08T01:37:45Z",
-    "verification": "Existing heartbeat updated through app and saved rrule/ACTIVE/current target read back.",
+    "lastVerifiedUtc": "2026-10-08T01:49:02Z",
+    "verification": "Existing ACTIVE heartbeat exact saved prompt/name/target and 2h cadence verified; four owners included, callbacks primary, unchanged reports suppressed.",
     "userReaffirmed": "Direct 8 October request: callbacks at completion/need, fallback every 1-3 hours, chosen 2h; unchanged routine summaries suppressed.",
     "latestMandateUpdatedUtc": "2026-10-08T01:37:45Z",
     "reportOnMeaningfulChange": true,
-    "mode": "event-driven callbacks with two-hour fallback"
+    "mode": "event-driven callbacks with two-hour fallback",
+    "coordinatedThreadIds": [
+      "01a1169b-9357-7df3-a8f6-f913557c782a",
+      "01a1169c-3df6-7571-997d-48ab57365875",
+      "01a111ec-a913-7830-91b0-925d0a1dd1b2",
+      "01a11928-cc8d-7580-9d29-f6557bb2cbd7"
+    ]
   },
   "threads": [
     {
@@ -1737,6 +1743,25 @@
           ],
           "isError": false
         }
+      },
+      "oldschoolBaselineBindingAssignment": {
+        "key": "scientist-oldschool-baseline-binding-20261008",
+        "authorizedUtc": "2026-10-08T01:48:09Z",
+        "status": "sent once",
+        "prompt": "Direkte neue Nutzeranweisung in Overseer: „Stelle auch sicher dass klassisches Agentic Coding in den Case Studies durch den Scientist berücksichtigt und gemessen wird als Refernezwert. Hierzu steht dir der Chat \"Oldschool\" zur Verfügung“.\n\nOldschool ist der vorhandene lokale Chat 01a11928-cc8d-7580-9d29-f6557bb2cbd7. Er ist jetzt Engineering-Eigentümer der starken Conventional-Referenz. Du behältst gemeinsame Aufgaben, Versuchshülle, Metriken und getrennte unabhängige Bewertung. Die bisherigen drei Arme und sechs Basiszellen bleiben: Conventional/Oldschool, Classic, Government jeweils Greenfield/Brownfield. Ein reiner Classic-Government-Vergleich genügt nicht. Gute Planung, normale Absichts-/Architekturdokumentation, Architektur-/Regressionstests, Subagenten und unabhängige Reviews bleiben für Conventional erlaubt; kein Markitect/Government, keine künstlich schwache Referenz.\n\nErgänzung scientist-oldschool-baseline-binding-20261008 für deinen nächsten öffentlichen Studien-Setupstand: Schließe zuerst die laufende government-scope-identity-offline-20261008 im bestehenden Umfang ab. Ergänze danach einen schmalen öffentlichen Einbindungs-/Messplan zu Oldschool und binde dessen Rolle ausdrücklich an die vorhandene 3x2-Matrix, gemeinsame Anforderungen/Setup-Pflichten, unveränderte Outcome-Kriterien/Gewichte und gemeinsames endliches Ressourcenprofil. Berichte später je Ausgangslage absolute Qualität/Fehler/Drift/Änderungsqualität, Setup-/Pflege-/Koordinationsaufwand, Lauf-/Agenten-/menschliche Zeit, tatsächlich verfügbare Token-/Kostenwerte und Aufsicht; zeige Classic/Government jeweils gegenüber dieser gemessenen Conventional-Referenz. Unbekannte Werte bleiben null; keine Fixture-Ergebnisse oder reine Planungsbriefe als Referenzwert.\n\nDie aktuelle kanonische Ergänzung steht in C:/Users/Consiliari/Glacius Labs/Markitect/docs/design/government/evaluation.md im Abschnitt zur Oldschool-Referenz; deine lokale ältere Designkopie ist hierfür nicht maßgeblich. Oldschool erhält jetzt nur einen fallunabhängigen Arbeitsweisenbrief-Auftrag und keine Studienaufgaben; dessen Ergebnis reicht Overseer öffentlich weiter. Keine privaten Holdouts, fremden Ergebnisse oder zukünftigen Taskkarten an ihn. Er darf weder seine eigenen Endnoten noch das gemeinsame Oracle verfassen.\n\nDer dauerhafte Chat darf nicht als geteilter Gedächtniskontext mehrerer unabhängiger Zellen dienen: Vor realen Läufen echte frische Actor-Kontexte je Zelle, isolierte Zielcheckouts, exaktes verfügbares Modell/Reasoning/Tools/Berechtigungen und messbare Grenzen binden. Überprüfe dabei konzeptionell auch die App-gegen-CLI-Verzerrung: Oldschool nicht mit anderen Werkzeugen oder ungemessener Hilfe gegen einen beschränkten Classic-/Government-Runner vergleichen. Ein anderer Ausführungskanal wäre ein neuer gemeinsamer Protokollstand, keine Schutzregelumgehung. Keine zusätzlichen praktischen Runner-/Tool-/Metadatenproben aus diesem Auftrag. Vorbereitung darf nicht heimlich fallbezogen trainieren; alle tatsächlichen Hilfen/Unteragenten zählen später im jeweiligen Arm.\n\nDieser Auftrag ist ausschließlich öffentlicher Setup-/Dokumentationsabgleich plus fokussierte statische Konsistenzprüfung und bei fachlichem Bedarf ein enger unabhängiger Methodenreview. Null neue native Controller-, Wrapper-, Delegate-, Actor-/Modell-/Provider-/Metadatensitzungen, Studienzellen oder vollständige Testsuiten. Vorhandene Quoten/Stops/Pins bleiben. Ein neuer sauberer Dokumentationsstand und klar benannte Voraussetzungen genügen; keine zusätzliche Experimentplattform. Melde den Abschluss dieses Pakets einmal direkt an Overseer gemäß Rückmeldevertrag.",
+        "predecessor": "government-scope-identity-offline-20261008",
+        "scope": "Public role/protocol/measurement binding after existing scope correction; no new experimental runs.",
+        "exitCondition": "Clean public setup amendment with consistent 3x2 matrix, shared resource/capability boundaries and one callback.",
+        "sentUtc": "2026-10-08T01:48:27Z",
+        "response": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"threadId\":\"01a1169c-3df6-7571-997d-48ab57365875\"}"
+            }
+          ],
+          "isError": false
+        }
       }
     },
     {
@@ -2068,9 +2093,40 @@
           }
         }
       ]
+    },
+    {
+      "name": "Oldschool",
+      "threadId": "01a11928-cc8d-7580-9d29-f6557bb2cbd7",
+      "hostId": "local",
+      "afterCursor": "d10992a0-2450-478c-aa5a-d9a57d563dd5:1",
+      "lastObservedStatus": "idle",
+      "activeTurn": null,
+      "initialAssignmentDispatched": true,
+      "assignedMilestone": "oldschool-baseline-preparation-20261008",
+      "worktree": null,
+      "candidateSha": null,
+      "acceptance": "No implementation or measured trial yet.",
+      "baselinePreparationAssignment": {
+        "key": "oldschool-baseline-preparation-20261008",
+        "authorizedUtc": "2026-10-08T01:48:09Z",
+        "status": "sent once",
+        "prompt": "Der Nutzer hat dich im Overseer-Chat 01a11367-a781-7683-a20f-46e12614dcb4 ausdrücklich bereitgestellt: „Stelle auch sicher dass klassisches Agentic Coding in den Case Studies durch den Scientist berücksichtigt und gemessen wird als Refernezwert. Hierzu steht dir der Chat \"Oldschool\" zur Verfügung“. Dein eigener direkter Nutzerauftrag ist, auf Overseer zu warten; dies ist dein erster begrenzter Auftrag.\n\nDu vertrittst gutes klassisches Agentic Coding als Conventional-Referenz. Du bist ausführender Engineering-Eigentümer, nicht Autor gemeinsamer Aufgaben, Holdouts oder deiner endgültigen Bewertung. Scientist besitzt Versuchsaufbau und unabhängige Messung. In späteren freigegebenen Fällen sind normale Planung, verständliche Anforderungs-/Architekturdokumentation, gezielte Tests, Standardwerkzeuge, sinnvolle Subagenten und unabhängige Reviews unter demselben Gesamtbudget erlaubt. Kein Markitect oder Government im Referenzarm; du sollst eine starke faire Referenz liefern.\n\nAuftrag oldschool-baseline-preparation-20261008: Liefere einmalig hier im Chat einen kompakten, fallunabhängigen Arbeitsweisen-/Fähigkeitsbrief (höchstens etwa 600 Wörter). Beschreibe, wie du Nutzerabsicht/Annahmen festhältst, ein neues oder bestehendes Projekt erkundest, Änderungen begrenzt umsetzt, sinnvoll testest/reviewst, Drift/Regressionen behandelst und bei Kontextverlust fortsetzt. Benenne aus dem vorhandenen Sitzungskontext bekannte Werkzeuge und Mess-/Kontextgrenzen; ungeprüfte Fähigkeiten klar als ungeprüft lassen. Keine Testaufrufe oder zusätzlichen Diagnose-/Modell-/Providersitzungen, keine Subagenten für diesen kurzen Brief, keine Repositoryänderungen. Du hast noch keinen freigegebenen Studiencheckout. Dein gemeinsames cwd ist nicht dein Schreibbereich.\n\nLies für diesen Brief weder Studienfixtures/künftige Aufgaben/Oracle noch Implementierungen, Bewertungen oder Ergebnisse anderer Arme/Chats. Der vorhandene Chat bleibt die Anlaufstelle; Scientist muss je Studienzelle frische Actor-Kontexte und isolierte Checkouts sowie ein gleiches tatsächliches Tool-/Modell-/Ressourcenprofil festschreiben. Aus diesem Brief folgt kein Trialstart und kein empirischer Referenzwert.\n\nDer Nutzer hat im selben Overseer-Chat außerdem direkt verlangt: „lass die Agents sich zurückmelden ... Sonst sollen sie sich melden wenn sie fertig sind oder was brauchen.“ Zusammen mit deiner jetzigen ausdrücklichen Einbindung autorisiert das deine Abschluss-/Bedarfsmeldung an Overseer. Bei Bedarf ist die direkte Nutzernachricht dort mit read_thread nachlesbar. Sende den fertigen fallunabhängigen Brief einmalig mit send_message_to_thread an 01a11367-a781-7683-a20f-46e12614dcb4, hostId local, Ereignis oldschool-baseline-preparation-20261008. Keine reine Empfangsbestätigung, Meldeschleife oder periodischen Pings. Anschließend wartest du auf genau abgegrenzte Folgeaufträge; bestehende Studiengrants werden nicht benutzt.",
+        "scope": "One case-independent chat brief, no study inputs, writes or experimental executions.",
+        "exitCondition": "Brief and one direct completion/need callback, then wait.",
+        "sentUtc": "2026-10-08T01:48:26Z",
+        "response": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"threadId\":\"01a11928-cc8d-7580-9d29-f6557bb2cbd7\"}"
+            }
+          ],
+          "isError": false
+        }
+      }
     }
   ],
-  "nextAction": "Scientist completes government-scope-identity-offline-20261008 and reports once directly. Review clean offline result before any new finite native grant. Worker/Architect hold; shared heavy slot free.",
+  "nextAction": "Scientist finishes current offline scope fix, then binds Oldschool to public Conventional reference measurement plan. Oldschool prepares case-independent method/capability brief and reports once. Review callbacks before actual new bounded runs; Worker/Architect hold.",
   "boundaries": {
     "governmentPublication": false,
     "automaticClassicReplacement": false,
@@ -2439,6 +2495,23 @@
       "status": "GOV-P1 and CLASSIC-P1 dispatched once and both active; study versions remain unchanged.",
       "scope": "Intent authoring, canonical model, project setup, model/file upkeep and clear user workflow; up to two demonstrated gaps per owner. No arbitrary extension queue or study fixture changes.",
       "candidatePolicy": "Independent development versions do not replace frozen study inputs. Adoption in a subsequent matched block requires explicit version freeze, prerequisites and finite resource allocation. Results always identify tested version and exclude unretested improvements."
+    },
+    "baselineReference": {
+      "authorizedUtc": "2026-10-08T01:48:09Z",
+      "source": "Direct user request to measure classic agentic coding as a reference and use the existing Oldschool chat.",
+      "ownerThreadId": "01a11928-cc8d-7580-9d29-f6557bb2cbd7",
+      "measurementOwnerThreadId": "01a1169c-3df6-7571-997d-48ab57365875",
+      "arm": "Conventional Agentic",
+      "conditions": [
+        "Greenfield",
+        "Brownfield"
+      ],
+      "totalBaseCellsUnchanged": 6,
+      "independentEvaluation": true,
+      "strongBaselineTools": "Normal planning, documentation, tests, general tools, subagents and independent reviews within same budget; no Markitect/Government.",
+      "contextRule": "Fresh actual actor context and isolated checkout per cell; persistent owner chat is not fresh trial context.",
+      "executionRule": "Exact shared model/reasoning/tool/permission/channel and finite resources before actual execution; no hidden App/CLI confound.",
+      "currentAuthorization": "Preparation only; no trial grant or empirical baseline values."
     }
   },
   "fullSuiteSlotHistory": [
@@ -2640,6 +2713,12 @@
         "processedUtc": "2026-10-08T01:42:34Z",
         "disposition": "Qualified incomplete closure verified; bounded offline follow-up authorized."
       }
-    ]
+    ],
+    "oldschoolAuthorization": {
+      "effectiveUtc": "2026-10-08T01:48:09Z",
+      "source": "Latest direct user supplies Oldschool; earlier direct user instruction requests agent completion/need callbacks.",
+      "threadId": "01a11928-cc8d-7580-9d29-f6557bb2cbd7",
+      "targetThreadId": "01a11367-a781-7683-a20f-46e12614dcb4"
+    }
   }
 }

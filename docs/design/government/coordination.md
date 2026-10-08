@@ -1,4 +1,4 @@
-# Aktive Koordination: Worker, Scientist und Architect
+# Aktive Koordination: Worker, Scientist, Architect und Oldschool
 
 Stand: 2026-10-07. Der Nutzer hat das Go zur Umsetzung und Koordination erteilt. Dieses Dokument aktiviert das Designpaket `09850535de0c2af5f38b2cfd4f20a62702b676eb` und ersetzt dessen historische Hinweise auf das noch ausstehende Go. Architektur, Nachweisgrenzen und endliche Lieferfolge bleiben bestehen. „Implementer“ im Lieferplan bezeichnet den Chat **Worker**, „Case Study“ den Chat **Scientist**.
 
@@ -12,8 +12,9 @@ Am 7. Oktober wurde auf ausdrücklichen Nutzerwunsch die [SAT-inspirierte Modell
 | Worker | `01a1169b-9357-7df3-a8f6-f913557c782a` | Government implementieren und produktbezogene Nachweise liefern; erster Auftrag G1 mit G2-Verträgen |
 | Scientist | `01a1169c-3df6-7571-997d-48ab57365875` | Referenzprojekt, drei Versuchsarme, Greenfield/Brownfield, öffentliche Checks, getrennte Bewertung, Metriken und Vergleich |
 | Architect | `01a111ec-a913-7830-91b0-925d0a1dd1b2` | Classic stabilisieren, erforderliche Quell-/Releaseprüfungen schließen, aufräumen und reproduzierbares Readiness-Paket für Scientist liefern |
+| Oldschool | `01a11928-cc8d-7580-9d29-f6557bb2cbd7` | Gute konventionelle Agentic-Arbeitsweise als gemessene Referenz; Scientist besitzt Versuch, gemeinsame Inputs und unabhängige Bewertung |
 
-Der Nutzer hat die gezielte Beauftragung und fortlaufende Koordination aller drei Chats ausdrücklich autorisiert. Direkte neuere Nutzeraufträge gehen vor. Seit dem direkten Nutzerauftrag vom 8. Oktober melden Worker, Scientist und Architect neue Abschlüsse, Blockaden und benötigte Entscheidungen selbst an Overseer. Die Rückmeldebefugnis und der genaue Ablauf stehen im Abschnitt „Ereignisbezogene Rückmeldung und zweistündliche Absicherung“ am Ende dieser Akte.
+Der Nutzer hat die gezielte Beauftragung und fortlaufende Koordination ausdrücklich autorisiert; am 8. Oktober kam Oldschool als Eigentümer der konventionellen Referenz hinzu. Direkte neuere Nutzeraufträge gehen vor. Worker, Scientist, Architect und Oldschool melden neue Abschlüsse, Blockaden und benötigte Entscheidungen selbst an Overseer. Die Rückmeldebefugnis und der genaue Ablauf stehen im Abschnitt „Ereignisbezogene Rückmeldung und zweistündliche Absicherung“ dieser Akte.
 
 ### Erweiterter Forschungsauftrag vom 7. Oktober
 
@@ -24,6 +25,16 @@ Der laufende G5-Auftrag und der bereits einmalig freigegebene Kontextversuch wer
 Auf Basis echter Befunde darf Overseer höchstens zwei weitere konkrete Fragestellungen priorisieren und dafür minimale Produktänderungen/Versuche an die Eigentümer delegieren. Die erste Forschungsrunde endet spätestens nach sechs Basis-Trials und acht weiteren vollständigen Trials einschließlich etwaiger Wiederholungen mit einer Produktsynthese. Diese Obergrenze ist keine Startfreigabe: Jeder Block braucht vorher feste Stände und ein gleiches endliches Ressourcenprofil; bestehende Grants werden nicht erweitert oder aufgefüllt. Unklare Ergebnisse bleiben unklar. Neue Käufe, unbeschränkte Modellaufrufe, Schutzregelumgehung, automatische Government-Veröffentlichung oder Main-/Classic-Übernahme folgen auch aus der freien Hand nicht.
 
 Der Abschluss enthält einen beurteilbaren Minimalaufbau, sinnvolle optionale Government-Mechanismen, zu vereinfachende Teile und einen versionsgebundenen praktischen Bedienweg vom Nutzerbrief über Modell/Repository bis zu Umsetzung, Modellpflege und Wiederaufnahme. Routineentscheidungen werden eigenständig getroffen; notwendige Nutzerentscheidungen betreffen echte Zielkonflikte oder externe Verpflichtungen. Die Beobachtung endet nicht schon nach dem ersten Pilotbericht, sondern nach dieser endlichen Synthese oder einer tatsächlich benötigten Nutzerentscheidung. Seit dem 8. Oktober erfolgt die Koordination bei Rückmeldungen; der zweistündliche Heartbeat dient als Absicherung. Unveränderte Zustände erzeugen keinen Routinebericht. Abgeschlossene Meilensteine werden nicht ohne konkreten Anlass neu geprüft.
+
+### Oldschool als konventionelle Referenz, direkter Nutzerauftrag vom 8. Oktober
+
+Der Nutzer verlangt ausdrücklich, klassisches Agentic Coding in Scientists Case Studies als Referenz zu messen, und stellt den vorhandenen Chat **Oldschool** (`01a11928-cc8d-7580-9d29-f6557bb2cbd7`, Host `local`) bereit. Overseer hat dessen direkten Auftrag gelesen: „Du bist der Oldschool Entwickler. Warte bis der Overseer dich befehligt.“ Dies gibt dem bestehenden Conventional-Arm einen Eigentümer; es entsteht kein vierter Versuchsarm und keine zusätzliche Zelle.
+
+[evaluation.md](evaluation.md) bindet die Referenz an dieselben drei Arme mal Greenfield/Brownfield, unveränderte Kriterien und gemeinsame Ressourcen. Oldschool besitzt die konventionelle Engineering-Arbeit; Scientist besitzt Versuch, Messung und getrennte Bewertung. Gute Dokumente, Planung, Tests, Standardwerkzeuge, Subagenten und unabhängige Reviews sind erlaubt. Künftige Aufgaben, private Bewertungen und fremde Zellergebnisse bleiben getrennt. Der Abschluss vergleicht Classic und Government jeweils mit der gemessenen Conventional-Referenz.
+
+Der erste Auftrag `oldschool-baseline-preparation-20261008` liefert einen fallunabhängigen Arbeitsweisen-/Fähigkeitsbrief im Chat, ohne Studienmaterial, Repositoryänderung oder experimentelle Ausführung. Oldschool besitzt noch keinen freigegebenen Studiencheckout; sein gemeinsames cwd ist kein Schreibbereich. Scientist schließt seinen laufenden Scope-Auftrag zuerst ab und bindet danach unter `scientist-oldschool-baseline-binding-20261008` Oldschool öffentlich in Rollen-, Kontext- und Messplan ein. Frische Actor-Kontexte pro Zelle und gleiche tatsächliche Modell-/Tool-/Ausführungsvoraussetzungen bleiben zwingend; ein App-gegen-CLI-Unterschied darf nicht still als Methodeneffekt gelten. Diese Vorbereitung ist kein neuer Laufgrant und verwendet keine Restquoten.
+
+Oldschool meldet Abschluss oder Bedarf wie die anderen Eigentümer einmal direkt an Overseer. Grundlage sind die direkte Bereitstellung dieses Chats und der vorherige direkte Nutzerauftrag zu Agentenrückmeldungen. Der bestehende zweistündliche Heartbeat berücksichtigt jetzt vier Chats und bleibt bei unverändertem Stand still. Worker-/Architect-Holds, Studienpins, Ressourcen und Messhistorien bleiben erhalten. Historische Abschnitte mit drei Eigentümern werden durch diese Rollenweiterung ergänzt.
 
 ## Arbeitsbereiche und feste Ausgangsstände
 
