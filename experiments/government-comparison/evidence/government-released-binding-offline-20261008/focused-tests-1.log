@@ -1,0 +1,26 @@
+test_missing_or_different_successor_release_is_rejected (test_government_released_binding.GovernmentReleasedBindingTests.test_missing_or_different_successor_release_is_rejected) ... ok
+test_old_three_field_released_entry_is_rejected (test_government_released_binding.GovernmentReleasedBindingTests.test_old_three_field_released_entry_is_rejected) ... ok
+test_original_release_keeps_the_existing_two_field_contract (test_government_released_binding.GovernmentReleasedBindingTests.test_original_release_keeps_the_existing_two_field_contract) ... ok
+test_production_bindings_pass_the_real_consumer (test_government_released_binding.GovernmentReleasedBindingTests.test_production_bindings_pass_the_real_consumer) ... FAIL
+test_snapshot_requires_its_separate_exact_file_release (test_government_released_binding.GovernmentReleasedBindingTests.test_snapshot_requires_its_separate_exact_file_release) ... ok
+test_wrong_release_or_metadata_digest_is_rejected (test_government_released_binding.GovernmentReleasedBindingTests.test_wrong_release_or_metadata_digest_is_rejected) ... ok
+test_wrong_source_key_is_rejected_for_both_grants (test_government_released_binding.GovernmentReleasedBindingTests.test_wrong_source_key_is_rejected_for_both_grants) ... ok
+
+======================================================================
+FAIL: test_production_bindings_pass_the_real_consumer (test_government_released_binding.GovernmentReleasedBindingTests.test_production_bindings_pass_the_real_consumer)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\government-comparison\runtime\test_government_released_binding.py", line 79, in test_production_bindings_pass_the_real_consumer
+    self.assertEqual(admitted["sourceCoordinationPath"], str(self.snapshot))
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'C:\\Users\\Consiliari\\AppData\\Local\\Temp\\tmpcoq9k[26 chars]json' != 'C:\\Users\\CONSIL~1\\AppData\\Local\\Temp\\tmpcoq9kl0[24 chars]json'
+- C:\Users\Consiliari\AppData\Local\Temp\tmpcoq9kl0b\coordinator-snapshot.json
+?           ^^^^^^^^^
++ C:\Users\CONSIL~1\AppData\Local\Temp\tmpcoq9kl0b\coordinator-snapshot.json
+?           ^^^^^^^
+
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.174s
+
+FAILED (failures=1)

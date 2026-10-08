@@ -1,0 +1,83 @@
+{
+  "status": "isolated offline binding regression only",
+  "baseCommit": "8702d6ad0f8eed724b77acd7e827880d171e7703",
+  "finalFocusedTests": 7,
+  "finalTestLog": "focused-tests-2.log",
+  "realConsumer": "native_fixture_budget.validate_r5_grant_binding",
+  "validatorMocked": false,
+  "productionHelper": "run-native-integration-r5.fixture_grant_bindings, called by prepare and regression",
+  "temporaryTestRelocations": [
+    "original grant path",
+    "successor envelope path and resulting digest",
+    "frozen coordinator snapshot path"
+  ],
+  "unchangedPins": [
+    "frozen grant values",
+    "snapshot bytes",
+    "Government source/binary/delegate",
+    "Python",
+    "resource limits"
+  ],
+  "testProcessGuard": "subprocess.Popen raises",
+  "testLedgerGuard": "sqlite3.connect raises",
+  "protectedFilesVerified": 3541,
+  "ledgers": [
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\native-starts.sqlite",
+      "sha256": "dd617d58a9021fce0b11482b740d78ccb5ddd143ff0c6fa4fbe08983af7f6705",
+      "starts": 12,
+      "corrections": 3,
+      "reservedSeconds": 1800
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\government-scope-native-20261008-r5\\historical-native-starts.sqlite",
+      "sha256": "dd617d58a9021fce0b11482b740d78ccb5ddd143ff0c6fa4fbe08983af7f6705",
+      "starts": 12,
+      "corrections": 3,
+      "reservedSeconds": 1800
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\government-scope-native-20261008-r5\\terminal-native-starts.sqlite",
+      "sha256": "dd617d58a9021fce0b11482b740d78ccb5ddd143ff0c6fa4fbe08983af7f6705",
+      "starts": 12,
+      "corrections": 3,
+      "reservedSeconds": 1800
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\government-scope-native-20261008-r5\\raw-external\\history-native-starts.sqlite",
+      "sha256": "dd617d58a9021fce0b11482b740d78ccb5ddd143ff0c6fa4fbe08983af7f6705",
+      "starts": 12,
+      "corrections": 3,
+      "reservedSeconds": 1800
+    }
+  ],
+  "experimentalStarts": 0,
+  "newCasePreparation": 0,
+  "liveInputValidate": 0,
+  "freeze": 0,
+  "nativeStarts": 0,
+  "controllerStarts": 0,
+  "wrapperAttempts": 0,
+  "delegates": 0,
+  "realActorStarts": 0,
+  "modelProviderMetadataSessions": 0,
+  "studyCells": 0,
+  "fullProductSuites": 0,
+  "scopeTestsRepeated": false,
+  "engineeringReviewTokens": null,
+  "engineeringReviewWallSeconds": null,
+  "historicalUsage": {
+    "nativeStarts": 12,
+    "wrappers": 10,
+    "delegates": 7,
+    "reservedSeconds": 1800,
+    "realActorStarts": 5,
+    "knownTokenSubtotal": 53331,
+    "totalTokens": null
+  },
+  "syntaxFiles": [
+    "run-native-integration-r5.py",
+    "runtime/test_government_released_binding.py"
+  ],
+  "sourceCommit": "62579cac83323e7179d9e2882716d96ef8728547"
+}

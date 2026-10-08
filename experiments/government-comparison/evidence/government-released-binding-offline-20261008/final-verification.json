@@ -1,0 +1,22 @@
+{
+  "sourceCommit": "62579cac83323e7179d9e2882716d96ef8728547",
+  "protectedFilesVerified": 3541,
+  "protectedFileMismatches": 0,
+  "unchangedExternalR5Pairs": 20,
+  "externalR5Mismatches": 0,
+  "independentReviewSha256": "69f9714bf9a6626857ca165cbc34b3a7a0e9330e45aca9982bda8c1047d9799c",
+  "finalFocusedTestLogSha256": "1c8935a39fa93c6823a862be8587ace0d03d5b8d9f6487b25f4e597c4fb5c4f9",
+  "finalFocusedTests": 7,
+  "newExperimentalConsumption": {
+    "native": 0,
+    "controller": 0,
+    "wrappers": 0,
+    "delegates": 0,
+    "reservedSeconds": 0
+  },
+  "oldR5Disposition": "NOT ADMITTED, unchanged",
+  "newLiveInputValidation": false,
+  "newCasePrepared": false,
+  "newFreeze": false,
+  "sourceDeadlineFinalReceiptWriteProven": false
+}

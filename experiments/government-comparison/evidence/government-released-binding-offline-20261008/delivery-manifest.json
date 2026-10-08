@@ -1,0 +1,58 @@
+{
+  "package": "government-released-binding-offline-20261008",
+  "baseCommit": "8702d6ad0f8eed724b77acd7e827880d171e7703",
+  "sourceCommit": "62579cac83323e7179d9e2882716d96ef8728547",
+  "status": "qualified offline binding correction; no new actual admission",
+  "files": [
+    {
+      "path": "experiments/government-comparison/evidence/government-released-binding-offline-20261008/final-verification.json",
+      "sha256": "6ff710a8679372b9d8473ac403dd1cd2544820d10fcf084214769d9d116530b8",
+      "bytes": 741
+    },
+    {
+      "path": "experiments/government-comparison/evidence/government-released-binding-offline-20261008/focused-tests-1.log",
+      "sha256": "3b4c213146e172b9296cbdf74c06b52e6a743f3df2ea7104925cccf096937c6d",
+      "bytes": 2462
+    },
+    {
+      "path": "experiments/government-comparison/evidence/government-released-binding-offline-20261008/focused-tests-2.log",
+      "sha256": "1c8935a39fa93c6823a862be8587ace0d03d5b8d9f6487b25f4e597c4fb5c4f9",
+      "bytes": 1355
+    },
+    {
+      "path": "experiments/government-comparison/evidence/government-released-binding-offline-20261008/handoff.md",
+      "sha256": "8fb8ea5e17025530155c0c117147a3e772a01362750cebd59867ebd8526c6e65",
+      "bytes": 3603
+    },
+    {
+      "path": "experiments/government-comparison/evidence/government-released-binding-offline-20261008/historical-bindings.json",
+      "sha256": "dfb16d0d2a7608ff794ecfa2c7c1a9e481da8652e61975888a440618f8084cc6",
+      "bytes": 1135404
+    },
+    {
+      "path": "experiments/government-comparison/evidence/government-released-binding-offline-20261008/independent-review.md",
+      "sha256": "69f9714bf9a6626857ca165cbc34b3a7a0e9330e45aca9982bda8c1047d9799c",
+      "bytes": 3745
+    },
+    {
+      "path": "experiments/government-comparison/evidence/government-released-binding-offline-20261008/offline-checks.json",
+      "sha256": "8d3a8a9f66f6e8c69d127fabf1e137b1745649b38beb73db6f102cc895fb9791",
+      "bytes": 3058
+    },
+    {
+      "path": "experiments/government-comparison/evidence/government-released-binding-offline-20261008/preparation-notes.md",
+      "sha256": "0031d8130b8d3834e72afe7669fc6b9099a3e2d2be1b946ee512f061560a7c66",
+      "bytes": 739
+    },
+    {
+      "path": "experiments/government-comparison/run-native-integration-r5.py",
+      "sha256": "6749067ad68e6dad30f020e8cee2bc105f63717db6fda4eb4369c882634a65fc",
+      "bytes": 32941
+    },
+    {
+      "path": "experiments/government-comparison/runtime/test_government_released_binding.py",
+      "sha256": "09d4774a809c60ef3b60d6df14dcbbfb55a630600de589fc703c7f740ff1e34c",
+      "bytes": 7003
+    }
+  ]
+}
