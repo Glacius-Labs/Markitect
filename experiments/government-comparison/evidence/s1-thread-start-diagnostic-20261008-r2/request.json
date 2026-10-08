@@ -1,0 +1,35 @@
+{
+  "key": "s1-thread-start-diagnostic-20261008-r2",
+  "sourceCommit": "c6d84de416986837adfa57967c8b9ef29a1eb90a",
+  "profileSha256": "1f8eb50373349a0c46c9b5a795638aa5e0d6ab66fff029019194e9913112f188",
+  "authorizationGrantSha256": "ce85999beae78dde3d7f26d153e0dfde31d0f0ab876e9630f1d8e4620df34a61",
+  "sourceFiles": {
+    "experiments/government-comparison/evidence/policy-read-disabled-status/run-1/classified-client.py": "95c8486ad8962e14ad0c2da2989adcf154fa28f51d19c1fe983c532d1a885926",
+    "experiments/government-comparison/evidence/s1-common-runner-read-tool-20261008-r1/profile.json": "6a1d9c043758563d59b576c0a2c526e375f6bc819002768a535333b7cb1a128c",
+    "experiments/government-comparison/evidence/s1-common-runner-read-tool-20261008-r1/protocol.py": "ebd087657febf63846904d83a75bc226a5412458418d20abe024ed267febb822",
+    "experiments/government-comparison/evidence/s1-common-runner-readiness-plan-20261008/source-evidence.json": "30ccadf14b3e94e1b76d2eedcae77152395cd643797e9919c49947cd27f73c2c",
+    "experiments/government-comparison/evidence/s1-runner-rebinding-metadata-20261008-r1/generated-schemas.zip": "3157e8a55329cf4e5346676c3ef0c308402d2420f8f916d6a5b7e0e9c84356ad",
+    "experiments/government-comparison/evidence/s1-thread-start-diagnostic-20261008-r2/authorization-grant.json": "ce85999beae78dde3d7f26d153e0dfde31d0f0ab876e9630f1d8e4620df34a61",
+    "experiments/government-comparison/evidence/s1-thread-start-diagnostic-20261008-r2/client.py": "85a3181560c97e150d52fbb12458bea3958993ffaecbdcffa077ff14dc30bb5c",
+    "experiments/government-comparison/evidence/s1-thread-start-diagnostic-20261008-r2/current-handoff.md": "443789f6245b3461151ef2ce95c2591e7df0098d50caed43cb3204e578f84f07",
+    "experiments/government-comparison/evidence/s1-thread-start-diagnostic-20261008-r2/diagnostic-contract.json": "0fb70bafd10b0d3de2883d1f4fcbf7cfd292a61e88a6ce524567a386e664a70c",
+    "experiments/government-comparison/evidence/s1-thread-start-diagnostic-20261008-r2/focused-tests.log": "abd907fd078acab821d808b3a6b927e49fd43125150af7ae37da31c283839128",
+    "experiments/government-comparison/evidence/s1-thread-start-diagnostic-20261008-r2/frozen-method-enums.json": "6553df9ac4a37d11402728992ed5e684ea379fbadeee790700867ae4542594cf",
+    "experiments/government-comparison/evidence/s1-thread-start-diagnostic-20261008-r2/input-binding.json": "03355c2e1eb0fefd666347beaca776eecb37279e562df6e596341749de644a86",
+    "experiments/government-comparison/evidence/s1-thread-start-diagnostic-20261008-r2/offline-validation.json": "e1b1b7a4c93f7395b0cc32bd2d8bd50e41ed62e39e74e4e73c2f5561a70893f1",
+    "experiments/government-comparison/evidence/s1-thread-start-diagnostic-20261008-r2/preflight-review.md": "43bf5f4b57a1d797c36d0bd1838d517aa50e93bafe869a656ea2099e3362514d",
+    "experiments/government-comparison/evidence/s1-thread-start-diagnostic-20261008-r2/profile.json": "1f8eb50373349a0c46c9b5a795638aa5e0d6ab66fff029019194e9913112f188",
+    "experiments/government-comparison/evidence/s1-thread-start-diagnostic-20261008-r2/run_once.py": "55d4321c9f315b93a986ec17fc23cf60f68d4296dbc2488e05620dd01ce5f096",
+    "experiments/government-comparison/evidence/s1-thread-start-diagnostic-20261008-r2/schema-contract.json": "7880a5d32f71ddb09258dcb829ef6ec0e9384e0c06f062c99a7a585143458d48",
+    "experiments/government-comparison/evidence/s1-thread-start-diagnostic-20261008-r2/stderr_collector.py": "a9a1213146acbf31791e966992507b976ee6d3753bf50b27ecf14e7c42261df4",
+    "experiments/government-comparison/evidence/s1-thread-start-diagnostic-20261008-r2/test_client.py": "e19ae568c8043d3a7a5174a53e8b24f9405a08f88a5366645b7970cf5cf05c11",
+    "experiments/government-comparison/evidence/s1-thread-start-diagnostic-20261008-r2/thread_gate.py": "b48ce8b67e3a18ecab80a49d1eb3633f90443cc9524972e00a3ea7bdf27fa6cd",
+    "experiments/government-comparison/runtime/process.py": "d0cedb71d57be87095d9af119d9769fb0c3d311e1af073cba81f6337743c78ae",
+    "experiments/government-comparison/runtime/selected_feature_contract.py": "985ff1d8f8870de4ac697e030c2abeb543d1bc3e74f475968c5e1097be865550"
+  },
+  "interpreter": {
+    "path": "C:\\Python313\\python.exe",
+    "sha256": "d87063e5597f257004c731b66c59c56c91038861c6877b1a3dca6b8c4e919125"
+  },
+  "claimBoundary": "One fresh thread/start-only diagnostic; zero turns/tools/Actor-task reservations; inherited R1 contract is historical provenance only."
+}
