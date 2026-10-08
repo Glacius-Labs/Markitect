@@ -149,6 +149,7 @@ spec:
     - internal/modules/projectmodel
     - internal/host/projectwork
     - internal/host/projectadoption
+    - internal/host/projectsetup
     - internal/tooling/clauderunner
     - internal/host/project_guarded_write.go
     - internal/host/project_guarded_write_test.go
@@ -159,6 +160,7 @@ spec:
     - internal/host/projectrun
     - internal/host/projectcli
     - examples/project-world
+    - experiments/project-world-live
     - docs/project-workflow.md
     - internal/host/cli/project_dispatch_test.go
     - docs/validation/project-world-delivery.md
@@ -2074,3 +2076,25 @@ spec:
       owner: project-world-validation
     - path: internal/host/projectrun/process_e2e_test.go
       owner: project-world-implementation
+    - path: internal/host/projectadoption/runner.go
+      owner: project-world-implementation
+    - path: internal/host/projectadoption/runner_test.go
+      owner: project-world-implementation
+    - path: experiments/project-world-live/acceptance.py
+      owner: project-world-live-validation
+    - path: internal/host/projectsetup/setup.go
+      owner: project-world-implementation
+    - path: internal/host/projectsetup/setup_test.go
+      owner: project-world-implementation
+    - path: experiments/project-world-live/run.py
+      owner: project-world-live-validation
+    - path: experiments/project-world-live/README.md
+      owner: project-world-live-validation
+    - path: internal/host/projectadoption/target_context.go
+      owner: project-world-implementation
+    - path: internal/host/projectcli/resolution.go
+      owner: project-world-implementation
+    - path: internal/host/projectcli/resolution_test.go
+      owner: project-world-implementation
+    - path: experiments/project-world-live/brownfield.py
+      owner: project-world-live-validation
