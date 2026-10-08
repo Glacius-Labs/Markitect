@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-08T19:58:49Z",
+  "updatedUtc": "2026-10-08T20:00:26Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -8,12 +8,12 @@
   "sourceBaseline": "1ea5c76f55526fc4d721e865885436153f48b497",
   "automation": {
     "id": "jev-nach-markitect-grundmodell-untersuchen",
-    "status": "PAUSED pending explicit resume update in this turn",
+    "status": "ACTIVE",
     "intervalMinutes": 120,
     "reportEveryReview": false,
     "reportTimezone": "Europe/Berlin",
-    "lastVerifiedUtc": "2026-10-08T19:51:14Z",
-    "verification": "automation_update returned PAUSED; exact saved automation.toml independently verified PAUSED, existing name/prompt/2h cadence/target preserved.",
+    "lastVerifiedUtc": "2026-10-08T20:00:26Z",
+    "verification": "automation_update returned ACTIVE; exact saved TOML status ACTIVE, 2h cadence and root target verified; fresh resumption mandate included.",
     "userReaffirmed": "Direct 8 October request: callbacks at completion/need, fallback every 1-3 hours, chosen 2h; unchanged routine summaries suppressed.",
     "latestMandateUpdatedUtc": "2026-10-08T01:37:45Z",
     "reportOnMeaningfulChange": true,
@@ -28,7 +28,9 @@
     "classicMainMandateVerified": true,
     "pausedUtc": "2026-10-08T19:51:14Z",
     "pauseReason": "Finite diagnosis block closed; synthesis, six NOT RUN cells and limits recorded. No repeat polling or new grants.",
-    "resumptionRequestedUtc": "2026-10-08T19:58:49Z"
+    "resumptionRequestedUtc": "2026-10-08T19:58:49Z",
+    "resumedUtc": "2026-10-08T20:00:26Z",
+    "promptSha256": "597aa4055b27b4c574fbe8edaf4c8549794d65aa7d9e9b75c1b3493d6921271c"
   },
   "threads": [
     {
@@ -447,9 +449,10 @@
       "lastAssignment": {
         "key": "s1-resumed-read-tool-20261008-r1",
         "authorizedUtc": "2026-10-08T19:58:49Z",
-        "status": "Authorized; awaiting once-only dispatch",
+        "status": "Dispatched once; conditional single read-tool attempt active until terminal result or deadline",
         "scope": "One conditional real readonly model/tool ability probe, no study cells.",
-        "grantPointer": "threads[name=Scientist].evidence.resumedReadToolGrant"
+        "grantPointer": "threads[name=Scientist].evidence.resumedReadToolGrant",
+        "sentUtc": "2026-10-08T20:00:26Z"
       },
       "evidence": {
         "sourcesHashChecked": 37,
@@ -5384,6 +5387,13 @@
           "maxObservedStderrBytes": 16384,
           "privateArtifactHandling": "Reuse accepted bounded redaction collector, metadata-only public receipts. Own completed/quiescent private excerpt may be inspected only once if essential diagnosis; never raw config/auth/private study data. No public raw stderr or hashes of secret-bearing content; preserve unexpected files.",
           "historicalUsage": "13 actual app-server process trees;6 Actor reservations including5 model attempts;8 CLI metadata calls;53331 known historical tokens,total current usage/provider billing unknown;native vector15/16/13/2250. Preserve all ledgers and counters. Reserve at most one additional tree and Actor, count actual stages separately; unknown historical usage is not zero or new ability evidence."
+        },
+        "resumedReadToolDispatch": {
+          "key": "s1-resumed-read-tool-20261008-r1",
+          "sentUtc": "2026-10-08T20:00:26Z",
+          "delivery": "send_message_to_thread returned matching threadId without error",
+          "grantCommit": "3f0d3a5",
+          "repeatDispatchPermitted": false
         }
       },
       "classicHandoffReceived": true,
@@ -7243,6 +7253,14 @@
       "verifiedSavedToml": true,
       "intervalMinutes": 120,
       "noAdditionalRuntimeAuthorized": true
+    },
+    {
+      "event": "User-requested resumption after finite synthesis",
+      "verifiedUtc": "2026-10-08T20:00:26Z",
+      "status": "ACTIVE",
+      "intervalMinutes": 120,
+      "runtimeGrantKey": "s1-resumed-read-tool-20261008-r1",
+      "routineReports": false
     }
   ],
   "communicationPolicy": {
