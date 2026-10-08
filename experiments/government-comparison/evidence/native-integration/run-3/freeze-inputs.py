@@ -23,7 +23,7 @@ for name in ('test_native_controller.py','test_native_fixture_budget.py','test_n
     paths.add(ROOT/'runtime'/name)
 paths.add(d.EXTERNAL/'coordinator-slot-activation-snapshot.json')
 paths.add(d.LEGACY/'released-native-grant.json')
-paths.add(ROOT/'evidence/native-integration/run-2/native-starts.sqlite')
+paths.add(ROOT/'evidence/native-integration/run-2/external-snapshots/native-starts.sqlite')
 for path in d.EVIDENCE.iterdir():
     if path.is_file():paths.add(path)
 for arm in ('government','classic'):
