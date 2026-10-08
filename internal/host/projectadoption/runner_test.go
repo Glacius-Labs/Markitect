@@ -187,6 +187,27 @@ func TestDistillationDraftSchemaMatchesBothPythonAdapterContracts(t *testing.T) 
 	if got := claims["method"].(map[string]any)["enum"].([]any); len(got) != 4 {
 		t.Fatalf("provider claim method enum = %#v", got)
 	}
+	scopes := rootSchema["properties"].(map[string]any)["scopes"].(map[string]any)["items"].(map[string]any)["properties"].(map[string]any)
+	parentID := scopes["parentId"].(map[string]any)
+	if parentID["minLength"] != float64(0) || parentID["maxLength"] != float64(64) {
+		t.Fatalf("provider scope parent ID bounds = %#v", parentID)
+	}
+	draft := DistillationDraft{
+		Claims: []DistillationDraftClaim{{
+			ID: "cancel-observation", ScopeID: "orders", Kind: "observation", Method: "static-source",
+			Statement: "A cancellation function is declared.", Evidence: []EvidenceRef{{EvidenceID: "implementation", StartLine: 2, EndLine: 2, Excerpt: "func Cancel() {}"}},
+			Uncertainty: []string{}, RuntimeObservationJSON: "",
+		}},
+		Terms: []Term{}, Contradictions: []Contradiction{}, Questions: []DistillationDraftQuestion{},
+		Scopes:   []DistillationDraftScope{{ID: "orders", Name: "Orders", ParentID: "", ClaimIDs: []string{"cancel-observation"}, OwnerCandidate: ""}},
+		Proposal: ModelProposal{Goal: "Represent orders", Files: []ProposedFile{{ScopeID: "orders", Path: ".markitect/model/orders/statement.yaml", Content: "apiVersion: project.markitect.example.org/v1alpha1\n"}}},
+	}
+	var draftValue any
+	if data, err := json.Marshal(draft); err != nil {
+		t.Fatal(err)
+	} else if err := json.Unmarshal(data, &draftValue); err != nil {
+		t.Fatal(err)
+	}
 	invocation := map[string]any{
 		"apiVersion": agentexec.APIVersion, "runId": "run-fixture", "nonce": "nonce-fixture",
 		"inputDigest": "sha256:" + strings.Repeat("a", 64),
@@ -194,7 +215,7 @@ func TestDistillationDraftSchemaMatchesBothPythonAdapterContracts(t *testing.T) 
 			"role": agentexec.RoleExecutor, "sourceRevision": strings.Repeat("b", 40),
 			"modelDigest": "sha256:" + strings.Repeat("c", 64), "modulePin": "project-adoption/v1alpha1",
 			"projectionId": "brownfield-distillation", "scopeIds": []string{}, "policyIds": []string{},
-			"context": map[string]any{"responseSchema": responseSchema}, "artifacts": []any{},
+			"context": map[string]any{"responseSchema": responseSchema, "testDraft": draftValue}, "artifacts": []any{},
 		},
 	}
 	encoded, err := json.Marshal(invocation)
@@ -209,6 +230,8 @@ value = adapter.strict_loads(sys.stdin.buffer.read())
 validated = adapter.validate_invocation(value)
 schema = adapter.task_response_schema(validated)
 assert schema == validated["request"]["context"]["responseSchema"]
+adapter.validate_report_value(validated["request"]["context"]["testDraft"], schema)
+assert validated["request"]["context"]["testDraft"]["scopes"][0]["parentId"] == ""
 `
 	for _, adapterPath := range []string{
 		filepath.Join(repoRoot, "internal", "tooling", "codexrunner", "runner.py"),
