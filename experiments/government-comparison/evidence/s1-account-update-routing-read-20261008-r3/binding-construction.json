@@ -1,0 +1,17 @@
+{
+  "key": "s1-account-update-routing-read-20261008-r3",
+  "sourceCommit": "d5997d6392ae3f6397bd45a21e3ed4946b1b768c",
+  "sourceFilesVerifiedAtS": 217,
+  "frozenInputsCurrentlyVerified": 232,
+  "requestSha256": "6c8c15827f790ae47b971b738ed355a94a91a446d5e7915ddc84b536dc815f73",
+  "freezeSha256": "8953d04f970d87ccc0a5c26381def7cc28f5c761209214ce081cbb71f9e83ebe",
+  "fullLiveGrantAssignedSlotAndWindowBinding": true,
+  "nativeCwdIdentityAndConsistencyVerified": true,
+  "externalRootAbsent": true,
+  "createdUtc": "2026-10-08T21:06:44.202525Z",
+  "sourceChangesAfterS": 0,
+  "runtimeStarts": 0,
+  "actorReservations": 0,
+  "bindingConstructionRefinements": 0,
+  "preliminarySourceCommitSuperseded": "87bf8e777b3adcdfd2a16f13e5c55652b77fd93a"
+}
