@@ -76,7 +76,7 @@ Endkriterium: Eine Modelländerung wird entlang der betroffenen Managementpfade 
 
 ### P3 — Umsetzung und Prüfung nach Bereichen organisieren
 
-Lieferung: Artefaktzuordnung, Fähigkeitenauswahl, Kandidatenbildung, Writerkoordination, aussagekräftige Kindberichte, unabhängige lokale Prüfung und aktive Kompatibilitätsprüfung und Integration durch jeden Elternmanager.
+Lieferung: Artefaktzuordnung, Fähigkeitenauswahl, Kandidatenbildung, Writerkoordination, aussagekräftige Kindberichte, unabhängige lokale Prüfung und aktive Kompatibilitätsprüfung und Integration durch jeden Elternmanager. Der [neueste Zuordnungsentwurf](conceptual-modules.md#modell-und-repositorydateien-zuordnen) trennt eindeutige Dateiverantwortung, fachliche Viele-zu-viele-Bezüge, konkrete Schreibaufträge und Nachweise. Ein ableitbarer Index verbindet Modellidentitäten und Repositorypfade in beide Richtungen; neue oder verschobene Dateien werden gegen einen gebundenen Kandidaten abgeglichen.
 
 Endkriterium: Der Stornierungsfall verändert tatsächlich erforderliche Dateien; fehlende Bestandsfreigabe wird trotz erfolgreicher lokaler Order-Prüfung sichtbar. Modelländerung und Reparatur bei unverändertem Modell sind getrennt durchlaufbar. Zwei zuständige Bereiche schreiben nicht unkoordiniert denselben Pfad.
 
@@ -146,6 +146,11 @@ Die folgenden Szenarien sind Anforderungen für spätere Implementierungsprüfun
 | A29 | Neues Projekt wird angelegt | Alle Markitect-eigenen Dateien liegen unter `.markitect/`; kanonische Quellen sind versionierbar, lokale Arbeitsdaten werden ausdrücklich behandelt |
 | A30 | Nutzer ändert die lesbare Spezifikation | Änderung fließt über die kanonischen Modelleingaben und deren Prüfung; kein konkurrierender Besitzer derselben Aussage entsteht |
 | A31 | Modell wurde geändert, lesbare Sicht oder Prüfung ist älter | Gebundener Stand und fehlende Aktualität sind sichtbar; ein gültiges Modell wird nicht mit nachgewiesener Umsetzung gleichgesetzt |
+| A32 | Ein Use Case hat Backend, Frontend, Dokumentation und Tests | Alle Dateibezüge sind über den Modellinhalt auflösbar; Technologien erzwingen keine neue Managementhierarchie |
+| A33 | Mehrere Modellinhalte benötigen dieselbe Datei | Viele-zu-viele-Bezug ist zulässig; Dateibesitzer und konkreter Writer bleiben eindeutig, widersprüchliche Ownership wird gemeldet |
+| A34 | Implementierung erzeugt, verschiebt oder entfernt zugeordnete Dateien | Laufbestand und Zuordnungen werden abgeglichen; Aktualisierung wird validiert, finale Evidenz bindet den tatsächlich finalen Stand |
+| A35 | Ein Pfadmuster passt nach einer Änderung auf weitere Dateien | Gebundene Dateimenge wird aktualisiert; neue Dateien und unklare Verantwortung verschwinden nicht hinter einem alten Index |
+| A36 | Ein Modellinhalt wird in eine andere YAML-Datei aufgeteilt | Fachliche Dateibezüge hängen an der Modellidentität; eine echte Namespace-/Identitätsänderung wird ausdrücklich migriert |
 
 ## 6. Noch zu entscheidende Details
 
@@ -178,3 +183,5 @@ Der ausgearbeitete Shop-Beleg enthält beide Modellstände, fünf Managerrollen 
 Durchgeführt für diese Ausarbeitung: unabhängiger Beispielreview mit anschließendem Nachreview; die Befunde zu expliziter Pflichtabdeckung, neuem Realisierungsbedarf bei unveränderten Begriffen, Writergrenzen, Core-Referenzabbildung und späteren Zuordnungsänderungen wurden eingearbeitet. Der Belegprüfer besteht für 39 Baseline-/44 Zieldefinitionen, fünf Managerrollen und 17 deklarierte Artefaktpfade; er bestätigt fünf neue und fünf geänderte Definitionen einschließlich Realisierungs-/Prüfzuordnung. Sieben Markdown-Dateien mit 51 lokalen Linkzielen bestehen die Zielprüfung. Whitespaceprüfung wird einschließlich aller neuen Dateien vor dem lokalen Commit ausgeführt. Null Shop-Prüfungen, null Beispiel-Managerstarts und kein Deployment; die zur Planung eingesetzten Reviewagenten sind davon getrennt.
 
 Die weitere Nutzerpräzisierung legt `.markitect/` als Ablage aller Markitect-eigenen Dateien sowie Gespräch und lesbare Spezifikation als normalen Zugang fest. `manager.yaml` ist die empfohlene Benennung aus den beiden Nutzervorschlägen. A28–A31 beschreiben die geplante Bedienabnahme. Für diese Dokumentationsfortschreibung wurden 47 lokale Linkziele in fünf Dateien und Whitespace geprüft. Der ältere YAML-Beleg wurde weder migriert noch erneut ausgeführt; keine Produkt- oder Laufzeitprüfung wird daraus abgeleitet.
+
+Die anschließende Planung der Dateizuordnung ergänzt A32–A36: unterschiedliche technische Artefakte je Slice, Viele-zu-viele-Bezüge, eindeutige Dateiverantwortung, Pfadänderungen und gebundene Dateimengen. Zwanzig lokale Linkziele in drei geänderten Dokumenten und Whitespace wurden geprüft. Der Entwurf enthält keine implementierte Dateiauflösung und keine neue Produktprüfung.

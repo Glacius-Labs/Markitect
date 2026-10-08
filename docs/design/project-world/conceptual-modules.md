@@ -98,6 +98,54 @@ Der gemeinsame Handelsmanager koordiniert betroffene Kinder, entscheidet gemeins
 
 Wirklich gemeinsame Bedeutung wird einmal an einem bewusst gewählten Besitzer definiert und importiert. Querschnittsregeln wie Zugriffsschutz können einen expliziten Geltungsbereich über mehrere Module besitzen. Das rechtfertigt weder eine Kopie pro Modul noch eine unspezifische Sammlung beliebiger Shared-Inhalte.
 
+## Modell und Repositorydateien zuordnen
+
+Die bisher unter „Projektionen“ gebündelte Verbindung zu konkreten Dateien bleibt erforderlich. Im Zielmodell wird sie als **Dateizuordnung** ausgedrückt: Welcher Manager verantwortet eine Datei, welche Modellinhalte werden darin umgesetzt, beschrieben oder geprüft und welche Fähigkeiten werden für ihre Bearbeitung gebraucht? Dateizuordnung ist zunächst ein Vertragsvorschlag, kein vorhandenes neues Produktfeature.
+
+Die fachliche Gliederung bleibt maßgeblich. Orders kann Backend, Frontend, Tests und Dokumentation gemeinsam verantworten. Diese technischen Rollen erzwingen keine neuen Manager oder getrennten Modellhierarchien. Benötigt ein Projekt tatsächlich eine eigene Frontendverantwortung, kann es diese ausdrücklich delegieren und die Integration beim gemeinsamen Manager belassen.
+
+### Verantwortung und Bezug getrennt ausdrücken
+
+Zwei Angaben beantworten unterschiedliche Fragen und dürfen nicht verwechselt werden:
+
+- **Dateiverantwortung:** Die gemeinsame Managerdeklaration benennt die verantworteten Repositorypfade bzw. Pfadmuster. Das ergibt eine prüfbare Zuordnung zu einem Modul. Ein Elternmodul kann Teilbäume ausdrücklich an Kinder delegieren; für eine konkrete Datei bleibt genau ein zuständiger Besitzer auflösbar. Mehrdeutige überlappende Zuordnungen sind ein Fehler, keine implizite Vorrangregel nach dem längsten Pfad.
+- **Fachlicher Dateibezug:** Ein Modellinhalt referenziert die Dateien, die ihn implementieren, dokumentieren oder prüfen. Mehrere Modellinhalte dürfen dieselbe Datei benötigen; ein Modellinhalt darf mehrere Dateien über mehrere Technologien benötigen. Diese Beziehung überträgt weder Ownership noch Schreibbefugnis.
+
+Eine Zuordnung verbindet deshalb die **Identität eines Modellgegenstands** mit einem Repositorypfad und einer Rolle. Die YAML-Datei ist sein Speicherort. Eine spätere Aufteilung mehrerer Definitionen auf verschiedene YAML-Dateien soll die fachliche Zuordnung nicht unnötig ändern. Die Rückwärtsansicht „Welche Dateien gehören zu dieser Modelldatei?“ wird aus den darin enthaltenen Definitionen abgeleitet.
+
+Vorgeschlagene Rollen sind `implementation`, `documentation`, `verification` und `configuration`. Backend und Frontend können zusätzliche erklärende Kategorien von Implementierungen sein. Rolle und Technologie sind keine Verantwortungshierarchie. Eine Datei kann mehrere Rollen erfüllen; Dokumentationsbezug allein beweist keine implementierte Regel.
+
+Die Zuordnung wird beim fachlichen Besitzer des Modellinhalts gepflegt, beispielsweise im `cancel-order.yaml` oder in einer lokalen, ausdrücklich angebundenen Begleitdatei desselben Slice. Ein globales manuell gepflegtes Zweitregister wird nicht benötigt. Der Compiler kann daraus einen Repositoryindex und beide Navigationsrichtungen erzeugen.
+
+### Beispiel: Order stornieren
+
+Die folgenden Repositorypfade sind illustrative zukünftige Artefakte, keine vorhandene Shop-Implementierung:
+
+| Modellinhalt | Repositorydatei | Rolle | Dateiverantwortung |
+|---|---|---|---|
+| `commerce/sales/orders/cancel-order` | `src/backend/Orders/CancelOrder.cs` | Implementierung des Ablaufs | Orders |
+| `commerce/sales/orders/cancel-order` | `src/frontend/orders/CancelOrderButton.tsx` | Implementierung der Bedienung | Orders |
+| `commerce/sales/orders/cancel-order` | `tests/orders/CancelOrderTests.cs` | Ausführbare Verifikation | Orders |
+| `commerce/sales/orders/cancel-order` | `docs/orders/cancellation.md` | Produktdokumentation | Orders |
+| `commerce/inventory/reservations/release` | `src/backend/Inventory/ReleaseReservation.cs` | Implementierung der Freigabe | Inventory |
+| `commerce/sales/orders/cancel-order` | `src/backend/Inventory/ReleaseReservation.cs` | Über benötigten Freigabevertrag abgeleiteter Implementierungsbezug | Inventory |
+
+Die letzte Zeile ist eine abgeleitete Ansicht aus dem benötigten Freigabevertrag und dessen eigener Dateizuordnung, kein zweites manuell gepflegtes Inventar in Orders. Sie verbindet Orders mit einer fremdverantworteten Datei, erlaubt aber keinen unkoordinierten Schreibzugriff. Der fachliche Vertrag bleibt die öffentliche Freigabefunktion. Orders erhält zunächst diesen Vertrag und den relevanten Prüfstand; die Dateiverknüpfung zwingt fremden internen Quellcode nicht in jeden Managerkontext. Inventory bearbeitet seinen Kandidaten, der gemeinsame Manager integriert den Gesamtfall.
+
+### Pflege, Ausführung und Prüfung
+
+Am Anfang kann ein neues Konzept gültig sein, obwohl noch keine Implementierungsdatei existiert. Bekannte Zuordnungen, geplante Realisierungen und am Kandidaten tatsächlich beobachtete Dateien bleiben unterscheidbar. Ein unbekannter zukünftiger Dateiname muss nicht vor der Delegation erfunden werden. Der Manager erhält Ziel, verantworteten Umfang und benötigte Rollen; der Arbeiter meldet die konkreten entstandenen Dateien zurück.
+
+Der Lauf führt den tatsächlichen Änderungsbestand. Er gleicht neue, verschobene, entfernte und veränderte Dateien mit Verantwortung und fachlichen Zuordnungen ab. Neue Zuordnungen werden innerhalb des erteilten Auftrags als nachvollziehbare Modelländerung validiert und angenommen. Finale Prüfungen binden den dadurch aktualisierten Modell- und Artefaktstand. Eine beobachtete Datei schafft für sich genommen keine akzeptierte Fachabsicht; bei unverändertem Soll bleibt eine Reparatur möglich.
+
+Für die Ausführung wird aus den bestehenden Verantwortungen und dem konkreten Auftrag genau ein Writer pro veränderbarer Datei bestimmt. Pfadmuster beschreiben Zuständigkeit; sie ersetzen keine abgegrenzte Laufberechtigung. Gemeinsame Dateien wie OpenAPI-Dokumente oder zentrale Navigation haben einen benannten Besitzer bzw. Integrator, auch wenn mehrere Slices dazu beitragen. Direkt erzeugte Dateien besitzen zusätzlich eine erklärte Erzeugungsquelle und einen einzigen verantwortlichen Erzeugungsweg.
+
+Der Compiler bzw. Host kann an einem festen Repositorysnapshot prüfen, ob Zuordnungen auf gültige Modellinhalte verweisen, Pfade auflösbar sind und Ownership eindeutig ist. Bei Pfadmustern werden Muster und tatsächlich aufgelöste Dateimenge gebunden; neu passende oder verschwundene Dateien dürfen nicht durch einen veralteten Index übersehen werden. Er kann fehlende erwartete Dateien, ungeklärte Dateien und mehrere Ansprüche melden. Explizite Fremdverwaltung und Ausschlüsse bleiben möglich.
+
+Eine Zuordnung ist zunächst eine Behauptung über Zweck und Zusammenhang. Sie beweist nicht, dass `CancelOrder.cs` die Regel korrekt implementiert oder ein referenzierter Test sie tatsächlich prüft. Checkauswahl, reale Ergebnisse und semantische Beurteilung liefern dafür zusätzliche Nachweise. Unbekannte Abdeckung wird sichtbar; sie darf Impact nicht auf eine angeblich vollständige Dateiliste verengen. Auch neue Pflichten für unveränderte Dateien können frische Prüfung oder Anpassung verlangen.
+
+Bei einer Modelländerung ergeben sich so betroffene fachliche Verträge und Dateibezüge, zuständige Manager und benötigte Prüfungen. Bei einer direkten Codeänderung zeigt derselbe Index umgekehrt, welche Vorgaben erneut abzugleichen sind. Abhängigkeiten, Dateizuordnung, Ausführungsrechte und Nachweise bleiben in ihrer Wirkung ausdrücklich unterschieden.
+
 ## Folgen für den nächsten Planungsstand
 
 1. Den öffentlichen Namen wählen; Arbeitsvorschlag ist Modul.
@@ -107,5 +155,6 @@ Wirklich gemeinsame Bedeutung wird einmal an einem bewusst gewählten Besitzer d
 5. Pfad-/Identitätsänderungen und daraus folgende Kontext-, Impact- und Evidenzänderungen ausdrücklich spezifizieren.
 6. Modell, Laufzeitkonfiguration und interne Ausgaben vollständig unter `.markitect/` verorten; versionierte Quellen und lokale Arbeitsdaten ausdrücklich unterscheiden.
 7. Gespräch, lesbare Spezifikation und fachliche Änderungsansicht als normalen Produkteinstieg entwerfen; YAML bleibt einsehbares Speicherformat.
+8. Dateiverantwortung in der Managerdeklaration und fachliche Dateibezüge im jeweiligen Slice konkretisieren; einen ableitbaren Index statt mehrfach gepflegter Zuordnungen schaffen.
 
 Der Compiler prüft deklarierte Struktur, Referenzen und gewählte Grenzen. Ob Implementierung, Kommentare und Dokumentation tatsächlich zur akzeptierten Bedeutung passen, bleibt eine zusätzliche Prüfpflicht. Die fachliche Gliederung verbessert Kontext und Änderungsnachverfolgung; sie beweist diese Konformität nicht allein.

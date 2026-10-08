@@ -22,13 +22,14 @@ Markitect soll ein gemeinsames, kanonisches Verständnis des Projekts ausdrücke
 10. **Ein eigener AI-Agent pro Manager:** Jede Managerrolle einschließlich Geschäftsführung wird durch einen eigenen, auf ihre Funktion spezialisierten AI-Agenten ausgeübt. Jeder hat seinen eigenen Arbeitskontext. Eltern benötigen weder die vollständigen Kontexte ihrer Kinder noch Kenntnis darüber, welche internen Details dort geladen sind. Zusammenarbeit erfolgt über Aufträge, Berichte, Schnittstellen und konkrete Rückfragen.
 11. **Fachliche Gliederung und verborgene Werkzeugablage:** Zusammengehörige Konzepte, Verhalten, Regeln und Prüferwartungen liegen gemeinsam in rekursiven Slices statt in globalen Typordnern. Alle Markitect-eigenen Dateien liegen unter `.markitect/`. Die kombinierte Einheit aus Modul, Namensraum und Verantwortung sowie `manager.yaml` als deren Deklaration sind die aktuellen Benennungsvorschläge.
 12. **Modellpflege als Hauptarbeit:** Der normale Nutzer entwickelt die Spezifikation im Gespräch mit einem AI-Agenten und liest erzeugte Dokumentation und verständliche fachliche Änderungen. YAML ist das interne, versionierbare Speicherformat. Das gewünschte Verhalten zu modellieren wird zur primären Form des Programmierens; Umsetzung, Integration und belastbare Prüfung bleiben ausdrückliche Aufgaben.
+13. **Modell und Dateien verbinden:** Der Zusammenhang mit Dokumentation, Backend, Frontend, Tests und Konfiguration bleibt ausdrücklich modelliert. Dateiverantwortung und fachlicher Bezug erfüllen unterschiedliche Aufgaben. Die konkrete Dateizuordnung wird als Beziehung zwischen Modellinhalten und Realisierungen weiter ausgearbeitet; keine Eins-zu-eins-Abbildung zwischen YAML-Datei und Ergebnisdatei wird vorausgesetzt.
 
 ## Dokumente und Eigentümerschaft
 
 | Dokument | Verantworteter Inhalt |
 |---|---|
 | [Zielmodell](model.md) | Begriffe, vorgeschlagene Verträge, Verantwortungsregeln und durchgehendes Order-Beispiel |
-| [Fachliche Module und Vertical Slices](conceptual-modules.md) | Neuester Zielstand: `.markitect/`, Managerdeklaration, fachliche Slices, Verträge über Grenzen und modellzentrierte Bedienung; Shop-Beleg noch im ersten Zuschnitt |
+| [Fachliche Module und Vertical Slices](conceptual-modules.md) | Neuester Zielstand: `.markitect/`, Managerdeklaration, fachliche Slices, Dateiverantwortung und Dateibezüge, Verträge über Grenzen und modellzentrierte Bedienung; Shop-Beleg noch im ersten Zuschnitt |
 | [Umsetzungsplan](implementation-plan.md) | Quellabgleich, endliche Schritte, Abnahmeszenarien und offene Entscheidungen |
 | [Shop-Walkthrough](shop-walkthrough.md) | Konkrete Antworten zu Dateistruktur, Modell, Änderungen und Start der Umsetzung |
 | [Shop-Modellbeleg](shop-example/README.md) | Vollständige vorgeschlagene YAML-Dateien, Vorher-/Nachher-Stand und lokaler Belegprüfer |
