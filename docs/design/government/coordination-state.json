@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-08T14:59:04Z",
+  "updatedUtc": "2026-10-08T15:16:10Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -428,23 +428,40 @@
       "name": "Scientist",
       "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
       "hostId": "local",
-      "afterCursor": "4993693c-4fc7-4021-b456-5988f9f71188:2",
+      "afterCursor": "4993693c-4fc7-4021-b456-5988f9f71188:4",
       "lastObservedStatus": "active",
-      "activeTurn": "01a11c03-e44c-7303-a073-c6a275788a49",
-      "lastAssistantMessageId": null,
+      "activeTurn": "01a11c16-0e72-74a3-b21f-316d14021d6e",
+      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac7b310f2f881918cfebc7bbcac4de7",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "One bounded thread/start diagnostic, zero turns or tools.",
-      "latestProgress": "Live status query: active diagnostic preparation; changed synthetic collector/thread-gate tests and final source validation observed. No new terminal runtime handoff accepted; current grant unchanged.",
+      "latestProgress": "One installed-runner inventory assignment dispatched and active; zero executable invocation authority.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-scientist/Markitect",
       "transferredDesignCommit": "b9e17c9896f14b4b1268e4bcb005395f5d324384",
-      "candidateSha": "befbd24d625c77f2f0ab1c36bb91e36b65473e9e",
+      "candidateSha": "73b263c37b471be39fc8dad37311889a0be26393",
       "acceptance": "R7 bounded native+outer Queue and terminal Resume mechanics accepted; S1 real common Actor/tools and study cells remain open.",
       "lastAssignment": {
-        "key": "s1-thread-start-diagnostic-20261008-r1",
-        "authorizedUtc": "2026-10-08T06:52:02Z",
-        "status": "Dispatched once; bounded diagnostic preparation and conditional one thread-start-only process.",
-        "scope": "Observe one thread/start boundary with bounded safe stderr diagnostics; stop before every turn even on success. No real Actor task or study execution.",
-        "sentUtc": "2026-10-08T06:53:47Z"
+        "key": "s1-runner-rebinding-offline-20261008",
+        "authorizedUtc": "2026-10-08T15:16:04Z",
+        "baseSha": "73b263c37b471be39fc8dad37311889a0be26393",
+        "status": "Dispatched once; active; offline only.",
+        "scope": "Read-only inventory of at most two installed Codex executable candidates and one concise source-bound rebinding proposal after exact prior binary disappeared; no executable invocation or runtime quota.",
+        "maxExecutableCandidates": 2,
+        "maxCodexInvocations": 0,
+        "maxMetadataSessions": 0,
+        "maxAppServerTrees": 0,
+        "maxReservations": 0,
+        "maxActors": 0,
+        "maxThreadStarts": 0,
+        "maxTurnStarts": 0,
+        "maxProducts": 0,
+        "maxStudyCells": 0,
+        "maxTests": 0,
+        "configurationWrites": 0,
+        "installations": 0,
+        "sourceChanges": 0,
+        "newPurchases": false,
+        "exitCondition": "Clean concise documentation of exact candidate path/hash/PE metadata, known and unknown compatibility with pinned schemas/client, and at most one finite next-operation proposal; one callback, no automatic execution.",
+        "sentUtc": "2026-10-08T15:16:10Z"
       },
       "evidence": {
         "sourcesHashChecked": 37,
@@ -2868,7 +2885,7 @@
         "threadStartDiagnosticGrant": {
           "key": "s1-thread-start-diagnostic-20261008-r1",
           "issuedUtc": "2026-10-08T06:52:02Z",
-          "status": "Dispatched once; active continuation confirmed; awaiting direct terminal callback.",
+          "status": "Closed: preparation blocked before reservation; unused authority expires.",
           "ownerThreadId": "01a1169c-3df6-7571-997d-48ab57365875",
           "sourceThreadId": "01a11367-a781-7683-a20f-46e12614dcb4",
           "baseSha": "befbd24d625c77f2f0ab1c36bb91e36b65473e9e",
@@ -2927,7 +2944,81 @@
           "newPurchases": false,
           "exitCondition": "One terminal outcome or real preparation blocker, sanitized observed diagnostics/counters/times, independent postreview, clean SHA, explicit slot release, one callback to Overseer; no automatic next call and no residual reuse.",
           "sentUtc": "2026-10-08T06:53:47Z",
-          "sentPrompt": "Overseer nimmt deinen sauberen Abschluss befbd24d625c77f2f0ab1c36bb91e36b65473e9e qualifiziert als STOPPED BEFORE TURN an. Root bestätigte 35 Payloads plus Manifest, 3993 unveränderte historische Paketdateien, 27 Quellpins, 37 Freezeinputs, 26 Schemamitglieder und sieben bytegleiche externe Belegpaare. Unabhängiger Root-Review bestätigt die terminale Kette. R1 ist geschlossen; Slotfreigabe 2026-10-08T06:32:45.438113Z angenommen. Ein neuer Prozessbaum und eine Actorreservation verbraucht, kumulativ sechs Prozessbäume/sechs Actorreservationen. Thread/start genau einmal geschrieben, keine validierte Threadantwort und kein turn/start beobachtet. Interne Threaderzeugung/Usage bleiben unbekannt. 765 stderrBytes wurden verworfen; ihre Ursache lässt sich nicht rekonstruieren. Keine Umwertung als Policy-/Authfehler oder erfolgreiche Actorfähigkeit.\n\nNeuer, bereits in Root coordination-state.json dokumentierter Grant s1-thread-start-diagnostic-20261008-r1, issuedUtc 2026-10-08T06:52:02Z: genau EIN THREADSTART-DIAGNOSEVERSUCH, ausdrücklich NULL turn/start, NULL Actor-Task oder Toolaufruf. Der freie Slot ist ausschließlich diesem Schlüssel zugeordnet. Basis befbd24d..., getrennte additive Quelle/Belege/Reservation; alle alten eingefrorenen Bytes bleiben erhalten. Historische R1-Restquote ist nicht nutzbar.\n\nZiel ist nur, beim gleichen Threadstart eine nützliche sichere Diagnose statt des verlorenen stderr-Inhalts zu erhalten. Übernimm R1s gepinnte Binary 0.160.1, Schemaarchiv, 17 argv-Konfigurationspaare, initialize experimentalApi=true, Metadatenconsumer/Gates und thread/start-Payload exakt. Vorhandener öffentlicher cwd C:/Users/Consiliari/Documents/Scientist-Probes/s1-common-runner-read-tool-20261008-r1/actor samt README.md/probe-input.txt bleibt bytegleich. Nur neue Client-/Grant-/Evidenzidentität und der eng abgegrenzte Diagnosecollector. Neuer externer Evidenzbereich C:/Users/Consiliari/Documents/Scientist-Probes/s1-thread-start-diagnostic-20261008-r1; unerwartene Inhalte erhalten und stoppen. Kein neuer öffentlicher Task, keine Änderung an Auth, Policy, Trust, globaler Config, Transport, Modell/Provider oder Berechtigungen.\n\nNur initialize/initialized, einmal config/read, bei positiven Gates einmal tatsächliches configRequirements/read und dann höchstens einmal thread/start im selben neuen Baum. Stoppe nach validierter Threadantwort ebenfalls VOR jedem Turn. Kein turn/start, interrupt, Shell-/Prozess-RPC, gewöhnliches Tool, dynamisches Tool, Approval-Reply, Auth-/Account-Abfrage oder alternativer Startpfad.\n\nDie minimale Collectoränderung darf maximal 16384 stderrBytes transient im RAM und höchstens acht Diagnosezeilen berücksichtigen. Erste nichtleere stderr-Ausgabe bleibt terminal: niemals als harmlose Warnung ignorieren oder danach weiterarbeiten. Vorab festgelegte enge bekannte Signaturen dürfen auf feste sichere Fehlerklassen/Codes und gebundene Severity-/Komponentenwerte abgebildet werden. Keine beliebigen Originaltexte, Pfade, URLs, IDs, Accountdaten, Credentials oder Rawlogs persistieren/ausgeben. Unbekannter Inhalt bleibt ausdrücklich unklassifiziert; nichts erraten. Fragment-/Truncationflags und Bytezähler festhalten. Ergänzende Fragmentbytes ausschließlich im schon begrenzten Cleanup ohne weitere RPC sammeln. Baue keinen allgemeinen Log-/Runnerrahmen. Die neue Beobachtung erklärt alte verlorene Rohdaten nicht nachträglich.\n\nVor Start fokussierte Offlineprüfungen des tatsächlichen neuen Collectorpfads für Fragmentierung, Capturegrenze, Redaktion/keine Rohtextausgabe, unbekannte Signatur und unveränderten terminalen Stop; enger unabhängiger Datenschutz-/Quell-/Bindungsreview. Nur betroffene Prüfungen; die 31 unveränderten R1-Fälle und Produktsuiten nicht komplett wiederholen. Sauberer Quellcommit, frische genaue Request-/Freeze-/Schema-/Input-/Grantbindungen vor separater einmaliger DIAGNOSTIK-Reservation. Windows-Job vor Worker-GO.\n\nRessourcen: maximal ein neuer App-Server-Prozessbaum einschließlich missglücktem Start, vorher sechs und danach höchstens sieben; eine Diagnostikreservation, KEINE neue Actor-Taskreservation. Ein thread/start, null turns/tools, Parallelität1, null Retries. Metadatenphase33s, Threadantwort15s, native Sitzung50s, Cleanup höchstens10s innerhalb Controller65s, äußerer Abschluss/Receipt80s. Queue64, Einzelframe1MB, Rawgesamt8MB, Notifications2048; sämtliche bisherigen Schema-/ID-/Serverrequest-/Policy-/Warnungs-/Grenzstops erhalten. Echte Vorbereitungssperre oder erstes terminales Ergebnis beendet den Auftrag ohne Reparatur/Nachstart.\n\nHistorische sechs Actorreservationen (fünf ältere Actorversuche plus R1 ohne beobachteten Turn), 53331 bekannte Tokens bei unbekannter Gesamtnutzung, sechs CLI-Metadatenaufrufe und native Produkthistorie15/16/13/2250 unverändert. Tatsächliche Request-/Antwort-/Thread-/Turnzahlen separat; request written ist kein created thread. Interne native Inferenz/Usage ohne Beleg weiter unbekannt, lokale Beendigung kein Billingstopbeweis. Null Produkt/Wrapper/Delegate/Studienläufe, Käufe oder volle Tests.\n\nNach dem einmaligen Ergebnis: sichere Diagnose mit genauen Zählern/Fristen, enger unabhängiger Nachreview, sauberer Abschluss-SHA, explizite Slotfreigabe und genau eine direkte Meldung an Overseer. Keine Empfangsbestätigung, Folgediagnose oder automatischer weiterer Aufruf. Bei erfolgter Kontextkomprimierung diesen konkreten aktiven Auftrag fortsetzen; die alte initiale Warteanweisung ist dadurch erfüllt. Worker, Architect und Oldschool halten ihre bestehenden Stände. S1 und alle sechs Zellen bleiben offen."
+          "sentPrompt": "Overseer nimmt deinen sauberen Abschluss befbd24d625c77f2f0ab1c36bb91e36b65473e9e qualifiziert als STOPPED BEFORE TURN an. Root bestätigte 35 Payloads plus Manifest, 3993 unveränderte historische Paketdateien, 27 Quellpins, 37 Freezeinputs, 26 Schemamitglieder und sieben bytegleiche externe Belegpaare. Unabhängiger Root-Review bestätigt die terminale Kette. R1 ist geschlossen; Slotfreigabe 2026-10-08T06:32:45.438113Z angenommen. Ein neuer Prozessbaum und eine Actorreservation verbraucht, kumulativ sechs Prozessbäume/sechs Actorreservationen. Thread/start genau einmal geschrieben, keine validierte Threadantwort und kein turn/start beobachtet. Interne Threaderzeugung/Usage bleiben unbekannt. 765 stderrBytes wurden verworfen; ihre Ursache lässt sich nicht rekonstruieren. Keine Umwertung als Policy-/Authfehler oder erfolgreiche Actorfähigkeit.\n\nNeuer, bereits in Root coordination-state.json dokumentierter Grant s1-thread-start-diagnostic-20261008-r1, issuedUtc 2026-10-08T06:52:02Z: genau EIN THREADSTART-DIAGNOSEVERSUCH, ausdrücklich NULL turn/start, NULL Actor-Task oder Toolaufruf. Der freie Slot ist ausschließlich diesem Schlüssel zugeordnet. Basis befbd24d..., getrennte additive Quelle/Belege/Reservation; alle alten eingefrorenen Bytes bleiben erhalten. Historische R1-Restquote ist nicht nutzbar.\n\nZiel ist nur, beim gleichen Threadstart eine nützliche sichere Diagnose statt des verlorenen stderr-Inhalts zu erhalten. Übernimm R1s gepinnte Binary 0.160.1, Schemaarchiv, 17 argv-Konfigurationspaare, initialize experimentalApi=true, Metadatenconsumer/Gates und thread/start-Payload exakt. Vorhandener öffentlicher cwd C:/Users/Consiliari/Documents/Scientist-Probes/s1-common-runner-read-tool-20261008-r1/actor samt README.md/probe-input.txt bleibt bytegleich. Nur neue Client-/Grant-/Evidenzidentität und der eng abgegrenzte Diagnosecollector. Neuer externer Evidenzbereich C:/Users/Consiliari/Documents/Scientist-Probes/s1-thread-start-diagnostic-20261008-r1; unerwartene Inhalte erhalten und stoppen. Kein neuer öffentlicher Task, keine Änderung an Auth, Policy, Trust, globaler Config, Transport, Modell/Provider oder Berechtigungen.\n\nNur initialize/initialized, einmal config/read, bei positiven Gates einmal tatsächliches configRequirements/read und dann höchstens einmal thread/start im selben neuen Baum. Stoppe nach validierter Threadantwort ebenfalls VOR jedem Turn. Kein turn/start, interrupt, Shell-/Prozess-RPC, gewöhnliches Tool, dynamisches Tool, Approval-Reply, Auth-/Account-Abfrage oder alternativer Startpfad.\n\nDie minimale Collectoränderung darf maximal 16384 stderrBytes transient im RAM und höchstens acht Diagnosezeilen berücksichtigen. Erste nichtleere stderr-Ausgabe bleibt terminal: niemals als harmlose Warnung ignorieren oder danach weiterarbeiten. Vorab festgelegte enge bekannte Signaturen dürfen auf feste sichere Fehlerklassen/Codes und gebundene Severity-/Komponentenwerte abgebildet werden. Keine beliebigen Originaltexte, Pfade, URLs, IDs, Accountdaten, Credentials oder Rawlogs persistieren/ausgeben. Unbekannter Inhalt bleibt ausdrücklich unklassifiziert; nichts erraten. Fragment-/Truncationflags und Bytezähler festhalten. Ergänzende Fragmentbytes ausschließlich im schon begrenzten Cleanup ohne weitere RPC sammeln. Baue keinen allgemeinen Log-/Runnerrahmen. Die neue Beobachtung erklärt alte verlorene Rohdaten nicht nachträglich.\n\nVor Start fokussierte Offlineprüfungen des tatsächlichen neuen Collectorpfads für Fragmentierung, Capturegrenze, Redaktion/keine Rohtextausgabe, unbekannte Signatur und unveränderten terminalen Stop; enger unabhängiger Datenschutz-/Quell-/Bindungsreview. Nur betroffene Prüfungen; die 31 unveränderten R1-Fälle und Produktsuiten nicht komplett wiederholen. Sauberer Quellcommit, frische genaue Request-/Freeze-/Schema-/Input-/Grantbindungen vor separater einmaliger DIAGNOSTIK-Reservation. Windows-Job vor Worker-GO.\n\nRessourcen: maximal ein neuer App-Server-Prozessbaum einschließlich missglücktem Start, vorher sechs und danach höchstens sieben; eine Diagnostikreservation, KEINE neue Actor-Taskreservation. Ein thread/start, null turns/tools, Parallelität1, null Retries. Metadatenphase33s, Threadantwort15s, native Sitzung50s, Cleanup höchstens10s innerhalb Controller65s, äußerer Abschluss/Receipt80s. Queue64, Einzelframe1MB, Rawgesamt8MB, Notifications2048; sämtliche bisherigen Schema-/ID-/Serverrequest-/Policy-/Warnungs-/Grenzstops erhalten. Echte Vorbereitungssperre oder erstes terminales Ergebnis beendet den Auftrag ohne Reparatur/Nachstart.\n\nHistorische sechs Actorreservationen (fünf ältere Actorversuche plus R1 ohne beobachteten Turn), 53331 bekannte Tokens bei unbekannter Gesamtnutzung, sechs CLI-Metadatenaufrufe und native Produkthistorie15/16/13/2250 unverändert. Tatsächliche Request-/Antwort-/Thread-/Turnzahlen separat; request written ist kein created thread. Interne native Inferenz/Usage ohne Beleg weiter unbekannt, lokale Beendigung kein Billingstopbeweis. Null Produkt/Wrapper/Delegate/Studienläufe, Käufe oder volle Tests.\n\nNach dem einmaligen Ergebnis: sichere Diagnose mit genauen Zählern/Fristen, enger unabhängiger Nachreview, sauberer Abschluss-SHA, explizite Slotfreigabe und genau eine direkte Meldung an Overseer. Keine Empfangsbestätigung, Folgediagnose oder automatischer weiterer Aufruf. Bei erfolgter Kontextkomprimierung diesen konkreten aktiven Auftrag fortsetzen; die alte initiale Warteanweisung ist dadurch erfüllt. Worker, Architect und Oldschool halten ihre bestehenden Stände. S1 und alle sechs Zellen bleiben offen.",
+          "closedUtc": "2026-10-08T15:16:04Z",
+          "remainingAuthority": 0,
+          "actualAppServerTrees": 0,
+          "actualDiagnosticReservations": 0
+        },
+        "threadStartDiagnosticAcceptance": {
+          "reviewedUtc": "2026-10-08T15:16:04Z",
+          "status": "Accepted: PREPARATION BLOCKED BEFORE RESERVATION",
+          "finalSha": "73b263c37b471be39fc8dad37311889a0be26393",
+          "sourceSha": "7e9271f0dbc81d202c92cf627999723cc750c6ad",
+          "manifestSha256": "b5d3db1dace2d53828be29cc317010a0e9124474f3a55d8b0aa6e92ffa1ea804",
+          "postreviewSha256": "68f51650a042e00004dc4505cae24f650062de9495e528f6acc938aff3e83a3c",
+          "summarySha256": "0064fece1af3ba00494b4b1b3f778e3a909839c41e3289c4c66bdd7f50b6647d",
+          "slotReleaseSha256": "3dd93f4da2a0dd59dba21b4b057a56274d84bd02b954b5274804d8c0f001c376",
+          "slotReleasedUtc": "2026-10-08T15:08:27.466196+00:00",
+          "rootVerified": {
+            "cleanSha": true,
+            "payloads": 23,
+            "manifest": 1,
+            "sourcePins": 17,
+            "onlyAdditions": 24,
+            "exactExecutableAbsent": true,
+            "externalDirectoryEmpty": true,
+            "noRequestFreezeReservationRuntimeArtifacts": true,
+            "testsRerun": 0
+          },
+          "independentRootReview": "r4_terminal_acceptance supports closure; run_once reservation-before-controller-check wording corrected additively, no invocation occurred.",
+          "reportedPreservation": {
+            "historicalFiles": 4029,
+            "liveLedgers": 5,
+            "externalPairs": 21,
+            "freezeInputsAvailable": [
+              23,
+              29,
+              36
+            ],
+            "freezeInputsTotal": [
+              24,
+              30,
+              37
+            ],
+            "soleMissingInput": "same exact old executable",
+            "newSyntheticDistinctCases": 15,
+            "finalSignalPlacement": "independently statically reviewed after final test; not dynamically retested"
+          },
+          "consumed": {
+            "diagnosticReservations": 0,
+            "actorTaskReservations": 0,
+            "appServerTrees": 0,
+            "threadStarts": 0,
+            "turnStarts": 0,
+            "toolItems": 0,
+            "cliMetadataCalls": 0,
+            "studyCells": 0
+          },
+          "cumulative": {
+            "appServerTrees": 6,
+            "actorReservations": 6,
+            "historicalModelActorAttempts": 5,
+            "cliMetadataCalls": 6,
+            "knownHistoricalTokens": 53331,
+            "totalUsage": "unknown",
+            "nativeHistory": [
+              15,
+              16,
+              13,
+              2250
+            ]
+          },
+          "causeOfBinaryAbsence": "unknown",
+          "runtimeDiagnostics": "not observed",
+          "executionTiming": "not applicable; no execution",
+          "s1": "open",
+          "studyCells": "all six NOT_RUN"
         }
       },
       "classicHandoffReceived": true,
@@ -3112,9 +3203,33 @@
         {
           "key": "s1-thread-start-diagnostic-20261008-r1",
           "authorizedUtc": "2026-10-08T06:52:02Z",
-          "status": "Dispatched once; bounded diagnostic preparation and conditional one thread-start-only process.",
+          "status": "Completed and accepted: preparation blocked before reservation.",
           "scope": "Observe one thread/start boundary with bounded safe stderr diagnostics; stop before every turn even on success. No real Actor task or study execution.",
           "sentUtc": "2026-10-08T06:53:47Z"
+        },
+        {
+          "key": "s1-runner-rebinding-offline-20261008",
+          "authorizedUtc": "2026-10-08T15:16:04Z",
+          "baseSha": "73b263c37b471be39fc8dad37311889a0be26393",
+          "status": "Dispatched once; active; offline only.",
+          "scope": "Read-only inventory of at most two installed Codex executable candidates and one concise source-bound rebinding proposal after exact prior binary disappeared; no executable invocation or runtime quota.",
+          "maxExecutableCandidates": 2,
+          "maxCodexInvocations": 0,
+          "maxMetadataSessions": 0,
+          "maxAppServerTrees": 0,
+          "maxReservations": 0,
+          "maxActors": 0,
+          "maxThreadStarts": 0,
+          "maxTurnStarts": 0,
+          "maxProducts": 0,
+          "maxStudyCells": 0,
+          "maxTests": 0,
+          "configurationWrites": 0,
+          "installations": 0,
+          "sourceChanges": 0,
+          "newPurchases": false,
+          "exitCondition": "Clean concise documentation of exact candidate path/hash/PE metadata, known and unknown compatibility with pinned schemas/client, and at most one finite next-operation proposal; one callback, no automatic execution.",
+          "sentUtc": "2026-10-08T15:16:10Z"
         }
       ],
       "offlineAdapterContractAssignment": {
@@ -3279,6 +3394,31 @@
         "exitCondition": "One minimal reusable parser/consumer correction with focused offline tests, independent source review and clean exact SHA; existing actual result stays insufficient. No follow-on invocation.",
         "sentUtc": "2026-10-08T05:14:11Z",
         "prompt": "Overseer nimmt f4bea6dd9b92d72d828751d9a05411c86edd66fa als sauberen terminalen INSUFFICIENT-Nachweis an. Root bestätigte 30 Manifest-/Payloaddateien gegen Hash/Git, 3901 alte Dateien, 15 Quellpins, 24 Freezeinputs, fünf unveränderte Liveledger, sieben sanitisierte Original/Kopie-Paare, Handoff-Suffix und tatsächliche Receipts/Zeiten. Unabhängiger Root-Code-/Resultreview bestätigt die Grenzen. Vierte Policy-Sitzung verbraucht, alter Grant geschlossen, Restquote verfallen. Deine Slotfreigabe 05:07:18.279104 UTC ist angenommen, Slot frei. Kein Retry oder Umwerten des Ergebnisses.\n\nNeuer begrenzter Auftrag s1-selected-feature-contract-offline-20261008, dokumentiert in Root coordination-state.json: NUR eine minimale Offline-Korrektur des ausgewählten Feature-Parservertrags. Kein neuer Ausführungsgrant. Basis f4bea6d, bestehende eingefrorene Clients/Pläne/Reviews/Receipts/Historie bleiben bytegleich.\n\nRoot-Befund: client.py feature_map verlangt für config.features alle Werte bool und filtert erst danach. Das gepinnte ConfigReadResponse typisiert features nicht (zusätzliche Properties erlaubt); gefragt sind acht konkrete Schalter. featureRequirements in ConfigRequirementsReadResponse ist dagegen eine schema-typisierte bool-Map. Diese beiden Verträge dürfen nicht denselben Pauschalvalidator verwenden. Der aktuelle tatsächliche Auslöser bleibt unbekannt: falscher Container, Größe, angefragter oder anderer Wert lassen sich aus invalid nicht rekonstruieren. Gemeldete Session-Layer-Werte ersetzen die effektive Beobachtung nicht.\n\nImplementiere genau die kleine weiterverwendbare Parser-/Consumerkorrektur für einen späteren Kandidaten, ohne alten archivierten Client zu ändern und ohne neue Laufprofile/Driverplattform. Gewöhnliche Wahl der minimalen Quelldateien liegt bei dir. Echte sanitize_config_read/assess-Verbraucher müssen den korrigierten Vertrag in den gezielten Offlineprüfungen tatsächlich verwenden; keine nur von Hand positiv gebauten Zwischenergebnisse oder gemockten Parser.\n\nConfig.features: Container dict und bestehende Größenobergrenze behalten. Ausschließlich die acht angefragten Namen (apps, goals, hooks, memories, multi_agent, plugins, shell_tool, unified_exec) jeweils missing/null/present mit echtem bool/invalid klassifizieren. Nur exakt alle gewünschten Werte können diese einzelne Vorbedingung erfüllen. Fehlende/null/falsch typisierte/entgegengesetzte Werte bleiben unzureichend oder Konflikt. Nicht angefragte Werte weder typprüfen noch speichern; der Rest gilt ausdrücklich als nicht ausgewertet, niemals als insgesamt gültige Featuremap. Container-/Größen-/Feld-/Typ-/Wertprobleme durch feste sichere Codes unterscheiden, ohne beliebige Fehlertexte, Feldnamen oder Werte zu leaken.\n\nRequirements.featureRequirements: Die schemaweite Bool-Prüfung aller Values beibehalten. Nicht interpretierte oder unbekannte Requirementnamen dürfen nicht still weggefiltert und dann als konfliktfrei behandelt werden: sichere unaufgelöste Constraint-Klasse/insufficient ohne Name/Wert zu speichern. Bekannte Konflikte bleiben blockierend. Limits, Strict-JSON/Duplikatschutz, Datenschutz, Herkunftsbindung, Warnungs-/Abbruchregeln und die Trennung von Konfigurationsmeldung und tatsächlichen Rechten nicht aufweichen.\n\nGezielte synthetische Offlinefälle:\n- acht richtige ausgewählte bools plus nicht ausgewählte string/null/object-Werte: Auswahl bleibt prüfbar, Extras bleiben unveröffentlicht und unbewertet;\n- jeder angefragte Schalter missing/null/string/number/opposite bool: nie positive Vorbedingung;\n- falscher/fehlender Container und Überschreitung der bestehenden Mapgrenze: klare unzureichende Diagnose;\n- typisierte Requirements mit beliebigem non-bool: ungültig; unbekannter bool-Requirementname: unaufgelöst;\n- die tatsächlich gespeicherte terminale Receipt bleibt insufficient, ohne verlorene Rawdaten synthetisch als historische Wahrheit auszugeben. Kein zweiter Read, Retry oder Realprozess bei Tests. Keine Behauptung, diese synthetischen Extras seien der echte Auslöser.\n\nKeine neue tatsächliche Fallvorbereitung/Admission/Freeze, Codex-CLI-/app-server-/Metadatensitzung, Actor-/Modell-/Provider-/Produkt-/Studienausführung oder Ledgeränderung. Keine volle Produktsuite, P1-Übernahme, Produktreparatur oder Veröffentlichung. Testlauf nur für die betroffenen Offlineverträge; keine komplette alte Suite wiederholen. Historie bleibt vier Policybäume, sechs CLI-Metadatencalls, fünf reale Actors/53331 bekannte Tokens/Gesamtnutzung unbekannt sowie native 15/16/13/2250.\n\nEnger unabhängiger Quell-/Testreview, sauberer kleiner Abschluss-SHA, genaue Dateien/Prüfbelege und eine direkte Abschluss-/Bedarfsmeldung beenden den Auftrag. Benenne, was damit offline korrigiert und was weiterhin real unbeobachtet ist. Ein späterer tatsächlicher Aufruf benötigt einen neuen endlichen Grant nach Abnahme. Keine automatische Fortsetzung; andere Eigentümer bleiben unverändert."
+      },
+      "runnerRebindingOfflineAssignment": {
+        "key": "s1-runner-rebinding-offline-20261008",
+        "authorizedUtc": "2026-10-08T15:16:04Z",
+        "baseSha": "73b263c37b471be39fc8dad37311889a0be26393",
+        "status": "Dispatched once; active; offline only.",
+        "scope": "Read-only inventory of at most two installed Codex executable candidates and one concise source-bound rebinding proposal after exact prior binary disappeared; no executable invocation or runtime quota.",
+        "maxExecutableCandidates": 2,
+        "maxCodexInvocations": 0,
+        "maxMetadataSessions": 0,
+        "maxAppServerTrees": 0,
+        "maxReservations": 0,
+        "maxActors": 0,
+        "maxThreadStarts": 0,
+        "maxTurnStarts": 0,
+        "maxProducts": 0,
+        "maxStudyCells": 0,
+        "maxTests": 0,
+        "configurationWrites": 0,
+        "installations": 0,
+        "sourceChanges": 0,
+        "newPurchases": false,
+        "exitCondition": "Clean concise documentation of exact candidate path/hash/PE metadata, known and unknown compatibility with pinned schemas/client, and at most one finite next-operation proposal; one callback, no automatic execution.",
+        "sentUtc": "2026-10-08T15:16:10Z",
+        "sentPrompt": "Neuer begrenzter Offlineauftrag s1-runner-rebinding-offline-20261008, 2026-10-08T15:16:04Z, in Root coordination-state.json dokumentiert. Dein sauberer Abschluss 73b263c37b471be39fc8dad37311889a0be26393 ist nach Root-Hash/Git-/17-Quellpinprüfung und unabhängigem Review als PREPARATION BLOCKED BEFORE RESERVATION angenommen. Exakt gepinnte Binary tatsächlich abwesend; Ursache unbekannt. Null neue Reservationen/Starts, alter Diagnosegrant geschlossen, Restquote verfallen; Slotfreigabe15:08:27.466196Z angenommen. Kein vorheriger Lauf wird umgewertet.\n\nBestimme ausschließlich lesend höchstens ZWEI bereits vorhandene lokale Codex-Binarykandidaten, bevorzugt die aktuelle Desktop-Laufzeit unter dem bestehenden OpenAI/Codex-Verzeichnis. Nutze Dateiinventar und verfügbare PE-Dateiversionsmetadaten, SHA256 und bei Bedarf den Imagepfad des laufenden Codex-Prozesses. Keine Credential-/Config-/Account-/beliebige Prozessdaten ausgeben. Kein Download, Installation, Kopieren/Wiederherstellen der Binary, Update, Änderung globaler Config/Trust/Policy oder Ausführen irgendeiner codex.exe, auch nicht --version/help/schema. Prüfe, ob der alte Hash noch in einem vorhandenen Kandidaten auftaucht; eine neue Version niemals als alte darstellen.\n\nLiefere ein knappes neues öffentliches Dokument, höchstens zwei Dokumentationsdateien: exakte Pfade/Hashes/lesbare Versionsmetadaten mit Herkunft, aktuell beobachtete Verfügbarkeit und deren Grenzen. Vergleiche vorhandene lokale/offizielle Informationen mit dem bisherigen0.160.1-Schema und den vorbereiteten engen Clientverträgen. Unbewiesene Schema-/RPC-Kompatibilität bleibt ausdrücklich offen. Keine neue Clientplattform, Parser-/Produktsourcenänderung, Tests, breite Historienneuverifikation oder zusätzliche Subagentenschleife. Ein enger unabhängiger lesender Plausibilitätsreview des ausgewählten Vorschlags genügt.\n\nWähle höchstens EINEN begründeten nächsten technischen Schritt und beschreibe dessen genaue endliche Operation, benötigte neue Pins, messbaren Erkenntnisgewinn und Abbruchgrenze. Falls erst version/help/schema-Metadaten nötig sind, nenne diese separat mit exakter argv und Fristen; sie werden jetzt NICHT ausgeführt. Falls ein stabiler projektexterner Pin aus bereits installierten Bytes sinnvoll wäre, zunächst lediglich vorschlagen. Keine Vorwegnahme einer künftigen Startfreigabe. Ziel bleibt der möglichst kurze Weg zu einer gemeinsamen tatsächlichen Ausführungsumgebung für Conventional, Classic und Government; keine Schlussfolgerung aus dieser Infrastrukturänderung über Methodenqualität.\n\nNull Codex-/CLI-/Metadaten-/App-Server-/Actor-/Modell-/Thread-/Turn-/Produkt-/Controller-/Wrapper-/Delegate-/Studienstarts, Reservationen, Freezes, Ledgeränderungen oder Tests. Bestehende Quoten und unbekannte Usage erhalten. Sauberer enger Dokumentationsabschluss und genau eine direkte Abschluss-/Bedarfsmeldung. Kein automatischer Folgeaufruf und keine reine Empfangsbestätigung."
       }
     },
     {
@@ -3669,7 +3809,7 @@
       "lastAssistantMessageId": "msg_0dc7fbe822793640016ac6f69ccac88191ac99728328af381f"
     }
   ],
-  "nextAction": "Await Scientist direct bounded thread-start diagnostic callback; inspect safe actual diagnostics before any further grant. Other owners hold; unchanged states quiet.",
+  "nextAction": "Await direct offline runner-inventory callback; bind one next operation only after reviewing exact candidate. Other owners hold.",
   "boundaries": {
     "governmentPublication": false,
     "automaticClassicReplacement": false,
@@ -3679,11 +3819,11 @@
     "satPrinciples": "Deferred by direct user request on 2026-10-07; conceptual constraint/consistency/conflict-explanation principles first, no solver integration or current assignment change. See docs/design/government/deferred-research.md."
   },
   "lastReview": {
-    "reviewedUtc": "2026-10-08T06:52:02Z",
-    "evidenceLevel": "Root exact packet/source/Git/history/freeze/schema/archive verification and independent terminal review; no tests rerun.",
+    "reviewedUtc": "2026-10-08T15:16:04Z",
+    "evidenceLevel": "Root clean SHA/payload/Git/source-pin/existence verification plus independent terminal review; no tests.",
     "coordinationActions": [
-      "Qualified acceptance and closure of read-tool R1 before turn.",
-      "One new bounded diagnostic grant with zero turn/tool authority."
+      "Accept missing-executable preparation closure and release slot.",
+      "One narrow read-only installed-runner discovery proposal; zero runtime authority."
     ],
     "userDecisionRequired": false
   },
@@ -3879,10 +4019,9 @@
     "owner": "Worker"
   },
   "fullSuiteSlot": {
-    "owner": "Scientist",
-    "key": "s1-thread-start-diagnostic-20261008-r1",
-    "assignedUtc": "2026-10-08T06:52:02Z",
-    "status": "Assigned to one bounded thread-start-only diagnostic; no full suite.",
+    "owner": null,
+    "key": null,
+    "status": "Free; no actual execution grant.",
     "queue": []
   },
   "contextSmokePreparation": {
@@ -4178,6 +4317,15 @@
       "queue": [],
       "releasedUtc": "2026-10-08T06:32:45.438113Z",
       "releaseVerifiedUtc": "2026-10-08T06:52:02Z"
+    },
+    {
+      "owner": "Scientist",
+      "key": "s1-thread-start-diagnostic-20261008-r1",
+      "assignedUtc": "2026-10-08T06:52:02Z",
+      "status": "Released after preparation blocker; residual expired.",
+      "queue": [],
+      "releasedUtc": "2026-10-08T15:08:27.466196+00:00",
+      "releaseVerifiedUtc": "2026-10-08T15:16:04Z"
     }
   ],
   "smokeAttemptCountingDecision": {
