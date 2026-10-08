@@ -1,0 +1,209 @@
+{
+  "canonicalSource": {
+    "gitBlob": "8169d3a6d4c3bf591d264b313ab04c583b0738e1",
+    "path": "docs/design/government/evaluation.md",
+    "repository": "C:\\Users\\Consiliari\\Glacius Labs\\Markitect",
+    "section": "Konventionelle Referenz mit Oldschool, Nutzerauftrag vom 8. Oktober",
+    "sectionSha256": "e5c63a62c06898996d11187ec064bd492c90f4dc34b08f59e1963d927ba12ee5",
+    "sectionSnapshot": "../evidence/scientist-oldschool-baseline-binding-20261008/canonical-oldschool-section.md",
+    "sha256": "df9279acafbc3a522329b72f37977eb9474f64ebde8d466c03710d50497cd967",
+    "sourceCommit": "93c3580fc8e63f403f33b909118cdd7d3601627c"
+  },
+  "commonInputs": [
+    {
+      "path": "public/brief.md",
+      "sha256": "4692ec98bbf8f8a140020e88182a62504689e6e6df5aa80af7c6783cdacb13c8"
+    },
+    {
+      "path": "public/architecture.md",
+      "sha256": "7459d9514358d1448c2353e0c0bf3d24d11a7eaf84b67c695724c88d20023700"
+    },
+    {
+      "path": "public/brownfield-provenance.md",
+      "sha256": "155f6f736adf4d48b71074f74a9221d9f8ac796a938b5b8b0650f741d59eb548"
+    },
+    {
+      "path": "public/q1-intent-setup-v1.md",
+      "sha256": "40bba049ac18da05deaa31943e3f6452280220f560f39e55a908704b8397312e"
+    },
+    {
+      "path": "public/rubric.json",
+      "sha256": "5b1966bbe1ec1f86812943ab28866d4cfa4b04a271e73f7b136a7160f1386c37"
+    },
+    {
+      "path": "public/resource-proposal.json",
+      "sha256": "258a5c76df6bc9691a137ebafa9f1ce23bf3190ce20714a6415a16bc80de2b4b"
+    },
+    {
+      "path": "public/measurement-profile-v2.json",
+      "sha256": "670572616658318a7498c13e16265707f4293c472072abb072f629505c402e2f"
+    },
+    {
+      "path": "public/metrics.schema.json",
+      "sha256": "a261854c9e2760350004565b69f6a158442aafa87e6fbb4a51cd08f4959cc7cb"
+    },
+    {
+      "path": "public/holdout-procedure.md",
+      "sha256": "795fd4bac98559ea7c8a1c2066deaa3f198a50406ae0b2f9d68c34e67ab6ac7f"
+    },
+    {
+      "path": "public/user-goal-coverage.md",
+      "sha256": "157f24f25459bb0fd7c89d7be5861d3bbf99a937f8f71a972b90ec0c62142ba2"
+    },
+    {
+      "path": "runtime/classic-pin.json",
+      "sha256": "097a42d2e6ea3553f0ee69c922b2df166186c7d9841057f1d6355ffa6831ff8c"
+    },
+    {
+      "path": "runtime/government-pin.json",
+      "sha256": "9599e6be0ced1cdbb96a3f2a288a7826ab74e5053c8aa5508e017dbdea20d92a"
+    },
+    {
+      "path": "prepare.py",
+      "sha256": "4c1162e0203bb68fa47ee1677c8fe8d563daad99566eee4000db931cd8cfeca7"
+    },
+    {
+      "path": "harness.py",
+      "sha256": "b7c99dbd0c2c0c905b819bbce3328be1b50133283cece51751cf2526e1640395"
+    },
+    {
+      "path": "public/tasks/01-create-order.md",
+      "sha256": "bf5c1e5bf148245bfbc8212e2ad90b7369d8a1a03765258eda078f1ec87075a9"
+    },
+    {
+      "path": "public/tasks/02-reserve-stock.md",
+      "sha256": "e2b2afde36c28ac8fed8fff89325c40d69bb075056cf02809f908dfaf14858a6"
+    },
+    {
+      "path": "public/tasks/03-persist-state.md",
+      "sha256": "2e9e4b6084d553a21720215e6cd5632508c875ea577b3492da01346a84ca2c53"
+    },
+    {
+      "path": "public/tasks/04-order-lifecycle.md",
+      "sha256": "f9ff9d364f4ed9a1d4a6f61189f7c32e017c22f1ac1acdba8eec5cc046e4faa0"
+    },
+    {
+      "path": "public/tasks/05-change-limit.md",
+      "sha256": "8ae2fca3229f9c4ceb9f618da68eabe02f08071b1d51075af715139a8f5d2ae4"
+    },
+    {
+      "path": "public/tasks/06-repair-regression.md",
+      "sha256": "14b7d553132756fbbb7036417a90cbe8452efeee6c77bd8cba77a90ff4e2292a"
+    }
+  ],
+  "fixtureValuesAreReferenceMeasurements": false,
+  "historicalConsumptionUnchanged": {
+    "actualTotalUsage": null,
+    "deterministicDelegates": 7,
+    "knownReportedTokens": 53331,
+    "nativeStarts": 12,
+    "realActorStarts": 5,
+    "reservedSessionSeconds": 1800,
+    "wrappers": 10
+  },
+  "kind": "public-study-setup-binding",
+  "liveStudyTrials": 0,
+  "matrix": [
+    {
+      "actorContext": null,
+      "actualOutcome": null,
+      "arm": "conventional",
+      "cellId": "conventional-greenfield",
+      "condition": "greenfield",
+      "isolatedCheckout": null,
+      "status": "NOT RUN"
+    },
+    {
+      "actorContext": null,
+      "actualOutcome": null,
+      "arm": "classic",
+      "cellId": "classic-greenfield",
+      "condition": "greenfield",
+      "isolatedCheckout": null,
+      "status": "NOT RUN"
+    },
+    {
+      "actorContext": null,
+      "actualOutcome": null,
+      "arm": "government",
+      "cellId": "government-greenfield",
+      "condition": "greenfield",
+      "isolatedCheckout": null,
+      "status": "NOT RUN"
+    },
+    {
+      "actorContext": null,
+      "actualOutcome": null,
+      "arm": "conventional",
+      "cellId": "conventional-brownfield",
+      "condition": "brownfield",
+      "isolatedCheckout": null,
+      "status": "NOT RUN"
+    },
+    {
+      "actorContext": null,
+      "actualOutcome": null,
+      "arm": "classic",
+      "cellId": "classic-brownfield",
+      "condition": "brownfield",
+      "isolatedCheckout": null,
+      "status": "NOT RUN"
+    },
+    {
+      "actorContext": null,
+      "actualOutcome": null,
+      "arm": "government",
+      "cellId": "government-brownfield",
+      "condition": "brownfield",
+      "isolatedCheckout": null,
+      "status": "NOT RUN"
+    }
+  ],
+  "newExperimentalConsumption": {
+    "controllerStarts": 0,
+    "delegates": 0,
+    "fullSuites": 0,
+    "metadataSessions": 0,
+    "modelProviderCalls": 0,
+    "nativeStarts": 0,
+    "realActorStarts": 0,
+    "studyCells": 0,
+    "wrappers": 0
+  },
+  "oldschool": {
+    "briefReceiptStatus": "public preparation accepted and forwarded by Overseer; actual tool capability untested",
+    "hostId": "local",
+    "publicWorkflowBrief": {
+      "actualActiveSeconds": null,
+      "actualUsage": null,
+      "classification": "Overseer-forwarded public method description; not measurement",
+      "path": "public/oldschool-workflow-brief-20261008.md",
+      "sha256": "5b9dddff5d07d9cb1e6427c43e46f1259e9fb49fd030fc0a6e1e44b21e60aadc",
+      "sourcePackage": "oldschool-baseline-preparation-20261008",
+      "sourceThreadId": "01a11367-a781-7683-a20f-46e12614dcb4",
+      "zeroConsumptionInstrumented": false
+    },
+    "role": "Engineering owner of Conventional; not a cell Actor context, oracle author, or final assessor",
+    "threadId": "01a11928-cc8d-7580-9d29-f6557bb2cbd7"
+  },
+  "outcomeAndMethodWeightsChanged": false,
+  "package": "scientist-oldschool-baseline-binding-20261008",
+  "s1Complete": false,
+  "schemaVersion": 1,
+  "scientistBaseCommit": "962bcd12ca3a940517f457a9fd89d44cf5d7c0d3",
+  "sharedProfile": {
+    "actualModel": null,
+    "actualReasoning": null,
+    "channel": null,
+    "contextPolicy": null,
+    "descendantMetering": null,
+    "freshCellContextVerified": false,
+    "matchedChannelVerified": false,
+    "measurementSemantics": "measurement-profile-v2.json",
+    "newOrExpandedLimits": false,
+    "permissions": null,
+    "resourceOwner": "resource-proposal.json commonLimits",
+    "toolConfiguration": null
+  },
+  "status": "documentation-only; NOT RUN; no execution authority"
+}

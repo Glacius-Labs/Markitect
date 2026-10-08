@@ -134,6 +134,11 @@ freeze the resulting context policy equally across arms.
 
 ## Next finite checkpoint
 
+The [Oldschool Conventional reference binding](public/oldschool-baseline-binding-v1.md)
+applies the canonical 8 October addition to the existing three-arm/six-cell
+comparison. It fixes ownership and public setup/measurement prerequisites only;
+all cells remain NOT RUN and no reference value or execution grant is created.
+
 The [extended user-goal coverage](public/user-goal-coverage.md) binds the six
 research questions to existing cards, independent criteria and explicit gaps.
 Its [exact canonical contract snapshot](public/study-contract-2026-10-07.md) comes
