@@ -15,6 +15,7 @@ import (
 
 type Project = projectwork.Project
 type Mutation = projectwork.Mutation
+type FileChange = projectwork.FileChange
 type EditPlan = projectwork.EditPlan
 type Snapshot = snapshot.Snapshot
 
