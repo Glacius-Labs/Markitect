@@ -1,0 +1,126 @@
+package projectrun
+
+import (
+	"os"
+	"path/filepath"
+	"strings"
+	"testing"
+	"time"
+
+	"go.yaml.in/yaml/v3"
+)
+
+func validRuntime() Runtime {
+	return Runtime{
+		APIVersion: APIVersion,
+		Mode:       ModeControlledLocal,
+		Agents: map[string]Agent{
+			"commerce": {
+				Command: "fake-agent", Args: []string{"--protocol"}, Model: "fixture",
+				ProviderVersion: "fixture-v1", Timeout: Duration(30 * time.Second),
+				MaxStdoutBytes: 64 << 10, MaxStderrBytes: 16 << 10,
+				Environment: []string{"OPENAI_API_KEY"},
+				Pricing:     Pricing{InputMicrosPerMillion: 100, OutputMicrosPerMillion: 200},
+			},
+		},
+		Limits: Limits{
+			MaxDepth: 4, MaxStarts: 12, MaxRetries: 1, MaxParallel: 2,
+			MaxDuration: Duration(10 * time.Minute), MaxCostMicros: 5000,
+			MaxCandidateFileBytes: 1 << 20, MaxCandidateBytes: 8 << 20,
+		},
+	}
+}
+
+func TestValidateRuntimeRequiresExplicitBoundedControlledLocalConfiguration(t *testing.T) {
+	if err := ValidateRuntime(validRuntime()); err != nil {
+		t.Fatalf("valid config rejected: %v", err)
+	}
+
+	cases := []struct {
+		name   string
+		change func(*Runtime)
+		want   string
+	}{
+		{"missing finite starts", func(c *Runtime) { c.Limits.MaxStarts = 0 }, "limits"},
+		{"unbounded retries", func(c *Runtime) { c.Limits.MaxRetries = 4 }, "limits"},
+		{"asserted isolation", func(c *Runtime) { c.Mode = ModeIsolated }, "unavailable"},
+		{"required isolation", func(c *Runtime) { c.RequireIsolation = true }, "unavailable"},
+		{"ambient git credential", func(c *Runtime) {
+			agent := c.Agents["commerce"]
+			agent.Environment = []string{"GIT_ASKPASS"}
+			c.Agents["commerce"] = agent
+		}, "may not inherit"},
+		{"environment value persisted", func(c *Runtime) {
+			agent := c.Agents["commerce"]
+			agent.Environment = []string{"OPENAI_API_KEY=secret"}
+			c.Agents["commerce"] = agent
+		}, "invalid or duplicate"},
+		{"no enforceable price", func(c *Runtime) {
+			agent := c.Agents["commerce"]
+			agent.Pricing = Pricing{}
+			c.Agents["commerce"] = agent
+		}, "pricing"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			config := validRuntime()
+			tc.change(&config)
+			if err := ValidateRuntime(config); err == nil || !strings.Contains(err.Error(), tc.want) {
+				t.Fatalf("expected error containing %q; got %v", tc.want, err)
+			}
+		})
+	}
+}
+
+func TestLoadRuntimeStrictlyDecodesOneDocumentAndDurations(t *testing.T) {
+	root := t.TempDir()
+	if err := os.Mkdir(filepath.Join(root, ".markitect"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	data, err := yaml.Marshal(validRuntime())
+	if err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(root, filepath.FromSlash(RuntimePath))
+	if err := os.WriteFile(path, data, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	loaded, err := LoadRuntime(root)
+	if err != nil {
+		t.Fatalf("load config: %v\n%s", err, data)
+	}
+	if loaded.Limits.MaxDuration != Duration(10*time.Minute) || loaded.Agents["commerce"].Timeout != Duration(30*time.Second) {
+		t.Fatalf("duration decode mismatch: %+v", loaded)
+	}
+
+	for name, content := range map[string]string{
+		"unknown field":   strings.Replace(string(data), "maxStarts:", "mystery: true\n  maxStarts:", 1),
+		"second document": string(data) + "---\napiVersion: ignored\n",
+	} {
+		t.Run(name, func(t *testing.T) {
+			if err := os.WriteFile(path, []byte(content), 0o600); err != nil {
+				t.Fatal(err)
+			}
+			if _, err := LoadRuntime(root); err == nil {
+				t.Fatal("invalid runtime config unexpectedly loaded")
+			}
+		})
+	}
+}
+
+func TestLoadRuntimeRejectsSymlinkedConfig(t *testing.T) {
+	root := t.TempDir()
+	if err := os.Mkdir(filepath.Join(root, ".markitect"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	outside := filepath.Join(t.TempDir(), "runtime.yaml")
+	if err := os.WriteFile(outside, []byte("{}"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(outside, filepath.Join(root, filepath.FromSlash(RuntimePath))); err != nil {
+		t.Skipf("symlink creation unavailable: %v", err)
+	}
+	if _, err := LoadRuntime(root); err == nil || !strings.Contains(err.Error(), "symlink") {
+		t.Fatalf("expected symlink rejection, got %v", err)
+	}
+}
