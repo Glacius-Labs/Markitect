@@ -67,6 +67,9 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 	if project.Snapshot == nil || project.Snapshot.Digest() != plan.BaseSnapshot || project.Digest != plan.BaseProjectDigest || project.Report.ModelDigest != plan.BaseModelDigest {
 		return supersedeExisting(store, id, ErrStale)
 	}
+	if err := validateChangeImpact(host, root, project, plan); err != nil {
+		return supersedeExisting(store, id, err)
+	}
 	working, err := host.Load(root, "")
 	if err != nil {
 		return supersedeExisting(store, id, err)
@@ -487,15 +490,22 @@ func invokeManager(ctx context.Context, host Host, invoker Invoker, root string,
 	}
 	managerContext.Children = filteredChildren
 	ctxPayload := struct {
-		Phase           string                      `json:"phase"`
-		Goal            string                      `json:"goal"`
-		Manager         projectmodel.ManagerContext `json:"manager"`
-		DirectChildren  []string                    `json:"directChildren"`
-		ChildReports    []childReport               `json:"childReports,omitempty"`
-		ConflictPaths   []string                    `json:"conflictPaths,omitempty"`
-		CandidateDigest string                      `json:"candidateDigest"`
-		ResponseSchema  json.RawMessage             `json:"responseSchema"`
-	}{Phase: phase, Goal: task.Goal, Manager: managerContext, DirectChildren: activeChildrenFromContext(managerContext), ChildReports: childReports, ConflictPaths: conflicts, CandidateDigest: project.Snapshot.Digest(), ResponseSchema: taskResponseSchema(phase)}
+		Phase                string                      `json:"phase"`
+		PhaseGuidance        string                      `json:"phaseGuidance"`
+		EscalationTarget     string                      `json:"escalationTarget"`
+		Goal                 string                      `json:"goal"`
+		Manager              projectmodel.ManagerContext `json:"manager"`
+		DirectChildren       []string                    `json:"directChildren"`
+		DirectChildContracts []projectmodel.Statement    `json:"directChildContracts"`
+		DirectChildArtifacts []projectmodel.Artifact     `json:"directChildArtifacts"`
+		ChildReports         []childReport               `json:"childReports,omitempty"`
+		ConflictPaths        []string                    `json:"conflictPaths,omitempty"`
+		CandidateDigest      string                      `json:"candidateDigest"`
+		ResponseSchema       json.RawMessage             `json:"responseSchema"`
+	}{Phase: phase, PhaseGuidance: phaseGuidance(phase), EscalationTarget: escalationTarget(task), Goal: task.Goal,
+		Manager: managerContext, DirectChildren: activeChildrenFromContext(managerContext),
+		DirectChildContracts: publicChildContracts(project.Report, activeChildIDs), DirectChildArtifacts: requiredChildArtifacts(project.Report, activeChildIDs),
+		ChildReports: childReports, ConflictPaths: conflicts, CandidateDigest: project.Snapshot.Digest(), ResponseSchema: taskResponseSchema(phase)}
 	// Parent integration sees only direct child summaries and candidate digests,
 	// never their transcripts or private logs.
 	_ = start
@@ -503,7 +513,7 @@ func invokeManager(ctx context.Context, host Host, invoker Invoker, root string,
 	if err != nil {
 		return result, log, err
 	}
-	artifacts, err := scopedArtifacts(project, task, configAgent, runtime.Limits, phase)
+	artifacts, err := scopedArtifacts(project, task, configAgent, runtime.Limits, phase, activeChildIDs)
 	if err != nil {
 		return result, log, err
 	}
@@ -514,8 +524,14 @@ func invokeManager(ctx context.Context, host Host, invoker Invoker, root string,
 	if err != nil {
 		return result, log, err
 	}
-	if result.Response.Role != agentexec.RoleExecutor || result.Receipt.Outcome != result.Response.Outcome || (result.Response.Outcome != agentexec.OutcomeProposed && result.Response.Outcome != agentexec.OutcomeEscalated) {
-		return result, log, fmt.Errorf("agent did not return a typed proposed or escalated executor result")
+	if result.Response.Role != agentexec.RoleExecutor {
+		return result, log, fmt.Errorf("agent returned role %q; expected executor", result.Response.Role)
+	}
+	if result.Receipt.Outcome != result.Response.Outcome {
+		return result, log, fmt.Errorf("agent response outcome did not match its execution receipt")
+	}
+	if result.Response.Outcome != agentexec.OutcomeProposed && result.Response.Outcome != agentexec.OutcomeEscalated {
+		return result, log, executorOutcomeError(result.Response)
 	}
 	// A fresh project read after each external process catches concurrent edits
 	// without auditing mutable operational state under .markitect/runs.
@@ -544,6 +560,31 @@ func invokeManager(ctx context.Context, host Host, invoker Invoker, root string,
 	return result, log, nil
 }
 
+// executorOutcomeError includes only exact adapter-owned public diagnostics.
+// Free-form uncertainty can contain provider output or model text and is never
+// copied into public runtime errors.
+func executorOutcomeError(response agentexec.Response) error {
+	message := fmt.Sprintf("agent returned outcome %q", response.Outcome)
+	allowed := map[string]bool{
+		"Codex rejected the configured model for the active account. Choose a model explicitly confirmed for that account; Markitect did not substitute a model.": true,
+		"Codex authentication was unavailable or rejected. Authenticate the configured account and retry.":                                                        true,
+		"The Codex provider rate limit prevented completion. Wait for the limit to reset before retrying.":                                                        true,
+		"The installed Codex CLI rejected its invocation or configuration. Check the installed version and adapter-supported settings.":                           true,
+	}
+	var diagnostics []string
+	seen := map[string]bool{}
+	for _, item := range response.Uncertainty {
+		if allowed[item] && !seen[item] && len(diagnostics) < 3 {
+			diagnostics = append(diagnostics, item)
+			seen[item] = true
+		}
+	}
+	if len(diagnostics) == 0 {
+		return fmt.Errorf("%s; no safe provider diagnostic was supplied", message)
+	}
+	return fmt.Errorf("%s: %s", message, strings.Join(diagnostics, " "))
+}
+
 type childReport struct {
 	ManagerID       string   `json:"managerId"`
 	Summary         string   `json:"summary"`
@@ -553,7 +594,46 @@ type childReport struct {
 	CandidateDigest string   `json:"candidateDigest"`
 }
 
-func scopedArtifacts(project *Project, task ManagerTask, agent Agent, limits Limits, phase string) ([]agentexec.Artifact, error) {
+func phaseGuidance(phase string) string {
+	const work = "Host protocol for work: complete the assigned goal for this Manager's own mandate and delegate to every ID in directChildren exactly once with a concrete, bounded goal, and to no other Manager. The outer agent outcome must be proposed even when this report status is partial; status describes this Manager's local work only. Status complete means this Manager completed its own work and all required delegations, not that children or the whole project are already complete. Status no-op is valid when this Manager has no own-scope edit to make; it still must provide every required delegation. Use status partial only for genuinely incomplete own-scope work, with an actionable question or risk. Propose only this Manager's own selected-inventory files; do not edit child-owned files. Child implementation files are intentionally not supplied during work: their absence is not a blocker or risk because those children receive their own task. Keep resolvedQuestions and resolvedRisks empty during work. Do not claim integration or verification."
+	const integrate = "Host protocol for integration: inspect every direct child report and the current merged candidate artifacts supplied for active direct children, plus directChildContracts and directChildArtifacts. Integrate the actual child candidate bytes against this Manager's mandate and the supplied contracts; do not merely repeat the reports. Set integrated=true only after checking each child result. Do not create delegations. Propose only this Manager's own files, except a listed conflict path authorized for this integration. If no additional integration edit is needed, return status complete with an empty candidateFiles array; status no-op is not valid for integration. Resolve only exact question/risk text present in this Manager or direct child reports, copying it verbatim to resolvedQuestions/resolvedRisks. Keep unresolved obligations in questions/risks and escalate to escalationTarget; do not claim checks passed."
+	if phase == "integrate" {
+		return integrate
+	}
+	return work
+}
+
+func publicChildContracts(report projectmodel.Report, activeChildren []string) []projectmodel.Statement {
+	active := make(map[string]bool, len(activeChildren))
+	for _, id := range activeChildren {
+		active[id] = true
+	}
+	var contracts []projectmodel.Statement
+	for _, statement := range report.Statements {
+		if statement.Public && active[statement.Owner] {
+			contracts = append(contracts, statement)
+		}
+	}
+	sort.Slice(contracts, func(i, j int) bool { return contracts[i].ID < contracts[j].ID })
+	return contracts
+}
+
+func requiredChildArtifacts(report projectmodel.Report, activeChildren []string) []projectmodel.Artifact {
+	active := make(map[string]bool, len(activeChildren))
+	for _, id := range activeChildren {
+		active[id] = true
+	}
+	var artifacts []projectmodel.Artifact
+	for _, artifact := range report.Artifacts {
+		if artifact.Required && active[artifact.Owner] {
+			artifacts = append(artifacts, artifact)
+		}
+	}
+	sort.Slice(artifacts, func(i, j int) bool { return artifacts[i].ID < artifacts[j].ID })
+	return artifacts
+}
+
+func scopedArtifacts(project *Project, task ManagerTask, agent Agent, limits Limits, phase string, activeChildIDs []string) ([]agentexec.Artifact, error) {
 	paths := map[string]bool{}
 	for _, entry := range project.Report.Files {
 		if entry.Owner == task.ManagerID {
@@ -575,10 +655,8 @@ func scopedArtifacts(project *Project, task ManagerTask, agent Agent, limits Lim
 	}
 	if phase == "integrate" {
 		children := map[string]bool{}
-		for _, m := range project.Report.Managers {
-			if m.Parent == task.ManagerID {
-				children[m.ID] = true
-			}
+		for _, id := range activeChildIDs {
+			children[id] = true
 		}
 		for _, artifact := range project.Report.Artifacts {
 			if !children[artifact.Owner] || !artifact.Required {
