@@ -46,6 +46,7 @@ var actionSpecs = map[string]actionSpec{
 	"plan":     {usage: "plan --repo PATH --goal TEXT [--manager ID ...] [--revision COMMIT] [--since OLD_COMMIT] [--write]", flags: []string{"repo", "goal", "manager", "revision", "since", "write"}, required: []string{"repo", "goal"}, write: true},
 	"run":      {usage: "run --repo PATH --plan PLAN_ID --write", flags: []string{"repo", "plan", "write"}, required: []string{"repo", "plan", "write"}, write: true},
 	"resume":   {usage: "resume --repo PATH --run RUN_ID --write", flags: []string{"repo", "run", "write"}, required: []string{"repo", "run", "write"}, write: true},
+	"repair":   {usage: "repair --repo PATH --run RUN_ID [--write]", flags: []string{"repo", "run", "write"}, required: []string{"repo", "run"}, write: true},
 	"status":   {usage: "status --repo PATH --run RUN_ID", flags: []string{"repo", "run"}, required: []string{"repo", "run"}},
 	"verify":   {usage: "verify --repo PATH --run RUN_ID --write", flags: []string{"repo", "run", "write"}, required: []string{"repo", "run", "write"}, write: true},
 	"apply":    {usage: "apply --repo PATH --plan PLAN_ID --run RUN_ID --candidate ID [--branch BRANCH --head COMMIT --worktree DIGEST --expect VERIFY_DIGEST --write]", flags: []string{"repo", "plan", "run", "candidate", "branch", "head", "worktree", "expect", "write"}, required: []string{"repo", "plan", "run", "candidate"}, write: true},

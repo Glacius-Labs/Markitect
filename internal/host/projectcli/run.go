@@ -47,7 +47,7 @@ func Run(args []string, out, errout io.Writer) int {
 
 func runAction(opts options, out io.Writer) error {
 	ctx := context.Background()
-	if opts.action == "run" || opts.action == "resume" || opts.action == "verify" || (opts.action == "distill" && opts.generate) {
+	if opts.action == "run" || opts.action == "resume" || opts.action == "repair" || opts.action == "verify" || (opts.action == "distill" && opts.generate) {
 		bounded, stop := signal.NotifyContext(ctx, os.Interrupt)
 		defer stop()
 		ctx = bounded
@@ -402,6 +402,19 @@ func runAction(opts options, out io.Writer) error {
 			return err
 		}
 		return writeJSON(out, report)
+	case "repair":
+		if !opts.write {
+			report, err := projectrun.Status(opts.repo, opts.run)
+			if err != nil {
+				return err
+			}
+			return writeJSON(out, report)
+		}
+		report, err := projectrun.Repair(ctx, projectRunHost(), projectrun.ProcessInvoker{}, opts.repo, opts.run)
+		if err != nil {
+			return err
+		}
+		return writeJSON(out, report)
 	case "status":
 		report, err := projectrun.Status(opts.repo, opts.run)
 		if err != nil {
@@ -520,7 +533,7 @@ func writeJSON(out io.Writer, value any) error {
 
 func printUsage(out io.Writer, action string) {
 	if action == "" {
-		_, _ = io.WriteString(out, "Usage: markitect project <action> [flags]\nActions: schema init check index context impact document edit discover distill resolve adopt setup doctor plan run resume status verify apply\n")
+		_, _ = io.WriteString(out, "Usage: markitect project <action> [flags]\nActions: schema init check index context impact document edit discover distill resolve adopt setup doctor plan run resume repair status verify apply\n")
 		return
 	}
 	if spec, ok := actionSpecs[action]; ok {
