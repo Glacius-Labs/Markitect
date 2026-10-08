@@ -71,7 +71,7 @@ func Analyze(model core.Model, inventory []File) Report {
 		if owner == "" {
 			addFinding(&r, "ownership.check-unmanaged", id, "Check has no Manager at or above its namespace.", "error")
 		}
-		r.Checks = append(r.Checks, Check{ID: id, Name: d.Metadata.Name, Owner: owner, Command: stringsFrom(d.Spec["command"]), Uses: refIDs(d.Spec["uses"]), Limitation: stringValue(d.Spec["limitation"])})
+		r.Checks = append(r.Checks, Check{ID: id, Name: d.Metadata.Name, Owner: owner, Command: orderedStrings(d.Spec["command"]), Uses: refIDs(d.Spec["uses"]), Limitation: stringValue(d.Spec["limitation"])})
 	}
 	sort.Slice(r.Checks, func(i, j int) bool { return r.Checks[i].ID < r.Checks[j].ID })
 	checkByID := map[string]Check{}
@@ -100,8 +100,10 @@ func Analyze(model core.Model, inventory []File) Report {
 	}
 	for _, a := range r.Artifacts {
 		for _, sid := range a.Realizes {
-			if _, ok := statementByID[sid]; !ok {
+			if target, ok := statementByID[sid]; !ok {
 				addFinding(&r, "reference.artifact-statement-missing", a.ID, "Artifact realizes a missing Statement.", "error")
+			} else if target.Owner != a.Owner && !target.Public {
+				addFinding(&r, "reference.private-cross-manager", a.ID, "Artifact crosses a Manager boundary to realize a private Statement.", "error")
 			}
 		}
 		for _, cid := range a.Checks {
@@ -112,8 +114,10 @@ func Analyze(model core.Model, inventory []File) Report {
 	}
 	for _, c := range r.Checks {
 		for _, sid := range c.Uses {
-			if _, ok := statementByID[sid]; !ok {
+			if target, ok := statementByID[sid]; !ok {
 				addFinding(&r, "reference.check-statement-missing", c.ID, "Check uses a missing Statement.", "error")
+			} else if target.Owner != c.Owner && !target.Public {
+				addFinding(&r, "reference.private-cross-manager", c.ID, "Check crosses a Manager boundary to use a private Statement.", "error")
 			}
 		}
 	}
@@ -283,6 +287,22 @@ func stringsFrom(v any) []string {
 		}
 	}
 	return sortedUnique(out)
+}
+func orderedStrings(v any) []string {
+	if value, ok := v.(string); ok {
+		return []string{value}
+	}
+	if values, ok := v.([]string); ok {
+		return append([]string(nil), values...)
+	}
+	values, _ := v.([]any)
+	out := make([]string, 0, len(values))
+	for _, value := range values {
+		if text, ok := value.(string); ok {
+			out = append(out, text)
+		}
+	}
+	return out
 }
 func refID(v any) string {
 	m, ok := v.(map[string]any)
