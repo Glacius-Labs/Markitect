@@ -53,6 +53,42 @@ func writeRecord(root, rawPath string, data []byte) (string, error) {
 	return "sha256:" + hex.EncodeToString(digest[:]), nil
 }
 
+// preflightRecordDestinations confirms that all explicit output paths are
+// valid, absent Markitect records before an agent invocation can incur cost.
+func preflightRecordDestinations(root string, rawPaths ...string) error {
+	paths := make([]string, 0, len(rawPaths))
+	seen := map[string]bool{}
+	for _, raw := range rawPaths {
+		rel, err := recordPath(raw)
+		if err != nil {
+			return err
+		}
+		if seen[rel] {
+			return fmt.Errorf("Markitect record destination %s was specified more than once", rel)
+		}
+		seen[rel] = true
+		paths = append(paths, rel)
+	}
+	if len(paths) == 0 {
+		return errors.New("at least one Markitect record destination is required")
+	}
+	sort.Strings(paths)
+	capture, err := hostwrite.CaptureGuardedWrite(root, paths)
+	if err != nil {
+		return fmt.Errorf("capture Markitect record targets: %w", err)
+	}
+	for _, path := range paths {
+		current, ok := capture.Files[path]
+		if !ok {
+			return fmt.Errorf("Markitect record destination %s was not captured", path)
+		}
+		if current.Exists {
+			return fmt.Errorf("refusing to overwrite existing Markitect record %s", path)
+		}
+	}
+	return nil
+}
+
 // writeRecords persists a related group of transport records under one
 // guarded capture, refusing any overwrite before applying the group.
 func writeRecords(root string, records map[string][]byte) (map[string]string, error) {
