@@ -6,6 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
+	"os/signal"
 
 	"github.com/Glacius-Labs/Markitect/internal/host/projectadoption"
 	"github.com/Glacius-Labs/Markitect/internal/host/projectrun"
@@ -40,6 +42,12 @@ func Run(args []string, out, errout io.Writer) int {
 }
 
 func runAction(opts options, out io.Writer) error {
+	ctx := context.Background()
+	if opts.action == "run" || opts.action == "resume" || opts.action == "verify" {
+		bounded, stop := signal.NotifyContext(ctx, os.Interrupt)
+		defer stop()
+		ctx = bounded
+	}
 	switch opts.action {
 	case "init":
 		plan, err := projectwork.Init(opts.repo, opts.name, opts.write)
@@ -225,13 +233,13 @@ func runAction(opts options, out io.Writer) error {
 		}
 		return writeJSON(out, plan)
 	case "run":
-		report, err := projectrun.Run(context.Background(), projectRunHost(), projectrun.ProcessInvoker{}, opts.repo, opts.plan)
+		report, err := projectrun.Run(ctx, projectRunHost(), projectrun.ProcessInvoker{}, opts.repo, opts.plan)
 		if err != nil {
 			return err
 		}
 		return writeJSON(out, report)
 	case "resume":
-		report, err := projectrun.Resume(context.Background(), projectRunHost(), projectrun.ProcessInvoker{}, opts.repo, opts.run)
+		report, err := projectrun.Resume(ctx, projectRunHost(), projectrun.ProcessInvoker{}, opts.repo, opts.run)
 		if err != nil {
 			return err
 		}
@@ -243,7 +251,7 @@ func runAction(opts options, out io.Writer) error {
 		}
 		return writeJSON(out, report)
 	case "verify":
-		report, err := projectrun.Verify(context.Background(), projectRunHost(), projectrun.ProcessInvoker{}, opts.repo, opts.run)
+		report, err := projectrun.Verify(ctx, projectRunHost(), projectrun.ProcessInvoker{}, opts.repo, opts.run)
 		if err != nil {
 			return err
 		}
