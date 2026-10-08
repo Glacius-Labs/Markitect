@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-08T00:25:46Z",
+  "updatedUtc": "2026-10-08T00:31:39Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -22,13 +22,13 @@
       "name": "Worker",
       "threadId": "01a1169b-9357-7df3-a8f6-f913557c782a",
       "hostId": "local",
-      "afterCursor": "b2b8e43f-fcaa-41bf-828a-99c69527bdea:64",
+      "afterCursor": "b2b8e43f-fcaa-41bf-828a-99c69527bdea:65",
       "lastObservedStatus": "active",
       "activeTurn": "01a118e6-3635-7aa2-a742-3ea22dc01267",
-      "lastAssistantMessageId": "msg_0a7785839df196a4016ac6e2ded510819181cc3e84ee66dca4",
+      "lastAssistantMessageId": "msg_0a7785839df196a4016ac6e3ddbdf881918ead3d3bae8a45ef",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "At most two evidenced usability/product gaps in intent-to-model-to-project/change workflow; independent successor worktree; reviewed version-bound public entrypoint.",
-      "latestProgress": "Ich erstelle den additiven Abschlussnachtrag mit vier Versuchen, den tatsächlichen und reservierten Zählern sowie der Grenze der globalen Durchsetzung. Quellstand und alte Belege bleiben unverändert. Verfügbare Reviewer-Nachrichten archiviere ich als nachträgliche Abschrift und benenne fehlende Originale ausdrücklich.",
+      "latestProgress": "Die Prüfung bestätigt alle 122 alten Dateigrößen und Hashes unverändert, ebenso Handoff und Index. Neu liegen Abschriften von 14 verfügbaren Reviewer-Nachrichten vor. Sie sind als nachträgliche Archivierung gekennzeichnet; Original-Zeitstempel und exakte Prüf-SHAs je Nachricht bleiben unbekannt.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-worker/Markitect",
       "transferredDesignCommit": "691ce1dee3484371c4aea725db4ed5cc3f2e3719",
       "candidateSha": "839dc4e3f6078aa051e08c50c2b958150ca45f49",
@@ -404,13 +404,13 @@
       "name": "Scientist",
       "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
       "hostId": "local",
-      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:95",
+      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:96",
       "lastObservedStatus": "active",
       "activeTurn": "01a118dd-a444-7463-9cfb-7a49e9499964",
-      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac6e1e8b6a48191a9786726167520f1",
+      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac6e3e055ec819183b1ec6608310480",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "Offline exact native/adapter contract repair, focused regression and independent review; no new live grant.",
-      "latestProgress": "Der neue Grant ist im aktuellen Coordinator-Stand vorhanden; der Prüfslot gehört weiterhin Worker. Ich binde R3 separat an diesen Grant und die fünf historischen Starts. Die bisherigen Belege und der produktive Budget-Ledger bleiben während der Vorbereitung unverändert. Die frühere gemockte Classic-Aufnahmeprüfung wird durch einen echten Offline-Test der Grant- und bind_request-Kette ergänzt.",
+      "latestProgress": "Das unabhängige Review hat noch eine Freigabelücke gefunden: Ein widerrufener R3-Status könnte bei unverändertem Prüfslot weiter passieren. Ich lasse diese Prüfung vor dem Freeze korrigieren. Native Aufrufe bleiben bis zum Abschluss der Vorbedingungen ausgesetzt.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-scientist/Markitect",
       "transferredDesignCommit": "b9e17c9896f14b4b1268e4bcb005395f5d324384",
       "candidateSha": "f5cd8871b84f45541044110057b59f0bb1ca0804",
@@ -1306,7 +1306,7 @@
             "classic": 180
           },
           "reservedSecondsPerNativeStart": 150,
-          "firstCheckpoint": "One Government queue and one Classic Execute, max two starts/300 reserved seconds; each product must succeed before its later operations.",
+          "firstCheckpoint": "Separate per-product admission checkpoints: Government queue(max1start/150reservedsec), then if successful its resume/replay; after Government terminal, Classic Execute(max1start/150reservedsec), then if successful its permitted continuation. Entry starts sum to2/300 but do not form a joint temporal barrier.",
           "stop": "First failure/missing prerequisite/time or quota stop closes that product without retry or repair-and-run. Other bounded product may run if preflight valid.",
           "newModelProviderCalls": 0,
           "metadataSessions": 0,
@@ -1314,7 +1314,25 @@
           "nativeEntryGate": "Clean source; narrow new grant admission plus real bind_request offline checks; independent review; immutable freeze and new cases; fullSuiteSlot explicitly assigned to Scientist for this grant.",
           "remainingHistoricalTokens": null,
           "sentUtc": "2026-10-08T00:15:41Z",
-          "slotAssignedUtc": "2026-10-08T00:20:56Z"
+          "slotAssignedUtc": "2026-10-08T00:20:56Z",
+          "previousFirstCheckpoint": "One Government queue and one Classic Execute, max two starts/300 reserved seconds; each product must succeed before its later operations.",
+          "sequenceClarification": {
+            "key": "r3-a1",
+            "decidedUtc": "2026-10-08T00:30:59Z",
+            "nativeConsumptionBeforeAmendment": "Scientist reports zero new native starts; actual preflight remains incomplete",
+            "choice": "A: contiguous Government block then contiguous Classic block; no overlapping product controllers",
+            "boundsChanged": false,
+            "priorAmbiguity": "Joint first-two-start checkpoint conflicted with contiguous sequential product execution. Clarified before any new native execution.",
+            "prompt": "A gilt: Produkte als zusammenhängende Blöcke sequentiell, Government zuerst vollständig bis zum zulässigen Ende, dann Classic. Die Formulierung vom gemeinsamen ersten Zwei-Start-Checkpoint war missverständlich; ich präzisiere sie ausdrücklich vor jeder neuen nativen Ausführung durch Amendment r3-a1 im vorhandenen Grant. Kein zusätzlicher Grant und keine Budgeterhöhung.\n\nGovernment: genau eine Queue als eigener Eintrittscheckpoint (max1Start/150reservierteSekunden); nur bei positivem Ergebnis die zugehörige Resume-/Replayoperation innerhalb insgesamt max2Starts/300Sekunden. Bei Fehler/fehlenderVoraussetzung/Grenzstopp Government terminal schließen ohne Reparatur/Nachstart. Danach Classic: genau ein Execute als eigener Eintrittscheckpoint (max1Start/150Sekunden); nur bei positivem Ergebnis gebundener Review und die bereits erlaubten Apply/Verify/Audit/stale-Apply-Schritte innerhalb insgesamt max5Starts/750Sekunden. Auch hier ersterFehler=Produktstop. Der separate Classicblock darf bei erfülltem Preflight auch nach negativem Governmentblock laufen. Es muss kein Classic-Controller während Government offen gehalten werden.\n\nDie beiden jeweils ersten Eintrittsaufrufe verbrauchen zusammen höchstens2Starts/300Sekunden, sind aber KEINE gemeinsame zeitliche Barriere vor Government-Resume. Weitere Limits unverändert: insgesamt max7neue/12kumulativeNativeStarts,1050neue/1800kumulativeReservierungssekunden, Produkte nie parallel, Rollenparallelität höchstens2, alle Prozessfristen, Rollen-/Wrappercaps und Stopregeln unverändert. Die neue Reihenfolgenklarstellung, aktueller Coordinator-Snapshot und aktuelle Live-Grant-/Slot-Prüfung gehören vor Start in den neuen Freeze. Dein enger Widerrufsstatus-Fix samt Negativtests/Review liegt im bestehenden Preflight-Auftrag; keine Lockerung zulässiger Status. Bis sämtliche Voraussetzungen erfüllt sind weiter null native Starts. Danach ist A innerhalb des aktiv zugeteilten Slots autorisiert, ohne weitere pauschale Nachfrage.",
+            "status": "Sent once in response to explicit sequencing question; pre-native amendment, no added quota.",
+            "sentUtc": "2026-10-08T00:30:59Z"
+          }
+        },
+        "contractCorrectedNativeIntegrationProgress": {
+          "observedUtc": "2026-10-08T00:30:59Z",
+          "status": "Offline preflight active; independent review found revoked grant status could pass unchanged slot, narrow fix/negative tests pending. No new native starts reported.",
+          "slot": "Scientist R3 assigned",
+          "studyReadiness": false
         }
       },
       "classicHandoffReceived": true,
@@ -1404,13 +1422,13 @@
       "name": "Architect",
       "threadId": "01a111ec-a913-7830-91b0-925d0a1dd1b2",
       "hostId": "local",
-      "afterCursor": "71d9f5b2-c0f0-474c-9898-777d051b478a:45",
-      "lastObservedStatus": "active",
-      "activeTurn": "01a118e3-8a0e-76a2-a63d-dbeb3c855b45",
-      "lastAssistantMessageId": "msg_0b6e7ce0ce9f843f016ac6e22f64d087d2b9b1bd44437570ab",
+      "afterCursor": "71d9f5b2-c0f0-474c-9898-777d051b478a:46",
+      "lastObservedStatus": "idle",
+      "activeTurn": null,
+      "lastAssistantMessageId": "msg_0b6e7ce0ce9f843f016ac6e35b48a487d2afa61bc3e35a9192",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "At most two evidenced usability/product gaps in intent-to-model-to-project/change workflow; independent successor worktree; reviewed version-bound public entrypoint.",
-      "latestProgress": "Ich bereite den korrigierten Grant separat vor und binde Quelle, Runtime und den Ablauf mit sieben Starts. Der Replay und die schwere Quellprüfung bleiben gesperrt, bis der Slot ausdrücklich Architect für r2 zugewiesen ist.",
+      "latestProgress": "r2 ist vorbereitet und unabhängig geprüft, wartet aber noch auf den Slot. Gebunden sind der saubere Quellstand fbb2dea, die Runtime, 30 Beispiel-Dateien und genau ein unveränderter Skriptaufruf mit maximal 7 Starts, 6 Rollen und 1800 Sekunden inklusive Cleanup. Das Manifest über elf Vorbereitungsdateien ist geprüft. Der Slot gehört weiterhin Scientist/R3. Daher wurden weder Replay noch schwere Quellprüfung gestartet; neuer Verbrauch: null. Der geschlossene r1-Grant bleibt unverändert. Der genaue vorbereitete Stand steht in der Bereitschaftsnotiz.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/classic-public-example/Markitect",
       "transferredDesignCommit": null,
       "candidateSha": "fbb2deab8d85be74a77874a705229a0a1ea1fee4",
@@ -1488,12 +1506,25 @@
           "closureSha256": "f88f0f7aa5a0242aa96d2669964eb155abd5c6f6605e375d64cd4e3a1d67da06",
           "manifestSha256": "2615e24b051ebc332755ee0bddc3bb9ee2c6a0c15d9af7d69d8595cefd5957ca",
           "correction": "Seven starts: baseline3 + refused staleApply1 + changed3; prior root six-start allocation omitted refusal. No historical usage reset."
+        },
+        "classicP1R2PreflightReadiness": {
+          "verifiedUtc": "2026-10-08T00:30:59Z",
+          "sha": "fbb2deab8d85be74a77874a705229a0a1ea1fee4",
+          "cleanObserved": true,
+          "filesHashChecked": 11,
+          "hashMismatches": 0,
+          "manifestSha256": "59e417ceec06612556ff2b1257dde22d035dcd46c6ac7853f03413976084d47a",
+          "readinessSha256": "c8a9214340d4cd5fd25ce2b6d4c4baf8bb18b8f1e4a20f426c2e7ae7d3b51feb",
+          "independentReview": "Owner reviewer conditional pass; live slot and final manifest prerequisite, source plan7sequentialcalls/6roles/0retry. Root read review/plan and verified manifest.",
+          "nativeStarts": 0,
+          "roleReservations": 0,
+          "status": "Prepared; awaiting explicit Architect/r2 slot after Scientist. No replay/gate completion."
         }
       },
       "lastAssignment": {
         "key": "classic-p1-corrected-replay-20261008-r2",
         "authorizedUtc": "2026-10-08T00:22:06Z",
-        "status": "Dispatched once; active offline preparation confirmed",
+        "status": "Prepared independently reviewed preflight; root verified11manifestfiles, clean fbb2dea. Waiting for explicit Architect/r2 slot; zero new execution.",
         "scope": "Correct counted seven-start public script replay, one attempt plus required final gates; shared slot required.",
         "sentUtc": "2026-10-08T00:22:06Z"
       },
@@ -1548,7 +1579,7 @@
       "classicP1ClosureAssignment": {
         "key": "classic-p1-corrected-replay-20261008-r2",
         "authorizedUtc": "2026-10-08T00:22:06Z",
-        "status": "Dispatched once; active offline preparation confirmed. Runtime slot not yet assigned.",
+        "status": "Prepared independently reviewed preflight; root verified11manifestfiles, clean fbb2dea. Waiting for explicit Architect/r2 slot; zero new execution.",
         "baseSha": "fbb2deab8d85be74a77874a705229a0a1ea1fee4",
         "prompt": "Dein Preflight-Stopp war korrekt. Overseer hat die sieben Preflight-Dateien, closure.json und die unveränderte Quelle geprüft; unabhängiges Root-Review bestätigt die korrigierte Zählung. Meine vorherige Zuteilung hat den absichtlich abgewiesenen stale Apply übersehen. Dieser zählt auch bei Exit 2 als Start. Der geschlossene Grant classic-p1-corrected-replay-20261008-r1 bleibt mit exakt null neuem Verbrauch unverändert archiviert.\n\nFrischer, ausdrücklich separat dokumentierter Grant: classic-p1-corrected-replay-20261008-r2. Genau ein vollständiger unveränderter Skriptaufruf aus sauberem fbb2deab8d85be74a77874a705229a0a1ea1fee4, Runtime v0.14.1 / 7dbd599c81540c8203a1b7f83afbc335174f4f1f, frischer Fall und neue unveränderliche Grant-/Preflightdateien. Maximal EINE Versuchsinvokation einschließlich eines erfolglosen Versuchs, SIEBEN native Controllerstarts, SECHS deterministische Rollenreservierungen, Parallelität EINS, 1800 Sekunden äußere Gesamtfrist einschließlich Cleanup, null Retry. Kein Erfolg erforderlich, damit ein Versuch zählt. Sequenz: Basis Execute/Apply/Verify (3), absichtlich abgewiesener stale Apply (1), Änderung Execute/Apply/Verify (3). Auch ein abgewiesener oder gescheiterter Prozess zählt ab Start. Keine ausgelassene oder umklassifizierte Stufe, keine Quotenänderung. Historisch weiterhin zwei Versuche/elf Starts/neun Rollen/196.744 Sekunden; kumulative Obergrenzen mit diesem neuen Grant drei Versuche/18 Starts/15 Rollen; tatsächliche neue Zeit additiv.\n\nAlle übrigen Grenzen des vorherigen Abschlussauftrags bleiben: nur Vorabbindung und gezielter unabhängiger Review, dann genau dieser Replay sowie einmal die erforderlichen finalen Quellgates am unveränderlichen Stand. Keine neue Funktion, Produkt-/Skriptänderung, Studie, reale Actor-/Provideraufrufe, Käufe oder Veröffentlichung; alte Fehler und Belege unverändert. Bei erstem Fehler oder fehlender Voraussetzung schließen, Diagnose/Belege liefern, kein Nachstart.\n\nfullSuiteSlot ist inzwischen Scientist für R3 zugewiesen. Dein korrigierter Grant ist als nächster vorgemerkt, aber native Ausführung und schwere Suite bleiben bis ausdrücklicher Zuweisung an Architect für r2 gesperrt. Jetzt offline vorbereiten; bei wartender Bereitschaft den exakten Preflightstand melden. Nach Ausführung/Gates tatsächliche Bilanz und unabhängigen Abschluss-Handoff liefern. Kein neues pauschales Nutzer-Go nötig, sobald die dokumentierte Slot-Bedingung erfüllt ist.",
         "maxFullAttempts": 1,
@@ -1598,7 +1629,7 @@
       ]
     }
   ],
-  "nextAction": "Await Scientist R3 preflight and bounded outcomes, then release/assign Architect r2 slot. Worker has only additive evidence closure, no new runtime or product work.",
+  "nextAction": "Scientist finishes revoked-grant guard preflight, freezes r3-a1 order and runs bounded Government block then Classic block; await terminal outcomes/release. Architect r2 prepared, verified waiting for slot. Worker additive closure still active.",
   "boundaries": {
     "governmentPublication": false,
     "automaticClassicReplacement": false,
@@ -1608,12 +1639,11 @@
     "satPrinciples": "Deferred by direct user request on 2026-10-07; conceptual constraint/consistency/conflict-explanation principles first, no solver integration or current assignment change. See docs/design/government/deferred-research.md."
   },
   "lastReview": {
-    "reviewedUtc": "2026-10-08T00:25:46Z",
-    "evidenceLevel": "GOV-P1 source,122artifactbindings,binary and4gates independently verified; qualified technical acceptance with attempt-count deviation and review archive limits. Classic corrected7startgrant and Scientist slot assigned, actual successor outcomes pending.",
+    "reviewedUtc": "2026-10-08T00:31:39Z",
+    "evidenceLevel": "Joint snapshot shows Worker and Scientist active; Architect r2 prepared. Root verified clean Architect SHA,11manifesthashes, readiness/review/plans. Worker additive hashes and Scientist revoked-status finding remain owner reports, not new completion acceptance.",
     "coordinationActions": [
-      "Released Worker heavy slot based on completed gates and explicit release; assigned existing R3 slot to Scientist and notified once.",
-      "Archived zero-use six-start Classic grant; issued fresh one-attempt seven-start r2 grant with explicit counting of failures/refusals.",
-      "Qualified technical GOV-P1 acceptance; recorded four attempts vs conservative two-attempt cap, no retrospective grant. Sent zero-runtime additive evidence closure once and confirmed active."
+      "Recorded Architect preflight readiness without assigning busy slot or repeating task.",
+      "Answered Scientist sequencing question with pre-native r3-a1: contiguous Government then Classic, own positive checkpoints and unchanged limits."
     ],
     "userDecisionRequired": false
   },
