@@ -15,6 +15,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/host/projectrun"
 	"github.com/Glacius-Labs/Markitect/internal/host/projectsetup"
 	"github.com/Glacius-Labs/Markitect/internal/host/projectwork"
+	"github.com/Glacius-Labs/Markitect/internal/infrastructure/source"
 	"github.com/Glacius-Labs/Markitect/internal/modules/projectmodel"
 )
 
@@ -196,16 +197,30 @@ func runAction(opts options, out io.Writer) error {
 			return err
 		}
 		if opts.generate {
-			project, err := projectwork.Load(opts.repo, "")
+			head, err := source.GitOutput(opts.repo, "rev-parse", "--verify", "--end-of-options", "HEAD^{commit}")
+			if err != nil {
+				return fmt.Errorf("generated distillation requires a committed HEAD: %w", err)
+			}
+			fixedProject, err := projectwork.Load(opts.repo, strings.TrimSpace(string(head)))
+			if err != nil {
+				return fmt.Errorf("load committed project HEAD before generated distillation: %w", err)
+			}
+			if fixedProject.Provisional || fixedProject.Revision == "" || fixedProject.Report.Status != "succeeded" {
+				return errors.New("generated distillation requires a committed HEAD with a successful project check")
+			}
+			workingProject, err := projectwork.Load(opts.repo, "")
 			if err != nil {
 				return err
+			}
+			if workingProject.Digest != fixedProject.Digest {
+				return errors.New("selected project inputs differ from committed HEAD; commit accepted model, runtime, inventory, or selection changes before generated distillation")
 			}
 			runtimeConfig, err := projectrun.LoadRuntime(opts.repo)
 			if err != nil {
 				return err
 			}
 			rootManager := ""
-			for _, manager := range project.Report.Managers {
+			for _, manager := range fixedProject.Report.Managers {
 				if manager.Parent == "" && manager.Namespace == "" {
 					if rootManager != "" {
 						return errors.New("project has multiple root Managers")
@@ -221,7 +236,7 @@ func runAction(opts options, out io.Writer) error {
 			if err != nil {
 				return err
 			}
-			targetContext, err := projectadoption.TargetContextForProject(project)
+			targetContext, err := projectadoption.TargetContextForProject(fixedProject)
 			if err != nil {
 				return err
 			}
