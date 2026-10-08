@@ -1,0 +1,23 @@
+{
+  "key": "s1-selected-feature-metadata-20261008-r2",
+  "status": "terminal-preparation-blocked",
+  "manifestExcludesItself": true,
+  "payloadFiles": {
+    "experiments/government-comparison/evidence/s1-selected-feature-metadata-20261008-r2/authorization-grant.json": "420e7b7ba1768d03d6d863d17a40db0367dff6c65cc8e9a4e629653178b987c9",
+    "experiments/government-comparison/evidence/s1-selected-feature-metadata-20261008-r2/client.py": "07e266484c0d73a8604ee488793c7138a936a0fd8d17d1fea436e0662cdee9a5",
+    "experiments/government-comparison/evidence/s1-selected-feature-metadata-20261008-r2/focused-integration.log": "820462cbaabadc8baab9d6b5234faaf208a3e8ec8f7b73f172c3f3e29ba81367",
+    "experiments/government-comparison/evidence/s1-selected-feature-metadata-20261008-r2/frozen-method-enums.json": "6553df9ac4a37d11402728992ed5e684ea379fbadeee790700867ae4542594cf",
+    "experiments/government-comparison/evidence/s1-selected-feature-metadata-20261008-r2/handoff.md": "46204e6b4f5c6efac27009bd2a2fe1bfa060f8aa7de8f7d4027265d56a7b6a07",
+    "experiments/government-comparison/evidence/s1-selected-feature-metadata-20261008-r2/historical-preservation.json": "97740f1b7bba02b49c53e4f670c97f2a2442ac9e73d78c0272bf4eb60e733353",
+    "experiments/government-comparison/evidence/s1-selected-feature-metadata-20261008-r2/live-authority-at-closure.json": "aba6779c89b772719ee58bc8aff7a6141fc4c1e211b9afc60a4be6ce7cdac60a",
+    "experiments/government-comparison/evidence/s1-selected-feature-metadata-20261008-r2/offline-validation.json": "95026f5ca59a37c2a3a12f98ccade39b402ef0161cb7cf3edd65e7a666263105",
+    "experiments/government-comparison/evidence/s1-selected-feature-metadata-20261008-r2/postreview.md": "b70f486b15fae6372bed01d63b27ec5d76d7ba7dba73fd3d3c4db9d6fa474254",
+    "experiments/government-comparison/evidence/s1-selected-feature-metadata-20261008-r2/preflight-review.md": "6ea1d1050c646b29d30a5201bcecd48414e9b7b2c991aaca8188d1b98b6b26e3",
+    "experiments/government-comparison/evidence/s1-selected-feature-metadata-20261008-r2/profile.json": "aa16af1c299f0e8968cfdc49fedc15a1bb00ade31abeedb7c3e5368a6f89cde4",
+    "experiments/government-comparison/evidence/s1-selected-feature-metadata-20261008-r2/run_once.py": "ccbc7c080d01fb536792c162a69cf6577959cb525de8b5a4154cfc2539869b19",
+    "experiments/government-comparison/evidence/s1-selected-feature-metadata-20261008-r2/slot-release.json": "6ab677509e4b81d6f5778ba31ca08712f1ccc4dc89b13460691429a6513a446f",
+    "experiments/government-comparison/evidence/s1-selected-feature-metadata-20261008-r2/terminal.json": "4e07f54c189cb9ab4184f020b7da26d40080df26fbad1cef7935e5a9864f6d69",
+    "experiments/government-comparison/evidence/s1-selected-feature-metadata-20261008-r2/test_client.py": "abf82c6860cf9c1a679f27dbd1ed298645fe016789b210895b92dac4cf4cd651",
+    "experiments/government-comparison/public/s1-selected-feature-metadata-20261008-r2.md": "744eccfe808db8268bdd40112395a5cba239c7dd91ccf50c53917f58a1f28332"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "key": "s1-selected-feature-metadata-20261008-r2",
+  "owner": "Scientist",
+  "releasedUtc": "2026-10-08T05:36:01.906434Z",
+  "reason": "Terminal concrete preflight blocker before reservation or start",
+  "remainingSessionsExpired": 1,
+  "newMetadataStartAttempts": 0,
+  "policyTreesCumulative": 4,
+  "cliMetadataCallsCumulative": 6,
+  "noAutomaticFurtherOperation": true,
+  "coordinationSlotMutation": "Overseer-owned canonical slot; this receipt explicitly releases Scientist claim."
+}

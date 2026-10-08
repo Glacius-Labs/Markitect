@@ -1,0 +1,15 @@
+{
+  "observedUtc": "2026-10-08T05:36:01.906734Z",
+  "sourcePath": "C:\\Users\\Consiliari\\Glacius Labs\\Markitect\\docs\\design\\government\\coordination-state.json",
+  "sourceSha256": "ba13ce4d17d86c6bb606ff9295b106cafad7015575ac6c082a46ec949d2f9a4b",
+  "grantKey": "s1-selected-feature-metadata-20261008-r2",
+  "grantStatus": "Dispatched once; conditional operation authorized, awaiting terminal callback.",
+  "slot": {
+    "owner": "Scientist",
+    "key": "s1-selected-feature-metadata-20261008-r2",
+    "status": "Assigned to one bounded corrected metadata operation; no product suite.",
+    "assignedUtc": "2026-10-08T05:27:07Z",
+    "queue": []
+  },
+  "externalEvidenceEntries": []
+}

@@ -1,0 +1,11 @@
+# Independent terminal postreview
+
+**Disposition: terminally blocked before admission.** I read the terminal receipts after the accepted adapter’s missing/null `featureRequirements` fall-through was recorded. No attempt was made to repair, freeze, reserve, launch, or repeat the operation.
+
+The terminal record reports `preparation-blocked`, no source commit, no request or freeze hashes, no reservation, zero metadata starts, and no requirements RPC. The external evidence directory is empty. The five focused offline integration cases passed, but their coverage does not include the blocker identified in the preflight review. This remains a source-level finding, not an app-server observation.
+
+Accounting is consistent with the terminal packet: four prior policy trees plus zero new trees; six prior CLI metadata calls plus zero new calls; five historical Actor starts and 53,331 historically known tokens remain unchanged, while total usage and native internal network/inference remain unknown. No Actor, thread, turn, model call, native product, wrapper, delegate, or study cell was added. All six study cells remain NOT RUN.
+
+The preservation receipt records 3,944 tracked package files unchanged and all five historical liveledgers unchanged. The live-authority closure receipt retains the dispatched grant and assigned slot at closure; the separate release receipt expires the remaining session and releases Scientist’s slot claim. No process timing applies because no process was created. No S1, enforcement, active-permission, serving-identity, historical-cause, quality, or human-acceptance claim follows from this blocked preparation.
+
+Reviewed receipt hashes: terminal `4e07f54c189cb9ab4184f020b7da26d40080df26fbad1cef7935e5a9864f6d69`; offline validation `95026f5ca59a37c2a3a12f98ccade39b402ef0161cb7cf3edd65e7a666263105`; historical preservation `97740f1b7bba02b49c53e4f670c97f2a2442ac9e73d78c0272bf4eb60e733353`; live-authority closure `aba6779c89b772719ee58bc8aff7a6141fc4c1e211b9afc60a4be6ce7cdac60a`; slot release `6ab677509e4b81d6f5778ba31ca08712f1ccc4dc89b13460691429a6513a446f`. The preflight review, corrected to state that sanitization reinserts the unresolved observation but neither assessment rejects it, has SHA-256 `6ea1d1050c646b29d30a5201bcecd48414e9b7b2c991aaca8188d1b98b6b26e3`.
