@@ -41,7 +41,14 @@ func TestDistillationExecutorHelper(t *testing.T) {
 	var prompt struct {
 		Instructions string `json:"instructions"`
 	}
-	if err := json.Unmarshal(invocation.Request.Context, &prompt); err != nil || !strings.Contains(prompt.Instructions, "commerce.sales.orders") || !strings.Contains(prompt.Instructions, "observation/static-source") || !strings.Contains(prompt.Instructions, "one-based line bounds") {
+	if err := json.Unmarshal(invocation.Request.Context, &prompt); err != nil ||
+		!strings.Contains(prompt.Instructions, "commerce.sales.orders") ||
+		!strings.Contains(prompt.Instructions, `Root scope proposals MUST have parentId = ""`) ||
+		!strings.Contains(prompt.Instructions, "every non-root scope's parentId must name another declared scope ID, and parent relationships must be acyclic") ||
+		!strings.Contains(prompt.Instructions, "Every proposed scope must contain at least one grounded claim assigned to it and at least one model-proposal file") ||
+		!strings.Contains(prompt.Instructions, "Existing target Managers are guidance only and do not need mirrored as adoption scopes") ||
+		!strings.Contains(prompt.Instructions, "observation/static-source") ||
+		!strings.Contains(prompt.Instructions, "one-based line bounds") {
 		os.Exit(36)
 	}
 	artifact := invocation.Request.Artifacts[0]
