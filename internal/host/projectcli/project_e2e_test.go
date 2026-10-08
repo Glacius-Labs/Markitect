@@ -188,6 +188,51 @@ func TestProjectWorldFixtureAndReviewedEdit(t *testing.T) {
 	}
 }
 
+func TestProjectRuntimeSetupUsesReviewedEditWithoutHandEditing(t *testing.T) {
+	repo := copyProjectWorld(t)
+	project, err := projectwork.Load(repo, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	mutation := projectwork.Mutation{
+		APIVersion: projectwork.APIVersion,
+		BaseDigest: project.Digest,
+		Actor:      projectwork.HumanActor,
+		Goal:       "Select the project-owned bounded agent runtime",
+		Files: []projectwork.FileChange{{
+			Path:    projectwork.RuntimePath,
+			Content: "mode: controlled-local\n",
+		}},
+	}
+	encoded, err := projectwork.EncodeMutation(mutation)
+	if err != nil {
+		t.Fatal(err)
+	}
+	path := ".markitect/drafts/runtime-edit.json"
+	if _, err := writeRecord(repo, path, encoded); err != nil {
+		t.Fatal(err)
+	}
+	var previewOut, previewErr bytes.Buffer
+	if code := Run([]string{"project", "edit", "--repo", repo, "--input", path}, &previewOut, &previewErr); code != 0 {
+		t.Fatalf("runtime edit preview exit=%d stderr=%s", code, previewErr.String())
+	}
+	var plan projectwork.EditPlan
+	if err := json.Unmarshal(previewOut.Bytes(), &plan); err != nil {
+		t.Fatal(err)
+	}
+	if plan.CandidateDigest == project.Digest || plan.Report.Digest != project.Report.Digest || len(plan.Mutation.Files) != 1 || plan.Mutation.Files[0].Path != projectwork.RuntimePath {
+		t.Fatalf("runtime edit preview changed unexpected project data: %+v", plan)
+	}
+	var applyOut, applyErr bytes.Buffer
+	if code := Run([]string{"project", "edit", "--repo", repo, "--input", path, "--expect", plan.Digest, "--write"}, &applyOut, &applyErr); code != 0 {
+		t.Fatalf("runtime edit apply exit=%d stderr=%s", code, applyErr.String())
+	}
+	updated, err := os.ReadFile(filepath.Join(repo, filepath.FromSlash(projectwork.RuntimePath)))
+	if err != nil || string(updated) != mutation.Files[0].Content {
+		t.Fatalf("runtime edit bytes=%q err=%v", updated, err)
+	}
+}
+
 func TestProjectInitCreatesOnlyMarkitectFilesOnUnbornFeatureBranch(t *testing.T) {
 	repo := t.TempDir()
 	runGit(t, repo, "init", "--initial-branch=feature-init")
@@ -226,6 +271,30 @@ func TestProjectInitCreatesOnlyMarkitectFilesOnUnbornFeatureBranch(t *testing.T)
 		if entry.Name() != ".git" && entry.Name() != ".markitect" {
 			t.Fatalf("init wrote outside .markitect: %s", entry.Name())
 		}
+	}
+}
+
+func TestProjectPlanRejectsUncommittedSelectedInputs(t *testing.T) {
+	repo := copyProjectWorld(t)
+	sourceFile := filepath.Join(repo, "src", "shop", "orders", "order.py")
+	contents, err := os.ReadFile(sourceFile)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(sourceFile, append(contents, []byte("\n# uncommitted selected change\n")...), 0644); err != nil {
+		t.Fatal(err)
+	}
+	var out, errout bytes.Buffer
+	args := []string{
+		"project", "plan", "--repo", repo,
+		"--goal", "Implement a bounded order change",
+		"--manager", `["project.markitect.example.org/v1alpha1","Manager","commerce.sales.orders","orders"]`,
+	}
+	if code := Run(args, &out, &errout); code != 2 || !strings.Contains(errout.String(), "selected project inputs differ from fixed base revision; commit accepted selected changes before planning") {
+		t.Fatalf("dirty plan exit=%d stderr=%s", code, errout.String())
+	}
+	if _, err := os.Stat(filepath.Join(repo, ".markitect", "runs")); !os.IsNotExist(err) {
+		t.Fatalf("rejected read-only plan created persisted run state: %v", err)
 	}
 }
 
