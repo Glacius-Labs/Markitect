@@ -57,11 +57,13 @@ func TestProjectRunExecutorProcess(t *testing.T) {
 				Owns    []string `json:"owns"`
 			} `json:"manager"`
 		} `json:"manager"`
-		GlobalGoal        string   `json:"globalGoal"`
-		OwnTask           string   `json:"ownTask"`
-		RepairDiagnostic  string   `json:"repairDiagnostic"`
-		CandidateDigest   string   `json:"candidateDigest"`
-		AllowedWritePaths []string `json:"allowedWritePaths"`
+		GlobalGoal        string                `json:"globalGoal"`
+		OwnTask           string                `json:"ownTask"`
+		RepairDiagnostic  string                `json:"repairDiagnostic"`
+		RepairRound       int                   `json:"repairRound"`
+		RepairChecks      []RepairCheckFeedback `json:"repairChecks"`
+		CandidateDigest   string                `json:"candidateDigest"`
+		AllowedWritePaths []string              `json:"allowedWritePaths"`
 		ChildReports      []struct {
 			ManagerID string `json:"managerId"`
 			Summary   string `json:"summary"`
@@ -78,7 +80,8 @@ func TestProjectRunExecutorProcess(t *testing.T) {
 	if err := appendE2ELog(os.Getenv(e2eLogEnv), map[string]any{
 		"phase": contextPayload.Phase, "managerId": contextPayload.Manager.Manager.ID,
 		"globalGoal": contextPayload.GlobalGoal, "ownTask": contextPayload.OwnTask,
-		"repairDiagnostic": contextPayload.RepairDiagnostic, "candidateDigest": contextPayload.CandidateDigest,
+		"repairDiagnostic": contextPayload.RepairDiagnostic, "repairRound": contextPayload.RepairRound,
+		"repairChecks": contextPayload.RepairChecks, "candidateDigest": contextPayload.CandidateDigest,
 		"allowedWritePaths": contextPayload.AllowedWritePaths,
 		"directChildren":    contextPayload.DirectChildren, "childReports": contextPayload.ChildReports,
 		"schema": contextPayload.ResponseSchema, "sourceRevision": invocation.Request.SourceRevision,
@@ -119,6 +122,9 @@ func TestProjectRunExecutorProcess(t *testing.T) {
 				processExit(2, "unexpected work manager "+contextPayload.Manager.Manager.ID)
 			}
 			files = []agentexec.CandidateFile{{Path: artifactPath, Mode: "0644", Content: content}}
+			if os.Getenv(e2eBehaviorEnv) == "repair-check-fail" && contextPayload.RepairRound == 0 && contextPayload.Manager.Manager.ID == e2eManagerID("orders", "orders") {
+				files = []agentexec.CandidateFile{{Path: artifactPath, Mode: "0644", Content: "orders implementation v1\n"}}
+			}
 			if os.Getenv(e2eBehaviorEnv) == "repair-foreign-first" && contextPayload.Manager.Manager.ID == e2eManagerID("orders", "orders") && countE2EProcessCalls(os.Getenv(e2eLogEnv), contextPayload.Manager.Manager.ID, contextPayload.Phase) == 1 {
 				files = []agentexec.CandidateFile{{Path: "src/inventory/foreign.txt", Mode: "0644", Content: "unauthorized"}}
 			}
