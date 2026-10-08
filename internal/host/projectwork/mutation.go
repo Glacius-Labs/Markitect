@@ -18,6 +18,7 @@ import (
 	hostwrite "github.com/Glacius-Labs/Markitect/internal/host"
 	"github.com/Glacius-Labs/Markitect/internal/infrastructure/source"
 	"github.com/Glacius-Labs/Markitect/internal/modules/projectmodel"
+	"go.yaml.in/yaml/v3"
 )
 
 const maxMutationBytes = 4 << 20
@@ -158,7 +159,7 @@ func PlanEdit(project *Project, mutation Mutation) (EditPlan, error) {
 	seen := map[string]string{}
 	candidateSnapshot := cloneSnapshot(project.Snapshot)
 	for _, change := range mutation.Files {
-		if change.Path != ManifestPath && !strings.HasPrefix(change.Path, ModelRoot+"/") {
+		if change.Path != ManifestPath && change.Path != RuntimePath && !strings.HasPrefix(change.Path, ModelRoot+"/") {
 			return EditPlan{}, fmt.Errorf("mutation path %q is outside the selected project model and manifest", change.Path)
 		}
 		if err := validateRepoPath(change.Path); err != nil {
@@ -168,8 +169,14 @@ func PlanEdit(project *Project, mutation Mutation) (EditPlan, error) {
 			return EditPlan{}, fmt.Errorf("mutation repeats or case-aliases paths %q and %q", old, change.Path)
 		}
 		seen[strings.ToLower(change.Path)] = change.Path
+		if change.Path == RuntimePath && !user {
+			root := nearestManager(project.Report.Managers, "")
+			if root == nil || root.Namespace != "" || actor == nil || actor.ID != root.ID {
+				return EditPlan{}, fmt.Errorf("only the explicit user actor or active root Manager may update runtime configuration")
+			}
+		}
 		if change.Delete {
-			if change.Path == ManifestPath || change.Content != "" {
+			if change.Path == ManifestPath || change.Path == RuntimePath || change.Content != "" {
 				return EditPlan{}, fmt.Errorf("only model files may be deleted and delete content must be empty")
 			}
 			if !selectedModelFiles(project.Config)[change.Path] {
@@ -180,6 +187,11 @@ func PlanEdit(project *Project, mutation Mutation) (EditPlan, error) {
 		} else {
 			if !utf8.ValidString(change.Content) || len(change.Content) == 0 || len(change.Content) > source.DefaultMaxFileBytes {
 				return EditPlan{}, fmt.Errorf("mutation content for %q must be nonempty UTF-8 and within the source file limit", change.Path)
+			}
+			if change.Path == RuntimePath {
+				if err := validateRuntimeEditYAML(change.Content); err != nil {
+					return EditPlan{}, err
+				}
 			}
 			candidateSnapshot.Files[change.Path] = []byte(change.Content)
 			if _, selected := project.Snapshot.Files[change.Path]; !selected {
@@ -235,7 +247,7 @@ func PlanEdit(project *Project, mutation Mutation) (EditPlan, error) {
 		}
 	}
 	for _, change := range mutation.Files {
-		if change.Path == ManifestPath {
+		if change.Path == ManifestPath || change.Path == RuntimePath {
 			continue
 		}
 		namespace, namespaceErr := namespaceForModelPath(change.Path)
@@ -287,6 +299,35 @@ func PlanEdit(project *Project, mutation Mutation) (EditPlan, error) {
 		return EditPlan{}, err
 	}
 	return plan, nil
+}
+
+// validateRuntimeEditYAML checks only unambiguous YAML syntax. Runtime policy
+// and execution readiness remain projectrun responsibilities.
+func validateRuntimeEditYAML(content string) error {
+	const maxRuntimeEditBytes = 1 << 20
+	data := []byte(content)
+	if len(data) == 0 || len(data) > maxRuntimeEditBytes || !utf8.Valid(data) {
+		return fmt.Errorf("runtime config must be valid UTF-8 between 1 and %d bytes", maxRuntimeEditBytes)
+	}
+	decoder := yaml.NewDecoder(bytes.NewReader(data))
+	var document yaml.Node
+	if err := decoder.Decode(&document); err != nil {
+		return fmt.Errorf("invalid runtime config YAML: %w", err)
+	}
+	if len(document.Content) != 1 || document.Content[0].Kind != yaml.MappingNode {
+		return fmt.Errorf("runtime config must contain one YAML mapping")
+	}
+	if err := rejectProjectYAMLNode(&document); err != nil {
+		return fmt.Errorf("runtime config: %w", err)
+	}
+	var extra yaml.Node
+	if err := decoder.Decode(&extra); err != io.EOF {
+		if err == nil {
+			return fmt.Errorf("runtime config must contain exactly one YAML document")
+		}
+		return fmt.Errorf("invalid trailing runtime config YAML: %w", err)
+	}
+	return nil
 }
 
 // ApplyEdit recomputes and applies an exact mutation only while the active
