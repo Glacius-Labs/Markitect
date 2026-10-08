@@ -1,0 +1,19 @@
+{
+  "status": "passed",
+  "testsRun": 13,
+  "failures": 0,
+  "errors": 0,
+  "output": "test_controller_never_writes_go_if_job_assignment_fails (focused_regressions.MetadataClientTests.test_controller_never_writes_go_if_job_assignment_fails) ... ok\ntest_controller_writes_go_only_after_job_assignment (focused_regressions.MetadataClientTests.test_controller_writes_go_only_after_job_assignment) ... ok\ntest_cwd_guard_accepts_exact_temp_snapshot_and_rejects_tampering (focused_regressions.MetadataClientTests.test_cwd_guard_accepts_exact_temp_snapshot_and_rejects_tampering) ... ok\ntest_default_permission_and_origin_ambiguity_never_satisfy_assessment (focused_regressions.MetadataClientTests.test_default_permission_and_origin_ambiguity_never_satisfy_assessment) ... ok\ntest_disabled_remote_status_is_the_only_accepted_status_and_is_sanitized (focused_regressions.MetadataClientTests.test_disabled_remote_status_is_the_only_accepted_status_and_is_sanitized) ... ok\ntest_duplicate_json_keys_and_nonstandard_numbers_are_rejected (focused_regressions.MetadataClientTests.test_duplicate_json_keys_and_nonstandard_numbers_are_rejected) ... ok\ntest_every_warning_or_provisional_payload_stops (focused_regressions.MetadataClientTests.test_every_warning_or_provisional_payload_stops) ... ok\ntest_live_authority_requires_exact_grant_and_active_slot (focused_regressions.MetadataClientTests.test_live_authority_requires_exact_grant_and_active_slot) ... ok\ntest_malformed_frames_server_requests_and_notification_limit_stop (focused_regressions.MetadataClientTests.test_malformed_frames_server_requests_and_notification_limit_stop) ... ok\ntest_presence_states_cover_missing_null_present_and_invalid (focused_regressions.MetadataClientTests.test_presence_states_cover_missing_null_present_and_invalid) ... ok\ntest_privacy_aliases_and_allowlisted_metadata_only (focused_regressions.MetadataClientTests.test_privacy_aliases_and_allowlisted_metadata_only) ... ok\ntest_profile_argv_cwd_limits_and_plan_tampering_guards (focused_regressions.MetadataClientTests.test_profile_argv_cwd_limits_and_plan_tampering_guards) ... ok\ntest_requirements_validate_boolean_profile_map_and_detect_conflicts (focused_regressions.MetadataClientTests.test_requirements_validate_boolean_profile_map_and_detect_conflicts) ... ok\n\n----------------------------------------------------------------------\nRan 13 tests in 0.054s\n\nOK\n",
+  "sourcePins": {
+    "client.py": "8b6a2032dce5468c730885906f030fcfbed3cb4f23b010e95f90592a38b0fdfb",
+    "run_once.py": "d8345a03dd04186a769e5ed4d0c4e711892b3007078fd598d3b2ab3aeaa7e6e3",
+    "test_client.py": "a30c7bf6661df1e92952618cd169584f7c68e7f2ff0a0188e32fbef0d967e44b",
+    "profile.json": "de8de70e51b66ca4b7d3bf8a9c01ec577c462e258b824926ea9e6f85c1742589"
+  },
+  "checkedUtc": "2026-10-08T05:03:54.916329+00:00",
+  "codexProcessesStarted": 0,
+  "metadataRequests": 0,
+  "modelCallsRequested": 0,
+  "liveLedgerWrites": 0,
+  "scope": "Actual selected parser/classifier/assessment/profile/cwd/live-authority guards and mocked controller Job-before-GO success/failure; no actual process-tree/provider/tool proof"
+}
