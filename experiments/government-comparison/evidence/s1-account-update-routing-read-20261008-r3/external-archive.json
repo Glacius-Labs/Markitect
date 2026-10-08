@@ -1,0 +1,38 @@
+{
+  "key": "s1-account-update-routing-read-20261008-r3",
+  "scope": "Exactly eight approved bounded metadata receipts; no private excerpt or raw stream",
+  "files": {
+    "output-root-created.json": {
+      "sha256": "113a00f688377407313f44f6312c982774ac496e0528b3f4fc31a3f46758c12d",
+      "bytes": 223
+    },
+    "reservation.json": {
+      "sha256": "5e00f9a99e60cbca97c60302aecb01daab9986264be1fdad174f1034d0b41b35",
+      "bytes": 902
+    },
+    "controller-once.json": {
+      "sha256": "f20d3776b92b94a1add2e9a417388056230b4728ec349be98b910af99d4b5bb4",
+      "bytes": 585
+    },
+    "job-assigned.json": {
+      "sha256": "f7d3457be76ddde3e3492c708af4aae31c9c7dbf523da3ba2a5e57b9a1bcac15",
+      "bytes": 649
+    },
+    "started-once.json": {
+      "sha256": "fa89b770468d0bf035a4ed0c176319f253dacfecb2d676b86d09e21be516e4a6",
+      "bytes": 585
+    },
+    "sanitized-result.json": {
+      "sha256": "169969e946099da0c79c4297b41f3f3b201779a009d7a2bae7c7ebb3c90a7dce",
+      "bytes": 24811
+    },
+    "controller-receipt.json": {
+      "sha256": "dbc3cfcec05d25b0388fa0172b9222af8bddbd4e75216911246a92b2862862bd",
+      "bytes": 1046
+    },
+    "outer-receipt.json": {
+      "sha256": "c091f61a8256ea3208503608b4c6ef0c5c459f3797a28522ce876f0745d36c96",
+      "bytes": 654
+    }
+  }
+}

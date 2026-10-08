@@ -1,0 +1,190 @@
+{
+  "key": "s1-account-update-routing-read-20261008-r3",
+  "scope": "Terminal packet payloads; excludes this manifest and ignored caches; immutable source manifest unchanged",
+  "files": {
+    "account_observer.py": {
+      "sha256": "1934b3c21b2f267524b1c01834170eaf5120327e25f61ffa61b341caf83b1745",
+      "bytes": 3730
+    },
+    "affected-tests.log": {
+      "sha256": "401a40b05e3bc4fad07e763b20a249d63d47263c9694c72f92e0002775c30689",
+      "bytes": 278
+    },
+    "authorization-grant.json": {
+      "sha256": "d826319cfc772507d907891e64118dc016524eaff81918982ab82c21a5f24b2e",
+      "bytes": 21472
+    },
+    "binding-construction.json": {
+      "sha256": "bd6e065a292b7e58cc78a48747cffea8a5923b821af795e81221047ab75b7dd7",
+      "bytes": 762
+    },
+    "binding-review.md": {
+      "sha256": "1cfe2522ecc7024b1b95d05cd7f56bd8d5fbaf57e4a400bc6d2e8db08da2d29a",
+      "bytes": 2021
+    },
+    "client.py": {
+      "sha256": "d1ed0cc9ed8374c8e31c10480bd7f36823a0a8d098ecbdd22e6fe389a6fef221",
+      "bytes": 64658
+    },
+    "closeout-history.json": {
+      "sha256": "e2c1dc71961f47620ab2091e183b3a0fa3085019203faf9079f895fe16a8c37e",
+      "bytes": 592
+    },
+    "collector.py": {
+      "sha256": "2dc8d67a1ab3a3401d7f670da9e201693621290acd9882fd2ecce571168151fc",
+      "bytes": 46334
+    },
+    "current-handoff.md": {
+      "sha256": "6e914c355fe074675b88da017c7a9559b136a7c4c01f4a1349e5153740a984b4",
+      "bytes": 909
+    },
+    "diagnostic-contract.json": {
+      "sha256": "459c0d8692b2fe7891d960ad362922c14419d47c3f4fc3320f9d181b3e52efd3",
+      "bytes": 6404
+    },
+    "expected.json": {
+      "sha256": "033f4372bb8d2e094b778b9ffdc119fc6d32559d4b05f7ada98b98cc13019d1b",
+      "bytes": 141
+    },
+    "external-archive.json": {
+      "sha256": "ef2cb57cc3f710d25450307bd78c21bb101477e316f87e5010e6a5e867339b4b",
+      "bytes": 1329
+    },
+    "focused-tests.log": {
+      "sha256": "5332a143c95b2cd00bb9783ceba79375358cdc08455dfbc18ab95809844fdadf",
+      "bytes": 1247
+    },
+    "freeze.json": {
+      "sha256": "8953d04f970d87ccc0a5c26381def7cc28f5c761209214ce081cbb71f9e83ebe",
+      "bytes": 59841
+    },
+    "frozen-method-enums.json": {
+      "sha256": "831728c4ce8c1913d25eff43229c93b81c0f5d802f93eb3b057333c4048e2220",
+      "bytes": 23235
+    },
+    "input-validation.json": {
+      "sha256": "bcf2e9adf2a00223a17e82910e6b9454f5a35375b8a693d0f33130b924304484",
+      "bytes": 1643
+    },
+    "manifest.json": {
+      "sha256": "3ed021543e1e4bf80855bde759a8aeb56ac1a8cb1b1e0c45cc991b2ac07e9013",
+      "bytes": 3811
+    },
+    "offline-validation.json": {
+      "sha256": "18912a444599520a3893e961951aadeb0c43d62d9b96082dde71b80e91118b82",
+      "bytes": 1485
+    },
+    "post-review.md": {
+      "sha256": "cc519a2e1cf9eb75675385bd603404520cd788c8e7a7b4e16d247800edf5f116",
+      "bytes": 2523
+    },
+    "postrun-validation.json": {
+      "sha256": "3f7218f408fcf0d37284ef915e72fd6ddbedee74ba6fd5bb0ec98b59d7b948a4",
+      "bytes": 977
+    },
+    "preparation-history.json": {
+      "sha256": "5674fcc80c2ebd1185721dab647ca84bfcafef27819a916f73cac5d633ae1263",
+      "bytes": 1472
+    },
+    "preparation.md": {
+      "sha256": "0336c3aafccb44a0a8ca7d219e3badcd64c2c76fdc1daa7436de8e75c4906c82",
+      "bytes": 3516
+    },
+    "private-artifact-closure.json": {
+      "sha256": "c59a4878f07ffba338f8feb233616fa839106385472a0d33e8a171e56348ad0d",
+      "bytes": 430
+    },
+    "profile.json": {
+      "sha256": "ebe15b31de5b15e61f06d561608d509d3657eed80aaf63651dd6f15206be1b5e",
+      "bytes": 5587
+    },
+    "protocol-basis.json": {
+      "sha256": "378c2c93b6bf409f442f6acff575ff0dd6506f6529122756a80dd0704663f620",
+      "bytes": 971
+    },
+    "protocol_failure.py": {
+      "sha256": "776365db287479a23be67a4e22ac083f54ce881fa1452337d0e281529adcb38f",
+      "bytes": 6000
+    },
+    "request.json": {
+      "sha256": "6c8c15827f790ae47b971b738ed355a94a91a446d5e7915ddc84b536dc815f73",
+      "bytes": 39750
+    },
+    "run-1/controller-once.json": {
+      "sha256": "f20d3776b92b94a1add2e9a417388056230b4728ec349be98b910af99d4b5bb4",
+      "bytes": 585
+    },
+    "run-1/controller-receipt.json": {
+      "sha256": "dbc3cfcec05d25b0388fa0172b9222af8bddbd4e75216911246a92b2862862bd",
+      "bytes": 1046
+    },
+    "run-1/job-assigned.json": {
+      "sha256": "f7d3457be76ddde3e3492c708af4aae31c9c7dbf523da3ba2a5e57b9a1bcac15",
+      "bytes": 649
+    },
+    "run-1/outer-receipt.json": {
+      "sha256": "c091f61a8256ea3208503608b4c6ef0c5c459f3797a28522ce876f0745d36c96",
+      "bytes": 654
+    },
+    "run-1/output-root-created.json": {
+      "sha256": "113a00f688377407313f44f6312c982774ac496e0528b3f4fc31a3f46758c12d",
+      "bytes": 223
+    },
+    "run-1/reservation.json": {
+      "sha256": "5e00f9a99e60cbca97c60302aecb01daab9986264be1fdad174f1034d0b41b35",
+      "bytes": 902
+    },
+    "run-1/sanitized-result.json": {
+      "sha256": "169969e946099da0c79c4297b41f3f3b201779a009d7a2bae7c7ebb3c90a7dce",
+      "bytes": 24811
+    },
+    "run-1/started-once.json": {
+      "sha256": "fa89b770468d0bf035a4ed0c176319f253dacfecb2d676b86d09e21be516e4a6",
+      "bytes": 585
+    },
+    "run_once.py": {
+      "sha256": "72906e3fe27a61cbff9f81ef078ee8a20b0594b10465f7aecf061af97fb30098",
+      "bytes": 3547
+    },
+    "schema-contract.json": {
+      "sha256": "5bfa3bb503b9478cba0613a01875df0962a02ae25ef23f874ea1b99eaf35f06d",
+      "bytes": 5417
+    },
+    "slot-release.json": {
+      "sha256": "3ec0c6e301257fe1caec9101af3d929e7fb14d1af99c6afeaef7a0a57c7b9612",
+      "bytes": 874
+    },
+    "source-review.md": {
+      "sha256": "23ad94ffe6b95f9138d4a136954533ac256512dd3ad52f8c1757e0997e46a56c",
+      "bytes": 3649
+    },
+    "startup_observer.py": {
+      "sha256": "654a40b5f09651f39d74dfed48927c7f1fbeccc99387e95cd655afa009175d3e",
+      "bytes": 4742
+    },
+    "terminal-summary.json": {
+      "sha256": "1bc224395b2f157421fdcb0c5df27fba1e25a91179c431ec271f8d33d83757b3",
+      "bytes": 7157
+    },
+    "test-results-affected.json": {
+      "sha256": "ca5aa8b384d769735a31ed4cb2a62310843280e6fb718c969a845076df24dfb3",
+      "bytes": 181
+    },
+    "test-results.json": {
+      "sha256": "ee44c866a9532541370a61d2c1ad73f9e6327e20c98f2a28bf40904df7daf4c0",
+      "bytes": 143
+    },
+    "test_account_runtime.initial.py.txt": {
+      "sha256": "708d1c34680cd1bf12a6d572dc1c9b3896dd924b343984ef193f8d364a814d4a",
+      "bytes": 19660
+    },
+    "test_account_runtime.py": {
+      "sha256": "cc1787c656d06da72c2a7ab892897a1394acda6357865157d13823783d2beee3",
+      "bytes": 20130
+    },
+    "thread_gate.py": {
+      "sha256": "d62ae5d946af927d09538628905cf05a242ede47267e693b571736b79c50c7de",
+      "bytes": 5852
+    }
+  }
+}

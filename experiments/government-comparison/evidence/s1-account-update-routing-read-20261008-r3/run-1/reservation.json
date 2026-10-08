@@ -1,0 +1,21 @@
+{
+  "key": "s1-account-update-routing-read-20261008-r3",
+  "reservedAtUnix": 1791493755.3563802,
+  "grantIssuedUtc": "2026-10-08T20:51:31Z",
+  "slotAssignedUtc": "2026-10-08T20:51:31Z",
+  "sourceCommit": "d5997d6392ae3f6397bd45a21e3ed4946b1b768c",
+  "freezeCommit": "158fa0249f5bd368e858f605417b33b48f59884b",
+  "requestSha256": "6c8c15827f790ae47b971b738ed355a94a91a446d5e7915ddc84b536dc815f73",
+  "freezeSha256": "8953d04f970d87ccc0a5c26381def7cc28f5c761209214ce081cbb71f9e83ebe",
+  "readinessWindowKey": "s1-resumed-readiness-window-20261008",
+  "notAfterUtc": "2026-10-08T21:57:43Z",
+  "latestActualStartUtc": "2026-10-08T21:54:13Z",
+  "readinessAttemptOrdinal": 2,
+  "maxTrees": 1,
+  "maxDiagnosticReservations": 0,
+  "maxActorTaskReservations": 1,
+  "priorAppServerTrees": 14,
+  "priorActorReservations": 7,
+  "priorCliMetadataCalls": 8,
+  "cumulativeAppServerMaximum": 15
+}

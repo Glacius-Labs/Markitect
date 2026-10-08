@@ -1,0 +1,23 @@
+{
+  "key": "s1-account-update-routing-read-20261008-r3",
+  "grantIssuedUtc": "2026-10-08T20:51:31Z",
+  "slotAssignedUtc": "2026-10-08T20:51:31Z",
+  "requestSha256": "6c8c15827f790ae47b971b738ed355a94a91a446d5e7915ddc84b536dc815f73",
+  "freezeSha256": "8953d04f970d87ccc0a5c26381def7cc28f5c761209214ce081cbb71f9e83ebe",
+  "reservationSha256": "5e00f9a99e60cbca97c60302aecb01daab9986264be1fdad174f1034d0b41b35",
+  "sourceCommit": "d5997d6392ae3f6397bd45a21e3ed4946b1b768c",
+  "freezeCommit": "158fa0249f5bd368e858f605417b33b48f59884b",
+  "workerReturnCode": 1,
+  "stopReason": null,
+  "controllerSeconds": 20.269650000002002,
+  "jobCloseSeconds": 2.130000211764127e-05,
+  "processTreeControl": "windows-job-kill-on-close",
+  "deadlineSeconds": 180,
+  "controllerLimitSeconds": 195,
+  "outerLimitSeconds": 210,
+  "rawLogsPersisted": false,
+  "automaticRetries": 0,
+  "terminalResultPresent": true,
+  "terminalResultSha256": "169969e946099da0c79c4297b41f3f3b201779a009d7a2bae7c7ebb3c90a7dce",
+  "withinControllerBound": true
+}

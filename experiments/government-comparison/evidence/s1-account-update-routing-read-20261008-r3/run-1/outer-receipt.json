@@ -1,0 +1,17 @@
+{
+  "key": "s1-account-update-routing-read-20261008-r3",
+  "outerReturnCode": 1,
+  "stopReason": null,
+  "outerThroughReceiptReadbackSeconds": 39.45124130000113,
+  "withinOuterBound": true,
+  "controllerReceiptSha256": "dbc3cfcec05d25b0388fa0172b9222af8bddbd4e75216911246a92b2862862bd",
+  "sanitizedResultSha256": "169969e946099da0c79c4297b41f3f3b201779a009d7a2bae7c7ebb3c90a7dce",
+  "terminalResultPresent": true,
+  "status": "stopped",
+  "nativeStartAttemptRecorded": true,
+  "diagnosticReservations": 0,
+  "actorTaskReservations": 1,
+  "nativeProviderRequests": null,
+  "nativeProviderRetries": null,
+  "remainingGrantClosed": true
+}

@@ -1,0 +1,11 @@
+{
+  "key": "s1-account-update-routing-read-20261008-r3",
+  "grantIssuedUtc": "2026-10-08T20:51:31Z",
+  "slotAssignedUtc": "2026-10-08T20:51:31Z",
+  "requestSha256": "6c8c15827f790ae47b971b738ed355a94a91a446d5e7915ddc84b536dc815f73",
+  "freezeSha256": "8953d04f970d87ccc0a5c26381def7cc28f5c761209214ce081cbb71f9e83ebe",
+  "reservationSha256": "5e00f9a99e60cbca97c60302aecb01daab9986264be1fdad174f1034d0b41b35",
+  "sourceCommit": "d5997d6392ae3f6397bd45a21e3ed4946b1b768c",
+  "freezeCommit": "158fa0249f5bd368e858f605417b33b48f59884b",
+  "startedAtUnix": 1791493761.8301806
+}

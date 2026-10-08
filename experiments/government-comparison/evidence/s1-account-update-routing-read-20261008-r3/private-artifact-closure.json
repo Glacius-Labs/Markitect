@@ -1,0 +1,13 @@
+{
+  "key": "s1-account-update-routing-read-20261008-r3",
+  "ownExactRelativeFile": "private-redacted-stderr/redacted-stderr.json",
+  "afterOwnedNativeWorkerCleanup": true,
+  "nativePidQuiescenceVerified": true,
+  "bytesRemovedFromMetadataOnly": 683,
+  "contentReads": 0,
+  "contentParses": 0,
+  "contentHashes": 0,
+  "exactFileUnlinked": true,
+  "privateDirectoryEmpty": true,
+  "noHistoricalPrivateRecovery": true
+}

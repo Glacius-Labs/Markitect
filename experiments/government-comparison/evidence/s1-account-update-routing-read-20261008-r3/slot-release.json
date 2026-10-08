@@ -1,0 +1,21 @@
+{
+  "key": "s1-account-update-routing-read-20261008-r3",
+  "grantIssuedUtc": "2026-10-08T20:51:31Z",
+  "releasedUtc": "2026-10-08T21:10:53.986354Z",
+  "releaseReason": "Final allocated actual read attempt terminal; native worker and owned Job cleanup complete; resumed block ends with no repair/retry/fallback",
+  "grantClosed": true,
+  "remainingAppServerTrees": 0,
+  "remainingActorReservations": 0,
+  "actualNewNativeTrees": 1,
+  "actualNewActorReservations": 1,
+  "actualNativeTreesCumulative": 15,
+  "actorReservationsCumulative": 8,
+  "readinessAttemptOrdinal": 2,
+  "finalAttemptInResumedBlock": true,
+  "resumedBlockEnded": true,
+  "automaticFurtherGrant": false,
+  "privateDirectoryEmpty": true,
+  "localSlotReleaseRecorded": true,
+  "canonicalSlotReleasePendingOverseerAcceptance": true,
+  "canonicalCoordinationUnmodifiedByScientist": true
+}

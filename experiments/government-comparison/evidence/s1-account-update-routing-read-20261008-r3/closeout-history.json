@@ -1,0 +1,17 @@
+{
+  "key": "s1-account-update-routing-read-20261008-r3",
+  "oneNativeAttempt": true,
+  "firstResultTerminal": true,
+  "postStartSourceRepairs": 0,
+  "retries": 0,
+  "fallbacks": 0,
+  "schemaAdmissionChangesAfterFreeze": 0,
+  "privateRecoveryAttempts": 0,
+  "additionalTestsAfterActual": 0,
+  "independentSourceAndBindingReviewsPassed": true,
+  "postreviewPending": false,
+  "canonicalMutationByScientist": false,
+  "resumedBlockEnded": true,
+  "independentPostreviewCompleted": true,
+  "postreviewSha256": "cc519a2e1cf9eb75675385bd603404520cd788c8e7a7b4e16d247800edf5f116"
+}
