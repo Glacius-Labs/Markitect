@@ -1,0 +1,14 @@
+{
+  "protectedHistoricalFiles": 3715,
+  "historicalHandoffSuffixExact": true,
+  "acceptedReceiptConsumerAstUnchanged": true,
+  "r6RawOriginalCopyPairs": 92,
+  "status": "passed",
+  "sourceCodeFilesUnchangedAfterReviewedCommit": 13,
+  "frozenInputsStillUnchanged": 55,
+  "rawOriginalCopyPairs": 93,
+  "terminalLiveNativeLedgerSnapshotExact": true,
+  "liveLedgerSha256": "fefbca4d88a253034a7f18d305ad227ad71c109d25668fcbae15961f23ceeba3",
+  "experimentalRunsRepeated": false,
+  "failureStateRescored": false
+}

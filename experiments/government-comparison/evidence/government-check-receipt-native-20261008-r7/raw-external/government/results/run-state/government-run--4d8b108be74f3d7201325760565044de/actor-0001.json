@@ -1,0 +1,58 @@
+{
+  "sequence": 1,
+  "startedAt": "2026-10-08T04:24:34.1649219Z",
+  "finishedAt": "2026-10-08T04:24:34.9014354Z",
+  "phase": "execute",
+  "slotId": "positive-root-executor",
+  "scopes": [
+    "[\"markitect.government-example/v1alpha1\",\"Requirement\",\"inventory\",\"safe-release\"]"
+  ],
+  "result": {
+    "Response": {
+      "apiVersion": "markitect.example.org/agent-execution/v1alpha1",
+      "runId": "5ebc2ced9d2ccec1f7a40ba0d5fd01a6",
+      "nonce": "a23a30caa764df2a424e889f71b2407e",
+      "role": "executor",
+      "inputDigest": "sha256:19c3399c18352aa182fb7f7bd2a3717c9e75bbd32625507a1856b4e55740d520",
+      "outcome": "proposed",
+      "candidateFiles": [
+        {
+          "path": "inventory/reservation.go",
+          "mode": "0644",
+          "content": "package inventory\n\nimport (\n\t\"errors\"\n\t\"math\"\n)\n\nvar ErrOverflow = errors.New(\"available stock would overflow\")\n\n// Release adds released stock to available inventory without wrapping.\nfunc Release(available, amount int64) (int64, error) {\n\tif amount \u003c 0 {\n\t\treturn available, errors.New(\"release amount cannot be negative\")\n\t}\n\tif amount \u003e 0 \u0026\u0026 available \u003e math.MaxInt64-amount {\n\t\treturn available, ErrOverflow\n\t}\n\treturn available + amount, nil\n}\n"
+        },
+        {
+          "path": "inventory/reservation_test.go",
+          "mode": "0644",
+          "content": "package inventory\n\nimport (\n\t\"errors\"\n\t\"math\"\n\t\"testing\"\n)\n\nfunc TestReleaseRejectsOverflow(t *testing.T) {\n\tif _, err := Release(math.MaxInt64, 1); !errors.Is(err, ErrOverflow) {\n\t\tt.Fatalf(\"Release(MaxInt64, 1) error = %v, want ErrOverflow\", err)\n\t}\n}\n\nfunc TestReleaseAddsWithinRange(t *testing.T) {\n\tgot, err := Release(8, 3)\n\tif err != nil || got != 11 {\n\t\tt.Fatalf(\"Release(8, 3) = (%d, %v), want (11, nil)\", got, err)\n\t}\n}\n"
+        }
+      ],
+      "evidenceRefs": [
+        "[\"markitect.government-example/v1alpha1\",\"Requirement\",\"inventory\",\"safe-release\"]",
+        "[\"markitect.government/v1alpha1\",\"Constitution\",\"inventory\",\"active\"]",
+        "inventory/reservation.go",
+        "inventory/reservation_test.go"
+      ],
+      "verifierObservations": [],
+      "uncertainty": []
+    },
+    "Receipt": {
+      "apiVersion": "markitect.example.org/agent-execution/v1alpha1",
+      "runId": "5ebc2ced9d2ccec1f7a40ba0d5fd01a6",
+      "inputDigest": "sha256:19c3399c18352aa182fb7f7bd2a3717c9e75bbd32625507a1856b4e55740d520",
+      "contextDigest": "sha256:d1e5664181c9382e0c047dcba6d773c6cfbec1b13feab66347154b7ec3e46937",
+      "configDigest": "sha256:50e173be345d1fbf27c8c8e0564dc7be00cd935650afcdea275d1b9df642b2a9",
+      "commandDigest": "sha256:286b929850a15bb838e056d8887ca8e54def6d197a5bca66481bb8c953fa9345",
+      "executableDigest": "sha256:d87063e5597f257004c731b66c59c56c91038861c6877b1a3dca6b8c4e919125",
+      "runtimeFilesDigest": "sha256:a44a103e3034b9c9f633b3fb5e3b3013239e64260c2b05fc011f962808579ecf",
+      "providerVersion": "python-fixed-role-response-v1",
+      "providerVersionDigest": "sha256:724397c0b5615e3a70af28508cd6b20e6857a6b1340d6e352d8c7b71c6cc1621",
+      "stdoutDigest": "sha256:13b1490fb1469fa3a59fb95cb8a865d3f7239b5a9fb1c24ff0730ab7bd70568e",
+      "stderrDigest": "sha256:2849603a0ecf445a814513317e9e629e2aa1d7a3bc4736e23f8dd76075ea9c33",
+      "privateLogDigest": "",
+      "outcome": "proposed",
+      "wallTimeMilliseconds": 726,
+      "retryCount": 0
+    }
+  }
+}

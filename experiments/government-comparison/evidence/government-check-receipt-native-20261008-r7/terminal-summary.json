@@ -1,0 +1,137 @@
+{
+  "key": "government-check-receipt-native-20261008-r7",
+  "status": "terminal-bounded-mechanics-passed",
+  "sourceCommit": "225a34e8443363475d815ad42bd847448bfc1335",
+  "actualInputCommit": "84ce9cfef83dc6f560fc1cda7c23fc3f3004c062",
+  "freezeCommit": "dad9d0dae29ade7de1329b76c8ccfca1bd0642ab",
+  "freezeSha256": "3d6e1fca5095a3119aa487449f2f719e4afb871236bb29669d033a0e55873df2",
+  "actualAdmission": "passed",
+  "requestSha256": "11ccf1cd8c1a9d33e0660d61dfbe396cae79c6370cc96c5e1f8ff81832c1b151",
+  "nativeQueue": {
+    "status": "complete",
+    "jobState": "accepted-scoped",
+    "runStatus": "accepted-scoped",
+    "runStage": "complete",
+    "promotionStatus": "promoted",
+    "candidateCommit": "9e659bb0c1f7a22d6e4cf36ba3c2980289ccc6fe",
+    "candidateTree": "6bc4205465453852eb67cd03b42de6349f2fb634",
+    "nativeReportedPeakParallelism": 1,
+    "freshChecks": [
+      {
+        "Name": "inventory-overflow",
+        "Tool": "go",
+        "ExitCode": 0,
+        "Milliseconds": 1786,
+        "TimeoutMilliseconds": 30000,
+        "Output": "ok  \texample.invalid/markitect/government-positive/inventory\t0.207s\n"
+      }
+    ]
+  },
+  "outerQueueStatus": "completed",
+  "resume": {
+    "status": "completed",
+    "nativeStatus": "complete",
+    "outerStatus": "completed",
+    "passed": true,
+    "roleStartsBefore": 3,
+    "roleStartsAfter": 3,
+    "checks": {
+      "sameBoundRunReport": true,
+      "sameCandidateEvidenceDecision": true,
+      "sameNativeRoleStarts": true,
+      "samePersistedQueue": true,
+      "samePromotionReadback": true,
+      "samePromotionReceipts": true,
+      "sameQueue": true,
+      "noAdditionalRoles": true,
+      "controllerDeadlineSatisfied": true,
+      "passed": true
+    }
+  },
+  "newConsumption": {
+    "freshStaticCasePreparations": 1,
+    "actualAdmissionActions": 1,
+    "runOnceInvocations": 1,
+    "nativeStarts": 2,
+    "wrapperAttemptsIncludingFailures": 3,
+    "deterministicDelegates": 3,
+    "reservedNativeSessionSeconds": 300,
+    "realActorStarts": 0,
+    "modelProviderCalls": 0,
+    "metadataSessions": 0,
+    "studyCells": 0,
+    "classicNativeStarts": 0,
+    "fullProductSuites": 0
+  },
+  "cumulativeConsumption": {
+    "nativeStarts": 15,
+    "wrapperAttempts": 16,
+    "deterministicDelegates": 13,
+    "reservedNativeSessionSeconds": 2250,
+    "historicalRealActorStarts": 5,
+    "historicalKnownTokenSubtotal": 53331,
+    "totalRealTokens": null
+  },
+  "ceilings": {
+    "nativeStarts": 15,
+    "wrapperAttempts": 19,
+    "deterministicDelegates": 16,
+    "reservedNativeSessionSeconds": 2250
+  },
+  "timing": {
+    "queueNativeProcessWallSeconds": 6.242453300044872,
+    "queueBridgeSecondsAfterTerminalReceiptAvailable": 6.406213760375977,
+    "queueDriverSecondsAfterBridgeCompletionReadback": 6.666939500020817,
+    "resumeNativeProcessWallSeconds": 0.49891379999462515,
+    "resumeSecondsAfterTerminalResultReadback": 0.6795120999449864,
+    "resumeSecondsAfterCompletionReceiptReadback": 0.6891238000243902,
+    "deadlineSeconds": 38,
+    "delegateMeasuredWallSeconds": [
+      0.14819249999709427,
+      0.14518800005316734,
+      0.2714566000504419
+    ],
+    "delegateMeasuredWallSecondsSum": 0.5648371001007035,
+    "nativeReportedActorWallMilliseconds": 1737,
+    "engineeringAndReviewUsage": "unknown"
+  },
+  "history": {
+    "original13StartsUnchanged": true,
+    "original4CorrectionsUnchanged": true,
+    "originalAllocationUnchanged": true,
+    "protectedHistoricalFiles": 3715,
+    "rawArchivePairs": 93
+  },
+  "slotRelease": {
+    "owner": "Scientist",
+    "grantKey": "government-check-receipt-native-20261008-r7",
+    "releasedUtc": "2026-10-08T04:25:10.373410+00:00",
+    "status": "released by Scientist after terminal bounded mechanics pass",
+    "remainingQuotaReusable": false,
+    "canonicalCoordinatorOwner": "Overseer; no Scientist edit to live coordination",
+    "newNativeStarts": 2,
+    "newReservedNativeSeconds": 300,
+    "resumeStarted": true
+  },
+  "noRetryOrRestQuotaReuse": true,
+  "semanticAcceptance": false,
+  "humanAcceptance": false,
+  "s1Complete": false,
+  "sixBaseStudyCells": "NOT RUN",
+  "remainingOpen": [
+    "S1",
+    "real common tool capability",
+    "semantic engineering quality",
+    "human acceptance"
+  ],
+  "oldResultsUnchanged": {
+    "R6": "INCOMPLETE",
+    "R5": "NOT ADMITTED",
+    "R4": "INCOMPLETE"
+  },
+  "independentPostreview": {
+    "path": "evidence\\government-check-receipt-native-20261008-r7\\independent-postreview.md",
+    "sha256": "45903754791e4f9b40b05613b9fb37e84973998565cae1fc9f1d2569040a7318",
+    "disposition": "bounded mechanics pass, no material terminal blocker; no new execution"
+  }
+}

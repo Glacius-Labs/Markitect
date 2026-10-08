@@ -1,0 +1,15 @@
+{
+  "dispatchId": "government-native-check-receipt-r7",
+  "elapsedSecondsAfterTerminalReceiptAvailable": 6.406213760375977,
+  "nativeProcess": {
+    "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-check-receipt-20261008-r7\\government\\controller-evidence\\outer-run\\process\\process.json",
+    "sha256": "3d2d8ec8ea76ccff4e1bee6e40aa620daabe6917f11be306e1e428cc1848d6bc"
+  },
+  "requestSha256": "11ccf1cd8c1a9d33e0660d61dfbe396cae79c6370cc96c5e1f8ff81832c1b151",
+  "status": "completed",
+  "terminalControllerReceiptSha256": "2bc6133e1bac817babad15dead9944158f9005fbef8f3fefd45348345ea473e0",
+  "terminalResult": {
+    "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-check-receipt-20261008-r7\\government\\outer-results\\r7-queue.json",
+    "sha256": "336f3935039956d22468aaa24ca8135db7d7d28884ca8f43801bc098e880af76"
+  }
+}

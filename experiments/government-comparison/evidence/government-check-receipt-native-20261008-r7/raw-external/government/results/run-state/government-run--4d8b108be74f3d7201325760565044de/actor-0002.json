@@ -1,0 +1,65 @@
+{
+  "sequence": 2,
+  "startedAt": "2026-10-08T04:24:37.4432107Z",
+  "finishedAt": "2026-10-08T04:24:37.8959078Z",
+  "phase": "review",
+  "slotId": "positive-root-verifier",
+  "scopes": [
+    "[\"markitect.government/v1alpha1\",\"Area\",\"inventory\",\"root\"]",
+    "[\"markitect.government-example/v1alpha1\",\"Requirement\",\"inventory\",\"safe-release\"]"
+  ],
+  "result": {
+    "Response": {
+      "apiVersion": "markitect.example.org/agent-execution/v1alpha1",
+      "runId": "9b693931fcd12b4e043de10f23fc573d",
+      "nonce": "85638dad5ae9f6420097345416bd6681",
+      "role": "verifier",
+      "inputDigest": "sha256:c6ec80a6e8a9dd2ad8371861bdb6704f3753858b807981e70ecfc431a138b32b",
+      "outcome": "passed",
+      "candidateFiles": [],
+      "evidenceRefs": [
+        "[\"markitect.government-example/v1alpha1\",\"Requirement\",\"inventory\",\"safe-release\"]",
+        "[\"markitect.government/v1alpha1\",\"Area\",\"inventory\",\"root\"]",
+        "[\"markitect.government/v1alpha1\",\"Constitution\",\"inventory\",\"active\"]",
+        "inventory/reservation.go",
+        "inventory/reservation_test.go"
+      ],
+      "verifierObservations": [
+        {
+          "subject": "[\"markitect.government-example/v1alpha1\",\"Requirement\",\"inventory\",\"safe-release\"]",
+          "outcome": "passed",
+          "detail": "passed: implementation is supplied; passed: MaxInt64 addition boundary is guarded; passed: negative release is rejected; passed: overflow test calls Release(MaxInt64, 1); passed: overflow test requires ErrOverflow; passed: ordinary addition is preserved"
+        },
+        {
+          "subject": "[\"markitect.government/v1alpha1\",\"Area\",\"inventory\",\"root\"]",
+          "outcome": "passed",
+          "detail": "passed: implementation is supplied; passed: MaxInt64 addition boundary is guarded; passed: negative release is rejected; passed: overflow test calls Release(MaxInt64, 1); passed: overflow test requires ErrOverflow; passed: ordinary addition is preserved"
+        },
+        {
+          "subject": "[\"markitect.government/v1alpha1\",\"Constitution\",\"inventory\",\"active\"]",
+          "outcome": "passed",
+          "detail": "passed: implementation is supplied; passed: MaxInt64 addition boundary is guarded; passed: negative release is rejected; passed: overflow test calls Release(MaxInt64, 1); passed: overflow test requires ErrOverflow; passed: ordinary addition is preserved"
+        }
+      ],
+      "uncertainty": []
+    },
+    "Receipt": {
+      "apiVersion": "markitect.example.org/agent-execution/v1alpha1",
+      "runId": "9b693931fcd12b4e043de10f23fc573d",
+      "inputDigest": "sha256:c6ec80a6e8a9dd2ad8371861bdb6704f3753858b807981e70ecfc431a138b32b",
+      "contextDigest": "sha256:6d71b29d1b58a166f175cdbf87183c376d7d15127804d16453d9361987c050c0",
+      "configDigest": "sha256:b33a597423946d7219d6a9d77dc77bcca96322eb2d112c6968738410d5653cd6",
+      "commandDigest": "sha256:fae3d4abcb5e5e966c28e341f2f86f145c06ab2a57f6a65797cb695179af6123",
+      "executableDigest": "sha256:d87063e5597f257004c731b66c59c56c91038861c6877b1a3dca6b8c4e919125",
+      "runtimeFilesDigest": "sha256:a44a103e3034b9c9f633b3fb5e3b3013239e64260c2b05fc011f962808579ecf",
+      "providerVersion": "python-fixed-role-response-v1",
+      "providerVersionDigest": "sha256:724397c0b5615e3a70af28508cd6b20e6857a6b1340d6e352d8c7b71c6cc1621",
+      "stdoutDigest": "sha256:d43fb6ffcaad703c9a32706943fcedfc67b5fc5a94e2e1b827c18ec6b0595fd6",
+      "stderrDigest": "sha256:d8a7c68b83de9ad7471a3b606a8089ab9f8c10ac05b24519bf5eb53a045ce0cd",
+      "privateLogDigest": "",
+      "outcome": "passed",
+      "wallTimeMilliseconds": 443,
+      "retryCount": 0
+    }
+  }
+}

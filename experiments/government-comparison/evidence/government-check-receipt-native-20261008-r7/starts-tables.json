@@ -1,0 +1,23 @@
+{
+  "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-check-receipt-20261008-r7\\government\\released\\wrapper-diagnostics\\starts.sqlite",
+  "sha256": "d1346d06bf6a3247675f271c692d1d4dca0af353188c2cda98f66652ccf390fb",
+  "tables": {
+    "starts": [
+      {
+        "id": 1,
+        "config_sha": "8ca1fc909df85f58178275582aab0a89871530943f783221b99fd4047b650afa",
+        "started": 1791433474.2952774
+      },
+      {
+        "id": 2,
+        "config_sha": "8ca1fc909df85f58178275582aab0a89871530943f783221b99fd4047b650afa",
+        "started": 1791433477.55559
+      },
+      {
+        "id": 3,
+        "config_sha": "8ca1fc909df85f58178275582aab0a89871530943f783221b99fd4047b650afa",
+        "started": 1791433478.0220056
+      }
+    ]
+  }
+}

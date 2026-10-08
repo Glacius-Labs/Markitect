@@ -1,0 +1,11 @@
+{
+  "owner": "Scientist",
+  "grantKey": "government-check-receipt-native-20261008-r7",
+  "releasedUtc": "2026-10-08T04:25:10.373410+00:00",
+  "status": "released by Scientist after terminal bounded mechanics pass",
+  "remainingQuotaReusable": false,
+  "canonicalCoordinatorOwner": "Overseer; no Scientist edit to live coordination",
+  "newNativeStarts": 2,
+  "newReservedNativeSeconds": 300,
+  "resumeStarted": true
+}

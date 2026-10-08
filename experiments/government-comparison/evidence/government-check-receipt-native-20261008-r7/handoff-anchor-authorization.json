@@ -1,0 +1,9 @@
+{
+  "grantKey": "government-check-receipt-native-20261008-r7",
+  "authorization": "Granted current short R7 continuation/terminal anchor while preserving complete older history",
+  "sourceCommit": "225a34e8443363475d815ad42bd847448bfc1335",
+  "priorHandoffSha256": "05e4f9ec4c6b18da5f35a292ffb8fe989dc5b73c677c4f71846f38fd9df20bc9",
+  "prependedBytes": 1831,
+  "historicalOriginalSuffixSha256": "e7f046f176442c48fc884448594e1612220905ae6197683c985739f58241b04d",
+  "historicalOriginalPrefixBytes": 2918
+}
