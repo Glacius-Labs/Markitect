@@ -38,6 +38,12 @@ func TestDistillationExecutorHelper(t *testing.T) {
 	if err := json.Unmarshal(requestContext["targetContext"], &targetContext); err != nil || targetContext.RootManagerID == "" || targetContext.Digest == "" {
 		os.Exit(35)
 	}
+	var prompt struct {
+		Instructions string `json:"instructions"`
+	}
+	if err := json.Unmarshal(invocation.Request.Context, &prompt); err != nil || !strings.Contains(prompt.Instructions, "commerce.sales.orders") || !strings.Contains(prompt.Instructions, "observation/static-source") || !strings.Contains(prompt.Instructions, "one-based line bounds") {
+		os.Exit(36)
+	}
 	artifact := invocation.Request.Artifacts[0]
 	if artifact.Path != "evidence/implementation.txt" || string(artifact.Content) != "package orders\nfunc Cancel() {}\n" {
 		os.Exit(34)
@@ -76,7 +82,7 @@ func TestDistillationExecutorHelper(t *testing.T) {
 }
 
 func TestGenerateDistillationUsesBoundedExecutorAndValidatesReport(t *testing.T) {
-	root, discovery, target := distillationDiscovery(t)
+	root, discovery, target, _ := distillationDiscovery(t)
 	selectedBefore, err := os.ReadFile(filepath.Join(root, "src", "orders", "cancel.go"))
 	if err != nil {
 		t.Fatal(err)
@@ -104,7 +110,7 @@ func TestGenerateDistillationUsesBoundedExecutorAndValidatesReport(t *testing.T)
 }
 
 func TestGenerateDistillationRejectsMissingUsageAndBadGrounding(t *testing.T) {
-	root, discovery, target := distillationDiscovery(t)
+	root, discovery, target, _ := distillationDiscovery(t)
 	for _, mode := range []string{"missing-usage", "bad-grounding", "over-budget"} {
 		config := testDistillationConfig(t)
 		t.Setenv(distillationModeEnv, mode)
@@ -116,7 +122,7 @@ func TestGenerateDistillationRejectsMissingUsageAndBadGrounding(t *testing.T) {
 }
 
 func TestGenerateDistillationRejectsUnsafeBoundsAndStaleDiscovery(t *testing.T) {
-	root, discovery, target := distillationDiscovery(t)
+	root, discovery, target, _ := distillationDiscovery(t)
 	config := testDistillationConfig(t)
 	config.EnvironmentAllowlist = nil
 	if _, _, err := GenerateDistillation(context.Background(), root, discovery, config, testDistillationOptions(t, target)); err == nil || !strings.Contains(err.Error(), "explicit environment allowlist") {
@@ -169,6 +175,18 @@ func TestDistillationDraftSchemaMatchesBothPythonAdapterContracts(t *testing.T) 
 	if err := json.Unmarshal(schema, &responseSchema); err != nil {
 		t.Fatal(err)
 	}
+	rootSchema := responseSchema.(map[string]any)
+	claims := rootSchema["properties"].(map[string]any)["claims"].(map[string]any)["items"].(map[string]any)["properties"].(map[string]any)
+	claimID := claims["id"].(map[string]any)
+	if claimID["minLength"] != float64(1) || claimID["maxLength"] != float64(64) {
+		t.Fatalf("provider claim ID bounds = %#v", claimID)
+	}
+	if got := claims["kind"].(map[string]any)["enum"].([]any); len(got) != 4 {
+		t.Fatalf("provider claim kind enum = %#v", got)
+	}
+	if got := claims["method"].(map[string]any)["enum"].([]any); len(got) != 4 {
+		t.Fatalf("provider claim method enum = %#v", got)
+	}
 	invocation := map[string]any{
 		"apiVersion": agentexec.APIVersion, "runId": "run-fixture", "nonce": "nonce-fixture",
 		"inputDigest": "sha256:" + strings.Repeat("a", 64),
@@ -209,6 +227,64 @@ assert schema == validated["request"]["context"]["responseSchema"]
 	}
 }
 
+func TestAgentDistillationRequiresFixedTargetBinding(t *testing.T) {
+	_, discovery, target, targetProject := distillationDiscovery(t)
+	report := Distillation{
+		APIVersion: DistillationVersion, DiscoveryDigest: discovery.Digest, SchemaDigest: strings.Repeat("d", 64),
+		Claims: []Claim{{ID: "claim", ScopeID: "orders", Kind: "observation", Method: "static-source", Statement: "A cancellation function is declared.",
+			Evidence: []EvidenceRef{{EvidenceID: "implementation", StartLine: 2, EndLine: 2, Excerpt: "func Cancel() {}"}}, Uncertainty: []string{}}},
+		Terms: []Term{}, Contradictions: []Contradiction{}, Questions: []Question{},
+		Scopes:   []ScopeProposal{{ID: "orders", Name: "Orders", ClaimIDs: []string{"claim"}}},
+		Proposal: ModelProposal{Goal: "Record the proposed order scope", Files: []ProposedFile{{ScopeID: "orders", Path: ".markitect/model/orders/statement.yaml", Content: "apiVersion: project.markitect.example.org/v1alpha1\n"}}},
+	}
+	report.Method = "agent-assisted"
+	report.RunnerIdentity = "agentexec/fixture/model"
+	report.RunnerDigest = strings.Repeat("d", 64)
+	report.TargetBasis = target.ProjectDigest
+	report.TargetRevision = target.Revision
+	report.TargetContextDigest = target.Digest
+	SealDistillation(&report)
+	if err := ValidateDistillation(discovery, report); err != nil {
+		t.Fatalf("complete target-bound agent report rejected: %v", err)
+	}
+	if err := ValidateDistillationTarget(report, targetProject); err != nil {
+		t.Fatalf("matching target project rejected: %v", err)
+	}
+	unbound := report
+	unbound.TargetBasis, unbound.TargetRevision, unbound.TargetContextDigest = "", "", ""
+	SealDistillation(&unbound)
+	if err := ValidateDistillation(discovery, unbound); err == nil {
+		t.Fatal("agent-assisted report without target binding was accepted")
+	}
+	retargeted := report
+	retargeted.TargetRevision = strings.Repeat("e", 40)
+	SealDistillation(&retargeted)
+	if err := ValidateDistillation(discovery, retargeted); err != nil {
+		t.Fatalf("structurally complete retargeted report should validate before target comparison: %v", err)
+	}
+	if err := ValidateDistillationTarget(retargeted, targetProject); err == nil {
+		t.Fatal("report bound to another target revision was accepted")
+	}
+	badPair := report
+	badPair.Claims = append([]Claim(nil), report.Claims...)
+	badPair.Claims[0].Method = "documentation"
+	SealDistillation(&badPair)
+	if err := ValidateDistillation(discovery, badPair); err == nil {
+		t.Fatal("claim with a kind/method pair outside the exact allowed set was accepted")
+	}
+	badID := report
+	badID.Scopes = append([]ScopeProposal(nil), report.Scopes...)
+	badID.Claims = append([]Claim(nil), report.Claims...)
+	badID.Proposal.Files = append([]ProposedFile(nil), report.Proposal.Files...)
+	badID.Scopes[0].ID = "commerce.sales.orders"
+	badID.Claims[0].ScopeID = "commerce.sales.orders"
+	badID.Proposal.Files[0].ScopeID = "commerce.sales.orders"
+	SealDistillation(&badID)
+	if err := ValidateDistillation(discovery, badID); err == nil {
+		t.Fatal("dotted namespace was accepted as a local scope ID")
+	}
+}
+
 func TestNewPrivateLogDirectoryIsUniqueAndUncreated(t *testing.T) {
 	parent := t.TempDir()
 	first, err := newPrivateLogDirectory(parent)
@@ -244,7 +320,7 @@ func TestTargetContextRejectsUncommittedProject(t *testing.T) {
 	}
 }
 
-func distillationDiscovery(t *testing.T) (string, Discovery, DistillationTargetContext) {
+func distillationDiscovery(t *testing.T) (string, Discovery, DistillationTargetContext, *projectwork.Project) {
 	t.Helper()
 	root, commit := committedRepository(t, map[string]string{"src/orders/cancel.go": "package orders\nfunc Cancel() {}\n"})
 	discovery, err := Discover(root, DiscoveryRequest{
@@ -272,7 +348,7 @@ func distillationDiscovery(t *testing.T) (string, Discovery, DistillationTargetC
 	if err != nil {
 		t.Fatal(err)
 	}
-	return root, discovery, target
+	return root, discovery, target, targetProject
 }
 
 func testDistillationConfig(t *testing.T) agentexec.Config {
