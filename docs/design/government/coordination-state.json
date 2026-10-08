@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-08T23:35:28Z",
+  "updatedUtc": "2026-10-08T23:36:37Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -8432,13 +8432,13 @@
       "lastObservedStatus": "active",
       "candidateSha": "57fa01ce49fe797b403f4f7640e11820e6b1741f",
       "candidateStatus": "Previous clean reported handoff; current7-file WIP for native Luna High/appCLI streaming pinning; not a frozen test candidate",
-      "afterCursor": "003822b0-39a3-45aa-ad00-ed2b07a94fa4:5",
-      "lastAssistantMessageId": "msg_09c2fcf082a171e3016ac8266a7b508191aff2f3ff50f4515c",
+      "afterCursor": "003822b0-39a3-45aa-ad00-ed2b07a94fa4:6",
+      "lastAssistantMessageId": "msg_09c2fcf082a171e3016ac8288805fc819191f479809a48e77e",
       "assignedMilestone": "Continue latest direct user-authorized native Luna High Shop verification; then immutable test-readiness handoff/callback",
       "monitoringAuthorizedUtc": "2026-10-08T22:51:11Z",
       "monitoringSource": "Direct user asks regularly watch Design, test it and assess whether it can replace Classic",
       "acceptance": "Not yet independently accepted; development/native test reports only",
-      "latestProgress": "Current owner work expands native runtime feedback: Reviewer findings rerun implementation/review; integration cannot bypass reviews. Next manager subtree rework while preserving independent siblings, then focused failure transitions. No clean readiness candidate yet.",
+      "latestProgress": "Owner reports persistent finite counters across rework/checkrepair: default3reviews per manager/phase and2managerreworkrounds per run. Targetedruntimechecks ongoing, then fresh Shop/nativeLunaHigh ownertests; still active WIP, no clean readiness closure.",
       "evidence": {
         "observedCurrentHead": "57fa01ce49fe797b403f4f7640e11820e6b1741f",
         "observedBranch": "codex/model-driven-delivery",
@@ -8487,7 +8487,15 @@
     "synthesisPath": "docs/design/government/assessment-2026-10-08.md",
     "observationStatus": "Offline runtime-binding active; concrete operator toolchain error read from raw evidence and one separately recorded existing-toolchain correction, no deadline/test/Actor expansion.",
     "researchComparisonCompleted": false,
-    "synthesisSupplementedUtc": "2026-10-08T21:17:14Z"
+    "synthesisSupplementedUtc": "2026-10-08T21:17:14Z",
+    "latestQuietFallback": {
+      "checkedUtc": "2026-10-08T23:36:37Z",
+      "targets": [
+        "Design",
+        "Scientist"
+      ],
+      "result": "Both active. Design new incremental progress only, Scientist unchanged since immediately preceding checked dispatch. No closure/actionable blocker/new assignment or quota; quiet fallback."
+    }
   },
   "publicAdapterHandoff": {
     "version": "1.1",
@@ -9516,7 +9524,7 @@
     "prompt": "Öffentlicher Input zum bereits erteilten Paket scientist-oldschool-baseline-binding-20261008; kein zusätzlicher Arbeitsauftrag und keine Laufquote.\n\nOldschool hat oldschool-baseline-preparation-20261008 per direkter Rückmeldung abgeschlossen. Ich habe den fallunabhängigen Arbeitsweisenbrief als Vorbereitung angenommen. Er beschreibt:\n- beobachtbare Abnahmekriterien, begrenzten Umfang und explizite Annahmen/Entscheidungen;\n- gezielte Erkundung von Anweisungen, Git-Stand, Einstiegspunkten, Datenfluss und betroffenen Aufrufern;\n- vollständige begrenzte Änderungen, klare Verantwortlichkeiten, Validierung und Fehlerbehandlung;\n- risikobasierte Regression-/Integrationsprüfungen, sinnvolle unabhängige Reviews und SHA-gebundene Nachweise;\n- Driftabgleich gegen den ursprünglichen Auftrag, reproduzierbare Fehler und erneute betroffene Checks;\n- prüfbare Übergabe mit Ziel, Entscheidungen, SHA/WIP, Checks und nächstem Schritt statt Vertrauen auf bloße Zusammenfassung.\nSubagenten nur für sinnvolle unabhängige Arbeit; deren Aufwand zählt mit. Markitect/Government bleiben aus dem Arm ausgeschlossen. Gemeinsame Aufgaben, Oracle und endgültige Bewertung bleiben bei dir bzw. unabhängigen Bewertern.\n\nSeine konkreten Studienwerkzeuge und tatsächliche Toolfähigkeit sind ausdrücklich ungeprüft. Gemeldet sind keine Repositoryzugriffe, Änderungen, Tests, Subagenten oder zusätzlichen Diagnose-/Modellsitzungen in dieser Vorbereitung. Das ist eine Eigenmeldung, kein instrumentierter Nullverbrauchsnachweis. Der Brief liefert weder einen gemessenen Referenzwert noch S1 oder semantische Annahme. Exakte Usage-/Zeitwerte bleiben ohne Instrumentierung unbekannt.\n\nOldschool bestätigt ausdrücklich: Sein permanenter Eigentümerchat ist wegen Rollen-/Vorbereitungskontext kein frischer Studien-Actor. Die bereits vereinbarte frische Ausführung je Zelle und das gemeinsame tatsächliche Modell-/Tool-/Ressourcenprofil bleiben Voraussetzung. Nutze diese öffentliche Methodenbeschreibung in deinem bestehenden Einbindungs-/Messplan, nach Abschluss des laufenden Scope-Pakets. Keine neuen Kriterien/Gewichte oder zusätzliche Vorbereitung einer konkreten Aufgabe ableiten. Oldschool wartet jetzt auf einen späteren konkret freigegebenen Auftrag; keine reine Empfangsbestätigung nötig.",
     "sentUtc": "2026-10-08T01:51:27Z"
   },
-  "lastHeartbeatCheckUtc": "2026-10-08T19:00:15Z",
+  "lastHeartbeatCheckUtc": "2026-10-08T23:36:37Z",
   "productDirection": {
     "decidedUtc": "2026-10-08T16:07:25Z",
     "source": "Direct user instruction in Overseer",
