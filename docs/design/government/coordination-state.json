@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-08T01:34:22Z",
+  "updatedUtc": "2026-10-08T01:37:57Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -9,13 +9,15 @@
   "automation": {
     "id": "jev-nach-markitect-grundmodell-untersuchen",
     "status": "ACTIVE",
-    "intervalMinutes": 10,
-    "reportEveryReview": true,
+    "intervalMinutes": 120,
+    "reportEveryReview": false,
     "reportTimezone": "Europe/Berlin",
-    "lastVerifiedUtc": "2026-10-07T19:40:16Z",
-    "verification": "Updated existing heartbeat through app, re-read saved configuration: ACTIVE10minutes,current thread; expanded research prompt present. No duplicate.",
-    "userReaffirmed": "Latest direct user request: every10minutes plus immediate extra review; existing monitor retained.",
-    "latestMandateUpdatedUtc": "2026-10-07T19:38:53Z"
+    "lastVerifiedUtc": "2026-10-08T01:37:45Z",
+    "verification": "Existing heartbeat updated through app and saved rrule/ACTIVE/current target read back.",
+    "userReaffirmed": "Direct 8 October request: callbacks at completion/need, fallback every 1-3 hours, chosen 2h; unchanged routine summaries suppressed.",
+    "latestMandateUpdatedUtc": "2026-10-08T01:37:45Z",
+    "reportOnMeaningfulChange": true,
+    "mode": "event-driven callbacks with two-hour fallback"
   },
   "threads": [
     {
@@ -2451,5 +2453,87 @@
     "scientist": "Active terminal R4 closure; draft handoff and terminal-summary read. Native queue reports complete/accepted-scoped, outer adapter incomplete due to JSON identity tuple versus inventory/root review-scope comparison. Draft attribution and consumption not yet accepted as a clean independently reviewed terminal delivery. No resume or retry.",
     "study": "0 of 6 matched baseline trials; no comparative quality, autonomy or economic winner established.",
     "actions": "No new assignment or resource grant; existing nextAction unchanged."
+  },
+  "automationHistory": [
+    {
+      "id": "jev-nach-markitect-grundmodell-untersuchen",
+      "status": "ACTIVE",
+      "intervalMinutes": 10,
+      "reportEveryReview": true,
+      "reportTimezone": "Europe/Berlin",
+      "lastVerifiedUtc": "2026-10-07T19:40:16Z",
+      "verification": "Updated existing heartbeat through app, re-read saved configuration: ACTIVE10minutes,current thread; expanded research prompt present. No duplicate.",
+      "userReaffirmed": "Latest direct user request: every10minutes plus immediate extra review; existing monitor retained.",
+      "latestMandateUpdatedUtc": "2026-10-07T19:38:53Z"
+    }
+  ],
+  "communicationPolicy": {
+    "effectiveUtc": "2026-10-08T01:37:45Z",
+    "authorizationSource": "Direct user message in Overseer chat 01a11367-a781-7683-a20f-46e12614dcb4 on 2026-10-08",
+    "userQuote": "Passe deine Wartezeit so an, dass sie Sinn macht und lass die Agents sich zurückmelden. Ich denke du musst nicht alle 10-30 Minuten schauen und zusammenfassen was sie machen. Vermutlich reichen alle 1-3h falls sie sich nicht melden. Sonst sollen sie sich melden wenn sie fertig sind oder was brauchen. Das sollte doch gehen oder?",
+    "callbackTargetThreadId": "01a11367-a781-7683-a20f-46e12614dcb4",
+    "callbackHostId": "local",
+    "events": [
+      "new package completion",
+      "real blocker",
+      "needed coordination decision"
+    ],
+    "fallbackIntervalMinutes": 120,
+    "unchangedReports": false,
+    "acknowledgmentLoops": false,
+    "taskAndGrantBoundariesUnchanged": true,
+    "deliveries": [
+      {
+        "name": "Worker",
+        "threadId": "01a1169b-9357-7df3-a8f6-f913557c782a",
+        "hostId": "local",
+        "prompt": "Der Nutzer hat am 8. Oktober im Overseer-Chat die Rückmeldung ausdrücklich direkt autorisiert: „Passe deine Wartezeit so an, dass sie Sinn macht und lass die Agents sich zurückmelden. Ich denke du musst nicht alle 10-30 Minuten schauen und zusammenfassen was sie machen. Vermutlich reichen alle 1-3h falls sie sich nicht melden. Sonst sollen sie sich melden wenn sie fertig sind oder was brauchen. Das sollte doch gehen oder?“\n\nDer direkte Nutzerauftrag ist im Overseer-Chat 01a11367-a781-7683-a20f-46e12614dcb4, Host local, mit read_thread nachlesbar. Diese Autorisierung stammt vom Menschen; sie ist keine bloße Bitte eines anderen Agenten. Bei Bedarf lies die jüngste direkte Nutzer-Nachricht dort als Nachweis.\n\nNeue Kommunikationsregel: Melde einen NEUEN Paketabschluss, eine echte Blockade oder eine benötigte Koordinationsentscheidung einmalig mit send_message_to_thread an threadId 01a11367-a781-7683-a20f-46e12614dcb4, hostId local. Nenne knapp Paket/Status, tatsächlichen SHA und Sauberkeit, Pfad zum Handoff/Belegen, Checks und unabhängige Reviewbefunde, offenen Bedarf sowie ggf. verbrauchten Grant/Slotfreigabe. Private Bewertungsdaten bleiben bei Scientist und werden nicht an Produktimplementierer verteilt. Die Meldung löst die notwendige Prüfung bei Overseer aus; warte dafür nicht auf den Zweistundentakt.\n\nOverseer hat den bestehenden Heartbeat auf zwei Stunden als Absicherung umgestellt. Keine periodischen Fortschrittspings, keine reine Empfangsbestätigung, keine Meldeschleifen oder Wiederholung bereits angenommener Abschlüsse. Kennzeichne die Meldung mit dem eindeutigen Paket-/Ereignisnamen und vermeide Doppelversand bei Wiederaufnahme; bei unklarem Versandresultat erst prüfen. Versiegelte Nachweispakete bleiben unverändert. Laufende fachliche Aufträge, Holds, Grants, Stopregeln und Schreibgrenzen bleiben unverändert. Diese Nachricht erteilt keine neue Ausführungsquote.\n\nDein angenommener GOV-P1-Abschluss und Nachtrag bleiben im Hold. Melde diesen bekannten Abschluss nicht erneut und beginne keinen neuen Produktauftrag. Diese Regel gilt für künftige neue Ereignisse.",
+        "status": "sent once",
+        "sentUtc": "2026-10-08T01:37:55Z",
+        "response": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"threadId\":\"01a1169b-9357-7df3-a8f6-f913557c782a\"}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      {
+        "name": "Scientist",
+        "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
+        "hostId": "local",
+        "prompt": "Der Nutzer hat am 8. Oktober im Overseer-Chat die Rückmeldung ausdrücklich direkt autorisiert: „Passe deine Wartezeit so an, dass sie Sinn macht und lass die Agents sich zurückmelden. Ich denke du musst nicht alle 10-30 Minuten schauen und zusammenfassen was sie machen. Vermutlich reichen alle 1-3h falls sie sich nicht melden. Sonst sollen sie sich melden wenn sie fertig sind oder was brauchen. Das sollte doch gehen oder?“\n\nDer direkte Nutzerauftrag ist im Overseer-Chat 01a11367-a781-7683-a20f-46e12614dcb4, Host local, mit read_thread nachlesbar. Diese Autorisierung stammt vom Menschen; sie ist keine bloße Bitte eines anderen Agenten. Bei Bedarf lies die jüngste direkte Nutzer-Nachricht dort als Nachweis.\n\nNeue Kommunikationsregel: Melde einen NEUEN Paketabschluss, eine echte Blockade oder eine benötigte Koordinationsentscheidung einmalig mit send_message_to_thread an threadId 01a11367-a781-7683-a20f-46e12614dcb4, hostId local. Nenne knapp Paket/Status, tatsächlichen SHA und Sauberkeit, Pfad zum Handoff/Belegen, Checks und unabhängige Reviewbefunde, offenen Bedarf sowie ggf. verbrauchten Grant/Slotfreigabe. Private Bewertungsdaten bleiben bei Scientist und werden nicht an Produktimplementierer verteilt. Die Meldung löst die notwendige Prüfung bei Overseer aus; warte dafür nicht auf den Zweistundentakt.\n\nOverseer hat den bestehenden Heartbeat auf zwei Stunden als Absicherung umgestellt. Keine periodischen Fortschrittspings, keine reine Empfangsbestätigung, keine Meldeschleifen oder Wiederholung bereits angenommener Abschlüsse. Kennzeichne die Meldung mit dem eindeutigen Paket-/Ereignisnamen und vermeide Doppelversand bei Wiederaufnahme; bei unklarem Versandresultat erst prüfen. Versiegelte Nachweispakete bleiben unverändert. Laufende fachliche Aufträge, Holds, Grants, Stopregeln und Schreibgrenzen bleiben unverändert. Diese Nachricht erteilt keine neue Ausführungsquote.\n\nSchließe dein laufendes R4-Paket im bestehenden Umfang ab. Sende den neuen terminalen R4-Handoff nach Abschluss des Reviews und der sauberen Übergabe an Overseer; falls das inzwischen bereits fertig ist, melde ihn jetzt einmalig. Die negative/incomplete Stopregel bleibt bestehen; keine Wiederaufnahme oder neue Ausführung aus dieser Nachricht ableiten.",
+        "status": "sent once",
+        "sentUtc": "2026-10-08T01:37:56Z",
+        "response": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"threadId\":\"01a1169c-3df6-7571-997d-48ab57365875\"}"
+            }
+          ],
+          "isError": false
+        }
+      },
+      {
+        "name": "Architect",
+        "threadId": "01a111ec-a913-7830-91b0-925d0a1dd1b2",
+        "hostId": "local",
+        "prompt": "Der Nutzer hat am 8. Oktober im Overseer-Chat die Rückmeldung ausdrücklich direkt autorisiert: „Passe deine Wartezeit so an, dass sie Sinn macht und lass die Agents sich zurückmelden. Ich denke du musst nicht alle 10-30 Minuten schauen und zusammenfassen was sie machen. Vermutlich reichen alle 1-3h falls sie sich nicht melden. Sonst sollen sie sich melden wenn sie fertig sind oder was brauchen. Das sollte doch gehen oder?“\n\nDer direkte Nutzerauftrag ist im Overseer-Chat 01a11367-a781-7683-a20f-46e12614dcb4, Host local, mit read_thread nachlesbar. Diese Autorisierung stammt vom Menschen; sie ist keine bloße Bitte eines anderen Agenten. Bei Bedarf lies die jüngste direkte Nutzer-Nachricht dort als Nachweis.\n\nNeue Kommunikationsregel: Melde einen NEUEN Paketabschluss, eine echte Blockade oder eine benötigte Koordinationsentscheidung einmalig mit send_message_to_thread an threadId 01a11367-a781-7683-a20f-46e12614dcb4, hostId local. Nenne knapp Paket/Status, tatsächlichen SHA und Sauberkeit, Pfad zum Handoff/Belegen, Checks und unabhängige Reviewbefunde, offenen Bedarf sowie ggf. verbrauchten Grant/Slotfreigabe. Private Bewertungsdaten bleiben bei Scientist und werden nicht an Produktimplementierer verteilt. Die Meldung löst die notwendige Prüfung bei Overseer aus; warte dafür nicht auf den Zweistundentakt.\n\nOverseer hat den bestehenden Heartbeat auf zwei Stunden als Absicherung umgestellt. Keine periodischen Fortschrittspings, keine reine Empfangsbestätigung, keine Meldeschleifen oder Wiederholung bereits angenommener Abschlüsse. Kennzeichne die Meldung mit dem eindeutigen Paket-/Ereignisnamen und vermeide Doppelversand bei Wiederaufnahme; bei unklarem Versandresultat erst prüfen. Versiegelte Nachweispakete bleiben unverändert. Laufende fachliche Aufträge, Holds, Grants, Stopregeln und Schreibgrenzen bleiben unverändert. Diese Nachricht erteilt keine neue Ausführungsquote.\n\nDein angenommener CLASSIC-P1-r2-Abschluss bleibt im Hold. Melde diesen bekannten Abschluss nicht erneut und beginne keinen neuen Produktauftrag. Diese Regel gilt für künftige neue Ereignisse.",
+        "status": "sent once",
+        "sentUtc": "2026-10-08T01:37:57Z",
+        "response": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"threadId\":\"01a111ec-a913-7830-91b0-925d0a1dd1b2\"}"
+            }
+          ],
+          "isError": false
+        }
+      }
+    ]
   }
 }
