@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -83,11 +84,15 @@ func resolveCheckExecutable(command string, allowlist []string) (string, string,
 }
 
 func readPinnedExecutable(path string) (string, []byte, error) {
-	info, err := os.Lstat(path)
+	linkBefore, err := os.Lstat(path)
 	if err != nil {
 		return "", nil, err
 	}
-	if !info.Mode().IsRegular() {
+	if linkBefore.Mode()&os.ModeSymlink != 0 && !linkBefore.Mode().IsRegular() {
+		// A PATH symlink is acceptable only after resolving it to one fixed,
+		// regular native executable. The resolved target, never the PATH alias,
+		// is pinned and executed.
+	} else if !linkBefore.Mode().IsRegular() {
 		return "", nil, fmt.Errorf("not a regular file")
 	}
 	resolved, err := filepath.EvalSymlinks(path)
@@ -98,13 +103,36 @@ func readPinnedExecutable(path string) (string, []byte, error) {
 	if err != nil {
 		return "", nil, err
 	}
-	info, err = os.Stat(resolved)
-	if err != nil || !info.Mode().IsRegular() {
+	before, err := os.Stat(resolved)
+	if err != nil || !before.Mode().IsRegular() {
 		return "", nil, fmt.Errorf("resolved executable is not a regular file")
 	}
-	raw, err := os.ReadFile(resolved)
+	if before.Size() < 0 || before.Size() > 256<<20 {
+		return "", nil, fmt.Errorf("resolved executable exceeds 256 MiB pinning limit")
+	}
+	f, err := os.Open(resolved)
 	if err != nil {
 		return "", nil, err
+	}
+	raw, readErr := io.ReadAll(io.LimitReader(f, (256<<20)+1))
+	opened, statErr := f.Stat()
+	closeErr := f.Close()
+	if readErr != nil {
+		return "", nil, readErr
+	}
+	if statErr != nil {
+		return "", nil, statErr
+	}
+	if closeErr != nil {
+		return "", nil, closeErr
+	}
+	linkAfter, err := os.Lstat(path)
+	if err != nil || !os.SameFile(linkBefore, linkAfter) {
+		return "", nil, fmt.Errorf("PATH executable alias changed while pinning")
+	}
+	after, err := os.Stat(resolved)
+	if err != nil || !os.SameFile(before, opened) || !os.SameFile(opened, after) || len(raw) != int(before.Size()) {
+		return "", nil, fmt.Errorf("executable changed while pinning")
 	}
 	return resolved, raw, nil
 }
