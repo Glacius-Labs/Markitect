@@ -1,0 +1,17 @@
+{
+  "key": "s1-startup-status-routing-diagnostic-20261008-r1",
+  "sourceCommit": "a7e49bbdf285f651163469599a44f51730065847",
+  "sourceFilesVerifiedAtS": 121,
+  "frozenInputsCurrentlyVerified": 135,
+  "requestSha256": "c190ce2a86b556f3f9516a95132439c1be94f4c36ce01ab8b76ef50f85d6c55d",
+  "freezeSha256": "fcdc577171fe79e4e5dde3576397b4f0ff473f44c8e0c288c02e44c70ee25235",
+  "fullLiveGrantAssignedSlotAndWindowBinding": true,
+  "nativeCwdIdentityAndConsistencyVerified": true,
+  "externalRootAbsent": true,
+  "createdUtc": "2026-10-08T19:40:15.332174+00:00",
+  "sourceChangesAfterS": 0,
+  "runtimeStarts": 0,
+  "diagnosticReservations": 0,
+  "bindingConstructionRefinements": 1,
+  "bindingConstructionRefinement": "Freeze timestamp suffix normalized from +00:00 to required Z before review; no source/runtime mutation"
+}
