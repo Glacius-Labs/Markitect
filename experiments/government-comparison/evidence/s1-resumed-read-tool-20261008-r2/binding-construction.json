@@ -1,0 +1,16 @@
+{
+  "key": "s1-resumed-read-tool-20261008-r2",
+  "sourceCommit": "71bc90d6e112d5d9c38d23f35c54285a263b8ac8",
+  "sourceFilesVerifiedAtS": 152,
+  "frozenInputsCurrentlyVerified": 167,
+  "requestSha256": "6b206fc49ade88ddfa679e0a8d652e082e1e852c7aa38f244d4d1b1c0f63ad40",
+  "freezeSha256": "976f5e03dc5d9d18d9db295c127033d11ac6c0e7f48b5f01095c0e6eb0d482bc",
+  "fullLiveGrantAssignedSlotAndWindowBinding": true,
+  "nativeCwdIdentityAndConsistencyVerified": true,
+  "externalRootAbsent": true,
+  "createdUtc": "2026-10-08T20:23:29.069571Z",
+  "sourceChangesAfterS": 0,
+  "runtimeStarts": 0,
+  "actorReservations": 0,
+  "bindingConstructionRefinements": 0
+}
