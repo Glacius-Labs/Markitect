@@ -456,8 +456,11 @@ func jsonSchemaForType(value reflect.Type) map[string]any {
 			}
 			propertySchema := jsonSchemaForType(field.Type)
 			switch name {
-			case "id", "scopeId", "parentId", "questionId", "evidenceId":
+			case "id", "scopeId", "questionId", "evidenceId":
 				propertySchema["minLength"] = 1
+				propertySchema["maxLength"] = 64
+			case "parentId":
+				propertySchema["minLength"] = 0
 				propertySchema["maxLength"] = 64
 			case "kind":
 				propertySchema["enum"] = []string{"observation", "documented-intent", "submitted-runtime-record", "hypothesis"}
