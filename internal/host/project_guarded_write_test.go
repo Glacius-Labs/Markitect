@@ -104,6 +104,77 @@ func TestGuardedWriteBindsUnbornBranchAndFirstCommitStalesCapture(t *testing.T) 
 	}
 }
 
+func TestGuardedWriteRejectsExistingBranchRefWithMissingCommit(t *testing.T) {
+	root := installTestRepo(t, "feature/guarded")
+	runWriterGit(t, root, "update-ref", "-d", "refs/heads/feature/guarded")
+	ref := filepath.Join(root, ".git", "refs", "heads", "feature", "guarded")
+	if err := os.MkdirAll(filepath.Dir(ref), 0755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(ref, []byte(strings.Repeat("1", 40)+"\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := CaptureGuardedWrite(root, []string{"README.md"}); err == nil || !strings.Contains(err.Error(), "verify guarded unborn branch ref") {
+		t.Fatalf("CaptureGuardedWrite error = %v, want broken existing-ref refusal", err)
+	}
+}
+
+func TestGuardedWriteUsesProjectLockForMissingProjectManifest(t *testing.T) {
+	root := installTestRepo(t, "feature/guarded")
+	capture, err := CaptureGuardedWrite(root, []string{".markitect/project.yaml", ".markitect/drafts/init.json"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	result, err := ApplyGuardedWriteChecked(root, capture, []GuardedWriteChange{
+		{Path: ".markitect/project.yaml", Bytes: []byte("kind: Project\n"), Mode: 0644},
+		{Path: ".markitect/drafts/init.json", Bytes: []byte("{}\n"), Mode: 0644},
+	}, func() error {
+		if _, err := os.Stat(filepath.Join(root, ".markitect", "write.lock")); err != nil {
+			return errors.New("project initialization did not hold the .markitect lock")
+		}
+		if _, err := os.Stat(filepath.Join(root, ".artifacts")); !os.IsNotExist(err) {
+			return errors.New("project initialization created a legacy .artifacts directory")
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("ApplyGuardedWriteChecked: %v", err)
+	}
+	if !reflect.DeepEqual(result.CompletedPaths, []string{".markitect/drafts/init.json", ".markitect/project.yaml"}) {
+		t.Fatalf("completed paths = %v", result.CompletedPaths)
+	}
+	if _, err := os.Stat(filepath.Join(root, ".artifacts")); !os.IsNotExist(err) {
+		t.Fatalf("project initialization left .artifacts outside Markitect: %v", err)
+	}
+}
+
+func TestLegacyWriterUsesProjectLockAfterProjectManifestExists(t *testing.T) {
+	root := installTestRepo(t, "feature/guarded")
+	manifest := filepath.Join(root, ".markitect", "project.yaml")
+	if err := os.MkdirAll(filepath.Dir(manifest), 0755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(manifest, []byte("kind: Project\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	writer, err := openWriteRoot(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer writer.Close()
+	unlock, err := writer.LockWriter()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(filepath.Join(root, ".markitect", "write.lock")); err != nil {
+		t.Fatalf("project lock missing: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(root, ".artifacts")); !os.IsNotExist(err) {
+		t.Fatalf("new project lock created legacy .artifacts directory: %v", err)
+	}
+	unlock()
+}
+
 func TestGuardedWriteRejectsStaleBytesAndNewFile(t *testing.T) {
 	t.Run("changed selected bytes", func(t *testing.T) {
 		root := installTestRepo(t, "feature/guarded")
