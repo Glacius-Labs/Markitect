@@ -1,0 +1,25 @@
+{
+  "key": "s1-startup-status-routing-diagnostic-20261008-r1",
+  "checkedUtc": "2026-10-08T19:36:50.841682+00:00",
+  "consumeASTIdenticalAfterRemovingSoleExactMethodRoute": true,
+  "projectionStaticUpperBoundDefaultJsonBytes": 602,
+  "projectionKeys": [
+    "version",
+    "observed",
+    "limitReached",
+    "statusCounts",
+    "scopeCounts",
+    "dispositionCounts",
+    "firstClassification",
+    "routingRuleVersion",
+    "telemetryOnly"
+  ],
+  "offlineModeAndMethodAdmittedOmitted": true,
+  "rawPayloadValuesOrHashesAdded": false,
+  "runtimeStarts": 0,
+  "reservations": 0,
+  "testInvocationsAtStaticCheck": 0,
+  "sourceCorrectionIterations": 0,
+  "reviewReadCorrectionWithoutSourceChange": 1,
+  "schemaScopeProseClarification": 1
+}

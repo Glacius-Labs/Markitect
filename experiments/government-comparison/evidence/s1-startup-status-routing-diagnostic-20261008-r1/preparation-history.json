@@ -1,0 +1,27 @@
+{
+  "key": "s1-startup-status-routing-diagnostic-20261008-r1",
+  "firstActionUtc": "2026-10-08T19:32:02Z",
+  "preparationDeadlineUtc": "2026-10-08T19:52:02Z",
+  "recordedUtc": "2026-10-08T19:39:23.644981+00:00",
+  "initialSourceConstructionBatches": 1,
+  "ordinaryPresealSourceTestCorrectionBatches": 1,
+  "correctionDetails": [
+    "New test notification fixtures removed forbidden jsonrpc envelope field",
+    "New test assertions distinguish fixed first-failure refusal from observer classification and metadata prethread observed0",
+    "Existing six case groups refined with starting/ready, valid subsequent lifecycle, conservative negative classifications and immutable import binding"
+  ],
+  "sourceImplementationCorrections": 0,
+  "reviewReadCorrectionsWithoutSourceChange": 1,
+  "schemaScopeProseClarifications": 1,
+  "testInvocations": 1,
+  "unittestCaseGroups": 6,
+  "parameterizedNegativeInputs": 10,
+  "fakeSessionInvocations": 15,
+  "testFailures": 0,
+  "nativeRuntimeStarts": 0,
+  "diagnosticReservations": 0,
+  "oldSuitesRerun": false,
+  "maximumTestInvocations": 3,
+  "maximumOrdinaryCorrectionBatches": 2,
+  "withinPreparationBound": true
+}

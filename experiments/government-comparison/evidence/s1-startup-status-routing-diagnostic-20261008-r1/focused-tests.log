@@ -1,0 +1,11 @@
+test_app_and_correlated_own_startup_are_observed_after_valid_thread_response (test_routing_client.StartupRoutingClientTests.test_app_and_correlated_own_startup_are_observed_after_valid_thread_response) ... ok
+test_first_startup_failure_survives_later_cleanup_drain (test_routing_client.StartupRoutingClientTests.test_first_startup_failure_survives_later_cleanup_drain) ... ok
+test_fresh_attempt_two_window_and_request_freeze_binding (test_routing_client.StartupRoutingClientTests.test_fresh_attempt_two_window_and_request_freeze_binding) ... ok
+test_metadata_phase_startup_observation_keeps_original_lifecycle_refusal (test_routing_client.StartupRoutingClientTests.test_metadata_phase_startup_observation_keeps_original_lifecycle_refusal) ... ok
+test_negative_startup_classifications_remain_terminal (test_routing_client.StartupRoutingClientTests.test_negative_startup_classifications_remain_terminal) ... ok
+test_unlisted_method_and_thread_response_gate_remain_strict (test_routing_client.StartupRoutingClientTests.test_unlisted_method_and_thread_response_gate_remain_strict) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.371s
+
+OK

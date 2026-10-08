@@ -1,0 +1,78 @@
+{
+  "key": "s1-startup-status-routing-diagnostic-20261008-r1",
+  "scope": "Immutable reviewed preseal source payloads, no request/freeze/runtime yet",
+  "files": {
+    "authorization-grant.json": {
+      "sha256": "88c48b9e0328696c37bf8b508ce1cdba579c22a1023d13f63bb66f72b174ebc0",
+      "bytes": 12624
+    },
+    "client.py": {
+      "sha256": "90bdcb4bd505d77a91e4f6dc782fc8a5d30ddcce676b28de0bc8154af791b9d3",
+      "bytes": 52137
+    },
+    "diagnostic-contract.json": {
+      "sha256": "7b821f51cf2e9b2050fbf3f5c0edc9fc7aac7374018881bff77cb8d235594b57",
+      "bytes": 4636
+    },
+    "focused-tests.log": {
+      "sha256": "8dc78a6c6d70266f08d0c23c6c26b40e1217e27b35a7a23999d3ad399573aee2",
+      "bytes": 1193
+    },
+    "frozen-method-enums.json": {
+      "sha256": "831728c4ce8c1913d25eff43229c93b81c0f5d802f93eb3b057333c4048e2220",
+      "bytes": 23235
+    },
+    "input-validation.json": {
+      "sha256": "890fb24bc62414b7abe1bc2ad526b17da24ea553b9f892b7917487788ccd02ae",
+      "bytes": 919
+    },
+    "offline-validation.json": {
+      "sha256": "e6926654b2247179d5e6af091e0996b720c24cb30902bc3cc4320d9555e491ef",
+      "bytes": 763
+    },
+    "preparation-history.json": {
+      "sha256": "e9d5829edf094b0d3802b3d15bcccdc37030cb376d79220f9fcd76b394eae1d9",
+      "bytes": 1186
+    },
+    "preparation.md": {
+      "sha256": "a13639a0fc6e8bd8cce9b27a103166505be67dd4dc2802eebc5dc3bbb0c8b7e4",
+      "bytes": 1942
+    },
+    "profile.json": {
+      "sha256": "9e2423020b218fee87fce50f0b3ba857891db4bfeb6021690e78fe768bc358c0",
+      "bytes": 3093
+    },
+    "protocol_failure.py": {
+      "sha256": "776365db287479a23be67a4e22ac083f54ce881fa1452337d0e281529adcb38f",
+      "bytes": 6000
+    },
+    "run_once.py": {
+      "sha256": "91329f873e233dcac77452fedd306d2f3fbaf72b71361bd8575d4391191f18f6",
+      "bytes": 3557
+    },
+    "schema-contract.json": {
+      "sha256": "2bbfecfbeb476338e454bfaf757bcacce9c7240d61c1c97df6cfbb3f4830a70e",
+      "bytes": 2736
+    },
+    "source-review.md": {
+      "sha256": "a88a15db2da4390a996c95217aeee1156e0c39db0882af1bc8da614662c262ef",
+      "bytes": 2691
+    },
+    "startup_observer.py": {
+      "sha256": "654a40b5f09651f39d74dfed48927c7f1fbeccc99387e95cd655afa009175d3e",
+      "bytes": 4742
+    },
+    "test-results.json": {
+      "sha256": "7b88267742e5ee45c84966cecd12854acf0f01a470cf0683904d9f9d19a1c057",
+      "bytes": 468
+    },
+    "test_routing_client.py": {
+      "sha256": "22466c31e78bd545ee96e3a6c36a668962ddf35f563330fa9e9c36fb3342a30b",
+      "bytes": 20109
+    },
+    "thread_gate.py": {
+      "sha256": "d62ae5d946af927d09538628905cf05a242ede47267e693b571736b79c50c7de",
+      "bytes": 5852
+    }
+  }
+}

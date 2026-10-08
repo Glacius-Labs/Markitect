@@ -1,0 +1,16 @@
+{
+  "exitCode": 0,
+  "key": "s1-startup-status-routing-diagnostic-20261008-r1",
+  "sourceTestCorrectionBatchesBeforeInitialRun": 1,
+  "realProcessApisBlockedInsideTests": true,
+  "wallSeconds": 0.6211314,
+  "invocations": 1,
+  "actualNativeStarts": 0,
+  "cases": 6,
+  "unittestCaseGroups": 6,
+  "parameterizedNegativeInputs": 10,
+  "inProcessFakeSessionInvocations": 15,
+  "unittestReportedSeconds": 0.371,
+  "failures": 0,
+  "oldSuitesRerun": false
+}

@@ -1,0 +1,29 @@
+{
+  "key": "s1-startup-status-routing-diagnostic-20261008-r1",
+  "checkedUtc": "2026-10-08T19:36:11.250274+00:00",
+  "sameCwdIdentityAndTwoFiles": true,
+  "binarySha256": "3553cd6e7df5a093d8cb8301cd8088a57e0971aba71ddbe0e67f7f44a15cdf68",
+  "archiveSha256": "3157e8a55329cf4e5346676c3ef0c308402d2420f8f916d6a5b7e0e9c84356ad",
+  "schemaMembers": 13,
+  "oldMemberPinsPreserved": 12,
+  "generalNotificationsUnchanged": true,
+  "threadGateByteIdentical": true,
+  "firstFailureHelperByteIdentical": true,
+  "startupObserverByteIdentical": true,
+  "unchangedFunctionAST": [
+    "validate_cwd",
+    "native_identity",
+    "admit_rpc",
+    "consume_stderr",
+    "reject_provisional",
+    "pump",
+    "send",
+    "request",
+    "accept_thread_response",
+    "controller"
+  ],
+  "nativeRuntimeStarts": 0,
+  "reservations": 0,
+  "externalRootAbsent": true,
+  "freshLiveAuthorityAndWindowOrdinal": 2
+}

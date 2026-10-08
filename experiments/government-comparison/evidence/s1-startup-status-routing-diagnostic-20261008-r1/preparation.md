@@ -1,0 +1,9 @@
+# Final thread-only startup-status routing diagnostic
+
+First action 2026-10-08T19:32:02Z; preparation deadline 19:52:02Z. Last of two actual attempts in the finite window ending20:42Z. Accepted base2dcbc0ceec87379edd4ccd7a1af2dc8088d282ef; actual client basis88766758413e0cbe5558ec572a76c66fce7587e7. Old packets unchanged.
+
+The exact startup method takes a separate telemetry route only after unchanged envelope/count/timestamp, thread phase and provisional checks. The byte-identical offline observer validates the real thirteenth pinned schema before conservative shape/scope/status/size rules. Only observation-only continues. All negative outcomes retain forbidden-or-unknown-notification; no general notification-map expansion or first-failure vocabulary change. Missing/unresolved/foreign IDs, failed/cancelled/error/failureReason/extra fields/size/limit remain terminal. Metadata phase remains terminal before classification.
+
+The live projection omits offline mode/methodAdmitted labels and selects seven fixed snapshot keys plus routingRuleVersion1/telemetryOnlytrue. It contains fixed categories/counters only, <=2048 bytes. Popen request/return UTC timestamps are metadata around that call; neither proves server-side creation instant. No clock-monitor framework added.
+
+Same binary/archive/seventeen config pairs/five RPCs/native cwd identity/two inputs and all remaining gates. Immutable observer and first-failure helper hash-bound before import. WindowsJob before GO. Maximum two ordinary correction batches, three affected test invocations, six new synthetic actual-client consume/finally cases; no old suites. One runtime tree/reservation12->13 only after source/binding review and fresh clean S/F. Zero Actor/turn/tool/CLI metadata/web/study/retry. After this package the diagnosis ends even if lifecycle passes. Historical Actor6/model5/CLI metadata8/known tokens53331,total unknown/native15/16/13/2250 retained.
