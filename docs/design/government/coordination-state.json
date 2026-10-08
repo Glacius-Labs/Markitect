@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-08T21:28:26Z",
+  "updatedUtc": "2026-10-08T21:30:31Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -435,10 +435,10 @@
       "name": "Scientist",
       "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
       "hostId": "local",
-      "afterCursor": "4993693c-4fc7-4021-b456-5988f9f71188:31",
-      "lastObservedStatus": "idle",
-      "activeTurn": null,
-      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac80766d6808191bd10e585e0fc6218",
+      "afterCursor": "4993693c-4fc7-4021-b456-5988f9f71188:32",
+      "lastObservedStatus": "active",
+      "activeTurn": "01a11d6a-0c62-76a2-8f2c-c82fbe60b8ab",
+      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac80ac73f948191ae33ede1337a8297",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "Run six real native-Codex exploratory case studies, independently evaluate and report intermediate data",
       "latestProgress": "New direct user mandate replaces preparation-only stop for a separate matched native pilot. Historical attempts preserved; new actual trial grant issued, pending dispatch.",
@@ -6551,6 +6551,19 @@
           "automaticRefill": false,
           "callbacks": "One in-content callback when first actual cell starts with trial/actor/repo/base/protocol/config/time identities, then each completed cell or material blocker/required decision. No ACK or routine poll loops.",
           "exitCondition": "Finish six finite base trials and independent exploratory intermediate analysis under this one grant. Product-specific incompleteness does not stop other cells. No endless capability diagnostics or stop after preparation-only report; actual cells must be attempted on usable native path. At block end deliver data, limitations and next at most two evidence-selected questions; no extra trial authority in this grant."
+        },
+        "nativeCaseStudiesV3RootPreparation": {
+          "recordedUtc": "2026-10-08T21:30:31Z",
+          "rootReadOnlyReviewActivations": 2,
+          "reviewers": [
+            "/root/g2_review_authority",
+            "/root/g2_handoff_evidence"
+          ],
+          "actualTrialActorsStartedByRoot": 0,
+          "actualAppServerStarts": 0,
+          "tokensAndActiveTime": null,
+          "outcome": "Existing public inputs/start/product pins found; native matched profile permitted and cooperative access limitation explicit; actual missing piece is study control-plane/actor dispatch, not further collector diagnostics.",
+          "scope": "Common study preparation before Scientist native grant execution; no private holdout content read or shared."
         }
       },
       "classicHandoffReceived": true,
