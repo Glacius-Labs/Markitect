@@ -292,7 +292,7 @@ func Apply(host Host, invoker Invoker, root string, request ApplyRequest) (Apply
 		}
 		return nil
 	}
-	result, applyErr := hostwrite.ApplyGuardedWriteChecked(root, capture, changes, validate)
+	result, applyErr := hostwrite.ApplyGuardedWriteChecked(capture.Root, capture, changes, validate)
 	out.Written = append([]string(nil), result.CompletedPaths...)
 	out.Journal = append([]string(nil), result.CompletedPaths...)
 	out.AppliedAt = time.Now().UTC()
