@@ -84,6 +84,16 @@ func PreflightApply(host Host, root, runID, candidateID string) (ApplyPreflight,
 	if base == nil || base.Snapshot == nil || base.Snapshot.Digest() != plan.BaseSnapshot || base.Digest != plan.BaseProjectDigest {
 		return out, ErrStale
 	}
+	working, err := host.Load(root, "")
+	if err != nil {
+		return out, err
+	}
+	if working == nil || working.Snapshot == nil || working.Snapshot.Digest() != plan.WorkingSnapshot || working.Digest != plan.WorkingProjectDigest {
+		return out, ErrStale
+	}
+	if err := repositoryMatches(root, plan); err != nil {
+		return out, err
+	}
 	paths := candidateDeltaPaths(base.Snapshot, candidate)
 	if len(paths) == 0 {
 		return out, fmt.Errorf("candidate has no changes to apply")
