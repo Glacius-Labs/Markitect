@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-08T00:16:38Z",
+  "updatedUtc": "2026-10-08T00:25:46Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -22,23 +22,23 @@
       "name": "Worker",
       "threadId": "01a1169b-9357-7df3-a8f6-f913557c782a",
       "hostId": "local",
-      "afterCursor": "b2b8e43f-fcaa-41bf-828a-99c69527bdea:62",
+      "afterCursor": "b2b8e43f-fcaa-41bf-828a-99c69527bdea:64",
       "lastObservedStatus": "active",
-      "activeTurn": "01a118bd-3faf-7723-98c1-6bbf2e27a4c3",
-      "lastAssistantMessageId": "msg_0a7785839df196a4016ac6dc7a0d788191a7c30503835d14bf",
+      "activeTurn": "01a118e6-3635-7aa2-a742-3ea22dc01267",
+      "lastAssistantMessageId": "msg_0a7785839df196a4016ac6e2ded510819181cc3e84ee66dca4",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "At most two evidenced usability/product gaps in intent-to-model-to-project/change workflow; independent successor worktree; reviewed version-bound public entrypoint.",
-      "latestProgress": "Reported check, impact, go vet and isolated example tests green; final full verify in progress; heavy slot retained.",
+      "latestProgress": "Ich erstelle den additiven Abschlussnachtrag mit vier Versuchen, den tatsächlichen und reservierten Zählern sowie der Grenze der globalen Durchsetzung. Quellstand und alte Belege bleiben unverändert. Verfügbare Reviewer-Nachrichten archiviere ich als nachträgliche Abschrift und benenne fehlende Originale ausdrücklich.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-worker/Markitect",
       "transferredDesignCommit": "691ce1dee3484371c4aea725db4ed5cc3f2e3719",
-      "candidateSha": "04e225d5caee78c2a198607143863fca1e829750",
-      "acceptance": "G5 accepted; G1-G5 finite technical mechanics sequence complete. Hold exact candidate for S1.",
+      "candidateSha": "839dc4e3f6078aa051e08c50c2b958150ca45f49",
+      "acceptance": "GOV-P1 technical mechanics qualified accepted; four attempts vs conservative two-attempt cap is a recorded deviation, not retroactively authorized. Additive evidence closure pending.",
       "lastAssignment": {
-        "key": "government-usable-model-p1",
-        "sentUtc": "2026-10-07T23:28:12Z",
-        "status": "Active; not completed",
-        "scope": "At most two evidenced usability/product gaps in intent-to-model-to-project/change workflow; independent successor worktree; reviewed version-bound public entrypoint.",
-        "baseSha": "04e225d5caee78c2a198607143863fca1e829750"
+        "key": "government-p1-additive-evidence-closure",
+        "authorizedUtc": "2026-10-08T00:25:02Z",
+        "status": "Sent once; active evidence-only closure acknowledged",
+        "scope": "Additive evidence-only errata and available original review messages; preserve old122files/index/ledger/source. No new tests or runtime.",
+        "sentUtc": "2026-10-08T00:25:02Z"
       },
       "evidence": {
         "summary": ".artifacts/government-g1/budget-final-summary.json",
@@ -245,6 +245,83 @@
           "leaseFinding": "Closed: strict complete record before mutation, Verify same decoder/full owner incl CreatedAt; regressions retain rejected bytes and validate fresh-token reacquisition.",
           "priorEvidence": "ce021ce handoff/native/Verify hashes verified unchanged, 1498e91 remains zero-completed-suite historical candidate.",
           "limits": "Windows-local deterministic mechanics only; no real-model engineering quality, productivity, human acceptance, institutional independence, Linux runtime/CI/release/deployment or OS sandbox claim."
+        },
+        "govP1CandidateReview": {
+          "observedUtc": "2026-10-08T00:20:56Z",
+          "sha": "839dc4e3f6078aa051e08c50c2b958150ca45f49",
+          "cleanObserved": true,
+          "status": "Independent acceptance pending; no additional worker assignment",
+          "gatesRead": "All4exit0; one full Go suite770881ms, source Verify nonprovisional passed",
+          "binarySha256": "4f45ecc21a69db15f1840a92faf037821838da60deecc78c340e75d940c7a4d6",
+          "handoffSha256": "f99884cf066cf6627feefb9bc4020eb1c33a4d06e531295f5af1e5c58afe4be8",
+          "indexSha256": "4dd862595a4f04e1b68868f89b9c3b255a73792a448fdfece9d6e30b48e9a96e",
+          "reportedIndexFiles": 122,
+          "actualSmoke": "Three failed attempts plus one complete walkthrough; five native,ten roles,65.129s. Attempt cap interpretation under audit.",
+          "slotReleaseReadUtc": "2026-10-08T00:16:55.5233253Z",
+          "rootSourceComparison": {
+            "changedFiles": 22,
+            "rawByteEqualFiles": 19,
+            "rawMismatches": [
+              "examples/government-project/.gitignore",
+              "examples/government-project/government.yaml",
+              "examples/government-project/studio/protected-goal.txt"
+            ],
+            "status": "All22match Git-normalized objects;19byteequal,threeCRLF/LF-only",
+            "normalization": [
+              {
+                "path": "examples/government-project/.gitignore",
+                "onlyCrLfDifference": true,
+                "gitNormalizedHashMatches": true,
+                "checkoutSha256": "dfbfe2c79c09c6097fc48d548bd91a940824e222400b42a78a25f88d3d68af00",
+                "blobSha256": "bafac7f8a488fbfd1885a16845d69b58eaf695701a30cf7b99a85b457fad81fb"
+              },
+              {
+                "path": "examples/government-project/government.yaml",
+                "onlyCrLfDifference": true,
+                "gitNormalizedHashMatches": true,
+                "checkoutSha256": "0e39ae15496eb944019561f885fd3739d7dd9346d4f4b87de099ab0866524b65",
+                "blobSha256": "92f3fb07cde765a1e28212473a9817828afa966d3986bbac14fe2c9be89aef90"
+              },
+              {
+                "path": "examples/government-project/studio/protected-goal.txt",
+                "onlyCrLfDifference": true,
+                "gitNormalizedHashMatches": true,
+                "checkoutSha256": "6f32acfc6c5335c78883172be79caef346490e69d5a9d7cbbc1a127e07032cfa",
+                "blobSha256": "c6739abab2617ccfd096c73531215afbbc6d6a24846818d46ff4558df73a3da6"
+              }
+            ]
+          }
+        },
+        "govP1Acceptance": {
+          "acceptedUtc": "2026-10-08T00:25:02Z",
+          "sha": "839dc4e3f6078aa051e08c50c2b958150ca45f49",
+          "clean": true,
+          "independentRootReview": "/root/g5_evidence_acceptance",
+          "manifestFilesChecked": 122,
+          "hashMismatches": 0,
+          "sourceFiles": 22,
+          "sourceComparison": "19rawbyteequal;3CRLF/LF-only,all22Git-clean-objects match",
+          "binarySha256": "4f45ecc21a69db15f1840a92faf037821838da60deecc78c340e75d940c7a4d6",
+          "binaryBytes": 14558720,
+          "binaryVcsModified": false,
+          "fourGatesPassed": true,
+          "fullSuiteStarts": 1,
+          "goSuiteMilliseconds": 770881,
+          "actualSmoke": {
+            "fullAttempts": 4,
+            "failedAttempts": 3,
+            "completedWalkthroughs": 1,
+            "nativeStarts": 5,
+            "actualRoles": 10,
+            "committedRoleReservations": 16,
+            "outerWallSeconds": 65.129,
+            "peakParallelism": 1
+          },
+          "attemptDisposition": "Original complete-pass phrasing ambiguous. Root consistently counts full helper invocations including failures:4vs2 is an observed deviation; no retroactive grant. Completion-only counter is not global attempt admission.",
+          "globalReservationLimit": "Per-project budgets; actual totals retrospective. No shared mechanistic attempt/reservation enforcement across fresh projects proven. Configured capacity32 is not actual reservation16 or starts10.",
+          "independentReviewArchiveGap": "Original P1 review findings summarized in handoff; original reports not in122fileindex. Current root post-review exists and is distinct; additive archiving requested if originals available.",
+          "limitations": "Deterministic local Windows mechanics only; manual authored/reconciled model and digest attestation; no human acceptance, semantic/real-model quality, productivity, Linux/CI or release claim.",
+          "sourceChangesRequired": false
         }
       },
       "lastResearchContext": {
@@ -291,6 +368,12 @@
           "sentUtc": "2026-10-07T20:54:17Z",
           "key": "g5-recognized-lease-validation",
           "scope": "Reject incomplete/malformed same-host records without mutation; complete supported format/value validation, appropriate Verify checks, focused regressions and independent review; final SHA/gates/recovery evidence; preserve prior evidence, no expansion."
+        },
+        {
+          "key": "government-p1-additive-evidence-closure",
+          "sentUtc": "2026-10-08T00:25:02Z",
+          "status": "Sent once; active confirmed",
+          "promptRecord": "govP1EvidenceClosureAssignment"
         }
       ],
       "continuationHistory": [
@@ -302,19 +385,32 @@
           "newQuota": false
         }
       ],
-      "followupWorktree": "C:/Users/Consiliari/.codex/worktrees/government-p1/Markitect"
+      "followupWorktree": "C:/Users/Consiliari/.codex/worktrees/government-p1/Markitect",
+      "govP1EvidenceClosureAssignment": {
+        "key": "government-p1-additive-evidence-closure",
+        "authorizedUtc": "2026-10-08T00:25:02Z",
+        "status": "Sent once; active evidence-only closure acknowledged; no runtime/source change",
+        "baseSha": "839dc4e3f6078aa051e08c50c2b958150ca45f49",
+        "prompt": "GOV-P1 auf sauberem 839dc4e3f6078aa051e08c50c2b958150ca45f49 ist durch Overseer technisch QUALIFIZIERT angenommen: Root verglich22Quelländerungen (19bytegleich,3nurCRLF/LF mit passenden Git-clean-Objekten); unabhängiges Root-Review /root/g5_evidence_acceptance bestätigte alle122Indexdateien samt Größen/Hashes, exakte Binary/VCS.modified=false, alle4finalenGates und einen frischen Volltest770.881s. Kein weiterer Smoke, keine volle Suite oder Produktänderung ist erforderlich oder autorisiert. Frozen04e225d bleibt unverändert, Scientist hat jetzt den freigegebenen R3-Slot.\n\nEs bleibt eine konkrete Dokumentations-/Bilanzkorrektur, kein neues Produktpaket. Der ursprüngliche Wortlaut 'höchstens zwei vollständige Durchgänge' war auslegungsbedürftig. Für die Koordination zählen wir konservativ JEDEN vollständigen Helper-Aufruf als Versuch, auch wenn Continue scheitert. Deine vier frischen smoke.ps1-Aufrufe b41c744/02abf4a/3d16054/839dc4e mit Continue-Exits1/1/1/0 sind daher vier Versuche, drei fehlgeschlagen, einer erfolgreich. Der bestehende completedWalks=1-Zähler zählt nur Erfolge. Unter dieser einheitlichen Versuchsdefinition sind vier statt zwei Versuche eine Abweichung; keine rückwirkende Freigabe, Umdeutung oder Löschung. Die tatsächlichen5nativenStarts,10Rollenstarts,65.129Sekunden und Peak1 bleiben innerhalb ihrer separaten Grenzen. Tatsächlich gebundene Rollenreservierungen sind0+4+4+8=16, tatsächlicheStarts0+1+1+8=10. Konfigurierte Kapazitäten frischer Projekte sind keine gestarteten Rollen; den Unterschied nicht verwischen. Die globale Summierung erfolgte retrospektiv, eine mechanisch gemeinsame Versuch-/Reservierungsgrenze über frische Projekte ist nicht nachgewiesen. Das ist ein Befund zur Betriebs-/Budgetdisziplin, kein Nachweis eines Produktqualitätsfehlers.\n\nEinziger Auftrag GOV-P1 evidence-closure: Neue additive, separat hashgebundene Errata/Abschlussdatei zu Handoff und altem Index erstellen; die bisherigen122Dateien/Handoff/Index/Ledger unverändert erhalten. Sie nennt diese vier Versuche, korrekte tatsächliche und reservierte Zähler, die Grenze der globalen Durchsetzung, technische qualifizierte Annahme samt noch fehlender Modell-/Menschen-/Provider-/Linux-/Releaseaussage und die CRLF/Git-normalisiert-Grenze. Keine Änderung von Produkt-/Beispielquellen oder Zählern alter Belege. Der saubere Quell-SHA bleibt839dc4e.\n\nDie ursprünglichen unabhängigen p1-Reviewbefunde liegen im Handoff nur als Zusammenfassung vor; das122Dateienpaket enthält keine rohen Reviewberichte. Archiviere bereits vorhandene Nachrichten dieser Reviewer samt Identität/Umfang/Quellstand in NEUEN Dateien, soweit sie tatsächlich verfügbar sind; nichts rückwirkend erzeugen oder als Originalreview ausgeben. Fehlende Originale offen benennen. Das jetzige Root-Review darfst du als neue lesende Nachprüfung anhand dieser von Overseer übermittelten Befunde referenzieren, ausdrücklich nachträglich, nicht als Vorabreview. Keine neue breite Review-/Testwelle; bei nicht verfügbaren Originalen genügt eine ehrliche Beleggrenze.\n\nLiefere nur den sauberen unveränderten SHA, neue Dateipfade/Hashes, Bestätigung alter122Hashes unverändert und korrekte Grenzen; dann Hold. Null neue native Smoke-/Rollen-/Modell-/Provider-/Metadatenstarts oder Studienzellen, keine Budgetauffüllung, neue Funktion, Veröffentlichung oder Main-Übernahme. Dieser enge Nachtrag ist direkt durch Overseer beauftragt, keine Nutzerentscheidung erforderlich.",
+        "scope": "Additive evidence-only errata and available original review messages; preserve old122files/index/ledger/source. No new tests or runtime.",
+        "newNativeStarts": 0,
+        "newRoleStarts": 0,
+        "newModelProviderCalls": 0,
+        "studyCells": 0,
+        "sentUtc": "2026-10-08T00:25:02Z"
+      }
     },
     {
       "name": "Scientist",
       "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
       "hostId": "local",
-      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:93",
+      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:95",
       "lastObservedStatus": "active",
       "activeTurn": "01a118dd-a444-7463-9cfb-7a49e9499964",
-      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac6e0b1bb348191a290edf9f2d3369d",
+      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac6e1e8b6a48191a9786726167520f1",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "Offline exact native/adapter contract repair, focused regression and independent review; no new live grant.",
-      "latestProgress": "Ich bereite den neuen R3-Grant zunächst ausschließlich offline vor: enge Zulassung, echte Grant- und Classic-Bindung, Regressionen, Review und Freeze. Native Starts bleiben gesperrt, bis Overseer den Prüfslot in coordination-state.json ausdrücklich Scientist für R3 zuweist. Ich halte Auftrag und Eintrittsbedingung im Handoff fest.",
+      "latestProgress": "Der neue Grant ist im aktuellen Coordinator-Stand vorhanden; der Prüfslot gehört weiterhin Worker. Ich binde R3 separat an diesen Grant und die fünf historischen Starts. Die bisherigen Belege und der produktive Budget-Ledger bleiben während der Vorbereitung unverändert. Die frühere gemockte Classic-Aufnahmeprüfung wird durch einen echten Offline-Test der Grant- und bind_request-Kette ergänzt.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-scientist/Markitect",
       "transferredDesignCommit": "b9e17c9896f14b4b1268e4bcb005395f5d324384",
       "candidateSha": "f5cd8871b84f45541044110057b59f0bb1ca0804",
@@ -1177,7 +1273,7 @@
         "contractCorrectedNativeIntegrationGrant": {
           "key": "native-s1-contract-corrected-integration-20261008-r3",
           "authorizedUtc": "2026-10-08T00:15:34Z",
-          "status": "Dispatched once; active offline preparation confirmed; no native execution before explicit shared-slot assignment",
+          "status": "Active; shared slot assigned. All other preflight and finite execution prerequisites remain mandatory.",
           "baseSha": "f5cd8871b84f45541044110057b59f0bb1ca0804",
           "prompt": "Overseer nimmt dein Offline-Paket auf sauberem f5cd8871b84f45541044110057b59f0bb1ca0804 qualifiziert an. Root hat 21 geänderte Dateien gegen Git geprüft; unabhängiges Review bestätigt die gebundenen 20 Manifestdateien, Command-/Scope-Korrekturen und Grenzen der 18 fokussierten Tests plus Offline-Rollenkette. Native Grant-Zulassung und Classic bind_request waren darin teilweise gepatcht, Delegates gemockt; das ist noch kein nativer Erfolg oder S1. Die R2-Errata und der äußere Government-Prozessbeleg sind angenommen; eine spätere gemeinsame Auswertung muss ihn einschließen und Classic nicht doppelt zählen. Historische Dateien bleiben unverändert.\n\nNächster einzelner Grant: native-s1-contract-corrected-integration-20261008-r3, jetzt in coordination-state.json dokumentiert. Nur die bereits vorgeschlagene deterministische native Integrationsmechanik an Government 04e225d5caee78c2a198607143863fca1e829750 und Classic c91363b7ac4decbe87212ff0f588b5451581a152 / Runtime 7dbd599c81540c8203a1b7f83afbc335174f4f1f. P1-Folgestände nicht übernehmen.\n\nVor jeder tatsächlichen Ausführung: den bisherigen geschlossenen R2-Key in der Zulassung nicht wiederverwenden, sondern den neuen konkreten Grant eng zulassen und die echte Grant-/bind_request-Kette offline prüfen; keine allgemeinen Freigaben oder Lockerungen. Korrigierte Quelle sauber committen, passende Regressionen und unabhängiges gezieltes Vorabreview, danach neue Fälle, Quelle, Konfiguration, Pins, Grant, frischen Coordinator-Snapshot und getrennt unveränderliches Vorabreview einfrieren. Historische 5 native Starts, 3 Wrapperversuche, 0 Delegates und 750 reservierte Sessionsekunden bleiben additiv gebunden; unbekannte echte Usage bleibt unbekannt.\n\nZusätzlich höchstens Government 2 native Starts / 6 Wrapperversuche / 6 deterministische Delegates / 300 reservierte Sessionsekunden: genau eine Queue und nur bei positivem Ergebnis ihr Resume-/Replaynachweis, kein inspect. Classic höchstens 5 native Starts / 6 Wrapperversuche / 6 deterministische Delegates / 750 reservierte Sekunden: Execute, gebundenes externes Review und guarded Apply, frisches Verify, Audit, stale-Apply-Replay, jeweils nur mit erfüllten Vorgängern. Ein auditierbarer externer Review ersetzt keine unabhängige semantische Studienbewertung. Alle erforderlichen finalen Government-Ressortzustimmungen bleiben nötig.\n\nZusammen höchstens 7 neue native Starts und 1050 reservierte Sekunden; mit Historie maximal 12 Starts / 1800 reservierte Sekunden. Produkte sequentiell, Rollenparallelität höchstens 2. Harte native Prozessfrist 38 Sekunden, Controllerfenster Government 38 / Classic 180 Sekunden und 150 logische reservierte Sessionsekunden pro Start einschließlich Rollen/Cleanup bleiben wie im geprüften Vorschlag. Reservierte Sekunden sind keine gemessene Summe beliebiger OS-Kinder; tatsächliche Belege separat sammeln. Erster Checkpoint ist genau die erste Queue und das erste Execute (höchstens 2 Starts/300 Sekunden). Beim ersten Fehler, fehlender Voraussetzung oder Quoten-/Zeitstopp endet das betreffende Produkt ohne Reparatur und weiteren Start in diesem Grant; der andere separat begrenzte Fall darf bei erfülltem Preflight laufen. Folgeoperationen sind nur bei positivem eigenen Checkpoint zugelassen. Keine Wiederholungen, neuen Fälle oder automatische Restquotennutzung.\n\nZeitliche Eintrittsbedingung: Worker besitzt aktuell den schweren Prüfslot. Jetzt ausschließlich offline Preflight/Fix/Freeze vorbereiten. Native Ausführung erst, wenn Overseer in coordination-state.json fullSuiteSlot ausdrücklich Scientist für diesen R3-Grant zuweist. Die Queue ist Worker -> Scientist R3 -> Architect P1-Abschluss. Fehlt die Freigabe nach Vorbereitung, melde konkreten sauberen Preflightstand und Bereitschaft; das Paket ist dann nicht abgeschlossen. Nicht mit der historischen Initial-Wartemeldung enden. Keine volle Produkttestsuite.\n\nKeine neue reale Actor-/Modell-/Provider-/Metadatensitzung, Studienzelle, Käufe, Produktänderungen, Policyumgehung oder Publikation. Danach sauberer Handoff mit echten Ergebnissen, allen verbrauchten Starts/Wrappern/Delegates, additivem Ledger und unabhängiger Nachprüfung. Bei erneutem Fehlschlag nur begrenzte lesende Fehlerzuordnung und erhaltene Belege, kein neuer Lauf. Auftrag und Gate im Handoff dauerhaft festhalten.",
           "government": {
@@ -1217,7 +1313,8 @@
           "studyCells": 0,
           "nativeEntryGate": "Clean source; narrow new grant admission plus real bind_request offline checks; independent review; immutable freeze and new cases; fullSuiteSlot explicitly assigned to Scientist for this grant.",
           "remainingHistoricalTokens": null,
-          "sentUtc": "2026-10-08T00:15:41Z"
+          "sentUtc": "2026-10-08T00:15:41Z",
+          "slotAssignedUtc": "2026-10-08T00:20:56Z"
         }
       },
       "classicHandoffReceived": true,
@@ -1307,13 +1404,13 @@
       "name": "Architect",
       "threadId": "01a111ec-a913-7830-91b0-925d0a1dd1b2",
       "hostId": "local",
-      "afterCursor": "71d9f5b2-c0f0-474c-9898-777d051b478a:43",
+      "afterCursor": "71d9f5b2-c0f0-474c-9898-777d051b478a:45",
       "lastObservedStatus": "active",
-      "activeTurn": "01a118dd-a645-7b51-9f42-ebecddb95e25",
-      "lastAssistantMessageId": "msg_0b6e7ce0ce9f843f016ac6e0ae811487d2a6cecca1f20efff5",
+      "activeTurn": "01a118e3-8a0e-76a2-a63d-dbeb3c855b45",
+      "lastAssistantMessageId": "msg_0b6e7ce0ce9f843f016ac6e22f64d087d2b9b1bd44437570ab",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "At most two evidenced usability/product gaps in intent-to-model-to-project/change workflow; independent successor worktree; reviewed version-bound public entrypoint.",
-      "latestProgress": "Der Zwischenstand ist angenommen. Ich bereite jetzt genau einen getrennt dokumentierten Abschlusslauf vor. Der native Lauf und die schwere finale Quellprüfung warten auf die ausdrückliche Slot-Zuweisung; die bisherigen Fehlversuche und ihre Bilanz bleiben unverändert.",
+      "latestProgress": "Ich bereite den korrigierten Grant separat vor und binde Quelle, Runtime und den Ablauf mit sieben Starts. Der Replay und die schwere Quellprüfung bleiben gesperrt, bis der Slot ausdrücklich Architect für r2 zugewiesen ist.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/classic-public-example/Markitect",
       "transferredDesignCommit": null,
       "candidateSha": "fbb2deab8d85be74a77874a705229a0a1ea1fee4",
@@ -1380,14 +1477,25 @@
             "outerWallSeconds": 196.744
           },
           "oldSmokeStatus": "Closed; noFurtherRunsAuthorized, unused numeric room not authority"
+        },
+        "classicP1ReplayPreflightStop": {
+          "observedUtc": "2026-10-08T00:20:56Z",
+          "reportedNativeStarts": 0,
+          "reportedRoleStarts": 0,
+          "reason": "Root grant omitted deliberately rejected stale Apply; full script needs7native,not6",
+          "status": "Independently accepted zero-use preflight stop; root verified7manifestfiles and closure",
+          "independentReviewer": "/root/g2_handoff_evidence",
+          "closureSha256": "f88f0f7aa5a0242aa96d2669964eb155abd5c6f6605e375d64cd4e3a1d67da06",
+          "manifestSha256": "2615e24b051ebc332755ee0bddc3bb9ee2c6a0c15d9af7d69d8595cefd5957ca",
+          "correction": "Seven starts: baseline3 + refused staleApply1 + changed3; prior root six-start allocation omitted refusal. No historical usage reset."
         }
       },
       "lastAssignment": {
-        "key": "classic-p1-corrected-replay-20261008-r1",
-        "authorizedUtc": "2026-10-08T00:15:34Z",
-        "status": "Dispatched once; active offline preparation confirmed; no native execution before explicit shared-slot assignment",
-        "scope": "One corrected full example replay and required final gates; shared slot required.",
-        "sentUtc": "2026-10-08T00:15:41Z"
+        "key": "classic-p1-corrected-replay-20261008-r2",
+        "authorizedUtc": "2026-10-08T00:22:06Z",
+        "status": "Dispatched once; active offline preparation confirmed",
+        "scope": "Correct counted seven-start public script replay, one attempt plus required final gates; shared slot required.",
+        "sentUtc": "2026-10-08T00:22:06Z"
       },
       "heldCandidateSha": "c91363b7ac4decbe87212ff0f588b5451581a152",
       "followupWorktree": "C:/Users/Consiliari/.codex/worktrees/classic-public-example/Markitect",
@@ -1429,32 +1537,68 @@
           "sentUtc": "2026-10-08T00:15:41Z",
           "status": "Sent once; active confirmed",
           "promptRecord": "classicP1ClosureAssignment"
+        },
+        {
+          "key": "classic-p1-corrected-replay-20261008-r2",
+          "sentUtc": "2026-10-08T00:22:06Z",
+          "status": "Sent once; active confirmed",
+          "promptRecord": "classicP1ClosureAssignment"
         }
       ],
       "classicP1ClosureAssignment": {
-        "key": "classic-p1-corrected-replay-20261008-r1",
-        "authorizedUtc": "2026-10-08T00:15:34Z",
-        "status": "Dispatched once; active offline preparation confirmed; no native execution before explicit shared-slot assignment",
+        "key": "classic-p1-corrected-replay-20261008-r2",
+        "authorizedUtc": "2026-10-08T00:22:06Z",
+        "status": "Dispatched once; active offline preparation confirmed. Runtime slot not yet assigned.",
         "baseSha": "fbb2deab8d85be74a77874a705229a0a1ea1fee4",
-        "prompt": "Overseer nimmt CLASSIC-P1 fbb2deab8d85be74a77874a705229a0a1ea1fee4 als qualifizierten Zwischenstand an. Root hat die 14 geänderten Dateien gegen Git geprüft; unabhängiges Review hat alle 1220 Manifestdateien ohne Abweichung geprüft. Beide vollständigen Skriptversuche bleiben incomplete; die erfolgreiche saved-Apply-Fortsetzung ist ein separater Nachweis. Sie beweist noch keinen vollständigen korrigierten Skriptdurchlauf. Fokus- und Quellprüfungen sind belegt; volle finale Go-Suite sowie gehostete Plattform-/Releasegates bleiben offen. Keine Studie oder semantische Autonomie belegt.\n\nGenau ein begrenzter Abschlussauftrag: classic-p1-corrected-replay-20261008-r1. Der bisherige P1-Smoke-Grant ist geschlossen bei 2 vollen Versuchen, 11 nativen mutierenden Starts, 9 deterministischen Rollenreservierungen und 196.744 Sekunden äußerer Laufzeit. Nichts zurücksetzen oder dessen ungenutzte Quote wiederverwenden. Ein frischer, getrennt eingefrorener Folgegrant erlaubt zusätzlich genau EINEN ununterbrochenen Aufruf des auf fbb2dea korrigierten öffentlichen Beispielskripts an einem frischen Fall: höchstens 6 native mutierende Starts, 6 deterministische Rollenreservierungen, Parallelität 1, 1800 Sekunden äußere Gesamtfrist einschließlich Aufräumen, alle Prozesse endlich begrenzt, kein Retry. Das bindet Basis- und Änderungszyklus jeweils Execute/Apply/Verify; lesende Schritte bleiben Bestandteil dieses einen endlich begrenzten Skriptlaufs. Kumulativ also höchstens 3 volle Versuche, 17 native Starts und 15 Rollen; neue tatsächliche Laufzeit getrennt zur historischen addieren.\n\nVorab Quelle, Skript, Runtime, Eingaben, Grenzen und separaten Grant unveränderlich binden und den gezielten unabhängigen Reviewbeleg erhalten. Keine neue Produktfunktion und keine rückwirkende Reparatur der zwei alten Versuche. Auf Fehler oder fehlende Voraussetzung sofort ohne neuen Versuch schließen und mit konkreter Diagnose liefern. Der erfolgreiche saved-Apply-Fall macht genau diese Wiederholung fachlich sinnvoll.\n\nZeitliche Eintrittsbedingung: Worker hat weiterhin den schweren Prüfslot; danach ist Scientist R3 vorgemerkt, danach dein CLASSIC-P1-Abschluss. Jetzt offline vorbereiten. Nativer Smoke und erforderliche finale schwere Quellgates erst, wenn Overseer in coordination-state.json fullSuiteSlot ausdrücklich Architect für diesen Abschluss zuweist. Nicht parallel zu Scientists zeitgebundenen nativen Fällen starten. Einmal die tatsächlich erforderliche finale Go-Suite/festen Projektgates am unveränderlichen finalen Quellstand durchführen; bereits gültige unveränderte fokussierte Prüfungen nicht ohne Anlass wiederholen. Gehostete Windows/Linux- und Release-Lücken ehrlich offenlassen, keine neue Veröffentlichung oder Main-Übernahme.\n\nNach diesem einen Replay und den verfügbaren erforderlichen Gates sauberer Folge-SHA mit Belegpaket, tatsächlicher additiver Bilanz, unabhängiger Abschlussprüfung und verständlichem versionierten Bedienweg. Falls noch auf Slot wartend, konkreten vorbereiteten Stand berichten, nicht als Paketabschluss ausgeben. Gefrorener Studienkandidat c91363b/v0.14.1 bleibt unverändert, keine Studienfixtures/Methodik oder Government-/SAT-/Jev-Arbeit. Keine Modell-/Provideraufrufe, Käufe oder zusätzliche Folgepakete.",
+        "prompt": "Dein Preflight-Stopp war korrekt. Overseer hat die sieben Preflight-Dateien, closure.json und die unveränderte Quelle geprüft; unabhängiges Root-Review bestätigt die korrigierte Zählung. Meine vorherige Zuteilung hat den absichtlich abgewiesenen stale Apply übersehen. Dieser zählt auch bei Exit 2 als Start. Der geschlossene Grant classic-p1-corrected-replay-20261008-r1 bleibt mit exakt null neuem Verbrauch unverändert archiviert.\n\nFrischer, ausdrücklich separat dokumentierter Grant: classic-p1-corrected-replay-20261008-r2. Genau ein vollständiger unveränderter Skriptaufruf aus sauberem fbb2deab8d85be74a77874a705229a0a1ea1fee4, Runtime v0.14.1 / 7dbd599c81540c8203a1b7f83afbc335174f4f1f, frischer Fall und neue unveränderliche Grant-/Preflightdateien. Maximal EINE Versuchsinvokation einschließlich eines erfolglosen Versuchs, SIEBEN native Controllerstarts, SECHS deterministische Rollenreservierungen, Parallelität EINS, 1800 Sekunden äußere Gesamtfrist einschließlich Cleanup, null Retry. Kein Erfolg erforderlich, damit ein Versuch zählt. Sequenz: Basis Execute/Apply/Verify (3), absichtlich abgewiesener stale Apply (1), Änderung Execute/Apply/Verify (3). Auch ein abgewiesener oder gescheiterter Prozess zählt ab Start. Keine ausgelassene oder umklassifizierte Stufe, keine Quotenänderung. Historisch weiterhin zwei Versuche/elf Starts/neun Rollen/196.744 Sekunden; kumulative Obergrenzen mit diesem neuen Grant drei Versuche/18 Starts/15 Rollen; tatsächliche neue Zeit additiv.\n\nAlle übrigen Grenzen des vorherigen Abschlussauftrags bleiben: nur Vorabbindung und gezielter unabhängiger Review, dann genau dieser Replay sowie einmal die erforderlichen finalen Quellgates am unveränderlichen Stand. Keine neue Funktion, Produkt-/Skriptänderung, Studie, reale Actor-/Provideraufrufe, Käufe oder Veröffentlichung; alte Fehler und Belege unverändert. Bei erstem Fehler oder fehlender Voraussetzung schließen, Diagnose/Belege liefern, kein Nachstart.\n\nfullSuiteSlot ist inzwischen Scientist für R3 zugewiesen. Dein korrigierter Grant ist als nächster vorgemerkt, aber native Ausführung und schwere Suite bleiben bis ausdrücklicher Zuweisung an Architect für r2 gesperrt. Jetzt offline vorbereiten; bei wartender Bereitschaft den exakten Preflightstand melden. Nach Ausführung/Gates tatsächliche Bilanz und unabhängigen Abschluss-Handoff liefern. Kein neues pauschales Nutzer-Go nötig, sobald die dokumentierte Slot-Bedingung erfüllt ist.",
         "maxFullAttempts": 1,
-        "maxNativeMutatingStarts": 6,
+        "attemptCounting": "Every whole script invocation counts, including failed or incomplete; rejected native processes count from launch.",
+        "maxNativeMutatingStarts": 7,
         "maxDeterministicRoleReservations": 6,
         "maxParallelProcesses": 1,
         "maxOuterWallSeconds": 1800,
         "retries": 0,
         "cumulativeMaxFullAttempts": 3,
-        "cumulativeMaxNativeStarts": 17,
+        "cumulativeMaxNativeStarts": 18,
         "cumulativeMaxRoles": 15,
         "newModelProviderCalls": 0,
         "studyCells": 0,
-        "nativeEntryGate": "Immutable source/input/runtime/grant freeze, independent preflight review, fullSuiteSlot explicitly assigned to Architect for this closure.",
-        "sourceGates": "Required final exact-source gates/full Go suite once after slot assignment; no redundant valid focused tests or release claim.",
-        "sentUtc": "2026-10-08T00:15:41Z"
-      }
+        "nativeEntryGate": "Fresh immutable grant/source/input/runtime freeze and independent preflight review; fullSuiteSlot explicitly assigns Architect for r2.",
+        "sourceGates": "Required final exact-source gates/full Go suite once after slot assignment; no redundant unchanged focused tests.",
+        "sentUtc": "2026-10-08T00:22:06Z"
+      },
+      "classicP1ClosureAssignmentHistory": [
+        {
+          "key": "classic-p1-corrected-replay-20261008-r1",
+          "authorizedUtc": "2026-10-08T00:15:34Z",
+          "status": "Closed before execution: seven mutating attempts required, six granted; zero new consumption. Root is checking additive correction; historical grant preserved.",
+          "baseSha": "fbb2deab8d85be74a77874a705229a0a1ea1fee4",
+          "prompt": "Overseer nimmt CLASSIC-P1 fbb2deab8d85be74a77874a705229a0a1ea1fee4 als qualifizierten Zwischenstand an. Root hat die 14 geänderten Dateien gegen Git geprüft; unabhängiges Review hat alle 1220 Manifestdateien ohne Abweichung geprüft. Beide vollständigen Skriptversuche bleiben incomplete; die erfolgreiche saved-Apply-Fortsetzung ist ein separater Nachweis. Sie beweist noch keinen vollständigen korrigierten Skriptdurchlauf. Fokus- und Quellprüfungen sind belegt; volle finale Go-Suite sowie gehostete Plattform-/Releasegates bleiben offen. Keine Studie oder semantische Autonomie belegt.\n\nGenau ein begrenzter Abschlussauftrag: classic-p1-corrected-replay-20261008-r1. Der bisherige P1-Smoke-Grant ist geschlossen bei 2 vollen Versuchen, 11 nativen mutierenden Starts, 9 deterministischen Rollenreservierungen und 196.744 Sekunden äußerer Laufzeit. Nichts zurücksetzen oder dessen ungenutzte Quote wiederverwenden. Ein frischer, getrennt eingefrorener Folgegrant erlaubt zusätzlich genau EINEN ununterbrochenen Aufruf des auf fbb2dea korrigierten öffentlichen Beispielskripts an einem frischen Fall: höchstens 6 native mutierende Starts, 6 deterministische Rollenreservierungen, Parallelität 1, 1800 Sekunden äußere Gesamtfrist einschließlich Aufräumen, alle Prozesse endlich begrenzt, kein Retry. Das bindet Basis- und Änderungszyklus jeweils Execute/Apply/Verify; lesende Schritte bleiben Bestandteil dieses einen endlich begrenzten Skriptlaufs. Kumulativ also höchstens 3 volle Versuche, 17 native Starts und 15 Rollen; neue tatsächliche Laufzeit getrennt zur historischen addieren.\n\nVorab Quelle, Skript, Runtime, Eingaben, Grenzen und separaten Grant unveränderlich binden und den gezielten unabhängigen Reviewbeleg erhalten. Keine neue Produktfunktion und keine rückwirkende Reparatur der zwei alten Versuche. Auf Fehler oder fehlende Voraussetzung sofort ohne neuen Versuch schließen und mit konkreter Diagnose liefern. Der erfolgreiche saved-Apply-Fall macht genau diese Wiederholung fachlich sinnvoll.\n\nZeitliche Eintrittsbedingung: Worker hat weiterhin den schweren Prüfslot; danach ist Scientist R3 vorgemerkt, danach dein CLASSIC-P1-Abschluss. Jetzt offline vorbereiten. Nativer Smoke und erforderliche finale schwere Quellgates erst, wenn Overseer in coordination-state.json fullSuiteSlot ausdrücklich Architect für diesen Abschluss zuweist. Nicht parallel zu Scientists zeitgebundenen nativen Fällen starten. Einmal die tatsächlich erforderliche finale Go-Suite/festen Projektgates am unveränderlichen finalen Quellstand durchführen; bereits gültige unveränderte fokussierte Prüfungen nicht ohne Anlass wiederholen. Gehostete Windows/Linux- und Release-Lücken ehrlich offenlassen, keine neue Veröffentlichung oder Main-Übernahme.\n\nNach diesem einen Replay und den verfügbaren erforderlichen Gates sauberer Folge-SHA mit Belegpaket, tatsächlicher additiver Bilanz, unabhängiger Abschlussprüfung und verständlichem versionierten Bedienweg. Falls noch auf Slot wartend, konkreten vorbereiteten Stand berichten, nicht als Paketabschluss ausgeben. Gefrorener Studienkandidat c91363b/v0.14.1 bleibt unverändert, keine Studienfixtures/Methodik oder Government-/SAT-/Jev-Arbeit. Keine Modell-/Provideraufrufe, Käufe oder zusätzliche Folgepakete.",
+          "maxFullAttempts": 1,
+          "maxNativeMutatingStarts": 6,
+          "maxDeterministicRoleReservations": 6,
+          "maxParallelProcesses": 1,
+          "maxOuterWallSeconds": 1800,
+          "retries": 0,
+          "cumulativeMaxFullAttempts": 3,
+          "cumulativeMaxNativeStarts": 17,
+          "cumulativeMaxRoles": 15,
+          "newModelProviderCalls": 0,
+          "studyCells": 0,
+          "nativeEntryGate": "Immutable source/input/runtime/grant freeze, independent preflight review, fullSuiteSlot explicitly assigned to Architect for this closure.",
+          "sourceGates": "Required final exact-source gates/full Go suite once after slot assignment; no redundant valid focused tests or release claim.",
+          "sentUtc": "2026-10-08T00:15:41Z",
+          "actualNewUsage": {
+            "fullAttempts": 0,
+            "nativeStarts": 0,
+            "roleReservations": 0,
+            "outerWallSeconds": 0
+          }
+        }
+      ]
     }
   ],
-  "nextAction": "Await Worker final verify result and explicit heavy-slot release, verify completion evidence, then assign slot to Scientist R3 if preflight ready; Architect closure follows. Both successor packages dispatched/active offline. No new real model calls or study cells.",
+  "nextAction": "Await Scientist R3 preflight and bounded outcomes, then release/assign Architect r2 slot. Worker has only additive evidence closure, no new runtime or product work.",
   "boundaries": {
     "governmentPublication": false,
     "automaticClassicReplacement": false,
@@ -1464,12 +1608,12 @@
     "satPrinciples": "Deferred by direct user request on 2026-10-07; conceptual constraint/consistency/conflict-explanation principles first, no solver integration or current assignment change. See docs/design/government/deferred-research.md."
   },
   "lastReview": {
-    "reviewedUtc": "2026-10-08T00:16:38Z",
-    "evidenceLevel": "Scientist R3 offline and Architect P1 intermediate independently reviewed, clean SHA and files verified; Worker final verify is reported active. No tests/processes repeated by root.",
+    "reviewedUtc": "2026-10-08T00:25:46Z",
+    "evidenceLevel": "GOV-P1 source,122artifactbindings,binary and4gates independently verified; qualified technical acceptance with attempt-count deviation and review archive limits. Classic corrected7startgrant and Scientist slot assigned, actual successor outcomes pending.",
     "coordinationActions": [
-      "Qualified offline R3 and Classic P1 intermediate acceptance.",
-      "Recorded two distinct finite conditional successor grants; execution waits for explicit shared-slot reassignment.",
-      "Both successor messages sent once at00:15:41Z; active acknowledgments expressly preserve offline-only preparation until shared-slot assignment."
+      "Released Worker heavy slot based on completed gates and explicit release; assigned existing R3 slot to Scientist and notified once.",
+      "Archived zero-use six-start Classic grant; issued fresh one-attempt seven-start r2 grant with explicit counting of failures/refusals.",
+      "Qualified technical GOV-P1 acceptance; recorded four attempts vs conservative two-attempt cap, no retrospective grant. Sent zero-runtime additive evidence closure once and confirmed active."
     ],
     "userDecisionRequired": false
   },
@@ -1665,35 +1809,24 @@
     "owner": "Worker"
   },
   "fullSuiteSlot": {
-    "owner": "Worker",
-    "assignedUtc": "2026-10-07T23:43:19Z",
-    "scope": "Worker GOV-P1 final exact-source verify; Scientist R3 and Architect P1 successor grants queued with explicit runtime entry gate. Independent offline preparation may proceed.",
-    "releaseCondition": "Worker reports exact final gate outcome and releases slot in own chat; no redundant suite without source changes/findings.",
-    "notificationStatus": "Sent once to Worker and Architect after reservation; no new work or quota",
-    "notifications": [
-      {
-        "recipient": "Worker",
-        "key": "government-p1-heavy-slot",
-        "sentUtc": "2026-10-07T23:43:19Z"
-      },
-      {
-        "recipient": "Architect",
-        "key": "classic-p1-defer-heavy-slot",
-        "sentUtc": "2026-10-07T23:43:20Z"
-      }
-    ],
+    "owner": "Scientist",
+    "assignedUtc": "2026-10-08T00:20:56Z",
+    "key": "native-s1-contract-corrected-integration-20261008-r3",
+    "scope": "Existing R3 grant only. Native starts permitted after its clean source, narrow admission/bind_request offline proof, independent preflight review, immutable freeze and all specified limits. No extra quota.",
+    "previousOwnerReleaseUtc": "2026-10-08T00:16:55.5233253Z",
+    "releaseCondition": "Scientist actual permitted R3 native cases terminal with evidence and explicit release in own chat, or preflight prevents starts and release reported.",
+    "notificationStatus": "Scientist activation sent once; all remaining grant preconditions retained",
     "queue": [
       {
-        "owner": "Scientist",
-        "key": "native-s1-contract-corrected-integration-20261008-r3",
-        "status": "Wait for Worker release and root slot assignment; offline preflight allowed"
-      },
-      {
         "owner": "Architect",
-        "key": "classic-p1-corrected-replay-20261008-r1",
-        "status": "Wait for Scientist native completion/release and root slot assignment; offline preflight allowed"
+        "key": "classic-p1-corrected-replay-20261008-r2",
+        "status": "Fresh seven-start grant recorded; no native or heavy execution until later root slot assignment"
       }
-    ]
+    ],
+    "activationNotification": {
+      "prompt": "Slot-Freigabe innerhalb deines bereits beauftragten Grants native-s1-contract-corrected-integration-20261008-r3: Worker hat seine vier finalen Gates beendet und den Slot um 2026-10-08T00:16:55.5233253Z ausdrücklich freigegeben; ich habe das Gate-Ergebnis gelesen. fullSuiteSlot in der kanonischen coordination-state.json ist jetzt ausdrücklich Scientist für R3 zugewiesen. Du kannst nach Erfüllung ALLER übrigen bereits festgelegten Voraussetzungen (saubere korrigierte Quelle, echte Grant-/Bindungskette offline geprüft, unabhängiges Vorabreview, neuer unveränderlicher Freeze samt aktuellem Coordinator-Snapshot) die exakt begrenzten Fälle durchführen. Keine neue Quote oder Umfangsänderung, alte Verbrauchs-/Fehlergrenzen gelten vollständig. Native Ausführung braucht nun keine weitere pauschale Rückfrage. Nach terminalen Fällen/Abbruch und erhaltenen Belegen den Slot in deinem Chat freigeben. Architect bleibt währenddessen bei Offline-Arbeit. Halte den Aktivierungszeitpunkt getrennt im Handoff fest.",
+      "sentUtc": "2026-10-08T00:20:56Z"
+    }
   },
   "contextSmokePreparation": {
     "selectedUtc": "2026-10-07T17:31:12Z",
@@ -1847,5 +1980,43 @@
       "scope": "Intent authoring, canonical model, project setup, model/file upkeep and clear user workflow; up to two demonstrated gaps per owner. No arbitrary extension queue or study fixture changes.",
       "candidatePolicy": "Independent development versions do not replace frozen study inputs. Adoption in a subsequent matched block requires explicit version freeze, prerequisites and finite resource allocation. Results always identify tested version and exclude unretested improvements."
     }
+  },
+  "fullSuiteSlotHistory": [
+    {
+      "owner": "Worker",
+      "assignedUtc": "2026-10-07T23:43:19Z",
+      "scope": "Worker GOV-P1 final exact-source verify; Scientist R3 and Architect P1 successor grants queued with explicit runtime entry gate. Independent offline preparation may proceed.",
+      "releaseCondition": "Worker reports exact final gate outcome and releases slot in own chat; no redundant suite without source changes/findings.",
+      "notificationStatus": "Sent once to Worker and Architect after reservation; no new work or quota",
+      "notifications": [
+        {
+          "recipient": "Worker",
+          "key": "government-p1-heavy-slot",
+          "sentUtc": "2026-10-07T23:43:19Z"
+        },
+        {
+          "recipient": "Architect",
+          "key": "classic-p1-defer-heavy-slot",
+          "sentUtc": "2026-10-07T23:43:20Z"
+        }
+      ],
+      "queue": [
+        {
+          "owner": "Scientist",
+          "key": "native-s1-contract-corrected-integration-20261008-r3",
+          "status": "Wait for Worker release and root slot assignment; offline preflight allowed"
+        },
+        {
+          "owner": "Architect",
+          "key": "classic-p1-corrected-replay-20261008-r1",
+          "status": "Wait for Scientist native completion/release and root slot assignment; offline preflight allowed"
+        }
+      ]
+    }
+  ],
+  "smokeAttemptCountingDecision": {
+    "decidedUtc": "2026-10-08T00:25:46Z",
+    "scope": "All new finite smoke grants; applies conservative common interpretation to historical P1 reporting without changing old records or authorizing excess retrospectively.",
+    "rule": "A whole helper/script invocation counts as an attempt even when failed/incomplete. A native launch counts even when rejected. Pure offline preflight that never invoked the helper has zero full attempts. Actual starts, committed reservations, configured capacity and completed successful walkthroughs are distinct."
   }
 }
