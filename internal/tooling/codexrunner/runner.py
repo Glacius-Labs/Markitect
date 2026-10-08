@@ -22,6 +22,12 @@ MAX_LOG_BYTES = 16 * 1024 * 1024
 MAX_ARTIFACT_BYTES = 8 * 1024 * 1024
 MAX_TASK_RESPONSE_SCHEMA_BYTES = 12 * 1024
 CODEX_REASONING_EFFORTS = {"minimal", "low", "medium", "high", "xhigh"}
+CODEX_FAILURE_DIAGNOSTICS = {
+    "model_unsupported": "Codex rejected the configured model for the active account. Choose a model explicitly confirmed for that account; Markitect did not substitute a model.",
+    "authentication": "Codex authentication was unavailable or rejected. Authenticate the configured account and retry.",
+    "rate_limited": "The Codex provider rate limit prevented completion. Wait for the limit to reset before retrying.",
+    "cli_incompatible": "The installed Codex CLI rejected its invocation or configuration. Check the installed version and adapter-supported settings.",
+}
 RESPONSE_SCHEMA = {
     "type": "object",
     "additionalProperties": False,
@@ -368,6 +374,7 @@ class EventCollector:
         self.tool_calls = 0
         self.usage: dict[str, int] = {}
         self.overflow = False
+        self.failure_category: str | None = None
         self._lock = threading.Lock()
 
     def record_line(self, line: bytes) -> bool:
@@ -384,6 +391,10 @@ class EventCollector:
         if not isinstance(event, dict):
             return True
         event_type = event.get("type")
+        if event_type in {"error", "turn.failed", "response.failed", "codex.error"}:
+            category = classify_codex_failure(json.dumps(event, ensure_ascii=False, separators=(",", ":")))
+            if category is not None and self.failure_category is None:
+                self.failure_category = category
         item = event.get("item")
         if event_type == "item.started" and isinstance(item, dict):
             item_type = item.get("type", "")
@@ -497,6 +508,40 @@ def incomplete_response(invocation: dict[str, Any], reason: str, collector: Even
     if telemetry is not None:
         response["usage"] = telemetry
     return response
+
+
+def classify_codex_failure(value: bytes | str) -> str | None:
+    """Map known CLI/provider failures to fixed diagnostics; never return source text."""
+    text = value.decode("utf-8", errors="replace") if isinstance(value, bytes) else value
+    text = text.lower()
+    if (
+        "not supported when using codex with a chatgpt account" in text
+        or "model_not_supported" in text
+        or "unsupported_model" in text
+    ):
+        return "model_unsupported"
+    if any(marker in text for marker in (
+        "invalid_api_key", "authentication_error", "unauthorized", "authentication failed",
+        "authentication required", "not authenticated", "login required", "token expired",
+        '"status":401', "http 401",
+    )):
+        return "authentication"
+    if any(marker in text for marker in (
+        "rate_limit_exceeded", "rate limit", "too many requests", '"status":429', "http 429",
+    )):
+        return "rate_limited"
+    if any(marker in text for marker in (
+        "unrecognized option", "unknown option", "unexpected argument", "unknown config key",
+        "failed to parse config", "could not parse config", "error loading config",
+        "failed to load config", "configuration parse error",
+    )):
+        return "cli_incompatible"
+    return None
+
+
+def provider_failure_diagnostic(stderr: bytes, collector: EventCollector) -> str | None:
+    category = collector.failure_category or classify_codex_failure(stderr)
+    return CODEX_FAILURE_DIAGNOSTICS.get(category) if category is not None else None
 
 
 def validate_report_value(value: Any, schema: dict[str, Any], depth: int = 0) -> None:
@@ -614,6 +659,8 @@ def launch_codex(
         "--json",
         "--skip-git-repo-check",
         "--disable", "plugins",
+        "--disable", "shell_tool",
+        "--disable", "unified_exec",
         "--output-schema", str(schema_path),
         "--output-last-message", str(response_path),
         "--cd", str(cwd),
@@ -701,11 +748,19 @@ def launch_codex(
         return incomplete_response(invocation, "Codex execution timed out.", collector)
     if collector.overflow or stderr_overflow[0]:
         return incomplete_response(invocation, "Codex event output exceeded the private log bound.", collector)
+    if collector.tool_calls:
+        return incomplete_response(invocation, "Codex invoked a tool despite its configured tool restrictions.", collector)
     if return_code != 0:
+        diagnostic = provider_failure_diagnostic(bytes(stderr), collector)
+        if diagnostic is not None:
+            return incomplete_response(invocation, diagnostic, collector)
         raise AdapterError("Codex process failed")
     try:
         response_bytes = response_path.read_bytes()
     except OSError as exc:
+        diagnostic = provider_failure_diagnostic(bytes(stderr), collector)
+        if diagnostic is not None:
+            return incomplete_response(invocation, diagnostic, collector)
         raise AdapterError("Codex did not produce a final response") from exc
     if len(response_bytes) > 8 * 1024 * 1024:
         raise AdapterError("Codex final response exceeded its size bound")
