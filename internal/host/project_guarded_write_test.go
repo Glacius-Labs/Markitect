@@ -51,6 +51,59 @@ func TestGuardedWriteCapturesAndAppliesCreateReplaceAndDelete(t *testing.T) {
 	}
 }
 
+func TestGuardedWriteCreatesBelowMissingMarkitectDirectories(t *testing.T) {
+	root := installTestRepo(t, "feature/guarded")
+	capture, err := CaptureGuardedWrite(root, []string{".markitect/drafts/new.json"})
+	if err != nil {
+		t.Fatalf("capture under missing .markitect parent: %v", err)
+	}
+	if capture.Files[".markitect/drafts/new.json"].Exists {
+		t.Fatal("capture unexpectedly found a file below the missing .markitect directory")
+	}
+	result, err := ApplyGuardedWrite(root, capture, []GuardedWriteChange{{Path: ".markitect/drafts/new.json", Bytes: []byte("{\"draft\":true}\n"), Mode: 0644}})
+	if err != nil {
+		t.Fatalf("apply under missing .markitect parent: %v", err)
+	}
+	if !reflect.DeepEqual(result.CompletedPaths, []string{".markitect/drafts/new.json"}) {
+		t.Fatalf("completed paths = %v", result.CompletedPaths)
+	}
+	if got := string(mustRead(t, filepath.Join(root, ".markitect", "drafts", "new.json"))); got != "{\"draft\":true}\n" {
+		t.Fatalf("created bytes = %q", got)
+	}
+}
+
+func TestGuardedWriteBindsUnbornBranchAndFirstCommitStalesCapture(t *testing.T) {
+	root := tempRoot(t)
+	runWriterGit(t, root, "init", "-b", "codex/new")
+	capture, err := CaptureGuardedWrite(root, []string{".markitect/drafts/new.json"})
+	if err != nil {
+		t.Fatalf("capture in a new repository: %v", err)
+	}
+	if capture.Head != "unborn:refs/heads/codex/new" {
+		t.Fatalf("captured Head = %q, want explicit unborn branch sentinel", capture.Head)
+	}
+	result, err := ApplyGuardedWrite(root, capture, []GuardedWriteChange{{Path: ".markitect/drafts/new.json", Bytes: []byte("draft\n"), Mode: 0644}})
+	if err != nil || !reflect.DeepEqual(result.CompletedPaths, []string{".markitect/drafts/new.json"}) {
+		t.Fatalf("apply in new repository: result=%+v err=%v", result, err)
+	}
+	stale, err := CaptureGuardedWrite(root, []string{"later.txt"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	runWriterGit(t, root, "add", "-A")
+	runWriterGit(t, root, "-c", "user.name=Markitect Test", "-c", "user.email=markitect-test@example.invalid", "commit", "-m", "first commit")
+	result, err = ApplyGuardedWrite(root, stale, []GuardedWriteChange{{Path: "later.txt", Bytes: []byte("must not write\n"), Mode: 0644}})
+	if err == nil || !strings.Contains(err.Error(), "HEAD changed") {
+		t.Fatalf("apply after first commit error = %v, want stale-unborn refusal", err)
+	}
+	if len(result.CompletedPaths) != 0 {
+		t.Fatalf("stale unborn capture reported writes: %v", result.CompletedPaths)
+	}
+	if _, err := os.Lstat(filepath.Join(root, "later.txt")); !os.IsNotExist(err) {
+		t.Fatalf("stale unborn capture created later.txt: %v", err)
+	}
+}
+
 func TestGuardedWriteRejectsStaleBytesAndNewFile(t *testing.T) {
 	t.Run("changed selected bytes", func(t *testing.T) {
 		root := installTestRepo(t, "feature/guarded")
@@ -151,6 +204,30 @@ func TestGuardedWriteRejectsUnsafeAndUnselectedPaths(t *testing.T) {
 	}
 	if len(result.CompletedPaths) != 0 {
 		t.Fatalf("unselected change reported completed paths: %v", result.CompletedPaths)
+	}
+}
+
+func TestGuardedWriteRejectsNonAdjacentPortableAliases(t *testing.T) {
+	root := installTestRepo(t, "feature/guarded")
+	for _, selected := range [][]string{
+		{"A.txt", "B.txt", "a.txt"},
+		{"FileA/one.txt", "filea/two.txt"},
+	} {
+		if _, err := CaptureGuardedWrite(root, selected); err == nil {
+			t.Fatalf("CaptureGuardedWrite(%q) accepted portable aliases", selected)
+		}
+	}
+	for _, changes := range [][]GuardedWriteChange{
+		{{Path: "A.txt", Bytes: []byte("a"), Mode: 0644}, {Path: "B.txt", Bytes: []byte("b"), Mode: 0644}, {Path: "a.txt", Bytes: []byte("alias"), Mode: 0644}},
+		{{Path: "FileA/one.txt", Bytes: []byte("a"), Mode: 0644}, {Path: "filea/two.txt", Bytes: []byte("alias"), Mode: 0644}},
+	} {
+		selected := make(map[string]GuardedWriteFile, len(changes))
+		for _, change := range changes {
+			selected[change.Path] = GuardedWriteFile{}
+		}
+		if _, err := normalizeGuardedChanges(changes, selected); err == nil {
+			t.Fatalf("normalizeGuardedChanges(%v) accepted portable aliases", changes)
+		}
 	}
 }
 
