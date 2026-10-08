@@ -49,6 +49,12 @@ The .NET policy owns the representation signature and refers to the selected Use
 
 The new source commit is distinct from the original accepted source and the immutable post-Apply evidence revision. Inspect `impact --base OLD --revision NEW` and `reconcile-plan`; do not edit the emitted Markdown as a second authority. Both representations must reflect the changed intent, while `EffectAxis.cs` and the project file retain their valid bytes. Old verification remains historical. An incomplete audit and refused old Apply are expected before current work is materialized and verified.
 
+## Continue work and keep owners current
+
+For a new accepted requirement, change its canonical owner and independently maintained check inputs, commit the reviewed source, then inspect impact and prepare fresh candidates. Edit neither emitted Markdown nor generated code as a second intent owner. An implementation-only correction instead keeps accepted intent unchanged and prepares a repair against it. Preserve previous results as history; changed source, runtime, targets or ledger can invalidate a saved plan or result.
+
+If Apply completed but verification was interrupted, preserve its exact JSON and use the documented `controller-verify --apply-result FILE --write` handoff with the same repository, source configuration, runtime and ledger. Verify reacquires current evidence and runs fresh checks; the saved file is neither approval nor a cached pass. A stale binding, partial failure or changed intent requires inspecting the reports and current state before preparing new work, rather than blindly repeating Apply. This is a bounded verification continuation, not general task/session resumption or automatic rollback.
+
 ## Run the public mechanical example
 
 The [example README](README.md) links the copyable command and finite smoke profile. The runner creates a separate feature-branch repository from exact Git blobs, records the proposed canonical/check diff, and requires explicit selection of this known change. It exercises the public native commands and records each source revision, reviewed output digest, raw command result and check receipt outside the source checkout. It never changes your original checkout or published binary.

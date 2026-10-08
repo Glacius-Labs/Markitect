@@ -5,6 +5,8 @@
 v0.11.0 adds per-subject PolicyResults, narrowly scoped digest-bound Project exceptions, and a provider-independent Copy Me authoring workflow. Architecture contracts remain versioned Domain/package contracts; discovery proposals require explicit human adoption. The [engineering constitution](engineering-constitution.md) defines these decisions and limits. Generated Domain contracts and resource policy outcomes require the Project's explicit Markdown target.
 
 
+Classic is the active product line on `main`, following the [vision](vision.md#current-basis-and-unproven-benefit). The complete [Commerce example](../examples/classic-commerce/README.md) is an unreleased source entrypoint that runs with the published v0.14.1 alpha; Government remains a separate experiment.
+
 The experimental canonical alpha bundled with v0.14.1 uses a separate minimal Schema/Definition Core, explicit Schema/Projection Modules and runtime capability resolution. [Canonical projection usage](canonical-projections.md) describes its executable commands; [the migration validation](validation/canonical-projection-reset.md) records results. The published Domain/Resource sections below describe the preserved v0.13 compatibility contract, not operators or vocabulary in the new Core. Installation, materialization and verification remain separate.
 
 ## Purpose
