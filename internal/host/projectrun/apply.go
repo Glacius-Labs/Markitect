@@ -70,6 +70,12 @@ func PreflightApply(host Host, root, runID, candidateID string) (ApplyPreflight,
 	if verification.Status != "verified" || verification.CandidateHash != candidate.Digest || verification.Digest == "" {
 		return out, fmt.Errorf("candidate has no matching successful verification")
 	}
+	if verification.RunID != runID {
+		return out, fmt.Errorf("verification belongs to another run")
+	}
+	if err := validateCheckExecutables(plan); err != nil {
+		return out, err
+	}
 	base, err := host.Load(root, plan.BaseRevision)
 	if err != nil {
 		return out, err
@@ -187,8 +193,11 @@ func Apply(host Host, invoker Invoker, root string, request ApplyRequest) (Apply
 	if err != nil {
 		return out, err
 	}
-	if verify.Status != "verified" || verify.CandidateID != candidate.ID || verify.CandidateHash != candidate.Digest || request.ExpectedVerificationDigest == "" || verify.Digest != request.ExpectedVerificationDigest {
+	if verify.Status != "verified" || verify.RunID != request.RunID || verify.CandidateID != candidate.ID || verify.CandidateHash != candidate.Digest || request.ExpectedVerificationDigest == "" || verify.Digest != request.ExpectedVerificationDigest {
 		return out, fmt.Errorf("candidate lacks matching successful verification")
+	}
+	if err := validateCheckExecutables(plan); err != nil {
+		return out, err
 	}
 	compiled, err := projectForCandidate(host, root, base.Snapshot, candidate)
 	if err != nil {
@@ -235,6 +244,9 @@ func Apply(host Host, invoker Invoker, root string, request ApplyRequest) (Apply
 		return out, err
 	}
 	validate := func() error {
+		if err := validateCheckExecutables(plan); err != nil {
+			return err
+		}
 		fresh, loadErr := host.Load(root, "")
 		if loadErr != nil {
 			return loadErr
@@ -274,7 +286,7 @@ func Apply(host Host, invoker Invoker, root string, request ApplyRequest) (Apply
 		if loadErr != nil {
 			return loadErr
 		}
-		if latestVerify.Status != "verified" || latestVerify.CandidateHash != candidate.Digest || latestVerify.Digest != request.ExpectedVerificationDigest {
+		if latestVerify.Status != "verified" || latestVerify.RunID != request.RunID || latestVerify.CandidateHash != candidate.Digest || latestVerify.Digest != request.ExpectedVerificationDigest {
 			return ErrStale
 		}
 		return nil
@@ -420,6 +432,18 @@ func latestVerification(dir, candidateID string) (VerifyReport, error) {
 		if err := readJSON(filepath.Join(dir, "verification", name), &current); err != nil {
 			return best, err
 		}
+		if current.APIVersion != APIVersion {
+			return best, fmt.Errorf("verification report has unsupported API version")
+		}
+		if current.CandidateID == candidateID && (current.Digest != "" || current.Status == "verified") {
+			computed, digestErr := verificationDigest(current)
+			if digestErr != nil {
+				return best, digestErr
+			}
+			if current.Digest == "" || current.Digest != computed {
+				return best, fmt.Errorf("verification report digest mismatch")
+			}
+		}
 		if current.CandidateID == candidateID && current.VerifiedAt.After(best.VerifiedAt) {
 			best = current
 		}
@@ -428,6 +452,14 @@ func latestVerification(dir, candidateID string) (VerifyReport, error) {
 		return best, fmt.Errorf("no verification report for candidate %s", candidateID)
 	}
 	return best, nil
+}
+
+func verificationDigest(report VerifyReport) (string, error) {
+	return digest(struct {
+		RunID, CandidateID, CandidateHash, Status string
+		Checks                                    []CheckResult
+		Verifier                                  *VerifierReport
+	}{report.RunID, report.CandidateID, report.CandidateHash, report.Status, report.Checks, report.Verifier})
 }
 func persistApply(s *runStore, dir string, report ApplyReport) error {
 	if err := ensureDirectory(filepath.Join(dir, "apply")); err != nil {
