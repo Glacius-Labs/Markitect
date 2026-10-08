@@ -27,6 +27,7 @@ const (
 	e2eExecutorEnv = "MARKITECT_E2E_EXECUTOR"
 	e2eCheckEnv    = "MARKITECT_E2E_CHECK"
 	e2eLogEnv      = "MARKITECT_E2E_LOG"
+	e2eBehaviorEnv = "MARKITECT_E2E_BEHAVIOR"
 )
 
 // These process entry points are re-executed by ProcessInvoker and by the
@@ -109,10 +110,16 @@ func TestProjectRunExecutorProcess(t *testing.T) {
 				processExit(2, "unexpected work manager "+contextPayload.Manager.Manager.ID)
 			}
 			files = []agentexec.CandidateFile{{Path: artifactPath, Mode: "0644", Content: content}}
+			if os.Getenv(e2eBehaviorEnv) == "out-of-scope" && contextPayload.Manager.Manager.ID == e2eManagerID("orders", "orders") {
+				files = []agentexec.CandidateFile{{Path: "src/inventory/foreign.txt", Mode: "0644", Content: "unauthorized"}}
+			}
 		}
 	case "integrate":
 		if len(contextPayload.ChildReports) != 2 {
 			processExit(2, fmt.Sprintf("root integration saw %d child reports, want 2", len(contextPayload.ChildReports)))
+		}
+		if os.Getenv(e2eBehaviorEnv) == "failed-integration" {
+			response.Status = "failed"
 		}
 	default:
 		processExit(2, "unknown phase "+contextPayload.Phase)
@@ -122,7 +129,11 @@ func TestProjectRunExecutorProcess(t *testing.T) {
 		processExit(2, "encode task report: "+err.Error())
 	}
 	inputTokens, outputTokens := int64(41), int64(13)
-	result := agentexec.Response{APIVersion: agentexec.APIVersion, RunID: invocation.RunID, Nonce: invocation.Nonce,
+	nonce := invocation.Nonce
+	if os.Getenv(e2eBehaviorEnv) == "stale-nonce" {
+		nonce = "stale-" + nonce
+	}
+	result := agentexec.Response{APIVersion: agentexec.APIVersion, RunID: invocation.RunID, Nonce: nonce,
 		Role: agentexec.RoleExecutor, InputDigest: invocation.InputDigest, Outcome: agentexec.OutcomeProposed,
 		CandidateFiles: files, EvidenceRefs: []string{}, VerifierObservations: []agentexec.Observation{},
 		ReportJSON: reportJSON, Uncertainty: []string{}, Usage: &agentexec.Usage{Source: "provider-reported", InputTokens: &inputTokens, OutputTokens: &outputTokens}}
@@ -269,6 +280,32 @@ func TestProjectRunExecutorRejectsForeignPathProposal(t *testing.T) {
 	}
 }
 
+func TestProjectRunProcessRejectsStaleNonceOutOfScopeAndFailedIntegration(t *testing.T) {
+	for _, behavior := range []string{"stale-nonce", "out-of-scope", "failed-integration"} {
+		t.Run(behavior, func(t *testing.T) {
+			root := makeProjectRunFixture(t)
+			executable, err := os.Executable()
+			if err != nil {
+				t.Fatal(err)
+			}
+			t.Setenv("PATH", filepath.Dir(executable)+string(os.PathListSeparator)+os.Getenv("PATH"))
+			t.Setenv(e2eExecutorEnv, "1")
+			t.Setenv(e2eCheckEnv, "1")
+			t.Setenv(e2eBehaviorEnv, behavior)
+			t.Setenv(e2eLogEnv, filepath.Join(t.TempDir(), "requests.jsonl"))
+			plan, err := Plan(projectworkHost(), root, identityHead(t, root), PlanRequest{Goal: "Implement both owned artifacts and integrate them.",
+				Managers: []string{e2eManagerID("orders", "orders"), e2eManagerID("inventory", "inventory")}, ExecuteAuthorized: true})
+			if err != nil {
+				t.Fatalf("Plan: %v", err)
+			}
+			run, runErr := Run(context.Background(), projectworkHost(), ProcessInvoker{}, root, plan.ID)
+			if runErr == nil || run.Status == StatusIntegrated || run.Status == StatusVerified || run.Status == StatusApplied {
+				t.Fatalf("behavior %s unexpectedly closed successfully: status=%s err=%v", behavior, run.Status, runErr)
+			}
+		})
+	}
+}
+
 func projectworkHost() Host {
 	return Host{Load: projectwork.Load, FromSnapshot: projectwork.FromSnapshot, PlanEdit: projectwork.PlanEdit, ApplyEdit: projectwork.ApplyEdit}
 }
@@ -318,7 +355,7 @@ func makeProjectRunFixture(t *testing.T) string {
 	checkArgs := []string{"-test.run=^TestProjectRunCheckProcess$"}
 	buildAgent := func() Agent {
 		return Agent{Command: executable, Args: args, Model: "fixture-model", ProviderVersion: "e2e-process-v1", Timeout: Duration(30 * time.Second),
-			MaxStdoutBytes: 1 << 20, MaxStderrBytes: 1 << 20, Environment: []string{"PATH", e2eExecutorEnv, e2eCheckEnv, e2eLogEnv},
+			MaxStdoutBytes: 1 << 20, MaxStderrBytes: 1 << 20, Environment: []string{"PATH", e2eExecutorEnv, e2eCheckEnv, e2eLogEnv, e2eBehaviorEnv},
 			Pricing: Pricing{InputMicrosPerMillion: 1, OutputMicrosPerMillion: 1}}
 	}
 	config := Runtime{APIVersion: APIVersion, Mode: ModeControlledLocal, Agents: map[string]Agent{

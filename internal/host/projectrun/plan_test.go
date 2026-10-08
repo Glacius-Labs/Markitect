@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/internal/core/snapshot"
+	"github.com/Glacius-Labs/Markitect/internal/modules/projectmodel"
 )
 
 func TestProjectModelEditCannotChangeRuntimeConfiguration(t *testing.T) {
@@ -15,6 +16,18 @@ func TestProjectModelEditCannotChangeRuntimeConfiguration(t *testing.T) {
 	}
 	if err := validateModelEditPaths(Mutation{Files: []FileChange{{Path: ".markitect/model/managers/root.yaml"}}}); err != nil {
 		t.Fatalf("valid model edit path rejected: %v", err)
+	}
+}
+
+func TestPlanChecksBlockRequiredArtifactsWithMissingChecks(t *testing.T) {
+	owner := "orders"
+	report := projectmodel.Report{Artifacts: []projectmodel.Artifact{{ID: "orders-code", Owner: owner, Required: true, Paths: []string{"src/orders/"}, Checks: []string{"orders-test"}}}}
+	checks, findings := planChecks(report, map[string]bool{owner: true})
+	if len(checks) != 0 {
+		t.Fatalf("unexpected checks: %+v", checks)
+	}
+	if len(findings) == 0 {
+		t.Fatal("required artifact with a missing check did not block planning")
 	}
 }
 
