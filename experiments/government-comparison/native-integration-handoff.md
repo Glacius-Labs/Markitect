@@ -1,3 +1,74 @@
+# Government response correction: offline package
+
+Current explicit task: `government-executor-response-offline-20261008`, accepted
+base `cd537ac11765097cb46e9326f295d74059e827a3`. Implementation and focused gate
+are complete. The new independent review and delivery manifest own final
+assessment and preservation checks. If either is missing, finish only that
+step, then commit the narrow local package cleanly. The delivery commit owns
+this completed offline correction; it does not authorize runtime execution.
+No native Government attempt or any other experimental process is authorized.
+Architect owns the shared execution slot; Scientist neither consumes nor reassigns it.
+
+## Narrow implementation
+
+`runtime/fixtures/government_positive/deterministic_delegate.py` omits
+`candidateJson` for both supported roles, Executor and Verifier. All four
+required arrays remain present and non-null; Executor's verifierObservations
+and Verifier's candidateFiles stay empty. Infer is not added. The candidate
+source/tests, review predicates, votes and outcome rules are unchanged.
+`response_bytes()` serializes the actual response; CLI main writes those exact
+UTF-8 bytes. No Host validator, native product or role-admission rule changed.
+
+`runtime/government_roles.py` advances only the single strict deterministic
+Government delegate SHA pin from
+`bcb541ab827e293f215e1a621205c68d840271eb263191476dfc3a45463ec9c1` to
+`e8b8e5087f994a975efc2228301cf7f51dee9de4d64b77077a0941db7a8e98b9`.
+There is no old-hash fallback or general allowance.
+
+## Offline evidence and limits
+
+New evidence is exclusively in
+`evidence/government-executor-response-offline-20261008/`: issued assignment,
+read-only exact Host assessment, four Git-bound source snapshots from
+`04e225d5caee78c2a198607143863fca1e829750`, seven source-derived pure-function
+wire input/output pairs, focused test log and independent review records.
+The wire examples are not recorded native invocations or native admission.
+
+Root's command runs six byte-serialization tests and two existing pure response
+body tests: **8/8 passed**. `runtime/test_government_response_serialization.py`
+checks exact emitted keys/arrays and role-specific forbidden contents, actual
+serialized bytes, review/vote positive/negative/incomplete forms, strict pin
+consistency, unchanged historical R3 null bytes and unsupported Infer rejection.
+It does not implement or mock a replacement Host validator. No delegate main
+or external role process was started. The reviewer's mistakenly broader command
+ran 14 passing offline tests including six extra fixture preparation/binding
+tests with temporary Git repositories; its initial import-only error and command
+scope deviation are retained separately. No further rerun is needed.
+
+The pinned Host `agentexec/runner.go:375-377` requires all four arrays;
+`:389-396` rejects nonempty candidateJson RawMessage on Executor/Verifier.
+JSON null is not absence. For the R3 failure, runner returns before carrying a
+valid Response, and Government execution returns at `run.go:347-352` before
+proposal/check/review. Report evidence is assigned only later (`:385-427`).
+Absent evidence identity in this early failed report is therefore downstream;
+no independent evidence-generation defect is established and no identity is
+invented. Positive native evidence generation remains unverified.
+
+All historical R1/R2/R3 evidence files, reviews, freeze documents, archives and
+ledgers remain unchanged. The two current fixture/adapter source files advance
+from the closed R3 source; its original bytes remain bound to accepted cd537ac.
+Do not reinterpret the old source freeze as current authority or rescore R3.
+R3 remains Government negative / Classic bounded mechanics positive.
+
+New experimental consumption: zero product/controller starts, zero wrapper or
+delegate processes, zero model/provider or metadata runs, zero study cells.
+Historical usage remains unknown where unknown; no full product suite or
+standard native Markitect-first gate ran because this assignment explicitly
+forbids native product starts. No product source, P1, publication, push or PR.
+A later actual Government case requires a separate new finite Overseer grant.
+
+The R3 handoff below is retained verbatim from accepted `cd537ac`.
+
 # Native integration R3 terminal: Government negative; Classic mechanics positive
 
 The existing grant `native-s1-contract-corrected-integration-20261008-r3`,

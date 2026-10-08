@@ -100,11 +100,12 @@ def response(invocation: dict, slot_phase: str) -> dict:
         "inputDigest": invocation["inputDigest"],
         "outcome": "incomplete",
         "candidateFiles": [],
-        "candidateJson": None,
         "evidenceRefs": refs,
         "verifierObservations": [],
         "uncertainty": [],
     }
+    # All four arrays are required even when empty. candidateJson belongs to
+    # inference responses: JSON null is a nonempty RawMessage in the held Host.
     if slot_phase == "execute" and role == "executor":
         out["outcome"] = "proposed"
         out["candidateFiles"] = [
@@ -166,13 +167,18 @@ def response(invocation: dict, slot_phase: str) -> dict:
     raise ValueError("configured role/phase does not match the agentexec Invocation")
 
 
+def response_bytes(invocation: dict, slot_phase: str) -> bytes:
+    """Serialize the exact native wire response without starting a delegate."""
+    return (json.dumps(response(invocation, slot_phase), sort_keys=True,
+                       separators=(",", ":")) + "\n").encode("utf-8")
+
+
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--phase", required=True, choices=("execute", "review", "vote"))
     args = parser.parse_args(argv)
     invocation = json.load(sys.stdin)
-    result = response(invocation, args.phase)
-    sys.stdout.write(json.dumps(result, sort_keys=True, separators=(",", ":")) + "\n")
+    sys.stdout.buffer.write(response_bytes(invocation, args.phase))
     return 0
 
 

@@ -159,7 +159,7 @@ INVOCATION_API = "markitect.example.org/agent-execution/v1alpha1"
 ROLE_AUTH_API = "markitect.scientist-role-authorization/v1alpha1"
 NATIVE_FIXTURE_AUTH = {"sourceGrantKey": "native-s1-integration-fixtures-20261008",
                        "classification": "nativeFixture", "providerUse": "noProvider"}
-_GOVERNMENT_FIXTURE_DELEGATE_SHA256 = "bcb541ab827e293f215e1a621205c68d840271eb263191476dfc3a45463ec9c1"
+_GOVERNMENT_FIXTURE_DELEGATE_SHA256 = "e8b8e5087f994a975efc2228301cf7f51dee9de4d64b77077a0941db7a8e98b9"
 _CLASSIC_FIXTURE_DELEGATE_SHA256 = "ddac10f2d0cb7884d24d2e31b4933ec500d87857d88a0688ead7a5dcaa450c20"
 _HEX256 = re.compile(r"^[0-9a-f]{64}$")
 _DIGEST = re.compile(r"^sha256:[0-9a-f]{64}$")

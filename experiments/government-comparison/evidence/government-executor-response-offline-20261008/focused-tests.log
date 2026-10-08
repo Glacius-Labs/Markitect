@@ -1,0 +1,13 @@
+test_executor_serialized_bytes_omit_inference_and_keep_required_empty_arrays (runtime.test_government_response_serialization.GovernmentResponseSerializationTests.test_executor_serialized_bytes_omit_inference_and_keep_required_empty_arrays) ... ok
+test_fixed_delegate_pin_matches_only_the_corrected_source (runtime.test_government_response_serialization.GovernmentResponseSerializationTests.test_fixed_delegate_pin_matches_only_the_corrected_source) ... ok
+test_inference_support_is_not_added_to_this_fixture (runtime.test_government_response_serialization.GovernmentResponseSerializationTests.test_inference_support_is_not_added_to_this_fixture) ... ok
+test_retained_r3_bytes_show_null_regression_without_rescoring_history (runtime.test_government_response_serialization.GovernmentResponseSerializationTests.test_retained_r3_bytes_show_null_regression_without_rescoring_history) ... ok
+test_verifier_review_serialized_success_failure_and_incomplete_shapes (runtime.test_government_response_serialization.GovernmentResponseSerializationTests.test_verifier_review_serialized_success_failure_and_incomplete_shapes) ... ok
+test_verifier_vote_serialized_assent_objection_and_missing_identity_shapes (runtime.test_government_response_serialization.GovernmentResponseSerializationTests.test_verifier_vote_serialized_assent_objection_and_missing_identity_shapes) ... ok
+test_deterministic_delegate_uses_native_invocation_and_candidate_bindings (runtime.test_government_integration.GovernmentIntegrationPreparationTests.test_deterministic_delegate_uses_native_invocation_and_candidate_bindings) ... ok
+test_failed_candidate_never_gets_positive_review_or_vote (runtime.test_government_integration.GovernmentIntegrationPreparationTests.test_failed_candidate_never_gets_positive_review_or_vote) ... ok
+
+----------------------------------------------------------------------
+Ran 8 tests in 0.001s
+
+OK
