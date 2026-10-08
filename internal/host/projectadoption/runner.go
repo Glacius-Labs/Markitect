@@ -177,7 +177,23 @@ func GenerateDistillation(ctx context.Context, sourceRoot string, discovery Disc
 	contextData := distillationRequestContext{
 		Instructions: `Analyze only the supplied fixed Discovery evidence artifacts and project-model schema. evidenceLines is source-data guidance containing evidenceId, one-based lineNumber, exact line text without line-number prefixes, and the original lineEnding; it supplements but never replaces the unchanged selected blob artifacts. Cite exact excerpts from the selected blob without adding evidence IDs or line numbers to excerpt text; preserve exact source line-ending bytes when spanning lines, and use inclusive one-based bounds. targetContext is accepted target guidance, not source evidence; use it only for compatible placement under existing Manager identities/namespaces and to avoid conflicts with public contracts. Produce a proposal only; do not adopt it or modify source. Distinguish static source observations, documented intent, submitted runtime records, and synthesis hypotheses. Never infer behavior from filenames. Do not present runtime records as authenticated execution or claim human acceptance.\n\n` +
 			`IDs must match ^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$: 1-64 lowercase ASCII letters/digits with only internal hyphens. IDs are local identifiers; use simple scope IDs such as orders, never namespaces such as commerce.sales.orders. Every claim, question, and contradiction scopeId must name a declared local scope. Root scope proposals MUST have parentId = ""; every non-root scope's parentId must name another declared scope ID, and parent relationships must be acyclic. Every proposed scope must contain at least one grounded claim assigned to it and at least one model-proposal file; do not create organizational/container scopes without grounded claims. Existing target Managers are guidance only and do not need mirrored as adoption scopes. Each claimIds entry must name a declared claim assigned to that same scope. Every scope claimIds list must include its assigned claims. Proposal file scopeId must name a declared scope. Every claim and term occurrence must cite a selected evidence ID copied exactly from Discovery; each excerpt must be exact contiguous text with inclusive one-based line bounds. Terms must cite occurrences whose excerpt contains the exact term. Questions must cite same-scope claims and provide at least two distinct alternatives. Contradictions must point to a same-scope question whose claimIds include every conflicting claim.\n\n` +
-			`Claim kind/method pairs are exactly: observation/static-source (runtimeObservationJson is the empty string); documented-intent/documentation (runtimeObservationJson is the empty string); submitted-runtime-record/submitted-record (runtimeObservationJson is required strict JSON copied from selected runtime-record evidence and the claim must cite that record); hypothesis/synthesis (runtimeObservationJson is the empty string). Do not use kind runtime-observation or combine other pairs. For a submitted record, runtimeObservationJson must contain exactly evidenceId, recordSourceRevision, sourceRelation, command, exitCode, runnerDigest, and inputs; copy record fields exactly and set sourceRelation to same-discovery-commit only when its revision equals the Discovery commit, otherwise historical. Never fabricate runtime metadata for other claim kinds. For the outer Executor response, outcome must be proposed, candidateFiles must be [], and candidateJson must be null; the only typed DistillationDraft belongs in reportJson as a JSON-encoded string. Put proposed YAML only inside reportJson.proposal.files entries with scopeId, path, and content. Never put proposed YAML in outer candidateFiles or candidateJson, and do not edit source or target files. Return every required property including empty arrays and empty optional-string values, only the closed reportJson object described by responseSchema. Model proposal files must use declared local scope IDs and canonical .markitect/model YAML paths.`,
+			`Claim kind/method pairs are exactly: observation/static-source (runtimeObservationJson is the empty string); documented-intent/documentation (runtimeObservationJson is the empty string); submitted-runtime-record/submitted-record (runtimeObservationJson is required strict JSON copied from selected runtime-record evidence and the claim must cite that record); hypothesis/synthesis (runtimeObservationJson is the empty string). Do not use kind runtime-observation or combine other pairs. For a submitted record, runtimeObservationJson must contain exactly evidenceId, recordSourceRevision, sourceRelation, command, exitCode, runnerDigest, and inputs; copy record fields exactly and set sourceRelation to same-discovery-commit only when its revision equals the Discovery commit, otherwise historical. Never fabricate runtime metadata for other claim kinds. For the outer Executor response, outcome must be proposed, candidateFiles must be [], and candidateJson must be null; the only typed DistillationDraft belongs in reportJson as a JSON-encoded string. Put proposed YAML only inside reportJson.proposal.files entries with scopeId, path, and content. Never put proposed YAML in outer candidateFiles or candidateJson, and do not edit source or target files. Return every required property including empty arrays and empty optional-string values, only the closed reportJson object described by responseSchema. Model proposal files must use declared local scope IDs and canonical .markitect/model YAML paths.\n\n` +
+			`Use the active project-model schema in this request as authoritative; do not invent fields or silently normalize YAML. For Statement proposals, put exactly one YAML document in each proposal file. Required authoring shape: apiVersion, kind: Statement, metadata.name, metadata.namespace, top-level purpose, and spec.category, spec.description, spec.public, spec.uses, and spec.requires. The namespace must equal the dot-joined parent folders of the file below .markitect/model (for example, .markitect/model/sales/cancel-order.yaml requires namespace sales; a file directly under model uses namespace ""). uses and requires are arrays of reference objects with namespace and name, never stringified compiled IDs. Empty arrays are valid. Example (valid one-document YAML):
+apiVersion: project.markitect.example.org/v1alpha1
+kind: Statement
+metadata:
+  name: cancel-order
+  namespace: sales
+purpose: Cancel an eligible order.
+spec:
+  category: use-case
+  description: Record cancellation behavior.
+  public: false
+  uses:
+    - namespace: sales
+      name: cancellation
+  requires: []
+The example ends at the closing YAML line.`,
 		DiscoveryDigest: discovery.Digest, Purpose: discovery.Purpose,
 		Review: discovery.Review, ScopeRoots: append([]string{}, discovery.ScopeRoots...),
 		Selected:      append([]SelectedPath{}, discovery.Selected...),
@@ -215,21 +231,26 @@ func GenerateDistillation(ctx context.Context, sourceRoot string, discovery Disc
 	if runErr != nil {
 		return empty, receipt, fmt.Errorf("agent-assisted distillation invocation failed: %w", runErr)
 	}
+	usageErr := requireDistillationUsage(result.Response.Usage)
+	var costErr error
+	if usageErr == nil {
+		inputCost, inputErr := tokenCostMicros(*result.Response.Usage.InputTokens, options.InputPriceMicrosPerMillion)
+		outputCost, outputErr := tokenCostMicros(*result.Response.Usage.OutputTokens, options.OutputPriceMicrosPerMillion)
+		if inputErr != nil || outputErr != nil || inputCost > math.MaxInt64-outputCost {
+			costErr = errors.New("provider-reported token cost exceeds the supported bound")
+		} else {
+			receipt.EstimatedCostMicros = inputCost + outputCost
+		}
+	}
 	if result.Response.Outcome != agentexec.OutcomeProposed || len(result.Response.ReportJSON) == 0 || len(result.Response.CandidateFiles) != 0 || len(result.Response.CandidateJSON) != 0 {
 		return empty, receipt, errors.New("executor did not return a report-only distillation proposal")
 	}
-	if err := requireDistillationUsage(result.Response.Usage); err != nil {
-		return empty, receipt, err
+	if usageErr != nil {
+		return empty, receipt, usageErr
 	}
-	inputCost, err := tokenCostMicros(*result.Response.Usage.InputTokens, options.InputPriceMicrosPerMillion)
-	if err != nil {
-		return empty, receipt, err
+	if costErr != nil {
+		return empty, receipt, costErr
 	}
-	outputCost, err := tokenCostMicros(*result.Response.Usage.OutputTokens, options.OutputPriceMicrosPerMillion)
-	if err != nil || inputCost > math.MaxInt64-outputCost {
-		return empty, receipt, errors.New("provider-reported token cost exceeds the supported bound")
-	}
-	receipt.EstimatedCostMicros = inputCost + outputCost
 	if receipt.EstimatedCostMicros > options.MaxCostMicros {
 		return empty, receipt, fmt.Errorf("provider-reported cost estimate %d micros exceeds configured acceptance ceiling %d micros", receipt.EstimatedCostMicros, options.MaxCostMicros)
 	}
