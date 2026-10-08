@@ -1,0 +1,11 @@
+{
+  "key": "s1-common-runner-policy-metadata-20261008",
+  "reservedAtUnix": 1791435993.6477616,
+  "sourceCommit": "54cdcffaeb9024197589182c03fefe0103db656b",
+  "freezeCommit": "c73c02e883c97c3b0e3e62eb9604f742223235be",
+  "requestSha256": "462725e25338e1dc9a7b9a5fe5e2c9180de6e12b8e9752d7823f042a6365e16c",
+  "freezeSha256": "9676e05a01fffc0497af1e0b222a2703284dec02a65aa11418c93332ea82d7b6",
+  "maxTrees": 1,
+  "priorPolicyTrees": 3,
+  "cumulativeMaximum": 4
+}

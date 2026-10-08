@@ -1,0 +1,161 @@
+{
+  "key": "s1-common-runner-policy-metadata-20261008",
+  "status": "terminal insufficient; no retry",
+  "sourceCommit": "54cdcffaeb9024197589182c03fefe0103db656b",
+  "freezeCommit": "c73c02e883c97c3b0e3e62eb9604f742223235be",
+  "baseCommit": "e42ba917e765169b1e5c1737f8310da41904b22e",
+  "allSixStudyCells": "NOT RUN",
+  "policyTreeConsumption": {
+    "before": 3,
+    "new": 1,
+    "after": 4
+  },
+  "independentPostreviewSha256": "0d5ec76ee35d1f47292c969922068e3b04c686a38fd9848a0b7830016e53ffda",
+  "entries": [
+    {
+      "path": "evidence/s1-common-runner-policy-metadata-20261008/authorization-grant.json",
+      "sha256": "1381f180e45d90399e605af5556cf040c1aeca77885c6608faa095b605c6a853",
+      "bytes": 12193
+    },
+    {
+      "path": "evidence/s1-common-runner-policy-metadata-20261008/client.py",
+      "sha256": "8b6a2032dce5468c730885906f030fcfbed3cb4f23b010e95f90592a38b0fdfb",
+      "bytes": 31447
+    },
+    {
+      "path": "evidence/s1-common-runner-policy-metadata-20261008/current-handoff.md",
+      "sha256": "c02ed48295768cd39d5d75d4e2f075ecf5072fcf663f1a60fbd89024d7bdefa9",
+      "bytes": 1225
+    },
+    {
+      "path": "evidence/s1-common-runner-policy-metadata-20261008/external-archive.json",
+      "sha256": "5042ab6293b408d4a055a7879e8a26922ba3cb797637b7ddef0c7c3de69cc16f",
+      "bytes": 2500
+    },
+    {
+      "path": "evidence/s1-common-runner-policy-metadata-20261008/freeze.json",
+      "sha256": "9676e05a01fffc0497af1e0b222a2703284dec02a65aa11418c93332ea82d7b6",
+      "bytes": 6001
+    },
+    {
+      "path": "evidence/s1-common-runner-policy-metadata-20261008/frozen-method-enums.json",
+      "sha256": "6553df9ac4a37d11402728992ed5e684ea379fbadeee790700867ae4542594cf",
+      "bytes": 24134
+    },
+    {
+      "path": "evidence/s1-common-runner-policy-metadata-20261008/handoff-suffix-binding.json",
+      "sha256": "08d56ae4a520dfa3e083da57cc552327f201d9e2480ae670070acaeedff9b9c0",
+      "bytes": 194
+    },
+    {
+      "path": "evidence/s1-common-runner-policy-metadata-20261008/historical-bindings.json",
+      "sha256": "e88274d45995f9c339ddf368716813c077cf7b53b8975f78a78f840a05510dfd",
+      "bytes": 803873
+    },
+    {
+      "path": "evidence/s1-common-runner-policy-metadata-20261008/offline-validation.json",
+      "sha256": "b184eae5d778ea57ac6d892ab667ea4849ec72cef3bee4490dc7bc36c3d02030",
+      "bytes": 3151
+    },
+    {
+      "path": "evidence/s1-common-runner-policy-metadata-20261008/postreview.md",
+      "sha256": "0d5ec76ee35d1f47292c969922068e3b04c686a38fd9848a0b7830016e53ffda",
+      "bytes": 3001
+    },
+    {
+      "path": "evidence/s1-common-runner-policy-metadata-20261008/postrun-validation.json",
+      "sha256": "8ea840410dda3704ac055751959b1daa61b7329b953fe3663d7ae65ce3cf0cb4",
+      "bytes": 1202
+    },
+    {
+      "path": "evidence/s1-common-runner-policy-metadata-20261008/preflight-review.md",
+      "sha256": "7943f64df9b18b3634fa0540e6dfe044556b3675f98125325231a3cffad79a06",
+      "bytes": 4125
+    },
+    {
+      "path": "evidence/s1-common-runner-policy-metadata-20261008/prestart-bindings-review.md",
+      "sha256": "99bc0879edf1c5c72e96d2af4b62bb9a663b638f55ab5ff85c43284e6a866c7e",
+      "bytes": 2825
+    },
+    {
+      "path": "evidence/s1-common-runner-policy-metadata-20261008/profile.json",
+      "sha256": "de8de70e51b66ca4b7d3bf8a9c01ec577c462e258b824926ea9e6f85c1742589",
+      "bytes": 2306
+    },
+    {
+      "path": "evidence/s1-common-runner-policy-metadata-20261008/request.json",
+      "sha256": "462725e25338e1dc9a7b9a5fe5e2c9180de6e12b8e9752d7823f042a6365e16c",
+      "bytes": 3281
+    },
+    {
+      "path": "evidence/s1-common-runner-policy-metadata-20261008/run-1/controller-once.json",
+      "sha256": "d63888bf6d128cc81c9b4439122e38c316a9942c6742575b67544b376ac8015a",
+      "bytes": 493
+    },
+    {
+      "path": "evidence/s1-common-runner-policy-metadata-20261008/run-1/controller-receipt.json",
+      "sha256": "c704fb69fcf14b04fd6c17f1874913b4455b895f7161db2f1bfbc7b8e8364dcd",
+      "bytes": 951
+    },
+    {
+      "path": "evidence/s1-common-runner-policy-metadata-20261008/run-1/job-assigned.json",
+      "sha256": "ec4477a99129ed95ecdcbc7276536eb8cbe5c86f69ae2975757d136a3c2d4796",
+      "bytes": 557
+    },
+    {
+      "path": "evidence/s1-common-runner-policy-metadata-20261008/run-1/outer-receipt.json",
+      "sha256": "bfa7cbb5c380dcf422a191f0cce485f9116bd104aa5babb7c868054661285ed1",
+      "bytes": 598
+    },
+    {
+      "path": "evidence/s1-common-runner-policy-metadata-20261008/run-1/reservation.json",
+      "sha256": "40ea4a41ddbfb7d357ee95aa31e64ad93cec89fa989652c021d2c47d9ae77a8d",
+      "bytes": 473
+    },
+    {
+      "path": "evidence/s1-common-runner-policy-metadata-20261008/run-1/sanitized-result.json",
+      "sha256": "1bf6e197688e59ae259c79379a598549db8325d53643162db0f8020c7e266e50",
+      "bytes": 12990
+    },
+    {
+      "path": "evidence/s1-common-runner-policy-metadata-20261008/run-1/started-once.json",
+      "sha256": "6e74fb4979e29f8b428da9f67c38a68b977778d2bc82ac5e08cdd92de3275f1c",
+      "bytes": 493
+    },
+    {
+      "path": "evidence/s1-common-runner-policy-metadata-20261008/run_once.py",
+      "sha256": "d8345a03dd04186a769e5ed4d0c4e711892b3007078fd598d3b2ab3aeaa7e6e3",
+      "bytes": 2925
+    },
+    {
+      "path": "evidence/s1-common-runner-policy-metadata-20261008/slot-release.json",
+      "sha256": "83c62f5e878248552bd1c1ebdd3d9233bbb885c3a5cb0011c28742ee36ca0f1c",
+      "bytes": 662
+    },
+    {
+      "path": "evidence/s1-common-runner-policy-metadata-20261008/terminal-handoff.md",
+      "sha256": "51b62fbc97cc2bbe7bc919977a2d98a4cc90b95e772842d6161289f2b6c3db91",
+      "bytes": 1471
+    },
+    {
+      "path": "evidence/s1-common-runner-policy-metadata-20261008/terminal-summary.json",
+      "sha256": "db0fc28fee54a25316545a078a4abbf2b51f0d855435a9d11688cfc12548a926",
+      "bytes": 2895
+    },
+    {
+      "path": "evidence/s1-common-runner-policy-metadata-20261008/test_client.py",
+      "sha256": "a30c7bf6661df1e92952618cd169584f7c68e7f2ff0a0188e32fbef0d967e44b",
+      "bytes": 20268
+    },
+    {
+      "path": "native-integration-handoff.md",
+      "sha256": "7fce21ae8b8b78aede2c3a5a5ce8479c34e95a9f80c288afab93795a8e08869e",
+      "bytes": 38748
+    },
+    {
+      "path": "public/s1-common-runner-policy-metadata-20261008.md",
+      "sha256": "32c4caeb306892bebd4d189ec64d2e052ff618621d192da6996dfbb9be07f60f",
+      "bytes": 3440
+    }
+  ]
+}

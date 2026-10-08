@@ -1,0 +1,21 @@
+{
+  "key": "s1-common-runner-policy-metadata-20261008",
+  "requestSha256": "462725e25338e1dc9a7b9a5fe5e2c9180de6e12b8e9752d7823f042a6365e16c",
+  "freezeSha256": "9676e05a01fffc0497af1e0b222a2703284dec02a65aa11418c93332ea82d7b6",
+  "reservationSha256": "40ea4a41ddbfb7d357ee95aa31e64ad93cec89fa989652c021d2c47d9ae77a8d",
+  "sourceCommit": "54cdcffaeb9024197589182c03fefe0103db656b",
+  "freezeCommit": "c73c02e883c97c3b0e3e62eb9604f742223235be",
+  "workerReturnCode": 1,
+  "stopReason": null,
+  "controllerSeconds": 2.6255461000837386,
+  "jobCloseSeconds": 1.680001150816679e-05,
+  "processTreeControl": "windows-job-kill-on-close",
+  "deadlineSeconds": 38,
+  "controllerLimitSeconds": 50,
+  "outerLimitSeconds": 60,
+  "rawLogsPersisted": false,
+  "automaticRetries": 0,
+  "terminalResultPresent": true,
+  "terminalResultSha256": "1bf6e197688e59ae259c79379a598549db8325d53643162db0f8020c7e266e50",
+  "withinControllerBound": true
+}

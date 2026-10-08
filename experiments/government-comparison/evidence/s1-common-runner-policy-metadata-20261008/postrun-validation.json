@@ -1,0 +1,35 @@
+{
+  "status": "passed preservation and actual bounds; metadata result remains insufficient",
+  "protectedHistoricalFiles": 3901,
+  "sourcePinsUnchanged": 15,
+  "freezeInputsUnchanged": 24,
+  "historicalLiveLedgersUnchanged": 5,
+  "externalSanitizedPairs": 7,
+  "allSixStudyCells": "NOT RUN",
+  "newProductTests": 0,
+  "experimentalAttempts": 1,
+  "retries": 0,
+  "sourceCommit": "54cdcffaeb9024197589182c03fefe0103db656b",
+  "freezeCommit": "c73c02e883c97c3b0e3e62eb9604f742223235be",
+  "actualSentMethods": [
+    "initialize",
+    "initialized",
+    "config/read"
+  ],
+  "requirementsReadSent": false,
+  "actualNativeExit": 0,
+  "actualSessionSeconds": 0.1818253000965342,
+  "actualCleanupSeconds": 0.01108229998499155,
+  "actualControllerSeconds": 2.6255461000837386,
+  "actualOuterThroughReceiptSeconds": 5.090213899966329,
+  "rawInMemoryBytesDiscarded": {
+    "raw": 49287,
+    "stdout": 49287,
+    "stderr": 0
+  },
+  "postrunProductTests": 0,
+  "finalHandoffSuffixPreserved": true,
+  "newPublicReportLinksResolved": 1,
+  "independentPostreviewSha256": "0d5ec76ee35d1f47292c969922068e3b04c686a38fd9848a0b7830016e53ffda",
+  "noPostrunTestsOrSourceChanges": true
+}

@@ -1,0 +1,78 @@
+{
+  "key": "s1-common-runner-policy-metadata-20261008",
+  "status": "INSUFFICIENT; GRANT CLOSED",
+  "sourceCommit": "54cdcffaeb9024197589182c03fefe0103db656b",
+  "freezeCommit": "c73c02e883c97c3b0e3e62eb9604f742223235be",
+  "requestSha256": "462725e25338e1dc9a7b9a5fe5e2c9180de6e12b8e9752d7823f042a6365e16c",
+  "freezeSha256": "9676e05a01fffc0497af1e0b222a2703284dec02a65aa11418c93332ea82d7b6",
+  "resultSha256": "1bf6e197688e59ae259c79379a598549db8325d53643162db0f8020c7e266e50",
+  "stopReason": "requested-features-unobserved",
+  "sentRpcMethods": [
+    "initialize",
+    "initialized",
+    "config/read"
+  ],
+  "requirementsRead": "NOT SENT after preliminary config failure",
+  "observedDefault": ":read-only",
+  "observedDefaultOrigin": "sessionFlags, exact one matching versioned layer",
+  "configReportedModelProviderReasoning": [
+    "gpt-6.1-sol",
+    "openai",
+    "high"
+  ],
+  "effectiveFeatures": "invalid aggregate under frozen sanitizer; raw discarded; exact failing shape/member unknown",
+  "sessionLayerRequestedFeatures": "retained matching requested booleans; does not establish effective map",
+  "claimBoundary": "Observed argv acceptance and selected config reporting only; no inline-key recognition/enforcement, active profile, real tools, serving identity, constraint clearance or historical exec cause proof",
+  "nativeExit": 0,
+  "actualSeconds": {
+    "nativeSessionIncludingCleanup": 0.1818253000965342,
+    "nativeCleanup": 0.01108229998499155,
+    "controllerThroughJobClose": 2.6255461000837386,
+    "jobClose": 1.680001150816679e-05,
+    "outerThroughReceiptReadback": 5.090213899966329
+  },
+  "rawBytesDiscarded": {
+    "raw": 49287,
+    "stdout": 49287,
+    "stderr": 0
+  },
+  "newConsumption": {
+    "metadataAppServerTrees": 1,
+    "cliMetadataCalls": 0,
+    "actors": 0,
+    "threads": 0,
+    "turns": 0,
+    "requestedModelCalls": 0,
+    "nativeProductStarts": 0,
+    "productWrappers": 0,
+    "productDelegates": 0,
+    "studyCells": 0,
+    "fullProductTests": 0,
+    "historicalLedgerWrites": 0,
+    "retries": 0,
+    "publicMetadataCwdCreated": true,
+    "studyCasePreparations": 0
+  },
+  "unchangedHistory": {
+    "cliMetadataCalls": 6,
+    "realActors": 5,
+    "knownActorTokens": 53331,
+    "totalTokens": null,
+    "providerRequests": null,
+    "internalRetries": null,
+    "nativeProductStarts": 15,
+    "productWrapperAttempts": 16,
+    "deterministicDelegates": 13,
+    "reservedNativeSeconds": 2250
+  },
+  "policyTrees": {
+    "before": 3,
+    "new": 1,
+    "after": 4
+  },
+  "nativeInternalNetworkOrInference": null,
+  "slotReleaseUtc": "2026-10-08T05:07:18.279104+00:00",
+  "allSixStudyCells": "NOT RUN",
+  "next": "Wait; no automatic diagnosis continuation, source repair/relaunch or Actor authority",
+  "publication": "local evidence only; no push/PR/publication"
+}

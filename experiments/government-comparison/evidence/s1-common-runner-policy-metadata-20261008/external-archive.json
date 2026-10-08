@@ -1,0 +1,48 @@
+{
+  "pairs": [
+    {
+      "original": "C:/Users/Consiliari/Documents/Scientist-Probes/s1-common-runner-policy-metadata-20261008/controller-once.json",
+      "copy": "evidence/s1-common-runner-policy-metadata-20261008/run-1/controller-once.json",
+      "sha256": "d63888bf6d128cc81c9b4439122e38c316a9942c6742575b67544b376ac8015a",
+      "bytes": 493
+    },
+    {
+      "original": "C:/Users/Consiliari/Documents/Scientist-Probes/s1-common-runner-policy-metadata-20261008/controller-receipt.json",
+      "copy": "evidence/s1-common-runner-policy-metadata-20261008/run-1/controller-receipt.json",
+      "sha256": "c704fb69fcf14b04fd6c17f1874913b4455b895f7161db2f1bfbc7b8e8364dcd",
+      "bytes": 951
+    },
+    {
+      "original": "C:/Users/Consiliari/Documents/Scientist-Probes/s1-common-runner-policy-metadata-20261008/job-assigned.json",
+      "copy": "evidence/s1-common-runner-policy-metadata-20261008/run-1/job-assigned.json",
+      "sha256": "ec4477a99129ed95ecdcbc7276536eb8cbe5c86f69ae2975757d136a3c2d4796",
+      "bytes": 557
+    },
+    {
+      "original": "C:/Users/Consiliari/Documents/Scientist-Probes/s1-common-runner-policy-metadata-20261008/outer-receipt.json",
+      "copy": "evidence/s1-common-runner-policy-metadata-20261008/run-1/outer-receipt.json",
+      "sha256": "bfa7cbb5c380dcf422a191f0cce485f9116bd104aa5babb7c868054661285ed1",
+      "bytes": 598
+    },
+    {
+      "original": "C:/Users/Consiliari/Documents/Scientist-Probes/s1-common-runner-policy-metadata-20261008/reservation.json",
+      "copy": "evidence/s1-common-runner-policy-metadata-20261008/run-1/reservation.json",
+      "sha256": "40ea4a41ddbfb7d357ee95aa31e64ad93cec89fa989652c021d2c47d9ae77a8d",
+      "bytes": 473
+    },
+    {
+      "original": "C:/Users/Consiliari/Documents/Scientist-Probes/s1-common-runner-policy-metadata-20261008/sanitized-result.json",
+      "copy": "evidence/s1-common-runner-policy-metadata-20261008/run-1/sanitized-result.json",
+      "sha256": "1bf6e197688e59ae259c79379a598549db8325d53643162db0f8020c7e266e50",
+      "bytes": 12990
+    },
+    {
+      "original": "C:/Users/Consiliari/Documents/Scientist-Probes/s1-common-runner-policy-metadata-20261008/started-once.json",
+      "copy": "evidence/s1-common-runner-policy-metadata-20261008/run-1/started-once.json",
+      "sha256": "6e74fb4979e29f8b428da9f67c38a68b977778d2bc82ac5e08cdd92de3275f1c",
+      "bytes": 493
+    }
+  ],
+  "rawFramesArchived": 0,
+  "rawStderrArchived": 0
+}

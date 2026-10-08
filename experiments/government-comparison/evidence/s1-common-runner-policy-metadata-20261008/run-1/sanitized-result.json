@@ -1,0 +1,412 @@
+{
+  "key": "s1-common-runner-policy-metadata-20261008",
+  "status": "insufficient",
+  "stopReason": "requested-features-unobserved",
+  "requestSha256": "462725e25338e1dc9a7b9a5fe5e2c9180de6e12b8e9752d7823f042a6365e16c",
+  "freezeSha256": "9676e05a01fffc0497af1e0b222a2703284dec02a65aa11418c93332ea82d7b6",
+  "reservationSha256": "40ea4a41ddbfb7d357ee95aa31e64ad93cec89fa989652c021d2c47d9ae77a8d",
+  "sourceCommit": "54cdcffaeb9024197589182c03fefe0103db656b",
+  "freezeCommit": "c73c02e883c97c3b0e3e62eb9604f742223235be",
+  "sentRpc": [
+    {
+      "method": "initialize",
+      "id": 0
+    },
+    {
+      "method": "initialized",
+      "id": null
+    },
+    {
+      "method": "config/read",
+      "id": 1
+    }
+  ],
+  "observations": [
+    {
+      "id": 0,
+      "sanitizedResult": {
+        "handshakeAcknowledged": true
+      }
+    },
+    {
+      "id": 1,
+      "sanitizedResult": {
+        "config": {
+          "approval_policy": {
+            "state": "present",
+            "value": "never"
+          },
+          "approvals_reviewer": {
+            "state": "null"
+          },
+          "sandbox_mode": {
+            "state": "null"
+          },
+          "model": {
+            "state": "present",
+            "value": "gpt-6.1-sol"
+          },
+          "model_provider": {
+            "state": "present",
+            "value": "openai"
+          },
+          "model_reasoning_effort": {
+            "state": "present",
+            "value": "high"
+          },
+          "default_permissions": {
+            "state": "present",
+            "value": ":read-only"
+          },
+          "permissions": {
+            "state": "null"
+          },
+          "features": {
+            "state": "invalid"
+          },
+          "windows": {
+            "state": "present",
+            "value": {
+              "sandbox": {
+                "state": "present",
+                "value": "elevated"
+              }
+            }
+          }
+        },
+        "origins": {
+          "approval_policy": {
+            "state": "present",
+            "value": {
+              "type": "sessionFlags",
+              "versionDigest": "sha256:2a981cebb3a430c68c309844af0c68a0e5049f6f338f5d32939d57780c1e7649",
+              "selectedProfile": {
+                "state": "missing"
+              }
+            }
+          },
+          "approvals_reviewer": {
+            "state": "missing"
+          },
+          "default_permissions": {
+            "state": "present",
+            "value": {
+              "type": "sessionFlags",
+              "versionDigest": "sha256:2a981cebb3a430c68c309844af0c68a0e5049f6f338f5d32939d57780c1e7649",
+              "selectedProfile": {
+                "state": "missing"
+              }
+            }
+          },
+          "features": {
+            "state": "missing"
+          },
+          "features.apps": {
+            "state": "present",
+            "value": {
+              "type": "sessionFlags",
+              "versionDigest": "sha256:2a981cebb3a430c68c309844af0c68a0e5049f6f338f5d32939d57780c1e7649",
+              "selectedProfile": {
+                "state": "missing"
+              }
+            }
+          },
+          "features.goals": {
+            "state": "present",
+            "value": {
+              "type": "sessionFlags",
+              "versionDigest": "sha256:2a981cebb3a430c68c309844af0c68a0e5049f6f338f5d32939d57780c1e7649",
+              "selectedProfile": {
+                "state": "missing"
+              }
+            }
+          },
+          "features.hooks": {
+            "state": "present",
+            "value": {
+              "type": "sessionFlags",
+              "versionDigest": "sha256:2a981cebb3a430c68c309844af0c68a0e5049f6f338f5d32939d57780c1e7649",
+              "selectedProfile": {
+                "state": "missing"
+              }
+            }
+          },
+          "features.memories": {
+            "state": "present",
+            "value": {
+              "type": "sessionFlags",
+              "versionDigest": "sha256:2a981cebb3a430c68c309844af0c68a0e5049f6f338f5d32939d57780c1e7649",
+              "selectedProfile": {
+                "state": "missing"
+              }
+            }
+          },
+          "features.multi_agent": {
+            "state": "present",
+            "value": {
+              "type": "sessionFlags",
+              "versionDigest": "sha256:2a981cebb3a430c68c309844af0c68a0e5049f6f338f5d32939d57780c1e7649",
+              "selectedProfile": {
+                "state": "missing"
+              }
+            }
+          },
+          "features.network_proxy": {
+            "state": "missing"
+          },
+          "features.plugins": {
+            "state": "present",
+            "value": {
+              "type": "sessionFlags",
+              "versionDigest": "sha256:2a981cebb3a430c68c309844af0c68a0e5049f6f338f5d32939d57780c1e7649",
+              "selectedProfile": {
+                "state": "missing"
+              }
+            }
+          },
+          "features.powershell_shell_version": {
+            "state": "missing"
+          },
+          "features.shell_tool": {
+            "state": "present",
+            "value": {
+              "type": "sessionFlags",
+              "versionDigest": "sha256:2a981cebb3a430c68c309844af0c68a0e5049f6f338f5d32939d57780c1e7649",
+              "selectedProfile": {
+                "state": "missing"
+              }
+            }
+          },
+          "features.unified_exec": {
+            "state": "present",
+            "value": {
+              "type": "sessionFlags",
+              "versionDigest": "sha256:2a981cebb3a430c68c309844af0c68a0e5049f6f338f5d32939d57780c1e7649",
+              "selectedProfile": {
+                "state": "missing"
+              }
+            }
+          },
+          "features.windows_sandbox_service": {
+            "state": "missing"
+          },
+          "model": {
+            "state": "present",
+            "value": {
+              "type": "sessionFlags",
+              "versionDigest": "sha256:2a981cebb3a430c68c309844af0c68a0e5049f6f338f5d32939d57780c1e7649",
+              "selectedProfile": {
+                "state": "missing"
+              }
+            }
+          },
+          "model_provider": {
+            "state": "present",
+            "value": {
+              "type": "sessionFlags",
+              "versionDigest": "sha256:2a981cebb3a430c68c309844af0c68a0e5049f6f338f5d32939d57780c1e7649",
+              "selectedProfile": {
+                "state": "missing"
+              }
+            }
+          },
+          "model_reasoning_effort": {
+            "state": "present",
+            "value": {
+              "type": "sessionFlags",
+              "versionDigest": "sha256:2a981cebb3a430c68c309844af0c68a0e5049f6f338f5d32939d57780c1e7649",
+              "selectedProfile": {
+                "state": "missing"
+              }
+            }
+          },
+          "permissions": {
+            "state": "missing"
+          },
+          "sandbox_mode": {
+            "state": "missing"
+          },
+          "windows": {
+            "state": "missing"
+          }
+        },
+        "layers": {
+          "state": "present",
+          "value": [
+            {
+              "type": "sessionFlags",
+              "versionDigest": "sha256:2a981cebb3a430c68c309844af0c68a0e5049f6f338f5d32939d57780c1e7649",
+              "selectedProfile": {
+                "state": "missing"
+              },
+              "config": {
+                "approval_policy": {
+                  "state": "present",
+                  "value": "never"
+                },
+                "approvals_reviewer": {
+                  "state": "missing"
+                },
+                "sandbox_mode": {
+                  "state": "missing"
+                },
+                "model": {
+                  "state": "present",
+                  "value": "gpt-6.1-sol"
+                },
+                "model_provider": {
+                  "state": "present",
+                  "value": "openai"
+                },
+                "model_reasoning_effort": {
+                  "state": "present",
+                  "value": "high"
+                },
+                "default_permissions": {
+                  "state": "present",
+                  "value": ":read-only"
+                },
+                "permissions": {
+                  "state": "missing"
+                },
+                "features": {
+                  "state": "present",
+                  "value": {
+                    "apps": false,
+                    "goals": false,
+                    "hooks": false,
+                    "memories": false,
+                    "multi_agent": false,
+                    "plugins": false,
+                    "shell_tool": true,
+                    "unified_exec": true
+                  }
+                },
+                "windows": {
+                  "state": "missing"
+                }
+              }
+            },
+            {
+              "type": "user",
+              "versionDigest": "sha256:3eb4afddd3ca1914236354e73da8792c068fe1b9098a6972fdc3a1dad9987738",
+              "selectedProfile": {
+                "state": "null"
+              },
+              "config": {
+                "approval_policy": {
+                  "state": "missing"
+                },
+                "approvals_reviewer": {
+                  "state": "missing"
+                },
+                "sandbox_mode": {
+                  "state": "missing"
+                },
+                "model": {
+                  "state": "present",
+                  "value": "gpt-6.1-sol"
+                },
+                "model_provider": {
+                  "state": "missing"
+                },
+                "model_reasoning_effort": {
+                  "state": "present",
+                  "value": "high"
+                },
+                "default_permissions": {
+                  "state": "missing"
+                },
+                "permissions": {
+                  "state": "missing"
+                },
+                "features": {
+                  "state": "present",
+                  "value": {
+                    "memories": true
+                  }
+                },
+                "windows": {
+                  "state": "present",
+                  "value": {
+                    "sandbox": {
+                      "state": "present",
+                      "value": "elevated"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "type": "system",
+              "versionDigest": "sha256:44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+              "selectedProfile": {
+                "state": "missing"
+              },
+              "config": {
+                "approval_policy": {
+                  "state": "missing"
+                },
+                "approvals_reviewer": {
+                  "state": "missing"
+                },
+                "sandbox_mode": {
+                  "state": "missing"
+                },
+                "model": {
+                  "state": "missing"
+                },
+                "model_provider": {
+                  "state": "missing"
+                },
+                "model_reasoning_effort": {
+                  "state": "missing"
+                },
+                "default_permissions": {
+                  "state": "missing"
+                },
+                "permissions": {
+                  "state": "missing"
+                },
+                "features": {
+                  "state": "missing"
+                },
+                "windows": {
+                  "state": "missing"
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "serverMethodEvents": [
+    {
+      "method": "remoteControl/status/changed",
+      "class": "RemoteControl/status/changedNotification",
+      "status": "disabled"
+    }
+  ],
+  "notificationCount": 1,
+  "nativeReturnCode": 0,
+  "nativeSessionWallSeconds": 0.1818253000965342,
+  "cleanupSeconds": 0.01108229998499155,
+  "rawBytesDiscarded": {
+    "raw": 49287,
+    "stdout": 49287,
+    "stderr": 0
+  },
+  "rawFramePayloadsPersisted": false,
+  "rawStderrPersisted": false,
+  "requestedActors": 0,
+  "requestedTurns": 0,
+  "requestedModelCalls": 0,
+  "nativeInternalNetworkOrInference": null,
+  "activePermissionProfile": null,
+  "actualTools": null,
+  "servingModel": null,
+  "providerRequests": null,
+  "automaticRetries": 0,
+  "meaning": "Observed argv acceptance and reported config precondition only; recognition/enforcement and historical denial cause unproven"
+}

@@ -1,0 +1,15 @@
+{
+  "key": "s1-common-runner-policy-metadata-20261008",
+  "outerReturnCode": 1,
+  "stopReason": null,
+  "outerThroughReceiptReadbackSeconds": 5.090213899966329,
+  "withinOuterBound": true,
+  "controllerReceiptSha256": "c704fb69fcf14b04fd6c17f1874913b4455b895f7161db2f1bfbc7b8e8364dcd",
+  "sanitizedResultSha256": "1bf6e197688e59ae259c79379a598549db8325d53643162db0f8020c7e266e50",
+  "terminalResultPresent": true,
+  "status": "insufficient",
+  "metadataStartAttemptRecorded": true,
+  "actorsRequested": 0,
+  "nativeInternalNetworkOrInference": null,
+  "remainingGrantClosed": true
+}

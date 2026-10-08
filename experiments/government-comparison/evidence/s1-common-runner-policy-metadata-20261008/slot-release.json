@@ -1,0 +1,15 @@
+{
+  "key": "s1-common-runner-policy-metadata-20261008",
+  "owner": "Scientist",
+  "releasedAtUtc": "2026-10-08T05:07:18.279104+00:00",
+  "terminalStatus": "INSUFFICIENT",
+  "processTreeControl": "Windows Job closed in controller receipt; own worker and native terminal receipts read back",
+  "residualGrant": "closed; no retry or automatic continuation",
+  "sourceCommit": "54cdcffaeb9024197589182c03fefe0103db656b",
+  "freezeCommit": "c73c02e883c97c3b0e3e62eb9604f742223235be",
+  "appServerTreesConsumed": 1,
+  "policyTreeHistoryBefore": 3,
+  "policyTreeHistoryAfter": 4,
+  "newActorsRequested": 0,
+  "fiveHistoricalLiveLedgersUnchanged": true
+}
