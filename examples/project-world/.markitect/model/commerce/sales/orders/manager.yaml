@@ -1,0 +1,12 @@
+apiVersion: project.markitect.example.org/v1alpha1
+kind: Manager
+metadata:
+  name: orders
+  namespace: commerce.sales.orders
+purpose: Owns order identity, state transitions, and order-local behavior.
+spec:
+  parent:
+    namespace: commerce.sales
+    name: sales
+  owns:
+    - src/shop/orders/

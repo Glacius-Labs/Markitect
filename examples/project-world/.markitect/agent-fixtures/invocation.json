@@ -1,0 +1,24 @@
+{
+  "apiVersion": "markitect.example.org/agent-execution/v1alpha1",
+  "runId": "fixture-run-001",
+  "nonce": "fixture-nonce-not-a-secret",
+  "inputDigest": "sha256:fixture-input-digest",
+  "request": {
+    "role": "executor",
+    "sourceRevision": "fixture-commit",
+    "modelDigest": "sha256:fixture-model-digest",
+    "modulePin": "",
+    "projectionId": "project-world/shop-cancellation",
+    "scopeIds": ["project.markitect.example.org/v1alpha1/Manager/commerce.sales.orders/orders"],
+    "policyIds": [],
+    "context": {"purpose": "Implement only the authorized order cancellation change."},
+    "artifacts": [
+      {
+        "path": ".markitect/views/project.md",
+        "mode": "100644",
+        "digest": "sha256:fixture-artifact-digest",
+        "content": "UmV2aWV3IHRoZSBib3VuZGVkIHByb2plY3Qgdmlldy4="
+      }
+    ]
+  }
+}

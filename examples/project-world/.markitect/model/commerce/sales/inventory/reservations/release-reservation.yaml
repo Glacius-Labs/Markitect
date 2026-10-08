@@ -1,0 +1,14 @@
+apiVersion: project.markitect.example.org/v1alpha1
+kind: Statement
+metadata:
+  name: release-reservation
+  namespace: commerce.sales.inventory.reservations
+purpose: Defines idempotent release of an order's active reservation.
+spec:
+  category: rule
+  description: Releasing a reservation changes only active reservations to released; repeating the operation does not release quantity twice.
+  public: true
+  uses:
+    - namespace: commerce.sales.inventory.reservations
+      name: reservation
+  requires: []

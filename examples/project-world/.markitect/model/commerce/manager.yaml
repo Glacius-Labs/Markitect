@@ -1,0 +1,13 @@
+apiVersion: project.markitect.example.org/v1alpha1
+kind: Manager
+metadata:
+  name: commerce
+  namespace: commerce
+purpose: Integrates the order lifecycle with stock reservation behavior.
+spec:
+  parent:
+    namespace: ""
+    name: shop
+  owns:
+    - src/shop/
+    - docs/
