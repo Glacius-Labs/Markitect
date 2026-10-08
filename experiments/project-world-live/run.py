@@ -54,6 +54,7 @@ def main() -> None:
         base = git('rev-parse', 'HEAD')
         checked = invoke(tool, root, output, 'check')
         replacements = {
+            '.markitect/model/commerce/sales/orders/requires-active-reservation.yaml': ('before a confirmed order can be cancelled.', 'before a confirmed or packing order can be cancelled.'),
             '.markitect/model/commerce/sales/orders/cancel-order.yaml': ('A confirmed order may be cancelled before shipment', 'A confirmed or packing order may be cancelled before shipment'),
             '.markitect/model/commerce/sales/orders/order.yaml': ('confirmed or shipped state', 'confirmed, packing or shipped state'),
             '.markitect/model/commerce/sales/orders/cancel-before-shipped.yaml': (
@@ -63,7 +64,12 @@ def main() -> None:
         for path, (old, new) in replacements.items():
             content = (root / path).read_text(encoding='utf-8')
             assert old in content
-            files.append({'path': path, 'content': content.replace(old, new)})
+            content = content.replace(old, new)
+            if path.endswith('/requires-active-reservation.yaml'):
+                assert 'leaves the order confirmed by rolling back' in content
+                content = content.replace('leaves the order confirmed by rolling back',
+                                          'leaves the order in its original confirmed or packing state by rolling back')
+            files.append({'path': path, 'content': content})
         mutation = {'apiVersion': 'project.markitect.example.org/v1alpha1', 'baseDigest': checked['projectDigest'],
                     'actor': 'user', 'goal': 'Allow cancellation during packing, preserving atomic reservation release, shipped-order rejection and idempotency.',
                     'files': files}

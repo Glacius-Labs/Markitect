@@ -12,7 +12,7 @@ python -B experiments/project-world-live/run.py --source . --tool "$env:TEMP\mar
 python -B experiments/project-world-live/run.py --source . --tool "$env:TEMP\markitect-live.exe" --output "$env:TEMP\shop-live-proof" --model MODEL --stage apply
 ```
 
-Preparation creates a disposable Git repository, freezes both source adapters outside it, and records the exact source revision and plan in `state.json`. No adopting checkout or global configuration is changed. It changes three accepted model statements: cancellation must work during packing, as well as while confirmed. `plan --since` must select six Managers and one declared check without a manually supplied Manager list. Runtime setup pins Python, the adapter and the native provider executable.
+Preparation creates a disposable Git repository, freezes both source adapters outside it, and records the exact source revision and plan in `state.json`. No adopting checkout or global configuration is changed. It changes four accepted model statements: cancellation must work during packing, as well as while confirmed. `plan --since` must select six Managers and one declared check without a manually supplied Manager list. Runtime setup pins Python, the adapter and the native provider executable.
 
 The Apply stage first changes one disposable documentation file after preflight, checks rejection of the stale binding, restores the exact original bytes, then applies the verified candidate.
 
