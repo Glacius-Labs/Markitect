@@ -1,0 +1,144 @@
+{
+  "tag": "rust-v0.162.0-alpha.2",
+  "tagRefObserved": {
+    "bytes": 369,
+    "tagObject": "08a287137b1e11bf3566d53d6820b82177019f29"
+  },
+  "tagObject": {
+    "node_id": "TA_kwDOOYsS4doAKDA4YTI4NzEzN2IxZTExYmYzNTY2ZDUzZDY4MjBiODIxNzcwMTlmMjk",
+    "sha": "08a287137b1e11bf3566d53d6820b82177019f29",
+    "url": "https://api.github.com/repos/openai/codex/git/tags/08a287137b1e11bf3566d53d6820b82177019f29",
+    "tagger": {
+      "name": "andrewgu-oai",
+      "email": "andrewgu@openai.com",
+      "date": "2026-10-02T00:51:47Z"
+    },
+    "object": {
+      "sha": "74e804deeb1241d5fe699b31fb319f7d46454c42",
+      "type": "commit",
+      "url": "https://api.github.com/repos/openai/codex/git/commits/74e804deeb1241d5fe699b31fb319f7d46454c42"
+    },
+    "tag": "rust-v0.162.0-alpha.2",
+    "message": "Release 0.162.0-alpha.2",
+    "verification": {
+      "verified": false,
+      "reason": "unsigned",
+      "signature": null,
+      "payload": null,
+      "verified_at": null
+    }
+  },
+  "release": {
+    "tag_name": "rust-v0.162.0-alpha.2",
+    "target_commitish": "main",
+    "name": "0.162.0-alpha.2",
+    "draft": false,
+    "immutable": false,
+    "prerelease": true,
+    "published_at": "2026-10-02T01:44:23Z",
+    "html_url": "https://github.com/openai/codex/releases/tag/rust-v0.162.0-alpha.2"
+  },
+  "relevantReleaseAssets": [
+    {
+      "name": "codex-x86_64-pc-windows-msvc.exe",
+      "size": 333357872,
+      "digest": "sha256:d83cc3582592e307df008411f02f61a93fb93580b53dc173608a63202d97bbe4",
+      "browser_download_url": "https://github.com/openai/codex/releases/download/rust-v0.162.0-alpha.2/codex-x86_64-pc-windows-msvc.exe"
+    },
+    {
+      "name": "codex-x86_64-pc-windows-msvc.exe.tar.gz",
+      "size": 111330535,
+      "digest": "sha256:3fb83e724ec05fb924d0ee957fd6edb29c6b2f01b043d5d561e9a628fc890cc7",
+      "browser_download_url": "https://github.com/openai/codex/releases/download/rust-v0.162.0-alpha.2/codex-x86_64-pc-windows-msvc.exe.tar.gz"
+    },
+    {
+      "name": "codex-x86_64-pc-windows-msvc.exe.zip",
+      "size": 164455588,
+      "digest": "sha256:a049ecdabdf909cc291e778db1aafea36b0e98bcf43774ed382ea7f9f6897e4c",
+      "browser_download_url": "https://github.com/openai/codex/releases/download/rust-v0.162.0-alpha.2/codex-x86_64-pc-windows-msvc.exe.zip"
+    },
+    {
+      "name": "codex-x86_64-pc-windows-msvc.exe.zst",
+      "size": 81898921,
+      "digest": "sha256:703d524a835b104e24fbaa7b0c6d5809c1e82766bb53a68db9ae7e8f0cab9b8e",
+      "browser_download_url": "https://github.com/openai/codex/releases/download/rust-v0.162.0-alpha.2/codex-x86_64-pc-windows-msvc.exe.zst"
+    }
+  ],
+  "acquisition": {
+    "publicRequestsSoFar": 8,
+    "responseBodyBytesSoFar": 1006562,
+    "requests": [
+      {
+        "url": "https://api.github.com/repos/openai/codex/git/ref/tags/rust-v0.162.0-alpha.2",
+        "bytes": 369
+      },
+      {
+        "url": "https://api.github.com/repos/openai/codex/releases/tags/rust-v0.162.0-alpha.2",
+        "bytes": 301083
+      },
+      {
+        "url": "https://api.github.com/repos/openai/codex/git/tags/08a287137b1e11bf3566d53d6820b82177019f29",
+        "bytes": 676
+      },
+      {
+        "url": "https://api.github.com/repos/openai/codex/releases/tags/rust-v0.162.0-alpha.2",
+        "bytes": 301083
+      },
+      {
+        "url": "https://raw.githubusercontent.com/openai/codex/74e804deeb1241d5fe699b31fb319f7d46454c42/codex-rs/core/src/shell_snapshot.rs",
+        "status": 200,
+        "bytes": 44203
+      },
+      {
+        "url": "https://raw.githubusercontent.com/openai/codex/74e804deeb1241d5fe699b31fb319f7d46454c42/codex-rs/core/src/codex.rs",
+        "status": 404,
+        "bytes": 14
+      },
+      {
+        "url": "https://api.github.com/repos/openai/codex/contents/codex-rs/core/src?ref=74e804deeb1241d5fe699b31fb319f7d46454c42",
+        "status": 200,
+        "bytes": 153197,
+        "purpose": "Resolve moved immediate caller path; directory metadata only."
+      },
+      {
+        "url": "https://raw.githubusercontent.com/openai/codex/74e804deeb1241d5fe699b31fb319f7d46454c42/codex-rs/core/src/session/mod.rs",
+        "status": 200,
+        "bytes": 205937,
+        "purpose": "Immediate session/thread initialization caller after module relocation."
+      }
+    ],
+    "note": "Initial release response was not retained; one same-release re-fetch, fully counted. No release binary downloaded.",
+    "closed": true,
+    "limits": {
+      "maxPublicRequests": 8,
+      "maxNewResponseBodyBytes": 4194304,
+      "maxSourceFiles": 4
+    }
+  },
+  "sourceFiles": [
+    {
+      "upstreamPath": "codex-rs/core/src/shell_snapshot.rs",
+      "commit": "74e804deeb1241d5fe699b31fb319f7d46454c42",
+      "archiveFile": "sources/shell_snapshot.rs",
+      "bytes": 44203,
+      "sha256": "0be257e217221ebbe260686206ccbc75896caf42e0f2fbe099dfb9d2c483cef5",
+      "url": "https://raw.githubusercontent.com/openai/codex/74e804deeb1241d5fe699b31fb319f7d46454c42/codex-rs/core/src/shell_snapshot.rs"
+    },
+    {
+      "upstreamPath": "codex-rs/core/src/session/mod.rs",
+      "commit": "74e804deeb1241d5fe699b31fb319f7d46454c42",
+      "archiveFile": "sources/session_mod.rs",
+      "bytes": 205937,
+      "sha256": "7b957fee426408a542cef3be828541590e91b4b07ec15c2d61118358e516cfb1",
+      "url": "https://raw.githubusercontent.com/openai/codex/74e804deeb1241d5fe699b31fb319f7d46454c42/codex-rs/core/src/session/mod.rs"
+    }
+  ],
+  "callerDirectoryInventory": [
+    {
+      "name": "shell_snapshot.rs",
+      "type": "file"
+    }
+  ],
+  "observedUtc": "2026-10-08T17:16:46.262092+00:00",
+  "claimBoundary": "Fixed same-version tag commit only; no equality to bundled candidate demonstrated. Fetch budget closed at8."
+}

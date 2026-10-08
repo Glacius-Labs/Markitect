@@ -1,0 +1,52 @@
+{
+  "key": "s1-shell-snapshot-static-trace-20261008",
+  "checkedUtc": "2026-10-08T17:16:46.262092+00:00",
+  "candidate": {
+    "publicVersionFromPriorSealedMetadata": "codex-cli 0.162.0-alpha.2",
+    "bytes": 333357008,
+    "sha256": "3553cd6e7df5a093d8cb8301cd8088a57e0971aba71ddbe0e67f7f44a15cdf68",
+    "versionCommandRepeated": false
+  },
+  "localDistribution": {
+    "packageIdentity": "OpenAI.Codex",
+    "windowsPackageVersion": "26.1002.7124.0",
+    "electronPackageVersion": "26.1002.52244",
+    "buildFlavor": "prod",
+    "buildNumber": "13536",
+    "containedCore": "1",
+    "bundledCliBytes": 333357008,
+    "bundledCliSha256": "3553cd6e7df5a093d8cb8301cd8088a57e0971aba71ddbe0e67f7f44a15cdf68",
+    "candidateByteIdentityVerified": true,
+    "selectedMetadataInspected": [
+      "Windows package registration",
+      "bundled resource inventory",
+      "root Electron package.json metadata inside existing app.asar",
+      "owl-electron-app.json",
+      "owl-app.ini"
+    ],
+    "selectedMetadataUpstreamCliCommit": null,
+    "runtimeArchiveIdentifierMeaning": "Identifies Electron/Owl runtime archive, not a demonstrated CLI source mapping."
+  },
+  "officialReleaseComparison": {
+    "sameVersionTag": "rust-v0.162.0-alpha.2",
+    "windowsExeBytes": 333357872,
+    "windowsExeSha256FromOfficialApi": "d83cc3582592e307df008411f02f61a93fb93580b53dc173608a63202d97bbe4",
+    "exactArtifactEquality": false,
+    "sizeDifferenceBytes": 864,
+    "causeOfDifference": "unknown; no signing-only or code-equivalence assumption"
+  },
+  "localSourceInventory": {
+    "scopes": [
+      "workspace projects",
+      "downloads",
+      "workdir",
+      "runtime cache"
+    ],
+    "matchingShellSnapshotOrCargoSourcesFound": false,
+    "scopeLimit": "Only selected local scopes were inventoried; no claim that no source exists anywhere."
+  },
+  "provenanceBoundary": "Candidate equals currently bundled desktop CLI. Selected local metadata does not bind that CLI to an upstream commit. Same-version public release exe has different bytes. Tag source may be traced only conditionally, not promoted into exact binary behavior.",
+  "runtimeStarts": 0,
+  "testsBuildsCliQueries": 0,
+  "privateExcerptOrTranscriptRead": false
+}
