@@ -5,6 +5,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"strings"
 	"time"
@@ -380,16 +381,28 @@ func compareCaptureToBase(capture *hostwrite.GuardedWriteCapture, base *Snapshot
 			return fmt.Errorf("target path %s does not match fixed base existence", p)
 		}
 		if exists {
-			mode := fs.FileMode(0o644)
-			if base.Modes[p] == "100755" {
-				mode = 0o755
-			}
-			if string(old) != string(current.Bytes) || current.Mode.Perm() != mode {
+			if string(old) != string(current.Bytes) || !captureModeMatchesGit(current.Mode, base.Modes[p]) {
 				return fmt.Errorf("target path %s differs from fixed base bytes or mode", p)
 			}
 		}
 	}
 	return nil
+}
+
+func captureModeMatchesGit(captured fs.FileMode, gitMode string) bool {
+	want := fs.FileMode(0o644)
+	if gitMode == "100755" {
+		want = 0o755
+	} else if gitMode != "100644" {
+		return false
+	}
+	if runtime.GOOS == "windows" {
+		// NTFS permission bits do not encode Git's executable bit. Preserve
+		// exact raw mode in guarded-capture CAS, but use the selected Git tree
+		// mode as the baseline semantic mode on Windows.
+		return captured.Perm()&0o444 != 0 && captured&^fs.FileMode(0o777) == 0
+	}
+	return captured.Perm() == want
 }
 func guardedChanges(c candidateData, paths []string) ([]hostwrite.GuardedWriteChange, error) {
 	changes := make([]hostwrite.GuardedWriteChange, 0, len(paths))

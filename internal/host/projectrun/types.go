@@ -14,6 +14,8 @@ import (
 )
 
 type Project = projectwork.Project
+type Config = projectwork.Config
+type Exclusion = projectwork.Exclusion
 type Mutation = projectwork.Mutation
 type EditPlan = projectwork.EditPlan
 type Snapshot = snapshot.Snapshot
