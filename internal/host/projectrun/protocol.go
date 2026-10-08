@@ -107,7 +107,30 @@ func decodeTaskResponse(raw json.RawMessage, phase string, activeChildren []stri
 			return response, fmt.Errorf("task risks must be nonempty and bounded")
 		}
 	}
+	if err := uniqueObligations(response.Questions); err != nil {
+		return response, fmt.Errorf("task questions: %w", err)
+	}
+	if err := uniqueObligations(response.Risks); err != nil {
+		return response, fmt.Errorf("task risks: %w", err)
+	}
+	if err := uniqueObligations(response.ResolvedQuestions); err != nil {
+		return response, fmt.Errorf("resolved questions: %w", err)
+	}
+	if err := uniqueObligations(response.ResolvedRisks); err != nil {
+		return response, fmt.Errorf("resolved risks: %w", err)
+	}
 	return response, nil
+}
+
+func uniqueObligations(values []string) error {
+	seen := map[string]bool{}
+	for _, value := range values {
+		if seen[value] {
+			return fmt.Errorf("duplicate obligation %q", value)
+		}
+		seen[value] = true
+	}
+	return nil
 }
 
 func taskResponseSchema(phase string) json.RawMessage {
@@ -116,6 +139,15 @@ func taskResponseSchema(phase string) json.RawMessage {
 	properties := map[string]any{"status": map[string]any{"type": "string", "enum": []string{"complete", "partial", "blocked", "failed", "no-op"}}, "summary": map[string]any{"type": "string", "minLength": 1, "maxLength": 4096}, "delegations": delegations, "integrated": map[string]any{"type": "boolean", "enum": []bool{phase == "integrate"}}, "questions": textList, "risks": textList, "resolvedQuestions": textList, "resolvedRisks": textList, "escalateTo": map[string]any{"type": "string", "maxLength": 128}}
 	data, _ := json.Marshal(map[string]any{"type": "object", "additionalProperties": false, "required": []string{"status", "summary", "delegations", "integrated", "questions", "risks", "resolvedQuestions", "resolvedRisks", "escalateTo"}, "properties": properties})
 	return data
+}
+
+// TaskResponseSchema exposes the provider-neutral closed response contract
+// for fixtures and adapters that need to inspect the task report shape.
+func TaskResponseSchema(phase string) (json.RawMessage, error) {
+	if phase != "work" && phase != "integrate" {
+		return nil, fmt.Errorf("unknown project task phase %q", phase)
+	}
+	return append(json.RawMessage(nil), taskResponseSchema(phase)...), nil
 }
 
 func validateExactObjectKeys(raw json.RawMessage, allowed map[string]bool) error {
