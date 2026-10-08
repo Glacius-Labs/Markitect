@@ -248,7 +248,7 @@ def government_resume():
     return result
 
 
-def require_positive_classic_checkpoint(capture):
+def require_positive_classic_checkpoint(capture, original_stdout_sha256):
     """Stop before another native effect unless this exact capture is positive."""
     action = capture.get("action")
     if action not in classic_integration.EXPECTED_STATUSES:
@@ -258,7 +258,10 @@ def require_positive_classic_checkpoint(capture):
     if dispatch.digest(receipt_raw) != capture.get("processSha256"):
         raise ValueError("Classic checkpoint process receipt changed")
     receipt = json.loads(receipt_raw)
-    report = json.loads(Path(capture["stdoutPath"]).read_bytes())
+    report_raw = Path(capture["stdoutPath"]).read_bytes()
+    if dispatch.digest(report_raw) != original_stdout_sha256:
+        raise ValueError("Classic checkpoint stdout differs from the parent-captured bytes")
+    report = json.loads(report_raw)
     if (capture.get("returnCode") != 0 or receipt.get("returnCode") != 0 or
             receipt.get("stopReason") is not None or receipt.get("timedOut") is not False or
             not isinstance(report, dict) or
@@ -277,7 +280,7 @@ def classic_flow():
     session = native_controller.begin_classic_controller(request_path, a)
     try:
         execute = native_controller.run_classic_step(session, "execute", fixture_budget=b)
-        require_positive_classic_checkpoint(execute)
+        require_positive_classic_checkpoint(execute, session.process_records[-1]["stdoutSha256"])
         print(json.dumps({"awaitingExactExecuteReview": execute,
                       "reviewPath": str(EXTERNAL / "classic/execute-review.json")}), flush=True)
     # Keep the same active controller Request/runtime across independent review.
@@ -292,7 +295,7 @@ def classic_flow():
             capture = native_controller.run_classic_step(session, action, fixture_budget=b,
                 external_review=review if action in {"apply", "apply-replay"} else None)
             if action != "apply-replay":
-                require_positive_classic_checkpoint(capture)
+                require_positive_classic_checkpoint(capture, session.process_records[-1]["stdoutSha256"])
     finally:
         result = native_controller.finalize_classic_controller(session)
         write_new(EVIDENCE / "classic/flow-result.json", result)

@@ -16,10 +16,11 @@ class R3CheckpointTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             for action, status in driver.classic_integration.EXPECTED_STATUSES.items():
-                for problem in (None, "wrong_status", "timeout", "stop", "changed_receipt", "nonzero"):
+                for problem in (None, "wrong_status", "timeout", "stop", "changed_receipt", "changed_stdout", "nonzero"):
                     with self.subTest(action=action, problem=problem):
                         report = root / "stdout.json"
                         report.write_text(json.dumps({"status": status if problem != "wrong_status" else "blocked"}))
+                        original_stdout_sha = driver.dispatch.digest(report.read_bytes())
                         receipt = {"returnCode": 2 if problem == "nonzero" else 0,
                                    "stopReason": "wall_deadline" if problem == "stop" else None,
                                    "timedOut": problem == "timeout"}
@@ -30,11 +31,13 @@ class R3CheckpointTests(unittest.TestCase):
                                    "processSha256": driver.dispatch.digest(process.read_bytes())}
                         if problem == "changed_receipt":
                             process.write_text(process.read_text() + " ")
+                        if problem == "changed_stdout":
+                            report.write_text(report.read_text() + " ")
                         if problem is None:
-                            driver.require_positive_classic_checkpoint(capture)
+                            driver.require_positive_classic_checkpoint(capture, original_stdout_sha)
                         else:
                             with self.assertRaises(ValueError):
-                                driver.require_positive_classic_checkpoint(capture)
+                                driver.require_positive_classic_checkpoint(capture, original_stdout_sha)
 
     def test_audit_findings_or_next_steps_stop_before_replay(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -47,4 +50,4 @@ class R3CheckpointTests(unittest.TestCase):
             for field in ("findings", "nextSteps"):
                 report.write_text(json.dumps({"status": "complete", field: ["unresolved"]}))
                 with self.assertRaisesRegex(ValueError, "Audit has findings"):
-                    driver.require_positive_classic_checkpoint(capture)
+                    driver.require_positive_classic_checkpoint(capture, driver.dispatch.digest(report.read_bytes()))
