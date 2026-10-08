@@ -129,7 +129,7 @@ function New-Runtime([string] $Name, [string] $Ref, [string] $Base, [string] $St
             @{ ressort = $ressort + @{ name = 'pricing' }; runner = (New-RunnerSpec 'ressort-pricing' $(if ($ExecutorMode -eq 'independent') { 'assent-unaffected' } else { 'assent' })) },
             @{ ressort = $ressort + @{ name = 'schedule' }; runner = (New-RunnerSpec 'ressort-schedule' 'assent-unaffected') }
         )
-        checks = @(@{ name = 'booking-realization'; run = @('go','test','./...','-count=1','-timeout=20s') })
+        checks = @(@{ name = 'booking-realization'; run = @('go','test','./...','-count=1','-timeout=20s'); timeoutSeconds = 30 })
     }
     if ($Amend) { $runtime.amendment = @{ maxRepairs = 0 } }
     $path = Join-Path $script:External ($Name + '.runtime.json')
