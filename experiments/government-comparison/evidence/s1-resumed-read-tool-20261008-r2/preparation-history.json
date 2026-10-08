@@ -1,0 +1,19 @@
+{
+  "key": "s1-resumed-read-tool-20261008-r2",
+  "startedUtc": "2026-10-08T20:09:09Z",
+  "deadlineUtc": "2026-10-08T20:39:09Z",
+  "recordedUtc": "2026-10-08T20:22:47.577692Z",
+  "correctionBatchesUsed": 2,
+  "maximumCorrectionBatches": 2,
+  "testInvocationsUsed": 1,
+  "maximumAffectedTestInvocations": 3,
+  "syntheticGroups": 12,
+  "maximumSyntheticGroups": 12,
+  "offlineParticipants": 2,
+  "realNativeStarts": 0,
+  "actorReservations": 0,
+  "extraCliMetadataCalls": 0,
+  "externalWritesOtherThanAuthorizedLocalEvidence": 0,
+  "firstRunTestsAllPassed": true,
+  "remainingSourceTestCorrectionBatches": 0
+}

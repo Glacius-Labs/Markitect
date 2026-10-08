@@ -1,0 +1,90 @@
+{
+  "key": "s1-resumed-read-tool-20261008-r2",
+  "scope": "Immutable reviewed preseal source payloads; no request/freeze/runtime yet",
+  "files": {
+    "authorization-grant.json": {
+      "sha256": "cf1c5ea685e7817c85adfe0bfa67fa6e885688122378e471372a7693a956fca7",
+      "bytes": 18416
+    },
+    "client.py": {
+      "sha256": "26e7569fcae4bcd2dc6b6917436f35d6f1581d54d4fe6ee3fa0ab4d842c1874d",
+      "bytes": 59801
+    },
+    "collector.py": {
+      "sha256": "2dc8d67a1ab3a3401d7f670da9e201693621290acd9882fd2ecce571168151fc",
+      "bytes": 46334
+    },
+    "diagnostic-contract.json": {
+      "sha256": "dcb29194aa8849f9dc951ba13079c1d29248ae0bf43e909e4fc7025c62979a7a",
+      "bytes": 4620
+    },
+    "expected.json": {
+      "sha256": "033f4372bb8d2e094b778b9ffdc119fc6d32559d4b05f7ada98b98cc13019d1b",
+      "bytes": 141
+    },
+    "focused-tests.log": {
+      "sha256": "2350a2f2c755c085c506fe519f7ec715a425cc2224037c0c696c57c4f17ea41e",
+      "bytes": 2280
+    },
+    "frozen-method-enums.json": {
+      "sha256": "831728c4ce8c1913d25eff43229c93b81c0f5d802f93eb3b057333c4048e2220",
+      "bytes": 23235
+    },
+    "input-validation.json": {
+      "sha256": "e1f4ebde6c44acdaf96b1d1f040a3f51399c5ffd5729e2931939ea647dc72129",
+      "bytes": 1362
+    },
+    "offline-validation.json": {
+      "sha256": "2dbad065914182f17d7934161b8f6412a9df7e4a6e3de6a1fb341fc6cffcf5ed",
+      "bytes": 750
+    },
+    "preparation-history.json": {
+      "sha256": "b1a24acbb0e6372c125d513989719ad14fa960814862bdcaf57780da943f26c8",
+      "bytes": 626
+    },
+    "preparation.md": {
+      "sha256": "9a012d13af54460712ac08768b3691ac4a26f0a726f44ee6fed70a7fd3371a6d",
+      "bytes": 2784
+    },
+    "profile.json": {
+      "sha256": "ce6a75f88aedf648c157ff090a31ade3b48fb6af98f336f6f270adcaa0ac1029",
+      "bytes": 5567
+    },
+    "protocol-basis.json": {
+      "sha256": "502618c0d6abea01a964d84a0c71ed735849a6ff1f33ed2e6c15f17a705b0517",
+      "bytes": 2811
+    },
+    "protocol_failure.py": {
+      "sha256": "776365db287479a23be67a4e22ac083f54ce881fa1452337d0e281529adcb38f",
+      "bytes": 6000
+    },
+    "run_once.py": {
+      "sha256": "991dea5741f6a4d355d79801afb4f911f1d0c12476216e405e11030ec127a6f3",
+      "bytes": 3547
+    },
+    "schema-contract.json": {
+      "sha256": "1dc1b9f0b059cff17c2ed55c3aba5e2d1c22e87fb1a4a726c735e19981ecc249",
+      "bytes": 5306
+    },
+    "source-review.md": {
+      "sha256": "563a6e557edc3b6ea878cc2df4b4b3093dcf097a420697138521fb4d75f43a00",
+      "bytes": 2593
+    },
+    "startup_observer.py": {
+      "sha256": "654a40b5f09651f39d74dfed48927c7f1fbeccc99387e95cd655afa009175d3e",
+      "bytes": 4742
+    },
+    "test-results.json": {
+      "sha256": "a526a3a0c5246cc06f9e59266ecadfcae3eac8994a2a45177fc4634087627ec6",
+      "bytes": 143
+    },
+    "test_read_client.py": {
+      "sha256": "ebaec342d6f31e393a61547fe283849a60d792b7af07d0e08fae475ebc2d4a2e",
+      "bytes": 27872
+    },
+    "thread_gate.py": {
+      "sha256": "d62ae5d946af927d09538628905cf05a242ede47267e693b571736b79c50c7de",
+      "bytes": 5852
+    }
+  }
+}

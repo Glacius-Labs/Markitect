@@ -1,0 +1,45 @@
+{
+  "key": "s1-resumed-read-tool-20261008-r2",
+  "liveAuthorityAndSlotWindowVerified": true,
+  "actualReadinessAttemptOrdinal": 1,
+  "previousActualTrees": 13,
+  "previousActorReservations": 6,
+  "oldSchemaPinsPreserved": 13,
+  "schemaMembers": 27,
+  "actorNotificationMethods": [
+    "thread/tokenUsage/updated",
+    "turn/started",
+    "turn/completed",
+    "item/started",
+    "item/completed",
+    "item/agentMessage/delta",
+    "item/commandExecution/outputDelta",
+    "item/reasoning/summaryTextDelta",
+    "item/reasoning/summaryPartAdded",
+    "item/reasoning/textDelta"
+  ],
+  "generalThreadNotificationMapUnchanged": true,
+  "publicSentinelExcludedFromPrompt": true,
+  "binarySha256": "3553cd6e7df5a093d8cb8301cd8088a57e0971aba71ddbe0e67f7f44a15cdf68",
+  "archiveSha256": "3157e8a55329cf4e5346676c3ef0c308402d2420f8f916d6a5b7e0e9c84356ad",
+  "byteIdenticalHelpers": [
+    "thread_gate.py",
+    "protocol_failure.py",
+    "startup_observer.py"
+  ],
+  "unchangedFunctionAST": [
+    "validate_cwd",
+    "native_identity",
+    "strict_json",
+    "reject_provisional",
+    "load_module",
+    "consume_stderr",
+    "pump",
+    "startup_projection"
+  ],
+  "publicCwdIdentityAndTwoFilesVerified": true,
+  "runtimeStarts": 0,
+  "reservations": 0,
+  "externalRootAbsent": true,
+  "initialSourceValidationErrors": 0
+}

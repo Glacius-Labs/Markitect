@@ -1,0 +1,47 @@
+{
+  "key": "s1-resumed-read-tool-20261008-r2",
+  "basisAcceptedSha": "8676817608239451b8a5ad17ebc46482e2ed59f4",
+  "baseSha": "70b07573f98e47e45952eaef04403131642b724c",
+  "archiveSha256": "3157e8a55329cf4e5346676c3ef0c308402d2420f8f916d6a5b7e0e9c84356ad",
+  "schemaMembers": 27,
+  "preservedMembers": 13,
+  "addedMembers": 14,
+  "generalThreadMap": {
+    "thread/closed": "v2/ThreadClosedNotification.json",
+    "thread/started": "v2/ThreadStartedNotification.json",
+    "thread/status/changed": "v2/ThreadStatusChangedNotification.json"
+  },
+  "separateActorMap": {
+    "thread/tokenUsage/updated": "v2/ThreadTokenUsageUpdatedNotification.json",
+    "turn/started": "v2/TurnStartedNotification.json",
+    "turn/completed": "v2/TurnCompletedNotification.json",
+    "item/started": "v2/ItemStartedNotification.json",
+    "item/completed": "v2/ItemCompletedNotification.json",
+    "item/agentMessage/delta": "v2/AgentMessageDeltaNotification.json",
+    "item/commandExecution/outputDelta": "v2/CommandExecutionOutputDeltaNotification.json",
+    "item/reasoning/summaryTextDelta": "v2/ReasoningSummaryTextDeltaNotification.json",
+    "item/reasoning/summaryPartAdded": "v2/ReasoningSummaryPartAddedNotification.json",
+    "item/reasoning/textDelta": "v2/ReasoningTextDeltaNotification.json"
+  },
+  "terminalOnlyMap": {
+    "error": "v2/ErrorNotification.json"
+  },
+  "exactFinalMessagePhase": "final_answer",
+  "reasoningTextPersisted": false,
+  "ordinaryCommand": "Exact frozen Get-Content -LiteralPath native public probe-input.txt -Raw; no additional commands or shell/path variants",
+  "collectorReference": {
+    "path": "experiments/government-comparison/evidence/s1-common-runner-read-tool-20261008-r1/collector.py",
+    "sha256": "ee1f73d76de17afcf5a5ea892f820446a110b5593356b6b09d6aa1cf0e78a3a3",
+    "scope": "Proof logic reference only; old binary/argv/schema hashes/authority never executed"
+  },
+  "collectorChanges": [
+    "Conservative null-only pluginId/scriptPath check",
+    "Current pinned final_answer enum",
+    "Finite raw usage total/last/context projection with optional absence preserved and no double-counting",
+    "Retain validated safe public command/exit/source presence and lifecycle observed booleans"
+  ],
+  "threadGateScope": "Byte-identical gate, applied before collector thread response and to all three original thread lifecycle methods. Gate finish counters are local to gate, session actual counts are explicit.",
+  "firstFailureScope": "Byte-identical version1 helper; phase thread covers own thread and its single turn; newly introduced collector reasons may reduce to fixed unknown in firstFailure, while collector fixed stopReason remains in bounded receipt.",
+  "noWildcardAdmission": true,
+  "beforeLaunchFrozen": true
+}

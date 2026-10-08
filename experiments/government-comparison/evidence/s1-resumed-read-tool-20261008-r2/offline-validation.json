@@ -1,0 +1,21 @@
+{
+  "key": "s1-resumed-read-tool-20261008-r2",
+  "initialLiveProfileInputSchemaValidationPassed": true,
+  "sourceImplementationCorrectionBatches": 2,
+  "initialSchemaQueryRefinements": 1,
+  "testInvocations": 1,
+  "nativeStarts": 0,
+  "reservations": 0,
+  "startupProjectionStaticMaximumDefaultJsonBytes": 602,
+  "firstFailureHelperByteIdentical": true,
+  "threadGateByteIdentical": true,
+  "startupObserverByteIdentical": true,
+  "currentStderrCollectorAndPumpUnchanged": true,
+  "oldSuitesRerun": false,
+  "corrections": [
+    "Pinned .162 final_answer phase and explicit safe public proof",
+    "Latch validated item/completed command proof; stale snapshot regression covered"
+  ],
+  "testGroups": 12,
+  "testsPassed": true
+}
