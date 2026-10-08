@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-08T23:36:37Z",
+  "updatedUtc": "2026-10-08T23:57:05Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -439,16 +439,16 @@
       "name": "Scientist",
       "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
       "hostId": "local",
-      "afterCursor": "4993693c-4fc7-4021-b456-5988f9f71188:54",
-      "lastObservedStatus": "active",
+      "afterCursor": "4993693c-4fc7-4021-b456-5988f9f71188:55",
+      "lastObservedStatus": "idle",
       "activeTurn": {
         "id": "01a11ddb-974f-76b0-ab00-eee1efe9ae24",
-        "status": "inProgress"
+        "status": "completed"
       },
-      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac8284190cc8191809e7c8b15dbefff",
+      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac82d0780e08191b9e0d414ccdba79c",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "Run six real native-Codex exploratory case studies, independently evaluate and report intermediate data",
-      "latestProgress": "Runtime-binding package active. One original build failed because Scientist forced older baseGo; root verified raw ledger/log. One separate concrete existing-toolchain correction authorized; no actual Actor/trial starts.",
+      "latestProgress": "Clean ed9c5b3 closure reported: exactClassicMainbuildPASS/3metadataPASS/32then42mechanicsPASS, correctionbatches3/2deviation; no Actors/Trials. Root reconciliation/review pending.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-scientist/Markitect",
       "transferredDesignCommit": "b9e17c9896f14b4b1268e4bcb005395f5d324384",
       "candidateSha": "7d6964331f542462b4a29db3819f60c75083e3be",
@@ -7255,6 +7255,78 @@
           "grantCommit": "724f216",
           "prompt": "Dein materieller Toolchainbefund ist von Root aus Rohlog und vorab reserviertem Ledger bestätigt: GOTOOLCHAIN=local hat die Basis-Go1.24.1 erzwungen. Das ist ein konkreter Ausführungsfehler, kein Classic-Produktbefund. Die ursprüngliche Buildquote bleibt verbraucht; Originalbelege unverändert erhalten.\n\nRoot hat für genau diese Korrektur einen GETRENNTEN endlichen Grant dokumentiert und committed: 724f216, key v4-classic-existing-toolchain-build-correction-20261009, canonical coordination-state.json -> Scientist.evidence.v4ClassicExistingToolchainBuildCorrectionGrant. Issued2026-10-08T23:34:40Z, unverändertes Ende2026-10-09T00:10:57Z. Genau EIN zusätzlicher Buildversuch, Timeout min600s/verbleibende Grantzeit. Keine neuen Actors/Subagents/Provider/CodexCLI/Appserver/Anwendungsserver/Trials und keine Zusatzquoten für Tests, Metadaten oder Korrekturbatches.\n\nErmittle ausschließlich die bereits vorhandene passende Go1.27.1-Binary bzw. ihren vorhandenen Cachepfad, binde Pfad/Version/Hash und baue damit direkt im bereits eigenen isolierten exakten a97cbd5-Checkout. Keine Installation/Downloads einer Toolchain, globalen Konfigurationen oder Fallbacks. GOTOOLCHAIN=local passt nur, wenn die tatsächlich ausgewählte Binary selbst die erforderliche vorhandene Go1.27.1 ist. Gewöhnliche gepinnte Modulwiederherstellung bleibt innerhalb des Buildlimits erlaubt. Neue separate Reservation VOR dem einen Versuch. Falls vorhandene Toolchain nicht belegbar oder Build erneut fehlschlägt, genau diesen Punkt qualifiziert offen lassen und Paket schließen.\n\nBei Erfolg die ohnehin bereits erlaubten gewöhnlichen Classic-Metadaten-/Contextaufrufe mit der exakt gebundenen Binary erledigen; keine Nachfüllung der ursprünglichen übrigen Quoten. Unabhängigen DTO-/Dispatcher-/Auditroot-Teil wie beauftragt abschließen. Kein weiterer allgemeiner Vorbereitungs-/Diagnoseblock, keine private Oracleänderung und keine ungebundene Design-WIP-Adaption. Danach einmal sauberer Handoff/Blocker direkt an Overseer. Keine Empfangsbestätigung.",
           "promptSha256": "075258d639f615e542b1007a7f2b397602438ba26f0feca75f6ddc9dc77e4d91"
+        },
+        "v4ClassicMainRuntimeBindingClosureObserved": {
+          "observedUtc": "2026-10-08T23:54:37Z",
+          "reportedSha": "ed9c5b33434219c64a39366b7d1b1cd30fc64884",
+          "rootObservedClean": true,
+          "status": "Evidence and independent review in progress; not study admission",
+          "correctionBatchesReported": 3,
+          "correctionLimit": 2,
+          "grantDeviation": "Archival filename fix after two helper batches, no exemption/prereservation; preserve as Scientist operator deviation, not product failure",
+          "zeroActualActorsTrials": true
+        },
+        "v4ProspectiveOracleOutcomeReviewGrant": {
+          "key": "v4-prospective-oracle-outcome-independent-review-20261009",
+          "issuedUtc": "2026-10-08T23:57:05Z",
+          "notAfterUtc": "2026-10-09T00:12:05Z",
+          "maxOverallWallSeconds": 900,
+          "freshIndependentReviewerActivationsMax": 1,
+          "perReviewerWallSeconds": 600,
+          "maxConcurrentReviewers": 1,
+          "newProductActors": 0,
+          "providerAPICalls": 0,
+          "codexCLICalls": 0,
+          "appserverCalls": 0,
+          "applicationServerStarts": 0,
+          "fullTrials": 0,
+          "sourceBaseline": "ed9c5b33434219c64a39366b7d1b1cd30fc64884",
+          "publicPreparationSha": "c7d55105a1f0183d6517e263d15c0fadef7d4b2d",
+          "privateArchiveSha256": "b125e404f723d6c91223762dafa4c7d612a3f234aeebbe7d707f64511d4f3030",
+          "kind": "One independent prospective common-study setup review, counted separately from all arms and from fulltrial ceiling; not actual study cell or capability diagnosis",
+          "reason": "Known concrete oracle-applicability/restart-representation errors and Task5clarification/Task6equivalence require independent requirement-bound review before new matched comparisons. Candidate-independent review can finish while Design is active.",
+          "source": "Direct user Scientist tests/continues; finite authorized research and independent-review requirement in evaluation.md",
+          "conditions": [
+            "Reserve exactly one fresh fork_turns=none reviewer before native activation; no model/reasoning overrides, no childactors or followup/retry activation. Failedstart consumes1.",
+            "Only reviewed frozen publicTasks1-6/map/checks/rubric/commonoutcomes/q1intent axes and unchanged prospectiveprivatebundle. Do not include prior armresults/DesignWIP/otherchats/agentinventory/globalprocessreads. Sharedfilesystem boundary cooperative.",
+            "Reviewer privately verifies each holdout assertion derives solely from declared currently released requirements, prospective atomicity/restart fixes, Task5 oldTask4binary/sameDB/newlimit clarification, and Task6 independent mutationequivalence rule. Sharedoutcomes neutral to method; method/Designmigration criteria separate.",
+            "Read-only source review only: no program/test/build/server/CLIexecution, product/fixture/oracle edits, modelprovider/APIcalls, candidate measurement or scoring. Do not repair findings in this grant. No new general framework or capability work.",
+            "Reviewer output stored only in own Scientist evaluation evidence; public/rootcallback gives verdict, declaredrequirement IDs, exact reviewed hashes, concrete applicability/blocker metadata, usageunknowns and counts, never privateoracle content/solutions/testvectors. Privateverbatim report/ZIP stays away from implementers.",
+            "Record requested inherited actualprofile uncertainty, actual activation/start/end and elapsed, known usage only; no price/token estimates. Count this review as shared preparatory effort for every proposed comparison, not free assistance to one arm.",
+            "At deadline or first terminal result close with no retries/newquota; preserve all old37/115/264bindings, runtimebindingpacket and privatebundle. No blanket restart or waiting for Root approval within already authorized single review.",
+            "This grant does not admit any cell or allocate fulltrials. After review hold for exact clean Design callback/jointfreeze or concrete materialfinding; no generic preparation/diagnostic loop."
+          ],
+          "status": "Authorized/not yet dispatched",
+          "usage": null
+        },
+        "v4ClassicMainRuntimeBindingRootVerification": {
+          "verifiedUtc": "2026-10-08T23:57:05Z",
+          "sha": "ed9c5b33434219c64a39366b7d1b1cd30fc64884",
+          "clean": true,
+          "onlyNewFiles": 37,
+          "workingAndGitManifestBindings": 36,
+          "manifestGitEqual": true,
+          "preservedAcceptedV4Files": 37,
+          "preservedOlderEvidenceFiles": 115,
+          "classicCleanSha": "a97cbd5ef3e0b22b9e6397501047a4e01dc90204",
+          "classicSourceArchiveFiles": 32,
+          "classicWorkingGitArchiveBindings": 32,
+          "auditSourceExcerpts": 12,
+          "binarySha256": "0621e6ce827278d4410136cdc608286150d5d16caa566cc8d823891acc0712b8",
+          "toolchainHashMatch": true,
+          "metadataCalls": 3,
+          "focusedTestCounts": [
+            32,
+            42
+          ],
+          "correctionBatches": 3,
+          "correctionLimit": 2,
+          "grantDeviationPreserved": true,
+          "handoffSha256": "a7cd7b7333e791763cb25a3fa71c9a92e10946604de4b8e87043da274239cb0f",
+          "manifestSha256": "0bb7af63eccbefaa18b029e8fbc188f8baabb30d2c05ea305ade41535be9e5e6",
+          "dispatchConfigSha256": "447c1df2141a1de5dc46be40a991d8e08b2c127759e9ae35daf8190440f8bd75",
+          "independentPublicAuthorityReview": "pending /root/g2_review_authority",
+          "notStudyAdmission": true
         }
       },
       "classicHandoffReceived": true,
@@ -8432,13 +8504,13 @@
       "lastObservedStatus": "active",
       "candidateSha": "57fa01ce49fe797b403f4f7640e11820e6b1741f",
       "candidateStatus": "Previous clean reported handoff; current7-file WIP for native Luna High/appCLI streaming pinning; not a frozen test candidate",
-      "afterCursor": "003822b0-39a3-45aa-ad00-ed2b07a94fa4:6",
-      "lastAssistantMessageId": "msg_09c2fcf082a171e3016ac8288805fc819191f479809a48e77e",
+      "afterCursor": "003822b0-39a3-45aa-ad00-ed2b07a94fa4:7",
+      "lastAssistantMessageId": "msg_09c2fcf082a171e3016ac82d1e0c008191aab9e0b43b401539",
       "assignedMilestone": "Continue latest direct user-authorized native Luna High Shop verification; then immutable test-readiness handoff/callback",
       "monitoringAuthorizedUtc": "2026-10-08T22:51:11Z",
       "monitoringSource": "Direct user asks regularly watch Design, test it and assess whether it can replace Classic",
       "acceptance": "Not yet independently accepted; development/native test reports only",
-      "latestProgress": "Owner reports persistent finite counters across rework/checkrepair: default3reviews per manager/phase and2managerreworkrounds per run. Targetedruntimechecks ongoing, then fresh Shop/nativeLunaHigh ownertests; still active WIP, no clean readiness closure.",
+      "latestProgress": "Owner reports fullsource suite and31repositorygatesPASS; independentcodeReview found reworkleafstatus/noopwrite issues plus delegatingmanagerselection under repair; active WIP, no cleanreadinesspin. Root has not rerun checks.",
       "evidence": {
         "observedCurrentHead": "57fa01ce49fe797b403f4f7640e11820e6b1741f",
         "observedBranch": "codex/model-driven-delivery",
@@ -8463,7 +8535,7 @@
       }
     }
   ],
-  "nextAction": "Scientist completes exact ClassicMain/dispatcher runtime binding with one separately recorded existingGo1.27.1 build correction, unchanged deadline; Design continues own loop/readiness work. Then exact matched freeze and finite actual executiongrant, no generic prep loop.",
+  "nextAction": "Finish Root publicruntimebinding review and Scientist one independent prospective common oracle/outcome review while Design closes its own repair/native tests. Then exactcleanDesignhandoff+jointfreeze+finiteActualgrant within8trials/2questions. No further genericprep/diagnostics.",
   "boundaries": {
     "governmentPublication": false,
     "automaticClassicReplacement": false,
@@ -9679,6 +9751,18 @@
       "usage": null,
       "category": "Root coordination review outside experimental Actor ledger",
       "status": "Completed: offline-only qualified acceptance; concrete binary/profile/dispatcher/root/staging/globalbudget bindings required, no capability loop."
+    },
+    {
+      "key": "v4-runtime-binding-independent-authority-review-20261009",
+      "issuedUtc": "2026-10-08T23:54:37Z",
+      "agent": "/root/g2_review_authority",
+      "maxWallSeconds": 360,
+      "maxActivations": 1,
+      "readOnly": true,
+      "experimentalActors": 0,
+      "testsBuildsProviderNativeExecutions": 0,
+      "scope": "Public ed9c5b3 runtimebinding/sourcecontract, source/pin/timeline/deviation and actual admissionboundary; no privateoracle; no writes/tests",
+      "usage": null
     }
   ]
 }
