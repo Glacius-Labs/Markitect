@@ -103,7 +103,7 @@ func validateDiscoveryRequest(request DiscoveryRequest) error {
 	if request.APIVersion != DiscoveryVersion || !validID(request.ID) || strings.TrimSpace(request.Purpose) == "" || strings.TrimSpace(request.Review) == "" {
 		return errors.New("discovery requires supported apiVersion, stable ID, purpose, and review reference")
 	}
-	if len(request.Commit) != 40 && len(request.Commit) != 64 || request.Commit != strings.ToLower(request.Commit) {
+	if !validFullCommit(request.Commit) {
 		return errors.New("discovery requires a full lowercase Git commit ID")
 	}
 	if len(request.Selected) == 0 || len(request.Selected) > maxSelectedFiles {

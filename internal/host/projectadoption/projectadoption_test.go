@@ -1,9 +1,11 @@
 package projectadoption
 
 import (
+	"encoding/json"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -15,7 +17,7 @@ func TestDiscoveryUsesOnlySelectedBlobsAtFullCommit(t *testing.T) {
 	root, commit := committedRepository(t, map[string]string{
 		"src/orders/cancel.go": "package orders\nfunc Cancel() {}\n",
 		"docs/order.md":        "Cancellation is permitted before dispatch.\n",
-		"runtime/test.log":     "command: go test ./orders; exit: 0; runner: " + strings.Repeat("a", 64) + "\n",
+		"runtime/test.log":     testRuntimeRecord("package orders\nfunc Cancel() {}\n"),
 		"docs/unselected.md":   "not evidence for this review\n",
 	})
 	request := DiscoveryRequest{
@@ -86,11 +88,46 @@ func TestCurrentBindingsDeriveSchemaAndBuildIdentity(t *testing.T) {
 	}
 }
 
+func TestFilesystemPathComparisonUsesDirectoryIdentity(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("Windows path components are case-insensitive")
+	}
+	parent := t.TempDir()
+	upper := filepath.Join(parent, "Repo")
+	lower := filepath.Join(parent, "repo")
+	if err := os.Mkdir(upper, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Mkdir(lower, 0o755); err != nil {
+		if os.IsExist(err) {
+			t.Skip("filesystem treats case-variant directory names as aliases")
+		}
+		t.Fatal(err)
+	}
+	upperInfo, err := os.Stat(upper)
+	if err != nil {
+		t.Fatal(err)
+	}
+	lowerInfo, err := os.Stat(lower)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if os.SameFile(upperInfo, lowerInfo) {
+		t.Skip("filesystem treats case-variant directory names as aliases")
+	}
+	if sameFilesystemPath(upper, lower) {
+		t.Fatal("distinct case-sensitive POSIX directories must not alias")
+	}
+	if !sameFilesystemPath(upper, filepath.Join(upper, ".")) {
+		t.Fatal("the same directory through a path alias should compare equal")
+	}
+}
+
 func TestDistillationPreservesContradictionsAndSeparatesEvidenceMethods(t *testing.T) {
 	root, commit := committedRepository(t, map[string]string{
 		"src/orders/cancel.go": "package orders\nfunc Cancel() {}\n",
 		"docs/order.md":        "Cancellation is permitted before dispatch.\n",
-		"runtime/test.log":     "command: go test ./orders; exit: 0; runner: " + strings.Repeat("a", 64) + "\n",
+		"runtime/test.log":     testRuntimeRecord("package orders\nfunc Cancel() {}\n"),
 	})
 	request := DiscoveryRequest{
 		APIVersion: DiscoveryVersion, ID: "discovery-2", Purpose: "Assess cancellation", Review: "review-18",
@@ -114,7 +151,7 @@ func TestDistillationPreservesContradictionsAndSeparatesEvidenceMethods(t *testi
 	}
 	bad := report
 	bad.Claims = append([]Claim(nil), report.Claims...)
-	bad.Claims[0].Method = "runtime-evidence"
+	bad.Claims[0].Method = "submitted-record"
 	SealDistillation(&bad)
 	if err := ValidateDistillation(discovery, bad); err == nil {
 		t.Fatal("static source observation must not be relabeled as runtime evidence")
@@ -127,13 +164,89 @@ func TestDistillationPreservesContradictionsAndSeparatesEvidenceMethods(t *testi
 	if err := ValidateDistillation(discovery, bad); err == nil {
 		t.Fatal("out-of-range line evidence should be rejected")
 	}
+	bad = report
+	bad.Claims = append([]Claim(nil), report.Claims...)
+	for i, claim := range bad.Claims {
+		if claim.Kind == "submitted-runtime-record" {
+			changedRuntime := *claim.Runtime
+			changedRuntime.ExitCode = intValue(1)
+			bad.Claims[i].Runtime = &changedRuntime
+		}
+	}
+	SealDistillation(&bad)
+	if err := ValidateDistillation(discovery, bad); err == nil {
+		t.Fatal("exit code 1 must not match the structured record with exit code 0")
+	}
+	duplicateDiscovery := discovery
+	duplicateDiscovery.Evidence = append([]Evidence(nil), discovery.Evidence...)
+	var duplicateRecord string
+	for i, evidence := range duplicateDiscovery.Evidence {
+		if evidence.ID == "test-run" {
+			duplicateRecord = strings.Replace(evidence.Content, `"exitCode":0`, `"exitCode":0,"exitCode":10`, 1)
+			if duplicateRecord == evidence.Content {
+				t.Fatal("test runtime record did not contain the expected numeric exit code")
+			}
+			duplicateDiscovery.Evidence[i].Content = duplicateRecord
+			duplicateDiscovery.Evidence[i].Digest = digestBytes([]byte(duplicateRecord))
+		}
+	}
+	SealDiscovery(&duplicateDiscovery)
+	duplicateReport := report
+	duplicateReport.DiscoveryDigest = duplicateDiscovery.Digest
+	duplicateReport.Claims = append([]Claim(nil), report.Claims...)
+	for i, claim := range duplicateReport.Claims {
+		if claim.Kind == "submitted-runtime-record" {
+			claim.Evidence = append([]EvidenceRef(nil), claim.Evidence...)
+			claim.Evidence[0].Excerpt = strings.TrimSpace(duplicateRecord)
+			duplicateReport.Claims[i] = claim
+		}
+	}
+	SealDistillation(&duplicateReport)
+	if err := ValidateDistillation(duplicateDiscovery, duplicateReport); err == nil {
+		t.Fatal("duplicate structured runtime-record fields must be rejected")
+	}
+	sameCommitDiscovery := discovery
+	sameCommitDiscovery.Evidence = append([]Evidence(nil), discovery.Evidence...)
+	for i, evidence := range sameCommitDiscovery.Evidence {
+		if evidence.ID == "test-run" {
+			content := testRuntimeRecordAtRevision("package orders\nfunc Cancel() {}\n", discovery.Commit)
+			sameCommitDiscovery.Evidence[i].Content = content
+			sameCommitDiscovery.Evidence[i].Digest = digestBytes([]byte(content))
+		}
+	}
+	SealDiscovery(&sameCommitDiscovery)
+	sameCommitReport := validDistillation(sameCommitDiscovery)
+	if err := ValidateDistillation(sameCommitDiscovery, sameCommitReport); err != nil {
+		t.Fatalf("same-commit submitted record with selected matching inputs rejected: %v", err)
+	}
+	bad = sameCommitReport
+	bad.Claims = append([]Claim(nil), sameCommitReport.Claims...)
+	for i, claim := range bad.Claims {
+		if claim.Kind == "submitted-runtime-record" {
+			changedRuntime := *claim.Runtime
+			changedRuntime.Inputs = append([]RuntimeInput(nil), claim.Runtime.Inputs...)
+			changedRuntime.Inputs[0].Digest = strings.Repeat("b", 64)
+			bad.Claims[i].Runtime = &changedRuntime
+		}
+	}
+	SealDistillation(&bad)
+	if err := ValidateDistillation(sameCommitDiscovery, bad); err == nil {
+		t.Fatal("same-commit runtime input must bind the selected source digest")
+	}
+	bad = report
+	bad.Questions = append([]Question(nil), report.Questions...)
+	bad.Questions[0].ClaimIDs = []string{"source-observation", "ownership-hypothesis"}
+	SealDistillation(&bad)
+	if err := ValidateDistillation(discovery, bad); err == nil {
+		t.Fatal("same-scope question that omits one conflicting claim must not resolve the contradiction")
+	}
 }
 
 func TestResolutionRequiresExplicitPerScopeDecisionAndAnswers(t *testing.T) {
 	root, commit := committedRepository(t, map[string]string{
 		"src/orders/cancel.go": "package orders\nfunc Cancel() {}\n",
 		"docs/order.md":        "Cancellation is permitted before dispatch.\n",
-		"runtime/test.log":     "command: go test ./orders; exit: 0; runner: " + strings.Repeat("a", 64) + "\n",
+		"runtime/test.log":     testRuntimeRecord("package orders\nfunc Cancel() {}\n"),
 	})
 	discovery, err := Discover(root, DiscoveryRequest{
 		APIVersion: DiscoveryVersion, ID: "discovery-3", Purpose: "Assess cancellation", Review: "review-19",
@@ -170,7 +283,7 @@ func TestPlanAndApplyAdoptOnlyResolvedModelScope(t *testing.T) {
 	root, _ := committedRepository(t, map[string]string{
 		"src/orders/cancel.go": "package orders\nfunc Cancel() {}\n",
 		"docs/order.md":        "Cancellation is permitted before dispatch.\n",
-		"runtime/test.log":     "command: go test ./orders; exit: 0; runner: " + strings.Repeat("a", 64) + "\n",
+		"runtime/test.log":     testRuntimeRecord("package orders\nfunc Cancel() {}\n"),
 	})
 	gitRun(t, root, "checkout", "-b", "codex/project-adoption-test")
 	if _, err := projectwork.Init(root, "Brownfield fixture", true); err != nil {
@@ -226,6 +339,9 @@ func TestPlanAndApplyAdoptOnlyResolvedModelScope(t *testing.T) {
 		Scopes:    []ScopeResolution{{ScopeID: "orders", Status: "adopt", Reason: "Confirmed scope"}, {ScopeID: "inventory", Status: "defer", Reason: "Not reviewed"}},
 	}
 	SealResolution(&resolution)
+	if _, err := PlanAdoption(root, target, discovery, report, resolution, strings.Repeat("e", 64), strings.Repeat("f", 64)); err == nil {
+		t.Fatal("adoption must reject caller-invented schema/build bindings")
+	}
 	plan, err := PlanAdoption(root, target, discovery, report, resolution, schemaDigest, buildDigest)
 	if err != nil {
 		t.Fatal(err)
@@ -293,10 +409,10 @@ func validDistillation(discovery Discovery) Distillation {
 		Evidence:  []EvidenceRef{{EvidenceID: doc.ID, StartLine: 1, EndLine: 1, Excerpt: "Cancellation is permitted before dispatch."}}, Uncertainty: []string{"No runtime conformance evidence is implied."},
 	}
 	runtimeClaim := Claim{
-		ID: "test-observation", ScopeID: "orders", Kind: "runtime-observation", Method: "runtime-evidence",
-		Statement: "The recorded test command exited successfully.",
+		ID: "test-observation", ScopeID: "orders", Kind: "submitted-runtime-record", Method: "submitted-record",
+		Statement: "The submitted runtime record reports a successful test command; execution is not authenticated.",
 		Evidence:  []EvidenceRef{{EvidenceID: run.ID, StartLine: 1, EndLine: 1, Excerpt: strings.TrimSpace(run.Content)}}, Uncertainty: []string{"This does not establish production behavior."},
-		Runtime: &RuntimeObservation{EvidenceID: run.ID, Command: []string{"go", "test", "./orders"}, ExitCode: intValue(0), RunnerDigest: strings.Repeat("a", 64)},
+		Runtime: runtimeObservationFromEvidence(run, discovery.Commit),
 	}
 	hypothesis := Claim{
 		ID: "ownership-hypothesis", ScopeID: "orders", Kind: "hypothesis", Method: "synthesis",
@@ -328,6 +444,41 @@ func discoveryEvidence(discovery Discovery, id string) Evidence {
 		}
 	}
 	panic("missing test evidence " + id)
+}
+
+func testRuntimeRecord(source string) string {
+	return testRuntimeRecordAtRevision(source, strings.Repeat("0", 40))
+}
+
+func testRuntimeRecordAtRevision(source, revision string) string {
+	record := submittedRuntimeRecord{
+		APIVersion: RuntimeRecordVersion, RecordSourceRevision: revision,
+		Command: []string{"go", "test", "./orders"}, ExitCode: intValue(0),
+		RunnerDigest: strings.Repeat("a", 64),
+		Inputs:       []RuntimeInput{{Path: "src/orders/cancel.go", Digest: digestBytes([]byte(source))}},
+	}
+	data, err := json.Marshal(record)
+	if err != nil {
+		panic(err)
+	}
+	return string(data) + "\n"
+}
+
+func runtimeObservationFromEvidence(evidence Evidence, discoveryCommit string) *RuntimeObservation {
+	var record submittedRuntimeRecord
+	if err := decodeClosedJSON([]byte(evidence.Content), &record); err != nil {
+		panic(err)
+	}
+	relation := "historical"
+	if record.RecordSourceRevision == discoveryCommit {
+		relation = "same-discovery-commit"
+	}
+	return &RuntimeObservation{
+		EvidenceID: evidence.ID, RecordSourceRevision: record.RecordSourceRevision,
+		SourceRelation: relation, Command: append([]string(nil), record.Command...),
+		ExitCode: intValue(*record.ExitCode), RunnerDigest: record.RunnerDigest,
+		Inputs: append([]RuntimeInput(nil), record.Inputs...),
+	}
 }
 
 func boolValue(value bool) *bool { return &value }

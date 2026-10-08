@@ -3,7 +3,7 @@ package projectadoption
 import (
 	"errors"
 	"fmt"
-	"path/filepath"
+	"os"
 	"sort"
 	"strings"
 
@@ -18,6 +18,13 @@ import (
 func PlanAdoption(sourceRoot string, target *projectwork.Project, discovery Discovery, report Distillation, resolution Resolution, schemaDigest, buildDigest string) (AdoptionPlan, error) {
 	if target == nil || target.Snapshot == nil || target.Provisional {
 		return AdoptionPlan{}, errors.New("adoption requires a loaded committed target project snapshot")
+	}
+	activeSchemaDigest, activeBuildDigest, err := CurrentBindings(projectmodel.Schema())
+	if err != nil {
+		return AdoptionPlan{}, fmt.Errorf("derive trusted active project bindings: %w", err)
+	}
+	if schemaDigest != activeSchemaDigest || buildDigest != activeBuildDigest {
+		return AdoptionPlan{}, errors.New("caller schema/build bindings do not match the active schema and running executable")
 	}
 	if err := RefreshSource(sourceRoot, discovery); err != nil {
 		return AdoptionPlan{}, err
@@ -241,12 +248,12 @@ func sameFilesystemPath(a, b string) bool {
 	if a == "" || b == "" {
 		return false
 	}
-	left, leftErr := filepath.Abs(a)
-	right, rightErr := filepath.Abs(b)
-	if leftErr != nil || rightErr != nil {
+	left, leftErr := os.Stat(a)
+	right, rightErr := os.Stat(b)
+	if leftErr != nil || rightErr != nil || !left.IsDir() || !right.IsDir() {
 		return false
 	}
-	return strings.EqualFold(filepath.Clean(left), filepath.Clean(right))
+	return os.SameFile(left, right)
 }
 
 func sortedMapKeys(values map[string]bool) []string {
