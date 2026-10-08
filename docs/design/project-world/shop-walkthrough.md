@@ -1,6 +1,8 @@
 # Ein kleines Shop-Projekt mit Markitect
 
-Status: ausgearbeiteter Zielentwurf. Die folgenden Dateien, Bedienaktionen und Agentenabläufe sind ein Vorschlag für das künftige Produkt. Das [konkrete YAML-Beispiel](shop-example/README.md) ist ein lokal prüfbarer Designbeleg, keine implementierte Shop-Anwendung und kein aktueller CLI-Vertrag. Dieser Walkthrough beantwortet die fünf Benutzerfragen; das [Laufzeitprotokoll](operating-protocol.md) besitzt die detaillierten Ausführungsverträge.
+Historischer Entwurf. Den aktuellen Dateibaum, das implementierte Modell und die Bedienung zeigen das [ausführbare Shop-Projekt](../../../examples/project-world/README.md) und der [Arbeitsablauf](../../project-workflow.md).
+
+Status des folgenden Belegs: ausgearbeiteter Zielentwurf. Die folgenden Dateien, Bedienaktionen und Agentenabläufe sind ein Vorschlag für das künftige Produkt. Das [konkrete YAML-Beispiel](shop-example/README.md) ist ein lokal prüfbarer Designbeleg, keine implementierte Shop-Anwendung und kein aktueller CLI-Vertrag. Dieser Walkthrough beantwortet die fünf Benutzerfragen; das [Laufzeitprotokoll](operating-protocol.md) besitzt die detaillierten Ausführungsverträge.
 
 Fortschreibung: Die nachfolgende Dateistruktur und die getrennten Area-/Namespace-/Moduldefinitionen zeigen die erste Iteration. Der [neueste Zielstand](conceptual-modules.md) führt Markitect-eigene Dateien unter `.markitect/` zusammen, gliedert nach fachlichen Slices und empfiehlt `manager.yaml` als gemeinsame Deklaration. Der Nutzer arbeitet über Gespräch und lesbare Spezifikation. Dieser Walkthrough ist noch nicht vollständig darauf migriert.
 
@@ -83,9 +85,9 @@ Die drei wesentlichen Dinge sind damit räumlich erkennbar: `model/` enthält da
 
 ### Organisation, Module und Namespaces
 
-Der [Organisationsbeleg](shop-example/project/model/organization.yaml) enthält fünf Bereiche mit `parent` und genau einem `manager`. Jede Managerrolle ist auf einen eigenen AI-Agenten gebunden. Zwei Rollen können dasselbe AI-Modell verwenden, teilen aber keinen Gesprächskontext.
+Der [Organisationsbeleg](shop-example/project/model/organization.yaml.example) enthält fünf Bereiche mit `parent` und genau einem `manager`. Jede Managerrolle ist auf einen eigenen AI-Agenten gebunden. Zwei Rollen können dasselbe AI-Modell verwenden, teilen aber keinen Gesprächskontext.
 
-[Module und Namespaces](shop-example/project/model/modules.yaml) sind eigene verantwortete Gegenstände. Im Beispiel besitzt Bestellungen das Modul `sales-domain` und den Namespace `sales`. Handel verantwortet die übergreifenden Regeln. Der Use Case darf sich fachlich im Namespace `sales` befinden und trotzdem von Handel integriert werden. Namespacepflege, kanonische Ownership einer Definition und Ausführung sind ausdrückliche Beziehungen; sie werden nicht aus gleicher Schreibweise abgeleitet.
+[Module und Namespaces](shop-example/project/model/modules.yaml.example) sind eigene verantwortete Gegenstände. Im Beispiel besitzt Bestellungen das Modul `sales-domain` und den Namespace `sales`. Handel verantwortet die übergreifenden Regeln. Der Use Case darf sich fachlich im Namespace `sales` befinden und trotzdem von Handel integriert werden. Namespacepflege, kanonische Ownership einer Definition und Ausführung sind ausdrückliche Beziehungen; sie werden nicht aus gleicher Schreibweise abgeleitet.
 
 Das kleine Projekt verwendet lokale Modellmodule. Ihre Revision wird durch Quelle und Inhaltsdigest gebunden. Ein später veröffentlichtes wiederverwendbares Modul bekäme eine unveränderliche Paketversion, einen Maintainer und eine ausdrücklich verantwortete lokale Adoption. Die Verwaltung solcher Pakete ist nicht nötig, um mit dem kleinen Projekt zu beginnen.
 
@@ -106,7 +108,7 @@ Der Compiler kann Identitäten, Typen und ausdrückliche Verwendungen prüfen. D
 
 ### Regeln und Use Cases
 
-Der [Zielstand der Bestellungen](shop-example/project/model/sales.yaml) enthält lokale Regeln. Die [übergreifende Regel](shop-example/project/model/commerce.yaml) beschreibt das Zusammenspiel. Ein Auszug aus der vorgeschlagenen Syntax lautet:
+Der [Zielstand der Bestellungen](shop-example/project/model/sales.yaml.example) enthält lokale Regeln. Die [übergreifende Regel](shop-example/project/model/commerce.yaml.example) beschreibt das Zusammenspiel. Ein Auszug aus der vorgeschlagenen Syntax lautet:
 
 ```yaml
 kind: Rule
@@ -130,9 +132,9 @@ Die Texte sind lesbare kanonische Vorgaben, kein eingebautes ausführbares Bedin
 
 ### Architektur, Arbeitsweise und Realisierung
 
-[Engineering](shop-example/project/model/engineering.yaml) beschreibt die gemeinsame Transaktion, lokale Entscheidungsfreiheit, den nächsten befugten Vorfahren bei Konflikten und wenige dem Nutzer vorbehaltene Grundsatzentscheidungen. Der Prozess legt den Lebenszyklus einer Änderung fest; der Workflow benennt seine konkreten Schritte. Beide besitzen einen Verantwortlichen.
+[Engineering](shop-example/project/model/engineering.yaml.example) beschreibt die gemeinsame Transaktion, lokale Entscheidungsfreiheit, den nächsten befugten Vorfahren bei Konflikten und wenige dem Nutzer vorbehaltene Grundsatzentscheidungen. Der Prozess legt den Lebenszyklus einer Änderung fest; der Workflow benennt seine konkreten Schritte. Beide besitzen einen Verantwortlichen.
 
-[Realisierungen](shop-example/project/model/realization.yaml) ordnen Modellpflichten existierenden Dateien, verantworteten Schreibbereichen und Prüfungen zu. Bekannte Pfade werden ausdrücklich benannt. Neue Detailpfade können innerhalb des delegierten Bereichs erst im Arbeitsplan ausgewählt und nach tatsächlicher Umsetzung eingetragen werden. Nicht jede Methode und jeder Dateiname muss im Sollmodell vorgegeben sein.
+[Realisierungen](shop-example/project/model/realization.yaml.example) ordnen Modellpflichten existierenden Dateien, verantworteten Schreibbereichen und Prüfungen zu. Bekannte Pfade werden ausdrücklich benannt. Neue Detailpfade können innerhalb des delegierten Bereichs erst im Arbeitsplan ausgewählt und nach tatsächlicher Umsetzung eingetragen werden. Nicht jede Methode und jeder Dateiname muss im Sollmodell vorgegeben sein.
 
 ## 4. Wie arbeitet man damit bei einer Änderung?
 

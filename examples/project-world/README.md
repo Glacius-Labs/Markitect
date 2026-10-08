@@ -14,6 +14,7 @@ $fixtureRepo = Join-Path $env:TEMP ("markitect-project-world-" + [guid]::NewGuid
 Copy-Item .\examples\project-world $fixtureRepo -Recurse
 Push-Location $fixtureRepo
 git init -b feature/project-world
+git config core.autocrlf false
 git add .
 git commit -m "Initialize project-world fixture"
 python -B -m unittest discover -s tests -v
