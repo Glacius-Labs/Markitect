@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-08T21:26:29Z",
+  "updatedUtc": "2026-10-08T21:28:26Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -8,14 +8,14 @@
   "sourceBaseline": "1ea5c76f55526fc4d721e865885436153f48b497",
   "automation": {
     "id": "jev-nach-markitect-grundmodell-untersuchen",
-    "status": "PAUSED",
+    "status": "ACTIVE",
     "intervalMinutes": 120,
     "reportEveryReview": false,
     "reportTimezone": "Europe/Berlin",
-    "lastVerifiedUtc": "2026-10-08T21:17:14Z",
-    "verification": "automation_update returned PAUSED; exact saved TOML independently verified PAUSED, unchanged name/prompt/root target/two-hour cadence.",
+    "lastVerifiedUtc": "2026-10-08T21:28:26Z",
+    "verification": "automation_update returned ACTIVE; exact saved TOML independently verified ACTIVE,2h,root target; new native actual-six-case mandate replaces stale diagnostic prompt.",
     "userReaffirmed": "Direct 8 October request: callbacks at completion/need, fallback every 1-3 hours, chosen 2h; unchanged routine summaries suppressed.",
-    "latestMandateUpdatedUtc": "2026-10-08T01:37:45Z",
+    "latestMandateUpdatedUtc": "2026-10-08T21:28:26Z",
     "reportOnMeaningfulChange": true,
     "mode": "event-driven callbacks with two-hour fallback",
     "coordinatedThreadIds": [
@@ -29,8 +29,8 @@
     "pausedUtc": "2026-10-08T21:17:14Z",
     "pauseReason": "Final resumed two-actual-attempt window closed after R3; S1/read/write/build unproved, all six cells NOT RUN. Evidence/effort synthesis supplemented; no new grant or routine polling.",
     "resumptionRequestedUtc": "2026-10-08T19:58:49Z",
-    "resumedUtc": "2026-10-08T20:00:26Z",
-    "promptSha256": "310ccb57b77bd4f5f6b5bf0af96fda2a3cd43073256539b9c88a77e0c28775ee"
+    "resumedUtc": "2026-10-08T21:28:26Z",
+    "promptSha256": "20323d83678f51d7cf179fbd53015a00c7c7f00ac7c4f7ba841c111a6fcfe85b"
   },
   "threads": [
     {
@@ -449,9 +449,12 @@
       "lastAssignment": {
         "key": "native-codex-exploratory-v3-20261008",
         "authorizedUtc": "2026-10-08T21:26:29Z",
-        "status": "Authorized actual six-cell native pilot; pending once-only dispatch",
+        "status": "Dispatched once; actual six-cell native pilot authorized, awaiting first actual cell-start callback.",
         "grantPointer": "threads[name=Scientist].evidence.nativeCaseStudiesV3Grant",
-        "scope": "AUTHORIZED common finite preparation plus six actual base trials after prospective independent freeze verification; no further Root go needed."
+        "scope": "AUTHORIZED common finite preparation plus six actual base trials after prospective independent freeze verification; no further Root go needed.",
+        "sentUtc": "2026-10-08T21:28:26Z",
+        "grantCommit": "f4ecb27",
+        "deliveryConfirmed": true
       },
       "evidence": {
         "sourcesHashChecked": 37,
@@ -8571,6 +8574,14 @@
       "runtimeGrantKey": "s1-account-update-routing-read-20261008-r3",
       "remainingRuntimeAuthority": 0,
       "synthesisPath": "docs/design/government/assessment-2026-10-08.md"
+    },
+    {
+      "event": "Direct user requests case studies actually run; native-v3 execution resumed",
+      "verifiedUtc": "2026-10-08T21:28:26Z",
+      "status": "ACTIVE",
+      "intervalMinutes": 120,
+      "runtimeGrantKey": "native-codex-exploratory-v3-20261008",
+      "routineReports": false
     }
   ],
   "communicationPolicy": {
