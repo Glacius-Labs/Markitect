@@ -516,14 +516,15 @@ func TestRunRuntimeFileChangesConfigurationDigest(t *testing.T) {
 		t.Fatal(err)
 	}
 	config := testConfig()
+	t.Setenv(helperEnv, "1")
+	t.Setenv("MARKITECT_AGENTEXEC_TEST_MODE", "")
+	t.Setenv("MARKITECT_AGENTEXEC_TEST_ROLE", "")
+	config.EnvironmentAllowlist = stringList(helperEnv, "MARKITECT_AGENTEXEC_TEST_MODE", "MARKITECT_AGENTEXEC_TEST_ROLE")
 	config.RuntimeFiles = []RuntimeFile{{Path: script, Mode: "0644", Digest: digest(content)}}
 	fingerprinted, err := Fingerprint(config)
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Setenv(helperEnv, "1")
-	t.Setenv("MARKITECT_AGENTEXEC_TEST_MODE", "")
-	t.Setenv("MARKITECT_AGENTEXEC_TEST_ROLE", "")
 	first, err := Run(context.Background(), config, testRequest(RoleExecutor), opts)
 	if err != nil {
 		t.Fatal(err)
@@ -549,6 +550,69 @@ func TestRunRuntimeFileChangesConfigurationDigest(t *testing.T) {
 		t.Fatal("changing the selected runner wrapper did not invalidate config identity")
 	}
 }
+
+func TestEnvironmentAllowlistSemanticsAndDigest(t *testing.T) {
+	selected := []string{"MARKITECT_AGENTEXEC_TEST_SECRET"}
+	child, envDigest, err := resolveEnvironment(&selected, []string{
+		"MARKITECT_AGENTEXEC_TEST_SECRET=secret-value-must-not-appear",
+		"UNSELECTED=value",
+		"MARKITECT_AGENT_CONFIG_JSON=ambient-config",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(child) != 1 || child[0] != "MARKITECT_AGENTEXEC_TEST_SECRET=secret-value-must-not-appear" {
+		t.Fatalf("allowlist did not select exactly its named environment value: %#v", child)
+	}
+	if strings.Contains(envDigest, "secret-value-must-not-appear") || strings.Contains(envDigest, "sha256:secret") {
+		t.Fatal("environment fingerprint exposed a value")
+	}
+	empty := []string{}
+	child, _, err = resolveEnvironment(&empty, []string{"ONLY=value"})
+	if err != nil || len(child) != 0 {
+		t.Fatalf("non-nil empty allowlist must inherit nothing, got %#v, %v", child, err)
+	}
+	child, _, err = resolveEnvironment(nil, []string{"LEGACY=value"})
+	if err != nil || len(child) != 1 || child[0] != "LEGACY=value" {
+		t.Fatalf("nil allowlist must preserve legacy inheritance, got %#v, %v", child, err)
+	}
+}
+
+func TestEnvironmentAllowlistIsBoundIntoFingerprintAndReceipt(t *testing.T) {
+	config := testConfig()
+	config.EnvironmentAllowlist = stringList("MARKITECT_AGENTEXEC_TEST_SECRET", helperEnv, "MARKITECT_AGENTEXEC_TEST_MODE", "MARKITECT_AGENTEXEC_TEST_ROLE")
+	t.Setenv(helperEnv, "1")
+	t.Setenv("MARKITECT_AGENTEXEC_TEST_MODE", "")
+	t.Setenv("MARKITECT_AGENTEXEC_TEST_ROLE", "")
+	t.Setenv("MARKITECT_AGENTEXEC_TEST_SECRET", "secret-value-must-not-appear")
+	fingerprint, err := Fingerprint(config)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("MARKITECT_AGENTEXEC_TEST_SECRET", "changed-secret")
+	changed, err := Fingerprint(config)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if fingerprint == changed {
+		t.Fatal("changing an allowlisted effective value did not change the fingerprint")
+	}
+	t.Setenv("MARKITECT_AGENTEXEC_TEST_SECRET", "secret-value-must-not-appear")
+	opts := testOptions(t)
+	result, err := Run(context.Background(), config, testRequest(RoleExecutor), opts)
+	if err != nil {
+		t.Fatal(err)
+	}
+	encoded, err := json.Marshal(result.Receipt)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.Receipt.EnvironmentDigest == "" || strings.Contains(string(encoded), "secret-value-must-not-appear") {
+		t.Fatalf("receipt must bind the effective environment without exposing its values: %s", encoded)
+	}
+}
+
+func stringList(values ...string) *[]string { return &values }
 
 func TestRuntimeFileCombinedBoundRejectsOversizedInput(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "oversized-runtime.bin")
