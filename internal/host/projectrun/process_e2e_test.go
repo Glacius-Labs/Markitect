@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"sync/atomic"
 	"testing"
@@ -56,7 +57,12 @@ func TestProjectRunExecutorProcess(t *testing.T) {
 				Owns    []string `json:"owns"`
 			} `json:"manager"`
 		} `json:"manager"`
-		ChildReports []struct {
+		GlobalGoal        string   `json:"globalGoal"`
+		OwnTask           string   `json:"ownTask"`
+		RepairDiagnostic  string   `json:"repairDiagnostic"`
+		CandidateDigest   string   `json:"candidateDigest"`
+		AllowedWritePaths []string `json:"allowedWritePaths"`
+		ChildReports      []struct {
 			ManagerID string `json:"managerId"`
 			Summary   string `json:"summary"`
 			Status    string `json:"status"`
@@ -71,7 +77,10 @@ func TestProjectRunExecutorProcess(t *testing.T) {
 	}
 	if err := appendE2ELog(os.Getenv(e2eLogEnv), map[string]any{
 		"phase": contextPayload.Phase, "managerId": contextPayload.Manager.Manager.ID,
-		"directChildren": contextPayload.DirectChildren, "childReports": contextPayload.ChildReports,
+		"globalGoal": contextPayload.GlobalGoal, "ownTask": contextPayload.OwnTask,
+		"repairDiagnostic": contextPayload.RepairDiagnostic, "candidateDigest": contextPayload.CandidateDigest,
+		"allowedWritePaths": contextPayload.AllowedWritePaths,
+		"directChildren":    contextPayload.DirectChildren, "childReports": contextPayload.ChildReports,
 		"schema": contextPayload.ResponseSchema, "sourceRevision": invocation.Request.SourceRevision,
 		"modelDigest": invocation.Request.ModelDigest, "modulePin": invocation.Request.ModulePin,
 		"projectionId": invocation.Request.ProjectionID, "scopeIds": invocation.Request.ScopeIDs,
@@ -110,6 +119,9 @@ func TestProjectRunExecutorProcess(t *testing.T) {
 				processExit(2, "unexpected work manager "+contextPayload.Manager.Manager.ID)
 			}
 			files = []agentexec.CandidateFile{{Path: artifactPath, Mode: "0644", Content: content}}
+			if os.Getenv(e2eBehaviorEnv) == "repair-foreign-first" && contextPayload.Manager.Manager.ID == e2eManagerID("orders", "orders") && countE2EProcessCalls(os.Getenv(e2eLogEnv), contextPayload.Manager.Manager.ID, contextPayload.Phase) == 1 {
+				files = []agentexec.CandidateFile{{Path: "src/inventory/foreign.txt", Mode: "0644", Content: "unauthorized"}}
+			}
 			if os.Getenv(e2eBehaviorEnv) == "out-of-scope" && contextPayload.Manager.Manager.ID == e2eManagerID("orders", "orders") {
 				files = []agentexec.CandidateFile{{Path: "src/inventory/foreign.txt", Mode: "0644", Content: "unauthorized"}}
 			}
@@ -120,6 +132,9 @@ func TestProjectRunExecutorProcess(t *testing.T) {
 		}
 		if os.Getenv(e2eBehaviorEnv) == "failed-integration" {
 			response.Status = "failed"
+		}
+		if os.Getenv(e2eBehaviorEnv) == "repair-foreign-first" && contextPayload.Manager.Manager.ID == e2eManagerID("", "project-owner") && countE2EProcessCalls(os.Getenv(e2eLogEnv), contextPayload.Manager.Manager.ID, contextPayload.Phase) == 1 {
+			files = []agentexec.CandidateFile{{Path: "src/orders/implementation.txt", Mode: "0644", Content: "unauthorized"}}
 		}
 	default:
 		processExit(2, "unknown phase "+contextPayload.Phase)
@@ -306,6 +321,109 @@ func TestProjectRunProcessRejectsStaleNonceOutOfScopeAndFailedIntegration(t *tes
 	}
 }
 
+func TestProjectRunRepairsKnownValidationFailuresInWorkAndIntegration(t *testing.T) {
+	root := makeProjectRunFixture(t)
+	updateE2ERuntime(t, root, func(config *Runtime) {
+		config.Limits.MaxRetries = 1
+		config.Limits.MaxDuration += Duration(time.Second)
+	})
+	setupE2EProcess(t, "repair-foreign-first")
+	logPath := os.Getenv(e2eLogEnv)
+	plan, err := Plan(projectworkHost(), root, identityHead(t, root), PlanRequest{Goal: "Implement both owned artifacts and integrate them.",
+		Managers: []string{e2eManagerID("orders", "orders"), e2eManagerID("inventory", "inventory")}, ExecuteAuthorized: true})
+	if err != nil {
+		t.Fatalf("Plan: %v", err)
+	}
+	run, err := Run(context.Background(), projectworkHost(), ProcessInvoker{}, root, plan.ID)
+	if err != nil {
+		t.Fatalf("Run did not repair known validation failures: status=%s err=%v", run.Status, err)
+	}
+	if run.Status != StatusIntegrated || len(run.Invocations) != 6 {
+		t.Fatalf("repair did not finish a fully integrated run: status=%s invocations=%d", run.Status, len(run.Invocations))
+	}
+	orders := findTask(run.Tasks, e2eManagerID("orders", "orders"))
+	rootTask := findTask(run.Tasks, e2eManagerID("", "project-owner"))
+	if orders == nil || orders.WorkAttempts != 2 || orders.Attempts != 2 || rootTask == nil || rootTask.IntegrationAttempts != 2 || rootTask.Attempts != 3 {
+		t.Fatalf("attempt counts were not retained: orders=%+v root=%+v", orders, rootTask)
+	}
+	if err := assertRepairTrace(t, logPath, orders.ManagerID, "work"); err != nil {
+		t.Fatal(err)
+	}
+	if err := assertRepairTrace(t, logPath, rootTask.ManagerID, "integrate"); err != nil {
+		t.Fatal(err)
+	}
+	store, err := newRunStore(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	persisted, err := store.readLatestState(run.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if persisted.Status != StatusIntegrated || findTask(persisted.Tasks, orders.ManagerID).WorkAttempts != 2 || findTask(persisted.Tasks, rootTask.ManagerID).IntegrationAttempts != 2 {
+		t.Fatalf("retry ledger was not durable in latest state: %+v", persisted.Tasks)
+	}
+}
+
+func TestProjectRunRetryCeilingAndCostAccountingAreDurable(t *testing.T) {
+	for _, scenario := range []struct {
+		name        string
+		retries     int
+		maxCost     int64
+		priceOrders int64
+		wantStatus  string
+	}{
+		{name: "retry ceiling", retries: 0, maxCost: 100000, priceOrders: 1, wantStatus: StatusFailed},
+		{name: "cost ceiling before retry", retries: 1, maxCost: 54, priceOrders: 1_000_000, wantStatus: StatusBlocked},
+	} {
+		t.Run(scenario.name, func(t *testing.T) {
+			root := makeProjectRunFixture(t)
+			updateE2ERuntime(t, root, func(config *Runtime) {
+				config.Limits.MaxRetries = scenario.retries
+				config.Limits.MaxCostMicros = scenario.maxCost
+				config.Limits.MaxDuration += Duration(time.Second)
+				orders := e2eManagerID("orders", "orders")
+				agent := config.Agents[orders]
+				agent.Pricing = Pricing{InputMicrosPerMillion: scenario.priceOrders, OutputMicrosPerMillion: scenario.priceOrders}
+				config.Agents[orders] = agent
+			})
+			setupE2EProcess(t, "repair-foreign-first")
+			logPath := os.Getenv(e2eLogEnv)
+			plan, err := Plan(projectworkHost(), root, identityHead(t, root), PlanRequest{Goal: "Implement the owned orders artifact.",
+				Managers: []string{e2eManagerID("orders", "orders")}, ExecuteAuthorized: true})
+			if err != nil {
+				t.Fatalf("Plan: %v", err)
+			}
+			run, runErr := Run(context.Background(), projectworkHost(), ProcessInvoker{}, root, plan.ID)
+			if runErr == nil || run.Status != scenario.wantStatus {
+				t.Fatalf("invalid proposal did not stop at the expected bounded state: status=%s err=%v", run.Status, runErr)
+			}
+			orders := findTask(run.Tasks, e2eManagerID("orders", "orders"))
+			if orders == nil || orders.WorkAttempts != 1 || orders.Attempts != 1 || len(run.Invocations) != 2 {
+				t.Fatalf("first failed attempt accounting missing: orders=%+v invocations=%d", orders, len(run.Invocations))
+			}
+			if got := countE2EProcessCalls(logPath, orders.ManagerID, "work"); got != 1 {
+				t.Fatalf("runtime started %d orders attempts, want exactly one", got)
+			}
+			store, err := newRunStore(root)
+			if err != nil {
+				t.Fatal(err)
+			}
+			persisted, err := store.readLatestState(run.ID)
+			if err != nil {
+				t.Fatal(err)
+			}
+			persistedOrders := findTask(persisted.Tasks, orders.ManagerID)
+			if persisted.Status != scenario.wantStatus || persistedOrders.WorkAttempts != 1 || persistedOrders.Attempts != 1 || strings.TrimSpace(persistedOrders.RepairDiagnostic) == "" {
+				t.Fatalf("failed-attempt and retry diagnostic were not durably recorded: status=%s task=%+v", persisted.Status, persistedOrders)
+			}
+			if scenario.name == "cost ceiling before retry" && totalCost(persisted.Invocations) != scenario.maxCost {
+				t.Fatalf("reported spend %d, want bound %d", totalCost(persisted.Invocations), scenario.maxCost)
+			}
+		})
+	}
+}
+
 func projectworkHost() Host {
 	return Host{Load: projectwork.Load, FromSnapshot: projectwork.FromSnapshot, PlanEdit: projectwork.PlanEdit, ApplyEdit: projectwork.ApplyEdit}
 }
@@ -382,6 +500,102 @@ func makeProjectRunFixture(t *testing.T) string {
 	gitE2E(t, root, "add", ".")
 	gitE2E(t, root, "commit", "-m", "project run process fixture")
 	return root
+}
+
+func updateE2ERuntime(t *testing.T, root string, update func(*Runtime)) {
+	t.Helper()
+	path := filepath.Join(root, filepath.FromSlash(RuntimePath))
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var runtime Runtime
+	if err := yaml.Unmarshal(data, &runtime); err != nil {
+		t.Fatal(err)
+	}
+	update(&runtime)
+	updated, err := yaml.Marshal(runtime)
+	if err != nil {
+		t.Fatal(err)
+	}
+	writeE2E(t, root, RuntimePath, string(updated))
+	gitE2E(t, root, "add", RuntimePath)
+	gitE2E(t, root, "commit", "-m", "adjust projectrun test runtime")
+}
+
+func setupE2EProcess(t *testing.T, behavior string) {
+	t.Helper()
+	executable, err := os.Executable()
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("PATH", filepath.Dir(executable)+string(os.PathListSeparator)+os.Getenv("PATH"))
+	t.Setenv(e2eExecutorEnv, "1")
+	t.Setenv(e2eCheckEnv, "1")
+	t.Setenv(e2eBehaviorEnv, behavior)
+	t.Setenv(e2eLogEnv, filepath.Join(t.TempDir(), "requests.jsonl"))
+}
+
+func assertRepairTrace(t *testing.T, logPath, managerID, phase string) error {
+	t.Helper()
+	records, err := readE2ERecords(logPath)
+	if err != nil {
+		return err
+	}
+	var found []map[string]any
+	for _, record := range records {
+		if record["managerId"] == managerID && record["phase"] == phase {
+			found = append(found, record)
+		}
+	}
+	if len(found) != 2 {
+		return fmt.Errorf("%s %s had %d process calls, want a failed validation and one repair", managerID, phase, len(found))
+	}
+	if strings.TrimSpace(fmt.Sprint(found[0]["repairDiagnostic"])) != "" || strings.TrimSpace(fmt.Sprint(found[1]["repairDiagnostic"])) == "" {
+		return fmt.Errorf("repair diagnostic was not supplied only on retry: %+v", found)
+	}
+	if found[0]["candidateDigest"] != found[1]["candidateDigest"] {
+		return fmt.Errorf("repair changed the scoped candidate input: %v != %v", found[0]["candidateDigest"], found[1]["candidateDigest"])
+	}
+	if !reflect.DeepEqual(found[0]["artifacts"], found[1]["artifacts"]) {
+		return fmt.Errorf("repair changed the scoped source artifacts")
+	}
+	return nil
+}
+
+func countE2EProcessCalls(path, managerID, phase string) int {
+	records, err := readE2ERecords(path)
+	if err != nil {
+		return 0
+	}
+	count := 0
+	for _, record := range records {
+		if record["managerId"] == managerID && record["phase"] == phase {
+			count++
+		}
+	}
+	return count
+}
+
+func readE2ERecords(path string) ([]map[string]any, error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+	var records []map[string]any
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		var record map[string]any
+		if err := json.Unmarshal(scanner.Bytes(), &record); err != nil {
+			return nil, err
+		}
+		records = append(records, record)
+	}
+	if err := scanner.Err(); err != nil {
+		return nil, err
+	}
+	return records, nil
 }
 
 func e2eChildManager(name string) string {
