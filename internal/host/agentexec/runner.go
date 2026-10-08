@@ -188,7 +188,11 @@ func run(parent context.Context, cfg Config, request Request, opts RunOptions) (
 		WallTimeMilliseconds:  wallTime.Milliseconds(),
 		RetryCount:            0,
 	}
-	logBytes, logErr := readOptionalBoundedFile(privateLogPath, maxOutputBound)
+	logErr := verifyPrivateLogFile(privateLogPath)
+	var logBytes []byte
+	if logErr == nil {
+		logBytes, logErr = readOptionalBoundedFile(privateLogPath, maxOutputBound)
+	}
 	if logErr == nil && logBytes != nil {
 		receipt.PrivateLogDigest = digest(logBytes)
 	}
@@ -662,8 +666,13 @@ func preparePrivateLogDirectory(value string, roots []string) (string, error) {
 		if err != nil || pathWithinAny(canonical, roots) {
 			return "", errors.New("private log directory must be outside audited input roots")
 		}
-		if err := os.Chmod(canonical, 0700); err != nil {
-			return "", errors.New("private log directory permissions could not be restricted")
+		if err := verifyPrivateLogDirectory(canonical); err != nil {
+			return "", errors.New("private log directory access could not be verified")
+		}
+		if runtime.GOOS != "windows" {
+			if err := os.Chmod(canonical, 0700); err != nil {
+				return "", errors.New("private log directory permissions could not be restricted")
+			}
 		}
 		return canonical, nil
 	}
@@ -697,15 +706,27 @@ func preparePrivateLogDirectory(value string, roots []string) (string, error) {
 	if pathWithinAny(candidate, roots) {
 		return "", errors.New("private log directory must be outside audited input roots")
 	}
-	if err := os.MkdirAll(absolute, 0700); err != nil {
+	if runtime.GOOS == "windows" {
+		if err := os.MkdirAll(filepath.Dir(candidate), 0700); err != nil {
+			return "", errors.New("private log directory parent could not be created")
+		}
+		if err := createPrivateLogDirectory(candidate); err != nil {
+			return "", errors.New("private log directory could not be created with a protected access list")
+		}
+	} else if err := os.MkdirAll(absolute, 0700); err != nil {
 		return "", errors.New("private log directory could not be created")
 	}
 	canonical, err := canonicalDir(absolute)
 	if err != nil || pathWithinAny(canonical, roots) {
 		return "", errors.New("private log directory must be outside audited input roots")
 	}
-	if err := os.Chmod(canonical, 0700); err != nil {
-		return "", errors.New("private log directory permissions could not be restricted")
+	if err := verifyPrivateLogDirectory(canonical); err != nil {
+		return "", errors.New("private log directory access could not be verified")
+	}
+	if runtime.GOOS != "windows" {
+		if err := os.Chmod(canonical, 0700); err != nil {
+			return "", errors.New("private log directory permissions could not be restricted")
+		}
 	}
 	return canonical, nil
 }
