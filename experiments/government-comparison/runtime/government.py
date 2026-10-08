@@ -309,6 +309,48 @@ def _has_evidence_identity(report: dict) -> bool:
             type(evidence.get("round")) is int and evidence["round"] > 0)
 
 
+_IDENTITY_FIELDS = ("apiVersion", "kind", "namespace", "name")
+
+
+def _valid_identity_identifier(value: str) -> bool:
+    # Pinned core/compile.go validIdentifier uses Unicode Letter or Decimal Digit.
+    return (bool(value) and (value[0].isalpha() or value[0].isdecimal()) and
+            all(char.isalpha() or char.isdecimal() or char in "_.-" for char in value))
+
+
+def _valid_identity_api_version(value: str) -> bool:
+    parts = value.split("/")
+    return (len(parts) == 2 and 0 < len(parts[0]) <= 253 and 0 < len(parts[1]) <= 63 and
+            not parts[0].startswith(".") and not parts[0].endswith(".") and
+            re.fullmatch(r"[A-Za-z0-9.-]+", parts[0]) is not None and
+            re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", parts[1]) is not None)
+
+
+def _definition_identity(value, label: str) -> tuple[str, str, str, str]:
+    """Keep all four pinned core.DefinitionIdentity fields without normalization."""
+    if (not isinstance(value, dict) or set(value) != set(_IDENTITY_FIELDS) or
+            any(not isinstance(value[key], str) for key in _IDENTITY_FIELDS) or
+            not _valid_identity_api_version(value["apiVersion"]) or
+            not _valid_identity_identifier(value["kind"]) or
+            (value["namespace"] != "" and not _valid_identity_identifier(value["namespace"])) or
+            not _valid_identity_identifier(value["name"])):
+        raise ValueError(f"{label} requires a complete four-field Government identity")
+    return tuple(value[key] for key in _IDENTITY_FIELDS)
+
+
+def _scope_identity(value) -> tuple[str, str, str, str]:
+    """Decode DefinitionIdentity.Key's JSON [apiVersion, kind, namespace, name]."""
+    if not isinstance(value, str):
+        raise ValueError("Government review scope must be a serialized four-field identity")
+    try:
+        parts = json.loads(value)
+    except json.JSONDecodeError as exc:
+        raise ValueError("Government review scope must be a serialized four-field identity") from exc
+    if not isinstance(parts, list) or len(parts) != len(_IDENTITY_FIELDS):
+        raise ValueError("Government review scope must be a serialized four-field identity")
+    return _definition_identity(dict(zip(_IDENTITY_FIELDS, parts)), "Government review scope")
+
+
 def _validate_run_report(report: dict, run_id: str, configured_slots: dict[str, tuple[str, str]],
                          *, require_acceptance: bool = False,
                          root_review_slots: set[str] | None = None) -> list[str]:
@@ -351,9 +393,8 @@ def _validate_run_report(report: dict, run_id: str, configured_slots: dict[str, 
         if not isinstance(seat, dict) or not isinstance(seat.get("ressort", {}), dict):
             raise ValueError("Government cabinet record malformed")
         identity = seat.get("ressort", {})
-        key = (identity.get("namespace"), identity.get("name"))
-        if (not all(isinstance(part, str) and part for part in key) or
-                not isinstance(seat.get("slotId"), str) or not seat["slotId"] or
+        key = _definition_identity(identity, "Government cabinet Ressort")
+        if (not isinstance(seat.get("slotId"), str) or not seat["slotId"] or
                 key in expected_voters):
             raise ValueError("Government cabinet identity is missing or duplicated")
         expected_voters.add(key)
@@ -380,15 +421,13 @@ def _validate_run_report(report: dict, run_id: str, configured_slots: dict[str, 
         if not isinstance(vote.get("ressort", {}), dict):
             raise ValueError("Government vote Ressort record malformed")
         identity = vote.get("ressort", {})
-        key = (identity.get("namespace"), identity.get("name"))
-        if not all(isinstance(part, str) and part for part in key):
-            raise ValueError("Government vote Ressort identity malformed")
+        key = _definition_identity(identity, "Government vote Ressort")
         if require_acceptance and vote.get("outcome") not in {"assent", "assent-unaffected"}:
             raise ValueError("accepted Government job requires positive final votes from every Ressort")
         if key not in expected_voters or key in observed_voters:
             raise ValueError("Government vote is outside or duplicated in the selected cabinet")
-        seat = next(item for item in cabinet if (item.get("ressort", {}).get("namespace"),
-                                                  item.get("ressort", {}).get("name")) == key)
+        seat = next(item for item in cabinet
+                    if _definition_identity(item["ressort"], "Government cabinet Ressort") == key)
         if (vote.get("priorMandate") != seat.get("priorMandate") or
                 vote.get("mandateDigest") != seat.get("mandateDigest")):
             raise ValueError("Government vote authority differs from selected cabinet")
@@ -470,12 +509,9 @@ def _validate_run_report(report: dict, run_id: str, configured_slots: dict[str, 
                 scopes = actor.get("scopes")
                 if not isinstance(scopes, list) or not all(isinstance(scope, str) for scope in scopes):
                     raise ValueError("accepted Government review actor must bind its reviewed scopes")
-                covered.update(scopes)
+                covered.update(_scope_identity(scope) for scope in scopes)
         for identity in integration_reviews:
-            if (not isinstance(identity, dict) or
-                    not all(isinstance(identity.get(key), str) and identity[key]
-                            for key in ("namespace", "name")) or
-                    f"{identity['namespace']}/{identity['name']}" not in covered):
+            if _definition_identity(identity, "Government planned integration review") not in covered:
                 raise ValueError("accepted Government job lacks a passing review receipt for a planned integration scope")
     for vote in votes:
         ressort = vote.get("ressort", {})

@@ -164,7 +164,8 @@ class GovernmentTranslationTests(unittest.TestCase):
                    "namespace": "orders", "name": "prior"}
         return {"apiVersion": government.RUN_API, "runId": run_id, "status": "accepted-scoped",
                 "priorConstitution": "sha256:" + "9" * 64,
-                "plan": {"integrationReviews": [{"namespace": "orders", "name": "root"}]},
+                "plan": {"integrationReviews": [{"apiVersion": "markitect.government/v1alpha1", "kind": "Area",
+                                                 "namespace": "orders", "name": "root"}]},
                 "evidence": {"id": evidence, "materialCandidateId": candidate, "round": 1},
                 "cabinet": [{"ressort": {"apiVersion": "markitect.government/v1alpha1", "kind": "Ressort",
                                            "namespace": "orders", "name": "finance"},
@@ -176,10 +177,10 @@ class GovernmentTranslationTests(unittest.TestCase):
                            {"phase": "execute", "slotId": "child-writer", "result": {
                     "Response": {"runId": "actor-3", "role": "executor", "inputDigest": "sha256:" + "7" * 64},
                     "Receipt": {"runId": "actor-3", "inputDigest": "sha256:" + "7" * 64}}},
-                           {"phase": "review", "slotId": "reviewer", "scopes": ["orders/root"], "result": {
+                           {"phase": "review", "slotId": "reviewer", "scopes": ['["markitect.government/v1alpha1","Area","orders","root"]'], "result": {
                     "Response": {"runId": "actor-review", "role": "verifier", "inputDigest": "sha256:" + "8" * 64,
                                  "outcome": "passed", "uncertainty": [],
-                                 "verifierObservations": [{"subject": "orders/root", "outcome": "passed",
+                                 "verifierObservations": [{"subject": '["markitect.government/v1alpha1","Area","orders","root"]', "outcome": "passed",
                                                            "detail": "reviewed planned integration scope"}]},
                     "Receipt": {"runId": "actor-review", "inputDigest": "sha256:" + "8" * 64}}},
                            {"phase": "vote", "slotId": "vote-finance", "result": {
@@ -190,7 +191,8 @@ class GovernmentTranslationTests(unittest.TestCase):
                                                            "materialCandidateId": candidate, "evidenceId": evidence,
                                                            "round": 1})}]},
                     "Receipt": {"runId": "actor-2", "inputDigest": "sha256:" + "5" * 64}}}],
-                "votes": [{"ressort": {"namespace": "orders", "name": "finance"},
+                "votes": [{"ressort": {"apiVersion": "markitect.government/v1alpha1", "kind": "Ressort",
+                                        "namespace": "orders", "name": "finance"},
                            "id": "sha256:" + "6" * 64,
                            "priorMandate": mandate, "mandateDigest": "sha256:" + "4" * 64,
                            "materialCandidateId": candidate, "evidenceId": evidence,
