@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-08T20:54:50Z",
+  "updatedUtc": "2026-10-08T20:55:26Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -449,9 +449,12 @@
       "lastAssignment": {
         "key": "s1-account-update-routing-read-20261008-r3",
         "authorizedUtc": "2026-10-08T20:51:31Z",
-        "status": "Authorized final conditional read attempt; pending once-only dispatch",
+        "status": "Dispatched once; tool confirmed target Scientist chat. Conditional final one actual attempt; awaiting terminal callback.",
         "grantPointer": "threads[name=Scientist].evidence.accountUpdateRoutingReadGrant",
-        "scope": "Test only prospective exact account/updated compatible-metadata route on same real public-read Actor path; no write/build/study calls."
+        "scope": "Test only prospective exact account/updated compatible-metadata route on same real public-read Actor path; no write/build/study calls.",
+        "sentUtc": "2026-10-08T20:55:26Z",
+        "grantCommit": "fdbd2c9",
+        "deliveryConfirmed": true
       },
       "evidence": {
         "sourcesHashChecked": 37,
@@ -7372,7 +7375,7 @@
     "classicMainIntegration": "Explicitly authorized by direct user; required checks and independent review before regular merge. Frozen study remains separate."
   },
   "lastReview": {
-    "reviewedUtc": "2026-10-08T20:57:10Z",
+    "reviewedUtc": "2026-10-08T20:54:50Z",
     "evidenceLevel": "Root verified clean offline Git T/S,32 payloads plus manifest,186 source pins and complete assignment/schema archive binding; independent Root source/evidence review qualified OK. No new actual execution or Root tests.",
     "coordinationActions": [
       "Accept offline exact account/updated classifier and disabled routing proposal",
