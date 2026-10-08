@@ -6,7 +6,7 @@ The canonical UseCase requires positive integer quantity, non-negative decimal u
 
 ## Prerequisites
 
-- Windows amd64 or Linux amd64, Git, Python 3.10+ available as `python` and an absolute path to the verified Markitect v0.14.1 native binary. Follow the [public installation instructions](../../README.md#install-markitect); `version` must identify 0.14.1. This example does not install or change a global CLI.
+- Windows amd64 or Linux amd64, Git with `init --initial-branch` support, Python 3.10+ available as `python` and an absolute path to the verified Markitect v0.14.1 native binary. Follow the [public installation instructions](../../README.md#install-markitect); `version` must identify 0.14.1. This example does not install or change a global CLI.
 - An existing .NET SDK **8.0.418** and compatible .NET 8 runtime. `global.json` disables roll-forward for reproducibility. This example targets `net8.0` and uses no external NuGet packages; `NuGet.Config` clears package feeds. Missing SDK/reference packs are a prerequisite gap, never permission to install or retarget silently.
 - Fresh disposable Git repositories and external directories for reports, ledger, private actor logs and build artifacts. All commands run with the local caller's authority; this is not an OS sandbox. The native product does not fingerprint the PATH-resolved compiler/Python as authenticated tools; this example records their actual versions and raw outputs.
 
