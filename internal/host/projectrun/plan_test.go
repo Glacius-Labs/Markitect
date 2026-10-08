@@ -154,15 +154,51 @@ func TestSinceImpactAndExplicitManagerRouteThroughRequiredHierarchy(t *testing.T
 
 func TestPhaseGuidanceDefinesLocalWorkAndIntegrationResponsibilities(t *testing.T) {
 	work := phaseGuidance("work")
-	for _, required := range []string{"globalGoal is context", "implement only ownTask", "allowedWritePaths as the complete set", "ArtifactRelations and ForeignOwnership describe read context", "do not implement that Manager's file, tests, or docs", "outer agent outcome must be proposed", "Status complete means this Manager completed its own work", "Child implementation files are intentionally not supplied", "resolvedQuestions and resolvedRisks empty"} {
+	for _, required := range []string{"globalGoal is context", "implement only ownTask", "allowedWritePaths as the complete set", "ArtifactRelations and ForeignOwnership describe read context", "do not implement that Manager's files, tests, or docs", "activeResponsibilities", "outer outcome must be proposed when escalateTo is empty", "escalated when escalateTo names escalationTarget", "Status describes this Manager's local work only", "Child implementation files are intentionally not supplied", "resolvedQuestions and resolvedRisks empty"} {
 		if !strings.Contains(work, required) {
 			t.Errorf("work guidance omitted %q", required)
 		}
 	}
 	integrate := phaseGuidance("integrate")
-	for _, required := range []string{"globalGoal is context", "Inspect every direct child report", "actual child candidate bytes", "Set integrated=true", "Do not create delegations", "allowedWritePaths"} {
+	for _, required := range []string{"globalGoal is context", "activeResponsibilities", "Inspect every direct child report", "actual child candidate bytes", "Set integrated=true", "Do not create delegations", "allowedWritePaths", "outer outcome must be proposed when escalateTo is empty", "escalated when escalateTo names escalationTarget"} {
 		if !strings.Contains(integrate, required) {
 			t.Errorf("integration guidance omitted %q", required)
+		}
+	}
+	if err := validateTaskOutcome(agentexec.OutcomeProposed, TaskResponse{}); err != nil {
+		t.Fatalf("guidance's un-escalated outcome is rejected: %v", err)
+	}
+	escalated := TaskResponse{EscalateTo: "parent-manager"}
+	if err := validateTaskOutcome(agentexec.OutcomeEscalated, escalated); err != nil {
+		t.Fatalf("guidance's escalated outcome is rejected: %v", err)
+	}
+	if err := validateTaskOutcome(agentexec.OutcomeProposed, escalated); err == nil {
+		t.Fatal("proposed outcome unexpectedly accepted when escalation target is set")
+	}
+}
+
+func TestActiveResponsibilitiesExposeOnlyInPlanPublicRoutingFields(t *testing.T) {
+	orders := e2eManagerID("sales.orders", "orders")
+	engineering := e2eManagerID("engineering", "engineering")
+	report := projectmodel.Report{Managers: []projectmodel.Manager{
+		{ID: orders, Purpose: "Own order lifecycle behavior.", Owns: []string{"src/shop/orders/"}, Instructions: "private orders policy"},
+		{ID: engineering, Purpose: "Own project test files.", Owns: []string{"tests/"}, Instructions: "private engineering policy"},
+		{ID: e2eManagerID("unused", "unused"), Purpose: "Do not include this inactive Manager.", Owns: []string{"internal/"}},
+	}}
+	active := activeResponsibilities(report, []ManagerTask{{ManagerID: engineering}, {ManagerID: orders}})
+	if len(active) != 2 || active[0].ManagerID != engineering || active[1].ManagerID != orders {
+		t.Fatalf("active scope missing or unordered: %+v", active)
+	}
+	if active[0].Purpose != "Own project test files." || !containsString(active[0].Owns, "tests/") {
+		t.Fatalf("active Engineering routing data missing: %+v", active[0])
+	}
+	encoded, err := json.Marshal(active)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, secret := range []string{"private orders policy", "private engineering policy", "Do not include this inactive Manager", "Instructions", "Statement", "source bytes"} {
+		if strings.Contains(string(encoded), secret) {
+			t.Fatalf("routing data leaked private or inactive context %q: %s", secret, encoded)
 		}
 	}
 }
