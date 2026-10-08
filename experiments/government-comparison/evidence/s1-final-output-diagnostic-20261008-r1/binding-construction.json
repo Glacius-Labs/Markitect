@@ -1,0 +1,15 @@
+{
+  "key": "s1-final-output-diagnostic-20261008-r1",
+  "sourceCommit": "ca71a5d64242ab0db29072e8e88d46a27de67acf",
+  "sourceFilesVerifiedAtS": 82,
+  "frozenInputsCurrentlyVerified": 95,
+  "requestSha256": "1c60f21603b4e335efef64f63fb7991b6f8aab54d562fb5d88a9e685d9bef72a",
+  "freezeSha256": "12430b622275f07ed93ad7e42f2288575407577713b6199593f9fded8d8c6c5e",
+  "fullLiveGrantAssignedSlotAndWindowBinding": true,
+  "nativeCwdIdentityAndConsistencyVerified": true,
+  "externalRootAbsent": true,
+  "createdUtc": "2026-10-08T19:04:31.820932+00:00",
+  "sourceChangesAfterS": 0,
+  "runtimeStarts": 0,
+  "diagnosticReservations": 0
+}
