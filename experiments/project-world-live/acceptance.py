@@ -18,7 +18,7 @@ def main() -> None:
     parser.add_argument("--repo", type=Path, required=True)
     args = parser.parse_args()
     sys.path.insert(0, str(args.repo.resolve() / "src"))
-    from shop.commerce.cancellation import cancel_order
+    from shop.commerce.cancellation import ReservationInvariantError, cancel_order
     from shop.orders.order import InvalidTransition
 
     checked: list[str] = []
@@ -34,7 +34,7 @@ def main() -> None:
                 else:
                     try:
                         cancel_order(connection, "acceptance-order")
-                    except Exception:
+                    except ReservationInvariantError:
                         pass
                     else:
                         raise AssertionError("invalid reservation cardinality was accepted")
@@ -42,6 +42,36 @@ def main() -> None:
                 checked.append(f"{initial}/reservations={reservations}")
             finally:
                 connection.close()
+        connection = database(initial, 1)
+        try:
+            connection.execute("UPDATE reservations SET status = 'released'")
+            try:
+                cancel_order(connection, "acceptance-order")
+            except ReservationInvariantError:
+                pass
+            else:
+                raise AssertionError("pre-released reservation was accepted")
+            assert state(connection) == (initial, 0, 1)
+            checked.append(f"{initial}/pre-released")
+        finally:
+            connection.close()
+        connection = database(initial, 1)
+        try:
+            connection.executescript(
+                "CREATE TRIGGER reject_release BEFORE UPDATE OF status ON reservations "
+                "WHEN NEW.status = 'released' BEGIN "
+                "SELECT RAISE(ABORT, 'acceptance release failure'); END;"
+            )
+            try:
+                cancel_order(connection, "acceptance-order")
+            except sqlite3.DatabaseError:
+                pass
+            else:
+                raise AssertionError("injected release failure was accepted")
+            assert state(connection) == (initial, 1, 0)
+            checked.append(f"{initial}/release-failure")
+        finally:
+            connection.close()
     connection = database("shipped", 1)
     try:
         try:
