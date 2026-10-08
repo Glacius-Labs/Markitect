@@ -1,0 +1,12 @@
+{
+  "actorRepository": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-check-receipt-20261008-r7\\government\\actor",
+  "backlogSha256": "28b6d3b0c9732494dfc1806444b8984aac6c190501b94c02022b7ca554d10740",
+  "baseCommit": "a27a7e8cd085eeb00639d59c2e082edf28feb44b",
+  "diagnosticsSha256": "8ca1fc909df85f58178275582aab0a89871530943f783221b99fd4047b650afa",
+  "grantSha256": "639af044fc46b5a996b8a1d80f44cbe3d8861257b44286bcef2a6a6cb6305331",
+  "preparationPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-check-receipt-20261008-r7\\government\\preparation-final.json",
+  "preparationSha256": "dd95a03db0055848548561b8e4ff2632a81ec7953f93563c50024cc978240e43",
+  "roleAuthorizationSha256": "536d5581385ff318873a38c81e091c591ddfea4eee68a84e309d2b967689b41f",
+  "runtimeFileCount": 19,
+  "runtimeSha256": "658a64a231edd47831ab890493c647e0ac8213faee0901fc488f2a3f0e296da1"
+}
