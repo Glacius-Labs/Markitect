@@ -1,0 +1,70 @@
+{
+  "status": "passed",
+  "baseCommit": "130fcd85c866e7643cdb7f5bcb844c8ccd2ec311",
+  "protectedFilesUnchanged": 3711,
+  "priorHandoffSuffixPreserved": true,
+  "r6RawOriginalCopyPairsUnchanged": 92,
+  "liveNativeLedgerUnchanged": {
+    "path": "C:/Users/Consiliari/Documents/Scientist-Probes/native-metadata-fixtures-20261008/native-starts.sqlite",
+    "sha256": "c0a91051a16f5d2d3a7754789c2ad02b67b6b2f57f32ac4bd16562700b8fcf1a"
+  },
+  "oldR6FreezeStatus": "invalidated by authorized consumer source correction; never reused or rescored",
+  "oldR6FreezeChangedInputs": [
+    "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\runtime\\native_fixture_budget.py"
+  ],
+  "newExperimentalConsumption": {
+    "actualCasePreparations": 0,
+    "admissionActions": 0,
+    "freezes": 0,
+    "nativeStarts": 0,
+    "controllerStarts": 0,
+    "wrapperStarts": 0,
+    "delegates": 0,
+    "modelProviderMetadataStarts": 0,
+    "studyCells": 0,
+    "liveLedgerWrites": 0
+  },
+  "cumulativeUnchanged": {
+    "nativeStarts": 13,
+    "wrapperAttempts": 13,
+    "deterministicDelegates": 10,
+    "reservedNativeSessionSeconds": 1950,
+    "realActorStarts": 5,
+    "knownTokens": 53331,
+    "totalTokens": null
+  },
+  "tests": {
+    "count": 13,
+    "status": "passed",
+    "rawLog": "focused-tests-1.log",
+    "unchangedBroadSuitesRepeated": false,
+    "consumerAndTranslatorMocked": false
+  },
+  "syntaxFiles": 3,
+  "sourceHashes": {
+    "runtime/native_fixture_budget.py": "a5c95a9bd4ad7cdeaa7d1cfec13c738835021082767e9f5f7a19ddd5ecd3a3e5",
+    "runtime/test_native_r4_budget.py": "22567767ec4d1ca68555c89cd5f3936e204ee50975d33108126d52334f12e914",
+    "runtime/test_government_check_receipts.py": "00b72b01937ba817a24105cfb2cfda451abcc9468e9d6c60a9a478d910ac5f78"
+  },
+  "pinnedSourceEvidence": [
+    {
+      "sourceCommit": "04e225d5caee78c2a198607143863fca1e829750",
+      "path": "internal/host/verify.go",
+      "gitBlob": "f00566e6935e8556cac6d5daa3c1eb7c2eb79ec0",
+      "sha256": "e8beb39c8706daffa8fac0fcd4d6d1d5defb17ce3675bae26be736bb3ed3eb0f",
+      "copy": "evidence\\government-check-receipt-identity-offline-20261008\\pinned-source\\verify.go"
+    },
+    {
+      "sourceCommit": "04e225d5caee78c2a198607143863fca1e829750",
+      "path": "internal/host/authoring/check.go",
+      "gitBlob": "b42bbf9177c151005fc642428202f6202115a2fa",
+      "sha256": "8bcb2a08ebb122fe4012e75f61d580fa2d06d922196c3b484aec3292a835c68d",
+      "copy": "evidence\\government-check-receipt-identity-offline-20261008\\pinned-source\\check.go"
+    }
+  ],
+  "neighborInspection": "Both historical R4 and shared R5/R6 pre-reservation paths call the same corrected helper. Existing driver _check_report_checks already derives the executable from run[0] when no tool is supplied; no neighboring source edits or extra reruns.",
+  "sourceCommit": "9dbbb93eea895947f800b1354fe056ac5b4f08d8",
+  "independentReviewSha256": "db824adc65df423aeb1083caec41c1e2ee0697ca0bee953e511725a1b7ee7bc2",
+  "diffCheckPassed": true,
+  "engineeringAndReviewUsage": "unknown"
+}

@@ -1,0 +1,18 @@
+test_exact_check_set_allows_reordering (test_government_check_receipts.GovernmentCheckReceiptTests.test_exact_check_set_allows_reordering) ... ok
+test_exact_sealed_configuration_and_native_gate_result_match (test_government_check_receipts.GovernmentCheckReceiptTests.test_exact_sealed_configuration_and_native_gate_result_match) ... ok
+test_exit_receipt_must_be_integer_zero (test_government_check_receipts.GovernmentCheckReceiptTests.test_exit_receipt_must_be_integer_zero) ... ok
+test_invalid_configuration_shapes_and_commands_are_rejected (test_government_check_receipts.GovernmentCheckReceiptTests.test_invalid_configuration_shapes_and_commands_are_rejected) ... ok
+test_invalid_native_identity_shapes_are_rejected (test_government_check_receipts.GovernmentCheckReceiptTests.test_invalid_native_identity_shapes_are_rejected) ... ok
+test_invalid_or_exceeded_time_receipts_are_rejected (test_government_check_receipts.GovernmentCheckReceiptTests.test_invalid_or_exceeded_time_receipts_are_rejected) ... ok
+test_missing_additional_and_duplicate_checks_are_rejected (test_government_check_receipts.GovernmentCheckReceiptTests.test_missing_additional_and_duplicate_checks_are_rejected) ... ok
+test_wrong_name_or_executable_token_is_rejected (test_government_check_receipts.GovernmentCheckReceiptTests.test_wrong_name_or_executable_token_is_rejected) ... ok
+test_zero_duration_and_exact_timeout_remain_valid (test_government_check_receipts.GovernmentCheckReceiptTests.test_zero_duration_and_exact_timeout_remain_valid) ... ok
+test_real_resume_consumer_rejects_wrong_native_tool_after_translation (test_government_check_receipts.GovernmentResumeReceiptTransitionTests.test_real_resume_consumer_rejects_wrong_native_tool_after_translation) ... ok
+test_real_resume_pre_reservation_consumer_accepts_relocated_r6_receipts (test_government_check_receipts.GovernmentResumeReceiptTransitionTests.test_real_resume_pre_reservation_consumer_accepts_relocated_r6_receipts) ... ok
+test_resume_consumer_keeps_runtime_and_report_digest_guards (test_government_check_receipts.GovernmentResumeReceiptTransitionTests.test_resume_consumer_keeps_runtime_and_report_digest_guards) ... ok
+test_r4_fresh_check_receipts_match_go_json_gate_result_fields_and_bounds (test_native_r4_budget.NativeR4BudgetTests.test_r4_fresh_check_receipts_match_go_json_gate_result_fields_and_bounds) ... ok
+
+----------------------------------------------------------------------
+Ran 13 tests in 1.196s
+
+OK

@@ -1,0 +1,12 @@
+{
+  "status": "passed",
+  "baseCommit": "130fcd85c866e7643cdb7f5bcb844c8ccd2ec311",
+  "sourceCommit": "9dbbb93eea895947f800b1354fe056ac5b4f08d8",
+  "protectedFilesUnchanged": 3711,
+  "priorHandoffSuffixPreserved": true,
+  "sourceHashesStillMatchReviewedCandidate": true,
+  "liveNativeLedgerUnchanged": true,
+  "r6RawPairsUnchanged": 92,
+  "oldR6FreezeNeverReused": true,
+  "newExperimentalConsumption": 0
+}

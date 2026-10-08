@@ -1,0 +1,74 @@
+{
+  "key": "government-check-receipt-identity-offline-20261008",
+  "status": "offline-passed-no-new-execution",
+  "baseCommit": "130fcd85c866e7643cdb7f5bcb844c8ccd2ec311",
+  "sourceCommit": "9dbbb93eea895947f800b1354fe056ac5b4f08d8",
+  "entries": [
+    {
+      "path": "evidence/government-check-receipt-identity-offline-20261008/final-preservation.json",
+      "sha256": "f726ec64edb750fba976f731b4160a43b789192b91ed1ebf998da59d09d906b8",
+      "bytes": 419
+    },
+    {
+      "path": "evidence/government-check-receipt-identity-offline-20261008/focused-tests-1.log",
+      "sha256": "4cd084af3497d67fc0eebc369d4e5eae8dbf56dc52284756d626fd3afc492c66",
+      "bytes": 2479
+    },
+    {
+      "path": "evidence/government-check-receipt-identity-offline-20261008/handoff.md",
+      "sha256": "e4923ce9526119a8e13faa01ed39432633e1c2b08278d55076135d2b2664ec1e",
+      "bytes": 3186
+    },
+    {
+      "path": "evidence/government-check-receipt-identity-offline-20261008/independent-review.md",
+      "sha256": "db824adc65df423aeb1083caec41c1e2ee0697ca0bee953e511725a1b7ee7bc2",
+      "bytes": 4361
+    },
+    {
+      "path": "evidence/government-check-receipt-identity-offline-20261008/offline-validation.json",
+      "sha256": "8600315cf5d1e99737f8be3498ef175c3984b58c3fd63a634eefb62eb2dc2795",
+      "bytes": 3159
+    },
+    {
+      "path": "evidence/government-check-receipt-identity-offline-20261008/pinned-source/check.go",
+      "sha256": "8bcb2a08ebb122fe4012e75f61d580fa2d06d922196c3b484aec3292a835c68d",
+      "bytes": 1348
+    },
+    {
+      "path": "evidence/government-check-receipt-identity-offline-20261008/pinned-source/verify.go",
+      "sha256": "e8beb39c8706daffa8fac0fcd4d6d1d5defb17ce3675bae26be736bb3ed3eb0f",
+      "bytes": 11346
+    },
+    {
+      "path": "evidence/government-check-receipt-identity-offline-20261008/preservation-baseline.json",
+      "sha256": "6df057623506fcfa774d62f16822c87dccbf107e2574a68df52a539aaae41f4f",
+      "bytes": 1082242
+    },
+    {
+      "path": "evidence/government-check-receipt-identity-offline-20261008/source-diff.patch",
+      "sha256": "7a50d23012d6cf2104d3c84c5acde81a68dbb132c05b48dff19fceee8fa6f988",
+      "bytes": 13411
+    },
+    {
+      "path": "native-integration-handoff.md",
+      "sha256": "e7f046f176442c48fc884448594e1612220905ae6197683c985739f58241b04d",
+      "bytes": 31603
+    },
+    {
+      "path": "runtime/native_fixture_budget.py",
+      "sha256": "a5c95a9bd4ad7cdeaa7d1cfec13c738835021082767e9f5f7a19ddd5ecd3a3e5",
+      "bytes": 113365
+    },
+    {
+      "path": "runtime/test_government_check_receipts.py",
+      "sha256": "00b72b01937ba817a24105cfb2cfda451abcc9468e9d6c60a9a478d910ac5f78",
+      "bytes": 10698
+    },
+    {
+      "path": "runtime/test_native_r4_budget.py",
+      "sha256": "22567767ec4d1ca68555c89cd5f3936e204ee50975d33108126d52334f12e914",
+      "bytes": 13595
+    }
+  ],
+  "selfBinding": "Manifest bound by enclosing Git object, exact bytes checked after final commit."
+}
