@@ -1,0 +1,11 @@
+{
+  "key": "s1-stderr-observation-diagnostic-20261008-r2",
+  "stage": "uncommitted-binding-construction-before-final-review-or-freeze-commit",
+  "sourceCommitUnchanged": "a9a3794651b87a15fc53a0480ab584aac0f3dc0c",
+  "adjustment": "Use the existing validator literal EXE path spelling for the binary freeze dictionary key; bytes/hash/target unchanged. No source/test edit or gate override.",
+  "previousUncommittedFreezeSha256": "2ec7bc64555c63cdeab98d76bdf62938a773cbc37c1b95635a9a4a00112e144f",
+  "reviewedFreezeSha256": "73fd2b1c31103c6929a56b8872f1fbbf179e4e9b3fd868cbe5fe40f1fcb5bb58",
+  "sourceTestRepairIterationsRemain": 2,
+  "testInvocationsRemain": 2,
+  "runtimeReservations": 0
+}
