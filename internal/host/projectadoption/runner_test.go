@@ -52,7 +52,11 @@ func TestDistillationExecutorHelper(t *testing.T) {
 		!strings.Contains(prompt.Instructions, "Every proposed scope must contain at least one grounded claim assigned to it and at least one model-proposal file") ||
 		!strings.Contains(prompt.Instructions, "Existing target Managers are guidance only and do not need mirrored as adoption scopes") ||
 		!strings.Contains(prompt.Instructions, "observation/static-source") ||
-		!strings.Contains(prompt.Instructions, "one-based line bounds") {
+		!strings.Contains(prompt.Instructions, "one-based line bounds") ||
+		!strings.Contains(prompt.Instructions, "candidateFiles must be [], and candidateJson must be null") ||
+		!strings.Contains(prompt.Instructions, "only typed DistillationDraft belongs in reportJson as a JSON-encoded string") ||
+		!strings.Contains(prompt.Instructions, "Put proposed YAML only inside reportJson.proposal.files entries with scopeId, path, and content") ||
+		!strings.Contains(prompt.Instructions, "Never put proposed YAML in outer candidateFiles or candidateJson") {
 		os.Exit(36)
 	}
 	artifact := invocation.Request.Artifacts[0]
