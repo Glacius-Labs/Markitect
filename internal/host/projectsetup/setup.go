@@ -177,7 +177,7 @@ func BuildRuntime(project *projectwork.Project, options Options, found Discovery
 		APIVersion: projectrun.APIVersion, Mode: projectrun.ModeControlledLocal, RequireIsolation: false,
 		Agents: agents,
 		Limits: projectrun.Limits{
-			MaxDepth: DefaultMaxDepth, MaxStarts: DefaultMaxStarts, MaxRetries: 0, MaxParallel: 1,
+			MaxDepth: DefaultMaxDepth, MaxStarts: DefaultMaxStarts, MaxRetries: 1, MaxParallel: 1,
 			MaxDuration: projectrun.Duration(DefaultMaxRunTime), MaxCostMicros: options.MaxCostMicros,
 			MaxCandidateFileBytes: DefaultMaxFileBytes, MaxCandidateBytes: DefaultMaxTotalBytes,
 		},

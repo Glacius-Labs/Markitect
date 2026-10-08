@@ -52,7 +52,7 @@ func TestBuildRuntimeMapsAllManagersAndPinsTools(t *testing.T) {
 			}
 		}
 	}
-	if config.Mode != "controlled-local" || config.RequireIsolation || config.Limits.MaxRetries != 0 || config.Limits.MaxParallel != 1 || config.Limits.MaxCostMicros != 5000 {
+	if config.Mode != "controlled-local" || config.RequireIsolation || config.Limits.MaxRetries != 1 || config.Limits.MaxParallel != 1 || config.Limits.MaxCostMicros != 5000 {
 		t.Fatalf("unsafe or unexpected limits: %#v", config)
 	}
 }
