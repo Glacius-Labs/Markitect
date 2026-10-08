@@ -133,6 +133,37 @@ def start_native_diagnostics(argv):
         import native_controller
         native_controller.validate_r4_delegate_authorization(request, role_raw, validated)
         max_starts = validated["maxWrapperAttempts"]
+    elif correction["sourceKey"] == "government-scope-native-20261008-r5":
+        request_path = request_path.resolve(strict=True)
+        request = _strict_json(request_path.read_bytes(), "R5 wrapper Request")
+        r5_binding = request.get("nativeFixtureR5Grant") if isinstance(request, dict) else None
+        original = request.get("nativeFixtureGrant") if isinstance(request, dict) else None
+        if (request.get("dispatchId") != "government-native-scope-r5" or
+                request.get("arm") != "government" or
+                request.get("nativeFixtureR4Grant") is not None or
+                request.get("nativeFixtureR3Grant") is not None or
+                request.get("nativeFixtureCorrection") is not None or
+                r5_binding != correction or
+                not isinstance(original, dict) or set(original) != {"path", "sha256", "sourceKey"}):
+            raise ValueError("R5 wrapper diagnostics must bind the exact Government Request and retain R1 provenance")
+        from native_fixture_budget import validate_r5_grant_binding, validate_r5_entry_gate
+        validated = validate_r5_grant_binding(request, original["path"], original["sha256"])
+        if (validated.get("grantKey") != correction["sourceKey"] or
+                validated.get("maxWrapperAttempts") != 6 or
+                validated.get("maxDeterministicDelegates") != 6 or
+                validated.get("maxNativeStarts") != 2):
+            raise ValueError("wrapper diagnostic grant differs from the exact R5 role allocation")
+        role_binding = request.get("product", {}).get("government", {}).get("roleAuthorization", {})
+        role_path = Path(role_binding.get("path", "")).resolve(strict=True)
+        role_raw = role_path.read_bytes()
+        if (role_binding.get("sha256") != hashlib.sha256(role_raw).hexdigest() or
+                not any(isinstance(item, dict) and item.get("path") and item.get("sha256") == role_binding["sha256"] and
+                        Path(item["path"]).resolve(strict=True) == role_path
+                        for item in request.get("releasedInputs", []))):
+            raise ValueError("R5 role authorization must remain the exact released Request input")
+        import native_controller
+        native_controller.validate_r5_delegate_authorization(request, role_raw, validated)
+        max_starts = validated["maxWrapperAttempts"]
     else:
         raise ValueError("wrapper diagnostic grant key is not authorized")
     directory = config_path.parent / "wrapper-diagnostics"
@@ -147,6 +178,9 @@ def start_native_diagnostics(argv):
         if correction["sourceKey"] == "government-serialization-native-20261008-r4":
             # Re-read the live activation/slot immediately before the durable claim.
             validate_r4_entry_gate(validated)
+        elif correction["sourceKey"] == "government-scope-native-20261008-r5":
+            # Re-read the exact R5 activation/slot immediately before the durable claim.
+            validate_r5_entry_gate(validated)
         cursor = db.execute("INSERT INTO starts(config_sha,started) VALUES(?,?)", (expected, time.time()))
         invocation = cursor.lastrowid
         db.commit()
@@ -402,11 +436,16 @@ def _role_auth(raw: bytes, expected_sha: str, request: dict, request_raw: bytes,
     r3_grant = request.get("nativeFixtureR3Grant")
     r2_correction = request.get("nativeFixtureCorrection")
     r4_grant = request.get("nativeFixtureR4Grant")
-    if sum(value is not None for value in (r3_grant, r2_correction, r4_grant)) > 1:
-        raise ValueError("R2, R3, and R4 additive grants cannot be combined")
+    r5_grant = request.get("nativeFixtureR5Grant")
+    if sum(value is not None for value in (r3_grant, r2_correction, r4_grant, r5_grant)) > 1:
+        raise ValueError("R2, R3, R4, and R5 additive grants cannot be combined")
     if r4_grant is not None and (request.get("dispatchId") != "government-native-serialization-r4" or arm != "government"):
         raise ValueError("R4 grant is restricted to its exact Government dispatch")
-    diagnostic_grant = r4_grant if r4_grant is not None else (r3_grant if r3_grant is not None else r2_correction)
+    if r5_grant is not None and (request.get("dispatchId") != "government-native-scope-r5" or arm != "government"):
+        raise ValueError("R5 grant is restricted to its exact Government dispatch")
+    diagnostic_grant = (r5_grant if r5_grant is not None else
+                        r4_grant if r4_grant is not None else
+                        r3_grant if r3_grant is not None else r2_correction)
     if diagnostic_grant is not None:
         if not isinstance(diagnostics, dict) or set(diagnostics) != {"path", "sha256"}:
             raise ValueError("corrected role requires released diagnostic configuration")
@@ -832,6 +871,20 @@ def run_role(invocation_raw: bytes, authorization_raw: bytes, authorization_sha2
         from native_fixture_budget import validate_r4_entry_gate
         validate_r4_entry_gate(validated_r4)
         native_controller.validate_r4_delegate_authorization(request, authorization_raw, validated_r4)
+    r5_binding = request.get("nativeFixtureR5Grant")
+    if r5_binding is not None:
+        validated_r5 = fixture_bounds.get("r5Grant") if isinstance(fixture_bounds, dict) else None
+        if (request.get("dispatchId") != "government-native-scope-r5" or
+                request.get("arm") != "government" or
+                request.get("nativeFixtureR4Grant") is not None or
+                request.get("nativeFixtureR3Grant") is not None or
+                request.get("nativeFixtureCorrection") is not None or
+                not isinstance(validated_r5, dict) or
+                validated_r5.get("grantKey") != r5_binding.get("sourceKey")):
+            raise ValueError("R5 role call requires the exact separate Government grant before reservation")
+        from native_fixture_budget import validate_r5_entry_gate
+        validate_r5_entry_gate(validated_r5)
+        native_controller.validate_r5_delegate_authorization(request, authorization_raw, validated_r5)
     reserved_id, attempt_id = _reserve(ledger, auth, invocation, invocation_sha,
                                        authorization_sha256, role_slot, evidence_path,
                                        authority.grant["retrospectiveTokenThreshold"],
@@ -848,6 +901,12 @@ def run_role(invocation_raw: bytes, authorization_raw: bytes, authorization_sha2
         from native_fixture_budget import validate_r4_entry_gate
         validate_r4_entry_gate(validated_r4)
         native_controller.validate_r4_delegate_authorization(request, authorization_raw, validated_r4)
+    if r5_binding is not None:
+        # A reservation may take time; the current R5 slot and delegate pins
+        # must still hold at the final delegate Popen boundary.
+        from native_fixture_budget import validate_r5_entry_gate
+        validate_r5_entry_gate(validated_r5)
+        native_controller.validate_r5_delegate_authorization(request, authorization_raw, validated_r5)
     environment = native_controller.strip_bootstrap_environment(os.environ)
     result = bounded(argv, str(Path(cwd or os.getcwd()).resolve()), evidence_path,
                      effective_timeout, stdin=invocation_raw, env=environment,
@@ -905,7 +964,8 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     invocation_raw = sys.stdin.buffer.read()
     context = native_controller.load_context(invocation_raw=invocation_raw)
-    diagnostic_grant = (context.request.get("nativeFixtureR4Grant") or
+    diagnostic_grant = (context.request.get("nativeFixtureR5Grant") or
+                        context.request.get("nativeFixtureR4Grant") or
                         context.request.get("nativeFixtureR3Grant") or
                         context.request.get("nativeFixtureCorrection"))
     if diagnostic_grant is not None:
@@ -929,6 +989,19 @@ def main(argv: list[str] | None = None) -> int:
             raise ValueError("wrapper requires the exact validated R4 grant before delegation")
         from native_fixture_budget import validate_r4_entry_gate
         validate_r4_entry_gate(validated)
+    if context.request.get("nativeFixtureR5Grant") is not None:
+        bounds = context.native_fixture_bounds
+        validated = bounds.get("r5Grant") if isinstance(bounds, dict) else None
+        if (context.request.get("dispatchId") != "government-native-scope-r5" or
+                context.request.get("arm") != "government" or
+                context.request.get("nativeFixtureR4Grant") is not None or
+                context.request.get("nativeFixtureR3Grant") is not None or
+                context.request.get("nativeFixtureCorrection") is not None or
+                not isinstance(validated, dict) or
+                validated.get("grantKey") != diagnostic_grant.get("sourceKey")):
+            raise ValueError("wrapper requires the exact validated R5 grant before delegation")
+        from native_fixture_budget import validate_r5_entry_gate
+        validate_r5_entry_gate(validated)
     if (Path(args.authorization).resolve(strict=True) != context.authorization_path or
             args.authorization_sha256 != context.authorization_sha256):
         raise ValueError("wrapper argv differs from the digest-bound controller authorization")

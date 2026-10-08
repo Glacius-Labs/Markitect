@@ -103,6 +103,28 @@ R4_CUMULATIVE = {"government": {"starts": 6, "seconds": 900},
 R4_SOURCE_SHA = "04e225d5caee78c2a198607143863fca1e829750"
 R4_BINARY_SHA256 = "12241f325e4af59451e4021b31d9e6f5b829b5de06c94d35eaabfb9d663aa51f"
 R4_DELEGATE_SHA256 = "e8b8e5087f994a975efc2228301cf7f51dee9de4d64b77077a0941db7a8e98b9"
+R5_KEY = "government-scope-native-20261008-r5"
+R5_DISPATCH_ID = "government-native-scope-r5"
+R5_POINTER = "threads[name=Scientist].evidence.governmentScopeNativeGrant"
+R5_ENVELOPE_PATH = (r"C:\Users\Consiliari\Documents\Scientist-Probes\native-government-scope-20261008-r5"
+                    r"\released-r5-grant.json")
+R5_ENVELOPE_SHA256 = "c80edc0e9864c1e332eaee81838dad0f33640aa96b226d30d14228375c493c90"
+R5_SOURCE_PATH = (r"C:\Users\Consiliari\Documents\Scientist-Probes\native-government-scope-20261008-r5"
+                  r"\coordinator-r5-preflight-snapshot.json")
+R5_SOURCE_SHA256 = "881dd9afe3973f00dd4a04cd6d2efaa611b95f2605a952082c25ad32c3a9f5fa"
+R5_COORDINATION_PATH = R3_COORDINATION_PATH
+R5_ACTIVE_STATUS = "Active; Scientist slot assigned; execute only after offline preflight."
+R5_HISTORY_PATH = (Path(__file__).parents[1] / "evidence" / "government-scope-native-20261008-r5" /
+                   "historical-native-starts.sqlite").resolve()
+R5_HISTORY_SHA256 = "dd617d58a9021fce0b11482b740d78ccb5ddd143ff0c6fa4fbe08983af7f6705"
+R5_PRIOR_LABELS = R4_PRIOR_LABELS | {("government", "government-native-serialization-r4/queue")}
+R5_LABELS = {"government-native-scope-r5/queue", "government-native-scope-r5/resume"}
+R5_CUMULATIVE = {"government": {"starts": 7, "seconds": 1050}, "classic": {"starts": 7, "seconds": 1050}}
+R5_SOURCE_SHA = R4_SOURCE_SHA
+R5_BINARY_SHA256 = R4_BINARY_SHA256
+R5_DELEGATE_SHA256 = R4_DELEGATE_SHA256
+R5_PYTHON_PATH = r"C:\Python313\python.exe"
+R5_PYTHON_SHA256 = "d87063e5597f257004c731b66c59c56c91038861c6877b1a3dca6b8c4e919125"
 
 
 def sha(path):
@@ -484,6 +506,163 @@ def validate_r4_entry_gate(validated_grant):
             "slotOwner": "Scientist", "slotKey": slot_keys[0][1], "grantKey": R4_KEY}
 
 
+
+def validate_r5_grant_binding(request, original_grant_path, original_grant_sha):
+    """Validate the exact additive R5 Government scope grant without writing a ledger."""
+    if not isinstance(request, dict) or request.get("mode") != "mechanical":
+        raise ValueError("R5 provider-free allocation requires a mechanical Request")
+    if request.get("arm") != "government" or request.get("dispatchId") != R5_DISPATCH_ID:
+        raise ValueError("R5 grant is restricted to the exact Government dispatch")
+    if any(request.get(field) is not None for field in
+           ("nativeFixtureCorrection", "nativeFixtureR3Grant", "nativeFixtureR4Grant")):
+        raise ValueError("R5 Request cannot reuse a closed correction, R3, or R4 binding")
+    original_path = Path(original_grant_path).resolve(strict=True)
+    if (original_path != Path(R3_BASE_GRANT_PATH).resolve(strict=True) or
+            original_grant_sha != R3_BASE_GRANT_SHA256 or sha(original_path) != R3_BASE_GRANT_SHA256):
+        raise ValueError("R5 allocation requires the exact original R1 source grant")
+    _released_binding(request, "nativeFixtureGrant", original_path, original_grant_sha, KEY)
+
+    binding = request.get("nativeFixtureR5Grant")
+    if (not isinstance(binding, dict) or set(binding) != {"path", "sha256", "sourceKey"} or
+            binding.get("sourceKey") != R5_KEY):
+        raise ValueError("exact nativeFixtureR5Grant path/SHA/key binding required")
+    raw_path = Path(binding["path"])
+    if raw_path.is_symlink():
+        raise ValueError("R5 grant envelope cannot be a symlink")
+    grant_path = raw_path.resolve(strict=True)
+    grant_sha = binding["sha256"]
+    if (grant_path != Path(R5_ENVELOPE_PATH).resolve(strict=True) or
+            grant_sha != R5_ENVELOPE_SHA256 or sha(grant_path) != R5_ENVELOPE_SHA256):
+        raise ValueError("R5 grant envelope path or digest differs from the accepted source")
+    _released_binding(request, "nativeFixtureR5Grant", grant_path, grant_sha, R5_KEY)
+
+    document = _strict_load(grant_path, "R5 grant envelope")
+    if (not isinstance(document, dict) or set(document) !=
+            {"grant", "sourceCoordinationPath", "sourceCoordinationSha256", "sourceJsonPointer", "sourceThreadId"}):
+        raise ValueError("R5 grant envelope shape mismatch")
+    source_path_raw = Path(document["sourceCoordinationPath"])
+    if source_path_raw.is_symlink():
+        raise ValueError("R5 canonical source snapshot cannot be a symlink")
+    source_path = source_path_raw.resolve(strict=True)
+    source_sha = document["sourceCoordinationSha256"]
+    if (source_path != Path(R5_SOURCE_PATH).resolve(strict=True) or source_sha != R5_SOURCE_SHA256 or
+            sha(source_path) != R5_SOURCE_SHA256 or document["sourceThreadId"] != SOURCE_THREAD or
+            document["sourceJsonPointer"] != R5_POINTER):
+        raise ValueError("R5 canonical source path, digest, thread, or pointer mismatch")
+    if not _is_released(request, source_path, source_sha):
+        raise ValueError("R5 canonical source snapshot must be an exact released Request input")
+
+    source = _strict_load(source_path, "R5 canonical coordination snapshot")
+    scientist = next((item for item in source.get("threads", [])
+                      if isinstance(item, dict) and item.get("name") == "Scientist"), None)
+    grant = document["grant"]
+    if (not isinstance(scientist, dict) or
+            scientist.get("evidence", {}).get("governmentScopeNativeGrant") != grant or
+            grant.get("key") != R5_KEY or grant.get("baseSha") != "1d3f125d374822755936b039ff14b0fdd69e9f5f"):
+        raise ValueError("R5 grant differs from its canonical Scientist source or frozen base")
+
+    original_doc = _strict_load(original_path, "original R1 source grant")
+    original_products = {item.get("name", "").lower(): item
+                         for item in original_doc.get("grant", {}).get("products", [])
+                         if isinstance(item, dict)}
+    expected_product = {"name": "Government", "sourceSha": R5_SOURCE_SHA,
+                        "binarySha256": R5_BINARY_SHA256}
+    if original_products.get("government") != expected_product:
+        raise ValueError("R5 Government source/binary pins differ from the accepted R1 product")
+    expected_product_grant = {**expected_product, "delegateSha256": R5_DELEGATE_SHA256}
+    if grant.get("product") != expected_product_grant:
+        raise ValueError("R5 product/delegate pin differs from the exact accepted Government candidate")
+
+    executable = request.get("product", {}).get("government", {}).get("executable")
+    if (not isinstance(executable, dict) or executable.get("sha256") != R5_BINARY_SHA256 or
+            executable.get("sourceCommit") != R5_SOURCE_SHA or not isinstance(executable.get("path"), str)):
+        raise ValueError("R5 Request must bind the exact Government executable source and digest")
+    executable_path = Path(executable["path"])
+    if (executable_path.is_symlink() or not executable_path.is_file() or
+            sha(executable_path) != R5_BINARY_SHA256):
+        raise ValueError("R5 Request Government executable differs from the exact binary pin")
+    python_pin = grant.get("python")
+    python_path = Path(R5_PYTHON_PATH)
+    if (python_pin != {"path": "C:/Python313/python.exe", "sha256": R5_PYTHON_SHA256} or
+            not python_path.is_file() or python_path.is_symlink() or sha(python_path) != R5_PYTHON_SHA256):
+        raise ValueError("R5 Python executable differs from the exact Python313 pin")
+
+    expected_values = {
+        "maxFreshCases": 1, "maxNativeStarts": 2, "maxWrapperAttempts": 6,
+        "maxDeterministicDelegates": 6, "maxParallelRoles": 2,
+        "reservedSecondsPerNativeStart": 150, "maxNewReservedSessionSeconds": 300,
+        "nativeProcessDeadlineSeconds": 38, "controllerWindowSeconds": 38,
+        "historicalConsumed": {"nativeStarts": 12, "wrapperAttempts": 10,
+                               "delegates": 7, "reservedSessionSeconds": 1800},
+        "cumulativeMaxNativeStarts": 14, "cumulativeMaxWrapperAttempts": 16,
+        "cumulativeMaxDelegates": 13, "cumulativeMaxReservedSessionSeconds": 2100,
+        "newModelProviderCalls": 0, "metadataSessions": 0, "studyCells": 0,
+        "classicNativeStarts": 0, "fullProductSuites": 0,
+        "historicalRealUsage": {"actorStarts": 5, "knownTokenSubtotal": 53331, "totalTokens": None},
+        "sequence": ["one fresh Queue",
+                     "only after complete positive native AND outer result, fresh actual checks, independent technical review, all required final assents and promotion: associated existing Resume/Replay verification"]}
+    if any(grant.get(key) != value for key, value in expected_values.items()):
+        raise ValueError("R5 grant limits or sequencing differ from the exact finite Government allocation")
+    return {"path": str(grant_path), "sha256": grant_sha,
+            "sourceCoordinationPath": str(source_path), "sourceCoordinationSha256": source_sha,
+            "grantKey": R5_KEY, "grant": grant, "product": expected_product_grant,
+            "maxNativeStarts": grant["maxNativeStarts"],
+            "maxWrapperAttempts": grant["maxWrapperAttempts"],
+            "maxDeterministicDelegates": grant["maxDeterministicDelegates"],
+            "maxParallelRoles": grant["maxParallelRoles"],
+            "maxRoleStarts": grant["maxWrapperAttempts"], "maxRoleParallel": grant["maxParallelRoles"],
+            "maxRoleProcessSeconds": grant["nativeProcessDeadlineSeconds"],
+            "reservedSecondsPerNativeStart": grant["reservedSecondsPerNativeStart"],
+            "maxNewReservedSessionSeconds": grant["maxNewReservedSessionSeconds"],
+            "nativeProcessDeadlineSeconds": grant["nativeProcessDeadlineSeconds"],
+            "controllerWindowSeconds": grant["controllerWindowSeconds"],
+            "cumulativeMaxNativeStarts": grant["cumulativeMaxNativeStarts"],
+            "cumulativeMaxWrapperAttempts": grant["cumulativeMaxWrapperAttempts"],
+            "cumulativeMaxDelegates": grant["cumulativeMaxDelegates"],
+            "cumulativeMaxReservedSessionSeconds": grant["cumulativeMaxReservedSessionSeconds"]}
+
+
+def validate_r5_entry_gate(validated_grant):
+    """Require the exact live Scientist R5 assignment before each consumption."""
+    if (not isinstance(validated_grant, dict) or validated_grant.get("grantKey") != R5_KEY or
+            validated_grant.get("grant", {}).get("key") != R5_KEY or
+            validated_grant.get("sourceCoordinationPath") != R5_SOURCE_PATH or
+            validated_grant.get("sourceCoordinationSha256") != R5_SOURCE_SHA256):
+        raise ValueError("validated R5 grant provenance required for the entry gate")
+    live_path = Path(R5_COORDINATION_PATH)
+    if live_path.is_symlink():
+        raise ValueError("live R5 coordination state cannot be a symlink")
+    live_path = live_path.resolve(strict=True)
+    raw = live_path.read_bytes()
+    source = _strict_load(raw, "live R5 coordination state")
+    scientist = next((item for item in source.get("threads", [])
+                      if isinstance(item, dict) and item.get("name") == "Scientist"), None)
+    live_grant = scientist.get("evidence", {}).get("governmentScopeNativeGrant") if scientist else None
+    frozen_source = _strict_load(validated_grant["sourceCoordinationPath"], "frozen R5 coordination source")
+    frozen_scientist = next((item for item in frozen_source.get("threads", [])
+                             if isinstance(item, dict) and item.get("name") == "Scientist"), None)
+    frozen_grant = (frozen_scientist.get("evidence", {}).get("governmentScopeNativeGrant")
+                    if frozen_scientist else None)
+    if not isinstance(live_grant, dict) or not isinstance(frozen_grant, dict):
+        raise ValueError("live Scientist R5 grant is missing")
+    if live_grant != frozen_grant or live_grant != validated_grant["grant"]:
+        raise ValueError("live Scientist R5 grant differs from the exact frozen active grant")
+    slot = source.get("fullSuiteSlot")
+    frozen_slot = frozen_source.get("fullSuiteSlot")
+    if not isinstance(slot, dict) or slot.get("owner") != "Scientist":
+        raise ValueError("R5 fullSuiteSlot is not explicitly assigned to Scientist")
+    slot_keys = [(key, slot[key]) for key in ("assignmentKey", "key", "grantKey") if key in slot]
+    if len(slot_keys) != 1 or slot_keys[0][1] != R5_KEY:
+        raise ValueError("R5 fullSuiteSlot must carry exactly one matching explicit grant key")
+    if slot != frozen_slot:
+        raise ValueError("live R5 fullSuiteSlot differs from the exact frozen Scientist assignment")
+    if (slot.get("assignedUtc") != "2026-10-08T02:00:58Z" or
+            live_grant.get("slotAssignedUtc") != slot.get("assignedUtc")):
+        raise ValueError("R5 grant slotAssignedUtc must match the exact live Scientist slot assignment")
+    return {"coordinationPath": str(live_path), "coordinationSha256": hashlib.sha256(raw).hexdigest(),
+            "slotOwner": "Scientist", "slotKey": slot_keys[0][1], "grantKey": R5_KEY}
+
+
 def validate_r3_entry_gate(validated_grant):
     """Require a live, exact R3 full-suite assignment before any R3 consumption."""
     if (not isinstance(validated_grant, dict) or validated_grant.get("grantKey") != R3_KEY or
@@ -614,11 +793,14 @@ class FixtureBudget:
         self.correction = None
         self.r3 = None
         self.r4 = None
+        self.r5 = None
         if (request is not None and request.get("dispatchId") in set(R3_DISPATCH_IDS.values()) and
                 request.get("nativeFixtureR3Grant") is None):
             raise ValueError("exact R3 fixture grant is required for the corrected R3 dispatch")
         if request is not None and request.get("dispatchId") == R4_DISPATCH_ID and request.get("nativeFixtureR4Grant") is None:
             raise ValueError("exact R4 fixture grant is required for the Government serialization R4 dispatch")
+        if request is not None and request.get("dispatchId") == R5_DISPATCH_ID and request.get("nativeFixtureR5Grant") is None:
+            raise ValueError("exact R5 fixture grant is required for the Government scope R5 dispatch")
         if request is not None and request.get("nativeFixtureCorrection") is not None:
             self.correction = self._validate_correction(request)
         if request is not None and request.get("nativeFixtureR4Grant") is not None:
@@ -629,6 +811,16 @@ class FixtureBudget:
             if not self.path.is_file():
                 raise ValueError("R4 requires the existing immutable native-start history")
             self._validate_r4_prior_history_readonly()
+            return
+        if request is not None and request.get("nativeFixtureR5Grant") is not None:
+            self.r5 = validate_r5_grant_binding(request, self.grant_path, self.grant_sha)
+            if (self.correction is not None or request.get("nativeFixtureR3Grant") is not None or
+                    request.get("nativeFixtureR4Grant") is not None):
+                raise ValueError("R5 Request cannot combine closed correction grants")
+            self.r5_request = request
+            if not self.path.is_file():
+                raise ValueError("R5 requires the existing immutable native-start history")
+            self._validate_r5_prior_history_readonly()
             return
         if request is not None and request.get("nativeFixtureR3Grant") is not None:
             self.r3 = validate_r3_grant_binding(request, self.grant_path, self.grant_sha)
@@ -729,6 +921,11 @@ class FixtureBudget:
             raise ValueError("R3 products must run sequentially in Government then Classic order")
         if len([row for row in new_rows if row[4] is None]) > 1:
             raise ValueError("R3 history exceeds maxParallel=1 native controller allocation")
+
+    @staticmethod
+    def _r5_identity(validated_grant):
+        return (R5_KEY, validated_grant["sha256"], validated_grant["sourceCoordinationSha256"],
+                validated_grant["grant"]["baseSha"])
 
     @staticmethod
     def _r4_identity(validated_grant):
@@ -911,6 +1108,179 @@ class FixtureBudget:
         finally:
             db.close()
 
+    def _r5_validate_queue_success(self, queue_row):
+        """Re-run the product translator against exact bound Request/stdout before Resume."""
+        receipt_raw = queue_row[6].encode("utf-8") if isinstance(queue_row[6], str) else b"{}"
+        receipt = _strict_load(receipt_raw, "R5 Queue process receipt")
+        if (not isinstance(receipt, dict) or type(receipt.get("returnCode")) is not int or
+                receipt.get("returnCode") != 0):
+            raise ValueError("R5 resume requires a successful queue process")
+        government_product = self.r5_request.get("product", {}).get("government", {})
+        role_binding = government_product.get("roleAuthorization")
+        if (not isinstance(role_binding, dict) or set(role_binding) != {"path", "sha256"} or
+                not isinstance(role_binding.get("path"), str)):
+            raise ValueError("R5 queue requires the exact Request roleAuthorization binding")
+        auth_path = Path(role_binding["path"])
+        if auth_path.is_symlink() or sha(auth_path) != role_binding["sha256"]:
+            raise ValueError("R5 queue roleAuthorization path/digest changed")
+        auth = _strict_load(auth_path, "R5 roleAuthorization")
+        request_path = auth.get("requestPath") if isinstance(auth, dict) else None
+        if not isinstance(request_path, str):
+            raise ValueError("R5 roleAuthorization does not bind the exact Request path")
+        request_raw = Path(request_path).read_bytes()
+        if _strict_load(request_raw, "R5 Request") != self.r5_request:
+            raise ValueError("R5 exact Request bytes differ from the admitted Request")
+        evidence = Path(self.r5_request.get("evidenceDirectory", "")).resolve(strict=True)
+        stdout_path = evidence / "process" / "stdout.log"
+        try:
+            from government import translate_queue_result
+            translated = translate_queue_result(
+                self.r5_request, request_raw, stdout_path, receipt["returnCode"])
+        except (OSError, ValueError, KeyError) as exc:
+            raise ValueError(f"R5 Queue native result is not positively translatable: {exc}") from exc
+        if (translated.get("status") != "completed" or
+                translated.get("government", {}).get("queueStatus") != "complete"):
+            raise ValueError("R5 Queue translator did not report completed/complete")
+        jobs = translated.get("government", {}).get("nativeJobStates", [])
+        if (len(jobs) != 1 or jobs[0].get("id") != self.r5_request.get("task", {}).get("id") or
+                jobs[0].get("state") not in {"accepted-scoped", "accepted-complete"}):
+            raise ValueError("R5 Queue translator did not bind one accepted Request job")
+        reports = [item for item in translated.get("receipts", [])
+                   if item.get("kind") == "government-run-report"]
+        if len(reports) != 1:
+            raise ValueError("R5 Queue requires one translated native run report")
+        report_path = Path(reports[0]["path"]).resolve(strict=True)
+        report_raw = report_path.read_bytes()
+        if hashlib.sha256(report_raw).hexdigest() != reports[0].get("sha256"):
+            raise ValueError("R5 translated run report digest changed")
+        report = _strict_load(report_raw, "R5 native run report")
+        promotion = report.get("promotion") if isinstance(report, dict) else None
+        if (not isinstance(report, dict) or report.get("status") != "accepted-scoped" or
+                report.get("stage") != "complete" or
+                not isinstance(promotion, dict) or promotion.get("status") != "promoted"):
+            raise ValueError("R5 run report must be accepted-scoped/complete with promoted status")
+        completion_receipts = [item for item in translated.get("receipts", [])
+                               if item.get("kind") == "government-promotion-completion"]
+        if len(completion_receipts) != 1:
+            raise ValueError("R5 promoted run must bind its promotion-completion receipt")
+        runtime_binding = government_product.get("runtime", {})
+        if (not isinstance(runtime_binding, dict) or not isinstance(runtime_binding.get("path"), str) or
+                sha(runtime_binding["path"]) != runtime_binding.get("sha256")):
+            raise ValueError("R5 fresh-check runtime binding is missing or changed")
+        runtime = _strict_load(runtime_binding["path"], "R5 native runtime")
+        expected_checks = runtime.get("checks") if isinstance(runtime, dict) else None
+        observed_checks = report.get("checks")
+        _validate_r4_fresh_check_receipts(expected_checks, observed_checks)
+        kinds = {item.get("kind") for item in translated.get("receipts", [])}
+        if "government-decision" not in kinds or not any(
+                isinstance(kind, str) and kind.startswith("government-vote:") for kind in kinds):
+            raise ValueError("R5 accepted queue lacks explicit validated final vote/decision receipts")
+        return translated
+
+    def _validate_r5_rows(self, allocation, starts, corrections):
+        if allocation != [(self.grant_sha,)]:
+            raise ValueError("R5 must append to the original R1 native-start allocation")
+        if hashlib.sha256(R5_HISTORY_PATH.read_bytes()).hexdigest() != R5_HISTORY_SHA256:
+            raise ValueError("immutable R5 twelve-start history snapshot digest mismatch")
+        old_allocation, old_starts, old_corrections = _history_rows(R5_HISTORY_PATH)
+        old_rows = [row for row in starts if (row[0], row[1]) in R5_PRIOR_LABELS]
+        expected_old_rows = [row for row in old_starts if (row[0], row[1]) in R5_PRIOR_LABELS]
+        if (old_allocation != [(R3_BASE_GRANT_SHA256,)] or len(expected_old_rows) != 12 or
+                old_rows != expected_old_rows):
+            raise ValueError("R5 historical starts differ from the immutable twelve-row snapshot")
+        prior_corrections = [row for row in corrections if row[0] != R5_KEY]
+        if prior_corrections != old_corrections:
+            raise ValueError("R5 must preserve all existing R2/R3 correction records exactly")
+        new_rows = [row for row in starts if (row[0], row[1]) not in R5_PRIOR_LABELS]
+        if any(product != "government" or label not in R5_LABELS for
+               product, label, _argv, _claimed, _finished, _seconds, _receipt in new_rows):
+            raise ValueError("R5 history contains an unallocated non-Government start")
+        identity = self._r5_identity(self.r5)
+        r5_corrections = [row for row in corrections if row[0] == R5_KEY]
+        if r5_corrections and r5_corrections != [identity]:
+            raise ValueError("R5 history is bound to a different source grant or snapshot")
+        if (len(new_rows) > 2 or sum(row[5] for row in new_rows) > 300 or
+                any(row[5] != PROCESS_SECONDS_RESERVED for row in new_rows)):
+            raise ValueError("R5 history exceeds its two-start/300-second finite allocation")
+        total_rows = [*expected_old_rows, *new_rows]
+        if (len(total_rows) > 14 or sum(row[5] for row in total_rows) > 2100 or
+                sum(row[0] == "government" for row in total_rows) > 7 or
+                sum(row[5] for row in total_rows if row[0] == "government") > 1050 or
+                sum(row[0] == "classic" for row in total_rows) > 7 or
+                sum(row[5] for row in total_rows if row[0] == "classic") > 1050):
+            raise ValueError("R5 history exceeds cumulative native-start/session ceilings")
+        new_ordered = sorted(new_rows, key=lambda row: row[3])
+        if [row[1] for row in new_ordered] not in ([], ["government-native-scope-r5/queue"],
+                                                   ["government-native-scope-r5/queue",
+                                                    "government-native-scope-r5/resume"]):
+            raise ValueError("R5 must reserve its queue before its single associated resume")
+        if len(new_ordered) == 2:
+            queue_receipt = json.loads(new_ordered[0][6] or "{}")
+            if (new_ordered[0][4] is None or type(queue_receipt.get("returnCode")) is not int or
+                    queue_receipt.get("returnCode") != 0 or new_ordered[1][3] < new_ordered[0][4]):
+                raise ValueError("R5 resume requires a completed successful queue process")
+            self._r5_validate_queue_success(new_ordered[0])
+        if len([row for row in new_rows if row[4] is None]) > 1:
+            raise ValueError("R5 native controller parallelism is exhausted")
+
+    def _validate_r5_prior_history_readonly(self):
+        if hashlib.sha256(R5_HISTORY_PATH.read_bytes()).hexdigest() != R5_HISTORY_SHA256:
+            raise ValueError("immutable R5 twelve-start history snapshot digest mismatch")
+        with _readonly_db(self.path) as db:
+            allocation = db.execute("SELECT grant_sha FROM allocation ORDER BY grant_sha").fetchall()
+            starts = db.execute("SELECT product,label,argv,claimed,finished,reserved_seconds,receipt "
+                                "FROM starts ORDER BY product,label").fetchall()
+            corrections = db.execute("SELECT source_key,correction_sha,source_snapshot_sha,basis_sha "
+                                     "FROM corrections ORDER BY source_key").fetchall()
+        self._validate_r5_rows(allocation, starts, corrections)
+
+    def _reserve_r5(self, product, label, argv):
+        if product != "government" or label not in R5_LABELS:
+            raise ValueError("native start label is not allocated by the exact R5 Government grant")
+        db = self._connection()
+        try:
+            db.execute("BEGIN IMMEDIATE")
+            allocation = db.execute("SELECT grant_sha FROM allocation ORDER BY grant_sha").fetchall()
+            starts = db.execute("SELECT product,label,argv,claimed,finished,reserved_seconds,receipt "
+                                "FROM starts ORDER BY product,label").fetchall()
+            corrections = db.execute("SELECT source_key,correction_sha,source_snapshot_sha,basis_sha "
+                                     "FROM corrections ORDER BY source_key").fetchall()
+            self._validate_r5_rows(allocation, starts, corrections)
+            if db.execute("SELECT 1 FROM starts WHERE product=? AND label=?", (product, label)).fetchone():
+                raise ValueError("R5 native start already claimed; no retry")
+            new_rows = [row for row in starts if (row[0], row[1]) not in R5_PRIOR_LABELS]
+            expected_next = ("government-native-scope-r5/queue" if not new_rows else
+                             "government-native-scope-r5/resume")
+            if label != expected_next:
+                raise ValueError("R5 permits one queue followed only by its associated resume")
+            if label == "government-native-scope-r5/resume":
+                queue_row = next((row for row in new_rows
+                                  if row[1] == "government-native-scope-r5/queue"), None)
+                if queue_row is None or queue_row[4] is None:
+                    raise ValueError("R5 resume requires a completed successful queue process")
+                self._r5_validate_queue_success(queue_row)
+            count, seconds = db.execute("SELECT COUNT(*),COALESCE(SUM(reserved_seconds),0) "
+                                        "FROM starts WHERE product='government'").fetchone()
+            if count >= R5_CUMULATIVE["government"]["starts"] or seconds + PROCESS_SECONDS_RESERVED > R5_CUMULATIVE["government"]["seconds"]:
+                raise ValueError("finite R5 Government native allocation exhausted")
+            if db.execute("SELECT COUNT(*) FROM starts WHERE finished IS NULL").fetchone()[0] >= 1:
+                raise ValueError("R5 native controller parallelism exhausted")
+            identity = self._r5_identity(self.r5)
+            existing = db.execute("SELECT source_key,correction_sha,source_snapshot_sha,basis_sha "
+                                  "FROM corrections WHERE source_key=?", (R5_KEY,)).fetchone()
+            if existing is None:
+                db.execute("INSERT INTO corrections VALUES(?,?,?,?)", identity)
+            elif tuple(existing) != identity:
+                raise ValueError("R5 ledger record differs from its validated source grant")
+            db.execute("INSERT INTO starts VALUES(?,?,?,?,NULL,?,NULL)",
+                       (product, label, json.dumps(argv), time.time(), PROCESS_SECONDS_RESERVED))
+            db.commit()
+        except BaseException:
+            db.rollback()
+            raise
+        finally:
+            db.close()
+
     def _validate_r3_prior_history_readonly(self):
         if hashlib.sha256(R3_HISTORY_PATH.read_bytes()).hexdigest() != R3_HISTORY_SHA256:
             raise ValueError("immutable R2 native-start snapshot digest mismatch")
@@ -924,6 +1294,24 @@ class FixtureBudget:
 
     def preflight_snapshot(self):
         """Read-only allocation/history view; reports slot readiness without reserving."""
+        if self.r5 is not None:
+            with _readonly_db(self.path) as db:
+                db.row_factory = sqlite3.Row
+                rows = [dict(row) for row in db.execute("SELECT * FROM starts ORDER BY claimed")]
+            try:
+                gate = {"ready": True, **validate_r5_entry_gate(self.r5)}
+            except (OSError, ValueError) as exc:
+                gate = {"ready": False, "reason": str(exc)}
+            return {"allocationId": R5_KEY, "grantSha256": self.r5["sha256"],
+                    "sourceCoordinationSha256": self.r5["sourceCoordinationSha256"],
+                    "cumulativeNativeStartCeiling": {key: value["starts"] for key, value in R5_CUMULATIVE.items()},
+                    "cumulativeReservedSessionSecondsCeiling": {key: value["seconds"] for key, value in R5_CUMULATIVE.items()},
+                    "maxParallel": 1, "productsRunSequentially": True, "starts": rows,
+                    "entryGate": gate, "deadlineSeconds": 38,
+                    "reservedSecondsPerStart": PROCESS_SECONDS_RESERVED,
+                    "accountingUnit": "bounded Government controller and deterministic role sessions including cleanup margin",
+                    "arbitraryOsDescendantWallSeconds": None,
+                    "refills": 0, "realActorStarts": 0, "providerCalls": 0, "studyCells": 0}
         if self.r4 is not None:
             with _readonly_db(self.path) as db:
                 db.row_factory = sqlite3.Row
@@ -1020,6 +1408,12 @@ class FixtureBudget:
     def reserve(self, product, label, argv):
         if sha(self.grant_path) != self.grant_sha:
             raise ValueError("fixture allocation changed before start")
+        if self.r5 is not None:
+            self.r5 = validate_r5_grant_binding(self.r5_request, self.grant_path, self.grant_sha)
+            if (sha(self.r5["path"]) != self.r5["sha256"] or
+                    sha(self.r5["sourceCoordinationPath"]) != self.r5["sourceCoordinationSha256"]):
+                raise ValueError("R5 grant or frozen source changed before start")
+            validate_r5_entry_gate(self.r5)
         if self.r4 is not None:
             self.r4 = validate_r4_grant_binding(self.r4_request, self.grant_path, self.grant_sha)
             if (sha(self.r4["path"]) != self.r4["sha256"] or
@@ -1050,6 +1444,9 @@ class FixtureBudget:
                 json.loads(self.grant_path.read_bytes())["grant"]["products"]
                 if item["name"].lower() == product):
             raise ValueError("allocated executable changed before start")
+        if self.r5 is not None:
+            self._reserve_r5(product, label, argv)
+            return
         if self.r4 is not None:
             self._reserve_r4(product, label, argv)
             return
@@ -1141,6 +1538,8 @@ class FixtureBudget:
                        (time.time(), json.dumps(receipt,sort_keys=True), product,label))
 
     def snapshot(self):
+        if self.r5 is not None:
+            return self.preflight_snapshot()
         if self.r4 is not None:
             return self.preflight_snapshot()
         if self.r3 is not None:

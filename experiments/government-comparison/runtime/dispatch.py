@@ -17,6 +17,8 @@ CHECKOUT = Path(__file__).resolve().parents[3]
 LIVE_GAPS = ["provider-requests-and-internal-retries-unknown", "retrospective-token-overshoot",
              "unobserved-native-descendants", "same-user-filesystem-access", "serving-model-may-be-null",
              "effective-actor-file-tools-unproven-by-local-flags"]
+R5_CONTROLLER_DEADLINE_SECONDS = 38
+R5_CLEANUP_MARGIN_SECONDS = 6
 
 
 def digest(raw):
@@ -29,6 +31,19 @@ def encoded(value):
 
 def execution_sha(request):
     return digest(encoded({key: value for key, value in request.items() if key != "operation"}))
+
+
+def r5_process_timeout(existing_wall, controller_elapsed):
+    """Reserve bounded-process cleanup time inside the R5 38-second controller deadline."""
+    return min(float(existing_wall), R5_CONTROLLER_DEADLINE_SECONDS -
+               float(controller_elapsed) - R5_CLEANUP_MARGIN_SECONDS)
+
+
+def validate_r5_terminal_deadline(request, controller_elapsed):
+    """Keep positive R5 qualification inside the complete controller window."""
+    if (request.get("nativeFixtureR5Grant") is not None and
+            float(controller_elapsed) > R5_CONTROLLER_DEADLINE_SECONDS):
+        raise ValueError("R5 controller deadline exceeded before positive result finalization")
 
 
 def external(path, *, existing=False):
@@ -451,12 +466,15 @@ def dispatch_government(request_path, result_path, authority, request, raw, capt
     process_receipts = []
     process_verified = False
     controller_finished = False
-    def r4_start_gate():
+    def native_fixture_start_gate():
         if request.get("nativeFixtureR4Grant") is not None:
             fresh_request, fresh_captured = authority.validate(raw)
             native_controller.validate_r4_entry_for_launch(fresh_request, fresh_captured, argv)
+        if request.get("nativeFixtureR5Grant") is not None:
+            fresh_request, fresh_captured = authority.validate(raw)
+            native_controller.validate_r5_entry_for_launch(fresh_request, fresh_captured, argv)
     try:
-        r4_start_gate()
+        native_fixture_start_gate()
         ledger.reserve_controller_dispatch(request["dispatchId"], execution_sha(request), raw, argv,
                                            request["task"]["id"], request["purpose"],
                                            authority.grant["maxActorSessions"])
@@ -489,6 +507,9 @@ def dispatch_government(request_path, result_path, authority, request, raw, capt
             if time.time() >= authority.grant["expiresAt"]:
                 reason = reason or "grant_expired"
             elapsed = ledger.controller_elapsed(request["dispatchId"])
+            if request.get("nativeFixtureR5Grant") is not None and elapsed >= (
+                    R5_CONTROLLER_DEADLINE_SECONDS - R5_CLEANUP_MARGIN_SECONDS):
+                reason = reason or "R5_controller_wall_deadline"
             if elapsed >= min(request["wallSeconds"], authority.grant["maxSessionWallSeconds"]):
                 reason = reason or "controller_wall_deadline"
             if directory.joinpath("STOP").exists():
@@ -509,7 +530,11 @@ def dispatch_government(request_path, result_path, authority, request, raw, capt
                    remaining / 3.0, max(0.0, float(authority.grant["expiresAt"]) - time.time()))
         if wall <= 0:
             raise LimitReached("no shared wall-time remains for native controller launch")
-        r4_start_gate()
+        native_fixture_start_gate()
+        if request.get("nativeFixtureR5Grant") is not None:
+            wall = r5_process_timeout(wall, ledger.controller_elapsed(request["dispatchId"]))
+            if wall <= 0:
+                raise LimitReached("R5 controller deadline leaves no process time after cleanup reserve")
         receipt = bounded(argv, request["actorRepository"], evidence / "process", wall,
                           env=controller_env, stop_path=evidence / "STOP", poll_stop=monitor)
         process_path = evidence / "process" / "process.json"
@@ -542,10 +567,12 @@ def dispatch_government(request_path, result_path, authority, request, raw, capt
                 raise ValueError("controller released-input snapshot mismatch")
             result["receipts"].append({"path": str(snapshot.resolve()), "sha256": item["sha256"],
                                        "kind": "released-input-snapshot"})
+        elapsed_seconds = ledger.controller_elapsed(request["dispatchId"])
+        validate_r5_terminal_deadline(request, elapsed_seconds)
         result = ledger.finish_controller_dispatch(request["dispatchId"], result,
                   {"argv": argv, "cwd": request["actorRepository"], "process": process,
                    "processSha256": digest(process_raw), "bootstrapSha256": bootstrap_sha,
-                   "elapsedSeconds": ledger.controller_elapsed(request["dispatchId"])})
+                   "elapsedSeconds": elapsed_seconds})
         controller_finished = True
     except Exception as exc:
         result.update(status="incomplete", inferencePerformed=None,
