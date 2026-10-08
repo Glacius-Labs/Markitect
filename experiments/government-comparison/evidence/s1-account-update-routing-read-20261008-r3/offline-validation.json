@@ -1,12 +1,13 @@
 {
   "key": "s1-account-update-routing-read-20261008-r3",
-  "sourceTestCorrectionBatches": 1,
+  "sourceTestCorrectionBatches": 2,
   "corrections": [
     "Unsealed wrapper copied R2 label corrected toR3; nested authoritative grant unchanged; explicit wrapper key guard added",
-    "Pre-first-test fixture cleanup and precise firstfailure/staleslot/window assertions"
+    "Pre-first-test fixture cleanup and precise firstfailure/staleslot/window assertions",
+    "Late seven authority assertions qualified with preserved recovered initial bytes and affected-group-only invocation2"
   ],
   "sourceImplementationRoutingCorrections": 0,
-  "testInvocations": 1,
+  "testInvocations": 2,
   "newUnittestGroups": 6,
   "syntheticSessionInvocations": 8,
   "testsPassed": true,
@@ -22,5 +23,13 @@
     "ConfigReadResponse",
     "ConfigRequirementsReadResponse"
   ],
-  "threadTurnItemUsageAccountSchemasReal": true
+  "threadTurnItemUsageAccountSchemasReal": true,
+  "testFailures": 0,
+  "allSixFinalFileSingleInvocationClaimed": false,
+  "initialTestSourceSha256": "708d1c34680cd1bf12a6d572dc1c9b3896dd924b343984ef193f8d364a814d4a",
+  "finalTestSourceSha256": "cc1787c656d06da72c2a7ab892897a1394acda6357865157d13823783d2beee3",
+  "initialSixGroupsPassed": true,
+  "affectedAuthorityGroupPassed": true,
+  "affectedUnittestSeconds": 0.001,
+  "runtimeSourceChangedAfterInitialTests": false
 }
