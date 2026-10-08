@@ -1,0 +1,17 @@
+{
+  "key": "s1-stderr-observation-diagnostic-20261008-r2",
+  "owner": "Scientist",
+  "grantIssuedUtc": "2026-10-08T17:31:23Z",
+  "slotAssignedUtc": "2026-10-08T17:31:23Z",
+  "releasedUtc": "2026-10-08T17:44:26.585904+00:00",
+  "sourceCommit": "a9a3794651b87a15fc53a0480ab584aac0f3dc0c",
+  "freezeCommit": "8d32055cb052e3375cfb775db13ba6b7aca33c3e",
+  "status": "Released after one terminal diagnostic before turn; identity/policy gate mismatch",
+  "diagnosticReservationsConsumed": 1,
+  "nativeTreesConsumed": 1,
+  "cumulativeNativeTrees": 9,
+  "remainingRuntimeAllocation": 0,
+  "remainingGrantClosed": true,
+  "automaticFollowOn": false,
+  "canonicalCoordinationUpdate": "Overseer-owned; this receipt explicitly releases Scientist slot, not a claim of canonical mutation."
+}

@@ -1,0 +1,11 @@
+{
+  "key": "s1-stderr-observation-diagnostic-20261008-r2",
+  "grantIssuedUtc": "2026-10-08T17:31:23Z",
+  "slotAssignedUtc": "2026-10-08T17:31:23Z",
+  "requestSha256": "1971dd1cb28e338623b5b20474a810506fedd79e8d1e1b449458f6a35c5e5792",
+  "freezeSha256": "73fd2b1c31103c6929a56b8872f1fbbf179e4e9b3fd868cbe5fe40f1fcb5bb58",
+  "reservationSha256": "c481cdacb337cc6b9774e744363e42686872e2bdfe92ec9adb984de5d909f949",
+  "sourceCommit": "a9a3794651b87a15fc53a0480ab584aac0f3dc0c",
+  "freezeCommit": "8d32055cb052e3375cfb775db13ba6b7aca33c3e",
+  "startedAtUnix": 1791481325.6189027
+}

@@ -1,0 +1,16 @@
+{
+  "key": "s1-stderr-observation-diagnostic-20261008-r2",
+  "checkedUtc": "2026-10-08T17:42:58.752921+00:00",
+  "excerptStatus": "written-private",
+  "ownedExclusiveOutputRootVerified": true,
+  "targetNonlinkRegularSingleLinkVerified": true,
+  "validJson": true,
+  "privateOutputBytes": 638,
+  "targetedReadCount": 1,
+  "ownedExactFileRemoved": true,
+  "privateDirectoryEmpty": true,
+  "contentHashComputed": false,
+  "excerptTextArchived": false,
+  "rawPersisted": false,
+  "residual": "Known-pattern redaction only; sanitized tool/task history may remain, restrictive ACL/isolation not proven."
+}

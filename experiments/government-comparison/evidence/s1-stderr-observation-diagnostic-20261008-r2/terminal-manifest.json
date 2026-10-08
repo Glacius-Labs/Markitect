@@ -1,0 +1,168 @@
+{
+  "key": "s1-stderr-observation-diagnostic-20261008-r2",
+  "baseSha": "5f66346d6c602d573777fcd1522d006a6a6faefb",
+  "sourceCommit": "a9a3794651b87a15fc53a0480ab584aac0f3dc0c",
+  "freezeCommit": "8d32055cb052e3375cfb775db13ba6b7aca33c3e",
+  "sealedUtc": "2026-10-08T17:46:04.699342+00:00",
+  "status": "STOPPED BEFORE TURN",
+  "stopReason": "thread-response-identity-or-policy-mismatch",
+  "files": {
+    "authorization-grant.json": {
+      "bytes": 8526,
+      "sha256": "cf988b417c3ac6c0bc227c28f4a9306dd555627a9375e424c3f2a7cb5ed729da"
+    },
+    "binding-construction.json": {
+      "bytes": 690,
+      "sha256": "5d49b25258d3ac969ea0d2b80cd8bc1cb94ddeefa823129833551084777111a3"
+    },
+    "binding-review.md": {
+      "bytes": 3392,
+      "sha256": "c180204a6c642a9a87f56dbcc2d6add7f065d1176ef68ce36183a0792f5556f3"
+    },
+    "client.py": {
+      "bytes": 37566,
+      "sha256": "70fd65b3c0ced08dd638676fe52dad9ff1f3fd2a56399e84605643245950f3b5"
+    },
+    "current-handoff.md": {
+      "bytes": 2380,
+      "sha256": "4e5d733505d5e38958ca42f99fbae966fd9e3724c676dc90ee26cb5e8391c646"
+    },
+    "diagnostic-contract.json": {
+      "bytes": 1536,
+      "sha256": "c16a7be1096bba49acb97e02b5b5d0d5ad0d9753bcc578505c2e8b7dbb8deb27"
+    },
+    "external-archive.json": {
+      "bytes": 1421,
+      "sha256": "71e209b43a470ac890d379f24982c389a54f46a09388f44a3daee87ba9dc5bd8"
+    },
+    "focused-binding-rerun.log": {
+      "bytes": 289,
+      "sha256": "71857cb4aed58538045c4c557dca0cdd8506da93d27b44d78b20f42c7c2ef1aa"
+    },
+    "focused-tests.log": {
+      "bytes": 2091,
+      "sha256": "c3c0dde6ff1c0b7867ce7727f6d7a56ecccd27fccf256291caa5bce070382a7f"
+    },
+    "freeze.json": {
+      "bytes": 9228,
+      "sha256": "73fd2b1c31103c6929a56b8872f1fbbf179e4e9b3fd868cbe5fe40f1fcb5bb58"
+    },
+    "frozen-method-enums.json": {
+      "bytes": 23235,
+      "sha256": "831728c4ce8c1913d25eff43229c93b81c0f5d802f93eb3b057333c4048e2220"
+    },
+    "input-validation.json": {
+      "bytes": 910,
+      "sha256": "d987b73dcca70760860687169d25ca9328d1d554d17426d0e3edebe8b5cf2db7"
+    },
+    "manifest.json": {
+      "bytes": 2583,
+      "sha256": "423671ebb966767752168da50e50b78697d86b4dfe4975c51f534f9ce9783f67"
+    },
+    "offline-validation.json": {
+      "bytes": 2193,
+      "sha256": "3d5b36abcd8949b17496f76e77dd8c5e7761f9bbac4237dde358e50076247a51"
+    },
+    "postreview.md": {
+      "bytes": 3582,
+      "sha256": "d0bde4fe005ae8b2e52e7c83eec8eda88d17c039343023847407309153e061ee"
+    },
+    "postrun-validation.json": {
+      "bytes": 1534,
+      "sha256": "53aef864b12b77f6db523194fb9a8a074a23148e78ff655f8645f06144ce7abb"
+    },
+    "preflight-review.md": {
+      "bytes": 3616,
+      "sha256": "44f819abfa0763c5ae4b32ab2ed1f81beedf2a62a15b87f7e879bd1571170bfc"
+    },
+    "preparation-history.json": {
+      "bytes": 6451,
+      "sha256": "cbeeec2a46c90acde13b81928028af20fb022fa34c0e6cfbfe95af3f735b1c39"
+    },
+    "preparation.md": {
+      "bytes": 3181,
+      "sha256": "d19266800216233c4742bf50674dae80765c149e4074ec97f43f3ca41495af10"
+    },
+    "private-artifact-closure.json": {
+      "bytes": 600,
+      "sha256": "db58208b56db5b0dff2069e57f53fa63d75fd2f57f1d3d554f060d564521d493"
+    },
+    "profile.json": {
+      "bytes": 2967,
+      "sha256": "b8ccffb43d7248c8082ad23abad7cb71c8bb03d21bf36fe7d296dea3a7dbe72c"
+    },
+    "request.json": {
+      "bytes": 5485,
+      "sha256": "1971dd1cb28e338623b5b20474a810506fedd79e8d1e1b449458f6a35c5e5792"
+    },
+    "run-1/controller-once.json": {
+      "bytes": 587,
+      "sha256": "26fd70ffd67000e2906ccc1ebd01258238ab9c07f545246b3531cd86bfe4831d"
+    },
+    "run-1/controller-receipt.json": {
+      "bytes": 1045,
+      "sha256": "53b24d67c23032c27020fc19b856396574a8ce6b4961f9268bd64940a88f646c"
+    },
+    "run-1/job-assigned.json": {
+      "bytes": 651,
+      "sha256": "0bb333e8a1908c5616a324276700eebb5a25b1f4df1a247fa7b857f9e0066927"
+    },
+    "run-1/outer-receipt.json": {
+      "bytes": 656,
+      "sha256": "ad000e13c9c2a1df50633e3442b73e409de3d8533b01abebc8dc14e8b4d0cfaa"
+    },
+    "run-1/output-root-created.json": {
+      "bytes": 224,
+      "sha256": "9295cb54b48ee4081019f6da794060f20bf253afff2f37d9aaee8c6b8e25ebff"
+    },
+    "run-1/reservation.json": {
+      "bytes": 711,
+      "sha256": "c481cdacb337cc6b9774e744363e42686872e2bdfe92ec9adb984de5d909f949"
+    },
+    "run-1/sanitized-result.json": {
+      "bytes": 19561,
+      "sha256": "81daef24a905de0b65f06295bdaa408c7ad5ab178f3be9ee76d4037f7ae5d556"
+    },
+    "run-1/started-once.json": {
+      "bytes": 587,
+      "sha256": "746b33b2441472639d80a08c583ef185d8fc2e6e85488796d70e9083b0c6b338"
+    },
+    "run_once.py": {
+      "bytes": 3347,
+      "sha256": "a2f53477c0eca6f394568270ce536afdc213ba484f187f9301b257fc98f9ecd0"
+    },
+    "schema-contract.json": {
+      "bytes": 2544,
+      "sha256": "c4bf557d17426f4c9a6c61e97353b8361469169e067e1f911fdfc7488d369270"
+    },
+    "slot-release.json": {
+      "bytes": 777,
+      "sha256": "96557e9afeac106e5097da6939033912b6639e583618f0d34c46930adeb86212"
+    },
+    "terminal-summary.json": {
+      "bytes": 3796,
+      "sha256": "f6d31bcfa4ca55f0e0d5b0de943511d971e9aad16c5f4a1fd28a90fb7e37077e"
+    },
+    "test_bindings.py": {
+      "bytes": 16025,
+      "sha256": "8badec3b33c18019a134f93cf310050421c267276dd26abd99ed5e9e38a5c56a"
+    },
+    "thread_gate.py": {
+      "bytes": 4470,
+      "sha256": "b48ce8b67e3a18ecab80a49d1eb3633f90443cc9524972e00a3ea7bdf27fa6cd"
+    }
+  },
+  "payloadFiles": 36,
+  "totalFilesIncludingTerminalManifest": 37,
+  "sourcePreparationManifestMeaning": "Original source manifest zero-use fields describe preparation phase only; terminal result consumes one diagnostic reservation/native tree.",
+  "closureManifestConstruction": "First payload-count assertion included three Git-ignored Python bytecode files and wrote no manifest. Final inventory excludes only those verified ignored caches; no source change or runtime retry.",
+  "ignoredPythonCacheFilesExcluded": 3,
+  "nativeTreesAdded": 1,
+  "diagnosticReservationsAdded": 1,
+  "cumulativeNativeTrees": 9,
+  "turnsToolsActorsCliMetadataAdded": 0,
+  "remainingAllocation": 0,
+  "privateExcerptIncluded": false,
+  "privateExcerptContentHashComputed": false,
+  "automaticFollowOn": false
+}
