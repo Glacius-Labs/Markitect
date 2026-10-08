@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-08T20:09:11Z",
+  "updatedUtc": "2026-10-08T20:34:50Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -440,19 +440,18 @@
       "activeTurn": null,
       "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac7f70b42c0819193d64778c888caa2",
       "initialAssignmentDispatched": true,
-      "assignedMilestone": "Resume common real model/tool readiness toward frozen six-cell Conventional/Classic/Government comparison",
+      "assignedMilestone": "Offline pinned account-update metadata contract; no runtime admission until fresh independent acceptance/grant",
       "latestProgress": "Final thread-only mechanics accepted, final grant closed, S1 and6 cells NOT RUN. Finite synthesis saved; observation PAUSED, no pending assignment.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-scientist/Markitect",
       "transferredDesignCommit": "b9e17c9896f14b4b1268e4bcb005395f5d324384",
-      "candidateSha": "70b07573f98e47e45952eaef04403131642b724c",
+      "candidateSha": "247105c418557cf2e2765ce7a3f65293c644d2bc",
       "acceptance": "R7 bounded native+outer Queue and terminal Resume mechanics accepted; S1 real common Actor/tools and study cells remain open.",
       "lastAssignment": {
-        "key": "s1-resumed-read-tool-20261008-r2",
-        "authorizedUtc": "2026-10-08T20:04:57Z",
-        "status": "Dispatched once; conditional single read-tool attempt pending preparation/freeze/review",
-        "grantPointer": "threads[name=Scientist].evidence.resumedReadToolR2Grant",
-        "scope": "Same one real readonly model/native tool ability probe; separate fresh authority and slot; no actual reuse.",
-        "sentUtc": "2026-10-08T20:09:11Z"
+        "key": "s1-account-update-contract-offline-20261008",
+        "authorizedUtc": "2026-10-08T20:34:50Z",
+        "status": "Authorized offline-only, pending once-only dispatch",
+        "scope": "Pinned public account/updated schema classifier and exact disabled client routing proposal; never qualify discarded actual payload or change general live admission.",
+        "assignmentPointer": "threads[name=Scientist].evidence.accountUpdateContractOfflineAssignment"
       },
       "evidence": {
         "sourcesHashChecked": 37,
@@ -5640,6 +5639,215 @@
           "delivery": "send_message_to_thread returned matching Scientist threadId without error",
           "grantCommit": "3e5dd89",
           "repeatDispatchPermitted": false
+        },
+        "resumedReadToolR2Acceptance": {
+          "key": "s1-resumed-read-tool-20261008-r2",
+          "status": "STOPPED during first real turn; public read NOT ESTABLISHED",
+          "stopReason": "forbidden-or-unknown-notification",
+          "firstProtocolFailure": {
+            "version": 1,
+            "phase": "thread",
+            "stage": "notification-gate",
+            "envelopeCategory": "notification",
+            "method": {
+              "category": "listed",
+              "name": "account/updated"
+            },
+            "exceptionClass": "ValueError",
+            "refusalCode": "forbidden-or-unknown-notification"
+          },
+          "firstFailureMeaning": "Exact listed method name and fixed refusal only; no account payload/status/authentication cause recovered or inferred. Public catalog membership is not runtime admission.",
+          "collectorSecondaryStopReason": "turn-event-status-mismatch",
+          "collectorSecondaryMeaning": "Observed during stop/interrupt cleanup; does not replace latched first refusal or establish original turn status.",
+          "baseSha": "70b07573f98e47e45952eaef04403131642b724c",
+          "actualRuntimeBasisSha": "8676817608239451b8a5ad17ebc46482e2ed59f4",
+          "sourceCommit": "71bc90d6e112d5d9c38d23f35c54285a263b8ac8",
+          "freezeCommit": "df67b943e0f97634696b6710ef4934a63c165937",
+          "requestSha256": "6b206fc49ade88ddfa679e0a8d652e082e1e852c7aa38f244d4d1b1c0f63ad40",
+          "freezeSha256": "976f5e03dc5d9d18d9db295c127033d11ac6c0e7f48b5f01095c0e6eb0d482bc",
+          "sourcePinsAgainstS": 152,
+          "freezePins": 167,
+          "mismatches": 0,
+          "sourceChangesAfterS": 0,
+          "threadResponseValidated": true,
+          "threadStartedCorrelated": true,
+          "turnStartRequested": true,
+          "turnStartResponseValidated": true,
+          "actualTurnStartRequests": 1,
+          "observedNativeCommandItems": 0,
+          "commandCompletionEventObserved": false,
+          "sentinelReadEstablished": false,
+          "finalJsonEstablished": false,
+          "completedTurnEstablished": false,
+          "clientSubstituteToolRequests": 0,
+          "ownedInterruptRequests": 1,
+          "interruptResponseEnvelopeValidated": true,
+          "providerCancellationConfirmed": false,
+          "usageSeen": false,
+          "currentUsage": null,
+          "actualProviderRequests": null,
+          "actualProviderRetries": null,
+          "providerBillingStopped": null,
+          "modelIdentity": {
+            "requested": "gpt-6.1-sol",
+            "threadReported": "gpt-6.1-sol",
+            "providerRequested": "openai",
+            "providerThreadReported": "openai",
+            "servingModel": null
+          },
+          "reportedReadOnlyNeverEphemeralGatesPassed": true,
+          "osIsolationEstablished": false,
+          "startupStatusObservation": {
+            "version": 1,
+            "observed": 3,
+            "limitReached": false,
+            "statusCounts": {
+              "starting": 2,
+              "ready": 1,
+              "failed": 0,
+              "cancelled": 0,
+              "unknown": 0
+            },
+            "scopeCounts": {
+              "app": 0,
+              "own-thread": 3,
+              "foreign-thread": 0,
+              "missing": 0,
+              "unresolved-thread": 0,
+              "invalid": 0
+            },
+            "dispositionCounts": {
+              "observation-only": 3,
+              "terminal-reject": 0
+            },
+            "firstClassification": {
+              "refusalVersion": 1,
+              "hypotheticalDisposition": "observation-only",
+              "status": "starting",
+              "scope": "own-thread",
+              "refusalCode": null
+            },
+            "routingRuleVersion": 1,
+            "telemetryOnly": true
+          },
+          "startupMeaning": "Three typed own-thread telemetry observations (starting2/ready1); no inference of global MCP health or task readiness.",
+          "nativeReturnCode": 0,
+          "workerReturnCode": 1,
+          "outerReturnCode": 1,
+          "nativeSessionSeconds": 0.9590232000009564,
+          "cleanupSeconds": 0.023536299999250332,
+          "controllerSeconds": 10.461136900001293,
+          "outerThroughReceiptReadbackSeconds": 24.62418699999762,
+          "controllerAndOuterBoundsRespected": true,
+          "firstActionUtc": "2026-10-08T20:09:09Z",
+          "reservationUtc": "2026-10-08T20:25:59.891372Z",
+          "nativePopenRequestedUtc": "2026-10-08T20:26:13.890644+00:00",
+          "nativePopenReturnedUtc": "2026-10-08T20:26:13.899325+00:00",
+          "nativePopenTimestampMeaning": "UTC observations around Popen, not exact OS creation or readiness time",
+          "terminalUtc": "2026-10-08T20:26:14.829831Z",
+          "preparationToReservationSeconds": 1010.891372,
+          "preparationToPopenRequestSeconds": 1024.890644,
+          "preparationToTerminalSeconds": 1025.829831,
+          "preparationEnvelopeRespected": true,
+          "latestStartAndDeadlineRespected": true,
+          "correctionBatchesUsed": 2,
+          "testInvocations": 1,
+          "newUnittestGroups": 12,
+          "syntheticSessionInvocations": 13,
+          "testFailures": 0,
+          "unittestReportedSeconds": 0.48,
+          "testWallSeconds": 0.700923,
+          "offlineParticipants": 2,
+          "actualNewNativeTrees": 1,
+          "actualNewActorReservations": 1,
+          "actualNewDiagnosticReservations": 0,
+          "nativeTreesCumulative": 14,
+          "actorReservationsCumulative": 7,
+          "historicalActorReservations": 6,
+          "includedHistoricalModelAttempts": 5,
+          "historicalCliMetadataCalls": 8,
+          "additionalCliMetadataCallsWebStudyCellsRetries": 0,
+          "knownHistoricalTokens": 53331,
+          "totalCurrentAndHistoricalTokens": null,
+          "nativeHistoricalVector": [
+            15,
+            16,
+            13,
+            2250
+          ],
+          "stderrObservedBytes": 464,
+          "stderrCompleteLines": 2,
+          "privateOwnExactFileRemovedBytesMetadataOnly": 922,
+          "privateContentReadsParsesHashes": 0,
+          "privateDirectoryEmpty": true,
+          "approvedMetadataFilesArchived": 8,
+          "grantClosed": true,
+          "remainingRuntimeAllocation": 0,
+          "slotReleaseSha256": "588ca9c1add7f1a9d804f7db15801f3b16a364a6e468f0ac965b5dec821e0f98",
+          "s1Established": false,
+          "readWriteBuildEstablished": [
+            false,
+            false,
+            false
+          ],
+          "sixStudyCells": [
+            "NOT RUN",
+            "NOT RUN",
+            "NOT RUN",
+            "NOT RUN",
+            "NOT RUN",
+            "NOT RUN"
+          ],
+          "localSlotReleaseRecorded": true,
+          "canonicalSlotReleasePendingOverseerAcceptance": false,
+          "canonicalCoordinationUnmodifiedByScientist": true,
+          "summaryUtc": "2026-10-08T20:27:50.528452Z",
+          "nextBoundary": "Await Overseer decision and fresh destination/runner-specific authority; no runtime, repair/relaunch, write/build or study work authorized by this closed R2 grant.",
+          "acceptedUtc": "2026-10-08T20:34:50Z",
+          "sha": "247105c418557cf2e2765ce7a3f65293c644d2bc",
+          "cleanRootVerified": true,
+          "payloadsHashSizeGitChecked": 42,
+          "terminalManifestSha256": "b4d7fc90359aeda5b05e9c901d56a930a49bd06b886fae3bdd66989c3e6bdcd4",
+          "pureAdditionsChecked": 43,
+          "sourcePinsRootHashAndGitSChecked": 152,
+          "freezePinsRootHashChecked": 167,
+          "externalMetadataPairsRootChecked": 8,
+          "ownPrivateDirectoryRootMetadataOnlyEmpty": true,
+          "completeCanonicalGrantEqual": true,
+          "independentRootReviewer": "/root/r4_terminal_acceptance",
+          "independentRootReview": "Qualified terminal evidence/closure acceptance; no material blocker. account/updated first exact frozen notification gate refusal, no actual payload qualification/auth cause. Secondary cleanup error does not replace first; no tool/usage/S1 established. Root accepts local release into canonical free slot.",
+          "canonicalSlotReleaseAccepted": true
+        },
+        "accountUpdateContractOfflineAssignment": {
+          "key": "s1-account-update-contract-offline-20261008",
+          "authorizedUtc": "2026-10-08T20:34:50Z",
+          "baseSha": "247105c418557cf2e2765ce7a3f65293c644d2bc",
+          "status": "Authorized offline-only, pending once-only dispatch",
+          "purpose": "Pinned public account/updated schema classifier and exact disabled client routing proposal; never qualify discarded actual payload or change general live admission.",
+          "maxPreparationSeconds": 1200,
+          "maxOfflineRepairIterations": 2,
+          "maxAffectedTestInvocations": 3,
+          "maxSyntheticCaseGroups": 6,
+          "maxOfflineReviewers": 2,
+          "maxNativeStarts": 0,
+          "maxActorReservations": 0,
+          "maxTurns": 0,
+          "maxTools": 0,
+          "maxCliMetadataCalls": 0,
+          "maxWebCalls": 0,
+          "maxStudyCells": 0,
+          "maxRuntimeReservations": 0,
+          "maxFullProductSuites": 0,
+          "slotAssigned": false,
+          "schemaArchivePath": "experiments/government-comparison/evidence/s1-runner-rebinding-metadata-20261008-r1/generated-schemas.zip",
+          "schemaArchiveSha256": "3157e8a55329cf4e5346676c3ef0c308402d2420f8f916d6a5b7e0e9c84356ad",
+          "schemaMember": "v2/AccountUpdatedNotification.json",
+          "schemaMemberSha256": "268dba6977cc3adcced751a97367772a1e201a199c14f454741d851fe8bbacb1",
+          "prospectiveClassifier": "Validate exact pinned schema then locally stricter shape: only authMode and optional planType, explicit authMode exactly chatgpt; planType absent/null/valid schema enum may be ignored without value persistence. Missing/null/different authMode, extras, malformed/oversize or overcount terminal. No auth/account RPC, negotiation, token/header/credential input/output or acceptance of a different mode. Account notice is connection/account scoped, not proof of own-thread/account identity; observation requires already validated own readonly thread and turn-request phase. Max8 observations, max4096 serialized input bytes each, projection<=2048 fixed categories/counters only; preserve all global frame/count limits. Method remains unadmitted in current live clients.",
+          "routingProposal": "Disabled prospective exact-method sidebranch after unchanged envelope/count/timestamp/phase/provisional/identity gates; only positively classified existing-mode-compatible metadata could later continue. No wildcard account methods or source mutation in prior packet. Before own validated thread/turn phase reject. General allowlist, all other gates, first-failure helper, startup observer, tool/usage/stop/cleanup contracts unchanged. Actual-client consumption/cleanup synthetic tests of success and refusals; no live entrypoint enabled.",
+          "claimBoundary": "Source/schema/synthetic behavior and a prospective proposal only. Actual discarded payload/authMode/planType/account state/cause unknown; historical STOP unchanged. No S1/read/tool/provider/OS/quality proof.",
+          "stopRule": "First authority/private/immutable binding blocker terminal; ordinary local source/test mistakes only within envelope. No live repair/relaunch or automatic second actual attempt.",
+          "exitCondition": "Clean source SHA, exact source/schema/evidence hashes and independent bounded source review; report synthetic cases/corrections/time and unchanged old pins; one callback to Overseer. Next actual call requires Root acceptance and separate final fresh grant within same resumed block/deadline."
         }
       },
       "classicHandoffReceived": true,
@@ -6015,6 +6223,14 @@
           "scope": "One conditional real readonly model/tool ability probe, no study cells.",
           "grantPointer": "threads[name=Scientist].evidence.resumedReadToolGrant",
           "sentUtc": "2026-10-08T20:00:26Z"
+        },
+        {
+          "key": "s1-resumed-read-tool-20261008-r2",
+          "authorizedUtc": "2026-10-08T20:04:57Z",
+          "status": "Closed and accepted: first real turn stopped at account/updated; no tool/read/usage proof, remaining0",
+          "grantPointer": "threads[name=Scientist].evidence.resumedReadToolR2Grant",
+          "scope": "Same one real readonly model/native tool ability probe; separate fresh authority and slot; no actual reuse.",
+          "sentUtc": "2026-10-08T20:09:11Z"
         }
       ],
       "offlineAdapterContractAssignment": {
@@ -6781,7 +6997,7 @@
       "lastAssistantMessageId": "msg_0dc7fbe822793640016ac6f69ccac88191ac99728328af381f"
     }
   ],
-  "nextAction": "Scientist R2 prepares under reviewed fresh authority and may execute exactly one read-tool attempt after source/freeze/binding review and new reservation. Handle terminal callback; no duplicate dispatch or automatic next grant. No study starts yet.",
+  "nextAction": "Scientist offline-only account/updated schema/classifier and disabled exact-route proposal; handle callback and independent evidence review before considering last actual readiness attempt. Slot free. No studies or live grant.",
   "boundaries": {
     "governmentPublication": false,
     "automaticClassicReplacement": false,
@@ -6998,12 +7214,12 @@
     "owner": "Worker"
   },
   "fullSuiteSlot": {
-    "owner": "Scientist",
-    "key": "s1-resumed-read-tool-20261008-r2",
+    "owner": null,
+    "key": null,
     "queue": [],
-    "status": "Assigned to prospective resumed read-tool readiness r2.",
-    "grantIssuedUtc": "2026-10-08T20:04:57Z",
-    "assignedUtc": "2026-10-08T20:04:57Z"
+    "status": "Free; R2 terminal release accepted, offline followup only.",
+    "releasedUtc": "2026-10-08T20:27:50.528452Z",
+    "releaseVerifiedUtc": "2026-10-08T20:34:50Z"
   },
   "contextSmokePreparation": {
     "selectedUtc": "2026-10-07T17:31:12Z",
@@ -7224,8 +7440,8 @@
         "source": "Direct user Mache weiter after final report and pause",
         "deadlineUtc": "2026-10-08T21:57:43Z",
         "maxConsideredActualReadinessAttempts": 2,
-        "reservedActualAttempts": 1,
-        "consumedActualAttempts": 0,
+        "reservedActualAttempts": 0,
+        "consumedActualAttempts": 1,
         "eachNeedsFreshGrant": true,
         "grantKeys": [
           "s1-resumed-read-tool-20261008-r1",
@@ -7241,7 +7457,9 @@
             "closurePointer": "threads[name=Scientist].evidence.resumedReadToolR1Closure"
           }
         ],
-        "activeGrantKey": "s1-resumed-read-tool-20261008-r2"
+        "activeGrantKey": null,
+        "remainingConsideredActualAttempts": 1,
+        "latestAcceptedActualSha": "247105c418557cf2e2765ce7a3f65293c644d2bc"
       }
     ]
   },
@@ -7519,6 +7737,23 @@
         "noImplicitCapacityFromFalseActualFields": true,
         "canonicalReleaseAccepted": true
       }
+    },
+    {
+      "event": "Scientist R2 terminal release accepted",
+      "acceptedUtc": "2026-10-08T20:34:50Z",
+      "priorSlot": {
+        "owner": "Scientist",
+        "key": "s1-resumed-read-tool-20261008-r2",
+        "queue": [],
+        "status": "Assigned to prospective resumed read-tool readiness r2.",
+        "grantIssuedUtc": "2026-10-08T20:04:57Z",
+        "assignedUtc": "2026-10-08T20:04:57Z"
+      },
+      "releasedUtc": "2026-10-08T20:27:50.528452Z",
+      "key": "s1-resumed-read-tool-20261008-r2",
+      "releaseSha256": "588ca9c1add7f1a9d804f7db15801f3b16a364a6e468f0ac965b5dec821e0f98",
+      "actualNewNativeTrees": 1,
+      "actualNewActorReservations": 1
     }
   ],
   "smokeAttemptCountingDecision": {
