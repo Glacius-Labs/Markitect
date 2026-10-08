@@ -51,6 +51,130 @@ func TestGuardedWriteCapturesAndAppliesCreateReplaceAndDelete(t *testing.T) {
 	}
 }
 
+func TestGuardedWriteCreatesBelowMissingMarkitectDirectories(t *testing.T) {
+	root := installTestRepo(t, "feature/guarded")
+	capture, err := CaptureGuardedWrite(root, []string{".markitect/drafts/new.json"})
+	if err != nil {
+		t.Fatalf("capture under missing .markitect parent: %v", err)
+	}
+	if capture.Files[".markitect/drafts/new.json"].Exists {
+		t.Fatal("capture unexpectedly found a file below the missing .markitect directory")
+	}
+	result, err := ApplyGuardedWrite(root, capture, []GuardedWriteChange{{Path: ".markitect/drafts/new.json", Bytes: []byte("{\"draft\":true}\n"), Mode: 0644}})
+	if err != nil {
+		t.Fatalf("apply under missing .markitect parent: %v", err)
+	}
+	if !reflect.DeepEqual(result.CompletedPaths, []string{".markitect/drafts/new.json"}) {
+		t.Fatalf("completed paths = %v", result.CompletedPaths)
+	}
+	if got := string(mustRead(t, filepath.Join(root, ".markitect", "drafts", "new.json"))); got != "{\"draft\":true}\n" {
+		t.Fatalf("created bytes = %q", got)
+	}
+}
+
+func TestGuardedWriteBindsUnbornBranchAndFirstCommitStalesCapture(t *testing.T) {
+	root := tempRoot(t)
+	runWriterGit(t, root, "init", "-b", "codex/new")
+	capture, err := CaptureGuardedWrite(root, []string{".markitect/drafts/new.json"})
+	if err != nil {
+		t.Fatalf("capture in a new repository: %v", err)
+	}
+	if capture.Head != "unborn:refs/heads/codex/new" {
+		t.Fatalf("captured Head = %q, want explicit unborn branch sentinel", capture.Head)
+	}
+	result, err := ApplyGuardedWrite(root, capture, []GuardedWriteChange{{Path: ".markitect/drafts/new.json", Bytes: []byte("draft\n"), Mode: 0644}})
+	if err != nil || !reflect.DeepEqual(result.CompletedPaths, []string{".markitect/drafts/new.json"}) {
+		t.Fatalf("apply in new repository: result=%+v err=%v", result, err)
+	}
+	stale, err := CaptureGuardedWrite(root, []string{"later.txt"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	runWriterGit(t, root, "add", "-A")
+	runWriterGit(t, root, "-c", "user.name=Markitect Test", "-c", "user.email=markitect-test@example.invalid", "commit", "-m", "first commit")
+	result, err = ApplyGuardedWrite(root, stale, []GuardedWriteChange{{Path: "later.txt", Bytes: []byte("must not write\n"), Mode: 0644}})
+	if err == nil || !strings.Contains(err.Error(), "HEAD changed") {
+		t.Fatalf("apply after first commit error = %v, want stale-unborn refusal", err)
+	}
+	if len(result.CompletedPaths) != 0 {
+		t.Fatalf("stale unborn capture reported writes: %v", result.CompletedPaths)
+	}
+	if _, err := os.Lstat(filepath.Join(root, "later.txt")); !os.IsNotExist(err) {
+		t.Fatalf("stale unborn capture created later.txt: %v", err)
+	}
+}
+
+func TestGuardedWriteRejectsExistingBranchRefWithMissingCommit(t *testing.T) {
+	root := installTestRepo(t, "feature/guarded")
+	runWriterGit(t, root, "update-ref", "-d", "refs/heads/feature/guarded")
+	ref := filepath.Join(root, ".git", "refs", "heads", "feature", "guarded")
+	if err := os.MkdirAll(filepath.Dir(ref), 0755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(ref, []byte(strings.Repeat("1", 40)+"\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := CaptureGuardedWrite(root, []string{"README.md"}); err == nil || !strings.Contains(err.Error(), "verify guarded unborn branch ref") {
+		t.Fatalf("CaptureGuardedWrite error = %v, want broken existing-ref refusal", err)
+	}
+}
+
+func TestGuardedWriteUsesProjectLockForMissingProjectManifest(t *testing.T) {
+	root := installTestRepo(t, "feature/guarded")
+	capture, err := CaptureGuardedWrite(root, []string{".markitect/project.yaml", ".markitect/drafts/init.json"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	result, err := ApplyGuardedWriteChecked(root, capture, []GuardedWriteChange{
+		{Path: ".markitect/project.yaml", Bytes: []byte("kind: Project\n"), Mode: 0644},
+		{Path: ".markitect/drafts/init.json", Bytes: []byte("{}\n"), Mode: 0644},
+	}, func() error {
+		if _, err := os.Stat(filepath.Join(root, ".markitect", "write.lock")); err != nil {
+			return errors.New("project initialization did not hold the .markitect lock")
+		}
+		if _, err := os.Stat(filepath.Join(root, ".artifacts")); !os.IsNotExist(err) {
+			return errors.New("project initialization created a legacy .artifacts directory")
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("ApplyGuardedWriteChecked: %v", err)
+	}
+	if !reflect.DeepEqual(result.CompletedPaths, []string{".markitect/drafts/init.json", ".markitect/project.yaml"}) {
+		t.Fatalf("completed paths = %v", result.CompletedPaths)
+	}
+	if _, err := os.Stat(filepath.Join(root, ".artifacts")); !os.IsNotExist(err) {
+		t.Fatalf("project initialization left .artifacts outside Markitect: %v", err)
+	}
+}
+
+func TestLegacyWriterUsesProjectLockAfterProjectManifestExists(t *testing.T) {
+	root := installTestRepo(t, "feature/guarded")
+	manifest := filepath.Join(root, ".markitect", "project.yaml")
+	if err := os.MkdirAll(filepath.Dir(manifest), 0755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(manifest, []byte("kind: Project\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	writer, err := openWriteRoot(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer writer.Close()
+	unlock, err := writer.LockWriter()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(filepath.Join(root, ".markitect", "write.lock")); err != nil {
+		t.Fatalf("project lock missing: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(root, ".artifacts")); !os.IsNotExist(err) {
+		t.Fatalf("new project lock created legacy .artifacts directory: %v", err)
+	}
+	unlock()
+}
+
 func TestGuardedWriteRejectsStaleBytesAndNewFile(t *testing.T) {
 	t.Run("changed selected bytes", func(t *testing.T) {
 		root := installTestRepo(t, "feature/guarded")
