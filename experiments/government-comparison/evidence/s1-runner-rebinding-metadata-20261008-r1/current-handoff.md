@@ -1,0 +1,9 @@
+# Finite metadata execution boundary
+
+Grant s1-runner-rebinding-metadata-20261008-r1 permits only its two exact sequential version/schema CLI argv. A small separate recorder reuses the unchanged WindowsJob lifetime guard; no existing client/parser/product source changes. Initial external-root absence was observed before exclusive creation; preparation.json binds existing two-file cwd and candidate hash. Source/binding/preflight precede the one recorder invocation.
+
+Version output must match the bounded public codex-cli semver line, exit0, zero stderr and stable binary hash. Otherwise no second call. Any stderr, source/input/authority/hash drift, output/deadline failure is terminal, no retry or fallback. Maximum version/schema phases5/20seconds, worker40seconds then owned cleanup within overall45seconds/readback, cleanup at most5seconds. Raw stderr immediately discarded; only256bytes version text may be retained transiently, then validated or discarded. Schema stdout discarded. Polling caps are observations, not a hard filesystem quota; overshoot fields are explicit.
+
+The Windows Job is assigned before worker GO and closed at terminal completion, also terminating surviving descendants. It controls lifetime, not filesystem confidentiality, global side effects, networking, provider inference or billing. No deliberate config/auth/trust/policy changes; their absence is not OS-enforced by this recorder. Only authorized schema output is directed to the new schemas subtree. Existing public input hashes are checked before/after each command. Source was inspected with ast.parse only; no tests or Codex invocations during preparation.
+
+After terminal execution, read-only schema manifest/diff and narrow postreview may follow. No automatic runtime, Actor or RPC starts. Previous history/ledgers/closed grants remain unchanged; known53331tokens is not total usage. S1open; six study cells NOT RUN.
