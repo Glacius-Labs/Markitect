@@ -158,7 +158,9 @@ func GenerateDistillation(ctx context.Context, sourceRoot string, discovery Disc
 		})
 	}
 	contextData := distillationRequestContext{
-		Instructions:    `Analyze only the supplied fixed Discovery evidence artifacts and the provided project-model schema. The separately supplied targetContext is accepted target guidance, not source evidence: use it only to suggest placement under existing Manager identities/namespaces and avoid conflicting public contracts. Produce a proposal-only Brownfield distillation: distinguish static source observations, documented intent, submitted runtime records, and synthesis hypotheses; cite exact evidence excerpts with line bounds; preserve contradictions; surface terminology, synonyms, ambiguities, and precise owner questions; suggest scopes and canonical model files without adopting them. Never infer behavior from filenames alone. Do not claim runtime behavior unless the selected evidence itself is a submitted runtime record, and do not treat that record as authenticated execution. Never claim human acceptance. Return only the closed reportJson object described by responseSchema; do not return candidate files or modify any source. Empty arrays and empty optional-string values must be explicit.`,
+		Instructions: `Analyze only the supplied fixed Discovery evidence artifacts and project-model schema. targetContext is accepted target guidance, not source evidence; use it only for compatible placement under existing Manager identities/namespaces and to avoid conflicts with public contracts. Produce a proposal only; do not adopt it or modify source. Distinguish static source observations, documented intent, submitted runtime records, and synthesis hypotheses. Never infer behavior from filenames. Do not present runtime records as authenticated execution or claim human acceptance.\n\n` +
+			`IDs must match ^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$: 1-64 lowercase ASCII letters/digits with only internal hyphens. IDs are local identifiers; use simple scope IDs such as orders, never namespaces such as commerce.sales.orders. Every claim, question, and contradiction scopeId must name a declared local scope. Each parentId must name another declared local scope; each claimIds entry must name a declared claim assigned to that same scope. Every scope claimIds list must include its assigned claims. Proposal file scopeId must name a declared scope. Every claim and term occurrence must cite a selected evidence ID copied exactly from Discovery; each excerpt must be exact contiguous text with inclusive one-based line bounds. Terms must cite occurrences whose excerpt contains the exact term. Questions must cite same-scope claims and provide at least two distinct alternatives. Contradictions must point to a same-scope question whose claimIds include every conflicting claim.\n\n` +
+			`Claim kind/method pairs are exactly: observation/static-source (runtimeObservationJson is the empty string); documented-intent/documentation (runtimeObservationJson is the empty string); submitted-runtime-record/submitted-record (runtimeObservationJson is required strict JSON copied from selected runtime-record evidence and the claim must cite that record); hypothesis/synthesis (runtimeObservationJson is the empty string). Do not use kind runtime-observation or combine other pairs. For a submitted record, runtimeObservationJson must contain exactly evidenceId, recordSourceRevision, sourceRelation, command, exitCode, runnerDigest, and inputs; copy record fields exactly and set sourceRelation to same-discovery-commit only when its revision equals the Discovery commit, otherwise historical. Never fabricate runtime metadata for other claim kinds. Return every required property including empty arrays and empty optional-string values, only the closed reportJson object described by responseSchema. Model proposal files must use declared local scope IDs and canonical .markitect/model YAML paths.`,
 		DiscoveryDigest: discovery.Digest, Purpose: discovery.Purpose,
 		Review: discovery.Review, ScopeRoots: append([]string{}, discovery.ScopeRoots...),
 		Selected:   append([]SelectedPath{}, discovery.Selected...),
@@ -452,7 +454,22 @@ func jsonSchemaForType(value reflect.Type) map[string]any {
 			if name == "" || name == "-" {
 				continue
 			}
-			properties[name] = jsonSchemaForType(field.Type)
+			propertySchema := jsonSchemaForType(field.Type)
+			switch name {
+			case "id", "scopeId", "parentId", "questionId", "evidenceId":
+				propertySchema["minLength"] = 1
+				propertySchema["maxLength"] = 64
+			case "kind":
+				propertySchema["enum"] = []string{"observation", "documented-intent", "submitted-runtime-record", "hypothesis"}
+			case "method":
+				propertySchema["enum"] = []string{"static-source", "documentation", "submitted-record", "synthesis"}
+			case "claimIds":
+				if items, ok := propertySchema["items"].(map[string]any); ok {
+					items["minLength"] = 1
+					items["maxLength"] = 64
+				}
+			}
+			properties[name] = propertySchema
 			optional := false
 			for _, option := range parts[1:] {
 				if option == "omitempty" {

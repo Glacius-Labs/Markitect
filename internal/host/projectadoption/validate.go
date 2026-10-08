@@ -23,6 +23,8 @@ func ValidateDistillation(discovery Discovery, report Distillation) error {
 		if !validDigest(report.TargetBasis) || !validFullCommit(report.TargetRevision) || !validDigest(report.TargetContextDigest) {
 			return errors.New("target-bound distillation must bind a project digest, full revision, and target-context digest together")
 		}
+	} else if report.Method == "agent-assisted" {
+		return errors.New("agent-assisted distillation must bind its fixed target project and context")
 	}
 	switch report.Method {
 	case "human-review", "static-tool", "agent-assisted":
