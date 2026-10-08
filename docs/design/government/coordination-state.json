@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-08T04:38:00Z",
+  "updatedUtc": "2026-10-08T04:55:56Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -30,8 +30,8 @@
       "name": "Worker",
       "threadId": "01a1169b-9357-7df3-a8f6-f913557c782a",
       "hostId": "local",
-      "afterCursor": "b2b8e43f-fcaa-41bf-828a-99c69527bdea:67",
-      "lastObservedStatus": "idle",
+      "afterCursor": "b2b8e43f-fcaa-41bf-828a-99c69527bdea:68",
+      "lastObservedStatus": "notLoaded",
       "activeTurn": null,
       "lastAssistantMessageId": "msg_0a7785839df196a4016ac6f3fa072c819194583b51e8c10e00",
       "initialAssignmentDispatched": true,
@@ -428,30 +428,30 @@
       "name": "Scientist",
       "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
       "hostId": "local",
-      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:118",
+      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:120",
       "lastObservedStatus": "active",
       "activeTurn": {
-        "id": "01a119cd-4bbb-7142-8460-fb231e04752f",
+        "id": "01a119dd-cff2-7782-a915-626fe3866f64",
         "status": "inProgress",
         "error": null,
-        "startedAt": 1791434247,
+        "startedAt": 1791435329,
         "completedAt": null,
         "durationMs": null
       },
-      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac71e0fd13881918465143b24ae298f",
+      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac72243c0e48191b7f55068d16ecd3a",
       "initialAssignmentDispatched": true,
-      "assignedMilestone": "s1-common-runner-readiness-plan-20261008",
-      "latestProgress": "Für die Konfigurations- und Berechtigungsfrage nutze ich die OpenAI-Docs-Anleitung. Dabei trenne ich heutige Dokumentation von den archivierten Belegen des gepinnten Clients 0.160.1; heutige Profile erklären die früheren Ablehnungen nicht rückwirkend.",
+      "assignedMilestone": "s1-common-runner-policy-metadata-20261008",
+      "latestProgress": "Ich bereite den eng begrenzten Metadatenversuch vor: ein neuer gebundener Client, Offline-Prüfungen und ein unabhängiger Vorabreview vor dem einzigen erlaubten Start. Ein positives Ergebnis gilt nur als beobachtete argv-Annahme und gemeldete Konfigurationsvorbedingung; die Wirksamkeit des Schlüssels und der tatsächliche Zugriff bleiben damit unbelegt.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-scientist/Markitect",
       "transferredDesignCommit": "b9e17c9896f14b4b1268e4bcb005395f5d324384",
-      "candidateSha": "91bb8cf7b3ae242adc02e7f466bf17ca9120a1c1",
+      "candidateSha": "e42ba917e765169b1e5c1737f8310da41904b22e",
       "acceptance": "R7 bounded native+outer Queue and terminal Resume mechanics accepted; S1 real common Actor/tools and study cells remain open.",
       "lastAssignment": {
-        "key": "s1-common-runner-readiness-plan-20261008",
-        "authorizedUtc": "2026-10-08T04:31:41Z",
-        "status": "Dispatched; awaiting bounded documentation/readiness completion callback.",
-        "scope": "Update source/evidence-bound S1 matrix; consolidate known real-runner policy barrier and one finite source-supported next-operation proposal, common to three arms. Documentation/read-only work only.",
-        "sentUtc": "2026-10-08T04:37:27Z"
+        "key": "s1-common-runner-policy-metadata-20261008",
+        "authorizedUtc": "2026-10-08T04:54:29Z",
+        "status": "Dispatched; narrow preparation then at most one metadata process conditional on reviewed prerequisites.",
+        "scope": "One prospectively bound metadata process after narrow client preparation, tests and independent review; no real Actor or product/study execution.",
+        "sentUtc": "2026-10-08T04:55:29Z"
       },
       "evidence": {
         "sourcesHashChecked": 37,
@@ -2200,6 +2200,112 @@
           "recordedFocusedChecks": "48 final passing test executions across five focused logs (18+7+13+7+3); overlap not reported as 48 unique tests. Earlier assertion failures and focused corrections retained. Syntax13/diff passed. Root reran no tests.",
           "explicitSlotReleaseUtc": "2026-10-08T04:25:10.373410+00:00",
           "claimBoundary": "Deterministic protocol roles plus actual Go check only. S1/common real tool capability/semantic quality/human acceptance remain open; all six study cells NOT RUN. No comparison with Classic timing because cases/steps differ; historical failures and unknown usage retained."
+        },
+        "commonRunnerReadinessPlanAcceptance": {
+          "acceptedUtc": "2026-10-08T04:54:29Z",
+          "candidateSha": "e42ba917e765169b1e5c1737f8310da41904b22e",
+          "baseSha": "91bb8cf7b3ae242adc02e7f466bf17ca9120a1c1",
+          "clean": true,
+          "manifestSha256": "4ad5033f6b4e0d2cb015519901926d1d9869783f99629af39218bb409cce1368",
+          "independentReviewSha256": "f02aface550b1f44ba9938fa518b1fe7962807ea3689a7b7e64bc5c6515c2630",
+          "publicPlanSha256": "2e1f395692fb145a0dd51b7bb4ee494b338448b476c107e6ddad8babca43bcd2",
+          "publicMatrixSha256": "5243e9b9d02258570a5c7771c1db8868619464caa6e01697a36edfced6b20c83",
+          "rootVerification": {
+            "payloadsPlusManifest": 12,
+            "protectedHistoricalFiles": 3890,
+            "sourceFiles": 15,
+            "existingEvidenceFiles": 13,
+            "schemaMembers": 5,
+            "liveLedgerFiles": 5,
+            "originalMatrixExact": true,
+            "handoffSuffixExact": true,
+            "futureCwdNotPrepared": true,
+            "mismatches": 0,
+            "testsRerun": false,
+            "experimentalStarts": 0
+          },
+          "rootIndependentReviewer": "/root/r4_terminal_acceptance",
+          "disposition": "DOCUMENTATION READY with claim qualification: app-server argv acceptance and reported value/origin are prospective metadata only; neither strict recognition of inline config key nor enforcement is proven.",
+          "findings": [
+            "Classic R3 separate fixture lifecycle accepted; ordinary Classic dispatch remains readiness_gap.",
+            "Government R7 proves Queue and already-terminal idempotent readback, not interrupted Actor recovery.",
+            "Both native bridges remain nativeFixture-only; general Conventional task path and real model delegates not implemented.",
+            "Historical CreateProcess denials unresolved; six study cells NOT RUN.",
+            "Pinned strict-config help refers to config.toml keys, does not establish same treatment for inline config override. Config response permits unknown properties; echoed value is not recognition/enforcement."
+          ],
+          "consumption": "Zero new experimental processes, calls, cases, admissions, freezes or ledger writes. Historical usage unchanged.",
+          "nextDecision": "One conditional finite prospective policy metadata operation; no sixth Actor, no study cell, no automatic follow-on."
+        },
+        "commonRunnerPolicyMetadataGrant": {
+          "key": "s1-common-runner-policy-metadata-20261008",
+          "issuedUtc": "2026-10-08T04:54:29Z",
+          "status": "Dispatched; preparation/review preconditions before one process tree.",
+          "ownerThreadId": "01a1169c-3df6-7571-997d-48ab57365875",
+          "sourceThreadId": "01a11367-a781-7683-a20f-46e12614dcb4",
+          "baseSha": "e42ba917e765169b1e5c1737f8310da41904b22e",
+          "planSha256": "2e1f395692fb145a0dd51b7bb4ee494b338448b476c107e6ddad8babca43bcd2",
+          "purpose": "Observe argv acceptance, reported default/origin and constraints with presence distinctions for a new common prospective route; not recognition/enforcement or historical denial diagnosis.",
+          "executable": "C:/Users/Consiliari/AppData/Local/OpenAI/Codex/bin/5ea220ae823df3d7/codex.exe",
+          "executableVersion": "codex-cli 0.160.1",
+          "executableSha256": "3b8f6e33caa75f232558a3cf76ff9b87bb5ef6dbcf4996372f24e55c78b1b916",
+          "schemaArchiveSha256": "cd24042eec4696f6b73368cfc6ce930726f3e10c28bae63cdbd1b2f502ff1d97",
+          "priorClientSha256": "95c8486ad8962e14ad0c2da2989adcf154fa28f51d19c1fe983c532d1a885926",
+          "cwd": "C:/Users/Consiliari/Documents/Scientist-Probes/s1-common-runner-prospective-20261008/actor",
+          "argvContract": "Exact public plan JSON array: app-server --stdio --strict-config plus 17 config pairs. No extra flags, fallback path, endpoint, provider or profile changes.",
+          "requestedModel": "gpt-6.1-sol",
+          "requestedReasoning": "high",
+          "requestedProvider": "openai",
+          "existingAuth": "ChatGPT; no account/auth/model-list RPC or credential reads",
+          "maxAdditionalAppServerSessions": 1,
+          "previousAppServerSessionsConsumed": 3,
+          "cumulativeAppServerSessionsMaximum": 4,
+          "maxCliMetadataCalls": 0,
+          "previousCliMetadataCalls": 6,
+          "allowedMethods": [
+            "initialize",
+            "initialized",
+            "config/read",
+            "configRequirements/read"
+          ],
+          "maxConfigReads": 1,
+          "maxRequirementsReads": 1,
+          "maxParallel": 1,
+          "retries": 0,
+          "activeRpcSeconds": 33,
+          "ownedProcessExecutionSeconds": 38,
+          "controllerWithCleanupSeconds": 50,
+          "outerReceiptSeconds": 60,
+          "maxCleanupSeconds": 10,
+          "maxQueuedFrames": 32,
+          "maxRawBytes": 4000000,
+          "maxInboundNotifications": 16,
+          "allowedInboundNotifications": [
+            "remoteControl/status/changed"
+          ],
+          "notificationRule": "Only exact pinned-schema disabled status, discard without reply. Every warning, provisional result, other/invalid status or notification and every server request stops.",
+          "maxRealActors": 0,
+          "maxThreads": 0,
+          "maxTurns": 0,
+          "maxRequestedModelCalls": 0,
+          "maxNativeProductStarts": 0,
+          "maxProductWrappers": 0,
+          "maxDelegates": 0,
+          "maxStudyCells": 0,
+          "maxFullProductSuites": 0,
+          "nativeInternalNetworkOrInference": "Not established by requested RPC list; no fabricated zero total.",
+          "preparation": "One narrow new client/closed profile derived from preserved old client; presence-aware bounded sanitizer, exact warning stop policy, actual request/cwd/argv/authority/freeze binding and focused offline tests with no Codex launch. One independent preflight review and clean source commit before the one process tree. Create only the designated new public metadata cwd; if preexisting unexpected content stop, never clear it. Archive old evidence unchanged.",
+          "requiredSuccess": "All permitted RPCs once, exact config value/origin and typed compatible constraints reported with missing/null/present/invalid distinctions, normal process cleanup/terminal receipt within bounds. This yields only visible metadata precondition satisfied. No active profile or tool proof.",
+          "stopRule": "First failure or missing/null/invalid/ambiguous selected default or origin, incompatible legacy/managed constraint, warning, unexpected activity, deadline/resource issue ends terminal nonpositive/insufficient. No retries, repair-and-relaunch, alternate route or residual use.",
+          "claimQualification": "strict-config inline-key recognition is unproven; argv accepted plus echoed property is never treated as recognized/enforced permission. Historical exec cause remains unknown.",
+          "ledgerBoundary": "No changes to five historical real/native ledgers. Record one new metadata reservation/start/result separately before launch; report additive metadata trees 3->at most4 and unchanged historical counters.",
+          "exitCondition": "One finite attempt or blocked preparation, sanitized actual receipts plus independent postreview, clean final SHA and direct callback with explicit slot release; residual grant closes. No automatic further operation.",
+          "newPurchases": false,
+          "globalConfigurationChanges": false,
+          "policyBypass": false,
+          "remainingSessions": 1,
+          "consumedSessions": 0,
+          "sentUtc": "2026-10-08T04:55:29Z",
+          "prompt": "Overseer nimmt den sauberen Dokumentationsabschluss e42ba917e765169b1e5c1737f8310da41904b22e qualifiziert an. Root hat zwölf Manifest-/Payloaddateien, 3890 historische Dateien, 15 Quellpins, 13 Belegpins, fünf Schema-Mitglieder, ursprüngliche Matrix, alten Handoff-Suffix und fünf unveränderte Liveledger geprüft. Keine neue Ausführung.\n\nDer zusätzliche unabhängige Root-Review bestätigt den Nutzen EINER prospektiven Konfigurations-Vorprüfung, verschärft aber die Aussagegrenze: Die gepinnte Hilfe beschreibt strict-config für config.toml; gleiche Prüfung eines inline --config-Werts ist unbelegt. ConfigReadResponse lässt zusätzliche Properties zu. Ein Prozessstart und zurückgemeldeter Default samt Origin beweisen deshalb keine Erkennung als wirksamer Schlüssel und kein Enforcement. Bezeichne ein positives Ergebnis ausschließlich als beobachtete argv-Annahme und gemeldete Konfigurationsvorbedingung; fehlender/null/ungültiger/mehrdeutiger Wert oder Origin ergibt insufficient. Bestehenden eingefrorenen Plan und Review erhalten; diese Einschränkung in neuen aktuellen Grant-/Handoffbelegen festhalten.\n\nNeuer einmaliger Grant: s1-common-runner-policy-metadata-20261008, dokumentiert 2026-10-08T04:54:29Z in Root docs/design/government/coordination-state.json unter Scientist.evidence.commonRunnerPolicyMetadataGrant. Der freie Slot ist Scientist mit genau diesem Schlüssel und Zeitpunkt zugewiesen. Dieser Auftrag erlaubt eng notwendige Vorbereitung UND danach genau einen Metadatenversuch, sofern alle Vorbedingungen bestanden sind. Keine Zwischenmeldung nur für eine weitere pauschale Freigabe nötig.\n\nVorbereitung: Leite einen kleinen neuen, separat gebundenen Client/ein geschlossenes Profil aus dem erhaltenen classified-client ab. Nur Präsenzklassifikation missing/null/present/invalid, begrenzte Sanitization, exakte geplante 17 Konfigurationspaare/RPCs/cwd, Warnungsabbruch und frische Grant-/Quell-/Request-/Schema-/Freeze-/Reservationbindung. Bestehende Clients/Grants/Belege bleiben unverändert; kein allgemeiner Runnerumbau. Fokussierte Offline-Regressionsfälle durch die tatsächlichen betroffenen Parser/Guards, ohne Codex-Prozess oder Modell, plus enger unabhängiger Vorabreview. Auf sauberem Quellstand neue unveränderliche Vorabbindungen erstellen. Die neue Metadatenreservation einmal vor Start protokollieren; historische fünf Liveledger nicht verändern.\n\nErlaubt ist ausschließlich das im Plan genannte neue öffentliche Metadaten-cwd C:/Users/Consiliari/Documents/Scientist-Probes/s1-common-runner-prospective-20261008/actor und eine getrennte kleine Evidenzablage. Sein Erstellen ist jetzt autorisiert; keine Studienaufgabe, privaten Daten, alten Actorverläufe oder fremden Zellergebnisse dort ablegen. Tatsächliche Existenz, unverfängliche öffentliche Inhalte und exakt identisches Prozess-/RPC-cwd vor Start binden. Bei unerwartetem Altinhalt stoppen, nichts löschen oder umnutzen. Keine Installation, globalen Konfigurations-/Trust-/Policyänderungen oder Kopie/Umleitung von CODEX_HOME/Auth. Pinned Binary 0.160.1 mit SHA 3b8f6e33caa75f232558a3cf76ff9b87bb5ef6dbcf4996372f24e55c78b1b916 vor Start bestätigen.\n\nGenau das geplante argv mit app-server --stdio --strict-config und 17 Paaren verwenden, gewünschtes gpt-6.1-sol/high, openai, bestehende ChatGPT-Route. Keine zusätzlichen Help-/Metadata-Aufrufe. Nur initialize/initialized, einmal config/read(includeLayers=true, exact cwd), einmal configRequirements/read. Keine Thread-/Turn-/Tool-/Datei-/Command-/Account-/Auth-/Modell-/Write-RPCs. Verwaltete und systemweite Grenzen bleiben erhalten; der Pfad ist prospektiv und erklärt nicht die früheren exec-Ablehnungen.\n\nEndliche Grenzen: ein neuer app-server-Prozessbaum einschließlich fehlgeschlagenem Startversuch; Parallelität eins; keine Retries. Aktive RPC-Arbeit höchstens 33 s, Prozessfrist 38 s, Cleanup höchstens 10 s, Controllerabschluss einschließlich Cleanup spätestens 50 s, äußere Receipt/Sanitization spätestens 60 s. Vorhandenes Windows-Job-Kill-on-close nutzen und nur eigene Prozesse beenden. Maximal 32 Frames Queue, 4000000 Rawbytes insgesamt, 16 Notifications. Nur exakt schema-valides remoteControl/status/changed=disabled ohne Antwort verwerfen. Jede Warnung (auch bislang tolerierte), provisorische Antwort, andere/ungültige Notification, Serveranfrage, Auth-Aktivität, RPC-Fehler, fehlende Voraussetzung oder Grenze stoppt terminal. Keine Reparatur mit Nachstart oder andere Route bei Laufproblemen.\n\nSanitisiertes Resultat nach geplantem engstem Allowlistvertrag: Präsenzklassen, genau angefragter Built-in-Default, typisierte Default-/Allowlist-/Legacy-/Windows-/Featurebeschränkungen, Origin/Layers ohne fremde Rohtexte oder Pfade; Customnamen nur konsistente opake Aliasse. Keine Rawframes oder stderr/config-Texte persistieren. Bei widersprechender Legacy-/Managed-Konfiguration, fehlender oder mehrdeutiger Herkunft/Wert insufficient bzw. inkompatibel. Keine Constraints entfernen. Kein Ergebnis erlaubt automatisch einen Actor. Aktives Profil, echte Werkzeuge, Lesen/Schreiben/Build/Test, Serving-/Providerdetails bleiben unbeobachtet. Null angeforderte Modell-RPCs nicht als null native interne Netzwerk- oder Inferenzaktivität ausgeben.\n\nVorher drei Policy-Prozessbäume, neu maximal einer, kumulativ höchstens vier; sechs CLI-Metadatencalls bleiben sechs. Native Historie 15 Starts/16 Wrapper/13 deterministische Delegates/2250 reservierte Sekunden unverändert. Reale Historie fünf Actors/53331 bekannte Tokens/Gesamtverbrauch unbekannt. Neu null reale Actors, native Produktstarts, Produktwrapper/-delegates, Studienzellen oder volle Produkttests. Keine P1-Übernahme, Produktreparatur, Veröffentlichung oder Käufe.\n\nNach dem einen terminalen Resultat oder einer echten Vorbereitungssperre: unabhängiger enger Nachreview, genaue Istgrenzen/Timing/Usage und Sanitizationlimits, unveränderte Historie, sauberer Abschluss-SHA, ausdrückliche Slotfreigabe und eine direkte Abschluss-/Bedarfsmeldung. Restquote danach verfallen; keine automatische Diagnosefortsetzung. Keine Empfangsbestätigung oder Meldeschleife. Worker, Architect und Oldschool bleiben unverändert."
         }
       },
       "classicHandoffReceived": true,
@@ -2342,9 +2448,16 @@
         {
           "key": "s1-common-runner-readiness-plan-20261008",
           "authorizedUtc": "2026-10-08T04:31:41Z",
-          "status": "Dispatched; awaiting bounded documentation/readiness completion callback.",
+          "status": "Completed and qualified accepted; no experimental consumption.",
           "scope": "Update source/evidence-bound S1 matrix; consolidate known real-runner policy barrier and one finite source-supported next-operation proposal, common to three arms. Documentation/read-only work only.",
           "sentUtc": "2026-10-08T04:37:27Z"
+        },
+        {
+          "key": "s1-common-runner-policy-metadata-20261008",
+          "authorizedUtc": "2026-10-08T04:54:29Z",
+          "status": "Dispatched; narrow preparation then at most one metadata process conditional on reviewed prerequisites.",
+          "scope": "One prospectively bound metadata process after narrow client preparation, tests and independent review; no real Actor or product/study execution.",
+          "sentUtc": "2026-10-08T04:55:29Z"
         }
       ],
       "offlineAdapterContractAssignment": {
@@ -2471,7 +2584,7 @@
       "commonRunnerReadinessPlanAssignment": {
         "key": "s1-common-runner-readiness-plan-20261008",
         "authorizedUtc": "2026-10-08T04:31:41Z",
-        "status": "Dispatched; no experimental execution authorized.",
+        "status": "Completed and qualified accepted at e42ba91; claim correction recorded before prospective operation.",
         "baseSha": "91bb8cf7b3ae242adc02e7f466bf17ca9120a1c1",
         "prompt": "R7 ist auf sauberem 91bb8cf7b3ae242adc02e7f466bf17ca9120a1c1 als BOUNDED MECHANICS PASSED angenommen. Root hat Hashes, Git-Blobs, Freeze, historische Belege und Ledger unabhängig geprüft; ein zusätzlicher Review bestätigt Queue, gebundene Checks, technische Prüfung, finale Ressortzustimmung und Promotion. Resume hielt die Rollenanzahl bei 3. Die Queue war vorher bereits vollständig: Das belegt terminale Idempotenz und Readback, keine Wiederaufnahme abgebrochener Agentenarbeit. R7 ist geschlossen, Restquote verfallen, deine Slotfreigabe vom 08.10.2026 um 04:25:10.373410 UTC angenommen. Kumulativ: 15 native Starts, 16 Wrapper, 13 deterministische Delegates und 2250 reservierte Sekunden. Historisch fünf reale Actors, 53331 bekannte Tokens, Gesamtverbrauch unbekannt.\n\nNächster begrenzter Auftrag: s1-common-runner-readiness-plan-20261008. Nur Quellen-/Belegabgleich und öffentliche Readiness-/Ausführungsplanung im Scientist-Checkout; keine experimentelle Ausführung oder Quotenauffüllung. Ziel ist der gemeinsame reale Actor-/Toolpfad für Conventional/Oldschool, Classic und Government.\n\n1. Aktualisiere die öffentliche S1-Matrix und das aktuelle Handoff anhand des angenommenen Classic-R3-Lebenszyklus (cd537ac, Quelle 9b7ee8a) und Government R7. public/s1-adapter-mechanics.md enthält überholte Angaben zur fehlenden Bootstrap-/Wrapperintegration. Erhalte datierte Altbelege. Trenne native Produktfähigkeit, gemeinsame Wrapper-/Ledgerintegration, deterministische Fixtures, tatsächliche Provider-/Toolfähigkeit und semantische Annahme. Benenne genau, welche Pfade nur nativeFixture-Profile zulassen und welche minimale Brücke für echte Actors fehlt; implementiere sie jetzt nicht. Alle sechs Studienzellen bleiben NOT RUN.\n\n2. Konsolidiere die bestehende Runnerblockade ohne Wiederholung: Der fünfte reale Actor konnte beide freigegebenen Dateien wegen zweier CreateProcess-policy-Ablehnungen nicht lesen, trotz Exit 0. Sechs CLI-Metadatencalls und drei app-server-Metadatensitzungen sind verbraucht. Die letzte app-server-Konfiguration beweist nicht die effektive Konfiguration des früheren exec mit ignore-user-config/ignore-rules; die Ursache bleibt unbekannt. Keine abgewiesenen Befehle nachspielen, keine Shellwechsel zur Umgehung, keine Abschaltung von Schutzparametern, globale Policyänderung oder Installation.\n\n3. Liefere EINE empfohlene nächste Operation mit einem klaren neuen Erkenntnisgewinn. Nutze vorhandene gepinnte 0.160.1-Hilfe, Schemas, Client-/Quellbelege und bei Bedarf offizielle Dokumentation. Root hat https://learn.chatgpt.com/docs/permissions und https://learn.chatgpt.com/docs/config-file/config-basic gelesen: Dort beschriebene Profile beweisen nicht die historische Wirkung im gepinnten exec. Ein sinnvoller neuer prospektiver Runnerpfad muss klar vom historischen Befund getrennt und für alle drei Arme gleich sein; managed/system constraints bleiben erhalten. Jetzt kein Profil anwenden.\n\nDer Vorschlag nennt exakte Binary, Quellen, Tools, gewünschtes Modell und Reasoning, bekannte und unbekannte Rechte, Inputs/Pfade sowie belegbare Konfigurationspräzedenz. Unbekannten Zugriff nicht als erlaubt erklären. Falls zuerst eine Metadatenoperation nötig ist: genaue argv/RPCs, sanitisiertes Ergebnisschema und die neue gegenüber bisherigen Reads beantwortbare Frage. Falls bereits eine reale Session begründet vorbereitet werden kann: genau ein frischer Kontext, isolierter Checkout, öffentliche fallunabhängige Aufgabe, Erfolgs-/Abbruchkriterien, harte Prozess-/Session-/Parallelitätsgrenzen und messbare Usage einschließlich unbekannter Restgrößen. Kein allgemeiner Diagnosezyklus oder Harnessneubau. Keine Zusatzhilfe oder versteckten Einschränkungen eines Arms. Lesen beweist noch kein Schreiben, Build oder Test.\n\nGewünschte/angebotene Modellidentität und tatsächlich beobachtbare Serving-/Providerdaten unterscheiden; keine unerreichbaren Metadaten als scheinbar erfüllbare Voraussetzung setzen. Historische unbekannte Gesamtnutzung bleibt unbekannt. Jede spätere experimentelle Invocation braucht einen neuen endlichen Overseer-Grant. Dieser Auftrag ist KEIN Laufgrant.\n\nErlaubt sind lokale Datei-/Quellen-/Git-Leseoperationen und offizielles Dokumentationslesen sowie die nötigen öffentlichen Dokumentationsänderungen. Null neue tatsächliche Fallvorbereitungen, Admissionaktionen, Freezes, native Starts, Codex-CLI-/app-server-/Metadaten-/Modell-/Provider-/Controller-/Wrapper-/Delegate-/Studienstarts, Liveledgeränderungen oder vollständige Tests. Keine Produktänderung oder P1-Übernahme.\n\nLiefere einen engen unabhängigen Readiness-/Methodenreview, sauberen Dokumentationsabschluss und genau eine direkte Abschluss-/Bedarfsmeldung an Overseer. Keine Produkttests für Dokumentation. Höchstens eine begründete Alternative. Wenn Autorität technisch nicht belegbar ist, benenne die konkrete fehlende Tatsache und zuständige Grenze statt pauschal neue Nutzerfreigabe anzufordern. Worker, Architect und Oldschool bleiben verfügbar; keine neuen Implementierungsaufträge aus diesem Paket.",
         "scope": "Update source/evidence-bound S1 matrix; consolidate known real-runner policy barrier and one finite source-supported next-operation proposal, common to three arms. Documentation/read-only work only.",
@@ -2494,8 +2607,8 @@
       "name": "Architect",
       "threadId": "01a111ec-a913-7830-91b0-925d0a1dd1b2",
       "hostId": "local",
-      "afterCursor": "71d9f5b2-c0f0-474c-9898-777d051b478a:53",
-      "lastObservedStatus": "idle",
+      "afterCursor": "71d9f5b2-c0f0-474c-9898-777d051b478a:54",
+      "lastObservedStatus": "notLoaded",
       "activeTurn": null,
       "lastAssistantMessageId": "msg_0b6e7ce0ce9f843f016ac6efac545887d2b532e3903d762cbc",
       "initialAssignmentDispatched": true,
@@ -2878,7 +2991,7 @@
       "lastAssistantMessageId": "msg_0dc7fbe822793640016ac6f69ccac88191ac99728328af381f"
     }
   ],
-  "nextAction": "Await Scientist common-runner readiness plan and independent review via direct callback. No execution grant; other owners held; quiet two-hour fallback.",
+  "nextAction": "Await one finite prospective policy metadata result or preparation block via direct callback; independently verify then decide. No automatic Actor or diagnosis continuation.",
   "boundaries": {
     "governmentPublication": false,
     "automaticClassicReplacement": false,
@@ -2888,12 +3001,11 @@
     "satPrinciples": "Deferred by direct user request on 2026-10-07; conceptual constraint/consistency/conflict-explanation principles first, no solver integration or current assignment change. See docs/design/government/deferred-research.md."
   },
   "lastReview": {
-    "reviewedUtc": "2026-10-08T04:31:41Z",
-    "evidenceLevel": "Root exact hashes/Git/freeze/history/readonly ledger plus independent raw semantic receipt/code review. No repeated tests or experimental execution.",
+    "reviewedUtc": "2026-10-08T04:54:29Z",
+    "evidenceLevel": "Root exact payload/Git/history/schema/ledger verification plus independent narrow source/readiness review. No tests or experimental execution by root.",
     "coordinationActions": [
-      "Accepted bounded R7 Queue and terminal Resume/readback, with interruption-recovery limitation.",
-      "Closed grant and released slot; preserved all old failures/usage.",
-      "Authorized one public S1/current runner readiness reconciliation and next-operation proposal, zero execution."
+      "Accepted public S1 reconciliation with strict-config claim qualification.",
+      "Authorized one prospective metadata operation after reviewed preparation; zero real Actors/study cells."
     ],
     "userDecisionRequired": false
   },
@@ -3089,11 +3201,10 @@
     "owner": "Worker"
   },
   "fullSuiteSlot": {
-    "owner": null,
-    "key": null,
-    "status": "Free after explicit R7 terminal release; next readiness planning has no runtime slot.",
-    "releasedUtc": "2026-10-08T04:25:10.373410+00:00",
-    "releaseVerifiedUtc": "2026-10-08T04:31:41Z",
+    "owner": "Scientist",
+    "key": "s1-common-runner-policy-metadata-20261008",
+    "status": "Assigned to one bounded prospective metadata operation, not a full product suite.",
+    "assignedUtc": "2026-10-08T04:54:29Z",
     "queue": []
   },
   "contextSmokePreparation": {
