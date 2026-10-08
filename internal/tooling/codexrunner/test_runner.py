@@ -388,6 +388,62 @@ class CodexRunnerTests(unittest.TestCase):
             private_log = (cwd / "private.jsonl").read_text(encoding="utf-8")
             self.assertIn("private-nonce", private_log)
 
+    def test_known_provider_error_is_emitted_as_successful_adapter_protocol_response(self) -> None:
+        value = invocation("executor")
+        error_event = json.dumps({
+            "type": "error",
+            "message": json.dumps({
+                "type": "error",
+                "status": 400,
+                "error": {"message": "The 'gpt-6-luna' model is not supported when using Codex with a ChatGPT account."},
+            }),
+        }).encode("utf-8") + b"\n"
+
+        class FakeProcess:
+            def __init__(self, argv, **kwargs):
+                self.stdin = io.BytesIO()
+                self.stdout = io.BytesIO(error_event)
+                self.stderr = io.BytesIO()
+
+            def wait(self, timeout=None):
+                return 1
+
+            def terminate(self):
+                return None
+
+            def kill(self):
+                return None
+
+        with tempfile.TemporaryDirectory() as directory:
+            cwd = Path(directory)
+            public_stdout = io.BytesIO()
+            config = json.dumps({"model": "gpt-6-luna", "modelOptions": {}, "providerVersion": "0.130.0"})
+            with patch.object(runner.sys, "stdin", type("Input", (), {"buffer": io.BytesIO(json.dumps(value).encode("utf-8"))})()), \
+                 patch.object(runner.sys, "stdout", type("Output", (), {"buffer": public_stdout})()), \
+                 patch.object(runner.sys, "stderr", io.StringIO()), \
+                 patch.object(runner.Path, "cwd", return_value=cwd), \
+                 patch.dict(runner.os.environ, {
+                     "MARKITECT_AGENT_CONFIG_JSON": config,
+                     "MARKITECT_AGENT_PRIVATE_LOG": str(cwd / "private.jsonl"),
+                 }), \
+                 patch.object(runner, "resolve_codex", return_value=["codex.exe"]), \
+                 patch.object(runner, "check_version"), \
+                 patch.object(runner.subprocess, "Popen", FakeProcess):
+                exit_code = runner.main([
+                    "--model", "gpt-6-luna",
+                    "--codex-executable", "codex.exe",
+                    "--codex-version", "0.130.0",
+                ])
+
+            self.assertEqual(exit_code, 0)
+            response = json.loads(public_stdout.getvalue())
+            self.assertEqual(response["outcome"], "incomplete")
+            self.assertEqual(response["role"], "executor")
+            self.assertEqual(response["candidateFiles"], [])
+            self.assertEqual(response["verifierObservations"], [])
+            self.assertEqual(response["uncertainty"], [runner.CODEX_FAILURE_DIAGNOSTICS["model_unsupported"]])
+            self.assertNotIn("gpt-6-luna", json.dumps(response))
+
     def test_codex_tool_calls_force_incomplete_and_features_are_disabled(self) -> None:
         value = invocation()
         value["request"]["artifacts"] = []
