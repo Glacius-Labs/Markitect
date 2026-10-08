@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-08T23:12:39Z",
+  "updatedUtc": "2026-10-08T23:30:57Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -439,16 +439,16 @@
       "name": "Scientist",
       "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
       "hostId": "local",
-      "afterCursor": "4993693c-4fc7-4021-b456-5988f9f71188:52",
-      "lastObservedStatus": "active",
+      "afterCursor": "4993693c-4fc7-4021-b456-5988f9f71188:53",
+      "lastObservedStatus": "idle",
       "activeTurn": {
         "id": "01a11dc7-f196-7483-8dc8-723dd2e04104",
-        "status": "inProgress"
+        "status": "completed"
       },
-      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac8230572a08191be7b168404cefbf3",
+      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac826613e308191ba6c42eb9f56eba7",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "Run six real native-Codex exploratory case studies, independently evaluate and report intermediate data",
-      "latestProgress": "Actual posthoc runtime qualified accepted; currently bounded prospective comparison preparation. ClassicMain contract allows0644/0755/0600 and request-supplied evidenceIDs; Design adapter admission explicit, no new trial execution.",
+      "latestProgress": "Offline v4 preparation reported clean c7d5510, 37 added files, 17 then19mechanicaltestsPASS, no new ActualActors/Trials; root evidence reconciliation active. Design and common executable profile not admitted.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-scientist/Markitect",
       "transferredDesignCommit": "b9e17c9896f14b4b1268e4bcb005395f5d324384",
       "candidateSha": "7d6964331f542462b4a29db3819f60c75083e3be",
@@ -7070,7 +7070,8 @@
             "Commonoutcomequalityseparatefrommethodconformity, fourDesignmigrationcriteriaareprospectivereadiness/migrationnotConventionalDesignfeaturemandates.",
             "NoMain/releaseornewsourcefeatures fromScientist; explicitprospectiveClassicMainpinchangesonlynewv4candidate,neveroldv3.",
             "Finishdraft/separatechecks/hashhandoff/callbackwithinbound; actual6cellsrequiresseparatelyreviewedfreezeandfiniteexecutiongrant onceDesignready. Noautomatictrialrefill."
-          ]
+          ],
+          "status": "Closed/accepted qualified offline only; ordinary correction/test quota consumed2/2, no actualtrialallocation"
         },
         "nativeV3EphemeralValidationAcceptance": {
           "acceptedUtc": "2026-10-08T23:12:39Z",
@@ -7120,6 +7121,86 @@
           "prompt": "Dein Abschluss3e8515f7 ist eingetroffen; Root hat bereits den tatsächlichen dynamischen Serverstart,25Loghashes und gebundene Rohresultate gelesen.46/45Erratum und die12.Start-Diagnose ausdrücklichalsAbweichung/ohneTestcredit beibehalten; OriginalRestartFAILED undAtomicityinapplicable bleiben. KeinweitererActualaufruf ausdiesenGrants.\n\nNächster konkreter begrenzter Auftrag ist bereitscommitted a5f8477: matched-design-classic-main-conventional-preparation-20261009, vollständig in C:/Users/Consiliari/Glacius Labs/Markitect/docs/design/government/coordination-state.json -> Scientist.evidence.matchedDesignClassicMainPreparationGrant. Issue23:09:35Z, Ende23:39:35Z am8OktUTC. Max1800s, ZEROActor-/Provider-/Appserver-/vollständigeTrialstarts, höchstens2gewöhnlicheKorrekturbatches+2gezieltemechanischeTestaufrufe, keineProduktarbeit/altenEvidenzänderungen.\n\nBereite jetzt die konkreteprospektiveVergleichsversionvor, währendDesignseineaktuellenIntegrationsbefundebehebt: publicDTO/Identity/allowedMode/paths/suppliedEvidenceRefs-Preflight alsgewöhnlicherexternerMechanikhelper, OwnHandle+Kestrel0Transport, tatsächlicheRunner-/Task-/Rollenfristen samtindependentAssessmentreserve, gleichestatsächlichesnativeProfil undklärbareCandidateAdmission. Anforderungen/Task1-6Mappung/Holdout-Anwendbarkeit/RestartSerializationkorrektur prospektiv undRequirementgebunden, Originaleunverändert undnichtrescoren. KeineSimulationfehlenderProduktfähigkeiten/erfundeneVotes/Evidence. VorbereitungsnachweisealsMechanik,keineStudienzellenkennzeichnen. QuelltestsaufkonkreteDTO/Transport/Mappingrisikenbeschränken; keineVollsuitenoderweiterenCapability-Mikrodiagnosen. FehlendennativenCLI-/Tool-/ModellsupportalskonkreteAdmissionlückebenennen, nichtschweigendApp/CLI/Modellwechseln.\n\nExpliziteprospektiveVersionsentscheidungvonOverseer fürNEUESv4: ClassicMaina97cbd5ef3e0b22b9e6397501047a4e01dc90204 istderaktuelleHauptversions-/Ablösungsvergleich. DasalteStudyClassicc91363b/v0.14.1 undallesv3bleibenunverändert; derneueMainpinistkeinrückwirkenderErsatz. DesignnurmitgenauemsauberenangenommenenReadinessSource/Binary/Role-/Toolcontract,nicht57fa+WIPstillfreezen. Du kannstjetztCandidate-unabhängigeöffentlicheVerträge/Protokoll/Admissionvorbereiten, ohneaufWIPzuzugreifenoderscheinbarfertigenDesignpinzuerfinden.\n\nVorschlag6gematchteZellen: Design,ClassicMain,starkeConventional jeweilsGreenfield/Brownfield, innerhalbinsgesamtmax8weitererTrials/max2Fragen,restliche2unzugeteilt. GemeinsameOutcomeQualitätseparatvonMethodenkonformität, keineDesignartefaktpflichtfürConventional; Ownership/Modellpflege/Drift/Aufsicht/MigrationuntergemeinsamdeklariertenOutcomes. ActualModel/Tool/Resourcesmüssenidentischundrealnutzbarsein, deinaktuellLuna/SolConfoundhinweisbleibt. KeinMain-/Releaseentscheid undnochKEINEActual-Folgetrialquote; nachdeinemkonkretenmechanischgeprüftenDraft plusDesignreadinesspinfolgtunabhängigerFreezecheckundfrischerendlicherExecutiongrantohnepauschaleNutzerrückfrage.\n\nLiefereinnerhalbFensterexaktenkleinenSource-/Diff-/Checks-/Remaining-AdmitHandoffmitCallback, keinACK, keinFortsetzungsverlustbeiKompaktion. Keine neuenAgentsfürdieseOfflinevorbereitung; unabhängigeActualFreezeReviewsgibt es erstuntereinemseparatgezähltenVolltrialblock.",
           "promptSha256": "a36688416438261656128be336cd98eaeee4f2b8aac5d8cd2ef813fd4a283080",
           "status": "Active preparation verified; no actual new study/Actor grant"
+        },
+        "matchedDesignClassicMainPreparationAcceptance": {
+          "acceptedUtc": "2026-10-08T23:30:57Z",
+          "sourceSha": "c7d55105a1f0183d6517e263d15c0fadef7d4b2d",
+          "cleanVerified": true,
+          "changedFiles": 37,
+          "allChangesAdditiveWithinPreparationDirectory": true,
+          "rootVerifiedWorkingAndGitBindings": 36,
+          "rootVerifiedOldEvidenceBytesAgainst3e8515f": 115,
+          "rootVerifiedClassicMainPublicSourceBindings": 6,
+          "mismatches": 0,
+          "manifestSha256": "e4b2892a3f13c5f6c0b12b69d5dda92d121760dacdca17ce98a77479e6c03148",
+          "handoffSha256": "c3721ac3e2ab3c21e49c7efbbacfdb49860371e435c69ad601ec11c287214337",
+          "privateArchiveSha256": "b125e404f723d6c91223762dafa4c7d612a3f234aeebbe7d707f64511d4f3030",
+          "privateArchiveRootReview": "Compressedbyteshash/metadataonly; no privateoraclecontent opened or sent to implementers",
+          "mechanicalChecks": [
+            "17 PASS initial",
+            "19 PASS final"
+          ],
+          "correctionBatches": 2,
+          "focusedTests": 2,
+          "elapsedSecondsFromIssueToSeal": 845.804931,
+          "actualNewExperimentalActors": 0,
+          "actualServers": 0,
+          "actualProviderAPICalls": 0,
+          "fullTrials": 0,
+          "remainingCorrectionAndTestQuota": 0,
+          "qualification": "Qualified offline draft only; not study freeze, candidate admission, semantic quality or product/runtime proof",
+          "independentReview": {
+            "reviewer": "/root/g2_review_authority",
+            "outcome": "Qualified offline-only acceptance",
+            "openRisks": [
+              "Recursive DTO alias checks overvalidate opaque request.context; no parser equivalence",
+              "Staged future inputs remain in broader shared host: cooperative access only",
+              "Actual repo/context.workspace/runtime InputRoots and every helper/log path must be bound",
+              "Deadline arithmetic lacks actual native dispatcher/phase/frozen-candidate admission binding",
+              "PerActor startledger requires unique state path/serialization/aggregate cap",
+              "Design/Classic executables/native roles/profile and totalreview/trialbudget not admitted"
+            ]
+          },
+          "unknownUsage": null
+        },
+        "v4ClassicMainRuntimeBindingGrant": {
+          "key": "v4-classic-main-runtime-binding-20261009",
+          "issuedUtc": "2026-10-08T23:30:57Z",
+          "notAfterUtc": "2026-10-09T00:10:57Z",
+          "source": "Direct user Scientist continues tests/work; verified c7d5510 preparation and independent authority review identify exact executable/dispatcher/DTO bindings still missing. Product-independent work can proceed while Design is active.",
+          "maxWallSeconds": 2400,
+          "actualActorActivations": 0,
+          "providerCalls": 0,
+          "codexCLICalls": 0,
+          "appserverCalls": 0,
+          "applicationServerStarts": 0,
+          "fullTrials": 0,
+          "productSourceChangesAllowed": false,
+          "oldEvidenceChangesAllowed": false,
+          "ordinaryCorrectionBatchesMax": 2,
+          "targetedMechanicalTestInvocationsMax": 2,
+          "classicBuildAttemptsMax": 1,
+          "classicBuildTimeoutSeconds": 600,
+          "ordinaryClassicMetadataOrContextInvocationsMax": 4,
+          "metadataProcessTimeoutSeconds": 60,
+          "sourceBaseline": "c7d55105a1f0183d6517e263d15c0fadef7d4b2d",
+          "classicSource": "a97cbd5ef3e0b22b9e6397501047a4e01dc90204",
+          "scope": "One final concrete candidate-independent runtime-binding packet in new additive directory. Bind exact ClassicMain source/binary/module/runtime/config, correct opaque-context structural preflight copy, implement actual reservation/phase/frozen-candidate/deadline/owned-path gates used at native tool-call boundaries. No native tool-call/model/session execution in this grant.",
+          "conditions": [
+            "Use verified existing exact-source binary if available, otherwise build source a97cbd5 once in owned isolated feature checkout; normal pinned dependency restore within600s, no toolchain/globalinstallation/policychanges. Do not change root/Architect/Worker/Design sources.",
+            "Keep c7d5510 36files/manifest/private archive and all old evidence byte-identical. Copy corrected DTO/helper into new packet rather than overwrite old accepted draft.",
+            "Treat request.context as opaque semantic payload according to bound actual contract; identity/protocol fields remain closed and evidenceRefs limited to supplied IDs. No fake semantic code/results/evidence/votes.",
+            "Bind actual input roots from Classic invocation/context contract and exact helper/output/log paths outside all audited roots; no narrowed audit to make fixtures pass.",
+            "Executable dispatch preparation must reject late/missing reservation, phase, candidatefreeze, quota and resultidentity before native actions; unique perActor state paths, serialized resource/phase accounting, concrete stopdue receipts interface. Pure tests use fake callbacks explicitly; no claim of actual native timer/OS/provider enforcement.",
+            "Use same effective MIN RunnerSpec/bridge/role/task/trial/grant boundaries and assessment reserve; Task5 priorbinary/sameDB and Task6 independent equivalence requirements preserved.",
+            "Stage only released inputs and record cooperative wider-filesystem/tool access; never claim future/private files are inaccessible merely because absent from staged subtree. No global process/port/agent inventories.",
+            "Do not inspect Design WIP or build a speculative Design adapter; prepare explicit Design contract admission mapping with nulls until clean ownerhandoff. No Luna/Sol or CLI substitution.",
+            "No new private oracle corrections or shared requirement expansion here; prospective oracle/outcome independent review stays pending for the matched freeze.",
+            "Count every build/metadata/test attempt; stop on exhaustion or missing real contract and preserve WIP. No general capability/smoke/full-suite loops, retries or extra platform.",
+            "Deliver exact clean source/config/binary/helper/test hashes, actual commands/failures/limits and remaining Design/admission items by deadline; then hold for clean Design callback or concrete review finding, not another generic preparation package.",
+            "No fulltrial admission yet. Next actual block requires exact accepted Design candidate, one supported real common profile and independently reviewed finite freeze/review/trialbudget within existing8trial/2question ceiling."
+          ],
+          "usage": null
         }
       },
       "classicHandoffReceived": true,
@@ -8297,13 +8378,13 @@
       "lastObservedStatus": "active",
       "candidateSha": "57fa01ce49fe797b403f4f7640e11820e6b1741f",
       "candidateStatus": "Previous clean reported handoff; current7-file WIP for native Luna High/appCLI streaming pinning; not a frozen test candidate",
-      "afterCursor": "003822b0-39a3-45aa-ad00-ed2b07a94fa4:4",
-      "lastAssistantMessageId": "msg_09c2fcf082a171e3016ac81fdf19948191a1c29f4e4d8363ad",
+      "afterCursor": "003822b0-39a3-45aa-ad00-ed2b07a94fa4:5",
+      "lastAssistantMessageId": "msg_09c2fcf082a171e3016ac8266a7b508191aff2f3ff50f4515c",
       "assignedMilestone": "Continue latest direct user-authorized native Luna High Shop verification; then immutable test-readiness handoff/callback",
       "monitoringAuthorizedUtc": "2026-10-08T22:51:11Z",
       "monitoringSource": "Direct user asks regularly watch Design, test it and assess whether it can replace Classic",
       "acceptance": "Not yet independently accepted; development/native test reports only",
-      "latestProgress": "Owner reports first full nativeLuna run stopped Shop on contradictory manager reports and Brownfield on invalid proposal. Nothing applied; owner investigates integration instructions/validation. Not an accepted test candidate.",
+      "latestProgress": "Current owner work expands native runtime feedback: Reviewer findings rerun implementation/review; integration cannot bypass reviews. Next manager subtree rework while preserving independent siblings, then focused failure transitions. No clean readiness candidate yet.",
       "evidence": {
         "observedCurrentHead": "57fa01ce49fe797b403f4f7640e11820e6b1741f",
         "observedBranch": "codex/model-driven-delivery",
@@ -8323,16 +8404,12 @@
         "promptSha256": "b466787ab2a6878ce5489622327922ea863f172863369c482b7a9b9560aa0e6d"
       },
       "activeTurn": {
-        "id": "01a11db1-07cf-7642-a6a0-4f0bccd79f66",
-        "status": "inProgress",
-        "error": null,
-        "startedAt": 1791499503,
-        "completedAt": null,
-        "durationMs": null
+        "id": "01a11dcf-569a-7290-864f-71c8aa326eef",
+        "status": "inProgress"
       }
     }
   ],
-  "nextAction": "Scientist seals actualephemeralruntime45+3public/compat/5holdouts, preserves1failed+1inapplicable, then bounded1800s zeroActor prospectiveDesign/ClassicMain/Conventional protocol prep. Design completes own direct native tests/readiness. No further actualquota/fulltrials until concrete matched freeze+grant.",
+  "nextAction": "Accept c7d5510 offline-only. Scientist receives one final bounded zeroActor runtime-binding packet for exact ClassicMain executable/dispatcher/DTO gates while Design closes own native manager-review/repair work. After readiness callback reconcile exact matched freeze/profile and executionbudget; no further generic diagnostics/preparation loops.",
   "boundaries": {
     "governmentPublication": false,
     "automaticClassicReplacement": false,
@@ -8343,8 +8420,8 @@
     "classicMainIntegration": "Explicitly authorized by direct user; required checks and independent review before regular merge. Frozen study remains separate."
   },
   "lastReview": {
-    "reviewedUtc": "2026-10-08T23:12:39Z",
-    "evidenceLevel": "Actual ConventionsGF posthoc46public/3restart/oldordercompatibility/5holdoutgroups passed, onefailedharnesscase/oneinapplicable and unplanneddiagnostic retained. Root64bindings/135ZIP/25logs/16oldfiles verified; no comparativewinner. Scientist nowactivein boundedzeroActorpreparation; Designstillneedsreadinesshandoff.",
+    "reviewedUtc": "2026-10-08T23:30:57Z",
+    "evidenceLevel": "c7d5510 offline draft independently and hash-verified:36Git+workingbindings/115oldfiles/6Classiccontracts,17+19mechanicsPASS; no actual study advance. Design active in direct owner work; no clean ready candidate.",
     "coordinationActions": [
       "AddedDesignasfifthmonitoredcandidateandrequestedimmutableReadinesscallback",
       "ResumedScientistwithfresh2Actorposthoctestgrantafterreportedcompaction-inducedidle; noolddeadlineextension",
@@ -8354,7 +8431,7 @@
     "userDecisionRequired": false,
     "synthesisWrittenUtc": "2026-10-08T19:51:14Z",
     "synthesisPath": "docs/design/government/assessment-2026-10-08.md",
-    "observationStatus": "Eventcallbacksand2hfallbackactive; no further actualstudyquota; prepare6matchedfuturecellswithin8totalcap.",
+    "observationStatus": "New exact bounded zeroActor executable/dispatchbinding prep authorized while Design active; no study trialquota.",
     "researchComparisonCompleted": false,
     "synthesisSupplementedUtc": "2026-10-08T21:17:14Z"
   },
@@ -9521,6 +9598,15 @@
       "usage": null,
       "category": "Root coordination review outside experimental Actor ledger",
       "status": "Completed qualified review; twopartialbuilds/no runtimeresults/original29startsand0030unstarted confirmed, dynamicportoneActorprospectivegrant supported, publicoracleconflict leftopen."
+    },
+    {
+      "issuedUtc": "2026-10-08T23:28:51Z",
+      "reviewer": "/root/g2_review_authority",
+      "scope": "Independent read-only public v4 preparation review; max300s; no private oracle, files changed, tests/runtime/provider/Actors. Source c7d5510 compared to public ClassicMain bindings.",
+      "actorActivations": 1,
+      "usage": null,
+      "category": "Root coordination review outside experimental Actor ledger",
+      "status": "Completed: offline-only qualified acceptance; concrete binary/profile/dispatcher/root/staging/globalbudget bindings required, no capability loop."
     }
   ]
 }
