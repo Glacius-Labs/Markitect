@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-08T00:59:53Z",
+  "updatedUtc": "2026-10-08T01:13:17Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -420,23 +420,23 @@
       "name": "Scientist",
       "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
       "hostId": "local",
-      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:100",
+      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:102",
       "lastObservedStatus": "active",
-      "activeTurn": "01a11902-4c5f-7c22-859f-3200620532c2",
-      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac6eaaaea8c8191a666ea4ebaf4009b",
+      "activeTurn": "01a11911-884b-7d03-9baf-138e29226a9d",
+      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac6edf58aa48191b28ba5b1d1abff91",
       "initialAssignmentDispatched": true,
-      "assignedMilestone": "Government Executor response contract: narrow offline correction, tests, independent review and clean handoff.",
-      "latestProgress": "Der Hostvertrag verlangt alle vier Antwortarrays auch dann, wenn sie leer sind. Die Korrektur lässt daher gezielt candidateJson bei Executor und Verifier weg und erhält die Pflichtarrays. Die Quellenprüfung zeigt außerdem: Evidence entsteht erst nach Ausführung, Checks und Review. Für die früh zurückgewiesene R3-Antwort ist die fehlende Identität eine Folge, kein belegter eigenständiger Fehler.",
+      "assignedMilestone": "R4 Government-only native response validation: first offline preparation, native execution conditional on explicit shared-slot activation.",
+      "latestProgress": "Ich bereite R4 ausschließlich offline vor: eng gebundene Zulassung, Regressionen, unabhängiges Vorabreview und neuer Freeze. Die native Ausführung bleibt gesperrt, bis der Overseer genau diesen Grant aktiviert und den Slot Scientist zuweist.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-scientist/Markitect",
       "transferredDesignCommit": "b9e17c9896f14b4b1268e4bcb005395f5d324384",
-      "candidateSha": "cd537ac11765097cb46e9326f295d74059e827a3",
-      "acceptance": "R3 qualified actual native fixture mechanics accepted: Classic positive, Government negative adapter response. Not S1 or semantic acceptance.",
+      "candidateSha": "a0bf4e48230b22fe7e1d5f1b80c7b56a0ffb6c76",
+      "acceptance": "Qualified offline response serializer correction accepted. No native Government success or S1.",
       "lastAssignment": {
-        "key": "government-executor-response-offline-20261008",
-        "authorizedUtc": "2026-10-08T00:55:05Z",
-        "status": "Dispatched once; active offline-only correction confirmed.",
-        "scope": "Exact Government Executor response serializer correction and byte-level offline contract regression, independent narrow review and clean handoff. No runtime grant.",
-        "sentUtc": "2026-10-08T00:55:43Z"
+        "key": "government-serialization-native-20261008-r4",
+        "authorizedUtc": "2026-10-08T01:11:38Z",
+        "status": "Dispatched once; active offline R4 preflight confirmed, no slot or native activation.",
+        "scope": "One fresh finite Government mechanics case after exact new admission/preflight and explicit slot. Classic excluded.",
+        "sentUtc": "2026-10-08T01:12:22Z"
       },
       "evidence": {
         "sourcesHashChecked": 37,
@@ -1437,6 +1437,96 @@
           "observedUtc": "2026-10-08T00:59:53Z",
           "evidenceLevel": "owner commentary, not final acceptance",
           "finding": "Host requires four arrays even empty; omit candidateJson for Executor and Verifier. Owner attributes missing identity to early rejection before evidence production. Focused offline correction and review active."
+        },
+        "governmentResponseOfflineAcceptance": {
+          "acceptedUtc": "2026-10-08T01:11:38Z",
+          "sha": "a0bf4e48230b22fe7e1d5f1b80c7b56a0ffb6c76",
+          "cleanObserved": true,
+          "rootGitByteFiles": 32,
+          "rootGitByteMismatches": 0,
+          "rootRead": [
+            "narrow source diff",
+            "focused test log",
+            "independent review and test-scope deviation",
+            "pinned host assessment"
+          ],
+          "independentRootReview": {
+            "agent": "/root/s1_dispatch_acceptance",
+            "filesHashChecked": 31,
+            "hashMismatches": 0,
+            "conclusion": "Qualified offline acceptance; no additional narrow serializer correction found. Actual host admission remains unproven."
+          },
+          "hashes": {
+            "offline-evidence-manifest.json": "f4356a19ec1574661a16a5bd86bd5aa2d5c34495047b947fda51f8c86a235ef7",
+            "delivery-validation.json": "83f8de9fecaa3c5a5c0c0552ca3191e489aaf790661d9fc659bdcb402063864b",
+            "independent-review.md": "d5b7a58363516f22bc1f39e22cc20fee49b596edeac0efbac4f89641f9e7a747",
+            "focused-tests.log": "27eb38f258a04afac947fcd03dec286e0e4ed15f376de0a706bff6f61ca4a271",
+            "reviewer-test-command-record.md": "4dbcd97037aadfd8bbf130ceba24ec3b35fb54d1a5d825b3e17dd2296fa9bb6f",
+            "host-contract-assessment.md": "136566d026d967b7567c12dc769c1dfd76964bd33006c5c10ef9b1548284ee12"
+          },
+          "hostSource": "04e225d5caee78c2a198607143863fca1e829750",
+          "correctedDelegateSha256": "e8b8e5087f994a975efc2228301cf7f51dee9de4d64b77077a0941db7a8e98b9",
+          "sourceChange": "Omit candidateJson for supported Executor/Verifier, retain four required arrays and role-specific empty arrays; CLI emits actual serializer bytes; single strict delegate pin advanced.",
+          "reportedFocusedTests": 8,
+          "reviewerOfflineTests": 14,
+          "reviewerExtraPreparationTests": 6,
+          "reviewDeviation": "Reviewer first import-only error then inadvertently ran both modules, six extra offline preparation/binding tests with temporary Git operations. Disclosed; no experimental runtime starts.",
+          "history": "Git diff changes no historical evidence; delivery records2670 historical evidence files and2303 R3 pairs unchanged. Closed source freeze is not reusable; original R3 source still git-bound.",
+          "newNativeStarts": 0,
+          "newWrapperDelegateStarts": 0,
+          "newModelProviderCalls": 0,
+          "metadataSessions": 0,
+          "studyCells": 0,
+          "limits": "Source-derived wire examples and offline response contract only. Missing identity is downstream of early host rejection. No native host admission, S1, semantic or human acceptance."
+        },
+        "governmentSerializationNativeGrant": {
+          "key": "government-serialization-native-20261008-r4",
+          "authorizedUtc": "2026-10-08T01:11:38Z",
+          "status": "Prepared grant; awaiting explicit Scientist shared-slot activation. Offline preflight only.",
+          "baseSha": "a0bf4e48230b22fe7e1d5f1b80c7b56a0ffb6c76",
+          "prompt": "Overseer nimmt dein Offlinepaket auf sauberem a0bf4e48230b22fe7e1d5f1b80c7b56a0ffb6c76 qualifiziert an. Root hat alle 32 geänderten Dateien bytegleich gegen Git geprüft; unabhängiger Root-Review bestätigt den engen Serializer-/Pin-Diff und 31 Manifestdateien ohne Abweichung. Acht fokussierte Tests sowie die sechs zusätzlich irrtümlich ausgeführten Offline-Tests bleiben getrennt dokumentiert. Kein weiterer Serializer-Fix ist derzeit belegt. Native Annahme und S1 bleiben offen; historische R3-Belege werden nicht neu bewertet.\n\nSeparater neuer begrenzter Grant: government-serialization-native-20261008-r4. Gegen den gehaltenen Government-Quellstand 04e225d5caee78c2a198607143863fca1e829750 und dessen akzeptierte Binary 12241f325e4af59451e4021b31d9e6f5b829b5de06c94d35eaabfb9d663aa51f genau EINEN frischen deterministischen Fall mit korrigiertem Delegate e8b8e5087f994a975efc2228301cf7f51dee9de4d64b77077a0941db7a8e98b9 vorbereiten. Classic ist in diesem Grant ausgeschlossen; sein positiver R3-Mechanikbeleg bleibt stehen. P1-Folgestände nicht übernehmen.\n\nErlaubte tatsächliche Sequenz nach allen Voraussetzungen: genau eine Queue. Nur wenn diese mit den geforderten frischen Checks, unabhängigem technischem Review und expliziten finalen Stimmen aller ausgewählten Ressorts vollständig positiv endet, genau die zugehörige bestehende Resume-/Replay-Prüfung. Erfolg vorab an Queue-/Jobstatus, finalen Kandidaten-/Evidenz-/Votenbindungen und Promotionbeleg definieren; OS-Exit 0 reicht nicht. Bei erstem Fehler, incomplete, fehlender Voraussetzung oder Grenzstopp den Fall terminal belegen und schließen: keine Reparatur mit Nachstart, kein Retry, kein neuer Fall, keine Restquotennutzung. Es ist kein künstlicher weiterer Unterbrechungsfall freigegeben.\n\nHöchstgrenzen neu: zwei native Produktstarts (Queue + bedingter Resume/Replay), sechs Wrapperversuche einschließlich Fehlschlägen, sechs deterministische Delegateprozesse, Rollenparallelität höchstens zwei, 150 reservierte Sessionsekunden je nativem Start und insgesamt 300. Bestehende harte native Prozess-/Controllerfrist jeweils 38 Sekunden einschließlich kontrolliertem Cleanup erhalten; Reservierung ist getrennt von tatsächlich gemessenen Prozesszeiten auszuweisen. Historie unverändert elf native Starts / sieben Wrapper / vier Delegates / 1650 reservierte Sekunden; damit kumulativ höchstens 13 / 13 / 10 / 1950. Reale Historie fünf Actorstarts, 53331 bekannte Tokens, Gesamtnutzung weiterhin unbekannt. Keine Modelle, Provider, Metadatensitzungen, Studienzellen, volle Produktsuite, Produktreparatur oder Veröffentlichung.\n\nJetzt nur offline den vorhandenen engen Zulassungspfad um exakt diesen neuen Grant ergänzen, ohne geschlossene R3-Zulassung wiederzuverwenden oder allgemein zu lockern. Aktiven Grantstatus, Schlüssel, Quell-/Binary-/Delegate-/Requestpins und passende Slot-Zuweisungszeit unmittelbar vor jeder Reservierung/Start prüfen; Widerruf muss ablehnen. Neuer Fall und getrennte Evidenz, enge betroffene Offline-Regressionen der echten Bindungskette, unabhängiger Vorabreview, sauberer Quellcommit und frischer unveränderlicher Freeze samt Coordinator-Snapshot. Alte Quellen/Freezes/Reviewbytes/Ledger bleiben erhalten; neue Verbräuche additiv.\n\nArchitect besitzt weiterhin fullSuiteSlot für seine laufende Go-Suite. Keine native Ausführung, solange Overseer nicht ausdrücklich Scientist mit genau government-serialization-native-20261008-r4 in coordination-state.json zuweist und den dortigen Grant aktiviert. Bei fertigem Preflight wartende Bereitschaft melden; kein weiterer Nutzer-Go ist nach erfüllter Slotbedingung nötig. Nach terminalem Fall einen sauberen Handoff mit tatsächlichen Ergebnissen/Verbrauch, erhaltenen Rohbelegen, unabhängigem Nachreview und konkreter verbleibender S1-Lücke liefern; Slot ausdrücklich freigeben. Keine automatische Diagnosekaskade.",
+          "product": {
+            "name": "Government",
+            "sourceSha": "04e225d5caee78c2a198607143863fca1e829750",
+            "binarySha256": "12241f325e4af59451e4021b31d9e6f5b829b5de06c94d35eaabfb9d663aa51f",
+            "delegateSha256": "e8b8e5087f994a975efc2228301cf7f51dee9de4d64b77077a0941db7a8e98b9"
+          },
+          "maxFreshCases": 1,
+          "maxNativeStarts": 2,
+          "maxWrapperAttempts": 6,
+          "maxDeterministicDelegates": 6,
+          "maxParallelRoles": 2,
+          "reservedSecondsPerNativeStart": 150,
+          "maxNewReservedSessionSeconds": 300,
+          "nativeProcessDeadlineSeconds": 38,
+          "controllerWindowSeconds": 38,
+          "historicalConsumed": {
+            "nativeStarts": 11,
+            "wrapperAttempts": 7,
+            "delegates": 4,
+            "reservedSessionSeconds": 1650
+          },
+          "cumulativeMaxNativeStarts": 13,
+          "cumulativeMaxWrapperAttempts": 13,
+          "cumulativeMaxDelegates": 10,
+          "cumulativeMaxReservedSessionSeconds": 1950,
+          "sequence": [
+            "one fresh Queue",
+            "only after complete positive Queue with current checks, independent technical review and all required final assents: its associated existing Resume/Replay verification"
+          ],
+          "stop": "First failed/incomplete/missing prerequisite/time or quota stop terminates case; no repair-and-run, retry, new case or residual quota reuse.",
+          "nativeEntryGate": "Clean source, exact grant and live active status, immutable source/binary/delegate/request and coordinator freeze, independent preflight review, explicit Scientist/r4 slot and matching slotAssignedUtc immediately before each reserve/start.",
+          "newModelProviderCalls": 0,
+          "metadataSessions": 0,
+          "studyCells": 0,
+          "classicNativeStarts": 0,
+          "fullProductSuites": 0,
+          "historicalRealUsage": {
+            "actorStarts": 5,
+            "knownTokenSubtotal": 53331,
+            "totalTokens": null
+          },
+          "sentUtc": "2026-10-08T01:12:22Z"
         }
       },
       "classicHandoffReceived": true,
@@ -1513,6 +1603,13 @@
           "status": "Completed and qualified accepted; R3 closed. Unused numerical remainder is not reusable.",
           "scope": "Narrow preflight then conditional native R3; shared slot required before actual starts.",
           "sentUtc": "2026-10-08T00:15:41Z"
+        },
+        {
+          "key": "government-executor-response-offline-20261008",
+          "authorizedUtc": "2026-10-08T00:55:05Z",
+          "status": "Completed and qualified accepted; zero experimental runtime starts.",
+          "scope": "Exact Government Executor response serializer correction and byte-level offline contract regression, independent narrow review and clean handoff. No runtime grant.",
+          "sentUtc": "2026-10-08T00:55:43Z"
         }
       ],
       "offlineAdapterContractAssignment": {
@@ -1532,7 +1629,7 @@
         "key": "government-executor-response-offline-20261008",
         "authorizedUtc": "2026-10-08T00:55:05Z",
         "baseSha": "cd537ac11765097cb46e9326f295d74059e827a3",
-        "status": "Dispatched once; active offline-only correction confirmed.",
+        "status": "Completed and qualified accepted; zero experimental runtime starts.",
         "scope": "Exact Government Executor response serializer correction and byte-level offline contract regression, independent narrow review and clean handoff. No runtime grant.",
         "prompt": "Overseer nimmt deinen R3-Abschluss auf sauberem cd537ac11765097cb46e9326f295d74059e827a3 qualifiziert an. Unabhängiger Root-Review: 2394 Manifestdateien, 102 Freeze-Eingaben, 2303 Original/Kopie-Paare ohne Hashabweichung; die fünf historischen Ledgerzeilen sind unverändert erhalten. Root verglich zusätzlich elf Nicht-Evidenzdateien bytegleich mit Git und las terminale Prozessbelege. R3: sechs native Starts, vier Wrapper, vier deterministische Delegates, 900 reservierte Sekunden; kumulativ elf / 1650. Classic zeigt den positiven begrenzten Fixture-Ablauf, Government einen belegten Adapterfehler; S1, reale Runnerfähigkeit und semantische Qualitätsaussagen bleiben offen. Der R3-Grant ist geschlossen, seine übrige Zahlenquote nicht wiederverwendbar. Der Slot ist Architect für seinen bestehenden r2-Abschluss zugewiesen.\n\nNächster einzelner Auftrag government-executor-response-offline-20261008: Behebe ausschließlich den nachgewiesenen Government-Fixture-Antwortfehler. Der Executor darf candidateJson nicht mitsenden; auch JSON null ist für den gepinnten Go-Host ein nichtleeres json.RawMessage. Die Feldform je Rolle an exakt 04e225d5caee78c2a198607143863fca1e829750/Hostvertrag abgleichen, ohne den Host oder strikte Rollenregeln zu ändern. Ergänze eine enge Offline-Regression der tatsächlich serialisierten Antwortbytes und der verbotenen Felder; kein bloß gemockter Erfolg und kein Nachbau einer großzügigeren Zulassung. Prüfe dabei lesend, ob die fehlende evidence.identity ausschließlich Folge der zurückgewiesenen Antwort ist. Eine Identität niemals erfinden; nur einen belegten unabhängigen Fehler als offenen Punkt melden.\n\nErlaubt sind die enge Fixture-/Adapterkorrektur, gezielte Offline-Tests und ein unabhängiger Review, gefolgt von sauberem lokalem Commit und kurzem Handoff mit genauen Dateien, SHA, Testbelegen und Grenzen. Null neue native Produkt-/Controllerstarts, Wrapper-/Delegate-Läufe, Modelle, Provider, Metadatensitzungen oder Studienzellen; keine volle Produktsuite. Die Tests dürfen die Serializerfunktionen ohne gestarteten Delegate prüfen. Keine allgemeine Runnerplattform, Produktreparatur oder P1-Übernahme. Alte R1/R2/R3-Dateien, Reviews, Freezes und Ledger unverändert erhalten; neue Nachweise in separatem neuen Bereich. Kein Wiederholungsaufruf unter R3. Abschluss ist die offline geprüfte Korrektur und Review, ein späterer tatsächlicher Government-Fall braucht gesonderten neuen begrenzten Grant. Bitte Handoff so festhalten, dass diese konkrete Arbeit nach Komprimierung fortsetzbar ist.",
         "nativeProductStarts": 0,
@@ -1548,13 +1645,13 @@
       "name": "Architect",
       "threadId": "01a111ec-a913-7830-91b0-925d0a1dd1b2",
       "hostId": "local",
-      "afterCursor": "71d9f5b2-c0f0-474c-9898-777d051b478a:48",
+      "afterCursor": "71d9f5b2-c0f0-474c-9898-777d051b478a:50",
       "lastObservedStatus": "active",
       "activeTurn": "01a11901-b822-7eb1-bb28-c99b32a763e4",
-      "lastAssistantMessageId": "msg_0b6e7ce0ce9f843f016ac6eaab055087d2a1e2d0ab8b6bfa1a",
+      "lastAssistantMessageId": "msg_0b6e7ce0ce9f843f016ac6edfb926887d2b57f507798366980",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "At most two evidenced usability/product gaps in intent-to-model-to-project/change workflow; independent successor worktree; reviewed version-bound public entrypoint.",
-      "latestProgress": "Die Prüfung des lokalen Starters für die Quellgates hat zwei Punkte gefunden: Seine Schutzprüfungen müssen auch bei optimiertem Python aktiv bleiben, und der Starter selbst braucht eine Hash-Bindung. Ich korrigiere das vor dem Start. Der öffentliche Beispielcode und der erfolgreiche Replay bleiben unverändert.",
+      "latestProgress": "Der zuvor laufende Host-Test ist inzwischen beendet; die übergeordnete Projektverifikation liefert noch keinen Abschlussbericht. Ich warte auf diesen Bericht, bevor ich einen Gate-Erfolg festhalte oder die README-Ergänzung übernehme.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/classic-public-example/Markitect",
       "transferredDesignCommit": null,
       "candidateSha": "fbb2deab8d85be74a77874a705229a0a1ea1fee4",
@@ -1647,16 +1744,16 @@
           "status": "Prepared; awaiting explicit Architect/r2 slot after Scientist. No replay/gate completion."
         },
         "classicP1ClosureProgress": {
-          "observedUtc": "2026-10-08T00:59:53Z",
+          "observedUtc": "2026-10-08T01:13:17Z",
           "evidenceLevel": "owner commentary, not final acceptance",
-          "replay": "Owner reports successful unchanged public replay; terminal handoff not yet reviewed by root.",
-          "gatePreparation": "Independent starter review found Python optimized assertions and missing starter hash binding; owner correcting before required final source gates. Product source and completed replay unchanged."
+          "replay": "Reported successful unchanged public replay",
+          "sourceGates": "Owner reports Host test ended but enclosing ProjectVerify has no terminal report; no gate-success acceptance."
         }
       },
       "lastAssignment": {
         "key": "classic-p1-corrected-replay-20261008-r2",
         "authorizedUtc": "2026-10-08T00:22:06Z",
-        "status": "Existing r2 activation sent once; owner reports first replay in progress. No result yet.",
+        "status": "Owner reports Host test ended; enclosing ProjectVerify terminal report still pending.",
         "scope": "Correct counted seven-start public script replay, one attempt plus required final gates; shared slot required.",
         "sentUtc": "2026-10-08T00:22:06Z"
       },
@@ -1762,7 +1859,7 @@
       ]
     }
   ],
-  "nextAction": "Await Scientist clean offline response fix with independent review, and Architect exact-source final gates/handoff after reported replay success. Review actual completions before new bounded steps. Worker remains on hold.",
+  "nextAction": "Scientist prepares exact Government-only R4 preflight while Architect completes final gates and handoff. Assign Scientist slot only after terminal Architect evidence/release. No actual study cell authorized; held pins and historical consumption remain.",
   "boundaries": {
     "governmentPublication": false,
     "automaticClassicReplacement": false,
@@ -1772,11 +1869,12 @@
     "satPrinciples": "Deferred by direct user request on 2026-10-07; conceptual constraint/consistency/conflict-explanation principles first, no solver integration or current assignment change. See docs/design/government/deferred-research.md."
   },
   "lastReview": {
-    "reviewedUtc": "2026-10-08T00:59:53Z",
-    "evidenceLevel": "Joint cursor snapshot only; new findings are reported progress, no new completion accepted.",
+    "reviewedUtc": "2026-10-08T01:13:17Z",
+    "evidenceLevel": "Scientist clean source and32Git-byte paths checked by root; independent31-file review accepted narrow offline correction. Architect suite progress reported only.",
     "coordinationActions": [
-      "Saved new Scientist offline contract finding and Architect reported replay success/gate-preflight corrections.",
-      "No repeated assignment or added quota; Architect retains slot."
+      "Accepted Scientist offline correction with disclosed extra offline tests and exact limits.",
+      "Recorded one Government-only finite R4 grant before dispatch; Architect retains slot.",
+      "No new Worker assignment or Classic repeat."
     ],
     "userDecisionRequired": false
   },
@@ -1978,7 +2076,13 @@
     "scope": "Existing r2 grant only: one unchanged replay helper invocation, max7native/6deterministicroles/1800s then required exact-source gates once. No quota increase.",
     "previousOwnerReleaseUtc": "2026-10-08T00:54:03Z",
     "releaseCondition": "Replay and required exact-source gates terminal with archived receipts and explicit release, or preflight/first failure terminal without retry.",
-    "queue": [],
+    "queue": [
+      {
+        "owner": "Scientist",
+        "key": "government-serialization-native-20261008-r4",
+        "status": "Finite fresh Government-only grant recorded; offline preparation permitted, native starts blocked pending later explicit slot assignment."
+      }
+    ],
     "notificationStatus": "Architect activation sent once; active replay reported. No completed replay or final gate claim yet.",
     "activationNotification": {
       "prompt": "Der R3-Abschluss von Scientist ist jetzt auf sauberem cd537ac11765097cb46e9326f295d74059e827a3 unabhängig geprüft und angenommen; alle zugelassenen nativen Prozesse sind terminal belegt, Scientist hat den Slot ausdrücklich freigegeben. Ich habe fullSuiteSlot in der kanonischen coordination-state.json soeben Architect mit dem bestehenden Schlüssel classic-p1-corrected-replay-20261008-r2 zugewiesen.\n\nAktiviere jetzt ausschließlich deinen bereits vorbereiteten und zugeteilten r2-Abschluss: sauberer fbb2deab8d85be74a77874a705229a0a1ea1fee4, unveränderte Runtime/30 Quelleingaben, elf eingefrorene Preflightdateien samt unabhängigem Review, frische unmittelbare Live-Slotprüfung. Genau eine Helper-Invokation einschließlich Fehlschlag, maximal sieben native Starts, sechs deterministische Rollen, Parallelität eins, 1800 Sekunden inklusive Cleanup, kein Retry. Alle historischen Verbräuche und Stopregeln bleiben bestehen. Nach erfolgreichem Replay genau die bereits geplanten erforderlichen finalen Quellgates am festen SHA; keine redundanten fokussierten Wiederholungen. Keine neue Quote oder sonstige Umfangserweiterung. Falls eine Voraussetzung scheitert, Belege erhalten und Paket ohne Nachstart schließen.\n\nAnschließend exakten sauberen Handoff mit gebundenen Gates, tatsächlicher additiver Bilanz und unabhängigem Abschlussreview liefern, Slot ausdrücklich freigeben. Studienpin bleibt unverändert; keine Veröffentlichung. Keine weitere pauschale Rückfrage erforderlich.",
