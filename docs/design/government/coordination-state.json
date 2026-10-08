@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-08T03:43:14Z",
+  "updatedUtc": "2026-10-08T03:59:26Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -33,7 +33,7 @@
       "afterCursor": "b2b8e43f-fcaa-41bf-828a-99c69527bdea:67",
       "lastObservedStatus": "idle",
       "activeTurn": null,
-      "lastAssistantMessageId": "msg_0a7785839df196a4016ac6e3ffaa2081918c42723c112f1cb6",
+      "lastAssistantMessageId": "msg_0a7785839df196a4016ac6f3fa072c819194583b51e8c10e00",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "At most two evidenced usability/product gaps in intent-to-model-to-project/change workflow; independent successor worktree; reviewed version-bound public entrypoint.",
       "latestProgress": "Unverändert sauber: 839dc4e3f6078aa051e08c50c2b958150ca45f49. Alle 122 alten Dateien, Handoff und Index sind hashgleich erhalten. Bilanz: 4 statt 2 Versuche — Abweichung, davon 3 fehlgeschlagen. Tatsächlich: 5 native Starts, 10 Rollenstarts, 16 gebundene Rollenreservierungen, 65,129 Sekunden, Peak 1. Globale mechanische Durchsetzung ist nicht nachgewiesen. Keine neuen Ausführungen. Neue Datei SHA256 Errata 472a816e3c2dc6435294ef6a647eabc68755015173acf557b09d3f8fe9f5fd44 Alte Evidenz geprüft 3f2d2d47b742ee09919db177195f1a0876a7bdbdd87ecaaf132f2fc87e5729f3 Usability-Nachrichten 3e336a5f0b256300afbedc61c56d3fd733dd2d95b2d39687808bbd860193d9b3 Quellreview-Nachrichten 58ed828b5941d0b7fe5fa3ee68b4a3cdec52987faa9a72ee549cc0e9f73f0020 Abschlussindex 8bf251744729d126f79bde4e74062c64f2c98cd6b6ec179e416cbe2a02aa9c2f Reviewer-Abschriften sind keine Raw-Originale. Technische Qualifikation und CRLF/Git-Normalisierungsgrenze sind dokumentiert; Modell-, Menschen-, Provider-, Linux- und Releaseaussagen bleiben offen. Hold.",
@@ -428,23 +428,23 @@
       "name": "Scientist",
       "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
       "hostId": "local",
-      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:112",
+      "afterCursor": "9a7f01a4-d158-443c-97a2-e993115c2514:114",
       "lastObservedStatus": "active",
-      "activeTurn": "01a1199b-1c74-77f3-a220-34921fec0b02",
-      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac7112e4c8c819196d445ffd3569a3f",
+      "activeTurn": "01a119a9-f99b-7f41-af47-816349b3db00",
+      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac714fc46d08191b6ed20ffbf667679",
       "initialAssignmentDispatched": true,
-      "assignedMilestone": "government-released-binding-native-20261008-r6",
-      "latestProgress": "Scientist active again on existing R6; reports binding a1 and closing independent preflight before once-only actual case/admission. No new quota or accepted R6 result.",
+      "assignedMilestone": "government-check-receipt-identity-offline-20261008",
+      "latestProgress": "Offline receipt/config consumer correction active; Scientist confirms exact source contract, focused regression and independent review, no new execution or ledger change.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-scientist/Markitect",
       "transferredDesignCommit": "b9e17c9896f14b4b1268e4bcb005395f5d324384",
-      "candidateSha": "165f35b3d2bd70fbcc49d54f52d479b88d54a6b7",
-      "acceptance": "Qualified scope identity offline correction accepted; actual native translation/resume and S1 remain unproven.",
+      "candidateSha": "130fcd85c866e7643cdb7f5bcb844c8ccd2ec311",
+      "acceptance": "Qualified R6 terminal evidence accepted; native and outer Queue positive, R6 INCOMPLETE; no S1.",
       "lastAssignment": {
-        "key": "government-serialization-native-20261008-r4",
-        "authorizedUtc": "2026-10-08T01:11:38Z",
-        "status": "Existing R4 activation sent and acknowledged; remaining preflight/review/freeze mandatory.",
-        "scope": "One fresh finite Government mechanics case after exact new admission/preflight and explicit slot. Classic excluded.",
-        "sentUtc": "2026-10-08T01:12:22Z"
+        "key": "government-check-receipt-identity-offline-20261008",
+        "authorizedUtc": "2026-10-08T03:56:48Z",
+        "status": "Sent once; delivery confirmed",
+        "scope": "Minimal native configured run[0] to GateResult.Tool identity correction at actual Resume admission consumer, isolated producer/consumer regressions and independent review.",
+        "sentUtc": "2026-10-08T03:58:52Z"
       },
       "evidence": {
         "sourcesHashChecked": 37,
@@ -1842,7 +1842,7 @@
           },
           "key": "government-released-binding-native-20261008-r6",
           "authorizedUtc": "2026-10-08T02:27:56Z",
-          "status": "Active; Scientist slot assigned; execute only after offline preflight.",
+          "status": "Closed INCOMPLETE; native and outer Queue positive, Resume rejected before reservation/process. Unused quota expired.",
           "baseSha": "165f35b3d2bd70fbcc49d54f52d479b88d54a6b7",
           "prompt": "Overseer nimmt government-released-binding-offline-20261008 auf sauberem 165f35b3d2bd70fbcc49d54f52d479b88d54a6b7 an, Quelle 62579cac83323e7179d9e2882716d96ef8728547. Root prüfte zehn Payloads plus Manifest gegen Git/Hashes, alle 3541 geschützten Altdateien, 20 externe R5-Original/Kopie-Paare und vier unveränderte Ledgerdigests. Sieben erfolgreiche fokussierte Tests, Vorbereitungsabweichungen und unabhängigen Review gelesen; zusätzlicher unabhängiger Root-Codecheck ohne wesentlichen Befund. Der Test prüft die gemeinsame produktive Hilfsfunktion gegen den echten Verbraucher; prepare-Anbindung ist quellgeprüft, noch kein neuer tatsächlicher Durchlauf. R5 bleibt geschlossen NOT ADMITTED, R4 geschlossen incomplete.\n\nEin neuer endlicher Grant: government-released-binding-native-20261008-r6 unter threads[name=Scientist].evidence.governmentReleasedBindingNativeGrant. Exakt ein frischer deterministischer Government-Fall, beginnend auf obigem sauberen Scientist-Stand. Government bleibt Quelle04e225d5caee78c2a198607143863fca1e829750 / Binary12241f325e4af59451e4021b31d9e6f5b829b5de06c94d35eaabfb9d663aa51f / Delegatee8b8e5087f994a975efc2228301cf7f51dee9de4d64b77077a0941db7a8e98b9 / bisherigem Python313-Pin. Kein P1-Wechsel.\n\nVor tatsächlicher Ausführung das kleinstmögliche fest gebundene R6-Nachfolgerprofil in der bestehenden prepare/validate/freeze/run-once-Kette ergänzen. Keine weitere vollständige r6-Treiberkopie und keine allgemeine Runnerplattform. Ein enger geschlossener Profilzuschnitt für vorhandenes R5 und genau neues R6 ist zulässig, soweit nötig um die bestehende Logik zu teilen. Alte R5-Konstanten/Archivpins nicht auf R6 umdeuten. R6 braucht eigene Identität, Dispatch-/Tasklabels, Requestmarker, Envelope-/Snapshotpfade und -Hashes, Coordinator-JSON-Pointer/Thread sowie genaue neue Request-/Authority-/Protocol-/Runtime-/Quellbindung. Kein stiller Fallback auf R5 oder Reaktivieren alter Quoten. Alte Belege und Quellstände bleiben nachvollziehbar.\n\nNur betroffene Offline-Regressionen, Syntax und unabhängiger enger Vorabreview: echte produktive Bindungsfunktion gegen strikten Verbraucher; R5 geschlossen/andere Keys/Slots/Pins weiterhin abgewiesen; R6-Gesamtkette behält Scope, Kandidat, Evidenz, Review, finale Ressortzustimmungen und Promotion. Keine unberührten breiten Scope- oder Produkttests. Danach sauberer Quellcommit, genau eine frische statische Fall-/Requestvorbereitung und eine tatsächliche Eingabevalidierung; nur bei Erfolg frischer unveränderlicher Freeze. Die Zulassung darf keine reservierten oder gestarteten Produkt-/Rollenprozesse vortäuschen.\n\nNach bestandenem Preflight: genau eine native Queue. Nur wenn native UND äußere Kette vollständig positiv mit aktuellen echten Checks, unabhängigem technischem Review, voller Identität/Scopeabdeckung, gebundener Evidenz/Runde/Mandat, expliziter finaler Zustimmung aller ausgewählten Ressorts und Promotion enden, genau die zugehörige bestehende Resume-/Replayprüfung. OS-Exit0 oder allein native complete genügen nicht. Keine weitere künstliche Unterbrechung.\n\nNeue Obergrenzen: ein frischer Fall, eine tatsächliche Eingabevalidierung, zwei native Starts, sechs Wrapperversuche einschließlich Fehlschlägen, sechs deterministische Delegates, Rollenparallelität zwei, 150 reservierte Sessionsekunden je nativem Start / höchstens300neu. Harte native Prozess- und Controllerfrist jeweils38Sekunden einschließlich Cleanup; nutze die vorhandene Arbeitsfrist plus Cleanupreserve. Messe tatsächliche Ablaufzeit bis nach verfügbarer terminaler Receipt/Abschlussbeleg separat, damit ein früherer Zeitstempel vor Finalisierung nicht als Abschlussmessung ausgegeben wird. Kein allgemeiner Frist-/Watchdogumbau. Wird eine Grenze tatsächlich überschritten oder fehlt der Abschlussbeleg, Ergebnis entsprechend nicht als vollständig positiv werten. Historie12native/10wrapper/7delegates/1800reserved bleibt; kumulative Obergrenzen14/16/13/2100. Historische reale Actorstarts5, bekannte Tokens53331, Gesamtusage unbekannt.\n\nDer freie schwere Slot ist dir mit genau diesem R6-Schlüssel jetzt ausdrücklich zugewiesen. Vor jeder Reservierung/Start müssen live aktiver Grant, passende Slot-Zuweisungszeit und alle eingefrorenen Pins stimmen; unabhängig positiv geprüfter Offline-Preflight bleibt Voraussetzung. Verwende für den finalen Freeze den Coordinatorstand nach dieser einmaligen Nachricht. Nach erfüllten Voraussetzungen kein zusätzlicher Zwischenauftrag nötig.\n\nErster tatsächlicher Inputfehler, negativer/unvollständiger nativer oder äußerer Befund, fehlende Voraussetzung, Zeit-/Quotengrenze: terminal stoppen, Belege sichern, Grant schließen. Keine Reparatur mit Nachstart, Wiederholungsvalidierung, neuer Fall, Retry oder Restquotennutzung. Null Classic-Wiederholungen, reale Actor-/Modell-/Provider-/Metadatensitzungen, Studienzellen, volle Produktsuiten, Produktfixes oder Veröffentlichung. Offline-Tests vor dem einmaligen echten Preflight bleiben reguläre Vorbereitung. Kein Qualitäts-/Autonomiebeweis aus deterministischen Rollen.\n\nSauberer Abschluss mit genauem SHA, Rohbelegen, tatsächlicher neuer und kumulativer Bilanz, unverändertem historischen Ledgerpräfix, unabhängigem Nachreview, verbleibenden Grenzen und ausdrücklicher Slotfreigabe. Engineering-/Reviewusage bleibt unbekannt, soweit nicht gemessen. Abschluss oder echte Blockade einmal direkt melden gemäß Nutzerautorisierung; keine automatische weitere Diagnosekaskade.",
           "maxActualInputValidations": 1,
@@ -1866,13 +1866,29 @@
               "numericalLimitsChanged": false,
               "priorExperimentsRescored": false
             }
-          ]
+          ],
+          "closedUtc": "2026-10-08T03:56:48Z",
+          "actualConsumption": {
+            "staticCases": 1,
+            "actualAdmissions": 1,
+            "runOnceInvocations": 1,
+            "nativeStarts": 1,
+            "wrapperAttempts": 3,
+            "deterministicDelegates": 3,
+            "reservedSessionSeconds": 150,
+            "realActors": 0,
+            "providerCalls": 0,
+            "metadataSessions": 0,
+            "studyCells": 0,
+            "classicNativeStarts": 0,
+            "fullProductSuites": 0
+          }
         },
         "governmentReleasedBindingNativeProgress": {
           "observedUtc": "2026-10-08T03:42:06Z",
           "headSha": "165f35b3d2bd70fbcc49d54f52d479b88d54a6b7",
           "worktreeClean": false,
-          "phase": "Offline preflight WIP; premature waiting after context compaction, no package completion",
+          "phase": "Terminal qualified acceptance: Queue positive; Resume pre-reservation identity error; R6 closed",
           "latestDirectHumanMessage": "2026-10-07 initial Scientist delegation to Overseer; no newer direct stop found",
           "compactionUtc": "2026-10-08T02:41:49.183Z",
           "prematureWaitUtc": "2026-10-08T02:41:57.146Z",
@@ -1885,7 +1901,106 @@
             "released-r6-grant.json"
           ],
           "observedNewNativeStarts": 0,
-          "outstanding": "Current R6 continuation anchor, bind a1 and review addendum, clean source, once prepared/validated fixture, conditional frozen execution and terminal handoff."
+          "outstanding": "Only separate offline correction authorized; no live quota",
+          "terminalAcceptedUtc": "2026-10-08T03:56:48Z"
+        },
+        "governmentReleasedBindingNativeAcceptance": {
+          "acceptedUtc": "2026-10-08T03:56:48Z",
+          "candidateSha": "130fcd85c866e7643cdb7f5bcb844c8ccd2ec311",
+          "sourceSha": "a9bcb89d3b5ded16c7db9125ee6c0755bfd026e4",
+          "admissionEvidenceSha": "1ef0e7dcc1b74e52d942c5ba406a568b5646934b",
+          "freezeCommit": "8e0ae28cb696bc64a326351f2c93379a1f72c1ce",
+          "cleanVerified": true,
+          "evidenceDirectory": "experiments/government-comparison/evidence/government-released-binding-native-20261008-r6",
+          "manifestSha256": "84e4633ce9dd8cb97a04d0fbd6c4abb28e7b1b9678f1bb968138c5cf5247fc2e",
+          "manifestPlusPayloadChecked": 170,
+          "frozenInputsChecked": 55,
+          "externalOriginalCopyPairsChecked": 92,
+          "historicalEntriesChecked": 3545,
+          "historicalByteIdentical": 3544,
+          "historicalAuthorizedException": "native-integration-handoff.md current anchor added; entire old suffix byte-identical.",
+          "mismatches": 0,
+          "freezeSha256": "4a5b67067d1ecb8e08d303c5675a946b7dbf74c7254ffe77cc792f54a9e5b628",
+          "independentPostReviewSha256": "db2c51910a03b83f0d4a1ff73fefa381e81b1c424b42e2b0bc370b27dded027c",
+          "terminalSummarySha256": "acba1fa3c93111e15813ba64feb3d1518b9762e18e1a44f454a962773e33fd0",
+          "terminalResultSha256": "ec9a9058b4263a190c4015fb78d9d2d6ab0f89badf43b7d2100adb9f39aa070",
+          "externalArchiveSha256": "96e420f73f85c3afb2c3f090a1e74e9712091cea328a39c4dbbdd94f0e13f457",
+          "rootIndependentReviewer": "/root/r4_terminal_acceptance",
+          "rootReview": "Confirmed native Check.Run[0] -> GateResult.Tool exact contract on 04e225d; shared consumer incorrectly expects configured tool field. Narrow offline correction, no weakening or old outcome rescoring. Changed consumer is R6 runtime-pinned, so old freeze cannot be reused with corrected bytes.",
+          "actualResult": "INCOMPLETE; native Queue complete/accepted-scoped and outer completed, conditional Resume rejected before reservation/process.",
+          "failure": "ValueError: R4 fresh checks differ from the exact configured check names/tools",
+          "failureBoundary": {
+            "admissionAttempted": true,
+            "reservationAdded": false,
+            "processStarted": false
+          },
+          "check": {
+            "name": "inventory-overflow",
+            "tool": "go",
+            "exitCode": 0,
+            "milliseconds": 6270,
+            "timeoutMilliseconds": 30000,
+            "configuredRun": [
+              "go",
+              "test",
+              "./inventory",
+              "-count=1"
+            ]
+          },
+          "candidateCommit": "413b7bbb518f594500f22486c27c63db9328d5c0",
+          "candidateTree": "6bc4205465453852eb67cd03b42de6349f2fb634",
+          "queueEvidence": "sha256:a98d705ce10dd3677421abc6ecec92f4c7428f86c45cf96d6306a3e89420b707",
+          "newConsumption": {
+            "staticCases": 1,
+            "actualAdmissions": 1,
+            "runOnceInvocations": 1,
+            "nativeStarts": 1,
+            "wrapperAttempts": 3,
+            "deterministicDelegates": 3,
+            "reservedSessionSeconds": 150,
+            "realActors": 0,
+            "providerCalls": 0,
+            "metadataSessions": 0,
+            "studyCells": 0,
+            "classicNativeStarts": 0,
+            "fullProductSuites": 0
+          },
+          "cumulativeConsumption": {
+            "nativeStarts": 13,
+            "wrapperAttempts": 13,
+            "deterministicDelegates": 10,
+            "reservedSessionSeconds": 1950,
+            "realActorStarts": 5,
+            "knownTokenSubtotal": 53331,
+            "totalTokens": null
+          },
+          "timing": {
+            "nativeProcessSeconds": 10.794795599998906,
+            "controllerThroughTerminalReceiptSeconds": 10.98673677444458,
+            "driverThroughTerminalReceiptSeconds": 11.234606900019571,
+            "allWithin38Seconds": true,
+            "delegateProcessSecondsTotal": 0.429926700075157,
+            "nativeRoleObservedMilliseconds": 1372,
+            "peakNativeRoleParallelism": 1,
+            "resumeProcessSeconds": null
+          },
+          "ledger": {
+            "sha256": "c0a91051a16f5d2d3a7754789c2ad02b67b6b2f57f32ac4bd16562700b8fcf1a",
+            "originalLiveEqualsTerminal": true,
+            "oldRowsUnchanged": true,
+            "startsBefore": 12,
+            "startsAfter": 13,
+            "correctionsBefore": 3,
+            "correctionsAfter": 4,
+            "allocationsBefore": 1,
+            "allocationsAfter": 1,
+            "newResumeRows": 0
+          },
+          "focusedTests": "Owner recorded 42 distinct focused offline cases; after a1 only 32 affected cases rerun, ten unchanged chain cases retained; syntax11 and diff passed. Root read records and reran none.",
+          "rootTestsRerun": false,
+          "explicitSlotReleaseUtc": "2026-10-08T03:48:44.689868+00:00",
+          "claimBoundary": "Deterministic mechanics with real finite Go check and fixed protocol roles only. No native Resume, S1, semantic/AI quality, comparative outcome or human acceptance. Engineering/review usage unknown; six study cells still NOT RUN.",
+          "preparationDisclosures": "Read-only evidence-preparation path and JSON BLOB serialization mistakes preserved; no experimental retry."
         }
       },
       "classicHandoffReceived": true,
@@ -1996,9 +2111,24 @@
         {
           "key": "government-released-binding-native-20261008-r6",
           "authorizedUtc": "2026-10-08T02:27:56Z",
-          "status": "Sent once; conditional finite R6 execution after independent preflight and successful input validation.",
+          "status": "Closed INCOMPLETE; native and outer Queue positive, Resume rejected before reservation/process. Unused quota expired.",
           "promptRecord": "evidence.governmentReleasedBindingNativeGrant",
-          "sentUtc": "2026-10-08T02:28:49Z"
+          "sentUtc": "2026-10-08T02:28:49Z",
+          "acceptedUtc": "2026-10-08T03:56:48Z"
+        },
+        {
+          "key": "government-serialization-native-20261008-r4",
+          "authorizedUtc": "2026-10-08T01:11:38Z",
+          "status": "Existing R4 activation sent and acknowledged; remaining preflight/review/freeze mandatory.",
+          "scope": "One fresh finite Government mechanics case after exact new admission/preflight and explicit slot. Classic excluded.",
+          "sentUtc": "2026-10-08T01:12:22Z"
+        },
+        {
+          "key": "government-check-receipt-identity-offline-20261008",
+          "authorizedUtc": "2026-10-08T03:56:48Z",
+          "sentUtc": "2026-10-08T03:58:52Z",
+          "status": "Sent once; delivery confirmed",
+          "scope": "Minimal native configured run[0] to GateResult.Tool identity correction at actual Resume admission consumer, isolated producer/consumer regressions and independent review."
         }
       ],
       "offlineAdapterContractAssignment": {
@@ -2098,13 +2228,35 @@
         "exitCondition": "Clean small correction with production builder-consumer regression, independent review, additive evidence and unchanged experimental consumption; callback once.",
         "sentUtc": "2026-10-08T02:19:48Z",
         "acceptedUtc": "2026-10-08T02:27:56Z"
+      },
+      "governmentCheckReceiptOfflineAssignment": {
+        "key": "government-check-receipt-identity-offline-20261008",
+        "authorizedUtc": "2026-10-08T03:56:48Z",
+        "status": "Sent once; delivery confirmed",
+        "baseSha": "130fcd85c866e7643cdb7f5bcb844c8ccd2ec311",
+        "prompt": "Overseer nimmt deinen sauberen R6-Abschluss 130fcd85c866e7643cdb7f5bcb844c8ccd2ec311 qualifiziert an: native UND äußere Queue positiv; der gesamte Fall bleibt endgültig INCOMPLETE, weil Resume vor Reservierung und Prozessstart abgewiesen wurde. Root bestätigte 170 Manifest-/Payloaddateien gegen Hash/Git, 55 Freeze-Eingaben, 92 externe Original/Kopie-Paare, 3544 unveränderte historische Dateien plus den erhaltenen Handoff-Suffix sowie alle alten SQLite-Zeilen und genau eine neue Queue-Zeile. Unabhängiger Root-Code-/Vertragsreview bestätigt die Ursache. R6 ist geschlossen, alle Restquoten verfallen. Deine ausdrückliche Slotfreigabe vom 08.10.03:48:44.689868Z ist angenommen, der Slot ist frei. Kumulativ 13 native Starts / 13 Wrapper / 10 deterministische Delegates / 1950 reservierte Sekunden; fünf historische reale Actorstarts, 53331 bekannte Tokens und unbekannter Gesamtverbrauch bleiben erhalten. Kein S1-/Studienabschluss.\n\nGenau ein neuer OFFLINE-Auftrag: government-check-receipt-identity-offline-20261008, ausgehend vom genannten sauberen Stand. Korrigiere minimal den tatsächlichen Resume-Zulassungsverbraucher _validate_r4_fresh_check_receipts in runtime/native_fixture_budget.py. Die eingefrorene Konfiguration enthält name und run:[\"go\",\"test\",\"./inventory\",\"-count=1\"], kein tool. Die gepinnte native Quelle 04e225d übernimmt für GateResult.Tool genau Check.Run[0]. Der Verbraucher erwartet fälschlich item.get(\"tool\"). Leite die erwartete Werkzeugidentität aus dem gültigen nichtleeren run-Array gemäß genau diesem Quellvertrag ab. Keine neue alternative Grammatik oder pauschaler toleranter Fallback. Exakte Namens-/Werkzeugmenge, Anzahl, Duplikatschutz, Exit-/Zeitprüfung und sämtliche Runtime-/Report-/Receipt-/Kandidaten-/Evidenz-/Scope-/Review-/finalen Ressortbindungen bleiben erhalten. Prüfe nur die direkt betroffenen benachbarten Verbraucher; keine Plattform oder neue Treiberkopie.\n\nRegressionen sollen die echte produktive Verbraucherfunktion mit den tatsächlichen versiegelten R6-Konfigurations- und GateResult-Formen durchlaufen, einschließlich des Aufrufübergangs zum Resume-Gate soweit rein offline möglich. Den betroffenen Verbraucher nicht durch Mock ersetzen. Positive Zuordnung und aussagekräftige negative Varianten für falschen Namen/Werkzeug, fehlende/zusätzliche/doppelte Checks, nichtnull Exit, ungültige Eingabeform und ungültige/überschrittene Zeitgrenzen. Verwende isolierte Testkopien; alte Rohbelege bleiben unverändert und werden nicht neu bewertet. Nur betroffene fokussierte Tests und unabhängiger enger Review, keine redundante Produktsuite. Vorhandene erfolgreiche Nachbarprüfungen nicht ohne relevante Änderung wiederholen.\n\nNull neue tatsächliche Fallvorbereitungen, Admissionaktionen, Freeze- oder Laufversuche, native/Controller-/Wrapper-/Delegate-/Modell-/Provider-/Metadatenstarts, Studienzellen oder Änderungen am Liveledger. Lokale Python-Regressionen, Quell-/Dateiarbeit und Git sind zulässige Offline-Entwicklung, keine experimentelle Laufquote. Produktpins einschließlich Government 04e225d und Classic c91363b bleiben unverändert. Keine Produktreparatur oder P1-Übernahme.\n\nAbschluss: sauberer kleiner Quellcommit und Delivery-SHA, Quelldiff, fokussierte Prüfnachweise, unabhängiger Review, Grenzen und additive Verbrauchsbilanz. Ergänze im aktiven Handoff oben einen kurzen aktuellen Fortsetzungsanker und bewahre die ältere Geschichte. Der korrigierte Consumer ist in R6 runtimeFiles gepinnt: Änderungen daran machen den alten Freeze unpassend. R6 daher nicht mit geänderten Bytes replayen oder als erfolgreich umdeuten. Eine spätere frische endliche Ausführung kann erst nach Abnahme und eigenem Grant folgen; jetzt keine neue Laufprofilentwicklung oder Vorbereitung.\n\nArbeite bis zu dieser begrenzten Übergabe weiter und melde Abschluss oder konkrete Blockade genau einmal direkt an Overseer gemäß Nutzerautorisierung. Keine reine Empfangsbestätigung oder Meldeschleife.",
+        "scope": "Minimal native configured run[0] to GateResult.Tool identity correction at actual Resume admission consumer, isolated producer/consumer regressions and independent review.",
+        "allowed": "Focused offline tests, local source/file/Git work and independent narrow review; no experimental process or live ledger mutation.",
+        "maxNewStaticCasesPrepared": 0,
+        "maxNewActualInputValidations": 0,
+        "maxNewNativeStarts": 0,
+        "maxNewWrappers": 0,
+        "maxNewDelegates": 0,
+        "maxNewRealActors": 0,
+        "maxNewProviderCalls": 0,
+        "maxNewMetadataSessions": 0,
+        "maxNewStudyCells": 0,
+        "fullProductSuites": 0,
+        "exitCondition": "Clean source-bound small correction, actual consumer regression and independent review, preserved sealed R6/raw/history/ledger, once-only callback.",
+        "sentUtc": "2026-10-08T03:58:52Z",
+        "activeConfirmed": true
       }
     },
     {
       "name": "Architect",
       "threadId": "01a111ec-a913-7830-91b0-925d0a1dd1b2",
       "hostId": "local",
-      "afterCursor": "71d9f5b2-c0f0-474c-9898-777d051b478a:52",
+      "afterCursor": "71d9f5b2-c0f0-474c-9898-777d051b478a:53",
       "lastObservedStatus": "idle",
       "activeTurn": null,
       "lastAssistantMessageId": "msg_0b6e7ce0ce9f843f016ac6efac545887d2b532e3903d762cbc",
@@ -2484,10 +2636,11 @@
           "empiricalReference": false,
           "studyStarted": false
         }
-      }
+      },
+      "lastAssistantMessageId": "msg_0dc7fbe822793640016ac6f69ccac88191ac99728328af381f"
     }
   ],
-  "nextAction": "Await existing R6 direct terminal/need callback; a1 clarification recorded, active continuation confirmed. Preserve original slot/limits/WIP; no model/study grant. Quiet two-hour fallback.",
+  "nextAction": "Await Scientist direct offline check-receipt correction completion or need callback; no experimental runtime/model/study grant. Others hold; quiet two-hour fallback.",
   "boundaries": {
     "governmentPublication": false,
     "automaticClassicReplacement": false,
@@ -2497,12 +2650,12 @@
     "satPrinciples": "Deferred by direct user request on 2026-10-07; conceptual constraint/consistency/conflict-explanation principles first, no solver integration or current assignment change. See docs/design/government/deferred-research.md."
   },
   "lastReview": {
-    "reviewedUtc": "2026-10-08T01:30:01Z",
-    "evidenceLevel": "Joint cursor snapshot only; new Scientist negative R4 outcome is reported, not accepted completion.",
+    "reviewedUtc": "2026-10-08T03:56:48Z",
+    "evidenceLevel": "Root source/hash/Git/freeze/archive/readonly ledger verification plus independent narrow native contract review; no tests or experimental runs repeated.",
     "coordinationActions": [
-      "Saved reported outer evidence rejection and no-resume stop.",
-      "Kept existing stop rules and slot while Scientist closes handoff; no new grant or repeat instruction.",
-      "Worker and Architect unchanged completed holds."
+      "Accept qualified positive Queue and terminal INCOMPLETE R6.",
+      "Close R6 residual quota, verify explicit slot release.",
+      "Authorize exactly one narrow offline receipt/config correction; other owners held."
     ],
     "userDecisionRequired": false
   },
@@ -2698,10 +2851,11 @@
     "owner": "Worker"
   },
   "fullSuiteSlot": {
-    "owner": "Scientist",
-    "key": "government-released-binding-native-20261008-r6",
-    "status": "Explicitly assigned for one bounded R6 case after independent offline preflight and one successful actual input validation.",
-    "assignedUtc": "2026-10-08T02:27:56Z",
+    "owner": null,
+    "key": null,
+    "status": "Free after explicit R6 terminal release; offline correction needs no runtime slot.",
+    "releasedUtc": "2026-10-08T03:48:44.689868+00:00",
+    "releaseVerifiedUtc": "2026-10-08T03:56:48Z",
     "queue": []
   },
   "contextSmokePreparation": {
@@ -2969,6 +3123,15 @@
       },
       "releasedUtc": "2026-10-08T01:31:55.705453+00:00",
       "releaseVerifiedUtc": "2026-10-08T01:42:34Z"
+    },
+    {
+      "owner": "Scientist",
+      "key": "government-released-binding-native-20261008-r6",
+      "status": "Terminal R6 released; no remaining reusable quota",
+      "assignedUtc": "2026-10-08T02:27:56Z",
+      "queue": [],
+      "releasedUtc": "2026-10-08T03:48:44.689868+00:00",
+      "releaseVerifiedUtc": "2026-10-08T03:56:48Z"
     }
   ],
   "smokeAttemptCountingDecision": {
