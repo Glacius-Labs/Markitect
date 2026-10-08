@@ -1,0 +1,28 @@
+{
+  "key": "s1-common-runner-policy-metadata-20261008",
+  "sourceCommit": "54cdcffaeb9024197589182c03fefe0103db656b",
+  "profileSha256": "de8de70e51b66ca4b7d3bf8a9c01ec577c462e258b824926ea9e6f85c1742589",
+  "authorizationGrantSha256": "1381f180e45d90399e605af5556cf040c1aeca77885c6608faa095b605c6a853",
+  "sourceFiles": {
+    "experiments/government-comparison/evidence/policy-compatibility/run-1/protocol-schema.zip": "cd24042eec4696f6b73368cfc6ce930726f3e10c28bae63cdbd1b2f502ff1d97",
+    "experiments/government-comparison/evidence/policy-read-disabled-status/run-1/classified-client.py": "95c8486ad8962e14ad0c2da2989adcf154fa28f51d19c1fe983c532d1a885926",
+    "experiments/government-comparison/evidence/s1-common-runner-policy-metadata-20261008/authorization-grant.json": "1381f180e45d90399e605af5556cf040c1aeca77885c6608faa095b605c6a853",
+    "experiments/government-comparison/evidence/s1-common-runner-policy-metadata-20261008/client.py": "8b6a2032dce5468c730885906f030fcfbed3cb4f23b010e95f90592a38b0fdfb",
+    "experiments/government-comparison/evidence/s1-common-runner-policy-metadata-20261008/current-handoff.md": "c02ed48295768cd39d5d75d4e2f075ecf5072fcf663f1a60fbd89024d7bdefa9",
+    "experiments/government-comparison/evidence/s1-common-runner-policy-metadata-20261008/frozen-method-enums.json": "6553df9ac4a37d11402728992ed5e684ea379fbadeee790700867ae4542594cf",
+    "experiments/government-comparison/evidence/s1-common-runner-policy-metadata-20261008/historical-bindings.json": "e88274d45995f9c339ddf368716813c077cf7b53b8975f78a78f840a05510dfd",
+    "experiments/government-comparison/evidence/s1-common-runner-policy-metadata-20261008/offline-validation.json": "b184eae5d778ea57ac6d892ab667ea4849ec72cef3bee4490dc7bc36c3d02030",
+    "experiments/government-comparison/evidence/s1-common-runner-policy-metadata-20261008/preflight-review.md": "7943f64df9b18b3634fa0540e6dfe044556b3675f98125325231a3cffad79a06",
+    "experiments/government-comparison/evidence/s1-common-runner-policy-metadata-20261008/profile.json": "de8de70e51b66ca4b7d3bf8a9c01ec577c462e258b824926ea9e6f85c1742589",
+    "experiments/government-comparison/evidence/s1-common-runner-policy-metadata-20261008/run_once.py": "d8345a03dd04186a769e5ed4d0c4e711892b3007078fd598d3b2ab3aeaa7e6e3",
+    "experiments/government-comparison/evidence/s1-common-runner-policy-metadata-20261008/test_client.py": "a30c7bf6661df1e92952618cd169584f7c68e7f2ff0a0188e32fbef0d967e44b",
+    "experiments/government-comparison/evidence/s1-common-runner-readiness-plan-20261008/source-evidence.json": "30ccadf14b3e94e1b76d2eedcae77152395cd643797e9919c49947cd27f73c2c",
+    "experiments/government-comparison/public/s1-common-runner-readiness-plan-20261008.md": "2e1f395692fb145a0dd51b7bb4ee494b338448b476c107e6ddad8babca43bcd2",
+    "experiments/government-comparison/runtime/process.py": "d0cedb71d57be87095d9af119d9769fb0c3d311e1af073cba81f6337743c78ae"
+  },
+  "interpreter": {
+    "path": "C:\\Python313\\python.exe",
+    "sha256": "d87063e5597f257004c731b66c59c56c91038861c6877b1a3dca6b8c4e919125"
+  },
+  "claimBoundary": "Observed argv acceptance/reported configuration precondition only. strict-config inline-key recognition/enforcement unproven. No active profile/tool/serving proof."
+}
