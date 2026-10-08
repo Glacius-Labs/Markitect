@@ -61,7 +61,23 @@ func writeDocument(project *Project, content string) error {
 	if existing, ok := capture.Files[ViewPath]; ok && existing.Exists && !bytes.Contains(existing.Bytes, []byte(generatedViewMarker)) {
 		return fmt.Errorf("refusing to replace non-generated file at %s", ViewPath)
 	}
-	_, err = hostwrite.ApplyGuardedWrite(project.Root, capture, []hostwrite.GuardedWriteChange{{Path: ViewPath, Bytes: []byte(content), Mode: fs.FileMode(0644)}})
+	validate := func() error {
+		var current *Project
+		var loadErr error
+		if project.Provisional {
+			current, loadErr = Load(project.Root, "")
+		} else {
+			current, loadErr = Load(project.Root, project.Revision)
+		}
+		if loadErr != nil {
+			return loadErr
+		}
+		if current.Digest != project.Digest {
+			return fmt.Errorf("selected project inputs changed before document write")
+		}
+		return nil
+	}
+	_, err = hostwrite.ApplyGuardedWriteChecked(capture.Root, capture, []hostwrite.GuardedWriteChange{{Path: ViewPath, Bytes: []byte(content), Mode: fs.FileMode(0644)}}, validate)
 	if err != nil {
 		return fmt.Errorf("write generated view %s: %w", ViewPath, err)
 	}
@@ -87,6 +103,9 @@ func documentText(project *Project) string {
 	} else {
 		for _, manager := range managers {
 			fmt.Fprintf(&out, "### %s\n\n- Identity: %s\n- Namespace: %s\n", heading(manager.Name), manager.ID, manager.Namespace)
+			if manager.Purpose != "" {
+				fmt.Fprintf(&out, "- Purpose: %s\n", inline(manager.Purpose))
+			}
 			if manager.Parent != "" {
 				fmt.Fprintf(&out, "- Parent Manager: %s\n", manager.Parent)
 			}

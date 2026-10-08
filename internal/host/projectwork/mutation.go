@@ -195,10 +195,30 @@ func PlanEdit(project *Project, mutation Mutation) (EditPlan, error) {
 		if decodeErr != nil {
 			return EditPlan{}, fmt.Errorf("prospective project manifest: %w", decodeErr)
 		}
-		if decoded.Name != project.Config.Name || !reflect.DeepEqual(decoded.InventoryRoots, project.Config.InventoryRoots) || !reflect.DeepEqual(decoded.Exclusions, project.Config.Exclusions) {
-			return EditPlan{}, fmt.Errorf("model mutation may update modelFiles only; project identity and inventory scope are fixed by the active Project")
+		if decoded.Name != project.Config.Name {
+			return EditPlan{}, fmt.Errorf("project identity is fixed by the active Project")
+		}
+		scopeChanged := !reflect.DeepEqual(decoded.InventoryRoots, project.Config.InventoryRoots) || !reflect.DeepEqual(decoded.Exclusions, project.Config.Exclusions)
+		if scopeChanged && !mayChangeInventoryScope(project, actor, user) {
+			return EditPlan{}, fmt.Errorf("only the explicit user actor or active root Manager may change inventory roots or exclusions")
 		}
 		candidateConfig = decoded
+	}
+	if !reflect.DeepEqual(candidateConfig.InventoryRoots, project.Config.InventoryRoots) || !reflect.DeepEqual(candidateConfig.Exclusions, project.Config.Exclusions) {
+		inventory, inventoryErr := loadConfiguredInventory(project.Root, project.Revision, project.Provisional, candidateConfig)
+		if inventoryErr != nil {
+			return EditPlan{}, fmt.Errorf("acquire prospective selected inventory: %w", inventoryErr)
+		}
+		for file := range candidateSnapshot.Files {
+			if !strings.HasPrefix(file, ".markitect/") {
+				delete(candidateSnapshot.Files, file)
+				delete(candidateSnapshot.Modes, file)
+			}
+		}
+		for file, data := range inventory.Files {
+			candidateSnapshot.Files[file] = append([]byte(nil), data...)
+			candidateSnapshot.Modes[file] = inventory.Modes[file]
+		}
 	}
 	for _, file := range candidateConfig.ModelFiles {
 		if _, present := candidateSnapshot.Files[file]; !present {
@@ -308,8 +328,24 @@ func ApplyEdit(root string, plan EditPlan, expected string) (EditPlan, error) {
 	if recomputed.Digest != plan.Digest || recomputed.CandidateDigest != plan.CandidateDigest {
 		return plan, fmt.Errorf("reviewed edit plan no longer matches the recomputed candidate")
 	}
+	candidateConfig := current.Config
+	for _, change := range plan.Mutation.Files {
+		if change.Path == ManifestPath {
+			candidateConfig, err = DecodeConfig([]byte(change.Content))
+			if err != nil {
+				return plan, fmt.Errorf("decode reviewed candidate manifest: %w", err)
+			}
+		}
+	}
+	prospectiveInventory, err := loadConfiguredInventory(root, current.Revision, current.Provisional, candidateConfig)
+	if err != nil {
+		return plan, fmt.Errorf("recheck prospective inventory selection: %w", err)
+	}
 	paths := make([]string, 0, len(current.Snapshot.Files)+len(plan.Mutation.Files))
 	for file := range current.Snapshot.Files {
+		paths = append(paths, file)
+	}
+	for file := range prospectiveInventory.Files {
 		paths = append(paths, file)
 	}
 	for _, change := range plan.Mutation.Files {
@@ -328,6 +364,12 @@ func ApplyEdit(root string, plan EditPlan, expected string) (EditPlan, error) {
 		actual, found := capture.Files[file]
 		if !found || !actual.Exists || !bytes.Equal(actual.Bytes, data) || !sameSnapshotMode(actual.Mode, current.Snapshot.Modes[file]) {
 			return plan, fmt.Errorf("selected project input changed before guarded write: %s", file)
+		}
+	}
+	for file, data := range prospectiveInventory.Files {
+		actual, found := capture.Files[file]
+		if !found || !actual.Exists || !bytes.Equal(actual.Bytes, data) || !sameSnapshotMode(actual.Mode, prospectiveInventory.Modes[file]) {
+			return plan, fmt.Errorf("prospectively selected inventory changed before guarded write: %s", file)
 		}
 	}
 	changes := make([]hostwrite.GuardedWriteChange, 0, len(plan.Mutation.Files))
@@ -374,6 +416,13 @@ func ApplyEdit(root string, plan EditPlan, expected string) (EditPlan, error) {
 		if !sameSnapshotFiles(current.Snapshot, working.Snapshot) {
 			return fmt.Errorf("working selected files or inventory membership differ from the reviewed project snapshot")
 		}
+		checked, checkErr := PlanEdit(latest, plan.Mutation)
+		if checkErr != nil {
+			return checkErr
+		}
+		if checked.Digest != plan.Digest || checked.CandidateDigest != plan.CandidateDigest {
+			return fmt.Errorf("prospective inventory selection changed under the writer lock")
+		}
 		return nil
 	}
 	result, err := hostwrite.ApplyGuardedWriteChecked(capture.Root, capture, changes, validateBasis)
@@ -394,6 +443,14 @@ func resolveActor(project *Project, id string) (*projectmodel.Manager, bool, err
 		}
 	}
 	return nil, false, fmt.Errorf("actor %q is neither an active Manager ID nor the reserved user actor", id)
+}
+
+func mayChangeInventoryScope(project *Project, actor *projectmodel.Manager, user bool) bool {
+	if user {
+		return true
+	}
+	root := nearestManager(project.Report.Managers, "")
+	return root != nil && actor != nil && actor.ID == root.ID && root.Namespace == ""
 }
 
 func authorizeModelPath(report projectmodel.Report, actor *projectmodel.Manager, namespace, file string) error {
