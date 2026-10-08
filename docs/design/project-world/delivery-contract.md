@@ -6,7 +6,7 @@ Status: konkrete, koordinierte Implementierung des Nutzerauftrags auf der frisch
 
 Der bestehende Standardbibliothek-Core bleibt unverändert. Die neue Host-Frontend-Abbildung benutzt seine vollständigen Identitäten, referenztypisierten Properties und normale `Compile`-Funktion. Abgeleitete Zuordnungs-/Kontext-/Impactreports sind keine zweite kanonische IR. Historische Project-/Projectionbefehle bleiben kompatibel; neue öffentliche Befehle verwenden `project` und sprechen von Modell, Manager, Artefakt, Kandidat und Umsetzung.
 
-Das minimale Schema trägt `markitect.example.org/project/v1alpha1` und fünf Kinds:
+Das minimale Schema trägt `project.markitect.example.org/v1alpha1` und fünf Kinds:
 
 | Kind | Verbindlicher Inhalt |
 |---|---|
@@ -18,7 +18,7 @@ Das minimale Schema trägt `markitect.example.org/project/v1alpha1` und fünf Ki
 
 `Statement` als gemeinsamer typisierter Ziel-Kind vermeidet ein fingiertes Union-Referenzfeature. Erweiterungen bleiben auf dieser technischen Basis zu prüfen. Die Auswahl ist ein kleiner bewusster Startwortschatz, keine Quellcodeontologie oder eingebaute Unternehmensorganisation.
 
-Die Hostkonvention setzt Modellnamensräume aus dem Verzeichnis relativ zu `.markitect/model/`. Authored `metadata.namespace` muss dazu passen; Änderungen werden als Identitätsänderung sichtbar. Eine Managerdefinition liegt in `manager.yaml`; andere Definitionen können beim Slice bleiben. Jeder interne Ordner gehört zum nächsten deklarierten Manager. Elternmanager delegieren über ausdrückliche Kindverträge; widersprüchliche Geschwister-Dateiansprüche schlagen fehl. Pfadselektoren beginnen bewusst mit exakten Pfaden oder Verzeichnispräfixen; beliebige Query-/Patternsprachen sind kein Bedarf dieses Durchlaufs.
+Die Hostkonvention setzt Modellnamensräume aus dem Verzeichnis relativ zu `.markitect/model/`: Ordnersegmente verwenden Kleinbuchstaben, Ziffern und Bindestriche und beginnen mit einem Buchstaben; Punkte sind als Segmenttrenner reserviert. Beispielsweise wird `commerce/sales/orders` zu `commerce.sales.orders`; der Modellwurzel entspricht der leere Namespace. Authored `metadata.namespace` muss dazu passen; Änderungen werden als Identitätsänderung sichtbar. Eine Managerdefinition liegt in `manager.yaml`; andere Definitionen können beim Slice bleiben. Jeder interne Ordner gehört zum nächsten deklarierten Manager. Elternmanager delegieren über ausdrückliche Kindverträge; widersprüchliche Geschwister-Dateiansprüche schlagen fehl. Pfadselektoren beginnen bewusst mit exakten Pfaden oder Verzeichnispräfixen; beliebige Query-/Patternsprachen sind kein Bedarf dieses Durchlaufs. Ein Manager kann mit `.` den Repositoryumfang verantworten; die davon unabhängige Inhaltsauswahl im Manifest verwendet weiterhin konkrete Pfade und Präfixe.
 
 `.markitect/project.yaml` enthält Version, Projektname, exakt ausgewählte Modelldateien und Inventarscope/Ausschlüsse. Die fachliche Corekompilierung sieht nur die ausgewählten Definitionsbytes. `.markitect/runtime.yaml` konfiguriert Runner/Provider und begrenzte Ausführung, getrennt von Fachbedeutung. `.markitect/drafts/` bewahrt Entwürfe; `views/` enthält lesbare Sichten, `runs/` gebundene operative Daten und `cache/` wiederherstellbare Ausgaben. Diese Ausgaben werden nicht rekursiv erneut als Sollquelle inventarisiert.
 
