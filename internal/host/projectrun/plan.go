@@ -19,6 +19,7 @@ import (
 // no external agent.
 func Plan(host Host, root, revision string, request PlanRequest) (PlanRecord, error) {
 	var plan PlanRecord
+	var err error
 	if host.Load == nil || host.FromSnapshot == nil || host.PlanEdit == nil {
 		return plan, fmt.Errorf("project Host frontend is incomplete")
 	}
@@ -29,7 +30,18 @@ func Plan(host Host, root, revision string, request PlanRequest) (PlanRecord, er
 		revision = request.BaseRevision
 	}
 	if strings.TrimSpace(revision) == "" {
-		return plan, fmt.Errorf("a fixed base revision is required")
+		revision, err = resolveGitHead(root)
+		if err != nil {
+			return plan, fmt.Errorf("resolve fixed default base revision: %w", err)
+		}
+	}
+	targetHead, err := resolveGitHead(root)
+	if err != nil {
+		return plan, fmt.Errorf("capture current target HEAD: %w", err)
+	}
+	targetBranch, err := resolveGitBranch(root)
+	if err != nil {
+		return plan, fmt.Errorf("capture current target branch: %w", err)
 	}
 	project, err := host.Load(root, revision)
 	if err != nil {
@@ -45,12 +57,17 @@ func Plan(host Host, root, revision string, request PlanRequest) (PlanRecord, er
 	if err != nil {
 		return plan, fmt.Errorf("capture current project working inputs: %w", err)
 	}
-	if working == nil || working.Snapshot == nil || working.Snapshot.Provisional {
-		return plan, fmt.Errorf("project runtime requires a fixed working-input snapshot")
+	if working == nil || working.Snapshot == nil {
+		return plan, fmt.Errorf("project runtime requires a selected working-input snapshot")
 	}
 	repository, err := source.IdentifyGit(root)
 	if err != nil {
 		return plan, fmt.Errorf("identify project repository: %w", err)
+	}
+	currentHead, headErr := resolveGitHead(root)
+	currentBranch, branchErr := resolveGitBranch(root)
+	if headErr != nil || branchErr != nil || currentHead != targetHead || currentBranch != targetBranch {
+		return plan, ErrStale
 	}
 	if !startableReport(project.Report) {
 		return plan, fmt.Errorf("project model analysis did not succeed: %s", project.Report.Status)
@@ -164,7 +181,7 @@ func Plan(host Host, root, revision string, request PlanRequest) (PlanRecord, er
 	plan = PlanRecord{
 		APIVersion: APIVersion, ID: id, Status: StatusPlanned, Goal: request.Goal,
 		ExecuteAuthorized: request.ExecuteAuthorized, Root: root,
-		BaseRevision: project.Revision, BaseSnapshot: project.Snapshot.Digest(),
+		BaseRevision: project.Revision, TargetBranch: targetBranch, TargetHead: targetHead, BaseSnapshot: project.Snapshot.Digest(),
 		WorkingSnapshot:  working.Snapshot.Digest(),
 		RepositoryDigest: repository.Digest, BaseProjectDigest: project.Digest, WorkingProjectDigest: working.Digest,
 		BaseModelDigest: project.Report.ModelDigest,
