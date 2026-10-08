@@ -1,0 +1,85 @@
+{
+  "key": "s1-startup-status-contract-offline-20261008",
+  "baseSha": "88766758413e0cbe5558ec572a76c66fce7587e7",
+  "files": {
+    "experiments/government-comparison/evidence/s1-startup-status-contract-offline-20261008/startup_observer.py": {
+      "sha256": "654a40b5f09651f39d74dfed48927c7f1fbeccc99387e95cd655afa009175d3e",
+      "bytes": 4742
+    },
+    "experiments/government-comparison/evidence/s1-startup-status-contract-offline-20261008/offline_wiring.py": {
+      "sha256": "cd115633c9493e9da741905615b5a7d53a044c06770da6c78be341d5e0592e04",
+      "bytes": 4774
+    },
+    "experiments/government-comparison/evidence/s1-startup-status-contract-offline-20261008/protocol_failure.py": {
+      "sha256": "776365db287479a23be67a4e22ac083f54ce881fa1452337d0e281529adcb38f",
+      "bytes": 6000
+    },
+    "experiments/government-comparison/evidence/s1-startup-status-contract-offline-20261008/thread_gate.py": {
+      "sha256": "d62ae5d946af927d09538628905cf05a242ede47267e693b571736b79c50c7de",
+      "bytes": 5852
+    },
+    "experiments/government-comparison/evidence/s1-startup-status-contract-offline-20261008/admission-contract.json": {
+      "sha256": "1ffdbc1d598cc6f8cb2cc69d2d8e1c94d44ccbec65bde1efa4b28d6fb5adc86f",
+      "bytes": 2632
+    },
+    "experiments/government-comparison/evidence/s1-startup-status-contract-offline-20261008/observer-schema-contract.json": {
+      "sha256": "5100fe8171f3c1e17893f48d416ecc39d5e00b44044c5858be6e8079b3082b4a",
+      "bytes": 2678
+    },
+    "experiments/government-comparison/evidence/s1-startup-status-contract-offline-20261008/profile.json": {
+      "sha256": "24f2a13d392141a1b8520e0c2e8e70abbc05a9375c9d3b4ab037aeea2764b730",
+      "bytes": 3073
+    },
+    "experiments/government-comparison/evidence/s1-startup-status-contract-offline-20261008/test_startup_observer.py": {
+      "sha256": "90d8e4fd5f11b3ebb48d2d6e426847fa5a2736daef30215099372682b10a4c9e",
+      "bytes": 10686
+    },
+    "experiments/government-comparison/evidence/s1-startup-status-contract-offline-20261008/decision.md": {
+      "sha256": "b1e71066d54db0e4f54c36f1efc7565529b67f6fb128963e9a8c86554860c151",
+      "bytes": 5911
+    },
+    "experiments/government-comparison/evidence/s1-final-output-diagnostic-20261008-r1/thread_gate.py": {
+      "sha256": "d62ae5d946af927d09538628905cf05a242ede47267e693b571736b79c50c7de",
+      "bytes": 5852
+    },
+    "experiments/government-comparison/evidence/s1-final-output-diagnostic-20261008-r1/protocol_failure.py": {
+      "sha256": "776365db287479a23be67a4e22ac083f54ce881fa1452337d0e281529adcb38f",
+      "bytes": 6000
+    },
+    "experiments/government-comparison/evidence/s1-final-output-diagnostic-20261008-r1/schema-contract.json": {
+      "sha256": "1ffdbc1d598cc6f8cb2cc69d2d8e1c94d44ccbec65bde1efa4b28d6fb5adc86f",
+      "bytes": 2632
+    },
+    "experiments/government-comparison/evidence/s1-final-output-diagnostic-20261008-r1/profile.json": {
+      "sha256": "24f2a13d392141a1b8520e0c2e8e70abbc05a9375c9d3b4ab037aeea2764b730",
+      "bytes": 3073
+    },
+    "experiments/government-comparison/evidence/s1-common-runner-read-tool-20261008-r1/protocol.py": {
+      "sha256": "ebd087657febf63846904d83a75bc226a5412458418d20abe024ed267febb822",
+      "bytes": 6035
+    },
+    "experiments/government-comparison/evidence/s1-runner-rebinding-metadata-20261008-r1/generated-schemas.zip": {
+      "sha256": "3157e8a55329cf4e5346676c3ef0c308402d2420f8f916d6a5b7e0e9c84356ad",
+      "bytes": 645474
+    }
+  },
+  "archiveMembers": {
+    "ServerNotification.json": "c0d2c87f78054a8b21f42f9a32256e9412603a85d7151671e914493f84739e7a",
+    "v1/InitializeParams.json": "b55124e7c0f36a1789396daa5578217a92be67f053903696236686e59f6f212e",
+    "v1/InitializeResponse.json": "62ad689c2cb6379913c1d72749cfd8de5089d35760214123518eb92eef11acc9",
+    "v2/ConfigReadParams.json": "257c54a423b47c1d209ff1076765a1564d82322fd5161670fd489a2874de1bac",
+    "v2/ConfigReadResponse.json": "4ec77e1a3eed746037149799c3b6bb8fe7b4b593e5930fc9f410e6282de9df50",
+    "v2/ConfigRequirementsReadResponse.json": "23133727e5dac0fcd77ca0db8bb47f4bef7c3e880b96846aec612d1dedba7e5b",
+    "v2/ErrorNotification.json": "eb702b074f6f8d6a7236e095b57fb24d69db183d3dc3ffab1954e65c2ead9e6d",
+    "v2/ThreadClosedNotification.json": "d504cceb70e3397ad684924b08d3bff328a927be02ef4e3d482a18e27bab73de",
+    "v2/ThreadStartParams.json": "80a40a7fac15b4bf70efb7f893fb353acc0a0d30c68f54aee4f01923deca85de",
+    "v2/ThreadStartResponse.json": "bcb709ddaed237632beda448e79621d3fbfcc449fee661221088fa16d8b55914",
+    "v2/ThreadStartedNotification.json": "734203a310c40ed3bc1d3cba96a82eb062fbcfcab3f27ee3e950ff455b4973a1",
+    "v2/ThreadStatusChangedNotification.json": "26f3c60c1b73f7fa2d31c74429cdc36f8746c76c33e3d314b3fb61d3661f05f6",
+    "v2/McpServerStatusUpdatedNotification.json": "d6f4cb120b2363d321247592f03b9afbbf2762ad6d8af31b88c1b1bf39c4c7aa"
+  },
+  "existingMembersUnchanged": 12,
+  "newExistingMemberBindingCount": 1,
+  "newSchemaGenerated": false,
+  "runtimeAuthority": false
+}

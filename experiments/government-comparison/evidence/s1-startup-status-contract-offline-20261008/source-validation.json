@@ -1,0 +1,19 @@
+{
+  "kind": "static source/member/output-bound checks; no tests or runtime",
+  "unchangedThreadGateSha256": "d62ae5d946af927d09538628905cf05a242ede47267e693b571736b79c50c7de",
+  "unchangedFirstFailureHelperSha256": "776365db287479a23be67a4e22ac083f54ce881fa1452337d0e281529adcb38f",
+  "admissionContractByteIdentical": true,
+  "startupMethodRemainsUnadmitted": true,
+  "oldMemberPinsUnchanged": 12,
+  "observerMemberPins": 13,
+  "newMember": "v2/McpServerStatusUpdatedNotification.json",
+  "newMemberSha256": "d6f4cb120b2363d321247592f03b9afbbf2762ad6d8af31b88c1b1bf39c4c7aa",
+  "conservativeObserverSnapshotIndentedBytes": 716,
+  "conservativeWholeOfflineReceiptIndentedBytes": 1392,
+  "maxOutputBytes": 2048,
+  "observerRefusalVersion": 1,
+  "firstFailureVocabularyUnchanged": true,
+  "sourceTestCorrectionIterations": 2,
+  "runtimeStarts": 0,
+  "observerRefusalMembers": 12
+}

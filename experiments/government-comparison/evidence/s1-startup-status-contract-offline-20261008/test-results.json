@@ -1,0 +1,28 @@
+{
+  "invocation": 1,
+  "command": [
+    "C:/Python313/python.exe",
+    "-B",
+    "-m",
+    "unittest",
+    "-v",
+    "test_startup_observer.py"
+  ],
+  "startedUtc": "2026-10-08T19:24:03.075903+00:00",
+  "finishedUtc": "2026-10-08T19:24:03.533526+00:00",
+  "commandWallSeconds": 0.45718940000006114,
+  "returnCode": 0,
+  "newTestMethods": 6,
+  "realPinnedStartupSchema": true,
+  "realPinnedThreadResponseSchema": true,
+  "protocolMocks": false,
+  "processLaunchApisBlocked": [
+    "subprocess.Popen",
+    "subprocess.run",
+    "subprocess.check_output",
+    "os.system"
+  ],
+  "priorSuitesRun": 0,
+  "nativeRuntimeStarts": 0,
+  "sourceTestCorrectionIterations": 2
+}

@@ -1,0 +1,47 @@
+{
+  "key": "s1-startup-status-contract-offline-20261008",
+  "firstActionUtc": "2026-10-08T19:16:14Z",
+  "offlineDeadlineUtc": "2026-10-08T19:36:14Z",
+  "sourceTestCorrectionIterations": 2,
+  "maxSourceTestCorrectionIterations": 2,
+  "corrections": [
+    {
+      "iteration": 1,
+      "phase": "before test invocation1",
+      "source": [
+        "Narrow Observer validator-failure catch to Exception; preserve inherited BaseException cleanup drain and record/rethrow",
+        "Restore explicit pre-thread metadata lifecycle refusal in pure offline Gate fixture"
+      ],
+      "tests": []
+    },
+    {
+      "iteration": 2,
+      "phase": "before test invocation1",
+      "source": [],
+      "tests": [
+        "Add grouped unknown status and oversized name checks",
+        "Validate real full synthetic Thread response before cleanup; verify observer receives Gate-known ownID and no ID/name/error value leaks"
+      ]
+    }
+  ],
+  "testInvocations": 1,
+  "maxTestInvocations": 3,
+  "newTestMethods": 6,
+  "testFailures": 0,
+  "sourceValidationFailures": 0,
+  "protocolMocks": false,
+  "priorSuitesRun": 0,
+  "nativeRuntimeStarts": 0,
+  "reservations": 0,
+  "actorTasksTurnsToolsCliMetadataWebStudyCalls": 0,
+  "slotAssigned": false,
+  "historicalFramesPayloadsPrivateContentReadOrRecovered": false,
+  "phaseSourceDescription": "Focused pure Gate fixture only; no full client/remote-control/RPC/transport/Job/stderr replacement or live equivalence assertion",
+  "currentActualReadinessPayloadStatusAndScope": null,
+  "readinessDeadlineUnchanged": "2026-10-08T20:42:00Z",
+  "automaticFollowOn": false,
+  "documentationClarifications": [
+    "Qualify source-review gate submission by phase and distinguish ValueError mapping from other Exception",
+    "Enumerate existing12 ObserverV1 refusal values; no firstFailure-code or admission change"
+  ]
+}

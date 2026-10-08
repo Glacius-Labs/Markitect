@@ -1,0 +1,11 @@
+test_cleanup_drain_keeps_first_failure_and_returns_only_value_free_snapshot (test_startup_observer.StartupObserverTests.test_cleanup_drain_keeps_first_failure_and_returns_only_value_free_snapshot) ... ok
+test_explicit_app_scope_and_exact_known_own_thread_scope_are_observation_only (test_startup_observer.StartupObserverTests.test_explicit_app_scope_and_exact_known_own_thread_scope_are_observation_only) ... ok
+test_failed_cancelled_nonnull_error_and_failure_reason_remain_terminal (test_startup_observer.StartupObserverTests.test_failed_cancelled_nonnull_error_and_failure_reason_remain_terminal) ... ok
+test_foreign_missing_and_unresolved_thread_scopes_are_distinct_rejections (test_startup_observer.StartupObserverTests.test_foreign_missing_and_unresolved_thread_scopes_are_distinct_rejections) ... ok
+test_original_gate_still_rejects_exact_method_without_admitting_a_turn (test_startup_observer.StartupObserverTests.test_original_gate_still_rejects_exact_method_without_admitting_a_turn) ... ok
+test_real_schema_wrong_type_is_distinct_from_schema_valid_local_extra_key (test_startup_observer.StartupObserverTests.test_real_schema_wrong_type_is_distinct_from_schema_valid_local_extra_key) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.124s
+
+OK

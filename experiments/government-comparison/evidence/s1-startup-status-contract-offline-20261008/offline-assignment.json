@@ -1,0 +1,35 @@
+{
+  "key": "s1-startup-status-contract-offline-20261008",
+  "authorizedUtc": "2026-10-08T19:14:43Z",
+  "baseSha": "88766758413e0cbe5558ec572a76c66fce7587e7",
+  "maxPreparationSeconds": 1200,
+  "maxOfflineRepairIterations": 2,
+  "maxAffectedTestInvocations": 3,
+  "maxSyntheticCases": 6,
+  "newRuntimeAllocation": 0,
+  "newReservations": 0,
+  "slotAssigned": false,
+  "methodRemainsUnadmitted": true,
+  "readinessDeadlineUtc": "2026-10-08T20:42:00Z",
+  "firstActionUtc": "2026-10-08T19:16:14Z",
+  "offlineDeadlineUtc": "2026-10-08T19:36:14Z",
+  "canonicalAuthorityPointer": "threads[name=Scientist].lastAssignment",
+  "readinessWindow": {
+    "key": "s1-readiness-final-window-20261008",
+    "authorizedUtc": "2026-10-08T18:42:00Z",
+    "deadlineUtc": "2026-10-08T20:42:00Z",
+    "basis": "Overseer narrows remaining readiness diagnosis under direct finite research mandate; no automatic runtime authorization.",
+    "maxFurtherActualReadinessAttempts": 2,
+    "consumedFurtherActualAttempts": 1,
+    "reservedFurtherActualAttempts": 0,
+    "priorActualAppServerTrees": 11,
+    "grantKeys": [
+      "s1-final-output-diagnostic-20261008-r1"
+    ],
+    "eachAttemptRequiresFreshConcreteGrant": true,
+    "zeroRuntimeAuthorizedByThisWindow": true,
+    "exitCondition": "If S1 is still unproven at two further actual attempts or deadline, stop this diagnosis block, synthesize actual mechanics/product evidence, effort and NOT RUN comparisons; pause observation under finite-block user instruction. If S1 passes, continue separately frozen and granted six base trials.",
+    "noPolicyBypassNoPurchases": true,
+    "latestAcceptedActualSha": "88766758413e0cbe5558ec572a76c66fce7587e7"
+  }
+}
