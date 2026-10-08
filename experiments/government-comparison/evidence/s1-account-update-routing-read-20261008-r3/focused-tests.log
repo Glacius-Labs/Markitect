@@ -1,0 +1,11 @@
+test_final_grant_window_slot_and_freeze_identity_are_bound (test_account_runtime.AccountRoutingRuntimeTests.test_final_grant_window_slot_and_freeze_identity_are_bound) ... ok
+test_live_account_route_is_telemetry_and_preserves_full_public_read (test_account_runtime.AccountRoutingRuntimeTests.test_live_account_route_is_telemetry_and_preserves_full_public_read) ... ok
+test_negative_account_and_unknown_family_stop_with_fixed_diagnostics (test_account_runtime.AccountRoutingRuntimeTests.test_negative_account_and_unknown_family_stop_with_fixed_diagnostics) ... ok
+test_prethread_and_prestart_account_events_remain_terminal_without_turn (test_account_runtime.AccountRoutingRuntimeTests.test_prethread_and_prestart_account_events_remain_terminal_without_turn) ... ok
+test_raw_event_size_and_eight_notice_ceiling_stop_through_real_consumer (test_account_runtime.AccountRoutingRuntimeTests.test_raw_event_size_and_eight_notice_ceiling_stop_through_real_consumer) ... ok
+test_stop_cleanup_drains_and_owns_one_validated_interrupt (test_account_runtime.AccountRoutingRuntimeTests.test_stop_cleanup_drains_and_owns_one_validated_interrupt) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.321s
+
+OK

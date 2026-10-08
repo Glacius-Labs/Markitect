@@ -1,0 +1,26 @@
+{
+  "key": "s1-account-update-routing-read-20261008-r3",
+  "sourceTestCorrectionBatches": 1,
+  "corrections": [
+    "Unsealed wrapper copied R2 label corrected toR3; nested authoritative grant unchanged; explicit wrapper key guard added",
+    "Pre-first-test fixture cleanup and precise firstfailure/staleslot/window assertions"
+  ],
+  "sourceImplementationRoutingCorrections": 0,
+  "testInvocations": 1,
+  "newUnittestGroups": 6,
+  "syntheticSessionInvocations": 8,
+  "testsPassed": true,
+  "unittestSeconds": 0.321,
+  "nativeStarts": 0,
+  "runtimeReservations": 0,
+  "oldClassifierAndProductSuitesRerun": false,
+  "offlineFakeFlagsAbsent": true,
+  "accountObserverByteIdentical": true,
+  "realRuntimeBasisBound": true,
+  "metadataResponseSchemasMocked": [
+    "InitializeResponse",
+    "ConfigReadResponse",
+    "ConfigRequirementsReadResponse"
+  ],
+  "threadTurnItemUsageAccountSchemasReal": true
+}

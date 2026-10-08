@@ -1,0 +1,72 @@
+{
+  "schemaArchive": "experiments/government-comparison/evidence/s1-runner-rebinding-metadata-20261008-r1/generated-schemas.zip",
+  "schemaArchiveSha256": "3157e8a55329cf4e5346676c3ef0c308402d2420f8f916d6a5b7e0e9c84356ad",
+  "memberSha256": {
+    "ServerNotification.json": "c0d2c87f78054a8b21f42f9a32256e9412603a85d7151671e914493f84739e7a",
+    "v1/InitializeParams.json": "b55124e7c0f36a1789396daa5578217a92be67f053903696236686e59f6f212e",
+    "v1/InitializeResponse.json": "62ad689c2cb6379913c1d72749cfd8de5089d35760214123518eb92eef11acc9",
+    "v2/ConfigReadParams.json": "257c54a423b47c1d209ff1076765a1564d82322fd5161670fd489a2874de1bac",
+    "v2/ConfigReadResponse.json": "4ec77e1a3eed746037149799c3b6bb8fe7b4b593e5930fc9f410e6282de9df50",
+    "v2/ConfigRequirementsReadResponse.json": "23133727e5dac0fcd77ca0db8bb47f4bef7c3e880b96846aec612d1dedba7e5b",
+    "v2/ErrorNotification.json": "eb702b074f6f8d6a7236e095b57fb24d69db183d3dc3ffab1954e65c2ead9e6d",
+    "v2/ThreadClosedNotification.json": "d504cceb70e3397ad684924b08d3bff328a927be02ef4e3d482a18e27bab73de",
+    "v2/ThreadStartParams.json": "80a40a7fac15b4bf70efb7f893fb353acc0a0d30c68f54aee4f01923deca85de",
+    "v2/ThreadStartResponse.json": "bcb709ddaed237632beda448e79621d3fbfcc449fee661221088fa16d8b55914",
+    "v2/ThreadStartedNotification.json": "734203a310c40ed3bc1d3cba96a82eb062fbcfcab3f27ee3e950ff455b4973a1",
+    "v2/ThreadStatusChangedNotification.json": "26f3c60c1b73f7fa2d31c74429cdc36f8746c76c33e3d314b3fb61d3661f05f6",
+    "v2/McpServerStatusUpdatedNotification.json": "d6f4cb120b2363d321247592f03b9afbbf2762ad6d8af31b88c1b1bf39c4c7aa",
+    "v2/TurnStartedNotification.json": "842678f3eb37e555f80aed024e9daa41abf26686b9541a2d4ff5494d74e0f332",
+    "v2/CommandExecutionOutputDeltaNotification.json": "841fa94098ddb63a71acf1bf5f9e3fac1b0491f4ed3fa8ef86f9a6ca1260b539",
+    "v2/ReasoningTextDeltaNotification.json": "16cdc13080a7523b44f00fb6fdb660c56a7c4c8cda96b2f9b87b7e72264170fb",
+    "v2/ItemStartedNotification.json": "7574788d2a352747f50d44be3ef649011cb8de8069da4c655faff14d0aee32c4",
+    "v2/TurnStartResponse.json": "92d0c40c75ff98bb31aca940a5484885e475bbf2920bb18198ff4fd5450b3a4a",
+    "v2/TurnCompletedNotification.json": "4669009c1bad2d8a26da821d9aaaef847865085bba3c8293d8cc92a6919237fb",
+    "v2/TurnInterruptResponse.json": "531de6be06fe979b5963f249bab82498a175e614bf65ac12fb2e849dfe60bcf1",
+    "v2/TurnInterruptParams.json": "6dff382dae73d1dbc58406ed045605f647e7a49660e2540fbd2c6c24d60c5f2b",
+    "v2/ItemCompletedNotification.json": "d04b9153de38cd8302a2a418a44a65e8265d4c7586d46ea2cc801b594c6acf5b",
+    "v2/AgentMessageDeltaNotification.json": "996e6c0ea65e57bed5a00f410b94381fe5ebf804333e5d00c2b6e6d47e5c55f6",
+    "v2/ReasoningSummaryPartAddedNotification.json": "c8dfcb82d773d0f5d297ae1a47749e2b719013e82030a3af5d4550f9feb8eed6",
+    "v2/ThreadTokenUsageUpdatedNotification.json": "aba4f6c7e4a19b2b842c08ee793b57000c07dafd57b922ad0d8e7c76609108c2",
+    "v2/ReasoningSummaryTextDeltaNotification.json": "895bdca00b4674634c25a5c4d1f82e55e65767d81ddcac4bb7b00aa3d438e62f",
+    "v2/TurnStartParams.json": "f4a07f33f33d5962bf5a770d1c1bb6a6de1412ccef9fb62705c4d9a83a956dbf",
+    "v2/AccountUpdatedNotification.json": "268dba6977cc3adcced751a97367772a1e201a199c14f454741d851fe8bbacb1"
+  },
+  "requestSchemas": {
+    "initialize": "v1/InitializeParams.json",
+    "config/read": "v2/ConfigReadParams.json",
+    "thread/start": "v2/ThreadStartParams.json",
+    "turn/start": "v2/TurnStartParams.json",
+    "turn/interrupt": "v2/TurnInterruptParams.json"
+  },
+  "responseSchemas": {
+    "initialize": "v1/InitializeResponse.json",
+    "config/read": "v2/ConfigReadResponse.json",
+    "configRequirements/read": "v2/ConfigRequirementsReadResponse.json",
+    "thread/start": "v2/ThreadStartResponse.json",
+    "turn/start": "v2/TurnStartResponse.json",
+    "turn/interrupt": "v2/TurnInterruptResponse.json"
+  },
+  "notifications": {
+    "thread/closed": "v2/ThreadClosedNotification.json",
+    "thread/started": "v2/ThreadStartedNotification.json",
+    "thread/status/changed": "v2/ThreadStatusChangedNotification.json"
+  },
+  "stopPolicy": "All turn/item/usage/error/warning/auth/approval/server requests and unlisted methods stop. Remote disabled only via unchanged pinned existing classifier. Thread closed permitted only after validated own response.",
+  "scope": "One prospective native public read, separate finite actor notification extension; unchanged general three-thread map",
+  "key": "s1-resumed-read-tool-20261008-r2",
+  "actorNotifications": {
+    "thread/tokenUsage/updated": "v2/ThreadTokenUsageUpdatedNotification.json",
+    "turn/started": "v2/TurnStartedNotification.json",
+    "turn/completed": "v2/TurnCompletedNotification.json",
+    "item/started": "v2/ItemStartedNotification.json",
+    "item/completed": "v2/ItemCompletedNotification.json",
+    "item/agentMessage/delta": "v2/AgentMessageDeltaNotification.json",
+    "item/commandExecution/outputDelta": "v2/CommandExecutionOutputDeltaNotification.json",
+    "item/reasoning/summaryTextDelta": "v2/ReasoningSummaryTextDeltaNotification.json",
+    "item/reasoning/summaryPartAdded": "v2/ReasoningSummaryPartAddedNotification.json",
+    "item/reasoning/textDelta": "v2/ReasoningTextDeltaNotification.json"
+  },
+  "terminalNotifications": {
+    "error": "v2/ErrorNotification.json"
+  }
+}

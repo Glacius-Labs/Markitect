@@ -1,0 +1,140 @@
+{
+  "argv": [
+    "C:/Users/Consiliari/AppData/Local/OpenAI/Codex/bin/9691020b546a15b2/codex.exe",
+    "app-server",
+    "--stdio",
+    "--strict-config",
+    "--config",
+    "default_permissions=\":read-only\"",
+    "--config",
+    "approval_policy=\"never\"",
+    "--config",
+    "apps._default.enabled=false",
+    "--config",
+    "features.apps=false",
+    "--config",
+    "features.goals=false",
+    "--config",
+    "features.hooks=false",
+    "--config",
+    "features.memories=false",
+    "--config",
+    "features.multi_agent=false",
+    "--config",
+    "features.plugins=false",
+    "--config",
+    "features.shell_tool=true",
+    "--config",
+    "features.unified_exec=true",
+    "--config",
+    "forced_login_method=\"chatgpt\"",
+    "--config",
+    "model=\"gpt-6.1-sol\"",
+    "--config",
+    "model_provider=\"openai\"",
+    "--config",
+    "model_reasoning_effort=\"high\"",
+    "--config",
+    "project_doc_max_bytes=0",
+    "--config",
+    "web_search=\"disabled\""
+  ],
+  "cwd": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\s1-common-runner-read-tool-20261008-r1\\actor",
+  "rpc": [
+    {
+      "id": 0,
+      "method": "initialize",
+      "params": {
+        "clientInfo": {
+          "name": "scientist_native_cwd_diagnostic_r1",
+          "version": "1.0"
+        },
+        "capabilities": {
+          "experimentalApi": true
+        }
+      }
+    },
+    {
+      "method": "initialized",
+      "params": {}
+    },
+    {
+      "id": 1,
+      "method": "config/read",
+      "params": {
+        "includeLayers": true,
+        "cwd": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\s1-common-runner-read-tool-20261008-r1\\actor"
+      }
+    },
+    {
+      "id": 2,
+      "method": "configRequirements/read"
+    }
+  ],
+  "threadStart": {
+    "method": "thread/start",
+    "id": 3,
+    "params": {
+      "model": "gpt-6.1-sol",
+      "modelProvider": "openai",
+      "approvalPolicy": "never",
+      "permissions": ":read-only",
+      "ephemeral": true,
+      "cwd": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\s1-common-runner-read-tool-20261008-r1\\actor"
+    }
+  },
+  "expectedFiles": {
+    "probe-input.txt": "9c9b152a51daf10dbc38765feec7b72c9d42587d6300c6cf7fcb8fd1e9ab29c5",
+    "README.md": "b986640bbeea4d174ff450cd27bb50d68697e78d8ad9fd0757fe3427b2904a59"
+  },
+  "key": "s1-account-update-routing-read-20261008-r3",
+  "externalEvidence": "C:/Users/Consiliari/Documents/Scientist-Probes/s1-account-update-routing-read-20261008-r3",
+  "limits": {
+    "metadataHandshakeSeconds": 33,
+    "threadStartSeconds": 15,
+    "ownedProcessExecutionSeconds": 180,
+    "maxCleanupSeconds": 10,
+    "controllerWithCleanupSeconds": 195,
+    "outerReceiptSeconds": 210,
+    "maxQueuedFrames": 64,
+    "maxSingleFrameBytes": 1000000,
+    "maxRawBytes": 8000000,
+    "maxInboundNotifications": 2048,
+    "maxStderrCaptureBytes": 1024,
+    "maxStderrDiagnosticLines": 4,
+    "maxRedactedOutputBytes": 2048,
+    "maxObservedStderrBytes": 16384,
+    "turnSeconds": 120,
+    "tokenStopThreshold": 10000
+  },
+  "command": "Get-Content -LiteralPath 'C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\s1-common-runner-read-tool-20261008-r1\\actor\\probe-input.txt' -Raw",
+  "turnPrompt": "Perform exactly one ordinary native shell-tool invocation in cwd C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\s1-common-runner-read-tool-20261008-r1\\actor. Execute exactly this PowerShell read command once:\nGet-Content -LiteralPath 'C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\s1-common-runner-read-tool-20261008-r1\\actor\\probe-input.txt' -Raw\nDo not run any other command, read any other file, write anything, use networks or helpers, or retry any denial/failure. Use the ordinary native shell tool; no delegated agent or replacement tool. Then return only one JSON object with exactly one key, sentinel, whose value is the file content stripped of whitespace: {\"sentinel\":\"<file value>\"}. Do not guess the value. If the tool cannot complete, report failure and stop without another tool invocation.",
+  "turnStart": {
+    "method": "turn/start",
+    "id": 4,
+    "params": {
+      "threadId": "$threadId",
+      "effort": "high",
+      "input": [
+        {
+          "type": "text",
+          "text": "Perform exactly one ordinary native shell-tool invocation in cwd C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\s1-common-runner-read-tool-20261008-r1\\actor. Execute exactly this PowerShell read command once:\nGet-Content -LiteralPath 'C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\s1-common-runner-read-tool-20261008-r1\\actor\\probe-input.txt' -Raw\nDo not run any other command, read any other file, write anything, use networks or helpers, or retry any denial/failure. Use the ordinary native shell tool; no delegated agent or replacement tool. Then return only one JSON object with exactly one key, sentinel, whose value is the file content stripped of whitespace: {\"sentinel\":\"<file value>\"}. Do not guess the value. If the tool cannot complete, report failure and stop without another tool invocation."
+        }
+      ]
+    }
+  },
+  "interrupt": {
+    "method": "turn/interrupt",
+    "id": 5,
+    "params": {
+      "threadId": "$threadId",
+      "turnId": "$turnId"
+    }
+  },
+  "allowedPublicFinalShape": {
+    "sentinel": "32 lowercase hex characters, equal to public file value"
+  },
+  "safePublicOutputMaxBytes": 512,
+  "maxPendingLifecycleEvents": 64,
+  "maxTrackedItems": 16
+}

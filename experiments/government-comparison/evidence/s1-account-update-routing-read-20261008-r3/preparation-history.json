@@ -1,0 +1,22 @@
+{
+  "key": "s1-account-update-routing-read-20261008-r3",
+  "firstActionUtc": "2026-10-08T20:55:22Z",
+  "preparationDeadlineUtc": "2026-10-08T21:15:22Z",
+  "recordedUtc": "2026-10-08T21:01:42.670446Z",
+  "ordinarySourceTestCorrectionBatches": 1,
+  "maximumCorrectionBatches": 2,
+  "pretestWrapperLabelAndGuardCorrection": true,
+  "nestedAuthoritativeGrantOrImmutableBindingChanged": false,
+  "testInvocations": 1,
+  "maxAffectedTestInvocations": 3,
+  "testGroups": 6,
+  "maxTestGroups": 6,
+  "offlineParticipants": 2,
+  "reviewQueryPointerCorrections": 1,
+  "reviewQueryCorrectionMeaning": "Testauthor initially queried a nonexistent root Scientist property; correct threads-list selection found the already independently verified grant, no authority field was missing or changed",
+  "nativeStarts": 0,
+  "actorReservations": 0,
+  "additionalCliMetadataCalls": 0,
+  "webCalls": 0,
+  "studyCells": 0
+}

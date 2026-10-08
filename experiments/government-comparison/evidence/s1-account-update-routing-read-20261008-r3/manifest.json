@@ -1,0 +1,94 @@
+{
+  "key": "s1-account-update-routing-read-20261008-r3",
+  "scope": "Immutable reviewed preseal source payloads; no request/freeze/runtime yet",
+  "files": {
+    "account_observer.py": {
+      "sha256": "1934b3c21b2f267524b1c01834170eaf5120327e25f61ffa61b341caf83b1745",
+      "bytes": 3730
+    },
+    "authorization-grant.json": {
+      "sha256": "d826319cfc772507d907891e64118dc016524eaff81918982ab82c21a5f24b2e",
+      "bytes": 21472
+    },
+    "client.py": {
+      "sha256": "d1ed0cc9ed8374c8e31c10480bd7f36823a0a8d098ecbdd22e6fe389a6fef221",
+      "bytes": 64658
+    },
+    "collector.py": {
+      "sha256": "2dc8d67a1ab3a3401d7f670da9e201693621290acd9882fd2ecce571168151fc",
+      "bytes": 46334
+    },
+    "diagnostic-contract.json": {
+      "sha256": "459c0d8692b2fe7891d960ad362922c14419d47c3f4fc3320f9d181b3e52efd3",
+      "bytes": 6404
+    },
+    "expected.json": {
+      "sha256": "033f4372bb8d2e094b778b9ffdc119fc6d32559d4b05f7ada98b98cc13019d1b",
+      "bytes": 141
+    },
+    "focused-tests.log": {
+      "sha256": "5332a143c95b2cd00bb9783ceba79375358cdc08455dfbc18ab95809844fdadf",
+      "bytes": 1247
+    },
+    "frozen-method-enums.json": {
+      "sha256": "831728c4ce8c1913d25eff43229c93b81c0f5d802f93eb3b057333c4048e2220",
+      "bytes": 23235
+    },
+    "input-validation.json": {
+      "sha256": "bcf2e9adf2a00223a17e82910e6b9454f5a35375b8a693d0f33130b924304484",
+      "bytes": 1643
+    },
+    "offline-validation.json": {
+      "sha256": "ed5608f9562c4cb7373f5ec96419cd8a560910ccc8694f511bb0209461ca9fcc",
+      "bytes": 928
+    },
+    "preparation-history.json": {
+      "sha256": "c63daf0ae4e8daa5fe915d96a0c6f69306a6747e91217c8e309eff0e3e3fe1aa",
+      "bytes": 922
+    },
+    "preparation.md": {
+      "sha256": "0336c3aafccb44a0a8ca7d219e3badcd64c2c76fdc1daa7436de8e75c4906c82",
+      "bytes": 3516
+    },
+    "profile.json": {
+      "sha256": "ebe15b31de5b15e61f06d561608d509d3657eed80aaf63651dd6f15206be1b5e",
+      "bytes": 5587
+    },
+    "protocol-basis.json": {
+      "sha256": "378c2c93b6bf409f442f6acff575ff0dd6506f6529122756a80dd0704663f620",
+      "bytes": 971
+    },
+    "protocol_failure.py": {
+      "sha256": "776365db287479a23be67a4e22ac083f54ce881fa1452337d0e281529adcb38f",
+      "bytes": 6000
+    },
+    "run_once.py": {
+      "sha256": "72906e3fe27a61cbff9f81ef078ee8a20b0594b10465f7aecf061af97fb30098",
+      "bytes": 3547
+    },
+    "schema-contract.json": {
+      "sha256": "5bfa3bb503b9478cba0613a01875df0962a02ae25ef23f874ea1b99eaf35f06d",
+      "bytes": 5417
+    },
+    "source-review.md": {
+      "sha256": "c49faa0a145cf42bd418248e98310eccda8f6fee0ebf16c75e610744c8ff27de",
+      "bytes": 2868
+    },
+    "startup_observer.py": {
+      "sha256": "654a40b5f09651f39d74dfed48927c7f1fbeccc99387e95cd655afa009175d3e",
+      "bytes": 4742
+    },
+    "test-results.json": {
+      "sha256": "ee44c866a9532541370a61d2c1ad73f9e6327e20c98f2a28bf40904df7daf4c0",
+      "bytes": 143
+    },
+    "test_account_runtime.py": {
+      "sha256": "cc1787c656d06da72c2a7ab892897a1394acda6357865157d13823783d2beee3",
+      "bytes": 20130
+    },
+    "thread_gate.py": {
+      "sha256": "d62ae5d946af927d09538628905cf05a242ede47267e693b571736b79c50c7de",
+      "bytes": 5852
+    }
+  }
+}

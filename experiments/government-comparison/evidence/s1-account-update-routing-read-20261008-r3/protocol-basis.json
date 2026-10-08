@@ -1,0 +1,19 @@
+{
+  "key": "s1-account-update-routing-read-20261008-r3",
+  "baseSha": "894046afecec35fc5c6733c911e7740c77659ed6",
+  "realRuntimeBasisSha": "247105c418557cf2e2765ce7a3f65293c644d2bc",
+  "realClientBasisSha256": "26e7569fcae4bcd2dc6b6917436f35d6f1581d54d4fe6ee3fa0ab4d842c1874d",
+  "realRunOnceBasisSha256": "991dea5741f6a4d355d79801afb4f911f1d0c12476216e405e11030ec127a6f3",
+  "acceptedOfflineSha": "894046afecec35fc5c6733c911e7740c77659ed6",
+  "acceptedOfflineProposalSha256": "69bef32e8698957d01ae6cd79a79afeec7595b8db2dbc104a6595324bb36160e",
+  "acceptedObserverSha256": "1934b3c21b2f267524b1c01834170eaf5120327e25f61ffa61b341caf83b1745",
+  "observerByteIdentical": true,
+  "old27SchemaPinsUnchanged": true,
+  "schemaMembers": 28,
+  "generalMapsUnchanged": true,
+  "projection": "accountStatusObservation",
+  "handlingPhaseOnlyNoArrivalChronology": true,
+  "noOfflineFlagsOrFakeEntrypointActivation": true,
+  "nativeStarts": 0,
+  "reservations": 0
+}
