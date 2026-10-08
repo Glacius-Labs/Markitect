@@ -11,8 +11,8 @@
       "bytes": 1329
     },
     "independent-review.md": {
-      "sha256": "47fdad7971c33a3272d38529211fb72c20829c590f2e868a77af5858dab2e716",
-      "bytes": 1945
+      "sha256": "93bd8cfda221aa794d8182e6f7403f152395294c7b0e033ea0745444606027a7",
+      "bytes": 2001
     },
     "preflight-findings.json": {
       "sha256": "48d48824acfaaa561cc29e3317529fadc9ac070cda825d3272a18be630223f61",
@@ -23,12 +23,12 @@
       "bytes": 715
     },
     "terminal-summary.json": {
-      "sha256": "ad98f38f270bf67ad50c725ffe31c449239522ae4d27cb01ee1ced170889e396",
-      "bytes": 2388
+      "sha256": "a0d4976d69b945e14b4f1752b5b448063b5dee5d0cc50e900b99e76b09e1af59",
+      "bytes": 2656
     },
     "work-history.json": {
-      "sha256": "8b7e0a555da76c092085b5c5b370306d8e83c20d3136449f9813bbabd2bd9498",
-      "bytes": 660
+      "sha256": "d554ee62368b0b621e22feeef8ff006252f238848d3f6fe369457b8fa91f45bf",
+      "bytes": 928
     }
   }
 }

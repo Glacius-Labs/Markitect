@@ -8,7 +8,7 @@
     "Fresh positive one-tree/one-Actor authorization coexists with remainingAuthority0 and already-recorded actualNewAppServerTrees1/actualNewActorReservations1 before this package acted",
     "Assigned slot lacks grantIssuedUtc/assignedUtc and retains previous release metadata; cannot bind accepted activation checks exactly"
   ],
-  "independentAuthorityReviewSha256": "47fdad7971c33a3272d38529211fb72c20829c590f2e868a77af5858dab2e716",
+  "independentAuthorityReviewSha256": "93bd8cfda221aa794d8182e6f7403f152395294c7b0e033ea0745444606027a7",
   "authoritySnapshotSha256": "26355f897a70c89ca3ab89e8ec4bb81ac898acc015646378e8a30f50a4014ed9",
   "slotReleaseSha256": "056d087826b6c45893d407afdac3e507aefdcbb72403825cf7fdca744ebe5ba2",
   "sourceImplementationChanges": 0,
@@ -54,5 +54,7 @@
     "NOT RUN"
   ],
   "noRepairOrRelaunchPerformed": true,
-  "nextBoundary": "Overseer may reconcile and issue fresh separate unambiguous authority/slot transition. This allocation ends without normalization, start, retry or fallback."
+  "nextBoundary": "Overseer may reconcile and issue fresh separate unambiguous authority/slot transition. This allocation ends without normalization, start, retry or fallback.",
+  "closeoutReviewerProseCorrections": 1,
+  "closeoutReviewerProseCorrection": "Existing resumption-history record correctly described as present (consumed0/reserved1); it does not supply missing slot activation timestamps. No authority/runtime/source/test change."
 }

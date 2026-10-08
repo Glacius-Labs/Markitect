@@ -16,5 +16,7 @@
   "privateOrHoldoutReads": 0,
   "sourceChangesAfterAcceptedBase": 0,
   "canonicalMutations": 0,
-  "oldGrantOrWindowReused": false
+  "oldGrantOrWindowReused": false,
+  "closeoutReviewerProseCorrections": 1,
+  "closeoutReviewerProseCorrection": "Existing resumption-history record correctly described as present (consumed0/reserved1); it does not supply missing slot activation timestamps. No authority/runtime/source/test change."
 }
