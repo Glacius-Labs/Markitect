@@ -11,7 +11,7 @@ import (
 
 func TestProjectProposalPathsStayInSelectedInventory(t *testing.T) {
 	config := Config{InventoryRoots: []string{"src/"}, Exclusions: []Exclusion{{Path: "src/private/", Reason: "private"}}}
-	for _, path := range []string{"outside/new.go", "src/private/secret.go", ".markitect/model/new.yaml", ".markitect/drafts/agent-fixtures/x.md", ".markitect/new-control-file"} {
+	for _, path := range []string{"outside/new.go", "src/private/secret.go", "src/Private/new.go", ".markitect/model/new.yaml", ".markitect/drafts/agent-fixtures/x.md", ".markitect/new-control-file"} {
 		if projectPathAllowed(config, path) {
 			t.Errorf("proposal path %q should be rejected", path)
 		}

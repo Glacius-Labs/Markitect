@@ -691,11 +691,20 @@ func projectPathAllowed(config projectwork.Config, path string) bool {
 		return false
 	}
 	for _, exclusion := range config.Exclusions {
-		if pathWithin(path, exclusion.Path) {
+		if pathWithinPortable(path, exclusion.Path) {
 			return false
 		}
 	}
 	return true
+}
+
+func pathWithinPortable(path, prefix string) bool {
+	path = strings.ToLower(strings.TrimSuffix(path, "/"))
+	prefix = strings.ToLower(strings.TrimSuffix(prefix, "/"))
+	if prefix == "" || prefix == "." {
+		return true
+	}
+	return path == prefix || strings.HasPrefix(path, prefix+"/")
 }
 func ownedPath(owns []string, path string) bool {
 	for _, own := range owns {
