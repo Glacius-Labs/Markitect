@@ -1,0 +1,77 @@
+{
+  "key": "s1-final-output-diagnostics-offline-20261008",
+  "baseSha": "900b9e7eccda27276272b97cd8c0b14c117b1cc6",
+  "sourceCommit": "29441fa54cb6f72dbf1d6c550795b6ca6a57bd8c",
+  "files": {
+    "client.py": {
+      "sha256": "6fb1fe4f0b51a5a0150b990c86b3657579ce6a6dae15d5028d47bde94771a2e0",
+      "bytes": 43682
+    },
+    "frozen-method-enums.json": {
+      "sha256": "831728c4ce8c1913d25eff43229c93b81c0f5d802f93eb3b057333c4048e2220",
+      "bytes": 23235
+    },
+    "offline-assignment.json": {
+      "sha256": "0a99c18793414034e309f26635127ae2ba33e0d54a02dd2ded236a6c8510a189",
+      "bytes": 1408
+    },
+    "postreview.md": {
+      "sha256": "2b38b47c18de2406fc74df4cb8c0dfe142e0875d52a4eed8b2b830761b777dab",
+      "bytes": 806
+    },
+    "profile.json": {
+      "sha256": "d7f6de005778ac4e3915dee99c9c479c318f19ddcacbf89f1c9c53500b6eda6c",
+      "bytes": 2961
+    },
+    "protocol_failure.py": {
+      "sha256": "776365db287479a23be67a4e22ac083f54ce881fa1452337d0e281529adcb38f",
+      "bytes": 6000
+    },
+    "README.md": {
+      "sha256": "6a896eb17acd6875dcfdf6c9388f5628c311831aa970a2f9a87cecb72662ba83",
+      "bytes": 5036
+    },
+    "schema-contract.json": {
+      "sha256": "c4bf557d17426f4c9a6c61e97353b8361469169e067e1f911fdfc7488d369270",
+      "bytes": 2544
+    },
+    "source-bindings.json": {
+      "sha256": "a33ddf1a0fc7d0661dacbc74cb5eeba7defca427a91764ca26c425e561b6d6b6",
+      "bytes": 3167
+    },
+    "source-review.md": {
+      "sha256": "5a663429a806c6597ef8dc94cb02ef06c952e8374d9dc8080bf40b562dcaf542",
+      "bytes": 3517
+    },
+    "source-validation.json": {
+      "sha256": "46fb32952b115c237d81fc06c335ea0c401e55a324f44597f4f346f8985460b1",
+      "bytes": 651
+    },
+    "terminal-summary.json": {
+      "sha256": "8ceeb901d9a93205ff51ffd5edb1311a94422d45fc34586e4188c3a5019bfcf3",
+      "bytes": 3976
+    },
+    "test-invocation-1.txt": {
+      "sha256": "7c28ffbb57343fed2bdb9348db1e1aa632a702b3ffddd806fd2e152ea617442f",
+      "bytes": 1329
+    },
+    "test-results.json": {
+      "sha256": "a56792c0e6ccb37c94f6fbf556c3bb04f548572f88afaa9fe64ae5c141626897",
+      "bytes": 498
+    },
+    "test_protocol_failure.py": {
+      "sha256": "6f7abbfac479711abeb48d0353360c5666e61c318e3ef2d6de5816b46e5cc121",
+      "bytes": 14685
+    },
+    "thread_gate.py": {
+      "sha256": "d62ae5d946af927d09538628905cf05a242ede47267e693b571736b79c50c7de",
+      "bytes": 5852
+    },
+    "work-history.json": {
+      "sha256": "9e30c68b4e72054278381cfded9568c87e16eaaf34e71d45d7a18c29c74e9618",
+      "bytes": 1767
+    }
+  },
+  "selfExcluded": true,
+  "runtimeStarts": 0
+}
