@@ -325,8 +325,8 @@ func inspectFile(raw string) (Tool, error) {
 	if !info.Mode().IsRegular() || info.Mode()&fs.ModeSymlink != 0 {
 		return result, errors.New("path must be a regular non-symlink file")
 	}
-	if info.Size() <= 0 || info.Size() > 256<<20 {
-		return result, errors.New("file size is outside the supported 1..256 MiB bound")
+	if info.Size() <= 0 || info.Size() > agentexec.MaxRuntimeAssetBytes {
+		return result, errors.New("file size is outside the supported 1..512 MiB bound")
 	}
 	path, err := filepath.EvalSymlinks(raw)
 	if err != nil {
@@ -336,21 +336,35 @@ func inspectFile(raw string) (Tool, error) {
 	if err != nil {
 		return result, err
 	}
-	data, err := os.ReadFile(path)
+	file, err := os.Open(path)
 	if err != nil {
 		return result, err
 	}
-	if len(data) > 256<<20 {
+	defer file.Close()
+	opened, err := file.Stat()
+	if err != nil || !os.SameFile(info, opened) || opened.Size() != info.Size() || opened.Mode() != info.Mode() {
+		return result, errors.New("runtime asset changed before fingerprinting")
+	}
+	hash := sha256.New()
+	count, err := io.Copy(hash, io.LimitReader(file, agentexec.MaxRuntimeAssetBytes+1))
+	if err != nil {
+		return result, err
+	}
+	if count > agentexec.MaxRuntimeAssetBytes {
 		return result, errors.New("file exceeds the runtime asset size bound")
 	}
-	sum := sha256.Sum256(data)
+	after, err := file.Stat()
+	current, currentErr := os.Lstat(path)
+	if err != nil || currentErr != nil || count != opened.Size() || after.Size() != opened.Size() || after.Mode() != opened.Mode() || !after.ModTime().Equal(opened.ModTime()) || !os.SameFile(opened, current) || current.Mode() != opened.Mode() || current.Size() != opened.Size() {
+		return result, errors.New("runtime asset changed during fingerprinting")
+	}
 	mode := "0644"
 	if info.Mode().Perm()&0111 != 0 {
 		mode = fmt.Sprintf("%04o", info.Mode().Perm())
 	} else if runtime.GOOS != "windows" && strings.HasSuffix(strings.ToLower(path), ".py") {
 		mode = fmt.Sprintf("%04o", info.Mode().Perm())
 	}
-	return Tool{Path: path, Digest: "sha256:" + hex.EncodeToString(sum[:]), Mode: mode}, nil
+	return Tool{Path: path, Digest: "sha256:" + hex.EncodeToString(hash.Sum(nil)), Mode: mode}, nil
 }
 
 func isCommandShim(path string) bool {

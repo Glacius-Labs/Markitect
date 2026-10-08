@@ -15,6 +15,7 @@ def main() -> None:
     parser.add_argument('--tool', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--model', required=True)
+    parser.add_argument('--provider-executable', type=Path, help='Explicit native Codex executable used during preparation; later stages use the frozen runtime.')
     parser.add_argument('--stage', choices=('prepare', 'generate', 'resolve', 'adopt'), default='prepare')
     parser.add_argument('--choices', type=Path)
     args = parser.parse_args()
@@ -44,6 +45,8 @@ def main() -> None:
         git('commit', '-m', 'Freeze intentionally contradictory Brownfield Shop')
         config = ['--tool-root', str(frozen), '--provider', 'codex', '--model', args.model, '--effort', 'high',
                   '--input-micros-per-million', '20000000', '--output-micros-per-million', '100000000', '--max-cost-micros', '5000000']
+        if args.provider_executable:
+            config += ['--provider-executable', str(args.provider_executable.resolve())]
         setup = invoke(tool, root, output, 'setup', *config)
         invoke(tool, root, output, 'setup', *config, '--expect', setup['editPlan']['digest'], '--write')
         git('add', '.markitect/runtime.yaml')
@@ -64,6 +67,8 @@ def main() -> None:
         (drafts / 'discovery-request.json').write_text(json.dumps(request), encoding='utf-8')
         discovery = invoke(tool, root, output, 'discover', '--request', '.markitect/drafts/discovery-request.json', '--output', '.markitect/drafts/discovery.json')
         state = {'repo': str(root), 'tool': str(tool), 'model': args.model, 'head': head,
+                 'providerExecutable': setup['discovery']['providerBinary']['path'],
+                 'providerVersion': setup['discovery']['providerBinary']['version'],
                  'sourceRevision': subprocess.check_output(['git', '-C', str(source), 'rev-parse', 'HEAD'], text=True).strip()}
         state_path.write_text(json.dumps(state, indent=2), encoding='utf-8')
         print(json.dumps({'prepared': True, 'repo': str(root), 'sourceCommit': head}))

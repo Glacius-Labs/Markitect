@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -696,23 +698,85 @@ func TestEnvironmentAllowlistIsBoundIntoFingerprintAndReceipt(t *testing.T) {
 
 func stringList(values ...string) *[]string { return &values }
 
-func TestRuntimeFileCombinedBoundRejectsOversizedInput(t *testing.T) {
-	path := filepath.Join(t.TempDir(), "oversized-runtime.bin")
+func TestRuntimeFileOver256MiBIsFingerprintedWithStreamingHash(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "large-runtime.bin")
+	const size = (256 << 20) + 1
 	file, err := os.Create(path)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := file.Truncate(maxRuntimeFileBytes + 1); err != nil {
+	if err := file.Truncate(size); err != nil {
 		_ = file.Close()
 		t.Fatal(err)
 	}
 	if err := file.Close(); err != nil {
 		t.Fatal(err)
 	}
-	_, _, err = snapshotRuntimeFiles([]RuntimeFile{{Path: path, Mode: "0644", Digest: "sha256:" + strings.Repeat("0", 64)}})
-	if err == nil || !strings.Contains(err.Error(), "256 MiB bound") {
-		t.Fatalf("expected bounded oversized runtime rejection, got %v", err)
+	if err := os.Chmod(path, 0644); err != nil {
+		t.Fatal(err)
 	}
+	declaredDigest := zeroFileDigest(size)
+	states, _, err := snapshotRuntimeFiles([]RuntimeFile{{Path: path, Mode: "0644", Digest: declaredDigest}})
+	if err != nil {
+		t.Fatalf("expected runtime asset over 256 MiB to fingerprint successfully: %v", err)
+	}
+	if len(states) != 1 || states[0].digest != declaredDigest {
+		t.Fatalf("large runtime state did not preserve its declared digest: %#v", states)
+	}
+}
+
+func TestRuntimeFileIndividualAndCombinedBoundsRejectBeforeHashing(t *testing.T) {
+	root := t.TempDir()
+	createSparseFile := func(name string, size int64) string {
+		t.Helper()
+		path := filepath.Join(root, name)
+		file, err := os.Create(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := file.Truncate(size); err != nil {
+			_ = file.Close()
+			t.Fatal(err)
+		}
+		if err := file.Close(); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.Chmod(path, 0644); err != nil {
+			t.Fatal(err)
+		}
+		return path
+	}
+
+	oversized := createSparseFile("oversized-runtime.bin", MaxRuntimeAssetBytes+1)
+	_, _, err := snapshotRuntimeFiles([]RuntimeFile{{Path: oversized, Mode: "0644", Digest: "sha256:" + strings.Repeat("0", 64)}})
+	if err == nil || !strings.Contains(err.Error(), "512 MiB bound") {
+		t.Fatalf("expected per-file runtime bound rejection, got %v", err)
+	}
+
+	first := createSparseFile("first-runtime.bin", 1)
+	second := createSparseFile("second-runtime.bin", MaxRuntimeAssetBytes)
+	files := []RuntimeFile{
+		{Path: first, Mode: "0644", Digest: digest([]byte{0})},
+		{Path: second, Mode: "0644", Digest: "sha256:" + strings.Repeat("0", 64)},
+	}
+	_, _, err = snapshotRuntimeFiles(files)
+	if err == nil || !strings.Contains(err.Error(), "512 MiB bound") {
+		t.Fatalf("expected combined runtime bound rejection, got %v", err)
+	}
+}
+
+func zeroFileDigest(size int64) string {
+	hasher := sha256.New()
+	zeros := make([]byte, 64<<10)
+	for size > 0 {
+		chunk := int64(len(zeros))
+		if size < chunk {
+			chunk = size
+		}
+		_, _ = hasher.Write(zeros[:chunk])
+		size -= chunk
+	}
+	return "sha256:" + hex.EncodeToString(hasher.Sum(nil))
 }
 
 func TestPortableArtifactAliasesRejected(t *testing.T) {

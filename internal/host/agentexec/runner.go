@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/rand"
+	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -20,12 +21,16 @@ import (
 )
 
 const (
-	maxOutputBound      = 16 << 20
-	maxRuntimeFiles     = 32
-	maxRuntimeFileBytes = 256 << 20
-	maxSnapshotFiles    = 200000
-	maxSnapshotBytes    = 1 << 30
+	maxOutputBound    = 16 << 20
+	maxRuntimeFiles   = 32
+	maxSnapshotFiles  = 200000
+	maxSnapshotBytes  = 1 << 30
+	maxFileHashBuffer = 64 << 10
 )
+
+// MaxRuntimeAssetBytes bounds each pinned runtime asset, the combined declared
+// runtime assets, and the runner executable fingerprinted for an invocation.
+const MaxRuntimeAssetBytes int64 = 512 << 20
 
 type limitedBuffer struct {
 	buffer   bytes.Buffer
@@ -275,11 +280,10 @@ func fingerprintConfig(input Config, inheritedEnvironment []string) (Config, str
 	if isShellExecutable(executable) {
 		return Config{}, "", nil, "", "", "", nil, "", errors.New("runner command must be a direct executable, not a shell")
 	}
-	executableBytes, err := readBoundedFile(executable, 256<<20)
+	executableDigest, _, err := hashBoundedFile(executable, MaxRuntimeAssetBytes)
 	if err != nil {
 		return Config{}, "", nil, "", "", "", nil, "", errors.New("configured runner executable could not be fingerprinted")
 	}
-	executableDigest := digest(executableBytes)
 	runtimeBefore, runtimeDigest, err := snapshotRuntimeFiles(cfg.RuntimeFiles)
 	if err != nil {
 		return Config{}, "", nil, "", "", "", nil, "", err
@@ -935,14 +939,18 @@ func snapshotRuntimeFiles(files []RuntimeFile) ([]runtimeState, string, error) {
 		if err != nil || !info.Mode().IsRegular() || info.Mode()&os.ModeSymlink != 0 {
 			return nil, "", errors.New("runtime file must be a regular non-symlink file")
 		}
-		if info.Size() < 0 || info.Size() > maxRuntimeFileBytes || total+info.Size() > maxRuntimeFileBytes {
-			return nil, "", errors.New("runtime files exceed the 256 MiB bound")
+		if info.Size() < 0 || info.Size() > MaxRuntimeAssetBytes || total+info.Size() > MaxRuntimeAssetBytes {
+			return nil, "", errors.New("runtime files exceed the 512 MiB bound")
 		}
-		content, err := readBoundedFile(real, maxRuntimeFileBytes)
-		if err != nil || digest(content) != file.Digest || runtimeFileMode(info.Mode()) != file.Mode {
+		fileDigest, size, err := hashBoundedFile(real, MaxRuntimeAssetBytes)
+		if err != nil || fileDigest != file.Digest || size != info.Size() || runtimeFileMode(info.Mode()) != file.Mode {
 			return nil, "", errors.New("runtime file differs from its declared digest or mode")
 		}
-		total += int64(len(content))
+		after, err := os.Lstat(real)
+		if err != nil || !after.Mode().IsRegular() || after.Mode()&os.ModeSymlink != 0 || !os.SameFile(info, after) || after.Size() != info.Size() || runtimeFileMode(after.Mode()) != file.Mode {
+			return nil, "", errors.New("runtime file changed while it was fingerprinted")
+		}
+		total += size
 		states = append(states, runtimeState{path: real, mode: file.Mode, digest: file.Digest})
 	}
 	encoded, _ := json.Marshal(files)
@@ -972,14 +980,45 @@ func verifyRuntimeFiles(expected []runtimeState) error {
 // cannot prove which bytes the OS loaded if the path is replaced and restored
 // between checks.
 func verifyExecutableDigest(path, expected string) error {
-	content, err := readBoundedFile(path, 256<<20)
+	actual, _, err := hashBoundedFile(path, MaxRuntimeAssetBytes)
 	if err != nil {
 		return err
 	}
-	if digest(content) != expected {
+	if actual != expected {
 		return errors.New("configured runner executable changed during invocation")
 	}
 	return nil
+}
+
+// hashBoundedFile hashes a regular file without retaining its contents. It checks
+// the opened file's size before and after streaming so a concurrent size change
+// fails closed even when the resulting byte count remains under the limit.
+func hashBoundedFile(name string, limit int64) (string, int64, error) {
+	file, err := os.Open(name)
+	if err != nil {
+		return "", 0, err
+	}
+	defer file.Close()
+	before, err := file.Stat()
+	if err != nil {
+		return "", 0, err
+	}
+	if !before.Mode().IsRegular() || before.Size() < 0 || before.Size() > limit {
+		return "", 0, errors.New("file exceeds hash bound or is not regular")
+	}
+	hasher := sha256.New()
+	count, err := io.CopyBuffer(hasher, io.LimitReader(file, limit+1), make([]byte, maxFileHashBuffer))
+	if err != nil {
+		return "", 0, err
+	}
+	after, err := file.Stat()
+	if err != nil {
+		return "", 0, err
+	}
+	if count > limit || count != before.Size() || after.Size() != before.Size() {
+		return "", 0, errors.New("file size changed while hashing or exceeds hash bound")
+	}
+	return "sha256:" + hex.EncodeToString(hasher.Sum(nil)), count, nil
 }
 
 func readBoundedFile(name string, limit int64) ([]byte, error) {

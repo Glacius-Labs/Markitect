@@ -10,6 +10,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/Glacius-Labs/Markitect/internal/host/agentexec"
 	"github.com/Glacius-Labs/Markitect/internal/host/projectwork"
 	"github.com/Glacius-Labs/Markitect/internal/modules/projectmodel"
 )
@@ -92,6 +93,61 @@ func TestDiscoverRejectsCommandShimAndParsesOnlyVersion(t *testing.T) {
 	}
 	if _, err := Discover(Options{Provider: "codex"}); err == nil || !strings.Contains(err.Error(), "--tool-root") {
 		t.Fatalf("missing source root error = %v", err)
+	}
+}
+
+func TestInspectFileSupportsLargeProviderWithoutBufferingAsset(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "current-provider.exe")
+	file, err := os.Create(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	const size = (256 << 20) + 1
+	if err := file.Truncate(size); err != nil {
+		file.Close()
+		t.Fatal(err)
+	}
+	if err := file.Close(); err != nil {
+		t.Fatal(err)
+	}
+	want := sha256.New()
+	zeros := make([]byte, 32<<10)
+	for remaining := int64(size); remaining > 0; {
+		chunk := int64(len(zeros))
+		if remaining < chunk {
+			chunk = remaining
+		}
+		want.Write(zeros[:chunk])
+		remaining -= chunk
+	}
+	var before, after runtime.MemStats
+	runtime.ReadMemStats(&before)
+	tool, err := inspectFile(path)
+	runtime.ReadMemStats(&after)
+	if err != nil {
+		t.Fatalf("inspect current-size provider: %v", err)
+	}
+	if tool.Digest != "sha256:"+hex.EncodeToString(want.Sum(nil)) {
+		t.Fatalf("streamed provider digest = %s", tool.Digest)
+	}
+	if allocated := after.TotalAlloc - before.TotalAlloc; allocated > 16<<20 {
+		t.Fatalf("fingerprinting buffered a large asset: allocated %d bytes", allocated)
+	}
+}
+
+func TestInspectFileRetainsFiniteAssetSizeLimit(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "oversized-provider.exe")
+	file, err := os.Create(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := file.Truncate(agentexec.MaxRuntimeAssetBytes + 1); err != nil {
+		file.Close()
+		t.Fatal(err)
+	}
+	file.Close()
+	if _, err := inspectFile(path); err == nil || !strings.Contains(err.Error(), "512 MiB") {
+		t.Fatalf("oversized provider was not rejected: %v", err)
 	}
 }
 

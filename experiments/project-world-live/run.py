@@ -18,6 +18,7 @@ def main() -> None:
     parser.add_argument('--tool', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--model', required=True)
+    parser.add_argument('--provider-executable', type=Path, help='Explicit native Codex executable used during preparation; later stages use the frozen runtime.')
     parser.add_argument('--stage', choices=('prepare', 'run', 'repair', 'verify', 'apply'), default='prepare')
     args = parser.parse_args()
     output = args.output.resolve()
@@ -46,7 +47,9 @@ def main() -> None:
         setup_args = ['--tool-root', str(frozen), '--provider', 'codex', '--model', args.model,
                       '--effort', 'high', '--input-micros-per-million', '20000000',
                       '--output-micros-per-million', '100000000', '--max-cost-micros', '10000000']
-        invoke(tool, root, output, 'doctor', '--tool-root', str(frozen), '--provider', 'codex')
+        provider_args = ['--provider-executable', str(args.provider_executable.resolve())] if args.provider_executable else []
+        setup_args += provider_args
+        invoke(tool, root, output, 'doctor', '--tool-root', str(frozen), '--provider', 'codex', *provider_args)
         preview = invoke(tool, root, output, 'setup', *setup_args)
         invoke(tool, root, output, 'setup', *setup_args, '--expect', preview['editPlan']['digest'], '--write')
         git('add', '.markitect/runtime.yaml')
@@ -84,6 +87,8 @@ def main() -> None:
                       'Implement the accepted model change: allow cancellation during packing as well as confirmed, keep atomic reservation release and shipped-order rejection, update documentation and add a regression test.', '--write')
         assert len(plan['managers']) == 6 and len(plan['checks']) == 1, plan
         state = {'repo': str(root), 'tool': str(tool), 'model': args.model,
+                 'providerExecutable': preview['discovery']['providerBinary']['path'],
+                 'providerVersion': preview['discovery']['providerBinary']['version'],
                  'base': base, 'head': git('rev-parse', 'HEAD'), 'plan': plan['id'],
                  'sourceRevision': subprocess.check_output(['git', '-C', str(source), 'rev-parse', 'HEAD'], text=True).strip()}
         state_path.write_text(json.dumps(state, indent=2), encoding='utf-8')
