@@ -1,0 +1,16 @@
+apiVersion: project.markitect.example.org/v1alpha1
+kind: Statement
+metadata:
+  name: requires-active-reservation
+  namespace: commerce.sales.orders
+purpose: Requires one active inventory reservation before a confirmed order can be cancelled.
+spec:
+  category: rule
+  description: Cancellation requires exactly one active reservation for the order; a missing, already released, or duplicate active reservation leaves the order confirmed by rolling back the transaction.
+  public: true
+  uses:
+    - namespace: commerce.sales.orders
+      name: order
+    - namespace: commerce.sales.inventory.reservations
+      name: reservation
+  requires: []

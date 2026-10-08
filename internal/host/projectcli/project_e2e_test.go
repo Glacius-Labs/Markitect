@@ -7,14 +7,66 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"reflect"
 	"runtime"
 	"strings"
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/internal/host/projectadoption"
+	"github.com/Glacius-Labs/Markitect/internal/host/projectrun"
 	"github.com/Glacius-Labs/Markitect/internal/host/projectwork"
 	"github.com/Glacius-Labs/Markitect/internal/modules/projectmodel"
 )
+
+func TestProjectAgentFixtureMatchesClosedWorkResponseContract(t *testing.T) {
+	_, file, _, ok := runtime.Caller(0)
+	if !ok {
+		t.Fatal("test caller path unavailable")
+	}
+	fixtures := filepath.Join(filepath.Dir(file), "..", "..", "..", "examples", "project-world", ".markitect", "agent-fixtures")
+	invocationBytes, err := os.ReadFile(filepath.Join(fixtures, "invocation.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var invocation struct {
+		Request struct {
+			Context struct {
+				ResponseSchema json.RawMessage `json:"responseSchema"`
+			} `json:"context"`
+		} `json:"request"`
+	}
+	if err := json.Unmarshal(invocationBytes, &invocation); err != nil {
+		t.Fatal(err)
+	}
+	wantSchema, err := projectrun.TaskResponseSchema("work")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var gotValue, wantValue any
+	if err := json.Unmarshal(invocation.Request.Context.ResponseSchema, &gotValue); err != nil {
+		t.Fatalf("decode fixture response schema: %v", err)
+	}
+	if err := json.Unmarshal(wantSchema, &wantValue); err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(gotValue, wantValue) {
+		t.Fatal("invocation fixture responseSchema differs from projectrun's work contract")
+	}
+	responseBytes, err := os.ReadFile(filepath.Join(fixtures, "response.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var response struct {
+		ReportJSON json.RawMessage `json:"reportJson"`
+		Candidate  json.RawMessage `json:"candidateJson"`
+	}
+	if err := json.Unmarshal(responseBytes, &response); err != nil {
+		t.Fatal(err)
+	}
+	if len(response.ReportJSON) == 0 || len(response.Candidate) != 0 {
+		t.Fatal("fixture must carry the typed executor report, not infer-only candidateJson")
+	}
+}
 
 func TestProjectWorldFixtureAndReviewedEdit(t *testing.T) {
 	repo := copyProjectWorld(t)
@@ -251,8 +303,8 @@ func TestProjectAdoptionCommandsKeepDeferredScopeOutOfModel(t *testing.T) {
 		Method:          "human-review",
 		SchemaDigest:    bindingsSchema,
 		Claims: []projectadoption.Claim{
-			{ID: "documented-cancellation", ScopeID: "orders", Kind: "documented-intent", Method: "documentation", Statement: "The selected documentation allows cancellation before shipment.", Evidence: []projectadoption.EvidenceRef{{EvidenceID: "cancellation-doc", StartLine: 3, EndLine: 3, Excerpt: "A confirmed order can be cancelled before shipment."}}, Uncertainty: []string{}},
-			{ID: "inventory-deferred", ScopeID: "inventory", Kind: "hypothesis", Method: "synthesis", Statement: "Inventory may be considered as a separate adoption scope.", Evidence: []projectadoption.EvidenceRef{{EvidenceID: "cancellation-doc", StartLine: 3, EndLine: 3, Excerpt: "A confirmed order can be cancelled before shipment."}}, Uncertainty: []string{"No inventory-specific evidence was selected."}},
+			{ID: "documented-cancellation", ScopeID: "orders", Kind: "documented-intent", Method: "documentation", Statement: "The selected documentation allows cancellation before shipment.", Evidence: []projectadoption.EvidenceRef{{EvidenceID: "cancellation-doc", StartLine: 3, EndLine: 3, Excerpt: "A confirmed order can be cancelled before shipment only when exactly one active inventory reservation exists."}}, Uncertainty: []string{}},
+			{ID: "inventory-deferred", ScopeID: "inventory", Kind: "hypothesis", Method: "synthesis", Statement: "Inventory may be considered as a separate adoption scope.", Evidence: []projectadoption.EvidenceRef{{EvidenceID: "cancellation-doc", StartLine: 3, EndLine: 3, Excerpt: "A confirmed order can be cancelled before shipment only when exactly one active inventory reservation exists."}}, Uncertainty: []string{"No inventory-specific evidence was selected."}},
 		},
 		Terms:          []projectadoption.Term{},
 		Contradictions: []projectadoption.Contradiction{},

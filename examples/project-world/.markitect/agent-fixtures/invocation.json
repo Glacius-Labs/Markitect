@@ -11,7 +11,25 @@
     "projectionId": "project-world/shop-cancellation",
     "scopeIds": ["project.markitect.example.org/v1alpha1/Manager/commerce.sales.orders/orders"],
     "policyIds": [],
-    "context": {"purpose": "Implement only the authorized order cancellation change."},
+    "context": {
+      "purpose": "Implement only the authorized order cancellation change.",
+      "responseSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["status", "summary", "delegations", "integrated", "questions", "risks", "resolvedQuestions", "resolvedRisks", "escalateTo"],
+        "properties": {
+          "status": {"type": "string", "enum": ["complete", "partial", "blocked", "failed", "no-op"]},
+          "summary": {"type": "string", "minLength": 1, "maxLength": 4096},
+          "delegations": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["managerId", "goal"], "properties": {"managerId": {"type": "string", "minLength": 1}, "goal": {"type": "string", "minLength": 1, "maxLength": 4096}}}},
+          "integrated": {"type": "boolean", "enum": [false]},
+          "questions": {"type": "array", "items": {"type": "string", "minLength": 1, "maxLength": 4096}},
+          "risks": {"type": "array", "items": {"type": "string", "minLength": 1, "maxLength": 4096}},
+          "resolvedQuestions": {"type": "array", "items": {"type": "string", "minLength": 1, "maxLength": 4096}},
+          "resolvedRisks": {"type": "array", "items": {"type": "string", "minLength": 1, "maxLength": 4096}},
+          "escalateTo": {"type": "string", "maxLength": 128}
+        }
+      }
+    },
     "artifacts": [
       {
         "path": ".markitect/views/project.md",
