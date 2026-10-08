@@ -196,7 +196,7 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 		if err := persistState(store, &report); err != nil {
 			return empty, err
 		}
-		proposal, invocation, err := invokeManager(ctx, host, invoker, root, runtime, plan, input, *task, "work", nil, nil, starts)
+		proposal, invocation, err := invokeManager(ctx, host, invoker, root, runtime, plan, input, *task, "work", children, nil, nil, starts)
 		starts++
 		if err != nil {
 			task.State = "uncertain"
@@ -245,7 +245,7 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 		if parsed.Status == "no-op" && len(proposal.Response.CandidateFiles) > 0 {
 			return failRun(store, report, fmt.Errorf("manager %s claimed no-op while proposing files", task.ManagerID))
 		}
-		candidate, err := applyProposal(current, proposal.Response.CandidateFiles, input.Report, *task, "work", runtime.Limits)
+		candidate, err := applyProposal(current, proposal.Response.CandidateFiles, input.Report, *task, "work", nil, runtime.Limits)
 		if err != nil {
 			return failRun(store, report, err)
 		}
@@ -301,7 +301,7 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 		if err := persistState(store, &report); err != nil {
 			return empty, err
 		}
-		proposal, invocation, err := invokeManager(ctx, host, invoker, root, runtime, plan, input, *task, "integrate", conflicts, childSummaries, starts)
+		proposal, invocation, err := invokeManager(ctx, host, invoker, root, runtime, plan, input, *task, "integrate", children, conflicts, childSummaries, starts)
 		starts++
 		if err != nil {
 			task.State = "uncertain"
@@ -326,14 +326,17 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 		if parsed.Status == "blocked" || parsed.Status == "failed" || parsed.Status == "no-op" {
 			return blockRun(store, report, fmt.Errorf("manager %s integration is %s: %s", task.ManagerID, parsed.Status, parsed.Summary))
 		}
-		resolved, err := applyProposal(merged, proposal.Response.CandidateFiles, input.Report, *task, "integrate", runtime.Limits)
+		resolved, err := applyProposal(merged, proposal.Response.CandidateFiles, input.Report, *task, "integrate", conflicts, runtime.Limits)
 		if err != nil {
 			return failRun(store, report, err)
 		}
 		if len(conflicts) > 0 && !proposesEvery(proposal.Response.CandidateFiles, conflicts) {
 			return blockRun(store, report, fmt.Errorf("manager %s did not resolve child path conflict(s): %s", task.ManagerID, strings.Join(conflicts, ", ")))
 		}
-		outstandingQ, outstandingR := managerObligations(*task, report.Tasks, children)
+		outstandingQ, outstandingR, obligationsErr := managerObligations(*task, report.Tasks, children)
+		if obligationsErr != nil {
+			return blockRun(store, report, fmt.Errorf("manager %s obligations: %w", task.ManagerID, obligationsErr))
+		}
 		resolvedQ, remainingQ, err := resolveObligations(outstandingQ, parsed.ResolvedQuestions)
 		if err != nil {
 			return blockRun(store, report, fmt.Errorf("manager %s questions: %w", task.ManagerID, err))
@@ -435,7 +438,7 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 	return report, nil
 }
 
-func invokeManager(ctx context.Context, host Host, invoker Invoker, root string, runtime Runtime, plan PlanRecord, project *Project, task ManagerTask, phase string, conflicts []string, childReports []childReport, start int) (agentexec.RunResult, InvocationLog, error) {
+func invokeManager(ctx context.Context, host Host, invoker Invoker, root string, runtime Runtime, plan PlanRecord, project *Project, task ManagerTask, phase string, activeChildIDs, conflicts []string, childReports []childReport, start int) (agentexec.RunResult, InvocationLog, error) {
 	var result agentexec.RunResult
 	var log InvocationLog
 	configAgent, ok := runtime.Agents[task.ManagerID]
@@ -459,6 +462,17 @@ func invokeManager(ctx context.Context, host Host, invoker Invoker, root string,
 	if err != nil {
 		return result, log, err
 	}
+	active := map[string]bool{}
+	for _, id := range activeChildIDs {
+		active[id] = true
+	}
+	filteredChildren := managerContext.Children[:0]
+	for _, child := range managerContext.Children {
+		if active[child.ID] {
+			filteredChildren = append(filteredChildren, child)
+		}
+	}
+	managerContext.Children = filteredChildren
 	ctxPayload := struct {
 		Phase           string                      `json:"phase"`
 		Goal            string                      `json:"goal"`
@@ -596,13 +610,19 @@ func scopedArtifacts(project *Project, task ManagerTask, agent Agent, limits Lim
 	return out, nil
 }
 
-func applyProposal(base candidateData, proposals []agentexec.CandidateFile, report projectmodel.Report, task ManagerTask, phase string, limits Limits) (candidateData, error) {
+func applyProposal(base candidateData, proposals []agentexec.CandidateFile, report projectmodel.Report, task ManagerTask, phase string, conflictPaths []string, limits Limits) (candidateData, error) {
 	files := map[string]File{}
 	for p, f := range base.Files {
 		f.Content = append([]byte(nil), f.Content...)
 		files[p] = f
 	}
 	seen := map[string]bool{}
+	conflictSet := map[string]bool{}
+	if phase == "integrate" {
+		for _, path := range conflictPaths {
+			conflictSet[path] = true
+		}
+	}
 	var total int64
 	for _, p := range proposals {
 		if !safeRepoPath(p.Path) {
@@ -616,7 +636,7 @@ func applyProposal(base candidateData, proposals []agentexec.CandidateFile, repo
 			return candidateData{}, fmt.Errorf("proposal may not write protected path %s", p.Path)
 		}
 		owner, known := ownerForPath(report, p.Path)
-		if !known || owner != task.ManagerID {
+		if !known || (owner != task.ManagerID && !conflictSet[p.Path]) {
 			return candidateData{}, fmt.Errorf("manager %s proposed path owned by %q (phase %s): %s", task.ManagerID, owner, phase, p.Path)
 		}
 		if int64(len(p.Content)) > limits.MaxCandidateFileBytes {
@@ -1037,17 +1057,37 @@ func recordEscalation(report *RunReport, task ManagerTask, response TaskResponse
 	report.Escalations = append(report.Escalations, Escalation{ID: id, FromManager: task.ManagerID, ToManager: task.ParentTask, Question: strings.Join(uniqueSorted(parts), "; "), AffectedTasks: []string{task.ID}, Status: "open"})
 	return nil
 }
-func managerObligations(parent ManagerTask, tasks []ManagerTask, children []string) ([]string, []string) {
+func managerObligations(parent ManagerTask, tasks []ManagerTask, children []string) ([]string, []string, error) {
 	questions := append([]string(nil), parent.Questions...)
 	risks := append([]string(nil), parent.Risks...)
+	questionOwners := map[string]string{}
+	riskOwners := map[string]string{}
+	for _, q := range parent.Questions {
+		questionOwners[q] = parent.ManagerID
+	}
+	for _, r := range parent.Risks {
+		riskOwners[r] = parent.ManagerID
+	}
 	for _, id := range children {
 		child := findTask(tasks, id)
 		if child != nil {
+			for _, q := range child.Questions {
+				if prior, exists := questionOwners[q]; exists && prior != child.ManagerID {
+					return nil, nil, fmt.Errorf("question %q is ambiguous between Managers %s and %s", q, prior, child.ManagerID)
+				}
+				questionOwners[q] = child.ManagerID
+			}
+			for _, r := range child.Risks {
+				if prior, exists := riskOwners[r]; exists && prior != child.ManagerID {
+					return nil, nil, fmt.Errorf("risk %q is ambiguous between Managers %s and %s", r, prior, child.ManagerID)
+				}
+				riskOwners[r] = child.ManagerID
+			}
 			questions = append(questions, child.Questions...)
 			risks = append(risks, child.Risks...)
 		}
 	}
-	return uniqueSorted(questions), uniqueSorted(risks)
+	return uniqueSorted(questions), uniqueSorted(risks), nil
 }
 func resolveObligations(outstanding, resolved []string) ([]string, []string, error) {
 	want := map[string]bool{}
