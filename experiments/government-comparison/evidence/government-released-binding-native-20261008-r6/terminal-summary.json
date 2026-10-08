@@ -1,0 +1,102 @@
+{
+  "key": "government-released-binding-native-20261008-r6",
+  "status": "terminal-incomplete",
+  "sourceCommit": "a9bcb89d3b5ded16c7db9125ee6c0755bfd026e4",
+  "actualInputCommit": "1ef0e7dcc1b74e52d942c5ba406a568b5646934b",
+  "freezeCommit": "8e0ae28cb696bc64a326351f2c93379a1f72c1ce",
+  "freezeSha256": "4a5b67067d1ecb8e08d303c5675a946b7dbf74c7254ffe77cc792f54a9e5b628",
+  "actualAdmission": "passed",
+  "requestSha256": "eac83bf61112c8352f0ef7daf79929ff161c75d511b7dcfddd5989d3fa07cc9c",
+  "nativeQueue": {
+    "status": "complete",
+    "jobState": "accepted-scoped",
+    "runStatus": "accepted-scoped",
+    "runStage": "complete",
+    "promotionStatus": "promoted",
+    "candidateCommit": "413b7bbb518f594500f22486c27c63db9328d5c0",
+    "candidateTree": "6bc4205465453852eb67cd03b42de6349f2fb634",
+    "nativeReportedPeakParallelism": 1,
+    "freshChecks": [
+      {
+        "Name": "inventory-overflow",
+        "Tool": "go",
+        "ExitCode": 0,
+        "Milliseconds": 6270,
+        "TimeoutMilliseconds": 30000,
+        "Output": "ok  \texample.invalid/markitect/government-positive/inventory\t0.213s\n"
+      }
+    ]
+  },
+  "outerQueueStatus": "completed",
+  "resume": {
+    "status": "not-started",
+    "admissionAttempted": true,
+    "reservationAdded": false,
+    "processStarted": false,
+    "failure": "ValueError: R4 fresh checks differ from the exact configured check names/tools",
+    "boundary": "Conditional Resume budget admission, before inserting a new native-start row or spawning process."
+  },
+  "newConsumption": {
+    "freshStaticCasePreparations": 1,
+    "actualAdmissionActions": 1,
+    "runOnceInvocations": 1,
+    "nativeStarts": 1,
+    "wrapperAttemptsIncludingFailures": 3,
+    "deterministicDelegates": 3,
+    "reservedNativeSessionSeconds": 150,
+    "realActorStarts": 0,
+    "modelProviderCalls": 0,
+    "metadataSessions": 0,
+    "studyCells": 0,
+    "classicNativeStarts": 0,
+    "fullProductSuites": 0
+  },
+  "cumulativeConsumption": {
+    "nativeStarts": 13,
+    "wrapperAttempts": 13,
+    "deterministicDelegates": 10,
+    "reservedNativeSessionSeconds": 1950,
+    "historicalRealActorStarts": 5,
+    "historicalKnownTokenSubtotal": 53331,
+    "totalRealTokens": null
+  },
+  "timing": {
+    "nativeProcessWallSeconds": 10.794795599998906,
+    "bridgeSecondsAfterTerminalReceiptAvailable": 10.98673677444458,
+    "driverSecondsAfterBridgeCompletionReadback": 11.234606900019571,
+    "deadlineSeconds": 38,
+    "resumeCompletionElapsed": null,
+    "delegateMeasuredWallSeconds": [
+      0.14738910004962236,
+      0.1429024999961257,
+      0.13963510002940893
+    ],
+    "delegateMeasuredWallSecondsSum": 0.429926700075157,
+    "nativeReportedActorWallMilliseconds": 1372,
+    "engineeringAndReviewUsage": "unknown"
+  },
+  "history": {
+    "original12StartsUnchanged": true,
+    "original3CorrectionsUnchanged": true,
+    "originalAllocationUnchanged": true,
+    "appendedNativeStarts": 1,
+    "appendedR6GrantCorrection": 1,
+    "liveLedgerSha256": "c0a91051a16f5d2d3a7754789c2ad02b67b6b2f57f32ac4bd16562700b8fcf1a",
+    "frozenInputsUnchanged": 55,
+    "rawArchivePairs": 92
+  },
+  "limits": {
+    "s1Complete": false,
+    "semanticAcceptance": false,
+    "humanAcceptance": false,
+    "productQualityEvidence": false,
+    "realActorToolCapabilityVerified": false,
+    "r5": "terminal NOT ADMITTED, unchanged",
+    "r4": "terminal incomplete, unchanged",
+    "remainingQuotaReusable": false
+  },
+  "closureDeviations": [
+    "Read-only document inspection twice used incorrect relative directories; no mutation or experimental execution.",
+    "Read-only SQLite table JSON serialization initially failed on a BLOB; corrected archival JSON encoding to base64. Original database bytes already archived unchanged."
+  ]
+}

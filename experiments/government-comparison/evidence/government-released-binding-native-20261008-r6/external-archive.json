@@ -1,0 +1,561 @@
+{
+  "root": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6",
+  "exclusions": [
+    ".git",
+    "__pycache__"
+  ],
+  "pairs": [
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\actual-input-preflight.log",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\actual-input-preflight.log",
+      "sha256": "585a700e764734388a86e6cde720dace5fab35763c1c88ad73a3544d0f795014",
+      "bytes": 16882
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\case-claimed.json",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\case-claimed.json",
+      "sha256": "cf218b7ddd5eaaf0e9a97889a04ee07c2dee08fc1fe70ee29cce1c02a034f49f",
+      "bytes": 94
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\coordinator-r6-a1-preflight-snapshot.json",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\coordinator-r6-a1-preflight-snapshot.json",
+      "sha256": "9db0292ff9e7bec4c3605ab2594dd9a6d2bec4a12e5fa4cad5a6a89edcc7782d",
+      "bytes": 267765
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\coordinator-r6-preflight-snapshot.json",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\coordinator-r6-preflight-snapshot.json",
+      "sha256": "15a996adf7b532f01497fa3e6f47673a0430a29fc9143270c59c0fb48c2850cc",
+      "bytes": 260756
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\fixture-preparation.log",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\fixture-preparation.log",
+      "sha256": "fb923418c65e531f7be489de7a8350b2c31ec1e6885f24322462cee79e77907a",
+      "bytes": 940
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\freeze.log",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\freeze.log",
+      "sha256": "b04523cd831209282bc2217233c8ef361ede63f90521c07322ebd59e423c20a1",
+      "bytes": 282
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\actor\\go.mod",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\government\\actor\\go.mod",
+      "sha256": "4b2ce0ea5c1d5ccbd8f974e642bcd3581bd4e3a6094b565d6414bd03c816ff8d",
+      "bytes": 64
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\actor\\government.yaml",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\government\\actor\\government.yaml",
+      "sha256": "816041553684dc5710baf63217d435f62e9f997d1bbba4b74d9a2c4803da4325",
+      "bytes": 6456
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\actor\\inventory\\reservation.go",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\government\\actor\\inventory\\reservation.go",
+      "sha256": "d08e4543e86e22600b73686ea3408159953cb1bf90f153df939da81aecf8f49c",
+      "bytes": 392
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\actor\\inventory\\reservation_test.go",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\government\\actor\\inventory\\reservation_test.go",
+      "sha256": "fbf4ff362a7c3ac8a4a52142e78495658244f2e42e78bfea19d0987c10dde264",
+      "bytes": 430
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\actor\\order.yaml",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\government\\actor\\order.yaml",
+      "sha256": "7707549c484a2af0f864bb914b9b192e9352a603985f7cede093a2c32655223d",
+      "bytes": 379
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\actor\\README.md",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\government\\actor\\README.md",
+      "sha256": "0f8f755da63e5117ecc332cf6365cdd6570079633dbe33f117bd51d6053f14e1",
+      "bytes": 753
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\authority.json",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\government\\authority.json",
+      "sha256": "5b942ff68a7e410aec24dfde7c9f15912f1d06b4c03ecbb3044f55acfc47834d",
+      "bytes": 676
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\controller-evidence\\outer-run\\controller-bootstrap.json",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\government\\controller-evidence\\outer-run\\controller-bootstrap.json",
+      "sha256": "2acae806769e089e7f0c4d96a635c48c9436e5f2144482a3e3b9854235c9b487",
+      "bytes": 1206
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\controller-evidence\\outer-run\\controller-completion.json",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\government\\controller-evidence\\outer-run\\controller-completion.json",
+      "sha256": "66042c3b2a987db3154ee5bb960a492920964dc5ae26df8a83730bcf48ce37bf",
+      "bytes": 897
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\controller-evidence\\outer-run\\process\\process.json",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\government\\controller-evidence\\outer-run\\process\\process.json",
+      "sha256": "5d82e2a7d6f557961bb65d1ee6698198f83fd9b727c67e5f727c26eb16073df4",
+      "bytes": 1518
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\controller-evidence\\outer-run\\process\\stderr.log",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\government\\controller-evidence\\outer-run\\process\\stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\controller-evidence\\outer-run\\process\\stdout.log",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\government\\controller-evidence\\outer-run\\process\\stdout.log",
+      "sha256": "459b3ebe17aef812a90ee84d75553c25bb4950c73511fa563119bd5fe833b0a6",
+      "bytes": 1891
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\controller-evidence\\outer-run\\released-inputs\\0",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\government\\controller-evidence\\outer-run\\released-inputs\\0",
+      "sha256": "b83103dc1f0c9d9985bfe540692869754abbd40249809e55c6aebc4a9d24417b",
+      "bytes": 97605
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\controller-evidence\\outer-run\\released-inputs\\1",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\government\\controller-evidence\\outer-run\\released-inputs\\1",
+      "sha256": "690cc1bb0cb057c98e7de1745f2a8c9af1507c94fbd5a2f808db449210ed0bc0",
+      "bytes": 18029
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\controller-evidence\\outer-run\\released-inputs\\10",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\government\\controller-evidence\\outer-run\\released-inputs\\10",
+      "sha256": "dcced224fbd5bd74ac95527fb1f44001c5e966fefab54332186c39f468b10b43",
+      "bytes": 166
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\controller-evidence\\outer-run\\released-inputs\\11",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\government\\controller-evidence\\outer-run\\released-inputs\\11",
+      "sha256": "d87063e5597f257004c731b66c59c56c91038861c6877b1a3dca6b8c4e919125",
+      "bytes": 105832
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\controller-evidence\\outer-run\\released-inputs\\2",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\government\\controller-evidence\\outer-run\\released-inputs\\2",
+      "sha256": "ffd452e09ef1f7db356c570cbf90ddd4fac3eee44c035df09a5dc785cb6573a5",
+      "bytes": 559
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\controller-evidence\\outer-run\\released-inputs\\3",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\government\\controller-evidence\\outer-run\\released-inputs\\3",
+      "sha256": "3ef4281ce9b31162174f7987d6331280dc502b866e014ac05a50ad8a860bde76",
+      "bytes": 4655
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\controller-evidence\\outer-run\\released-inputs\\4",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\government\\controller-evidence\\outer-run\\released-inputs\\4",
+      "sha256": "b917f5a5eb99f0a607fd282a81acdf7b085e6a1dba14f89c8d0c32f349c82c3e",
+      "bytes": 2562
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\controller-evidence\\outer-run\\released-inputs\\5",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\government\\controller-evidence\\outer-run\\released-inputs\\5",
+      "sha256": "fc677770bdc15b3c9e69b8906b974297baad5180f391be44eabee2b53a5ac55d",
+      "bytes": 9643
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\controller-evidence\\outer-run\\released-inputs\\6",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\government\\controller-evidence\\outer-run\\released-inputs\\6",
+      "sha256": "9db0292ff9e7bec4c3605ab2594dd9a6d2bec4a12e5fa4cad5a6a89edcc7782d",
+      "bytes": 267765
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\controller-evidence\\outer-run\\released-inputs\\7",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\government\\controller-evidence\\outer-run\\released-inputs\\7",
+      "sha256": "02609c2e1b5d82db42640c97dc72c4e34b1a4a3fc9168e657da64c8b9f13f2be",
+      "bytes": 1175
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\controller-evidence\\outer-run\\released-inputs\\8",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\government\\controller-evidence\\outer-run\\released-inputs\\8",
+      "sha256": "dd617d58a9021fce0b11482b740d78ccb5ddd143ff0c6fa4fbe08983af7f6705",
+      "bytes": 61440
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\controller-evidence\\outer-run\\released-inputs\\9",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\government\\controller-evidence\\outer-run\\released-inputs\\9",
+      "sha256": "a24afddf2c0fe7fdf31787a63508419995c15e7b801d36976b6ee5524d7dc110",
+      "bytes": 459
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\controller-evidence\\outer-run\\request.json",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\government\\controller-evidence\\outer-run\\request.json",
+      "sha256": "eac83bf61112c8352f0ef7daf79929ff161c75d511b7dcfddd5989d3fa07cc9c",
+      "bytes": 6515
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\fixture-ledger.sqlite",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\government\\fixture-ledger.sqlite",
+      "sha256": "56fbd6c2f5cf75ed5be2e3100699ddce7ee18438c5dbdbaebc206145dfa5cade",
+      "bytes": 143360
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\grant.json",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\government\\grant.json",
+      "sha256": "4b66098db950909a3001500070e8338d352df7a86cd7405ae4ffb208999a8c62",
+      "bytes": 1599
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\outer-results\\r6-queue.json",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\government\\outer-results\\r6-queue.json",
+      "sha256": "829b397132f068a0fa41761481b97c77d66a27b77900913994b4142b23ee22b3",
+      "bytes": 14304
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\preparation-final.json",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\government\\preparation-final.json",
+      "sha256": "9cbaf3ec7b69f4613536c11c64fc3d9929ba64f12d9d7b7ab0d8f1737aa57ef4",
+      "bytes": 11368
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\protocol.json",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\government\\protocol.json",
+      "sha256": "4df77fbeb5b7aba14f8dd4ad43f196a70f926f6f7064220b3f84e767d07c3d73",
+      "bytes": 3485
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\released\\backlog.json",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\government\\released\\backlog.json",
+      "sha256": "ffd452e09ef1f7db356c570cbf90ddd4fac3eee44c035df09a5dc785cb6573a5",
+      "bytes": 559
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\released\\mechanical_actor.py",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\government\\released\\mechanical_actor.py",
+      "sha256": "02609c2e1b5d82db42640c97dc72c4e34b1a4a3fc9168e657da64c8b9f13f2be",
+      "bytes": 1175
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\released\\request.json",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\government\\released\\request.json",
+      "sha256": "eac83bf61112c8352f0ef7daf79929ff161c75d511b7dcfddd5989d3fa07cc9c",
+      "bytes": 6515
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\released\\role-auth.json",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\government\\released\\role-auth.json",
+      "sha256": "3ef4281ce9b31162174f7987d6331280dc502b866e014ac05a50ad8a860bde76",
+      "bytes": 4655
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\released\\runtime.json",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\government\\released\\runtime.json",
+      "sha256": "690cc1bb0cb057c98e7de1745f2a8c9af1507c94fbd5a2f808db449210ed0bc0",
+      "bytes": 18029
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\released\\task-card.txt",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\government\\released\\task-card.txt",
+      "sha256": "dcced224fbd5bd74ac95527fb1f44001c5e966fefab54332186c39f468b10b43",
+      "bytes": 166
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\released\\wrapper-diagnostics\\starts.sqlite",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\government\\released\\wrapper-diagnostics\\starts.sqlite",
+      "sha256": "9c0cb87492281dd5f9c449eed7d6a59f9688e0383f7e00724e7d22867eb5620a",
+      "bytes": 8192
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\released\\wrapper-diagnostics\\wrapper-000001\\finished.json",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\government\\released\\wrapper-diagnostics\\wrapper-000001\\finished.json",
+      "sha256": "5ae723ecf4bd3c68f39fd217ca90d473dfcf4eb125bdcff2eb0d3c857d7d42b2",
+      "bytes": 1337
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\released\\wrapper-diagnostics\\wrapper-000001\\start.json",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\government\\released\\wrapper-diagnostics\\wrapper-000001\\start.json",
+      "sha256": "3fe7a105557eda8a4e87efc8e0218bcc17dcd34fd17791d593f0876bc92fb616",
+      "bytes": 790
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\released\\wrapper-diagnostics\\wrapper-000001\\stderr.log",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\government\\released\\wrapper-diagnostics\\wrapper-000001\\stderr.log",
+      "sha256": "079092c9dd6e818451349397c880123739b12cacae205ed4384ae627cb230f2f",
+      "bytes": 2284
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\released\\wrapper-diagnostics\\wrapper-000001\\stdout.log",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\government\\released\\wrapper-diagnostics\\wrapper-000001\\stdout.log",
+      "sha256": "0dbe1980a5733e206f911a0325d0915b895a43e0aaee4687e5612548635fdb40",
+      "bytes": 1679
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\released\\wrapper-diagnostics\\wrapper-000002\\finished.json",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\government\\released\\wrapper-diagnostics\\wrapper-000002\\finished.json",
+      "sha256": "fe1013fe377bea50f24dfa7ffa8e8678b0544dab6b3dfb62ff9f293e5ce7834e",
+      "bytes": 1337
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\released\\wrapper-diagnostics\\wrapper-000002\\start.json",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\government\\released\\wrapper-diagnostics\\wrapper-000002\\start.json",
+      "sha256": "b0be71b058f64437eed0edd085a21663b691f33c2f9700b6ad3d667023d049ec",
+      "bytes": 790
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\released\\wrapper-diagnostics\\wrapper-000002\\stderr.log",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\government\\released\\wrapper-diagnostics\\wrapper-000002\\stderr.log",
+      "sha256": "c962967788f12909d0eb05459d04f5f85a9f19a3cf3a05aaf9d3a8e92257fcd0",
+      "bytes": 2296
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\released\\wrapper-diagnostics\\wrapper-000002\\stdout.log",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\government\\released\\wrapper-diagnostics\\wrapper-000002\\stdout.log",
+      "sha256": "f27c3cb672b72615aba9f1f67cd03268bf578a942c5f006d614a6def9340ddf8",
+      "bytes": 1787
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\released\\wrapper-diagnostics\\wrapper-000003\\finished.json",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\government\\released\\wrapper-diagnostics\\wrapper-000003\\finished.json",
+      "sha256": "6be84cd095e4e0d920f4e9b11b44e7f666011f88baba71a49dcf72aef257fcff",
+      "bytes": 1337
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\released\\wrapper-diagnostics\\wrapper-000003\\start.json",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\government\\released\\wrapper-diagnostics\\wrapper-000003\\start.json",
+      "sha256": "5f3d1d9e255b63dab7f85b9ea6a2a10b548f120de3066ed55f75ab666eecce20",
+      "bytes": 790
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\released\\wrapper-diagnostics\\wrapper-000003\\stderr.log",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\government\\released\\wrapper-diagnostics\\wrapper-000003\\stderr.log",
+      "sha256": "3e2ec0066d03f348bc990f075868d793e7e955da3dfd8d52848c2efde083c01e",
+      "bytes": 2300
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\released\\wrapper-diagnostics\\wrapper-000003\\stdout.log",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\government\\released\\wrapper-diagnostics\\wrapper-000003\\stdout.log",
+      "sha256": "b65be9846a0edd90bddf3b74abbd14f4d0f2d35bec517b773d626f704e7c6b21",
+      "bytes": 999
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\released\\wrapper-diagnostics-config.json",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\government\\released\\wrapper-diagnostics-config.json",
+      "sha256": "a24afddf2c0fe7fdf31787a63508419995c15e7b801d36976b6ee5524d7dc110",
+      "bytes": 459
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\results\\queue-state\\government-queue--e1e4a8f3b8a4ea1dc161ca162b0f0605\\events.jsonl",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\government\\results\\queue-state\\government-queue--e1e4a8f3b8a4ea1dc161ca162b0f0605\\events.jsonl",
+      "sha256": "147dfb31fbefbb0b0bb097b1c9c3389eb7f293f3ecc8e5badc86b573f69cec03",
+      "bytes": 66715
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\results\\queue-state\\government-queue--e1e4a8f3b8a4ea1dc161ca162b0f0605\\queue-report-00000001.json",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\government\\results\\queue-state\\government-queue--e1e4a8f3b8a4ea1dc161ca162b0f0605\\queue-report-00000001.json",
+      "sha256": "e8acdb77442bfbdf38c0a6812ea3fe65c78ceea9543f8e95ff8aacd7762f2e4f",
+      "bytes": 1529
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\results\\queue-state\\government-queue--e1e4a8f3b8a4ea1dc161ca162b0f0605\\queue-report-00000002.json",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\government\\results\\queue-state\\government-queue--e1e4a8f3b8a4ea1dc161ca162b0f0605\\queue-report-00000002.json",
+      "sha256": "e90e90f275e1ba09cd2d5956d9593fca06571ade9e7ab4d10a19d2b338b96420",
+      "bytes": 1521
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\results\\queue-state\\government-queue--e1e4a8f3b8a4ea1dc161ca162b0f0605\\queue-report-00000014.json",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\government\\results\\queue-state\\government-queue--e1e4a8f3b8a4ea1dc161ca162b0f0605\\queue-report-00000014.json",
+      "sha256": "459b3ebe17aef812a90ee84d75553c25bb4950c73511fa563119bd5fe833b0a6",
+      "bytes": 1891
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\results\\queue-state\\government-queue--e1e4a8f3b8a4ea1dc161ca162b0f0605\\queue.lease",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\government\\results\\queue-state\\government-queue--e1e4a8f3b8a4ea1dc161ca162b0f0605\\queue.lease",
+      "sha256": "a37ced9232fe59993b4d1c4d45379f26bdc0c35b692d964db9e3fec322b2b4cd",
+      "bytes": 192
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\results\\run-state\\government-run--a9a590d7ae06dee6ca648b0ecf23dbef\\actor-0001.json",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\government\\results\\run-state\\government-run--a9a590d7ae06dee6ca648b0ecf23dbef\\actor-0001.json",
+      "sha256": "b968efe4de54162402ab9d37dc52f6251da3345200cb01f4432284b7000b6b1e",
+      "bytes": 3485
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\results\\run-state\\government-run--a9a590d7ae06dee6ca648b0ecf23dbef\\actor-0002.json",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\government\\results\\run-state\\government-run--a9a590d7ae06dee6ca648b0ecf23dbef\\actor-0002.json",
+      "sha256": "4d76c2782efd8ceb57d5600272c0f125f6a7d69febfd69ae40b2cbe164d98389",
+      "bytes": 3702
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\results\\run-state\\government-run--a9a590d7ae06dee6ca648b0ecf23dbef\\actor-0003.json",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\government\\results\\run-state\\government-run--a9a590d7ae06dee6ca648b0ecf23dbef\\actor-0003.json",
+      "sha256": "b82507efdead3bec93bdcd4312f918a5b500649869b912df0656f384c1fd8eef",
+      "bytes": 2714
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\results\\run-state\\government-run--a9a590d7ae06dee6ca648b0ecf23dbef\\candidate.index",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\government\\results\\run-state\\government-run--a9a590d7ae06dee6ca648b0ecf23dbef\\candidate.index",
+      "sha256": "64757852d93d7bf68dbf304b4065d90e54e24cf5dbc28e1850198714ee7c7321",
+      "bytes": 587
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\results\\run-state\\government-run--a9a590d7ae06dee6ca648b0ecf23dbef\\checks.json",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\government\\results\\run-state\\government-run--a9a590d7ae06dee6ca648b0ecf23dbef\\checks.json",
+      "sha256": "873053aa3c785fba9c21a5525e2eb01da0116a4ceb84bddc503bd5d12ebc7032",
+      "bytes": 231
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\results\\run-state\\government-run--a9a590d7ae06dee6ca648b0ecf23dbef\\decision.json",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\government\\results\\run-state\\government-run--a9a590d7ae06dee6ca648b0ecf23dbef\\decision.json",
+      "sha256": "c82eb2c716c243823543469e2a1dc7941e753fa8fc0f32e90b1bb5d4e375211a",
+      "bytes": 490
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\results\\run-state\\government-run--a9a590d7ae06dee6ca648b0ecf23dbef\\evidence.json",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\government\\results\\run-state\\government-run--a9a590d7ae06dee6ca648b0ecf23dbef\\evidence.json",
+      "sha256": "77609f134e91cb8d076d96cb5179bdb53bca848750dc7d359135bb10bbf74849",
+      "bytes": 487
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\results\\run-state\\government-run--a9a590d7ae06dee6ca648b0ecf23dbef\\material.json",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\government\\results\\run-state\\government-run--a9a590d7ae06dee6ca648b0ecf23dbef\\material.json",
+      "sha256": "99fbb172c7dd871b666df208e4104bf7aa921f4ec6d330a806a53133969de02a",
+      "bytes": 863
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\results\\run-state\\government-run--a9a590d7ae06dee6ca648b0ecf23dbef\\promotion-0dcb3fb9d0569719a39869a9ebd9900f52b6af55bb4505ace89a46059e4d0295.json",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\government\\results\\run-state\\government-run--a9a590d7ae06dee6ca648b0ecf23dbef\\promotion-0dcb3fb9d0569719a39869a9ebd9900f52b6af55bb4505ace89a46059e4d0295.json",
+      "sha256": "60180727cab8d7b74af0ae47cda32d1e0a2d517843231a4f9d6c4c21883eff2b",
+      "bytes": 760
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\results\\run-state\\government-run--a9a590d7ae06dee6ca648b0ecf23dbef\\promotion-completion-0dcb3fb9d0569719a39869a9ebd9900f52b6af55bb4505ace89a46059e4d0295.json",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\government\\results\\run-state\\government-run--a9a590d7ae06dee6ca648b0ecf23dbef\\promotion-completion-0dcb3fb9d0569719a39869a9ebd9900f52b6af55bb4505ace89a46059e4d0295.json",
+      "sha256": "80847471ec877fabc3c87379b7f2df4e5a692042efc91d88e303013945274f01",
+      "bytes": 926
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\results\\run-state\\government-run--a9a590d7ae06dee6ca648b0ecf23dbef\\report.json",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\government\\results\\run-state\\government-run--a9a590d7ae06dee6ca648b0ecf23dbef\\report.json",
+      "sha256": "b76eb7ff5fd18202752a62de0724482718434ed3f9eb9c78f80df1c8552a58ef",
+      "bytes": 26891
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\results\\temporary\\government-candidate-562009934\\go.mod",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\government\\results\\temporary\\government-candidate-562009934\\go.mod",
+      "sha256": "4b2ce0ea5c1d5ccbd8f974e642bcd3581bd4e3a6094b565d6414bd03c816ff8d",
+      "bytes": 64
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\results\\temporary\\government-candidate-562009934\\government.yaml",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\government\\results\\temporary\\government-candidate-562009934\\government.yaml",
+      "sha256": "816041553684dc5710baf63217d435f62e9f997d1bbba4b74d9a2c4803da4325",
+      "bytes": 6456
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\results\\temporary\\government-candidate-562009934\\inventory\\reservation.go",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\government\\results\\temporary\\government-candidate-562009934\\inventory\\reservation.go",
+      "sha256": "04dfd8eee7ab692480661c37a4bfee065d1c29da185b90337f16fb4d786ca4ed",
+      "bytes": 450
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\results\\temporary\\government-candidate-562009934\\inventory\\reservation_test.go",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\government\\results\\temporary\\government-candidate-562009934\\inventory\\reservation_test.go",
+      "sha256": "fbf4ff362a7c3ac8a4a52142e78495658244f2e42e78bfea19d0987c10dde264",
+      "bytes": 430
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\results\\temporary\\government-candidate-562009934\\order.yaml",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\government\\results\\temporary\\government-candidate-562009934\\order.yaml",
+      "sha256": "7707549c484a2af0f864bb914b9b192e9352a603985f7cede093a2c32655223d",
+      "bytes": 379
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\results\\temporary\\government-candidate-562009934\\README.md",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\government\\results\\temporary\\government-candidate-562009934\\README.md",
+      "sha256": "0f8f755da63e5117ecc332cf6365cdd6570079633dbe33f117bd51d6053f14e1",
+      "bytes": 753
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\role-evidence\\2ff3b941a497fb9dcd8bd4db511aa4f38810ca28e4d086163c5f4ae164083495\\process.json",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\government\\role-evidence\\2ff3b941a497fb9dcd8bd4db511aa4f38810ca28e4d086163c5f4ae164083495\\process.json",
+      "sha256": "f4d144436e0f8ce668f1928ad9d2cf282aff39294d9264306f5ce6821adf5b7c",
+      "bytes": 1353
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\role-evidence\\2ff3b941a497fb9dcd8bd4db511aa4f38810ca28e4d086163c5f4ae164083495\\stderr.log",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\government\\role-evidence\\2ff3b941a497fb9dcd8bd4db511aa4f38810ca28e4d086163c5f4ae164083495\\stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\role-evidence\\2ff3b941a497fb9dcd8bd4db511aa4f38810ca28e4d086163c5f4ae164083495\\stdout.log",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\government\\role-evidence\\2ff3b941a497fb9dcd8bd4db511aa4f38810ca28e4d086163c5f4ae164083495\\stdout.log",
+      "sha256": "0dbe1980a5733e206f911a0325d0915b895a43e0aaee4687e5612548635fdb40",
+      "bytes": 1679
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\role-evidence\\614bd64ec373b94dd09a2c0c128bf66ea8efd531fa00f4d56acff25ac4b94c82\\process.json",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\government\\role-evidence\\614bd64ec373b94dd09a2c0c128bf66ea8efd531fa00f4d56acff25ac4b94c82\\process.json",
+      "sha256": "7d9af4c902f9f184cc654553c90072e4dc3e5157414be20938105f5663683f63",
+      "bytes": 1350
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\role-evidence\\614bd64ec373b94dd09a2c0c128bf66ea8efd531fa00f4d56acff25ac4b94c82\\stderr.log",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\government\\role-evidence\\614bd64ec373b94dd09a2c0c128bf66ea8efd531fa00f4d56acff25ac4b94c82\\stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\role-evidence\\614bd64ec373b94dd09a2c0c128bf66ea8efd531fa00f4d56acff25ac4b94c82\\stdout.log",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\government\\role-evidence\\614bd64ec373b94dd09a2c0c128bf66ea8efd531fa00f4d56acff25ac4b94c82\\stdout.log",
+      "sha256": "b65be9846a0edd90bddf3b74abbd14f4d0f2d35bec517b773d626f704e7c6b21",
+      "bytes": 999
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\role-evidence\\889013a587d0792f5a4eefd5ce02a23d1866071f5496ddbb62f97b35b1ad0569\\process.json",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\government\\role-evidence\\889013a587d0792f5a4eefd5ce02a23d1866071f5496ddbb62f97b35b1ad0569\\process.json",
+      "sha256": "29e66399368f20ae34d5e1a76c472f9bedfe5292d25ab50b6915de3273017a08",
+      "bytes": 1351
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\role-evidence\\889013a587d0792f5a4eefd5ce02a23d1866071f5496ddbb62f97b35b1ad0569\\stderr.log",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\government\\role-evidence\\889013a587d0792f5a4eefd5ce02a23d1866071f5496ddbb62f97b35b1ad0569\\stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\role-evidence\\889013a587d0792f5a4eefd5ce02a23d1866071f5496ddbb62f97b35b1ad0569\\stdout.log",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\government\\role-evidence\\889013a587d0792f5a4eefd5ce02a23d1866071f5496ddbb62f97b35b1ad0569\\stdout.log",
+      "sha256": "f27c3cb672b72615aba9f1f67cd03268bf578a942c5f006d614a6def9340ddf8",
+      "bytes": 1787
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\history-native-starts.sqlite",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\history-native-starts.sqlite",
+      "sha256": "dd617d58a9021fce0b11482b740d78ccb5ddd143ff0c6fa4fbe08983af7f6705",
+      "bytes": 61440
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\outer-preparation.log",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\outer-preparation.log",
+      "sha256": "c47723388820482bccb26e6d010b1d24d67336ceee6e6668bcb0728550bf9b65",
+      "bytes": 922
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\released-r6-a1-grant.json",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\released-r6-a1-grant.json",
+      "sha256": "fc677770bdc15b3c9e69b8906b974297baad5180f391be44eabee2b53a5ac55d",
+      "bytes": 9643
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\released-r6-grant.json",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\released-r6-grant.json",
+      "sha256": "257ac1c4e7ebd2acb7024e3286b5de1871064def856406a1726d788cf2701721",
+      "bytes": 8530
+    },
+    {
+      "original": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\run-once.log",
+      "copy": "evidence\\government-released-binding-native-20261008-r6\\raw-external\\run-once.log",
+      "sha256": "a02ffd3eba856f3f957006af116ac03d8f54eb02dd4004fb54a6fd978f4566a4",
+      "bytes": 27456
+    }
+  ]
+}

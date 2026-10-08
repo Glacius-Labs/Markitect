@@ -1,0 +1,582 @@
+{
+  "apiVersion": "markitect.government-execution/v1alpha1",
+  "runId": "government-run--a9a590d7ae06dee6ca648b0ecf23dbef",
+  "status": "accepted-scoped",
+  "stage": "complete",
+  "reportPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\results\\run-state\\government-run--a9a590d7ae06dee6ca648b0ecf23dbef\\report.json",
+  "activeRef": "refs/markitect/government/active/scientist-positive",
+  "baseRevision": "e0a7e52acb052fda318204d29a14d10ad23e88e7",
+  "priorConstitution": "sha256:c1d7194bd6a8961001c68cbace3f7da40d5daf1b22570026d097e6091cf63e93",
+  "runtimePin": "sha256:91d29c9b09299d5ea3483ddef1bc6dd688e2230a3553bb638897876edb84d2af",
+  "toolPins": "sha256:d4c49e283d91d316cc0181f7dc1ee698f0155b44e046e6d957cfc7550d3d7694",
+  "timeoutSeconds": 38,
+  "workspace": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\results\\temporary\\government-candidate-562009934",
+  "plan": {
+    "apiVersion": "markitect.government-plan/v1alpha1",
+    "status": "planned-within-declared-boundary",
+    "digest": "sha256:bb2f6b8a71a29d9d334eeb198d18732c43fa31a188b67da460dde0d9df141533",
+    "activeConstitution": "sha256:c1d7194bd6a8961001c68cbace3f7da40d5daf1b22570026d097e6091cf63e93",
+    "orderDigest": "sha256:13da04887f293b0586504b4d0f91c85c0aeedf1c44612db8634986b6eb245107",
+    "inventoryDigest": "sha256:bb21629d2be0f05990bac9f96223e7a27aa85cd5464442cbb5e99bc3246cbe91",
+    "provisional": true,
+    "affected": [
+      {
+        "apiVersion": "markitect.government-example/v1alpha1",
+        "kind": "Requirement",
+        "namespace": "inventory",
+        "name": "safe-release"
+      }
+    ],
+    "work": [
+      {
+        "area": {
+          "apiVersion": "markitect.government/v1alpha1",
+          "kind": "Area",
+          "namespace": "inventory",
+          "name": "root"
+        },
+        "subjects": [
+          {
+            "apiVersion": "markitect.government-example/v1alpha1",
+            "kind": "Requirement",
+            "namespace": "inventory",
+            "name": "safe-release"
+          }
+        ],
+        "paths": [
+          "inventory/reservation.go",
+          "inventory/reservation_test.go"
+        ],
+        "mandates": [
+          {
+            "apiVersion": "markitect.government/v1alpha1",
+            "kind": "Mandate",
+            "namespace": "inventory",
+            "name": "release-change"
+          }
+        ]
+      }
+    ],
+    "integrationReviews": [
+      {
+        "apiVersion": "markitect.government/v1alpha1",
+        "kind": "Area",
+        "namespace": "inventory",
+        "name": "root"
+      }
+    ],
+    "cabinet": [
+      {
+        "apiVersion": "markitect.government/v1alpha1",
+        "kind": "Ressort",
+        "namespace": "inventory",
+        "name": "correctness"
+      }
+    ],
+    "survey": {
+      "observation": {
+        "roots": [
+          "."
+        ],
+        "exclusions": [
+          {
+            "path": "README.md",
+            "reason": "Human fixture operation and evidence-limit instructions are outside candidate scope."
+          }
+        ],
+        "entries": [
+          {
+            "path": "README.md",
+            "type": "file",
+            "mode": "100644",
+            "source": "native",
+            "status": "excluded",
+            "reason": "Human fixture operation and evidence-limit instructions are outside candidate scope."
+          },
+          {
+            "path": "go.mod",
+            "type": "file",
+            "mode": "100644",
+            "digest": "sha256:4b2ce0ea5c1d5ccbd8f974e642bcd3581bd4e3a6094b565d6414bd03c816ff8d",
+            "source": "native",
+            "status": "observed"
+          },
+          {
+            "path": "government.yaml",
+            "type": "file",
+            "mode": "100644",
+            "digest": "sha256:816041553684dc5710baf63217d435f62e9f997d1bbba4b74d9a2c4803da4325",
+            "source": "native",
+            "status": "observed"
+          },
+          {
+            "path": "inventory",
+            "type": "directory",
+            "mode": "directory",
+            "source": "native",
+            "status": "observed"
+          },
+          {
+            "path": "inventory/reservation.go",
+            "type": "file",
+            "mode": "100644",
+            "digest": "sha256:d08e4543e86e22600b73686ea3408159953cb1bf90f153df939da81aecf8f49c",
+            "source": "native",
+            "status": "observed"
+          },
+          {
+            "path": "inventory/reservation_test.go",
+            "type": "file",
+            "mode": "100644",
+            "digest": "sha256:fbf4ff362a7c3ac8a4a52142e78495658244f2e42e78bfea19d0987c10dde264",
+            "source": "native",
+            "status": "observed"
+          },
+          {
+            "path": "order.yaml",
+            "type": "file",
+            "mode": "100644",
+            "digest": "sha256:7707549c484a2af0f864bb914b9b192e9352a603985f7cede093a2c32655223d",
+            "source": "native",
+            "status": "observed"
+          }
+        ],
+        "digest": "sha256:bb21629d2be0f05990bac9f96223e7a27aa85cd5464442cbb5e99bc3246cbe91",
+        "provisional": true,
+        "complete": true
+      },
+      "artifacts": [
+        {
+          "path": "README.md",
+          "class": "excluded",
+          "purpose": "Human fixture operation and evidence-limit instructions are outside candidate scope.",
+          "subjects": null,
+          "observed": {
+            "path": "README.md",
+            "type": "file",
+            "mode": "100644",
+            "source": "native",
+            "status": "excluded",
+            "reason": "Human fixture operation and evidence-limit instructions are outside candidate scope."
+          }
+        },
+        {
+          "path": "go.mod",
+          "class": "realization",
+          "purpose": "Declares the dependency-free module used to test the candidate in isolation.",
+          "writer": {
+            "apiVersion": "markitect.government/v1alpha1",
+            "kind": "Area",
+            "namespace": "inventory",
+            "name": "root"
+          },
+          "subjects": null,
+          "observed": {
+            "path": "go.mod",
+            "type": "file",
+            "mode": "100644",
+            "digest": "sha256:4b2ce0ea5c1d5ccbd8f974e642bcd3581bd4e3a6094b565d6414bd03c816ff8d",
+            "source": "native",
+            "status": "observed"
+          }
+        },
+        {
+          "path": "government.yaml",
+          "class": "canonical",
+          "purpose": "Canonical source for the prior model and declared observation boundary.",
+          "writer": {
+            "apiVersion": "markitect.government/v1alpha1",
+            "kind": "Area",
+            "namespace": "inventory",
+            "name": "root"
+          },
+          "subjects": null,
+          "observed": {
+            "path": "government.yaml",
+            "type": "file",
+            "mode": "100644",
+            "digest": "sha256:816041553684dc5710baf63217d435f62e9f997d1bbba4b74d9a2c4803da4325",
+            "source": "native",
+            "status": "observed"
+          }
+        },
+        {
+          "path": "inventory/reservation.go",
+          "class": "realization",
+          "purpose": "Source implementation of overflow-safe inventory release.",
+          "writer": {
+            "apiVersion": "markitect.government/v1alpha1",
+            "kind": "Area",
+            "namespace": "inventory",
+            "name": "root"
+          },
+          "subjects": [
+            {
+              "apiVersion": "markitect.government-example/v1alpha1",
+              "kind": "Requirement",
+              "namespace": "inventory",
+              "name": "safe-release"
+            }
+          ],
+          "observed": {
+            "path": "inventory/reservation.go",
+            "type": "file",
+            "mode": "100644",
+            "digest": "sha256:d08e4543e86e22600b73686ea3408159953cb1bf90f153df939da81aecf8f49c",
+            "source": "native",
+            "status": "observed"
+          }
+        },
+        {
+          "path": "inventory/reservation_test.go",
+          "class": "realization",
+          "purpose": "Focused test of the integer overflow boundary and ordinary addition.",
+          "writer": {
+            "apiVersion": "markitect.government/v1alpha1",
+            "kind": "Area",
+            "namespace": "inventory",
+            "name": "root"
+          },
+          "subjects": [
+            {
+              "apiVersion": "markitect.government-example/v1alpha1",
+              "kind": "Requirement",
+              "namespace": "inventory",
+              "name": "safe-release"
+            }
+          ],
+          "observed": {
+            "path": "inventory/reservation_test.go",
+            "type": "file",
+            "mode": "100644",
+            "digest": "sha256:fbf4ff362a7c3ac8a4a52142e78495658244f2e42e78bfea19d0987c10dde264",
+            "source": "native",
+            "status": "observed"
+          }
+        },
+        {
+          "path": "order.yaml",
+          "class": "canonical",
+          "purpose": "Explicit prior-Constitution-bound request used by the bounded scenario.",
+          "writer": {
+            "apiVersion": "markitect.government/v1alpha1",
+            "kind": "Area",
+            "namespace": "inventory",
+            "name": "root"
+          },
+          "subjects": null,
+          "observed": {
+            "path": "order.yaml",
+            "type": "file",
+            "mode": "100644",
+            "digest": "sha256:7707549c484a2af0f864bb914b9b192e9352a603985f7cede093a2c32655223d",
+            "source": "native",
+            "status": "observed"
+          }
+        }
+      ],
+      "unknown": null,
+      "missing": null,
+      "unavailable": null,
+      "unassignedSubjects": null,
+      "unrealizedSubjects": null,
+      "coverage": "accounted-within-declared-boundary"
+    },
+    "findings": null,
+    "limits": [
+      "Read-only proposal; no execution, independent agent review, votes, acceptance or promotion occurred.",
+      "Native observation is provisional, not an atomic Git revision; G2 must rebind immutable inputs and revalidate prior authority.",
+      "Declared assignments and purposes are structural claims, not proof of implementation semantics or sufficient cabinet selection.",
+      "Cooperative process shares caller OS rights; worktree and path checks are not a sandbox."
+    ]
+  },
+  "cabinet": [
+    {
+      "ressort": {
+        "apiVersion": "markitect.government/v1alpha1",
+        "kind": "Ressort",
+        "namespace": "inventory",
+        "name": "correctness"
+      },
+      "priorMandate": {
+        "apiVersion": "markitect.government/v1alpha1",
+        "kind": "Mandate",
+        "namespace": "inventory",
+        "name": "release-change"
+      },
+      "mandateDigest": "sha256:513c7252137c282e6bb2223536bfc8ec3fb44715b4c38bc8c0a280ae8a0cbefb",
+      "slotId": "positive-ressort-correctness"
+    }
+  ],
+  "changedPaths": [
+    "inventory/reservation.go"
+  ],
+  "candidateCommit": "413b7bbb518f594500f22486c27c63db9328d5c0",
+  "candidateTree": "6bc4205465453852eb67cd03b42de6349f2fb634",
+  "candidate": {
+    "id": "sha256:f1975e8daa0628770a1d4a95499a65f35b48bbe1507b59c84fc3bb7436f18879",
+    "input": {
+      "priorConstitutionDigest": "sha256:c1d7194bd6a8961001c68cbace3f7da40d5daf1b22570026d097e6091cf63e93",
+      "baseRevision": "e0a7e52acb052fda318204d29a14d10ad23e88e7",
+      "repositoryTreeDigest": "sha256:40f8782ed14fa0648262bc0af25313ad1cd56bc62d08a206dcd359dcb16dce13",
+      "modelDigest": "sha256:c1d7194bd6a8961001c68cbace3f7da40d5daf1b22570026d097e6091cf63e93",
+      "planDigest": "sha256:bb2f6b8a71a29d9d334eeb198d18732c43fa31a188b67da460dde0d9df141533",
+      "checkDefinitionsDigest": "sha256:d05841dfe3dd18e8fea766129a8a690c3e3100214168a29b648637bd0803650d",
+      "toolPinsDigest": "sha256:d4c49e283d91d316cc0181f7dc1ee698f0155b44e046e6d957cfc7550d3d7694",
+      "inventoryDigest": "sha256:bb21629d2be0f05990bac9f96223e7a27aa85cd5464442cbb5e99bc3246cbe91"
+    }
+  },
+  "checks": [
+    {
+      "Name": "inventory-overflow",
+      "Tool": "go",
+      "ExitCode": 0,
+      "Milliseconds": 6270,
+      "TimeoutMilliseconds": 30000,
+      "Output": "ok  \texample.invalid/markitect/government-positive/inventory\t0.213s\n"
+    }
+  ],
+  "actors": [
+    {
+      "sequence": 1,
+      "startedAt": "2026-10-08T03:46:26.0404162Z",
+      "finishedAt": "2026-10-08T03:46:26.5363003Z",
+      "phase": "execute",
+      "slotId": "positive-root-executor",
+      "scopes": [
+        "[\"markitect.government-example/v1alpha1\",\"Requirement\",\"inventory\",\"safe-release\"]"
+      ],
+      "result": {
+        "Response": {
+          "apiVersion": "markitect.example.org/agent-execution/v1alpha1",
+          "runId": "85e6b795b1c6e1785213b6ae431f2b3b",
+          "nonce": "834f3d80a89f1f68b7e2f6bc54b149d3",
+          "role": "executor",
+          "inputDigest": "sha256:d0406d4b0f5a19bce3526624f399901813dd2a35747cb679640bdcd9912aa099",
+          "outcome": "proposed",
+          "candidateFiles": [
+            {
+              "path": "inventory/reservation.go",
+              "mode": "0644",
+              "content": "package inventory\n\nimport (\n\t\"errors\"\n\t\"math\"\n)\n\nvar ErrOverflow = errors.New(\"available stock would overflow\")\n\n// Release adds released stock to available inventory without wrapping.\nfunc Release(available, amount int64) (int64, error) {\n\tif amount \u003c 0 {\n\t\treturn available, errors.New(\"release amount cannot be negative\")\n\t}\n\tif amount \u003e 0 \u0026\u0026 available \u003e math.MaxInt64-amount {\n\t\treturn available, ErrOverflow\n\t}\n\treturn available + amount, nil\n}\n"
+            },
+            {
+              "path": "inventory/reservation_test.go",
+              "mode": "0644",
+              "content": "package inventory\n\nimport (\n\t\"errors\"\n\t\"math\"\n\t\"testing\"\n)\n\nfunc TestReleaseRejectsOverflow(t *testing.T) {\n\tif _, err := Release(math.MaxInt64, 1); !errors.Is(err, ErrOverflow) {\n\t\tt.Fatalf(\"Release(MaxInt64, 1) error = %v, want ErrOverflow\", err)\n\t}\n}\n\nfunc TestReleaseAddsWithinRange(t *testing.T) {\n\tgot, err := Release(8, 3)\n\tif err != nil || got != 11 {\n\t\tt.Fatalf(\"Release(8, 3) = (%d, %v), want (11, nil)\", got, err)\n\t}\n}\n"
+            }
+          ],
+          "evidenceRefs": [
+            "[\"markitect.government-example/v1alpha1\",\"Requirement\",\"inventory\",\"safe-release\"]",
+            "[\"markitect.government/v1alpha1\",\"Constitution\",\"inventory\",\"active\"]",
+            "inventory/reservation.go",
+            "inventory/reservation_test.go"
+          ],
+          "verifierObservations": [],
+          "uncertainty": []
+        },
+        "Receipt": {
+          "apiVersion": "markitect.example.org/agent-execution/v1alpha1",
+          "runId": "85e6b795b1c6e1785213b6ae431f2b3b",
+          "inputDigest": "sha256:d0406d4b0f5a19bce3526624f399901813dd2a35747cb679640bdcd9912aa099",
+          "contextDigest": "sha256:53a3bed369ac6f0a67f511845d23ea95c69bc13b1c8d15ac186b99fcb093eb8a",
+          "configDigest": "sha256:373dc102995fff5e804e210002467d85f03fae17cf04c497cdd72ef4a82a83dd",
+          "commandDigest": "sha256:099f99a3d31d2bdfb782ca23404cab30b706b92196829776beb03494e1ed0cc1",
+          "executableDigest": "sha256:d87063e5597f257004c731b66c59c56c91038861c6877b1a3dca6b8c4e919125",
+          "runtimeFilesDigest": "sha256:38883f27db50afb2ddaf913edf95b13d0241a2686a5fce73020ec88b20653214",
+          "providerVersion": "python-fixed-role-response-v1",
+          "providerVersionDigest": "sha256:724397c0b5615e3a70af28508cd6b20e6857a6b1340d6e352d8c7b71c6cc1621",
+          "stdoutDigest": "sha256:0dbe1980a5733e206f911a0325d0915b895a43e0aaee4687e5612548635fdb40",
+          "stderrDigest": "sha256:079092c9dd6e818451349397c880123739b12cacae205ed4384ae627cb230f2f",
+          "privateLogDigest": "",
+          "outcome": "proposed",
+          "wallTimeMilliseconds": 487,
+          "retryCount": 0
+        }
+      }
+    },
+    {
+      "sequence": 2,
+      "startedAt": "2026-10-08T03:46:33.167232Z",
+      "finishedAt": "2026-10-08T03:46:33.6306581Z",
+      "phase": "review",
+      "slotId": "positive-root-verifier",
+      "scopes": [
+        "[\"markitect.government/v1alpha1\",\"Area\",\"inventory\",\"root\"]",
+        "[\"markitect.government-example/v1alpha1\",\"Requirement\",\"inventory\",\"safe-release\"]"
+      ],
+      "result": {
+        "Response": {
+          "apiVersion": "markitect.example.org/agent-execution/v1alpha1",
+          "runId": "2c71be64223afae1b286b06fbb7920c0",
+          "nonce": "107918ded91f4cdc4972acc9ed76f1e2",
+          "role": "verifier",
+          "inputDigest": "sha256:944de0e216f87b1e5895ed0ffe46433de19660e9553fba667db015eae3759518",
+          "outcome": "passed",
+          "candidateFiles": [],
+          "evidenceRefs": [
+            "[\"markitect.government-example/v1alpha1\",\"Requirement\",\"inventory\",\"safe-release\"]",
+            "[\"markitect.government/v1alpha1\",\"Area\",\"inventory\",\"root\"]",
+            "[\"markitect.government/v1alpha1\",\"Constitution\",\"inventory\",\"active\"]",
+            "inventory/reservation.go",
+            "inventory/reservation_test.go"
+          ],
+          "verifierObservations": [
+            {
+              "subject": "[\"markitect.government-example/v1alpha1\",\"Requirement\",\"inventory\",\"safe-release\"]",
+              "outcome": "passed",
+              "detail": "passed: implementation is supplied; passed: MaxInt64 addition boundary is guarded; passed: negative release is rejected; passed: overflow test calls Release(MaxInt64, 1); passed: overflow test requires ErrOverflow; passed: ordinary addition is preserved"
+            },
+            {
+              "subject": "[\"markitect.government/v1alpha1\",\"Area\",\"inventory\",\"root\"]",
+              "outcome": "passed",
+              "detail": "passed: implementation is supplied; passed: MaxInt64 addition boundary is guarded; passed: negative release is rejected; passed: overflow test calls Release(MaxInt64, 1); passed: overflow test requires ErrOverflow; passed: ordinary addition is preserved"
+            },
+            {
+              "subject": "[\"markitect.government/v1alpha1\",\"Constitution\",\"inventory\",\"active\"]",
+              "outcome": "passed",
+              "detail": "passed: implementation is supplied; passed: MaxInt64 addition boundary is guarded; passed: negative release is rejected; passed: overflow test calls Release(MaxInt64, 1); passed: overflow test requires ErrOverflow; passed: ordinary addition is preserved"
+            }
+          ],
+          "uncertainty": []
+        },
+        "Receipt": {
+          "apiVersion": "markitect.example.org/agent-execution/v1alpha1",
+          "runId": "2c71be64223afae1b286b06fbb7920c0",
+          "inputDigest": "sha256:944de0e216f87b1e5895ed0ffe46433de19660e9553fba667db015eae3759518",
+          "contextDigest": "sha256:33574a043adb2d97e6ad4aecefd4a101ef2af9e32a8cedc797aaa3c7ebc5496e",
+          "configDigest": "sha256:074896d5b31de9039b9ff9c89bbf26c0cb11e19fb57bd99414a1265eaa5854e5",
+          "commandDigest": "sha256:3d5286a74d3b02854e39c8b89887f1926607245020c8e70d98dfb6f2ef83fa1b",
+          "executableDigest": "sha256:d87063e5597f257004c731b66c59c56c91038861c6877b1a3dca6b8c4e919125",
+          "runtimeFilesDigest": "sha256:38883f27db50afb2ddaf913edf95b13d0241a2686a5fce73020ec88b20653214",
+          "providerVersion": "python-fixed-role-response-v1",
+          "providerVersionDigest": "sha256:724397c0b5615e3a70af28508cd6b20e6857a6b1340d6e352d8c7b71c6cc1621",
+          "stdoutDigest": "sha256:f27c3cb672b72615aba9f1f67cd03268bf578a942c5f006d614a6def9340ddf8",
+          "stderrDigest": "sha256:c962967788f12909d0eb05459d04f5f85a9f19a3cf3a05aaf9d3a8e92257fcd0",
+          "privateLogDigest": "",
+          "outcome": "passed",
+          "wallTimeMilliseconds": 453,
+          "retryCount": 0
+        }
+      }
+    },
+    {
+      "sequence": 3,
+      "startedAt": "2026-10-08T03:46:33.6466813Z",
+      "finishedAt": "2026-10-08T03:46:34.0889545Z",
+      "phase": "vote",
+      "slotId": "positive-ressort-correctness",
+      "scopes": [
+        "[\"markitect.government/v1alpha1\",\"Ressort\",\"inventory\",\"correctness\"]"
+      ],
+      "result": {
+        "Response": {
+          "apiVersion": "markitect.example.org/agent-execution/v1alpha1",
+          "runId": "640a2a47301f47402a19f2e831724872",
+          "nonce": "c8b3b05afe449a8253e8487af0e3f165",
+          "role": "verifier",
+          "inputDigest": "sha256:a5b3d1410c511a403b4bdbb8d821a4fccb8e91882f12d9608bdf3104eeb2642b",
+          "outcome": "passed",
+          "candidateFiles": [],
+          "evidenceRefs": [
+            "[\"markitect.government/v1alpha1\",\"Constitution\",\"inventory\",\"active\"]",
+            "[\"markitect.government/v1alpha1\",\"Ressort\",\"inventory\",\"correctness\"]",
+            "inventory/reservation.go",
+            "inventory/reservation_test.go"
+          ],
+          "verifierObservations": [
+            {
+              "subject": "government-vote",
+              "outcome": "passed",
+              "detail": "{\"evidenceId\":\"sha256:a98d705ce10dd3677421abc6ecec92f4c7428f86c45cf96d6306a3e89420b707\",\"materialCandidateId\":\"sha256:f1975e8daa0628770a1d4a95499a65f35b48bbe1507b59c84fc3bb7436f18879\",\"outcome\":\"assent\",\"reason\":\"Deterministic fixture checked the bound overflow implementation and focused test; this is process-mechanics evidence only.\",\"round\":1}"
+            }
+          ],
+          "uncertainty": []
+        },
+        "Receipt": {
+          "apiVersion": "markitect.example.org/agent-execution/v1alpha1",
+          "runId": "640a2a47301f47402a19f2e831724872",
+          "inputDigest": "sha256:a5b3d1410c511a403b4bdbb8d821a4fccb8e91882f12d9608bdf3104eeb2642b",
+          "contextDigest": "sha256:6768878a6349d62fc23db7733dc37ee5c1116ecfd561bec36b94bc747a69d0d3",
+          "configDigest": "sha256:6b9fb67f28edc77d0af2e8bde4950e47161efba264cc9e9f595e56d809c60c53",
+          "commandDigest": "sha256:611fff6596bc6fac3b36f093c7854a951e617f2a4502b8f5f64646fdb788316b",
+          "executableDigest": "sha256:d87063e5597f257004c731b66c59c56c91038861c6877b1a3dca6b8c4e919125",
+          "runtimeFilesDigest": "sha256:38883f27db50afb2ddaf913edf95b13d0241a2686a5fce73020ec88b20653214",
+          "providerVersion": "python-fixed-role-response-v1",
+          "providerVersionDigest": "sha256:724397c0b5615e3a70af28508cd6b20e6857a6b1340d6e352d8c7b71c6cc1621",
+          "stdoutDigest": "sha256:b65be9846a0edd90bddf3b74abbd14f4d0f2d35bec517b773d626f704e7c6b21",
+          "stderrDigest": "sha256:3e2ec0066d03f348bc990f075868d793e7e955da3dfd8d52848c2efde083c01e",
+          "privateLogDigest": "",
+          "outcome": "passed",
+          "wallTimeMilliseconds": 432,
+          "retryCount": 0
+        }
+      }
+    }
+  ],
+  "evidence": {
+    "id": "sha256:a98d705ce10dd3677421abc6ecec92f4c7428f86c45cf96d6306a3e89420b707",
+    "materialCandidateId": "sha256:f1975e8daa0628770a1d4a95499a65f35b48bbe1507b59c84fc3bb7436f18879",
+    "round": 1,
+    "resultDigests": [
+      "sha256:50e377b9e89bb33347a137950ca424c12ff027576f4c7ac42b3e739e7b25e0eb",
+      "sha256:7127e00c38d479abd4109fc4352ac8b72d316c60f5d512b78104141f69519870",
+      "sha256:88fcd51df16513473b4bf14eec646fdf5cfcc525aa385032f95f27bf5a35d8bd"
+    ],
+    "reportDigests": null
+  },
+  "votes": [
+    {
+      "id": "sha256:9da6b1601a9ff49f66f92417edda1364d4150ca9a85321a1e9b06ff5cd0145a5",
+      "priorMandate": {
+        "apiVersion": "markitect.government/v1alpha1",
+        "kind": "Mandate",
+        "namespace": "inventory",
+        "name": "release-change"
+      },
+      "mandateDigest": "sha256:513c7252137c282e6bb2223536bfc8ec3fb44715b4c38bc8c0a280ae8a0cbefb",
+      "ressort": {
+        "apiVersion": "markitect.government/v1alpha1",
+        "kind": "Ressort",
+        "namespace": "inventory",
+        "name": "correctness"
+      },
+      "materialCandidateId": "sha256:f1975e8daa0628770a1d4a95499a65f35b48bbe1507b59c84fc3bb7436f18879",
+      "evidenceId": "sha256:a98d705ce10dd3677421abc6ecec92f4c7428f86c45cf96d6306a3e89420b707",
+      "round": 1,
+      "outcome": "assent",
+      "reason": "Deterministic fixture checked the bound overflow implementation and focused test; this is process-mechanics evidence only.",
+      "provenance": {
+        "runId": "640a2a47301f47402a19f2e831724872",
+        "slotId": "positive-ressort-correctness"
+      }
+    }
+  ],
+  "decision": {
+    "id": "sha256:6a28e4c9fde3a56ce4fc4fa06c7aa4485d698b32ed2710b799a1145804145b14",
+    "materialCandidateId": "sha256:f1975e8daa0628770a1d4a95499a65f35b48bbe1507b59c84fc3bb7436f18879",
+    "evidenceId": "sha256:a98d705ce10dd3677421abc6ecec92f4c7428f86c45cf96d6306a3e89420b707",
+    "priorAuthorityDigest": "sha256:c1d7194bd6a8961001c68cbace3f7da40d5daf1b22570026d097e6091cf63e93",
+    "round": 1,
+    "voteIds": [
+      "sha256:9da6b1601a9ff49f66f92417edda1364d4150ca9a85321a1e9b06ff5cd0145a5"
+    ]
+  },
+  "promotion": {
+    "status": "promoted",
+    "intentPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\results\\run-state\\government-run--a9a590d7ae06dee6ca648b0ecf23dbef\\promotion-0dcb3fb9d0569719a39869a9ebd9900f52b6af55bb4505ace89a46059e4d0295.json",
+    "completionPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\results\\run-state\\government-run--a9a590d7ae06dee6ca648b0ecf23dbef\\promotion-completion-0dcb3fb9d0569719a39869a9ebd9900f52b6af55bb4505ace89a46059e4d0295.json",
+    "expectedOld": "e0a7e52acb052fda318204d29a14d10ad23e88e7",
+    "newCommit": "413b7bbb518f594500f22486c27c63db9328d5c0",
+    "actualActive": "413b7bbb518f594500f22486c27c63db9328d5c0",
+    "fencingToken": "9907a2af4e7ead2c98258b2b8f6e5fe5e233149268ad2da7e23d9ca05fbf0a8a"
+  },
+  "priorModelDigest": "sha256:c1d7194bd6a8961001c68cbace3f7da40d5daf1b22570026d097e6091cf63e93",
+  "limits": [
+    "Cooperative processes share caller OS rights; separated processes and input audits are not an OS sandbox or proof of institutional independence.",
+    "Recursive execution, model amendment and persistent queue operation are opt-in and finite; interrupted actors are never automatically replayed.",
+    "PromotionIntent and Git CAS are separate durable effects. No automatic rollback or atomic ledger/Git transaction is claimed.",
+    "Accepted-scoped records configured process and check outcomes; it does not establish semantic sufficiency or human acceptance.",
+    "Area review is read-only evidence assigned by the frozen plan, never a Ressort vote or acceptance/change/promotion authority; no per-Area review mandate is inferred from implement."
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "status": "passed",
+  "historicalFilesChecked": 3545,
+  "historicalFilesUnchanged": 3544,
+  "authorizedHandoffOriginalSuffixPreserved": true,
+  "sourceCodeFilesUnchangedAfterReviewedCommit": 11,
+  "frozenInputsStillUnchanged": 55,
+  "rawOriginalCopyPairs": 92,
+  "terminalLiveNativeLedgerSnapshotExact": true,
+  "liveLedgerSha256": "c0a91051a16f5d2d3a7754789c2ad02b67b6b2f57f32ac4bd16562700b8fcf1a",
+  "experimentalRunsRepeated": false,
+  "failureStateRescored": false
+}

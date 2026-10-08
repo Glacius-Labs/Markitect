@@ -1,0 +1,10 @@
+[
+  {
+    "Name": "inventory-overflow",
+    "Tool": "go",
+    "ExitCode": 0,
+    "Milliseconds": 6270,
+    "TimeoutMilliseconds": 30000,
+    "Output": "ok  \texample.invalid/markitect/government-positive/inventory\t0.213s\n"
+  }
+]

@@ -1,0 +1,15 @@
+{
+  "dispatchId": "government-native-released-binding-r6",
+  "elapsedSecondsAfterTerminalReceiptAvailable": 10.98673677444458,
+  "nativeProcess": {
+    "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\controller-evidence\\outer-run\\process\\process.json",
+    "sha256": "5d82e2a7d6f557961bb65d1ee6698198f83fd9b727c67e5f727c26eb16073df4"
+  },
+  "requestSha256": "eac83bf61112c8352f0ef7daf79929ff161c75d511b7dcfddd5989d3fa07cc9c",
+  "status": "completed",
+  "terminalControllerReceiptSha256": "0eaa9f65c7ec8f5dfd6c87553dd7178c3ab8a8fff22ba2497270263886d5e147",
+  "terminalResult": {
+    "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\outer-results\\r6-queue.json",
+    "sha256": "829b397132f068a0fa41761481b97c77d66a27b77900913994b4142b23ee22b3"
+  }
+}

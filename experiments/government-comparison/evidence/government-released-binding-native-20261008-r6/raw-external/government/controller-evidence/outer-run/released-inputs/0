@@ -1,0 +1,1801 @@
+{
+  "correctionBase": "ce021cef2d23002c3eca0b6a81e0913b3fc5a4f5",
+  "correctionClassification": "representation repair against unchanged supported-lease contract",
+  "correctionPaths": [
+    "docs/government.md",
+    "internal/host/government/lease.go",
+    "internal/host/government/lease_test.go",
+    "markitect-artifacts.yaml"
+  ],
+  "leaseCorrection": {
+    "repairImpact": {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\lease-repair-impact-04e225d.yaml",
+      "bytes": 6025,
+      "sha256": "a5039a324ee846ca01a620c8781fee82aeba0c60c361600af377a775784a5806"
+    },
+    "implementation": "Shared strict complete v1 owner decoder; reject malformed existing bytes before write; Verify compares all owner fields including CreatedAt.",
+    "baseContext": {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\lease-repair-base-context.yaml",
+      "bytes": 298531,
+      "sha256": "b7d99712cd2b29ec6a7a89f8b9d6a777aa7821e0a70427901e6eb9998f74a4e0"
+    },
+    "focusedMetadata": {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\lease-repair-focused-metadata.json",
+      "bytes": 506,
+      "sha256": "78a931b32d55e6353ae87f1cfacd64570e150d6f10567b5b2690b35098a3e9eb"
+    },
+    "focusedLog": {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\lease-repair-focused.log",
+      "bytes": 72,
+      "sha256": "6bd5749389b3d891e3a1197f57e474bd3139f0133eb310538b5696ec36c44cc0"
+    },
+    "baseCheck": {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\lease-repair-base-check.yaml",
+      "bytes": 195646,
+      "sha256": "3d411bbd87ee0c6d842f998266bd5c1a01d3c803f81a0b34745c30c499febfcc"
+    },
+    "priorEvidenceAudit": {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\lease-repair-history-audit.json",
+      "bytes": 708,
+      "sha256": "e628e90f5ac750ebecb02b7c26bd4ff60417cee8207b43f3d5e5ca9fe847c734"
+    }
+  },
+  "priorG5Candidate": {
+    "native": {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\native-summary-ce021ce.json",
+      "bytes": 58204,
+      "sha256": "d97c33c1e7104c894d17da1c1bc83e469fdf99ed11976bfe6272a854bce07868"
+    },
+    "completedFullSuites": 1,
+    "handoff": {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\handoff-ce021ce.json",
+      "bytes": 93366,
+      "sha256": "bc07c4c9b08f58c8ea7c4fdb8a8f2e847c654f1b7cd518bd4cae606cd7d84ea5"
+    },
+    "verify": {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\final-verify-ce021ce\\summary.json",
+      "bytes": 582,
+      "sha256": "ccbccf0aea147858ff8d18ddbd272f354aa0dc5dad51234ff92f23ba9352874b"
+    },
+    "scope": "Earlier successful source/native evidence retained at its original SHA; superseded only by the narrow complete-lease-record correction; never evidence for the new SHA.",
+    "sourceSHA": "ce021cef2d23002c3eca0b6a81e0913b3fc5a4f5"
+  },
+  "phase": "G5",
+  "status": "implementation-and-local-technical-validation-complete; S1-reviewable hold pending Overseer",
+  "sourceSHA": "04e225d5caee78c2a198607143863fca1e829750",
+  "baseG4": "d146201e0f004e671cb90cf77b6a107dc14429b5",
+  "branch": "codex/government-worker",
+  "worktree": "C:/Users/Consiliari/.codex/worktrees/government-worker/Markitect",
+  "sourceClean": true,
+  "evidenceTools": [
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\run-final-verify.ps1",
+      "bytes": 3692,
+      "sha256": "f400d8bc257b214de09cdca8587aea86afefa9841a065a1e2e76a1ae1d575133"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\verify-progress.ps1",
+      "bytes": 1845,
+      "sha256": "8816c3562877bb598188dc0e83ad178ed59c03e75a1f8c1a6d31b0c0066ee2d6"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\run-native.ps1",
+      "bytes": 3366,
+      "sha256": "bec7453ab073b23b4e5a891db98d2eb8c30d223d79931e82c22ea6f60b45c307"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\run-contribution.ps1",
+      "bytes": 1996,
+      "sha256": "53b2b9331ad02bbc233068e867fa32f4d626965420e2b522dc792803424d3de2"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\build-manifests.ps1",
+      "bytes": 4966,
+      "sha256": "7452f3851b770b4561b04f6f1d49eba7fcfcf2379877c4e5fc8a80ff4ddd6140"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\build-lease-repair-handoff.ps1",
+      "bytes": 14318,
+      "sha256": "9bb3a68b313bb3f07429f5e6f748519d496ccacd5714b0719a34a6734386354a"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\audit-lease-repair-history.ps1",
+      "bytes": 2922,
+      "sha256": "7344888b6e4aefaeabef4dc76f6c7e5e61a0533e8bc7048542b65b166a96f3ef"
+    }
+  ],
+  "binary": {
+    "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\markitect-04e225d.exe",
+    "bytes": 14556160,
+    "sha256": "12241f325e4af59451e4021b31d9e6f5b829b5de06c94d35eaabfb9d663aa51f"
+  },
+  "buildMetadata": {
+    "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\build-04e225d.txt",
+    "bytes": 593,
+    "sha256": "c0d30859c1a258a09ea39f50f2e97f4fa4507eb42246f2de1f0ee71d7efa7b50"
+  },
+  "implemented": [
+    "Finite explicitly supplied dependency backlog, durable unique queue/job/run binding, serial independent jobs and bounded recursive actor concurrency.",
+    "Hash-chained flushed pre-effect actor/repair/wall reservations, cumulative replay and unknown observed usage; interrupted in-flight slots remain occupied.",
+    "Durable candidate/evidence/decision checkpoint, tokenized PromotionIntent, one Git CAS and separately durable completion.",
+    "Recovery recognizes only exact bound intent and continuous raw reflog edge, including a later advanced ref; never repeats CAS, rolls back or accepts current ref alone.",
+    "OS-held writer lease with token and file identity verification; live/foreign/empty/unrecognized leases fail closed.",
+    "Changed backlog/runtime/tool/repository binding permanently stops old queue while preserving historical accepted reports; explicit fresh execution required."
+  ],
+  "finiteBounds": {
+    "parallelism": "1..16",
+    "actorStarts": "1..4096",
+    "wallAccounting": "Full configured TimeoutSeconds reserved per order without refund; observed queue age includes downtime.",
+    "jobs": "0..128 in explicit topological order",
+    "repairs": "0..64",
+    "unknownActors": "Reserved count and in-flight slot never reset or silently released on resume.",
+    "wallSeconds": "1..86400"
+  },
+  "userFlow": {
+    "outputs": "JSON stdout with unique queueDirectory/queueId; external events.jsonl, immutable queue-report-NNNNNNNN.json, unique run reports/receipts/checkpoints, PromotionIntent/completion; managed Active ref changes only after fresh checks/reviews/votes and fenced CAS.",
+    "start": "markitect government --repo ABS_REPO --action queue --backlog ABS_BACKLOG_JSON --write",
+    "exitCodes": "0 finite processing completed, including blocked/incomplete jobs; inspect reported states. 1 input/lease/persistence/stale errors; 2 invalid CLI.",
+    "resume": "markitect government --repo ABS_REPO --action resume --backlog ABS_BACKLOG_JSON --queue ABS_QUEUE_DIRECTORY --write",
+    "canonicalInputs": "Project Government YAML defines domain model, rules, ownership, prior Mandates and protected goals; explicit Order YAML states requested work. Runtime JSON supplies exact expectedBase/activeRef, tools, runner/model settings and checks. External finite backlog JSON selects jobs, dependencies and cumulative limits.",
+    "humanDecisions": "Responsible human supplies authority/rules/orders, exact runtime tools/models and budgets; resolves escalation or unknown external effects; changed authority or stale binding needs fresh explicit input. No autonomous Owner approval, Court, daemon or inferred goals."
+  },
+  "sourceVerify": {
+    "noStandaloneFullSuite": true,
+    "start": {
+      "sourceSHA": "04e225d5caee78c2a198607143863fca1e829750",
+      "startedUTC": "2026-10-07T20:59:50.950131Z",
+      "pid": 36856,
+      "command": [
+        "C:/Users/Consiliari/.codex/worktrees/government-worker/Markitect/.artifacts/government-g5/markitect-04e225d.exe",
+        "verify",
+        "--repo",
+        ".",
+        "--revision",
+        "04e225d5caee78c2a198607143863fca1e829750"
+      ],
+      "binarySHA256": "12241f325e4af59451e4021b31d9e6f5b829b5de06c94d35eaabfb9d663aa51f",
+      "repo": "C:/Users/Consiliari/.codex/worktrees/government-worker/Markitect",
+      "supervisorWallLimitSeconds": 1800,
+      "goCheckLimitSeconds": 1800,
+      "otherCheckDefaultSeconds": 600,
+      "goTestBinaryTimeout": "30m",
+      "scope": "one fresh fixed Project Verify; complete Go suite only through its declared gate",
+      "rawStreamBytes": true
+    },
+    "fullSuiteRoute": "Only final fixed Project Verify: go test ./... -count=1 -timeout=30m",
+    "stdout": {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\final-verify-04e225d\\stdout.yaml",
+      "bytes": 579794,
+      "sha256": "d88a98b3ab7372eccbd28bfd4f478f3a398d3332349b58bd35feb3a9187c37f3"
+    },
+    "stderr": {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\final-verify-04e225d\\stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "summary": {
+      "sourceSHA": "04e225d5caee78c2a198607143863fca1e829750",
+      "finalSourceSHA": "04e225d5caee78c2a198607143863fca1e829750",
+      "finalStatus": [],
+      "sourceUnchanged": true,
+      "startedUTC": "2026-10-07T20:59:50.950131Z",
+      "finishedUTC": "2026-10-07T21:14:22.9252598Z",
+      "elapsedMs": 871615.1379,
+      "supervisorWallLimitSeconds": 1800,
+      "timedOut": false,
+      "exitCode": 0,
+      "rootPid": 36856,
+      "stdoutSHA256": "d88a98b3ab7372eccbd28bfd4f478f3a398d3332349b58bd35feb3a9187c37f3",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "provisional": false,
+    "gates": [
+      {
+        "name": "architecture-imports",
+        "tool": "go",
+        "exitCode": 0,
+        "milliseconds": 1731,
+        "timeoutMilliseconds": 600000
+      },
+      {
+        "name": "managed-artifacts",
+        "tool": "go",
+        "exitCode": 0,
+        "milliseconds": 5332,
+        "timeoutMilliseconds": 600000
+      },
+      {
+        "name": "module-checks",
+        "tool": "go",
+        "exitCode": 0,
+        "milliseconds": 4902,
+        "timeoutMilliseconds": 600000
+      },
+      {
+        "name": "go-tests",
+        "tool": "go",
+        "exitCode": 0,
+        "milliseconds": 736184,
+        "timeoutMilliseconds": 1800000
+      }
+    ],
+    "completedFullGoSuitesAtThisSHA": 1
+  },
+  "otherGates": {
+    "vet": {
+      "command": [
+        "go",
+        "vet",
+        "./..."
+      ],
+      "finishedUTC": "2026-10-07T20:59:40.8531427Z",
+      "exitCode": 0,
+      "sourceSHA": "04e225d5caee78c2a198607143863fca1e829750",
+      "startedUTC": "2026-10-07T20:59:39.0345608Z"
+    },
+    "focusedPreFinal": [
+      {
+        "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\integration-focused.log",
+        "bytes": 315,
+        "sha256": "e7f3772c9a2862af2cc3cf69134e7213ad94fce36d26709f137ab49827624a65"
+      },
+      {
+        "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\lease-repair-focused-metadata.json",
+        "bytes": 506,
+        "sha256": "78a931b32d55e6353ae87f1cfacd64570e150d6f10567b5b2690b35098a3e9eb"
+      },
+      {
+        "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\lease-repair-focused.log",
+        "bytes": 72,
+        "sha256": "6bd5749389b3d891e3a1197f57e474bd3139f0133eb310538b5696ec36c44cc0"
+      },
+      {
+        "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\promotion-focused-metadata.json",
+        "bytes": 639,
+        "sha256": "997e6b247a93bacf3c1eae28ebbd61ba4b8ce01a63a54b3c9000c2e35abd9a2c"
+      },
+      {
+        "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\promotion-focused.log",
+        "bytes": 73,
+        "sha256": "78df72cbf58c116f70cbae0fb60db4f8ee13cc33534187b8f57dbbfc46f846c8"
+      },
+      {
+        "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\promotion-parser-focused-metadata.json",
+        "bytes": 366,
+        "sha256": "6c0e2e70cb354ecdf3938c4b278b0e1f063d49d1761faf96e5ac8421084bafdc"
+      },
+      {
+        "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\promotion-parser-focused.log",
+        "bytes": 72,
+        "sha256": "7cc5fa5171b0cd7d1bf8335fea82fad1c33d428c93325d6cb55317ccf12ac824"
+      },
+      {
+        "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\queue-focused-capacity-fix-metadata.json",
+        "bytes": 650,
+        "sha256": "80e3a2c23347ca4aa254de29381dd6fd5cedd2825bf780221f9de3fb208cef23"
+      },
+      {
+        "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\queue-focused-capacity-fix.log",
+        "bytes": 83,
+        "sha256": "dab39447d4b9b787c190f86e37f6c6191bf9a4be4ec9757b48662337af15fc9f"
+      },
+      {
+        "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\queue-focused-metadata.json",
+        "bytes": 557,
+        "sha256": "d85e46395c696a1d0b45fe2eec5ad9c20267008d902a842ec201ae7f98281f47"
+      },
+      {
+        "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\queue-focused-reservation-fix-metadata.json",
+        "bytes": 602,
+        "sha256": "dd05637d37f370a9becee7f2260ac5e96228efdcfbd64061d7127b4fc260a744"
+      },
+      {
+        "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\queue-focused-reservation-fix.log",
+        "bytes": 82,
+        "sha256": "e19ee99bbdb01a38d7bd1bdc2d15895bc85793bfb31c31326d7b4c0a79a86fb9"
+      },
+      {
+        "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\queue-focused.log",
+        "bytes": 82,
+        "sha256": "53666e81ec168b566a2a4719d61acb9c6145f793e4b3105a027e6e0bff445804"
+      },
+      {
+        "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\root-preliminary-build-failure.json",
+        "bytes": 417,
+        "sha256": "4a270120f1d6f1ce02c21129f3747bf91288eff516176903d7370168922829a6"
+      }
+    ],
+    "vetLog": {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\vet-04e225d.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "commands": [
+      {
+        "argv": [
+          "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\markitect-04e225d.exe",
+          "schema",
+          "--repo",
+          "."
+        ],
+        "log": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\contribution-04e225d-01.log",
+        "exitCode": 0,
+        "logSHA256": "d26a6015db4de687393ced49acfc26376942850acb5fd7b050462012e6600ff1"
+      },
+      {
+        "argv": [
+          "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\markitect-04e225d.exe",
+          "check",
+          "--repo",
+          "examples/minimal"
+        ],
+        "log": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\contribution-04e225d-02.log",
+        "exitCode": 0,
+        "logSHA256": "67fc8c099a3e1fd54255c08de77e88115ddcacda6a1e3d569c758f7a307a022c"
+      },
+      {
+        "argv": [
+          "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\markitect-04e225d.exe",
+          "check",
+          "--repo",
+          "examples/repository-layout"
+        ],
+        "log": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\contribution-04e225d-03.log",
+        "exitCode": 0,
+        "logSHA256": "ed676a19526e6dd38b4ef2df9c460b7c004b8fd9ed4ab8b51059c429a4da4437"
+      },
+      {
+        "argv": [
+          "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\markitect-04e225d.exe",
+          "check",
+          "--repo",
+          "examples/canonical-engineering"
+        ],
+        "log": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\contribution-04e225d-04.log",
+        "exitCode": 0,
+        "logSHA256": "36dd070f540b4ecc2b23dbc892a5720a447e6a3280867dd5b9512be781ee63e9"
+      },
+      {
+        "argv": [
+          "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\markitect-04e225d.exe",
+          "format",
+          "--repo",
+          "examples/canonical-engineering"
+        ],
+        "log": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\contribution-04e225d-05.log",
+        "exitCode": 0,
+        "logSHA256": "3842b1adb1affb0a6741e8f659a2395887bad52c1eb73800f0a3120a2cfdce89"
+      },
+      {
+        "argv": [
+          "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\markitect-04e225d.exe",
+          "model",
+          "--repo",
+          "examples/canonical-engineering"
+        ],
+        "log": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\contribution-04e225d-06.log",
+        "exitCode": 0,
+        "logSHA256": "d3c3acb9e858585230488959b81f67098a4570c0f15c02fd17561d55372d0b73"
+      },
+      {
+        "argv": [
+          "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\markitect-04e225d.exe",
+          "check",
+          "--repo",
+          "examples/engineering-constitution"
+        ],
+        "log": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\contribution-04e225d-07.log",
+        "exitCode": 0,
+        "logSHA256": "d6c9e4039f53fe742af6dea30130124a98bb49ab2c33cabe89c3851af631bd02"
+      },
+      {
+        "argv": [
+          "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\markitect-04e225d.exe",
+          "format",
+          "--repo",
+          "examples/engineering-constitution"
+        ],
+        "log": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\contribution-04e225d-08.log",
+        "exitCode": 0,
+        "logSHA256": "3842b1adb1affb0a6741e8f659a2395887bad52c1eb73800f0a3120a2cfdce89"
+      },
+      {
+        "argv": [
+          "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\markitect-04e225d.exe",
+          "model",
+          "--repo",
+          "examples/engineering-constitution"
+        ],
+        "log": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\contribution-04e225d-09.log",
+        "exitCode": 0,
+        "logSHA256": "8a4d27545fcabebcb7189a7471b1d36ff031fe57247b97541bc1b491da04104b"
+      },
+      {
+        "argv": [
+          "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\markitect-04e225d.exe",
+          "check",
+          "--repo",
+          "examples/engineering-discovery"
+        ],
+        "log": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\contribution-04e225d-10.log",
+        "exitCode": 0,
+        "logSHA256": "835e3f4c0b8217f78a7bdfb2dba39347453fbc0f22a4a883c99b9579047bad27"
+      },
+      {
+        "argv": [
+          "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\markitect-04e225d.exe",
+          "format",
+          "--repo",
+          "examples/engineering-discovery"
+        ],
+        "log": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\contribution-04e225d-11.log",
+        "exitCode": 0,
+        "logSHA256": "3842b1adb1affb0a6741e8f659a2395887bad52c1eb73800f0a3120a2cfdce89"
+      },
+      {
+        "argv": [
+          "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\markitect-04e225d.exe",
+          "check",
+          "--repo",
+          "examples/software-architecture"
+        ],
+        "log": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\contribution-04e225d-12.log",
+        "exitCode": 0,
+        "logSHA256": "69d88e9c0bbf44657742047bcd07a5e6b33de14dea5d02ca6301200b1b29cce2"
+      },
+      {
+        "argv": [
+          "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\markitect-04e225d.exe",
+          "format",
+          "--repo",
+          "examples/software-architecture"
+        ],
+        "log": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\contribution-04e225d-13.log",
+        "exitCode": 0,
+        "logSHA256": "3842b1adb1affb0a6741e8f659a2395887bad52c1eb73800f0a3120a2cfdce89"
+      },
+      {
+        "argv": [
+          "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\markitect-04e225d.exe",
+          "model",
+          "--repo",
+          "examples/software-architecture"
+        ],
+        "log": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\contribution-04e225d-14.log",
+        "exitCode": 0,
+        "logSHA256": "dca313937aea8c4b2e6216e2e592711cbbfccbee6dc509d596a66f8efcf73cd9"
+      },
+      {
+        "argv": [
+          "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\markitect-04e225d.exe",
+          "context",
+          "--repo",
+          "examples/software-architecture",
+          "--namespace",
+          "engineering",
+          "--kind",
+          "Skill",
+          "--name",
+          "implement-order"
+        ],
+        "log": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\contribution-04e225d-15.log",
+        "exitCode": 0,
+        "logSHA256": "22c7a70e79eedc2dca98f57d8c67d47d2175068ad9aec0840f5c733579a57e4b"
+      },
+      {
+        "argv": [
+          "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\markitect-04e225d.exe",
+          "check",
+          "--repo",
+          "examples/delivery-target-equality"
+        ],
+        "log": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\contribution-04e225d-16.log",
+        "exitCode": 0,
+        "logSHA256": "0ec429f0dc3986cdefac816b215c26a5e543f5a7f154198b0b5abe2c8d4bbf59"
+      },
+      {
+        "argv": [
+          "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\markitect-04e225d.exe",
+          "format",
+          "--repo",
+          "examples/delivery-target-equality"
+        ],
+        "log": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\contribution-04e225d-17.log",
+        "exitCode": 0,
+        "logSHA256": "3842b1adb1affb0a6741e8f659a2395887bad52c1eb73800f0a3120a2cfdce89"
+      },
+      {
+        "argv": [
+          "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\markitect-04e225d.exe",
+          "model",
+          "--repo",
+          "examples/delivery-target-equality"
+        ],
+        "log": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\contribution-04e225d-18.log",
+        "exitCode": 0,
+        "logSHA256": "3568a135e8626c3eb5098df11f90c9ef0325b1d5bdf379b82acac41022e6f204"
+      },
+      {
+        "argv": [
+          "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\markitect-04e225d.exe",
+          "context",
+          "--repo",
+          "examples/delivery-target-equality",
+          "--namespace",
+          "engineering",
+          "--kind",
+          "Skill",
+          "--name",
+          "deployment-review"
+        ],
+        "log": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\contribution-04e225d-19.log",
+        "exitCode": 0,
+        "logSHA256": "36718619b55ee765311062d37e4e361c79a8caf865306f54a6e4f4a1a34d1f31"
+      },
+      {
+        "argv": [
+          "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\markitect-04e225d.exe",
+          "check",
+          "--repo",
+          "benchmark/fixtures/v2"
+        ],
+        "log": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\contribution-04e225d-20.log",
+        "exitCode": 0,
+        "logSHA256": "7caefa3f20c9eae2176e424e50162e998fea18a05cade7ff317d3f636701dad4"
+      }
+    ],
+    "impact": {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\impact-04e225d.yaml",
+      "bytes": 10233,
+      "sha256": "c40d541213f2dbdfd0b453c7ca0a1b5c2a155f3a0a43b7f0432f7b9d00f380ca"
+    },
+    "check": {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\check-04e225d.yaml",
+      "bytes": 199869,
+      "sha256": "e878c1aa6b7444a8df58ffd2cd5454ab4c0b97de5580a842c9925784f7af2e11"
+    },
+    "diffCheck": "passed",
+    "contribution": {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\contribution-summary-04e225d.json",
+      "bytes": 10579,
+      "sha256": "4f834e2a5fb566ef7dd4a6231b44f4fea9c46ffd00ce24cb7fbb6e84beb67252"
+    }
+  },
+  "nativeSummary": {
+    "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\native-summary-04e225d.json",
+    "bytes": 58206,
+    "sha256": "2bdd255ebfa3112ec3a8ccbd153931303758f4e9e931e400e181d1a4fb872c6a"
+  },
+  "nativeTrials": [
+    {
+      "case": "branches",
+      "status": "passed",
+      "expected": "a failed prerequisite blocks only its dependent finite order while a disjoint independent order completes",
+      "sourceCheckout": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c\\government-g5-branches-83cf78c9785c428b8adb401411b86c6c\\repo",
+      "baseRevision": "298af3ff8480d3166730ea8e1eec01090c892787",
+      "invocations": [
+        {
+          "exitCode": 0,
+          "killed": false,
+          "value": {
+            "apiVersion": "markitect.government-queue/v1alpha1",
+            "queueId": "government-queue--f7f6d2936b364097a600fbdb9ac65b31",
+            "queueDirectory": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c\\government-g5-branches-83cf78c9785c428b8adb401411b86c6c\\state\\government-queue--f7f6d2936b364097a600fbdb9ac65b31",
+            "status": "blocked",
+            "nextStep": "none",
+            "backlogDigest": "b437de90d5d8db3b7f482e9973d9ed80649a11f5103d5c60eabd3ff9080a8b21",
+            "limits": {
+              "actorStarts": 40,
+              "maxRepairs": 4,
+              "maxWallTimeSeconds": 14400,
+              "maxParallelism": 1
+            },
+            "actorStarts": 4,
+            "repairs": 0,
+            "inFlightActors": 0,
+            "peakParallelism": 1,
+            "reservedWallTimeSeconds": 3600,
+            "elapsedWallTimeSeconds": 7,
+            "usage": {
+              "inputTokens": {
+                "known": false,
+                "total": 0,
+                "unknown": true
+              },
+              "outputTokens": {
+                "known": false,
+                "total": 0,
+                "unknown": true
+              },
+              "cachedTokens": {
+                "known": false,
+                "total": 0,
+                "unknown": true
+              },
+              "toolCalls": {
+                "known": false,
+                "total": 0,
+                "unknown": true
+              },
+              "observedActorWallTimeMilliseconds": {
+                "known": true,
+                "total": 152,
+                "unknown": false
+              }
+            },
+            "jobs": [
+              {
+                "id": "blocked",
+                "state": "blocked",
+                "nextStep": "none",
+                "runId": "government-run--3cecac77db4f0450506bbcf37b0c5108",
+                "reportPath": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c\\government-g5-branches-83cf78c9785c428b8adb401411b86c6c\\state\\blocked\\government-run--3cecac77db4f0450506bbcf37b0c5108\\report.json",
+                "reportDigest": "95e596d11ce88759364e1780fbc7cc581be51f4baca40526efae242217a473f7",
+                "error": "amendment prior-authority plan is blocked: amendment.source-unmapped (blocked-government.yaml): selected Government source must have an affected prior realization and exactly one canonical writer; authority.missing ([\"markitect.government-example/v1alpha1\",\"Requirement\",\"invoice\",\"protected-total\"]): prior mandate for responsible Area does not allow amend-model"
+              },
+              {
+                "id": "dependent",
+                "state": "blocked",
+                "nextStep": "dependency blocked",
+                "error": "an explicit prerequisite did not complete"
+              },
+              {
+                "id": "independent",
+                "state": "accepted-scoped",
+                "nextStep": "complete",
+                "runId": "government-run--5268aef6dcc842dcd9b97e98992a6f31",
+                "reportPath": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c\\government-g5-branches-83cf78c9785c428b8adb401411b86c6c\\state\\independent\\government-run--5268aef6dcc842dcd9b97e98992a6f31\\report.json",
+                "reportDigest": "d0f568f54e54d78c0fe1565fe12faca63421b629f992cc9371ed4453d613753a"
+              }
+            ],
+            "journalSequence": 21,
+            "journalDigest": "81b30472f7da027b785907e1465cb2aced2f2f587aef38a55c7c96e6d4c2e7e5",
+            "startedAt": "2026-10-07T21:00:14.0786109Z"
+          },
+          "parseError": null,
+          "stdout": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c\\government-g5-branches-83cf78c9785c428b8adb401411b86c6c\\queue.stdout.json",
+          "stderr": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c\\government-g5-branches-83cf78c9785c428b8adb401411b86c6c\\queue.stderr.txt",
+          "stdoutSha256": "sha256:bec8f4d9af161cec917589f12a1009753e96d7b3d62584549ee994e228e83f22",
+          "stderrSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ],
+      "evidence": {
+        "queueDirectory": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c\\government-g5-branches-83cf78c9785c428b8adb401411b86c6c\\state\\government-queue--f7f6d2936b364097a600fbdb9ac65b31",
+        "dependent": {
+          "id": "dependent",
+          "state": "blocked",
+          "nextStep": "dependency blocked",
+          "error": "an explicit prerequisite did not complete"
+        },
+        "independent": {
+          "id": "independent",
+          "state": "accepted-scoped",
+          "nextStep": "complete",
+          "runId": "government-run--5268aef6dcc842dcd9b97e98992a6f31",
+          "reportPath": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c\\government-g5-branches-83cf78c9785c428b8adb401411b86c6c\\state\\independent\\government-run--5268aef6dcc842dcd9b97e98992a6f31\\report.json",
+          "reportDigest": "d0f568f54e54d78c0fe1565fe12faca63421b629f992cc9371ed4453d613753a"
+        },
+        "blocked": {
+          "id": "blocked",
+          "state": "blocked",
+          "nextStep": "none",
+          "runId": "government-run--3cecac77db4f0450506bbcf37b0c5108",
+          "reportPath": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c\\government-g5-branches-83cf78c9785c428b8adb401411b86c6c\\state\\blocked\\government-run--3cecac77db4f0450506bbcf37b0c5108\\report.json",
+          "reportDigest": "95e596d11ce88759364e1780fbc7cc581be51f4baca40526efae242217a473f7",
+          "error": "amendment prior-authority plan is blocked: amendment.source-unmapped (blocked-government.yaml): selected Government source must have an affected prior realization and exactly one canonical writer; authority.missing ([\"markitect.government-example/v1alpha1\",\"Requirement\",\"invoice\",\"protected-total\"]): prior mandate for responsible Area does not allow amend-model"
+        },
+        "activeIndependent": "85f4da4724b9bf5a10b1963b1603ea21da8a6326"
+      },
+      "trialDirectory": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c\\government-g5-branches-83cf78c9785c428b8adb401411b86c6c",
+      "summaryPath": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c\\government-g5-branches-83cf78c9785c428b8adb401411b86c6c\\summary.json"
+    },
+    {
+      "case": "interrupt-after",
+      "status": "passed",
+      "expected": "a real Markitect host process is killed after update-ref; resume proves effect state, retains actor starts against the shared budget, preserves unknown provider usage, and repeat cannot issue another CAS or actor",
+      "sourceCheckout": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c\\government-g5-interrupt-after-4ef433f00ac741bcba84e5379fcefb9e\\repo",
+      "baseRevision": "460f7b7f3654a59119cb6468dd567d2a32dc8299",
+      "invocations": [
+        {
+          "exitCode": null,
+          "killed": true,
+          "value": null,
+          "parseError": null,
+          "stdout": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c\\government-g5-interrupt-after-4ef433f00ac741bcba84e5379fcefb9e\\queue-killed.stdout.json",
+          "stderr": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c\\government-g5-interrupt-after-4ef433f00ac741bcba84e5379fcefb9e\\queue-killed.stderr.txt",
+          "stdoutSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderrSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "exitCode": 0,
+          "killed": false,
+          "value": {
+            "apiVersion": "markitect.government-queue/v1alpha1",
+            "queueId": "government-queue--37ca9d0a4ec0d27bb28c1e879ca31b78",
+            "queueDirectory": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c\\government-g5-interrupt-after-4ef433f00ac741bcba84e5379fcefb9e\\state\\government-queue--37ca9d0a4ec0d27bb28c1e879ca31b78",
+            "status": "complete",
+            "nextStep": "none",
+            "backlogDigest": "71bd3919a3e1a21061ccf0fd8dfbe1cbc64d04a7bf9b9afbc4766633c750063f",
+            "limits": {
+              "actorStarts": 8,
+              "maxRepairs": 4,
+              "maxWallTimeSeconds": 14400,
+              "maxParallelism": 1
+            },
+            "actorStarts": 8,
+            "repairs": 0,
+            "inFlightActors": 0,
+            "peakParallelism": 1,
+            "reservedWallTimeSeconds": 3600,
+            "elapsedWallTimeSeconds": 16,
+            "usage": {
+              "inputTokens": {
+                "known": false,
+                "total": 0,
+                "unknown": true
+              },
+              "outputTokens": {
+                "known": false,
+                "total": 0,
+                "unknown": true
+              },
+              "cachedTokens": {
+                "known": false,
+                "total": 0,
+                "unknown": true
+              },
+              "toolCalls": {
+                "known": false,
+                "total": 0,
+                "unknown": true
+              },
+              "observedActorWallTimeMilliseconds": {
+                "known": true,
+                "total": 491,
+                "unknown": false
+              }
+            },
+            "jobs": [
+              {
+                "id": "promotion",
+                "state": "accepted-scoped",
+                "nextStep": "complete",
+                "runId": "government-run--bf043fcdc69ef3c43420e148e9da5074",
+                "reportPath": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c\\government-g5-interrupt-after-4ef433f00ac741bcba84e5379fcefb9e\\state\\promotion\\government-run--bf043fcdc69ef3c43420e148e9da5074\\report.json",
+                "reportDigest": "50490f1ec5d335fbabfe9ba45c46a8940071c916c6081f3fe2063274c9181f5e"
+              },
+              {
+                "id": "independent",
+                "state": "accepted-scoped",
+                "nextStep": "complete",
+                "runId": "government-run--c651ab61d808f99fb0a47241c10892a1",
+                "reportPath": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c\\government-g5-interrupt-after-4ef433f00ac741bcba84e5379fcefb9e\\state\\independent\\government-run--c651ab61d808f99fb0a47241c10892a1\\report.json",
+                "reportDigest": "f1ff88e661c5630261f27309548bc08e553525e68aaea09ea38c96aaa0e255e5"
+              }
+            ],
+            "journalSequence": 29,
+            "journalDigest": "7d58b4d09fe925cf60e36429d99bccda6e45baa3fb5391c170ce6d4b1b603039",
+            "startedAt": "2026-10-07T21:01:14.6308923Z"
+          },
+          "parseError": null,
+          "stdout": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c\\government-g5-interrupt-after-4ef433f00ac741bcba84e5379fcefb9e\\resume-after-kill.stdout.json",
+          "stderr": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c\\government-g5-interrupt-after-4ef433f00ac741bcba84e5379fcefb9e\\resume-after-kill.stderr.txt",
+          "stdoutSha256": "sha256:8fcd6aad74672376e956adfda35312d4a68b6e7ad2a433c89a6d42ea338189fa",
+          "stderrSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "exitCode": 0,
+          "killed": false,
+          "value": {
+            "apiVersion": "markitect.government-queue/v1alpha1",
+            "queueId": "government-queue--37ca9d0a4ec0d27bb28c1e879ca31b78",
+            "queueDirectory": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c\\government-g5-interrupt-after-4ef433f00ac741bcba84e5379fcefb9e\\state\\government-queue--37ca9d0a4ec0d27bb28c1e879ca31b78",
+            "status": "complete",
+            "nextStep": "none",
+            "backlogDigest": "71bd3919a3e1a21061ccf0fd8dfbe1cbc64d04a7bf9b9afbc4766633c750063f",
+            "limits": {
+              "actorStarts": 8,
+              "maxRepairs": 4,
+              "maxWallTimeSeconds": 14400,
+              "maxParallelism": 1
+            },
+            "actorStarts": 8,
+            "repairs": 0,
+            "inFlightActors": 0,
+            "peakParallelism": 1,
+            "reservedWallTimeSeconds": 3600,
+            "elapsedWallTimeSeconds": 16,
+            "usage": {
+              "inputTokens": {
+                "known": false,
+                "total": 0,
+                "unknown": true
+              },
+              "outputTokens": {
+                "known": false,
+                "total": 0,
+                "unknown": true
+              },
+              "cachedTokens": {
+                "known": false,
+                "total": 0,
+                "unknown": true
+              },
+              "toolCalls": {
+                "known": false,
+                "total": 0,
+                "unknown": true
+              },
+              "observedActorWallTimeMilliseconds": {
+                "known": true,
+                "total": 491,
+                "unknown": false
+              }
+            },
+            "jobs": [
+              {
+                "id": "promotion",
+                "state": "accepted-scoped",
+                "nextStep": "complete",
+                "runId": "government-run--bf043fcdc69ef3c43420e148e9da5074",
+                "reportPath": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c\\government-g5-interrupt-after-4ef433f00ac741bcba84e5379fcefb9e\\state\\promotion\\government-run--bf043fcdc69ef3c43420e148e9da5074\\report.json",
+                "reportDigest": "50490f1ec5d335fbabfe9ba45c46a8940071c916c6081f3fe2063274c9181f5e"
+              },
+              {
+                "id": "independent",
+                "state": "accepted-scoped",
+                "nextStep": "complete",
+                "runId": "government-run--c651ab61d808f99fb0a47241c10892a1",
+                "reportPath": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c\\government-g5-interrupt-after-4ef433f00ac741bcba84e5379fcefb9e\\state\\independent\\government-run--c651ab61d808f99fb0a47241c10892a1\\report.json",
+                "reportDigest": "f1ff88e661c5630261f27309548bc08e553525e68aaea09ea38c96aaa0e255e5"
+              }
+            ],
+            "journalSequence": 29,
+            "journalDigest": "7d58b4d09fe925cf60e36429d99bccda6e45baa3fb5391c170ce6d4b1b603039",
+            "startedAt": "2026-10-07T21:01:14.6308923Z"
+          },
+          "parseError": null,
+          "stdout": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c\\government-g5-interrupt-after-4ef433f00ac741bcba84e5379fcefb9e\\resume-repeat.stdout.json",
+          "stderr": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c\\government-g5-interrupt-after-4ef433f00ac741bcba84e5379fcefb9e\\resume-repeat.stderr.txt",
+          "stdoutSha256": "sha256:8fcd6aad74672376e956adfda35312d4a68b6e7ad2a433c89a6d42ea338189fa",
+          "stderrSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ],
+      "evidence": {
+        "actorStartsAfterResume": 8,
+        "eventsFinal": [
+          {
+            "atUtc": "2026-10-07T21:01:22.0170408Z",
+            "phase": "delegated",
+            "args": [
+              "--no-replace-objects",
+              "-c",
+              "safe.directory=C:/Users/Consiliari/AppData/Local/Temp/markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c/government-g5-interrupt-after-4ef433f00ac741bcba84e5379fcefb9e/repo",
+              "-c",
+              "core.hooksPath=C:/Users/CONSIL~1/AppData/Local/Temp/markitect-government-no-hooks-2534376119",
+              "-C",
+              "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c\\government-g5-interrupt-after-4ef433f00ac741bcba84e5379fcefb9e\\repo",
+              "update-ref",
+              "--create-reflog",
+              "-m",
+              "markitect government promotion 484c6a5518b01e1716bed9e1fce97d4ec6017010527984d4cac319eb0bbb33cc",
+              "refs/markitect/government/active/g5-interrupt-after-promotion",
+              "30d935d4a6c87ca341a32225157aa16bf7de1b06",
+              "460f7b7f3654a59119cb6468dd567d2a32dc8299"
+            ]
+          },
+          {
+            "atUtc": "2026-10-07T21:01:30.6418287Z",
+            "phase": "delegated",
+            "args": [
+              "--no-replace-objects",
+              "-c",
+              "safe.directory=C:/Users/Consiliari/AppData/Local/Temp/markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c/government-g5-interrupt-after-4ef433f00ac741bcba84e5379fcefb9e/repo",
+              "-c",
+              "core.hooksPath=C:/Users/CONSIL~1/AppData/Local/Temp/markitect-government-no-hooks-3132517978",
+              "-C",
+              "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c\\government-g5-interrupt-after-4ef433f00ac741bcba84e5379fcefb9e\\repo",
+              "update-ref",
+              "--create-reflog",
+              "-m",
+              "markitect government promotion d257742e90fb6f091242da526a4463e104119c0f2c508c8cd5d6263966c35ab5",
+              "refs/markitect/government/active/g5-interrupt-after-independent",
+              "8f090562329264d90630cbb89e89a0d6bdc4694b",
+              "460f7b7f3654a59119cb6468dd567d2a32dc8299"
+            ]
+          }
+        ],
+        "primaryPromotionDelegations": 1,
+        "activeBeforeResume": "20f67daa69e884d3ecc3dd90c87353cf3cebc336",
+        "activeAtKill": "30d935d4a6c87ca341a32225157aa16bf7de1b06",
+        "gate": {
+          "atUtc": "2026-10-07T21:01:22.018076Z",
+          "phase": "after",
+          "args": [
+            "--no-replace-objects",
+            "-c",
+            "safe.directory=C:/Users/Consiliari/AppData/Local/Temp/markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c/government-g5-interrupt-after-4ef433f00ac741bcba84e5379fcefb9e/repo",
+            "-c",
+            "core.hooksPath=C:/Users/CONSIL~1/AppData/Local/Temp/markitect-government-no-hooks-2534376119",
+            "-C",
+            "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c\\government-g5-interrupt-after-4ef433f00ac741bcba84e5379fcefb9e\\repo",
+            "update-ref",
+            "--create-reflog",
+            "-m",
+            "markitect government promotion 484c6a5518b01e1716bed9e1fce97d4ec6017010527984d4cac319eb0bbb33cc",
+            "refs/markitect/government/active/g5-interrupt-after-promotion",
+            "30d935d4a6c87ca341a32225157aa16bf7de1b06",
+            "460f7b7f3654a59119cb6468dd567d2a32dc8299"
+          ]
+        },
+        "eventsAtKill": [
+          {
+            "atUtc": "2026-10-07T21:01:22.0170408Z",
+            "phase": "delegated",
+            "args": [
+              "--no-replace-objects",
+              "-c",
+              "safe.directory=C:/Users/Consiliari/AppData/Local/Temp/markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c/government-g5-interrupt-after-4ef433f00ac741bcba84e5379fcefb9e/repo",
+              "-c",
+              "core.hooksPath=C:/Users/CONSIL~1/AppData/Local/Temp/markitect-government-no-hooks-2534376119",
+              "-C",
+              "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c\\government-g5-interrupt-after-4ef433f00ac741bcba84e5379fcefb9e\\repo",
+              "update-ref",
+              "--create-reflog",
+              "-m",
+              "markitect government promotion 484c6a5518b01e1716bed9e1fce97d4ec6017010527984d4cac319eb0bbb33cc",
+              "refs/markitect/government/active/g5-interrupt-after-promotion",
+              "30d935d4a6c87ca341a32225157aa16bf7de1b06",
+              "460f7b7f3654a59119cb6468dd567d2a32dc8299"
+            ]
+          }
+        ],
+        "activeAfter": "20f67daa69e884d3ecc3dd90c87353cf3cebc336",
+        "totalDelegations": 2,
+        "promotion": {
+          "id": "promotion",
+          "state": "accepted-scoped",
+          "nextStep": "complete",
+          "runId": "government-run--bf043fcdc69ef3c43420e148e9da5074",
+          "reportPath": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c\\government-g5-interrupt-after-4ef433f00ac741bcba84e5379fcefb9e\\state\\promotion\\government-run--bf043fcdc69ef3c43420e148e9da5074\\report.json",
+          "reportDigest": "50490f1ec5d335fbabfe9ba45c46a8940071c916c6081f3fe2063274c9181f5e"
+        },
+        "queueDirectory": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c\\government-g5-interrupt-after-4ef433f00ac741bcba84e5379fcefb9e\\state\\government-queue--37ca9d0a4ec0d27bb28c1e879ca31b78",
+        "unknownProviderUsage": {
+          "inputTokens": {
+            "known": false,
+            "total": 0,
+            "unknown": true
+          },
+          "outputTokens": {
+            "known": false,
+            "total": 0,
+            "unknown": true
+          },
+          "cachedTokens": {
+            "known": false,
+            "total": 0,
+            "unknown": true
+          },
+          "toolCalls": {
+            "known": false,
+            "total": 0,
+            "unknown": true
+          },
+          "observedActorWallTimeMilliseconds": {
+            "known": true,
+            "total": 491,
+            "unknown": false
+          }
+        },
+        "laterCommit": "20f67daa69e884d3ecc3dd90c87353cf3cebc336",
+        "actorStartsAfterRepeat": 8,
+        "independent": {
+          "id": "independent",
+          "state": "accepted-scoped",
+          "nextStep": "complete",
+          "runId": "government-run--c651ab61d808f99fb0a47241c10892a1",
+          "reportPath": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c\\government-g5-interrupt-after-4ef433f00ac741bcba84e5379fcefb9e\\state\\independent\\government-run--c651ab61d808f99fb0a47241c10892a1\\report.json",
+          "reportDigest": "f1ff88e661c5630261f27309548bc08e553525e68aaea09ea38c96aaa0e255e5"
+        }
+      },
+      "trialDirectory": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c\\government-g5-interrupt-after-4ef433f00ac741bcba84e5379fcefb9e",
+      "summaryPath": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c\\government-g5-interrupt-after-4ef433f00ac741bcba84e5379fcefb9e\\summary.json"
+    },
+    {
+      "case": "interrupt-before",
+      "status": "passed",
+      "expected": "a real Markitect host process is killed before update-ref; resume proves effect state, retains actor starts against the shared budget, preserves unknown provider usage, and repeat cannot issue another CAS or actor",
+      "sourceCheckout": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c\\government-g5-interrupt-before-965d84337be641938a5e5d076c0a4cc3\\repo",
+      "baseRevision": "6a8e178026953546c5908b0913671b17c0284305",
+      "invocations": [
+        {
+          "exitCode": null,
+          "killed": true,
+          "value": null,
+          "parseError": null,
+          "stdout": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c\\government-g5-interrupt-before-965d84337be641938a5e5d076c0a4cc3\\queue-killed.stdout.json",
+          "stderr": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c\\government-g5-interrupt-before-965d84337be641938a5e5d076c0a4cc3\\queue-killed.stderr.txt",
+          "stdoutSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderrSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "exitCode": 0,
+          "killed": false,
+          "value": {
+            "apiVersion": "markitect.government-queue/v1alpha1",
+            "queueId": "government-queue--e5361d126189c7e0442ed94a835b1061",
+            "queueDirectory": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c\\government-g5-interrupt-before-965d84337be641938a5e5d076c0a4cc3\\state\\government-queue--e5361d126189c7e0442ed94a835b1061",
+            "status": "incomplete",
+            "nextStep": "inspect incomplete jobs and escalation",
+            "backlogDigest": "a41244cd5ab7bda5cc939733466ba105c0399c9a5b7e23cfee9c37c8bdddcd66",
+            "limits": {
+              "actorStarts": 5,
+              "maxRepairs": 4,
+              "maxWallTimeSeconds": 14400,
+              "maxParallelism": 1
+            },
+            "actorStarts": 5,
+            "repairs": 0,
+            "inFlightActors": 0,
+            "peakParallelism": 1,
+            "reservedWallTimeSeconds": 3600,
+            "elapsedWallTimeSeconds": 14,
+            "usage": {
+              "inputTokens": {
+                "known": false,
+                "total": 0,
+                "unknown": true
+              },
+              "outputTokens": {
+                "known": false,
+                "total": 0,
+                "unknown": true
+              },
+              "cachedTokens": {
+                "known": false,
+                "total": 0,
+                "unknown": true
+              },
+              "toolCalls": {
+                "known": false,
+                "total": 0,
+                "unknown": true
+              },
+              "observedActorWallTimeMilliseconds": {
+                "known": true,
+                "total": 164,
+                "unknown": false
+              }
+            },
+            "jobs": [
+              {
+                "id": "promotion",
+                "state": "incomplete",
+                "nextStep": "inspect durable report and escalate",
+                "runId": "government-run--9d2c5b13f3902e05177ab10231a6a552",
+                "reportPath": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c\\government-g5-interrupt-before-965d84337be641938a5e5d076c0a4cc3\\state\\promotion\\government-run--9d2c5b13f3902e05177ab10231a6a552\\report.json",
+                "reportDigest": "8d58a6c29c838700c67bd2718f55123716b2d755af43305061630dec4ace61d2",
+                "error": "promotion recovery remains incomplete\nno exact tokenized promotion edge exists; outcome remains incomplete and will not be replayed"
+              },
+              {
+                "id": "independent",
+                "state": "incomplete",
+                "nextStep": "inspect durable report and escalate",
+                "runId": "government-run--78fd891f6e2ef3f5429d810dd8ccc620",
+                "reportPath": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c\\government-g5-interrupt-before-965d84337be641938a5e5d076c0a4cc3\\state\\independent\\government-run--78fd891f6e2ef3f5429d810dd8ccc620\\report.json",
+                "reportDigest": "62aa0d1ba88a2616d4f1794a82f075f231cd0a2f87807b076313c791e98007ae",
+                "error": "cumulative queue actor-start limit exhausted"
+              }
+            ],
+            "journalSequence": 22,
+            "journalDigest": "487ba86d50ae1b76b5cf47e6dc42b26d4ee4fbb0672963feb7cc69bec1b4a396",
+            "startedAt": "2026-10-07T21:00:52.696387Z"
+          },
+          "parseError": null,
+          "stdout": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c\\government-g5-interrupt-before-965d84337be641938a5e5d076c0a4cc3\\resume-after-kill.stdout.json",
+          "stderr": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c\\government-g5-interrupt-before-965d84337be641938a5e5d076c0a4cc3\\resume-after-kill.stderr.txt",
+          "stdoutSha256": "sha256:fb36ada53ae8bea47f50056f2e6e1a879eba36be4e17eee1d33bc93be30b90f0",
+          "stderrSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "exitCode": 0,
+          "killed": false,
+          "value": {
+            "apiVersion": "markitect.government-queue/v1alpha1",
+            "queueId": "government-queue--e5361d126189c7e0442ed94a835b1061",
+            "queueDirectory": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c\\government-g5-interrupt-before-965d84337be641938a5e5d076c0a4cc3\\state\\government-queue--e5361d126189c7e0442ed94a835b1061",
+            "status": "incomplete",
+            "nextStep": "inspect incomplete jobs and escalation",
+            "backlogDigest": "a41244cd5ab7bda5cc939733466ba105c0399c9a5b7e23cfee9c37c8bdddcd66",
+            "limits": {
+              "actorStarts": 5,
+              "maxRepairs": 4,
+              "maxWallTimeSeconds": 14400,
+              "maxParallelism": 1
+            },
+            "actorStarts": 5,
+            "repairs": 0,
+            "inFlightActors": 0,
+            "peakParallelism": 1,
+            "reservedWallTimeSeconds": 3600,
+            "elapsedWallTimeSeconds": 14,
+            "usage": {
+              "inputTokens": {
+                "known": false,
+                "total": 0,
+                "unknown": true
+              },
+              "outputTokens": {
+                "known": false,
+                "total": 0,
+                "unknown": true
+              },
+              "cachedTokens": {
+                "known": false,
+                "total": 0,
+                "unknown": true
+              },
+              "toolCalls": {
+                "known": false,
+                "total": 0,
+                "unknown": true
+              },
+              "observedActorWallTimeMilliseconds": {
+                "known": true,
+                "total": 164,
+                "unknown": false
+              }
+            },
+            "jobs": [
+              {
+                "id": "promotion",
+                "state": "incomplete",
+                "nextStep": "inspect durable report and escalate",
+                "runId": "government-run--9d2c5b13f3902e05177ab10231a6a552",
+                "reportPath": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c\\government-g5-interrupt-before-965d84337be641938a5e5d076c0a4cc3\\state\\promotion\\government-run--9d2c5b13f3902e05177ab10231a6a552\\report.json",
+                "reportDigest": "8d58a6c29c838700c67bd2718f55123716b2d755af43305061630dec4ace61d2",
+                "error": "promotion recovery remains incomplete\nno exact tokenized promotion edge exists; outcome remains incomplete and will not be replayed"
+              },
+              {
+                "id": "independent",
+                "state": "incomplete",
+                "nextStep": "inspect durable report and escalate",
+                "runId": "government-run--78fd891f6e2ef3f5429d810dd8ccc620",
+                "reportPath": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c\\government-g5-interrupt-before-965d84337be641938a5e5d076c0a4cc3\\state\\independent\\government-run--78fd891f6e2ef3f5429d810dd8ccc620\\report.json",
+                "reportDigest": "62aa0d1ba88a2616d4f1794a82f075f231cd0a2f87807b076313c791e98007ae",
+                "error": "cumulative queue actor-start limit exhausted"
+              }
+            ],
+            "journalSequence": 22,
+            "journalDigest": "487ba86d50ae1b76b5cf47e6dc42b26d4ee4fbb0672963feb7cc69bec1b4a396",
+            "startedAt": "2026-10-07T21:00:52.696387Z"
+          },
+          "parseError": null,
+          "stdout": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c\\government-g5-interrupt-before-965d84337be641938a5e5d076c0a4cc3\\resume-repeat.stdout.json",
+          "stderr": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c\\government-g5-interrupt-before-965d84337be641938a5e5d076c0a4cc3\\resume-repeat.stderr.txt",
+          "stdoutSha256": "sha256:fb36ada53ae8bea47f50056f2e6e1a879eba36be4e17eee1d33bc93be30b90f0",
+          "stderrSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ],
+      "evidence": {
+        "actorStartsAfterResume": 5,
+        "eventsFinal": [
+          {
+            "atUtc": "2026-10-07T21:00:59.2571052Z",
+            "phase": "attempt",
+            "args": [
+              "--no-replace-objects",
+              "-c",
+              "safe.directory=C:/Users/Consiliari/AppData/Local/Temp/markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c/government-g5-interrupt-before-965d84337be641938a5e5d076c0a4cc3/repo",
+              "-c",
+              "core.hooksPath=C:/Users/CONSIL~1/AppData/Local/Temp/markitect-government-no-hooks-1535531916",
+              "-C",
+              "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c\\government-g5-interrupt-before-965d84337be641938a5e5d076c0a4cc3\\repo",
+              "update-ref",
+              "--create-reflog",
+              "-m",
+              "markitect government promotion 8e58f30ff02c413e29aa7197ff2cbb786aaaed5645bd41b7fb7529715dfdcc33",
+              "refs/markitect/government/active/g5-interrupt-before-promotion",
+              "23856acfd47068f89c4dbecfe5746bfde819454d",
+              "6a8e178026953546c5908b0913671b17c0284305"
+            ]
+          }
+        ],
+        "primaryPromotionDelegations": 0,
+        "activeBeforeResume": "6a8e178026953546c5908b0913671b17c0284305",
+        "activeAtKill": "6a8e178026953546c5908b0913671b17c0284305",
+        "gate": {
+          "atUtc": "2026-10-07T21:00:59.2617821Z",
+          "phase": "before",
+          "args": [
+            "--no-replace-objects",
+            "-c",
+            "safe.directory=C:/Users/Consiliari/AppData/Local/Temp/markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c/government-g5-interrupt-before-965d84337be641938a5e5d076c0a4cc3/repo",
+            "-c",
+            "core.hooksPath=C:/Users/CONSIL~1/AppData/Local/Temp/markitect-government-no-hooks-1535531916",
+            "-C",
+            "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c\\government-g5-interrupt-before-965d84337be641938a5e5d076c0a4cc3\\repo",
+            "update-ref",
+            "--create-reflog",
+            "-m",
+            "markitect government promotion 8e58f30ff02c413e29aa7197ff2cbb786aaaed5645bd41b7fb7529715dfdcc33",
+            "refs/markitect/government/active/g5-interrupt-before-promotion",
+            "23856acfd47068f89c4dbecfe5746bfde819454d",
+            "6a8e178026953546c5908b0913671b17c0284305"
+          ]
+        },
+        "eventsAtKill": [
+          {
+            "atUtc": "2026-10-07T21:00:59.2571052Z",
+            "phase": "attempt",
+            "args": [
+              "--no-replace-objects",
+              "-c",
+              "safe.directory=C:/Users/Consiliari/AppData/Local/Temp/markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c/government-g5-interrupt-before-965d84337be641938a5e5d076c0a4cc3/repo",
+              "-c",
+              "core.hooksPath=C:/Users/CONSIL~1/AppData/Local/Temp/markitect-government-no-hooks-1535531916",
+              "-C",
+              "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c\\government-g5-interrupt-before-965d84337be641938a5e5d076c0a4cc3\\repo",
+              "update-ref",
+              "--create-reflog",
+              "-m",
+              "markitect government promotion 8e58f30ff02c413e29aa7197ff2cbb786aaaed5645bd41b7fb7529715dfdcc33",
+              "refs/markitect/government/active/g5-interrupt-before-promotion",
+              "23856acfd47068f89c4dbecfe5746bfde819454d",
+              "6a8e178026953546c5908b0913671b17c0284305"
+            ]
+          }
+        ],
+        "activeAfter": "6a8e178026953546c5908b0913671b17c0284305",
+        "totalDelegations": 0,
+        "promotion": {
+          "id": "promotion",
+          "state": "incomplete",
+          "nextStep": "inspect durable report and escalate",
+          "runId": "government-run--9d2c5b13f3902e05177ab10231a6a552",
+          "reportPath": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c\\government-g5-interrupt-before-965d84337be641938a5e5d076c0a4cc3\\state\\promotion\\government-run--9d2c5b13f3902e05177ab10231a6a552\\report.json",
+          "reportDigest": "8d58a6c29c838700c67bd2718f55123716b2d755af43305061630dec4ace61d2",
+          "error": "promotion recovery remains incomplete\nno exact tokenized promotion edge exists; outcome remains incomplete and will not be replayed"
+        },
+        "queueDirectory": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c\\government-g5-interrupt-before-965d84337be641938a5e5d076c0a4cc3\\state\\government-queue--e5361d126189c7e0442ed94a835b1061",
+        "unknownProviderUsage": {
+          "inputTokens": {
+            "known": false,
+            "total": 0,
+            "unknown": true
+          },
+          "outputTokens": {
+            "known": false,
+            "total": 0,
+            "unknown": true
+          },
+          "cachedTokens": {
+            "known": false,
+            "total": 0,
+            "unknown": true
+          },
+          "toolCalls": {
+            "known": false,
+            "total": 0,
+            "unknown": true
+          },
+          "observedActorWallTimeMilliseconds": {
+            "known": true,
+            "total": 164,
+            "unknown": false
+          }
+        },
+        "laterCommit": "",
+        "actorStartsAfterRepeat": 5,
+        "independent": {
+          "id": "independent",
+          "state": "incomplete",
+          "nextStep": "inspect durable report and escalate",
+          "runId": "government-run--78fd891f6e2ef3f5429d810dd8ccc620",
+          "reportPath": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c\\government-g5-interrupt-before-965d84337be641938a5e5d076c0a4cc3\\state\\independent\\government-run--78fd891f6e2ef3f5429d810dd8ccc620\\report.json",
+          "reportDigest": "62aa0d1ba88a2616d4f1794a82f075f231cd0a2f87807b076313c791e98007ae",
+          "error": "cumulative queue actor-start limit exhausted"
+        }
+      },
+      "trialDirectory": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c\\government-g5-interrupt-before-965d84337be641938a5e5d076c0a4cc3",
+      "summaryPath": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c\\government-g5-interrupt-before-965d84337be641938a5e5d076c0a4cc3\\summary.json"
+    },
+    {
+      "case": "stale-backlog",
+      "status": "passed",
+      "expected": "changed runtime fingerprints and backlog bytes stop future queue work while preserving accepted-scoped historical results, actors, and Active refs",
+      "sourceCheckout": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c\\government-g5-stale-backlog-2d29eb210fbd4c609d60f50d5bff1f07\\repo",
+      "baseRevision": "9b2651aaf0299184d1876f768f90db85ec5ea0e6",
+      "invocations": [
+        {
+          "exitCode": 0,
+          "killed": false,
+          "value": {
+            "apiVersion": "markitect.government-queue/v1alpha1",
+            "queueId": "government-queue--084583804cbcd58d8c97c4d1fd510698",
+            "queueDirectory": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c\\government-g5-stale-runtime-2c0713801be244e0860baa5f46003a5d\\state\\government-queue--084583804cbcd58d8c97c4d1fd510698",
+            "status": "complete",
+            "nextStep": "none",
+            "backlogDigest": "4b88eaa37d5128b1c31e681a6cfafa116a7b3bb349ea57950d6df659fddca61a",
+            "limits": {
+              "actorStarts": 40,
+              "maxRepairs": 4,
+              "maxWallTimeSeconds": 14400,
+              "maxParallelism": 1
+            },
+            "actorStarts": 4,
+            "repairs": 0,
+            "inFlightActors": 0,
+            "peakParallelism": 1,
+            "reservedWallTimeSeconds": 1800,
+            "elapsedWallTimeSeconds": 9,
+            "usage": {
+              "inputTokens": {
+                "known": false,
+                "total": 0,
+                "unknown": true
+              },
+              "outputTokens": {
+                "known": false,
+                "total": 0,
+                "unknown": true
+              },
+              "cachedTokens": {
+                "known": false,
+                "total": 0,
+                "unknown": true
+              },
+              "toolCalls": {
+                "known": false,
+                "total": 0,
+                "unknown": true
+              },
+              "observedActorWallTimeMilliseconds": {
+                "known": true,
+                "total": 331,
+                "unknown": false
+              }
+            },
+            "jobs": [
+              {
+                "id": "only",
+                "state": "accepted-scoped",
+                "nextStep": "complete",
+                "runId": "government-run--498c0fdc17721fab26fa111600a59fd7",
+                "reportPath": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c\\government-g5-stale-runtime-2c0713801be244e0860baa5f46003a5d\\state\\only\\government-run--498c0fdc17721fab26fa111600a59fd7\\report.json",
+                "reportDigest": "471ed8cebe285b49901117615a4ecc374231899705cdb97759e33a6160aa17b3"
+              }
+            ],
+            "journalSequence": 16,
+            "journalDigest": "6aba02ab097bfbc6cdec4ed164939a6f2a03bfecb70991eeabe8acb048e9cf32",
+            "startedAt": "2026-10-07T21:00:25.4048823Z"
+          },
+          "parseError": null,
+          "stdout": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c\\government-g5-stale-runtime-2c0713801be244e0860baa5f46003a5d\\runtime-queue.stdout.json",
+          "stderr": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c\\government-g5-stale-runtime-2c0713801be244e0860baa5f46003a5d\\runtime-queue.stderr.txt",
+          "stdoutSha256": "sha256:f3392a030bef9a65b39c62df4c7d5aedad21c4fb0b6b28a250cddab0a65482b0",
+          "stderrSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "exitCode": 1,
+          "killed": false,
+          "value": {
+            "apiVersion": "markitect.government-queue/v1alpha1",
+            "queueId": "government-queue--084583804cbcd58d8c97c4d1fd510698",
+            "queueDirectory": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c\\government-g5-stale-runtime-2c0713801be244e0860baa5f46003a5d\\state\\government-queue--084583804cbcd58d8c97c4d1fd510698",
+            "status": "blocked",
+            "nextStep": "none",
+            "backlogDigest": "4b88eaa37d5128b1c31e681a6cfafa116a7b3bb349ea57950d6df659fddca61a",
+            "limits": {
+              "actorStarts": 40,
+              "maxRepairs": 4,
+              "maxWallTimeSeconds": 14400,
+              "maxParallelism": 1
+            },
+            "actorStarts": 4,
+            "repairs": 0,
+            "inFlightActors": 0,
+            "peakParallelism": 1,
+            "reservedWallTimeSeconds": 1800,
+            "elapsedWallTimeSeconds": 9,
+            "usage": {
+              "inputTokens": {
+                "known": false,
+                "total": 0,
+                "unknown": true
+              },
+              "outputTokens": {
+                "known": false,
+                "total": 0,
+                "unknown": true
+              },
+              "cachedTokens": {
+                "known": false,
+                "total": 0,
+                "unknown": true
+              },
+              "toolCalls": {
+                "known": false,
+                "total": 0,
+                "unknown": true
+              },
+              "observedActorWallTimeMilliseconds": {
+                "known": true,
+                "total": 331,
+                "unknown": false
+              }
+            },
+            "jobs": [
+              {
+                "id": "only",
+                "state": "accepted-scoped",
+                "nextStep": "complete",
+                "runId": "government-run--498c0fdc17721fab26fa111600a59fd7",
+                "reportPath": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c\\government-g5-stale-runtime-2c0713801be244e0860baa5f46003a5d\\state\\only\\government-run--498c0fdc17721fab26fa111600a59fd7\\report.json",
+                "reportDigest": "471ed8cebe285b49901117615a4ecc374231899705cdb97759e33a6160aa17b3",
+                "error": "runtime binding changed: job \"only\" runtime bytes changed"
+              }
+            ],
+            "journalSequence": 17,
+            "journalDigest": "5374af715c4fc1bc9cac17837082b3efeb31103beef72b4be15bf450a62ea55b",
+            "startedAt": "2026-10-07T21:00:25.4048823Z"
+          },
+          "parseError": null,
+          "stdout": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c\\government-g5-stale-runtime-2c0713801be244e0860baa5f46003a5d\\resume-stale-runtime.stdout.json",
+          "stderr": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c\\government-g5-stale-runtime-2c0713801be244e0860baa5f46003a5d\\resume-stale-runtime.stderr.txt",
+          "stdoutSha256": "sha256:5868fe27d9744de019be79cde2ac9119521ae8689b88cf10cae3b987a75a0c4a",
+          "stderrSha256": "sha256:8e5a559eeedd0b88b7bb3d0943a282a395fe0478787f327f353daed57fc6aa96"
+        },
+        {
+          "exitCode": 0,
+          "killed": false,
+          "value": {
+            "apiVersion": "markitect.government-queue/v1alpha1",
+            "queueId": "government-queue--6f957cc91cc1656675c6c7bf3e4bbb85",
+            "queueDirectory": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c\\government-g5-stale-backlog-2d29eb210fbd4c609d60f50d5bff1f07\\state\\government-queue--6f957cc91cc1656675c6c7bf3e4bbb85",
+            "status": "complete",
+            "nextStep": "none",
+            "backlogDigest": "db4212bb3527dead542014c370c329aeb147eab2de8b2396de1287cd8ec451c6",
+            "limits": {
+              "actorStarts": 40,
+              "maxRepairs": 4,
+              "maxWallTimeSeconds": 14400,
+              "maxParallelism": 1
+            },
+            "actorStarts": 4,
+            "repairs": 0,
+            "inFlightActors": 0,
+            "peakParallelism": 1,
+            "reservedWallTimeSeconds": 1800,
+            "elapsedWallTimeSeconds": 4,
+            "usage": {
+              "inputTokens": {
+                "known": false,
+                "total": 0,
+                "unknown": true
+              },
+              "outputTokens": {
+                "known": false,
+                "total": 0,
+                "unknown": true
+              },
+              "cachedTokens": {
+                "known": false,
+                "total": 0,
+                "unknown": true
+              },
+              "toolCalls": {
+                "known": false,
+                "total": 0,
+                "unknown": true
+              },
+              "observedActorWallTimeMilliseconds": {
+                "known": true,
+                "total": 172,
+                "unknown": false
+              }
+            },
+            "jobs": [
+              {
+                "id": "only",
+                "state": "accepted-scoped",
+                "nextStep": "complete",
+                "runId": "government-run--e53d015ff5c8c3df9c7b04d670cb169e",
+                "reportPath": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c\\government-g5-stale-backlog-2d29eb210fbd4c609d60f50d5bff1f07\\state\\only\\government-run--e53d015ff5c8c3df9c7b04d670cb169e\\report.json",
+                "reportDigest": "5cd877cc99d322b1b48e66a8911d2af3bd31053a006e6e0270fdd8b9af17b956"
+              }
+            ],
+            "journalSequence": 16,
+            "journalDigest": "acbc8552bd287472a6b948b5b348d1450cb913f9660a60cdbc0f937b3a945fba",
+            "startedAt": "2026-10-07T21:00:40.4143244Z"
+          },
+          "parseError": null,
+          "stdout": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c\\government-g5-stale-backlog-2d29eb210fbd4c609d60f50d5bff1f07\\queue.stdout.json",
+          "stderr": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c\\government-g5-stale-backlog-2d29eb210fbd4c609d60f50d5bff1f07\\queue.stderr.txt",
+          "stdoutSha256": "sha256:b5dae6a82364040068781e21f938d98dee4446ef16ef93afe530d7f64aad8cb5",
+          "stderrSha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "exitCode": 1,
+          "killed": false,
+          "value": {
+            "apiVersion": "markitect.government-queue/v1alpha1",
+            "queueId": "government-queue--6f957cc91cc1656675c6c7bf3e4bbb85",
+            "queueDirectory": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c\\government-g5-stale-backlog-2d29eb210fbd4c609d60f50d5bff1f07\\state\\government-queue--6f957cc91cc1656675c6c7bf3e4bbb85",
+            "status": "blocked",
+            "nextStep": "none",
+            "backlogDigest": "db4212bb3527dead542014c370c329aeb147eab2de8b2396de1287cd8ec451c6",
+            "limits": {
+              "actorStarts": 40,
+              "maxRepairs": 4,
+              "maxWallTimeSeconds": 14400,
+              "maxParallelism": 1
+            },
+            "actorStarts": 4,
+            "repairs": 0,
+            "inFlightActors": 0,
+            "peakParallelism": 1,
+            "reservedWallTimeSeconds": 1800,
+            "elapsedWallTimeSeconds": 4,
+            "usage": {
+              "inputTokens": {
+                "known": false,
+                "total": 0,
+                "unknown": true
+              },
+              "outputTokens": {
+                "known": false,
+                "total": 0,
+                "unknown": true
+              },
+              "cachedTokens": {
+                "known": false,
+                "total": 0,
+                "unknown": true
+              },
+              "toolCalls": {
+                "known": false,
+                "total": 0,
+                "unknown": true
+              },
+              "observedActorWallTimeMilliseconds": {
+                "known": true,
+                "total": 172,
+                "unknown": false
+              }
+            },
+            "jobs": [
+              {
+                "id": "only",
+                "state": "accepted-scoped",
+                "nextStep": "complete",
+                "runId": "government-run--e53d015ff5c8c3df9c7b04d670cb169e",
+                "reportPath": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c\\government-g5-stale-backlog-2d29eb210fbd4c609d60f50d5bff1f07\\state\\only\\government-run--e53d015ff5c8c3df9c7b04d670cb169e\\report.json",
+                "reportDigest": "5cd877cc99d322b1b48e66a8911d2af3bd31053a006e6e0270fdd8b9af17b956",
+                "error": "backlog bytes changed; old queue assent is stale"
+              }
+            ],
+            "journalSequence": 17,
+            "journalDigest": "abf7fa876ff63f0f1c84382d63645e6a0eaf9996b997393c8db60e6edbf79c0f",
+            "startedAt": "2026-10-07T21:00:40.4143244Z"
+          },
+          "parseError": null,
+          "stdout": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c\\government-g5-stale-backlog-2d29eb210fbd4c609d60f50d5bff1f07\\resume-stale.stdout.json",
+          "stderr": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c\\government-g5-stale-backlog-2d29eb210fbd4c609d60f50d5bff1f07\\resume-stale.stderr.txt",
+          "stdoutSha256": "sha256:e9cc4b65484d7db2a3c278100c3dc5a13d6ee65cdaeb3c5b76aa59e05b049e01",
+          "stderrSha256": "sha256:27ca80bb9cb5ab3538246d1333e6e82a557489a794fb3981af177636e5756543"
+        }
+      ],
+      "evidence": {
+        "actorStartsBeforeRuntimeChange": 4,
+        "runtimeJobState": "accepted-scoped",
+        "staleError": "backlog bytes changed; old queue assent is stale",
+        "staleRuntimeQueue": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c\\government-g5-stale-runtime-2c0713801be244e0860baa5f46003a5d\\state\\government-queue--084583804cbcd58d8c97c4d1fd510698",
+        "staleBacklogQueue": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c\\government-g5-stale-backlog-2d29eb210fbd4c609d60f50d5bff1f07\\state\\government-queue--6f957cc91cc1656675c6c7bf3e4bbb85",
+        "originalJournalDigest": "acbc8552bd287472a6b948b5b348d1450cb913f9660a60cdbc0f937b3a945fba",
+        "runtimeOverallState": "blocked",
+        "runtimeError": "runtime binding changed: job \"only\" runtime bytes changed",
+        "staleJournalDigest": "abf7fa876ff63f0f1c84382d63645e6a0eaf9996b997393c8db60e6edbf79c0f",
+        "staleOverallState": "blocked",
+        "staleJobState": "accepted-scoped",
+        "actorStartsAfterRuntimeChange": 4,
+        "staleRuntimeTrial": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c\\government-g5-stale-runtime-2c0713801be244e0860baa5f46003a5d",
+        "activeBeforeResume": "8c305b52e6be68fc02e076bf8c8df0e164244e08",
+        "activeAfterResume": "8c305b52e6be68fc02e076bf8c8df0e164244e08"
+      },
+      "trialDirectory": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c\\government-g5-stale-backlog-2d29eb210fbd4c609d60f50d5bff1f07",
+      "summaryPath": "C:\\Users\\Consiliari\\AppData\\Local\\Temp\\markitect-g5-04e225d-861392291e4e4ed0af16fe003396cf0c\\government-g5-stale-backlog-2d29eb210fbd4c609d60f50d5bff1f07\\summary.json"
+    }
+  ],
+  "nativeBindingAudit": {
+    "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\native-binding-audit-04e225d.json",
+    "bytes": 49556,
+    "sha256": "462e9e362f3201d4871305de1ab7d5cce6cdfbd108984a457c57e28bb05175be"
+  },
+  "sourceManifest": {
+    "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\source-manifest-04e225d.json",
+    "bytes": 13096,
+    "sha256": "7915e345c8081d207c0bb51c9e7a303522e92ca87ad96a534115fbbd8d59f553"
+  },
+  "nativeManifest": {
+    "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\native-manifest-04e225d.json",
+    "bytes": 140886,
+    "sha256": "759f2af31d0dadded6a8f4b22f28bea5e5f6f0c90f19fbcfc5ead798ba5f2c7c"
+  },
+  "sourceFiles": 35,
+  "nativeFiles": 344,
+  "independentReview": {
+    "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\independent-review-lease-repair.json",
+    "bytes": 1695,
+    "sha256": "a3e5b2ebd1e77ca13effd4e4718a3a2afe38d69de6e084a1bf52bb7970d232d5"
+  },
+  "supersededCandidate": {
+    "native": {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\native-summary-1498e91.json",
+      "bytes": 58203,
+      "sha256": "9ff806a4c6c2759128675c007cbd0825a3d76790c17b7d99db9820da54cf281b"
+    },
+    "partialStdout": {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\final-verify-1498e91\\stdout.yaml",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "sourceSHA": "1498e91e9e929334a01edc4f1211fd47112e6ddd",
+    "scope": "Superseded source candidate: native4 passed, full Verify deliberately interrupted for independent parallel-capacity finding; zero completed full suites for this candidate. Final candidate separately verified once.",
+    "partialStderr": {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\final-verify-1498e91\\stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "review": {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\independent-review-1498e91.json",
+      "bytes": 1812,
+      "sha256": "876423a34d9b71f779ec2d7056958dac2c638cc92e79028ab0717ba70409ec35"
+    },
+    "verifyAbort": {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\final-verify-1498e91\\review-abort.json",
+      "bytes": 453,
+      "sha256": "fb9f81fda61e146d56b1264ef371526af19ade03907745737f62b4f9296dde89"
+    },
+    "nativeManifest": {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\native-manifest-1498e91.json",
+      "bytes": 140897,
+      "sha256": "539326cf3b846df1f02f642455a8fc16c53f38122e6eaa78cc1146d710a577bf"
+    },
+    "verifySummary": {
+      "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\final-verify-1498e91\\summary.json",
+      "bytes": 583,
+      "sha256": "4cc38c7b7347aa2f5b6ed07548c7c951e3b960c238884ed385538349ac9f483e"
+    }
+  },
+  "historicalAttempts": [
+    {
+      "metadata": {
+        "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\native-20261007-194600-cc3445aece584e4587ff9cb8d1ed347e.json",
+        "bytes": 518,
+        "sha256": "d32cd07b63c89fed1cab6af7c96c3a2bc4f228132c8740b6b00630fd8e2fddb9"
+      },
+      "exitCode": 1,
+      "externalRoot": "C:\\Users\\CONSIL~1\\AppData\\Local\\Temp\\markitect-g5-native-20261007-194600-cc3445aece584e4587ff9cb8d1ed347e",
+      "rawLog": {
+        "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\native-20261007-194600-cc3445aece584e4587ff9cb8d1ed347e.log",
+        "bytes": 743,
+        "sha256": "7c8b93694c7d94a40639eb03fd1111bca3573eb7ae84cbbee5bc832fbf4f4381"
+      },
+      "sourceFixed": false,
+      "scope": "Pre-final mutable-source native trial; retained diagnostic attempt, never final acceptance evidence."
+    },
+    {
+      "metadata": {
+        "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\native-20261007-194636-2e81cc0cfae640acb47afee71c2c58f9.json",
+        "bytes": 518,
+        "sha256": "7d77c4951f2500e159ebfc816b65426e915b9e83467bb2d1e56a470c1c815d62"
+      },
+      "exitCode": 1,
+      "externalRoot": "C:\\Users\\CONSIL~1\\AppData\\Local\\Temp\\markitect-g5-native-20261007-194636-2e81cc0cfae640acb47afee71c2c58f9",
+      "rawLog": {
+        "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\native-20261007-194636-2e81cc0cfae640acb47afee71c2c58f9.log",
+        "bytes": 91,
+        "sha256": "1e344650008e4209cbac5ac39eda45a3de40c7d8e656312a6c21ee6a8f042f11"
+      },
+      "sourceFixed": false,
+      "scope": "Pre-final mutable-source native trial; retained diagnostic attempt, never final acceptance evidence."
+    },
+    {
+      "metadata": {
+        "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\native-20261007-194701-0deea52821a74043b2b42b3c4aa24492.json",
+        "bytes": 518,
+        "sha256": "46560546180a0ba3841409ef7fc4f98ff8434f35852a90810e5604ebe62c0b16"
+      },
+      "exitCode": 1,
+      "externalRoot": "C:\\Users\\CONSIL~1\\AppData\\Local\\Temp\\markitect-g5-native-20261007-194701-0deea52821a74043b2b42b3c4aa24492",
+      "rawLog": {
+        "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\native-20261007-194701-0deea52821a74043b2b42b3c4aa24492.log",
+        "bytes": 80,
+        "sha256": "3bc474d14bf0e6d3037fc542290314b9d5b054de3d24338097faf21f3eb82e4f"
+      },
+      "sourceFixed": false,
+      "scope": "Pre-final mutable-source native trial; retained diagnostic attempt, never final acceptance evidence."
+    },
+    {
+      "metadata": {
+        "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\native-20261007-194831-4a3629c249ef472fa29988e3a09f5ef4.json",
+        "bytes": 518,
+        "sha256": "1b6c6ba6b116c5c5817d0f4413fb6e862a258a63d725ee23ba202b6adc6d9931"
+      },
+      "exitCode": 1,
+      "externalRoot": "C:\\Users\\CONSIL~1\\AppData\\Local\\Temp\\markitect-g5-native-20261007-194831-4a3629c249ef472fa29988e3a09f5ef4",
+      "rawLog": {
+        "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\native-20261007-194831-4a3629c249ef472fa29988e3a09f5ef4.log",
+        "bytes": 553,
+        "sha256": "37bfa2645c85ab6f0abe803ffd13db975c76fe151eea0aa96a30ba244595cf81"
+      },
+      "sourceFixed": false,
+      "scope": "Pre-final mutable-source native trial; retained diagnostic attempt, never final acceptance evidence."
+    },
+    {
+      "metadata": {
+        "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\native-20261007-195000-69aa9c1794384f00bdfbb4ce36481dd2.json",
+        "bytes": 518,
+        "sha256": "bb6265d1cd7e8179494cfe98068ba63870209718cf0320f3e348eac9c7b48e8f"
+      },
+      "exitCode": 1,
+      "externalRoot": "C:\\Users\\CONSIL~1\\AppData\\Local\\Temp\\markitect-g5-native-20261007-195000-69aa9c1794384f00bdfbb4ce36481dd2",
+      "rawLog": {
+        "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\native-20261007-195000-69aa9c1794384f00bdfbb4ce36481dd2.log",
+        "bytes": 559,
+        "sha256": "c6f82a082329d9d8ecd1536a3c93ec4305907f060f5cfab11af9af1ceed5fabd"
+      },
+      "sourceFixed": false,
+      "scope": "Pre-final mutable-source native trial; retained diagnostic attempt, never final acceptance evidence."
+    },
+    {
+      "metadata": {
+        "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\native-20261007-195215-9deb7a1ac84a4fde96f164782b3ff57e.json",
+        "bytes": 518,
+        "sha256": "6c97451cf3d8b92a6b7d25325e5acd63f8e80ab155309405945371a8faff3204"
+      },
+      "exitCode": 0,
+      "externalRoot": "C:\\Users\\CONSIL~1\\AppData\\Local\\Temp\\markitect-g5-native-20261007-195215-9deb7a1ac84a4fde96f164782b3ff57e",
+      "rawLog": {
+        "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\native-20261007-195215-9deb7a1ac84a4fde96f164782b3ff57e.log",
+        "bytes": 53859,
+        "sha256": "97b2362eb89c83df079e52f61e2ce61be6e34ff17ea94af34791311558e29fd6"
+      },
+      "sourceFixed": false,
+      "scope": "Pre-final mutable-source native trial; retained diagnostic attempt, never final acceptance evidence."
+    },
+    {
+      "metadata": {
+        "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\native-20261007-195444-b8b25aca1b1e46d7b2c16219db9558e6.json",
+        "bytes": 750,
+        "sha256": "55f674ddbb6ec8c95f29084b15784a09029f5bcd9f4fb47093a5764aa331f45f"
+      },
+      "exitCode": 0,
+      "externalRoot": "C:\\Users\\CONSIL~1\\AppData\\Local\\Temp\\markitect-g5-native-20261007-195444-b8b25aca1b1e46d7b2c16219db9558e6",
+      "rawLog": {
+        "path": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-worker\\Markitect\\.artifacts\\government-g5\\native-20261007-195444-b8b25aca1b1e46d7b2c16219db9558e6.log",
+        "bytes": 54091,
+        "sha256": "6297e7310ff4de2f85960d24599d1e3790bedd2920e68abcc39e797b132ac0e5"
+      },
+      "sourceFixed": false,
+      "scope": "Pre-final mutable-source native trial; retained diagnostic attempt, never final acceptance evidence."
+    }
+  ],
+  "historicalCorrections": [
+    "Retained native attempts include fixture inspection/runner initialization, missing protected-goal binding, stale-report expectation and lost Git shim PATH; the latter correctly invalidated tool pins.",
+    "Some early promotion focused failure raw streams were not retained; their diagnoses were in tool/chat outputs. Preliminary source compile failure is explicitly a reconstructed record.",
+    "Independent review corrections: keep unknown interrupted actor slots occupied; validate reservation identity before mutating counters; validate malformed reflog timestamps and actor identity."
+  ],
+  "limitations": [
+    "Windows amd64 local source/binary evidence only; no Linux runtime, race, CI, installed release or deployment claim. Linux promotion package crosscompile is compile evidence only.",
+    "Deterministic public programs demonstrate process/persistence/recovery mechanics, not real-model engineering quality, institutional independence, productivity or human acceptance.",
+    "Actor processes share caller rights. A released Host lease does not prove old actor/child processes terminated; unknown reservations conservatively occupy slots.",
+    "No atomic Git/journal transaction, automatic rollback, authenticated Owner approval, Court override, autonomous goals or scheduler platform.",
+    "Journal hashes bind records and detect accidental changes; they are not authenticated against a malicious same-user actor.",
+    "Private Scientist scoring, Classic integration, matched comparison and shared study ownership remain outside this implementation task."
+  ],
+  "heavySlot": "released after final Verify completed",
+  "next": "Hold S1-reviewable candidate. Await Overseer. No push, PR, release, merge, comparison or new development."
+}

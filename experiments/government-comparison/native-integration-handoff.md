@@ -1,3 +1,14 @@
+# R6 terminal checkpoint, 2026-10-08
+
+R6 is closed incomplete: native and outer Queue positive, conditional Resume
+budget admission refused before reservation/start. No repair or retry.
+Source a9bcb89d3b5ded16c7db9125ee6c0755bfd026e4; admission1ef0e7d; freeze8e0ae28.
+New1native/3wrappers/3delegates/150reserved; cumulative13/13/10/1950.
+Evidence and final handoff: evidence/government-released-binding-native-20261008-r6/.
+Scientist slot released. Finish only independent postreview/manifest/clean delivery
+and one direct Overseer completion callback; then wait. Earlier checkpoint and
+all historical handoff content remain below unchanged.
+
 # Active R6 Scientist checkpoint, 2026-10-08
 
 Authority: Overseer chat 01a11367-a781-7683-a20f-46e12614dcb4; existing grant

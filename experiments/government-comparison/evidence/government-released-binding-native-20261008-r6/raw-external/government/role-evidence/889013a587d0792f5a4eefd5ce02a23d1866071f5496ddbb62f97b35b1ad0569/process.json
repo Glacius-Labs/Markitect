@@ -1,0 +1,27 @@
+{
+  "argv": [
+    "C:\\Python313\\python.exe",
+    "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\runtime\\fixtures\\government_positive\\deterministic_delegate.py",
+    "--phase",
+    "review"
+  ],
+  "cwd": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\actor",
+  "returnCode": 0,
+  "wallSeconds": 0.1429024999961257,
+  "stopReason": null,
+  "processTreeControl": "windows-job-kill-on-close",
+  "filesystemIsolation": "not established by process wrapper",
+  "automaticRetries": 0,
+  "receipts": [
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\role-evidence\\889013a587d0792f5a4eefd5ce02a23d1866071f5496ddbb62f97b35b1ad0569\\stdout.log",
+      "sha256": "f27c3cb672b72615aba9f1f67cd03268bf578a942c5f006d614a6def9340ddf8",
+      "kind": "stdout.log"
+    },
+    {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\role-evidence\\889013a587d0792f5a4eefd5ce02a23d1866071f5496ddbb62f97b35b1ad0569\\stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "kind": "stderr.log"
+    }
+  ]
+}

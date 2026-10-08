@@ -2,6 +2,7 @@
   "authority": "Overseer continuation 2026-10-08; explicit instruction to prepend current R6 anchor preserving old content",
   "path": "native-integration-handoff.md",
   "oldSha256": "e00fc634cc9fc5e45a93f0ffced719b85d6dcdf910d505dbde8a5e5b10cdccd8",
-  "prefixBytes": 1327,
-  "oldSuffixPreserved": true
+  "prefixBytes": 1970,
+  "oldSuffixPreserved": true,
+  "finalTerminalAnchorAdded": true
 }

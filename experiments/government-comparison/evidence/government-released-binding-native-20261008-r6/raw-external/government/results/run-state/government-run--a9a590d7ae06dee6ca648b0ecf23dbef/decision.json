@@ -1,0 +1,10 @@
+{
+  "id": "sha256:6a28e4c9fde3a56ce4fc4fa06c7aa4485d698b32ed2710b799a1145804145b14",
+  "materialCandidateId": "sha256:f1975e8daa0628770a1d4a95499a65f35b48bbe1507b59c84fc3bb7436f18879",
+  "evidenceId": "sha256:a98d705ce10dd3677421abc6ecec92f4c7428f86c45cf96d6306a3e89420b707",
+  "priorAuthorityDigest": "sha256:c1d7194bd6a8961001c68cbace3f7da40d5daf1b22570026d097e6091cf63e93",
+  "round": 1,
+  "voteIds": [
+    "sha256:9da6b1601a9ff49f66f92417edda1364d4150ca9a85321a1e9b06ff5cd0145a5"
+  ]
+}

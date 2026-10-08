@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "intent": {
+    "version": 2,
+    "expectedOld": "e0a7e52acb052fda318204d29a14d10ad23e88e7",
+    "newCommit": "413b7bbb518f594500f22486c27c63db9328d5c0",
+    "expectedTreeId": "6bc4205465453852eb67cd03b42de6349f2fb634",
+    "materialCandidateId": "sha256:f1975e8daa0628770a1d4a95499a65f35b48bbe1507b59c84fc3bb7436f18879",
+    "evidenceId": "sha256:a98d705ce10dd3677421abc6ecec92f4c7428f86c45cf96d6306a3e89420b707",
+    "decisionId": "sha256:6a28e4c9fde3a56ce4fc4fa06c7aa4485d698b32ed2710b799a1145804145b14",
+    "idempotencyKey": "government-run--a9a590d7ae06dee6ca648b0ecf23dbef",
+    "activeRef": "refs/markitect/government/active/scientist-positive",
+    "fencingToken": "9907a2af4e7ead2c98258b2b8f6e5fe5e233149268ad2da7e23d9ca05fbf0a8a",
+    "createdAt": "2026-10-08T03:46:34.8151636Z"
+  },
+  "observedRef": "413b7bbb518f594500f22486c27c63db9328d5c0",
+  "completedAt": "2026-10-08T03:46:35.1843398Z"
+}

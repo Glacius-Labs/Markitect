@@ -1,0 +1,60 @@
+{
+  "apiVersion": "markitect.government-queue/v1alpha1",
+  "queueId": "government-queue--e1e4a8f3b8a4ea1dc161ca162b0f0605",
+  "queueDirectory": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\results\\queue-state\\government-queue--e1e4a8f3b8a4ea1dc161ca162b0f0605",
+  "status": "complete",
+  "nextStep": "none",
+  "backlogDigest": "ffd452e09ef1f7db356c570cbf90ddd4fac3eee44c035df09a5dc785cb6573a5",
+  "limits": {
+    "actorStarts": 3,
+    "maxRepairs": 0,
+    "maxWallTimeSeconds": 38,
+    "maxParallelism": 2
+  },
+  "actorStarts": 3,
+  "repairs": 0,
+  "inFlightActors": 0,
+  "peakParallelism": 1,
+  "reservedWallTimeSeconds": 38,
+  "elapsedWallTimeSeconds": 10,
+  "usage": {
+    "inputTokens": {
+      "known": false,
+      "total": 0,
+      "unknown": true
+    },
+    "outputTokens": {
+      "known": false,
+      "total": 0,
+      "unknown": true
+    },
+    "cachedTokens": {
+      "known": false,
+      "total": 0,
+      "unknown": true
+    },
+    "toolCalls": {
+      "known": false,
+      "total": 0,
+      "unknown": true
+    },
+    "observedActorWallTimeMilliseconds": {
+      "known": true,
+      "total": 1372,
+      "unknown": false
+    }
+  },
+  "jobs": [
+    {
+      "id": "positive-overflow-release-r6",
+      "state": "accepted-scoped",
+      "nextStep": "complete",
+      "runId": "government-run--a9a590d7ae06dee6ca648b0ecf23dbef",
+      "reportPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-released-binding-20261008-r6\\government\\results\\run-state\\government-run--a9a590d7ae06dee6ca648b0ecf23dbef\\report.json",
+      "reportDigest": "b76eb7ff5fd18202752a62de0724482718434ed3f9eb9c78f80df1c8552a58ef"
+    }
+  ],
+  "journalSequence": 14,
+  "journalDigest": "74b4e5651a130381952474678c144a979e9d606f7f30e215999987842c47f3d3",
+  "startedAt": "2026-10-08T03:46:24.7253827Z"
+}

@@ -1,0 +1,11 @@
+{
+  "owner": "Scientist",
+  "grantKey": "government-released-binding-native-20261008-r6",
+  "releasedUtc": "2026-10-08T03:48:44.689868+00:00",
+  "status": "released by Scientist after terminal incomplete case",
+  "remainingQuotaReusable": false,
+  "canonicalCoordinatorOwner": "Overseer; no Scientist edit to live coordination",
+  "newNativeStarts": 1,
+  "newReservedNativeSeconds": 150,
+  "resumeStarted": false
+}
