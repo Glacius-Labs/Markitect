@@ -80,6 +80,7 @@ func invokeReviewer(ctx context.Context, host Host, invoker Invoker, root string
 		Round           int                         `json:"round"`
 		CandidateID     string                      `json:"candidateId"`
 		CandidateDigest string                      `json:"candidateDigest"`
+		ChangedPaths    []string                    `json:"changedPaths"`
 		AcceptedModel   projectmodel.ManagerContext `json:"acceptedModel"`
 		ScopedModel     struct {
 			Statements []projectmodel.Statement `json:"statements"`
@@ -89,7 +90,7 @@ func invokeReviewer(ctx context.Context, host Host, invoker Invoker, root string
 		CandidateFiles []reviewFileRef `json:"candidateFiles"`
 		ResponseSchema json.RawMessage `json:"responseSchema"`
 	}{Kind: "projectrun-review/v1", RunGoal: plan.Goal, ManagerID: task.ManagerID, OwnTask: task.Goal, Phase: phase, Round: round,
-		CandidateID: candidate.ID, CandidateDigest: candidate.Digest, AcceptedModel: accepted,
+		CandidateID: candidate.ID, CandidateDigest: candidate.Digest, ChangedPaths: unionPaths(task.WrittenPaths, task.IntegratedPaths), AcceptedModel: accepted,
 		ScopedModel: struct {
 			Statements []projectmodel.Statement `json:"statements"`
 			Artifacts  []projectmodel.Artifact  `json:"artifacts"`
@@ -204,8 +205,9 @@ func reviewScopeDigest(plan PlanRecord, project *Project, task ManagerTask, phas
 		Phase         string                      `json:"phase"`
 		AcceptedModel projectmodel.ManagerContext `json:"acceptedModel"`
 		Checks        []string                    `json:"checks"`
+		ChangedPaths  []string                    `json:"changedPaths"`
 		Files         []agentexec.Artifact        `json:"files"`
-	}{"projectrun-review/v1", plan.Goal, task.ManagerID, task.Goal, phase, accepted, append([]string(nil), task.Checks...), files})
+	}{"projectrun-review/v1", plan.Goal, task.ManagerID, task.Goal, phase, accepted, append([]string(nil), task.Checks...), unionPaths(task.WrittenPaths, task.IntegratedPaths), files})
 }
 
 func scopedReviewModel(report projectmodel.Report, managerID string, tasks []ManagerTask) (projectmodel.ManagerContext, error) {
@@ -271,6 +273,13 @@ func scopedCandidateFiles(project *Project, task ManagerTask) []agentexec.Artifa
 		files = append(files, agentexec.Artifact{Path: path, Mode: mode, Digest: rawContentDigest(content), Content: content})
 	}
 	return files
+}
+
+// reviewRequired distinguishes pure routing from work with reviewable scope.
+// Declared artifacts and paths changed at any point remain mandatory even if
+// the final snapshot has no bytes at those paths (for example, a deletion).
+func reviewRequired(project *Project, task ManagerTask) bool {
+	return project != nil && (len(scopedCandidateFiles(project, task)) > 0 || len(task.Artifacts) > 0 || len(task.WrittenPaths) > 0 || len(task.IntegratedPaths) > 0)
 }
 
 func reviewScopePaths(files []agentexec.Artifact) []string {
@@ -419,6 +428,9 @@ func requireFreshReviews(host Host, root string, store *runStore, dir string, ba
 		task := planned
 		if current := findTask(run.Tasks, planned.ManagerID); current != nil {
 			task = *current
+		}
+		if !reviewRequired(finalProject, task) {
+			continue
 		}
 		phase := "work"
 		if len(activeChildren(run.Tasks, task.ManagerID)) > 0 {

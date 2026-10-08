@@ -167,8 +167,12 @@ func Plan(host Host, root, revision string, request PlanRequest) (PlanRecord, er
 		minimumStarts++
 	}
 	if runtime.Review != nil {
-		phaseCount := len(managerTasks)
+		phaseCount := 0
 		for _, task := range managerTasks {
+			if !reviewRequired(finalProject, task) {
+				continue
+			}
+			phaseCount++
 			if len(activeChildren(managerTasks, task.ManagerID)) > 0 {
 				phaseCount++
 			}

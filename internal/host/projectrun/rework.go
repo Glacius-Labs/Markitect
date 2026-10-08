@@ -192,6 +192,9 @@ func executeReworkSubtree(ctx context.Context, host Host, invoker Invoker, root 
 			}
 			return fmt.Errorf("targeted work response for %s: %w", managerID, err)
 		}
+		if parsed.Status == "no-op" && len(proposal.Response.CandidateFiles) > 0 {
+			return fmt.Errorf("targeted work response for %s claimed no-op while proposing files", managerID)
+		}
 		candidate, err := applyProposal(current, proposal.Response.CandidateFiles, input.Config, input.Report, *task, "work", nil, runtime.Limits)
 		if err != nil {
 			return err
@@ -208,7 +211,8 @@ func executeReworkSubtree(ctx context.Context, host Host, invoker Invoker, root 
 		if err != nil {
 			return err
 		}
-		task.CandidateID, task.ReportID, task.WrittenPaths = candidate.ID, invocation.ReportID, proposalPaths(proposal.Response.CandidateFiles)
+		task.CandidateID, task.ReportID = candidate.ID, invocation.ReportID
+		task.WrittenPaths = unionPaths(task.WrittenPaths, proposalPaths(proposal.Response.CandidateFiles))
 		task.Summary, task.Questions, task.Risks, task.Delegations, task.ReportStatus = parsed.Summary, parsed.Questions, parsed.Risks, parsed.Delegations, parsed.Status
 		for _, delegation := range parsed.Delegations {
 			child := findTask(report.Tasks, delegation.ManagerID)
@@ -225,6 +229,15 @@ func executeReworkSubtree(ctx context.Context, host Host, invoker Invoker, root 
 		if err != nil {
 			return err
 		}
+		if !reviewRequired(candidateProject, *task) {
+			task.State, task.RepairPhase, task.RepairDiagnostic, task.ReviewStatus, task.ReviewCandidateID, task.ReviewRound = "worked", "", "", "not-required", candidate.ID, 0
+			current = candidate
+			reviewPassed = true
+			if err := persistState(store, report); err != nil {
+				return err
+			}
+			break
+		}
 		task.ReviewStatus, task.ReviewCandidateID, task.ReviewRound = "invoking", candidate.ID, round
 		if err := persistState(store, report); err != nil {
 			return err
@@ -232,7 +245,7 @@ func executeReworkSubtree(ctx context.Context, host Host, invoker Invoker, root 
 		if err := ensureRemaining(ctx, runtime, *starts, *spent, "targeted reviewer"); err != nil {
 			return err
 		}
-		review, reviewLog, err := recordReview(ctx, host, invoker, root, store, report, plan, runtime, candidateProject, *task, "work", round, candidate)
+		review, _, err := recordReview(ctx, host, invoker, root, store, report, plan, runtime, candidateProject, *task, "work", round, candidate)
 		*starts++
 		*spent = totalCost(report.Invocations)
 		if *spent > runtime.Limits.MaxCostMicros {
@@ -243,11 +256,13 @@ func executeReworkSubtree(ctx context.Context, host Host, invoker Invoker, root 
 			_ = persistState(store, report)
 			return err
 		}
-		_ = reviewLog
 		if review.Outcome == "pass" {
-			task.ReviewStatus = "pass"
+			task.State, task.RepairPhase, task.RepairDiagnostic, task.ReviewStatus = "worked", "", "", "pass"
 			current = candidate
 			reviewPassed = true
+			if err := persistState(store, report); err != nil {
+				return err
+			}
 			break
 		}
 		var findings []string
@@ -353,6 +368,13 @@ func reintegrateAfterRework(ctx context.Context, host Host, invoker Invoker, roo
 	compiled, err := projectForCandidate(host, root, base.Snapshot, candidate)
 	if err != nil {
 		return nil, err
+	}
+	if !reviewRequired(compiled, *task) {
+		task.ReviewStatus, task.ReviewCandidateID, task.ReviewRound = "not-required", candidate.ID, 0
+		if err := persistState(store, report); err != nil {
+			return nil, err
+		}
+		return append([]ReworkRequest(nil), parsed.ReworkRequests...), nil
 	}
 	reviewRound := reviewCount(report.Reviews, task.ManagerID, "integrate") + 1
 	if reviewRound > runtime.Review.MaxRounds {

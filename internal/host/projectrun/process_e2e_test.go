@@ -120,6 +120,9 @@ func TestProjectRunExecutorProcess(t *testing.T) {
 		Delegations: []Delegation{}, ReworkRequests: []ReworkRequest{}, Integrated: contextPayload.Phase == "integrate", Questions: []string{}, Risks: []string{},
 		ResolvedQuestions: []string{}, ResolvedRisks: []string{}, EscalateTo: ""}
 	files := []agentexec.CandidateFile{}
+	if os.Getenv(e2eBehaviorEnv) == "manager-rework-invalid-noop" && contextPayload.Phase == "work" && contextPayload.Manager.Manager.ID == e2eManagerID("orders", "orders") && contextPayload.RepairDiagnostic != "" {
+		response.Status = "no-op"
+	}
 	switch contextPayload.Phase {
 	case "work":
 		if contextPayload.Manager.Manager.ID == e2eManagerID("", "project-owner") {
@@ -156,7 +159,7 @@ func TestProjectRunExecutorProcess(t *testing.T) {
 		if os.Getenv(e2eBehaviorEnv) == "failed-integration" {
 			response.Status = "failed"
 		}
-		if os.Getenv(e2eBehaviorEnv) == "manager-directed-rework" && contextPayload.Manager.Manager.ID == e2eManagerID("", "project-owner") && countE2EProcessCalls(os.Getenv(e2eLogEnv), contextPayload.Manager.Manager.ID, contextPayload.Phase) == 1 {
+		if (os.Getenv(e2eBehaviorEnv) == "manager-directed-rework" || os.Getenv(e2eBehaviorEnv) == "manager-rework-invalid-noop") && contextPayload.Manager.Manager.ID == e2eManagerID("", "project-owner") && countE2EProcessCalls(os.Getenv(e2eLogEnv), contextPayload.Manager.Manager.ID, contextPayload.Phase) == 1 {
 			response.ReworkRequests = []ReworkRequest{{ManagerID: e2eManagerID("orders", "orders"), Goal: "Correct the orders artifact after integration review.", Reason: "The initial orders implementation needs a focused correction."}}
 			files = []agentexec.CandidateFile{{Path: "src/project-integration.txt", Mode: "0644", Content: "parent integration edit survives child rework\n"}}
 		}
@@ -604,6 +607,10 @@ func TestManagerDirectedReworkRerunsOnlyRequestedLeafAndReintegratesAncestors(t 
 	if len(run.Reviews) < 5 {
 		t.Fatalf("expected work and reintegration reviews, got %d", len(run.Reviews))
 	}
+	ordersTask := findTask(run.Tasks, e2eManagerID("orders", "orders"))
+	if ordersTask == nil || ordersTask.State != "worked" {
+		t.Fatalf("successfully reworked leaf was not durably marked worked: %+v", ordersTask)
+	}
 	store, err := newRunStore(root)
 	if err != nil {
 		t.Fatal(err)
@@ -618,6 +625,71 @@ func TestManagerDirectedReworkRerunsOnlyRequestedLeafAndReintegratesAncestors(t 
 	}
 	if got := string(finalCandidate.Files["src/project-integration.txt"].Content); got != "parent integration edit survives child rework\n" {
 		t.Fatalf("targeted child rework discarded parent-owned integration edit: %q", got)
+	}
+	// Model a durable interruption just after the completed rework round and
+	// before the caller persists final integration closure. Resume must trust
+	// the worked task and its reviews without replaying its subprocesses.
+	latest, err := store.readLatestState(plan.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	latest.Status = StatusInterrupted
+	if err := persistState(store, &latest); err != nil {
+		t.Fatal(err)
+	}
+	resumed, resumeErr := Resume(context.Background(), host, ProcessInvoker{}, root, plan.ID)
+	resumedOrders := findTask(resumed.Tasks, ordersTask.ManagerID)
+	if resumeErr != nil || resumed.Status != StatusIntegrated || resumedOrders == nil || resumedOrders.State != "worked" || len(resumed.Invocations) != len(run.Invocations) {
+		t.Fatalf("known-complete targeted rework did not resume without losing state: status=%s task=%+v err=%v", resumed.Status, resumedOrders, resumeErr)
+	}
+}
+
+func TestPureRoutingManagerSkipsReviewerButImplementationManagersDoNot(t *testing.T) {
+	root := makeProjectRunFixture(t)
+	setupE2EProcess(t, "normal")
+	enableE2EReviews(t, root, 100000)
+	host := projectworkHost()
+	plan, err := Plan(host, root, identityHead(t, root), PlanRequest{Goal: "Implement both owned artifacts.",
+		Managers: []string{e2eManagerID("orders", "orders"), e2eManagerID("inventory", "inventory")}, ExecuteAuthorized: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	run, err := Run(context.Background(), host, ProcessInvoker{}, root, plan.ID)
+	if err != nil || run.Status != StatusIntegrated {
+		t.Fatalf("pure routing fixture failed: status=%s err=%v", run.Status, err)
+	}
+	rootID := e2eManagerID("", "project-owner")
+	rootTask := findTask(run.Tasks, rootID)
+	if rootTask == nil || rootTask.ReviewStatus != "not-required" {
+		t.Fatalf("pure router did not retain explicit not-required state: %+v", rootTask)
+	}
+	if calls := countE2EProcessCalls(os.Getenv(e2eLogEnv), rootID, "review"); calls != 0 {
+		t.Fatalf("pure routing Manager invoked reviewer %d times, want zero", calls)
+	}
+	for _, managerID := range []string{e2eManagerID("orders", "orders"), e2eManagerID("inventory", "inventory")} {
+		if calls := countE2EProcessCalls(os.Getenv(e2eLogEnv), managerID, "review"); calls == 0 {
+			t.Fatalf("implementation Manager %s skipped mandatory review", managerID)
+		}
+	}
+}
+
+func TestTargetedWorkRejectsNoOpWithCandidateWrites(t *testing.T) {
+	root := makeProjectRunFixture(t)
+	setupE2EProcess(t, "manager-rework-invalid-noop")
+	enableE2EReviews(t, root, 100000)
+	host := projectworkHost()
+	plan, err := Plan(host, root, identityHead(t, root), PlanRequest{Goal: "Implement both owned artifacts.",
+		Managers: []string{e2eManagerID("orders", "orders"), e2eManagerID("inventory", "inventory")}, ExecuteAuthorized: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	run, err := Run(context.Background(), host, ProcessInvoker{}, root, plan.ID)
+	if err == nil || run.Status != StatusBlocked || !strings.Contains(err.Error(), "claimed no-op while proposing files") {
+		t.Fatalf("targeted work accepted no-op alongside candidate writes: status=%s err=%v", run.Status, err)
+	}
+	orders := e2eManagerID("orders", "orders")
+	if calls := countE2EProcessCalls(os.Getenv(e2eLogEnv), orders, "work"); calls != 2 {
+		t.Fatalf("targeted work calls=%d, want one normal and one rejected rework response", calls)
 	}
 }
 

@@ -64,6 +64,19 @@ func TestReviewScopeDigestSurvivesSiblingMergeButChangesWithOwnedBytes(t *testin
 	}
 
 	parent := ManagerTask{ManagerID: e2eManagerID("", "project-owner"), Goal: "Reconcile integration.", Owns: []string{"."}}
+	if reviewRequired(base, parent) {
+		t.Fatal("empty routing manager scope unexpectedly requires a reviewer invocation")
+	}
+	parent.WrittenPaths = []string{"src/deleted-output.txt"}
+	if !reviewRequired(base, parent) {
+		t.Fatal("recorded deletion path incorrectly became a pure-routing skip")
+	}
+	parent.WrittenPaths = nil
+	parent.Artifacts = []string{"declared-but-missing-artifact"}
+	if !reviewRequired(base, parent) {
+		t.Fatal("missing declared artifact incorrectly became a pure-routing skip")
+	}
+	parent.Artifacts = nil
 	parentFiles := scopedCandidateFiles(base, parent)
 	for _, file := range parentFiles {
 		if strings.HasPrefix(file.Path, "src/orders/") || strings.HasPrefix(file.Path, "src/inventory/") {
@@ -77,6 +90,29 @@ func TestReviewScopeDigestSurvivesSiblingMergeButChangesWithOwnedBytes(t *testin
 	parentAfterSibling, err := reviewScopeDigest(plan, mergedSibling, parent, "integrate")
 	if err != nil || parentAfterSibling != parentInitial {
 		t.Fatalf("parent review scope changed with independent child bytes: got=%s want=%s err=%v", parentAfterSibling, parentInitial, err)
+	}
+}
+
+func TestCheckRepairPreservesReviewScopeHistoryForDeletedPaths(t *testing.T) {
+	root := makeProjectRunFixture(t)
+	base, err := projectworkHost().Load(root, identityHead(t, root))
+	if err != nil {
+		t.Fatal(err)
+	}
+	task := ManagerTask{
+		ManagerID:       e2eManagerID("", "project-owner"),
+		Goal:            "Reconcile integration.",
+		Owns:            []string{"."},
+		WrittenPaths:    []string{"src/deleted-output.txt"},
+		IntegratedPaths: []string{"src/removed-by-parent.txt"},
+	}
+	resetTaskForRepair(&task)
+	if len(task.WrittenPaths) != 1 || task.WrittenPaths[0] != "src/deleted-output.txt" ||
+		len(task.IntegratedPaths) != 1 || task.IntegratedPaths[0] != "src/removed-by-parent.txt" {
+		t.Fatalf("check repair discarded cumulative changed-path evidence: written=%v integrated=%v", task.WrittenPaths, task.IntegratedPaths)
+	}
+	if !reviewRequired(base, task) {
+		t.Fatal("deleted paths became a pure-routing skip after check repair")
 	}
 }
 

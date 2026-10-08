@@ -356,7 +356,7 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 				return failRun(store, report, err)
 			}
 			task.State, task.ReportID, task.CandidateID = "worked", invocation.ReportID, candidate.ID
-			task.WrittenPaths = proposalPaths(proposal.Response.CandidateFiles)
+			task.WrittenPaths = unionPaths(task.WrittenPaths, proposalPaths(proposal.Response.CandidateFiles))
 			task.Summary, task.Questions, task.Risks, task.Delegations, task.ReportStatus = parsed.Summary, parsed.Questions, parsed.Risks, parsed.Delegations, parsed.Status
 			report.Candidate = candidateRef(candidate, false)
 			if err := persistState(store, &report); err != nil {
@@ -368,6 +368,13 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 			candidateProject, compileErr := projectForCandidate(host, root, project.Snapshot, candidate)
 			if compileErr != nil {
 				return failRun(store, report, compileErr)
+			}
+			if !reviewRequired(candidateProject, *task) {
+				task.ReviewStatus, task.ReviewCandidateID, task.ReviewRound = "not-required", candidate.ID, 0
+				if err := persistState(store, &report); err != nil {
+					return empty, err
+				}
+				break
 			}
 			task.ReviewStatus, task.ReviewCandidateID, task.ReviewRound = "invoking", candidate.ID, reviewRound
 			if err := persistState(store, &report); err != nil {
@@ -618,20 +625,27 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 			return failRun(store, report, err)
 		}
 		task.State, task.IntegrationReportID, task.IntegrationCandidateID = "integrated", invocation.ReportID, resolved.ID
-		task.IntegratedPaths = changedCandidatePaths(merged, resolved)
+		task.IntegratedPaths = unionPaths(task.IntegratedPaths, changedCandidatePaths(merged, resolved))
 		task.Summary = parsed.Summary
 		report.Candidate = candidateRef(resolved, false)
 		if err := persistState(store, &report); err != nil {
 			return empty, err
 		}
 		if runtime.Review != nil {
-			integrationReviewRound := reviewCount(report.Reviews, task.ManagerID, "integrate") + 1
-			if integrationReviewRound > runtime.Review.MaxRounds {
-				return blockRun(store, report, fmt.Errorf("Manager %s exhausted the cumulative integration review round limit", task.ManagerID))
-			}
 			candidateProject, compileErr := projectForCandidate(host, root, project.Snapshot, resolved)
 			if compileErr != nil {
 				return failRun(store, report, compileErr)
+			}
+			if !reviewRequired(candidateProject, *task) {
+				task.ReviewStatus, task.ReviewCandidateID, task.ReviewRound = "not-required", resolved.ID, 0
+				if err := persistState(store, &report); err != nil {
+					return empty, err
+				}
+				continue
+			}
+			integrationReviewRound := reviewCount(report.Reviews, task.ManagerID, "integrate") + 1
+			if integrationReviewRound > runtime.Review.MaxRounds {
+				return blockRun(store, report, fmt.Errorf("Manager %s exhausted the cumulative integration review round limit", task.ManagerID))
 			}
 			task.ReviewStatus, task.ReviewCandidateID, task.ReviewRound = "invoking", resolved.ID, integrationReviewRound
 			if err := persistState(store, &report); err != nil {
@@ -707,6 +721,13 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 			phase := "work"
 			if len(activeChildren(report.Tasks, task.ManagerID)) > 0 {
 				phase = "integrate"
+			}
+			if !reviewRequired(finalProject, *task) {
+				task.ReviewStatus, task.ReviewCandidateID, task.ReviewRound = "not-required", finalCandidate.ID, 0
+				if err := persistState(store, &report); err != nil {
+					return empty, err
+				}
+				continue
 			}
 			scopeDigest, digestErr := reviewScopeDigest(plan, finalProject, *task, phase)
 			if digestErr != nil {
@@ -963,7 +984,6 @@ func resetTaskForRepair(task *ManagerTask) {
 	task.RepairPhase, task.RepairDiagnostic = "", ""
 	task.ReportID, task.CandidateID = "", ""
 	task.IntegrationReportID, task.IntegrationCandidateID = "", ""
-	task.WrittenPaths, task.IntegratedPaths = nil, nil
 	task.Delegations = nil
 	task.Summary = ""
 	task.Questions, task.Risks = []string{}, []string{}
