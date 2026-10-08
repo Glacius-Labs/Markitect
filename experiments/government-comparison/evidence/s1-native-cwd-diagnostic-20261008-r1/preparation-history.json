@@ -1,0 +1,27 @@
+{
+  "key": "s1-native-cwd-diagnostic-20261008-r1",
+  "startedUtc": "2026-10-08T18:24:13Z",
+  "deadlineUtc": "2026-10-08T18:44:13Z",
+  "offlineRepairIterations": 0,
+  "affectedTestInvocations": 1,
+  "failureHistory": [],
+  "nativeStarts": 0,
+  "diagnosticReservations": 0,
+  "testInvocations": [
+    {
+      "invocation": 1,
+      "command": "python -m unittest test_native_cwd -v",
+      "exitCode": 0,
+      "wallSeconds": 0.20964869999988878,
+      "recordedUtc": "2026-10-08T18:27:32.398576+00:00",
+      "sourceSha256": {
+        "client.py": "b111ce67e202ff73c7f9e8d8b279e7b04ba02f0034ec1eeae57f3baf5401782f",
+        "run_once.py": "d8862b36a3b9b057bac9caf82a7d0827c744d5b8de10861e04efeabf2aa4e20b",
+        "thread_gate.py": "d62ae5d946af927d09538628905cf05a242ede47267e693b571736b79c50c7de",
+        "test_native_cwd.py": "cf94ed961f1b9de7a0cdb54d5849981f43ecf797051f9232d098c197dd897c13"
+      },
+      "sourceBytesUnchangedThroughInvocation": true,
+      "log": "focused-tests.log"
+    }
+  ]
+}

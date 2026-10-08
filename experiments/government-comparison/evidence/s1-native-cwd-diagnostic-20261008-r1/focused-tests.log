@@ -1,0 +1,11 @@
+test_fresh_authority_and_freeze_binding_preserve_native_identity_contract (test_native_cwd.NativeCwdDiagnosticTests.test_fresh_authority_and_freeze_binding_preserve_native_identity_contract) ... ok
+test_full_valid_synthetic_thread_boundary_still_ends_before_turns (test_native_cwd.NativeCwdDiagnosticTests.test_full_valid_synthetic_thread_boundary_still_ends_before_turns) ... ok
+test_native_file_identity_and_pinned_metadata_mismatches_fail_closed (test_native_cwd.NativeCwdDiagnosticTests.test_native_file_identity_and_pinned_metadata_mismatches_fail_closed) ... ok
+test_profile_native_spellings_identity_and_exact_public_inputs_are_consistent (test_native_cwd.NativeCwdDiagnosticTests.test_profile_native_spellings_identity_and_exact_public_inputs_are_consistent) ... ok
+test_top_level_and_nested_response_cwd_mismatches_remain_strict (test_native_cwd.NativeCwdDiagnosticTests.test_top_level_and_nested_response_cwd_mismatches_remain_strict) ... ok
+test_wrong_or_mixed_cwd_spellings_are_rejected_at_profile_and_capture_boundaries (test_native_cwd.NativeCwdDiagnosticTests.test_wrong_or_mixed_cwd_spellings_are_rejected_at_profile_and_capture_boundaries) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.004s
+
+OK

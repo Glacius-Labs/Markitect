@@ -1,0 +1,34 @@
+{
+  "key": "s1-native-cwd-diagnostic-20261008-r1",
+  "validatedUtc": "2026-10-08T18:26:21.336627+00:00",
+  "fullLiveGrantAndAssignedSlotVerified": true,
+  "slotAssignedUtc": "2026-10-08T18:23:59Z",
+  "currentBinaryAndSchemaHashesVerified": true,
+  "sameArchivedSchemaMemberHashesVerified": 12,
+  "configurationPairsUnchanged": 17,
+  "targetedNativeIdentityMetadata": {
+    "volumeSerial": 2559709660,
+    "fileIndex": 2533274799012170,
+    "attributes": 16
+  },
+  "nativeResolveSamefileAndNoReparseVerified": true,
+  "exactPublicFilesVerified": {
+    "probe-input.txt": "9c9b152a51daf10dbc38765feec7b72c9d42587d6300c6cf7fcb8fd1e9ab29c5",
+    "README.md": "b986640bbeea4d174ff450cd27bb50d68697e78d8ad9fd0757fe3427b2904a59"
+  },
+  "previousFreezeInputsVerifiedUnchanged": 56,
+  "gateEntireFileByteIdentical": true,
+  "clientExistingFunctionsChanged": [
+    "validate_profile",
+    "validate_cwd",
+    "live_authority",
+    "validate_bound_inputs",
+    "load_request"
+  ],
+  "clientExistingOtherFunctionsAstUnchanged": 31,
+  "clientNewFunction": "native_identity",
+  "externalRootAbsent": true,
+  "newNativeTrees": 0,
+  "newReservations": 0,
+  "privateContentsRead": false
+}

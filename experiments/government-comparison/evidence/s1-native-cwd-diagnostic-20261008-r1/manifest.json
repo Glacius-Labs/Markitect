@@ -1,0 +1,76 @@
+{
+  "key": "s1-native-cwd-diagnostic-20261008-r1",
+  "baseSha": "875329110f9572b1e1f128b19706cecc1911b29d",
+  "phase": "reviewed-source-preparation-only",
+  "sealedUtc": "2026-10-08T18:28:57.994287+00:00",
+  "files": {
+    "authorization-grant.json": {
+      "bytes": 10217,
+      "sha256": "74cc346408e65b28fe34c4a64abb38ef29baf39b956dcb20c4507d44ac8a2eb9"
+    },
+    "client.py": {
+      "bytes": 41833,
+      "sha256": "b111ce67e202ff73c7f9e8d8b279e7b04ba02f0034ec1eeae57f3baf5401782f"
+    },
+    "diagnostic-contract.json": {
+      "bytes": 2249,
+      "sha256": "cc55bea6341d9827d176ebc9566e980fa598e1a5612bbfabad7183484df2580a"
+    },
+    "focused-tests.log": {
+      "bytes": 1273,
+      "sha256": "76a57c385f5d01c2c7da032ea7c3f7fa08450c8e621b9b0c6d143c467cdf0b17"
+    },
+    "frozen-method-enums.json": {
+      "bytes": 23235,
+      "sha256": "831728c4ce8c1913d25eff43229c93b81c0f5d802f93eb3b057333c4048e2220"
+    },
+    "input-validation.json": {
+      "bytes": 1172,
+      "sha256": "d8198ab7a6030ba14db2b36709e66c4a92666066e604031fa9a7dac3839fe80f"
+    },
+    "offline-validation.json": {
+      "bytes": 984,
+      "sha256": "6ac611e966eea50c41a5c935d8cc920499b503f32115f8edc8edb7148f247750"
+    },
+    "preflight-review.md": {
+      "bytes": 3938,
+      "sha256": "bbd97ddb8cd3daeee2e50bddac4e993e1e34c895099da8b6cfb65642f49acdbb"
+    },
+    "preparation-history.json": {
+      "bytes": 1004,
+      "sha256": "06dfc9912fb816e44f2f55969bfcbef2db17e9002499a2bc81d44ac6664f8b49"
+    },
+    "preparation.md": {
+      "bytes": 2781,
+      "sha256": "8868f273faffbeb9889923336f0fefbeb1bcb7ee63dbf7f56e2caa9a28deb813"
+    },
+    "profile.json": {
+      "bytes": 2961,
+      "sha256": "d7f6de005778ac4e3915dee99c9c479c318f19ddcacbf89f1c9c53500b6eda6c"
+    },
+    "run_once.py": {
+      "bytes": 3349,
+      "sha256": "d8862b36a3b9b057bac9caf82a7d0827c744d5b8de10861e04efeabf2aa4e20b"
+    },
+    "schema-contract.json": {
+      "bytes": 2544,
+      "sha256": "c4bf557d17426f4c9a6c61e97353b8361469169e067e1f911fdfc7488d369270"
+    },
+    "test_native_cwd.py": {
+      "bytes": 7822,
+      "sha256": "cf94ed961f1b9de7a0cdb54d5849981f43ecf797051f9232d098c197dd897c13"
+    },
+    "thread_gate.py": {
+      "bytes": 5852,
+      "sha256": "d62ae5d946af927d09538628905cf05a242ede47267e693b571736b79c50c7de"
+    }
+  },
+  "payloadFiles": 15,
+  "ignoredPythonCachesExcluded": 3,
+  "newNativeTrees": 0,
+  "diagnosticReservations": 0,
+  "requestCreated": false,
+  "finalFreezeCreated": false,
+  "privateExcerptIncluded": false,
+  "responseValuesOrFingerprintsIncluded": false
+}
