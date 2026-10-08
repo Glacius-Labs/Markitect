@@ -45,6 +45,8 @@ func planDigest(plan PlanRecord) (string, error) {
 		Goal                 string            `json:"goal"`
 		ExecuteAuthorized    bool              `json:"executeAuthorized"`
 		BaseRevision         string            `json:"baseRevision"`
+		TargetBranch         string            `json:"targetBranch"`
+		TargetHead           string            `json:"targetHead"`
 		RepositoryDigest     string            `json:"repositoryDigest"`
 		BaseSnapshot         string            `json:"baseSnapshot"`
 		WorkingSnapshot      string            `json:"workingSnapshot"`
@@ -61,7 +63,7 @@ func planDigest(plan PlanRecord) (string, error) {
 		RuntimeAgents        map[string]string `json:"runtimeAgents"`
 		Findings             []string          `json:"findings,omitempty"`
 		Blockers             []string          `json:"blockers,omitempty"`
-	}{plan.APIVersion, plan.ID, plan.Status, plan.Goal, plan.ExecuteAuthorized, plan.BaseRevision, plan.RepositoryDigest, plan.BaseSnapshot, plan.WorkingSnapshot, plan.BaseProjectDigest, plan.WorkingProjectDigest, plan.BaseModelDigest, plan.ModelDigest, plan.ReportDigest, plan.RuntimeDigest, plan.Managers, plan.Checks, plan.ModelEdit, plan.InitialCandidateID, plan.RuntimeAgents, plan.Findings, plan.Blockers})
+	}{plan.APIVersion, plan.ID, plan.Status, plan.Goal, plan.ExecuteAuthorized, plan.BaseRevision, plan.TargetBranch, plan.TargetHead, plan.RepositoryDigest, plan.BaseSnapshot, plan.WorkingSnapshot, plan.BaseProjectDigest, plan.WorkingProjectDigest, plan.BaseModelDigest, plan.ModelDigest, plan.ReportDigest, plan.RuntimeDigest, plan.Managers, plan.Checks, plan.ModelEdit, plan.InitialCandidateID, plan.RuntimeAgents, plan.Findings, plan.Blockers})
 }
 
 func newID() (string, error) {

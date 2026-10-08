@@ -35,6 +35,70 @@ func CaptureTarget(root string, paths []string) (string, error) {
 	return TargetDigest(capture)
 }
 
+// PreflightApply reads the latest verification and captures the exact target
+// preconditions without writing. Its fields can be copied directly into an
+// ApplyRequest after the caller presents the verification digest.
+func PreflightApply(host Host, root, runID, candidateID string) (ApplyPreflight, error) {
+	var out ApplyPreflight
+	store, err := newRunStore(root)
+	if err != nil {
+		return out, err
+	}
+	plan, err := store.readPlan(runID)
+	if err != nil {
+		return out, err
+	}
+	run, err := store.readLatestState(runID)
+	if err != nil {
+		return out, err
+	}
+	if run.Status != StatusVerified || run.Candidate.ID != candidateID || !run.Candidate.Integrated {
+		return out, fmt.Errorf("requested candidate is not the latest verified integrated candidate")
+	}
+	dir, err := store.runDir(runID)
+	if err != nil {
+		return out, err
+	}
+	candidate, err := store.readCandidate(dir, candidateID)
+	if err != nil {
+		return out, err
+	}
+	verification, err := latestVerification(dir, candidateID)
+	if err != nil {
+		return out, err
+	}
+	if verification.Status != "verified" || verification.CandidateHash != candidate.Digest || verification.Digest == "" {
+		return out, fmt.Errorf("candidate has no matching successful verification")
+	}
+	base, err := host.Load(root, plan.BaseRevision)
+	if err != nil {
+		return out, err
+	}
+	if base == nil || base.Snapshot == nil || base.Snapshot.Digest() != plan.BaseSnapshot || base.Digest != plan.BaseProjectDigest {
+		return out, ErrStale
+	}
+	paths := candidateDeltaPaths(base.Snapshot, candidate)
+	if len(paths) == 0 {
+		return out, fmt.Errorf("candidate has no changes to apply")
+	}
+	capture, err := hostwrite.CaptureGuardedWrite(root, paths)
+	if err != nil {
+		return out, err
+	}
+	if capture.Branch != plan.TargetBranch || capture.Head != plan.TargetHead {
+		return out, ErrStale
+	}
+	if err := compareCaptureToBase(capture, base.Snapshot, paths); err != nil {
+		return out, err
+	}
+	target, err := TargetDigest(capture)
+	if err != nil {
+		return out, err
+	}
+	return ApplyPreflight{RunID: runID, PlanID: plan.ID, CandidateID: candidateID, VerificationDigest: verification.Digest,
+		TargetBranch: capture.Branch, ExpectedHead: capture.Head, ExpectedWorktree: target, Paths: paths}, nil
+}
+
 // TargetDigest is the precondition token accepted by ApplyRequest.
 func TargetDigest(capture *hostwrite.GuardedWriteCapture) (string, error) {
 	if capture == nil {
@@ -142,6 +206,9 @@ func Apply(host Host, invoker Invoker, root string, request ApplyRequest) (Apply
 	}
 	if request.TargetBranch == "" || request.ExpectedHead == "" || request.ExpectedWorktree == "" || request.ExpectedVerificationDigest == "" {
 		return out, fmt.Errorf("apply requires exact verification digest, target branch, HEAD and working-file digest")
+	}
+	if request.TargetBranch != plan.TargetBranch || request.ExpectedHead != plan.TargetHead {
+		return out, fmt.Errorf("apply target branch or HEAD differs from the bound plan")
 	}
 	capture, err := hostwrite.CaptureGuardedWrite(root, paths)
 	if err != nil {
