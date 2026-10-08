@@ -153,3 +153,19 @@ func nativeExecutable(raw []byte, path string) bool {
 	}
 	return false
 }
+
+func validateCheckExecutables(plan PlanRecord) error {
+	for _, check := range plan.Checks {
+		if check.ExecutablePath == "" || check.ExecutableDigest == "" {
+			return fmt.Errorf("check %s has no bound executable", check.ID)
+		}
+		resolved, raw, err := readPinnedExecutable(check.ExecutablePath)
+		if err != nil {
+			return fmt.Errorf("check %s executable unavailable: %w", check.ID, err)
+		}
+		if resolved != check.ExecutablePath || rawContentDigest(raw) != check.ExecutableDigest {
+			return fmt.Errorf("check %s executable changed since planning", check.ID)
+		}
+	}
+	return nil
+}

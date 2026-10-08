@@ -76,3 +76,51 @@ func TestWriteImmutableDoesNotReplaceExistingFile(t *testing.T) {
 		t.Fatalf("existing content changed to %q", content)
 	}
 }
+
+func TestRunStateJournalStartsAtPositiveRevision(t *testing.T) {
+	root := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(root, ".markitect"), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, RuntimePath), []byte("runtime"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	store, err := newRunStore(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	unlock, err := store.lock()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer unlock()
+	id := "0123456789abcdef0123456789abcdef"
+	if _, err := store.createRun(id); err != nil {
+		t.Fatal(err)
+	}
+	if err := ensureDirectory(filepath.Join(store.base, id, "states")); err != nil {
+		t.Fatal(err)
+	}
+	report := RunReport{APIVersion: APIVersion, ID: id, PlanID: id, Status: StatusRunning, Revision: 1}
+	if err := store.appendState(report); err != nil {
+		t.Fatal(err)
+	}
+	loaded, err := store.readLatestState(id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if loaded.Revision != 1 {
+		t.Fatalf("got revision %d, want 1", loaded.Revision)
+	}
+	report = loaded
+	if err := persistState(store, &report); err != nil {
+		t.Fatal(err)
+	}
+	loaded, err = store.readLatestState(id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if loaded.Revision != 2 {
+		t.Fatalf("got revision %d, want 2", loaded.Revision)
+	}
+}

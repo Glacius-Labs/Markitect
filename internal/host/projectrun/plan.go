@@ -118,7 +118,7 @@ func Plan(host Host, root, revision string, request PlanRequest) (PlanRecord, er
 	if err != nil {
 		return plan, err
 	}
-	managerTasks, selected, findings, err := planManagers(finalProject.Report, project.Snapshot.Files, request, editPlan, runtime.Limits)
+	managerTasks, selected, findings, err := planManagers(finalProject.Report, finalProject.Snapshot.Files, request, editPlan, runtime.Limits)
 	if err != nil {
 		return plan, err
 	}

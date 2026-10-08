@@ -222,7 +222,30 @@ func (s *runStore) runDir(id string) (string, error) {
 	if !validID(id) {
 		return "", fmt.Errorf("invalid run ID %q", id)
 	}
-	return filepath.Join(s.base, id), nil
+	dir := filepath.Join(s.base, id)
+	if info, err := os.Lstat(dir); err == nil {
+		if !info.IsDir() || info.Mode()&os.ModeSymlink != 0 {
+			return "", fmt.Errorf("runtime run path %s must be a real directory", dir)
+		}
+	} else if !os.IsNotExist(err) {
+		return "", err
+	}
+	return dir, nil
+}
+
+func requireRealSubdirectory(parent, name string) (string, error) {
+	if name == "" || filepath.Base(name) != name {
+		return "", fmt.Errorf("invalid runtime state directory %q", name)
+	}
+	path := filepath.Join(parent, name)
+	info, err := os.Lstat(path)
+	if err != nil {
+		return "", err
+	}
+	if !info.IsDir() || info.Mode()&os.ModeSymlink != 0 {
+		return "", fmt.Errorf("runtime state directory %s must be real", path)
+	}
+	return path, nil
 }
 
 func (s *runStore) createRun(id string) (string, error) {
@@ -442,7 +465,10 @@ func (s *runStore) readLatestState(id string) (RunReport, error) {
 	if err != nil {
 		return latest, err
 	}
-	statesDir := filepath.Join(dir, "states")
+	statesDir, err := requireRealSubdirectory(dir, "states")
+	if err != nil {
+		return latest, err
+	}
 	entries, err := os.ReadDir(statesDir)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -513,7 +539,11 @@ func (s *runStore) readCandidate(dir, id string) (candidateData, error) {
 	if !validID(id) {
 		return data, fmt.Errorf("invalid candidate ID")
 	}
-	if err := readJSON(filepath.Join(dir, "candidates", id+".json"), &data); err != nil {
+	candidateDir, err := requireRealSubdirectory(dir, "candidates")
+	if err != nil {
+		return data, err
+	}
+	if err := readJSON(filepath.Join(candidateDir, id+".json"), &data); err != nil {
 		return data, err
 	}
 	if data.ID != id || data.APIVersion != APIVersion {
