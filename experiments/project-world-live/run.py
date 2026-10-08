@@ -18,7 +18,7 @@ def main() -> None:
     parser.add_argument('--tool', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--model', required=True)
-    parser.add_argument('--stage', choices=('prepare', 'run', 'verify', 'apply'), default='prepare')
+    parser.add_argument('--stage', choices=('prepare', 'run', 'repair', 'verify', 'apply'), default='prepare')
     args = parser.parse_args()
     output = args.output.resolve()
     output.mkdir(parents=True, exist_ok=True)
@@ -93,6 +93,9 @@ def main() -> None:
     tool, root = Path(state['tool']), Path(state['repo'])
     if args.stage == 'run':
         result = invoke(tool, root, output, 'run', '--plan', state['plan'], '--write')
+    elif args.stage == 'repair':
+        result = invoke(tool, root, output, 'repair', '--run', state['plan'], '--write')
+        assert result['status'] == 'integrated', result
     elif args.stage == 'verify':
         result = invoke(tool, root, output, 'verify', '--run', state['plan'], '--write')
         assert result['status'] == 'verified', result

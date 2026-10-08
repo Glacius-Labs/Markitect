@@ -1,6 +1,6 @@
 # Live Shop acceptance exercise
 
-This harness uses the public `markitect project` CLI and an existing signed-in Codex account. It starts real provider calls only for `--stage run`; preparation performs local discovery, reviewed runtime setup, an exact model edit and impact planning. The selected model is explicit; there is no fallback. The caller authorizes provider usage and supplies budget weights. The weights in this finite experiment are estimates, not provider prices or a billing cap.
+This harness uses the public `markitect project` CLI and an existing signed-in Codex account. It starts real provider calls for `--stage run` and an explicitly requested `--stage repair`; preparation performs local discovery, reviewed runtime setup, an exact model edit and impact planning. The selected model is explicit; there is no fallback. The caller authorizes provider usage and supplies budget weights. The weights in this finite experiment are estimates, not provider prices or a billing cap.
 
 Build a source candidate and keep its adapter bytes fixed for the whole exercise. From the Markitect source root:
 
@@ -15,6 +15,8 @@ python -B experiments/project-world-live/run.py --source . --tool "$env:TEMP\mar
 Preparation creates a disposable Git repository, freezes both source adapters outside it, and records the exact source revision and plan in `state.json`. No adopting checkout or global configuration is changed. It changes four accepted model statements: cancellation must work during packing, as well as while confirmed. `plan --since` must select six Managers and one declared check without a manually supplied Manager list. Runtime setup pins Python, the adapter and the native provider executable.
 
 The Apply stage first changes one disposable documentation file after preflight, checks rejection of the stale binding, restores the exact original bytes, then applies the verified candidate.
+
+If a required declared check fails, inspect `project status --repo DISPOSABLE_SHOP_PATH --run PLAN_ID`. An explicit `--stage repair` returns that known check failure through the same Manager tree, using the same run identity, original deadline and cumulative start/cost ledger. It does not apply files or change accepted model/check obligations. After successful repair, run `--stage verify` again before Apply. The default setup permits one repair round; unknown provider outcomes, stale inputs, exhausted limits and an unchanged failed candidate remain blocked. Keep the binary and adapter bytes fixed throughout the lifecycle.
 
 After Apply, read the disposable checkout path from `state.json` and run the independent acceptance checker:
 
