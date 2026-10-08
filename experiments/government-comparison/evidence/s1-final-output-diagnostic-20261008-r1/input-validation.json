@@ -1,0 +1,14 @@
+{
+  "key": "s1-final-output-diagnostic-20261008-r1",
+  "checkedUtc": "2026-10-08T19:00:48.343344+00:00",
+  "freshGrantSlotWindowSemantics": true,
+  "nativeCwdResolutionFileIdNoReparseAndTwoHashes": true,
+  "sameArgv17ConfigPairsFiveRpcsThreadParams": true,
+  "sameGateBytes": true,
+  "sameSchemaMembersArchive": true,
+  "unchangedHelperSha256": "776365db287479a23be67a4e22ac083f54ce881fa1452337d0e281529adcb38f",
+  "externalRootAbsent": true,
+  "runtimeStarts": 0,
+  "diagnosticReservations": 0,
+  "sourceOrTestCorrections": 0
+}

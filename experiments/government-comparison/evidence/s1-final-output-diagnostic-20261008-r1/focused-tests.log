@@ -1,0 +1,9 @@
+test_authority_drift_is_rejected_but_unrelated_live_cursor_is_ignored (test_runtime_binding.RuntimeBindingTests.test_authority_drift_is_rejected_but_unrelated_live_cursor_is_ignored) ... ok
+test_helper_pin_precedes_import_and_readiness_window_boundaries_are_exact (test_runtime_binding.RuntimeBindingTests.test_helper_pin_precedes_import_and_readiness_window_boundaries_are_exact) ... ok
+test_mocked_session_finally_keeps_first_failure_boundary_and_field_comparison (test_runtime_binding.RuntimeBindingTests.test_mocked_session_finally_keeps_first_failure_boundary_and_field_comparison) ... ok
+test_request_and_freeze_bind_all_four_readiness_fields (test_runtime_binding.RuntimeBindingTests.test_request_and_freeze_bind_all_four_readiness_fields) ... ok
+
+----------------------------------------------------------------------
+Ran 4 tests in 0.021s
+
+OK

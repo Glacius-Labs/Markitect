@@ -1,0 +1,23 @@
+{
+  "key": "s1-final-output-diagnostic-20261008-r1",
+  "staticCheckedUtc": "2026-10-08T19:03:05.574115+00:00",
+  "unchangedFunctions": [
+    "consume",
+    "accept_thread_response",
+    "pump",
+    "send",
+    "request",
+    "admit_rpc",
+    "consume_stderr",
+    "reject_provisional",
+    "validate_cwd"
+  ],
+  "cleanupAndEntireResultConstructionByteIdenticalToAcceptedOffline": true,
+  "helperByteIdentical": true,
+  "newRuntimeBinding": "fresh grant/slot/window/profile/authority/source/request/freeze/reservation; no runtime artifacts yet",
+  "testInvocations": 1,
+  "newCases": 4,
+  "testFailures": 0,
+  "sourceOrTestCorrectionIterations": 0,
+  "nativeRuntimeStarts": 0
+}

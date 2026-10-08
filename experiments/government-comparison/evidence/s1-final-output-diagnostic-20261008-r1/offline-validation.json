@@ -1,0 +1,13 @@
+{
+  "key": "s1-final-output-diagnostic-20261008-r1",
+  "testInvocations": 1,
+  "newTestMethods": 4,
+  "returnCode": 0,
+  "startedUtc": "2026-10-08T19:02:29.559084+00:00",
+  "finishedUtc": "2026-10-08T19:02:29.797748+00:00",
+  "commandWallSeconds": 0.23817549999876064,
+  "priorSuitesRun": 0,
+  "nativeRuntimeStarts": 0,
+  "sourceOrTestCorrectionIterations": 0,
+  "fixture": "Popen mocked, current authority seam mocked for session; pinned real fullThread response protocol, other metadata/notification schema routines mocked"
+}
