@@ -1,0 +1,13 @@
+designVersion: project-world/0.1
+resources:
+  - kind: Rule
+    id: commerce/create-reserves-stock
+    owner: commerce-manager
+    area: commerce
+    purpose: Eine Order nur zusammen mit ihrer Bestandszusage annehmen.
+    module: commerce-domain
+    namespace: commerce-language
+    uses: [sales/order, sales/confirmed, inventory/reservation, inventory/no-overbooking]
+    condition: Eine neue Order wird nur bei ausreichendem Bestand bestätigt.
+    outcome: Order und Reservierung entstehen gemeinsam oder überhaupt nicht.
+    architecture: engineering/shop-monolith
