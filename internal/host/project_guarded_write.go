@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -155,7 +156,14 @@ func applyGuardedWrite(root string, capture *GuardedWriteCapture, changes []Guar
 	if err := compareGuardedFiles(writer, capture.Files); err != nil {
 		return result, err
 	}
-	unlock, err := writer.LockWriter()
+	var unlock func()
+	if _, selectedProjectManifest := capture.Files[".markitect/project.yaml"]; selectedProjectManifest {
+		// Initialization captures the still-missing manifest, so select the
+		// project lock explicitly before its existence can drive LockWriter.
+		unlock, err = writer.lockWriterAt(".markitect", "write.lock")
+	} else {
+		unlock, err = writer.LockWriter()
+	}
 	if err != nil {
 		return result, err
 	}
@@ -329,9 +337,19 @@ func guardedGitState(root string) (source.GitIdentity, string, string, error) {
 		if ref != "refs/heads/"+branch {
 			return source.GitIdentity{}, "", "", fmt.Errorf("unborn guarded write HEAD %q does not match named branch %q", ref, branch)
 		}
+		if _, branchRefErr := source.GitOutput(root, "show-ref", "--verify", "--quiet", ref); branchRefErr == nil {
+			return source.GitIdentity{}, "", "", fmt.Errorf("named branch ref %s exists but guarded HEAD does not resolve to a commit: %w", ref, err)
+		} else if !gitExitedWithCode(branchRefErr, 1) {
+			return source.GitIdentity{}, "", "", fmt.Errorf("verify guarded unborn branch ref %s: %w", ref, branchRefErr)
+		}
 		return identity, branch, "unborn:" + ref, nil
 	}
 	return identity, branch, strings.TrimSpace(string(head)), nil
+}
+
+func gitExitedWithCode(err error, code int) bool {
+	var exit *exec.ExitError
+	return errors.As(err, &exit) && exit.ExitCode() == code
 }
 
 func ensureGuardedGitState(root string, expectedIdentity source.GitIdentity, expectedBranch, expectedHead string) error {
