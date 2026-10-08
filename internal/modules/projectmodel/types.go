@@ -2,7 +2,7 @@
 // views from the structural Core model. It performs no I/O or provider calls.
 package projectmodel
 
-const APIVersion = "markitect.example.org/project/v1alpha1"
+const APIVersion = "project.markitect.example.org/v1alpha1"
 
 type File struct {
 	Path   string `json:"path"`
