@@ -310,6 +310,133 @@ class CodexRunnerTests(unittest.TestCase):
             )
             self.assertTrue(log_path.exists())
 
+    def test_known_provider_failures_map_to_fixed_safe_diagnostics(self) -> None:
+        cases = {
+            'The \'gpt-6-luna\' model is not supported when using Codex with a ChatGPT account.': "model_unsupported",
+            '{"type":"authentication_error","status":401,"message":"private_token_xyz"}': "authentication",
+            '{"code":"rate_limit_exceeded","request_id":"private-id"}': "rate_limited",
+            "Error: unrecognized option '--example-private-flag'": "cli_incompatible",
+        }
+        for raw, expected in cases.items():
+            with self.subTest(expected=expected):
+                category = runner.classify_codex_failure(raw)
+                self.assertEqual(category, expected)
+                diagnostic = runner.CODEX_FAILURE_DIAGNOSTICS[category]
+                self.assertNotIn("private_token", diagnostic)
+                self.assertNotIn("private-id", diagnostic)
+                self.assertNotIn("gpt-6-luna", diagnostic)
+        self.assertIsNone(runner.classify_codex_failure("HTTP 400 invalid_request_error"))
+        self.assertIsNone(runner.classify_codex_failure("models_cache: unknown variant `max`"))
+
+    def test_known_provider_error_returns_incomplete_protocol_without_body(self) -> None:
+        value = invocation("executor")
+        private_body = json.dumps({
+            "type": "error",
+            "message": json.dumps({
+                "type": "error",
+                "status": 400,
+                "error": {
+                    "type": "invalid_request_error",
+                    "message": "invalid request body nonce=private-nonce",
+                    "request_id": "private-request-id",
+                },
+            }),
+        }).encode("utf-8") + b"\n" + json.dumps({
+            "type": "turn.failed",
+            "error": {"message": json.dumps({
+                "type": "error",
+                "status": 400,
+                "error": {"message": "The 'gpt-6-luna' model is not supported when using Codex with a ChatGPT account."},
+            })},
+        }).encode("utf-8") + b"\n"
+
+        class FakeProcess:
+            def __init__(self, argv, **kwargs):
+                self.stdin = io.BytesIO()
+                self.stdout = io.BytesIO(private_body)
+                self.stderr = io.BytesIO()
+
+            def wait(self, timeout=None):
+                return 1
+
+            def terminate(self):
+                return None
+
+            def kill(self):
+                return None
+
+        with tempfile.TemporaryDirectory() as directory:
+            cwd = Path(directory)
+            args = argparse.Namespace(
+                codex_executable="codex.exe",
+                codex_script=None,
+                codex_version="0.130.0",
+                model="gpt-6-luna",
+                timeout_seconds=10,
+            )
+            with patch.object(runner, "resolve_codex", return_value=["codex.exe"]), \
+                 patch.object(runner, "check_version"), \
+                 patch.object(runner.subprocess, "Popen", FakeProcess):
+                response = runner.launch_codex(value, args, {}, cwd, cwd / "private.jsonl")
+
+            self.assertEqual(response["outcome"], "incomplete")
+            self.assertEqual(response["uncertainty"], [runner.CODEX_FAILURE_DIAGNOSTICS["model_unsupported"]])
+            self.assertEqual(response["nonce"], value["nonce"])
+            self.assertNotIn("gpt-6-luna", json.dumps(response))
+            self.assertNotIn("private-nonce", json.dumps(response))
+            self.assertNotIn("private-request-id", json.dumps(response))
+            private_log = (cwd / "private.jsonl").read_text(encoding="utf-8")
+            self.assertIn("private-nonce", private_log)
+
+    def test_codex_tool_calls_force_incomplete_and_features_are_disabled(self) -> None:
+        value = invocation()
+        value["request"]["artifacts"] = []
+
+        class FakeProcess:
+            def __init__(self, argv, **kwargs):
+                self.argv = argv
+                self.stdin = io.BytesIO()
+                self.stdout = io.BytesIO(b'{"type":"item.started","item":{"type":"command_execution"}}\n')
+                self.stderr = io.BytesIO()
+                response_path = Path(argv[argv.index("--output-last-message") + 1])
+                response_path.write_text(json.dumps({
+                    "apiVersion": value["apiVersion"],
+                    "runId": value["runId"],
+                    "nonce": value["nonce"],
+                    "role": "executor",
+                    "inputDigest": value["inputDigest"],
+                    "outcome": "proposed",
+                    "candidateFiles": [{"path":"candidate.txt","mode":"0644","content":"candidate"}],
+                    "candidateJson": None,
+                    "reportJson": None,
+                    "evidenceRefs": [],
+                    "verifierObservations": [],
+                    "uncertainty": [],
+                }), encoding="utf-8")
+
+            def wait(self, timeout=None):
+                return 0
+
+            def terminate(self):
+                return None
+
+            def kill(self):
+                return None
+
+        with tempfile.TemporaryDirectory() as directory:
+            cwd = Path(directory)
+            args = argparse.Namespace(
+                codex_executable="codex.exe", codex_script=None,
+                codex_version="0.130.0", model="gpt-6-luna", timeout_seconds=10,
+            )
+            with patch.object(runner, "resolve_codex", return_value=["codex.exe"]), \
+                 patch.object(runner, "check_version"), \
+                 patch.object(runner.subprocess, "Popen", FakeProcess):
+                response = runner.launch_codex(value, args, {}, cwd, cwd / "private.jsonl")
+            self.assertEqual(response["outcome"], "incomplete")
+            self.assertIn("tool restrictions", response["uncertainty"][0])
+            self.assertEqual(response["usage"]["toolCalls"], 1)
+
     def test_codex_launch_uses_read_only_ephemeral_flags_and_private_telemetry(self) -> None:
         value = invocation()
         value["request"]["context"] = {"privatePromptSentinel": "DO_NOT_LOG_PROMPT_CONTENT", "responseSchema": task_report_schema()}
@@ -342,7 +469,6 @@ class CodexRunnerTests(unittest.TestCase):
                 self.stdout = io.BytesIO(
                     b'{"type":"thread.started","thread_id":"fresh-thread"}\n'
                     b'{"type":"turn.started"}\n'
-                    b'{"type":"item.started","item":{"type":"command_execution"}}\n'
                     b'{"type":"turn.completed","usage":{"input_tokens":7,"output_tokens":4}}\n'
                 )
                 self.stderr = io.BytesIO(b"private model catalog detail")
@@ -395,13 +521,14 @@ class CodexRunnerTests(unittest.TestCase):
             self.assertIn("--sandbox", argv)
             self.assertIn("read-only", argv)
             self.assertIn("--disable", argv)
-            self.assertIn("plugins", argv)
+            disabled_features = [argv[index + 1] for index, value in enumerate(argv[:-1]) if value == "--disable"]
+            self.assertEqual(disabled_features, ["plugins", "shell_tool", "unified_exec"])
             self.assertEqual(argv[-1], "-")
             self.assertLess(argv.index("--config"), len(argv) - 1)
             self.assertNotIn("--add-dir", argv)
             self.assertNotIn("candidateJson", response)
             self.assertEqual(response["usage"], {
-                "source":"provider-reported", "inputTokens":7, "outputTokens":4, "toolCalls":1,
+                "source":"provider-reported", "inputTokens":7, "outputTokens":4,
             })
             private_log = log_path.read_text(encoding="utf-8")
             self.assertIn('"type":"provider.stderr"', private_log)
