@@ -6,11 +6,13 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"reflect"
 	"runtime"
 	"strings"
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/internal/host/agentexec"
+	"github.com/Glacius-Labs/Markitect/internal/host/projectrun"
 	"github.com/Glacius-Labs/Markitect/internal/host/projectwork"
 	"github.com/Glacius-Labs/Markitect/internal/modules/projectmodel"
 )
@@ -33,6 +35,12 @@ func TestBuildRuntimeMapsAllManagersAndPinsTools(t *testing.T) {
 	if len(config.Agents) != 3 {
 		t.Fatalf("agent mappings = %d, want every active manager", len(config.Agents))
 	}
+	if config.Review == nil || config.Review.MaxRounds != DefaultReviewMaxRounds || config.Review.MaxManagerRounds != DefaultReviewMaxManagerRounds {
+		t.Fatalf("review defaults = %#v, want maxRounds=%d and maxManagerRounds=%d", config.Review, DefaultReviewMaxRounds, DefaultReviewMaxManagerRounds)
+	}
+	if len(config.Review.Agents) != len(config.Agents) {
+		t.Fatalf("reviewer mappings = %d, want one for every Manager", len(config.Review.Agents))
+	}
 	for _, id := range []string{"root-manager", "orders-manager", "inventory-manager"} {
 		agent, ok := config.Agents[id]
 		if !ok {
@@ -47,6 +55,16 @@ func TestBuildRuntimeMapsAllManagersAndPinsTools(t *testing.T) {
 		if len(agent.RuntimeFiles) != 3 {
 			t.Fatalf("runtime file pins for %s = %d, want Python, adapter, provider", id, len(agent.RuntimeFiles))
 		}
+		reviewer, ok := config.Review.Agents[id]
+		if !ok {
+			t.Fatalf("missing reviewer mapping for %s", id)
+		}
+		if !reflect.DeepEqual(agent, reviewer) {
+			t.Fatalf("reviewer config for %s does not match selected worker config: worker=%#v reviewer=%#v", id, agent, reviewer)
+		}
+		if len(reviewer.RuntimeFiles) != len(agent.RuntimeFiles) || !reflect.DeepEqual(reviewer.RuntimeFiles, agent.RuntimeFiles) {
+			t.Fatalf("reviewer source pins for %s do not match worker pins: worker=%#v reviewer=%#v", id, agent.RuntimeFiles, reviewer.RuntimeFiles)
+		}
 		for _, file := range agent.Environment {
 			if strings.EqualFold(file, "HOME") || strings.EqualFold(file, "CODEX_HOME") || strings.EqualFold(file, "USERPROFILE") || strings.EqualFold(file, "APPDATA") {
 				t.Fatalf("runtime allowlist includes private account variable %q", file)
@@ -55,6 +73,12 @@ func TestBuildRuntimeMapsAllManagersAndPinsTools(t *testing.T) {
 	}
 	if config.Mode != "controlled-local" || config.RequireIsolation || config.Limits.MaxRetries != 1 || config.Limits.MaxParallel != 1 || config.Limits.MaxCostMicros != 5000 {
 		t.Fatalf("unsafe or unexpected limits: %#v", config)
+	}
+	if config.Limits.MaxDuration <= 0 || config.Limits.MaxCostMicros <= 0 {
+		t.Fatalf("runtime budget and deadline must remain finite and positive: %#v", config.Limits)
+	}
+	if err := projectrun.ValidateRuntime(config); err != nil {
+		t.Fatalf("generated runtime is invalid: %v", err)
 	}
 }
 

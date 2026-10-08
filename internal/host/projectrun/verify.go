@@ -100,6 +100,9 @@ func Verify(ctx context.Context, host Host, invoker Invoker, root, runID string)
 	if compiled.Report.ModelDigest != plan.ModelDigest || hasErrorFinding(compiled.Report.Findings) {
 		return out, fmt.Errorf("integrated candidate has invalid project model")
 	}
+	if err := requireFreshReviews(host, root, s, dir, base, candidate, plan, runtime, run); err != nil {
+		return out, err
+	}
 	if err := requireArtifacts(compiled.Report); err != nil {
 		return out, err
 	}
@@ -579,6 +582,19 @@ func runtimeDigestWithInvoker(invoker Invoker, runtime Runtime) (string, error) 
 			return "", err
 		}
 		fps["$verifier"] = fp
+	}
+	if runtime.Review != nil {
+		for id, reviewer := range runtime.Review.Agents {
+			cfg, err := reviewer.AgentConfig()
+			if err != nil {
+				return "", err
+			}
+			fp, err := invoker.Fingerprint(cfg)
+			if err != nil {
+				return "", err
+			}
+			fps["$reviewer:"+id] = fp
+		}
 	}
 	return digest(struct {
 		Runtime      Runtime           `json:"runtime"`

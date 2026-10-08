@@ -163,6 +163,20 @@ func ValidateRuntime(config Runtime) error {
 			return fmt.Errorf("invalid runtime verifier: %w", err)
 		}
 	}
+	if config.Review != nil {
+		if len(config.Review.Agents) == 0 || config.Review.MaxRounds < 1 || config.Review.MaxRounds > 3 ||
+			config.Review.MaxManagerRounds < 1 || config.Review.MaxManagerRounds > 3 {
+			return fmt.Errorf("runtime review must declare reviewer agents and rounds within 1..3")
+		}
+		for managerID, agent := range config.Review.Agents {
+			if strings.TrimSpace(managerID) == "" {
+				return fmt.Errorf("runtime reviewer Manager ID must not be empty")
+			}
+			if _, err := agent.AgentConfig(); err != nil {
+				return fmt.Errorf("invalid runtime reviewer %q: %w", managerID, err)
+			}
+		}
+	}
 	l := config.Limits
 	if l.MaxDepth < 1 || l.MaxDepth > 32 || l.MaxStarts < 1 || l.MaxStarts > 256 ||
 		l.MaxRetries < 0 || l.MaxRetries > 3 || l.MaxParallel < 1 || l.MaxParallel > 16 ||

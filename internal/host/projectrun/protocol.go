@@ -16,15 +16,16 @@ type Delegation struct {
 // TaskResponse is the narrow proposal/report payload carried in agentexec's
 // typed ReportJSON field. It contains no transcript or authority grant.
 type TaskResponse struct {
-	Status            string       `json:"status"`
-	Summary           string       `json:"summary"`
-	Delegations       []Delegation `json:"delegations"`
-	Integrated        bool         `json:"integrated"`
-	Questions         []string     `json:"questions"`
-	Risks             []string     `json:"risks"`
-	ResolvedQuestions []string     `json:"resolvedQuestions"`
-	ResolvedRisks     []string     `json:"resolvedRisks"`
-	EscalateTo        string       `json:"escalateTo"`
+	Status            string          `json:"status"`
+	Summary           string          `json:"summary"`
+	Delegations       []Delegation    `json:"delegations"`
+	ReworkRequests    []ReworkRequest `json:"reworkRequests"`
+	Integrated        bool            `json:"integrated"`
+	Questions         []string        `json:"questions"`
+	Risks             []string        `json:"risks"`
+	ResolvedQuestions []string        `json:"resolvedQuestions"`
+	ResolvedRisks     []string        `json:"resolvedRisks"`
+	EscalateTo        string          `json:"escalateTo"`
 }
 
 func decodeTaskResponse(raw json.RawMessage, phase string, activeChildren []string) (TaskResponse, error) {
@@ -32,7 +33,7 @@ func decodeTaskResponse(raw json.RawMessage, phase string, activeChildren []stri
 	if len(raw) == 0 {
 		return response, fmt.Errorf("agent response omitted the typed project task report")
 	}
-	allowed := map[string]bool{"status": true, "summary": true, "delegations": true, "integrated": true, "questions": true, "risks": true, "resolvedQuestions": true, "resolvedRisks": true, "escalateTo": true}
+	allowed := map[string]bool{"status": true, "summary": true, "delegations": true, "reworkRequests": true, "integrated": true, "questions": true, "risks": true, "resolvedQuestions": true, "resolvedRisks": true, "escalateTo": true}
 	if err := validateExactObjectKeys(raw, allowed); err != nil {
 		return response, err
 	}
@@ -56,13 +57,16 @@ func decodeTaskResponse(raw json.RawMessage, phase string, activeChildren []stri
 	if len(response.Summary) > 4096 {
 		return response, fmt.Errorf("task summary exceeds 4096 bytes")
 	}
+	if phase != "integrate" && len(response.ReworkRequests) > 0 {
+		return response, fmt.Errorf("work report may not request manager-directed rework")
+	}
 	if phase == "integrate" && !response.Integrated {
 		return response, fmt.Errorf("parent did not report actual child-candidate integration")
 	}
 	if phase != "integrate" && response.Integrated {
 		return response, fmt.Errorf("work report cannot claim child integration")
 	}
-	if response.Delegations == nil || response.Questions == nil || response.Risks == nil || response.ResolvedQuestions == nil || response.ResolvedRisks == nil {
+	if response.Delegations == nil || response.ReworkRequests == nil || response.Questions == nil || response.Risks == nil || response.ResolvedQuestions == nil || response.ResolvedRisks == nil {
 		return response, fmt.Errorf("task report requires all list fields as arrays (empty when none)")
 	}
 	wanted := map[string]bool{}
@@ -81,6 +85,19 @@ func decodeTaskResponse(raw json.RawMessage, phase string, activeChildren []stri
 			return response, fmt.Errorf("manager delegated twice to %s", delegation.ManagerID)
 		}
 		seen[delegation.ManagerID] = true
+	}
+	seenRework := map[string]bool{}
+	for _, request := range response.ReworkRequests {
+		if phase != "integrate" {
+			return response, fmt.Errorf("work report may not request manager-directed rework")
+		}
+		if !wanted[request.ManagerID] {
+			return response, fmt.Errorf("manager requested rework outside its active direct-child plan: %s", request.ManagerID)
+		}
+		if seenRework[request.ManagerID] || strings.TrimSpace(request.Goal) == "" || len(request.Goal) > 4096 || strings.TrimSpace(request.Reason) == "" || len(request.Reason) > 2048 {
+			return response, fmt.Errorf("rework request requires a unique active child and bounded goal and reason")
+		}
+		seenRework[request.ManagerID] = true
 	}
 	if phase == "work" {
 		if len(response.ResolvedQuestions) > 0 || len(response.ResolvedRisks) > 0 {
@@ -136,8 +153,9 @@ func uniqueObligations(values []string) error {
 func taskResponseSchema(phase string) json.RawMessage {
 	delegations := map[string]any{"type": "array", "items": map[string]any{"type": "object", "additionalProperties": false, "required": []string{"managerId", "goal"}, "properties": map[string]any{"managerId": map[string]any{"type": "string", "minLength": 1}, "goal": map[string]any{"type": "string", "minLength": 1, "maxLength": 4096}}}}
 	textList := map[string]any{"type": "array", "items": map[string]any{"type": "string", "minLength": 1, "maxLength": 4096}}
-	properties := map[string]any{"status": map[string]any{"type": "string", "enum": []string{"complete", "partial", "blocked", "failed", "no-op"}}, "summary": map[string]any{"type": "string", "minLength": 1, "maxLength": 4096}, "delegations": delegations, "integrated": map[string]any{"type": "boolean", "enum": []bool{phase == "integrate"}}, "questions": textList, "risks": textList, "resolvedQuestions": textList, "resolvedRisks": textList, "escalateTo": map[string]any{"type": "string", "maxLength": 128}}
-	data, _ := json.Marshal(map[string]any{"type": "object", "additionalProperties": false, "required": []string{"status", "summary", "delegations", "integrated", "questions", "risks", "resolvedQuestions", "resolvedRisks", "escalateTo"}, "properties": properties})
+	reworkItems := map[string]any{"type": "array", "items": map[string]any{"type": "object", "additionalProperties": false, "required": []string{"managerId", "goal", "reason"}, "properties": map[string]any{"managerId": map[string]any{"type": "string", "minLength": 1, "maxLength": 128}, "goal": map[string]any{"type": "string", "minLength": 1, "maxLength": 4096}, "reason": map[string]any{"type": "string", "minLength": 1, "maxLength": 2048}}}}
+	properties := map[string]any{"status": map[string]any{"type": "string", "enum": []string{"complete", "partial", "blocked", "failed", "no-op"}}, "summary": map[string]any{"type": "string", "minLength": 1, "maxLength": 4096}, "delegations": delegations, "reworkRequests": reworkItems, "integrated": map[string]any{"type": "boolean", "enum": []bool{phase == "integrate"}}, "questions": textList, "risks": textList, "resolvedQuestions": textList, "resolvedRisks": textList, "escalateTo": map[string]any{"type": "string", "maxLength": 128}}
+	data, _ := json.Marshal(map[string]any{"type": "object", "additionalProperties": false, "required": []string{"status", "summary", "delegations", "reworkRequests", "integrated", "questions", "risks", "resolvedQuestions", "resolvedRisks", "escalateTo"}, "properties": properties})
 	return data
 }
 
@@ -176,6 +194,11 @@ func validateExactObjectKeys(raw json.RawMessage, allowed map[string]bool) error
 		}
 		if key == "delegations" {
 			if err := validateArrayObjectKeys(value, map[string]bool{"managerId": true, "goal": true}); err != nil {
+				return err
+			}
+		}
+		if key == "reworkRequests" {
+			if err := validateArrayObjectKeys(value, map[string]bool{"managerId": true, "goal": true, "reason": true}); err != nil {
 				return err
 			}
 		}

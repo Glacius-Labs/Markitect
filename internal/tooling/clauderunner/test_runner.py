@@ -43,6 +43,58 @@ def task_report_schema() -> dict:
     }
 
 
+def review_report_schema() -> dict:
+    return {
+        "type": "object",
+        "additionalProperties": False,
+        "required": ["status", "summary", "findings"],
+        "properties": {
+            "status": {"type": "string", "enum": ["pass", "fail"]},
+            "summary": {"type": "string", "minLength": 1, "maxLength": 512},
+            "findings": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "additionalProperties": False,
+                    "required": ["path", "expectation", "grounding"],
+                    "properties": {
+                        "path": {"type": "string", "minLength": 1},
+                        "expectation": {"type": "string", "minLength": 1},
+                        "grounding": {"type": "string", "minLength": 1},
+                    },
+                },
+            },
+        },
+    }
+
+
+def review_invocation() -> dict:
+    value = invocation("executor")
+    source = b"def check(value):\n    return bool(value)\n"
+    source_digest = "sha256:" + hashlib.sha256(source).hexdigest()
+    value["request"]["context"] = {
+        "kind": "projectrun-review/v1",
+        "runGoal": "Add bounded validation for the candidate output.",
+        "managerId": "manager-1",
+        "ownTask": "Review the candidate against the goal and accepted model.",
+        "phase": "review",
+        "round": 1,
+        "candidateId": "candidate-1",
+        "candidateDigest": "sha256:" + "d" * 64,
+        "acceptedModel": {"statements": [{"id": "goal-1", "text": "Keep validation bounded."}], "artifacts": []},
+        "scopedModel": {"statements": ["Validate without writes."]},
+        "candidateFiles": [{"path": "src/check.py", "mode": "0644", "digest": source_digest}],
+        "responseSchema": review_report_schema(),
+    }
+    value["request"]["artifacts"] = [{
+        "path": "src/check.py",
+        "mode": "0644",
+        "digest": "sha256:" + hashlib.sha256(source).hexdigest(),
+        "content": base64.b64encode(source).decode("ascii"),
+    }]
+    return value
+
+
 class ClaudeRunnerTests(unittest.TestCase):
     def test_strict_json_rejects_duplicate_keys(self) -> None:
         with self.assertRaises(runner.AdapterError):
@@ -128,6 +180,118 @@ class ClaudeRunnerTests(unittest.TestCase):
         response["reportJson"] = '{"status":"complete","summary":""}'
         with self.assertRaises(runner.AdapterError):
             runner.normalize_claude_response({"structured_output": response}, value)
+
+    def test_typed_review_report_is_transmitted_and_outcomes_stay_safe(self) -> None:
+        value = review_invocation()
+        prompt = runner.make_prompt(value)
+        self.assertIn("request.context.runGoal", prompt)
+        self.assertIn("request.context.acceptedModel", prompt)
+        self.assertIn("actual scoped candidate bytes", prompt)
+        self.assertIn("Do not use an implementer transcript", prompt)
+        self.assertIn("fabricate test execution or test results", prompt)
+        self.assertIn("candidateFiles must be empty", prompt)
+        self.assertIn("grounding field must exactly equal", prompt)
+        self.assertIn("statement:<id>", prompt)
+        schema = runner.provider_response_schema(value)
+        self.assertEqual(schema["properties"]["reportJson"]["type"], ["string", "null"])
+        self.assertIn("responseSchema", prompt)
+
+        response = {
+            "apiVersion": value["apiVersion"], "runId": value["runId"], "nonce": value["nonce"],
+            "role": "executor", "inputDigest": value["inputDigest"], "outcome": "proposed",
+            "candidateFiles": [], "candidateJson": None,
+            "reportJson": json.dumps({
+                "status": "fail", "summary": "The candidate violates the requested validation boundary.",
+                "findings": [{
+                    "path": "src/check.py", "expectation": "Reject values outside the accepted model.",
+                    "grounding": "statement:goal-1",
+                }],
+            }),
+            "evidenceRefs": [], "verifierObservations": [], "uncertainty": [],
+        }
+        normalized = runner.normalize_claude_response({"structured_output": response}, value)
+        self.assertEqual(normalized["outcome"], "proposed")
+        self.assertEqual(normalized["reportJson"]["status"], "fail")
+
+        response["candidateJson"] = None
+        response["outcome"] = "incomplete"
+        response["reportJson"] = None
+        response["uncertainty"] = ["The supplied bytes do not settle the requirement."]
+        normalized = runner.normalize_claude_response({"structured_output": response}, value)
+        self.assertEqual(normalized["outcome"], "incomplete")
+        self.assertNotIn("reportJson", normalized)
+
+        response["outcome"] = "proposed"
+        response["candidateFiles"] = [{"path": "rewrite.py", "mode": "0644", "content": "x"}]
+        response["candidateJson"] = None
+        response["reportJson"] = json.dumps({"status": "fail", "summary": "mismatch", "findings": [{
+            "path": "src/check.py", "expectation": "pass", "grounding": "statement:goal-1",
+        }]})
+        with self.assertRaisesRegex(runner.AdapterError, "candidate writes"):
+            runner.normalize_claude_response({"structured_output": response}, value)
+
+        legacy = invocation("verifier")
+        legacy["request"]["context"]["responseSchema"] = review_report_schema()
+        self.assertIsNone(runner.task_response_schema(legacy))
+        legacy_prompt = runner.make_prompt(legacy)
+        self.assertIn("Always set reportJson to null for this role/request", legacy_prompt)
+        self.assertIn("exactly one verifierObservations entry", legacy_prompt)
+        response["candidateFiles"] = []
+        response["candidateJson"] = None
+        response["reportJson"] = None
+        self.assertNotIn("reportJson", runner.normalize_claude_response({"structured_output": response}, legacy))
+
+    def test_claude_launch_transmits_typed_review_schema_and_read_only_report(self) -> None:
+        value = review_invocation()
+        report_json = json.dumps({
+            "status": "pass", "summary": "The scoped candidate satisfies the goal.", "findings": [],
+        })
+        structured = {
+            "apiVersion": value["apiVersion"], "runId": value["runId"], "nonce": value["nonce"],
+            "role": "executor", "inputDigest": value["inputDigest"], "outcome": "proposed",
+            "candidateFiles": [], "candidateJson": None, "reportJson": report_json,
+            "evidenceRefs": ["scope/example", "src/check.py"], "verifierObservations": [], "uncertainty": [],
+        }
+        captured = {}
+
+        class CapturingStdin(io.BytesIO):
+            def write(self, data):
+                captured["prompt"] = bytes(data)
+                return super().write(data)
+
+        class FakeProcess:
+            def __init__(self, argv, **kwargs):
+                captured["argv"] = argv
+                self.stdin = CapturingStdin()
+                self.stdout = io.BytesIO(json.dumps({"structured_output": structured}).encode("utf-8"))
+                self.stderr = io.BytesIO()
+
+            def wait(self, timeout=None):
+                return 0
+
+            def terminate(self):
+                return None
+
+            def kill(self):
+                return None
+
+        with tempfile.TemporaryDirectory() as directory:
+            cwd = Path(directory)
+            args = argparse.Namespace(
+                claude_executable="C:/managed/claude.exe", claude_version="2.1.248",
+                model="sonnet", timeout_seconds=10,
+            )
+            with patch.object(runner, "resolve_claude", return_value=[args.claude_executable]), \
+                 patch.object(runner, "check_version"), \
+                 patch.object(runner.subprocess, "Popen", FakeProcess):
+                response = runner.launch_claude(value, args, {}, cwd, cwd / "private.jsonl")
+            argv = captured["argv"]
+            response_schema = json.loads(argv[argv.index("--json-schema") + 1])
+            self.assertEqual(response_schema["properties"]["reportJson"]["type"], ["string", "null"])
+            self.assertEqual(captured["prompt"], runner.make_prompt(value).encode("utf-8") + b"\n")
+            self.assertEqual(response["outcome"], "proposed")
+            self.assertEqual(response["reportJson"], {"status": "pass", "summary": "The scoped candidate satisfies the goal.", "findings": []})
+            self.assertEqual(response["candidateFiles"], [])
         response["reportJson"] = None
         with self.assertRaises(runner.AdapterError):
             runner.normalize_claude_response({"structured_output": response}, value)

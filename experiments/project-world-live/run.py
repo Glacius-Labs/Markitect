@@ -123,7 +123,20 @@ def main() -> None:
             probe.write_bytes(original)
         result = invoke(tool, root, output, 'apply', *binding, *exact)
         assert result['status'] == 'applied', result
-    print(json.dumps({'stage': args.stage, 'status': result.get('status'), 'plan': state['plan']}))
+    status = invoke(tool, root, output, 'status', '--run', state['plan'])
+    run = status['run']
+    reviews = run.get('reviews', [])
+    invocations = run.get('invocations', [])
+    summary = {'stage': args.stage, 'status': result.get('status'), 'plan': state['plan'],
+               'candidate': run['candidate']['id'], 'invocations': len(invocations),
+               'reviewInvocations': sum(item['role'] == 'reviewer' for item in invocations),
+               'reviewPasses': sum(item['outcome'] == 'pass' for item in reviews),
+               'failedReviews': sum(item['outcome'] == 'fail' for item in reviews),
+               'reviewFindings': sum(len(item['findings']) for item in reviews),
+               'managerReworkRounds': len(run.get('managerReworkRounds', [])),
+               'estimatedCostMicros': sum(item['costMicros'] for item in invocations)}
+    (output / (args.stage + '-summary.json')).write_text(json.dumps(summary, indent=2), encoding='utf-8')
+    print(json.dumps(summary))
 
 
 def invoke(tool: Path, root: Path, output: Path, action: str, *words: str) -> dict:

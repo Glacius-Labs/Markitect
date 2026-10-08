@@ -45,6 +45,58 @@ def task_report_schema() -> dict:
     }
 
 
+def review_report_schema() -> dict:
+    return {
+        "type": "object",
+        "additionalProperties": False,
+        "required": ["status", "summary", "findings"],
+        "properties": {
+            "status": {"type": "string", "enum": ["pass", "fail"]},
+            "summary": {"type": "string", "minLength": 1, "maxLength": 512},
+            "findings": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "additionalProperties": False,
+                    "required": ["path", "expectation", "grounding"],
+                    "properties": {
+                        "path": {"type": "string", "minLength": 1},
+                        "expectation": {"type": "string", "minLength": 1},
+                        "grounding": {"type": "string", "minLength": 1},
+                    },
+                },
+            },
+        },
+    }
+
+
+def review_invocation() -> dict:
+    value = invocation("executor")
+    source = b"def check(value):\n    return bool(value)\n"
+    source_digest = "sha256:" + hashlib.sha256(source).hexdigest()
+    value["request"]["context"] = {
+        "kind": "projectrun-review/v1",
+        "runGoal": "Add bounded validation for the candidate output.",
+        "managerId": "manager-1",
+        "ownTask": "Review the candidate against the goal and accepted model.",
+        "phase": "review",
+        "round": 1,
+        "candidateId": "candidate-1",
+        "candidateDigest": "sha256:" + "d" * 64,
+        "acceptedModel": {"statements": [{"id": "goal-1", "text": "Keep validation bounded."}], "artifacts": []},
+        "scopedModel": {"statements": ["Validate without writes."]},
+        "candidateFiles": [{"path": "src/check.py", "mode": "0644", "digest": source_digest}],
+        "responseSchema": review_report_schema(),
+    }
+    value["request"]["artifacts"] = [{
+        "path": "src/check.py",
+        "mode": "0644",
+        "digest": "sha256:" + hashlib.sha256(source).hexdigest(),
+        "content": base64.b64encode(source).decode("ascii"),
+    }]
+    return value
+
+
 class CodexRunnerTests(unittest.TestCase):
     def test_strict_json_rejects_duplicate_keys_at_any_depth(self) -> None:
         with self.assertRaises(runner.AdapterError):
@@ -281,6 +333,134 @@ class CodexRunnerTests(unittest.TestCase):
             runner.normalize_codex_response({"candidateJson": None, "reportJson": '{"status":"complete","summary":""}'}, value)
         legacy = invocation("executor")
         self.assertNotIn("reportJson", runner.normalize_codex_response({"candidateJson": None, "reportJson": None}, legacy))
+
+    def test_typed_read_only_reviewer_report_preserves_semantic_failure_and_uncertainty(self) -> None:
+        value = review_invocation()
+        prompt = runner.make_prompt(value)
+        self.assertIn("request.context.runGoal", prompt)
+        self.assertIn("request.context.acceptedModel", prompt)
+        self.assertIn("actual scoped candidate bytes", prompt)
+        self.assertIn("Do not use an implementer transcript", prompt)
+        self.assertIn("fabricate test execution or test results", prompt)
+        self.assertIn("candidateFiles must be empty", prompt)
+        self.assertIn("grounding field must exactly equal", prompt)
+        self.assertIn("statement:<id>", prompt)
+        self.assertIn("request.context.responseSchema", prompt)
+        self.assertEqual(runner.provider_response_schema(value)["properties"]["reportJson"]["type"], ["string", "null"])
+
+        failed = runner.normalize_codex_response({
+            "candidateJson": None,
+            "reportJson": json.dumps({
+                "status": "fail",
+                "summary": "The candidate violates the requested validation boundary.",
+                "findings": [{
+                    "path": "src/check.py",
+                    "expectation": "Reject values outside the accepted model.",
+                    "grounding": "statement:goal-1",
+                }],
+            }),
+            "outcome": "proposed",
+            "candidateFiles": [], "verifierObservations": [],
+        }, value)
+        self.assertEqual(failed["outcome"], "proposed")
+        self.assertEqual(failed["reportJson"]["status"], "fail")
+        self.assertEqual(failed["reportJson"]["findings"][0]["path"], "src/check.py")
+
+        uncertain = runner.normalize_codex_response({
+            "candidateJson": None, "reportJson": None, "outcome": "incomplete",
+            "candidateFiles": [], "verifierObservations": [],
+            "uncertainty": ["The scoped bytes are insufficient to assess the requirement."],
+        }, value)
+        self.assertEqual(uncertain["outcome"], "incomplete")
+        self.assertNotIn("reportJson", uncertain)
+        with self.assertRaises(runner.AdapterError):
+            runner.normalize_codex_response({
+                "candidateJson": None, "reportJson": None, "outcome": "failed",
+                "candidateFiles": [], "uncertainty": [],
+            }, value)
+        with self.assertRaisesRegex(runner.AdapterError, "semantic verdict"):
+            runner.normalize_codex_response({
+                "candidateJson": None,
+                "reportJson": json.dumps({"status": "pass", "summary": "mismatch", "findings": [{
+                    "path": "src/check.py", "expectation": "pass", "grounding": "statement:goal-1",
+                }]}),
+                "outcome": "proposed", "candidateFiles": [], "verifierObservations": [],
+            }, value)
+        with self.assertRaisesRegex(runner.AdapterError, "candidate writes"):
+            runner.normalize_codex_response({
+                "candidateJson": None,
+                "reportJson": json.dumps({"status": "fail", "summary": "mismatch", "findings": [{
+                    "path": "src/check.py", "expectation": "pass", "grounding": "statement:goal-1",
+                }]}),
+                "outcome": "proposed", "candidateFiles": [{"path": "rewrite.py", "mode": "0644", "content": "x"}],
+                "verifierObservations": [],
+            }, value)
+
+        legacy = invocation("verifier")
+        legacy["request"]["context"]["responseSchema"] = review_report_schema()
+        self.assertIsNone(runner.task_response_schema(legacy))
+        legacy_prompt = runner.make_prompt(legacy)
+        self.assertIn("Always set reportJson to null for this role/request", legacy_prompt)
+        self.assertIn("exactly one verifierObservations entry", legacy_prompt)
+        self.assertNotIn("reportJson", runner.normalize_codex_response({"candidateJson": None, "reportJson": None}, legacy))
+
+    def test_codex_launch_transmits_typed_review_schema_and_read_only_report(self) -> None:
+        value = review_invocation()
+        report_json = json.dumps({
+            "status": "pass", "summary": "The scoped candidate satisfies the goal.", "findings": [],
+        })
+        captured = {}
+
+        class CapturingStdin(io.BytesIO):
+            def __init__(self):
+                super().__init__()
+                self.submitted = bytearray()
+
+            def write(self, data):
+                self.submitted.extend(data)
+                return super().write(data)
+
+        class FakeProcess:
+            def __init__(self, argv, **kwargs):
+                captured["argv"] = argv
+                self.stdin = CapturingStdin()
+                captured["stdin"] = self.stdin
+                self.stdout = io.BytesIO(b'{"type":"turn.completed","usage":{"input_tokens":5}}\n')
+                self.stderr = io.BytesIO()
+                response_path = Path(argv[argv.index("--output-last-message") + 1])
+                response_path.write_text(json.dumps({
+                    "apiVersion": value["apiVersion"], "runId": value["runId"], "nonce": value["nonce"],
+                    "role": "executor", "inputDigest": value["inputDigest"], "outcome": "proposed",
+                    "candidateFiles": [], "candidateJson": None, "reportJson": report_json,
+                    "evidenceRefs": ["scope/example", "src/check.py"], "verifierObservations": [], "uncertainty": [],
+                }), encoding="utf-8")
+
+            def wait(self, timeout=None):
+                return 0
+
+            def terminate(self):
+                return None
+
+            def kill(self):
+                return None
+
+        with tempfile.TemporaryDirectory() as directory:
+            cwd = Path(directory)
+            args = argparse.Namespace(
+                codex_executable="codex.exe", codex_script=None, codex_version="0.130.0",
+                model="gpt-5.5", timeout_seconds=10,
+            )
+            with patch.object(runner, "resolve_codex", return_value=["codex.exe"]), \
+                 patch.object(runner, "check_version"), \
+                 patch.object(runner.subprocess, "Popen", FakeProcess):
+                response = runner.launch_codex(value, args, {}, cwd, cwd / "private.jsonl")
+            argv = captured["argv"]
+            response_schema = json.loads(Path(argv[argv.index("--output-schema") + 1]).read_text(encoding="utf-8"))
+            self.assertEqual(response_schema["properties"]["reportJson"]["type"], ["string", "null"])
+            self.assertEqual(bytes(captured["stdin"].submitted), runner.make_prompt(value).encode("utf-8"))
+            self.assertEqual(response["outcome"], "proposed")
+            self.assertEqual(response["reportJson"], {"status": "pass", "summary": "The scoped candidate satisfies the goal.", "findings": []})
+            self.assertEqual(response["candidateFiles"], [])
 
     def test_invalid_task_report_schema_fails_before_codex_or_file_creation(self) -> None:
         value = invocation()

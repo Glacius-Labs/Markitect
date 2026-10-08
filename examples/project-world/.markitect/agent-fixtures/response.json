@@ -12,6 +12,7 @@
     "status": "complete",
     "summary": "Protocol-only fixture; no source edits are proposed.",
     "delegations": [],
+    "reworkRequests": [],
     "integrated": false,
     "questions": [],
     "risks": [],

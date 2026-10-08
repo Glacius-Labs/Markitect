@@ -87,6 +87,13 @@ func PreflightApply(host Host, root, runID, candidateID string) (ApplyPreflight,
 	if err := validateChangeImpact(host, root, base, plan); err != nil {
 		return out, err
 	}
+	runtimeConfig, err := LoadRuntime(root)
+	if err != nil {
+		return out, err
+	}
+	if err := requireFreshReviews(host, root, store, dir, base, candidate, plan, runtimeConfig, run); err != nil {
+		return out, err
+	}
 	working, err := host.Load(root, "")
 	if err != nil {
 		return out, err
@@ -222,6 +229,9 @@ func Apply(host Host, invoker Invoker, root string, request ApplyRequest) (Apply
 	}
 	if compiled.Report.ModelDigest != plan.ModelDigest || hasErrorFinding(compiled.Report.Findings) {
 		return out, fmt.Errorf("candidate project model changed since plan")
+	}
+	if err := requireFreshReviews(host, root, s, dir, base, candidate, plan, runtime, run); err != nil {
+		return out, err
 	}
 	if err := requireArtifacts(compiled.Report); err != nil {
 		return out, err

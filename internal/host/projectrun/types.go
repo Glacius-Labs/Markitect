@@ -58,7 +58,17 @@ type Runtime struct {
 	RequireIsolation bool             `json:"requireIsolation" yaml:"requireIsolation"`
 	Agents           map[string]Agent `json:"agents" yaml:"agents"`
 	Verifier         *Agent           `json:"verifier,omitempty" yaml:"verifier,omitempty"`
+	Review           *ReviewConfig    `json:"review,omitempty" yaml:"review,omitempty"`
 	Limits           Limits           `json:"limits" yaml:"limits"`
+}
+
+// ReviewConfig enables an independent bounded reviewer for each active
+// Manager. Agent keys are Manager IDs; review invocations use their own
+// runtime fingerprints and share the run's cumulative resource ceilings.
+type ReviewConfig struct {
+	Agents           map[string]Agent `json:"agents" yaml:"agents"`
+	MaxRounds        int              `json:"maxRounds" yaml:"maxRounds"`
+	MaxManagerRounds int              `json:"maxManagerRounds" yaml:"maxManagerRounds"`
 }
 
 type Agent struct {
@@ -147,32 +157,42 @@ type PlanRecord struct {
 }
 
 type ManagerTask struct {
-	ID                     string       `json:"id"`
-	ManagerID              string       `json:"managerId"`
-	ParentTask             string       `json:"parentTask,omitempty"`
-	Depth                  int          `json:"depth"`
-	Goal                   string       `json:"goal"`
-	Owns                   []string     `json:"owns"`
-	Statements             []string     `json:"statements"`
-	Artifacts              []string     `json:"artifacts"`
-	Checks                 []string     `json:"checks"`
-	State                  string       `json:"state"`
-	ReportStatus           string       `json:"reportStatus"`
-	Attempts               int          `json:"attempts,omitempty"`
-	WorkAttempts           int          `json:"workAttempts,omitempty"`
-	IntegrationAttempts    int          `json:"integrationAttempts,omitempty"`
-	RepairPhase            string       `json:"repairPhase,omitempty"`
-	RepairDiagnostic       string       `json:"repairDiagnostic,omitempty"`
-	ReportID               string       `json:"reportId,omitempty"`
-	CandidateID            string       `json:"candidateId,omitempty"`
-	IntegrationReportID    string       `json:"integrationReportId,omitempty"`
-	IntegrationCandidateID string       `json:"integrationCandidateId,omitempty"`
-	WrittenPaths           []string     `json:"writtenPaths,omitempty"`
-	IntegratedPaths        []string     `json:"integratedPaths,omitempty"`
-	Delegations            []Delegation `json:"delegations,omitempty"`
-	Summary                string       `json:"summary,omitempty"`
-	Questions              []string     `json:"questions,omitempty"`
-	Risks                  []string     `json:"risks,omitempty"`
+	ID                     string          `json:"id"`
+	ManagerID              string          `json:"managerId"`
+	ParentTask             string          `json:"parentTask,omitempty"`
+	Depth                  int             `json:"depth"`
+	Goal                   string          `json:"goal"`
+	Owns                   []string        `json:"owns"`
+	Statements             []string        `json:"statements"`
+	Artifacts              []string        `json:"artifacts"`
+	Checks                 []string        `json:"checks"`
+	State                  string          `json:"state"`
+	ReportStatus           string          `json:"reportStatus"`
+	Attempts               int             `json:"attempts,omitempty"`
+	WorkAttempts           int             `json:"workAttempts,omitempty"`
+	IntegrationAttempts    int             `json:"integrationAttempts,omitempty"`
+	RepairPhase            string          `json:"repairPhase,omitempty"`
+	RepairDiagnostic       string          `json:"repairDiagnostic,omitempty"`
+	ReportID               string          `json:"reportId,omitempty"`
+	CandidateID            string          `json:"candidateId,omitempty"`
+	IntegrationReportID    string          `json:"integrationReportId,omitempty"`
+	IntegrationCandidateID string          `json:"integrationCandidateId,omitempty"`
+	WrittenPaths           []string        `json:"writtenPaths,omitempty"`
+	IntegratedPaths        []string        `json:"integratedPaths,omitempty"`
+	Delegations            []Delegation    `json:"delegations,omitempty"`
+	Summary                string          `json:"summary,omitempty"`
+	Questions              []string        `json:"questions,omitempty"`
+	Risks                  []string        `json:"risks,omitempty"`
+	ReviewStatus           string          `json:"reviewStatus,omitempty"`
+	ReviewCandidateID      string          `json:"reviewCandidateId,omitempty"`
+	ReviewRound            int             `json:"reviewRound,omitempty"`
+	ReworkRequests         []ReworkRequest `json:"reworkRequests,omitempty"`
+}
+
+type ReworkRequest struct {
+	ManagerID string `json:"managerId"`
+	Goal      string `json:"goal"`
+	Reason    string `json:"reason"`
 }
 
 type CheckPlan struct {
@@ -185,27 +205,66 @@ type CheckPlan struct {
 }
 
 type RunReport struct {
-	APIVersion              string          `json:"apiVersion"`
-	ID                      string          `json:"id"`
-	PlanID                  string          `json:"planId"`
-	Status                  string          `json:"status"`
-	Mode                    string          `json:"mode"`
-	StartedAt               time.Time       `json:"startedAt"`
-	UpdatedAt               time.Time       `json:"updatedAt"`
-	BaseRevision            string          `json:"baseRevision"`
-	BaseSnapshot            string          `json:"baseSnapshot"`
-	ModelDigest             string          `json:"modelDigest"`
-	RuntimeDigest           string          `json:"runtimeDigest"`
-	Candidate               CandidateRef    `json:"candidate"`
-	Tasks                   []ManagerTask   `json:"tasks"`
-	Invocations             []InvocationLog `json:"invocations"`
-	Checks                  []CheckResult   `json:"checks"`
-	Findings                []string        `json:"findings,omitempty"`
-	Escalations             []Escalation    `json:"escalations,omitempty"`
-	RepairRounds            []RepairRound   `json:"repairRounds,omitempty"`
-	ActiveRepairCandidateID string          `json:"activeRepairCandidateId,omitempty"`
-	Revision                uint64          `json:"revision"`
-	Digest                  string          `json:"digest"`
+	APIVersion              string               `json:"apiVersion"`
+	ID                      string               `json:"id"`
+	PlanID                  string               `json:"planId"`
+	Status                  string               `json:"status"`
+	Mode                    string               `json:"mode"`
+	StartedAt               time.Time            `json:"startedAt"`
+	UpdatedAt               time.Time            `json:"updatedAt"`
+	BaseRevision            string               `json:"baseRevision"`
+	BaseSnapshot            string               `json:"baseSnapshot"`
+	ModelDigest             string               `json:"modelDigest"`
+	RuntimeDigest           string               `json:"runtimeDigest"`
+	Candidate               CandidateRef         `json:"candidate"`
+	Tasks                   []ManagerTask        `json:"tasks"`
+	Invocations             []InvocationLog      `json:"invocations"`
+	Checks                  []CheckResult        `json:"checks"`
+	Findings                []string             `json:"findings,omitempty"`
+	Escalations             []Escalation         `json:"escalations,omitempty"`
+	RepairRounds            []RepairRound        `json:"repairRounds,omitempty"`
+	Reviews                 []ReviewRecord       `json:"reviews,omitempty"`
+	ManagerReworkRounds     []ManagerReworkRound `json:"managerReworkRounds,omitempty"`
+	ActiveRepairCandidateID string               `json:"activeRepairCandidateId,omitempty"`
+	Revision                uint64               `json:"revision"`
+	Digest                  string               `json:"digest"`
+}
+
+type ManagerReworkRound struct {
+	Number   int                          `json:"number"`
+	Status   string                       `json:"status"`
+	Requests []ManagerReworkRequestRecord `json:"requests"`
+}
+
+type ManagerReworkRequestRecord struct {
+	Requester   string        `json:"requester"`
+	Request     ReworkRequest `json:"request"`
+	Status      string        `json:"status"`
+	CandidateID string        `json:"candidateId,omitempty"`
+}
+
+// ReviewRecord binds a reviewer decision to the exact immutable candidate
+// bytes and accepted scoped model supplied to that invocation.
+type ReviewRecord struct {
+	TaskID          string            `json:"taskId"`
+	ManagerID       string            `json:"managerId"`
+	Round           int               `json:"round"`
+	Phase           string            `json:"phase"`
+	CandidateID     string            `json:"candidateId"`
+	CandidateDigest string            `json:"candidateDigest"`
+	ScopeDigest     string            `json:"scopeDigest"`
+	InputDigest     string            `json:"inputDigest"`
+	Outcome         string            `json:"outcome"`
+	Findings        []ReviewFinding   `json:"findings"`
+	Receipt         agentexec.Receipt `json:"receipt"`
+	CostMicros      int64             `json:"costMicros"`
+	At              time.Time         `json:"at"`
+}
+
+type ReviewFinding struct {
+	Path        string `json:"path"`
+	Expectation string `json:"expectation"`
+	Grounding   string `json:"grounding"`
 }
 
 // RepairRound records an explicit manager loop started from a candidate whose

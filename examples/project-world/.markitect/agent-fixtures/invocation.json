@@ -16,11 +16,12 @@
       "responseSchema": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["status", "summary", "delegations", "integrated", "questions", "risks", "resolvedQuestions", "resolvedRisks", "escalateTo"],
+        "required": ["status", "summary", "delegations", "reworkRequests", "integrated", "questions", "risks", "resolvedQuestions", "resolvedRisks", "escalateTo"],
         "properties": {
           "status": {"type": "string", "enum": ["complete", "partial", "blocked", "failed", "no-op"]},
           "summary": {"type": "string", "minLength": 1, "maxLength": 4096},
           "delegations": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["managerId", "goal"], "properties": {"managerId": {"type": "string", "minLength": 1}, "goal": {"type": "string", "minLength": 1, "maxLength": 4096}}}},
+          "reworkRequests": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["managerId", "goal", "reason"], "properties": {"managerId": {"type": "string", "minLength": 1, "maxLength": 128}, "goal": {"type": "string", "minLength": 1, "maxLength": 4096}, "reason": {"type": "string", "minLength": 1, "maxLength": 2048}}}},
           "integrated": {"type": "boolean", "enum": [false]},
           "questions": {"type": "array", "items": {"type": "string", "minLength": 1, "maxLength": 4096}},
           "risks": {"type": "array", "items": {"type": "string", "minLength": 1, "maxLength": 4096}},
@@ -33,7 +34,7 @@
     "artifacts": [
       {
         "path": ".markitect/views/project.md",
-        "mode": "100644",
+        "mode": "0644",
         "digest": "sha256:fixture-artifact-digest",
         "content": "UmV2aWV3IHRoZSBib3VuZGVkIHByb2plY3Qgdmlldy4="
       }

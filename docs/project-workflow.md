@@ -120,6 +120,14 @@ The read-only apply preflight prints the exact verification digest, target branc
 
 Conversational integration requires a supported host/runtime to make the structured Markitect calls. The protocol example under `examples/project-world/.markitect/agent-fixtures/` is only a fixture; it is not proof of a provider call, verified agent setup, operating-system isolation, or agent compliance. Repository instructions can make the workflow discoverable but cannot technically prevent an agent with ordinary write access from bypassing it. Use the reported execution mode and its evidence, and keep human acceptance separate from structural checks.
 
+## Local implementation and review
+
+Standard `project setup` configures separate reviewer invocations for the responsible Managers. Each leaf implementation, and any implementation edit made by a parent, passes through a read-only review of the actual scoped candidate and accepted model. Concrete findings return to the implementer within the configured review-round budget. A passing result goes to the Manager for integration. Manager integration may return bounded `reworkRequests` to its active direct children; the affected work is implemented, reviewed and integrated again.
+
+The project-owned `runtime.review` block contains reviewer `agents`, `maxRounds` and `maxManagerRounds`. Standard defaults are three cumulative reviews per Manager and phase, and two Manager rework rounds for the whole run, within the existing total start/time/cost limits. Manager rework and check repair retain those counters. All invocations remain charged to the same run; a new round never replenishes its budget. Legacy runtime files without this optional block keep the earlier execution path and do not claim local review evidence.
+
+Review evidence binds the candidate and actual reviewed scope. Unchanged independent sibling results can remain valid after another child's correction; changed reviewed inputs require a fresh review. Reviewers have no write authority. Managers receive compact findings/results rather than worker transcripts. Fresh declared checks run on the integrated result before guarded Apply; neither reviewer agreement nor a Manager's completion report replaces those checks or owner acceptance. See the [implementation contract](design/project-world/delivery-contract.md#implementer-reviewer-schleife-und-gezielte-nacharbeit) for the role, budget and freshness boundaries.
+
 ## Executable example
 
 `examples/project-world/` models a Shop with a root manager, commerce integration manager, Sales manager, and separate Orders and Inventory managers. Its vertical slices cover order state, reservation release, the shared transaction rule, declared artifacts, and a literal test command. The Python example uses only the standard library and SQLite:

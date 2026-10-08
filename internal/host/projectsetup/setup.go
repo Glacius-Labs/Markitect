@@ -26,14 +26,16 @@ import (
 )
 
 const (
-	DefaultTimeout       = 5 * time.Minute
-	DefaultMaxStdout     = 4 << 20
-	DefaultMaxStderr     = 1 << 20
-	DefaultMaxDepth      = 8
-	DefaultMaxStarts     = 24
-	DefaultMaxRunTime    = 45 * time.Minute
-	DefaultMaxFileBytes  = 1 << 20
-	DefaultMaxTotalBytes = 8 << 20
+	DefaultTimeout                = 5 * time.Minute
+	DefaultMaxStdout              = 4 << 20
+	DefaultMaxStderr              = 1 << 20
+	DefaultMaxDepth               = 8
+	DefaultMaxStarts              = 24
+	DefaultMaxRunTime             = 45 * time.Minute
+	DefaultMaxFileBytes           = 1 << 20
+	DefaultMaxTotalBytes          = 8 << 20
+	DefaultReviewMaxRounds        = 3
+	DefaultReviewMaxManagerRounds = 2
 )
 
 type Options struct {
@@ -162,20 +164,20 @@ func BuildRuntime(project *projectwork.Project, options Options, found Discovery
 	}
 	pricing := projectrun.Pricing{InputMicrosPerMillion: options.InputMicrosPerMillion, OutputMicrosPerMillion: options.OutputMicrosPerMillion}
 	agents := make(map[string]projectrun.Agent, len(project.Report.Managers))
+	reviewAgents := make(map[string]projectrun.Agent, len(project.Report.Managers))
 	for _, manager := range project.Report.Managers {
 		if manager.ID == "" {
 			return config, errors.New("active project has a Manager with an empty ID")
 		}
-		agents[manager.ID] = projectrun.Agent{
-			Command: found.Python.Path, Args: append([]string(nil), args...), Model: options.Model,
-			ModelOptions: modelOptions, ProviderVersion: found.ProviderBinary.Version,
-			Timeout: projectrun.Duration(DefaultTimeout), MaxStdoutBytes: DefaultMaxStdout, MaxStderrBytes: DefaultMaxStderr,
-			RuntimeFiles: append([]agentexec.RuntimeFile(nil), files...), Environment: append([]string(nil), environment...), Pricing: pricing,
-		}
+		agents[manager.ID] = selectedAgent(found, args, options.Model, modelOptions, files, environment, pricing)
+		reviewAgents[manager.ID] = selectedAgent(found, args, options.Model, modelOptions, files, environment, pricing)
 	}
 	config = projectrun.Runtime{
 		APIVersion: projectrun.APIVersion, Mode: projectrun.ModeControlledLocal, RequireIsolation: false,
 		Agents: agents,
+		Review: &projectrun.ReviewConfig{
+			Agents: reviewAgents, MaxRounds: DefaultReviewMaxRounds, MaxManagerRounds: DefaultReviewMaxManagerRounds,
+		},
 		Limits: projectrun.Limits{
 			MaxDepth: DefaultMaxDepth, MaxStarts: DefaultMaxStarts, MaxRetries: 1, MaxParallel: 1,
 			MaxDuration: projectrun.Duration(DefaultMaxRunTime), MaxCostMicros: options.MaxCostMicros,
@@ -185,16 +187,31 @@ func BuildRuntime(project *projectwork.Project, options Options, found Discovery
 	if err := projectrun.ValidateRuntime(config); err != nil {
 		return projectrun.Runtime{}, fmt.Errorf("validate generated runtime: %w", err)
 	}
-	for _, agent := range agents {
-		agentConfig, err := agent.AgentConfig()
-		if err != nil {
-			return projectrun.Runtime{}, err
-		}
-		if _, err := agentexec.Fingerprint(agentConfig); err != nil {
-			return projectrun.Runtime{}, fmt.Errorf("validate selected runtime fingerprints: %w", err)
+	for _, roleAgents := range []map[string]projectrun.Agent{agents, reviewAgents} {
+		for _, agent := range roleAgents {
+			agentConfig, err := agent.AgentConfig()
+			if err != nil {
+				return projectrun.Runtime{}, err
+			}
+			if _, err := agentexec.Fingerprint(agentConfig); err != nil {
+				return projectrun.Runtime{}, fmt.Errorf("validate selected runtime fingerprints: %w", err)
+			}
 		}
 	}
 	return config, nil
+}
+
+func selectedAgent(found Discovery, args []string, model string, modelOptions map[string]string, files []agentexec.RuntimeFile, environment []string, pricing projectrun.Pricing) projectrun.Agent {
+	options := make(map[string]string, len(modelOptions))
+	for key, value := range modelOptions {
+		options[key] = value
+	}
+	return projectrun.Agent{
+		Command: found.Python.Path, Args: append([]string(nil), args...), Model: model,
+		ModelOptions: options, ProviderVersion: found.ProviderBinary.Version,
+		Timeout: projectrun.Duration(DefaultTimeout), MaxStdoutBytes: DefaultMaxStdout, MaxStderrBytes: DefaultMaxStderr,
+		RuntimeFiles: append([]agentexec.RuntimeFile(nil), files...), Environment: append([]string(nil), environment...), Pricing: pricing,
+	}
 }
 
 // Doctor performs local prerequisite checks without reading provider

@@ -166,6 +166,15 @@ func Plan(host Host, root, revision string, request PlanRequest) (PlanRecord, er
 	if runtime.Verifier != nil {
 		minimumStarts++
 	}
+	if runtime.Review != nil {
+		phaseCount := len(managerTasks)
+		for _, task := range managerTasks {
+			if len(activeChildren(managerTasks, task.ManagerID)) > 0 {
+				phaseCount++
+			}
+		}
+		minimumStarts += phaseCount
+	}
 	if minimumStarts > runtime.Limits.MaxStarts {
 		return plan, fmt.Errorf("plan requires at least %d manager, check, and verifier starts; configured limit is %d", minimumStarts, runtime.Limits.MaxStarts)
 	}
@@ -196,6 +205,24 @@ func Plan(host Host, root, revision string, request PlanRequest) (PlanRecord, er
 			return plan, fmt.Errorf("fingerprint runtime verifier: %w", fingerprintErr)
 		}
 		fingerprints["$verifier"] = fingerprint
+	}
+	if runtime.Review != nil {
+		for managerID, agent := range runtime.Review.Agents {
+			config, configErr := agent.AgentConfig()
+			if configErr != nil {
+				return plan, fmt.Errorf("invalid runtime reviewer %s: %w", managerID, configErr)
+			}
+			fingerprint, fingerprintErr := agentexec.Fingerprint(config)
+			if fingerprintErr != nil {
+				return plan, fmt.Errorf("fingerprint runtime reviewer %s: %w", managerID, fingerprintErr)
+			}
+			fingerprints["$reviewer:"+managerID] = fingerprint
+		}
+		for _, task := range managerTasks {
+			if _, ok := runtime.Review.Agents[task.ManagerID]; !ok {
+				return plan, fmt.Errorf("runtime reviewer for active Manager %s is not configured", task.ManagerID)
+			}
+		}
 	}
 	runtimeDigest, err := digest(struct {
 		Runtime      Runtime           `json:"runtime"`

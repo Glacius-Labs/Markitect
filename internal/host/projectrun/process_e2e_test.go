@@ -29,6 +29,7 @@ const (
 	e2eCheckEnv    = "MARKITECT_E2E_CHECK"
 	e2eLogEnv      = "MARKITECT_E2E_LOG"
 	e2eBehaviorEnv = "MARKITECT_E2E_BEHAVIOR"
+	e2eRootEnv     = "MARKITECT_E2E_ROOT"
 )
 
 // These process entry points are re-executed by ProcessInvoker and by the
@@ -46,6 +47,16 @@ func TestProjectRunExecutorProcess(t *testing.T) {
 	var invocation agentexec.Invocation
 	if err := json.Unmarshal(raw, &invocation); err != nil {
 		processExit(2, "decode invocation: "+err.Error())
+	}
+	var discriminator struct {
+		Kind string `json:"kind"`
+	}
+	if err := json.Unmarshal(invocation.Request.Context, &discriminator); err != nil {
+		processExit(2, "decode invocation context: "+err.Error())
+	}
+	if discriminator.Kind == "projectrun-review/v1" {
+		runE2EReview(invocation)
+		return
 	}
 	var contextPayload struct {
 		Phase          string   `json:"phase"`
@@ -106,7 +117,7 @@ func TestProjectRunExecutorProcess(t *testing.T) {
 	}
 
 	response := TaskResponse{Status: "complete", Summary: contextPayload.Manager.Manager.ID + " completed " + contextPayload.Phase,
-		Delegations: []Delegation{}, Integrated: contextPayload.Phase == "integrate", Questions: []string{}, Risks: []string{},
+		Delegations: []Delegation{}, ReworkRequests: []ReworkRequest{}, Integrated: contextPayload.Phase == "integrate", Questions: []string{}, Risks: []string{},
 		ResolvedQuestions: []string{}, ResolvedRisks: []string{}, EscalateTo: ""}
 	files := []agentexec.CandidateFile{}
 	switch contextPayload.Phase {
@@ -122,6 +133,12 @@ func TestProjectRunExecutorProcess(t *testing.T) {
 				processExit(2, "unexpected work manager "+contextPayload.Manager.Manager.ID)
 			}
 			files = []agentexec.CandidateFile{{Path: artifactPath, Mode: "0644", Content: content}}
+			if os.Getenv(e2eBehaviorEnv) == "review-defect-fix" && contextPayload.Manager.Manager.ID == e2eManagerID("orders", "orders") && countE2EProcessCalls(os.Getenv(e2eLogEnv), contextPayload.Manager.Manager.ID, contextPayload.Phase) == 1 {
+				files = []agentexec.CandidateFile{{Path: artifactPath, Mode: "0644", Content: "DEFECT: orders implementation v2\n"}}
+			}
+			if os.Getenv(e2eBehaviorEnv) == "review-always-fail" && contextPayload.Manager.Manager.ID == e2eManagerID("orders", "orders") {
+				files = []agentexec.CandidateFile{{Path: artifactPath, Mode: "0644", Content: "DEFECT: orders implementation v2\n"}}
+			}
 			if (os.Getenv(e2eBehaviorEnv) == "repair-check-fail" && contextPayload.RepairRound == 0 || os.Getenv(e2eBehaviorEnv) == "repair-check-no-change") && contextPayload.Manager.Manager.ID == e2eManagerID("orders", "orders") {
 				files = []agentexec.CandidateFile{{Path: artifactPath, Mode: "0644", Content: "orders implementation v1\n"}}
 			}
@@ -138,6 +155,17 @@ func TestProjectRunExecutorProcess(t *testing.T) {
 		}
 		if os.Getenv(e2eBehaviorEnv) == "failed-integration" {
 			response.Status = "failed"
+		}
+		if os.Getenv(e2eBehaviorEnv) == "manager-directed-rework" && contextPayload.Manager.Manager.ID == e2eManagerID("", "project-owner") && countE2EProcessCalls(os.Getenv(e2eLogEnv), contextPayload.Manager.Manager.ID, contextPayload.Phase) == 1 {
+			response.ReworkRequests = []ReworkRequest{{ManagerID: e2eManagerID("orders", "orders"), Goal: "Correct the orders artifact after integration review.", Reason: "The initial orders implementation needs a focused correction."}}
+			files = []agentexec.CandidateFile{{Path: "src/project-integration.txt", Mode: "0644", Content: "parent integration edit survives child rework\n"}}
+		}
+		if os.Getenv(e2eBehaviorEnv) == "integration-review-fix" && contextPayload.Manager.Manager.ID == e2eManagerID("", "project-owner") {
+			content := "corrected parent integration\n"
+			if countE2EProcessCalls(os.Getenv(e2eLogEnv), contextPayload.Manager.Manager.ID, contextPayload.Phase) == 1 {
+				content = "BAD parent integration\n"
+			}
+			files = []agentexec.CandidateFile{{Path: "src/project-integration.txt", Mode: "0644", Content: content}}
 		}
 		if os.Getenv(e2eBehaviorEnv) == "repair-foreign-first" && contextPayload.Manager.Manager.ID == e2eManagerID("", "project-owner") && countE2EProcessCalls(os.Getenv(e2eLogEnv), contextPayload.Manager.Manager.ID, contextPayload.Phase) == 1 {
 			files = []agentexec.CandidateFile{{Path: "src/orders/implementation.txt", Mode: "0644", Content: "unauthorized"}}
@@ -161,6 +189,114 @@ func TestProjectRunExecutorProcess(t *testing.T) {
 	encoded, err := json.Marshal(result)
 	if err != nil {
 		processExit(2, "encode response: "+err.Error())
+	}
+	_, _ = os.Stdout.Write(encoded)
+	processExit(0, "")
+}
+
+func runE2EReview(invocation agentexec.Invocation) {
+	var contextPayload struct {
+		ManagerID       string `json:"managerId"`
+		CandidateID     string `json:"candidateId"`
+		CandidateDigest string `json:"candidateDigest"`
+		AcceptedModel   struct {
+			Statements []projectmodel.Statement `json:"statements"`
+		} `json:"acceptedModel"`
+		CandidateFiles []reviewFileRef `json:"candidateFiles"`
+		ResponseSchema json.RawMessage `json:"responseSchema"`
+	}
+	if err := json.Unmarshal(invocation.Request.Context, &contextPayload); err != nil || contextPayload.ManagerID == "" || contextPayload.CandidateDigest == "" || len(contextPayload.ResponseSchema) == 0 {
+		processExit(2, "review request omitted its identity, candidate binding, or schema")
+	}
+	if err := appendE2ELog(os.Getenv(e2eLogEnv), map[string]any{"phase": "review", "managerId": contextPayload.ManagerID,
+		"candidateId": contextPayload.CandidateID, "candidateDigest": contextPayload.CandidateDigest,
+		"candidateFiles": contextPayload.CandidateFiles, "artifacts": invocation.Request.Artifacts,
+		"scopeIds": invocation.Request.ScopeIDs, "inputDigest": invocation.InputDigest, "schema": contextPayload.ResponseSchema,
+	}); err != nil {
+		processExit(2, "record review invocation: "+err.Error())
+	}
+	privateLog, err := os.OpenFile(os.Getenv("MARKITECT_AGENT_PRIVATE_LOG"), os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0600)
+	if err != nil {
+		processExit(2, "create private process log: "+err.Error())
+	}
+	if _, err := privateLog.Write([]byte("review fixture completed\n")); err != nil {
+		_ = privateLog.Close()
+		processExit(2, "write private process log: "+err.Error())
+	}
+	_ = privateLog.Close()
+	response := reviewResponse{Status: "pass", Summary: "scoped candidate satisfies its accepted model", Findings: []reviewFindingResponse{}}
+	if os.Getenv(e2eBehaviorEnv) == "review-defect-fix" && contextPayload.ManagerID == e2eManagerID("orders", "orders") {
+		for _, artifact := range invocation.Request.Artifacts {
+			if strings.Contains(string(artifact.Content), "DEFECT") {
+				grounding := ""
+				if len(contextPayload.AcceptedModel.Statements) > 0 {
+					grounding = "statement:" + contextPayload.AcceptedModel.Statements[0].ID
+				}
+				response.Status = "fail"
+				response.Summary = "candidate does not satisfy the accepted statement"
+				response.Findings = []reviewFindingResponse{{Path: artifact.Path, Expectation: "implementation must not contain the injected defect", Grounding: grounding}}
+			}
+		}
+	}
+	if os.Getenv(e2eBehaviorEnv) == "review-always-fail" && contextPayload.ManagerID == e2eManagerID("orders", "orders") {
+		grounding := ""
+		if len(contextPayload.AcceptedModel.Statements) > 0 {
+			grounding = "statement:" + contextPayload.AcceptedModel.Statements[0].ID
+		}
+		response.Status = "fail"
+		response.Summary = "fixture candidate remains defective"
+		response.Findings = []reviewFindingResponse{{Path: "src/orders/implementation.txt", Expectation: "implementation must not contain the injected defect", Grounding: grounding}}
+	}
+	if os.Getenv(e2eBehaviorEnv) == "integration-review-fix" && contextPayload.ManagerID == e2eManagerID("", "project-owner") {
+		for _, artifact := range invocation.Request.Artifacts {
+			if artifact.Path == "src/project-integration.txt" && strings.HasPrefix(string(artifact.Content), "BAD") {
+				grounding := ""
+				if len(contextPayload.AcceptedModel.Statements) > 0 {
+					grounding = "statement:" + contextPayload.AcceptedModel.Statements[0].ID
+				}
+				response.Status = "fail"
+				response.Summary = "parent integration contains a marked defect"
+				response.Findings = []reviewFindingResponse{{Path: artifact.Path, Expectation: "integration must contain the corrected parent summary", Grounding: grounding}}
+			}
+		}
+	}
+	if contextPayload.ManagerID == e2eManagerID("orders", "orders") && os.Getenv(e2eBehaviorEnv) == "review-ungrounded" {
+		response.Status = "fail"
+		response.Summary = "fixture finding with invented grounding"
+		response.Findings = []reviewFindingResponse{{Path: "src/orders/implementation.txt", Expectation: "invented expectation", Grounding: "statement:not-accepted"}}
+	}
+	if contextPayload.ManagerID == e2eManagerID("orders", "orders") && os.Getenv(e2eBehaviorEnv) == "review-working-drift" {
+		root := os.Getenv(e2eRootEnv)
+		if root == "" {
+			processExit(2, "review drift fixture omitted project root")
+		}
+		if err := os.WriteFile(filepath.Join(root, "src", "orders", "implementation.txt"), []byte("changed during reviewer invocation\n"), 0o644); err != nil {
+			processExit(2, "mutate review drift fixture: "+err.Error())
+		}
+	}
+	report, err := json.Marshal(response)
+	if err != nil {
+		processExit(2, "encode review report: "+err.Error())
+	}
+	inputTokens, outputTokens := int64(31), int64(7)
+	outcome := agentexec.OutcomeProposed
+	candidateFiles := []agentexec.CandidateFile{}
+	if contextPayload.ManagerID == e2eManagerID("orders", "orders") && os.Getenv(e2eBehaviorEnv) == "review-proposes-write" {
+		candidateFiles = []agentexec.CandidateFile{{Path: "src/orders/implementation.txt", Mode: "0644", Content: "reviewer must not write"}}
+	}
+	if os.Getenv(e2eBehaviorEnv) == "review-incomplete" {
+		outcome = agentexec.OutcomeIncomplete
+	}
+	if os.Getenv(e2eBehaviorEnv) == "review-over-budget" {
+		inputTokens = 2_000_000
+	}
+	result := agentexec.Response{APIVersion: agentexec.APIVersion, RunID: invocation.RunID, Nonce: invocation.Nonce,
+		Role: agentexec.RoleExecutor, InputDigest: invocation.InputDigest, Outcome: outcome,
+		CandidateFiles: candidateFiles, EvidenceRefs: []string{}, VerifierObservations: []agentexec.Observation{},
+		ReportJSON: report, Uncertainty: []string{}, Usage: &agentexec.Usage{Source: "provider-reported", InputTokens: &inputTokens, OutputTokens: &outputTokens}}
+	encoded, err := json.Marshal(result)
+	if err != nil {
+		processExit(2, "encode review response: "+err.Error())
 	}
 	_, _ = os.Stdout.Write(encoded)
 	processExit(0, "")
@@ -299,6 +435,342 @@ func TestProjectRunExecutorRejectsForeignPathProposal(t *testing.T) {
 	if err == nil || !strings.Contains(err.Error(), "proposed path") {
 		t.Fatalf("foreign-path candidate was not rejected: %v", err)
 	}
+}
+
+func TestProjectRunReviewerFindingsTriggerTargetedImplementerRepair(t *testing.T) {
+	root := makeProjectRunFixture(t)
+	setupE2EProcess(t, "review-defect-fix")
+	updateE2ERuntime(t, root, func(config *Runtime) {
+		config.Review = &ReviewConfig{Agents: map[string]Agent{}, MaxRounds: 2, MaxManagerRounds: 2}
+		for id, agent := range config.Agents {
+			config.Review.Agents[id] = agent
+		}
+		config.Limits.MaxStarts = 32
+	})
+	host := projectworkHost()
+	plan, err := Plan(host, root, identityHead(t, root), PlanRequest{Goal: "Implement both owned artifacts and reconcile the result.",
+		Managers: []string{e2eManagerID("orders", "orders"), e2eManagerID("inventory", "inventory")}, ExecuteAuthorized: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	run, err := Run(context.Background(), host, ProcessInvoker{}, root, plan.ID)
+	if err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+	if run.Status != StatusIntegrated || !run.Candidate.Integrated {
+		t.Fatalf("review loop did not integrate: %+v", run)
+	}
+	var ordersReviews []ReviewRecord
+	for _, review := range run.Reviews {
+		if review.ManagerID == e2eManagerID("orders", "orders") && review.Phase == "work" {
+			ordersReviews = append(ordersReviews, review)
+		}
+	}
+	if len(ordersReviews) != 2 || ordersReviews[0].Outcome != "fail" || ordersReviews[1].Outcome != "pass" || ordersReviews[0].CandidateDigest == ordersReviews[1].CandidateDigest {
+		t.Fatalf("expected a defect-bound failed review followed by a fresh passing candidate review: %+v", ordersReviews)
+	}
+	store, err := newRunStore(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	dir, err := store.runDir(run.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for i, review := range ordersReviews {
+		candidate, err := store.readCandidate(dir, review.CandidateID)
+		if err != nil || candidate.Digest != review.CandidateDigest {
+			t.Fatalf("review %d is not bound to its retained candidate: candidate=%+v err=%v", i, candidate, err)
+		}
+		if got := string(candidate.Files["src/orders/implementation.txt"].Content); i == 0 && !strings.Contains(got, "DEFECT") || i == 1 && got != "orders implementation v2\n" {
+			t.Fatalf("review %d candidate bytes were %q", i, got)
+		}
+	}
+	if calls := countE2EProcessCalls(os.Getenv(e2eLogEnv), e2eManagerID("orders", "orders"), "work"); calls != 2 {
+		t.Fatalf("implementer ran %d times after review findings, want 2", calls)
+	}
+	if calls := countE2EProcessCalls(os.Getenv(e2eLogEnv), e2eManagerID("inventory", "inventory"), "work"); calls != 1 {
+		t.Fatalf("unaffected sibling ran %d times, want 1", calls)
+	}
+	latest, err := store.readLatestState(plan.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	staleCandidate, err := store.readCandidate(dir, run.Candidate.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	staleCandidate.ID, err = newID()
+	if err != nil {
+		t.Fatal(err)
+	}
+	staleCandidate.Parents = []string{run.Candidate.ID}
+	ordersFile := staleCandidate.Files["src/orders/implementation.txt"]
+	ordersFile.Content = []byte("changed after review\n")
+	staleCandidate.Files[ordersFile.Path] = ordersFile
+	if err := store.writeCandidate(dir, staleCandidate); err != nil {
+		t.Fatal(err)
+	}
+	staleCandidate, err = store.readCandidate(dir, staleCandidate.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	latest.Candidate = candidateRef(staleCandidate, true)
+	if err := persistState(store, &latest); err != nil {
+		t.Fatal(err)
+	}
+	if _, staleErr := Verify(context.Background(), host, ProcessInvoker{}, root, plan.ID); staleErr == nil || !strings.Contains(staleErr.Error(), "fresh passed work review") {
+		t.Fatalf("Verify accepted bytes outside the passed review scope: %v", staleErr)
+	}
+	latest.Candidate = run.Candidate
+	if err := persistState(store, &latest); err != nil {
+		t.Fatal(err)
+	}
+	verified, err := Verify(context.Background(), host, ProcessInvoker{}, root, plan.ID)
+	if err != nil || verified.Status != "verified" {
+		t.Fatalf("fresh scoped reviews did not permit independent verification: report=%+v err=%v", verified, err)
+	}
+	paths, err := ApplyPaths(host, root, plan.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	worktreeDigest, err := CaptureTarget(root, paths)
+	if err != nil {
+		t.Fatal(err)
+	}
+	request := ApplyRequest{RunID: plan.ID, PlanID: plan.ID, CandidateID: run.Candidate.ID, ExpectedVerificationDigest: verified.Digest,
+		TargetBranch: gitE2E(t, root, "branch", "--show-current"), ExpectedHead: identityHead(t, root), ExpectedWorktree: worktreeDigest}
+	if _, err := Apply(host, ProcessInvoker{}, root, request); err != nil {
+		t.Fatalf("freshly reviewed candidate could not pass guarded Apply: %v", err)
+	}
+}
+
+func TestProjectRunReviewerRoundLimitBlocksRepeatedDefect(t *testing.T) {
+	root := makeProjectRunFixture(t)
+	setupE2EProcess(t, "review-always-fail")
+	enableE2EReviews(t, root, 100000)
+	updateE2ERuntime(t, root, func(config *Runtime) { config.Review.MaxRounds = 2 })
+	host := projectworkHost()
+	plan, err := Plan(host, root, identityHead(t, root), PlanRequest{Goal: "Implement and review the owned artifacts.",
+		Managers: []string{e2eManagerID("orders", "orders"), e2eManagerID("inventory", "inventory")}, ExecuteAuthorized: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	run, err := Run(context.Background(), host, ProcessInvoker{}, root, plan.ID)
+	if err == nil || run.Status != StatusBlocked {
+		t.Fatalf("persistent review defect did not block at the configured round limit: status=%s err=%v", run.Status, err)
+	}
+	orders := e2eManagerID("orders", "orders")
+	if reviews := reviewCount(run.Reviews, orders, "work"); reviews != 2 {
+		t.Fatalf("work review rounds=%d, want bounded limit 2", reviews)
+	}
+	if calls := countE2EProcessCalls(os.Getenv(e2eLogEnv), orders, "work"); calls != 2 {
+		t.Fatalf("bounded reviewer loop launched %d implementer calls, want 2", calls)
+	}
+}
+
+func TestManagerDirectedReworkRerunsOnlyRequestedLeafAndReintegratesAncestors(t *testing.T) {
+	root := makeProjectRunFixture(t)
+	setupE2EProcess(t, "manager-directed-rework")
+	updateE2ERuntime(t, root, func(config *Runtime) {
+		config.Review = &ReviewConfig{Agents: map[string]Agent{}, MaxRounds: 3, MaxManagerRounds: 2}
+		for id, agent := range config.Agents {
+			config.Review.Agents[id] = agent
+		}
+		config.Limits.MaxStarts = 32
+	})
+	host := projectworkHost()
+	plan, err := Plan(host, root, identityHead(t, root), PlanRequest{Goal: "Implement both owned artifacts and reconcile the result.",
+		Managers: []string{e2eManagerID("orders", "orders"), e2eManagerID("inventory", "inventory")}, ExecuteAuthorized: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	run, err := Run(context.Background(), host, ProcessInvoker{}, root, plan.ID)
+	if err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+	if run.Status != StatusIntegrated || len(run.ManagerReworkRounds) != 1 || run.ManagerReworkRounds[0].Status != "completed" {
+		t.Fatalf("manager-directed rework did not close: status=%s rounds=%+v", run.Status, run.ManagerReworkRounds)
+	}
+	if calls := countE2EProcessCalls(os.Getenv(e2eLogEnv), e2eManagerID("orders", "orders"), "work"); calls != 2 {
+		t.Fatalf("requested leaf work ran %d times, want initial plus targeted rework", calls)
+	}
+	if calls := countE2EProcessCalls(os.Getenv(e2eLogEnv), e2eManagerID("inventory", "inventory"), "work"); calls != 1 {
+		t.Fatalf("unaffected sibling work ran %d times, want 1", calls)
+	}
+	if calls := countE2EProcessCalls(os.Getenv(e2eLogEnv), e2eManagerID("", "project-owner"), "integrate"); calls != 2 {
+		t.Fatalf("affected root integrations ran %d times, want initial plus reintegration", calls)
+	}
+	if len(run.Reviews) < 5 {
+		t.Fatalf("expected work and reintegration reviews, got %d", len(run.Reviews))
+	}
+	store, err := newRunStore(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	dir, err := store.runDir(run.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	finalCandidate, err := store.readCandidate(dir, run.Candidate.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := string(finalCandidate.Files["src/project-integration.txt"].Content); got != "parent integration edit survives child rework\n" {
+		t.Fatalf("targeted child rework discarded parent-owned integration edit: %q", got)
+	}
+}
+
+func TestIntegrationReviewFindingsRepairAndRereviewParentCandidate(t *testing.T) {
+	root := makeProjectRunFixture(t)
+	projectPath := filepath.Join(root, filepath.FromSlash(projectwork.ManifestPath))
+	projectYAML, err := os.ReadFile(projectPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	projectYAML = []byte(strings.Replace(string(projectYAML), "  - .markitect/model/manager.yaml\n", "  - .markitect/model/manager.yaml\n  - .markitect/model/root-statement.yaml\n", 1))
+	writeE2E(t, root, projectwork.ManifestPath, string(projectYAML))
+	writeE2E(t, root, ".markitect/model/root-statement.yaml", "apiVersion: "+projectmodel.APIVersion+"\nkind: Statement\nmetadata:\n  name: integration-quality\n  namespace: \"\"\npurpose: Parent integration must produce a clean summary.\nspec:\n  category: concept\n  description: Parent-owned integration files contain the corrected summary.\n")
+	gitE2E(t, root, "add", projectwork.ManifestPath, ".markitect/model/root-statement.yaml")
+	gitE2E(t, root, "commit", "--amend", "--no-edit")
+	setupE2EProcess(t, "integration-review-fix")
+	enableE2EReviews(t, root, 100000)
+	host := projectworkHost()
+	plan, err := Plan(host, root, identityHead(t, root), PlanRequest{Goal: "Implement and reconcile the two owned artifacts.",
+		Managers: []string{e2eManagerID("orders", "orders"), e2eManagerID("inventory", "inventory")}, ExecuteAuthorized: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	run, err := Run(context.Background(), host, ProcessInvoker{}, root, plan.ID)
+	if err != nil || run.Status != StatusIntegrated {
+		t.Fatalf("integration reviewer findings did not lead to corrected closure: status=%s err=%v", run.Status, err)
+	}
+	var rootReviews []ReviewRecord
+	for _, review := range run.Reviews {
+		if review.ManagerID == e2eManagerID("", "project-owner") && review.Phase == "integrate" {
+			rootReviews = append(rootReviews, review)
+		}
+	}
+	if len(rootReviews) != 2 || rootReviews[0].Outcome != "fail" || rootReviews[1].Outcome != "pass" {
+		t.Fatalf("expected failed and fresh passed root integration reviews, got %+v", rootReviews)
+	}
+	store, err := newRunStore(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	dir, err := store.runDir(run.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	candidate, err := store.readCandidate(dir, run.Candidate.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := string(candidate.Files["src/project-integration.txt"].Content); got != "corrected parent integration\n" {
+		t.Fatalf("final candidate retained reviewer finding: %q", got)
+	}
+	if calls := countE2EProcessCalls(os.Getenv(e2eLogEnv), e2eManagerID("", "project-owner"), "integrate"); calls != 2 {
+		t.Fatalf("parent integration ran %d times, want initial plus bounded correction", calls)
+	}
+}
+
+func TestReviewerContractFailuresAndUncertainInvocationNeverReplay(t *testing.T) {
+	for _, behavior := range []string{"review-proposes-write", "review-ungrounded", "review-incomplete"} {
+		t.Run(behavior, func(t *testing.T) {
+			root := makeProjectRunFixture(t)
+			setupE2EProcess(t, behavior)
+			enableE2EReviews(t, root, 100000)
+			host := projectworkHost()
+			plan, err := Plan(host, root, identityHead(t, root), PlanRequest{Goal: "Implement both fixture artifacts.",
+				Managers: []string{e2eManagerID("orders", "orders"), e2eManagerID("inventory", "inventory")}, ExecuteAuthorized: true})
+			if err != nil {
+				t.Fatal(err)
+			}
+			run, err := Run(context.Background(), host, ProcessInvoker{}, root, plan.ID)
+			if err == nil || run.Status != StatusFailed {
+				t.Fatalf("invalid or uncertain review was accepted: status=%s err=%v", run.Status, err)
+			}
+			if len(run.Invocations) == 0 || run.Invocations[len(run.Invocations)-1].Role != "reviewer" {
+				t.Fatalf("failed reviewer invocation was not retained: %+v", run.Invocations)
+			}
+			before := countE2EProcessCalls(os.Getenv(e2eLogEnv), e2eManagerID("orders", "orders"), "review") + countE2EProcessCalls(os.Getenv(e2eLogEnv), e2eManagerID("", "project-owner"), "review")
+			_, resumeErr := Resume(context.Background(), host, ProcessInvoker{}, root, plan.ID)
+			if resumeErr == nil {
+				t.Fatal("uncertain review invocation was automatically replayed")
+			}
+			after := countE2EProcessCalls(os.Getenv(e2eLogEnv), e2eManagerID("orders", "orders"), "review") + countE2EProcessCalls(os.Getenv(e2eLogEnv), e2eManagerID("", "project-owner"), "review")
+			if after != before {
+				t.Fatalf("Resume replayed reviewer process: before=%d after=%d", before, after)
+			}
+		})
+	}
+}
+
+func TestReviewerCostOverrunBlocksBeforeAcceptingReview(t *testing.T) {
+	root := makeProjectRunFixture(t)
+	setupE2EProcess(t, "review-over-budget")
+	enableE2EReviews(t, root, 1)
+	host := projectworkHost()
+	plan, err := Plan(host, root, identityHead(t, root), PlanRequest{Goal: "Implement both fixture artifacts.",
+		Managers: []string{e2eManagerID("orders", "orders"), e2eManagerID("inventory", "inventory")}, ExecuteAuthorized: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	run, err := Run(context.Background(), host, ProcessInvoker{}, root, plan.ID)
+	if err == nil || run.Status != StatusBlocked || len(run.Invocations) == 0 || run.Invocations[len(run.Invocations)-1].CostMicros <= 1 {
+		t.Fatalf("review cost overrun was not durably blocked: status=%s last=%+v err=%v", run.Status, lastInvocation(run.Invocations), err)
+	}
+}
+
+func TestReviewerWorkingTreeDriftRetainsUncertainCallWithoutReplay(t *testing.T) {
+	root := makeProjectRunFixture(t)
+	setupE2EProcess(t, "review-working-drift")
+	t.Setenv(e2eRootEnv, root)
+	enableE2EReviews(t, root, 100000)
+	host := projectworkHost()
+	plan, err := Plan(host, root, identityHead(t, root), PlanRequest{Goal: "Implement both fixture artifacts.",
+		Managers: []string{e2eManagerID("orders", "orders"), e2eManagerID("inventory", "inventory")}, ExecuteAuthorized: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	run, runErr := Run(context.Background(), host, ProcessInvoker{}, root, plan.ID)
+	if runErr == nil || run.Status != StatusFailed {
+		t.Fatalf("reviewer changed the working snapshot but its review was consumed: status=%s err=%v", run.Status, runErr)
+	}
+	orders := e2eManagerID("orders", "orders")
+	task := findTask(run.Tasks, orders)
+	if task == nil || task.ReviewStatus != "uncertain" {
+		t.Fatalf("post-review binding failure was not retained as uncertain: %+v", task)
+	}
+	if len(run.Invocations) == 0 || run.Invocations[len(run.Invocations)-1].Role != "reviewer" {
+		t.Fatalf("reviewer call receipt was not retained after binding drift: %+v", run.Invocations)
+	}
+	before := countE2EProcessCalls(os.Getenv(e2eLogEnv), orders, "review")
+	if _, err := Resume(context.Background(), host, ProcessInvoker{}, root, plan.ID); err == nil {
+		t.Fatal("uncertain reviewer invocation was resumed automatically")
+	}
+	if after := countE2EProcessCalls(os.Getenv(e2eLogEnv), orders, "review"); after != before {
+		t.Fatalf("Resume replayed reviewer invocation after binding drift: before=%d after=%d", before, after)
+	}
+}
+
+func enableE2EReviews(t *testing.T, root string, maxCost int64) {
+	t.Helper()
+	updateE2ERuntime(t, root, func(config *Runtime) {
+		config.Review = &ReviewConfig{Agents: map[string]Agent{}, MaxRounds: 3, MaxManagerRounds: 2}
+		for id, agent := range config.Agents {
+			config.Review.Agents[id] = agent
+		}
+		config.Limits.MaxStarts = 32
+		config.Limits.MaxCostMicros = maxCost
+	})
+}
+
+func lastInvocation(invocations []InvocationLog) InvocationLog {
+	if len(invocations) == 0 {
+		return InvocationLog{}
+	}
+	return invocations[len(invocations)-1]
 }
 
 func TestProjectRunProcessRejectsStaleNonceOutOfScopeAndFailedIntegration(t *testing.T) {
@@ -479,7 +951,7 @@ func makeProjectRunFixture(t *testing.T) string {
 	checkArgs := []string{"-test.run=^TestProjectRunCheckProcess$"}
 	buildAgent := func() Agent {
 		return Agent{Command: executable, Args: args, Model: "fixture-model", ProviderVersion: "e2e-process-v1", Timeout: Duration(30 * time.Second),
-			MaxStdoutBytes: 1 << 20, MaxStderrBytes: 1 << 20, Environment: []string{"PATH", e2eExecutorEnv, e2eCheckEnv, e2eLogEnv, e2eBehaviorEnv},
+			MaxStdoutBytes: 1 << 20, MaxStderrBytes: 1 << 20, Environment: []string{"PATH", e2eExecutorEnv, e2eCheckEnv, e2eLogEnv, e2eBehaviorEnv, e2eRootEnv},
 			Pricing: Pricing{InputMicrosPerMillion: 1, OutputMicrosPerMillion: 1}}
 	}
 	config := Runtime{APIVersion: APIVersion, Mode: ModeControlledLocal, Agents: map[string]Agent{
