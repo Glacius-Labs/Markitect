@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-08T16:49:06Z",
+  "updatedUtc": "2026-10-08T16:53:11Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -4047,7 +4047,7 @@
       "lastAssistantMessageId": "msg_0b6e7ce0ce9f843f016ac7c023dbb887d289858cb338dc7cf5",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "Classic main integration authorized; main product line, frozen study retained",
-      "latestProgress": "Reports first main integration fully verified; twelve Markdown documentation updates under focused checks/review; code/schema unchanged.",
+      "latestProgress": "Explicit local heavy-slot release accepted. Clean twelve-Markdown documentation successor698e54fb in open PR87, remote CI pending; main560acdcd postmerge CI passed.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/classic-public-example/Markitect",
       "transferredDesignCommit": null,
       "candidateSha": "4908bd2cb25fbc8a231717c099e049da8546703a",
@@ -4448,7 +4448,22 @@
         "slotReleaseCoordination": {
           "sentUtc": "2026-10-08T16:49:06Z",
           "sentOnce": true,
-          "reason": "Main CI root verified successful, Scientist conditional one-diagnostic waiting; release after actual heavy gates, continue docs normally; no premature release or reruns"
+          "reason": "Main CI root verified successful, Scientist conditional one-diagnostic waiting; release after actual heavy gates, continue docs normally; no premature release or reruns",
+          "explicitRelease": {
+            "observedUtc": "2026-10-08T16:52:42Z",
+            "accepted": true,
+            "ownerReported": "All required heavy local source checks ended; none running or planned for pure documentation. Future heavy steps must be coordinated. Hosted PR87 CI continues remotely."
+          },
+          "documentationProgress": {
+            "observedUtc": "2026-10-08T16:52:42Z",
+            "sha": "698e54fb3b65e73ae03e545997f7e9822e730b69",
+            "cleanRootVerified": true,
+            "changedMarkdownFilesRootVerified": 12,
+            "pr": "https://github.com/Glacius-Labs/Markitect/pull/87",
+            "prStateRootVerified": "OPEN; Ubuntu and Windows CI in progress at inspection",
+            "ownerReportedChecks": "Focused structure/context/impact/file ownership, 341 local links and 41 anchors, unchanged install/try blocks, two positive independent documentation/usage reviews.",
+            "qualification": "Root verified clean SHA, changed-file list and remote PR state. Complete documentation packet not yet independently accepted; no merge or new release claimed."
+          }
         }
       }
     },
@@ -4510,7 +4525,7 @@
       "lastAssistantMessageId": "msg_0dc7fbe822793640016ac6f69ccac88191ac99728328af381f"
     }
   ],
-  "nextAction": "Scientist prepares fresh conditional redacted diagnostic; Architect completes docs and explicitly releases heavy slot after heavy phases. Activate Scientist only on release and ready source, no parallel actual run.",
+  "nextAction": "Scientist finishes narrow derivative and independent prestart checks, then at most one diagnostic under existing grant and activated slot. Architect finishes documentation PR87 CI and regular merge. Await terminal callbacks; no new quota.",
   "boundaries": {
     "governmentPublication": false,
     "automaticClassicReplacement": false,
@@ -4721,19 +4736,15 @@
     "owner": "Worker"
   },
   "fullSuiteSlot": {
-    "owner": "Architect",
-    "key": "classic-main-integration-20261008",
-    "assignedUtc": "2026-10-08T16:07:25Z",
-    "status": "Assigned for required sequential finite Classic integration gates; Scientist offline only",
-    "queue": [
-      {
-        "owner": "Scientist",
-        "key": "s1-redacted-stderr-diagnostic-20261008-r1",
-        "grantIssuedUtc": "2026-10-08T16:47:18Z",
-        "status": "Conditional; no execution until explicit slot assignment and final freeze"
-      }
-    ],
-    "releaseCondition": "Terminal main integration or concrete blocker callback, explicit release; no new provider/native smoke allowance"
+    "owner": "Scientist",
+    "key": "s1-redacted-stderr-diagnostic-20261008-r1",
+    "grantIssuedUtc": "2026-10-08T16:47:18Z",
+    "assignedUtc": "2026-10-08T16:52:42Z",
+    "status": "Assigned to one prospective redacted thread-start diagnostic.",
+    "activationSentUtc": "2026-10-08T16:53:11Z",
+    "activationSentOnce": true,
+    "queue": [],
+    "releaseCondition": "First terminal preparation or diagnostic result, independent postreview and explicit release; no retry or follow-on quota."
   },
   "contextSmokePreparation": {
     "selectedUtc": "2026-10-07T17:31:12Z",
@@ -5055,6 +5066,15 @@
       "queue": [],
       "releasedUtc": "2026-10-08T15:58:11.563229+00:00",
       "releaseVerifiedUtc": "2026-10-08T16:04:19Z"
+    },
+    {
+      "owner": "Architect",
+      "key": "classic-main-integration-20261008",
+      "assignedUtc": "2026-10-08T16:07:25Z",
+      "releaseObservedUtc": "2026-10-08T16:52:42Z",
+      "releaseVerifiedUtc": "2026-10-08T16:52:42Z",
+      "status": "Released explicitly after heavy local gates; remote documentation CI continues.",
+      "queue": []
     }
   ],
   "smokeAttemptCountingDecision": {
