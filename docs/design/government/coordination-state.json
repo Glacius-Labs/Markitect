@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-08T21:32:29Z",
+  "updatedUtc": "2026-10-08T21:43:02Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -435,13 +435,13 @@
       "name": "Scientist",
       "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
       "hostId": "local",
-      "afterCursor": "4993693c-4fc7-4021-b456-5988f9f71188:36",
+      "afterCursor": "4993693c-4fc7-4021-b456-5988f9f71188:42",
       "lastObservedStatus": "active",
       "activeTurn": "01a11d6a-0c62-76a2-8f2c-c82fbe60b8ab",
-      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac80b3766f081918620128bcc827527",
+      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac80dd33dc08191aee7700d8169f86e",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "Run six real native-Codex exploratory case studies, independently evaluate and report intermediate data",
-      "latestProgress": "New direct user mandate replaces preparation-only stop for a separate matched native pilot. Historical attempts preserved; new actual trial grant issued, pending dispatch.",
+      "latestProgress": "Actual Conventional Greenfield primary started under native-v3; matched six-cell execution continues. Root checked frozen pins, source SHA, initial branches and reservation/Actor binding. No cell results yet.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-scientist/Markitect",
       "transferredDesignCommit": "b9e17c9896f14b4b1268e4bcb005395f5d324384",
       "candidateSha": "7d6964331f542462b4a29db3819f60c75083e3be",
@@ -6566,10 +6566,98 @@
           "scope": "Common study preparation before Scientist native grant execution; no private holdout content read or shared."
         },
         "nativeCaseStudiesV3Progress": {
-          "observedUtc": "2026-10-08T21:32:29Z",
-          "source": "Compact thread snapshot; actual proof packet not yet accepted",
-          "status": "Scientist reports fresh native actor read/write/.NET10 build/run success and dummy cross-directory access; cooperative host boundary explicit. Preparing freeze/first cell.",
-          "actualFirstStudyCellStartEstablished": false
+          "observedUtc": "2026-10-08T21:43:02Z",
+          "source": "Direct first-cell callback, compact native thread snapshot, on-disk ledger and Root hash/Git checks",
+          "status": "Actual first study cell started; preparation complete; remaining five cells authorized within existing finite grant. No result/winner established.",
+          "actualFirstStudyCellStartEstablished": true,
+          "actualCompletedCells": 0
+        },
+        "nativeCaseStudiesV3StartAcceptance": {
+          "reviewedUtc": "2026-10-08T21:43:02Z",
+          "protocolCommit": "f3de2c0950493c7977611569d9c657ec5d39249f",
+          "freezeSha256": "18fd3a2af9356fd83c9b73c9fdfd1b67976146565659366959ca3b415627a484",
+          "protocolSha256": "78cd11a0578f8e708258d794de8235ca31dc1138b6ce0f79eb8446d7f11098ce",
+          "configurationSha256": "8ce69505dcbe7837d5601651a393a63363b9af4d93733af60e8cab179dff8156",
+          "rootSourcePinsChecked": 149,
+          "rootSupportPinsChecked": 115,
+          "hashMismatches": 0,
+          "sixInitialReposChecked": true,
+          "allInitialHeadsAndFeatureBranchesMatch": true,
+          "independentPublicProtocolReviewRead": true,
+          "independentFreezeReviewRead": true,
+          "firstTrialId": "conventional-greenfield-v3-20261008",
+          "firstActor": "/root/v3_conventional_greenfield",
+          "reservationId": "activation-0001",
+          "reservedUtc": "2026-10-08T21:40:20.417168Z",
+          "actorBindingObservedUtc": "2026-10-08T21:40:52.914733Z",
+          "firstBaseSha": "0416e366626d31933443ce2901d6a3696261db7b",
+          "firstTaskDeadlineUtc": "2026-10-08T22:00:20.417168Z",
+          "snapshotActivations": [
+            {
+              "reservationId": "activation-0001",
+              "trialId": "conventional-greenfield-v3-20261008",
+              "task": 1,
+              "role": "primary",
+              "reservedUtc": "2026-10-08T21:40:20.417168+00:00",
+              "reservedMonotonic": 24724.2783059,
+              "actorId": "/root/v3_conventional_greenfield",
+              "status": "running",
+              "usage": null,
+              "deadlineUtc": "2026-10-08T22:00:20.417168+00:00",
+              "remainingTaskActivations": 11,
+              "requestPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-codex-exploratory-v3-20261008\\requests\\conventional-greenfield-v3-20261008-task1-primary.json",
+              "requestSha256": "042823a1d3e3e56b1d0a8ca63d531cbba80e4bdc6222b51ff0ddb55ffd8f827c",
+              "observedUtc": "2026-10-08T21:40:52.914733+00:00"
+            },
+            {
+              "reservationId": "activation-0002",
+              "trialId": "classic-greenfield-v3-20261008",
+              "task": 1,
+              "role": "primary",
+              "reservedUtc": "2026-10-08T21:41:19.105982+00:00",
+              "reservedMonotonic": 24782.967129,
+              "actorId": "/root/v3_classic_greenfield",
+              "status": "running",
+              "usage": null,
+              "deadlineUtc": "2026-10-08T22:01:19.105982+00:00",
+              "remainingTaskActivations": 11,
+              "requestPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-codex-exploratory-v3-20261008\\requests\\classic-greenfield-v3-20261008-task1-primary.json",
+              "requestSha256": "d269f13e2fe7a52c653ca7312f5f80dec86ff7cf48ce49fda4ca9391baa2e707",
+              "observedUtc": "2026-10-08T21:42:15.502804+00:00"
+            },
+            {
+              "reservationId": "activation-0003",
+              "trialId": "government-greenfield-v3-20261008",
+              "task": 1,
+              "role": "primary",
+              "reservedUtc": "2026-10-08T21:41:19.124976+00:00",
+              "reservedMonotonic": 24782.9861204,
+              "actorId": "/root/v3_government_greenfield",
+              "status": "running",
+              "usage": null,
+              "deadlineUtc": "2026-10-08T22:01:19.124976+00:00",
+              "remainingTaskActivations": 11,
+              "requestPath": "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\native-codex-exploratory-v3-20261008\\requests\\government-greenfield-v3-20261008-task1-primary.json",
+              "requestSha256": "4f3af45bcd4ff360d11a97309b165e3a1772e09bbccb968ec008935fe86b6feb",
+              "observedUtc": "2026-10-08T21:42:15.564905+00:00"
+            }
+          ],
+          "reportedCommonPreparationSecondsApproximately": 761,
+          "commonPreparationActivations": 3,
+          "reportedCorrectionBatches": 2,
+          "affectedSyntheticTestInvocations": 2,
+          "syntheticGroupsPerInvocation": 3,
+          "reportedAllAffectedGroupsPassed": true,
+          "reviewLimitations": [
+            "Shared host cooperative isolation only; dummy cross-directory access succeeded.",
+            "Native capability proves local read/write/build/run, not actual pinned product role invocation.",
+            "Serving identity/provider receipts/tokens/cost unknown.",
+            "Actual native spawn reported by Scientist and corroborated by durable Actor binding; Root did not launch Actors.",
+            "Freeze remains exact reviewed digest despite reverted ordinary text clarification; correction effort counted.",
+            "No completed study cell or method superiority established."
+          ],
+          "rootRuntimeOrTestCalls": 0,
+          "nextAction": "Scientist continues six staged actual trials under existing grant without additional blanket go; actual product invocations/responses/votes must be retained. Material gap in one method does not halt other workable cells."
         }
       },
       "classicHandoffReceived": true,
@@ -7740,7 +7828,7 @@
       "lastAssistantMessageId": "msg_0dc7fbe822793640016ac6f69ccac88191ac99728328af381f"
     }
   ],
-  "nextAction": "Scientist independently freezes native-v3 protocol/config/inputs/role/budget bindings, uses at most one bounded common native capability call, and starts/finishes six real case trials. Concrete method gaps recorded; other cells continue. No new custom appserver diagnoses or old grant reuse.",
+  "nextAction": "Await event callbacks from actual native-v3 cells; Scientist executes all six staged cases within existing finite quotas. Check finished candidates/metrics and independent evaluations before synthesis. No further custom appserver diagnosis; no extra trials or quota refill.",
   "boundaries": {
     "governmentPublication": false,
     "automaticClassicReplacement": false,
@@ -7751,18 +7839,17 @@
     "classicMainIntegration": "Explicitly authorized by direct user; required checks and independent review before regular merge. Frozen study remains separate."
   },
   "lastReview": {
-    "reviewedUtc": "2026-10-08T21:26:29Z",
-    "evidenceLevel": "Root clean Git46 payloads+manifest/217 source pins+GitS/232 freeze hashes/8 external receipts/complete grant/GitF/CWD native identity and two hashes; no mismatches. Independent Root terminal review qualified OK; no Root tests/runtime.",
+    "reviewedUtc": "2026-10-08T21:43:02Z",
+    "evidenceLevel": "Root read independent protocol/freeze reviews; rechecked149 frozen source/input pins+115 support pins, configuration/protocol/freeze hashes, six base/feature-branch identities and first durable actual Actor reservation/binding; no mismatches, no Root tests/runtime.",
     "coordinationActions": [
-      "New human execution mandate accepted",
-      "Native direct dispatcher protocol and finite six-cell grant issued prospectively",
-      "Historical diagnosis outcomes/unknown costs preserved",
-      "Independent public preflight reviews accepted; no private holdouts passed to implementers"
+      "Accepted prospective native-v3 common preparation and first actual Conventional Greenfield start",
+      "Retained single already-delivered six-cell grant; no repeated order or extra quota",
+      "Await meaningful completion/blocker callbacks; two-hour fallback remains active"
     ],
     "userDecisionRequired": false,
     "synthesisWrittenUtc": "2026-10-08T19:51:14Z",
     "synthesisPath": "docs/design/government/assessment-2026-10-08.md",
-    "observationStatus": "Resuming under new direct actual-case-study mandate; event callbacks and2h fallback",
+    "observationStatus": "Actual native six-cell study execution active; no outcome data yet",
     "researchComparisonCompleted": false,
     "synthesisSupplementedUtc": "2026-10-08T21:17:14Z"
   },
@@ -7961,7 +8048,7 @@
     "owner": "Scientist",
     "key": "native-codex-exploratory-v3-20261008",
     "queue": [],
-    "status": "Reserved for native pilot common preparation and bounded own product/check processes; max4 study actors, no concurrent redundant product suites.",
+    "status": "Active native-v3 actual study execution; Scientist owns bounded actor/product/check processes, max4 study actors including helpers and evaluation.",
     "grantIssuedUtc": "2026-10-08T21:26:29Z",
     "assignedUtc": "2026-10-08T21:26:29Z"
   },
