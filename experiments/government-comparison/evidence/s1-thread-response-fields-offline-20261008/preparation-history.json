@@ -1,0 +1,37 @@
+{
+  "key": "s1-thread-response-fields-offline-20261008",
+  "startedUtc": "2026-10-08T17:52:41Z",
+  "deadlineUtc": "2026-10-08T18:12:41Z",
+  "sourceConstructionAttempts": 1,
+  "offlineRepairIterations": 1,
+  "affectedTestInvocations": 1,
+  "failureHistory": [
+    {
+      "stage": "pre-execution-static-fixture-review",
+      "finding": "Synthetic Thread fixture omitted three required schema fields; initial contract reference used an older same-archive packet.",
+      "correction": "Added synthetic preview/projectId/sessionId, bound sealed observation R2 contract, and used synthetic model/provider labels.",
+      "testInvocationsBeforeCorrection": 0,
+      "initialTestSourceSha256": "6fc5aae5583dc3e980cd346e70c6c1295345b9d41995cabbe91fb31770da6930"
+    }
+  ],
+  "nativeStarts": 0,
+  "diagnosticReservations": 0,
+  "executedTestSourceSha256": "b1046dd5ce34446ec943402e902075cd4a533e2a4fb7884e0684bbc4c7f1ad30",
+  "initialTestResult": {
+    "exitCode": 0,
+    "tests": 6,
+    "unittestSeconds": 0.003,
+    "wallSeconds": 0.10998389999986102,
+    "sourceSha256": "b1046dd5ce34446ec943402e902075cd4a533e2a4fb7884e0684bbc4c7f1ad30",
+    "log": "focused-tests.log",
+    "recordedUtc": "2026-10-08T17:59:00.819536+00:00"
+  },
+  "closureFormatting": {
+    "stage": "mandatory-staged-diff-check",
+    "initialExitCode": 2,
+    "finding": "New blank line at EOF in source-review.md.",
+    "correction": "Removed trailing blank line; production source and executed test bytes unchanged.",
+    "testInvocationsAdded": 0,
+    "sourceTestRepairIterationsAdded": 0
+  }
+}

@@ -1,0 +1,68 @@
+{
+  "key": "s1-thread-response-fields-offline-20261008",
+  "baseSha": "beeb077e2e59ad99633c3883715599e44e6bf0d6",
+  "startedUtc": "2026-10-08T17:52:41Z",
+  "deadlineUtc": "2026-10-08T18:12:41Z",
+  "maxPreparationSeconds": 1200,
+  "maxOfflineRepairIterations": 2,
+  "maxAffectedTestInvocations": 3,
+  "maxSyntheticCases": 6,
+  "scope": "Additive offline-only field-comparison metadata before unchanged equality rejection.",
+  "diagnosticShape": {
+    "comparisons": [
+      {
+        "field": "cwd",
+        "expectedType": "JSON type name",
+        "actualType": "JSON type name",
+        "equal": "boolean"
+      },
+      {
+        "field": "model",
+        "expectedType": "JSON type name",
+        "actualType": "JSON type name",
+        "equal": "boolean"
+      },
+      {
+        "field": "modelProvider",
+        "expectedType": "JSON type name",
+        "actualType": "JSON type name",
+        "equal": "boolean"
+      },
+      {
+        "field": "approvalPolicy",
+        "expectedType": "JSON type name",
+        "actualType": "JSON type name",
+        "equal": "boolean"
+      }
+    ],
+    "cwdLexicallyEquivalent": "boolean"
+  },
+  "forbiddenOutput": "Actual scalar values, paths, raw RPC, private excerpts, value fingerprints; no logging or transport.",
+  "cwdLexicalRule": "Exact strings, or for Windows-style spellings only slash replacement and Unicode casefold. No dot/trailing-separator normalization, filesystem identity inference, path resolution, file or network access; never changes acceptance.",
+  "acceptance": "Original equality, sandbox, parent, empty-turn, ephemeral and notification checks unchanged. Schema failure precedes comparison. One-response consumer closes before calling gate and exports only diagnostic metadata.",
+  "newRuntimeQuota": 0,
+  "slotReservation": false,
+  "historicalAppServerTrees": 9,
+  "historicalActorReservations": 6,
+  "historicalModelAttempts": 5,
+  "historicalCliMetadataCalls": 8,
+  "historicalKnownTokens": 53331,
+  "totalTokens": null,
+  "historicalNativeUsage": [
+    15,
+    16,
+    13,
+    2250
+  ],
+  "automaticFollowOn": false,
+  "sourcePins": {
+    "experiments/government-comparison/evidence/s1-stderr-observation-diagnostic-20261008-r2/thread_gate.py": "b48ce8b67e3a18ecab80a49d1eb3633f90443cc9524972e00a3ea7bdf27fa6cd",
+    "experiments/government-comparison/evidence/s1-stderr-observation-diagnostic-20261008-r2/client.py": "70fd65b3c0ced08dd638676fe52dad9ff1f3fd2a56399e84605643245950f3b5",
+    "experiments/government-comparison/evidence/s1-stderr-observation-diagnostic-20261008-r2/profile.json": "b8ccffb43d7248c8082ad23abad7cb71c8bb03d21bf36fe7d296dea3a7dbe72c",
+    "experiments/government-comparison/evidence/s1-stderr-observation-diagnostic-20261008-r2/schema-contract.json": "c4bf557d17426f4c9a6c61e97353b8361469169e067e1f911fdfc7488d369270",
+    "experiments/government-comparison/evidence/s1-stderr-observation-diagnostic-20261008-r2/request.json": "1971dd1cb28e338623b5b20474a810506fedd79e8d1e1b449458f6a35c5e5792",
+    "experiments/government-comparison/evidence/s1-stderr-observation-diagnostic-20261008-r2/freeze.json": "73fd2b1c31103c6929a56b8872f1fbbf179e4e9b3fd868cbe5fe40f1fcb5bb58",
+    "experiments/government-comparison/evidence/s1-common-runner-read-tool-20261008-r1/protocol.py": "ebd087657febf63846904d83a75bc226a5412458418d20abe024ed267febb822",
+    "experiments/government-comparison/evidence/s1-runner-rebinding-metadata-20261008-r1/generated-schemas.zip": "3157e8a55329cf4e5346676c3ef0c308402d2420f8f916d6a5b7e0e9c84356ad"
+  }
+}

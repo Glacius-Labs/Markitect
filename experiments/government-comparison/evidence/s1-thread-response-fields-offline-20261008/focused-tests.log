@@ -1,0 +1,11 @@
+test_each_single_field_mismatch_reports_four_fixed_rows_and_stops (test_gate.ThreadResponseFieldGateTests.test_each_single_field_mismatch_reports_four_fixed_rows_and_stops) ... ok
+test_failure_keeps_copy_isolated_metadata_and_unknown_notifications_stop (test_gate.ThreadResponseFieldGateTests.test_failure_keeps_copy_isolated_metadata_and_unknown_notifications_stop) ... ok
+test_multiple_mismatches_include_schema_supported_object_policy_and_types (test_gate.ThreadResponseFieldGateTests.test_multiple_mismatches_include_schema_supported_object_policy_and_types) ... ok
+test_schema_failure_has_no_comparison_and_consumer_stays_terminal (test_gate.ThreadResponseFieldGateTests.test_schema_failure_has_no_comparison_and_consumer_stays_terminal) ... ok
+test_valid_baseline_and_existing_sandbox_parent_turn_boundaries (test_gate.ThreadResponseFieldGateTests.test_valid_baseline_and_existing_sandbox_parent_turn_boundaries) ... ok
+test_windows_cwd_spelling_is_metadata_only_and_other_paths_remain_unequal (test_gate.ThreadResponseFieldGateTests.test_windows_cwd_spelling_is_metadata_only_and_other_paths_remain_unequal) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.003s
+
+OK

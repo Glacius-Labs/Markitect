@@ -1,0 +1,66 @@
+{
+  "key": "s1-thread-response-fields-offline-20261008",
+  "baseSha": "beeb077e2e59ad99633c3883715599e44e6bf0d6",
+  "sealedUtc": "2026-10-08T18:03:20.455258+00:00",
+  "preparationUntilSealSeconds": 639.455258,
+  "withinPreparationLimit": true,
+  "files": {
+    "consumer.py": {
+      "bytes": 694,
+      "sha256": "8218efb89fc476f43c8bee80ffb09c97e1a0b4bfbfc8f1206642d8d27687e565"
+    },
+    "contract.json": {
+      "bytes": 3531,
+      "sha256": "b065e99bb270a2ba49927d3960180f7437087fc13ddc2698ed6dca40c3863a62"
+    },
+    "derivation.json": {
+      "bytes": 997,
+      "sha256": "14f592118225e3f9937dd02378214bf540290f00d1586e521242c50e9824a140"
+    },
+    "focused-tests.log": {
+      "bytes": 1220,
+      "sha256": "3710cebfe1c56344ae3dd6d660ca128da3d98eff49ab5c3bbaf849894877ccf9"
+    },
+    "handoff.md": {
+      "bytes": 1880,
+      "sha256": "5746f88d0eed5bd1787efee6c4e8fba8a7c7df5f43dc9596830e67d46e1533e2"
+    },
+    "offline-validation.json": {
+      "bytes": 1885,
+      "sha256": "ec976d97a244363c967ed794673792eac653d1320aaea413ce226a404244e00e"
+    },
+    "preparation-history.json": {
+      "bytes": 1563,
+      "sha256": "203dc5566c4cdbb5dd3de5347d2f7b568ea8e63727c46d85b370758c216d2b39"
+    },
+    "schema-review.md": {
+      "bytes": 3336,
+      "sha256": "ebb40c6129f8963cf21c5dac667fbba8c3ab23647e6df86a4399225653cdcbbd"
+    },
+    "source-review.md": {
+      "bytes": 3574,
+      "sha256": "6275faf1089096e4c1e8de6f21866f29b68e849de699772142e07b9aa7401b0d"
+    },
+    "test_gate.py": {
+      "bytes": 9986,
+      "sha256": "b1046dd5ce34446ec943402e902075cd4a533e2a4fb7884e0684bbc4c7f1ad30"
+    },
+    "thread_gate.py": {
+      "bytes": 5581,
+      "sha256": "37dbe62d2831b6322137067f6a7a2096cd88ad9c638cec75caec8b5f4f2c045d"
+    }
+  },
+  "payloadFiles": 11,
+  "totalFilesIncludingManifest": 12,
+  "ignoredPythonCacheFilesExcluded": 3,
+  "status": "OFFLINE VALIDATED; runtime not authorized",
+  "syntheticCasesPassed": 6,
+  "affectedTestInvocations": 1,
+  "pretestFixtureRepairIterations": 1,
+  "newRuntimeTrees": 0,
+  "diagnosticReservations": 0,
+  "slotReserved": false,
+  "actualResponseValuesOrFingerprintsIncluded": false,
+  "automaticFollowOn": false,
+  "closureFormattingCorrection": "One mandatory staged diff-check rejected a trailing blank line in review Markdown; corrected without source/test changes or another test invocation."
+}

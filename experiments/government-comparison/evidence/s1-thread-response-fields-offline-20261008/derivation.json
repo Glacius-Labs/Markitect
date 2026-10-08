@@ -1,0 +1,23 @@
+{
+  "key": "s1-thread-response-fields-offline-20261008",
+  "originalThreadGateSha256": "b48ce8b67e3a18ecab80a49d1eb3633f90443cc9524972e00a3ea7bdf27fa6cd",
+  "derivativeThreadGateSha256": "37dbe62d2831b6322137067f6a7a2096cd88ad9c638cec75caec8b5f4f2c045d",
+  "consumerSha256": "8218efb89fc476f43c8bee80ffb09c97e1a0b4bfbfc8f1206642d8d27687e565",
+  "unchangedMethods": [
+    "_thread",
+    "accept_notification",
+    "_apply"
+  ],
+  "acceptResponseAstEqualAfterRemovingSoleMetadataAssignment": true,
+  "equalityPredicateUnchanged": true,
+  "finishChange": "Exports only deep-copied allowed comparison metadata instead of original value-bearing boundary receipt. No runtime consumer is updated by this offline packet.",
+  "newHelpers": [
+    "json_type",
+    "cwd_lexically_equivalent",
+    "compare_response_fields"
+  ],
+  "nativeStarts": 0,
+  "diagnosticReservations": 0,
+  "actualResponseValuesRead": false,
+  "scope": "Static source-derivation check, not a synthetic test invocation or runtime."
+}
