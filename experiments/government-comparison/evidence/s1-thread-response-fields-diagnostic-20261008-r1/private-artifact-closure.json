@@ -1,0 +1,22 @@
+{
+  "key": "s1-thread-response-fields-diagnostic-20261008-r1",
+  "closedUtc": "2026-10-08T18:16:40.483020+00:00",
+  "excerptStatusBeforeClosure": "written-private",
+  "diagnosticContentReadNeeded": false,
+  "reason": "Values-free field comparison already answers the bounded prospective question.",
+  "privateContentReads": 0,
+  "privateJsonParsed": false,
+  "privateContentHashed": false,
+  "ownedExclusiveOutputRootVerified": true,
+  "exactOwnedNonlinkFileVerified": true,
+  "quiescentCleanupSupportedByWrittenPrivateReceipt": true,
+  "nativeReturnCode": 0,
+  "workerExited": true,
+  "controllerJobClosedReceiptPresent": true,
+  "fileSizeBytes": 638,
+  "onlyExactOwnedFileRemoved": true,
+  "privateDirectoryEmpty": true,
+  "unexpectedArtifacts": false,
+  "rawOrPrivateContentArchived": false,
+  "secrecyAclOrTaskHistoryGuarantee": false
+}

@@ -1,0 +1,69 @@
+{
+  "key": "s1-thread-response-fields-diagnostic-20261008-r1",
+  "status": "STOPPED BEFORE TURN: exact cwd mismatch; lexical cwd hint true",
+  "stopReason": "thread-response-identity-or-policy-mismatch",
+  "sourceCommit": "d2d3b2b43412b9043e628f8e2d253788f2bc5098",
+  "freezeCommit": "a3168b367c2e2345d9a185359768cb4ef3a21fe7",
+  "requestSha256": "00bbc9263e7263d5aa9b6f6b5947e184fad298960911366c40b44d264b6c3c34",
+  "freezeSha256": "56b2df6b57c11dc6f70590df9935d2f351312ad718da5aed1577ce13540de33e",
+  "sanitizedResultSha256": "6ec4985764d20fba380c8f3a6738b19df1266da40ff4e234d62d152ab0a52673",
+  "fieldComparison": {
+    "comparisons": [
+      {
+        "field": "cwd",
+        "expectedType": "string",
+        "actualType": "string",
+        "equal": false
+      },
+      {
+        "field": "model",
+        "expectedType": "string",
+        "actualType": "string",
+        "equal": true
+      },
+      {
+        "field": "modelProvider",
+        "expectedType": "string",
+        "actualType": "string",
+        "equal": true
+      },
+      {
+        "field": "approvalPolicy",
+        "expectedType": "string",
+        "actualType": "string",
+        "equal": true
+      }
+    ],
+    "cwdLexicallyEquivalent": true
+  },
+  "interpretation": "Only cwd differs under exact scalar equality on this prospective response; slash/case lexical comparison succeeds. No actual values retained, no filesystem identity or historical-cause proof, no acceptance relaxation. Other three response scalars equal requested values.",
+  "fullyValidatedThreadResponse": false,
+  "strictGateStoppedBeforeTurn": true,
+  "nativeTreesThisAttempt": 1,
+  "diagnosticReservationsThisAttempt": 1,
+  "nativeTreesCumulative": 10,
+  "actorReservationsHistorical": 6,
+  "actorModelAttemptsHistorical": 5,
+  "cliMetadataHistorical": 8,
+  "knownTokensHistorical": 53331,
+  "totalAndCurrentTokens": null,
+  "historicalNativeUsage": [
+    15,
+    16,
+    13,
+    2250
+  ],
+  "turnsToolsStudyCells": 0,
+  "syntheticCasesPassed": 6,
+  "testInvocations": 1,
+  "presealCorrectionsConservativelyCounted": 2,
+  "productionSourceCorrections": 0,
+  "failedTestInvocations": 0,
+  "docFormattingDiffcheckCorrectionRecorded": true,
+  "privateContentReadOrHashed": false,
+  "grantClosed": true,
+  "remaining": 0,
+  "automaticFollowOn": false,
+  "resourceRecord": "postrun-validation.json",
+  "claimBoundary": "Prospective four-field comparison only; S1/tools/serving model/OS/billing/method quality and old mismatch fields remain open."
+}

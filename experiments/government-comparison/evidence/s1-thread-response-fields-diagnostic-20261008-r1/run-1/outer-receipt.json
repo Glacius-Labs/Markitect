@@ -1,0 +1,17 @@
+{
+  "key": "s1-thread-response-fields-diagnostic-20261008-r1",
+  "outerReturnCode": 1,
+  "stopReason": null,
+  "outerThroughReceiptReadbackSeconds": 8.792793099999471,
+  "withinOuterBound": true,
+  "controllerReceiptSha256": "e270fb2b63b5c0f1de4eb6cbf92e309bedaa4dd2d028de6f7e245c9afbe00768",
+  "sanitizedResultSha256": "6ec4985764d20fba380c8f3a6738b19df1266da40ff4e234d62d152ab0a52673",
+  "terminalResultPresent": true,
+  "status": "stopped",
+  "nativeStartAttemptRecorded": true,
+  "diagnosticReservations": 1,
+  "actorTaskReservations": 0,
+  "nativeProviderRequests": null,
+  "nativeProviderRetries": null,
+  "remainingGrantClosed": true
+}

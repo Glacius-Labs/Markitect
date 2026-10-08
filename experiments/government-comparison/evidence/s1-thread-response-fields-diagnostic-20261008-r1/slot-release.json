@@ -1,0 +1,19 @@
+{
+  "key": "s1-thread-response-fields-diagnostic-20261008-r1",
+  "grantIssuedUtc": "2026-10-08T18:07:10Z",
+  "slotAssignedUtc": "2026-10-08T18:07:10Z",
+  "releasedUtc": "2026-10-08T18:18:01.226346+00:00",
+  "owner": "Scientist",
+  "status": "RELEASED; grant closed with zero remaining",
+  "actualNativeTrees": 1,
+  "diagnosticReservations": 1,
+  "actualActorTaskReservations": 0,
+  "remainingNativeTrees": 0,
+  "remainingReservations": 0,
+  "nativeExited": true,
+  "workerExited": true,
+  "controllerJobClosed": true,
+  "futureHeavyLocalWorkPlanned": false,
+  "noAutomaticFollowOn": true,
+  "canonicalCoordinationOwner": "Overseer; this receipt reports explicit release without editing canonical coordination."
+}

@@ -1,0 +1,42 @@
+{
+  "key": "s1-thread-response-fields-diagnostic-20261008-r1",
+  "copiedApprovedMetadataFiles": {
+    "controller-once.json": {
+      "bytes": 591,
+      "sha256": "4572b967a7ad6abcbff2c498f8fc4ad7834ece963034377c01c6a16d0bce3ef5"
+    },
+    "controller-receipt.json": {
+      "bytes": 1048,
+      "sha256": "e270fb2b63b5c0f1de4eb6cbf92e309bedaa4dd2d028de6f7e245c9afbe00768"
+    },
+    "job-assigned.json": {
+      "bytes": 654,
+      "sha256": "aa94ff7bb031a23435bb36a5f3dd273838886307cce718e138e984412b0a7ab4"
+    },
+    "outer-receipt.json": {
+      "bytes": 660,
+      "sha256": "e3c078738fbaed07ae2a0f7833249d141e99af749faaaf1593cdfc9187a40d48"
+    },
+    "output-root-created.json": {
+      "bytes": 229,
+      "sha256": "742051be3183a8f67523e48b32146484351ae50975688babe6fd015e5031c6f9"
+    },
+    "reservation.json": {
+      "bytes": 716,
+      "sha256": "209c89494536c94f3e54040345f0cf33b3666067286932511b705040e0861c2a"
+    },
+    "sanitized-result.json": {
+      "bytes": 20236,
+      "sha256": "6ec4985764d20fba380c8f3a6738b19df1266da40ff4e234d62d152ab0a52673"
+    },
+    "started-once.json": {
+      "bytes": 591,
+      "sha256": "ab1b2a210341a4941c2d761527d79bcd170e4df2a73e03f44b951793622a2c60"
+    }
+  },
+  "fileCount": 8,
+  "privateFilesCopied": 0,
+  "rawFilesCopied": 0,
+  "actualComparisonValuesOrFingerprintsCopied": false,
+  "exactOwnedPrivateFileRemovedWithoutContentRead": true
+}
