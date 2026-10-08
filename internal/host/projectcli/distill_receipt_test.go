@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -19,6 +20,7 @@ import (
 
 const distillHelperEnv = "MARKITECT_PROJECTCLI_DISTILL_HELPER"
 const distillCalledEnv = "MARKITECT_PROJECTCLI_DISTILL_CALLED"
+const distillBarrierEnv = "MARKITECT_PROJECTCLI_DISTILL_BARRIER"
 
 func TestGeneratedDistillationPersistsOnlyReceiptWhenProposalIsRejected(t *testing.T) {
 	repo, args := prepareGeneratedDistillationFixture(t)
@@ -30,7 +32,11 @@ func TestGeneratedDistillationPersistsOnlyReceiptWhenProposalIsRejected(t *testi
 	if code := Run(args, &out, &errout); code != 1 {
 		t.Fatalf("rejected generated distillation exit=%d stderr=%s stdout=%s", code, errout.String(), out.String())
 	}
-	if !strings.Contains(out.String(), `"status": "rejected"`) || !strings.Contains(out.String(), "distillation.receipt.json") {
+	var result struct {
+		Status      string `json:"status"`
+		ReceiptPath string `json:"receiptPath"`
+	}
+	if err := json.Unmarshal(out.Bytes(), &result); err != nil || result.Status != "rejected" || !strings.HasPrefix(result.ReceiptPath, ".markitect/drafts/distillation.receipt.") {
 		t.Fatalf("rejected response omitted receipt status/path: %s", out.String())
 	}
 	if strings.Contains(errout.String(), "provider-private-failure") || strings.Contains(errout.String(), "decode executor reportJson") {
@@ -39,7 +45,7 @@ func TestGeneratedDistillationPersistsOnlyReceiptWhenProposalIsRejected(t *testi
 	if _, err := os.Stat(marker); err != nil {
 		t.Fatalf("deterministic subprocess was not invoked: %v", err)
 	}
-	receiptBytes, err := os.ReadFile(filepath.Join(repo, filepath.FromSlash(".markitect/drafts/distillation.receipt.json")))
+	receiptBytes, err := os.ReadFile(filepath.Join(repo, filepath.FromSlash(result.ReceiptPath)))
 	if err != nil {
 		t.Fatalf("execution receipt was not persisted: %v", err)
 	}
@@ -70,8 +76,72 @@ func TestGeneratedDistillationPreflightsBothOutputRecordsBeforeProvider(t *testi
 	if _, err := os.Stat(marker); !os.IsNotExist(err) {
 		t.Fatalf("provider ran despite an occupied output path: %v", err)
 	}
-	if _, err := os.Stat(filepath.Join(repo, filepath.FromSlash(".markitect/drafts/distillation.receipt.json"))); !os.IsNotExist(err) {
-		t.Fatalf("output preflight failure wrote a receipt: %v", err)
+	if records := findDistillationReceiptPaths(t, repo); len(records) != 0 {
+		t.Fatalf("output preflight failure wrote receipts: %v", records)
+	}
+}
+
+func TestConcurrentGeneratedDistillationsPreserveBothUniqueReceipts(t *testing.T) {
+	repo, args := prepareGeneratedDistillationFixture(t)
+	barrier := filepath.Join(t.TempDir(), "barrier")
+	if err := os.Mkdir(barrier, 0700); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv(distillHelperEnv, "1")
+	t.Setenv(distillCalledEnv, "")
+	t.Setenv(distillBarrierEnv, barrier)
+	type callResult struct {
+		code   int
+		out    string
+		errout string
+	}
+	results := make(chan callResult, 2)
+	var wait sync.WaitGroup
+	for range 2 {
+		wait.Add(1)
+		go func() {
+			defer wait.Done()
+			var out, errout bytes.Buffer
+			code := Run(append([]string(nil), args...), &out, &errout)
+			results <- callResult{code: code, out: out.String(), errout: errout.String()}
+		}()
+	}
+	wait.Wait()
+	close(results)
+	receiptPaths := map[string]bool{}
+	for result := range results {
+		if result.code != 1 {
+			t.Fatalf("concurrent rejected call exit=%d stderr=%s stdout=%s", result.code, result.errout, result.out)
+		}
+		var record struct {
+			Status      string `json:"status"`
+			ReceiptPath string `json:"receiptPath"`
+		}
+		if err := json.Unmarshal([]byte(result.out), &record); err != nil || record.Status != "rejected" || record.ReceiptPath == "" {
+			t.Fatalf("concurrent call omitted rejected receipt record: %s err=%v", result.out, err)
+		}
+		if receiptPaths[record.ReceiptPath] {
+			t.Fatalf("concurrent invocations shared receipt path %q", record.ReceiptPath)
+		}
+		receiptPaths[record.ReceiptPath] = true
+		data, err := os.ReadFile(filepath.Join(repo, filepath.FromSlash(record.ReceiptPath)))
+		if err != nil {
+			t.Fatalf("concurrent receipt %s not preserved: %v", record.ReceiptPath, err)
+		}
+		var receipt projectadoption.DistillationReceipt
+		if err := json.Unmarshal(data, &receipt); err != nil || receipt.Execution.RunID == "" {
+			t.Fatalf("invalid concurrent receipt %s: runID=%q err=%v", record.ReceiptPath, receipt.Execution.RunID, err)
+		}
+	}
+	if len(receiptPaths) != 2 {
+		t.Fatalf("preserved %d unique receipts, want 2", len(receiptPaths))
+	}
+	entries, err := os.ReadDir(barrier)
+	if err != nil || len(entries) != 2 {
+		t.Fatalf("provider barrier observed %d invocations, want 2; err=%v", len(entries), err)
+	}
+	if _, err := os.Stat(filepath.Join(repo, filepath.FromSlash(".markitect/drafts/distillation.json"))); !os.IsNotExist(err) {
+		t.Fatalf("invalid concurrent proposals wrote shared report: %v", err)
 	}
 }
 
@@ -89,6 +159,25 @@ func TestProjectCLIDistillationHelperProcess(t *testing.T) {
 	if err := json.NewDecoder(os.Stdin).Decode(&invocation); err != nil {
 		fmt.Fprintln(os.Stderr, "test helper invocation failed")
 		os.Exit(10)
+	}
+	if barrier := os.Getenv(distillBarrierEnv); barrier != "" {
+		if err := os.WriteFile(filepath.Join(barrier, invocation.RunID), []byte("ready"), 0600); err != nil {
+			fmt.Fprintln(os.Stderr, "test helper barrier failed")
+			os.Exit(12)
+		}
+		deadline := time.Now().Add(15 * time.Second)
+		for time.Now().Before(deadline) {
+			entries, err := os.ReadDir(barrier)
+			if err == nil && len(entries) >= 2 {
+				break
+			}
+			time.Sleep(10 * time.Millisecond)
+		}
+		entries, err := os.ReadDir(barrier)
+		if err != nil || len(entries) < 2 {
+			fmt.Fprintln(os.Stderr, "test helper barrier timed out")
+			os.Exit(13)
+		}
 	}
 	inputTokens, outputTokens := int64(120), int64(45)
 	response := agentexec.Response{
@@ -130,7 +219,7 @@ func prepareGeneratedDistillationFixture(t *testing.T) (string, []string) {
 		Command: executable, Args: []string{"-test.run=TestProjectCLIDistillationHelperProcess"},
 		Model: "receipt-test", ProviderVersion: "fixture/1", Timeout: projectrun.Duration(20 * time.Second),
 		MaxStdoutBytes: 1 << 20, MaxStderrBytes: 1 << 20,
-		Environment: []string{distillHelperEnv, distillCalledEnv},
+		Environment: []string{distillHelperEnv, distillCalledEnv, distillBarrierEnv},
 		Pricing:     projectrun.Pricing{InputMicrosPerMillion: 2, OutputMicrosPerMillion: 4},
 	}
 	runtimeConfig := projectrun.Runtime{
@@ -175,4 +264,20 @@ func prepareGeneratedDistillationFixture(t *testing.T) (string, []string) {
 		"--input-micros-per-million", "2", "--output-micros-per-million", "4", "--max-cost-micros", "100000",
 	}
 	return repo, args
+}
+
+func findDistillationReceiptPaths(t *testing.T, repo string) []string {
+	t.Helper()
+	directory := filepath.Join(repo, filepath.FromSlash(".markitect/drafts"))
+	entries, err := os.ReadDir(directory)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var result []string
+	for _, entry := range entries {
+		if strings.HasPrefix(entry.Name(), "distillation.receipt.") && strings.HasSuffix(entry.Name(), ".json") {
+			result = append(result, filepath.ToSlash(filepath.Join(".markitect/drafts", entry.Name())))
+		}
+	}
+	return result
 }

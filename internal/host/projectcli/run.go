@@ -2,6 +2,8 @@ package projectcli
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -264,30 +266,37 @@ func runAction(opts options, out io.Writer) error {
 					if marshalErr != nil {
 						return errors.New("generated distillation was rejected after invocation; execution receipt could not be encoded")
 					}
-					digests, writeErr := writeRecords(opts.repo, map[string][]byte{receiptPath: receiptBytes})
+					receiptDigest, writeErr := writeRecord(opts.repo, receiptPath, receiptBytes)
 					if writeErr != nil {
 						return fmt.Errorf("generated distillation was rejected after invocation; execution receipt could not be persisted: %w", writeErr)
 					}
-					if err := writeJSON(out, map[string]string{"status": "rejected", "receiptPath": receiptPath, "receiptDigest": digests[receiptPath]}); err != nil {
+					if err := writeJSON(out, map[string]string{"status": "rejected", "receiptPath": receiptPath, "receiptDigest": receiptDigest}); err != nil {
 						return err
 					}
 					return &projectOutcomeError{code: 1, message: "agent-assisted distillation was rejected after invocation; report was not created; see execution receipt"}
 				}
 				return err
 			}
-			encoded, err := projectadoption.EncodeDistillation(report)
-			if err != nil {
-				return err
-			}
 			receiptBytes, err := json.Marshal(receipt)
 			if err != nil {
 				return err
 			}
-			digests, err := writeRecords(opts.repo, map[string][]byte{opts.output: encoded, receiptPath: receiptBytes})
+			receiptDigest, err := writeRecord(opts.repo, receiptPath, receiptBytes)
 			if err != nil {
-				return err
+				return fmt.Errorf("generated distillation report was not persisted because its execution receipt could not be saved: %w", err)
 			}
-			return writeJSON(out, map[string]string{"reportPath": opts.output, "reportDigest": digests[opts.output], "receiptPath": receiptPath, "receiptDigest": digests[receiptPath]})
+			encoded, err := projectadoption.EncodeDistillation(report)
+			if err != nil {
+				return &projectOutcomeError{code: 1, message: "generated distillation report was rejected after invocation; execution receipt was preserved"}
+			}
+			reportDigest, err := writeRecord(opts.repo, opts.output, encoded)
+			if err != nil {
+				if writeErr := writeJSON(out, map[string]string{"status": "report-not-persisted", "receiptPath": receiptPath, "receiptDigest": receiptDigest}); writeErr != nil {
+					return writeErr
+				}
+				return &projectOutcomeError{code: 1, message: "generated distillation report was not persisted; execution receipt was preserved"}
+			}
+			return writeJSON(out, map[string]string{"reportPath": opts.output, "reportDigest": reportDigest, "receiptPath": receiptPath, "receiptDigest": receiptDigest})
 		}
 		reportBytes, err := readRecord(opts.repo, opts.report)
 		if err != nil {
@@ -531,7 +540,11 @@ func derivedReceiptPath(output string) (string, error) {
 	if !strings.HasPrefix(output, ".markitect/drafts/") || !strings.HasSuffix(output, ".json") {
 		return "", errors.New("generated distillation --output must be an explicit .json path under .markitect/drafts/")
 	}
-	return strings.TrimSuffix(output, ".json") + ".receipt.json", nil
+	var attempt [16]byte
+	if _, err := rand.Read(attempt[:]); err != nil {
+		return "", fmt.Errorf("create unique distillation receipt identity: %w", err)
+	}
+	return strings.TrimSuffix(output, ".json") + ".receipt." + hex.EncodeToString(attempt[:]) + ".json", nil
 }
 
 type projectOutcomeError struct {

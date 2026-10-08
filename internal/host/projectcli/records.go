@@ -6,9 +6,11 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"path"
 	"sort"
 	"strings"
+	"time"
 
 	hostwrite "github.com/Glacius-Labs/Markitect/internal/host"
 	"github.com/Glacius-Labs/Markitect/internal/infrastructure/source"
@@ -38,19 +40,40 @@ func writeRecord(root, rawPath string, data []byte) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	capture, err := hostwrite.CaptureGuardedWrite(root, []string{rel})
-	if err != nil {
-		return "", fmt.Errorf("capture Markitect record target %s: %w", rel, err)
+	for attempt := 0; attempt < 100; attempt++ {
+		capture, err := hostwrite.CaptureGuardedWrite(root, []string{rel})
+		if err != nil {
+			if isGuardedWriterBusy(err) && waitForGuardedWriter(attempt) {
+				continue
+			}
+			return "", fmt.Errorf("capture Markitect record target %s: %w", rel, err)
+		}
+		if current, ok := capture.Files[rel]; !ok || current.Exists {
+			return "", fmt.Errorf("refusing to overwrite existing Markitect record %s", rel)
+		}
+		_, err = hostwrite.ApplyGuardedWrite(capture.Root, capture, []hostwrite.GuardedWriteChange{{Path: rel, Bytes: data, Mode: 0644}})
+		if err != nil {
+			if isGuardedWriterBusy(err) && waitForGuardedWriter(attempt) {
+				continue
+			}
+			return "", fmt.Errorf("write Markitect record %s: %w", rel, err)
+		}
+		digest := sha256.Sum256(data)
+		return "sha256:" + hex.EncodeToString(digest[:]), nil
 	}
-	if current, ok := capture.Files[rel]; !ok || current.Exists {
-		return "", fmt.Errorf("refusing to overwrite existing Markitect record %s", rel)
+	return "", fmt.Errorf("write Markitect record %s: guarded writer remained busy after bounded retries", rel)
+}
+
+func isGuardedWriterBusy(err error) bool {
+	return err != nil && errors.Is(err, fs.ErrExist) && strings.HasPrefix(err.Error(), "renderer lock is already present:")
+}
+
+func waitForGuardedWriter(attempt int) bool {
+	if attempt >= 99 {
+		return false
 	}
-	_, err = hostwrite.ApplyGuardedWrite(capture.Root, capture, []hostwrite.GuardedWriteChange{{Path: rel, Bytes: data, Mode: 0644}})
-	if err != nil {
-		return "", fmt.Errorf("write Markitect record %s: %w", rel, err)
-	}
-	digest := sha256.Sum256(data)
-	return "sha256:" + hex.EncodeToString(digest[:]), nil
+	time.Sleep(10 * time.Millisecond)
+	return true
 }
 
 // preflightRecordDestinations confirms that all explicit output paths are
