@@ -1,0 +1,49 @@
+{
+  "key": "s1-thread-start-diagnostic-20261008-r2",
+  "pairs": [
+    {
+      "original": "C:/Users/Consiliari/Documents/Scientist-Probes/s1-thread-start-diagnostic-20261008-r2/controller-once.json",
+      "copy": "evidence/s1-thread-start-diagnostic-20261008-r2/run-1/controller-once.json",
+      "sha256": "fc0152491478c129276c595d0f13187b4e3c15fecbde26a8137a43068adb5974",
+      "bytes": 490
+    },
+    {
+      "original": "C:/Users/Consiliari/Documents/Scientist-Probes/s1-thread-start-diagnostic-20261008-r2/controller-receipt.json",
+      "copy": "evidence/s1-thread-start-diagnostic-20261008-r2/run-1/controller-receipt.json",
+      "sha256": "e2c94ef4b2a45838a1941ddf8965dba9d4a98d802a90fb78b724154ccc463a37",
+      "bytes": 949
+    },
+    {
+      "original": "C:/Users/Consiliari/Documents/Scientist-Probes/s1-thread-start-diagnostic-20261008-r2/job-assigned.json",
+      "copy": "evidence/s1-thread-start-diagnostic-20261008-r2/run-1/job-assigned.json",
+      "sha256": "f63844d6b16857add305b033dcd5b016d622a67e145e57c070c781701b149942",
+      "bytes": 554
+    },
+    {
+      "original": "C:/Users/Consiliari/Documents/Scientist-Probes/s1-thread-start-diagnostic-20261008-r2/outer-receipt.json",
+      "copy": "evidence/s1-thread-start-diagnostic-20261008-r2/run-1/outer-receipt.json",
+      "sha256": "49868991a11ad5137c17bf838cce5c8f44f475e87bcffb9be05544fc10f00653",
+      "bytes": 650
+    },
+    {
+      "original": "C:/Users/Consiliari/Documents/Scientist-Probes/s1-thread-start-diagnostic-20261008-r2/reservation.json",
+      "copy": "evidence/s1-thread-start-diagnostic-20261008-r2/run-1/reservation.json",
+      "sha256": "571472b4eda51e81d00371dacf44c166a46bd18fdff712f48d93ce306ddbac18",
+      "bytes": 583
+    },
+    {
+      "original": "C:/Users/Consiliari/Documents/Scientist-Probes/s1-thread-start-diagnostic-20261008-r2/sanitized-result.json",
+      "copy": "evidence/s1-thread-start-diagnostic-20261008-r2/run-1/sanitized-result.json",
+      "sha256": "3140f54fd0f1b4eb7a272b58ef467b26efc4975848b6223962e0d224b7552eb6",
+      "bytes": 20148
+    },
+    {
+      "original": "C:/Users/Consiliari/Documents/Scientist-Probes/s1-thread-start-diagnostic-20261008-r2/started-once.json",
+      "copy": "evidence/s1-thread-start-diagnostic-20261008-r2/run-1/started-once.json",
+      "sha256": "0b1cdd555650dddf122dbcf59c4bf30c4fb4d42ab7defeefae9c563684b3498f",
+      "bytes": 490
+    }
+  ],
+  "rawFramesArchived": false,
+  "rawStderrArchived": false
+}

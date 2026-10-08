@@ -1,0 +1,21 @@
+{
+  "key": "s1-thread-start-diagnostic-20261008-r2",
+  "requestSha256": "5780b4a749f766962b09ef4ec89f1ca1b38db20101017440941ed658f0469dbf",
+  "freezeSha256": "9a189e4baec5024d2941d27020180520c10f411ffb2ae09127f4fa20312a46ed",
+  "reservationSha256": "571472b4eda51e81d00371dacf44c166a46bd18fdff712f48d93ce306ddbac18",
+  "sourceCommit": "c6d84de416986837adfa57967c8b9ef29a1eb90a",
+  "freezeCommit": "8b4f0a4d8854dd7d8b7c2fe1863b949c70be2fc9",
+  "workerReturnCode": 1,
+  "stopReason": null,
+  "controllerSeconds": 1.4073312000000442,
+  "jobCloseSeconds": 1.6199999663513154e-05,
+  "processTreeControl": "windows-job-kill-on-close",
+  "deadlineSeconds": 50,
+  "controllerLimitSeconds": 65,
+  "outerLimitSeconds": 80,
+  "rawLogsPersisted": false,
+  "automaticRetries": 0,
+  "terminalResultPresent": true,
+  "terminalResultSha256": "3140f54fd0f1b4eb7a272b58ef467b26efc4975848b6223962e0d224b7552eb6",
+  "withinControllerBound": true
+}

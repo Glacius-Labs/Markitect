@@ -1,0 +1,17 @@
+{
+  "key": "s1-thread-start-diagnostic-20261008-r2",
+  "outerReturnCode": 1,
+  "stopReason": null,
+  "outerThroughReceiptReadbackSeconds": 2.661528499999804,
+  "withinOuterBound": true,
+  "controllerReceiptSha256": "e2c94ef4b2a45838a1941ddf8965dba9d4a98d802a90fb78b724154ccc463a37",
+  "sanitizedResultSha256": "3140f54fd0f1b4eb7a272b58ef467b26efc4975848b6223962e0d224b7552eb6",
+  "terminalResultPresent": true,
+  "status": "stopped",
+  "nativeStartAttemptRecorded": true,
+  "diagnosticReservations": 1,
+  "actorTaskReservations": 0,
+  "nativeProviderRequests": null,
+  "nativeProviderRetries": null,
+  "remainingGrantClosed": true
+}

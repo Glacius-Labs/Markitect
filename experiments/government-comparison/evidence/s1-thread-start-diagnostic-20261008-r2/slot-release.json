@@ -1,0 +1,16 @@
+{
+  "key": "s1-thread-start-diagnostic-20261008-r2",
+  "owner": "Scientist",
+  "releasedAtUtc": "2026-10-08T15:58:11.563229+00:00",
+  "status": "Explicitly released after first terminal; residual grant expired",
+  "reason": "server-stderr-activity",
+  "newDiagnosticReservationsConsumed": 1,
+  "newAppServerTreesConsumed": 1,
+  "newActorTaskReservationsConsumed": 0,
+  "threadStartRequestsWritten": 1,
+  "turnStartRequestsWritten": 0,
+  "remainingNewReservations": 0,
+  "remainingAppServerTrees": 0,
+  "noAutomaticFollowup": true,
+  "overseerOwnsCanonicalSlotUpdate": true
+}

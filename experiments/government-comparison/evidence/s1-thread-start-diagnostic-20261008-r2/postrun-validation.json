@@ -1,0 +1,20 @@
+{
+  "key": "s1-thread-start-diagnostic-20261008-r2",
+  "checkedAtUtc": "2026-10-08T15:58:11.563229+00:00",
+  "sourcePinsUnchanged": 22,
+  "freezePinsUnchanged": 32,
+  "sourcePinsMatchSourceGitBlobs": true,
+  "fiveHistoricalLedgersUnchanged": true,
+  "twoPublicCwdFilesUnchanged": true,
+  "binarySchemaInterpreterUnchanged": true,
+  "externalReceiptPairs": 7,
+  "externalInventoryExactlyExpected": true,
+  "sourceCommit": "c6d84de416986837adfa57967c8b9ef29a1eb90a",
+  "freezeCommit": "8b4f0a4d8854dd7d8b7c2fe1863b949c70be2fc9",
+  "actualOutcome": "first terminal, no repair/relaunch",
+  "historicalEvidencePreservedByAdditionsOnly": true,
+  "allPriorTrackedFilesUnmodified": true,
+  "newActorReservations": 0,
+  "nativeStarts": 1,
+  "rootRepeatedTests": false
+}
