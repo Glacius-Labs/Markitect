@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-08T22:51:11Z",
+  "updatedUtc": "2026-10-08T23:01:56Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -12,10 +12,10 @@
     "intervalMinutes": 120,
     "reportEveryReview": false,
     "reportTimezone": "Europe/Berlin",
-    "lastVerifiedUtc": "2026-10-08T21:32:29Z",
-    "verification": "automation_update returned ACTIVE; exact saved TOML independently verified ACTIVE,2h,root target; new native actual-six-case mandate replaces stale diagnostic prompt.",
+    "lastVerifiedUtc": "2026-10-08T22:54:35Z",
+    "verification": "automation_update returnedACTIVE; savedTOML checkedACTIVE/2h/rootTarget/exact5chatprompt; eventcallbacks and quietunchanged policy preserved",
     "userReaffirmed": "Direct 8 October request: callbacks at completion/need, fallback every 1-3 hours, chosen 2h; unchanged routine summaries suppressed.",
-    "latestMandateUpdatedUtc": "2026-10-08T21:28:26Z",
+    "latestMandateUpdatedUtc": "2026-10-08T22:54:35Z",
     "reportOnMeaningfulChange": true,
     "mode": "event-driven callbacks with two-hour fallback",
     "coordinatedThreadIds": [
@@ -31,7 +31,8 @@
     "pauseReason": "Final resumed two-actual-attempt window closed after R3; S1/read/write/build unproved, all six cells NOT RUN. Evidence/effort synthesis supplemented; no new grant or routine polling.",
     "resumptionRequestedUtc": "2026-10-08T19:58:49Z",
     "resumedUtc": "2026-10-08T21:28:26Z",
-    "promptSha256": "5b7f65bbc0f131627602bb37e62fda280c965d072a037551bceb9648b448f87a"
+    "promptSha256": "83e9b9088850211c9f383b8a30fc4d03a7936b1485a6664e5fc988c432d8f191",
+    "name": "Markitect: Vergleich und fünf Arbeitschats koordinieren"
   },
   "threads": [
     {
@@ -436,13 +437,20 @@
       "name": "Scientist",
       "threadId": "01a1169c-3df6-7571-997d-48ab57365875",
       "hostId": "local",
-      "afterCursor": "4993693c-4fc7-4021-b456-5988f9f71188:44",
+      "afterCursor": "4993693c-4fc7-4021-b456-5988f9f71188:47",
       "lastObservedStatus": "active",
-      "activeTurn": "01a11d6a-0c62-76a2-8f2c-c82fbe60b8ab",
-      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac816eb3b548191a08fda1c0b3afb28",
+      "activeTurn": {
+        "id": "01a11db7-3793-70e1-ae10-c047ece8ca0e",
+        "status": "inProgress",
+        "error": null,
+        "startedAt": 1791499909,
+        "completedAt": null,
+        "durationMs": null
+      },
+      "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac81ffd21b081918f2daa592ced6c37",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "Run six real native-Codex exploratory case studies, independently evaluate and report intermediate data",
-      "latestProgress": "Detected completed Scientist turn after context compaction with generic wait final despite unfinished task5/activation0030. Task5 deadline22:35:08.316849Z has passed; fresh separate bounded posthoc tests authorized, no original extension.",
+      "latestProgress": "Both supplemental Actors actually completed; clean candidate restores/builds. Own assigned ports62581/62582 return10013; public runtime/restart and seven holdouts NOT RUN. Scientist closes additive packet and base report; no runtime quality acceptance.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-scientist/Markitect",
       "transferredDesignCommit": "b9e17c9896f14b4b1268e4bcb005395f5d324384",
       "candidateSha": "7d6964331f542462b4a29db3819f60c75083e3be",
@@ -6865,12 +6873,89 @@
         },
         "nativeV3CoordinatorInterruptionObserved": {
           "observedUtc": "2026-10-08T22:51:11Z",
-          "source": "Recent completed turn ended after contextCompaction with generic wait message; live ledger Task5running/activation0030reserved",
+          "source": "Scientist new active turn commentary after explicit resume",
           "originalTask5DeadlineUtc": "2026-10-08T22:35:08.316849Z",
           "reservationId": "activation-0030",
           "actualLaunchEstablishedByRoot": false,
           "originalOutcome": "Pending Scientist reconciliation; preserve unknown launch and timing, no success claim or refill",
-          "rootAction": "Explicit bounded resume/closure plus separate posthoc validation grant; no old reservation reuse"
+          "rootAction": "Explicit bounded resume/closure plus separate posthoc validation grant; no old reservation reuse",
+          "reconciledReportedUtc": "2026-10-08T22:54:35Z",
+          "reported0030ActualLaunched": false,
+          "reportedOriginalTask5Outcome": "Incomplete at original time limit; candidate repair exists, re-review absent"
+        },
+        "nativeV3PosthocValidationDispatch": {
+          "sentUtc": "2026-10-08T22:54:35Z",
+          "deliveryConfirmed": true,
+          "grantCommit": "cc90160f306a9fc351311326061052f7e39c17cc",
+          "prompt": "Direkte Nutzeranweisung: Scientist soll derweil die Tests durchführen und weiterarbeiten; Design wird zusätzlich auf mögliche Classic-Ablösung geprüft. Setze die tatsächlich laufende Studie jetzt konkret fort, nicht nur generisch warten. Nach deiner letzten Kontextkürzung endete der Turn mit 'warte auf Anweisungen', obwohl Task5/activation0030 im Ledger offen waren. Die maßgebliche Akte steht unter C:/Users/Consiliari/Glacius Labs/Markitect/docs/design/government/{coordination.md,coordination-state.json,evaluation.md}, neuer Root-Grantcommit cc90160f306a9fc351311326061052f7e39c17cc. Arbeite ausschließlich in deinem WT C:/Users/Consiliari/.codex/worktrees/government-scientist/Markitect und vorhandenen eigenen Zellverzeichnissen, keine Root-/Design-/Classic-Produktquellen ändern.\n\nSofortige Rekonstruktion: Originalgrant native-codex-exploratory-v3-20261008; Protokoll/freeze f3de2c0950493c7977611569d9c657ec5d39249f/18fd3a2af9356fd83c9b73c9fdfd1b67976146565659366959ca3b415627a484, sauberer letzter Evidenzcommit b9128650b3a84cd30a84d3ce582ee66b243a544e.2GF-Zellen incomplete/readiness_gap und3BF contaminated_stopped angenommen; Originale unverändert. ConventionalGF Task1-4 öffentlichpassed; Task5 bekam öffentlichen Altauftrag-Idempotenzbefund und hatte Reparatur1. Task5deadline2026-10-08T22:35:08.316849Z ist inzwischen abgelaufen. activation0030 wurde22:24:50.412048Z als re-review reserviert; Root sieht keinen Launchbeleg. Kläre tatsächlichen Spawn/Folgeaufruf/Result/Actorstatus aus vorhandenen Receipts, stoppe nur eigene Residuen und erhalte Unknowns. AbgelaufeneReservation nicht neu verwenden, keine ursprünglicheFristverlängerung oder nachträglichenTask5/Task6-Pass erfinden. Schließe v3 entsprechend incomplete-at-limit/coordinator-interruption, sofern keine bereits vorhandenen fristgerechten Completionbelege tatsächlich anderes beweisen. KeinErsatzlauf.\n\nFRISCHER KONKRETER TESTGRANT native-v3-conventional-gf-posthoc-validation-20261009, vollständig unter Scientist.evidence.nativeV3PosthocValidationGrant in coordination-state.json: issue22:51:11Z, end23:36:11Z am8OktUTC, max2700sOverall/max900sVorbereitungohneActors, genau2neueActoraktivierungen, max1gleichzeitig, je600sWall. Nach tatsächlichem cleanSource-/Tree-/Bundle-/Input-/Configfreeze: (1) frischerfork_turns=noneActor prüft unveränderten ConventionalGF-Task5-Reparaturstand gegen öffentlich aktuell freigegebeneTask1-5 und dokumentiert echteBuild-/Checks-/AltauftragRetrybefunde; (2) frischerunabhängigerActor bewertet gefrorenenStand gegen erklärteTask1-5/Rubrik und dafür vorhandeneprivateHoldouts, keineTask6. AlleStarts/Fehlerzählen, vorabneuerseparaterSupplement-Ledgereintrag, alte30Reservationen/Usageunverändert. KeineImplementierungsänderung, semantischeReparatur, neueAnforderung, Task6-Mutation, NachbesserungausHoldout oder dritteAktivierung. Ergebnisse ausdrücklichPOSTHOC/separaterAufwand; keine rückwirkendeÄnderungv3Zeitwertung oderMethodensuperiorität. KeineProviderAPI/Käufe/Appserverdiagnose/Policyänderung. ParentProfilohneOverride, Serving/Usageunknownbleibenunknown.\n\nFür beideActors ausdrücklich eigenes frischkopiertesTestrepo/Inputverzeichnis und eigenePort-/PIDHandles bereitstellen; vorgeschlageneTestports62581/62582direktbinden, nichtfremdeOwneridentifizieren/kills. Keinecollaboration.list_agents/globalenProzessinventuren/fremdenZell-/Chat-/Memory-/Quellreads durchActors; keineeigenenSubspawns. WennPortunverfügbar odertatsächlicheFremdexposition: betroffenenChecksauberbeenden undGrenzemelden. Isolierungbleibtkooperativ,keineOS-Garantie. BestehendeProdukt-/Taskpinsbleiben. NativeCapabilitybereitsrealRead/Write/.NET10Build/Runbewiesen, keineweiterenVorbereitungs- oder217Vorfahrenpin-Schleifen.\n\nDanach tatsächlichenBasis-/Supplementbericht samtFehler/Aufwand/Grenzen undbegründetemminimalenFolgeplan liefern. Neuer Kandidat Design=Chat01a11c80-37aa-7fe0-9586-35d916ce6561, WT C:/Users/Consiliari/.codex/worktrees/model-driven-delivery/Markitect, Source57fa01ce49fe797b403f4f7640e11820e6b1741fplusaktiveWIP; aktuelldirektautorisierterNativeLunaHigh-Shoptest/appCLI0.162.0-alpha.2+Streaminghashfix. NochkeinangenommenerFreeze. Design-Produktcode/TestreparaturenbleibenbeiDesign, keineprivatenStudieninputs weiterreichen. NachseinemReadinesshandoff soll Scientist ihnaufderselbenSpielwiese gegenClassic+starkeConventional-Referenz einplanen; gemeinsamewirklicheModel-/Tool-/Budgetkonfiguration,keinLuna-vsSol-Confound. Max8weiterevollständigeTrials/max2befundgestützteFragenfürdenFolgeblock bleiben, derzeitkeineActualFolgetrialquote. KeinautomatischerMainersatz. EinmaligerCallbackbei tatsächlichemSupplement-Teststart, geprüftemAbschluss odermateriellemBedarf anOverseer01a11367-a781-7683-a20f-46e12614dcb4/local; keineACK. BeiKontextkürzung ausAkte/Grant/aktuellemLedgerweiterarbeiten, nichtzumursprünglichenWartepromptzurückfallen.",
+          "promptSha256": "091b7bf0e28fd129e7cb7914ff4846a48fc5319e6d4cc3b2009e1abc95746425",
+          "status": "Both distinct actual activations completed, corroborated in ledger/reports; qualified partial evidence only, sealed handoff pending",
+          "actualSupplementActorStartVerified": true
+        },
+        "nativeV3PosthocPreliminaryObservation": {
+          "observedUtc": "2026-10-08T23:01:00Z",
+          "scientistSourceSha": "904a7d0639eaba0a7597d303ae7c0504aca4396f",
+          "freezeCommit": "025f3aa3eb5e1e7e0da9a09c053c02452b9ea7e8",
+          "freezeSha256": "44854023d5918756b78d059bf663dd91cf12a8aaa47ca888a9accb66c26c8862",
+          "candidateSha": "d1e271b8472cc55565696b976a87ff968a4e8c7a",
+          "candidateTree": "a07ff00a3d3182521d202c618410f9c0520ea85f",
+          "freezeFiles": 150,
+          "currentStaticPinsMatching": 149,
+          "mutableException": "ledger.json updated only activations. Original prestart ledger in025f3aa sha256b7cc5f55efaf8e2b531362e63fd2aeb633800a7d71e64154895cb77629908b6f matches freeze; both candidate copies same cleanHEAD/tree. Not a freeze/source mutation.",
+          "actualActors": 2,
+          "remainingActors": 0,
+          "publicReviewReportSha256": "0bbc77d6f6c26b00993f43fa01b89c523b806915401742dae99f43c2fc1b816c",
+          "independentEvaluationReportSha256": "c25db8a11cd0597c24e77f768efa4804985824d87576ed1e6af3fe9ac8cac1e8",
+          "buildResult": "Both fresh copies restore/build PASS; prior compatibility source also built in public review",
+          "runtimeResult": "Direct assigned ports62581/62582 refused with socket10013; no runtime behavior/restart proof; seven holdoutsNOTRUN",
+          "qualityQualification": "Evaluator descriptive71.25 and method63.75 are partial source/prior-evidence descriptions, not current independent runtime quality score/completed trial/comparative winner.",
+          "originalOutcome": "incomplete-at-limit/coordinator-interruption;0030neverstarted;Task6NOTRUN",
+          "servingUsageAndCost": null,
+          "handoffStatus": "Live/WIP preliminary observation, final source/archive binding pending",
+          "oracleConsistencyFinding": "WIP prospective proposal alleges over-limit atomicity vector whereas original evaluator report says no stale vector. Independent review/admission must reconcile before future assertions; original oracle/report bytes preserved."
+        },
+        "nativeV3EphemeralValidationGrant": {
+          "key": "native-v3-conventional-gf-ephemeral-validation-20261009",
+          "issuedUtc": "2026-10-08T23:01:56Z",
+          "notAfterUtc": "2026-10-08T23:21:56Z",
+          "source": "Latest direct user instruction Scientist soll derweil die tests durchfuehren und weiter arbeiten; actual two fixed-port10013 findings plus independent Rootreview. New finite explicit allocation, not automatic refill or original deadline extension.",
+          "status": "One new actual posthoc runtime assessment authorized, dispatch pending",
+          "priorSupplementKey": "native-v3-conventional-gf-posthoc-validation-20261009",
+          "priorActualActivationsConsumed": 2,
+          "priorRemainingActivations": 0,
+          "actualActorActivationsMax": 1,
+          "initialActualActorActivations": 0,
+          "remainingAtIssue": 1,
+          "preparationMaxSeconds": 300,
+          "preparationActorActivations": 0,
+          "maximumOverallWallSeconds": 1200,
+          "perActorWallSeconds": 600,
+          "maxConcurrentActors": 1,
+          "maxOwnedServerStartsIncludingPriorAndRestarts": 12,
+          "candidateSha": "d1e271b8472cc55565696b976a87ff968a4e8c7a",
+          "candidateTree": "a07ff00a3d3182521d202c618410f9c0520ea85f",
+          "additionalFullTrials": 0,
+          "repairsAllowed": 0,
+          "task6Allowed": false,
+          "testScope": "Fresh independent runtime assessment of unchanged ConventionalGF Tasks1-5 repair: public checks, prior accepted7unitorder retry compatibility on both routes and existing applicable declared-requirement holdouts. Own prior Task4snapshot may be exported read-only solely to create compatibility DB. No product/source/assertion repair or new requirement.",
+          "authorityConditions": [
+            "Seal previous2Actorpartial packet first; preserve ledgerprestartsnapshot/freeze and reports; two exhausted reservations never reused.",
+            "Before actual Actor freeze own clean candidatecopy, Tasks1-5/publicchecks/rubric/evaluator metadata hashes and inherited native profile with dynamic-porttransport policy; fresh fork_turns=none, no childActors.",
+            "Start only own bounded server processes with ASPNETCORE_URLS=http://127.0.0.1:0; obtain actual URL only from ownstdout. Never use listener/process/thread/agent/global inventory or foreign-file reads/owner lookup/kills.",
+            "Own child handles/PIDs only; cleanup in finally and outer600sActorlimit. Serverstartsincludingrestarts<=12, no background leftovers; if native processcreation unavailable stop affected test.",
+            "If direct dynamic Kestrelbind also returns10013 or cannot yield an own URL, stop and closeNOTRUN; no alternateport search, fallback/retry or further actual quota.",
+            "Existing current assertions may receive own discovered baseURL through an external ordinary transportwrapper; no semantic changes to assertions, source, productDTOs or privateoracle. Readiness transportadaptation and exacthashes frozen beforeActor.",
+            "Reconcile contradictory public oracle-applicability descriptions without disclosing private content; any existing assertion that contradicts declaredTask1-5 requirement is explicitly inapplicable/NOTRUN, never silently fixed or countedaspass. No new/changed private test in this supplemental run.",
+            "One independent Actor may run publicchecks then existing applicableprivateholdouts after candidatealreadyfrozen. Results released only aftercandidatefreeze; no implementationfeedbackrepair.",
+            "Count failedlaunches as sole activation; original incomplete-at-limit/0030unstarted/Task6NOTRUN unchanged; all results posthoc, no methodcomparison or economics claim.",
+            "Use inherited common native profile nooverride; actual servingidentity/tokens/cost unknownremainnull; no providerAPI/purchases/globalconfig/policychanges.",
+            "After soleActor and cleanup, seal exact results/commands/build/runtime/checkapplicability, originalversussupplemental effort, publicbaseclosure and prospectiveDesign/Classic/Conventionalmatchedplan. No new fulltrial starts without separategrant."
+          ],
+          "review": {
+            "reviewer": "/root/g2_handoff_evidence",
+            "result": "Qualified feasible new single dynamic-port attempt; port-specificfailurehypothesis notgenerallistenpermissionguarantee. BothpriorActorsused; publicoracleconsistency mustbeclarified. No privatecontents/tests/runtime read byreviewer."
+          },
+          "usage": null
         }
       },
       "classicHandoffReceived": true,
@@ -8048,13 +8133,13 @@
       "lastObservedStatus": "active",
       "candidateSha": "57fa01ce49fe797b403f4f7640e11820e6b1741f",
       "candidateStatus": "Previous clean reported handoff; current7-file WIP for native Luna High/appCLI streaming pinning; not a frozen test candidate",
-      "afterCursor": null,
-      "lastAssistantMessageId": null,
+      "afterCursor": "003822b0-39a3-45aa-ad00-ed2b07a94fa4:4",
+      "lastAssistantMessageId": "msg_09c2fcf082a171e3016ac81fdf19948191a1c29f4e4d8363ad",
       "assignedMilestone": "Continue latest direct user-authorized native Luna High Shop verification; then immutable test-readiness handoff/callback",
       "monitoringAuthorizedUtc": "2026-10-08T22:51:11Z",
       "monitoringSource": "Direct user asks regularly watch Design, test it and assess whether it can replace Classic",
       "acceptance": "Not yet independently accepted; development/native test reports only",
-      "latestProgress": "Reported Windows53packages and3LunaHighreviews on prior source; native Luna now responds through appCLI0.162.0-alpha.2; streaminghash pinning fix+full Shop run in progress. Hard OS isolation unproven.",
+      "latestProgress": "Owner reports first full nativeLuna run stopped Shop on contradictory manager reports and Brownfield on invalid proposal. Nothing applied; owner investigates integration instructions/validation. Not an accepted test candidate.",
       "evidence": {
         "observedCurrentHead": "57fa01ce49fe797b403f4f7640e11820e6b1741f",
         "observedBranch": "codex/model-driven-delivery",
@@ -8067,12 +8152,23 @@
       "lastAssignment": {
         "key": "design-readiness-callback-and-classic-replacement-candidate-20261009",
         "authorizedUtc": "2026-10-08T22:51:11Z",
-        "sentUtc": null,
-        "scope": "Observe existing authorized implementation/testing; request bounded exact candidate/check/config/migration handoff and callbacks; no new trial budget or main/release promotion"
+        "sentUtc": "2026-10-08T22:54:35Z",
+        "scope": "Observe existing authorized implementation/testing; request bounded exact candidate/check/config/migration handoff and callbacks; no new trial budget or main/release promotion",
+        "deliveryConfirmed": true,
+        "prompt": "Der Nutzer hat Overseer heute direkt beauftragt, Design regelmäßig mitzubeobachten, deinen Stand auf der Scientist-Spielwiese testen zu lassen und zu untersuchen, ob er Classic ablösen kann. Dies erweitert die bestehende ereignisbezogene Koordination auf deinen Chat; deine jüngste direkte Nutzeranweisung zum vollständigen nativen Luna-High-Test hat Vorrang. Bitte führe diesen aktuellen Auftrag weiter; keine neue Zusatzimplementierung aus dieser Nachricht, kein Main-/Releaseauftrag.\n\nNach Abschluss deiner laufenden NativeLunaHigh-/Shopprüfung bzw. bei materiellem Blocker liefere einmal direkt per send_message_to_thread an Overseer01a11367-a781-7683-a20f-46e12614dcb4/local einen knappen prüfbaren Readinesshandoff: exakter saubererSourceSHA/Branch/Worktree und tatsächlicherTest-SHA/Binaryhash, CLIversion/-hash/Modell-Reasoning-/Tool-/Berechtigungskonfiguration, realePlan→Run/Resume→Verify→Apply-Belege getrennt vonFixtures/Reviews, genauausgeführteerforderlicheChecks und unabhängigeBefunde, Installations-/Benutzungsweg, BrownfieldAdoption/Migration/Kompatibilität zuClassicMain a97cbd5, bekannteIsolation-/Usage-/Plattformgrenzen. Produktcandidateunveröffentlichtklarbenennen. FallsWIP/Test nochläuft, keine künstlicheFrühfertigmeldung; amAbschlussexaktenKandidatengegenunbemerktenWechselfürScientisthalten, WeiterentwicklungnurmitneuemPinmitteilen.\n\nRückmeldungen anOverseer sind durch Nutzerwunsch nach selbstständigen Agentenmeldungen und diese direkte Aufnahme in die Koordination autorisiert. Nur neueAbschlüsse/Blockaden/Entscheidungen, keineACK-, Empfangs- oderPollingschleifen. RegelmäßigeAbsicherungdurchOverseeralle2h; unverändertbleibtstill. Scientist ist für unabhängigeTasks/Messung/Holdouts zuständig; keine privatenTestfälle/fremdenZellresultate anfordern oder Studienfixtures inProdukt einbauen. Vergleichsaufgaben/Rubrik undendlicheRessourcenwerdenvorActuals eingefroren; dein eigenerLuna-TestalleinbeweistnochkeinenMethodensieg. ClassicbleibtderzeitMain, eineAblösungistzuprüfenundkeinevorweggenommeneEntscheidung.",
+        "promptSha256": "b466787ab2a6878ce5489622327922ea863f172863369c482b7a9b9560aa0e6d"
+      },
+      "activeTurn": {
+        "id": "01a11db1-07cf-7642-a6a0-4f0bccd79f66",
+        "status": "inProgress",
+        "error": null,
+        "startedAt": 1791499503,
+        "completedAt": null,
+        "durationMs": null
       }
     }
   ],
-  "nextAction": "Resume Scientist to reconcile interrupted original v3 closure, perform two separately bounded posthoc ConventionalGF tests, finish base report and plan matched subsequent trials including Design when ready. Design continues own direct nativeLunaHigh work and delivers immutable readiness handoff. No automatic main replacement or extra8trial quota.",
+  "nextAction": "Scientist seal prior two-Actorpartialposthoc, then exactlyonefresh dynamicport unchangedcandidate runtimeassessment within separatelyrecordedgrant; finish baseclosure/futurematchedplan. Design fixes own native integration findings and sends exact readiness candidate. No additional fulltrial or mainreplacement.",
   "boundaries": {
     "governmentPublication": false,
     "automaticClassicReplacement": false,
@@ -8083,18 +8179,18 @@
     "classicMainIntegration": "Explicitly authorized by direct user; required checks and independent review before regular merge. Frozen study remains separate."
   },
   "lastReview": {
-    "reviewedUtc": "2026-10-08T22:23:39Z",
-    "evidenceLevel": "Three Brownfield contaminated closures:264 frozen pins,18 Git-bound files,173 archive members+originals,15 artifact hashes,3 patch members/bundle Heads and8 preserved GF originals checked, no mismatches. Independent Root review qualified accept; Government summary exposure wording caveat explicit.",
+    "reviewedUtc": "2026-10-08T23:01:56Z",
+    "evidenceLevel": "Two actual supplemental Actors/clean candidate/builds corroborated; runtime/holdouts unavailable from denied ports. Root public Design-vsClassic review completed; Design native run reports integration blockers. No sealed handoff or outcome-quality winner.",
     "coordinationActions": [
-      "Accepted three conservatively contaminated stopped attempts, no replacements or quality scores",
-      "Preserved dirty ConventionalTask2 exactly and prior GF original archives",
-      "Bound already-requested GF additive errata in b9128650",
-      "Sent one zero-runtime clarification/final-synthesis/repeat-planning assignment; remaining GF continues unchanged"
+      "AddedDesignasfifthmonitoredcandidateandrequestedimmutableReadinesscallback",
+      "ResumedScientistwithfresh2Actorposthoctestgrantafterreportedcompaction-inducedidle; noolddeadlineextension",
+      "Updated2hautomationtofiveownersandactualgrant/status",
+      "StartedoneboundedreadonlyrootpublicDesign-vsClassiccriteriareview"
     ],
     "userDecisionRequired": false,
     "synthesisWrittenUtc": "2026-10-08T19:51:14Z",
     "synthesisPath": "docs/design/government/assessment-2026-10-08.md",
-    "observationStatus": "Five actual attempts closed:2readiness gaps+3contamination; Conventional Greenfield remains active",
+    "observationStatus": "New independentreview supports one explicit600s dynamicport runtime assessment after twofixedportfailures; originalquotaended, noauto refill. Designownworkcontinues.",
     "researchComparisonCompleted": false,
     "synthesisSupplementedUtc": "2026-10-08T21:17:14Z"
   },
@@ -8568,7 +8664,45 @@
       "additionalFullTrialCeilingUnchanged": 8,
       "additionalQuestionsCeilingUnchanged": 2,
       "freezeBeforeMeasure": true,
-      "noAutomaticClassicReplacement": true
+      "noAutomaticClassicReplacement": true,
+      "publicComparisonReview": {
+        "reviewedUtc": "2026-10-08T23:01:00Z",
+        "reviewer": "/root/government_foundation",
+        "comparisonSources": {
+          "DesignPublicDocs": "57fa01ce49fe797b403f4f7640e11820e6b1741f",
+          "ClassicPublicMainDocs": "a97cbd5ef3e0b22b9e6397501047a4e01dc90204",
+          "heldStudyClassicUnchanged": "c91363b7ac4decbe87212ff0f588b5451581a152"
+        },
+        "status": "Read-only prospective capability/migration review completed, no product or trial acceptance",
+        "hypotheses": [
+          {
+            "mechanism": "Canonical project world",
+            "comparison": "Classic selected definitions/desired representations versus Design unified concepts/rules/use-cases/architecture/workflows",
+            "measure": "Same user intent and staged change: ambiguities, duplicate canonical facts, upkeep and drift; clarify single authority."
+          },
+          {
+            "mechanism": "Durable file ownership",
+            "comparison": "Classic declared projection coverage versus Design recursive managers/statement/artifact/check/file index",
+            "measure": "Coverage gaps, shared-file change ownership, unresolved/excluded classification and duplicate ownership without overclaiming whole-repo coverage."
+          },
+          {
+            "mechanism": "Integrated operator workflow",
+            "comparison": "Classic proposal/execute/apply/verify/audit versus Design manager tree/run/status/resume/repair/verify/apply",
+            "measure": "Novice operation, interruption/resume, invalid output/check/stale-candidate refusal, actual supervision/duplicated calls and final byte binding."
+          },
+          {
+            "mechanism": "Brownfield adoption",
+            "comparison": "Classic selective adoption versus Design discover/distill/resolve/adopt",
+            "measure": "Contradictions, unresolved/deferred scopes, exact input binding and preservation of app/tests/docs before explicit adoption."
+          }
+        ],
+        "boundaries": [
+          "Prospective public readiness/migration criteria, not retroactive v3 scoring or new common quality requirements.",
+          "Common outcome quality separate from method-specific conformity; compare same actual profiles/resources.",
+          "Old Design GPT5.5High Shop attempts9+10calls and11checker cases are feasibility only; current nativeLuna WIP separate.",
+          "No Design main replacement or clean candidate accepted; migration/history/provider/isolation limits remain."
+        ]
+      }
     }
   },
   "fullSuiteSlotHistory": [
@@ -9197,5 +9331,26 @@
     "liveStudyApproved": true,
     "issuedUtc": "2026-10-08T21:26:29Z",
     "notAfterUtc": "2026-10-09T15:26:29Z"
-  }
+  },
+  "evidenceReviewResources": [
+    {
+      "issuedUtc": "2026-10-08T22:54:35Z",
+      "reviewer": "/root/government_foundation",
+      "scope": "Read-only public frozenDesign57fa01c versusClassic c91363b/a97cbd5 criteria, max8min, no tests/changes/runtime",
+      "actorActivations": 1,
+      "usage": null,
+      "category": "RootcoordinationreviewoutsideexperimentalActorledger",
+      "status": "Completed; review findings recorded in researchMandate.designExtension.publicComparisonReview",
+      "actualSources": "Design57fa01c public docs versusClassicMaina97cbd5 public docs; StudyClassicc913unchanged"
+    },
+    {
+      "issuedUtc": "2026-10-08T23:01:00Z",
+      "reviewer": "/root/g2_handoff_evidence",
+      "scope": "Read-only partial posthoc evidence/public proposal and one bounded ephemeral-port followup assessment; max300s/no private oracle contents/tests/runtime/writes",
+      "actorActivations": 1,
+      "usage": null,
+      "category": "Root coordination review outside experimental Actor ledger",
+      "status": "Completed qualified review; twopartialbuilds/no runtimeresults/original29startsand0030unstarted confirmed, dynamicportoneActorprospectivegrant supported, publicoracleconflict leftopen."
+    }
+  ]
 }
