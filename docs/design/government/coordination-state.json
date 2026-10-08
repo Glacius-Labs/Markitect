@@ -1,6 +1,6 @@
 {
   "schema": "markitect.overseer-coordination/v1",
-  "updatedUtc": "2026-10-08T22:23:39Z",
+  "updatedUtc": "2026-10-08T22:51:11Z",
   "ownerThread": "01a11367-a781-7683-a20f-46e12614dcb4",
   "authorization": "Direct user Go on 2026-10-07 for Worker, Scientist and Architect coordination",
   "designCommit": "09850535de0c2af5f38b2cfd4f20a62702b676eb",
@@ -22,7 +22,8 @@
       "01a1169b-9357-7df3-a8f6-f913557c782a",
       "01a1169c-3df6-7571-997d-48ab57365875",
       "01a111ec-a913-7830-91b0-925d0a1dd1b2",
-      "01a11928-cc8d-7580-9d29-f6557bb2cbd7"
+      "01a11928-cc8d-7580-9d29-f6557bb2cbd7",
+      "01a11c80-37aa-7fe0-9586-35d916ce6561"
     ],
     "classicMainMandateUpdatedUtc": "2026-10-08T16:08:57Z",
     "classicMainMandateVerified": true,
@@ -441,7 +442,7 @@
       "lastAssistantMessageId": "msg_0fc934753f7a4b30016ac816eb3b548191a08fda1c0b3afb28",
       "initialAssignmentDispatched": true,
       "assignedMilestone": "Run six real native-Codex exploratory case studies, independently evaluate and report intermediate data",
-      "latestProgress": "All three Brownfield attempts closed contaminated_stopped after observed foreign-cell exposure. Root verified archives/dirty preservation and independent review. Conventional Greenfield alone continues; no comparative method quality result.",
+      "latestProgress": "Detected completed Scientist turn after context compaction with generic wait final despite unfinished task5/activation0030. Task5 deadline22:35:08.316849Z has passed; fresh separate bounded posthoc tests authorized, no original extension.",
       "worktree": "C:/Users/Consiliari/.codex/worktrees/government-scientist/Markitect",
       "transferredDesignCommit": "b9e17c9896f14b4b1268e4bcb005395f5d324384",
       "candidateSha": "7d6964331f542462b4a29db3819f60c75083e3be",
@@ -6827,6 +6828,49 @@
           "runtimeAuthority": "None from planning; separate explicit Root grant required after checked base report",
           "prompt": "Brownfield-Abschluss b9128650b3a84cd30a84d3ce582ee66b243a544e qualifiziert angenommen. Root prüfte264Freeze-/Supportpins,18Git-gebundeneAbschlussdateien,173ZIP-Mitglieder samtOriginalbytes,15Artefakthashes,3Patchbytes/Bundleheads und8unveränderteGF-Originaldateien ohneAbweichung. UnabhängigerRootreview bestätigt prospektive contaminated_stopped-Regel. DirtyConventionalTask2 bleibt WIP-Archiv/keinakzeptierterKandidat, EndbewertungenNOT RUN, keineErsatzquote. Bestehender Conventional-GF-Grant läuft unverändert zuEnde; Task6 nur tatsächliche absolute Einzelfallbelege, keine unbelegte Peer-Äquivalenz/Methodenwertung.\n\nEin enger additiver Klarstellungspunkt beim nächsten ohnehin nötigen Evidenzcommit, null neue Actor-/Trial-/Evaluatorstarts: government-brownfield/contamination.json decision.scope enthält generisch 'for path-only metadata'. Government las tatsächlich fremde list_agents-Taskzusammenfassungen, also mehr als Pfadmetadaten. Bitte Original unverändert lassen und additive Errata mit Unterschied zu Conventional/Classic-Pfadexposition aufnehmen; späterer Einfluss bleibt unbewiesen, fremde Summaryinhalte nicht wiedergeben. Bereits gebundene GF-Errata/Originalerhalt sind geprüft.\n\nIm abschließenden Basisbericht zusätzlich einen knappen prospektiven Wiederholungsvorschlag anhand realer Befunde liefern: gemeinsame eigene Port-/PID-/Ressourcenübergabe statt globaler Prozess-/Agenteninventur sowie korrekte öffentliche Role-/Evidence-DTO-Handhabung. Bestehende Produktpins/Tasks/Rubrik nicht still ändern, tatsächliche technische Abschottung von bloßen Actor-Instruktionen klar trennen. Nenne die kleinste mit vorhandenen Mitteln ausführbare Änderung, gemeinsame endliche Ressourcen, Source-/Config-Freeze und Abbruchkriterien für maximal6passende Wiederholungszellen innerhalb der insgesamt höchstens8weiterenTrials. Keine neue Plattform, Installation, API-/Policyänderung, kein Produktfix oder Actualstart aus diesem Planauftrag; erst nach geprüftem Basisbericht könnte Root einen frischen konkreten Grant erteilen. Dieses Dokumentations-/Syntheseargument zählt zu laufender Scientistkoordination, keine kostenlose Hilfe an Trialactors. Nächste Meldung bei finalem GF-/Basisabschluss oder echtem Bedarf; keineACK.",
           "promptSha256": "c5715915b443f9661046d94c148ac80cc027c43a3e246ba259be05f714b99f26"
+        },
+        "nativeV3PosthocValidationGrant": {
+          "key": "native-v3-conventional-gf-posthoc-validation-20261009",
+          "issuedUtc": "2026-10-08T22:51:11Z",
+          "notAfterUtc": "2026-10-08T23:36:11Z",
+          "source": "Direct user: Scientist soll derweil die tests durchfuehren und weiter arbeiten; prior actual-case research authorization",
+          "status": "Fresh separate bounded supplemental validation authorized; original v3 task deadline is not extended",
+          "originalGrantKey": "native-codex-exploratory-v3-20261008",
+          "preparationMaxSeconds": 900,
+          "preparationActorActivations": 0,
+          "actualActorActivationsMax": 2,
+          "initialActualActorActivations": 0,
+          "remainingActorActivationsAtIssuance": 2,
+          "perActorWallSeconds": 600,
+          "maxConcurrentActors": 1,
+          "maximumOverallWallSeconds": 2700,
+          "trialReplacementsOrAdditionalFullTrials": 0,
+          "additionalTask6OrImplementationActivations": 0,
+          "productChangesAllowed": false,
+          "semanticRepairsAllowed": 0,
+          "testScope": "Two fresh fork_turns=none Actors on frozen Conventional Greenfield Task5-repair candidate: current public Task1-5 re-review, then independent declared-requirement/holdout final assessment limited to Tasks1-5. No Task6, no future requirement, no feedback repair; results explicitly posthoc and outside original v3 timing score.",
+          "authorityConditions": [
+            "Reconcile actual task5/activation0030 and any running own Actors; expired reservation never reused, stop own residuals within existing authority, preserve actual starts and unknowns.",
+            "Close original v3 incomplete at time limit/coordinator interruption unless an already existing predeadline completion receipt proves otherwise; no retrospective extension.",
+            "Freeze actual clean candidate SHA/tree/bundle, original released1-5 tasks/rubric/checks/evaluator inputs and native model/reasoning/tool config before new Actors. Do not rewrite original evidence.",
+            "Record supplemental reservations before activation; failed launches and evaluators consume same2cap; no automatic retry/refill.",
+            "Sequential own isolated working copies; provided own port/PID/process handles only. No list_agents, global process inventory, foreign-cell/code/chat/memory reads by Actors, or child Actor spawns.",
+            "Ports62581 and62582 are candidate own test binds, not proven globally reserved; unavailable port ends affected test without inspecting/killing foreign owner.",
+            "Preserve cooperative shared-host isolation limitation; actual foreign exposure invalidates supplement.",
+            "Use inherited common native model/reasoning profile with no override; requested/serving identities and usage availability explicit.",
+            "No direct providerAPI, purchases, global config/policy changes or old appserver diagnostic.",
+            "After each Actor stop own test processes; report exact checks/results/commands, independent limits, original-versus-posthoc elapsed effort and null unknown provider usage."
+          ],
+          "usagePolicy": "Unavailable tokens/provider/cost remain null; finite calls/wall bounds apply, no cost/compute efficiency claim."
+        },
+        "nativeV3CoordinatorInterruptionObserved": {
+          "observedUtc": "2026-10-08T22:51:11Z",
+          "source": "Recent completed turn ended after contextCompaction with generic wait message; live ledger Task5running/activation0030reserved",
+          "originalTask5DeadlineUtc": "2026-10-08T22:35:08.316849Z",
+          "reservationId": "activation-0030",
+          "actualLaunchEstablishedByRoot": false,
+          "originalOutcome": "Pending Scientist reconciliation; preserve unknown launch and timing, no success claim or refill",
+          "rootAction": "Explicit bounded resume/closure plus separate posthoc validation grant; no old reservation reuse"
         }
       },
       "classicHandoffReceived": true,
@@ -7995,9 +8039,40 @@
         }
       },
       "lastAssistantMessageId": "msg_0dc7fbe822793640016ac6f69ccac88191ac99728328af381f"
+    },
+    {
+      "name": "Design",
+      "threadId": "01a11c80-37aa-7fe0-9586-35d916ce6561",
+      "hostId": "local",
+      "worktree": "C:/Users/Consiliari/.codex/worktrees/model-driven-delivery/Markitect",
+      "lastObservedStatus": "active",
+      "candidateSha": "57fa01ce49fe797b403f4f7640e11820e6b1741f",
+      "candidateStatus": "Previous clean reported handoff; current7-file WIP for native Luna High/appCLI streaming pinning; not a frozen test candidate",
+      "afterCursor": null,
+      "lastAssistantMessageId": null,
+      "assignedMilestone": "Continue latest direct user-authorized native Luna High Shop verification; then immutable test-readiness handoff/callback",
+      "monitoringAuthorizedUtc": "2026-10-08T22:51:11Z",
+      "monitoringSource": "Direct user asks regularly watch Design, test it and assess whether it can replace Classic",
+      "acceptance": "Not yet independently accepted; development/native test reports only",
+      "latestProgress": "Reported Windows53packages and3LunaHighreviews on prior source; native Luna now responds through appCLI0.162.0-alpha.2; streaminghash pinning fix+full Shop run in progress. Hard OS isolation unproven.",
+      "evidence": {
+        "observedCurrentHead": "57fa01ce49fe797b403f4f7640e11820e6b1741f",
+        "observedBranch": "codex/model-driven-delivery",
+        "observedModifiedFiles": 7,
+        "reportedSourceFullSuiteSha": "510efe6",
+        "reportedPriorSourceHandoffSha": "57fa01c",
+        "heldStudyVersion": null,
+        "mainPromotionAuthorized": false
+      },
+      "lastAssignment": {
+        "key": "design-readiness-callback-and-classic-replacement-candidate-20261009",
+        "authorizedUtc": "2026-10-08T22:51:11Z",
+        "sentUtc": null,
+        "scope": "Observe existing authorized implementation/testing; request bounded exact candidate/check/config/migration handoff and callbacks; no new trial budget or main/release promotion"
+      }
     }
   ],
-  "nextAction": "Await final Conventional Greenfield and six-attempt base synthesis under existing grant. Five peer closures stay preserved/incomplete or contaminated. Review minimal prospective matched repeat proposal against observed exposure/role integration errors; no new execution until separately finite grant, total additional research trials max8.",
+  "nextAction": "Resume Scientist to reconcile interrupted original v3 closure, perform two separately bounded posthoc ConventionalGF tests, finish base report and plan matched subsequent trials including Design when ready. Design continues own direct nativeLunaHigh work and delivers immutable readiness handoff. No automatic main replacement or extra8trial quota.",
   "boundaries": {
     "governmentPublication": false,
     "automaticClassicReplacement": false,
@@ -8486,6 +8561,14 @@
         "/root/g2_handoff_evidence"
       ],
       "reviewFindings": "Native fresh actors + new matched protocol permitted. Existing v0.1 permits honest cooperative holdout boundary; no OS isolation proof. Actual missing bridge is study adapter work, not more appserver diagnosis. Same frozen product methods and independent outcomes required."
+    },
+    "designExtension": {
+      "recordedUtc": "2026-10-08T22:51:11Z",
+      "directHumanRequest": "Regularly inspect Design and test whether it can replace Classic; Scientist continues testing in parallel",
+      "additionalFullTrialCeilingUnchanged": 8,
+      "additionalQuestionsCeilingUnchanged": 2,
+      "freezeBeforeMeasure": true,
+      "noAutomaticClassicReplacement": true
     }
   },
   "fullSuiteSlotHistory": [
@@ -9030,6 +9113,21 @@
       "totalCurrentTokens": null,
       "noFullResearchSuccessClaim": true,
       "resumption": "New explicit finite research mandate, preserved counters/unknowns, fresh protocol/ability review and concrete grant; no reuse of closed grants."
+    },
+    "designReplacementAssessment": {
+      "requestedUtc": "2026-10-08T22:51:11Z",
+      "status": "Candidate to evaluate against Classic, Conventional reference and Government where relevant; no preselected winner",
+      "candidateThreadId": "01a11c80-37aa-7fe0-9586-35d916ce6561",
+      "candidateWorktree": "C:/Users/Consiliari/.codex/worktrees/model-driven-delivery/Markitect",
+      "candidatePin": null,
+      "currentPrimaryLine": "Classic remains main until deliberate evidence-backed replacement/integration authorization",
+      "comparisonRequirements": [
+        "Equal actual model/reasoning/tools/time/calls/staged inputs and declared requirements",
+        "Shared outcome quality separated from method compliance and infrastructure faults",
+        "Intent/model/file ownership fidelity, change impact/drift, model upkeep, resume and supervision effort",
+        "Compatibility, migration/rollback and regressions against current ClassicMain as well as held studyClassic; no silent candidate substitution"
+      ],
+      "testBudget": "Included in max8additional full research trials/max2focused questions; no new full trial authorized by monitoring request or posthoc2Actor grant"
     }
   },
   "resourceProfileHistory": [
