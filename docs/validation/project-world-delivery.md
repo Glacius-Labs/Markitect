@@ -67,3 +67,44 @@ Local logs and disposable checkouts remain outside repository inputs under `%TEM
 No live Claude inference was run. The observed installed Claude CLI 2.1.233 is below the restricted adapter's minimum 2.1.248; unsupported versions are rejected. A supported conversation host remains the user-facing surface; the deterministic CLI itself contains no language model or autonomous conversation service.
 
 Compilation, linked artifacts and finite tests do not prove every comment, document and implementation fact is consistent, complete or correct. The design's larger acceptance catalogue remains a requirements list, not a claim that every scenario ran. Hosted Windows/Linux CI, immutable packaging, release gates, production behavior, economic benefit and human acceptance require separate evidence.
+
+## 2026-10-09 Luna High validation and Scientist handoff
+
+This additional local validation uses fixed source `510efe627f73f544492ff301ee9be329fe6fb01b` on `codex/model-driven-delivery`. That revision contains the implementation previously checked at `18e2a10` plus its final validation report. This record preserves the earlier receipts and their actual `gpt-5.5 high` provider selection. The worktree was clean before testing. No installed release, other chat's worktree, Overseer or Scientist task was changed.
+
+Three independent review agents were explicitly configured as `gpt-6-luna` with `high` reasoning. They inspected runtime/write boundaries, setup/adoption/adapters, and the executable example/acceptance harness respectively. Their model selection is distinct from the native provider selected by the adopting project's runtime.
+
+| Check | Result at `510efe6` |
+|---|---|
+| Fresh full Windows suite, `go test ./... -count=1 -timeout=30m` | PASS: 53 packages with tests, 282.5 seconds, Go 1.27.1 |
+| Contribution and project CLI gates | PASS: 35 correctly invoked source gates plus five project gates against a standalone disposable Git root |
+| Codex and Claude protocol suites | PASS: 26 and seven tests respectively; no live Claude inference |
+| Native Windows build and Linux amd64 cross-build | PASS; the Linux binary was not executed |
+| Native Init, previews and failure guards | PASS: 12 CLI probes, including read-only Init/setup, stale setup digest, and rejected-provider Resume/Repair/Verify/Apply |
+| Independent behavior checker | PASS: all 11 cases on the retained earlier provider-created candidate; fixed pre-Apply source fails packing cancellation as expected. No new inference occurred in these checks |
+| Independent Luna High reviews | No remaining actionable finding in the inspected scope; focused Go packages, CLI help, seven baseline Shop tests and the negative control checked separately |
+
+The first source-gate helper incorrectly invoked five project example commands directly against `examples/project-world`, which is not a Git worktree root. All five were rejected with that precise diagnostic. Repeating those commands against the separately initialized Shop, as documented in its README, passed. The native-probe helper also needed a local correction because `project document` emits Markdown rather than JSON. These were test-orchestration corrections; the original failed invocation records are retained. The full suite's outcome remains its own receipt.
+
+### Native Luna High provider attempt
+
+One fresh disposable Shop was prepared through the public CLI: local doctor/setup, four accepted model edits, a commit, then `plan --since`. Planning selected six Managers and one check. Fixed target commit: `d27c40ae2f4c5b580387163050e22fe759ec5570`; plan/run ID: `ef8b2ac06ef07ad837c497850e24a71b`.
+
+Native Codex CLI `0.130.0` received model `gpt-6-luna` and `model_reasoning_effort: high`. The active account rejected that model at the root Manager's first work call. The public response states: "Codex rejected the configured model for the active account." There was no model substitution. This is a provider/account compatibility failure; no successful Luna implementation experiment resulted. It says nothing about availability in another host or account. The review agents above ran with their separately configured Luna High profile.
+
+The run stopped as `failed`; its root task durably records one work attempt and an uncertain outcome, and the candidate remains empty and unintegrated. There is no accepted invocation/usage entry for this rejection. The task attempt is retained, while token usage and any provider charge remain unknown; missing usage is not zero cost. Resume, Repair, Verify and Apply each rejected the failed run without another provider process or any selected/operational file change. No second native-provider attempt or fallback was made.
+
+Evidence is under `%TEMP%/markitect-luna-high-validation-20261009/`: `full-tests-510efe6.json` and its log, `gates-510efe6.json`, `standalone-project-gates.json`, `native-cli-probes.json`, `linux-cross-build.json`, `independent-acceptance.json`, and `shop/state.json` plus public status/setup/run outputs. Frozen native Windows binary: `markitect-510efe6.exe`, SHA-256 `867a50c63fa2b584808778698d8b8e1a2d90ac255ba4968c0af1710b1a78e38f`. Adapter/provider/runtime digests remain in the disposable runtime and plan. Private provider logs remain private.
+
+### Independent trial recipe
+
+The user will instruct the Overseer. This handoff prepares a candidate and a bounded scenario; no Scientist trial was started and no independent acceptance is claimed.
+
+1. Use a fresh checkout at the supplied final candidate commit. Record full SHA, clean status, tool digest, provider executable/version/digest and actual Luna High model mapping. Keep model, tools, requirements, permissions and finite budgets identical if comparing approaches. Resolve the observed native model rejection in the actual trial environment before claiming a Luna run; stop on an unsupported profile rather than choosing a fallback.
+2. Run the contribution gates in [CONTRIBUTING](../../CONTRIBUTING.md), then build a separate binary. Keep binary and adapter bytes fixed throughout each lifecycle. Do not reuse the failed local run or earlier accepted fixture as a fresh actor/task result.
+3. Use [the Shop harness](../../experiments/project-world-live/README.md) with an explicit model and fresh output directory. Preparation edits the model and plans impact without inference. Check the expected six Managers and one check. `--stage run` starts inference; integration still requires fresh `--stage verify` and guarded `--stage apply`. A known required-check failure permits explicitly bounded same-run `--stage repair`, followed by fresh verification. Preserve failures, retries, interventions and usage/budget evidence.
+4. Freeze the candidate before evaluator checks. The independent [acceptance checker](../../experiments/project-world-live/acceptance.py) must fail on the original fixture and pass all 11 cases on a correct changed implementation. Keep its code/results out of actor-supplied materials. Being outside the Shop checkout does not establish inaccessibility: `controlled-local` is not OS isolation. If a hidden holdout is required, test the actor's actual access boundary independently and invoke the evaluator after candidate freeze.
+5. For Brownfield, use a separate fresh fixture through preparation, generation and explicit resolution. Review the report and question choices. For a user-led adoption review, invoke CLI `adopt` preview and guarded write separately as shown in [Project workflow](../project-workflow.md); the harness's `--stage adopt` immediately previews and writes within an already-authorized test. Confirm deferred scopes contribute no files and code/test/documentation bytes remain unchanged by model adoption.
+6. Report deterministic mechanics, provider-backed behavior, independent evaluator findings and human acceptance separately. Count setup, model upkeep, coordination corrections and failed attempts. Hosted CI, Linux execution, release packaging, hard OS isolation, arbitrary-repository understanding, long-running autonomy and productivity benefit remain outside this local result.
+
+The Go race detector was not run: this Windows host reports `CGO_ENABLED=0` and has no discovered GCC/Clang compiler. No compiler, provider, account or global configuration was installed or changed to hide that gap. The Linux cross-build does not substitute for Linux tests. Earlier provider-backed Shop/Brownfield evidence remains bound to its actual source above.
