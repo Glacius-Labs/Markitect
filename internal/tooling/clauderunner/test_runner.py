@@ -9,14 +9,14 @@ from unittest.mock import patch
 import runner
 
 
-def invocation() -> dict:
+def invocation(role: str = "executor") -> dict:
     return {
         "apiVersion": "markitect.example.org/agent-execution/v1alpha1",
         "runId": "a" * 32,
         "nonce": "b" * 32,
         "inputDigest": "sha256:" + "c" * 64,
         "request": {
-            "role": "executor",
+            "role": role,
             "sourceRevision": "d" * 40,
             "modelDigest": "sha256:" + "e" * 64,
             "modulePin": "module@sha256:" + "f" * 64,
@@ -25,6 +25,18 @@ def invocation() -> dict:
             "policyIds": [],
             "context": {"privatePromptSentinel": "DO_NOT_LOG_PROMPT_CONTENT"},
             "artifacts": [],
+        },
+    }
+
+
+def task_report_schema() -> dict:
+    return {
+        "type": "object",
+        "additionalProperties": False,
+        "required": ["status", "summary"],
+        "properties": {
+            "status": {"type": "string", "enum": ["complete", "partial"]},
+            "summary": {"type": "string", "minLength": 1, "maxLength": 256},
         },
     }
 
@@ -50,14 +62,43 @@ class ClaudeRunnerTests(unittest.TestCase):
             "outcome": "proposed",
             "candidateFiles": [],
             "candidateJson": '{"proposal":{"value":1}}',
+            "reportJson": None,
             "evidenceRefs": [],
             "verifierObservations": [],
             "uncertainty": ["inferred"],
         }
-        normalized = runner.normalize_claude_response({"structured_output": response})
+        normalized = runner.normalize_claude_response({"structured_output": response}, invocation("infer"))
         self.assertEqual(normalized["candidateJson"], {"proposal": {"value": 1}})
         with self.assertRaises(runner.AdapterError):
-            runner.normalize_claude_response({"result": "unstructured"})
+            runner.normalize_claude_response({"result": "unstructured"}, invocation("infer"))
+
+    def test_task_report_is_required_validated_and_returned_as_an_object(self) -> None:
+        value = invocation()
+        value["request"]["context"] = {"responseSchema": task_report_schema()}
+        response = {
+            "apiVersion": value["apiVersion"],
+            "runId": value["runId"],
+            "nonce": value["nonce"],
+            "role": "executor",
+            "inputDigest": value["inputDigest"],
+            "outcome": "proposed",
+            "candidateFiles": [],
+            "candidateJson": None,
+            "reportJson": '{"status":"complete","summary":"done"}',
+            "evidenceRefs": [],
+            "verifierObservations": [],
+            "uncertainty": [],
+        }
+        normalized = runner.normalize_claude_response({"structured_output": response}, value)
+        self.assertEqual(normalized["reportJson"], {"status": "complete", "summary": "done"})
+        self.assertEqual(runner.provider_response_schema(value)["properties"]["reportJson"]["type"], ["string", "null"])
+        self.assertIn("reportJson", runner.make_prompt(value))
+        response["reportJson"] = '{"status":"complete","summary":""}'
+        with self.assertRaises(runner.AdapterError):
+            runner.normalize_claude_response({"structured_output": response}, value)
+        response["reportJson"] = None
+        with self.assertRaises(runner.AdapterError):
+            runner.normalize_claude_response({"structured_output": response}, value)
 
     def test_version_requires_restricted_mode_minimum_and_exact_match(self) -> None:
         with self.assertRaises(runner.AdapterError):
@@ -78,6 +119,7 @@ class ClaudeRunnerTests(unittest.TestCase):
             "outcome": "proposed",
             "candidateFiles": [{"path": "candidate.txt", "mode": "0644", "content": "candidate"}],
             "candidateJson": None,
+            "reportJson": None,
             "evidenceRefs": ["scope/example"],
             "verifierObservations": [],
             "uncertainty": [],
@@ -109,6 +151,8 @@ class ClaudeRunnerTests(unittest.TestCase):
                 model="sonnet",
                 timeout_seconds=15,
             )
+            value["request"]["context"]["responseSchema"] = task_report_schema()
+            structured["reportJson"] = '{"status":"complete","summary":"done"}'
             with patch.object(runner, "resolve_claude", return_value=[args.claude_executable]), \
                  patch.object(runner, "check_version"), \
                  patch.object(runner.subprocess, "Popen", FakeProcess):
@@ -120,9 +164,11 @@ class ClaudeRunnerTests(unittest.TestCase):
             self.assertEqual(argv[argv.index("--tools") + 1], "")
             self.assertIn("mcp__*", argv)
             self.assertIn("--json-schema", argv)
+            self.assertIn('"reportJson":{"type":["string","null"]}', argv[argv.index("--json-schema") + 1])
             self.assertEqual(argv[argv.index("--effort") + 1], "high")
             self.assertFalse(captured["kwargs"]["shell"])
             self.assertEqual(result["candidateFiles"][0]["path"], "candidate.txt")
+            self.assertEqual(result["reportJson"], {"status": "complete", "summary": "done"})
             log = log_path.read_text(encoding="utf-8")
             self.assertIn("adapter.prompt-submitted", log)
             self.assertIn("provider.stderr", log)
