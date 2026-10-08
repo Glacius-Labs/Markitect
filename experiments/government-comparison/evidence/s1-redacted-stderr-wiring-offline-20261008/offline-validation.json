@@ -1,0 +1,47 @@
+{
+  "key": "s1-redacted-stderr-wiring-offline-20261008",
+  "baseSha": "3f91eeefaad0191d76af3363a9165f1fe719f78c",
+  "recordedUtc": "2026-10-08T16:39:41.553740+00:00",
+  "scope": "Six synthetic consumer methods against actual new StderrConsumer/admit_rpc functions used by copied session; live session wiring static reviewed",
+  "executionHistory": [
+    {
+      "tests": 6,
+      "passed": 6,
+      "unittestSeconds": 0.056,
+      "wallSeconds": 0.182,
+      "exitCode": 0
+    },
+    {
+      "tests": 2,
+      "passed": 2,
+      "unittestSeconds": 0.036,
+      "wallSeconds": 0.261,
+      "exitCode": 0,
+      "scope": "Only private-file and output/admission methods after failure-status qualification; fake stream/cached output/partial failure/existing-artifact regressions"
+    }
+  ],
+  "distinctTestCases": 6,
+  "collectorSuiteRepeated": false,
+  "rootRepeatedTests": false,
+  "finalSourceHashes": {
+    "client.py": "ac665dc546e7e333fcaf0e97e011e22b606d8809df2e47d23fdddb351d3e1dc8",
+    "test_consumer.py": "16413873652d005fd719798fda57135ba01b81f054a51223a8a2188efe4b987e",
+    "contract.md": "25e0d699ca466b30c1e44223405b3c1a63ca0fe3b6a30f88721450b824854098",
+    "derivation.json": "25af0e7e88a8bffd7f9463276b83d418b7ff945731a7d7d206ce0d1707c92ca8"
+  },
+  "focusedLogSha256": "51867d5d461f3890be56f490493580808e176617e41bf40c3310cd0fa4adc566",
+  "runtimeStarts": 0,
+  "cliMetadataCalls": 0,
+  "providerCalls": 0,
+  "sessionReservations": 0,
+  "sessionFreezeCreated": false,
+  "newRuntimeAllocation": 0,
+  "runtimeEntryGuardEnabled": true,
+  "liveAuthorityPatchedInTests": false,
+  "actualRealStderrCaptured": false,
+  "oldTrackedFilesModified": 0,
+  "frozenStudyInputsModified": 0,
+  "baseClientAndAcceptedCollectorByteIdentical": true,
+  "staticAstParse": "passed",
+  "claimBoundary": "Offline consumer integration evidence only; no actual session, RPC transport, process-tree shutdown, secret-free guarantee, diagnosis or provider/billing proof"
+}

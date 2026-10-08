@@ -1,0 +1,24 @@
+{
+  "key": "s1-redacted-stderr-wiring-offline-20261008",
+  "baseClient": {
+    "path": "experiments/government-comparison/evidence/s1-thread-start-diagnostic-20261008-r2/client.py",
+    "sha256": "85a3181560c97e150d52fbb12458bea3958993ffaecbdcffa077ff14dc30bb5c"
+  },
+  "acceptedCollector": {
+    "path": "experiments/government-comparison/evidence/s1-redacted-stderr-offline-20261008/redacted_stderr.py",
+    "sha256": "d92f79b0d14abd2c5851bea2162813c5f93b396e4d19fc927389bc8b6557ef6d"
+  },
+  "changedExistingFunctions": [
+    "consume_stderr",
+    "load_request",
+    "session",
+    "validate_pre_reservation"
+  ],
+  "unchangedExistingFunctionCount": 27,
+  "unchangedAdmissionAndController": true,
+  "newConsumerClass": "StderrConsumer",
+  "runtimeDisabledByAdditionalGuard": true,
+  "futureBindings": "Not allocated; fresh grant/source/request/freeze/reservation required",
+  "oldSourcesModified": false,
+  "sourceAstParsed": true
+}

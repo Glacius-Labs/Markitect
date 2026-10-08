@@ -1,0 +1,22 @@
+{
+  "key": "s1-redacted-stderr-wiring-offline-20261008",
+  "baseSha": "3f91eeefaad0191d76af3363a9165f1fe719f78c",
+  "status": "offline-consumer-wiring-reviewed",
+  "manifestExcludesItself": true,
+  "payloadFiles": {
+    "experiments/government-comparison/evidence/s1-redacted-stderr-wiring-offline-20261008/client.py": "ac665dc546e7e333fcaf0e97e011e22b606d8809df2e47d23fdddb351d3e1dc8",
+    "experiments/government-comparison/evidence/s1-redacted-stderr-wiring-offline-20261008/contract.md": "25e0d699ca466b30c1e44223405b3c1a63ca0fe3b6a30f88721450b824854098",
+    "experiments/government-comparison/evidence/s1-redacted-stderr-wiring-offline-20261008/derivation.json": "25af0e7e88a8bffd7f9463276b83d418b7ff945731a7d7d206ce0d1707c92ca8",
+    "experiments/government-comparison/evidence/s1-redacted-stderr-wiring-offline-20261008/focused-tests.log": "51867d5d461f3890be56f490493580808e176617e41bf40c3310cd0fa4adc566",
+    "experiments/government-comparison/evidence/s1-redacted-stderr-wiring-offline-20261008/offline-validation.json": "f2a16434e9afd5660fe45a232902f8adc66c78f590770adf7cc51151b6b7238b",
+    "experiments/government-comparison/evidence/s1-redacted-stderr-wiring-offline-20261008/source-result-review.md": "6bc251b113193b0be8ace32154c2fafa6b9575756b888f0b7b1b401fd3441bbf",
+    "experiments/government-comparison/evidence/s1-redacted-stderr-wiring-offline-20261008/test_consumer.py": "16413873652d005fd719798fda57135ba01b81f054a51223a8a2188efe4b987e"
+  },
+  "payloadCount": 7,
+  "actualRuntimeStarts": 0,
+  "newRuntimeAllocation": 0,
+  "sessionReservations": 0,
+  "sessionFreezeCreated": false,
+  "realStderrCaptured": false,
+  "boundary": "Source/synthetic consumer evidence only; runtime guard active, no live bindings or session authorization."
+}
