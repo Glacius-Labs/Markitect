@@ -5,10 +5,11 @@ package projectadoption
 import "github.com/Glacius-Labs/Markitect/internal/host/projectwork"
 
 const (
-	DiscoveryVersion    = "markitect.example.org/project-discovery/v1alpha1"
-	DistillationVersion = "markitect.example.org/project-distillation/v1alpha1"
-	ResolutionVersion   = "markitect.example.org/project-resolution/v1alpha1"
-	AdoptionPlanVersion = "markitect.example.org/project-adoption-plan/v1alpha1"
+	DiscoveryVersion     = "markitect.example.org/project-discovery/v1alpha1"
+	DistillationVersion  = "markitect.example.org/project-distillation/v1alpha1"
+	ResolutionVersion    = "markitect.example.org/project-resolution/v1alpha1"
+	AdoptionPlanVersion  = "markitect.example.org/project-adoption-plan/v1alpha1"
+	RuntimeRecordVersion = "markitect.example.org/submitted-runtime-record/v1alpha1"
 )
 
 // PathReason identifies a path or directory prefix in the declared scope.
@@ -82,19 +83,31 @@ type EvidenceRef struct {
 type Claim struct {
 	ID          string              `json:"id"`
 	ScopeID     string              `json:"scopeId"`
-	Kind        string              `json:"kind"`   // observation, documented-intent, runtime-observation, hypothesis
-	Method      string              `json:"method"` // static-source, documentation, runtime-evidence, synthesis
+	Kind        string              `json:"kind"`   // observation, documented-intent, submitted-runtime-record, hypothesis
+	Method      string              `json:"method"` // static-source, documentation, submitted-record, synthesis
 	Statement   string              `json:"statement"`
 	Evidence    []EvidenceRef       `json:"evidence"`
 	Uncertainty []string            `json:"uncertainty"`
 	Runtime     *RuntimeObservation `json:"runtime,omitempty"`
 }
 
+// RuntimeObservation copies a selected, caller-submitted record. Its values
+// are not an attestation that Markitect executed or authenticated the command.
 type RuntimeObservation struct {
-	EvidenceID   string   `json:"evidenceId"`
-	Command      []string `json:"command"`
-	ExitCode     *int     `json:"exitCode"`
-	RunnerDigest string   `json:"runnerDigest"`
+	EvidenceID           string         `json:"evidenceId"`
+	RecordSourceRevision string         `json:"recordSourceRevision"`
+	SourceRelation       string         `json:"sourceRelation"` // same-discovery-commit or historical
+	Command              []string       `json:"command"`
+	ExitCode             *int           `json:"exitCode"`
+	RunnerDigest         string         `json:"runnerDigest"`
+	Inputs               []RuntimeInput `json:"inputs"`
+}
+
+// RuntimeInput is a path and content digest asserted by the submitted runtime
+// record. It is not an execution attestation.
+type RuntimeInput struct {
+	Path   string `json:"path"`
+	Digest string `json:"digest"`
 }
 
 type TermOccurrence struct {
