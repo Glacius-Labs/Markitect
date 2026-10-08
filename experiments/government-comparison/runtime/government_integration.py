@@ -194,6 +194,7 @@ def _delegate_slot(python_executable: Path, delegate_path: Path, slot_id: str,
         "responseRole": response_role,
         "wrapper": {"command": str(python_executable)},
         "delegate": {
+            "command": str(python_executable),
             "argv": argv,
             "commandDigest": command_digest,
             "runtimeFiles": delegate_files,

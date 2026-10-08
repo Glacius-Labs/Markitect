@@ -1,4 +1,46 @@
-# Native integration: r2 stopped; negative handoff complete
+# Native integration: r3 offline package complete; native execution stopped
+
+Completed package: `s1-offline-adapter-contract-repair-r3-preparation`, delegated
+by Overseer after accepted r2 delivery
+`419775ab0ea5f421655ab3c8bd97e286ffbb6e0a`. The local commit containing this
+handoff owns the R3 source/evidence snapshot; exact file hashes and historical
+preservation checks are in
+`evidence/native-integration/run-3-preparation/delivery-validation.json`.
+
+The Government/shared delegate contract now explicitly binds the executable
+to `argv[0]`, preserving digest/runtime-file checks and the launch guard.
+Classic now resolves native Projection/Definition identities and matching
+context/authorization, with all three slots covered by static preflight.
+The focused gate passes 18 tests. The six-role chain exercises real temporary
+Authority/bootstrap and per-Invocation resolver/reservation code, then mocked
+success/failure translation for each role. Source-grant admission and Classic
+product binding remain patched boundaries; no native or delegate execution is
+proved. Original failures are reproduced offline from frozen/source-bound
+inputs, without reconstructing missing full historical stdin.
+
+Independent review: `public/native-integration-r3-offline-review.md`, SHA-256
+`f638cc31105b155a09a15b324f8e5f1079026ac9930e0b214b9377407a0914e2`;
+no material finding remains in the assigned offline scope. Full report:
+`public/native-integration-r3-offline-preparation.md`. New R2 errata:
+`public/native-integration-r2-government-errata.md`; the cited final native
+ledger has five rows, and Government's outer process receipt is present.
+
+**STOP: no new run quota, native product/controller/queue, real delegate,
+model, provider, metadata or study start.** Both R2 cases remain incomplete;
+S1, native lifecycle success, semantic quality and human acceptance remain
+open. Product pins and historical ledgers/freezes/reviews stay unchanged.
+
+`evidence/native-integration/run-3-preparation/next-native-allocation-proposal.json`
+is proposed only: first checkpoint Government queue + Classic Execute requires
+two newly granted starts/300 reserved seconds. Full conditional lifecycle
+requests Government +2/+6 wrappers/+6 fixed delegates/300 seconds and Classic
++5/+6/+6/750 seconds, with zero real Actors/providers/metadata/study cells.
+A new exact Coordinator-bound finite grant, narrow reviewed admission update,
+fresh disposable bindings and immutable preflight freeze are prerequisites.
+Do not reuse closed R2 authority, refresh old runtime snapshots, repair/relaunch
+a failed native case, or resume execution after compaction without that grant.
+
+## Closed r2 record
 
 Both corrected mechanical cases ended **incomplete** and are stopped. No
 resume, Apply, Verify, Audit, stale replay, semantic acceptance, comparison result

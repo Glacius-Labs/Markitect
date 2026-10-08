@@ -115,6 +115,11 @@ class GovernmentIntegrationPreparationTests(unittest.TestCase):
                 self.assertEqual(files[str(Path(sys.executable).resolve())], integration.runtime_file(sys.executable))
                 self.assertEqual(files[str((integration.FIXTURE_ROOT / "deterministic_delegate.py").resolve())],
                                  integration.runtime_file(integration.FIXTURE_ROOT / "deterministic_delegate.py"))
+            for slot in auth["slots"]:
+                self.assertEqual(slot["delegate"]["command"], slot["delegate"]["argv"][0])
+                self.assertEqual(slot["delegate"]["commandDigest"],
+                                 next(item["digest"] for item in slot["delegate"]["runtimeFiles"]
+                                      if item["path"] == slot["delegate"]["command"]))
             self.assertEqual(integration.expected_queue_role_calls()["queueTotal"], 3)
 
     def test_pending_role_authorization_cannot_build_native_runtime(self):

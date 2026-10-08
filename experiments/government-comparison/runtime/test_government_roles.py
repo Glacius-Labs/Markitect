@@ -241,10 +241,22 @@ sys.stdout.write(json.dumps(response, separators=(",", ":")))
 
     @staticmethod
     def _classic_invocation(role, projection_id, scope_id):
+        phase, slot_id, expected_scope = classic_integration.ROLE_SLOTS[(role, projection_id)]
+        if scope_id != expected_scope:
+            raise ValueError("test invocation scope does not match the native Classic role slot")
+        scopes = list(classic_integration.PROJECTION_SUBJECTS[projection_id])
+        definitions = []
+        for identity in scopes:
+            api_version, kind, namespace, name = json.loads(identity)
+            definitions.append({"apiVersion": api_version, "kind": kind,
+                                "metadata": {"namespace": namespace, "name": name}})
         request = {"role": role, "sourceRevision": "7dbd599c81540c8203a1b7f83afbc335174f4f1f",
                    "modelDigest": "sha256:" + "1" * 64, "modulePin": "sha256:" + "2" * 64,
-                   "projectionId": projection_id, "scopeIds": [scope_id], "policyIds": [],
-                   "context": {}, "artifacts": []}
+                   "projectionId": projection_id, "scopeIds": scopes, "policyIds": [],
+                   "context": {"model": {"projectionId": projection_id,
+                                             "scopeIds": list(classic_integration.NATIVE_SUBJECTS),
+                                             "definitions": definitions}},
+                   "artifacts": []}
         value = {"apiVersion": government_roles.INVOCATION_API, "runId": "classic-verify",
                  "nonce": "classic-verify-nonce", "inputDigest": "sha256:" + sha(go_json(request)),
                  "request": request}
@@ -542,6 +554,28 @@ sys.stdout.write(json.dumps(response, separators=(",", ":")))
         self.assertFalse(self.marker_path.exists())
         self.assertEqual(len(self.ledger.snapshot()["attempts"]), 1)
 
+    def test_missing_or_changed_delegate_command_fails_preflight_before_reservation(self):
+        original_auth = self.auth_raw
+        request, captured = self.authority.validate(self.request_raw)
+        for command in (None, str(Path(sys.executable).resolve()) + ".changed"):
+            changed = json.loads(original_auth)
+            if command is None:
+                changed["slots"][0]["delegate"].pop("command")
+            else:
+                changed["slots"][0]["delegate"]["command"] = command
+            changed_raw = raw_json(changed)
+            write(self.auth_path, changed_raw)
+            try:
+                with self.assertRaisesRegex(ValueError, r"explicit absolute executable equal to argv\[0\]"):
+                    government_roles._role_auth(
+                        changed_raw, sha(changed_raw), request, self.request_raw, self.authority,
+                        captured, government_roles.parse_invocation(self.invocation),
+                        str(self.auth_path), "root-writer")
+            finally:
+                write(self.auth_path, original_auth)
+            self.assertFalse(self.marker_path.exists())
+            self.assertEqual(len(self.ledger.snapshot()["attempts"]), 1)
+
     def test_authorization_raw_must_match_runtime_pinned_path_bytes(self):
         changed = json.loads(self.auth_raw)
         changed["expiresAt"] += 1
@@ -578,6 +612,28 @@ sys.stdout.write(json.dumps(response, separators=(",", ":")))
         with self.assertRaisesRegex(ValueError, "explicit controller bootstrap path"):
             government_roles.main(["--authorization", str(self.auth_path), "--authorization-sha256", self.auth_sha,
                                    "--evidence", str(self.role_evidence), "--slot", "root-writer"])
+
+    def test_classic_preflight_invocations_preserve_native_projection_scope_and_context(self):
+        runtime = {"apiVersion": "markitect.canonical/controller/v1alpha1",
+                   "executor": {"command": sys.executable, "args": []},
+                   "verifier": {"command": sys.executable, "args": []}}
+        roles = classic_integration.configured_roles(runtime)
+        self.assertEqual(len(roles), 3)
+        for role in roles:
+            with self.subTest(slot=role["slotId"]):
+                invocation = government_roles._preflight_invocation("classic", role)
+                self.assertEqual(invocation["request"]["projectionId"], role["projectionId"])
+                self.assertEqual(invocation["request"]["scopeIds"], role["nativeScopeIds"])
+                model = invocation["request"]["context"]["model"]
+                self.assertEqual(model["scopeIds"], classic_integration.NATIVE_SUBJECTS)
+                definition_ids = [json.dumps([item["apiVersion"], item["kind"],
+                                              item["metadata"]["namespace"], item["metadata"]["name"]],
+                                             separators=(",", ":"))
+                                  for item in model["definitions"]]
+                self.assertEqual(definition_ids, classic_integration.NATIVE_SUBJECTS)
+                self.assertEqual(classic_integration.resolve_role(invocation, runtime=runtime),
+                                 {"slotId": role["slotId"], "phase": role["phase"],
+                                  "responseRole": role["responseRole"]})
 
 
 if __name__ == "__main__":

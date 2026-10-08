@@ -1,0 +1,66 @@
+{
+  "fixture": "synthetic serializer-shaped Invocation with Request.scopeIds, context.model.scopeIds and Definitions sorted by Identity.Key(); not a saved product Invocation",
+  "invocation": {
+    "apiVersion": "markitect.example.org/agent-execution/v1alpha1",
+    "inputDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "nonce": "synthetic-native-shape-nonce",
+    "request": {
+      "artifacts": [],
+      "context": {
+        "model": {
+          "definitions": [
+            {
+              "apiVersion": "commerce.example.org/v1",
+              "kind": "EffectAxis",
+              "metadata": {
+                "name": "create-order-effects",
+                "namespace": "commerce"
+              }
+            },
+            {
+              "apiVersion": "commerce.example.org/v1",
+              "kind": "Handler",
+              "metadata": {
+                "name": "create-order-handler",
+                "namespace": "commerce"
+              }
+            },
+            {
+              "apiVersion": "commerce.example.org/v1",
+              "kind": "UseCase",
+              "metadata": {
+                "name": "create-order",
+                "namespace": "commerce"
+              }
+            }
+          ],
+          "projectionId": "[\"markitect.foundation/v1\",\"Projection\",\"commerce\",\"application-dotnet\"]",
+          "scopeIds": [
+            "[\"commerce.example.org/v1\",\"EffectAxis\",\"commerce\",\"create-order-effects\"]",
+            "[\"commerce.example.org/v1\",\"Handler\",\"commerce\",\"create-order-handler\"]",
+            "[\"commerce.example.org/v1\",\"UseCase\",\"commerce\",\"create-order\"]"
+          ]
+        }
+      },
+      "modelDigest": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "modulePin": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+      "policyIds": [],
+      "projectionId": "[\"markitect.foundation/v1\",\"Projection\",\"commerce\",\"application-dotnet\"]",
+      "role": "executor",
+      "scopeIds": [
+        "[\"commerce.example.org/v1\",\"EffectAxis\",\"commerce\",\"create-order-effects\"]",
+        "[\"commerce.example.org/v1\",\"Handler\",\"commerce\",\"create-order-handler\"]",
+        "[\"commerce.example.org/v1\",\"UseCase\",\"commerce\",\"create-order\"]"
+      ],
+      "sourceRevision": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    },
+    "runId": "synthetic-native-shape-run"
+  },
+  "kind": "offline-pre-fix-resolver-failure",
+  "observed": "ValueError: Classic Invocation is missing the exact configured scope identity",
+  "productSourceCommit": "7dbd599c81540c8203a1b7f83afbc335174f4f1f",
+  "source": "HEAD source loaded from Git blob; no working file changed",
+  "sourceCommit": "419775ab0ea5f421655ab3c8bd97e286ffbb6e0a",
+  "sourceSha256": "4bac5c17703b128de4e7d2cec7a53174fd6a8e6e5474930b4be1065a99ba857a",
+  "why": "The pre-R3 resolver compared canonical Definition scope IDs against the unrelated assurance scope label commerce-dotnet."
+}

@@ -1,0 +1,75 @@
+{
+  "beforeResolverSourceSha256": "4bac5c17703b128de4e7d2cec7a53174fd6a8e6e5474930b4be1065a99ba857a",
+  "expectedFix": "accept a pinned role/projection only with exact native canonical ScopeIDs, confirm context.model projectionId/scopeIds/subject identities, and bind to the matching approved role-auth slot",
+  "fixture": "synthetic Invocation assembled from the pinned DTO/producer; not a saved product Invocation; this first capture used source declaration ordering and is retained only as the initial exploratory reproduction; use classic-resolver-original-failure-native-shape.json for the normalized source-shaped capture.",
+  "heldSourceCommit": "c91363b7ac4decbe87212ff0f588b5451581a152",
+  "invocation": {
+    "apiVersion": "markitect.example.org/agent-execution/v1alpha1",
+    "inputDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "nonce": "synthetic-r3-nonce",
+    "request": {
+      "artifacts": [],
+      "context": {
+        "model": {
+          "definitions": [
+            {
+              "apiVersion": "commerce.example.org/v1",
+              "kind": "UseCase",
+              "metadata": {
+                "name": "create-order",
+                "namespace": "commerce"
+              }
+            },
+            {
+              "apiVersion": "commerce.example.org/v1",
+              "kind": "Handler",
+              "metadata": {
+                "name": "create-order-handler",
+                "namespace": "commerce"
+              }
+            },
+            {
+              "apiVersion": "commerce.example.org/v1",
+              "kind": "EffectAxis",
+              "metadata": {
+                "name": "create-order-effects",
+                "namespace": "commerce"
+              }
+            }
+          ],
+          "projectionId": "[\"markitect.foundation/v1\",\"Projection\",\"commerce\",\"application-dotnet\"]",
+          "scopeIds": [
+            "[\"commerce.example.org/v1\",\"UseCase\",\"commerce\",\"create-order\"]",
+            "[\"commerce.example.org/v1\",\"Handler\",\"commerce\",\"create-order-handler\"]",
+            "[\"commerce.example.org/v1\",\"EffectAxis\",\"commerce\",\"create-order-effects\"]"
+          ]
+        }
+      },
+      "modelDigest": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "modulePin": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+      "policyIds": [],
+      "projectionId": "[\"markitect.foundation/v1\",\"Projection\",\"commerce\",\"application-dotnet\"]",
+      "role": "executor",
+      "scopeIds": [
+        "[\"commerce.example.org/v1\",\"UseCase\",\"commerce\",\"create-order\"]",
+        "[\"commerce.example.org/v1\",\"Handler\",\"commerce\",\"create-order-handler\"]",
+        "[\"commerce.example.org/v1\",\"EffectAxis\",\"commerce\",\"create-order-effects\"]"
+      ],
+      "sourceRevision": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    },
+    "runId": "synthetic-r3-run"
+  },
+  "kind": "offline-pre-fix-resolver-regression-record",
+  "observed": "ValueError: Classic Invocation is missing the exact configured scope identity",
+  "pinnedSourceCommit": "7dbd599c81540c8203a1b7f83afbc335174f4f1f",
+  "sourceBlobSha256": {
+    "examples/canonical-projection/definitions/commerce.markdown-projection.yaml": "4e7f2bcbc78936e4ce8eaa570e46a10e594c5e8a2b63dde78567858159072760",
+    "examples/canonical-projection/definitions/commerce.projection.yaml": "74ee6f2ea2690017ef0bd5636f1faba564917b72e33e4a2c3360b13d86e09962",
+    "internal/core/types.go": "04f1f3ebd8b6cff5c22af549fbe1e3d1451b296df4afa12613e2cedf3a24410f",
+    "internal/host/agentexec/runner.go": "26d1713a3ffeacc87b03b7a5be6231375b39984dcd61f9e35753ae1dd2320e5b",
+    "internal/host/agentexec/types.go": "3c2875d87473406831f28803beec71b19d17d8334e70befe41e6fb381f345ac4",
+    "internal/host/canonical_agent_context.go": "c0d4ad7a477f55d233e1110e4779619e78b04019ec74ba7881d0e74d1fc1ac63",
+    "internal/host/canonical_controller_execution.go": "a74b935a4b50d63984286f29931909c8632afeca5e2c3e2888d225b1f12b9d0b",
+    "internal/host/canonical_controller_verification.go": "eff91796689e2139626e9e8847077cd26b3fab82f116e8b61a8ea76f81a1ab55"
+  }
+}

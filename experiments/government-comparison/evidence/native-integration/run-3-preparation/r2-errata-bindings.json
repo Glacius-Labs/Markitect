@@ -1,0 +1,105 @@
+{
+  "schemaVersion": 1,
+  "record": "r2-government-ledger-row-count-erratum-and-metrics-contract-review",
+  "reviewMode": "read-only offline; no tests or product/tool executions",
+  "r3Assignment": {
+    "coordinationPath": "C:\\Users\\Consiliari\\Glacius Labs\\Markitect\\docs\\design\\government\\coordination-state.json",
+    "coordinationSha256": "a833ff9b880dba2008922162bd26c147bf90a0541067eefe0aefb734db21152c",
+    "assignmentKey": "s1-offline-adapter-contract-repair-r3-preparation",
+    "baseSha": "419775ab0ea5f421655ab3c8bd97e286ffbb6e0a",
+    "scope": "Offline evidence correction and source-contract review only; no new grant or native execution."
+  },
+  "erratum": {
+    "newDocument": "experiments/government-comparison/public/native-integration-r2-government-errata.md",
+    "newDocumentSha256": "4dd0e1987bdacc2f328bd65929f59101367ca02cdb397ea62bb64435ebd8d6ab",
+    "priorReview": "experiments/government-comparison/public/native-integration-r2-government-postrun.md",
+    "priorReviewSha256": "eec23b494f20ebf78fb62bc8b7f525560de3887fb90c2be9e6f8b55703cf7998",
+    "priorClaim": {"nativeStartRows": 4, "citedDatabaseSha256": "c5769c0c204cfbc5d17d95320c8b2288b746aa785c16796ce0d7ab433b58fbf5"},
+    "correction": "The cited SHA is the final archived five-row database, so the earlier four-row statement and hash do not describe the same file state.",
+    "exactFourRowDatabaseBytesRetained": false,
+    "intermediateCountInterpretation": "Four rows may have been an earlier observed count before the Classic R2 append; no exact four-row database image is present in retained R2 freeze/archive evidence, so the cited hash cannot prove it."
+  },
+  "finalSharedNativeBudget": {
+    "originalPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\native-starts.sqlite",
+    "archiveCopyPath": "experiments/government-comparison/evidence/native-integration/run-2/external-snapshots/native-starts.sqlite",
+    "originalSha256": "c5769c0c204cfbc5d17d95320c8b2288b746aa785c16796ce0d7ab433b58fbf5",
+    "archiveCopySha256": "c5769c0c204cfbc5d17d95320c8b2288b746aa785c16796ce0d7ab433b58fbf5",
+    "originalAndArchiveMatch": true,
+    "integrityCheck": "ok",
+    "rowCount": 5,
+    "orderedRows": [
+      {"product": "government", "label": "inspect-constitution", "reservedSeconds": 150},
+      {"product": "government", "label": "government-native-positive/queue", "reservedSeconds": 150},
+      {"product": "classic", "label": "classic-native-positive/execute", "reservedSeconds": 150},
+      {"product": "government", "label": "government-native-corrected-r2/queue", "reservedSeconds": 150},
+      {"product": "classic", "label": "classic-native-corrected-r2/execute", "reservedSeconds": 150}
+    ],
+    "priorThreeRowSnapshot": {
+      "path": "experiments/government-comparison/evidence/native-integration/run-1/native-budget-snapshot.json",
+      "sha256": "cdea6577d7c4699920b53063cf5bb94d589a0e264abf27d80e5fa939bc955647",
+      "orderedRowsMatchExactly": true
+    },
+    "r2AppendedRowsOnly": ["government-native-corrected-r2/queue", "classic-native-corrected-r2/execute"],
+    "otherRowsOrRefills": 0,
+    "snapshotManifest": {
+      "path": "experiments/government-comparison/evidence/native-integration/run-2/external-snapshots.json",
+      "sha256": "59af681faabaec6aac3ade7f2aeafa4678c2137ab340a2755d4f137ed2d7f047",
+      "databaseEntrySha256": "c5769c0c204cfbc5d17d95320c8b2288b746aa785c16796ce0d7ab433b58fbf5"
+    }
+  },
+  "commonLedgerHistoricalRows": {
+    "government": {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\government\\fixture-ledger.sqlite",
+      "sha256": "c00c116064ecc8cd910c72ffb6f6e250b403fded24e20f85e8b55d38f87140a5",
+      "unchanged": true
+    },
+    "classic": {
+      "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-metadata-fixtures-20261008\\fixture-ledger.sqlite",
+      "sha256": "cf930cd89b2e97c8215e8526e1373f6eaf201788d7125bf47a87fa32ad2bddf7",
+      "unchanged": true
+    }
+  },
+  "metricsContract": {
+    "sourceCommit": "419775ab0ea5f421655ab3c8bd97e286ffbb6e0a",
+    "sources": {
+      "runtime/ledger.py": "d4e3aa98ea8486cc3821a658e93c823794750856e27e48cb96fdcb216f6afe8f",
+      "runtime/dispatch.py": "7e90fa68c9455d7e55f0cfe7de4fc3d81afd9d30c161998c8abd29b7dcd32421",
+      "runtime/native_controller.py": "96aeac564694cf47e4eee3be2e3565c54faa834d80ef091a7dcdacec7d041e0c"
+    },
+    "contractEvidence": [
+      "Ledger.finish_controller_dispatch persists status, result, process_receipt, and receipt_sha256 on controller_runs without adding an Actor attempt.",
+      "Government dispatch calls finish_controller_dispatch with the native process receipt, digest, bootstrap digest, and elapsed time; the returned Result also contains controllerProcess and raw receipt references.",
+      "Ledger.record_controller_process appends an individual action receipt to controller_processes. Classic records its execute action there and also includes action receipts in the outer controller run receipt.",
+      "Ledger.snapshot returns controllerRuns and controllerProcesses as separate collections; it does not define controllerProcesses as the complete set of all outer and inner native processes."
+    ],
+    "archivedOutputs": {
+      "governmentCaseLedger": {
+        "sha256": "ed5e804c27339e46eee778786703a6e0865d35057f115f60dbda332c9bc17c9c",
+        "integrityCheck": "ok",
+        "controllerRuns": [{"id": "government-native-corrected-r2", "status": "incomplete", "processReceiptPresent": true, "processReceiptSha256": "cf54a824e3081bcdf73a26a143910c21723da0474ff0f04922985c92cc0595a5"}],
+        "controllerProcesses": 0,
+        "actorAttempts": 0
+      },
+      "classicCaseLedger": {
+        "sha256": "52c6e65e64db90b00d8a65cc5e4d8714c726b0f7052f27187091b89ed1d1b7c6",
+        "integrityCheck": "ok",
+        "controllerRuns": [{"id": "classic-native-corrected-r2", "status": "incomplete", "processReceiptPresent": true, "processReceiptSha256": "bdba1cccfa9b48a3f5065433e43a7052c625b3903571edd3c885439e6c4bda90"}],
+        "controllerProcesses": [{"sequence": 1, "action": "execute", "status": "incomplete"}],
+        "actorAttempts": 0
+      }
+    },
+    "verdict": "No missing Government process receipt or historical metric write is identified. Zero controller_processes rows is expected for the direct outer Government process; its terminal process receipt is stored on controller_runs and in Result, and the shared native-start ledger counts the claim. A consumer that counts controller_processes alone would undercount outer Government processes; a consumer that adds Classic outer action summaries and child rows without digest deduplication could double-count. Raw snapshot completeness is satisfied; a unified normalized process-count projection is a reporting concern, not a reason to patch historical rows.",
+    "minimumFutureAction": "None required for R2 or ledger correctness. If a single normalized process count is later required, derive a typed, digest-deduplicated read-only view from controller_runs.process_receipt and controller_processes; do not append a duplicate Government row or mutate historical DBs."
+  },
+  "boundDocuments": {
+    "r2PreflightFreezeSha256": "55c53bf49b006165c3305e470c3258ba1807079511793ffc899e8dd46845d0b9",
+    "r2PreflightReviewSha256": "0109d475f15697ad1025f8bdae524d42fb1a617966959eb75b2b645dc0d41dad",
+    "r2GovernmentPostrunReviewSha256": "eec23b494f20ebf78fb62bc8b7f525560de3887fb90c2be9e6f8b55703cf7998",
+    "r2ClassicPostrunReviewSha256": "6ae84684ea3d0ed99a982643258120d7e373e0df24f668e60f08abd6ce663b5a",
+    "r2QuotaSummarySha256": "8474644f1b8480165fe2e2aa5321fc64f3ac8aab8895ee962323c4e0263fd280"
+  },
+  "limitations": [
+    "No exact four-row SQLite bytes are retained; the earlier count is not independently recoverable from the final archive.",
+    "This record does not authorize the offline fixes or another native run; the Overseer R3 task remains offline-only until separately reviewed and authorized."
+  ]
+}

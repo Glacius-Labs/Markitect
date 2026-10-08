@@ -1,0 +1,244 @@
+{
+  "heldDocumentationCommit": "c91363b7ac4decbe87212ff0f588b5451581a152",
+  "kind": "source-bound-classic-agentexec-contract",
+  "nativeProjectionScopes": {
+    "agentexecRequestSortedOrder": [
+      "[\"commerce.example.org/v1\",\"EffectAxis\",\"commerce\",\"create-order-effects\"]",
+      "[\"commerce.example.org/v1\",\"Handler\",\"commerce\",\"create-order-handler\"]",
+      "[\"commerce.example.org/v1\",\"UseCase\",\"commerce\",\"create-order\"]"
+    ],
+    "contextAndRequestSortedOrder": [
+      "[\"commerce.example.org/v1\",\"EffectAxis\",\"commerce\",\"create-order-effects\"]",
+      "[\"commerce.example.org/v1\",\"Handler\",\"commerce\",\"create-order-handler\"]",
+      "[\"commerce.example.org/v1\",\"UseCase\",\"commerce\",\"create-order\"]"
+    ],
+    "projectionIds": [
+      "[\"markitect.foundation/v1\",\"Projection\",\"commerce\",\"application-dotnet\"]",
+      "[\"markitect.foundation/v1\",\"Projection\",\"commerce\",\"application-markdown\"]"
+    ],
+    "sourceDeclarationOrder": [
+      "[\"commerce.example.org/v1\",\"UseCase\",\"commerce\",\"create-order\"]",
+      "[\"commerce.example.org/v1\",\"Handler\",\"commerce\",\"create-order-handler\"]",
+      "[\"commerce.example.org/v1\",\"EffectAxis\",\"commerce\",\"create-order-effects\"]"
+    ]
+  },
+  "producerAndSerializer": "canonical_controller_execution.go constructs Executor Request with ProjectionID and ScopeIDs=contextModel.ScopeIDs; canonical_controller_verification.go constructs the same native fields from selected verification context; BuildCanonicalAgentContext sorts ScopeIDs and Definitions by Identity.Key(); runner.go creates Invocation from normalized Request and json.Marshal writes it to process stdin.",
+  "rawInvocationSearch": {
+    "conclusion": "No saved full raw Invocation found. Marker hits are Classic reports, receipts, and stdout report copies; the available Execute receipt stores runId/inputDigest/contextDigest, not stdin Request and nonce. The R3 before-fix record is explicitly synthetic.",
+    "markerHitFiles": [
+      {
+        "bytes": 40531,
+        "path": "experiments/government-comparison/evidence/native-integration/run-2/classic/flow-result.json",
+        "sha256": "c4af3133a70ff5d4f17feffb150f18f69ec1683dfe2fd5dbdd517c96fcd61aca"
+      },
+      {
+        "bytes": 40531,
+        "path": "experiments/government-comparison/evidence/native-integration/run-2/external-snapshots/classic/outer-results/classic-native-corrected-r2.json",
+        "sha256": "c4af3133a70ff5d4f17feffb150f18f69ec1683dfe2fd5dbdd517c96fcd61aca"
+      },
+      {
+        "bytes": 48164,
+        "path": "experiments/government-comparison/evidence/native-integration/run-2/external-snapshots/classic/outer-controller-evidence/classic-native/execute.json",
+        "sha256": "cffa90f77ba974af5dbe30c06394f395d69984a2c8299af1bacd0fe86e947ec2"
+      },
+      {
+        "bytes": 48164,
+        "path": "experiments/government-comparison/evidence/native-integration/run-2/external-snapshots/classic/outer-controller-evidence/classic-native/process/execute/stdout.log",
+        "sha256": "cffa90f77ba974af5dbe30c06394f395d69984a2c8299af1bacd0fe86e947ec2"
+      }
+    ],
+    "scope": "Classic-specific saved run-1 and run-2 artifacts under each run/classic and run/external-snapshots/classic; binary SQLite excluded",
+    "validFullRawInvocationFiles": []
+  },
+  "sourceBlobs": {
+    "examples/canonical-projection/definitions/commerce.markdown-projection.yaml": {
+      "excerpts": [
+        {
+          "line": 10,
+          "text": "- apiVersion: commerce.example.org/v1"
+        },
+        {
+          "line": 11,
+          "text": "kind: UseCase"
+        },
+        {
+          "line": 13,
+          "text": "name: create-order"
+        },
+        {
+          "line": 15,
+          "text": "kind: Handler"
+        },
+        {
+          "line": 17,
+          "text": "name: create-order-handler"
+        },
+        {
+          "line": 19,
+          "text": "kind: EffectAxis"
+        },
+        {
+          "line": 21,
+          "text": "name: create-order-effects"
+        }
+      ],
+      "sha256": "4e7f2bcbc78936e4ce8eaa570e46a10e594c5e8a2b63dde78567858159072760"
+    },
+    "examples/canonical-projection/definitions/commerce.projection.yaml": {
+      "excerpts": [
+        {
+          "line": 10,
+          "text": "- apiVersion: commerce.example.org/v1"
+        },
+        {
+          "line": 11,
+          "text": "kind: UseCase"
+        },
+        {
+          "line": 13,
+          "text": "name: create-order"
+        },
+        {
+          "line": 15,
+          "text": "kind: Handler"
+        },
+        {
+          "line": 17,
+          "text": "name: create-order-handler"
+        },
+        {
+          "line": 19,
+          "text": "kind: EffectAxis"
+        },
+        {
+          "line": 21,
+          "text": "name: create-order-effects"
+        }
+      ],
+      "sha256": "74ee6f2ea2690017ef0bd5636f1faba564917b72e33e4a2c3360b13d86e09962"
+    },
+    "internal/core/types.go": {
+      "excerpts": [
+        {
+          "line": 46,
+          "text": "func (i DefinitionIdentity) Key() string {"
+        },
+        {
+          "line": 47,
+          "text": "data, _ := json.Marshal([4]string{i.APIVersion, i.Kind, i.Namespace, i.Name})"
+        }
+      ],
+      "sha256": "04f1f3ebd8b6cff5c22af549fbe1e3d1451b296df4afa12613e2cedf3a24410f"
+    },
+    "internal/host/agentexec/json.go": {
+      "excerpts": [
+        {
+          "line": 249,
+          "text": "req.ScopeIDs, err = sortedUniqueStrings(req.ScopeIDs, \"scopeIds\")"
+        }
+      ],
+      "sha256": "b6f7ee75a8bf007d0f1facfafc5b6a9ee72aaae270e641170aab53815d861104"
+    },
+    "internal/host/agentexec/runner.go": {
+      "excerpts": [
+        {
+          "line": 119,
+          "text": "inputDigest := digest(requestJSON)"
+        },
+        {
+          "line": 120,
+          "text": "invocation := Invocation{"
+        },
+        {
+          "line": 127,
+          "text": "inputJSON, err := json.Marshal(invocation)"
+        }
+      ],
+      "sha256": "26d1713a3ffeacc87b03b7a5be6231375b39984dcd61f9e35753ae1dd2320e5b"
+    },
+    "internal/host/agentexec/types.go": {
+      "excerpts": [
+        {
+          "line": 37,
+          "text": "type Request struct {"
+        },
+        {
+          "line": 49,
+          "text": "type Invocation struct {"
+        }
+      ],
+      "sha256": "3c2875d87473406831f28803beec71b19d17d8334e70befe41e6fb381f345ac4"
+    },
+    "internal/host/canonical_agent_context.go": {
+      "excerpts": [
+        {
+          "line": 145,
+          "text": "sort.Strings(result.ScopeIDs)"
+        },
+        {
+          "line": 146,
+          "text": "sort.Slice(result.Definitions, func(i, j int) bool {"
+        },
+        {
+          "line": 154,
+          "text": "return result, nil"
+        }
+      ],
+      "sha256": "c0d4ad7a477f55d233e1110e4779619e78b04019ec74ba7881d0e74d1fc1ac63"
+    },
+    "internal/host/canonical_controller_execution.go": {
+      "excerpts": [
+        {
+          "line": 136,
+          "text": "result, invokeErr := agentexec.Run(ctx, cfg.Executor.agentConfig(), agentexec.Request{"
+        },
+        {
+          "line": 138,
+          "text": "ScopeIDs: contextModel.ScopeIDs, PolicyIDs: canonicalRequestPolicyIDs(p.Request.Policies), Context: contextBytes, Artifacts: artifacts,"
+        }
+      ],
+      "sha256": "a74b935a4b50d63984286f29931909c8632afeca5e2c3e2888d225b1f12b9d0b"
+    },
+    "internal/host/canonical_controller_verification.go": {
+      "excerpts": [
+        {
+          "line": 677,
+          "text": "func canonicalControllerVerifierRequest(cfg CanonicalControllerConfig, item canonicalControllerPreparedVerification, node assurance.NodeRunInput, evidenceRevision string) (agentexec.Request, error) {"
+        },
+        {
+          "line": 703,
+          "text": "scopeIDs := append([]string(nil), item.context.ScopeIDs...)"
+        },
+        {
+          "line": 758,
+          "text": "request.ScopeIDs = append([]string{}, request.ScopeIDs...)"
+        }
+      ],
+      "sha256": "eff91796689e2139626e9e8847077cd26b3fab82f116e8b61a8ea76f81a1ab55"
+    }
+  },
+  "sourceCommit": "7dbd599c81540c8203a1b7f83afbc335174f4f1f",
+  "wireContract": {
+    "InvocationKeys": [
+      "apiVersion",
+      "runId",
+      "nonce",
+      "inputDigest",
+      "request"
+    ],
+    "RequestKeys": [
+      "role",
+      "sourceRevision",
+      "modelDigest",
+      "modulePin",
+      "projectionId",
+      "scopeIds",
+      "policyIds",
+      "context",
+      "artifacts"
+    ],
+    "contextScopeIds": "BuildCanonicalAgentContext sorts context ScopeIDs and Definitions by DefinitionIdentity.Key() before return; in this fixture order matches normalized Request.scopeIds.",
+    "identityKey": "JSON encoding of [apiVersion,kind,namespace,name]",
+    "topLevelScopeIds": "normalizeRequest sorts and rejects duplicates; emitted Invocation contains normalized Request"
+  }
+}

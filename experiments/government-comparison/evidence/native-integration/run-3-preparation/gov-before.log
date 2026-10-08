@@ -1,0 +1,8 @@
+Pre-fix Government delegate command-guard reproduction (read-only input; no process launched)
+Source: C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\government-comparison\evidence\native-integration\run-2\external-snapshots\government\released\role-auth.json
+role-auth SHA256: e464d4c918da3c48fb0072ecfa8ba4f8cbdba875f61387bbc2a72d148944e5c4
+Guard under test: delegate.command must exist and exactly equal delegate.argv[0].
+slot=positive-root-executor; command=<missing>; argv0=C:\Python313\python.exe; original_guard=FAIL (missing command)
+slot=positive-root-verifier; command=<missing>; argv0=C:\Python313\python.exe; original_guard=FAIL (missing command)
+slot=positive-ressort-correctness; command=<missing>; argv0=C:\Python313\python.exe; original_guard=FAIL (missing command)
+Observed: all frozen r2 slots fail this explicit command contract because delegate.command is absent.

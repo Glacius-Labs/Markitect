@@ -1,0 +1,7 @@
+test_all_six_frozen_r2_roles_complete_the_offline_contract_chain (experiments.government-comparison.runtime.test_native_adapter_contracts.NativeAdapterContractTests.test_all_six_frozen_r2_roles_complete_the_offline_contract_chain) ... ok
+test_r2_commandless_shape_fails_in_pinned_predecessor_before_reservation (experiments.government-comparison.runtime.test_native_adapter_contracts.NativeAdapterContractTests.test_r2_commandless_shape_fails_in_pinned_predecessor_before_reservation) ... ok
+
+----------------------------------------------------------------------
+Ran 2 tests in 1.755s
+
+OK

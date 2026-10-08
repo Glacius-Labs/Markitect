@@ -1,0 +1,52 @@
+{
+  "status": "proposed-not-authorized",
+  "package": "s1-offline-adapter-contract-repair-r3-preparation",
+  "currentRunQuota": 0,
+  "predecessor": "419775ab0ea5f421655ab3c8bd97e286ffbb6e0a",
+  "pins": {
+    "governmentSource": "04e225d5caee78c2a198607143863fca1e829750",
+    "governmentBinarySha256": "12241f325e4af59451e4021b31d9e6f5b829b5de06c94d35eaabfb9d663aa51f",
+    "classicHeldSource": "c91363b7ac4decbe87212ff0f588b5451581a152",
+    "classicRuntimeSource": "7dbd599c81540c8203a1b7f83afbc335174f4f1f",
+    "classicBinarySha256": "2cad55efad64f15d7f57638bea78312918fbf7d181c730f188b9921504da71c4"
+  },
+  "history": {
+    "nativeStarts": {"government": 3, "classic": 2, "total": 5},
+    "nativeWrappers": {"government": 2, "classic": 1, "total": 3},
+    "delegateStarts": 0,
+    "reservedSessionSeconds": {"government": 450, "classic": 300, "total": 750},
+    "historicalGovernmentRunningController": "preserve unchanged"
+  },
+  "requestedAdditionalAllocation": {
+    "government": {"nativeStarts": 2, "wrapperInvocationsIncludingFailures": 6, "fixedProtocolDelegateStartsMaximum": 6, "reservedSessionSeconds": 300},
+    "classic": {"nativeStarts": 5, "wrapperInvocationsIncludingFailures": 6, "fixedProtocolDelegateStartsMaximum": 6, "reservedSessionSeconds": 750},
+    "totalNativeStarts": 7,
+    "totalReservedSessionSeconds": 1050,
+    "realActorStarts": 0,
+    "providerCalls": 0,
+    "metadataTrees": 0,
+    "studyCells": 0
+  },
+  "requestedCumulativeCeilings": {
+    "nativeStarts": {"government": 5, "classic": 7, "total": 12},
+    "nativeWrappers": {"government": 8, "classic": 7, "total": 15},
+    "reservedSessionSeconds": {"government": 750, "classic": 1050, "total": 1800}
+  },
+  "originalOverallCeilings": {"nativeStarts": 16, "reservedSessionSeconds": 2400},
+  "bounds": {"nativeProcessSeconds": 38, "governmentControllerSeconds": 38, "classicControllerSeconds": 180, "reservedSessionSecondsPerNativeStart": 150, "maxParallelRoles": 2, "productsSequential": true},
+  "admissionPrerequisites": [
+    "Overseer review and a new explicit finite grant; neither R2 numbers nor this proposal supplies authority",
+    "Bind the new grant to its exact Coordinator source snapshot and new Request namespace; adapt only the finite grant admission needed for that issued grant",
+    "Fresh disposable fixture identities, exact committed corrected source/runtime/role/Request/Authority/binary/Python pins, reviewed immutable freeze",
+    "Keep original native-start SQLite history, all archived failures and null telemetry; never reopen old controller bookings",
+    "No second inspect; reuse prior Constitution only after source/config/pin equivalence is verified"
+  ],
+  "orderedActions": {
+    "government": ["one queue", "one same-queue resume/replay only if positive queue acceptance is fully evidenced; expect zero new role invocations"],
+    "classic": ["one Execute", "guarded Apply only after independent exact stdout SHA/native digest review", "fresh Verify of that Apply", "Audit only after successful Verify", "stale Apply replay using the same review only after successful Audit"]
+  },
+  "firstDiagnosticCheckpoint": {"government": "one queue", "classic": "one Execute", "additionalNativeStarts": 2, "additionalReservedSessionSeconds": 300, "continuation": "Remaining actions are conditional on exact successful receipts and the separately issued finite grant; no relaunch of either failed first action."},
+  "stopRule": "First missing prerequisite, unexpected invocation, failure, deadline, quota or translation stop ends that product. No repair/relaunch under the proposed case; the separately granted other product may run only under its own prerequisites.",
+  "accounting": "150 session seconds per native start already includes bounded controller and up to two concurrent role sessions plus cleanup. Wrapper and delegate are two stages of one role invocation, not additive role counts. Arbitrary OS-descendant aggregate wall time remains null/unmeasured.",
+  "acceptanceBoundary": "Native mechanics only; no semantic independence, human acceptance, comparison result or S1 runner readiness claim."
+}

@@ -33,6 +33,17 @@ ROLE_SLOTS = {
     ("verifier", DOTNET_PROJECTION): ("review", "classic/review/commerce-dotnet", "commerce-dotnet"),
     ("verifier", MARKDOWN_PROJECTION): ("review", "classic/review/commerce-markdown", "commerce-markdown"),
 }
+NATIVE_PROJECTION_SUBJECTS = [
+    json.dumps(["commerce.example.org/v1", "UseCase", "commerce", "create-order"], separators=(",", ":")),
+    json.dumps(["commerce.example.org/v1", "Handler", "commerce", "create-order-handler"], separators=(",", ":")),
+    json.dumps(["commerce.example.org/v1", "EffectAxis", "commerce", "create-order-effects"], separators=(",", ":")),
+]
+NATIVE_SUBJECTS = sorted(NATIVE_PROJECTION_SUBJECTS)
+NATIVE_CONTEXT_SUBJECTS = list(NATIVE_SUBJECTS)
+PROJECTION_SUBJECTS = {
+    DOTNET_PROJECTION: list(NATIVE_SUBJECTS),
+    MARKDOWN_PROJECTION: list(NATIVE_SUBJECTS),
+}
 FLOW_ACTIONS = ("execute", "apply", "verify", "audit", "apply-replay")
 EXPECTED_STATUSES = {"execute": "planned", "apply": "materialized-unverified",
                     "verify": "passed", "audit": "complete"}
@@ -155,6 +166,12 @@ def bind_request(request: dict, request_path: str | os.PathLike[str] | None = No
     auth_slots = auth_value.get("slots")
     if not isinstance(auth_slots, list) or {item.get("slotId") for item in auth_slots if isinstance(item, dict)} != expected_slots:
         raise ValueError("Classic role authorization slots differ from the configured native role set")
+    expected_by_slot = {item["slotId"]: item for item in roles}
+    for item in auth_slots:
+        expected = expected_by_slot.get(item.get("slotId")) if isinstance(item, dict) else None
+        if (expected is None or item.get("projectionId") != expected["projectionId"] or
+                item.get("scopeIds") != expected["nativeScopeIds"]):
+            raise ValueError("Classic role authorization does not bind the exact native Projection subjects")
 
     try:
         head = subprocess.run(["git", "-C", str(repo), "rev-parse", "--verify", "HEAD^{commit}"],
@@ -181,14 +198,37 @@ def resolve_role(invocation: dict, auth: dict | None = None, runtime: dict | Non
     request = invocation.get("request")
     if not isinstance(request, dict):
         raise ValueError("Classic agentexec Request required")
+    if not isinstance(request.get("role"), str) or not isinstance(request.get("projectionId"), str):
+        raise ValueError("Classic Invocation role and native Projection identity must be strings")
     key = (request.get("role"), request.get("projectionId"))
     resolved = ROLE_SLOTS.get(key)
     if resolved is None:
         raise ValueError("Classic role/projection is not an authorized fixture slot")
     phase, slot_id, scope_id = resolved
+    native_scopes = PROJECTION_SUBJECTS[request["projectionId"]]
     scopes = request.get("scopeIds")
-    if not isinstance(scopes, list) or scope_id not in scopes:
-        raise ValueError("Classic Invocation is missing the exact configured scope identity")
+    if not isinstance(scopes, list) or scopes != native_scopes:
+        raise ValueError("Classic Invocation native scope identities differ from its pinned Projection")
+    context = request.get("context")
+    model = context.get("model") if isinstance(context, dict) else None
+    context_scopes = model.get("scopeIds") if isinstance(model, dict) else None
+    if (not isinstance(model, dict) or model.get("projectionId") != request["projectionId"] or
+            not isinstance(context_scopes, list) or not all(isinstance(item, str) for item in context_scopes) or
+            sorted(context_scopes) != native_scopes or len(set(context_scopes)) != len(native_scopes)):
+        raise ValueError("Classic Invocation context subject/scope differs from its native request")
+    definitions = model.get("definitions")
+    if not isinstance(definitions, list):
+        raise ValueError("Classic Invocation context is missing native subject Definitions")
+    definition_subjects = []
+    for definition in definitions:
+        if not isinstance(definition, dict) or not isinstance(definition.get("metadata"), dict):
+            raise ValueError("Classic Invocation contains a malformed native subject Definition")
+        metadata = definition["metadata"]
+        identity = [definition.get("apiVersion"), definition.get("kind"),
+                    metadata.get("namespace"), metadata.get("name")]
+        definition_subjects.append(json.dumps(identity, separators=(",", ":")))
+    if sorted(definition_subjects) != sorted(native_scopes):
+        raise ValueError("Classic Invocation native subject Definitions differ from its authorized scope")
     if runtime is not None:
         runner = runtime.get("executor" if request["role"] == "executor" else "verifier")
         if not isinstance(runner, dict):
@@ -196,7 +236,10 @@ def resolve_role(invocation: dict, auth: dict | None = None, runtime: dict | Non
     if auth is not None:
         slots = auth.get("slots")
         approved = [item for item in slots if isinstance(item, dict) and item.get("slotId") == slot_id] if isinstance(slots, list) else []
-        if len(approved) != 1 or (approved[0].get("phase"), approved[0].get("responseRole")) != (phase, request["role"]):
+        if (len(approved) != 1 or
+                (approved[0].get("phase"), approved[0].get("responseRole")) != (phase, request["role"]) or
+                approved[0].get("projectionId") != request["projectionId"] or
+                approved[0].get("scopeIds") != native_scopes):
             raise ValueError("Classic Invocation role/projection is not present in the approved role slots")
     # The controller's opaque native context/artifacts remain inputs as supplied;
     # this projection adds only the Scientist's authorization slot identity.
@@ -218,6 +261,7 @@ def configured_roles(runtime: dict) -> list[dict]:
             phase, slot_id, scope_id = ROLE_SLOTS[(role, projection)]
             output.append({"slotId": slot_id, "phase": phase, "responseRole": role,
                            "projectionId": projection, "scopeId": scope_id,
+                           "nativeScopeIds": list(PROJECTION_SUBJECTS[projection]),
                            "command": runner["command"], "args": list(runner["args"]),
                            "runtimeFiles": json.loads(json.dumps(runner.get("runtimeFiles", []))),
                            "model": runner.get("model"), "modelOptions": runner.get("modelOptions"),
@@ -304,8 +348,9 @@ def build_role_authorization(*, trial_id: str, dispatch_id: str, task_id: str,
         if role == "executor" and phase != "execute":
             raise AssertionError("Classic Executor slot phase drift")
         slots.append({"slotId": slot_id, "phase": phase, "responseRole": role,
+                      "projectionId": projection, "scopeIds": list(PROJECTION_SUBJECTS[projection]),
                       "wrapper": {"command": str(python)},
-                      "delegate": {"argv": [str(python), str(delegate)],
+                      "delegate": {"command": str(python), "argv": [str(python), str(delegate)],
                                    "commandDigest": command_digest,
                                    "runtimeFiles": [python_file, delegate_file],
                                    "model": "protocol-test-double",

@@ -24,12 +24,22 @@ class ClassicIntegrationTests(unittest.TestCase):
 
     @staticmethod
     def invocation(role, projection, scope):
+        native_scope = (list(integration.NATIVE_SUBJECTS)
+                        if (role, projection) in integration.ROLE_SLOTS and
+                        integration.ROLE_SLOTS[(role, projection)][2] == scope
+                        else ["[\"wrong.example.org/v1\",\"UseCase\",\"commerce\",\"wrong\"]"])
+        definitions = []
+        for subject in integration.NATIVE_SUBJECTS:
+            api, kind, namespace, name = json.loads(subject)
+            definitions.append({"apiVersion": api, "kind": kind,
+                                "metadata": {"namespace": namespace, "name": name}})
+        model = {"projectionId": projection, "scopeIds": list(native_scope), "definitions": definitions}
         return {"apiVersion": "markitect.example.org/agent-execution/v1alpha1", "runId": "fixture-run",
                 "nonce": "fixture-nonce", "inputDigest": "sha256:" + "a" * 64,
                 "request": {"role": role, "sourceRevision": "b" * 40, "modelDigest": "sha256:" + "c" * 64,
-                             "modulePin": {"name": "markitect-dotnet", "version": "1.0.0", "digest": "sha256:" + "d" * 64},
-                             "projectionId": projection, "scopeIds": [scope], "policyIds": [],
-                             "context": {"nativeContext": "opaque; preserve exactly"}, "artifacts": []}}
+                             "modulePin": "sha256:" + "d" * 64,
+                             "projectionId": projection, "scopeIds": native_scope, "policyIds": [],
+                             "context": {"model": model}, "artifacts": []}}
 
     def test_native_projection_to_fixed_classic_slot_preserves_invocation(self):
         cases = (("executor", integration.DOTNET_PROJECTION, "commerce-dotnet",
@@ -53,9 +63,42 @@ class ClassicIntegrationTests(unittest.TestCase):
         ):
             with self.assertRaisesRegex(ValueError, "not an authorized fixture slot"):
                 integration.resolve_role(invocation)
-        with self.assertRaisesRegex(ValueError, "missing the exact configured scope identity"):
+        with self.assertRaisesRegex(ValueError, "native scope identities differ"):
             integration.resolve_role(self.invocation("verifier", integration.DOTNET_PROJECTION,
                                                       "commerce-markdown"))
+
+    def test_native_subject_projection_context_and_authorized_slot_are_all_bound(self):
+        good = self.invocation("executor", integration.DOTNET_PROJECTION, "commerce-dotnet")
+        role_auth = {"slots": [{"slotId": "classic/execute/commerce-dotnet", "phase": "execute",
+                                "responseRole": "executor", "projectionId": integration.DOTNET_PROJECTION,
+                                "scopeIds": list(integration.NATIVE_SUBJECTS)}]}
+        self.assertEqual(integration.resolve_role(good, role_auth)["slotId"],
+                         "classic/execute/commerce-dotnet")
+
+        changed = json.loads(json.dumps(good))
+        changed["request"]["context"]["model"]["projectionId"] = integration.MARKDOWN_PROJECTION
+        with self.assertRaisesRegex(ValueError, "context subject/scope"):
+            integration.resolve_role(changed, role_auth)
+
+        changed = json.loads(json.dumps(good))
+        changed["request"]["context"]["model"]["scopeIds"].pop()
+        with self.assertRaisesRegex(ValueError, "context subject/scope"):
+            integration.resolve_role(changed, role_auth)
+
+        changed = json.loads(json.dumps(good))
+        changed["request"]["context"]["model"]["definitions"][0]["metadata"]["name"] = "other"
+        with self.assertRaisesRegex(ValueError, "subject Definitions differ"):
+            integration.resolve_role(changed, role_auth)
+
+        changed_auth = json.loads(json.dumps(role_auth))
+        changed_auth["slots"][0]["scopeIds"] = ["wrong"]
+        with self.assertRaisesRegex(ValueError, "not present in the approved role slots"):
+            integration.resolve_role(good, changed_auth)
+
+        changed_auth = json.loads(json.dumps(role_auth))
+        changed_auth["slots"][0]["projectionId"] = integration.MARKDOWN_PROJECTION
+        with self.assertRaisesRegex(ValueError, "not present in the approved role slots"):
+            integration.resolve_role(good, changed_auth)
 
     def test_invocation_replay_identity_is_stable_and_nonce_bound(self):
         invocation = self.invocation("executor", integration.DOTNET_PROJECTION, "commerce-dotnet")
@@ -137,6 +180,12 @@ class ClassicIntegrationTests(unittest.TestCase):
         self.assertIn("native_fixture_budget.py", pinned_runtime_files)
         self.assertIn("classic_integration.py", pinned_runtime_files)
         self.assertEqual(authorization["slots"][0]["delegate"]["argv"][1].endswith("protocol_test_double.py"), True)
+        for slot in authorization["slots"]:
+            self.assertEqual(slot["delegate"]["command"], slot["delegate"]["argv"][0])
+            self.assertEqual(slot["scopeIds"], integration.NATIVE_SUBJECTS)
+            self.assertEqual(slot["projectionId"], next(
+                role["projectionId"] for role in integration.configured_roles(runtime)
+                if role["slotId"] == slot["slotId"]))
         self.assertTrue(runtime["auditAll"])
         self.assertEqual(runtime["assuranceRoots"], ["commerce-markdown"])
         self.assertEqual([scope["id"] for scope in runtime["assuranceScopes"]],

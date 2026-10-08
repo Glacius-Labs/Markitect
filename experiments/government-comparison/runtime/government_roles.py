@@ -325,6 +325,15 @@ def _role_auth(raw: bytes, expected_sha: str, request: dict, request_raw: bytes,
         raise ValueError("agentexec invocation role/phase is not authorized for this slot")
     if (role_slot.get("phase"), role_slot.get("responseRole")) != (phase, response_role):
         raise ValueError("operator role grant phase/role mismatch")
+    delegate = role_slot.get("delegate")
+    if not isinstance(delegate, dict):
+        raise ValueError("operator delegate runner binding required")
+    argv = delegate.get("argv")
+    command = delegate.get("command")
+    if (not isinstance(command, str) or not command or not Path(command).is_absolute() or
+            not isinstance(argv, list) or not argv or not all(isinstance(arg, str) for arg in argv) or
+            argv[0] != command):
+        raise ValueError("delegate command must be an explicit absolute executable equal to argv[0]")
     wrapper = role_slot.get("wrapper", {})
     wrapper_slot = slot_id if arm == "government" else None
     expected_args = wrapper_arguments(__file__, auth_path, expected_sha,
@@ -444,19 +453,36 @@ def preflight_authorization(request: dict, request_raw: bytes, authority, captur
     else:
         resolver = None
     for role in roles:
-        if request.get("arm") == "government":
-            projection = f"government/{role['phase']}/{role['slotId']}"
-            scope_ids = ["preflight-scope"]
-        else:
-            projection = role["projectionId"]
-            scope_ids = [role["scopeId"]]
-        invocation = {"apiVersion": INVOCATION_API,
-                     "request": {"role": role["responseRole"], "sourceRevision": "preflight",
-                     "modelDigest": "sha256:" + "0" * 64, "modulePin": "sha256:" + "0" * 64,
-                     "projectionId": projection, "scopeIds": scope_ids, "policyIds": [],
-                     "context": {}, "artifacts": []}}
+        invocation = _preflight_invocation(request.get("arm"), role)
         _role_auth(authorization_raw, authorization_sha256, request, request_raw, authority,
                    captured, invocation, authorization_path, role["slotId"], role_resolver=resolver)
+
+
+def _preflight_invocation(arm: str, role: dict) -> dict:
+    """Construct source-shaped synthetic invocation identities for static slot checks."""
+    if arm == "government":
+        projection = f"government/{role['phase']}/{role['slotId']}"
+        scope_ids = ["preflight-scope"]
+        context = {}
+    elif arm == "classic":
+        import classic_integration
+        projection = role["projectionId"]
+        scope_ids = list(role["nativeScopeIds"])
+        definitions = []
+        for identity in classic_integration.NATIVE_SUBJECTS:
+            api_version, kind, namespace, name = json.loads(identity)
+            definitions.append({"apiVersion": api_version, "kind": kind,
+                                "metadata": {"namespace": namespace, "name": name}})
+        context = {"model": {"projectionId": projection,
+                              "scopeIds": list(classic_integration.NATIVE_SUBJECTS),
+                              "definitions": definitions}}
+    else:
+        raise ValueError("preflight invocation requires a supported native arm")
+    return {"apiVersion": INVOCATION_API,
+            "request": {"role": role["responseRole"], "sourceRevision": "preflight",
+                        "modelDigest": "sha256:" + "0" * 64, "modulePin": "sha256:" + "0" * 64,
+                        "projectionId": projection, "scopeIds": scope_ids, "policyIds": [],
+                        "context": context, "artifacts": []}}
 
 
 def _execution_sha(request: dict) -> str:
