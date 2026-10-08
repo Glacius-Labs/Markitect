@@ -2072,3 +2072,5 @@ spec:
       owner: project-world-implementation
     - path: docs/validation/project-world-delivery.md
       owner: project-world-validation
+    - path: internal/host/projectrun/process_e2e_test.go
+      owner: project-world-implementation
