@@ -2,7 +2,7 @@
 
 This fixture demonstrates project-owned Markitect files under `.markitect/`, a recursive Manager tree, vertical Sales/Orders/Inventory slices, explicit file ownership and realization, and a runnable cancellation example using Python's standard library and SQLite.
 
-The fixture is intentionally small. It has no configured provider runner, agent credentials, or automatically starting runtime. The empty `.markitect/runtime.yaml` is a placeholder until a user or root Manager proposes a bounded runtime through the reviewed `project edit` flow; the business code and tests run independently.
+The fixture is intentionally small. It ships without a provider runner or credentials, and no agent starts automatically. The empty `.markitect/runtime.yaml` remains unchanged by the fixture tests. To configure a runner in a disposable copy, use `project setup` from the Markitect source candidate; it creates a reviewed edit proposal without hand-authored YAML and never probes account credentials.
 
 See the repository guide at [docs/project-workflow.md](../../docs/project-workflow.md) for the project CLI lifecycle.
 
@@ -17,6 +17,7 @@ git init -b feature/project-world
 git config core.autocrlf false
 git add .
 git commit -m "Initialize project-world fixture"
+$modelBasis = (git rev-parse HEAD).Trim()
 python -B -m unittest discover -s tests -v
 Pop-Location
 
@@ -28,6 +29,32 @@ go run ./cmd/markitect project context --repo $fixtureRepo --manager '["project.
 go run ./cmd/markitect project document --repo $fixtureRepo
 Pop-Location
 ```
+
+To prepare that disposable copy for a conversational run, first check local prerequisites. The doctor report deliberately reports authentication as `not-verified`; it never runs a login-status command or reads auth files. The setup preview requires the caller to select the model and explicit cost-estimation weights for their own budget policy:
+
+```powershell
+Push-Location $markitectRoot
+go run ./cmd/markitect project doctor --repo $fixtureRepo --tool-root $markitectRoot --provider codex
+go run ./cmd/markitect project setup --repo $fixtureRepo --tool-root $markitectRoot --provider codex --model MODEL --effort high --input-micros-per-million INPUT_RATE --output-micros-per-million OUTPUT_RATE --max-cost-micros TASK_BUDGET
+```
+
+Review `editPlan.digest` and the exact native executable/adapter pins in the preview before applying that same deterministic runtime edit:
+
+```powershell
+go run ./cmd/markitect project setup --repo $fixtureRepo --tool-root $markitectRoot --provider codex --model MODEL --effort high --input-micros-per-million INPUT_RATE --output-micros-per-million OUTPUT_RATE --max-cost-micros TASK_BUDGET --expect EDIT_PLAN_DIGEST --write
+Pop-Location
+Push-Location $fixtureRepo
+git add .markitect/runtime.yaml
+git commit -m "Configure project-local Markitect runtime"
+Pop-Location
+Push-Location $markitectRoot
+go run ./cmd/markitect project plan --repo $fixtureRepo --goal "Cancel confirmed orders and release their reservation atomically" --since $modelBasis
+Pop-Location
+```
+
+Replace the uppercase placeholders with the caller's selected model, microcurrency-per-million-token estimates, configured task budget, and digest from the immediately preceding preview. These prices are estimate inputs, not provider quotes or hard invoice ceilings. The native candidate command and the release CLI remain distinct; `go run` does not update an installed release or local tool pin. A live run still requires an existing supported host and account login, which Markitect does not verify.
+
+After committing the intended model/runtime basis, use the captured model commit as `--since` while planning a change. `--since` supplies the comparison baseline; code edits still target the current committed `HEAD`. A plan created without `--since` plans from the current project model without a historical comparison.
 
 The candidate command above runs from the Markitect source checkout; it does not change the installed release or any local tool pin. To run only the Python tests from a copy that is already at a Git worktree root:
 
@@ -56,6 +83,8 @@ src/shop/
 tests/test_cancellation.py
 docs/cancellation.md
 ```
+
+The Manager tree is root `shop`, then `commerce` → `sales` → `orders` and `inventory`, plus the peer `engineering` Manager. The cancellation flow crosses Orders and Inventory: shipped orders are rejected; successful cancellation releases exactly one active reservation in the same transaction; repeating cancellation is idempotent; absent, pre-released, or duplicate reservations cause the operation to fail and the order status to roll back. Those cases are linked to the Inventory artifact and the declared SQLite checks in the model; they remain finite fixture evidence, not proof of broader correctness.
 
 The model is a structural specification. Passing these tests establishes only the finite SQLite behaviors they exercise; it does not establish that the model captures every requirement or that an AI followed the workflow.
 

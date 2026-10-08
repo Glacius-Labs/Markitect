@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"path"
+	"sort"
 	"strings"
 
 	hostwrite "github.com/Glacius-Labs/Markitect/internal/host"
@@ -50,6 +51,43 @@ func writeRecord(root, rawPath string, data []byte) (string, error) {
 	}
 	digest := sha256.Sum256(data)
 	return "sha256:" + hex.EncodeToString(digest[:]), nil
+}
+
+// writeRecords persists a related group of transport records under one
+// guarded capture, refusing any overwrite before applying the group.
+func writeRecords(root string, records map[string][]byte) (map[string]string, error) {
+	paths := make([]string, 0, len(records))
+	for raw := range records {
+		rel, err := recordPath(raw)
+		if err != nil {
+			return nil, err
+		}
+		paths = append(paths, rel)
+	}
+	sort.Strings(paths)
+	if len(paths) == 0 {
+		return nil, errors.New("at least one Markitect record is required")
+	}
+	capture, err := hostwrite.CaptureGuardedWrite(root, paths)
+	if err != nil {
+		return nil, fmt.Errorf("capture Markitect record targets: %w", err)
+	}
+	changes := make([]hostwrite.GuardedWriteChange, 0, len(paths))
+	digests := make(map[string]string, len(paths))
+	for _, path := range paths {
+		current, ok := capture.Files[path]
+		if !ok || current.Exists {
+			return nil, fmt.Errorf("refusing to overwrite existing Markitect record %s", path)
+		}
+		data := records[path]
+		changes = append(changes, hostwrite.GuardedWriteChange{Path: path, Bytes: data, Mode: 0644})
+		sum := sha256.Sum256(data)
+		digests[path] = "sha256:" + hex.EncodeToString(sum[:])
+	}
+	if _, err := hostwrite.ApplyGuardedWrite(capture.Root, capture, changes); err != nil {
+		return nil, fmt.Errorf("write Markitect records: %w", err)
+	}
+	return digests, nil
 }
 
 func emitRecord(root, output string, data []byte, stdout io.Writer) error {

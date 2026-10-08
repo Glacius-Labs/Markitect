@@ -26,21 +26,41 @@ markitect project document --repo .
 
 The initialization owns only `.markitect/`: the project manifest, empty runtime placeholder, root manager, generated readable view, and local ignore rules. It does not configure an agent. The view is generated from the selected model and is safe to read or edit as a proposal, but the selected YAML model remains the compiled source of meaning.
 
-For execution, ask the existing host-side agent to propose the project runtime through the same closed `project edit` mutation. A user or root Manager can review and set `.markitect/runtime.yaml`; Markitect validates its bounded command, manager mapping, environment-name allowlist, model/provider labels, and finite limits. The runtime stores no provider secrets and never changes the host's provider/editor/plugin/account setup. If no runner has been selected, the runtime placeholder is intentionally empty and `project plan` reports that execution is not configured.
+Set up a local runner without writing YAML by hand. `setup` discovers a direct native provider executable, Python, and the adapter under the explicitly named Markitect source root; it invokes only `--version`, pins their paths and digests, and builds one mapping per active Manager. Codex discovery rejects npm `.cmd`/PowerShell wrappers and looks for its vendored native executable; use `--provider-executable` if discovery cannot find it. The provider account and supported host/CLI must already exist. Markitect never reads credentials or probes login status, so the report says authentication is `not-verified`.
 
-For an existing repository, adoption begins from a full fixed source commit and an explicit list of regular-file paths, reasons, exclusions, and scope roots in a JSON request. Discovery emits a bound record; P1 `distill` validates a supplied report and starts no provider; `adopt` shows the selected model proposal before a separate guarded write:
+Preview the ordinary runtime edit first. Supply the model and pricing weights chosen by the caller's budget policy; these estimate accepted usage and do not represent a provider quote, invoice, or hard billing cap:
+
+```powershell
+markitect project doctor --repo . --tool-root C:\src\Markitect --provider codex
+markitect project setup --repo . --tool-root C:\src\Markitect --provider codex --model MODEL --effort high --input-micros-per-million INPUT_RATE --output-micros-per-million OUTPUT_RATE --max-cost-micros TASK_BUDGET
+```
+
+Review `discovery`, `mutation`, and `editPlan` in the JSON preview, including every pinned executable and its version/digest. Then pass the exact `editPlan.digest` back to the same command:
+
+```powershell
+markitect project setup --repo . --tool-root C:\src\Markitect --provider codex --model MODEL --effort high --input-micros-per-million INPUT_RATE --output-micros-per-million OUTPUT_RATE --max-cost-micros TASK_BUDGET --expect EDIT_PLAN_DIGEST --write
+markitect project check --repo .
+git add .markitect/runtime.yaml
+git commit -m "Configure project-local Markitect runtime"
+```
+
+`setup` runs no agent and changes no global provider, editor, hook, plugin, MCP, or account configuration. `doctor` checks tool/version availability, declared-check executable names on `PATH`, and whether the repository is on a named feature branch; it does not establish account authentication. The runtime uses `controlled-local`, a finite depth/start/time/output/candidate budget and a caller-supplied cost estimate. It does not claim OS isolation. Once selected model and runtime inputs are accepted, commit them before `project plan`; planning compares fixed `HEAD` to the optional `--since` baseline while executing against the current committed project.
+
+For an existing repository, adoption begins from a full fixed source commit and an explicit list of regular-file paths, reasons, exclusions, and scope roots in a JSON request. Discovery emits a bound record. P1 `distill --report` validates a supplied report and starts no provider. If you deliberately want one agent-assisted proposal, first configure and commit the runtime, then use `distill --generate --write`; it runs the root Manager's configured agent once on the selected frozen evidence, requires caller-supplied pricing/budget weights and provider-reported usage, and writes a proposal plus a separate receipt under `.markitect/drafts/`. The report is still unverified model input, not an acceptance. `adopt` shows the selected model proposal before a separate guarded write:
 
 First initialize the target repository and commit that scaffold on its feature branch. If adoption should inventory the existing code, have the user or root Manager propose the desired inventory roots and exclusions through `project edit`, review/apply that exact edit, and commit it too. Adoption binds its model-only proposal to a committed target project basis; it does not infer an uncommitted or provisional model, nor silently broaden selected inventory. If the repository is already a Markitect project, use its existing committed project basis.
 
 ```powershell
 markitect project discover --repo . --request .markitect/drafts/discovery-request.json --output .markitect/drafts/discovery.json
 markitect project distill --discovery .markitect/drafts/discovery.json --report .markitect/drafts/distillation.json --repo . --output .markitect/drafts/validated-distillation.json
+# Optional one-call generation, after setup and committing the runtime:
+markitect project distill --repo . --discovery .markitect/drafts/discovery.json --generate --write --output .markitect/drafts/distillation.json --input-micros-per-million INPUT_RATE --output-micros-per-million OUTPUT_RATE --max-cost-micros TASK_BUDGET
 markitect project adopt --repo . --source-repo . --revision TARGET_COMMIT --discovery .markitect/drafts/discovery.json --report .markitect/drafts/distillation.json --resolution .markitect/drafts/resolution.json --output .markitect/drafts/adoption-plan.json
 # Review the exact plan JSON and its digest, then:
 markitect project adopt --repo . --source-repo . --revision TARGET_COMMIT --discovery .markitect/drafts/discovery.json --report .markitect/drafts/distillation.json --resolution .markitect/drafts/resolution.json --plan .markitect/drafts/adoption-plan.json --expect REVIEWED_PLAN_DIGEST --write
 ```
 
-The request, report, and resolution are explicit transports, not implicit guesses from the working directory. Distillation is not generated by P1. An existing conversation agent may prepare a report from the selected evidence, but its claims and questions remain proposals. The declared method or actor is a record claim, not authenticated provenance or owner acceptance; the resolution stays unauthenticated. Deferred scopes contribute no model files; changing any bound source, proposal, resolution, or target basis makes the plan stale. These operations write Markitect-owned files only.
+The request, report, and resolution are explicit transports, not implicit guesses from the working directory. Generated distillation preserves a separate execution receipt and cost estimate; caller-supplied prices are only budget weights, never a guaranteed bill ceiling. Its claims and questions remain proposals. The declared method or actor is a record claim, not authenticated provenance or owner acceptance; the resolution stays unauthenticated. Deferred scopes contribute no model files; changing any bound source, proposal, resolution, or target basis makes the plan stale. These operations write Markitect-owned files only.
 
 ## Everyday conversational work
 
@@ -48,14 +68,15 @@ The agent host is the conversation surface; Markitect is the source of project c
 
 1. Ask for a change in ordinary language, such as “allow cancellation only before shipment and release the reservation in the same transaction.”
 2. Have the agent read the relevant manager context and current index/check report. Use `project impact --base BASE_COMMIT --revision CANDIDATE_COMMIT` when comparing fixed revisions.
-3. If the business model, source inventory, or runtime changes, ask the agent to return a closed mutation JSON proposal for `project edit --input ...`. A user or root Manager may adjust the manifest's inventory roots, exclusions, or `.markitect/runtime.yaml` in that reviewed edit; narrower managers cannot broaden project inventory or update runtime configuration. Markitect renders the exact edit plan and digest; within the original user-authorized task, the agent can apply that same proposal with `--expect EDIT_PLAN_DIGEST --write`. There is no need to hand-edit YAML to propose a model, scope, or runtime change.
+3. If the business model or source inventory changes, ask the agent to return a closed mutation JSON proposal for `project edit --input ...`. A user or root Manager may adjust the manifest's inventory roots or exclusions; narrower managers cannot broaden project inventory. Use `project setup` to preview and bind the standard local provider runtime, or let the user/root Manager propose a custom runtime mutation through `project edit`. Markitect renders the exact edit plan and digest; within the original user-authorized task, the agent can apply that same proposal with `--expect EDIT_PLAN_DIGEST --write`. There is no need to hand-edit YAML to propose a model, scope, or standard Codex/Claude setup.
 4. After model, scope, adoption, or runtime changes, review the candidate and commit the accepted changes locally on the feature branch. Markitect does not commit. The selected checkout must reproduce the committed bytes and modes; keep line endings and Git checkout filters consistent with that requirement. Execution plans bind a fixed Git HEAD and the currently selected project inputs, so planning rejects uncommitted or otherwise different inventoried bytes instead of silently verifying a different source state.
-5. Review manager assignments and artifacts, then plan implementation. Planning is read-only unless `--write` records the exact, already-authorized request. Persisting a plan does not start an agent.
+5. Review manager assignments and artifacts, then plan implementation. `--since OLD_COMMIT` compares impact from a fixed earlier project basis to the current committed project; the plan's execution basis remains current `HEAD`. It helps tell the agent what changed without making the old commit the code being edited. Without `--since`, no change-baseline comparison is requested. Planning is read-only unless `--write` records the exact, already-authorized request. Persisting a plan does not start an agent.
 6. Start or resume the accepted plan, inspect its status, run the declared checks, and apply only the verified candidate bound to the expected branch and source state.
 
 ```powershell
 markitect project context --repo . --manager '["project.markitect.example.org/v1alpha1","Manager","commerce.sales.orders","orders"]'
 markitect project plan --repo . --goal "Cancel confirmed orders and release their reservation atomically" --manager '["project.markitect.example.org/v1alpha1","Manager","commerce.sales.orders","orders"]' --manager '["project.markitect.example.org/v1alpha1","Manager","commerce.sales.inventory","inventory"]'
+markitect project plan --repo . --goal "Cancel confirmed orders and release their reservation atomically" --since ACCEPTED_MODEL_COMMIT
 markitect project plan --repo . --goal "Cancel confirmed orders and release their reservation atomically" --manager '["project.markitect.example.org/v1alpha1","Manager","commerce.sales.orders","orders"]' --manager '["project.markitect.example.org/v1alpha1","Manager","commerce.sales.inventory","inventory"]' --write
 markitect project run --repo . --plan PLAN_ID --write
 markitect project status --repo . --run RUN_ID
