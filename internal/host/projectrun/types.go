@@ -32,6 +32,7 @@ const (
 	StatusBlocked     = "blocked"
 	StatusFailed      = "failed"
 	StatusIntegrated  = "integrated"
+	StatusVerifying   = "verifying"
 	StatusVerified    = "verified"
 	StatusApplied     = "applied"
 	StatusSuperseded  = "superseded"
@@ -109,6 +110,8 @@ type PlanRecord struct {
 	ExecuteAuthorized    bool              `json:"executeAuthorized"`
 	Root                 string            `json:"-"`
 	BaseRevision         string            `json:"baseRevision"`
+	TargetBranch         string            `json:"targetBranch"`
+	TargetHead           string            `json:"targetHead"`
 	RepositoryDigest     string            `json:"repositoryDigest"`
 	BaseSnapshot         string            `json:"baseSnapshot"`
 	WorkingSnapshot      string            `json:"workingSnapshot"`
@@ -272,6 +275,18 @@ type ApplyReport struct {
 	Journal     []string  `json:"journal"`
 	AppliedAt   time.Time `json:"appliedAt"`
 	Error       string    `json:"error,omitempty"`
+}
+
+// ApplyPreflight is a read-only, exact-target contract for a later Apply call.
+type ApplyPreflight struct {
+	RunID              string   `json:"runId"`
+	PlanID             string   `json:"planId"`
+	CandidateID        string   `json:"candidateId"`
+	VerificationDigest string   `json:"verificationDigest"`
+	TargetBranch       string   `json:"targetBranch"`
+	ExpectedHead       string   `json:"expectedHead"`
+	ExpectedWorktree   string   `json:"expectedWorktree"`
+	Paths              []string `json:"paths"`
 }
 
 // Host is the function bundle for the selected project frontend. It composes

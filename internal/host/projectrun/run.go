@@ -207,7 +207,7 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 			return failRun(store, report, fmt.Errorf("manager %s work: %w", task.ManagerID, err))
 		}
 		report.Invocations = append(report.Invocations, invocation)
-		spent += invocation.CostMicros
+		spent = addCost(spent, invocation.CostMicros)
 		if spent > runtime.Limits.MaxCostMicros {
 			return blockRun(store, report, fmt.Errorf("estimated cost limit exceeded"))
 		}
@@ -312,7 +312,7 @@ func runOrResume(ctx context.Context, host Host, invoker Invoker, root, id strin
 			return failRun(store, report, fmt.Errorf("manager %s integration: %w", task.ManagerID, err))
 		}
 		report.Invocations = append(report.Invocations, invocation)
-		spent += invocation.CostMicros
+		spent = addCost(spent, invocation.CostMicros)
 		if spent > runtime.Limits.MaxCostMicros {
 			return blockRun(store, report, fmt.Errorf("estimated cost limit exceeded"))
 		}
@@ -808,6 +808,13 @@ func totalCost(logs []InvocationLog) int64 {
 	}
 	return sum
 }
+
+func addCost(current, next int64) int64 {
+	if current < 0 || next < 0 || current > math.MaxInt64-next {
+		return math.MaxInt64
+	}
+	return current + next
+}
 func estimateCost(usage *agentexec.Usage, p Pricing) (int64, bool) {
 	if usage == nil || usage.InputTokens == nil || usage.OutputTokens == nil {
 		return 0, false
@@ -866,6 +873,17 @@ func repositoryMatches(root string, plan PlanRecord) error {
 		return err
 	}
 	if identity.Digest != plan.RepositoryDigest {
+		return ErrStale
+	}
+	head, err := resolveGitHead(root)
+	if err != nil {
+		return err
+	}
+	branch, err := resolveGitBranch(root)
+	if err != nil {
+		return err
+	}
+	if head != plan.TargetHead || branch != plan.TargetBranch {
 		return ErrStale
 	}
 	return nil

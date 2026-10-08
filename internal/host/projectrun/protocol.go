@@ -14,7 +14,7 @@ type Delegation struct {
 }
 
 // TaskResponse is the narrow proposal/report payload carried in agentexec's
-// opaque CandidateJSON field. It contains no transcript or authority grant.
+// typed ReportJSON field. It contains no transcript or authority grant.
 type TaskResponse struct {
 	Status            string       `json:"status"`
 	Summary           string       `json:"summary"`
