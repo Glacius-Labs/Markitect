@@ -64,6 +64,49 @@ func TestSchemaUsesTypedFullIdentityReferences(t *testing.T) {
 	}
 }
 
+func TestAnalyzePreservesLiteralArgvOrderAndDuplicates(t *testing.T) {
+	model, files := fixture(t, false, false, true)
+	for i := range model.Definitions {
+		if model.Definitions[i].Kind == checkKind {
+			model.Definitions[i].Spec["command"] = []any{"python", "-m", "unittest", "x", "x"}
+		}
+	}
+	r := Analyze(model, files)
+	if len(r.Checks) != 1 || strings.Join(r.Checks[0].Command, "|") != "python|-m|unittest|x|x" {
+		t.Fatalf("literal argv was normalized or reordered: %+v", r.Checks)
+	}
+}
+
+func TestImpactChangedStatementIncludesUnchangedRealizationAndCheck(t *testing.T) {
+	model, files := fixture(t, true, true, true)
+	base := Analyze(model, files)
+	definitions := copyDefinitions(model.Definitions)
+	for i := range definitions {
+		if definitions[i].Kind == statementKind && definitions[i].Metadata.Namespace == "orders" {
+			definitions[i].Spec["description"] = "Cancel before shipment and release the reservation."
+		}
+	}
+	candidate, diagnostics := core.Compile(model.Schemas, definitions, "changed-statement")
+	if len(diagnostics) != 0 {
+		t.Fatalf("compile changed statement: %+v", diagnostics)
+	}
+	impact := Impact(base, Analyze(candidate, files))
+	if !contains(impact.Files, "src/orders/cancel.go") || len(impact.Checks) == 0 {
+		t.Fatalf("unchanged realization/check was omitted: files=%v checks=%v", impact.Files, impact.Checks)
+	}
+}
+
+func TestImpactDecisionOnlyDeltaRoutesFullDeclaredReview(t *testing.T) {
+	model, files := fixture(t, true, true, true)
+	r := Analyze(model, files)
+	candidate := r
+	candidate.ModelDigest = "sha256:decision-only-change"
+	impact := Impact(r, candidate)
+	if len(impact.Managers) != len(r.Managers) || len(impact.Files) != len(r.Files) || len(impact.Checks) != len(r.Checks) || len(impact.Unknown) == 0 {
+		t.Fatalf("unprojected model change did not route broad review: managers=%v files=%v checks=%v unknown=%v", impact.Managers, impact.Files, impact.Checks, impact.Unknown)
+	}
+}
+
 func TestAnalyzeTracksManyToManyFileMeaningAndDeterministicDigest(t *testing.T) {
 	model, files := fixture(t, true, true, true)
 	definitions := append([]core.Definition(nil), model.Definitions...)
@@ -132,6 +175,87 @@ func TestImpactUsesAddsContextWhileRequiresAddsCoverage(t *testing.T) {
 	if !contains(requiresImpact.Files, "src/inventory/release.go") {
 		t.Fatalf("requires did not include target artifact coverage: %v", requiresImpact.Files)
 	}
+	removedRequires := Impact(Analyze(baseModel, files), base)
+	if !contains(removedRequires.AffectedStatements, (core.DefinitionIdentity{APIVersion: APIVersion, Kind: statementKind, Namespace: "inventory", Name: "release-reservation"}).Key()) || !contains(removedRequires.Files, "src/inventory/release.go") {
+		t.Fatalf("removed requires edge lost its former contract or coverage: statements=%v files=%v", removedRequires.AffectedStatements, removedRequires.Files)
+	}
+}
+
+func TestImpactTracksNamespaceAndSourcePathMovement(t *testing.T) {
+	model, inventory := fixture(t, true, true, true)
+	oldID := core.DefinitionIdentity{APIVersion: APIVersion, Kind: statementKind, Namespace: "orders", Name: "cancel-order"}
+	newID := core.DefinitionIdentity{APIVersion: APIVersion, Kind: statementKind, Namespace: "inventory", Name: "cancel-order"}
+	baseDefinitions := copyDefinitions(model.Definitions)
+	for i := range baseDefinitions {
+		if baseDefinitions[i].Identity().Key() == oldID.Key() {
+			baseDefinitions[i].Source.Path = ".markitect/model/orders/cancel-order.yaml"
+		}
+	}
+	baseModel, diagnostics := core.Compile(model.Schemas, baseDefinitions, "before-move")
+	if len(diagnostics) != 0 {
+		t.Fatalf("compile base namespace: %+v", diagnostics)
+	}
+	inventory = append(inventory, File{Path: ".markitect/model/orders/cancel-order.yaml", Digest: "sha256:model-before", Mode: "100644"})
+	base := Analyze(baseModel, inventory)
+
+	candidateDefinitions := copyDefinitions(baseModel.Definitions)
+	for i := range candidateDefinitions {
+		if candidateDefinitions[i].Identity().Key() == oldID.Key() {
+			candidateDefinitions[i].Metadata.Namespace = "inventory"
+			candidateDefinitions[i].Source.Path = ".markitect/model/inventory/cancel-order.yaml"
+		}
+		for key, value := range candidateDefinitions[i].Spec {
+			candidateDefinitions[i].Spec[key] = rewriteReference(value, oldID, newID)
+		}
+	}
+	candidateModel, diagnostics := core.Compile(baseModel.Schemas, candidateDefinitions, "after-move")
+	if len(diagnostics) != 0 {
+		t.Fatalf("compile moved namespace: %+v", diagnostics)
+	}
+	candidateFiles := append([]File(nil), inventory...)
+	for i := range candidateFiles {
+		if candidateFiles[i].Path == ".markitect/model/orders/cancel-order.yaml" {
+			candidateFiles[i].Path = ".markitect/model/inventory/cancel-order.yaml"
+			candidateFiles[i].Digest = "sha256:model-after"
+		}
+	}
+	impact := Impact(base, Analyze(candidateModel, candidateFiles))
+	if !contains(impact.ChangedDefinitions, oldID.Key()) || !contains(impact.ChangedDefinitions, newID.Key()) {
+		t.Fatalf("namespace identity migration was hidden: %v", impact.ChangedDefinitions)
+	}
+	if !contains(impact.Files, ".markitect/model/orders/cancel-order.yaml") || !contains(impact.Files, ".markitect/model/inventory/cancel-order.yaml") {
+		t.Fatalf("source path movement was hidden: %v", impact.Files)
+	}
+	ordersID := core.DefinitionIdentity{APIVersion: APIVersion, Kind: managerKind, Namespace: "orders", Name: "orders"}.Key()
+	inventoryID := core.DefinitionIdentity{APIVersion: APIVersion, Kind: managerKind, Namespace: "inventory", Name: "inventory"}.Key()
+	if !contains(impact.Managers, ordersID) || !contains(impact.Managers, inventoryID) {
+		t.Fatalf("ownership routing missed old or new manager: %v", impact.Managers)
+	}
+}
+
+func TestImpactFollowsTransitiveConsumers(t *testing.T) {
+	model, files := fixture(t, true, true, true)
+	definitions := copyDefinitions(model.Definitions)
+	definitions = append(definitions, core.Definition{APIVersion: APIVersion, Kind: statementKind, Metadata: core.Metadata{Namespace: "orders", Name: "operator-workflow"}, Purpose: "Operator flow uses cancellation.", Spec: map[string]any{"category": "workflow", "description": "Follow the cancellation workflow.", "uses": []any{map[string]any{"apiVersion": APIVersion, "kind": statementKind, "namespace": "orders", "name": "cancel-order"}}}})
+	model, diagnostics := core.Compile(model.Schemas, definitions, "transitive-consumer")
+	if len(diagnostics) != 0 {
+		t.Fatalf("compile consumer fixture: %+v", diagnostics)
+	}
+	base := Analyze(model, files)
+	changedDefinitions := copyDefinitions(model.Definitions)
+	for i := range changedDefinitions {
+		if changedDefinitions[i].Kind == statementKind && changedDefinitions[i].Metadata.Namespace == "inventory" {
+			changedDefinitions[i].Spec["description"] = "Release once and report conflicts."
+		}
+	}
+	candidate, diagnostics := core.Compile(model.Schemas, changedDefinitions, "changed-contract")
+	if len(diagnostics) != 0 {
+		t.Fatalf("compile changed contract: %+v", diagnostics)
+	}
+	impact := Impact(base, Analyze(candidate, files))
+	if !contains(impact.AffectedStatements, (core.DefinitionIdentity{APIVersion: APIVersion, Kind: statementKind, Namespace: "orders", Name: "cancel-order"}).Key()) || !contains(impact.AffectedStatements, (core.DefinitionIdentity{APIVersion: APIVersion, Kind: statementKind, Namespace: "orders", Name: "operator-workflow"}).Key()) {
+		t.Fatalf("transitive consumers were omitted: %v", impact.AffectedStatements)
+	}
 }
 
 func TestAnalyzeKeepsRequiredArtifactWhenMappingIsAbsent(t *testing.T) {
@@ -178,6 +302,20 @@ func TestAnalyzeRejectsPrivateCrossManagerReference(t *testing.T) {
 	}
 }
 
+func TestAnalyzeRejectsArtifactRealizingPrivateForeignStatement(t *testing.T) {
+	model, files := fixture(t, false, false, true)
+	definitions := copyDefinitions(model.Definitions)
+	definitions = append(definitions, core.Definition{APIVersion: APIVersion, Kind: artifactKind, Metadata: core.Metadata{Namespace: "inventory", Name: "foreign-realization"}, Purpose: "Invalid cross-manager realization.", Spec: map[string]any{"role": "implementation", "realizes": []any{map[string]any{"apiVersion": APIVersion, "kind": statementKind, "namespace": "orders", "name": "cancel-order"}}, "paths": []any{"src/inventory/foreign.go"}}})
+	model, diagnostics := core.Compile(model.Schemas, definitions, "private-artifact")
+	if len(diagnostics) != 0 {
+		t.Fatalf("compile private artifact fixture: %+v", diagnostics)
+	}
+	r := Analyze(model, files)
+	if r.Status != "failed" || !hasFinding(r.Findings, "reference.private-cross-manager") {
+		t.Fatalf("private artifact realization was not rejected: %+v", r.Findings)
+	}
+}
+
 func TestImpactRetainsRemovedRequiredObligationAndRoutesOwners(t *testing.T) {
 	oldModel, oldFiles := fixture(t, true, true, true)
 	newModel, newFiles := fixture(t, false, false, false)
@@ -211,6 +349,17 @@ func TestImpactNewRequirementIncludesUnchangedExpectedPathAndCheck(t *testing.T)
 
 func TestContextIncludesDirectPublicContractsAndExcludesSiblingInternals(t *testing.T) {
 	model, files := fixture(t, true, true, true)
+	definitions := copyDefinitions(model.Definitions)
+	definitions = append(definitions, core.Definition{APIVersion: APIVersion, Kind: statementKind, Metadata: core.Metadata{Namespace: "inventory", Name: "internal-guard"}, Purpose: "Private implementation detail.", Spec: map[string]any{"category": "rule", "description": "Internal inventory guard."}})
+	for i := range definitions {
+		if definitions[i].Kind == statementKind && definitions[i].Metadata.Namespace == "inventory" && definitions[i].Metadata.Name == "release-reservation" {
+			definitions[i].Spec["uses"] = []any{map[string]any{"apiVersion": APIVersion, "kind": statementKind, "namespace": "inventory", "name": "internal-guard"}}
+		}
+	}
+	model, diagnostics := core.Compile(model.Schemas, definitions, "private-contract-relation")
+	if len(diagnostics) != 0 {
+		t.Fatalf("compile contract relation fixture: %+v", diagnostics)
+	}
 	r := Analyze(model, files)
 	ordersID := (core.DefinitionIdentity{APIVersion: APIVersion, Kind: managerKind, Namespace: "orders", Name: "orders"}).Key()
 	ctx, err := Context(r, ordersID)
@@ -223,6 +372,9 @@ func TestContextIncludesDirectPublicContractsAndExcludesSiblingInternals(t *test
 	if len(ctx.Contracts) != 1 || !ctx.Contracts[0].Public || ctx.Contracts[0].Namespace != "inventory" {
 		t.Fatalf("direct public contract missing: %+v", ctx.Contracts)
 	}
+	if len(ctx.Contracts[0].Uses) != 0 || len(ctx.Contracts[0].Requires) != 0 {
+		t.Fatalf("public contract leaked private relation identities: %+v", ctx.Contracts[0])
+	}
 	for _, a := range ctx.Artifacts {
 		if a.Owner == "" || strings.Contains(a.ID, "release-code") {
 			t.Fatalf("sibling artifact leaked into context: %+v", a)
@@ -230,6 +382,16 @@ func TestContextIncludesDirectPublicContractsAndExcludesSiblingInternals(t *test
 	}
 	if len(ctx.Children) != 0 {
 		t.Fatalf("unexpected children: %+v", ctx.Children)
+	}
+	rootID := (core.DefinitionIdentity{APIVersion: APIVersion, Kind: managerKind, Name: "root"}).Key()
+	rootContext, err := Context(r, rootID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, child := range rootContext.Children {
+		if child.Instructions != "" {
+			t.Fatalf("child-local instructions leaked to parent context: %+v", child)
+		}
 	}
 	if _, err = Context(r, "missing"); err != ErrManagerNotFound {
 		t.Fatalf("missing manager error=%v", err)
@@ -255,6 +417,23 @@ func copyDefinitions(definitions []core.Definition) []core.Definition {
 		copy[i].Spec = spec
 	}
 	return copy
+}
+
+func rewriteReference(value any, old, next core.DefinitionIdentity) any {
+	switch v := value.(type) {
+	case map[string]any:
+		if v["apiVersion"] == old.APIVersion && v["kind"] == old.Kind && v["namespace"] == old.Namespace && v["name"] == old.Name {
+			return map[string]any{"apiVersion": next.APIVersion, "kind": next.Kind, "namespace": next.Namespace, "name": next.Name}
+		}
+		for key, item := range v {
+			v[key] = rewriteReference(item, old, next)
+		}
+	case []any:
+		for i := range v {
+			v[i] = rewriteReference(v[i], old, next)
+		}
+	}
+	return value
 }
 
 func TestAnalyzeExplicitlyReportsUnknownInventory(t *testing.T) {

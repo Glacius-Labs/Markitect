@@ -36,6 +36,8 @@ func Context(report Report, managerID string) (ManagerContext, error) {
 	}
 	for id := range needed {
 		if s, found := statementByID[id]; found && s.Owner != managerID && s.Public {
+			s.Uses = visibleRelations(s.Uses, statementByID)
+			s.Requires = visibleRelations(s.Requires, statementByID)
 			out.Contracts = append(out.Contracts, s)
 		}
 	}
@@ -51,6 +53,7 @@ func Context(report Report, managerID string) (ManagerContext, error) {
 	}
 	for _, child := range report.Managers {
 		if child.Parent == managerID {
+			child.Instructions = ""
 			out.Children = append(out.Children, child)
 		}
 	}
@@ -66,6 +69,16 @@ func Context(report Report, managerID string) (ManagerContext, error) {
 	sort.Slice(out.Children, func(i, j int) bool { return out.Children[i].ID < out.Children[j].ID })
 	out.Findings = sortedFindings(out.Findings)
 	return out, nil
+}
+
+func visibleRelations(ids []string, statements map[string]Statement) []string {
+	visible := make([]string, 0, len(ids))
+	for _, id := range ids {
+		if target, ok := statements[id]; ok && target.Public {
+			visible = append(visible, id)
+		}
+	}
+	return sortedUnique(visible)
 }
 
 func findingTouchesManager(f Finding, managerID string, r Report) bool {
@@ -119,47 +132,83 @@ func Impact(base, candidate Report) ChangeImpact {
 		statementByID[s.ID] = s
 	}
 	artifactByID := map[string]Artifact{}
+	allArtifacts := append(append([]Artifact(nil), base.Artifacts...), candidate.Artifacts...)
 	for _, a := range base.Artifacts {
 		artifactByID[a.ID] = a
 	}
 	for _, a := range candidate.Artifacts {
 		artifactByID[a.ID] = a
 	}
-	checkByID := map[string]Check{}
-	for _, c := range base.Checks {
-		checkByID[c.ID] = c
-	}
-	for _, c := range candidate.Checks {
-		checkByID[c.ID] = c
-	}
 	seed := map[string]bool{}
 	managers := map[string]bool{}
 	files := map[string]bool{}
 	checks := map[string]bool{}
 	for id := range changed {
-		if s, ok := statementByID[id]; ok {
-			seed[id] = true
-			managers[s.Owner] = true
-		}
-		if a, ok := artifactByID[id]; ok {
-			managers[a.Owner] = true
-			for _, sid := range a.Realizes {
-				seed[sid] = true
+		for _, report := range []Report{base, candidate} {
+			for _, s := range report.Statements {
+				if s.ID == id {
+					seed[id] = true
+					managers[s.Owner] = true
+				}
 			}
-			addArtifactPaths(files, a)
-			for _, cid := range a.Checks {
-				checks[cid] = true
+			for _, a := range report.Artifacts {
+				if a.ID == id {
+					managers[a.Owner] = true
+					for _, sid := range a.Realizes {
+						seed[sid] = true
+					}
+					addArtifactPaths(files, a)
+					for _, cid := range a.Checks {
+						checks[cid] = true
+					}
+				}
 			}
-		}
-		if c, ok := checkByID[id]; ok {
-			managers[c.Owner] = true
-			for _, sid := range c.Uses {
-				seed[sid] = true
+			for _, c := range report.Checks {
+				if c.ID == id {
+					managers[c.Owner] = true
+					for _, sid := range c.Uses {
+						seed[sid] = true
+					}
+					checks[id] = true
+				}
 			}
-			checks[id] = true
-		}
-		if _, ok := managerByID[id]; ok {
-			managers[id] = true
+			for _, m := range report.Managers {
+				if m.ID == id {
+					managers[id] = true
+					addAncestors(managers, id, managersForReport(report))
+				}
+			}
+			if managerByID[id].ID != "" {
+				for _, statement := range report.Statements {
+					if statement.Owner == id {
+						seed[statement.ID] = true
+					}
+				}
+				for _, artifact := range report.Artifacts {
+					if artifact.Owner == id {
+						for _, sid := range artifact.Realizes {
+							seed[sid] = true
+						}
+						addArtifactPaths(files, artifact)
+						for _, cid := range artifact.Checks {
+							checks[cid] = true
+						}
+					}
+				}
+				for _, check := range report.Checks {
+					if check.Owner == id {
+						checks[check.ID] = true
+						for _, sid := range check.Uses {
+							seed[sid] = true
+						}
+					}
+				}
+				for _, entry := range report.Files {
+					if entry.Owner == id {
+						files[entry.Path] = true
+					}
+				}
+			}
 		}
 	}
 	baseFiles, candidateFiles := entryMap(base.Files), entryMap(candidate.Files)
@@ -207,6 +256,26 @@ func Impact(base, candidate Report) ChangeImpact {
 			requires[s.ID] = appendUnique(requires[s.ID], s.Requires...)
 		}
 	}
+	modelUnprojected := base.ModelDigest != candidate.ModelDigest && len(changed) == 0
+	if modelUnprojected {
+		out.Unknown = append(out.Unknown, "model digest changed without a projected definition delta; decision or unprojected definition changes may require review")
+	}
+
+	// Directly changed statements and reverse dependents need their own realizing artifacts.
+	addCoverage := func(statementID string) {
+		for _, artifact := range allArtifacts {
+			if contains(artifact.Realizes, statementID) {
+				managers[artifact.Owner] = true
+				addArtifactPaths(files, artifact)
+				for _, checkID := range artifact.Checks {
+					checks[checkID] = true
+				}
+			}
+		}
+	}
+	for id := range seed {
+		addCoverage(id)
+	}
 	closure := map[string]bool{}
 	queue := make([]string, 0, len(seed))
 	for id := range seed {
@@ -232,44 +301,25 @@ func Impact(base, candidate Report) ChangeImpact {
 				closure[dep] = true
 				queue = append(queue, dep)
 			}
+			addCoverage(dep)
 			if s, ok := statementByID[dep]; ok {
 				managers[s.Owner] = true
 			}
-			for _, a := range artifactByID {
-				if contains(a.Realizes, dep) {
-					managers[a.Owner] = true
-					addArtifactPaths(files, a)
-					for _, cid := range a.Checks {
-						checks[cid] = true
-					}
+		}
+		// A changed contract routes every direct consumer; each consumer's own realization is affected too.
+		for _, report := range []Report{base, candidate} {
+			for _, consumer := range report.Statements {
+				if (contains(consumer.Uses, id) || contains(consumer.Requires, id)) && !closure[consumer.ID] {
+					closure[consumer.ID] = true
+					queue = append(queue, consumer.ID)
+					addCoverage(consumer.ID)
+					managers[consumer.Owner] = true
 				}
 			}
 		}
 	}
 	for id := range closure {
 		out.AffectedStatements = append(out.AffectedStatements, id)
-	}
-	// A changed public contract also routes its direct consumers, including removed consumers from base.
-	for id := range closure {
-		for _, r := range []Report{base, candidate} {
-			for _, s := range r.Statements {
-				if contains(s.Uses, id) {
-					managers[s.Owner] = true
-				}
-				if contains(s.Requires, id) {
-					managers[s.Owner] = true
-					for _, a := range r.Artifacts {
-						if contains(a.Realizes, id) {
-							addArtifactPaths(files, a)
-							managers[a.Owner] = true
-							for _, cid := range a.Checks {
-								checks[cid] = true
-							}
-						}
-					}
-				}
-			}
-		}
 	}
 	for id := range changed {
 		if _, ok := managerByID[id]; ok {
@@ -290,9 +340,6 @@ func Impact(base, candidate Report) ChangeImpact {
 	}
 	out.Files = mapKeys(files)
 	out.Checks = mapKeys(checks)
-	if base.ModelDigest != candidate.ModelDigest && len(changed) == 0 {
-		out.Unknown = append(out.Unknown, "model digest changed without a projected definition delta; decision or unprojected definition changes may require review")
-	}
 	out.Unknown = append(out.Unknown, base.Unknown...)
 	out.Unknown = append(out.Unknown, candidate.Unknown...)
 	if base.Status != "succeeded" {
@@ -303,6 +350,31 @@ func Impact(base, candidate Report) ChangeImpact {
 	}
 	out.Unknown = sortedUnique(out.Unknown)
 	if len(out.Unknown) > 0 {
+		// Unknown scope is never treated as a no-op: route every declared Manager and inventory item.
+		for _, report := range []Report{base, candidate} {
+			for _, manager := range report.Managers {
+				managers[manager.ID] = true
+				addAncestors(managers, manager.ID, managersForReport(report))
+			}
+			for _, statement := range report.Statements {
+				out.AffectedStatements = append(out.AffectedStatements, statement.ID)
+			}
+			for _, entry := range report.Files {
+				files[entry.Path] = true
+			}
+			for _, artifact := range report.Artifacts {
+				addArtifactPaths(files, artifact)
+				for _, checkID := range artifact.Checks {
+					checks[checkID] = true
+				}
+			}
+			for _, check := range report.Checks {
+				checks[check.ID] = true
+			}
+		}
+		out.Managers = mapKeys(managers)
+		out.Files = mapKeys(files)
+		out.Checks = mapKeys(checks)
 		out.Findings = append(out.Findings, Finding{Code: "impact.unknown-scope", Message: "Some project or inventory scope is unresolved and remains in the impact.", Severity: "incomplete"})
 	}
 	for _, m := range out.Managers {
@@ -450,4 +522,12 @@ func addAncestors(set map[string]bool, id string, managers map[string]Manager) {
 		set[m.Parent] = true
 		id = m.Parent
 	}
+}
+
+func managersForReport(report Report) map[string]Manager {
+	out := make(map[string]Manager, len(report.Managers))
+	for _, manager := range report.Managers {
+		out[manager.ID] = manager
+	}
+	return out
 }
