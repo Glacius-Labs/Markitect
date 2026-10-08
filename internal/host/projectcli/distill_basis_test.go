@@ -12,6 +12,47 @@ import (
 
 func TestGeneratedDistillationRejectsUncommittedSelectedModelBeforeRuntimeLoad(t *testing.T) {
 	repo := copyProjectWorld(t)
+	writeDistillBasisDiscovery(t, repo)
+	modelPath := filepath.Join(repo, filepath.FromSlash(".markitect/model/commerce/sales/orders/cancel-before-shipped.yaml"))
+	modelBytes, err := os.ReadFile(modelPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(modelPath, append(modelBytes, []byte("# uncommitted model edit\n")...), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	var out, errout bytes.Buffer
+	if code := Run(generatedDistillArgs(repo), &out, &errout); code == 0 || !strings.Contains(errout.String(), "selected project inputs differ from committed HEAD") {
+		t.Fatalf("dirty generated distillation exit=%d stderr=%s stdout=%s", code, errout.String(), out.String())
+	}
+	if _, err := os.Stat(filepath.Join(repo, filepath.FromSlash(".markitect/drafts/generated.json"))); !os.IsNotExist(err) {
+		t.Fatalf("rejected generated distillation emitted a report: %v", err)
+	}
+}
+
+func TestGeneratedDistillationCleanBasisReachesRuntimeValidation(t *testing.T) {
+	repo := copyProjectWorld(t)
+	writeDistillBasisDiscovery(t, repo)
+	var out, errout bytes.Buffer
+	if code := Run(generatedDistillArgs(repo), &out, &errout); code == 0 || !strings.Contains(errout.String(), "runtime apiVersion") || strings.Contains(errout.String(), "selected project inputs differ from committed HEAD") {
+		t.Fatalf("clean generated distillation exit=%d stderr=%s stdout=%s", code, errout.String(), out.String())
+	}
+	if _, err := os.Stat(filepath.Join(repo, filepath.FromSlash(".markitect/drafts/generated.json"))); !os.IsNotExist(err) {
+		t.Fatalf("runtime validation failure emitted a report: %v", err)
+	}
+}
+
+func generatedDistillArgs(repo string) []string {
+	return []string{
+		"distill", "--repo", repo, "--discovery", ".markitect/drafts/distill-fixed-basis.json",
+		"--generate", "--write", "--output", ".markitect/drafts/generated.json",
+		"--input-micros-per-million", "1", "--output-micros-per-million", "1", "--max-cost-micros", "1000",
+	}
+}
+
+func writeDistillBasisDiscovery(t *testing.T, repo string) {
+	t.Helper()
 	commit := gitOutput(t, repo, "rev-parse", "HEAD")
 	request := projectadoption.DiscoveryRequest{
 		APIVersion: projectadoption.DiscoveryVersion,
@@ -36,26 +77,5 @@ func TestGeneratedDistillationRejectsUncommittedSelectedModelBeforeRuntimeLoad(t
 	}
 	if _, err := writeRecord(repo, ".markitect/drafts/distill-fixed-basis.json", discoveryBytes); err != nil {
 		t.Fatal(err)
-	}
-	modelPath := filepath.Join(repo, filepath.FromSlash(".markitect/model/commerce/sales/orders/cancel-before-shipped.yaml"))
-	modelBytes, err := os.ReadFile(modelPath)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(modelPath, append(modelBytes, []byte("# uncommitted model edit\n")...), 0644); err != nil {
-		t.Fatal(err)
-	}
-
-	var out, errout bytes.Buffer
-	args := []string{
-		"distill", "--repo", repo, "--discovery", ".markitect/drafts/distill-fixed-basis.json",
-		"--generate", "--write", "--output", ".markitect/drafts/generated.json",
-		"--input-micros-per-million", "1", "--output-micros-per-million", "1", "--max-cost-micros", "1000",
-	}
-	if code := Run(args, &out, &errout); code == 0 || !strings.Contains(errout.String(), "selected project inputs differ from committed HEAD") {
-		t.Fatalf("dirty generated distillation exit=%d stderr=%s stdout=%s", code, errout.String(), out.String())
-	}
-	if _, err := os.Stat(filepath.Join(repo, filepath.FromSlash(".markitect/drafts/generated.json"))); !os.IsNotExist(err) {
-		t.Fatalf("rejected generated distillation emitted a report: %v", err)
 	}
 }
