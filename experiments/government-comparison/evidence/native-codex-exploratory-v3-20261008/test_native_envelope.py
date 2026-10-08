@@ -1,0 +1,89 @@
+import datetime as dt
+import json
+from pathlib import Path
+import subprocess
+import sys
+import tempfile
+import time
+import unittest
+from unittest.mock import patch
+
+import study_control as control
+
+
+class EnvelopeTests(unittest.TestCase):
+    def fresh(self, root):
+        ledger = {'overallDeadlineUtc': (control.now()+dt.timedelta(hours=1)).isoformat(),
+                  'trialActivations': [], 'preparationActivations': [],
+                  'cells': [{'trialId': 'cell'}]}
+        control.write(root/'ledger.json', ledger)
+        return ledger
+
+    def test_reservation_charged_before_call_and_activation_cap(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            with patch.object(control, 'ROOT', root), patch.object(control, 'LEDGER', root/'ledger.json'):
+                self.fresh(root)
+                for i in range(12):
+                    record = control.reserve('cell', 1, 'test')
+                    self.assertEqual(len(control.load()['trialActivations']), i+1)
+                    control.update(record['reservationId'], status='failed')
+                with self.assertRaises(AssertionError):
+                    control.reserve('cell', 1, 'test')
+                self.assertEqual(len(control.load()['trialActivations']), 12)
+
+    def test_parallel_and_expired_stage_refuse(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            with patch.object(control, 'ROOT', root), patch.object(control, 'LEDGER', root/'ledger.json'):
+                self.fresh(root)
+                for i in range(4):
+                    control.reserve('cell', 1, 'test')
+                with self.assertRaises(AssertionError):
+                    control.reserve('cell', 1, 'test')
+                ledger = control.load()
+                for call in ledger['trialActivations']:
+                    call['status'] = 'completed'
+                ledger['cells'][0]['tasks']['1']['startedMonotonic'] = time.monotonic()-1201
+                control.write(root/'ledger.json', ledger)
+                with self.assertRaises(AssertionError):
+                    control.reserve('cell', 1, 'test')
+
+    def test_mailbox_preserves_role_response_and_identity_refusal(self):
+        for wrong in [False, True]:
+            with self.subTest(wrong=wrong), tempfile.TemporaryDirectory() as temp:
+                root = Path(temp)
+                invocation = {'apiVersion': 'markitect.example.org/agent-execution/v1alpha1',
+                              'runId': 'abc123', 'nonce': 'nonce', 'inputDigest': 'sha256:input',
+                              'request': {'role': 'verifier'}}
+                deadline = (control.now()+dt.timedelta(seconds=10)).isoformat()
+                process = subprocess.Popen([sys.executable, '-B', str(Path(__file__).with_name('native_mailbox.py')),
+                                            '--mailbox', str(root), '--trial', 'cell', '--task', '1',
+                                            '--deadline', deadline], stdin=subprocess.PIPE,
+                                           stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                process.stdin.write(json.dumps(invocation).encode()); process.stdin.close()
+                limit = time.monotonic()+5
+                while not (root/'abc123/request.json').exists() and time.monotonic()<limit:
+                    time.sleep(.01)
+                self.assertTrue((root/'abc123/request.json').exists())
+                response = {k: invocation[k] for k in ['apiVersion', 'runId', 'nonce', 'inputDigest']}
+                response.update(role='verifier', outcome='incomplete', uncertainty=['transport test only'], usage=None)
+                if wrong:
+                    response['nonce'] = 'wrong'
+                raw = json.dumps(response, indent=2).encode()
+                (root/'abc123/response.json').write_bytes(raw)
+                process.wait(timeout=5)
+                output = process.stdout.read()
+                process.stdout.close()
+                process.stderr.close()
+                if wrong:
+                    self.assertEqual(process.returncode, 2)
+                    self.assertEqual(output, b'')
+                else:
+                    self.assertEqual(process.returncode, 0)
+                    self.assertEqual(output, raw)
+                    self.assertTrue((root/'abc123/transport-receipt.json').is_file())
+
+
+if __name__ == '__main__':
+    unittest.main()

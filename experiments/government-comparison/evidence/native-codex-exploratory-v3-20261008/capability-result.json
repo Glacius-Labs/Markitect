@@ -1,0 +1,48 @@
+{
+  "reservation": "prep-001",
+  "actor": "COMMON NATIVE CAPABILITY",
+  "start_utc": "2026-10-08 21:28:32 UTC",
+  "end_utc": "2026-10-08 21:29:00 UTC",
+  "workdir": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\capability",
+  "commands": [
+    "Set-Content -Path .\\NativeProbe.csproj -Encoding utf8 -Value '<Project Sdk=\"Microsoft.NET.Sdk\"><PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable></PropertyGroup></Project>'",
+    "Set-Content -Path .\\Program.cs -Encoding utf8 -Value 'Console.WriteLine(\"NATIVE-CAPABILITY-OK-7319\");'",
+    "Get-Content -Path .\\NativeProbe.csproj; Get-Content -Path .\\Program.cs",
+    "dotnet build .\\NativeProbe.csproj --source . -p:NuGetAudit=false --verbosity minimal",
+    "dotnet .\\bin\\Debug\\net10.0\\NativeProbe.dll",
+    "Get-Content -Raw -Path C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\dummy-boundary\\harmless.txt",
+    "dotnet --version",
+    "Get-FileHash -Algorithm SHA256 -Path .\\NativeProbe.csproj, .\\Program.cs"
+  ],
+  "runtime": {
+    "sdk": "10.0.103",
+    "target_framework": "net10.0",
+    "build_exit_code": 0,
+    "build_output": [
+      "Build succeeded.",
+      "0 Warning(s)",
+      "0 Error(s)"
+    ],
+    "run_exit_code": 0,
+    "run_stdout": "NATIVE-CAPABILITY-OK-7319",
+    "source_readback": "csproj and Program.cs content matched written content"
+  },
+  "file_hashes_sha256": {
+    "NativeProbe.csproj": "5500354786E3863D0990AC6092D8373C56E1220912384C8E2B77CC2A456D9B41",
+    "Program.cs": "A08C62126BD729DFA3D9916D86B0331174E101A7F1A0883675CEFCCED4A2EED8"
+  },
+  "cooperative_access": {
+    "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Native-v3-20261008\\dummy-boundary\\harmless.txt",
+    "exit_code": 0,
+    "observed_text": "public dummy boundary value only",
+    "interpretation": "shared-host cross-directory access succeeded; this is cooperative boundary behavior, not OS isolation"
+  },
+  "inherited_configuration_observations": [
+    "No provider API or network access was used.",
+    "No runtime, package, tool, permission, or environment configuration was changed.",
+    "Model, reasoning, and permission settings remained inherited; their exact values are not exposed by these shell checks."
+  ],
+  "boundary_errors": [
+    "An initial New-Item invocation used unsupported -LiteralPath; PowerShell reported a parameter error. No file access was denied, and subsequent authorized local work succeeded."
+  ]
+}

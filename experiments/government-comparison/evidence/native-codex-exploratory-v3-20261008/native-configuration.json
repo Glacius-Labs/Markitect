@@ -1,0 +1,16 @@
+{
+  "provenance": "Latest local session turn_context at 2026-10-08T21:27:31.805Z; native collaboration tools inherit parent; all spawn calls omit model and reasoning overrides",
+  "requestedModel": "gpt-6.1-sol",
+  "requestedReasoningEffort": "high",
+  "approvalPolicy": "never",
+  "sandboxPolicy": "danger-full-access",
+  "network": "enabled per parent environment",
+  "freshContext": "fork_turns=none for each new cell, helper, reviewer and evaluator",
+  "servingModel": null,
+  "providerRequests": null,
+  "rawUsage": null,
+  "tools": "Same inherited native functions shell/file/search/browser/collaboration tools; only Scientist launches descendants; Actors limited cooperatively to own repo/support and released material",
+  "globalConfigurationChanged": false,
+  "OSIsolationEstablished": false,
+  "ancestorContextLimitation": "Native default cwd remains owner workspace; every Actor shell call must explicitly use own repository/scratch. No actual OS permission confinement. Shared global system/developer instructions may exist; no owner-chat history is forked. Prior study/memory lookup prohibited."
+}

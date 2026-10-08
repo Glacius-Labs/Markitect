@@ -1,0 +1,14 @@
+{
+  "invocations": 2,
+  "ordinaryAdapterCorrectionBatches": 1,
+  "initialGroups": 3,
+  "initialPassed": true,
+  "initialSeconds": 0.673,
+  "initialFixtureResourceWarnings": true,
+  "finalAffectedGroups": 3,
+  "finalPassed": true,
+  "finalSeconds": 0.659,
+  "finalResourceWarnings": false,
+  "oldHistoricalSuitesRerun": false,
+  "syntheticOnly": true
+}

@@ -1,0 +1,155 @@
+{
+  "key": "native-codex-exploratory-v3-20261008",
+  "firstActionUtc": "2026-10-08T21:27:39Z",
+  "preparationDeadlineUtc": "2026-10-08T21:57:39Z",
+  "overallDeadlineUtc": "2026-10-09T15:26:29Z",
+  "preparationActivations": [
+    {
+      "reservationId": "prep-001",
+      "role": "common-capability",
+      "reservedUtc": "2026-10-08T21:28:18.658793+00:00",
+      "actorId": "/root/v3_native_capability",
+      "status": "completed",
+      "deadlineUtc": "2026-10-08T21:31:18.658793+00:00",
+      "usage": null,
+      "resultSha256": "f8d2a32952bd2e7c8fe58d5f6ded303ba25c30529db6601311041c71758e64c7",
+      "endedUtc": "2026-10-08T21:29:00Z"
+    },
+    {
+      "reservationId": "prep-002",
+      "role": "independent-public-protocol-review",
+      "reservedUtc": "2026-10-08T21:33:37.091194+00:00",
+      "actorId": "/root/v3_protocol_review",
+      "status": "completed",
+      "deadlineUtc": "2026-10-08T21:43:37.091194+00:00",
+      "usage": null,
+      "resultSha256": "455f3e53fd768bace0124ce2fef8d7d422b9190b02cda92aaba764e9682bcacf",
+      "endedUtc": "2026-10-08T21:37:00.804546+00:00"
+    },
+    {
+      "reservationId": "prep-003",
+      "role": "independent-freeze-binding-review",
+      "reservedUtc": "2026-10-08T21:33:37.091194+00:00",
+      "actorId": "/root/v3_freeze_review",
+      "status": "completed",
+      "deadlineUtc": "2026-10-08T21:43:37.091194+00:00",
+      "usage": null,
+      "resultSha256": "7b01cbffec74701b946246ae08ef01f13d5f2a4f65dcf915576b745eefb32cd3",
+      "endedUtc": "2026-10-08T21:39:14.742128+00:00"
+    }
+  ],
+  "trialActivations": [],
+  "cells": [
+    {
+      "trialId": "conventional-greenfield-v3-20261008",
+      "arm": "conventional",
+      "condition": "greenfield",
+      "maxActorActivations": 72,
+      "initialActorActivationsConsumed": 0,
+      "remainingActorActivations": 72,
+      "maxTrialWallSeconds": 7200,
+      "initialStatus": "not_started"
+    },
+    {
+      "trialId": "classic-greenfield-v3-20261008",
+      "arm": "classic",
+      "condition": "greenfield",
+      "maxActorActivations": 72,
+      "initialActorActivationsConsumed": 0,
+      "remainingActorActivations": 72,
+      "maxTrialWallSeconds": 7200,
+      "initialStatus": "not_started"
+    },
+    {
+      "trialId": "government-greenfield-v3-20261008",
+      "arm": "government",
+      "condition": "greenfield",
+      "maxActorActivations": 72,
+      "initialActorActivationsConsumed": 0,
+      "remainingActorActivations": 72,
+      "maxTrialWallSeconds": 7200,
+      "initialStatus": "not_started"
+    },
+    {
+      "trialId": "conventional-brownfield-v3-20261008",
+      "arm": "conventional",
+      "condition": "brownfield",
+      "maxActorActivations": 72,
+      "initialActorActivationsConsumed": 0,
+      "remainingActorActivations": 72,
+      "maxTrialWallSeconds": 7200,
+      "initialStatus": "not_started"
+    },
+    {
+      "trialId": "classic-brownfield-v3-20261008",
+      "arm": "classic",
+      "condition": "brownfield",
+      "maxActorActivations": 72,
+      "initialActorActivationsConsumed": 0,
+      "remainingActorActivations": 72,
+      "maxTrialWallSeconds": 7200,
+      "initialStatus": "not_started"
+    },
+    {
+      "trialId": "government-brownfield-v3-20261008",
+      "arm": "government",
+      "condition": "brownfield",
+      "maxActorActivations": 72,
+      "initialActorActivationsConsumed": 0,
+      "remainingActorActivations": 72,
+      "maxTrialWallSeconds": 7200,
+      "initialStatus": "not_started"
+    }
+  ],
+  "correctionBatches": 2,
+  "affectedTestInvocations": 2,
+  "historical": {
+    "appserverTrees": 15,
+    "actorReservations": 8,
+    "cliMetadataCalls": 8,
+    "knownHistoricalTokens": 53331,
+    "totalTokens": null,
+    "nativeVector": [
+      15,
+      16,
+      13,
+      2250
+    ]
+  },
+  "newNativeActivationsSeparate": true,
+  "preparationTestHistory": [
+    {
+      "invocation": 1,
+      "tests": 3,
+      "passed": true,
+      "seconds": 0.673,
+      "resourceWarnings": "Test fixture left stdout/stderr readers unclosed; ordinary correction batch1 closes handles",
+      "initialSourceSha256": "44ddd86f63316ba08bd9a115e62c40b0878a74290b9e84ee2c6350a764da2cb2",
+      "realNativeActors": 0
+    },
+    {
+      "invocation": 2,
+      "tests": 3,
+      "passed": true,
+      "seconds": 0.659,
+      "resourceWarnings": false,
+      "sourceRuntimeBehavior": "Transport and admission logic; no real study capability inferred"
+    }
+  ],
+  "commonPreparationNotes": [
+    "Capability local dummy console build used --source . and NuGetAudit=false with no package dependencies; this does not validate the service dependency graph or alter its mandatory audit policy",
+    "Capability actor minor unsupported New-Item LiteralPath parameter corrected within its one activation; no boundary denial"
+  ],
+  "presealFreezeRevisions": [
+    {
+      "oldSha256": "18fd3a2af9356fd83c9b73c9fdfd1b67976146565659366959ca3b415627a484",
+      "newSha256": "f18085cb05a8923cf4c43e15fff95dbf3729b28e72efbbf74cc2fe5134daef8d",
+      "reason": "Clarify equal read-only public technical documentation access; prior overrestrictive prose removed before any actual cell",
+      "runtimeCodeChanged": false,
+      "actualTrialStarts": 0,
+      "withdrawnBeforeAnyActualTrial": true,
+      "reasonWithdrawn": "Independent review sealed original18fd freeze before late clarification; exact independently reviewed inputs restored, no fourth prep activation or unreviewed variant used",
+      "activeFreezeSha256": "18fd3a2af9356fd83c9b73c9fdfd1b67976146565659366959ca3b415627a484"
+    }
+  ]
+}
