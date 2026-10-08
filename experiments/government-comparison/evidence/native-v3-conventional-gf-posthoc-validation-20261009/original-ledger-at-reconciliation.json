@@ -594,7 +594,7 @@
       "startedUtc": "2026-10-08T21:40:20.417168+00:00",
       "deadlineUtc": "2026-10-08T23:40:20.417168+00:00",
       "startedMonotonic": 24724.2782928,
-      "status": "closed",
+      "status": "running",
       "tasks": {
         "1": {
           "startedUtc": "2026-10-08T21:40:20.417168+00:00",
@@ -640,17 +640,9 @@
           "startedUtc": "2026-10-08T22:15:08.316849+00:00",
           "startedMonotonic": 26812.1779703,
           "deadlineUtc": "2026-10-08T22:35:08.316849+00:00",
-          "status": "closed",
-          "outcome": "incomplete-at-limit/coordinator-interruption",
-          "candidateSha": "d1e271b8472cc55565696b976a87ff968a4e8c7a",
-          "closureObservedUtc": "2026-10-08T22:53:27.969238+00:00",
-          "independentRereview": "NOT RUN; activation-0030 reserved but no launch receipt"
+          "status": "running"
         }
-      },
-      "outcome": "incomplete-at-limit/coordinator-interruption",
-      "closedUtc": "2026-10-08T22:53:27.969238+00:00",
-      "remainingTasks": "6 NOT RUN",
-      "acceptedFinalStudyCandidateSha": null
+      }
     },
     {
       "trialId": "classic-greenfield-v3-20261008",

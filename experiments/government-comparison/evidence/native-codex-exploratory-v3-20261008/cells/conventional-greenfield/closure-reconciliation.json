@@ -1,0 +1,16 @@
+{
+  "observedUtc": "2026-10-08T22:53:27.969238+00:00",
+  "originalTask5DeadlineUtc": "2026-10-08T22:35:08.316849Z",
+  "activation0030": "reserved but not launched; original reservation bytes and usage retained",
+  "receiptCount": 34,
+  "lastActualActivationCallUtc": "2026-10-08T22:21:21.991Z",
+  "originalReviewerStatus": "completed original activation-0028; no re-review turn",
+  "candidateSha": "d1e271b8472cc55565696b976a87ff968a4e8c7a",
+  "tree": "a07ff00a3d3182521d202c618410f9c0520ea85f",
+  "clean": true,
+  "outcome": "incomplete-at-limit/coordinator-interruption",
+  "task6": "NOT RUN",
+  "cause": "Coordinator ended turn with generic wait after context compaction before reserved followup launch; no retrospective extension.",
+  "nativeUsage": null,
+  "processCleanup": "Prior repair report records both owned services stopped; no global inventory or foreign termination during reconciliation."
+}

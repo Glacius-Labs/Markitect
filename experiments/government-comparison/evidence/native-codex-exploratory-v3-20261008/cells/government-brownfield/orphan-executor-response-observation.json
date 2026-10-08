@@ -1,0 +1,12 @@
+{
+  "observedUtc": "2026-10-08T22:22:08.271133+00:00",
+  "role": "executor",
+  "outcome": "proposed",
+  "responseSha256": "05f723255cff6f8acdd19febe220f034a3216b079400632eb5ddf1c813030e67",
+  "size": 8210,
+  "fileLastWriteUtc": "2026-10-08T22:13:40.116723+00:00",
+  "alreadyInOriginalEvidenceZip": true,
+  "archivedDigestMatches": true,
+  "transportReceiptExists": false,
+  "interpretation": "Native proposal bytes exist, but interrupted contaminated trial and absent transport receipt do not establish product consumption, checks, votes, promotion or acceptance. No extra evaluation/activation."
+}
