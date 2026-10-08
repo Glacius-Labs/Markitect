@@ -1,0 +1,9 @@
+{
+  "owner": "Scientist",
+  "grantKey": "government-scope-native-20261008-r5",
+  "status": "released after terminal preflight failure; no remaining quota reusable",
+  "releasedUtc": "2026-10-08T02:13:08Z",
+  "coordinatorOwner": "Overseer",
+  "canonicalCoordinatorStateEditedByScientist": false,
+  "nativeStarts": 0
+}

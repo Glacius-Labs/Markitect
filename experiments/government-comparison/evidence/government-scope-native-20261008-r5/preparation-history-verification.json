@@ -1,0 +1,10 @@
+{
+  "baseCommit": "1d3f125d374822755936b039ff14b0fdd69e9f5f",
+  "historicalFilesVerified": 3383,
+  "mismatches": [],
+  "liveLedgerSha256": "dd617d58a9021fce0b11482b740d78ccb5ddd143ff0c6fa4fbe08983af7f6705",
+  "nativeRows": 12,
+  "reservedSeconds": 1800,
+  "correctionRows": 3,
+  "experimentalStarts": 0
+}

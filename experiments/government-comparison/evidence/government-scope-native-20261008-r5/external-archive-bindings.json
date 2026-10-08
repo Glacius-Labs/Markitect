@@ -1,0 +1,125 @@
+{
+  "sourceCommit": "a5f42df2562dd53fd64c1b00abf6c413faa9a50d",
+  "files": [
+    {
+      "sourcePath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-scope-20261008-r5\\coordinator-r5-preflight-snapshot.json",
+      "path": "experiments/government-comparison/evidence/government-scope-native-20261008-r5/raw-external/coordinator-r5-preflight-snapshot.json",
+      "sha256": "881dd9afe3973f00dd4a04cd6d2efaa611b95f2605a952082c25ad32c3a9f5fa",
+      "bytes": 240555
+    },
+    {
+      "sourcePath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-scope-20261008-r5\\government\\actor\\go.mod",
+      "path": "experiments/government-comparison/evidence/government-scope-native-20261008-r5/raw-external/government/actor/go.mod",
+      "sha256": "4b2ce0ea5c1d5ccbd8f974e642bcd3581bd4e3a6094b565d6414bd03c816ff8d",
+      "bytes": 64
+    },
+    {
+      "sourcePath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-scope-20261008-r5\\government\\actor\\government.yaml",
+      "path": "experiments/government-comparison/evidence/government-scope-native-20261008-r5/raw-external/government/actor/government.yaml",
+      "sha256": "816041553684dc5710baf63217d435f62e9f997d1bbba4b74d9a2c4803da4325",
+      "bytes": 6456
+    },
+    {
+      "sourcePath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-scope-20261008-r5\\government\\actor\\inventory\\reservation.go",
+      "path": "experiments/government-comparison/evidence/government-scope-native-20261008-r5/raw-external/government/actor/inventory/reservation.go",
+      "sha256": "d08e4543e86e22600b73686ea3408159953cb1bf90f153df939da81aecf8f49c",
+      "bytes": 392
+    },
+    {
+      "sourcePath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-scope-20261008-r5\\government\\actor\\inventory\\reservation_test.go",
+      "path": "experiments/government-comparison/evidence/government-scope-native-20261008-r5/raw-external/government/actor/inventory/reservation_test.go",
+      "sha256": "fbf4ff362a7c3ac8a4a52142e78495658244f2e42e78bfea19d0987c10dde264",
+      "bytes": 430
+    },
+    {
+      "sourcePath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-scope-20261008-r5\\government\\actor\\order.yaml",
+      "path": "experiments/government-comparison/evidence/government-scope-native-20261008-r5/raw-external/government/actor/order.yaml",
+      "sha256": "7707549c484a2af0f864bb914b9b192e9352a603985f7cede093a2c32655223d",
+      "bytes": 379
+    },
+    {
+      "sourcePath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-scope-20261008-r5\\government\\actor\\README.md",
+      "path": "experiments/government-comparison/evidence/government-scope-native-20261008-r5/raw-external/government/actor/README.md",
+      "sha256": "0f8f755da63e5117ecc332cf6365cdd6570079633dbe33f117bd51d6053f14e1",
+      "bytes": 753
+    },
+    {
+      "sourcePath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-scope-20261008-r5\\government\\authority.json",
+      "path": "experiments/government-comparison/evidence/government-scope-native-20261008-r5/raw-external/government/authority.json",
+      "sha256": "a2c05860ac039caa97634b7e5a02d288bd02db486571023a00c40386c76d5531",
+      "bytes": 643
+    },
+    {
+      "sourcePath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-scope-20261008-r5\\government\\grant.json",
+      "path": "experiments/government-comparison/evidence/government-scope-native-20261008-r5/raw-external/government/grant.json",
+      "sha256": "6cfa70d40476e2428e346b9a6d42d946462645a3d2108f41c48bb642f8df8acf",
+      "bytes": 1532
+    },
+    {
+      "sourcePath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-scope-20261008-r5\\government\\preparation-final.json",
+      "path": "experiments/government-comparison/evidence/government-scope-native-20261008-r5/raw-external/government/preparation-final.json",
+      "sha256": "7584aa8ba283368136ce89d30172f1c5e5a8f24b49cf98ada363c8d98085abce",
+      "bytes": 10846
+    },
+    {
+      "sourcePath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-scope-20261008-r5\\government\\protocol.json",
+      "path": "experiments/government-comparison/evidence/government-scope-native-20261008-r5/raw-external/government/protocol.json",
+      "sha256": "b8cf3fa0f3dfa3e1931e06f9b0717ce8bae03e39ae31ba837da88954c462a4f5",
+      "bytes": 3362
+    },
+    {
+      "sourcePath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-scope-20261008-r5\\government\\released\\backlog.json",
+      "path": "experiments/government-comparison/evidence/government-scope-native-20261008-r5/raw-external/government/released/backlog.json",
+      "sha256": "edd2db1329e1c98a97226cac1610a46febeee525db08a76361aa856b0fec7b4c",
+      "bytes": 534
+    },
+    {
+      "sourcePath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-scope-20261008-r5\\government\\released\\mechanical_actor.py",
+      "path": "experiments/government-comparison/evidence/government-scope-native-20261008-r5/raw-external/government/released/mechanical_actor.py",
+      "sha256": "02609c2e1b5d82db42640c97dc72c4e34b1a4a3fc9168e657da64c8b9f13f2be",
+      "bytes": 1175
+    },
+    {
+      "sourcePath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-scope-20261008-r5\\government\\released\\request.json",
+      "path": "experiments/government-comparison/evidence/government-scope-native-20261008-r5/raw-external/government/released/request.json",
+      "sha256": "20c2d21a49a4c0ac86f9e91e7681d607c9dd7c293ab3abfde96dcddf2c265d1f",
+      "bytes": 6311
+    },
+    {
+      "sourcePath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-scope-20261008-r5\\government\\released\\role-auth.json",
+      "path": "experiments/government-comparison/evidence/government-scope-native-20261008-r5/raw-external/government/released/role-auth.json",
+      "sha256": "7cc2d74f5f39f8186437ea43a929da196d411645a2e78a0fadd602b4d3dff9f5",
+      "bytes": 4575
+    },
+    {
+      "sourcePath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-scope-20261008-r5\\government\\released\\runtime.json",
+      "path": "experiments/government-comparison/evidence/government-scope-native-20261008-r5/raw-external/government/released/runtime.json",
+      "sha256": "352a94036cde9ef0153b3c04a18bc1977e79b987bc1505671e12be50aa770924",
+      "bytes": 17071
+    },
+    {
+      "sourcePath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-scope-20261008-r5\\government\\released\\task-card.txt",
+      "path": "experiments/government-comparison/evidence/government-scope-native-20261008-r5/raw-external/government/released/task-card.txt",
+      "sha256": "dcced224fbd5bd74ac95527fb1f44001c5e966fefab54332186c39f468b10b43",
+      "bytes": 166
+    },
+    {
+      "sourcePath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-scope-20261008-r5\\government\\released\\wrapper-diagnostics-config.json",
+      "path": "experiments/government-comparison/evidence/government-scope-native-20261008-r5/raw-external/government/released/wrapper-diagnostics-config.json",
+      "sha256": "3bc19b689b493b0182d5e40735a43f5f240a323938ddb2301fa136868384149a",
+      "bytes": 423
+    },
+    {
+      "sourcePath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-scope-20261008-r5\\history-native-starts.sqlite",
+      "path": "experiments/government-comparison/evidence/government-scope-native-20261008-r5/raw-external/history-native-starts.sqlite",
+      "sha256": "dd617d58a9021fce0b11482b740d78ccb5ddd143ff0c6fa4fbe08983af7f6705",
+      "bytes": 61440
+    },
+    {
+      "sourcePath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-scope-20261008-r5\\released-r5-grant.json",
+      "path": "experiments/government-comparison/evidence/government-scope-native-20261008-r5/raw-external/released-r5-grant.json",
+      "sha256": "c80edc0e9864c1e332eaee81838dad0f33640aa96b226d30d14228375c493c90",
+      "bytes": 7290
+    }
+  ]
+}

@@ -1,0 +1,56 @@
+{
+  "status": "offline-preparation-only",
+  "syntaxFiles": [
+    "prepare-native-r5.py",
+    "run-native-integration-r5.py",
+    "runtime/native_fixture_budget.py",
+    "runtime/native_controller.py",
+    "runtime/government_roles.py",
+    "runtime/dispatch.py",
+    "runtime/test_native_r5_budget.py",
+    "runtime/test_native_r5_chain.py",
+    "runtime/test_native_r5_checkpoint.py"
+  ],
+  "syntax": "PASS",
+  "focusedSuites": [
+    {
+      "log": "budget-tests.log",
+      "finalTests": 6,
+      "passed": true
+    },
+    {
+      "log": "chain-tests.log",
+      "finalTests": 9,
+      "passed": true
+    },
+    {
+      "log": "checkpoint-tests.log",
+      "finalTests": 9,
+      "passed": true
+    }
+  ],
+  "acceptedScopeSourceUnchanged": true,
+  "acceptedScopeTestsRepeated": false,
+  "fullProductSuites": 0,
+  "newExperimentalProcesses": 0,
+  "sourceFiles": {
+    "prepare-native-r5.py": "d3d5a7dc57ec4ced26b204a3a7f578ce1ef4fa0493e10fb64fa6584355b053e4",
+    "run-native-integration-r5.py": "4d74b81f61644482f985e66eee7f834c5fc0a88529e8e19a0d6e4e723e878106",
+    "runtime/native_fixture_budget.py": "6a2eec833affad4cc9cf1a971bc17992759a29ca235c90d1ac038467f9898971",
+    "runtime/native_controller.py": "e2493375a3bc3d5320c4a16dc11436d7315f7f242e54cfd1b3e3566c2bcd8b1e",
+    "runtime/government_roles.py": "b6e7887e1ccfe85bbe2e21035586ca89e131ce79056f95242804f4b600520030",
+    "runtime/dispatch.py": "af5eec3bca562edb4f8c0133dcaf32195091343f315faa4d2c06fe4c2239b0e6",
+    "runtime/test_native_r5_budget.py": "04f6db1b5e506c257d95e6b94a56a413f52bcaf8f5b5d6de04f60cd53fc2c6fd",
+    "runtime/test_native_r5_chain.py": "d13cc06af84846afa9f0e67dc6ef8a8ddbf729a4b61c6390a33bf0794733633b",
+    "runtime/test_native_r5_checkpoint.py": "48b8094bf27cce20d76aff69d6f341bb6c5b5880c61572037ad068d6c06d0e50"
+  },
+  "retainedEarlierOfflineFailureLogs": [
+    "budget-tests.log",
+    "chain-tests-import-initial.log"
+  ],
+  "sourcePreparationAndCoordinationUsage": {
+    "tokens": null,
+    "wallSeconds": null,
+    "note": "Engineering and review overhead was not instrumented; zero experiment starts does not mean zero coordination model usage."
+  }
+}

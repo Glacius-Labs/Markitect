@@ -1,0 +1,12 @@
+{
+  "actorRepository": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-scope-20261008-r5\\government\\actor",
+  "backlogSha256": "edd2db1329e1c98a97226cac1610a46febeee525db08a76361aa856b0fec7b4c",
+  "baseCommit": "f0ac8fa4e27fd64c8f1cb1881e085fbf502b6d93",
+  "diagnosticsSha256": "3bc19b689b493b0182d5e40735a43f5f240a323938ddb2301fa136868384149a",
+  "grantSha256": "c80edc0e9864c1e332eaee81838dad0f33640aa96b226d30d14228375c493c90",
+  "preparationPath": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-scope-20261008-r5\\government\\preparation-final.json",
+  "preparationSha256": "7584aa8ba283368136ce89d30172f1c5e5a8f24b49cf98ada363c8d98085abce",
+  "roleAuthorizationSha256": "7cc2d74f5f39f8186437ea43a929da196d411645a2e78a0fadd602b4d3dff9f5",
+  "runtimeFileCount": 18,
+  "runtimeSha256": "352a94036cde9ef0153b3c04a18bc1977e79b987bc1505671e12be50aa770924"
+}

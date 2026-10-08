@@ -1,0 +1,273 @@
+{
+  "grantKey": "government-scope-native-20261008-r5",
+  "sourceCommit": "a5f42df2562dd53fd64c1b00abf6c413faa9a50d",
+  "freezeCommit": null,
+  "status": "terminal not admitted; zero new experimental consumption",
+  "files": [
+    {
+      "path": "experiments/government-comparison/evidence/government-scope-native-20261008-r5/actor-git-readback.txt",
+      "sha256": "35b0bf3a243499ea395ec3f6639e66752ba717cfbeae372511d785877c26dd02",
+      "bytes": 150
+    },
+    {
+      "path": "experiments/government-comparison/evidence/government-scope-native-20261008-r5/actual-input-preflight.log",
+      "sha256": "ec83b1fd8eedb4638ff2d230d430b7fa563a3fe69c654150ca7a6a40e7cb590b",
+      "bytes": 1462
+    },
+    {
+      "path": "experiments/government-comparison/evidence/government-scope-native-20261008-r5/authority-preparation.log",
+      "sha256": "058ab052377500c526e7aad7193127d26ae3736d76d9ae35a8a46ac9ba3106c5",
+      "bytes": 878
+    },
+    {
+      "path": "experiments/government-comparison/evidence/government-scope-native-20261008-r5/budget-tests.log",
+      "sha256": "336b4fc5a47df531e30bf79214abf3b367e9cef745949dd48c421a50277c1396",
+      "bytes": 8093
+    },
+    {
+      "path": "experiments/government-comparison/evidence/government-scope-native-20261008-r5/chain-tests-import-initial.log",
+      "sha256": "0f1e273b637be76d5835ce25d5523510c75374e196995e8b07714071ff5797c8",
+      "bytes": 799
+    },
+    {
+      "path": "experiments/government-comparison/evidence/government-scope-native-20261008-r5/chain-tests.log",
+      "sha256": "a592abce531f1394a01bb06fc4ae9ed4c8e42586234e4a9e359332117433acba",
+      "bytes": 223
+    },
+    {
+      "path": "experiments/government-comparison/evidence/government-scope-native-20261008-r5/checkpoint-tests.log",
+      "sha256": "346e0e5acf8ad882bf085fc66d1a59008aea426cb8dd94af5ad87624fd2b9e5f",
+      "bytes": 112
+    },
+    {
+      "path": "experiments/government-comparison/evidence/government-scope-native-20261008-r5/coordinator-r5-preflight-snapshot.json",
+      "sha256": "881dd9afe3973f00dd4a04cd6d2efaa611b95f2605a952082c25ad32c3a9f5fa",
+      "bytes": 240555
+    },
+    {
+      "path": "experiments/government-comparison/evidence/government-scope-native-20261008-r5/external-archive-bindings.json",
+      "sha256": "3f68d9d636b033a1ab07fd819a899e169a906f445c97b698388e79cc019d855b",
+      "bytes": 8187
+    },
+    {
+      "path": "experiments/government-comparison/evidence/government-scope-native-20261008-r5/final-verification.json",
+      "sha256": "b924d9047b4583db16c7ba3163644e63a3ac9c65170cdc4decbdc37591cec877",
+      "bytes": 538
+    },
+    {
+      "path": "experiments/government-comparison/evidence/government-scope-native-20261008-r5/fixture-preparation.log",
+      "sha256": "271216e79c31fe33d32d31201d897ba4ea2d0fcd069655fb67e4722cfae54289",
+      "bytes": 918
+    },
+    {
+      "path": "experiments/government-comparison/evidence/government-scope-native-20261008-r5/handoff.md",
+      "sha256": "44b494400965be0befca4dcc43ee639bdad4663b78e007261ecaf0a5516b530f",
+      "bytes": 3612
+    },
+    {
+      "path": "experiments/government-comparison/evidence/government-scope-native-20261008-r5/historical-bindings.json",
+      "sha256": "47816a57e0efce852bb91ca5298c6bedffa60266a8d92dbf1ff55188a1533c85",
+      "bytes": 1095549
+    },
+    {
+      "path": "experiments/government-comparison/evidence/government-scope-native-20261008-r5/historical-native-starts.sqlite",
+      "sha256": "dd617d58a9021fce0b11482b740d78ccb5ddd143ff0c6fa4fbe08983af7f6705",
+      "bytes": 61440
+    },
+    {
+      "path": "experiments/government-comparison/evidence/government-scope-native-20261008-r5/host-success-contract.md",
+      "sha256": "ea9baf9a557b759660ba881f01f4bad8bd5ea569f141fb8346424696a2607651",
+      "bytes": 3345
+    },
+    {
+      "path": "experiments/government-comparison/evidence/government-scope-native-20261008-r5/independent-post-run-review.md",
+      "sha256": "969154a78e9670bbf7895491f93ac72c05599380b5cf7a5df98c7fd146a71d6a",
+      "bytes": 2399
+    },
+    {
+      "path": "experiments/government-comparison/evidence/government-scope-native-20261008-r5/independent-preflight-review.md",
+      "sha256": "9ba66741ddd32f5a721f32156a0916d0eaaeaca11d4d5bd2fe9cbf4e55b79d1e",
+      "bytes": 2410
+    },
+    {
+      "path": "experiments/government-comparison/evidence/government-scope-native-20261008-r5/offline-preflight-checks.json",
+      "sha256": "e9acaf361dadfa670e0ad620cd51d46070bbe5c8db553059cdc565ff4c5d3035",
+      "bytes": 2145
+    },
+    {
+      "path": "experiments/government-comparison/evidence/government-scope-native-20261008-r5/preparation-history-verification.json",
+      "sha256": "55193188507fc9d0b7e4e389ae73a55927033da97731006df1b11170f7bfcf04",
+      "bytes": 315
+    },
+    {
+      "path": "experiments/government-comparison/evidence/government-scope-native-20261008-r5/raw-external/coordinator-r5-preflight-snapshot.json",
+      "sha256": "881dd9afe3973f00dd4a04cd6d2efaa611b95f2605a952082c25ad32c3a9f5fa",
+      "bytes": 240555
+    },
+    {
+      "path": "experiments/government-comparison/evidence/government-scope-native-20261008-r5/raw-external/government/actor/README.md",
+      "sha256": "0f8f755da63e5117ecc332cf6365cdd6570079633dbe33f117bd51d6053f14e1",
+      "bytes": 753
+    },
+    {
+      "path": "experiments/government-comparison/evidence/government-scope-native-20261008-r5/raw-external/government/actor/go.mod",
+      "sha256": "4b2ce0ea5c1d5ccbd8f974e642bcd3581bd4e3a6094b565d6414bd03c816ff8d",
+      "bytes": 64
+    },
+    {
+      "path": "experiments/government-comparison/evidence/government-scope-native-20261008-r5/raw-external/government/actor/government.yaml",
+      "sha256": "816041553684dc5710baf63217d435f62e9f997d1bbba4b74d9a2c4803da4325",
+      "bytes": 6456
+    },
+    {
+      "path": "experiments/government-comparison/evidence/government-scope-native-20261008-r5/raw-external/government/actor/inventory/reservation.go",
+      "sha256": "d08e4543e86e22600b73686ea3408159953cb1bf90f153df939da81aecf8f49c",
+      "bytes": 392
+    },
+    {
+      "path": "experiments/government-comparison/evidence/government-scope-native-20261008-r5/raw-external/government/actor/inventory/reservation_test.go",
+      "sha256": "fbf4ff362a7c3ac8a4a52142e78495658244f2e42e78bfea19d0987c10dde264",
+      "bytes": 430
+    },
+    {
+      "path": "experiments/government-comparison/evidence/government-scope-native-20261008-r5/raw-external/government/actor/order.yaml",
+      "sha256": "7707549c484a2af0f864bb914b9b192e9352a603985f7cede093a2c32655223d",
+      "bytes": 379
+    },
+    {
+      "path": "experiments/government-comparison/evidence/government-scope-native-20261008-r5/raw-external/government/authority.json",
+      "sha256": "a2c05860ac039caa97634b7e5a02d288bd02db486571023a00c40386c76d5531",
+      "bytes": 643
+    },
+    {
+      "path": "experiments/government-comparison/evidence/government-scope-native-20261008-r5/raw-external/government/grant.json",
+      "sha256": "6cfa70d40476e2428e346b9a6d42d946462645a3d2108f41c48bb642f8df8acf",
+      "bytes": 1532
+    },
+    {
+      "path": "experiments/government-comparison/evidence/government-scope-native-20261008-r5/raw-external/government/preparation-final.json",
+      "sha256": "7584aa8ba283368136ce89d30172f1c5e5a8f24b49cf98ada363c8d98085abce",
+      "bytes": 10846
+    },
+    {
+      "path": "experiments/government-comparison/evidence/government-scope-native-20261008-r5/raw-external/government/protocol.json",
+      "sha256": "b8cf3fa0f3dfa3e1931e06f9b0717ce8bae03e39ae31ba837da88954c462a4f5",
+      "bytes": 3362
+    },
+    {
+      "path": "experiments/government-comparison/evidence/government-scope-native-20261008-r5/raw-external/government/released/backlog.json",
+      "sha256": "edd2db1329e1c98a97226cac1610a46febeee525db08a76361aa856b0fec7b4c",
+      "bytes": 534
+    },
+    {
+      "path": "experiments/government-comparison/evidence/government-scope-native-20261008-r5/raw-external/government/released/mechanical_actor.py",
+      "sha256": "02609c2e1b5d82db42640c97dc72c4e34b1a4a3fc9168e657da64c8b9f13f2be",
+      "bytes": 1175
+    },
+    {
+      "path": "experiments/government-comparison/evidence/government-scope-native-20261008-r5/raw-external/government/released/request.json",
+      "sha256": "20c2d21a49a4c0ac86f9e91e7681d607c9dd7c293ab3abfde96dcddf2c265d1f",
+      "bytes": 6311
+    },
+    {
+      "path": "experiments/government-comparison/evidence/government-scope-native-20261008-r5/raw-external/government/released/role-auth.json",
+      "sha256": "7cc2d74f5f39f8186437ea43a929da196d411645a2e78a0fadd602b4d3dff9f5",
+      "bytes": 4575
+    },
+    {
+      "path": "experiments/government-comparison/evidence/government-scope-native-20261008-r5/raw-external/government/released/runtime.json",
+      "sha256": "352a94036cde9ef0153b3c04a18bc1977e79b987bc1505671e12be50aa770924",
+      "bytes": 17071
+    },
+    {
+      "path": "experiments/government-comparison/evidence/government-scope-native-20261008-r5/raw-external/government/released/task-card.txt",
+      "sha256": "dcced224fbd5bd74ac95527fb1f44001c5e966fefab54332186c39f468b10b43",
+      "bytes": 166
+    },
+    {
+      "path": "experiments/government-comparison/evidence/government-scope-native-20261008-r5/raw-external/government/released/wrapper-diagnostics-config.json",
+      "sha256": "3bc19b689b493b0182d5e40735a43f5f240a323938ddb2301fa136868384149a",
+      "bytes": 423
+    },
+    {
+      "path": "experiments/government-comparison/evidence/government-scope-native-20261008-r5/raw-external/history-native-starts.sqlite",
+      "sha256": "dd617d58a9021fce0b11482b740d78ccb5ddd143ff0c6fa4fbe08983af7f6705",
+      "bytes": 61440
+    },
+    {
+      "path": "experiments/government-comparison/evidence/government-scope-native-20261008-r5/raw-external/released-r5-grant.json",
+      "sha256": "c80edc0e9864c1e332eaee81838dad0f33640aa96b226d30d14228375c493c90",
+      "bytes": 7290
+    },
+    {
+      "path": "experiments/government-comparison/evidence/government-scope-native-20261008-r5/released-r5-grant.json",
+      "sha256": "c80edc0e9864c1e332eaee81838dad0f33640aa96b226d30d14228375c493c90",
+      "bytes": 7290
+    },
+    {
+      "path": "experiments/government-comparison/evidence/government-scope-native-20261008-r5/slot-release.json",
+      "sha256": "695af6e0598cdfc87287d3730288f5523d43598e1e84435cb1517e23cdcdb874",
+      "bytes": 317
+    },
+    {
+      "path": "experiments/government-comparison/evidence/government-scope-native-20261008-r5/terminal-accounting.json",
+      "sha256": "8aecf982e4e68d26e8f8e3ebd64ffae53a67b6feddc5f79b1d0b4da69ceff009",
+      "bytes": 1828
+    },
+    {
+      "path": "experiments/government-comparison/evidence/government-scope-native-20261008-r5/terminal-native-starts.sqlite",
+      "sha256": "dd617d58a9021fce0b11482b740d78ccb5ddd143ff0c6fa4fbe08983af7f6705",
+      "bytes": 61440
+    },
+    {
+      "path": "experiments/government-comparison/evidence/government-scope-native-20261008-r5/terminal-result.json",
+      "sha256": "b0b0b504859302f00dd83e6a5a9b9330f3b03188f95bb520853404913dbaddc8",
+      "bytes": 1136
+    },
+    {
+      "path": "experiments/government-comparison/prepare-native-r5.py",
+      "sha256": "d3d5a7dc57ec4ced26b204a3a7f578ce1ef4fa0493e10fb64fa6584355b053e4",
+      "bytes": 14323
+    },
+    {
+      "path": "experiments/government-comparison/run-native-integration-r5.py",
+      "sha256": "4d74b81f61644482f985e66eee7f834c5fc0a88529e8e19a0d6e4e723e878106",
+      "bytes": 32465
+    },
+    {
+      "path": "experiments/government-comparison/runtime/dispatch.py",
+      "sha256": "af5eec3bca562edb4f8c0133dcaf32195091343f315faa4d2c06fe4c2239b0e6",
+      "bytes": 44024
+    },
+    {
+      "path": "experiments/government-comparison/runtime/government_roles.py",
+      "sha256": "b6e7887e1ccfe85bbe2e21035586ca89e131ce79056f95242804f4b600520030",
+      "bytes": 66184
+    },
+    {
+      "path": "experiments/government-comparison/runtime/native_controller.py",
+      "sha256": "e2493375a3bc3d5320c4a16dc11436d7315f7f242e54cfd1b3e3566c2bcd8b1e",
+      "bytes": 55179
+    },
+    {
+      "path": "experiments/government-comparison/runtime/native_fixture_budget.py",
+      "sha256": "6a2eec833affad4cc9cf1a971bc17992759a29ca235c90d1ac038467f9898971",
+      "bytes": 107073
+    },
+    {
+      "path": "experiments/government-comparison/runtime/test_native_r5_budget.py",
+      "sha256": "04f6db1b5e506c257d95e6b94a56a413f52bcaf8f5b5d6de04f60cd53fc2c6fd",
+      "bytes": 9680
+    },
+    {
+      "path": "experiments/government-comparison/runtime/test_native_r5_chain.py",
+      "sha256": "d13cc06af84846afa9f0e67dc6ef8a8ddbf729a4b61c6390a33bf0794733633b",
+      "bytes": 14060
+    },
+    {
+      "path": "experiments/government-comparison/runtime/test_native_r5_checkpoint.py",
+      "sha256": "48b8094bf27cce20d76aff69d6f341bb6c5b5880c61572037ad068d6c06d0e50",
+      "bytes": 12063
+    }
+  ]
+}

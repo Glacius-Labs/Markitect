@@ -1,0 +1,14 @@
+Traceback (most recent call last):
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\government-comparison\run-native-integration-r5.py", line 557, in <module>
+    print(json.dumps({"prepare": prepare, "validate": validate, "freeze": freeze,
+                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                      "run-once": run_once}[args.action](), sort_keys=True))
+                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\government-comparison\run-native-integration-r5.py", line 192, in validate
+    validated = validate_r5_grant_binding(request, SOURCE_GRANT, dispatch.digest(SOURCE_GRANT.read_bytes()))
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\government-comparison\runtime\native_fixture_budget.py", line 537, in validate_r5_grant_binding
+    _released_binding(request, "nativeFixtureR5Grant", grant_path, grant_sha, R5_KEY)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\government-comparison\runtime\native_fixture_budget.py", line 146, in _released_binding
+    raise ValueError(f"Request {field} must be an exact released input")
+ValueError: Request nativeFixtureR5Grant must be an exact released input

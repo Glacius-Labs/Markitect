@@ -1,0 +1,24 @@
+{
+  "grantKey": "government-scope-native-20261008-r5",
+  "status": "not-admitted-preflight-failed",
+  "firstFailedAction": "actual input preflight validate",
+  "error": "ValueError: Request nativeFixtureR5Grant must be an exact released input",
+  "cause": "driver prepare places the three-field nativeFixtureR5Grant (path, sha256, sourceKey) in releasedInputs; _is_released requires exactly path and sha256",
+  "exactRejectedReleasedInput": {
+    "path": "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-scope-20261008-r5\\released-r5-grant.json",
+    "sha256": "c80edc0e9864c1e332eaee81838dad0f33640aa96b226d30d14228375c493c90",
+    "sourceKey": "government-scope-native-20261008-r5"
+  },
+  "nativeQueue": "NOT RUN",
+  "outerQueue": "NOT RUN",
+  "resume": "NOT RUN",
+  "freeze": "NOT CREATED because actual input preflight failed",
+  "sourceCommit": "a5f42df2562dd53fd64c1b00abf6c413faa9a50d",
+  "repairsAfterFailure": 0,
+  "retry": false,
+  "remainingQuotaReusable": false,
+  "historicalR4Status": "closed incomplete unchanged",
+  "semanticAcceptance": false,
+  "humanAcceptance": false,
+  "s1Complete": false
+}

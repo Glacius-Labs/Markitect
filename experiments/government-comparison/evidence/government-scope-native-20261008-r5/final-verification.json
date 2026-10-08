@@ -1,0 +1,17 @@
+{
+  "sourceCommit": "a5f42df2562dd53fd64c1b00abf6c413faa9a50d",
+  "historicalFilesVerified": 3383,
+  "historicalMismatches": 0,
+  "externalFilesVerified": 20,
+  "externalMismatches": 0,
+  "finalFocusedTests": 24,
+  "actualInputPreflight": "FAILED; no repeat",
+  "freeze": "NOT CREATED",
+  "nativeQueue": "NOT RUN",
+  "outerQueue": "NOT RUN",
+  "resume": "NOT RUN",
+  "independentPreflight": "NOT ADMITTED",
+  "independentClosure": "NOT ADMITTED; terminal evidence verified",
+  "remainingQuotaReusable": false,
+  "sourceWorkUsage": null
+}

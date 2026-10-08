@@ -1,0 +1,17 @@
+E
+======================================================================
+ERROR: test_native_r5_chain (unittest.loader._FailedTest.test_native_r5_chain)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: test_native_r5_chain
+Traceback (most recent call last):
+  File "C:\Python313\Lib\unittest\loader.py", line 137, in loadTestsFromName
+    module = __import__(module_name)
+  File "C:\Users\Consiliari\.codex\worktrees\government-scientist\Markitect\experiments\government-comparison\runtime\test_native_r5_chain.py", line 12, in <module>
+    import dispatch
+ModuleNotFoundError: No module named 'dispatch'
+
+
+----------------------------------------------------------------------
+Ran 1 test in 0.000s
+
+FAILED (errors=1)

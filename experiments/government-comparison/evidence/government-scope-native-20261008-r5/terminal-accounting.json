@@ -1,0 +1,45 @@
+{
+  "grantKey": "government-scope-native-20261008-r5",
+  "closedUtc": "2026-10-08T02:13:08Z",
+  "sourceCommit": "a5f42df2562dd53fd64c1b00abf6c413faa9a50d",
+  "status": "not-admitted-preflight-failed",
+  "freshCasesPrepared": 1,
+  "nativeStarts": 0,
+  "wrapperAttempts": 0,
+  "deterministicDelegates": 0,
+  "newReservedSessionSeconds": 0,
+  "nativeProcessWallSeconds": null,
+  "controllerWallSeconds": null,
+  "realActorStarts": 0,
+  "newModelProviderCalls": 0,
+  "metadataSessions": 0,
+  "studyCells": 0,
+  "classicNativeStarts": 0,
+  "fullProductSuites": 0,
+  "cumulative": {
+    "nativeStarts": 12,
+    "wrapperAttempts": 10,
+    "delegates": 7,
+    "reservedSessionSeconds": 1800
+  },
+  "historicalRealUsage": {
+    "actorStarts": 5,
+    "knownTokenSubtotal": 53331,
+    "totalTokens": null
+  },
+  "ledgerSha256": "dd617d58a9021fce0b11482b740d78ccb5ddd143ff0c6fa4fbe08983af7f6705",
+  "historicalRowsPreserved": 12,
+  "historicalCorrectionRowsPreserved": 3,
+  "absentPaths": [
+    "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-scope-20261008-r5\\case-claimed.json",
+    "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-scope-20261008-r5\\government\\fixture-ledger.sqlite",
+    "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-scope-20261008-r5\\government\\released\\wrapper-diagnostics",
+    "C:\\Users\\Consiliari\\Documents\\Scientist-Probes\\native-government-scope-20261008-r5\\government\\controller-evidence\\outer-run",
+    "C:\\Users\\Consiliari\\.codex\\worktrees\\government-scientist\\Markitect\\experiments\\government-comparison\\evidence\\government-scope-native-20261008-r5\\preflight-freeze.json"
+  ],
+  "noRetry": true,
+  "remainingQuotaReusable": false,
+  "semanticAcceptance": false,
+  "humanAcceptance": false,
+  "s1Complete": false
+}
