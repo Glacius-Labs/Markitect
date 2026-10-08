@@ -4,6 +4,7 @@ Start with the vision for Classic, the active product line on `main`, and the ro
 
 | Document | Owns |
 |---|---|
+| [Managed project workflow](project-workflow.md) | Source-alpha installation, model edits, selected Brownfield adoption, manager execution and verification boundaries |
 | [Project world](design/project-world/README.md) | User-authorized design and implementation contracts for recursively managed project models, file responsibilities, Brownfield adoption and controlled agent work |
 | [Product vision](vision.md) | Quality and intent-fidelity thesis, canonical authority, human/agent responsibilities and benefit hypothesis |
 | [Operating methodology](operating-methodology.md) | Ontology-driven reconciliation, recursive Executor/Verifier process, implementation freedom and usable-method target |

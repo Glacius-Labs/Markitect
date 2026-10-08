@@ -16,6 +16,7 @@ import (
 func printUsage(out io.Writer) {
 	fmt.Fprintln(out, "Markitect: desired engineering state and bounded reconciliation")
 	fmt.Fprintln(out, "usage: markitect COMMAND [options]")
+	fmt.Fprintln(out, "  project                     Model, delegate, verify and apply managed project work (source alpha)")
 	fmt.Fprintln(out, "  check, verify, inventory    Validate a project and its repository gates")
 	fmt.Fprintln(out, "  model, context, impact, find, explain, review    Inspect fixed semantic inputs")
 	fmt.Fprintln(out, "  canonical                                    Inspect, plan, apply, verify, adopt and control canonical projections (alpha)")

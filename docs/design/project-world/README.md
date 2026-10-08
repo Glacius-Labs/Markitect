@@ -4,7 +4,7 @@ Stand: 8. Oktober 2026, Europe/Berlin.
 
 ## Auftrag und Status
 
-Dieses Paket hält die direkte Produktdiskussion fest und beginnt die Planung in einem eigenen Worktree. Der Nutzer hat das Festhalten und Planen beauftragt. Die unten genannten Richtungsentscheidungen stammen aus dieser Diskussion; die konkreten Modellverträge und Umsetzungsschritte bleiben ein überprüfbarer Entwurf. Es wird keine neue API, Laufzeitfähigkeit oder Veröffentlichung behauptet.
+Dieses Paket hält die direkte Produktdiskussion und den anschließend erteilten Umsetzungsauftrag fest. Die neue experimentelle Sourceoberfläche heißt `markitect project ...`; ihr verbindlicher technischer Stand steht im [Umsetzungsvertrag](delivery-contract.md). Der [Arbeitsablauf](../../project-workflow.md) und das [ausführbare Shop-Projekt](../../../examples/project-world/README.md) zeigen die konkrete Bedienung und Dateistruktur. Umsetzung und Prüfung erfolgen in einem eigenen Worktree auf `codex/model-driven-delivery`; eine Veröffentlichung ist damit nicht verbunden.
 
 Markitect soll ein gemeinsames, kanonisches Verständnis des Projekts ausdrücken: Ziele, Fachbegriffe, Konzepte, Use Cases, Regeln, Architektur, Organisation und Arbeitsabläufe. Verantwortliche lassen diese Vorgaben innerhalb ihrer Befugnisse umsetzen und prüfen. Das Repository enthält ihre konkreten Realisierungen und die kanonischen Modelleingaben selbst.
 
@@ -22,13 +22,15 @@ Markitect soll ein gemeinsames, kanonisches Verständnis des Projekts ausdrücke
 10. **Ein eigener AI-Agent pro Manager:** Jede Managerrolle einschließlich Geschäftsführung wird durch einen eigenen, auf ihre Funktion spezialisierten AI-Agenten ausgeübt. Jeder hat seinen eigenen Arbeitskontext. Eltern benötigen weder die vollständigen Kontexte ihrer Kinder noch Kenntnis darüber, welche internen Details dort geladen sind. Zusammenarbeit erfolgt über Aufträge, Berichte, Schnittstellen und konkrete Rückfragen.
 11. **Fachliche Gliederung und verborgene Werkzeugablage:** Zusammengehörige Konzepte, Verhalten, Regeln und Prüferwartungen liegen gemeinsam in rekursiven Slices statt in globalen Typordnern. Alle Markitect-eigenen Dateien liegen unter `.markitect/`. Die kombinierte Einheit aus Modul, Namensraum und Verantwortung sowie `manager.yaml` als deren Deklaration sind die aktuellen Benennungsvorschläge.
 12. **Modellpflege als Hauptarbeit:** Der normale Nutzer entwickelt die Spezifikation im Gespräch mit einem AI-Agenten und liest erzeugte Dokumentation und verständliche fachliche Änderungen. YAML ist das interne, versionierbare Speicherformat. Das gewünschte Verhalten zu modellieren wird zur primären Form des Programmierens; Umsetzung, Integration und belastbare Prüfung bleiben ausdrückliche Aufgaben.
-13. **Modell und Dateien verbinden:** Der Zusammenhang mit Dokumentation, Backend, Frontend, Tests und Konfiguration bleibt ausdrücklich modelliert. Dateiverantwortung und fachlicher Bezug erfüllen unterschiedliche Aufgaben. Der konkrete Zuordnungsentwurf verbindet Modellinhalte und Realisierungen; Syntax und technische Validierung sind noch umzusetzen. Keine Eins-zu-eins-Abbildung zwischen YAML-Datei und Ergebnisdatei wird vorausgesetzt.
+13. **Modell und Dateien verbinden:** Der Zusammenhang mit Dokumentation, Backend, Frontend, Tests und Konfiguration bleibt ausdrücklich modelliert. Dateiverantwortung und fachlicher Bezug erfüllen unterschiedliche Aufgaben. Der technische Vertrag verbindet Manager, Statements, Artefakte und Checks mit den erfassten Dateien; es wird keine Eins-zu-eins-Abbildung zwischen YAML-Datei und Ergebnisdatei vorausgesetzt.
 14. **Dauerhafte Zuordnung und vollständiger Projektauftrag:** Akzeptierte Dateiverantwortung und Realisierungsbezüge sind versionierte Modelleingaben. Der Compiler bzw. Host erzeugt daraus einen wiederherstellbaren, an den tatsächlichen Dateistand gebundenen Index. Architektur, Arbeitsweise und erwartete Artefakte sind ebenfalls verantwortete Modellinhalte; vorhandene Dateien allein definieren nicht, welche Ergebnisse erforderlich sind.
 
 ## Dokumente und Eigentümerschaft
 
 | Dokument | Verantworteter Inhalt |
 |---|---|
+| [Praktischer Arbeitsablauf](../../project-workflow.md) | Installation des Sourcekandidaten, Init, Migration, Modelländerung und delegierte Umsetzung |
+| [Ausführbares Shop-Projekt](../../../examples/project-world/README.md) | Aktuelles Schema, vertikale Slices, konkrete Dateizuordnung und prüfbarer Python-/SQLite-Code |
 | [Zielmodell](model.md) | Begriffe, vorgeschlagene Verträge, Verantwortungsregeln und durchgehendes Order-Beispiel |
 | [Fachliche Module und Vertical Slices](conceptual-modules.md) | Neuester Zielstand: `.markitect/`, Managerdeklaration, fachliche Slices, Dateiverantwortung und Dateibezüge, Verträge über Grenzen und modellzentrierte Bedienung; Shop-Beleg noch im ersten Zuschnitt |
 | [Projektvertrag](project-contract.md) | Architektur, Arbeitsweise, erforderliche Artefakte, dauerhafte Zuordnungsquellen, abgeleiteter Dateiindex und Änderung ihres gebundenen Stands |
@@ -41,7 +43,7 @@ Markitect soll ein gemeinsames, kanonisches Verständnis des Projekts ausdrücke
 
 Dieses Paket ist der Besitzer dieser neuen Planung. Es ändert keine veröffentlichten Verträge. Die bestehende [Architektur](../../architecture.md) beschreibt ihren jeweiligen Quellstand; die [Roadmap](../../implementation-plan.md) verweist auf die neue Planung. Frühere Government-/Architect-Planung ist im ursprünglichen Planungscommit `d3f3b43` erhalten und wird nicht als benötigte Produktabhängigkeit kopiert. Deren zusätzliche Institutionen werden hier nicht automatisch übernommen.
 
-Lesereihenfolge für den aktuellen Zielstand: diese Richtungsentscheidungen, fachliche Module, Projektvertrag und Laufzeitprotokoll, anschließend Umsetzungsplan. Das allgemeine Zielmodell beschreibt die Prinzipien und verwendet zur Illustration teils die älteren Shop-Identitäten; Walkthrough und YAML-Beleg bewahren das erste ausführliche Beispiel. Bei Abweichungen gilt für Gliederung und Bedienung der neueste Modul-/Projektvertrag. Die konkrete Migration des ersten Belegs gehört zu P0 und ist vor Produktimplementierung erforderlich. Historische Beispiele begründen keine abweichenden Zielanforderungen.
+Lesereihenfolge: diese Richtungsentscheidungen, Umsetzungsvertrag, praktischer Arbeitsablauf und ausführbares Shop-Projekt. Fachliche Module, Projektvertrag und Laufzeitprotokoll erläutern die ausführlichere Zielrichtung. Das allgemeine Zielmodell, der ältere Walkthrough und `shop-example/` bewahren den ersten Entwurf mit abweichenden Identitäten und Syntax; dessen Dateien enden bewusst auf `.yaml.example`. Für die implementierte Syntax gilt der Umsetzungsvertrag mit `project.markitect.example.org/v1alpha1`, nicht dieser historische Beleg. Die umfangreichen Abnahmeszenarien im Plan sind Anforderungen; nur tatsächlich ausgeführte Prüfungen sind Evidenz.
 
 ## Arbeitsgrundlage
 
@@ -52,4 +54,4 @@ Lesereihenfolge für den aktuellen Zielstand: diese Richtungsentscheidungen, fac
 
 Für den jetzigen Implementierungsauftrag wurde `origin/main` erneut abgefragt und bestätigt: `a97cbd5ef3e0b22b9e6397501047a4e01dc90204`. Der neue isolierte Worktree liegt unter `C:/Users/Consiliari/.codex/worktrees/model-driven-delivery/Markitect`, Branch `codex/model-driven-delivery`. Dieses Paket wurde aus dem unveränderten Planungsworktree übernommen. Der ursprüngliche Planungsstand und andere aktive Arbeitskopien bleiben erhalten.
 
-Die Planungsbasis enthält ältere Produktquellen neben neueren Entwurfs- und Koordinationsdokumenten. Sie ist kein aktueller Implementierungsstand der Hauptlinie. Vor Produktcodeänderungen müssen die Dokumente auf eine ausdrücklich gewählte technische Basis übertragen und die tatsächlichen Verträge dort abgeglichen werden. Andere aktive Worktrees werden durch diese Planung nicht verändert.
+Die ursprüngliche Planungsbasis enthält ältere Produktquellen neben neueren Entwurfs- und Koordinationsdokumenten. Der Quellabgleich für die Umsetzung erfolgte auf der oben genannten Hauptlinienbasis und ist im Umsetzungsvertrag festgehalten. Andere aktive Worktrees werden durch diese Arbeit nicht verändert.

@@ -156,6 +156,11 @@ spec:
     - internal/host/tool_build_digest_test.go
     - internal/infrastructure/source/scoped_revision.go
     - internal/infrastructure/source/scoped_revision_test.go
+    - internal/host/projectrun
+    - internal/host/projectcli
+    - examples/project-world
+    - docs/project-workflow.md
+    - internal/host/cli/project_dispatch_test.go
   tooling:
     - path: docs/validation/classic-commerce-entrypoint.md
       owner: classic-commerce-public-example-validation
@@ -1937,4 +1942,130 @@ spec:
     - path: internal/tooling/clauderunner/runner.py
       owner: project-world-implementation
     - path: internal/tooling/clauderunner/test_runner.py
+      owner: project-world-implementation
+    - path: docs/project-workflow.md
+      owner: project-world-implementation
+    - path: examples/project-world/.markitect/.gitignore
+      owner: project-world-implementation
+    - path: examples/project-world/.markitect/agent-fixtures/invocation.json
+      owner: project-world-implementation
+    - path: examples/project-world/.markitect/agent-fixtures/response.json
+      owner: project-world-implementation
+    - path: examples/project-world/.markitect/model/commerce/architecture.yaml
+      owner: project-world-implementation
+    - path: examples/project-world/.markitect/model/commerce/manager.yaml
+      owner: project-world-implementation
+    - path: examples/project-world/.markitect/model/commerce/sales/inventory/manager.yaml
+      owner: project-world-implementation
+    - path: examples/project-world/.markitect/model/commerce/sales/inventory/reservations/artifacts.yaml
+      owner: project-world-implementation
+    - path: examples/project-world/.markitect/model/commerce/sales/inventory/reservations/release-reservation.yaml
+      owner: project-world-implementation
+    - path: examples/project-world/.markitect/model/commerce/sales/inventory/reservations/reservation.yaml
+      owner: project-world-implementation
+    - path: examples/project-world/.markitect/model/commerce/sales/manager.yaml
+      owner: project-world-implementation
+    - path: examples/project-world/.markitect/model/commerce/sales/orders/artifacts.yaml
+      owner: project-world-implementation
+    - path: examples/project-world/.markitect/model/commerce/sales/orders/cancel-before-shipped.yaml
+      owner: project-world-implementation
+    - path: examples/project-world/.markitect/model/commerce/sales/orders/cancel-order.yaml
+      owner: project-world-implementation
+    - path: examples/project-world/.markitect/model/commerce/sales/orders/manager.yaml
+      owner: project-world-implementation
+    - path: examples/project-world/.markitect/model/commerce/sales/orders/order.yaml
+      owner: project-world-implementation
+    - path: examples/project-world/.markitect/model/engineering/checks.yaml
+      owner: project-world-implementation
+    - path: examples/project-world/.markitect/model/engineering/manager.yaml
+      owner: project-world-implementation
+    - path: examples/project-world/.markitect/model/engineering/workflow.yaml
+      owner: project-world-implementation
+    - path: examples/project-world/.markitect/model/manager.yaml
+      owner: project-world-implementation
+    - path: examples/project-world/.markitect/project.yaml
+      owner: project-world-implementation
+    - path: examples/project-world/.markitect/runtime.yaml
+      owner: project-world-implementation
+    - path: examples/project-world/README.md
+      owner: project-world-implementation
+    - path: examples/project-world/docs/cancellation.md
+      owner: project-world-implementation
+    - path: examples/project-world/src/shop/__init__.py
+      owner: project-world-implementation
+    - path: examples/project-world/src/shop/commerce/__init__.py
+      owner: project-world-implementation
+    - path: examples/project-world/src/shop/commerce/cancellation.py
+      owner: project-world-implementation
+    - path: examples/project-world/src/shop/inventory/__init__.py
+      owner: project-world-implementation
+    - path: examples/project-world/src/shop/inventory/reservations.py
+      owner: project-world-implementation
+    - path: examples/project-world/src/shop/orders/__init__.py
+      owner: project-world-implementation
+    - path: examples/project-world/src/shop/orders/order.py
+      owner: project-world-implementation
+    - path: examples/project-world/tests/__init__.py
+      owner: project-world-implementation
+    - path: examples/project-world/tests/support.py
+      owner: project-world-implementation
+    - path: examples/project-world/tests/test_cancellation.py
+      owner: project-world-implementation
+    - path: internal/host/cli/project_dispatch_test.go
+      owner: project-world-implementation
+    - path: internal/host/projectcli/options.go
+      owner: project-world-implementation
+    - path: internal/host/projectcli/options_test.go
+      owner: project-world-implementation
+    - path: internal/host/projectcli/project_e2e_test.go
+      owner: project-world-implementation
+    - path: internal/host/projectcli/records.go
+      owner: project-world-implementation
+    - path: internal/host/projectcli/records_test.go
+      owner: project-world-implementation
+    - path: internal/host/projectcli/run.go
+      owner: project-world-implementation
+    - path: internal/host/projectrun/apply.go
+      owner: project-world-implementation
+    - path: internal/host/projectrun/checks.go
+      owner: project-world-implementation
+    - path: internal/host/projectrun/config.go
+      owner: project-world-implementation
+    - path: internal/host/projectrun/config_test.go
+      owner: project-world-implementation
+    - path: internal/host/projectrun/invoker.go
+      owner: project-world-implementation
+    - path: internal/host/projectrun/path.go
+      owner: project-world-implementation
+    - path: internal/host/projectrun/plan.go
+      owner: project-world-implementation
+    - path: internal/host/projectrun/process_alive_unix.go
+      owner: project-world-implementation
+    - path: internal/host/projectrun/process_alive_windows.go
+      owner: project-world-implementation
+    - path: internal/host/projectrun/protocol.go
+      owner: project-world-implementation
+    - path: internal/host/projectrun/run.go
+      owner: project-world-implementation
+    - path: internal/host/projectrun/store.go
+      owner: project-world-implementation
+    - path: internal/host/projectrun/types.go
+      owner: project-world-implementation
+    - path: internal/host/projectrun/verify.go
+      owner: project-world-implementation
+    - path: examples/project-world/.markitect/model/commerce/sales/orders/requires-active-reservation.yaml
+      owner: project-world-implementation
+    - path: internal/host/projectrun/git_binding.go
+      owner: project-world-implementation
+    - path: internal/host/projectrun/path_test.go
+      owner: project-world-implementation
+    - path: internal/host/projectrun/plan_test.go
+      owner: project-world-implementation
+    - path: internal/host/projectrun/protocol_test.go
+      owner: project-world-implementation
+    - path: internal/host/projectrun/store_test.go
+      owner: project-world-implementation
+    - path: internal/host/projectrun/verification_budget_test.go
+      owner: project-world-implementation
+    - path: internal/host/projectwork/runtime_edit_test.go
       owner: project-world-implementation
