@@ -207,6 +207,13 @@ func TestUserCanSelectNewInventoryThroughReviewedManifestEdit(t *testing.T) {
 	if len(updated.Report.Files) != 2 || updated.Report.Files[0].Path != "src/added.go" || updated.Report.Files[1].Path != "src/entry.go" {
 		t.Fatalf("selected inventory was not installed: %+v", updated.Report.Files)
 	}
+	rendered, err := Document(updated, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(rendered, "unmodeled: no Artifact path declared") {
+		t.Fatal("document did not distinguish observed files from Artifact coverage")
+	}
 }
 
 func TestNonRootManagerCannotChangeInventoryScope(t *testing.T) {
