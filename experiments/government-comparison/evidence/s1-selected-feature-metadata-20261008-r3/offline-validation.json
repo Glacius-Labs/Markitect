@@ -1,0 +1,23 @@
+{
+  "key": "s1-selected-feature-metadata-20261008-r3",
+  "recordedUtc": "2026-10-08T05:46:19.251153+00:00",
+  "scope": "Only five changed focused no-process real-consumer tests with explicit raw response envelopes; unchanged ten-case parser suite and product suites not rerun",
+  "passed": 5,
+  "durationSecondsFromLog": 0.09,
+  "testSourceSha256": "b8005863ef91e94d066cc0373db1303f4e286108c27510792f3b43b2a02973dc",
+  "logSha256": "506294bd547e0431fe433484e6a1be02675d67e2670ce24d9618c983696d49b5",
+  "clientSha256": "29d2c97a7c34ff3c580789a777967051221339bd6da3a39b492f729271b7b223",
+  "adapterSha256": "985ff1d8f8870de4ac697e030c2abeb543d1bc3e74f475968c5e1097be865550",
+  "cases": [
+    "actual requirements:null",
+    "present requirements with featureRequirements omitted/null/empty/compatible boolean map",
+    "missing final RPC/response/provenance or missing whole requirements field",
+    "malformed envelopes/maps/nonboolean map",
+    "unknown boolean names and known conflicts",
+    "independent origin gate nonpositive despite selected-feature compatibility"
+  ],
+  "limits": "Synthetically constructed offline inputs, not actual server observation or enforcement evidence",
+  "processStarts": 0,
+  "ledgerWrites": 0,
+  "rootRepeatedTests": false
+}

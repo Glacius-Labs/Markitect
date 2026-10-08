@@ -1,0 +1,86 @@
+{
+  "key": "s1-selected-feature-metadata-20261008-r3",
+  "argv": [
+    "C:/Users/Consiliari/AppData/Local/OpenAI/Codex/bin/5ea220ae823df3d7/codex.exe",
+    "app-server",
+    "--stdio",
+    "--strict-config",
+    "--config",
+    "default_permissions=\":read-only\"",
+    "--config",
+    "approval_policy=\"never\"",
+    "--config",
+    "apps._default.enabled=false",
+    "--config",
+    "features.apps=false",
+    "--config",
+    "features.goals=false",
+    "--config",
+    "features.hooks=false",
+    "--config",
+    "features.memories=false",
+    "--config",
+    "features.multi_agent=false",
+    "--config",
+    "features.plugins=false",
+    "--config",
+    "features.shell_tool=true",
+    "--config",
+    "features.unified_exec=true",
+    "--config",
+    "forced_login_method=\"chatgpt\"",
+    "--config",
+    "model=\"gpt-6.1-sol\"",
+    "--config",
+    "model_provider=\"openai\"",
+    "--config",
+    "model_reasoning_effort=\"high\"",
+    "--config",
+    "project_doc_max_bytes=0",
+    "--config",
+    "web_search=\"disabled\""
+  ],
+  "cwd": "C:/Users/Consiliari/Documents/Scientist-Probes/s1-common-runner-prospective-20261008/actor",
+  "rpc": [
+    {
+      "id": 0,
+      "method": "initialize",
+      "params": {
+        "clientInfo": {
+          "name": "scientist_selected_feature_policy_read_r3",
+          "version": "1.0"
+        }
+      }
+    },
+    {
+      "method": "initialized",
+      "params": {}
+    },
+    {
+      "id": 1,
+      "method": "config/read",
+      "params": {
+        "includeLayers": true,
+        "cwd": "C:/Users/Consiliari/Documents/Scientist-Probes/s1-common-runner-prospective-20261008/actor"
+      }
+    },
+    {
+      "id": 2,
+      "method": "configRequirements/read"
+    }
+  ],
+  "limits": {
+    "activeRpcSeconds": 33,
+    "ownedProcessExecutionSeconds": 38,
+    "controllerWithCleanupSeconds": 50,
+    "outerReceiptSeconds": 60,
+    "maxCleanupSeconds": 10,
+    "maxQueuedFrames": 32,
+    "maxRawBytes": 4000000,
+    "maxInboundNotifications": 16
+  },
+  "expectedFiles": {
+    "README.txt": "85c25997e1ee463e2d78fab8443110b3ee5066217edce20f0358fc9c64a3a8ad"
+  },
+  "externalEvidence": "C:/Users/Consiliari/Documents/Scientist-Probes/s1-selected-feature-metadata-20261008-r3"
+}

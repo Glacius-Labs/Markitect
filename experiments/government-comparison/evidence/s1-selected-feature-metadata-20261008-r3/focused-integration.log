@@ -1,0 +1,10 @@
+test_malformed_response_envelopes_and_malformed_typed_maps_fail_closed (test_client.SelectedFeatureMetadataR3IntegrationTests.test_malformed_response_envelopes_and_malformed_typed_maps_fail_closed) ... ok
+test_missing_rpc_response_or_provenance_and_missing_requirements_field_are_not_positive (test_client.SelectedFeatureMetadataR3IntegrationTests.test_missing_rpc_response_or_provenance_and_missing_requirements_field_are_not_positive) ... ok
+test_requirements_null_omitted_optional_null_empty_and_typed_map_are_valid_observations (test_client.SelectedFeatureMetadataR3IntegrationTests.test_requirements_null_omitted_optional_null_empty_and_typed_map_are_valid_observations) ... ok
+test_selected_feature_success_does_not_override_an_independent_origin_gate (test_client.SelectedFeatureMetadataR3IntegrationTests.test_selected_feature_success_does_not_override_an_independent_origin_gate) ... ok
+test_unknown_boolean_and_known_conflict_requirements_do_not_pass (test_client.SelectedFeatureMetadataR3IntegrationTests.test_unknown_boolean_and_known_conflict_requirements_do_not_pass) ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.090s
+
+OK

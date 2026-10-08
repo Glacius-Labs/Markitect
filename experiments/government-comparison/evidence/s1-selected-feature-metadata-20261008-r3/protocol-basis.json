@@ -1,0 +1,29 @@
+{
+  "archiveSha256": "cd24042eec4696f6b73368cfc6ce930726f3e10c28bae63cdbd1b2f502ff1d97",
+  "member": "v2/ConfigRequirementsReadResponse.json",
+  "memberSha256": "23133727e5dac0fcd77ca0db8bb47f4bef7c3e880b96846aec612d1dedba7e5b",
+  "wholeRequirements": {
+    "anyOf": [
+      {
+        "$ref": "#/definitions/ConfigRequirements"
+      },
+      {
+        "type": "null"
+      }
+    ],
+    "description": "Null if no requirements are configured (e.g. no requirements.toml/MDM entries)."
+  },
+  "configRequirementsRequiredFields": [],
+  "featureRequirements": {
+    "additionalProperties": {
+      "type": "boolean"
+    },
+    "type": [
+      "object",
+      "null"
+    ]
+  },
+  "boundedObservationRule": "After an actual successful requirements response, whole null means no configured requirements. Optional featureRequirements omitted/null/empty reports no additional feature constraint. Missing whole field or missing final RPC/response is insufficient. Invalid/unknown/conflicting present constraints remain nonpositive. Other gates unchanged.",
+  "perFeatureOrigins": "Not inferred from values",
+  "currentExternalDocs": "Overseer supplied current documentation corroboration; this package relies on pinned local schema, not an independently refreshed current-doc claim."
+}
