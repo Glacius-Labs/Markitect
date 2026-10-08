@@ -1,0 +1,25 @@
+{
+  "key": "s1-redacted-stderr-diagnostic-20261008-r1",
+  "phase": "reviewed-source-preparation",
+  "baseSha": "ab8945e9506256969b64d30d910d9012a8c91cf5",
+  "payloadFiles": {
+    "experiments/government-comparison/evidence/s1-redacted-stderr-diagnostic-20261008-r1/authorization-grant.json": "894ae2c792f7840fcd0ef7fc69d6a2da1d6ad1e77e4778992cdab30987dd1905",
+    "experiments/government-comparison/evidence/s1-redacted-stderr-diagnostic-20261008-r1/client.py": "70bf48d517274eb95df2741d737cc3efbbde38938ce1d23ff1062a5f55f4832b",
+    "experiments/government-comparison/evidence/s1-redacted-stderr-diagnostic-20261008-r1/diagnostic-contract.json": "b01f58965acc80908c7ed52c81b4fa9abe73eb8a73f213272dff2c6c90750771",
+    "experiments/government-comparison/evidence/s1-redacted-stderr-diagnostic-20261008-r1/focused-tests.log": "d0db283f665aa60b717011439ea92cf9e1d93c3ec0a87f785443ecc061dfc80a",
+    "experiments/government-comparison/evidence/s1-redacted-stderr-diagnostic-20261008-r1/frozen-method-enums.json": "831728c4ce8c1913d25eff43229c93b81c0f5d802f93eb3b057333c4048e2220",
+    "experiments/government-comparison/evidence/s1-redacted-stderr-diagnostic-20261008-r1/offline-validation.json": "6eb1c933daea9d7ad882362667e27a524af63d335fd2c9257bbbceca2e35168b",
+    "experiments/government-comparison/evidence/s1-redacted-stderr-diagnostic-20261008-r1/preflight-review.md": "4a0e3d04906c6378b54ebc081895d103abb9cfd4cc9b5ef363dd0c3ecbc20134",
+    "experiments/government-comparison/evidence/s1-redacted-stderr-diagnostic-20261008-r1/preparation.md": "92d8a302baeb29568a0d7638867d37d14470a9962684284dab0b483952eee2c5",
+    "experiments/government-comparison/evidence/s1-redacted-stderr-diagnostic-20261008-r1/profile.json": "aed4b6f57326a664342f5d989493117551715337a0e8d8fc666d3c5e7d8e6b6e",
+    "experiments/government-comparison/evidence/s1-redacted-stderr-diagnostic-20261008-r1/run_once.py": "14fa7ecf2c75cd0bdf212f19cf4d16a8ce8d52b57a59e88ecf628f2418861619",
+    "experiments/government-comparison/evidence/s1-redacted-stderr-diagnostic-20261008-r1/schema-contract.json": "c4bf557d17426f4c9a6c61e97353b8361469169e067e1f911fdfc7488d369270",
+    "experiments/government-comparison/evidence/s1-redacted-stderr-diagnostic-20261008-r1/test_bindings.py": "65adbbd26ab14d711ec5709fee5ec5d51381a0f159a6bed03e0a5ea19563d956",
+    "experiments/government-comparison/evidence/s1-redacted-stderr-diagnostic-20261008-r1/thread_gate.py": "b48ce8b67e3a18ecab80a49d1eb3633f90443cc9524972e00a3ea7bdf27fa6cd"
+  },
+  "runtimeStarts": 0,
+  "diagnosticReservations": 0,
+  "requestCreated": false,
+  "finalFreezeCreated": false,
+  "meaning": "Source packet only; final Request/Freeze and terminal evidence will be additive. No private excerpt content/hash may enter manifests."
+}

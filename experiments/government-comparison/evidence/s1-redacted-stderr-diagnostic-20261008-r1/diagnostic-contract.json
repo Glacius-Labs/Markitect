@@ -1,0 +1,19 @@
+{
+  "key": "s1-redacted-stderr-diagnostic-20261008-r1",
+  "issuedUtc": "2026-10-08T16:47:18Z",
+  "capture": {
+    "maxInputBytes": 1024,
+    "maxCompletePhysicalLines": 4,
+    "maxOutputBytes": 2048,
+    "firstNonemptyByteTerminal": true,
+    "continuationOnlyCleanup": true,
+    "privateExcerptRelativePath": "private-redacted-stderr/redacted-stderr.json",
+    "onceOnlyAfterNativeExitAndAllPumpsQuiescentAndOpenDeadline": true
+  },
+  "collectorPath": "experiments/government-comparison/evidence/s1-redacted-stderr-offline-20261008/redacted_stderr.py",
+  "collectorSha256": "d92f79b0d14abd2c5851bea2162813c5f93b396e4d19fc927389bc8b6557ef6d",
+  "normalReceipts": "Metadata only; no excerpt text or excerpt content fingerprint.",
+  "privateRead": "Only actual written-private, exact owned nonlink file, valid bounded JSON <=2048 bytes; report category/line/uncertainty only; remove only owned exact file at closure.",
+  "partialWrite": "Never read; remove exact partial only with proven own creation; preserve foreign files; no recursive deletion.",
+  "residual": "Unknown secret forms and sanitized task/model history retention remain possible. No secrecy/root cause/OS/billing/S1 proof."
+}

@@ -1,0 +1,14 @@
+test_capture_caps_private_path_and_collector_pin_are_bound (test_bindings.BindingValidationTests.test_capture_caps_private_path_and_collector_pin_are_bound) ... ok
+test_complete_live_grant_equality_distinguishes_boolean_from_number (test_bindings.BindingValidationTests.test_complete_live_grant_equality_distinguishes_boolean_from_number) ... ok
+test_exact_active_slot_and_grant_are_required_but_later_assignment_is_valid (test_bindings.BindingValidationTests.test_exact_active_slot_and_grant_are_required_but_later_assignment_is_valid) ... ok
+test_live_authority_ignores_unrelated_whole_state_cursor_and_time (test_bindings.BindingValidationTests.test_live_authority_ignores_unrelated_whole_state_cursor_and_time) ... ok
+test_profile_identity_and_exact_grant_owner_are_required (test_bindings.BindingValidationTests.test_profile_identity_and_exact_grant_owner_are_required) ... ok
+test_synthetic_request_freeze_identity_slot_and_time_mismatches_are_rejected (test_bindings.BindingValidationTests.test_synthetic_request_freeze_identity_slot_and_time_mismatches_are_rejected) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.017s
+
+OK
+Command: C:/Python313/python.exe -m unittest -v test_bindings
+Elapsed seconds: 0.237
+Exit code: 0
