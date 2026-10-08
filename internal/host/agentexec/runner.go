@@ -461,8 +461,8 @@ func validateResponse(response Response, req Request, invocation Invocation) err
 	switch req.Role {
 	case RoleExecutor:
 		allowedOutcome = response.Outcome == OutcomeProposed || response.Outcome == OutcomeFailed || response.Outcome == OutcomeIncomplete || response.Outcome == OutcomeEscalated
-		if response.Outcome == OutcomeProposed && len(response.CandidateFiles) == 0 {
-			return errors.New("executor proposal contains no candidate files")
+		if response.Outcome == OutcomeProposed && len(response.CandidateFiles) == 0 && len(response.ReportJSON) == 0 {
+			return errors.New("executor proposal contains neither candidate files nor reportJson")
 		}
 		if len(response.VerifierObservations) != 0 || len(response.CandidateJSON) != 0 {
 			return errors.New("executor response contains verifier or inference output")
@@ -470,15 +470,15 @@ func validateResponse(response Response, req Request, invocation Invocation) err
 	case RoleVerifier:
 		allowedOutcome = response.Outcome == OutcomePassed || response.Outcome == OutcomeFailed ||
 			response.Outcome == OutcomeIncomplete || response.Outcome == OutcomeEscalated
-		if len(response.CandidateFiles) != 0 || len(response.CandidateJSON) != 0 {
-			return errors.New("verifier response contains candidate or inference output")
+		if len(response.CandidateFiles) != 0 || len(response.CandidateJSON) != 0 || len(response.ReportJSON) != 0 {
+			return errors.New("verifier response contains candidate or task report output")
 		}
 		if (response.Outcome == OutcomePassed || response.Outcome == OutcomeFailed) && len(response.VerifierObservations) == 0 {
 			return errors.New("verifier result requires explicit observations")
 		}
 	case RoleInfer:
 		allowedOutcome = response.Outcome == OutcomeProposed || response.Outcome == OutcomeFailed || response.Outcome == OutcomeIncomplete || response.Outcome == OutcomeEscalated
-		if len(response.CandidateFiles) != 0 || len(response.VerifierObservations) != 0 {
+		if len(response.CandidateFiles) != 0 || len(response.VerifierObservations) != 0 || len(response.ReportJSON) != 0 {
 			return errors.New("inference response contains execution or verifier output")
 		}
 		if response.Outcome == OutcomeProposed && len(response.CandidateJSON) == 0 {
@@ -490,6 +490,14 @@ func validateResponse(response Response, req Request, invocation Invocation) err
 	}
 	if len(response.CandidateJSON) != 0 {
 		if _, err := canonicalObject(response.CandidateJSON, "candidateJson", maxContextBytes); err != nil {
+			return err
+		}
+	}
+	if len(response.ReportJSON) != 0 {
+		if req.Role != RoleExecutor {
+			return errors.New("reportJson is only valid for executor responses")
+		}
+		if _, err := canonicalObject(response.ReportJSON, "reportJson", maxContextBytes); err != nil {
 			return err
 		}
 	}

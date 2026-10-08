@@ -33,6 +33,18 @@ def invocation(role: str = "executor") -> dict:
     }
 
 
+def task_report_schema() -> dict:
+    return {
+        "type": "object",
+        "additionalProperties": False,
+        "required": ["status", "summary"],
+        "properties": {
+            "status": {"type": "string", "enum": ["complete", "partial"]},
+            "summary": {"type": "string", "minLength": 1, "maxLength": 256},
+        },
+    }
+
+
 class CodexRunnerTests(unittest.TestCase):
     def test_strict_json_rejects_duplicate_keys_at_any_depth(self) -> None:
         with self.assertRaises(runner.AdapterError):
@@ -157,7 +169,7 @@ class CodexRunnerTests(unittest.TestCase):
 
     def test_role_instructions_list_role_specific_outcomes(self) -> None:
         expected = {
-            "executor": ("proposed, failed, incomplete, or escalated", "proposed requires at least one candidate file"),
+            "executor": ("proposed, failed, incomplete, or escalated", "proposed requires at least one candidate file or a typed task report"),
             "verifier": ("passed, failed, incomplete, or escalated", "passed and failed require concrete verifier observations"),
             "infer": ("proposed, failed, incomplete, or escalated", "proposed requires a JSON object candidate"),
         }
@@ -176,11 +188,45 @@ class CodexRunnerTests(unittest.TestCase):
     def test_inference_candidate_uses_closed_string_transport_and_is_parsed(self) -> None:
         self.assertEqual(runner.RESPONSE_SCHEMA["properties"]["candidateJson"]["type"], ["string", "null"])
         self.assertIn("candidateJson", runner.RESPONSE_SCHEMA["required"])
-        response = runner.normalize_codex_response({"candidateJson": '{"proposal":{"value":1}}'})
+        response = runner.normalize_codex_response({"candidateJson": '{"proposal":{"value":1}}', "reportJson": None}, invocation("infer"))
         self.assertEqual(response["candidateJson"], {"proposal": {"value": 1}})
-        self.assertNotIn("candidateJson", runner.normalize_codex_response({"candidateJson": None}))
+        self.assertNotIn("candidateJson", runner.normalize_codex_response({"candidateJson": None, "reportJson": None}, invocation()))
         with self.assertRaises(runner.AdapterError):
-            runner.normalize_codex_response({"candidateJson": "[]"})
+            runner.normalize_codex_response({"candidateJson": "[]", "reportJson": None}, invocation("infer"))
+        with self.assertRaises(runner.AdapterError):
+            runner.normalize_codex_response({"candidateJson": '{"x":1}', "reportJson": None}, invocation("executor"))
+
+    def test_task_report_schema_is_closed_required_and_parsed_from_string(self) -> None:
+        value = invocation()
+        value["request"]["context"] = {"responseSchema": task_report_schema()}
+        provider_schema = runner.provider_response_schema(value)
+        self.assertEqual(provider_schema["properties"]["reportJson"]["type"], ["string", "null"])
+        self.assertIn("reportJson", provider_schema["required"])
+        self.assertIn("reportJson", runner.make_prompt(value))
+        normalized = runner.normalize_codex_response({
+            "candidateJson": None,
+            "reportJson": '{"status":"complete","summary":"done"}',
+        }, value)
+        self.assertEqual(normalized["reportJson"], {"status": "complete", "summary": "done"})
+        with self.assertRaises(runner.AdapterError):
+            runner.normalize_codex_response({"candidateJson": None, "reportJson": '{"status":"complete","summary":""}'}, value)
+        legacy = invocation("executor")
+        self.assertNotIn("reportJson", runner.normalize_codex_response({"candidateJson": None, "reportJson": None}, legacy))
+
+    def test_invalid_task_report_schema_fails_before_codex_or_file_creation(self) -> None:
+        value = invocation()
+        schema = task_report_schema()
+        schema["required"] = ["status"]
+        value["request"]["context"] = {"responseSchema": schema}
+        with tempfile.TemporaryDirectory() as directory:
+            cwd = Path(directory)
+            args = argparse.Namespace(codex_executable="codex.exe", codex_script=None, codex_version="0.130.0", model="model", timeout_seconds=10)
+            with patch.object(runner, "resolve_codex") as resolve, patch.object(runner.subprocess, "Popen") as spawn:
+                with self.assertRaises(runner.AdapterError):
+                    runner.launch_codex(value, args, {}, cwd, cwd / "events.jsonl")
+                resolve.assert_not_called()
+                spawn.assert_not_called()
+            self.assertEqual(list(cwd.iterdir()), [])
 
     def test_event_log_records_provider_usage_and_tool_count(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -197,7 +243,7 @@ class CodexRunnerTests(unittest.TestCase):
 
     def test_codex_launch_uses_read_only_ephemeral_flags_and_private_telemetry(self) -> None:
         value = invocation()
-        value["request"]["context"] = {"privatePromptSentinel": "DO_NOT_LOG_PROMPT_CONTENT"}
+        value["request"]["context"] = {"privatePromptSentinel": "DO_NOT_LOG_PROMPT_CONTENT", "responseSchema": task_report_schema()}
         captured = {}
 
         class CapturingStdin(io.BytesIO):
@@ -241,6 +287,7 @@ class CodexRunnerTests(unittest.TestCase):
                     "outcome": "proposed",
                     "candidateFiles": [{"path":"candidate.txt","mode":"0644","content":"candidate"}],
                     "candidateJson": None,
+                    "reportJson": '{"status":"complete","summary":"done"}',
                     "evidenceRefs": [],
                     "verifierObservations": [],
                     "uncertainty": [],
@@ -270,6 +317,7 @@ class CodexRunnerTests(unittest.TestCase):
                  patch.object(runner, "check_version"), \
                  patch.object(runner.subprocess, "Popen", side_effect=FakeProcess):
                 response = runner.launch_codex(value, args, {"model_reasoning_effort":"high"}, cwd, log_path)
+            self.assertEqual(response["reportJson"], {"status": "complete", "summary": "done"})
             argv = captured["argv"]
             self.assertIn("--ignore-user-config", argv)
             self.assertIn("--ephemeral", argv)

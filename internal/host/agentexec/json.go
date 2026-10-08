@@ -51,9 +51,9 @@ func strictDecode(data []byte, dst any) error {
 // rejectProtocolKeyAliases rejects case-folded duplicate property names in the
 // outer execution protocol. encoding/json matches struct fields
 // case-insensitively, so `runId` and `RunID` otherwise write the same field
-// despite being distinct JSON strings. candidateJson is opaque caller data;
-// its own exact duplicate-key check is performed by canonicalObject when it is
-// interpreted, and its property names must remain case-sensitive.
+// despite being distinct JSON strings. candidateJson and reportJson are opaque
+// caller data; their exact duplicate-key checks are performed by canonicalObject
+// when interpreted, and their property names remain case-sensitive.
 func rejectProtocolKeyAliases(data []byte) error {
 	decoder := json.NewDecoder(bytes.NewReader(data))
 	decoder.UseNumber()
@@ -97,7 +97,7 @@ func scanJSONValueWithProtocolKeys(decoder *json.Decoder, protocolKeys bool) err
 				}
 				seen[folded] = key
 			}
-			checkChild := protocolKeys && !strings.EqualFold(key, "candidateJson")
+			checkChild := protocolKeys && !strings.EqualFold(key, "candidateJson") && !strings.EqualFold(key, "reportJson")
 			if err := scanJSONValueWithProtocolKeys(decoder, checkChild); err != nil {
 				return err
 			}
